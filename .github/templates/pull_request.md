@@ -2,10 +2,13 @@
 <!-- Provide a short description of the changes. -->
 
 ### Changes
-- [ ] New feature
-- [ ] Bug fix
-- [ ] Documentation
-- [ ] Other (please describe)
+<!-- Select the type(s) of change this PR introduces -->
+- Documentation
+- New feature
+- Bug fix
+- Refactor
+- Chore
+- Other (please describe)
 
 ### Details
 <!-- Explain the motivation, design decisions, and any trade-offs. -->
