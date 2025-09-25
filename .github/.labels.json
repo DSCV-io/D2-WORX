@@ -1,0 +1,62 @@
+[
+  {
+    "name": "Architecture 🏗️",
+    "color": "006b75",
+    "description": "Impacts overall system design."
+  },
+  {
+    "name": "Blocked ⛔",
+    "color": "f9d0c4",
+    "description": "Something is blocked."
+  },
+  {
+    "name": "Bug 🐞",
+    "color": "b60205",
+    "description": "Something isn’t working as intended."
+  },
+  {
+    "name": "Deps 📦",
+    "color": "0052cc",
+    "description": "Dependency upgrades or changes."
+  },
+  {
+    "name": "Docs 📜",
+    "color": "5319e7",
+    "description": "Updates to documentation."
+  },
+  {
+    "name": "Duplicate 🔁",
+    "color": "d4c5f9",
+    "description": "This issue or pull request already exists."
+  },
+  {
+    "name": "Feature ✨",
+    "color": "0e8a16",
+    "description": "New feature or request."
+  },
+  {
+    "name": "Help Wanted 🙋",
+    "color": "d93f0b",
+    "description": "Extra attention is needed."
+  },
+  {
+    "name": "Infra ⚙️",
+    "color": "bfdadc",
+    "description": "Infrastructure-specific work."
+  },
+  {
+    "name": "WIP ⏳",
+    "color": "fbca04",
+    "description": "Work is in progress."
+  },
+  {
+    "name": "Refactor 🔨",
+    "color": "c2e0c6",
+    "description": "Code changes that neither fix a bug nor add a feature."
+  },
+  {
+    "name": "Chore 🧹",
+    "color": "fef2c0",
+    "description": "Other non-feature/non-bug work."
+  }
+]
