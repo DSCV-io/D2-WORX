@@ -1,0 +1,10 @@
+**/.git
+**/.gitignore
+**/.vscode
+**/node_modules
+**/.pnpm-store
+**/bin
+**/obj
+**/out
+**/.next
+**/.env

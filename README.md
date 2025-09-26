@@ -5,7 +5,12 @@ D²-WORX is the distributed evolution of the Decisive Commerce Application Frame
 This project is in its **earliest stages**. The public repo documents the ongoing evolution of D² as it transitions from a modular monolith (DeCAF) into a distributed framework. Expect frequent changes and incremental progress.
 
 ## Quickstart Guide 🚀
-*Intentionally pending...*
+
+### Getting started with local dev environment:
+1. Run the `/D2/scripts/make-dev-settings` script of your [environment's] choice (`.bat` or `.sh`) to generate the required `appsettings.Development.json` files (this just copies the `appsettings.Example.json` files).
+2. Edit the generated `appsettings.Development.json` files as needed.
+
+*To be continued...*
 
 ## Philosophy 🤔
 **Distributed, Scalable**: built around bounded contexts and event-driven communication to support horizontal scalability.
