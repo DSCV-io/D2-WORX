@@ -2,7 +2,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var cache = builder.AddRedis("cache");
 
-var apiService = builder.AddProject<Projects.D2_ApiService>("apiservice")
+var rest = builder.AddProject<Projects.REST>("REST")
     .WithHttpHealthCheck("/health");
 
 // REMOVED DEFAULT BLAZOR WEB PROJECT BUT LEAVING THIS HERE AS A REFERENCE TODO - REMOVE LATER

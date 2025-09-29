@@ -20,7 +20,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\D2.AppHost\D2.AppHost.csproj"/>
+        <ProjectReference Include="..\AppHost\AppHost.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
