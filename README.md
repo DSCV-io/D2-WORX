@@ -7,8 +7,18 @@ This project is in its **earliest stages**. The public repo documents the ongoin
 ## Quickstart Guide 🚀
 
 ### Getting started with local dev environment:
-1. Run the `/D2/scripts/make-dev-settings` script of your [environment's] choice (`.bat` or `.sh`) to generate the required `appsettings.Development.json` files (this just copies the `appsettings.Example.json` files).
-2. Edit the generated `appsettings.Development.json` files as needed.
+1. Using a command line utility, navigate to the AppHost folder (`/backends/AppHost`) and set the following secrets using the `dotnet user-secrets set <key> <value>` command:
+
+    - `Parameters:mq-username` (your desired RabbitMQ username)
+    - `Parameters:mq-password` (your desired RabbitMQ password)
+    - `Parameters:db-username` (your desired PostgreSQL username)
+    - `Parameters:db-password` (your desired PostgreSQL password)
+    - `Parameters:cache-password` (your desired Redis password)
+
+    If you want to verify your entries, use the `dotnet user-secrets list` command.
+
+2. Edit any `appsettings.*.json` files as needed.
+3. Run the AppHost project.
 
 *To be continued...*
 
