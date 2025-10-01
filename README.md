@@ -9,11 +9,13 @@ This project is in its **earliest stages**. The public repo documents the ongoin
 ### Getting started with local dev environment:
 1. Using a command line utility, navigate to the AppHost folder (`/backends/AppHost`) and set the following secrets using the `dotnet user-secrets set <key> <value>` command:
 
-    - `Parameters:mq-username` (your desired RabbitMQ username)
-    - `Parameters:mq-password` (your desired RabbitMQ password)
-    - `Parameters:db-username` (your desired PostgreSQL username)
-    - `Parameters:db-password` (your desired PostgreSQL password)
-    - `Parameters:cache-password` (your desired Redis password)
+    - `Parameters:mq-username` (RabbitMQ username)
+    - `Parameters:mq-password` (RabbitMQ password)
+    - `Parameters:db-username` (PostgreSQL username)
+    - `Parameters:db-password` (PostgreSQL password)
+    - `Parameters:cache-password` (Redis password)
+    - `Parameters:kc-username` (Keycloak username)
+    - `Parameters:kc-password` (Keycloak password)
 
     If you want to verify your entries, use the `dotnet user-secrets list` command.
 
