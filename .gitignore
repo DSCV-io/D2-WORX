@@ -133,7 +133,5 @@ $RECYCLE.BIN/
 .DS_Store
 _NCrunch*
 
-#Configs
-appsettings.json
-appsettings.*.json
-!appsettings.Example.json
+# Just a dumb folder for DeCAF stuff so I can reference it in the same dir.
+/old/
