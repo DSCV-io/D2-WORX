@@ -16,11 +16,13 @@ var kcPassword = builder.AddParameter("kc-password", true);
 
 // PostgreSQL (database).
 var db = builder.AddPostgres("d2-postgres", dbUsername, dbPassword)
+    .WithIconName("DatabaseStack")
     .WithImageTag("18.0-trixie")
     .WithDataVolume("d2-postgres-data")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithPgAdmin(x =>
     {
+        x.WithIconName("DatabasePerson");
         x.WithContainerName("d2-pgadmin4");
         x.WithImageTag("9.8.0");
         x.WithLifetime(ContainerLifetime.Persistent);
@@ -28,11 +30,13 @@ var db = builder.AddPostgres("d2-postgres", dbUsername, dbPassword)
 
 // Redis (cache).
 var cache = builder.AddRedis("d2-redis", null, cachePassword)
+    .WithIconName("Memory")
     .WithImageTag("8.2.1-bookworm")
     .WithDataVolume("d2-redis-data")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithRedisInsight(x =>
     {
+        x.WithIconName("BookSearch");
         x.WithContainerName("d2-redisinsight");
         x.WithImageTag("2.70.1");
         x.WithDataVolume("d2-redisinsight-data");
@@ -41,6 +45,7 @@ var cache = builder.AddRedis("d2-redis", null, cachePassword)
 
 // RabbitMQ (message broker).
 var broker = builder.AddRabbitMQ("d2-rabbitmq", mqUsername, mqPassword)
+    .WithIconName("Mailbox")
     .WithImageTag("4.1.4-management")
     .WithDataVolume("d2-rabbitmq-data")
     .WithLifetime(ContainerLifetime.Persistent)
@@ -52,6 +57,7 @@ db.AddDatabase(kc_pg_db_name);
 
 // Add keycloak.
 var keycloak = builder.AddKeycloak("d2-keycloak", null, kcUsername, kcPassword)
+    .WithIconName("LockClosedKey")
     .WaitFor(db)
     .WithImageTag("26.4.0")
     .WithDataVolume("d2-keycloak-data")
@@ -65,10 +71,12 @@ var keycloak = builder.AddKeycloak("d2-keycloak", null, kcUsername, kcPassword)
 
 // Auth service.
 var authService = builder.AddProject<Projects.Auth_API>("d2-auth")
+    .WithIconName("PersonAccounts")
     .DefaultInfraRefs(db, cache, broker, keycloak);
 
 // REST API gateway.
 var rest = builder.AddProject<Projects.REST>("d2-rest")
+    .WithIconName("Globe")
     // Services that the REST API depends on.
     .WaitFor(authService)
     .WithHttpHealthCheck("/health");
