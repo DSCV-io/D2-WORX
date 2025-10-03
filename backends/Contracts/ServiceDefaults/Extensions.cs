@@ -72,8 +72,7 @@ public static class Extensions
                             !context.Request.Path.StartsWithSegments(_HEALTH_ENDPOINT_PATH)
                             && !context.Request.Path.StartsWithSegments(_ALIVENESS_ENDPOINT_PATH)
                     )
-                    // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
-                    //.AddGrpcClientInstrumentation()
+                    .AddGrpcClientInstrumentation()
                     .AddHttpClientInstrumentation();
             });
 

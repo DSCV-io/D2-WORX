@@ -79,7 +79,14 @@ var rest = builder.AddProject<Projects.REST>("d2-rest")
     .WithIconName("Globe")
     // Services that the REST API depends on.
     .WaitFor(authService)
-    .WithHttpHealthCheck("/health");
+    .WithHttpHealthCheck("/health")
+    .WithExternalHttpEndpoints();
+
+// SvelteKit frontend (I find it easier to run this externally during development... it's just
+// nice to be able to see it running [or not] in the aspire dashboard).
+builder.AddExternalService("sveltekit", new Uri("http://localhost:5173"))
+    .WithIconName("DesktopCursor")
+    .WithHttpHealthCheck(path: "/", statusCode: 200);
 
 builder.Build().Run();
 
