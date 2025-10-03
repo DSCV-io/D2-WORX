@@ -21,6 +21,9 @@ This project is in its **earliest stages**. The public repo documents the ongoin
 
 2. Edit any `appsettings.*.json` files as needed.
 3. Run the AppHost project.
+4. Install front-end dependencies with the `pnpm i` command in the `/frontends/sveltekit` directory.
+5. Create a `.env` file in the `/frontends/sveltekit` directory using the `.env.example` as a template (update as needed).
+6. Build + run the front-end with `pnpm dev`. **NOTE**: this runs OUTSIDE of docker desktop locally but Aspire is set up to perform health checks on `http://localhost:5173`.
 
 *To be continued...*
 
