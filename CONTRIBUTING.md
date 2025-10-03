@@ -24,7 +24,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `chore:` maintenance tasks
 
 ## Pull Requests
-- Fill out the PR template.
+- Fill out the [PR template](https://github.com/DSCV-io/D2-WORX/blob/main/.github/templates/pull_request.md).
 - Keep PRs focused and scoped to a single concern.
 - Ensure code compiles and tests pass locally.
 
