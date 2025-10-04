@@ -56,7 +56,7 @@ const string kc_pg_db_name = "keycloak";
 db.AddDatabase(kc_pg_db_name);
 
 // Add keycloak.
-var keycloak = builder.AddKeycloak("d2-keycloak", null, kcUsername, kcPassword)
+var keycloak = builder.AddKeycloak("d2-keycloak", 8080, kcUsername, kcPassword)
     .WithIconName("LockClosedKey")
     .WaitFor(db)
     .WithImageTag("26.4.0")
