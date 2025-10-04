@@ -3,7 +3,6 @@
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
-	"packageManager": "pnpm@10.15.1",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
@@ -15,23 +14,21 @@
 		"lint": "prettier --check . && eslint .",
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
-		"test:e2e": "playwright test",
-		"machine-translate": "inlang machine translate --project project.inlang"
+		"test:e2e": "playwright test"
 	},
 	"devDependencies": {
 		"@eslint/compat": "1.4.0",
-		"@eslint/js": "9.36.0",
+		"@eslint/js": "9.37.0",
+		"@inlang/paraglide-js": "2.4.0",
 		"@playwright/test": "1.55.1",
-		"@stripe/stripe-js": "7.9.0",
-		"@sveltejs/adapter-node": "5.3.2",
-		"@sveltejs/kit": "2.43.7",
+		"@sveltejs/adapter-node": "5.3.3",
+		"@sveltejs/kit": "2.43.8",
 		"@sveltejs/vite-plugin-svelte": "6.2.1",
-		"@tailwindcss/typography": "0.5.16",
 		"@tailwindcss/vite": "4.1.14",
-		"@types/node": "24.6.2",
+		"@types/node": "22.18.8",
 		"@vitest/browser": "3.2.4",
 		"clsx": "2.1.1",
-		"eslint": "9.36.0",
+		"eslint": "9.37.0",
 		"eslint-config-prettier": "10.1.8",
 		"eslint-plugin-svelte": "3.12.4",
 		"globals": "16.4.0",
@@ -48,11 +45,9 @@
 		"tailwindcss-motion": "1.1.1",
 		"typescript": "5.9.3",
 		"typescript-eslint": "8.45.0",
-		"vite": "7.1.8",
+		"vite": "7.1.9",
 		"vitest": "3.2.4",
-		"vitest-browser-svelte": "1.1.0",
-		"@inlang/paraglide-js": "2.4.0",
-		"@inlang/cli": "^3.0.0"
+		"vitest-browser-svelte": "1.1.0"
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": [
@@ -60,6 +55,7 @@
 		]
 	},
 	"dependencies": {
+		"@stripe/stripe-js": "8.0.0",
 		"humanize-duration": "3.33.1",
 		"libphonenumber-js": "1.12.23",
 		"postcode-validator": "3.10.5",

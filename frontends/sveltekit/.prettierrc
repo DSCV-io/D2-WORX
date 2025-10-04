@@ -1,5 +1,5 @@
 {
-  "printWidth": 100,
+	"printWidth": 100,
   "tabWidth": 2,
   "useTabs": false,
   "singleQuote": false,
@@ -13,14 +13,14 @@
   "arrowParens": "always",
   "endOfLine": "crlf",
   "singleAttributePerLine": true,
-
-  "plugins": ["prettier-plugin-svelte", "prettier-plugin-tailwindcss"],
-  "overrides": [
-    {
-      "files": "*.svelte",
-      "options": {
-        "parser": "svelte"
-      }
-    }
-  ]
+	"plugins": ["prettier-plugin-svelte", "prettier-plugin-tailwindcss"],
+	"overrides": [
+		{
+			"files": "*.svelte",
+			"options": {
+				"parser": "svelte"
+			}
+		}
+	],
+	"tailwindStylesheet": "./src/app.css"
 }

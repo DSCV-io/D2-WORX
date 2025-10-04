@@ -7,7 +7,8 @@ This project is in its **earliest stages**. The public repo documents the ongoin
 ## Quickstart Guide 🚀
 
 ### Getting started with local dev environment:
-1. Using a command line utility, navigate to the AppHost folder (`/backends/AppHost`) and set the following secrets using the `dotnet user-secrets set <key> <value>` command:
+1. **Pre-reqs**: to run this project on your machine, you will need the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0), [Node v24.7.0+](https://nodejs.org/en/download), [PNPM 10.15.1+](https://pnpm.io/installation), [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) and to, obviously, clone this repository.
+2. Using a command line utility, navigate to the AppHost folder (`/backends/AppHost`) and set the following secrets using the `dotnet user-secrets set <key> <value>` command:
 
     - `Parameters:mq-username` (RabbitMQ username)
     - `Parameters:mq-password` (RabbitMQ password)
@@ -19,13 +20,9 @@ This project is in its **earliest stages**. The public repo documents the ongoin
 
     If you want to verify your entries, use the `dotnet user-secrets list` command.
 
-2. Edit any `appsettings.*.json` files as needed.
-3. Run the AppHost project.
-4. Install front-end dependencies with the `pnpm i` command in the `/frontends/sveltekit` directory.
-5. Create a `.env` file in the `/frontends/sveltekit` directory using the `.env.example` as a template (update as needed).
-6. Build + run the front-end with `pnpm dev`. **NOTE**: this runs OUTSIDE of docker desktop locally but Aspire is set up to perform health checks on `http://localhost:5173`.
-
-*To be continued...*
+3. Edit any `appsettings.*.json` files as needed.
+4. Create a `.env` file in the `/frontends/sveltekit` directory using the `.env.example` as a template (update as needed).
+5. Run the AppHost project either via CLI or IDE of your choice.
 
 ## Philosophy 🤔
 **Distributed, Scalable**: built around bounded contexts and event-driven communication to support horizontal scalability.
