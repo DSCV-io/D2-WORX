@@ -26,6 +26,50 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Auth.Infra", "backends\Serv
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Auth.Tests", "backends\Services\Auth\Auth.Tests\Auth.Tests.csproj", "{F6A07BF8-5938-4E95-B5A7-17CA58DE9956}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{C6AC4C7D-8095-401E-A44D-E6E05CD4F916}"
+	ProjectSection(SolutionItems) = preProject
+		CONTRIBUTING.md = CONTRIBUTING.md
+		LICENSE.md = LICENSE.md
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Observability", "Observability", "{B46DEAC7-AC68-4CBB-B3C3-D9985C17BB3D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Loki", "Loki", "{715DE28A-4990-4585-9C72-5DF09F05B05F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Grafana", "Grafana", "{351EDC8E-73CA-42A5-8A9E-56F430091478}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tempo", "Tempo", "{C82FA7F4-98DC-4366-8122-1040D686CBF2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Mimir", "Mimir", "{AA27FE9C-D7D6-4261-9CE1-69DAF988D359}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Provisioning", "Provisioning", "{D31C4135-68AE-4DD6-AE56-D82537CAE753}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{5B5EDC4B-AC8C-4418-8564-EECF5BE1DB22}"
+	ProjectSection(SolutionItems) = preProject
+		observability\loki\config\loki.yaml = observability\loki\config\loki.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{DE8EF225-5167-4E55-9CDC-3AB69D28B521}"
+	ProjectSection(SolutionItems) = preProject
+		observability\mimir\config\mimir.yaml = observability\mimir\config\mimir.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{7F994A2F-1C9C-45D7-A182-77C2EC2A42AC}"
+	ProjectSection(SolutionItems) = preProject
+		observability\tempo\config\tempo.yaml = observability\tempo\config\tempo.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dashboards", "Dashboards", "{0841A0F5-EF28-47EA-9099-35999D6BDEFA}"
+	ProjectSection(SolutionItems) = preProject
+		observability\grafana\provisioning\dashboards\dashboards.yaml = observability\grafana\provisioning\dashboards\dashboards.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Datasources", "Datasources", "{49C7F053-E93C-4A53-BE72-B318471CD937}"
+	ProjectSection(SolutionItems) = preProject
+		observability\grafana\provisioning\datasources\datasources.yaml = observability\grafana\provisioning\datasources\datasources.yaml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -78,5 +122,15 @@ Global
 		{051525A0-46C3-4142-9B49-402B2D1BF349} = {CA8869A6-B1C7-493C-BEB3-0D37219B4F8C}
 		{22256EAA-AD8A-4338-8BA7-23C8B5030849} = {CA8869A6-B1C7-493C-BEB3-0D37219B4F8C}
 		{F6A07BF8-5938-4E95-B5A7-17CA58DE9956} = {CA8869A6-B1C7-493C-BEB3-0D37219B4F8C}
+		{715DE28A-4990-4585-9C72-5DF09F05B05F} = {B46DEAC7-AC68-4CBB-B3C3-D9985C17BB3D}
+		{351EDC8E-73CA-42A5-8A9E-56F430091478} = {B46DEAC7-AC68-4CBB-B3C3-D9985C17BB3D}
+		{C82FA7F4-98DC-4366-8122-1040D686CBF2} = {B46DEAC7-AC68-4CBB-B3C3-D9985C17BB3D}
+		{AA27FE9C-D7D6-4261-9CE1-69DAF988D359} = {B46DEAC7-AC68-4CBB-B3C3-D9985C17BB3D}
+		{D31C4135-68AE-4DD6-AE56-D82537CAE753} = {351EDC8E-73CA-42A5-8A9E-56F430091478}
+		{5B5EDC4B-AC8C-4418-8564-EECF5BE1DB22} = {715DE28A-4990-4585-9C72-5DF09F05B05F}
+		{DE8EF225-5167-4E55-9CDC-3AB69D28B521} = {AA27FE9C-D7D6-4261-9CE1-69DAF988D359}
+		{7F994A2F-1C9C-45D7-A182-77C2EC2A42AC} = {C82FA7F4-98DC-4366-8122-1040D686CBF2}
+		{0841A0F5-EF28-47EA-9099-35999D6BDEFA} = {D31C4135-68AE-4DD6-AE56-D82537CAE753}
+		{49C7F053-E93C-4A53-BE72-B318471CD937} = {D31C4135-68AE-4DD6-AE56-D82537CAE753}
 	EndGlobalSection
 EndGlobal

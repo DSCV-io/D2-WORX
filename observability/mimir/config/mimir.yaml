@@ -1,0 +1,62 @@
+# Documentation: https://grafana.com/docs/mimir/latest/configure/configuration-parameters/
+target: all
+
+multitenancy_enabled: false
+
+server:
+  http_listen_port: 9009
+  grpc_listen_port: 9097
+  log_level: info
+  log_format: json
+
+common:
+  storage:
+    backend: filesystem
+    filesystem:
+      dir: /var/mimir/data
+
+blocks_storage:
+  backend: filesystem
+  filesystem:
+    dir: /var/mimir/blocks
+  tsdb:
+    dir: /var/mimir/tsdb
+  bucket_store:
+    sync_dir: /var/mimir/tsdb-sync
+    index_cache:
+      backend: inmemory
+
+compactor:
+  data_dir: /var/mimir/compactor
+  deletion_delay: 24h
+  sharding_ring:
+    kvstore:
+      store: inmemory
+
+distributor:
+  ring:
+    kvstore:
+      store: inmemory
+
+ingester:
+  ring:
+    kvstore:
+      store: inmemory
+    replication_factor: 1
+
+store_gateway:
+  sharding_ring:
+    replication_factor: 1
+    kvstore:
+      store: inmemory
+
+ruler_storage:
+  backend: filesystem
+  filesystem:
+    dir: /var/mimir/rules
+
+limits:
+  compactor_blocks_retention_period: 672h
+
+activity_tracker:
+  filepath: /var/mimir/activity.log

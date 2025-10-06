@@ -1,0 +1,98 @@
+# Documentation: https://grafana.com/docs/grafana/latest/administration/provisioning/#datasources
+
+apiVersion: 1
+
+datasources:
+  # Mimir (Prometheus-compatible metrics)
+  - name: Mimir
+    type: prometheus
+    access: proxy
+    url: http://d2-mimir:9009/prometheus
+    uid: mimir
+    isDefault: true
+    editable: true
+    jsonData:
+      httpMethod: POST
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: tempo
+      timeInterval: 30s
+      queryTimeout: 300s
+      prometheusType: Mimir
+      prometheusVersion: 2.40.0
+      disableMetricsLookup: false
+      customQueryParameters: ''
+    version: 1
+
+  # Loki (Logs)
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://d2-loki:3100
+    uid: loki
+    isDefault: false
+    editable: true
+    jsonData:
+      maxLines: 5000
+      timeout: 60
+      derivedFields:
+        # Match JSON format: "trace_id":"abc123"
+        - datasourceUid: tempo
+          matcherRegex: '"trace_id"[:\s]+"([a-f0-9]+)"'
+          name: TraceID_JSON
+          url: '$${__value.raw}'
+          urlDisplayLabel: 'View Trace'
+        # Match key=value format: trace_id=abc123
+        - datasourceUid: tempo
+          matcherRegex: 'trace_id=([a-f0-9]+)'
+          name: TraceID_KV
+          url: '$${__value.raw}'
+          urlDisplayLabel: 'View Trace'
+        # Match alternate format: traceID=abc123
+        - datasourceUid: tempo
+          matcherRegex: 'traceID=([a-f0-9]+)'
+          name: TraceID_Alt
+          url: '$${__value.raw}'
+          urlDisplayLabel: 'View Trace'
+    version: 1
+
+  # Tempo (Traces)
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://d2-tempo:3200
+    uid: tempo
+    isDefault: false
+    editable: true
+    jsonData:
+      httpMethod: GET
+      tracesToLogs:
+        datasourceUid: loki
+        tags: ['service.name', 'service_name', 'app']
+        mappedTags:
+          - key: service.name
+            value: service_name
+        mapTagNamesEnabled: true
+        filterByTraceID: true
+        filterBySpanID: false
+        customQuery: true
+        query: '{service_name="$${__tags.service_name}"} |= "$${__trace.traceId}"'
+      tracesToMetrics:
+        datasourceUid: mimir
+        tags:
+          - key: 'service.name'
+            value: 'service_name'
+        queries:
+          - name: 'Request Rate'
+            query: 'sum(rate(traces_spanmetrics_calls_total{service="$${__tags.service_name}"}[5m]))'
+      serviceMap:
+        datasourceUid: mimir
+      nodeGraph:
+        enabled: true
+      search:
+        hide: false
+      lokiSearch:
+        datasourceUid: loki
+      spanBar:
+        type: 'Duration'
+    version: 1
