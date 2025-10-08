@@ -6,18 +6,18 @@ var builder = DistributedApplication.CreateBuilder(args);
 builder.Configuration.AddUserSecrets<Program>();
 
 // Define all params to pass to containers.
-var dbUsername = builder.AddParameter("db-username");
+var dbUsername = builder.AddParameter("db-username", true);
 var dbPassword = builder.AddParameter("db-password", true);
-var dbaEmail = builder.AddParameter("dba-email");
+var dbaEmail = builder.AddParameter("dba-email", true);
 var dbaPassword = builder.AddParameter("dba-password", true);
 var cachePassword = builder.AddParameter("cache-password", true);
-var mqUsername = builder.AddParameter("mq-username");
+var mqUsername = builder.AddParameter("mq-username", true);
 var mqPassword = builder.AddParameter("mq-password", true);
-var kcUsername = builder.AddParameter("kc-username");
+var kcUsername = builder.AddParameter("kc-username", true);
 var kcPassword = builder.AddParameter("kc-password", true);
-var otelUser = builder.AddParameter("otel-username");
+var otelUser = builder.AddParameter("otel-username", true);
 var otelPassword = builder.AddParameter("otel-password", true);
-var s3Username = builder.AddParameter("s3-username");
+var s3Username = builder.AddParameter("s3-username", true);
 var s3Password = builder.AddParameter("s3-password", true);
 
 /******************************************
