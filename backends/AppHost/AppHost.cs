@@ -17,6 +17,42 @@ var kcUsername = builder.AddParameter("kc-username");
 var kcPassword = builder.AddParameter("kc-password", true);
 var otelUser = builder.AddParameter("otel-username");
 var otelPassword = builder.AddParameter("otel-password", true);
+var s3Username = builder.AddParameter("s3-username");
+var s3Password = builder.AddParameter("s3-password", true);
+
+/******************************************
+ ************* Object Storage *************
+ ******************************************/
+
+var minio = builder.AddContainer("d2-minio", "minio/minio", "RELEASE.2025-09-07T16-13-09Z")
+    .WithIconName("ScanObject")
+    .WithHttpEndpoint(port: 9000, targetPort: 9000, name: "minio-api", isProxied: false)
+    .WithHttpEndpoint(port: 9001, targetPort: 9001, name: "minio-console")
+    .WithEnvironment("MINIO_ROOT_USER", s3Username)
+    .WithEnvironment("MINIO_ROOT_PASSWORD", s3Password)
+    .WithEnvironment("MINIO_BROWSER", "on")
+    .WithVolume("d2-minio-data", "/data")
+    .WithArgs("server", "/data", "--console-address", ":9001")
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithExternalHttpEndpoints();
+
+var minioInit = builder.AddContainer("d2-minio-init", "minio/mc", "RELEASE.2025-08-13T08-35-41Z")
+    .WithIconName("StarArrowRightStart")
+    .WaitFor(minio)
+    .WithEnvironment("MINIO_ROOT_USER", s3Username)
+    .WithEnvironment("MINIO_ROOT_PASSWORD", s3Password)
+    .WithEntrypoint("/bin/sh")
+    .WithArgs(
+        "-c",
+        "mc alias set myminio http://d2-minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD && " +
+        "mc mb --ignore-existing myminio/loki-logs && " +
+        "mc mb --ignore-existing myminio/tempo-traces && " +
+        "mc mb --ignore-existing myminio/mimir-blocks && " +
+        "mc mb --ignore-existing myminio/mimir-ruler && " +
+        "mc mb --ignore-existing myminio/minio-uploads && " +
+        "echo 'MinIO buckets initialized successfully'"
+    )
+    .WithLifetime(ContainerLifetime.Session);
 
 /******************************************
  ************** Observability *************
@@ -29,7 +65,10 @@ var loki = builder.AddContainer("d2-loki", "grafana/loki", "3.5.5")
     .WithHttpEndpoint(port: 9095, targetPort: 9095, name: "loki-grpc", isProxied: false)
     .WithBindMount("../../observability/loki/config", "/etc/loki", isReadOnly: true)
     .WithVolume("d2-loki-data", "/loki")
-    .WithArgs("-config.file=/etc/loki/loki.yaml")
+    .WithArgs("-config.file=/etc/loki/loki.yaml", "-config.expand-env=true")
+    .WithEnvironment("MINIO_ROOT_USER", s3Username)
+    .WithEnvironment("MINIO_ROOT_PASSWORD", s3Password)
+    .WaitForCompletion(minioInit)
     .WithLifetime(ContainerLifetime.Persistent);
 
 // Tempo (Distributed Tracing) - Internal only
@@ -41,7 +80,10 @@ var tempo = builder.AddContainer("d2-tempo", "grafana/tempo", "2.8.2")
     .WithHttpEndpoint(port: 4318, targetPort: 4318, name: "tempo-otlp-http", isProxied: false)
     .WithBindMount("../../observability/tempo/config", "/etc/tempo", isReadOnly: true)
     .WithVolume("d2-tempo-data", "/var/tempo")
-    .WithArgs("-config.file=/etc/tempo/tempo.yaml")
+    .WithArgs("-config.file=/etc/tempo/tempo.yaml", "-config.expand-env=true")
+    .WithEnvironment("MINIO_ROOT_USER", s3Username)
+    .WithEnvironment("MINIO_ROOT_PASSWORD", s3Password)
+    .WaitForCompletion(minioInit)
     .WithLifetime(ContainerLifetime.Persistent);
 
 // Mimir (Metrics) - Internal only
@@ -51,7 +93,10 @@ var mimir = builder.AddContainer("d2-mimir", "grafana/mimir", "2.17.1")
     .WithHttpEndpoint(port: 9097, targetPort: 9097, name: "mimir-grpc", isProxied: false)
     .WithBindMount("../../observability/mimir/config", "/etc/mimir", isReadOnly: true)
     .WithVolume("d2-mimir-data", "/var/mimir")
-    .WithArgs("-config.file=/etc/mimir/mimir.yaml")
+    .WithArgs("-config.file=/etc/mimir/mimir.yaml", "-config.expand-env=true")
+    .WithEnvironment("MINIO_ROOT_USER", s3Username)
+    .WithEnvironment("MINIO_ROOT_PASSWORD", s3Password)
+    .WaitForCompletion(minioInit)
     .WithLifetime(ContainerLifetime.Persistent);
 
 // Prometheus (Metrics Scraping) - Internal only

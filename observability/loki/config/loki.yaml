@@ -11,9 +11,14 @@ server:
 common:
   path_prefix: /loki
   storage:
-    filesystem:
-      chunks_directory: /loki/chunks
-      rules_directory: /loki/rules
+    # S3-compatible MinIO storage
+    s3:
+      endpoint: d2-minio:9000
+      bucketnames: loki-logs
+      access_key_id: ${MINIO_ROOT_USER}
+      secret_access_key: ${MINIO_ROOT_PASSWORD}
+      insecure: true
+      s3forcepathstyle: true
   replication_factor: 1
   ring:
     instance_addr: 127.0.0.1
@@ -24,7 +29,7 @@ schema_config:
   configs:
     - from: 2025-01-01
       store: tsdb
-      object_store: filesystem
+      object_store: s3
       schema: v13
       index:
         prefix: index_
@@ -36,11 +41,11 @@ compactor:
   delete_request_store: filesystem
 
 limits_config:
-  retention_period: 672h
+  retention_period: 8640h  # 360 days
 
 table_manager:
   retention_deletes_enabled: true
-  retention_period: 672h
+  retention_period: 8640h  # 360 days
 
 frontend:
   log_queries_longer_than: 5s

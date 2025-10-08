@@ -23,8 +23,18 @@ metrics_generator:
 
 storage:
   trace:
-    backend: local
-    local:
-      path: /var/tempo/traces
+    backend: s3
+    s3:
+      bucket: tempo-traces
+      endpoint: d2-minio:9000
+      access_key: ${MINIO_ROOT_USER}
+      secret_key: ${MINIO_ROOT_PASSWORD}
+      insecure: true
+      forcepathstyle: true
     wal:
       path: /var/tempo/wal
+    cache: inmemory
+
+compactor:
+  compaction:
+    block_retention: 4320h  # 180 days
