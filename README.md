@@ -21,6 +21,8 @@ This project is in its **earliest stages**. The public repo documents the ongoin
     - `Parameters:kc-password` (Keycloak password)
     - `Parameters:otel-username` (Grafana username)
     - `Parameters:otel-password` (Grafana password)
+    - `Parameters:s3-username` (MinIO username)
+    - `Parameters:s3-password` (MinIO password)
 
     If you want to verify your entries, use the `dotnet user-secrets list` command.
 

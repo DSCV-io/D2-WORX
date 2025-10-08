@@ -11,14 +11,26 @@ server:
 
 common:
   storage:
-    backend: filesystem
-    filesystem:
-      dir: /var/mimir/data
+    backend: s3
+    s3:
+      endpoint: d2-minio:9000
+      bucket_name: mimir-blocks
+      access_key_id: ${MINIO_ROOT_USER}
+      secret_access_key: ${MINIO_ROOT_PASSWORD}
+      insecure: true
+      http:
+        insecure_skip_verify: true
+      signature_version: v4
+      storage_class: STANDARD
 
 blocks_storage:
-  backend: filesystem
-  filesystem:
-    dir: /var/mimir/blocks
+  backend: s3
+  s3:
+    endpoint: d2-minio:9000
+    bucket_name: mimir-blocks
+    access_key_id: ${MINIO_ROOT_USER}
+    secret_access_key: ${MINIO_ROOT_PASSWORD}
+    insecure: true
   tsdb:
     dir: /var/mimir/tsdb
   bucket_store:
@@ -51,12 +63,16 @@ store_gateway:
       store: inmemory
 
 ruler_storage:
-  backend: filesystem
-  filesystem:
-    dir: /var/mimir/rules
+  backend: s3
+  s3:
+    endpoint: d2-minio:9000
+    bucket_name: mimir-ruler
+    access_key_id: ${MINIO_ROOT_USER}
+    secret_access_key: ${MINIO_ROOT_PASSWORD}
+    insecure: true
 
 limits:
-  compactor_blocks_retention_period: 672h
+  compactor_blocks_retention_period: 2160h  # 90 days
 
 activity_tracker:
   filepath: /var/mimir/activity.log
