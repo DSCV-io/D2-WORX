@@ -62,7 +62,6 @@ var prometheus = builder.AddContainer("d2-prometheus", "prom/prometheus", "v3.6.
     .WithVolume("d2-prometheus-data", "/prometheus")
     .WithArgs(
         "--config.file=/etc/prometheus/prometheus.yaml",
-        "--web.config.file=/etc/prometheus/web.yaml",
         "--storage.tsdb.path=/prometheus",
         "--storage.tsdb.retention.time=15d",
         "--web.console.libraries=/etc/prometheus/console_libraries",

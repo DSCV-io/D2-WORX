@@ -135,7 +135,3 @@ _NCrunch*
 
 # Just a dumb folder for DeCAF stuff so I can reference it in the same dir.
 /old/
-
-# Prometheus configs (need to be setup manually)
-web.yaml
-prometheus.yaml

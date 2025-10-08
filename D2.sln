@@ -75,9 +75,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{E87F5990-B83A-4A7A-88AE-CE52B708468B}"
 	ProjectSection(SolutionItems) = preProject
 		observability\prometheus\config\prometheus.yaml = observability\prometheus\config\prometheus.yaml
-		observability\prometheus\config\example.web.yaml = observability\prometheus\config\example.web.yaml
-		observability\prometheus\config\web.yaml = observability\prometheus\config\web.yaml
-		observability\prometheus\config\example.prometheus.yaml = observability\prometheus\config\example.prometheus.yaml
 	EndProjectSection
 EndProject
 Global

@@ -1,2 +1,0 @@
-basic_auth_users:
-  prometheus: BCRYPT_HASH_GOES_HERE

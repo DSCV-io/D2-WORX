@@ -20,9 +20,6 @@ scrape_configs:
       - targets: [ 'localhost:9090' ]
         labels:
           service: 'prometheus'
-    basic_auth:
-      username: 'prometheus'
-      password: 'PLAINTEXT_PASSWORD_GOES_HERE'
 
   # REST API Service
   - job_name: 'gateway-rest'
