@@ -70,11 +70,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Datasources", "Datasources"
 		observability\grafana\provisioning\datasources\datasources.yaml = observability\grafana\provisioning\datasources\datasources.yaml
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Prometheus", "Prometheus", "{56337F98-D15D-48B3-AA13-C852CDFF91BE}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Alloy", "Alloy", "{AE50010E-DFA7-4483-A498-66A6A526A346}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{E87F5990-B83A-4A7A-88AE-CE52B708468B}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{9243E903-B661-4888-AC39-51D9445FA86C}"
 	ProjectSection(SolutionItems) = preProject
-		observability\prometheus\config\prometheus.yaml = observability\prometheus\config\prometheus.yaml
+		observability\alloy\config\config.alloy = observability\alloy\config\config.alloy
 	EndProjectSection
 EndProject
 Global
@@ -139,7 +139,7 @@ Global
 		{7F994A2F-1C9C-45D7-A182-77C2EC2A42AC} = {C82FA7F4-98DC-4366-8122-1040D686CBF2}
 		{0841A0F5-EF28-47EA-9099-35999D6BDEFA} = {D31C4135-68AE-4DD6-AE56-D82537CAE753}
 		{49C7F053-E93C-4A53-BE72-B318471CD937} = {D31C4135-68AE-4DD6-AE56-D82537CAE753}
-		{56337F98-D15D-48B3-AA13-C852CDFF91BE} = {B46DEAC7-AC68-4CBB-B3C3-D9985C17BB3D}
-		{E87F5990-B83A-4A7A-88AE-CE52B708468B} = {56337F98-D15D-48B3-AA13-C852CDFF91BE}
+		{AE50010E-DFA7-4483-A498-66A6A526A346} = {B46DEAC7-AC68-4CBB-B3C3-D9985C17BB3D}
+		{9243E903-B661-4888-AC39-51D9445FA86C} = {AE50010E-DFA7-4483-A498-66A6A526A346}
 	EndGlobalSection
 EndGlobal

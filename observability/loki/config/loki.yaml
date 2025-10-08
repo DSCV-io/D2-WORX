@@ -7,6 +7,9 @@ server:
   grpc_listen_port: 9095
   log_level: info
   log_format: json
+  # Increase gRPC message size limits for large log queries
+  grpc_server_max_recv_msg_size: 33554432  # 32 MB
+  grpc_server_max_send_msg_size: 33554432  # 32 MB
 
 common:
   path_prefix: /loki
@@ -42,6 +45,9 @@ compactor:
 
 limits_config:
   retention_period: 8640h  # 360 days
+  max_query_length: 8760h  # 365 days
+  max_query_lookback: 8640h # 360 days
+  max_entries_limit_per_query: 10000  # Increased from default 5000
 
 frontend:
   log_queries_longer_than: 5s

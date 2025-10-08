@@ -1,0 +1,214 @@
+// Grafana Alloy Configuration for D²-WORX
+// Handles metrics scraping, log collection, and trace forwarding
+
+logging {
+  level  = "info"
+  format = "json"
+}
+
+/******************************************************************************
+ * METRICS COLLECTION
+ ******************************************************************************/
+
+prometheus.scrape "infrastructure" {
+  targets = [
+    // Docker monitoring
+    {
+      __address__ = "host.docker.internal:8081",
+      job         = "cadvisor",
+      service     = "cadvisor",
+    },
+
+    // Application services
+    {
+      __address__ = "host.docker.internal:5461",
+      job         = "gateway-rest",
+      service     = "REST",
+    },
+    {
+      __address__ = "host.docker.internal:5132",
+      job         = "service-auth",
+      service     = "Auth.API",
+    },
+
+    // Infrastructure exporters
+    {
+      __address__ = "host.docker.internal:9187",
+      job         = "postgresql-exporter",
+      service     = "postgresql",
+    },
+    {
+      __address__ = "host.docker.internal:9121",
+      job         = "redis-exporter",
+      service     = "redis",
+    },
+    {
+      __address__ = "host.docker.internal:15672",
+      job         = "rabbitmq",
+      service     = "rabbitmq",
+    },
+    {
+      __address__      = "host.docker.internal:8080",
+      job              = "keycloak",
+      service          = "keycloak",
+      __metrics_path__ = "/metrics",
+    },
+    {
+      __address__      = "host.docker.internal:9000",
+      job              = "minio",
+      service          = "minio",
+      __metrics_path__ = "/minio/v2/metrics/cluster",
+    },
+
+    // LGTM stack
+    {
+      __address__ = "d2-mimir:9009",
+      job         = "mimir",
+      service     = "mimir",
+    },
+    {
+      __address__ = "d2-loki:3100",
+      job         = "loki",
+      service     = "loki",
+    },
+    {
+      __address__ = "d2-tempo:3200",
+      job         = "tempo",
+      service     = "tempo",
+    },
+  ]
+
+  forward_to = [prometheus.relabel.drop_verbose_labels.receiver]
+
+  // Drop verbose container labels to stay under Mimir's label limit
+  clustering {
+    enabled = true
+  }
+}
+
+prometheus.relabel "drop_verbose_labels" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+
+  rule {
+    source_labels = ["__name__"]
+    regex         = "container_.*"
+    action        = "keep"
+  }
+
+  // Drop container_label_* labels (Docker metadata)
+  rule {
+    regex  = "container_label_.*"
+    action = "labeldrop"
+  }
+
+  // Drop other verbose labels
+  rule {
+    regex  = "container_env_.*"
+    action = "labeldrop"
+  }
+}
+
+prometheus.remote_write "mimir" {
+  endpoint {
+    url = "http://d2-mimir:9009/api/v1/push"
+  }
+
+  external_labels = {
+    cluster     = "d2-local-dev",
+    environment = "Development",
+  }
+}
+
+/******************************************************************************
+ * LOG COLLECTION
+ ******************************************************************************/
+
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  // Extract container name
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  // Extract service name from d2-xxx pattern
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/d2-(.*)"
+    target_label  = "service"
+  }
+
+  // Add log stream type
+  rule {
+    source_labels = ["__meta_docker_container_log_stream"]
+    target_label  = "stream"
+  }
+
+  // Set log file path
+  rule {
+    source_labels = ["__meta_docker_container_id"]
+    target_label  = "__path__"
+    replacement   = "/var/lib/docker/containers/$1/$1-json.log"
+  }
+}
+
+loki.source.docker "containers" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.relabel.containers.output
+  forward_to    = [loki.write.local.receiver]
+  relabel_rules = discovery.relabel.containers.rules
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://d2-loki:3100/loki/api/v1/push"
+  }
+
+  external_labels = {
+    cluster     = "d2-local-dev",
+    environment = "Development",
+  }
+}
+
+/******************************************************************************
+ * TRACE COLLECTION
+ ******************************************************************************/
+
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    metrics = [otelcol.exporter.prometheus.default.input]
+    logs    = [otelcol.exporter.loki.default.input]
+    traces  = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+otelcol.exporter.prometheus "default" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+otelcol.exporter.loki "default" {
+  forward_to = [loki.write.local.receiver]
+}
+
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "d2-tempo:4317"
+    tls {
+      insecure = true
+    }
+  }
+}
