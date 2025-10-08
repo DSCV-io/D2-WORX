@@ -255,15 +255,6 @@ public static class Extensions
                 options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
             });
         });
-
-        // builder.Services.ConfigureOpenTelemetryMeterProvider(metrics =>
-        // {
-        //     metrics.AddOtlpExporter(options =>
-        //     {
-        //         options.Endpoint = new Uri(tempoUri);
-        //         options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
-        //     });
-        // });
     }
 
     private static void AddDefaultHealthChecks<TBuilder>(this TBuilder builder)
