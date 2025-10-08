@@ -78,34 +78,7 @@ prometheus.scrape "infrastructure" {
     },
   ]
 
-  forward_to = [prometheus.relabel.drop_verbose_labels.receiver]
-
-  // Drop verbose container labels to stay under Mimir's label limit
-  clustering {
-    enabled = true
-  }
-}
-
-prometheus.relabel "drop_verbose_labels" {
   forward_to = [prometheus.remote_write.mimir.receiver]
-
-  rule {
-    source_labels = ["__name__"]
-    regex         = "container_.*"
-    action        = "keep"
-  }
-
-  // Drop container_label_* labels (Docker metadata)
-  rule {
-    regex  = "container_label_.*"
-    action = "labeldrop"
-  }
-
-  // Drop other verbose labels
-  rule {
-    regex  = "container_env_.*"
-    action = "labeldrop"
-  }
 }
 
 prometheus.remote_write "mimir" {
