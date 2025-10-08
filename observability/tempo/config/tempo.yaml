@@ -1,0 +1,30 @@
+# Documentation: https://grafana.com/docs/tempo/latest/configuration/
+
+server:
+  http_listen_port: 3200
+  grpc_listen_port: 9096
+  log_level: info
+  log_format: json
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+metrics_generator:
+  storage:
+    path: /var/tempo/generator/wal
+  traces_storage:
+    path: /var/tempo/generator/traces
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /var/tempo/traces
+    wal:
+      path: /var/tempo/wal

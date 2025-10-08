@@ -14,9 +14,13 @@ This project is in its **earliest stages**. The public repo documents the ongoin
     - `Parameters:mq-password` (RabbitMQ password)
     - `Parameters:db-username` (PostgreSQL username)
     - `Parameters:db-password` (PostgreSQL password)
+    - `Parameters:dba-email` (PgAdmin4 admin email)
+    - `Parameters:dba-password` (PgAdmin4 admin password)
     - `Parameters:cache-password` (Redis password)
     - `Parameters:kc-username` (Keycloak username)
     - `Parameters:kc-password` (Keycloak password)
+    - `Parameters:otel-username` (Grafana username)
+    - `Parameters:otel-password` (Grafana password)
 
     If you want to verify your entries, use the `dotnet user-secrets list` command.
 
