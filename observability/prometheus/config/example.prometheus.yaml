@@ -1,0 +1,68 @@
+# Documentation: https://prometheus.io/docs/prometheus/latest/configuration/configuration/
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'local-dev'
+    environment: 'Development'
+
+remote_write:
+  - url: http://d2-mimir:9009/api/v1/push
+
+scrape_config_files:
+  - '/etc/prometheus/self-scrape.yaml'
+
+scrape_configs:
+  # Prometheus metrics
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: [ 'localhost:9090' ]
+        labels:
+          service: 'prometheus'
+    basic_auth:
+      username: 'prometheus'
+      password: 'PLAINTEXT_PASSWORD_GOES_HERE'
+
+  # REST API Service
+  - job_name: 'gateway-rest'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['host.docker.internal:5461']
+        labels:
+          service: 'REST'
+          app: 'REST'
+          environment: 'Development'
+    metrics_path: /metrics
+
+  # Auth API Service
+  - job_name: 'service-auth'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['host.docker.internal:5132']
+        labels:
+          service: 'Auth.API'
+          app: 'Auth.API'
+          environment: 'Development'
+    metrics_path: /metrics
+
+  # Mimir metrics
+  - job_name: 'mimir'
+    static_configs:
+      - targets: ['d2-mimir:9009']
+        labels:
+          service: 'mimir'
+
+  # Loki metrics
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['d2-loki:3100']
+        labels:
+          service: 'loki'
+
+  # Tempo metrics
+  - job_name: 'tempo'
+    static_configs:
+      - targets: ['d2-tempo:3200']
+        labels:
+          service: 'tempo'

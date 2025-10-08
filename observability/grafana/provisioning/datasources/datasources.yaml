@@ -3,6 +3,23 @@
 apiVersion: 1
 
 datasources:
+  # Prometheus (Primary metrics source - short term)
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://d2-prometheus:9090
+    uid: prometheus
+    isDefault: true
+    editable: true
+    jsonData:
+      httpMethod: POST
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: tempo
+      timeInterval: 15s
+      queryTimeout: 300s
+    version: 1
+
   # Mimir (Prometheus-compatible metrics)
   - name: Mimir
     type: prometheus

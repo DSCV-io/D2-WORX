@@ -25,8 +25,14 @@ This project is in its **earliest stages**. The public repo documents the ongoin
     If you want to verify your entries, use the `dotnet user-secrets list` command.
 
 3. Edit any `appsettings.*.json` files as needed.
-4. Create a `.env` file in the `/frontends/sveltekit` directory using the `.env.example` as a template (update as needed).
-5. Run the AppHost project either via CLI or IDE of your choice.
+4. Create the Prometheus configs in the `/observability/prometheus/config` directory using the existing example files as templates:
+    - Choose a password you would like to use for Prometheus. It will also be used by Prometheus itself to scrape its own metrics.
+    - Generate a Bcrypt hash for your chosen password using an [online Bcrypt Hash Generator](https://bcrypt.online/). Use a "cost factor" of 10 or higher.
+    - Copy the `example.web.yaml` file and create a `web.yaml` in the same directory. Replace `BCRYPT_HASH_GOES_HERE` with the hashed version of your password.
+    - Copy the `example.prometheus.yaml` file and create a `prometheus.yaml` in the same directory. Replace `PLAINTEXT_PASSWORD_GOES_HERE` with your own password (un-hashed).
+    - Should you visit the Prometheus dashboard, when prompted, your username will be `prometheus` (unless you changed it).
+5. Create a `.env` file in the `/frontends/sveltekit` directory using the `.env.example` as a template (update as needed).
+6. Run the AppHost project either via CLI or IDE of your choice.
 
 ## Philosophy 🤔
 **Distributed, Scalable**: built around bounded contexts and event-driven communication to support horizontal scalability.

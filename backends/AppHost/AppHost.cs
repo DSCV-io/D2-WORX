@@ -54,6 +54,24 @@ var mimir = builder.AddContainer("d2-mimir", "grafana/mimir", "2.17.1")
     .WithArgs("-config.file=/etc/mimir/mimir.yaml")
     .WithLifetime(ContainerLifetime.Persistent);
 
+// Prometheus (Metrics Scraping) - Internal only
+var prometheus = builder.AddContainer("d2-prometheus", "prom/prometheus", "v3.6.0")
+    .WithIconName("Fireplace")
+    .WithHttpEndpoint(port: 9090, targetPort: 9090, name: "prometheus-http", isProxied: false)
+    .WithBindMount("../../observability/prometheus/config", "/etc/prometheus", isReadOnly: true)
+    .WithVolume("d2-prometheus-data", "/prometheus")
+    .WithArgs(
+        "--config.file=/etc/prometheus/prometheus.yaml",
+        "--web.config.file=/etc/prometheus/web.yaml",
+        "--storage.tsdb.path=/prometheus",
+        "--storage.tsdb.retention.time=15d",
+        "--web.console.libraries=/etc/prometheus/console_libraries",
+        "--web.console.templates=/etc/prometheus/consoles",
+        "--web.enable-lifecycle",
+        "--enable-feature=exemplar-storage"
+    )
+    .WithLifetime(ContainerLifetime.Persistent);
+
 // Grafana (Visualization) - REQUIRES LOGIN
 var grafana = builder.AddContainer("d2-grafana", "grafana/grafana", "12.2.0")
     .WithIconName("ChartMultiple")
@@ -79,7 +97,8 @@ var grafana = builder.AddContainer("d2-grafana", "grafana/grafana", "12.2.0")
     // Wait for dependencies so that provisioning works.
     .WaitFor(tempo)
     .WaitFor(loki)
-    .WaitFor(mimir);
+    .WaitFor(mimir)
+    .WaitFor(prometheus);
 
 /******************************************
  ************* Infrastructure *************
@@ -152,7 +171,7 @@ var keycloak = builder.AddKeycloak("d2-keycloak", 8080, kcUsername, kcPassword)
 var authService = builder.AddProject<Projects.Auth_API>("d2-auth")
     .WithIconName("PersonAccounts")
     .DefaultInfraRefs(db, cache, broker, keycloak)
-    .WithOtelRefs(tempo, loki);
+    .WithOtelRefs();
 
 // REST API gateway.
 var rest = builder.AddProject<Projects.REST>("d2-rest")
@@ -161,7 +180,7 @@ var rest = builder.AddProject<Projects.REST>("d2-rest")
     .WaitFor(authService)
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints()
-    .WithOtelRefs(tempo, loki);
+    .WithOtelRefs();
 
 // SvelteKit frontend.
 var svelte = builder.AddViteApp("sveltekit",
@@ -213,20 +232,15 @@ internal static class ServiceExtensions
     /// Adds observability environment variables for tempo and loki.
     /// </summary>
     /// <param name="builder">The resource builder for the resource.</param>
-    /// <param name="tempo">The resource builder for the tempo container.</param>
-    /// <param name="loki">The resource builder for the loki container.</param>
     /// <typeparam name="TProject">A type that represents the project reference.</typeparam>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
     public static IResourceBuilder<TProject> WithOtelRefs<TProject>(
-        this IResourceBuilder<TProject> builder,
-        IResourceBuilder<ContainerResource> tempo,
-        IResourceBuilder<ContainerResource> loki)
+        this IResourceBuilder<TProject> builder)
         where TProject : IResourceWithEnvironment, IResourceWithWaitSupport
     {
-        builder.WithEnvironment("OTEL_EXPORTER_OTLP_ENDPOINT", tempo.GetEndpoint("tempo-otlp-grpc"));
-        builder.WithEnvironment("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc");
         builder.WithEnvironment("OTEL_SERVICE_NAME", builder.Resource.Name);
-        builder.WithEnvironment("Logging__Loki__Endpoint", loki.GetEndpoint("loki-http"));
+        builder.WithEnvironment("TEMPO_URI", "http://localhost:4318/v1/traces");
+        builder.WithEnvironment("LOKI_URI", "http://localhost:3100");
         return builder;
     }
 }

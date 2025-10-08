@@ -1,21 +1,14 @@
 using D2.Contracts.ServiceDefaults;
 using D2.Gateways.REST;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
-
-// Add services to the container.
 builder.Services.AddProblemDetails();
-
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-
 var app = builder.Build();
-
-// Configure the HTTP request pipeline.
 app.UseExceptionHandler();
+app.UseStructuredRequestLogging();
 
 if (app.Environment.IsDevelopment())
 {
@@ -38,13 +31,28 @@ app.MapGet("/weatherforecast", () =>
                     summaries[Random.Shared.Next(summaries.Length)]
                 ))
             .ToArray();
+        Log.Information("Weather forecast generated.");
         return forecast;
     })
     .WithName("GetWeatherForecast");
 
+app.MapPrometheusEndpointWithIpRestriction();
 app.MapDefaultEndpoints();
 
-app.Run();
+try
+{
+    Log.Information("Starting REST API service");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "REST API service failed to start");
+    throw;
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 
 namespace D2.Gateways.REST
 {
