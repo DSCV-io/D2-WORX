@@ -24,6 +24,7 @@ var s3Password = builder.AddParameter("s3-password", true);
  ************* Object Storage *************
  ******************************************/
 
+// MinIO - S3 Compatible Object Storage.
 var minio = builder.AddContainer("d2-minio", "minio/minio", "RELEASE.2025-09-07T16-13-09Z")
     .WithIconName("ScanObject")
     .WithHttpEndpoint(port: 9000, targetPort: 9000, name: "minio-api", isProxied: false)
@@ -36,6 +37,7 @@ var minio = builder.AddContainer("d2-minio", "minio/minio", "RELEASE.2025-09-07T
     .WithLifetime(ContainerLifetime.Persistent)
     .WithExternalHttpEndpoints();
 
+// MinIO Client - Used to initialize buckets.
 var minioInit = builder.AddContainer("d2-minio-init", "minio/mc", "RELEASE.2025-08-13T08-35-41Z")
     .WithIconName("StarArrowRightStart")
     .WaitFor(minio)
@@ -58,7 +60,7 @@ var minioInit = builder.AddContainer("d2-minio-init", "minio/mc", "RELEASE.2025-
  ************** Observability *************
  ******************************************/
 
-// Loki (Log Aggregation) - Internal only
+// Loki - Log Aggregation.
 var loki = builder.AddContainer("d2-loki", "grafana/loki", "3.5.5")
     .WithIconName("DocumentText")
     .WithHttpEndpoint(port: 3100, targetPort: 3100, name: "loki-http", isProxied: false)
@@ -71,13 +73,11 @@ var loki = builder.AddContainer("d2-loki", "grafana/loki", "3.5.5")
     .WaitForCompletion(minioInit)
     .WithLifetime(ContainerLifetime.Persistent);
 
-// Tempo (Distributed Tracing) - Internal only
+// Tempo - Distributed Tracing.
 var tempo = builder.AddContainer("d2-tempo", "grafana/tempo", "2.8.2")
     .WithIconName("Timeline")
     .WithHttpEndpoint(port: 3200, targetPort: 3200, name: "tempo-http", isProxied: false)
     .WithHttpEndpoint(port: 9096, targetPort: 9096, name: "tempo-grpc", isProxied: false)
-    .WithHttpEndpoint(port: 4317, targetPort: 4317, name: "tempo-otlp-grpc", isProxied: false)
-    .WithHttpEndpoint(port: 4318, targetPort: 4318, name: "tempo-otlp-http", isProxied: false)
     .WithBindMount("../../observability/tempo/config", "/etc/tempo", isReadOnly: true)
     .WithVolume("d2-tempo-data", "/var/tempo")
     .WithArgs("-config.file=/etc/tempo/tempo.yaml", "-config.expand-env=true")
@@ -86,7 +86,7 @@ var tempo = builder.AddContainer("d2-tempo", "grafana/tempo", "2.8.2")
     .WaitForCompletion(minioInit)
     .WithLifetime(ContainerLifetime.Persistent);
 
-// Mimir (Metrics) - Internal only
+// Mimir - Metrics.
 var mimir = builder.AddContainer("d2-mimir", "grafana/mimir", "2.17.1")
     .WithIconName("TopSpeed")
     .WithHttpEndpoint(port: 9009, targetPort: 9009, name: "mimir-http", isProxied: false)
@@ -99,28 +99,53 @@ var mimir = builder.AddContainer("d2-mimir", "grafana/mimir", "2.17.1")
     .WaitForCompletion(minioInit)
     .WithLifetime(ContainerLifetime.Persistent);
 
-// Prometheus (Metrics Scraping) - Internal only
-var prometheus = builder.AddContainer("d2-prometheus", "prom/prometheus", "v3.6.0")
-    .WithIconName("Fireplace")
-    .WithHttpEndpoint(port: 9090, targetPort: 9090, name: "prometheus-http", isProxied: false)
-    .WithBindMount("../../observability/prometheus/config", "/etc/prometheus", isReadOnly: true)
-    .WithVolume("d2-prometheus-data", "/prometheus")
+// cAdvisor - Container Resource Monitoring.
+var cAdvisor = builder.AddContainer("d2-cadvisor", "gcr.io/cadvisor/cadvisor", "v0.50.0")
+    .WithIconName("ChartMultiple")
+    .WithHttpEndpoint(port: 8081, targetPort: 8080, name: "cadvisor-http", isProxied: false)
+    .WithBindMount("/", "/rootfs", isReadOnly: true)
+    .WithBindMount("/var/run", "/var/run", isReadOnly: true)
+    .WithBindMount("/sys", "/sys", isReadOnly: true)
+    .WithBindMount("/var/lib/docker", "/var/lib/docker", isReadOnly: true)
     .WithArgs(
-        "--config.file=/etc/prometheus/prometheus.yaml",
-        "--storage.tsdb.path=/prometheus",
-        "--storage.tsdb.retention.time=15d",
-        "--web.console.libraries=/etc/prometheus/console_libraries",
-        "--web.console.templates=/etc/prometheus/consoles",
-        "--web.enable-lifecycle",
-        "--enable-feature=exemplar-storage"
+        "--housekeeping_interval=10s",
+        "--docker_only=true",
+        "--disable_metrics=disk,diskIO,tcp,udp,percpu,sched,process"
     )
     .WithLifetime(ContainerLifetime.Persistent);
 
-// Grafana (Visualization) - REQUIRES LOGIN
+// Grafana Alloy (replaces Prometheus + Promtail)
+var grafanaAlloy = builder.AddContainer("d2-grafana-alloy", "grafana/alloy", "v1.11.0")
+    .WithIconName("Agents")
+    .WithHttpEndpoint(port: 12345, targetPort: 12345, name: "alloy-http", isProxied: false)
+    .WithHttpEndpoint(port: 4317, targetPort: 4317, name: "otlp-grpc", isProxied: false)
+    .WithHttpEndpoint(port: 4318, targetPort: 4318, name: "otlp-http", isProxied: false)
+    .WithEnvironment("ALLOY_DEPLOY_MODE", "docker")
+    .WithBindMount("/proc", "/rootproc", isReadOnly: true)
+    .WithBindMount("/sys", "/sys", isReadOnly: true)
+    .WithBindMount("/", "/rootfs", isReadOnly: true)
+    .WithBindMount("/var/lib/docker", "/var/lib/docker", isReadOnly: true)
+    .WithBindMount("/var/run/docker.sock", "/var/run/docker.sock", isReadOnly: true)
+    .WithBindMount("../../observability/alloy/config", "/etc/alloy", isReadOnly: true)
+    .WithVolume("d2-alloy-data", "/var/lib/alloy/data")
+    .WithArgs(
+        "run",
+        "/etc/alloy/config.alloy",
+        "--server.http.listen-addr=0.0.0.0:12345",
+        "--stability.level=generally-available"
+    )
+    .WaitFor(cAdvisor)
+    .WaitFor(mimir)
+    .WaitFor(loki)
+    .WaitFor(tempo)
+    .WithLifetime(ContainerLifetime.Persistent);
+
+// Grafana - Visualization.
 var grafana = builder.AddContainer("d2-grafana", "grafana/grafana", "12.2.0")
-    .WithIconName("ChartMultiple")
+    .WithIconName("ChartPerson")
     .WithHttpEndpoint(port: 3000, targetPort: 3000, name: "grafana")
-    .WithBindMount("../../observability/grafana/provisioning", "/etc/grafana/provisioning", isReadOnly: true)
+    .WithBindMount("../../observability/grafana/provisioning", "/etc/grafana/provisioning",
+        isReadOnly: true)
     .WithVolume("d2-grafana-data", "/var/grafana")
     // Security - Require authentication.
     .WithEnvironment("GF_SECURITY_ADMIN_USER", otelUser)
@@ -141,21 +166,25 @@ var grafana = builder.AddContainer("d2-grafana", "grafana/grafana", "12.2.0")
     // Wait for dependencies so that provisioning works.
     .WaitFor(tempo)
     .WaitFor(loki)
-    .WaitFor(mimir)
-    .WaitFor(prometheus);
+    .WaitFor(mimir);
 
 /******************************************
  ************* Infrastructure *************
  ******************************************/
 
-// PostgreSQL (database).
-var db = builder.AddPostgres("d2-postgres", dbUsername, dbPassword)
+// PostgreSQL - Relational Database.
+var db = builder.AddPostgres(
+        "d2-postgres",
+        dbUsername,
+        dbPassword,
+        5532) // Not using 5432 to avoid conflicts for local dev (when PG is installed locally).
     .WithIconName("DatabaseStack")
     .WithImageTag("18.0-trixie")
     .WithDataVolume("d2-postgres-data")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithPgAdmin(x =>
     {
+        x.WithHostPort(5533);
         x.WithIconName("DatabasePerson");
         x.WithContainerName("d2-pgadmin4");
         x.WithImageTag("9.8.0");
@@ -166,14 +195,26 @@ var db = builder.AddPostgres("d2-postgres", dbUsername, dbPassword)
         x.WithEnvironment("PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION", "True");
     });
 
-// Redis (cache).
-var cache = builder.AddRedis("d2-redis", null, cachePassword)
+// Postgres Exporter - PostgreSQL Server Monitoring.
+var postgresExporter = builder.AddContainer(
+        "d2-postgres-exporter", "prometheuscommunity/postgres-exporter", "v0.18.1")
+    .WithIconName("DatabasePlugConnected")
+    .WithEnvironment(
+        "DATA_SOURCE_NAME",
+        $"postgresql://{dbUsername}:{dbPassword}@d2-postgres:5432/postgres?sslmode=disable")
+    .WithHttpEndpoint(port: 9187, targetPort: 9187, name: "metrics", isProxied: false)
+    .WaitFor(db)
+    .WithLifetime(ContainerLifetime.Persistent);
+
+// Redis - Cache.
+var cache = builder.AddRedis("d2-redis", 6379, cachePassword)
     .WithIconName("Memory")
     .WithImageTag("8.2.1-bookworm")
     .WithDataVolume("d2-redis-data")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithRedisInsight(x =>
     {
+        x.WithHostPort(5540);
         x.WithIconName("BookSearch");
         x.WithContainerName("d2-redisinsight");
         x.WithImageTag("2.70.1");
@@ -181,8 +222,18 @@ var cache = builder.AddRedis("d2-redis", null, cachePassword)
         x.WithLifetime(ContainerLifetime.Persistent);
     });
 
-// RabbitMQ (message broker).
-var broker = builder.AddRabbitMQ("d2-rabbitmq", mqUsername, mqPassword)
+// Redis Exporter - Redis Monitoring.
+var redisExporter = builder.AddContainer(
+        "d2-redis-exporter", "oliver006/redis_exporter", "v1.78.0")
+    .WithIconName("ChartLine")
+    .WithEnvironment("REDIS_ADDR", "d2-redis:6379")
+    .WithEnvironment("REDIS_PASSWORD", cachePassword)
+    .WithHttpEndpoint(port: 9121, targetPort: 9121, name: "metrics", isProxied: false)
+    .WaitFor(cache)
+    .WithLifetime(ContainerLifetime.Persistent);
+
+// RabbitMQ - Message Broker.
+var broker = builder.AddRabbitMQ("d2-rabbitmq", mqUsername, mqPassword, 15672)
     .WithIconName("Mailbox")
     .WithImageTag("4.1.4-management")
     .WithDataVolume("d2-rabbitmq-data")
@@ -193,7 +244,7 @@ var broker = builder.AddRabbitMQ("d2-rabbitmq", mqUsername, mqPassword)
 const string kc_pg_db_name = "keycloak";
 db.AddDatabase(kc_pg_db_name);
 
-// Add keycloak.
+// Keycloak - Identity and Access Management.
 var keycloak = builder.AddKeycloak("d2-keycloak", 8080, kcUsername, kcPassword)
     .WithIconName("LockClosedKey")
     .WaitFor(db)
@@ -211,14 +262,14 @@ var keycloak = builder.AddKeycloak("d2-keycloak", 8080, kcUsername, kcPassword)
  **************** Services ****************
  ******************************************/
 
-// Auth service.
+// Auth - Service.
 var authService = builder.AddProject<Projects.Auth_API>("d2-auth")
     .WithIconName("PersonAccounts")
     .DefaultInfraRefs(db, cache, broker, keycloak)
     .WithOtelRefs();
 
-// REST API gateway.
-var rest = builder.AddProject<Projects.REST>("d2-rest")
+// REST API - Gateway.
+var restGateway = builder.AddProject<Projects.REST>("d2-rest")
     .WithIconName("Globe")
     // Services that the REST API depends on.
     .WaitFor(authService)
@@ -226,11 +277,11 @@ var rest = builder.AddProject<Projects.REST>("d2-rest")
     .WithExternalHttpEndpoints()
     .WithOtelRefs();
 
-// SvelteKit frontend.
+// SvelteKit - Frontend.
 var svelte = builder.AddViteApp("sveltekit",
         workingDirectory: "../../frontends/sveltekit",
         packageManager: "pnpm")
-    .WaitFor(rest)
+    .WaitFor(restGateway)
     .WithPnpmPackageInstallation()
     .WithArgs("--host", "0.0.0.0", "--port", "5173")
     .WithIconName("DesktopCursor")
@@ -273,7 +324,7 @@ internal static class ServiceExtensions
     }
 
     /// <summary>
-    /// Adds observability environment variables for tempo and loki.
+    /// Adds observability environment variables for traces and logs.
     /// </summary>
     /// <param name="builder">The resource builder for the resource.</param>
     /// <typeparam name="TProject">A type that represents the project reference.</typeparam>
@@ -283,8 +334,8 @@ internal static class ServiceExtensions
         where TProject : IResourceWithEnvironment, IResourceWithWaitSupport
     {
         builder.WithEnvironment("OTEL_SERVICE_NAME", builder.Resource.Name);
-        builder.WithEnvironment("TEMPO_URI", "http://localhost:4318/v1/traces");
-        builder.WithEnvironment("LOKI_URI", "http://localhost:3100");
+        builder.WithEnvironment("TRACES_URI", "http://localhost:4318/v1/traces");
+        builder.WithEnvironment("LOGS_URI", "http://localhost:3100");
         return builder;
     }
 }

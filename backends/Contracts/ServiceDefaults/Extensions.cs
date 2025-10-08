@@ -125,7 +125,7 @@ public static class Extensions
     private static void AddStructuredLogging<TBuilder>(this TBuilder builder)
         where TBuilder : IHostApplicationBuilder
     {
-        var lokiEndpoint = builder.Configuration["LOKI_URI"];
+        var logsEndpoint = builder.Configuration["LOGS_URI"];
         var serviceName = builder.Environment.ApplicationName;
         var environment = builder.Environment.EnvironmentName;
 
@@ -140,7 +140,7 @@ public static class Extensions
             .Enrich.WithMachineName()
             .WriteTo.Console(new CompactJsonFormatter());
 
-        if (!string.IsNullOrWhiteSpace(lokiEndpoint))
+        if (!string.IsNullOrWhiteSpace(logsEndpoint))
         {
             var lokiLabels = new List<LokiLabel>
             {
@@ -149,7 +149,7 @@ public static class Extensions
             };
 
             loggerConfig.WriteTo.GrafanaLoki(
-                lokiEndpoint,
+                logsEndpoint,
                 labels: lokiLabels,
                 textFormatter: new CompactJsonFormatter(),
                 batchPostingLimit: 1000,
@@ -214,14 +214,14 @@ public static class Extensions
                             // Get the request URI.
                             var requestUri = message.RequestUri?.AbsoluteUri ?? string.Empty;
 
-                            // Ensure this is not a request to Loki.
-                            var lokiUri = builder.Configuration["LOKI_URI"];
-                            if (lokiUri is not null && IsOtlp(lokiUri))
+                            // Ensure this is not a request to logs collection.
+                            var logsCollUri = builder.Configuration["LOGS_URI"];
+                            if (logsCollUri is not null && IsOtlp(logsCollUri))
                                 return false;
 
-                            // Ensure this is not a request to Tempo.
-                            var tempoUri = builder.Configuration["TEMPO_URI"];
-                            if (tempoUri is not null && IsOtlp(tempoUri))
+                            // Ensure this is not a request to our traces collection.
+                            var tracesCollUri = builder.Configuration["TRACES_URI"];
+                            if (tracesCollUri is not null && IsOtlp(tracesCollUri))
                                 return false;
 
                             // Otherwise, allow it.
@@ -243,15 +243,15 @@ public static class Extensions
     private static void AddOpenTelemetryExporters<TBuilder>(this TBuilder builder)
         where TBuilder : IHostApplicationBuilder
     {
-        var tempoUri = builder.Configuration["TEMPO_URI"];
+        var tracesCollUri = builder.Configuration["TRACES_URI"];
 
-        if (string.IsNullOrWhiteSpace(tempoUri)) return;
+        if (string.IsNullOrWhiteSpace(tracesCollUri)) return;
 
         builder.Services.ConfigureOpenTelemetryTracerProvider(tracing =>
         {
             tracing.AddOtlpExporter(options =>
             {
-                options.Endpoint = new Uri(tempoUri);
+                options.Endpoint = new Uri(tracesCollUri);
                 options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
             });
         });
