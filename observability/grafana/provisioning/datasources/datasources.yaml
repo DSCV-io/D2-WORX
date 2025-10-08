@@ -20,13 +20,13 @@ datasources:
       queryTimeout: 300s
     version: 1
 
-  # Mimir (Prometheus-compatible metrics)
+  # Mimir (Secondary metrics source - long term)
   - name: Mimir
     type: prometheus
     access: proxy
     url: http://d2-mimir:9009/prometheus
     uid: mimir
-    isDefault: true
+    isDefault: false
     editable: true
     jsonData:
       httpMethod: POST
