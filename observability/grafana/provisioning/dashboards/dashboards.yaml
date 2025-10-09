@@ -3,14 +3,13 @@
 apiVersion: 1
 
 providers:
-  # Default dashboard provider - looks for .json files in this directory
-  - name: 'Default'
+  - name: 'D2-WORX Dashboards'
     orgId: 1
-    folder: ''
+    folder: 'd2-worx'
     type: file
     disableDeletion: false
     updateIntervalSeconds: 10
     allowUiUpdates: true
     options:
       path: /etc/grafana/provisioning/dashboards
-      foldersFromFilesStructure: false
+      foldersFromFilesStructure: true

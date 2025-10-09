@@ -43,6 +43,8 @@ var minioInit = builder.AddContainer("d2-minio-init", "minio/mc", "RELEASE.2025-
     .WaitFor(minio)
     .WithEnvironment("MINIO_ROOT_USER", s3Username)
     .WithEnvironment("MINIO_ROOT_PASSWORD", s3Password)
+    .WithEnvironment("MINIO_PROMETHEUS_AUTH_TYPE", "public")
+    .WithVolume("d2-minio-tokens", "/minio-token")
     .WithEntrypoint("/bin/sh")
     .WithArgs(
         "-c",
@@ -52,7 +54,8 @@ var minioInit = builder.AddContainer("d2-minio-init", "minio/mc", "RELEASE.2025-
         "mc mb --ignore-existing myminio/mimir-blocks && " +
         "mc mb --ignore-existing myminio/mimir-ruler && " +
         "mc mb --ignore-existing myminio/minio-uploads && " +
-        "echo 'MinIO buckets initialized successfully'"
+        "mc admin prometheus generate myminio > /minio-token/prometheus-config.yaml && " +
+        "echo 'MinIO buckets and Prometheus token initialized successfully'"
     )
     .WithLifetime(ContainerLifetime.Session);
 
@@ -109,18 +112,19 @@ var cAdvisor = builder.AddContainer("d2-cadvisor", "gcr.io/cadvisor/cadvisor", "
     .WithBindMount("/var/lib/docker", "/var/lib/docker", isReadOnly: true)
     .WithArgs(
         "--housekeeping_interval=10s",
-        "--docker_only=true",
-        "--disable_metrics=disk,diskIO,tcp,udp,percpu,sched,process"
+        "--docker_only=true"
     )
     .WithLifetime(ContainerLifetime.Persistent);
 
-// Grafana Alloy (replaces Prometheus + Promtail)
+// Grafana Alloy - Unified Agent for Metrics, Logs and Traces.
 var grafanaAlloy = builder.AddContainer("d2-grafana-alloy", "grafana/alloy", "v1.11.0")
     .WithIconName("Agents")
     .WithHttpEndpoint(port: 12345, targetPort: 12345, name: "alloy-http", isProxied: false)
     .WithHttpEndpoint(port: 4317, targetPort: 4317, name: "otlp-grpc", isProxied: false)
     .WithHttpEndpoint(port: 4318, targetPort: 4318, name: "otlp-http", isProxied: false)
     .WithEnvironment("ALLOY_DEPLOY_MODE", "docker")
+    .WithEnvironment("MINIO_ROOT_USER", s3Username)
+    .WithEnvironment("MINIO_ROOT_PASSWORD", s3Password)
     .WithBindMount("/proc", "/rootproc", isReadOnly: true)
     .WithBindMount("/sys", "/sys", isReadOnly: true)
     .WithBindMount("/", "/rootfs", isReadOnly: true)
@@ -128,6 +132,7 @@ var grafanaAlloy = builder.AddContainer("d2-grafana-alloy", "grafana/alloy", "v1
     .WithBindMount("/var/run/docker.sock", "/var/run/docker.sock", isReadOnly: true)
     .WithBindMount("../../observability/alloy/config", "/etc/alloy", isReadOnly: true)
     .WithVolume("d2-alloy-data", "/var/lib/alloy/data")
+    .WithVolume("d2-minio-tokens", "/minio-token", isReadOnly: true)
     .WithArgs(
         "run",
         "/etc/alloy/config.alloy",
@@ -138,6 +143,7 @@ var grafanaAlloy = builder.AddContainer("d2-grafana-alloy", "grafana/alloy", "v1
     .WaitFor(mimir)
     .WaitFor(loki)
     .WaitFor(tempo)
+    .WaitForCompletion(minioInit)
     .WithLifetime(ContainerLifetime.Persistent);
 
 // Grafana - Visualization.
@@ -237,6 +243,7 @@ var broker = builder.AddRabbitMQ("d2-rabbitmq", mqUsername, mqPassword, 15672)
     .WithIconName("Mailbox")
     .WithImageTag("4.1.4-management")
     .WithDataVolume("d2-rabbitmq-data")
+    .WithHttpEndpoint(port: 15692, targetPort: 15692, name: "metrics", isProxied: false)
     .WithLifetime(ContainerLifetime.Persistent)
     .WithManagementPlugin();
 
@@ -256,7 +263,14 @@ var keycloak = builder.AddKeycloak("d2-keycloak", 8080, kcUsername, kcPassword)
     .WithEnvironment("KC_DB_URL_HOST", "d2-postgres")
     .WithEnvironment("KC_DB_URL_PORT", "5432")
     .WithEnvironment("KC_DB_USERNAME", dbUsername)
-    .WithEnvironment("KC_DB_PASSWORD", dbPassword);
+    .WithEnvironment("KC_DB_PASSWORD", dbPassword)
+    .WithEnvironment("KC_METRICS_ENABLED", "true")
+    .WithEnvironment("KC_HTTP_METRICS_HISTOGRAMS_ENABLED", "true")
+    .WithEnvironment("KC_HTTP_METRICS_SLOS", "5,10,25,50,250,500,1000,2500,5000,10000")
+    .WithEnvironment("KC_FEATURES", "opentelemetry,user-event-metrics,organization")
+    .WithEnvironment("KC_EVENT_METRICS_USER_ENABLED", "true")
+    .WithEnvironment("KC_EVENT_METRICS_USER_EVENTS", "authreqid_to_token,client_delete,client_info,client_initiated_account_linking,client_login,client_register,client_update,code_to_token,custom_required_action,delete_account,execute_action_token,execute_actions,federated_identity_link,federated_identity_override_link,grant_consent,identity_provider_first_login,identity_provider_link_account,identity_provider_login,identity_provider_post_login,identity_provider_response,identity_provider_retrieve_token,impersonate,introspect_token,invalid_signature,invite_org,login,logout,oauth2_device_auth,oauth2_device_code_to_token,oauth2_device_verify_user_code,oauth2_extension_grant,permission_token,pushed_authorization_request,refresh_token,register,register_node,remove_credential,remove_federated_identity,reset_password,restart_authentication,revoke_grant,send_identity_provider_link,send_reset_password,send_verify_email,token_exchange,unregister_node,update_consent,update_credential,update_email,update_profile,user_disabled_by_permanent_lockout,user_disabled_by_temporary_lockout,user_info_request,verify_email,verify_profile")
+    .WithEnvironment("KC_EVENT_METRICS_USER_TAGS", "realm,idp,clientId");
 
 /******************************************
  **************** Services ****************
