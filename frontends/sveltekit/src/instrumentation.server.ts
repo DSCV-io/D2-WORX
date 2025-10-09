@@ -1,5 +1,7 @@
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
+import { LoggerProvider, BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
@@ -7,7 +9,21 @@ import { createAddHookMessageChannel } from 'import-in-the-middle';
 import { register } from 'node:module';
 
 const traceExporter = new OTLPTraceExporter({
-  url: 'http://localhost:4318/v1/traces', // Alloy OTLP HTTP endpoint
+  url: 'http://localhost:4318/v1/traces',
+});
+
+const logExporter = new OTLPLogExporter({
+  url: 'http://localhost:4318/v1/logs',
+});
+
+// Set up logging
+const loggerProvider = new LoggerProvider({
+  resource: resourceFromAttributes({
+    [ATTR_SERVICE_NAME]: "d2-sveltekit-server",
+  }),
+  processors: [
+    new BatchLogRecordProcessor(logExporter),
+  ]
 });
 
 const { registerOptions } = createAddHookMessageChannel();
@@ -18,27 +34,24 @@ export const sdk = new NodeSDK({
     [ATTR_SERVICE_NAME]: "d2-sveltekit-server",
   }),
   traceExporter,
+  logRecordProcessor: new BatchLogRecordProcessor(logExporter),
   instrumentations: [
     getNodeAutoInstrumentations({
       '@opentelemetry/instrumentation-fs': {
-        enabled: false, // Disable noisy file system instrumentation
+        enabled: false,
       },
       '@opentelemetry/instrumentation-http': {
         ignoreIncomingRequestHook: (req) => {
           const url = req.url || '';
           return (
-            // Vite dev server stuff
-            url.includes('?v=') ||           // Versioned imports
-            url.includes('/@') ||            // Vite internals
+            url.includes('?v=') ||
+            url.includes('/@') ||
             url.startsWith('/node_modules') ||
-
-            // Static assets (dev and prod)
             /\.(js|ts|svelte|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)(\?|$)/.test(url) ||
-
-            // Common noise
             url === '/favicon.ico' ||
             url === '/health' ||
-            url.endsWith('.map')
+            url.endsWith('.map') ||
+            url.startsWith('/.well-known/')
           );
         }
       }
@@ -47,3 +60,5 @@ export const sdk = new NodeSDK({
 });
 
 sdk.start();
+
+export { loggerProvider };
