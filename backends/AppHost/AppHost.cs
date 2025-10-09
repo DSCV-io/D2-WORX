@@ -292,7 +292,7 @@ var restGateway = builder.AddProject<Projects.REST>("d2-rest")
     .WithOtelRefs();
 
 // SvelteKit - Frontend.
-var svelte = builder.AddViteApp("sveltekit",
+var svelte = builder.AddViteApp("d2-sveltekit",
         workingDirectory: "../../frontends/sveltekit",
         packageManager: "pnpm")
     .WaitFor(restGateway)
