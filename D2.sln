@@ -77,6 +77,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{9243E9
 		observability\alloy\config\config.alloy = observability\alloy\config\config.alloy
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "D2-WORX", "D2-WORX", "{1F447BFA-D966-4A1B-8A7F-7371E8C7A6E4}"
+	ProjectSection(SolutionItems) = preProject
+		observability\grafana\provisioning\dashboards\d2-worx\rest-gateway-performance.json = observability\grafana\provisioning\dashboards\d2-worx\rest-gateway-performance.json
+		observability\grafana\provisioning\dashboards\d2-worx\cadvisor_19792_rev6.json = observability\grafana\provisioning\dashboards\d2-worx\cadvisor_19792_rev6.json
+		observability\grafana\provisioning\dashboards\d2-worx\keycloak_14390_rev7.json = observability\grafana\provisioning\dashboards\d2-worx\keycloak_14390_rev7.json
+		observability\grafana\provisioning\dashboards\d2-worx\minio_13502_rev26.json = observability\grafana\provisioning\dashboards\d2-worx\minio_13502_rev26.json
+		observability\grafana\provisioning\dashboards\d2-worx\pgsqldb_9628_rev8.json = observability\grafana\provisioning\dashboards\d2-worx\pgsqldb_9628_rev8.json
+		observability\grafana\provisioning\dashboards\d2-worx\rabbitmq_10991_rev15.json = observability\grafana\provisioning\dashboards\d2-worx\rabbitmq_10991_rev15.json
+		observability\grafana\provisioning\dashboards\d2-worx\redis_11835_rev1.json = observability\grafana\provisioning\dashboards\d2-worx\redis_11835_rev1.json
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -141,5 +152,6 @@ Global
 		{49C7F053-E93C-4A53-BE72-B318471CD937} = {D31C4135-68AE-4DD6-AE56-D82537CAE753}
 		{AE50010E-DFA7-4483-A498-66A6A526A346} = {B46DEAC7-AC68-4CBB-B3C3-D9985C17BB3D}
 		{9243E903-B661-4888-AC39-51D9445FA86C} = {AE50010E-DFA7-4483-A498-66A6A526A346}
+		{1F447BFA-D966-4A1B-8A7F-7371E8C7A6E4} = {0841A0F5-EF28-47EA-9099-35999D6BDEFA}
 	EndGlobalSection
 EndGlobal
