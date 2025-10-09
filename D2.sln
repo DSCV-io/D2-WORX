@@ -86,6 +86,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "D2-WORX", "D2-WORX", "{1F44
 		observability\grafana\provisioning\dashboards\d2-worx\pgsqldb_9628_rev8.json = observability\grafana\provisioning\dashboards\d2-worx\pgsqldb_9628_rev8.json
 		observability\grafana\provisioning\dashboards\d2-worx\rabbitmq_10991_rev15.json = observability\grafana\provisioning\dashboards\d2-worx\rabbitmq_10991_rev15.json
 		observability\grafana\provisioning\dashboards\d2-worx\redis_11835_rev1.json = observability\grafana\provisioning\dashboards\d2-worx\redis_11835_rev1.json
+		observability\grafana\provisioning\dashboards\d2-worx\sveltekit-performance.json = observability\grafana\provisioning\dashboards\d2-worx\sveltekit-performance.json
 	EndProjectSection
 EndProject
 Global

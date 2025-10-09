@@ -1,5 +1,5 @@
 {
-	"name": "sveltekit",
+	"name": "d2-sveltekit",
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
@@ -59,6 +59,7 @@
 		"@opentelemetry/api-logs": "0.206.0",
 		"@opentelemetry/auto-instrumentations-node": "0.65.0",
 		"@opentelemetry/exporter-logs-otlp-http": "0.206.0",
+		"@opentelemetry/exporter-metrics-otlp-http": "0.206.0",
 		"@opentelemetry/exporter-trace-otlp-http": "0.206.0",
 		"@opentelemetry/exporter-trace-otlp-proto": "0.206.0",
 		"@opentelemetry/instrumentation": "0.206.0",
@@ -66,6 +67,7 @@
 		"@opentelemetry/instrumentation-fetch": "0.206.0",
 		"@opentelemetry/resources": "2.1.0",
 		"@opentelemetry/sdk-logs": "0.206.0",
+		"@opentelemetry/sdk-metrics": "2.1.0",
 		"@opentelemetry/sdk-node": "0.206.0",
 		"@opentelemetry/sdk-trace-web": "2.1.0",
 		"@opentelemetry/semantic-conventions": "1.37.0",
