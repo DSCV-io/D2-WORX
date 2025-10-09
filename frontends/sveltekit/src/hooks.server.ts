@@ -1,3 +1,4 @@
+import './instrumentation.server'; // Initialize instrumentation...
 import type { Handle } from '@sveltejs/kit';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 
