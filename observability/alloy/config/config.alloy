@@ -36,6 +36,12 @@ prometheus.scrape "infrastructure" {
       service     = "Auth.API",
       __metrics_path__ = "/metrics",
     },
+    {
+      __address__ = "host.docker.internal:5138",
+      job         = "service-auth",
+      service     = "Geo.API",
+      __metrics_path__ = "/metrics",
+    },
 
     // Infrastructure exporters (containers)
     {
