@@ -26,7 +26,8 @@ public record WhoIs
     #region Identity
 
     /// <summary>
-    /// A content-addressable 32-byte SHA-256 hash of the IP address, year and month of the record.
+    /// A content-addressable 32-byte SHA-256 hash of the IP address, year, month and browser or
+    /// device fingerprint of the record.
     /// </summary>
     public required byte[] HashId { get; init; }
 
@@ -64,7 +65,10 @@ public record WhoIs
     /// <example>
     /// Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3
     /// </example>
-    public required string Fingerprint { get; init; }
+    /// <remarks>
+    /// While optional, this will be used in the content-addressable hash if provided.
+    /// </remarks>
+    public string? Fingerprint { get; init; }
 
     #endregion
 
@@ -268,6 +272,9 @@ public record WhoIs
     /// <param name="month">
     /// The month for the record. Defaults to current month.
     /// </param>
+    /// <param name="fingerprint">
+    /// The fingerprint of the browser or device associated with the IP address. Optional.
+    /// </param>
     /// <param name="asn">
     /// The ASN associated with the IP address. Optional.
     /// </param>
@@ -345,6 +352,7 @@ public record WhoIs
         string ipAddress,
         int? year = null,
         int? month = null,
+        string? fingerprint = null,
         // Properties.
         int? asn = null,
         string? asName = null,
@@ -374,7 +382,8 @@ public record WhoIs
         var (hashId, normalizedIp) = ComputeHashAndNormalizeIp(
             ipAddress,
             yearNotNull,
-            monthNotNull);
+            monthNotNull,
+            fingerprint);
 
         var whois = new WhoIs
         {
@@ -433,6 +442,7 @@ public record WhoIs
             whois.IPAddress,
             whois.Year,
             whois.Month,
+            whois.Fingerprint,
             whois.ASN,
             whois.ASName,
             whois.ASDomain,
@@ -455,8 +465,8 @@ public record WhoIs
             whois.LocationHashId);
 
     /// <summary>
-    /// Computes the SHA-256 hash of the normalized IP address, year and month, and returns the
-    /// normalized and validated IP address.
+    /// Computes the SHA-256 hash of the normalized IP address, year, month and fingerprint and
+    /// returns the normalized and validated IP address.
     /// </summary>
     ///
     /// <param name="ipAddress">
@@ -467,6 +477,9 @@ public record WhoIs
     /// </param>
     /// <param name="month">
     /// The month.
+    /// </param>
+    /// <param name="fingerprint">
+    /// The fingerprint of the browser or device associated with the IP address. Optional.
     /// </param>
     ///
     /// <returns>
@@ -483,7 +496,8 @@ public record WhoIs
     public static (byte[] hash, string normalizedIp) ComputeHashAndNormalizeIp(
         string ipAddress,
         int year,
-        int month)
+        int month,
+        string? fingerprint = null)
     {
         var normalizedIp = NormalizeAndValidateIPAddress(ipAddress);
 
@@ -501,7 +515,7 @@ public record WhoIs
                 year,
                 "must be between 1 and 9999.");
 
-        var inputBytes = Encoding.UTF8.GetBytes($"{normalizedIp}|{year}|{month}");
+        var inputBytes = Encoding.UTF8.GetBytes($"{normalizedIp}|{year}|{month}|{fingerprint.CleanStr()}");
         var hashId = SHA256.HashData(inputBytes);
 
         return (hashId, normalizedIp);

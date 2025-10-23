@@ -44,7 +44,7 @@ Location and WHOIS entities use **SHA-256 hash as primary key** instead of seque
 Normalized string from: coordinates, street address, city, postal code, subdivision code, country code
 
 **Hash Input (WHOIS):**
-Normalized string from: IP address + device fingerprint (composite key differentiates devices on same IP)
+Normalized string from: IP address + year + month + device fingerprint (composite key differentiates devices on same IP)
 
 ### 3. Loose Coupling via Context Keys
 
