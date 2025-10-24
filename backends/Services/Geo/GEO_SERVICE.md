@@ -44,7 +44,7 @@ Location and WHOIS entities use **SHA-256 hash as primary key** instead of seque
 Normalized string from: coordinates, street address, city, postal code, subdivision code, country code
 
 **Hash Input (WHOIS):**
-Normalized string from: IP address + year + month + device fingerprint (composite key differentiates devices on same IP)
+Normalized string from: IP address + year + month + device fingerprint (differentiates devices on same IP and provides temporal versioning)
 
 ### 3. Loose Coupling via Context Keys
 
@@ -104,23 +104,25 @@ Physical location with content-addressable hash ID.
 IP address geolocation and network metadata with device fingerprinting.
 
 **Key Properties:**
-- SHA-256 hash (byte[]) as primary key (computed from IP + fingerprint)
+- SHA-256 hash (byte[]) as primary key (computed from IP + year + month + fingerprint)
 - IP address (string)
+- Year and month (int) - temporal components of the hash
 - Device fingerprint (string) - differentiates devices sharing same IP
-- ASN information (number, name, country)
+- ASN information (number, name, domain, type)
 - Geographic information (city, country, coordinates)
-- LastUpdated (DateOnly) for staleness detection
+- Network flags (isAnonymous, isVPN, isTor, isProxy, etc.)
 
 **Design Decisions:**
-- Content-addressable by IP + fingerprint (same IP, different device = different record)
+- Content-addressable by IP + year + month + fingerprint (enables both device and temporal differentiation)
+- Year/month provide automatic monthly versioning (same device, new month = new record)
 - Fingerprint critical for home/corporate networks (multiple devices, one public IP)
 - All geo fields optional (external API may not return all data)
-- DateOnly for LastUpdated (no time component needed for daily refresh checks)
 - Immutable - updates create new records with new hash
 
 **Use Cases:**
-- Track user sessions by geographic location and device
+- Track user sessions by geographic location and device over time
 - Detect suspicious login attempts from unusual locations
+- Monthly refresh of WHOIS data (automatic via hash key)
 - Enrich analytics with geographic data
 - Rate limit by network (ASN) rather than just IP
 
@@ -130,26 +132,49 @@ Sovereign state with ISO codes and metadata.
 **Key Properties:**
 - ISO 3166-1 alpha-2 code (primary key)
 - ISO 3166-1 alpha-3 code, numeric code
-- Official name, common name
-- Collection of Subdivision child entities
+- Display name, official name
+- Phone number prefix and format
+- Optional sovereignty relationship (territories)
+- FKs to primary currency and primary locale
 
 **Design Decisions:**
-- ISO code as PK (stable, standardized)
+- ISO alpha-2 code as PK (stable, standardized, compact)
 - Subdivisions are owned child entities (part of Country aggregate)
+- Direct FKs to primary currency and locale (reference data pattern)
+- Many-to-many with Currency (via join table) for secondary currencies
+- Many-to-many with Locale (via join table) for additional locales
+- Many-to-many with GeopoliticalEntity for memberships
+
+**Relationships:**
+- One-to-many: Country → Subdivisions (owned children)
+- Many-to-one: Country → Currency (primary)
+- Many-to-one: Country → Locale (primary)
+- Many-to-many: Country ↔ Currency (all accepted currencies)
+- Many-to-many: Country ↔ Locale (all recognized locales)
+- Many-to-many: Country ↔ GeopoliticalEntity (memberships)
 
 #### GeopoliticalEntity
 Supra-national organizations and agreements.
 
 **Key Properties:**
-- Unique code (NATO, EU, USMCA)
-- Name, abbreviation, type (enum)
-- Member countries (list of ISO codes)
-- Established/dissolved dates
+- Unique code/abbreviation (primary key) - NATO, EU, USMCA, ASEAN
+- Display name
+- Type (comprehensive enum with 20+ categories)
+- Many-to-many relationship with member countries
 
 **Design Decisions:**
 - Separate aggregate from Country (different lifecycle)
-- Member countries stored as list (join table if complex queries needed)
-- Type enum: MilitaryAlliance, TradeAgreement, EconomicUnion, etc.
+- Custom code as PK (no ISO standard exists for these entities)
+- Type enum organized by category: Economic, Political, Military, Social/Cultural
+- Member countries via many-to-many (join table, no additional metadata needed)
+- No established/dissolved dates in current implementation (can add later if needed)
+
+**Type Categories:**
+- **General Geopolitical:** Continent, SubContinent, GeopoliticalRegion
+- **Economic:** FreeTradeAgreement, CustomsUnion, CommonMarket, EconomicUnion, MonetaryUnion, etc.
+- **Political:** PoliticalUnion, HumanRightsAgreement, EnvironmentalAgreement, PeaceTreaty, etc.
+- **Military:** MilitaryAlliance, ArmsControlAgreement, StatusOfForcesAgreement, etc.
+- **Social/Cultural:** CulturalCooperationAgreement, EducationalExchangeAgreement, LanguageUnion, etc.
 
 ### Child Entities
 
@@ -161,9 +186,15 @@ Administrative division within a country (state, province, region).
 - Accessed through Country, not directly
 
 **Key Properties:**
-- ISO 3166-2 code
-- Name, type (state, province, canton, etc.)
-- Parent country reference
+- ISO 3166-2 code (primary key) - e.g., US-AL, CA-AB
+- Short code (2-3 characters) - extracted from ISO code - e.g., AL, AB
+- Display name and official name
+- FK to parent country (ISO 3166-1 alpha-2)
+
+**Design Decisions:**
+- ISO 3166-2 as PK (globally unique, includes country prefix)
+- ShortCode for convenience (local identifier within country)
+- Both display and official names (some subdivisions have formal vs common names)
 
 ### Reference Data Entities
 
@@ -173,51 +204,57 @@ Administrative division within a country (state, province, region).
 Monetary currency information.
 
 **Key Properties:**
-- ISO 4217 code (USD, EUR, JPY)
-- Symbol, name, decimal places
+- ISO 4217 alpha code (primary key) - USD, EUR, JPY
+- ISO 4217 numeric code (unique) - 840, 978, 392
+- Display name and official name
+- Symbol ($, €, ¥) and decimal places (0-3)
 
 **Usage:**
-Referenced by CountryCurrency entities
+- Referenced by Country (primary currency FK)
+- Many-to-many with Country (all accepted currencies via join table)
+
+**Design Decisions:**
+- ISO 4217 alpha as PK (3-letter code, globally standardized)
+- Numeric code as string to preserve leading zeros (e.g., "008" for Albanian Lek)
+- Both display and official names for flexibility
 
 #### Language
 Human language information.
 
 **Key Properties:**
-- ISO 639-1 code (2-letter: en, fr, es)
-- ISO 639-3 code (3-letter: eng, fra, spa)
-- Name, native name
+- ISO 639-1 code (primary key) - en, fr, es, zh
+- Display name (in English) - English, French, Spanish
+- Endonym (native name) - English, Français, Español
 
 **Usage:**
-Referenced by Locale entities
+- Referenced by Locale entities
+- Combined with Country via Locale to form regional language variants
+
+**Design Decisions:**
+- ISO 639-1 only (2-letter codes sufficient for ~180 major languages)
+- No ISO 639-3 (YAGNI - unlikely to support 7,000+ languages)
+- No text direction or script metadata (UI responsibility)
 
 #### Locale
-Language + region combination.
+Language + region combination (BCP 47 format).
 
 **Key Properties:**
-- Language reference (FK)
-- Region code (ISO 3166-1 alpha-2)
-- Computed locale code (en-US, fr-CA)
+- IETF BCP 47 tag (primary key) - en-US, fr-CA, es-MX, zh-Hans-CN
+- Display name (in English) - English (United States)
+- Endonym (native name) - English (United States), Français (Canada)
+- FK to Language (ISO 639-1) - required
+- FK to Country (ISO 3166-1 alpha-2) - required
 
 **Usage:**
-Represents regional language variants
+- Represents regional language variants for formatting
+- Referenced by Country (primary locale FK)
+- Many-to-many with Country (all recognized locales via join table)
+- Used for date/time/number/currency formatting preferences
 
-#### CountryCurrency
-Join entity linking countries to currencies.
-
-**Key Properties:**
-- Country reference (FK)
-- Currency reference (FK)
-- IsPrimary flag
-
-**Rationale:**
-- Many-to-many relationship needed
-- Many countries use multiple currencies (tourism, trade)
-- Primary flag indicates official/main currency
-
-**Examples:**
-- US -> USD (primary)
-- Croatia -> EUR (primary), USD (tourism)
-- Panama -> USD (primary), PAB (secondary)
+**Design Decisions:**
+- BCP 47 tag as PK (standard format: language-country or language-script-country)
+- Both language and country required (region-specific locales only)
+- Separate FKs enable queries like "all locales for Spanish" or "all locales for Canada"
 
 ---
 
