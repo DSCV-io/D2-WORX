@@ -7,7 +7,7 @@
 /// Is an entity of the Geography "Geo" Domain. A subdivision always belongs to a single
 /// <see cref="Country"/> (which is the aggregate root).
 /// </remarks>
-public class Subdivision
+public record Subdivision
 {
     #region Identity - Primary Key
 
@@ -21,7 +21,7 @@ public class Subdivision
     /// Must be unique. Between 4 and 6 characters in length, typically formatted as "CC-SSS"
     /// where "CC" is the ISO 3166-1 alpha-2 country code and "SSS" is the subdivision code.
     /// </remarks>
-    public required string ISO31662Code { get; set; }
+    public required string ISO31662Code { get; init; }
 
     #endregion
 
@@ -34,7 +34,7 @@ public class Subdivision
     /// <example>
     /// AL
     /// </example>
-    public required string ShortCode { get; set; }
+    public required string ShortCode { get; init; }
 
     /// <summary>
     /// The display name of the subdivision.
@@ -42,7 +42,7 @@ public class Subdivision
     /// <example>
     /// Alabama
     /// </example>
-    public required string DisplayName { get; set; }
+    public required string DisplayName { get; init; }
 
     /// <summary>
     /// The official name of the subdivision.
@@ -50,7 +50,7 @@ public class Subdivision
     /// <example>
     /// State of Alabama
     /// </example>
-    public required string OfficialName { get; set; }
+    public required string OfficialName { get; init; }
 
     #endregion
 
@@ -62,7 +62,7 @@ public class Subdivision
     /// <example>
     /// US
     /// </example>
-    public required string CountryISO31661Alpha2Code { get; set; }
+    public required string CountryISO31661Alpha2Code { get; init; }
 
     #endregion
 
@@ -71,7 +71,7 @@ public class Subdivision
     /// <summary>
     /// Navigation property to the country this subdivision belongs to.
     /// </summary>
-    public Country? Country { get; set; }
+    public Country? Country { get; init; }
 
     #endregion
 }
