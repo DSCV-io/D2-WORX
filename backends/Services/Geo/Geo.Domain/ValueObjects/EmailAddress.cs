@@ -131,7 +131,7 @@ public record EmailAddress
 
     /// <inheritdoc/>
     /// <remarks>
-    /// Because <see cref="EmailAddress"/> contaions an <see cref="ImmutableHashSet{T}"/> for
+    /// Because <see cref="EmailAddress"/> contains an <see cref="ImmutableHashSet{T}"/> for
     /// <see cref="Labels"/>, this override is necessary to ensure proper value equality comparison.
     /// </remarks>
     public virtual bool Equals(EmailAddress? other)
@@ -145,7 +145,7 @@ public record EmailAddress
 
     /// <inheritdoc/>
     /// <remarks>
-    /// Because <see cref="EmailAddress"/> contaions an <see cref="ImmutableHashSet{T}"/> for
+    /// Because <see cref="EmailAddress"/> contains an <see cref="ImmutableHashSet{T}"/> for
     /// <see cref="Labels"/>, this override is necessary to ensure proper value equality comparison.
     /// </remarks>
     public override int GetHashCode()
