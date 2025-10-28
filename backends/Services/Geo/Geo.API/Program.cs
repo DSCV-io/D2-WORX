@@ -18,12 +18,12 @@ app.MapDefaultEndpoints();
 
 try
 {
-    Log.Information("Starting Auth.API service");
+    Log.Information("Starting Geo.API service");
     app.Run();
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "Auth.API service failed to start");
+    Log.Fatal(ex, "Geo.API service failed to start");
     throw;
 }
 finally
