@@ -127,4 +127,37 @@ public record EmailAddress
 
     #endregion
 
+    #region Equality Overrides
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Because <see cref="EmailAddress"/> contaions an <see cref="ImmutableHashSet{T}"/> for
+    /// <see cref="Labels"/>, this override is necessary to ensure proper value equality comparison.
+    /// </remarks>
+    public virtual bool Equals(EmailAddress? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+
+        return Value == other.Value
+               && Labels.SetEquals(other.Labels);
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Because <see cref="EmailAddress"/> contaions an <see cref="ImmutableHashSet{T}"/> for
+    /// <see cref="Labels"/>, this override is necessary to ensure proper value equality comparison.
+    /// </remarks>
+    public override int GetHashCode()
+    {
+        var hashCode = new HashCode();
+        hashCode.Add(Value);
+
+        foreach (var label in Labels.OrderBy(l => l))
+            hashCode.Add(label);
+
+        return hashCode.ToHashCode();
+    }
+
+    #endregion
 }

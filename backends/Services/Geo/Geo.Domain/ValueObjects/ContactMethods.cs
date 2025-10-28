@@ -99,4 +99,42 @@ public record ContactMethods
     public PhoneNumber? PrimaryPhoneNumber => PhoneNumbers.FirstOrDefault();
 
     #endregion
+
+    #region Equality Overrides
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Because <see cref="ContactMethods"/> contains <see cref="ImmutableList{T}"/> properties for
+    /// <see cref="Emails"/> and <see cref="PhoneNumbers"/>, this override is necessary to ensure
+    /// proper value equality comparison.
+    /// </remarks>
+    public virtual bool Equals(ContactMethods? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+
+        return Emails.SequenceEqual(other.Emails)
+               && PhoneNumbers.SequenceEqual(other.PhoneNumbers);
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Because <see cref="ContactMethods"/> contains <see cref="ImmutableList{T}"/> properties for
+    /// <see cref="Emails"/> and <see cref="PhoneNumbers"/>, this override is necessary to ensure
+    /// proper value equality comparison.
+    /// </remarks>
+    public override int GetHashCode()
+    {
+        var hashCode = new HashCode();
+
+        foreach (var email in Emails)
+            hashCode.Add(email);
+
+        foreach (var phone in PhoneNumbers)
+            hashCode.Add(phone);
+
+        return hashCode.ToHashCode();
+    }
+
+    #endregion
 }

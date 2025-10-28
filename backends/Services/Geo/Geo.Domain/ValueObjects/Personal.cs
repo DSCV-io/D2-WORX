@@ -197,4 +197,55 @@ public record Personal
             personal.BiologicalSex);
 
     #endregion
+
+    #region Equality Overrides
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Because <see cref="Personal"/> contains an <see cref="ImmutableList{T}"/> for
+    /// <see cref="ProfessionalCredentials"/>, this override is necessary to ensure proper
+    /// value equality comparison.
+    /// </remarks>
+    public virtual bool Equals(Personal? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+
+        return FirstName == other.FirstName
+               && Title == other.Title
+               && PreferredName == other.PreferredName
+               && MiddleName == other.MiddleName
+               && LastName == other.LastName
+               && GenerationalSuffix == other.GenerationalSuffix
+               && ProfessionalCredentials.SequenceEqual(other.ProfessionalCredentials)
+               && DateOfBirth == other.DateOfBirth
+               && BiologicalSex == other.BiologicalSex;
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Because <see cref="Personal"/> contains an <see cref="ImmutableList{T}"/> for
+    /// <see cref="ProfessionalCredentials"/>, this override is necessary to ensure proper
+    /// value equality comparison.
+    /// </remarks>
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(FirstName);
+        hash.Add(Title);
+        hash.Add(PreferredName);
+        hash.Add(MiddleName);
+        hash.Add(LastName);
+        hash.Add(GenerationalSuffix);
+
+        foreach (var credential in ProfessionalCredentials)
+            hash.Add(credential);
+
+        hash.Add(DateOfBirth);
+        hash.Add(BiologicalSex);
+
+        return hash.ToHashCode();
+    }
+
+    #endregion
 }

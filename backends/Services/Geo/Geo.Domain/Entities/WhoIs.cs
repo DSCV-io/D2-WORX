@@ -391,6 +391,7 @@ public record WhoIs
             IPAddress = normalizedIp,
             Year = yearNotNull,
             Month = monthNotNull,
+            Fingerprint = fingerprint.CleanStr(),
             ASN = asn,
             ASName = asName.CleanStr(),
             ASDomain = asDomain.CleanStr(),
