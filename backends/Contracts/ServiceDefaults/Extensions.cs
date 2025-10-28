@@ -1,4 +1,5 @@
 using System.Net;
+using D2.Contracts.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http;
@@ -140,7 +141,7 @@ public static class Extensions
             .Enrich.WithMachineName()
             .WriteTo.Console(new CompactJsonFormatter());
 
-        if (!string.IsNullOrWhiteSpace(logsEndpoint))
+        if (logsEndpoint.Truthy())
         {
             var lokiLabels = new List<LokiLabel>
             {
@@ -149,7 +150,7 @@ public static class Extensions
             };
 
             loggerConfig.WriteTo.GrafanaLoki(
-                logsEndpoint,
+                logsEndpoint!,
                 labels: lokiLabels,
                 textFormatter: new CompactJsonFormatter(),
                 batchPostingLimit: 1000,
@@ -245,13 +246,14 @@ public static class Extensions
     {
         var tracesCollUri = builder.Configuration["TRACES_URI"];
 
-        if (string.IsNullOrWhiteSpace(tracesCollUri)) return;
+        if (tracesCollUri.Falsey())
+            return;
 
         builder.Services.ConfigureOpenTelemetryTracerProvider(tracing =>
         {
             tracing.AddOtlpExporter(options =>
             {
-                options.Endpoint = new Uri(tracesCollUri);
+                options.Endpoint = new Uri(tracesCollUri!);
                 options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
             });
         });
