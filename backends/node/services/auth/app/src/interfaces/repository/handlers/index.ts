@@ -48,6 +48,12 @@ export type {
 } from "./r/check-org-exists.js";
 
 export type {
+  CheckUsernameAvailableInput,
+  CheckUsernameAvailableOutput,
+  ICheckUsernameAvailableHandler,
+} from "./r/check-username-available.js";
+
+export type {
   FindSignInEventsByUserIdInput,
   FindSignInEventsByUserIdOutput,
   IFindSignInEventsByUserIdHandler,
@@ -107,6 +113,18 @@ export type {
   UpdateOrgContactRecordOutput,
   IUpdateOrgContactRecordHandler,
 } from "./u/update-org-contact-record.js";
+
+export type {
+  UpdateUserNameInput,
+  UpdateUserNameOutput,
+  IUpdateUserNameHandler,
+} from "./u/update-user-name.js";
+
+export type {
+  UpdateUserUsernameInput,
+  UpdateUserUsernameOutput,
+  IUpdateUserUsernameHandler,
+} from "./u/update-user-username.js";
 
 export type {
   UpdateSignInEventWhoIsIdInput,

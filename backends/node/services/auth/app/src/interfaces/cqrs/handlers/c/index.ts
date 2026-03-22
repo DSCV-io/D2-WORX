@@ -52,6 +52,20 @@ export type {
 export { CREATE_USER_CONTACT_REDACTION } from "./create-user-contact.js";
 
 export type {
+  UpdateUserRealNameInput,
+  UpdateUserRealNameOutput,
+  IUpdateUserRealNameHandler,
+} from "./update-user-real-name.js";
+export { UPDATE_USER_REAL_NAME_REDACTION } from "./update-user-real-name.js";
+
+export type {
+  UpdateUsernameInput,
+  UpdateUsernameOutput,
+  IUpdateUsernameHandler,
+} from "./update-username.js";
+export { UPDATE_USERNAME_REDACTION } from "./update-username.js";
+
+export type {
   RunSessionPurgeInput,
   RunSessionPurgeOutput,
   IRunSessionPurgeHandler,

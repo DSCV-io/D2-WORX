@@ -50,6 +50,8 @@ import { CreateOrgContact } from "./implementations/cqrs/handlers/c/create-org-c
 import { UpdateOrgContactHandler } from "./implementations/cqrs/handlers/c/update-org-contact.js";
 import { DeleteOrgContact } from "./implementations/cqrs/handlers/c/delete-org-contact.js";
 import { CreateUserContact } from "./implementations/cqrs/handlers/c/create-user-contact.js";
+import { UpdateUserRealName } from "./implementations/cqrs/handlers/c/update-user-real-name.js";
+import { UpdateUsername } from "./implementations/cqrs/handlers/c/update-username.js";
 import { GetSignInEvents } from "./implementations/cqrs/handlers/q/get-sign-in-events.js";
 import { GetActiveConsents } from "./implementations/cqrs/handlers/q/get-active-consents.js";
 import { GetOrgContacts } from "./implementations/cqrs/handlers/q/get-org-contacts.js";
@@ -83,6 +85,11 @@ import {
   IHandleFileProcessedKey,
   IUpdateUserImageKey,
   IUpdateOrgLogoKey,
+  IUpdateUserRealNameKey,
+  IUpdateUsernameKey,
+  IUpdateUserNameKey,
+  ICheckUsernameAvailableKey,
+  IUpdateUserUsernameKey,
 } from "./service-keys.js";
 
 /** DI key for the auth-scoped AcquireLock handler (registered in composition root). */
@@ -173,6 +180,26 @@ export function addAuthApp(
   services.addTransient(
     ICreateUserContactKey,
     (sp) => new CreateUserContact(sp.resolve(ICreateContactsKey), sp.resolve(IHandlerContextKey)),
+  );
+
+  services.addTransient(
+    IUpdateUserRealNameKey,
+    (sp) =>
+      new UpdateUserRealName(
+        sp.resolve(IUpdateContactsByExtKeysKey),
+        sp.resolve(IUpdateUserNameKey),
+        sp.resolve(IHandlerContextKey),
+      ),
+  );
+
+  services.addTransient(
+    IUpdateUsernameKey,
+    (sp) =>
+      new UpdateUsername(
+        sp.resolve(ICheckUsernameAvailableKey),
+        sp.resolve(IUpdateUserUsernameKey),
+        sp.resolve(IHandlerContextKey),
+      ),
   );
 
   // --- Query Handlers ---

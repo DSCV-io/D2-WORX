@@ -149,6 +149,48 @@ export function createAuthCallbacks(
       }
     },
 
+    publishPasswordChanged: async (input) => {
+      const scope = createCallbackScope();
+      try {
+        const contactId = await resolveUserContactId(
+          getContactsByExtKeys,
+          input.userId,
+          logger,
+          "password changed notification",
+        );
+        if (!contactId) return;
+
+        const t = translator.t;
+        const locale = resolveLocale(
+          (input as Record<string, unknown>).locale as string | undefined,
+        );
+
+        const notifier = scope.resolve(INotifyKey);
+        await notifier.handleAsync({
+          recipientContactId: contactId,
+          title: t(locale, "auth_email_password_changed_subject"),
+          content: [
+            t(locale, "auth_email_password_changed_greeting", { name: input.name }),
+            "",
+            t(locale, "auth_email_password_changed_body"),
+            "",
+            t(locale, "auth_email_password_changed_disclaimer"),
+          ].join("\n"),
+          plaintext: t(locale, "auth_email_password_changed_plaintext", { name: input.name }),
+          sensitive: true,
+          correlationId: crypto.randomUUID(),
+          senderService: "auth",
+        });
+      } catch (err: unknown) {
+        // Fail-open: password change is already committed, notification is best-effort.
+        logger.warn("publishPasswordChanged: failed to send notification (fail-open)", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      } finally {
+        scope.dispose();
+      }
+    },
+
     createUserContact: async (data) => {
       const scope = createCallbackScope();
       try {

@@ -712,4 +712,134 @@ describe("BetterAuth behavioral integration", () => {
       );
     });
   });
+
+  // =========================================================================
+  // Q8 — Password change hook (account.update.after)
+  //
+  // When a user changes their password, the account.update.after hook fires
+  // with the updated account row (which includes the password hash field).
+  // Our hook detects this and calls publishPasswordChanged.
+  // =========================================================================
+  describe("password change notification hook", () => {
+    it("should invoke publishPasswordChanged callback when password is changed", async () => {
+      const passwordChangedCalls: { userId: string; email: string; name: string }[] = [];
+
+      const passwordFns = createPasswordFunctions(mockHibpCache);
+      const hookAuth = createAuth(testConfig, getDb(), undefined, {
+        passwordFunctions: passwordFns,
+        publishPasswordChanged: async (input) => {
+          passwordChangedCalls.push(input);
+        },
+      });
+
+      const email = "q8-pw-change@example.com";
+      const oldPassword = "SecurePass123!@#";
+      const newPassword = "NewSecurePass456!@#";
+
+      // Sign up and verify
+      const signUpRes = await hookAuth.api.signUpEmail({
+        body: { email, password: oldPassword, name: "Q8 PwChange" },
+      });
+      await getPool().query('UPDATE "user" SET email_verified = true WHERE id = $1', [
+        signUpRes.user.id,
+      ]);
+
+      const signInRes = await hookAuth.api.signInEmail({
+        body: { email, password: oldPassword },
+      });
+      const token =
+        signInRes.token ??
+        ((signInRes as Record<string, unknown>).session as { token: string })?.token;
+
+      // Change password
+      await hookAuth.api.changePassword({
+        body: { currentPassword: oldPassword, newPassword },
+        headers: new Headers({ Authorization: `Bearer ${token}` }),
+      });
+
+      // The hook fires asynchronously — give it a moment to complete
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      expect(passwordChangedCalls).toHaveLength(1);
+      expect(passwordChangedCalls[0].userId).toBe(signUpRes.user.id);
+      expect(passwordChangedCalls[0].email).toBe(email);
+      expect(passwordChangedCalls[0].name).toBe("Q8 PwChange");
+    });
+
+    it("should NOT invoke publishPasswordChanged on regular user updates", async () => {
+      const passwordChangedCalls: { userId: string }[] = [];
+
+      const passwordFns = createPasswordFunctions(mockHibpCache);
+      const hookAuth = createAuth(testConfig, getDb(), undefined, {
+        passwordFunctions: passwordFns,
+        publishPasswordChanged: async (input) => {
+          passwordChangedCalls.push(input);
+        },
+      });
+
+      const email = "q8-no-trigger@example.com";
+      const password = "SecurePass123!@#";
+
+      await hookAuth.api.signUpEmail({
+        body: { email, password, name: "Q8 NoTrigger" },
+      });
+      await getPool().query('UPDATE "user" SET email_verified = true WHERE email = $1', [email]);
+
+      const signInRes = await hookAuth.api.signInEmail({
+        body: { email, password },
+      });
+      const token =
+        signInRes.token ??
+        ((signInRes as Record<string, unknown>).session as { token: string })?.token;
+
+      // Update user name (not password) — should NOT trigger the hook
+      await hookAuth.api.updateUser({
+        body: { name: "Updated Name" },
+        headers: new Headers({ Authorization: `Bearer ${token}` }),
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      expect(passwordChangedCalls).toHaveLength(0);
+    });
+
+    it("should allow sign-in with new password after change", async () => {
+      const passwordFns = createPasswordFunctions(mockHibpCache);
+      const hookAuth = createAuth(testConfig, getDb(), undefined, {
+        passwordFunctions: passwordFns,
+      });
+
+      const email = "q8-new-pw@example.com";
+      const oldPassword = "SecurePass123!@#";
+      const newPassword = "NewSecurePass456!@#";
+
+      await hookAuth.api.signUpEmail({
+        body: { email, password: oldPassword, name: "Q8 NewPw" },
+      });
+      await getPool().query('UPDATE "user" SET email_verified = true WHERE email = $1', [email]);
+
+      const signInRes = await hookAuth.api.signInEmail({
+        body: { email, password: oldPassword },
+      });
+      const token =
+        signInRes.token ??
+        ((signInRes as Record<string, unknown>).session as { token: string })?.token;
+
+      await hookAuth.api.changePassword({
+        body: { currentPassword: oldPassword, newPassword },
+        headers: new Headers({ Authorization: `Bearer ${token}` }),
+      });
+
+      // Old password should fail
+      await expect(
+        hookAuth.api.signInEmail({ body: { email, password: oldPassword } }),
+      ).rejects.toThrow();
+
+      // New password should work
+      const newSignIn = await hookAuth.api.signInEmail({
+        body: { email, password: newPassword },
+      });
+      expect(newSignIn.user.id).toBeDefined();
+    });
+  });
 });

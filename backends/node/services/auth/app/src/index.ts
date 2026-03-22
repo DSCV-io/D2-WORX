@@ -80,6 +80,18 @@ export type {
   CheckOrgExistsInput,
   CheckOrgExistsOutput,
   ICheckOrgExistsHandler,
+  // Read (R) — Username Availability
+  CheckUsernameAvailableInput,
+  CheckUsernameAvailableOutput,
+  ICheckUsernameAvailableHandler,
+  // Update (U) — User Name
+  UpdateUserNameInput,
+  UpdateUserNameOutput,
+  IUpdateUserNameHandler,
+  // Update (U) — User Username
+  UpdateUserUsernameInput,
+  UpdateUserUsernameOutput,
+  IUpdateUserUsernameHandler,
   // Read (R) — PingDb
   PingDbInput,
   PingDbOutput,
@@ -144,6 +156,18 @@ export type {
   CreateUserContactInput,
   CreateUserContactOutput,
 } from "./interfaces/cqrs/handlers/c/create-user-contact.js";
+
+export { UpdateUserRealName } from "./implementations/cqrs/handlers/c/update-user-real-name.js";
+export type {
+  UpdateUserRealNameInput,
+  UpdateUserRealNameOutput,
+} from "./interfaces/cqrs/handlers/c/update-user-real-name.js";
+
+export { UpdateUsername } from "./implementations/cqrs/handlers/c/update-username.js";
+export type {
+  UpdateUsernameInput,
+  UpdateUsernameOutput,
+} from "./interfaces/cqrs/handlers/c/update-username.js";
 
 export { RecordSignInOutcome } from "./implementations/cqrs/handlers/c/record-sign-in-outcome.js";
 export type {
@@ -400,4 +424,9 @@ export {
   IHandleFileProcessedKey,
   IUpdateUserImageKey,
   IUpdateOrgLogoKey,
+  IUpdateUserRealNameKey,
+  IUpdateUsernameKey,
+  IUpdateUserNameKey,
+  ICheckUsernameAvailableKey,
+  IUpdateUserUsernameKey,
 } from "./service-keys.js";

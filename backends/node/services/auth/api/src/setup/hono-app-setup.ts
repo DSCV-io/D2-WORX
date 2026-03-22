@@ -35,6 +35,7 @@ import { createEmulationRoutes } from "../routes/emulation-routes.js";
 import { createOrgContactRoutes } from "../routes/org-contact-routes.js";
 import { createInvitationRoutes } from "../routes/invitation-routes.js";
 import { createCheckEmailRoutes } from "../routes/check-email-routes.js";
+import { createAccountRoutes } from "../routes/account-routes.js";
 
 export interface HonoAppOptions {
   auth: Auth;
@@ -152,6 +153,7 @@ export function buildHonoApp(options: HonoAppOptions): Hono {
   protectedRoutes.use("*", createCsrfMiddleware(config.corsOrigins));
   protectedRoutes.route("/", createEmulationRoutes());
   protectedRoutes.route("/", createOrgContactRoutes());
+  protectedRoutes.route("/", createAccountRoutes(auth));
   protectedRoutes.route(
     "/",
     createInvitationRoutes({

@@ -91,6 +91,16 @@ export interface AuthHooks {
     token: string;
   }) => Promise<void>;
   /**
+   * Publishes a password-changed security notification email.
+   * Called in databaseHooks.account.update.after when a password hash changes.
+   * Fire-and-forget — password change is already committed.
+   */
+  publishPasswordChanged?: (input: {
+    userId: string;
+    email: string;
+    name: string;
+  }) => Promise<void>;
+  /**
    * Creates a Geo contact for a newly registered user.
    * Called in databaseHooks.user.create.before (Contact BEFORE User pattern).
    * If this throws, sign-up fails entirely (fail-fast — no stale users).
@@ -353,6 +363,50 @@ export function createAuth(
                       error: err instanceof Error ? err.message : String(err),
                     });
                   });
+              }
+            }
+          },
+        },
+      },
+      account: {
+        update: {
+          after: async (account) => {
+            // Detect password change — the `password` field is updated when
+            // BetterAuth's changePassword endpoint commits a new hash.
+            // Fire-and-forget: the password change is already persisted.
+            if (hooks?.publishPasswordChanged && account.password) {
+              const userId = account.userId as string;
+              if (!userId) return;
+
+              try {
+                // Look up the user to get their name and email for the notification.
+                const [userRow] = await db
+                  .select({
+                    email: betterAuthSchema.user.email,
+                    name: betterAuthSchema.user.name,
+                  })
+                  .from(betterAuthSchema.user)
+                  .where(eq(betterAuthSchema.user.id, userId))
+                  .limit(1);
+
+                if (userRow) {
+                  hooks
+                    .publishPasswordChanged({
+                      userId,
+                      email: userRow.email,
+                      name: userRow.name,
+                    })
+                    .catch((err: unknown) => {
+                      log.warn(
+                        "account.update.after: publishPasswordChanged failed (non-critical)",
+                        { error: err instanceof Error ? err.message : String(err) },
+                      );
+                    });
+                }
+              } catch (err: unknown) {
+                log.warn("account.update.after: failed to look up user for password notification", {
+                  error: err instanceof Error ? err.message : String(err),
+                });
               }
             }
           },

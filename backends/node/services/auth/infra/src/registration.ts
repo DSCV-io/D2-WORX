@@ -26,6 +26,9 @@ import {
   IPurgeExpiredEmulationConsentsKey,
   ICheckEmailAvailabilityRepoKey,
   ICheckOrgExistsKey,
+  IUpdateUserNameKey,
+  ICheckUsernameAvailableKey,
+  IUpdateUserUsernameKey,
 } from "@d2/auth-app";
 import { CreateSignInEvent } from "./repository/handlers/c/create-sign-in-event.js";
 import { FindSignInEventsByUserId } from "./repository/handlers/r/find-sign-in-events-by-user-id.js";
@@ -51,6 +54,9 @@ import { PurgeExpiredEmulationConsents } from "./repository/handlers/d/purge-exp
 import { PingDb } from "./repository/handlers/r/ping-db.js";
 import { CheckEmailAvailability } from "./repository/handlers/r/check-email-availability.js";
 import { CheckOrgExists } from "./repository/handlers/r/check-org-exists.js";
+import { UpdateUserName } from "./repository/handlers/u/update-user-name.js";
+import { CheckUsernameAvailable } from "./repository/handlers/r/check-username-available.js";
+import { UpdateUserUsername } from "./repository/handlers/u/update-user-username.js";
 
 /**
  * Registers auth infrastructure services (repository handlers) with the DI container.
@@ -102,6 +108,20 @@ export function addAuthInfra(services: ServiceCollection, db: NodePgDatabase): v
   services.addTransient(
     IUpdateOrgLogoKey,
     (sp) => new UpdateOrgLogo(db, sp.resolve(IHandlerContextKey)),
+  );
+
+  // User account repo handlers
+  services.addTransient(
+    IUpdateUserNameKey,
+    (sp) => new UpdateUserName(db, sp.resolve(IHandlerContextKey)),
+  );
+  services.addTransient(
+    ICheckUsernameAvailableKey,
+    (sp) => new CheckUsernameAvailable(db, sp.resolve(IHandlerContextKey)),
+  );
+  services.addTransient(
+    IUpdateUserUsernameKey,
+    (sp) => new UpdateUserUsername(db, sp.resolve(IHandlerContextKey)),
   );
 
   // Emulation consent repo handlers

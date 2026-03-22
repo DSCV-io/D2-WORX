@@ -24,6 +24,9 @@ import type {
   IPurgeExpiredInvitationsHandler,
   IPurgeExpiredEmulationConsentsHandler,
   IPingDbHandler,
+  IUpdateUserNameHandler,
+  ICheckUsernameAvailableHandler,
+  IUpdateUserUsernameHandler,
 } from "./interfaces/repository/handlers/index.js";
 import type { ISignInThrottleStore } from "./interfaces/repository/sign-in-throttle-store.js";
 import type { ICheckEmailAvailabilityHandler } from "./interfaces/repository/handlers/r/check-email-availability.js";
@@ -118,6 +121,18 @@ export const ICheckOrgExistsKey = createServiceKey<ICheckOrgExistsHandler>(
   "Auth.Repo.CheckOrgExists",
 );
 
+// --- User Account Repository Handlers ---
+
+export const IUpdateUserNameKey = createServiceKey<IUpdateUserNameHandler>(
+  "Auth.Repo.UpdateUserName",
+);
+export const ICheckUsernameAvailableKey = createServiceKey<ICheckUsernameAvailableHandler>(
+  "Auth.Repo.CheckUsernameAvailable",
+);
+export const IUpdateUserUsernameKey = createServiceKey<IUpdateUserUsernameHandler>(
+  "Auth.Repo.UpdateUserUsername",
+);
+
 // --- Health Check Repository Handler ---
 
 export const IPingDbKey = createServiceKey<IPingDbHandler>("Auth.Repo.PingDb");
@@ -158,6 +173,11 @@ export const IDeleteOrgContactKey = createServiceKey<Commands.IDeleteOrgContactH
 export const ICreateUserContactKey = createServiceKey<Commands.ICreateUserContactHandler>(
   "Auth.App.CreateUserContact",
 );
+export const IUpdateUserRealNameKey = createServiceKey<Commands.IUpdateUserRealNameHandler>(
+  "Auth.App.UpdateUserRealName",
+);
+export const IUpdateUsernameKey =
+  createServiceKey<Commands.IUpdateUsernameHandler>("Auth.App.UpdateUsername");
 
 // --- Query Handlers ---
 
