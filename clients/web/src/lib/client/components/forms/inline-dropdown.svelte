@@ -1,36 +1,33 @@
 <script lang="ts">
   import { cn } from "$lib/shared/utils/utils.js";
-  import {
-    INPUT_CLASSES,
-    INPUT_FOCUS_CLASSES,
-    INLINE_BORDER_DIRTY,
-    INLINE_BORDER_SAVED,
-    INLINE_BORDER_INVALID,
-  } from "$lib/shared/forms/input-styles.js";
+  import * as Select from "$lib/client/components/ui/select/index.js";
   import { createInlineEditKeyHandler } from "$lib/shared/forms/inline-edit-keyboard.js";
   import InlineEditActions from "./inline-edit-actions.svelte";
   import InlineFieldStatusIcon from "./inline-field-status-icon.svelte";
 
   type SaveState = "idle" | "saving" | "saved" | "error";
-  type ValidationStatus = "idle" | "validating" | "valid" | "invalid";
+  type ValidationStatus = "idle" | "valid" | "invalid";
+
+  interface Option {
+    value: string;
+    label: string;
+    /** Optional image URL (e.g., flag SVG). */
+    image?: string;
+  }
 
   let {
     value = $bindable(""),
     label,
-    placeholder = "",
-    maxLength,
+    options,
     validate,
-    asyncValidate,
     onSave,
     onDirtyChange,
     class: className,
   }: {
     value?: string;
     label: string;
-    placeholder?: string;
-    maxLength?: number;
+    options: Option[];
     validate?: (value: string) => string | undefined;
-    asyncValidate?: (value: string) => Promise<string | undefined>;
     onSave: (value: string) => Promise<void>;
     onDirtyChange?: (dirty: boolean) => void;
     class?: string;
@@ -41,14 +38,13 @@
   let saveState: SaveState = $state("idle");
   let validationStatus: ValidationStatus = $state("idle");
   let errorMessage = $state("");
-  let blurred = $state(false);
 
   $effect(() => {
     originalValue = value;
     currentValue = value;
   });
 
-  const isDirty = $derived(currentValue.trim() !== originalValue);
+  const isDirty = $derived(currentValue !== originalValue);
 
   $effect(() => {
     onDirtyChange?.(isDirty);
@@ -59,7 +55,6 @@
     errorMessage = "";
     saveState = "idle";
     validationStatus = "idle";
-    blurred = false;
   }
 
   export function getDirty(): boolean {
@@ -71,24 +66,15 @@
     return doSave();
   }
 
-  function handleInput(e: Event) {
-    currentValue = (e.target as HTMLInputElement).value;
-    if (blurred) {
-      errorMessage = "";
-      validationStatus = "idle";
-      blurred = false;
-    }
+  function handleValueChange(newValue: string) {
+    currentValue = newValue;
     if (saveState === "saved" || saveState === "error") {
       saveState = "idle";
     }
-  }
 
-  async function handleBlur() {
-    blurred = true;
-    const trimmed = currentValue.trim();
-
+    // Validate immediately on change
     if (validate) {
-      const err = validate(trimmed);
+      const err = validate(newValue);
       if (err) {
         errorMessage = err;
         validationStatus = "invalid";
@@ -96,31 +82,18 @@
       }
     }
 
-    if (asyncValidate && isDirty) {
-      validationStatus = "validating";
-      errorMessage = "";
-      const err = await asyncValidate(trimmed);
-      if (err) {
-        errorMessage = err;
-        validationStatus = "invalid";
-        return;
-      }
-    }
-
-    if (isDirty && trimmed) {
+    if (newValue !== originalValue) {
       validationStatus = "valid";
       errorMessage = "";
-    } else if (!isDirty) {
+    } else {
       validationStatus = "idle";
       errorMessage = "";
     }
   }
 
   async function doSave(): Promise<boolean> {
-    const trimmed = currentValue.trim();
-
     if (validate) {
-      const err = validate(trimmed);
+      const err = validate(currentValue);
       if (err) {
         errorMessage = err;
         validationStatus = "invalid";
@@ -131,12 +104,11 @@
     saveState = "saving";
     errorMessage = "";
     try {
-      await onSave(trimmed);
-      value = trimmed;
-      originalValue = trimmed;
+      await onSave(currentValue);
+      value = currentValue;
+      originalValue = currentValue;
       saveState = "saved";
       validationStatus = "idle";
-      blurred = false;
       setTimeout(() => {
         if (saveState === "saved") saveState = "idle";
       }, 2000);
@@ -156,17 +128,18 @@
   });
 
   const showStatusIcon = $derived(
-    (saveState as string) !== "idle" ||
-      (blurred && validationStatus !== "idle") ||
-      (isDirty && validationStatus === "idle"),
+    (saveState as string) !== "idle" || validationStatus !== "idle" || isDirty,
   );
 
   const fieldId = $derived(label.toLowerCase().replace(/\s+/g, "-"));
+  const selectedOption = $derived(options.find((o) => o.value === currentValue));
 </script>
 
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class={cn("flex flex-col gap-1.5", className)}
-  data-slot="inline-edit-field"
+  data-slot="inline-dropdown"
+  onkeydown={handleKeydown}
 >
   <label
     class="text-sm font-medium"
@@ -175,28 +148,52 @@
 
   <div class="flex items-center gap-1.5">
     <div class="relative flex-1">
-      <input
-        id={fieldId}
-        type="text"
+      <Select.Root
+        type="single"
         value={currentValue}
-        {placeholder}
-        maxlength={maxLength}
+        onValueChange={handleValueChange}
         disabled={saveState === "saving"}
-        oninput={handleInput}
-        onblur={handleBlur}
-        onkeydown={handleKeydown}
-        class={cn(
-          INPUT_CLASSES,
-          INPUT_FOCUS_CLASSES,
-          showStatusIcon ? "pr-8" : "",
-          saveState === "saved" && INLINE_BORDER_SAVED,
-          validationStatus === "invalid" && INLINE_BORDER_INVALID,
-          isDirty && validationStatus !== "invalid" && saveState !== "saved" && INLINE_BORDER_DIRTY,
-        )}
-      />
+      >
+        <Select.Trigger
+          id={fieldId}
+          class={cn(
+            "w-full",
+            showStatusIcon ? "pr-8" : "",
+            saveState === "saved" && "border-green-500/50",
+            validationStatus === "invalid" && "border-destructive",
+            isDirty &&
+              validationStatus !== "invalid" &&
+              saveState !== "saved" &&
+              "border-blue-500/50",
+          )}
+        >
+          {#if selectedOption?.image}
+            <img
+              src={selectedOption.image}
+              alt=""
+              class="h-3 w-4 shrink-0 object-cover"
+            />
+          {/if}
+          {selectedOption?.label || "Select..."}
+        </Select.Trigger>
+        <Select.Content>
+          {#each options as option (option.value)}
+            <Select.Item value={option.value}>
+              {#if option.image}
+                <img
+                  src={option.image}
+                  alt=""
+                  class="h-3 w-4 shrink-0 object-cover"
+                />
+              {/if}
+              {option.label}
+            </Select.Item>
+          {/each}
+        </Select.Content>
+      </Select.Root>
 
       {#if showStatusIcon}
-        <div class="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2">
+        <div class="pointer-events-none absolute top-1/2 right-8 -translate-y-1/2">
           <InlineFieldStatusIcon
             {saveState}
             {validationStatus}

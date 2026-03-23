@@ -6,21 +6,21 @@
 
 <div class="space-y-6">
   <div>
-    <h2 class="text-xl font-semibold text-red-500">Danger Zone</h2>
-    <p class="text-muted-foreground text-sm">Irreversible account actions.</p>
+    <h2 class="text-xl font-semibold">Deactivate Account</h2>
+    <p class="text-muted-foreground text-sm">Permanently remove your account and data.</p>
   </div>
 
-  <Card.Root class="border-destructive/50">
+  <Card.Root>
     <Card.Header>
-      <Card.Title class="text-destructive text-base">Delete Account</Card.Title>
+      <Card.Title class="text-base">Delete Account</Card.Title>
       <Card.Description>
-        Permanently delete your account and all associated data. This cannot be undone.
+        Permanently delete your account and all associated data. This action cannot be undone.
       </Card.Description>
     </Card.Header>
     <Card.Content>
       <Button
         variant="destructive"
-        onclick={() => toast.error("Account deletion is not yet available.")}
+        onclick={() => toast.error("Account deactivation is not yet available.")}
       >
         Delete Account
       </Button>

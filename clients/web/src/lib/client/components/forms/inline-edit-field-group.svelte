@@ -1,16 +1,17 @@
 <script lang="ts">
   import { cn } from "$lib/shared/utils/utils.js";
-  import SaveIcon from "@lucide/svelte/icons/save";
-  import Undo2Icon from "@lucide/svelte/icons/undo-2";
-  import CircleCheckIcon from "@lucide/svelte/icons/circle-check";
-  import LoaderCircleIcon from "@lucide/svelte/icons/loader-circle";
+  import {
+    INPUT_CLASSES,
+    INPUT_FOCUS_CLASSES,
+    INLINE_BORDER_DIRTY,
+    INLINE_BORDER_SAVED,
+    INLINE_BORDER_INVALID,
+  } from "$lib/shared/forms/input-styles.js";
+  import { createInlineEditKeyHandler } from "$lib/shared/forms/inline-edit-keyboard.js";
+  import InlineEditActions from "./inline-edit-actions.svelte";
+  import InlineFieldStatusIcon from "./inline-field-status-icon.svelte";
 
   type SaveState = "idle" | "saving" | "saved" | "error";
-
-  const INPUT_CLASSES =
-    "border-input bg-background placeholder:text-muted-foreground flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base shadow-xs outline-none transition-[color,box-shadow,border-color] md:text-sm";
-  const INPUT_FOCUS_CLASSES =
-    "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]";
 
   interface FieldDef {
     key: string;
@@ -43,7 +44,6 @@
   let saveState: SaveState = $state("idle");
   let fieldErrors: Record<string, string> = $state({});
 
-  // Sync when parent changes field values externally
   $effect(() => {
     const newOriginals = Object.fromEntries(fields.map((f) => [f.key, f.value]));
     originalValues = newOriginals;
@@ -117,15 +117,11 @@
     }
   }
 
-  function handleKeydown(e: KeyboardEvent) {
-    if (e.key === "Enter" && isDirty) {
-      e.preventDefault();
-      doSave();
-    } else if (e.key === "Escape" && isDirty) {
-      e.preventDefault();
-      revert();
-    }
-  }
+  const handleKeydown = createInlineEditKeyHandler({
+    isDirty: () => isDirty,
+    onSave: () => doSave(),
+    onRevert: revert,
+  });
 </script>
 
 <div
@@ -139,27 +135,41 @@
         <div class="flex flex-1 flex-col gap-1">
           <label
             class="text-sm font-medium"
-            for={field.key}
+            for={field.key}>{field.label}</label
           >
-            {field.label}
-          </label>
-          <input
-            id={field.key}
-            type="text"
-            value={currentValues[field.key] ?? ""}
-            placeholder={field.placeholder}
-            maxlength={field.maxLength}
-            disabled={saveState === "saving"}
-            oninput={(e) => handleInput(field.key, e)}
-            onkeydown={handleKeydown}
-            class={cn(
-              INPUT_CLASSES,
-              INPUT_FOCUS_CLASSES,
-              fieldErrors[field.key] && "border-destructive",
-              fieldDirty && !fieldErrors[field.key] && "border-blue-500/50",
-              saveState === "saved" && "border-green-500/50",
-            )}
-          />
+          <div class="relative">
+            <input
+              id={field.key}
+              type="text"
+              value={currentValues[field.key] ?? ""}
+              placeholder={field.placeholder}
+              maxlength={field.maxLength}
+              disabled={saveState === "saving"}
+              oninput={(e) => handleInput(field.key, e)}
+              onkeydown={handleKeydown}
+              class={cn(
+                INPUT_CLASSES,
+                INPUT_FOCUS_CLASSES,
+                (fieldDirty || (saveState as string) !== "idle") && "pr-8",
+                fieldErrors[field.key] && INLINE_BORDER_INVALID,
+                fieldDirty && !fieldErrors[field.key] && INLINE_BORDER_DIRTY,
+                saveState === "saved" && INLINE_BORDER_SAVED,
+              )}
+            />
+            {#if fieldDirty || (saveState as string) !== "idle"}
+              <div class="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2">
+                <InlineFieldStatusIcon
+                  {saveState}
+                  validationStatus={fieldErrors[field.key]
+                    ? "invalid"
+                    : fieldDirty
+                      ? "valid"
+                      : "idle"}
+                  dirty={fieldDirty}
+                />
+              </div>
+            {/if}
+          </div>
           {#if fieldErrors[field.key]}
             <p class="text-destructive text-xs">{fieldErrors[field.key]}</p>
           {/if}
@@ -167,35 +177,12 @@
       {/each}
     </div>
 
-    <!-- Action buttons -->
-    <div class="flex w-[4.625rem] shrink-0 justify-center gap-0.5 pb-px">
-      {#if saveState === "saving"}
-        <div class="flex size-9 items-center justify-center">
-          <LoaderCircleIcon class="text-muted-foreground size-4 animate-spin" />
-        </div>
-      {:else if saveState === "saved"}
-        <div class="flex size-9 items-center justify-center">
-          <CircleCheckIcon class="size-4 text-green-500" />
-        </div>
-      {:else if isDirty}
-        <button
-          type="button"
-          onclick={() => doSave()}
-          class="text-muted-foreground hover:text-foreground hover:bg-muted flex size-9 cursor-pointer items-center justify-center rounded-md transition-colors"
-        >
-          <SaveIcon class="size-4" />
-          <span class="sr-only">Save</span>
-        </button>
-        <button
-          type="button"
-          onclick={revert}
-          class="text-muted-foreground hover:text-foreground hover:bg-muted flex size-9 cursor-pointer items-center justify-center rounded-md transition-colors"
-        >
-          <Undo2Icon class="size-4" />
-          <span class="sr-only">Revert</span>
-        </button>
-      {/if}
-    </div>
+    <InlineEditActions
+      dirty={isDirty}
+      {saveState}
+      onSave={() => doSave()}
+      onRevert={revert}
+    />
   </div>
 
   {#if fieldErrors._form}

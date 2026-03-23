@@ -1,12 +1,16 @@
 <script lang="ts">
   import InlineEditField from "$lib/client/components/forms/inline-edit-field.svelte";
   import InlineEditFieldGroup from "$lib/client/components/forms/inline-edit-field-group.svelte";
+  import InlineDropdown from "$lib/client/components/forms/inline-dropdown.svelte";
   import UnsavedChangesBar from "$lib/client/components/ui/unsaved-changes-bar.svelte";
   import * as Card from "$lib/client/components/ui/card/index.js";
   import { toast } from "svelte-sonner";
+  import { page } from "$app/stores";
+  import type { LocaleOption } from "$lib/shared/forms/locale-options.js";
 
   let username = $state("JohnDoe42");
-  let email = $state("john@example.com");
+  let locale = $state("en-US");
+  let timezone = $state("America/New_York");
 
   let nameFields = $state([
     {
@@ -27,13 +31,36 @@
 
   let nameFieldGroupRef: InlineEditFieldGroup | undefined = $state();
   let usernameFieldRef: InlineEditField | undefined = $state();
-  let emailFieldRef: InlineEditField | undefined = $state();
+  let localeRef: InlineDropdown | undefined = $state();
+  let timezoneRef: InlineDropdown | undefined = $state();
 
-  // Track dirty state from each field
-  let dirtyFields = $state({ name: false, username: false, email: false });
+  // Locale options resolved from Geo ref data via root layout
+  const rawLocales: LocaleOption[] = $derived(
+    ($page.data as { localeOptions?: LocaleOption[] }).localeOptions ?? [],
+  );
+  const localeOptions = $derived(
+    rawLocales.map((l) => ({ value: l.code, label: l.endonym, image: l.flag })),
+  );
+
+  const timezoneOptions = [
+    { value: "America/New_York", label: "Eastern (ET)" },
+    { value: "America/Chicago", label: "Central (CT)" },
+    { value: "America/Denver", label: "Mountain (MT)" },
+    { value: "America/Los_Angeles", label: "Pacific (PT)" },
+    { value: "Europe/London", label: "London (GMT)" },
+    { value: "Europe/Berlin", label: "Berlin (CET)" },
+    { value: "Europe/Paris", label: "Paris (CET)" },
+    { value: "Asia/Tokyo", label: "Tokyo (JST)" },
+  ];
+
+  let dirtyFields = $state({
+    name: false,
+    username: false,
+    locale: false,
+    timezone: false,
+  });
   const anyDirty = $derived(Object.values(dirtyFields).some(Boolean));
 
-  // --- Mock async callbacks ---
   async function mockSave(value: string) {
     await new Promise((r) => setTimeout(r, 1000));
     toast.success(`Saved: "${value}"`);
@@ -42,11 +69,6 @@
   async function mockSaveGroup(values: Record<string, string>) {
     await new Promise((r) => setTimeout(r, 1000));
     toast.success(`Saved: ${JSON.stringify(values)}`);
-  }
-
-  async function mockSaveFail() {
-    await new Promise((r) => setTimeout(r, 800));
-    throw new Error("Email change is not yet supported.");
   }
 
   function validateUsername(value: string) {
@@ -58,7 +80,6 @@
   }
 
   async function checkUsernameAvailable(value: string) {
-    // Simulate async availability check
     await new Promise((r) => setTimeout(r, 500));
     if (value.toLowerCase() === "admin") return "Username is already taken.";
     return undefined;
@@ -72,7 +93,6 @@
   }
 
   async function saveAll() {
-    // Save dirty fields sequentially
     if (nameFieldGroupRef?.getDirty()) {
       const ok = await nameFieldGroupRef.saveIfDirty();
       if (!ok) return;
@@ -81,8 +101,12 @@
       const ok = await usernameFieldRef.saveIfDirty();
       if (!ok) return;
     }
-    if (emailFieldRef?.getDirty()) {
-      const ok = await emailFieldRef.saveIfDirty();
+    if (localeRef?.getDirty()) {
+      const ok = await localeRef.saveIfDirty();
+      if (!ok) return;
+    }
+    if (timezoneRef?.getDirty()) {
+      const ok = await timezoneRef.saveIfDirty();
       if (!ok) return;
     }
   }
@@ -90,7 +114,8 @@
   function discardAll() {
     nameFieldGroupRef?.revert();
     usernameFieldRef?.revert();
-    emailFieldRef?.revert();
+    localeRef?.revert();
+    timezoneRef?.revert();
   }
 </script>
 
@@ -102,10 +127,10 @@
 
   <Card.Root>
     <Card.Header>
-      <Card.Title class="text-base">Name</Card.Title>
-      <Card.Description>Your first and last name as displayed to others.</Card.Description>
+      <Card.Title class="text-base">Your Information</Card.Title>
+      <Card.Description>Your name and unique identifier.</Card.Description>
     </Card.Header>
-    <Card.Content>
+    <Card.Content class="space-y-5">
       <InlineEditFieldGroup
         bind:fields={nameFields}
         validate={validateNameGroup}
@@ -113,17 +138,6 @@
         onDirtyChange={(d) => (dirtyFields.name = d)}
         bind:this={nameFieldGroupRef}
       />
-    </Card.Content>
-  </Card.Root>
-
-  <Card.Root>
-    <Card.Header>
-      <Card.Title class="text-base">Username</Card.Title>
-      <Card.Description>
-        Your unique identifier. Letters and numbers only. Try "admin" to see async validation.
-      </Card.Description>
-    </Card.Header>
-    <Card.Content>
       <InlineEditField
         bind:value={username}
         label="Username"
@@ -140,17 +154,25 @@
 
   <Card.Root>
     <Card.Header>
-      <Card.Title class="text-base">Email</Card.Title>
-      <Card.Description>Your email address. Changes are not yet supported.</Card.Description>
+      <Card.Title class="text-base">Language & Time</Card.Title>
+      <Card.Description>Your preferred language and timezone.</Card.Description>
     </Card.Header>
-    <Card.Content>
-      <InlineEditField
-        bind:value={email}
-        label="Email"
-        placeholder="Email address"
-        onSave={mockSaveFail}
-        onDirtyChange={(d) => (dirtyFields.email = d)}
-        bind:this={emailFieldRef}
+    <Card.Content class="space-y-5">
+      <InlineDropdown
+        bind:value={locale}
+        label="Language"
+        options={localeOptions}
+        onSave={mockSave}
+        onDirtyChange={(d) => (dirtyFields.locale = d)}
+        bind:this={localeRef}
+      />
+      <InlineDropdown
+        bind:value={timezone}
+        label="Timezone"
+        options={timezoneOptions}
+        onSave={mockSave}
+        onDirtyChange={(d) => (dirtyFields.timezone = d)}
+        bind:this={timezoneRef}
       />
     </Card.Content>
   </Card.Root>
