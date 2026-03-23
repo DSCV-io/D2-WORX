@@ -16,6 +16,20 @@ export default defineConfig(({ mode }) => {
     envDir,
     server: {
       allowedHosts: allowedHosts,
+      watch: {
+        // Docker bind mounts on Windows: native fs events don't propagate.
+        // Polling required. Exclude generated/output dirs to prevent
+        // infinite rebuild loops (.svelte-kit regenerates on watch events).
+        usePolling: true,
+        interval: 2000,
+        ignored: ["**/.svelte-kit/**", "**/build/**", "**/screenshots/**"],
+      },
+      hmr: {
+        // Cloudflare Tunnel: browser connects over wss://443, tunnel proxies
+        // the WebSocket upgrade to the Vite dev server inside Docker.
+        clientPort: 443,
+        protocol: "wss",
+      },
     },
     optimizeDeps: {
       include: [

@@ -62,6 +62,7 @@
     "@d2/i18n": "workspace:*",
     "@d2/idempotency": "workspace:*",
     "@d2/interfaces": "workspace:*",
+    "@d2/di": "workspace:*",
     "@d2/logging": "workspace:*",
     "pino": "10.3.1",
     "@d2/protos": "workspace:*",

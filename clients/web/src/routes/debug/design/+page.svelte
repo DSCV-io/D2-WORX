@@ -45,6 +45,12 @@
       label: m.webclient_design_demo_signup_form(),
       description: m.webclient_design_demo_signup_form_description(),
     },
+    {
+      href: "/debug/design/account-components" as const,
+      label: "Account Components",
+      description:
+        "ConfirmationDialog, InlineEditField, InlineEditFieldGroup, UnsavedChangesBar, UserAvatarMenu, SettingsNav",
+    },
   ]);
 </script>
 
@@ -115,7 +121,7 @@
     <div class="mb-8 flex flex-wrap gap-3">
       {#each demos as demo (demo.href)}
         <a
-          href={resolve(demo.href)}
+          href={resolve(demo.href as "/debug/design/contact-form")}
           class="group hover:border-primary hover:bg-accent rounded-lg border p-4 transition-colors"
         >
           <span class="group-hover:text-primary font-medium">{demo.label}</span>
