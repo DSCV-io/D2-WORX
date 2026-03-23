@@ -6,8 +6,6 @@
   import UserIcon from "@lucide/svelte/icons/user";
   import MailIcon from "@lucide/svelte/icons/mail";
   import ShieldIcon from "@lucide/svelte/icons/shield";
-  import MonitorSmartphoneIcon from "@lucide/svelte/icons/monitor-smartphone";
-  import ClockIcon from "@lucide/svelte/icons/clock";
   import TrashIcon from "@lucide/svelte/icons/trash-2";
 
   let { children }: { children: Snippet } = $props();
@@ -26,16 +24,6 @@
       icon: MailIcon,
     },
     { href: "/debug/design/account-components/security", label: "Security", icon: ShieldIcon },
-    {
-      href: "/debug/design/account-components/sessions",
-      label: "Sessions",
-      icon: MonitorSmartphoneIcon,
-    },
-    {
-      href: "/debug/design/account-components/recent-logins",
-      label: "Recent Logins",
-      icon: ClockIcon,
-    },
     {
       href: "/debug/design/account-components/deactivate",
       label: "Deactivate Account",
