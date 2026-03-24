@@ -11,11 +11,11 @@ describe("app-header.svelte", () => {
     await expect.element(trigger).toBeInTheDocument();
   });
 
-  it("should render the theme toggle button", async () => {
+  it("should render the preferences button", async () => {
     render(TestWrapper);
 
-    const themeToggle = page.getByRole("button", { name: /toggle theme/i });
-    await expect.element(themeToggle).toBeInTheDocument();
+    const prefsButton = page.getByRole("button", { name: /preferences/i });
+    await expect.element(prefsButton).toBeInTheDocument();
   });
 
   it("should render the breadcrumb area", async () => {

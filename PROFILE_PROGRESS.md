@@ -24,9 +24,9 @@
 - [x] 2F. InlineSwitch (on/off toggle for notification prefs)
 - [x] 2G. InlineDropdown (single-value select for locale, timezone, etc.)
 - [x] 2H. Debug demo pages (4-tab account-components: profile, email-phone, security, deactivate)
-- [ ] 2I. Mobile Public Nav
-- [ ] 2J. Component Tests
-- [ ] **Review Checkpoint 2** — svelte-check + lint clean
+- [x] 2I. Mobile Public Nav (responsive, preferences dropdown, consolidated across layouts)
+- [x] 2J. Component Tests (updated existing tests for nav/theme changes, 565 tests pass)
+- [x] **Review Checkpoint 2** — svelte-check clean, lint clean, format clean, 565 tests pass
 
 ## Phase 3: Account Route Group + Profile Tab
 
