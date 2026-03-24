@@ -20,3 +20,17 @@ export type {
   CheckFileAccessOutput,
   ICheckFileAccessHandler,
 } from "./check-file-access.js";
+
+export type {
+  GetFileVariantUrlInput,
+  GetFileVariantUrlOutput,
+  IGetFileVariantUrlHandler,
+} from "./get-file-variant-url.js";
+export { GET_FILE_VARIANT_URL_REDACTION } from "./get-file-variant-url.js";
+
+export type {
+  DownloadFileVariantInput,
+  DownloadFileVariantOutput,
+  IDownloadFileVariantHandler,
+} from "./download-file-variant.js";
+export { DOWNLOAD_FILE_VARIANT_REDACTION } from "./download-file-variant.js";

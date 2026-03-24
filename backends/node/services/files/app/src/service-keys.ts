@@ -139,6 +139,12 @@ export const ICheckHealthKey =
 export const ICheckFileAccessKey = createServiceKey<Queries.ICheckFileAccessHandler>(
   "Files.App.CheckFileAccess",
 );
+export const IGetFileVariantUrlKey = createServiceKey<Queries.IGetFileVariantUrlHandler>(
+  "Files.App.GetFileVariantUrl",
+);
+export const IDownloadFileVariantKey = createServiceKey<Queries.IDownloadFileVariantHandler>(
+  "Files.App.DownloadFileVariant",
+);
 
 // --- Messaging Handlers ---
 export const IPublishFileForProcessingKey =

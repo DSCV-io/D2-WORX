@@ -218,6 +218,18 @@ export type {
 
 export { CheckFileAccess } from "./implementations/cqrs/handlers/q/check-file-access.js";
 
+export { GetFileVariantUrl } from "./implementations/cqrs/handlers/q/get-file-variant-url.js";
+export type {
+  GetFileVariantUrlInput,
+  GetFileVariantUrlOutput,
+} from "./interfaces/cqrs/handlers/q/get-file-variant-url.js";
+
+export { DownloadFileVariant } from "./implementations/cqrs/handlers/q/download-file-variant.js";
+export type {
+  DownloadFileVariantInput,
+  DownloadFileVariantOutput,
+} from "./interfaces/cqrs/handlers/q/download-file-variant.js";
+
 // --- Utility Handlers ---
 export { ResolveFileAccess } from "./implementations/cqrs/handlers/u/resolve-file-access.js";
 
@@ -253,6 +265,8 @@ export {
   // CQRS keys (app-implemented)
   INotifyFileProcessedKey,
   ICheckFileAccessKey,
+  IGetFileVariantUrlKey,
+  IDownloadFileVariantKey,
   // Utility handler keys
   IResolveFileAccessKey,
   // App keys

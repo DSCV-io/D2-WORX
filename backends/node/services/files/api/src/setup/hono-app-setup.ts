@@ -197,8 +197,8 @@ export function buildHonoApp(options: HonoAppOptions): Hono {
   });
 
   protectedApp.route("/", createUploadRoutes(contextKeyConfigs));
-  protectedApp.route("/", createDownloadRoutes(contextKeyConfigs));
-  protectedApp.route("/", createVariantUrlRoutes(contextKeyConfigs));
+  protectedApp.route("/", createDownloadRoutes());
+  protectedApp.route("/", createVariantUrlRoutes());
   protectedApp.route("/", createListRoutes());
 
   app.route("/api/v1", protectedApp);

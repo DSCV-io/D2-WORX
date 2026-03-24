@@ -42,6 +42,8 @@ import {
   IListFilesKey,
   ICheckHealthKey,
   IContextKeyConfigMapKey,
+  IGetFileVariantUrlKey,
+  IDownloadFileVariantKey,
 } from "./service-keys.js";
 
 // Handler implementations
@@ -56,6 +58,8 @@ import { CheckHealth } from "./implementations/cqrs/handlers/q/check-health.js";
 import { NotifyFileProcessed } from "./implementations/cqrs/handlers/c/notify-file-processed.js";
 import { CheckFileAccess } from "./implementations/cqrs/handlers/q/check-file-access.js";
 import { ResolveFileAccess } from "./implementations/cqrs/handlers/u/resolve-file-access.js";
+import { GetFileVariantUrl } from "./implementations/cqrs/handlers/q/get-file-variant-url.js";
+import { DownloadFileVariant } from "./implementations/cqrs/handlers/q/download-file-variant.js";
 
 /** DI key for the files-scoped AcquireLock handler (registered in composition root). */
 export const IFilesAcquireLockKey: ServiceKey<DistributedCache.IAcquireLockHandler> =
@@ -284,5 +288,29 @@ export function addFilesApp(
   services.addTransient(
     ICheckFileAccessKey,
     (sp) => new CheckFileAccess(sp.resolve(ICallCanAccessKey), sp.resolve(IHandlerContextKey)),
+  );
+
+  services.addTransient(
+    IGetFileVariantUrlKey,
+    (sp) =>
+      new GetFileVariantUrl(
+        sp.resolve(IFindFileByIdKey),
+        contextKeyConfigs,
+        sp.resolve(IHandlerContextKey),
+        sp.resolve(IResolveFileAccessKey),
+        sp.resolve(IPresignGetUrlKey),
+      ),
+  );
+
+  services.addTransient(
+    IDownloadFileVariantKey,
+    (sp) =>
+      new DownloadFileVariant(
+        sp.resolve(IFindFileByIdKey),
+        contextKeyConfigs,
+        sp.resolve(IHandlerContextKey),
+        sp.resolve(IResolveFileAccessKey),
+        sp.resolve(IGetStorageObjectKey),
+      ),
   );
 }

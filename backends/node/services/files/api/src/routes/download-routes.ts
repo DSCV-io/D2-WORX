@@ -1,27 +1,20 @@
 import { Hono } from "hono";
 import type { ServiceScope } from "@d2/di";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
-import type { ContextKeyConfigMap } from "@d2/files-app";
-import {
-  IGetFileMetadataKey,
-  IGetStorageObjectKey,
-  IResolveFileAccessKey,
-  buildVariantStorageKey,
-} from "@d2/files-app";
-import { cleanDisplayStr } from "@d2/utilities";
+import { IDownloadFileVariantKey } from "@d2/files-app";
 import { SCOPE_KEY } from "../context-keys.js";
 
 /**
- * Download routes — file download proxy via MinIO.
+ * Download routes — file download proxy via storage.
  *
- * `GET /files/:fileId/:variantName` — streams file content from storage.
+ * `GET /files/:fileId/:variantName` — streams file content. Access control,
+ * file lookup, variant validation, and storage retrieval are handled by the
+ * app-layer DownloadFileVariant handler.
  *
- * Access control: JWT required (middleware pipeline) + read resolution check
- * (jwt_owner, jwt_org, authenticated, or callback — per context key config).
- *
- * Sets aggressive caching for ready files (immutable content-addressable keys).
+ * Uses `Content-Disposition: attachment` to prevent XSS via uploaded SVG/HTML.
+ * Sets aggressive caching for immutable content-addressable files.
  */
-export function createDownloadRoutes(contextKeyConfigs: ContextKeyConfigMap): Hono {
+export function createDownloadRoutes(): Hono {
   const app = new Hono();
 
   app.get("/files/:fileId/:variantName", async (c) => {
@@ -29,107 +22,29 @@ export function createDownloadRoutes(contextKeyConfigs: ContextKeyConfigMap): Ho
     const scope = (c as any).get(SCOPE_KEY) as ServiceScope;
     const { fileId, variantName } = c.req.param();
 
-    // Look up file metadata
-    const metadataHandler = scope.resolve(IGetFileMetadataKey);
-    const metaResult = await metadataHandler.handleAsync({ fileId });
+    const handler = scope.resolve(IDownloadFileVariantKey);
+    const result = await handler.handleAsync({ fileId, variantName });
 
-    if (!metaResult.success || !metaResult.data) {
+    if (!result.success || !result.data) {
       return c.json(
         {
           success: false,
-          statusCode: metaResult.statusCode,
-          messages: metaResult.messages,
+          statusCode: result.statusCode,
+          messages: result.messages,
           data: null,
         },
-        metaResult.statusCode as ContentfulStatusCode,
+        result.statusCode as ContentfulStatusCode,
       );
     }
 
-    const file = metaResult.data.file;
-
-    // Only serve ready files
-    if (file.status !== "ready") {
-      return c.json(
-        {
-          success: false,
-          statusCode: 404,
-          messages: ["File is not ready for download."],
-          data: null,
-        },
-        404 as ContentfulStatusCode,
-      );
-    }
-
-    // Check read access via context key resolution strategy
-    const ckConfig = contextKeyConfigs.get(file.contextKey);
-    if (!ckConfig) {
-      return c.json(
-        { success: false, statusCode: 403, messages: ["Unknown context key."], data: null },
-        403 as ContentfulStatusCode,
-      );
-    }
-
-    const accessHandler = scope.resolve(IResolveFileAccessKey);
-    const accessResult = await accessHandler.handleAsync({
-      config: ckConfig,
-      action: "read",
-      relatedEntityId: file.relatedEntityId,
-    });
-
-    if (!accessResult.success) {
-      return c.json(
-        {
-          success: false,
-          statusCode: accessResult.statusCode,
-          messages: accessResult.messages,
-          data: null,
-        },
-        accessResult.statusCode as ContentfulStatusCode,
-      );
-    }
-
-    // Verify the requested variant exists (variant identifier is `size`)
-    const variant = file.variants?.find((v) => v.size === variantName);
-    if (!variant) {
-      return c.json(
-        { success: false, statusCode: 404, messages: ["Variant not found."], data: null },
-        404 as ContentfulStatusCode,
-      );
-    }
-
-    // Build storage key and stream from MinIO
-    const storageKey = buildVariantStorageKey(
-      {
-        id: file.id,
-        contextKey: file.contextKey,
-        relatedEntityId: file.relatedEntityId,
-      },
-      variantName,
-      variant.contentType,
-    );
-
-    const storageHandler = scope.resolve(IGetStorageObjectKey);
-    const storageResult = await storageHandler.handleAsync({ key: storageKey });
-
-    if (!storageResult.success || !storageResult.data) {
-      return c.json(
-        { success: false, statusCode: 404, messages: ["File not found in storage."], data: null },
-        404 as ContentfulStatusCode,
-      );
-    }
+    const { buffer, contentType, displayName } = result.data;
 
     const headers = new Headers();
-    headers.set("Content-Type", variant.contentType);
+    headers.set("Content-Type", contentType);
     headers.set("Cache-Control", "public, max-age=31536000, immutable");
+    headers.set("Content-Disposition", `attachment; filename="${displayName}"`);
 
-    // Always use `attachment` to prevent XSS via uploaded SVG/HTML.
-    const safeName = cleanDisplayStr(file.displayName)?.slice(0, 255) ?? "download";
-    headers.set("Content-Disposition", `attachment; filename="${safeName}"`);
-
-    return new Response(new Uint8Array(storageResult.data.buffer), {
-      status: 200,
-      headers,
-    });
+    return new Response(new Uint8Array(buffer), { status: 200, headers });
   });
 
   return app;
