@@ -30,28 +30,30 @@
 
 ## Phase 3: Account Route Group + Profile Tab
 
-- [ ] 3A. Route Group + Layout
-- [ ] 3B. Profile Tab (inline edits)
-- [ ] 3C. Old Profile Route Redirect
-- [ ] 3D. SvelteKit Files API Proxy
-- [ ] **Review Checkpoint 3** — profile page renders, edits work
+- [x] 3A. Route Group + Layout (`/account/` with PublicNav + SettingsNav, `requireAuth()` guard)
+- [x] 3B. Profile Tab (real save handlers for name + username, mock save for locale/timezone)
+- [x] 3C. Delete old profile placeholder
+- [x] 3D. Account API Proxy (`/api/account/[...path]` → Auth service)
+- [x] 3E. Stub pages (email-phone, security with danger zone consolidated)
+- [x] 3F. i18n keys (50+ `account_*` keys, translated in all 10 locales)
+- [x] 3G. Fix theme/mode infinite loop (SegmentedControl `onchange`, removed local state + effects)
+- [x] 3H. Fix user-avatar-menu `goto` → `resolve()` for `/account/profile`
+- [ ] **Review Checkpoint 3** — profile page renders, edits work, container restarted
 
-## Phase 4: Security, Sessions, Recent Logins, Danger Zone
+## Phase 4: Security, Sessions, Recent Logins
 
-- [ ] 4A. Security Tab (change password)
-- [ ] 4B. Sessions Tab (list + revoke)
+- [ ] 4A. Security Tab (change password form, wired to BetterAuth)
+- [ ] 4B. Sessions Tab (list + revoke, UA parsing)
 - [ ] 4C. Recent Logins Tab (events + map)
-- [ ] 4D. Danger Zone Tab (stubbed)
 - [ ] **Review Checkpoint 4** — all tabs functional
 
 ## Phase 5: SignalR Integration + Avatar Upload
 
-- [ ] 5A. SignalR Client Infrastructure
-- [ ] 5B. Avatar Upload Client
-- [ ] 5C. AvatarUploader Component
-- [ ] 5D. Wire to Profile Page
-- [ ] 5E. SignalR Environment (docker-compose)
-- [ ] **Review Checkpoint 5** — avatar upload works E2E
+- [ ] 5A. SignalR Client Infrastructure (@microsoft/signalr, JWT via query param)
+- [ ] 5B. Avatar Upload Client (browser → Files REST API directly, presigned URL → MinIO PUT)
+- [ ] 5C. AvatarUploader Component with client-side crop/zoom (Canvas/cropperjs)
+- [ ] 5D. Wire to Profile Page + SignalR for file:ready/file:rejected events
+- [ ] **Review Checkpoint 5** — avatar upload works E2E (select → crop → upload → process → display)
 
 ## Phase 6: Navigation Updates
 

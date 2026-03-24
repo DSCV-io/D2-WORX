@@ -19,34 +19,28 @@
   import MonitorIcon from "@lucide/svelte/icons/monitor";
   import LanguagesIcon from "@lucide/svelte/icons/languages";
 
-  // --- Mode ---
+  // --- Mode (read from source of truth, write via onchange) ---
   const modeSegments = $derived([
     { value: "light", label: m.common_ui_mode_light(), icon: SunIcon },
     { value: "system", label: m.common_ui_mode_system(), icon: MonitorIcon },
     { value: "dark", label: m.common_ui_mode_dark(), icon: MoonIcon },
   ]);
 
-  let modeValue = $state(userPrefersMode.current ?? "system");
-  let lastSyncedMode = userPrefersMode.current ?? "system";
+  const currentMode = $derived(userPrefersMode.current ?? "system");
 
-  $effect(() => {
-    if (modeValue !== lastSyncedMode) {
-      lastSyncedMode = modeValue;
-      setMode(modeValue as "light" | "dark" | "system");
-    }
-  });
+  function handleModeChange(value: string) {
+    setMode(value as "light" | "dark" | "system");
+  }
 
-  // --- Theme ---
+  // --- Theme (read from source of truth, write via onchange) ---
   const themeSegments = $derived(builtInPresets.map((p) => ({ value: p.name, label: p.name })));
 
-  let themeValue = $state(getActivePresetName() ?? builtInPresets[0]?.name ?? "");
+  const currentTheme = $derived(getActivePresetName() ?? builtInPresets[0]?.name ?? "");
 
-  $effect(() => {
-    const preset = builtInPresets.find((p) => p.name === themeValue);
-    if (preset && themeValue !== getActivePresetName()) {
-      applyPreset(preset);
-    }
-  });
+  function handleThemeChange(value: string) {
+    const preset = builtInPresets.find((p) => p.name === value);
+    if (preset) applyPreset(preset);
+  }
 
   // --- Language modal ---
   let languageModalOpen = $state(false);
@@ -94,7 +88,8 @@
           </p>
           <SegmentedControl
             segments={modeSegments}
-            bind:value={modeValue}
+            value={currentMode}
+            onchange={handleModeChange}
             size="sm"
             class="w-full"
           />
@@ -105,7 +100,8 @@
           </p>
           <SegmentedControl
             segments={themeSegments}
-            bind:value={themeValue}
+            value={currentTheme}
+            onchange={handleThemeChange}
             size="sm"
             class="w-full"
           />

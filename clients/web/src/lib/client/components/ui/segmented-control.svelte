@@ -14,11 +14,13 @@
     segments,
     value = $bindable(""),
     size = "default",
+    onchange,
     class: className,
   }: {
     segments: Segment[];
     value?: string;
     size?: "sm" | "default";
+    onchange?: (value: string) => void;
     class?: string;
   } = $props();
 
@@ -65,7 +67,10 @@
     {@const active = segment.value === value}
     <button
       type="button"
-      onclick={() => (value = segment.value)}
+      onclick={() => {
+        value = segment.value;
+        onchange?.(segment.value);
+      }}
       class={cn(
         "relative z-10 flex cursor-pointer items-center justify-center gap-1.5 rounded-md px-4 py-1.5 font-medium whitespace-nowrap transition-colors",
         sizeClasses.text,
