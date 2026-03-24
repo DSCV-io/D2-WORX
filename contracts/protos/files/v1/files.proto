@@ -24,7 +24,7 @@ message CanAccessRequest {
   string context_key = 1;
   string related_entity_id = 2;
   string requesting_user_id = 3;
-  string requesting_org_id = 4;
+  optional string requesting_org_id = 4;
   string action = 5; // "upload" | "read"
 }
 

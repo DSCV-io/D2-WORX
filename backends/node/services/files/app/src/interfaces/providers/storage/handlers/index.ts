@@ -3,6 +3,7 @@ import type { IGetStorageObject } from "./get-storage-object.js";
 import type { IDeleteStorageObject } from "./delete-storage-object.js";
 import type { IDeleteStorageObjects } from "./delete-storage-objects.js";
 import type { IPresignPutUrl } from "./presign-put-url.js";
+import type { IPresignGetUrl } from "./presign-get-url.js";
 import type { IHeadStorageObject } from "./head-storage-object.js";
 import type { IPingStorage } from "./ping-storage.js";
 
@@ -32,6 +33,8 @@ export type {
 
 export type { PresignPutUrlInput, PresignPutUrlOutput, IPresignPutUrl } from "./presign-put-url.js";
 
+export type { PresignGetUrlInput, PresignGetUrlOutput, IPresignGetUrl } from "./presign-get-url.js";
+
 export type {
   HeadStorageObjectInput,
   HeadStorageObjectOutput,
@@ -47,6 +50,7 @@ export interface FileStorageHandlers {
   readonly delete: IDeleteStorageObject;
   readonly deleteMany: IDeleteStorageObjects;
   readonly presignPut: IPresignPutUrl;
+  readonly presignGet: IPresignGetUrl;
   readonly head: IHeadStorageObject;
   readonly ping: IPingStorage;
 }

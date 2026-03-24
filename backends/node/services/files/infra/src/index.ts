@@ -32,6 +32,7 @@ export { GetStorageObject } from "./providers/storage/handlers/get-storage-objec
 export { DeleteStorageObject } from "./providers/storage/handlers/delete-storage-object.js";
 export { DeleteStorageObjects } from "./providers/storage/handlers/delete-storage-objects.js";
 export { PresignPutUrl } from "./providers/storage/handlers/presign-put-url.js";
+export { PresignGetUrl } from "./providers/storage/handlers/presign-get-url.js";
 export { HeadStorageObject } from "./providers/storage/handlers/head-storage-object.js";
 export { PingStorage } from "./providers/storage/handlers/ping-storage.js";
 

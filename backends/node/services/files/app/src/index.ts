@@ -52,6 +52,9 @@ export type {
   PresignPutUrlInput,
   PresignPutUrlOutput,
   IPresignPutUrl,
+  PresignGetUrlInput,
+  PresignGetUrlOutput,
+  IPresignGetUrl,
   HeadStorageObjectInput,
   HeadStorageObjectOutput,
   IHeadStorageObject,
@@ -236,6 +239,7 @@ export {
   IDeleteStorageObjectKey,
   IDeleteStorageObjectsKey,
   IPresignPutUrlKey,
+  IPresignGetUrlKey,
   IHeadStorageObjectKey,
   IPingStorageKey,
   // Provider keys

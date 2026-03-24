@@ -58,7 +58,7 @@ export interface FileProcessedResponse {
 }
 
 function createBaseCanAccessRequest(): CanAccessRequest {
-  return { contextKey: "", relatedEntityId: "", requestingUserId: "", requestingOrgId: "", action: "" };
+  return { contextKey: "", relatedEntityId: "", requestingUserId: "", requestingOrgId: undefined, action: "" };
 }
 
 export const CanAccessRequest: MessageFns<CanAccessRequest> = {
@@ -72,7 +72,7 @@ export const CanAccessRequest: MessageFns<CanAccessRequest> = {
     if (message.requestingUserId !== undefined && message.requestingUserId !== "") {
       writer.uint32(26).string(message.requestingUserId);
     }
-    if (message.requestingOrgId !== undefined && message.requestingOrgId !== "") {
+    if (message.requestingOrgId !== undefined) {
       writer.uint32(34).string(message.requestingOrgId);
     }
     if (message.action !== undefined && message.action !== "") {
@@ -158,7 +158,7 @@ export const CanAccessRequest: MessageFns<CanAccessRequest> = {
         ? globalThis.String(object.requestingOrgId)
         : isSet(object.requesting_org_id)
         ? globalThis.String(object.requesting_org_id)
-        : "",
+        : undefined,
       action: isSet(object.action) ? globalThis.String(object.action) : "",
     };
   },
@@ -174,7 +174,7 @@ export const CanAccessRequest: MessageFns<CanAccessRequest> = {
     if (message.requestingUserId !== undefined && message.requestingUserId !== "") {
       obj.requestingUserId = message.requestingUserId;
     }
-    if (message.requestingOrgId !== undefined && message.requestingOrgId !== "") {
+    if (message.requestingOrgId !== undefined) {
       obj.requestingOrgId = message.requestingOrgId;
     }
     if (message.action !== undefined && message.action !== "") {
@@ -191,7 +191,7 @@ export const CanAccessRequest: MessageFns<CanAccessRequest> = {
     message.contextKey = object.contextKey ?? "";
     message.relatedEntityId = object.relatedEntityId ?? "";
     message.requestingUserId = object.requestingUserId ?? "";
-    message.requestingOrgId = object.requestingOrgId ?? "";
+    message.requestingOrgId = object.requestingOrgId ?? undefined;
     message.action = object.action ?? "";
     return message;
   },

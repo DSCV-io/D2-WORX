@@ -4,27 +4,27 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { ContextKeyConfigMap } from "@d2/files-app";
 import {
   IGetFileMetadataKey,
-  IGetStorageObjectKey,
+  IPresignGetUrlKey,
   IResolveFileAccessKey,
   buildVariantStorageKey,
 } from "@d2/files-app";
-import { cleanDisplayStr } from "@d2/utilities";
 import { SCOPE_KEY } from "../context-keys.js";
 
 /**
- * Download routes — file download proxy via MinIO.
+ * Variant URL routes — returns presigned GET URLs for file variants.
  *
- * `GET /files/:fileId/:variantName` — streams file content from storage.
+ * `GET /files/:fileId/:variantName/url` — returns a time-limited presigned URL
+ * that browsers can use directly in `<img src>` or `fetch()`. The presigned URL
+ * points at the public S3 endpoint (e.g., cloudflared tunnel to MinIO).
  *
  * Access control: JWT required (middleware pipeline) + read resolution check
  * (jwt_owner, jwt_org, authenticated, or callback — per context key config).
- *
- * Sets aggressive caching for ready files (immutable content-addressable keys).
+ * The presigned URL itself is public for its lifetime — the access gate is here.
  */
-export function createDownloadRoutes(contextKeyConfigs: ContextKeyConfigMap): Hono {
+export function createVariantUrlRoutes(contextKeyConfigs: ContextKeyConfigMap): Hono {
   const app = new Hono();
 
-  app.get("/files/:fileId/:variantName", async (c) => {
+  app.get("/files/:fileId/:variantName/url", async (c) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const scope = (c as any).get(SCOPE_KEY) as ServiceScope;
     const { fileId, variantName } = c.req.param();
@@ -88,7 +88,7 @@ export function createDownloadRoutes(contextKeyConfigs: ContextKeyConfigMap): Ho
       );
     }
 
-    // Verify the requested variant exists (variant identifier is `size`)
+    // Verify the requested variant exists
     const variant = file.variants?.find((v) => v.size === variantName);
     if (!variant) {
       return c.json(
@@ -97,7 +97,7 @@ export function createDownloadRoutes(contextKeyConfigs: ContextKeyConfigMap): Ho
       );
     }
 
-    // Build storage key and stream from MinIO
+    // Build storage key and generate presigned GET URL
     const storageKey = buildVariantStorageKey(
       {
         id: file.id,
@@ -108,28 +108,30 @@ export function createDownloadRoutes(contextKeyConfigs: ContextKeyConfigMap): Ho
       variant.contentType,
     );
 
-    const storageHandler = scope.resolve(IGetStorageObjectKey);
-    const storageResult = await storageHandler.handleAsync({ key: storageKey });
+    const presignHandler = scope.resolve(IPresignGetUrlKey);
+    const presignResult = await presignHandler.handleAsync({ key: storageKey });
 
-    if (!storageResult.success || !storageResult.data) {
+    if (!presignResult.success || !presignResult.data) {
       return c.json(
-        { success: false, statusCode: 404, messages: ["File not found in storage."], data: null },
-        404 as ContentfulStatusCode,
+        {
+          success: false,
+          statusCode: presignResult.statusCode,
+          messages: presignResult.messages,
+          data: null,
+        },
+        presignResult.statusCode as ContentfulStatusCode,
       );
     }
 
-    const headers = new Headers();
-    headers.set("Content-Type", variant.contentType);
-    headers.set("Cache-Control", "public, max-age=31536000, immutable");
-
-    // Always use `attachment` to prevent XSS via uploaded SVG/HTML.
-    const safeName = cleanDisplayStr(file.displayName)?.slice(0, 255) ?? "download";
-    headers.set("Content-Disposition", `attachment; filename="${safeName}"`);
-
-    return new Response(new Uint8Array(storageResult.data.buffer), {
-      status: 200,
-      headers,
-    });
+    return c.json(
+      {
+        success: true,
+        statusCode: 200,
+        messages: [],
+        data: { url: presignResult.data.url },
+      },
+      200 as ContentfulStatusCode,
+    );
   });
 
   return app;

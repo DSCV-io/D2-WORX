@@ -4,6 +4,7 @@ import type { ServiceScope } from "@d2/di";
 import type { IRequestContext } from "@d2/handler";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { IUploadFileKey } from "@d2/files-app";
+import { cleanDisplayStr } from "@d2/utilities";
 import type { ContextKeyConfigMap } from "@d2/files-app";
 import { SCOPE_KEY, REQUEST_CONTEXT_KEY } from "../context-keys.js";
 
@@ -95,7 +96,7 @@ async function handleUpload(
     contextKey,
     relatedEntityId,
     contentType: body.contentType ?? "application/octet-stream",
-    displayName: body.displayName ?? "unnamed",
+    displayName: cleanDisplayStr(body.displayName) ?? "unnamed",
     sizeBytes: body.sizeBytes ?? 0,
   });
 

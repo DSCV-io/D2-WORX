@@ -20,6 +20,7 @@ import {
   IDeleteStorageObjectKey,
   IDeleteStorageObjectsKey,
   IPresignPutUrlKey,
+  IPresignGetUrlKey,
   IHeadStorageObjectKey,
   IPingStorageKey,
   // Provider keys
@@ -54,6 +55,7 @@ import { GetStorageObject } from "./providers/storage/handlers/get-storage-objec
 import { DeleteStorageObject } from "./providers/storage/handlers/delete-storage-object.js";
 import { DeleteStorageObjects } from "./providers/storage/handlers/delete-storage-objects.js";
 import { PresignPutUrl } from "./providers/storage/handlers/presign-put-url.js";
+import { PresignGetUrl } from "./providers/storage/handlers/presign-get-url.js";
 import { HeadStorageObject } from "./providers/storage/handlers/head-storage-object.js";
 import { PingStorage } from "./providers/storage/handlers/ping-storage.js";
 
@@ -86,7 +88,7 @@ export interface FilesInfraConfig {
   readonly signalrApiKey: string;
   /**
    * Optional S3 client configured with a browser-reachable endpoint.
-   * Used only by PresignPutUrl to generate URLs that browsers can PUT to directly
+   * Used by PresignPutUrl and PresignGetUrl to generate URLs that browsers can reach directly
    * (e.g., via a cloudflared tunnel to MinIO). Falls back to `s3` if not provided.
    */
   readonly s3Public?: S3Client;
@@ -177,6 +179,10 @@ export function addFilesInfra(
   services.addTransient(
     IPresignPutUrlKey,
     (sp) => new PresignPutUrl(s3Public ?? s3, bucketName, sp.resolve(IHandlerContextKey)),
+  );
+  services.addTransient(
+    IPresignGetUrlKey,
+    (sp) => new PresignGetUrl(s3Public ?? s3, bucketName, sp.resolve(IHandlerContextKey)),
   );
   services.addTransient(
     IHeadStorageObjectKey,

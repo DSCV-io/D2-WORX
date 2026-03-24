@@ -51,12 +51,13 @@ export class ResolveFileAccess
 
       case "callback": {
         if (!this.accessChecker) return D2Result.forbidden();
+        if (!request.userId) return D2Result.unauthorized();
         const result = await this.accessChecker.handleAsync({
           address: input.config.callbackAddress,
           contextKey: input.config.contextKey,
           relatedEntityId: input.relatedEntityId,
-          requestingUserId: request.userId ?? "",
-          requestingOrgId: request.targetOrgId ?? "",
+          requestingUserId: request.userId,
+          requestingOrgId: request.targetOrgId,
           action: input.action,
         });
         return result.success && result.data?.allowed ? D2Result.ok() : D2Result.forbidden();

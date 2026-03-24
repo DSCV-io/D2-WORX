@@ -17,6 +17,7 @@ import type {
   IDeleteStorageObject,
   IDeleteStorageObjects,
   IPresignPutUrl,
+  IPresignGetUrl,
   IHeadStorageObject,
   IPingStorage,
 } from "./interfaces/providers/storage/handlers/index.js";
@@ -76,6 +77,7 @@ export const IDeleteStorageObjectsKey = createServiceKey<IDeleteStorageObjects>(
   "Files.Infra.DeleteStorageObjects",
 );
 export const IPresignPutUrlKey = createServiceKey<IPresignPutUrl>("Files.Infra.PresignPutUrl");
+export const IPresignGetUrlKey = createServiceKey<IPresignGetUrl>("Files.Infra.PresignGetUrl");
 export const IHeadStorageObjectKey = createServiceKey<IHeadStorageObject>(
   "Files.Infra.HeadStorageObject",
 );

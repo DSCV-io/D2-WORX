@@ -27,6 +27,7 @@ import { createHealthRoutes } from "../routes/health-routes.js";
 import { createUploadRoutes } from "../routes/upload-routes.js";
 import { createDownloadRoutes } from "../routes/download-routes.js";
 import { createListRoutes } from "../routes/list-routes.js";
+import { createVariantUrlRoutes } from "../routes/variant-url-routes.js";
 
 export interface HonoAppOptions {
   provider: ServiceProvider;
@@ -196,7 +197,8 @@ export function buildHonoApp(options: HonoAppOptions): Hono {
   });
 
   protectedApp.route("/", createUploadRoutes(contextKeyConfigs));
-  protectedApp.route("/", createDownloadRoutes());
+  protectedApp.route("/", createDownloadRoutes(contextKeyConfigs));
+  protectedApp.route("/", createVariantUrlRoutes(contextKeyConfigs));
   protectedApp.route("/", createListRoutes());
 
   app.route("/api/v1", protectedApp);

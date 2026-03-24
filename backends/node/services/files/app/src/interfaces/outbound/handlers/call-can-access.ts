@@ -5,7 +5,7 @@ export interface CallCanAccessInput {
   readonly contextKey: string;
   readonly relatedEntityId: string;
   readonly requestingUserId: string;
-  readonly requestingOrgId: string;
+  readonly requestingOrgId?: string;
   readonly action: "upload" | "read";
 }
 
