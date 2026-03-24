@@ -20,6 +20,8 @@
   const currentPath = $derived(page.url.pathname);
 </script>
 
+<!-- eslint-disable svelte/no-navigation-without-resolve -- generic nav component: callers pass pre-resolved paths -->
+
 <!-- Desktop: vertical left rail -->
 <nav
   class={cn("flex flex-col gap-0.5", "max-md:hidden", "sticky top-20 w-52 shrink-0", className)}

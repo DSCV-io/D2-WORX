@@ -131,7 +131,6 @@ export function createAuth(
   secondaryStorage?: SecondaryStorage,
   hooks?: AuthHooks,
 ) {
-  // eslint-disable-next-line no-console
   const log: AuthHooksLogger = hooks?.logger ?? { warn: console.warn, debug: console.debug };
   const sessionExpiresIn = config.sessionExpiresIn ?? AUTH_CONFIG_DEFAULTS.sessionExpiresIn;
   const sessionUpdateAge = config.sessionUpdateAge ?? AUTH_CONFIG_DEFAULTS.sessionUpdateAge;

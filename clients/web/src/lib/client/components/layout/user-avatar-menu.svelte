@@ -12,7 +12,7 @@
     applyPreset,
     getActivePresetName,
   } from "$lib/client/components/design/theme-state.svelte.js";
-  import UserIcon from "@lucide/svelte/icons/user";
+  import SettingsIcon from "@lucide/svelte/icons/settings";
   import LogOutIcon from "@lucide/svelte/icons/log-out";
   import LanguagesIcon from "@lucide/svelte/icons/languages";
   import SunIcon from "@lucide/svelte/icons/sun";
@@ -132,10 +132,11 @@
 
     <DropdownMenu.Separator />
 
-    <!-- Profile -->
+    <!-- Profile — route created in Phase 3; using bare path until then -->
+    <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
     <DropdownMenu.Item onSelect={() => goto("/account/profile")}>
-      <UserIcon class="mr-2 size-4" />
-      {m.common_ui_profile()}
+      <SettingsIcon class="mr-2 size-4" />
+      {m.common_ui_account()}
     </DropdownMenu.Item>
 
     <DropdownMenu.Separator />

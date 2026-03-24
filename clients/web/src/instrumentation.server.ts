@@ -124,7 +124,6 @@ const logsEndpoint = process.env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT;
 const metricsEndpoint = process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT;
 
 if (!tracesEndpoint || !logsEndpoint || !metricsEndpoint) {
-  // eslint-disable-next-line no-console
   console.error(
     "[OTel] FATAL: Missing OTEL_EXPORTER_OTLP_*_ENDPOINT env vars. " +
       "Telemetry will not be exported. Set OTEL_EXPORTER_OTLP_TRACES_ENDPOINT, " +

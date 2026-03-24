@@ -11,6 +11,7 @@
     applyPreset,
     getActivePresetName,
   } from "$lib/client/components/design/theme-state.svelte.js";
+  import * as m from "$lib/paraglide/messages.js";
 </script>
 
 <DropdownMenu.Root>
@@ -20,7 +21,7 @@
         {...props}
         variant="ghost"
         size="icon"
-        aria-label="Select theme"
+        aria-label={m.common_ui_select_theme()}
       >
         <PaletteIcon class="size-4" />
       </Button>

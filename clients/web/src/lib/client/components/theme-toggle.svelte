@@ -6,6 +6,7 @@
   import { mode, userPrefersMode, setMode } from "mode-watcher";
   import { Button } from "$lib/client/components/ui/button/index.js";
   import * as DropdownMenu from "$lib/client/components/ui/dropdown-menu/index.js";
+  import * as m from "$lib/paraglide/messages.js";
 </script>
 
 <DropdownMenu.Root>
@@ -15,7 +16,7 @@
         {...props}
         variant="ghost"
         size="icon"
-        aria-label="Toggle theme"
+        aria-label={m.common_ui_toggle_mode()}
       >
         {#if mode.current === "light"}
           <SunIcon class="size-4" />
@@ -28,21 +29,21 @@
   <DropdownMenu.Content align="end">
     <DropdownMenu.Item onclick={() => setMode("light")}>
       <SunIcon class="mr-2 size-4" />
-      Light
+      {m.common_ui_mode_light()}
       {#if userPrefersMode.current === "light"}
         <CheckIcon class="ml-auto size-4" />
       {/if}
     </DropdownMenu.Item>
     <DropdownMenu.Item onclick={() => setMode("dark")}>
       <MoonIcon class="mr-2 size-4" />
-      Dark
+      {m.common_ui_mode_dark()}
       {#if userPrefersMode.current === "dark"}
         <CheckIcon class="ml-auto size-4" />
       {/if}
     </DropdownMenu.Item>
     <DropdownMenu.Item onclick={() => setMode("system")}>
       <MonitorIcon class="mr-2 size-4" />
-      System
+      {m.common_ui_mode_system()}
       {#if userPrefersMode.current === "system"}
         <CheckIcon class="ml-auto size-4" />
       {/if}

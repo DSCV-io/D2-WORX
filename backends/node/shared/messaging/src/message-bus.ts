@@ -14,9 +14,7 @@ import type {
 import { ConsumerResult } from "./types.js";
 
 const CONSOLE_FALLBACK: MessageBusLogger = {
-  // eslint-disable-next-line no-console
   warn: (msg, ...args) => console.warn(`[MessageBus] ${msg}`, ...args),
-  // eslint-disable-next-line no-console
   error: (msg, ...args) => console.error(`[MessageBus] ${msg}`, ...args),
 };
 
