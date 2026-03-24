@@ -38,27 +38,35 @@
 - [x] 3F. i18n keys (50+ `account_*` keys, translated in all 10 locales)
 - [x] 3G. Fix theme/mode infinite loop (SegmentedControl `onchange`, removed local state + effects)
 - [x] 3H. Fix user-avatar-menu `goto` → `resolve()` for `/account/profile`
-- [ ] **Review Checkpoint 3** — profile page renders, edits work, container restarted
+- [x] **Review Checkpoint 3** — committed, container restarted
 
-## Phase 4: Security, Sessions, Recent Logins
+## Phase 4: SignalR Integration + Avatar Upload + Profile Pic Editor
 
-- [ ] 4A. Security Tab (change password form, wired to BetterAuth)
-- [ ] 4B. Sessions Tab (list + revoke, UA parsing)
-- [ ] 4C. Recent Logins Tab (events + map)
-- [ ] **Review Checkpoint 4** — all tabs functional
+- [ ] 4A. SignalR Client Infrastructure (@microsoft/signalr, JWT via query param, Svelte 5 runes)
+- [ ] 4B. Avatar Upload Client (browser → Files REST API directly, presigned URL → MinIO PUT)
+- [ ] 4C. Client-side crop/zoom editor (Canvas or cropperjs, circle frame)
+- [ ] 4D. AvatarUploader Component (select → crop → upload → SignalR status → display)
+- [ ] 4E. Wire avatar to Profile page
+- [ ] **Review Checkpoint 4** — avatar upload works E2E
 
-## Phase 5: SignalR Integration + Avatar Upload
+## Phase 5: Security, Sessions, Recent Logins (full implementation)
 
-- [ ] 5A. SignalR Client Infrastructure (@microsoft/signalr, JWT via query param)
-- [ ] 5B. Avatar Upload Client (browser → Files REST API directly, presigned URL → MinIO PUT)
-- [ ] 5C. AvatarUploader Component with client-side crop/zoom (Canvas/cropperjs)
-- [ ] 5D. Wire to Profile Page + SignalR for file:ready/file:rejected events
-- [ ] **Review Checkpoint 5** — avatar upload works E2E (select → crop → upload → process → display)
+- [ ] 5A. Change Password form (current + new + confirm, wired to BetterAuth changePassword)
+- [ ] 5B. Active Sessions list (GET /api/account/sessions, UA parsing, per-session revoke)
+- [ ] 5C. Recent Logins (paginated sign-in events, Leaflet map with WhoIs locations)
+- [ ] 5D. Email & Phone tab — wire email display from user data (phone deferred)
+- [ ] 5E. Notification preferences — wire to backend when handlers exist (mock for now)
+- [ ] **Review Checkpoint 5** — security/sessions/logins fully functional
+
+**Explicitly deferred:**
+- Phone number management (no backend support yet)
+- Account deletion (stubbed with toast, no backend support yet)
+- Locale/timezone save to backend (no update handlers yet)
 
 ## Phase 6: Navigation Updates
 
 - [ ] 6A. App Header (UserAvatarMenu)
-- [ ] 6B. App Sidebar (interactive footer)
+- [ ] 6B. App Sidebar (interactive footer with avatar)
 - [ ] 6C. Remove old Profile nav link
 - [ ] **Review Checkpoint 6** — nav works across all contexts
 
