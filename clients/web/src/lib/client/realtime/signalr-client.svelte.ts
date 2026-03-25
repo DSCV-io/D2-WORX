@@ -44,6 +44,7 @@ export function createRealtimeClient(): RealtimeClient {
   const listeners = new SvelteMap<string, SvelteSet<EventHandler>>();
 
   function dispatch(event: string, payloadJson: string): void {
+    console.log(`[SignalR dispatch] event="${event}" listeners=${[...listeners.keys()].join(",")}`);
     const handlers = listeners.get(event);
     if (!handlers || handlers.size === 0) return;
 

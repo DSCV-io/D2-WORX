@@ -5,6 +5,7 @@
   import { Toaster } from "$lib/client/components/ui/sonner/index.js";
   import ThemeProvider from "$lib/client/components/theme-provider.svelte";
   import NavigationProgress from "$lib/client/components/layout/navigation-progress.svelte";
+  import { invalidateAll } from "$app/navigation";
   import { setClientFingerprint, getToken } from "$lib/client/rest/gateway-client.js";
   import { generateClientFingerprint } from "$lib/client/utils/fingerprint.js";
   import { setFaroUser, resetFaroUser } from "$lib/client/telemetry/faro.js";
@@ -31,28 +32,42 @@
     }
   });
 
-  // Connect SignalR when authenticated, disconnect on sign-out
+  // Connect SignalR when authenticated, disconnect on sign-out.
+  // Also register the user:updated listener for session refresh.
+  let userUpdatedUnsub: (() => void) | undefined;
+
   $effect(() => {
     if (data.session && env.PUBLIC_SIGNALR_URL) {
       realtimeClient.connect(
         `${env.PUBLIC_SIGNALR_URL}/hub/authenticated`,
         async () => (await getToken()) ?? "",
       );
+
+      // Register user:updated listener (idempotent — only if not already registered)
+      if (!userUpdatedUnsub) {
+        userUpdatedUnsub = realtimeClient.on("user:updated", () => {
+          console.log("[user:updated] Busting cookie cache...");
+          fetch("/api/auth/get-session?disableCookieCache=true", {
+            method: "GET",
+            credentials: "include",
+          })
+            .then((res) => {
+              console.log("[user:updated] Cache bust response:", res.status);
+              return invalidateAll();
+            })
+            .then(() => {
+              console.log("[user:updated] invalidateAll complete, user:", data.user?.name, data.user?.image);
+            })
+            .catch((err) => console.error("[user:updated] Failed:", err));
+        });
+      }
     } else {
+      if (userUpdatedUnsub) {
+        userUpdatedUnsub();
+        userUpdatedUnsub = undefined;
+      }
       realtimeClient.disconnect();
     }
-  });
-
-  // Listen for user:updated events — refresh session data without page reload.
-  // The fetch with disableCookieCache forces BetterAuth to read fresh from DB
-  // and set a new session_data cookie. Then invalidateAll() re-runs all server
-  // loads which read the now-fresh cookie.
-  realtimeClient.on("user:updated", async () => {
-    await fetch("/api/auth/get-session?disableCookieCache=true", {
-      method: "GET",
-      credentials: "include",
-    });
-    await invalidateAll();
   });
 </script>
 
