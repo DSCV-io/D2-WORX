@@ -224,3 +224,8 @@ export const IRunEmulationConsentCleanupKey =
 export const IHandleFileProcessedKey = createServiceKey<Commands.IHandleFileProcessedHandler>(
   "Auth.App.HandleFileProcessed",
 );
+
+export const IInvalidateUserSessionCacheKey =
+  createServiceKey<Commands.IInvalidateUserSessionCacheHandler>(
+    "Auth.App.InvalidateUserSessionCache",
+  );

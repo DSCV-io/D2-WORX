@@ -14,7 +14,7 @@ import {
   createServiceScope,
 } from "@d2/handler";
 import * as CacheRedis from "@d2/cache-redis";
-import { AcquireLock, ReleaseLock, PingCache, ICachePingKey } from "@d2/cache-redis";
+import { addRedisCaching } from "@d2/cache-redis";
 import * as CacheMemory from "@d2/cache-memory";
 import { PingMessageBus, IMessageBusPingKey } from "@d2/messaging";
 import type { IMessagePublisher, MessageBus } from "@d2/messaging";
@@ -27,13 +27,7 @@ import {
 import type { GeoClientOptions } from "@d2/geo-client";
 import { Singleflight } from "@d2/utilities";
 import { CheckRateLimit } from "@d2/ratelimit";
-import {
-  addFilesApp,
-  parseContextKeyConfigs,
-  IFilesAcquireLockKey,
-  IFilesReleaseLockKey,
-  DEFAULT_FILES_JOB_OPTIONS,
-} from "@d2/files-app";
+import { addFilesApp, parseContextKeyConfigs, DEFAULT_FILES_JOB_OPTIONS } from "@d2/files-app";
 import type { FilesJobOptions } from "@d2/files-app";
 import { addFilesInfra, runMigrations } from "@d2/files-infra";
 import { createFileUploadedConsumer, createFileProcessingConsumer } from "@d2/files-infra";
@@ -246,12 +240,8 @@ export async function createFilesApp(
   // App layer (CQRS handlers)
   addFilesApp(services, contextKeyConfigs, config.jobOptions ?? DEFAULT_FILES_JOB_OPTIONS);
 
-  // Distributed locks (required for cleanup job)
-  services.addInstance(IFilesAcquireLockKey, new AcquireLock(redis, serviceContext));
-  services.addInstance(IFilesReleaseLockKey, new ReleaseLock(redis, serviceContext));
-
-  // Health check handlers
-  services.addInstance(ICachePingKey, new PingCache(redis, serviceContext));
+  // Distributed cache handlers (Get, Set, Remove, Lock, Ping, etc.)
+  addRedisCaching(services, redis, serviceContext);
   if (messageBus) {
     services.addInstance(IMessageBusPingKey, new PingMessageBus(messageBus, serviceContext));
   }

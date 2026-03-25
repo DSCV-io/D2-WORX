@@ -1299,6 +1299,9 @@ importers:
 
   backends/node/shared/interfaces:
     dependencies:
+      '@d2/di':
+        specifier: workspace:*
+        version: link:../di
       '@d2/handler':
         specifier: workspace:*
         version: link:../handler

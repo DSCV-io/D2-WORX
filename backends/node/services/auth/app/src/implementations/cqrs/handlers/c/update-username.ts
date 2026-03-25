@@ -7,6 +7,7 @@ import type {
 } from "../../../../interfaces/repository/handlers/index.js";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
 import type { IPushUserUpdated } from "../../../../interfaces/realtime/handlers/index.js";
+import type { IInvalidateUserSessionCacheHandler } from "../../../../interfaces/cqrs/handlers/c/invalidate-user-session-cache.js";
 
 type Input = Commands.UpdateUsernameInput;
 type Output = Commands.UpdateUsernameOutput;
@@ -38,17 +39,20 @@ export class UpdateUsername
   private readonly checkAvailable: ICheckUsernameAvailableHandler;
   private readonly updateUsernameRepo: IUpdateUserUsernameHandler;
   private readonly pushUserUpdated?: IPushUserUpdated;
+  private readonly invalidateSessionCache?: IInvalidateUserSessionCacheHandler;
 
   constructor(
     checkAvailable: ICheckUsernameAvailableHandler,
     updateUsername: IUpdateUserUsernameHandler,
     context: IHandlerContext,
     pushUserUpdated?: IPushUserUpdated,
+    invalidateSessionCache?: IInvalidateUserSessionCacheHandler,
   ) {
     super(context);
     this.checkAvailable = checkAvailable;
     this.updateUsernameRepo = updateUsername;
     this.pushUserUpdated = pushUserUpdated;
+    this.invalidateSessionCache = invalidateSessionCache;
   }
 
   override get redaction() {
@@ -103,6 +107,7 @@ export class UpdateUsername
       return D2Result.bubbleFail(updateResult);
     }
 
+    this.invalidateSessionCache?.handleAsync({ userId: input.userId }).catch(() => {});
     this.pushUserUpdated?.handleAsync({ userId: input.userId }).catch(() => {});
 
     return D2Result.ok({ data: { username, displayUsername } });

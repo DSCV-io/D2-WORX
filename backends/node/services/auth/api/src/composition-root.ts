@@ -15,7 +15,7 @@ import {
   IRequestContextKey,
   createServiceScope,
 } from "@d2/handler";
-import { AcquireLock, ReleaseLock, PingCache, ICachePingKey } from "@d2/cache-redis";
+import { addRedisCaching } from "@d2/cache-redis";
 import { PingMessageBus, IMessageBusPingKey } from "@d2/messaging";
 import type { IMessagePublisher } from "@d2/messaging";
 import { addCommsClient } from "@d2/comms-client";
@@ -30,8 +30,6 @@ import {
 import {
   addAuthApp,
   ISignInThrottleStoreKey,
-  IAuthAcquireLockKey,
-  IAuthReleaseLockKey,
   DEFAULT_AUTH_JOB_OPTIONS,
   type AuthJobOptions,
 } from "@d2/auth-app";
@@ -125,9 +123,8 @@ export async function createApp(
   // Geo client handlers (gRPC-backed with local caching)
   const geoSetup = addGeoClientHandlers(services, config, serviceContext);
 
-  // Lock handlers for job execution
-  services.addInstance(IAuthAcquireLockKey, new AcquireLock(redis, serviceContext));
-  services.addInstance(IAuthReleaseLockKey, new ReleaseLock(redis, serviceContext));
+  // Distributed cache handlers (Get, Set, Remove, Lock, Ping, etc.)
+  addRedisCaching(services, redis, serviceContext);
 
   // Layer registrations
   addAuthInfra(services, db, {
@@ -137,8 +134,6 @@ export async function createApp(
   addAuthApp(services, config.jobOptions ?? DEFAULT_AUTH_JOB_OPTIONS);
   addCommsClient(services, { publisher });
 
-  // Health check handlers
-  services.addInstance(ICachePingKey, new PingCache(redis, serviceContext));
   if (messageBus) {
     services.addInstance(IMessageBusPingKey, new PingMessageBus(messageBus, serviceContext));
   }

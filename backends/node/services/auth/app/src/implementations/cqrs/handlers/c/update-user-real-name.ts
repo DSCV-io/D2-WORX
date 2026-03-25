@@ -8,6 +8,7 @@ import type { Complex } from "@d2/geo-client";
 import type { IUpdateUserNameHandler } from "../../../../interfaces/repository/handlers/index.js";
 import type { IPushUserUpdated } from "../../../../interfaces/realtime/handlers/index.js";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
+import type { IInvalidateUserSessionCacheHandler } from "../../../../interfaces/cqrs/handlers/c/invalidate-user-session-cache.js";
 
 type Input = Commands.UpdateUserRealNameInput;
 type Output = Commands.UpdateUserRealNameOutput;
@@ -34,17 +35,20 @@ export class UpdateUserRealName
   private readonly updateContactsByExtKeys: Complex.IUpdateContactsByExtKeysHandler;
   private readonly updateUserNameRepo: IUpdateUserNameHandler;
   private readonly pushUserUpdated?: IPushUserUpdated;
+  private readonly invalidateSessionCache?: IInvalidateUserSessionCacheHandler;
 
   constructor(
     updateContactsByExtKeys: Complex.IUpdateContactsByExtKeysHandler,
     updateUserName: IUpdateUserNameHandler,
     context: IHandlerContext,
     pushUserUpdated?: IPushUserUpdated,
+    invalidateSessionCache?: IInvalidateUserSessionCacheHandler,
   ) {
     super(context);
     this.updateContactsByExtKeys = updateContactsByExtKeys;
     this.updateUserNameRepo = updateUserName;
     this.pushUserUpdated = pushUserUpdated;
+    this.invalidateSessionCache = invalidateSessionCache;
   }
 
   override get redaction() {
@@ -110,6 +114,7 @@ export class UpdateUserRealName
       return D2Result.bubbleFail(nameResult);
     }
 
+    this.invalidateSessionCache?.handleAsync({ userId: input.userId }).catch(() => {});
     this.pushUserUpdated?.handleAsync({ userId: input.userId }).catch(() => {});
 
     return D2Result.ok({ data: { name: combinedName } });

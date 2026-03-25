@@ -6,9 +6,9 @@ import { createLogger, type ILogger } from "@d2/logging";
 import { ILoggerKey } from "@d2/logging";
 import { HandlerContext, IHandlerContextKey, IRequestContextKey } from "@d2/handler";
 import { ServiceCollection } from "@d2/di";
-import { ICachePingKey, PingCache, AcquireLock, ReleaseLock } from "@d2/cache-redis";
+import { addRedisCaching } from "@d2/cache-redis";
 import { MessageBus, PingMessageBus, IMessageBusPingKey } from "@d2/messaging";
-import { addCommsApp, ICommsAcquireLockKey, ICommsReleaseLockKey } from "@d2/comms-app";
+import { addCommsApp } from "@d2/comms-app";
 import { DEFAULT_COMMS_JOB_OPTIONS, type CommsJobOptions } from "@d2/comms-app";
 import { addCommsInfra, runMigrations } from "@d2/comms-infra";
 import {
@@ -130,10 +130,8 @@ export async function createCommsService(config: CommsServiceConfig) {
   let redis: Redis | undefined;
   if (config.redisUrl) {
     redis = new Redis(config.redisUrl);
-    services.addInstance(ICachePingKey, new PingCache(redis, serviceContext));
-    services.addInstance(ICommsAcquireLockKey, new AcquireLock(redis, serviceContext));
-    services.addInstance(ICommsReleaseLockKey, new ReleaseLock(redis, serviceContext));
-    logger.info("Redis connected (cache ping + distributed locks registered)");
+    addRedisCaching(services, redis, serviceContext);
+    logger.info("Redis connected (distributed cache handlers registered)");
   }
 
   // 5. Build ServiceProvider

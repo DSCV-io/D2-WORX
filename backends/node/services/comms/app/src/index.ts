@@ -243,5 +243,3 @@ export {
   IRunDeletedMessagePurgeKey,
   IRunDeliveryHistoryPurgeKey,
 } from "./service-keys.js";
-
-export { ICommsAcquireLockKey, ICommsReleaseLockKey } from "./registration.js";

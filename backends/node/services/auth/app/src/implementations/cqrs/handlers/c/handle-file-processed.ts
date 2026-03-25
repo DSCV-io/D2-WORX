@@ -6,6 +6,7 @@ import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
 import type { IUpdateUserImageHandler } from "../../../../interfaces/repository/handlers/u/update-user-image.js";
 import type { IUpdateOrgLogoHandler } from "../../../../interfaces/repository/handlers/u/update-org-logo.js";
 import type { IPushUserUpdated } from "../../../../interfaces/realtime/handlers/index.js";
+import type { IInvalidateUserSessionCacheHandler } from "../../../../interfaces/cqrs/handlers/c/invalidate-user-session-cache.js";
 
 type Input = Commands.HandleFileProcessedInput;
 type Output = Commands.HandleFileProcessedOutput;
@@ -34,17 +35,20 @@ export class HandleFileProcessed
   private readonly updateUserImage: IUpdateUserImageHandler;
   private readonly updateOrgLogo: IUpdateOrgLogoHandler;
   private readonly pushUserUpdated?: IPushUserUpdated;
+  private readonly invalidateSessionCache?: IInvalidateUserSessionCacheHandler;
 
   constructor(
     updateUserImage: IUpdateUserImageHandler,
     updateOrgLogo: IUpdateOrgLogoHandler,
     context: IHandlerContext,
     pushUserUpdated?: IPushUserUpdated,
+    invalidateSessionCache?: IInvalidateUserSessionCacheHandler,
   ) {
     super(context);
     this.updateUserImage = updateUserImage;
     this.updateOrgLogo = updateOrgLogo;
     this.pushUserUpdated = pushUserUpdated;
+    this.invalidateSessionCache = invalidateSessionCache;
   }
 
   protected async executeAsync(input: Input): Promise<D2Result<Output | undefined>> {
@@ -69,6 +73,7 @@ export class HandleFileProcessed
           image: input.fileId,
         });
         if (!result.success) return D2Result.bubbleFail(result);
+        this.invalidateSessionCache?.handleAsync({ userId: input.relatedEntityId }).catch(() => {});
         this.pushUserUpdated?.handleAsync({ userId: input.relatedEntityId }).catch(() => {});
         break;
       }

@@ -16,3 +16,15 @@ export type {
   IReleaseLockHandler,
 } from "./handlers/d/release-lock.js";
 export type { PingInput, PingOutput, IPingHandler } from "./handlers/q/ping.js";
+export {
+  IDistributedCacheGetKey,
+  IDistributedCacheSetKey,
+  IDistributedCacheSetNxKey,
+  IDistributedCacheRemoveKey,
+  IDistributedCacheExistsKey,
+  IDistributedCacheGetTtlKey,
+  IDistributedCacheIncrementKey,
+  IDistributedCacheAcquireLockKey,
+  IDistributedCacheReleaseLockKey,
+  IDistributedCachePingKey,
+} from "./service-keys.js";

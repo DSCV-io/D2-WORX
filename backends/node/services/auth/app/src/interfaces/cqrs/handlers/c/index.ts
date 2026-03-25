@@ -94,3 +94,9 @@ export type {
   HandleFileProcessedOutput,
   IHandleFileProcessedHandler,
 } from "./handle-file-processed.js";
+
+export type {
+  InvalidateUserSessionCacheInput,
+  InvalidateUserSessionCacheOutput,
+  IInvalidateUserSessionCacheHandler,
+} from "./invalidate-user-session-cache.js";

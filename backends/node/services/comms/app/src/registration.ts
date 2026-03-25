@@ -43,22 +43,9 @@ import { CheckHealth } from "./implementations/cqrs/handlers/q/check-health.js";
 import { RunDeletedMessagePurge } from "./implementations/cqrs/handlers/c/run-deleted-message-purge.js";
 import { RunDeliveryHistoryPurge } from "./implementations/cqrs/handlers/c/run-delivery-history-purge.js";
 import { IMessageBusPingKey } from "@d2/messaging";
-import {
-  ICachePingKey,
-  createRedisAcquireLockKey,
-  createRedisReleaseLockKey,
-} from "@d2/cache-redis";
-import type { ServiceKey } from "@d2/di";
-import type { DistributedCache } from "@d2/interfaces";
+import { DistributedCache } from "@d2/interfaces";
 import type { CommsJobOptions } from "./comms-job-options.js";
 import { DEFAULT_COMMS_JOB_OPTIONS } from "./comms-job-options.js";
-
-/** DI key for the comms-scoped AcquireLock handler (registered in composition root). */
-export const ICommsAcquireLockKey: ServiceKey<DistributedCache.IAcquireLockHandler> =
-  createRedisAcquireLockKey("comms");
-/** DI key for the comms-scoped ReleaseLock handler (registered in composition root). */
-export const ICommsReleaseLockKey: ServiceKey<DistributedCache.IReleaseLockHandler> =
-  createRedisReleaseLockKey("comms");
 
 /**
  * Registers comms application-layer services (CQRS handlers)
@@ -157,7 +144,7 @@ export function addCommsApp(
       new CheckHealth(
         sp.resolve(IPingDbKey),
         sp.resolve(IHandlerContextKey),
-        sp.tryResolve(ICachePingKey),
+        sp.tryResolve(DistributedCache.IDistributedCachePingKey),
         sp.tryResolve(IMessageBusPingKey),
       ),
   );
@@ -168,8 +155,8 @@ export function addCommsApp(
     IRunDeletedMessagePurgeKey,
     (sp) =>
       new RunDeletedMessagePurge(
-        sp.resolve(ICommsAcquireLockKey),
-        sp.resolve(ICommsReleaseLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
         sp.resolve(IPurgeDeletedMessagesKey),
         jobOptions,
         sp.resolve(IHandlerContextKey),
@@ -180,8 +167,8 @@ export function addCommsApp(
     IRunDeliveryHistoryPurgeKey,
     (sp) =>
       new RunDeliveryHistoryPurge(
-        sp.resolve(ICommsAcquireLockKey),
-        sp.resolve(ICommsReleaseLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
         sp.resolve(IPurgeDeliveryHistoryKey),
         jobOptions,
         sp.resolve(IHandlerContextKey),

@@ -58,19 +58,14 @@ import { GetOrgContacts } from "./implementations/cqrs/handlers/q/get-org-contac
 import { CheckSignInThrottle } from "./implementations/cqrs/handlers/q/check-sign-in-throttle.js";
 import { CheckHealth } from "./implementations/cqrs/handlers/q/check-health.js";
 import { CheckEmailAvailability } from "./implementations/cqrs/handlers/q/check-email-availability.js";
-import {
-  ICachePingKey,
-  createRedisAcquireLockKey,
-  createRedisReleaseLockKey,
-} from "@d2/cache-redis";
-import type { ServiceKey } from "@d2/di";
-import type { DistributedCache } from "@d2/interfaces";
+import { DistributedCache } from "@d2/interfaces";
 import { IMessageBusPingKey } from "@d2/messaging";
 import { RunSessionPurge } from "./implementations/cqrs/handlers/c/run-session-purge.js";
 import { RunSignInEventPurge } from "./implementations/cqrs/handlers/c/run-sign-in-event-purge.js";
 import { RunInvitationCleanup } from "./implementations/cqrs/handlers/c/run-invitation-cleanup.js";
 import { RunEmulationConsentCleanup } from "./implementations/cqrs/handlers/c/run-emulation-consent-cleanup.js";
 import { HandleFileProcessed } from "./implementations/cqrs/handlers/c/handle-file-processed.js";
+import { InvalidateUserSessionCache } from "./implementations/cqrs/handlers/c/invalidate-user-session-cache.js";
 import type { AuthJobOptions } from "./auth-job-options.js";
 import { DEFAULT_AUTH_JOB_OPTIONS } from "./auth-job-options.js";
 import {
@@ -91,14 +86,8 @@ import {
   IUpdateUserNameKey,
   ICheckUsernameAvailableKey,
   IUpdateUserUsernameKey,
+  IInvalidateUserSessionCacheKey,
 } from "./service-keys.js";
-
-/** DI key for the auth-scoped AcquireLock handler (registered in composition root). */
-export const IAuthAcquireLockKey: ServiceKey<DistributedCache.IAcquireLockHandler> =
-  createRedisAcquireLockKey("auth");
-/** DI key for the auth-scoped ReleaseLock handler (registered in composition root). */
-export const IAuthReleaseLockKey: ServiceKey<DistributedCache.IReleaseLockHandler> =
-  createRedisReleaseLockKey("auth");
 
 /**
  * Registers auth application-layer services (CQRS handlers, notification publishers)
@@ -191,6 +180,7 @@ export function addAuthApp(
         sp.resolve(IUpdateUserNameKey),
         sp.resolve(IHandlerContextKey),
         sp.tryResolve(IPushUserUpdatedKey),
+        sp.tryResolve(IInvalidateUserSessionCacheKey),
       ),
   );
 
@@ -202,6 +192,7 @@ export function addAuthApp(
         sp.resolve(IUpdateUserUsernameKey),
         sp.resolve(IHandlerContextKey),
         sp.tryResolve(IPushUserUpdatedKey),
+        sp.tryResolve(IInvalidateUserSessionCacheKey),
       ),
   );
 
@@ -257,7 +248,7 @@ export function addAuthApp(
     (sp) =>
       new CheckHealth(
         sp.resolve(IPingDbKey),
-        sp.resolve(ICachePingKey),
+        sp.resolve(DistributedCache.IDistributedCachePingKey),
         sp.resolve(IHandlerContextKey),
         sp.tryResolve(IMessageBusPingKey),
       ),
@@ -269,8 +260,8 @@ export function addAuthApp(
     IRunSessionPurgeKey,
     (sp) =>
       new RunSessionPurge(
-        sp.resolve(IAuthAcquireLockKey),
-        sp.resolve(IAuthReleaseLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
         sp.resolve(IPurgeExpiredSessionsKey),
         jobOptions,
         sp.resolve(IHandlerContextKey),
@@ -281,8 +272,8 @@ export function addAuthApp(
     IRunSignInEventPurgeKey,
     (sp) =>
       new RunSignInEventPurge(
-        sp.resolve(IAuthAcquireLockKey),
-        sp.resolve(IAuthReleaseLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
         sp.resolve(IPurgeSignInEventsKey),
         jobOptions,
         sp.resolve(IHandlerContextKey),
@@ -293,8 +284,8 @@ export function addAuthApp(
     IRunInvitationCleanupKey,
     (sp) =>
       new RunInvitationCleanup(
-        sp.resolve(IAuthAcquireLockKey),
-        sp.resolve(IAuthReleaseLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
         sp.resolve(IPurgeExpiredInvitationsKey),
         jobOptions,
         sp.resolve(IHandlerContextKey),
@@ -305,10 +296,21 @@ export function addAuthApp(
     IRunEmulationConsentCleanupKey,
     (sp) =>
       new RunEmulationConsentCleanup(
-        sp.resolve(IAuthAcquireLockKey),
-        sp.resolve(IAuthReleaseLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
         sp.resolve(IPurgeExpiredEmulationConsentsKey),
         jobOptions,
+        sp.resolve(IHandlerContextKey),
+      ),
+  );
+
+  // Session cache invalidation (bust BetterAuth's Redis-cached sessions after user mutations)
+  services.addTransient(
+    IInvalidateUserSessionCacheKey,
+    (sp) =>
+      new InvalidateUserSessionCache(
+        sp.resolve(DistributedCache.IDistributedCacheGetKey),
+        sp.resolve(DistributedCache.IDistributedCacheRemoveKey),
         sp.resolve(IHandlerContextKey),
       ),
   );
@@ -322,6 +324,7 @@ export function addAuthApp(
         sp.resolve(IUpdateOrgLogoKey),
         sp.resolve(IHandlerContextKey),
         sp.tryResolve(IPushUserUpdatedKey),
+        sp.tryResolve(IInvalidateUserSessionCacheKey),
       ),
   );
 }

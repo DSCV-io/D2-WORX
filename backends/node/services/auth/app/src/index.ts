@@ -375,13 +375,18 @@ export type {
   HandleFileProcessedOutput,
 } from "./interfaces/cqrs/handlers/c/handle-file-processed.js";
 
+export { InvalidateUserSessionCache } from "./implementations/cqrs/handlers/c/invalidate-user-session-cache.js";
+export type {
+  InvalidateUserSessionCacheInput,
+  InvalidateUserSessionCacheOutput,
+} from "./interfaces/cqrs/handlers/c/invalidate-user-session-cache.js";
+
 // --- Job Options ---
 export type { AuthJobOptions } from "./auth-job-options.js";
 export { DEFAULT_AUTH_JOB_OPTIONS } from "./auth-job-options.js";
 
 // --- DI Registration ---
 export { addAuthApp } from "./registration.js";
-export { IAuthAcquireLockKey, IAuthReleaseLockKey } from "./registration.js";
 export {
   // Infra-layer keys (interfaces defined here, implemented in auth-infra)
   ICreateSignInEventKey,
@@ -429,6 +434,7 @@ export {
   IRunInvitationCleanupKey,
   IRunEmulationConsentCleanupKey,
   IHandleFileProcessedKey,
+  IInvalidateUserSessionCacheKey,
   IUpdateUserImageKey,
   IUpdateOrgLogoKey,
   IUpdateUserRealNameKey,

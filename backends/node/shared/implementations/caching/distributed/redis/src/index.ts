@@ -1,5 +1,6 @@
 export { type ICacheSerializer, JsonCacheSerializer } from "./serialization.js";
 export { redisErrorResult } from "./redis-error-result.js";
+export { addRedisCaching } from "./registration.js";
 export { SetNx } from "./handlers/c/set-nx.js";
 export { AcquireLock } from "./handlers/c/acquire-lock.js";
 export { Get } from "./handlers/r/get.js";

@@ -234,7 +234,7 @@ export type {
 export { ResolveFileAccess } from "./implementations/cqrs/handlers/u/resolve-file-access.js";
 
 // --- DI Registration ---
-export { addFilesApp, IFilesAcquireLockKey, IFilesReleaseLockKey } from "./registration.js";
+export { addFilesApp } from "./registration.js";
 export {
   // Infra keys (repo)
   ICreateFileRecordKey,

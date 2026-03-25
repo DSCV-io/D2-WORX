@@ -56,7 +56,11 @@
               return invalidateAll();
             })
             .then(() => {
-              console.log("[user:updated] invalidateAll complete, user:", data.user?.name, data.user?.image);
+              console.log(
+                "[user:updated] invalidateAll complete, user:",
+                data.user?.name,
+                data.user?.image,
+              );
             })
             .catch((err) => console.error("[user:updated] Failed:", err));
         });

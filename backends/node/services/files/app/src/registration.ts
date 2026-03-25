@@ -1,7 +1,6 @@
-import type { ServiceCollection, ServiceKey } from "@d2/di";
+import type { ServiceCollection } from "@d2/di";
 import { IHandlerContextKey } from "@d2/handler";
-import { createRedisAcquireLockKey, createRedisReleaseLockKey } from "@d2/cache-redis";
-import type { DistributedCache } from "@d2/interfaces";
+import { DistributedCache } from "@d2/interfaces";
 import type { FilesJobOptions } from "./files-job-options.js";
 import { DEFAULT_FILES_JOB_OPTIONS } from "./files-job-options.js";
 import type { ContextKeyConfigMap } from "./context-key-config.js";
@@ -60,13 +59,6 @@ import { CheckFileAccess } from "./implementations/cqrs/handlers/q/check-file-ac
 import { ResolveFileAccess } from "./implementations/cqrs/handlers/u/resolve-file-access.js";
 import { GetFileVariantUrl } from "./implementations/cqrs/handlers/q/get-file-variant-url.js";
 import { DownloadFileVariant } from "./implementations/cqrs/handlers/q/download-file-variant.js";
-
-/** DI key for the files-scoped AcquireLock handler (registered in composition root). */
-export const IFilesAcquireLockKey: ServiceKey<DistributedCache.IAcquireLockHandler> =
-  createRedisAcquireLockKey("files");
-/** DI key for the files-scoped ReleaseLock handler (registered in composition root). */
-export const IFilesReleaseLockKey: ServiceKey<DistributedCache.IReleaseLockHandler> =
-  createRedisReleaseLockKey("files");
 
 /**
  * Registers files application-layer services (CQRS handlers)
@@ -203,8 +195,8 @@ export function addFilesApp(
     IRunCleanupKey,
     (sp) =>
       new RunCleanup(
-        sp.resolve(IFilesAcquireLockKey),
-        sp.resolve(IFilesReleaseLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
         sp.resolve(IFindStaleFilesKey),
         sp.resolve(IDeleteFileRecordsByIdsKey),
         {
