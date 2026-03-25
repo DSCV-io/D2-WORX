@@ -127,9 +127,7 @@
     onRevert: revert,
   });
 
-  const showStatusIcon = $derived(
-    (saveState as string) !== "idle" || validationStatus !== "idle" || isDirty,
-  );
+  const showStatusIcon = $derived(validationStatus !== "idle" || isDirty);
 
   const fieldId = $derived(label.toLowerCase().replace(/\s+/g, "-"));
   const selectedOption = $derived(options.find((o) => o.value === currentValue));
@@ -158,7 +156,6 @@
           id={fieldId}
           class={cn(
             "w-full",
-            showStatusIcon ? "pr-8" : "",
             saveState === "saved" && "border-green-500/50",
             validationStatus === "invalid" && "border-destructive",
             isDirty &&
@@ -174,7 +171,14 @@
               class="h-3 w-4 shrink-0 object-cover"
             />
           {/if}
-          {selectedOption?.label || "Select..."}
+          <span class="flex-1 text-left">{selectedOption?.label || "Select..."}</span>
+          {#if showStatusIcon}
+            <InlineFieldStatusIcon
+              saveState="idle"
+              {validationStatus}
+              dirty={isDirty}
+            />
+          {/if}
         </Select.Trigger>
         <Select.Content>
           {#each options as option (option.value)}
@@ -192,15 +196,6 @@
         </Select.Content>
       </Select.Root>
 
-      {#if showStatusIcon}
-        <div class="pointer-events-none absolute top-1/2 right-8 -translate-y-1/2">
-          <InlineFieldStatusIcon
-            {saveState}
-            {validationStatus}
-            dirty={isDirty}
-          />
-        </div>
-      {/if}
     </div>
 
     <InlineEditActions

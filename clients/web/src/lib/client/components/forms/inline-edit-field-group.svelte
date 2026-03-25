@@ -150,21 +150,17 @@
               class={cn(
                 INPUT_CLASSES,
                 INPUT_FOCUS_CLASSES,
-                (fieldDirty || (saveState as string) !== "idle") && "pr-8",
+                (fieldDirty || fieldErrors[field.key]) && "pr-8",
                 fieldErrors[field.key] && INLINE_BORDER_INVALID,
                 fieldDirty && !fieldErrors[field.key] && INLINE_BORDER_DIRTY,
                 saveState === "saved" && INLINE_BORDER_SAVED,
               )}
             />
-            {#if fieldDirty || (saveState as string) !== "idle"}
+            {#if fieldDirty || fieldErrors[field.key]}
               <div class="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2">
                 <InlineFieldStatusIcon
-                  {saveState}
-                  validationStatus={fieldErrors[field.key]
-                    ? "invalid"
-                    : fieldDirty
-                      ? "valid"
-                      : "idle"}
+                  saveState="idle"
+                  validationStatus={fieldErrors[field.key] ? "invalid" : fieldDirty ? "valid" : "idle"}
                   dirty={fieldDirty}
                 />
               </div>
