@@ -6,6 +6,7 @@ import { GEO_CONTEXT_KEYS } from "@d2/auth-domain";
 import type { ContactToCreateDTO } from "@d2/protos";
 import type { Complex } from "@d2/geo-client";
 import type { IUpdateUserNameHandler } from "../../../../interfaces/repository/handlers/index.js";
+import type { IPushUserUpdated } from "../../../../interfaces/realtime/handlers/index.js";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
 
 type Input = Commands.UpdateUserRealNameInput;
@@ -32,15 +33,18 @@ export class UpdateUserRealName
 {
   private readonly updateContactsByExtKeys: Complex.IUpdateContactsByExtKeysHandler;
   private readonly updateUserNameRepo: IUpdateUserNameHandler;
+  private readonly pushUserUpdated?: IPushUserUpdated;
 
   constructor(
     updateContactsByExtKeys: Complex.IUpdateContactsByExtKeysHandler,
     updateUserName: IUpdateUserNameHandler,
     context: IHandlerContext,
+    pushUserUpdated?: IPushUserUpdated,
   ) {
     super(context);
     this.updateContactsByExtKeys = updateContactsByExtKeys;
     this.updateUserNameRepo = updateUserName;
+    this.pushUserUpdated = pushUserUpdated;
   }
 
   override get redaction() {
@@ -105,6 +109,8 @@ export class UpdateUserRealName
     if (!nameResult.success) {
       return D2Result.bubbleFail(nameResult);
     }
+
+    this.pushUserUpdated?.handleAsync({ userId: input.userId }).catch(() => {});
 
     return D2Result.ok({ data: { name: combinedName } });
   }

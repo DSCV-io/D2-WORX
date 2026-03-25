@@ -5,6 +5,7 @@ import { AUTH_FILE_CONTEXT_KEYS } from "@d2/auth-domain";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
 import type { IUpdateUserImageHandler } from "../../../../interfaces/repository/handlers/u/update-user-image.js";
 import type { IUpdateOrgLogoHandler } from "../../../../interfaces/repository/handlers/u/update-org-logo.js";
+import type { IPushUserUpdated } from "../../../../interfaces/realtime/handlers/index.js";
 
 type Input = Commands.HandleFileProcessedInput;
 type Output = Commands.HandleFileProcessedOutput;
@@ -32,15 +33,18 @@ export class HandleFileProcessed
 {
   private readonly updateUserImage: IUpdateUserImageHandler;
   private readonly updateOrgLogo: IUpdateOrgLogoHandler;
+  private readonly pushUserUpdated?: IPushUserUpdated;
 
   constructor(
     updateUserImage: IUpdateUserImageHandler,
     updateOrgLogo: IUpdateOrgLogoHandler,
     context: IHandlerContext,
+    pushUserUpdated?: IPushUserUpdated,
   ) {
     super(context);
     this.updateUserImage = updateUserImage;
     this.updateOrgLogo = updateOrgLogo;
+    this.pushUserUpdated = pushUserUpdated;
   }
 
   protected async executeAsync(input: Input): Promise<D2Result<Output | undefined>> {
@@ -65,6 +69,7 @@ export class HandleFileProcessed
           image: input.fileId,
         });
         if (!result.success) return D2Result.bubbleFail(result);
+        this.pushUserUpdated?.handleAsync({ userId: input.relatedEntityId }).catch(() => {});
         break;
       }
 

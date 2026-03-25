@@ -42,6 +42,18 @@
       realtimeClient.disconnect();
     }
   });
+
+  // Listen for user:updated events — refresh session data without page reload.
+  // The fetch with disableCookieCache forces BetterAuth to read fresh from DB
+  // and set a new session_data cookie. Then invalidateAll() re-runs all server
+  // loads which read the now-fresh cookie.
+  realtimeClient.on("user:updated", async () => {
+    await fetch("/api/auth/get-session?disableCookieCache=true", {
+      method: "GET",
+      credentials: "include",
+    });
+    await invalidateAll();
+  });
 </script>
 
 <svelte:head>

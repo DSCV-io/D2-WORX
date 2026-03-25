@@ -113,6 +113,12 @@ export type {
 
 export type { ISignInThrottleStore } from "./interfaces/repository/sign-in-throttle-store.js";
 
+export type {
+  PushUserUpdatedInput,
+  PushUserUpdatedOutput,
+  IPushUserUpdated,
+} from "./interfaces/realtime/handlers/index.js";
+
 // --- Command Handlers ---
 export { RecordSignInEvent } from "./implementations/cqrs/handlers/c/record-sign-in-event.js";
 export type {
@@ -411,6 +417,7 @@ export {
   ICheckEmailAvailabilityRepoKey,
   ICheckOrgExistsKey,
   IPingDbKey,
+  IPushUserUpdatedKey,
   ICheckHealthKey,
   // Job keys
   IPurgeExpiredSessionsKey,

@@ -29,7 +29,9 @@ import {
   IUpdateUserNameKey,
   ICheckUsernameAvailableKey,
   IUpdateUserUsernameKey,
+  IPushUserUpdatedKey,
 } from "@d2/auth-app";
+import { PushUserUpdated } from "./realtime/handlers/push-user-updated.js";
 import { CreateSignInEvent } from "./repository/handlers/c/create-sign-in-event.js";
 import { FindSignInEventsByUserId } from "./repository/handlers/r/find-sign-in-events-by-user-id.js";
 import { CountSignInEventsByUserId } from "./repository/handlers/r/count-sign-in-events-by-user-id.js";
@@ -58,13 +60,25 @@ import { UpdateUserName } from "./repository/handlers/u/update-user-name.js";
 import { CheckUsernameAvailable } from "./repository/handlers/r/check-username-available.js";
 import { UpdateUserUsername } from "./repository/handlers/u/update-user-username.js";
 
+export interface AuthInfraConfig {
+  readonly db: NodePgDatabase;
+  /** gRPC address of the SignalR Gateway (e.g., "d2-signalr:5401"). Optional — push disabled if not set. */
+  readonly signalrGatewayAddress?: string;
+  /** API key for authenticating gRPC calls to the SignalR Gateway. */
+  readonly signalrApiKey?: string;
+}
+
 /**
- * Registers auth infrastructure services (repository handlers) with the DI container.
- * Mirrors .NET's `services.AddAuthInfra(configuration)` pattern.
+ * Registers auth infrastructure services (repository handlers, realtime handlers)
+ * with the DI container. Mirrors .NET's `services.AddAuthInfra(configuration)` pattern.
  *
- * All repo handlers are transient — new instance per resolve, receiving scoped IHandlerContext.
+ * All handlers are transient — new instance per resolve, receiving scoped IHandlerContext.
  */
-export function addAuthInfra(services: ServiceCollection, db: NodePgDatabase): void {
+export function addAuthInfra(
+  services: ServiceCollection,
+  db: NodePgDatabase,
+  config?: Omit<AuthInfraConfig, "db">,
+): void {
   // Health check handler
   services.addTransient(IPingDbKey, (sp) => new PingDb(db, sp.resolve(IHandlerContextKey)));
 
@@ -185,4 +199,18 @@ export function addAuthInfra(services: ServiceCollection, db: NodePgDatabase): v
     IPurgeExpiredEmulationConsentsKey,
     (sp) => new PurgeExpiredEmulationConsents(db, sp.resolve(IHandlerContextKey)),
   );
+
+  // --- Realtime Handlers ---
+
+  if (config?.signalrGatewayAddress && config.signalrApiKey) {
+    services.addTransient(
+      IPushUserUpdatedKey,
+      (sp) =>
+        new PushUserUpdated(
+          config.signalrGatewayAddress!,
+          config.signalrApiKey!,
+          sp.resolve(IHandlerContextKey),
+        ),
+    );
+  }
 }

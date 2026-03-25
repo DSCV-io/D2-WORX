@@ -32,6 +32,7 @@ import type { ISignInThrottleStore } from "./interfaces/repository/sign-in-throt
 import type { ICheckEmailAvailabilityHandler } from "./interfaces/repository/handlers/r/check-email-availability.js";
 import type { ICheckOrgExistsHandler } from "./interfaces/repository/handlers/r/check-org-exists.js";
 import type { Commands, Queries } from "./interfaces/cqrs/handlers/index.js";
+import type { IPushUserUpdated } from "./interfaces/realtime/handlers/index.js";
 // =============================================================================
 // Infrastructure-layer keys (interfaces defined in auth-app, implemented in auth-infra)
 // =============================================================================
@@ -141,6 +142,12 @@ export const IPingDbKey = createServiceKey<IPingDbHandler>("Auth.Repo.PingDb");
 
 export const ISignInThrottleStoreKey = createServiceKey<ISignInThrottleStore>(
   "Auth.SignInThrottleStore",
+);
+
+// --- Realtime Handlers ---
+
+export const IPushUserUpdatedKey = createServiceKey<IPushUserUpdated>(
+  "Auth.Realtime.PushUserUpdated",
 );
 
 // =============================================================================

@@ -130,7 +130,10 @@ export async function createApp(
   services.addInstance(IAuthReleaseLockKey, new ReleaseLock(redis, serviceContext));
 
   // Layer registrations
-  addAuthInfra(services, db);
+  addAuthInfra(services, db, {
+    signalrGatewayAddress: process.env.AUTH_SIGNALR_GATEWAY_ADDRESS,
+    signalrApiKey: process.env.AUTH_SIGNALR_API_KEY,
+  });
   addAuthApp(services, config.jobOptions ?? DEFAULT_AUTH_JOB_OPTIONS);
   addCommsClient(services, { publisher });
 

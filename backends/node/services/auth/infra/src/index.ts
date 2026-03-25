@@ -98,8 +98,12 @@ export { UpdateOrgLogo } from "./repository/handlers/u/update-org-logo.js";
 export { createWhoIsResolutionConsumer } from "./messaging/consumers/whois-resolution-consumer.js";
 export type { WhoIsResolutionConsumerDeps } from "./messaging/consumers/whois-resolution-consumer.js";
 
+// --- Realtime Handlers ---
+export { PushUserUpdated } from "./realtime/handlers/push-user-updated.js";
+
 // --- DI Registration ---
 export { addAuthInfra } from "./registration.js";
+export type { AuthInfraConfig } from "./registration.js";
 export {
   ICreateSignInEventKey,
   IFindSignInEventsByUserIdKey,

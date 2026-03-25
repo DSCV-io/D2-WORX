@@ -6,6 +6,7 @@ import type {
   IUpdateUserUsernameHandler,
 } from "../../../../interfaces/repository/handlers/index.js";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
+import type { IPushUserUpdated } from "../../../../interfaces/realtime/handlers/index.js";
 
 type Input = Commands.UpdateUsernameInput;
 type Output = Commands.UpdateUsernameOutput;
@@ -36,15 +37,18 @@ export class UpdateUsername
 {
   private readonly checkAvailable: ICheckUsernameAvailableHandler;
   private readonly updateUsernameRepo: IUpdateUserUsernameHandler;
+  private readonly pushUserUpdated?: IPushUserUpdated;
 
   constructor(
     checkAvailable: ICheckUsernameAvailableHandler,
     updateUsername: IUpdateUserUsernameHandler,
     context: IHandlerContext,
+    pushUserUpdated?: IPushUserUpdated,
   ) {
     super(context);
     this.checkAvailable = checkAvailable;
     this.updateUsernameRepo = updateUsername;
+    this.pushUserUpdated = pushUserUpdated;
   }
 
   override get redaction() {
@@ -98,6 +102,8 @@ export class UpdateUsername
     if (!updateResult.success) {
       return D2Result.bubbleFail(updateResult);
     }
+
+    this.pushUserUpdated?.handleAsync({ userId: input.userId }).catch(() => {});
 
     return D2Result.ok({ data: { username, displayUsername } });
   }

@@ -87,6 +87,7 @@ import {
   IUpdateOrgLogoKey,
   IUpdateUserRealNameKey,
   IUpdateUsernameKey,
+  IPushUserUpdatedKey,
   IUpdateUserNameKey,
   ICheckUsernameAvailableKey,
   IUpdateUserUsernameKey,
@@ -189,6 +190,7 @@ export function addAuthApp(
         sp.resolve(IUpdateContactsByExtKeysKey),
         sp.resolve(IUpdateUserNameKey),
         sp.resolve(IHandlerContextKey),
+        sp.tryResolve(IPushUserUpdatedKey),
       ),
   );
 
@@ -199,6 +201,7 @@ export function addAuthApp(
         sp.resolve(ICheckUsernameAvailableKey),
         sp.resolve(IUpdateUserUsernameKey),
         sp.resolve(IHandlerContextKey),
+        sp.tryResolve(IPushUserUpdatedKey),
       ),
   );
 
@@ -318,6 +321,7 @@ export function addAuthApp(
         sp.resolve(IUpdateUserImageKey),
         sp.resolve(IUpdateOrgLogoKey),
         sp.resolve(IHandlerContextKey),
+        sp.tryResolve(IPushUserUpdatedKey),
       ),
   );
 }
