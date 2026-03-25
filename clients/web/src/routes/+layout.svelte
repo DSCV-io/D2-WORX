@@ -46,22 +46,13 @@
       // Register user:updated listener (idempotent — only if not already registered)
       if (!userUpdatedUnsub) {
         userUpdatedUnsub = realtimeClient.on("user:updated", () => {
-          console.log("[user:updated] Busting cookie cache...");
+          console.debug("[user:updated] Refreshing session...");
           fetch("/api/auth/get-session?disableCookieCache=true", {
             method: "GET",
             credentials: "include",
           })
-            .then((res) => {
-              console.log("[user:updated] Cache bust response:", res.status);
-              return invalidateAll();
-            })
-            .then(() => {
-              console.log(
-                "[user:updated] invalidateAll complete, user:",
-                data.user?.name,
-                data.user?.image,
-              );
-            })
+            .then(() => invalidateAll())
+            .then(() => console.debug("[user:updated] Session refreshed"))
             .catch((err) => console.error("[user:updated] Failed:", err));
         });
       }

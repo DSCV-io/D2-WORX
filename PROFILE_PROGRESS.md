@@ -40,14 +40,21 @@
 - [x] 3H. Fix user-avatar-menu `goto` → `resolve()` for `/account/profile`
 - [x] **Review Checkpoint 3** — committed, container restarted
 
-## Phase 4: SignalR Integration + Avatar Upload + Profile Pic Editor
+## Phase 4: SignalR + Avatar Upload + Real-Time Session Refresh
 
-- [ ] 4A. SignalR Client Infrastructure (@microsoft/signalr, JWT via query param, Svelte 5 runes)
-- [ ] 4B. Avatar Upload Client (browser → Files REST API directly, presigned URL → MinIO PUT)
-- [ ] 4C. Client-side crop/zoom editor (Canvas or cropperjs, circle frame)
-- [ ] 4D. AvatarUploader Component (select → crop → upload → SignalR status → display)
-- [ ] 4E. Wire avatar to Profile page
-- [ ] **Review Checkpoint 4** — avatar upload works E2E
+- [x] 4A. SignalR Client Infrastructure (`@microsoft/signalr`, JWT via query param, Svelte 5 runes, SvelteMap/SvelteSet)
+- [x] 4B. SignalR Gateway fixes (CORS, `MapInboundClaims=false`, custom `JwksConfigurationRetriever`)
+- [x] 4C. Avatar Upload Client (browser → Files REST API presigned PUT URL → MinIO)
+- [x] 4D. Client-side crop/zoom editor (pure Canvas, circle mask, exports 512×512 WebP)
+- [x] 4E. AvatarUploader Component (state machine: idle→cropping→uploading→processing→ready)
+- [x] 4F. Wire avatar to Profile page + nav (presigned GET URLs, in-memory cache)
+- [x] 4G. Files service security audit (access control on download route, IDOR fixes, app-layer refactor)
+- [x] 4H. PushUserUpdated (Auth → SignalR Gateway gRPC, wired into 3 mutation handlers)
+- [x] 4I. Browser `user:updated` listener (cache bust → `invalidateAll()` → reactive UI update)
+- [x] 4J. InvalidateUserSessionCache command (bust BetterAuth Redis session cache after user mutations)
+- [x] 4K. DI abstraction fix (moved distributed cache service keys from `@d2/cache-redis` to `@d2/interfaces`, added `addRedisCaching()`, fixed auth/files/comms app layers)
+- [x] 4L. Integration tests (8 tests for session cache invalidation, 1037 auth-tests total)
+- [x] **Review Checkpoint 4** — real-time updates working E2E, all tests pass, lint/format clean
 
 ## Phase 5: Security, Sessions, Recent Logins (full implementation)
 
@@ -77,3 +84,8 @@
 - [ ] 7B. E2E Tests
 - [ ] 7C. Documentation
 - [ ] **Review Checkpoint 7 (Final)** — all tests pass, docs updated
+
+## Known Issues
+
+- [ ] InlineDropdown info icon overlaps with select content (Language & Timezone dropdowns)
+- [ ] InlineEditFieldGroup shows redundant success checkmarks (one per field + one for the group)
