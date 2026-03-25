@@ -39,6 +39,7 @@ export function createFileProcessingConsumer(deps: FileProcessingConsumerDeps) {
         {
           exchange: FILES_MESSAGING.EVENTS_EXCHANGE,
           type: FILES_MESSAGING.EVENTS_EXCHANGE_TYPE,
+          durable: true,
         },
       ],
       queueBindings: [

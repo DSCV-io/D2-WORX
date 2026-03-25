@@ -21,12 +21,23 @@ vi.mock("$app/paths", () => ({
   resolve: (path: string) => path,
 }));
 
+vi.mock("$lib/client/utils/avatar-url.js", () => ({
+  getAvatarDisplayUrl: () => Promise.resolve(""),
+  invalidateAvatarUrl: () => {},
+  clearAvatarUrlCache: () => {},
+}));
+
+vi.mock("$lib/client/rest/files-client.js", () => ({
+  getVariantUrl: () => Promise.resolve(""),
+}));
+
 vi.mock("$lib/client/stores/auth-client.js", () => ({
   authClient: { signOut: () => Promise.resolve() },
 }));
 
 vi.mock("$lib/client/rest/gateway-client.js", () => ({
   invalidateToken: () => {},
+  getToken: () => Promise.resolve(null),
 }));
 
 vi.mock("$lib/paraglide/runtime", () => ({

@@ -8,6 +8,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\..\..\Handler\Handler.csproj" />
         <ProjectReference Include="..\..\..\Handler.Extensions\Handler.Extensions.csproj" />
         <ProjectReference Include="..\..\..\Result\Result.csproj" />

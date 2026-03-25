@@ -345,5 +345,16 @@
   "account_deactivate_description": "Ihr Konto und Ihre Daten dauerhaft entfernen.",
   "account_deactivate_delete_title": "Konto löschen",
   "account_deactivate_delete_description": "Löschen Sie Ihr Konto und alle zugehörigen Daten dauerhaft. Diese Aktion kann nicht rückgängig gemacht werden.",
-  "account_deactivate_not_available": "Kontodeaktivierung ist noch nicht verfügbar."
+  "account_deactivate_not_available": "Kontodeaktivierung ist noch nicht verfügbar.",
+  "account_profile_avatar_title": "Profilbild",
+  "account_profile_avatar_change": "Foto ändern",
+  "account_profile_avatar_crop_title": "Foto zuschneiden",
+  "account_profile_avatar_crop_description": "Ziehen zum Verschieben. Schieberegler zum Zoomen.",
+  "account_profile_avatar_crop_confirm": "Foto speichern",
+  "account_profile_avatar_uploading": "Wird hochgeladen...",
+  "account_profile_avatar_processing": "Wird verarbeitet...",
+  "account_profile_avatar_success": "Foto aktualisiert!",
+  "account_profile_avatar_rejected": "Foto abgelehnt: {reason}",
+  "account_profile_avatar_too_large": "Bild muss unter 50 MB sein.",
+  "account_profile_avatar_invalid_type": "Bitte wählen Sie eine Bilddatei."
 }

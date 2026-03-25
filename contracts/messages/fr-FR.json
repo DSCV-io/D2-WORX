@@ -345,5 +345,16 @@
   "account_deactivate_description": "Supprimez définitivement votre compte et vos données.",
   "account_deactivate_delete_title": "Supprimer le compte",
   "account_deactivate_delete_description": "Supprimez définitivement votre compte et toutes les données associées. Cette action est irréversible.",
-  "account_deactivate_not_available": "La désactivation du compte n'est pas encore disponible."
+  "account_deactivate_not_available": "La désactivation du compte n'est pas encore disponible.",
+  "account_profile_avatar_title": "Photo de profil",
+  "account_profile_avatar_change": "Changer la photo",
+  "account_profile_avatar_crop_title": "Recadrer la photo",
+  "account_profile_avatar_crop_description": "Glissez pour repositionner. Utilisez le curseur pour zoomer.",
+  "account_profile_avatar_crop_confirm": "Enregistrer la photo",
+  "account_profile_avatar_uploading": "Téléchargement...",
+  "account_profile_avatar_processing": "Traitement...",
+  "account_profile_avatar_success": "Photo mise à jour !",
+  "account_profile_avatar_rejected": "Photo rejetée : {reason}",
+  "account_profile_avatar_too_large": "L'image doit faire moins de 50 Mo.",
+  "account_profile_avatar_invalid_type": "Veuillez sélectionner un fichier image."
 }

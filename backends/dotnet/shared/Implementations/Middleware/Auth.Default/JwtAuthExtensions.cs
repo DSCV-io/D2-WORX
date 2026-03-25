@@ -51,12 +51,29 @@ public static partial class JwtAuthExtensions
                 .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(jwt =>
                 {
+                    // Preserve original JWT claim names (e.g., "sub", "orgId").
+                    // Without this, ASP.NET remaps "sub" to the long
+                    // ClaimTypes.NameIdentifier URI, breaking FindFirst("sub").
+                    jwt.MapInboundClaims = false;
+
                     // JWKS endpoint for automatic key retrieval and rotation.
                     // Auth service is internal — never exposed to the internet.
                     // TLS termination is handled by the reverse proxy in production.
                     jwt.RequireHttpsMetadata = false;
-                    jwt.Authority = options.AuthServiceBaseUrl;
-                    jwt.MetadataAddress = $"{options.AuthServiceBaseUrl.TrimEnd('/')}/api/auth/.well-known/openid-configuration";
+
+                    // BetterAuth does not serve a standard OIDC discovery document.
+                    // Use a custom retriever that fetches the raw JWKS endpoint and
+                    // wraps it in an OpenIdConnectConfiguration for the framework.
+                    var jwksUrl = $"{options.AuthServiceBaseUrl.TrimEnd('/')}/api/auth/jwks";
+                    jwt.Configuration = null;
+                    jwt.ConfigurationManager = new Microsoft.IdentityModel.Protocols.ConfigurationManager<Microsoft.IdentityModel.Protocols.OpenIdConnect.OpenIdConnectConfiguration>(
+                        jwksUrl,
+                        new JwksConfigurationRetriever(options.Issuer),
+                        new Microsoft.IdentityModel.Protocols.HttpDocumentRetriever { RequireHttps = false })
+                    {
+                        AutomaticRefreshInterval = options.JwksAutoRefreshInterval,
+                        RefreshInterval = options.JwksRefreshInterval,
+                    };
 
                     jwt.TokenValidationParameters = new TokenValidationParameters
                     {
@@ -70,16 +87,6 @@ public static partial class JwtAuthExtensions
                         RequireSignedTokens = true,
                         ValidAlgorithms = ["RS256"],
                     };
-
-                    // Explicit JWKS refresh intervals.
-                    // Framework defaults (12h auto, 30s forced) are reasonable but implicit.
-                    // Making them configurable and visible.
-                    jwt.AutomaticRefreshInterval = options.JwksAutoRefreshInterval;
-                    jwt.RefreshInterval = options.JwksRefreshInterval;
-
-                    // BetterAuth may not serve a standard OIDC discovery document.
-                    // Fall back to direct JWKS endpoint if discovery fails.
-                    jwt.Configuration = null;
                     jwt.Events = new JwtBearerEvents
                     {
                         OnAuthenticationFailed = context =>

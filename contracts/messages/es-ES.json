@@ -345,5 +345,16 @@
   "account_deactivate_description": "Elimina permanentemente tu cuenta y datos.",
   "account_deactivate_delete_title": "Eliminar cuenta",
   "account_deactivate_delete_description": "Elimina permanentemente tu cuenta y todos los datos asociados. Esta acción no se puede deshacer.",
-  "account_deactivate_not_available": "La desactivación de cuenta aún no está disponible."
+  "account_deactivate_not_available": "La desactivación de cuenta aún no está disponible.",
+  "account_profile_avatar_title": "Foto de perfil",
+  "account_profile_avatar_change": "Cambiar foto",
+  "account_profile_avatar_crop_title": "Recortar foto",
+  "account_profile_avatar_crop_description": "Arrastra para reposicionar. Usa el control para zoom.",
+  "account_profile_avatar_crop_confirm": "Guardar foto",
+  "account_profile_avatar_uploading": "Subiendo...",
+  "account_profile_avatar_processing": "Procesando...",
+  "account_profile_avatar_success": "¡Foto actualizada!",
+  "account_profile_avatar_rejected": "Foto rechazada: {reason}",
+  "account_profile_avatar_too_large": "La imagen debe ser menor a 50 MB.",
+  "account_profile_avatar_invalid_type": "Por favor selecciona un archivo de imagen."
 }

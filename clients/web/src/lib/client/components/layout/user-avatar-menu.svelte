@@ -20,6 +20,7 @@
   import MoonIcon from "@lucide/svelte/icons/moon";
   import MonitorIcon from "@lucide/svelte/icons/monitor";
   import { cn } from "$lib/shared/utils/utils.js";
+  import { getAvatarDisplayUrl } from "$lib/client/utils/avatar-url.js";
 
   let {
     user,
@@ -39,6 +40,19 @@
   } = $props();
 
   const sizeClasses = $derived(size === "sm" ? "size-7" : size === "lg" ? "size-10" : "size-8");
+
+  // Resolve user.image (fileId) to a presigned display URL
+  let avatarUrl: string | undefined = $state();
+
+  $effect(() => {
+    if (user.image) {
+      getAvatarDisplayUrl(user.image, "small")
+        .then((url) => {
+          avatarUrl = url;
+        })
+        .catch(() => {});
+    }
+  });
 
   const initials = $derived(() => {
     if (!user.name) return "?";
@@ -94,9 +108,9 @@
         {...props}
       >
         <Avatar.Root class={cn(sizeClasses, "rounded-full")}>
-          {#if user.image}
+          {#if avatarUrl}
             <Avatar.Image
-              src={user.image}
+              src={avatarUrl}
               alt={user.name ?? "User"}
             />
           {/if}

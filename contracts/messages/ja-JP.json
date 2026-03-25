@@ -345,5 +345,16 @@
   "account_deactivate_description": "アカウントとデータを完全に削除します。",
   "account_deactivate_delete_title": "アカウントを削除",
   "account_deactivate_delete_description": "アカウントと関連するすべてのデータを完全に削除します。この操作は取り消せません。",
-  "account_deactivate_not_available": "アカウントの無効化はまだ利用できません。"
+  "account_deactivate_not_available": "アカウントの無効化はまだ利用できません。",
+  "account_profile_avatar_title": "プロフィール写真",
+  "account_profile_avatar_change": "写真を変更",
+  "account_profile_avatar_crop_title": "写真を切り抜き",
+  "account_profile_avatar_crop_description": "ドラッグで位置調整。スライダーでズーム。",
+  "account_profile_avatar_crop_confirm": "写真を保存",
+  "account_profile_avatar_uploading": "アップロード中...",
+  "account_profile_avatar_processing": "処理中...",
+  "account_profile_avatar_success": "写真が更新されました！",
+  "account_profile_avatar_rejected": "写真が拒否されました: {reason}",
+  "account_profile_avatar_too_large": "画像は50 MB以下にしてください。",
+  "account_profile_avatar_invalid_type": "画像ファイルを選択してください。"
 }

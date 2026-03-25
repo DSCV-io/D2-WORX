@@ -69,13 +69,28 @@ builder.Services.AddJwtAuth(builder.Configuration);
 // Register service-to-service API key authentication.
 builder.Services.AddServiceKeyAuth(builder.Configuration);
 
-// Register CORS — supports comma-separated origins (e.g. "http://localhost:5173,https://app.example.com").
-var corsOrigins = (builder.Configuration["CorsOrigin"] ?? "http://localhost:5173")
-    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+// Register CORS — read indexed GATEWAY_CORS_ORIGINS__0, __1, etc. via IConfiguration.
+var corsOrigins = new List<string>();
+for (var i = 0; ; i++)
+{
+    var origin = builder.Configuration[$"GATEWAY_CORS_ORIGINS:{i}"];
+    if (string.IsNullOrEmpty(origin))
+    {
+        break;
+    }
+
+    corsOrigins.Add(origin.TrimEnd('/'));
+}
+
+if (corsOrigins.Count == 0)
+{
+    corsOrigins.Add("http://localhost:5173");
+}
+
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
-    p.WithOrigins(corsOrigins)
+    p.WithOrigins(corsOrigins.ToArray())
      .AllowCredentials()
-     .WithHeaders("Content-Type", "Authorization", "Idempotency-Key", "X-Client-Fingerprint", "D2-Locale")
+     .WithHeaders("Content-Type", "Authorization", "Idempotency-Key", "X-Client-Fingerprint", "X-Requested-With", "D2-Locale")
      .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE")));
 
 // Request body size limit (256 KB — gateway payloads are small JSON).

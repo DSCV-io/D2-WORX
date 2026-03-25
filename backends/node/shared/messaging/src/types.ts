@@ -21,7 +21,7 @@ export interface ConsumerConfig<T = unknown> {
   queue: string;
   queueOptions?: { durable?: boolean; arguments?: Record<string, unknown> };
   prefetchCount?: number;
-  exchanges?: Array<{ exchange: string; type: "topic" | "direct" | "fanout" }>;
+  exchanges?: Array<{ exchange: string; type: "topic" | "direct" | "fanout"; durable?: boolean }>;
   queueBindings?: Array<{ exchange: string; routingKey: string }>;
   /** Optional deserializer for the raw message body. When provided, the raw JSON is passed through this function before reaching the handler. */
   deserialize?: (raw: unknown) => T;
@@ -30,7 +30,7 @@ export interface ConsumerConfig<T = unknown> {
 export interface PublisherConfig {
   confirm?: boolean;
   maxAttempts?: number;
-  exchanges?: Array<{ exchange: string; type: "topic" | "direct" | "fanout" }>;
+  exchanges?: Array<{ exchange: string; type: "topic" | "direct" | "fanout"; durable?: boolean }>;
 }
 
 export interface PublishTarget {

@@ -30,6 +30,31 @@ var redisConnectionString = ConnectionStringHelper.GetRedis();
 
 builder.AddServiceDefaults();
 
+// CORS — browser connects directly to this gateway for WebSocket.
+// Read indexed SIGNALR_CORS_ORIGINS__0, __1, etc. via IConfiguration.
+var corsOrigins = new List<string>();
+for (var i = 0; ; i++)
+{
+    var origin = builder.Configuration[$"SIGNALR_CORS_ORIGINS:{i}"];
+    if (string.IsNullOrEmpty(origin))
+    {
+        break;
+    }
+
+    corsOrigins.Add(origin.TrimEnd('/'));
+}
+
+if (corsOrigins.Count == 0)
+{
+    corsOrigins.Add("http://localhost:5173");
+}
+
+builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
+    p.WithOrigins(corsOrigins.ToArray())
+     .AllowCredentials()
+     .WithHeaders("Content-Type", "Authorization", "X-Client-Fingerprint", "X-Requested-With", "X-SignalR-User-Agent")
+     .WithMethods("GET", "POST")));
+
 // Redis connection multiplexer — shared by SignalR backplane and health checks.
 var redisOptions = StackExchange.Redis.ConfigurationOptions.Parse(redisConnectionString);
 redisOptions.AbortOnConnectFail = false;
@@ -93,6 +118,7 @@ app.Use(async (context, next) =>
     await next();
 });
 
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 

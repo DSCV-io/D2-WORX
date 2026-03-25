@@ -17,6 +17,46 @@ using Microsoft.Extensions.Options;
 /// </summary>
 public class JwtAuthConfigTests
 {
+    #region JWKS configuration
+
+    /// <summary>
+    /// Verifies that ConfigurationManager is set (not null) for automatic key refresh.
+    /// </summary>
+    [Fact]
+    public void AddJwtAuth_SetsConfigurationManager()
+    {
+        var config = CreateConfig();
+        var jwtOptions = ResolveJwtBearerOptions(config);
+
+        jwtOptions.ConfigurationManager.Should().NotBeNull();
+    }
+
+    /// <summary>
+    /// Verifies that static Configuration is null (using ConfigurationManager instead).
+    /// </summary>
+    [Fact]
+    public void AddJwtAuth_StaticConfigurationIsNull()
+    {
+        var config = CreateConfig();
+        var jwtOptions = ResolveJwtBearerOptions(config);
+
+        jwtOptions.Configuration.Should().BeNull();
+    }
+
+    /// <summary>
+    /// Verifies HTTPS metadata is not required (internal auth service, TLS at proxy).
+    /// </summary>
+    [Fact]
+    public void AddJwtAuth_DoesNotRequireHttpsMetadata()
+    {
+        var config = CreateConfig();
+        var jwtOptions = ResolveJwtBearerOptions(config);
+
+        jwtOptions.RequireHttpsMetadata.Should().BeFalse();
+    }
+
+    #endregion
+
     #region Default refresh intervals
 
     /// <summary>

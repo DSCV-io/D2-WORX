@@ -63,6 +63,7 @@ export function createFileUploadedConsumer(deps: FileUploadedConsumerDeps) {
         {
           exchange: FILES_MESSAGING.EVENTS_EXCHANGE,
           type: FILES_MESSAGING.EVENTS_EXCHANGE_TYPE,
+          durable: true,
         },
       ],
       queueBindings: [
@@ -103,16 +104,18 @@ export function createFileUploadedConsumer(deps: FileUploadedConsumerDeps) {
  * Extracts the fileId from either a MinIO S3 event notification
  * or a simple `{ fileId }` message body.
  *
- * MinIO notifications contain the object key in `Records[0].s3.object.key`.
- * The object key IS the fileId (files stored as `{fileId}` in the bucket).
- * URL-encoded characters (e.g., `%2F`) are decoded.
+ * MinIO notifications contain the S3 object key in `Records[0].s3.object.key`.
+ * The object key follows the pattern `{contextKey}/{relatedEntityId}/{fileId}/raw.{ext}`.
+ * The fileId is the third path segment (index 2).
  */
 function extractFileId(body: unknown): string | undefined {
   // Try MinIO S3 event format first
   const minioResult = minioEventSchema.safeParse(body);
   if (minioResult.success) {
-    const objectKey = minioResult.data.Records[0]!.s3.object.key;
-    return decodeURIComponent(objectKey);
+    const objectKey = decodeURIComponent(minioResult.data.Records[0]!.s3.object.key);
+    // Storage key format: {contextKey}/{relatedEntityId}/{fileId}/{filename}
+    const segments = objectKey.split("/");
+    return segments.length >= 3 ? segments[2] : objectKey;
   }
 
   // Fall back to simple { fileId } format

@@ -59,6 +59,7 @@
 - [ ] **Review Checkpoint 5** — security/sessions/logins fully functional
 
 **Explicitly deferred:**
+
 - Phone number management (no backend support yet)
 - Account deletion (stubbed with toast, no backend support yet)
 - Locale/timezone save to backend (no update handlers yet)

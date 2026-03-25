@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AvatarUploader from "$lib/client/components/account/avatar-uploader.svelte";
   import InlineEditField from "$lib/client/components/forms/inline-edit-field.svelte";
   import InlineEditFieldGroup from "$lib/client/components/forms/inline-edit-field-group.svelte";
   import InlineDropdown from "$lib/client/components/forms/inline-dropdown.svelte";
@@ -194,6 +195,22 @@
     <h2 class="text-xl font-semibold">{m.account_profile_title()}</h2>
     <p class="text-muted-foreground text-sm">{m.account_profile_description()}</p>
   </div>
+
+  <!-- Avatar -->
+  <Card.Root>
+    <Card.Header>
+      <Card.Title class="text-base">{m.account_profile_avatar_title()}</Card.Title>
+    </Card.Header>
+    <Card.Content>
+      {#if user}
+        <AvatarUploader
+          currentImageFileId={user.image}
+          userId={user.id}
+          userName={user.name}
+        />
+      {/if}
+    </Card.Content>
+  </Card.Root>
 
   <Card.Root>
     <Card.Header>

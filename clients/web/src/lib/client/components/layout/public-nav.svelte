@@ -26,6 +26,7 @@
   import LanguagesIcon from "@lucide/svelte/icons/languages";
   import SettingsIcon from "@lucide/svelte/icons/settings";
   import LogOutIcon from "@lucide/svelte/icons/log-out";
+  import { getAvatarDisplayUrl } from "$lib/client/utils/avatar-url.js";
 
   // --- Auth state ---
   const session = $derived($page.data.session);
@@ -86,6 +87,19 @@
     const preset = builtInPresets.find((p) => p.name === value);
     if (preset) applyPreset(preset);
   }
+
+  // --- Avatar URL resolution for mobile trigger ---
+  let mobileAvatarUrl: string | undefined = $state();
+
+  $effect(() => {
+    if (user?.image) {
+      getAvatarDisplayUrl(user.image, "thumb")
+        .then((url) => {
+          mobileAvatarUrl = url;
+        })
+        .catch(() => {});
+    }
+  });
 
   // --- Language modal ---
   let languageModalOpen = $state(false);
@@ -194,9 +208,9 @@
           onclick={() => (sheetOpen = true)}
         >
           <Avatar.Root class="size-8 rounded-full">
-            {#if user.image}
+            {#if mobileAvatarUrl}
               <Avatar.Image
-                src={user.image}
+                src={mobileAvatarUrl}
                 alt={user.name ?? "User"}
               />
             {/if}
