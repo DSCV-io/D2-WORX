@@ -9,6 +9,7 @@
   import { toast } from "svelte-sonner";
   import { onMount } from "svelte";
   import * as m from "$lib/paraglide/messages.js";
+  import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
   import CameraIcon from "@lucide/svelte/icons/camera";
   import LoaderIcon from "@lucide/svelte/icons/loader-circle";
 
@@ -28,6 +29,7 @@
   let selectedFile: File | undefined = $state();
   let cropDialogOpen = $state(false);
   let displayUrl: string | undefined = $state();
+  let avatarLoading = $state(!!currentImageFileId);
   let fileInput: HTMLInputElement | undefined = $state();
   let pendingFileId: string | undefined = $state();
 
@@ -39,15 +41,19 @@
   // Resolve avatar URL reactively — clears when image is removed, fetches when set
   $effect(() => {
     if (currentImageFileId) {
+      avatarLoading = true;
       getAvatarDisplayUrl(currentImageFileId, "original")
         .then((url) => {
           displayUrl = url;
+          avatarLoading = false;
         })
         .catch(() => {
           displayUrl = undefined;
+          avatarLoading = false;
         });
     } else {
       displayUrl = undefined;
+      avatarLoading = false;
     }
   });
 
@@ -185,48 +191,54 @@
 
 <!-- Avatar display + upload trigger -->
 <div class="flex flex-col items-center gap-4">
-  <button
-    type="button"
-    class="group relative cursor-pointer"
-    onclick={handleFileSelect}
-    disabled={uploadState === "uploading" ||
-      uploadState === "processing" ||
-      uploadState === "removing"}
-  >
-    {#key displayUrl}
-      <Avatar.Root class="size-32 rounded-full">
-        {#if displayUrl}
-          <Avatar.Image
-            src={displayUrl}
-            alt={userName ?? "Avatar"}
-          />
-        {/if}
-        <Avatar.Fallback
-          class="rounded-full text-3xl font-medium text-white"
-          style="background-color: {avatarColor()}"
+  {#if avatarLoading}
+    <Skeleton class="size-32 rounded-full" />
+  {:else}
+    <button
+      type="button"
+      class="group relative cursor-pointer"
+      onclick={handleFileSelect}
+      disabled={uploadState === "uploading" ||
+        uploadState === "processing" ||
+        uploadState === "removing"}
+    >
+      {#key displayUrl}
+        <Avatar.Root class="size-32 rounded-full">
+          {#if displayUrl}
+            <Avatar.Image
+              src={displayUrl}
+              alt={userName ?? "Avatar"}
+            />
+          {/if}
+          <Avatar.Fallback
+            class="rounded-full text-3xl font-medium text-white"
+            style="background-color: {avatarColor()}"
+          >
+            {initials()}
+          </Avatar.Fallback>
+        </Avatar.Root>
+      {/key}
+
+      <!-- Overlay -->
+      {#if uploadState === "removing" || uploadState === "uploading" || uploadState === "processing"}
+        <div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
+          <LoaderIcon class="size-8 animate-spin text-white" />
+        </div>
+      {:else}
+        <div
+          class="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 transition-colors group-hover:bg-black/40"
         >
-          {initials()}
-        </Avatar.Fallback>
-      </Avatar.Root>
-    {/key}
+          <CameraIcon
+            class="size-8 text-white opacity-0 transition-opacity group-hover:opacity-100"
+          />
+        </div>
+      {/if}
+    </button>
+  {/if}
 
-    <!-- Overlay -->
-    {#if uploadState === "removing" || uploadState === "uploading" || uploadState === "processing"}
-      <div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
-        <LoaderIcon class="size-8 animate-spin text-white" />
-      </div>
-    {:else}
-      <div
-        class="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 transition-colors group-hover:bg-black/40"
-      >
-        <CameraIcon
-          class="size-8 text-white opacity-0 transition-opacity group-hover:opacity-100"
-        />
-      </div>
-    {/if}
-  </button>
-
-  {#if uploadState === "uploading" || uploadState === "processing" || uploadState === "removing"}
+  {#if avatarLoading}
+    <Skeleton class="h-5 w-16" />
+  {:else if uploadState === "uploading" || uploadState === "processing" || uploadState === "removing"}
     <p class="text-muted-foreground text-sm">
       {uploadState === "uploading"
         ? m.account_profile_avatar_uploading()

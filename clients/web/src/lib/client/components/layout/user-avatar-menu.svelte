@@ -21,6 +21,7 @@
   import MonitorIcon from "@lucide/svelte/icons/monitor";
   import { cn } from "$lib/shared/utils/utils.js";
   import { getAvatarDisplayUrl } from "$lib/client/utils/avatar-url.js";
+  import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
 
   let {
     user,
@@ -43,18 +44,23 @@
 
   // Resolve user.image (fileId) to a presigned display URL
   let avatarUrl: string | undefined = $state();
+  let avatarLoading = $state(!!user.image);
 
   $effect(() => {
     if (user.image) {
+      avatarLoading = true;
       getAvatarDisplayUrl(user.image, "small")
         .then((url) => {
           avatarUrl = url;
+          avatarLoading = false;
         })
         .catch(() => {
           avatarUrl = undefined;
+          avatarLoading = false;
         });
     } else {
       avatarUrl = undefined;
+      avatarLoading = false;
     }
   });
 
@@ -111,22 +117,26 @@
         class={cn("rounded-full p-0", sizeClasses, className)}
         {...props}
       >
-        {#key avatarUrl}
-          <Avatar.Root class={cn(sizeClasses, "rounded-full")}>
-            {#if avatarUrl}
-              <Avatar.Image
-                src={avatarUrl}
-                alt={user.name ?? "User"}
-              />
-            {/if}
-            <Avatar.Fallback
-              class="rounded-full text-xs font-medium text-white"
-              style="background-color: {avatarColor()}"
-            >
-              {initials()}
-            </Avatar.Fallback>
-          </Avatar.Root>
-        {/key}
+        {#if avatarLoading}
+          <Skeleton class={cn(sizeClasses, "rounded-full")} />
+        {:else}
+          {#key avatarUrl}
+            <Avatar.Root class={cn(sizeClasses, "rounded-full")}>
+              {#if avatarUrl}
+                <Avatar.Image
+                  src={avatarUrl}
+                  alt={user.name ?? "User"}
+                />
+              {/if}
+              <Avatar.Fallback
+                class="rounded-full text-xs font-medium text-white"
+                style="background-color: {avatarColor()}"
+              >
+                {initials()}
+              </Avatar.Fallback>
+            </Avatar.Root>
+          {/key}
+        {/if}
       </Button>
     {/snippet}
   </DropdownMenu.Trigger>
