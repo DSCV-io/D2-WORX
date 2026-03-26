@@ -74,7 +74,11 @@ export interface GeoRefData {
     | { [key: string]: LocaleDTO }
     | undefined;
   /** Key is short_code. */
-  geopoliticalEntities?: { [key: string]: GeopoliticalEntityDTO } | undefined;
+  geopoliticalEntities?:
+    | { [key: string]: GeopoliticalEntityDTO }
+    | undefined;
+  /** Key is iana_identifier. */
+  timezones?: { [key: string]: TimezoneDTO } | undefined;
 }
 
 export interface GeoRefData_CountriesEntry {
@@ -105,6 +109,11 @@ export interface GeoRefData_LocalesEntry {
 export interface GeoRefData_GeopoliticalEntitiesEntry {
   key: string;
   value?: GeopoliticalEntityDTO | undefined;
+}
+
+export interface GeoRefData_TimezonesEntry {
+  key: string;
+  value?: TimezoneDTO | undefined;
 }
 
 export interface FindWhoIsRequest {
@@ -331,6 +340,23 @@ export interface LocaleDTO {
     | undefined;
   /** Foreign keys. */
   languageIso6391Code?: string | undefined;
+  countryIso31661Alpha2Code?: string | undefined;
+}
+
+export interface TimezoneDTO {
+  /** Primary key. */
+  ianaIdentifier?:
+    | string
+    | undefined;
+  /** Properties. */
+  displayName?: string | undefined;
+  utcOffsetStd?: string | undefined;
+  utcOffsetDst?: string | undefined;
+  abbreviationStd?: string | undefined;
+  abbreviationDst?:
+    | string
+    | undefined;
+  /** Foreign keys. */
   countryIso31661Alpha2Code?: string | undefined;
 }
 
@@ -790,6 +816,7 @@ function createBaseGeoRefData(): GeoRefData {
     languages: {},
     locales: {},
     geopoliticalEntities: {},
+    timezones: {},
   };
 }
 
@@ -821,6 +848,9 @@ export const GeoRefData: MessageFns<GeoRefData> = {
         GeoRefData_GeopoliticalEntitiesEntry.encode({ key: key as any, value }, writer.uint32(66).fork()).join();
       },
     );
+    globalThis.Object.entries(message.timezones || {}).forEach(([key, value]: [string, TimezoneDTO]) => {
+      GeoRefData_TimezonesEntry.encode({ key: key as any, value }, writer.uint32(74).fork()).join();
+    });
     return writer;
   },
 
@@ -913,6 +943,17 @@ export const GeoRefData: MessageFns<GeoRefData> = {
           }
           continue;
         }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          const entry9 = GeoRefData_TimezonesEntry.decode(reader, reader.uint32());
+          if (entry9.value !== undefined) {
+            message.timezones![entry9.key] = entry9.value;
+          }
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -992,6 +1033,15 @@ export const GeoRefData: MessageFns<GeoRefData> = {
           {},
         )
         : {},
+      timezones: isObject(object.timezones)
+        ? (globalThis.Object.entries(object.timezones) as [string, any][]).reduce(
+          (acc: { [key: string]: TimezoneDTO }, [key, value]: [string, any]) => {
+            acc[key] = TimezoneDTO.fromJSON(value);
+            return acc;
+          },
+          {},
+        )
+        : {},
     };
   },
 
@@ -1054,6 +1104,15 @@ export const GeoRefData: MessageFns<GeoRefData> = {
         obj.geopoliticalEntities = {};
         entries.forEach(([k, v]) => {
           obj.geopoliticalEntities[k] = GeopoliticalEntityDTO.toJSON(v);
+        });
+      }
+    }
+    if (message.timezones) {
+      const entries = globalThis.Object.entries(message.timezones) as [string, TimezoneDTO][];
+      if (entries.length > 0) {
+        obj.timezones = {};
+        entries.forEach(([k, v]) => {
+          obj.timezones[k] = TimezoneDTO.toJSON(v);
         });
       }
     }
@@ -1122,6 +1181,15 @@ export const GeoRefData: MessageFns<GeoRefData> = {
         },
         {},
       );
+    message.timezones = (globalThis.Object.entries(object.timezones ?? {}) as [string, TimezoneDTO][]).reduce(
+      (acc: { [key: string]: TimezoneDTO }, [key, value]: [string, TimezoneDTO]) => {
+        if (value !== undefined) {
+          acc[key] = TimezoneDTO.fromPartial(value);
+        }
+        return acc;
+      },
+      {},
+    );
     return message;
   },
 };
@@ -1593,6 +1661,84 @@ export const GeoRefData_GeopoliticalEntitiesEntry: MessageFns<GeoRefData_Geopoli
     message.key = object.key ?? "";
     message.value = (object.value !== undefined && object.value !== null)
       ? GeopoliticalEntityDTO.fromPartial(object.value)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseGeoRefData_TimezonesEntry(): GeoRefData_TimezonesEntry {
+  return { key: "", value: undefined };
+}
+
+export const GeoRefData_TimezonesEntry: MessageFns<GeoRefData_TimezonesEntry> = {
+  encode(message: GeoRefData_TimezonesEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== undefined) {
+      TimezoneDTO.encode(message.value, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GeoRefData_TimezonesEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGeoRefData_TimezonesEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = TimezoneDTO.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GeoRefData_TimezonesEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? TimezoneDTO.fromJSON(object.value) : undefined,
+    };
+  },
+
+  toJSON(message: GeoRefData_TimezonesEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== undefined) {
+      obj.value = TimezoneDTO.toJSON(message.value);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GeoRefData_TimezonesEntry>, I>>(base?: I): GeoRefData_TimezonesEntry {
+    return GeoRefData_TimezonesEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GeoRefData_TimezonesEntry>, I>>(object: I): GeoRefData_TimezonesEntry {
+    const message = createBaseGeoRefData_TimezonesEntry();
+    message.key = object.key ?? "";
+    message.value = (object.value !== undefined && object.value !== null)
+      ? TimezoneDTO.fromPartial(object.value)
       : undefined;
     return message;
   },
@@ -4405,6 +4551,198 @@ export const LocaleDTO: MessageFns<LocaleDTO> = {
     message.name = object.name ?? "";
     message.endonym = object.endonym ?? "";
     message.languageIso6391Code = object.languageIso6391Code ?? "";
+    message.countryIso31661Alpha2Code = object.countryIso31661Alpha2Code ?? "";
+    return message;
+  },
+};
+
+function createBaseTimezoneDTO(): TimezoneDTO {
+  return {
+    ianaIdentifier: "",
+    displayName: "",
+    utcOffsetStd: "",
+    utcOffsetDst: undefined,
+    abbreviationStd: "",
+    abbreviationDst: undefined,
+    countryIso31661Alpha2Code: "",
+  };
+}
+
+export const TimezoneDTO: MessageFns<TimezoneDTO> = {
+  encode(message: TimezoneDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.ianaIdentifier !== undefined && message.ianaIdentifier !== "") {
+      writer.uint32(10).string(message.ianaIdentifier);
+    }
+    if (message.displayName !== undefined && message.displayName !== "") {
+      writer.uint32(18).string(message.displayName);
+    }
+    if (message.utcOffsetStd !== undefined && message.utcOffsetStd !== "") {
+      writer.uint32(26).string(message.utcOffsetStd);
+    }
+    if (message.utcOffsetDst !== undefined) {
+      writer.uint32(34).string(message.utcOffsetDst);
+    }
+    if (message.abbreviationStd !== undefined && message.abbreviationStd !== "") {
+      writer.uint32(42).string(message.abbreviationStd);
+    }
+    if (message.abbreviationDst !== undefined) {
+      writer.uint32(50).string(message.abbreviationDst);
+    }
+    if (message.countryIso31661Alpha2Code !== undefined && message.countryIso31661Alpha2Code !== "") {
+      writer.uint32(58).string(message.countryIso31661Alpha2Code);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TimezoneDTO {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTimezoneDTO();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.ianaIdentifier = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.displayName = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.utcOffsetStd = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.utcOffsetDst = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.abbreviationStd = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.abbreviationDst = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.countryIso31661Alpha2Code = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TimezoneDTO {
+    return {
+      ianaIdentifier: isSet(object.ianaIdentifier)
+        ? globalThis.String(object.ianaIdentifier)
+        : isSet(object.iana_identifier)
+        ? globalThis.String(object.iana_identifier)
+        : "",
+      displayName: isSet(object.displayName)
+        ? globalThis.String(object.displayName)
+        : isSet(object.display_name)
+        ? globalThis.String(object.display_name)
+        : "",
+      utcOffsetStd: isSet(object.utcOffsetStd)
+        ? globalThis.String(object.utcOffsetStd)
+        : isSet(object.utc_offset_std)
+        ? globalThis.String(object.utc_offset_std)
+        : "",
+      utcOffsetDst: isSet(object.utcOffsetDst)
+        ? globalThis.String(object.utcOffsetDst)
+        : isSet(object.utc_offset_dst)
+        ? globalThis.String(object.utc_offset_dst)
+        : undefined,
+      abbreviationStd: isSet(object.abbreviationStd)
+        ? globalThis.String(object.abbreviationStd)
+        : isSet(object.abbreviation_std)
+        ? globalThis.String(object.abbreviation_std)
+        : "",
+      abbreviationDst: isSet(object.abbreviationDst)
+        ? globalThis.String(object.abbreviationDst)
+        : isSet(object.abbreviation_dst)
+        ? globalThis.String(object.abbreviation_dst)
+        : undefined,
+      countryIso31661Alpha2Code: isSet(object.countryIso31661Alpha2Code)
+        ? globalThis.String(object.countryIso31661Alpha2Code)
+        : isSet(object.country_iso_3166_1_alpha_2_code)
+        ? globalThis.String(object.country_iso_3166_1_alpha_2_code)
+        : "",
+    };
+  },
+
+  toJSON(message: TimezoneDTO): unknown {
+    const obj: any = {};
+    if (message.ianaIdentifier !== undefined && message.ianaIdentifier !== "") {
+      obj.ianaIdentifier = message.ianaIdentifier;
+    }
+    if (message.displayName !== undefined && message.displayName !== "") {
+      obj.displayName = message.displayName;
+    }
+    if (message.utcOffsetStd !== undefined && message.utcOffsetStd !== "") {
+      obj.utcOffsetStd = message.utcOffsetStd;
+    }
+    if (message.utcOffsetDst !== undefined) {
+      obj.utcOffsetDst = message.utcOffsetDst;
+    }
+    if (message.abbreviationStd !== undefined && message.abbreviationStd !== "") {
+      obj.abbreviationStd = message.abbreviationStd;
+    }
+    if (message.abbreviationDst !== undefined) {
+      obj.abbreviationDst = message.abbreviationDst;
+    }
+    if (message.countryIso31661Alpha2Code !== undefined && message.countryIso31661Alpha2Code !== "") {
+      obj.countryIso31661Alpha2Code = message.countryIso31661Alpha2Code;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<TimezoneDTO>, I>>(base?: I): TimezoneDTO {
+    return TimezoneDTO.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<TimezoneDTO>, I>>(object: I): TimezoneDTO {
+    const message = createBaseTimezoneDTO();
+    message.ianaIdentifier = object.ianaIdentifier ?? "";
+    message.displayName = object.displayName ?? "";
+    message.utcOffsetStd = object.utcOffsetStd ?? "";
+    message.utcOffsetDst = object.utcOffsetDst ?? undefined;
+    message.abbreviationStd = object.abbreviationStd ?? "";
+    message.abbreviationDst = object.abbreviationDst ?? undefined;
     message.countryIso31661Alpha2Code = object.countryIso31661Alpha2Code ?? "";
     return message;
   },
