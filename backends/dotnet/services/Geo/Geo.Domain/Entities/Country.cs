@@ -183,6 +183,17 @@ public record Country
     public ICollection<Locale> Locales { get; init; } = [];
 
     /// <summary>
+    /// Gets a collection of IANA timezones associated with this country.
+    /// </summary>
+    /// <example>
+    /// America/New_York, America/Chicago, America/Denver, America/Los_Angeles.
+    /// </example>
+    /// <remarks>
+    /// A country can have multiple timezones. Each timezone has a single primary country.
+    /// </remarks>
+    public ICollection<Timezone> Timezones { get; init; } = [];
+
+    /// <summary>
     /// Gets a collection of geopolitical entities to which this country belongs.
     /// </summary>
     /// <example>

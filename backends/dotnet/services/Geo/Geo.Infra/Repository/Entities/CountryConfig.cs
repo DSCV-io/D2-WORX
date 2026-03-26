@@ -141,6 +141,13 @@ public class CountryConfig : IEntityTypeConfiguration<Country>
             .IsRequired()
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Timezones (Navigation Collection - One-to-many).
+        builder.HasMany(x => x.Timezones)
+            .WithOne(x => x.Country)
+            .HasForeignKey(x => x.CountryISO31661Alpha2Code)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Geopolitical Entities (Navigation Collection - Many-to-many).
         builder.HasMany(x => x.GeopoliticalEntities)
             .WithMany(x => x.Countries)
