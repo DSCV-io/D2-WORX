@@ -94,6 +94,7 @@ export { PurgeExpiredEmulationConsents } from "./repository/handlers/d/purge-exp
 export { UpdateUserImage } from "./repository/handlers/u/update-user-image.js";
 export { UpdateOrgLogo } from "./repository/handlers/u/update-org-logo.js";
 export { UpdateUserLocale } from "./repository/handlers/u/update-user-locale.js";
+export { UpdateUserTimezone } from "./repository/handlers/u/update-user-timezone.js";
 
 // --- Messaging Consumers ---
 export { createWhoIsResolutionConsumer } from "./messaging/consumers/whois-resolution-consumer.js";

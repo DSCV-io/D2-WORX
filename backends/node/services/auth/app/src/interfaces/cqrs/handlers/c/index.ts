@@ -106,3 +106,9 @@ export type {
   UpdateUserLocaleOutput,
   IUpdateUserLocaleHandler,
 } from "./update-user-locale.js";
+
+export type {
+  UpdateUserTimezoneInput,
+  UpdateUserTimezoneOutput,
+  IUpdateUserTimezoneHandler,
+} from "./update-user-timezone.js";

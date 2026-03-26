@@ -33,6 +33,7 @@ export const user = pgTable(
     displayUsername: text("display_username").notNull().unique(),
     // i18n
     locale: text("locale").default("en-US"),
+    timezone: text("timezone").default("America/New_York"),
     // Admin plugin
     role: text("role"),
     banned: boolean("banned").default(false),

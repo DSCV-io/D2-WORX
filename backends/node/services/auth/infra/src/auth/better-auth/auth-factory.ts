@@ -423,6 +423,12 @@ export function createAuth(
           defaultValue: BASE_LOCALE,
           input: false,
         },
+        timezone: {
+          type: "string",
+          required: false,
+          defaultValue: "America/New_York",
+          input: false,
+        },
       },
     },
 

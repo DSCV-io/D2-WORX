@@ -92,6 +92,10 @@ export type {
   UpdateUserLocaleInput as UpdateUserLocaleRepoInput,
   UpdateUserLocaleOutput as UpdateUserLocaleRepoOutput,
   IUpdateUserLocaleHandler as IUpdateUserLocaleRepoHandler,
+  // Update (U) — User Timezone
+  UpdateUserTimezoneInput as UpdateUserTimezoneRepoInput,
+  UpdateUserTimezoneOutput as UpdateUserTimezoneRepoOutput,
+  IUpdateUserTimezoneHandler as IUpdateUserTimezoneRepoHandler,
   // Update (U) — User Username
   UpdateUserUsernameInput,
   UpdateUserUsernameOutput,
@@ -184,6 +188,12 @@ export type {
   UpdateUserLocaleInput,
   UpdateUserLocaleOutput,
 } from "./interfaces/cqrs/handlers/c/update-user-locale.js";
+
+export { UpdateUserTimezone } from "./implementations/cqrs/handlers/c/update-user-timezone.js";
+export type {
+  UpdateUserTimezoneInput,
+  UpdateUserTimezoneOutput,
+} from "./interfaces/cqrs/handlers/c/update-user-timezone.js";
 
 export { RecordSignInOutcome } from "./implementations/cqrs/handlers/c/record-sign-in-outcome.js";
 export type {
@@ -452,6 +462,8 @@ export {
   IUpdateUsernameKey,
   IUpdateUserLocaleKey,
   IUpdateUserLocaleRepoKey,
+  IUpdateUserTimezoneKey,
+  IUpdateUserTimezoneRepoKey,
   IUpdateUserNameKey,
   ICheckUsernameAvailableKey,
   IUpdateUserUsernameKey,

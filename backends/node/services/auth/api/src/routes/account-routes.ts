@@ -5,6 +5,7 @@ import {
   IUpdateUserRealNameKey,
   IUpdateUsernameKey,
   IUpdateUserLocaleKey,
+  IUpdateUserTimezoneKey,
   IGetSignInEventsKey,
   IUpdateUserImageKey,
   IInvalidateUserSessionCacheKey,
@@ -72,6 +73,23 @@ export function createAccountRoutes(auth: Auth) {
     const result = await handler.handleAsync({
       userId: session.userId as string,
       locale: body.locale as string,
+    });
+    const status = (
+      result.success ? HttpStatusCode.OK : (result.statusCode ?? HttpStatusCode.BadRequest)
+    ) as ContentfulStatusCode;
+    return c.json(result, status);
+  });
+
+  // PATCH /api/account/timezone — Update user's timezone preference
+  app.patch("/api/account/timezone", async (c) => {
+    const body = await c.req.json();
+    const session = c.get(SESSION_KEY);
+    if (!session) return c.json({ success: false, statusCode: 401 }, 401 as ContentfulStatusCode);
+
+    const handler = c.get(SCOPE_KEY).resolve(IUpdateUserTimezoneKey);
+    const result = await handler.handleAsync({
+      userId: session.userId as string,
+      timezone: body.timezone as string,
     });
     const status = (
       result.success ? HttpStatusCode.OK : (result.statusCode ?? HttpStatusCode.BadRequest)

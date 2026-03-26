@@ -145,6 +145,12 @@ export type {
 } from "./u/update-user-locale.js";
 
 export type {
+  UpdateUserTimezoneInput,
+  UpdateUserTimezoneOutput,
+  IUpdateUserTimezoneHandler,
+} from "./u/update-user-timezone.js";
+
+export type {
   UpdateOrgLogoInput,
   UpdateOrgLogoOutput,
   IUpdateOrgLogoHandler,

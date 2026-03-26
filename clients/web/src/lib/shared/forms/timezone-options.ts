@@ -100,16 +100,10 @@ function formatLabel(displayName: string, abbrevSTD: string, abbrevDST?: string)
  * Priority timezones appear first (in PRIORITY_TIMEZONES order),
  * then remaining timezones sorted alphabetically by display name.
  */
-export function timezonesToOptions(
-  timezones: Record<string, TimezoneDTO>,
-): TimezoneOption[] {
+export function timezonesToOptions(timezones: Record<string, TimezoneDTO>): TimezoneOption[] {
   const all = Object.values(timezones).map((t) => ({
     value: t.ianaIdentifier,
-    label: formatLabel(
-      t.displayName,
-      t.abbreviationStd,
-      t.abbreviationDst || undefined,
-    ),
+    label: formatLabel(t.displayName, t.abbreviationStd, t.abbreviationDst || undefined),
     displayName: t.displayName,
     offset: t.utcOffsetStd,
   }));

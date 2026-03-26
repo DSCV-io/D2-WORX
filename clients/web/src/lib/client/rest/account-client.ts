@@ -71,6 +71,14 @@ export async function updateLocale(locale: string): Promise<D2Result> {
   });
 }
 
+/** Update user's timezone preference. */
+export async function updateTimezone(timezone: string): Promise<D2Result> {
+  return accountApiCall("/api/account/timezone", {
+    method: "PATCH",
+    body: { timezone },
+  });
+}
+
 /**
  * Bust BetterAuth's cookie cache so the next page load reads fresh session data.
  * Call after mutations that change user fields (locale, etc.) before triggering

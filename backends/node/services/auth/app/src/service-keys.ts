@@ -19,6 +19,7 @@ import type {
   IUpdateSignInEventWhoIsIdHandler,
   IUpdateUserImageHandler,
   IUpdateUserLocaleHandler,
+  IUpdateUserTimezoneHandler,
   IUpdateOrgLogoHandler,
   IPurgeExpiredSessionsHandler,
   IPurgeSignInEventsHandler,
@@ -137,6 +138,9 @@ export const IUpdateUserUsernameKey = createServiceKey<IUpdateUserUsernameHandle
 export const IUpdateUserLocaleRepoKey = createServiceKey<IUpdateUserLocaleHandler>(
   "Auth.Repo.UpdateUserLocale",
 );
+export const IUpdateUserTimezoneRepoKey = createServiceKey<IUpdateUserTimezoneHandler>(
+  "Auth.Repo.UpdateUserTimezone",
+);
 
 // --- Health Check Repository Handler ---
 
@@ -191,6 +195,9 @@ export const IUpdateUsernameKey =
   createServiceKey<Commands.IUpdateUsernameHandler>("Auth.App.UpdateUsername");
 export const IUpdateUserLocaleKey = createServiceKey<Commands.IUpdateUserLocaleHandler>(
   "Auth.App.UpdateUserLocale",
+);
+export const IUpdateUserTimezoneKey = createServiceKey<Commands.IUpdateUserTimezoneHandler>(
+  "Auth.App.UpdateUserTimezone",
 );
 
 // --- Query Handlers ---

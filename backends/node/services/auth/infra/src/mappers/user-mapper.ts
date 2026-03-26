@@ -16,6 +16,7 @@ export function toDomainUser(raw: Record<string, unknown>): User {
     emailVerified: Boolean(raw["emailVerified"] ?? raw["email_verified"]),
     image: (raw["image"] as string | undefined) ?? undefined,
     locale: (raw["locale"] as string) ?? "en-US",
+    timezone: (raw["timezone"] as string) ?? "America/New_York",
     createdAt: toDate(raw["createdAt"] ?? raw["created_at"]),
     updatedAt: toDate(raw["updatedAt"] ?? raw["updated_at"]),
   };

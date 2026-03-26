@@ -53,6 +53,7 @@ import { CreateUserContact } from "./implementations/cqrs/handlers/c/create-user
 import { UpdateUserRealName } from "./implementations/cqrs/handlers/c/update-user-real-name.js";
 import { UpdateUsername } from "./implementations/cqrs/handlers/c/update-username.js";
 import { UpdateUserLocale } from "./implementations/cqrs/handlers/c/update-user-locale.js";
+import { UpdateUserTimezone } from "./implementations/cqrs/handlers/c/update-user-timezone.js";
 import { GetSignInEvents } from "./implementations/cqrs/handlers/q/get-sign-in-events.js";
 import { GetActiveConsents } from "./implementations/cqrs/handlers/q/get-active-consents.js";
 import { GetOrgContacts } from "./implementations/cqrs/handlers/q/get-org-contacts.js";
@@ -85,6 +86,8 @@ import {
   IUpdateUsernameKey,
   IUpdateUserLocaleKey,
   IUpdateUserLocaleRepoKey,
+  IUpdateUserTimezoneKey,
+  IUpdateUserTimezoneRepoKey,
   IPushUserUpdatedKey,
   IUpdateUserNameKey,
   ICheckUsernameAvailableKey,
@@ -208,6 +211,17 @@ export function addAuthApp(
         sp.resolve(IGetContactsByExtKeysKey),
         sp.resolve(IUpdateContactsByExtKeysKey),
         sp.resolve(IUpdateUserLocaleRepoKey),
+        sp.resolve(IHandlerContextKey),
+        sp.tryResolve(IPushUserUpdatedKey),
+        sp.tryResolve(IInvalidateUserSessionCacheKey),
+      ),
+  );
+
+  services.addTransient(
+    IUpdateUserTimezoneKey,
+    (sp) =>
+      new UpdateUserTimezone(
+        sp.resolve(IUpdateUserTimezoneRepoKey),
         sp.resolve(IHandlerContextKey),
         sp.tryResolve(IPushUserUpdatedKey),
         sp.tryResolve(IInvalidateUserSessionCacheKey),
