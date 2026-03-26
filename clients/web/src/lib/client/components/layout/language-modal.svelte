@@ -2,6 +2,7 @@
   import * as m from "$lib/paraglide/messages.js";
   import * as Dialog from "$lib/client/components/ui/dialog/index.js";
   import { Button } from "$lib/client/components/ui/button/index.js";
+  import ConfirmationDialog from "$lib/client/components/ui/confirmation-dialog.svelte";
   import { getLocale } from "$lib/paraglide/runtime";
   import { page } from "$app/stores";
   import { changeLocale } from "$lib/client/utils/change-locale.js";
@@ -20,6 +21,7 @@
   );
 
   let selectedCode: string = $state(getLocale());
+  let confirmOpen = $state(false);
 
   // Reset selection when modal opens
   $effect(() => {
@@ -28,7 +30,17 @@
     }
   });
 
-  async function apply() {
+  function requestApply() {
+    // No change — just close
+    if (selectedCode === getLocale()) {
+      open = false;
+      return;
+    }
+    // Show confirmation before reloading
+    confirmOpen = true;
+  }
+
+  async function applyConfirmed() {
     open = false;
     await changeLocale(selectedCode, !!$page.data.session);
   }
@@ -73,7 +85,15 @@
         variant="ghost"
         onclick={() => (open = false)}>{m.common_ui_cancel()}</Button
       >
-      <Button onclick={apply}>{m.common_ui_set_language()}</Button>
+      <Button onclick={requestApply}>{m.common_ui_set_language()}</Button>
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>
+
+<ConfirmationDialog
+  bind:open={confirmOpen}
+  title={m.common_ui_change_language_title()}
+  description={m.common_ui_change_language_description()}
+  confirmLabel={m.common_ui_change_language_confirm()}
+  onConfirm={applyConfirmed}
+/>

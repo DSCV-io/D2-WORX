@@ -28,7 +28,7 @@
 
   async function mockSaveBool(value: boolean) {
     await new Promise((r) => setTimeout(r, 800));
-    toast.success(m.common_ui_save());
+    toast.success(m.common_ui_changes_saved());
   }
 
   async function saveAll() {

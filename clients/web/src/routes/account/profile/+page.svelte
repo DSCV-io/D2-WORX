@@ -4,6 +4,7 @@
   import InlineEditFieldGroup from "$lib/client/components/forms/inline-edit-field-group.svelte";
   import InlineDropdown from "$lib/client/components/forms/inline-dropdown.svelte";
   import UnsavedChangesBar from "$lib/client/components/ui/unsaved-changes-bar.svelte";
+  import ConfirmationDialog from "$lib/client/components/ui/confirmation-dialog.svelte";
   import * as Card from "$lib/client/components/ui/card/index.js";
   import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
   import { toast } from "svelte-sonner";
@@ -115,7 +116,7 @@
       const msg = result.messages?.[0] ?? result.inputErrors?.[0]?.[1];
       throw new Error(msg ?? m.common_errors_unknown());
     }
-    toast.success(m.common_ui_save());
+    toast.success(m.common_ui_changes_saved());
   }
 
   async function saveUsername(value: string) {
@@ -124,16 +125,24 @@
       const msg = result.messages?.[0] ?? result.inputErrors?.[0]?.[1];
       throw new Error(msg ?? m.common_errors_unknown());
     }
-    toast.success(m.common_ui_save());
+    toast.success(m.common_ui_changes_saved());
   }
 
+  let pendingLocale = $state("");
+  let localeConfirmOpen = $state(false);
+
   async function saveLocale(value: string) {
-    await changeLocale(value, true);
+    pendingLocale = value;
+    localeConfirmOpen = true;
+  }
+
+  async function confirmLocaleChange() {
+    await changeLocale(pendingLocale, true);
   }
 
   async function mockSaveTimezone(value: string) {
     await new Promise((r) => setTimeout(r, 500));
-    toast.success(m.common_ui_save());
+    toast.success(m.common_ui_changes_saved());
   }
 
   // --- Validation ---
@@ -306,4 +315,12 @@
   visible={anyDirty}
   onSave={saveAll}
   onDiscard={discardAll}
+/>
+
+<ConfirmationDialog
+  bind:open={localeConfirmOpen}
+  title={m.common_ui_change_language_title()}
+  description={m.common_ui_change_language_description()}
+  confirmLabel={m.common_ui_change_language_confirm()}
+  onConfirm={confirmLocaleChange}
 />
