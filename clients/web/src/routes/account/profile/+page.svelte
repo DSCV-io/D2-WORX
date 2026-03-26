@@ -5,6 +5,7 @@
   import InlineDropdown from "$lib/client/components/forms/inline-dropdown.svelte";
   import UnsavedChangesBar from "$lib/client/components/ui/unsaved-changes-bar.svelte";
   import * as Card from "$lib/client/components/ui/card/index.js";
+  import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
   import { toast } from "svelte-sonner";
   import { updateName as updateNameApi, updateUsername as updateUsernameApi } from "$lib/client/rest/account-client.js";
   import { page } from "$app/stores";
@@ -53,6 +54,10 @@
     },
   ]);
 
+  // Track whether initial data has been synced into the form fields.
+  // Skeletons show until this is true (avoids flash of empty placeholders).
+  let loaded = $state(false);
+
   // Sync initial values from user data once available
   $effect(() => {
     if (user) {
@@ -60,6 +65,7 @@
       nameFields[0].value = parts.first;
       nameFields[1].value = parts.last;
       username = user.displayUsername ?? user.username ?? "";
+      loaded = true;
     }
   });
 
@@ -193,23 +199,42 @@
       <Card.Description>{m.account_profile_your_info_description()}</Card.Description>
     </Card.Header>
     <Card.Content class="space-y-5">
-      <InlineEditFieldGroup
-        bind:fields={nameFields}
-        validate={validateNameGroup}
-        onSave={saveName}
-        onDirtyChange={(d) => (dirtyFields.name = d)}
-        bind:this={nameFieldGroupRef}
-      />
-      <InlineEditField
-        bind:value={username}
-        label={m.account_profile_username()}
-        placeholder={m.account_profile_username_placeholder()}
-        maxLength={32}
-        validate={validateUsername}
-        onSave={saveUsername}
-        onDirtyChange={(d) => (dirtyFields.username = d)}
-        bind:this={usernameFieldRef}
-      />
+      {#if loaded}
+        <InlineEditFieldGroup
+          bind:fields={nameFields}
+          validate={validateNameGroup}
+          onSave={saveName}
+          onDirtyChange={(d) => (dirtyFields.name = d)}
+          bind:this={nameFieldGroupRef}
+        />
+        <InlineEditField
+          bind:value={username}
+          label={m.account_profile_username()}
+          placeholder={m.account_profile_username_placeholder()}
+          maxLength={32}
+          validate={validateUsername}
+          onSave={saveUsername}
+          onDirtyChange={(d) => (dirtyFields.username = d)}
+          bind:this={usernameFieldRef}
+        />
+      {:else}
+        <!-- Name fields skeleton -->
+        <div class="flex flex-col gap-2 sm:flex-row sm:gap-1.5">
+          <div class="flex flex-1 flex-col gap-1.5">
+            <Skeleton class="h-5 w-20" />
+            <Skeleton class="h-9 w-full rounded-md" />
+          </div>
+          <div class="flex flex-1 flex-col gap-1.5">
+            <Skeleton class="h-5 w-20" />
+            <Skeleton class="h-9 w-full rounded-md" />
+          </div>
+        </div>
+        <!-- Username skeleton -->
+        <div class="flex flex-col gap-1.5">
+          <Skeleton class="h-5 w-24" />
+          <Skeleton class="h-9 w-full rounded-md" />
+        </div>
+      {/if}
     </Card.Content>
   </Card.Root>
 
@@ -221,12 +246,17 @@
         <Card.Description>{m.account_profile_avatar_description()}</Card.Description>
       </Card.Header>
       <Card.Content>
-        {#if user}
+        {#if loaded}
           <AvatarUploader
             currentImageFileId={user.image}
             userId={user.id}
             userName={user.name}
           />
+        {:else}
+          <div class="flex flex-col items-center gap-4">
+            <Skeleton class="size-32 rounded-full" />
+            <Skeleton class="h-5 w-16" />
+          </div>
         {/if}
       </Card.Content>
     </Card.Root>
@@ -237,22 +267,33 @@
         <Card.Description>{m.account_profile_language_time_description()}</Card.Description>
       </Card.Header>
       <Card.Content class="space-y-5">
-        <InlineDropdown
-          bind:value={locale}
-          label={m.account_profile_language()}
-          options={localeOptions}
-          onSave={mockSaveLocale}
-          onDirtyChange={(d) => (dirtyFields.locale = d)}
-          bind:this={localeRef}
-        />
-        <InlineDropdown
-          bind:value={timezone}
-          label={m.account_profile_timezone()}
-          options={timezoneOptions}
-          onSave={mockSaveTimezone}
-          onDirtyChange={(d) => (dirtyFields.timezone = d)}
-          bind:this={timezoneRef}
-        />
+        {#if loaded}
+          <InlineDropdown
+            bind:value={locale}
+            label={m.account_profile_language()}
+            options={localeOptions}
+            onSave={mockSaveLocale}
+            onDirtyChange={(d) => (dirtyFields.locale = d)}
+            bind:this={localeRef}
+          />
+          <InlineDropdown
+            bind:value={timezone}
+            label={m.account_profile_timezone()}
+            options={timezoneOptions}
+            onSave={mockSaveTimezone}
+            onDirtyChange={(d) => (dirtyFields.timezone = d)}
+            bind:this={timezoneRef}
+          />
+        {:else}
+          <div class="flex flex-col gap-1.5">
+            <Skeleton class="h-5 w-20" />
+            <Skeleton class="h-9 w-full rounded-md" />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <Skeleton class="h-5 w-20" />
+            <Skeleton class="h-9 w-full rounded-md" />
+          </div>
+        {/if}
       </Card.Content>
     </Card.Root>
   </div>
