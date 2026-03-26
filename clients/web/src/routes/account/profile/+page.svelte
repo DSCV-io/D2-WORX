@@ -7,7 +7,10 @@
   import * as Card from "$lib/client/components/ui/card/index.js";
   import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
   import { toast } from "svelte-sonner";
-  import { updateName as updateNameApi, updateUsername as updateUsernameApi } from "$lib/client/rest/account-client.js";
+  import {
+    updateName as updateNameApi,
+    updateUsername as updateUsernameApi,
+  } from "$lib/client/rest/account-client.js";
   import { page } from "$app/stores";
   import { getLocale } from "$lib/paraglide/runtime";
   import * as m from "$lib/paraglide/messages.js";
@@ -106,8 +109,7 @@
   async function saveName(values: Record<string, string>) {
     const result = await updateNameApi(values.firstName, values.lastName);
     if (!result.success) {
-      const msg =
-        result.messages?.[0] ?? result.inputErrors?.[0]?.[1];
+      const msg = result.messages?.[0] ?? result.inputErrors?.[0]?.[1];
       throw new Error(msg ?? m.common_errors_unknown());
     }
     toast.success(m.common_ui_save());

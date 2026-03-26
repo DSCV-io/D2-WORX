@@ -258,7 +258,7 @@
       {#if currentImageFileId || displayUrl}
         <button
           type="button"
-          class="text-muted-foreground hover:text-foreground cursor-pointer text-sm decoration-[0.1rem] underline-offset-2 hover:underline transition-colors"
+          class="text-muted-foreground hover:text-foreground cursor-pointer text-sm decoration-[0.1rem] underline-offset-2 transition-colors hover:underline"
           onclick={handleRemove}
         >
           {m.account_profile_avatar_remove()}
