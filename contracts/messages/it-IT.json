@@ -347,14 +347,16 @@
   "account_deactivate_delete_description": "Elimina permanentemente il tuo account e tutti i dati associati. Questa azione non può essere annullata.",
   "account_deactivate_not_available": "La disattivazione dell'account non è ancora disponibile.",
   "account_profile_avatar_title": "Foto profilo",
-  "account_profile_avatar_change": "Cambia foto",
-  "account_profile_avatar_crop_title": "Ritaglia foto",
+  "account_profile_avatar_description": "Aggiorna la tua immagine del profilo.",
+  "account_profile_avatar_change": "Sostituisci.",
+  "account_profile_avatar_crop_title": "Ritaglia immagine",
   "account_profile_avatar_crop_description": "Trascina per riposizionare. Usa il cursore per lo zoom.",
-  "account_profile_avatar_crop_confirm": "Salva foto",
+  "account_profile_avatar_crop_confirm": "Salva immagine",
   "account_profile_avatar_uploading": "Caricamento...",
   "account_profile_avatar_processing": "Elaborazione...",
-  "account_profile_avatar_success": "Foto aggiornata!",
+  "account_profile_avatar_success": "Immagine aggiornata!",
   "account_profile_avatar_rejected": "Foto rifiutata: {reason}",
   "account_profile_avatar_too_large": "L'immagine deve essere inferiore a 50 MB.",
-  "account_profile_avatar_invalid_type": "Seleziona un file immagine."
+  "account_profile_avatar_invalid_type": "Seleziona un file immagine.",
+  "account_profile_avatar_remove": "Rimuovi."
 }

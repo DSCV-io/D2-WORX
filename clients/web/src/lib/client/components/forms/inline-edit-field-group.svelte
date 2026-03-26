@@ -160,7 +160,11 @@
               <div class="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2">
                 <InlineFieldStatusIcon
                   saveState="idle"
-                  validationStatus={fieldErrors[field.key] ? "invalid" : fieldDirty ? "valid" : "idle"}
+                  validationStatus={fieldErrors[field.key]
+                    ? "invalid"
+                    : fieldDirty
+                      ? "valid"
+                      : "idle"}
                   dirty={fieldDirty}
                 />
               </div>

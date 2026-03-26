@@ -347,14 +347,16 @@
   "account_deactivate_delete_description": "Permanently delete your account and all associated data. This action cannot be undone.",
   "account_deactivate_not_available": "Account deactivation is not yet available.",
   "account_profile_avatar_title": "Profile Picture",
-  "account_profile_avatar_change": "Change photo",
-  "account_profile_avatar_crop_title": "Crop Photo",
+  "account_profile_avatar_description": "Update your profile picture.",
+  "account_profile_avatar_change": "Replace.",
+  "account_profile_avatar_crop_title": "Crop Picture",
   "account_profile_avatar_crop_description": "Drag to reposition. Use the slider to zoom.",
-  "account_profile_avatar_crop_confirm": "Save photo",
+  "account_profile_avatar_crop_confirm": "Save picture",
   "account_profile_avatar_uploading": "Uploading...",
   "account_profile_avatar_processing": "Processing...",
-  "account_profile_avatar_success": "Photo updated!",
+  "account_profile_avatar_success": "Picture updated!",
   "account_profile_avatar_rejected": "Photo rejected: {reason}",
   "account_profile_avatar_too_large": "Image must be under 50 MB.",
-  "account_profile_avatar_invalid_type": "Please select an image file."
+  "account_profile_avatar_invalid_type": "Please select an image file.",
+  "account_profile_avatar_remove": "Remove."
 }

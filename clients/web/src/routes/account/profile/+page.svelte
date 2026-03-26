@@ -6,6 +6,7 @@
   import UnsavedChangesBar from "$lib/client/components/ui/unsaved-changes-bar.svelte";
   import * as Card from "$lib/client/components/ui/card/index.js";
   import { toast } from "svelte-sonner";
+  import { updateName as updateNameApi, updateUsername as updateUsernameApi } from "$lib/client/rest/account-client.js";
   import { page } from "$app/stores";
   import { getLocale } from "$lib/paraglide/runtime";
   import * as m from "$lib/paraglide/messages.js";
@@ -97,29 +98,19 @@
   // --- Real save handlers ---
 
   async function saveName(values: Record<string, string>) {
-    const response = await fetch("/api/account/name", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ firstName: values.firstName, lastName: values.lastName }),
-    });
-    const result = await response.json();
-    if (!response.ok) {
+    const result = await updateNameApi(values.firstName, values.lastName);
+    if (!result.success) {
       const msg =
-        result.messages?.[0] ?? result.inputErrors?.firstName ?? result.inputErrors?.lastName;
+        result.messages?.[0] ?? result.inputErrors?.[0]?.[1];
       throw new Error(msg ?? m.common_errors_unknown());
     }
     toast.success(m.common_ui_save());
   }
 
   async function saveUsername(value: string) {
-    const response = await fetch("/api/account/username", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: value }),
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      const msg = result.messages?.[0] ?? result.inputErrors?.username;
+    const result = await updateUsernameApi(value);
+    if (!result.success) {
+      const msg = result.messages?.[0] ?? result.inputErrors?.[0]?.[1];
       throw new Error(msg ?? m.common_errors_unknown());
     }
     toast.success(m.common_ui_save());
@@ -196,22 +187,6 @@
     <p class="text-muted-foreground text-sm">{m.account_profile_description()}</p>
   </div>
 
-  <!-- Avatar -->
-  <Card.Root>
-    <Card.Header>
-      <Card.Title class="text-base">{m.account_profile_avatar_title()}</Card.Title>
-    </Card.Header>
-    <Card.Content>
-      {#if user}
-        <AvatarUploader
-          currentImageFileId={user.image}
-          userId={user.id}
-          userName={user.name}
-        />
-      {/if}
-    </Card.Content>
-  </Card.Root>
-
   <Card.Root>
     <Card.Header>
       <Card.Title class="text-base">{m.account_profile_your_info_title()}</Card.Title>
@@ -238,30 +213,49 @@
     </Card.Content>
   </Card.Root>
 
-  <Card.Root>
-    <Card.Header>
-      <Card.Title class="text-base">{m.account_profile_language_time_title()}</Card.Title>
-      <Card.Description>{m.account_profile_language_time_description()}</Card.Description>
-    </Card.Header>
-    <Card.Content class="space-y-5">
-      <InlineDropdown
-        bind:value={locale}
-        label={m.account_profile_language()}
-        options={localeOptions}
-        onSave={mockSaveLocale}
-        onDirtyChange={(d) => (dirtyFields.locale = d)}
-        bind:this={localeRef}
-      />
-      <InlineDropdown
-        bind:value={timezone}
-        label={m.account_profile_timezone()}
-        options={timezoneOptions}
-        onSave={mockSaveTimezone}
-        onDirtyChange={(d) => (dirtyFields.timezone = d)}
-        bind:this={timezoneRef}
-      />
-    </Card.Content>
-  </Card.Root>
+  <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <!-- Avatar -->
+    <Card.Root>
+      <Card.Header>
+        <Card.Title class="text-base">{m.account_profile_avatar_title()}</Card.Title>
+        <Card.Description>{m.account_profile_avatar_description()}</Card.Description>
+      </Card.Header>
+      <Card.Content>
+        {#if user}
+          <AvatarUploader
+            currentImageFileId={user.image}
+            userId={user.id}
+            userName={user.name}
+          />
+        {/if}
+      </Card.Content>
+    </Card.Root>
+
+    <Card.Root>
+      <Card.Header>
+        <Card.Title class="text-base">{m.account_profile_language_time_title()}</Card.Title>
+        <Card.Description>{m.account_profile_language_time_description()}</Card.Description>
+      </Card.Header>
+      <Card.Content class="space-y-5">
+        <InlineDropdown
+          bind:value={locale}
+          label={m.account_profile_language()}
+          options={localeOptions}
+          onSave={mockSaveLocale}
+          onDirtyChange={(d) => (dirtyFields.locale = d)}
+          bind:this={localeRef}
+        />
+        <InlineDropdown
+          bind:value={timezone}
+          label={m.account_profile_timezone()}
+          options={timezoneOptions}
+          onSave={mockSaveTimezone}
+          onDirtyChange={(d) => (dirtyFields.timezone = d)}
+          bind:this={timezoneRef}
+        />
+      </Card.Content>
+    </Card.Root>
+  </div>
 </div>
 
 <UnsavedChangesBar

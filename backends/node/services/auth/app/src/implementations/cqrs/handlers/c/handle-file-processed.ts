@@ -73,8 +73,10 @@ export class HandleFileProcessed
           image: input.fileId,
         });
         if (!result.success) return D2Result.bubbleFail(result);
-        this.invalidateSessionCache?.handleAsync({ userId: input.relatedEntityId }).catch(() => {});
-        this.pushUserUpdated?.handleAsync({ userId: input.relatedEntityId }).catch(() => {});
+        this.invalidateSessionCache
+          ?.handleAsync({ userId: input.relatedEntityId })
+          .then(() => this.pushUserUpdated?.handleAsync({ userId: input.relatedEntityId }))
+          .catch(() => {});
         break;
       }
 

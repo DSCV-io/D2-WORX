@@ -114,8 +114,10 @@ export class UpdateUserRealName
       return D2Result.bubbleFail(nameResult);
     }
 
-    this.invalidateSessionCache?.handleAsync({ userId: input.userId }).catch(() => {});
-    this.pushUserUpdated?.handleAsync({ userId: input.userId }).catch(() => {});
+    this.invalidateSessionCache
+      ?.handleAsync({ userId: input.userId })
+      .then(() => this.pushUserUpdated?.handleAsync({ userId: input.userId }))
+      .catch(() => {});
 
     return D2Result.ok({ data: { name: combinedName } });
   }

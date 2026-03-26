@@ -50,7 +50,11 @@
         .then((url) => {
           avatarUrl = url;
         })
-        .catch(() => {});
+        .catch(() => {
+          avatarUrl = undefined;
+        });
+    } else {
+      avatarUrl = undefined;
     }
   });
 
@@ -107,20 +111,22 @@
         class={cn("rounded-full p-0", sizeClasses, className)}
         {...props}
       >
-        <Avatar.Root class={cn(sizeClasses, "rounded-full")}>
-          {#if avatarUrl}
-            <Avatar.Image
-              src={avatarUrl}
-              alt={user.name ?? "User"}
-            />
-          {/if}
-          <Avatar.Fallback
-            class="rounded-full text-xs font-medium text-white"
-            style="background-color: {avatarColor()}"
-          >
-            {initials()}
-          </Avatar.Fallback>
-        </Avatar.Root>
+        {#key avatarUrl}
+          <Avatar.Root class={cn(sizeClasses, "rounded-full")}>
+            {#if avatarUrl}
+              <Avatar.Image
+                src={avatarUrl}
+                alt={user.name ?? "User"}
+              />
+            {/if}
+            <Avatar.Fallback
+              class="rounded-full text-xs font-medium text-white"
+              style="background-color: {avatarColor()}"
+            >
+              {initials()}
+            </Avatar.Fallback>
+          </Avatar.Root>
+        {/key}
       </Button>
     {/snippet}
   </DropdownMenu.Trigger>

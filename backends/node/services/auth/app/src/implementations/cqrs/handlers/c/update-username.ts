@@ -107,8 +107,10 @@ export class UpdateUsername
       return D2Result.bubbleFail(updateResult);
     }
 
-    this.invalidateSessionCache?.handleAsync({ userId: input.userId }).catch(() => {});
-    this.pushUserUpdated?.handleAsync({ userId: input.userId }).catch(() => {});
+    this.invalidateSessionCache
+      ?.handleAsync({ userId: input.userId })
+      .then(() => this.pushUserUpdated?.handleAsync({ userId: input.userId }))
+      .catch(() => {});
 
     return D2Result.ok({ data: { username, displayUsername } });
   }

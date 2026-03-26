@@ -195,7 +195,6 @@
           {/each}
         </Select.Content>
       </Select.Root>
-
     </div>
 
     <InlineEditActions

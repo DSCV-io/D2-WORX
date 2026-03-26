@@ -1,7 +1,14 @@
 import { Hono } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { HttpStatusCode } from "@d2/result";
-import { IUpdateUserRealNameKey, IUpdateUsernameKey, IGetSignInEventsKey } from "@d2/auth-app";
+import {
+  IUpdateUserRealNameKey,
+  IUpdateUsernameKey,
+  IGetSignInEventsKey,
+  IUpdateUserImageKey,
+  IInvalidateUserSessionCacheKey,
+  IPushUserUpdatedKey,
+} from "@d2/auth-app";
 import type { SessionVariables } from "../middleware/session.js";
 import type { ScopeVariables } from "../middleware/scope.js";
 import { SCOPE_KEY, SESSION_KEY } from "../context-keys.js";
@@ -48,6 +55,35 @@ export function createAccountRoutes(auth: Auth) {
       userId: session.userId as string,
       username: body.username as string,
     });
+    const status = (
+      result.success ? HttpStatusCode.OK : (result.statusCode ?? HttpStatusCode.BadRequest)
+    ) as ContentfulStatusCode;
+    return c.json(result, status);
+  });
+
+  // DELETE /api/account/avatar — Remove user's profile picture
+  app.delete("/api/account/avatar", async (c) => {
+    const session = c.get(SESSION_KEY);
+    if (!session) return c.json({ success: false, statusCode: 401 }, 401 as ContentfulStatusCode);
+
+    const scope = c.get(SCOPE_KEY);
+    const userId = session.userId as string;
+
+    const handler = scope.resolve(IUpdateUserImageKey);
+    const invalidate = scope.tryResolve(IInvalidateUserSessionCacheKey);
+    const push = scope.tryResolve(IPushUserUpdatedKey);
+
+    const result = await handler.handleAsync({ userId, image: null });
+
+    if (result.success) {
+      // Fire-and-forget: invalidate cache → then push SignalR event.
+      // Client relies on the user:updated event for session refresh, not the API response.
+      invalidate
+        ?.handleAsync({ userId })
+        .then(() => push?.handleAsync({ userId }))
+        .catch(() => {});
+    }
+
     const status = (
       result.success ? HttpStatusCode.OK : (result.statusCode ?? HttpStatusCode.BadRequest)
     ) as ContentfulStatusCode;

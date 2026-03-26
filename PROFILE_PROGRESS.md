@@ -87,5 +87,5 @@
 
 ## Known Issues
 
-- [ ] InlineDropdown info icon overlaps with select content (Language & Timezone dropdowns)
-- [ ] InlineEditFieldGroup shows redundant success checkmarks (one per field + one for the group)
+- [x] InlineDropdown info icon overlaps with select content (Language & Timezone dropdowns)
+- [x] InlineEditFieldGroup shows redundant success checkmarks (one per field + one for the group)

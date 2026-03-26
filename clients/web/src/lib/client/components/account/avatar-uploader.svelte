@@ -4,6 +4,7 @@
   import AvatarCropDialog from "./avatar-crop-dialog.svelte";
   import { getRealtimeContext } from "$lib/client/realtime/index.js";
   import { uploadFile } from "$lib/client/rest/files-client.js";
+  import { removeAvatar } from "$lib/client/rest/account-client.js";
   import { getAvatarDisplayUrl, invalidateAvatarUrl } from "$lib/client/utils/avatar-url.js";
   import { toast } from "svelte-sonner";
   import { onMount } from "svelte";
@@ -21,7 +22,7 @@
     userName?: string;
   } = $props();
 
-  type UploadState = "idle" | "cropping" | "uploading" | "processing" | "ready";
+  type UploadState = "idle" | "cropping" | "uploading" | "processing" | "ready" | "removing";
 
   let uploadState: UploadState = $state("idle");
   let selectedFile: File | undefined = $state();
@@ -35,16 +36,18 @@
   // the browser from choking on absurdly large files during Canvas rendering.
   const MAX_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 
-  // Resolve existing avatar URL on mount
-  onMount(() => {
+  // Resolve avatar URL reactively — clears when image is removed, fetches when set
+  $effect(() => {
     if (currentImageFileId) {
-      getAvatarDisplayUrl(currentImageFileId, "medium")
+      getAvatarDisplayUrl(currentImageFileId, "original")
         .then((url) => {
           displayUrl = url;
         })
         .catch(() => {
-          // Silently fail — show initials fallback
+          displayUrl = undefined;
         });
+    } else {
+      displayUrl = undefined;
     }
   });
 
@@ -57,7 +60,7 @@
       if (!data.fileId || data.fileId !== pendingFileId) return;
 
       invalidateAvatarUrl(data.fileId);
-      getAvatarDisplayUrl(data.fileId, "medium")
+      getAvatarDisplayUrl(data.fileId, "original")
         .then(async (url) => {
           displayUrl = url;
           uploadState = "idle";
@@ -147,6 +150,20 @@
 
     selectedFile = undefined;
   }
+
+  async function handleRemove() {
+    uploadState = "removing";
+    const result = await removeAvatar();
+    if (result.success) {
+      displayUrl = undefined;
+      pendingFileId = undefined;
+      uploadState = "idle";
+      toast.success(m.account_profile_avatar_success());
+    } else {
+      uploadState = "idle";
+      toast.error(result.messages?.[0] ?? m.common_errors_unknown());
+    }
+  }
 </script>
 
 <!-- Hidden file input -->
@@ -167,45 +184,74 @@
 {/if}
 
 <!-- Avatar display + upload trigger -->
-<button
-  type="button"
-  class="group relative cursor-pointer"
-  onclick={handleFileSelect}
-  disabled={uploadState === "uploading" || uploadState === "processing"}
->
-  <Avatar.Root class="size-24 rounded-full">
-    {#if displayUrl}
-      <Avatar.Image
-        src={displayUrl}
-        alt={userName ?? "Avatar"}
-      />
-    {/if}
-    <Avatar.Fallback
-      class="rounded-full text-2xl font-medium text-white"
-      style="background-color: {avatarColor()}"
-    >
-      {initials()}
-    </Avatar.Fallback>
-  </Avatar.Root>
+<div class="flex flex-col items-center gap-4">
+  <button
+    type="button"
+    class="group relative cursor-pointer"
+    onclick={handleFileSelect}
+    disabled={uploadState === "uploading" ||
+      uploadState === "processing" ||
+      uploadState === "removing"}
+  >
+    {#key displayUrl}
+      <Avatar.Root class="size-32 rounded-full">
+        {#if displayUrl}
+          <Avatar.Image
+            src={displayUrl}
+            alt={userName ?? "Avatar"}
+          />
+        {/if}
+        <Avatar.Fallback
+          class="rounded-full text-3xl font-medium text-white"
+          style="background-color: {avatarColor()}"
+        >
+          {initials()}
+        </Avatar.Fallback>
+      </Avatar.Root>
+    {/key}
 
-  <!-- Overlay -->
-  {#if uploadState === "uploading" || uploadState === "processing"}
-    <div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
-      <LoaderIcon class="size-6 animate-spin text-white" />
-    </div>
+    <!-- Overlay -->
+    {#if uploadState === "removing" || uploadState === "uploading" || uploadState === "processing"}
+      <div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
+        <LoaderIcon class="size-8 animate-spin text-white" />
+      </div>
+    {:else}
+      <div
+        class="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 transition-colors group-hover:bg-black/40"
+      >
+        <CameraIcon
+          class="size-8 text-white opacity-0 transition-opacity group-hover:opacity-100"
+        />
+      </div>
+    {/if}
+  </button>
+
+  {#if uploadState === "uploading" || uploadState === "processing" || uploadState === "removing"}
+    <p class="text-muted-foreground text-sm">
+      {uploadState === "uploading"
+        ? m.account_profile_avatar_uploading()
+        : uploadState === "processing"
+          ? m.account_profile_avatar_processing()
+          : m.account_profile_avatar_uploading()}
+    </p>
   {:else}
-    <div
-      class="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 transition-colors group-hover:bg-black/40"
-    >
-      <CameraIcon class="size-6 text-white opacity-0 transition-opacity group-hover:opacity-100" />
+    <div class="flex items-center gap-3">
+      <button
+        type="button"
+        class="text-primary cursor-pointer text-sm decoration-[0.1rem] underline-offset-2 hover:underline"
+        onclick={handleFileSelect}
+      >
+        {m.account_profile_avatar_change()}
+      </button>
+      {#if currentImageFileId || displayUrl}
+        <button
+          type="button"
+          class="text-muted-foreground hover:text-foreground cursor-pointer text-sm decoration-[0.1rem] underline-offset-2 hover:underline transition-colors"
+          onclick={handleRemove}
+        >
+          {m.account_profile_avatar_remove()}
+        </button>
+      {/if}
     </div>
   {/if}
-</button>
-
-{#if uploadState === "uploading" || uploadState === "processing"}
-  <p class="text-muted-foreground mt-2 text-xs">
-    {uploadState === "uploading"
-      ? m.account_profile_avatar_uploading()
-      : m.account_profile_avatar_processing()}
-  </p>
-{/if}
+</div>

@@ -97,7 +97,11 @@
         .then((url) => {
           mobileAvatarUrl = url;
         })
-        .catch(() => {});
+        .catch(() => {
+          mobileAvatarUrl = undefined;
+        });
+    } else {
+      mobileAvatarUrl = undefined;
     }
   });
 
@@ -207,20 +211,22 @@
           aria-label={m.common_ui_open_menu()}
           onclick={() => (sheetOpen = true)}
         >
-          <Avatar.Root class="size-8 rounded-full">
-            {#if mobileAvatarUrl}
-              <Avatar.Image
-                src={mobileAvatarUrl}
-                alt={user.name ?? "User"}
-              />
-            {/if}
-            <Avatar.Fallback
-              class="rounded-full text-xs font-medium text-white"
-              style="background-color: {avatarColor()}"
-            >
-              {initials()}
-            </Avatar.Fallback>
-          </Avatar.Root>
+          {#key mobileAvatarUrl}
+            <Avatar.Root class="size-8 rounded-full">
+              {#if mobileAvatarUrl}
+                <Avatar.Image
+                  src={mobileAvatarUrl}
+                  alt={user.name ?? "User"}
+                />
+              {/if}
+              <Avatar.Fallback
+                class="rounded-full text-xs font-medium text-white"
+                style="background-color: {avatarColor()}"
+              >
+                {initials()}
+              </Avatar.Fallback>
+            </Avatar.Root>
+          {/key}
         </button>
       {:else}
         <!-- Unauthenticated: hamburger opens sheet -->
