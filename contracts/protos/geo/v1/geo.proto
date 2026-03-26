@@ -85,6 +85,7 @@ message GeoRefData {
   map<string, LanguageDTO> languages = 6; // Key is iso_639_1_code.
   map<string, LocaleDTO> locales = 7; // Key is ietf_bcp_47_tag.
   map<string, GeopoliticalEntityDTO> geopolitical_entities = 8; // Key is short_code.
+  map<string, TimezoneDTO> timezones = 9; // Key is iana_identifier.
 }
 
 // *********************
@@ -310,6 +311,21 @@ message LocaleDTO {
   // Foreign keys.
   string language_iso_639_1_code = 4;
   string country_iso_3166_1_alpha_2_code = 5;
+}
+
+message TimezoneDTO {
+  // Primary key.
+  string iana_identifier = 1;
+
+  // Properties.
+  string display_name = 2;
+  string utc_offset_std = 3;
+  optional string utc_offset_dst = 4;
+  string abbreviation_std = 5;
+  optional string abbreviation_dst = 6;
+
+  // Foreign keys.
+  string country_iso_3166_1_alpha_2_code = 7;
 }
 
 message GeopoliticalEntityDTO {

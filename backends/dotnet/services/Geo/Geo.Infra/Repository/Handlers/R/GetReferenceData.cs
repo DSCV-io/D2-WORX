@@ -168,6 +168,47 @@ public class GetReferenceData : BaseHandler<GetReferenceData, I, O>, H
             })
             .ToDictionaryAsync(l => l.IetfBcp47Tag, ct);
 
+        // Query timezones (project to anonymous type for nullable DST fields).
+        var timezonesRaw = await r_db.Timezones
+            .AsNoTracking()
+            .Select(t => new
+            {
+                t.IANAIdentifier,
+                t.DisplayName,
+                t.UTCOffsetSTD,
+                t.UTCOffsetDST,
+                t.AbbreviationSTD,
+                t.AbbreviationDST,
+                t.CountryISO31661Alpha2Code,
+            })
+            .ToListAsync(ct);
+
+        var timezones = timezonesRaw.ToDictionary(
+            t => t.IANAIdentifier,
+            t =>
+            {
+                var dto = new TimezoneDTO
+                {
+                    IanaIdentifier = t.IANAIdentifier,
+                    DisplayName = t.DisplayName,
+                    UtcOffsetStd = t.UTCOffsetSTD,
+                    AbbreviationStd = t.AbbreviationSTD,
+                    CountryIso31661Alpha2Code = t.CountryISO31661Alpha2Code,
+                };
+
+                if (t.UTCOffsetDST != null)
+                {
+                    dto.UtcOffsetDst = t.UTCOffsetDST;
+                }
+
+                if (t.AbbreviationDST != null)
+                {
+                    dto.AbbreviationDst = t.AbbreviationDST;
+                }
+
+                return dto;
+            });
+
         // Query geopolitical entities (project to anonymous type for EF compatibility).
         var geopoliticalEntitiesRaw = await r_db.GeopoliticalEntities
             .AsNoTracking()
@@ -222,6 +263,7 @@ public class GetReferenceData : BaseHandler<GetReferenceData, I, O>, H
             Currencies = { currencies },
             Languages = { languages },
             Locales = { locales },
+            Timezones = { timezones },
             GeopoliticalEntities = { geopoliticalEntities },
         };
 
