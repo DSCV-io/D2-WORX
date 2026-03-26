@@ -29,6 +29,7 @@ import {
   IUpdateUserNameKey,
   ICheckUsernameAvailableKey,
   IUpdateUserUsernameKey,
+  IUpdateUserLocaleRepoKey,
   IPushUserUpdatedKey,
 } from "@d2/auth-app";
 import { PushUserUpdated } from "./realtime/handlers/push-user-updated.js";
@@ -59,6 +60,7 @@ import { CheckOrgExists } from "./repository/handlers/r/check-org-exists.js";
 import { UpdateUserName } from "./repository/handlers/u/update-user-name.js";
 import { CheckUsernameAvailable } from "./repository/handlers/r/check-username-available.js";
 import { UpdateUserUsername } from "./repository/handlers/u/update-user-username.js";
+import { UpdateUserLocale } from "./repository/handlers/u/update-user-locale.js";
 
 export interface AuthInfraConfig {
   readonly db: NodePgDatabase;
@@ -136,6 +138,10 @@ export function addAuthInfra(
   services.addTransient(
     IUpdateUserUsernameKey,
     (sp) => new UpdateUserUsername(db, sp.resolve(IHandlerContextKey)),
+  );
+  services.addTransient(
+    IUpdateUserLocaleRepoKey,
+    (sp) => new UpdateUserLocale(db, sp.resolve(IHandlerContextKey)),
   );
 
   // Emulation consent repo handlers

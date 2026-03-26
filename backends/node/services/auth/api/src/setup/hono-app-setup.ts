@@ -28,7 +28,7 @@ import {
 import { createScopeMiddleware } from "../middleware/scope.js";
 import { createRequestContextLoggingMiddleware } from "../middleware/request-context-logging.js";
 import { createAmbientScopeMiddleware } from "../middleware/ambient-scope.js";
-import { handleError } from "../middleware/error-handler.js";
+import { createErrorHandler } from "../middleware/error-handler.js";
 import { REQUEST_CONTEXT_KEY } from "../context-keys.js";
 import { createAuthRoutes } from "../routes/auth-routes.js";
 import { createEmulationRoutes } from "../routes/emulation-routes.js";
@@ -117,7 +117,7 @@ export function buildHonoApp(options: HonoAppOptions): Hono {
   app.use("*", createRequestContextLoggingMiddleware(logger));
   app.use("*", createAmbientScopeMiddleware());
   app.use("*", createDistributedRateLimitMiddleware(rateLimitCheck));
-  app.onError(handleError);
+  app.onError(createErrorHandler(logger));
 
   // Email availability check (public, pre-auth — rate limited but no session/CSRF)
   app.route("/", createCheckEmailRoutes(checkEmailHandler));

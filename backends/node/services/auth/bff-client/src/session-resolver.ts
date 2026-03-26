@@ -138,5 +138,6 @@ function mapUser(raw: BetterAuthSessionResponse["user"]): AuthUser {
     username: raw.username ?? undefined,
     displayUsername: raw.displayUsername ?? undefined,
     image: raw.image ?? undefined,
+    locale: raw.locale ?? undefined,
   };
 }

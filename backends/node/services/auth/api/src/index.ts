@@ -20,7 +20,7 @@ export {
   type GetFingerprint,
   type RevokeSession,
 } from "./middleware/session-fingerprint.js";
-export { handleError } from "./middleware/error-handler.js";
+export { createErrorHandler } from "./middleware/error-handler.js";
 export {
   createServiceKeyMiddleware,
   type ServiceKeyMiddlewareOptions,

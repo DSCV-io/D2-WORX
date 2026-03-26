@@ -139,6 +139,12 @@ export type {
 } from "./u/update-user-image.js";
 
 export type {
+  UpdateUserLocaleInput,
+  UpdateUserLocaleOutput,
+  IUpdateUserLocaleHandler,
+} from "./u/update-user-locale.js";
+
+export type {
   UpdateOrgLogoInput,
   UpdateOrgLogoOutput,
   IUpdateOrgLogoHandler,

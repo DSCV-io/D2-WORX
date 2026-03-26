@@ -1,47 +1,55 @@
 import { z } from "zod";
-import { BaseHandler, type IHandlerContext, zodGuid, zodNonEmptyString } from "@d2/handler";
+import { BaseHandler, type IHandlerContext, type RedactionSpec, zodGuid } from "@d2/handler";
 import { D2Result } from "@d2/result";
-import { cleanDisplayStr } from "@d2/utilities";
 import { GEO_CONTEXT_KEYS } from "@d2/auth-domain";
 import type { ContactToCreateDTO } from "@d2/protos";
 import type { Complex, Queries as GeoQueries } from "@d2/geo-client";
-import type { IUpdateUserNameHandler } from "../../../../interfaces/repository/handlers/index.js";
+import type { IUpdateUserLocaleHandler as IUpdateUserLocaleRepoHandler } from "../../../../interfaces/repository/handlers/index.js";
 import type { IPushUserUpdated } from "../../../../interfaces/realtime/handlers/index.js";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
 import type { IInvalidateUserSessionCacheHandler } from "../../../../interfaces/cqrs/handlers/c/invalidate-user-session-cache.js";
 
-type Input = Commands.UpdateUserRealNameInput;
-type Output = Commands.UpdateUserRealNameOutput;
+type Input = Commands.UpdateUserLocaleInput;
+type Output = Commands.UpdateUserLocaleOutput;
+
+/** BCP 47 locale tag pattern: 2-letter language, optional 2-letter region. */
+const BCP47_PATTERN = /^[a-z]{2}(-[A-Z]{2})?$/;
 
 const schema = z.object({
   userId: zodGuid,
-  firstName: zodNonEmptyString(255),
-  lastName: zodNonEmptyString(255),
+  locale: z.string().min(2).max(10).regex(BCP47_PATTERN, "Invalid locale format"),
 });
 
+/** Redaction spec — locale is not PII but handler touches Geo contacts internally. */
+export const UPDATE_USER_LOCALE_REDACTION: RedactionSpec = {};
+
 /**
- * Updates a user's real name (first + last).
+ * Updates a user's locale preference.
  *
  * Coordinates two updates:
- * 1. Geo contact (firstName/lastName) via UpdateContactsByExtKeys
- * 2. BetterAuth user.name (combined "firstName lastName") via repo handler
+ * 1. Geo contact (ietfBcp47Tag) via UpdateContactsByExtKeys
+ * 2. BetterAuth user.locale via repo handler
  *
  * IDOR prevention: userId is injected from IRequestContext, never from input.
  */
-export class UpdateUserRealName
+export class UpdateUserLocale
   extends BaseHandler<Input, Output>
-  implements Commands.IUpdateUserRealNameHandler
+  implements Commands.IUpdateUserLocaleHandler
 {
+  override get redaction() {
+    return UPDATE_USER_LOCALE_REDACTION;
+  }
+
   private readonly getContactsByExtKeys: GeoQueries.IGetContactsByExtKeysHandler;
   private readonly updateContactsByExtKeys: Complex.IUpdateContactsByExtKeysHandler;
-  private readonly updateUserNameRepo: IUpdateUserNameHandler;
+  private readonly updateUserLocaleRepo: IUpdateUserLocaleRepoHandler;
   private readonly pushUserUpdated?: IPushUserUpdated;
   private readonly invalidateSessionCache?: IInvalidateUserSessionCacheHandler;
 
   constructor(
     getContactsByExtKeys: GeoQueries.IGetContactsByExtKeysHandler,
     updateContactsByExtKeys: Complex.IUpdateContactsByExtKeysHandler,
-    updateUserName: IUpdateUserNameHandler,
+    updateUserLocaleRepo: IUpdateUserLocaleRepoHandler,
     context: IHandlerContext,
     pushUserUpdated?: IPushUserUpdated,
     invalidateSessionCache?: IInvalidateUserSessionCacheHandler,
@@ -49,34 +57,15 @@ export class UpdateUserRealName
     super(context);
     this.getContactsByExtKeys = getContactsByExtKeys;
     this.updateContactsByExtKeys = updateContactsByExtKeys;
-    this.updateUserNameRepo = updateUserName;
+    this.updateUserLocaleRepo = updateUserLocaleRepo;
     this.pushUserUpdated = pushUserUpdated;
     this.invalidateSessionCache = invalidateSessionCache;
-  }
-
-  override get redaction() {
-    return Commands.UPDATE_USER_REAL_NAME_REDACTION;
   }
 
   protected async executeAsync(input: Input): Promise<D2Result<Output | undefined>> {
     const validation = this.validateInput(schema, input);
     if (!validation.success) return D2Result.bubbleFail(validation);
 
-    const firstName = cleanDisplayStr(input.firstName);
-    if (!firstName) {
-      return D2Result.validationFailed({
-        inputErrors: [["firstName", "First name is required."]],
-      });
-    }
-
-    const lastName = cleanDisplayStr(input.lastName);
-    if (!lastName) {
-      return D2Result.validationFailed({
-        inputErrors: [["lastName", "Last name is required."]],
-      });
-    }
-
-    const combinedName = `${firstName} ${lastName}`;
     const extKey = { contextKey: GEO_CONTEXT_KEYS.USER, relatedEntityId: input.userId };
 
     // Fetch existing contact to preserve fields we're not changing.
@@ -87,24 +76,20 @@ export class UpdateUserRealName
         errorCode: existingResult.errorCode,
       });
       return D2Result.serviceUnavailable({
-        messages: ["Unable to update contact details. Please try again."],
+        messages: ["Unable to update locale preference. Please try again."],
       });
     }
     const mapKey = `${extKey.contextKey}:${extKey.relatedEntityId}`;
     const existingContact = existingResult.data?.data.get(mapKey)?.[0];
 
-    // Spread existing contact, override only the fields we're changing.
+    // Spread existing contact, override only the locale field.
     const { id: _, ...existingFields } = existingContact ?? {};
     const contactToCreate: ContactToCreateDTO = {
       ...existingFields,
       createdAt: new Date(),
       contextKey: extKey.contextKey,
       relatedEntityId: extKey.relatedEntityId,
-      personalDetails: {
-        ...(existingContact?.personalDetails ?? {}),
-        firstName,
-        lastName,
-      },
+      ietfBcp47Tag: input.locale,
     };
 
     // Cross-service call — do NOT bubbleFail (may leak Geo internals).
@@ -112,35 +97,36 @@ export class UpdateUserRealName
       contacts: [contactToCreate],
     });
     if (!geoResult.success) {
-      this.context.logger.error("Failed to update Geo contact for user real name", {
+      this.context.logger.error("Failed to update Geo contact for user locale", {
         userId: input.userId,
         errorCode: geoResult.errorCode,
         statusCode: geoResult.statusCode,
       });
       return D2Result.serviceUnavailable({
-        messages: ["Unable to update contact details. Please try again."],
+        messages: ["Unable to update locale preference. Please try again."],
       });
     }
 
-    // Update BetterAuth user.name (same-service repo — bubbleFail is safe)
-    const nameResult = await this.updateUserNameRepo.handleAsync({
+    // Update BetterAuth user.locale (same-service repo — bubbleFail is safe)
+    const localeResult = await this.updateUserLocaleRepo.handleAsync({
       userId: input.userId,
-      name: combinedName,
+      locale: input.locale,
     });
-    if (!nameResult.success) {
-      return D2Result.bubbleFail(nameResult);
+    if (!localeResult.success) {
+      return D2Result.bubbleFail(localeResult);
     }
 
-    this.invalidateSessionCache
-      ?.handleAsync({ userId: input.userId })
-      .then(() => this.pushUserUpdated?.handleAsync({ userId: input.userId }))
-      .catch(() => {});
+    // Locale changes trigger an immediate page reload (Paraglide), so the
+    // session cache MUST be fresh before the response returns — otherwise the
+    // server load reads stale locale and overrides the cookie back.
+    await this.invalidateSessionCache?.handleAsync({ userId: input.userId }).catch(() => {});
+    await this.pushUserUpdated?.handleAsync({ userId: input.userId }).catch(() => {});
 
-    return D2Result.ok({ data: { name: combinedName } });
+    return D2Result.ok({ data: {} });
   }
 }
 
 export type {
-  UpdateUserRealNameInput,
-  UpdateUserRealNameOutput,
-} from "../../../../interfaces/cqrs/handlers/c/update-user-real-name.js";
+  UpdateUserLocaleInput,
+  UpdateUserLocaleOutput,
+} from "../../../../interfaces/cqrs/handlers/c/update-user-locale.js";

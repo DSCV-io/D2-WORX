@@ -52,6 +52,7 @@ import { DeleteOrgContact } from "./implementations/cqrs/handlers/c/delete-org-c
 import { CreateUserContact } from "./implementations/cqrs/handlers/c/create-user-contact.js";
 import { UpdateUserRealName } from "./implementations/cqrs/handlers/c/update-user-real-name.js";
 import { UpdateUsername } from "./implementations/cqrs/handlers/c/update-username.js";
+import { UpdateUserLocale } from "./implementations/cqrs/handlers/c/update-user-locale.js";
 import { GetSignInEvents } from "./implementations/cqrs/handlers/q/get-sign-in-events.js";
 import { GetActiveConsents } from "./implementations/cqrs/handlers/q/get-active-consents.js";
 import { GetOrgContacts } from "./implementations/cqrs/handlers/q/get-org-contacts.js";
@@ -82,6 +83,8 @@ import {
   IUpdateOrgLogoKey,
   IUpdateUserRealNameKey,
   IUpdateUsernameKey,
+  IUpdateUserLocaleKey,
+  IUpdateUserLocaleRepoKey,
   IPushUserUpdatedKey,
   IUpdateUserNameKey,
   ICheckUsernameAvailableKey,
@@ -152,6 +155,7 @@ export function addAuthApp(
         sp.resolve(IFindOrgContactByIdKey),
         sp.resolve(IUpdateOrgContactRecordKey),
         sp.resolve(IHandlerContextKey),
+        sp.resolve(IGetContactsByExtKeysKey),
         sp.resolve(IUpdateContactsByExtKeysKey),
       ),
   );
@@ -176,6 +180,7 @@ export function addAuthApp(
     IUpdateUserRealNameKey,
     (sp) =>
       new UpdateUserRealName(
+        sp.resolve(IGetContactsByExtKeysKey),
         sp.resolve(IUpdateContactsByExtKeysKey),
         sp.resolve(IUpdateUserNameKey),
         sp.resolve(IHandlerContextKey),
@@ -190,6 +195,19 @@ export function addAuthApp(
       new UpdateUsername(
         sp.resolve(ICheckUsernameAvailableKey),
         sp.resolve(IUpdateUserUsernameKey),
+        sp.resolve(IHandlerContextKey),
+        sp.tryResolve(IPushUserUpdatedKey),
+        sp.tryResolve(IInvalidateUserSessionCacheKey),
+      ),
+  );
+
+  services.addTransient(
+    IUpdateUserLocaleKey,
+    (sp) =>
+      new UpdateUserLocale(
+        sp.resolve(IGetContactsByExtKeysKey),
+        sp.resolve(IUpdateContactsByExtKeysKey),
+        sp.resolve(IUpdateUserLocaleRepoKey),
         sp.resolve(IHandlerContextKey),
         sp.tryResolve(IPushUserUpdatedKey),
         sp.tryResolve(IInvalidateUserSessionCacheKey),

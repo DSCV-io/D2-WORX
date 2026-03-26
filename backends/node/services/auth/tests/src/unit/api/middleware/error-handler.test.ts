@@ -1,12 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { Hono } from "hono";
-import { handleError } from "@d2/auth-api";
+import { createErrorHandler } from "@d2/auth-api";
 import { AuthValidationError } from "@d2/auth-domain";
 import { TK } from "@d2/i18n";
+import { createLogger } from "@d2/logging";
+
+const silentLogger = createLogger({ level: "silent" as never });
 
 function createApp() {
   const app = new Hono();
-  app.onError(handleError);
+  app.onError(createErrorHandler(silentLogger));
   return app;
 }
 

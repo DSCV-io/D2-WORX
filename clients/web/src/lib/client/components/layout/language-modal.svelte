@@ -2,8 +2,9 @@
   import * as m from "$lib/paraglide/messages.js";
   import * as Dialog from "$lib/client/components/ui/dialog/index.js";
   import { Button } from "$lib/client/components/ui/button/index.js";
-  import { getLocale, setLocale, type Locale } from "$lib/paraglide/runtime";
+  import { getLocale } from "$lib/paraglide/runtime";
   import { page } from "$app/stores";
+  import { changeLocale } from "$lib/client/utils/change-locale.js";
   import type { LocaleOption } from "$lib/shared/forms/locale-options.js";
   import { cn } from "$lib/shared/utils/utils.js";
   import CheckIcon from "@lucide/svelte/icons/check";
@@ -27,9 +28,9 @@
     }
   });
 
-  function apply() {
-    setLocale(selectedCode as Locale);
+  async function apply() {
     open = false;
+    await changeLocale(selectedCode, !!$page.data.session);
   }
 </script>
 

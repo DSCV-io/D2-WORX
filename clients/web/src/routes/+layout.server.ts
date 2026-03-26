@@ -25,7 +25,7 @@ const enabledLocales = readEnabledLocales();
  */
 let cachedLocaleOptions: LocaleOption[] | null = null;
 
-export const load: LayoutServerLoad = async ({ locals, url }) => {
+export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
   // Reading url.pathname makes SvelteKit track it as a dependency.
   // The root layout re-runs on every client-side navigation, keeping
   // auth state ($page.data.session) fresh after sign-in/sign-out.
@@ -43,9 +43,26 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
   const localeOptions =
     cachedLocaleOptions ?? enabledLocales.map((code) => ({ code, endonym: code, flag: "" }));
 
+  const user = locals.user ?? null;
+
+  // Sync PARAGLIDE_LOCALE cookie with user's stored locale preference.
+  // On sign-in, this ensures the first authenticated page renders in the
+  // user's saved language. On subsequent loads, cookie already matches.
+  if (user?.locale) {
+    const currentCookie = cookies.get("PARAGLIDE_LOCALE");
+    if (currentCookie !== user.locale) {
+      cookies.set("PARAGLIDE_LOCALE", user.locale, {
+        path: "/",
+        maxAge: 34_560_000,
+        httpOnly: false,
+        sameSite: "lax",
+      });
+    }
+  }
+
   return {
     session: locals.session ?? null,
-    user: locals.user ?? null,
+    user,
     localeOptions,
   };
 };

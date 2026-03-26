@@ -4,7 +4,7 @@ import { D2Result } from "@d2/result";
 import { TK } from "@d2/i18n";
 import { updateOrgContact, GEO_CONTEXT_KEYS, type UpdateOrgContactInput } from "@d2/auth-domain";
 import type { ContactDTO, ContactToCreateDTO } from "@d2/protos";
-import { contactInputSchema, type Complex } from "@d2/geo-client";
+import { contactInputSchema, type Complex, type Queries as GeoQueries } from "@d2/geo-client";
 import type {
   IFindOrgContactByIdHandler,
   IUpdateOrgContactRecordHandler,
@@ -44,17 +44,20 @@ export class UpdateOrgContactHandler
 {
   private readonly findById: IFindOrgContactByIdHandler;
   private readonly updateRecord: IUpdateOrgContactRecordHandler;
+  private readonly getContactsByExtKeys: GeoQueries.IGetContactsByExtKeysHandler;
   private readonly updateContactsByExtKeys: Complex.IUpdateContactsByExtKeysHandler;
 
   constructor(
     findById: IFindOrgContactByIdHandler,
     updateRecord: IUpdateOrgContactRecordHandler,
     context: IHandlerContext,
+    getContactsByExtKeys: GeoQueries.IGetContactsByExtKeysHandler,
     updateContactsByExtKeys: Complex.IUpdateContactsByExtKeysHandler,
   ) {
     super(context);
     this.findById = findById;
     this.updateRecord = updateRecord;
+    this.getContactsByExtKeys = getContactsByExtKeys;
     this.updateContactsByExtKeys = updateContactsByExtKeys;
   }
 
@@ -82,18 +85,43 @@ export class UpdateOrgContactHandler
 
     let newGeoContact: ContactDTO | undefined;
 
-    // Contact replacement flow — single call to Geo
-    if (input.updates.contact) {
-      const contactToCreate = {
+    // Contact replacement flow — fetch existing, merge provided fields, then replace.
+    if (input.updates.contact || input.updates.ietfBcp47Tag !== undefined) {
+      const extKey = { contextKey: GEO_CONTEXT_KEYS.ORG_CONTACT, relatedEntityId: existing.id };
+      const existingResult = await this.getContactsByExtKeys.handleAsync({ keys: [extKey] });
+      if (!existingResult.success) {
+        this.context.logger.error("Failed to fetch existing Geo contact for merge", {
+          orgContactId: existing.id,
+          errorCode: existingResult.errorCode,
+        });
+        return D2Result.serviceUnavailable({
+          messages: ["Unable to update contact details. Please try again."],
+        });
+      }
+      const mapKey = `${extKey.contextKey}:${extKey.relatedEntityId}`;
+      const existingGeoContact = existingResult.data?.data.get(mapKey)?.[0];
+
+      // Spread existing contact, override only the provided fields.
+      const { id: _, ...existingFields } = existingGeoContact ?? {};
+      const contactToCreate: ContactToCreateDTO = {
+        ...existingFields,
         createdAt: new Date(),
-        contextKey: GEO_CONTEXT_KEYS.ORG_CONTACT,
-        relatedEntityId: existing.id,
-        ietfBcp47Tag: input.updates.ietfBcp47Tag ?? undefined,
-        contactMethods: input.updates.contact.contactMethods ?? undefined,
-        personalDetails: input.updates.contact.personalDetails ?? undefined,
-        professionalDetails: input.updates.contact.professionalDetails ?? undefined,
-        location: input.updates.contact.location ?? undefined,
-      } as ContactToCreateDTO;
+        contextKey: extKey.contextKey,
+        relatedEntityId: extKey.relatedEntityId,
+        ...(input.updates.ietfBcp47Tag !== undefined && {
+          ietfBcp47Tag: input.updates.ietfBcp47Tag,
+        }),
+        ...(input.updates.contact?.contactMethods && {
+          contactMethods: input.updates.contact.contactMethods,
+        }),
+        ...(input.updates.contact?.personalDetails && {
+          personalDetails: input.updates.contact.personalDetails,
+        }),
+        ...(input.updates.contact?.professionalDetails && {
+          professionalDetails: input.updates.contact.professionalDetails,
+        }),
+        ...(input.updates.contact?.location && { location: input.updates.contact.location }),
+      };
 
       const geoResult = await this.updateContactsByExtKeys.handleAsync({
         contacts: [contactToCreate],

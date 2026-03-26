@@ -23,6 +23,7 @@ export interface AuthUser {
   username?: string;
   displayUsername?: string;
   image?: string;
+  locale?: string;
 }
 
 /** Configuration for the BFF client. */
@@ -58,5 +59,6 @@ export interface BetterAuthSessionResponse {
     username?: string;
     displayUsername?: string;
     image?: string | null;
+    locale?: string | null;
   };
 }

@@ -62,3 +62,23 @@ export async function removeAvatar(): Promise<D2Result> {
     method: "DELETE",
   });
 }
+
+/** Update user's locale preference. */
+export async function updateLocale(locale: string): Promise<D2Result> {
+  return accountApiCall("/api/account/locale", {
+    method: "PATCH",
+    body: { locale },
+  });
+}
+
+/**
+ * Bust BetterAuth's cookie cache so the next page load reads fresh session data.
+ * Call after mutations that change user fields (locale, etc.) before triggering
+ * a page reload.
+ */
+export async function bustSessionCache(): Promise<void> {
+  await fetch("/api/auth/get-session?disableCookieCache=true", {
+    method: "GET",
+    credentials: "include",
+  }).catch(() => {});
+}

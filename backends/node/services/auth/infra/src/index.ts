@@ -93,6 +93,7 @@ export { PurgeExpiredEmulationConsents } from "./repository/handlers/d/purge-exp
 // --- Repository Handlers (file callback) ---
 export { UpdateUserImage } from "./repository/handlers/u/update-user-image.js";
 export { UpdateOrgLogo } from "./repository/handlers/u/update-org-logo.js";
+export { UpdateUserLocale } from "./repository/handlers/u/update-user-locale.js";
 
 // --- Messaging Consumers ---
 export { createWhoIsResolutionConsumer } from "./messaging/consumers/whois-resolution-consumer.js";

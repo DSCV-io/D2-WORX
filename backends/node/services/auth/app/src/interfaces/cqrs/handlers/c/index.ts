@@ -100,3 +100,9 @@ export type {
   InvalidateUserSessionCacheOutput,
   IInvalidateUserSessionCacheHandler,
 } from "./invalidate-user-session-cache.js";
+
+export type {
+  UpdateUserLocaleInput,
+  UpdateUserLocaleOutput,
+  IUpdateUserLocaleHandler,
+} from "./update-user-locale.js";

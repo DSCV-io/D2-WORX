@@ -18,6 +18,7 @@ import type {
   IDeleteOrgContactRecordHandler,
   IUpdateSignInEventWhoIsIdHandler,
   IUpdateUserImageHandler,
+  IUpdateUserLocaleHandler,
   IUpdateOrgLogoHandler,
   IPurgeExpiredSessionsHandler,
   IPurgeSignInEventsHandler,
@@ -133,6 +134,9 @@ export const ICheckUsernameAvailableKey = createServiceKey<ICheckUsernameAvailab
 export const IUpdateUserUsernameKey = createServiceKey<IUpdateUserUsernameHandler>(
   "Auth.Repo.UpdateUserUsername",
 );
+export const IUpdateUserLocaleRepoKey = createServiceKey<IUpdateUserLocaleHandler>(
+  "Auth.Repo.UpdateUserLocale",
+);
 
 // --- Health Check Repository Handler ---
 
@@ -185,6 +189,9 @@ export const IUpdateUserRealNameKey = createServiceKey<Commands.IUpdateUserRealN
 );
 export const IUpdateUsernameKey =
   createServiceKey<Commands.IUpdateUsernameHandler>("Auth.App.UpdateUsername");
+export const IUpdateUserLocaleKey = createServiceKey<Commands.IUpdateUserLocaleHandler>(
+  "Auth.App.UpdateUserLocale",
+);
 
 // --- Query Handlers ---
 

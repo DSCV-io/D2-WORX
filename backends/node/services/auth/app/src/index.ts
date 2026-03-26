@@ -88,6 +88,10 @@ export type {
   UpdateUserNameInput,
   UpdateUserNameOutput,
   IUpdateUserNameHandler,
+  // Update (U) — User Locale
+  UpdateUserLocaleInput as UpdateUserLocaleRepoInput,
+  UpdateUserLocaleOutput as UpdateUserLocaleRepoOutput,
+  IUpdateUserLocaleHandler as IUpdateUserLocaleRepoHandler,
   // Update (U) — User Username
   UpdateUserUsernameInput,
   UpdateUserUsernameOutput,
@@ -174,6 +178,12 @@ export type {
   UpdateUsernameInput,
   UpdateUsernameOutput,
 } from "./interfaces/cqrs/handlers/c/update-username.js";
+
+export { UpdateUserLocale } from "./implementations/cqrs/handlers/c/update-user-locale.js";
+export type {
+  UpdateUserLocaleInput,
+  UpdateUserLocaleOutput,
+} from "./interfaces/cqrs/handlers/c/update-user-locale.js";
 
 export { RecordSignInOutcome } from "./implementations/cqrs/handlers/c/record-sign-in-outcome.js";
 export type {
@@ -303,6 +313,7 @@ export function createOrgContactHandlers(
       repo.findById,
       repo.update,
       context,
+      geo.getContactsByExtKeys,
       geo.updateContactsByExtKeys,
     ),
     delete: new DeleteOrgContact(repo.findById, repo.delete, context, geo.deleteContactsByExtKeys),
@@ -439,6 +450,8 @@ export {
   IUpdateOrgLogoKey,
   IUpdateUserRealNameKey,
   IUpdateUsernameKey,
+  IUpdateUserLocaleKey,
+  IUpdateUserLocaleRepoKey,
   IUpdateUserNameKey,
   ICheckUsernameAvailableKey,
   IUpdateUserUsernameKey,

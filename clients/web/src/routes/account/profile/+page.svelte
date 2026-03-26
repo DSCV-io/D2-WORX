@@ -13,6 +13,7 @@
   } from "$lib/client/rest/account-client.js";
   import { page } from "$app/stores";
   import { getLocale } from "$lib/paraglide/runtime";
+  import { changeLocale } from "$lib/client/utils/change-locale.js";
   import * as m from "$lib/paraglide/messages.js";
   import type { LocaleOption } from "$lib/shared/forms/locale-options.js";
 
@@ -25,6 +26,7 @@
       username?: string;
       displayUsername?: string;
       image?: string;
+      locale?: string;
     } | null,
   );
 
@@ -68,6 +70,7 @@
       nameFields[0].value = parts.first;
       nameFields[1].value = parts.last;
       username = user.displayUsername ?? user.username ?? "";
+      locale = user.locale ?? getLocale();
       loaded = true;
     }
   });
@@ -124,10 +127,8 @@
     toast.success(m.common_ui_save());
   }
 
-  // TODO: Wire to backend when locale/timezone update handlers are created
-  async function mockSaveLocale(value: string) {
-    await new Promise((r) => setTimeout(r, 500));
-    toast.success(m.common_ui_save());
+  async function saveLocale(value: string) {
+    await changeLocale(value, true);
   }
 
   async function mockSaveTimezone(value: string) {
@@ -274,7 +275,7 @@
             bind:value={locale}
             label={m.account_profile_language()}
             options={localeOptions}
-            onSave={mockSaveLocale}
+            onSave={saveLocale}
             onDirtyChange={(d) => (dirtyFields.locale = d)}
             bind:this={localeRef}
           />
