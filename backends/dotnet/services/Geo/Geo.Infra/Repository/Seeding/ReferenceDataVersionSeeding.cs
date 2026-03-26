@@ -32,8 +32,8 @@ public static class ReferenceDataVersionSeeding
                 new ReferenceDataVersion
                 {
                     Id = 0,
-                    Version = "1.4.0",
-                    UpdatedAt = new DateTime(2025, 11, 28, 0, 0, 0, DateTimeKind.Utc),
+                    Version = "1.5.0",
+                    UpdatedAt = new DateTime(2026, 3, 26, 0, 0, 0, DateTimeKind.Utc),
                 });
         }
     }
