@@ -56,6 +56,24 @@
 - [x] 4L. Integration tests (8 tests for session cache invalidation, 1037 auth-tests total)
 - [x] **Review Checkpoint 4** — real-time updates working E2E, all tests pass, lint/format clean
 
+## Phase 4B: Language & Timezone Persistence
+
+- [x] 4M. Avatar removal (DELETE /api/account/avatar, frontend Remove button)
+- [x] 4N. Account client module (account-client.ts — updateName, updateUsername, removeAvatar, updateLocale, bustSessionCache)
+- [x] 4O. Skeleton loading states (profile page fields, avatar, header avatar)
+- [x] 4P. Contact data loss fix (fetch existing contact before UpdateContactsByExtKeys, abort on Geo failure)
+- [x] 4Q. Locale persistence (UpdateUserLocale CQRS handler + repo, BFF types, sign-in hydration cookie sync)
+- [x] 4R. Shared changeLocale() utility (both language modal + profile dropdown, awaits API + cache bust before reload)
+- [x] 4S. Language change confirmation dialog (warns about page reload + unsaved changes)
+- [x] 4T. Professional toast copy (no exclamation marks, "Changes saved." instead of "Save")
+- [x] 4U. Error handler structured logging (createErrorHandler factory with Pino logger)
+- [x] 4V. Timezone Geo domain entity + seed data (309 canonical IANA entries, EF Core config, proto, GetReferenceData)
+- [x] 4W. Timezone frontend option transforms (priority pinning, label formatting)
+- [ ] 4X. EF migration for timezones + ref data version bump
+- [ ] 4Y. Auth user.timezone persistence (mirrors locale — handler, route, BFF, sign-in)
+- [ ] 4Z. Profile page timezone typeahead (searchable, real data from Geo ref data)
+- [ ] **Review Checkpoint 4B** — language + timezone fully working E2E
+
 ## Phase 5: Security, Sessions, Recent Logins (full implementation)
 
 - [ ] 5A. Change Password form (current + new + confirm, wired to BetterAuth changePassword)
@@ -69,7 +87,6 @@
 
 - Phone number management (no backend support yet)
 - Account deletion (stubbed with toast, no backend support yet)
-- Locale/timezone save to backend (no update handlers yet)
 
 ## Phase 6: Navigation Updates
 
