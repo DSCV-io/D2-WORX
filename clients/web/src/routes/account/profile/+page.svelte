@@ -15,8 +15,10 @@
   import { page } from "$app/stores";
   import { getLocale } from "$lib/paraglide/runtime";
   import { changeLocale } from "$lib/client/utils/change-locale.js";
+  import { changeTimezone } from "$lib/client/utils/change-timezone.js";
   import * as m from "$lib/paraglide/messages.js";
   import type { LocaleOption } from "$lib/shared/forms/locale-options.js";
+  import type { TimezoneOption } from "$lib/shared/forms/timezone-options.js";
 
   // --- User data from layout server load ---
   const user = $derived(
@@ -72,6 +74,7 @@
       nameFields[1].value = parts.last;
       username = user.displayUsername ?? user.username ?? "";
       locale = user.locale ?? getLocale();
+      timezone = user.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
       loaded = true;
     }
   });
@@ -89,16 +92,10 @@
     rawLocales.map((l) => ({ value: l.code, label: l.endonym, image: l.flag })),
   );
 
-  const timezoneOptions = [
-    { value: "America/New_York", label: "Eastern (ET)" },
-    { value: "America/Chicago", label: "Central (CT)" },
-    { value: "America/Denver", label: "Mountain (MT)" },
-    { value: "America/Los_Angeles", label: "Pacific (PT)" },
-    { value: "Europe/London", label: "London (GMT)" },
-    { value: "Europe/Berlin", label: "Berlin (CET)" },
-    { value: "Europe/Paris", label: "Paris (CET)" },
-    { value: "Asia/Tokyo", label: "Tokyo (JST)" },
-  ];
+  const rawTimezones: TimezoneOption[] = $derived(
+    ($page.data as { timezoneOptions?: TimezoneOption[] }).timezoneOptions ?? [],
+  );
+  const timezoneOptions = $derived(rawTimezones.map((t) => ({ value: t.value, label: t.label })));
 
   let dirtyFields = $state({
     name: false,
@@ -140,8 +137,8 @@
     await changeLocale(pendingLocale, true);
   }
 
-  async function mockSaveTimezone(value: string) {
-    await new Promise((r) => setTimeout(r, 500));
+  async function saveTimezone(value: string) {
+    await changeTimezone(value);
     toast.success(m.common_ui_changes_saved());
   }
 
@@ -292,7 +289,7 @@
             bind:value={timezone}
             label={m.account_profile_timezone()}
             options={timezoneOptions}
-            onSave={mockSaveTimezone}
+            onSave={saveTimezone}
             onDirtyChange={(d) => (dirtyFields.timezone = d)}
             bind:this={timezoneRef}
           />

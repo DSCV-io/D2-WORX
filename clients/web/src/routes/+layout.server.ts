@@ -1,5 +1,6 @@
 import { env } from "$env/dynamic/public";
 import { localesToOptions, type LocaleOption } from "$lib/shared/forms/locale-options.js";
+import { timezonesToOptions, type TimezoneOption } from "$lib/shared/forms/timezone-options.js";
 import { getGeoRefData } from "$lib/server/geo-ref-data.server.js";
 import type { LayoutServerLoad } from "./$types";
 
@@ -24,6 +25,7 @@ const enabledLocales = readEnabledLocales();
  * so the next request retries.
  */
 let cachedLocaleOptions: LocaleOption[] | null = null;
+let cachedTimezoneOptions: TimezoneOption[] | null = null;
 
 export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
   // Reading url.pathname makes SvelteKit track it as a dependency.
@@ -32,10 +34,15 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
   // Cost is negligible — this loader just reads locals.
   void url.pathname;
 
-  if (!cachedLocaleOptions) {
+  if (!cachedLocaleOptions || !cachedTimezoneOptions) {
     const refData = await getGeoRefData();
     if (refData) {
-      cachedLocaleOptions = localesToOptions(refData.locales, enabledLocales);
+      if (!cachedLocaleOptions) {
+        cachedLocaleOptions = localesToOptions(refData.locales, enabledLocales);
+      }
+      if (!cachedTimezoneOptions && refData.timezones) {
+        cachedTimezoneOptions = timezonesToOptions(refData.timezones);
+      }
     }
   }
 
@@ -64,5 +71,6 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
     session: locals.session ?? null,
     user,
     localeOptions,
+    timezoneOptions: cachedTimezoneOptions ?? [],
   };
 };
