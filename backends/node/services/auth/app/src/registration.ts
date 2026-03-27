@@ -221,6 +221,8 @@ export function addAuthApp(
     IUpdateUserTimezoneKey,
     (sp) =>
       new UpdateUserTimezone(
+        sp.resolve(IGetContactsByExtKeysKey),
+        sp.resolve(IUpdateContactsByExtKeysKey),
         sp.resolve(IUpdateUserTimezoneRepoKey),
         sp.resolve(IHandlerContextKey),
         sp.tryResolve(IPushUserUpdatedKey),

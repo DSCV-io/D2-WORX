@@ -435,6 +435,45 @@ public class ContactToCreateValidatorTests
 
     #endregion
 
+    #region IANA Identifier (Timezone) Validation
+
+    /// <summary>
+    /// Tests that a valid IANA identifier passes validation.
+    /// </summary>
+    [Fact]
+    public void Validate_ValidIanaIdentifier_Passes()
+    {
+        var dto = new ContactToCreateDTO
+        {
+            ContextKey = "timezone-test",
+            RelatedEntityId = Guid.NewGuid().ToString(),
+            IanaIdentifier = "America/New_York",
+        };
+        var validator = new ContactToCreateValidator();
+        var result = validator.Validate(dto);
+        result.IsValid.Should().BeTrue();
+    }
+
+    /// <summary>
+    /// Tests that an IANA identifier exceeding max length fails validation.
+    /// </summary>
+    [Fact]
+    public void Validate_IanaIdentifierTooLong_Fails()
+    {
+        var dto = new ContactToCreateDTO
+        {
+            ContextKey = "timezone-test",
+            RelatedEntityId = Guid.NewGuid().ToString(),
+            IanaIdentifier = new string('A', 65),
+        };
+        var validator = new ContactToCreateValidator();
+        var result = validator.Validate(dto);
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.PropertyName == "ianaIdentifier");
+    }
+
+    #endregion
+
     #region Multiple Errors
 
     /// <summary>

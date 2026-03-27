@@ -504,6 +504,61 @@ public class ContactTests
 
     #endregion
 
+    #region IANA Identifier (Timezone)
+
+    /// <summary>
+    /// Tests that creating a Contact with an explicit IANA identifier sets the IANAIdentifier property.
+    /// </summary>
+    [Fact]
+    public void Create_WithIanaIdentifier_SetsIdentifier()
+    {
+        // Arrange
+        const string context_key = "auth-user";
+        var relatedEntityId = Guid.CreateVersion7();
+
+        // Act
+        var contact = Contact.Create(context_key, relatedEntityId, ianaIdentifier: "Europe/London");
+
+        // Assert
+        contact.IANAIdentifier.Should().Be("Europe/London");
+    }
+
+    /// <summary>
+    /// Tests that creating a Contact without an IANA identifier defaults to "America/New_York".
+    /// </summary>
+    [Fact]
+    public void Create_WithoutIanaIdentifier_DefaultsToAmericaNewYork()
+    {
+        // Arrange
+        const string context_key = "auth-user";
+        var relatedEntityId = Guid.CreateVersion7();
+
+        // Act
+        var contact = Contact.Create(context_key, relatedEntityId);
+
+        // Assert
+        contact.IANAIdentifier.Should().Be("America/New_York");
+    }
+
+    /// <summary>
+    /// Tests that creating a Contact with null IANA identifier defaults to "America/New_York".
+    /// </summary>
+    [Fact]
+    public void Create_WithNullIanaIdentifier_DefaultsToAmericaNewYork()
+    {
+        // Arrange
+        const string context_key = "auth-user";
+        var relatedEntityId = Guid.CreateVersion7();
+
+        // Act
+        var contact = Contact.Create(context_key, relatedEntityId, ianaIdentifier: null);
+
+        // Assert
+        contact.IANAIdentifier.Should().Be("America/New_York");
+    }
+
+    #endregion
+
     #region Loose Coupling Pattern
 
     /// <summary>

@@ -372,6 +372,71 @@ public class ContactMapperTests
 
     #endregion
 
+    #region IANA Identifier (Timezone) Mapping
+
+    /// <summary>
+    /// Tests that ToDTO includes the IanaIdentifier property from the domain Contact.
+    /// </summary>
+    [Fact]
+    public void ToDTO_IncludesIanaIdentifier()
+    {
+        // Arrange
+        var contact = Contact.Create(
+            contextKey: "timezone-test",
+            relatedEntityId: Guid.NewGuid(),
+            ianaIdentifier: "Asia/Tokyo");
+
+        // Act
+        var dto = contact.ToDTO();
+
+        // Assert
+        dto.IanaIdentifier.Should().Be("Asia/Tokyo");
+    }
+
+    /// <summary>
+    /// Tests that ToDomain from ContactDTO includes the IANAIdentifier property.
+    /// </summary>
+    [Fact]
+    public void ToDomain_FromDTO_IncludesIanaIdentifier()
+    {
+        // Arrange
+        var dto = new ContactDTO
+        {
+            ContextKey = "timezone-test",
+            RelatedEntityId = Guid.NewGuid().ToString(),
+            IanaIdentifier = "Europe/Berlin",
+        };
+
+        // Act
+        var domain = dto.ToDomain();
+
+        // Assert
+        domain.IANAIdentifier.Should().Be("Europe/Berlin");
+    }
+
+    /// <summary>
+    /// Tests that ToDomain from ContactToCreateDTO includes the IANAIdentifier property.
+    /// </summary>
+    [Fact]
+    public void ToDomain_FromCreateDTO_IncludesIanaIdentifier()
+    {
+        // Arrange
+        var createDto = new ContactToCreateDTO
+        {
+            ContextKey = "timezone-test",
+            RelatedEntityId = Guid.NewGuid().ToString(),
+            IanaIdentifier = "Pacific/Auckland",
+        };
+
+        // Act
+        var domain = createDto.ToDomain(locationHashId: null);
+
+        // Assert
+        domain.IANAIdentifier.Should().Be("Pacific/Auckland");
+    }
+
+    #endregion
+
     #region ExtractLocation Tests
 
     /// <summary>

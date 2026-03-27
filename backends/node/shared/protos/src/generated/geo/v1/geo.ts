@@ -237,7 +237,11 @@ export interface ContactToCreateDTO {
     | LocationDTO
     | undefined;
   /** IETF BCP 47 locale tag (e.g. "en-US", "fr-CA"). Synced from User.locale. */
-  ietfBcp47Tag?: string | undefined;
+  ietfBcp47Tag?:
+    | string
+    | undefined;
+  /** IANA timezone identifier (e.g. "America/New_York"). Synced from User.timezone. */
+  ianaIdentifier?: string | undefined;
 }
 
 export interface CountryDTO {
@@ -489,7 +493,11 @@ export interface ContactDTO {
     | LocationDTO
     | undefined;
   /** IETF BCP 47 locale tag (e.g. "en-US", "fr-CA"). Synced from User.locale. */
-  ietfBcp47Tag?: string | undefined;
+  ietfBcp47Tag?:
+    | string
+    | undefined;
+  /** IANA timezone identifier (e.g. "America/New_York"). Synced from User.timezone. */
+  ianaIdentifier?: string | undefined;
 }
 
 function createBaseRequestReferenceDataUpdateRequest(): RequestReferenceDataUpdateRequest {
@@ -3395,6 +3403,7 @@ function createBaseContactToCreateDTO(): ContactToCreateDTO {
     professionalDetails: undefined,
     location: undefined,
     ietfBcp47Tag: undefined,
+    ianaIdentifier: undefined,
   };
 }
 
@@ -3423,6 +3432,9 @@ export const ContactToCreateDTO: MessageFns<ContactToCreateDTO> = {
     }
     if (message.ietfBcp47Tag !== undefined) {
       writer.uint32(66).string(message.ietfBcp47Tag);
+    }
+    if (message.ianaIdentifier !== undefined) {
+      writer.uint32(74).string(message.ianaIdentifier);
     }
     return writer;
   },
@@ -3498,6 +3510,14 @@ export const ContactToCreateDTO: MessageFns<ContactToCreateDTO> = {
           message.ietfBcp47Tag = reader.string();
           continue;
         }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.ianaIdentifier = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -3545,6 +3565,11 @@ export const ContactToCreateDTO: MessageFns<ContactToCreateDTO> = {
         : isSet(object.ietf_bcp47_tag)
         ? globalThis.String(object.ietf_bcp47_tag)
         : undefined,
+      ianaIdentifier: isSet(object.ianaIdentifier)
+        ? globalThis.String(object.ianaIdentifier)
+        : isSet(object.iana_identifier)
+        ? globalThis.String(object.iana_identifier)
+        : undefined,
     };
   },
 
@@ -3574,6 +3599,9 @@ export const ContactToCreateDTO: MessageFns<ContactToCreateDTO> = {
     if (message.ietfBcp47Tag !== undefined) {
       obj.ietfBcp47Tag = message.ietfBcp47Tag;
     }
+    if (message.ianaIdentifier !== undefined) {
+      obj.ianaIdentifier = message.ianaIdentifier;
+    }
     return obj;
   },
 
@@ -3598,6 +3626,7 @@ export const ContactToCreateDTO: MessageFns<ContactToCreateDTO> = {
       ? LocationDTO.fromPartial(object.location)
       : undefined;
     message.ietfBcp47Tag = object.ietfBcp47Tag ?? undefined;
+    message.ianaIdentifier = object.ianaIdentifier ?? undefined;
     return message;
   },
 };
@@ -6380,6 +6409,7 @@ function createBaseContactDTO(): ContactDTO {
     professionalDetails: undefined,
     location: undefined,
     ietfBcp47Tag: "",
+    ianaIdentifier: "",
   };
 }
 
@@ -6411,6 +6441,9 @@ export const ContactDTO: MessageFns<ContactDTO> = {
     }
     if (message.ietfBcp47Tag !== undefined && message.ietfBcp47Tag !== "") {
       writer.uint32(74).string(message.ietfBcp47Tag);
+    }
+    if (message.ianaIdentifier !== undefined && message.ianaIdentifier !== "") {
+      writer.uint32(82).string(message.ianaIdentifier);
     }
     return writer;
   },
@@ -6494,6 +6527,14 @@ export const ContactDTO: MessageFns<ContactDTO> = {
           message.ietfBcp47Tag = reader.string();
           continue;
         }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.ianaIdentifier = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -6542,6 +6583,11 @@ export const ContactDTO: MessageFns<ContactDTO> = {
         : isSet(object.ietf_bcp47_tag)
         ? globalThis.String(object.ietf_bcp47_tag)
         : "",
+      ianaIdentifier: isSet(object.ianaIdentifier)
+        ? globalThis.String(object.ianaIdentifier)
+        : isSet(object.iana_identifier)
+        ? globalThis.String(object.iana_identifier)
+        : "",
     };
   },
 
@@ -6574,6 +6620,9 @@ export const ContactDTO: MessageFns<ContactDTO> = {
     if (message.ietfBcp47Tag !== undefined && message.ietfBcp47Tag !== "") {
       obj.ietfBcp47Tag = message.ietfBcp47Tag;
     }
+    if (message.ianaIdentifier !== undefined && message.ianaIdentifier !== "") {
+      obj.ianaIdentifier = message.ianaIdentifier;
+    }
     return obj;
   },
 
@@ -6599,6 +6648,7 @@ export const ContactDTO: MessageFns<ContactDTO> = {
       ? LocationDTO.fromPartial(object.location)
       : undefined;
     message.ietfBcp47Tag = object.ietfBcp47Tag ?? "";
+    message.ianaIdentifier = object.ianaIdentifier ?? "";
     return message;
   },
 };

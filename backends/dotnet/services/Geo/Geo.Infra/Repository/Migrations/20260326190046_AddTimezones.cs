@@ -1,12 +1,17 @@
-﻿using System;
+﻿// -----------------------------------------------------------------------
+// <copyright file="20260326190046_AddTimezones.cs" company="DCSV">
+// Copyright (c) DCSV. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace D2.Geo.Infra.Repository.Migrations;
+
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
-
-namespace D2.Geo.Infra.Repository.Migrations
-{
     /// <inheritdoc />
     public partial class AddTimezones : Migration
     {
@@ -23,7 +28,7 @@ namespace D2.Geo.Infra.Repository.Migrations
                     utc_offset_dst = table.Column<string>(type: "character varying(7)", maxLength: 7, nullable: true),
                     abbreviation_std = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
                     abbreviation_dst = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
-                    country_iso_3166_1_alpha_2_code = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false)
+                    country_iso_3166_1_alpha_2_code = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
                 },
                 constraints: table =>
                 {
@@ -379,4 +384,3 @@ namespace D2.Geo.Infra.Repository.Migrations
                 values: new object[] { new DateTime(2025, 11, 28, 0, 0, 0, 0, DateTimeKind.Utc), "1.4.0" });
         }
     }
-}

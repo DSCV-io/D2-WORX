@@ -228,6 +228,7 @@ message ContactToCreateDTO {
   optional ProfessionalDTO professional_details = 6;
   optional LocationDTO location = 7;  // Full location data or just hash_id to reference existing.
   optional string ietf_bcp47_tag = 8;  // IETF BCP 47 locale tag (e.g. "en-US", "fr-CA"). Synced from User.locale.
+  optional string iana_identifier = 9;  // IANA timezone identifier (e.g. "America/New_York"). Synced from User.timezone.
 }
 
 // *********************
@@ -445,4 +446,5 @@ message ContactDTO {
   optional ProfessionalDTO professional_details = 7;
   optional LocationDTO location = 8;  // Full location data (null if no location).
   string ietf_bcp47_tag = 9;  // IETF BCP 47 locale tag (e.g. "en-US", "fr-CA"). Synced from User.locale.
+  string iana_identifier = 10;  // IANA timezone identifier (e.g. "America/New_York"). Synced from User.timezone.
 }
