@@ -314,6 +314,8 @@
   "account_profile_username_placeholder": "ユーザー名を入力",
   "account_profile_language": "言語",
   "account_profile_timezone": "タイムゾーン",
+  "account_profile_timezone_placeholder": "タイムゾーンを検索...",
+  "account_profile_timezone_description": "希望するタイムゾーンを設定してください。",
   "account_profile_username_required": "ユーザー名は必須です。",
   "account_profile_username_alpha": "英数字のみ使用できます。",
   "account_profile_username_min": "3文字以上必要です。",

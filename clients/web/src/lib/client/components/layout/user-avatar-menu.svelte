@@ -6,6 +6,7 @@
   import * as DropdownMenu from "$lib/client/components/ui/dropdown-menu/index.js";
   import SegmentedControl from "$lib/client/components/ui/segmented-control.svelte";
   import LanguageModal from "$lib/client/components/layout/language-modal.svelte";
+  import TimezoneModal from "$lib/client/components/layout/timezone-modal.svelte";
   import { Button } from "$lib/client/components/ui/button/index.js";
   import { userPrefersMode, setMode } from "mode-watcher";
   import { builtInPresets } from "$lib/client/components/design/theme-presets.js";
@@ -13,9 +14,10 @@
     applyPreset,
     getActivePresetName,
   } from "$lib/client/components/design/theme-state.svelte.js";
-  import SettingsIcon from "@lucide/svelte/icons/settings";
+  import UserRoundCogIcon from "@lucide/svelte/icons/user-round-cog";
   import LogOutIcon from "@lucide/svelte/icons/log-out";
   import LanguagesIcon from "@lucide/svelte/icons/languages";
+  import ClockIcon from "@lucide/svelte/icons/clock";
   import SunIcon from "@lucide/svelte/icons/sun";
   import MoonIcon from "@lucide/svelte/icons/moon";
   import MonitorIcon from "@lucide/svelte/icons/monitor";
@@ -103,11 +105,13 @@
     if (preset) applyPreset(preset);
   }
 
-  // --- Language modal ---
+  // --- Language & timezone modals ---
   let languageModalOpen = $state(false);
+  let timezoneModalOpen = $state(false);
 </script>
 
 <LanguageModal bind:open={languageModalOpen} />
+<TimezoneModal bind:open={timezoneModalOpen} />
 
 <DropdownMenu.Root>
   <DropdownMenu.Trigger>
@@ -158,7 +162,7 @@
     <DropdownMenu.Separator />
 
     <DropdownMenu.Item onSelect={() => goto(resolve("/account/profile"))}>
-      <SettingsIcon class="mr-2 size-4" />
+      <UserRoundCogIcon class="mr-2 size-4" />
       {m.common_ui_account()}
     </DropdownMenu.Item>
 
@@ -194,6 +198,12 @@
     <DropdownMenu.Item onSelect={() => (languageModalOpen = true)}>
       <LanguagesIcon class="mr-2 size-4" />
       {m.common_ui_language()}
+    </DropdownMenu.Item>
+
+    <!-- Timezone -->
+    <DropdownMenu.Item onSelect={() => (timezoneModalOpen = true)}>
+      <ClockIcon class="mr-2 size-4" />
+      {m.account_profile_timezone()}
     </DropdownMenu.Item>
 
     <DropdownMenu.Separator />

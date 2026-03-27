@@ -3,6 +3,7 @@
   import InlineEditField from "$lib/client/components/forms/inline-edit-field.svelte";
   import InlineEditFieldGroup from "$lib/client/components/forms/inline-edit-field-group.svelte";
   import InlineDropdown from "$lib/client/components/forms/inline-dropdown.svelte";
+  import InlineCombobox from "$lib/client/components/forms/inline-combobox.svelte";
   import UnsavedChangesBar from "$lib/client/components/ui/unsaved-changes-bar.svelte";
   import ConfirmationDialog from "$lib/client/components/ui/confirmation-dialog.svelte";
   import * as Card from "$lib/client/components/ui/card/index.js";
@@ -30,6 +31,7 @@
       displayUsername?: string;
       image?: string;
       locale?: string;
+      timezone?: string;
     } | null,
   );
 
@@ -82,7 +84,7 @@
   let nameFieldGroupRef: InlineEditFieldGroup | undefined = $state();
   let usernameFieldRef: InlineEditField | undefined = $state();
   let localeRef: InlineDropdown | undefined = $state();
-  let timezoneRef: InlineDropdown | undefined = $state();
+  let timezoneRef: InlineCombobox | undefined = $state();
 
   // Locale options from root layout (Geo ref data)
   const rawLocales: LocaleOption[] = $derived(
@@ -247,9 +249,9 @@
     </Card.Content>
   </Card.Root>
 
-  <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+  <div class="grid grid-cols-1 gap-6 md:grid-cols-5">
     <!-- Avatar -->
-    <Card.Root>
+    <Card.Root class="md:col-span-2">
       <Card.Header>
         <Card.Title class="text-base">{m.account_profile_avatar_title()}</Card.Title>
         <Card.Description>{m.account_profile_avatar_description()}</Card.Description>
@@ -270,7 +272,7 @@
       </Card.Content>
     </Card.Root>
 
-    <Card.Root>
+    <Card.Root class="md:col-span-3">
       <Card.Header>
         <Card.Title class="text-base">{m.account_profile_language_time_title()}</Card.Title>
         <Card.Description>{m.account_profile_language_time_description()}</Card.Description>
@@ -285,10 +287,11 @@
             onDirtyChange={(d) => (dirtyFields.locale = d)}
             bind:this={localeRef}
           />
-          <InlineDropdown
+          <InlineCombobox
             bind:value={timezone}
             label={m.account_profile_timezone()}
             options={timezoneOptions}
+            placeholder={m.account_profile_timezone_placeholder()}
             onSave={saveTimezone}
             onDirtyChange={(d) => (dirtyFields.timezone = d)}
             bind:this={timezoneRef}

@@ -314,6 +314,8 @@
   "account_profile_username_placeholder": "Inserisci nome utente",
   "account_profile_language": "Lingua",
   "account_profile_timezone": "Fuso orario",
+  "account_profile_timezone_placeholder": "Cerca fusi orari...",
+  "account_profile_timezone_description": "Imposta il tuo fuso orario preferito.",
   "account_profile_username_required": "Il nome utente è obbligatorio.",
   "account_profile_username_alpha": "Solo lettere e numeri.",
   "account_profile_username_min": "Deve contenere almeno 3 caratteri.",

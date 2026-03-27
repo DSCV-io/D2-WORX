@@ -31,12 +31,10 @@
   });
 
   function requestApply() {
-    // No change — just close
     if (selectedCode === getLocale()) {
       open = false;
       return;
     }
-    // Show confirmation before reloading
     confirmOpen = true;
   }
 

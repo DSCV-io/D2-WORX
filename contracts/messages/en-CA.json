@@ -314,6 +314,8 @@
   "account_profile_username_placeholder": "Enter username",
   "account_profile_language": "Language",
   "account_profile_timezone": "Timezone",
+  "account_profile_timezone_placeholder": "Search timezones...",
+  "account_profile_timezone_description": "Set your preferred timezone.",
   "account_profile_username_required": "Username is required.",
   "account_profile_username_alpha": "Letters and numbers only.",
   "account_profile_username_min": "Must be at least 3 characters.",

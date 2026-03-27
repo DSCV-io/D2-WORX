@@ -314,6 +314,8 @@
   "account_profile_username_placeholder": "Ingresa nombre de usuario",
   "account_profile_language": "Idioma",
   "account_profile_timezone": "Zona horaria",
+  "account_profile_timezone_placeholder": "Buscar zonas horarias...",
+  "account_profile_timezone_description": "Establece tu zona horaria preferida.",
   "account_profile_username_required": "El nombre de usuario es obligatorio.",
   "account_profile_username_alpha": "Solo letras y números.",
   "account_profile_username_min": "Debe tener al menos 3 caracteres.",
