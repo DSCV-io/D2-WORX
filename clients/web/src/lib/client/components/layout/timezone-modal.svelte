@@ -59,9 +59,7 @@
     }
     saving = true;
     try {
-      if ($page.data.session) {
-        await changeTimezone(selectedValue);
-      }
+      await changeTimezone(selectedValue, !!$page.data.session);
       toast.success(m.common_ui_changes_saved());
       open = false;
     } catch {

@@ -1,9 +1,32 @@
+/**
+ * Shared timezone change logic for both the timezone modal and profile page.
+ *
+ * Sets the D2_TIMEZONE cookie (readable by the server for SSR / sign-up),
+ * persists to backend if authenticated, then invalidates all server loads
+ * so components re-render with the new timezone.
+ *
+ * Unlike locale, timezone does NOT require a page reload — no translations
+ * depend on it, so invalidateAll() is sufficient.
+ */
+import { invalidateAll } from "$app/navigation";
 import { updateTimezone, bustSessionCache } from "$lib/client/rest/account-client.js";
 
-export async function changeTimezone(timezone: string): Promise<void> {
-  const result = await updateTimezone(timezone);
-  if (!result.success) {
-    throw new Error(result.messages?.[0] ?? "Failed to update timezone.");
+/** Cookie name — matches the server-side sync in +layout.server.ts. */
+const TIMEZONE_COOKIE = "D2_TIMEZONE";
+const COOKIE_MAX_AGE = 34_560_000; // ~400 days, same as PARAGLIDE_LOCALE
+
+export async function changeTimezone(timezone: string, isAuthenticated: boolean): Promise<void> {
+  if (isAuthenticated) {
+    const result = await updateTimezone(timezone);
+    if (!result.success) {
+      throw new Error(result.messages?.[0] ?? "Failed to update timezone.");
+    }
+    await bustSessionCache();
   }
-  await bustSessionCache();
+
+  // Set cookie so the server knows the timezone (SSR, sign-up, etc.)
+  document.cookie = `${TIMEZONE_COOKIE}=${encodeURIComponent(timezone)}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
+
+  // Re-run all server loads so components pick up the new timezone.
+  await invalidateAll();
 }

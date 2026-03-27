@@ -9,6 +9,7 @@
   import SegmentedControl from "$lib/client/components/ui/segmented-control.svelte";
   import UserAvatarMenu from "$lib/client/components/layout/user-avatar-menu.svelte";
   import LanguageModal from "$lib/client/components/layout/language-modal.svelte";
+  import TimezoneModal from "$lib/client/components/layout/timezone-modal.svelte";
   import { authClient } from "$lib/client/stores/auth-client.js";
   import { invalidateToken } from "$lib/client/rest/gateway-client.js";
   import { userPrefersMode, setMode } from "mode-watcher";
@@ -24,11 +25,13 @@
   import MoonIcon from "@lucide/svelte/icons/moon";
   import MonitorIcon from "@lucide/svelte/icons/monitor";
   import LanguagesIcon from "@lucide/svelte/icons/languages";
+  import ClockIcon from "@lucide/svelte/icons/clock";
   import SettingsIcon from "@lucide/svelte/icons/settings";
   import LogOutIcon from "@lucide/svelte/icons/log-out";
   import { getAvatarDisplayUrl } from "$lib/client/utils/avatar-url.js";
   import { getLocale } from "$lib/paraglide/runtime";
   import type { LocaleOption } from "$lib/shared/forms/locale-options.js";
+  import type { TimezoneOption } from "$lib/shared/forms/timezone-options.js";
 
   // --- Auth state ---
   const session = $derived($page.data.session);
@@ -122,14 +125,29 @@
     localeOptions.find((l) => l.code === getLocale())?.endonym ?? getLocale(),
   );
 
-  // --- Language modal ---
+  // --- Timezone display label ---
+  const timezoneOptions: TimezoneOption[] = $derived(
+    ($page.data as { timezoneOptions?: TimezoneOption[] }).timezoneOptions ?? [],
+  );
+  const currentTimezoneCode = $derived(
+    ($page.data as { timezone?: string }).timezone ??
+      Intl.DateTimeFormat().resolvedOptions().timeZone,
+  );
+  const currentTimezoneLabel = $derived(
+    timezoneOptions.find((t) => t.value === currentTimezoneCode)?.displayName ??
+      currentTimezoneCode.replace(/_/g, " ").replace(/\//g, " / "),
+  );
+
+  // --- Language + timezone modals ---
   let languageModalOpen = $state(false);
+  let timezoneModalOpen = $state(false);
 
   // --- Mobile sheet ---
   let sheetOpen = $state(false);
 </script>
 
 <LanguageModal bind:open={languageModalOpen} />
+<TimezoneModal bind:open={timezoneModalOpen} />
 
 <nav
   class="bg-background/95 supports-backdrop-filter:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur-sm"
@@ -201,6 +219,10 @@
             <DropdownMenu.Item onSelect={() => (languageModalOpen = true)}>
               <LanguagesIcon class="mr-2 size-4" />
               {currentLocaleLabel}
+            </DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => (timezoneModalOpen = true)}>
+              <ClockIcon class="mr-2 size-4" />
+              {currentTimezoneLabel}
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Root>
@@ -342,6 +364,18 @@
       >
         <LanguagesIcon class="mr-2 size-4" />
         {currentLocaleLabel}
+      </Button>
+
+      <Button
+        variant="ghost"
+        class="justify-start"
+        onclick={() => {
+          timezoneModalOpen = true;
+          sheetOpen = false;
+        }}
+      >
+        <ClockIcon class="mr-2 size-4" />
+        {currentTimezoneLabel}
       </Button>
 
       {#if session}

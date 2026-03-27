@@ -23,6 +23,15 @@
     generateClientFingerprint().then((fp) => setClientFingerprint(fp));
   });
 
+  // Auto-set D2_TIMEZONE cookie from browser on first visit (if not already set).
+  // Server reads this cookie for SSR and sign-up flows.
+  $effect(() => {
+    if (!document.cookie.includes("D2_TIMEZONE=")) {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      document.cookie = `D2_TIMEZONE=${encodeURIComponent(tz)}; path=/; max-age=34560000; SameSite=Lax`;
+    }
+  });
+
   // Enrich Faro telemetry with user ID + username for session correlation (no PII).
   $effect(() => {
     if (data.user) {

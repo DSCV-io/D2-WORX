@@ -140,7 +140,7 @@
   }
 
   async function saveTimezone(value: string) {
-    await changeTimezone(value);
+    await changeTimezone(value, true);
     toast.success(m.common_ui_changes_saved());
   }
 

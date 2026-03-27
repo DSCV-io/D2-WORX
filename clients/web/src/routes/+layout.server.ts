@@ -67,10 +67,30 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
     }
   }
 
+  // Sync D2_TIMEZONE cookie with user's stored timezone preference.
+  // Same pattern as locale — ensures server-side code knows the user's
+  // timezone for SSR and sign-up flows.
+  if (user?.timezone) {
+    const currentTzCookie = cookies.get("D2_TIMEZONE");
+    if (currentTzCookie !== user.timezone) {
+      cookies.set("D2_TIMEZONE", user.timezone, {
+        path: "/",
+        maxAge: 34_560_000,
+        httpOnly: false,
+        sameSite: "lax",
+      });
+    }
+  }
+
+  // Read timezone from cookie (set by client or synced from user above).
+  // Falls back to undefined — client-side code uses Intl API as final fallback.
+  const timezone = cookies.get("D2_TIMEZONE") ?? undefined;
+
   return {
     session: locals.session ?? null,
     user,
     localeOptions,
     timezoneOptions: cachedTimezoneOptions ?? [],
+    timezone,
   };
 };
