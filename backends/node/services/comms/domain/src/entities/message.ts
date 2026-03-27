@@ -1,4 +1,6 @@
 import { cleanStr, generateUuidV7 } from "@d2/utilities";
+import type { Channel } from "../enums/channel.js";
+import { isValidChannel } from "../enums/channel.js";
 import type { ContentFormat } from "../enums/content-format.js";
 import { isValidContentFormat } from "../enums/content-format.js";
 import type { Urgency } from "../enums/urgency.js";
@@ -24,7 +26,7 @@ export interface Message {
   readonly content: string;
   readonly plainTextContent: string;
   readonly contentFormat: ContentFormat;
-  readonly sensitive: boolean;
+  readonly channels: Channel[];
   readonly urgency: Urgency;
   readonly relatedEntityId?: string;
   readonly relatedEntityType?: string;
@@ -46,7 +48,7 @@ export interface CreateMessageInput {
   readonly senderService?: string;
   readonly title?: string;
   readonly contentFormat?: ContentFormat;
-  readonly sensitive?: boolean;
+  readonly channels?: Channel[];
   readonly urgency?: Urgency;
   readonly relatedEntityId?: string;
   readonly relatedEntityType?: string;
@@ -113,6 +115,13 @@ export function createMessage(input: CreateMessageInput): Message {
     );
   }
 
+  const channels = input.channels ?? [];
+  for (const ch of channels) {
+    if (!isValidChannel(ch)) {
+      throw new CommsValidationError("Message", "channels", ch, "is not a valid channel.");
+    }
+  }
+
   // At least one sender required
   const hasSender = !!input.senderUserId || !!input.senderContactId || !!input.senderService;
   if (!hasSender) {
@@ -137,7 +146,7 @@ export function createMessage(input: CreateMessageInput): Message {
     content,
     plainTextContent,
     contentFormat,
-    sensitive: input.sensitive ?? false,
+    channels,
     urgency,
     relatedEntityId: input.relatedEntityId,
     relatedEntityType: input.relatedEntityType,

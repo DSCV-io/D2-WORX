@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import { generateUuidV7 } from "@d2/utilities";
 import { createDeliveryAttempt, type DeliveryAttempt } from "@d2/comms-domain";
-import { createDeliveryAttemptRepoHandlers } from "@d2/comms-infra";
+import { createDeliveryAttemptRepoHandlers, message, deliveryRequest } from "@d2/comms-infra";
 import type { DeliveryAttemptRepoHandlers } from "@d2/comms-app";
 import {
   startPostgres,
@@ -26,6 +26,27 @@ describe("DeliveryAttemptRepository (integration)", () => {
 
   beforeEach(async () => {
     await cleanAllTables();
+
+    // FK constraints require a valid message → delivery_request chain.
+    const msgId = generateUuidV7();
+    await getDb().insert(message).values({
+      id: msgId,
+      content: "test",
+      plainTextContent: "test",
+      contentFormat: "markdown",
+      channels: [],
+      urgency: "normal",
+      senderService: "test",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    await getDb().insert(deliveryRequest).values({
+      id: testRequestId,
+      messageId: msgId,
+      correlationId: generateUuidV7(),
+      recipientContactId: generateUuidV7(),
+      createdAt: new Date(),
+    });
   });
 
   function makeAttempt(overrides?: Partial<DeliveryAttempt>): DeliveryAttempt {

@@ -4,17 +4,17 @@ import type { Message } from "@d2/comms-domain";
 
 /** Helper to create a partial message with just the fields channel resolution needs */
 function messageWith(
-  overrides: Partial<Pick<Message, "sensitive" | "urgency">> = {},
-): Pick<Message, "sensitive" | "urgency"> {
+  overrides: Partial<Pick<Message, "channels" | "urgency">> = {},
+): Pick<Message, "channels" | "urgency"> {
   return {
-    sensitive: false,
+    channels: [],
     urgency: "normal",
     ...overrides,
   };
 }
 
 describe("resolveChannels", () => {
-  describe("normal urgency, non-sensitive", () => {
+  describe("normal urgency, no channel override", () => {
     it("should include all enabled channels", () => {
       const prefs = createChannelPreference({ contactId: "c1" });
       const result = resolveChannels(prefs, messageWith());
@@ -53,12 +53,27 @@ describe("resolveChannels", () => {
     });
   });
 
-  describe("sensitive messages", () => {
-    it("should restrict to email only", () => {
+  describe("explicit channel override", () => {
+    it("should restrict to email only when channels is ['email']", () => {
       const prefs = createChannelPreference({ contactId: "c1" });
-      const result = resolveChannels(prefs, messageWith({ sensitive: true }));
+      const result = resolveChannels(prefs, messageWith({ channels: ["email"] }));
       expect(result.channels).toEqual(["email"]);
       expect(result.skippedChannels).toEqual(["sms"]);
+    });
+
+    it("should restrict to sms only when channels is ['sms']", () => {
+      const prefs = createChannelPreference({ contactId: "c1" });
+      const result = resolveChannels(prefs, messageWith({ channels: ["sms"] }));
+      expect(result.channels).toEqual(["sms"]);
+      expect(result.skippedChannels).toEqual(["email"]);
+    });
+
+    it("should resolve both when channels is ['email', 'sms']", () => {
+      const prefs = createChannelPreference({ contactId: "c1" });
+      const result = resolveChannels(prefs, messageWith({ channels: ["email", "sms"] }));
+      expect(result.channels).toContain("email");
+      expect(result.channels).toContain("sms");
+      expect(result.skippedChannels).toHaveLength(0);
     });
 
     it("should force email even when email is disabled in prefs", () => {
@@ -67,16 +82,17 @@ describe("resolveChannels", () => {
         emailEnabled: false,
         smsEnabled: true,
       });
-      const result = resolveChannels(prefs, messageWith({ sensitive: true }));
+      const result = resolveChannels(prefs, messageWith({ channels: ["email"] }));
       expect(result.channels).toEqual(["email"]);
       expect(result.skippedChannels).toEqual(["sms"]);
     });
 
-    it("should restrict to email even when urgency is urgent", () => {
+    it("should resolve from preferences when channels is empty", () => {
       const prefs = createChannelPreference({ contactId: "c1" });
-      const result = resolveChannels(prefs, messageWith({ sensitive: true, urgency: "urgent" }));
-      expect(result.channels).toEqual(["email"]);
-      expect(result.skippedChannels).toEqual(["sms"]);
+      const result = resolveChannels(prefs, messageWith({ channels: [] }));
+      expect(result.channels).toContain("email");
+      expect(result.channels).toContain("sms");
+      expect(result.skippedChannels).toHaveLength(0);
     });
   });
 
@@ -88,6 +104,16 @@ describe("resolveChannels", () => {
         smsEnabled: false,
       });
       const result = resolveChannels(prefs, messageWith({ urgency: "urgent" }));
+      expect(result.channels).toContain("email");
+      expect(result.channels).toContain("sms");
+    });
+
+    it("should override explicit channel restriction when urgent", () => {
+      const prefs = createChannelPreference({ contactId: "c1" });
+      const result = resolveChannels(
+        prefs,
+        messageWith({ channels: ["email"], urgency: "urgent" }),
+      );
       expect(result.channels).toContain("email");
       expect(result.channels).toContain("sms");
     });

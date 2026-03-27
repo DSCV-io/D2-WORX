@@ -47,7 +47,7 @@ function toMessage(row: MessageRow): Message {
     content: row.content,
     plainTextContent: row.plainTextContent,
     contentFormat: row.contentFormat as ContentFormat,
-    sensitive: row.sensitive,
+    channels: (row.channels ?? []) as ("email" | "sms")[],
     urgency: row.urgency as Urgency,
     relatedEntityId: row.relatedEntityId ?? undefined,
     relatedEntityType: row.relatedEntityType ?? undefined,

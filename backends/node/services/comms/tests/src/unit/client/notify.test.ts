@@ -226,18 +226,18 @@ describe("Notify", () => {
       expect(target.routingKey).toBe("");
     });
 
-    it("should default sensitive to false when not provided", async () => {
+    it("should default channels to empty array when not provided", async () => {
       await handler.handleAsync(validInput());
 
       const [, message] = (publisher.send as ReturnType<typeof vi.fn>).mock.calls[0];
-      expect(message.sensitive).toBe(false);
+      expect(message.channels).toEqual([]);
     });
 
-    it("should pass sensitive through when explicitly set to true", async () => {
-      await handler.handleAsync(validInput({ sensitive: true }));
+    it("should pass channels through when explicitly set", async () => {
+      await handler.handleAsync(validInput({ channels: ["email"] }));
 
       const [, message] = (publisher.send as ReturnType<typeof vi.fn>).mock.calls[0];
-      expect(message.sensitive).toBe(true);
+      expect(message.channels).toEqual(["email"]);
     });
 
     it("should default urgency to 'normal' when not provided", async () => {

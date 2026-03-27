@@ -70,7 +70,7 @@ describe("Deliver", () => {
       title: "Test Email",
       content: "<p>Hello</p>",
       plainTextContent: "Hello",
-      sensitive: true,
+      channels: ["email"],
       recipientContactId: CONTACT_1,
       correlationId: CORR_1,
     });
@@ -160,7 +160,7 @@ describe("Deliver", () => {
       title: "Test",
       content: "test",
       plainTextContent: "test",
-      sensitive: true,
+      channels: ["email"],
       recipientContactId: CONTACT_1,
       correlationId: CORR_FAIL,
     });
@@ -182,7 +182,7 @@ describe("Deliver", () => {
 
     expect(messageRepo.create.handleAsync).toHaveBeenCalledOnce();
     expect(requestRepo.create.handleAsync).toHaveBeenCalledOnce();
-    // contact-1 has both email + phone; non-sensitive normal -> email + sms resolved,
+    // contact-1 has both email + phone; empty channels + normal urgency -> email + sms resolved,
     // but SMS dispatcher not registered so only email attempt is created
     expect(attemptRepo.create.handleAsync).toHaveBeenCalledTimes(1);
   });
@@ -483,7 +483,7 @@ describe("Deliver", () => {
       title: "Test",
       content: "test",
       plainTextContent: "test",
-      sensitive: true,
+      channels: ["email"],
       recipientContactId: CONTACT_1,
       correlationId: CORR_PROVIDER_THROW,
     });

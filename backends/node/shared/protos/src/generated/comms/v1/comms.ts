@@ -111,9 +111,12 @@ export interface MessageDTO {
     | string
     | undefined;
   /** "markdown" | "plain" | "html" */
-  contentFormat?: string | undefined;
-  sensitive?:
-    | boolean
+  contentFormat?:
+    | string
+    | undefined;
+  /** Explicit channel override (empty = resolve from preferences) */
+  channels?:
+    | string[]
     | undefined;
   /** "normal" | "important" | "urgent" */
   urgency?: string | undefined;
@@ -1245,7 +1248,7 @@ function createBaseMessageDTO(): MessageDTO {
     content: "",
     plainTextContent: "",
     contentFormat: "",
-    sensitive: false,
+    channels: [],
     urgency: "",
     relatedEntityId: undefined,
     relatedEntityType: undefined,
@@ -1288,8 +1291,10 @@ export const MessageDTO: MessageFns<MessageDTO> = {
     if (message.contentFormat !== undefined && message.contentFormat !== "") {
       writer.uint32(82).string(message.contentFormat);
     }
-    if (message.sensitive !== undefined && message.sensitive !== false) {
-      writer.uint32(88).bool(message.sensitive);
+    if (message.channels !== undefined && message.channels.length !== 0) {
+      for (const v of message.channels) {
+        writer.uint32(90).string(v!);
+      }
     }
     if (message.urgency !== undefined && message.urgency !== "") {
       writer.uint32(98).string(message.urgency);
@@ -1403,11 +1408,14 @@ export const MessageDTO: MessageFns<MessageDTO> = {
           continue;
         }
         case 11: {
-          if (tag !== 88) {
+          if (tag !== 90) {
             break;
           }
 
-          message.sensitive = reader.bool();
+          const el = reader.string();
+          if (el !== undefined) {
+            message.channels!.push(el);
+          }
           continue;
         }
         case 12: {
@@ -1515,7 +1523,9 @@ export const MessageDTO: MessageFns<MessageDTO> = {
         : isSet(object.content_format)
         ? globalThis.String(object.content_format)
         : "",
-      sensitive: isSet(object.sensitive) ? globalThis.Boolean(object.sensitive) : false,
+      channels: globalThis.Array.isArray(object?.channels)
+        ? object.channels.map((e: any) => globalThis.String(e))
+        : [],
       urgency: isSet(object.urgency) ? globalThis.String(object.urgency) : "",
       relatedEntityId: isSet(object.relatedEntityId)
         ? globalThis.String(object.relatedEntityId)
@@ -1582,8 +1592,8 @@ export const MessageDTO: MessageFns<MessageDTO> = {
     if (message.contentFormat !== undefined && message.contentFormat !== "") {
       obj.contentFormat = message.contentFormat;
     }
-    if (message.sensitive !== undefined && message.sensitive !== false) {
-      obj.sensitive = message.sensitive;
+    if (message.channels?.length) {
+      obj.channels = message.channels;
     }
     if (message.urgency !== undefined && message.urgency !== "") {
       obj.urgency = message.urgency;
@@ -1624,7 +1634,7 @@ export const MessageDTO: MessageFns<MessageDTO> = {
     message.content = object.content ?? "";
     message.plainTextContent = object.plainTextContent ?? "";
     message.contentFormat = object.contentFormat ?? "";
-    message.sensitive = object.sensitive ?? false;
+    message.channels = object.channels?.map((e) => e) || [];
     message.urgency = object.urgency ?? "";
     message.relatedEntityId = object.relatedEntityId ?? undefined;
     message.relatedEntityType = object.relatedEntityType ?? undefined;

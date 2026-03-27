@@ -32,7 +32,7 @@ const deliverSchema = z.object({
   title: z.string().min(1).max(255),
   content: z.string().min(1).max(50_000),
   plainTextContent: z.string().min(1).max(50_000),
-  sensitive: z.boolean().optional(),
+  channels: z.array(z.enum(["email", "sms"])).optional(),
   urgency: z.enum(["normal", "urgent"]).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   senderService: z.string().min(1).max(50),
@@ -108,7 +108,7 @@ export class Deliver extends BaseHandler<Input, Output> implements Complex.IDeli
       title: input.title,
       content: input.content,
       plainTextContent: input.plainTextContent,
-      sensitive: input.sensitive,
+      channels: input.channels,
       urgency: input.urgency,
       metadata: input.metadata,
     });

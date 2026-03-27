@@ -33,7 +33,7 @@ export class CreateMessageRecord extends BaseHandler<I, O> implements ICreateMes
       content: m.content,
       plainTextContent: m.plainTextContent,
       contentFormat: m.contentFormat,
-      sensitive: m.sensitive,
+      channels: m.channels,
       urgency: m.urgency,
       relatedEntityId: m.relatedEntityId,
       relatedEntityType: m.relatedEntityType,

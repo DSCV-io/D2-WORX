@@ -95,7 +95,7 @@ export function createAuthCallbacks(
             name: input.name,
             url: input.verificationUrl,
           }),
-          sensitive: true,
+          channels: ["email"],
           correlationId: crypto.randomUUID(),
           senderService: "auth",
         });
@@ -140,7 +140,7 @@ export function createAuthCallbacks(
             name: input.name,
             url: input.resetUrl,
           }),
-          sensitive: true,
+          channels: ["email"],
           correlationId: crypto.randomUUID(),
           senderService: "auth",
         });
@@ -177,7 +177,7 @@ export function createAuthCallbacks(
             t(locale, "auth_email_password_changed_disclaimer"),
           ].join("\n"),
           plaintext: t(locale, "auth_email_password_changed_plaintext", { name: input.name }),
-          sensitive: true,
+          channels: ["email"],
           correlationId: crypto.randomUUID(),
           senderService: "auth",
         });

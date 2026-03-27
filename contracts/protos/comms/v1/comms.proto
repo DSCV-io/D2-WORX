@@ -115,7 +115,7 @@ message MessageDTO {
   string content = 8;
   string plain_text_content = 9;
   string content_format = 10;              // "markdown" | "plain" | "html"
-  bool sensitive = 11;
+  repeated string channels = 11;              // Explicit channel override (empty = resolve from preferences)
   string urgency = 12;                     // "normal" | "important" | "urgent"
   optional string related_entity_id = 13;
   optional string related_entity_type = 14;

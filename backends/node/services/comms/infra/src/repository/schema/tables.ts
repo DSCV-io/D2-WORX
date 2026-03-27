@@ -17,8 +17,12 @@ export const message = pgTable(
   "message",
   {
     id: varchar("id", { length: 36 }).primaryKey(),
-    threadId: varchar("thread_id", { length: 36 }),
-    parentMessageId: varchar("parent_message_id", { length: 36 }),
+    threadId: varchar("thread_id", { length: 36 }).references(() => message.id, {
+      onDelete: "cascade",
+    }),
+    parentMessageId: varchar("parent_message_id", { length: 36 }).references(() => message.id, {
+      onDelete: "cascade",
+    }),
     senderUserId: varchar("sender_user_id", { length: 36 }),
     senderContactId: varchar("sender_contact_id", { length: 36 }),
     senderService: varchar("sender_service", { length: 50 }),
@@ -26,7 +30,7 @@ export const message = pgTable(
     content: text("content").notNull(),
     plainTextContent: text("plain_text_content").notNull(),
     contentFormat: varchar("content_format", { length: 20 }).notNull().default("markdown"),
-    sensitive: boolean("sensitive").notNull().default(false),
+    channels: text("channels").array().notNull().default([]),
     urgency: varchar("urgency", { length: 20 }).notNull().default("normal"),
     relatedEntityId: varchar("related_entity_id", { length: 36 }),
     relatedEntityType: varchar("related_entity_type", { length: 100 }),
@@ -49,7 +53,9 @@ export const deliveryRequest = pgTable(
   "delivery_request",
   {
     id: varchar("id", { length: 36 }).primaryKey(),
-    messageId: varchar("message_id", { length: 36 }).notNull(),
+    messageId: varchar("message_id", { length: 36 })
+      .notNull()
+      .references(() => message.id, { onDelete: "cascade" }),
     correlationId: varchar("correlation_id", { length: 36 }).notNull(),
     recipientContactId: varchar("recipient_contact_id", { length: 36 }).notNull(),
     callbackTopic: varchar("callback_topic", { length: 255 }),
@@ -70,7 +76,9 @@ export const deliveryAttempt = pgTable(
   "delivery_attempt",
   {
     id: varchar("id", { length: 36 }).primaryKey(),
-    requestId: varchar("request_id", { length: 36 }).notNull(),
+    requestId: varchar("request_id", { length: 36 })
+      .notNull()
+      .references(() => deliveryRequest.id, { onDelete: "cascade" }),
     channel: varchar("channel", { length: 20 }).notNull(),
     recipientAddress: varchar("recipient_address", { length: 320 }).notNull(),
     status: varchar("status", { length: 20 }).notNull().default("pending"),

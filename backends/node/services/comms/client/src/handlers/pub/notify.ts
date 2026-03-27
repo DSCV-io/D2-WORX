@@ -14,8 +14,8 @@ export interface NotifyInput {
   readonly content: string;
   /** Plain text — SMS body, email fallback. */
   readonly plaintext: string;
-  /** Default false. true = email only (secure channel). */
-  readonly sensitive?: boolean;
+  /** Explicit channel override. Empty/undefined = resolve from preferences. */
+  readonly channels?: ("email" | "sms")[];
   /** Default "normal". "urgent" = bypass prefs, force all channels. */
   readonly urgency?: "normal" | "urgent";
   /** Idempotency key for deduplication. */
@@ -33,7 +33,10 @@ const notifySchema = z.object({
   title: z.string().min(1).max(255),
   content: z.string().min(1).max(50_000),
   plaintext: z.string().min(1).max(50_000),
-  sensitive: z.boolean().optional().default(false),
+  channels: z
+    .array(z.enum(["email", "sms"]))
+    .optional()
+    .default([]),
   urgency: z.enum(["normal", "urgent"]).optional().default("normal"),
   correlationId: z.string().min(1).max(36),
   senderService: z.string().min(1).max(50),
@@ -86,7 +89,7 @@ export class Notify extends BaseHandler<NotifyInput, NotifyOutput> implements IN
         title: input.title,
         content: input.content,
         plaintext: input.plaintext,
-        sensitive: input.sensitive ?? false,
+        channels: input.channels ?? [],
         urgency: input.urgency ?? "normal",
         correlationId: input.correlationId,
         senderService: input.senderService,

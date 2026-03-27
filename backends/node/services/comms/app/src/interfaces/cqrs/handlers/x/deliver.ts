@@ -6,7 +6,7 @@ export interface DeliverInput {
   readonly title: string;
   readonly content: string;
   readonly plainTextContent: string;
-  readonly sensitive?: boolean;
+  readonly channels?: ("email" | "sms")[];
   readonly urgency?: "normal" | "urgent";
   readonly recipientContactId: string;
   readonly correlationId: string;

@@ -251,7 +251,7 @@ export function createInvitationRoutes(options: InvitationRoutesOptions) {
           invitationUrl,
         ].join("\n"),
         plaintext: t(locale, "auth_email_invitation_plaintext", interpolation),
-        sensitive: true,
+        channels: ["email"],
         correlationId: invitationId,
         senderService: "auth",
       });

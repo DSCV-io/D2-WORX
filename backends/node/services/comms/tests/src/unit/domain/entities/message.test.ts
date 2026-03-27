@@ -46,9 +46,9 @@ describe("Message", () => {
       expect(msg.urgency).toBe("normal");
     });
 
-    it("should default sensitive to false", () => {
+    it("should default channels to empty array", () => {
       const msg = createMessage(validInput);
-      expect(msg.sensitive).toBe(false);
+      expect(msg.channels).toEqual([]);
     });
 
     it("should default optional fields to undefined", () => {
@@ -74,7 +74,7 @@ describe("Message", () => {
         senderService: "auth",
         title: "Test Title",
         contentFormat: "html",
-        sensitive: true,
+        channels: ["email"],
         urgency: "urgent",
         relatedEntityId: "entity-1",
         relatedEntityType: "invoice",
@@ -84,7 +84,7 @@ describe("Message", () => {
       expect(msg.parentMessageId).toBe("msg-parent");
       expect(msg.title).toBe("Test Title");
       expect(msg.contentFormat).toBe("html");
-      expect(msg.sensitive).toBe(true);
+      expect(msg.channels).toEqual(["email"]);
       expect(msg.urgency).toBe("urgent");
       expect(msg.relatedEntityId).toBe("entity-1");
       expect(msg.relatedEntityType).toBe("invoice");

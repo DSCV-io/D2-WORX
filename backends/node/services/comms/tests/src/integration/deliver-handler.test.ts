@@ -109,7 +109,7 @@ describe("Deliver handler (integration)", () => {
       title: "Test Email",
       content: "<p>Hello</p>",
       plainTextContent: "Hello",
-      sensitive: true,
+      channels: ["email"],
       recipientContactId: CONTACT_1,
       correlationId: generateUuidV7(),
     });
@@ -129,7 +129,7 @@ describe("Deliver handler (integration)", () => {
     expect(msgRow).toBeDefined();
     expect(msgRow.title).toBe("Test Email");
     expect(msgRow.senderService).toBe("auth");
-    expect(msgRow.sensitive).toBe(true);
+    expect(msgRow.channels).toEqual(["email"]);
 
     const [reqRow] = await db
       .select()
@@ -296,7 +296,7 @@ describe("Deliver handler (integration)", () => {
     });
     expect(prefResult.success).toBe(true);
 
-    // Non-sensitive, non-urgent message — system-decided channels
+    // No channel override, non-urgent message — system-decided channels
     // Email is disabled, SMS is enabled but contact has no phone -> no deliverable channels
     const deliverResult = await handlers.deliver.handleAsync({
       senderService: "system",
