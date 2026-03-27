@@ -27,11 +27,20 @@
   import SettingsIcon from "@lucide/svelte/icons/settings";
   import LogOutIcon from "@lucide/svelte/icons/log-out";
   import { getAvatarDisplayUrl } from "$lib/client/utils/avatar-url.js";
+  import { getLocale } from "$lib/paraglide/runtime";
+  import type { LocaleOption } from "$lib/shared/forms/locale-options.js";
 
   // --- Auth state ---
   const session = $derived($page.data.session);
   const user = $derived(
-    $page.data.user as { id: string; name?: string; email?: string; image?: string } | null,
+    $page.data.user as {
+      id: string;
+      name?: string;
+      email?: string;
+      image?: string;
+      locale?: string;
+      timezone?: string;
+    } | null,
   );
 
   let signingOut = $state(false);
@@ -104,6 +113,14 @@
       mobileAvatarUrl = undefined;
     }
   });
+
+  // --- Language display label (for unauthenticated dropdown / mobile sheet) ---
+  const localeOptions: LocaleOption[] = $derived(
+    ($page.data as { localeOptions?: LocaleOption[] }).localeOptions ?? [],
+  );
+  const currentLocaleLabel = $derived(
+    localeOptions.find((l) => l.code === getLocale())?.endonym ?? getLocale(),
+  );
 
   // --- Language modal ---
   let languageModalOpen = $state(false);
@@ -183,7 +200,7 @@
             <DropdownMenu.Separator />
             <DropdownMenu.Item onSelect={() => (languageModalOpen = true)}>
               <LanguagesIcon class="mr-2 size-4" />
-              {m.common_ui_language()}
+              {currentLocaleLabel}
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Root>
@@ -324,7 +341,7 @@
         }}
       >
         <LanguagesIcon class="mr-2 size-4" />
-        {m.common_ui_language()}
+        {currentLocaleLabel}
       </Button>
 
       {#if session}

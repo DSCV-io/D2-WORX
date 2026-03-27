@@ -69,10 +69,14 @@
 - [x] 4U. Error handler structured logging (createErrorHandler factory with Pino logger)
 - [x] 4V. Timezone Geo domain entity + seed data (309 canonical IANA entries, EF Core config, proto, GetReferenceData)
 - [x] 4W. Timezone frontend option transforms (priority pinning, label formatting)
-- [ ] 4X. EF migration for timezones + ref data version bump
-- [ ] 4Y. Auth user.timezone persistence (mirrors locale — handler, route, BFF, sign-in)
-- [ ] 4Z. Profile page timezone typeahead (searchable, real data from Geo ref data)
-- [ ] **Review Checkpoint 4B** — language + timezone fully working E2E
+- [x] 4X. EF migration for timezones + ref data version bump
+- [x] 4Y. Auth user.timezone persistence (mirrors locale — handler, route, BFF, sign-in)
+- [x] 4Z. Profile page timezone typeahead (searchable, real data from Geo ref data)
+- [x] 4AA. Fix Paraglide setLocale() intermittent silent reload skip (own reload, bypass guard)
+- [x] 4AB. Add IANAIdentifier (timezone) to Contact entity (domain, EF, mapper, validator, proto, migration, tests)
+- [x] 4AC. UpdateUserTimezone handler syncs timezone to Geo contact (fetch-then-merge pattern)
+- [x] 4AD. Dropdown shows current locale endonym + timezone display name instead of generic labels
+- [x] **Review Checkpoint 4B** — language + timezone fully working E2E
 
 ## Phase 5: Security, Sessions, Recent Logins (full implementation)
 
@@ -106,3 +110,5 @@
 
 - [x] InlineDropdown info icon overlaps with select content (Language & Timezone dropdowns)
 - [x] InlineEditFieldGroup shows redundant success checkmarks (one per field + one for the group)
+- [ ] Pass locale + timezone through on sign-up from the frontend
+- [ ] Dkron job to periodically bump geo ref data cache (services must re-fetch when version changes)

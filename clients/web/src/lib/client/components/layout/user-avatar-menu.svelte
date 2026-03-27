@@ -24,6 +24,10 @@
   import { cn } from "$lib/shared/utils/utils.js";
   import { getAvatarDisplayUrl } from "$lib/client/utils/avatar-url.js";
   import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
+  import { page } from "$app/stores";
+  import { getLocale } from "$lib/paraglide/runtime";
+  import type { LocaleOption } from "$lib/shared/forms/locale-options.js";
+  import type { TimezoneOption } from "$lib/shared/forms/timezone-options.js";
 
   let {
     user,
@@ -36,6 +40,8 @@
       name?: string;
       email?: string;
       image?: string;
+      locale?: string;
+      timezone?: string;
     };
     onSignOut: () => Promise<void> | void;
     size?: "sm" | "md" | "lg";
@@ -104,6 +110,27 @@
     const preset = builtInPresets.find((p) => p.name === value);
     if (preset) applyPreset(preset);
   }
+
+  // --- Language & timezone display labels ---
+  const localeOptions: LocaleOption[] = $derived(
+    ($page.data as { localeOptions?: LocaleOption[] }).localeOptions ?? [],
+  );
+  const timezoneOptions: TimezoneOption[] = $derived(
+    ($page.data as { timezoneOptions?: TimezoneOption[] }).timezoneOptions ?? [],
+  );
+
+  const currentLocaleCode = $derived(user.locale ?? getLocale());
+  const currentLocaleLabel = $derived(
+    localeOptions.find((l) => l.code === currentLocaleCode)?.endonym ?? currentLocaleCode,
+  );
+
+  const currentTimezoneCode = $derived(
+    user.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+  );
+  const currentTimezoneLabel = $derived(
+    timezoneOptions.find((t) => t.value === currentTimezoneCode)?.displayName ??
+      currentTimezoneCode.replace(/_/g, " ").replace(/\//g, " / "),
+  );
 
   // --- Language & timezone modals ---
   let languageModalOpen = $state(false);
@@ -197,13 +224,13 @@
     <!-- Language -->
     <DropdownMenu.Item onSelect={() => (languageModalOpen = true)}>
       <LanguagesIcon class="mr-2 size-4" />
-      {m.common_ui_language()}
+      {currentLocaleLabel}
     </DropdownMenu.Item>
 
     <!-- Timezone -->
     <DropdownMenu.Item onSelect={() => (timezoneModalOpen = true)}>
       <ClockIcon class="mr-2 size-4" />
-      {m.account_profile_timezone()}
+      {currentTimezoneLabel}
     </DropdownMenu.Item>
 
     <DropdownMenu.Separator />
