@@ -7,6 +7,7 @@ import { INotifyKey } from "@d2/comms-client";
 import { GEO_CONTEXT_KEYS, AUTH_MESSAGING } from "@d2/auth-domain";
 import { IRecordSignInEventKey, ICreateUserContactKey } from "@d2/auth-app";
 import type { AuthHooks } from "@d2/auth-infra";
+import { signUpPrefsStorage } from "@d2/auth-infra";
 import type { Translator } from "@d2/i18n";
 import { resolveLocale } from "@d2/i18n";
 
@@ -74,7 +75,8 @@ export function createAuthCallbacks(
 
         const t = translator.t;
         const locale = resolveLocale(
-          (input as Record<string, unknown>).locale as string | undefined,
+          ((input as Record<string, unknown>).locale as string | undefined) ??
+            signUpPrefsStorage.getStore()?.locale,
         );
 
         const notifier = scope.resolve(INotifyKey);
@@ -117,7 +119,8 @@ export function createAuthCallbacks(
 
         const t = translator.t;
         const locale = resolveLocale(
-          (input as Record<string, unknown>).locale as string | undefined,
+          ((input as Record<string, unknown>).locale as string | undefined) ??
+            signUpPrefsStorage.getStore()?.locale,
         );
 
         const notifier = scope.resolve(INotifyKey);
@@ -162,7 +165,8 @@ export function createAuthCallbacks(
 
         const t = translator.t;
         const locale = resolveLocale(
-          (input as Record<string, unknown>).locale as string | undefined,
+          ((input as Record<string, unknown>).locale as string | undefined) ??
+            signUpPrefsStorage.getStore()?.locale,
         );
 
         const notifier = scope.resolve(INotifyKey);

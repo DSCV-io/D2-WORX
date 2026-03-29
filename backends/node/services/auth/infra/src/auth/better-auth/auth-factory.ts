@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer } from "better-auth/plugins/bearer";
@@ -10,6 +11,20 @@ import { eq, and } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { JWT_CLAIM_TYPES, SESSION_FIELDS } from "@d2/auth-domain";
 import { BASE_LOCALE } from "@d2/i18n";
+
+/**
+ * Per-request sign-up preferences (locale + timezone from cookies).
+ *
+ * BetterAuth's databaseHooks don't have access to the HTTP request, so
+ * we stash cookie values here via Hono middleware and read them in the
+ * user.create.before hook. Exported for use by the middleware.
+ */
+export interface SignUpPreferences {
+  locale?: string;
+  timezone?: string;
+}
+
+export const signUpPrefsStorage = new AsyncLocalStorage<SignUpPreferences>();
 import type { AuthServiceConfig } from "./auth-config.js";
 import { AUTH_CONFIG_DEFAULTS } from "./auth-config.js";
 import { generateId } from "./hooks/id-hooks.js";
@@ -110,6 +125,7 @@ export interface AuthHooks {
     email: string;
     name: string;
     locale: string;
+    timezone: string;
   }) => Promise<void>;
 }
 
@@ -268,13 +284,24 @@ export function createAuth(
             const userId = (user.id as string) ?? generateId();
             data = { ...data, id: userId };
 
+            // Read sign-up preferences from AsyncLocalStorage (set by Hono middleware
+            // from PARAGLIDE_LOCALE + D2_TIMEZONE cookies). BetterAuth's databaseHooks
+            // don't have request access, so this is the bridge.
+            const prefs = signUpPrefsStorage.getStore();
+            const locale = prefs?.locale ?? (user.locale as string) ?? BASE_LOCALE;
+            const timezone = prefs?.timezone ?? (user.timezone as string) ?? "America/New_York";
+
+            // Inject into user data so BetterAuth persists them to the DB row.
+            data = { ...data, locale, timezone };
+
             // Create Geo contact BEFORE user (fail-fast if Geo unavailable)
             if (hooks?.createUserContact) {
               await hooks.createUserContact({
                 userId,
                 email: user.email as string,
                 name: user.name as string,
-                locale: (user.locale as string) ?? BASE_LOCALE,
+                locale,
+                timezone,
               });
             }
 

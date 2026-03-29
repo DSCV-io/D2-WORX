@@ -28,7 +28,7 @@
   $effect(() => {
     if (!document.cookie.includes("D2_TIMEZONE=")) {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      document.cookie = `D2_TIMEZONE=${encodeURIComponent(tz)}; path=/; max-age=34560000; SameSite=Lax`;
+      document.cookie = `D2_TIMEZONE=${tz}; path=/; max-age=34560000; SameSite=Lax`;
     }
   });
 

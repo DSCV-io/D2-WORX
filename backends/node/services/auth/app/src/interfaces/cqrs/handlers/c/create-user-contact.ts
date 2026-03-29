@@ -6,6 +6,7 @@ export interface CreateUserContactInput {
   readonly email: string;
   readonly name: string;
   readonly locale: string;
+  readonly timezone?: string;
 }
 
 export interface CreateUserContactOutput {

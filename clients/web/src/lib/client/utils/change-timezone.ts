@@ -25,7 +25,8 @@ export async function changeTimezone(timezone: string, isAuthenticated: boolean)
   }
 
   // Set cookie so the server knows the timezone (SSR, sign-up, etc.)
-  document.cookie = `${TIMEZONE_COOKIE}=${encodeURIComponent(timezone)}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
+  // No encodeURIComponent — IANA identifiers (A-Za-z0-9/_+-) are cookie-safe.
+  document.cookie = `${TIMEZONE_COOKIE}=${timezone}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
 
   // Re-run all server loads so components pick up the new timezone.
   await invalidateAll();

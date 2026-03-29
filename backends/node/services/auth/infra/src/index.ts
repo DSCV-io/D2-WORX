@@ -2,8 +2,8 @@
 // This is the ONLY package that imports better-auth.
 
 // --- Auth Factory ---
-export { createAuth } from "./auth/better-auth/auth-factory.js";
-export type { Auth, AuthHooks } from "./auth/better-auth/auth-factory.js";
+export { createAuth, signUpPrefsStorage } from "./auth/better-auth/auth-factory.js";
+export type { Auth, AuthHooks, SignUpPreferences } from "./auth/better-auth/auth-factory.js";
 
 // --- Config ---
 export { AUTH_CONFIG_DEFAULTS } from "./auth/better-auth/auth-config.js";

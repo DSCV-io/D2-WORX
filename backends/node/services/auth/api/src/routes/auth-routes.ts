@@ -6,8 +6,10 @@ import { TK } from "@d2/i18n";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { ILogger } from "@d2/logging";
 import type { Auth } from "@d2/auth-infra";
+import { signUpPrefsStorage } from "@d2/auth-infra";
 import type { CheckSignInThrottle, RecordSignInOutcome } from "@d2/auth-app";
 import { REQUEST_CONTEXT_KEY } from "../middleware/request-enrichment.js";
+import { getCookie } from "hono/cookie";
 
 /**
  * Clones response headers and sets a single header (overwrites if exists).
@@ -47,6 +49,14 @@ export function createAuthRoutes(
   logger?: ILogger,
 ) {
   const app = new Hono();
+
+  // Populate sign-up preferences from cookies so the databaseHooks
+  // user.create.before hook can read locale + timezone.
+  app.use("*", async (c, next) => {
+    const locale = getCookie(c, "PARAGLIDE_LOCALE");
+    const timezone = getCookie(c, "D2_TIMEZONE");
+    return signUpPrefsStorage.run({ locale, timezone }, next);
+  });
 
   /**
    * Shared sign-in handler with optional throttle guard.
