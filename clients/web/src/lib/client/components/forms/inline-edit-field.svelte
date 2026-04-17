@@ -155,8 +155,12 @@
     onRevert: revert,
   });
 
+  // Inner status icon shows for validation feedback only.
+  // Save lifecycle (saving/saved) is handled by InlineEditActions to the right —
+  // duplicating it here would put two checkmarks side-by-side after a save.
+  // For "error", validationStatus is also "invalid", so the inner X still shows.
   const showStatusIcon = $derived(
-    (saveState as string) !== "idle" ||
+    saveState === "error" ||
       (blurred && validationStatus !== "idle") ||
       (isDirty && validationStatus === "idle"),
   );
