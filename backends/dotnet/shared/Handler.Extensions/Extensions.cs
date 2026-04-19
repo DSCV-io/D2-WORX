@@ -43,7 +43,13 @@ public static class Extensions
         {
             services.AddHttpContextAccessor();
 
-            services.AddScoped<IRequestContext>(sp =>
+            // Transient (not Scoped) so every resolution re-checks Features. The
+            // gateway's MutableRequestContext is set into Features by
+            // RequestEnrichmentMiddleware mid-pipeline — anything that resolves
+            // IRequestContext earlier (e.g. structured logging enrichers) would
+            // otherwise cache the claims-based fallback and miss the populated
+            // identity once JwtFingerprintMiddleware runs.
+            services.AddTransient<IRequestContext>(sp =>
             {
                 var httpCtx = sp.GetService<IHttpContextAccessor>()?.HttpContext;
 
@@ -58,7 +64,7 @@ public static class Extensions
                 return new RequestContext(sp.GetRequiredService<IHttpContextAccessor>());
             });
 
-            services.AddScoped<IHandlerContext, HandlerContext>();
+            services.AddTransient<IHandlerContext, HandlerContext>();
 
             return services;
         }

@@ -8,7 +8,7 @@ namespace D2.Gateways.REST.Endpoints;
 
 using D2.Services.Protos.Comms.V1;
 using D2.Shared.Auth.Default;
-using D2.Shared.Handler;
+using D2.Shared.Handler.Extensions.Auth;
 using D2.Shared.Utilities.Extensions;
 
 /// <summary>
@@ -18,11 +18,6 @@ using D2.Shared.Utilities.Extensions;
 /// </summary>
 public static class CommsEndpoints
 {
-    private const string AUTH_USER_CONTEXT_KEY = "auth_user";
-
-    /// <summary>Body for PUT /api/v1/notification-preferences — both fields optional (only provided values are written).</summary>
-    public sealed record SetMyPreferencesRequest(bool? EmailEnabled, bool? SmsEnabled);
-
     /// <summary>
     /// Extension methods for the service collection.
     /// </summary>
@@ -94,20 +89,15 @@ public static class CommsEndpoints
     }
 
     private static async Task<IResult> GetMyPreferencesAsync(
+        AuthenticatedUserId userId,
         CommsService.CommsServiceClient commsClient,
-        IHandlerContext handlerContext,
         CancellationToken ct)
     {
-        if (handlerContext.Request.UserId is not Guid userId)
-        {
-            return Results.Unauthorized();
-        }
-
         var response = await commsClient.GetUserChannelPreferenceAsync(
             new GetUserChannelPreferenceRequest
             {
-                ContextKey = AUTH_USER_CONTEXT_KEY,
-                RelatedEntityId = userId.ToString(),
+                ContextKey = "auth_user",
+                RelatedEntityId = userId.Value.ToString(),
             },
             cancellationToken: ct);
 
@@ -115,20 +105,15 @@ public static class CommsEndpoints
     }
 
     private static async Task<IResult> SetMyPreferencesAsync(
+        AuthenticatedUserId userId,
         SetMyPreferencesRequest body,
         CommsService.CommsServiceClient commsClient,
-        IHandlerContext handlerContext,
         CancellationToken ct)
     {
-        if (handlerContext.Request.UserId is not Guid userId)
-        {
-            return Results.Unauthorized();
-        }
-
         var req = new SetUserChannelPreferenceRequest
         {
-            ContextKey = AUTH_USER_CONTEXT_KEY,
-            RelatedEntityId = userId.ToString(),
+            ContextKey = "auth_user",
+            RelatedEntityId = userId.Value.ToString(),
         };
         if (body.EmailEnabled is bool e)
         {
