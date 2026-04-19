@@ -22,7 +22,7 @@
   "account_email_notifications_description": "Also send routine notifications to your email. Otherwise they stay in-app only.",
   "account_email_phone_description": "Manage your contact details and notification preferences.",
   "account_email_phone_title": "Email & Phone",
-  "account_notifications_alert_body": "Security alerts (sign-ins, password changes, email/phone changes) are always sent to your email — these cannot be turned off, and they never go via SMS. Critical service alerts always go to both email and SMS (when a phone is set), regardless of the toggles below. The toggles only control whether *routine, day-to-day* notifications are also sent to your email/phone in addition to staying in-app. Your phone number is optional and can be removed at any time.",
+  "account_notifications_alert_body": "Security alerts always go to your email — never SMS, never optional. Critical service alerts go to both email and SMS (when set) regardless of the toggles below. The toggles only affect routine, day-to-day notifications.",
   "account_notifications_alert_title": "How notifications work",
   "account_notifications_description": "Control how you receive notifications.",
   "account_notifications_title": "Notification Preferences",

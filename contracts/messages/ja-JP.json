@@ -22,7 +22,7 @@
   "account_email_notifications_description": "通常の通知をメールでも受け取ります。オフの場合は、アプリ内のみで通知されます。",
   "account_email_phone_description": "連絡先情報と通知設定を管理します。",
   "account_email_phone_title": "メールと電話番号",
-  "account_notifications_alert_body": "セキュリティ通知（ログイン、パスワード変更、メールアドレスや電話番号の変更）は常にメールで送信されます — オフにすることはできず、SMSで送信されることもありません。重要なサービス通知は、下記の設定に関係なく、常にメールとSMS（電話番号が登録されている場合）の両方で送信されます。下記の設定で切り替えられるのは、*日常的な通常の通知*もメールや電話に送信するか、それともアプリ内のみに留めるかだけです。電話番号の登録は任意で、いつでも削除できます。",
+  "account_notifications_alert_body": "セキュリティ通知は常にメールで送信されます — SMSでは送信されず、オフにすることもできません。重要なサービス通知は、下記の設定に関係なく、メールとSMS（登録されている場合）の両方で送信されます。下記の設定で切り替えられるのは、日常的な通常の通知のみです。",
   "account_notifications_alert_title": "通知の仕組み",
   "account_notifications_description": "通知の受信方法を設定します。",
   "account_notifications_title": "通知設定",

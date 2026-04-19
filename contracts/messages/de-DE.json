@@ -22,7 +22,7 @@
   "account_email_notifications_description": "Routine-Benachrichtigungen zusätzlich per E-Mail senden. Andernfalls bleiben sie nur in der App.",
   "account_email_phone_description": "Verwalten Sie Ihre Kontaktdaten und Benachrichtigungseinstellungen.",
   "account_email_phone_title": "E-Mail & Telefon",
-  "account_notifications_alert_body": "Sicherheitswarnungen (Anmeldungen, Passwortänderungen, E-Mail-/Telefonänderungen) werden immer an Ihre E-Mail-Adresse gesendet — sie können nicht deaktiviert werden und werden nie per SMS gesendet. Kritische Servicewarnungen werden immer sowohl per E-Mail als auch per SMS gesendet (wenn ein Telefon eingestellt ist), unabhängig von den unten stehenden Optionen. Die Optionen steuern nur, ob *routinemäßige, alltägliche* Benachrichtigungen zusätzlich zu Ihrer E-Mail/Ihrem Telefon gesendet werden, anstatt nur in der App zu bleiben. Ihre Telefonnummer ist optional und kann jederzeit entfernt werden.",
+  "account_notifications_alert_body": "Sicherheitswarnungen gehen immer an Ihre E-Mail-Adresse — nie per SMS, nie optional. Kritische Servicewarnungen gehen unabhängig von den unten stehenden Optionen an E-Mail und SMS (sofern hinterlegt). Die Optionen beeinflussen nur Routinebenachrichtigungen.",
   "account_notifications_alert_title": "So funktionieren Benachrichtigungen",
   "account_notifications_description": "Steuern Sie, wie Sie Benachrichtigungen erhalten.",
   "account_notifications_title": "Benachrichtigungseinstellungen",

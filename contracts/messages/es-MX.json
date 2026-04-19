@@ -22,7 +22,7 @@
   "account_email_notifications_description": "Recibir también las notificaciones rutinarias en tu correo. Si no, permanecen solo en la app.",
   "account_email_phone_description": "Administra tus datos de contacto y tus preferencias de notificación.",
   "account_email_phone_title": "Correo y celular",
-  "account_notifications_alert_body": "Las alertas de seguridad (inicios de sesión, cambios de contraseña, cambios de correo/celular) siempre se envían a tu correo — no se pueden desactivar y nunca se envían por SMS. Las alertas críticas del servicio siempre se envían tanto por correo como por SMS (si tienes un celular configurado), sin importar las opciones de abajo. Las opciones solo controlan si las notificaciones *rutinarias del día a día* también se envían a tu correo/celular además de permanecer en la app. Tu número de celular es opcional y puedes eliminarlo en cualquier momento.",
+  "account_notifications_alert_body": "Las alertas de seguridad siempre se envían a tu correo — nunca por SMS, nunca opcionales. Las alertas críticas del servicio se envían tanto por correo como por SMS (si tienes un celular configurado), sin importar las opciones de abajo. Las opciones solo afectan a las notificaciones rutinarias del día a día.",
   "account_notifications_alert_title": "Cómo funcionan las notificaciones",
   "account_notifications_description": "Controla cómo recibes las notificaciones.",
   "account_notifications_title": "Preferencias de notificación",

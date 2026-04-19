@@ -22,7 +22,7 @@
   "account_email_notifications_description": "Invia anche le notifiche di routine alla tua email. Altrimenti restano solo nell'app.",
   "account_email_phone_description": "Gestisci i tuoi dati di contatto e le preferenze di notifica.",
   "account_email_phone_title": "Email e telefono",
-  "account_notifications_alert_body": "Gli avvisi di sicurezza (accessi, modifiche della password, modifiche di email/telefono) vengono sempre inviati alla tua email — non possono essere disattivati e non vengono mai inviati via SMS. Gli avvisi critici del servizio vengono sempre inviati sia via email sia via SMS (quando è impostato un telefono), indipendentemente dalle opzioni qui sotto. Le opzioni controllano solo se le notifiche *quotidiane di routine* vengono inviate anche alla tua email/telefono oltre a restare nell'app. Il tuo numero di telefono è facoltativo e può essere rimosso in qualsiasi momento.",
+  "account_notifications_alert_body": "Gli avvisi di sicurezza vengono sempre inviati via email — mai via SMS, mai opzionali. Gli avvisi critici del servizio vengono inviati sia via email sia via SMS (se impostato), indipendentemente dalle opzioni qui sotto. Le opzioni controllano solo le notifiche quotidiane di routine.",
   "account_notifications_alert_title": "Come funzionano le notifiche",
   "account_notifications_description": "Controlla come ricevi le notifiche.",
   "account_notifications_title": "Preferenze di notifica",

@@ -22,7 +22,7 @@
   "account_email_notifications_description": "Envoyer aussi les notifications courantes par e-mail. Sinon, elles restent uniquement dans l'application.",
   "account_email_phone_description": "Gérez vos coordonnées et préférences de notification.",
   "account_email_phone_title": "E-mail et téléphone",
-  "account_notifications_alert_body": "Les alertes de sécurité (connexions, changements de mot de passe, modifications de l'e-mail ou du téléphone) sont toujours envoyées par e-mail — elles ne peuvent pas être désactivées et ne sont jamais envoyées par SMS. Les alertes critiques de service sont toujours envoyées à la fois par e-mail et par SMS (si un numéro de téléphone est renseigné), quelles que soient les options ci-dessous. Les options ci-dessous déterminent uniquement si les notifications *courantes, du quotidien* sont également envoyées sur votre e-mail ou votre téléphone, en complément de l'application. Votre numéro de téléphone est facultatif et peut être supprimé à tout moment.",
+  "account_notifications_alert_body": "Les alertes de sécurité sont toujours envoyées par e-mail — jamais par SMS, jamais optionnelles. Les alertes critiques de service sont envoyées à la fois par e-mail et par SMS (si renseigné), quelles que soient les options ci-dessous. Les options n'affectent que les notifications courantes du quotidien.",
   "account_notifications_alert_title": "Comment fonctionnent les notifications",
   "account_notifications_description": "Contrôlez la façon dont vous recevez les notifications.",
   "account_notifications_title": "Préférences de notification",
