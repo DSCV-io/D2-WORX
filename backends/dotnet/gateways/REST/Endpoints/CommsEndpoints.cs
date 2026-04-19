@@ -20,6 +20,9 @@ public static class CommsEndpoints
 {
     private const string AUTH_USER_CONTEXT_KEY = "auth_user";
 
+    /// <summary>Body for PUT /api/v1/notification-preferences — both fields optional (only provided values are written).</summary>
+    public sealed record SetMyPreferencesRequest(bool? EmailEnabled, bool? SmsEnabled);
+
     /// <summary>
     /// Extension methods for the service collection.
     /// </summary>
@@ -141,7 +144,4 @@ public static class CommsEndpoints
 
         return response.Result.ToHttpResult(response.Data);
     }
-
-    /// <summary>Body for PUT /api/v1/notification-preferences — both fields optional (only provided values are written).</summary>
-    public sealed record SetMyPreferencesRequest(bool? EmailEnabled, bool? SmsEnabled);
 }

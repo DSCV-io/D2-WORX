@@ -23,6 +23,7 @@
     asyncValidate,
     onSave,
     onDirtyChange,
+    balanced = false,
     class: className,
   }: {
     value?: string;
@@ -33,6 +34,8 @@
     asyncValidate?: (value: string) => Promise<string | undefined>;
     onSave: (value: string) => Promise<void>;
     onDirtyChange?: (dirty: boolean) => void;
+    /** Mirrors the right-side action slot width on the left, so the field appears horizontally centered within its container. */
+    balanced?: boolean;
     class?: string;
   } = $props();
 
@@ -169,7 +172,7 @@
 </script>
 
 <div
-  class={cn("flex flex-col gap-1.5", className)}
+  class={cn("flex flex-col gap-1.5", balanced && "pl-[4.625rem]", className)}
   data-slot="inline-edit-field"
 >
   <label

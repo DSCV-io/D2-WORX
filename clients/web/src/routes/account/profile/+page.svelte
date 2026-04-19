@@ -216,6 +216,7 @@
           validate={validateNameGroup}
           onSave={saveName}
           onDirtyChange={(d) => (dirtyFields.name = d)}
+          balanced
           bind:this={nameFieldGroupRef}
         />
         <InlineEditField
@@ -226,11 +227,12 @@
           validate={validateUsername}
           onSave={saveUsername}
           onDirtyChange={(d) => (dirtyFields.username = d)}
+          balanced
           bind:this={usernameFieldRef}
         />
       {:else}
         <!-- Name fields skeleton -->
-        <div class="flex flex-col gap-2 sm:flex-row sm:gap-1.5">
+        <div class="flex flex-col gap-2 pl-[4.625rem] sm:flex-row sm:gap-1.5">
           <div class="flex flex-1 flex-col gap-1.5">
             <Skeleton class="h-5 w-20" />
             <Skeleton class="h-9 w-full rounded-md" />
@@ -241,7 +243,7 @@
           </div>
         </div>
         <!-- Username skeleton -->
-        <div class="flex flex-col gap-1.5">
+        <div class="flex flex-col gap-1.5 pl-[4.625rem]">
           <Skeleton class="h-5 w-24" />
           <Skeleton class="h-9 w-full rounded-md" />
         </div>
@@ -285,6 +287,7 @@
             options={localeOptions}
             onSave={saveLocale}
             onDirtyChange={(d) => (dirtyFields.locale = d)}
+            balanced
             bind:this={localeRef}
           />
           <InlineCombobox
@@ -294,14 +297,15 @@
             placeholder={m.account_profile_timezone_placeholder()}
             onSave={saveTimezone}
             onDirtyChange={(d) => (dirtyFields.timezone = d)}
+            balanced
             bind:this={timezoneRef}
           />
         {:else}
-          <div class="flex flex-col gap-1.5">
+          <div class="flex flex-col gap-1.5 pl-[4.625rem]">
             <Skeleton class="h-5 w-20" />
             <Skeleton class="h-9 w-full rounded-md" />
           </div>
-          <div class="flex flex-col gap-1.5">
+          <div class="flex flex-col gap-1.5 pl-[4.625rem]">
             <Skeleton class="h-5 w-20" />
             <Skeleton class="h-9 w-full rounded-md" />
           </div>

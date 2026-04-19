@@ -162,18 +162,11 @@
             {/if}
           </div>
           <div class="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onclick={() => (phoneModalOpen = true)}
-            >
-              {user?.phone ? m.account_phone_change_button() : m.account_phone_add_button()}
-            </Button>
             {#if user?.phone}
               <Button
                 variant="ghost"
                 size="icon"
-                class="size-9"
+                class="size-8"
                 onclick={() => (removePhoneOpen = true)}
                 title={m.account_phone_remove_button()}
               >
@@ -181,6 +174,13 @@
                 <span class="sr-only">{m.account_phone_remove_button()}</span>
               </Button>
             {/if}
+            <Button
+              variant="outline"
+              size="sm"
+              onclick={() => (phoneModalOpen = true)}
+            >
+              {user?.phone ? m.account_phone_change_button() : m.account_phone_add_button()}
+            </Button>
           </div>
         </div>
       {:else}

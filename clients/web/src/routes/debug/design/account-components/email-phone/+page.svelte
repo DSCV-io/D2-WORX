@@ -10,13 +10,9 @@
   let smsNotifications = $state(false);
 
   let emailFieldRef: InlineEditField | undefined = $state();
-  let emailNotifRef: InlineSwitch | undefined = $state();
-  let smsNotifRef: InlineSwitch | undefined = $state();
 
   let dirtyFields = $state({
     email: false,
-    emailNotif: false,
-    smsNotif: false,
   });
   const anyDirty = $derived(Object.values(dirtyFields).some(Boolean));
 
@@ -35,20 +31,10 @@
       const ok = await emailFieldRef.saveIfDirty();
       if (!ok) return;
     }
-    if (emailNotifRef?.getDirty()) {
-      const ok = await emailNotifRef.saveIfDirty();
-      if (!ok) return;
-    }
-    if (smsNotifRef?.getDirty()) {
-      const ok = await smsNotifRef.saveIfDirty();
-      if (!ok) return;
-    }
   }
 
   function discardAll() {
     emailFieldRef?.revert();
-    emailNotifRef?.revert();
-    smsNotifRef?.revert();
   }
 </script>
 
@@ -88,16 +74,12 @@
         label="Email notifications"
         description="Receive email notifications for important updates."
         onSave={mockSaveBool}
-        onDirtyChange={(d) => (dirtyFields.emailNotif = d)}
-        bind:this={emailNotifRef}
       />
       <InlineSwitch
         bind:value={smsNotifications}
         label="SMS notifications"
         description="Receive text message alerts for urgent items."
         onSave={mockSaveBool}
-        onDirtyChange={(d) => (dirtyFields.smsNotif = d)}
-        bind:this={smsNotifRef}
       />
     </Card.Content>
   </Card.Root>
