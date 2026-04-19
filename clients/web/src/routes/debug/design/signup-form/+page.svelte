@@ -4,7 +4,7 @@
   import { zod4Client as zodClient } from "sveltekit-superforms/adapters";
   import { untrack } from "svelte";
   import { createSignUpSchema as createSignupSchema } from "$lib/shared/forms/sign-up-schema.js";
-  import { FormInput } from "$lib/client/components/forms/index.js";
+  import { FormInput, FormPasswordInput } from "$lib/client/components/forms/index.js";
   import { Button } from "$lib/client/components/ui/button/index.js";
   import * as Card from "$lib/client/components/ui/card/index.js";
   import { toast } from "svelte-sonner";
@@ -19,8 +19,6 @@
   import { useAsyncFieldCheck } from "$lib/client/forms/async-field-check.svelte.js";
   import ArrowLeftIcon from "@lucide/svelte/icons/arrow-left";
   import * as m from "$lib/paraglide/messages.js";
-  import EyeIcon from "@lucide/svelte/icons/eye";
-  import EyeOffIcon from "@lucide/svelte/icons/eye-off";
 
   let { data } = $props();
 
@@ -51,9 +49,6 @@
     },
   });
 
-  // Show/hide toggles for password fields (independent state)
-  let showPassword = $state(false);
-  let showConfirmPassword = $state(false);
 </script>
 
 <svelte:head>
@@ -141,51 +136,17 @@
           {...CONFIRM_EMAIL}
         />
 
-        <!-- Password with show/hide toggle -->
-        <FormInput
+        <FormPasswordInput
           {form}
           field="password"
           {...PASSWORD}
-          type={showPassword ? "text" : "password"}
-        >
-          {#snippet inputAction()}
-            <button
-              type="button"
-              onclick={() => (showPassword = !showPassword)}
-              class="text-muted-foreground hover:text-foreground"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {#if showPassword}
-                <EyeOffIcon class="size-4" />
-              {:else}
-                <EyeIcon class="size-4" />
-              {/if}
-            </button>
-          {/snippet}
-        </FormInput>
+        />
 
-        <!-- Confirm Password with independent show/hide toggle -->
-        <FormInput
+        <FormPasswordInput
           {form}
           field="confirmPassword"
           {...CONFIRM_PASSWORD}
-          type={showConfirmPassword ? "text" : "password"}
-        >
-          {#snippet inputAction()}
-            <button
-              type="button"
-              onclick={() => (showConfirmPassword = !showConfirmPassword)}
-              class="text-muted-foreground hover:text-foreground"
-              aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-            >
-              {#if showConfirmPassword}
-                <EyeOffIcon class="size-4" />
-              {:else}
-                <EyeIcon class="size-4" />
-              {/if}
-            </button>
-          {/snippet}
-        </FormInput>
+        />
 
         <!-- Actions -->
         <div class="flex justify-end gap-2 pt-2">
