@@ -52,6 +52,9 @@
 
   // Resolve user.image (fileId) to a presigned display URL
   let avatarUrl: string | undefined = $state();
+  // svelte-ignore state_referenced_locally
+  // Initial-only seed so the skeleton renders immediately on SSR when an image
+  // is set. The $effect on `user.image` below keeps it in sync.
   let avatarLoading = $state(!!user.image);
 
   $effect(() => {

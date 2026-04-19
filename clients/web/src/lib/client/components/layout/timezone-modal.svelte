@@ -82,6 +82,7 @@
         type="single"
         bind:open={comboboxOpen}
         value={selectedValue}
+        inputValue={comboboxOpen ? searchValue : selectedLabel}
         onValueChange={(v) => {
           selectedValue = v;
           searchValue = "";
@@ -94,7 +95,6 @@
         <div class="relative">
           <Combobox.Input
             autocomplete="off"
-            value={comboboxOpen ? searchValue : selectedLabel}
             oninput={(e) => {
               searchValue = (e.target as HTMLInputElement).value;
             }}

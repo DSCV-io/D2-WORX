@@ -41,11 +41,13 @@
 
   let originalValue = $state(value);
   let currentValue = $state(value);
-  let saveState: SaveState = $state("idle");
-  let validationStatus: ValidationStatus = $state("idle");
+  let saveState = $state<SaveState>("idle");
+  let validationStatus = $state<ValidationStatus>("idle");
   let errorMessage = $state("");
   let searchValue = $state("");
   let open = $state(false);
+  // svelte-ignore state_referenced_locally
+  // Initial-only seed; the $effect below keeps it in sync with displayLabel.
   let comboboxInputValue = $state(options.find((o) => o.value === value)?.label ?? "");
 
   /** The label to display in the input when closed. Reactively derived from currentValue + options. */
@@ -176,7 +178,7 @@
         type="single"
         disabled={saveState === "saving"}
         bind:open
-        bind:inputValue={comboboxInputValue}
+        inputValue={comboboxInputValue}
         value={currentValue}
         onValueChange={handleValueChange}
         items={options.map((o) => ({ value: o.value, label: o.label }))}

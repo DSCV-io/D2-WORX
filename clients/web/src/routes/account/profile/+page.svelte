@@ -75,7 +75,7 @@
       nameFields[0].value = parts.first;
       nameFields[1].value = parts.last;
       username = user.displayUsername ?? user.username ?? "";
-      locale = user.locale ?? getLocale();
+      locale = (user.locale as ReturnType<typeof getLocale> | undefined) ?? getLocale();
       timezone = user.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
       loaded = true;
     }
@@ -191,9 +191,7 @@
 </script>
 
 <svelte:head>
-  <title
-    >{m.account_page_title()} / {m.account_profile_title()} — {m.webclient_nav_brand()}</title
-  >
+  <title>{m.account_page_title()} / {m.account_profile_title()} — {m.webclient_nav_brand()}</title>
   <meta
     name="description"
     content={m.account_profile_description()}
@@ -259,7 +257,7 @@
         <Card.Description>{m.account_profile_avatar_description()}</Card.Description>
       </Card.Header>
       <Card.Content>
-        {#if loaded}
+        {#if loaded && user}
           <AvatarUploader
             currentImageFileId={user.image}
             userId={user.id}

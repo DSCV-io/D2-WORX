@@ -38,8 +38,8 @@
 
   let originalValue = $state(value);
   let currentValue = $state(value);
-  let saveState: SaveState = $state("idle");
-  let validationStatus: ValidationStatus = $state("idle");
+  let saveState = $state<SaveState>("idle");
+  let validationStatus = $state<ValidationStatus>("idle");
   let errorMessage = $state("");
   let blurred = $state(false);
 

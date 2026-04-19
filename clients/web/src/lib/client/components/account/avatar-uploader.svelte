@@ -29,6 +29,9 @@
   let selectedFile: File | undefined = $state();
   let cropDialogOpen = $state(false);
   let displayUrl: string | undefined = $state();
+  // svelte-ignore state_referenced_locally
+  // Initial-only seed so the skeleton renders immediately on SSR when an image
+  // is set. The $effect on `currentImageFileId` below keeps it in sync.
   let avatarLoading = $state(!!currentImageFileId);
   let fileInput: HTMLInputElement | undefined = $state();
   let pendingFileId: string | undefined = $state();

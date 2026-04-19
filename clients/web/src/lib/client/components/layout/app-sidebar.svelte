@@ -17,7 +17,7 @@
   const navItems = $derived([
     { label: m.common_ui_dashboard(), href: "/dashboard" as const, icon: LayoutDashboardIcon },
     { label: m.webclient_app_settings_title(), href: "/settings" as const, icon: SettingsIcon },
-    { label: m.webclient_app_profile_title(), href: "/profile" as const, icon: UserIcon },
+    { label: m.webclient_app_profile_title(), href: "/account/profile" as const, icon: UserIcon },
   ]);
 </script>
 
