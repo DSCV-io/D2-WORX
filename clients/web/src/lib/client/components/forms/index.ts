@@ -1,4 +1,5 @@
 export { default as FormInput } from "./form-input.svelte";
+export { default as FormPasswordInput } from "./form-password-input.svelte";
 export { default as FormSelect } from "./form-select.svelte";
 export { default as FormCombobox } from "./form-combobox.svelte";
 export { default as FormPhoneInput } from "./form-phone-input.svelte";

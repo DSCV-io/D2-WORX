@@ -10,6 +10,11 @@ import {
   IUpdateUserImageKey,
   IInvalidateUserSessionCacheKey,
   IPushUserUpdatedKey,
+  IRequestEmailChangeKey,
+  IVerifyEmailChangeKey,
+  IRequestPhoneChangeKey,
+  IVerifyPhoneChangeKey,
+  IRemovePhoneKey,
 } from "@d2/auth-app";
 import type { SessionVariables } from "../middleware/session.js";
 import type { ScopeVariables } from "../middleware/scope.js";
@@ -194,6 +199,99 @@ export function createAccountRoutes(auth: Auth) {
       userId: session.userId as string,
       limit,
       offset,
+    });
+    const status = (
+      result.success ? HttpStatusCode.OK : (result.statusCode ?? HttpStatusCode.BadRequest)
+    ) as ContentfulStatusCode;
+    return c.json(result, status);
+  });
+
+  // ========================================================================
+  // Email & Phone change (OTP flows)
+  // ========================================================================
+  // userId always derived from session — never accepted from request body (IDOR).
+  // Password is in the SAME request body as the new value (atomic — bypass-proof).
+
+  // POST /api/account/email/request-change — initiate email change (sends OTP to NEW email)
+  app.post("/api/account/email/request-change", async (c) => {
+    const body = await c.req.json();
+    const session = c.get(SESSION_KEY);
+    if (!session) return c.json({ success: false, statusCode: 401 }, 401 as ContentfulStatusCode);
+
+    const handler = c.get(SCOPE_KEY).resolve(IRequestEmailChangeKey);
+    const result = await handler.handleAsync({
+      userId: session.userId as string,
+      newEmail: body.newEmail as string,
+      currentPassword: body.currentPassword as string,
+    });
+    const status = (
+      result.success ? HttpStatusCode.OK : (result.statusCode ?? HttpStatusCode.BadRequest)
+    ) as ContentfulStatusCode;
+    return c.json(result, status);
+  });
+
+  // POST /api/account/email/verify-change — verify OTP and apply email change
+  app.post("/api/account/email/verify-change", async (c) => {
+    const body = await c.req.json();
+    const session = c.get(SESSION_KEY);
+    if (!session) return c.json({ success: false, statusCode: 401 }, 401 as ContentfulStatusCode);
+
+    const handler = c.get(SCOPE_KEY).resolve(IVerifyEmailChangeKey);
+    const result = await handler.handleAsync({
+      userId: session.userId as string,
+      code: body.code as string,
+    });
+    const status = (
+      result.success ? HttpStatusCode.OK : (result.statusCode ?? HttpStatusCode.BadRequest)
+    ) as ContentfulStatusCode;
+    return c.json(result, status);
+  });
+
+  // POST /api/account/phone/request-change — initiate phone change/add (sends OTP via SMS)
+  app.post("/api/account/phone/request-change", async (c) => {
+    const body = await c.req.json();
+    const session = c.get(SESSION_KEY);
+    if (!session) return c.json({ success: false, statusCode: 401 }, 401 as ContentfulStatusCode);
+
+    const handler = c.get(SCOPE_KEY).resolve(IRequestPhoneChangeKey);
+    const result = await handler.handleAsync({
+      userId: session.userId as string,
+      newPhone: body.newPhone as string,
+      currentPassword: body.currentPassword as string,
+    });
+    const status = (
+      result.success ? HttpStatusCode.OK : (result.statusCode ?? HttpStatusCode.BadRequest)
+    ) as ContentfulStatusCode;
+    return c.json(result, status);
+  });
+
+  // POST /api/account/phone/verify-change — verify OTP and apply phone change
+  app.post("/api/account/phone/verify-change", async (c) => {
+    const body = await c.req.json();
+    const session = c.get(SESSION_KEY);
+    if (!session) return c.json({ success: false, statusCode: 401 }, 401 as ContentfulStatusCode);
+
+    const handler = c.get(SCOPE_KEY).resolve(IVerifyPhoneChangeKey);
+    const result = await handler.handleAsync({
+      userId: session.userId as string,
+      code: body.code as string,
+    });
+    const status = (
+      result.success ? HttpStatusCode.OK : (result.statusCode ?? HttpStatusCode.BadRequest)
+    ) as ContentfulStatusCode;
+    return c.json(result, status);
+  });
+
+  // DELETE /api/account/phone — remove user's phone (password-gated, no OTP)
+  app.delete("/api/account/phone", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const session = c.get(SESSION_KEY);
+    if (!session) return c.json({ success: false, statusCode: 401 }, 401 as ContentfulStatusCode);
+
+    const handler = c.get(SCOPE_KEY).resolve(IRemovePhoneKey);
+    const result = await handler.handleAsync({
+      userId: session.userId as string,
+      currentPassword: body.currentPassword as string,
     });
     const status = (
       result.success ? HttpStatusCode.OK : (result.statusCode ?? HttpStatusCode.BadRequest)

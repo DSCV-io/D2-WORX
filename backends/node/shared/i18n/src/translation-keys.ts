@@ -62,6 +62,37 @@ export const TK = {
       ROLE_REQUIRED: "auth_errors_ROLE_REQUIRED",
       SIGN_IN_THROTTLED: "auth_errors_SIGN_IN_THROTTLED",
     },
+    email: {
+      emailChanged: {
+        subject: "auth_email_changed_subject",
+        body: "auth_email_changed_body",
+        plaintext: "auth_email_changed_plaintext",
+      },
+      phoneChanged: {
+        subject: "auth_phone_changed_subject",
+        body: "auth_phone_changed_body",
+        plaintext: "auth_phone_changed_plaintext",
+      },
+      phoneRemoved: {
+        subject: "auth_phone_removed_subject",
+        body: "auth_phone_removed_body",
+        plaintext: "auth_phone_removed_plaintext",
+      },
+    },
+    otp: {
+      email: {
+        subject: "auth_otp_email_subject",
+        body: "auth_otp_email_body",
+        expiry: "auth_otp_email_expiry",
+        disclaimer: "auth_otp_email_disclaimer",
+        plaintext: "auth_otp_email_plaintext",
+      },
+      sms: {
+        subject: "auth_otp_sms_subject",
+        body: "auth_otp_sms_body",
+        plaintext: "auth_otp_sms_plaintext",
+      },
+    },
   },
   middleware: {
     errors: {

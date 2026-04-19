@@ -178,6 +178,13 @@ export function createAuth(
 
     secondaryStorage,
 
+    // We use the verification table for our own account-change OTP records
+    // (RequestEmailChange, RequestPhoneChange). Records persist in Postgres
+    // so that updateValue (attempts increment) and id-based lookups work.
+    // Without this, BetterAuth omits "verification" from its internal schema
+    // when secondaryStorage is set, breaking any DB-backed verification ops.
+    verification: { disableCleanup: false, storeInDatabase: true },
+
     emailAndPassword: {
       enabled: true,
       autoSignIn: false,
@@ -454,6 +461,17 @@ export function createAuth(
           type: "string",
           required: false,
           defaultValue: "America/New_York",
+          input: false,
+        },
+        phone: {
+          type: "string",
+          required: false,
+          input: false,
+        },
+        phoneVerified: {
+          type: "boolean",
+          required: false,
+          defaultValue: false,
           input: false,
         },
       },

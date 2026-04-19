@@ -26,22 +26,45 @@ import type { IChannelDispatcher } from "./channel-dispatchers.js";
 type Input = Complex.DeliverInput;
 type Output = Complex.DeliverOutput;
 
-const deliverSchema = z.object({
-  correlationId: zodGuid,
-  recipientContactId: zodGuid,
-  title: z.string().min(1).max(255),
-  content: z.string().min(1).max(50_000),
-  plainTextContent: z.string().min(1).max(50_000),
-  channels: z.array(z.enum(["email", "sms"])).optional(),
-  urgency: z.enum(["normal", "urgent"]).optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-  senderService: z.string().min(1).max(50),
-});
+const deliverSchema = z
+  .object({
+    correlationId: zodGuid,
+    recipientContactId: zodGuid.optional(),
+    alternativeContactInfo: z
+      .object({
+        email: z.string().email().max(254).optional(),
+        phone: z
+          .string()
+          .regex(/^\d{7,15}$/)
+          .optional(),
+      })
+      .refine((v) => !!(v.email || v.phone), {
+        message: "alternativeContactInfo must include at least one of email or phone",
+      })
+      .optional(),
+    title: z.string().min(1).max(255),
+    content: z.string().min(1).max(50_000),
+    plainTextContent: z.string().min(1).max(50_000),
+    channels: z.array(z.enum(["email", "sms"])).optional(),
+    urgency: z.enum(["normal", "urgent"]).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+    senderService: z.string().min(1).max(50),
+  })
+  .refine((v) => !!v.recipientContactId !== !!v.alternativeContactInfo, {
+    message: "Exactly one of recipientContactId or alternativeContactInfo must be provided",
+  });
 
 /**
  * Core delivery orchestrator. Creates Message + DeliveryRequest, resolves
  * the recipient's address, determines channels, and dispatches via channel
  * dispatchers in parallel (Promise.allSettled).
+ *
+ * Two recipient modes:
+ * - **Contact-based** (`recipientContactId`): resolves email/phone via
+ *   geo-client, applies channel preferences.
+ * - **Transient** (`alternativeContactInfo`): bypasses Geo and channel-pref
+ *   lookup; uses provided email/phone directly. Used for OTP delivery to
+ *   unverified addresses.
  *
  * Channel-specific logic (content transformation, provider invocation) is
  * delegated to IChannelDispatcher implementations. The handler owns
@@ -113,7 +136,7 @@ export class Deliver extends BaseHandler<Input, Output> implements Complex.IDeli
       metadata: input.metadata,
     });
 
-    // Step 2: Create domain DeliveryRequest
+    // Step 2: Create domain DeliveryRequest (recipientContactId may be undefined for transient sends)
     const request = createDeliveryRequest({
       messageId: message.id,
       correlationId: input.correlationId,
@@ -127,24 +150,32 @@ export class Deliver extends BaseHandler<Input, Output> implements Complex.IDeli
     const reqResult = await this.requestRepo.create.handleAsync({ request });
     if (!reqResult.success) return D2Result.bubbleFail(reqResult);
 
-    // Step 4: Resolve recipient address
-    const resolved = await this.recipientResolver.handleAsync({
-      contactId: input.recipientContactId,
-    });
-
-    if (!resolved.success || !resolved.data) {
-      return D2Result.bubbleFail(resolved);
-    }
-
-    const { email, phone } = resolved.data;
-
-    // Step 5: Resolve channel preferences
+    // Step 4: Resolve recipient addresses
+    let email: string | undefined;
+    let phone: string | undefined;
     let prefs: ChannelPreference | undefined;
-    const prefResult = await this.channelPrefRepo.findByContactId.handleAsync({
-      contactId: input.recipientContactId,
-    });
-    if (prefResult.success && prefResult.data) {
-      prefs = prefResult.data.pref;
+
+    if (input.alternativeContactInfo) {
+      // Transient send — addresses provided directly, skip Geo + preference lookup.
+      email = input.alternativeContactInfo.email;
+      phone = input.alternativeContactInfo.phone;
+    } else if (input.recipientContactId) {
+      const resolved = await this.recipientResolver.handleAsync({
+        contactId: input.recipientContactId,
+      });
+      if (!resolved.success || !resolved.data) {
+        return D2Result.bubbleFail(resolved);
+      }
+      email = resolved.data.email;
+      phone = resolved.data.phone;
+
+      // Step 5: Resolve channel preferences (only meaningful when we have a contactId)
+      const prefResult = await this.channelPrefRepo.findByContactId.handleAsync({
+        contactId: input.recipientContactId,
+      });
+      if (prefResult.success && prefResult.data) {
+        prefs = prefResult.data.pref;
+      }
     }
 
     // Step 6: Resolve channels via domain rule
@@ -159,11 +190,11 @@ export class Deliver extends BaseHandler<Input, Output> implements Complex.IDeli
       } else if (ch === "sms" && phone && this.dispatchers.has("sms")) {
         deliverableChannels.push({ channel: "sms", address: phone });
       } else if (ch === "email" && !email) {
-        skippedReasons.push("email: no address on contact");
+        skippedReasons.push("email: no address available");
       } else if (ch === "email" && !this.dispatchers.has("email")) {
         skippedReasons.push("email: no dispatcher configured");
       } else if (ch === "sms" && !phone) {
-        skippedReasons.push("sms: no phone number on contact");
+        skippedReasons.push("sms: no phone number available");
       } else if (ch === "sms" && !this.dispatchers.has("sms")) {
         skippedReasons.push("sms: no dispatcher configured");
       }
@@ -299,6 +330,7 @@ export class Deliver extends BaseHandler<Input, Output> implements Complex.IDeli
 }
 
 export type {
+  AlternativeContactInfo,
   DeliverInput,
   DeliverOutput,
 } from "../../../../interfaces/cqrs/handlers/x/deliver.js";

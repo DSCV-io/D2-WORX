@@ -1,6 +1,17 @@
 import type { IHandler, RedactionSpec } from "@d2/handler";
 import type { DeliveryAttempt } from "@d2/comms-domain";
 
+/**
+ * One-shot transient recipient — bypasses Geo contact lookup.
+ * Use when sending to addresses that aren't yet contacts (e.g., OTP for unverified
+ * new email/phone). Either recipientContactId OR alternativeContactInfo MUST be
+ * provided (not both).
+ */
+export interface AlternativeContactInfo {
+  readonly email?: string;
+  readonly phone?: string;
+}
+
 export interface DeliverInput {
   readonly senderService: string;
   readonly title: string;
@@ -8,7 +19,10 @@ export interface DeliverInput {
   readonly plainTextContent: string;
   readonly channels?: ("email" | "sms")[];
   readonly urgency?: "normal" | "urgent";
-  readonly recipientContactId: string;
+  /** Geo contact ID — preferred recipient (mutually exclusive with alternativeContactInfo). */
+  readonly recipientContactId?: string;
+  /** One-shot transient recipient — see AlternativeContactInfo doc. */
+  readonly alternativeContactInfo?: AlternativeContactInfo;
   readonly correlationId: string;
   readonly metadata?: Record<string, unknown>;
 }
@@ -21,7 +35,7 @@ export interface DeliverOutput {
 
 /** Recommended redaction for Deliver handlers. */
 export const DELIVER_REDACTION: RedactionSpec = {
-  inputFields: ["content", "plainTextContent", "title"],
+  inputFields: ["content", "plainTextContent", "title", "alternativeContactInfo"],
   suppressOutput: true,
 };
 

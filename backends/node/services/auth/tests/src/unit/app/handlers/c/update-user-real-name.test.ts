@@ -4,7 +4,7 @@ import { createLogger } from "@d2/logging";
 import { D2Result, HttpStatusCode } from "@d2/result";
 import { UpdateUserRealName } from "@d2/auth-app";
 import type { IUpdateUserNameHandler } from "@d2/auth-app";
-import type { Complex } from "@d2/geo-client";
+import type { Complex, Queries as GeoQueries } from "@d2/geo-client";
 
 const VALID_USER_ID = "01234567-89ab-cdef-0123-456789abcdef";
 
@@ -21,6 +21,30 @@ function createTestContext() {
     isTargetingAdmin: false,
   };
   return new HandlerContext(request, createLogger({ level: "silent" as never }));
+}
+
+function createMockGetContactsByExtKeys(): GeoQueries.IGetContactsByExtKeysHandler {
+  return {
+    handleAsync: vi.fn().mockResolvedValue(
+      D2Result.ok({
+        data: {
+          data: new Map([
+            [
+              "auth_user:" + VALID_USER_ID,
+              [
+                {
+                  id: "geo-001",
+                  contextKey: "auth_user",
+                  relatedEntityId: VALID_USER_ID,
+                  personalDetails: { firstName: "Old", lastName: "Name" },
+                },
+              ],
+            ],
+          ]),
+        },
+      }),
+    ),
+  } as unknown as GeoQueries.IGetContactsByExtKeysHandler;
 }
 
 function createMockUpdateContactsByExtKeys(): Complex.IUpdateContactsByExtKeysHandler {
@@ -40,14 +64,17 @@ function createMockUpdateUserName() {
 }
 
 describe("UpdateUserRealName", () => {
+  let getContactsByExtKeys: GeoQueries.IGetContactsByExtKeysHandler;
   let updateContactsByExtKeys: Complex.IUpdateContactsByExtKeysHandler;
   let updateUserName: ReturnType<typeof createMockUpdateUserName>;
   let handler: UpdateUserRealName;
 
   beforeEach(() => {
+    getContactsByExtKeys = createMockGetContactsByExtKeys();
     updateContactsByExtKeys = createMockUpdateContactsByExtKeys();
     updateUserName = createMockUpdateUserName();
     handler = new UpdateUserRealName(
+      getContactsByExtKeys,
       updateContactsByExtKeys,
       updateUserName as unknown as IUpdateUserNameHandler,
       createTestContext(),
@@ -162,7 +189,7 @@ describe("UpdateUserRealName", () => {
   // Repo failure (same-service — bubbleFail is safe)
   // -----------------------------------------------------------------------
 
-  it("should bubble failure when repo updateUserName returns notFound", async () => {
+  it("should bubble failure when repo updateUserName returns notFound — and rolls Geo back (saga)", async () => {
     updateUserName.handleAsync = vi.fn().mockResolvedValue(D2Result.notFound());
 
     const result = await handler.handleAsync({
@@ -173,7 +200,17 @@ describe("UpdateUserRealName", () => {
 
     expect(result.success).toBe(false);
     expect(result.statusCode).toBe(HttpStatusCode.NotFound);
-    expect(updateContactsByExtKeys.handleAsync).toHaveBeenCalledOnce();
+    // SAGA: Geo called twice — once with the new contact, once with the old (rollback)
+    expect(updateContactsByExtKeys.handleAsync).toHaveBeenCalledTimes(2);
+    const calls = (updateContactsByExtKeys.handleAsync as ReturnType<typeof vi.fn>).mock.calls;
+    // First call had the new firstName/lastName
+    const firstCallContact = calls[0][0].contacts[0];
+    expect(firstCallContact.personalDetails.firstName).toBe("John");
+    expect(firstCallContact.personalDetails.lastName).toBe("Doe");
+    // Second call (rollback) had the OLD firstName/lastName
+    const rollbackContact = calls[1][0].contacts[0];
+    expect(rollbackContact.personalDetails.firstName).toBe("Old");
+    expect(rollbackContact.personalDetails.lastName).toBe("Name");
   });
 
   // -----------------------------------------------------------------------

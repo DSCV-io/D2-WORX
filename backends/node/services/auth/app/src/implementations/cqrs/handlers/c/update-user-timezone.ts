@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { BaseHandler, type IHandlerContext, type RedactionSpec, zodGuid } from "@d2/handler";
 import { D2Result } from "@d2/result";
+import { TK } from "@d2/i18n";
 import { GEO_CONTEXT_KEYS } from "@d2/auth-domain";
 import type { ContactToCreateDTO } from "@d2/protos";
 import type { Complex, Queries as GeoQueries } from "@d2/geo-client";
@@ -8,6 +9,7 @@ import type { IUpdateUserTimezoneHandler as IUpdateUserTimezoneRepoHandler } fro
 import type { IPushUserUpdated } from "../../../../interfaces/realtime/handlers/index.js";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
 import type { IInvalidateUserSessionCacheHandler } from "../../../../interfaces/cqrs/handlers/c/invalidate-user-session-cache.js";
+import { runCrossServiceUpdate } from "../u/cross-service-update.js";
 
 type Input = Commands.UpdateUserTimezoneInput;
 type Output = Commands.UpdateUserTimezoneOutput;
@@ -21,11 +23,14 @@ const schema = z.object({
 export const UPDATE_USER_TIMEZONE_REDACTION: RedactionSpec = {};
 
 /**
- * Updates a user's timezone preference.
+ * Updates a user's timezone preference via SAGA pattern.
  *
  * Coordinates two updates (mirrors UpdateUserLocale):
  * 1. Geo contact (ianaIdentifier) via UpdateContactsByExtKeys
  * 2. BetterAuth user.timezone via repo handler
+ *
+ * On auth failure after Geo succeeded → Geo is rolled back to the original
+ * timezone value. On rollback failure → logger.fatal() (CRITICAL).
  *
  * IDOR prevention: userId is injected from IRequestContext, never from input.
  */
@@ -65,7 +70,7 @@ export class UpdateUserTimezone
 
     const extKey = { contextKey: GEO_CONTEXT_KEYS.USER, relatedEntityId: input.userId };
 
-    // Fetch existing contact to preserve fields we're not changing.
+    // Fetch existing contact — needed both for the merge AND saga rollback target.
     const existingResult = await this.getContactsByExtKeys.handleAsync({ keys: [extKey] });
     if (!existingResult.success) {
       this.context.logger.error("Failed to fetch existing Geo contact for merge", {
@@ -73,15 +78,21 @@ export class UpdateUserTimezone
         errorCode: existingResult.errorCode,
       });
       return D2Result.serviceUnavailable({
-        messages: ["Unable to update timezone preference. Please try again."],
+        messages: [TK.common.errors.SERVICE_UNAVAILABLE],
       });
     }
     const mapKey = `${extKey.contextKey}:${extKey.relatedEntityId}`;
     const existingContact = existingResult.data?.data.get(mapKey)?.[0];
-
-    // Spread existing contact, override only the timezone field.
     const { id: _, ...existingFields } = existingContact ?? {};
-    const contactToCreate: ContactToCreateDTO = {
+
+    const oldContact: ContactToCreateDTO = {
+      ...existingFields,
+      createdAt: new Date(),
+      contextKey: extKey.contextKey,
+      relatedEntityId: extKey.relatedEntityId,
+    };
+
+    const newContact: ContactToCreateDTO = {
       ...existingFields,
       createdAt: new Date(),
       contextKey: extKey.contextKey,
@@ -89,29 +100,19 @@ export class UpdateUserTimezone
       ianaIdentifier: input.timezone,
     };
 
-    // Cross-service call — do NOT bubbleFail (may leak Geo internals).
-    const geoResult = await this.updateContactsByExtKeys.handleAsync({
-      contacts: [contactToCreate],
+    const result = await runCrossServiceUpdate({
+      oldContact,
+      newContact,
+      updateContactsByExtKeys: this.updateContactsByExtKeys,
+      operationLabel: "user.timezone",
+      context: this.context,
+      authUpdate: () =>
+        this.updateUserTimezoneRepo.handleAsync({
+          userId: input.userId,
+          timezone: input.timezone,
+        }),
     });
-    if (!geoResult.success) {
-      this.context.logger.error("Failed to update Geo contact for user timezone", {
-        userId: input.userId,
-        errorCode: geoResult.errorCode,
-        statusCode: geoResult.statusCode,
-      });
-      return D2Result.serviceUnavailable({
-        messages: ["Unable to update timezone preference. Please try again."],
-      });
-    }
-
-    // Update BetterAuth user.timezone (same-service repo — bubbleFail is safe)
-    const timezoneResult = await this.updateUserTimezoneRepo.handleAsync({
-      userId: input.userId,
-      timezone: input.timezone,
-    });
-    if (!timezoneResult.success) {
-      return D2Result.bubbleFail(timezoneResult);
-    }
+    if (!result.success) return D2Result.bubbleFail(result);
 
     // Invalidate session cache so next SSR load reads fresh timezone
     await this.invalidateSessionCache?.handleAsync({ userId: input.userId }).catch(() => {});

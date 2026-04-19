@@ -1,4 +1,5 @@
-import { pgTable, text, boolean, timestamp, index } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { pgTable, text, boolean, timestamp, index, uniqueIndex } from "drizzle-orm/pg-core";
 
 /**
  * Drizzle schema for BetterAuth-managed tables.
@@ -34,13 +35,21 @@ export const user = pgTable(
     // i18n
     locale: text("locale").default("en-US"),
     timezone: text("timezone").default("America/New_York"),
+    // Phone (digits-only E.164 like Geo). Verified flag tracks OTP confirmation.
+    phone: text("phone"),
+    phoneVerified: boolean("phone_verified").notNull().default(false),
     // Admin plugin
     role: text("role"),
     banned: boolean("banned").default(false),
     banReason: text("ban_reason"),
     banExpires: timestamp("ban_expires"),
   },
-  () => [],
+  (t) => [
+    // Partial unique index: enforces one user per phone, allows multiple null phones.
+    uniqueIndex("user_phone_unique")
+      .on(t.phone)
+      .where(sql`${t.phone} IS NOT NULL`),
+  ],
 );
 
 export const session = pgTable(

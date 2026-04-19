@@ -10,6 +10,7 @@ import type {
   IUpdateOrgContactRecordHandler,
 } from "../../../../interfaces/repository/handlers/index.js";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
+import { runCrossServiceUpdate } from "../u/cross-service-update.js";
 
 type Input = Commands.UpdateOrgContactHandlerInput;
 type Output = Commands.UpdateOrgContactOutput;
@@ -35,8 +36,9 @@ const schema = z.object({
  *
  * Two modes:
  * 1. **Metadata-only** (label and/or isPrimary) — updates junction fields in place.
- * 2. **Contact replacement** (contact details provided) — calls UpdateContactsByExtKeys
- *    which atomically replaces the Geo contact at the ext key. Then updates junction metadata.
+ * 2. **Contact replacement** (contact details provided) — uses SAGA pattern:
+ *    Geo update first → auth metadata update → if auth fails, Geo rolled back to
+ *    the original contact. On rollback failure → logger.fatal() (CRITICAL).
  */
 export class UpdateOrgContactHandler
   extends BaseHandler<Input, Output>
@@ -83,9 +85,19 @@ export class UpdateOrgContactHandler
       });
     }
 
+    // Compute the metadata patch up-front so both branches can apply it.
+    const metadataUpdates: UpdateOrgContactInput = {};
+    if (input.updates.label !== undefined) {
+      (metadataUpdates as Record<string, unknown>).label = input.updates.label;
+    }
+    if (input.updates.isPrimary !== undefined) {
+      (metadataUpdates as Record<string, unknown>).isPrimary = input.updates.isPrimary;
+    }
+    const updated = updateOrgContact(existing, metadataUpdates);
+
     let newGeoContact: ContactDTO | undefined;
 
-    // Contact replacement flow — fetch existing, merge provided fields, then replace.
+    // -- Mode 2: contact replacement (SAGA — Geo + Auth atomic) --
     if (input.updates.contact || input.updates.ietfBcp47Tag !== undefined) {
       const extKey = { contextKey: GEO_CONTEXT_KEYS.ORG_CONTACT, relatedEntityId: existing.id };
       const existingResult = await this.getContactsByExtKeys.handleAsync({ keys: [extKey] });
@@ -95,15 +107,23 @@ export class UpdateOrgContactHandler
           errorCode: existingResult.errorCode,
         });
         return D2Result.serviceUnavailable({
-          messages: ["Unable to update contact details. Please try again."],
+          messages: [TK.common.errors.SERVICE_UNAVAILABLE],
         });
       }
       const mapKey = `${extKey.contextKey}:${extKey.relatedEntityId}`;
       const existingGeoContact = existingResult.data?.data.get(mapKey)?.[0];
-
-      // Spread existing contact, override only the provided fields.
       const { id: _, ...existingFields } = existingGeoContact ?? {};
-      const contactToCreate: ContactToCreateDTO = {
+
+      // Snapshot — pre-update contact (rollback target).
+      const oldContact: ContactToCreateDTO = {
+        ...existingFields,
+        createdAt: new Date(),
+        contextKey: extKey.contextKey,
+        relatedEntityId: extKey.relatedEntityId,
+      };
+
+      // Target — apply only the fields the caller specified.
+      const newContact: ContactToCreateDTO = {
         ...existingFields,
         createdAt: new Date(),
         contextKey: extKey.contextKey,
@@ -123,32 +143,34 @@ export class UpdateOrgContactHandler
         ...(input.updates.contact?.location && { location: input.updates.contact.location }),
       };
 
-      const geoResult = await this.updateContactsByExtKeys.handleAsync({
-        contacts: [contactToCreate],
+      const sagaResult = await runCrossServiceUpdate({
+        oldContact,
+        newContact,
+        updateContactsByExtKeys: this.updateContactsByExtKeys,
+        operationLabel: "org_contact",
+        context: this.context,
+        onGeoSuccess: (geoResult) => {
+          // Capture new Geo contact for the response.
+          newGeoContact = geoResult.data?.replacements[0]?.newContact;
+        },
+        authUpdate: async () => {
+          // Defensive: if Geo "succeeded" but returned no replacements, treat
+          // as a service failure. Auth update will fail → saga rolls back Geo
+          // (no-op since Geo didn't actually change anything).
+          if (!newGeoContact) {
+            return D2Result.serviceUnavailable({
+              messages: [TK.common.errors.SERVICE_UNAVAILABLE],
+            });
+          }
+          return this.updateRecord.handleAsync({ contact: updated });
+        },
       });
-      if (!geoResult.success || !geoResult.data) {
-        return D2Result.bubbleFail(geoResult);
-      }
-
-      // We send exactly 1 contact, so we expect exactly 1 replacement entry.
-      newGeoContact = geoResult.data.replacements[0]?.newContact;
-      if (!newGeoContact) {
-        return D2Result.bubbleFail(geoResult);
-      }
+      if (!sagaResult.success) return D2Result.bubbleFail(sagaResult);
+    } else {
+      // -- Mode 1: metadata-only — no Geo update, no saga needed --
+      const updateResult = await this.updateRecord.handleAsync({ contact: updated });
+      if (!updateResult.success) return D2Result.bubbleFail(updateResult);
     }
-
-    // Apply metadata updates via domain function
-    const metadataUpdates: UpdateOrgContactInput = {};
-    if (input.updates.label !== undefined) {
-      (metadataUpdates as Record<string, unknown>).label = input.updates.label;
-    }
-    if (input.updates.isPrimary !== undefined) {
-      (metadataUpdates as Record<string, unknown>).isPrimary = input.updates.isPrimary;
-    }
-
-    const updated = updateOrgContact(existing, metadataUpdates);
-    const updateResult = await this.updateRecord.handleAsync({ contact: updated });
-    if (!updateResult.success) return D2Result.bubbleFail(updateResult);
 
     return D2Result.ok({
       data: { contact: updated, geoContact: newGeoContact },

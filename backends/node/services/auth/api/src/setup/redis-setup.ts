@@ -1,13 +1,15 @@
 import Redis from "ioredis";
 import type { HandlerContext } from "@d2/handler";
 import * as CacheRedis from "@d2/cache-redis";
-import { createSecondaryStorage, SignInThrottleStore } from "@d2/auth-infra";
+import { createSecondaryStorage, OtpRateLimitStore, SignInThrottleStore } from "@d2/auth-infra";
 
 export interface RedisSetup {
   /** Redis-backed BetterAuth secondary storage adapter. */
   secondaryStorage: ReturnType<typeof createSecondaryStorage>;
   /** Sign-in throttle store (Redis-backed counters). */
   throttleStore: SignInThrottleStore;
+  /** OTP send rate limit store (Redis-backed counters per user/type). */
+  otpRateLimitStore: OtpRateLimitStore;
   /** Individual cache handlers exposed for pre-auth singletons that need them. */
   handlers: {
     get: CacheRedis.Get<string>;
@@ -45,9 +47,17 @@ export function createRedisSetup(redis: Redis, serviceContext: HandlerContext): 
     redisIncrement,
   );
 
+  const otpRateLimitStore = new OtpRateLimitStore(
+    redisGetTtl,
+    redisSet,
+    redisRemove,
+    redisIncrement,
+  );
+
   return {
     secondaryStorage,
     throttleStore,
+    otpRateLimitStore,
     handlers: {
       get: redisGet,
       set: redisSet,

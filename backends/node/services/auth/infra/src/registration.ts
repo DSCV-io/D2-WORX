@@ -31,6 +31,10 @@ import {
   IUpdateUserUsernameKey,
   IUpdateUserLocaleRepoKey,
   IUpdateUserTimezoneRepoKey,
+  IUpdateUserEmailKey,
+  IUpdateUserPhoneKey,
+  ICheckPhoneAvailabilityKey,
+  IGetUserByIdKey,
   IPushUserUpdatedKey,
 } from "@d2/auth-app";
 import { PushUserUpdated } from "./realtime/handlers/push-user-updated.js";
@@ -62,6 +66,10 @@ import { UpdateUserName } from "./repository/handlers/u/update-user-name.js";
 import { CheckUsernameAvailable } from "./repository/handlers/r/check-username-available.js";
 import { UpdateUserUsername } from "./repository/handlers/u/update-user-username.js";
 import { UpdateUserLocale } from "./repository/handlers/u/update-user-locale.js";
+import { UpdateUserEmail } from "./repository/handlers/u/update-user-email.js";
+import { UpdateUserPhone } from "./repository/handlers/u/update-user-phone.js";
+import { CheckPhoneAvailability } from "./repository/handlers/r/check-phone-availability.js";
+import { GetUserById } from "./repository/handlers/r/get-user-by-id.js";
 import { UpdateUserTimezone } from "./repository/handlers/u/update-user-timezone.js";
 
 export interface AuthInfraConfig {
@@ -148,6 +156,22 @@ export function addAuthInfra(
   services.addTransient(
     IUpdateUserTimezoneRepoKey,
     (sp) => new UpdateUserTimezone(db, sp.resolve(IHandlerContextKey)),
+  );
+  services.addTransient(
+    IUpdateUserEmailKey,
+    (sp) => new UpdateUserEmail(db, sp.resolve(IHandlerContextKey)),
+  );
+  services.addTransient(
+    IUpdateUserPhoneKey,
+    (sp) => new UpdateUserPhone(db, sp.resolve(IHandlerContextKey)),
+  );
+  services.addTransient(
+    ICheckPhoneAvailabilityKey,
+    (sp) => new CheckPhoneAvailability(db, sp.resolve(IHandlerContextKey)),
+  );
+  services.addTransient(
+    IGetUserByIdKey,
+    (sp) => new GetUserById(db, sp.resolve(IHandlerContextKey)),
   );
 
   // Emulation consent repo handlers

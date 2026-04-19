@@ -1,60 +1,58 @@
 <script lang="ts">
-  import InlineEditField from "$lib/client/components/forms/inline-edit-field.svelte";
   import InlineSwitch from "$lib/client/components/forms/inline-switch.svelte";
-  import UnsavedChangesBar from "$lib/client/components/ui/unsaved-changes-bar.svelte";
   import * as Card from "$lib/client/components/ui/card/index.js";
+  import * as Alert from "$lib/client/components/ui/alert/index.js";
+  import { Button } from "$lib/client/components/ui/button/index.js";
+  import AccountVerificationModal from "$lib/client/components/account/account-verification-modal.svelte";
+  import RemovePhoneDialog from "$lib/client/components/account/remove-phone-dialog.svelte";
   import { toast } from "svelte-sonner";
   import * as m from "$lib/paraglide/messages.js";
+  import { page } from "$app/stores";
+  import { formatPhoneForDisplay } from "$lib/shared/utils/phone-format.js";
+  import CheckCircleIcon from "@lucide/svelte/icons/circle-check";
+  import XIcon from "@lucide/svelte/icons/x";
+  import AlertTriangleIcon from "@lucide/svelte/icons/triangle-alert";
+  import InfoIcon from "@lucide/svelte/icons/info";
 
-  let email = $state("");
+  let { data } = $props();
+
+  // --- User data from layout server load ---
+  const user = $derived(
+    $page.data.user as {
+      id: string;
+      email?: string;
+      emailVerified?: boolean;
+      phone?: string;
+      phoneVerified?: boolean;
+    } | null,
+  );
+
+  // --- Modal state ---
+  let emailModalOpen = $state(false);
+  let phoneModalOpen = $state(false);
+  let removePhoneOpen = $state(false);
+
+  // --- Notification preferences (still mock — separate Comms-side task) ---
   let emailNotifications = $state(true);
   let smsNotifications = $state(false);
 
-  let emailFieldRef: InlineEditField | undefined = $state();
-  let emailNotifRef: InlineSwitch | undefined = $state();
-  let smsNotifRef: InlineSwitch | undefined = $state();
-
-  let dirtyFields = $state({
-    email: false,
-    emailNotif: false,
-    smsNotif: false,
-  });
-  const anyDirty = $derived(Object.values(dirtyFields).some(Boolean));
-
-  async function mockSaveFail() {
-    await new Promise((r) => setTimeout(r, 800));
-    throw new Error("Email change is not yet supported.");
-  }
-
-  async function mockSaveBool(value: boolean) {
+  async function mockSaveBool(_value: boolean): Promise<void> {
     await new Promise((r) => setTimeout(r, 800));
     toast.success(m.common_ui_changes_saved());
   }
 
-  async function saveAll() {
-    if (emailFieldRef?.getDirty()) {
-      const ok = await emailFieldRef.saveIfDirty();
-      if (!ok) return;
-    }
-    if (emailNotifRef?.getDirty()) {
-      const ok = await emailNotifRef.saveIfDirty();
-      if (!ok) return;
-    }
-    if (smsNotifRef?.getDirty()) {
-      const ok = await smsNotifRef.saveIfDirty();
-      if (!ok) return;
-    }
-  }
-
-  function discardAll() {
-    emailFieldRef?.revert();
-    emailNotifRef?.revert();
-    smsNotifRef?.revert();
-  }
+  // --- Phone display ---
+  const phoneDisplay = $derived(() => (user?.phone ? formatPhoneForDisplay(user.phone) : null));
 </script>
 
 <svelte:head>
-  <title>{m.account_email_phone_title()}</title>
+  <title
+    >{m.account_page_title()} / {m.account_email_phone_title()} — {m.webclient_nav_brand()}</title
+  >
+  <meta
+    name="description"
+    content={m.account_email_phone_description()}
+  />
 </svelte:head>
 
 <div class="space-y-6">
@@ -63,51 +61,121 @@
     <p class="text-muted-foreground text-sm">{m.account_email_phone_description()}</p>
   </div>
 
+  <!-- Email row -->
   <Card.Root>
     <Card.Header>
       <Card.Title class="text-base">{m.account_email_address_title()}</Card.Title>
       <Card.Description>{m.account_email_address_description()}</Card.Description>
     </Card.Header>
     <Card.Content>
-      <InlineEditField
-        bind:value={email}
-        label={m.webclient_forms_email_label()}
-        placeholder={m.webclient_forms_email_placeholder()}
-        onSave={mockSaveFail}
-        onDirtyChange={(d) => (dirtyFields.email = d)}
-        bind:this={emailFieldRef}
-      />
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex min-w-0 flex-1 items-center gap-2">
+          <span class="truncate text-sm">{user?.email ?? ""}</span>
+          {#if user?.emailVerified}
+            <span class="text-muted-foreground inline-flex items-center gap-1 text-xs">
+              <CheckCircleIcon class="size-3.5 text-green-500" />
+              {m.account_verified_label()}
+            </span>
+          {/if}
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onclick={() => (emailModalOpen = true)}>{m.account_email_change_button()}</Button
+        >
+      </div>
     </Card.Content>
   </Card.Root>
 
+  <!-- Phone row -->
+  <Card.Root>
+    <Card.Header>
+      <Card.Title class="text-base">{m.account_phone_title()}</Card.Title>
+      <Card.Description>{m.account_phone_description()}</Card.Description>
+    </Card.Header>
+    <Card.Content class="space-y-4">
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex min-w-0 flex-1 items-center gap-2">
+          {#if user?.phone}
+            <span class="truncate text-sm">{phoneDisplay()}</span>
+            {#if user.phoneVerified}
+              <span class="text-muted-foreground inline-flex items-center gap-1 text-xs">
+                <CheckCircleIcon class="size-3.5 text-green-500" />
+                {m.account_verified_label()}
+              </span>
+            {/if}
+          {:else}
+            <span class="text-muted-foreground text-sm">{m.account_phone_not_added()}</span>
+          {/if}
+        </div>
+        <div class="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onclick={() => (phoneModalOpen = true)}
+          >
+            {user?.phone ? m.account_phone_change_button() : m.account_phone_add_button()}
+          </Button>
+          {#if user?.phone}
+            <Button
+              variant="ghost"
+              size="icon"
+              class="size-9"
+              onclick={() => (removePhoneOpen = true)}
+              title={m.account_phone_remove_button()}
+            >
+              <XIcon class="size-4" />
+              <span class="sr-only">{m.account_phone_remove_button()}</span>
+            </Button>
+          {/if}
+        </div>
+      </div>
+
+      <Alert.Root variant="warning">
+        <AlertTriangleIcon />
+        <Alert.Title>{m.account_phone_dev_alert_title()}</Alert.Title>
+        <Alert.Description>{m.account_phone_dev_alert_body()}</Alert.Description>
+      </Alert.Root>
+    </Card.Content>
+  </Card.Root>
+
+  <!-- Notification preferences (still mock — Comms-side task pending) -->
   <Card.Root>
     <Card.Header>
       <Card.Title class="text-base">{m.account_notifications_title()}</Card.Title>
       <Card.Description>{m.account_notifications_description()}</Card.Description>
     </Card.Header>
     <Card.Content class="space-y-4">
+      <Alert.Root variant="info">
+        <InfoIcon />
+        <Alert.Title>{m.account_notifications_alert_title()}</Alert.Title>
+        <Alert.Description>{m.account_notifications_alert_body()}</Alert.Description>
+      </Alert.Root>
+
       <InlineSwitch
         bind:value={emailNotifications}
         label={m.account_email_notifications()}
         description={m.account_email_notifications_description()}
         onSave={mockSaveBool}
-        onDirtyChange={(d) => (dirtyFields.emailNotif = d)}
-        bind:this={emailNotifRef}
       />
       <InlineSwitch
         bind:value={smsNotifications}
         label={m.account_sms_notifications()}
         description={m.account_sms_notifications_description()}
         onSave={mockSaveBool}
-        onDirtyChange={(d) => (dirtyFields.smsNotif = d)}
-        bind:this={smsNotifRef}
       />
     </Card.Content>
   </Card.Root>
 </div>
 
-<UnsavedChangesBar
-  visible={anyDirty}
-  onSave={saveAll}
-  onDiscard={discardAll}
+<AccountVerificationModal
+  bind:open={emailModalOpen}
+  type="email"
+  countries={data.countries}
 />
+<AccountVerificationModal
+  bind:open={phoneModalOpen}
+  type="phone"
+  countries={data.countries}
+/>
+<RemovePhoneDialog bind:open={removePhoneOpen} />

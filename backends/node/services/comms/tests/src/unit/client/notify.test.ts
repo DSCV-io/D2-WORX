@@ -359,4 +359,118 @@ describe("Notify", () => {
       expect(result).toBeSuccess();
     });
   });
+
+  // -------------------------------------------------------------------------
+  // alternativeContactInfo (XOR with recipientContactId)
+  // -------------------------------------------------------------------------
+
+  describe("alternativeContactInfo", () => {
+    it("should accept alternativeContactInfo with email and no recipientContactId", async () => {
+      const input: NotifyInput = {
+        alternativeContactInfo: { email: "new@example.com" },
+        title: "Test",
+        content: "Hi",
+        plaintext: "Hi",
+        correlationId: "corr-1",
+        senderService: "auth",
+      };
+      const result = await handler.handleAsync(input);
+      expect(result).toBeSuccess();
+      expect(publisher.send).toHaveBeenCalledWith(
+        expect.objectContaining({ exchange: expect.any(String), routingKey: expect.any(String) }),
+        expect.objectContaining({
+          alternativeContactInfo: { email: "new@example.com" },
+          recipientContactId: undefined,
+        }),
+      );
+    });
+
+    it("should accept alternativeContactInfo with phone and no recipientContactId", async () => {
+      const input: NotifyInput = {
+        alternativeContactInfo: { phone: "13213214321" },
+        title: "Test",
+        content: "Hi",
+        plaintext: "Hi",
+        correlationId: "corr-2",
+        senderService: "auth",
+      };
+      const result = await handler.handleAsync(input);
+      expect(result).toBeSuccess();
+    });
+
+    it("should reject when neither recipientContactId nor alternativeContactInfo is provided", async () => {
+      const input = {
+        title: "Test",
+        content: "Hi",
+        plaintext: "Hi",
+        correlationId: "corr-3",
+        senderService: "auth",
+      } as unknown as NotifyInput;
+      const result = await handler.handleAsync(input);
+      expect(result).toBeFailure();
+      expect(result).toHaveStatusCode(400);
+      expect(result).toHaveErrorCode("VALIDATION_FAILED");
+    });
+
+    it("should reject when BOTH recipientContactId and alternativeContactInfo are provided", async () => {
+      const input: NotifyInput = {
+        recipientContactId: "019505e1-4a28-7000-8000-000000000001",
+        alternativeContactInfo: { email: "new@example.com" },
+        title: "Test",
+        content: "Hi",
+        plaintext: "Hi",
+        correlationId: "corr-4",
+        senderService: "auth",
+      };
+      const result = await handler.handleAsync(input);
+      expect(result).toBeFailure();
+      expect(result).toHaveStatusCode(400);
+      expect(result).toHaveErrorCode("VALIDATION_FAILED");
+    });
+
+    it("should reject alternativeContactInfo with neither email nor phone", async () => {
+      const input: NotifyInput = {
+        alternativeContactInfo: {},
+        title: "Test",
+        content: "Hi",
+        plaintext: "Hi",
+        correlationId: "corr-5",
+        senderService: "auth",
+      };
+      const result = await handler.handleAsync(input);
+      expect(result).toBeFailure();
+      expect(result).toHaveStatusCode(400);
+      expect(result).toHaveErrorCode("VALIDATION_FAILED");
+    });
+
+    it("should reject alternativeContactInfo with invalid email", async () => {
+      const input: NotifyInput = {
+        alternativeContactInfo: { email: "not-an-email" },
+        title: "Test",
+        content: "Hi",
+        plaintext: "Hi",
+        correlationId: "corr-6",
+        senderService: "auth",
+      };
+      const result = await handler.handleAsync(input);
+      expect(result).toBeFailure();
+      expect(result).toHaveStatusCode(400);
+      expect(result).toHaveErrorCode("VALIDATION_FAILED");
+    });
+
+    it("should reject alternativeContactInfo with non-digit phone", async () => {
+      const input: NotifyInput = {
+        alternativeContactInfo: { phone: "+1 (555) 123-4567" },
+        title: "Test",
+        content: "Hi",
+        plaintext: "Hi",
+        correlationId: "corr-7",
+        senderService: "auth",
+      };
+      const result = await handler.handleAsync(input);
+      expect(result).toBeFailure();
+      expect(result).toHaveStatusCode(400);
+      expect(result).toHaveErrorCode("VALIDATION_FAILED");
+    });
+  });
 });

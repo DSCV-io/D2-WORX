@@ -60,6 +60,12 @@ import { GetOrgContacts } from "./implementations/cqrs/handlers/q/get-org-contac
 import { CheckSignInThrottle } from "./implementations/cqrs/handlers/q/check-sign-in-throttle.js";
 import { CheckHealth } from "./implementations/cqrs/handlers/q/check-health.js";
 import { CheckEmailAvailability } from "./implementations/cqrs/handlers/q/check-email-availability.js";
+import { RequestEmailChange } from "./implementations/cqrs/handlers/c/request-email-change.js";
+import { VerifyEmailChange } from "./implementations/cqrs/handlers/c/verify-email-change.js";
+import { RequestPhoneChange } from "./implementations/cqrs/handlers/c/request-phone-change.js";
+import { VerifyPhoneChange } from "./implementations/cqrs/handlers/c/verify-phone-change.js";
+import { RemovePhone } from "./implementations/cqrs/handlers/c/remove-phone.js";
+import { INotifyKey } from "@d2/comms-client";
 import { DistributedCache } from "@d2/interfaces";
 import { IMessageBusPingKey } from "@d2/messaging";
 import { RunSessionPurge } from "./implementations/cqrs/handlers/c/run-session-purge.js";
@@ -93,6 +99,19 @@ import {
   ICheckUsernameAvailableKey,
   IUpdateUserUsernameKey,
   IInvalidateUserSessionCacheKey,
+  IRequestEmailChangeKey,
+  IVerifyEmailChangeKey,
+  IRequestPhoneChangeKey,
+  IVerifyPhoneChangeKey,
+  IRemovePhoneKey,
+  IOtpRateLimitStoreKey,
+  IVerificationStoreKey,
+  IVerifyUserPasswordKey,
+  ICheckPhoneAvailabilityKey,
+  IGetUserByIdKey,
+  IUpdateUserEmailKey,
+  IUpdateUserPhoneKey,
+  ITranslatorKey,
 } from "./service-keys.js";
 
 /**
@@ -224,6 +243,90 @@ export function addAuthApp(
         sp.resolve(IGetContactsByExtKeysKey),
         sp.resolve(IUpdateContactsByExtKeysKey),
         sp.resolve(IUpdateUserTimezoneRepoKey),
+        sp.resolve(IHandlerContextKey),
+        sp.tryResolve(IPushUserUpdatedKey),
+        sp.tryResolve(IInvalidateUserSessionCacheKey),
+      ),
+  );
+
+  services.addTransient(
+    IRequestEmailChangeKey,
+    (sp) =>
+      new RequestEmailChange(
+        sp.resolve(IVerifyUserPasswordKey),
+        sp.resolve(IOtpRateLimitStoreKey),
+        sp.resolve(IVerificationStoreKey),
+        sp.resolve(ICheckEmailAvailabilityRepoKey),
+        sp.resolve(IUpdateUserEmailKey),
+        sp.resolve(IGetUserByIdKey),
+        sp.resolve(INotifyKey),
+        sp.resolve(ITranslatorKey),
+        sp.resolve(IHandlerContextKey),
+      ),
+  );
+
+  services.addTransient(
+    IVerifyEmailChangeKey,
+    (sp) =>
+      new VerifyEmailChange(
+        sp.resolve(IVerificationStoreKey),
+        sp.resolve(IOtpRateLimitStoreKey),
+        sp.resolve(IUpdateUserEmailKey),
+        sp.resolve(IGetUserByIdKey),
+        sp.resolve(IGetContactsByExtKeysKey),
+        sp.resolve(IUpdateContactsByExtKeysKey),
+        sp.resolve(INotifyKey),
+        sp.resolve(ITranslatorKey),
+        sp.resolve(IHandlerContextKey),
+        sp.tryResolve(IPushUserUpdatedKey),
+        sp.tryResolve(IInvalidateUserSessionCacheKey),
+      ),
+  );
+
+  services.addTransient(
+    IRequestPhoneChangeKey,
+    (sp) =>
+      new RequestPhoneChange(
+        sp.resolve(IVerifyUserPasswordKey),
+        sp.resolve(IOtpRateLimitStoreKey),
+        sp.resolve(IVerificationStoreKey),
+        sp.resolve(ICheckPhoneAvailabilityKey),
+        sp.resolve(IGetUserByIdKey),
+        sp.resolve(INotifyKey),
+        sp.resolve(ITranslatorKey),
+        sp.resolve(IHandlerContextKey),
+      ),
+  );
+
+  services.addTransient(
+    IVerifyPhoneChangeKey,
+    (sp) =>
+      new VerifyPhoneChange(
+        sp.resolve(IVerificationStoreKey),
+        sp.resolve(IOtpRateLimitStoreKey),
+        sp.resolve(IUpdateUserPhoneKey),
+        sp.resolve(IGetUserByIdKey),
+        sp.resolve(IGetContactsByExtKeysKey),
+        sp.resolve(IUpdateContactsByExtKeysKey),
+        sp.resolve(INotifyKey),
+        sp.resolve(ITranslatorKey),
+        sp.resolve(IHandlerContextKey),
+        sp.tryResolve(IPushUserUpdatedKey),
+        sp.tryResolve(IInvalidateUserSessionCacheKey),
+      ),
+  );
+
+  services.addTransient(
+    IRemovePhoneKey,
+    (sp) =>
+      new RemovePhone(
+        sp.resolve(IVerifyUserPasswordKey),
+        sp.resolve(IGetUserByIdKey),
+        sp.resolve(IUpdateUserPhoneKey),
+        sp.resolve(IGetContactsByExtKeysKey),
+        sp.resolve(IUpdateContactsByExtKeysKey),
+        sp.resolve(INotifyKey),
+        sp.resolve(ITranslatorKey),
         sp.resolve(IHandlerContextKey),
         sp.tryResolve(IPushUserUpdatedKey),
         sp.tryResolve(IInvalidateUserSessionCacheKey),

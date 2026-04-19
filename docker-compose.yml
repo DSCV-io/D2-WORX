@@ -653,6 +653,7 @@ services:
       - ./contracts:/app/contracts
       - ./clients/web/package.json:/app/clients/web/package.json:ro
       - d2-node-modules:/app/node_modules
+      - ./.dev-data:/app/.dev-data
     networks: [d2-network]
     depends_on:
       d2-node-init:

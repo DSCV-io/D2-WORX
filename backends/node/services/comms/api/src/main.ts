@@ -41,6 +41,8 @@ const config = defineConfig("comms-service", {
   twilioAccountSid: optionalString("TWILIO_ACCOUNT_SID"),
   twilioAuthToken: optionalString("TWILIO_AUTH_TOKEN"),
   twilioPhoneNumber: optionalString("TWILIO_PHONE_NUMBER"),
+  smsProvider: optionalString("COMMS_SMS_PROVIDER") as "twilio" | "mock" | undefined,
+  smsMockLogPath: optionalString("COMMS_SMS_MOCK_LOG_PATH"),
   geoAddress: optionalString("GEO_GRPC_ADDRESS"),
   geoApiKey: optionalString("COMMS_GEO_CLIENT__APIKEY"),
   commsApiKeys: envArray("COMMS_API_KEYS"),

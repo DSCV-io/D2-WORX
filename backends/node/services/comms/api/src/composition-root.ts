@@ -28,6 +28,10 @@ export interface CommsServiceConfig {
   twilioAccountSid?: string;
   twilioAuthToken?: string;
   twilioPhoneNumber?: string;
+  /** "twilio" | "mock" — when omitted, auto-detects based on Twilio creds. */
+  smsProvider?: "twilio" | "mock";
+  /** JSONL log file path used by the mock SMS provider. */
+  smsMockLogPath?: string;
   geoAddress?: string;
   geoApiKey?: string;
   commsApiKeys?: string[];

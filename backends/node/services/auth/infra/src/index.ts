@@ -52,6 +52,15 @@ export {
 // --- Sign-In Throttle ---
 export { SignInThrottleStore } from "./auth/sign-in-throttle-store.js";
 
+// --- OTP Rate Limit ---
+export { OtpRateLimitStore } from "./auth/otp-rate-limit-store.js";
+
+// --- Verification Store (BetterAuth-backed) ---
+export { BetterAuthVerificationStore } from "./auth/verification-store.js";
+
+// --- Password Verifier (BetterAuth-backed) ---
+export { BetterAuthPasswordVerifier } from "./auth/password-verifier.js";
+
 // --- Drizzle Schema ---
 export { signInEvent, emulationConsent, orgContact } from "./repository/schema/index.js";
 export type {

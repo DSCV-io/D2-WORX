@@ -23,17 +23,33 @@ export interface NotificationConsumerDeps {
  * Zod schema for validating incoming notification messages.
  * Matches the NotifyInput shape published by @d2/comms-client.
  */
-const notificationMessageSchema = z.object({
-  recipientContactId: zodGuid,
-  title: z.string().min(1).max(255),
-  content: z.string().min(1).max(50_000),
-  plaintext: z.string().min(1).max(50_000),
-  channels: z.array(z.enum(["email", "sms"])).optional(),
-  urgency: z.enum(["normal", "urgent"]).optional(),
-  correlationId: z.string().min(1).max(36),
-  senderService: z.string().min(1).max(50),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-});
+const notificationMessageSchema = z
+  .object({
+    recipientContactId: zodGuid.optional(),
+    alternativeContactInfo: z
+      .object({
+        email: z.string().email().max(254).optional(),
+        phone: z
+          .string()
+          .regex(/^\d{7,15}$/)
+          .optional(),
+      })
+      .refine((v) => !!(v.email || v.phone), {
+        message: "alternativeContactInfo must include at least one of email or phone",
+      })
+      .optional(),
+    title: z.string().min(1).max(255),
+    content: z.string().min(1).max(50_000),
+    plaintext: z.string().min(1).max(50_000),
+    channels: z.array(z.enum(["email", "sms"])).optional(),
+    urgency: z.enum(["normal", "urgent"]).optional(),
+    correlationId: z.string().min(1).max(36),
+    senderService: z.string().min(1).max(50),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+  })
+  .refine((v) => !!v.recipientContactId !== !!v.alternativeContactInfo, {
+    message: "Exactly one of recipientContactId or alternativeContactInfo must be provided",
+  });
 
 type NotificationMessage = z.infer<typeof notificationMessageSchema>;
 
@@ -89,6 +105,7 @@ export function createNotificationConsumer(deps: NotificationConsumerDeps) {
           channels: body.channels,
           urgency: body.urgency,
           recipientContactId: body.recipientContactId,
+          alternativeContactInfo: body.alternativeContactInfo,
           correlationId: body.correlationId,
           metadata: body.metadata,
         });

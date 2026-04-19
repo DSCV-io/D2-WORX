@@ -561,4 +561,99 @@ describe("Deliver", () => {
     expect(channels).toContain("email");
     expect(channels).toContain("sms");
   });
+
+  // -------------------------------------------------------------------------
+  // alternativeContactInfo (transient sends)
+  // -------------------------------------------------------------------------
+
+  describe("alternativeContactInfo", () => {
+    const CORR_ALT_EMAIL = "b0000000-0000-0000-0000-00000000ae01";
+    const CORR_ALT_SMS = "b0000000-0000-0000-0000-00000000ae02";
+    const CORR_ALT_BOTH = "b0000000-0000-0000-0000-00000000ae03";
+
+    it("should deliver to alternativeContactInfo email without calling Geo resolver", async () => {
+      const resolverSpy = vi.spyOn(recipientResolver, "handleAsync");
+
+      const result = await deliver.handleAsync({
+        senderService: "auth",
+        title: "Verify your new email",
+        content: "Code: 123456",
+        plainTextContent: "Code: 123456",
+        channels: ["email"],
+        alternativeContactInfo: { email: "new@example.com" },
+        correlationId: CORR_ALT_EMAIL,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data!.attempts).toHaveLength(1);
+      expect(result.data!.attempts[0].channel).toBe("email");
+      expect(result.data!.attempts[0].recipientAddress).toBe("new@example.com");
+      expect(result.data!.attempts[0].status).toBe("sent");
+
+      // Geo lookup must NOT happen for transient sends
+      expect(resolverSpy).not.toHaveBeenCalled();
+      // Channel preferences must NOT be looked up either
+      expect(channelPrefRepo.findByContactId.handleAsync).not.toHaveBeenCalled();
+    });
+
+    it("should persist DeliveryRequest with null recipientContactId for transient sends", async () => {
+      await deliver.handleAsync({
+        senderService: "auth",
+        title: "Test",
+        content: "Hi",
+        plainTextContent: "Hi",
+        channels: ["email"],
+        alternativeContactInfo: { email: "transient@example.com" },
+        correlationId: CORR_ALT_BOTH,
+      });
+
+      const createCall = (requestRepo.create.handleAsync as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(createCall[0].request.recipientContactId).toBeUndefined();
+    });
+
+    it("should reject when both recipientContactId and alternativeContactInfo are provided", async () => {
+      const result = await deliver.handleAsync({
+        senderService: "auth",
+        title: "Test",
+        content: "Hi",
+        plainTextContent: "Hi",
+        recipientContactId: CONTACT_1,
+        alternativeContactInfo: { email: "new@example.com" },
+        correlationId: CORR_ALT_SMS,
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.statusCode).toBe(400);
+      expect(result.errorCode).toBe("VALIDATION_FAILED");
+    });
+
+    it("should reject when neither recipientContactId nor alternativeContactInfo is provided", async () => {
+      const result = await deliver.handleAsync({
+        senderService: "auth",
+        title: "Test",
+        content: "Hi",
+        plainTextContent: "Hi",
+        correlationId: "b0000000-0000-0000-0000-00000000ae04",
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.statusCode).toBe(400);
+      expect(result.errorCode).toBe("VALIDATION_FAILED");
+    });
+
+    it("should return notFound when alternativeContactInfo provides no usable address for requested channel", async () => {
+      const result = await deliver.handleAsync({
+        senderService: "auth",
+        title: "Test",
+        content: "Hi",
+        plainTextContent: "Hi",
+        channels: ["sms"], // SMS requested
+        alternativeContactInfo: { email: "only-email@example.com" }, // but only email provided
+        correlationId: "b0000000-0000-0000-0000-00000000ae05",
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.statusCode).toBe(404);
+    });
+  });
 });

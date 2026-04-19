@@ -151,6 +151,30 @@ export type {
 } from "./u/update-user-timezone.js";
 
 export type {
+  UpdateUserEmailInput,
+  UpdateUserEmailOutput,
+  IUpdateUserEmailHandler,
+} from "./u/update-user-email.js";
+
+export type {
+  UpdateUserPhoneInput,
+  UpdateUserPhoneOutput,
+  IUpdateUserPhoneHandler,
+} from "./u/update-user-phone.js";
+
+export type {
+  CheckPhoneAvailabilityInput,
+  CheckPhoneAvailabilityOutput,
+  ICheckPhoneAvailabilityHandler,
+} from "./r/check-phone-availability.js";
+
+export type {
+  GetUserByIdInput,
+  GetUserByIdOutput,
+  IGetUserByIdHandler,
+} from "./r/get-user-by-id.js";
+
+export type {
   UpdateOrgLogoInput,
   UpdateOrgLogoOutput,
   IUpdateOrgLogoHandler,

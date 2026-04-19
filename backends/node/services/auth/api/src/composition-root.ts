@@ -24,12 +24,18 @@ import {
   runMigrations,
   addAuthInfra,
   createWhoIsResolutionConsumer,
+  BetterAuthPasswordVerifier,
+  BetterAuthVerificationStore,
   type AuthServiceConfig,
   type PasswordFunctions,
 } from "@d2/auth-infra";
 import {
   addAuthApp,
   ISignInThrottleStoreKey,
+  IOtpRateLimitStoreKey,
+  IVerificationStoreKey,
+  IVerifyUserPasswordKey,
+  ITranslatorKey,
   DEFAULT_AUTH_JOB_OPTIONS,
   type AuthJobOptions,
 } from "@d2/auth-app";
@@ -119,6 +125,7 @@ export async function createApp(
   );
 
   services.addInstance(ISignInThrottleStoreKey, redisSetup.throttleStore);
+  services.addInstance(IOtpRateLimitStoreKey, redisSetup.otpRateLimitStore);
 
   // Geo client handlers (gRPC-backed with local caching)
   const geoSetup = addGeoClientHandlers(services, config, serviceContext);
@@ -138,6 +145,29 @@ export async function createApp(
     services.addInstance(IMessageBusPingKey, new PingMessageBus(messageBus, serviceContext));
   }
 
+  // i18n translator (loads contracts/messages/*.json at startup) — needs to be
+  // registered BEFORE build so handlers can resolve it.
+  const messagesDir = pathResolve(
+    dirname(fileURLToPath(import.meta.url)),
+    "../../../../../../contracts/messages",
+  );
+  const translator = createTranslator({ messagesDir });
+  services.addInstance(ITranslatorKey, translator);
+
+  // BetterAuth-backed stores depend on `auth`, which is created AFTER `build()`
+  // (because `createAuth` needs `provider` via callbacks → cyclic dependency).
+  // Register lazy singleton factories that capture the eventual `auth` reference
+  // — first resolution happens during request handling, well after auth is set.
+  let authInstance: ReturnType<typeof createAuth> | undefined;
+  services.addSingleton(IVerificationStoreKey, () => {
+    if (!authInstance) throw new Error("auth instance not initialized");
+    return new BetterAuthVerificationStore(authInstance);
+  });
+  services.addSingleton(IVerifyUserPasswordKey, () => {
+    if (!authInstance) throw new Error("auth instance not initialized");
+    return new BetterAuthPasswordVerifier(authInstance);
+  });
+
   // 5. Build ServiceProvider
   const provider = services.build();
 
@@ -153,14 +183,7 @@ export async function createApp(
     overrides?.passwordFunctions,
   );
 
-  // 7. i18n translator (loads contracts/messages/*.json at startup)
-  const messagesDir = pathResolve(
-    dirname(fileURLToPath(import.meta.url)),
-    "../../../../../../contracts/messages",
-  );
-  const translator = createTranslator({ messagesDir });
-
-  // 8. Session fingerprint binding (stolen token detection)
+  // 7. Session fingerprint binding (stolen token detection)
   const fingerprintStorage = new AsyncLocalStorage<string>();
   const deviceFingerprintStorage = new AsyncLocalStorage<string>();
   const SESSION_FP_PREFIX = "session:fp:";
@@ -181,6 +204,7 @@ export async function createApp(
     getDeviceFingerprintForCurrentRequest: () => deviceFingerprintStorage.getStore(),
     passwordFunctions: preAuth.passwordFns,
   });
+  authInstance = auth; // unblock the lazy factories registered earlier
 
   const sessionFingerprintMiddleware = createSessionFingerprintMiddleware({
     storeFingerprint: async (token, fp) => {

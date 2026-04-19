@@ -112,3 +112,34 @@ export type {
   UpdateUserTimezoneOutput,
   IUpdateUserTimezoneHandler,
 } from "./update-user-timezone.js";
+
+export type {
+  RequestEmailChangeInput,
+  RequestEmailChangeOutput,
+  IRequestEmailChangeHandler,
+} from "./request-email-change.js";
+export { REQUEST_EMAIL_CHANGE_REDACTION } from "./request-email-change.js";
+
+export type {
+  VerifyEmailChangeInput,
+  VerifyEmailChangeOutput,
+  IVerifyEmailChangeHandler,
+} from "./verify-email-change.js";
+export { VERIFY_EMAIL_CHANGE_REDACTION } from "./verify-email-change.js";
+
+export type {
+  RequestPhoneChangeInput,
+  RequestPhoneChangeOutput,
+  IRequestPhoneChangeHandler,
+} from "./request-phone-change.js";
+export { REQUEST_PHONE_CHANGE_REDACTION } from "./request-phone-change.js";
+
+export type {
+  VerifyPhoneChangeInput,
+  VerifyPhoneChangeOutput,
+  IVerifyPhoneChangeHandler,
+} from "./verify-phone-change.js";
+export { VERIFY_PHONE_CHANGE_REDACTION } from "./verify-phone-change.js";
+
+export type { RemovePhoneInput, RemovePhoneOutput, IRemovePhoneHandler } from "./remove-phone.js";
+export { REMOVE_PHONE_REDACTION } from "./remove-phone.js";

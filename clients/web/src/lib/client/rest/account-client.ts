@@ -90,3 +90,61 @@ export async function bustSessionCache(): Promise<void> {
     credentials: "include",
   }).catch(() => {});
 }
+
+// ---------------------------------------------------------------------------
+// Email & Phone change (OTP-gated, password-confirmed)
+// ---------------------------------------------------------------------------
+
+/**
+ * Initiate an email change. Server validates currentPassword atomically with
+ * newEmail (no bypass). On success, server sends a 6-digit OTP to newEmail
+ * and returns the expiry timestamp for the frontend countdown.
+ */
+export async function requestEmailChange(
+  newEmail: string,
+  currentPassword: string,
+): Promise<D2Result<{ expiresAt: string }>> {
+  return accountApiCall<{ expiresAt: string }>("/api/account/email/request-change", {
+    method: "POST",
+    body: { newEmail, currentPassword },
+  });
+}
+
+/** Submit the OTP code from the user's new email inbox to finalize the change. */
+export async function verifyEmailChange(code: string): Promise<D2Result<{ newEmail: string }>> {
+  return accountApiCall<{ newEmail: string }>("/api/account/email/verify-change", {
+    method: "POST",
+    body: { code },
+  });
+}
+
+/**
+ * Initiate a phone add or change. newPhone MUST be digits-only (frontend
+ * strips formatting via `phoneToDigits()` before calling). Server validates
+ * password + sends OTP via SMS to the new phone.
+ */
+export async function requestPhoneChange(
+  newPhone: string,
+  currentPassword: string,
+): Promise<D2Result<{ expiresAt: string }>> {
+  return accountApiCall<{ expiresAt: string }>("/api/account/phone/request-change", {
+    method: "POST",
+    body: { newPhone, currentPassword },
+  });
+}
+
+/** Submit the OTP code from the user's phone to finalize the phone change. */
+export async function verifyPhoneChange(code: string): Promise<D2Result<{ phone: string }>> {
+  return accountApiCall<{ phone: string }>("/api/account/phone/verify-change", {
+    method: "POST",
+    body: { code },
+  });
+}
+
+/** Remove the user's phone number. Password gate is the sole defense. */
+export async function removePhone(currentPassword: string): Promise<D2Result> {
+  return accountApiCall("/api/account/phone", {
+    method: "DELETE",
+    body: { currentPassword },
+  });
+}

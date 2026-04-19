@@ -1,4 +1,5 @@
 import { createServiceKey } from "@d2/di";
+import type { Translator } from "@d2/i18n";
 
 // Import interface types for keys
 import type {
@@ -29,8 +30,15 @@ import type {
   IUpdateUserNameHandler,
   ICheckUsernameAvailableHandler,
   IUpdateUserUsernameHandler,
+  IUpdateUserEmailHandler,
+  IUpdateUserPhoneHandler,
+  ICheckPhoneAvailabilityHandler,
+  IGetUserByIdHandler,
 } from "./interfaces/repository/handlers/index.js";
 import type { ISignInThrottleStore } from "./interfaces/repository/sign-in-throttle-store.js";
+import type { IOtpRateLimitStore } from "./interfaces/repository/otp-rate-limit-store.js";
+import type { IVerificationStore } from "./interfaces/repository/verification-store.js";
+import type { IVerifyUserPassword } from "./interfaces/repository/password-verifier.js";
 import type { ICheckEmailAvailabilityHandler } from "./interfaces/repository/handlers/r/check-email-availability.js";
 import type { ICheckOrgExistsHandler } from "./interfaces/repository/handlers/r/check-org-exists.js";
 import type { Commands, Queries } from "./interfaces/cqrs/handlers/index.js";
@@ -152,6 +160,19 @@ export const ISignInThrottleStoreKey = createServiceKey<ISignInThrottleStore>(
   "Auth.SignInThrottleStore",
 );
 
+// --- OTP Rate Limit Store ---
+
+export const IOtpRateLimitStoreKey = createServiceKey<IOtpRateLimitStore>("Auth.OtpRateLimitStore");
+
+// --- Verification Store ---
+
+export const IVerificationStoreKey = createServiceKey<IVerificationStore>("Auth.VerificationStore");
+
+// --- Password Verifier ---
+
+export const IVerifyUserPasswordKey =
+  createServiceKey<IVerifyUserPassword>("Auth.VerifyUserPassword");
+
 // --- Realtime Handlers ---
 
 export const IPushUserUpdatedKey = createServiceKey<IPushUserUpdated>(
@@ -243,3 +264,39 @@ export const IInvalidateUserSessionCacheKey =
   createServiceKey<Commands.IInvalidateUserSessionCacheHandler>(
     "Auth.App.InvalidateUserSessionCache",
   );
+
+// --- Email/Phone change (OTP) handlers ---
+
+export const IRequestEmailChangeKey = createServiceKey<Commands.IRequestEmailChangeHandler>(
+  "Auth.App.RequestEmailChange",
+);
+export const IVerifyEmailChangeKey = createServiceKey<Commands.IVerifyEmailChangeHandler>(
+  "Auth.App.VerifyEmailChange",
+);
+export const IRequestPhoneChangeKey = createServiceKey<Commands.IRequestPhoneChangeHandler>(
+  "Auth.App.RequestPhoneChange",
+);
+export const IVerifyPhoneChangeKey = createServiceKey<Commands.IVerifyPhoneChangeHandler>(
+  "Auth.App.VerifyPhoneChange",
+);
+export const IRemovePhoneKey =
+  createServiceKey<Commands.IRemovePhoneHandler>("Auth.App.RemovePhone");
+
+// --- Repository keys for new lookups/updates ---
+
+export const ICheckPhoneAvailabilityKey = createServiceKey<ICheckPhoneAvailabilityHandler>(
+  "Auth.Repo.CheckPhoneAvailability",
+);
+
+export const IGetUserByIdKey = createServiceKey<IGetUserByIdHandler>("Auth.Repo.GetUserById");
+
+export const IUpdateUserEmailKey = createServiceKey<IUpdateUserEmailHandler>(
+  "Auth.Repo.UpdateUserEmail",
+);
+
+export const IUpdateUserPhoneKey = createServiceKey<IUpdateUserPhoneHandler>(
+  "Auth.Repo.UpdateUserPhone",
+);
+
+// --- i18n Translator (singleton, registered in composition-root) ---
+export const ITranslatorKey = createServiceKey<Translator>("Auth.Translator");

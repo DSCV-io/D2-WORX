@@ -8,6 +8,7 @@ import {
   timestamp,
   index,
   uniqueIndex,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
 // ---------------------------------------------------------------------------
@@ -17,12 +18,13 @@ export const message = pgTable(
   "message",
   {
     id: varchar("id", { length: 36 }).primaryKey(),
-    threadId: varchar("thread_id", { length: 36 }).references(() => message.id, {
+    threadId: varchar("thread_id", { length: 36 }).references((): AnyPgColumn => message.id, {
       onDelete: "cascade",
     }),
-    parentMessageId: varchar("parent_message_id", { length: 36 }).references(() => message.id, {
-      onDelete: "cascade",
-    }),
+    parentMessageId: varchar("parent_message_id", { length: 36 }).references(
+      (): AnyPgColumn => message.id,
+      { onDelete: "cascade" },
+    ),
     senderUserId: varchar("sender_user_id", { length: 36 }),
     senderContactId: varchar("sender_contact_id", { length: 36 }),
     senderService: varchar("sender_service", { length: 50 }),
@@ -47,7 +49,9 @@ export const message = pgTable(
 );
 
 // ---------------------------------------------------------------------------
-// delivery_request — WHO to deliver to (contactId only)
+// delivery_request — WHO to deliver to.
+// recipientContactId is nullable: undefined for one-shot transient sends to
+// addresses provided via alternativeContactInfo (e.g. OTP to unverified email).
 // ---------------------------------------------------------------------------
 export const deliveryRequest = pgTable(
   "delivery_request",
@@ -57,7 +61,7 @@ export const deliveryRequest = pgTable(
       .notNull()
       .references(() => message.id, { onDelete: "cascade" }),
     correlationId: varchar("correlation_id", { length: 36 }).notNull(),
-    recipientContactId: varchar("recipient_contact_id", { length: 36 }).notNull(),
+    recipientContactId: varchar("recipient_contact_id", { length: 36 }),
     callbackTopic: varchar("callback_topic", { length: 255 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     processedAt: timestamp("processed_at"),

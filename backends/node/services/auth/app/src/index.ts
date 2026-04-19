@@ -96,6 +96,22 @@ export type {
   UpdateUserTimezoneInput as UpdateUserTimezoneRepoInput,
   UpdateUserTimezoneOutput as UpdateUserTimezoneRepoOutput,
   IUpdateUserTimezoneHandler as IUpdateUserTimezoneRepoHandler,
+  // Update (U) — User Email
+  UpdateUserEmailInput,
+  UpdateUserEmailOutput,
+  IUpdateUserEmailHandler,
+  // Update (U) — User Phone
+  UpdateUserPhoneInput,
+  UpdateUserPhoneOutput,
+  IUpdateUserPhoneHandler,
+  // Read (R) — Phone availability
+  CheckPhoneAvailabilityInput,
+  CheckPhoneAvailabilityOutput,
+  ICheckPhoneAvailabilityHandler,
+  // Read (R) — Get user
+  GetUserByIdInput,
+  GetUserByIdOutput,
+  IGetUserByIdHandler,
   // Update (U) — User Username
   UpdateUserUsernameInput,
   UpdateUserUsernameOutput,
@@ -194,6 +210,60 @@ export type {
   UpdateUserTimezoneInput,
   UpdateUserTimezoneOutput,
 } from "./interfaces/cqrs/handlers/c/update-user-timezone.js";
+
+// --- Email/Phone change (OTP) handlers ---
+
+export { RequestEmailChange } from "./implementations/cqrs/handlers/c/request-email-change.js";
+export type {
+  RequestEmailChangeInput,
+  RequestEmailChangeOutput,
+  IRequestEmailChangeHandler,
+} from "./interfaces/cqrs/handlers/c/request-email-change.js";
+export { REQUEST_EMAIL_CHANGE_REDACTION } from "./interfaces/cqrs/handlers/c/request-email-change.js";
+
+export { VerifyEmailChange } from "./implementations/cqrs/handlers/c/verify-email-change.js";
+export type {
+  VerifyEmailChangeInput,
+  VerifyEmailChangeOutput,
+  IVerifyEmailChangeHandler,
+} from "./interfaces/cqrs/handlers/c/verify-email-change.js";
+export { VERIFY_EMAIL_CHANGE_REDACTION } from "./interfaces/cqrs/handlers/c/verify-email-change.js";
+
+export { RequestPhoneChange } from "./implementations/cqrs/handlers/c/request-phone-change.js";
+export type {
+  RequestPhoneChangeInput,
+  RequestPhoneChangeOutput,
+  IRequestPhoneChangeHandler,
+} from "./interfaces/cqrs/handlers/c/request-phone-change.js";
+export { REQUEST_PHONE_CHANGE_REDACTION } from "./interfaces/cqrs/handlers/c/request-phone-change.js";
+
+export { VerifyPhoneChange } from "./implementations/cqrs/handlers/c/verify-phone-change.js";
+export type {
+  VerifyPhoneChangeInput,
+  VerifyPhoneChangeOutput,
+  IVerifyPhoneChangeHandler,
+} from "./interfaces/cqrs/handlers/c/verify-phone-change.js";
+export { VERIFY_PHONE_CHANGE_REDACTION } from "./interfaces/cqrs/handlers/c/verify-phone-change.js";
+
+export { RemovePhone } from "./implementations/cqrs/handlers/c/remove-phone.js";
+export type {
+  RemovePhoneInput,
+  RemovePhoneOutput,
+  IRemovePhoneHandler,
+} from "./interfaces/cqrs/handlers/c/remove-phone.js";
+export { REMOVE_PHONE_REDACTION } from "./interfaces/cqrs/handlers/c/remove-phone.js";
+
+// --- Utility helpers (CQRS u/) ---
+export { runCrossServiceUpdate } from "./implementations/cqrs/handlers/u/cross-service-update.js";
+export type { CrossServiceUpdateParams } from "./implementations/cqrs/handlers/u/cross-service-update.js";
+
+// --- Repository interfaces (verification, password, OTP rate limit) ---
+
+export type {
+  IVerificationStore,
+  VerificationRecord,
+} from "./interfaces/repository/verification-store.js";
+export type { IVerifyUserPassword } from "./interfaces/repository/password-verifier.js";
 
 export { RecordSignInOutcome } from "./implementations/cqrs/handlers/c/record-sign-in-outcome.js";
 export type {
@@ -467,4 +537,19 @@ export {
   IUpdateUserNameKey,
   ICheckUsernameAvailableKey,
   IUpdateUserUsernameKey,
+  // Email/Phone change (OTP) handler keys
+  IRequestEmailChangeKey,
+  IVerifyEmailChangeKey,
+  IRequestPhoneChangeKey,
+  IVerifyPhoneChangeKey,
+  IRemovePhoneKey,
+  // Repo + store keys for the OTP/account-change flows
+  IOtpRateLimitStoreKey,
+  IVerificationStoreKey,
+  IVerifyUserPasswordKey,
+  ICheckPhoneAvailabilityKey,
+  IGetUserByIdKey,
+  IUpdateUserEmailKey,
+  IUpdateUserPhoneKey,
+  ITranslatorKey,
 } from "./service-keys.js";

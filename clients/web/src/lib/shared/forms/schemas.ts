@@ -17,6 +17,7 @@ import { z } from "zod";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { postcodeValidator } from "postcode-validator";
 import { DISPLAY_NAME_INVALID_RE } from "@d2/utilities";
+import * as m from "$lib/paraglide/messages.js";
 
 /**
  * General name field (first/last name, city, etc.). Geo DB: varchar(255).
@@ -38,9 +39,9 @@ export function emailField() {
     .string()
     .trim()
     .toLowerCase()
-    .min(1, "Required")
-    .max(254, "Email too long")
-    .email("Invalid email address");
+    .min(1, { error: () => m.webclient_forms_required() })
+    .max(254, { error: () => m.webclient_forms_email_too_long() })
+    .email({ error: () => m.webclient_forms_email_invalid() });
 }
 
 /**
@@ -52,9 +53,9 @@ export function phoneField() {
   return z
     .string()
     .trim()
-    .min(1, "Required")
-    .max(20, "Phone number too long")
-    .refine((val) => isValidPhoneNumber(val), "Invalid phone number");
+    .min(1, { error: () => m.webclient_forms_required() })
+    .max(20, { error: () => m.webclient_forms_phone_too_long() })
+    .refine((val) => isValidPhoneNumber(val), { error: () => m.webclient_forms_phone_invalid() });
 }
 
 /** Optional phone field — same rules but allows empty string. */
@@ -62,8 +63,10 @@ export function phoneFieldOptional() {
   return z
     .string()
     .trim()
-    .max(20, "Phone number too long")
-    .refine((val) => !val || isValidPhoneNumber(val), "Invalid phone number")
+    .max(20, { error: () => m.webclient_forms_phone_too_long() })
+    .refine((val) => !val || isValidPhoneNumber(val), {
+      error: () => m.webclient_forms_phone_invalid(),
+    })
     .optional()
     .default("");
 }

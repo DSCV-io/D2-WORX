@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { BaseHandler, type IHandlerContext, zodGuid, zodNonEmptyString } from "@d2/handler";
 import { D2Result } from "@d2/result";
+import { TK } from "@d2/i18n";
 import { cleanDisplayStr } from "@d2/utilities";
 import { GEO_CONTEXT_KEYS } from "@d2/auth-domain";
 import type { ContactToCreateDTO } from "@d2/protos";
@@ -9,6 +10,7 @@ import type { IUpdateUserNameHandler } from "../../../../interfaces/repository/h
 import type { IPushUserUpdated } from "../../../../interfaces/realtime/handlers/index.js";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
 import type { IInvalidateUserSessionCacheHandler } from "../../../../interfaces/cqrs/handlers/c/invalidate-user-session-cache.js";
+import { runCrossServiceUpdate } from "../u/cross-service-update.js";
 
 type Input = Commands.UpdateUserRealNameInput;
 type Output = Commands.UpdateUserRealNameOutput;
@@ -20,11 +22,14 @@ const schema = z.object({
 });
 
 /**
- * Updates a user's real name (first + last).
+ * Updates a user's real name (first + last) via SAGA pattern.
  *
  * Coordinates two updates:
  * 1. Geo contact (firstName/lastName) via UpdateContactsByExtKeys
  * 2. BetterAuth user.name (combined "firstName lastName") via repo handler
+ *
+ * On auth failure after Geo succeeded → Geo is rolled back to the original
+ * contact. On rollback failure → logger.fatal() (CRITICAL).
  *
  * IDOR prevention: userId is injected from IRequestContext, never from input.
  */
@@ -79,7 +84,7 @@ export class UpdateUserRealName
     const combinedName = `${firstName} ${lastName}`;
     const extKey = { contextKey: GEO_CONTEXT_KEYS.USER, relatedEntityId: input.userId };
 
-    // Fetch existing contact to preserve fields we're not changing.
+    // Fetch existing contact — needed both for the merge AND as the saga rollback target.
     const existingResult = await this.getContactsByExtKeys.handleAsync({ keys: [extKey] });
     if (!existingResult.success) {
       this.context.logger.error("Failed to fetch existing Geo contact for merge", {
@@ -87,15 +92,23 @@ export class UpdateUserRealName
         errorCode: existingResult.errorCode,
       });
       return D2Result.serviceUnavailable({
-        messages: ["Unable to update contact details. Please try again."],
+        messages: [TK.common.errors.SERVICE_UNAVAILABLE],
       });
     }
     const mapKey = `${extKey.contextKey}:${extKey.relatedEntityId}`;
     const existingContact = existingResult.data?.data.get(mapKey)?.[0];
-
-    // Spread existing contact, override only the fields we're changing.
     const { id: _, ...existingFields } = existingContact ?? {};
-    const contactToCreate: ContactToCreateDTO = {
+
+    // Snapshot of pre-update contact (rollback target if auth fails).
+    const oldContact: ContactToCreateDTO = {
+      ...existingFields,
+      createdAt: new Date(),
+      contextKey: extKey.contextKey,
+      relatedEntityId: extKey.relatedEntityId,
+    };
+
+    // Target state — override personalDetails firstName/lastName.
+    const newContact: ContactToCreateDTO = {
       ...existingFields,
       createdAt: new Date(),
       contextKey: extKey.contextKey,
@@ -107,29 +120,20 @@ export class UpdateUserRealName
       },
     };
 
-    // Cross-service call — do NOT bubbleFail (may leak Geo internals).
-    const geoResult = await this.updateContactsByExtKeys.handleAsync({
-      contacts: [contactToCreate],
+    // SAGA: Geo first → Auth second → compensate Geo on auth failure.
+    const result = await runCrossServiceUpdate({
+      oldContact,
+      newContact,
+      updateContactsByExtKeys: this.updateContactsByExtKeys,
+      operationLabel: "user.name",
+      context: this.context,
+      authUpdate: () =>
+        this.updateUserNameRepo.handleAsync({
+          userId: input.userId,
+          name: combinedName,
+        }),
     });
-    if (!geoResult.success) {
-      this.context.logger.error("Failed to update Geo contact for user real name", {
-        userId: input.userId,
-        errorCode: geoResult.errorCode,
-        statusCode: geoResult.statusCode,
-      });
-      return D2Result.serviceUnavailable({
-        messages: ["Unable to update contact details. Please try again."],
-      });
-    }
-
-    // Update BetterAuth user.name (same-service repo — bubbleFail is safe)
-    const nameResult = await this.updateUserNameRepo.handleAsync({
-      userId: input.userId,
-      name: combinedName,
-    });
-    if (!nameResult.success) {
-      return D2Result.bubbleFail(nameResult);
-    }
+    if (!result.success) return D2Result.bubbleFail(result);
 
     this.invalidateSessionCache
       ?.handleAsync({ userId: input.userId })

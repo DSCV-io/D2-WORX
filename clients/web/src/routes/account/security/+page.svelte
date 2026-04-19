@@ -14,7 +14,9 @@
 </script>
 
 <svelte:head>
-  <title>{m.account_security_title()}</title>
+  <title
+    >{m.account_page_title()} / {m.account_security_title()} — {m.webclient_nav_brand()}</title
+  >
 </svelte:head>
 
 <div class="space-y-6">

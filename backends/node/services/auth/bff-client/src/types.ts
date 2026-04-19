@@ -19,12 +19,16 @@ export interface AuthSession {
 export interface AuthUser {
   id: string;
   email: string;
+  emailVerified?: boolean;
   name: string;
   username?: string;
   displayUsername?: string;
   image?: string;
   locale?: string;
   timezone?: string;
+  /** Digits-only E.164 phone number, or undefined if not set. */
+  phone?: string;
+  phoneVerified?: boolean;
 }
 
 /** Configuration for the BFF client. */
@@ -56,11 +60,14 @@ export interface BetterAuthSessionResponse {
   user: {
     id: string;
     email: string;
+    emailVerified?: boolean;
     name: string;
     username?: string;
     displayUsername?: string;
     image?: string | null;
     locale?: string | null;
     timezone?: string | null;
+    phone?: string | null;
+    phoneVerified?: boolean;
   };
 }

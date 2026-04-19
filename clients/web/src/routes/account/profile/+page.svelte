@@ -191,7 +191,9 @@
 </script>
 
 <svelte:head>
-  <title>{m.account_profile_title()}</title>
+  <title
+    >{m.account_page_title()} / {m.account_profile_title()} — {m.webclient_nav_brand()}</title
+  >
   <meta
     name="description"
     content={m.account_profile_description()}

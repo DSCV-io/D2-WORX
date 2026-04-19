@@ -16,6 +16,7 @@
   import { formatPhoneAsYouType, getCountryCallingCode } from "$lib/shared/forms/phone-format.js";
   import FieldStatusIcon from "./field-status-icon.svelte";
   import { getFieldStatus } from "$lib/shared/forms/field-status.js";
+  import * as m from "$lib/paraglide/messages.js";
 
   type Props = {
     form: SuperForm<T>;
@@ -119,7 +120,6 @@
             class="text-destructive"
             aria-hidden="true">*</span
           >{/if}
-        <FieldStatusIcon status={fieldStatus} />
       </Form.Label>
       <input
         type="hidden"
@@ -151,9 +151,9 @@
             align="start"
           >
             <Command.Root>
-              <Command.Input placeholder="Search country..." />
+              <Command.Input placeholder={m.webclient_forms_country_search()} />
               <Command.List>
-                <Command.Empty>No country found.</Command.Empty>
+                <Command.Empty>{m.webclient_forms_country_empty()}</Command.Empty>
                 <Command.Group>
                   {#each countries as country (country.value)}
                     <Command.Item
@@ -184,20 +184,28 @@
         </Popover.Root>
 
         <!-- Phone number input (display only — hidden input carries the E.164 value) -->
-        <Input
-          {...triggerProps}
-          type="tel"
-          autocomplete="off"
-          value={displayValue}
-          placeholder="Phone number"
-          {disabled}
-          oninput={handlePhoneInput}
-          onblur={handleBlur}
-          class={cn(
-            "flex-1",
-            fieldStatus === "valid" && "border-success/70 dark:border-success/50",
-          )}
-        />
+        <div class="relative flex-1">
+          <Input
+            {...triggerProps}
+            type="tel"
+            autocomplete="off"
+            value={displayValue}
+            placeholder={m.account_phone_input_label()}
+            {disabled}
+            oninput={handlePhoneInput}
+            onblur={handleBlur}
+            class={cn(
+              "w-full",
+              fieldStatus !== "idle" && "pr-8",
+              fieldStatus === "valid" && "border-success/70 dark:border-success/50",
+            )}
+          />
+          {#if fieldStatus !== "idle"}
+            <div class="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2">
+              <FieldStatusIcon status={fieldStatus} />
+            </div>
+          {/if}
+        </div>
       </div>
     {/snippet}
   </Control>

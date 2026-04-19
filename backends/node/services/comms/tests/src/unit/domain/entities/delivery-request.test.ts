@@ -58,14 +58,23 @@ describe("DeliveryRequest", () => {
       );
     });
 
-    it("should throw when no recipient is provided", () => {
-      expect(() =>
-        createDeliveryRequest({
-          messageId: "msg-1",
-          correlationId: "corr-1",
-          recipientContactId: "",
-        }),
-      ).toThrow(CommsValidationError);
+    it("should accept undefined recipientContactId (transient sends use alternativeContactInfo at app layer)", () => {
+      const req = createDeliveryRequest({
+        messageId: "msg-1",
+        correlationId: "corr-1",
+      });
+      expect(req.recipientContactId).toBeUndefined();
+    });
+
+    it("should accept empty-string recipientContactId by treating it as undefined-equivalent (XOR enforced at API layer)", () => {
+      // Domain entity is permissive; the XOR rule between recipientContactId and
+      // alternativeContactInfo is enforced by the Deliver handler's Zod schema.
+      const req = createDeliveryRequest({
+        messageId: "msg-1",
+        correlationId: "corr-1",
+        recipientContactId: undefined,
+      });
+      expect(req.recipientContactId).toBeUndefined();
     });
   });
 

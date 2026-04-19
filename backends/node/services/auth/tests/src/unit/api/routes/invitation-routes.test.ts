@@ -490,7 +490,7 @@ describe("Invitation routes", () => {
         expect.objectContaining({
           recipientContactId: "geo-contact-1",
           title: "You've been invited to join Acme Corp.",
-          sensitive: true,
+          channels: ["email"],
           correlationId: "inv-abc",
           senderService: "auth",
         }),
@@ -561,7 +561,7 @@ describe("Invitation routes", () => {
         expect.objectContaining({
           recipientContactId: "geo-contact-existing",
           title: "You've been invited to join Acme Corp.",
-          sensitive: true,
+          channels: ["email"],
           correlationId: "inv-abc",
           senderService: "auth",
         }),
@@ -753,7 +753,7 @@ describe("Invitation routes", () => {
         title: "You've been invited to join Test Org.",
         content: expect.stringContaining("The Inviter (inviter@example.com)"),
         plaintext: expect.stringContaining("The Inviter (inviter@example.com)"),
-        sensitive: true,
+        channels: ["email"],
         correlationId: "inv-abc",
         senderService: "auth",
       });
@@ -774,7 +774,7 @@ describe("Invitation routes", () => {
         title: "You've been invited to join Test Org.",
         content: expect.stringContaining("as **auditor**"),
         plaintext: expect.stringContaining("as auditor"),
-        sensitive: true,
+        channels: ["email"],
         correlationId: "inv-abc",
         senderService: "auth",
       });
