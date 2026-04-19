@@ -13,6 +13,7 @@ using D2.Geo.Client.Interfaces.CQRS.Handlers.C;
 using D2.Geo.Client.Interfaces.CQRS.Handlers.Q;
 using D2.Geo.Client.Interfaces.CQRS.Handlers.X;
 using D2.Geo.Client.Interfaces.Messaging.Handlers.Sub;
+using D2.Geo.Client.Messaging.Consumers;
 using D2.Geo.Client.Messaging.Handlers.Sub;
 using D2.Services.Protos.Geo.V1;
 using D2.Shared.InMemoryCache.Default;
@@ -59,6 +60,13 @@ public static partial class Extensions
             services.AddTransient<IComplex.IGetHandler, Get>();
             services.AddTransient<ICommands.IReqUpdateHandler, ReqUpdate>();
             services.AddGeoRefDataShared();
+
+            // Cross-process cache invalidation. Both BackgroundServices subscribe
+            // to the matching events.geo.* fanout exchanges and evict the local
+            // memory cache when the Geo service mutates data — keeps every
+            // geo-client-equipped process consistent without per-service wiring.
+            services.AddHostedService<UpdatedConsumerService>();
+            services.AddHostedService<ContactEvictionConsumerService>();
 
             return services;
         }

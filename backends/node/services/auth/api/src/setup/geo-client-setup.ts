@@ -23,6 +23,8 @@ export interface GeoClientSetup {
   geoOptions: GeoClientOptions;
   /** GetContactsByExtKeys handler (used directly by auth callbacks). */
   getContactsByExtKeys: GetContactsByExtKeys;
+  /** Local memory cache backing all per-process geo-client cache-asides — passed to wireGeoClientConsumers for cross-process invalidation. */
+  contactCacheStore: CacheMemory.MemoryCacheStore;
 }
 
 /**
@@ -78,5 +80,5 @@ export function addGeoClientHandlers(
   services.addInstance(IGetContactsByExtKeysKey, getContactsByExtKeys);
   services.addInstance(IUpdateContactsByExtKeysKey, updateContactsByExtKeys);
 
-  return { geoClient, geoOptions, getContactsByExtKeys };
+  return { geoClient, geoOptions, getContactsByExtKeys, contactCacheStore };
 }

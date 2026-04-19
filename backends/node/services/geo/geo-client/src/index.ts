@@ -75,6 +75,8 @@ export type {
   IContactsEvictedHandler,
 } from "./messaging/handlers/sub/contacts-evicted.js";
 export { createContactsEvictedConsumer } from "./messaging/consumers/contacts-evicted-consumer.js";
+export { wireGeoClientConsumers } from "./messaging/wire-consumers.js";
+export type { WireGeoClientConsumersOptions } from "./messaging/wire-consumers.js";
 
 // Service Keys (DI registration tokens)
 export {

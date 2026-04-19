@@ -11,22 +11,13 @@ import { MessageBus, PingMessageBus, IMessageBusPingKey } from "@d2/messaging";
 import { addCommsApp } from "@d2/comms-app";
 import { DEFAULT_COMMS_JOB_OPTIONS, type CommsJobOptions } from "@d2/comms-app";
 import { addCommsInfra, runMigrations } from "@d2/comms-infra";
-import { randomUUID } from "node:crypto";
-import { createContactsEvictedConsumer } from "@d2/geo-client";
+import { wireGeoClientConsumers } from "@d2/geo-client";
 import {
   addGeoClientHandlers,
   addDeliveryProviders,
   buildGrpcServer,
   startNotificationConsumer,
 } from "./setup/index.js";
-
-/**
- * Geo emits contact-eviction events on the `events.geo.contacts` fanout exchange.
- * Each consumer instance gets its own queue (so every comms process receives a
- * copy and can evict its local geo-client cache). Mirrors the .NET pattern:
- * `{exchange}.{instanceId}`.
- */
-const GEO_CONTACTS_EVICTED_EXCHANGE = "events.geo.contacts";
 
 export interface CommsServiceConfig {
   databaseUrl: string;
@@ -163,28 +154,20 @@ export async function createCommsService(config: CommsServiceConfig) {
     logger,
   });
 
-  // 7. RabbitMQ notification consumer
+  // 7. RabbitMQ notification consumer + geo-client cache invalidation
   if (messageBus) {
     await startNotificationConsumer(messageBus, provider, logger);
 
-    // Geo contact-eviction subscription — keeps this process's geo-client
-    // memory cache fresh when other services (e.g. auth) replace contacts.
-    const instanceId = randomUUID().replace(/-/g, "").slice(0, 8);
-    const evictionConsumer = createContactsEvictedConsumer(
-      messageBus,
-      {
-        queue: `${GEO_CONTACTS_EVICTED_EXCHANGE}.${instanceId}`,
-        queueOptions: { durable: false, arguments: { "x-expires": 60_000 } },
-        exchanges: [
-          { exchange: GEO_CONTACTS_EVICTED_EXCHANGE, type: "fanout", durable: true },
-        ],
-        queueBindings: [{ exchange: GEO_CONTACTS_EVICTED_EXCHANGE, routingKey: "" }],
-      },
-      () => geoClientSetup.contactsEvictedHandler,
+    // Wire the geo-client's cross-process cache invalidation. Every service
+    // with a geo-client cache must do this; the helper subscribes to the
+    // `events.geo.contacts` fanout and evicts on any contact mutation
+    // anywhere in the cluster.
+    await wireGeoClientConsumers({
+      bus: messageBus,
+      cacheStore: geoClientSetup.contactCacheStore,
+      context: serviceContext,
       logger,
-    );
-    await evictionConsumer.ready;
-    logger.info("Geo contact eviction consumer ready");
+    });
   }
 
   // 8. Shutdown

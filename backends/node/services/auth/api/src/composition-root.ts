@@ -19,6 +19,7 @@ import { addRedisCaching } from "@d2/cache-redis";
 import { PingMessageBus, IMessageBusPingKey } from "@d2/messaging";
 import type { IMessagePublisher } from "@d2/messaging";
 import { addCommsClient } from "@d2/comms-client";
+import { wireGeoClientConsumers } from "@d2/geo-client";
 import {
   createAuth,
   runMigrations,
@@ -158,7 +159,7 @@ export async function createApp(
   // (because `createAuth` needs `provider` via callbacks → cyclic dependency).
   // Register lazy singleton factories that capture the eventual `auth` reference
   // — first resolution happens during request handling, well after auth is set.
-  let authInstance: ReturnType<typeof createAuth> | undefined;
+  let authInstance: ReturnType<typeof createAuth> | undefined = undefined;
   services.addSingleton(IVerificationStoreKey, () => {
     if (!authInstance) throw new Error("auth instance not initialized");
     return new BetterAuthVerificationStore(authInstance);
@@ -245,13 +246,24 @@ export async function createApp(
     db,
   });
 
-  // 9. WhoIs resolution consumer
+  // 9. WhoIs resolution consumer + geo-client cache invalidation
   if (messageBus) {
     createWhoIsResolutionConsumer({
       messageBus,
       provider,
       createScope: createServiceScope,
       findWhoIs: preAuth.findWhoIs,
+      logger,
+    });
+
+    // Cross-process geo-client cache invalidation. Auth's local cache evicts
+    // when auth itself mutates a contact (via the cacheRemove handler injected
+    // into UpdateContactsByExtKeys/DeleteContactsByExtKeys), but only this
+    // subscription keeps it consistent when ANOTHER service mutates contacts.
+    await wireGeoClientConsumers({
+      bus: messageBus,
+      cacheStore: geoSetup.contactCacheStore,
+      context: serviceContext,
       logger,
     });
   }
