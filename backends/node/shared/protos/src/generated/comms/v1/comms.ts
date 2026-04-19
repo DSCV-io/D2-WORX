@@ -182,6 +182,28 @@ export interface SetChannelPreferenceResponse {
   data?: ChannelPreferenceDTO | undefined;
 }
 
+export interface GetUserChannelPreferenceRequest {
+  contextKey?: string | undefined;
+  relatedEntityId?: string | undefined;
+}
+
+export interface GetUserChannelPreferenceResponse {
+  result?: D2ResultProto | undefined;
+  data?: ChannelPreferenceDTO | undefined;
+}
+
+export interface SetUserChannelPreferenceRequest {
+  contextKey?: string | undefined;
+  relatedEntityId?: string | undefined;
+  emailEnabled?: boolean | undefined;
+  smsEnabled?: boolean | undefined;
+}
+
+export interface SetUserChannelPreferenceResponse {
+  result?: D2ResultProto | undefined;
+  data?: ChannelPreferenceDTO | undefined;
+}
+
 export interface GetDeliveryStatusRequest {
   deliveryRequestId?: string | undefined;
 }
@@ -2523,6 +2545,386 @@ export const SetChannelPreferenceResponse: MessageFns<SetChannelPreferenceRespon
   },
   fromPartial<I extends Exact<DeepPartial<SetChannelPreferenceResponse>, I>>(object: I): SetChannelPreferenceResponse {
     const message = createBaseSetChannelPreferenceResponse();
+    message.result = (object.result !== undefined && object.result !== null)
+      ? D2ResultProto.fromPartial(object.result)
+      : undefined;
+    message.data = (object.data !== undefined && object.data !== null)
+      ? ChannelPreferenceDTO.fromPartial(object.data)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseGetUserChannelPreferenceRequest(): GetUserChannelPreferenceRequest {
+  return { contextKey: "", relatedEntityId: "" };
+}
+
+export const GetUserChannelPreferenceRequest: MessageFns<GetUserChannelPreferenceRequest> = {
+  encode(message: GetUserChannelPreferenceRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.contextKey !== undefined && message.contextKey !== "") {
+      writer.uint32(10).string(message.contextKey);
+    }
+    if (message.relatedEntityId !== undefined && message.relatedEntityId !== "") {
+      writer.uint32(18).string(message.relatedEntityId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetUserChannelPreferenceRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetUserChannelPreferenceRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.contextKey = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.relatedEntityId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetUserChannelPreferenceRequest {
+    return {
+      contextKey: isSet(object.contextKey)
+        ? globalThis.String(object.contextKey)
+        : isSet(object.context_key)
+        ? globalThis.String(object.context_key)
+        : "",
+      relatedEntityId: isSet(object.relatedEntityId)
+        ? globalThis.String(object.relatedEntityId)
+        : isSet(object.related_entity_id)
+        ? globalThis.String(object.related_entity_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetUserChannelPreferenceRequest): unknown {
+    const obj: any = {};
+    if (message.contextKey !== undefined && message.contextKey !== "") {
+      obj.contextKey = message.contextKey;
+    }
+    if (message.relatedEntityId !== undefined && message.relatedEntityId !== "") {
+      obj.relatedEntityId = message.relatedEntityId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetUserChannelPreferenceRequest>, I>>(base?: I): GetUserChannelPreferenceRequest {
+    return GetUserChannelPreferenceRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetUserChannelPreferenceRequest>, I>>(
+    object: I,
+  ): GetUserChannelPreferenceRequest {
+    const message = createBaseGetUserChannelPreferenceRequest();
+    message.contextKey = object.contextKey ?? "";
+    message.relatedEntityId = object.relatedEntityId ?? "";
+    return message;
+  },
+};
+
+function createBaseGetUserChannelPreferenceResponse(): GetUserChannelPreferenceResponse {
+  return { result: undefined, data: undefined };
+}
+
+export const GetUserChannelPreferenceResponse: MessageFns<GetUserChannelPreferenceResponse> = {
+  encode(message: GetUserChannelPreferenceResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.result !== undefined) {
+      D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
+    }
+    if (message.data !== undefined) {
+      ChannelPreferenceDTO.encode(message.data, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetUserChannelPreferenceResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetUserChannelPreferenceResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.result = D2ResultProto.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.data = ChannelPreferenceDTO.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetUserChannelPreferenceResponse {
+    return {
+      result: isSet(object.result) ? D2ResultProto.fromJSON(object.result) : undefined,
+      data: isSet(object.data) ? ChannelPreferenceDTO.fromJSON(object.data) : undefined,
+    };
+  },
+
+  toJSON(message: GetUserChannelPreferenceResponse): unknown {
+    const obj: any = {};
+    if (message.result !== undefined) {
+      obj.result = D2ResultProto.toJSON(message.result);
+    }
+    if (message.data !== undefined) {
+      obj.data = ChannelPreferenceDTO.toJSON(message.data);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetUserChannelPreferenceResponse>, I>>(
+    base?: I,
+  ): GetUserChannelPreferenceResponse {
+    return GetUserChannelPreferenceResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetUserChannelPreferenceResponse>, I>>(
+    object: I,
+  ): GetUserChannelPreferenceResponse {
+    const message = createBaseGetUserChannelPreferenceResponse();
+    message.result = (object.result !== undefined && object.result !== null)
+      ? D2ResultProto.fromPartial(object.result)
+      : undefined;
+    message.data = (object.data !== undefined && object.data !== null)
+      ? ChannelPreferenceDTO.fromPartial(object.data)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseSetUserChannelPreferenceRequest(): SetUserChannelPreferenceRequest {
+  return { contextKey: "", relatedEntityId: "", emailEnabled: undefined, smsEnabled: undefined };
+}
+
+export const SetUserChannelPreferenceRequest: MessageFns<SetUserChannelPreferenceRequest> = {
+  encode(message: SetUserChannelPreferenceRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.contextKey !== undefined && message.contextKey !== "") {
+      writer.uint32(10).string(message.contextKey);
+    }
+    if (message.relatedEntityId !== undefined && message.relatedEntityId !== "") {
+      writer.uint32(18).string(message.relatedEntityId);
+    }
+    if (message.emailEnabled !== undefined) {
+      writer.uint32(24).bool(message.emailEnabled);
+    }
+    if (message.smsEnabled !== undefined) {
+      writer.uint32(32).bool(message.smsEnabled);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SetUserChannelPreferenceRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSetUserChannelPreferenceRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.contextKey = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.relatedEntityId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.emailEnabled = reader.bool();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.smsEnabled = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SetUserChannelPreferenceRequest {
+    return {
+      contextKey: isSet(object.contextKey)
+        ? globalThis.String(object.contextKey)
+        : isSet(object.context_key)
+        ? globalThis.String(object.context_key)
+        : "",
+      relatedEntityId: isSet(object.relatedEntityId)
+        ? globalThis.String(object.relatedEntityId)
+        : isSet(object.related_entity_id)
+        ? globalThis.String(object.related_entity_id)
+        : "",
+      emailEnabled: isSet(object.emailEnabled)
+        ? globalThis.Boolean(object.emailEnabled)
+        : isSet(object.email_enabled)
+        ? globalThis.Boolean(object.email_enabled)
+        : undefined,
+      smsEnabled: isSet(object.smsEnabled)
+        ? globalThis.Boolean(object.smsEnabled)
+        : isSet(object.sms_enabled)
+        ? globalThis.Boolean(object.sms_enabled)
+        : undefined,
+    };
+  },
+
+  toJSON(message: SetUserChannelPreferenceRequest): unknown {
+    const obj: any = {};
+    if (message.contextKey !== undefined && message.contextKey !== "") {
+      obj.contextKey = message.contextKey;
+    }
+    if (message.relatedEntityId !== undefined && message.relatedEntityId !== "") {
+      obj.relatedEntityId = message.relatedEntityId;
+    }
+    if (message.emailEnabled !== undefined) {
+      obj.emailEnabled = message.emailEnabled;
+    }
+    if (message.smsEnabled !== undefined) {
+      obj.smsEnabled = message.smsEnabled;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SetUserChannelPreferenceRequest>, I>>(base?: I): SetUserChannelPreferenceRequest {
+    return SetUserChannelPreferenceRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SetUserChannelPreferenceRequest>, I>>(
+    object: I,
+  ): SetUserChannelPreferenceRequest {
+    const message = createBaseSetUserChannelPreferenceRequest();
+    message.contextKey = object.contextKey ?? "";
+    message.relatedEntityId = object.relatedEntityId ?? "";
+    message.emailEnabled = object.emailEnabled ?? undefined;
+    message.smsEnabled = object.smsEnabled ?? undefined;
+    return message;
+  },
+};
+
+function createBaseSetUserChannelPreferenceResponse(): SetUserChannelPreferenceResponse {
+  return { result: undefined, data: undefined };
+}
+
+export const SetUserChannelPreferenceResponse: MessageFns<SetUserChannelPreferenceResponse> = {
+  encode(message: SetUserChannelPreferenceResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.result !== undefined) {
+      D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
+    }
+    if (message.data !== undefined) {
+      ChannelPreferenceDTO.encode(message.data, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SetUserChannelPreferenceResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSetUserChannelPreferenceResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.result = D2ResultProto.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.data = ChannelPreferenceDTO.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SetUserChannelPreferenceResponse {
+    return {
+      result: isSet(object.result) ? D2ResultProto.fromJSON(object.result) : undefined,
+      data: isSet(object.data) ? ChannelPreferenceDTO.fromJSON(object.data) : undefined,
+    };
+  },
+
+  toJSON(message: SetUserChannelPreferenceResponse): unknown {
+    const obj: any = {};
+    if (message.result !== undefined) {
+      obj.result = D2ResultProto.toJSON(message.result);
+    }
+    if (message.data !== undefined) {
+      obj.data = ChannelPreferenceDTO.toJSON(message.data);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SetUserChannelPreferenceResponse>, I>>(
+    base?: I,
+  ): SetUserChannelPreferenceResponse {
+    return SetUserChannelPreferenceResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SetUserChannelPreferenceResponse>, I>>(
+    object: I,
+  ): SetUserChannelPreferenceResponse {
+    const message = createBaseSetUserChannelPreferenceResponse();
     message.result = (object.result !== undefined && object.result !== null)
       ? D2ResultProto.fromPartial(object.result)
       : undefined;
@@ -5162,6 +5564,38 @@ export const CommsServiceService = {
       Buffer.from(SetChannelPreferenceResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): SetChannelPreferenceResponse => SetChannelPreferenceResponse.decode(value),
   },
+  /**
+   * User-centric variants — caller passes ext-key (context_key + related_entity_id);
+   * comms internally resolves the contact id via the Geo client (memory-cached,
+   * refreshed via cross-process eviction events). Used by the REST gateway for
+   * browser-initiated user preferences without exposing contact_id externally.
+   */
+  getUserChannelPreference: {
+    path: "/d2.comms.v1.CommsService/GetUserChannelPreference",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetUserChannelPreferenceRequest): Buffer =>
+      Buffer.from(GetUserChannelPreferenceRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetUserChannelPreferenceRequest =>
+      GetUserChannelPreferenceRequest.decode(value),
+    responseSerialize: (value: GetUserChannelPreferenceResponse): Buffer =>
+      Buffer.from(GetUserChannelPreferenceResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetUserChannelPreferenceResponse =>
+      GetUserChannelPreferenceResponse.decode(value),
+  },
+  setUserChannelPreference: {
+    path: "/d2.comms.v1.CommsService/SetUserChannelPreference",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: SetUserChannelPreferenceRequest): Buffer =>
+      Buffer.from(SetUserChannelPreferenceRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): SetUserChannelPreferenceRequest =>
+      SetUserChannelPreferenceRequest.decode(value),
+    responseSerialize: (value: SetUserChannelPreferenceResponse): Buffer =>
+      Buffer.from(SetUserChannelPreferenceResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): SetUserChannelPreferenceResponse =>
+      SetUserChannelPreferenceResponse.decode(value),
+  },
   /** GetTemplate and UpsertTemplate removed — templates dropped from architecture. */
   getDeliveryStatus: {
     path: "/d2.comms.v1.CommsService/GetDeliveryStatus",
@@ -5315,6 +5749,14 @@ export interface CommsServiceServer extends UntypedServiceImplementation {
   /** Phase 1: Delivery Engine */
   getChannelPreference: handleUnaryCall<GetChannelPreferenceRequest, GetChannelPreferenceResponse>;
   setChannelPreference: handleUnaryCall<SetChannelPreferenceRequest, SetChannelPreferenceResponse>;
+  /**
+   * User-centric variants — caller passes ext-key (context_key + related_entity_id);
+   * comms internally resolves the contact id via the Geo client (memory-cached,
+   * refreshed via cross-process eviction events). Used by the REST gateway for
+   * browser-initiated user preferences without exposing contact_id externally.
+   */
+  getUserChannelPreference: handleUnaryCall<GetUserChannelPreferenceRequest, GetUserChannelPreferenceResponse>;
+  setUserChannelPreference: handleUnaryCall<SetUserChannelPreferenceRequest, SetUserChannelPreferenceResponse>;
   /** GetTemplate and UpsertTemplate removed — templates dropped from architecture. */
   getDeliveryStatus: handleUnaryCall<GetDeliveryStatusRequest, GetDeliveryStatusResponse>;
   /** Phase 2: In-App Notifications (stubs) */
@@ -5381,6 +5823,42 @@ export interface CommsServiceClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: SetChannelPreferenceResponse) => void,
+  ): ClientUnaryCall;
+  /**
+   * User-centric variants — caller passes ext-key (context_key + related_entity_id);
+   * comms internally resolves the contact id via the Geo client (memory-cached,
+   * refreshed via cross-process eviction events). Used by the REST gateway for
+   * browser-initiated user preferences without exposing contact_id externally.
+   */
+  getUserChannelPreference(
+    request: GetUserChannelPreferenceRequest,
+    callback: (error: ServiceError | null, response: GetUserChannelPreferenceResponse) => void,
+  ): ClientUnaryCall;
+  getUserChannelPreference(
+    request: GetUserChannelPreferenceRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetUserChannelPreferenceResponse) => void,
+  ): ClientUnaryCall;
+  getUserChannelPreference(
+    request: GetUserChannelPreferenceRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetUserChannelPreferenceResponse) => void,
+  ): ClientUnaryCall;
+  setUserChannelPreference(
+    request: SetUserChannelPreferenceRequest,
+    callback: (error: ServiceError | null, response: SetUserChannelPreferenceResponse) => void,
+  ): ClientUnaryCall;
+  setUserChannelPreference(
+    request: SetUserChannelPreferenceRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: SetUserChannelPreferenceResponse) => void,
+  ): ClientUnaryCall;
+  setUserChannelPreference(
+    request: SetUserChannelPreferenceRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: SetUserChannelPreferenceResponse) => void,
   ): ClientUnaryCall;
   /** GetTemplate and UpsertTemplate removed — templates dropped from architecture. */
   getDeliveryStatus(

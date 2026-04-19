@@ -5,6 +5,12 @@ export type {
 } from "./set-channel-preference.js";
 
 export type {
+  SetUserChannelPreferenceInput,
+  SetUserChannelPreferenceOutput,
+  ISetUserChannelPreferenceHandler,
+} from "./set-user-channel-preference.js";
+
+export type {
   RunDeletedMessagePurgeInput,
   RunDeletedMessagePurgeOutput,
   IRunDeletedMessagePurgeHandler,

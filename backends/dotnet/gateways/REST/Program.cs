@@ -45,8 +45,14 @@ builder.Services.ConfigureHttpJsonOptions(opts =>
     opts.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
-// Register gRPC clients.
+// Register gRPC clients. Each per-service file owns its main client + any
+// REST routes that proxy to that service. Job-service clients are separate
+// (different proto, used by Dkron-only endpoints).
 builder.Services.AddGeoGrpcClient();
+builder.Services.AddAuthGrpcClient();
+builder.Services.AddCommsGrpcClient();
+builder.Services.AddFilesGrpcClient();
+builder.Services.AddSignalRGrpcClient();
 builder.Services.AddAuthJobsGrpcClient();
 builder.Services.AddGeoJobsGrpcClient();
 builder.Services.AddCommsJobsGrpcClient();
@@ -101,10 +107,6 @@ builder.Services.AddIdempotency(builder.Configuration);
 
 // Register translation middleware services — messages copied to output by MSBuild.
 builder.Services.AddTranslation(builder.Configuration);
-
-// Register gRPC clients + HTTP client for health endpoint fan-out.
-builder.Services.AddHealthEndpointDependencies();
-
 SupportedLocales.Configure(builder.Configuration);
 
 var app = builder.Build();
@@ -139,6 +141,10 @@ app.MapDefaultEndpoints();
 
 // Map versioned API endpoints.
 app.MapGeoEndpointsV1();
+app.MapAuthEndpointsV1();
+app.MapCommsEndpointsV1();
+app.MapFilesEndpointsV1();
+app.MapSignalREndpointsV1();
 app.MapAuthJobEndpointsV1();
 app.MapGeoJobEndpointsV1();
 app.MapCommsJobEndpointsV1();

@@ -1,6 +1,6 @@
 import type { ServiceCollection } from "@d2/di";
 import { IHandlerContextKey } from "@d2/handler";
-import { IGetContactsByIdsKey } from "@d2/geo-client";
+import { IGetContactsByExtKeysKey, IGetContactsByIdsKey } from "@d2/geo-client";
 import {
   // Infra keys
   ICreateMessageRecordKey,
@@ -23,7 +23,9 @@ import {
   IDeliverKey,
   IRecipientResolverKey,
   ISetChannelPreferenceKey,
+  ISetUserChannelPreferenceKey,
   IGetChannelPreferenceKey,
+  IGetUserChannelPreferenceKey,
   IPingDbKey,
   ICheckHealthKey,
   IRunDeletedMessagePurgeKey,
@@ -38,7 +40,9 @@ import {
 import type { IChannelDispatcher } from "./implementations/cqrs/handlers/x/channel-dispatchers.js";
 import { RecipientResolver } from "./implementations/cqrs/handlers/q/resolve-recipient.js";
 import { SetChannelPreference } from "./implementations/cqrs/handlers/c/set-channel-preference.js";
+import { SetUserChannelPreference } from "./implementations/cqrs/handlers/c/set-user-channel-preference.js";
 import { GetChannelPreference } from "./implementations/cqrs/handlers/q/get-channel-preference.js";
+import { GetUserChannelPreference } from "./implementations/cqrs/handlers/q/get-user-channel-preference.js";
 import { CheckHealth } from "./implementations/cqrs/handlers/q/check-health.js";
 import { RunDeletedMessagePurge } from "./implementations/cqrs/handlers/c/run-deleted-message-purge.js";
 import { RunDeliveryHistoryPurge } from "./implementations/cqrs/handlers/c/run-delivery-history-purge.js";
@@ -123,6 +127,16 @@ export function addCommsApp(
       ),
   );
 
+  services.addTransient(
+    ISetUserChannelPreferenceKey,
+    (sp) =>
+      new SetUserChannelPreference(
+        sp.resolve(IGetContactsByExtKeysKey),
+        sp.resolve(ISetChannelPreferenceKey),
+        sp.resolve(IHandlerContextKey),
+      ),
+  );
+
   // --- Query Handlers ---
 
   services.addTransient(
@@ -134,6 +148,16 @@ export function addCommsApp(
           findByContactId: sp.resolve(IFindChannelPreferenceByContactIdKey),
           update: sp.resolve(IUpdateChannelPreferenceRecordKey),
         },
+        sp.resolve(IHandlerContextKey),
+      ),
+  );
+
+  services.addTransient(
+    IGetUserChannelPreferenceKey,
+    (sp) =>
+      new GetUserChannelPreference(
+        sp.resolve(IGetContactsByExtKeysKey),
+        sp.resolve(IGetChannelPreferenceKey),
         sp.resolve(IHandlerContextKey),
       ),
   );

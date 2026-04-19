@@ -11,12 +11,22 @@ import { MessageBus, PingMessageBus, IMessageBusPingKey } from "@d2/messaging";
 import { addCommsApp } from "@d2/comms-app";
 import { DEFAULT_COMMS_JOB_OPTIONS, type CommsJobOptions } from "@d2/comms-app";
 import { addCommsInfra, runMigrations } from "@d2/comms-infra";
+import { randomUUID } from "node:crypto";
+import { createContactsEvictedConsumer } from "@d2/geo-client";
 import {
   addGeoClientHandlers,
   addDeliveryProviders,
   buildGrpcServer,
   startNotificationConsumer,
 } from "./setup/index.js";
+
+/**
+ * Geo emits contact-eviction events on the `events.geo.contacts` fanout exchange.
+ * Each consumer instance gets its own queue (so every comms process receives a
+ * copy and can evict its local geo-client cache). Mirrors the .NET pattern:
+ * `{exchange}.{instanceId}`.
+ */
+const GEO_CONTACTS_EVICTED_EXCHANGE = "events.geo.contacts";
 
 export interface CommsServiceConfig {
   databaseUrl: string;
@@ -28,8 +38,8 @@ export interface CommsServiceConfig {
   twilioAccountSid?: string;
   twilioAuthToken?: string;
   twilioPhoneNumber?: string;
-  /** "twilio" | "mock" — when omitted, auto-detects based on Twilio creds. */
-  smsProvider?: "twilio" | "mock";
+  /** "twilio" | "mock" — when omitted, auto-detects based on Twilio creds. Read from env as a string; provider-setup narrows. */
+  smsProvider?: string;
   /** JSONL log file path used by the mock SMS provider. */
   smsMockLogPath?: string;
   geoAddress?: string;
@@ -94,8 +104,10 @@ export async function createCommsService(config: CommsServiceConfig) {
     (sp) => new HandlerContext(sp.resolve(IRequestContextKey), sp.resolve(ILoggerKey)),
   );
 
-  // Geo client for recipient resolution
-  addGeoClientHandlers(services, config, serviceContext);
+  // Geo client for recipient resolution + ext-key contact lookup. Returns
+  // the cache store and eviction handler so we can wire the cross-process
+  // cache invalidation consumer once the message bus is up.
+  const geoClientSetup = addGeoClientHandlers(services, config, serviceContext);
 
   // Layer registrations
   addCommsInfra(services, db);
@@ -154,6 +166,25 @@ export async function createCommsService(config: CommsServiceConfig) {
   // 7. RabbitMQ notification consumer
   if (messageBus) {
     await startNotificationConsumer(messageBus, provider, logger);
+
+    // Geo contact-eviction subscription — keeps this process's geo-client
+    // memory cache fresh when other services (e.g. auth) replace contacts.
+    const instanceId = randomUUID().replace(/-/g, "").slice(0, 8);
+    const evictionConsumer = createContactsEvictedConsumer(
+      messageBus,
+      {
+        queue: `${GEO_CONTACTS_EVICTED_EXCHANGE}.${instanceId}`,
+        queueOptions: { durable: false, arguments: { "x-expires": 60_000 } },
+        exchanges: [
+          { exchange: GEO_CONTACTS_EVICTED_EXCHANGE, type: "fanout", durable: true },
+        ],
+        queueBindings: [{ exchange: GEO_CONTACTS_EVICTED_EXCHANGE, routingKey: "" }],
+      },
+      () => geoClientSetup.contactsEvictedHandler,
+      logger,
+    );
+    await evictionConsumer.ready;
+    logger.info("Geo contact eviction consumer ready");
   }
 
   // 8. Shutdown

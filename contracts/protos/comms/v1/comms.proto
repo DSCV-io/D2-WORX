@@ -20,6 +20,12 @@ service CommsService {
   // Phase 1: Delivery Engine
   rpc GetChannelPreference(GetChannelPreferenceRequest) returns (GetChannelPreferenceResponse);
   rpc SetChannelPreference(SetChannelPreferenceRequest) returns (SetChannelPreferenceResponse);
+  // User-centric variants — caller passes ext-key (context_key + related_entity_id);
+  // comms internally resolves the contact id via the Geo client (memory-cached,
+  // refreshed via cross-process eviction events). Used by the REST gateway for
+  // browser-initiated user preferences without exposing contact_id externally.
+  rpc GetUserChannelPreference(GetUserChannelPreferenceRequest) returns (GetUserChannelPreferenceResponse);
+  rpc SetUserChannelPreference(SetUserChannelPreferenceRequest) returns (SetUserChannelPreferenceResponse);
   // GetTemplate and UpsertTemplate removed — templates dropped from architecture.
   rpc GetDeliveryStatus(GetDeliveryStatusRequest) returns (GetDeliveryStatusResponse);
 
@@ -182,6 +188,35 @@ message SetChannelPreferenceRequest {
 }
 
 message SetChannelPreferenceResponse {
+  d2.common.v1.D2ResultProto result = 1;
+  ChannelPreferenceDTO data = 2;
+}
+
+// **************************************************
+// ***** Phase 1: User-centric channel prefs ********
+// **************************************************
+// These wrap the contact-id variants above and resolve the contact via Geo
+// from the (context_key, related_entity_id) tuple. Optional booleans = leave
+// unchanged on Set; null/missing = unset on Get.
+
+message GetUserChannelPreferenceRequest {
+  string context_key = 1;
+  string related_entity_id = 2;
+}
+
+message GetUserChannelPreferenceResponse {
+  d2.common.v1.D2ResultProto result = 1;
+  ChannelPreferenceDTO data = 2;
+}
+
+message SetUserChannelPreferenceRequest {
+  string context_key = 1;
+  string related_entity_id = 2;
+  optional bool email_enabled = 3;
+  optional bool sms_enabled = 4;
+}
+
+message SetUserChannelPreferenceResponse {
   d2.common.v1.D2ResultProto result = 1;
   ChannelPreferenceDTO data = 2;
 }

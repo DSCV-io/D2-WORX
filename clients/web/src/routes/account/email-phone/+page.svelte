@@ -13,6 +13,12 @@
   import XIcon from "@lucide/svelte/icons/x";
   import AlertTriangleIcon from "@lucide/svelte/icons/triangle-alert";
   import InfoIcon from "@lucide/svelte/icons/info";
+  import {
+    getMyNotificationPreferences,
+    setMyNotificationPreferences,
+  } from "$lib/client/rest/notification-preferences-client.js";
+  import { translateMessage } from "$lib/client/utils/translate-message.js";
+  import { onMount } from "svelte";
 
   let { data } = $props();
 
@@ -32,12 +38,35 @@
   let phoneModalOpen = $state(false);
   let removePhoneOpen = $state(false);
 
-  // --- Notification preferences (still mock — separate Comms-side task) ---
-  let emailNotifications = $state(true);
+  // --- Notification preferences (real — gateway → Comms) ---
+  // Defaults until first load completes. Channel-prefs are opt-in: missing rows
+  // = both disabled (routine notifications stay in-app only).
+  let emailNotifications = $state(false);
   let smsNotifications = $state(false);
 
-  async function mockSaveBool(_value: boolean): Promise<void> {
-    await new Promise((r) => setTimeout(r, 800));
+  onMount(() => {
+    void (async () => {
+      const result = await getMyNotificationPreferences();
+      if (result.success && result.data) {
+        emailNotifications = result.data.emailEnabled;
+        smsNotifications = result.data.smsEnabled;
+      }
+    })();
+  });
+
+  async function saveEmailPref(value: boolean): Promise<void> {
+    const result = await setMyNotificationPreferences({ emailEnabled: value });
+    if (!result.success) {
+      throw new Error(translateMessage(result.messages?.[0], undefined, m.common_errors_unknown()));
+    }
+    toast.success(m.common_ui_changes_saved());
+  }
+
+  async function saveSmsPref(value: boolean): Promise<void> {
+    const result = await setMyNotificationPreferences({ smsEnabled: value });
+    if (!result.success) {
+      throw new Error(translateMessage(result.messages?.[0], undefined, m.common_errors_unknown()));
+    }
     toast.success(m.common_ui_changes_saved());
   }
 
@@ -156,13 +185,13 @@
         bind:value={emailNotifications}
         label={m.account_email_notifications()}
         description={m.account_email_notifications_description()}
-        onSave={mockSaveBool}
+        onSave={saveEmailPref}
       />
       <InlineSwitch
         bind:value={smsNotifications}
         label={m.account_sms_notifications()}
         description={m.account_sms_notifications_description()}
-        onSave={mockSaveBool}
+        onSave={saveSmsPref}
       />
     </Card.Content>
   </Card.Root>

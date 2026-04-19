@@ -46,6 +46,7 @@ export { GetContactsByExtKeys } from "./handlers/q/get-contacts-by-ext-keys.js";
 export type {
   GetContactsByExtKeysInput,
   GetContactsByExtKeysOutput,
+  IGetContactsByExtKeysHandler,
 } from "./interfaces/q/get-contacts-by-ext-keys.js";
 export { GetContactsByIds } from "./handlers/q/get-contacts-by-ids.js";
 export type {

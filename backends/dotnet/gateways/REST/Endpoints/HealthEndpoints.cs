@@ -25,82 +25,12 @@ using Serilog;
 /// </summary>
 public static class HealthEndpoints
 {
-    /// <summary>
-    /// Extension methods for the service collection.
-    /// </summary>
-    ///
-    /// <param name="services">
-    /// The service collection to extend.
-    /// </param>
-    extension(IServiceCollection services)
-    {
-        /// <summary>
-        /// Registers gRPC clients needed for the health endpoint.
-        /// Reads <c>COMMS_GRPC_ADDRESS</c>, <c>AUTH_GRPC_ADDRESS</c>, <c>FILES_GRPC_ADDRESS</c>,
-        /// and <c>SIGNALR_GRPC_ADDRESS</c> (bare <c>host:port</c>).
-        /// Geo client is already registered via <see cref="GeoEndpoints.AddGeoGrpcClient"/>.
-        /// </summary>
-        ///
-        /// <returns>
-        /// The updated service collection.
-        /// </returns>
-        public IServiceCollection AddHealthEndpointDependencies()
-        {
-            // Comms gRPC client (Geo client is already registered via AddGeoGrpcClient).
-            var commsAddress = Environment.GetEnvironmentVariable("COMMS_GRPC_ADDRESS");
-            if (commsAddress.Falsey())
-            {
-                throw new ArgumentException(
-                    "Comms gRPC service address not configured. Missing 'COMMS_GRPC_ADDRESS' environment variable.");
-            }
-
-            services.AddGrpcClient<CommsService.CommsServiceClient>(o =>
-            {
-                o.Address = new Uri($"http://{commsAddress}");
-            });
-
-            // Auth gRPC client (checkHealth is exempt from API key auth).
-            var authGrpcAddress = Environment.GetEnvironmentVariable("AUTH_GRPC_ADDRESS");
-            if (authGrpcAddress.Falsey())
-            {
-                throw new ArgumentException(
-                    "Auth gRPC service address not configured. Missing 'AUTH_GRPC_ADDRESS' environment variable.");
-            }
-
-            services.AddGrpcClient<AuthService.AuthServiceClient>(o =>
-            {
-                o.Address = new Uri($"http://{authGrpcAddress}");
-            });
-
-            // Files gRPC client.
-            var filesGrpcAddress = Environment.GetEnvironmentVariable("FILES_GRPC_ADDRESS");
-            if (filesGrpcAddress.Falsey())
-            {
-                throw new ArgumentException(
-                    "Files gRPC service address not configured. Missing 'FILES_GRPC_ADDRESS' environment variable.");
-            }
-
-            services.AddGrpcClient<FilesService.FilesServiceClient>(o =>
-            {
-                o.Address = new Uri($"http://{filesGrpcAddress}");
-            });
-
-            // SignalR gRPC client.
-            var signalrGrpcAddress = Environment.GetEnvironmentVariable("SIGNALR_GRPC_ADDRESS");
-            if (signalrGrpcAddress.Falsey())
-            {
-                throw new ArgumentException(
-                    "SignalR gRPC service address not configured. Missing 'SIGNALR_GRPC_ADDRESS' environment variable.");
-            }
-
-            services.AddGrpcClient<RealtimeGateway.RealtimeGatewayClient>(o =>
-            {
-                o.Address = new Uri($"http://{signalrGrpcAddress}");
-            });
-
-            return services;
-        }
-    }
+    // gRPC client registrations live in their owning per-service endpoint files
+    // (CommsEndpoints.AddCommsGrpcClient, AuthEndpoints.AddAuthGrpcClient,
+    // FilesEndpoints.AddFilesGrpcClient, SignalREndpoints.AddSignalRGrpcClient,
+    // GeoEndpoints.AddGeoGrpcClient). HealthEndpoints just consumes the clients
+    // — server-side CheckHealth RPCs are exempt from API key auth, so the same
+    // clients work for health probes and business endpoints alike.
 
     /// <summary>
     /// Extension methods for the endpoint route builder.

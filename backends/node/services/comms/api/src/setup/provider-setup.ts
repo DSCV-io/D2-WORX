@@ -18,7 +18,7 @@ export interface ProviderConfig {
    * The mock provider appends each message to a JSONL log file — useful for
    * dev where Twilio A2P 10DLC / Toll-Free verification gates real delivery.
    */
-  smsProvider?: SmsProviderKind;
+  smsProvider?: string;
   /** Path the mock provider writes to (JSONL). Default: /app/.dev-data/sms.jsonl */
   smsMockLogPath?: string;
 }
@@ -26,7 +26,9 @@ export interface ProviderConfig {
 const DEFAULT_MOCK_LOG_PATH = "/app/.dev-data/sms.jsonl";
 
 function selectSmsProvider(config: ProviderConfig): SmsProviderKind {
-  if (config.smsProvider) return config.smsProvider;
+  if (config.smsProvider === "twilio" || config.smsProvider === "mock") {
+    return config.smsProvider;
+  }
   const hasTwilio = !!(
     config.twilioAccountSid &&
     config.twilioAuthToken &&
