@@ -39,10 +39,11 @@
   let removePhoneOpen = $state(false);
 
   // --- Notification preferences (real — gateway → Comms) ---
-  // Defaults until first load completes. Channel-prefs are opt-in: missing rows
-  // = both disabled (routine notifications stay in-app only).
-  let emailNotifications = $state(false);
-  let smsNotifications = $state(false);
+  // Channel prefs are opt-OUT: when no row exists, both channels deliver by
+  // default (matches backend `resolveChannels` rule — `prefs?.emailEnabled ?? true`).
+  // Initialize to true so the toggles display correctly while the GET completes.
+  let emailNotifications = $state(true);
+  let smsNotifications = $state(true);
 
   onMount(() => {
     void (async () => {
