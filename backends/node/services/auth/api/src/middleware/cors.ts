@@ -8,7 +8,13 @@ export function createCorsMiddleware(origins: string[]) {
   return cors({
     origin: origins,
     credentials: true,
-    allowHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "traceparent",
+      "tracestate",
+    ],
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     maxAge: 86400,
   });

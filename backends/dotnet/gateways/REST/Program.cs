@@ -96,7 +96,7 @@ if (corsOrigins.Count == 0)
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
     p.WithOrigins(corsOrigins.ToArray())
      .AllowCredentials()
-     .WithHeaders("Content-Type", "Authorization", "Idempotency-Key", "X-Client-Fingerprint", "X-Requested-With", "D2-Locale")
+     .WithHeaders("Content-Type", "Authorization", "Idempotency-Key", "X-Client-Fingerprint", "X-Requested-With", "D2-Locale", "traceparent", "tracestate")
      .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE")));
 
 // Request body size limit (256 KB — gateway payloads are small JSON).

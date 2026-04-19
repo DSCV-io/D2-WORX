@@ -117,7 +117,13 @@ describe("Middleware chain order", () => {
       cors({
         origin: "http://localhost:5173",
         credentials: true,
-        allowHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+        allowHeaders: [
+          "Content-Type",
+          "Authorization",
+          "X-Requested-With",
+          "traceparent",
+          "tracestate",
+        ],
         allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         maxAge: 86400,
       }),

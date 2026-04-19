@@ -66,7 +66,14 @@ export function buildHonoApp(options: HonoAppOptions): Hono {
     "*",
     cors({
       origin: config.corsOrigins,
-      allowHeaders: ["Content-Type", "Authorization", "Accept", "X-Client-Fingerprint"],
+      allowHeaders: [
+        "Content-Type",
+        "Authorization",
+        "Accept",
+        "X-Client-Fingerprint",
+        "traceparent",
+        "tracestate",
+      ],
       allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
       exposeHeaders: ["Content-Disposition"],
       credentials: true,

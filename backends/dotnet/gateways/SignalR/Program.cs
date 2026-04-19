@@ -52,7 +52,7 @@ if (corsOrigins.Count == 0)
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
     p.WithOrigins(corsOrigins.ToArray())
      .AllowCredentials()
-     .WithHeaders("Content-Type", "Authorization", "X-Client-Fingerprint", "X-Requested-With", "X-SignalR-User-Agent")
+     .WithHeaders("Content-Type", "Authorization", "X-Client-Fingerprint", "X-Requested-With", "X-SignalR-User-Agent", "traceparent", "tracestate")
      .WithMethods("GET", "POST")));
 
 // Redis connection multiplexer — shared by SignalR backplane and health checks.
