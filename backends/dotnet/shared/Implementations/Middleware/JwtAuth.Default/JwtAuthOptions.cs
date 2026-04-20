@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Default;
+namespace D2.Shared.JwtAuth.Default;
 
 /// <summary>
 /// Configuration options for JWT authentication against the Auth Service.

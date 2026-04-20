@@ -1,25 +1,8 @@
 /**
- * Organization membership roles.
- *
- * Stored as plain text in PostgreSQL (NOT PG enums).
- * TypeScript string unions provide compile-time safety.
+ * Re-exports the canonical `Role` definition from `@d2/handler` so existing
+ * `@d2/auth-domain` consumers don't break. The source of truth lives in
+ * `@d2/handler/src/role.ts` to mirror `D2.Shared.Handler.Auth.RoleValues` —
+ * cross-cutting auth primitives belong with the platform's handler layer,
+ * not in the auth-service domain package.
  */
-
-export const ROLES = ["owner", "officer", "agent", "auditor"] as const;
-
-export type Role = (typeof ROLES)[number];
-
-export function isValidRole(value: unknown): value is Role {
-  return typeof value === "string" && ROLES.includes(value as Role);
-}
-
-/**
- * Role hierarchy — higher numeric value means more privileges.
- * Used to determine if one role outranks another.
- */
-export const ROLE_HIERARCHY: Readonly<Record<Role, number>> = {
-  auditor: 0,
-  agent: 1,
-  officer: 2,
-  owner: 3,
-};
+export { ROLES, ROLE_HIERARCHY, isValidRole, rolesAtOrAbove, type Role } from "@d2/handler";

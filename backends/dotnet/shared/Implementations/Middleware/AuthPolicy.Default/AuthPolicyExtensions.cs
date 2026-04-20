@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler.Extensions.Auth;
+namespace D2.Shared.AuthPolicy.Default;
 
 using D2.Shared.Handler.Auth;
 using Microsoft.AspNetCore.Authorization;

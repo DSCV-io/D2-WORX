@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Handler.Auth;
+namespace D2.Shared.AuthPolicy.Default;
 
 /// <summary>
 /// Named authorization policy constants used with <c>RequireAuthorization</c>.

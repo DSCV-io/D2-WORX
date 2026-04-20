@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Default;
+namespace D2.Shared.JwtAuth.Default;
 
-using D2.Shared.Handler.Extensions.Auth;
+using D2.Shared.AuthPolicy.Default;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;

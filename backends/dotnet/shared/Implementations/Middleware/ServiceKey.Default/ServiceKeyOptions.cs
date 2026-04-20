@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Default;
+namespace D2.Shared.ServiceKey.Default;
 
 /// <summary>
 /// Configuration options for service-to-service API key authentication.

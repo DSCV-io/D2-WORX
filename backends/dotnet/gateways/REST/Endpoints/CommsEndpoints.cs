@@ -7,8 +7,8 @@
 namespace D2.Gateways.REST.Endpoints;
 
 using D2.Services.Protos.Comms.V1;
-using D2.Shared.Auth.Default;
-using D2.Shared.Handler.Extensions.Auth;
+using D2.Shared.AuthPolicy.Default;
+using D2.Shared.Handler;
 using D2.Shared.Utilities.Extensions;
 
 /// <summary>
@@ -73,8 +73,11 @@ public static class CommsEndpoints
         /// <returns>The updated endpoint route builder.</returns>
         public IEndpointRouteBuilder MapCommsEndpointsV1()
         {
+            // RequireAuth() at the group level — every endpoint inside is gated
+            // by an authenticated user. Handlers don't re-check identity; they
+            // can read userId straight off the request context.
             var notificationPrefs = erb.MapGroup("/api/v1/notification-preferences")
-                .RequireAuthorization();
+                .RequireAuth();
 
             notificationPrefs.MapGet(string.Empty, GetMyPreferencesAsync)
                 .WithName("GetMyNotificationPreferences")
@@ -89,31 +92,31 @@ public static class CommsEndpoints
     }
 
     private static async Task<IResult> GetMyPreferencesAsync(
-        AuthenticatedUserId userId,
+        IHandlerContext ctx,
         CommsService.CommsServiceClient commsClient,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var response = await commsClient.GetUserChannelPreferenceAsync(
             new GetUserChannelPreferenceRequest
             {
                 ContextKey = "auth_user",
-                RelatedEntityId = userId.Value.ToString(),
+                RelatedEntityId = ctx.Request.UserId!.Value.ToString(),
             },
-            cancellationToken: ct);
+            cancellationToken: cancellationToken);
 
         return response.Result.ToHttpResult(response.Data);
     }
 
     private static async Task<IResult> SetMyPreferencesAsync(
-        AuthenticatedUserId userId,
+        IHandlerContext ctx,
         SetMyPreferencesRequest body,
         CommsService.CommsServiceClient commsClient,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var req = new SetUserChannelPreferenceRequest
         {
             ContextKey = "auth_user",
-            RelatedEntityId = userId.Value.ToString(),
+            RelatedEntityId = ctx.Request.UserId!.Value.ToString(),
         };
         if (body.EmailEnabled is bool e)
         {
@@ -125,7 +128,7 @@ public static class CommsEndpoints
             req.SmsEnabled = s;
         }
 
-        var response = await commsClient.SetUserChannelPreferenceAsync(req, cancellationToken: ct);
+        var response = await commsClient.SetUserChannelPreferenceAsync(req, cancellationToken: cancellationToken);
 
         return response.Result.ToHttpResult(response.Data);
     }

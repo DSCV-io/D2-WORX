@@ -6,7 +6,7 @@
 
 namespace D2.Shared.Tests.Unit.Gateway;
 
-using D2.Shared.Auth.Default;
+using D2.Shared.ServiceKey.Default;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Xunit;

@@ -15,7 +15,7 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { SessionVariables } from "../middleware/session.js";
 import { type ScopeVariables } from "../middleware/scope.js";
 import { SCOPE_KEY, SESSION_KEY, USER_KEY } from "../context-keys.js";
-import { requireOrg, requireRole } from "../middleware/authorization.js";
+import { requireOrg, requireRole } from "@d2/auth-policy";
 
 /** Roles that may be assigned via invitation. */
 const INVITABLE_ROLES = new Set<Role>(ROLES);

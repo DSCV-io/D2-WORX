@@ -44,7 +44,9 @@
         <ProjectReference Include="..\I18n\I18n.csproj" />
         <ProjectReference Include="..\Implementations\Caching\Distributed\DistributedCache.Redis\DistributedCache.Redis.csproj" />
         <ProjectReference Include="..\Implementations\Caching\InMemory\InMemoryCache.Default\InMemoryCache.Default.csproj" />
-        <ProjectReference Include="..\Implementations\Middleware\Auth.Default\Auth.Default.csproj" />
+        <ProjectReference Include="..\Implementations\Middleware\AuthPolicy.Default\AuthPolicy.Default.csproj" />
+        <ProjectReference Include="..\Implementations\Middleware\JwtAuth.Default\JwtAuth.Default.csproj" />
+        <ProjectReference Include="..\Implementations\Middleware\ServiceKey.Default\ServiceKey.Default.csproj" />
         <ProjectReference Include="..\Implementations\Middleware\Idempotency.Default\Idempotency.Default.csproj" />
         <ProjectReference Include="..\Implementations\Middleware\RateLimit.Default\RateLimit.Default.csproj" />
         <ProjectReference Include="..\Implementations\Middleware\RequestEnrichment.Default\RequestEnrichment.Default.csproj" />

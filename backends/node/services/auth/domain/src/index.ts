@@ -19,7 +19,7 @@ export { OTP_RATE_LIMIT, OTP_EXPIRY, OTP_VERIFY } from "./constants/otp-constant
 // --- Enums ---
 export { ORG_TYPES, isValidOrgType } from "./enums/org-type.js";
 export type { OrgType } from "./enums/org-type.js";
-export { ROLES, ROLE_HIERARCHY, isValidRole } from "./enums/role.js";
+export { ROLES, ROLE_HIERARCHY, isValidRole, rolesAtOrAbove } from "./enums/role.js";
 export type { Role } from "./enums/role.js";
 export {
   INVITATION_STATUSES,

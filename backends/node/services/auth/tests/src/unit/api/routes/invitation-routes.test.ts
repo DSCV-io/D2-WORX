@@ -4,6 +4,25 @@ import { D2Result, HttpStatusCode } from "@d2/result";
 import { INotifyKey } from "@d2/comms-client";
 import { ICreateContactsKey, IGetContactsByExtKeysKey } from "@d2/geo-client";
 import { createInvitationRoutes, SCOPE_KEY } from "@d2/auth-api";
+import { OrgType } from "@d2/handler";
+
+/** Maps the legacy lowercase org-type strings used by the test fixture to the OrgType enum. */
+function toOrgTypeEnum(value: string): OrgType | undefined {
+  switch (value) {
+    case "admin":
+      return OrgType.Admin;
+    case "support":
+      return OrgType.Support;
+    case "customer":
+      return OrgType.Customer;
+    case "third_party":
+      return OrgType.ThirdParty;
+    case "affiliate":
+      return OrgType.Affiliate;
+    default:
+      return undefined;
+  }
+}
 import type { Translator } from "@d2/i18n";
 
 // ---------- Mock helpers ----------
@@ -112,6 +131,9 @@ function createTestApp(
   const app = new Hono();
 
   app.use("*", async (c, next) => {
+    const orgId = session.activeOrganizationId ?? "org-1";
+    const orgType = session.activeOrganizationType ?? "customer";
+    const orgRole = session.activeOrganizationRole ?? "officer";
     c.set(
       "user" as never,
       {
@@ -123,11 +145,25 @@ function createTestApp(
     c.set(
       "session" as never,
       {
-        activeOrganizationId: session.activeOrganizationId ?? "org-1",
-        activeOrganizationType: session.activeOrganizationType ?? "customer",
-        activeOrganizationRole: session.activeOrganizationRole ?? "officer",
+        activeOrganizationId: orgId,
+        activeOrganizationType: orgType,
+        activeOrganizationRole: orgRole,
       } as never,
     );
+    c.set("requestContext" as never, {
+      isAuthenticated: true,
+      isTrustedService: false,
+      isOrgEmulating: false,
+      isUserImpersonating: false,
+      userId: "user-inviter",
+      email: "inviter@example.com",
+      targetOrgId: orgId,
+      targetOrgType: toOrgTypeEnum(orgType),
+      targetOrgRole: orgRole,
+      agentOrgId: orgId,
+      agentOrgType: toOrgTypeEnum(orgType),
+      agentOrgRole: orgRole,
+    } as never);
     c.set(SCOPE_KEY as never, createMockScope(handlers) as never);
     await next();
   });
@@ -218,6 +254,14 @@ describe("Invitation routes", () => {
           } as never,
         );
         c.set("session" as never, {} as never); // No org fields
+        c.set("requestContext" as never, {
+          isAuthenticated: true,
+          isTrustedService: false,
+          isOrgEmulating: false,
+          isUserImpersonating: false,
+          userId: "user-1",
+          email: "u@e.com",
+        } as never);
         c.set(SCOPE_KEY as never, createMockScope(handlers) as never);
         await next();
       });
@@ -713,6 +757,20 @@ describe("Invitation routes", () => {
             activeOrganizationRole: "officer",
           } as never,
         );
+        c.set("requestContext" as never, {
+          isAuthenticated: true,
+          isTrustedService: false,
+          isOrgEmulating: false,
+          isUserImpersonating: false,
+          userId: "user-no-name",
+          email: "noname@e.com",
+          targetOrgId: "org-1",
+          targetOrgType: OrgType.Customer,
+          targetOrgRole: "officer",
+          agentOrgId: "org-1",
+          agentOrgType: OrgType.Customer,
+          agentOrgRole: "officer",
+        } as never);
         c.set(SCOPE_KEY as never, createMockScope(handlers) as never);
         await next();
       });
@@ -882,6 +940,14 @@ describe("Invitation routes", () => {
       app.use("*", async (c, next) => {
         c.set("user" as never, { id: "u", email: "u@e.com", name: "U" } as never);
         c.set("session" as never, {} as never);
+        c.set("requestContext" as never, {
+          isAuthenticated: true,
+          isTrustedService: false,
+          isOrgEmulating: false,
+          isUserImpersonating: false,
+          userId: "u",
+          email: "u@e.com",
+        } as never);
         c.set(SCOPE_KEY as never, createMockScope(handlers) as never);
         await next();
       });

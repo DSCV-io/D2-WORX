@@ -6,8 +6,8 @@
 
 namespace D2.Shared.Tests.Unit.Gateway;
 
+using D2.Shared.AuthPolicy.Default;
 using D2.Shared.Handler.Auth;
-using D2.Shared.Handler.Extensions.Auth;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;

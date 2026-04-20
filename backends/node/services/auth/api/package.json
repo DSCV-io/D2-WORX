@@ -20,6 +20,7 @@
   ],
   "dependencies": {
     "@d2/auth-app": "workspace:*",
+    "@d2/auth-policy": "workspace:*",
     "@d2/comms-client": "workspace:*",
     "@d2/csrf": "workspace:*",
     "@d2/database-startup-pg": "workspace:*",

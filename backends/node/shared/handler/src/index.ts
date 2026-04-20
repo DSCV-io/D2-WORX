@@ -6,6 +6,13 @@ export { type IRequestContext } from "./i-request-context.js";
 export { type HandlerOptions, DEFAULT_HANDLER_OPTIONS } from "./handler-options.js";
 export { type RedactionSpec } from "./redaction-spec.js";
 export { OrgType } from "./org-type.js";
+export {
+  ROLES,
+  ROLE_HIERARCHY,
+  isValidRole,
+  rolesAtOrAbove,
+  type Role,
+} from "./role.js";
 export * as validators from "./validators.js";
 export {
   isValidIpAddress,

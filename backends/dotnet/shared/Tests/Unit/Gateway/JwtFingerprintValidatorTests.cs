@@ -8,7 +8,7 @@ namespace D2.Shared.Tests.Unit.Gateway;
 
 using System.Security.Cryptography;
 using System.Text;
-using D2.Shared.Auth.Default;
+using D2.Shared.JwtAuth.Default;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 

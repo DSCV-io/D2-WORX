@@ -183,6 +183,11 @@ export function createScopeMiddleware(provider: ServiceProvider) {
       requestContextStorage.enterWith(requestContext);
       requestLoggerStorage.enterWith(logger);
 
+      // Re-publish the merged requestContext into c.var so policy middleware
+      // (`@d2/auth-policy` requireAuth/requireOrg/etc.) can read it.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (c as any).set(REQUEST_CONTEXT_KEY, requestContext);
+
       c.set(SCOPE_KEY, scope);
       await next();
     } finally {

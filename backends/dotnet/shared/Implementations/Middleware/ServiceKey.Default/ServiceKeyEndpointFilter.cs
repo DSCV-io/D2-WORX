@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Default;
+namespace D2.Shared.ServiceKey.Default;
 
 using D2.Shared.Handler;
 using Microsoft.AspNetCore.Http;

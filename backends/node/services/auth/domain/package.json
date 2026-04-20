@@ -17,6 +17,7 @@
     "dist"
   ],
   "dependencies": {
+    "@d2/handler": "workspace:*",
     "@d2/utilities": "workspace:*"
   },
   "devDependencies": {

@@ -6,9 +6,9 @@
 
 namespace D2.Shared.Tests.Unit.Gateway;
 
-using D2.Shared.Auth.Default;
 using D2.Shared.Handler;
 using D2.Shared.RequestEnrichment.Default;
+using D2.Shared.ServiceKey.Default;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Auth.Default;
+namespace D2.Shared.JwtAuth.Default;
 
 using System.Security.Cryptography;
 using System.Text;

@@ -7,7 +7,7 @@
 using D2.Gateways.SignalR.Hubs;
 using D2.Gateways.SignalR.Interceptors;
 using D2.Gateways.SignalR.Services;
-using D2.Shared.Auth.Default;
+using D2.Shared.JwtAuth.Default;
 using D2.Shared.ServiceDefaults;
 using D2.Shared.Utilities.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

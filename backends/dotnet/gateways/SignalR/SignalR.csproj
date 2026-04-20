@@ -10,7 +10,9 @@
     <ItemGroup>
         <ProjectReference Include="..\..\shared\ServiceDefaults\ServiceDefaults.csproj" />
         <ProjectReference Include="..\..\shared\Handler.Extensions\Handler.Extensions.csproj" />
-        <ProjectReference Include="..\..\shared\Implementations\Middleware\Auth.Default\Auth.Default.csproj" />
+        <ProjectReference Include="..\..\shared\Implementations\Middleware\AuthPolicy.Default\AuthPolicy.Default.csproj" />
+        <ProjectReference Include="..\..\shared\Implementations\Middleware\JwtAuth.Default\JwtAuth.Default.csproj" />
+        <ProjectReference Include="..\..\shared\Implementations\Middleware\ServiceKey.Default\ServiceKey.Default.csproj" />
         <ProjectReference Include="..\..\shared\protos\_gen\Protos.DotNet\Protos.DotNet.csproj" />
     </ItemGroup>
 

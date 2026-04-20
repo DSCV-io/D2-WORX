@@ -16,9 +16,10 @@ import {
   IVerifyPhoneChangeKey,
   IRemovePhoneKey,
 } from "@d2/auth-app";
+import type { IRequestContext } from "@d2/handler";
 import type { SessionVariables } from "../middleware/session.js";
 import type { ScopeVariables } from "../middleware/scope.js";
-import { SCOPE_KEY, SESSION_KEY } from "../context-keys.js";
+import { SCOPE_KEY, REQUEST_CONTEXT_KEY } from "../context-keys.js";
 import type { Auth } from "@d2/auth-infra";
 
 /** Default and maximum page sizes for list endpoints. */
@@ -28,20 +29,22 @@ const MAX_LIMIT = 100;
 /**
  * Account routes — user-level, org-agnostic endpoints.
  * All require authentication (session middleware) but no org membership.
- * userId is derived from session, never from request body (IDOR prevention).
+ * userId is derived from the request context, never from request body (IDOR prevention).
  */
 export function createAccountRoutes(auth: Auth) {
   const app = new Hono<{ Variables: SessionVariables & ScopeVariables }>();
 
+  // Local helper: returns the authenticated user's id from requestContext.
+  // Routes are gated by sessionMiddleware upstream, so userId is guaranteed present.
+  const uid = (c: import("hono").Context): string =>
+    (c.get(REQUEST_CONTEXT_KEY as never) as IRequestContext).userId!;
+
   // PATCH /api/account/name — Update user's real name (firstName + lastName)
   app.patch("/api/account/name", async (c) => {
     const body = await c.req.json();
-    const session = c.get(SESSION_KEY);
-    if (!session) return c.json({ success: false, statusCode: 401 }, 401 as ContentfulStatusCode);
-
     const handler = c.get(SCOPE_KEY).resolve(IUpdateUserRealNameKey);
     const result = await handler.handleAsync({
-      userId: session.userId as string,
+      userId: uid(c),
       firstName: body.firstName as string,
       lastName: body.lastName as string,
     });
@@ -54,12 +57,9 @@ export function createAccountRoutes(auth: Auth) {
   // PATCH /api/account/username — Update username
   app.patch("/api/account/username", async (c) => {
     const body = await c.req.json();
-    const session = c.get(SESSION_KEY);
-    if (!session) return c.json({ success: false, statusCode: 401 }, 401 as ContentfulStatusCode);
-
     const handler = c.get(SCOPE_KEY).resolve(IUpdateUsernameKey);
     const result = await handler.handleAsync({
-      userId: session.userId as string,
+      userId: uid(c),
       username: body.username as string,
     });
     const status = (
@@ -71,12 +71,9 @@ export function createAccountRoutes(auth: Auth) {
   // PATCH /api/account/locale — Update user's locale preference
   app.patch("/api/account/locale", async (c) => {
     const body = await c.req.json();
-    const session = c.get(SESSION_KEY);
-    if (!session) return c.json({ success: false, statusCode: 401 }, 401 as ContentfulStatusCode);
-
     const handler = c.get(SCOPE_KEY).resolve(IUpdateUserLocaleKey);
     const result = await handler.handleAsync({
-      userId: session.userId as string,
+      userId: uid(c),
       locale: body.locale as string,
     });
     const status = (
@@ -88,12 +85,9 @@ export function createAccountRoutes(auth: Auth) {
   // PATCH /api/account/timezone — Update user's timezone preference
   app.patch("/api/account/timezone", async (c) => {
     const body = await c.req.json();
-    const session = c.get(SESSION_KEY);
-    if (!session) return c.json({ success: false, statusCode: 401 }, 401 as ContentfulStatusCode);
-
     const handler = c.get(SCOPE_KEY).resolve(IUpdateUserTimezoneKey);
     const result = await handler.handleAsync({
-      userId: session.userId as string,
+      userId: uid(c),
       timezone: body.timezone as string,
     });
     const status = (
@@ -104,24 +98,21 @@ export function createAccountRoutes(auth: Auth) {
 
   // DELETE /api/account/avatar — Remove user's profile picture
   app.delete("/api/account/avatar", async (c) => {
-    const session = c.get(SESSION_KEY);
-    if (!session) return c.json({ success: false, statusCode: 401 }, 401 as ContentfulStatusCode);
-
     const scope = c.get(SCOPE_KEY);
-    const userId = session.userId as string;
+    const id = uid(c);
 
     const handler = scope.resolve(IUpdateUserImageKey);
     const invalidate = scope.tryResolve(IInvalidateUserSessionCacheKey);
     const push = scope.tryResolve(IPushUserUpdatedKey);
 
-    const result = await handler.handleAsync({ userId, image: null });
+    const result = await handler.handleAsync({ userId: id, image: null });
 
     if (result.success) {
       // Fire-and-forget: invalidate cache → then push SignalR event.
       // Client relies on the user:updated event for session refresh, not the API response.
       invalidate
-        ?.handleAsync({ userId })
-        .then(() => push?.handleAsync({ userId }))
+        ?.handleAsync({ userId: id })
+        .then(() => push?.handleAsync({ userId: id }))
         .catch(() => {});
     }
 
@@ -183,9 +174,6 @@ export function createAccountRoutes(auth: Auth) {
 
   // GET /api/account/sign-in-events — Paginated sign-in event history
   app.get("/api/account/sign-in-events", async (c) => {
-    const session = c.get(SESSION_KEY);
-    if (!session) return c.json({ success: false, statusCode: 401 }, 401 as ContentfulStatusCode);
-
     const limitParam = parseInt(c.req.query("limit") ?? "", 10);
     const offsetParam = parseInt(c.req.query("offset") ?? "", 10);
     const limit = Math.min(
@@ -196,7 +184,7 @@ export function createAccountRoutes(auth: Auth) {
 
     const handler = c.get(SCOPE_KEY).resolve(IGetSignInEventsKey);
     const result = await handler.handleAsync({
-      userId: session.userId as string,
+      userId: uid(c),
       limit,
       offset,
     });
@@ -215,12 +203,9 @@ export function createAccountRoutes(auth: Auth) {
   // POST /api/account/email/request-change — initiate email change (sends OTP to NEW email)
   app.post("/api/account/email/request-change", async (c) => {
     const body = await c.req.json();
-    const session = c.get(SESSION_KEY);
-    if (!session) return c.json({ success: false, statusCode: 401 }, 401 as ContentfulStatusCode);
-
     const handler = c.get(SCOPE_KEY).resolve(IRequestEmailChangeKey);
     const result = await handler.handleAsync({
-      userId: session.userId as string,
+      userId: uid(c),
       newEmail: body.newEmail as string,
       currentPassword: body.currentPassword as string,
     });
@@ -233,12 +218,9 @@ export function createAccountRoutes(auth: Auth) {
   // POST /api/account/email/verify-change — verify OTP and apply email change
   app.post("/api/account/email/verify-change", async (c) => {
     const body = await c.req.json();
-    const session = c.get(SESSION_KEY);
-    if (!session) return c.json({ success: false, statusCode: 401 }, 401 as ContentfulStatusCode);
-
     const handler = c.get(SCOPE_KEY).resolve(IVerifyEmailChangeKey);
     const result = await handler.handleAsync({
-      userId: session.userId as string,
+      userId: uid(c),
       code: body.code as string,
     });
     const status = (
@@ -250,12 +232,9 @@ export function createAccountRoutes(auth: Auth) {
   // POST /api/account/phone/request-change — initiate phone change/add (sends OTP via SMS)
   app.post("/api/account/phone/request-change", async (c) => {
     const body = await c.req.json();
-    const session = c.get(SESSION_KEY);
-    if (!session) return c.json({ success: false, statusCode: 401 }, 401 as ContentfulStatusCode);
-
     const handler = c.get(SCOPE_KEY).resolve(IRequestPhoneChangeKey);
     const result = await handler.handleAsync({
-      userId: session.userId as string,
+      userId: uid(c),
       newPhone: body.newPhone as string,
       currentPassword: body.currentPassword as string,
     });
@@ -268,12 +247,9 @@ export function createAccountRoutes(auth: Auth) {
   // POST /api/account/phone/verify-change — verify OTP and apply phone change
   app.post("/api/account/phone/verify-change", async (c) => {
     const body = await c.req.json();
-    const session = c.get(SESSION_KEY);
-    if (!session) return c.json({ success: false, statusCode: 401 }, 401 as ContentfulStatusCode);
-
     const handler = c.get(SCOPE_KEY).resolve(IVerifyPhoneChangeKey);
     const result = await handler.handleAsync({
-      userId: session.userId as string,
+      userId: uid(c),
       code: body.code as string,
     });
     const status = (
@@ -285,12 +261,9 @@ export function createAccountRoutes(auth: Auth) {
   // DELETE /api/account/phone — remove user's phone (password-gated, no OTP)
   app.delete("/api/account/phone", async (c) => {
     const body = await c.req.json().catch(() => ({}));
-    const session = c.get(SESSION_KEY);
-    if (!session) return c.json({ success: false, statusCode: 401 }, 401 as ContentfulStatusCode);
-
     const handler = c.get(SCOPE_KEY).resolve(IRemovePhoneKey);
     const result = await handler.handleAsync({
-      userId: session.userId as string,
+      userId: uid(c),
       currentPassword: body.currentPassword as string,
     });
     const status = (

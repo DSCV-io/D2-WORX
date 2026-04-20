@@ -27,13 +27,18 @@ export {
 } from "./middleware/service-key.js";
 export { createAmbientScopeMiddleware } from "./middleware/ambient-scope.js";
 export { createScopeMiddleware } from "./middleware/scope.js";
+// Policy middleware moved to @d2/auth-policy. Re-export for backward compat
+// so existing tests (and any external importer) keep working through the
+// `@d2/auth-api` surface.
 export {
+  requireAuth,
   requireOrg,
   requireOrgType,
   requireRole,
   requireStaff,
   requireAdmin,
-} from "./middleware/authorization.js";
+  requireTrustedService,
+} from "@d2/auth-policy";
 
 // Route factories (exported for testing)
 export { createAuthRoutes } from "./routes/auth-routes.js";

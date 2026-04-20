@@ -12,7 +12,7 @@ import {
 import type { SessionVariables } from "../middleware/session.js";
 import { type ScopeVariables } from "../middleware/scope.js";
 import { SCOPE_KEY, SESSION_KEY } from "../context-keys.js";
-import { requireOrg, requireRole } from "../middleware/authorization.js";
+import { requireOrg, requireRole } from "@d2/auth-policy";
 
 /** Default and maximum page sizes for list endpoints. */
 const DEFAULT_LIMIT = 50;

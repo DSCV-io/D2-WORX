@@ -7,14 +7,15 @@
 using System.Text.Json.Serialization;
 using D2.Gateways.REST.Endpoints;
 using D2.Geo.Client;
-using D2.Shared.Auth.Default;
 using D2.Shared.DistributedCache.Redis;
 using D2.Shared.Handler.Extensions;
 using D2.Shared.I18n;
 using D2.Shared.Idempotency.Default;
+using D2.Shared.JwtAuth.Default;
 using D2.Shared.RateLimit.Default;
 using D2.Shared.RequestEnrichment.Default;
 using D2.Shared.ServiceDefaults;
+using D2.Shared.ServiceKey.Default;
 using D2.Shared.Translation.Default;
 using D2.Shared.Utilities.Configuration;
 using Serilog;
