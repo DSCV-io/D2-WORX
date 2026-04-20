@@ -12,6 +12,7 @@
     cancelLabel,
     variant = "default",
     onConfirm,
+    onCancel,
   }: {
     open?: boolean;
     title: string;
@@ -20,12 +21,23 @@
     cancelLabel?: string;
     variant?: "default" | "destructive";
     onConfirm: () => Promise<void>;
+    /**
+     * Fires when the dialog is dismissed without confirming — explicit Cancel
+     * button click, Escape key, or click outside. Use it to undo any optimistic
+     * state changes the caller made before opening the dialog.
+     */
+    onCancel?: () => void;
   } = $props();
 
   let loading = $state(false);
+  // Tracks whether the most recent open→close transition went through confirm.
+  // Used by the $effect below to fire onCancel for any other close path.
+  let confirmedThisOpen = $state(false);
+  let wasOpen = $state(false);
 
   async function handleConfirm() {
     loading = true;
+    confirmedThisOpen = true;
     try {
       await onConfirm();
       open = false;
@@ -33,6 +45,17 @@
       loading = false;
     }
   }
+
+  $effect(() => {
+    if (open) {
+      wasOpen = true;
+      confirmedThisOpen = false;
+    } else if (wasOpen) {
+      // Dialog just closed. If onConfirm wasn't the trigger, treat as cancel.
+      if (!confirmedThisOpen) onCancel?.();
+      wasOpen = false;
+    }
+  });
 </script>
 
 <AlertDialog.Root bind:open>

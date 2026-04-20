@@ -2,6 +2,7 @@
   import { cn } from "$lib/shared/utils/utils.js";
   import { Combobox } from "bits-ui";
   import { createInlineEditKeyHandler } from "$lib/shared/forms/inline-edit-keyboard.js";
+  import { isSaveCancelledError } from "$lib/shared/forms/save-cancelled-error.js";
   import InlineEditActions from "./inline-edit-actions.svelte";
   import InlineFieldStatusIcon from "./inline-field-status-icon.svelte";
   import CheckIcon from "@lucide/svelte/icons/check";
@@ -26,7 +27,6 @@
     validate,
     onSave,
     onDirtyChange,
-    balanced = false,
     class: className,
   }: {
     value?: string;
@@ -37,8 +37,6 @@
     validate?: (value: string) => string | undefined;
     onSave: (value: string) => Promise<void>;
     onDirtyChange?: (dirty: boolean) => void;
-    /** Mirrors the right-side action slot width on the left, so the field appears horizontally centered within its container. */
-    balanced?: boolean;
     class?: string;
   } = $props();
 
@@ -146,6 +144,12 @@
       }, 2000);
       return true;
     } catch (err) {
+      // User-cancelled flow (e.g., dismissed a confirmation modal). Stay
+      // dirty so save/revert reappear; do NOT show an error.
+      if (isSaveCancelledError(err)) {
+        saveState = "idle";
+        return false;
+      }
       errorMessage = err instanceof Error ? err.message : "Failed to save.";
       saveState = "error";
       validationStatus = "invalid";
@@ -166,7 +170,7 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-  class={cn("flex flex-col gap-1.5", balanced && "pl-[4.625rem]", className)}
+  class={cn("flex flex-col gap-1.5", className)}
   data-slot="inline-combobox"
   onkeydown={handleKeydown}
 >
