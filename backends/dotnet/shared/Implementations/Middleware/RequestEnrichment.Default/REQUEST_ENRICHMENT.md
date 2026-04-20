@@ -45,8 +45,8 @@ The middleware performs the following enrichment steps:
 The enrichment middleware creates the instance with network fields, then subsequent middleware mutates it:
 
 - **RequestEnrichmentMiddleware** — creates with network/geo fields (clientIp, fingerprints, WhoIs data)
-- **ServiceKeyMiddleware** (`Auth.Default`) — sets `IsTrustedService` flag
-- **JwtAuth + JwtFingerprintMiddleware** (`Auth.Default`) — sets identity/org fields (userId, agentOrg, targetOrg, etc.)
+- **ServiceKeyMiddleware** (`ServiceKey.Default`) — sets `IsTrustedService` flag
+- **JwtAuth + JwtFingerprintMiddleware** (`JwtAuth.Default`) — sets identity/org fields (userId, agentOrg, targetOrg, etc.)
 - **TranslationMiddleware** (`Translation.Default`) — translates D2Result message/inputError keys using locale resolved from request headers
 
 ### Network / Enrichment Fields (set by RequestEnrichmentMiddleware)

@@ -69,7 +69,7 @@ builder.Services
         options.Configuration.ChannelPrefix = StackExchange.Redis.RedisChannel.Literal("d2-signalr");
     });
 
-// JWT authentication — reuse shared Auth.Default middleware.
+// JWT authentication — reuse shared JwtAuth.Default middleware.
 // SignalR passes the token as ?access_token= query param during WebSocket upgrade.
 builder.Services.AddJwtAuth(builder.Configuration, "SIGNALR_AUTH");
 

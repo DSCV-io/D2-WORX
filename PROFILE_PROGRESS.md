@@ -60,7 +60,7 @@
 
 - [x] 4M. Avatar removal (DELETE /api/account/avatar, frontend Remove button)
 - [x] 4N. Account client module (account-client.ts — updateName, updateUsername, removeAvatar, updateLocale, bustSessionCache)
-- [x] 4O. Skeleton loading states (profile page fields, avatar, header avatar)
+- [x] 4O. Skeleton loading states (profile page fields, avatar, header avatar; email-phone tab fields/toggles (commit 360d0e3e))
 - [x] 4P. Contact data loss fix (fetch existing contact before UpdateContactsByExtKeys, abort on Geo failure)
 - [x] 4Q. Locale persistence (UpdateUserLocale CQRS handler + repo, BFF types, sign-in hydration cookie sync)
 - [x] 4R. Shared changeLocale() utility (both language modal + profile dropdown, awaits API + cache bust before reload)
@@ -83,13 +83,12 @@
 - [ ] 5A. Change Password form (current + new + confirm, wired to BetterAuth changePassword)
 - [ ] 5B. Active Sessions list (GET /api/account/sessions, UA parsing, per-session revoke)
 - [ ] 5C. Recent Logins (paginated sign-in events, Leaflet map with WhoIs locations)
-- [ ] 5D. Email & Phone tab — wire email display from user data (phone deferred)
-- [ ] 5E. Notification preferences — wire to backend when handlers exist (mock for now)
+- [x] 5D. Email & Phone tab — email display + verified badges, phone add/change/remove with OTP, notification preferences (gateway → Comms via user-centric RPC), skeleton loading states, immediate-save toggles
+- [x] 5E. Notification preferences — gateway + Comms wiring, i18n + defaults fix
 - [ ] **Review Checkpoint 5** — security/sessions/logins fully functional
 
 **Explicitly deferred:**
 
-- Phone number management (no backend support yet)
 - Account deletion (stubbed with toast, no backend support yet)
 
 ## Phase 6: Navigation Updates

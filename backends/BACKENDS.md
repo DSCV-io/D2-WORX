@@ -238,8 +238,11 @@ Implementations/ -> Common reusable implementations
 |   |
 |   |__ Idempotency.Default/ -> Idempotency-Key header middleware (Redis SET NX, response caching)
 |   |
-|   |__ Auth.Default/ -> JWT auth, service key validation, session fingerprint binding (.NET)
-|   |                     Node.js splits into @d2/service-key + @d2/session-fingerprint (+ @d2/csrf, Node-only)
+|   |__ JwtAuth.Default/ -> JWT Bearer + JWKS + fingerprint binding
+|   |
+|   |__ ServiceKey.Default/ -> S2S API key
+|   |
+|   |__ AuthPolicy.Default/ -> AuthPolicies constants + RoutePolicyExtensions (.RequireAuth(), .RequireOrg(), etc.)
 |   |
 |   |__ Translation.Default/ -> Gateway-edge D2Result message/inputError translation (resolves TK.* keys)
 |

@@ -5,7 +5,7 @@ Standalone .NET real-time push gateway. Accepts WebSocket connections from authe
 **Runtime:** ASP.NET Core (.NET 10)
 **Transport:** WebSocket (browser-facing) + gRPC (internal push)
 **Backplane:** Redis (StackExchangeRedis)
-**Auth:** JWT Bearer (RS256 JWKS via `Auth.Default`)
+**Auth:** JWT Bearer (RS256 JWKS via `JwtAuth.Default`)
 
 > **F6 scope: authenticated hub only.** Public hub + subscription tokens (anonymous/third-party support chat) deferred to Comms Stage B. See ADR-028 in [PLANNING.md](../../../../PLANNING.md) for the full two-tier design.
 
@@ -79,7 +79,7 @@ Proto: [`contracts/protos/realtime/v1/realtime_gateway.proto`](../../../../contr
 
 JWT is passed as `?access_token=` query parameter during WebSocket upgrade (standard SignalR convention -- WebSocket API does not support `Authorization` headers).
 
-The gateway reuses `Auth.Default` (`AddJwtAuth`) for RS256 JWKS validation against the Auth service. A `PostConfigure<JwtBearerOptions>` hook extracts the token from the query string for `/hub` paths, then delegates to the standard JWT validation pipeline.
+The gateway reuses `JwtAuth.Default` (`AddJwtAuth`) for RS256 JWKS validation against the Auth service. A `PostConfigure<JwtBearerOptions>` hook extracts the token from the query string for `/hub` paths, then delegates to the standard JWT validation pipeline.
 
 Config section: `SIGNALR_AUTH` (same shape as other .NET services).
 
@@ -152,7 +152,7 @@ backends/dotnet/gateways/SignalR/
 | ------------------------------------------------- | -------------------------------------- |
 | `D2.Shared.ServiceDefaults`                       | OTel, health, Prometheus, Serilog      |
 | `D2.Shared.Handler.Extensions`                    | Handler auth utilities (JwtClaimTypes) |
-| `D2.Shared.Auth.Default`                          | JWT Bearer auth (RS256 JWKS)           |
+| `D2.Shared.JwtAuth.Default`                       | JWT Bearer auth (RS256 JWKS)           |
 | `D2.Shared.Protos.DotNet`                         | Proto-generated RealtimeGateway types  |
 | `Grpc.AspNetCore`                                 | gRPC server hosting                    |
 | `Microsoft.AspNetCore.SignalR.StackExchangeRedis` | Redis backplane for SignalR            |

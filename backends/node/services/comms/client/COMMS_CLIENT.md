@@ -30,21 +30,33 @@ client/
 
 ## Universal Message Shape
 
-Every notification published through the client uses a single `NotifyInput` shape. The Comms service decides which channels to use based on the recipient's contact data, the `sensitive` flag, and `urgency`.
+Every notification published through the client uses a single `NotifyInput` shape. The Comms service decides which channels to use based on the caller-supplied `channels` array, the `urgency` flag, and the recipient's stored channel preferences.
 
-| Field                | Type                      | Required | Description                                                 |
-| -------------------- | ------------------------- | -------- | ----------------------------------------------------------- |
-| `recipientContactId` | `string` (UUID)           | Yes      | Geo contact ID -- the ONLY recipient identifier             |
-| `title`              | `string` (max 255)        | Yes      | Email subject, SMS prefix, push title                       |
-| `content`            | `string` (max 50,000)     | Yes      | Markdown body -- rendered to HTML for email                 |
-| `plaintext`          | `string` (max 50,000)     | Yes      | Plain text -- SMS body, email fallback                      |
-| `sensitive`          | `boolean`                 | No       | Default `false`. When `true`, email only (secure channel)   |
-| `urgency`            | `"normal"` \| `"urgent"`  | No       | Default `"normal"`. `"urgent"` bypasses prefs, all channels |
-| `correlationId`      | `string` (max 36)         | Yes      | Idempotency key for deduplication                           |
-| `senderService`      | `string` (max 50)         | Yes      | Source service identifier (e.g. `"auth"`, `"billing"`)      |
-| `metadata`           | `Record<string, unknown>` | No       | Arbitrary key-value pairs for future use                    |
+| Field                | Type                      | Required | Description                                                                  |
+| -------------------- | ------------------------- | -------- | ---------------------------------------------------------------------------- |
+| `recipientContactId` | `string` (UUID)           | Yes      | Geo contact ID -- the ONLY recipient identifier                              |
+| `title`              | `string` (max 255)        | Yes      | Email subject, SMS prefix, push title                                        |
+| `content`            | `string` (max 50,000)     | Yes      | Markdown body -- rendered to HTML for email                                  |
+| `plaintext`          | `string` (max 50,000)     | Yes      | Plain text -- SMS body, email fallback                                       |
+| `channels`           | `Channel[]`               | No       | Explicit caller override -- attempt exactly these channels. Empty/omitted = fall back to the recipient's stored channel preferences. `Channel = "email" \| "sms"` from `@d2/comms-domain` |
+| `urgency`            | `"normal"` \| `"urgent"`  | No       | Default `"normal"`. `"urgent"` forces ALL channels (email + sms), overriding both `channels` and recipient preferences |
+| `correlationId`      | `string` (max 36)         | Yes      | Idempotency key for deduplication                                            |
+| `senderService`      | `string` (max 50)         | Yes      | Source service identifier (e.g. `"auth"`, `"billing"`)                       |
+| `metadata`           | `Record<string, unknown>` | No       | Arbitrary key-value pairs for future use                                     |
 
 All fields are validated via Zod before publishing.
+
+### Channel Resolution Precedence
+
+The Comms service applies the `resolveChannels` rule (in `@d2/comms-domain/rules/channel-resolution.ts`):
+
+1. **`urgency === "urgent"`** -- force ALL channels (`email` + `sms`); ignore `channels` and recipient preferences
+2. **`channels` non-empty** -- caller override: use exactly these channels; recipient preferences are ignored
+3. **`channels` empty/undefined** -- fall back to recipient preferences (`emailEnabled`, `smsEnabled`)
+
+Channel preferences are **opt-out**: when a recipient has no `channel_preference` row, both `emailEnabled` and `smsEnabled` default to `true`.
+
+Use `channels: ["email"]` for tokens / PII / anything that must not leak via SMS. Leave `channels` unset to honour the recipient's stored preferences.
 
 ---
 
@@ -98,7 +110,7 @@ const contacts = await getContactsByExtKeys.handleAsync({
   relatedEntityId: userId,
 });
 
-// 2. Publish notification
+// 2. Publish notification (email-only -- contains a reset token)
 const notify = scope.resolve(INotifyKey);
 await notify.handleAsync({
   recipientContactId: contacts.data![0].id,
@@ -107,7 +119,7 @@ await notify.handleAsync({
   plaintext: "Visit https://... to reset your password.",
   correlationId: crypto.randomUUID(),
   senderService: "auth",
-  sensitive: true,
+  channels: ["email"],
 });
 ```
 
@@ -118,8 +130,9 @@ await notify.handleAsync({
 | Decision                           | Rationale                                                                                                   |
 | ---------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | **Contacts only, never userIds**   | Decouples identity from delivery. Comms resolves addresses from Geo contacts, never queries Auth            |
-| **`sensitive` gates channel**      | `true` restricts to email only (encrypted transport). SMS/push excluded for PII-heavy content               |
-| **`urgency` bypasses preferences** | `"urgent"` forces delivery on all available channels regardless of user notification preferences            |
+| **Explicit `channels[]` override** | Caller supplies exactly which channels to attempt (e.g., `["email"]` for tokens / PII). Replaces the older opaque `sensitive: boolean` flag with something the caller controls precisely |
+| **Empty `channels` -> use prefs**  | Omitting `channels` (or passing `[]`) falls through to the recipient's stored `channel_preference` row. Defaults are opt-out (both channels enabled) when no preference row exists |
+| **`urgency` overrides everything** | `"urgent"` forces delivery on ALL channels regardless of `channels` or recipient notification preferences   |
 | **Fire-and-forget via RabbitMQ**   | Publisher returns success once the message is enqueued. Comms handles retries, rendering, and delivery      |
 | **No-op without publisher**        | When `publisher` is omitted, handler logs the notification and returns `Ok` -- safe for tests and local dev |
 | **Single exchange, no routing**    | All notifications go to `comms.notifications` fanout exchange with empty routing key                        |

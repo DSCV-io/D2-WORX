@@ -32,7 +32,6 @@ src/
   composition-root.ts       createApp() — DI wiring, BetterAuth, Hono pipeline
   geo/                      Geo client configuration (context keys, caching)
   middleware/
-    authorization.ts        requireOrg, requireOrgType, requireRole, requireStaff, requireAdmin
     cors.ts                 CORS middleware factory
     csrf.ts                 CSRF protection (Origin header validation)
     distributed-rate-limit.ts  Rate limiting middleware (Redis sliding window)
@@ -176,13 +175,17 @@ When `authApiKeys` is configured, the gRPC server wraps all handlers with `withA
 
 ## Authorization Middleware
 
-| Middleware         | Purpose                                                  |
-| ------------------ | -------------------------------------------------------- |
-| `requireOrg()`     | Active org required (orgId + valid orgType + valid role) |
-| `requireOrgType()` | Session orgType must be in allowed set                   |
-| `requireRole()`    | Session role must meet minimum hierarchy level           |
-| `requireStaff()`   | Shorthand for `requireOrgType("admin", "support")`       |
-| `requireAdmin()`   | Shorthand for `requireOrgType("admin")`                  |
+Policy middleware lives in `@d2/auth-policy` (`backends/node/shared/implementations/middleware/auth-policy/default/`). `auth-api`'s `index.ts` re-exports them for backward compatibility.
+
+| Middleware                | Purpose                                                  |
+| ------------------------- | -------------------------------------------------------- |
+| `requireAuth()`           | Authenticated request required (session or trusted service) |
+| `requireTrustedService()` | Trusted service (`X-Api-Key`) required                   |
+| `requireOrg()`            | Active org required (orgId + valid orgType + valid role) |
+| `requireOrgType()`        | Session orgType must be in allowed set                   |
+| `requireRole()`           | Session role must meet minimum hierarchy level           |
+| `requireStaff()`          | Shorthand for `requireOrgType("admin", "support")`       |
+| `requireAdmin()`          | Shorthand for `requireOrgType("admin")`                  |
 
 ## Configuration
 
@@ -222,6 +225,7 @@ Job options are only parsed when `AUTH_APP__SIGNINEVENTRETENTIONDAYS` is set. Wh
 | `@d2/auth-app`           | CQRS handlers, service keys                            |
 | `@d2/auth-domain`        | Constants, enums, session fields                       |
 | `@d2/auth-infra`         | BetterAuth factory, config, migrations, throttle       |
+| `@d2/auth-policy`        | Authorization middleware (requireAuth, requireOrg, requireRole, etc.) |
 | `@d2/cache-memory`       | Local caches (WhoIs, throttle, contacts, HIBP)         |
 | `@d2/cache-redis`        | Redis handlers (session storage, throttle, rate limit) |
 | `@d2/comms-client`       | `INotifyKey` for sending notifications via comms       |

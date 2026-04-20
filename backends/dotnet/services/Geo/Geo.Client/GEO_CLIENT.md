@@ -6,7 +6,7 @@ Service-owned client library for the Geo microservice. Contains messages, handle
 
 | File Name                                  | Description                                                                                                                                                                                                                               |
 | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Extensions.cs](Extensions.cs)             | DI extension methods: `AddGeoRefDataConsumer`, `AddGeoRefDataProvider`, `AddWhoIsCache`, `AddContactHandlers`.                                                                                                                            |
+| [Extensions.cs](Extensions.cs)             | DI extension methods: `AddGeoRefDataConsumer` (auto-registers `UpdatedConsumerService` + `ContactEvictionConsumerService` hosted services), `AddGeoRefDataProvider`, `AddWhoIsCache`, `AddContactHandlers`.                                |
 | [GeoClientOptions.cs](GeoClientOptions.cs) | Configuration options for WhoIs cache, contact cache, `AllowedContextKeys`, `ApiKey`, and circuit breaker settings.                                                                                                                       |
 | [Geo.Client.csproj](Geo.Client.csproj)     | Project file with dependencies on Handler, I18n, InMemoryCache.Default, Interfaces, Messaging.RabbitMQ, Protos.DotNet, Result.Extensions, Utilities, Grpc.Net.ClientFactory, and Microsoft.Extensions.Configuration/Hosting.Abstractions. |
 
@@ -154,6 +154,52 @@ This allows input logging to remain enabled (useful for debugging) while ensurin
 
 ---
 
+## Cache-Invalidation Consumer Auto-Wiring
+
+The Geo service emits two fanout events that consumers must subscribe to in order to keep their local memory caches coherent across processes:
+
+| Event                     | Exchange                            | Purpose                                                                            |
+| ------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------- |
+| `GeoRefDataUpdatedEvent`  | `events.geo.refdata.updated`        | Geo published new reference data — refetch + repopulate all ref-data cache tiers.  |
+| `ContactsEvictedEvent`    | `events.geo.contacts.evicted`       | Geo deleted/replaced contacts — evict matching IDs and ext-keys from local memory. |
+
+Without these subscriptions, the local memory cache silently drifts whenever Geo mutates data (a contact deleted on instance A is still served stale by instance B). Both are fanout exchanges, so each consumer process binds its own auto-deleted queue (`{exchange}.{instanceId}`) and receives every event.
+
+### .NET — Auto-Registration via `AddGeoRefDataConsumer`
+
+Calling `services.AddGeoRefDataConsumer(configuration)` now automatically registers both consumer hosted services:
+
+```csharp
+services.AddHostedService<UpdatedConsumerService>();        // ref-data updates
+services.AddHostedService<ContactEvictionConsumerService>();// contact evictions
+```
+
+Composition roots that register the Geo client get cache invalidation for free — no extra wiring required. Each consumer creates its own auto-deleted queue per process so every instance receives every event.
+
+### Node.js — Opt-in via `wireGeoClientConsumers(options)`
+
+`@d2/geo-client` exports a `wireGeoClientConsumers(options)` helper. Composition roots that have a connected `MessageBus` call it once after the bus is connected:
+
+```typescript
+import { wireGeoClientConsumers } from "@d2/geo-client";
+
+// After the MessageBus is connected and the cache store is registered:
+await wireGeoClientConsumers({
+  bus,
+  cacheStore,
+  logger,
+  // Optional — only services that cache ref-data wire the Updated handler:
+  updatedHandlerFactory: () => new RefDataUpdatedHandler(...),
+});
+```
+
+- `ContactsEvicted` is auto-constructed (only needs the local cache store) and always wired.
+- `Updated` (ref-data) is opt-in via the caller-supplied `updatedHandlerFactory` — services that don't cache ref-data omit it.
+
+The Auth and Comms Node services already call this helper in their composition roots.
+
+---
+
 ## Security — API Key + Context Key Validation
 
 Contacts are only accessible externally via ext keys (`contextKey` + `relatedEntityId`). ID-based get/delete are removed from client libraries (proto RPCs remain for Geo's internal use).
@@ -183,7 +229,7 @@ Reusable FluentValidation validators for proto-generated DTOs, exported as singl
 
 | File Name                                                             | Description                                                                                                                                                                                                                |
 | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [ContactToCreateValidator.cs](Validators/ContactToCreateValidator.cs) | Aggregate validator for `ContactToCreateDTO`. Mirrors Geo domain factory constraints (names 255, company 255, website 2048, `ietf_bcp47_tag` max 35, emails, phones). Supports indexed property names for bulk validation. |
+| [ContactToCreateValidator.cs](Validators/ContactToCreateValidator.cs) | Aggregate validator for `ContactToCreateDTO`. Mirrors Geo domain factory constraints (names 255, company 255, website 2048, `ietf_bcp47_tag` max 35, optional `iana_identifier`, emails, phones). Supports indexed property names for bulk validation. |
 
 ---
 
@@ -221,6 +267,9 @@ builder.Services.AddWhoIsCache(builder.Configuration, servicePrefix: "GATEWAY");
 builder.Services.AddContactHandlers(builder.Configuration, servicePrefix: "AUTH");
 
 // 4. Register reference data consumer (multi-tier cache: mem → Redis → disk → gRPC).
+//    Also auto-registers UpdatedConsumerService + ContactEvictionConsumerService
+//    hosted services so the local memory cache stays coherent across instances
+//    when Geo publishes ref-data updates or contact evictions.
 builder.Services.AddGeoRefDataConsumer(builder.Configuration);
 ```
 
@@ -379,6 +428,7 @@ const result = await createContacts.handleAsync({
         phoneNumbers: [],
       },
       ietfBcp47Tag: "en-US",
+      ianaIdentifier: "America/New_York",
     },
   ],
 });

@@ -170,6 +170,7 @@ Individual or organizational contact information with optional location referenc
 - ContextKey for categorization/caching
 - RelatedEntityId for loose coupling to external entities
 - IETFBCP47Tag (BCP 47 string, max 35 chars, defaults to `"en-US"`) - FK to Locale reference entity. Navigation property provides access to associated Locale. Synced from User.locale for async notification language resolution by Comms service
+- IANAIdentifier (canonical IANA timezone string, e.g. `"America/New_York"`, `"Europe/London"`) - optional. Recipient's preferred display timezone for date/time formatting in notifications and UI surfaces
 - Optional nested value objects: ContactMethods, Personal, Professional
 - Optional FK to Location (hex string hash)
 
@@ -179,6 +180,7 @@ Individual or organizational contact information with optional location referenc
 - CreatedAt always UTC (display timezone conversion in UI)
 - LocationHashId is a hex string to match Location primary key type
 - IETFBCP47Tag enables the Comms service to deliver notifications in the recipient's preferred language. The FK to Locale enforces referential integrity against valid BCP 47 tags in the reference data
+- IANAIdentifier is optional (`null` when unknown) — services that format date/time for the contact (Comms templates, UI rendering) fall back to the locale's default zone or UTC when not set. Stored as a free-form IANA string rather than an FK because the IANA tz database is large, externally maintained, and not modeled as Geo reference data
 
 #### Location
 

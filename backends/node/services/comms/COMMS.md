@@ -101,7 +101,7 @@ message
 +-- content             text NOT NULL (markdown -- rendered to HTML for email)
 +-- plain_text_content  text NOT NULL (plain text -- SMS body, email fallback)
 +-- content_format      varchar(20) DEFAULT "markdown"
-+-- sensitive           boolean DEFAULT false
++-- channels            jsonb? (Channel[] -- caller-supplied list of channels to attempt; null/empty = use prefs)
 +-- urgency             varchar(20) DEFAULT "normal" ("normal" | "urgent")
 +-- related_entity_id   UUID?
 +-- related_entity_type varchar(100)?
@@ -224,13 +224,15 @@ Callers are responsible for providing a contactId (resolved from their own domai
 
 ### Channel Resolution
 
-After resolving the recipient address, Deliver looks up channel preferences by `contactId`. Three rules control channel selection:
+After resolving the recipient address, Deliver looks up channel preferences by `contactId`. The `resolveChannels` rule (in `@d2/comms-domain/rules/channel-resolution.ts`) is the source of truth and applies the following precedence:
 
-1. **`sensitive: true`** -- email ONLY (safety: tokens/PII must not leak via SMS)
-2. **`urgency: "urgent"`** -- forces all channels (email + SMS), bypasses preferences
-3. **`urgency: "normal"`** -- respects all channel preferences
+1. **`urgency === "urgent"`** -- forces ALL channels (`email` + `sms`), overrides everything below
+2. **`channels` non-empty** -- caller-supplied override: use exactly those channels, ignore recipient preferences
+3. **`channels` empty/undefined** -- fall back to recipient channel preferences (`emailEnabled`, `smsEnabled`)
 
-No quiet hours. No requested-channels override. The `sensitive` and `urgency` fields on the Message entity are the only inputs to channel resolution.
+The `Channel` type is `"email" | "sms"` (defined in `@d2/comms-domain`). Channel preference defaults are **opt-out**: when no `channel_preference` row exists for a contact, both `emailEnabled` and `smsEnabled` default to `true`.
+
+No quiet hours. The `channels` array and `urgency` field on the Message entity are the only caller-controlled inputs to channel resolution.
 
 ### Known Limitation: SMS Without Provider
 
@@ -492,8 +494,8 @@ await notify.handleAsync({
 | `title`              | `string` (max 255)        | Yes      | Email subject, SMS prefix, push title                  |
 | `content`            | `string` (max 50,000)     | Yes      | Markdown body -- rendered to HTML for email            |
 | `plaintext`          | `string` (max 50,000)     | Yes      | Plain text -- SMS body, email fallback                 |
-| `sensitive`          | `boolean`                 | No       | Default `false`. When `true`, email only (secure)      |
-| `urgency`            | `"normal"` \| `"urgent"`  | No       | Default `"normal"`. `"urgent"` bypasses prefs          |
+| `channels`           | `Channel[]`               | No       | Caller override -- exactly these channels. Empty/omitted = use recipient prefs |
+| `urgency`            | `"normal"` \| `"urgent"`  | No       | Default `"normal"`. `"urgent"` forces all channels     |
 | `correlationId`      | `string` (max 36)         | Yes      | Idempotency key for deduplication                      |
 | `senderService`      | `string` (max 50)         | Yes      | Source service identifier (e.g. `"auth"`, `"billing"`) |
 | `metadata`           | `Record<string, unknown>` | No       | Arbitrary key-value pairs for future use               |
@@ -542,8 +544,8 @@ backends/node/services/comms/
 |       +-- implementations/
 |       |   +-- cqrs/handlers/
 |       |       +-- x/                 (Deliver)
-|       |       +-- c/                 (SetChannelPreference)
-|       |       +-- q/                 (GetChannelPreference, RecipientResolver)
+|       |       +-- c/                 (SetChannelPreference, SetUserChannelPreference)
+|       |       +-- q/                 (GetChannelPreference, GetUserChannelPreference, RecipientResolver)
 |       +-- registration.ts   (addCommsApp -- DI wiring)
 |       +-- service-keys.ts   (DI service key definitions)
 |       +-- index.ts
@@ -581,12 +583,14 @@ backends/node/services/comms/
 
 ### App Layer (comms-app)
 
-| Handler                | Type    | Category | Description                                                                                                                                                 |
-| ---------------------- | ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Deliver`              | Complex | `x/`     | Orchestrates full delivery: create Message + DeliveryRequest, resolve recipient, resolve channels, render markdown, dispatch via providers, record attempts |
-| `RecipientResolver`    | Query   | `q/`     | Resolves email/phone from contactId via geo-client `GetContactsByIds`                                                                                       |
-| `SetChannelPreference` | Command | `c/`     | Creates or updates channel preferences for a contact                                                                                                        |
-| `GetChannelPreference` | Query   | `q/`     | Returns channel preferences for a contact (creates defaults if missing)                                                                                     |
+| Handler                    | Type    | Category | Description                                                                                                                                                                                                                                                                              |
+| -------------------------- | ------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Deliver`                  | Complex | `x/`     | Orchestrates full delivery: create Message + DeliveryRequest, resolve recipient, resolve channels, render markdown, dispatch via providers, record attempts                                                                                                                              |
+| `RecipientResolver`        | Query   | `q/`     | Resolves email/phone from contactId via geo-client `GetContactsByIds`                                                                                                                                                                                                                    |
+| `SetChannelPreference`     | Command | `c/`     | Creates or updates channel preferences for a `contactId`                                                                                                                                                                                                                                 |
+| `GetChannelPreference`     | Query   | `q/`     | Returns channel preferences for a `contactId` (creates defaults if missing)                                                                                                                                                                                                              |
+| `SetUserChannelPreference` | Command | `c/`     | User-centric variant. Accepts `(contextKey, relatedEntityId)`, resolves contact via geo-client `GetContactsByExtKeys` (memory-cached), then delegates to `SetChannelPreference`. Returns `404 NOT_FOUND` when no Geo contact exists for the user (can't attach prefs to a missing contact) |
+| `GetUserChannelPreference` | Query   | `q/`     | User-centric variant. Accepts `(contextKey, relatedEntityId)`, resolves contact via geo-client `GetContactsByExtKeys` (memory-cached), then delegates to `GetChannelPreference`. Returns `pref: undefined` when the user has no Geo contact yet -- caller treats that as "use defaults"   |
 
 ### Repository Interfaces (comms-app) + Implementations (comms-infra)
 
@@ -604,6 +608,30 @@ backends/node/services/comms/
 | `MarkDeliveryRequestProcessed`       | `u/`     | delivery_request   |
 | `UpdateDeliveryAttemptStatus`        | `u/`     | delivery_attempt   |
 | `UpdateChannelPreferenceRecord`      | `u/`     | channel_preference |
+
+---
+
+## gRPC API Surface
+
+The Comms gRPC server (`@d2/comms-api`) exposes the handlers above as RPCs consumed by the .NET REST gateway. Channel-preference RPCs come in two flavours: a low-level **contact-id-based** pair, and a higher-level **user-centric** pair that resolves the contact for the caller.
+
+| RPC                          | Handler                    | Purpose                                                                               |
+| ---------------------------- | -------------------------- | ------------------------------------------------------------------------------------- |
+| `GetChannelPreference`       | `GetChannelPreference`     | Direct contact-id lookup (creates defaults if missing). Used by service-to-service callers that already have a `contactId` |
+| `SetChannelPreference`       | `SetChannelPreference`     | Direct contact-id upsert. Used by service-to-service callers that already have a `contactId`                               |
+| `GetUserChannelPreference`   | `GetUserChannelPreference` | Accepts `(contextKey, relatedEntityId)`, internally resolves contact via `GetContactsByExtKeys` (memory-cached), then delegates to `GetChannelPreference`. Returns `pref: undefined` when the user has no Geo contact yet -- caller treats that as "use defaults" |
+| `SetUserChannelPreference`   | `SetUserChannelPreference` | Accepts `(contextKey, relatedEntityId)`, internally resolves contact via `GetContactsByExtKeys` (memory-cached), then delegates to `SetChannelPreference`. Returns `404 NOT_FOUND` when no contact exists (can't attach prefs to a missing contact) |
+
+### HTTP Equivalents (gateway routes)
+
+The .NET REST gateway exposes the user-centric pair as the public HTTP surface for end-user notification preference management:
+
+| Method | Path                              | Delegates to RPC             |
+| ------ | --------------------------------- | ---------------------------- |
+| GET    | `/api/v1/notification-preferences` | `GetUserChannelPreference`   |
+| PUT    | `/api/v1/notification-preferences` | `SetUserChannelPreference`   |
+
+The gateway derives `contextKey` (e.g., `auth_user`) and `relatedEntityId` (the authenticated user's id) from the JWT, so the browser never supplies them. The contact-id RPCs are not exposed over HTTP -- they are reserved for trusted service-to-service calls where the `contactId` is already known.
 
 ---
 
@@ -683,8 +711,8 @@ backends/node/services/comms/
 
 - [x] Domain entities: Message, DeliveryRequest, DeliveryAttempt, ChannelPreference
 - [x] Domain entities (Stage C): Thread, ThreadParticipant, MessageAttachment, MessageReaction, MessageReceipt (fully implemented, not stubs)
-- [x] Domain rules: channel resolution (sensitive -> email only, urgent -> bypass prefs, normal -> follow prefs), retry policy, recipient validation, message validation
-- [x] App layer: Deliver handler (orchestrator), RecipientResolver, SetChannelPreference, GetChannelPreference
+- [x] Domain rules: channel resolution (urgent -> force all channels, caller `channels[]` override, else fall back to recipient prefs), retry policy, recipient validation, message validation
+- [x] App layer: Deliver handler (orchestrator), RecipientResolver, SetChannelPreference, GetChannelPreference, SetUserChannelPreference, GetUserChannelPreference
 - [x] Infra: Drizzle schema + migrations (message, delivery_request, delivery_attempt, channel_preference)
 - [x] Infra: 12 repository handlers (4 create, 5 find, 3 update)
 - [x] Infra: Email provider (Resend API), SMS provider (Twilio API)
@@ -734,7 +762,8 @@ backends/node/services/comms/
 - **No per-event sub-handlers**: Removed HandleVerificationEmail, HandlePasswordReset, HandleInvitationEmail. All notifications use the universal message shape -- the Deliver handler handles everything generically.
 - **No event registry**: Removed event type -> handler dispatch mapping. The notification consumer dispatches all messages directly to the Deliver handler.
 - **No template wrappers**: Removed template_wrapper table and entity. Email HTML wrapping uses a single hardcoded default template with `{{title}}`, `{{body}}`, `{{unsubscribeUrl}}` placeholders.
-- **No quiet hours**: Removed from channel preferences. Channel resolution uses only `sensitive` and `urgency` fields.
+- **No quiet hours**: Removed from channel preferences. Channel resolution uses only the caller-supplied `channels` array, the `urgency` flag, and the recipient's `channel_preference` row.
+- **Explicit `channels` array replaces `sensitive` flag**: The opaque `sensitive: boolean` field was removed in favour of an explicit `channels: Channel[]` array on the universal message shape. Callers either supply the exact channels to attempt (e.g., `["email"]` for tokens/PII) or leave it empty to fall back to recipient preferences. `urgency: "urgent"` still overrides everything and forces all channels.
 - **No userId resolution**: Removed recipientUserId from DeliveryRequest. All recipients resolved via contactId only. Sending services are responsible for resolving userId -> contactId before publishing.
 - **Two urgency levels only**: `"normal"` and `"urgent"` (removed `"important"`). Simple binary: respect prefs or bypass prefs.
 - **Markdown rendering**: `marked` + `isomorphic-dompurify` for XSS-safe server-side HTML email rendering. No client-side rendering for transactional emails.
@@ -758,7 +787,7 @@ backends/node/services/comms/
 | Markdown rendering   | N/A                                      | `marked` + `isomorphic-dompurify` (server-side for email)      |
 | Sender API           | `Context.Messaging.Commands.Notify`      | `@d2/comms-client` Notify handler -> RabbitMQ fanout           |
 | Recipient resolution | Inline DB lookup in Notify handler       | geo-client `GetContactsByIds` (contactId only)                 |
-| Channel preferences  | PG NotificationSettings per user/contact | Per-contact prefs with `sensitive` + `urgency` channel control |
+| Channel preferences  | PG NotificationSettings per user/contact | Per-contact prefs + explicit `channels[]` override + `urgency` |
 | In-app notifications | PG Notification table                    | Same + real-time push via SignalR gateway                      |
 | Threads / chat       | PG Thread + Message model                | Same concept, org-scoped, real-time via SignalR                |
 | Recipients           | Only via contactId                       | contactId only (no userId, no direct email/phone)              |

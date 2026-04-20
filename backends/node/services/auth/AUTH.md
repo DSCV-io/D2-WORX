@@ -17,11 +17,13 @@ This document describes the complete authentication and authorization infrastruc
 9. [Fail-Closed vs Fail-Open Matrix](#fail-closed-vs-fail-open-matrix)
 10. [CQRS Handlers](#cqrs-handlers)
 11. [Request Flow Diagrams](#request-flow-diagrams) (includes [plain-language overview](#how-authentication-works-plain-language-overview))
-12. [Constants Cross-Reference](#constants-cross-reference)
-13. [Security Controls Summary](#security-controls-summary)
-14. [Known Security Gaps & Pre-Production Requirements](#known-security-gaps--pre-production-requirements)
-15. [Secure Endpoint Construction Checklist](#secure-endpoint-construction-checklist)
-16. [Test Coverage Map](#test-coverage-map)
+12. [Email & Phone Change (OTP)](#email--phone-change-otp)
+13. [Cross-Service Consistency (SAGA Pattern)](#cross-service-consistency-saga-pattern)
+14. [Constants Cross-Reference](#constants-cross-reference)
+15. [Security Controls Summary](#security-controls-summary)
+16. [Known Security Gaps & Pre-Production Requirements](#known-security-gaps--pre-production-requirements)
+17. [Secure Endpoint Construction Checklist](#secure-endpoint-construction-checklist)
+18. [Test Coverage Map](#test-coverage-map)
 
 ---
 
@@ -417,6 +419,17 @@ BetterAuth is session-based at its core. Sessions use 3-tier storage for perform
 1. **Revocation**: `revokeSession` deletes from Redis + PG. Cookie cache expires naturally in ≤5min
 1. **Expiry**: Session TTL enforced at all 3 tiers
 
+### Locale & Timezone Hydration on Sign-Up
+
+SvelteKit sets two browser-derived cookies on every page load (defaults to whatever the browser reports — no user action required):
+
+| Cookie        | Source                                                  | Purpose                                            |
+| ------------- | ------------------------------------------------------- | -------------------------------------------------- |
+| `D2_LOCALE`   | Negotiated locale (Paraglide / `Accept-Language`)       | UI language preference                             |
+| `D2_TIMEZONE` | `Intl.DateTimeFormat().resolvedOptions().timeZone`      | IANA timezone identifier (e.g., `America/Toronto`) |
+
+The BetterAuth sign-up callback reads BOTH cookies off the inbound request and persists them onto the new `user` row (`user.locale`, `user.timezone`). New users land in the system with their browser's locale and timezone preserved — no post-sign-up onboarding step needed for either field. After sign-up, the profile page dropdowns let the user change either independently via `UpdateUserLocale` / `UpdateUserTimezone` (both follow the SAGA pattern — see [Cross-Service Consistency](#cross-service-consistency-saga-pattern)).
+
 ### Cookie Signing & Token Types
 
 BetterAuth distinguishes between **raw session tokens** and **signed cookie values**. This is critical for understanding how different auth paths work.
@@ -586,7 +599,7 @@ Two independent fingerprint checks prevent token theft:
 
 ### 2. JWT Fingerprint (.NET Gateway)
 
-**Where**: `Auth.Default/JwtFingerprintMiddleware.cs` + `Auth.Default/JwtFingerprintValidator.cs` (in `backends/dotnet/shared/Implementations/Middleware/Auth.Default/`)
+**Where**: `JwtAuth.Default/JwtFingerprintMiddleware.cs` + `JwtAuth.Default/JwtFingerprintValidator.cs` (in `backends/dotnet/shared/Implementations/Middleware/JwtAuth.Default/`)
 
 **Formula**: `SHA-256(User-Agent + "|" + Accept)` (identical to Node.js)
 
@@ -706,16 +719,16 @@ The composition root builds the pipeline in this exact order:
 
 ### .NET Gateway Middleware Order
 
-Auth middleware has moved from gateway-local (`REST/Auth/`) to shared packages at `backends/dotnet/shared/Implementations/Middleware/Auth.Default/` and `Translation.Default/`.
+Auth middleware has moved from gateway-local (`REST/Auth/`) to shared packages at `backends/dotnet/shared/Implementations/Middleware/JwtAuth.Default/`, `ServiceKey.Default/`, `AuthPolicy.Default/`, and `Translation.Default/`.
 
 ```
 1.  Security headers (X-Content-Type-Options: nosniff, X-Frame-Options: DENY)
 2.  CORS
 3.  Request enrichment (IP resolution, fingerprint, WhoIs)
-4.  Service key detection (Auth.Default — X-Api-Key → sets IsTrustedService flag)
+4.  Service key detection (ServiceKey.Default — X-Api-Key → sets IsTrustedService flag)
 5.  Rate limiting (multi-dimensional sliding window — skipped for trusted services)
-6.  Authentication (Auth.Default — JWT Bearer via JWKS)
-7.  Fingerprint validation (Auth.Default — fp claim vs computed — skipped for trusted services)
+6.  Authentication (JwtAuth.Default — JWT Bearer via JWKS)
+7.  Fingerprint validation (JwtAuth.Default — fp claim vs computed — skipped for trusted services)
 8.  Request context logging
 9.  Authorization (policy evaluation)
 10. Idempotency (for POST/PUT/PATCH)
@@ -877,6 +890,137 @@ Browser ──JWT (in-memory)──► .NET Gateway
 8. Client sends JWT to .NET Gateway in Authorization header
 9. Gateway validates via JWKS public key (cached)
 ```
+
+---
+
+## Email & Phone Change (OTP)
+
+Account change flows for email and phone use a two-step OTP ritual: `request-change` (validates password, issues OTP) → `verify-change` (validates code, applies change). Both factors share storage, rate-limit, and attempt-budget mechanics, differing only in TTL and delivery channel.
+
+### CQRS Handlers (`@d2/auth-app`)
+
+| Handler              | Category | Purpose                                                                                             |
+| -------------------- | -------- | --------------------------------------------------------------------------------------------------- |
+| `RequestEmailChange` | Command  | Password-gated; issues 15-min email OTP, publishes comms notification to the PENDING new email     |
+| `VerifyEmailChange`  | Command  | Validates OTP; applies email change; sends security notification to the OLD email                  |
+| `RequestPhoneChange` | Command  | Password-gated; issues 5-min SMS OTP, publishes comms notification to the PENDING new phone number |
+| `VerifyPhoneChange`  | Command  | Validates OTP; applies phone change + sets `phoneVerified: true`                                   |
+| `RemovePhone`        | Command  | Password-gated; clears `phone` + `phoneVerified` (no OTP — password is the gate)                   |
+
+### BetterAuth User Fields
+
+Two new user-table fields added via `user.additionalFields`:
+
+| Field           | Type                     | Notes                                                                                   |
+| --------------- | ------------------------ | --------------------------------------------------------------------------------------- |
+| `phone`         | `text`, nullable, unique | Unique partial index: `CREATE UNIQUE INDEX ... ON user (phone) WHERE phone IS NOT NULL` |
+| `phoneVerified` | `boolean`, default false | Set to `true` only on successful `VerifyPhoneChange`                                    |
+
+### OTP Storage (Verification Table Reuse)
+
+OTPs piggyback on BetterAuth's existing `verification` table — no new schema. One active record per change type per user.
+
+| Field        | Value                                                            |
+| ------------ | ---------------------------------------------------------------- |
+| `identifier` | `account-change:{type}:{userId}` where `type` ∈ {`email`,`phone`} |
+| `value`      | JSON: `{ codeHash, pendingValue, attempts }`                     |
+| `expiresAt`  | now + TTL (see below)                                            |
+
+- `codeHash`: scrypt hash of the 6-digit code
+- `pendingValue`: the new email / phone being claimed
+- `attempts`: wrong-code counter
+
+### OTP Constants (`@d2/auth-domain`)
+
+| Constant                     | Value  | Purpose                                    |
+| ---------------------------- | ------ | ------------------------------------------ |
+| `OTP_EXPIRY.EMAIL_SECONDS`   | 900    | 15 min — email OTP TTL                     |
+| `OTP_EXPIRY.PHONE_SECONDS`   | 300    | 5 min — SMS OTP TTL                        |
+| `OTP_VERIFY.CODE_LENGTH`     | 6      | Numeric digits                             |
+| `OTP_VERIFY.MAX_ATTEMPTS`    | 5      | Wrong-code tries before the record is burned |
+
+On `attempts >= MAX_ATTEMPTS` the verification record is deleted — the user must restart with a fresh `request-change`.
+
+### OTP Rate Limiter (`OtpRateLimitStore`, `@d2/auth-infra`)
+
+Redis-backed send-rate limiter, keyed by `(userId, type)`. Mirrors `SignInThrottleStore` semantics:
+
+| Sends in window | Outcome                                                           |
+| --------------- | ----------------------------------------------------------------- |
+| 1–3             | Free — no delay                                                   |
+| 4+              | Exponential backoff: `min(2^(n-3) * 1min, 10 min)`, capped at 10m |
+
+- Window: 5 min
+- Fail-open on Redis errors (same as throttle store)
+- Password failures do NOT consume the budget (verified before any rate-limit state change)
+
+### Password Gate
+
+Every initiate (`request-change`) AND `RemovePhone` takes `currentPassword` in the SAME request body as the new value. Verification uses `BetterAuthPasswordVerifier` and runs BEFORE any state change (OTP issuance, DB write, rate-limit consumption).
+
+- Wrong password → 401 Unauthorized, no rate-limit consumed, no OTP issued
+- Right password → proceeds to rate-limit check → OTP issuance
+
+### HTTP Routes (`@d2/auth-api`)
+
+All routes extract `userId` from the session (never from the request body — IDOR safe).
+
+| Method   | Path                                | Handler              |
+| -------- | ----------------------------------- | -------------------- |
+| `POST`   | `/api/account/email/request-change` | `RequestEmailChange` |
+| `POST`   | `/api/account/email/verify-change`  | `VerifyEmailChange`  |
+| `POST`   | `/api/account/phone/request-change` | `RequestPhoneChange` |
+| `POST`   | `/api/account/phone/verify-change`  | `VerifyPhoneChange`  |
+| `DELETE` | `/api/account/phone`                | `RemovePhone`        |
+
+### Notification Delivery
+
+OTP notifications are published via `@d2/comms-client` using `alternativeContactInfo` (the pending new value is NOT yet a Geo contact, so no contactId exists):
+
+| Flow                 | Target                                                 |
+| -------------------- | ------------------------------------------------------ |
+| Email OTP            | `alternativeContactInfo: { email: pendingEmail }`      |
+| Phone OTP            | `alternativeContactInfo: { phone: pendingPhone }`      |
+| Email change success | `alternativeContactInfo: { email: OLD email }` — security notification to the previous address |
+
+The old-email security notification ("your email was changed") fires after `VerifyEmailChange` applies the new email, giving the previous account owner a window to detect takeover.
+
+---
+
+## Cross-Service Consistency (SAGA Pattern)
+
+Several handlers update both Geo (user/org contact data) and Auth (BetterAuth user/session rows) in a single logical operation. Without coordination, a failure between the two writes leaves the system inconsistent. The auth service uses a Geo-first, Auth-second, compensate-on-failure SAGA.
+
+### Handlers Using the Pattern
+
+- `UpdateUserLocale` — Geo contact `ietfBcp47Tag` + BetterAuth `user.locale`
+- `UpdateUserTimezone` — Geo contact `ianaIdentifier` + BetterAuth `user.timezone`
+- `UpdateUserRealName` — Geo contact `firstName`/`lastName` + BetterAuth `user.name`
+- `UpdateOrgContact` — Geo contact replacement + `org_contact` junction metadata
+- `VerifyEmailChange` — Geo contact email + BetterAuth `user.email`
+- `VerifyPhoneChange` — Geo contact phone + BetterAuth `user.phone` / `phoneVerified`
+
+### Shared Helper
+
+`runCrossServiceUpdate` in `@d2/auth-app/cqrs/handlers/u/cross-service-update.ts` is the single implementation of the pattern. Handlers above delegate to it with three callbacks: `snapshot` (capture Geo pre-state), `applyGeo` (primary write), `applyAuth` (secondary write).
+
+### Flow
+
+```
+1. Snapshot Geo pre-state (read current value)
+2. applyGeo(newValue)        ── if fails → bubbleFail (no Auth write, no state change)
+3. applyAuth(newValue)       ── if fails → compensate (restore Geo to snapshot)
+4. If compensation fails     ── logger.fatal(...) with full context → bubbleFail
+5. Return Auth's original failure (never mask it)
+```
+
+### Rationale
+
+Geo is the riskier call (gRPC, external service, network). Failing fast there avoids touching local Auth state entirely. If Auth then fails — a lower-probability event since it's local DB — we roll Geo back to the pre-update snapshot, preserving the "atomic from the user's POV" contract.
+
+### Compensation-Rollback Failure (CRITICAL)
+
+If the compensating Geo update ALSO fails, the helper logs at `logger.fatal()` with `traceId`, `userId`, the pre-snapshot, and the attempted new value. The system is now in a known-inconsistent state (Geo has `newValue`, Auth has `oldValue`) and **manual reconciliation is required**. This is the project-wide rule for any compensation-rollback failure: fatal severity, full context, never silent.
 
 ---
 
@@ -1267,18 +1411,24 @@ backends/node/services/auth/
 
 ### .NET Gateway Auth
 
-Auth middleware has moved from gateway-local (`REST/Auth/`) to the shared middleware package `Auth.Default`.
+Auth middleware has moved from gateway-local (`REST/Auth/`) to three sibling shared middleware packages: `JwtAuth.Default` (JWT Bearer + fingerprint), `ServiceKey.Default` (X-Api-Key trust), and `AuthPolicy.Default` (named policies + endpoint extensions). The corresponding namespaces are `D2.Shared.JwtAuth.Default`, `D2.Shared.ServiceKey.Default`, and `D2.Shared.AuthPolicy.Default`.
 
 ```
-backends/dotnet/shared/Implementations/Middleware/Auth.Default/
+backends/dotnet/shared/Implementations/Middleware/JwtAuth.Default/
 ├── JwtAuthExtensions.cs                 # AddJwtAuth + UseJwtAuth (JWKS, policies)
 ├── JwtAuthOptions.cs                    # Config: BaseUrl, Issuer, Audience, ClockSkew
 ├── JwtFingerprintMiddleware.cs          # fp claim validation (fail-closed for non-trusted, skip for trusted)
-├── JwtFingerprintValidator.cs           # SHA-256(UA|Accept) computation
+└── JwtFingerprintValidator.cs           # SHA-256(UA|Accept) computation
+
+backends/dotnet/shared/Implementations/Middleware/ServiceKey.Default/
 ├── ServiceKeyExtensions.cs              # AddServiceKeyAuth + UseServiceKeyDetection
-├── ServiceKeyMiddleware.cs              # X-Api-Key middleware (constant-time comparison)
+├── ServiceKeyMiddleware.cs              # X-Api-Key middleware (constant-time comparison) — sets IsTrustedService flag
 ├── ServiceKeyEndpointFilter.cs          # RequireServiceKey() endpoint filter
 └── ServiceKeyOptions.cs                 # Service key config + key name mapping
+
+backends/dotnet/shared/Implementations/Middleware/AuthPolicy.Default/
+├── AuthPolicyExtensions.cs              # AddD2Policies, RequireOrgType, RequireRole, RequireOrgTypeAndRole
+└── RoutePolicyExtensions.cs             # RequireAuth(), RequireOrg(), RequireStaff(), RequireAdmin() endpoint extensions
 
 backends/dotnet/shared/Implementations/Middleware/Translation.Default/
 ├── TranslationMiddleware.cs             # TK.* key resolution in D2Result responses
@@ -1291,7 +1441,4 @@ backends/dotnet/shared/Handler/Auth/
 ├── RoleValues.cs                        # Role constants + HIERARCHY + AtOrAbove()
 ├── AuthPolicies.cs                      # Named policy constants
 └── RequestHeaders.cs                    # Custom header constants
-
-backends/dotnet/shared/Handler.Extensions/Auth/
-└── AuthPolicyExtensions.cs              # AddD2Policies, RequireOrgType, RequireRole, RequireOrgTypeAndRole
 ```
