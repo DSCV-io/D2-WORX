@@ -5,11 +5,16 @@ import type { IMessagePublisher } from "@d2/messaging";
 import type { GetContactsByExtKeys } from "@d2/geo-client";
 import { INotifyKey } from "@d2/comms-client";
 import { GEO_CONTEXT_KEYS, AUTH_MESSAGING } from "@d2/auth-domain";
-import { IRecordSignInEventKey, ICreateUserContactKey } from "@d2/auth-app";
+import {
+  IRecordSignInEventKey,
+  ICreateUserContactKey,
+  IFindUserIdByIdentifierKey,
+} from "@d2/auth-app";
 import type { AuthHooks } from "@d2/auth-infra";
 import { signUpPrefsStorage } from "@d2/auth-infra";
 import type { Translator } from "@d2/i18n";
 import { resolveLocale } from "@d2/i18n";
+import type { RecordFailedSignIn } from "../routes/auth-routes.js";
 
 /**
  * Creates the BetterAuth callback hooks that bridge app-layer logic
@@ -38,6 +43,7 @@ export function createAuthCallbacks(
         });
 
         // Fire-and-forget: publish to WhoIs resolution queue for async enrichment
+        // of BOTH the sign_in_event row and the session row (consumer updates both).
         if (result.success && result.data?.event && publisher) {
           publisher
             .send(
@@ -47,6 +53,7 @@ export function createAuthCallbacks(
               },
               {
                 signInEventId: result.data.event.id,
+                sessionId: data.sessionId,
                 ipAddress: data.ipAddress,
                 userAgent: data.userAgent,
               },
@@ -209,6 +216,71 @@ export function createAuthCallbacks(
         scope.dispose();
       }
     },
+  };
+}
+
+/**
+ * Builds the audit-record callback for FAILED sign-in attempts.
+ *
+ * Resolves the userId from the supplied email/username — if no user matches
+ * (attacker probing nonexistent identifiers) the failure is dropped from the
+ * audit table (the throttle layer still tracks it by hashed identifier).
+ *
+ * On a successful resolution, writes a `sign_in_event` row with `successful:
+ * false` + the failure reason, then publishes a WhoIs resolution message so
+ * the row gets enriched with city/country/ASN — same pipeline as the success
+ * path (`onSignIn`).
+ */
+export function createRecordFailedSignIn(
+  provider: ServiceProvider,
+  logger: ILogger,
+  publisher?: IMessagePublisher,
+): RecordFailedSignIn {
+  return async (data) => {
+    const scope = createServiceScope(provider, logger);
+    try {
+      // Resolve userId — drop the audit if nobody matches.
+      const finder = scope.resolve(IFindUserIdByIdentifierKey);
+      const lookup = await finder.handleAsync({
+        email: data.email?.toLowerCase(),
+        username: data.username?.toLowerCase(),
+      });
+      const userId = lookup.success ? lookup.data?.userId : undefined;
+      if (!userId) return;
+
+      const recorder = scope.resolve(IRecordSignInEventKey);
+      const result = await recorder.handleAsync({
+        userId,
+        successful: false,
+        ipAddress: data.ipAddress,
+        userAgent: data.userAgent,
+        deviceFingerprint: data.deviceFingerprint,
+        failureReason: data.failureReason,
+      });
+
+      // Enqueue WhoIs resolution (no sessionId — failed attempts have no session).
+      if (result.success && result.data?.event && publisher) {
+        publisher
+          .send(
+            {
+              exchange: AUTH_MESSAGING.WHOIS_RESOLUTION_EXCHANGE,
+              routingKey: AUTH_MESSAGING.WHOIS_RESOLUTION_QUEUE,
+            },
+            {
+              signInEventId: result.data.event.id,
+              ipAddress: data.ipAddress,
+              userAgent: data.userAgent,
+            },
+          )
+          .catch((err: unknown) =>
+            logger.warn("recordFailedSignIn: WhoIs resolution publish failed (fail-open)", {
+              error: err instanceof Error ? err.message : String(err),
+            }),
+          );
+      }
+    } finally {
+      scope.dispose();
+    }
   };
 }
 

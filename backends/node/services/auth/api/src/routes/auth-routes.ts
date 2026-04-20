@@ -36,6 +36,23 @@ function extractIdentifier(body: Record<string, unknown> | null, path: string): 
 }
 
 /**
+ * Audit-record callback for failed sign-in attempts. Receives the raw identifier
+ * (email or username), the request envelope, and the BetterAuth response status.
+ * Implementation lives in the composition root so it can resolve handlers + the
+ * RabbitMQ publisher with full DI context.
+ */
+export interface RecordFailedSignIn {
+  (data: {
+    email?: string;
+    username?: string;
+    ipAddress: string;
+    userAgent: string;
+    deviceFingerprint?: string;
+    failureReason: string;
+  }): Promise<void>;
+}
+
+/**
  * Mounts BetterAuth at /api/auth/*.
  *
  * Sign-in endpoints (`/sign-in/email`, `/sign-in/username`) are guarded by
@@ -47,6 +64,7 @@ export function createAuthRoutes(
   auth: Auth,
   throttleHandlers?: { check: CheckSignInThrottle; record: RecordSignInOutcome },
   logger?: ILogger,
+  recordFailedSignIn?: RecordFailedSignIn,
 ) {
   const app = new Hono();
 
@@ -59,73 +77,102 @@ export function createAuthRoutes(
   });
 
   /**
-   * Shared sign-in handler with optional throttle guard.
+   * Shared sign-in handler with optional throttle guard + audit recording.
    *
    * 1. Clone body to extract identifier (email or username)
    * 2. Check throttle → 429 if blocked
    * 3. Forward to BetterAuth
-   * 4. Record outcome (fire-and-forget)
+   * 4. Record throttle outcome (fire-and-forget)
+   * 5. On non-200 response, record a failed `sign_in_event` row (fire-and-forget)
+   *
+   * Successful sign-ins are recorded by `databaseHooks.session.create.after` →
+   * `onSignIn` callback, which has the actual session/user object.
    */
   const handleSignIn = async (c: Context) => {
-    if (throttleHandlers) {
-      // Clone the request so BetterAuth can still read the body
-      const body = await c.req.raw
-        .clone()
-        .json()
-        .catch(() => null);
-      const identifier = extractIdentifier(body as Record<string, unknown> | null, c.req.path);
+    // Clone the request so BetterAuth can still read the body. We need this for
+    // both throttle (identifier) and audit-on-failure (resolve userId on 401).
+    const body = await c.req.raw
+      .clone()
+      .json()
+      .catch(() => null);
+    const identifier = extractIdentifier(body as Record<string, unknown> | null, c.req.path);
+    const isEmailEndpoint = c.req.path.endsWith("/sign-in/email");
 
-      if (identifier) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const requestContext = (c as any).get(REQUEST_CONTEXT_KEY) as
-          | { clientIp?: string; serverFingerprint?: string }
-          | undefined;
-        const identifierHash = sha256(identifier);
-        const identityHash = sha256(
-          `${requestContext?.clientIp ?? "unknown"}:${requestContext?.serverFingerprint ?? "unknown"}`,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const requestContext = (c as any).get(REQUEST_CONTEXT_KEY) as
+      | {
+          clientIp?: string;
+          serverFingerprint?: string;
+          deviceFingerprint?: string;
+        }
+      | undefined;
+    const userAgent = c.req.header("user-agent") ?? "unknown";
+
+    if (throttleHandlers && identifier) {
+      const identifierHash = sha256(identifier);
+      const identityHash = sha256(
+        `${requestContext?.clientIp ?? "unknown"}:${requestContext?.serverFingerprint ?? "unknown"}`,
+      );
+
+      // Check throttle
+      const check = await throttleHandlers.check.handleAsync({ identifierHash, identityHash });
+      if (check.success && check.data?.blocked) {
+        const retryAfterSec = check.data.retryAfterSec ?? 300;
+        c.header("Retry-After", String(retryAfterSec));
+        return c.json(
+          D2Result.fail({
+            messages: [TK.auth.errors.SIGN_IN_THROTTLED],
+            statusCode: HttpStatusCode.TooManyRequests,
+            errorCode: "SIGN_IN_THROTTLED",
+          }),
+          429 as ContentfulStatusCode,
+        );
+      }
+
+      // Forward to BetterAuth
+      const response = await auth.handler(c.req.raw);
+
+      // Record throttle outcome (fire-and-forget — don't block the response)
+      throttleHandlers.record
+        .handleAsync({
+          identifierHash,
+          identityHash,
+          responseStatus: response.status,
+        })
+        .catch((err: unknown) =>
+          logger?.warn("Throttle record failed (non-blocking)", {
+            error: err instanceof Error ? err.message : String(err),
+          }),
         );
 
-        // Check throttle
-        const check = await throttleHandlers.check.handleAsync({ identifierHash, identityHash });
-        if (check.success && check.data?.blocked) {
-          const retryAfterSec = check.data.retryAfterSec ?? 300;
-          c.header("Retry-After", String(retryAfterSec));
-          return c.json(
-            D2Result.fail({
-              messages: [TK.auth.errors.SIGN_IN_THROTTLED],
-              statusCode: HttpStatusCode.TooManyRequests,
-              errorCode: "SIGN_IN_THROTTLED",
-            }),
-            429 as ContentfulStatusCode,
-          );
-        }
-
-        // Forward to BetterAuth
-        const response = await auth.handler(c.req.raw);
-
-        // Record outcome (fire-and-forget — don't block the response)
-        throttleHandlers.record
-          .handleAsync({
-            identifierHash,
-            identityHash,
-            responseStatus: response.status,
-          })
-          .catch((err: unknown) =>
-            logger?.warn("Throttle record failed (non-blocking)", {
-              error: err instanceof Error ? err.message : String(err),
-            }),
-          );
-
-        if (response.status !== 200 && logger) {
+      if (response.status !== 200) {
+        if (logger) {
           logger.warn("Sign-in attempt failed", {
             path: c.req.path,
             status: response.status,
             identifierHash,
           });
         }
-
-        return response;
+        // Audit failed sign-in (fire-and-forget). Skipped silently if no userId
+        // resolves (attacker probing nonexistent emails) — the throttle layer
+        // still tracks those by hashed identifier.
+        recordFailedSignIn
+          ?.({
+            email: isEmailEndpoint ? identifier : undefined,
+            username: isEmailEndpoint ? undefined : identifier,
+            ipAddress: requestContext?.clientIp ?? "unknown",
+            userAgent,
+            deviceFingerprint: requestContext?.deviceFingerprint,
+            failureReason: `http_${response.status}`,
+          })
+          .catch((err: unknown) =>
+            logger?.warn("recordFailedSignIn failed (non-blocking)", {
+              error: err instanceof Error ? err.message : String(err),
+            }),
+          );
       }
+
+      return response;
     }
 
     // No throttle or no identifier found — pass through to BetterAuth

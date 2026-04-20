@@ -23,4 +23,6 @@ export interface Session {
   readonly activeOrganizationRole: Role | null;
   readonly emulatedOrganizationId: string | null;
   readonly emulatedOrganizationType: OrgType | null;
+  /** Resolved at sign-in via cross-service Geo FindWhoIs (async, fail-open). */
+  readonly whoIsId?: string;
 }

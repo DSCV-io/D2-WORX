@@ -8,6 +8,7 @@ import {
   ICountSignInEventsByUserIdKey,
   IGetLatestSignInEventDateKey,
   IUpdateSignInEventWhoIsIdKey,
+  IUpdateSessionWhoIsIdKey,
   IUpdateUserImageKey,
   IUpdateOrgLogoKey,
   ICreateEmulationConsentRecordKey,
@@ -35,6 +36,8 @@ import {
   IUpdateUserPhoneKey,
   ICheckPhoneAvailabilityKey,
   IGetUserByIdKey,
+  IFindActiveSessionsByUserIdKey,
+  IFindUserIdByIdentifierKey,
   IPushUserUpdatedKey,
 } from "@d2/auth-app";
 import { PushUserUpdated } from "./realtime/handlers/push-user-updated.js";
@@ -48,6 +51,7 @@ import { FindActiveConsentsByUserId } from "./repository/handlers/r/find-active-
 import { FindActiveConsentByUserIdAndOrg } from "./repository/handlers/r/find-active-consent-by-user-id-and-org.js";
 import { RevokeEmulationConsentRecord } from "./repository/handlers/u/revoke-emulation-consent-record.js";
 import { UpdateSignInEventWhoIsId } from "./repository/handlers/u/update-sign-in-event-who-is-id.js";
+import { UpdateSessionWhoIsId } from "./repository/handlers/u/update-session-who-is-id.js";
 import { UpdateUserImage } from "./repository/handlers/u/update-user-image.js";
 import { UpdateOrgLogo } from "./repository/handlers/u/update-org-logo.js";
 import { CreateOrgContactRecord } from "./repository/handlers/c/create-org-contact-record.js";
@@ -70,6 +74,8 @@ import { UpdateUserEmail } from "./repository/handlers/u/update-user-email.js";
 import { UpdateUserPhone } from "./repository/handlers/u/update-user-phone.js";
 import { CheckPhoneAvailability } from "./repository/handlers/r/check-phone-availability.js";
 import { GetUserById } from "./repository/handlers/r/get-user-by-id.js";
+import { FindActiveSessionsByUserId } from "./repository/handlers/r/find-active-sessions-by-user-id.js";
+import { FindUserIdByIdentifier } from "./repository/handlers/r/find-user-id-by-identifier.js";
 import { UpdateUserTimezone } from "./repository/handlers/u/update-user-timezone.js";
 
 export interface AuthInfraConfig {
@@ -128,6 +134,10 @@ export function addAuthInfra(
     (sp) => new UpdateSignInEventWhoIsId(db, sp.resolve(IHandlerContextKey)),
   );
   services.addTransient(
+    IUpdateSessionWhoIsIdKey,
+    (sp) => new UpdateSessionWhoIsId(db, sp.resolve(IHandlerContextKey)),
+  );
+  services.addTransient(
     IUpdateUserImageKey,
     (sp) => new UpdateUserImage(db, sp.resolve(IHandlerContextKey)),
   );
@@ -172,6 +182,14 @@ export function addAuthInfra(
   services.addTransient(
     IGetUserByIdKey,
     (sp) => new GetUserById(db, sp.resolve(IHandlerContextKey)),
+  );
+  services.addTransient(
+    IFindActiveSessionsByUserIdKey,
+    (sp) => new FindActiveSessionsByUserId(db, sp.resolve(IHandlerContextKey)),
+  );
+  services.addTransient(
+    IFindUserIdByIdentifierKey,
+    (sp) => new FindUserIdByIdentifier(db, sp.resolve(IHandlerContextKey)),
   );
 
   // Emulation consent repo handlers

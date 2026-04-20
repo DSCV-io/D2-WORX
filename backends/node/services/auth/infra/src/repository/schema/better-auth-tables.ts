@@ -74,6 +74,11 @@ export const session = pgTable(
     activeOrganizationRole: text("active_organization_role"),
     emulatedOrganizationId: text("emulated_organization_id"),
     emulatedOrganizationType: text("emulated_organization_type"),
+    // Resolved at sign-in via cross-service Geo FindWhoIs (async, fail-open).
+    // Populated by the WhoIs resolution consumer ~milliseconds after the row is
+    // inserted. Null until resolved (or if resolution fails). References the
+    // content-addressable Geo WhoIs hash — frontend re-hydrates via Geo client.
+    whoIsId: text("who_is_id"),
   },
   (table) => [index("session_user_id_idx").on(table.userId)],
 );

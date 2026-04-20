@@ -31,6 +31,7 @@ export const SESSION_FIELDS = {
   ACTIVE_ORG_ID: "activeOrganizationId",
   EMULATED_ORG_ID: "emulatedOrganizationId",
   EMULATED_ORG_TYPE: "emulatedOrganizationType",
+  WHO_IS_ID: "whoIsId",
 } as const;
 
 /**

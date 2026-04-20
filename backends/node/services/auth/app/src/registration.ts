@@ -5,6 +5,7 @@ import {
   IDeleteContactsByExtKeysKey,
   IGetContactsByExtKeysKey,
   IUpdateContactsByExtKeysKey,
+  IFindWhoIsKey,
 } from "@d2/geo-client";
 import {
   // Infra keys (interfaces defined here, implemented in auth-infra)
@@ -33,6 +34,8 @@ import {
   IDeleteOrgContactKey,
   ICreateUserContactKey,
   IGetSignInEventsKey,
+  IGetMySessionsKey,
+  IFindActiveSessionsByUserIdKey,
   IGetActiveConsentsKey,
   IGetOrgContactsKey,
   ICheckSignInThrottleKey,
@@ -55,6 +58,7 @@ import { UpdateUsername } from "./implementations/cqrs/handlers/c/update-usernam
 import { UpdateUserLocale } from "./implementations/cqrs/handlers/c/update-user-locale.js";
 import { UpdateUserTimezone } from "./implementations/cqrs/handlers/c/update-user-timezone.js";
 import { GetSignInEvents } from "./implementations/cqrs/handlers/q/get-sign-in-events.js";
+import { GetMySessions } from "./implementations/cqrs/handlers/q/get-my-sessions.js";
 import { GetActiveConsents } from "./implementations/cqrs/handlers/q/get-active-consents.js";
 import { GetOrgContacts } from "./implementations/cqrs/handlers/q/get-org-contacts.js";
 import { CheckSignInThrottle } from "./implementations/cqrs/handlers/q/check-sign-in-throttle.js";
@@ -342,6 +346,17 @@ export function addAuthApp(
         sp.resolve(IFindSignInEventsByUserIdKey),
         sp.resolve(ICountSignInEventsByUserIdKey),
         sp.resolve(IGetLatestSignInEventDateKey),
+        sp.resolve(IFindWhoIsKey),
+        sp.resolve(IHandlerContextKey),
+      ),
+  );
+
+  services.addTransient(
+    IGetMySessionsKey,
+    (sp) =>
+      new GetMySessions(
+        sp.resolve(IFindActiveSessionsByUserIdKey),
+        sp.resolve(IFindWhoIsKey),
         sp.resolve(IHandlerContextKey),
       ),
   );

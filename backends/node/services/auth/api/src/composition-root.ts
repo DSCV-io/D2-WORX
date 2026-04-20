@@ -19,7 +19,7 @@ import { addRedisCaching } from "@d2/cache-redis";
 import { PingMessageBus, IMessageBusPingKey } from "@d2/messaging";
 import type { IMessagePublisher } from "@d2/messaging";
 import { addCommsClient } from "@d2/comms-client";
-import { wireGeoClientConsumers } from "@d2/geo-client";
+import { wireGeoClientConsumers, IFindWhoIsKey } from "@d2/geo-client";
 import {
   createAuth,
   runMigrations,
@@ -47,6 +47,7 @@ import {
   addGeoClientHandlers,
   createPreAuthHandlers,
   createAuthCallbacks,
+  createRecordFailedSignIn,
   buildHonoApp,
   buildGrpcServer,
 } from "./setup/index.js";
@@ -169,6 +170,16 @@ export async function createApp(
     return new BetterAuthPasswordVerifier(authInstance);
   });
 
+  // FindWhoIs is constructed by `createPreAuthHandlers` AFTER `services.build()`
+  // (it depends on the geo singleflight + circuit breaker that live with the
+  // service-level HandlerContext). Register a lazy singleton that captures the
+  // eventual instance — same pattern as the BetterAuth-backed stores above.
+  let findWhoIsInstance: import("@d2/geo-client").FindWhoIs | undefined;
+  services.addSingleton(IFindWhoIsKey, () => {
+    if (!findWhoIsInstance) throw new Error("FindWhoIs not initialized");
+    return findWhoIsInstance;
+  });
+
   // 5. Build ServiceProvider
   const provider = services.build();
 
@@ -183,6 +194,9 @@ export async function createApp(
     logger,
     overrides?.passwordFunctions,
   );
+  // Bind the FindWhoIs lazy singleton registered earlier so DI consumers
+  // (GetMySessions, GetSignInEvents) can resolve it.
+  findWhoIsInstance = preAuth.findWhoIs;
 
   // 7. Session fingerprint binding (stolen token detection)
   const fingerprintStorage = new AsyncLocalStorage<string>();
@@ -197,6 +211,7 @@ export async function createApp(
     translator,
     publisher,
   );
+  const recordFailedSignIn = createRecordFailedSignIn(provider, logger, publisher);
 
   const auth = createAuth(config, db, redisSetup.secondaryStorage, {
     ...callbacks,
@@ -237,6 +252,7 @@ export async function createApp(
     rateLimitCheck: preAuth.rateLimitCheck,
     throttleCheck: preAuth.throttleCheck,
     throttleRecord: preAuth.throttleRecord,
+    recordFailedSignIn,
     checkEmailHandler: preAuth.checkEmailHandler,
     fingerprintStorage,
     deviceFingerprintStorage,

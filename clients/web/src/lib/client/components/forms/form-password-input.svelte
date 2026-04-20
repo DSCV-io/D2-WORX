@@ -15,9 +15,19 @@
     placeholder?: string;
     description?: string;
     disabled?: boolean;
+    /** Password-manager hint — `current-password` for sign-in/verify, `new-password` for change/reset. */
+    autocomplete?: "current-password" | "new-password" | "off";
   };
 
-  let { form, field, label, placeholder, description, disabled = false }: Props = $props();
+  let {
+    form,
+    field,
+    label,
+    placeholder,
+    description,
+    disabled = false,
+    autocomplete,
+  }: Props = $props();
 
   let showPassword = $state(false);
 </script>
@@ -29,6 +39,7 @@
   {placeholder}
   {description}
   {disabled}
+  {autocomplete}
   type={showPassword ? "text" : "password"}
 >
   {#snippet inputAction()}

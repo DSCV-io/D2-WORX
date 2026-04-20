@@ -148,3 +148,108 @@ export async function removePhone(currentPassword: string): Promise<D2Result> {
     body: { currentPassword },
   });
 }
+
+// ---------------------------------------------------------------------------
+// Security tab — sessions, sign-in events, change password
+// ---------------------------------------------------------------------------
+
+/** Active session enriched with WhoIs + isCurrent flag (raw shape from API). */
+export interface ActiveSessionDTO {
+  session: {
+    id: string;
+    token: string;
+    userId: string;
+    expiresAt: string;
+    createdAt: string;
+    updatedAt: string;
+    ipAddress?: string;
+    userAgent?: string;
+    whoIsId?: string;
+  };
+  whoIs?: WhoIsLite;
+  isCurrent: boolean;
+}
+
+/** Sign-in event enriched with WhoIs (raw shape from API). */
+export interface RecentLoginDTO {
+  event: {
+    id: string;
+    userId: string;
+    successful: boolean;
+    ipAddress: string;
+    userAgent: string;
+    whoIsId?: string;
+    deviceFingerprint?: string;
+    failureReason?: string;
+    createdAt: string;
+  };
+  whoIs?: WhoIsLite;
+}
+
+/**
+ * Subset of `WhoIsDTO` the FE actually renders. Mirror of the proto shape but
+ * trimmed — JSON serialization drops the proto type info anyway.
+ */
+export interface WhoIsLite {
+  hashId: string;
+  ipAddress: string;
+  asn?: number;
+  asName?: string;
+  asDomain?: string;
+  isAnonymous?: boolean;
+  isHosting?: boolean;
+  isMobile?: boolean;
+  isProxy?: boolean;
+  isRelay?: boolean;
+  isTor?: boolean;
+  isVpn?: boolean;
+  location?: {
+    city?: string;
+    postalCode?: string;
+    subdivisionIso31662Code?: string;
+    countryIso31661Alpha2Code?: string;
+  };
+}
+
+export async function listMySessions(): Promise<D2Result<{ sessions: ActiveSessionDTO[] }>> {
+  return accountApiCall<{ sessions: ActiveSessionDTO[] }>("/api/account/sessions");
+}
+
+export async function revokeSession(token: string, currentPassword: string): Promise<D2Result> {
+  return accountApiCall("/api/account/sessions/revoke", {
+    method: "POST",
+    body: { token, currentPassword },
+  });
+}
+
+export async function revokeOtherSessions(currentPassword: string): Promise<D2Result> {
+  return accountApiCall("/api/account/sessions/revoke-others", {
+    method: "POST",
+    body: { currentPassword },
+  });
+}
+
+export async function listRecentLogins(
+  limit = 20,
+  offset = 0,
+): Promise<D2Result<{ events: RecentLoginDTO[]; total: number }>> {
+  const qs = new URLSearchParams({ limit: String(limit), offset: String(offset) }).toString();
+  return accountApiCall<{ events: RecentLoginDTO[]; total: number }>(
+    `/api/account/sign-in-events?${qs}`,
+  );
+}
+
+/**
+ * Change password. By default revokes ALL other sessions to invalidate any
+ * stolen cookies; opt out with `revokeOtherSessions=false`.
+ */
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+  revokeOtherSessions = true,
+): Promise<D2Result> {
+  return accountApiCall("/api/account/change-password", {
+    method: "POST",
+    body: { currentPassword, newPassword, revokeOtherSessions },
+  });
+}

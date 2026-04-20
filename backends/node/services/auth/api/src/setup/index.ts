@@ -4,7 +4,7 @@ export { addGeoClientHandlers } from "./geo-client-setup.js";
 export type { GeoClientSetup } from "./geo-client-setup.js";
 export { createPreAuthHandlers } from "./pre-auth-setup.js";
 export type { PreAuthSetup } from "./pre-auth-setup.js";
-export { createAuthCallbacks } from "./auth-callbacks.js";
+export { createAuthCallbacks, createRecordFailedSignIn } from "./auth-callbacks.js";
 export { buildHonoApp } from "./hono-app-setup.js";
 export type { HonoAppOptions } from "./hono-app-setup.js";
 export { buildGrpcServer } from "./grpc-server-setup.js";

@@ -38,7 +38,12 @@ describe("createAuth() full integration", () => {
   };
 
   let auth: ReturnType<typeof createAuth>;
-  let onSignInCalls: Array<{ userId: string; ipAddress: string; userAgent: string }>;
+  let onSignInCalls: Array<{
+    userId: string;
+    sessionId: string;
+    ipAddress: string;
+    userAgent: string;
+  }>;
   let hooks: AuthHooks;
 
   /**

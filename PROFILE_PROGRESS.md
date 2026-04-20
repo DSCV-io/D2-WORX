@@ -80,16 +80,21 @@
 
 ## Phase 5: Security, Sessions, Recent Logins (full implementation)
 
-- [ ] 5A. Change Password form (current + new + confirm, wired to BetterAuth changePassword)
-- [ ] 5B. Active Sessions list (GET /api/account/sessions, UA parsing, per-session revoke)
-- [ ] 5C. Recent Logins (paginated sign-in events, Leaflet map with WhoIs locations)
+- [x] 5A. Change Password modal (current + new + confirm, BetterAuth changePassword, optional revoke-others, security email via existing publishPasswordChanged hook)
+- [x] 5B. Active Sessions list (GET /api/account/sessions enriched with WhoIs + isCurrent flag, UA parsing via ua-parser-js@2.0.9, password-gated per-session revoke + revoke-others)
+- [x] 5C. Recent Logins (paginated sign-in events, GetSignInEvents enriched with WhoIs server-side; **Leaflet map with WhoIs locations deferred** — see below)
 - [x] 5D. Email & Phone tab — email display + verified badges, phone add/change/remove with OTP, notification preferences (gateway → Comms via user-centric RPC), skeleton loading states, immediate-save toggles
 - [x] 5E. Notification preferences — gateway + Comms wiring, i18n + defaults fix
+- [x] 5F. Session WhoIs hydration — `session.who_is_id` column + Drizzle migration `0009`, `IFindActiveSessionsByUserId` repo handler, async resolution via existing WhoIs RabbitMQ consumer (extended with optional `sessionId` field)
+- [x] 5G. Saga consistency for revoke routes — `currentPassword` is sent in the same HTTP body as the action (atomic, mirrors email/phone OTP pattern), `BetterAuthPasswordVerifier` checked BEFORE any state change, 401 on mismatch
 - [ ] **Review Checkpoint 5** — security/sessions/logins fully functional
 
-**Explicitly deferred:**
+**Explicitly deferred (not done in this pass):**
 
-- Account deletion (stubbed with toast, no backend support yet)
+- **5C-map**: Leaflet map view of recent-login WhoIs locations (Phase 6 polish — needs Leaflet install, marker clustering for repeat IPs, per-row map-toggle UI). All the data is already on the response (lat/lng would require expanding `LocationDTO` with coordinates — currently only city/subdivision/country are returned).
+- **Delete Account flow**: still a stub-with-toast. Needs its own design conversation: cascade across services (Auth user + memberships, Geo contact, Comms threads, Files objects), grace period vs. hard delete, audit-trail retention. Not in scope for the security tab.
+- **Country-name resolution in WhoIs display**: `formatLocation()` currently shows raw ISO codes (e.g. "Toronto, ON, CA"). The user has Geo ref data available server-side; the layout loader does not currently propagate the `countries` map to page data. Plumbing it through is the next polish step — the UI is forward-compatible, just swap raw codes for `displayName` lookups.
+- **CountryDTO/SubdivisionDTO `displayName` lookup endpoints in `+layout.server.ts`**: tracked alongside the country-name resolution above.
 
 ## Phase 6: Navigation Updates
 
@@ -111,3 +116,5 @@
 - [x] InlineEditFieldGroup shows redundant success checkmarks (one per field + one for the group)
 - [ ] Pass locale + timezone through on sign-up from the frontend
 - [ ] Dkron job to periodically bump geo ref data cache (services must re-fetch when version changes)
+- [ ] Pre-existing svelte-check errors in `geo-ref-data.ts`, `locale-options.ts`, `timezone-options.ts`, `+layout.server.ts`, `debug/design/contact-form/+page.server.ts`, `middleware.mock.server.ts` — caused by proto fields becoming optional. Not introduced by the security tab work; flagged for a separate cleanup pass.
+- [ ] Pre-existing TS strictness errors in `auth-tests` for `cache.set.handleAsync.mock.calls[0][0]` accessor patterns and the `update-org-logo`/`update-user-image`/`username-hooks` test files (the matchers `toBeSuccess`/`toBeFailure` augmentation isn't being picked up — likely a separate fix to `auth-tests` tsconfig or a missing `tsconfig.includes` for the setup file).

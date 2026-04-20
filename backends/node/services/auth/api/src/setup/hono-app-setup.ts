@@ -51,6 +51,8 @@ export interface HonoAppOptions {
   rateLimitCheck: CheckRateLimit;
   throttleCheck: CheckSignInThrottle;
   throttleRecord: RecordSignInOutcome;
+  /** Audit-record failed sign-in attempts (resolves userId, writes sign_in_event row, enqueues WhoIs lookup). Optional. */
+  recordFailedSignIn?: import("../routes/auth-routes.js").RecordFailedSignIn;
   checkEmailHandler: CheckEmailAvailability;
   fingerprintStorage: AsyncLocalStorage<string>;
   deviceFingerprintStorage: AsyncLocalStorage<string>;
@@ -71,6 +73,7 @@ export function buildHonoApp(options: HonoAppOptions): Hono {
     rateLimitCheck,
     throttleCheck,
     throttleRecord,
+    recordFailedSignIn,
     checkEmailHandler,
     fingerprintStorage,
     deviceFingerprintStorage,
@@ -96,7 +99,20 @@ export function buildHonoApp(options: HonoAppOptions): Hono {
       onError: (c) => c.json(D2Result.payloadTooLarge(), 413 as ContentfulStatusCode),
     }),
   );
-  app.use("*", createRequestEnrichmentMiddleware(findWhoIs, undefined, logger));
+  app.use(
+    "*",
+    createRequestEnrichmentMiddleware(
+      findWhoIs,
+      // Auth sits behind the gateway / SvelteKit BFF. The BFF forwards the
+      // browser IP via `x-forwarded-for`; in prod the gateway uses
+      // `cf-connecting-ip`. Trusting all three keeps `clientIp` accurate
+      // across both paths so failed-sign-in audit + throttle bucket the right
+      // address. Anything reaching auth without one of these headers (i.e.
+      // direct internal traffic) intentionally falls back to "unknown".
+      { trustedProxyHeaders: ["cf-connecting-ip", "x-real-ip", "x-forwarded-for"] },
+      logger,
+    ),
+  );
   if (config.authApiKeys?.length) {
     // BetterAuth routes (/api/auth/*) are public (JWKS, sign-in, sign-up, etc.) —
     // other services must fetch JWKS without an API key. Only non-auth routes
@@ -141,7 +157,12 @@ export function buildHonoApp(options: HonoAppOptions): Hono {
   });
   authApp.route(
     "/",
-    createAuthRoutes(auth, { check: throttleCheck, record: throttleRecord }, logger),
+    createAuthRoutes(
+      auth,
+      { check: throttleCheck, record: throttleRecord },
+      logger,
+      recordFailedSignIn,
+    ),
   );
   app.route("/", authApp);
 

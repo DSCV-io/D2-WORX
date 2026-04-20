@@ -7,6 +7,7 @@ import {
   IUpdateUserLocaleKey,
   IUpdateUserTimezoneKey,
   IGetSignInEventsKey,
+  IGetMySessionsKey,
   IUpdateUserImageKey,
   IInvalidateUserSessionCacheKey,
   IPushUserUpdatedKey,
@@ -15,6 +16,7 @@ import {
   IRequestPhoneChangeKey,
   IVerifyPhoneChangeKey,
   IRemovePhoneKey,
+  IVerifyUserPasswordKey,
 } from "@d2/auth-app";
 import type { IRequestContext } from "@d2/handler";
 import type { SessionVariables } from "../middleware/session.js";
@@ -122,27 +124,59 @@ export function createAccountRoutes(auth: Auth) {
     return c.json(result, status);
   });
 
-  // GET /api/account/sessions — List active sessions (BetterAuth native)
+  // GET /api/account/sessions — List active sessions, enriched with Geo WhoIs
+  // (city/country/ASN/network flags) and an `isCurrent` flag for the active row.
   app.get("/api/account/sessions", async (c) => {
+    const scope = c.get(SCOPE_KEY);
+    const handler = scope.resolve(IGetMySessionsKey);
+
+    // Resolve the current session token so the handler can flag the active row.
+    // Failure to resolve is non-fatal — every row just gets isCurrent=false.
+    let currentSessionToken: string | undefined;
     try {
-      const sessions = await auth.api.listSessions({ headers: c.req.raw.headers });
-      return c.json({ success: true, statusCode: 200, data: { sessions } });
+      const current = await auth.api.getSession({ headers: c.req.raw.headers });
+      currentSessionToken = current?.session?.token;
     } catch {
-      return c.json(
-        { success: false, statusCode: 500, messages: ["Failed to retrieve sessions."] },
-        500 as ContentfulStatusCode,
-      );
+      currentSessionToken = undefined;
     }
+
+    const result = await handler.handleAsync({
+      userId: uid(c),
+      currentSessionToken,
+    });
+    const status = (
+      result.success ? HttpStatusCode.OK : (result.statusCode ?? HttpStatusCode.BadRequest)
+    ) as ContentfulStatusCode;
+    return c.json(result, status);
   });
 
-  // POST /api/account/sessions/revoke — Revoke a specific session by token
+  // POST /api/account/sessions/revoke — Revoke a specific session by token.
+  // Password-gated: caller must supply currentPassword in the SAME request body
+  // (atomic — bypass-proof, mirroring the email/phone change pattern).
   app.post("/api/account/sessions/revoke", async (c) => {
-    const body = await c.req.json();
+    const body = await c.req.json().catch(() => ({}));
     const token = body.token as string;
+    const currentPassword = body.currentPassword as string;
     if (!token) {
       return c.json(
         { success: false, statusCode: 400, messages: ["Session token is required."] },
         400 as ContentfulStatusCode,
+      );
+    }
+    if (!currentPassword) {
+      return c.json(
+        { success: false, statusCode: 400, messages: ["Password is required to confirm this change."] },
+        400 as ContentfulStatusCode,
+      );
+    }
+    const passwordOk = await c
+      .get(SCOPE_KEY)
+      .resolve(IVerifyUserPasswordKey)
+      .verify(uid(c), currentPassword);
+    if (!passwordOk) {
+      return c.json(
+        { success: false, statusCode: 401, messages: ["Incorrect password."] },
+        401 as ContentfulStatusCode,
       );
     }
     try {
@@ -159,8 +193,27 @@ export function createAccountRoutes(auth: Auth) {
     }
   });
 
-  // POST /api/account/sessions/revoke-others — Revoke all sessions except current
+  // POST /api/account/sessions/revoke-others — Revoke all sessions except current.
+  // Password-gated, same atomic-request rule as the single-session revoke.
   app.post("/api/account/sessions/revoke-others", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const currentPassword = body.currentPassword as string;
+    if (!currentPassword) {
+      return c.json(
+        { success: false, statusCode: 400, messages: ["Password is required to confirm this change."] },
+        400 as ContentfulStatusCode,
+      );
+    }
+    const passwordOk = await c
+      .get(SCOPE_KEY)
+      .resolve(IVerifyUserPasswordKey)
+      .verify(uid(c), currentPassword);
+    if (!passwordOk) {
+      return c.json(
+        { success: false, statusCode: 401, messages: ["Incorrect password."] },
+        401 as ContentfulStatusCode,
+      );
+    }
     try {
       await auth.api.revokeSessions({ headers: c.req.raw.headers });
       return c.json({ success: true, statusCode: 200, data: {} });
@@ -168,6 +221,44 @@ export function createAccountRoutes(auth: Auth) {
       return c.json(
         { success: false, statusCode: 500, messages: ["Failed to revoke sessions."] },
         500 as ContentfulStatusCode,
+      );
+    }
+  });
+
+  // POST /api/account/change-password — Change password (BetterAuth-native).
+  // Atomic: currentPassword + newPassword in the SAME body. By default revokes
+  // ALL other sessions to invalidate any stolen cookies; the security email
+  // notification fires automatically via the publishPasswordChanged hook
+  // (databaseHooks.account.update.after).
+  app.post("/api/account/change-password", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const currentPassword = body.currentPassword as string | undefined;
+    const newPassword = body.newPassword as string | undefined;
+    const revokeOtherSessions = body.revokeOtherSessions !== false; // default true
+
+    if (!currentPassword || !newPassword) {
+      return c.json(
+        {
+          success: false,
+          statusCode: 400,
+          messages: ["Current password and new password are required."],
+        },
+        400 as ContentfulStatusCode,
+      );
+    }
+
+    try {
+      await auth.api.changePassword({
+        headers: c.req.raw.headers,
+        body: { currentPassword, newPassword, revokeOtherSessions },
+      });
+      return c.json({ success: true, statusCode: 200, data: {} });
+    } catch (err) {
+      const status = (err as { statusCode?: number })?.statusCode ?? 400;
+      const message = (err as { message?: string })?.message ?? "Failed to change password.";
+      return c.json(
+        { success: false, statusCode: status, messages: [message] },
+        status as ContentfulStatusCode,
       );
     }
   });

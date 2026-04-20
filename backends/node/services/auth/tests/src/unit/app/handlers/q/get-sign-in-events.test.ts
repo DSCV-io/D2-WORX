@@ -9,6 +9,15 @@ import type {
   IGetLatestSignInEventDateHandler,
 } from "@d2/auth-app";
 import type { SignInEvent } from "@d2/auth-domain";
+import type { Complex } from "@d2/geo-client";
+
+/** WhoIs hydration is fail-open and orthogonal to the caching/pagination behavior under test. */
+function createNoopFindWhoIs(): Complex.IFindWhoIsHandler {
+  return {
+    handleAsync: vi.fn().mockResolvedValue(D2Result.ok({ data: { whoIs: undefined } })),
+    redaction: { inputFields: ["ipAddress"], suppressOutput: true },
+  } as unknown as Complex.IFindWhoIsHandler;
+}
 
 function createTestContext() {
   const request: IRequestContext = {
@@ -81,6 +90,7 @@ describe("GetSignInEvents", () => {
         repo.findByUserId as unknown as IFindSignInEventsByUserIdHandler,
         repo.countByUserId as unknown as ICountSignInEventsByUserIdHandler,
         repo.getLatestEventDate as unknown as IGetLatestSignInEventDateHandler,
+        createNoopFindWhoIs(),
         createTestContext(),
       );
     });
@@ -197,6 +207,7 @@ describe("GetSignInEvents", () => {
         repo.findByUserId as unknown as IFindSignInEventsByUserIdHandler,
         repo.countByUserId as unknown as ICountSignInEventsByUserIdHandler,
         repo.getLatestEventDate as unknown as IGetLatestSignInEventDateHandler,
+        createNoopFindWhoIs(),
         createTestContext(),
         cache,
       );
@@ -400,7 +411,7 @@ describe("GetSignInEvents", () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.events).toHaveLength(1);
-      expect(result.data?.events[0].id).toBe("evt-page2");
+      expect(result.data!.events[0]!.event.id).toBe("evt-page2");
 
       // Should NOT hit the DB for events/count — cache was valid even for page 2
       expect(repo.findByUserId.handleAsync).not.toHaveBeenCalled();
@@ -441,7 +452,7 @@ describe("GetSignInEvents", () => {
       const result = await handler.handleAsync({ userId: "user-123", limit: 5, offset: 5 });
 
       expect(result.success).toBe(true);
-      expect(result.data?.events[0].id).toBe("evt-fresh");
+      expect(result.data!.events[0]!.event.id).toBe("evt-fresh");
       expect(result.data?.total).toBe(11);
 
       // Should have hit DB since cache was stale
@@ -454,6 +465,7 @@ describe("GetSignInEvents", () => {
       { handleAsync: vi.fn() } as unknown as IFindSignInEventsByUserIdHandler,
       { handleAsync: vi.fn() } as unknown as ICountSignInEventsByUserIdHandler,
       { handleAsync: vi.fn() } as unknown as IGetLatestSignInEventDateHandler,
+      createNoopFindWhoIs(),
       createTestContext(),
     );
     expect(handler.redaction).toBeDefined();

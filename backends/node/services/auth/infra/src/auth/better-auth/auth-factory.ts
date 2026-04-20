@@ -59,6 +59,7 @@ export interface AuthHooks {
   /** Called after a successful sign-in to record audit events. */
   onSignIn?: (data: {
     userId: string;
+    sessionId: string;
     ipAddress: string;
     userAgent: string;
     deviceFingerprint?: string;
@@ -270,6 +271,11 @@ export function createAuth(
           required: false,
           input: false,
         },
+        [SESSION_FIELDS.WHO_IS_ID]: {
+          type: "string",
+          required: false,
+          input: false,
+        },
       },
     },
 
@@ -380,12 +386,14 @@ export function createAuth(
               const ipAddress = (session["ipAddress"] as string) ?? "unknown";
               const userAgent = (session["userAgent"] as string) ?? "unknown";
               const userId = session["userId"] as string;
+              const sessionId = session["id"] as string;
 
-              if (userId) {
+              if (userId && sessionId) {
                 // Fire-and-forget — don't block session creation
                 hooks
                   .onSignIn({
                     userId,
+                    sessionId,
                     ipAddress,
                     userAgent,
                     deviceFingerprint: hooks.getDeviceFingerprintForCurrentRequest?.(),

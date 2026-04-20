@@ -25,6 +25,13 @@ export type {
   ICountSignInEventsByUserIdHandler,
   IGetLatestSignInEventDateHandler,
   IUpdateSignInEventWhoIsIdHandler,
+  IUpdateSessionWhoIsIdHandler,
+  IFindActiveSessionsByUserIdHandler,
+  FindActiveSessionsByUserIdInput,
+  FindActiveSessionsByUserIdOutput,
+  IFindUserIdByIdentifierHandler,
+  FindUserIdByIdentifierInput,
+  FindUserIdByIdentifierOutput,
   IUpdateUserImageHandler,
   UpdateUserImageInput,
   UpdateUserImageOutput,
@@ -70,6 +77,8 @@ export type {
   UpdateOrgContactRecordOutput,
   UpdateSignInEventWhoIsIdInput,
   UpdateSignInEventWhoIsIdOutput,
+  UpdateSessionWhoIsIdInput,
+  UpdateSessionWhoIsIdOutput,
   DeleteOrgContactRecordInput,
   DeleteOrgContactRecordOutput,
   // Read (R) — Email Availability
@@ -329,6 +338,7 @@ import { CreateUserContact } from "./implementations/cqrs/handlers/c/create-user
 /** Creates sign-in event handlers (mirrors .NET AddXxx() pattern). */
 export function createSignInEventHandlers(
   repo: SignInEventRepoHandlers,
+  findWhoIs: import("@d2/geo-client").Complex.IFindWhoIsHandler,
   context: IHandlerContext,
   memoryCache?: {
     get: InMemoryCache.IGetHandler<{
@@ -349,6 +359,7 @@ export function createSignInEventHandlers(
       repo.findByUserId,
       repo.countByUserId,
       repo.getLatestEventDate,
+      findWhoIs,
       context,
       memoryCache,
     ),
@@ -485,6 +496,9 @@ export {
   ICountSignInEventsByUserIdKey,
   IGetLatestSignInEventDateKey,
   IUpdateSignInEventWhoIsIdKey,
+  IUpdateSessionWhoIsIdKey,
+  IFindActiveSessionsByUserIdKey,
+  IFindUserIdByIdentifierKey,
   ICreateEmulationConsentRecordKey,
   IFindEmulationConsentByIdKey,
   IFindActiveConsentsByUserIdKey,
@@ -506,6 +520,7 @@ export {
   IDeleteOrgContactKey,
   ICreateUserContactKey,
   IGetSignInEventsKey,
+  IGetMySessionsKey,
   IGetActiveConsentsKey,
   IGetOrgContactsKey,
   ICheckSignInThrottleKey,

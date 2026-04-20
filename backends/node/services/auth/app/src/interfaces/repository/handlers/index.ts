@@ -133,6 +133,12 @@ export type {
 } from "./u/update-sign-in-event-who-is-id.js";
 
 export type {
+  UpdateSessionWhoIsIdInput,
+  UpdateSessionWhoIsIdOutput,
+  IUpdateSessionWhoIsIdHandler,
+} from "./u/update-session-who-is-id.js";
+
+export type {
   UpdateUserImageInput,
   UpdateUserImageOutput,
   IUpdateUserImageHandler,
@@ -173,6 +179,18 @@ export type {
   GetUserByIdOutput,
   IGetUserByIdHandler,
 } from "./r/get-user-by-id.js";
+
+export type {
+  FindActiveSessionsByUserIdInput,
+  FindActiveSessionsByUserIdOutput,
+  IFindActiveSessionsByUserIdHandler,
+} from "./r/find-active-sessions-by-user-id.js";
+
+export type {
+  FindUserIdByIdentifierInput,
+  FindUserIdByIdentifierOutput,
+  IFindUserIdByIdentifierHandler,
+} from "./r/find-user-id-by-identifier.js";
 
 export type {
   UpdateOrgLogoInput,
