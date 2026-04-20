@@ -311,7 +311,10 @@ _Middleware:_
 | Request Enrichment | [RequestEnrichment.Default](backends/dotnet/shared/Implementations/Middleware/RequestEnrichment.Default/REQUEST_ENRICHMENT.md) | [@d2/request-enrichment](backends/node/shared/implementations/middleware/request-enrichment/default/REQUEST_ENRICHMENT.md)                                                                        | IP resolution, fingerprinting, and WhoIs geolocation  |
 | Rate Limiting      | [RateLimit.Default](backends/dotnet/shared/Implementations/Middleware/RateLimit.Default/RATE_LIMIT.md)                         | [@d2/ratelimit](backends/node/shared/implementations/middleware/ratelimit/default/RATELIMIT.md)                                                                                                   | Multi-dimensional sliding-window rate limiting        |
 | Idempotency        | [Idempotency.Default](backends/dotnet/shared/Implementations/Middleware/Idempotency.Default/IDEMPOTENCY.md)                    | [@d2/idempotency](backends/node/shared/implementations/middleware/idempotency/default/IDEMPOTENCY.md)                                                                                             | Idempotency-Key header middleware (Redis-backed)      |
-| Auth               | [Auth.Default](backends/dotnet/shared/Implementations/Middleware/Auth.Default/)                                                | [@d2/service-key](backends/node/shared/implementations/middleware/service-key/default/) + [@d2/session-fingerprint](backends/node/shared/implementations/middleware/session-fingerprint/default/) | JWT auth, service key validation, fingerprint binding |
+| JWT Auth           | [JwtAuth.Default](backends/dotnet/shared/Implementations/Middleware/JwtAuth.Default/JWT_AUTH.md)                               | [@d2/jwt-auth](backends/node/shared/implementations/middleware/jwt-auth/default/JWT_AUTH.md)                                                                                                      | JWT Bearer + JWKS + fingerprint binding               |
+| Service Key        | [ServiceKey.Default](backends/dotnet/shared/Implementations/Middleware/ServiceKey.Default/SERVICE_KEY.md)                      | [@d2/service-key](backends/node/shared/implementations/middleware/service-key/default/)                                                                                                           | S2S API key validation (constant-time)                |
+| Auth Policy        | [AuthPolicy.Default](backends/dotnet/shared/Implementations/Middleware/AuthPolicy.Default/AUTH_POLICY.md)                      | [@d2/auth-policy](backends/node/shared/implementations/middleware/auth-policy/default/AUTH_POLICY.md)                                                                                             | Route-level policies (`.RequireAuth()`, `.RequireOrg()`, `.RequireRole()`, etc.) |
+| Session Fingerprint | —                                                                                                                             | [@d2/session-fingerprint](backends/node/shared/implementations/middleware/session-fingerprint/default/)                                                                                           | BetterAuth cookie-session binding (Node-only)         |
 | Translation        | [Translation.Default](backends/dotnet/shared/Implementations/Middleware/Translation.Default/)                                  | [@d2/translation](backends/node/shared/implementations/middleware/translation/default/)                                                                                                           | Gateway-edge D2Result message/inputError translation  |
 | CSRF               | —                                                                                                                              | [@d2/csrf](backends/node/shared/implementations/middleware/csrf/default/)                                                                                                                         | CSRF protection (Origin + Content-Type validation)    |
 
@@ -331,7 +334,7 @@ _Domain-specific microservices. Each service owns its data and communicates via 
 | [Geo](backends/dotnet/services/Geo/GEO_SERVICE.md)         | .NET     | ✅ Done    | Geographic reference data, locations, contacts, and WHOIS with multi-tier caching |
 | [Auth](backends/node/services/auth/AUTH.md)                | Node.js  | 🚧 Stage C | Standalone Hono + BetterAuth + Drizzle — Stages A-B done, BFF client done         |
 | [Comms](backends/node/services/comms/COMMS.md)             | Node.js  | 🚧 Stage B | Stage A done (delivery engine). Stage B next (in-app notifications, SignalR)      |
-| Files                                                      | Node.js  | 📋 Planned | File uploads, image processing, MinIO storage — event-driven (ADR-026)            |
+| [Files](backends/node/services/files/FILES.md)             | Node.js  | ✅ Done    | File uploads, image processing, MinIO storage — event-driven (ADR-026)            |
 | [dkron-mgr](backends/node/services/dkron-mgr/DKRON_MGR.md) | Node.js  | ✅ Done    | Declarative Dkron job reconciler — drift detection, orphan cleanup                |
 
 _Service internals (DDD layers):_
@@ -341,7 +344,7 @@ _Service internals (DDD layers):_
 | Geo       | [Domain](backends/dotnet/services/Geo/Geo.Domain/GEO_DOMAIN.md) | [App](backends/dotnet/services/Geo/Geo.App/GEO_APP.md) | [Infra](backends/dotnet/services/Geo/Geo.Infra/GEO_INFRA.md) | [API](backends/dotnet/services/Geo/Geo.API/GEO_API.md) | [Tests](backends/dotnet/services/Geo/Geo.Tests/GEO_TESTS.md)       |
 | Auth      | [Domain](backends/node/services/auth/domain/AUTH_DOMAIN.md)     | [App](backends/node/services/auth/app/AUTH_APP.md)     | [Infra](backends/node/services/auth/infra/AUTH_INFRA.md)     | [API](backends/node/services/auth/api/AUTH_API.md)     | [Tests](backends/node/services/auth/tests/AUTH_TESTS.md)           |
 | Comms     | [Domain](backends/node/services/comms/domain/COMMS_DOMAIN.md)   | [App](backends/node/services/comms/app/COMMS_APP.md)   | [Infra](backends/node/services/comms/infra/COMMS_INFRA.md)   | [API](backends/node/services/comms/api/COMMS_API.md)   | [Tests](backends/node/services/comms/tests/COMMS_TESTS.md)         |
-| Files     | —                                                               | —                                                      | —                                                            | —                                                      | —                                                                  |
+| Files     | [Domain](backends/node/services/files/domain/FILES_DOMAIN.md)   | [App](backends/node/services/files/app/FILES_APP.md)   | [Infra](backends/node/services/files/infra/FILES_INFRA.md)   | [API](backends/node/services/files/api/FILES_API.md)   | —                                                                  |
 | dkron-mgr | —                                                               | —                                                      | —                                                            | —                                                      | [Tests](backends/node/services/dkron-mgr/tests/DKRON_MGR_TESTS.md) |
 
 ### Client Libraries
@@ -361,14 +364,14 @@ _Service-owned client libraries for consumers._
 | Gateway                                               | Platform | Status     | Description                                |
 | ----------------------------------------------------- | -------- | ---------- | ------------------------------------------ |
 | [REST Gateway](backends/dotnet/gateways/REST/REST.md) | .NET     | ✅ Done    | HTTP/REST → gRPC routing gateway           |
-| SignalR Gateway                                       | .NET     | 📋 Planned | Real-time WebSocket push gateway (ADR-028) |
+| [SignalR Gateway](backends/dotnet/gateways/SignalR/SignalR.md) | .NET     | ✅ Done    | Real-time WebSocket push gateway (ADR-028) |
 
 _Gateway internals:_
 
 | Gateway         | Docs                                             | Description                                                                 |
 | --------------- | ------------------------------------------------ | --------------------------------------------------------------------------- |
 | REST Gateway    | [REST.md](backends/dotnet/gateways/REST/REST.md) | JWT auth, gRPC routing, rate limiting, idempotency, request enrichment      |
-| SignalR Gateway | —                                                | JWT-authed WebSocket connections, gRPC push interface for internal services |
+| SignalR Gateway | [SignalR.md](backends/dotnet/gateways/SignalR/SignalR.md) | JWT-authed WebSocket connections, gRPC push interface for internal services |
 
 ### Orchestration
 

@@ -62,8 +62,8 @@
 
 - **Phase 1: TypeScript Shared Infrastructure** ✅ — 24 shared `@d2/*` packages mirroring .NET (result, handler, DI, caching, messaging, middleware, batch-pg, errors-pg, i18n, auth/CSRF/translation middleware)
 - **Phase 2 Stage A: Cross-cutting foundations** ✅ — Retry utility, idempotency middleware, UUIDv7
-- **Phase 2 Stage B: Auth Service DDD layers** ✅ — domain, app, infra, api (969 tests)
-- **Comms Service Stage A** ✅ — Delivery engine, email + SMS providers, `@d2/comms-client` (575 tests)
+- **Phase 2 Stage B: Auth Service DDD layers** ✅ — domain, app, infra, api (~1,000 tests, expanding with OTP/SAGA work)
+- **Comms Service Stage A** ✅ — Delivery engine, email + SMS providers, `@d2/comms-client` (~600 tests, expanding with user-channel-pref work)
 - **E2E Cross-Service Tests** ✅ — 31 tests (22 API-level + 9 browser E2E: Auth → Geo → Comms delivery pipeline + Dkron job chain + BFF client integration)
 - **Cross-platform Parity** ✅ — `@d2/batch-pg`, `@d2/errors-pg`, .NET `Errors.Pg`, documented in `backends/PARITY.md`
 - **.NET Gateway** ✅ — JWT auth, request enrichment, rate limiting, CORS, service key middleware, translation middleware
@@ -73,7 +73,14 @@
 - **SvelteKit Web Client Steps 0–9** ✅ — Design system, routing, auth BFF, gateway client, forms, auth pages, fingerprinting, Faro telemetry, three-tier Playwright tests (706 tests: 551 Vitest + 146 mocked Playwright + 9 browser E2E)
 - **Q1 2026 Dependency Update** ✅ — .NET 10.0.103, Node 24.14, pnpm 10.30, auth health gRPC migration (#43)
 - **i18n & BCP 47 Locale Migration** ✅ — 10 BCP 47 locales (en-US, en-CA, en-GB, fr-FR, fr-CA, es-ES, es-MX, de-DE, it-IT, ja-JP) replacing 5 bare language codes. D2.Shared.I18n + @d2/i18n packages, gateway-edge translation middleware, Contact.IETFBCP47Tag field, auth middleware extraction to shared packages
-- **Shared tests** — 1,245 passing
+- **Auth middleware split** ✅ — .NET `Auth.Default` split into `JwtAuth.Default` + `ServiceKey.Default` + `AuthPolicy.Default` siblings. Node.js parity: `@d2/jwt-auth` (relocated to `shared/implementations/middleware/jwt-auth/default/`), `@d2/auth-policy` (new). Added `RoutePolicyExtensions` (`.RequireAuth()`, `.RequireOrg()`, etc.) on .NET. New E2E `auth-policy-enforcement.test.ts`. `Role`/`ROLE_HIERARCHY`/`isValidRole`/`rolesAtOrAbove` moved from `@d2/auth-domain` to `@d2/handler` (auth-domain re-exports for back-compat). Deleted `AuthenticatedUserId` parameter binder
+- **Email & Phone change with OTP + SAGA** ✅ — 5 new auth handlers (`RequestEmailChange`, `VerifyEmailChange`, `RequestPhoneChange`, `VerifyPhoneChange`, `RemovePhone`), OTP rate limiter, BetterAuth `phone` + `phoneVerified` user fields, `runCrossServiceUpdate` SAGA helper (Geo-first → Auth-second → compensate Geo on auth failure → fatal log if rollback fails), comms `alternativeContactInfo` for delivery to non-contact addresses
+- **User-centric notification preferences** ✅ — Comms gRPC `GetUserChannelPreference`/`SetUserChannelPreference` RPCs. REST gateway exposes `/api/v1/notification-preferences`
+- **Per-service gateway endpoint files** ✅ — Gateway endpoint mapping split into per-service files (`AuthEndpoints.cs`, `CommsEndpoints.cs`, `FilesEndpoints.cs`, `SignalREndpoints.cs`)
+- **Cross-process cache invalidation** ✅ — Geo client consumers auto-wired (.NET `AddGeoRefDataConsumer`, Node `wireGeoClientConsumers()`)
+- **W3C Trace Context CORS** ✅ — `traceparent` + `tracestate` allowed on REST gateway, SignalR gateway, Files API, Auth API
+- **Timezone hydration** ✅ — `D2_TIMEZONE` cookie + sign-up hydration, Geo Contact `IANAIdentifier` field, profile-dropdown timezone selector
+- **Shared tests** — ~1,250+ passing (counts grow per-feature; see Services table)
 
 ### Phase 2: Auth Service + SvelteKit Integration
 
@@ -180,7 +187,7 @@ From Q1 2026 audit:
 
 [↑ back to top](#table-of-contents)
 
-Current focus: **File Service + SignalR Gateway** (detour from Step 10 Onboarding — required for user profile management, profile pictures, and real-time push notifications. Onboarding resumes after this is complete.)
+Current focus: **SvelteKit Account area** (Profile + Email & Phone tabs largely shipped; Security tab next). The File Service + SignalR Gateway prerequisites are complete. Onboarding (Step 10) resumes after the Account area is done.
 
 Full SvelteKit implementation plan: [`clients/web/IMPLEMENTATION_PLAN.md`](clients/web/IMPLEMENTATION_PLAN.md)
 
@@ -197,7 +204,7 @@ Full SvelteKit implementation plan: [`clients/web/IMPLEMENTATION_PLAN.md`](clien
 | F7   | Auth FileCallback gRPC server              | Done        | ADR-026          | `FileCallbackService` gRPC server on Auth port 5101 (OnFileProcessed + CanAccess). HandleFileProcessed command handler routes by context key: `user_avatar` → `user.image`, `org_logo` → `organization.logo`, others → ack. CanAccess returns `allowed: false` (fail-closed; Auth CKs use JWT resolution). UpdateUserImage + UpdateOrgLogo repo handlers. Service-key auth via `withApiKeyAuth`                     |
 | F7.5 | Cross-cutting security + logic audit       | Done        | —                | Solution-wide sweep. Reusable checklist: [AUDIT_CHECKLIST.md](AUDIT_CHECKLIST.md)                                                                                                                                                                                                                                                                                                                                   |
 | F8   | File service E2E test                      | Done        | ADR-026          | 8 E2E tests: upload → intake → scan → process → callback → push. Adversarial tests (bad MIME, oversized, malformed).                                                                                                                                                                                                                                                                                                |
-| F9   | SvelteKit profile page + avatar upload     | In Progress | ADR-026, ADR-028 | Account route group with profile tab done (Phase 1–3). Phase 4: SignalR client + avatar upload + crop editor. Phase 5: security/sessions/logins. Browser flow: select → crop → upload → presigned URL → MinIO PUT → process → SignalR status → display                                                                                                                                                              |
+| F9   | SvelteKit profile page + avatar upload     | In Progress | ADR-026, ADR-028 | Account route group + Profile tab + Email & Phone tab shipped (avatar upload + crop editor, SignalR client, OTP-verified email/phone change with SAGA, notification preferences, timezone hydration, animated InlineEditActions, FormPasswordInput migration, locale flow with cancel-aware confirmation). Next: Security tab (sessions/logins/password/2FA)                                                       |
 
 Full checklist moved to standalone file: [AUDIT_CHECKLIST.md](AUDIT_CHECKLIST.md)
 
@@ -218,9 +225,9 @@ Full checklist moved to standalone file: [AUDIT_CHECKLIST.md](AUDIT_CHECKLIST.md
 | 7    | Forms Architecture (Superforms)     | ✅ Done     | 108 tests. Superforms + Formsnap + Zod 4, field presets, D2Result mapping, form-actions pipeline |
 | 8    | Auth Pages (Sign-In, Sign-Up, etc.) | ✅ Done     | Sign-in, sign-up, forgot/reset password, verify-email. i18n (10 BCP 47 locales)                  |
 | 9    | Client Telemetry (Grafana Faro)     | ✅ Done     | Faro SDK, Alloy faro.receiver pipeline, Web Vitals → Mimir histograms, RUM dashboard             |
-| 10   | Onboarding Flow                     | Blocked F\* | Post-auth org selection/creation + user profile. Needs File Service for profile pictures         |
+| 10   | Onboarding Flow                     | Pending     | Post-auth org selection/creation + user profile. File Service prerequisite shipped — resumes after Account area Security tab |
 | 11   | App Shell (Sidebar, Header, Org)    | Pending     | Org-type nav, org switcher, emulation banner, breadcrumbs                                        |
-| 12   | SignalR Abstraction Layer           | Blocked F6  | Browser → .NET SignalR gateway direct (`@microsoft/signalr`). Needs SignalR Gateway built first  |
+| 12   | SignalR Abstraction Layer           | ✅ Done     | Browser → .NET SignalR gateway direct (`@microsoft/signalr`). Wired through F9 (avatar updates, user:updated session refresh) |
 
 ### Other Active Work
 
@@ -232,6 +239,15 @@ Full checklist moved to standalone file: [AUDIT_CHECKLIST.md](AUDIT_CHECKLIST.md
 
 ### Recently Completed
 
+- **Auth middleware split (.NET + Node parity)**: `Auth.Default` split into 3 sibling .NET projects — `JwtAuth.Default`, `ServiceKey.Default`, `AuthPolicy.Default`. New `@d2/auth-policy` Node package; `@d2/jwt-auth` relocated to `shared/implementations/middleware/jwt-auth/default/`. `Role`/`ROLE_HIERARCHY`/`isValidRole`/`rolesAtOrAbove` moved to `@d2/handler` (auth-domain re-exports). New `RoutePolicyExtensions` on .NET (`.RequireAuth()`, `.RequireOrg()`, etc.). 4 Hono auth route files refactored. Mass test refactor across auth-tests. New E2E `auth-policy-enforcement.test.ts`. `AuthenticatedUserId` parameter binder removed
+- **Email & Phone change with OTP + SAGA**: 5 new auth handlers (`RequestEmailChange`, `VerifyEmailChange`, `RequestPhoneChange`, `VerifyPhoneChange`, `RemovePhone`), OTP rate limiter, BetterAuth `phone` + `phoneVerified` fields, `runCrossServiceUpdate` SAGA helper, comms `alternativeContactInfo` for delivery to non-contact addresses
+- **User-centric notification preferences**: Comms gRPC `GetUserChannelPreference`/`SetUserChannelPreference` RPCs; gateway exposes `/api/v1/notification-preferences`
+- **Per-service gateway endpoint files**: Endpoint mapping split into `AuthEndpoints.cs`, `CommsEndpoints.cs`, `FilesEndpoints.cs`, `SignalREndpoints.cs`
+- **Cross-process cache invalidation auto-wired**: `.NET AddGeoRefDataConsumer` and Node `wireGeoClientConsumers()` register consumers automatically
+- **W3C Trace Context CORS**: `traceparent` + `tracestate` allowed across REST gateway, SignalR gateway, Files API, Auth API
+- **Timezone hydration**: `D2_TIMEZONE` cookie + sign-up hydration, profile-dropdown timezone selector, Geo Contact `IANAIdentifier` field
+- **SvelteKit profile + email&phone polish**: Animated `InlineEditActions` slot (collapses idle, animates open on dirty/saving/saved); `SaveCancelledError` sentinel + `isSaveCancelledError` guard; `ConfirmationDialog.onCancel` callback; profile page locale flow rewired to await modal confirmation; skeleton loading on Email & Phone tab; notification toggle defaults to ON; i18n trims; phone row alignment; `FormPasswordInput` migration of inline eye-toggle password fields; cleared all svelte-check errors and warnings
+- **Doc sweep**: 12 doc files updated (AUTH.md, REST.md, SignalR.md, REQUEST_ENRICHMENT.md, AUTH_API.md, BACKENDS.md, PARITY.md, COMMS.md, COMMS_CLIENT.md, GEO_SERVICE.md, GEO_CLIENT.md, PROFILE_PROGRESS.md)
 - **File Service (F1-F8)**: Complete pipeline — domain, app, infra, API, JWT middleware, Auth FileCallback gRPC, SignalR Gateway, 8 E2E tests. 546 files-tests + 42 bff-client tests
 - **Solution-wide quality sweep**: 79 issues fixed (4 CRITICAL, 22 HIGH, 38 MEDIUM, 15 LOW) — bare catches, unchecked results, RedactionSpec, D2Result factories, auth flags, i18n, PII logging, security fixes
 - **Nullability refactor**: Domain models consolidated to `?: T` (TS) / `T?` (C#). Proto `optional` keyword on 65 fields + `useOptionals=all`. New utilities: `truthyOrUndefined()` (TS), `ToNullIfEmpty()` (C#). Zero empty strings as data
@@ -320,13 +336,13 @@ Full checklist moved to standalone file: [AUDIT_CHECKLIST.md](AUDIT_CHECKLIST.md
 
 ### Services
 
-| Service   | Platform | Status      | Tests       | Notes                                                                                        |
-| --------- | -------- | ----------- | ----------- | -------------------------------------------------------------------------------------------- |
-| Geo       | .NET     | ✅ Done     | 795 passing | Geographic reference data, locations, contacts, WHOIS, multi-tier caching                    |
-| Auth      | Node.js  | 🚧 Stage C  | 995 passing | Hono + BetterAuth + Drizzle. Stages A-B done, BFF client done, E2E tested                    |
-| Comms     | Node.js  | 🚧 Stage B  | 575 passing | Stage A done (delivery engine). Stage B next (in-app notifications, SignalR)                 |
-| Files     | Node.js  | 🚧 Stage F8 | 546 passing | Domain + app + infra + API + JWT middleware + E2E done. Auth FileCallback gRPC done. ADR-026 |
-| dkron-mgr | Node.js  | ✅ Done     | 64 passing  | Declarative Dkron job reconciler — drift detection, orphan cleanup                           |
+| Service   | Platform | Status       | Tests       | Notes                                                                                                                                                          |
+| --------- | -------- | ------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Geo       | .NET     | ✅ Done      | 795 passing | Geographic reference data, locations, contacts, WHOIS, multi-tier caching, Contact `IANAIdentifier` (timezone)                                                 |
+| Auth      | Node.js  | 🚧 Stage C   | ~944 unit + integration | Hono + BetterAuth + Drizzle. Stages A-B done, BFF client done, E2E tested. Email/phone change with OTP + SAGA done. Middleware split (jwt-auth/service-key/auth-policy) done |
+| Comms     | Node.js  | 🚧 Stage B   | ~600 passing | Stage A done (delivery engine). User-centric channel preferences (gRPC) done. Stage B next (in-app notifications, push via SignalR)                            |
+| Files     | Node.js  | ✅ F1-F8 Done | 546 passing | Domain + app + infra + API + JWT middleware + E2E done. Auth FileCallback gRPC done. F9 SvelteKit avatar upload integration done. ADR-026                     |
+| dkron-mgr | Node.js  | ✅ Done      | 64 passing  | Declarative Dkron job reconciler — drift detection, orphan cleanup                                                                                             |
 
 ### Gateways
 
@@ -339,7 +355,7 @@ Full checklist moved to standalone file: [AUDIT_CHECKLIST.md](AUDIT_CHECKLIST.md
 
 | Component            | Status     | Notes                                                                                                                                                                         |
 | -------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| SvelteKit App        | 🚧 Stage B | Stage A (Steps 0–9) done. F9 in progress: account route group + profile tab done, avatar upload + SignalR client next                                                         |
+| SvelteKit App        | 🚧 Stage B | Stage A (Steps 0–9) done. F9 mostly done: account route group, Profile tab (avatar upload + crop + SignalR), Email & Phone tab (OTP-verified change + SAGA + notification prefs + timezone). Security tab next                                                         |
 | Auth BFF Integration | ✅ Done    | Proxy, session resolver, JWT manager, route guards (ADR-017)                                                                                                                  |
 | API Gateway Client   | ✅ Done    | Server-side + client-side, camelCase normalizer (ADR-005)                                                                                                                     |
 | Server Middleware    | ✅ Done    | Request enrichment, rate limiting, idempotency on SvelteKit                                                                                                                   |
@@ -2226,7 +2242,7 @@ FILES_CK__2__VARIANT__2__NAME=original
 
 The File Service (ADR-026) exposes a public REST API that must validate JWTs independently (it doesn't sit behind the .NET gateway). Any future public-facing Node.js service would need the same capability.
 
-**Decision**: Create a shared package `@d2/jwt-auth` (under `backends/node/shared/implementations/middleware/`) that provides Hono middleware for JWT validation. This is the Node.js equivalent of the .NET `Auth.Default` middleware.
+**Decision**: Create a shared package `@d2/jwt-auth` (under `backends/node/shared/implementations/middleware/`) that provides Hono middleware for JWT validation. This is the Node.js equivalent of the .NET `JwtAuth.Default` middleware.
 
 **Responsibilities:**
 
@@ -2258,7 +2274,7 @@ backends/node/shared/implementations/middleware/jwt-auth/default/
 - Any Node.js service can be publicly exposed with JWT auth (not just Auth)
 - Exact parity with .NET gateway JWT validation (same claims, same fingerprint check, same clock skew)
 - Unblocks File Service (ADR-026) and any future direct-to-public Node.js service
-- Platform parity: .NET has `Auth.Default`, Node.js gets `@d2/jwt-auth`
+- Platform parity: .NET has `JwtAuth.Default` + `ServiceKey.Default` + `AuthPolicy.Default`, Node.js gets `@d2/jwt-auth` + `@d2/service-key` + `@d2/auth-policy`
 
 ---
 
@@ -2289,7 +2305,7 @@ Anonymous visitor     ──WebSocket──→ /hub/public (subscription token)
 
 **Key Design Decisions:**
 
-1. **Separate service from REST gateway** — WebSocket connections are stateful (long-lived, memory per connection). The REST gateway is stateless (request/response fan-out). Mixing them couples scaling characteristics and failure modes. Shared middleware (`Auth.Default`, `RequestEnrichment`, `RateLimit`) is already abstracted into packages — reuse is plug-and-play.
+1. **Separate service from REST gateway** — WebSocket connections are stateful (long-lived, memory per connection). The REST gateway is stateless (request/response fan-out). Mixing them couples scaling characteristics and failure modes. Shared middleware (`JwtAuth.Default`, `ServiceKey.Default`, `AuthPolicy.Default`, `RequestEnrichment`, `RateLimit`) is already abstracted into packages — reuse is plug-and-play.
 
 2. **Channel-based routing** — All push targeting uses named channels, not connection IDs or user IDs directly. Internal services push to a channel name; the gateway resolves channel → connections via SignalR Groups. Examples: `user:{userId}`, `org:{orgId}`, `thread:{threadId}`. Services never track WebSocket connections.
 
