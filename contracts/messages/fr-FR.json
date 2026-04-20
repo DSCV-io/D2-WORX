@@ -112,7 +112,7 @@
   "account_recent_logins_failure": "Échec",
   "account_recent_logins_pagination": "Affichage de {start}–{end} sur {total}",
   "account_recent_logins_placeholder": "L'historique de connexion et la carte apparaîtront ici.",
-  "account_recent_logins_success": "Réussi",
+  "account_recent_logins_success": "Succès",
   "account_recent_logins_title": "Connexions récentes",
   "account_security_change_password_confirm": "Voulez-vous vraiment changer votre mot de passe ? Toutes les autres sessions actives seront déconnectées.",
   "account_security_change_password_description": "Mettez à jour votre mot de passe. Toutes les autres sessions seront déconnectées.",
