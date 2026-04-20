@@ -412,43 +412,54 @@ export function createAuth(
       account: {
         update: {
           after: async (account) => {
-            // Detect password change — the `password` field is updated when
-            // BetterAuth's changePassword endpoint commits a new hash.
-            // Fire-and-forget: the password change is already persisted.
-            if (hooks?.publishPasswordChanged && account.password) {
-              const userId = account.userId as string;
-              if (!userId) return;
+            // BetterAuth's `changePassword` endpoint commits a new hash via
+            // `internalAdapter.updateAccount({ password })`, which lands here.
+            // Other account.update flows (OAuth token refresh, etc.) also pass
+            // `password` because the `after` hook receives the full row, not
+            // just changed fields — accept the over-fire (rare for credential
+            // accounts) over a "did password actually change" comparison that
+            // would require carrying state across `before`/`after`.
+            if (!hooks?.publishPasswordChanged || !account.password) return;
+            const userId = account.userId as string;
+            if (!userId) return;
 
-              try {
-                // Look up the user to get their name and email for the notification.
-                const [userRow] = await db
-                  .select({
-                    email: betterAuthSchema.user.email,
-                    name: betterAuthSchema.user.name,
-                  })
-                  .from(betterAuthSchema.user)
-                  .where(eq(betterAuthSchema.user.id, userId))
-                  .limit(1);
+            log.debug("account.update.after: password-changed hook fired", { userId });
 
-                if (userRow) {
-                  hooks
-                    .publishPasswordChanged({
-                      userId,
-                      email: userRow.email,
-                      name: userRow.name,
-                    })
-                    .catch((err: unknown) => {
-                      log.warn(
-                        "account.update.after: publishPasswordChanged failed (non-critical)",
-                        { error: err instanceof Error ? err.message : String(err) },
-                      );
-                    });
-                }
-              } catch (err: unknown) {
-                log.warn("account.update.after: failed to look up user for password notification", {
-                  error: err instanceof Error ? err.message : String(err),
+            try {
+              // Look up the user to get their name and email for the notification.
+              const [userRow] = await db
+                .select({
+                  email: betterAuthSchema.user.email,
+                  name: betterAuthSchema.user.name,
+                })
+                .from(betterAuthSchema.user)
+                .where(eq(betterAuthSchema.user.id, userId))
+                .limit(1);
+
+              if (!userRow) {
+                log.warn("account.update.after: user row not found for password notification", {
+                  userId,
                 });
+                return;
               }
+
+              hooks
+                .publishPasswordChanged({
+                  userId,
+                  email: userRow.email,
+                  name: userRow.name,
+                })
+                .catch((err: unknown) => {
+                  log.warn(
+                    "account.update.after: publishPasswordChanged failed (non-critical)",
+                    { error: err instanceof Error ? err.message : String(err), userId },
+                  );
+                });
+            } catch (err: unknown) {
+              log.warn("account.update.after: failed to look up user for password notification", {
+                error: err instanceof Error ? err.message : String(err),
+                userId,
+              });
             }
           },
         },

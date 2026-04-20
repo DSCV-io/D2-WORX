@@ -160,6 +160,7 @@ export function createAuthCallbacks(
     },
 
     publishPasswordChanged: async (input) => {
+      logger.info("publishPasswordChanged: invoked", { userId: input.userId });
       const scope = createCallbackScope();
       try {
         const contactId = await resolveUserContactId(
@@ -168,7 +169,13 @@ export function createAuthCallbacks(
           logger,
           "password changed notification",
         );
-        if (!contactId) return;
+        if (!contactId) {
+          logger.warn(
+            "publishPasswordChanged: no Geo contact for user — security email skipped",
+            { userId: input.userId },
+          );
+          return;
+        }
 
         const t = translator.t;
         const locale = resolveLocale(
@@ -177,7 +184,7 @@ export function createAuthCallbacks(
         );
 
         const notifier = scope.resolve(INotifyKey);
-        await notifier.handleAsync({
+        const result = await notifier.handleAsync({
           recipientContactId: contactId,
           title: t(locale, "auth_email_password_changed_subject"),
           content: [
@@ -192,10 +199,21 @@ export function createAuthCallbacks(
           correlationId: crypto.randomUUID(),
           senderService: "auth",
         });
+        if (!result.success) {
+          logger.warn("publishPasswordChanged: Notify returned non-success", {
+            userId: input.userId,
+            statusCode: result.statusCode,
+            errorCode: result.errorCode,
+            messages: result.messages,
+          });
+        } else {
+          logger.info("publishPasswordChanged: security email queued", { userId: input.userId });
+        }
       } catch (err: unknown) {
         // Fail-open: password change is already committed, notification is best-effort.
         logger.warn("publishPasswordChanged: failed to send notification (fail-open)", {
           error: err instanceof Error ? err.message : String(err),
+          userId: input.userId,
         });
       } finally {
         scope.dispose();
