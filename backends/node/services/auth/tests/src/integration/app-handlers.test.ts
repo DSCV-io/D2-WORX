@@ -11,7 +11,6 @@ import { generateId, ensureUsername } from "@d2/auth-infra";
 import { HandlerContext, type IRequestContext } from "@d2/handler";
 import { createLogger } from "@d2/logging";
 import * as CacheMemory from "@d2/cache-memory";
-import type { SignInEvent } from "@d2/auth-domain";
 import {
   createSignInEventRepoHandlers,
   createEmulationConsentRepoHandlers,
@@ -62,7 +61,11 @@ describe("Sign-in event handlers (integration)", () => {
   let handlers: ReturnType<typeof createSignInEventHandlers>;
   let cacheStore: CacheMemory.MemoryCacheStore;
 
-  type CachedEvents = { events: SignInEvent[]; total: number; latestDate?: string };
+  type CachedEvents = {
+    events: import("@d2/auth-app").AuthQueries.EnrichedSignInEvent[];
+    total: number;
+    latestDate?: string;
+  };
 
   beforeAll(async () => {
     await startPostgres();

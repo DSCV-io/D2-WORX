@@ -72,6 +72,8 @@ import { RemovePhone } from "./implementations/cqrs/handlers/c/remove-phone.js";
 import { INotifyKey } from "@d2/comms-client";
 import { DistributedCache } from "@d2/interfaces";
 import { IMessageBusPingKey } from "@d2/messaging";
+import * as CacheMemory from "@d2/cache-memory";
+import type { Queries as AuthQueries } from "./interfaces/cqrs/handlers/index.js";
 import { RunSessionPurge } from "./implementations/cqrs/handlers/c/run-session-purge.js";
 import { RunSignInEventPurge } from "./implementations/cqrs/handlers/c/run-sign-in-event-purge.js";
 import { RunInvitationCleanup } from "./implementations/cqrs/handlers/c/run-invitation-cleanup.js";
@@ -339,6 +341,17 @@ export function addAuthApp(
 
   // --- Query Handlers ---
 
+  // In-process LRU cache for sign-in event pages. Keyed by userId+limit+offset,
+  // validated against the user's latest event date on every read. Sized for
+  // ~1000 distinct (user, page) combos before LRU eviction kicks in. Each
+  // entry holds the FULL enriched response — hits skip both the row fetch
+  // and WhoIs hydration.
+  type CachedEvents = {
+    events: AuthQueries.EnrichedSignInEvent[];
+    total: number;
+    latestDate?: string;
+  };
+  const signInEventCacheStore = new CacheMemory.MemoryCacheStore({ maxEntries: 1000 });
   services.addTransient(
     IGetSignInEventsKey,
     (sp) =>
@@ -348,6 +361,16 @@ export function addAuthApp(
         sp.resolve(IGetLatestSignInEventDateKey),
         sp.resolve(IFindWhoIsKey),
         sp.resolve(IHandlerContextKey),
+        {
+          get: new CacheMemory.Get<CachedEvents>(
+            signInEventCacheStore,
+            sp.resolve(IHandlerContextKey),
+          ),
+          set: new CacheMemory.Set<CachedEvents>(
+            signInEventCacheStore,
+            sp.resolve(IHandlerContextKey),
+          ),
+        },
       ),
   );
 

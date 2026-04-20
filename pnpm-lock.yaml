@@ -165,6 +165,9 @@ importers:
       '@d2/batch-pg':
         specifier: workspace:*
         version: link:../../../shared/implementations/repository/batch/pg
+      '@d2/cache-memory':
+        specifier: workspace:*
+        version: link:../../../shared/implementations/caching/in-memory/default
       '@d2/cache-redis':
         specifier: workspace:*
         version: link:../../../shared/implementations/caching/distributed/redis

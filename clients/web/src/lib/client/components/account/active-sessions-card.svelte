@@ -142,7 +142,7 @@
           {@const stub = whoIsStub(s.session.whoIsId)}
           <li
             class={[
-              "group rounded-lg border p-4 transition-colors",
+              "group rounded-lg border p-4 transition-colors shadow-sm",
               s.isCurrent
                 ? "border-success/40 bg-success/5"
                 : "hover:border-muted-foreground/30",

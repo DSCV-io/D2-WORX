@@ -16,15 +16,21 @@ type Input = Queries.GetSignInEventsInput;
 type Output = Queries.GetSignInEventsOutput;
 type EnrichedSignInEvent = Queries.EnrichedSignInEvent;
 
-/** Cache value shape for sign-in event queries — raw rows only, WhoIs fetched fresh per request. */
+/**
+ * Cache value — the FULL enriched response (events + WhoIs already resolved).
+ * Sign-in events are append-only and WhoIs is content-addressable on (ip,
+ * year, month) — neither changes once written, so caching the entire output
+ * is safe. Hits skip both the DB row fetch AND the parallel WhoIs hydration;
+ * only `getLatestEventDate` runs each call to validate freshness.
+ */
 interface CachedEvents {
-  events: SignInEvent[];
+  events: EnrichedSignInEvent[];
   total: number;
   latestDate?: string;
 }
 
-/** Cache TTL: 5 minutes. */
-const CACHE_TTL_MS = 5 * 60 * 1000;
+/** Cache TTL: 3 hours. Latest-date staleness check invalidates earlier when a new event lands. */
+const CACHE_TTL_MS = 3 * 60 * 60 * 1000;
 
 /**
  * Retrieves paginated sign-in events for a user.
@@ -73,68 +79,37 @@ export class GetSignInEvents
   protected async executeAsync(input: Input): Promise<D2Result<Output | undefined>> {
     const limit = Math.min(input.limit ?? 50, 100);
     const offset = Math.max(input.offset ?? 0, 0);
+    const cacheKey = AUTH_CACHE_KEYS.signInEvents(input.userId, limit, offset);
 
-    // Cache stores the raw rows + total. WhoIs is hydrated fresh on every
-    // response (geo-client has its own multi-tier cache, so re-hydration is cheap).
-    let events: SignInEvent[] | undefined;
-    let total = 0;
-
+    // Cache hit path — the only DB call is the cheap latest-date check.
     if (this.cache) {
-      const cacheKey = AUTH_CACHE_KEYS.signInEvents(input.userId, limit, offset);
       const cacheResult = await this.cache.get.handleAsync({ key: cacheKey });
-
       if (cacheResult.success && cacheResult.data?.value) {
         const cached = cacheResult.data.value;
-
-        // Verify staleness: check if latest event date still matches
         const dateResult = await this.getLatestEventDate.handleAsync({
           userId: input.userId,
         });
         const latestStr = dateResult.success ? dateResult.data?.date?.toISOString() : undefined;
-
         if (latestStr === cached.latestDate) {
-          events = cached.events;
-          total = cached.total;
+          return D2Result.ok({ data: { events: cached.events, total: cached.total } });
         }
       }
     }
 
-    if (events === undefined) {
-      // Cache miss or stale — query DB
-      const [findResult, countResult, latestDateResult] = await Promise.all([
-        this.findByUserId.handleAsync({ userId: input.userId, limit, offset }),
-        this.countByUserId.handleAsync({ userId: input.userId }),
-        this.getLatestEventDate.handleAsync({ userId: input.userId }),
-      ]);
+    // Cache miss or stale — fetch rows + count + latest date in parallel.
+    const [findResult, countResult, latestDateResult] = await Promise.all([
+      this.findByUserId.handleAsync({ userId: input.userId, limit, offset }),
+      this.countByUserId.handleAsync({ userId: input.userId }),
+      this.getLatestEventDate.handleAsync({ userId: input.userId }),
+    ]);
 
-      if (!findResult.success) return D2Result.bubbleFail(findResult);
-      if (!countResult.success) return D2Result.bubbleFail(countResult);
-      events = findResult.data?.events ?? [];
-      total = countResult.data?.count ?? 0;
+    if (!findResult.success) return D2Result.bubbleFail(findResult);
+    if (!countResult.success) return D2Result.bubbleFail(countResult);
+    const rawEvents: SignInEvent[] = findResult.data?.events ?? [];
+    const total = countResult.data?.count ?? 0;
 
-      if (this.cache) {
-        const globalLatestDate = latestDateResult.success
-          ? latestDateResult.data?.date?.toISOString()
-          : undefined;
-        const cacheKey = AUTH_CACHE_KEYS.signInEvents(input.userId, limit, offset);
-        // Fire-and-forget — don't block response on cache write
-        this.cache.set
-          .handleAsync({
-            key: cacheKey,
-            value: { events, total, latestDate: globalLatestDate },
-            expirationMs: CACHE_TTL_MS,
-          })
-          .catch((err: unknown) =>
-            this.context.logger.debug("GetSignInEvents: cache set failed", {
-              error: err instanceof Error ? err.message : String(err),
-            }),
-          );
-      }
-    }
-
-    // Hydrate WhoIs for unique IPs in the page. geo-client dedupes/caches
-    // internally, so parallel calls are cheap.
-    const uniqueIps = Array.from(new Set(events.map((e) => e.ipAddress).filter(Boolean)));
+    // Hydrate WhoIs for unique IPs (geo-client multi-tier cache absorbs duplicates).
+    const uniqueIps = Array.from(new Set(rawEvents.map((e) => e.ipAddress).filter(Boolean)));
     const whoIsByIp = new Map<string, WhoIsDTO>();
     if (uniqueIps.length > 0) {
       const results = await Promise.all(
@@ -150,10 +125,30 @@ export class GetSignInEvents
       }
     }
 
-    const enriched: EnrichedSignInEvent[] = events.map((e) => ({
+    const enriched: EnrichedSignInEvent[] = rawEvents.map((e) => ({
       event: e,
       whoIs: whoIsByIp.get(e.ipAddress),
     }));
+
+    // Populate cache with the FULL enriched response. Use the global latest
+    // event date so the staleness check works for every page (offset > 0).
+    if (this.cache) {
+      const globalLatestDate = latestDateResult.success
+        ? latestDateResult.data?.date?.toISOString()
+        : undefined;
+      // Fire-and-forget — don't block the response on cache write.
+      this.cache.set
+        .handleAsync({
+          key: cacheKey,
+          value: { events: enriched, total, latestDate: globalLatestDate },
+          expirationMs: CACHE_TTL_MS,
+        })
+        .catch((err: unknown) =>
+          this.context.logger.debug("GetSignInEvents: cache set failed", {
+            error: err instanceof Error ? err.message : String(err),
+          }),
+        );
+    }
 
     return D2Result.ok({ data: { events: enriched, total } });
   }

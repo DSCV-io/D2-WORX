@@ -21,6 +21,7 @@
     "@d2/comms-client": "workspace:*",
     "@d2/i18n": "workspace:*",
     "@d2/batch-pg": "workspace:*",
+    "@d2/cache-memory": "workspace:*",
     "@d2/cache-redis": "workspace:*",
     "@d2/di": "workspace:*",
     "@d2/geo-client": "workspace:*",

@@ -7,8 +7,10 @@
   import { listRecentLogins, type RecentLoginDTO } from "$lib/client/rest/account-client.js";
   import { parseUserAgent } from "$lib/shared/utils/user-agent.js";
   import { formatLocation } from "$lib/shared/utils/format-location.js";
-  import CheckIcon from "@lucide/svelte/icons/check";
-  import XIcon from "@lucide/svelte/icons/x";
+  import MonitorIcon from "@lucide/svelte/icons/monitor";
+  import SmartphoneIcon from "@lucide/svelte/icons/smartphone";
+  import TabletIcon from "@lucide/svelte/icons/tablet";
+  import GlobeIcon from "@lucide/svelte/icons/globe";
   import MapPinIcon from "@lucide/svelte/icons/map-pin";
   import ChevronLeftIcon from "@lucide/svelte/icons/chevron-left";
   import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
@@ -63,6 +65,14 @@
     if (!id || id.length < 8) return undefined;
     return `${id.slice(0, 4)}…${id.slice(-4)}`;
   }
+
+  /** Pick a Lucide icon for the device class returned by ua-parser. */
+  function deviceIcon(deviceType: string) {
+    if (deviceType === "mobile") return SmartphoneIcon;
+    if (deviceType === "tablet") return TabletIcon;
+    if (deviceType === "desktop" || deviceType === "unknown") return MonitorIcon;
+    return GlobeIcon;
+  }
 </script>
 
 <Card.Root>
@@ -102,9 +112,10 @@
           {@const loc = formatLocation(e.whoIs)}
           {@const ok = e.event.successful}
           {@const stub = whoIsStub(e.event.whoIsId)}
+          {@const Icon = deviceIcon(ua.deviceType)}
           <li
             class={[
-              "flex items-start gap-4 rounded-lg border p-4 transition-colors",
+              "flex items-start gap-4 rounded-lg border p-4 transition-colors shadow-sm",
               ok
                 ? "hover:border-muted-foreground/30"
                 : "border-destructive/30 bg-destructive/5",
@@ -113,14 +124,10 @@
             <div
               class={[
                 "flex size-10 shrink-0 items-center justify-center rounded-md",
-                ok ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive",
+                ok ? "bg-muted text-muted-foreground" : "bg-destructive/10 text-destructive",
               ].join(" ")}
             >
-              {#if ok}
-                <CheckIcon class="size-5" />
-              {:else}
-                <XIcon class="size-5" />
-              {/if}
+              <Icon class="size-5" />
             </div>
 
             <div class="flex flex-1 flex-col gap-1.5 min-w-0">

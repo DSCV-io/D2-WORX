@@ -10,8 +10,8 @@ export {
 } from "./interfaces/cqrs/handlers/index.js";
 
 import type { IHandlerContext } from "@d2/handler";
-import type { SignInEvent } from "@d2/auth-domain";
 import type { Commands, Queries, Complex } from "@d2/geo-client";
+import type { Queries as AuthQueriesNS } from "./interfaces/cqrs/handlers/index.js";
 
 // --- Interfaces (Repository Handler Bundles) ---
 export type {
@@ -342,12 +342,12 @@ export function createSignInEventHandlers(
   context: IHandlerContext,
   memoryCache?: {
     get: InMemoryCache.IGetHandler<{
-      events: SignInEvent[];
+      events: AuthQueriesNS.EnrichedSignInEvent[];
       total: number;
       latestDate?: string;
     }>;
     set: InMemoryCache.ISetHandler<{
-      events: SignInEvent[];
+      events: AuthQueriesNS.EnrichedSignInEvent[];
       total: number;
       latestDate?: string;
     }>;

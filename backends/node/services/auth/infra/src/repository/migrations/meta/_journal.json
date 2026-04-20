@@ -68,8 +68,15 @@
     {
       "idx": 9,
       "version": "7",
-      "when": 1777190400000,
+      "when": 1776496277937,
       "tag": "0009_add_session_who_is_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1776664510622,
+      "tag": "0010_sign_in_event_composite_idx",
       "breakpoints": true
     }
   ]

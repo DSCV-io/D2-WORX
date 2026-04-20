@@ -30,7 +30,18 @@ export const signInEvent = pgTable(
     failureReason: varchar("failure_reason", { length: 100 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
-  (table) => [index("idx_sign_in_event_user_id").on(table.userId)],
+  (table) => [
+    // Composite (user_id, created_at DESC) covers every query in this table:
+    //   - findByUserId: WHERE user_id = ? ORDER BY created_at DESC LIMIT/OFFSET
+    //   - countByUserId: WHERE user_id = ? (left-prefix on user_id)
+    //   - getLatestEventDate: SELECT MAX(created_at) WHERE user_id = ? (PG can use index-only scan from the leading edge)
+    // Replaces the old single-column user_id index — left-prefix lookup keeps
+    // user_id-only queries fast.
+    index("idx_sign_in_event_user_id_created_at").on(
+      table.userId,
+      sql`${table.createdAt} DESC`,
+    ),
+  ],
 );
 
 export const emulationConsent = pgTable(
