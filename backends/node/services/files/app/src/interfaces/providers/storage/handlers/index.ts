@@ -24,12 +24,14 @@ export type {
   DeleteStorageObjectOutput,
   IDeleteStorageObject,
 } from "./delete-storage-object.js";
+export { DELETE_STORAGE_OBJECT_REDACTION } from "./delete-storage-object.js";
 
 export type {
   DeleteStorageObjectsInput,
   DeleteStorageObjectsOutput,
   IDeleteStorageObjects,
 } from "./delete-storage-objects.js";
+export { DELETE_STORAGE_OBJECTS_REDACTION } from "./delete-storage-objects.js";
 
 export type { PresignPutUrlInput, PresignPutUrlOutput, IPresignPutUrl } from "./presign-put-url.js";
 
@@ -40,6 +42,7 @@ export type {
   HeadStorageObjectOutput,
   IHeadStorageObject,
 } from "./head-storage-object.js";
+export { HEAD_STORAGE_OBJECT_REDACTION } from "./head-storage-object.js";
 
 export type { PingStorageInput, PingStorageOutput, IPingStorage } from "./ping-storage.js";
 

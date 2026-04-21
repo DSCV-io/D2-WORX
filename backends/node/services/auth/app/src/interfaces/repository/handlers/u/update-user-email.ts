@@ -1,4 +1,4 @@
-import type { IHandler } from "@d2/handler";
+import type { IHandler, RedactionSpec } from "@d2/handler";
 
 export interface UpdateUserEmailInput {
   readonly userId: string;
@@ -9,4 +9,11 @@ export interface UpdateUserEmailInput {
 
 export interface UpdateUserEmailOutput {}
 
-export type IUpdateUserEmailHandler = IHandler<UpdateUserEmailInput, UpdateUserEmailOutput>;
+/** `email` is PII and must NOT appear in handler I/O logs. */
+export const UPDATE_USER_EMAIL_REDACTION: RedactionSpec = {
+  inputFields: ["email"],
+};
+
+export interface IUpdateUserEmailHandler extends IHandler<UpdateUserEmailInput, UpdateUserEmailOutput> {
+  readonly redaction: RedactionSpec;
+}

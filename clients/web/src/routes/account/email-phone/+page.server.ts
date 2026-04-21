@@ -6,7 +6,8 @@ import type { PageServerLoad } from "./$types.js";
 export const load: PageServerLoad = async () => {
   const refData = await getGeoRefData();
   if (!refData) {
-    error(503, "Geo reference data unavailable. Ensure infrastructure services are running.");
+    // TK key — the +error.svelte page passes this through translateMessage().
+    error(503, "common_errors_geo_ref_unavailable");
   }
   return {
     countries: countriesToOptions(refData.countries ?? {}),

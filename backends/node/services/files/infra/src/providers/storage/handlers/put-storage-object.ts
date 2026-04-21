@@ -33,7 +33,7 @@ export class PutStorageObject extends BaseHandler<I, O> implements IPutStorageOb
       );
       return D2Result.ok({ data: {} });
     } catch (err: unknown) {
-      this.context.logger.error("PutStorageObject failed", { key: input.key, err });
+      this.context.logger.error("PutStorageObject failed", { err });
       return D2Result.serviceUnavailable();
     }
   }

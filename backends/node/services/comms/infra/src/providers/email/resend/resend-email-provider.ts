@@ -38,8 +38,12 @@ export class ResendEmailProvider
     });
 
     if (error) {
+      // Log raw provider error for ops visibility, but never propagate it
+      // to the caller — return ONLY a translated TK key so the FE can
+      // resolve it without leaking provider/English copy to end users.
+      this.context.logger.warn("Resend email send failed", { error: error.message });
       return D2Result.serviceUnavailable({
-        messages: [error.message || TK.comms.errors.PROVIDER_UNKNOWN],
+        messages: [TK.comms.errors.PROVIDER_UNKNOWN],
       });
     }
 

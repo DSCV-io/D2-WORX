@@ -27,4 +27,10 @@ service AuthJobService {
   // Clean up expired or revoked emulation consents.
   rpc CleanupExpiredEmulationConsents(d2.common.v1.TriggerJobRequest)
       returns (d2.common.v1.TriggerJobResponse);
+
+  // Anonymize users whose 30-day deletion grace period has expired.
+  // Called nightly by Dkron; transactionally scrubs PII while preserving
+  // referential integrity (status='deleted' tombstone).
+  rpc CleanupDeletedUsers(d2.common.v1.TriggerJobRequest)
+      returns (d2.common.v1.TriggerJobResponse);
 }

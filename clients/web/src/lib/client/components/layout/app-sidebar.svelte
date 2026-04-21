@@ -79,7 +79,8 @@
             <Avatar.AvatarFallback class="rounded-lg">U</Avatar.AvatarFallback>
           </Avatar.Avatar>
           <div class="flex flex-col gap-0.5 leading-none">
-            <span class="text-sm font-medium">User</span>
+            <!-- Static placeholder — real signed-in user data is rendered by UserAvatarMenu in the header. -->
+            <span class="text-sm font-medium">{m.common_ui_user_fallback()}</span>
             <span class="text-muted-foreground text-xs">user@example.com</span>
           </div>
         </Sidebar.SidebarMenuButton>

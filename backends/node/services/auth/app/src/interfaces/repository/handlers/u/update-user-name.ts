@@ -1,4 +1,4 @@
-import type { IHandler } from "@d2/handler";
+import type { IHandler, RedactionSpec } from "@d2/handler";
 
 export interface UpdateUserNameInput {
   readonly userId: string;
@@ -7,4 +7,11 @@ export interface UpdateUserNameInput {
 
 export interface UpdateUserNameOutput {}
 
-export type IUpdateUserNameHandler = IHandler<UpdateUserNameInput, UpdateUserNameOutput>;
+/** `name` is PII and must NOT appear in handler I/O logs. */
+export const UPDATE_USER_NAME_REDACTION: RedactionSpec = {
+  inputFields: ["name"],
+};
+
+export interface IUpdateUserNameHandler extends IHandler<UpdateUserNameInput, UpdateUserNameOutput> {
+  readonly redaction: RedactionSpec;
+}

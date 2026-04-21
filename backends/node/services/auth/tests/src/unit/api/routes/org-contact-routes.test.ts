@@ -86,20 +86,23 @@ function createTestApp(
       activeOrganizationType: orgType,
       activeOrganizationRole: orgRole,
     });
-    c.set("requestContext" as never, {
-      isAuthenticated: true,
-      isTrustedService: false,
-      isOrgEmulating: false,
-      isUserImpersonating: false,
-      userId: "user-123",
-      email: "test@test.com",
-      targetOrgId: orgId,
-      targetOrgType: toOrgTypeEnum(orgType),
-      targetOrgRole: orgRole,
-      agentOrgId: orgId,
-      agentOrgType: toOrgTypeEnum(orgType),
-      agentOrgRole: orgRole,
-    } as never);
+    c.set(
+      "requestContext" as never,
+      {
+        isAuthenticated: true,
+        isTrustedService: false,
+        isOrgEmulating: false,
+        isUserImpersonating: false,
+        userId: "user-123",
+        email: "test@test.com",
+        targetOrgId: orgId,
+        targetOrgType: toOrgTypeEnum(orgType),
+        targetOrgRole: orgRole,
+        agentOrgId: orgId,
+        agentOrgType: toOrgTypeEnum(orgType),
+        agentOrgRole: orgRole,
+      } as never,
+    );
     // Mock DI scope — routes resolve handlers from c.get("scope")
     c.set(SCOPE_KEY as never, createMockScope(handlers) as never);
     await next();
@@ -408,14 +411,17 @@ describe("Org contact routes", () => {
       app.use("*", async (c, next) => {
         c.set("user", { id: "user-123", email: "test@test.com", name: "Test" });
         c.set("session", {}); // No org fields
-        c.set("requestContext" as never, {
-          isAuthenticated: true,
-          isTrustedService: false,
-          isOrgEmulating: false,
-          isUserImpersonating: false,
-          userId: "user-123",
-          email: "test@test.com",
-        } as never);
+        c.set(
+          "requestContext" as never,
+          {
+            isAuthenticated: true,
+            isTrustedService: false,
+            isOrgEmulating: false,
+            isUserImpersonating: false,
+            userId: "user-123",
+            email: "test@test.com",
+          } as never,
+        );
         c.set(SCOPE_KEY as never, createMockScope(handlers) as never);
         await next();
       });
@@ -436,14 +442,17 @@ describe("Org contact routes", () => {
       app.use("*", async (c, next) => {
         c.set("user", { id: "user-123", email: "test@test.com", name: "Test" });
         c.set("session", {});
-        c.set("requestContext" as never, {
-          isAuthenticated: true,
-          isTrustedService: false,
-          isOrgEmulating: false,
-          isUserImpersonating: false,
-          userId: "user-123",
-          email: "test@test.com",
-        } as never);
+        c.set(
+          "requestContext" as never,
+          {
+            isAuthenticated: true,
+            isTrustedService: false,
+            isOrgEmulating: false,
+            isUserImpersonating: false,
+            userId: "user-123",
+            email: "test@test.com",
+          } as never,
+        );
         c.set(SCOPE_KEY as never, createMockScope(handlers) as never);
         await next();
       });

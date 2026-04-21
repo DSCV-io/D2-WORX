@@ -106,6 +106,11 @@ public static class AuthJobEndpoints
                 .WithName("CleanupExpiredEmulationConsents")
                 .WithSummary("Cleans up expired or revoked emulation consents.");
 
+            group.MapPost("/cleanup-deleted-users", CleanupDeletedUsersAsync)
+                .RequireServiceKey()
+                .WithName("CleanupDeletedUsers")
+                .WithSummary("Anonymizes users past the 30-day deletion grace window.");
+
             return erb;
         }
     }
@@ -148,6 +153,17 @@ public static class AuthJobEndpoints
         CancellationToken ct)
     {
         var response = await client.CleanupExpiredEmulationConsentsAsync(
+            new TriggerJobRequest(),
+            cancellationToken: ct);
+
+        return response.Result.ToHttpResult(response.Data);
+    }
+
+    private static async Task<IResult> CleanupDeletedUsersAsync(
+        AuthJobService.AuthJobServiceClient client,
+        CancellationToken ct)
+    {
+        var response = await client.CleanupDeletedUsersAsync(
             new TriggerJobRequest(),
             cancellationToken: ct);
 

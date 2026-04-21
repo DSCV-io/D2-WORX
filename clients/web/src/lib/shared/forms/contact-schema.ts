@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { postcodeValidator } from "postcode-validator";
 import { nameField, emailField, phoneField, streetField } from "$lib/shared/forms/schemas.js";
+import * as m from "$lib/paraglide/messages.js";
 
 /**
  * Contact form schema factory — matches Geo proto StreetAddressDTO shape.
@@ -20,20 +21,27 @@ export function createContactSchema(countriesWithSubdivisions: Set<string>) {
       lastName: nameField(),
       email: emailField(),
       phone: phoneField(),
-      country: z.string().trim().min(1, "Please select a country"),
+      country: z
+        .string()
+        .trim()
+        .min(1, { error: () => m.webclient_forms_country_required() }),
       state: z.string().trim().optional().default(""),
       street1: streetField(),
       street2: z.string().trim().max(255).optional().default(""),
       street3: z.string().trim().max(255).optional().default(""),
       city: nameField(),
-      postalCode: z.string().trim().min(1, "Required").max(16, "Postal code too long"),
+      postalCode: z
+        .string()
+        .trim()
+        .min(1, { error: () => m.webclient_forms_required() })
+        .max(16, { error: () => m.webclient_forms_postal_code_too_long() }),
     })
     .refine((d) => !d.street3 || d.street2, {
-      message: "Address Line 2 is required when Line 3 is provided",
+      error: () => m.webclient_forms_address_line2_required_when_line3(),
       path: ["street2"],
     })
     .refine((d) => !d.street2 || d.street1, {
-      message: "Street Address is required when additional lines are provided",
+      error: () => m.webclient_forms_street_required_when_lines(),
       path: ["street1"],
     })
     .superRefine((d, ctx) => {
@@ -42,7 +50,7 @@ export function createContactSchema(countriesWithSubdivisions: Set<string>) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["state"],
-          message: "State / Province is required for this country",
+          message: m.webclient_forms_state_required_for_country(),
         });
       }
 
@@ -53,7 +61,7 @@ export function createContactSchema(countriesWithSubdivisions: Set<string>) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               path: ["postalCode"],
-              message: `Invalid postal code for ${d.country}`,
+              message: m.webclient_forms_postal_code_invalid_for_country({ country: d.country }),
             });
           }
         } catch {

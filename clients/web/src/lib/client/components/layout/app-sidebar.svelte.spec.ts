@@ -32,7 +32,7 @@ describe("app-sidebar.svelte", () => {
 
     await expect.element(dashboardLink).toHaveAttribute("href", "/dashboard");
     await expect.element(settingsLink).toHaveAttribute("href", "/settings");
-    await expect.element(profileLink).toHaveAttribute("href", "/profile");
+    await expect.element(profileLink).toHaveAttribute("href", "/account/profile");
   });
 
   it("should display the org type from props", async () => {

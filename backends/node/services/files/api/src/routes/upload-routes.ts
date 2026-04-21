@@ -4,6 +4,7 @@ import type { ServiceScope } from "@d2/di";
 import type { IRequestContext } from "@d2/handler";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { IUploadFileKey } from "@d2/files-app";
+import { TK } from "@d2/i18n";
 import { cleanDisplayStr } from "@d2/utilities";
 import type { ContextKeyConfigMap } from "@d2/files-app";
 import { SCOPE_KEY, REQUEST_CONTEXT_KEY } from "../context-keys.js";
@@ -27,14 +28,14 @@ export function createUploadRoutes(contextKeyConfigs: ContextKeyConfigMap): Hono
   app.post("/org/logo", async (c) => {
     return handleUpload(c, contextKeyConfigs, "org_logo", (rc) => rc.targetOrgId, {
       missingEntityStatus: 401,
-      missingEntityMessage: "No active organization.",
+      missingEntityMessage: TK.middleware.errors.NO_ACTIVE_ORGANIZATION,
     });
   });
 
   app.post("/org/documents", async (c) => {
     return handleUpload(c, contextKeyConfigs, "org_document", (rc) => rc.targetOrgId, {
       missingEntityStatus: 401,
-      missingEntityMessage: "No active organization.",
+      missingEntityMessage: TK.middleware.errors.NO_ACTIVE_ORGANIZATION,
     });
   });
 
@@ -48,7 +49,11 @@ export function createUploadRoutes(contextKeyConfigs: ContextKeyConfigMap): Hono
 interface MissingEntityOptions {
   /** HTTP status code when relatedEntityId is missing (default: 400). */
   readonly missingEntityStatus?: number;
-  /** Error message when relatedEntityId is missing (default: "Missing related entity ID."). */
+  /**
+   * Error message when relatedEntityId is missing (default:
+   * `TK.files.errors.MISSING_RELATED_ENTITY`). MUST be a TK translation key —
+   * the FE resolves it via `translateMessage()`. Never raw English.
+   */
   readonly missingEntityMessage?: string;
 }
 
@@ -67,7 +72,7 @@ async function handleUpload(
   const relatedEntityId = getRelatedEntityId(requestContext);
   if (!relatedEntityId) {
     const status = options?.missingEntityStatus ?? 400;
-    const message = options?.missingEntityMessage ?? "Missing related entity ID.";
+    const message = options?.missingEntityMessage ?? TK.files.errors.MISSING_RELATED_ENTITY;
     return c.json(
       { success: false, statusCode: status, messages: [message], data: null },
       status as ContentfulStatusCode,
@@ -76,7 +81,12 @@ async function handleUpload(
 
   if (!contextKeyConfigs.has(contextKey)) {
     return c.json(
-      { success: false, statusCode: 400, messages: ["Invalid upload target."], data: null },
+      {
+        success: false,
+        statusCode: 400,
+        messages: [TK.files.errors.INVALID_UPLOAD_TARGET],
+        data: null,
+      },
       400 as ContentfulStatusCode,
     );
   }
@@ -86,7 +96,12 @@ async function handleUpload(
     body = await c.req.json();
   } catch {
     return c.json(
-      { success: false, statusCode: 400, messages: ["Invalid JSON body."], data: null },
+      {
+        success: false,
+        statusCode: 400,
+        messages: [TK.files.errors.INVALID_JSON_BODY],
+        data: null,
+      },
       400 as ContentfulStatusCode,
     );
   }

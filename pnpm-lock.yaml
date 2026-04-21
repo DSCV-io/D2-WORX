@@ -987,6 +987,9 @@ importers:
       '@d2/handler':
         specifier: workspace:*
         version: link:../../../shared/handler
+      '@d2/i18n':
+        specifier: workspace:*
+        version: link:../../../shared/i18n
       '@d2/logging':
         specifier: workspace:*
         version: link:../../../shared/logging

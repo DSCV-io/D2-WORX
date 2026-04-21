@@ -17,6 +17,7 @@
   import { getLocale } from "$lib/paraglide/runtime";
   import { changeLocale } from "$lib/client/utils/change-locale.js";
   import { changeTimezone } from "$lib/client/utils/change-timezone.js";
+  import { translateMessage } from "$lib/client/utils/translate-message.js";
   import { SaveCancelledError } from "$lib/shared/forms/save-cancelled-error.js";
   import * as m from "$lib/paraglide/messages.js";
   import type { LocaleOption } from "$lib/shared/forms/locale-options.js";
@@ -113,8 +114,8 @@
   async function saveName(values: Record<string, string>) {
     const result = await updateNameApi(values.firstName, values.lastName);
     if (!result.success) {
-      const msg = result.messages?.[0] ?? result.inputErrors?.[0]?.[1];
-      throw new Error(msg ?? m.common_errors_unknown());
+      const key = result.messages?.[0] ?? result.inputErrors?.[0]?.[1];
+      throw new Error(translateMessage(key, undefined, m.common_errors_unknown()));
     }
     toast.success(m.common_ui_changes_saved());
   }
@@ -122,8 +123,8 @@
   async function saveUsername(value: string) {
     const result = await updateUsernameApi(value);
     if (!result.success) {
-      const msg = result.messages?.[0] ?? result.inputErrors?.[0]?.[1];
-      throw new Error(msg ?? m.common_errors_unknown());
+      const key = result.messages?.[0] ?? result.inputErrors?.[0]?.[1];
+      throw new Error(translateMessage(key, undefined, m.common_errors_unknown()));
     }
     toast.success(m.common_ui_changes_saved());
   }

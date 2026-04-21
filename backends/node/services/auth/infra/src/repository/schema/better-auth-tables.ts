@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, boolean, timestamp, index, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, boolean, timestamp, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
 
 /**
  * Drizzle schema for BetterAuth-managed tables.
@@ -43,12 +43,25 @@ export const user = pgTable(
     banned: boolean("banned").default(false),
     banReason: text("ban_reason"),
     banExpires: timestamp("ban_expires"),
+    // Account lifecycle: 'active' | 'pending_deletion' | 'deleted'.
+    // Banned is orthogonal (admin plugin's own boolean); status drives the
+    // self-service deletion flow. `deleted_at` is the grace clock for
+    // pending_deletion (independent of `updated_at` so normal mutations
+    // don't reset it). On full anonymization it's repurposed to record the
+    // anonymization timestamp.
+    status: text("status").notNull().default("active"),
+    deletedAt: timestamp("deleted_at"),
+    deletionFeedback: jsonb("deletion_feedback"),
   },
   (t) => [
     // Partial unique index: enforces one user per phone, allows multiple null phones.
     uniqueIndex("user_phone_unique")
       .on(t.phone)
       .where(sql`${t.phone} IS NOT NULL`),
+    // Partial index for the nightly purge job — only indexes pending users.
+    index("user_pending_deletion_idx")
+      .on(t.deletedAt)
+      .where(sql`${t.status} = 'pending_deletion'`),
   ],
 );
 
@@ -162,6 +175,10 @@ export const member = pgTable(
   (table) => [
     index("member_organization_id_idx").on(table.organizationId),
     index("member_user_id_idx").on(table.userId),
+    // Composite (organization_id, role) — backs the correlated COUNT(*) in
+    // CheckSoleOwnerOrgs so the per-org "are you the only owner?" check
+    // stays an index-only scan even on large orgs.
+    index("member_organization_role_idx").on(table.organizationId, table.role),
   ],
 );
 

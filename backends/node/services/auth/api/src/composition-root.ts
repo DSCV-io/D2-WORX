@@ -140,7 +140,7 @@ export async function createApp(
     signalrGatewayAddress: process.env.AUTH_SIGNALR_GATEWAY_ADDRESS,
     signalrApiKey: process.env.AUTH_SIGNALR_API_KEY,
   });
-  addAuthApp(services, config.jobOptions ?? DEFAULT_AUTH_JOB_OPTIONS);
+  addAuthApp(services, config.jobOptions ?? DEFAULT_AUTH_JOB_OPTIONS, publisher);
   addCommsClient(services, { publisher });
 
   if (messageBus) {
@@ -174,7 +174,7 @@ export async function createApp(
   // (it depends on the geo singleflight + circuit breaker that live with the
   // service-level HandlerContext). Register a lazy singleton that captures the
   // eventual instance — same pattern as the BetterAuth-backed stores above.
-  let findWhoIsInstance: import("@d2/geo-client").FindWhoIs | undefined;
+  let findWhoIsInstance: import("@d2/geo-client").FindWhoIs | undefined = undefined;
   services.addSingleton(IFindWhoIsKey, () => {
     if (!findWhoIsInstance) throw new Error("FindWhoIs not initialized");
     return findWhoIsInstance;

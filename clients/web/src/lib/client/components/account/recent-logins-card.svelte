@@ -5,6 +5,7 @@
   import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
   import { Badge } from "$lib/client/components/ui/badge/index.js";
   import { listRecentLogins, type RecentLoginDTO } from "$lib/client/rest/account-client.js";
+  import { translateMessage } from "$lib/client/utils/translate-message.js";
   import { parseUserAgent } from "$lib/shared/utils/user-agent.js";
   import { formatLocation } from "$lib/shared/utils/format-location.js";
   import MonitorIcon from "@lucide/svelte/icons/monitor";
@@ -31,7 +32,7 @@
     loading = false;
     loaded = true;
     if (!result.success) {
-      errorMessage = result.messages?.[0] ?? m.common_errors_unknown();
+      errorMessage = translateMessage(result.messages?.[0], undefined, m.common_errors_unknown());
       events = [];
       total = 0;
       return;
@@ -83,7 +84,7 @@
   <Card.Content class="space-y-4">
     {#if !loaded}
       <ul class="space-y-3">
-        {#each Array.from({ length: PAGE_SIZE }) as _ , i (i)}
+        {#each Array.from({ length: PAGE_SIZE }) as _, i (i)}
           <li class="flex items-start gap-4 rounded-lg border p-4">
             <Skeleton class="size-10 rounded-md" />
             <div class="flex flex-1 flex-col gap-2">
@@ -115,10 +116,8 @@
           {@const Icon = deviceIcon(ua.deviceType)}
           <li
             class={[
-              "flex items-start gap-4 rounded-lg border p-4 transition-colors shadow-sm",
-              ok
-                ? "hover:border-muted-foreground/30"
-                : "border-destructive/30 bg-destructive/5",
+              "flex items-start gap-4 rounded-lg border p-4 shadow-sm transition-colors",
+              ok ? "hover:border-muted-foreground/30" : "border-destructive/30 bg-destructive/5",
             ].join(" ")}
           >
             <div
@@ -130,7 +129,7 @@
               <Icon class="size-5" />
             </div>
 
-            <div class="flex flex-1 flex-col gap-1.5 min-w-0">
+            <div class="flex min-w-0 flex-1 flex-col gap-1.5">
               <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <Badge variant={ok ? "success" : "destructive"}>
                   {ok ? m.account_recent_logins_success() : m.account_recent_logins_failure()}
@@ -155,14 +154,19 @@
                 {/if}
               </div>
 
-              <div class="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+              <div
+                class="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs"
+              >
                 {#if loc}
                   <span class="inline-flex items-center gap-1">
                     <MapPinIcon class="size-3" />
                     {loc}
                   </span>
                 {/if}
-                <span class="font-mono" title={e.event.ipAddress}>
+                <span
+                  class="font-mono"
+                  title={e.event.ipAddress}
+                >
                   {shortIp(e.event.ipAddress)}
                 </span>
               </div>
@@ -171,7 +175,9 @@
         {/each}
       </ul>
 
-      <div class="text-muted-foreground flex items-center justify-between gap-2 border-t pt-4 text-xs">
+      <div
+        class="text-muted-foreground flex items-center justify-between gap-2 border-t pt-4 text-xs"
+      >
         <span>{m.account_recent_logins_pagination({ start: pageStart, end: pageEnd, total })}</span>
         <div class="flex gap-1">
           <Button

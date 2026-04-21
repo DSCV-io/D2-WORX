@@ -159,7 +159,7 @@
               {#if avatarUrl}
                 <Avatar.Image
                   src={avatarUrl}
-                  alt={user.name ?? "User"}
+                  alt={user.name ?? m.common_ui_user_avatar_alt()}
                 />
               {/if}
               <Avatar.Fallback
@@ -182,7 +182,7 @@
     <!-- User info -->
     <DropdownMenu.Label class="font-normal">
       <div class="flex flex-col gap-1">
-        <p class="text-sm leading-none font-medium">{user.name ?? "User"}</p>
+        <p class="text-sm leading-none font-medium">{user.name ?? m.common_ui_user_fallback()}</p>
         {#if user.email}
           <p class="text-muted-foreground text-xs leading-none">{user.email}</p>
         {/if}

@@ -256,9 +256,7 @@ describe("runCrossServiceUpdate (saga helper)", () => {
   // -----------------------------------------------------------------------
 
   it("includes operationLabel in all log messages", async () => {
-    const geo = mockGeo(async () =>
-      D2Result.fail({ messages: ["x"], statusCode: 500 }),
-    );
+    const geo = mockGeo(async () => D2Result.fail({ messages: ["x"], statusCode: 500 }));
     const { context, logger } = createTestContext();
 
     await runCrossServiceUpdate({

@@ -6,6 +6,7 @@ import {
   IRunSignInEventPurgeKey,
   IRunInvitationCleanupKey,
   IRunEmulationConsentCleanupKey,
+  ICleanupDeletedUsersKey,
 } from "@d2/auth-app";
 
 /**
@@ -37,5 +38,8 @@ export function createAuthJobsGrpcService(provider: ServiceProvider): AuthJobSer
         IRunEmulationConsentCleanupKey,
         "cleanup-expired-emulation-consents",
       ),
+
+    cleanupDeletedUsers: (call, callback) =>
+      handleJobRpc(provider, call, callback, ICleanupDeletedUsersKey, "cleanup-deleted-users"),
   };
 }

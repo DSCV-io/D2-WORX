@@ -70,11 +70,16 @@ src/
         find-org-contact-by-id.ts           Single junction record by ID
         find-org-contacts-by-org-id.ts      Paginated junctions for an org
         check-org-exists.ts                 Boolean existence check by org ID
+        find-deleted-users-to-purge.ts      Cursor-batched id list of pending_deletion users past grace
+        check-sole-owner-orgs.ts            Org ids where userId is the sole `owner`
       u/
         revoke-emulation-consent-record.ts  Sets revokedAt timestamp
         update-org-contact-record.ts        Updates label/isPrimary + updatedAt
+        update-user-status.ts               UPDATE user.status (+ optional deleted_at, deletion_feedback)
+        anonymize-user.ts                   Single-tx PII scrub of user + cascade DELETE on account/session
       d/
         delete-org-contact-record.ts              Deletes junction row by ID
+        delete-all-user-sessions.ts               DELETE FROM session WHERE user_id = ? RETURNING id
         purge-expired-sessions.ts                 Batch-deletes sessions past expiresAt
         purge-sign-in-events.ts                   Batch-deletes sign-in events before cutoff
         purge-expired-invitations.ts              Batch-deletes invitations past expiresAt
@@ -205,6 +210,18 @@ Four batch-delete handlers for scheduled job cleanup. All use `batchDelete` from
 | `PurgeSignInEvents`             | `sign_in_event`     | `createdAt < cutoffDate`                     | Cutoff computed by job handler   |
 | `PurgeExpiredInvitations`       | `invitation`        | `expiresAt < cutoffDate`                     | BetterAuth-managed table         |
 | `PurgeExpiredEmulationConsents` | `emulation_consent` | `expiresAt < now() OR revokedAt IS NOT NULL` | Removes both expired and revoked |
+
+## User-Deletion Repository Handlers
+
+Five handlers backing the self-service deletion + nightly anonymization pipeline. Schema additions in migration `0011_add_user_deletion_fields.sql`: `user.status` (`'active' | 'pending_deletion' | 'deleted'`, default `'active'`), `user.deleted_at` (grace clock — also reused as the actual anonymization timestamp post-finalize), `user.deletion_feedback` (jsonb `{ reason?, comment? }`), and partial index `user_pending_deletion_idx ON deleted_at WHERE status='pending_deletion'`.
+
+| Handler                    | TLC | Operation                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------------- | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UpdateUserStatus`         | u/  | UPDATE `user.status` plus optional `deleted_at` / `deletion_feedback`. Returns `{ updated: bool }` (false if no row matched)                                                                                                                                                                                                                                                                                                   |
+| `FindDeletedUsersToPurge`  | r/  | Internal cursor loop (`DEFAULT_BATCH_SIZE` from `@d2/batch-pg`) over `status='pending_deletion' AND deleted_at < graceCutoff`. Returns flat `string[]` of user ids. Backed by `user_pending_deletion_idx`                                                                                                                                                                                                                       |
+| `AnonymizeUser`            | u/  | Single transaction with `WHERE status='pending_deletion'` guard (race-safe vs concurrent `CancelUserDeletion`). Captures `originalEmail`/`originalName` BEFORE the scrub via SELECT-then-UPDATE in the same tx (returned to the caller for the fanout event). Scrub: `status='deleted'`, `name='Deleted user'`, `email='deleted-{id}@deleted.local'`, `username`/`displayUsername='deleted_{id}'`, `image`/`phone` NULL, `phoneVerified=false`. DELETEs `account` + `session` rows (frees Google sub / credential for re-registration). UPDATEs `sign_in_event` SET `ip_address`/`user_agent='[anonymized]'`, `device_fingerprint=null`, `who_is_id=null`. Keeps `role`, `createdAt`, `status`, `deletedAt`, `deletionFeedback`, `signInEvent.successful` + `createdAt` for retention metrics |
+| `CheckSoleOwnerOrgs`       | r/  | Single SQL with subquery counting owners per candidate org. Returns `string[]` of orgIds where the user is the SOLE `owner`. Empty array = safe to delete; non-empty = `RequestUserDeletion` returns 409 `SOLE_OWNER_OF_ORGS`                                                                                                                                                                                                  |
+| `DeleteAllUserSessions`    | d/  | `DELETE FROM session WHERE user_id = ? RETURNING id`. Returns `{ rowsAffected }`. Used by `RequestUserDeletion` to terminate every active session before the grace window starts                                                                                                                                                                                                                                              |
 
 ## Repository Handler Patterns
 

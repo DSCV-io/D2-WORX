@@ -37,10 +37,7 @@ export const signInEvent = pgTable(
     //   - getLatestEventDate: SELECT MAX(created_at) WHERE user_id = ? (PG can use index-only scan from the leading edge)
     // Replaces the old single-column user_id index — left-prefix lookup keeps
     // user_id-only queries fast.
-    index("idx_sign_in_event_user_id_created_at").on(
-      table.userId,
-      sql`${table.createdAt} DESC`,
-    ),
+    index("idx_sign_in_event_user_id_created_at").on(table.userId, sql`${table.createdAt} DESC`),
   ],
 );
 

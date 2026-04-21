@@ -143,3 +143,31 @@ export { VERIFY_PHONE_CHANGE_REDACTION } from "./verify-phone-change.js";
 
 export type { RemovePhoneInput, RemovePhoneOutput, IRemovePhoneHandler } from "./remove-phone.js";
 export { REMOVE_PHONE_REDACTION } from "./remove-phone.js";
+
+// --- User deletion (self-service) ---
+export type {
+  RequestUserDeletionInput,
+  RequestUserDeletionOutput,
+  IRequestUserDeletionHandler,
+} from "./request-user-deletion.js";
+export { REQUEST_USER_DELETION_REDACTION } from "./request-user-deletion.js";
+
+export type {
+  CancelUserDeletionInput,
+  CancelUserDeletionOutput,
+  ICancelUserDeletionHandler,
+} from "./cancel-user-deletion.js";
+export { CANCEL_USER_DELETION_REDACTION } from "./cancel-user-deletion.js";
+
+export type {
+  FinalizeDeletedUserInput,
+  FinalizeDeletedUserOutput,
+  IFinalizeDeletedUserHandler,
+} from "./finalize-deleted-user.js";
+export { FINALIZE_DELETED_USER_REDACTION } from "./finalize-deleted-user.js";
+
+export type {
+  CleanupDeletedUsersInput,
+  CleanupDeletedUsersOutput,
+  ICleanupDeletedUsersHandler,
+} from "./cleanup-deleted-users.js";

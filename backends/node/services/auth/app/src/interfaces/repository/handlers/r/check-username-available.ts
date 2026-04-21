@@ -1,4 +1,4 @@
-import type { IHandler } from "@d2/handler";
+import type { IHandler, RedactionSpec } from "@d2/handler";
 
 export interface CheckUsernameAvailableInput {
   /** The username to check (case-insensitive). */
@@ -9,7 +9,12 @@ export interface CheckUsernameAvailableOutput {
   readonly available: boolean;
 }
 
-export type ICheckUsernameAvailableHandler = IHandler<
-  CheckUsernameAvailableInput,
-  CheckUsernameAvailableOutput
->;
+/** `username` is PII (user-chosen identifier) — redact from logs. */
+export const CHECK_USERNAME_AVAILABLE_REDACTION: RedactionSpec = {
+  inputFields: ["username"],
+};
+
+export interface ICheckUsernameAvailableHandler
+  extends IHandler<CheckUsernameAvailableInput, CheckUsernameAvailableOutput> {
+  readonly redaction: RedactionSpec;
+}

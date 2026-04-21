@@ -92,7 +92,12 @@
 **Explicitly deferred (not done in this pass):**
 
 - **5C-map**: Leaflet map view of recent-login WhoIs locations (Phase 6 polish — needs Leaflet install, marker clustering for repeat IPs, per-row map-toggle UI). All the data is already on the response (lat/lng would require expanding `LocationDTO` with coordinates — currently only city/subdivision/country are returned).
-- **Delete Account flow**: still a stub-with-toast. Needs its own design conversation: cascade across services (Auth user + memberships, Geo contact, Comms threads, Files objects), grace period vs. hard delete, audit-trail retention. Not in scope for the security tab.
+- **Delete Account flow**: ✅ shipped. Self-service soft-delete with 30-day grace, anonymize-don't-hard-delete, async cross-service teardown via `auth.user-anonymize` fanout. Sole-org-owner blocked (must transfer ownership first). Sign-back-in during grace cancels. Nightly Dkron job (`auth-cleanup-deleted-users`, 04:00 UTC) anonymizes users past the cutoff. See `AUTH.md` § User-status lifecycle and `AUTH_APP.md` for the handler surface. **Follow-ups required separately:**
+  - Geo consumer for `auth.user-anonymize` (anonymize the user's Geo Contact)
+  - Comms consumer for `auth.user-anonymize` (scrub thread participants + delivery history refs)
+  - Files consumer for `auth.user-anonymize` (anonymize file ownership refs / scrub displayNames)
+  - Email-confirmed org-deletion flow — the path that unblocks sole-owner deletes
+  - Native-speaker review of the new i18n keys (`account_delete_*`, `auth_email_user_deletion_*`, `auth_errors_ACCOUNT_DELETED`, `auth_errors_SOLE_OWNER_OF_ORGS`) across all 10 locales
 - **Country-name resolution in WhoIs display**: `formatLocation()` currently shows raw ISO codes (e.g. "Toronto, ON, CA"). The user has Geo ref data available server-side; the layout loader does not currently propagate the `countries` map to page data. Plumbing it through is the next polish step — the UI is forward-compatible, just swap raw codes for `displayName` lookups.
 - **CountryDTO/SubdivisionDTO `displayName` lookup endpoints in `+layout.server.ts`**: tracked alongside the country-name resolution above.
 
@@ -117,4 +122,6 @@
 - [ ] Pass locale + timezone through on sign-up from the frontend
 - [ ] Dkron job to periodically bump geo ref data cache (services must re-fetch when version changes)
 - [ ] Pre-existing svelte-check errors in `geo-ref-data.ts`, `locale-options.ts`, `timezone-options.ts`, `+layout.server.ts`, `debug/design/contact-form/+page.server.ts`, `middleware.mock.server.ts` — caused by proto fields becoming optional. Not introduced by the security tab work; flagged for a separate cleanup pass.
+- [ ] **14 pre-existing test failures on `feat/files`** — auth-tests (2), web client `layout.server.test.ts` (5), .NET `JwtAuthConfigTests` (3), e2e-tests (4). Full per-test breakdown with root cause + suggested fix in [PLANNING.md § Pre-existing Test Failures (feat/files)](PLANNING.md#pre-existing-test-failures-featfiles). All predate the user-deletion + i18n cleanup work.
+- [ ] **Hardcoded English in debug/design routes (deferred)** — `routes/debug/{health,session,design/contact-form}/` + `lib/client/components/design/*.svelte` (~80 strings: showcase pages, theme editor, debug session JSON labels, debug health status capitalizations). Per CLAUDE.md these still need i18n even for dev/debug pages, but they're internal-only and don't affect the user-facing audit. Tracked separately so the user-deletion + i18n-cleanup PR stays scoped.
 - [ ] Pre-existing TS strictness errors in `auth-tests` for `cache.set.handleAsync.mock.calls[0][0]` accessor patterns and the `update-org-logo`/`update-user-image`/`username-hooks` test files (the matchers `toBeSuccess`/`toBeFailure` augmentation isn't being picked up — likely a separate fix to `auth-tests` tsconfig or a missing `tsconfig.includes` for the setup file).

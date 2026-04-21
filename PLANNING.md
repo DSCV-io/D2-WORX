@@ -135,6 +135,57 @@ Auth service architecture documented in [`AUTH.md`](backends/node/services/auth/
 | 81  | Email unsubscribe URL not wired        | Comms | Medium | `{{unsubscribeUrl}}` placeholder in email template always receives `""`. Needs: unsubscribe endpoint, per-recipient token generation, URL construction. `channel-dispatchers.ts:120`                                                                                                                                                                                 |
 | 82  | Production SMS via Twilio (10DLC/TFN)  | Comms | Large  | Currently `COMMS_SMS_PROVIDER=mock` writes to JSONL log. US carriers block all unverified A2P long-code SMS since Jan 2024. Switch options: (a) Toll-Free Verification (~2-5 wk approval, free), (b) 10DLC Sole Proprietor registration (~1 wk, ~$2-4/mo), (c) Twilio Verify API for OTP-only. Pick + run process before public launch. Set `COMMS_SMS_PROVIDER=twilio` once carrier-approved. |
 
+### Pre-existing Test Failures (feat/files)
+
+14 test failures across 4 suites that **predate the user-deletion + i18n cleanup work** on this branch. Each is a contained, fixable issue — none are infrastructure-wide. Listed with file, test name, observed error, root cause, and suggested fix so any of them can be picked up independently.
+
+#### auth-tests (2)
+
+| File | Test | Error | Root cause | Fix |
+| --- | --- | --- | --- | --- |
+| `backends/node/services/auth/tests/src/integration/migration.test.ts` | `Drizzle migrations (integration) > should create expected custom table indexes` | `expect(indexNames).toContain("idx_sign_in_event_user_id")` — index not found | Migration `0010_sign_in_event_composite_idx.sql` (commit `e17bffdb perf(auth): cache GetSignInEvents`) DROPped `idx_sign_in_event_user_id` and replaced it with `idx_sign_in_event_user_id_created_at`. Test was not updated. | Update the assertion to `idx_sign_in_event_user_id_created_at` (line 237). |
+| `backends/node/services/auth/tests/src/unit/app/handlers/q/get-sign-in-events.test.ts` | `GetSignInEvents > with cache > should correctly validate cache for page 2 (offset > 0)` | `TypeError: Cannot read properties of undefined (reading 'id')` at line 414 — `events[0].event.id` accessed but `events[0]` is the raw event, not the `{ event, whoIs }` wrapper | Cache fixture in the test stores raw `event` objects but the handler expects the enriched `EnrichedSignInEvent` shape (`{ event, whoIs }`). Same commit (`e17bffdb`) introduced the wrapper without updating this fixture. | Update `cache.get` mock at line ~393 to wrap each cached event as `{ event: createEvent(...), whoIs: undefined }`. |
+
+#### web client `clients/web` (5, all `routes/layout.server.test.ts`)
+
+All 5 fail at `+layout.server.ts:87` with `TypeError: Cannot read properties of undefined (reading 'get')` — the loader reads `cookies.get("D2_TIMEZONE")` but the test's event mock doesn't include the `cookies` object. Pre-existing from commit `f3c7679a feat(web): add D2_TIMEZONE cookie + timezone selector for all users`.
+
+| Test |
+| --- |
+| `root +layout.server.ts > should return null session and user when locals are empty` |
+| `root +layout.server.ts > should pass through session from locals when present` |
+| `root +layout.server.ts > should pass through user from locals when present` |
+| `root +layout.server.ts > should include localeOptions from Geo ref data` |
+| `root +layout.server.ts > falls back to code-only options when Geo is unavailable` |
+
+**Single fix for all 5**: in `clients/web/src/routes/layout.server.test.ts`, extend the `callLoad()` helper at line 45 to inject a stub `cookies` API: `cookies: { get: () => undefined, set: () => {}, getAll: () => [] }`.
+
+#### .NET `D2.Shared.Tests` (3, all `JwtAuthConfigTests`)
+
+Auto-refresh / refresh interval expectations have drifted from the implementation defaults. Pre-existing from commit `cbbb1507 refactor(auth): split Auth.Default into JwtAuth/ServiceKey/AuthPolicy`.
+
+| Test | Expected | Actual | Likely cause |
+| --- | --- | --- | --- |
+| `D2.Shared.Tests.Unit.Gateway.JwtAuthConfigTests.AddJwtAuth_ConfiguresDefaultAutoRefreshInterval` | `8h` | `12h` | Default constant in `JwtAuthExtensions.cs` was raised post-test |
+| `D2.Shared.Tests.Unit.Gateway.JwtAuthConfigTests.AddJwtAuth_ConfiguresCustomRefreshInterval` | `10m` | `5m` | Custom-options pass-through clamps to a minimum |
+| `D2.Shared.Tests.Unit.Gateway.JwtAuthConfigTests.AddJwtAuth_ConfiguresCustomAutoRefreshInterval` | `4h` | `12h` | Custom-options auto-refresh is being overridden by the default |
+
+**Fix**: audit `JwtAuthExtensions.AddJwtAuth` defaults vs the test's expectations — pick whichever values are correct intent (likely the impl), and update either the test asserts or the constants accordingly. Do NOT just bump the test asserts to match the impl without confirming the impl is the desired behavior.
+
+#### e2e-tests (4 failed test cases / 32 total)
+
+These are infra/Testcontainer flakes, not test-code bugs. None blocked by missing tests; they need test-isolation hardening.
+
+| File | Test | Error | Root cause | Fix |
+| --- | --- | --- | --- | --- |
+| `backends/node/services/e2e/src/e2e/dkron-job-chain.test.ts` | `E2E: Dkron -> Gateway -> Geo full job chain` | `Gateway failed to start within 60000ms on port 61456` (helpers/gateway-service.ts:48) | Docker resource pressure — gateway container can't start when other Testcontainers are also pulling/starting. Order-dependent. | Increase startup timeout to 120s OR serialize e2e file execution via `vitest run --no-file-parallelism`. |
+| `backends/node/services/e2e/src/e2e/job-execution.test.ts` | `E2E: Scheduled job execution (full DI → lock → purge → DB)` | Same Docker-timeout pattern as above | Same root cause | Same — increase timeout or serialize. |
+| `backends/node/services/e2e/src/e2e/files-pipeline.test.ts` | `E2E: Files pipeline` (4 sub-cases — pipeline complete / oversize reject / EICAR virus / variant download) | `AMQPChannelError: ExchangeDeclare: PRECONDITION_FAILED - inequivalent arg 'durable' for exchange 'files.events' in vhost '/': received 'false' but current is 'true'` | Stale RabbitMQ exchange persists across test runs with conflicting `durable` setting. Earlier consumer declared the exchange as durable; this test declares it non-durable. | Either (a) make test declare `durable: true` to match the consumer, or (b) ensure each test gets a fresh RabbitMQ container (no shared state). Confirm the production exchange should be durable, then make tests match. |
+
+#### How to triage
+
+The auth-tests and web client failures are **15-minute fixes** — single line/property change each. The .NET JwtAuth tests need a **30-minute config audit** to determine which side is correct. The e2e flakes need **a focused 1-2 hour test-isolation pass** — they'll keep recurring on any branch until the shared-state assumptions are fixed.
+
 ### Open Questions
 
 - **Emulation/impersonation implementation details**: Authorization model decided (org emulation = read-only no consent, user impersonation = user-level consent, admin bypass). Remaining: should impersonation require 2FA? Should there be a max impersonation duration? How does `emulation_consent` integrate with BetterAuth's `impersonation` plugin hooks?

@@ -105,6 +105,13 @@ export { UpdateOrgLogo } from "./repository/handlers/u/update-org-logo.js";
 export { UpdateUserLocale } from "./repository/handlers/u/update-user-locale.js";
 export { UpdateUserTimezone } from "./repository/handlers/u/update-user-timezone.js";
 
+// User-deletion repo handlers
+export { UpdateUserStatus } from "./repository/handlers/u/update-user-status.js";
+export { AnonymizeUser } from "./repository/handlers/u/anonymize-user.js";
+export { FindDeletedUsersToPurge } from "./repository/handlers/r/find-deleted-users-to-purge.js";
+export { CheckSoleOwnerOrgs } from "./repository/handlers/r/check-sole-owner-orgs.js";
+export { DeleteAllUserSessions } from "./repository/handlers/d/delete-all-user-sessions.js";
+
 // --- Messaging Consumers ---
 export { createWhoIsResolutionConsumer } from "./messaging/consumers/whois-resolution-consumer.js";
 export type { WhoIsResolutionConsumerDeps } from "./messaging/consumers/whois-resolution-consumer.js";

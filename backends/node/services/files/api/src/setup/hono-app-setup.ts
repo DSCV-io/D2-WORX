@@ -6,6 +6,7 @@ import type { ServiceProvider } from "@d2/di";
 import type { ILogger } from "@d2/logging";
 import { ILoggerKey } from "@d2/logging";
 import { D2Result } from "@d2/result";
+import { TK } from "@d2/i18n";
 import { jwtAuth } from "@d2/jwt-auth";
 import {
   HandlerContext,
@@ -127,7 +128,7 @@ export function buildHonoApp(options: HonoAppOptions): Hono {
       {
         success: false,
         statusCode: 500,
-        messages: ["Internal server error"],
+        messages: [TK.common.errors.UNKNOWN],
         inputErrors: [],
         data: null,
       },

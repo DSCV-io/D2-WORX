@@ -89,8 +89,7 @@ export class ProcessFile
     const getResult = await this.storage.get.handleAsync({ key: rawKey });
     if (!getResult.success) return D2Result.bubbleFail(getResult);
 
-    if (!getResult.data)
-      return D2Result.serviceUnavailable({ messages: ["Handler returned empty data"] });
+    if (!getResult.data) return D2Result.serviceUnavailable();
     const buffer = getResult.data.buffer;
 
     // ClamAV scan — ALL files, regardless of content type

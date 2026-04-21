@@ -42,7 +42,7 @@ export class PresignGetUrl extends BaseHandler<I, O> implements IPresignGetUrl {
 
       return D2Result.ok({ data: { url } });
     } catch (err: unknown) {
-      this.context.logger.error("PresignGetUrl failed", { key: input.key, err });
+      this.context.logger.error("PresignGetUrl failed", { err });
       return D2Result.serviceUnavailable();
     }
   }

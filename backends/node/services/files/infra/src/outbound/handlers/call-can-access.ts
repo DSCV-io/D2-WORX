@@ -1,5 +1,5 @@
 import * as grpc from "@grpc/grpc-js";
-import { BaseHandler, type IHandlerContext } from "@d2/handler";
+import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handler";
 import type { D2Result } from "@d2/result";
 import {
   FileCallbackClientCtor,
@@ -9,6 +9,7 @@ import {
 import { handleGrpcCall } from "@d2/result-extensions";
 import { createApiKeyInterceptor, createTraceContextInterceptor } from "@d2/service-defaults/grpc";
 import {
+  CALL_CAN_ACCESS_REDACTION,
   type CallCanAccessInput as I,
   type CallCanAccessOutput as O,
   type ICallCanAccess,
@@ -30,6 +31,10 @@ export class CallCanAccess extends BaseHandler<I, O> implements ICallCanAccess {
     super(context);
     this.clients = clients;
     this.apiKey = apiKey;
+  }
+
+  override get redaction(): RedactionSpec {
+    return CALL_CAN_ACCESS_REDACTION;
   }
 
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {

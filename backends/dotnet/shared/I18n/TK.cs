@@ -67,6 +67,35 @@ public static class TK
             /// <summary>Value could not be deserialized.</summary>
             public const string COULD_NOT_BE_DESERIALIZED = "common_errors_COULD_NOT_BE_DESERIALIZED";
         }
+
+        /// <summary>
+        /// Cross-cutting validator messages used by reusable .NET validators in
+        /// <c>D2.Shared.Handler.Validators</c>. Mirrored in Node.js as
+        /// <c>TK.common.validation.*</c>.
+        /// </summary>
+        public static class Validation
+        {
+            /// <summary>The value must be a valid IPv4 or IPv6 address.</summary>
+            public const string IP_INVALID = "common_validation_IP_INVALID";
+
+            /// <summary>The value must be a 64-character hex string.</summary>
+            public const string HASH_ID_INVALID = "common_validation_HASH_ID_INVALID";
+
+            /// <summary>The value must be a valid, non-empty GUID.</summary>
+            public const string ID_INVALID = "common_validation_ID_INVALID";
+
+            /// <summary>The value must be a valid email address.</summary>
+            public const string EMAIL_INVALID = "common_validation_EMAIL_INVALID";
+
+            /// <summary>The value must be 7-15 digits (E.164).</summary>
+            public const string PHONE_INVALID = "common_validation_PHONE_INVALID";
+
+            /// <summary>The value is not an allowed context key.</summary>
+            public const string CONTEXT_KEY_NOT_ALLOWED = "common_validation_CONTEXT_KEY_NOT_ALLOWED";
+
+            /// <summary>The list must contain at least one item.</summary>
+            public const string NON_EMPTY_LIST = "common_validation_NON_EMPTY_LIST";
+        }
     }
 
     /// <summary>
@@ -189,6 +218,42 @@ public static class TK
 
             /// <summary>Too many sign-in attempts.</summary>
             public const string SIGN_IN_THROTTLED = "auth_errors_SIGN_IN_THROTTLED";
+
+            /// <summary>The account has been deleted.</summary>
+            public const string ACCOUNT_DELETED = "auth_errors_ACCOUNT_DELETED";
+
+            /// <summary>The user is the sole owner of one or more orgs.</summary>
+            public const string SOLE_OWNER_OF_ORGS = "auth_errors_SOLE_OWNER_OF_ORGS";
+
+            /// <summary>Session token is required.</summary>
+            public const string SESSION_TOKEN_REQUIRED = "auth_errors_SESSION_TOKEN_REQUIRED";
+
+            /// <summary>Password is required to confirm this change.</summary>
+            public const string PASSWORD_REQUIRED_FOR_CHANGE = "auth_errors_PASSWORD_REQUIRED_FOR_CHANGE";
+
+            /// <summary>The current password is incorrect.</summary>
+            public const string INCORRECT_PASSWORD = "auth_errors_INCORRECT_PASSWORD";
+
+            /// <summary>Failed to revoke the session(s).</summary>
+            public const string SESSION_REVOKE_FAILED = "auth_errors_SESSION_REVOKE_FAILED";
+
+            /// <summary>Both current password and new password are required.</summary>
+            public const string CHANGE_PASSWORD_REQUIRED_FIELDS = "auth_errors_CHANGE_PASSWORD_REQUIRED_FIELDS";
+
+            /// <summary>Failed to change the password.</summary>
+            public const string CHANGE_PASSWORD_FAILED = "auth_errors_CHANGE_PASSWORD_FAILED";
+
+            /// <summary>Password cannot be only numbers.</summary>
+            public const string PASSWORD_NUMERIC_ONLY = "auth_errors_PASSWORD_NUMERIC_ONLY";
+
+            /// <summary>Password cannot be only numbers + date separators.</summary>
+            public const string PASSWORD_DATE_LIKE = "auth_errors_PASSWORD_DATE_LIKE";
+
+            /// <summary>Password is too common (matched the blocklist).</summary>
+            public const string PASSWORD_TOO_COMMON = "auth_errors_PASSWORD_TOO_COMMON";
+
+            /// <summary>Password has appeared in a known breach dataset (HIBP).</summary>
+            public const string PASSWORD_BREACHED = "auth_errors_PASSWORD_BREACHED";
         }
     }
 
@@ -210,6 +275,33 @@ public static class TK
 
             /// <summary>Organization type is not authorized for this operation.</summary>
             public const string ORG_TYPE_NOT_AUTHORIZED = "middleware_errors_ORG_TYPE_NOT_AUTHORIZED";
+        }
+    }
+
+    /// <summary>
+    /// Files service translation keys.
+    /// </summary>
+    public static class Files
+    {
+        /// <summary>
+        /// Files-specific error messages.
+        /// </summary>
+        public static class Errors
+        {
+            /// <summary>Missing related entity ID for the upload context.</summary>
+            public const string MISSING_RELATED_ENTITY = "files_errors_MISSING_RELATED_ENTITY";
+
+            /// <summary>The supplied context key is not a valid upload target.</summary>
+            public const string INVALID_UPLOAD_TARGET = "files_errors_INVALID_UPLOAD_TARGET";
+
+            /// <summary>The request body could not be parsed as JSON.</summary>
+            public const string INVALID_JSON_BODY = "files_errors_INVALID_JSON_BODY";
+
+            /// <summary>Required query parameters are missing on the list endpoint.</summary>
+            public const string LIST_QUERY_PARAMS_REQUIRED = "files_errors_LIST_QUERY_PARAMS_REQUIRED";
+
+            /// <summary>Storage delete completed for some objects but not all.</summary>
+            public const string PARTIAL_STORAGE_DELETE = "files_errors_PARTIAL_STORAGE_DELETE";
         }
     }
 

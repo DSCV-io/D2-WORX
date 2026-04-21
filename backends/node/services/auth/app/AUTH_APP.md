@@ -45,10 +45,14 @@ src/
           update-org-contact.ts              IUpdateOrgContactHandler + REDACTION
           delete-org-contact.ts              IDeleteOrgContactHandler
           create-user-contact.ts             ICreateUserContactHandler + REDACTION
+          request-user-deletion.ts           IRequestUserDeletionHandler + REDACTION
+          cancel-user-deletion.ts            ICancelUserDeletionHandler
+          finalize-deleted-user.ts           IFinalizeDeletedUserHandler + REDACTION
           run-session-purge.ts               IRunSessionPurgeHandler
           run-sign-in-event-purge.ts         IRunSignInEventPurgeHandler
           run-invitation-cleanup.ts          IRunInvitationCleanupHandler
           run-emulation-consent-cleanup.ts   IRunEmulationConsentCleanupHandler
+          cleanup-deleted-users.ts           ICleanupDeletedUsersHandler
           handle-file-processed.ts           IHandleFileProcessedHandler
         q/
           index.ts                           Barrel re-exports all query interfaces
@@ -75,13 +79,18 @@ src/
           find-active-consent-by-user-id-and-org.ts  IFindActiveConsentByUserIdAndOrgHandler
           find-org-contact-by-id.ts               IFindOrgContactByIdHandler
           find-org-contacts-by-org-id.ts          IFindOrgContactsByOrgIdHandler
+          find-deleted-users-to-purge.ts          IFindDeletedUsersToPurgeHandler
+          check-sole-owner-orgs.ts                ICheckSoleOwnerOrgsHandler
         u/
           revoke-emulation-consent-record.ts   IRevokeEmulationConsentRecordHandler
           update-org-contact-record.ts         IUpdateOrgContactRecordHandler
           update-user-image.ts                 IUpdateUserImageHandler
           update-org-logo.ts                   IUpdateOrgLogoHandler
+          update-user-status.ts                IUpdateUserStatusHandler
+          anonymize-user.ts                    IAnonymizeUserHandler + REDACTION
         d/
           delete-org-contact-record.ts                IDeleteOrgContactRecordHandler
+          delete-all-user-sessions.ts                 IDeleteAllUserSessionsHandler
           purge-expired-sessions.ts                   IPurgeExpiredSessionsHandler
           purge-sign-in-events.ts                     IPurgeSignInEventsHandler
           purge-expired-invitations.ts                IPurgeExpiredInvitationsHandler
@@ -98,10 +107,14 @@ src/
           update-org-contact.ts          UpdateOrgContactHandler
           delete-org-contact.ts          DeleteOrgContact
           create-user-contact.ts         CreateUserContact
+          request-user-deletion.ts       RequestUserDeletion
+          cancel-user-deletion.ts        CancelUserDeletion
+          finalize-deleted-user.ts       FinalizeDeletedUser
           run-session-purge.ts           RunSessionPurge
           run-sign-in-event-purge.ts     RunSignInEventPurge
           run-invitation-cleanup.ts      RunInvitationCleanup
           run-emulation-consent-cleanup.ts  RunEmulationConsentCleanup
+          cleanup-deleted-users.ts       CleanupDeletedUsers
           handle-file-processed.ts         HandleFileProcessed
         q/
           get-sign-in-events.ts          GetSignInEvents
@@ -114,23 +127,26 @@ src/
 
 ## CQRS Handlers
 
-### Command Handlers (9)
+### Command Handlers (12)
 
-| Handler                   | Input                                                  | Output                     | Description                                                                                                                      |
-| ------------------------- | ------------------------------------------------------ | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `RecordSignInEvent`       | userId, successful, IP, UA                             | `{ event }`                | Creates immutable audit record via domain factory + repo                                                                         |
-| `RecordSignInOutcome`     | identifierHash, identityHash                           | `{ recorded }`             | Records throttle state: success marks known-good, failure increments                                                             |
-| `CreateEmulationConsent`  | userId, grantedToOrgId, expiry                         | `{ consent }`              | Validates org type, checks org exists, prevents duplicates                                                                       |
-| `RevokeEmulationConsent`  | consentId, userId                                      | `{ consent }`              | Ownership check + active check before revoking                                                                                   |
-| `CreateOrgContact`        | orgId, label, contact details                          | `{ contact, geoContact }`  | Creates junction then Geo contact; rollback on Geo failure                                                                       |
-| `UpdateOrgContactHandler` | id, orgId, updates                                     | `{ contact, geoContact? }` | Metadata-only or contact replacement via UpdateContactsByExtKeys                                                                 |
-| `DeleteOrgContact`        | id, orgId                                              | `{}`                       | IDOR check, best-effort Geo delete, then junction delete                                                                         |
-| `CreateUserContact`       | userId, email, name, locale                            | `{ contact }`              | Sign-up hook: Geo contact with contextKey=auth_user. Fail-fast                                                                   |
-| `HandleFileProcessed`     | fileId, contextKey, relatedEntityId, status, variants? | `{ success }`              | Routes by contextKey: `user_avatar` → UpdateUserImage, `org_logo` → UpdateOrgLogo, others → ack. Rejected files logged and acked |
+| Handler                   | Input                                                  | Output                     | Description                                                                                                                                                                                                                                                          |
+| ------------------------- | ------------------------------------------------------ | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RecordSignInEvent`       | userId, successful, IP, UA                             | `{ event }`                | Creates immutable audit record via domain factory + repo                                                                                                                                                                                                             |
+| `RecordSignInOutcome`     | identifierHash, identityHash                           | `{ recorded }`             | Records throttle state: success marks known-good, failure increments                                                                                                                                                                                                 |
+| `CreateEmulationConsent`  | userId, grantedToOrgId, expiry                         | `{ consent }`              | Validates org type, checks org exists, prevents duplicates                                                                                                                                                                                                           |
+| `RevokeEmulationConsent`  | consentId, userId                                      | `{ consent }`              | Ownership check + active check before revoking                                                                                                                                                                                                                       |
+| `CreateOrgContact`        | orgId, label, contact details                          | `{ contact, geoContact }`  | Creates junction then Geo contact; rollback on Geo failure                                                                                                                                                                                                           |
+| `UpdateOrgContactHandler` | id, orgId, updates                                     | `{ contact, geoContact? }` | Metadata-only or contact replacement via UpdateContactsByExtKeys                                                                                                                                                                                                     |
+| `DeleteOrgContact`        | id, orgId                                              | `{}`                       | IDOR check, best-effort Geo delete, then junction delete                                                                                                                                                                                                             |
+| `CreateUserContact`       | userId, email, name, locale                            | `{ contact }`              | Sign-up hook: Geo contact with contextKey=auth_user. Fail-fast                                                                                                                                                                                                       |
+| `RequestUserDeletion`     | userId, currentPassword, feedback?                     | `{ scheduledFor }`         | Self-service deletion gate. Verifies password atomically, runs `CheckSoleOwnerOrgs` (409 `SOLE_OWNER_OF_ORGS` if any), flips `status` → `pending_deletion` + sets `deletedAt`, calls `DeleteAllUserSessions`, busts BetterAuth Redis cookie cache, sends "scheduled" notification via `alternativeContactInfo` (security-relevant — bypasses channel preferences). Returns ISO date when permanent anonymization runs (`deletedAt + GRACE_PERIOD_DAYS`) |
+| `CancelUserDeletion`      | userId                                                 | `{ cancelled }`            | Invoked fire-and-forget by BetterAuth `session.create.before` hook when a `pending_deletion` user signs back in. Idempotent — no-op if status≠pending_deletion. Flips `status` → `active`, clears `deletedAt`, sends "cancelled" notification                                                                       |
+| `FinalizeDeletedUser`     | userId                                                 | `{ anonymized }`           | Per-user worker invoked by `CleanupDeletedUsers`. Calls `AnonymizeUser`; on success sends "complete" notification via `alternativeContactInfo` (Geo contact is being torn down) and publishes `auth.user-anonymize` fanout event for Geo / Comms / Files consumers    |
+| `HandleFileProcessed`     | fileId, contextKey, relatedEntityId, status, variants? | `{ success }`              | Routes by contextKey: `user_avatar` → UpdateUserImage, `org_logo` → UpdateOrgLogo, others → ack. Rejected files logged and acked                                                                                                                                     |
 
-### Job Handlers (4)
+### Job Handlers (5)
 
-Scheduled job orchestrators that acquire a distributed lock (Redis), delegate to a repository purge handler, and release the lock in a `finally` block. All return `{ rowsAffected, lockAcquired, durationMs }`. If the lock is already held, the handler returns immediately with `lockAcquired: false`.
+Scheduled job orchestrators that acquire a distributed lock (Redis), delegate to a repository purge handler, and release the lock in a `finally` block. All return `{ rowsAffected, lockAcquired, durationMs }` (purge jobs) or an extended shape (`CleanupDeletedUsers`). If the lock is already held, the handler returns immediately with `lockAcquired: false`.
 
 | Handler                      | Lock Key                                      | Repo Handler                            | Cutoff Logic                                    |
 | ---------------------------- | --------------------------------------------- | --------------------------------------- | ----------------------------------------------- |
@@ -138,6 +154,9 @@ Scheduled job orchestrators that acquire a distributed lock (Redis), delegate to
 | `RunSignInEventPurge`        | `lock:job:purge-sign-in-events`               | `IPurgeSignInEventsHandler`             | Events older than `signInEventRetentionDays`    |
 | `RunInvitationCleanup`       | `lock:job:cleanup-expired-invitations`        | `IPurgeExpiredInvitationsHandler`       | Invitations past `expiresAt` + retention buffer |
 | `RunEmulationConsentCleanup` | `lock:job:cleanup-expired-emulation-consents` | `IPurgeExpiredEmulationConsentsHandler` | Expired OR already-revoked consents             |
+| `CleanupDeletedUsers`        | `lock:job:cleanup-deleted-users`              | `IFindDeletedUsersToPurgeHandler`       | Users with `status='pending_deletion'` AND `deleted_at < now() - GRACE_PERIOD_MS` |
+
+`CleanupDeletedUsers` orchestrates a fan-out per user instead of a single batch DELETE: it calls `FindDeletedUsersToPurge` to get the candidate id list, then `Promise.all`s `FinalizeDeletedUser` per id. Per-user failures are isolated — they count as `skipped`, not as a failed run. Returns `{ processed, anonymized, skipped, lockAcquired, durationMs, rowsAffected }` where `processed` = candidates considered, `anonymized` = successful finalizations, `skipped` = per-user failures, `rowsAffected` = `anonymized` for parity with the other purge jobs. Mapped to the gRPC `CleanupDeletedUsers` rpc on `AuthJobService`. Dkron schedule: `auth-cleanup-deleted-users` at `0 0 4 * * *` (04:00 UTC daily — runs AFTER the comms purges so when this job publishes `auth.user-anonymize`, downstream consumers hit a settled DB instead of racing other nightly cleanup).
 
 ### Query Handlers (6)
 
@@ -160,6 +179,16 @@ Defined as `IHandler<TInput, TOutput>` interfaces, grouped into aggregate bundle
 | `EmulationConsentRepoHandlers` | 5        | create, findById, findActiveByUserId, findByUserAndOrg, revoke       |
 | `OrgContactRepoHandlers`       | 5        | create, findById, findByOrgId, update, delete                        |
 
+Plus 5 standalone user-deletion handlers (not bundled — consumed directly by the deletion CQRS handlers via DI):
+
+| Interface                          | Input                                       | Output                | Description                                                                                                                                       |
+| ---------------------------------- | ------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `IUpdateUserStatusHandler`         | userId, status, deletedAt?, feedback?       | `{ updated: bool }`   | UPDATE `user.status` (+ optional `deleted_at`, `deletion_feedback`). Returns whether the row matched                                              |
+| `IFindDeletedUsersToPurgeHandler`  | graceCutoff (Date)                          | `string[]` (user ids) | Internal cursor loop (`DEFAULT_BATCH_SIZE`) over `status='pending_deletion' AND deleted_at < graceCutoff`. Backed by `user_pending_deletion_idx`  |
+| `IAnonymizeUserHandler`            | userId                                      | `{ originalEmail, originalName }` | Single transaction with `WHERE status='pending_deletion'` guard (race-safe vs concurrent cancel). Captures pre-scrub PII for the fanout event     |
+| `ICheckSoleOwnerOrgsHandler`       | userId                                      | `string[]` (org ids)  | Single SQL with subquery counting owners per candidate org. Returns orgs where the user is the SOLE `owner`                                       |
+| `IDeleteAllUserSessionsHandler`    | userId                                      | `{ rowsAffected }`    | `DELETE FROM session WHERE user_id = ? RETURNING id`. Used by `RequestUserDeletion` to terminate every active session                             |
+
 Plus 4 standalone purge handlers (not bundled — used by job handlers via DI):
 
 | Interface                               | Input      | Output             | Description                                   |
@@ -173,10 +202,10 @@ Plus `ISignInThrottleStore` (non-handler interface with 6 methods for Redis key 
 
 ## Service Keys
 
-44 `ServiceKey<T>` tokens organized in two groups:
+53 `ServiceKey<T>` tokens organized in two groups:
 
-- **25 infra-layer keys** — for repository handlers (including `IUpdateUserImageKey`, `IUpdateOrgLogoKey`, `ICheckOrgExistsKey`), PingDb, throttle store, and 4 purge handlers (interfaces defined here, implemented in `@d2/auth-infra`)
-- **19 app-layer keys** — for CQRS handlers including CheckEmailAvailability, CheckHealth, HandleFileProcessed, and 4 job handlers (typed against handler interfaces, e.g., `Commands.IRecordSignInEventHandler`)
+- **30 infra-layer keys** — for repository handlers (including `IUpdateUserImageKey`, `IUpdateOrgLogoKey`, `ICheckOrgExistsKey`, `IUpdateUserStatusKey`, `IFindDeletedUsersToPurgeKey`, `IAnonymizeUserKey`, `ICheckSoleOwnerOrgsKey`, `IDeleteAllUserSessionsKey`), PingDb, throttle store, and 4 purge handlers (interfaces defined here, implemented in `@d2/auth-infra`)
+- **23 app-layer keys** — for CQRS handlers including CheckEmailAvailability, CheckHealth, HandleFileProcessed, the 3 user-deletion command handlers (`IRequestUserDeletionKey`, `ICancelUserDeletionKey`, `IFinalizeDeletedUserKey`), and 5 job handlers (typed against handler interfaces, e.g., `Commands.IRecordSignInEventHandler`)
 
 ## AuthJobOptions
 
@@ -194,7 +223,7 @@ Configuration for scheduled job handlers, provided via `addAuthApp()` (defaults 
 addAuthApp(services: ServiceCollection, jobOptions?: AuthJobOptions): void
 ```
 
-Registers all 19 CQRS handlers as **transient** (new instance per resolve). Each handler receives its repository dependencies and `IHandlerContext` from the DI container. Organization existence checks use the `ICheckOrgExistsHandler` repository handler (registered in auth-infra) via DI -- the `AddAuthAppOptions` parameter was removed (org existence is now a DI-resolved repo handler instead of a callback). The optional `jobOptions` parameter (defaults to `DEFAULT_AUTH_JOB_OPTIONS`) configures retention periods and lock TTL for job handlers. Infra-layer purge handlers use `DEFAULT_BATCH_SIZE` (500) from `@d2/batch-pg` internally -- batch size is not passed via handler input.
+Registers all 23 CQRS handlers as **transient** (new instance per resolve). Each handler receives its repository dependencies and `IHandlerContext` from the DI container. Organization existence checks use the `ICheckOrgExistsHandler` repository handler (registered in auth-infra) via DI -- the `AddAuthAppOptions` parameter was removed (org existence is now a DI-resolved repo handler instead of a callback). The optional `jobOptions` parameter (defaults to `DEFAULT_AUTH_JOB_OPTIONS`) configures retention periods and lock TTL for job handlers. Infra-layer purge handlers use `DEFAULT_BATCH_SIZE` (500) from `@d2/batch-pg` internally -- batch size is not passed via handler input.
 
 ## Handler Implementation Patterns
 

@@ -1,11 +1,12 @@
 import { eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { BaseHandler, type IHandlerContext } from "@d2/handler";
+import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handler";
 import { D2Result } from "@d2/result";
-import type {
-  UpdateUserUsernameInput as I,
-  UpdateUserUsernameOutput as O,
-  IUpdateUserUsernameHandler,
+import {
+  UPDATE_USER_USERNAME_REDACTION,
+  type UpdateUserUsernameInput as I,
+  type UpdateUserUsernameOutput as O,
+  type IUpdateUserUsernameHandler,
 } from "@d2/auth-app";
 import { user } from "../../schema/better-auth-tables.js";
 
@@ -15,6 +16,10 @@ export class UpdateUserUsername extends BaseHandler<I, O> implements IUpdateUser
   constructor(db: NodePgDatabase, context: IHandlerContext) {
     super(context);
     this.db = db;
+  }
+
+  override get redaction(): RedactionSpec {
+    return UPDATE_USER_USERNAME_REDACTION;
   }
 
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {

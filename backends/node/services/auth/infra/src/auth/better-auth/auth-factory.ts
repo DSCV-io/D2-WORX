@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { betterAuth } from "better-auth";
+import { betterAuth, APIError } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer } from "better-auth/plugins/bearer";
 import { jwt } from "better-auth/plugins/jwt";
@@ -9,8 +9,8 @@ import { username } from "better-auth/plugins/username";
 import type { SecondaryStorage } from "better-auth";
 import { eq, and } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { JWT_CLAIM_TYPES, SESSION_FIELDS } from "@d2/auth-domain";
-import { BASE_LOCALE } from "@d2/i18n";
+import { JWT_CLAIM_TYPES, SESSION_FIELDS, USER_STATUS } from "@d2/auth-domain";
+import { BASE_LOCALE, TK } from "@d2/i18n";
 
 /**
  * Per-request sign-up preferences (locale + timezone from cookies).
@@ -128,6 +128,16 @@ export interface AuthHooks {
     locale: string;
     timezone: string;
   }) => Promise<void>;
+  /**
+   * Cancels a pending user deletion when an account in the grace window
+   * signs back in successfully. Invoked from `session.create.before` —
+   * fire-and-forget so a downstream failure (Comms email send, etc.)
+   * does not block the session creation.
+   *
+   * The implementation is in auth-app (CancelUserDeletion handler); the
+   * composition root wires it via a fresh DI scope per call.
+   */
+  cancelUserDeletion?: (data: { userId: string }) => Promise<void>;
 }
 
 /**
@@ -380,6 +390,52 @@ export function createAuth(
           },
         },
         create: {
+          before: async (session) => {
+            // Block sign-in for fully anonymized users; cancel pending deletion
+            // for users still in the grace window. This runs alongside the admin
+            // plugin's own ban check (BetterAuth merges hooks per lifecycle slot).
+            const userId = (session as Record<string, unknown>)["userId"] as string | undefined;
+            if (!userId) return;
+
+            try {
+              const [row] = await db
+                .select({ status: betterAuthSchema.user.status })
+                .from(betterAuthSchema.user)
+                .where(eq(betterAuthSchema.user.id, userId))
+                .limit(1);
+              const status = row?.status as string | undefined;
+
+              if (status === USER_STATUS.DELETED) {
+                // Pass the raw TK key as the message; the SvelteKit BFF
+                // (`translateMessage` helper) resolves it against the user's
+                // locale before rendering. BetterAuth doesn't run inside our
+                // D2Result/translator layer, so we cannot translate here —
+                // the FE owns the actual i18n round-trip.
+                throw new APIError("FORBIDDEN", { message: TK.auth.errors.ACCOUNT_DELETED });
+              }
+
+              if (status === USER_STATUS.PENDING_DELETION && hooks?.cancelUserDeletion) {
+                // Fire-and-forget the side effect; let the session create proceed.
+                // CancelUserDeletion flips status back to active + sends the
+                // cancellation email — none of which should block sign-in.
+                hooks.cancelUserDeletion({ userId }).catch((err: unknown) => {
+                  log.warn("session.create.before: cancelUserDeletion failed (non-blocking)", {
+                    error: err instanceof Error ? err.message : String(err),
+                    userId,
+                  });
+                });
+              }
+            } catch (err: unknown) {
+              if (err instanceof APIError) throw err;
+              // DB lookup failure — fail-open. Sign-in proceeds; we'd rather a
+              // pending-deletion user occasionally not get their cancel-email
+              // than block all sign-ins on a transient DB blip.
+              log.warn("session.create.before: status lookup failed (fail-open)", {
+                error: err instanceof Error ? err.message : String(err),
+                userId,
+              });
+            }
+          },
           after: async (session) => {
             // Record sign-in event via app-layer callback
             if (hooks?.onSignIn) {
@@ -450,10 +506,10 @@ export function createAuth(
                   name: userRow.name,
                 })
                 .catch((err: unknown) => {
-                  log.warn(
-                    "account.update.after: publishPasswordChanged failed (non-critical)",
-                    { error: err instanceof Error ? err.message : String(err), userId },
-                  );
+                  log.warn("account.update.after: publishPasswordChanged failed (non-critical)", {
+                    error: err instanceof Error ? err.message : String(err),
+                    userId,
+                  });
                 });
             } catch (err: unknown) {
               log.warn("account.update.after: failed to look up user for password notification", {

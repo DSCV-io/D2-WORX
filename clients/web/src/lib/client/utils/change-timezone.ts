@@ -10,6 +10,8 @@
  */
 import { invalidateAll } from "$app/navigation";
 import { updateTimezone, bustSessionCache } from "$lib/client/rest/account-client.js";
+import { translateMessage } from "$lib/client/utils/translate-message.js";
+import * as m from "$lib/paraglide/messages.js";
 
 /** Cookie name — matches the server-side sync in +layout.server.ts. */
 const TIMEZONE_COOKIE = "D2_TIMEZONE";
@@ -19,7 +21,13 @@ export async function changeTimezone(timezone: string, isAuthenticated: boolean)
   if (isAuthenticated) {
     const result = await updateTimezone(timezone);
     if (!result.success) {
-      throw new Error(result.messages?.[0] ?? "Failed to update timezone.");
+      throw new Error(
+        translateMessage(
+          result.messages?.[0],
+          undefined,
+          m.account_profile_timezone_update_failed(),
+        ),
+      );
     }
     await bustSessionCache();
   }

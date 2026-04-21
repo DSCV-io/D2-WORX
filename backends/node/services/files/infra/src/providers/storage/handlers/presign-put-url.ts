@@ -46,7 +46,7 @@ export class PresignPutUrl extends BaseHandler<I, O> implements IPresignPutUrl {
 
       return D2Result.ok({ data: { url } });
     } catch (err: unknown) {
-      this.context.logger.error("PresignPutUrl failed", { key: input.key, err });
+      this.context.logger.error("PresignPutUrl failed", { err });
       return D2Result.serviceUnavailable();
     }
   }

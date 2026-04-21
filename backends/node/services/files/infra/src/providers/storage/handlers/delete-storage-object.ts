@@ -1,10 +1,11 @@
 import { DeleteObjectCommand, type S3Client } from "@aws-sdk/client-s3";
-import { BaseHandler, type IHandlerContext } from "@d2/handler";
+import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handler";
 import { D2Result } from "@d2/result";
-import type {
-  DeleteStorageObjectInput as I,
-  DeleteStorageObjectOutput as O,
-  IDeleteStorageObject,
+import {
+  DELETE_STORAGE_OBJECT_REDACTION,
+  type DeleteStorageObjectInput as I,
+  type DeleteStorageObjectOutput as O,
+  type IDeleteStorageObject,
 } from "@d2/files-app";
 
 export class DeleteStorageObject extends BaseHandler<I, O> implements IDeleteStorageObject {
@@ -17,6 +18,10 @@ export class DeleteStorageObject extends BaseHandler<I, O> implements IDeleteSto
     this.bucket = bucket;
   }
 
+  override get redaction(): RedactionSpec {
+    return DELETE_STORAGE_OBJECT_REDACTION;
+  }
+
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {
     try {
       await this.s3.send(
@@ -27,7 +32,7 @@ export class DeleteStorageObject extends BaseHandler<I, O> implements IDeleteSto
       );
       return D2Result.ok({ data: {} });
     } catch (err: unknown) {
-      this.context.logger.error("DeleteStorageObject failed", { key: input.key, err });
+      this.context.logger.error("DeleteStorageObject failed", { err });
       return D2Result.serviceUnavailable();
     }
   }

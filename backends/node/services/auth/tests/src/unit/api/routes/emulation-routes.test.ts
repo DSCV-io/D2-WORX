@@ -98,20 +98,23 @@ function createTestApp(
     // Populate requestContext (shape that @d2/auth-policy reads from). Maps
     // the legacy lowercase orgType strings to the OrgType enum values used
     // throughout the platform.
-    c.set("requestContext" as never, {
-      isAuthenticated: true,
-      isTrustedService: false,
-      isOrgEmulating: false,
-      isUserImpersonating: false,
-      userId,
-      email: "test@test.com",
-      targetOrgId: orgId,
-      targetOrgType: toOrgTypeEnum(orgType),
-      targetOrgRole: orgRole,
-      agentOrgId: orgId,
-      agentOrgType: toOrgTypeEnum(orgType),
-      agentOrgRole: orgRole,
-    } as never);
+    c.set(
+      "requestContext" as never,
+      {
+        isAuthenticated: true,
+        isTrustedService: false,
+        isOrgEmulating: false,
+        isUserImpersonating: false,
+        userId,
+        email: "test@test.com",
+        targetOrgId: orgId,
+        targetOrgType: toOrgTypeEnum(orgType),
+        targetOrgRole: orgRole,
+        agentOrgId: orgId,
+        agentOrgType: toOrgTypeEnum(orgType),
+        agentOrgRole: orgRole,
+      } as never,
+    );
     // Mock DI scope — routes resolve handlers from c.get("scope")
     c.set(SCOPE_KEY as never, createMockScope(handlers) as never);
     await next();

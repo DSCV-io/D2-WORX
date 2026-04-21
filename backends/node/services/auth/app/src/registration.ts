@@ -71,7 +71,7 @@ import { VerifyPhoneChange } from "./implementations/cqrs/handlers/c/verify-phon
 import { RemovePhone } from "./implementations/cqrs/handlers/c/remove-phone.js";
 import { INotifyKey } from "@d2/comms-client";
 import { DistributedCache } from "@d2/interfaces";
-import { IMessageBusPingKey } from "@d2/messaging";
+import { IMessageBusPingKey, type IMessagePublisher } from "@d2/messaging";
 import * as CacheMemory from "@d2/cache-memory";
 import type { Queries as AuthQueries } from "./interfaces/cqrs/handlers/index.js";
 import { RunSessionPurge } from "./implementations/cqrs/handlers/c/run-session-purge.js";
@@ -80,6 +80,10 @@ import { RunInvitationCleanup } from "./implementations/cqrs/handlers/c/run-invi
 import { RunEmulationConsentCleanup } from "./implementations/cqrs/handlers/c/run-emulation-consent-cleanup.js";
 import { HandleFileProcessed } from "./implementations/cqrs/handlers/c/handle-file-processed.js";
 import { InvalidateUserSessionCache } from "./implementations/cqrs/handlers/c/invalidate-user-session-cache.js";
+import { RequestUserDeletion } from "./implementations/cqrs/handlers/c/request-user-deletion.js";
+import { CancelUserDeletion } from "./implementations/cqrs/handlers/c/cancel-user-deletion.js";
+import { FinalizeDeletedUser } from "./implementations/cqrs/handlers/c/finalize-deleted-user.js";
+import { CleanupDeletedUsers } from "./implementations/cqrs/handlers/c/cleanup-deleted-users.js";
 import type { AuthJobOptions } from "./auth-job-options.js";
 import { DEFAULT_AUTH_JOB_OPTIONS } from "./auth-job-options.js";
 import {
@@ -118,6 +122,15 @@ import {
   IUpdateUserEmailKey,
   IUpdateUserPhoneKey,
   ITranslatorKey,
+  IRequestUserDeletionKey,
+  ICancelUserDeletionKey,
+  IFinalizeDeletedUserKey,
+  ICleanupDeletedUsersKey,
+  IUpdateUserStatusKey,
+  IFindDeletedUsersToPurgeKey,
+  IAnonymizeUserKey,
+  ICheckSoleOwnerOrgsKey,
+  IDeleteAllUserSessionsKey,
 } from "./service-keys.js";
 
 /**
@@ -129,6 +142,7 @@ import {
 export function addAuthApp(
   services: ServiceCollection,
   jobOptions: AuthJobOptions = DEFAULT_AUTH_JOB_OPTIONS,
+  publisher?: IMessagePublisher,
 ): void {
   // --- Command Handlers ---
 
@@ -500,6 +514,61 @@ export function addAuthApp(
         sp.resolve(IHandlerContextKey),
         sp.tryResolve(IPushUserUpdatedKey),
         sp.tryResolve(IInvalidateUserSessionCacheKey),
+      ),
+  );
+
+  // --- User deletion (self-service) ---
+
+  services.addTransient(
+    IRequestUserDeletionKey,
+    (sp) =>
+      new RequestUserDeletion(
+        sp.resolve(IVerifyUserPasswordKey),
+        sp.resolve(IGetUserByIdKey),
+        sp.resolve(ICheckSoleOwnerOrgsKey),
+        sp.resolve(IUpdateUserStatusKey),
+        sp.resolve(IDeleteAllUserSessionsKey),
+        sp.resolve(INotifyKey),
+        sp.resolve(ITranslatorKey),
+        sp.resolve(IHandlerContextKey),
+        sp.tryResolve(IInvalidateUserSessionCacheKey),
+      ),
+  );
+
+  services.addTransient(
+    ICancelUserDeletionKey,
+    (sp) =>
+      new CancelUserDeletion(
+        sp.resolve(IGetUserByIdKey),
+        sp.resolve(IUpdateUserStatusKey),
+        sp.resolve(INotifyKey),
+        sp.resolve(ITranslatorKey),
+        sp.resolve(IHandlerContextKey),
+      ),
+  );
+
+  services.addTransient(
+    IFinalizeDeletedUserKey,
+    (sp) =>
+      new FinalizeDeletedUser(
+        sp.resolve(IAnonymizeUserKey),
+        sp.resolve(INotifyKey),
+        sp.resolve(ITranslatorKey),
+        sp.resolve(IHandlerContextKey),
+        publisher,
+      ),
+  );
+
+  services.addTransient(
+    ICleanupDeletedUsersKey,
+    (sp) =>
+      new CleanupDeletedUsers(
+        sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
+        sp.resolve(IFindDeletedUsersToPurgeKey),
+        sp.resolve(IFinalizeDeletedUserKey),
+        jobOptions,
+        sp.resolve(IHandlerContextKey),
       ),
   );
 }

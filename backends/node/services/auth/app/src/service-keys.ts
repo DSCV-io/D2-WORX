@@ -37,6 +37,11 @@ import type {
   IGetUserByIdHandler,
   IFindActiveSessionsByUserIdHandler,
   IFindUserIdByIdentifierHandler,
+  IUpdateUserStatusHandler,
+  IFindDeletedUsersToPurgeHandler,
+  IAnonymizeUserHandler,
+  ICheckSoleOwnerOrgsHandler,
+  IDeleteAllUserSessionsHandler,
 } from "./interfaces/repository/handlers/index.js";
 import type { ISignInThrottleStore } from "./interfaces/repository/sign-in-throttle-store.js";
 import type { IOtpRateLimitStore } from "./interfaces/repository/otp-rate-limit-store.js";
@@ -232,9 +237,8 @@ export const IUpdateUserTimezoneKey = createServiceKey<Commands.IUpdateUserTimez
 export const IGetSignInEventsKey = createServiceKey<Queries.IGetSignInEventsHandler>(
   "Auth.App.GetSignInEvents",
 );
-export const IGetMySessionsKey = createServiceKey<Queries.IGetMySessionsHandler>(
-  "Auth.App.GetMySessions",
-);
+export const IGetMySessionsKey =
+  createServiceKey<Queries.IGetMySessionsHandler>("Auth.App.GetMySessions");
 export const IGetActiveConsentsKey = createServiceKey<Queries.IGetActiveConsentsHandler>(
   "Auth.App.GetActiveConsents",
 );
@@ -291,6 +295,21 @@ export const IVerifyPhoneChangeKey = createServiceKey<Commands.IVerifyPhoneChang
 export const IRemovePhoneKey =
   createServiceKey<Commands.IRemovePhoneHandler>("Auth.App.RemovePhone");
 
+// --- User deletion (self-service) ---
+
+export const IRequestUserDeletionKey = createServiceKey<Commands.IRequestUserDeletionHandler>(
+  "Auth.App.RequestUserDeletion",
+);
+export const ICancelUserDeletionKey = createServiceKey<Commands.ICancelUserDeletionHandler>(
+  "Auth.App.CancelUserDeletion",
+);
+export const IFinalizeDeletedUserKey = createServiceKey<Commands.IFinalizeDeletedUserHandler>(
+  "Auth.App.FinalizeDeletedUser",
+);
+export const ICleanupDeletedUsersKey = createServiceKey<Commands.ICleanupDeletedUsersHandler>(
+  "Auth.App.CleanupDeletedUsers",
+);
+
 // --- Repository keys for new lookups/updates ---
 
 export const ICheckPhoneAvailabilityKey = createServiceKey<ICheckPhoneAvailabilityHandler>(
@@ -299,11 +318,28 @@ export const ICheckPhoneAvailabilityKey = createServiceKey<ICheckPhoneAvailabili
 
 export const IGetUserByIdKey = createServiceKey<IGetUserByIdHandler>("Auth.Repo.GetUserById");
 
-export const IFindActiveSessionsByUserIdKey =
-  createServiceKey<IFindActiveSessionsByUserIdHandler>("Auth.Repo.FindActiveSessionsByUserId");
+export const IFindActiveSessionsByUserIdKey = createServiceKey<IFindActiveSessionsByUserIdHandler>(
+  "Auth.Repo.FindActiveSessionsByUserId",
+);
 
-export const IFindUserIdByIdentifierKey =
-  createServiceKey<IFindUserIdByIdentifierHandler>("Auth.Repo.FindUserIdByIdentifier");
+export const IFindUserIdByIdentifierKey = createServiceKey<IFindUserIdByIdentifierHandler>(
+  "Auth.Repo.FindUserIdByIdentifier",
+);
+
+// --- User Deletion Repo Keys ---
+export const IUpdateUserStatusKey = createServiceKey<IUpdateUserStatusHandler>(
+  "Auth.Repo.UpdateUserStatus",
+);
+export const IFindDeletedUsersToPurgeKey = createServiceKey<IFindDeletedUsersToPurgeHandler>(
+  "Auth.Repo.FindDeletedUsersToPurge",
+);
+export const IAnonymizeUserKey = createServiceKey<IAnonymizeUserHandler>("Auth.Repo.AnonymizeUser");
+export const ICheckSoleOwnerOrgsKey = createServiceKey<ICheckSoleOwnerOrgsHandler>(
+  "Auth.Repo.CheckSoleOwnerOrgs",
+);
+export const IDeleteAllUserSessionsKey = createServiceKey<IDeleteAllUserSessionsHandler>(
+  "Auth.Repo.DeleteAllUserSessions",
+);
 
 export const IUpdateUserEmailKey = createServiceKey<IUpdateUserEmailHandler>(
   "Auth.Repo.UpdateUserEmail",

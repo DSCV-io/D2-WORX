@@ -12,6 +12,7 @@
  *   GET /api/v1/files/:fileId/:variant/url → presigned GET URL for <img src>
  */
 import { env } from "$env/dynamic/public";
+import * as m from "$lib/paraglide/messages.js";
 
 import { getToken } from "./gateway-client.js";
 
@@ -57,7 +58,7 @@ export async function uploadFile(
   displayName: string,
 ): Promise<{ fileId: string }> {
   const token = await getToken();
-  if (!token) throw new Error("Not authenticated.");
+  if (!token) throw new Error(m.common_errors_not_authenticated());
 
   // Step 1: Request presigned URL from Files API
   const baseUrl = getFilesBaseUrl();
@@ -74,14 +75,16 @@ export async function uploadFile(
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    const msg = body?.messages?.[0] ?? `Upload failed (${response.status})`;
+    const msg =
+      translateBackendMessage(body?.messages?.[0]) ??
+      m.files_errors_UPLOAD_FAILED({ status: String(response.status) });
     throw new Error(msg);
   }
 
   const result = await response.json();
   const data = result.data as UploadResult | undefined;
   if (!data?.presignedUrl || !data?.fileId) {
-    throw new Error("Invalid upload response from Files service.");
+    throw new Error(m.files_errors_UPLOAD_INVALID_RESPONSE());
   }
 
   // Step 2: PUT blob directly to MinIO via presigned URL
@@ -93,7 +96,7 @@ export async function uploadFile(
   });
 
   if (!putResponse.ok) {
-    throw new Error(`File upload to storage failed (${putResponse.status})`);
+    throw new Error(m.files_errors_STORAGE_UPLOAD_FAILED({ status: String(putResponse.status) }));
   }
 
   return { fileId: data.fileId };
@@ -108,7 +111,7 @@ export async function uploadFile(
  */
 export async function getVariantUrl(fileId: string, variantName: string): Promise<string> {
   const token = await getToken();
-  if (!token) throw new Error("Not authenticated.");
+  if (!token) throw new Error(m.common_errors_not_authenticated());
 
   const baseUrl = getFilesBaseUrl();
   const response = await fetch(`${baseUrl}/api/v1/files/${fileId}/${variantName}/url`, {
@@ -119,13 +122,35 @@ export async function getVariantUrl(fileId: string, variantName: string): Promis
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    const msg = body?.messages?.[0] ?? `Failed to get variant URL (${response.status})`;
+    const msg =
+      translateBackendMessage(body?.messages?.[0]) ??
+      m.files_errors_VARIANT_URL_FAILED({ status: String(response.status) });
     throw new Error(msg);
   }
 
   const result = await response.json();
   const url = result.data?.url as string | undefined;
-  if (!url) throw new Error("Invalid variant URL response.");
+  if (!url) throw new Error(m.files_errors_VARIANT_URL_INVALID_RESPONSE());
 
   return url;
+}
+
+/**
+ * Backend D2Result `messages` are TK keys (e.g. "files_errors_UPLOAD_FAILED").
+ * Resolve to a localized string at the runtime locale; return undefined when
+ * we can't map it so the caller falls back to a typed Paraglide message.
+ */
+function translateBackendMessage(key: unknown): string | undefined {
+  if (typeof key !== "string" || !key) return undefined;
+  const registry = m as unknown as Record<
+    string,
+    ((args?: Record<string, unknown>) => string) | undefined
+  >;
+  const fn = registry[key];
+  if (typeof fn !== "function") return undefined;
+  try {
+    return fn();
+  } catch {
+    return undefined;
+  }
 }

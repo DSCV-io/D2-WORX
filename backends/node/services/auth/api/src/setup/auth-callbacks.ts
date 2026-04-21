@@ -9,6 +9,7 @@ import {
   IRecordSignInEventKey,
   ICreateUserContactKey,
   IFindUserIdByIdentifierKey,
+  ICancelUserDeletionKey,
 } from "@d2/auth-app";
 import type { AuthHooks } from "@d2/auth-infra";
 import { signUpPrefsStorage } from "@d2/auth-infra";
@@ -170,10 +171,9 @@ export function createAuthCallbacks(
           "password changed notification",
         );
         if (!contactId) {
-          logger.warn(
-            "publishPasswordChanged: no Geo contact for user — security email skipped",
-            { userId: input.userId },
-          );
+          logger.warn("publishPasswordChanged: no Geo contact for user — security email skipped", {
+            userId: input.userId,
+          });
           return;
         }
 
@@ -229,6 +229,27 @@ export function createAuthCallbacks(
           throw new Error(
             `Failed to create Geo contact for user ${data.userId}: ${result.messages?.join(", ") ?? "unknown error"}`,
           );
+        }
+      } finally {
+        scope.dispose();
+      }
+    },
+
+    cancelUserDeletion: async (data) => {
+      // Wrapper around the CancelUserDeletion app handler — invoked from the
+      // BetterAuth sign-in `before` hook. Per-call DI scope keeps the traceId
+      // isolated from any concurrent callbacks.
+      const scope = createCallbackScope();
+      try {
+        const handler = scope.resolve(ICancelUserDeletionKey);
+        const result = await handler.handleAsync({ userId: data.userId });
+        if (!result.success) {
+          logger.warn("cancelUserDeletion: handler returned non-success (non-blocking)", {
+            userId: data.userId,
+            statusCode: result.statusCode,
+            errorCode: result.errorCode,
+            messages: result.messages,
+          });
         }
       } finally {
         scope.dispose();

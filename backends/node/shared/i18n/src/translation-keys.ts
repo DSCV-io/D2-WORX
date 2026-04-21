@@ -21,6 +21,15 @@ export const TK = {
       UNKNOWN: "common_errors_unknown",
       VALIDATION_FAILED: "common_errors_VALIDATION_FAILED",
     },
+    validation: {
+      CONTEXT_KEY_NOT_ALLOWED: "common_validation_CONTEXT_KEY_NOT_ALLOWED",
+      EMAIL_INVALID: "common_validation_EMAIL_INVALID",
+      HASH_ID_INVALID: "common_validation_HASH_ID_INVALID",
+      ID_INVALID: "common_validation_ID_INVALID",
+      IP_INVALID: "common_validation_IP_INVALID",
+      NON_EMPTY_LIST: "common_validation_NON_EMPTY_LIST",
+      PHONE_INVALID: "common_validation_PHONE_INVALID",
+    },
   },
   geo: {
     validation: {
@@ -49,6 +58,7 @@ export const TK = {
   },
   auth: {
     errors: {
+      ACCOUNT_DELETED: "auth_errors_ACCOUNT_DELETED",
       EMAIL_ALREADY_TAKEN: "auth_errors_EMAIL_ALREADY_TAKEN",
       EMAIL_QUERY_REQUIRED: "auth_errors_EMAIL_QUERY_REQUIRED",
       EMAIL_REQUIRED: "auth_errors_EMAIL_REQUIRED",
@@ -61,6 +71,19 @@ export const TK = {
       ORG_CONTACT_ORG_MISMATCH: "auth_errors_ORG_CONTACT_ORG_MISMATCH",
       ROLE_REQUIRED: "auth_errors_ROLE_REQUIRED",
       SIGN_IN_THROTTLED: "auth_errors_SIGN_IN_THROTTLED",
+      SOLE_OWNER_OF_ORGS: "auth_errors_SOLE_OWNER_OF_ORGS",
+      // Account-management routes (account-routes.ts)
+      SESSION_TOKEN_REQUIRED: "auth_errors_SESSION_TOKEN_REQUIRED",
+      PASSWORD_REQUIRED_FOR_CHANGE: "auth_errors_PASSWORD_REQUIRED_FOR_CHANGE",
+      INCORRECT_PASSWORD: "auth_errors_INCORRECT_PASSWORD",
+      SESSION_REVOKE_FAILED: "auth_errors_SESSION_REVOKE_FAILED",
+      CHANGE_PASSWORD_REQUIRED_FIELDS: "auth_errors_CHANGE_PASSWORD_REQUIRED_FIELDS",
+      CHANGE_PASSWORD_FAILED: "auth_errors_CHANGE_PASSWORD_FAILED",
+      // Password-policy violations (returned from validatePassword + HIBP check)
+      PASSWORD_NUMERIC_ONLY: "auth_errors_PASSWORD_NUMERIC_ONLY",
+      PASSWORD_DATE_LIKE: "auth_errors_PASSWORD_DATE_LIKE",
+      PASSWORD_TOO_COMMON: "auth_errors_PASSWORD_TOO_COMMON",
+      PASSWORD_BREACHED: "auth_errors_PASSWORD_BREACHED",
     },
     email: {
       emailChanged: {
@@ -77,6 +100,21 @@ export const TK = {
         subject: "auth_phone_removed_subject",
         body: "auth_phone_removed_body",
         plaintext: "auth_phone_removed_plaintext",
+      },
+      userDeletionScheduled: {
+        subject: "auth_email_user_deletion_scheduled_subject",
+        body: "auth_email_user_deletion_scheduled_body",
+        plaintext: "auth_email_user_deletion_scheduled_plaintext",
+      },
+      userDeletionCancelled: {
+        subject: "auth_email_user_deletion_cancelled_subject",
+        body: "auth_email_user_deletion_cancelled_body",
+        plaintext: "auth_email_user_deletion_cancelled_plaintext",
+      },
+      userDeletionComplete: {
+        subject: "auth_email_user_deletion_complete_subject",
+        body: "auth_email_user_deletion_complete_body",
+        plaintext: "auth_email_user_deletion_complete_plaintext",
       },
     },
     otp: {
@@ -106,6 +144,15 @@ export const TK = {
       DELIVERY_RETRY_SCHEDULED: "comms_errors_DELIVERY_RETRY_SCHEDULED",
       NO_DELIVERABLE_CHANNELS: "comms_errors_NO_DELIVERABLE_CHANNELS",
       PROVIDER_UNKNOWN: "comms_errors_PROVIDER_UNKNOWN",
+    },
+  },
+  files: {
+    errors: {
+      MISSING_RELATED_ENTITY: "files_errors_MISSING_RELATED_ENTITY",
+      INVALID_UPLOAD_TARGET: "files_errors_INVALID_UPLOAD_TARGET",
+      INVALID_JSON_BODY: "files_errors_INVALID_JSON_BODY",
+      LIST_QUERY_PARAMS_REQUIRED: "files_errors_LIST_QUERY_PARAMS_REQUIRED",
+      PARTIAL_STORAGE_DELETE: "files_errors_PARTIAL_STORAGE_DELETE",
     },
   },
 } as const;

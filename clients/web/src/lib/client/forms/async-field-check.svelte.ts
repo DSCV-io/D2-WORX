@@ -7,6 +7,7 @@
 import { fromStore } from "svelte/store";
 import type { Readable } from "svelte/store";
 import type { FieldStatus } from "$lib/shared/forms/field-status.js";
+import * as m from "$lib/paraglide/messages.js";
 
 /**
  * Minimal form shape — uses `any` for store properties to avoid
@@ -68,7 +69,7 @@ export function useAsyncFieldCheck(options: UseAsyncFieldCheckOptions): UseAsync
         status = "invalid";
         form.errors.update((e: Record<string, string[]>) => ({
           ...e,
-          [field]: [result.errorMessage ?? "Validation failed"],
+          [field]: [result.errorMessage ?? m.webclient_forms_validation_failed()],
         }));
       } else {
         status = "valid";

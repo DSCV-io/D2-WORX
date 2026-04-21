@@ -1,4 +1,4 @@
-import type { IHandler } from "@d2/handler";
+import type { IHandler, RedactionSpec } from "@d2/handler";
 
 export interface UpdateUserPhoneInput {
   readonly userId: string;
@@ -10,4 +10,11 @@ export interface UpdateUserPhoneInput {
 
 export interface UpdateUserPhoneOutput {}
 
-export type IUpdateUserPhoneHandler = IHandler<UpdateUserPhoneInput, UpdateUserPhoneOutput>;
+/** `phone` is PII and must NOT appear in handler I/O logs. */
+export const UPDATE_USER_PHONE_REDACTION: RedactionSpec = {
+  inputFields: ["phone"],
+};
+
+export interface IUpdateUserPhoneHandler extends IHandler<UpdateUserPhoneInput, UpdateUserPhoneOutput> {
+  readonly redaction: RedactionSpec;
+}

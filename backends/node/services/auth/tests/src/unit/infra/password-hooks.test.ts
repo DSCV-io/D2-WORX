@@ -146,19 +146,17 @@ describe("createPasswordFunctions", () => {
 
     it("should throw for numeric-only password", async () => {
       const { hash } = createPasswordFunctions(cache, mockLogger);
-      await expect(hash("123456789012")).rejects.toThrow("Password cannot be only numbers.");
+      await expect(hash("123456789012")).rejects.toThrow("auth_errors_PASSWORD_NUMERIC_ONLY");
     });
 
     it("should throw for date-like password", async () => {
       const { hash } = createPasswordFunctions(cache, mockLogger);
-      await expect(hash("2025-10-01")).rejects.toThrow(
-        "Password cannot be only numbers and date separators.",
-      );
+      await expect(hash("2025-10-01")).rejects.toThrow("auth_errors_PASSWORD_DATE_LIKE");
     });
 
     it("should throw for common password", async () => {
       const { hash } = createPasswordFunctions(cache, mockLogger);
-      await expect(hash("q1w2e3r4t5y6")).rejects.toThrow("This password is too common.");
+      await expect(hash("q1w2e3r4t5y6")).rejects.toThrow("auth_errors_PASSWORD_TOO_COMMON");
     });
 
     it("should throw for breached password", async () => {
@@ -167,7 +165,7 @@ describe("createPasswordFunctions", () => {
       vi.mocked(fetch).mockResolvedValue(new Response(responseBody, { status: 200 }));
 
       const { hash } = createPasswordFunctions(cache, mockLogger);
-      await expect(hash(password)).rejects.toThrow("This password has appeared in a data breach");
+      await expect(hash(password)).rejects.toThrow("auth_errors_PASSWORD_BREACHED");
     });
 
     it("should succeed when HIBP is down (fail-open)", async () => {

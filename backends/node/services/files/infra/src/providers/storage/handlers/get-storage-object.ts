@@ -41,7 +41,7 @@ export class GetStorageObject extends BaseHandler<I, O> implements IGetStorageOb
       if (isNotFoundError(err)) {
         return D2Result.notFound();
       }
-      this.context.logger.error("GetStorageObject failed", { key: input.key, err });
+      this.context.logger.error("GetStorageObject failed", { err });
       return D2Result.serviceUnavailable();
     }
   }

@@ -4,16 +4,15 @@
   import ChangePasswordDialog from "$lib/client/components/account/change-password-dialog.svelte";
   import ActiveSessionsCard from "$lib/client/components/account/active-sessions-card.svelte";
   import RecentLoginsCard from "$lib/client/components/account/recent-logins-card.svelte";
-  import { toast } from "svelte-sonner";
+  import DeleteUserDialog from "$lib/client/components/account/delete-user-dialog.svelte";
   import * as m from "$lib/paraglide/messages.js";
 
   let changePasswordOpen = $state(false);
+  let deleteUserOpen = $state(false);
 </script>
 
 <svelte:head>
-  <title
-    >{m.account_page_title()} / {m.account_security_title()} — {m.webclient_nav_brand()}</title
-  >
+  <title>{m.account_page_title()} / {m.account_security_title()} — {m.webclient_nav_brand()}</title>
   <meta
     name="description"
     content={m.account_security_description()}
@@ -44,7 +43,6 @@
 
   <RecentLoginsCard />
 
-  <!-- Danger Zone — Delete Account flow is deferred (tracked in PROFILE_PROGRESS.md) -->
   <Card.Root class="border-destructive/50">
     <Card.Header>
       <Card.Title class="text-destructive text-base">
@@ -55,10 +53,12 @@
     <Card.Content>
       <Button
         variant="destructive"
-        onclick={() => toast.error(m.account_deactivate_not_available())}
+        onclick={() => (deleteUserOpen = true)}
       >
         {m.account_deactivate_delete_title()}
       </Button>
     </Card.Content>
   </Card.Root>
+
+  <DeleteUserDialog bind:open={deleteUserOpen} />
 </div>

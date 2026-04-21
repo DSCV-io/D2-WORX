@@ -14,6 +14,7 @@
   import { parseUserAgent } from "$lib/shared/utils/user-agent.js";
   import { formatLocation } from "$lib/shared/utils/format-location.js";
   import PasswordConfirmDialog from "./password-confirm-dialog.svelte";
+  import { translateMessage } from "$lib/client/utils/translate-message.js";
   import LogOutIcon from "@lucide/svelte/icons/log-out";
   import MonitorIcon from "@lucide/svelte/icons/monitor";
   import SmartphoneIcon from "@lucide/svelte/icons/smartphone";
@@ -38,7 +39,7 @@
     const result = await listMySessions();
     loading = false;
     if (!result.success) {
-      errorMessage = result.messages?.[0] ?? m.common_errors_unknown();
+      errorMessage = translateMessage(result.messages?.[0], undefined, m.common_errors_unknown());
       sessions = [];
       loaded = true;
       return;
@@ -58,7 +59,7 @@
 
   async function doRevoke(password: string) {
     if (!revokeTarget) {
-      return D2Result.fail({ statusCode: 400, messages: ["No session selected."] });
+      return D2Result.fail({ statusCode: 400, messages: ["account_sessions_no_session_selected"] });
     }
     return revokeSession(revokeTarget.session.token, password);
   }
@@ -142,10 +143,8 @@
           {@const stub = whoIsStub(s.session.whoIsId)}
           <li
             class={[
-              "group rounded-lg border p-4 transition-colors shadow-sm",
-              s.isCurrent
-                ? "border-success/40 bg-success/5"
-                : "hover:border-muted-foreground/30",
+              "group rounded-lg border p-4 shadow-sm transition-colors",
+              s.isCurrent ? "border-success/40 bg-success/5" : "hover:border-muted-foreground/30",
             ].join(" ")}
           >
             <div class="flex items-start gap-4">
@@ -158,7 +157,7 @@
                 <Icon class="size-5" />
               </div>
 
-              <div class="flex flex-1 flex-col gap-1.5 min-w-0">
+              <div class="flex min-w-0 flex-1 flex-col gap-1.5">
                 <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <span class="text-sm font-semibold">{ua.browser}</span>
                   <span class="text-muted-foreground text-xs"
@@ -186,7 +185,10 @@
                       {loc}
                     </span>
                   {/if}
-                  <span class="font-mono" title={s.session.ipAddress ?? ""}>
+                  <span
+                    class="font-mono"
+                    title={s.session.ipAddress ?? ""}
+                  >
                     {shortIp(s.session.ipAddress)}
                   </span>
                   <span class="inline-flex items-center gap-1">

@@ -1,4 +1,4 @@
-import type { IHandler } from "@d2/handler";
+import type { IHandler, RedactionSpec } from "@d2/handler";
 import type { OrgContact } from "@d2/auth-domain";
 
 export interface FindOrgContactsByOrgIdInput {
@@ -11,7 +11,12 @@ export interface FindOrgContactsByOrgIdOutput {
   readonly contacts: OrgContact[];
 }
 
-export type IFindOrgContactsByOrgIdHandler = IHandler<
-  FindOrgContactsByOrgIdInput,
-  FindOrgContactsByOrgIdOutput
->;
+/** Output `contacts[].label` is user-supplied free text (PII) — suppress full output. */
+export const FIND_ORG_CONTACTS_BY_ORG_ID_REDACTION: RedactionSpec = {
+  suppressOutput: true,
+};
+
+export interface IFindOrgContactsByOrgIdHandler
+  extends IHandler<FindOrgContactsByOrgIdInput, FindOrgContactsByOrgIdOutput> {
+  readonly redaction: RedactionSpec;
+}

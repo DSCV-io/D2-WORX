@@ -63,6 +63,11 @@ export type {
   IPingStorage,
   FileStorageHandlers,
 } from "./interfaces/providers/storage/handlers/index.js";
+export {
+  DELETE_STORAGE_OBJECT_REDACTION,
+  DELETE_STORAGE_OBJECTS_REDACTION,
+  HEAD_STORAGE_OBJECT_REDACTION,
+} from "./interfaces/providers/storage/handlers/index.js";
 
 // --- Interfaces (Provider Contracts) ---
 export type {
@@ -86,6 +91,10 @@ export type {
   CallCanAccessInput,
   CallCanAccessOutput,
   ICallCanAccess,
+} from "./interfaces/outbound/handlers/index.js";
+export {
+  CALL_ON_FILE_PROCESSED_REDACTION,
+  CALL_CAN_ACCESS_REDACTION,
 } from "./interfaces/outbound/handlers/index.js";
 
 // --- Interfaces (Realtime Contracts) ---

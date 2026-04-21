@@ -2,6 +2,7 @@
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import * as m from "$lib/paraglide/messages.js";
+  import { translateMessage } from "$lib/client/utils/translate-message.js";
 </script>
 
 <div class="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
@@ -10,7 +11,7 @@
   </h1>
 
   <p class="text-muted-foreground mt-4 text-xl">
-    {page.error?.message ?? m.webclient_error_something_went_wrong()}
+    {translateMessage(page.error?.message, undefined, m.webclient_error_something_went_wrong())}
   </p>
 
   {#if page.error?.traceId}

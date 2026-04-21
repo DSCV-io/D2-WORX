@@ -10,6 +10,7 @@
   import { onMount } from "svelte";
   import * as m from "$lib/paraglide/messages.js";
   import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
+  import { translateMessage } from "$lib/client/utils/translate-message.js";
   import CameraIcon from "@lucide/svelte/icons/camera";
   import LoaderIcon from "@lucide/svelte/icons/loader-circle";
 
@@ -170,7 +171,7 @@
       toast.success(m.account_profile_avatar_success());
     } else {
       uploadState = "idle";
-      toast.error(result.messages?.[0] ?? m.common_errors_unknown());
+      toast.error(translateMessage(result.messages?.[0], undefined, m.common_errors_unknown()));
     }
   }
 </script>
@@ -210,7 +211,7 @@
           {#if displayUrl}
             <Avatar.Image
               src={displayUrl}
-              alt={userName ?? "Avatar"}
+              alt={userName ?? m.account_profile_avatar_alt()}
             />
           {/if}
           <Avatar.Fallback

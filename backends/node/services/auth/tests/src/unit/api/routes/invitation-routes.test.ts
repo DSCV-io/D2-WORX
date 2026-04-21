@@ -150,20 +150,23 @@ function createTestApp(
         activeOrganizationRole: orgRole,
       } as never,
     );
-    c.set("requestContext" as never, {
-      isAuthenticated: true,
-      isTrustedService: false,
-      isOrgEmulating: false,
-      isUserImpersonating: false,
-      userId: "user-inviter",
-      email: "inviter@example.com",
-      targetOrgId: orgId,
-      targetOrgType: toOrgTypeEnum(orgType),
-      targetOrgRole: orgRole,
-      agentOrgId: orgId,
-      agentOrgType: toOrgTypeEnum(orgType),
-      agentOrgRole: orgRole,
-    } as never);
+    c.set(
+      "requestContext" as never,
+      {
+        isAuthenticated: true,
+        isTrustedService: false,
+        isOrgEmulating: false,
+        isUserImpersonating: false,
+        userId: "user-inviter",
+        email: "inviter@example.com",
+        targetOrgId: orgId,
+        targetOrgType: toOrgTypeEnum(orgType),
+        targetOrgRole: orgRole,
+        agentOrgId: orgId,
+        agentOrgType: toOrgTypeEnum(orgType),
+        agentOrgRole: orgRole,
+      } as never,
+    );
     c.set(SCOPE_KEY as never, createMockScope(handlers) as never);
     await next();
   });
@@ -254,14 +257,17 @@ describe("Invitation routes", () => {
           } as never,
         );
         c.set("session" as never, {} as never); // No org fields
-        c.set("requestContext" as never, {
-          isAuthenticated: true,
-          isTrustedService: false,
-          isOrgEmulating: false,
-          isUserImpersonating: false,
-          userId: "user-1",
-          email: "u@e.com",
-        } as never);
+        c.set(
+          "requestContext" as never,
+          {
+            isAuthenticated: true,
+            isTrustedService: false,
+            isOrgEmulating: false,
+            isUserImpersonating: false,
+            userId: "user-1",
+            email: "u@e.com",
+          } as never,
+        );
         c.set(SCOPE_KEY as never, createMockScope(handlers) as never);
         await next();
       });
@@ -757,20 +763,23 @@ describe("Invitation routes", () => {
             activeOrganizationRole: "officer",
           } as never,
         );
-        c.set("requestContext" as never, {
-          isAuthenticated: true,
-          isTrustedService: false,
-          isOrgEmulating: false,
-          isUserImpersonating: false,
-          userId: "user-no-name",
-          email: "noname@e.com",
-          targetOrgId: "org-1",
-          targetOrgType: OrgType.Customer,
-          targetOrgRole: "officer",
-          agentOrgId: "org-1",
-          agentOrgType: OrgType.Customer,
-          agentOrgRole: "officer",
-        } as never);
+        c.set(
+          "requestContext" as never,
+          {
+            isAuthenticated: true,
+            isTrustedService: false,
+            isOrgEmulating: false,
+            isUserImpersonating: false,
+            userId: "user-no-name",
+            email: "noname@e.com",
+            targetOrgId: "org-1",
+            targetOrgType: OrgType.Customer,
+            targetOrgRole: "officer",
+            agentOrgId: "org-1",
+            agentOrgType: OrgType.Customer,
+            agentOrgRole: "officer",
+          } as never,
+        );
         c.set(SCOPE_KEY as never, createMockScope(handlers) as never);
         await next();
       });
@@ -940,14 +949,17 @@ describe("Invitation routes", () => {
       app.use("*", async (c, next) => {
         c.set("user" as never, { id: "u", email: "u@e.com", name: "U" } as never);
         c.set("session" as never, {} as never);
-        c.set("requestContext" as never, {
-          isAuthenticated: true,
-          isTrustedService: false,
-          isOrgEmulating: false,
-          isUserImpersonating: false,
-          userId: "u",
-          email: "u@e.com",
-        } as never);
+        c.set(
+          "requestContext" as never,
+          {
+            isAuthenticated: true,
+            isTrustedService: false,
+            isOrgEmulating: false,
+            isUserImpersonating: false,
+            userId: "u",
+            email: "u@e.com",
+          } as never,
+        );
         c.set(SCOPE_KEY as never, createMockScope(handlers) as never);
         await next();
       });

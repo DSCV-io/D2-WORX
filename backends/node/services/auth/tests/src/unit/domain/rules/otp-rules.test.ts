@@ -88,21 +88,15 @@ describe("otp-rules", () => {
 
     it("decode returns null on missing fields", () => {
       expect(decodePendingValue(JSON.stringify({ codeHash: "abc" }))).toBeNull();
-      expect(
-        decodePendingValue(JSON.stringify({ codeHash: "abc", pendingValue: "x" })),
-      ).toBeNull();
+      expect(decodePendingValue(JSON.stringify({ codeHash: "abc", pendingValue: "x" }))).toBeNull();
     });
 
     it("decode returns null on wrong field types", () => {
       expect(
-        decodePendingValue(
-          JSON.stringify({ codeHash: 123, pendingValue: "x", attempts: 0 }),
-        ),
+        decodePendingValue(JSON.stringify({ codeHash: 123, pendingValue: "x", attempts: 0 })),
       ).toBeNull();
       expect(
-        decodePendingValue(
-          JSON.stringify({ codeHash: "abc", pendingValue: "x", attempts: "0" }),
-        ),
+        decodePendingValue(JSON.stringify({ codeHash: "abc", pendingValue: "x", attempts: "0" })),
       ).toBeNull();
     });
 

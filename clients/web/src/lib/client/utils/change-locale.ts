@@ -13,12 +13,16 @@
  */
 import { setLocale, type Locale } from "$lib/paraglide/runtime";
 import { updateLocale, bustSessionCache } from "$lib/client/rest/account-client.js";
+import { translateMessage } from "$lib/client/utils/translate-message.js";
+import * as m from "$lib/paraglide/messages.js";
 
 export async function changeLocale(locale: string, isAuthenticated: boolean): Promise<void> {
   if (isAuthenticated) {
     const result = await updateLocale(locale);
     if (!result.success) {
-      throw new Error(result.messages?.[0] ?? "Failed to update locale.");
+      throw new Error(
+        translateMessage(result.messages?.[0], undefined, m.account_profile_locale_update_failed()),
+      );
     }
     await bustSessionCache();
   }

@@ -80,6 +80,7 @@ export type {
   UpdateDeliveryAttemptStatusOutput,
   IUpdateDeliveryAttemptStatusHandler,
 } from "./u/update-delivery-attempt-status.js";
+export { UPDATE_DELIVERY_ATTEMPT_STATUS_REDACTION } from "./u/update-delivery-attempt-status.js";
 
 export type {
   UpdateChannelPreferenceRecordInput,

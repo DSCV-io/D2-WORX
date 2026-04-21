@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { ServiceScope } from "@d2/di";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { IListFilesKey } from "@d2/files-app";
+import { TK } from "@d2/i18n";
 import { SCOPE_KEY } from "../context-keys.js";
 
 /**
@@ -23,7 +24,7 @@ export function createListRoutes(): Hono {
         {
           success: false,
           statusCode: 400,
-          messages: ["contextKey and relatedEntityId are required query parameters."],
+          messages: [TK.files.errors.LIST_QUERY_PARAMS_REQUIRED],
           data: null,
         },
         400 as ContentfulStatusCode,

@@ -55,7 +55,9 @@
           if (result.error) {
             // Always show server errors at the form level — field-level errors
             // get cleared by client-side revalidation on the next interaction.
-            serverError = result.error.message ?? m.auth_sign_in_sign_up_failed();
+            // BetterAuth's `result.error.message` is raw English; ignore it and
+            // render a single localized fallback.
+            serverError = m.auth_sign_in_sign_up_failed();
             f.valid = false;
             return;
           }
@@ -91,7 +93,6 @@
       };
     },
   });
-
 </script>
 
 <form

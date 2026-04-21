@@ -3,6 +3,26 @@
 
 export { AUTH_CACHE_KEYS } from "./cache-keys.js";
 
+// --- Repo redaction specs (re-exported for handlers that need them) ---
+export {
+  UPDATE_USER_STATUS_REDACTION,
+  FIND_DELETED_USERS_TO_PURGE_REDACTION,
+  ANONYMIZE_USER_REDACTION,
+  CHECK_SOLE_OWNER_ORGS_REDACTION,
+  DELETE_ALL_USER_SESSIONS_REDACTION,
+  UPDATE_USER_EMAIL_REDACTION,
+  UPDATE_USER_PHONE_REDACTION,
+  UPDATE_USER_NAME_REDACTION,
+  UPDATE_USER_USERNAME_REDACTION,
+  UPDATE_USER_IMAGE_REDACTION,
+  UPDATE_ORG_LOGO_REDACTION,
+  CHECK_USERNAME_AVAILABLE_REDACTION,
+  FIND_ORG_CONTACTS_BY_ORG_ID_REDACTION,
+  FIND_ORG_CONTACT_BY_ID_REDACTION,
+  CREATE_ORG_CONTACT_RECORD_REDACTION,
+  UPDATE_ORG_CONTACT_RECORD_REDACTION,
+} from "./interfaces/repository/handlers/index.js";
+
 // --- CQRS Handler Interfaces (app-layer contracts) ---
 export {
   Commands as AuthCommands,
@@ -32,6 +52,21 @@ export type {
   IFindUserIdByIdentifierHandler,
   FindUserIdByIdentifierInput,
   FindUserIdByIdentifierOutput,
+  IUpdateUserStatusHandler,
+  UpdateUserStatusInput,
+  UpdateUserStatusOutput,
+  IFindDeletedUsersToPurgeHandler,
+  FindDeletedUsersToPurgeInput,
+  FindDeletedUsersToPurgeOutput,
+  IAnonymizeUserHandler,
+  AnonymizeUserInput,
+  AnonymizeUserOutput,
+  ICheckSoleOwnerOrgsHandler,
+  CheckSoleOwnerOrgsInput,
+  CheckSoleOwnerOrgsOutput,
+  IDeleteAllUserSessionsHandler,
+  DeleteAllUserSessionsInput,
+  DeleteAllUserSessionsOutput,
   IUpdateUserImageHandler,
   UpdateUserImageInput,
   UpdateUserImageOutput,
@@ -471,6 +506,12 @@ export type {
   RunEmulationConsentCleanupOutput,
 } from "./interfaces/cqrs/handlers/c/run-emulation-consent-cleanup.js";
 
+// User-deletion app handlers (self-service)
+export { RequestUserDeletion } from "./implementations/cqrs/handlers/c/request-user-deletion.js";
+export { CancelUserDeletion } from "./implementations/cqrs/handlers/c/cancel-user-deletion.js";
+export { FinalizeDeletedUser } from "./implementations/cqrs/handlers/c/finalize-deleted-user.js";
+export { CleanupDeletedUsers } from "./implementations/cqrs/handlers/c/cleanup-deleted-users.js";
+
 export { HandleFileProcessed } from "./implementations/cqrs/handlers/c/handle-file-processed.js";
 export type {
   HandleFileProcessedInput,
@@ -499,6 +540,11 @@ export {
   IUpdateSessionWhoIsIdKey,
   IFindActiveSessionsByUserIdKey,
   IFindUserIdByIdentifierKey,
+  IUpdateUserStatusKey,
+  IFindDeletedUsersToPurgeKey,
+  IAnonymizeUserKey,
+  ICheckSoleOwnerOrgsKey,
+  IDeleteAllUserSessionsKey,
   ICreateEmulationConsentRecordKey,
   IFindEmulationConsentByIdKey,
   IFindActiveConsentsByUserIdKey,
@@ -558,6 +604,11 @@ export {
   IRequestPhoneChangeKey,
   IVerifyPhoneChangeKey,
   IRemovePhoneKey,
+  // User-deletion handler keys (self-service)
+  IRequestUserDeletionKey,
+  ICancelUserDeletionKey,
+  IFinalizeDeletedUserKey,
+  ICleanupDeletedUsersKey,
   // Repo + store keys for the OTP/account-change flows
   IOtpRateLimitStoreKey,
   IVerificationStoreKey,

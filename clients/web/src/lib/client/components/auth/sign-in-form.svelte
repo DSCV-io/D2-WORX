@@ -57,7 +57,9 @@
               return;
             }
 
-            serverError = result.error.message ?? m.auth_sign_in_invalid_credentials();
+            // Always render a localized error — BetterAuth's `result.error.message`
+            // is raw English so we ignore it and rely on a single translated fallback.
+            serverError = m.auth_sign_in_invalid_credentials();
             return;
           }
 

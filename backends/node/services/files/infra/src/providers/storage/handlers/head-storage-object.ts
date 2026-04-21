@@ -1,10 +1,11 @@
 import { HeadObjectCommand, type S3Client } from "@aws-sdk/client-s3";
-import { BaseHandler, type IHandlerContext } from "@d2/handler";
+import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handler";
 import { D2Result } from "@d2/result";
-import type {
-  HeadStorageObjectInput as I,
-  HeadStorageObjectOutput as O,
-  IHeadStorageObject,
+import {
+  HEAD_STORAGE_OBJECT_REDACTION,
+  type HeadStorageObjectInput as I,
+  type HeadStorageObjectOutput as O,
+  type IHeadStorageObject,
 } from "@d2/files-app";
 
 export class HeadStorageObject extends BaseHandler<I, O> implements IHeadStorageObject {
@@ -15,6 +16,10 @@ export class HeadStorageObject extends BaseHandler<I, O> implements IHeadStorage
     super(context);
     this.s3 = s3;
     this.bucket = bucket;
+  }
+
+  override get redaction(): RedactionSpec {
+    return HEAD_STORAGE_OBJECT_REDACTION;
   }
 
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {
@@ -37,7 +42,7 @@ export class HeadStorageObject extends BaseHandler<I, O> implements IHeadStorage
       if (isNotFoundError(err)) {
         return D2Result.ok({ data: { exists: false } });
       }
-      this.context.logger.error("HeadStorageObject failed", { key: input.key, err });
+      this.context.logger.error("HeadStorageObject failed", { err });
       return D2Result.serviceUnavailable();
     }
   }

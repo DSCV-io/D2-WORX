@@ -1,5 +1,5 @@
 import * as grpc from "@grpc/grpc-js";
-import { BaseHandler, type IHandlerContext } from "@d2/handler";
+import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handler";
 import type { D2Result } from "@d2/result";
 import {
   FileCallbackClientCtor,
@@ -9,6 +9,7 @@ import {
 import { handleGrpcCall } from "@d2/result-extensions";
 import { createApiKeyInterceptor, createTraceContextInterceptor } from "@d2/service-defaults/grpc";
 import {
+  CALL_ON_FILE_PROCESSED_REDACTION,
   type CallOnFileProcessedInput as I,
   type CallOnFileProcessedOutput as O,
   type ICallOnFileProcessed,
@@ -30,6 +31,10 @@ export class CallOnFileProcessed extends BaseHandler<I, O> implements ICallOnFil
     super(context);
     this.clients = clients;
     this.apiKey = apiKey;
+  }
+
+  override get redaction(): RedactionSpec {
+    return CALL_ON_FILE_PROCESSED_REDACTION;
   }
 
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {

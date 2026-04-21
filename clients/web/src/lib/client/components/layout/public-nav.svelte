@@ -255,7 +255,7 @@
               {#if mobileAvatarUrl}
                 <Avatar.Image
                   src={mobileAvatarUrl}
-                  alt={user.name ?? "User"}
+                  alt={user.name ?? m.common_ui_user_avatar_alt()}
                 />
               {/if}
               <Avatar.Fallback
@@ -289,7 +289,9 @@
       <Sheet.Title>
         {#if session && user}
           <div class="flex flex-col gap-1">
-            <span class="text-sm leading-none font-medium">{user.name ?? "User"}</span>
+            <span class="text-sm leading-none font-medium"
+              >{user.name ?? m.common_ui_user_fallback()}</span
+            >
             {#if user.email}
               <span class="text-muted-foreground text-xs leading-none font-normal">
                 {user.email}

@@ -119,3 +119,18 @@ export const SIGN_IN_THROTTLE = {
   /** Local memory cache TTL for known-good lookups in milliseconds (5 minutes). */
   KNOWN_GOOD_CACHE_TTL_MS: 5 * 60 * 1000,
 } as const;
+
+/**
+ * Self-service user deletion grace period.
+ *
+ * On initiate, status flips to `pending_deletion` + `deleted_at = NOW()`.
+ * Signing back in within the grace window flips status back to `active`.
+ * The nightly purge job (`CleanupDeletedUsers`) anonymizes any pending row
+ * whose `deleted_at` is older than the grace cutoff.
+ *
+ * Configurable per environment via `AuthJobOptions.userDeletionGracePeriodMs`.
+ */
+export const USER_DELETION = {
+  GRACE_PERIOD_DAYS: 30,
+  GRACE_PERIOD_MS: 30 * 24 * 60 * 60 * 1000,
+} as const;

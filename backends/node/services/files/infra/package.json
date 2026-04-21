@@ -26,6 +26,7 @@
     "@d2/files-app": "workspace:*",
     "@d2/files-domain": "workspace:*",
     "@d2/handler": "workspace:*",
+    "@d2/i18n": "workspace:*",
     "@d2/result-extensions": "workspace:*",
     "@d2/logging": "workspace:*",
     "@d2/messaging": "workspace:*",

@@ -3,8 +3,22 @@ import { COMMON_PASSWORDS } from "../data/common-passwords.js";
 export interface PasswordValidationResult {
   valid: boolean;
   code?: string;
+  /**
+   * Translation key for the failure reason. MUST stay exactly in sync with
+   * `TK.auth.errors.*` in `@d2/i18n` — defined as local constants here to
+   * avoid an `@d2/auth-domain` → `@d2/i18n` dependency.
+   */
   message?: string;
 }
+
+/**
+ * Translation keys for password-policy violations.
+ * MUST match `TK.auth.errors.PASSWORD_*` in `@d2/i18n` (translation-keys.ts).
+ * Duplicated here only because `@d2/auth-domain` cannot depend on `@d2/i18n`.
+ */
+const PASSWORD_NUMERIC_ONLY_KEY = "auth_errors_PASSWORD_NUMERIC_ONLY";
+const PASSWORD_DATE_LIKE_KEY = "auth_errors_PASSWORD_DATE_LIKE";
+const PASSWORD_TOO_COMMON_KEY = "auth_errors_PASSWORD_TOO_COMMON";
 
 /**
  * Pure synchronous password validation — no async, no network.
@@ -16,6 +30,10 @@ export interface PasswordValidationResult {
  *
  * Length validation is handled by BetterAuth natively (minPasswordLength / maxPasswordLength)
  * and runs BEFORE this function is called via the `hash` hook.
+ *
+ * `message` is a TK translation key (`auth_errors_PASSWORD_*`) so callers
+ * (e.g. password-hooks → APIError) can hand it straight to `translateMessage()`
+ * on the FE without leaking English to the user.
  */
 export function validatePassword(password: string): PasswordValidationResult {
   // 1. Numeric-only — e.g. "123456789012"
@@ -23,7 +41,7 @@ export function validatePassword(password: string): PasswordValidationResult {
     return {
       valid: false,
       code: "PASSWORD_NUMERIC_ONLY",
-      message: "Password cannot be only numbers.",
+      message: PASSWORD_NUMERIC_ONLY_KEY,
     };
   }
 
@@ -32,7 +50,7 @@ export function validatePassword(password: string): PasswordValidationResult {
     return {
       valid: false,
       code: "PASSWORD_DATE_LIKE",
-      message: "Password cannot be only numbers and date separators.",
+      message: PASSWORD_DATE_LIKE_KEY,
     };
   }
 
@@ -41,7 +59,7 @@ export function validatePassword(password: string): PasswordValidationResult {
     return {
       valid: false,
       code: "PASSWORD_TOO_COMMON",
-      message: "This password is too common.",
+      message: PASSWORD_TOO_COMMON_KEY,
     };
   }
 

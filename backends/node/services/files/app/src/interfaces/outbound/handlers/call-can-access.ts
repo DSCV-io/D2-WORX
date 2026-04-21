@@ -1,4 +1,4 @@
-import type { IHandler } from "@d2/handler";
+import type { IHandler, RedactionSpec } from "@d2/handler";
 
 export interface CallCanAccessInput {
   readonly address: string;
@@ -13,5 +13,12 @@ export interface CallCanAccessOutput {
   readonly allowed: boolean;
 }
 
+/** `address` is an internal service endpoint — redact from logs. */
+export const CALL_CAN_ACCESS_REDACTION: RedactionSpec = {
+  inputFields: ["address"],
+};
+
 /** gRPC CanAccess call — queries the owning service for access authorization. */
-export type ICallCanAccess = IHandler<CallCanAccessInput, CallCanAccessOutput>;
+export interface ICallCanAccess extends IHandler<CallCanAccessInput, CallCanAccessOutput> {
+  readonly redaction: RedactionSpec;
+}

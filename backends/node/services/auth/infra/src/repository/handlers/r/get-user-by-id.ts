@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handler";
 import { D2Result } from "@d2/result";
+import { type UserStatus, USER_STATUS } from "@d2/auth-domain";
 import type {
   GetUserByIdInput as I,
   GetUserByIdOutput as O,
@@ -27,9 +28,11 @@ export class GetUserById extends BaseHandler<I, O> implements IGetUserByIdHandle
         id: user.id,
         email: user.email,
         emailVerified: user.emailVerified,
+        name: user.name,
         phone: user.phone,
         phoneVerified: user.phoneVerified,
         locale: user.locale,
+        status: user.status,
       })
       .from(user)
       .where(eq(user.id, input.userId))
@@ -44,9 +47,11 @@ export class GetUserById extends BaseHandler<I, O> implements IGetUserByIdHandle
           id: row.id,
           email: row.email,
           emailVerified: row.emailVerified,
+          name: row.name ?? null,
           phone: row.phone ?? null,
           phoneVerified: row.phoneVerified,
           locale: row.locale ?? null,
+          status: (row.status as UserStatus) ?? USER_STATUS.ACTIVE,
         },
       },
     });

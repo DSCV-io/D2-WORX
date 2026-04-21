@@ -38,6 +38,11 @@ import {
   IGetUserByIdKey,
   IFindActiveSessionsByUserIdKey,
   IFindUserIdByIdentifierKey,
+  IUpdateUserStatusKey,
+  IFindDeletedUsersToPurgeKey,
+  IAnonymizeUserKey,
+  ICheckSoleOwnerOrgsKey,
+  IDeleteAllUserSessionsKey,
   IPushUserUpdatedKey,
 } from "@d2/auth-app";
 import { PushUserUpdated } from "./realtime/handlers/push-user-updated.js";
@@ -76,6 +81,11 @@ import { CheckPhoneAvailability } from "./repository/handlers/r/check-phone-avai
 import { GetUserById } from "./repository/handlers/r/get-user-by-id.js";
 import { FindActiveSessionsByUserId } from "./repository/handlers/r/find-active-sessions-by-user-id.js";
 import { FindUserIdByIdentifier } from "./repository/handlers/r/find-user-id-by-identifier.js";
+import { UpdateUserStatus } from "./repository/handlers/u/update-user-status.js";
+import { FindDeletedUsersToPurge } from "./repository/handlers/r/find-deleted-users-to-purge.js";
+import { AnonymizeUser } from "./repository/handlers/u/anonymize-user.js";
+import { CheckSoleOwnerOrgs } from "./repository/handlers/r/check-sole-owner-orgs.js";
+import { DeleteAllUserSessions } from "./repository/handlers/d/delete-all-user-sessions.js";
 import { UpdateUserTimezone } from "./repository/handlers/u/update-user-timezone.js";
 
 export interface AuthInfraConfig {
@@ -190,6 +200,28 @@ export function addAuthInfra(
   services.addTransient(
     IFindUserIdByIdentifierKey,
     (sp) => new FindUserIdByIdentifier(db, sp.resolve(IHandlerContextKey)),
+  );
+
+  // User deletion repo handlers
+  services.addTransient(
+    IUpdateUserStatusKey,
+    (sp) => new UpdateUserStatus(db, sp.resolve(IHandlerContextKey)),
+  );
+  services.addTransient(
+    IFindDeletedUsersToPurgeKey,
+    (sp) => new FindDeletedUsersToPurge(db, sp.resolve(IHandlerContextKey)),
+  );
+  services.addTransient(
+    IAnonymizeUserKey,
+    (sp) => new AnonymizeUser(db, sp.resolve(IHandlerContextKey)),
+  );
+  services.addTransient(
+    ICheckSoleOwnerOrgsKey,
+    (sp) => new CheckSoleOwnerOrgs(db, sp.resolve(IHandlerContextKey)),
+  );
+  services.addTransient(
+    IDeleteAllUserSessionsKey,
+    (sp) => new DeleteAllUserSessions(db, sp.resolve(IHandlerContextKey)),
   );
 
   // Emulation consent repo handlers

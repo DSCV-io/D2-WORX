@@ -83,6 +83,8 @@ export type {
   IPingDbHandler,
 } from "./interfaces/repository/handlers/index.js";
 
+export { UPDATE_DELIVERY_ATTEMPT_STATUS_REDACTION } from "./interfaces/repository/handlers/index.js";
+
 // --- Complex Handlers ---
 export { Deliver } from "./implementations/cqrs/handlers/x/deliver.js";
 export type { DeliverInput, DeliverOutput } from "./interfaces/cqrs/handlers/x/deliver.js";

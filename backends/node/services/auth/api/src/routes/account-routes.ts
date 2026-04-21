@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { HttpStatusCode } from "@d2/result";
+import { TK } from "@d2/i18n";
+import { ILoggerKey } from "@d2/logging";
 import {
   IUpdateUserRealNameKey,
   IUpdateUsernameKey,
@@ -17,6 +19,7 @@ import {
   IVerifyPhoneChangeKey,
   IRemovePhoneKey,
   IVerifyUserPasswordKey,
+  IRequestUserDeletionKey,
 } from "@d2/auth-app";
 import type { IRequestContext } from "@d2/handler";
 import type { SessionVariables } from "../middleware/session.js";
@@ -159,13 +162,17 @@ export function createAccountRoutes(auth: Auth) {
     const currentPassword = body.currentPassword as string;
     if (!token) {
       return c.json(
-        { success: false, statusCode: 400, messages: ["Session token is required."] },
+        { success: false, statusCode: 400, messages: [TK.auth.errors.SESSION_TOKEN_REQUIRED] },
         400 as ContentfulStatusCode,
       );
     }
     if (!currentPassword) {
       return c.json(
-        { success: false, statusCode: 400, messages: ["Password is required to confirm this change."] },
+        {
+          success: false,
+          statusCode: 400,
+          messages: [TK.auth.errors.PASSWORD_REQUIRED_FOR_CHANGE],
+        },
         400 as ContentfulStatusCode,
       );
     }
@@ -175,7 +182,7 @@ export function createAccountRoutes(auth: Auth) {
       .verify(uid(c), currentPassword);
     if (!passwordOk) {
       return c.json(
-        { success: false, statusCode: 401, messages: ["Incorrect password."] },
+        { success: false, statusCode: 401, messages: [TK.auth.errors.INCORRECT_PASSWORD] },
         401 as ContentfulStatusCode,
       );
     }
@@ -187,7 +194,7 @@ export function createAccountRoutes(auth: Auth) {
       return c.json({ success: true, statusCode: 200, data: {} });
     } catch {
       return c.json(
-        { success: false, statusCode: 500, messages: ["Failed to revoke session."] },
+        { success: false, statusCode: 500, messages: [TK.auth.errors.SESSION_REVOKE_FAILED] },
         500 as ContentfulStatusCode,
       );
     }
@@ -200,7 +207,11 @@ export function createAccountRoutes(auth: Auth) {
     const currentPassword = body.currentPassword as string;
     if (!currentPassword) {
       return c.json(
-        { success: false, statusCode: 400, messages: ["Password is required to confirm this change."] },
+        {
+          success: false,
+          statusCode: 400,
+          messages: [TK.auth.errors.PASSWORD_REQUIRED_FOR_CHANGE],
+        },
         400 as ContentfulStatusCode,
       );
     }
@@ -210,7 +221,7 @@ export function createAccountRoutes(auth: Auth) {
       .verify(uid(c), currentPassword);
     if (!passwordOk) {
       return c.json(
-        { success: false, statusCode: 401, messages: ["Incorrect password."] },
+        { success: false, statusCode: 401, messages: [TK.auth.errors.INCORRECT_PASSWORD] },
         401 as ContentfulStatusCode,
       );
     }
@@ -219,7 +230,7 @@ export function createAccountRoutes(auth: Auth) {
       return c.json({ success: true, statusCode: 200, data: {} });
     } catch {
       return c.json(
-        { success: false, statusCode: 500, messages: ["Failed to revoke sessions."] },
+        { success: false, statusCode: 500, messages: [TK.auth.errors.SESSION_REVOKE_FAILED] },
         500 as ContentfulStatusCode,
       );
     }
@@ -241,7 +252,7 @@ export function createAccountRoutes(auth: Auth) {
         {
           success: false,
           statusCode: 400,
-          messages: ["Current password and new password are required."],
+          messages: [TK.auth.errors.CHANGE_PASSWORD_REQUIRED_FIELDS],
         },
         400 as ContentfulStatusCode,
       );
@@ -255,9 +266,18 @@ export function createAccountRoutes(auth: Auth) {
       return c.json({ success: true, statusCode: 200, data: {} });
     } catch (err) {
       const status = (err as { statusCode?: number })?.statusCode ?? 400;
-      const message = (err as { message?: string })?.message ?? "Failed to change password.";
+      // Log the raw provider error for ops, but never propagate it to the user —
+      // emit a translated TK key instead so we don't leak provider/English copy.
+      const rawMessage = (err as { message?: string })?.message;
+      c.get(SCOPE_KEY)
+        .resolve(ILoggerKey)
+        .warn("Change password failed", { status, error: rawMessage });
       return c.json(
-        { success: false, statusCode: status, messages: [message] },
+        {
+          success: false,
+          statusCode: status,
+          messages: [TK.auth.errors.CHANGE_PASSWORD_FAILED],
+        },
         status as ContentfulStatusCode,
       );
     }
@@ -356,6 +376,31 @@ export function createAccountRoutes(auth: Auth) {
     const result = await handler.handleAsync({
       userId: uid(c),
       currentPassword: body.currentPassword as string,
+    });
+    const status = (
+      result.success ? HttpStatusCode.OK : (result.statusCode ?? HttpStatusCode.BadRequest)
+    ) as ContentfulStatusCode;
+    return c.json(result, status);
+  });
+
+  // POST /api/account/delete — Initiate self-service user deletion.
+  //
+  // Atomic password-gated. On success the user is logged out everywhere
+  // (status flipped to `pending_deletion`, all sessions revoked, BetterAuth
+  // Redis cookie cache busted) and the FE redirects to the public
+  // `/account/delete-scheduled` landing page. The cancellation path is just
+  // signing back in — handled by the BetterAuth `session.create.before` hook.
+  //
+  //   200 → { scheduledFor: ISO string }
+  //   401 → wrong password
+  //   409 → sole owner of one or more orgs (must transfer ownership first)
+  app.post("/api/account/delete", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const handler = c.get(SCOPE_KEY).resolve(IRequestUserDeletionKey);
+    const result = await handler.handleAsync({
+      userId: uid(c),
+      currentPassword: body.currentPassword as string,
+      feedback: body.feedback as { reason?: string; comment?: string } | undefined,
     });
     const status = (
       result.success ? HttpStatusCode.OK : (result.statusCode ?? HttpStatusCode.BadRequest)

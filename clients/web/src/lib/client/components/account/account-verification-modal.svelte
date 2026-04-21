@@ -46,8 +46,14 @@
   // lifetime — read once at init via untrack to satisfy Svelte 5.
   const schema = untrack(() =>
     type === "email"
-      ? z.object({ newValue: emailField(), currentPassword: z.string().min(1, { error: () => m.webclient_forms_required() }) })
-      : z.object({ newValue: phoneField(), currentPassword: z.string().min(1, { error: () => m.webclient_forms_required() }) }),
+      ? z.object({
+          newValue: emailField(),
+          currentPassword: z.string().min(1, { error: () => m.webclient_forms_required() }),
+        })
+      : z.object({
+          newValue: phoneField(),
+          currentPassword: z.string().min(1, { error: () => m.webclient_forms_required() }),
+        }),
   );
 
   const form = superForm(defaults({ newValue: "", currentPassword: "" }, zodClient(schema)), {

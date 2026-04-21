@@ -76,7 +76,7 @@ describe("useAsyncFieldCheck", () => {
 
     await result.check();
 
-    expect(currentErrors.email).toEqual(["Validation failed"]);
+    expect(currentErrors.email).toEqual(["Validation failed."]);
   });
 
   it("skips check when field value is falsy (default preCheck)", async () => {

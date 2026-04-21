@@ -8,6 +8,7 @@ export {
   REQUEST_HEADERS,
   PASSWORD_POLICY,
   SIGN_IN_THROTTLE,
+  USER_DELETION,
   GEO_CONTEXT_KEYS,
   AUTH_FILE_CONTEXT_KEYS,
 } from "./constants/auth-constants.js";
@@ -27,6 +28,8 @@ export {
   isValidInvitationStatus,
 } from "./enums/invitation-status.js";
 export type { InvitationStatus } from "./enums/invitation-status.js";
+export { USER_STATUS } from "./enums/user-status.js";
+export type { UserStatus } from "./enums/user-status.js";
 
 // --- Exceptions ---
 export { AuthDomainError } from "./exceptions/auth-domain-error.js";

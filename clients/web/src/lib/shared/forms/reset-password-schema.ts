@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { passwordField } from "$lib/shared/forms/schemas.js";
+import * as m from "$lib/paraglide/messages.js";
 
 /**
  * Reset password form schema — new password + confirmation.
@@ -11,10 +12,10 @@ export function createResetPasswordSchema() {
   return z
     .object({
       newPassword: passwordField(),
-      confirmNewPassword: z.string().min(1, "Required"),
+      confirmNewPassword: z.string().min(1, { error: () => m.webclient_forms_required() }),
     })
     .refine((d) => d.newPassword === d.confirmNewPassword, {
-      message: "Passwords do not match",
+      error: () => m.webclient_forms_passwords_mismatch(),
       path: ["confirmNewPassword"],
     });
 }

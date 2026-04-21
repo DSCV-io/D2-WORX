@@ -253,3 +253,23 @@ export async function changePassword(
     body: { currentPassword, newPassword, revokeOtherSessions },
   });
 }
+
+// ---------------------------------------------------------------------------
+// Account deletion (self-service, atomic password gate, 30-day grace)
+// ---------------------------------------------------------------------------
+
+/**
+ * Initiate self-service account deletion. Atomic password gate — wrong password
+ * returns 401. Sole-owner-of-org returns 409. On success, server flips status
+ * to `pending_deletion`, revokes all sessions, and returns the date when
+ * permanent anonymization will run if the user does not sign back in.
+ */
+export async function requestUserDeletion(
+  currentPassword: string,
+  feedback?: { reason?: string; comment?: string },
+): Promise<D2Result<{ scheduledFor: string }>> {
+  return accountApiCall<{ scheduledFor: string }>("/api/account/delete", {
+    method: "POST",
+    body: { currentPassword, feedback },
+  });
+}
