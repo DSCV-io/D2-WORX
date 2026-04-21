@@ -107,9 +107,11 @@ function makeMocks(opts?: { storedValue?: string; expiresAt?: Date }): Mocks {
       ),
     } as unknown as GeoQueries.IGetContactsByExtKeysHandler,
     updateContactsByExtKeys: {
-      handleAsync: vi.fn().mockResolvedValue(
-        D2Result.ok({ data: { replacements: [{ newContact: { id: "geo-001" } }] } }),
-      ),
+      handleAsync: vi
+        .fn()
+        .mockResolvedValue(
+          D2Result.ok({ data: { replacements: [{ newContact: { id: "geo-001" } }] } }),
+        ),
     } as unknown as Complex.IUpdateContactsByExtKeysHandler,
     notify: { handleAsync: vi.fn().mockResolvedValue(D2Result.ok({ data: {} })) },
   };

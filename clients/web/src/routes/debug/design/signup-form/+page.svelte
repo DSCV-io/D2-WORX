@@ -48,7 +48,6 @@
       return { valid: available, errorMessage: "This email is already taken" };
     },
   });
-
 </script>
 
 <svelte:head>

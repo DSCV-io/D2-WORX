@@ -9,7 +9,10 @@
  */
 import * as m from "$lib/paraglide/messages.js";
 
-const messageRegistry = m as unknown as Record<string, ((args?: Record<string, unknown>) => string) | undefined>;
+const messageRegistry = m as unknown as Record<
+  string,
+  ((args?: Record<string, unknown>) => string) | undefined
+>;
 
 export function translateMessage(
   key: string | undefined,

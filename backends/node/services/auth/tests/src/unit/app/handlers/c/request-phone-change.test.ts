@@ -234,14 +234,12 @@ describe("RequestPhoneChange", () => {
     mocks.notify.handleAsync.mockResolvedValue(
       D2Result.fail({ messages: ["sms publish failed"], statusCode: 500 }),
     );
-    mocks.verificationStore.findByIdentifier
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        id: "v-strand",
-        identifier: "x",
-        value: "{}",
-        expiresAt: new Date(),
-      });
+    mocks.verificationStore.findByIdentifier.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: "v-strand",
+      identifier: "x",
+      value: "{}",
+      expiresAt: new Date(),
+    });
 
     const result = await makeHandler(mocks).handleAsync(validInput());
 

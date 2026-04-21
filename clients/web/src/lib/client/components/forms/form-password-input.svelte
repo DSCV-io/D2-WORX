@@ -47,7 +47,9 @@
       type="button"
       onclick={() => (showPassword = !showPassword)}
       class="text-muted-foreground hover:text-foreground"
-      aria-label={showPassword ? m.webclient_forms_hide_password() : m.webclient_forms_show_password()}
+      aria-label={showPassword
+        ? m.webclient_forms_hide_password()
+        : m.webclient_forms_show_password()}
     >
       {#if showPassword}
         <EyeOffIcon class="size-4" />

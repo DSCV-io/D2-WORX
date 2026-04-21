@@ -18,5 +18,7 @@ export interface SetUserChannelPreferenceOutput {
   readonly pref: ChannelPreference;
 }
 
-export interface ISetUserChannelPreferenceHandler
-  extends IHandler<SetUserChannelPreferenceInput, SetUserChannelPreferenceOutput> {}
+export interface ISetUserChannelPreferenceHandler extends IHandler<
+  SetUserChannelPreferenceInput,
+  SetUserChannelPreferenceOutput
+> {}

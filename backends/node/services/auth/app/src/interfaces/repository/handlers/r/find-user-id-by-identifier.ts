@@ -17,7 +17,9 @@ export const FIND_USER_ID_BY_IDENTIFIER_REDACTION: RedactionSpec = {
   suppressOutput: true,
 };
 
-export interface IFindUserIdByIdentifierHandler
-  extends IHandler<FindUserIdByIdentifierInput, FindUserIdByIdentifierOutput> {
+export interface IFindUserIdByIdentifierHandler extends IHandler<
+  FindUserIdByIdentifierInput,
+  FindUserIdByIdentifierOutput
+> {
   readonly redaction: RedactionSpec;
 }

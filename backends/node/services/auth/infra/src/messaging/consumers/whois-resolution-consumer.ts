@@ -29,7 +29,11 @@ function validateMessage(body: unknown): WhoIsResolutionMessage | null {
   if (typeof obj.signInEventId !== "string" || !isValidGuid(obj.signInEventId)) return null;
   // sessionId is optional, but if present must be a non-empty string (BetterAuth uses opaque IDs, not GUIDs)
   if (obj.sessionId !== undefined) {
-    if (typeof obj.sessionId !== "string" || obj.sessionId.length === 0 || obj.sessionId.length > 255)
+    if (
+      typeof obj.sessionId !== "string" ||
+      obj.sessionId.length === 0 ||
+      obj.sessionId.length > 255
+    )
       return null;
   }
   if (typeof obj.ipAddress !== "string" || obj.ipAddress.length === 0 || obj.ipAddress.length > 45)

@@ -25,7 +25,6 @@ export const GET_MY_SESSIONS_REDACTION: RedactionSpec = {
   suppressOutput: true,
 };
 
-export interface IGetMySessionsHandler
-  extends IHandler<GetMySessionsInput, GetMySessionsOutput> {
+export interface IGetMySessionsHandler extends IHandler<GetMySessionsInput, GetMySessionsOutput> {
   readonly redaction: RedactionSpec;
 }

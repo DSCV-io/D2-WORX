@@ -156,20 +156,18 @@ export function createAuthRoutes(
         // Audit failed sign-in (fire-and-forget). Skipped silently if no userId
         // resolves (attacker probing nonexistent emails) — the throttle layer
         // still tracks those by hashed identifier.
-        recordFailedSignIn
-          ?.({
-            email: isEmailEndpoint ? identifier : undefined,
-            username: isEmailEndpoint ? undefined : identifier,
-            ipAddress: requestContext?.clientIp ?? "unknown",
-            userAgent,
-            deviceFingerprint: requestContext?.deviceFingerprint,
-            failureReason: `http_${response.status}`,
-          })
-          .catch((err: unknown) =>
-            logger?.warn("recordFailedSignIn failed (non-blocking)", {
-              error: err instanceof Error ? err.message : String(err),
-            }),
-          );
+        recordFailedSignIn?.({
+          email: isEmailEndpoint ? identifier : undefined,
+          username: isEmailEndpoint ? undefined : identifier,
+          ipAddress: requestContext?.clientIp ?? "unknown",
+          userAgent,
+          deviceFingerprint: requestContext?.deviceFingerprint,
+          failureReason: `http_${response.status}`,
+        }).catch((err: unknown) =>
+          logger?.warn("recordFailedSignIn failed (non-blocking)", {
+            error: err instanceof Error ? err.message : String(err),
+          }),
+        );
       }
 
       return response;

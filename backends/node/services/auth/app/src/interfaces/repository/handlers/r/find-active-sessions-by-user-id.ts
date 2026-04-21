@@ -14,7 +14,9 @@ export const FIND_ACTIVE_SESSIONS_REDACTION: RedactionSpec = {
   suppressOutput: true,
 };
 
-export interface IFindActiveSessionsByUserIdHandler
-  extends IHandler<FindActiveSessionsByUserIdInput, FindActiveSessionsByUserIdOutput> {
+export interface IFindActiveSessionsByUserIdHandler extends IHandler<
+  FindActiveSessionsByUserIdInput,
+  FindActiveSessionsByUserIdOutput
+> {
   readonly redaction: RedactionSpec;
 }
