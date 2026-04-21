@@ -142,11 +142,11 @@ describe("Dkron Integration (real container)", () => {
 
   // ── Full Reconciliation Cycle ────────────────────────────────────
 
-  it("should create all 8 jobs on first reconciliation", async () => {
+  it("should create all 9 jobs on first reconciliation", async () => {
     const result = await reconcile(config, logger);
 
     expect(result.errors).toHaveLength(0);
-    expect(result.created).toHaveLength(8);
+    expect(result.created).toHaveLength(9);
     expect(result.updated).toHaveLength(0);
     expect(result.deleted).toHaveLength(0);
     expect(result.unchanged).toHaveLength(0);
@@ -154,7 +154,7 @@ describe("Dkron Integration (real container)", () => {
     // Verify jobs exist in Dkron
     const jobs = await listJobs(dkronUrl, logger);
     const managed = jobs.filter((j) => j.metadata?.managed_by === "d2-dkron-mgr");
-    expect(managed).toHaveLength(8);
+    expect(managed).toHaveLength(9);
   });
 
   it("should report all unchanged on second reconciliation", async () => {
@@ -164,7 +164,7 @@ describe("Dkron Integration (real container)", () => {
     expect(result.created).toHaveLength(0);
     expect(result.updated).toHaveLength(0);
     expect(result.deleted).toHaveLength(0);
-    expect(result.unchanged).toHaveLength(8);
+    expect(result.unchanged).toHaveLength(9);
   });
 
   it("should detect and fix a schedule drift", async () => {
@@ -184,7 +184,7 @@ describe("Dkron Integration (real container)", () => {
     expect(result.errors).toHaveLength(0);
     expect(result.updated).toHaveLength(1);
     expect(result.updated[0]).toBe(firstJob.name);
-    expect(result.unchanged).toHaveLength(7);
+    expect(result.unchanged).toHaveLength(8);
     expect(result.created).toHaveLength(0);
     expect(result.deleted).toHaveLength(0);
 
@@ -215,7 +215,7 @@ describe("Dkron Integration (real container)", () => {
     expect(result.errors).toHaveLength(0);
     expect(result.deleted).toHaveLength(1);
     expect(result.deleted[0]).toBe("orphan-legacy-job");
-    expect(result.unchanged).toHaveLength(8);
+    expect(result.unchanged).toHaveLength(9);
 
     // Verify it's actually gone
     const jobs = await listJobs(dkronUrl, logger);
@@ -242,7 +242,7 @@ describe("Dkron Integration (real container)", () => {
 
     // Should NOT delete the unmanaged job
     expect(result.deleted).toHaveLength(0);
-    expect(result.unchanged).toHaveLength(8);
+    expect(result.unchanged).toHaveLength(9);
 
     // Verify the manual job still exists
     const jobs = await listJobs(dkronUrl, logger);

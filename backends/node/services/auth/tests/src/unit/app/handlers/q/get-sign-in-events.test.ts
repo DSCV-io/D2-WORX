@@ -389,12 +389,14 @@ describe("GetSignInEvents", () => {
     it("should correctly validate cache for page 2 (offset > 0)", async () => {
       const globalLatest = new Date("2026-02-10T12:00:00.000Z");
 
-      // Cache has page 2 data with the global latest date
+      // Cache stores `EnrichedSignInEvent[]` (`{ event, whoIs }` wrappers),
+      // not raw `SignInEvent`. The handler reads `events[i].event.id` so we
+      // must mirror that shape here.
       cache.get.handleAsync = vi.fn().mockResolvedValue(
         D2Result.ok({
           data: {
             value: {
-              events: [createEvent("evt-page2", new Date("2026-02-05"))],
+              events: [{ event: createEvent("evt-page2", new Date("2026-02-05")) }],
               total: 10,
               latestDate: globalLatest.toISOString(),
             },

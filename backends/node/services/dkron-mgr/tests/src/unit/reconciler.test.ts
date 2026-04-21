@@ -179,12 +179,12 @@ describe("reconcile", () => {
     });
   }
 
-  it("should create all 8 jobs when Dkron is empty", async () => {
+  it("should create all 9 jobs when Dkron is empty", async () => {
     mockDkronApi([]);
 
     const result = await reconcile(config, logger);
 
-    expect(result.created).toHaveLength(8);
+    expect(result.created).toHaveLength(9);
     expect(result.updated).toHaveLength(0);
     expect(result.deleted).toHaveLength(0);
     expect(result.unchanged).toHaveLength(0);
@@ -192,7 +192,7 @@ describe("reconcile", () => {
   });
 
   it("should report all jobs as unchanged when state matches", async () => {
-    // Simulate Dkron already having all 8 jobs with correct config.
+    // Simulate Dkron already having all 9 jobs with correct config.
     // We need to import getDesiredJobs to build the matching state.
     const { getDesiredJobs } = await import("@d2/dkron-mgr");
     const desired = getDesiredJobs(config);
@@ -208,7 +208,7 @@ describe("reconcile", () => {
     expect(result.created).toHaveLength(0);
     expect(result.updated).toHaveLength(0);
     expect(result.deleted).toHaveLength(0);
-    expect(result.unchanged).toHaveLength(8);
+    expect(result.unchanged).toHaveLength(9);
     expect(result.errors).toHaveLength(0);
   });
 
@@ -228,7 +228,7 @@ describe("reconcile", () => {
 
     expect(result.updated).toHaveLength(1);
     expect(result.updated[0]).toBe(desired[0]!.name);
-    expect(result.unchanged).toHaveLength(7);
+    expect(result.unchanged).toHaveLength(8);
   });
 
   it("should delete orphaned managed jobs", async () => {
@@ -237,7 +237,7 @@ describe("reconcile", () => {
 
     const result = await reconcile(config, logger);
 
-    expect(result.created).toHaveLength(8);
+    expect(result.created).toHaveLength(9);
     expect(result.deleted).toHaveLength(1);
     expect(result.deleted[0]).toBe("orphan-old-job");
   });
@@ -262,7 +262,7 @@ describe("reconcile", () => {
     // The unmanaged job should NOT be deleted
     expect(result.deleted).toHaveLength(0);
     // All 8 desired jobs should be created (none exist as managed)
-    expect(result.created).toHaveLength(8);
+    expect(result.created).toHaveLength(9);
   });
 
   it("should accumulate errors without blocking other operations", async () => {
@@ -296,6 +296,6 @@ describe("reconcile", () => {
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]!.operation).toBe("create");
     // 7 successful creates (8 total minus 1 failure)
-    expect(result.created).toHaveLength(7);
+    expect(result.created).toHaveLength(8);
   });
 });

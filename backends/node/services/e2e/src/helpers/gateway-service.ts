@@ -30,8 +30,12 @@ async function getAvailablePort(): Promise<number> {
 
 /**
  * Polls the Gateway health endpoint until it responds.
+ *
+ * 120s default — the .NET gateway compiles + binds slowly under Docker
+ * resource pressure when several other Testcontainer-backed services boot
+ * in the same suite. 60s was tight enough to flake.
  */
-async function waitForGatewayReady(port: number, timeoutMs = 60_000): Promise<void> {
+async function waitForGatewayReady(port: number, timeoutMs = 120_000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   const url = `http://localhost:${port}/health`;
 
@@ -76,16 +80,19 @@ export async function startGateway(opts: {
     REDIS_URL: opts.redisUrl,
     // Geo gRPC address (the only service we actually call)
     GEO_GRPC_ADDRESS: opts.geoGrpcAddress,
-    // Auth + Comms gRPC addresses (required by config validation, but not called in Geo-only tests)
+    // Auth + Comms + Files gRPC addresses (required by config validation,
+    // but not called in Geo-only tests).
     AUTH_GRPC_ADDRESS: "localhost:1",
     COMMS_GRPC_ADDRESS: "localhost:1",
+    FILES_GRPC_ADDRESS: "localhost:1",
     // Service key config: allow Dkron's X-Api-Key to pass
     GATEWAY_SERVICEKEY__ValidKeys__0: opts.serviceKey,
     // gRPC API keys (sent as call credentials to downstream services)
     GATEWAY_GEO_GRPC_API_KEY: opts.geoApiKey,
-    // Auth + Comms keys required by startup validation but not called in Geo-only tests
+    // Auth + Comms + Files keys required by startup validation but not called in Geo-only tests
     GATEWAY_AUTH_GRPC_API_KEY: "e2e-dummy-auth-key",
     GATEWAY_COMMS_GRPC_API_KEY: "e2e-dummy-comms-key",
+    GATEWAY_FILES_GRPC_API_KEY: "e2e-dummy-files-key",
     // JWT config (required by service registration, but service-key endpoints skip JWT)
     GATEWAY_AUTH__AuthServiceBaseUrl: "http://localhost:1",
     GATEWAY_AUTH__Issuer: "e2e-test",

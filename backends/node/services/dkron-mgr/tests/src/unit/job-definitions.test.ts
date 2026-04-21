@@ -9,9 +9,9 @@ const config: DkronMgrConfig = {
 };
 
 describe("getDesiredJobs", () => {
-  it("should return exactly 8 jobs", () => {
+  it("should return exactly 9 jobs", () => {
     const jobs = getDesiredJobs(config);
-    expect(jobs).toHaveLength(8);
+    expect(jobs).toHaveLength(9);
   });
 
   it("should include all expected job names", () => {
@@ -24,6 +24,7 @@ describe("getDesiredJobs", () => {
     expect(names).toContain("auth-purge-sign-in-events");
     expect(names).toContain("auth-cleanup-invitations");
     expect(names).toContain("auth-cleanup-emulation-consents");
+    expect(names).toContain("auth-cleanup-deleted-users");
     expect(names).toContain("comms-purge-deleted-messages");
     expect(names).toContain("comms-purge-delivery-history");
   });

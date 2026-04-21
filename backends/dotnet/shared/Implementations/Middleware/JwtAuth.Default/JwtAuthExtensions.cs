@@ -75,6 +75,16 @@ public static partial class JwtAuthExtensions
                         RefreshInterval = options.JwksRefreshInterval,
                     };
 
+                    // Mirror the same intervals onto JwtBearerOptions itself —
+                    // these are the values DI consumers read via IOptions, and
+                    // they govern behaviour if the custom ConfigurationManager
+                    // is ever removed in favour of standard OIDC discovery.
+                    // Without this mirror, JwtBearerOptions retains framework
+                    // defaults (12h auto / 5m refresh) that diverge from what
+                    // our ConfigurationManager actually does.
+                    jwt.AutomaticRefreshInterval = options.JwksAutoRefreshInterval;
+                    jwt.RefreshInterval = options.JwksRefreshInterval;
+
                     jwt.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuer = true,

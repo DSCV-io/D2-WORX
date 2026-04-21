@@ -86,11 +86,16 @@ export async function startFilesService(opts: {
 
   // Publisher used by the Files service internally (PublishFileForProcessing handler).
   // Declares the exchange to ensure it exists before consumers are ready.
+  // `durable: true` MUST match the consumer's declaration in
+  // file-{uploaded,processing}-consumer.ts. RabbitMQ rejects a redeclare
+  // with PRECONDITION_FAILED if `durable` differs from the existing exchange,
+  // so the publisher and consumer must agree.
   publisher = messageBus.createPublisher({
     exchanges: [
       {
         exchange: FILES_MESSAGING.EVENTS_EXCHANGE,
         type: FILES_MESSAGING.EVENTS_EXCHANGE_TYPE,
+        durable: true,
       },
     ],
   });
@@ -101,6 +106,7 @@ export async function startFilesService(opts: {
       {
         exchange: FILES_MESSAGING.EVENTS_EXCHANGE,
         type: FILES_MESSAGING.EVENTS_EXCHANGE_TYPE,
+        durable: true,
       },
     ],
   });

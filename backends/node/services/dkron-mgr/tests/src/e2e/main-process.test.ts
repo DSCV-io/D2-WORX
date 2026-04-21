@@ -110,10 +110,10 @@ describe("dkron-mgr main.ts (real process)", () => {
       `Process crashed before reconciliation.\n${stdout.join("\n")}`,
     ).toBeNull();
 
-    // Verify all 8 jobs were actually created in Dkron.
+    // Verify all 9 jobs were actually created in Dkron.
     const jobs = await listJobs(dkronUrl, logger);
     const managed = jobs.filter((j) => j.metadata?.managed_by === "d2-dkron-mgr");
-    expect(managed).toHaveLength(8);
+    expect(managed).toHaveLength(9);
 
     // Terminate the process. On Windows, SIGTERM unconditionally kills the
     // process (signal handlers don't run), so we can't assert exit code 0.
