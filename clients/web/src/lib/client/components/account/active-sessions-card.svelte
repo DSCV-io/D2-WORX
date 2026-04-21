@@ -12,7 +12,9 @@
   } from "$lib/client/rest/account-client.js";
   import { D2Result } from "@d2/result";
   import { parseUserAgent } from "$lib/shared/utils/user-agent.js";
-  import { formatLocation } from "$lib/shared/utils/format-location.js";
+  import { formatLocation, locationCountryCode } from "$lib/shared/utils/format-location.js";
+  import CopyChip from "./copy-chip.svelte";
+  import CountryFlag from "./country-flag.svelte";
   import PasswordConfirmDialog from "./password-confirm-dialog.svelte";
   import { translateMessage } from "$lib/client/utils/translate-message.js";
   import LogOutIcon from "@lucide/svelte/icons/log-out";
@@ -21,7 +23,6 @@
   import TabletIcon from "@lucide/svelte/icons/tablet";
   import GlobeIcon from "@lucide/svelte/icons/globe";
   import MapPinIcon from "@lucide/svelte/icons/map-pin";
-  import ClockIcon from "@lucide/svelte/icons/clock";
   import { toast } from "svelte-sonner";
 
   let sessions = $state<ActiveSessionDTO[]>([]);
@@ -139,8 +140,9 @@
         {#each sessions as s (s.session.id)}
           {@const ua = parseUserAgent(s.session.userAgent)}
           {@const loc = formatLocation(s.whoIs)}
+          {@const cc = locationCountryCode(s.whoIs)}
           {@const Icon = deviceIcon(ua.deviceType)}
-          {@const stub = whoIsStub(s.session.whoIsId)}
+          {@const whoIsStubText = whoIsStub(s.session.whoIsId)}
           <li
             class={[
               "group rounded-lg border p-4 shadow-sm transition-colors",
@@ -159,43 +161,53 @@
 
               <div class="flex min-w-0 flex-1 flex-col gap-1.5">
                 <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span class="text-sm font-semibold">{ua.browser}</span>
-                  <span class="text-muted-foreground text-xs"
-                    >{m.account_sessions_on_os({ os: ua.os })}</span
-                  >
-                  {#if stub}
-                    <span
-                      class="text-muted-foreground/70 font-mono text-[10px]"
-                      title={s.session.whoIsId}
-                    >
-                      ({stub})
-                    </span>
-                  {/if}
                   {#if s.isCurrent}
                     <Badge variant="success">{m.account_sessions_current_badge()}</Badge>
                   {/if}
+                  <span class="text-muted-foreground text-xs"
+                    >{fmtRelative(s.session.updatedAt)}</span
+                  >
                 </div>
 
-                <div
-                  class="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs"
-                >
-                  {#if loc}
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                  <span class="font-semibold">{ua.browser}</span>
+                  <span class="text-muted-foreground text-xs"
+                    >{m.account_sessions_on_os({ os: ua.os })}</span
+                  >
+                </div>
+
+                {#if loc}
+                  <div
+                    class="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs"
+                  >
                     <span class="inline-flex items-center gap-1">
                       <MapPinIcon class="size-3" />
                       {loc}
+                      {#if cc}
+                        <CountryFlag code={cc} />
+                      {/if}
                     </span>
-                  {/if}
-                  <span
-                    class="font-mono"
-                    title={s.session.ipAddress ?? ""}
-                  >
-                    {shortIp(s.session.ipAddress)}
-                  </span>
-                  <span class="inline-flex items-center gap-1">
-                    <ClockIcon class="size-3" />
-                    {fmtRelative(s.session.updatedAt)}
-                  </span>
-                </div>
+                  </div>
+                {/if}
+
+                {#if s.session.ipAddress || whoIsStubText}
+                  <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    {#if s.session.ipAddress}
+                      <CopyChip
+                        label={m.account_sessions_ip_label()}
+                        display={shortIp(s.session.ipAddress)}
+                        value={s.session.ipAddress}
+                      />
+                    {/if}
+                    {#if whoIsStubText}
+                      <CopyChip
+                        label={m.account_sessions_who_is_id_label()}
+                        display={whoIsStubText}
+                        value={s.session.whoIsId}
+                      />
+                    {/if}
+                  </div>
+                {/if}
               </div>
 
               {#if !s.isCurrent}

@@ -23,3 +23,12 @@ export function formatLocation(whoIs: WhoIsLite | undefined): string {
   if (countryIso31661Alpha2Code) parts.push(countryIso31661Alpha2Code);
   return parts.join(", ");
 }
+
+/**
+ * Returns the ISO 3166-1 alpha-2 country code from a WhoIs payload, or
+ * undefined if missing. Used as the source for `<CountryFlag>` next to
+ * the formatted location string.
+ */
+export function locationCountryCode(whoIs: WhoIsLite | undefined): string | undefined {
+  return whoIs?.location?.countryIso31661Alpha2Code ?? undefined;
+}

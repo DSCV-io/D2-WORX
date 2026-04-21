@@ -7,7 +7,9 @@
   import { listRecentLogins, type RecentLoginDTO } from "$lib/client/rest/account-client.js";
   import { translateMessage } from "$lib/client/utils/translate-message.js";
   import { parseUserAgent } from "$lib/shared/utils/user-agent.js";
-  import { formatLocation } from "$lib/shared/utils/format-location.js";
+  import { formatLocation, locationCountryCode } from "$lib/shared/utils/format-location.js";
+  import CopyChip from "./copy-chip.svelte";
+  import CountryFlag from "./country-flag.svelte";
   import MonitorIcon from "@lucide/svelte/icons/monitor";
   import SmartphoneIcon from "@lucide/svelte/icons/smartphone";
   import TabletIcon from "@lucide/svelte/icons/tablet";
@@ -67,6 +69,12 @@
     return `${id.slice(0, 4)}…${id.slice(-4)}`;
   }
 
+  /** First/last 4 chars of the device fingerprint — same visual-diff purpose. */
+  function deviceFpStub(fp: string | undefined): string | undefined {
+    if (!fp || fp.length < 8) return undefined;
+    return `${fp.slice(0, 4)}…${fp.slice(-4)}`;
+  }
+
   /** Pick a Lucide icon for the device class returned by ua-parser. */
   function deviceIcon(deviceType: string) {
     if (deviceType === "mobile") return SmartphoneIcon;
@@ -111,8 +119,10 @@
         {#each events as e (e.event.id)}
           {@const ua = parseUserAgent(e.event.userAgent)}
           {@const loc = formatLocation(e.whoIs)}
+          {@const cc = locationCountryCode(e.whoIs)}
           {@const ok = e.event.successful}
-          {@const stub = whoIsStub(e.event.whoIsId)}
+          {@const whoIsStubText = whoIsStub(e.event.whoIsId)}
+          {@const deviceFpStubText = deviceFpStub(e.event.deviceFingerprint)}
           {@const Icon = deviceIcon(ua.deviceType)}
           <li
             class={[
@@ -144,32 +154,47 @@
                     >&nbsp;{m.account_sessions_on_os({ os: ua.os })}</span
                   >
                 </span>
-                {#if stub}
-                  <span
-                    class="text-muted-foreground/70 font-mono text-[10px]"
-                    title={e.event.whoIsId}
-                  >
-                    ({stub})
-                  </span>
-                {/if}
               </div>
 
-              <div
-                class="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs"
-              >
-                {#if loc}
+              {#if loc}
+                <div
+                  class="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs"
+                >
                   <span class="inline-flex items-center gap-1">
                     <MapPinIcon class="size-3" />
                     {loc}
+                    {#if cc}
+                      <CountryFlag code={cc} />
+                    {/if}
                   </span>
-                {/if}
-                <span
-                  class="font-mono"
-                  title={e.event.ipAddress}
-                >
-                  {shortIp(e.event.ipAddress)}
-                </span>
-              </div>
+                </div>
+              {/if}
+
+              {#if e.event.ipAddress || whoIsStubText || deviceFpStubText}
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  {#if e.event.ipAddress}
+                    <CopyChip
+                      label={m.account_sessions_ip_label()}
+                      display={shortIp(e.event.ipAddress)}
+                      value={e.event.ipAddress}
+                    />
+                  {/if}
+                  {#if whoIsStubText}
+                    <CopyChip
+                      label={m.account_sessions_who_is_id_label()}
+                      display={whoIsStubText}
+                      value={e.event.whoIsId}
+                    />
+                  {/if}
+                  {#if deviceFpStubText}
+                    <CopyChip
+                      label={m.account_sessions_device_fp_label()}
+                      display={deviceFpStubText}
+                      value={e.event.deviceFingerprint}
+                    />
+                  {/if}
+                </div>
+              {/if}
             </div>
           </li>
         {/each}
