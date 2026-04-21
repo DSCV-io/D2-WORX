@@ -103,19 +103,23 @@ export function computeLightTokens(config: ThemeConfig): ThemeTokens {
   const warning = config.warning;
   const charts = chartHues(h);
 
+  // Layered surface strategy (mirrors Stripe / Linear / Vercel):
+  //   page bg (off-white) → card (white, lifts above page) → input (white, with stronger border)
+  // One step of contrast between each plane. Foreground is near-black with
+  // a tiny amount of brand-hue chroma for harmony — NOT brand-colored.
   return {
-    "--background": oklch(1, 0, 0),
-    "--foreground": oklch(l, c, h),
-    "--card": oklch(1, 0, 0),
-    "--card-foreground": oklch(l, c, h),
+    "--background": oklch(0.985, 0.002, h), // off-white page
+    "--foreground": oklch(0.18, 0.005, h), // near-black, brand-tinted (almost imperceptibly)
+    "--card": oklch(1, 0, 0), // pure white surface — lifts above page
+    "--card-foreground": oklch(0.18, 0.005, h),
     "--popover": oklch(1, 0, 0),
-    "--popover-foreground": oklch(l, c, h),
+    "--popover-foreground": oklch(0.18, 0.005, h),
     "--primary": oklch(l, c, h),
     "--primary-foreground": oklch(0.985, 0, 0),
     "--secondary": oklch(sec.lightness, sec.chroma, sec.hue),
     "--secondary-foreground": autoForeground(sec.lightness),
-    "--muted": oklch(0.967, Math.min(sec.chroma * 0.15, 0.025), sec.hue),
-    "--muted-foreground": oklch(0.552, Math.min(sec.chroma * 1.5, 0.05), sec.hue),
+    "--muted": oklch(0.96, Math.min(sec.chroma * 0.15, 0.012), sec.hue),
+    "--muted-foreground": oklch(0.48, Math.min(sec.chroma * 1.0, 0.025), sec.hue),
     "--accent": oklch(acc.lightness, acc.chroma, acc.hue),
     "--accent-foreground": oklch(0.985, 0, 0),
     "--destructive": oklch(d.lightness, d.chroma, d.hue),
@@ -126,27 +130,30 @@ export function computeLightTokens(config: ThemeConfig): ThemeTokens {
     "--success-foreground": oklch(0.985, 0, 0),
     "--warning": oklch(warning.lightness, warning.chroma, warning.hue),
     "--warning-foreground": oklch(0.985, 0, 0),
-    "--border": oklch(0.92, Math.min(c * 0.67, 0.02), h),
-    "--input": oklch(0.92, Math.min(c * 0.67, 0.02), h),
-    "--ring": oklch(0.705, Math.min(c * 2.5, 0.06), h),
+    // Border: visible enough to outline fields without being loud.
+    "--border": oklch(0.9, 0.005, h),
+    // Input bg = pure white (matches card). Affordance comes from the
+    // visible border + focus ring.
+    "--input": oklch(1, 0, 0),
+    "--ring": oklch(l, c, h), // focus ring = brand color for clear interaction signal
     "--chart-1": oklch(0.646, 0.222, charts[0]),
     "--chart-2": oklch(0.6, 0.118, charts[1]),
     "--chart-3": oklch(0.398, 0.07, charts[2]),
     "--chart-4": oklch(0.828, 0.189, charts[3]),
     "--chart-5": oklch(0.769, 0.188, charts[4]),
-    "--sidebar": oklch(0.985, 0, 0),
-    "--sidebar-foreground": oklch(l, c, h),
+    "--sidebar": oklch(0.985, 0.002, h),
+    "--sidebar-foreground": oklch(0.18, 0.005, h),
     "--sidebar-primary": oklch(l, c, h),
     "--sidebar-primary-foreground": oklch(0.985, 0, 0),
-    "--sidebar-accent": oklch(0.967, Math.min(acc.chroma * 0.15, 0.025), acc.hue),
-    "--sidebar-accent-foreground": oklch(l, c, h),
-    "--sidebar-border": oklch(0.92, Math.min(c * 0.67, 0.02), h),
-    "--sidebar-ring": oklch(0.705, Math.min(c * 2.5, 0.06), h),
+    "--sidebar-accent": oklch(0.94, Math.min(acc.chroma * 0.15, 0.025), acc.hue),
+    "--sidebar-accent-foreground": oklch(0.18, 0.005, h),
+    "--sidebar-border": oklch(0.9, 0.005, h),
+    "--sidebar-ring": oklch(l, c, h),
   };
 }
 
 export function computeDarkTokens(config: ThemeConfig): ThemeTokens {
-  const { hue: h, chroma: c } = config.primary;
+  const { hue: h, chroma: c, lightness: l } = config.primary;
   const sec = config.secondary;
   const acc = config.accent;
   const d = config.destructive;
@@ -155,29 +162,33 @@ export function computeDarkTokens(config: ThemeConfig): ThemeTokens {
   const warning = config.warning;
   const charts = chartHues(h);
 
-  // Dark mode inverts the lightness scale
-  const darkPrimaryL = 0.92;
-  const darkPrimaryC = Math.min(c * 0.67, 0.02);
+  // Dark-mode primary keeps the brand identity visible:
+  // medium-light (~0.7), slightly desaturated chroma (~85% of source),
+  // same hue. NOT near-white. Matches Stripe / Linear dark palettes
+  // where brand color is recognizable but eye-friendly.
+  const darkPrimaryL = Math.max(l + 0.2, 0.7);
+  const darkPrimaryC = c * 0.85;
 
-  // Boost lightness for dark mode status colors (more visible on dark backgrounds)
+  // Boost lightness for status colors so they're visible on dark backgrounds.
   const darkDestructiveL = Math.min(d.lightness + 0.13, 0.85);
   const darkInfoL = Math.min(info.lightness + 0.1, 0.85);
   const darkSuccessL = Math.min(success.lightness + 0.09, 0.85);
   const darkWarningL = Math.min(warning.lightness + 0.05, 0.9);
 
   return {
-    "--background": oklch(0.141, Math.min(c * 0.83, 0.015), h),
-    "--foreground": oklch(0.985, 0, 0),
-    "--card": oklch(0.21, Math.min(c * 0.5, 0.025), h),
-    "--card-foreground": oklch(0.985, 0, 0),
-    "--popover": oklch(0.21, Math.min(c * 0.5, 0.025), h),
-    "--popover-foreground": oklch(0.985, 0, 0),
+    // Layered surfaces: page (deepest) → card (lifted) → input (further lifted).
+    "--background": oklch(0.115, Math.min(c * 0.5, 0.008), h), // near-black page
+    "--foreground": oklch(0.97, 0, 0), // near-white text (no brand tint — keeps copy neutral)
+    "--card": oklch(0.165, Math.min(c * 0.5, 0.012), h), // subtle lift above page
+    "--card-foreground": oklch(0.97, 0, 0),
+    "--popover": oklch(0.18, Math.min(c * 0.5, 0.012), h),
+    "--popover-foreground": oklch(0.97, 0, 0),
     "--primary": oklch(darkPrimaryL, darkPrimaryC, h),
-    "--primary-foreground": oklch(0.21, Math.min(c * 0.5, 0.025), h),
-    "--secondary": oklch(0.274, Math.min(sec.chroma * 0.4, 0.04), sec.hue),
-    "--secondary-foreground": oklch(0.985, 0, 0),
-    "--muted": oklch(0.274, Math.min(sec.chroma * 0.3, 0.02), sec.hue),
-    "--muted-foreground": oklch(0.705, Math.min(sec.chroma * 1.5, 0.05), sec.hue),
+    "--primary-foreground": oklch(0.115, Math.min(c * 0.5, 0.008), h),
+    "--secondary": oklch(0.26, Math.min(sec.chroma * 0.4, 0.025), sec.hue),
+    "--secondary-foreground": oklch(0.97, 0, 0),
+    "--muted": oklch(0.22, Math.min(sec.chroma * 0.3, 0.012), sec.hue),
+    "--muted-foreground": oklch(0.65, Math.min(sec.chroma * 1.0, 0.025), sec.hue),
     "--accent": oklch(acc.lightness, acc.chroma, acc.hue),
     "--accent-foreground": oklch(0.985, 0, 0),
     "--destructive": oklch(darkDestructiveL, d.chroma * 0.78, d.hue),
@@ -188,22 +199,23 @@ export function computeDarkTokens(config: ThemeConfig): ThemeTokens {
     "--success-foreground": autoForeground(darkSuccessL),
     "--warning": oklch(darkWarningL, warning.chroma * 0.9, warning.hue),
     "--warning-foreground": autoForeground(darkWarningL),
-    "--border": oklchAlpha(1, 0, 0, "13%"),
-    "--input": oklchAlpha(1, 0, 0, "15%"),
-    "--ring": oklch(0.552, Math.min(c * 2.7, 0.05), h),
+    // Subtler border + a clearly distinct input bg (one step lighter than card).
+    "--border": oklchAlpha(1, 0, 0, "12%"),
+    "--input": oklch(0.22, Math.min(c * 0.5, 0.012), h),
+    "--ring": oklch(darkPrimaryL, darkPrimaryC, h),
     "--chart-1": oklch(0.488, 0.243, charts[0]),
     "--chart-2": oklch(0.696, 0.17, charts[1]),
     "--chart-3": oklch(0.769, 0.188, charts[2]),
     "--chart-4": oklch(0.627, 0.265, charts[3]),
     "--chart-5": oklch(0.645, 0.246, charts[4]),
-    "--sidebar": oklch(0.21, Math.min(c * 0.5, 0.025), h),
-    "--sidebar-foreground": oklch(0.985, 0, 0),
-    "--sidebar-primary": oklch(0.488, 0.243, charts[0]),
-    "--sidebar-primary-foreground": oklch(0.985, 0, 0),
-    "--sidebar-accent": oklch(acc.lightness, acc.chroma, acc.hue),
-    "--sidebar-accent-foreground": oklch(0.985, 0, 0),
-    "--sidebar-border": oklchAlpha(1, 0, 0, "13%"),
-    "--sidebar-ring": oklch(0.552, Math.min(c * 2.7, 0.05), h),
+    "--sidebar": oklch(0.165, Math.min(c * 0.5, 0.012), h),
+    "--sidebar-foreground": oklch(0.97, 0, 0),
+    "--sidebar-primary": oklch(darkPrimaryL, darkPrimaryC, h),
+    "--sidebar-primary-foreground": oklch(0.115, Math.min(c * 0.5, 0.008), h),
+    "--sidebar-accent": oklch(0.22, Math.min(acc.chroma * 0.3, 0.012), acc.hue),
+    "--sidebar-accent-foreground": oklch(0.97, 0, 0),
+    "--sidebar-border": oklchAlpha(1, 0, 0, "10%"),
+    "--sidebar-ring": oklch(darkPrimaryL, darkPrimaryC, h),
   };
 }
 

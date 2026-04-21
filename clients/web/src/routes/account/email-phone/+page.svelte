@@ -1,6 +1,5 @@
 <script lang="ts">
   import InlineSwitch from "$lib/client/components/forms/inline-switch.svelte";
-  import * as Card from "$lib/client/components/ui/card/index.js";
   import * as Alert from "$lib/client/components/ui/alert/index.js";
   import { Button } from "$lib/client/components/ui/button/index.js";
   import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
@@ -97,153 +96,145 @@
   />
 </svelte:head>
 
-<div class="space-y-6">
-  <div>
-    <h2 class="text-xl font-semibold">{m.account_email_phone_title()}</h2>
-    <p class="text-muted-foreground text-sm">{m.account_email_phone_description()}</p>
-  </div>
+<div class="space-y-10">
+  <header>
+    <h1 class="text-xl font-semibold">{m.account_email_phone_title()}</h1>
+    <p class="text-muted-foreground mt-1 text-sm">{m.account_email_phone_description()}</p>
+  </header>
 
-  <!-- Email row -->
-  <Card.Root>
-    <Card.Header>
-      <Card.Title class="text-base">{m.account_email_address_title()}</Card.Title>
-      <Card.Description>{m.account_email_address_description()}</Card.Description>
-    </Card.Header>
-    <Card.Content>
-      {#if loaded}
-        <div class="flex items-center justify-between gap-4">
-          <div class="flex min-w-0 flex-1 items-center gap-2">
-            <span class="truncate text-sm">{user?.email ?? ""}</span>
-            {#if user?.emailVerified}
+  <section class="space-y-3">
+    <div>
+      <h2 class="text-base font-semibold">{m.account_email_address_title()}</h2>
+      <p class="text-muted-foreground mt-1 text-sm">{m.account_email_address_description()}</p>
+    </div>
+    {#if loaded}
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex min-w-0 flex-1 items-center gap-2">
+          <span class="truncate text-sm">{user?.email ?? ""}</span>
+          {#if user?.emailVerified}
+            <span class="text-muted-foreground inline-flex items-center gap-1 text-xs">
+              <CheckCircleIcon class="size-3.5 text-green-500" />
+              {m.account_verified_label()}
+            </span>
+          {/if}
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onclick={() => (emailModalOpen = true)}>{m.account_email_change_button()}</Button
+        >
+      </div>
+    {:else}
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex min-w-0 flex-1 items-center gap-2">
+          <Skeleton class="h-5 w-48" />
+          <Skeleton class="h-4 w-16" />
+        </div>
+        <Skeleton class="h-8 w-20 rounded-md" />
+      </div>
+    {/if}
+  </section>
+
+  <section class="space-y-3">
+    <div>
+      <h2 class="text-base font-semibold">{m.account_phone_title()}</h2>
+      <p class="text-muted-foreground mt-1 text-sm">{m.account_phone_description()}</p>
+    </div>
+    {#if loaded}
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex min-w-0 flex-1 items-center gap-2">
+          {#if user?.phone}
+            <span class="truncate text-sm">{phoneDisplay()}</span>
+            {#if user.phoneVerified}
               <span class="text-muted-foreground inline-flex items-center gap-1 text-xs">
                 <CheckCircleIcon class="size-3.5 text-green-500" />
                 {m.account_verified_label()}
               </span>
             {/if}
-          </div>
+          {:else}
+            <span class="text-muted-foreground text-sm">{m.account_phone_not_added()}</span>
+          {/if}
+        </div>
+        <div class="flex items-center gap-2">
+          {#if user?.phone}
+            <Button
+              variant="ghost"
+              size="icon"
+              class="size-8"
+              onclick={() => (removePhoneOpen = true)}
+              title={m.account_phone_remove_button()}
+            >
+              <XIcon class="size-4" />
+              <span class="sr-only">{m.account_phone_remove_button()}</span>
+            </Button>
+          {/if}
           <Button
             variant="outline"
             size="sm"
-            onclick={() => (emailModalOpen = true)}>{m.account_email_change_button()}</Button
+            onclick={() => (phoneModalOpen = true)}
           >
+            {user?.phone ? m.account_phone_change_button() : m.account_phone_add_button()}
+          </Button>
         </div>
-      {:else}
-        <div class="flex items-center justify-between gap-4">
-          <div class="flex min-w-0 flex-1 items-center gap-2">
-            <Skeleton class="h-5 w-48" />
-            <Skeleton class="h-4 w-16" />
-          </div>
-          <Skeleton class="h-8 w-20 rounded-md" />
+      </div>
+    {:else}
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex min-w-0 flex-1 items-center gap-2">
+          <Skeleton class="h-5 w-40" />
+          <Skeleton class="h-4 w-16" />
         </div>
-      {/if}
-    </Card.Content>
-  </Card.Root>
+        <Skeleton class="h-8 w-20 rounded-md" />
+      </div>
+    {/if}
 
-  <!-- Phone row -->
-  <Card.Root>
-    <Card.Header>
-      <Card.Title class="text-base">{m.account_phone_title()}</Card.Title>
-      <Card.Description>{m.account_phone_description()}</Card.Description>
-    </Card.Header>
-    <Card.Content class="space-y-4">
-      {#if loaded}
-        <div class="flex items-center justify-between gap-4">
-          <div class="flex min-w-0 flex-1 items-center gap-2">
-            {#if user?.phone}
-              <span class="truncate text-sm">{phoneDisplay()}</span>
-              {#if user.phoneVerified}
-                <span class="text-muted-foreground inline-flex items-center gap-1 text-xs">
-                  <CheckCircleIcon class="size-3.5 text-green-500" />
-                  {m.account_verified_label()}
-                </span>
-              {/if}
-            {:else}
-              <span class="text-muted-foreground text-sm">{m.account_phone_not_added()}</span>
-            {/if}
-          </div>
-          <div class="flex items-center gap-2">
-            {#if user?.phone}
-              <Button
-                variant="ghost"
-                size="icon"
-                class="size-8"
-                onclick={() => (removePhoneOpen = true)}
-                title={m.account_phone_remove_button()}
-              >
-                <XIcon class="size-4" />
-                <span class="sr-only">{m.account_phone_remove_button()}</span>
-              </Button>
-            {/if}
-            <Button
-              variant="outline"
-              size="sm"
-              onclick={() => (phoneModalOpen = true)}
-            >
-              {user?.phone ? m.account_phone_change_button() : m.account_phone_add_button()}
-            </Button>
-          </div>
-        </div>
-      {:else}
-        <div class="flex items-center justify-between gap-4">
-          <div class="flex min-w-0 flex-1 items-center gap-2">
-            <Skeleton class="h-5 w-40" />
-            <Skeleton class="h-4 w-16" />
-          </div>
-          <Skeleton class="h-8 w-20 rounded-md" />
-        </div>
-      {/if}
+    <Alert.Root variant="warning">
+      <AlertTriangleIcon />
+      <Alert.Title>{m.account_phone_dev_alert_title()}</Alert.Title>
+      <Alert.Description>{m.account_phone_dev_alert_body()}</Alert.Description>
+    </Alert.Root>
+  </section>
 
-      <Alert.Root variant="warning">
-        <AlertTriangleIcon />
-        <Alert.Title>{m.account_phone_dev_alert_title()}</Alert.Title>
-        <Alert.Description>{m.account_phone_dev_alert_body()}</Alert.Description>
-      </Alert.Root>
-    </Card.Content>
-  </Card.Root>
+  <section class="space-y-3">
+    <div>
+      <h2 class="text-base font-semibold">{m.account_notifications_title()}</h2>
+      <p class="text-muted-foreground mt-1 text-sm">{m.account_notifications_description()}</p>
+    </div>
+    <Alert.Root variant="info">
+      <InfoIcon />
+      <Alert.Title>{m.account_notifications_alert_title()}</Alert.Title>
+      <Alert.Description>{m.account_notifications_alert_body()}</Alert.Description>
+    </Alert.Root>
 
-  <Card.Root>
-    <Card.Header>
-      <Card.Title class="text-base">{m.account_notifications_title()}</Card.Title>
-      <Card.Description>{m.account_notifications_description()}</Card.Description>
-    </Card.Header>
-    <Card.Content class="space-y-4">
-      <Alert.Root variant="info">
-        <InfoIcon />
-        <Alert.Title>{m.account_notifications_alert_title()}</Alert.Title>
-        <Alert.Description>{m.account_notifications_alert_body()}</Alert.Description>
-      </Alert.Root>
-
-      {#if prefsLoaded}
-        <InlineSwitch
-          bind:value={emailNotifications}
-          label={m.account_email_notifications()}
-          description={m.account_email_notifications_description()}
-          onSave={saveEmailPref}
-        />
-        <InlineSwitch
-          bind:value={smsNotifications}
-          label={m.account_sms_notifications()}
-          description={m.account_sms_notifications_description()}
-          onSave={saveSmsPref}
-        />
-      {:else}
-        <div class="flex items-center justify-between gap-3">
-          <div class="flex flex-col gap-1">
-            <Skeleton class="h-4 w-32" />
-            <Skeleton class="h-3 w-56" />
-          </div>
-          <Skeleton class="h-6 w-11 rounded-full" />
+    {#if prefsLoaded}
+      <InlineSwitch
+        bind:value={emailNotifications}
+        label={m.account_email_notifications()}
+        description={m.account_email_notifications_description()}
+        onSave={saveEmailPref}
+      />
+      <InlineSwitch
+        bind:value={smsNotifications}
+        label={m.account_sms_notifications()}
+        description={m.account_sms_notifications_description()}
+        onSave={saveSmsPref}
+      />
+    {:else}
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex flex-col gap-1">
+          <Skeleton class="h-4 w-32" />
+          <Skeleton class="h-3 w-56" />
         </div>
-        <div class="flex items-center justify-between gap-3">
-          <div class="flex flex-col gap-1">
-            <Skeleton class="h-4 w-32" />
-            <Skeleton class="h-3 w-56" />
-          </div>
-          <Skeleton class="h-6 w-11 rounded-full" />
+        <Skeleton class="h-6 w-11 rounded-full" />
+      </div>
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex flex-col gap-1">
+          <Skeleton class="h-4 w-32" />
+          <Skeleton class="h-3 w-56" />
         </div>
-      {/if}
-    </Card.Content>
-  </Card.Root>
+        <Skeleton class="h-6 w-11 rounded-full" />
+      </div>
+    {/if}
+  </section>
 </div>
 
 <AccountVerificationModal

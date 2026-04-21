@@ -6,7 +6,6 @@
   import InlineCombobox from "$lib/client/components/forms/inline-combobox.svelte";
   import UnsavedChangesBar from "$lib/client/components/ui/unsaved-changes-bar.svelte";
   import ConfirmationDialog from "$lib/client/components/ui/confirmation-dialog.svelte";
-  import * as Card from "$lib/client/components/ui/card/index.js";
   import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
   import { toast } from "svelte-sonner";
   import {
@@ -219,18 +218,20 @@
   />
 </svelte:head>
 
-<div class="space-y-6">
-  <div>
-    <h2 class="text-xl font-semibold">{m.account_profile_title()}</h2>
-    <p class="text-muted-foreground text-sm">{m.account_profile_description()}</p>
-  </div>
+<div class="space-y-10">
+  <header>
+    <h1 class="text-xl font-semibold">{m.account_profile_title()}</h1>
+    <p class="text-muted-foreground mt-1 text-sm">{m.account_profile_description()}</p>
+  </header>
 
-  <Card.Root>
-    <Card.Header>
-      <Card.Title class="text-base">{m.account_profile_your_info_title()}</Card.Title>
-      <Card.Description>{m.account_profile_your_info_description()}</Card.Description>
-    </Card.Header>
-    <Card.Content class="space-y-5">
+  <section class="space-y-3">
+    <div>
+      <h2 class="text-base font-semibold">{m.account_profile_your_info_title()}</h2>
+      <p class="text-muted-foreground mt-1 text-sm">
+        {m.account_profile_your_info_description()}
+      </p>
+    </div>
+    <div class="space-y-5">
       {#if loaded}
         <InlineEditFieldGroup
           bind:fields={nameFields}
@@ -267,69 +268,66 @@
           <Skeleton class="h-9 w-full rounded-md" />
         </div>
       {/if}
-    </Card.Content>
-  </Card.Root>
+    </div>
+  </section>
 
-  <div class="grid grid-cols-1 gap-6 md:grid-cols-5">
-    <!-- Avatar -->
-    <Card.Root class="md:col-span-2">
-      <Card.Header>
-        <Card.Title class="text-base">{m.account_profile_avatar_title()}</Card.Title>
-        <Card.Description>{m.account_profile_avatar_description()}</Card.Description>
-      </Card.Header>
-      <Card.Content>
-        {#if loaded && user}
-          <AvatarUploader
-            currentImageFileId={user.image}
-            userId={user.id}
-            userName={user.name}
-          />
-        {:else}
-          <div class="flex flex-col items-center gap-4">
-            <Skeleton class="size-32 rounded-full" />
-            <Skeleton class="h-5 w-16" />
-          </div>
-        {/if}
-      </Card.Content>
-    </Card.Root>
+  <section class="space-y-3">
+    <div>
+      <h2 class="text-base font-semibold">{m.account_profile_avatar_title()}</h2>
+      <p class="text-muted-foreground mt-1 text-sm">{m.account_profile_avatar_description()}</p>
+    </div>
+    {#if loaded && user}
+      <AvatarUploader
+        currentImageFileId={user.image}
+        userId={user.id}
+        userName={user.name}
+      />
+    {:else}
+      <div class="flex flex-col items-start gap-4">
+        <Skeleton class="size-32 rounded-full" />
+        <Skeleton class="h-5 w-16" />
+      </div>
+    {/if}
+  </section>
 
-    <Card.Root class="md:col-span-3">
-      <Card.Header>
-        <Card.Title class="text-base">{m.account_profile_language_time_title()}</Card.Title>
-        <Card.Description>{m.account_profile_language_time_description()}</Card.Description>
-      </Card.Header>
-      <Card.Content class="space-y-5">
-        {#if loaded}
-          <InlineDropdown
-            bind:value={locale}
-            label={m.account_profile_language()}
-            options={localeOptions}
-            onSave={saveLocale}
-            onDirtyChange={(d) => (dirtyFields.locale = d)}
-            bind:this={localeRef}
-          />
-          <InlineCombobox
-            bind:value={timezone}
-            label={m.account_profile_timezone()}
-            options={timezoneOptions}
-            placeholder={m.account_profile_timezone_placeholder()}
-            onSave={saveTimezone}
-            onDirtyChange={(d) => (dirtyFields.timezone = d)}
-            bind:this={timezoneRef}
-          />
-        {:else}
-          <div class="flex flex-col gap-1.5">
-            <Skeleton class="h-5 w-20" />
-            <Skeleton class="h-9 w-full rounded-md" />
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <Skeleton class="h-5 w-20" />
-            <Skeleton class="h-9 w-full rounded-md" />
-          </div>
-        {/if}
-      </Card.Content>
-    </Card.Root>
-  </div>
+  <section class="space-y-3">
+    <div>
+      <h2 class="text-base font-semibold">{m.account_profile_language_time_title()}</h2>
+      <p class="text-muted-foreground mt-1 text-sm">
+        {m.account_profile_language_time_description()}
+      </p>
+    </div>
+    <div class="space-y-5">
+      {#if loaded}
+        <InlineDropdown
+          bind:value={locale}
+          label={m.account_profile_language()}
+          options={localeOptions}
+          onSave={saveLocale}
+          onDirtyChange={(d) => (dirtyFields.locale = d)}
+          bind:this={localeRef}
+        />
+        <InlineCombobox
+          bind:value={timezone}
+          label={m.account_profile_timezone()}
+          options={timezoneOptions}
+          placeholder={m.account_profile_timezone_placeholder()}
+          onSave={saveTimezone}
+          onDirtyChange={(d) => (dirtyFields.timezone = d)}
+          bind:this={timezoneRef}
+        />
+      {:else}
+        <div class="flex flex-col gap-1.5">
+          <Skeleton class="h-5 w-20" />
+          <Skeleton class="h-9 w-full rounded-md" />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <Skeleton class="h-5 w-20" />
+          <Skeleton class="h-9 w-full rounded-md" />
+        </div>
+      {/if}
+    </div>
+  </section>
 </div>
 
 <UnsavedChangesBar

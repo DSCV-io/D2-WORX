@@ -1,6 +1,5 @@
 <script lang="ts">
   import * as m from "$lib/paraglide/messages.js";
-  import * as Card from "$lib/client/components/ui/card/index.js";
   import { Button } from "$lib/client/components/ui/button/index.js";
   import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
   import { Badge } from "$lib/client/components/ui/badge/index.js";
@@ -84,16 +83,16 @@
   }
 </script>
 
-<Card.Root>
-  <Card.Header>
-    <Card.Title class="text-base">{m.account_recent_logins_title()}</Card.Title>
-    <Card.Description>{m.account_recent_logins_description()}</Card.Description>
-  </Card.Header>
-  <Card.Content class="space-y-4">
+<section class="space-y-3">
+  <div>
+    <h2 class="text-base font-semibold">{m.account_recent_logins_title()}</h2>
+    <p class="text-muted-foreground mt-1 text-sm">{m.account_recent_logins_description()}</p>
+  </div>
+  <div class="space-y-0">
     {#if !loaded}
-      <ul class="space-y-3">
+      <ul class="divide-border/60 divide-y border-y">
         {#each Array.from({ length: PAGE_SIZE }) as _, i (i)}
-          <li class="flex items-start gap-4 rounded-lg border p-4">
+          <li class="flex items-start gap-4 py-4">
             <Skeleton class="size-10 rounded-md" />
             <div class="flex flex-1 flex-col gap-2">
               <Skeleton class="h-5 w-48" />
@@ -103,7 +102,7 @@
           </li>
         {/each}
       </ul>
-      <div class="flex items-center justify-between gap-2 border-t pt-4">
+      <div class="flex items-center justify-between gap-2 pt-4">
         <Skeleton class="h-4 w-32" />
         <div class="flex gap-1">
           <Skeleton class="size-9 rounded-md" />
@@ -115,7 +114,7 @@
     {:else if events.length === 0}
       <p class="text-muted-foreground text-sm">{m.account_recent_logins_empty()}</p>
     {:else}
-      <ul class="space-y-3">
+      <ul class="divide-border/60 divide-y border-y">
         {#each events as e (e.event.id)}
           {@const ua = parseUserAgent(e.event.userAgent)}
           {@const loc = formatLocation(e.whoIs)}
@@ -126,8 +125,10 @@
           {@const Icon = deviceIcon(ua.deviceType)}
           <li
             class={[
-              "flex items-start gap-4 rounded-lg border p-4 shadow-sm transition-colors",
-              ok ? "hover:border-muted-foreground/30" : "border-destructive/30 bg-destructive/5",
+              "relative flex items-start gap-4 py-4 pl-4 pr-2 transition-colors",
+              ok
+                ? "hover:bg-muted/30"
+                : "before:bg-destructive before:absolute before:left-0 before:top-3 before:bottom-3 before:w-[3px] before:rounded-full",
             ].join(" ")}
           >
             <div
@@ -201,7 +202,7 @@
       </ul>
 
       <div
-        class="text-muted-foreground flex items-center justify-between gap-2 border-t pt-4 text-xs"
+        class="text-muted-foreground flex items-center justify-between gap-2 pt-4 text-xs"
       >
         <span>{m.account_recent_logins_pagination({ start: pageStart, end: pageEnd, total })}</span>
         <div class="flex gap-1">
@@ -226,5 +227,5 @@
         </div>
       </div>
     {/if}
-  </Card.Content>
-</Card.Root>
+  </div>
+</section>

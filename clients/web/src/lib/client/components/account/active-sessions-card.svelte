@@ -1,6 +1,5 @@
 <script lang="ts">
   import * as m from "$lib/paraglide/messages.js";
-  import * as Card from "$lib/client/components/ui/card/index.js";
   import { Button } from "$lib/client/components/ui/button/index.js";
   import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
   import { Badge } from "$lib/client/components/ui/badge/index.js";
@@ -109,16 +108,16 @@
   const otherSessionsCount = $derived(sessions.filter((s) => !s.isCurrent).length);
 </script>
 
-<Card.Root>
-  <Card.Header>
-    <Card.Title class="text-base">{m.account_sessions_title()}</Card.Title>
-    <Card.Description>{m.account_sessions_description()}</Card.Description>
-  </Card.Header>
-  <Card.Content class="space-y-4">
+<section class="space-y-3">
+  <div>
+    <h2 class="text-base font-semibold">{m.account_sessions_title()}</h2>
+    <p class="text-muted-foreground mt-1 text-sm">{m.account_sessions_description()}</p>
+  </div>
+  <div class="space-y-0">
     {#if !loaded}
-      <ul class="space-y-3">
+      <ul class="divide-border/60 divide-y">
         {#each [0, 1] as _i (_i)}
-          <li class="flex items-start gap-4 rounded-lg border p-4">
+          <li class="flex items-start gap-4 py-4">
             <Skeleton class="size-10 rounded-md" />
             <div class="flex flex-1 flex-col gap-2">
               <Skeleton class="h-5 w-44" />
@@ -128,7 +127,7 @@
           </li>
         {/each}
       </ul>
-      <div class="border-t pt-4">
+      <div class="pt-4">
         <Skeleton class="h-9 w-56 rounded-md" />
       </div>
     {:else if errorMessage}
@@ -136,7 +135,7 @@
     {:else if sessions.length === 0}
       <p class="text-muted-foreground text-sm">{m.account_sessions_empty()}</p>
     {:else}
-      <ul class="space-y-3">
+      <ul class="divide-border/60 divide-y border-y">
         {#each sessions as s (s.session.id)}
           {@const ua = parseUserAgent(s.session.userAgent)}
           {@const loc = formatLocation(s.whoIs)}
@@ -145,8 +144,10 @@
           {@const whoIsStubText = whoIsStub(s.session.whoIsId)}
           <li
             class={[
-              "group rounded-lg border p-4 shadow-sm transition-colors",
-              s.isCurrent ? "border-success/40 bg-success/5" : "hover:border-muted-foreground/30",
+              "group relative py-4 pl-4 pr-2 transition-colors",
+              s.isCurrent
+                ? "before:bg-success before:absolute before:left-0 before:top-3 before:bottom-3 before:w-[3px] before:rounded-full"
+                : "hover:bg-muted/30",
             ].join(" ")}
           >
             <div class="flex items-start gap-4">
@@ -243,7 +244,7 @@
       </ul>
 
       {#if otherSessionsCount > 0}
-        <div class="border-t pt-4">
+        <div class="pt-4">
           <Button
             variant="outline"
             size="sm"
@@ -256,8 +257,8 @@
         </div>
       {/if}
     {/if}
-  </Card.Content>
-</Card.Root>
+  </div>
+</section>
 
 <PasswordConfirmDialog
   bind:open={revokeDialogOpen}

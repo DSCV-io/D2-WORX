@@ -39,7 +39,10 @@
     <div class="flex flex-col gap-6 md:flex-row md:gap-8">
       <SettingsNav items={navItems} />
 
-      <div class="min-w-0 flex-1">
+      <!-- Cap form/content width so wide monitors don't stretch single-line
+           inputs across the full viewport. Mirrors Stripe / Linear /
+           Vercel — content stays scannable, whitespace fills the rest. -->
+      <div class="min-w-0 max-w-2xl flex-1">
         {@render children()}
       </div>
     </div>

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Button } from "$lib/client/components/ui/button/index.js";
-  import * as Card from "$lib/client/components/ui/card/index.js";
+  import { Separator } from "$lib/client/components/ui/separator/index.js";
   import ChangePasswordDialog from "$lib/client/components/account/change-password-dialog.svelte";
   import ActiveSessionsCard from "$lib/client/components/account/active-sessions-card.svelte";
   import RecentLoginsCard from "$lib/client/components/account/recent-logins-card.svelte";
@@ -19,23 +19,23 @@
   />
 </svelte:head>
 
-<div class="space-y-6">
-  <div>
-    <h2 class="text-xl font-semibold">{m.account_security_title()}</h2>
-    <p class="text-muted-foreground text-sm">{m.account_security_description()}</p>
-  </div>
+<div class="space-y-10">
+  <header>
+    <h1 class="text-xl font-semibold">{m.account_security_title()}</h1>
+    <p class="text-muted-foreground mt-1 text-sm">{m.account_security_description()}</p>
+  </header>
 
-  <Card.Root>
-    <Card.Header>
-      <Card.Title class="text-base">{m.account_security_change_password_title()}</Card.Title>
-      <Card.Description>{m.account_security_change_password_description()}</Card.Description>
-    </Card.Header>
-    <Card.Content>
-      <Button onclick={() => (changePasswordOpen = true)}>
-        {m.account_security_change_password_title()}
-      </Button>
-    </Card.Content>
-  </Card.Root>
+  <section class="space-y-3">
+    <div>
+      <h2 class="text-base font-semibold">{m.account_security_change_password_title()}</h2>
+      <p class="text-muted-foreground mt-1 text-sm">
+        {m.account_security_change_password_description()}
+      </p>
+    </div>
+    <Button onclick={() => (changePasswordOpen = true)}>
+      {m.account_security_change_password_title()}
+    </Button>
+  </section>
 
   <ChangePasswordDialog bind:open={changePasswordOpen} />
 
@@ -43,22 +43,24 @@
 
   <RecentLoginsCard />
 
-  <Card.Root class="border-destructive/50">
-    <Card.Header>
-      <Card.Title class="text-destructive text-base">
+  <Separator />
+
+  <section class="space-y-3">
+    <div>
+      <h2 class="text-destructive text-base font-semibold">
         {m.account_deactivate_delete_title()}
-      </Card.Title>
-      <Card.Description>{m.account_deactivate_delete_description()}</Card.Description>
-    </Card.Header>
-    <Card.Content>
-      <Button
-        variant="destructive"
-        onclick={() => (deleteUserOpen = true)}
-      >
-        {m.account_deactivate_delete_title()}
-      </Button>
-    </Card.Content>
-  </Card.Root>
+      </h2>
+      <p class="text-muted-foreground mt-1 text-sm">
+        {m.account_deactivate_delete_description()}
+      </p>
+    </div>
+    <Button
+      variant="destructive"
+      onclick={() => (deleteUserOpen = true)}
+    >
+      {m.account_deactivate_delete_title()}
+    </Button>
+  </section>
 
   <DeleteUserDialog bind:open={deleteUserOpen} />
 </div>
