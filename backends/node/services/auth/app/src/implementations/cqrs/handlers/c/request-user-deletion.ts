@@ -29,7 +29,7 @@ type Output = Commands.RequestUserDeletionOutput;
  * Falls back to UTC + abbreviation only when the supplied timezone is an
  * invalid IANA identifier (Intl throws RangeError on construct).
  */
-function formatDateTimeLong(date: Date, locale: string, timezone?: string): string {
+export function formatDateTimeLong(date: Date, locale: string, timezone?: string): string {
   const options: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "long",
@@ -55,7 +55,6 @@ const schema = z.object({
       comment: z.string().max(2000).optional(),
     })
     .optional(),
-  timezoneOverride: z.string().max(100).optional(),
 });
 
 /**
@@ -134,10 +133,7 @@ export class RequestUserDeletion
     const userEmail = userResult.data?.user.email;
     const userName = userResult.data?.user.name ?? "";
     const userLocale = resolveLocale(userResult.data?.user.locale ?? undefined);
-    // Prefer the route-supplied override (D2_TIMEZONE cookie — matches the
-    // tz the user is currently using to view dates in the UI). Falls back to
-    // the persisted user.timezone column, then UTC.
-    const userTimezone = input.timezoneOverride ?? userResult.data?.user.timezone ?? undefined;
+    const userTimezone = userResult.data?.user.timezone ?? undefined;
 
     // 4. Flip status + set grace clock + persist feedback.
     //    `expectedStatus: ACTIVE` is a defense-in-depth CAS guard — if the

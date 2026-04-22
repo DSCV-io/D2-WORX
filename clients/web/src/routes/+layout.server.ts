@@ -37,7 +37,7 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
   if (!cachedLocaleOptions || !cachedTimezoneOptions) {
     const refData = await getGeoRefData();
     if (refData) {
-      if (!cachedLocaleOptions) {
+      if (!cachedLocaleOptions && refData.locales) {
         cachedLocaleOptions = localesToOptions(refData.locales, enabledLocales);
       }
       if (!cachedTimezoneOptions && refData.timezones) {

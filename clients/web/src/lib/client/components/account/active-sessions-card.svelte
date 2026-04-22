@@ -135,9 +135,9 @@
     {#if !loaded}
       <ul class="divide-border/60 divide-y">
         {#each [0, 1] as _i (_i)}
-          <li class="flex items-center gap-3 py-3">
+          <li class="flex items-center gap-3 py-3 pl-4 pr-2">
             <Skeleton class="size-6 rounded-md" />
-            <Skeleton class="h-4 flex-1 max-w-md" />
+            <Skeleton class="h-4 flex-1" />
             <Skeleton class="size-6 rounded-md" />
           </li>
         {/each}

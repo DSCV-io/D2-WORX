@@ -5,13 +5,6 @@ export interface RequestUserDeletionInput {
   readonly currentPassword: string;
   /** Optional flexible blob persisted with the deletion request. Both fields free-text. */
   readonly feedback?: { reason?: string; comment?: string };
-  /**
-   * IANA timezone (e.g. "America/Edmonton") to format the scheduled-for
-   * timestamp in the email. Route layer reads this from the `D2_TIMEZONE`
-   * cookie — that matches whatever the user is currently using to view dates
-   * in the UI. Falls through to `user.timezone` if absent, then UTC.
-   */
-  readonly timezoneOverride?: string;
 }
 
 export interface RequestUserDeletionOutput {

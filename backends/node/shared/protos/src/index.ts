@@ -39,6 +39,7 @@ export type {
   CurrencyDTO,
   LanguageDTO,
   LocaleDTO,
+  TimezoneDTO,
   GeopoliticalEntityDTO,
   CoordinatesDTO,
   StreetAddressDTO,

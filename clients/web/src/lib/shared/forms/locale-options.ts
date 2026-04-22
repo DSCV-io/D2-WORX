@@ -26,7 +26,11 @@ export function localesToOptions(
 ): LocaleOption[] {
   return enabledLocales.map((code) => {
     const locale = locales[code];
-    if (locale) {
+    // All three proto fields are optional in the wire format. Treat any
+    // missing piece as a missing locale and fall through to the code-based
+    // derivation — keeps the FE robust to partial Geo ref data without
+    // crashing svelte-check on undefined.
+    if (locale?.ietfBcp47Tag && locale.endonym && locale.countryIso31661Alpha2Code) {
       return {
         code: locale.ietfBcp47Tag,
         endonym: locale.endonym,

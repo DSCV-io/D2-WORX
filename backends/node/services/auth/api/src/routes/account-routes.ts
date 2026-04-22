@@ -397,16 +397,10 @@ export function createAccountRoutes(auth: Auth) {
   app.post("/api/account/delete", async (c) => {
     const body = await c.req.json().catch(() => ({}));
     const handler = c.get(SCOPE_KEY).resolve(IRequestUserDeletionKey);
-    // Read D2_TIMEZONE cookie so the email's "scheduled for" timestamp lands
-    // in the same tz the user is currently using to view dates in the UI.
-    // Cookie wins over user.timezone (which can lag if change-timezone was
-    // never persisted authenticated). Falls through to UTC if absent.
-    const tzCookie = c.req.header("cookie")?.match(/(?:^|;\s*)D2_TIMEZONE=([^;]+)/)?.[1];
     const result = await handler.handleAsync({
       userId: uid(c),
       currentPassword: body.currentPassword as string,
       feedback: body.feedback as { reason?: string; comment?: string } | undefined,
-      timezoneOverride: tzCookie ? decodeURIComponent(tzCookie) : undefined,
     });
     const status = (
       result.success ? HttpStatusCode.OK : (result.statusCode ?? HttpStatusCode.BadRequest)

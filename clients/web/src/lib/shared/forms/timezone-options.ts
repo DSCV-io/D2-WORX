@@ -101,12 +101,20 @@ function formatLabel(displayName: string, abbrevSTD: string, abbrevDST?: string)
  * then remaining timezones sorted alphabetically by display name.
  */
 export function timezonesToOptions(timezones: Record<string, TimezoneDTO>): TimezoneOption[] {
-  const all = Object.values(timezones).map((t) => ({
-    value: t.ianaIdentifier,
-    label: formatLabel(t.displayName, t.abbreviationStd, t.abbreviationDst || undefined),
-    displayName: t.displayName,
-    offset: t.utcOffsetStd,
-  }));
+  // Drop entries missing required identity fields. Proto3 makes these
+  // optional on the wire, but a TZ option with no IANA identifier or
+  // display name has no UI value — we'd render an empty row.
+  const all = Object.values(timezones).flatMap((t): TimezoneOption[] => {
+    if (!t.ianaIdentifier || !t.displayName) return [];
+    return [
+      {
+        value: t.ianaIdentifier,
+        label: formatLabel(t.displayName, t.abbreviationStd ?? "", t.abbreviationDst || undefined),
+        displayName: t.displayName,
+        offset: t.utcOffsetStd ?? "",
+      },
+    ];
+  });
 
   const prioritySet = new Set(PRIORITY_TIMEZONES);
   const byId = new Map(all.map((o) => [o.value, o]));

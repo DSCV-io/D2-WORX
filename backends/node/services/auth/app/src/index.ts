@@ -507,7 +507,10 @@ export type {
 } from "./interfaces/cqrs/handlers/c/run-emulation-consent-cleanup.js";
 
 // User-deletion app handlers (self-service)
-export { RequestUserDeletion } from "./implementations/cqrs/handlers/c/request-user-deletion.js";
+export {
+  RequestUserDeletion,
+  formatDateTimeLong,
+} from "./implementations/cqrs/handlers/c/request-user-deletion.js";
 export { CancelUserDeletion } from "./implementations/cqrs/handlers/c/cancel-user-deletion.js";
 export { FinalizeDeletedUser } from "./implementations/cqrs/handlers/c/finalize-deleted-user.js";
 export { CleanupDeletedUsers } from "./implementations/cqrs/handlers/c/cleanup-deleted-users.js";
