@@ -4,6 +4,7 @@
   import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
   import { Badge } from "$lib/client/components/ui/badge/index.js";
   import * as Popover from "$lib/client/components/ui/popover/index.js";
+  import * as Tooltip from "$lib/client/components/ui/tooltip/index.js";
   import {
     listMySessions,
     revokeSession,
@@ -12,7 +13,11 @@
   } from "$lib/client/rest/account-client.js";
   import { D2Result } from "@d2/result";
   import { parseUserAgent } from "$lib/shared/utils/user-agent.js";
-  import { formatLocation, locationCountryCode } from "$lib/shared/utils/format-location.js";
+  import {
+    formatLocation,
+    formatLocationLong,
+    locationCountryCode,
+  } from "$lib/shared/utils/format-location.js";
   import CopyChip from "./copy-chip.svelte";
   import CountryFlag from "./country-flag.svelte";
   import DeviceIdenticon from "./device-identicon.svelte";
@@ -25,6 +30,7 @@
   import TabletIcon from "@lucide/svelte/icons/tablet";
   import GlobeIcon from "@lucide/svelte/icons/globe";
   import MapPinIcon from "@lucide/svelte/icons/map-pin";
+  import ClockIcon from "@lucide/svelte/icons/clock";
   import { toast } from "svelte-sonner";
 
   let sessions = $state<ActiveSessionDTO[]>([]);
@@ -69,6 +75,18 @@
 
   async function doRevokeOthers(password: string) {
     return revokeOtherSessions(password);
+  }
+
+  /**
+   * Absolute timestamp for the row's time-chip tooltip — full date + time
+   * with the user's saved timezone. Pairs with the relative label
+   * ("13 minutes ago") shown in the chip itself.
+   */
+  function fmtAbsoluteDateTime(iso: string): string {
+    return new Date(iso).toLocaleString(undefined, {
+      dateStyle: "long",
+      timeStyle: "long",
+    });
   }
 
   function fmtRelative(iso: string): string {
@@ -117,13 +135,10 @@
     {#if !loaded}
       <ul class="divide-border/60 divide-y">
         {#each [0, 1] as _i (_i)}
-          <li class="flex items-start gap-4 py-4">
-            <Skeleton class="size-10 rounded-md" />
-            <div class="flex flex-1 flex-col gap-2">
-              <Skeleton class="h-5 w-44" />
-              <Skeleton class="h-4 w-60" />
-            </div>
-            <Skeleton class="size-9 rounded-md" />
+          <li class="flex items-center gap-3 py-3">
+            <Skeleton class="size-6 rounded-md" />
+            <Skeleton class="h-4 flex-1 max-w-md" />
+            <Skeleton class="size-6 rounded-md" />
           </li>
         {/each}
       </ul>
@@ -135,7 +150,9 @@
     {:else if sessions.length === 0}
       <p class="text-muted-foreground text-sm">{m.account_sessions_empty()}</p>
     {:else}
-      <ul class="divide-border/60 divide-y border-y">
+      <ul
+        class="divide-border/60 divide-y border-y md:grid md:grid-cols-[auto_auto_auto_auto_1fr_auto_auto] md:gap-x-4"
+      >
         {#each sessions as s (s.session.id)}
           {@const ua = parseUserAgent(s.session.userAgent)}
           {@const loc = formatLocation(s.whoIs)}
@@ -144,76 +161,54 @@
           {@const whoIsStubText = whoIsStub(s.session.whoIsId)}
           <li
             class={[
-              "group relative py-4 pl-4 pr-2 transition-colors hover:bg-muted/30",
+              "group text-muted-foreground relative flex flex-col gap-1.5 py-3 pl-4 pr-2 text-xs transition-colors hover:bg-muted/30 md:col-span-full md:grid md:grid-cols-subgrid md:grid-flow-dense md:items-center md:gap-x-4 md:gap-y-0",
               s.isCurrent &&
-                "before:bg-success before:absolute before:left-0 before:top-3 before:bottom-3 before:w-[3px] before:rounded-full",
+                "before:bg-info before:absolute before:left-0 before:top-3 before:bottom-3 before:w-[3px] before:rounded-full",
             ]
               .filter(Boolean)
               .join(" ")}
           >
-            <div class="flex items-start gap-4">
+            <div class="flex items-center gap-3 md:contents">
               {#if s.session.clientFingerprint}
                 <DeviceIdenticon
                   seed={s.session.clientFingerprint}
-                  size={40}
+                  size={24}
                   class="shrink-0"
                 />
               {:else}
                 <div
                   class={[
-                    "flex size-10 shrink-0 items-center justify-center rounded-md",
-                    s.isCurrent ? "bg-success/10 text-success" : "bg-muted text-muted-foreground",
+                    "flex size-6 shrink-0 items-center justify-center rounded-md",
+                    s.isCurrent ? "bg-info/10 text-info" : "bg-muted text-muted-foreground",
                   ].join(" ")}
                 >
-                  <Icon class="size-5" />
+                  <Icon class="size-3" />
                 </div>
               {/if}
 
-              <div class="flex min-w-0 flex-1 flex-col gap-1.5">
-                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  {#if s.isCurrent}
-                    <Badge variant="success">{m.account_sessions_current_badge()}</Badge>
-                  {/if}
-                  <span class="text-muted-foreground text-xs"
-                    >{fmtRelative(s.session.updatedAt)}</span
+              <div class="flex items-center md:col-start-6 md:justify-self-end">
+                {#if s.isCurrent}
+                  <Badge
+                    variant="info"
+                    class="px-1.5 py-0 text-[10px]"
                   >
-                </div>
-
-                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                  <Icon class="text-muted-foreground size-4 shrink-0" />
-                  <span class="font-semibold">{ua.browser}</span>
-                  <span class="text-muted-foreground text-xs"
-                    >{m.account_sessions_on_os({ os: ua.os })}</span
-                  >
-                </div>
-
-                {#if loc}
-                  <div
-                    class="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs"
-                  >
-                    <span class="inline-flex items-center gap-1">
-                      <MapPinIcon class="size-3" />
-                      <span>{m.account_sessions_nearby_label()}</span>
-                      {loc}
-                      {#if cc}
-                        <CountryFlag code={cc} />
-                      {/if}
-                    </span>
-                  </div>
+                    {m.account_sessions_current_badge()}
+                  </Badge>
                 {/if}
               </div>
 
-              <Popover.Root>
+              <div class="ml-auto md:col-start-7 md:ml-0">
+                <Popover.Root>
                 <Popover.Trigger>
                   {#snippet child({ props })}
                     <Button
                       {...props}
                       variant="ghost"
                       size="icon"
-                      class="size-9 shrink-0"
+                      class="size-6 shrink-0"
                       aria-label={m.account_sessions_details()}
                     >
-                      <MoreVerticalIcon class="size-4" />
+                      <MoreVerticalIcon class="size-3" />
                     </Button>
                   {/snippet}
                 </Popover.Trigger>
@@ -258,6 +253,75 @@
                 </Popover.Content>
               </Popover.Root>
             </div>
+            </div>
+
+            <Tooltip.Provider delayDuration={150}>
+              <Tooltip.Root>
+                <Tooltip.Trigger>
+                  {#snippet child({ props })}
+                    <span
+                      {...props}
+                      class="ml-9 inline-flex items-center gap-1 whitespace-nowrap md:ml-0 md:col-start-2"
+                    >
+                      <ClockIcon class="size-3" />
+                      {fmtRelative(s.session.updatedAt)}
+                    </span>
+                  {/snippet}
+                </Tooltip.Trigger>
+                <Tooltip.Content>
+                  <p class="text-xs">{fmtAbsoluteDateTime(s.session.updatedAt)}</p>
+                </Tooltip.Content>
+              </Tooltip.Root>
+            </Tooltip.Provider>
+
+            {#if loc}
+              {@const locLong = formatLocationLong(s.whoIs)}
+              <Tooltip.Provider delayDuration={150}>
+                <Tooltip.Root>
+                  <Tooltip.Trigger>
+                    {#snippet child({ props })}
+                      <span
+                        {...props}
+                        class="ml-9 inline-flex items-center gap-1 whitespace-nowrap md:ml-0 md:col-start-3"
+                      >
+                        <MapPinIcon class="size-3" />
+                        {loc}
+                        {#if cc}
+                          <CountryFlag code={cc} />
+                        {/if}
+                      </span>
+                    {/snippet}
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>
+                    <p class="text-xs">{locLong}</p>
+                  </Tooltip.Content>
+                </Tooltip.Root>
+              </Tooltip.Provider>
+            {:else}
+              <span class="hidden md:block md:col-start-3"></span>
+            {/if}
+
+            <Tooltip.Provider delayDuration={150}>
+              <Tooltip.Root>
+                <Tooltip.Trigger>
+                  {#snippet child({ props })}
+                    <span
+                      {...props}
+                      class="ml-9 inline-flex items-center gap-1 whitespace-nowrap md:ml-0 md:col-start-4"
+                    >
+                      <Icon class="size-3" />
+                      <span class="text-foreground font-medium">{ua.browser}</span>
+                      <span>{m.account_sessions_on_os({ os: ua.os })}</span>
+                    </span>
+                  {/snippet}
+                </Tooltip.Trigger>
+                <Tooltip.Content>
+                  <p class="text-xs">
+                    {ua.browserLong} {m.account_sessions_on_os({ os: ua.osLong })}
+                  </p>
+                </Tooltip.Content>
+              </Tooltip.Root>
+            </Tooltip.Provider>
           </li>
         {/each}
       </ul>

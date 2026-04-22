@@ -5,10 +5,15 @@
   import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
   import { Badge } from "$lib/client/components/ui/badge/index.js";
   import * as Popover from "$lib/client/components/ui/popover/index.js";
+  import * as Tooltip from "$lib/client/components/ui/tooltip/index.js";
   import { listRecentLogins, type RecentLoginDTO } from "$lib/client/rest/account-client.js";
   import { translateMessage } from "$lib/client/utils/translate-message.js";
   import { parseUserAgent } from "$lib/shared/utils/user-agent.js";
-  import { formatLocation, locationCountryCode } from "$lib/shared/utils/format-location.js";
+  import {
+    formatLocation,
+    formatLocationLong,
+    locationCountryCode,
+  } from "$lib/shared/utils/format-location.js";
   import CopyChip from "./copy-chip.svelte";
   import CountryFlag from "./country-flag.svelte";
   import DeviceIdenticon from "./device-identicon.svelte";
@@ -18,6 +23,7 @@
   import TabletIcon from "@lucide/svelte/icons/tablet";
   import GlobeIcon from "@lucide/svelte/icons/globe";
   import MapPinIcon from "@lucide/svelte/icons/map-pin";
+  import ClockIcon from "@lucide/svelte/icons/clock";
   import ChevronLeftIcon from "@lucide/svelte/icons/chevron-left";
   import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
 
@@ -64,10 +70,23 @@
   const pageEnd = $derived(Math.min(offset + PAGE_SIZE, total));
 
   function fmtDateTime(iso: string): string {
+    return new Date(iso).toLocaleDateString(undefined, {
+      timeZone: timezone,
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  }
+
+  /**
+   * Long timestamp for the time-chip tooltip — full date + time with the
+   * user's saved timezone. Pairs with the date-only label in the chip.
+   */
+  function fmtAbsoluteDateTime(iso: string): string {
     return new Date(iso).toLocaleString(undefined, {
       timeZone: timezone,
-      dateStyle: "medium",
-      timeStyle: "short",
+      dateStyle: "long",
+      timeStyle: "long",
     });
   }
 
@@ -104,22 +123,18 @@
     {#if !loaded}
       <ul class="divide-border/60 divide-y border-y">
         {#each Array.from({ length: PAGE_SIZE }) as _, i (i)}
-          <li class="flex items-start gap-4 py-4">
-            <Skeleton class="size-10 rounded-md" />
-            <div class="flex flex-1 flex-col gap-2">
-              <Skeleton class="h-5 w-48" />
-              <Skeleton class="h-4 w-40" />
-              <Skeleton class="h-4 w-60" />
-            </div>
-            <Skeleton class="size-9 rounded-md" />
+          <li class="flex items-center gap-3 py-3">
+            <Skeleton class="size-6 rounded-md" />
+            <Skeleton class="h-4 flex-1 max-w-md" />
+            <Skeleton class="size-6 rounded-md" />
           </li>
         {/each}
       </ul>
       <div class="flex items-center justify-between gap-2 pt-4">
         <Skeleton class="h-4 w-32" />
         <div class="flex gap-1">
-          <Skeleton class="size-9 rounded-md" />
-          <Skeleton class="size-9 rounded-md" />
+          <Skeleton class="size-7 rounded-md" />
+          <Skeleton class="size-7 rounded-md" />
         </div>
       </div>
     {:else if errorMessage}
@@ -127,7 +142,9 @@
     {:else if events.length === 0}
       <p class="text-muted-foreground text-sm">{m.account_recent_logins_empty()}</p>
     {:else}
-      <ul class="divide-border/60 divide-y border-y">
+      <ul
+        class="divide-border/60 divide-y border-y md:grid md:grid-cols-[auto_auto_auto_auto_1fr_auto_auto] md:gap-x-4"
+      >
         {#each events as e (e.event.id)}
           {@const ua = parseUserAgent(e.event.userAgent)}
           {@const loc = formatLocation(e.whoIs)}
@@ -139,114 +156,161 @@
           {@const hasForensic = !!(e.event.ipAddress || whoIsStubText || deviceFpStubText)}
           <li
             class={[
-              "relative flex items-start gap-4 py-4 pl-4 pr-2 transition-colors hover:bg-muted/30",
+              "text-muted-foreground relative flex flex-col gap-1.5 py-3 pl-4 pr-2 text-xs transition-colors hover:bg-muted/30 md:col-span-full md:grid md:grid-cols-subgrid md:grid-flow-dense md:items-center md:gap-x-4 md:gap-y-0",
               !ok &&
                 "before:bg-destructive before:absolute before:left-0 before:top-3 before:bottom-3 before:w-[3px] before:rounded-full",
             ]
               .filter(Boolean)
               .join(" ")}
           >
-            {#if e.event.clientFingerprint}
-              <DeviceIdenticon
-                seed={e.event.clientFingerprint}
-                size={40}
-                class="shrink-0"
-              />
-            {:else}
-              <div
-                class={[
-                  "flex size-10 shrink-0 items-center justify-center rounded-md",
-                  ok ? "bg-muted text-muted-foreground" : "bg-destructive/10 text-destructive",
-                ].join(" ")}
-              >
-                <Icon class="size-5" />
-              </div>
-            {/if}
-
-            <div class="flex min-w-0 flex-1 flex-col gap-1.5">
-              <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <Badge variant={ok ? "success" : "destructive"}>
-                  {ok ? m.account_recent_logins_success() : m.account_recent_logins_failure()}
-                </Badge>
-                <span class="text-muted-foreground text-xs">{fmtDateTime(e.event.createdAt)}</span>
-              </div>
-
-              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                <Icon class="text-muted-foreground size-4 shrink-0" />
-                <span>
-                  <span class="font-medium">{ua.browser}</span>
-                  <span class="text-muted-foreground"
-                    >&nbsp;{m.account_sessions_on_os({ os: ua.os })}</span
-                  >
-                </span>
-              </div>
-
-              {#if loc}
+            <div class="flex items-center gap-3 md:contents">
+              {#if e.event.clientFingerprint}
+                <DeviceIdenticon
+                  seed={e.event.clientFingerprint}
+                  size={24}
+                  class="shrink-0"
+                />
+              {:else}
                 <div
-                  class="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs"
+                  class={[
+                    "flex size-6 shrink-0 items-center justify-center rounded-md",
+                    ok ? "bg-muted text-muted-foreground" : "bg-destructive/10 text-destructive",
+                  ].join(" ")}
                 >
-                  <span class="inline-flex items-center gap-1">
-                    <MapPinIcon class="size-3" />
-                    <span>{m.account_sessions_nearby_label()}</span>
-                    {loc}
-                    {#if cc}
-                      <CountryFlag code={cc} />
-                    {/if}
-                  </span>
+                  <Icon class="size-3" />
                 </div>
               {/if}
+
+              <div class="flex items-center md:col-start-6 md:justify-self-end">
+                <Badge
+                  variant={ok ? "success" : "destructive"}
+                  class="px-1.5 py-0 text-[10px]"
+                >
+                  {ok ? m.account_recent_logins_success() : m.account_recent_logins_failure()}
+                </Badge>
+              </div>
+
+              <div class="ml-auto md:col-start-7 md:ml-0">
+                {#if hasForensic}
+                  <Popover.Root>
+                  <Popover.Trigger>
+                    {#snippet child({ props })}
+                      <Button
+                        {...props}
+                        variant="ghost"
+                        size="icon"
+                        class="size-6 shrink-0"
+                        aria-label={m.account_sessions_details()}
+                      >
+                        <MoreVerticalIcon class="size-3" />
+                      </Button>
+                    {/snippet}
+                  </Popover.Trigger>
+                  <Popover.Content
+                    align="end"
+                    class="w-72 p-3"
+                  >
+                    <div class="space-y-2">
+                      <p class="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                        {m.account_sessions_details()}
+                      </p>
+                      <div class="flex flex-wrap items-center gap-1.5">
+                        {#if e.event.ipAddress}
+                          <CopyChip
+                            label={m.account_sessions_ip_label()}
+                            display={shortIp(e.event.ipAddress)}
+                            value={e.event.ipAddress}
+                          />
+                        {/if}
+                        {#if whoIsStubText}
+                          <CopyChip
+                            label={m.account_sessions_who_is_id_label()}
+                            display={whoIsStubText}
+                            value={e.event.whoIsId}
+                          />
+                        {/if}
+                        {#if deviceFpStubText}
+                          <CopyChip
+                            label={m.account_sessions_device_fp_label()}
+                            display={deviceFpStubText}
+                            value={e.event.deviceFingerprint}
+                          />
+                        {/if}
+                      </div>
+                    </div>
+                  </Popover.Content>
+                </Popover.Root>
+              {/if}
+              </div>
             </div>
 
-            {#if hasForensic}
-              <Popover.Root>
-                <Popover.Trigger>
+            <Tooltip.Provider delayDuration={150}>
+              <Tooltip.Root>
+                <Tooltip.Trigger>
                   {#snippet child({ props })}
-                    <Button
+                    <span
                       {...props}
-                      variant="ghost"
-                      size="icon"
-                      class="size-9 shrink-0"
-                      aria-label={m.account_sessions_details()}
+                      class="ml-9 inline-flex items-center gap-1 whitespace-nowrap md:ml-0 md:col-start-2"
                     >
-                      <MoreVerticalIcon class="size-4" />
-                    </Button>
+                      <ClockIcon class="size-3" />
+                      {fmtDateTime(e.event.createdAt)}
+                    </span>
                   {/snippet}
-                </Popover.Trigger>
-                <Popover.Content
-                  align="end"
-                  class="w-72 p-3"
-                >
-                  <div class="space-y-2">
-                    <p class="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-                      {m.account_sessions_details()}
-                    </p>
-                    <div class="flex flex-wrap items-center gap-1.5">
-                      {#if e.event.ipAddress}
-                        <CopyChip
-                          label={m.account_sessions_ip_label()}
-                          display={shortIp(e.event.ipAddress)}
-                          value={e.event.ipAddress}
-                        />
-                      {/if}
-                      {#if whoIsStubText}
-                        <CopyChip
-                          label={m.account_sessions_who_is_id_label()}
-                          display={whoIsStubText}
-                          value={e.event.whoIsId}
-                        />
-                      {/if}
-                      {#if deviceFpStubText}
-                        <CopyChip
-                          label={m.account_sessions_device_fp_label()}
-                          display={deviceFpStubText}
-                          value={e.event.deviceFingerprint}
-                        />
-                      {/if}
-                    </div>
-                  </div>
-                </Popover.Content>
-              </Popover.Root>
+                </Tooltip.Trigger>
+                <Tooltip.Content>
+                  <p class="text-xs">{fmtAbsoluteDateTime(e.event.createdAt)}</p>
+                </Tooltip.Content>
+              </Tooltip.Root>
+            </Tooltip.Provider>
+
+            {#if loc}
+              {@const locLong = formatLocationLong(e.whoIs)}
+              <Tooltip.Provider delayDuration={150}>
+                <Tooltip.Root>
+                  <Tooltip.Trigger>
+                    {#snippet child({ props })}
+                      <span
+                        {...props}
+                        class="ml-9 inline-flex items-center gap-1 whitespace-nowrap md:ml-0 md:col-start-3"
+                      >
+                        <MapPinIcon class="size-3" />
+                        {loc}
+                        {#if cc}
+                          <CountryFlag code={cc} />
+                        {/if}
+                      </span>
+                    {/snippet}
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>
+                    <p class="text-xs">{locLong}</p>
+                  </Tooltip.Content>
+                </Tooltip.Root>
+              </Tooltip.Provider>
+            {:else}
+              <span class="hidden md:block md:col-start-3"></span>
             {/if}
+
+            <Tooltip.Provider delayDuration={150}>
+              <Tooltip.Root>
+                <Tooltip.Trigger>
+                  {#snippet child({ props })}
+                    <span
+                      {...props}
+                      class="ml-9 inline-flex items-center gap-1 whitespace-nowrap md:ml-0 md:col-start-4"
+                    >
+                      <Icon class="size-3" />
+                      <span class="text-foreground font-medium">{ua.browser}</span>
+                      <span>{m.account_sessions_on_os({ os: ua.os })}</span>
+                    </span>
+                  {/snippet}
+                </Tooltip.Trigger>
+                <Tooltip.Content>
+                  <p class="text-xs">
+                    {ua.browserLong} {m.account_sessions_on_os({ os: ua.osLong })}
+                  </p>
+                </Tooltip.Content>
+              </Tooltip.Root>
+            </Tooltip.Provider>
           </li>
         {/each}
       </ul>
@@ -256,21 +320,23 @@
         <div class="flex gap-1">
           <Button
             variant="outline"
-            size="sm"
+            size="icon"
+            class="size-7"
             disabled={!hasPrev || loading}
             onclick={() => void load(Math.max(0, offset - PAGE_SIZE))}
             aria-label={m.common_ui_previous()}
           >
-            <ChevronLeftIcon class="size-4" />
+            <ChevronLeftIcon class="size-3.5" />
           </Button>
           <Button
             variant="outline"
-            size="sm"
+            size="icon"
+            class="size-7"
             disabled={!hasNext || loading}
             onclick={() => void load(offset + PAGE_SIZE)}
             aria-label={m.common_ui_next()}
           >
-            <ChevronRightIcon class="size-4" />
+            <ChevronRightIcon class="size-3.5" />
           </Button>
         </div>
       </div>
