@@ -1,6 +1,7 @@
 <script lang="ts">
   import { invalidateAll } from "$app/navigation";
   import * as Avatar from "$lib/client/components/ui/avatar/index.js";
+  import * as DropdownMenu from "$lib/client/components/ui/dropdown-menu/index.js";
   import AvatarCropDialog from "./avatar-crop-dialog.svelte";
   import { getRealtimeContext } from "$lib/client/realtime/index.js";
   import { uploadFile } from "$lib/client/rest/files-client.js";
@@ -11,7 +12,9 @@
   import * as m from "$lib/paraglide/messages.js";
   import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
   import { translateMessage } from "$lib/client/utils/translate-message.js";
-  import CameraIcon from "@lucide/svelte/icons/camera";
+  import PencilIcon from "@lucide/svelte/icons/pencil";
+  import UploadIcon from "@lucide/svelte/icons/upload";
+  import Trash2Icon from "@lucide/svelte/icons/trash-2";
   import LoaderIcon from "@lucide/svelte/icons/loader-circle";
 
   let {
@@ -26,7 +29,7 @@
 
   type UploadState = "idle" | "cropping" | "uploading" | "processing" | "ready" | "removing";
 
-  let uploadState: UploadState = $state("idle");
+  let uploadState = $state<UploadState>("idle");
   let selectedFile: File | undefined = $state();
   let cropDialogOpen = $state(false);
   let displayUrl: string | undefined = $state();
@@ -42,7 +45,6 @@
   // the browser from choking on absurdly large files during Canvas rendering.
   const MAX_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 
-  // Resolve avatar URL reactively — clears when image is removed, fetches when set
   $effect(() => {
     if (currentImageFileId) {
       avatarLoading = true;
@@ -61,7 +63,6 @@
     }
   });
 
-  // Subscribe to SignalR events for file status updates
   onMount(() => {
     const realtime = getRealtimeContext();
 
@@ -97,7 +98,6 @@
     };
   });
 
-  // Avatar initials + color (same algorithm as UserAvatarMenu)
   const initials = $derived(() => {
     if (!userName) return "?";
     const parts = userName.trim().split(/\s+/);
@@ -114,6 +114,13 @@
     return `hsl(${hue}, 55%, 45%)`;
   });
 
+  const busy = $derived(
+    uploadState === "uploading" ||
+      uploadState === "processing" ||
+      uploadState === "removing",
+  );
+  const hasImage = $derived(!!(currentImageFileId || displayUrl));
+
   function handleFileSelect() {
     fileInput?.click();
   }
@@ -121,7 +128,7 @@
   function handleFileChange(e: Event) {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
-    input.value = ""; // Reset so same file can be re-selected
+    input.value = "";
 
     if (!file) return;
 
@@ -176,7 +183,6 @@
   }
 </script>
 
-<!-- Hidden file input -->
 <input
   bind:this={fileInput}
   type="file"
@@ -193,81 +199,81 @@
   />
 {/if}
 
-<!-- Avatar display + upload trigger -->
-<div class="flex flex-col items-center gap-4">
+<div class="flex flex-col items-start">
   {#if avatarLoading}
     <Skeleton class="size-32 rounded-full" />
   {:else}
-    <button
-      type="button"
-      class="group relative cursor-pointer"
-      onclick={handleFileSelect}
-      disabled={uploadState === "uploading" ||
-        uploadState === "processing" ||
-        uploadState === "removing"}
-    >
-      {#key displayUrl}
-        <Avatar.Root class="size-32 rounded-full">
-          {#if displayUrl}
-            <Avatar.Image
-              src={displayUrl}
-              alt={userName ?? m.account_profile_avatar_alt()}
-            />
-          {/if}
-          <Avatar.Fallback
-            class="rounded-full text-3xl font-medium text-white"
-            style="background-color: {avatarColor()}"
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger disabled={busy}>
+        {#snippet child({ props })}
+          <button
+            {...props}
+            type="button"
+            class="group focus-visible:ring-ring relative block size-32 cursor-pointer rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed"
+            disabled={busy}
+            aria-label={m.account_profile_avatar_edit()}
           >
-            {initials()}
-          </Avatar.Fallback>
-        </Avatar.Root>
-      {/key}
+            {#key displayUrl}
+              <Avatar.Root class="size-32 rounded-full">
+                {#if displayUrl}
+                  <Avatar.Image
+                    src={displayUrl}
+                    alt={userName ?? m.account_profile_avatar_alt()}
+                  />
+                {/if}
+                <Avatar.Fallback
+                  class="rounded-full text-3xl font-medium text-white"
+                  style="background-color: {avatarColor()}"
+                >
+                  {initials()}
+                </Avatar.Fallback>
+              </Avatar.Root>
+            {/key}
 
-      <!-- Overlay -->
-      {#if uploadState === "removing" || uploadState === "uploading" || uploadState === "processing"}
-        <div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
-          <LoaderIcon class="size-8 animate-spin text-white" />
-        </div>
-      {:else}
-        <div
-          class="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 transition-colors group-hover:bg-black/40"
-        >
-          <CameraIcon
-            class="size-8 text-white opacity-0 transition-opacity group-hover:opacity-100"
-          />
-        </div>
-      {/if}
-    </button>
-  {/if}
+            {#if busy}
+              <div
+                class="absolute inset-0 flex items-center justify-center rounded-full bg-black/50"
+              >
+                <LoaderIcon class="size-8 animate-spin text-white" />
+              </div>
 
-  {#if avatarLoading}
-    <Skeleton class="h-5 w-16" />
-  {:else if uploadState === "uploading" || uploadState === "processing" || uploadState === "removing"}
-    <p class="text-muted-foreground text-sm">
-      {uploadState === "uploading"
-        ? m.account_profile_avatar_uploading()
-        : uploadState === "processing"
-          ? m.account_profile_avatar_processing()
-          : m.account_profile_avatar_uploading()}
-    </p>
-  {:else}
-    <div class="flex items-center gap-3">
-      <button
-        type="button"
-        class="text-primary cursor-pointer text-sm decoration-[0.1rem] underline-offset-2 hover:underline"
-        onclick={handleFileSelect}
+              <div class="absolute inset-0 flex items-center">
+                <p class="relative -right-[10rem] text-muted-foreground text-sm">
+                  {uploadState === "processing"
+                    ? m.account_profile_avatar_processing()
+                    : m.account_profile_avatar_uploading()}
+                </p>
+              </div>
+            {:else}
+              <span
+                class="bg-background text-foreground border-border absolute bottom-2 left-2 z-10 inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm font-medium shadow-sm transition-colors group-hover:bg-accent dark:shadow-[0_1px_3px_0_rgb(0_0_0/0.5)]"
+              >
+                <PencilIcon class="size-4" />
+                {m.account_profile_avatar_edit()}
+              </span>
+            {/if}
+          </button>
+        {/snippet}
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content
+        align="start"
+        class="w-48"
       >
-        {m.account_profile_avatar_change()}
-      </button>
-      {#if currentImageFileId || displayUrl}
-        <button
-          type="button"
-          class="text-muted-foreground hover:text-foreground cursor-pointer text-sm decoration-[0.1rem] underline-offset-2 transition-colors hover:underline"
-          onclick={handleRemove}
-        >
-          {m.account_profile_avatar_remove()}
-        </button>
-      {/if}
-    </div>
+        <DropdownMenu.Item onSelect={handleFileSelect}>
+          <UploadIcon class="mr-2 size-4" />
+          {m.account_profile_avatar_change()}
+        </DropdownMenu.Item>
+        {#if hasImage}
+          <DropdownMenu.Separator />
+          <DropdownMenu.Item
+            variant="destructive"
+            onSelect={handleRemove}
+          >
+            <Trash2Icon class="mr-2 size-4" />
+            {m.account_profile_avatar_remove()}
+          </DropdownMenu.Item>
+        {/if}
+      </DropdownMenu.Content>
+    </DropdownMenu.Root>
   {/if}
 </div>

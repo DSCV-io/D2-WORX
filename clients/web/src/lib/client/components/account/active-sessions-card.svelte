@@ -3,6 +3,7 @@
   import { Button } from "$lib/client/components/ui/button/index.js";
   import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
   import { Badge } from "$lib/client/components/ui/badge/index.js";
+  import * as Popover from "$lib/client/components/ui/popover/index.js";
   import {
     listMySessions,
     revokeSession,
@@ -17,6 +18,7 @@
   import PasswordConfirmDialog from "./password-confirm-dialog.svelte";
   import { translateMessage } from "$lib/client/utils/translate-message.js";
   import LogOutIcon from "@lucide/svelte/icons/log-out";
+  import MoreVerticalIcon from "@lucide/svelte/icons/more-vertical";
   import MonitorIcon from "@lucide/svelte/icons/monitor";
   import SmartphoneIcon from "@lucide/svelte/icons/smartphone";
   import TabletIcon from "@lucide/svelte/icons/tablet";
@@ -84,7 +86,6 @@
     return m.account_sessions_days_ago({ count: days });
   }
 
-  /** Pick a Lucide icon for the device class returned by ua-parser. */
   function deviceIcon(deviceType: string) {
     if (deviceType === "mobile") return SmartphoneIcon;
     if (deviceType === "tablet") return TabletIcon;
@@ -92,14 +93,12 @@
     return GlobeIcon;
   }
 
-  /** Truncate IPv6 in the middle so both ends stay legible. */
   function shortIp(ip: string | undefined): string {
     if (!ip) return m.account_sessions_unknown_ip();
     if (ip.length <= 24) return ip;
     return `${ip.slice(0, 12)}…${ip.slice(-8)}`;
   }
 
-  /** First/last 4 chars of the content-addressable WhoIs hash — quick visual diff between rows. */
   function whoIsStub(id: string | undefined): string | undefined {
     if (!id || id.length < 8) return undefined;
     return `${id.slice(0, 4)}…${id.slice(-4)}`;
@@ -123,7 +122,7 @@
               <Skeleton class="h-5 w-44" />
               <Skeleton class="h-4 w-60" />
             </div>
-            <Skeleton class="h-9 w-24 rounded-md" />
+            <Skeleton class="size-9 rounded-md" />
           </li>
         {/each}
       </ul>
@@ -183,6 +182,7 @@
                   >
                     <span class="inline-flex items-center gap-1">
                       <MapPinIcon class="size-3" />
+                      <span>{m.account_sessions_nearby_label()}</span>
                       {loc}
                       {#if cc}
                         <CountryFlag code={cc} />
@@ -190,55 +190,63 @@
                     </span>
                   </div>
                 {/if}
-
-                {#if s.session.ipAddress || whoIsStubText}
-                  <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    {#if s.session.ipAddress}
-                      <CopyChip
-                        label={m.account_sessions_ip_label()}
-                        display={shortIp(s.session.ipAddress)}
-                        value={s.session.ipAddress}
-                      />
-                    {/if}
-                    {#if whoIsStubText}
-                      <CopyChip
-                        label={m.account_sessions_who_is_id_label()}
-                        display={whoIsStubText}
-                        value={s.session.whoIsId}
-                      />
-                    {/if}
-                  </div>
-                {/if}
               </div>
 
-              {#if !s.isCurrent}
-                <!-- Desktop: button hugs the right edge of the row -->
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onclick={() => openRevokeDialog(s)}
-                  aria-label={m.account_sessions_revoke()}
-                  class="hidden sm:inline-flex"
+              <Popover.Root>
+                <Popover.Trigger>
+                  {#snippet child({ props })}
+                    <Button
+                      {...props}
+                      variant="ghost"
+                      size="icon"
+                      class="size-9 shrink-0"
+                      aria-label={m.account_sessions_details()}
+                    >
+                      <MoreVerticalIcon class="size-4" />
+                    </Button>
+                  {/snippet}
+                </Popover.Trigger>
+                <Popover.Content
+                  align="end"
+                  class="w-72 p-3"
                 >
-                  <LogOutIcon class="mr-1.5 size-4" />
-                  {m.account_sessions_revoke()}
-                </Button>
-              {/if}
+                  <div class="space-y-2">
+                    <p class="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                      {m.account_sessions_details()}
+                    </p>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                      {#if s.session.ipAddress}
+                        <CopyChip
+                          label={m.account_sessions_ip_label()}
+                          display={shortIp(s.session.ipAddress)}
+                          value={s.session.ipAddress}
+                        />
+                      {/if}
+                      {#if whoIsStubText}
+                        <CopyChip
+                          label={m.account_sessions_who_is_id_label()}
+                          display={whoIsStubText}
+                          value={s.session.whoIsId}
+                        />
+                      {/if}
+                    </div>
+                  </div>
+                  {#if !s.isCurrent}
+                    <div class="border-border/50 mt-3 border-t pt-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onclick={() => openRevokeDialog(s)}
+                        class="w-full"
+                      >
+                        <LogOutIcon class="mr-1.5 size-4" />
+                        {m.account_sessions_revoke()}
+                      </Button>
+                    </div>
+                  {/if}
+                </Popover.Content>
+              </Popover.Root>
             </div>
-
-            {#if !s.isCurrent}
-              <!-- Mobile: button drops below the row, full width — no dead space -->
-              <Button
-                variant="outline"
-                size="sm"
-                onclick={() => openRevokeDialog(s)}
-                aria-label={m.account_sessions_revoke()}
-                class="mt-3 w-full sm:hidden"
-              >
-                <LogOutIcon class="mr-1.5 size-4" />
-                {m.account_sessions_revoke()}
-              </Button>
-            {/if}
           </li>
         {/each}
       </ul>

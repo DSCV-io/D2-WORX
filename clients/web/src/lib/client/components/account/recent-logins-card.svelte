@@ -1,14 +1,17 @@
 <script lang="ts">
   import * as m from "$lib/paraglide/messages.js";
+  import { page } from "$app/stores";
   import { Button } from "$lib/client/components/ui/button/index.js";
   import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
   import { Badge } from "$lib/client/components/ui/badge/index.js";
+  import * as Popover from "$lib/client/components/ui/popover/index.js";
   import { listRecentLogins, type RecentLoginDTO } from "$lib/client/rest/account-client.js";
   import { translateMessage } from "$lib/client/utils/translate-message.js";
   import { parseUserAgent } from "$lib/shared/utils/user-agent.js";
   import { formatLocation, locationCountryCode } from "$lib/shared/utils/format-location.js";
   import CopyChip from "./copy-chip.svelte";
   import CountryFlag from "./country-flag.svelte";
+  import MoreVerticalIcon from "@lucide/svelte/icons/more-vertical";
   import MonitorIcon from "@lucide/svelte/icons/monitor";
   import SmartphoneIcon from "@lucide/svelte/icons/smartphone";
   import TabletIcon from "@lucide/svelte/icons/tablet";
@@ -25,6 +28,13 @@
   let loaded = $state(false);
   let loading = $state(false);
   let errorMessage = $state("");
+
+  // User's preferred timezone (synced from cookie via root layout). Falls back
+  // to browser tz so SSR / pre-cookie loads still render readable times.
+  const timezone = $derived(
+    ($page.data as { timezone?: string }).timezone ??
+      Intl.DateTimeFormat().resolvedOptions().timeZone,
+  );
 
   async function load(newOffset: number) {
     loading = true;
@@ -53,7 +63,11 @@
   const pageEnd = $derived(Math.min(offset + PAGE_SIZE, total));
 
   function fmtDateTime(iso: string): string {
-    return new Date(iso).toLocaleString();
+    return new Date(iso).toLocaleString(undefined, {
+      timeZone: timezone,
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
   }
 
   function shortIp(ip: string): string {
@@ -62,19 +76,16 @@
     return `${ip.slice(0, 12)}…${ip.slice(-8)}`;
   }
 
-  /** First/last 4 chars of the content-addressable WhoIs hash — quick visual diff between rows. */
   function whoIsStub(id: string | undefined): string | undefined {
     if (!id || id.length < 8) return undefined;
     return `${id.slice(0, 4)}…${id.slice(-4)}`;
   }
 
-  /** First/last 4 chars of the device fingerprint — same visual-diff purpose. */
   function deviceFpStub(fp: string | undefined): string | undefined {
     if (!fp || fp.length < 8) return undefined;
     return `${fp.slice(0, 4)}…${fp.slice(-4)}`;
   }
 
-  /** Pick a Lucide icon for the device class returned by ua-parser. */
   function deviceIcon(deviceType: string) {
     if (deviceType === "mobile") return SmartphoneIcon;
     if (deviceType === "tablet") return TabletIcon;
@@ -99,6 +110,7 @@
               <Skeleton class="h-4 w-40" />
               <Skeleton class="h-4 w-60" />
             </div>
+            <Skeleton class="size-9 rounded-md" />
           </li>
         {/each}
       </ul>
@@ -123,6 +135,7 @@
           {@const whoIsStubText = whoIsStub(e.event.whoIsId)}
           {@const deviceFpStubText = deviceFpStub(e.event.deviceFingerprint)}
           {@const Icon = deviceIcon(ua.deviceType)}
+          {@const hasForensic = !!(e.event.ipAddress || whoIsStubText || deviceFpStubText)}
           <li
             class={[
               "relative flex items-start gap-4 py-4 pl-4 pr-2 transition-colors",
@@ -163,6 +176,7 @@
                 >
                   <span class="inline-flex items-center gap-1">
                     <MapPinIcon class="size-3" />
+                    <span>{m.account_sessions_nearby_label()}</span>
                     {loc}
                     {#if cc}
                       <CountryFlag code={cc} />
@@ -170,40 +184,63 @@
                   </span>
                 </div>
               {/if}
-
-              {#if e.event.ipAddress || whoIsStubText || deviceFpStubText}
-                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  {#if e.event.ipAddress}
-                    <CopyChip
-                      label={m.account_sessions_ip_label()}
-                      display={shortIp(e.event.ipAddress)}
-                      value={e.event.ipAddress}
-                    />
-                  {/if}
-                  {#if whoIsStubText}
-                    <CopyChip
-                      label={m.account_sessions_who_is_id_label()}
-                      display={whoIsStubText}
-                      value={e.event.whoIsId}
-                    />
-                  {/if}
-                  {#if deviceFpStubText}
-                    <CopyChip
-                      label={m.account_sessions_device_fp_label()}
-                      display={deviceFpStubText}
-                      value={e.event.deviceFingerprint}
-                    />
-                  {/if}
-                </div>
-              {/if}
             </div>
+
+            {#if hasForensic}
+              <Popover.Root>
+                <Popover.Trigger>
+                  {#snippet child({ props })}
+                    <Button
+                      {...props}
+                      variant="ghost"
+                      size="icon"
+                      class="size-9 shrink-0"
+                      aria-label={m.account_sessions_details()}
+                    >
+                      <MoreVerticalIcon class="size-4" />
+                    </Button>
+                  {/snippet}
+                </Popover.Trigger>
+                <Popover.Content
+                  align="end"
+                  class="w-72 p-3"
+                >
+                  <div class="space-y-2">
+                    <p class="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                      {m.account_sessions_details()}
+                    </p>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                      {#if e.event.ipAddress}
+                        <CopyChip
+                          label={m.account_sessions_ip_label()}
+                          display={shortIp(e.event.ipAddress)}
+                          value={e.event.ipAddress}
+                        />
+                      {/if}
+                      {#if whoIsStubText}
+                        <CopyChip
+                          label={m.account_sessions_who_is_id_label()}
+                          display={whoIsStubText}
+                          value={e.event.whoIsId}
+                        />
+                      {/if}
+                      {#if deviceFpStubText}
+                        <CopyChip
+                          label={m.account_sessions_device_fp_label()}
+                          display={deviceFpStubText}
+                          value={e.event.deviceFingerprint}
+                        />
+                      {/if}
+                    </div>
+                  </div>
+                </Popover.Content>
+              </Popover.Root>
+            {/if}
           </li>
         {/each}
       </ul>
 
-      <div
-        class="text-muted-foreground flex items-center justify-between gap-2 pt-4 text-xs"
-      >
+      <div class="text-muted-foreground flex items-center justify-between gap-2 pt-4 text-xs">
         <span>{m.account_recent_logins_pagination({ start: pageStart, end: pageEnd, total })}</span>
         <div class="flex gap-1">
           <Button

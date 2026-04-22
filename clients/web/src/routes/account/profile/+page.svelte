@@ -289,10 +289,7 @@
           userName={user.name}
         />
       {:else}
-        <div class="flex flex-col items-start gap-4">
-          <Skeleton class="size-32 rounded-full" />
-          <Skeleton class="h-5 w-16" />
-        </div>
+        <Skeleton class="size-32 rounded-full" />
       {/if}
     </div>
   </section>
