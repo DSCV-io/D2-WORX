@@ -44,8 +44,11 @@
   --success-foreground: oklch(0.985 0 0);
   --warning: oklch(0.75 0.17 65);
   --warning-foreground: oklch(0.985 0 0);
-  --border: oklch(0.9 0.005 220);
-  --input: oklch(1 0 0);
+  --border: oklch(0.88 0.008 220);
+  /* Input bg is distinctly darker than BOTH page bg (white) and card bg
+     (white) so form fields are recognizable wherever they sit. Tuned to
+     read as a clearly different surface without feeling heavy. */
+  --input: oklch(0.955 0.006 220);
   --ring: oklch(0.5 0.12 220);
   --chart-1: oklch(0.646 0.222 220);
   --chart-2: oklch(0.6 0.118 280);
@@ -64,19 +67,20 @@
 
 .dark {
   /* Layered surfaces — page (deepest) → card (lifted) → input (further lift).
-     Primary keeps brand identity (recognizably teal, not near-white). */
-  --background: oklch(0.115 0.008 220);
-  --foreground: oklch(0.97 0 0);
-  --card: oklch(0.165 0.012 220);
-  --card-foreground: oklch(0.97 0 0);
-  --popover: oklch(0.18 0.012 220);
-  --popover-foreground: oklch(0.97 0 0);
-  --primary: oklch(0.7 0.102 220);
-  --primary-foreground: oklch(0.115 0.008 220);
-  --secondary: oklch(0.26 0.025 250);
-  --secondary-foreground: oklch(0.97 0 0);
-  --muted: oklch(0.22 0.012 250);
-  --muted-foreground: oklch(0.65 0.025 250);
+     Primary kept at the original near-white tint per design preference —
+     gives a clean monochrome look on dark bg. */
+  --background: oklch(0.17 0.015 220);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.21 0.025 220);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.21 0.025 220);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.92 0.02 220);
+  --primary-foreground: oklch(0.21 0.025 220);
+  --secondary: oklch(0.274 0.04 250);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.274 0.02 250);
+  --muted-foreground: oklch(0.705 0.05 250);
   --accent: oklch(0.65 0.16 55);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.68 0.1716 25);
@@ -87,22 +91,26 @@
   --success-foreground: oklch(0.985 0 0);
   --warning: oklch(0.8 0.153 65);
   --warning-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(0.22 0.012 220);
-  --ring: oklch(0.7 0.102 220);
+  --border: oklch(1 0 0 / 14%);
+  /* Input bg is a solid one-step lift above page (NOT transparent) so all
+     input-shaped components — Input, Textarea, Select, Combobox — render
+     identically. Avoids the bg-transparent vs dark:bg-input/30 mismatch
+     where Input was page-colored and Select had its own tint. */
+  --input: oklch(0.26 0.022 220);
+  --ring: oklch(0.92 0.02 220);
   --chart-1: oklch(0.488 0.243 220);
   --chart-2: oklch(0.696 0.17 280);
   --chart-3: oklch(0.769 0.188 10);
   --chart-4: oklch(0.627 0.265 70);
   --chart-5: oklch(0.645 0.246 160);
-  --sidebar: oklch(0.165 0.012 220);
-  --sidebar-foreground: oklch(0.97 0 0);
-  --sidebar-primary: oklch(0.7 0.102 220);
-  --sidebar-primary-foreground: oklch(0.115 0.008 220);
-  --sidebar-accent: oklch(0.22 0.012 55);
-  --sidebar-accent-foreground: oklch(0.97 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.7 0.102 220);
+  --sidebar: oklch(0.21 0.025 220);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 220);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.65 0.16 55);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 13%);
+  --sidebar-ring: oklch(0.552 0.05 220);
 }
 
 @theme inline {

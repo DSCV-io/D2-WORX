@@ -197,7 +197,8 @@
             class={cn(
               "w-full",
               fieldStatus !== "idle" && "pr-8",
-              fieldStatus === "valid" && "border-success/70 dark:border-success/50",
+              fieldStatus === "valid" && "border-2 border-success dark:border-success",
+              fieldStatus === "invalid" && "border-2",
             )}
           />
           {#if fieldStatus !== "idle"}

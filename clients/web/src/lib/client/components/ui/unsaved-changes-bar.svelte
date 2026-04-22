@@ -16,7 +16,7 @@
 
 {#if visible}
   <div
-    class="bg-background/95 supports-backdrop-filter:bg-background/80 fixed inset-x-0 bottom-0 z-50 border-t backdrop-blur-sm"
+    class="bg-background/95 supports-backdrop-filter:bg-background/80 fixed inset-x-0 bottom-0 z-50 shadow-[0_-1px_3px_0_rgb(0_0_0/0.08)] backdrop-blur-sm dark:shadow-[0_-2px_6px_0_rgb(0_0_0/0.6)]"
     transition:fly={{ y: 40, duration: 200 }}
     data-slot="unsaved-changes-bar"
   >

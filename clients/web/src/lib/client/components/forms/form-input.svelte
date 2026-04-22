@@ -130,7 +130,8 @@
             inputAction && effectiveStatus !== "idle" && "pr-14",
             inputAction && effectiveStatus === "idle" && "pr-8",
             !inputAction && effectiveStatus !== "idle" && "pr-8",
-            effectiveStatus === "valid" && "border-success/70 dark:border-success/50",
+            effectiveStatus === "valid" && "border-2 border-success dark:border-success",
+            effectiveStatus === "invalid" && "border-2",
           )}
         />
         {#if effectiveStatus !== "idle"}

@@ -131,10 +131,11 @@ export function computeLightTokens(config: ThemeConfig): ThemeTokens {
     "--warning": oklch(warning.lightness, warning.chroma, warning.hue),
     "--warning-foreground": oklch(0.985, 0, 0),
     // Border: visible enough to outline fields without being loud.
-    "--border": oklch(0.9, 0.005, h),
-    // Input bg = pure white (matches card). Affordance comes from the
-    // visible border + focus ring.
-    "--input": oklch(1, 0, 0),
+    "--border": oklch(0.88, 0.008, h),
+    // Input bg is distinctly darker than BOTH page bg (white) and card bg
+    // (white) so form fields are recognizable wherever they sit. Tuned to
+    // read as a clearly different surface without feeling heavy.
+    "--input": oklch(0.955, 0.006, h),
     "--ring": oklch(l, c, h), // focus ring = brand color for clear interaction signal
     "--chart-1": oklch(0.646, 0.222, charts[0]),
     "--chart-2": oklch(0.6, 0.118, charts[1]),
@@ -162,12 +163,12 @@ export function computeDarkTokens(config: ThemeConfig): ThemeTokens {
   const warning = config.warning;
   const charts = chartHues(h);
 
-  // Dark-mode primary keeps the brand identity visible:
-  // medium-light (~0.7), slightly desaturated chroma (~85% of source),
-  // same hue. NOT near-white. Matches Stripe / Linear dark palettes
-  // where brand color is recognizable but eye-friendly.
-  const darkPrimaryL = Math.max(l + 0.2, 0.7);
-  const darkPrimaryC = c * 0.85;
+  // Dark-mode primary stays close to the original near-white tint —
+  // gives a clean monochrome look on dark bg, which the user prefers
+  // over a saturated brand teal. (Brand identity still surfaces via
+  // the logo tile + accent color elsewhere.)
+  const darkPrimaryL = 0.92;
+  const darkPrimaryC = Math.min(c * 0.17, 0.02);
 
   // Boost lightness for status colors so they're visible on dark backgrounds.
   const darkDestructiveL = Math.min(d.lightness + 0.13, 0.85);
@@ -176,19 +177,19 @@ export function computeDarkTokens(config: ThemeConfig): ThemeTokens {
   const darkWarningL = Math.min(warning.lightness + 0.05, 0.9);
 
   return {
-    // Layered surfaces: page (deepest) → card (lifted) → input (further lifted).
-    "--background": oklch(0.115, Math.min(c * 0.5, 0.008), h), // near-black page
-    "--foreground": oklch(0.97, 0, 0), // near-white text (no brand tint — keeps copy neutral)
-    "--card": oklch(0.165, Math.min(c * 0.5, 0.012), h), // subtle lift above page
-    "--card-foreground": oklch(0.97, 0, 0),
-    "--popover": oklch(0.18, Math.min(c * 0.5, 0.012), h),
-    "--popover-foreground": oklch(0.97, 0, 0),
+    // Layered surfaces: page → card (lifted) → input (further lifted, solid).
+    "--background": oklch(0.17, Math.min(c * 0.83, 0.015), h),
+    "--foreground": oklch(0.985, 0, 0),
+    "--card": oklch(0.21, Math.min(c * 0.5, 0.025), h),
+    "--card-foreground": oklch(0.985, 0, 0),
+    "--popover": oklch(0.21, Math.min(c * 0.5, 0.025), h),
+    "--popover-foreground": oklch(0.985, 0, 0),
     "--primary": oklch(darkPrimaryL, darkPrimaryC, h),
-    "--primary-foreground": oklch(0.115, Math.min(c * 0.5, 0.008), h),
-    "--secondary": oklch(0.26, Math.min(sec.chroma * 0.4, 0.025), sec.hue),
-    "--secondary-foreground": oklch(0.97, 0, 0),
-    "--muted": oklch(0.22, Math.min(sec.chroma * 0.3, 0.012), sec.hue),
-    "--muted-foreground": oklch(0.65, Math.min(sec.chroma * 1.0, 0.025), sec.hue),
+    "--primary-foreground": oklch(0.21, Math.min(c * 0.5, 0.025), h),
+    "--secondary": oklch(0.274, Math.min(sec.chroma * 0.4, 0.04), sec.hue),
+    "--secondary-foreground": oklch(0.985, 0, 0),
+    "--muted": oklch(0.274, Math.min(sec.chroma * 0.3, 0.02), sec.hue),
+    "--muted-foreground": oklch(0.705, Math.min(sec.chroma * 1.5, 0.05), sec.hue),
     "--accent": oklch(acc.lightness, acc.chroma, acc.hue),
     "--accent-foreground": oklch(0.985, 0, 0),
     "--destructive": oklch(darkDestructiveL, d.chroma * 0.78, d.hue),
@@ -199,23 +200,27 @@ export function computeDarkTokens(config: ThemeConfig): ThemeTokens {
     "--success-foreground": autoForeground(darkSuccessL),
     "--warning": oklch(darkWarningL, warning.chroma * 0.9, warning.hue),
     "--warning-foreground": autoForeground(darkWarningL),
-    // Subtler border + a clearly distinct input bg (one step lighter than card).
-    "--border": oklchAlpha(1, 0, 0, "12%"),
-    "--input": oklch(0.22, Math.min(c * 0.5, 0.012), h),
-    "--ring": oklch(darkPrimaryL, darkPrimaryC, h),
+    "--border": oklchAlpha(1, 0, 0, "14%"),
+    // Solid input bg one step lighter than card (NOT transparent / alpha).
+    // All input-shaped components — Input, Textarea, Select, Combobox — must
+    // use bg-input via this token so they render identically. Previously
+    // Input was transparent (showed page bg) and Select had its own
+    // dark:bg-input/30 — that's the mismatch.
+    "--input": oklch(0.26, Math.min(c * 0.4, 0.022), h),
+    "--ring": oklch(0.552, Math.min(c * 2.7, 0.05), h),
     "--chart-1": oklch(0.488, 0.243, charts[0]),
     "--chart-2": oklch(0.696, 0.17, charts[1]),
     "--chart-3": oklch(0.769, 0.188, charts[2]),
     "--chart-4": oklch(0.627, 0.265, charts[3]),
     "--chart-5": oklch(0.645, 0.246, charts[4]),
-    "--sidebar": oklch(0.165, Math.min(c * 0.5, 0.012), h),
-    "--sidebar-foreground": oklch(0.97, 0, 0),
-    "--sidebar-primary": oklch(darkPrimaryL, darkPrimaryC, h),
-    "--sidebar-primary-foreground": oklch(0.115, Math.min(c * 0.5, 0.008), h),
-    "--sidebar-accent": oklch(0.22, Math.min(acc.chroma * 0.3, 0.012), acc.hue),
-    "--sidebar-accent-foreground": oklch(0.97, 0, 0),
-    "--sidebar-border": oklchAlpha(1, 0, 0, "10%"),
-    "--sidebar-ring": oklch(darkPrimaryL, darkPrimaryC, h),
+    "--sidebar": oklch(0.21, Math.min(c * 0.5, 0.025), h),
+    "--sidebar-foreground": oklch(0.985, 0, 0),
+    "--sidebar-primary": oklch(0.488, 0.243, charts[0]),
+    "--sidebar-primary-foreground": oklch(0.985, 0, 0),
+    "--sidebar-accent": oklch(acc.lightness, acc.chroma, acc.hue),
+    "--sidebar-accent-foreground": oklch(0.985, 0, 0),
+    "--sidebar-border": oklchAlpha(1, 0, 0, "13%"),
+    "--sidebar-ring": oklch(0.552, Math.min(c * 2.7, 0.05), h),
   };
 }
 

@@ -150,7 +150,7 @@
 <TimezoneModal bind:open={timezoneModalOpen} />
 
 <nav
-  class="bg-background/95 supports-backdrop-filter:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur-sm"
+  class="bg-background/95 supports-backdrop-filter:bg-background/60 sticky top-0 z-50 w-full shadow-sm backdrop-blur-sm dark:shadow-[0_1px_3px_0_rgb(0_0_0/0.6)]"
 >
   <div class="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
     <!-- Brand: icon-only on mobile, full on desktop -->

@@ -163,12 +163,12 @@
           id={fieldId}
           class={cn(
             "w-full",
-            saveState === "saved" && "border-green-500/50",
-            validationStatus === "invalid" && "border-destructive",
+            saveState === "saved" && "border-2 border-green-500",
+            validationStatus === "invalid" && "border-2 border-destructive",
             isDirty &&
               validationStatus !== "invalid" &&
               saveState !== "saved" &&
-              "border-blue-500/50",
+              "border-2 border-blue-500",
           )}
         >
           {#if selectedOption?.image}

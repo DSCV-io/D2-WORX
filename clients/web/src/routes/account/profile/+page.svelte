@@ -6,6 +6,7 @@
   import InlineCombobox from "$lib/client/components/forms/inline-combobox.svelte";
   import UnsavedChangesBar from "$lib/client/components/ui/unsaved-changes-bar.svelte";
   import ConfirmationDialog from "$lib/client/components/ui/confirmation-dialog.svelte";
+  import { Separator } from "$lib/client/components/ui/separator/index.js";
   import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
   import { toast } from "svelte-sonner";
   import {
@@ -218,20 +219,22 @@
   />
 </svelte:head>
 
-<div class="space-y-10">
+<div class="space-y-12">
   <header>
-    <h1 class="text-xl font-semibold">{m.account_profile_title()}</h1>
+    <h1 class="text-2xl font-semibold tracking-tight">{m.account_profile_title()}</h1>
     <p class="text-muted-foreground mt-1 text-sm">{m.account_profile_description()}</p>
   </header>
 
-  <section class="space-y-3">
+  <Separator class="bg-border/50" />
+
+  <section>
     <div>
       <h2 class="text-base font-semibold">{m.account_profile_your_info_title()}</h2>
-      <p class="text-muted-foreground mt-1 text-sm">
+      <p class="text-muted-foreground mt-0.5 text-sm">
         {m.account_profile_your_info_description()}
       </p>
     </div>
-    <div class="space-y-5">
+    <div class="mt-5 space-y-5">
       {#if loaded}
         <InlineEditFieldGroup
           bind:fields={nameFields}
@@ -271,33 +274,39 @@
     </div>
   </section>
 
-  <section class="space-y-3">
+  <Separator class="bg-border/50" />
+
+  <section>
     <div>
       <h2 class="text-base font-semibold">{m.account_profile_avatar_title()}</h2>
-      <p class="text-muted-foreground mt-1 text-sm">{m.account_profile_avatar_description()}</p>
+      <p class="text-muted-foreground mt-0.5 text-sm">{m.account_profile_avatar_description()}</p>
     </div>
-    {#if loaded && user}
-      <AvatarUploader
-        currentImageFileId={user.image}
-        userId={user.id}
-        userName={user.name}
-      />
-    {:else}
-      <div class="flex flex-col items-start gap-4">
-        <Skeleton class="size-32 rounded-full" />
-        <Skeleton class="h-5 w-16" />
-      </div>
-    {/if}
+    <div class="mt-5">
+      {#if loaded && user}
+        <AvatarUploader
+          currentImageFileId={user.image}
+          userId={user.id}
+          userName={user.name}
+        />
+      {:else}
+        <div class="flex flex-col items-start gap-4">
+          <Skeleton class="size-32 rounded-full" />
+          <Skeleton class="h-5 w-16" />
+        </div>
+      {/if}
+    </div>
   </section>
 
-  <section class="space-y-3">
+  <Separator class="bg-border/50" />
+
+  <section>
     <div>
       <h2 class="text-base font-semibold">{m.account_profile_language_time_title()}</h2>
-      <p class="text-muted-foreground mt-1 text-sm">
+      <p class="text-muted-foreground mt-0.5 text-sm">
         {m.account_profile_language_time_description()}
       </p>
     </div>
-    <div class="space-y-5">
+    <div class="mt-5 space-y-5">
       {#if loaded}
         <InlineDropdown
           bind:value={locale}

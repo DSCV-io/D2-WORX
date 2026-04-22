@@ -108,12 +108,12 @@
   const otherSessionsCount = $derived(sessions.filter((s) => !s.isCurrent).length);
 </script>
 
-<section class="space-y-3">
+<section>
   <div>
     <h2 class="text-base font-semibold">{m.account_sessions_title()}</h2>
-    <p class="text-muted-foreground mt-1 text-sm">{m.account_sessions_description()}</p>
+    <p class="text-muted-foreground mt-0.5 text-sm">{m.account_sessions_description()}</p>
   </div>
-  <div class="space-y-0">
+  <div class="mt-5 space-y-0">
     {#if !loaded}
       <ul class="divide-border/60 divide-y">
         {#each [0, 1] as _i (_i)}

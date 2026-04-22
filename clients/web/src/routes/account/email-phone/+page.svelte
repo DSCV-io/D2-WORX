@@ -1,6 +1,7 @@
 <script lang="ts">
   import InlineSwitch from "$lib/client/components/forms/inline-switch.svelte";
   import * as Alert from "$lib/client/components/ui/alert/index.js";
+  import { Separator } from "$lib/client/components/ui/separator/index.js";
   import { Button } from "$lib/client/components/ui/button/index.js";
   import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";
   import AccountVerificationModal from "$lib/client/components/account/account-verification-modal.svelte";
@@ -96,17 +97,20 @@
   />
 </svelte:head>
 
-<div class="space-y-10">
+<div class="space-y-12">
   <header>
-    <h1 class="text-xl font-semibold">{m.account_email_phone_title()}</h1>
+    <h1 class="text-2xl font-semibold tracking-tight">{m.account_email_phone_title()}</h1>
     <p class="text-muted-foreground mt-1 text-sm">{m.account_email_phone_description()}</p>
   </header>
 
-  <section class="space-y-3">
+  <Separator class="bg-border/50" />
+
+  <section>
     <div>
       <h2 class="text-base font-semibold">{m.account_email_address_title()}</h2>
-      <p class="text-muted-foreground mt-1 text-sm">{m.account_email_address_description()}</p>
+      <p class="text-muted-foreground mt-0.5 text-sm">{m.account_email_address_description()}</p>
     </div>
+    <div class="mt-5">
     {#if loaded}
       <div class="flex items-center justify-between gap-4">
         <div class="flex min-w-0 flex-1 items-center gap-2">
@@ -133,13 +137,17 @@
         <Skeleton class="h-8 w-20 rounded-md" />
       </div>
     {/if}
+    </div>
   </section>
 
-  <section class="space-y-3">
+  <Separator class="bg-border/50" />
+
+  <section>
     <div>
       <h2 class="text-base font-semibold">{m.account_phone_title()}</h2>
-      <p class="text-muted-foreground mt-1 text-sm">{m.account_phone_description()}</p>
+      <p class="text-muted-foreground mt-0.5 text-sm">{m.account_phone_description()}</p>
     </div>
+    <div class="mt-5 space-y-4">
     {#if loaded}
       <div class="flex items-center justify-between gap-4">
         <div class="flex min-w-0 flex-1 items-center gap-2">
@@ -192,13 +200,17 @@
       <Alert.Title>{m.account_phone_dev_alert_title()}</Alert.Title>
       <Alert.Description>{m.account_phone_dev_alert_body()}</Alert.Description>
     </Alert.Root>
+    </div>
   </section>
 
-  <section class="space-y-3">
+  <Separator class="bg-border/50" />
+
+  <section>
     <div>
       <h2 class="text-base font-semibold">{m.account_notifications_title()}</h2>
-      <p class="text-muted-foreground mt-1 text-sm">{m.account_notifications_description()}</p>
+      <p class="text-muted-foreground mt-0.5 text-sm">{m.account_notifications_description()}</p>
     </div>
+    <div class="mt-5 space-y-4">
     <Alert.Root variant="info">
       <InfoIcon />
       <Alert.Title>{m.account_notifications_alert_title()}</Alert.Title>
@@ -234,6 +246,7 @@
         <Skeleton class="h-6 w-11 rounded-full" />
       </div>
     {/if}
+    </div>
   </section>
 </div>
 

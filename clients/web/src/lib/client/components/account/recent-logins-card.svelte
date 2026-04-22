@@ -83,12 +83,12 @@
   }
 </script>
 
-<section class="space-y-3">
+<section>
   <div>
     <h2 class="text-base font-semibold">{m.account_recent_logins_title()}</h2>
-    <p class="text-muted-foreground mt-1 text-sm">{m.account_recent_logins_description()}</p>
+    <p class="text-muted-foreground mt-0.5 text-sm">{m.account_recent_logins_description()}</p>
   </div>
-  <div class="space-y-0">
+  <div class="mt-5 space-y-0">
     {#if !loaded}
       <ul class="divide-border/60 divide-y border-y">
         {#each Array.from({ length: PAGE_SIZE }) as _, i (i)}

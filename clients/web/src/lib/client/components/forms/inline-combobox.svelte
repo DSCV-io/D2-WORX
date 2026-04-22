@@ -213,15 +213,15 @@
             }}
             {placeholder}
             class={cn(
-              "border-input bg-background dark:bg-input/30 placeholder:text-muted-foreground flex h-9 w-full min-w-0 rounded-md border px-3 py-1 pr-8 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm",
+              "border-input bg-input placeholder:text-muted-foreground flex h-9 w-full min-w-0 rounded-md border px-3 py-1 pr-8 text-base transition-[color,box-shadow] outline-none md:text-sm",
               "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
               "disabled:cursor-not-allowed disabled:opacity-50",
-              saveState === "saved" && "border-green-500/50",
-              validationStatus === "invalid" && "border-destructive",
+              saveState === "saved" && "border-2 border-green-500",
+              validationStatus === "invalid" && "border-2 border-destructive",
               isDirty &&
                 validationStatus !== "invalid" &&
                 saveState !== "saved" &&
-                "border-blue-500/50",
+                "border-2 border-blue-500",
             )}
           />
           <Combobox.Trigger class="absolute top-1/2 right-2 -translate-y-1/2">
