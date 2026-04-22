@@ -201,6 +201,8 @@ export async function createApp(
   // 7. Session fingerprint binding (stolen token detection)
   const fingerprintStorage = new AsyncLocalStorage<string>();
   const deviceFingerprintStorage = new AsyncLocalStorage<string>();
+  const clientFingerprintStorage = new AsyncLocalStorage<string>();
+  const serverFingerprintStorage = new AsyncLocalStorage<string>();
   const SESSION_FP_PREFIX = "session:fp:";
   const SESSION_FP_TTL_SECONDS = 7 * 24 * 60 * 60;
 
@@ -218,6 +220,8 @@ export async function createApp(
     logger,
     getFingerprintForCurrentRequest: () => fingerprintStorage.getStore(),
     getDeviceFingerprintForCurrentRequest: () => deviceFingerprintStorage.getStore(),
+    getClientFingerprintForCurrentRequest: () => clientFingerprintStorage.getStore(),
+    getServerFingerprintForCurrentRequest: () => serverFingerprintStorage.getStore(),
     passwordFunctions: preAuth.passwordFns,
   });
   authInstance = auth; // unblock the lazy factories registered earlier
@@ -256,6 +260,8 @@ export async function createApp(
     checkEmailHandler: preAuth.checkEmailHandler,
     fingerprintStorage,
     deviceFingerprintStorage,
+    clientFingerprintStorage,
+    serverFingerprintStorage,
     sessionFingerprintMiddleware,
     translator,
     logger,

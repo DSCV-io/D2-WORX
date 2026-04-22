@@ -9,6 +9,8 @@ export interface SignInEvent {
   readonly userAgent: string;
   readonly whoIsId?: string;
   readonly deviceFingerprint?: string;
+  readonly clientFingerprint?: string;
+  readonly serverFingerprint?: string;
   readonly failureReason?: string;
   readonly createdAt: Date;
 }
@@ -20,6 +22,8 @@ export interface CreateSignInEventInput {
   readonly userAgent: string;
   readonly whoIsId?: string;
   readonly deviceFingerprint?: string;
+  readonly clientFingerprint?: string;
+  readonly serverFingerprint?: string;
   readonly failureReason?: string;
   readonly id?: string;
 }
@@ -45,6 +49,8 @@ export function createSignInEvent(input: CreateSignInEventInput): SignInEvent {
     userAgent: input.userAgent,
     whoIsId: input.whoIsId,
     deviceFingerprint: input.deviceFingerprint,
+    clientFingerprint: input.clientFingerprint,
+    serverFingerprint: input.serverFingerprint,
     failureReason: input.failureReason,
     createdAt: new Date(),
   };

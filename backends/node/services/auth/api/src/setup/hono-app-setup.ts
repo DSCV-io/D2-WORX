@@ -56,6 +56,8 @@ export interface HonoAppOptions {
   checkEmailHandler: CheckEmailAvailability;
   fingerprintStorage: AsyncLocalStorage<string>;
   deviceFingerprintStorage: AsyncLocalStorage<string>;
+  clientFingerprintStorage: AsyncLocalStorage<string>;
+  serverFingerprintStorage: AsyncLocalStorage<string>;
   sessionFingerprintMiddleware: ReturnType<typeof createSessionFingerprintMiddleware>;
   logger: ILogger;
   db: NodePgDatabase;
@@ -77,6 +79,8 @@ export function buildHonoApp(options: HonoAppOptions): Hono {
     checkEmailHandler,
     fingerprintStorage,
     deviceFingerprintStorage,
+    clientFingerprintStorage,
+    serverFingerprintStorage,
     sessionFingerprintMiddleware,
     translator,
     logger,
@@ -149,10 +153,23 @@ export function buildHonoApp(options: HonoAppOptions): Hono {
   authApp.use("*", async (c, next) => {
     const fp = computeFingerprint(c.req.raw.headers);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rc = (c as any).get(REQUEST_CONTEXT_KEY) as { deviceFingerprint?: string } | undefined;
-    const dfp = rc?.deviceFingerprint;
+    const rc = (c as any).get(REQUEST_CONTEXT_KEY) as
+      | { deviceFingerprint?: string; clientFingerprint?: string; serverFingerprint?: string }
+      | undefined;
+    // Bridge fingerprints from request enrichment middleware → AsyncLocalStorage
+    // so BetterAuth's session.create.before hook (which has no Hono context)
+    // can stamp them onto the new session row.
+    const runWith = (
+      store: AsyncLocalStorage<string>,
+      value: string | undefined,
+      next: () => Promise<void>,
+    ) => (value ? store.run(value, next) : next());
     await fingerprintStorage.run(fp, () =>
-      dfp ? deviceFingerprintStorage.run(dfp, () => next()) : next(),
+      runWith(deviceFingerprintStorage, rc?.deviceFingerprint, () =>
+        runWith(clientFingerprintStorage, rc?.clientFingerprint, () =>
+          runWith(serverFingerprintStorage, rc?.serverFingerprint, () => next()),
+        ),
+      ),
     );
   });
   authApp.route(

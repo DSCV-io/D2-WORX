@@ -48,6 +48,8 @@ export interface RecordFailedSignIn {
     ipAddress: string;
     userAgent: string;
     deviceFingerprint?: string;
+    clientFingerprint?: string;
+    serverFingerprint?: string;
     failureReason: string;
   }): Promise<void>;
 }
@@ -104,6 +106,7 @@ export function createAuthRoutes(
           clientIp?: string;
           serverFingerprint?: string;
           deviceFingerprint?: string;
+          clientFingerprint?: string;
         }
       | undefined;
     const userAgent = c.req.header("user-agent") ?? "unknown";
@@ -162,6 +165,8 @@ export function createAuthRoutes(
           ipAddress: requestContext?.clientIp ?? "unknown",
           userAgent,
           deviceFingerprint: requestContext?.deviceFingerprint,
+          clientFingerprint: requestContext?.clientFingerprint,
+          serverFingerprint: requestContext?.serverFingerprint,
           failureReason: `http_${response.status}`,
         }).catch((err: unknown) =>
           logger?.warn("recordFailedSignIn failed (non-blocking)", {

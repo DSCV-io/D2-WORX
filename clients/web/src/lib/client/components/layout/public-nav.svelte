@@ -26,7 +26,7 @@
   import MonitorIcon from "@lucide/svelte/icons/monitor";
   import LanguagesIcon from "@lucide/svelte/icons/languages";
   import ClockIcon from "@lucide/svelte/icons/clock";
-  import SettingsIcon from "@lucide/svelte/icons/settings";
+  import UserRoundCogIcon from "@lucide/svelte/icons/user-round-cog";
   import LogOutIcon from "@lucide/svelte/icons/log-out";
   import { getAvatarDisplayUrl } from "$lib/client/utils/avatar-url.js";
   import { getLocale } from "$lib/paraglide/runtime";
@@ -312,7 +312,7 @@
           onclick={() => (sheetOpen = false)}
           href={resolve("/account/profile")}
         >
-          <SettingsIcon class="mr-2 size-4" />
+          <UserRoundCogIcon class="mr-2 size-4" />
           {m.common_ui_account()}
         </Button>
 

@@ -15,6 +15,7 @@
   import { formatLocation, locationCountryCode } from "$lib/shared/utils/format-location.js";
   import CopyChip from "./copy-chip.svelte";
   import CountryFlag from "./country-flag.svelte";
+  import DeviceIdenticon from "./device-identicon.svelte";
   import PasswordConfirmDialog from "./password-confirm-dialog.svelte";
   import { translateMessage } from "$lib/client/utils/translate-message.js";
   import LogOutIcon from "@lucide/svelte/icons/log-out";
@@ -143,21 +144,30 @@
           {@const whoIsStubText = whoIsStub(s.session.whoIsId)}
           <li
             class={[
-              "group relative py-4 pl-4 pr-2 transition-colors",
-              s.isCurrent
-                ? "before:bg-success before:absolute before:left-0 before:top-3 before:bottom-3 before:w-[3px] before:rounded-full"
-                : "hover:bg-muted/30",
-            ].join(" ")}
+              "group relative py-4 pl-4 pr-2 transition-colors hover:bg-muted/30",
+              s.isCurrent &&
+                "before:bg-success before:absolute before:left-0 before:top-3 before:bottom-3 before:w-[3px] before:rounded-full",
+            ]
+              .filter(Boolean)
+              .join(" ")}
           >
             <div class="flex items-start gap-4">
-              <div
-                class={[
-                  "flex size-10 shrink-0 items-center justify-center rounded-md",
-                  s.isCurrent ? "bg-success/10 text-success" : "bg-muted text-muted-foreground",
-                ].join(" ")}
-              >
-                <Icon class="size-5" />
-              </div>
+              {#if s.session.clientFingerprint}
+                <DeviceIdenticon
+                  seed={s.session.clientFingerprint}
+                  size={40}
+                  class="shrink-0"
+                />
+              {:else}
+                <div
+                  class={[
+                    "flex size-10 shrink-0 items-center justify-center rounded-md",
+                    s.isCurrent ? "bg-success/10 text-success" : "bg-muted text-muted-foreground",
+                  ].join(" ")}
+                >
+                  <Icon class="size-5" />
+                </div>
+              {/if}
 
               <div class="flex min-w-0 flex-1 flex-col gap-1.5">
                 <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -170,6 +180,7 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                  <Icon class="text-muted-foreground size-4 shrink-0" />
                   <span class="font-semibold">{ua.browser}</span>
                   <span class="text-muted-foreground text-xs"
                     >{m.account_sessions_on_os({ os: ua.os })}</span

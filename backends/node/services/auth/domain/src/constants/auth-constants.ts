@@ -32,6 +32,9 @@ export const SESSION_FIELDS = {
   EMULATED_ORG_ID: "emulatedOrganizationId",
   EMULATED_ORG_TYPE: "emulatedOrganizationType",
   WHO_IS_ID: "whoIsId",
+  DEVICE_FINGERPRINT: "deviceFingerprint",
+  CLIENT_FINGERPRINT: "clientFingerprint",
+  SERVER_FINGERPRINT: "serverFingerprint",
 } as const;
 
 /**

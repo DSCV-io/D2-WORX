@@ -8,6 +8,8 @@ export interface RecordSignInEventInput {
   readonly userAgent: string;
   readonly whoIsId?: string;
   readonly deviceFingerprint?: string;
+  readonly clientFingerprint?: string;
+  readonly serverFingerprint?: string;
   readonly failureReason?: string;
 }
 

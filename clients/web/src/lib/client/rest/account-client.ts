@@ -165,6 +165,12 @@ export interface ActiveSessionDTO {
     ipAddress?: string;
     userAgent?: string;
     whoIsId?: string;
+    /** Combined sha256(clientFp + serverFp + clientIp). */
+    deviceFingerprint?: string;
+    /** Stable hardware/browser signature — used by identicons. */
+    clientFingerprint?: string;
+    /** Network-derived signature (UA + headers + IP class). */
+    serverFingerprint?: string;
   };
   whoIs?: WhoIsLite;
   isCurrent: boolean;
@@ -180,6 +186,10 @@ export interface RecentLoginDTO {
     userAgent: string;
     whoIsId?: string;
     deviceFingerprint?: string;
+    /** Stable hardware/browser signature — used by identicons. */
+    clientFingerprint?: string;
+    /** Network-derived signature (UA + headers + IP class). */
+    serverFingerprint?: string;
     failureReason?: string;
     createdAt: string;
   };

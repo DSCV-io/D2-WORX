@@ -15,6 +15,8 @@ const schema = z.object({
   userAgent: z.string().max(512),
   whoIsId: z.string().max(64).optional(),
   deviceFingerprint: z.string().max(64).optional(),
+  clientFingerprint: z.string().max(64).optional(),
+  serverFingerprint: z.string().max(64).optional(),
   failureReason: z.string().max(100).optional(),
 });
 
@@ -53,6 +55,8 @@ export class RecordSignInEvent
       userAgent: input.userAgent,
       whoIsId: input.whoIsId,
       deviceFingerprint: input.deviceFingerprint,
+      clientFingerprint: input.clientFingerprint,
+      serverFingerprint: input.serverFingerprint,
       failureReason: input.failureReason,
     };
 

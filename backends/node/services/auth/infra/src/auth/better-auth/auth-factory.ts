@@ -63,6 +63,8 @@ export interface AuthHooks {
     ipAddress: string;
     userAgent: string;
     deviceFingerprint?: string;
+    clientFingerprint?: string;
+    serverFingerprint?: string;
   }) => Promise<void>;
   /**
    * Returns the client fingerprint for the current request.
@@ -73,9 +75,23 @@ export interface AuthHooks {
   getFingerprintForCurrentRequest?: () => string | undefined;
   /**
    * Returns the device fingerprint for the current request (from enrichment middleware).
-   * Typically backed by `AsyncLocalStorage` in the composition root.
+   * Combined hash: sha256(clientFp + serverFp + clientIp). Typically backed by
+   * `AsyncLocalStorage` in the composition root.
    */
   getDeviceFingerprintForCurrentRequest?: () => string | undefined;
+  /**
+   * Returns the client (hardware/browser) fingerprint for the current request.
+   * Stable across networks — derived from canvas/WebGL/timezone/etc on the
+   * browser and forwarded as the `d2-cfp` cookie or `X-Client-Fingerprint`
+   * header.
+   */
+  getClientFingerprintForCurrentRequest?: () => string | undefined;
+  /**
+   * Returns the server (network) fingerprint for the current request.
+   * Derived from request headers (UA + accept headers + IP class) — changes
+   * when the user roams networks.
+   */
+  getServerFingerprintForCurrentRequest?: () => string | undefined;
   /**
    * Custom password hash/verify functions with domain validation + HIBP checks.
    * Created by `createPasswordFunctions()` in the composition root.
@@ -286,6 +302,21 @@ export function createAuth(
           required: false,
           input: false,
         },
+        [SESSION_FIELDS.DEVICE_FINGERPRINT]: {
+          type: "string",
+          required: false,
+          input: false,
+        },
+        [SESSION_FIELDS.CLIENT_FINGERPRINT]: {
+          type: "string",
+          required: false,
+          input: false,
+        },
+        [SESSION_FIELDS.SERVER_FINGERPRINT]: {
+          type: "string",
+          required: false,
+          input: false,
+        },
       },
     },
 
@@ -391,11 +422,24 @@ export function createAuth(
         },
         create: {
           before: async (session) => {
+            // Snapshot the request's three fingerprints (combined / client / server)
+            // from AsyncLocalStorage onto the session row. The `data` return
+            // pattern is how BetterAuth merges custom additionalFields into
+            // the row before INSERT (mirrors the update.before hook above).
+            const deviceFp = hooks?.getDeviceFingerprintForCurrentRequest?.();
+            const clientFp = hooks?.getClientFingerprintForCurrentRequest?.();
+            const serverFp = hooks?.getServerFingerprintForCurrentRequest?.();
+            const fpFields: Record<string, string | null> = {
+              [SESSION_FIELDS.DEVICE_FINGERPRINT]: deviceFp ?? null,
+              [SESSION_FIELDS.CLIENT_FINGERPRINT]: clientFp ?? null,
+              [SESSION_FIELDS.SERVER_FINGERPRINT]: serverFp ?? null,
+            };
+
             // Block sign-in for fully anonymized users; cancel pending deletion
             // for users still in the grace window. This runs alongside the admin
             // plugin's own ban check (BetterAuth merges hooks per lifecycle slot).
             const userId = (session as Record<string, unknown>)["userId"] as string | undefined;
-            if (!userId) return;
+            if (!userId) return { data: { ...session, ...fpFields } };
 
             try {
               const [row] = await db
@@ -435,6 +479,8 @@ export function createAuth(
                 userId,
               });
             }
+
+            return { data: { ...session, ...fpFields } };
           },
           after: async (session) => {
             // Record sign-in event via app-layer callback
@@ -453,6 +499,8 @@ export function createAuth(
                     ipAddress,
                     userAgent,
                     deviceFingerprint: hooks.getDeviceFingerprintForCurrentRequest?.(),
+                    clientFingerprint: hooks.getClientFingerprintForCurrentRequest?.(),
+                    serverFingerprint: hooks.getServerFingerprintForCurrentRequest?.(),
                   })
                   .catch((err: unknown) => {
                     // Swallow errors — sign-in audit is non-critical

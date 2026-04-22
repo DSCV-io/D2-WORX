@@ -25,4 +25,13 @@ export interface Session {
   readonly emulatedOrganizationType: OrgType | null;
   /** Resolved at sign-in via cross-service Geo FindWhoIs (async, fail-open). */
   readonly whoIsId?: string;
+
+  // Fingerprint snapshots taken at session-create time. Surfaced for the
+  // active-sessions UI (identicon rendering + forensic display).
+  /** Combined sha256(clientFp + serverFp + clientIp). */
+  readonly deviceFingerprint?: string;
+  /** Stable hardware/browser signature — derived from canvas/WebGL/etc. */
+  readonly clientFingerprint?: string;
+  /** Network-derived signature — UA + accept headers + IP class. */
+  readonly serverFingerprint?: string;
 }

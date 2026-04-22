@@ -11,6 +11,7 @@
   import { formatLocation, locationCountryCode } from "$lib/shared/utils/format-location.js";
   import CopyChip from "./copy-chip.svelte";
   import CountryFlag from "./country-flag.svelte";
+  import DeviceIdenticon from "./device-identicon.svelte";
   import MoreVerticalIcon from "@lucide/svelte/icons/more-vertical";
   import MonitorIcon from "@lucide/svelte/icons/monitor";
   import SmartphoneIcon from "@lucide/svelte/icons/smartphone";
@@ -138,20 +139,29 @@
           {@const hasForensic = !!(e.event.ipAddress || whoIsStubText || deviceFpStubText)}
           <li
             class={[
-              "relative flex items-start gap-4 py-4 pl-4 pr-2 transition-colors",
-              ok
-                ? "hover:bg-muted/30"
-                : "before:bg-destructive before:absolute before:left-0 before:top-3 before:bottom-3 before:w-[3px] before:rounded-full",
-            ].join(" ")}
+              "relative flex items-start gap-4 py-4 pl-4 pr-2 transition-colors hover:bg-muted/30",
+              !ok &&
+                "before:bg-destructive before:absolute before:left-0 before:top-3 before:bottom-3 before:w-[3px] before:rounded-full",
+            ]
+              .filter(Boolean)
+              .join(" ")}
           >
-            <div
-              class={[
-                "flex size-10 shrink-0 items-center justify-center rounded-md",
-                ok ? "bg-muted text-muted-foreground" : "bg-destructive/10 text-destructive",
-              ].join(" ")}
-            >
-              <Icon class="size-5" />
-            </div>
+            {#if e.event.clientFingerprint}
+              <DeviceIdenticon
+                seed={e.event.clientFingerprint}
+                size={40}
+                class="shrink-0"
+              />
+            {:else}
+              <div
+                class={[
+                  "flex size-10 shrink-0 items-center justify-center rounded-md",
+                  ok ? "bg-muted text-muted-foreground" : "bg-destructive/10 text-destructive",
+                ].join(" ")}
+              >
+                <Icon class="size-5" />
+              </div>
+            {/if}
 
             <div class="flex min-w-0 flex-1 flex-col gap-1.5">
               <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -162,6 +172,7 @@
               </div>
 
               <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                <Icon class="text-muted-foreground size-4 shrink-0" />
                 <span>
                   <span class="font-medium">{ua.browser}</span>
                   <span class="text-muted-foreground"

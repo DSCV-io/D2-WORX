@@ -92,8 +92,20 @@ export const session = pgTable(
     // inserted. Null until resolved (or if resolution fails). References the
     // content-addressable Geo WhoIs hash — frontend re-hydrates via Geo client.
     whoIsId: text("who_is_id"),
+    // Fingerprint snapshots taken at session-create time. Stamped from the
+    // request enrichment middleware via AsyncLocalStorage. See sign_in_event
+    // for full semantics — same three values, persisted on the session row so
+    // active-session UIs can render device identicons without joining.
+    deviceFingerprint: text("device_fingerprint"),
+    clientFingerprint: text("client_fingerprint"),
+    serverFingerprint: text("server_fingerprint"),
   },
-  (table) => [index("session_user_id_idx").on(table.userId)],
+  (table) => [
+    index("session_user_id_idx").on(table.userId),
+    index("session_client_fingerprint_idx").on(table.clientFingerprint),
+    index("session_server_fingerprint_idx").on(table.serverFingerprint),
+    index("session_device_fingerprint_idx").on(table.deviceFingerprint),
+  ],
 );
 
 export const account = pgTable(

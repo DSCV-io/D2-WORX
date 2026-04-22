@@ -92,6 +92,13 @@
       "when": 1776771935837,
       "tag": "0012_add_member_org_role_idx",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1776879825553,
+      "tag": "0013_add_session_fingerprint_columns",
+      "breakpoints": true
     }
   ]
 }

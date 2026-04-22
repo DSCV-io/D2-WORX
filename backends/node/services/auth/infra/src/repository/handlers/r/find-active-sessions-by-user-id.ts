@@ -53,5 +53,8 @@ function toSession(row: typeof session.$inferSelect): Session {
     emulatedOrganizationId: row.emulatedOrganizationId,
     emulatedOrganizationType: (row.emulatedOrganizationType as OrgType | null) ?? null,
     whoIsId: row.whoIsId ?? undefined,
+    deviceFingerprint: row.deviceFingerprint ?? undefined,
+    clientFingerprint: row.clientFingerprint ?? undefined,
+    serverFingerprint: row.serverFingerprint ?? undefined,
   };
 }

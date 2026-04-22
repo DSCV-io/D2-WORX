@@ -70,6 +70,8 @@
     "@d2/result": "workspace:*",
     "@d2/service-defaults": "workspace:*",
     "@d2/utilities": "workspace:*",
+    "@dicebear/core": "9.4.2",
+    "@dicebear/identicon": "9.4.2",
     "@grafana/faro-web-sdk": "1.19.0",
     "@grafana/faro-web-tracing": "1.19.0",
     "@internationalized/date": "3.11.0",

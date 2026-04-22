@@ -41,6 +41,8 @@ export function createAuthCallbacks(
           ipAddress: data.ipAddress,
           userAgent: data.userAgent,
           deviceFingerprint: data.deviceFingerprint,
+          clientFingerprint: data.clientFingerprint,
+          serverFingerprint: data.serverFingerprint,
         });
 
         // Fire-and-forget: publish to WhoIs resolution queue for async enrichment
@@ -294,6 +296,8 @@ export function createRecordFailedSignIn(
         ipAddress: data.ipAddress,
         userAgent: data.userAgent,
         deviceFingerprint: data.deviceFingerprint,
+        clientFingerprint: data.clientFingerprint,
+        serverFingerprint: data.serverFingerprint,
         failureReason: data.failureReason,
       });
 
