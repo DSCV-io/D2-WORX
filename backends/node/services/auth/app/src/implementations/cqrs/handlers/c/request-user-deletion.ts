@@ -17,6 +17,35 @@ import type { IInvalidateUserSessionCacheHandler } from "../../../../interfaces/
 type Input = Commands.RequestUserDeletionInput;
 type Output = Commands.RequestUserDeletionOutput;
 
+/**
+ * Formats a Date as a human-readable long-form string in the user's locale +
+ * timezone — e.g. "May 22, 2026 at 12:43 PM MDT".
+ *
+ * Uses individual field options (year/month/day/hour/minute) rather than
+ * `dateStyle`/`timeStyle` — those two are mutually exclusive with
+ * `timeZoneName` per spec, and combining them silently throws RangeError
+ * which would mask the timezone in the rendered email.
+ *
+ * Falls back to UTC + abbreviation only when the supplied timezone is an
+ * invalid IANA identifier (Intl throws RangeError on construct).
+ */
+function formatDateTimeLong(date: Date, locale: string, timezone?: string): string {
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: timezone,
+    timeZoneName: "short",
+  };
+  try {
+    return new Intl.DateTimeFormat(locale, options).format(date);
+  } catch {
+    return new Intl.DateTimeFormat(locale, { ...options, timeZone: "UTC" }).format(date);
+  }
+}
+
 const schema = z.object({
   userId: zodGuid,
   currentPassword: z.string().min(1).max(256),
@@ -26,6 +55,7 @@ const schema = z.object({
       comment: z.string().max(2000).optional(),
     })
     .optional(),
+  timezoneOverride: z.string().max(100).optional(),
 });
 
 /**
@@ -104,6 +134,10 @@ export class RequestUserDeletion
     const userEmail = userResult.data?.user.email;
     const userName = userResult.data?.user.name ?? "";
     const userLocale = resolveLocale(userResult.data?.user.locale ?? undefined);
+    // Prefer the route-supplied override (D2_TIMEZONE cookie — matches the
+    // tz the user is currently using to view dates in the UI). Falls back to
+    // the persisted user.timezone column, then UTC.
+    const userTimezone = input.timezoneOverride ?? userResult.data?.user.timezone ?? undefined;
 
     // 4. Flip status + set grace clock + persist feedback.
     //    `expectedStatus: ACTIVE` is a defense-in-depth CAS guard — if the
@@ -141,8 +175,18 @@ export class RequestUserDeletion
 
     // 6. Send "scheduled" email — alternativeContactInfo so security-relevant
     //    notifications bypass channel preferences (mirrors phoneRemoved).
+    //    The API caller still receives the raw ISO string (frontend renders
+    //    its own localized date on the scheduled-deletion landing page); the
+    //    email body gets a pre-formatted human-readable string in the user's
+    //    saved locale + timezone so the recipient sees "May 22, 2026, 11:23 AM
+    //    MDT" instead of an ISO blob.
     const scheduledForDate = new Date(now.getTime() + USER_DELETION.GRACE_PERIOD_MS);
     const scheduledFor = scheduledForDate.toISOString();
+    const scheduledForDisplay = formatDateTimeLong(
+      scheduledForDate,
+      userLocale,
+      userTimezone,
+    );
     if (userEmail) {
       const t = this.translator.t;
       this.notify
@@ -152,11 +196,11 @@ export class RequestUserDeletion
           title: t(userLocale, TK.auth.email.userDeletionScheduled.subject),
           content: t(userLocale, TK.auth.email.userDeletionScheduled.body, {
             name: userName,
-            scheduledFor,
+            scheduledFor: scheduledForDisplay,
           }),
           plaintext: t(userLocale, TK.auth.email.userDeletionScheduled.plaintext, {
             name: userName,
-            scheduledFor,
+            scheduledFor: scheduledForDisplay,
           }),
           correlationId: crypto.randomUUID(),
           senderService: "auth",

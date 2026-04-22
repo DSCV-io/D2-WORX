@@ -15,6 +15,8 @@ export interface GetUserByIdOutput {
     readonly phoneVerified: boolean;
     /** BCP-47 locale (e.g. "en-US"). null when user hasn't set one. */
     readonly locale: string | null;
+    /** IANA timezone (e.g. "America/Edmonton"). null when user hasn't set one. */
+    readonly timezone: string | null;
     /** Lifecycle status — used by deletion-flow handlers to decide cancel vs no-op. */
     readonly status: UserStatus;
   };

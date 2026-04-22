@@ -8,6 +8,8 @@
   import { z } from "zod";
   import { requestUserDeletion } from "$lib/client/rest/account-client.js";
   import { translateMessage } from "$lib/client/utils/translate-message.js";
+  import { authClient } from "$lib/client/stores/auth-client.js";
+  import { invalidateToken } from "$lib/client/rest/gateway-client.js";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import LoaderCircleIcon from "@lucide/svelte/icons/loader-circle";
@@ -93,8 +95,19 @@
             return;
           }
 
-          // Success: server has already revoked all sessions. Redirect to the
-          // public landing page; the next request hits an unauthenticated state.
+          // Server already revoked the session row + busted the BetterAuth
+          // Redis cookie cache, but the BROWSER still has the session cookie
+          // and the in-memory JWT until we explicitly clear them. Mirrors the
+          // standard sign-out flow (see public-nav.svelte::handleSignOut):
+          //   1. authClient.signOut() — wipes the SvelteKit session cookie
+          //   2. invalidateToken() — clears the gateway-client JWT cache
+          //   3. goto({ invalidateAll: true }) — re-runs data loaders so the
+          //      UI reflects the now-unauthenticated state on the public page
+          // signOut() may 401 since the server-side row is already gone — we
+          // intentionally swallow that; the cookie wipe still happens via the
+          // BetterAuth Set-Cookie response header.
+          await authClient.signOut().catch(() => {});
+          invalidateToken();
           open = false;
           await goto(resolve("/auth/account-deletion-scheduled"), { invalidateAll: true });
         } finally {

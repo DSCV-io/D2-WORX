@@ -32,6 +32,7 @@ export class GetUserById extends BaseHandler<I, O> implements IGetUserByIdHandle
         phone: user.phone,
         phoneVerified: user.phoneVerified,
         locale: user.locale,
+        timezone: user.timezone,
         status: user.status,
       })
       .from(user)
@@ -51,6 +52,7 @@ export class GetUserById extends BaseHandler<I, O> implements IGetUserByIdHandle
           phone: row.phone ?? null,
           phoneVerified: row.phoneVerified,
           locale: row.locale ?? null,
+          timezone: row.timezone ?? null,
           status: (row.status as UserStatus) ?? USER_STATUS.ACTIVE,
         },
       },
