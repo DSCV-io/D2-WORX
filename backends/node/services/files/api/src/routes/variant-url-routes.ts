@@ -22,15 +22,7 @@ export function createVariantUrlRoutes(): Hono {
     const handler = scope.resolve(IGetFileVariantUrlKey);
     const result = await handler.handleAsync({ fileId, variantName });
 
-    return c.json(
-      {
-        success: result.success,
-        statusCode: result.statusCode,
-        messages: result.messages,
-        data: result.data ?? null,
-      },
-      result.statusCode as ContentfulStatusCode,
-    );
+    return c.json(result, result.statusCode as ContentfulStatusCode);
   });
 
   return app;

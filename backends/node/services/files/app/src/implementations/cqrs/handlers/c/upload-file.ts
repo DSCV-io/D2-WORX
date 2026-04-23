@@ -63,10 +63,7 @@ export class UploadFile extends BaseHandler<Input, Output> implements Commands.I
 
     // Validate content type against allowed categories
     if (!isContentTypeAllowed(input.contentType, config.allowedCategories)) {
-      return D2Result.fail({
-        statusCode: 400,
-        errorCode: "FILES_CONTENT_TYPE_NOT_ALLOWED",
-      });
+      return D2Result.validationFailed({ errorCode: "FILES_CONTENT_TYPE_NOT_ALLOWED" });
     }
 
     // Validate size against config limit

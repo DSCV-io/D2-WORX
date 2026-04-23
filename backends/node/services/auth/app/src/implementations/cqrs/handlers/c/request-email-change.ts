@@ -85,9 +85,8 @@ export class RequestEmailChange
     // 2. Rate limit — does not count password failures toward OTP budget.
     const cooldown = await this.otpRateLimit.getCooldownSeconds(input.userId, "email");
     if (cooldown > 0) {
-      return D2Result.fail({
+      return D2Result.tooManyRequests({
         messages: [TK.common.errors.TOO_MANY_REQUESTS],
-        statusCode: 429,
         errorCode: "OTP_RATE_LIMITED",
       });
     }

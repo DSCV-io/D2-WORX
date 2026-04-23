@@ -268,6 +268,50 @@ public class D2ResultGenericTests
     }
 
     /// <summary>
+    /// Tests that ValidationFailed accepts an errorCode override (generic variant).
+    /// </summary>
+    [Fact]
+    public void ValidationFailed_AcceptsErrorCodeOverride()
+    {
+        // Act
+        var result = D2Result<string>.ValidationFailed(errorCode: "FILES_INVALID_CONTENT_TYPE");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+        Assert.Equal("FILES_INVALID_CONTENT_TYPE", result.ErrorCode);
+    }
+
+    /// <summary>
+    /// Tests that TooManyRequests creates a 429 result with the RATE_LIMITED code.
+    /// </summary>
+    [Fact]
+    public void TooManyRequests_CreatesRateLimitedResult()
+    {
+        // Act
+        var result = D2Result<string>.TooManyRequests();
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal(HttpStatusCode.TooManyRequests, result.StatusCode);
+        Assert.Equal(ErrorCodes.RATE_LIMITED, result.ErrorCode);
+        Assert.Contains("common_errors_TOO_MANY_REQUESTS", result.Messages);
+    }
+
+    /// <summary>
+    /// Tests that TooManyRequests accepts an errorCode override.
+    /// </summary>
+    [Fact]
+    public void TooManyRequests_AcceptsErrorCodeOverride()
+    {
+        // Act
+        var result = D2Result<string>.TooManyRequests(errorCode: "OTP_RATE_LIMITED");
+
+        // Assert
+        Assert.Equal("OTP_RATE_LIMITED", result.ErrorCode);
+    }
+
+    /// <summary>
     /// Tests that the Conflict factory method creates a Conflict result.
     /// </summary>
     [Fact]

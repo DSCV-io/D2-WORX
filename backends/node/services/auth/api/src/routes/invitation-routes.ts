@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
-import { D2Result, HttpStatusCode } from "@d2/result";
+import { D2Result } from "@d2/result";
 import { TK, resolveLocale } from "@d2/i18n";
 import type { Translator } from "@d2/i18n";
 import { ILoggerKey } from "@d2/logging";
@@ -153,9 +153,8 @@ export function createInvitationRoutes(options: InvitationRoutesOptions) {
         // Logging is best-effort — never let it break the error response
       }
       return c.json(
-        D2Result.fail({
+        D2Result.validationFailed({
           messages: [TK.auth.errors.INVITATION_CREATION_FAILED],
-          statusCode: HttpStatusCode.BadRequest,
         }),
         400 as ContentfulStatusCode,
       );

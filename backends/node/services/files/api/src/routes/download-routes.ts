@@ -26,15 +26,7 @@ export function createDownloadRoutes(): Hono {
     const result = await handler.handleAsync({ fileId, variantName });
 
     if (!result.success || !result.data) {
-      return c.json(
-        {
-          success: false,
-          statusCode: result.statusCode,
-          messages: result.messages,
-          data: null,
-        },
-        result.statusCode as ContentfulStatusCode,
-      );
+      return c.json(result, result.statusCode as ContentfulStatusCode);
     }
 
     const { buffer, contentType, displayName } = result.data;

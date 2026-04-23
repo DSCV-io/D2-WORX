@@ -164,6 +164,35 @@ describe("D2Result.validationFailed", () => {
     expect(result).toBeFailure();
     expect(result).toHaveInputErrors(inputErrors);
   });
+
+  it("accepts an errorCode override for client-side discrimination", () => {
+    const result = D2Result.validationFailed({ errorCode: "PHONE_NO_CHANGE" });
+
+    expect(result).toBeFailure();
+    expect(result).toHaveStatusCode(HttpStatusCode.BadRequest);
+    expect(result).toHaveErrorCode("PHONE_NO_CHANGE");
+    expect(result).toHaveMessages(["common_errors_VALIDATION_FAILED"]);
+  });
+});
+
+describe("D2Result.tooManyRequests", () => {
+  it("creates a 429 result with default message + RATE_LIMITED code", () => {
+    const result = D2Result.tooManyRequests();
+
+    expect(result).toBeFailure();
+    expect(result).toHaveStatusCode(HttpStatusCode.TooManyRequests);
+    expect(result).toHaveErrorCode(ErrorCodes.RATE_LIMITED);
+    expect(result).toHaveMessages(["common_errors_TOO_MANY_REQUESTS"]);
+  });
+
+  it("respects an explicit messages override", () => {
+    const result = D2Result.tooManyRequests({
+      messages: ["common_errors_OTP_RATE_LIMITED"],
+    });
+
+    expect(result).toHaveMessages(["common_errors_OTP_RATE_LIMITED"]);
+    expect(result).toHaveErrorCode(ErrorCodes.RATE_LIMITED);
+  });
 });
 
 describe("D2Result.conflict", () => {

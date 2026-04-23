@@ -153,10 +153,18 @@ export class D2Result<TData = void> {
     });
   }
 
-  /** Create a 400 Validation Failed result. */
+  /**
+   * Create a 400 Validation Failed result.
+   *
+   * The optional `errorCode` overrides the default `VALIDATION_FAILED` so
+   * callers can attach a more specific code (e.g. `PHONE_NO_CHANGE`,
+   * `FILES_INVALID_CONTENT_TYPE`) for client-side discrimination — without
+   * dropping back to raw `D2Result.fail()`.
+   */
   static validationFailed<T = void>(options?: {
     messages?: string[];
     inputErrors?: InputError[];
+    errorCode?: ErrorCode | string;
     traceId?: string;
   }): D2Result<T> {
     return new D2Result<T>({
@@ -164,7 +172,7 @@ export class D2Result<TData = void> {
       messages: options?.messages ?? ["common_errors_VALIDATION_FAILED"],
       inputErrors: options?.inputErrors,
       statusCode: HttpStatusCode.BadRequest,
-      errorCode: ErrorCodes.VALIDATION_FAILED,
+      errorCode: options?.errorCode ?? ErrorCodes.VALIDATION_FAILED,
       traceId: options?.traceId,
     });
   }
@@ -218,6 +226,27 @@ export class D2Result<TData = void> {
       messages: options?.messages ?? ["common_errors_PAYLOAD_TOO_LARGE"],
       statusCode: HttpStatusCode.RequestEntityTooLarge,
       errorCode: ErrorCodes.PAYLOAD_TOO_LARGE,
+      traceId: options?.traceId,
+    });
+  }
+
+  /**
+   * Create a 429 Too Many Requests result (rate limited).
+   *
+   * The optional `errorCode` overrides the default `RATE_LIMITED` so callers
+   * can attach a more specific code (e.g. `OTP_RATE_LIMITED`) for client-side
+   * discrimination.
+   */
+  static tooManyRequests<T = void>(options?: {
+    messages?: string[];
+    errorCode?: ErrorCode | string;
+    traceId?: string;
+  }): D2Result<T> {
+    return new D2Result<T>({
+      success: false,
+      messages: options?.messages ?? ["common_errors_TOO_MANY_REQUESTS"],
+      statusCode: HttpStatusCode.TooManyRequests,
+      errorCode: options?.errorCode ?? ErrorCodes.RATE_LIMITED,
       traceId: options?.traceId,
     });
   }

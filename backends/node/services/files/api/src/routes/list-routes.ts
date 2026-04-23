@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { ServiceScope } from "@d2/di";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { D2Result } from "@d2/result";
 import { IListFilesKey } from "@d2/files-app";
 import { TK } from "@d2/i18n";
 import { SCOPE_KEY } from "../context-keys.js";
@@ -21,12 +22,9 @@ export function createListRoutes(): Hono {
 
     if (!contextKey || !relatedEntityId) {
       return c.json(
-        {
-          success: false,
-          statusCode: 400,
+        D2Result.validationFailed({
           messages: [TK.files.errors.LIST_QUERY_PARAMS_REQUIRED],
-          data: null,
-        },
+        }),
         400 as ContentfulStatusCode,
       );
     }
@@ -42,15 +40,7 @@ export function createListRoutes(): Hono {
       offset,
     });
 
-    return c.json(
-      {
-        success: result.success,
-        statusCode: result.statusCode,
-        messages: result.messages,
-        data: result.data ?? null,
-      },
-      result.statusCode as ContentfulStatusCode,
-    );
+    return c.json(result, result.statusCode as ContentfulStatusCode);
   });
 
   return app;

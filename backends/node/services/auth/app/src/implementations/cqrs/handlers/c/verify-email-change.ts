@@ -91,9 +91,8 @@ export class VerifyEmailChange
 
     if (decoded.attempts >= OTP_VERIFY.MAX_ATTEMPTS) {
       await this.verificationStore.deleteById(record.id);
-      return D2Result.fail({
+      return D2Result.tooManyRequests({
         messages: [TK.common.errors.TOO_MANY_REQUESTS],
-        statusCode: 429,
         errorCode: "OTP_MAX_ATTEMPTS",
       });
     }

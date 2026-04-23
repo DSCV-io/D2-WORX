@@ -66,9 +66,8 @@ export class RequestPhoneChange
     // 2. Rate limit.
     const cooldown = await this.otpRateLimit.getCooldownSeconds(input.userId, "phone");
     if (cooldown > 0) {
-      return D2Result.fail({
+      return D2Result.tooManyRequests({
         messages: [TK.common.errors.TOO_MANY_REQUESTS],
-        statusCode: 429,
         errorCode: "OTP_RATE_LIMITED",
       });
     }
@@ -77,9 +76,8 @@ export class RequestPhoneChange
     //    be in use by another user.
     const userResult = await this.getUserById.handleAsync({ userId: input.userId });
     if (userResult.success && userResult.data?.user.phone === input.newPhone) {
-      return D2Result.fail({
+      return D2Result.validationFailed({
         messages: [TK.common.errors.BAD_REQUEST],
-        statusCode: 400,
         errorCode: "PHONE_NO_CHANGE",
       });
     }

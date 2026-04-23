@@ -143,10 +143,7 @@ export class ProcessFile
     // Resolve content category
     const category = resolveContentCategory(file.contentType);
     if (!category) {
-      return D2Result.fail({
-        statusCode: 400,
-        errorCode: "FILES_INVALID_CONTENT_TYPE",
-      });
+      return D2Result.validationFailed({ errorCode: "FILES_INVALID_CONTENT_TYPE" });
     }
 
     const isImage = category === "image";
