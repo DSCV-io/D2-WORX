@@ -7,3 +7,4 @@ export {
   DEFAULT_REQUEST_ENRICHMENT_OPTIONS,
 } from "./request-enrichment-options.js";
 export { enrichRequest } from "./enrich-request.js";
+export { isInfrastructurePath } from "./infrastructure-paths.js";

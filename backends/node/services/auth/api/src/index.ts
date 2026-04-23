@@ -4,10 +4,17 @@ export { createApp } from "./composition-root.js";
 export type { AppOverrides } from "./composition-root.js";
 export type { SessionVariables } from "./middleware/session.js";
 
+// Exported for security-conformance tests that exercise the Hono app builder
+// directly (e.g., assert fail-closed behavior on empty AUTH_API_KEYS) without
+// spinning up the full composition root (which would require Postgres + Redis).
+export { buildHonoApp } from "./setup/hono-app-setup.js";
+export type { HonoAppOptions } from "./setup/hono-app-setup.js";
+
 // Context key constants
 export { USER_KEY, SESSION_KEY, SCOPE_KEY, REQUEST_CONTEXT_KEY } from "./context-keys.js";
 
 // Middleware factories (exported for testing)
+export { createCorsMiddleware, AUTH_CUSTOM_REQUEST_HEADERS } from "./middleware/cors.js";
 export { createCsrfMiddleware } from "./middleware/csrf.js";
 export { createRequestEnrichmentMiddleware } from "./middleware/request-enrichment.js";
 export { createDistributedRateLimitMiddleware } from "./middleware/distributed-rate-limit.js";

@@ -117,23 +117,30 @@ export function buildHonoApp(options: HonoAppOptions): Hono {
       logger,
     ),
   );
-  if (config.authApiKeys?.length) {
-    // BetterAuth routes (/api/auth/*) are public (JWKS, sign-in, sign-up, etc.) —
-    // other services must fetch JWKS without an API key. Only non-auth routes
-    // (custom endpoints: emulation, org contacts, invitations) require S2S trust.
-    const serviceKeyMiddleware = createServiceKeyMiddleware(config.authApiKeys, { require: true });
-    app.use("*", async (c, next) => {
-      if (c.req.path.startsWith("/api/auth/")) {
-        return next();
-      }
-      return serviceKeyMiddleware(c, next);
-    });
-    logger.info(
-      `Auth API service key authentication enabled (${config.authApiKeys.length} key(s), required — /api/auth/* exempt)`,
+  // Fail-closed: if no service keys are configured, refuse to start. Every
+  // protected non-`/api/auth/*` route (account, emulation, org-contacts,
+  // invitations) requires S2S trust — silently skipping the middleware on
+  // empty config would leave them open. Mirrors the sibling gRPC servers
+  // (`grpc-server-setup.ts`, comms / files gRPC) which throw the same way.
+  if (!config.authApiKeys?.length) {
+    throw new Error(
+      "AUTH_API_KEYS not configured. HTTP server requires at least one API key (fail-closed).",
     );
-  } else {
-    logger.warn("Auth API started WITHOUT service key requirement — all requests accepted");
   }
+  // BetterAuth routes (/api/auth/*) are public (JWKS, sign-in, sign-up, etc.) —
+  // other services must fetch JWKS without an API key. Only non-auth routes
+  // (custom endpoints: account, emulation, org-contacts, invitations) require
+  // S2S trust.
+  const serviceKeyMiddleware = createServiceKeyMiddleware(config.authApiKeys, { require: true });
+  app.use("*", async (c, next) => {
+    if (c.req.path.startsWith("/api/auth/")) {
+      return next();
+    }
+    return serviceKeyMiddleware(c, next);
+  });
+  logger.info(
+    `Auth API service key authentication enabled (${config.authApiKeys.length} key(s), required — /api/auth/* exempt)`,
+  );
   app.use("*", createRequestContextLoggingMiddleware(logger));
   app.use("*", createAmbientScopeMiddleware());
   app.use("*", createDistributedRateLimitMiddleware(rateLimitCheck));

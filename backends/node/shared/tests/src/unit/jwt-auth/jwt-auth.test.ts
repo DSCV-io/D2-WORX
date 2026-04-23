@@ -175,13 +175,26 @@ describe("checkFingerprint", () => {
     expect(result.messages).toEqual(expect.arrayContaining([expect.stringContaining("mismatch")]));
   });
 
-  it("passes when no fp claim is present (backward compat)", async () => {
+  it("rejects when no fp claim is present (fail-closed by default)", async () => {
+    // The old behavior was a soft-pass for "backward compat." Any future
+    // issuer or dev token without `fp` could bypass binding entirely. New
+    // default is fail-closed; opt-in via `allowMissingClaim: true` for
+    // explicit dev paths.
     const result = await checkFingerprint({}, "Any UA", "Any Accept");
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
+    expect(result.statusCode).toBe(401);
   });
 
-  it("passes when fp claim is not a string", async () => {
+  it("rejects when fp claim is not a string (fail-closed by default)", async () => {
     const result = await checkFingerprint({ fp: 12345 }, "UA", "Accept");
+    expect(result.success).toBe(false);
+    expect(result.statusCode).toBe(401);
+  });
+
+  it("passes missing fp claim only when allowMissingClaim is explicitly opted in", async () => {
+    const result = await checkFingerprint({}, "Any UA", "Any Accept", {
+      allowMissingClaim: true,
+    });
     expect(result.success).toBe(true);
   });
 
@@ -425,7 +438,10 @@ describe("jwtAuth middleware", () => {
    * Response (on auth failure) or null (if next() was called, meaning auth
    * passed). Also returns the values set on the context via c.set().
    */
-  async function callMiddleware(headers: Record<string, string> = {}): Promise<{
+  async function callMiddleware(
+    headers: Record<string, string> = {},
+    options: { fingerprintCheck?: boolean } = {},
+  ): Promise<{
     response: Response | null;
     setValues: Record<string, unknown>;
   }> {
@@ -433,6 +449,12 @@ describe("jwtAuth middleware", () => {
       jwksUrl,
       issuer: TEST_ISSUER,
       audience: TEST_AUDIENCE,
+      // Default off for most tests — the integration tests sign tokens
+      // without `fp` and aren't about fingerprint binding. Tests that DO
+      // want to exercise fp behavior pass `{ fingerprintCheck: true }`.
+      // The strict-default behavior of `checkFingerprint` itself is
+      // asserted in the unit tests above.
+      fingerprintCheck: options.fingerprintCheck ?? false,
     });
 
     const { ctx, getSetValues } = createMockContext(headers);
@@ -539,11 +561,14 @@ describe("jwtAuth middleware", () => {
 
     const token = await signToken({ sub: "user-1", fp });
 
-    const { response, setValues } = await callMiddleware({
-      Authorization: `Bearer ${token}`,
-      "User-Agent": ua,
-      Accept: accept,
-    });
+    const { response, setValues } = await callMiddleware(
+      {
+        Authorization: `Bearer ${token}`,
+        "User-Agent": ua,
+        Accept: accept,
+      },
+      { fingerprintCheck: true },
+    );
 
     expect(response).toBeNull();
     const reqCtx = setValues["requestContext"] as Record<string, unknown>;
@@ -564,11 +589,14 @@ describe("jwtAuth middleware", () => {
     const token = await signToken({ sub: "user-1", fp });
 
     // Request comes from a DIFFERENT client (different UA)
-    const { response } = await callMiddleware({
-      Authorization: `Bearer ${token}`,
-      "User-Agent": "Mozilla/5.0 StolenBrowser",
-      Accept: "text/html",
-    });
+    const { response } = await callMiddleware(
+      {
+        Authorization: `Bearer ${token}`,
+        "User-Agent": "Mozilla/5.0 StolenBrowser",
+        Accept: "text/html",
+      },
+      { fingerprintCheck: true },
+    );
 
     expect(response).not.toBeNull();
     expect(response!.status).toBe(401);

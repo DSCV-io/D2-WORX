@@ -21,19 +21,27 @@ async function computeFingerprint(userAgent: string, accept: string): Promise<st
  * current request. A mismatch indicates the token may have been stolen (replayed
  * from a different client).
  *
- * If the `fp` claim is absent, the check passes (backward compatibility).
+ * **Fail-closed by default:** when `fp` is absent the request is rejected. The
+ * old "backward compat" soft-pass let any future issuer/dev token bypass
+ * fingerprint binding entirely. Set `allowMissingClaim: true` to opt back into
+ * the legacy posture for development paths that explicitly mint tokens without
+ * `fp` (none in production).
  *
- * @returns `ok()` on match or absent claim, `unauthorized()` on mismatch.
+ * @returns `ok()` on match (or on absent claim when `allowMissingClaim` is
+ *   true), `unauthorized()` otherwise.
  */
 export async function checkFingerprint(
   payload: JWTPayload,
   userAgent: string,
   accept: string,
+  options: { allowMissingClaim?: boolean } = {},
 ): Promise<D2Result<void>> {
   const expectedFingerprint = payload["fp"];
   if (typeof expectedFingerprint !== "string") {
-    // No fingerprint claim — skip (backward compat)
-    return D2Result.ok();
+    if (options.allowMissingClaim === true) return D2Result.ok();
+    return D2Result.unauthorized({
+      messages: ["Fingerprint claim required."],
+    });
   }
 
   const actual = await computeFingerprint(userAgent, accept);
