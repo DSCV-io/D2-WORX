@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { invalidateAll } from "$app/navigation";
   import * as Avatar from "$lib/client/components/ui/avatar/index.js";
   import * as DropdownMenu from "$lib/client/components/ui/dropdown-menu/index.js";
   import AvatarCropDialog from "./avatar-crop-dialog.svelte";
@@ -72,11 +71,15 @@
 
       invalidateAvatarUrl(data.fileId);
       getAvatarDisplayUrl(data.fileId, "original")
-        .then(async (url) => {
+        .then((url) => {
           displayUrl = url;
           uploadState = "idle";
           toast.success(m.webclient_app_account_profile_avatar_success());
-          await invalidateAll();
+          // Auth's handle-file-processed consumer pushes user:updated for
+          // user_avatar contextKey → root layout listener handles cache-bust
+          // + invalidateAll. The local URL update above gives instant
+          // feedback in this component; the cascading refresh hits other
+          // avatar consumers (header, sidebar) shortly after via SignalR.
         })
         .catch(() => {
           uploadState = "idle";

@@ -24,7 +24,6 @@
     requestPhoneChange,
     verifyPhoneChange,
   } from "$lib/client/rest/account-client.js";
-  import { invalidateAll } from "$app/navigation";
   import LoaderCircleIcon from "@lucide/svelte/icons/loader-circle";
   import CircleCheckIcon from "@lucide/svelte/icons/circle-check";
 
@@ -216,7 +215,8 @@
       }
 
       step = "success";
-      void invalidateAll();
+      // VerifyEmail/PhoneChange handlers push user:updated via SignalR → root
+      // layout listener handles cache-bust + invalidateAll. No local invalidate.
       setTimeout(() => {
         open = false;
       }, 1500);

@@ -34,6 +34,21 @@ export function withApiKeyAuth<T extends Record<string, grpc.UntypedHandleCall>>
   options: ApiKeyAuthOptions,
 ): T {
   const { validKeys, logger, exempt } = options;
+
+  // Fail-closed at construction. If validKeys is empty, every authenticated
+  // RPC would silently reject (correct) but the service signals "key auth is
+  // configured" which is misleading. Throw so misconfiguration surfaces at
+  // startup rather than appearing healthy and rejecting all real traffic.
+  // Mirrors the pattern landed in commit 95ca94c7 for the auth/files API
+  // key middleware (Hono).
+  if (validKeys.size === 0) {
+    throw new Error(
+      "withApiKeyAuth: validKeys is empty. Refusing to wrap service " +
+        "with auth that has no accepted keys (would reject all calls). " +
+        "Provide at least one key or omit the wrapper if auth is intentionally disabled.",
+    );
+  }
+
   const wrapped = {} as Record<string, grpc.UntypedHandleCall>;
 
   for (const [method, handler] of Object.entries(service)) {

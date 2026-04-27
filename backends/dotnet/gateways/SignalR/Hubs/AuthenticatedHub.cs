@@ -55,7 +55,14 @@ public partial class AuthenticatedHub : Hub
     /// <inheritdoc/>
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        LogClientDisconnected(r_logger, Context.ConnectionId);
+        // userId/orgId at disconnect: Context.User survives the disconnect call
+        // (the principal isn't torn down until after this hook returns), so we
+        // can extract the same claims used at connect time. Falls back to "(none)"
+        // for connections that weren't authenticated to begin with.
+        var userId = Context.User?.FindFirst(JwtClaimTypes.SUB)?.Value;
+        var orgId = Context.User?.FindFirst(JwtClaimTypes.ORG_ID)?.Value;
+
+        LogClientDisconnected(r_logger, Context.ConnectionId, userId ?? "(none)", orgId ?? "(none)");
 
         await base.OnDisconnectedAsync(exception);
     }
@@ -63,6 +70,6 @@ public partial class AuthenticatedHub : Hub
     [LoggerMessage(Level = LogLevel.Information, Message = "Client connected: {ConnectionId}, userId={UserId}, orgId={OrgId}")]
     private static partial void LogClientConnected(ILogger logger, string connectionId, string userId, string orgId);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Client disconnected: {ConnectionId}")]
-    private static partial void LogClientDisconnected(ILogger logger, string connectionId);
+    [LoggerMessage(Level = LogLevel.Information, Message = "Client disconnected: {ConnectionId}, userId={UserId}, orgId={OrgId}")]
+    private static partial void LogClientDisconnected(ILogger logger, string connectionId, string userId, string orgId);
 }

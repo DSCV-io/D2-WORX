@@ -52,15 +52,21 @@ public partial class ServiceKeyInterceptor : Interceptor
         }
 
         var apiKey = context.RequestHeaders.GetValue("x-api-key");
+
+        // Peer for forensics: pre-auth, so we have no userId/orgId yet.
+        // Peer captures the calling host (e.g., "ipv4:10.0.0.42:54321") so SecOps
+        // can correlate failed-auth log lines with rate-limit / WhoIs data.
+        var peer = context.Peer;
+
         if (string.IsNullOrEmpty(apiKey))
         {
-            LogMissingApiKey(r_logger, context.Method);
+            LogMissingApiKey(r_logger, context.Method, peer);
             throw new RpcException(new Status(StatusCode.Unauthenticated, "Missing x-api-key header."));
         }
 
         if (!ConstantTimeContains(r_validKeyBytes, apiKey))
         {
-            LogInvalidApiKey(r_logger, context.Method);
+            LogInvalidApiKey(r_logger, context.Method, peer);
             throw new RpcException(new Status(StatusCode.Unauthenticated, "Invalid API key."));
         }
 
@@ -89,9 +95,9 @@ public partial class ServiceKeyInterceptor : Interceptor
         return found;
     }
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Missing x-api-key header on gRPC call {Method}")]
-    private static partial void LogMissingApiKey(ILogger logger, string method);
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Missing x-api-key header on gRPC call {Method} from {Peer}")]
+    private static partial void LogMissingApiKey(ILogger logger, string method, string peer);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Invalid API key on gRPC call {Method}")]
-    private static partial void LogInvalidApiKey(ILogger logger, string method);
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Invalid API key on gRPC call {Method} from {Peer}")]
+    private static partial void LogInvalidApiKey(ILogger logger, string method, string peer);
 }

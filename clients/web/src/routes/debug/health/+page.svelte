@@ -31,6 +31,16 @@
     if (status === "degraded") return "bg-yellow-100 dark:bg-yellow-950";
     return "bg-red-100 dark:bg-red-950";
   }
+
+  // Map raw API status strings to localized labels. Falls back to the raw
+  // status string for unknown values (defensive — surfaces unexpected new
+  // statuses the API might add without breaking the UI).
+  function statusLabel(status: string): string {
+    if (status === "healthy") return m.webclient_debug_health_status_healthy();
+    if (status === "degraded") return m.webclient_debug_health_status_degraded();
+    if (status === "unhealthy") return m.webclient_debug_health_status_unhealthy();
+    return status;
+  }
 </script>
 
 <svelte:head>
@@ -113,7 +123,7 @@
         {/if}
         <div>
           <p class="font-semibold {statusColor(health.status)}">
-            {health.status.charAt(0).toUpperCase() + health.status.slice(1)}
+            {statusLabel(health.status)}
           </p>
           <p class="text-muted-foreground text-xs">
             {new Date(health.timestamp).toLocaleString()}
@@ -140,11 +150,11 @@
                   {:else}
                     <CircleXIcon class="size-4" />
                   {/if}
-                  {service.status}
+                  {statusLabel(service.status)}
                 </span>
               </Card.Title>
               <Card.Description>
-                {service.latencyMs}ms round-trip
+                {m.webclient_debug_health_round_trip({ ms: service.latencyMs })}
               </Card.Description>
             </Card.Header>
             <Card.Content>
@@ -159,7 +169,7 @@
                       <dd class="flex items-center gap-2">
                         <span class="text-muted-foreground text-xs">{comp.latencyMs}ms</span>
                         <span class="text-xs font-medium {statusColor(comp.status)}">
-                          {comp.status}
+                          {statusLabel(comp.status)}
                         </span>
                       </dd>
                     </div>
@@ -187,7 +197,7 @@
         <Card.Header>
           <Card.Title class="text-base">{m.webclient_debug_health_raw_response()}</Card.Title>
           <Card.Description>
-            <code>GET /api/health</code> from .NET Gateway
+            {m.webclient_debug_health_source_gateway({ path: "GET /api/health" })}
           </Card.Description>
         </Card.Header>
         <Card.Content>

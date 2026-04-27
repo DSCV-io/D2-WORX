@@ -166,21 +166,18 @@ describe("withApiKeyAuth interceptor", () => {
     );
   });
 
-  it("should reject any key when the valid key set is empty", () => {
+  it("throws at construction when validKeys is empty (fail-closed posture)", () => {
+    // Behavior changed in commit that closed review.md m24: instead of
+    // wrapping the service and rejecting every inbound call (silently signaling
+    // "auth is configured" while accepting nothing), the wrapper now throws
+    // at construction so misconfiguration surfaces at startup. Mirrors the
+    // pattern landed in commit 95ca94c7 for the auth/files Hono service-key
+    // middleware. Cross-tested in @d2/shared-tests' with-api-key-auth.test.ts.
     const logger = createMockLogger();
     const service = createMockService();
-    const wrapped = withApiKeyAuth(service, { validKeys: new Set<string>(), logger });
 
-    const call = createMockCall("some-key");
-    const callback = vi.fn();
-
-    (wrapped.getPreferences as grpc.handleUnaryCall<unknown, unknown>)(call, callback);
-
-    expect(callback).toHaveBeenCalledWith(
-      expect.objectContaining({
-        code: grpc.status.UNAUTHENTICATED,
-        message: "Invalid API key.",
-      }),
+    expect(() => withApiKeyAuth(service, { validKeys: new Set<string>(), logger })).toThrow(
+      /validKeys is empty/,
     );
   });
 });

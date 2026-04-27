@@ -19,7 +19,6 @@ function makeMinimalGrpcOptions(
   overrides: Partial<CommsGrpcServerOptions> = {},
 ): CommsGrpcServerOptions {
   return {
-     
     provider: {} as any,
     grpcPort: 0,
     commsApiKeys: [],
@@ -29,7 +28,6 @@ function makeMinimalGrpcOptions(
       warn: () => {},
       error: () => {},
       fatal: () => {},
-       
     } as any,
     ...overrides,
   };
@@ -47,7 +45,6 @@ describe("§5 Security — comms-api gRPC conformance", () => {
 
     it("refuses to build the gRPC server when commsApiKeys is undefined AND allowUnauthenticated is not set", async () => {
       await expect(
-         
         buildGrpcServer(makeMinimalGrpcOptions({ commsApiKeys: undefined as any })),
       ).rejects.toThrow(/COMMS_API_KEYS not configured/);
     });

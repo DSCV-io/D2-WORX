@@ -10,6 +10,8 @@ import {
   ICreateUserContactKey,
   IGetUserIdByIdentifierKey,
   ICancelUserDeletionKey,
+  IInvalidateUserSessionCacheKey,
+  IPushUserUpdatedKey,
 } from "@d2/auth-app";
 import type { AuthHooks } from "@d2/auth-infra";
 import { signUpPrefsStorage } from "@d2/auth-infra";
@@ -253,6 +255,35 @@ export function createAuthCallbacks(
             messages: result.messages,
           });
         }
+      } finally {
+        scope.dispose();
+      }
+    },
+
+    invalidateAndPushUserUpdated: async (input) => {
+      // Invoked from databaseHooks.account.update.after on password change
+      // (and any future writes that need to broadcast a "your data changed"
+      // signal). Bust Redis session cache first (so the next session lookup
+      // re-reads PG truth), then push the SignalR event so every open tab
+      // refreshes via the root-layout listener (`bustSessionCache()` +
+      // `invalidateAll()`). Both calls are best-effort — the underlying
+      // mutation has already committed.
+      const scope = createCallbackScope();
+      try {
+        const invalidate = scope.resolve(IInvalidateUserSessionCacheKey);
+        const push = scope.resolve(IPushUserUpdatedKey);
+        await invalidate.handleAsync({ userId: input.userId }).catch((err: unknown) => {
+          logger.warn("invalidateAndPushUserUpdated: cache bust failed (non-blocking)", {
+            userId: input.userId,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        });
+        await push.handleAsync({ userId: input.userId }).catch((err: unknown) => {
+          logger.warn("invalidateAndPushUserUpdated: SignalR push failed (non-blocking)", {
+            userId: input.userId,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        });
       } finally {
         scope.dispose();
       }

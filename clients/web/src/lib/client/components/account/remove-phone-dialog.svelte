@@ -9,7 +9,6 @@
   import { z } from "zod";
   import { removePhone } from "$lib/client/rest/account-client.js";
   import { translateMessage } from "$lib/client/utils/translate-message.js";
-  import { invalidateAll } from "$app/navigation";
   import LoaderCircleIcon from "@lucide/svelte/icons/loader-circle";
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
@@ -42,7 +41,8 @@
           );
           return;
         }
-        void invalidateAll();
+        // RemovePhone handler pushes user:updated via SignalR → root layout
+        // listener handles cache-bust + invalidateAll. No local invalidate.
         open = false;
       } finally {
         submitting = false;

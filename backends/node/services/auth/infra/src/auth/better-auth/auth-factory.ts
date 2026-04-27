@@ -154,6 +154,19 @@ export interface AuthHooks {
    * composition root wires it via a fresh DI scope per call.
    */
   cancelUserDeletion?: (data: { userId: string }) => Promise<void>;
+  /**
+   * Busts the Redis session-cache + pushes a `user:updated` SignalR event
+   * after a password change. The frontend's root-layout listener picks up
+   * the event, calls `bustSessionCache()` + `invalidateAll()`, and every
+   * open tab refreshes its data — including the security tab's active
+   * sessions list (which shrinks if `revokeOtherSessions=true`).
+   *
+   * Fire-and-forget — password change is already committed before this fires.
+   * Without this, components that mutate password-related state would have
+   * to call `invalidateAll()` themselves (which CLAUDE.md §5 SvelteKit
+   * forbids — single source of truth for cache-bust is the SignalR event).
+   */
+  invalidateAndPushUserUpdated?: (input: { userId: string }) => Promise<void>;
 }
 
 /**
@@ -559,6 +572,21 @@ export function createAuth(
                     userId,
                   });
                 });
+
+              // Bust session cache + push user:updated so every open tab
+              // refreshes its data (security tab's session list shrinks if
+              // other sessions were revoked). Without this, the frontend
+              // would have to call invalidateAll() itself — which violates
+              // §5 SvelteKit single-source-of-truth-for-cache-bust rule.
+              hooks.invalidateAndPushUserUpdated?.({ userId }).catch((err: unknown) => {
+                log.warn(
+                  "account.update.after: invalidateAndPushUserUpdated failed (non-critical)",
+                  {
+                    error: err instanceof Error ? err.message : String(err),
+                    userId,
+                  },
+                );
+              });
             } catch (err: unknown) {
               log.warn("account.update.after: failed to look up user for password notification", {
                 error: err instanceof Error ? err.message : String(err),

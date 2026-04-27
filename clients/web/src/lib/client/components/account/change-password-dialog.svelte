@@ -9,7 +9,6 @@
   import { passwordField } from "$lib/shared/forms/schemas.js";
   import { changePassword } from "$lib/client/rest/account-client.js";
   import { translateMessage } from "$lib/client/utils/translate-message.js";
-  import { invalidateAll } from "$app/navigation";
   import { toast } from "svelte-sonner";
   import LoaderCircleIcon from "@lucide/svelte/icons/loader-circle";
 
@@ -70,8 +69,9 @@
             return;
           }
           toast.success(m.webclient_app_account_security_password_changed());
-          // Sessions list may have changed — refresh data loaders.
-          void invalidateAll();
+          // Backend's account.update.after hook pushes user:updated via SignalR
+          // → root layout listener busts session cache + invalidateAll(). No
+          // local invalidate needed — single source of truth for cache-bust.
           open = false;
         } finally {
           submitting = false;

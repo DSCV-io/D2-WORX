@@ -31,32 +31,31 @@ import { checkFingerprint } from "@d2/jwt-auth";
  */
 function makeMinimalOptions(overrides: Partial<HonoAppOptions["config"]> = {}): HonoAppOptions {
   return {
-     
     auth: {} as any,
-     
+
     provider: {} as any,
     config: {
       corsOrigins: ["http://localhost:5173"],
       baseUrl: "http://localhost:3333",
       ...overrides,
     },
-     
+
     translator: {} as any,
-     
+
     findWhoIs: {} as any,
-     
+
     rateLimitCheck: {} as any,
-     
+
     throttleCheck: {} as any,
-     
+
     throttleRecord: {} as any,
-     
+
     checkEmailHandler: {} as any,
     fingerprintStorage: new AsyncLocalStorage<string>(),
     deviceFingerprintStorage: new AsyncLocalStorage<string>(),
     clientFingerprintStorage: new AsyncLocalStorage<string>(),
     serverFingerprintStorage: new AsyncLocalStorage<string>(),
-     
+
     sessionFingerprintMiddleware: (async (_c: unknown, next: () => Promise<void>) => next()) as any,
     logger: {
       debug: () => {},
@@ -65,7 +64,7 @@ function makeMinimalOptions(overrides: Partial<HonoAppOptions["config"]> = {}): 
       error: () => {},
       fatal: () => {},
     },
-     
+
     db: {} as any,
   };
 }

@@ -64,7 +64,11 @@ public partial class RealtimeGatewayService : RealtimeGateway.RealtimeGatewayBas
             .Group(request.Channel)
             .SendAsync("ReceiveEvent", request.Event, request.PayloadJson, context.CancellationToken);
 
-        LogPushedEvent(r_logger, request.Event, request.Channel);
+        // Channel naming convention encodes target identity (e.g. "user:<id>",
+        // "org:<id>"). Logged as a single field so correlation with auth /
+        // SignalR connection logs is straightforward. Peer captures the
+        // calling service for cross-service forensics.
+        LogPushedEvent(r_logger, request.Event, request.Channel, context.Peer);
 
         return new PushResponse
         {
@@ -100,7 +104,7 @@ public partial class RealtimeGatewayService : RealtimeGateway.RealtimeGatewayBas
             request.Channel,
             context.CancellationToken);
 
-        LogRemovedFromChannel(r_logger, request.ConnectionId, request.Channel);
+        LogRemovedFromChannel(r_logger, request.ConnectionId, request.Channel, context.Peer);
 
         return new PushResponse
         {
@@ -158,9 +162,9 @@ public partial class RealtimeGatewayService : RealtimeGateway.RealtimeGatewayBas
         return response;
     }
 
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Pushed event {Event} to channel {Channel}")]
-    private static partial void LogPushedEvent(ILogger logger, string @event, string channel);
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Pushed event {Event} to channel {Channel} from {Peer}")]
+    private static partial void LogPushedEvent(ILogger logger, string @event, string channel, string peer);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Removed connection {ConnectionId} from channel {Channel}")]
-    private static partial void LogRemovedFromChannel(ILogger logger, string connectionId, string channel);
+    [LoggerMessage(Level = LogLevel.Information, Message = "Removed connection {ConnectionId} from channel {Channel} (request from {Peer})")]
+    private static partial void LogRemovedFromChannel(ILogger logger, string connectionId, string channel, string peer);
 }
