@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { FindFileById } from "@d2/files-infra";
+import { GetFileById } from "@d2/files-infra";
 import { createTestContext, createSampleFileRow } from "../../helpers/test-context.js";
 
 function createMockDb(rows: unknown[] = []) {
@@ -10,12 +10,12 @@ function createMockDb(rows: unknown[] = []) {
   return { select, from, where, limit };
 }
 
-describe("FindFileById", () => {
+describe("GetFileById", () => {
   it("should return the mapped file when found", async () => {
     const row = createSampleFileRow();
     const { select } = createMockDb([row]);
     const db = { select } as never;
-    const handler = new FindFileById(db, createTestContext());
+    const handler = new GetFileById(db, createTestContext());
 
     const result = await handler.handleAsync({ id: "file-001" });
 
@@ -29,7 +29,7 @@ describe("FindFileById", () => {
   it("should return notFound when no rows are returned", async () => {
     const { select } = createMockDb([]);
     const db = { select } as never;
-    const handler = new FindFileById(db, createTestContext());
+    const handler = new GetFileById(db, createTestContext());
 
     const result = await handler.handleAsync({ id: "nonexistent-id" });
 
@@ -42,7 +42,7 @@ describe("FindFileById", () => {
     const row2 = createSampleFileRow({ id: "file-002" });
     const { select } = createMockDb([row1, row2]);
     const db = { select } as never;
-    const handler = new FindFileById(db, createTestContext());
+    const handler = new GetFileById(db, createTestContext());
 
     const result = await handler.handleAsync({ id: "file-001" });
 
@@ -64,7 +64,7 @@ describe("FindFileById", () => {
     const row = createSampleFileRow({ status: "ready", variants });
     const { select } = createMockDb([row]);
     const db = { select } as never;
-    const handler = new FindFileById(db, createTestContext());
+    const handler = new GetFileById(db, createTestContext());
 
     const result = await handler.handleAsync({ id: "file-001" });
 
@@ -80,7 +80,7 @@ describe("FindFileById", () => {
     });
     const { select } = createMockDb([row]);
     const db = { select } as never;
-    const handler = new FindFileById(db, createTestContext());
+    const handler = new GetFileById(db, createTestContext());
 
     const result = await handler.handleAsync({ id: "file-001" });
 
@@ -93,7 +93,7 @@ describe("FindFileById", () => {
     const row = createSampleFileRow();
     const { select } = createMockDb([row]);
     const db = { select } as never;
-    const handler = new FindFileById(db, createTestContext());
+    const handler = new GetFileById(db, createTestContext());
 
     const result = await handler.handleAsync({ id: "file-001" });
 
@@ -107,7 +107,7 @@ describe("FindFileById", () => {
     const from = vi.fn().mockReturnValue({ where });
     const select = vi.fn().mockReturnValue({ from });
     const db = { select } as never;
-    const handler = new FindFileById(db, createTestContext());
+    const handler = new GetFileById(db, createTestContext());
 
     const result = await handler.handleAsync({ id: "file-001" });
 
@@ -118,11 +118,39 @@ describe("FindFileById", () => {
   it("should call db.select with correct where clause using input.id", async () => {
     const { select, where } = createMockDb([]);
     const db = { select } as never;
-    const handler = new FindFileById(db, createTestContext());
+    const handler = new GetFileById(db, createTestContext());
 
     await handler.handleAsync({ id: "my-file-id" });
 
     expect(select).toHaveBeenCalledTimes(1);
     expect(where).toHaveBeenCalledTimes(1);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Input validation
+  // ---------------------------------------------------------------------------
+
+  it("should reject empty id with validationFailed", async () => {
+    const { select } = createMockDb([]);
+    const db = { select } as never;
+    const handler = new GetFileById(db, createTestContext());
+
+    const result = await handler.handleAsync({ id: "" });
+
+    expect(result).toBeFailure();
+    expect(result.statusCode).toBe(400);
+    expect(select).not.toHaveBeenCalled();
+  });
+
+  it("should reject id over 36 chars with validationFailed", async () => {
+    const { select } = createMockDb([]);
+    const db = { select } as never;
+    const handler = new GetFileById(db, createTestContext());
+
+    const result = await handler.handleAsync({ id: "a".repeat(37) });
+
+    expect(result).toBeFailure();
+    expect(result.statusCode).toBe(400);
+    expect(select).not.toHaveBeenCalled();
   });
 });

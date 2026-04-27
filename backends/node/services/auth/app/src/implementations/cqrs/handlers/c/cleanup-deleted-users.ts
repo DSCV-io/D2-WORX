@@ -3,7 +3,7 @@ import { BaseHandler, type IHandlerContext } from "@d2/handler";
 import { D2Result } from "@d2/result";
 import type { DistributedCache } from "@d2/interfaces";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
-import type { IFindDeletedUsersToPurgeHandler } from "../../../../interfaces/repository/handlers/r/find-deleted-users-to-purge.js";
+import type { IGetDeletedUsersToPurgeHandler } from "../../../../interfaces/repository/handlers/r/get-deleted-users-to-purge.js";
 import type { AuthJobOptions } from "../../../../auth-job-options.js";
 
 type Input = Commands.CleanupDeletedUsersInput;
@@ -19,7 +19,7 @@ const LOCK_KEY = "lock:job:cleanup-deleted-users";
  * with zero counts (Dkron retries on its next tick).
  *
  * Workload shape:
- *   1. FindDeletedUsersToPurge cursor-pages internally → flat string[] of
+ *   1. GetDeletedUsersToPurge cursor-pages internally → flat string[] of
  *      every eligible user id (status='pending_deletion' AND deleted_at <
  *      now - graceCutoffMs). Bounded memory via DEFAULT_BATCH_SIZE per chunk;
  *      the caller sees a single flat list.
@@ -40,7 +40,7 @@ export class CleanupDeletedUsers
   constructor(
     private readonly acquireLock: DistributedCache.IAcquireLockHandler,
     private readonly releaseLock: DistributedCache.IReleaseLockHandler,
-    private readonly findDeletedUsersToPurge: IFindDeletedUsersToPurgeHandler,
+    private readonly getDeletedUsersToPurge: IGetDeletedUsersToPurgeHandler,
     private readonly finalizeDeletedUser: Commands.IFinalizeDeletedUserHandler,
     private readonly options: AuthJobOptions,
     context: IHandlerContext,
@@ -73,9 +73,9 @@ export class CleanupDeletedUsers
 
     try {
       const graceCutoff = new Date(Date.now() - this.options.userDeletionGracePeriodMs);
-      const findResult = await this.findDeletedUsersToPurge.handleAsync({ graceCutoff });
-      if (!findResult.success) return D2Result.bubbleFail(findResult);
-      const ids = findResult.data?.userIds ?? [];
+      const purgeListResult = await this.getDeletedUsersToPurge.handleAsync({ graceCutoff });
+      if (!purgeListResult.success) return D2Result.bubbleFail(purgeListResult);
+      const ids = purgeListResult.data?.userIds ?? [];
 
       if (ids.length === 0) {
         return D2Result.ok({

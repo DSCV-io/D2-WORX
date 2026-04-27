@@ -35,8 +35,9 @@
     "@grpc/grpc-js": "1.14.3",
     "@testcontainers/rabbitmq": "11.12.0",
     "@testcontainers/redis": "11.12.0",
+    "@types/node": "22.18.8",
     "jose": "6.0.11",
-    "ioredis": "5.8.0",
+    "ioredis": "5.10.0",
     "rabbitmq-client": "5.0.8",
     "vitest": "4.0.18",
     "zod": "4.3.6"

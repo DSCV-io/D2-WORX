@@ -16,7 +16,9 @@ export const HEAD_STORAGE_OBJECT_REDACTION: RedactionSpec = {
 };
 
 /** Checks if an object exists in storage and returns its metadata. */
-export interface IHeadStorageObject
-  extends IHandler<HeadStorageObjectInput, HeadStorageObjectOutput> {
+export interface IHeadStorageObject extends IHandler<
+  HeadStorageObjectInput,
+  HeadStorageObjectOutput
+> {
   readonly redaction: RedactionSpec;
 }

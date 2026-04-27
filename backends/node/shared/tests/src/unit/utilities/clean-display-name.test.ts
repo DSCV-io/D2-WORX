@@ -16,7 +16,7 @@ describe("cleanDisplayStr", () => {
     ["Jos\u00e9 Mar\u00eda", "Jos\u00e9 Mar\u00eda"],
     ["\u7530\u4E2D\u592A\u90CE", "\u7530\u4E2D\u592A\u90CE"],
     ["M\u00fcller, Hans", "M\u00fcller, Hans"],
-  ])('passes through valid name "%s"', (input, expected) => {
+  ])('passes through valid name "%s"', (input: string, expected: string) => {
     expect(cleanDisplayStr(input)).toBe(expected);
   });
 
@@ -29,7 +29,7 @@ describe("cleanDisplayStr", () => {
     ["test`backtick`", "testbacktick"],
     ["$100 dollars", "100 dollars"],
     ['he said "hello"', "he said hello"],
-  ])('strips dangerous characters from "%s" to "%s"', (input, expected) => {
+  ])('strips dangerous characters from "%s" to "%s"', (input: string, expected: string) => {
     expect(cleanDisplayStr(input)).toBe(expected);
   });
 

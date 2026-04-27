@@ -103,10 +103,8 @@ export class VerifyPhoneChange
 
     // Code correct — fetch user (for current email + phone + locale) and contact (for sync).
     const userResult = await this.getUserById.handleAsync({ userId: input.userId });
-    const userEmail = userResult.success ? (userResult.data?.user.email ?? null) : null;
-    const userLocale = resolveLocale(
-      userResult.success ? (userResult.data?.user.locale ?? undefined) : undefined,
-    );
+    const userEmail = userResult.success ? userResult.data?.user.email : undefined;
+    const userLocale = resolveLocale(userResult.success ? userResult.data?.user.locale : undefined);
     const newPhone = decoded.pendingValue;
 
     const extKey = { contextKey: GEO_CONTEXT_KEYS.USER, relatedEntityId: input.userId };
@@ -154,6 +152,7 @@ export class VerifyPhoneChange
           userId: input.userId,
           phone: newPhone,
           phoneVerified: true,
+          clear: false,
         }),
     });
     if (!sagaResult.success) return D2Result.bubbleFail(sagaResult);

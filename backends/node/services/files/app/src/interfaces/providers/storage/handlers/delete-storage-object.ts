@@ -12,7 +12,9 @@ export const DELETE_STORAGE_OBJECT_REDACTION: RedactionSpec = {
 };
 
 /** Deletes a single object by key from object storage. */
-export interface IDeleteStorageObject
-  extends IHandler<DeleteStorageObjectInput, DeleteStorageObjectOutput> {
+export interface IDeleteStorageObject extends IHandler<
+  DeleteStorageObjectInput,
+  DeleteStorageObjectOutput
+> {
   readonly redaction: RedactionSpec;
 }

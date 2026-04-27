@@ -35,7 +35,7 @@ import {
   ICreateUserContactKey,
   IGetSignInEventsKey,
   IGetMySessionsKey,
-  IFindActiveSessionsByUserIdKey,
+  IGetActiveSessionsByUserIdKey,
   IGetActiveConsentsKey,
   IGetOrgContactsKey,
   ICheckSignInThrottleKey,
@@ -127,7 +127,7 @@ import {
   IFinalizeDeletedUserKey,
   ICleanupDeletedUsersKey,
   IUpdateUserStatusKey,
-  IFindDeletedUsersToPurgeKey,
+  IGetDeletedUsersToPurgeKey,
   IAnonymizeUserKey,
   ICheckSoleOwnerOrgsKey,
   IDeleteAllUserSessionsKey,
@@ -392,7 +392,7 @@ export function addAuthApp(
     IGetMySessionsKey,
     (sp) =>
       new GetMySessions(
-        sp.resolve(IFindActiveSessionsByUserIdKey),
+        sp.resolve(IGetActiveSessionsByUserIdKey),
         sp.resolve(IFindWhoIsKey),
         sp.resolve(IHandlerContextKey),
       ),
@@ -565,7 +565,7 @@ export function addAuthApp(
       new CleanupDeletedUsers(
         sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
         sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
-        sp.resolve(IFindDeletedUsersToPurgeKey),
+        sp.resolve(IGetDeletedUsersToPurgeKey),
         sp.resolve(IFinalizeDeletedUserKey),
         jobOptions,
         sp.resolve(IHandlerContextKey),

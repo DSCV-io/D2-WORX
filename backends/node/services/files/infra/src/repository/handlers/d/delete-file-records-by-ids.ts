@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { inArray } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { BaseHandler, type IHandlerContext } from "@d2/handler";
@@ -8,6 +9,10 @@ import type {
   IDeleteFileRecordsByIdsHandler,
 } from "@d2/files-app";
 import { file } from "../../schema/tables.js";
+
+const schema = z.object({
+  ids: z.array(z.string().min(1).max(36)).max(1000),
+}) as unknown as z.ZodType<I>;
 
 export class DeleteFileRecordsByIds
   extends BaseHandler<I, O>
@@ -21,6 +26,9 @@ export class DeleteFileRecordsByIds
   }
 
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {
+    const validation = this.validateInput(schema, input);
+    if (!validation.success) return D2Result.bubbleFail(validation);
+
     if (input.ids.length === 0) {
       return D2Result.ok({ data: { rowsAffected: 0 } });
     }

@@ -53,7 +53,7 @@
         const result = await onSubmit(f.data.currentPassword);
         if (!result.success) {
           if (result.statusCode === 401) {
-            errorMessage = m.account_password_incorrect();
+            errorMessage = m.webclient_app_account_password_incorrect();
             $formData.currentPassword = "";
             return;
           }

@@ -4,7 +4,7 @@ import { D2Result } from "@d2/result";
 import type { DistributedCache } from "@d2/interfaces";
 import type { File, FileStatus } from "@d2/files-domain";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
-import type { IFindStaleFilesHandler } from "../../../../interfaces/repository/handlers/r/find-stale-files.js";
+import type { IGetStaleFilesHandler } from "../../../../interfaces/repository/handlers/r/get-stale-files.js";
 import type { IDeleteFileRecordsByIdsHandler } from "../../../../interfaces/repository/handlers/d/delete-file-records-by-ids.js";
 import type { FileStorageHandlers } from "../../../../interfaces/providers/storage/handlers/index.js";
 import type { FilesJobOptions } from "../../../../files-job-options.js";
@@ -14,7 +14,6 @@ type Input = Commands.RunCleanupInput;
 type Output = Commands.RunCleanupOutput;
 
 const LOCK_KEY = "lock:job:files-cleanup";
-const CLEANUP_BATCH_SIZE = 100;
 
 /**
  * Unified cleanup job for stale files across all non-terminal statuses.
@@ -27,7 +26,7 @@ const CLEANUP_BATCH_SIZE = 100;
 export class RunCleanup extends BaseHandler<Input, Output> implements Commands.IRunCleanupHandler {
   private readonly acquireLock: DistributedCache.IAcquireLockHandler;
   private readonly releaseLock: DistributedCache.IReleaseLockHandler;
-  private readonly findStaleFiles: IFindStaleFilesHandler;
+  private readonly getStaleFiles: IGetStaleFilesHandler;
   private readonly deleteByIds: IDeleteFileRecordsByIdsHandler;
   private readonly storage: FileStorageHandlers;
   private readonly options: FilesJobOptions;
@@ -35,7 +34,7 @@ export class RunCleanup extends BaseHandler<Input, Output> implements Commands.I
   constructor(
     acquireLock: DistributedCache.IAcquireLockHandler,
     releaseLock: DistributedCache.IReleaseLockHandler,
-    findStaleFiles: IFindStaleFilesHandler,
+    getStaleFiles: IGetStaleFilesHandler,
     deleteByIds: IDeleteFileRecordsByIdsHandler,
     storage: FileStorageHandlers,
     options: FilesJobOptions,
@@ -44,7 +43,7 @@ export class RunCleanup extends BaseHandler<Input, Output> implements Commands.I
     super(context);
     this.acquireLock = acquireLock;
     this.releaseLock = releaseLock;
-    this.findStaleFiles = findStaleFiles;
+    this.getStaleFiles = getStaleFiles;
     this.deleteByIds = deleteByIds;
     this.storage = storage;
     this.options = options;
@@ -105,10 +104,10 @@ export class RunCleanup extends BaseHandler<Input, Output> implements Commands.I
   }
 
   private async cleanStatus(status: FileStatus, cutoffDate: Date): Promise<number> {
-    const result = await this.findStaleFiles.handleAsync({
+    const result = await this.getStaleFiles.handleAsync({
       status,
       cutoffDate,
-      limit: CLEANUP_BATCH_SIZE,
+      limit: this.options.cleanupBatchSize,
     });
     if (!result.success || !result.data?.files.length) return 0;
 

@@ -158,8 +158,10 @@
 <Dialog.Root bind:open>
   <Dialog.Content class="max-w-sm">
     <Dialog.Header>
-      <Dialog.Title>{m.account_profile_avatar_crop_title()}</Dialog.Title>
-      <Dialog.Description>{m.account_profile_avatar_crop_description()}</Dialog.Description>
+      <Dialog.Title>{m.webclient_app_account_profile_avatar_crop_title()}</Dialog.Title>
+      <Dialog.Description
+        >{m.webclient_app_account_profile_avatar_crop_description()}</Dialog.Description
+      >
     </Dialog.Header>
 
     <div class="flex flex-col items-center gap-4 py-4">
@@ -196,7 +198,7 @@
         variant="ghost"
         onclick={() => (open = false)}>{m.common_ui_cancel()}</Button
       >
-      <Button onclick={handleCrop}>{m.account_profile_avatar_crop_confirm()}</Button>
+      <Button onclick={handleCrop}>{m.webclient_app_account_profile_avatar_crop_confirm()}</Button>
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>

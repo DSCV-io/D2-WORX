@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { FindFilesByContext } from "@d2/files-infra";
+import { GetFilesByContext } from "@d2/files-infra";
 import { createTestContext, createSampleFileRow } from "../../helpers/test-context.js";
 
 function createMockDb(options: { rows?: unknown[]; total?: number } = {}) {
@@ -30,13 +30,13 @@ function createMockDb(options: { rows?: unknown[]; total?: number } = {}) {
   return { select, dataWhere, limit, offset, orderBy };
 }
 
-describe("FindFilesByContext", () => {
+describe("GetFilesByContext", () => {
   it("should return files and total count on success", async () => {
     const row1 = createSampleFileRow({ id: "file-001" });
     const row2 = createSampleFileRow({ id: "file-002" });
     const { select } = createMockDb({ rows: [row1, row2], total: 2 });
     const db = { select } as never;
-    const handler = new FindFilesByContext(db, createTestContext());
+    const handler = new GetFilesByContext(db, createTestContext());
 
     const result = await handler.handleAsync({
       contextKey: "user_avatar",
@@ -51,7 +51,7 @@ describe("FindFilesByContext", () => {
   it("should return empty files and zero total when no matches", async () => {
     const { select } = createMockDb({ rows: [], total: 0 });
     const db = { select } as never;
-    const handler = new FindFilesByContext(db, createTestContext());
+    const handler = new GetFilesByContext(db, createTestContext());
 
     const result = await handler.handleAsync({
       contextKey: "user_avatar",
@@ -66,7 +66,7 @@ describe("FindFilesByContext", () => {
   it("should default limit to 50 when not provided", async () => {
     const { select, limit } = createMockDb();
     const db = { select } as never;
-    const handler = new FindFilesByContext(db, createTestContext());
+    const handler = new GetFilesByContext(db, createTestContext());
 
     await handler.handleAsync({
       contextKey: "user_avatar",
@@ -79,7 +79,7 @@ describe("FindFilesByContext", () => {
   it("should cap limit at 100 when larger value provided", async () => {
     const { select, limit } = createMockDb();
     const db = { select } as never;
-    const handler = new FindFilesByContext(db, createTestContext());
+    const handler = new GetFilesByContext(db, createTestContext());
 
     await handler.handleAsync({
       contextKey: "user_avatar",
@@ -93,7 +93,7 @@ describe("FindFilesByContext", () => {
   it("should use provided limit when within max", async () => {
     const { select, limit } = createMockDb();
     const db = { select } as never;
-    const handler = new FindFilesByContext(db, createTestContext());
+    const handler = new GetFilesByContext(db, createTestContext());
 
     await handler.handleAsync({
       contextKey: "user_avatar",
@@ -107,7 +107,7 @@ describe("FindFilesByContext", () => {
   it("should default offset to 0 when not provided", async () => {
     const { select, offset } = createMockDb();
     const db = { select } as never;
-    const handler = new FindFilesByContext(db, createTestContext());
+    const handler = new GetFilesByContext(db, createTestContext());
 
     await handler.handleAsync({
       contextKey: "user_avatar",
@@ -120,7 +120,7 @@ describe("FindFilesByContext", () => {
   it("should use provided offset", async () => {
     const { select, offset } = createMockDb();
     const db = { select } as never;
-    const handler = new FindFilesByContext(db, createTestContext());
+    const handler = new GetFilesByContext(db, createTestContext());
 
     await handler.handleAsync({
       contextKey: "user_avatar",
@@ -148,7 +148,7 @@ describe("FindFilesByContext", () => {
     });
     const { select } = createMockDb({ rows: [row], total: 1 });
     const db = { select } as never;
-    const handler = new FindFilesByContext(db, createTestContext());
+    const handler = new GetFilesByContext(db, createTestContext());
 
     const result = await handler.handleAsync({
       contextKey: "user_avatar",
@@ -181,7 +181,7 @@ describe("FindFilesByContext", () => {
     });
 
     const db = { select } as never;
-    const handler = new FindFilesByContext(db, createTestContext());
+    const handler = new GetFilesByContext(db, createTestContext());
 
     const result = await handler.handleAsync({
       contextKey: "user_avatar",
@@ -210,7 +210,7 @@ describe("FindFilesByContext", () => {
     });
 
     const db = { select } as never;
-    const handler = new FindFilesByContext(db, createTestContext());
+    const handler = new GetFilesByContext(db, createTestContext());
 
     const result = await handler.handleAsync({
       contextKey: "user_avatar",
@@ -224,14 +224,14 @@ describe("FindFilesByContext", () => {
   it("should always return ok (not notFound) even when no files exist", async () => {
     const { select } = createMockDb({ rows: [], total: 0 });
     const db = { select } as never;
-    const handler = new FindFilesByContext(db, createTestContext());
+    const handler = new GetFilesByContext(db, createTestContext());
 
     const result = await handler.handleAsync({
       contextKey: "user_avatar",
       relatedEntityId: "user-123",
     });
 
-    // FindFilesByContext returns ok with empty array, not notFound
+    // GetFilesByContext returns ok with empty array, not notFound
     expect(result).toBeSuccess();
     expect(result.statusCode).toBe(200);
     expect(result.data?.files).toEqual([]);
@@ -240,7 +240,7 @@ describe("FindFilesByContext", () => {
   it("should handle limit of exactly 100 (boundary)", async () => {
     const { select, limit } = createMockDb();
     const db = { select } as never;
-    const handler = new FindFilesByContext(db, createTestContext());
+    const handler = new GetFilesByContext(db, createTestContext());
 
     await handler.handleAsync({
       contextKey: "user_avatar",
@@ -254,7 +254,7 @@ describe("FindFilesByContext", () => {
   it("should handle limit of 101 (capped to 100)", async () => {
     const { select, limit } = createMockDb();
     const db = { select } as never;
-    const handler = new FindFilesByContext(db, createTestContext());
+    const handler = new GetFilesByContext(db, createTestContext());
 
     await handler.handleAsync({
       contextKey: "user_avatar",
@@ -263,5 +263,55 @@ describe("FindFilesByContext", () => {
     });
 
     expect(limit).toHaveBeenCalledWith(100);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Input validation
+  // ---------------------------------------------------------------------------
+
+  it("should reject empty contextKey with validationFailed", async () => {
+    const { select } = createMockDb();
+    const db = { select } as never;
+    const handler = new GetFilesByContext(db, createTestContext());
+
+    const result = await handler.handleAsync({
+      contextKey: "",
+      relatedEntityId: "user-123",
+    });
+
+    expect(result).toBeFailure();
+    expect(result.statusCode).toBe(400);
+    expect(select).not.toHaveBeenCalled();
+  });
+
+  it("should reject contextKey over 100 chars with validationFailed", async () => {
+    const { select } = createMockDb();
+    const db = { select } as never;
+    const handler = new GetFilesByContext(db, createTestContext());
+
+    const result = await handler.handleAsync({
+      contextKey: "a".repeat(101),
+      relatedEntityId: "user-123",
+    });
+
+    expect(result).toBeFailure();
+    expect(result.statusCode).toBe(400);
+    expect(select).not.toHaveBeenCalled();
+  });
+
+  it("should reject negative offset with validationFailed", async () => {
+    const { select } = createMockDb();
+    const db = { select } as never;
+    const handler = new GetFilesByContext(db, createTestContext());
+
+    const result = await handler.handleAsync({
+      contextKey: "user_avatar",
+      relatedEntityId: "user-123",
+      offset: -1,
+    });
+
+    expect(result).toBeFailure();
+    expect(result.statusCode).toBe(400);
+    expect(select).not.toHaveBeenCalled();
   });
 });

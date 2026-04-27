@@ -60,7 +60,7 @@ describe("DeleteFile", () => {
     const repo = createMockRepo();
     const storage = createMockStorage();
     const file = makePendingFile();
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
     const { handler } = createHandler({ repo, storage });
 
     const result = await handler.handleAsync({ fileId: "file-001" });
@@ -74,7 +74,7 @@ describe("DeleteFile", () => {
     const repo = createMockRepo();
     const storage = createMockStorage();
     const file = makeReadyFile();
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
     const { handler } = createHandler({ repo, storage });
 
     await handler.handleAsync({ fileId: "file-001" });
@@ -85,7 +85,7 @@ describe("DeleteFile", () => {
 
   it("should return notFound when file does not exist", async () => {
     const repo = createMockRepo();
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.notFound());
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.notFound());
     const { handler } = createHandler({ repo });
 
     const result = await handler.handleAsync({ fileId: "nonexistent" });
@@ -104,7 +104,7 @@ describe("DeleteFile", () => {
   it("should propagate repo delete failure", async () => {
     const repo = createMockRepo();
     const file = makePendingFile();
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
     vi.mocked(repo.delete.handleAsync).mockResolvedValue(D2Result.serviceUnavailable());
     const { handler } = createHandler({ repo });
 
@@ -117,7 +117,7 @@ describe("DeleteFile", () => {
   it("should return forbidden when access is denied", async () => {
     const repo = createMockRepo();
     const file = makePendingFile();
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
     const { handler } = createHandler({ repo, accessAllowed: false });
 
     const result = await handler.handleAsync({ fileId: "file-001" });

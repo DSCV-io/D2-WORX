@@ -52,16 +52,16 @@
   let nameFields = $state([
     {
       key: "firstName",
-      label: m.account_profile_first_name(),
+      label: m.webclient_app_account_profile_first_name(),
       value: "",
-      placeholder: m.account_profile_first_name(),
+      placeholder: m.webclient_app_account_profile_first_name(),
       maxLength: 255,
     },
     {
       key: "lastName",
-      label: m.account_profile_last_name(),
+      label: m.webclient_app_account_profile_last_name(),
       value: "",
-      placeholder: m.account_profile_last_name(),
+      placeholder: m.webclient_app_account_profile_last_name(),
       maxLength: 255,
     },
   ]);
@@ -168,17 +168,19 @@
   // --- Validation ---
 
   function validateUsername(value: string) {
-    if (!value) return m.account_profile_username_required();
-    if (!/^[a-zA-Z0-9]+$/.test(value)) return m.account_profile_username_alpha();
-    if (value.length < 3) return m.account_profile_username_min();
-    if (value.length > 32) return m.account_profile_username_max();
+    if (!value) return m.webclient_app_account_profile_username_required();
+    if (!/^[a-zA-Z0-9]+$/.test(value)) return m.webclient_app_account_profile_username_alpha();
+    if (value.length < 3) return m.webclient_app_account_profile_username_min();
+    if (value.length > 32) return m.webclient_app_account_profile_username_max();
     return undefined;
   }
 
   function validateNameGroup(values: Record<string, string>) {
     const errors: Record<string, string> = {};
-    if (!values.firstName?.trim()) errors.firstName = m.account_profile_first_name_required();
-    if (!values.lastName?.trim()) errors.lastName = m.account_profile_last_name_required();
+    if (!values.firstName?.trim())
+      errors.firstName = m.webclient_app_account_profile_first_name_required();
+    if (!values.lastName?.trim())
+      errors.lastName = m.webclient_app_account_profile_last_name_required();
     return Object.keys(errors).length > 0 ? errors : undefined;
   }
 
@@ -212,26 +214,46 @@
 </script>
 
 <svelte:head>
-  <title>{m.account_page_title()} / {m.account_profile_title()} — {m.webclient_nav_brand()}</title>
+  <title
+    >{m.webclient_app_account_page_title()} / {m.webclient_app_account_profile_title()} — {m.webclient_nav_brand()}</title
+  >
   <meta
     name="description"
-    content={m.account_profile_description()}
+    content={m.webclient_app_account_profile_description()}
+  />
+  <meta
+    name="robots"
+    content="noindex, nofollow"
+  />
+  <meta
+    property="og:title"
+    content="{m.webclient_app_account_page_title()} / {m.webclient_app_account_profile_title()} — {m.webclient_nav_brand()}"
+  />
+  <meta
+    property="og:description"
+    content={m.webclient_app_account_profile_description()}
+  />
+  <meta
+    property="og:type"
+    content="website"
   />
 </svelte:head>
 
 <div class="space-y-12">
   <header>
-    <h1 class="text-2xl font-semibold tracking-tight">{m.account_profile_title()}</h1>
-    <p class="text-muted-foreground mt-1 text-sm">{m.account_profile_description()}</p>
+    <h1 class="text-2xl font-semibold tracking-tight">{m.webclient_app_account_profile_title()}</h1>
+    <p class="text-muted-foreground mt-1 text-sm">
+      {m.webclient_app_account_profile_description()}
+    </p>
   </header>
 
   <Separator class="bg-border/50" />
 
   <section>
     <div>
-      <h2 class="text-base font-semibold">{m.account_profile_your_info_title()}</h2>
+      <h2 class="text-base font-semibold">{m.webclient_app_account_profile_your_info_title()}</h2>
       <p class="text-muted-foreground mt-0.5 text-sm">
-        {m.account_profile_your_info_description()}
+        {m.webclient_app_account_profile_your_info_description()}
       </p>
     </div>
     <div class="mt-5 space-y-5">
@@ -245,8 +267,8 @@
         />
         <InlineEditField
           bind:value={username}
-          label={m.account_profile_username()}
-          placeholder={m.account_profile_username_placeholder()}
+          label={m.webclient_app_account_profile_username()}
+          placeholder={m.webclient_app_account_profile_username_placeholder()}
           maxLength={32}
           validate={validateUsername}
           onSave={saveUsername}
@@ -278,8 +300,10 @@
 
   <section>
     <div>
-      <h2 class="text-base font-semibold">{m.account_profile_avatar_title()}</h2>
-      <p class="text-muted-foreground mt-0.5 text-sm">{m.account_profile_avatar_description()}</p>
+      <h2 class="text-base font-semibold">{m.webclient_app_account_profile_avatar_title()}</h2>
+      <p class="text-muted-foreground mt-0.5 text-sm">
+        {m.webclient_app_account_profile_avatar_description()}
+      </p>
     </div>
     <div class="mt-5">
       {#if loaded && user}
@@ -298,16 +322,18 @@
 
   <section>
     <div>
-      <h2 class="text-base font-semibold">{m.account_profile_language_time_title()}</h2>
+      <h2 class="text-base font-semibold">
+        {m.webclient_app_account_profile_language_time_title()}
+      </h2>
       <p class="text-muted-foreground mt-0.5 text-sm">
-        {m.account_profile_language_time_description()}
+        {m.webclient_app_account_profile_language_time_description()}
       </p>
     </div>
     <div class="mt-5 space-y-5">
       {#if loaded}
         <InlineDropdown
           bind:value={locale}
-          label={m.account_profile_language()}
+          label={m.webclient_app_account_profile_language()}
           options={localeOptions}
           onSave={saveLocale}
           onDirtyChange={(d) => (dirtyFields.locale = d)}
@@ -315,9 +341,9 @@
         />
         <InlineCombobox
           bind:value={timezone}
-          label={m.account_profile_timezone()}
+          label={m.webclient_app_account_profile_timezone()}
           options={timezoneOptions}
-          placeholder={m.account_profile_timezone_placeholder()}
+          placeholder={m.webclient_app_account_profile_timezone_placeholder()}
           onSave={saveTimezone}
           onDirtyChange={(d) => (dirtyFields.timezone = d)}
           bind:this={timezoneRef}

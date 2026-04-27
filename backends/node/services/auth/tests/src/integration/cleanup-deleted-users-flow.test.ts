@@ -7,13 +7,10 @@ import { createLogger } from "@d2/logging";
 import { USER_STATUS, USER_DELETION } from "@d2/auth-domain";
 import type { DistributedCache } from "@d2/interfaces";
 import type { INotifyHandler } from "@d2/comms-client";
-import {
-  CleanupDeletedUsers,
-  FinalizeDeletedUser,
-} from "@d2/auth-app";
+import { CleanupDeletedUsers, FinalizeDeletedUser } from "@d2/auth-app";
 import {
   AnonymizeUser,
-  FindDeletedUsersToPurge,
+  GetDeletedUsersToPurge,
   user,
   account,
   session,
@@ -174,7 +171,7 @@ describe("CleanupDeletedUsers — full job flow (integration)", () => {
     mockNotify = makeMockNotify();
 
     const anonymize = new AnonymizeUser(getDb(), ctx());
-    const find = new FindDeletedUsersToPurge(getDb(), ctx());
+    const getPurgeList = new GetDeletedUsersToPurge(getDb(), ctx());
 
     // FinalizeDeletedUser without a publisher — fanout publish is best-effort
     // and out of scope for this DB-flow assertion suite (the per-user notify
@@ -190,17 +187,14 @@ describe("CleanupDeletedUsers — full job flow (integration)", () => {
     cleanup = new CleanupDeletedUsers(
       mockLocks.acquireLock,
       mockLocks.releaseLock,
-      find,
+      getPurgeList,
       finalize,
       {
         jobLockTtlMs: 5 * 60 * 1000,
-        sessionPurgeBatchSize: 100,
         signInEventRetentionDays: 90,
-        signInEventPurgeBatchSize: 100,
-        invitationGracePeriodDays: 7,
-        invitationPurgeBatchSize: 100,
-        emulationConsentPurgeBatchSize: 100,
+        invitationRetentionDays: 7,
         userDeletionGracePeriodMs: USER_DELETION.GRACE_PERIOD_MS,
+        userPurgeBatchSize: 50_000,
       },
       ctx(),
     );
@@ -280,10 +274,7 @@ describe("CleanupDeletedUsers — full job flow (integration)", () => {
 
     // Non-eligible pending_deletion users: untouched.
     if (nonEligibleIds.length > 0) {
-      const rows = await getDb()
-        .select()
-        .from(user)
-        .where(inArray(user.id, nonEligibleIds));
+      const rows = await getDb().select().from(user).where(inArray(user.id, nonEligibleIds));
       expect(rows).toHaveLength(nonEligibleIds.length);
       for (const r of rows) {
         expect(r.status).toBe(USER_STATUS.PENDING_DELETION);

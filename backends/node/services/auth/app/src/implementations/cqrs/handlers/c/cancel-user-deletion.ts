@@ -72,7 +72,7 @@ export class CancelUserDeletion
     const statusResult = await this.updateUserStatus.handleAsync({
       userId: input.userId,
       status: USER_STATUS.ACTIVE,
-      deletedAt: null,
+      clearDeletedAt: true,
       expectedStatus: USER_STATUS.PENDING_DELETION,
     });
     if (!statusResult.success) return D2Result.bubbleFail(statusResult);
@@ -87,18 +87,21 @@ export class CancelUserDeletion
     // Send the cancellation email via alternativeContactInfo (security-
     // relevant: bypass channel preferences, mirrors phoneRemoved).
     const userEmail = u.email;
-    const userName = u.name ?? "";
-    const userLocale = resolveLocale(u.locale ?? undefined);
+    const userName = u.name;
+    const userLocale = resolveLocale(u.locale);
     if (userEmail) {
       const t = this.translator.t;
+      // Translator interpolates `{name}` — fall back to the localized "User"
+      // string when the user has no display name set. Don't pass `""`.
+      const displayName = userName ?? t(userLocale, TK.common.ui.USER_FALLBACK);
       this.notify
         .handleAsync({
           alternativeContactInfo: { email: userEmail },
           channels: ["email"],
           title: t(userLocale, TK.auth.email.userDeletionCancelled.subject),
-          content: t(userLocale, TK.auth.email.userDeletionCancelled.body, { name: userName }),
+          content: t(userLocale, TK.auth.email.userDeletionCancelled.body, { name: displayName }),
           plaintext: t(userLocale, TK.auth.email.userDeletionCancelled.plaintext, {
-            name: userName,
+            name: displayName,
           }),
           correlationId: crypto.randomUUID(),
           senderService: "auth",

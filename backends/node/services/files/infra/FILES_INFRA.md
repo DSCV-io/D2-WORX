@@ -27,7 +27,7 @@ src/
       index.ts                 Barrel
     handlers/
       c/  create-file-record.ts
-      r/  find-file-by-id.ts, find-files-by-context.ts, find-stale-files.ts, ping-db.ts
+      r/  get-file-by-id.ts, get-files-by-context.ts, get-stale-files.ts, ping-db.ts
       u/  update-file-record.ts
       d/  delete-file-record.ts, delete-file-records-by-ids.ts
     mappers/
@@ -67,9 +67,9 @@ src/
 | Handler                | 3LC | Operation                                        |
 | ---------------------- | --- | ------------------------------------------------ |
 | CreateFileRecord       | C/  | Insert new file row                              |
-| FindFileById           | R/  | Select by primary key, `notFound` if missing     |
-| FindFilesByContext     | R/  | Paginated select by contextKey + relatedEntityId |
-| FindStaleFiles         | R/  | Select by status + createdAt cutoff              |
+| GetFileById            | R/  | Select by primary key, `notFound` if missing     |
+| GetFilesByContext      | R/  | Paginated select by contextKey + relatedEntityId |
+| GetStaleFiles          | R/  | Select by status + createdAt cutoff              |
 | PingDb                 | R/  | `SELECT 1` latency probe                         |
 | UpdateFileRecord       | U/  | Update + `.returning()`, `notFound` if empty     |
 | DeleteFileRecord       | D/  | Delete + `.returning()`, `notFound` if empty     |
@@ -231,8 +231,8 @@ All tests are in `@d2/files-tests` (`backends/node/services/files/tests/`):
 src/unit/infra/
   helpers/          test-context.ts
   repository/
-    handlers/       create-file-record, find-file-by-id, find-files-by-context,
-                    find-stale-files, ping-db, update-file-record, delete-file-record,
+    handlers/       create-file-record, get-file-by-id, get-files-by-context,
+                    get-stale-files, ping-db, update-file-record, delete-file-record,
                     delete-file-records-by-ids
     mappers/        file-mapper.test.ts
   providers/

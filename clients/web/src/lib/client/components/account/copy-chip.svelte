@@ -45,7 +45,7 @@
           type="button"
           onclick={handleCopy}
           disabled={!value}
-          class="text-muted-foreground hover:text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60 inline-flex items-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 font-mono text-[10px] transition-colors hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          class="text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:border-border focus-visible:ring-ring inline-flex items-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 font-mono text-[10px] transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
           aria-label={`${label}: ${display}. ${m.common_ui_click_to_copy()}`}
         >
           <span class="text-foreground/70 font-sans text-[10px] font-medium">{label}:</span>

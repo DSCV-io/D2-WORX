@@ -12,6 +12,13 @@ export interface AuthJobOptions {
    * older than this are anonymized by `CleanupDeletedUsers`. Default: 30 days.
    */
   readonly userDeletionGracePeriodMs: number;
+  /**
+   * Defense-in-depth cap on the number of users `GetDeletedUsersToPurge`
+   * returns per nightly tick. Hitting this cap means the downstream finalize
+   * is failing and rows are accumulating — the handler logs a warning and the
+   * next tick absorbs whatever's left. Default: 50000.
+   */
+  readonly userPurgeBatchSize: number;
 }
 
 export const DEFAULT_AUTH_JOB_OPTIONS: AuthJobOptions = {
@@ -19,4 +26,5 @@ export const DEFAULT_AUTH_JOB_OPTIONS: AuthJobOptions = {
   invitationRetentionDays: 7,
   jobLockTtlMs: 300_000,
   userDeletionGracePeriodMs: USER_DELETION.GRACE_PERIOD_MS,
+  userPurgeBatchSize: 50_000,
 };

@@ -34,5 +34,14 @@
     class="inline-block overflow-hidden rounded-md {className}"
     style:width="{size}px"
     style:height="{size}px"
-    aria-hidden="true">{@html svg}</span>
+    aria-hidden="true"
+    ><!-- DiceBear identicon: SVG generated server-side from a deterministic
+         sha256(clientFingerprint) seed. The output contains only geometric
+         primitives (<rect>, <path>) — no scripts, no event handlers, no
+         user-controlled content flows into the SVG. Suppression is the
+         clean path here: the alternative (innerHTML via $effect) bypasses
+         the rule mechanically without bypassing the actual risk. -->
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+    {@html svg}</span
+  >
 {/if}

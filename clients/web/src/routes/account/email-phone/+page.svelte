@@ -89,117 +89,77 @@
 
 <svelte:head>
   <title
-    >{m.account_page_title()} / {m.account_email_phone_title()} — {m.webclient_nav_brand()}</title
+    >{m.webclient_app_account_page_title()} / {m.webclient_app_account_email_phone_title()} — {m.webclient_nav_brand()}</title
   >
   <meta
     name="description"
-    content={m.account_email_phone_description()}
+    content={m.webclient_app_account_email_phone_description()}
+  />
+  <meta
+    name="robots"
+    content="noindex, nofollow"
+  />
+  <meta
+    property="og:title"
+    content="{m.webclient_app_account_page_title()} / {m.webclient_app_account_email_phone_title()} — {m.webclient_nav_brand()}"
+  />
+  <meta
+    property="og:description"
+    content={m.webclient_app_account_email_phone_description()}
+  />
+  <meta
+    property="og:type"
+    content="website"
   />
 </svelte:head>
 
 <div class="space-y-12">
   <header>
-    <h1 class="text-2xl font-semibold tracking-tight">{m.account_email_phone_title()}</h1>
-    <p class="text-muted-foreground mt-1 text-sm">{m.account_email_phone_description()}</p>
+    <h1 class="text-2xl font-semibold tracking-tight">
+      {m.webclient_app_account_email_phone_title()}
+    </h1>
+    <p class="text-muted-foreground mt-1 text-sm">
+      {m.webclient_app_account_email_phone_description()}
+    </p>
   </header>
 
   <Separator class="bg-border/50" />
 
   <section>
     <div>
-      <h2 class="text-base font-semibold">{m.account_email_address_title()}</h2>
-      <p class="text-muted-foreground mt-0.5 text-sm">{m.account_email_address_description()}</p>
+      <h2 class="text-base font-semibold">{m.webclient_app_account_email_address_title()}</h2>
+      <p class="text-muted-foreground mt-0.5 text-sm">
+        {m.webclient_app_account_email_address_description()}
+      </p>
     </div>
     <div class="mt-5">
-    {#if loaded}
-      <div class="flex items-center justify-between gap-4">
-        <div class="flex min-w-0 flex-1 items-center gap-2">
-          <span class="truncate text-sm">{user?.email ?? ""}</span>
-          {#if user?.emailVerified}
-            <span class="text-muted-foreground inline-flex items-center gap-1 text-xs">
-              <CheckCircleIcon class="size-3.5 text-green-500" />
-              {m.account_verified_label()}
-            </span>
-          {/if}
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onclick={() => (emailModalOpen = true)}>{m.account_email_change_button()}</Button
-        >
-      </div>
-    {:else}
-      <div class="flex items-center justify-between gap-4">
-        <div class="flex min-w-0 flex-1 items-center gap-2">
-          <Skeleton class="h-5 w-48" />
-          <Skeleton class="h-4 w-16" />
-        </div>
-        <Skeleton class="h-8 w-20 rounded-md" />
-      </div>
-    {/if}
-    </div>
-  </section>
-
-  <Separator class="bg-border/50" />
-
-  <section>
-    <div>
-      <h2 class="text-base font-semibold">{m.account_phone_title()}</h2>
-      <p class="text-muted-foreground mt-0.5 text-sm">{m.account_phone_description()}</p>
-    </div>
-    <div class="mt-5 space-y-4">
-    {#if loaded}
-      <div class="flex items-center justify-between gap-4">
-        <div class="flex min-w-0 flex-1 items-center gap-2">
-          {#if user?.phone}
-            <span class="truncate text-sm">{phoneDisplay()}</span>
-            {#if user.phoneVerified}
+      {#if loaded}
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex min-w-0 flex-1 items-center gap-2">
+            <span class="truncate text-sm">{user?.email ?? ""}</span>
+            {#if user?.emailVerified}
               <span class="text-muted-foreground inline-flex items-center gap-1 text-xs">
                 <CheckCircleIcon class="size-3.5 text-green-500" />
-                {m.account_verified_label()}
+                {m.webclient_app_account_verified_label()}
               </span>
             {/if}
-          {:else}
-            <span class="text-muted-foreground text-sm">{m.account_phone_not_added()}</span>
-          {/if}
-        </div>
-        <div class="flex items-center gap-2">
-          {#if user?.phone}
-            <Button
-              variant="ghost"
-              size="icon"
-              class="size-8"
-              onclick={() => (removePhoneOpen = true)}
-              title={m.account_phone_remove_button()}
-            >
-              <XIcon class="size-4" />
-              <span class="sr-only">{m.account_phone_remove_button()}</span>
-            </Button>
-          {/if}
+          </div>
           <Button
             variant="outline"
             size="sm"
-            onclick={() => (phoneModalOpen = true)}
+            onclick={() => (emailModalOpen = true)}
+            >{m.webclient_app_account_email_change_button()}</Button
           >
-            {user?.phone ? m.account_phone_change_button() : m.account_phone_add_button()}
-          </Button>
         </div>
-      </div>
-    {:else}
-      <div class="flex items-center justify-between gap-4">
-        <div class="flex min-w-0 flex-1 items-center gap-2">
-          <Skeleton class="h-5 w-40" />
-          <Skeleton class="h-4 w-16" />
+      {:else}
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex min-w-0 flex-1 items-center gap-2">
+            <Skeleton class="h-5 w-48" />
+            <Skeleton class="h-4 w-16" />
+          </div>
+          <Skeleton class="h-8 w-20 rounded-md" />
         </div>
-        <Skeleton class="h-8 w-20 rounded-md" />
-      </div>
-    {/if}
-
-    <Alert.Root variant="warning">
-      <AlertTriangleIcon />
-      <Alert.Title>{m.account_phone_dev_alert_title()}</Alert.Title>
-      <Alert.Description>{m.account_phone_dev_alert_body()}</Alert.Description>
-    </Alert.Root>
+      {/if}
     </div>
   </section>
 
@@ -207,45 +167,116 @@
 
   <section>
     <div>
-      <h2 class="text-base font-semibold">{m.account_notifications_title()}</h2>
-      <p class="text-muted-foreground mt-0.5 text-sm">{m.account_notifications_description()}</p>
+      <h2 class="text-base font-semibold">{m.webclient_app_account_phone_title()}</h2>
+      <p class="text-muted-foreground mt-0.5 text-sm">
+        {m.webclient_app_account_phone_description()}
+      </p>
     </div>
     <div class="mt-5 space-y-4">
-    <Alert.Root variant="info">
-      <InfoIcon />
-      <Alert.Title>{m.account_notifications_alert_title()}</Alert.Title>
-      <Alert.Description>{m.account_notifications_alert_body()}</Alert.Description>
-    </Alert.Root>
+      {#if loaded}
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex min-w-0 flex-1 items-center gap-2">
+            {#if user?.phone}
+              <span class="truncate text-sm">{phoneDisplay()}</span>
+              {#if user.phoneVerified}
+                <span class="text-muted-foreground inline-flex items-center gap-1 text-xs">
+                  <CheckCircleIcon class="size-3.5 text-green-500" />
+                  {m.webclient_app_account_verified_label()}
+                </span>
+              {/if}
+            {:else}
+              <span class="text-muted-foreground text-sm"
+                >{m.webclient_app_account_phone_not_added()}</span
+              >
+            {/if}
+          </div>
+          <div class="flex items-center gap-2">
+            {#if user?.phone}
+              <Button
+                variant="ghost"
+                size="icon"
+                class="size-8"
+                onclick={() => (removePhoneOpen = true)}
+                title={m.webclient_app_account_phone_remove_button()}
+              >
+                <XIcon class="size-4" />
+                <span class="sr-only">{m.webclient_app_account_phone_remove_button()}</span>
+              </Button>
+            {/if}
+            <Button
+              variant="outline"
+              size="sm"
+              onclick={() => (phoneModalOpen = true)}
+            >
+              {user?.phone
+                ? m.webclient_app_account_phone_change_button()
+                : m.webclient_app_account_phone_add_button()}
+            </Button>
+          </div>
+        </div>
+      {:else}
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex min-w-0 flex-1 items-center gap-2">
+            <Skeleton class="h-5 w-40" />
+            <Skeleton class="h-4 w-16" />
+          </div>
+          <Skeleton class="h-8 w-20 rounded-md" />
+        </div>
+      {/if}
 
-    {#if prefsLoaded}
-      <InlineSwitch
-        bind:value={emailNotifications}
-        label={m.account_email_notifications()}
-        description={m.account_email_notifications_description()}
-        onSave={saveEmailPref}
-      />
-      <InlineSwitch
-        bind:value={smsNotifications}
-        label={m.account_sms_notifications()}
-        description={m.account_sms_notifications_description()}
-        onSave={saveSmsPref}
-      />
-    {:else}
-      <div class="flex items-center justify-between gap-3">
-        <div class="flex flex-col gap-1">
-          <Skeleton class="h-4 w-32" />
-          <Skeleton class="h-3 w-56" />
+      <Alert.Root variant="warning">
+        <AlertTriangleIcon />
+        <Alert.Title>{m.webclient_app_account_phone_dev_alert_title()}</Alert.Title>
+        <Alert.Description>{m.webclient_app_account_phone_dev_alert_body()}</Alert.Description>
+      </Alert.Root>
+    </div>
+  </section>
+
+  <Separator class="bg-border/50" />
+
+  <section>
+    <div>
+      <h2 class="text-base font-semibold">{m.webclient_app_account_notifications_title()}</h2>
+      <p class="text-muted-foreground mt-0.5 text-sm">
+        {m.webclient_app_account_notifications_description()}
+      </p>
+    </div>
+    <div class="mt-5 space-y-4">
+      <Alert.Root variant="info">
+        <InfoIcon />
+        <Alert.Title>{m.webclient_app_account_notifications_alert_title()}</Alert.Title>
+        <Alert.Description>{m.webclient_app_account_notifications_alert_body()}</Alert.Description>
+      </Alert.Root>
+
+      {#if prefsLoaded}
+        <InlineSwitch
+          bind:value={emailNotifications}
+          label={m.webclient_app_account_email_notifications()}
+          description={m.webclient_app_account_email_notifications_description()}
+          onSave={saveEmailPref}
+        />
+        <InlineSwitch
+          bind:value={smsNotifications}
+          label={m.webclient_app_account_sms_notifications()}
+          description={m.webclient_app_account_sms_notifications_description()}
+          onSave={saveSmsPref}
+        />
+      {:else}
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex flex-col gap-1">
+            <Skeleton class="h-4 w-32" />
+            <Skeleton class="h-3 w-56" />
+          </div>
+          <Skeleton class="h-6 w-11 rounded-full" />
         </div>
-        <Skeleton class="h-6 w-11 rounded-full" />
-      </div>
-      <div class="flex items-center justify-between gap-3">
-        <div class="flex flex-col gap-1">
-          <Skeleton class="h-4 w-32" />
-          <Skeleton class="h-3 w-56" />
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex flex-col gap-1">
+            <Skeleton class="h-4 w-32" />
+            <Skeleton class="h-3 w-56" />
+          </div>
+          <Skeleton class="h-6 w-11 rounded-full" />
         </div>
-        <Skeleton class="h-6 w-11 rounded-full" />
-      </div>
-    {/if}
+      {/if}
     </div>
   </section>
 </div>

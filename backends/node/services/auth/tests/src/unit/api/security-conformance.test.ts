@@ -31,33 +31,33 @@ import { checkFingerprint } from "@d2/jwt-auth";
  */
 function makeMinimalOptions(overrides: Partial<HonoAppOptions["config"]> = {}): HonoAppOptions {
   return {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     auth: {} as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     provider: {} as any,
     config: {
       corsOrigins: ["http://localhost:5173"],
       baseUrl: "http://localhost:3333",
       ...overrides,
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     translator: {} as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     findWhoIs: {} as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     rateLimitCheck: {} as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     throttleCheck: {} as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     throttleRecord: {} as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     checkEmailHandler: {} as any,
     fingerprintStorage: new AsyncLocalStorage<string>(),
     deviceFingerprintStorage: new AsyncLocalStorage<string>(),
     clientFingerprintStorage: new AsyncLocalStorage<string>(),
     serverFingerprintStorage: new AsyncLocalStorage<string>(),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    sessionFingerprintMiddleware: ((async (_c: unknown, next: () => Promise<void>) => next()) as any),
+     
+    sessionFingerprintMiddleware: (async (_c: unknown, next: () => Promise<void>) => next()) as any,
     logger: {
       debug: () => {},
       info: () => {},
@@ -65,7 +65,7 @@ function makeMinimalOptions(overrides: Partial<HonoAppOptions["config"]> = {}): 
       error: () => {},
       fatal: () => {},
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     db: {} as any,
   };
 }
@@ -87,9 +87,7 @@ describe("§5 Security — auth-api HTTP conformance", () => {
 
     it("builds successfully when at least one key is configured", () => {
       // Sanity check — the throw is gated on emptiness, not always-on.
-      expect(() =>
-        buildHonoApp(makeMinimalOptions({ authApiKeys: ["test-key-1"] })),
-      ).not.toThrow();
+      expect(() => buildHonoApp(makeMinimalOptions({ authApiKeys: ["test-key-1"] }))).not.toThrow();
     });
   });
 
@@ -129,7 +127,9 @@ describe("§5 Security — auth-api HTTP conformance", () => {
       // any future issuer/dev token bypass fingerprint binding entirely.
       // New default is fail-closed; opt-in via `allowMissingClaim: true`.
       const result = await checkFingerprint(
-        { /* no fp */ },
+        {
+          /* no fp */
+        },
         "Mozilla/5.0",
         "application/json",
       );

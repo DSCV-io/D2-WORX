@@ -10,13 +10,13 @@ pattern, same fingerprint formula.
 
 ## Components
 
-| File | Role |
-|---|---|
-| `JwtAuthExtensions.cs` | `services.AddJwtAuth(configuration)` + `app.UseJwtAuth()` extensions. Wires JWT Bearer + the fingerprint middleware + `AddD2Policies` (from `AuthPolicy.Default`) |
-| `JwksConfigurationRetriever.cs` | Fetches the raw JWKS document from the auth service (BetterAuth doesn't serve OIDC discovery, so we wrap the bare JWKS in an `OpenIdConnectConfiguration`) |
-| `JwtFingerprintMiddleware.cs` | Reads the `fp` claim, computes the expected fingerprint from request headers, 401s on mismatch. Populates the `MutableRequestContext` identity fields after a successful match |
-| `JwtFingerprintValidator.cs` | Pure helper: `SHA-256(UserAgent + "|" + Accept)`. Same formula on Node (`@d2/jwt-auth/fingerprint-check`) |
-| `JwtAuthOptions.cs` | Bound from configuration section `GATEWAY_AUTH` (or whichever `sectionName` is passed to `AddJwtAuth`) — `AuthServiceBaseUrl`, `Issuer`, `Audience`, JWKS refresh intervals, clock skew |
+| File                            | Role                                                                                                                                                                                    |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `JwtAuthExtensions.cs`          | `services.AddJwtAuth(configuration)` + `app.UseJwtAuth()` extensions. Wires JWT Bearer + the fingerprint middleware + `AddD2Policies` (from `AuthPolicy.Default`)                       |
+| `JwksConfigurationRetriever.cs` | Fetches the raw JWKS document from the auth service (BetterAuth doesn't serve OIDC discovery, so we wrap the bare JWKS in an `OpenIdConnectConfiguration`)                              |
+| `JwtFingerprintMiddleware.cs`   | Reads the `fp` claim, computes the expected fingerprint from request headers, 401s on mismatch. Populates the `MutableRequestContext` identity fields after a successful match          |
+| `JwtFingerprintValidator.cs`    | Pure helper: `SHA-256(UserAgent + "                                                                                                                                                     | " + Accept)`. Same formula on Node (`@d2/jwt-auth/fingerprint-check`) |
+| `JwtAuthOptions.cs`             | Bound from configuration section `GATEWAY_AUTH` (or whichever `sectionName` is passed to `AddJwtAuth`) — `AuthServiceBaseUrl`, `Issuer`, `Audience`, JWKS refresh intervals, clock skew |
 
 ## Pipeline order
 
@@ -44,9 +44,9 @@ service-to-service calls don't carry browser headers.
 
 ## Node parity
 
-| `@d2/jwt-auth` | `D2.Shared.JwtAuth.Default` |
-|---|---|
-| `jwtAuth({ jwksUrl, issuer, audience })` Hono middleware | `services.AddJwtAuth(configuration)` |
-| `verifyToken(token, opts)` | `Microsoft.AspNetCore.Authentication.JwtBearer` (framework) |
-| `checkFingerprint(payload, ua, accept)` | `JwtFingerprintValidator.ComputeFingerprint(httpContext)` |
+| `@d2/jwt-auth`                                              | `D2.Shared.JwtAuth.Default`                                             |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `jwtAuth({ jwksUrl, issuer, audience })` Hono middleware    | `services.AddJwtAuth(configuration)`                                    |
+| `verifyToken(token, opts)`                                  | `Microsoft.AspNetCore.Authentication.JwtBearer` (framework)             |
+| `checkFingerprint(payload, ua, accept)`                     | `JwtFingerprintValidator.ComputeFingerprint(httpContext)`               |
 | `populateRequestContext(payload)` → returns IRequestContext | `JwtFingerprintMiddleware.SetAuthState` mutates `MutableRequestContext` |

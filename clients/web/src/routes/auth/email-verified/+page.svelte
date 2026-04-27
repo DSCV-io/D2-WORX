@@ -3,6 +3,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { onMount } from "svelte";
+  import favicon from "$lib/assets/favicon.svg";
   import * as Card from "$lib/client/components/ui/card/index.js";
   import { Button } from "$lib/client/components/ui/button/index.js";
   import CircleCheckIcon from "@lucide/svelte/icons/circle-check";
@@ -62,11 +63,13 @@
         href={resolve("/")}
         class="flex items-center gap-2"
       >
-        <div
-          class="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg text-sm font-bold"
-        >
-          DW
-        </div>
+        <img
+          src={favicon}
+          alt=""
+          class="size-8 rounded-lg"
+          width="32"
+          height="32"
+        />
         <span class="text-xl font-semibold">{m.webclient_nav_brand()}</span>
       </a>
     </div>

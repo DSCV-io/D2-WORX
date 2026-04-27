@@ -23,9 +23,12 @@ export class UpdateUserImage extends BaseHandler<I, O> implements IUpdateUserIma
   }
 
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {
+    // `clear: true`  → write NULL (remove avatar)
+    // `clear: false` → write the supplied `image` string
+    const nextImage = input.clear ? null : (input.image ?? null);
     const rows = await this.db
       .update(user)
-      .set({ image: input.image, updatedAt: new Date() })
+      .set({ image: nextImage, updatedAt: new Date() })
       .where(eq(user.id, input.userId))
       .returning({ id: user.id });
 

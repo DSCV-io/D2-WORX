@@ -1,8 +1,7 @@
 import { Hono } from "hono";
-import type { ServiceScope } from "@d2/di";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { IGetFileVariantUrlKey } from "@d2/files-app";
-import { SCOPE_KEY } from "../context-keys.js";
+import type { FilesVariables } from "../context-keys.js";
 
 /**
  * Variant URL routes — returns presigned GET URLs for file variants.
@@ -11,12 +10,11 @@ import { SCOPE_KEY } from "../context-keys.js";
  * that browsers can use directly in `<img src>`. Access control, file lookup,
  * and variant validation are handled by the app-layer GetFileVariantUrl handler.
  */
-export function createVariantUrlRoutes(): Hono {
-  const app = new Hono();
+export function createVariantUrlRoutes(): Hono<{ Variables: FilesVariables }> {
+  const app = new Hono<{ Variables: FilesVariables }>();
 
   app.get("/files/:fileId/:variantName/url", async (c) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const scope = (c as any).get(SCOPE_KEY) as ServiceScope;
+    const scope = c.var.scope;
     const { fileId, variantName } = c.req.param();
 
     const handler = scope.resolve(IGetFileVariantUrlKey);

@@ -14,6 +14,9 @@ export const UPDATE_USER_EMAIL_REDACTION: RedactionSpec = {
   inputFields: ["email"],
 };
 
-export interface IUpdateUserEmailHandler extends IHandler<UpdateUserEmailInput, UpdateUserEmailOutput> {
+export interface IUpdateUserEmailHandler extends IHandler<
+  UpdateUserEmailInput,
+  UpdateUserEmailOutput
+> {
   readonly redaction: RedactionSpec;
 }

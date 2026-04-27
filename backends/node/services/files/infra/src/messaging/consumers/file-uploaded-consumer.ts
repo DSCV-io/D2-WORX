@@ -76,9 +76,9 @@ export function createFileUploadedConsumer(deps: FileUploadedConsumerDeps) {
     async (msg: IncomingMessage<unknown>) => {
       const fileId = extractFileId(msg.body);
       if (!fileId) {
-        logger.warn("Invalid file upload message — dropping", {
-          body: msg.body,
-        });
+        // Object keys carry user-supplied filenames (PII risk); never log the
+        // raw body. Log only the shape so the message can still be diagnosed.
+        logger.warn("Invalid file upload message — dropping", describeBody(msg.body));
         return ConsumerResult.ACK;
       }
 
@@ -98,6 +98,25 @@ export function createFileUploadedConsumer(deps: FileUploadedConsumerDeps) {
       return ConsumerResult.ACK;
     },
   );
+}
+
+/**
+ * Returns a redacted shape descriptor for an unparseable message body — safe
+ * to log. Avoids leaking user-supplied filenames embedded in S3 object keys.
+ */
+function describeBody(body: unknown): Record<string, unknown> {
+  if (body === null || body === undefined) {
+    return { bodyType: body === null ? "null" : "undefined" };
+  }
+  const type = typeof body;
+  if (type !== "object") {
+    const length = type === "string" ? (body as string).length : undefined;
+    return { bodyType: type, length };
+  }
+  if (Array.isArray(body)) {
+    return { bodyType: "array", length: body.length };
+  }
+  return { bodyType: "object", keys: Object.keys(body as Record<string, unknown>) };
 }
 
 /**

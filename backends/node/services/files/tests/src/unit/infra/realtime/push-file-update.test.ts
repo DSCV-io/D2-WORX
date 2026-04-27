@@ -36,7 +36,7 @@ const okResultProto = {
 
 // --- Imports (after mocks) ---
 
-import { PushFileUpdate } from "@d2/files-infra";
+import { PushFileUpdate, DEFAULT_FILES_OUTBOUND_OPTIONS } from "@d2/files-infra";
 
 // --- Helpers ---
 
@@ -73,7 +73,12 @@ describe("PushFileUpdate", () => {
   });
 
   it("should return delivered=true on successful push", async () => {
-    const handler = new PushFileUpdate("gateway:5200", "test-signalr-key", createTestContext());
+    const handler = new PushFileUpdate(
+      "gateway:5200",
+      "test-signalr-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
+      createTestContext(),
+    );
 
     mockPushToChannel.mockImplementation(
       (_req: unknown, _meta: unknown, _opts: unknown, cb: (err: unknown, res: unknown) => void) => {
@@ -94,7 +99,12 @@ describe("PushFileUpdate", () => {
   });
 
   it("should return delivered=false when user is not connected", async () => {
-    const handler = new PushFileUpdate("gateway:5200", "test-signalr-key", createTestContext());
+    const handler = new PushFileUpdate(
+      "gateway:5200",
+      "test-signalr-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
+      createTestContext(),
+    );
 
     mockPushToChannel.mockImplementation(
       (_req: unknown, _meta: unknown, _opts: unknown, cb: (err: unknown, res: unknown) => void) => {
@@ -114,7 +124,12 @@ describe("PushFileUpdate", () => {
   });
 
   it("should return serviceUnavailable on gRPC error", async () => {
-    const handler = new PushFileUpdate("gateway:5200", "test-signalr-key", createTestContext());
+    const handler = new PushFileUpdate(
+      "gateway:5200",
+      "test-signalr-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
+      createTestContext(),
+    );
 
     mockPushToChannel.mockImplementation(
       (_req: unknown, _meta: unknown, _opts: unknown, cb: (err: unknown, res: unknown) => void) => {
@@ -135,7 +150,12 @@ describe("PushFileUpdate", () => {
   });
 
   it("should construct channel as user:{uploaderUserId}", async () => {
-    const handler = new PushFileUpdate("gateway:5200", "test-signalr-key", createTestContext());
+    const handler = new PushFileUpdate(
+      "gateway:5200",
+      "test-signalr-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
+      createTestContext(),
+    );
 
     mockPushToChannel.mockImplementation(
       (
@@ -160,7 +180,12 @@ describe("PushFileUpdate", () => {
   });
 
   it("should map status 'ready' to event 'file:ready'", async () => {
-    const handler = new PushFileUpdate("gateway:5200", "test-signalr-key", createTestContext());
+    const handler = new PushFileUpdate(
+      "gateway:5200",
+      "test-signalr-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
+      createTestContext(),
+    );
 
     mockPushToChannel.mockImplementation(
       (
@@ -185,7 +210,12 @@ describe("PushFileUpdate", () => {
   });
 
   it("should map status 'rejected' to event 'file:rejected'", async () => {
-    const handler = new PushFileUpdate("gateway:5200", "test-signalr-key", createTestContext());
+    const handler = new PushFileUpdate(
+      "gateway:5200",
+      "test-signalr-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
+      createTestContext(),
+    );
 
     mockPushToChannel.mockImplementation(
       (
@@ -211,7 +241,12 @@ describe("PushFileUpdate", () => {
   });
 
   it("should include fileId, contextKey, status, variants, and rejectionReason in payload", async () => {
-    const handler = new PushFileUpdate("gateway:5200", "test-signalr-key", createTestContext());
+    const handler = new PushFileUpdate(
+      "gateway:5200",
+      "test-signalr-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
+      createTestContext(),
+    );
 
     mockPushToChannel.mockImplementation(
       (
@@ -243,7 +278,12 @@ describe("PushFileUpdate", () => {
   });
 
   it("should include undefined rejectionReason and variants in payload when not provided", async () => {
-    const handler = new PushFileUpdate("gateway:5200", "test-signalr-key", createTestContext());
+    const handler = new PushFileUpdate(
+      "gateway:5200",
+      "test-signalr-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
+      createTestContext(),
+    );
 
     mockPushToChannel.mockImplementation(
       (
@@ -274,7 +314,12 @@ describe("PushFileUpdate", () => {
   });
 
   it("should set deadline on gRPC call options", async () => {
-    const handler = new PushFileUpdate("gateway:5200", "test-signalr-key", createTestContext());
+    const handler = new PushFileUpdate(
+      "gateway:5200",
+      "test-signalr-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
+      createTestContext(),
+    );
 
     mockPushToChannel.mockImplementation(
       (
@@ -298,7 +343,12 @@ describe("PushFileUpdate", () => {
   });
 
   it("should reuse client on subsequent calls", async () => {
-    const handler = new PushFileUpdate("gateway:5200", "test-signalr-key", createTestContext());
+    const handler = new PushFileUpdate(
+      "gateway:5200",
+      "test-signalr-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
+      createTestContext(),
+    );
 
     mockPushToChannel.mockImplementation(
       (_req: unknown, _meta: unknown, _opts: unknown, cb: (err: unknown, res: unknown) => void) => {

@@ -197,6 +197,36 @@ public class D2ResultTests
     }
 
     /// <summary>
+    /// Tests that ServiceUnavailable creates a 503 result with the default SERVICE_UNAVAILABLE code.
+    /// </summary>
+    [Fact]
+    public void ServiceUnavailable_CreatesServiceUnavailableResult()
+    {
+        // Act
+        var result = D2Result.ServiceUnavailable();
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, result.StatusCode);
+        Assert.Equal(ErrorCodes.SERVICE_UNAVAILABLE, result.ErrorCode);
+        Assert.Contains("common_errors_SERVICE_UNAVAILABLE", result.Messages);
+    }
+
+    /// <summary>
+    /// Tests that ServiceUnavailable accepts an errorCode override for downstream discrimination.
+    /// </summary>
+    [Fact]
+    public void ServiceUnavailable_AcceptsErrorCodeOverride()
+    {
+        // Act
+        var result = D2Result.ServiceUnavailable(errorCode: "DELIVERY_FAILED");
+
+        // Assert
+        Assert.Equal("DELIVERY_FAILED", result.ErrorCode);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, result.StatusCode);
+    }
+
+    /// <summary>
     /// Tests that the constructor defaults to OK status code when success is true.
     /// </summary>
     [Fact]

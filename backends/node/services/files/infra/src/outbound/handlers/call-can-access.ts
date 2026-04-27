@@ -14,8 +14,7 @@ import {
   type CallCanAccessOutput as O,
   type ICallCanAccess,
 } from "@d2/files-app";
-
-const GRPC_TIMEOUT_MS = 10_000;
+import type { FilesOutboundOptions } from "../../options.js";
 
 /**
  * gRPC outbound client for CanAccess calls to owning services.
@@ -26,11 +25,18 @@ const GRPC_TIMEOUT_MS = 10_000;
 export class CallCanAccess extends BaseHandler<I, O> implements ICallCanAccess {
   private readonly clients: Map<string, FileCallbackClient>;
   private readonly apiKey: string;
+  private readonly options: FilesOutboundOptions;
 
-  constructor(clients: Map<string, FileCallbackClient>, apiKey: string, context: IHandlerContext) {
+  constructor(
+    clients: Map<string, FileCallbackClient>,
+    apiKey: string,
+    options: FilesOutboundOptions,
+    context: IHandlerContext,
+  ) {
     super(context);
     this.clients = clients;
     this.apiKey = apiKey;
+    this.options = options;
   }
 
   override get redaction(): RedactionSpec {
@@ -52,7 +58,7 @@ export class CallCanAccess extends BaseHandler<I, O> implements ICallCanAccess {
               action: input.action,
             },
             new grpc.Metadata(),
-            { deadline: Date.now() + GRPC_TIMEOUT_MS },
+            { deadline: Date.now() + this.options.grpcTimeoutMs },
             (err, res) => {
               if (err) reject(err);
               else resolve(res);

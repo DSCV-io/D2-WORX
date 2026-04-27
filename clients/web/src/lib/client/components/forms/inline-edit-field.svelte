@@ -9,6 +9,7 @@
   } from "$lib/shared/forms/input-styles.js";
   import { createInlineEditKeyHandler } from "$lib/shared/forms/inline-edit-keyboard.js";
   import { isSaveCancelledError } from "$lib/shared/forms/save-cancelled-error.js";
+  import * as m from "$lib/paraglide/messages.js";
   import InlineEditActions from "./inline-edit-actions.svelte";
   import InlineFieldStatusIcon from "./inline-field-status-icon.svelte";
 
@@ -149,7 +150,7 @@
         saveState = "idle";
         return false;
       }
-      errorMessage = err instanceof Error ? err.message : "Failed to save.";
+      errorMessage = err instanceof Error ? err.message : m.common_errors_save_failed();
       saveState = "error";
       validationStatus = "invalid";
       return false;

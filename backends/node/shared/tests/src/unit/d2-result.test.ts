@@ -195,6 +195,29 @@ describe("D2Result.tooManyRequests", () => {
   });
 });
 
+describe("D2Result.serviceUnavailable", () => {
+  it("creates a 503 result with default message + SERVICE_UNAVAILABLE code", () => {
+    const result = D2Result.serviceUnavailable();
+
+    expect(result).toBeFailure();
+    expect(result).toHaveStatusCode(HttpStatusCode.ServiceUnavailable);
+    expect(result).toHaveErrorCode(ErrorCodes.SERVICE_UNAVAILABLE);
+    expect(result).toHaveMessages(["common_errors_SERVICE_UNAVAILABLE"]);
+  });
+
+  it("accepts an errorCode override for downstream discrimination", () => {
+    const result = D2Result.serviceUnavailable({
+      messages: ["common_comms_DELIVERY_RETRY_SCHEDULED"],
+      errorCode: "DELIVERY_FAILED",
+    });
+
+    expect(result).toBeFailure();
+    expect(result).toHaveStatusCode(HttpStatusCode.ServiceUnavailable);
+    expect(result).toHaveErrorCode("DELIVERY_FAILED");
+    expect(result).toHaveMessages(["common_comms_DELIVERY_RETRY_SCHEDULED"]);
+  });
+});
+
 describe("D2Result.conflict", () => {
   it("creates a 409 conflict result with default message", () => {
     const result = D2Result.conflict();

@@ -1,8 +1,7 @@
 import { Hono } from "hono";
-import type { ServiceScope } from "@d2/di";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { IDownloadFileVariantKey } from "@d2/files-app";
-import { SCOPE_KEY } from "../context-keys.js";
+import type { FilesVariables } from "../context-keys.js";
 
 /**
  * Download routes — file download proxy via storage.
@@ -14,12 +13,11 @@ import { SCOPE_KEY } from "../context-keys.js";
  * Uses `Content-Disposition: attachment` to prevent XSS via uploaded SVG/HTML.
  * Sets aggressive caching for immutable content-addressable files.
  */
-export function createDownloadRoutes(): Hono {
-  const app = new Hono();
+export function createDownloadRoutes(): Hono<{ Variables: FilesVariables }> {
+  const app = new Hono<{ Variables: FilesVariables }>();
 
   app.get("/files/:fileId/:variantName", async (c) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const scope = (c as any).get(SCOPE_KEY) as ServiceScope;
+    const scope = c.var.scope;
     const { fileId, variantName } = c.req.param();
 
     const handler = scope.resolve(IDownloadFileVariantKey);

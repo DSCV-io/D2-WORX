@@ -42,7 +42,7 @@ describe("GetFileMetadata", () => {
   it("should return file metadata on success", async () => {
     const repo = createMockRepo();
     const file = makeFile();
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
     const { handler } = createHandler({ repo });
 
     const result = await handler.handleAsync({ fileId: "file-001" });
@@ -54,7 +54,7 @@ describe("GetFileMetadata", () => {
 
   it("should return notFound when file does not exist", async () => {
     const repo = createMockRepo();
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.notFound());
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.notFound());
     const { handler } = createHandler({ repo });
 
     const result = await handler.handleAsync({ fileId: "nonexistent" });
@@ -74,7 +74,7 @@ describe("GetFileMetadata", () => {
       sizeBytes: 512,
       id: "file-002",
     });
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
     const { handler } = createHandler({ repo });
 
     const result = await handler.handleAsync({ fileId: "file-002" });
@@ -86,7 +86,7 @@ describe("GetFileMetadata", () => {
   it("should return forbidden when access is denied", async () => {
     const repo = createMockRepo();
     const file = makeFile();
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
     const { handler } = createHandler({
       repo,
       resolveAccess: createMockResolveFileAccess(false),
@@ -108,7 +108,7 @@ describe("GetFileMetadata", () => {
   it("should delegate to resolveAccess with correct input", async () => {
     const repo = createMockRepo();
     const file = makeFile();
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
     const resolveAccess = createMockResolveFileAccess();
     const { handler } = createHandler({ repo, resolveAccess });
 
@@ -123,7 +123,7 @@ describe("GetFileMetadata", () => {
 
   it("should propagate repo failure", async () => {
     const repo = createMockRepo();
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.serviceUnavailable());
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.serviceUnavailable());
     const { handler } = createHandler({ repo });
 
     const result = await handler.handleAsync({ fileId: "file-001" });

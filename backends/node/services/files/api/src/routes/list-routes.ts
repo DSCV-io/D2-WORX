@@ -1,22 +1,20 @@
 import { Hono } from "hono";
-import type { ServiceScope } from "@d2/di";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { D2Result } from "@d2/result";
 import { IListFilesKey } from "@d2/files-app";
 import { TK } from "@d2/i18n";
-import { SCOPE_KEY } from "../context-keys.js";
+import type { FilesVariables } from "../context-keys.js";
 
 /**
  * List routes — paginated file listing by context.
  *
  * `GET /files?contextKey=...&relatedEntityId=...&limit=...&offset=...`
  */
-export function createListRoutes(): Hono {
-  const app = new Hono();
+export function createListRoutes(): Hono<{ Variables: FilesVariables }> {
+  const app = new Hono<{ Variables: FilesVariables }>();
 
   app.get("/files", async (c) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const scope = (c as any).get(SCOPE_KEY) as ServiceScope;
+    const scope = c.var.scope;
     const contextKey = c.req.query("contextKey");
     const relatedEntityId = c.req.query("relatedEntityId");
 

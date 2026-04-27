@@ -23,9 +23,12 @@ export class UpdateOrgLogo extends BaseHandler<I, O> implements IUpdateOrgLogoHa
   }
 
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {
+    // `clear: true`  → write NULL (remove logo)
+    // `clear: false` → write the supplied `logo` string
+    const nextLogo = input.clear ? null : (input.logo ?? null);
     const rows = await this.db
       .update(organization)
-      .set({ logo: input.logo, updatedAt: new Date() })
+      .set({ logo: nextLogo, updatedAt: new Date() })
       .where(eq(organization.id, input.orgId))
       .returning({ id: organization.id });
 

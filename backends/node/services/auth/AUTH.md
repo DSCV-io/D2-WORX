@@ -72,24 +72,24 @@ The auth service is a standalone Node.js application built on **Hono** + **Bette
 
 **Who owns what**: CQRS handlers for custom tables (sign_in_event, emulation_consent, org_contact). These handlers DO NOT touch BetterAuth-managed tables.
 
-| Handler                | Type    | Purpose                                                                              |
-| ---------------------- | ------- | ------------------------------------------------------------------------------------ |
-| RecordSignInEvent      | Command | Audit sign-in with WhoIs linkage                                                     |
-| CreateEmulationConsent | Command | Grant org-level emulation consent                                                    |
-| RevokeEmulationConsent | Command | Revoke active consent                                                                |
-| CreateOrgContact       | Command | Create Geo contact via gRPC + org_contact junction                                   |
-| UpdateOrgContact       | Command | Update metadata (label/isPrimary) or replace contact (immutability pattern)          |
-| DeleteOrgContact       | Command | Delete junction + best-effort Geo contact cleanup                                    |
-| CheckSignInThrottle    | Query   | Check throttle status per (identifier, identity) — local cache → Redis, fail-open    |
-| GetSignInEvents        | Query   | Paginated sign-in history (with local memory cache + staleness check)                |
-| GetActiveConsents      | Query   | User's active emulation consents                                                     |
-| GetOrgContacts         | Query   | Org's contacts hydrated with full Geo contact data                                   |
-| CheckEmailAvailability | Query   | Check if an email is available for registration (in-memory cache + DB, fail-open)    |
-| RecordSignInOutcome    | Command | Record sign-in success/failure → mark known-good or increment failures + set lockout |
-| CreateUserContact      | Command | Create Geo contact via gRPC (`contextKey: auth_user`) during sign-up hook            |
-| HandleFileProcessed    | Command | Routes file processing callbacks by contextKey: avatar → user.image, logo → org.logo |
-| RequestUserDeletion    | Command | Self-service deletion gate — password check, sole-owner check, flips status → `pending_deletion`, deletes sessions, sends "scheduled" notification |
-| CancelUserDeletion     | Command | Idempotent — re-activates a `pending_deletion` user when they sign back in (fired by BetterAuth `session.create.before` hook) |
+| Handler                | Type    | Purpose                                                                                                                                                 |
+| ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RecordSignInEvent      | Command | Audit sign-in with WhoIs linkage                                                                                                                        |
+| CreateEmulationConsent | Command | Grant org-level emulation consent                                                                                                                       |
+| RevokeEmulationConsent | Command | Revoke active consent                                                                                                                                   |
+| CreateOrgContact       | Command | Create Geo contact via gRPC + org_contact junction                                                                                                      |
+| UpdateOrgContact       | Command | Update metadata (label/isPrimary) or replace contact (immutability pattern)                                                                             |
+| DeleteOrgContact       | Command | Delete junction + best-effort Geo contact cleanup                                                                                                       |
+| CheckSignInThrottle    | Query   | Check throttle status per (identifier, identity) — local cache → Redis, fail-open                                                                       |
+| GetSignInEvents        | Query   | Paginated sign-in history (with local memory cache + staleness check)                                                                                   |
+| GetActiveConsents      | Query   | User's active emulation consents                                                                                                                        |
+| GetOrgContacts         | Query   | Org's contacts hydrated with full Geo contact data                                                                                                      |
+| CheckEmailAvailability | Query   | Check if an email is available for registration (in-memory cache + DB, fail-open)                                                                       |
+| RecordSignInOutcome    | Command | Record sign-in success/failure → mark known-good or increment failures + set lockout                                                                    |
+| CreateUserContact      | Command | Create Geo contact via gRPC (`contextKey: auth_user`) during sign-up hook                                                                               |
+| HandleFileProcessed    | Command | Routes file processing callbacks by contextKey: avatar → user.image, logo → org.logo                                                                    |
+| RequestUserDeletion    | Command | Self-service deletion gate — password check, sole-owner check, flips status → `pending_deletion`, deletes sessions, sends "scheduled" notification      |
+| CancelUserDeletion     | Command | Idempotent — re-activates a `pending_deletion` user when they sign back in (fired by BetterAuth `session.create.before` hook)                           |
 | FinalizeDeletedUser    | Command | Per-user worker invoked by `CleanupDeletedUsers` job — calls AnonymizeUser, sends "complete" notification, publishes `auth.user-anonymize` fanout event |
 
 **DI pattern**: `@d2/di` registration functions — `addAuthApp(services, options)` registers all 23 CQRS handlers (12 command + 6 query + 5 job) as transient services, `addAuthInfra(services, db)` registers all 28 repo handlers as transient services. Both accept a `ServiceCollection` and use `ServiceKey<T>` tokens for type-safe registration/resolution. Handlers resolve their dependencies (repo handlers, geo-client handlers, `IHandlerContext`) from the `ServiceProvider` at resolve time. Notification publishing uses `@d2/comms-client` (configured in `@d2/auth-api` composition root via `addCommsClient(services, { publisher })`), not app-layer handlers. See ADR-011 in `PLANNING.md`.
@@ -426,10 +426,10 @@ BetterAuth is session-based at its core. Sessions use 3-tier storage for perform
 
 SvelteKit sets two browser-derived cookies on every page load (defaults to whatever the browser reports — no user action required):
 
-| Cookie        | Source                                                  | Purpose                                            |
-| ------------- | ------------------------------------------------------- | -------------------------------------------------- |
-| `D2_LOCALE`   | Negotiated locale (Paraglide / `Accept-Language`)       | UI language preference                             |
-| `D2_TIMEZONE` | `Intl.DateTimeFormat().resolvedOptions().timeZone`      | IANA timezone identifier (e.g., `America/Toronto`) |
+| Cookie        | Source                                             | Purpose                                            |
+| ------------- | -------------------------------------------------- | -------------------------------------------------- |
+| `D2_LOCALE`   | Negotiated locale (Paraglide / `Accept-Language`)  | UI language preference                             |
+| `D2_TIMEZONE` | `Intl.DateTimeFormat().resolvedOptions().timeZone` | IANA timezone identifier (e.g., `America/Toronto`) |
 
 The BetterAuth sign-up callback reads BOTH cookies off the inbound request and persists them onto the new `user` row (`user.locale`, `user.timezone`). New users land in the system with their browser's locale and timezone preserved — no post-sign-up onboarding step needed for either field. After sign-up, the profile page dropdowns let the user change either independently via `UpdateUserLocale` / `UpdateUserTimezone` (both follow the SAGA pattern — see [Cross-Service Consistency](#cross-service-consistency-saga-pattern)).
 
@@ -781,19 +781,19 @@ These handlers operate on custom tables via Drizzle repositories. They follow th
 
 #### Commands (C/)
 
-| Handler                | Input                                              | Side Effects                                                                  | Zod Validation                                           | Business Logic                                                                                                                                                                                             |
-| ---------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| RecordSignInOutcome    | identifierHash, identityHash, responseStatus       | Redis: mark known-good / increment failures / set lockout                     | — (pre-hashed input)                                     | Success (200) → markKnownGood + clearFailureState + update local cache. Failure (401/400) → incrementFailures + computeSignInDelay → setLocked if delay > 0. Other status → no-op. Fail-open on all errors |
-| RecordSignInEvent      | userId, ipAddress, userAgent, whoIsId?, successful | Writes to `sign_in_event`                                                     | userId required                                          | —                                                                                                                                                                                                          |
-| CreateEmulationConsent | userId, grantedToOrgId, activeOrgType, expiresAt   | Writes to `emulation_consent`                                                 | zodGuid, z.enum(ORG_TYPES), future date, max 30d         | canEmulate check, org existence, duplicate prevention                                                                                                                                                      |
-| RevokeEmulationConsent | consentId, userId                                  | Sets `revoked_at`                                                             | zodGuid × 2                                              | Consent exists, belongs to user, is active                                                                                                                                                                 |
-| CreateOrgContact       | organizationId, label, isPrimary?, contact         | Creates `org_contact` junction → Geo contact via gRPC (ext key = junction ID) | zodGuid, zodNonEmptyString, contact sub-fields           | Junction created first; Geo contact uses ext key `(org_contact, junction.id)`. Rollback junction on Geo failure                                                                                            |
-| UpdateOrgContact       | id, organizationId, updates                        | Updates metadata or replaces contact via `updateContactsByExtKeys`            | zodGuid × 2, at-least-one-field refine, optional contact | IDOR check; if contact provided: atomic replace via Geo ext-key update                                                                                                                                     |
-| DeleteOrgContact       | id, organizationId                                 | Deletes junction + best-effort Geo contact cleanup via ext key                | zodGuid × 2                                              | IDOR check; Geo delete failure tolerated (orphan cleanup by Geo job)                                                                                                                                       |
-| CreateUserContact      | userId, email, name, locale                        | Creates Geo contact via gRPC (`contextKey: auth_user`)                        | zodGuid, zodNonEmptyString(254/511/35)                   | Splits `name` into firstName/lastName; maps `locale` to `ietfBcp47Tag` on the Geo contact; Geo failure aborts sign-up entirely                                                                             |
-| RequestUserDeletion    | userId, currentPassword, feedback?                 | Atomic password verify; CheckSoleOwnerOrgs; UpdateUserStatus → `pending_deletion`; DeleteAllUserSessions; bust BetterAuth Redis cookie cache; comms `alternativeContactInfo` "scheduled" notification | zodGuid, password required, optional `{ reason?, comment? }` | 401 on wrong password, 409 `SOLE_OWNER_OF_ORGS` if blocking, otherwise 200 `{ scheduledFor }` (ISO date = `deletedAt + GRACE_PERIOD_DAYS`). Notification bypasses channel preferences (security-relevant) |
-| CancelUserDeletion     | userId                                             | Idempotent UpdateUserStatus → `active`, clears `deletedAt`, sends "cancelled" notification | zodGuid                                                  | No-op if status≠pending_deletion. Fired fire-and-forget by the `session.create.before` hook                                                                                                              |
-| FinalizeDeletedUser    | userId                                             | AnonymizeUser; on success → "complete" notification via `alternativeContactInfo` (Geo contact is being torn down) + publish `auth.user-anonymize` fanout event | zodGuid                                                  | Per-user worker. AnonymizeUser's `WHERE status='pending_deletion'` guard makes the run race-safe vs concurrent cancel                                                                                  |
+| Handler                | Input                                              | Side Effects                                                                                                                                                                                          | Zod Validation                                               | Business Logic                                                                                                                                                                                             |
+| ---------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RecordSignInOutcome    | identifierHash, identityHash, responseStatus       | Redis: mark known-good / increment failures / set lockout                                                                                                                                             | — (pre-hashed input)                                         | Success (200) → markKnownGood + clearFailureState + update local cache. Failure (401/400) → incrementFailures + computeSignInDelay → setLocked if delay > 0. Other status → no-op. Fail-open on all errors |
+| RecordSignInEvent      | userId, ipAddress, userAgent, whoIsId?, successful | Writes to `sign_in_event`                                                                                                                                                                             | userId required                                              | —                                                                                                                                                                                                          |
+| CreateEmulationConsent | userId, grantedToOrgId, activeOrgType, expiresAt   | Writes to `emulation_consent`                                                                                                                                                                         | zodGuid, z.enum(ORG_TYPES), future date, max 30d             | canEmulate check, org existence, duplicate prevention                                                                                                                                                      |
+| RevokeEmulationConsent | consentId, userId                                  | Sets `revoked_at`                                                                                                                                                                                     | zodGuid × 2                                                  | Consent exists, belongs to user, is active                                                                                                                                                                 |
+| CreateOrgContact       | organizationId, label, isPrimary?, contact         | Creates `org_contact` junction → Geo contact via gRPC (ext key = junction ID)                                                                                                                         | zodGuid, zodNonEmptyString, contact sub-fields               | Junction created first; Geo contact uses ext key `(org_contact, junction.id)`. Rollback junction on Geo failure                                                                                            |
+| UpdateOrgContact       | id, organizationId, updates                        | Updates metadata or replaces contact via `updateContactsByExtKeys`                                                                                                                                    | zodGuid × 2, at-least-one-field refine, optional contact     | IDOR check; if contact provided: atomic replace via Geo ext-key update                                                                                                                                     |
+| DeleteOrgContact       | id, organizationId                                 | Deletes junction + best-effort Geo contact cleanup via ext key                                                                                                                                        | zodGuid × 2                                                  | IDOR check; Geo delete failure tolerated (orphan cleanup by Geo job)                                                                                                                                       |
+| CreateUserContact      | userId, email, name, locale                        | Creates Geo contact via gRPC (`contextKey: auth_user`)                                                                                                                                                | zodGuid, zodNonEmptyString(254/511/35)                       | Splits `name` into firstName/lastName; maps `locale` to `ietfBcp47Tag` on the Geo contact; Geo failure aborts sign-up entirely                                                                             |
+| RequestUserDeletion    | userId, currentPassword, feedback?                 | Atomic password verify; CheckSoleOwnerOrgs; UpdateUserStatus → `pending_deletion`; DeleteAllUserSessions; bust BetterAuth Redis cookie cache; comms `alternativeContactInfo` "scheduled" notification | zodGuid, password required, optional `{ reason?, comment? }` | 401 on wrong password, 409 `SOLE_OWNER_OF_ORGS` if blocking, otherwise 200 `{ scheduledFor }` (ISO date = `deletedAt + GRACE_PERIOD_DAYS`). Notification bypasses channel preferences (security-relevant)  |
+| CancelUserDeletion     | userId                                             | Idempotent UpdateUserStatus → `active`, clears `deletedAt`, sends "cancelled" notification                                                                                                            | zodGuid                                                      | No-op if status≠pending_deletion. Fired fire-and-forget by the `session.create.before` hook                                                                                                                |
+| FinalizeDeletedUser    | userId                                             | AnonymizeUser; on success → "complete" notification via `alternativeContactInfo` (Geo contact is being torn down) + publish `auth.user-anonymize` fanout event                                        | zodGuid                                                      | Per-user worker. AnonymizeUser's `WHERE status='pending_deletion'` guard makes the run race-safe vs concurrent cancel                                                                                      |
 
 #### Notification Publishing
 
@@ -905,8 +905,8 @@ Account change flows for email and phone use a two-step OTP ritual: `request-cha
 
 ### CQRS Handlers (`@d2/auth-app`)
 
-| Handler              | Category | Purpose                                                                                             |
-| -------------------- | -------- | --------------------------------------------------------------------------------------------------- |
+| Handler              | Category | Purpose                                                                                            |
+| -------------------- | -------- | -------------------------------------------------------------------------------------------------- |
 | `RequestEmailChange` | Command  | Password-gated; issues 15-min email OTP, publishes comms notification to the PENDING new email     |
 | `VerifyEmailChange`  | Command  | Validates OTP; applies email change; sends security notification to the OLD email                  |
 | `RequestPhoneChange` | Command  | Password-gated; issues 5-min SMS OTP, publishes comms notification to the PENDING new phone number |
@@ -926,11 +926,11 @@ Two new user-table fields added via `user.additionalFields`:
 
 OTPs piggyback on BetterAuth's existing `verification` table — no new schema. One active record per change type per user.
 
-| Field        | Value                                                            |
-| ------------ | ---------------------------------------------------------------- |
+| Field        | Value                                                             |
+| ------------ | ----------------------------------------------------------------- |
 | `identifier` | `account-change:{type}:{userId}` where `type` ∈ {`email`,`phone`} |
-| `value`      | JSON: `{ codeHash, pendingValue, attempts }`                     |
-| `expiresAt`  | now + TTL (see below)                                            |
+| `value`      | JSON: `{ codeHash, pendingValue, attempts }`                      |
+| `expiresAt`  | now + TTL (see below)                                             |
 
 - `codeHash`: scrypt hash of the 6-digit code
 - `pendingValue`: the new email / phone being claimed
@@ -938,12 +938,12 @@ OTPs piggyback on BetterAuth's existing `verification` table — no new schema. 
 
 ### OTP Constants (`@d2/auth-domain`)
 
-| Constant                     | Value  | Purpose                                    |
-| ---------------------------- | ------ | ------------------------------------------ |
-| `OTP_EXPIRY.EMAIL_SECONDS`   | 900    | 15 min — email OTP TTL                     |
-| `OTP_EXPIRY.PHONE_SECONDS`   | 300    | 5 min — SMS OTP TTL                        |
-| `OTP_VERIFY.CODE_LENGTH`     | 6      | Numeric digits                             |
-| `OTP_VERIFY.MAX_ATTEMPTS`    | 5      | Wrong-code tries before the record is burned |
+| Constant                   | Value | Purpose                                      |
+| -------------------------- | ----- | -------------------------------------------- |
+| `OTP_EXPIRY.EMAIL_SECONDS` | 900   | 15 min — email OTP TTL                       |
+| `OTP_EXPIRY.PHONE_SECONDS` | 300   | 5 min — SMS OTP TTL                          |
+| `OTP_VERIFY.CODE_LENGTH`   | 6     | Numeric digits                               |
+| `OTP_VERIFY.MAX_ATTEMPTS`  | 5     | Wrong-code tries before the record is burned |
 
 On `attempts >= MAX_ATTEMPTS` the verification record is deleted — the user must restart with a fresh `request-change`.
 
@@ -983,10 +983,10 @@ All routes extract `userId` from the session (never from the request body — ID
 
 OTP notifications are published via `@d2/comms-client` using `alternativeContactInfo` (the pending new value is NOT yet a Geo contact, so no contactId exists):
 
-| Flow                 | Target                                                 |
-| -------------------- | ------------------------------------------------------ |
-| Email OTP            | `alternativeContactInfo: { email: pendingEmail }`      |
-| Phone OTP            | `alternativeContactInfo: { phone: pendingPhone }`      |
+| Flow                 | Target                                                                                         |
+| -------------------- | ---------------------------------------------------------------------------------------------- |
+| Email OTP            | `alternativeContactInfo: { email: pendingEmail }`                                              |
+| Phone OTP            | `alternativeContactInfo: { phone: pendingPhone }`                                              |
 | Email change success | `alternativeContactInfo: { email: OLD email }` — security notification to the previous address |
 
 The old-email security notification ("your email was changed") fires after `VerifyEmailChange` applies the new email, giving the previous account owner a window to detect takeover.

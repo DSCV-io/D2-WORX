@@ -83,6 +83,37 @@ describe("toFile", () => {
     expect(file.rejectionReason).toBe("size_exceeded");
   });
 
+  it("should map empty string rejectionReason as undefined", () => {
+    const row: FileRow = {
+      ...baseRow,
+      rejectionReason: "",
+    };
+    const file = toFile(row);
+
+    expect(file.rejectionReason).toBeUndefined();
+  });
+
+  it("should map whitespace-only rejectionReason as undefined", () => {
+    const row: FileRow = {
+      ...baseRow,
+      rejectionReason: "   ",
+    };
+    const file = toFile(row);
+
+    expect(file.rejectionReason).toBeUndefined();
+  });
+
+  it("should trim rejectionReason whitespace when present", () => {
+    const row: FileRow = {
+      ...baseRow,
+      status: "rejected",
+      rejectionReason: "  size_exceeded  ",
+    };
+    const file = toFile(row);
+
+    expect(file.rejectionReason).toBe("size_exceeded");
+  });
+
   it("should cast status as FileStatus", () => {
     const readyRow: FileRow = { ...baseRow, status: "ready" };
     const file = toFile(readyRow);

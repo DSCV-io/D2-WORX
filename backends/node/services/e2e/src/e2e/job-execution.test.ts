@@ -145,8 +145,14 @@ describe("E2E: Scheduled job execution (full DI → lock → purge → DB)", () 
       IHandlerContextKey,
       (sp) => new HandlerContext(sp.resolve(IRequestContextKey), sp.resolve(ILoggerKey)),
     );
-    authServices.addInstance(DistributedCache.IDistributedCacheAcquireLockKey, new AcquireLock(redis, serviceContext));
-    authServices.addInstance(DistributedCache.IDistributedCacheReleaseLockKey, new ReleaseLock(redis, serviceContext));
+    authServices.addInstance(
+      DistributedCache.IDistributedCacheAcquireLockKey,
+      new AcquireLock(redis, serviceContext),
+    );
+    authServices.addInstance(
+      DistributedCache.IDistributedCacheReleaseLockKey,
+      new ReleaseLock(redis, serviceContext),
+    );
     addAuthInfra(authServices, authDb);
     // Register only job CQRS handlers (avoids geo-client deps from addAuthApp)
     authServices.addTransient(
@@ -202,8 +208,14 @@ describe("E2E: Scheduled job execution (full DI → lock → purge → DB)", () 
       IHandlerContextKey,
       (sp) => new HandlerContext(sp.resolve(IRequestContextKey), sp.resolve(ILoggerKey)),
     );
-    commsServices.addInstance(DistributedCache.IDistributedCacheAcquireLockKey, new AcquireLock(redis, serviceContext));
-    commsServices.addInstance(DistributedCache.IDistributedCacheReleaseLockKey, new ReleaseLock(redis, serviceContext));
+    commsServices.addInstance(
+      DistributedCache.IDistributedCacheAcquireLockKey,
+      new AcquireLock(redis, serviceContext),
+    );
+    commsServices.addInstance(
+      DistributedCache.IDistributedCacheReleaseLockKey,
+      new ReleaseLock(redis, serviceContext),
+    );
     addCommsInfra(commsServices, commsDb);
     commsServices.addTransient(
       IRunDeletedMessagePurgeKey,

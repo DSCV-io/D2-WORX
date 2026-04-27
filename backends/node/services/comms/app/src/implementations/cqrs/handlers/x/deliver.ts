@@ -302,9 +302,8 @@ export class Deliver extends BaseHandler<Input, Output> implements Complex.IDeli
       (a) => a.status === "failed" && a.nextRetryAt != null,
     );
     if (retryableFailures.length > 0) {
-      return D2Result.fail({
+      return D2Result.serviceUnavailable({
         messages: [TK.comms.errors.DELIVERY_RETRY_SCHEDULED],
-        statusCode: 503,
         errorCode: COMMS_RETRY.DELIVERY_FAILED,
       });
     }

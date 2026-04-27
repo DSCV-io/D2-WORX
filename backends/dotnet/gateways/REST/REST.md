@@ -24,16 +24,16 @@ All middleware (JWT auth, service key, fingerprint validation, request enrichmen
 
 ### Shared Middleware Packages
 
-| Package                                                                                           | Provides                                                                              |
-| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Package                                                                                           | Provides                                                                                |
+| ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | [`JwtAuth.Default`](../../shared/Implementations/Middleware/JwtAuth.Default/)                     | JWT Bearer auth (RS256/JWKS) and `JwtFingerprintMiddleware` / `JwtFingerprintValidator` |
-| [`ServiceKey.Default`](../../shared/Implementations/Middleware/ServiceKey.Default/)               | `ServiceKeyMiddleware`, constant-time API key validation, `RequireServiceKey()` filter |
-| [`AuthPolicy.Default`](../../shared/Implementations/Middleware/AuthPolicy.Default/)               | `AuthPolicies` constants, `AddD2Policies()`, fluent `RequireAuth()` route extensions  |
-| [`RequestEnrichment.Default`](../../shared/Implementations/Middleware/RequestEnrichment.Default/) | IP resolution, fingerprinting, WhoIs lookup, `IRequestContext` population             |
-| [`RateLimit.Default`](../../shared/Implementations/Middleware/RateLimit.Default/)                 | Multi-dimensional sliding-window rate limiting                                        |
-| [`Idempotency.Default`](../../shared/Implementations/Middleware/Idempotency.Default/)             | `Idempotency-Key` header middleware (SET NX + response caching)                       |
-| [`Translation.Default`](../../shared/Implementations/Middleware/Translation.Default/)             | `D2-Locale` header parsing, BCP 47 locale resolution, `D2Result.messages` translation |
-| [`I18n`](../../shared/I18n/)                                                                      | `SupportedLocales` (IETF BCP 47 tags), `ITranslator`, translation key constants       |
+| [`ServiceKey.Default`](../../shared/Implementations/Middleware/ServiceKey.Default/)               | `ServiceKeyMiddleware`, constant-time API key validation, `RequireServiceKey()` filter  |
+| [`AuthPolicy.Default`](../../shared/Implementations/Middleware/AuthPolicy.Default/)               | `AuthPolicies` constants, `AddD2Policies()`, fluent `RequireAuth()` route extensions    |
+| [`RequestEnrichment.Default`](../../shared/Implementations/Middleware/RequestEnrichment.Default/) | IP resolution, fingerprinting, WhoIs lookup, `IRequestContext` population               |
+| [`RateLimit.Default`](../../shared/Implementations/Middleware/RateLimit.Default/)                 | Multi-dimensional sliding-window rate limiting                                          |
+| [`Idempotency.Default`](../../shared/Implementations/Middleware/Idempotency.Default/)             | `Idempotency-Key` header middleware (SET NX + response caching)                         |
+| [`Translation.Default`](../../shared/Implementations/Middleware/Translation.Default/)             | `D2-Locale` header parsing, BCP 47 locale resolution, `D2Result.messages` translation   |
+| [`I18n`](../../shared/I18n/)                                                                      | `SupportedLocales` (IETF BCP 47 tags), `ITranslator`, translation key constants         |
 
 ## API Versioning
 
@@ -89,17 +89,17 @@ All job endpoints require `RequireServiceKey()` — accessible only to Dkron or 
 
 Each backing service owns one endpoint file under [`Endpoints/`](Endpoints/). The file owns BOTH the `IServiceCollection.Add*GrpcClient()` extension AND the `IEndpointRouteBuilder.Map*EndpointsV1()` extension. `Program.cs` calls each one — no per-route logic lives in `Program.cs` itself.
 
-| File                    | gRPC Client                       | REST Routes                                                     |
-| ----------------------- | --------------------------------- | --------------------------------------------------------------- |
-| `GeoEndpoints.cs`       | Geo data client                   | `/api/v1/geo/...` (reference data + update)                     |
-| `AuthEndpoints.cs`      | Auth client                       | _(placeholder — no REST routes yet)_                            |
-| `CommsEndpoints.cs`     | Comms client                      | `/api/v1/notification-preferences` (GET + PUT)                  |
-| `FilesEndpoints.cs`     | Files client                      | _(placeholder — no REST routes yet)_                            |
-| `SignalREndpoints.cs`   | SignalR push client               | _(placeholder — no REST routes yet)_                            |
-| `AuthJobEndpoints.cs`   | Auth job client (with API key)    | `/api/v1/auth/jobs/...` (Dkron-only via `RequireServiceKey()`)  |
-| `GeoJobEndpoints.cs`    | Geo job client (with API key)     | `/api/v1/geo/jobs/...` (Dkron-only via `RequireServiceKey()`)   |
-| `CommsJobEndpoints.cs`  | Comms job client (with API key)   | `/api/v1/comms/jobs/...` (Dkron-only via `RequireServiceKey()`) |
-| `HealthEndpoints.cs`    | Reuses Geo/Auth/Comms clients     | `/api/health`                                                   |
+| File                   | gRPC Client                     | REST Routes                                                     |
+| ---------------------- | ------------------------------- | --------------------------------------------------------------- |
+| `GeoEndpoints.cs`      | Geo data client                 | `/api/v1/geo/...` (reference data + update)                     |
+| `AuthEndpoints.cs`     | Auth client                     | _(placeholder — no REST routes yet)_                            |
+| `CommsEndpoints.cs`    | Comms client                    | `/api/v1/notification-preferences` (GET + PUT)                  |
+| `FilesEndpoints.cs`    | Files client                    | _(placeholder — no REST routes yet)_                            |
+| `SignalREndpoints.cs`  | SignalR push client             | _(placeholder — no REST routes yet)_                            |
+| `AuthJobEndpoints.cs`  | Auth job client (with API key)  | `/api/v1/auth/jobs/...` (Dkron-only via `RequireServiceKey()`)  |
+| `GeoJobEndpoints.cs`   | Geo job client (with API key)   | `/api/v1/geo/jobs/...` (Dkron-only via `RequireServiceKey()`)   |
+| `CommsJobEndpoints.cs` | Comms job client (with API key) | `/api/v1/comms/jobs/...` (Dkron-only via `RequireServiceKey()`) |
+| `HealthEndpoints.cs`   | Reuses Geo/Auth/Comms clients   | `/api/health`                                                   |
 
 ```csharp
 // Program.cs — gRPC client registration

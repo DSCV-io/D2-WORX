@@ -6,6 +6,7 @@
   import * as Card from "$lib/client/components/ui/card/index.js";
   import { toast } from "svelte-sonner";
   import { page } from "$app/stores";
+  import * as m from "$lib/paraglide/messages.js";
   import type { LocaleOption } from "$lib/shared/forms/locale-options.js";
 
   let username = $state("JohnDoe42");
@@ -15,16 +16,16 @@
   let nameFields = $state([
     {
       key: "firstName",
-      label: "First Name",
+      label: m.webclient_app_account_profile_first_name(),
       value: "John",
-      placeholder: "First name",
+      placeholder: m.webclient_app_account_profile_first_name(),
       maxLength: 255,
     },
     {
       key: "lastName",
-      label: "Last Name",
+      label: m.webclient_app_account_profile_last_name(),
       value: "Doe",
-      placeholder: "Last name",
+      placeholder: m.webclient_app_account_profile_last_name(),
       maxLength: 255,
     },
   ]);
@@ -63,32 +64,36 @@
 
   async function mockSave(value: string) {
     await new Promise((r) => setTimeout(r, 1000));
-    toast.success(`Saved: "${value}"`);
+    toast.success(m.webclient_debug_account_components_saved_value({ value }));
   }
 
   async function mockSaveGroup(values: Record<string, string>) {
     await new Promise((r) => setTimeout(r, 1000));
-    toast.success(`Saved: ${JSON.stringify(values)}`);
+    toast.success(
+      m.webclient_debug_account_components_saved_values({ values: JSON.stringify(values) }),
+    );
   }
 
   function validateUsername(value: string) {
-    if (!value) return "Username is required.";
-    if (!/^[a-zA-Z0-9]+$/.test(value)) return "Letters and numbers only.";
-    if (value.length < 3) return "Must be at least 3 characters.";
-    if (value.length > 32) return "Must be 32 characters or fewer.";
+    if (!value) return m.webclient_app_account_profile_username_required();
+    if (!/^[a-zA-Z0-9]+$/.test(value)) return m.webclient_app_account_profile_username_alpha();
+    if (value.length < 3) return m.webclient_app_account_profile_username_min();
+    if (value.length > 32) return m.webclient_app_account_profile_username_max();
     return undefined;
   }
 
   async function checkUsernameAvailable(value: string) {
     await new Promise((r) => setTimeout(r, 500));
-    if (value.toLowerCase() === "admin") return "Username is already taken.";
+    if (value.toLowerCase() === "admin") return m.webclient_app_account_profile_username_taken();
     return undefined;
   }
 
   function validateNameGroup(values: Record<string, string>) {
     const errors: Record<string, string> = {};
-    if (!values.firstName?.trim()) errors.firstName = "First name is required.";
-    if (!values.lastName?.trim()) errors.lastName = "Last name is required.";
+    if (!values.firstName?.trim())
+      errors.firstName = m.webclient_app_account_profile_first_name_required();
+    if (!values.lastName?.trim())
+      errors.lastName = m.webclient_app_account_profile_last_name_required();
     return Object.keys(errors).length > 0 ? errors : undefined;
   }
 
@@ -119,16 +124,30 @@
   }
 </script>
 
+<svelte:head>
+  <title>{m.webclient_debug_account_components_profile_page_title()}</title>
+  <meta
+    name="description"
+    content={m.webclient_debug_account_components_profile_page_description()}
+  />
+  <meta
+    name="robots"
+    content="noindex, nofollow"
+  />
+</svelte:head>
+
 <div class="space-y-6">
   <div>
-    <h2 class="text-xl font-semibold">Profile</h2>
-    <p class="text-muted-foreground text-sm">Manage your personal information.</p>
+    <h2 class="text-xl font-semibold">{m.webclient_app_account_profile_title()}</h2>
+    <p class="text-muted-foreground text-sm">{m.webclient_app_account_profile_description()}</p>
   </div>
 
   <Card.Root>
     <Card.Header>
-      <Card.Title class="text-base">Your Information</Card.Title>
-      <Card.Description>Your name and unique identifier.</Card.Description>
+      <Card.Title class="text-base">{m.webclient_app_account_profile_your_info_title()}</Card.Title>
+      <Card.Description>
+        {m.webclient_app_account_profile_your_info_description()}
+      </Card.Description>
     </Card.Header>
     <Card.Content class="space-y-5">
       <InlineEditFieldGroup
@@ -140,8 +159,8 @@
       />
       <InlineEditField
         bind:value={username}
-        label="Username"
-        placeholder="Enter username"
+        label={m.webclient_app_account_profile_username()}
+        placeholder={m.webclient_app_account_profile_username_placeholder()}
         maxLength={32}
         validate={validateUsername}
         asyncValidate={checkUsernameAvailable}
@@ -154,13 +173,17 @@
 
   <Card.Root>
     <Card.Header>
-      <Card.Title class="text-base">Language & Time</Card.Title>
-      <Card.Description>Your preferred language and timezone.</Card.Description>
+      <Card.Title class="text-base">
+        {m.webclient_app_account_profile_language_time_title()}
+      </Card.Title>
+      <Card.Description>
+        {m.webclient_app_account_profile_language_time_description()}
+      </Card.Description>
     </Card.Header>
     <Card.Content class="space-y-5">
       <InlineDropdown
         bind:value={locale}
-        label="Language"
+        label={m.webclient_app_account_profile_language()}
         options={localeOptions}
         onSave={mockSave}
         onDirtyChange={(d) => (dirtyFields.locale = d)}
@@ -168,7 +191,7 @@
       />
       <InlineDropdown
         bind:value={timezone}
-        label="Timezone"
+        label={m.webclient_app_account_profile_timezone()}
         options={timezoneOptions}
         onSave={mockSave}
         onDirtyChange={(d) => (dirtyFields.timezone = d)}

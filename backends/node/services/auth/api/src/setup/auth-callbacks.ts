@@ -8,7 +8,7 @@ import { GEO_CONTEXT_KEYS, AUTH_MESSAGING } from "@d2/auth-domain";
 import {
   IRecordSignInEventKey,
   ICreateUserContactKey,
-  IFindUserIdByIdentifierKey,
+  IGetUserIdByIdentifierKey,
   ICancelUserDeletionKey,
 } from "@d2/auth-app";
 import type { AuthHooks } from "@d2/auth-infra";
@@ -281,7 +281,7 @@ export function createRecordFailedSignIn(
     const scope = createServiceScope(provider, logger);
     try {
       // Resolve userId — drop the audit if nobody matches.
-      const finder = scope.resolve(IFindUserIdByIdentifierKey);
+      const finder = scope.resolve(IGetUserIdByIdentifierKey);
       const lookup = await finder.handleAsync({
         email: data.email?.toLowerCase(),
         username: data.username?.toLowerCase(),

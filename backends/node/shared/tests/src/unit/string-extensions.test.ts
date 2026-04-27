@@ -20,13 +20,13 @@ describe("cleanStr", () => {
     ["hello\t\tworld", "hello world"],
     ["hello\n\nworld", "hello world"],
     ["  hello  \n  world  ", "hello world"],
-  ])('cleans "%s" to "%s"', (input, expected) => {
+  ])('cleans "%s" to "%s"', (input: string, expected: string) => {
     expect(cleanStr(input)).toBe(expected);
   });
 
   it.each([null, undefined, "", " ", "   ", "\t", "\n", "  \t  \n  "])(
     "returns undefined for %j",
-    (input) => {
+    (input: string | null | undefined) => {
       expect(cleanStr(input)).toBeUndefined();
     },
   );
@@ -43,7 +43,7 @@ describe("cleanAndValidateEmail", () => {
     ["  test@example.com  ", "test@example.com"],
     ["user.name@example.com", "user.name@example.com"],
     ["user+tag@example.co.uk", "user+tag@example.co.uk"],
-  ])('validates and cleans "%s" to "%s"', (input, expected) => {
+  ])('validates and cleans "%s" to "%s"', (input: string, expected: string) => {
     expect(cleanAndValidateEmail(input)).toBe(expected);
   });
 
@@ -58,7 +58,7 @@ describe("cleanAndValidateEmail", () => {
     "test@.com",
     "test @example.com",
     "test@ example.com",
-  ])("throws for invalid email %j", (input) => {
+  ])("throws for invalid email %j", (input: string | null | undefined) => {
     expect(() => cleanAndValidateEmail(input)).toThrow("Invalid email address format.");
   });
 });
@@ -76,24 +76,30 @@ describe("cleanAndValidatePhoneNumber", () => {
     ["(555) 123 4567", "5551234567"],
     ["+44 20 7946 0958", "442079460958"],
     ["  555.123.4567  ", "5551234567"],
-  ])('cleans "%s" to "%s"', (input, expected) => {
+  ])('cleans "%s" to "%s"', (input: string, expected: string) => {
     expect(cleanAndValidatePhoneNumber(input)).toBe(expected);
   });
 
-  it.each([null, undefined, "", "   "])('throws "cannot be null or empty" for %j', (input) => {
-    expect(() => cleanAndValidatePhoneNumber(input)).toThrow(
-      "Phone number cannot be null or empty.",
-    );
-  });
+  it.each([null, undefined, "", "   "])(
+    'throws "cannot be null or empty" for %j',
+    (input: string | null | undefined) => {
+      expect(() => cleanAndValidatePhoneNumber(input)).toThrow(
+        "Phone number cannot be null or empty.",
+      );
+    },
+  );
 
-  it.each(["abc", "---", "()"])('throws "Invalid phone number format" for "%s"', (input) => {
-    expect(() => cleanAndValidatePhoneNumber(input)).toThrow("Invalid phone number format.");
-  });
+  it.each(["abc", "---", "()"])(
+    'throws "Invalid phone number format" for "%s"',
+    (input: string) => {
+      expect(() => cleanAndValidatePhoneNumber(input)).toThrow("Invalid phone number format.");
+    },
+  );
 
   it.each([
     "123456", // 6 digits (too short)
     "1234567890123456", // 16 digits (too long)
-  ])('throws "between 7 and 15 digits" for "%s"', (input) => {
+  ])('throws "between 7 and 15 digits" for "%s"', (input: string) => {
     expect(() => cleanAndValidatePhoneNumber(input)).toThrow(
       "Phone number must be between 7 and 15 digits in length.",
     );

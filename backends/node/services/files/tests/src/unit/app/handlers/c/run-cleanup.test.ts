@@ -5,7 +5,7 @@ import { createFile } from "@d2/files-domain";
 import {
   createMockAcquireLock,
   createMockReleaseLock,
-  createMockFindStaleFiles,
+  createMockGetStaleFiles,
   createMockDeleteByIds,
   createMockStorage,
   createMockContext,
@@ -15,14 +15,14 @@ function createHandler(
   overrides: {
     acquireLock?: ReturnType<typeof createMockAcquireLock>;
     releaseLock?: ReturnType<typeof createMockReleaseLock>;
-    findStaleFiles?: ReturnType<typeof createMockFindStaleFiles>;
+    getStaleFiles?: ReturnType<typeof createMockGetStaleFiles>;
     deleteByIds?: ReturnType<typeof createMockDeleteByIds>;
     storage?: ReturnType<typeof createMockStorage>;
   } = {},
 ) {
   const acquireLock = overrides.acquireLock ?? createMockAcquireLock();
   const releaseLock = overrides.releaseLock ?? createMockReleaseLock();
-  const findStaleFiles = overrides.findStaleFiles ?? createMockFindStaleFiles();
+  const getStaleFiles = overrides.getStaleFiles ?? createMockGetStaleFiles();
   const deleteByIds = overrides.deleteByIds ?? createMockDeleteByIds();
   const storage = overrides.storage ?? createMockStorage();
   const context = createMockContext();
@@ -31,7 +31,7 @@ function createHandler(
     handler: new RunCleanup(
       acquireLock,
       releaseLock,
-      findStaleFiles,
+      getStaleFiles,
       deleteByIds,
       storage,
       DEFAULT_FILES_JOB_OPTIONS,
@@ -39,7 +39,7 @@ function createHandler(
     ),
     acquireLock,
     releaseLock,
-    findStaleFiles,
+    getStaleFiles,
     deleteByIds,
     storage,
   };
@@ -58,10 +58,10 @@ describe("RunCleanup", () => {
 
   it("should always release lock in finally block", async () => {
     const releaseLock = createMockReleaseLock();
-    const findStaleFiles = createMockFindStaleFiles();
-    vi.mocked(findStaleFiles.handleAsync).mockRejectedValue(new Error("boom"));
+    const getStaleFiles = createMockGetStaleFiles();
+    vi.mocked(getStaleFiles.handleAsync).mockRejectedValue(new Error("boom"));
 
-    const { handler } = createHandler({ releaseLock, findStaleFiles });
+    const { handler } = createHandler({ releaseLock, getStaleFiles });
 
     // Should not throw — BaseHandler catches exceptions
     const result = await handler.handleAsync({});
@@ -79,18 +79,18 @@ describe("RunCleanup", () => {
       sizeBytes: 512,
       id: "stale-001",
     });
-    const findStaleFiles = createMockFindStaleFiles([staleFile]);
+    const getStaleFiles = createMockGetStaleFiles([staleFile]);
     const storage = createMockStorage();
     const deleteByIds = createMockDeleteByIds();
 
-    const { handler } = createHandler({ findStaleFiles, storage, deleteByIds });
+    const { handler } = createHandler({ getStaleFiles, storage, deleteByIds });
 
     const result = await handler.handleAsync({});
 
     expect(result.success).toBe(true);
     expect(result.data?.lockAcquired).toBe(true);
-    // findStaleFiles called 3 times (pending, processing, rejected)
-    expect(findStaleFiles.handleAsync).toHaveBeenCalledTimes(3);
+    // getStaleFiles called 3 times (pending, processing, rejected)
+    expect(getStaleFiles.handleAsync).toHaveBeenCalledTimes(3);
     // Storage deleteMany called for each status that has files
     expect(storage.deleteMany.handleAsync).toHaveBeenCalled();
     // DB delete called for each status that has files
@@ -98,8 +98,8 @@ describe("RunCleanup", () => {
   });
 
   it("should report zero cleaned when no stale files found", async () => {
-    const findStaleFiles = createMockFindStaleFiles([]);
-    const { handler } = createHandler({ findStaleFiles });
+    const getStaleFiles = createMockGetStaleFiles([]);
+    const { handler } = createHandler({ getStaleFiles });
 
     const result = await handler.handleAsync({});
 
@@ -118,12 +118,12 @@ describe("RunCleanup", () => {
   });
 
   it("should search for each status with correct cutoff", async () => {
-    const findStaleFiles = createMockFindStaleFiles([]);
-    const { handler } = createHandler({ findStaleFiles });
+    const getStaleFiles = createMockGetStaleFiles([]);
+    const { handler } = createHandler({ getStaleFiles });
 
     await handler.handleAsync({});
 
-    const calls = vi.mocked(findStaleFiles.handleAsync).mock.calls;
+    const calls = vi.mocked(getStaleFiles.handleAsync).mock.calls;
     expect(calls).toHaveLength(3);
 
     // Verify statuses
@@ -137,13 +137,13 @@ describe("RunCleanup", () => {
     }
   });
 
-  it("should pass batch limit to findStaleFiles", async () => {
-    const findStaleFiles = createMockFindStaleFiles([]);
-    const { handler } = createHandler({ findStaleFiles });
+  it("should pass batch limit to getStaleFiles", async () => {
+    const getStaleFiles = createMockGetStaleFiles([]);
+    const { handler } = createHandler({ getStaleFiles });
 
     await handler.handleAsync({});
 
-    const calls = vi.mocked(findStaleFiles.handleAsync).mock.calls;
+    const calls = vi.mocked(getStaleFiles.handleAsync).mock.calls;
     for (const call of calls) {
       expect(call[0].limit).toBe(100);
     }

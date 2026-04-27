@@ -4,9 +4,9 @@ import { BaseHandler, type IHandlerContext } from "@d2/handler";
 import { D2Result } from "@d2/result";
 import { USER_STATUS } from "@d2/auth-domain";
 import type {
-  FindDeletedUsersToPurgeInput as I,
-  FindDeletedUsersToPurgeOutput as O,
-  IFindDeletedUsersToPurgeHandler,
+  GetDeletedUsersToPurgeInput as I,
+  GetDeletedUsersToPurgeOutput as O,
+  IGetDeletedUsersToPurgeHandler,
 } from "@d2/auth-app";
 import { user } from "../../schema/better-auth-tables.js";
 
@@ -20,21 +20,24 @@ import { user } from "../../schema/better-auth-tables.js";
  * (users who initiated deletion exactly 30+ days ago and never signed back
  * in to cancel). A single query is correct.
  *
- * The `MAX_PURGE_BATCH` cap is defense-in-depth — if it ever fires, the
- * downstream FinalizeDeletedUser is failing silently and rows are piling
- * up. The warn surfaces it; the next nightly tick absorbs whatever's left.
+ * The batch cap (`AuthJobOptions.userPurgeBatchSize`, default 50000) is
+ * defense-in-depth — if it ever fires, the downstream FinalizeDeletedUser
+ * is failing silently and rows are piling up. The warn surfaces it; the
+ * next nightly tick absorbs whatever's left.
  */
-const MAX_PURGE_BATCH = 50_000;
+const _DEFAULT_PURGE_BATCH = 50_000;
 
-export class FindDeletedUsersToPurge
+export class GetDeletedUsersToPurge
   extends BaseHandler<I, O>
-  implements IFindDeletedUsersToPurgeHandler
+  implements IGetDeletedUsersToPurgeHandler
 {
   private readonly db: NodePgDatabase;
+  private readonly batchSize: number;
 
-  constructor(db: NodePgDatabase, context: IHandlerContext) {
+  constructor(db: NodePgDatabase, context: IHandlerContext, batchSize?: number) {
     super(context);
     this.db = db;
+    this.batchSize = batchSize ?? _DEFAULT_PURGE_BATCH;
   }
 
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {
@@ -42,17 +45,14 @@ export class FindDeletedUsersToPurge
       .select({ id: user.id })
       .from(user)
       .where(
-        and(
-          eq(user.status, USER_STATUS.PENDING_DELETION),
-          lt(user.deletedAt, input.graceCutoff),
-        ),
+        and(eq(user.status, USER_STATUS.PENDING_DELETION), lt(user.deletedAt, input.graceCutoff)),
       )
-      .limit(MAX_PURGE_BATCH);
+      .limit(this.batchSize);
 
-    if (rows.length === MAX_PURGE_BATCH) {
+    if (rows.length === this.batchSize) {
       this.context.logger.warn(
-        "FindDeletedUsersToPurge: hit MAX_PURGE_BATCH cap — deletion is likely broken upstream and rows are accumulating",
-        { cap: MAX_PURGE_BATCH },
+        "GetDeletedUsersToPurge: hit userPurgeBatchSize cap — deletion is likely broken upstream and rows are accumulating",
+        { cap: this.batchSize },
       );
     }
 

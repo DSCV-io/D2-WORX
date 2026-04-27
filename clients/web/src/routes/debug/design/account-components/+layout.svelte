@@ -1,8 +1,10 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import { resolve } from "$app/paths";
   import UserAvatarMenu from "$lib/client/components/layout/user-avatar-menu.svelte";
   import SettingsNav from "$lib/client/components/account/settings-nav.svelte";
   import { toast } from "svelte-sonner";
+  import * as m from "$lib/paraglide/messages.js";
   import UserIcon from "@lucide/svelte/icons/user";
   import MailIcon from "@lucide/svelte/icons/mail";
   import ShieldIcon from "@lucide/svelte/icons/shield";
@@ -16,28 +18,40 @@
     email: "john.doe@example.com",
   };
 
-  const navItems = [
-    { href: "/debug/design/account-components/profile", label: "Profile", icon: UserIcon },
+  const navItems = $derived([
     {
-      href: "/debug/design/account-components/email-phone",
-      label: "Email & Phone",
+      href: resolve("/debug/design/account-components/profile"),
+      label: m.webclient_app_account_profile_title(),
+      icon: UserIcon,
+    },
+    {
+      href: resolve("/debug/design/account-components/email-phone"),
+      label: m.webclient_app_account_email_phone_title(),
       icon: MailIcon,
     },
-    { href: "/debug/design/account-components/security", label: "Security", icon: ShieldIcon },
     {
-      href: "/debug/design/account-components/deactivate",
-      label: "Deactivate Account",
+      href: resolve("/debug/design/account-components/security"),
+      label: m.webclient_app_account_security_title(),
+      icon: ShieldIcon,
+    },
+    {
+      href: resolve("/debug/design/account-components/deactivate"),
+      label: m.webclient_app_account_deactivate_title(),
       icon: TrashIcon,
     },
-  ];
+  ]);
 
   async function mockSignOut() {
-    toast.info("Sign out clicked");
+    toast.info(m.webclient_debug_account_components_signout_clicked());
   }
 </script>
 
 <svelte:head>
-  <title>Account Components — Debug</title>
+  <title>{m.webclient_debug_account_components_title()} — {m.webclient_nav_brand()}</title>
+  <meta
+    name="description"
+    content={m.webclient_debug_account_components_description()}
+  />
   <meta
     name="robots"
     content="noindex, nofollow"
@@ -48,9 +62,11 @@
   <!-- Header with avatar menu (mode, theme, language controls are inside the dropdown) -->
   <div class="mb-8 flex items-center justify-between">
     <div>
-      <h1 class="text-3xl font-bold tracking-tight">Account Components</h1>
+      <h1 class="text-3xl font-bold tracking-tight">
+        {m.webclient_debug_account_components_title()}
+      </h1>
       <p class="text-muted-foreground mt-1 text-sm">
-        Interactive demo — click the avatar for mode, theme, and language controls.
+        {m.webclient_debug_account_components_description()}
       </p>
     </div>
     <UserAvatarMenu

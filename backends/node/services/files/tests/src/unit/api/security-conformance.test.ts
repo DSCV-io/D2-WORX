@@ -30,11 +30,8 @@ import { SCOPE_KEY } from "../../../../api/src/context-keys.js";
  * this file rather than tracking the verification as TODOs in PROFILE_PROGRESS.
  */
 
-function makeMinimalGrpcOptions(
-  overrides: Partial<GrpcServerOptions> = {},
-): GrpcServerOptions {
+function makeMinimalGrpcOptions(overrides: Partial<GrpcServerOptions> = {}): GrpcServerOptions {
   return {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     provider: {} as any,
     grpcPort: 0,
     filesApiKeys: [],
@@ -44,7 +41,6 @@ function makeMinimalGrpcOptions(
       warn: () => {},
       error: () => {},
       fatal: () => {},
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any,
     ...overrides,
   };
@@ -60,9 +56,7 @@ function buildListRoutesHarness(): {
   app: Hono;
   listFilesMock: ReturnType<typeof vi.fn>;
 } {
-  const listFilesMock = vi
-    .fn()
-    .mockResolvedValue(D2Result.ok({ data: { items: [], total: 0 } }));
+  const listFilesMock = vi.fn().mockResolvedValue(D2Result.ok({ data: { items: [], total: 0 } }));
 
   const services = new ServiceCollection();
   services.addInstance(IListFilesKey, { handleAsync: listFilesMock });
@@ -70,7 +64,6 @@ function buildListRoutesHarness(): {
 
   const app = new Hono();
   app.use("*", async (c, next) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (c as any).set(SCOPE_KEY, provider.createScope());
     await next();
   });
@@ -81,14 +74,13 @@ function buildListRoutesHarness(): {
 describe("§5 Security — files-api gRPC conformance", () => {
   describe('"Auth middleware must fail-closed on missing config"', () => {
     it("refuses to build the gRPC server when filesApiKeys is empty", async () => {
-      await expect(
-        buildGrpcServer(makeMinimalGrpcOptions({ filesApiKeys: [] })),
-      ).rejects.toThrow(/FILES_API_KEYS not configured/);
+      await expect(buildGrpcServer(makeMinimalGrpcOptions({ filesApiKeys: [] }))).rejects.toThrow(
+        /FILES_API_KEYS not configured/,
+      );
     });
 
     it("refuses to build the gRPC server when filesApiKeys is undefined", async () => {
       await expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         buildGrpcServer(makeMinimalGrpcOptions({ filesApiKeys: undefined as any })),
       ).rejects.toThrow(/FILES_API_KEYS not configured/);
     });
@@ -113,13 +105,9 @@ describe("§5 Security — files-api HTTP conformance", () => {
     it("clamps limit to 100 when caller requests higher", async () => {
       const { app, listFilesMock } = buildListRoutesHarness();
 
-      await app.request(
-        "/files?contextKey=user_avatar&relatedEntityId=user-1&limit=999",
-      );
+      await app.request("/files?contextKey=user_avatar&relatedEntityId=user-1&limit=999");
 
-      expect(listFilesMock).toHaveBeenCalledWith(
-        expect.objectContaining({ limit: 100 }),
-      );
+      expect(listFilesMock).toHaveBeenCalledWith(expect.objectContaining({ limit: 100 }));
     });
 
     it("defaults limit to 50 when no value is supplied", async () => {
@@ -127,9 +115,7 @@ describe("§5 Security — files-api HTTP conformance", () => {
 
       await app.request("/files?contextKey=user_avatar&relatedEntityId=user-1");
 
-      expect(listFilesMock).toHaveBeenCalledWith(
-        expect.objectContaining({ limit: 50 }),
-      );
+      expect(listFilesMock).toHaveBeenCalledWith(expect.objectContaining({ limit: 50 }));
     });
   });
 });

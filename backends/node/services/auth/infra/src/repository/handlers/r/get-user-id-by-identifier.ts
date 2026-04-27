@@ -3,9 +3,9 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handler";
 import { D2Result } from "@d2/result";
 import type {
-  FindUserIdByIdentifierInput as I,
-  FindUserIdByIdentifierOutput as O,
-  IFindUserIdByIdentifierHandler,
+  GetUserIdByIdentifierInput as I,
+  GetUserIdByIdentifierOutput as O,
+  IGetUserIdByIdentifierHandler,
 } from "@d2/auth-app";
 import { user } from "../../schema/better-auth-tables.js";
 
@@ -17,9 +17,9 @@ import { user } from "../../schema/better-auth-tables.js";
  * when no user matches — those failed attempts are dropped from the audit table
  * (the throttle/rate-limit layer still tracks them by hashed identifier).
  */
-export class FindUserIdByIdentifier
+export class GetUserIdByIdentifier
   extends BaseHandler<I, O>
-  implements IFindUserIdByIdentifierHandler
+  implements IGetUserIdByIdentifierHandler
 {
   private readonly db: NodePgDatabase;
 

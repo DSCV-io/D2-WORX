@@ -1,6 +1,6 @@
 import { createMiddleware } from "hono/factory";
 import type { ILogger } from "@d2/logging";
-import { REQUEST_CONTEXT_KEY, REQUEST_LOGGER_KEY } from "../context-keys.js";
+import { REQUEST_LOGGER_KEY, type FilesVariables } from "../context-keys.js";
 
 export { REQUEST_LOGGER_KEY };
 
@@ -9,9 +9,8 @@ export { REQUEST_LOGGER_KEY };
  * Must run AFTER request enrichment (needs requestContext).
  */
 export function createRequestContextLoggingMiddleware(logger: ILogger) {
-  return createMiddleware(async (c, next) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const requestContext = (c as any).get(REQUEST_CONTEXT_KEY);
+  return createMiddleware<{ Variables: FilesVariables }>(async (c, next) => {
+    const requestContext = c.var.requestContext;
 
     if (requestContext) {
       const childLogger = logger.child({
@@ -21,8 +20,7 @@ export function createRequestContextLoggingMiddleware(logger: ILogger) {
         path: c.req.path,
         method: c.req.method,
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (c as any).set(REQUEST_LOGGER_KEY, childLogger);
+      c.set(REQUEST_LOGGER_KEY, childLogger);
     }
 
     await next();

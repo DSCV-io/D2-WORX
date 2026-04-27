@@ -35,6 +35,7 @@ describe("UpdateUserImage", () => {
     const result = await handler.handleAsync({
       userId: "user-123",
       image: "file-001",
+      clear: false,
     });
 
     expect(result).toBeSuccess();
@@ -50,20 +51,36 @@ describe("UpdateUserImage", () => {
     const result = await handler.handleAsync({
       userId: "nonexistent-user",
       image: "file-002",
+      clear: false,
     });
 
     expect(result).toBeFailure();
     expect(result.statusCode).toBe(404);
   });
 
-  it("should pass null image when clearing the avatar", async () => {
+  it("should write NULL when clear:true regardless of image value", async () => {
     const { update, set } = createMockDb([{ id: "user-123" }]);
     const db = { update } as never;
     const handler = new UpdateUserImage(db, createTestContext());
 
     const result = await handler.handleAsync({
       userId: "user-123",
-      image: null,
+      clear: true,
+    });
+
+    expect(result).toBeSuccess();
+    expect(set.mock.calls[0][0].image).toBeNull();
+  });
+
+  it("should ignore image and write NULL when clear:true even if image is supplied", async () => {
+    const { update, set } = createMockDb([{ id: "user-123" }]);
+    const db = { update } as never;
+    const handler = new UpdateUserImage(db, createTestContext());
+
+    const result = await handler.handleAsync({
+      userId: "user-123",
+      image: "leftover-id-should-be-ignored",
+      clear: true,
     });
 
     expect(result).toBeSuccess();
@@ -76,7 +93,7 @@ describe("UpdateUserImage", () => {
     const handler = new UpdateUserImage(db, createTestContext());
 
     const before = new Date();
-    await handler.handleAsync({ userId: "user-123", image: "file-001" });
+    await handler.handleAsync({ userId: "user-123", image: "file-001", clear: false });
     const after = new Date();
 
     const setArg = set.mock.calls[0][0];
@@ -95,6 +112,7 @@ describe("UpdateUserImage", () => {
     const result = await handler.handleAsync({
       userId: "user-123",
       image: "file-001",
+      clear: false,
     });
 
     expect(result).toBeFailure();

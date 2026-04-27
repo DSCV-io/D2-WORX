@@ -3,6 +3,7 @@
   import * as Select from "$lib/client/components/ui/select/index.js";
   import { createInlineEditKeyHandler } from "$lib/shared/forms/inline-edit-keyboard.js";
   import { isSaveCancelledError } from "$lib/shared/forms/save-cancelled-error.js";
+  import * as m from "$lib/paraglide/messages.js";
   import InlineEditActions from "./inline-edit-actions.svelte";
   import InlineFieldStatusIcon from "./inline-field-status-icon.svelte";
 
@@ -121,7 +122,7 @@
         saveState = "idle";
         return false;
       }
-      errorMessage = err instanceof Error ? err.message : "Failed to save.";
+      errorMessage = err instanceof Error ? err.message : m.common_errors_save_failed();
       saveState = "error";
       validationStatus = "invalid";
       return false;
@@ -164,7 +165,7 @@
           class={cn(
             "w-full",
             saveState === "saved" && "border-2 border-green-500",
-            validationStatus === "invalid" && "border-2 border-destructive",
+            validationStatus === "invalid" && "border-destructive border-2",
             isDirty &&
               validationStatus !== "invalid" &&
               saveState !== "saved" &&

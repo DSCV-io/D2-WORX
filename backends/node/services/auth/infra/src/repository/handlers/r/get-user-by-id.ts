@@ -3,6 +3,7 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handler";
 import { D2Result } from "@d2/result";
 import { type UserStatus, USER_STATUS } from "@d2/auth-domain";
+import { truthyOrUndefined } from "@d2/utilities";
 import type {
   GetUserByIdInput as I,
   GetUserByIdOutput as O,
@@ -42,17 +43,19 @@ export class GetUserById extends BaseHandler<I, O> implements IGetUserByIdHandle
     const row = rows[0];
     if (!row) return D2Result.notFound();
 
+    // DB row → domain: collapse null + empty/whitespace strings to undefined
+    // (no empty strings as data — `truthyOrUndefined` handles both cases).
     return D2Result.ok({
       data: {
         user: {
           id: row.id,
           email: row.email,
           emailVerified: row.emailVerified,
-          name: row.name ?? null,
-          phone: row.phone ?? null,
+          name: truthyOrUndefined(row.name),
+          phone: truthyOrUndefined(row.phone),
           phoneVerified: row.phoneVerified,
-          locale: row.locale ?? null,
-          timezone: row.timezone ?? null,
+          locale: truthyOrUndefined(row.locale),
+          timezone: truthyOrUndefined(row.timezone),
           status: (row.status as UserStatus) ?? USER_STATUS.ACTIVE,
         },
       },

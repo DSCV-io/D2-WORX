@@ -69,9 +69,9 @@ export class RemovePhone
     // 2. Idempotent: no-op if no phone set.
     const userResult = await this.getUserById.handleAsync({ userId: input.userId });
     if (!userResult.success) return D2Result.bubbleFail(userResult);
-    const userEmail = userResult.data?.user.email ?? null;
-    const oldPhone = userResult.data?.user.phone ?? null;
-    const userLocale = resolveLocale(userResult.data?.user.locale ?? undefined);
+    const userEmail = userResult.data?.user.email;
+    const oldPhone = userResult.data?.user.phone;
+    const userLocale = resolveLocale(userResult.data?.user.locale);
     if (!oldPhone) {
       return D2Result.ok({ data: {} });
     }
@@ -116,8 +116,8 @@ export class RemovePhone
       authUpdate: () =>
         this.updateUserPhoneRepo.handleAsync({
           userId: input.userId,
-          phone: null,
           phoneVerified: false,
+          clear: true,
         }),
     });
     if (!sagaResult.success) return D2Result.bubbleFail(sagaResult);

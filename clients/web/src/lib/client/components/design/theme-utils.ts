@@ -154,7 +154,9 @@ export function computeLightTokens(config: ThemeConfig): ThemeTokens {
 }
 
 export function computeDarkTokens(config: ThemeConfig): ThemeTokens {
-  const { hue: h, chroma: c, lightness: l } = config.primary;
+  // Lightness intentionally discarded — dark mode uses a fixed near-white
+  // primary tint instead of the user's brand lightness (see comment below).
+  const { hue: h, chroma: c, lightness: _l } = config.primary;
   const sec = config.secondary;
   const acc = config.accent;
   const d = config.destructive;

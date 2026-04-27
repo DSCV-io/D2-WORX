@@ -7,7 +7,7 @@ import { USER_STATUS } from "@d2/auth-domain";
 import {
   AnonymizeUser,
   CheckSoleOwnerOrgs,
-  FindDeletedUsersToPurge,
+  GetDeletedUsersToPurge,
   UpdateUserStatus,
   DeleteAllUserSessions,
   user,
@@ -163,10 +163,7 @@ describe("AnonymizeUser (integration)", () => {
     expect(sessions).toHaveLength(0);
 
     // sign_in_event rows preserved but PII scrubbed
-    const events = await getDb()
-      .select()
-      .from(signInEvent)
-      .where(eq(signInEvent.userId, userId));
+    const events = await getDb().select().from(signInEvent).where(eq(signInEvent.userId, userId));
     expect(events).toHaveLength(1);
     expect(events[0]?.ipAddress).toBe("[anonymized]");
     expect(events[0]?.userAgent).toBe("[anonymized]");
@@ -221,15 +218,13 @@ describe("CheckSoleOwnerOrgs (integration)", () => {
   }
 
   async function addMember(userId: string, orgId: string, role: string) {
-    await getDb()
-      .insert(member)
-      .values({
-        id: generateUuidV7(),
-        organizationId: orgId,
-        userId,
-        role,
-        createdAt: new Date(),
-      });
+    await getDb().insert(member).values({
+      id: generateUuidV7(),
+      organizationId: orgId,
+      userId,
+      role,
+      createdAt: new Date(),
+    });
   }
 
   it("returns empty when user is not a member of any org", async () => {
@@ -284,12 +279,12 @@ describe("CheckSoleOwnerOrgs (integration)", () => {
   });
 });
 
-describe("FindDeletedUsersToPurge (integration)", () => {
-  let handler: FindDeletedUsersToPurge;
+describe("GetDeletedUsersToPurge (integration)", () => {
+  let handler: GetDeletedUsersToPurge;
 
   beforeAll(async () => {
     await startPostgres();
-    handler = new FindDeletedUsersToPurge(getDb(), ctx());
+    handler = new GetDeletedUsersToPurge(getDb(), ctx());
   }, 120_000);
 
   afterAll(async () => {
@@ -378,7 +373,7 @@ describe("UpdateUserStatus (integration)", () => {
     const result = await handler.handleAsync({
       userId,
       status: USER_STATUS.ACTIVE,
-      deletedAt: null,
+      clearDeletedAt: true,
     });
 
     expect(result.success).toBe(true);
@@ -408,7 +403,7 @@ describe("UpdateUserStatus (integration)", () => {
     const result = await handler.handleAsync({
       userId,
       status: USER_STATUS.ACTIVE,
-      deletedAt: null,
+      clearDeletedAt: true,
       expectedStatus: USER_STATUS.PENDING_DELETION,
     });
 
@@ -429,7 +424,7 @@ describe("UpdateUserStatus (integration)", () => {
     const result = await handler.handleAsync({
       userId,
       status: USER_STATUS.ACTIVE,
-      deletedAt: null,
+      clearDeletedAt: true,
       expectedStatus: USER_STATUS.PENDING_DELETION,
     });
 
@@ -490,16 +485,10 @@ describe("DeleteAllUserSessions (integration)", () => {
     expect(result.success).toBe(true);
     expect(result.data?.rowsAffected).toBe(3);
 
-    const remaining = await getDb()
-      .select()
-      .from(session)
-      .where(eq(session.userId, userId));
+    const remaining = await getDb().select().from(session).where(eq(session.userId, userId));
     expect(remaining).toHaveLength(0);
 
-    const otherRemaining = await getDb()
-      .select()
-      .from(session)
-      .where(eq(session.userId, otherId));
+    const otherRemaining = await getDb().select().from(session).where(eq(session.userId, otherId));
     expect(otherRemaining).toHaveLength(1);
   });
 });

@@ -62,6 +62,7 @@ describe("HandleFileProcessed", () => {
     expect(updateUserImage.handleAsync).toHaveBeenCalledWith({
       userId: "user-123",
       image: "file-001",
+      clear: false,
     });
     expect(updateOrgLogo.handleAsync).not.toHaveBeenCalled();
   });
@@ -84,6 +85,7 @@ describe("HandleFileProcessed", () => {
     expect(updateOrgLogo.handleAsync).toHaveBeenCalledWith({
       orgId: "org-789",
       logo: "file-002",
+      clear: false,
     });
     expect(updateUserImage.handleAsync).not.toHaveBeenCalled();
   });

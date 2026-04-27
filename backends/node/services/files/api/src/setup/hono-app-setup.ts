@@ -23,7 +23,7 @@ import { createRequestEnrichmentMiddleware } from "../middleware/request-enrichm
 import { createDistributedRateLimitMiddleware } from "../middleware/distributed-rate-limit.js";
 import { createRequestContextLoggingMiddleware } from "../middleware/request-context-logging.js";
 import { createAmbientScopeMiddleware } from "../middleware/ambient-scope.js";
-import { REQUEST_CONTEXT_KEY, ENRICHED_CONTEXT_KEY, SCOPE_KEY } from "../context-keys.js";
+import { REQUEST_CONTEXT_KEY, SCOPE_KEY, type FilesVariables } from "../context-keys.js";
 import { createHealthRoutes } from "../routes/health-routes.js";
 import { createUploadRoutes } from "../routes/upload-routes.js";
 import { createDownloadRoutes } from "../routes/download-routes.js";
@@ -140,7 +140,7 @@ export function buildHonoApp(options: HonoAppOptions): Hono {
   app.route("/", createHealthRoutes(provider));
 
   // --- Protected routes (JWT auth + DI scope) ---
-  const protectedApp = new Hono();
+  const protectedApp = new Hono<{ Variables: FilesVariables }>();
 
   protectedApp.use(
     "*",
@@ -157,11 +157,9 @@ export function buildHonoApp(options: HonoAppOptions): Hono {
   // because JWT middleware overwrites REQUEST_CONTEXT_KEY with claims-only context.
   protectedApp.use("*", async (c, next) => {
     // JWT middleware populated requestContext from claims
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const jwtContext = (c as any).get(REQUEST_CONTEXT_KEY) as IRequestContext;
+    const jwtContext = c.var.requestContext;
     // Request enrichment saved its context under a separate key before JWT ran
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const enrichedContext = (c as any).get(ENRICHED_CONTEXT_KEY) as IRequestContext | undefined;
+    const enrichedContext = c.var.enrichedContext;
 
     // Merge: JWT identity claims take priority, enriched network fields preserved
     const requestContext: IRequestContext = {
@@ -193,10 +191,8 @@ export function buildHonoApp(options: HonoAppOptions): Hono {
     requestContextStorage.enterWith(requestContext);
     requestLoggerStorage.enterWith(resolvedLogger);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (c as any).set(SCOPE_KEY, scope);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (c as any).set(REQUEST_CONTEXT_KEY, requestContext);
+    c.set(SCOPE_KEY, scope);
+    c.set(REQUEST_CONTEXT_KEY, requestContext);
     try {
       await next();
     } finally {

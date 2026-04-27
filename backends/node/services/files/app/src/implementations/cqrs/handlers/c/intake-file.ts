@@ -47,7 +47,7 @@ export class IntakeFile extends BaseHandler<Input, Output> implements Commands.I
     const validation = this.validateInput(schema, input);
     if (!validation.success) return D2Result.bubbleFail(validation);
 
-    const findResult = await this.repo.findById.handleAsync({ id: input.fileId });
+    const findResult = await this.repo.getById.handleAsync({ id: input.fileId });
     if (!findResult.success || !findResult.data?.file) {
       return D2Result.ok({ data: { discarded: true, reason: "not_found" } });
     }

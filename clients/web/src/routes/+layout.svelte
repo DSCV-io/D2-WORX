@@ -7,6 +7,7 @@
   import NavigationProgress from "$lib/client/components/layout/navigation-progress.svelte";
   import { invalidateAll } from "$app/navigation";
   import { setClientFingerprint, getToken } from "$lib/client/rest/gateway-client.js";
+  import { bustSessionCache } from "$lib/client/rest/account-client.js";
   import { generateClientFingerprint } from "$lib/client/utils/fingerprint.js";
   import { setFaroUser, resetFaroUser } from "$lib/client/telemetry/faro.js";
   import { createRealtimeClient, setRealtimeContext } from "$lib/client/realtime/index.js";
@@ -56,10 +57,7 @@
       if (!userUpdatedUnsub) {
         userUpdatedUnsub = realtimeClient.on("user:updated", () => {
           console.debug("[user:updated] Refreshing session...");
-          fetch("/api/auth/get-session?disableCookieCache=true", {
-            method: "GET",
-            credentials: "include",
-          })
+          bustSessionCache()
             .then(() => invalidateAll())
             .then(() => console.debug("[user:updated] Session refreshed"))
             .catch((err) => console.error("[user:updated] Failed:", err));

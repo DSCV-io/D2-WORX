@@ -5,7 +5,7 @@ describe("org-creation rules", () => {
   describe("canCreateOrgType", () => {
     it("should allow anyone to create a customer org (no active org)", () => {
       expect(canCreateOrgType("customer")).toBe(true);
-      expect(canCreateOrgType("customer", null)).toBe(true);
+      expect(canCreateOrgType("customer", undefined)).toBe(true);
       expect(canCreateOrgType("customer", undefined)).toBe(true);
     });
 
@@ -22,7 +22,7 @@ describe("org-creation rules", () => {
     it("should not allow non-customer to create third_party org", () => {
       expect(canCreateOrgType("third_party", "admin")).toBe(false);
       expect(canCreateOrgType("third_party", "support")).toBe(false);
-      expect(canCreateOrgType("third_party", null)).toBe(false);
+      expect(canCreateOrgType("third_party", undefined)).toBe(false);
     });
 
     it("should allow admin org to create admin org", () => {
@@ -41,9 +41,9 @@ describe("org-creation rules", () => {
       expect(canCreateOrgType("admin", "customer")).toBe(false);
       expect(canCreateOrgType("support", "customer")).toBe(false);
       expect(canCreateOrgType("affiliate", "customer")).toBe(false);
-      expect(canCreateOrgType("admin", null)).toBe(false);
-      expect(canCreateOrgType("support", null)).toBe(false);
-      expect(canCreateOrgType("affiliate", null)).toBe(false);
+      expect(canCreateOrgType("admin", undefined)).toBe(false);
+      expect(canCreateOrgType("support", undefined)).toBe(false);
+      expect(canCreateOrgType("affiliate", undefined)).toBe(false);
     });
   });
 });

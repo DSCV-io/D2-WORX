@@ -112,12 +112,16 @@ describe("RequestPhoneChange", () => {
   // Validation — phone format strictness
   // -----------------------------------------------------------------------
 
-  it("rejects phone with formatting characters", async () => {
+  it("rejects phone with formatting characters and surfaces a TK key (not raw English)", async () => {
     const result = await makeHandler(mocks).handleAsync({
       ...validInput(),
       newPhone: "+1 (321) 321-4321",
     });
     expect(result.statusCode).toBe(HttpStatusCode.BadRequest);
+    // Zod regex error must use a TK key — never leak free-form English to clients.
+    const phoneError = result.inputErrors.find(([field]) => field === "newPhone");
+    expect(phoneError).toBeDefined();
+    expect(phoneError?.[1]).toBe("auth_errors_PHONE_INVALID_FORMAT");
   });
 
   it("rejects phone shorter than 7 digits", async () => {

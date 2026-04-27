@@ -72,7 +72,7 @@ export class ProcessFile
     if (!validation.success) return D2Result.bubbleFail(validation);
 
     // Fetch file record
-    const findResult = await this.repo.findById.handleAsync({ id: input.fileId });
+    const findResult = await this.repo.getById.handleAsync({ id: input.fileId });
     if (!findResult.success) return D2Result.bubbleFail(findResult);
     if (!findResult.data?.file) return D2Result.notFound();
 

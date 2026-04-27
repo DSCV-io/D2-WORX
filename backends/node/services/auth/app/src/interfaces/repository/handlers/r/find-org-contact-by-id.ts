@@ -14,7 +14,9 @@ export const FIND_ORG_CONTACT_BY_ID_REDACTION: RedactionSpec = {
   suppressOutput: true,
 };
 
-export interface IFindOrgContactByIdHandler
-  extends IHandler<FindOrgContactByIdInput, FindOrgContactByIdOutput> {
+export interface IFindOrgContactByIdHandler extends IHandler<
+  FindOrgContactByIdInput,
+  FindOrgContactByIdOutput
+> {
   readonly redaction: RedactionSpec;
 }

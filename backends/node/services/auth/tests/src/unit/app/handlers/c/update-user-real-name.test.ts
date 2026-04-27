@@ -147,6 +147,20 @@ describe("UpdateUserRealName", () => {
     expect(result.success).toBe(false);
     expect(result.inputErrors.length).toBeGreaterThanOrEqual(1);
     expect(result.inputErrors[0][0]).toBe("firstName");
+    // Must surface a TK key (not free-form English) so the FE can localize it.
+    expect(result.inputErrors[0][1]).toBe("auth_errors_FIRST_NAME_REQUIRED");
+  });
+
+  it("should return TK key for lastName when blank — never raw English", async () => {
+    const result = await handler.handleAsync({
+      userId: VALID_USER_ID,
+      firstName: "John",
+      lastName: "<>[](){}$`~",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.inputErrors[0][0]).toBe("lastName");
+    expect(result.inputErrors[0][1]).toBe("auth_errors_LAST_NAME_REQUIRED");
   });
 
   it("should return inputError on lastName when it is whitespace only", async () => {

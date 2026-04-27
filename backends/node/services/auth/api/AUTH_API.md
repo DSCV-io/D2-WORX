@@ -177,15 +177,15 @@ When `authApiKeys` is configured, the gRPC server wraps all handlers with `withA
 
 Policy middleware lives in `@d2/auth-policy` (`backends/node/shared/implementations/middleware/auth-policy/default/`). `auth-api`'s `index.ts` re-exports them for backward compatibility.
 
-| Middleware                | Purpose                                                  |
-| ------------------------- | -------------------------------------------------------- |
+| Middleware                | Purpose                                                     |
+| ------------------------- | ----------------------------------------------------------- |
 | `requireAuth()`           | Authenticated request required (session or trusted service) |
-| `requireTrustedService()` | Trusted service (`X-Api-Key`) required                   |
-| `requireOrg()`            | Active org required (orgId + valid orgType + valid role) |
-| `requireOrgType()`        | Session orgType must be in allowed set                   |
-| `requireRole()`           | Session role must meet minimum hierarchy level           |
-| `requireStaff()`          | Shorthand for `requireOrgType("admin", "support")`       |
-| `requireAdmin()`          | Shorthand for `requireOrgType("admin")`                  |
+| `requireTrustedService()` | Trusted service (`X-Api-Key`) required                      |
+| `requireOrg()`            | Active org required (orgId + valid orgType + valid role)    |
+| `requireOrgType()`        | Session orgType must be in allowed set                      |
+| `requireRole()`           | Session role must meet minimum hierarchy level              |
+| `requireStaff()`          | Shorthand for `requireOrgType("admin", "support")`          |
+| `requireAdmin()`          | Shorthand for `requireOrgType("admin")`                     |
 
 ## Configuration
 
@@ -220,33 +220,33 @@ Job options are only parsed when `AUTH_APP__SIGNINEVENTRETENTIONDAYS` is set. Wh
 
 ## Dependencies
 
-| Package                  | Purpose                                                |
-| ------------------------ | ------------------------------------------------------ |
-| `@d2/auth-app`           | CQRS handlers, service keys                            |
-| `@d2/auth-domain`        | Constants, enums, session fields                       |
-| `@d2/auth-infra`         | BetterAuth factory, config, migrations, throttle       |
+| Package                  | Purpose                                                               |
+| ------------------------ | --------------------------------------------------------------------- |
+| `@d2/auth-app`           | CQRS handlers, service keys                                           |
+| `@d2/auth-domain`        | Constants, enums, session fields                                      |
+| `@d2/auth-infra`         | BetterAuth factory, config, migrations, throttle                      |
 | `@d2/auth-policy`        | Authorization middleware (requireAuth, requireOrg, requireRole, etc.) |
-| `@d2/cache-memory`       | Local caches (WhoIs, throttle, contacts, HIBP)         |
-| `@d2/cache-redis`        | Redis handlers (session storage, throttle, rate limit) |
-| `@d2/comms-client`       | `INotifyKey` for sending notifications via comms       |
-| `@d2/di`                 | `ServiceCollection`, `ServiceProvider`                 |
-| `@d2/geo-client`         | Geo contact CRUD handlers + FindWhoIs                  |
-| `@d2/handler`            | `HandlerContext`, `IHandlerContextKey`                 |
-| `@d2/logging`            | Pino logger creation                                   |
-| `@d2/messaging`          | RabbitMQ `MessageBus` + `IMessagePublisher`            |
-| `@d2/ratelimit`          | Distributed rate limit check                           |
-| `@d2/request-enrichment` | IP/fingerprint/WhoIs middleware (imported indirectly)  |
-| `@d2/result`             | `D2Result`, `HttpStatusCode`                           |
-| `@d2/protos`             | `AuthJobServiceService` definition for gRPC server     |
-| `@d2/result-extensions`  | `d2ResultToProto()` for gRPC response conversion       |
-| `@d2/service-defaults`   | `setupTelemetry()`, `withApiKeyAuth`, `createRpcScope` |
-| `@d2/utilities`          | General utilities                                      |
-| `hono`                   | HTTP framework                                         |
-| `@grpc/grpc-js`          | gRPC server for scheduled job RPCs                     |
-| `@hono/node-server`      | Node.js adapter for Hono                               |
-| `ioredis`                | Redis client (direct for session fingerprint binding)  |
-| `drizzle-orm`            | Database queries in invitation routes                  |
-| `pg`                     | PostgreSQL connection pool                             |
+| `@d2/cache-memory`       | Local caches (WhoIs, throttle, contacts, HIBP)                        |
+| `@d2/cache-redis`        | Redis handlers (session storage, throttle, rate limit)                |
+| `@d2/comms-client`       | `INotifyKey` for sending notifications via comms                      |
+| `@d2/di`                 | `ServiceCollection`, `ServiceProvider`                                |
+| `@d2/geo-client`         | Geo contact CRUD handlers + FindWhoIs                                 |
+| `@d2/handler`            | `HandlerContext`, `IHandlerContextKey`                                |
+| `@d2/logging`            | Pino logger creation                                                  |
+| `@d2/messaging`          | RabbitMQ `MessageBus` + `IMessagePublisher`                           |
+| `@d2/ratelimit`          | Distributed rate limit check                                          |
+| `@d2/request-enrichment` | IP/fingerprint/WhoIs middleware (imported indirectly)                 |
+| `@d2/result`             | `D2Result`, `HttpStatusCode`                                          |
+| `@d2/protos`             | `AuthJobServiceService` definition for gRPC server                    |
+| `@d2/result-extensions`  | `d2ResultToProto()` for gRPC response conversion                      |
+| `@d2/service-defaults`   | `setupTelemetry()`, `withApiKeyAuth`, `createRpcScope`                |
+| `@d2/utilities`          | General utilities                                                     |
+| `hono`                   | HTTP framework                                                        |
+| `@grpc/grpc-js`          | gRPC server for scheduled job RPCs                                    |
+| `@hono/node-server`      | Node.js adapter for Hono                                              |
+| `ioredis`                | Redis client (direct for session fingerprint binding)                 |
+| `drizzle-orm`            | Database queries in invitation routes                                 |
+| `pg`                     | PostgreSQL connection pool                                            |
 
 ## Tests
 

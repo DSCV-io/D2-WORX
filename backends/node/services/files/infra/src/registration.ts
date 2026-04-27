@@ -7,9 +7,9 @@ import { IHandlerContextKey } from "@d2/handler";
 import {
   // Repository keys
   ICreateFileRecordKey,
-  IFindFileByIdKey,
-  IFindFilesByContextKey,
-  IFindStaleFilesKey,
+  IGetFileByIdKey,
+  IGetFilesByContextKey,
+  IGetStaleFilesKey,
   IUpdateFileRecordKey,
   IDeleteFileRecordKey,
   IDeleteFileRecordsByIdsKey,
@@ -41,9 +41,9 @@ import {
 
 // Repository handlers
 import { CreateFileRecord } from "./repository/handlers/c/create-file-record.js";
-import { FindFileById } from "./repository/handlers/r/find-file-by-id.js";
-import { FindFilesByContext } from "./repository/handlers/r/find-files-by-context.js";
-import { FindStaleFiles } from "./repository/handlers/r/find-stale-files.js";
+import { GetFileById } from "./repository/handlers/r/get-file-by-id.js";
+import { GetFilesByContext } from "./repository/handlers/r/get-files-by-context.js";
+import { GetStaleFiles } from "./repository/handlers/r/get-stale-files.js";
 import { PingDb } from "./repository/handlers/r/ping-db.js";
 import { UpdateFileRecord } from "./repository/handlers/u/update-file-record.js";
 import { DeleteFileRecord } from "./repository/handlers/d/delete-file-record.js";
@@ -62,6 +62,14 @@ import { PingStorage } from "./providers/storage/handlers/ping-storage.js";
 // Provider handlers
 import type { ClamdConfig } from "./providers/scanning/handlers/scan-file.js";
 import { ScanFile } from "./providers/scanning/handlers/scan-file.js";
+
+// Infra-layer options
+import type { FilesStorageOptions, FilesScanningOptions, FilesOutboundOptions } from "./options.js";
+import {
+  DEFAULT_FILES_STORAGE_OPTIONS,
+  DEFAULT_FILES_SCANNING_OPTIONS,
+  DEFAULT_FILES_OUTBOUND_OPTIONS,
+} from "./options.js";
 import { ProcessVariants } from "./providers/image-processing/handlers/process-variants.js";
 // Outbound handlers
 import { CallOnFileProcessed } from "./outbound/handlers/call-on-file-processed.js";
@@ -92,6 +100,12 @@ export interface FilesInfraConfig {
    * (e.g., via a cloudflared tunnel to MinIO). Falls back to `s3` if not provided.
    */
   readonly s3Public?: S3Client;
+  /** Optional storage options (presign expiries). Defaults to {@link DEFAULT_FILES_STORAGE_OPTIONS}. */
+  readonly storageOptions?: FilesStorageOptions;
+  /** Optional scanning options (clamd timeout). Defaults to {@link DEFAULT_FILES_SCANNING_OPTIONS}. */
+  readonly scanningOptions?: FilesScanningOptions;
+  /** Optional outbound options (gRPC call timeout). Defaults to {@link DEFAULT_FILES_OUTBOUND_OPTIONS}. */
+  readonly outboundOptions?: FilesOutboundOptions;
 }
 
 export interface FilesInfraDisposable {
@@ -122,6 +136,9 @@ export function addFilesInfra(
     signalrApiKey,
     s3Public,
   } = config;
+  const storageOptions = config.storageOptions ?? DEFAULT_FILES_STORAGE_OPTIONS;
+  const scanningOptions = config.scanningOptions ?? DEFAULT_FILES_SCANNING_OPTIONS;
+  const outboundOptions = config.outboundOptions ?? DEFAULT_FILES_OUTBOUND_OPTIONS;
 
   // Shared gRPC client cache for outbound handlers
   const callbackClients = new Map<string, FileCallbackClient>();
@@ -134,16 +151,16 @@ export function addFilesInfra(
     (sp) => new CreateFileRecord(db, sp.resolve(IHandlerContextKey)),
   );
   services.addTransient(
-    IFindFileByIdKey,
-    (sp) => new FindFileById(db, sp.resolve(IHandlerContextKey)),
+    IGetFileByIdKey,
+    (sp) => new GetFileById(db, sp.resolve(IHandlerContextKey)),
   );
   services.addTransient(
-    IFindFilesByContextKey,
-    (sp) => new FindFilesByContext(db, sp.resolve(IHandlerContextKey)),
+    IGetFilesByContextKey,
+    (sp) => new GetFilesByContext(db, sp.resolve(IHandlerContextKey)),
   );
   services.addTransient(
-    IFindStaleFilesKey,
-    (sp) => new FindStaleFiles(db, sp.resolve(IHandlerContextKey)),
+    IGetStaleFilesKey,
+    (sp) => new GetStaleFiles(db, sp.resolve(IHandlerContextKey)),
   );
   services.addTransient(
     IUpdateFileRecordKey,
@@ -178,11 +195,13 @@ export function addFilesInfra(
   );
   services.addTransient(
     IPresignPutUrlKey,
-    (sp) => new PresignPutUrl(s3Public ?? s3, bucketName, sp.resolve(IHandlerContextKey)),
+    (sp) =>
+      new PresignPutUrl(s3Public ?? s3, bucketName, storageOptions, sp.resolve(IHandlerContextKey)),
   );
   services.addTransient(
     IPresignGetUrlKey,
-    (sp) => new PresignGetUrl(s3Public ?? s3, bucketName, sp.resolve(IHandlerContextKey)),
+    (sp) =>
+      new PresignGetUrl(s3Public ?? s3, bucketName, storageOptions, sp.resolve(IHandlerContextKey)),
   );
   services.addTransient(
     IHeadStorageObjectKey,
@@ -195,7 +214,10 @@ export function addFilesInfra(
 
   // --- Provider handlers ---
 
-  services.addTransient(IScanFileKey, (sp) => new ScanFile(clamd, sp.resolve(IHandlerContextKey)));
+  services.addTransient(
+    IScanFileKey,
+    (sp) => new ScanFile(clamd, scanningOptions, sp.resolve(IHandlerContextKey)),
+  );
   services.addTransient(
     IProcessVariantsKey,
     (sp) => new ProcessVariants(sp.resolve(IHandlerContextKey)),
@@ -206,11 +228,22 @@ export function addFilesInfra(
   services.addTransient(
     ICallOnFileProcessedKey,
     (sp) =>
-      new CallOnFileProcessed(callbackClients, callbackApiKey, sp.resolve(IHandlerContextKey)),
+      new CallOnFileProcessed(
+        callbackClients,
+        callbackApiKey,
+        outboundOptions,
+        sp.resolve(IHandlerContextKey),
+      ),
   );
   services.addTransient(
     ICallCanAccessKey,
-    (sp) => new CallCanAccess(callbackClients, callbackApiKey, sp.resolve(IHandlerContextKey)),
+    (sp) =>
+      new CallCanAccess(
+        callbackClients,
+        callbackApiKey,
+        outboundOptions,
+        sp.resolve(IHandlerContextKey),
+      ),
   );
 
   // --- Realtime handlers ---
@@ -218,7 +251,12 @@ export function addFilesInfra(
   services.addTransient(
     IPushFileUpdateKey,
     (sp) =>
-      new PushFileUpdate(signalrGatewayAddress, signalrApiKey, sp.resolve(IHandlerContextKey)),
+      new PushFileUpdate(
+        signalrGatewayAddress,
+        signalrApiKey,
+        outboundOptions,
+        sp.resolve(IHandlerContextKey),
+      ),
   );
 
   // --- Messaging handlers ---

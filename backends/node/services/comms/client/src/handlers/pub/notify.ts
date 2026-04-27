@@ -85,7 +85,7 @@ const notifySchema = z
 export class Notify extends BaseHandler<NotifyInput, NotifyOutput> implements INotifyHandler {
   private readonly publisher: IMessagePublisher | undefined;
 
-  get redaction(): RedactionSpec {
+  override get redaction(): RedactionSpec {
     return { inputFields: ["content", "plaintext", "alternativeContactInfo"] };
   }
 

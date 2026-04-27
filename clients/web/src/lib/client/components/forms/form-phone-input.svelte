@@ -190,14 +190,14 @@
             type="tel"
             autocomplete="off"
             value={displayValue}
-            placeholder={m.account_phone_input_label()}
+            placeholder={m.webclient_app_account_phone_input_label()}
             {disabled}
             oninput={handlePhoneInput}
             onblur={handleBlur}
             class={cn(
               "w-full",
               fieldStatus !== "idle" && "pr-8",
-              fieldStatus === "valid" && "border-2 border-success dark:border-success",
+              fieldStatus === "valid" && "border-success dark:border-success border-2",
               fieldStatus === "invalid" && "border-2",
             )}
           />

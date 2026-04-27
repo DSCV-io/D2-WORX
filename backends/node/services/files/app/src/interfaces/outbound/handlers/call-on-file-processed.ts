@@ -19,7 +19,9 @@ export const CALL_ON_FILE_PROCESSED_REDACTION: RedactionSpec = {
 };
 
 /** gRPC OnFileProcessed call — notifies the owning service that processing completed. */
-export interface ICallOnFileProcessed
-  extends IHandler<CallOnFileProcessedInput, CallOnFileProcessedOutput> {
+export interface ICallOnFileProcessed extends IHandler<
+  CallOnFileProcessedInput,
+  CallOnFileProcessedOutput
+> {
   readonly redaction: RedactionSpec;
 }

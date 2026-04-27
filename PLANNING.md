@@ -127,12 +127,12 @@ Auth service architecture documented in [`AUTH.md`](backends/node/services/auth/
 
 ### Open — Can Fix Now
 
-| #   | Item                                   | Owner | Effort | Notes                                                                                                                                                                                                                                                                                                                                                                |
-| --- | -------------------------------------- | ----- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 40  | OTel alerting rules                    | All   | Medium | Grafana is running — no longer blocked. Define Grafana alert rules + alerting channel config. Targets: error rate >5% 5xx over 5min, latency P99 >2s, rate limit blocks per dimension, delivery failures, gRPC failure rate, service unavailability (RabbitMQ down, Redis down). Requires alert rule YAML + notification channel setup.                              |
-| 44  | `GetStorageObject` buffers entire file | Files | Medium | Download proxy and processing pipeline load full file into a `Buffer`. Safe at current max (25MB org_document). Risk: OOM if large context keys (video, archives) are added. Fix: add `StreamStorageObject` handler for download proxy, keep buffer-based handler for processing pipeline (Sharp/ClamAV need full buffer). Revisit before adding context keys >25MB. |
-| 80  | Presigned URL expiry hardcoded 15 min  | Files | Info   | `DEFAULT_EXPIRY_SECONDS = 900` not configurable via options pattern. Code change required to adjust. `presign-put-url.ts:11`                                                                                                                                                                                                                                         |
-| 81  | Email unsubscribe URL not wired        | Comms | Medium | `{{unsubscribeUrl}}` placeholder in email template always receives `""`. Needs: unsubscribe endpoint, per-recipient token generation, URL construction. `channel-dispatchers.ts:120`                                                                                                                                                                                 |
+| #   | Item                                   | Owner | Effort | Notes                                                                                                                                                                                                                                                                                                                                                                                          |
+| --- | -------------------------------------- | ----- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 40  | OTel alerting rules                    | All   | Medium | Grafana is running — no longer blocked. Define Grafana alert rules + alerting channel config. Targets: error rate >5% 5xx over 5min, latency P99 >2s, rate limit blocks per dimension, delivery failures, gRPC failure rate, service unavailability (RabbitMQ down, Redis down). Requires alert rule YAML + notification channel setup.                                                        |
+| 44  | `GetStorageObject` buffers entire file | Files | Medium | Download proxy and processing pipeline load full file into a `Buffer`. Safe at current max (25MB org_document). Risk: OOM if large context keys (video, archives) are added. Fix: add `StreamStorageObject` handler for download proxy, keep buffer-based handler for processing pipeline (Sharp/ClamAV need full buffer). Revisit before adding context keys >25MB.                           |
+| 80  | Presigned URL expiry hardcoded 15 min  | Files | Info   | `DEFAULT_EXPIRY_SECONDS = 900` not configurable via options pattern. Code change required to adjust. `presign-put-url.ts:11`                                                                                                                                                                                                                                                                   |
+| 81  | Email unsubscribe URL not wired        | Comms | Medium | `{{unsubscribeUrl}}` placeholder in email template always receives `""`. Needs: unsubscribe endpoint, per-recipient token generation, URL construction. `channel-dispatchers.ts:120`                                                                                                                                                                                                           |
 | 82  | Production SMS via Twilio (10DLC/TFN)  | Comms | Large  | Currently `COMMS_SMS_PROVIDER=mock` writes to JSONL log. US carriers block all unverified A2P long-code SMS since Jan 2024. Switch options: (a) Toll-Free Verification (~2-5 wk approval, free), (b) 10DLC Sole Proprietor registration (~1 wk, ~$2-4/mo), (c) Twilio Verify API for OTP-only. Pick + run process before public launch. Set `COMMS_SMS_PROVIDER=twilio` once carrier-approved. |
 
 ### Open Questions
@@ -198,36 +198,36 @@ Full SvelteKit implementation plan: [`clients/web/IMPLEMENTATION_PLAN.md`](clien
 | F1   | File domain layer (`@d2/files-domain`)     | Done        | ADR-026          | Entities, enums, rules, VariantConfig, constants. 236 tests. VariantSize = plain string, per-context-key variant config, no hardcoded context keys                                                                                                                                                                                                                                                                  |
 | F2   | File app layer (`@d2/files-app`)           | Done        | ADR-026          | 6 C/ + 4 Q/ + 1 U/ CQRS handlers, 3 messaging (1 pub + 2 sub), 4 provider groups (storage 7, image-processing, scanning, gRPC callback), repo bundle, 35 service keys, DI registration. 323 total tests                                                                                                                                                                                                             |
 | F3   | File infra layer (`@d2/files-infra`)       | Done        | ADR-026          | 8 repo handlers (Drizzle/PG), 7 S3 storage handlers, Sharp image-processing (→ WebP), ClamAV scanning (direct TCP clamd), 2 gRPC outbound (FileCallback), SignalR realtime push, 3 messaging handlers (1 pub + 2 sub), 2 consumers (intake + processing), DI registration. 42 Testcontainers integration tests (PG + MinIO). 532 total tests                                                                        |
-| F4   | JWT validation middleware (`@d2/jwt-auth`) | Done        | ADR-027          | Shared package at `backends/node/shared/implementations/middleware/jwt-auth/default/`. RS256 JWKS verification (jose), fingerprint check (SHA-256 UA+Accept), IRequestContext population from JWT claims. Hono middleware for public-facing Node.js services                                                                                                                                                                                           |
+| F4   | JWT validation middleware (`@d2/jwt-auth`) | Done        | ADR-027          | Shared package at `backends/node/shared/implementations/middleware/jwt-auth/default/`. RS256 JWKS verification (jose), fingerprint check (SHA-256 UA+Accept), IRequestContext population from JWT claims. Hono middleware for public-facing Node.js services                                                                                                                                                        |
 | F5   | File API layer (`@d2/files-api`)           | Done        | ADR-026, ADR-027 | Hono REST (upload/download/list/health routes) + gRPC (FilesService + FilesJobsService). Composition root with DI wiring. Dockerfile (`docker/Dockerfile.files`), `d2-files` docker-compose service (ports 5300/5301), `FILES_S3_PUBLIC_ENDPOINT` for browser-reachable presigned URLs via cloudflared tunnel                                                                                                       |
 | F6   | SignalR Gateway                            | Done        | ADR-028          | .NET service: authenticated hub (JWT on WS upgrade), channel-based routing (`user:`, `org:` auto-subscribed from claims), `PushToChannel` gRPC, Redis backplane, health check. Ports 5400/5401. Proto at `realtime/v1/realtime_gateway.proto` (supersedes `files/v1/signalr_bridge.proto`). Files-infra `PushFileUpdate` wired to new proto when built. Public hub + subscription tokens deferred to Comms Stage B. |
 | F7   | Auth FileCallback gRPC server              | Done        | ADR-026          | `FileCallbackService` gRPC server on Auth port 5101 (OnFileProcessed + CanAccess). HandleFileProcessed command handler routes by context key: `user_avatar` → `user.image`, `org_logo` → `organization.logo`, others → ack. CanAccess returns `allowed: false` (fail-closed; Auth CKs use JWT resolution). UpdateUserImage + UpdateOrgLogo repo handlers. Service-key auth via `withApiKeyAuth`                     |
 | F7.5 | Cross-cutting security + logic audit       | Done        | —                | Solution-wide sweep. Reusable checklist: [AUDIT_CHECKLIST.md](AUDIT_CHECKLIST.md)                                                                                                                                                                                                                                                                                                                                   |
 | F8   | File service E2E test                      | Done        | ADR-026          | 8 E2E tests: upload → intake → scan → process → callback → push. Adversarial tests (bad MIME, oversized, malformed).                                                                                                                                                                                                                                                                                                |
-| F9   | SvelteKit profile page + avatar upload     | In Progress | ADR-026, ADR-028 | Account route group + Profile tab + Email & Phone tab shipped (avatar upload + crop editor, SignalR client, OTP-verified email/phone change with SAGA, notification preferences, timezone hydration, animated InlineEditActions, FormPasswordInput migration, locale flow with cancel-aware confirmation). Next: Security tab (sessions/logins/password/2FA)                                                       |
+| F9   | SvelteKit profile page + avatar upload     | In Progress | ADR-026, ADR-028 | Account route group + Profile tab + Email & Phone tab shipped (avatar upload + crop editor, SignalR client, OTP-verified email/phone change with SAGA, notification preferences, timezone hydration, animated InlineEditActions, FormPasswordInput migration, locale flow with cancel-aware confirmation). Next: Security tab (sessions/logins/password/2FA)                                                        |
 
 Full checklist moved to standalone file: [AUDIT_CHECKLIST.md](AUDIT_CHECKLIST.md)
 
 ### SvelteKit Implementation Progress
 
-| Step | Name                                | Status      | Notes                                                                                            |
-| ---- | ----------------------------------- | ----------- | ------------------------------------------------------------------------------------------------ |
-| 0    | Document Implementation Plan        | ✅ Done     |                                                                                                  |
-| 1    | Error Handling Foundation + Types   | ✅ Done     | App.Error, hooks, error page, client-error endpoint                                              |
-| 2    | shadcn-svelte + Theme + Tokens      | ✅ Done     | Zinc OKLCH theme, Gabarito font, mode-watcher, Sonner toasts                                     |
-| 2.5  | Server-Side Middleware              | ✅ Done     | Request enrichment, rate limiting, idempotency. SvelteKit→Geo gRPC                               |
-| 3    | Design System Sprint (Kitchen Sink) | ✅ Done     | 27 components, 3 OKLCH presets, live theme editor at `/design`                                   |
-| 3.5  | Design Review & Polish              | ✅ Done     | Playwright visual QA, 11 fixes across 6 theme/mode combos                                        |
-| 4    | Route Groups + Layout System        | ✅ Done     | (auth), (onboarding), (app) groups, sidebar, auth guard stubs                                    |
-| 5    | @d2/auth-bff-client + Auth Proxy    | ✅ Done     | 34 unit + 10 E2E tests. Session resolver, JWT manager (per-session cache), route guards          |
-| 6    | API Client Layer (Gateway)          | ✅ Done     | 90 tests. camelCase normalizer, dynamic public URL, service key bypass, shared executeFetch      |
-| 6.5  | Chart Showcase (LayerChart 2.0)     | ✅ Done     | 5 chart types: area, bar, line, donut, sparkline                                                 |
-| 7    | Forms Architecture (Superforms)     | ✅ Done     | 108 tests. Superforms + Formsnap + Zod 4, field presets, D2Result mapping, form-actions pipeline |
-| 8    | Auth Pages (Sign-In, Sign-Up, etc.) | ✅ Done     | Sign-in, sign-up, forgot/reset password, verify-email. i18n (10 BCP 47 locales)                  |
-| 9    | Client Telemetry (Grafana Faro)     | ✅ Done     | Faro SDK, Alloy faro.receiver pipeline, Web Vitals → Mimir histograms, RUM dashboard             |
-| 10   | Onboarding Flow                     | Pending     | Post-auth org selection/creation + user profile. File Service prerequisite shipped — resumes after Account area Security tab |
-| 11   | App Shell (Sidebar, Header, Org)    | Pending     | Org-type nav, org switcher, emulation banner, breadcrumbs                                        |
-| 12   | SignalR Abstraction Layer           | ✅ Done     | Browser → .NET SignalR gateway direct (`@microsoft/signalr`). Wired through F9 (avatar updates, user:updated session refresh) |
+| Step | Name                                | Status  | Notes                                                                                                                         |
+| ---- | ----------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 0    | Document Implementation Plan        | ✅ Done |                                                                                                                               |
+| 1    | Error Handling Foundation + Types   | ✅ Done | App.Error, hooks, error page, client-error endpoint                                                                           |
+| 2    | shadcn-svelte + Theme + Tokens      | ✅ Done | Zinc OKLCH theme, Gabarito font, mode-watcher, Sonner toasts                                                                  |
+| 2.5  | Server-Side Middleware              | ✅ Done | Request enrichment, rate limiting, idempotency. SvelteKit→Geo gRPC                                                            |
+| 3    | Design System Sprint (Kitchen Sink) | ✅ Done | 27 components, 3 OKLCH presets, live theme editor at `/design`                                                                |
+| 3.5  | Design Review & Polish              | ✅ Done | Playwright visual QA, 11 fixes across 6 theme/mode combos                                                                     |
+| 4    | Route Groups + Layout System        | ✅ Done | (auth), (onboarding), (app) groups, sidebar, auth guard stubs                                                                 |
+| 5    | @d2/auth-bff-client + Auth Proxy    | ✅ Done | 34 unit + 10 E2E tests. Session resolver, JWT manager (per-session cache), route guards                                       |
+| 6    | API Client Layer (Gateway)          | ✅ Done | 90 tests. camelCase normalizer, dynamic public URL, service key bypass, shared executeFetch                                   |
+| 6.5  | Chart Showcase (LayerChart 2.0)     | ✅ Done | 5 chart types: area, bar, line, donut, sparkline                                                                              |
+| 7    | Forms Architecture (Superforms)     | ✅ Done | 108 tests. Superforms + Formsnap + Zod 4, field presets, D2Result mapping, form-actions pipeline                              |
+| 8    | Auth Pages (Sign-In, Sign-Up, etc.) | ✅ Done | Sign-in, sign-up, forgot/reset password, verify-email. i18n (10 BCP 47 locales)                                               |
+| 9    | Client Telemetry (Grafana Faro)     | ✅ Done | Faro SDK, Alloy faro.receiver pipeline, Web Vitals → Mimir histograms, RUM dashboard                                          |
+| 10   | Onboarding Flow                     | Pending | Post-auth org selection/creation + user profile. File Service prerequisite shipped — resumes after Account area Security tab  |
+| 11   | App Shell (Sidebar, Header, Org)    | Pending | Org-type nav, org switcher, emulation banner, breadcrumbs                                                                     |
+| 12   | SignalR Abstraction Layer           | ✅ Done | Browser → .NET SignalR gateway direct (`@microsoft/signalr`). Wired through F9 (avatar updates, user:updated session refresh) |
 
 ### Other Active Work
 
@@ -272,29 +272,29 @@ Full checklist moved to standalone file: [AUDIT_CHECKLIST.md](AUDIT_CHECKLIST.md
 
 ### Shared Packages (.NET)
 
-| Package                       | Status  | Location                                                                                        |
-| ----------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
-| D2.Result                     | ✅ Done | `backends/dotnet/shared/Result/`                                                                |
-| D2.Result.Extensions          | ✅ Done | `backends/dotnet/shared/Result.Extensions/`                                                     |
-| D2.Handler                    | ✅ Done | `backends/dotnet/shared/Handler/`                                                               |
-| D2.Interfaces                 | ✅ Done | `backends/dotnet/shared/Interfaces/` (includes GetTtl, Increment)                               |
-| D2.Utilities                  | ✅ Done | `backends/dotnet/shared/Utilities/`                                                             |
-| D2.ServiceDefaults            | ✅ Done | `backends/dotnet/shared/ServiceDefaults/`                                                       |
-| DistributedCache.Redis        | ✅ Done | `backends/dotnet/shared/Implementations/Caching/` (Get, Set, Remove, Exists, GetTtl, Increment) |
-| InMemoryCache.Default         | ✅ Done | `backends/dotnet/shared/Implementations/Caching/`                                               |
-| Transactions.Pg               | ✅ Done | `backends/dotnet/shared/Implementations/Repository/`                                            |
-| Batch.Pg                      | ✅ Done | `backends/dotnet/shared/Implementations/Repository/`                                            |
-| **RequestEnrichment.Default** | ✅ Done | `backends/dotnet/shared/Implementations/Middleware/`                                            |
-| **RateLimit.Default**         | ✅ Done | `backends/dotnet/shared/Implementations/Middleware/` (uses abstracted cache handlers)           |
-| **Idempotency.Default**       | ✅ Done | `backends/dotnet/shared/Implementations/Middleware/` (Idempotency-Key header, Redis-backed)     |
-| **Handler.Extensions**        | ✅ Done | `backends/dotnet/shared/Handler.Extensions/` (JWT/auth extensions)                              |
-| **Errors.Pg**                 | ✅ Done | `backends/dotnet/shared/Implementations/Repository/Errors/Errors.Pg/` (PG error code helpers)   |
-| **D2.Shared.I18n**            | ✅ Done | `backends/dotnet/shared/I18n/` (Translator + TK constants for gateway-edge translation)         |
-| **JwtAuth.Default**           | ✅ Done | `backends/dotnet/shared/Implementations/Middleware/JwtAuth.Default/` (JWT bearer + JWKS + fp claim binding) |
-| **ServiceKey.Default**        | ✅ Done | `backends/dotnet/shared/Implementations/Middleware/ServiceKey.Default/` (S2S API key, constant-time)        |
+| Package                       | Status  | Location                                                                                                                     |
+| ----------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| D2.Result                     | ✅ Done | `backends/dotnet/shared/Result/`                                                                                             |
+| D2.Result.Extensions          | ✅ Done | `backends/dotnet/shared/Result.Extensions/`                                                                                  |
+| D2.Handler                    | ✅ Done | `backends/dotnet/shared/Handler/`                                                                                            |
+| D2.Interfaces                 | ✅ Done | `backends/dotnet/shared/Interfaces/` (includes GetTtl, Increment)                                                            |
+| D2.Utilities                  | ✅ Done | `backends/dotnet/shared/Utilities/`                                                                                          |
+| D2.ServiceDefaults            | ✅ Done | `backends/dotnet/shared/ServiceDefaults/`                                                                                    |
+| DistributedCache.Redis        | ✅ Done | `backends/dotnet/shared/Implementations/Caching/` (Get, Set, Remove, Exists, GetTtl, Increment)                              |
+| InMemoryCache.Default         | ✅ Done | `backends/dotnet/shared/Implementations/Caching/`                                                                            |
+| Transactions.Pg               | ✅ Done | `backends/dotnet/shared/Implementations/Repository/`                                                                         |
+| Batch.Pg                      | ✅ Done | `backends/dotnet/shared/Implementations/Repository/`                                                                         |
+| **RequestEnrichment.Default** | ✅ Done | `backends/dotnet/shared/Implementations/Middleware/`                                                                         |
+| **RateLimit.Default**         | ✅ Done | `backends/dotnet/shared/Implementations/Middleware/` (uses abstracted cache handlers)                                        |
+| **Idempotency.Default**       | ✅ Done | `backends/dotnet/shared/Implementations/Middleware/` (Idempotency-Key header, Redis-backed)                                  |
+| **Handler.Extensions**        | ✅ Done | `backends/dotnet/shared/Handler.Extensions/` (JWT/auth extensions)                                                           |
+| **Errors.Pg**                 | ✅ Done | `backends/dotnet/shared/Implementations/Repository/Errors/Errors.Pg/` (PG error code helpers)                                |
+| **D2.Shared.I18n**            | ✅ Done | `backends/dotnet/shared/I18n/` (Translator + TK constants for gateway-edge translation)                                      |
+| **JwtAuth.Default**           | ✅ Done | `backends/dotnet/shared/Implementations/Middleware/JwtAuth.Default/` (JWT bearer + JWKS + fp claim binding)                  |
+| **ServiceKey.Default**        | ✅ Done | `backends/dotnet/shared/Implementations/Middleware/ServiceKey.Default/` (S2S API key, constant-time)                         |
 | **AuthPolicy.Default**        | ✅ Done | `backends/dotnet/shared/Implementations/Middleware/AuthPolicy.Default/` (RoutePolicyExtensions, AuthPolicies named policies) |
-| **Translation.Default**       | ✅ Done | `backends/dotnet/shared/Implementations/Middleware/` (gateway-edge D2Result translation)        |
-| **Geo.Client**                | ✅ Done | `backends/dotnet/services/Geo/Geo.Client/` (includes WhoIs cache handler)                       |
+| **Translation.Default**       | ✅ Done | `backends/dotnet/shared/Implementations/Middleware/` (gateway-edge D2Result translation)                                     |
+| **Geo.Client**                | ✅ Done | `backends/dotnet/services/Geo/Geo.Client/` (includes WhoIs cache handler)                                                    |
 
 ### Shared Packages (Node.js)
 
@@ -336,13 +336,13 @@ Full checklist moved to standalone file: [AUDIT_CHECKLIST.md](AUDIT_CHECKLIST.md
 
 ### Services
 
-| Service   | Platform | Status       | Tests       | Notes                                                                                                                                                          |
-| --------- | -------- | ------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Geo       | .NET     | ✅ Done      | 795 passing | Geographic reference data, locations, contacts, WHOIS, multi-tier caching, Contact `IANAIdentifier` (timezone)                                                 |
-| Auth      | Node.js  | 🚧 Stage C   | ~944 unit + integration | Hono + BetterAuth + Drizzle. Stages A-B done, BFF client done, E2E tested. Email/phone change with OTP + SAGA done. Middleware split (jwt-auth/service-key/auth-policy) done |
-| Comms     | Node.js  | 🚧 Stage B   | ~600 passing | Stage A done (delivery engine). User-centric channel preferences (gRPC) done. Stage B next (in-app notifications, push via SignalR)                            |
-| Files     | Node.js  | ✅ F1-F8 Done | 546 passing | Domain + app + infra + API + JWT middleware + E2E done. Auth FileCallback gRPC done. F9 SvelteKit avatar upload integration done. ADR-026                     |
-| dkron-mgr | Node.js  | ✅ Done      | 64 passing  | Declarative Dkron job reconciler — drift detection, orphan cleanup                                                                                             |
+| Service   | Platform | Status        | Tests                   | Notes                                                                                                                                                                        |
+| --------- | -------- | ------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Geo       | .NET     | ✅ Done       | 795 passing             | Geographic reference data, locations, contacts, WHOIS, multi-tier caching, Contact `IANAIdentifier` (timezone)                                                               |
+| Auth      | Node.js  | 🚧 Stage C    | ~944 unit + integration | Hono + BetterAuth + Drizzle. Stages A-B done, BFF client done, E2E tested. Email/phone change with OTP + SAGA done. Middleware split (jwt-auth/service-key/auth-policy) done |
+| Comms     | Node.js  | 🚧 Stage B    | ~600 passing            | Stage A done (delivery engine). User-centric channel preferences (gRPC) done. Stage B next (in-app notifications, push via SignalR)                                          |
+| Files     | Node.js  | ✅ F1-F8 Done | 546 passing             | Domain + app + infra + API + JWT middleware + E2E done. Auth FileCallback gRPC done. F9 SvelteKit avatar upload integration done. ADR-026                                    |
+| dkron-mgr | Node.js  | ✅ Done       | 64 passing              | Declarative Dkron job reconciler — drift detection, orphan cleanup                                                                                                           |
 
 ### Gateways
 
@@ -353,14 +353,14 @@ Full checklist moved to standalone file: [AUDIT_CHECKLIST.md](AUDIT_CHECKLIST.md
 
 ### Frontends
 
-| Component            | Status     | Notes                                                                                                                                                                         |
-| -------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| SvelteKit App        | 🚧 Stage B | Stage A (Steps 0–9) done. F9 mostly done: account route group, Profile tab (avatar upload + crop + SignalR), Email & Phone tab (OTP-verified change + SAGA + notification prefs + timezone). Security tab next                                                         |
-| Auth BFF Integration | ✅ Done    | Proxy, session resolver, JWT manager, route guards (ADR-017)                                                                                                                  |
-| API Gateway Client   | ✅ Done    | Server-side + client-side, camelCase normalizer (ADR-005)                                                                                                                     |
-| Server Middleware    | ✅ Done    | Request enrichment, rate limiting, idempotency on SvelteKit                                                                                                                   |
-| Playwright Tests     | ✅ Done    | Three-tier architecture (ADR-019): mocked CI (`tests/mocked/`, 146 passing, 5 skipped), local E2E (`tests/e2e/`), true browser E2E (`backends/node/services/e2e/`, 9 passing) |
-| OpenTelemetry        | ✅ Done    | Server instrumentation via OTLP/HTTP. Client telemetry via Grafana Faro (Step 9)                                                                                              |
+| Component            | Status     | Notes                                                                                                                                                                                                          |
+| -------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SvelteKit App        | 🚧 Stage B | Stage A (Steps 0–9) done. F9 mostly done: account route group, Profile tab (avatar upload + crop + SignalR), Email & Phone tab (OTP-verified change + SAGA + notification prefs + timezone). Security tab next |
+| Auth BFF Integration | ✅ Done    | Proxy, session resolver, JWT manager, route guards (ADR-017)                                                                                                                                                   |
+| API Gateway Client   | ✅ Done    | Server-side + client-side, camelCase normalizer (ADR-005)                                                                                                                                                      |
+| Server Middleware    | ✅ Done    | Request enrichment, rate limiting, idempotency on SvelteKit                                                                                                                                                    |
+| Playwright Tests     | ✅ Done    | Three-tier architecture (ADR-019): mocked CI (`tests/mocked/`, 146 passing, 5 skipped), local E2E (`tests/e2e/`), true browser E2E (`backends/node/services/e2e/`, 9 passing)                                  |
+| OpenTelemetry        | ✅ Done    | Server instrumentation via OTLP/HTTP. Client telemetry via Grafana Faro (Step 9)                                                                                                                               |
 
 ---
 

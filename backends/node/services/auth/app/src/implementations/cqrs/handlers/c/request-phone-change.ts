@@ -24,7 +24,7 @@ type Output = Commands.RequestPhoneChangeOutput;
 
 const schema = z.object({
   userId: zodGuid,
-  newPhone: z.string().regex(/^\d{7,15}$/, "Phone must be 7-15 digits, no formatting characters"),
+  newPhone: z.string().regex(/^\d{7,15}$/, { message: TK.auth.errors.PHONE_INVALID_FORMAT }),
   currentPassword: z.string().min(1).max(256),
 });
 
@@ -112,9 +112,7 @@ export class RequestPhoneChange
 
     // 6. Send via SMS.
     const expiryMinutes = String(Math.ceil(OTP_EXPIRY.SMS_MS / 60_000));
-    const userLocale = resolveLocale(
-      userResult.success ? (userResult.data?.user.locale ?? undefined) : undefined,
-    );
+    const userLocale = resolveLocale(userResult.success ? userResult.data?.user.locale : undefined);
     const t = this.translator.t;
     const notifyResult = await this.notify.handleAsync({
       alternativeContactInfo: { phone: input.newPhone },

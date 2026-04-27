@@ -73,8 +73,10 @@
 <Dialog.Root bind:open>
   <Dialog.Content class="max-w-sm">
     <Dialog.Header>
-      <Dialog.Title>{m.account_profile_timezone()}</Dialog.Title>
-      <Dialog.Description>{m.account_profile_timezone_description()}</Dialog.Description>
+      <Dialog.Title>{m.webclient_app_account_profile_timezone()}</Dialog.Title>
+      <Dialog.Description
+        >{m.webclient_app_account_profile_timezone_description()}</Dialog.Description
+      >
     </Dialog.Header>
 
     <div class="py-2">
@@ -106,7 +108,7 @@
               comboboxOpen = true;
               searchValue = "";
             }}
-            placeholder={m.account_profile_timezone_placeholder()}
+            placeholder={m.webclient_app_account_profile_timezone_placeholder()}
             class="border-input bg-background dark:bg-input/30 placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full min-w-0 rounded-md border px-3 py-1 pr-8 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] md:text-sm"
           />
           <Combobox.Trigger class="absolute top-1/2 right-2 -translate-y-1/2">
@@ -138,7 +140,9 @@
                 {/snippet}
               </Combobox.Item>
             {:else}
-              <div class="text-muted-foreground py-6 text-center text-sm">No results found.</div>
+              <div class="text-muted-foreground py-6 text-center text-sm">
+                {m.common_ui_no_results()}
+              </div>
             {/each}
           </Combobox.Viewport>
           <Combobox.ScrollDownButton class="flex cursor-default items-center justify-center py-1">

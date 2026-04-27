@@ -33,6 +33,7 @@
     "@d2/protos": "workspace:*",
     "@d2/result": "workspace:*",
     "@d2/service-defaults": "workspace:*",
+    "@d2/utilities": "workspace:*",
     "@grpc/grpc-js": "1.14.3",
     "drizzle-orm": "0.45.1",
     "pg": "8.19.0",

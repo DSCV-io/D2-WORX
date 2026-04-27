@@ -29,11 +29,11 @@
     })
     .refine((d) => d.newPassword === d.confirmPassword, {
       path: ["confirmPassword"],
-      error: () => m.account_change_password_mismatch(),
+      error: () => m.webclient_app_account_change_password_mismatch(),
     })
     .refine((d) => d.newPassword !== d.currentPassword, {
       path: ["newPassword"],
-      error: () => m.account_change_password_same_as_current(),
+      error: () => m.webclient_app_account_change_password_same_as_current(),
     });
 
   const form = superForm(
@@ -58,7 +58,7 @@
           );
           if (!result.success) {
             if (result.statusCode === 401) {
-              errorMessage = m.account_password_incorrect();
+              errorMessage = m.webclient_app_account_password_incorrect();
               $formData.currentPassword = "";
               return;
             }
@@ -69,7 +69,7 @@
             );
             return;
           }
-          toast.success(m.account_security_password_changed());
+          toast.success(m.webclient_app_account_security_password_changed());
           // Sessions list may have changed — refresh data loaders.
           void invalidateAll();
           open = false;
@@ -102,8 +102,10 @@
     onEscapeKeydown={(e) => e.preventDefault()}
   >
     <Dialog.Header>
-      <Dialog.Title>{m.account_security_change_password_title()}</Dialog.Title>
-      <Dialog.Description>{m.account_security_change_password_description()}</Dialog.Description>
+      <Dialog.Title>{m.webclient_app_account_security_change_password_title()}</Dialog.Title>
+      <Dialog.Description
+        >{m.webclient_app_account_security_change_password_description()}</Dialog.Description
+      >
     </Dialog.Header>
 
     <form
@@ -114,32 +116,32 @@
       <FormPasswordInput
         {form}
         field="currentPassword"
-        label={m.account_change_password_current_label()}
-        placeholder={m.account_change_password_current_placeholder()}
+        label={m.webclient_app_account_change_password_current_label()}
+        placeholder={m.webclient_app_account_change_password_current_placeholder()}
         autocomplete="current-password"
         disabled={submitting}
       />
       <FormPasswordInput
         {form}
         field="newPassword"
-        label={m.account_change_password_new_label()}
-        placeholder={m.account_change_password_new_placeholder()}
+        label={m.webclient_app_account_change_password_new_label()}
+        placeholder={m.webclient_app_account_change_password_new_placeholder()}
         autocomplete="new-password"
         disabled={submitting}
       />
       <FormPasswordInput
         {form}
         field="confirmPassword"
-        label={m.account_change_password_confirm_label()}
-        placeholder={m.account_change_password_confirm_placeholder()}
+        label={m.webclient_app_account_change_password_confirm_label()}
+        placeholder={m.webclient_app_account_change_password_confirm_placeholder()}
         autocomplete="new-password"
         disabled={submitting}
       />
       <FormCheckbox
         {form}
         field="revokeOtherSessions"
-        label={m.account_change_password_revoke_others_label()}
-        description={m.account_change_password_revoke_others_description()}
+        label={m.webclient_app_account_change_password_revoke_others_label()}
+        description={m.webclient_app_account_change_password_revoke_others_description()}
         disabled={submitting}
       />
       {#if errorMessage}
@@ -160,7 +162,7 @@
           {#if submitting}
             <LoaderCircleIcon class="mr-2 size-4 animate-spin" />
           {/if}
-          {m.account_security_change_password_yes()}
+          {m.webclient_app_account_security_change_password_yes()}
         </Button>
       </Dialog.Footer>
     </form>

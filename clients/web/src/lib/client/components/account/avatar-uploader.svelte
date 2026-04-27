@@ -75,7 +75,7 @@
         .then(async (url) => {
           displayUrl = url;
           uploadState = "idle";
-          toast.success(m.account_profile_avatar_success());
+          toast.success(m.webclient_app_account_profile_avatar_success());
           await invalidateAll();
         })
         .catch(() => {
@@ -89,7 +89,11 @@
 
       uploadState = "idle";
       pendingFileId = undefined;
-      toast.error(m.account_profile_avatar_rejected({ reason: data.rejectionReason ?? "unknown" }));
+      toast.error(
+        m.webclient_app_account_profile_avatar_rejected({
+          reason: data.rejectionReason ?? m.common_ui_unknown(),
+        }),
+      );
     });
 
     return () => {
@@ -115,9 +119,7 @@
   });
 
   const busy = $derived(
-    uploadState === "uploading" ||
-      uploadState === "processing" ||
-      uploadState === "removing",
+    uploadState === "uploading" || uploadState === "processing" || uploadState === "removing",
   );
   const hasImage = $derived(!!(currentImageFileId || displayUrl));
 
@@ -133,12 +135,12 @@
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast.error(m.account_profile_avatar_invalid_type());
+      toast.error(m.webclient_app_account_profile_avatar_invalid_type());
       return;
     }
 
     if (file.size > MAX_SIZE_BYTES) {
-      toast.error(m.account_profile_avatar_too_large());
+      toast.error(m.webclient_app_account_profile_avatar_too_large());
       return;
     }
 
@@ -175,7 +177,7 @@
       displayUrl = undefined;
       pendingFileId = undefined;
       uploadState = "idle";
-      toast.success(m.account_profile_avatar_success());
+      toast.success(m.webclient_app_account_profile_avatar_success());
     } else {
       uploadState = "idle";
       toast.error(translateMessage(result.messages?.[0], undefined, m.common_errors_unknown()));
@@ -211,14 +213,14 @@
             type="button"
             class="group focus-visible:ring-ring relative block size-32 cursor-pointer rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed"
             disabled={busy}
-            aria-label={m.account_profile_avatar_edit()}
+            aria-label={m.webclient_app_account_profile_avatar_edit()}
           >
             {#key displayUrl}
               <Avatar.Root class="size-32 rounded-full">
                 {#if displayUrl}
                   <Avatar.Image
                     src={displayUrl}
-                    alt={userName ?? m.account_profile_avatar_alt()}
+                    alt={userName ?? m.webclient_app_account_profile_avatar_alt()}
                   />
                 {/if}
                 <Avatar.Fallback
@@ -238,18 +240,18 @@
               </div>
 
               <div class="absolute inset-0 flex items-center">
-                <p class="relative -right-[10rem] text-muted-foreground text-sm">
+                <p class="text-muted-foreground relative -right-[10rem] text-sm">
                   {uploadState === "processing"
-                    ? m.account_profile_avatar_processing()
-                    : m.account_profile_avatar_uploading()}
+                    ? m.webclient_app_account_profile_avatar_processing()
+                    : m.webclient_app_account_profile_avatar_uploading()}
                 </p>
               </div>
             {:else}
               <span
-                class="bg-background text-foreground border-border absolute bottom-2 left-2 z-10 inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm font-medium shadow-sm transition-colors group-hover:bg-accent dark:shadow-[0_1px_3px_0_rgb(0_0_0/0.5)]"
+                class="bg-background text-foreground border-border group-hover:bg-accent absolute bottom-2 left-2 z-10 inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm font-medium shadow-sm transition-colors dark:shadow-[0_1px_3px_0_rgb(0_0_0/0.5)]"
               >
                 <PencilIcon class="size-4" />
-                {m.account_profile_avatar_edit()}
+                {m.webclient_app_account_profile_avatar_edit()}
               </span>
             {/if}
           </button>
@@ -261,7 +263,7 @@
       >
         <DropdownMenu.Item onSelect={handleFileSelect}>
           <UploadIcon class="mr-2 size-4" />
-          {m.account_profile_avatar_change()}
+          {m.webclient_app_account_profile_avatar_change()}
         </DropdownMenu.Item>
         {#if hasImage}
           <DropdownMenu.Separator />
@@ -270,7 +272,7 @@
             onSelect={handleRemove}
           >
             <Trash2Icon class="mr-2 size-4" />
-            {m.account_profile_avatar_remove()}
+            {m.webclient_app_account_profile_avatar_remove()}
           </DropdownMenu.Item>
         {/if}
       </DropdownMenu.Content>

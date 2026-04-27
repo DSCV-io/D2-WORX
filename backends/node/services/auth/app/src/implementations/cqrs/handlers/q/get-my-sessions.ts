@@ -2,7 +2,7 @@ import { BaseHandler, type IHandlerContext } from "@d2/handler";
 import { D2Result } from "@d2/result";
 import type { Complex } from "@d2/geo-client";
 import type { WhoIsDTO } from "@d2/protos";
-import type { IFindActiveSessionsByUserIdHandler } from "../../../../interfaces/repository/handlers/index.js";
+import type { IGetActiveSessionsByUserIdHandler } from "../../../../interfaces/repository/handlers/index.js";
 import { Queries } from "../../../../interfaces/cqrs/handlers/index.js";
 
 type Input = Queries.GetMySessionsInput;
@@ -24,7 +24,7 @@ export class GetMySessions
   extends BaseHandler<Input, Output>
   implements Queries.IGetMySessionsHandler
 {
-  private readonly findActiveSessions: IFindActiveSessionsByUserIdHandler;
+  private readonly getActiveSessions: IGetActiveSessionsByUserIdHandler;
   private readonly findWhoIs: Complex.IFindWhoIsHandler;
 
   override get redaction() {
@@ -32,17 +32,17 @@ export class GetMySessions
   }
 
   constructor(
-    findActiveSessions: IFindActiveSessionsByUserIdHandler,
+    getActiveSessions: IGetActiveSessionsByUserIdHandler,
     findWhoIs: Complex.IFindWhoIsHandler,
     context: IHandlerContext,
   ) {
     super(context);
-    this.findActiveSessions = findActiveSessions;
+    this.getActiveSessions = getActiveSessions;
     this.findWhoIs = findWhoIs;
   }
 
   protected async executeAsync(input: Input): Promise<D2Result<Output | undefined>> {
-    const sessionsResult = await this.findActiveSessions.handleAsync({ userId: input.userId });
+    const sessionsResult = await this.getActiveSessions.handleAsync({ userId: input.userId });
     if (!sessionsResult.success) return D2Result.bubbleFail(sessionsResult);
 
     const sessions = sessionsResult.data?.sessions ?? [];

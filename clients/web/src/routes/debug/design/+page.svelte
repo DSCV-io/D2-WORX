@@ -47,9 +47,8 @@
     },
     {
       href: "/debug/design/account-components" as const,
-      label: "Account Components",
-      description:
-        "ConfirmationDialog, InlineEditField, InlineEditFieldGroup, UnsavedChangesBar, UserAvatarMenu, SettingsNav",
+      label: m.webclient_debug_account_components_title(),
+      description: m.webclient_debug_account_components_subtitle(),
     },
   ]);
 </script>

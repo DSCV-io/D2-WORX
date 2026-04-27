@@ -1,7 +1,7 @@
 // --- Handler type imports (used by bundle interface below) ---
 import type { ICreateFileRecordHandler } from "./c/create-file-record.js";
-import type { IFindFileByIdHandler } from "./r/find-file-by-id.js";
-import type { IFindFilesByContextHandler } from "./r/find-files-by-context.js";
+import type { IGetFileByIdHandler } from "./r/get-file-by-id.js";
+import type { IGetFilesByContextHandler } from "./r/get-files-by-context.js";
 import type { IUpdateFileRecordHandler } from "./u/update-file-record.js";
 import type { IDeleteFileRecordHandler } from "./d/delete-file-record.js";
 import type { IDeleteFileRecordsByIdsHandler } from "./d/delete-file-records-by-ids.js";
@@ -15,22 +15,22 @@ export type {
 
 // --- Read (R) ---
 export type {
-  FindFileByIdInput,
-  FindFileByIdOutput,
-  IFindFileByIdHandler,
-} from "./r/find-file-by-id.js";
+  GetFileByIdInput,
+  GetFileByIdOutput,
+  IGetFileByIdHandler,
+} from "./r/get-file-by-id.js";
 
 export type {
-  FindFilesByContextInput,
-  FindFilesByContextOutput,
-  IFindFilesByContextHandler,
-} from "./r/find-files-by-context.js";
+  GetFilesByContextInput,
+  GetFilesByContextOutput,
+  IGetFilesByContextHandler,
+} from "./r/get-files-by-context.js";
 
 export type {
-  FindStaleFilesInput,
-  FindStaleFilesOutput,
-  IFindStaleFilesHandler,
-} from "./r/find-stale-files.js";
+  GetStaleFilesInput,
+  GetStaleFilesOutput,
+  IGetStaleFilesHandler,
+} from "./r/get-stale-files.js";
 
 export type { PingDbInput, PingDbOutput, IPingDbHandler } from "./r/ping-db.js";
 
@@ -60,8 +60,8 @@ export type {
 
 export interface FileRepoHandlers {
   create: ICreateFileRecordHandler;
-  findById: IFindFileByIdHandler;
-  findByContext: IFindFilesByContextHandler;
+  getById: IGetFileByIdHandler;
+  getByContext: IGetFilesByContextHandler;
   update: IUpdateFileRecordHandler;
   delete: IDeleteFileRecordHandler;
   deleteByIds: IDeleteFileRecordsByIdsHandler;

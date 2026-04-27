@@ -12,7 +12,7 @@ import type {
   IPushFileUpdate,
 } from "@d2/files-app";
 import type { DistributedCache } from "@d2/interfaces";
-import type { IFindStaleFilesHandler, IDeleteFileRecordsByIdsHandler } from "@d2/files-app";
+import type { IGetStaleFilesHandler, IDeleteFileRecordsByIdsHandler } from "@d2/files-app";
 import type { IHandlerContext, IRequestContext } from "@d2/handler";
 
 /**
@@ -21,8 +21,8 @@ import type { IHandlerContext, IRequestContext } from "@d2/handler";
 export function createMockRepo(): FileRepoHandlers {
   return {
     create: { handleAsync: vi.fn().mockResolvedValue(D2Result.ok({ data: { file: {} } })) },
-    findById: { handleAsync: vi.fn().mockResolvedValue(D2Result.ok({ data: { file: null } })) },
-    findByContext: {
+    getById: { handleAsync: vi.fn().mockResolvedValue(D2Result.ok({ data: { file: null } })) },
+    getByContext: {
       handleAsync: vi.fn().mockResolvedValue(D2Result.ok({ data: { files: [], total: 0 } })),
     },
     update: { handleAsync: vi.fn().mockResolvedValue(D2Result.ok({ data: { file: {} } })) },
@@ -149,12 +149,12 @@ export function createMockReleaseLock(): DistributedCache.IReleaseLockHandler {
 }
 
 /**
- * Creates a mock FindStaleFiles handler.
+ * Creates a mock GetStaleFiles handler.
  */
-export function createMockFindStaleFiles(files: unknown[] = []): IFindStaleFilesHandler {
+export function createMockGetStaleFiles(files: unknown[] = []): IGetStaleFilesHandler {
   return {
     handleAsync: vi.fn().mockResolvedValue(D2Result.ok({ data: { files } })),
-  } as unknown as IFindStaleFilesHandler;
+  } as unknown as IGetStaleFilesHandler;
 }
 
 /**

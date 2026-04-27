@@ -39,7 +39,11 @@ const okResultProto = {
 
 // --- Imports (after mocks) ---
 
-import { CallCanAccess, CallOnFileProcessed } from "@d2/files-infra";
+import {
+  CallCanAccess,
+  CallOnFileProcessed,
+  DEFAULT_FILES_OUTBOUND_OPTIONS,
+} from "@d2/files-infra";
 
 // --- Helpers ---
 
@@ -94,7 +98,12 @@ describe("CallCanAccess", () => {
 
   it("should return allowed=true on successful gRPC call", async () => {
     const clients = createPreSeededClients("auth:5101");
-    const handler = new CallCanAccess(clients as never, "test-callback-key", createTestContext());
+    const handler = new CallCanAccess(
+      clients as never,
+      "test-callback-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
+      createTestContext(),
+    );
 
     mockCanAccess.mockImplementation(
       (_req: unknown, _meta: unknown, _opts: unknown, cb: (err: unknown, res: unknown) => void) => {
@@ -117,7 +126,12 @@ describe("CallCanAccess", () => {
 
   it("should return allowed=false when service denies access", async () => {
     const clients = createPreSeededClients("auth:5101");
-    const handler = new CallCanAccess(clients as never, "test-callback-key", createTestContext());
+    const handler = new CallCanAccess(
+      clients as never,
+      "test-callback-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
+      createTestContext(),
+    );
 
     mockCanAccess.mockImplementation(
       (_req: unknown, _meta: unknown, _opts: unknown, cb: (err: unknown, res: unknown) => void) => {
@@ -140,7 +154,12 @@ describe("CallCanAccess", () => {
 
   it("should return serviceUnavailable on gRPC error", async () => {
     const clients = createPreSeededClients("auth:5101");
-    const handler = new CallCanAccess(clients as never, "test-callback-key", createTestContext());
+    const handler = new CallCanAccess(
+      clients as never,
+      "test-callback-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
+      createTestContext(),
+    );
 
     mockCanAccess.mockImplementation(
       (_req: unknown, _meta: unknown, _opts: unknown, cb: (err: unknown, res: unknown) => void) => {
@@ -164,7 +183,12 @@ describe("CallCanAccess", () => {
 
   it("should pass correct request fields to gRPC", async () => {
     const clients = createPreSeededClients("auth:5101");
-    const handler = new CallCanAccess(clients as never, "test-callback-key", createTestContext());
+    const handler = new CallCanAccess(
+      clients as never,
+      "test-callback-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
+      createTestContext(),
+    );
 
     mockCanAccess.mockImplementation(
       (
@@ -196,7 +220,12 @@ describe("CallCanAccess", () => {
 
   it("should set deadline on gRPC call options", async () => {
     const clients = createPreSeededClients("auth:5101");
-    const handler = new CallCanAccess(clients as never, "test-callback-key", createTestContext());
+    const handler = new CallCanAccess(
+      clients as never,
+      "test-callback-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
+      createTestContext(),
+    );
 
     mockCanAccess.mockImplementation(
       (
@@ -224,7 +253,12 @@ describe("CallCanAccess", () => {
 
   it("should create and cache client for new address", async () => {
     const clients = new Map<string, unknown>();
-    const handler = new CallCanAccess(clients as never, "test-callback-key", createTestContext());
+    const handler = new CallCanAccess(
+      clients as never,
+      "test-callback-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
+      createTestContext(),
+    );
 
     mockCanAccess.mockImplementation(
       (_req: unknown, _meta: unknown, _opts: unknown, cb: (err: unknown, res: unknown) => void) => {
@@ -247,7 +281,12 @@ describe("CallCanAccess", () => {
 
   it("should reuse cached client for same address", async () => {
     const clients = createPreSeededClients("auth:5101");
-    const handler = new CallCanAccess(clients as never, "test-callback-key", createTestContext());
+    const handler = new CallCanAccess(
+      clients as never,
+      "test-callback-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
+      createTestContext(),
+    );
 
     mockCanAccess.mockImplementation(
       (_req: unknown, _meta: unknown, _opts: unknown, cb: (err: unknown, res: unknown) => void) => {
@@ -281,7 +320,12 @@ describe("CallCanAccess", () => {
 
   it("should create separate clients for different addresses", async () => {
     const clients = new Map<string, unknown>();
-    const handler = new CallCanAccess(clients as never, "test-callback-key", createTestContext());
+    const handler = new CallCanAccess(
+      clients as never,
+      "test-callback-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
+      createTestContext(),
+    );
 
     mockCanAccess.mockImplementation(
       (_req: unknown, _meta: unknown, _opts: unknown, cb: (err: unknown, res: unknown) => void) => {
@@ -328,6 +372,7 @@ describe("CallOnFileProcessed", () => {
     const handler = new CallOnFileProcessed(
       clients as never,
       "test-callback-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
       createTestContext(),
     );
 
@@ -355,6 +400,7 @@ describe("CallOnFileProcessed", () => {
     const handler = new CallOnFileProcessed(
       clients as never,
       "test-callback-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
       createTestContext(),
     );
 
@@ -381,6 +427,7 @@ describe("CallOnFileProcessed", () => {
     const handler = new CallOnFileProcessed(
       clients as never,
       "test-callback-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
       createTestContext(),
     );
 
@@ -408,6 +455,7 @@ describe("CallOnFileProcessed", () => {
     const handler = new CallOnFileProcessed(
       clients as never,
       "test-callback-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
       createTestContext(),
     );
 
@@ -443,6 +491,7 @@ describe("CallOnFileProcessed", () => {
     const handler = new CallOnFileProcessed(
       clients as never,
       "test-callback-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
       createTestContext(),
     );
     const inputVariants = ["thumb", "medium", "original"];
@@ -476,6 +525,7 @@ describe("CallOnFileProcessed", () => {
     const handler = new CallOnFileProcessed(
       clients as never,
       "test-callback-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
       createTestContext(),
     );
 
@@ -505,6 +555,7 @@ describe("CallOnFileProcessed", () => {
     const handler = new CallOnFileProcessed(
       clients as never,
       "test-callback-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
       createTestContext(),
     );
 
@@ -535,6 +586,7 @@ describe("CallOnFileProcessed", () => {
     const handler = new CallOnFileProcessed(
       clients as never,
       "test-callback-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
       createTestContext(),
     );
 
@@ -561,6 +613,7 @@ describe("CallOnFileProcessed", () => {
     const handler = new CallOnFileProcessed(
       clients as never,
       "test-callback-key",
+      DEFAULT_FILES_OUTBOUND_OPTIONS,
       createTestContext(),
     );
 

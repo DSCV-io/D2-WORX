@@ -1,5 +1,5 @@
 import * as grpc from "@grpc/grpc-js";
-import { BaseHandler, type IHandlerContext } from "@d2/handler";
+import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handler";
 import type { D2Result } from "@d2/result";
 import {
   RealtimeGatewayClientCtor,
@@ -9,12 +9,12 @@ import {
 import { handleGrpcCall } from "@d2/result-extensions";
 import { createApiKeyInterceptor, createTraceContextInterceptor } from "@d2/service-defaults/grpc";
 import {
+  PUSH_FILE_UPDATE_REDACTION,
   type PushFileUpdateInput as I,
   type PushFileUpdateOutput as O,
   type IPushFileUpdate,
 } from "@d2/files-app";
-
-const GRPC_TIMEOUT_MS = 10_000;
+import type { FilesOutboundOptions } from "../../options.js";
 
 /**
  * Pushes file processing updates to connected browser clients via the SignalR Gateway.
@@ -26,12 +26,23 @@ const GRPC_TIMEOUT_MS = 10_000;
 export class PushFileUpdate extends BaseHandler<I, O> implements IPushFileUpdate {
   private readonly gatewayAddress: string;
   private readonly apiKey: string;
+  private readonly options: FilesOutboundOptions;
   private client: RealtimeGatewayClient | undefined;
 
-  constructor(gatewayAddress: string, apiKey: string, context: IHandlerContext) {
+  constructor(
+    gatewayAddress: string,
+    apiKey: string,
+    options: FilesOutboundOptions,
+    context: IHandlerContext,
+  ) {
     super(context);
     this.gatewayAddress = gatewayAddress;
     this.apiKey = apiKey;
+    this.options = options;
+  }
+
+  override get redaction(): RedactionSpec {
+    return PUSH_FILE_UPDATE_REDACTION;
   }
 
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {
@@ -57,7 +68,7 @@ export class PushFileUpdate extends BaseHandler<I, O> implements IPushFileUpdate
               payloadJson: payload,
             },
             new grpc.Metadata(),
-            { deadline: Date.now() + GRPC_TIMEOUT_MS },
+            { deadline: Date.now() + this.options.grpcTimeoutMs },
             (err: grpc.ServiceError | null, res: RealtimePushResponse) => {
               if (err) reject(err);
               else resolve(res);

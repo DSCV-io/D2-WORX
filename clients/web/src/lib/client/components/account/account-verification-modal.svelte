@@ -148,23 +148,25 @@
 
       if (!result.success) {
         if (result.statusCode === 401) {
-          errorMessage = m.account_password_incorrect();
+          errorMessage = m.webclient_app_account_password_incorrect();
           $formData.currentPassword = "";
           step = "input";
           return;
         }
         if (result.statusCode === 409) {
           errorMessage =
-            type === "email" ? m.account_otp_email_in_use() : m.account_otp_phone_in_use();
+            type === "email"
+              ? m.webclient_app_account_otp_email_in_use()
+              : m.webclient_app_account_otp_phone_in_use();
           step = "input";
           return;
         }
         if (result.statusCode === 429) {
-          errorMessage = m.account_otp_rate_limited();
+          errorMessage = m.webclient_app_account_otp_rate_limited();
           return;
         }
         if (result.errorCode === "PHONE_NO_CHANGE") {
-          errorMessage = m.account_otp_no_change_phone();
+          errorMessage = m.webclient_app_account_otp_no_change_phone();
           step = "input";
           return;
         }
@@ -198,15 +200,15 @@
         // (e.g. UNHANDLED_EXCEPTION).
         otpValue = "";
         if (result.statusCode === 401) {
-          errorMessage = m.account_otp_invalid_code();
+          errorMessage = m.webclient_app_account_otp_invalid_code();
           return;
         }
         if (result.statusCode === 404) {
-          errorMessage = m.account_otp_expired();
+          errorMessage = m.webclient_app_account_otp_expired();
           return;
         }
         if (result.statusCode === 429) {
-          errorMessage = m.account_otp_max_attempts();
+          errorMessage = m.webclient_app_account_otp_max_attempts();
           return;
         }
         errorMessage = translateMessage(result.messages?.[0], undefined, m.common_errors_unknown());
@@ -240,13 +242,15 @@
   function dialogTitle(): string {
     if (step === "input" || step === "confirm") {
       return type === "email"
-        ? m.account_email_change_dialog_title()
-        : m.account_phone_change_dialog_title();
+        ? m.webclient_app_account_email_change_dialog_title()
+        : m.webclient_app_account_phone_change_dialog_title();
     }
     if (step === "otp") {
-      return m.account_email_change_otp_title();
+      return m.webclient_app_account_email_change_otp_title();
     }
-    return type === "email" ? m.account_email_change_success() : m.account_phone_change_success();
+    return type === "email"
+      ? m.webclient_app_account_email_change_success()
+      : m.webclient_app_account_phone_change_success();
   }
 </script>
 
@@ -261,9 +265,9 @@
       {#if step === "otp"}
         <Dialog.Description>
           {#if type === "email"}
-            {m.account_email_change_otp_subtitle({ newEmail: displayValue() })}
+            {m.webclient_app_account_email_change_otp_subtitle({ newEmail: displayValue() })}
           {:else}
-            {m.account_phone_otp_subtitle({ newPhone: displayValue() })}
+            {m.webclient_app_account_phone_otp_subtitle({ newPhone: displayValue() })}
           {/if}
         </Dialog.Description>
       {/if}
@@ -285,7 +289,7 @@
           <FormPhoneInput
             {form}
             field="newValue"
-            label={m.account_phone_input_label()}
+            label={m.webclient_app_account_phone_input_label()}
             {countries}
             {defaultCountry}
           />
@@ -308,7 +312,7 @@
           >
           <Button
             type="submit"
-            disabled={submitting}>{m.account_email_change_continue()}</Button
+            disabled={submitting}>{m.webclient_app_account_email_change_continue()}</Button
           >
         </Dialog.Footer>
       </form>
@@ -316,9 +320,9 @@
       <div class="flex flex-col gap-4 py-2">
         <p class="text-sm">
           {#if type === "email"}
-            {m.account_email_change_confirm_body({ newEmail: displayValue() })}
+            {m.webclient_app_account_email_change_confirm_body({ newEmail: displayValue() })}
           {:else}
-            {m.account_phone_change_confirm_body({ newPhone: displayValue() })}
+            {m.webclient_app_account_phone_change_confirm_body({ newPhone: displayValue() })}
           {/if}
         </p>
         {#if errorMessage}
@@ -339,7 +343,7 @@
           {#if submitting}
             <LoaderCircleIcon class="mr-2 size-4 animate-spin" />
           {/if}
-          {m.account_email_change_send_code()}
+          {m.webclient_app_account_email_change_send_code()}
         </Button>
       </Dialog.Footer>
     {:else if step === "otp"}
@@ -360,9 +364,9 @@
 
         <p class="text-muted-foreground text-sm">
           {#if remainingSeconds() > 0}
-            {m.account_otp_expires_in({ time: expiryLabel() })}
+            {m.webclient_app_account_otp_expires_in({ time: expiryLabel() })}
           {:else}
-            <span class="text-destructive">{m.account_otp_expired()}</span>
+            <span class="text-destructive">{m.webclient_app_account_otp_expired()}</span>
           {/if}
         </p>
 
@@ -378,9 +382,9 @@
           disabled={submitting || resendCooldownSec() > 0}
         >
           {#if resendCooldownSec() > 0}
-            {m.account_otp_resend_in({ seconds: resendCooldownSec().toString() })}
+            {m.webclient_app_account_otp_resend_in({ seconds: resendCooldownSec().toString() })}
           {:else}
-            {m.account_otp_resend()}
+            {m.webclient_app_account_otp_resend()}
           {/if}
         </Button>
         <Button
@@ -392,7 +396,9 @@
       <div class="flex flex-col items-center gap-3 py-6">
         <CircleCheckIcon class="size-12 text-green-500" />
         <p class="text-sm">
-          {type === "email" ? m.account_email_change_success() : m.account_phone_change_success()}
+          {type === "email"
+            ? m.webclient_app_account_email_change_success()
+            : m.webclient_app_account_phone_change_success()}
         </p>
       </div>
     {/if}

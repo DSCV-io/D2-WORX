@@ -30,7 +30,7 @@ describe("IntakeFile", () => {
   it("should transition pending file to processing", async () => {
     const repo = createMockRepo();
     const file = makePendingFile();
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
     // Mock update to return the file in "processing" status (optimistic concurrency check)
     vi.mocked(repo.update.handleAsync).mockResolvedValue(
       D2Result.ok({ data: { file: { ...file, status: "processing" } } }),
@@ -47,7 +47,7 @@ describe("IntakeFile", () => {
 
   it("should discard when file not found", async () => {
     const repo = createMockRepo();
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.notFound());
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.notFound());
     const { handler } = createHandler(repo);
 
     const result = await handler.handleAsync({ fileId: "nonexistent" });
@@ -60,7 +60,7 @@ describe("IntakeFile", () => {
   it("should discard when file is already processing", async () => {
     const repo = createMockRepo();
     const file = { ...makePendingFile(), status: "processing" as const };
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
     const { handler } = createHandler(repo);
 
     const result = await handler.handleAsync({ fileId: "file-001" });
@@ -73,7 +73,7 @@ describe("IntakeFile", () => {
   it("should discard when file is ready", async () => {
     const repo = createMockRepo();
     const file = { ...makePendingFile(), status: "ready" as const };
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
     const { handler } = createHandler(repo);
 
     const result = await handler.handleAsync({ fileId: "file-001" });
@@ -93,7 +93,7 @@ describe("IntakeFile", () => {
   it("should propagate update failure", async () => {
     const repo = createMockRepo();
     const file = makePendingFile();
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
     vi.mocked(repo.update.handleAsync).mockResolvedValue(D2Result.serviceUnavailable());
     const { handler } = createHandler(repo);
 

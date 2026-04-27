@@ -103,6 +103,7 @@ export type {
   PushFileUpdateOutput,
   IPushFileUpdate,
 } from "./interfaces/realtime/handlers/index.js";
+export { PUSH_FILE_UPDATE_REDACTION } from "./interfaces/realtime/handlers/index.js";
 
 // --- CQRS Contracts (app-implemented, delegate to gRPC callbacks) ---
 export type {
@@ -149,9 +150,9 @@ export type {
   FileRepoHandlers,
   // Individual handler types
   ICreateFileRecordHandler,
-  IFindFileByIdHandler,
-  IFindFilesByContextHandler,
-  IFindStaleFilesHandler,
+  IGetFileByIdHandler,
+  IGetFilesByContextHandler,
+  IGetStaleFilesHandler,
   IUpdateFileRecordHandler,
   IDeleteFileRecordHandler,
   IDeleteFileRecordsByIdsHandler,
@@ -159,12 +160,12 @@ export type {
   // Individual I/O types
   CreateFileRecordInput,
   CreateFileRecordOutput,
-  FindFileByIdInput,
-  FindFileByIdOutput,
-  FindFilesByContextInput,
-  FindFilesByContextOutput,
-  FindStaleFilesInput,
-  FindStaleFilesOutput,
+  GetFileByIdInput,
+  GetFileByIdOutput,
+  GetFilesByContextInput,
+  GetFilesByContextOutput,
+  GetStaleFilesInput,
+  GetStaleFilesOutput,
   UpdateFileRecordInput,
   UpdateFileRecordOutput,
   DeleteFileRecordInput,
@@ -247,9 +248,9 @@ export { addFilesApp } from "./registration.js";
 export {
   // Infra keys (repo)
   ICreateFileRecordKey,
-  IFindFileByIdKey,
-  IFindFilesByContextKey,
-  IFindStaleFilesKey,
+  IGetFileByIdKey,
+  IGetFilesByContextKey,
+  IGetStaleFilesKey,
   IUpdateFileRecordKey,
   IDeleteFileRecordKey,
   IDeleteFileRecordsByIdsKey,

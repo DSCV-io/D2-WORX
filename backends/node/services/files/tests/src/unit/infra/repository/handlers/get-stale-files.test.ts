@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { FindStaleFiles } from "@d2/files-infra";
+import { GetStaleFiles } from "@d2/files-infra";
 import { createTestContext, createSampleFileRow } from "../../helpers/test-context.js";
 
 function createMockDb(rows: unknown[] = []) {
@@ -10,7 +10,7 @@ function createMockDb(rows: unknown[] = []) {
   return { select, from, where, limit };
 }
 
-describe("FindStaleFiles", () => {
+describe("GetStaleFiles", () => {
   const cutoffDate = new Date("2026-01-01T00:00:00Z");
 
   it("should return mapped files when stale files exist", async () => {
@@ -18,7 +18,7 @@ describe("FindStaleFiles", () => {
     const row2 = createSampleFileRow({ id: "file-002", status: "pending" });
     const { select } = createMockDb([row1, row2]);
     const db = { select } as never;
-    const handler = new FindStaleFiles(db, createTestContext());
+    const handler = new GetStaleFiles(db, createTestContext());
 
     const result = await handler.handleAsync({
       status: "pending",
@@ -35,7 +35,7 @@ describe("FindStaleFiles", () => {
   it("should return empty array when no stale files found", async () => {
     const { select } = createMockDb([]);
     const db = { select } as never;
-    const handler = new FindStaleFiles(db, createTestContext());
+    const handler = new GetStaleFiles(db, createTestContext());
 
     const result = await handler.handleAsync({
       status: "pending",
@@ -50,7 +50,7 @@ describe("FindStaleFiles", () => {
   it("should always return ok (not notFound) even when empty", async () => {
     const { select } = createMockDb([]);
     const db = { select } as never;
-    const handler = new FindStaleFiles(db, createTestContext());
+    const handler = new GetStaleFiles(db, createTestContext());
 
     const result = await handler.handleAsync({
       status: "processing",
@@ -65,7 +65,7 @@ describe("FindStaleFiles", () => {
   it("should pass the limit to the DB query", async () => {
     const { select, limit } = createMockDb([]);
     const db = { select } as never;
-    const handler = new FindStaleFiles(db, createTestContext());
+    const handler = new GetStaleFiles(db, createTestContext());
 
     await handler.handleAsync({
       status: "pending",
@@ -84,7 +84,7 @@ describe("FindStaleFiles", () => {
     });
     const { select } = createMockDb([row]);
     const db = { select } as never;
-    const handler = new FindStaleFiles(db, createTestContext());
+    const handler = new GetStaleFiles(db, createTestContext());
 
     const result = await handler.handleAsync({
       status: "pending",
@@ -103,7 +103,7 @@ describe("FindStaleFiles", () => {
     const from = vi.fn().mockReturnValue({ where });
     const select = vi.fn().mockReturnValue({ from });
     const db = { select } as never;
-    const handler = new FindStaleFiles(db, createTestContext());
+    const handler = new GetStaleFiles(db, createTestContext());
 
     const result = await handler.handleAsync({
       status: "pending",
@@ -119,7 +119,7 @@ describe("FindStaleFiles", () => {
     const row = createSampleFileRow({ id: "file-proc", status: "processing" });
     const { select } = createMockDb([row]);
     const db = { select } as never;
-    const handler = new FindStaleFiles(db, createTestContext());
+    const handler = new GetStaleFiles(db, createTestContext());
 
     const result = await handler.handleAsync({
       status: "processing",
@@ -145,7 +145,7 @@ describe("FindStaleFiles", () => {
     const row = createSampleFileRow({ status: "ready", variants });
     const { select } = createMockDb([row]);
     const db = { select } as never;
-    const handler = new FindStaleFiles(db, createTestContext());
+    const handler = new GetStaleFiles(db, createTestContext());
 
     const result = await handler.handleAsync({
       status: "ready",
@@ -155,5 +155,58 @@ describe("FindStaleFiles", () => {
 
     expect(result).toBeSuccess();
     expect(result.data?.files[0].variants).toHaveLength(1);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Input validation
+  // ---------------------------------------------------------------------------
+
+  it("should reject invalid status with validationFailed", async () => {
+    const { select } = createMockDb([]);
+    const db = { select } as never;
+    const handler = new GetStaleFiles(db, createTestContext());
+
+    const result = await handler.handleAsync({
+      // Cast — runtime garbage from a misbehaving caller.
+      status: "garbage" as never,
+      cutoffDate,
+      limit: 10,
+    });
+
+    expect(result).toBeFailure();
+    expect(result.statusCode).toBe(400);
+    expect(select).not.toHaveBeenCalled();
+  });
+
+  it("should reject negative limit with validationFailed", async () => {
+    const { select } = createMockDb([]);
+    const db = { select } as never;
+    const handler = new GetStaleFiles(db, createTestContext());
+
+    const result = await handler.handleAsync({
+      status: "pending",
+      cutoffDate,
+      limit: -1,
+    });
+
+    expect(result).toBeFailure();
+    expect(result.statusCode).toBe(400);
+    expect(select).not.toHaveBeenCalled();
+  });
+
+  it("should reject zero limit with validationFailed", async () => {
+    const { select } = createMockDb([]);
+    const db = { select } as never;
+    const handler = new GetStaleFiles(db, createTestContext());
+
+    const result = await handler.handleAsync({
+      status: "pending",
+      cutoffDate,
+      limit: 0,
+    });
+
+    expect(result).toBeFailure();
+    expect(result.statusCode).toBe(400);
+    expect(select).not.toHaveBeenCalled();
   });
 });

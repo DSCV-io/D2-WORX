@@ -4,15 +4,15 @@ import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handl
 import { D2Result } from "@d2/result";
 import type { Session, OrgType, Role } from "@d2/auth-domain";
 import type {
-  FindActiveSessionsByUserIdInput as I,
-  FindActiveSessionsByUserIdOutput as O,
-  IFindActiveSessionsByUserIdHandler,
+  GetActiveSessionsByUserIdInput as I,
+  GetActiveSessionsByUserIdOutput as O,
+  IGetActiveSessionsByUserIdHandler,
 } from "@d2/auth-app";
 import { session } from "../../schema/better-auth-tables.js";
 
-export class FindActiveSessionsByUserId
+export class GetActiveSessionsByUserId
   extends BaseHandler<I, O>
-  implements IFindActiveSessionsByUserIdHandler
+  implements IGetActiveSessionsByUserIdHandler
 {
   private readonly db: NodePgDatabase;
 

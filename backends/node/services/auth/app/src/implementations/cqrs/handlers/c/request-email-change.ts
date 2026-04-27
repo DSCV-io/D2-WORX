@@ -122,9 +122,7 @@ export class RequestEmailChange
     // 6. Send OTP via Comms (transient address — new email not yet a contact).
     const expiryMinutes = String(Math.ceil(OTP_EXPIRY.EMAIL_MS / 60_000));
     const userResult = await this.getUserById.handleAsync({ userId: input.userId });
-    const userLocale = resolveLocale(
-      userResult.success ? (userResult.data?.user.locale ?? undefined) : undefined,
-    );
+    const userLocale = resolveLocale(userResult.success ? userResult.data?.user.locale : undefined);
     const t = this.translator.t;
     const notifyResult = await this.notify.handleAsync({
       alternativeContactInfo: { email: input.newEmail },

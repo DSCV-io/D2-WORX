@@ -21,7 +21,11 @@ export async function changeLocale(locale: string, isAuthenticated: boolean): Pr
     const result = await updateLocale(locale);
     if (!result.success) {
       throw new Error(
-        translateMessage(result.messages?.[0], undefined, m.account_profile_locale_update_failed()),
+        translateMessage(
+          result.messages?.[0],
+          undefined,
+          m.webclient_app_account_profile_locale_update_failed(),
+        ),
       );
     }
     await bustSessionCache();

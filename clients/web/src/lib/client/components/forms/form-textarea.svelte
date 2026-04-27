@@ -85,7 +85,7 @@
         oninput={handleInput}
         onblur={handleBlur}
         class={cn(
-          fieldStatus === "valid" && "border-2 border-success dark:border-success",
+          fieldStatus === "valid" && "border-success dark:border-success border-2",
           fieldStatus === "invalid" && "border-2",
         )}
       />

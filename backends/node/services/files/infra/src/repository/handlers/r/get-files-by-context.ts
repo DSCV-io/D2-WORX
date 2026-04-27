@@ -1,11 +1,12 @@
+import { z } from "zod";
 import { and, eq, count, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handler";
 import { D2Result } from "@d2/result";
 import type {
-  FindFilesByContextInput as I,
-  FindFilesByContextOutput as O,
-  IFindFilesByContextHandler,
+  GetFilesByContextInput as I,
+  GetFilesByContextOutput as O,
+  IGetFilesByContextHandler,
 } from "@d2/files-app";
 import { file } from "../../schema/tables.js";
 import { toFile } from "../../mappers/file-mapper.js";
@@ -13,7 +14,17 @@ import { toFile } from "../../mappers/file-mapper.js";
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
 
-export class FindFilesByContext extends BaseHandler<I, O> implements IFindFilesByContextHandler {
+// Schema validates basic shape; the handler clamps `limit` to MAX_LIMIT
+// internally, so the schema accepts any positive integer for backwards
+// compatibility with callers that pass over-cap values.
+const schema = z.object({
+  contextKey: z.string().min(1).max(100),
+  relatedEntityId: z.string().min(1).max(255),
+  limit: z.number().int().positive().optional(),
+  offset: z.number().int().nonnegative().optional(),
+}) as unknown as z.ZodType<I>;
+
+export class GetFilesByContext extends BaseHandler<I, O> implements IGetFilesByContextHandler {
   private readonly db: NodePgDatabase;
 
   constructor(db: NodePgDatabase, context: IHandlerContext) {
@@ -26,6 +37,9 @@ export class FindFilesByContext extends BaseHandler<I, O> implements IFindFilesB
   }
 
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {
+    const validation = this.validateInput(schema, input);
+    if (!validation.success) return D2Result.bubbleFail(validation);
+
     const limit = Math.min(input.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
     const offset = input.offset ?? 0;
 

@@ -1,4 +1,4 @@
-import type { IHandler } from "@d2/handler";
+import type { IHandler, RedactionSpec } from "@d2/handler";
 
 export interface PushFileUpdateInput {
   /** The uploader's user ID — push targets `user:{uploaderUserId}` channel. */
@@ -20,5 +20,16 @@ export interface PushFileUpdateOutput {
   readonly delivered: boolean;
 }
 
+/**
+ * Inputs are opaque identifiers (uploaderUserId, fileId, contextKey, status,
+ * rejectionReason, variant names) — no PII is logged. Output is a boolean.
+ * Constant exists so this handler explicitly opts-in to the project-wide
+ * RedactionSpec convention, mirroring `CALL_CAN_ACCESS_REDACTION` and
+ * `CALL_ON_FILE_PROCESSED_REDACTION`.
+ */
+export const PUSH_FILE_UPDATE_REDACTION: RedactionSpec = {};
+
 /** Pushes a file processing update to a connected client via the SignalR gateway. */
-export type IPushFileUpdate = IHandler<PushFileUpdateInput, PushFileUpdateOutput>;
+export interface IPushFileUpdate extends IHandler<PushFileUpdateInput, PushFileUpdateOutput> {
+  readonly redaction: RedactionSpec;
+}

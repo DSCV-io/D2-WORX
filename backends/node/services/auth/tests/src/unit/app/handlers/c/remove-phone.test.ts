@@ -34,7 +34,12 @@ interface Mocks {
   notify: { handleAsync: ReturnType<typeof vi.fn> };
 }
 
-function makeMocks(currentPhone: string | null = OLD_PHONE): Mocks {
+function makeMocks(opts?: { currentPhone?: string }): Mocks {
+  // Default to OLD_PHONE; pass `{}` (no `currentPhone`) to simulate a user
+  // with no phone set. Using `undefined` as a parameter triggers the default,
+  // so we use an options object to distinguish "omitted" from "explicitly absent."
+  const hasPhone = opts === undefined ? true : opts.currentPhone !== undefined;
+  const currentPhone = opts === undefined ? OLD_PHONE : opts.currentPhone;
   return {
     passwordVerifier: { verify: vi.fn().mockResolvedValue(true) },
     getUserById: {
@@ -45,8 +50,8 @@ function makeMocks(currentPhone: string | null = OLD_PHONE): Mocks {
               id: VALID_USER_ID,
               email: USER_EMAIL,
               emailVerified: true,
-              phone: currentPhone,
-              phoneVerified: !!currentPhone,
+              ...(hasPhone ? { phone: currentPhone } : {}),
+              phoneVerified: hasPhone,
               locale: "en-US",
             },
           },
@@ -155,7 +160,7 @@ describe("RemovePhone", () => {
   // -----------------------------------------------------------------------
 
   it("returns ok without state changes when user has no phone (idempotent)", async () => {
-    mocks = makeMocks(null);
+    mocks = makeMocks({}); // no currentPhone — simulates user with no phone set
     const result = await makeHandler(mocks).handleAsync(validInput());
 
     expect(result.success).toBe(true);
@@ -174,8 +179,8 @@ describe("RemovePhone", () => {
     expect(result.success).toBe(true);
     expect(mocks.updateUserPhoneRepo.handleAsync).toHaveBeenCalledWith({
       userId: VALID_USER_ID,
-      phone: null,
       phoneVerified: false,
+      clear: true,
     });
     expect(mocks.updateContactsByExtKeys.handleAsync).toHaveBeenCalledTimes(1);
 

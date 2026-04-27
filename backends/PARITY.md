@@ -4,37 +4,37 @@ Tracks which shared infrastructure packages exist on both .NET and Node.js platf
 
 ## Shared Infrastructure
 
-| Concern                   | .NET Project                         | Node.js Package                               | Status    | Why exclusive?                                                                              |
-| ------------------------- | ------------------------------------ | --------------------------------------------- | --------- | ------------------------------------------------------------------------------------------- |
-| D2Result                  | `D2.Shared.Result`                   | `@d2/result`                                  | Parity    |                                                                                             |
-| D2Result ↔ Proto          | `D2.Shared.Result.Extensions`        | `@d2/result-extensions`                       | Parity    |                                                                                             |
-| Handler pattern           | `D2.Shared.Handler`                  | `@d2/handler`                                 | Parity    |                                                                                             |
-| Handler JWT extensions    | `D2.Shared.Handler.Extensions`       | —                                             | .NET-only | Node.js uses BetterAuth directly — no JWT validation middleware needed                      |
-| DI                        | `Microsoft.Extensions.DI` (built-in) | `@d2/di`                                      | Parity    |                                                                                             |
-| Logging                   | `ILogger<T>` (built-in)              | `@d2/logging`                                 | Parity    |                                                                                             |
-| Interfaces / contracts    | `D2.Shared.Interfaces`               | `@d2/interfaces`                              | Parity    |                                                                                             |
-| Utilities                 | `D2.Shared.Utilities`                | `@d2/utilities`                               | Parity    |                                                                                             |
-| Service defaults (OTel)   | `D2.Shared.ServiceDefaults`          | `@d2/service-defaults`                        | Parity    |                                                                                             |
-| Proto types               | `D2.Shared.Protos`                   | `@d2/protos`                                  | Parity    |                                                                                             |
-| In-memory cache           | `InMemoryCache.Default`              | `@d2/cache-memory`                            | Parity    |                                                                                             |
-| Distributed cache (Redis) | `DistributedCache.Redis`             | `@d2/cache-redis`                             | Parity    |                                                                                             |
-| Request enrichment        | `RequestEnrichment.Default`          | `@d2/request-enrichment`                      | Parity    |                                                                                             |
-| Rate limiting             | `RateLimit.Default`                  | `@d2/ratelimit`                               | Parity    |                                                                                             |
-| Idempotency               | `Idempotency.Default`                | `@d2/idempotency`                             | Parity    |                                                                                             |
-| PG batch queries          | `Batch.Pg`                           | `@d2/batch-pg`                                | Parity    |                                                                                             |
-| PG transactions           | `Transactions.Pg`                    | —                                             | .NET-only | Drizzle lacks ambient/scoped transactions across handler calls                              |
-| PG error helpers          | `Errors.Pg`                          | `@d2/errors-pg`                               | Parity    |                                                                                             |
-| Messaging                 | `Messaging.RabbitMQ`                 | `@d2/messaging`                               | Parity    |                                                                                             |
-| Geo client                | `Geo.Client`                         | `@d2/geo-client`                              | Parity    |                                                                                             |
-| Comms client              | —                                    | `@d2/comms-client`                            | Node-only | .NET services don't publish to Comms exchange (Comms is Node.js-only)                       |
-| Auth BFF client           | —                                    | `@d2/auth-bff-client`                         | Node-only | .NET gateway validates JWTs directly via JWKS, no BFF proxy needed                          |
-| JWT auth middleware       | `JwtAuth.Default`                    | `@d2/jwt-auth`                                | Parity    | Both validate JWT Bearer + JWKS + fingerprint binding                                       |
-| Service key middleware    | `ServiceKey.Default`                 | `@d2/service-key`                             | Parity    | Both enforce S2S API key authentication                                                     |
-| Auth policy middleware    | `AuthPolicy.Default`                 | `@d2/auth-policy`                             | Parity    | Both expose `AuthPolicies` constants + route extensions (`.RequireAuth()`, `.RequireOrg()`) |
-| Session fingerprint       | —                                    | `@d2/session-fingerprint`                     | Node-only | BetterAuth session-cookie binding — no .NET equivalent                                      |
-| Translation middleware    | `Translation.Default`                | `@d2/translation`                             | Parity    | Both translate D2Result messages/inputErrors with locale resolution                         |
-| CSRF middleware           | —                                    | `@d2/csrf`                                    | Node-only | .NET gateway uses CORS alone for CSRF protection (no explicit CSRF middleware)              |
-| i18n                      | `D2.Shared.I18n`                     | `@d2/i18n`                                    | Parity    | Both provide Translator + TK constants loading from contracts/messages/ (10 BCP 47 locales) |
+| Concern                   | .NET Project                         | Node.js Package           | Status    | Why exclusive?                                                                              |
+| ------------------------- | ------------------------------------ | ------------------------- | --------- | ------------------------------------------------------------------------------------------- |
+| D2Result                  | `D2.Shared.Result`                   | `@d2/result`              | Parity    |                                                                                             |
+| D2Result ↔ Proto          | `D2.Shared.Result.Extensions`        | `@d2/result-extensions`   | Parity    |                                                                                             |
+| Handler pattern           | `D2.Shared.Handler`                  | `@d2/handler`             | Parity    |                                                                                             |
+| Handler JWT extensions    | `D2.Shared.Handler.Extensions`       | —                         | .NET-only | Node.js uses BetterAuth directly — no JWT validation middleware needed                      |
+| DI                        | `Microsoft.Extensions.DI` (built-in) | `@d2/di`                  | Parity    |                                                                                             |
+| Logging                   | `ILogger<T>` (built-in)              | `@d2/logging`             | Parity    |                                                                                             |
+| Interfaces / contracts    | `D2.Shared.Interfaces`               | `@d2/interfaces`          | Parity    |                                                                                             |
+| Utilities                 | `D2.Shared.Utilities`                | `@d2/utilities`           | Parity    |                                                                                             |
+| Service defaults (OTel)   | `D2.Shared.ServiceDefaults`          | `@d2/service-defaults`    | Parity    |                                                                                             |
+| Proto types               | `D2.Shared.Protos`                   | `@d2/protos`              | Parity    |                                                                                             |
+| In-memory cache           | `InMemoryCache.Default`              | `@d2/cache-memory`        | Parity    |                                                                                             |
+| Distributed cache (Redis) | `DistributedCache.Redis`             | `@d2/cache-redis`         | Parity    |                                                                                             |
+| Request enrichment        | `RequestEnrichment.Default`          | `@d2/request-enrichment`  | Parity    |                                                                                             |
+| Rate limiting             | `RateLimit.Default`                  | `@d2/ratelimit`           | Parity    |                                                                                             |
+| Idempotency               | `Idempotency.Default`                | `@d2/idempotency`         | Parity    |                                                                                             |
+| PG batch queries          | `Batch.Pg`                           | `@d2/batch-pg`            | Parity    |                                                                                             |
+| PG transactions           | `Transactions.Pg`                    | —                         | .NET-only | Drizzle lacks ambient/scoped transactions across handler calls                              |
+| PG error helpers          | `Errors.Pg`                          | `@d2/errors-pg`           | Parity    |                                                                                             |
+| Messaging                 | `Messaging.RabbitMQ`                 | `@d2/messaging`           | Parity    |                                                                                             |
+| Geo client                | `Geo.Client`                         | `@d2/geo-client`          | Parity    |                                                                                             |
+| Comms client              | —                                    | `@d2/comms-client`        | Node-only | .NET services don't publish to Comms exchange (Comms is Node.js-only)                       |
+| Auth BFF client           | —                                    | `@d2/auth-bff-client`     | Node-only | .NET gateway validates JWTs directly via JWKS, no BFF proxy needed                          |
+| JWT auth middleware       | `JwtAuth.Default`                    | `@d2/jwt-auth`            | Parity    | Both validate JWT Bearer + JWKS + fingerprint binding                                       |
+| Service key middleware    | `ServiceKey.Default`                 | `@d2/service-key`         | Parity    | Both enforce S2S API key authentication                                                     |
+| Auth policy middleware    | `AuthPolicy.Default`                 | `@d2/auth-policy`         | Parity    | Both expose `AuthPolicies` constants + route extensions (`.RequireAuth()`, `.RequireOrg()`) |
+| Session fingerprint       | —                                    | `@d2/session-fingerprint` | Node-only | BetterAuth session-cookie binding — no .NET equivalent                                      |
+| Translation middleware    | `Translation.Default`                | `@d2/translation`         | Parity    | Both translate D2Result messages/inputErrors with locale resolution                         |
+| CSRF middleware           | —                                    | `@d2/csrf`                | Node-only | .NET gateway uses CORS alone for CSRF protection (no explicit CSRF middleware)              |
+| i18n                      | `D2.Shared.I18n`                     | `@d2/i18n`                | Parity    | Both provide Translator + TK constants loading from contracts/messages/ (10 BCP 47 locales) |
 
 ## API-Level Differences
 

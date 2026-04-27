@@ -19,7 +19,9 @@ const BCP47_PATTERN = /^[a-z]{2}(-[A-Z]{2})?$/;
 
 const schema = z.object({
   userId: zodGuid,
-  locale: z.string().min(2).max(10).regex(BCP47_PATTERN, "Invalid locale format"),
+  locale: z.string().min(2).max(10).regex(BCP47_PATTERN, {
+    message: TK.auth.errors.LOCALE_INVALID_FORMAT,
+  }),
 });
 
 /** Redaction spec — locale is not PII but handler touches Geo contacts internally. */

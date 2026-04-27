@@ -1,5 +1,6 @@
 <script lang="ts">
   import { cn } from "$lib/shared/utils/utils.js";
+  import * as m from "$lib/paraglide/messages.js";
   import SaveIcon from "@lucide/svelte/icons/save";
   import Undo2Icon from "@lucide/svelte/icons/undo-2";
   import CircleCheckIcon from "@lucide/svelte/icons/circle-check";
@@ -69,7 +70,7 @@
         class={cn(ACTION_BTN, saveDisabled && "cursor-not-allowed opacity-50")}
       >
         <SaveIcon class="size-4" />
-        <span class="sr-only">Save</span>
+        <span class="sr-only">{m.common_ui_save()}</span>
       </button>
       <button
         type="button"
@@ -77,7 +78,7 @@
         class={ACTION_BTN}
       >
         <Undo2Icon class="size-4" />
-        <span class="sr-only">Revert</span>
+        <span class="sr-only">{m.common_ui_revert()}</span>
       </button>
     {/if}
   </div>

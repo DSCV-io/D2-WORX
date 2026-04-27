@@ -12,6 +12,9 @@ export const UPDATE_USER_NAME_REDACTION: RedactionSpec = {
   inputFields: ["name"],
 };
 
-export interface IUpdateUserNameHandler extends IHandler<UpdateUserNameInput, UpdateUserNameOutput> {
+export interface IUpdateUserNameHandler extends IHandler<
+  UpdateUserNameInput,
+  UpdateUserNameOutput
+> {
   readonly redaction: RedactionSpec;
 }

@@ -3,9 +3,9 @@ import { generateUuidV7 } from "@d2/utilities";
 import { createFile, type File } from "@d2/files-domain";
 import {
   CreateFileRecord,
-  FindFileById,
-  FindFilesByContext,
-  FindStaleFiles,
+  GetFileById,
+  GetFilesByContext,
+  GetStaleFiles,
   UpdateFileRecord,
   DeleteFileRecord,
   DeleteFileRecordsByIds,
@@ -21,9 +21,9 @@ import { createTestContext } from "./helpers/test-context.js";
 
 describe("Repository handlers (integration)", () => {
   let createFileRecord: CreateFileRecord;
-  let findFileById: FindFileById;
-  let findFilesByContext: FindFilesByContext;
-  let findStaleFiles: FindStaleFiles;
+  let getFileById: GetFileById;
+  let getFilesByContext: GetFilesByContext;
+  let getStaleFiles: GetStaleFiles;
   let updateFileRecord: UpdateFileRecord;
   let deleteFileRecord: DeleteFileRecord;
   let deleteFileRecordsByIds: DeleteFileRecordsByIds;
@@ -34,9 +34,9 @@ describe("Repository handlers (integration)", () => {
     const db = getDb();
     const ctx = createTestContext();
     createFileRecord = new CreateFileRecord(db, ctx);
-    findFileById = new FindFileById(db, ctx);
-    findFilesByContext = new FindFilesByContext(db, ctx);
-    findStaleFiles = new FindStaleFiles(db, ctx);
+    getFileById = new GetFileById(db, ctx);
+    getFilesByContext = new GetFilesByContext(db, ctx);
+    getStaleFiles = new GetStaleFiles(db, ctx);
     updateFileRecord = new UpdateFileRecord(db, ctx);
     deleteFileRecord = new DeleteFileRecord(db, ctx);
     deleteFileRecordsByIds = new DeleteFileRecordsByIds(db, ctx);
@@ -64,16 +64,16 @@ describe("Repository handlers (integration)", () => {
   }
 
   // ---------------------------------------------------------------------------
-  // CreateFileRecord + FindFileById — round-trip
+  // CreateFileRecord + GetFileById — round-trip
   // ---------------------------------------------------------------------------
 
-  describe("CreateFileRecord + FindFileById", () => {
+  describe("CreateFileRecord + GetFileById", () => {
     it("should create and retrieve a file with all fields", async () => {
       const f = makeFile();
       const createResult = await createFileRecord.handleAsync({ file: f });
       expect(createResult.success).toBe(true);
 
-      const findResult = await findFileById.handleAsync({ id: f.id });
+      const findResult = await getFileById.handleAsync({ id: f.id });
       expect(findResult.success).toBe(true);
 
       const found = findResult.data!.file;
@@ -90,7 +90,7 @@ describe("Repository handlers (integration)", () => {
     });
 
     it("should return notFound for missing id", async () => {
-      const result = await findFileById.handleAsync({ id: generateUuidV7() });
+      const result = await getFileById.handleAsync({ id: generateUuidV7() });
       expect(result.success).toBe(false);
     });
 
@@ -116,7 +116,7 @@ describe("Repository handlers (integration)", () => {
       const f = makeFile({ variants, status: "ready" as const });
       await createFileRecord.handleAsync({ file: f });
 
-      const result = await findFileById.handleAsync({ id: f.id });
+      const result = await getFileById.handleAsync({ id: f.id });
       const found = result.data!.file;
       expect(found.variants).toEqual(variants);
     });
@@ -125,7 +125,7 @@ describe("Repository handlers (integration)", () => {
       const f = makeFile({ variants: undefined });
       await createFileRecord.handleAsync({ file: f });
 
-      const result = await findFileById.handleAsync({ id: f.id });
+      const result = await getFileById.handleAsync({ id: f.id });
       expect(result.data!.file.variants).toBeUndefined();
     });
 
@@ -136,7 +136,7 @@ describe("Repository handlers (integration)", () => {
       });
       await createFileRecord.handleAsync({ file: f });
 
-      const result = await findFileById.handleAsync({ id: f.id });
+      const result = await getFileById.handleAsync({ id: f.id });
       expect(result.data!.file.rejectionReason).toBe("malware");
     });
 
@@ -144,7 +144,7 @@ describe("Repository handlers (integration)", () => {
       const f = makeFile({ sizeBytes: 5_000_000_000 });
       await createFileRecord.handleAsync({ file: f });
 
-      const result = await findFileById.handleAsync({ id: f.id });
+      const result = await getFileById.handleAsync({ id: f.id });
       expect(result.data!.file.sizeBytes).toBe(5_000_000_000);
     });
 
@@ -152,7 +152,7 @@ describe("Repository handlers (integration)", () => {
       const f = makeFile();
       await createFileRecord.handleAsync({ file: f });
 
-      const result = await findFileById.handleAsync({ id: f.id });
+      const result = await getFileById.handleAsync({ id: f.id });
       const found = result.data!.file;
       expect(found.createdAt).toBeInstanceOf(Date);
       expect(found.createdAt.getTime()).toBeGreaterThan(0);
@@ -160,10 +160,10 @@ describe("Repository handlers (integration)", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // FindFilesByContext
+  // GetFilesByContext
   // ---------------------------------------------------------------------------
 
-  describe("FindFilesByContext", () => {
+  describe("GetFilesByContext", () => {
     it("should return paginated files for a given context", async () => {
       const entityId = generateUuidV7();
       const files: File[] = [];
@@ -173,7 +173,7 @@ describe("Repository handlers (integration)", () => {
         await createFileRecord.handleAsync({ file: f });
       }
 
-      const result = await findFilesByContext.handleAsync({
+      const result = await getFilesByContext.handleAsync({
         contextKey: "user_avatar",
         relatedEntityId: entityId,
         limit: 3,
@@ -195,7 +195,7 @@ describe("Repository handlers (integration)", () => {
         await createFileRecord.handleAsync({ file: f });
       }
 
-      const result = await findFilesByContext.handleAsync({
+      const result = await getFilesByContext.handleAsync({
         contextKey: "user_avatar",
         relatedEntityId: entityId,
       });
@@ -213,7 +213,7 @@ describe("Repository handlers (integration)", () => {
       await createFileRecord.handleAsync({ file: f1 });
       await createFileRecord.handleAsync({ file: f2 });
 
-      const result = await findFilesByContext.handleAsync({
+      const result = await getFilesByContext.handleAsync({
         contextKey: "user_avatar",
         relatedEntityId: entityId,
       });
@@ -229,7 +229,7 @@ describe("Repository handlers (integration)", () => {
       await createFileRecord.handleAsync({ file: makeFile({ relatedEntityId: entity1 }) });
       await createFileRecord.handleAsync({ file: makeFile({ relatedEntityId: entity2 }) });
 
-      const result = await findFilesByContext.handleAsync({
+      const result = await getFilesByContext.handleAsync({
         contextKey: "user_avatar",
         relatedEntityId: entity1,
       });
@@ -239,7 +239,7 @@ describe("Repository handlers (integration)", () => {
     });
 
     it("should return empty for non-existent context", async () => {
-      const result = await findFilesByContext.handleAsync({
+      const result = await getFilesByContext.handleAsync({
         contextKey: "non_existent",
         relatedEntityId: generateUuidV7(),
       });
@@ -257,7 +257,7 @@ describe("Repository handlers (integration)", () => {
         });
       }
 
-      const result = await findFilesByContext.handleAsync({
+      const result = await getFilesByContext.handleAsync({
         contextKey: "user_avatar",
         relatedEntityId: entityId,
         limit: 2,
@@ -275,7 +275,7 @@ describe("Repository handlers (integration)", () => {
       });
 
       // Requesting limit > 100 should be clamped
-      const result = await findFilesByContext.handleAsync({
+      const result = await getFilesByContext.handleAsync({
         contextKey: "user_avatar",
         relatedEntityId: entityId,
         limit: 500,
@@ -287,17 +287,17 @@ describe("Repository handlers (integration)", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // FindStaleFiles
+  // GetStaleFiles
   // ---------------------------------------------------------------------------
 
-  describe("FindStaleFiles", () => {
+  describe("GetStaleFiles", () => {
     it("should find files with matching status created before cutoff", async () => {
       const old = makeFile();
       await createFileRecord.handleAsync({ file: old });
 
       // Use a cutoff in the future so the file we just created qualifies
       const cutoff = new Date(Date.now() + 60_000);
-      const result = await findStaleFiles.handleAsync({
+      const result = await getStaleFiles.handleAsync({
         status: "pending",
         cutoffDate: cutoff,
         limit: 10,
@@ -313,7 +313,7 @@ describe("Repository handlers (integration)", () => {
       await createFileRecord.handleAsync({ file: f });
 
       const cutoff = new Date(Date.now() + 60_000);
-      const result = await findStaleFiles.handleAsync({
+      const result = await getStaleFiles.handleAsync({
         status: "pending",
         cutoffDate: cutoff,
         limit: 10,
@@ -328,7 +328,7 @@ describe("Repository handlers (integration)", () => {
 
       // Cutoff in the past — file was just created, so it shouldn't match
       const cutoff = new Date(Date.now() - 60_000);
-      const result = await findStaleFiles.handleAsync({
+      const result = await getStaleFiles.handleAsync({
         status: "pending",
         cutoffDate: cutoff,
         limit: 10,
@@ -343,7 +343,7 @@ describe("Repository handlers (integration)", () => {
       }
 
       const cutoff = new Date(Date.now() + 60_000);
-      const result = await findStaleFiles.handleAsync({
+      const result = await getStaleFiles.handleAsync({
         status: "pending",
         cutoffDate: cutoff,
         limit: 2,
@@ -369,7 +369,7 @@ describe("Repository handlers (integration)", () => {
       expect(result.data!.file.status).toBe("processing");
 
       // Verify via separate read
-      const readResult = await findFileById.handleAsync({ id: f.id });
+      const readResult = await getFileById.handleAsync({ id: f.id });
       expect(readResult.data!.file.status).toBe("processing");
     });
 
@@ -405,7 +405,7 @@ describe("Repository handlers (integration)", () => {
       await createFileRecord.handleAsync({ file: f });
 
       // Read original timestamp
-      const before = await findFileById.handleAsync({ id: f.id });
+      const before = await getFileById.handleAsync({ id: f.id });
       const originalUpdatedAt = before.data!.file.createdAt;
 
       // Small delay to ensure timestamp changes
@@ -414,7 +414,7 @@ describe("Repository handlers (integration)", () => {
       const updated: File = { ...f, status: "processing" as const };
       await updateFileRecord.handleAsync({ file: updated });
 
-      const after = await findFileById.handleAsync({ id: f.id });
+      const after = await getFileById.handleAsync({ id: f.id });
       // updatedAt should be equal to or after the createdAt
       expect(after.data!.file.createdAt.getTime()).toBe(originalUpdatedAt.getTime());
     });
@@ -448,7 +448,7 @@ describe("Repository handlers (integration)", () => {
       expect(result.success).toBe(true);
 
       // Confirm deletion
-      const findResult = await findFileById.handleAsync({ id: f.id });
+      const findResult = await getFileById.handleAsync({ id: f.id });
       expect(findResult.success).toBe(false);
     });
 
@@ -479,7 +479,7 @@ describe("Repository handlers (integration)", () => {
       expect(result.data!.rowsAffected).toBe(2);
 
       // f3 should still exist
-      const remaining = await findFileById.handleAsync({ id: f3.id });
+      const remaining = await getFileById.handleAsync({ id: f3.id });
       expect(remaining.success).toBe(true);
     });
 

@@ -6,7 +6,7 @@ Service-owned client library for the Geo microservice. Contains messages, handle
 
 | File Name                                  | Description                                                                                                                                                                                                                               |
 | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Extensions.cs](Extensions.cs)             | DI extension methods: `AddGeoRefDataConsumer` (auto-registers `UpdatedConsumerService` + `ContactEvictionConsumerService` hosted services), `AddGeoRefDataProvider`, `AddWhoIsCache`, `AddContactHandlers`.                                |
+| [Extensions.cs](Extensions.cs)             | DI extension methods: `AddGeoRefDataConsumer` (auto-registers `UpdatedConsumerService` + `ContactEvictionConsumerService` hosted services), `AddGeoRefDataProvider`, `AddWhoIsCache`, `AddContactHandlers`.                               |
 | [GeoClientOptions.cs](GeoClientOptions.cs) | Configuration options for WhoIs cache, contact cache, `AllowedContextKeys`, `ApiKey`, and circuit breaker settings.                                                                                                                       |
 | [Geo.Client.csproj](Geo.Client.csproj)     | Project file with dependencies on Handler, I18n, InMemoryCache.Default, Interfaces, Messaging.RabbitMQ, Protos.DotNet, Result.Extensions, Utilities, Grpc.Net.ClientFactory, and Microsoft.Extensions.Configuration/Hosting.Abstractions. |
 
@@ -158,10 +158,10 @@ This allows input logging to remain enabled (useful for debugging) while ensurin
 
 The Geo service emits two fanout events that consumers must subscribe to in order to keep their local memory caches coherent across processes:
 
-| Event                     | Exchange                            | Purpose                                                                            |
-| ------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------- |
-| `GeoRefDataUpdatedEvent`  | `events.geo.refdata.updated`        | Geo published new reference data — refetch + repopulate all ref-data cache tiers.  |
-| `ContactsEvictedEvent`    | `events.geo.contacts.evicted`       | Geo deleted/replaced contacts — evict matching IDs and ext-keys from local memory. |
+| Event                    | Exchange                      | Purpose                                                                            |
+| ------------------------ | ----------------------------- | ---------------------------------------------------------------------------------- |
+| `GeoRefDataUpdatedEvent` | `events.geo.refdata.updated`  | Geo published new reference data — refetch + repopulate all ref-data cache tiers.  |
+| `ContactsEvictedEvent`   | `events.geo.contacts.evicted` | Geo deleted/replaced contacts — evict matching IDs and ext-keys from local memory. |
 
 Without these subscriptions, the local memory cache silently drifts whenever Geo mutates data (a contact deleted on instance A is still served stale by instance B). Both are fanout exchanges, so each consumer process binds its own auto-deleted queue (`{exchange}.{instanceId}`) and receives every event.
 
@@ -227,8 +227,8 @@ Single `IMemoryCache` instance. No TTL — contacts are immutable.
 
 Reusable FluentValidation validators for proto-generated DTOs, exported as single source of truth. Any service creating contacts via Geo should compose these via `.SetValidator()` instead of duplicating rules.
 
-| File Name                                                             | Description                                                                                                                                                                                                                |
-| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| File Name                                                             | Description                                                                                                                                                                                                                                            |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [ContactToCreateValidator.cs](Validators/ContactToCreateValidator.cs) | Aggregate validator for `ContactToCreateDTO`. Mirrors Geo domain factory constraints (names 255, company 255, website 2048, `ietf_bcp47_tag` max 35, optional `iana_identifier`, emails, phones). Supports indexed property names for bulk validation. |
 
 ---

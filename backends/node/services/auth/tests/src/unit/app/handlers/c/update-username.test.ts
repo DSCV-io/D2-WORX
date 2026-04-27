@@ -93,7 +93,7 @@ describe("UpdateUsername", () => {
     expect(result.success).toBe(false);
     expect(result.inputErrors.length).toBeGreaterThanOrEqual(1);
     expect(result.inputErrors[0][0]).toBe("username");
-    expect(result.inputErrors[0][1]).toContain("letters and numbers");
+    expect(result.inputErrors[0][1]).toBe("auth_errors_USERNAME_INVALID_CHARS");
     expect(checkAvailable.handleAsync).not.toHaveBeenCalled();
   });
 
@@ -146,6 +146,8 @@ describe("UpdateUsername", () => {
 
     expect(result.success).toBe(false);
     expect(result.inputErrors[0][0]).toBe("username");
+    // Must surface a TK key (not free-form English) so the FE can localize it.
+    expect(result.inputErrors[0][1]).toBe("auth_errors_USERNAME_REQUIRED");
   });
 
   // -----------------------------------------------------------------------
@@ -168,7 +170,7 @@ describe("UpdateUsername", () => {
     expect(result.success).toBe(false);
     expect(result.inputErrors.length).toBeGreaterThanOrEqual(1);
     expect(result.inputErrors[0][0]).toBe("username");
-    expect(result.inputErrors[0][1]).toContain("already taken");
+    expect(result.inputErrors[0][1]).toBe("auth_errors_USERNAME_ALREADY_TAKEN");
     expect(updateUsernameRepo.handleAsync).not.toHaveBeenCalled();
   });
 

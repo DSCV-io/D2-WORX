@@ -2,7 +2,11 @@
   import * as m from "$lib/paraglide/messages.js";
   import * as Dialog from "$lib/client/components/ui/dialog/index.js";
   import { Button } from "$lib/client/components/ui/button/index.js";
-  import { FormInput, FormPasswordInput, FormTextarea } from "$lib/client/components/forms/index.js";
+  import {
+    FormInput,
+    FormPasswordInput,
+    FormTextarea,
+  } from "$lib/client/components/forms/index.js";
   import { defaults, superForm } from "sveltekit-superforms";
   import { zod4Client as zodClient } from "sveltekit-superforms/adapters";
   import { z } from "zod";
@@ -20,9 +24,10 @@
   // Username comes from session — typed-confirm matches against this.
   const expectedUsername = $derived(
     (
-      ($page.data.user as { username?: string; displayUsername?: string } | null)?.displayUsername ??
-        ($page.data.user as { username?: string } | null)?.username ??
-        ""
+      ($page.data.user as { username?: string; displayUsername?: string } | null)
+        ?.displayUsername ??
+      ($page.data.user as { username?: string } | null)?.username ??
+      ""
     )
       .toLowerCase()
       .trim(),
@@ -46,7 +51,7 @@
         ctx.addIssue({
           code: "custom",
           path: ["typedUsername"],
-          message: m.account_delete_typed_confirm_mismatch(),
+          message: m.webclient_app_account_delete_typed_confirm_mismatch(),
         });
       }
     });
@@ -78,13 +83,13 @@
 
           if (!result.success) {
             if (result.statusCode === 401) {
-              errorMessage = m.account_password_incorrect();
+              errorMessage = m.webclient_app_account_password_incorrect();
               $formData.currentPassword = "";
               return;
             }
             if (result.statusCode === 409) {
               // Sole-owner block — clear and explicit copy with link to orgs.
-              errorMessage = m.account_delete_blocked_sole_owner();
+              errorMessage = m.webclient_app_account_delete_blocked_sole_owner();
               return;
             }
             errorMessage = translateMessage(
@@ -139,12 +144,14 @@
     onEscapeKeydown={(e) => e.preventDefault()}
   >
     <Dialog.Header>
-      <Dialog.Title class="text-destructive">{m.account_delete_dialog_title()}</Dialog.Title>
-      <Dialog.Description>{m.account_delete_dialog_body()}</Dialog.Description>
+      <Dialog.Title class="text-destructive"
+        >{m.webclient_app_account_delete_dialog_title()}</Dialog.Title
+      >
+      <Dialog.Description>{m.webclient_app_account_delete_dialog_body()}</Dialog.Description>
     </Dialog.Header>
 
     <p class="text-destructive bg-destructive/10 rounded-md p-3 text-sm">
-      {m.account_delete_dialog_warning()}
+      {m.webclient_app_account_delete_dialog_warning()}
     </p>
 
     <form
@@ -155,35 +162,37 @@
       <FormInput
         {form}
         field="typedUsername"
-        label={m.account_delete_typed_confirm_label()}
-        placeholder={m.account_delete_typed_confirm_placeholder()}
+        label={m.webclient_app_account_delete_typed_confirm_label()}
+        placeholder={m.webclient_app_account_delete_typed_confirm_placeholder()}
         autocomplete="off"
         disabled={submitting}
       />
       <FormPasswordInput
         {form}
         field="currentPassword"
-        label={m.account_delete_password_label()}
-        placeholder={m.account_delete_password_placeholder()}
+        label={m.webclient_app_account_delete_password_label()}
+        placeholder={m.webclient_app_account_delete_password_placeholder()}
         autocomplete="current-password"
         disabled={submitting}
       />
 
       <details class="text-muted-foreground text-sm">
-        <summary class="cursor-pointer select-none">{m.account_delete_feedback_label()}</summary>
+        <summary class="cursor-pointer select-none"
+          >{m.webclient_app_account_delete_feedback_label()}</summary
+        >
         <div class="mt-3 flex flex-col gap-3">
           <FormInput
             {form}
             field="reason"
-            label={m.account_delete_feedback_reason_placeholder()}
-            placeholder={m.account_delete_feedback_reason_placeholder()}
+            label={m.webclient_app_account_delete_feedback_reason_placeholder()}
+            placeholder={m.webclient_app_account_delete_feedback_reason_placeholder()}
             disabled={submitting}
           />
           <FormTextarea
             {form}
             field="comment"
-            label={m.account_delete_feedback_comment_placeholder()}
-            placeholder={m.account_delete_feedback_comment_placeholder()}
+            label={m.webclient_app_account_delete_feedback_comment_placeholder()}
+            placeholder={m.webclient_app_account_delete_feedback_comment_placeholder()}
             rows={3}
             disabled={submitting}
           />
@@ -201,7 +210,7 @@
           onclick={() => (open = false)}
           disabled={submitting}
         >
-          {m.account_delete_cancel_button()}
+          {m.webclient_app_account_delete_cancel_button()}
         </Button>
         <Button
           type="submit"
@@ -210,9 +219,9 @@
         >
           {#if submitting}
             <LoaderCircleIcon class="mr-2 size-4 animate-spin" />
-            {m.account_delete_confirm_submitting()}
+            {m.webclient_app_account_delete_confirm_submitting()}
           {:else}
-            {m.account_delete_confirm_button()}
+            {m.webclient_app_account_delete_confirm_button()}
           {/if}
         </Button>
       </Dialog.Footer>

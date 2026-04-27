@@ -33,15 +33,15 @@ in the `D2.Shared.ServiceKey.Default` package.
 
 ## Policy reference
 
-| Method | Enforces | Fail status | Notes |
-|---|---|---|---|
-| `.RequireAuth()` | `User.Identity.IsAuthenticated` | 401 | Wraps the named `AuthPolicies.AUTHENTICATED` policy |
-| `.RequireTrustedService()` | `IRequestContext.IsTrustedService == true` | 401/403 | Custom `RequireAssertion` reading from `HttpContext.Features` |
-| `.RequireOrg()` | authenticated AND `orgId/orgType/role` claims present | 401/403 | Wraps `AuthPolicies.HAS_ACTIVE_ORG` |
-| `.RequireOrgType("admin", "support")` | active `orgType` claim ∈ allowed | 401/403 | Builds a one-off policy per call |
-| `.RequireRole("officer")` | active `role` claim ≥ min in hierarchy | 401/403 | Builds a one-off policy per call |
-| `.RequireStaff()` | shorthand for `RequireOrgType("admin", "support")` | 401/403 | Wraps `AuthPolicies.STAFF_ONLY` |
-| `.RequireAdmin()` | shorthand for `RequireOrgType("admin")` | 401/403 | Wraps `AuthPolicies.ADMIN_ONLY` |
+| Method                                | Enforces                                              | Fail status | Notes                                                         |
+| ------------------------------------- | ----------------------------------------------------- | ----------- | ------------------------------------------------------------- |
+| `.RequireAuth()`                      | `User.Identity.IsAuthenticated`                       | 401         | Wraps the named `AuthPolicies.AUTHENTICATED` policy           |
+| `.RequireTrustedService()`            | `IRequestContext.IsTrustedService == true`            | 401/403     | Custom `RequireAssertion` reading from `HttpContext.Features` |
+| `.RequireOrg()`                       | authenticated AND `orgId/orgType/role` claims present | 401/403     | Wraps `AuthPolicies.HAS_ACTIVE_ORG`                           |
+| `.RequireOrgType("admin", "support")` | active `orgType` claim ∈ allowed                      | 401/403     | Builds a one-off policy per call                              |
+| `.RequireRole("officer")`             | active `role` claim ≥ min in hierarchy                | 401/403     | Builds a one-off policy per call                              |
+| `.RequireStaff()`                     | shorthand for `RequireOrgType("admin", "support")`    | 401/403     | Wraps `AuthPolicies.STAFF_ONLY`                               |
+| `.RequireAdmin()`                     | shorthand for `RequireOrgType("admin")`               | 401/403     | Wraps `AuthPolicies.ADMIN_ONLY`                               |
 
 Role hierarchy (low → high): `auditor < agent < officer < owner`.
 
@@ -62,20 +62,20 @@ so most consumers don't need to call it themselves.
 
 ## Node parity
 
-| `@d2/auth-policy` (Node) | `D2.Shared.AuthPolicy.Default` (.NET) |
-|---|---|
-| `requireAuth()` | `.RequireAuth()` |
-| `requireTrustedService()` | `.RequireTrustedService()` |
-| `requireOrg()` | `.RequireOrg()` |
-| `requireOrgType(...)` | `.RequireOrgType(...)` |
-| `requireRole(min)` | `.RequireRole(min)` |
-| `requireStaff()` | `.RequireStaff()` |
-| `requireAdmin()` | `.RequireAdmin()` |
+| `@d2/auth-policy` (Node)  | `D2.Shared.AuthPolicy.Default` (.NET) |
+| ------------------------- | ------------------------------------- |
+| `requireAuth()`           | `.RequireAuth()`                      |
+| `requireTrustedService()` | `.RequireTrustedService()`            |
+| `requireOrg()`            | `.RequireOrg()`                       |
+| `requireOrgType(...)`     | `.RequireOrgType(...)`                |
+| `requireRole(min)`        | `.RequireRole(min)`                   |
+| `requireStaff()`          | `.RequireStaff()`                     |
+| `requireAdmin()`          | `.RequireAdmin()`                     |
 
 ## File layout
 
-| File | Purpose |
-|---|---|
-| `AuthPolicies.cs` | String constants for the named policies |
-| `AuthPolicyExtensions.cs` | `AddD2Policies()` — registers the named policies on `AuthorizationOptions` at startup |
-| `RoutePolicyExtensions.cs` | The fluent route-level helpers (`.RequireAuth()` etc.) |
+| File                       | Purpose                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------- |
+| `AuthPolicies.cs`          | String constants for the named policies                                               |
+| `AuthPolicyExtensions.cs`  | `AddD2Policies()` — registers the named policies on `AuthorizationOptions` at startup |
+| `RoutePolicyExtensions.cs` | The fluent route-level helpers (`.RequireAuth()` etc.)                                |

@@ -13,7 +13,8 @@ import { user } from "../../schema/better-auth-tables.js";
 /**
  * Updates a user's phone + phoneVerified flag atomically.
  *
- * Pass `phone: null` + `phoneVerified: false` to remove a phone.
+ * Pass `clear: true` + `phoneVerified: false` to remove a phone (the `phone`
+ * field is ignored). Pass `clear: false` + a defined `phone` to set/replace.
  * Callers should validate phone uniqueness BEFORE calling — this handler will
  * return a PG constraint error (409) on collision (partial unique index).
  */
@@ -31,10 +32,13 @@ export class UpdateUserPhone extends BaseHandler<I, O> implements IHandler {
 
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {
     try {
+      // `clear: true`  → write NULL (remove phone)
+      // `clear: false` → write the supplied `phone` string
+      const nextPhone = input.clear ? null : (input.phone ?? null);
       const rows = await this.db
         .update(user)
         .set({
-          phone: input.phone,
+          phone: nextPhone,
           phoneVerified: input.phoneVerified,
           updatedAt: new Date(),
         })

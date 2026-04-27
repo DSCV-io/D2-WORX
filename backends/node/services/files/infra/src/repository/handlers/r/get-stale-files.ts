@@ -1,16 +1,24 @@
+import { z } from "zod";
 import { and, eq, lte } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handler";
 import { D2Result } from "@d2/result";
+import { FILE_STATUSES } from "@d2/files-domain";
 import type {
-  FindStaleFilesInput as I,
-  FindStaleFilesOutput as O,
-  IFindStaleFilesHandler,
+  GetStaleFilesInput as I,
+  GetStaleFilesOutput as O,
+  IGetStaleFilesHandler,
 } from "@d2/files-app";
 import { file } from "../../schema/tables.js";
 import { toFile } from "../../mappers/file-mapper.js";
 
-export class FindStaleFiles extends BaseHandler<I, O> implements IFindStaleFilesHandler {
+const schema = z.object({
+  status: z.enum(FILE_STATUSES),
+  cutoffDate: z.date(),
+  limit: z.number().int().positive().max(10_000),
+}) as unknown as z.ZodType<I>;
+
+export class GetStaleFiles extends BaseHandler<I, O> implements IGetStaleFilesHandler {
   private readonly db: NodePgDatabase;
 
   constructor(db: NodePgDatabase, context: IHandlerContext) {
@@ -23,6 +31,9 @@ export class FindStaleFiles extends BaseHandler<I, O> implements IFindStaleFiles
   }
 
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {
+    const validation = this.validateInput(schema, input);
+    if (!validation.success) return D2Result.bubbleFail(validation);
+
     const rows = await this.db
       .select()
       .from(file)

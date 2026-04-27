@@ -3,9 +3,9 @@ import { createServiceKey } from "@d2/di";
 // Import interface types for infra-level keys
 import type {
   ICreateFileRecordHandler,
-  IFindFileByIdHandler,
-  IFindFilesByContextHandler,
-  IFindStaleFilesHandler,
+  IGetFileByIdHandler,
+  IGetFilesByContextHandler,
+  IGetStaleFilesHandler,
   IUpdateFileRecordHandler,
   IDeleteFileRecordHandler,
   IDeleteFileRecordsByIdsHandler,
@@ -43,12 +43,12 @@ import type { ContextKeyConfigMap } from "./context-key-config.js";
 export const ICreateFileRecordKey = createServiceKey<ICreateFileRecordHandler>(
   "Files.Repo.CreateFileRecord",
 );
-export const IFindFileByIdKey = createServiceKey<IFindFileByIdHandler>("Files.Repo.FindFileById");
-export const IFindFilesByContextKey = createServiceKey<IFindFilesByContextHandler>(
-  "Files.Repo.FindFilesByContext",
+export const IGetFileByIdKey = createServiceKey<IGetFileByIdHandler>("Files.Repo.GetFileById");
+export const IGetFilesByContextKey = createServiceKey<IGetFilesByContextHandler>(
+  "Files.Repo.GetFilesByContext",
 );
-export const IFindStaleFilesKey = createServiceKey<IFindStaleFilesHandler>(
-  "Files.Repo.FindStaleFiles",
+export const IGetStaleFilesKey = createServiceKey<IGetStaleFilesHandler>(
+  "Files.Repo.GetStaleFiles",
 );
 export const IUpdateFileRecordKey = createServiceKey<IUpdateFileRecordHandler>(
   "Files.Repo.UpdateFileRecord",

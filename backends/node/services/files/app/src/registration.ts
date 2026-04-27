@@ -8,9 +8,9 @@ import type { ContextKeyConfigMap } from "./context-key-config.js";
 // Infra keys
 import {
   ICreateFileRecordKey,
-  IFindFileByIdKey,
-  IFindFilesByContextKey,
-  IFindStaleFilesKey,
+  IGetFileByIdKey,
+  IGetFilesByContextKey,
+  IGetStaleFilesKey,
   IUpdateFileRecordKey,
   IDeleteFileRecordKey,
   IDeleteFileRecordsByIdsKey,
@@ -90,8 +90,8 @@ export function addFilesApp(
       new UploadFile(
         {
           create: sp.resolve(ICreateFileRecordKey),
-          findById: sp.resolve(IFindFileByIdKey),
-          findByContext: sp.resolve(IFindFilesByContextKey),
+          getById: sp.resolve(IGetFileByIdKey),
+          getByContext: sp.resolve(IGetFilesByContextKey),
           update: sp.resolve(IUpdateFileRecordKey),
           delete: sp.resolve(IDeleteFileRecordKey),
           deleteByIds: sp.resolve(IDeleteFileRecordsByIdsKey),
@@ -118,8 +118,8 @@ export function addFilesApp(
       new IntakeFile(
         {
           create: sp.resolve(ICreateFileRecordKey),
-          findById: sp.resolve(IFindFileByIdKey),
-          findByContext: sp.resolve(IFindFilesByContextKey),
+          getById: sp.resolve(IGetFileByIdKey),
+          getByContext: sp.resolve(IGetFilesByContextKey),
           update: sp.resolve(IUpdateFileRecordKey),
           delete: sp.resolve(IDeleteFileRecordKey),
           deleteByIds: sp.resolve(IDeleteFileRecordsByIdsKey),
@@ -138,8 +138,8 @@ export function addFilesApp(
       new ProcessFile(
         {
           create: sp.resolve(ICreateFileRecordKey),
-          findById: sp.resolve(IFindFileByIdKey),
-          findByContext: sp.resolve(IFindFilesByContextKey),
+          getById: sp.resolve(IGetFileByIdKey),
+          getByContext: sp.resolve(IGetFilesByContextKey),
           update: sp.resolve(IUpdateFileRecordKey),
           delete: sp.resolve(IDeleteFileRecordKey),
           deleteByIds: sp.resolve(IDeleteFileRecordsByIdsKey),
@@ -169,8 +169,8 @@ export function addFilesApp(
       new DeleteFile(
         {
           create: sp.resolve(ICreateFileRecordKey),
-          findById: sp.resolve(IFindFileByIdKey),
-          findByContext: sp.resolve(IFindFilesByContextKey),
+          getById: sp.resolve(IGetFileByIdKey),
+          getByContext: sp.resolve(IGetFilesByContextKey),
           update: sp.resolve(IUpdateFileRecordKey),
           delete: sp.resolve(IDeleteFileRecordKey),
           deleteByIds: sp.resolve(IDeleteFileRecordsByIdsKey),
@@ -197,7 +197,7 @@ export function addFilesApp(
       new RunCleanup(
         sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
         sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
-        sp.resolve(IFindStaleFilesKey),
+        sp.resolve(IGetStaleFilesKey),
         sp.resolve(IDeleteFileRecordsByIdsKey),
         {
           put: sp.resolve(IPutStorageObjectKey),
@@ -228,8 +228,8 @@ export function addFilesApp(
       new GetFileMetadata(
         {
           create: sp.resolve(ICreateFileRecordKey),
-          findById: sp.resolve(IFindFileByIdKey),
-          findByContext: sp.resolve(IFindFilesByContextKey),
+          getById: sp.resolve(IGetFileByIdKey),
+          getByContext: sp.resolve(IGetFilesByContextKey),
           update: sp.resolve(IUpdateFileRecordKey),
           delete: sp.resolve(IDeleteFileRecordKey),
           deleteByIds: sp.resolve(IDeleteFileRecordsByIdsKey),
@@ -246,8 +246,8 @@ export function addFilesApp(
       new ListFiles(
         {
           create: sp.resolve(ICreateFileRecordKey),
-          findById: sp.resolve(IFindFileByIdKey),
-          findByContext: sp.resolve(IFindFilesByContextKey),
+          getById: sp.resolve(IGetFileByIdKey),
+          getByContext: sp.resolve(IGetFilesByContextKey),
           update: sp.resolve(IUpdateFileRecordKey),
           delete: sp.resolve(IDeleteFileRecordKey),
           deleteByIds: sp.resolve(IDeleteFileRecordsByIdsKey),
@@ -286,7 +286,7 @@ export function addFilesApp(
     IGetFileVariantUrlKey,
     (sp) =>
       new GetFileVariantUrl(
-        sp.resolve(IFindFileByIdKey),
+        sp.resolve(IGetFileByIdKey),
         contextKeyConfigs,
         sp.resolve(IHandlerContextKey),
         sp.resolve(IResolveFileAccessKey),
@@ -298,7 +298,7 @@ export function addFilesApp(
     IDownloadFileVariantKey,
     (sp) =>
       new DownloadFileVariant(
-        sp.resolve(IFindFileByIdKey),
+        sp.resolve(IGetFileByIdKey),
         contextKeyConfigs,
         sp.resolve(IHandlerContextKey),
         sp.resolve(IResolveFileAccessKey),

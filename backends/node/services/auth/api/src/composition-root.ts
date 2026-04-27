@@ -136,11 +136,13 @@ export async function createApp(
   addRedisCaching(services, redis, serviceContext);
 
   // Layer registrations
+  const jobOptions = config.jobOptions ?? DEFAULT_AUTH_JOB_OPTIONS;
   addAuthInfra(services, db, {
     signalrGatewayAddress: process.env.AUTH_SIGNALR_GATEWAY_ADDRESS,
     signalrApiKey: process.env.AUTH_SIGNALR_API_KEY,
+    userPurgeBatchSize: jobOptions.userPurgeBatchSize,
   });
-  addAuthApp(services, config.jobOptions ?? DEFAULT_AUTH_JOB_OPTIONS, publisher);
+  addAuthApp(services, jobOptions, publisher);
   addCommsClient(services, { publisher });
 
   if (messageBus) {

@@ -12,7 +12,9 @@ export const UPDATE_ORG_CONTACT_RECORD_REDACTION: RedactionSpec = {
   suppressInput: true,
 };
 
-export interface IUpdateOrgContactRecordHandler
-  extends IHandler<UpdateOrgContactRecordInput, UpdateOrgContactRecordOutput> {
+export interface IUpdateOrgContactRecordHandler extends IHandler<
+  UpdateOrgContactRecordInput,
+  UpdateOrgContactRecordOutput
+> {
   readonly redaction: RedactionSpec;
 }

@@ -113,10 +113,8 @@ export class VerifyEmailChange
 
     // Code is correct — capture old email + locale, then run SAGA: Geo first, then auth.
     const userResult = await this.getUserById.handleAsync({ userId: input.userId });
-    const oldEmail = userResult.success ? (userResult.data?.user.email ?? null) : null;
-    const userLocale = resolveLocale(
-      userResult.success ? (userResult.data?.user.locale ?? undefined) : undefined,
-    );
+    const oldEmail = userResult.success ? userResult.data?.user.email : undefined;
+    const userLocale = resolveLocale(userResult.success ? userResult.data?.user.locale : undefined);
     const newEmail = decoded.pendingValue;
 
     const extKey = { contextKey: GEO_CONTEXT_KEYS.USER, relatedEntityId: input.userId };

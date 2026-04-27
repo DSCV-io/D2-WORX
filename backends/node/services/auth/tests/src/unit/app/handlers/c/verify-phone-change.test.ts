@@ -77,7 +77,6 @@ function makeMocks(opts?: { storedValue?: string; expiresAt?: Date }): Mocks {
               id: VALID_USER_ID,
               email: USER_EMAIL,
               emailVerified: true,
-              phone: null,
               phoneVerified: false,
               locale: "en-US",
             },
@@ -210,6 +209,7 @@ describe("VerifyPhoneChange", () => {
       userId: VALID_USER_ID,
       phone: NEW_PHONE,
       phoneVerified: true,
+      clear: false,
     });
     expect(mocks.otpRateLimit.clearOnSuccess).toHaveBeenCalledWith(VALID_USER_ID, "phone");
   });

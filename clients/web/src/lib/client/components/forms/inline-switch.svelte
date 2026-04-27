@@ -1,6 +1,7 @@
 <script lang="ts">
   import { cn } from "$lib/shared/utils/utils.js";
   import { Switch } from "$lib/client/components/ui/switch/index.js";
+  import * as m from "$lib/paraglide/messages.js";
 
   let {
     value = $bindable(false),
@@ -32,7 +33,7 @@
       await onSave(checked);
     } catch (err) {
       value = previous;
-      errorMessage = err instanceof Error ? err.message : "Failed to save.";
+      errorMessage = err instanceof Error ? err.message : m.common_errors_save_failed();
     } finally {
       saving = false;
     }

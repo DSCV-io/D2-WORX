@@ -433,6 +433,12 @@ public class D2Result<TData> : D2Result
     /// <param name="messages">
     /// A list of messages related to the service unavailability. Optional.
     /// </param>
+    /// <param name="errorCode">
+    /// Overrides the default <see cref="ErrorCodes.SERVICE_UNAVAILABLE"/> code so callers can attach
+    /// a more specific code (e.g. a domain-specific retry signal) for downstream discrimination —
+    /// e.g. message consumers that branch on the error code to decide between retry and dead-letter
+    /// — without dropping back to raw <see cref="Fail"/>. Optional.
+    /// </param>
     /// <param name="traceId">
     /// The trace identifier to correlate logs and diagnostics for the operation. Optional.
     /// </param>
@@ -442,6 +448,7 @@ public class D2Result<TData> : D2Result
     /// </returns>
     public static new D2Result<TData> ServiceUnavailable(
         List<string>? messages = null,
+        string? errorCode = null,
         string? traceId = null)
     {
         messages ??= ["common_errors_SERVICE_UNAVAILABLE"];
@@ -450,7 +457,7 @@ public class D2Result<TData> : D2Result
             default,
             messages,
             statusCode: HttpStatusCode.ServiceUnavailable,
-            errorCode: ErrorCodes.SERVICE_UNAVAILABLE,
+            errorCode: errorCode ?? ErrorCodes.SERVICE_UNAVAILABLE,
             traceId: traceId);
     }
 

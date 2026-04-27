@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { BaseHandler, type IHandlerContext, zodGuid } from "@d2/handler";
 import { D2Result } from "@d2/result";
+import { TK } from "@d2/i18n";
 import type {
   ICheckUsernameAvailableHandler,
   IUpdateUserUsernameHandler,
@@ -66,19 +67,19 @@ export class UpdateUsername
     const trimmed = input.username.trim();
     if (!trimmed) {
       return D2Result.validationFailed({
-        inputErrors: [["username", "Username is required."]],
+        inputErrors: [["username", TK.auth.errors.USERNAME_REQUIRED]],
       });
     }
 
     if (!USERNAME_REGEX.test(trimmed)) {
       return D2Result.validationFailed({
-        inputErrors: [["username", "Username can only contain letters and numbers."]],
+        inputErrors: [["username", TK.auth.errors.USERNAME_INVALID_CHARS]],
       });
     }
 
     if (trimmed.length < USERNAME_MIN_LENGTH) {
       return D2Result.validationFailed({
-        inputErrors: [["username", `Username must be at least ${USERNAME_MIN_LENGTH} characters.`]],
+        inputErrors: [["username", TK.auth.errors.USERNAME_TOO_SHORT]],
       });
     }
 
@@ -93,7 +94,7 @@ export class UpdateUsername
 
     if (!availResult.data.available) {
       return D2Result.validationFailed({
-        inputErrors: [["username", "Username is already taken."]],
+        inputErrors: [["username", TK.auth.errors.USERNAME_ALREADY_TAKEN]],
       });
     }
 

@@ -35,6 +35,7 @@ describe("UpdateOrgLogo", () => {
     const result = await handler.handleAsync({
       orgId: "org-789",
       logo: "file-002",
+      clear: false,
     });
 
     expect(result).toBeSuccess();
@@ -50,20 +51,36 @@ describe("UpdateOrgLogo", () => {
     const result = await handler.handleAsync({
       orgId: "nonexistent-org",
       logo: "file-003",
+      clear: false,
     });
 
     expect(result).toBeFailure();
     expect(result.statusCode).toBe(404);
   });
 
-  it("should pass null logo when clearing the org logo", async () => {
+  it("should write NULL when clear:true regardless of logo value", async () => {
     const { update, set } = createMockDb([{ id: "org-789" }]);
     const db = { update } as never;
     const handler = new UpdateOrgLogo(db, createTestContext());
 
     const result = await handler.handleAsync({
       orgId: "org-789",
-      logo: null,
+      clear: true,
+    });
+
+    expect(result).toBeSuccess();
+    expect(set.mock.calls[0][0].logo).toBeNull();
+  });
+
+  it("should ignore logo and write NULL when clear:true even if logo is supplied", async () => {
+    const { update, set } = createMockDb([{ id: "org-789" }]);
+    const db = { update } as never;
+    const handler = new UpdateOrgLogo(db, createTestContext());
+
+    const result = await handler.handleAsync({
+      orgId: "org-789",
+      logo: "leftover-id-should-be-ignored",
+      clear: true,
     });
 
     expect(result).toBeSuccess();
@@ -76,7 +93,7 @@ describe("UpdateOrgLogo", () => {
     const handler = new UpdateOrgLogo(db, createTestContext());
 
     const before = new Date();
-    await handler.handleAsync({ orgId: "org-789", logo: "file-002" });
+    await handler.handleAsync({ orgId: "org-789", logo: "file-002", clear: false });
     const after = new Date();
 
     const setArg = set.mock.calls[0][0];
@@ -95,6 +112,7 @@ describe("UpdateOrgLogo", () => {
     const result = await handler.handleAsync({
       orgId: "org-789",
       logo: "file-002",
+      clear: false,
     });
 
     expect(result).toBeFailure();

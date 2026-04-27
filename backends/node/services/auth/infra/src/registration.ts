@@ -36,10 +36,10 @@ import {
   IUpdateUserPhoneKey,
   ICheckPhoneAvailabilityKey,
   IGetUserByIdKey,
-  IFindActiveSessionsByUserIdKey,
-  IFindUserIdByIdentifierKey,
+  IGetActiveSessionsByUserIdKey,
+  IGetUserIdByIdentifierKey,
   IUpdateUserStatusKey,
-  IFindDeletedUsersToPurgeKey,
+  IGetDeletedUsersToPurgeKey,
   IAnonymizeUserKey,
   ICheckSoleOwnerOrgsKey,
   IDeleteAllUserSessionsKey,
@@ -79,10 +79,10 @@ import { UpdateUserEmail } from "./repository/handlers/u/update-user-email.js";
 import { UpdateUserPhone } from "./repository/handlers/u/update-user-phone.js";
 import { CheckPhoneAvailability } from "./repository/handlers/r/check-phone-availability.js";
 import { GetUserById } from "./repository/handlers/r/get-user-by-id.js";
-import { FindActiveSessionsByUserId } from "./repository/handlers/r/find-active-sessions-by-user-id.js";
-import { FindUserIdByIdentifier } from "./repository/handlers/r/find-user-id-by-identifier.js";
+import { GetActiveSessionsByUserId } from "./repository/handlers/r/get-active-sessions-by-user-id.js";
+import { GetUserIdByIdentifier } from "./repository/handlers/r/get-user-id-by-identifier.js";
 import { UpdateUserStatus } from "./repository/handlers/u/update-user-status.js";
-import { FindDeletedUsersToPurge } from "./repository/handlers/r/find-deleted-users-to-purge.js";
+import { GetDeletedUsersToPurge } from "./repository/handlers/r/get-deleted-users-to-purge.js";
 import { AnonymizeUser } from "./repository/handlers/u/anonymize-user.js";
 import { CheckSoleOwnerOrgs } from "./repository/handlers/r/check-sole-owner-orgs.js";
 import { DeleteAllUserSessions } from "./repository/handlers/d/delete-all-user-sessions.js";
@@ -94,6 +94,12 @@ export interface AuthInfraConfig {
   readonly signalrGatewayAddress?: string;
   /** API key for authenticating gRPC calls to the SignalR Gateway. */
   readonly signalrApiKey?: string;
+  /**
+   * Defense-in-depth cap on the number of pending-deletion users
+   * `GetDeletedUsersToPurge` returns per nightly tick. Defaults to
+   * `AuthJobOptions.userPurgeBatchSize` (50000) when not provided.
+   */
+  readonly userPurgeBatchSize?: number;
 }
 
 /**
@@ -194,12 +200,12 @@ export function addAuthInfra(
     (sp) => new GetUserById(db, sp.resolve(IHandlerContextKey)),
   );
   services.addTransient(
-    IFindActiveSessionsByUserIdKey,
-    (sp) => new FindActiveSessionsByUserId(db, sp.resolve(IHandlerContextKey)),
+    IGetActiveSessionsByUserIdKey,
+    (sp) => new GetActiveSessionsByUserId(db, sp.resolve(IHandlerContextKey)),
   );
   services.addTransient(
-    IFindUserIdByIdentifierKey,
-    (sp) => new FindUserIdByIdentifier(db, sp.resolve(IHandlerContextKey)),
+    IGetUserIdByIdentifierKey,
+    (sp) => new GetUserIdByIdentifier(db, sp.resolve(IHandlerContextKey)),
   );
 
   // User deletion repo handlers
@@ -208,8 +214,9 @@ export function addAuthInfra(
     (sp) => new UpdateUserStatus(db, sp.resolve(IHandlerContextKey)),
   );
   services.addTransient(
-    IFindDeletedUsersToPurgeKey,
-    (sp) => new FindDeletedUsersToPurge(db, sp.resolve(IHandlerContextKey)),
+    IGetDeletedUsersToPurgeKey,
+    (sp) =>
+      new GetDeletedUsersToPurge(db, sp.resolve(IHandlerContextKey), config?.userPurgeBatchSize),
   );
   services.addTransient(
     IAnonymizeUserKey,

@@ -6,6 +6,14 @@
 export { addFilesInfra } from "./registration.js";
 export type { FilesInfraConfig, FilesInfraDisposable } from "./registration.js";
 
+// --- Infra-layer Options ---
+export type { FilesStorageOptions, FilesScanningOptions, FilesOutboundOptions } from "./options.js";
+export {
+  DEFAULT_FILES_STORAGE_OPTIONS,
+  DEFAULT_FILES_SCANNING_OPTIONS,
+  DEFAULT_FILES_OUTBOUND_OPTIONS,
+} from "./options.js";
+
 // --- Drizzle Schema ---
 export { file } from "./repository/schema/index.js";
 export type { FileRow, NewFile } from "./repository/schema/index.js";
@@ -15,9 +23,9 @@ export { runMigrations } from "./repository/migrate.js";
 
 // --- Repository Handlers ---
 export { CreateFileRecord } from "./repository/handlers/c/create-file-record.js";
-export { FindFileById } from "./repository/handlers/r/find-file-by-id.js";
-export { FindFilesByContext } from "./repository/handlers/r/find-files-by-context.js";
-export { FindStaleFiles } from "./repository/handlers/r/find-stale-files.js";
+export { GetFileById } from "./repository/handlers/r/get-file-by-id.js";
+export { GetFilesByContext } from "./repository/handlers/r/get-files-by-context.js";
+export { GetStaleFiles } from "./repository/handlers/r/get-stale-files.js";
 export { PingDb } from "./repository/handlers/r/ping-db.js";
 export { UpdateFileRecord } from "./repository/handlers/u/update-file-record.js";
 export { DeleteFileRecord } from "./repository/handlers/d/delete-file-record.js";

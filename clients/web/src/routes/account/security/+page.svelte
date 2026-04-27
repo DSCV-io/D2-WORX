@@ -12,31 +12,55 @@
 </script>
 
 <svelte:head>
-  <title>{m.account_page_title()} / {m.account_security_title()} — {m.webclient_nav_brand()}</title>
+  <title
+    >{m.webclient_app_account_page_title()} / {m.webclient_app_account_security_title()} — {m.webclient_nav_brand()}</title
+  >
   <meta
     name="description"
-    content={m.account_security_description()}
+    content={m.webclient_app_account_security_description()}
+  />
+  <meta
+    name="robots"
+    content="noindex, nofollow"
+  />
+  <meta
+    property="og:title"
+    content="{m.webclient_app_account_page_title()} / {m.webclient_app_account_security_title()} — {m.webclient_nav_brand()}"
+  />
+  <meta
+    property="og:description"
+    content={m.webclient_app_account_security_description()}
+  />
+  <meta
+    property="og:type"
+    content="website"
   />
 </svelte:head>
 
 <div class="space-y-12">
   <header>
-    <h1 class="text-2xl font-semibold tracking-tight">{m.account_security_title()}</h1>
-    <p class="text-muted-foreground mt-1 text-sm">{m.account_security_description()}</p>
+    <h1 class="text-2xl font-semibold tracking-tight">
+      {m.webclient_app_account_security_title()}
+    </h1>
+    <p class="text-muted-foreground mt-1 text-sm">
+      {m.webclient_app_account_security_description()}
+    </p>
   </header>
 
   <Separator class="bg-border/50" />
 
   <section>
     <div>
-      <h2 class="text-base font-semibold">{m.account_security_change_password_title()}</h2>
+      <h2 class="text-base font-semibold">
+        {m.webclient_app_account_security_change_password_title()}
+      </h2>
       <p class="text-muted-foreground mt-0.5 text-sm">
-        {m.account_security_change_password_description()}
+        {m.webclient_app_account_security_change_password_description()}
       </p>
     </div>
     <div class="mt-5">
       <Button onclick={() => (changePasswordOpen = true)}>
-        {m.account_security_change_password_title()}
+        {m.webclient_app_account_security_change_password_title()}
       </Button>
     </div>
   </section>
@@ -56,10 +80,10 @@
   <section>
     <div>
       <h2 class="text-destructive text-base font-semibold">
-        {m.account_deactivate_delete_title()}
+        {m.webclient_app_account_deactivate_delete_title()}
       </h2>
       <p class="text-muted-foreground mt-0.5 text-sm">
-        {m.account_deactivate_delete_description()}
+        {m.webclient_app_account_deactivate_delete_description()}
       </p>
     </div>
     <div class="mt-5">
@@ -67,7 +91,7 @@
         variant="destructive"
         onclick={() => (deleteUserOpen = true)}
       >
-        {m.account_deactivate_delete_title()}
+        {m.webclient_app_account_deactivate_delete_title()}
       </Button>
     </div>
   </section>

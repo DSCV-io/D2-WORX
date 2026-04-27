@@ -37,7 +37,7 @@ src/
     cqrs/handlers/             CQRS handler interfaces (Commands, Queries, Utilities namespaces)
     repository/handlers/       Repository handler interfaces (C/R/U/D)
       c/  create-file-record.ts
-      r/  find-file-by-id.ts, find-files-by-context.ts, find-stale-files.ts, ping-db.ts
+      r/  get-file-by-id.ts, get-files-by-context.ts, get-stale-files.ts, ping-db.ts
       u/  update-file-record.ts
       d/  delete-file-record.ts, delete-file-records-by-ids.ts
     providers/

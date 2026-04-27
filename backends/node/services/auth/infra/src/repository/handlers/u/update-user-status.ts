@@ -34,9 +34,18 @@ export class UpdateUserStatus extends BaseHandler<I, O> implements IUpdateUserSt
 
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {
     // Build the patch — only include fields the caller explicitly passed.
+    // `clear*` flags take precedence over the value field (write NULL).
     const patch: Record<string, unknown> = { status: input.status, updatedAt: new Date() };
-    if (input.deletedAt !== undefined) patch.deletedAt = input.deletedAt;
-    if (input.deletionFeedback !== undefined) patch.deletionFeedback = input.deletionFeedback;
+    if (input.clearDeletedAt === true) {
+      patch.deletedAt = null;
+    } else if (input.deletedAt !== undefined) {
+      patch.deletedAt = input.deletedAt;
+    }
+    if (input.clearDeletionFeedback === true) {
+      patch.deletionFeedback = null;
+    } else if (input.deletionFeedback !== undefined) {
+      patch.deletionFeedback = input.deletionFeedback;
+    }
 
     // CAS guard: when `expectedStatus` is set, the UPDATE only matches if the
     // row's CURRENT status equals it. Defends against the cancel-vs-anonymize
@@ -47,11 +56,7 @@ export class UpdateUserStatus extends BaseHandler<I, O> implements IUpdateUserSt
         ? and(eq(user.id, input.userId), eq(user.status, input.expectedStatus))
         : eq(user.id, input.userId);
 
-    const rows = await this.db
-      .update(user)
-      .set(patch)
-      .where(where)
-      .returning({ id: user.id });
+    const rows = await this.db.update(user).set(patch).where(where).returning({ id: user.id });
 
     return D2Result.ok({ data: { updated: rows.length > 0 } });
   }

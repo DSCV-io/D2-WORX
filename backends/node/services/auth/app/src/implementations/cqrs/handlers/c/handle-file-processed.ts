@@ -71,6 +71,7 @@ export class HandleFileProcessed
         const result = await this.updateUserImage.handleAsync({
           userId: input.relatedEntityId,
           image: input.fileId,
+          clear: false,
         });
         if (!result.success) return D2Result.bubbleFail(result);
         this.invalidateSessionCache
@@ -84,6 +85,7 @@ export class HandleFileProcessed
         const result = await this.updateOrgLogo.handleAsync({
           orgId: input.relatedEntityId,
           logo: input.fileId,
+          clear: false,
         });
         if (!result.success) return D2Result.bubbleFail(result);
         break;

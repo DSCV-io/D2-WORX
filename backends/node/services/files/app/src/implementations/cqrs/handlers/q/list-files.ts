@@ -55,7 +55,7 @@ export class ListFiles extends BaseHandler<Input, Output> implements Queries.ILi
     });
     if (!accessResult.success) return D2Result.bubbleFail(accessResult);
 
-    const result = await this.repo.findByContext.handleAsync({
+    const result = await this.repo.getByContext.handleAsync({
       contextKey: input.contextKey,
       relatedEntityId: input.relatedEntityId,
       limit: input.limit ?? DEFAULT_LIMIT,

@@ -21,7 +21,9 @@ export const REQUEST_USER_DELETION_REDACTION: RedactionSpec = {
   inputFields: ["currentPassword", "feedback"],
 };
 
-export interface IRequestUserDeletionHandler
-  extends IHandler<RequestUserDeletionInput, RequestUserDeletionOutput> {
+export interface IRequestUserDeletionHandler extends IHandler<
+  RequestUserDeletionInput,
+  RequestUserDeletionOutput
+> {
   readonly redaction: RedactionSpec;
 }

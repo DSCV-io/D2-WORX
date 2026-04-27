@@ -391,8 +391,8 @@ importers:
         specifier: 4.11.9
         version: 4.11.9
       ioredis:
-        specifier: 5.8.0
-        version: 5.8.0
+        specifier: 5.10.0
+        version: 5.10.0
       pg:
         specifier: 8.18.0
         version: 8.18.0
@@ -821,8 +821,8 @@ importers:
         specifier: 4.12.3
         version: 4.12.3
       ioredis:
-        specifier: 5.8.0
-        version: 5.8.0
+        specifier: 5.10.0
+        version: 5.10.0
       pg:
         specifier: 8.18.0
         version: 8.18.0
@@ -1011,6 +1011,9 @@ importers:
       '@d2/service-defaults':
         specifier: workspace:*
         version: link:../../../shared/service-defaults
+      '@d2/utilities':
+        specifier: workspace:*
+        version: link:../../../shared/utilities
       '@grpc/grpc-js':
         specifier: 1.14.3
         version: 1.14.3
@@ -1589,9 +1592,12 @@ importers:
       '@testcontainers/redis':
         specifier: 11.12.0
         version: 11.12.0
+      '@types/node':
+        specifier: 22.18.8
+        version: 22.18.8
       ioredis:
-        specifier: 5.8.0
-        version: 5.8.0
+        specifier: 5.10.0
+        version: 5.10.0
       jose:
         specifier: 6.0.11
         version: 6.0.11
@@ -3127,9 +3133,6 @@ packages:
 
   '@internationalized/date@3.11.0':
     resolution: {integrity: sha512-BOx5huLAWhicM9/ZFs84CzP+V3gBW6vlpM02yzsdYC7TGlZJX1OJiEEHcSayF00Z+3jLlm4w79amvSt6RqKN3Q==}
-
-  '@ioredis/commands@1.4.0':
-    resolution: {integrity: sha512-aFT2yemJJo+TZCmieA7qnYGQooOS7QfNmYrzGtsYd3g9j5iDP8AimYYAesf79ohjbLG12XxC4nG5DyEnC88AsQ==}
 
   '@ioredis/commands@1.5.1':
     resolution: {integrity: sha512-JH8ZL/ywcJyR9MmJ5BNqZllXNZQqQbnVZOqpPQqE1vHiFgAw4NHbvE0FOduNU8IX9babitBT46571OnPTT0Zcw==}
@@ -6071,10 +6074,6 @@ packages:
 
   ioredis@5.10.0:
     resolution: {integrity: sha512-HVBe9OFuqs+Z6n64q09PQvP1/R4Bm+30PAyyD4wIEqssh3v9L21QjCVk4kRLucMBcDokJTcLjsGeVRlq/nH6DA==}
-    engines: {node: '>=12.22.0'}
-
-  ioredis@5.8.0:
-    resolution: {integrity: sha512-AUXbKn9gvo9hHKvk6LbZJQSKn/qIfkWXrnsyL9Yrf+oeXmla9Nmf6XEumOddyhM8neynpK5oAV6r9r99KBuwzA==}
     engines: {node: '>=12.22.0'}
 
   is-arrayish@0.3.4:
@@ -9501,8 +9500,6 @@ snapshots:
   '@internationalized/date@3.11.0':
     dependencies:
       '@swc/helpers': 0.5.19
-
-  '@ioredis/commands@1.4.0': {}
 
   '@ioredis/commands@1.5.1': {}
 
@@ -12932,20 +12929,6 @@ snapshots:
   ioredis@5.10.0:
     dependencies:
       '@ioredis/commands': 1.5.1
-      cluster-key-slot: 1.1.2
-      debug: 4.4.3
-      denque: 2.1.0
-      lodash.defaults: 4.2.0
-      lodash.isarguments: 3.1.0
-      redis-errors: 1.2.0
-      redis-parser: 3.0.0
-      standard-as-callback: 2.1.0
-    transitivePeerDependencies:
-      - supports-color
-
-  ioredis@5.8.0:
-    dependencies:
-      '@ioredis/commands': 1.4.0
       cluster-key-slot: 1.1.2
       debug: 4.4.3
       denque: 2.1.0

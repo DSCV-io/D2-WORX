@@ -52,7 +52,7 @@ function createHandler(
 
   const file = makeProcessingFile();
   if (!overrides.skipDefaultFindById) {
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
   }
 
   return {
@@ -149,7 +149,7 @@ describe("ProcessFile", () => {
     vi.mocked(notifier.handleAsync).mockResolvedValue(D2Result.serviceUnavailable());
     const repo = createMockRepo();
     const file = makeProcessingFile();
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
 
     const { handler } = createHandler({ notifier, repo });
     const result = await handler.handleAsync({ fileId: "file-001" });
@@ -161,7 +161,7 @@ describe("ProcessFile", () => {
 
   it("should return notFound when file does not exist", async () => {
     const repo = createMockRepo();
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.notFound());
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.notFound());
     const { handler } = createHandler({ repo, skipDefaultFindById: true });
 
     const result = await handler.handleAsync({ fileId: "nonexistent" });
@@ -182,7 +182,7 @@ describe("ProcessFile", () => {
       id: "file-002",
     });
     const processingFile = transitionFileStatus(file, "processing");
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(
       D2Result.ok({ data: { file: processingFile } }),
     );
     const { handler } = createHandler({ repo, skipDefaultFindById: true });
@@ -227,7 +227,7 @@ describe("ProcessFile", () => {
       displayName: "report.pdf",
       id: "file-doc",
     });
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
 
     const processVariants = createMockProcessVariants();
     const { handler } = createHandler({ repo, processVariants, skipDefaultFindById: true });
@@ -248,7 +248,7 @@ describe("ProcessFile", () => {
       displayName: "report.pdf",
       id: "file-doc-2",
     });
-    vi.mocked(repo.findById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
+    vi.mocked(repo.getById.handleAsync).mockResolvedValue(D2Result.ok({ data: { file } }));
 
     const { handler } = createHandler({ repo, storage, skipDefaultFindById: true });
     const result = await handler.handleAsync({ fileId: "file-doc-2" });

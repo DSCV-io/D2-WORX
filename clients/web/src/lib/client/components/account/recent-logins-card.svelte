@@ -116,14 +116,16 @@
 
 <section>
   <div>
-    <h2 class="text-base font-semibold">{m.account_recent_logins_title()}</h2>
-    <p class="text-muted-foreground mt-0.5 text-sm">{m.account_recent_logins_description()}</p>
+    <h2 class="text-base font-semibold">{m.webclient_app_account_recent_logins_title()}</h2>
+    <p class="text-muted-foreground mt-0.5 text-sm">
+      {m.webclient_app_account_recent_logins_description()}
+    </p>
   </div>
   <div class="mt-5 space-y-0">
     {#if !loaded}
       <ul class="divide-border/60 divide-y border-y">
         {#each Array.from({ length: PAGE_SIZE }) as _, i (i)}
-          <li class="flex items-center gap-3 py-3 pl-4 pr-2">
+          <li class="flex items-center gap-3 py-3 pr-2 pl-4">
             <Skeleton class="size-6 rounded-md" />
             <Skeleton class="h-4 flex-1" />
             <Skeleton class="size-6 rounded-md" />
@@ -140,7 +142,7 @@
     {:else if errorMessage}
       <p class="text-destructive text-sm">{errorMessage}</p>
     {:else if events.length === 0}
-      <p class="text-muted-foreground text-sm">{m.account_recent_logins_empty()}</p>
+      <p class="text-muted-foreground text-sm">{m.webclient_app_account_recent_logins_empty()}</p>
     {:else}
       <ul
         class="divide-border/60 divide-y border-y md:grid md:grid-cols-[auto_auto_auto_auto_1fr_auto_auto] md:gap-x-4"
@@ -156,9 +158,9 @@
           {@const hasForensic = !!(e.event.ipAddress || whoIsStubText || deviceFpStubText)}
           <li
             class={[
-              "text-muted-foreground relative flex flex-col gap-1.5 py-3 pl-4 pr-2 text-xs transition-colors hover:bg-muted/30 md:col-span-full md:grid md:grid-cols-subgrid md:grid-flow-dense md:items-center md:gap-x-4 md:gap-y-0",
+              "text-muted-foreground hover:bg-muted/30 relative flex flex-col gap-1.5 py-3 pr-2 pl-4 text-xs transition-colors md:col-span-full md:grid md:grid-flow-dense md:grid-cols-subgrid md:items-center md:gap-x-4 md:gap-y-0",
               !ok &&
-                "before:bg-destructive before:absolute before:left-0 before:top-3 before:bottom-3 before:w-[3px] before:rounded-full",
+                "before:bg-destructive before:absolute before:top-3 before:bottom-3 before:left-0 before:w-[3px] before:rounded-full",
             ]
               .filter(Boolean)
               .join(" ")}
@@ -186,61 +188,65 @@
                   variant={ok ? "success" : "destructive"}
                   class="px-1.5 py-0 text-[10px]"
                 >
-                  {ok ? m.account_recent_logins_success() : m.account_recent_logins_failure()}
+                  {ok
+                    ? m.webclient_app_account_recent_logins_success()
+                    : m.webclient_app_account_recent_logins_failure()}
                 </Badge>
               </div>
 
               <div class="ml-auto md:col-start-7 md:ml-0">
                 {#if hasForensic}
                   <Popover.Root>
-                  <Popover.Trigger>
-                    {#snippet child({ props })}
-                      <Button
-                        {...props}
-                        variant="ghost"
-                        size="icon"
-                        class="size-6 shrink-0"
-                        aria-label={m.account_sessions_details()}
-                      >
-                        <MoreVerticalIcon class="size-3" />
-                      </Button>
-                    {/snippet}
-                  </Popover.Trigger>
-                  <Popover.Content
-                    align="end"
-                    class="w-72 p-3"
-                  >
-                    <div class="space-y-2">
-                      <p class="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-                        {m.account_sessions_details()}
-                      </p>
-                      <div class="flex flex-wrap items-center gap-1.5">
-                        {#if e.event.ipAddress}
-                          <CopyChip
-                            label={m.account_sessions_ip_label()}
-                            display={shortIp(e.event.ipAddress)}
-                            value={e.event.ipAddress}
-                          />
-                        {/if}
-                        {#if whoIsStubText}
-                          <CopyChip
-                            label={m.account_sessions_who_is_id_label()}
-                            display={whoIsStubText}
-                            value={e.event.whoIsId}
-                          />
-                        {/if}
-                        {#if deviceFpStubText}
-                          <CopyChip
-                            label={m.account_sessions_device_fp_label()}
-                            display={deviceFpStubText}
-                            value={e.event.deviceFingerprint}
-                          />
-                        {/if}
+                    <Popover.Trigger>
+                      {#snippet child({ props })}
+                        <Button
+                          {...props}
+                          variant="ghost"
+                          size="icon"
+                          class="size-6 shrink-0"
+                          aria-label={m.webclient_app_account_sessions_details()}
+                        >
+                          <MoreVerticalIcon class="size-3" />
+                        </Button>
+                      {/snippet}
+                    </Popover.Trigger>
+                    <Popover.Content
+                      align="end"
+                      class="w-72 p-3"
+                    >
+                      <div class="space-y-2">
+                        <p
+                          class="text-muted-foreground text-xs font-medium tracking-wide uppercase"
+                        >
+                          {m.webclient_app_account_sessions_details()}
+                        </p>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                          {#if e.event.ipAddress}
+                            <CopyChip
+                              label={m.webclient_app_account_sessions_ip_label()}
+                              display={shortIp(e.event.ipAddress)}
+                              value={e.event.ipAddress}
+                            />
+                          {/if}
+                          {#if whoIsStubText}
+                            <CopyChip
+                              label={m.webclient_app_account_sessions_who_is_id_label()}
+                              display={whoIsStubText}
+                              value={e.event.whoIsId}
+                            />
+                          {/if}
+                          {#if deviceFpStubText}
+                            <CopyChip
+                              label={m.webclient_app_account_sessions_device_fp_label()}
+                              display={deviceFpStubText}
+                              value={e.event.deviceFingerprint}
+                            />
+                          {/if}
+                        </div>
                       </div>
-                    </div>
-                  </Popover.Content>
-                </Popover.Root>
-              {/if}
+                    </Popover.Content>
+                  </Popover.Root>
+                {/if}
               </div>
             </div>
 
@@ -250,7 +256,7 @@
                   {#snippet child({ props })}
                     <span
                       {...props}
-                      class="ml-9 inline-flex items-center gap-1 whitespace-nowrap md:ml-0 md:col-start-2"
+                      class="ml-9 inline-flex items-center gap-1 whitespace-nowrap md:col-start-2 md:ml-0"
                     >
                       <ClockIcon class="size-3" />
                       {fmtDateTime(e.event.createdAt)}
@@ -271,7 +277,7 @@
                     {#snippet child({ props })}
                       <span
                         {...props}
-                        class="ml-9 inline-flex items-center gap-1 whitespace-nowrap md:ml-0 md:col-start-3"
+                        class="ml-9 inline-flex items-center gap-1 whitespace-nowrap md:col-start-3 md:ml-0"
                       >
                         <MapPinIcon class="size-3" />
                         {loc}
@@ -287,7 +293,7 @@
                 </Tooltip.Root>
               </Tooltip.Provider>
             {:else}
-              <span class="hidden md:block md:col-start-3"></span>
+              <span class="hidden md:col-start-3 md:block"></span>
             {/if}
 
             <Tooltip.Provider delayDuration={150}>
@@ -296,17 +302,18 @@
                   {#snippet child({ props })}
                     <span
                       {...props}
-                      class="ml-9 inline-flex items-center gap-1 whitespace-nowrap md:ml-0 md:col-start-4"
+                      class="ml-9 inline-flex items-center gap-1 whitespace-nowrap md:col-start-4 md:ml-0"
                     >
                       <Icon class="size-3" />
                       <span class="text-foreground font-medium">{ua.browser}</span>
-                      <span>{m.account_sessions_on_os({ os: ua.os })}</span>
+                      <span>{m.webclient_app_account_sessions_on_os({ os: ua.os })}</span>
                     </span>
                   {/snippet}
                 </Tooltip.Trigger>
                 <Tooltip.Content>
                   <p class="text-xs">
-                    {ua.browserLong} {m.account_sessions_on_os({ os: ua.osLong })}
+                    {ua.browserLong}
+                    {m.webclient_app_account_sessions_on_os({ os: ua.osLong })}
                   </p>
                 </Tooltip.Content>
               </Tooltip.Root>
@@ -316,7 +323,13 @@
       </ul>
 
       <div class="text-muted-foreground flex items-center justify-between gap-2 pt-4 text-xs">
-        <span>{m.account_recent_logins_pagination({ start: pageStart, end: pageEnd, total })}</span>
+        <span
+          >{m.webclient_app_account_recent_logins_pagination({
+            start: pageStart,
+            end: pageEnd,
+            total,
+          })}</span
+        >
         <div class="flex gap-1">
           <Button
             variant="outline"

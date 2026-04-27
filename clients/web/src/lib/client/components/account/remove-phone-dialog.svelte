@@ -31,7 +31,7 @@
         const result = await removePhone(f.data.currentPassword);
         if (!result.success) {
           if (result.statusCode === 401) {
-            errorMessage = m.account_password_incorrect();
+            errorMessage = m.webclient_app_account_password_incorrect();
             $formData.currentPassword = "";
             return;
           }
@@ -72,8 +72,8 @@
     onEscapeKeydown={(e) => e.preventDefault()}
   >
     <Dialog.Header>
-      <Dialog.Title>{m.account_phone_remove_dialog_title()}</Dialog.Title>
-      <Dialog.Description>{m.account_phone_remove_confirm_body()}</Dialog.Description>
+      <Dialog.Title>{m.webclient_app_account_phone_remove_dialog_title()}</Dialog.Title>
+      <Dialog.Description>{m.webclient_app_account_phone_remove_confirm_body()}</Dialog.Description>
     </Dialog.Header>
 
     <form
@@ -106,7 +106,7 @@
           {#if submitting}
             <LoaderCircleIcon class="mr-2 size-4 animate-spin" />
           {/if}
-          {m.account_phone_remove_button()}
+          {m.webclient_app_account_phone_remove_button()}
         </Button>
       </Dialog.Footer>
     </form>

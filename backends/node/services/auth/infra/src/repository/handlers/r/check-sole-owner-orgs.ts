@@ -30,10 +30,7 @@ const OWNER_ROLE = "owner" satisfies Role;
  * Uses raw SQL because Drizzle's correlated-subquery support is awkward
  * for this shape. Parameter binding is via `${...}` to keep it injection-safe.
  */
-export class CheckSoleOwnerOrgs
-  extends BaseHandler<I, O>
-  implements ICheckSoleOwnerOrgsHandler
-{
+export class CheckSoleOwnerOrgs extends BaseHandler<I, O> implements ICheckSoleOwnerOrgsHandler {
   private readonly db: NodePgDatabase;
 
   constructor(db: NodePgDatabase, context: IHandlerContext) {

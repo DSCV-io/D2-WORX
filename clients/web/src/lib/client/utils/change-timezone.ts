@@ -25,7 +25,7 @@ export async function changeTimezone(timezone: string, isAuthenticated: boolean)
         translateMessage(
           result.messages?.[0],
           undefined,
-          m.account_profile_timezone_update_failed(),
+          m.webclient_app_account_profile_timezone_update_failed(),
         ),
       );
     }

@@ -312,6 +312,36 @@ public class D2ResultGenericTests
     }
 
     /// <summary>
+    /// Tests that ServiceUnavailable creates a 503 result with the default SERVICE_UNAVAILABLE code.
+    /// </summary>
+    [Fact]
+    public void ServiceUnavailable_CreatesServiceUnavailableResult()
+    {
+        // Act
+        var result = D2Result<string>.ServiceUnavailable();
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, result.StatusCode);
+        Assert.Equal(ErrorCodes.SERVICE_UNAVAILABLE, result.ErrorCode);
+        Assert.Contains("common_errors_SERVICE_UNAVAILABLE", result.Messages);
+    }
+
+    /// <summary>
+    /// Tests that ServiceUnavailable accepts an errorCode override for downstream discrimination.
+    /// </summary>
+    [Fact]
+    public void ServiceUnavailable_AcceptsErrorCodeOverride()
+    {
+        // Act
+        var result = D2Result<string>.ServiceUnavailable(errorCode: "DELIVERY_FAILED");
+
+        // Assert
+        Assert.Equal("DELIVERY_FAILED", result.ErrorCode);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, result.StatusCode);
+    }
+
+    /// <summary>
     /// Tests that the Conflict factory method creates a Conflict result.
     /// </summary>
     [Fact]

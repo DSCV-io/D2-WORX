@@ -191,16 +191,16 @@ export type {
 } from "./r/get-user-by-id.js";
 
 export type {
-  FindActiveSessionsByUserIdInput,
-  FindActiveSessionsByUserIdOutput,
-  IFindActiveSessionsByUserIdHandler,
-} from "./r/find-active-sessions-by-user-id.js";
+  GetActiveSessionsByUserIdInput,
+  GetActiveSessionsByUserIdOutput,
+  IGetActiveSessionsByUserIdHandler,
+} from "./r/get-active-sessions-by-user-id.js";
 
 export type {
-  FindUserIdByIdentifierInput,
-  FindUserIdByIdentifierOutput,
-  IFindUserIdByIdentifierHandler,
-} from "./r/find-user-id-by-identifier.js";
+  GetUserIdByIdentifierInput,
+  GetUserIdByIdentifierOutput,
+  IGetUserIdByIdentifierHandler,
+} from "./r/get-user-id-by-identifier.js";
 
 // --- User Deletion Repo Handlers ---
 export type {
@@ -211,11 +211,11 @@ export type {
 export { UPDATE_USER_STATUS_REDACTION } from "./u/update-user-status.js";
 
 export type {
-  FindDeletedUsersToPurgeInput,
-  FindDeletedUsersToPurgeOutput,
-  IFindDeletedUsersToPurgeHandler,
-} from "./r/find-deleted-users-to-purge.js";
-export { FIND_DELETED_USERS_TO_PURGE_REDACTION } from "./r/find-deleted-users-to-purge.js";
+  GetDeletedUsersToPurgeInput,
+  GetDeletedUsersToPurgeOutput,
+  IGetDeletedUsersToPurgeHandler,
+} from "./r/get-deleted-users-to-purge.js";
+export { GET_DELETED_USERS_TO_PURGE_REDACTION } from "./r/get-deleted-users-to-purge.js";
 
 export type {
   AnonymizeUserInput,

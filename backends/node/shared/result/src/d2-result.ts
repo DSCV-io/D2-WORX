@@ -188,16 +188,25 @@ export class D2Result<TData = void> {
     });
   }
 
-  /** Create a 503 Service Unavailable result. */
+  /**
+   * Create a 503 Service Unavailable result.
+   *
+   * The optional `errorCode` overrides the default `SERVICE_UNAVAILABLE` so
+   * callers can attach a more specific code (e.g. `COMMS_RETRY.DELIVERY_FAILED`)
+   * for downstream discrimination — e.g. message consumers that branch on the
+   * error code to decide between retry and dead-letter — without dropping back
+   * to raw `D2Result.fail()`.
+   */
   static serviceUnavailable<T = void>(options?: {
     messages?: string[];
+    errorCode?: ErrorCode | string;
     traceId?: string;
   }): D2Result<T> {
     return new D2Result<T>({
       success: false,
       messages: options?.messages ?? ["common_errors_SERVICE_UNAVAILABLE"],
       statusCode: HttpStatusCode.ServiceUnavailable,
-      errorCode: ErrorCodes.SERVICE_UNAVAILABLE,
+      errorCode: options?.errorCode ?? ErrorCodes.SERVICE_UNAVAILABLE,
       traceId: options?.traceId,
     });
   }

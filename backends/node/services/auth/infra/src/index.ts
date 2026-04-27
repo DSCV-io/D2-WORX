@@ -108,7 +108,7 @@ export { UpdateUserTimezone } from "./repository/handlers/u/update-user-timezone
 // User-deletion repo handlers
 export { UpdateUserStatus } from "./repository/handlers/u/update-user-status.js";
 export { AnonymizeUser } from "./repository/handlers/u/anonymize-user.js";
-export { FindDeletedUsersToPurge } from "./repository/handlers/r/find-deleted-users-to-purge.js";
+export { GetDeletedUsersToPurge } from "./repository/handlers/r/get-deleted-users-to-purge.js";
 export { CheckSoleOwnerOrgs } from "./repository/handlers/r/check-sole-owner-orgs.js";
 export { DeleteAllUserSessions } from "./repository/handlers/d/delete-all-user-sessions.js";
 
@@ -129,8 +129,8 @@ export {
   IGetLatestSignInEventDateKey,
   IUpdateSignInEventWhoIsIdKey,
   IUpdateSessionWhoIsIdKey,
-  IFindActiveSessionsByUserIdKey,
-  IFindUserIdByIdentifierKey,
+  IGetActiveSessionsByUserIdKey,
+  IGetUserIdByIdentifierKey,
   ICreateEmulationConsentRecordKey,
   IFindEmulationConsentByIdKey,
   IFindActiveConsentsByUserIdKey,

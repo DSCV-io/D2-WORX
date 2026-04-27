@@ -14,7 +14,9 @@ export const CHECK_USERNAME_AVAILABLE_REDACTION: RedactionSpec = {
   inputFields: ["username"],
 };
 
-export interface ICheckUsernameAvailableHandler
-  extends IHandler<CheckUsernameAvailableInput, CheckUsernameAvailableOutput> {
+export interface ICheckUsernameAvailableHandler extends IHandler<
+  CheckUsernameAvailableInput,
+  CheckUsernameAvailableOutput
+> {
   readonly redaction: RedactionSpec;
 }

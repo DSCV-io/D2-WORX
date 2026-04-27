@@ -131,9 +131,9 @@ export class RequestUserDeletion
     const userResult = await this.getUserById.handleAsync({ userId: input.userId });
     if (!userResult.success) return D2Result.bubbleFail(userResult);
     const userEmail = userResult.data?.user.email;
-    const userName = userResult.data?.user.name ?? "";
-    const userLocale = resolveLocale(userResult.data?.user.locale ?? undefined);
-    const userTimezone = userResult.data?.user.timezone ?? undefined;
+    const userName = userResult.data?.user.name;
+    const userLocale = resolveLocale(userResult.data?.user.locale);
+    const userTimezone = userResult.data?.user.timezone;
 
     // 4. Flip status + set grace clock + persist feedback.
     //    `expectedStatus: ACTIVE` is a defense-in-depth CAS guard — if the
@@ -141,11 +141,17 @@ export class RequestUserDeletion
     //    `deleted` (shouldn't happen since they'd be signed out), we no-op
     //    instead of clobbering deletedAt / deletionFeedback.
     const now = new Date();
+    const feedback = input.feedback as Record<string, unknown> | undefined;
     const statusResult = await this.updateUserStatus.handleAsync({
       userId: input.userId,
       status: USER_STATUS.PENDING_DELETION,
       deletedAt: now,
-      deletionFeedback: (input.feedback as Record<string, unknown> | undefined) ?? null,
+      // Pass feedback when supplied, else explicitly clear any leftover from
+      // a prior pending_deletion → cancel → re-request cycle so analytics
+      // doesn't see stale text attributed to this run.
+      ...(feedback !== undefined
+        ? { deletionFeedback: feedback }
+        : { clearDeletionFeedback: true }),
       expectedStatus: USER_STATUS.ACTIVE,
     });
     if (!statusResult.success) return D2Result.bubbleFail(statusResult);
@@ -178,24 +184,23 @@ export class RequestUserDeletion
     //    MDT" instead of an ISO blob.
     const scheduledForDate = new Date(now.getTime() + USER_DELETION.GRACE_PERIOD_MS);
     const scheduledFor = scheduledForDate.toISOString();
-    const scheduledForDisplay = formatDateTimeLong(
-      scheduledForDate,
-      userLocale,
-      userTimezone,
-    );
+    const scheduledForDisplay = formatDateTimeLong(scheduledForDate, userLocale, userTimezone);
     if (userEmail) {
       const t = this.translator.t;
+      // Translator interpolates `{name}` — fall back to the localized "User"
+      // string when the user has no display name set. Don't pass `""`.
+      const displayName = userName ?? t(userLocale, TK.common.ui.USER_FALLBACK);
       this.notify
         .handleAsync({
           alternativeContactInfo: { email: userEmail },
           channels: ["email"],
           title: t(userLocale, TK.auth.email.userDeletionScheduled.subject),
           content: t(userLocale, TK.auth.email.userDeletionScheduled.body, {
-            name: userName,
+            name: displayName,
             scheduledFor: scheduledForDisplay,
           }),
           plaintext: t(userLocale, TK.auth.email.userDeletionScheduled.plaintext, {
-            name: userName,
+            name: displayName,
             scheduledFor: scheduledForDisplay,
           }),
           correlationId: crypto.randomUUID(),

@@ -1,6 +1,6 @@
 import { createMiddleware } from "hono/factory";
 import { requestContextStorage, requestLoggerStorage } from "@d2/handler";
-import { REQUEST_CONTEXT_KEY, REQUEST_LOGGER_KEY } from "../context-keys.js";
+import type { FilesVariables } from "../context-keys.js";
 
 /**
  * Creates Hono middleware that establishes ambient per-request context
@@ -13,11 +13,9 @@ import { REQUEST_CONTEXT_KEY, REQUEST_LOGGER_KEY } from "../context-keys.js";
  * Must run AFTER request enrichment middleware.
  */
 export function createAmbientScopeMiddleware() {
-  return createMiddleware(async (c, next) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const requestContext = (c as any).get(REQUEST_CONTEXT_KEY);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const logger = (c as any).get(REQUEST_LOGGER_KEY);
+  return createMiddleware<{ Variables: FilesVariables }>(async (c, next) => {
+    const requestContext = c.var.requestContext;
+    const logger = c.var.requestLogger;
 
     if (requestContext && logger) {
       return requestContextStorage.run(requestContext, () =>

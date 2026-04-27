@@ -19,7 +19,9 @@ export const UPDATE_DELIVERY_ATTEMPT_STATUS_REDACTION: RedactionSpec = {
   inputFields: ["error"],
 };
 
-export interface IUpdateDeliveryAttemptStatusHandler
-  extends IHandler<UpdateDeliveryAttemptStatusInput, UpdateDeliveryAttemptStatusOutput> {
+export interface IUpdateDeliveryAttemptStatusHandler extends IHandler<
+  UpdateDeliveryAttemptStatusInput,
+  UpdateDeliveryAttemptStatusOutput
+> {
   readonly redaction: RedactionSpec;
 }

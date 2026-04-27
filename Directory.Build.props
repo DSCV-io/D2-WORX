@@ -4,6 +4,16 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
+
+    <!--
+      Transitive vulnerability override: System.Security.Cryptography.Xml 9.0.0
+      (pulled in by EF Core 10 / ASP.NET Core 10) has GHSA-37gx-xxp4-5rgx and
+      GHSA-w3x6-4m5h-cxqf (both High severity). Pinning a direct reference to
+      the latest patched 10.0.7 (released 2026-04-21) overrides the transitive.
+      Re-evaluate when bumping EF Core / ASP.NET Core to a version that pulls
+      a non-vulnerable transitive on its own.
+    -->
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.7" />
   </ItemGroup>
 
   <ItemGroup>

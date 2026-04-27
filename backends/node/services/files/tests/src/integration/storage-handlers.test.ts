@@ -8,6 +8,7 @@ import {
   PresignPutUrl,
   HeadStorageObject,
   PingStorage,
+  DEFAULT_FILES_STORAGE_OPTIONS,
 } from "@d2/files-infra";
 import { startMinIO, stopMinIO, getS3Client, getBucketName } from "./helpers/minio-test-helpers.js";
 import { createTestContext } from "./helpers/test-context.js";
@@ -30,7 +31,7 @@ describe("Storage handlers (integration)", () => {
     getObject = new GetStorageObject(s3, bucket, ctx);
     deleteObject = new DeleteStorageObject(s3, bucket, ctx);
     deleteObjects = new DeleteStorageObjects(s3, bucket, ctx);
-    presignPutUrl = new PresignPutUrl(s3, bucket, ctx);
+    presignPutUrl = new PresignPutUrl(s3, bucket, DEFAULT_FILES_STORAGE_OPTIONS, ctx);
     headObject = new HeadStorageObject(s3, bucket, ctx);
     pingStorage = new PingStorage(s3, ctx);
   }, 120_000);

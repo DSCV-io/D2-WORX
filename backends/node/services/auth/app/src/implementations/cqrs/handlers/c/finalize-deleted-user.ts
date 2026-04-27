@@ -57,7 +57,7 @@ export class FinalizeDeletedUser
     }
 
     const originalEmail = data.originalEmail;
-    const originalName = data.originalName ?? "";
+    const originalName = data.originalName;
     const anonymizedAt = new Date().toISOString();
 
     // 2. Final "deletion complete" email — original email + name captured
@@ -65,14 +65,18 @@ export class FinalizeDeletedUser
     if (originalEmail) {
       const t = this.translator.t;
       const userLocale = resolveLocale(undefined);
+      // Translator interpolates `{name}` into the body — fall back to the
+      // localized "User" string when the row was anonymized without a name set.
+      // Do NOT pass `""` (no empty strings as data) — that would render "Hi ,".
+      const displayName = originalName ?? t(userLocale, TK.common.ui.USER_FALLBACK);
       this.notify
         .handleAsync({
           alternativeContactInfo: { email: originalEmail },
           channels: ["email"],
           title: t(userLocale, TK.auth.email.userDeletionComplete.subject),
-          content: t(userLocale, TK.auth.email.userDeletionComplete.body, { name: originalName }),
+          content: t(userLocale, TK.auth.email.userDeletionComplete.body, { name: displayName }),
           plaintext: t(userLocale, TK.auth.email.userDeletionComplete.plaintext, {
-            name: originalName,
+            name: displayName,
           }),
           correlationId: crypto.randomUUID(),
           senderService: "auth",

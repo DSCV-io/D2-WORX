@@ -9,12 +9,12 @@ comparison, same trusted-service flag semantics.
 
 ## Components
 
-| File | Role |
-|---|---|
-| `ServiceKeyExtensions.cs` | `services.AddServiceKeyAuth(configuration)` + `app.UseServiceKeyDetection()` extensions. Reads valid keys from configuration section `GATEWAY_SERVICEKEY` (or supplied name) |
-| `ServiceKeyMiddleware.cs` | Reads the `X-Api-Key` header, compares against valid keys with `CryptographicOperations.FixedTimeEquals` (constant-time, no timing leaks), sets `MutableRequestContext.IsTrustedService = true` on match |
-| `ServiceKeyEndpointFilter.cs` | `.RequireServiceKey()` endpoint filter — applies to job endpoints / S2S-only routes that should reject browser traffic |
-| `ServiceKeyOptions.cs` | Bound from configuration. `ValidKeys` is the allowlist (typically multiple to support rotation) |
+| File                          | Role                                                                                                                                                                                                     |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ServiceKeyExtensions.cs`     | `services.AddServiceKeyAuth(configuration)` + `app.UseServiceKeyDetection()` extensions. Reads valid keys from configuration section `GATEWAY_SERVICEKEY` (or supplied name)                             |
+| `ServiceKeyMiddleware.cs`     | Reads the `X-Api-Key` header, compares against valid keys with `CryptographicOperations.FixedTimeEquals` (constant-time, no timing leaks), sets `MutableRequestContext.IsTrustedService = true` on match |
+| `ServiceKeyEndpointFilter.cs` | `.RequireServiceKey()` endpoint filter — applies to job endpoints / S2S-only routes that should reject browser traffic                                                                                   |
+| `ServiceKeyOptions.cs`        | Bound from configuration. `ValidKeys` is the allowlist (typically multiple to support rotation)                                                                                                          |
 
 ## Pipeline order
 
@@ -53,8 +53,8 @@ rather than an endpoint filter), use `.RequireTrustedService()` from the
 
 ## Node parity
 
-| `@d2/service-key` | `D2.Shared.ServiceKey.Default` |
-|---|---|
-| `validateServiceKey(apiKey, validKeys)` | `ServiceKeyMiddleware` (constant-time loop) |
-| `createServiceKeyMiddleware(keys, opts)` Hono middleware | `services.AddServiceKeyAuth(configuration)` |
+| `@d2/service-key`                                                    | `D2.Shared.ServiceKey.Default`                        |
+| -------------------------------------------------------------------- | ----------------------------------------------------- |
+| `validateServiceKey(apiKey, validKeys)`                              | `ServiceKeyMiddleware` (constant-time loop)           |
+| `createServiceKeyMiddleware(keys, opts)` Hono middleware             | `services.AddServiceKeyAuth(configuration)`           |
 | `withApiKeyAuth(grpcService, opts)` from `@d2/service-defaults/grpc` | (.NET gRPC: `IInterceptor` pattern, separate concern) |

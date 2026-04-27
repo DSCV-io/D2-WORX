@@ -10,22 +10,26 @@
   let { children }: { children: Snippet } = $props();
 
   const navItems = [
-    { href: resolve("/account/profile"), label: m.account_profile_title(), icon: UserIcon },
+    {
+      href: resolve("/account/profile"),
+      label: m.webclient_app_account_profile_title(),
+      icon: UserIcon,
+    },
     {
       href: resolve("/account/email-phone"),
-      label: m.account_email_phone_title(),
+      label: m.webclient_app_account_email_phone_title(),
       icon: MailIcon,
     },
     {
       href: resolve("/account/security"),
-      label: m.account_security_title(),
+      label: m.webclient_app_account_security_title(),
       icon: ShieldIcon,
     },
   ];
 </script>
 
 <svelte:head>
-  <title>{m.account_page_title()}</title>
+  <title>{m.webclient_app_account_page_title()}</title>
   <meta
     name="robots"
     content="noindex, nofollow"
@@ -42,7 +46,7 @@
       <!-- Cap form/content width so wide monitors don't stretch single-line
            inputs across the full viewport. Mirrors Stripe / Linear /
            Vercel — content stays scannable, whitespace fills the rest. -->
-      <div class="min-w-0 max-w-2xl flex-1">
+      <div class="max-w-2xl min-w-0 flex-1">
         {@render children()}
       </div>
     </div>

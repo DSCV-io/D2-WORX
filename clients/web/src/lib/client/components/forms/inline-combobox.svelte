@@ -3,6 +3,7 @@
   import { Combobox } from "bits-ui";
   import { createInlineEditKeyHandler } from "$lib/shared/forms/inline-edit-keyboard.js";
   import { isSaveCancelledError } from "$lib/shared/forms/save-cancelled-error.js";
+  import * as m from "$lib/paraglide/messages.js";
   import InlineEditActions from "./inline-edit-actions.svelte";
   import InlineFieldStatusIcon from "./inline-field-status-icon.svelte";
   import CheckIcon from "@lucide/svelte/icons/check";
@@ -22,8 +23,8 @@
     value = $bindable(""),
     label,
     options,
-    placeholder = "Search...",
-    emptyMessage = "No results found.",
+    placeholder,
+    emptyMessage,
     validate,
     onSave,
     onDirtyChange,
@@ -39,6 +40,11 @@
     onDirtyChange?: (dirty: boolean) => void;
     class?: string;
   } = $props();
+
+  // Defaults pulled from Paraglide so the component is i18n-safe even when
+  // callers omit the optional placeholder/emptyMessage props.
+  const placeholderText = $derived(placeholder ?? m.common_ui_search_placeholder());
+  const emptyMessageText = $derived(emptyMessage ?? m.common_ui_no_results());
 
   let originalValue = $state(value);
   let currentValue = $state(value);
@@ -150,7 +156,7 @@
         saveState = "idle";
         return false;
       }
-      errorMessage = err instanceof Error ? err.message : "Failed to save.";
+      errorMessage = err instanceof Error ? err.message : m.common_errors_save_failed();
       saveState = "error";
       validationStatus = "invalid";
       return false;
@@ -211,13 +217,13 @@
               open = true;
               searchValue = "";
             }}
-            {placeholder}
+            placeholder={placeholderText}
             class={cn(
               "border-input bg-input placeholder:text-muted-foreground flex h-9 w-full min-w-0 rounded-md border px-3 py-1 pr-8 text-base transition-[color,box-shadow] outline-none md:text-sm",
               "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
               "disabled:cursor-not-allowed disabled:opacity-50",
               saveState === "saved" && "border-2 border-green-500",
-              validationStatus === "invalid" && "border-2 border-destructive",
+              validationStatus === "invalid" && "border-destructive border-2",
               isDirty &&
                 validationStatus !== "invalid" &&
                 saveState !== "saved" &&
@@ -255,7 +261,7 @@
                 </Combobox.Item>
               {:else}
                 <div class="text-muted-foreground py-6 text-center text-sm">
-                  {emptyMessage}
+                  {emptyMessageText}
                 </div>
               {/each}
             </Combobox.Viewport>

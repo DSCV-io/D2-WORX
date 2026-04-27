@@ -27,7 +27,7 @@
     class={cn(
       "selection:bg-primary bg-input selection:text-primary-foreground border-input ring-offset-background placeholder:text-muted-foreground flex h-9 w-full min-w-0 rounded-md border px-3 pt-1.5 text-sm font-medium transition-[color,box-shadow] outline-none disabled:cursor-not-allowed disabled:opacity-50",
       "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-      "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-2 aria-invalid:border-destructive",
+      "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive aria-invalid:border-2",
       className,
     )}
     type="file"
@@ -42,7 +42,7 @@
     class={cn(
       "border-input bg-input selection:bg-primary selection:text-primary-foreground ring-offset-background placeholder:text-muted-foreground flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base transition-[color,box-shadow] outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
       "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-      "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-2 aria-invalid:border-destructive",
+      "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive aria-invalid:border-2",
       className,
     )}
     {type}

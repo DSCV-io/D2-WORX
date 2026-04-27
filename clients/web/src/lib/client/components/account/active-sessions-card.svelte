@@ -12,6 +12,7 @@
     type ActiveSessionDTO,
   } from "$lib/client/rest/account-client.js";
   import { D2Result } from "@d2/result";
+  import { TK } from "@d2/i18n/keys";
   import { parseUserAgent } from "$lib/shared/utils/user-agent.js";
   import {
     formatLocation,
@@ -68,7 +69,9 @@
 
   async function doRevoke(password: string) {
     if (!revokeTarget) {
-      return D2Result.fail({ statusCode: 400, messages: ["account_sessions_no_session_selected"] });
+      return D2Result.validationFailed({
+        messages: [TK.webclient.account.sessions.NO_SESSION_SELECTED],
+      });
     }
     return revokeSession(revokeTarget.session.token, password);
   }
@@ -95,14 +98,14 @@
     const diff = Math.max(0, now - ts);
     const mins = Math.floor(diff / 60_000);
     if (mins < 1) return m.common_ui_just_now();
-    if (mins === 1) return m.account_sessions_minute_ago();
-    if (mins < 60) return m.account_sessions_minutes_ago({ count: mins });
+    if (mins === 1) return m.webclient_app_account_sessions_minute_ago();
+    if (mins < 60) return m.webclient_app_account_sessions_minutes_ago({ count: mins });
     const hours = Math.floor(mins / 60);
-    if (hours === 1) return m.account_sessions_hour_ago();
-    if (hours < 24) return m.account_sessions_hours_ago({ count: hours });
+    if (hours === 1) return m.webclient_app_account_sessions_hour_ago();
+    if (hours < 24) return m.webclient_app_account_sessions_hours_ago({ count: hours });
     const days = Math.floor(hours / 24);
-    if (days === 1) return m.account_sessions_day_ago();
-    return m.account_sessions_days_ago({ count: days });
+    if (days === 1) return m.webclient_app_account_sessions_day_ago();
+    return m.webclient_app_account_sessions_days_ago({ count: days });
   }
 
   function deviceIcon(deviceType: string) {
@@ -113,7 +116,7 @@
   }
 
   function shortIp(ip: string | undefined): string {
-    if (!ip) return m.account_sessions_unknown_ip();
+    if (!ip) return m.webclient_app_account_sessions_unknown_ip();
     if (ip.length <= 24) return ip;
     return `${ip.slice(0, 12)}…${ip.slice(-8)}`;
   }
@@ -128,14 +131,16 @@
 
 <section>
   <div>
-    <h2 class="text-base font-semibold">{m.account_sessions_title()}</h2>
-    <p class="text-muted-foreground mt-0.5 text-sm">{m.account_sessions_description()}</p>
+    <h2 class="text-base font-semibold">{m.webclient_app_account_sessions_title()}</h2>
+    <p class="text-muted-foreground mt-0.5 text-sm">
+      {m.webclient_app_account_sessions_description()}
+    </p>
   </div>
   <div class="mt-5 space-y-0">
     {#if !loaded}
       <ul class="divide-border/60 divide-y">
         {#each [0, 1] as _i (_i)}
-          <li class="flex items-center gap-3 py-3 pl-4 pr-2">
+          <li class="flex items-center gap-3 py-3 pr-2 pl-4">
             <Skeleton class="size-6 rounded-md" />
             <Skeleton class="h-4 flex-1" />
             <Skeleton class="size-6 rounded-md" />
@@ -148,7 +153,7 @@
     {:else if errorMessage}
       <p class="text-destructive text-sm">{errorMessage}</p>
     {:else if sessions.length === 0}
-      <p class="text-muted-foreground text-sm">{m.account_sessions_empty()}</p>
+      <p class="text-muted-foreground text-sm">{m.webclient_app_account_sessions_empty()}</p>
     {:else}
       <ul
         class="divide-border/60 divide-y border-y md:grid md:grid-cols-[auto_auto_auto_auto_1fr_auto_auto] md:gap-x-4"
@@ -161,9 +166,9 @@
           {@const whoIsStubText = whoIsStub(s.session.whoIsId)}
           <li
             class={[
-              "group text-muted-foreground relative flex flex-col gap-1.5 py-3 pl-4 pr-2 text-xs transition-colors hover:bg-muted/30 md:col-span-full md:grid md:grid-cols-subgrid md:grid-flow-dense md:items-center md:gap-x-4 md:gap-y-0",
+              "group text-muted-foreground hover:bg-muted/30 relative flex flex-col gap-1.5 py-3 pr-2 pl-4 text-xs transition-colors md:col-span-full md:grid md:grid-flow-dense md:grid-cols-subgrid md:items-center md:gap-x-4 md:gap-y-0",
               s.isCurrent &&
-                "before:bg-info before:absolute before:left-0 before:top-3 before:bottom-3 before:w-[3px] before:rounded-full",
+                "before:bg-info before:absolute before:top-3 before:bottom-3 before:left-0 before:w-[3px] before:rounded-full",
             ]
               .filter(Boolean)
               .join(" ")}
@@ -192,67 +197,67 @@
                     variant="info"
                     class="px-1.5 py-0 text-[10px]"
                   >
-                    {m.account_sessions_current_badge()}
+                    {m.webclient_app_account_sessions_current_badge()}
                   </Badge>
                 {/if}
               </div>
 
               <div class="ml-auto md:col-start-7 md:ml-0">
                 <Popover.Root>
-                <Popover.Trigger>
-                  {#snippet child({ props })}
-                    <Button
-                      {...props}
-                      variant="ghost"
-                      size="icon"
-                      class="size-6 shrink-0"
-                      aria-label={m.account_sessions_details()}
-                    >
-                      <MoreVerticalIcon class="size-3" />
-                    </Button>
-                  {/snippet}
-                </Popover.Trigger>
-                <Popover.Content
-                  align="end"
-                  class="w-72 p-3"
-                >
-                  <div class="space-y-2">
-                    <p class="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-                      {m.account_sessions_details()}
-                    </p>
-                    <div class="flex flex-wrap items-center gap-1.5">
-                      {#if s.session.ipAddress}
-                        <CopyChip
-                          label={m.account_sessions_ip_label()}
-                          display={shortIp(s.session.ipAddress)}
-                          value={s.session.ipAddress}
-                        />
-                      {/if}
-                      {#if whoIsStubText}
-                        <CopyChip
-                          label={m.account_sessions_who_is_id_label()}
-                          display={whoIsStubText}
-                          value={s.session.whoIsId}
-                        />
-                      {/if}
-                    </div>
-                  </div>
-                  {#if !s.isCurrent}
-                    <div class="border-border/50 mt-3 border-t pt-3">
+                  <Popover.Trigger>
+                    {#snippet child({ props })}
                       <Button
-                        variant="outline"
-                        size="sm"
-                        onclick={() => openRevokeDialog(s)}
-                        class="w-full"
+                        {...props}
+                        variant="ghost"
+                        size="icon"
+                        class="size-6 shrink-0"
+                        aria-label={m.webclient_app_account_sessions_details()}
                       >
-                        <LogOutIcon class="mr-1.5 size-4" />
-                        {m.account_sessions_revoke()}
+                        <MoreVerticalIcon class="size-3" />
                       </Button>
+                    {/snippet}
+                  </Popover.Trigger>
+                  <Popover.Content
+                    align="end"
+                    class="w-72 p-3"
+                  >
+                    <div class="space-y-2">
+                      <p class="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                        {m.webclient_app_account_sessions_details()}
+                      </p>
+                      <div class="flex flex-wrap items-center gap-1.5">
+                        {#if s.session.ipAddress}
+                          <CopyChip
+                            label={m.webclient_app_account_sessions_ip_label()}
+                            display={shortIp(s.session.ipAddress)}
+                            value={s.session.ipAddress}
+                          />
+                        {/if}
+                        {#if whoIsStubText}
+                          <CopyChip
+                            label={m.webclient_app_account_sessions_who_is_id_label()}
+                            display={whoIsStubText}
+                            value={s.session.whoIsId}
+                          />
+                        {/if}
+                      </div>
                     </div>
-                  {/if}
-                </Popover.Content>
-              </Popover.Root>
-            </div>
+                    {#if !s.isCurrent}
+                      <div class="border-border/50 mt-3 border-t pt-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onclick={() => openRevokeDialog(s)}
+                          class="w-full"
+                        >
+                          <LogOutIcon class="mr-1.5 size-4" />
+                          {m.webclient_app_account_sessions_revoke()}
+                        </Button>
+                      </div>
+                    {/if}
+                  </Popover.Content>
+                </Popover.Root>
+              </div>
             </div>
 
             <Tooltip.Provider delayDuration={150}>
@@ -261,7 +266,7 @@
                   {#snippet child({ props })}
                     <span
                       {...props}
-                      class="ml-9 inline-flex items-center gap-1 whitespace-nowrap md:ml-0 md:col-start-2"
+                      class="ml-9 inline-flex items-center gap-1 whitespace-nowrap md:col-start-2 md:ml-0"
                     >
                       <ClockIcon class="size-3" />
                       {fmtRelative(s.session.updatedAt)}
@@ -282,7 +287,7 @@
                     {#snippet child({ props })}
                       <span
                         {...props}
-                        class="ml-9 inline-flex items-center gap-1 whitespace-nowrap md:ml-0 md:col-start-3"
+                        class="ml-9 inline-flex items-center gap-1 whitespace-nowrap md:col-start-3 md:ml-0"
                       >
                         <MapPinIcon class="size-3" />
                         {loc}
@@ -298,7 +303,7 @@
                 </Tooltip.Root>
               </Tooltip.Provider>
             {:else}
-              <span class="hidden md:block md:col-start-3"></span>
+              <span class="hidden md:col-start-3 md:block"></span>
             {/if}
 
             <Tooltip.Provider delayDuration={150}>
@@ -307,17 +312,18 @@
                   {#snippet child({ props })}
                     <span
                       {...props}
-                      class="ml-9 inline-flex items-center gap-1 whitespace-nowrap md:ml-0 md:col-start-4"
+                      class="ml-9 inline-flex items-center gap-1 whitespace-nowrap md:col-start-4 md:ml-0"
                     >
                       <Icon class="size-3" />
                       <span class="text-foreground font-medium">{ua.browser}</span>
-                      <span>{m.account_sessions_on_os({ os: ua.os })}</span>
+                      <span>{m.webclient_app_account_sessions_on_os({ os: ua.os })}</span>
                     </span>
                   {/snippet}
                 </Tooltip.Trigger>
                 <Tooltip.Content>
                   <p class="text-xs">
-                    {ua.browserLong} {m.account_sessions_on_os({ os: ua.osLong })}
+                    {ua.browserLong}
+                    {m.webclient_app_account_sessions_on_os({ os: ua.osLong })}
                   </p>
                 </Tooltip.Content>
               </Tooltip.Root>
@@ -335,7 +341,7 @@
             disabled={loading}
           >
             <LogOutIcon class="mr-1.5 size-4" />
-            {m.account_sessions_sign_out_others()}
+            {m.webclient_app_account_sessions_sign_out_others()}
           </Button>
         </div>
       {/if}
@@ -345,26 +351,26 @@
 
 <PasswordConfirmDialog
   bind:open={revokeDialogOpen}
-  title={m.account_sessions_revoke_dialog_title()}
-  description={m.account_sessions_revoke_dialog_description()}
-  confirmLabel={m.account_sessions_revoke()}
+  title={m.webclient_app_account_sessions_revoke_dialog_title()}
+  description={m.webclient_app_account_sessions_revoke_dialog_description()}
+  confirmLabel={m.webclient_app_account_sessions_revoke()}
   confirmVariant="destructive"
   onSubmit={doRevoke}
   onSuccess={async () => {
-    toast.success(m.account_sessions_revoked_success());
+    toast.success(m.webclient_app_account_sessions_revoked_success());
     await reload();
   }}
 />
 
 <PasswordConfirmDialog
   bind:open={revokeOthersOpen}
-  title={m.account_sessions_revoke_others_dialog_title()}
-  description={m.account_sessions_revoke_others_dialog_description()}
-  confirmLabel={m.account_sessions_sign_out_others()}
+  title={m.webclient_app_account_sessions_revoke_others_dialog_title()}
+  description={m.webclient_app_account_sessions_revoke_others_dialog_description()}
+  confirmLabel={m.webclient_app_account_sessions_sign_out_others()}
   confirmVariant="destructive"
   onSubmit={doRevokeOthers}
   onSuccess={async () => {
-    toast.success(m.account_sessions_revoked_others_success());
+    toast.success(m.webclient_app_account_sessions_revoked_others_success());
     await reload();
   }}
 />

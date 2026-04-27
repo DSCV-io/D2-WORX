@@ -21,14 +21,14 @@ export function createFilesGrpcService(
           const handler = scope.resolve(ICheckHealthKey);
           const result = await handler.handleAsync({});
 
-          const components: Record<string, { status: string; latencyMs: string; error: string }> =
+          const components: Record<string, { status: string; latencyMs: string; error?: string }> =
             {};
           if (result.data?.components) {
             for (const [key, comp] of Object.entries(result.data.components)) {
               components[key] = {
                 status: comp.status,
                 latencyMs: String(comp.latencyMs ?? 0),
-                error: comp.error ?? "",
+                ...(comp.error !== undefined && { error: comp.error }),
               };
             }
           }

@@ -30,6 +30,10 @@ export const TK = {
       NON_EMPTY_LIST: "common_validation_NON_EMPTY_LIST",
       PHONE_INVALID: "common_validation_PHONE_INVALID",
     },
+    ui: {
+      /** Generic fallback when a user's display name is unknown / not yet set. */
+      USER_FALLBACK: "common_ui_user_fallback",
+    },
   },
   geo: {
     validation: {
@@ -84,6 +88,15 @@ export const TK = {
       PASSWORD_DATE_LIKE: "auth_errors_PASSWORD_DATE_LIKE",
       PASSWORD_TOO_COMMON: "auth_errors_PASSWORD_TOO_COMMON",
       PASSWORD_BREACHED: "auth_errors_PASSWORD_BREACHED",
+      // Field-level inputErrors surfaced to forms
+      FIRST_NAME_REQUIRED: "auth_errors_FIRST_NAME_REQUIRED",
+      LAST_NAME_REQUIRED: "auth_errors_LAST_NAME_REQUIRED",
+      USERNAME_REQUIRED: "auth_errors_USERNAME_REQUIRED",
+      USERNAME_INVALID_CHARS: "auth_errors_USERNAME_INVALID_CHARS",
+      USERNAME_TOO_SHORT: "auth_errors_USERNAME_TOO_SHORT",
+      USERNAME_ALREADY_TAKEN: "auth_errors_USERNAME_ALREADY_TAKEN",
+      PHONE_INVALID_FORMAT: "auth_errors_PHONE_INVALID_FORMAT",
+      LOCALE_INVALID_FORMAT: "auth_errors_LOCALE_INVALID_FORMAT",
     },
     email: {
       emailChanged: {
@@ -153,6 +166,13 @@ export const TK = {
       INVALID_JSON_BODY: "files_errors_INVALID_JSON_BODY",
       LIST_QUERY_PARAMS_REQUIRED: "files_errors_LIST_QUERY_PARAMS_REQUIRED",
       PARTIAL_STORAGE_DELETE: "files_errors_PARTIAL_STORAGE_DELETE",
+    },
+  },
+  webclient: {
+    account: {
+      sessions: {
+        NO_SESSION_SELECTED: "webclient_app_account_sessions_no_session_selected",
+      },
     },
   },
 } as const;

@@ -19,7 +19,7 @@ function makeMinimalGrpcOptions(
   overrides: Partial<CommsGrpcServerOptions> = {},
 ): CommsGrpcServerOptions {
   return {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     provider: {} as any,
     grpcPort: 0,
     commsApiKeys: [],
@@ -29,7 +29,7 @@ function makeMinimalGrpcOptions(
       warn: () => {},
       error: () => {},
       fatal: () => {},
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
     } as any,
     ...overrides,
   };
@@ -40,14 +40,14 @@ describe("§5 Security — comms-api gRPC conformance", () => {
     it("refuses to build the gRPC server when commsApiKeys is empty AND allowUnauthenticated is not set", async () => {
       // Default posture: missing config = refuse to start. Matches the
       // sibling files-api / auth-api gRPC servers.
-      await expect(
-        buildGrpcServer(makeMinimalGrpcOptions({ commsApiKeys: [] })),
-      ).rejects.toThrow(/COMMS_API_KEYS not configured/);
+      await expect(buildGrpcServer(makeMinimalGrpcOptions({ commsApiKeys: [] }))).rejects.toThrow(
+        /COMMS_API_KEYS not configured/,
+      );
     });
 
     it("refuses to build the gRPC server when commsApiKeys is undefined AND allowUnauthenticated is not set", async () => {
       await expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         buildGrpcServer(makeMinimalGrpcOptions({ commsApiKeys: undefined as any })),
       ).rejects.toThrow(/COMMS_API_KEYS not configured/);
     });

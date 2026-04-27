@@ -41,8 +41,20 @@ export function createAccountRoutes(auth: Auth) {
 
   // Local helper: returns the authenticated user's id from requestContext.
   // Routes are gated by sessionMiddleware upstream, so userId is guaranteed present.
-  const uid = (c: import("hono").Context): string =>
-    (c.get(REQUEST_CONTEXT_KEY as never) as IRequestContext).userId!;
+  // We still narrow explicitly to keep the typing honest — `userId` is `string | undefined`
+  // on `IRequestContext`. If something has bypassed the session middleware (test harness,
+  // misconfigured route), we throw rather than silence it with `!`.
+  const uid = (c: import("hono").Context): string => {
+    const requestContext = c.get(REQUEST_CONTEXT_KEY as never) as IRequestContext | undefined;
+    const userId = requestContext?.userId;
+    if (!userId) {
+      // Guarded by session middleware — this is a misconfiguration, not a runtime input issue.
+      throw new Error(
+        "account-routes: userId missing from request context (session middleware not applied)",
+      );
+    }
+    return userId;
+  };
 
   // PATCH /api/account/name — Update user's real name (firstName + lastName)
   app.patch("/api/account/name", async (c) => {
@@ -110,7 +122,7 @@ export function createAccountRoutes(auth: Auth) {
     const invalidate = scope.tryResolve(IInvalidateUserSessionCacheKey);
     const push = scope.tryResolve(IPushUserUpdatedKey);
 
-    const result = await handler.handleAsync({ userId: id, image: null });
+    const result = await handler.handleAsync({ userId: id, clear: true });
 
     if (result.success) {
       // Fire-and-forget: invalidate cache → then push SignalR event.

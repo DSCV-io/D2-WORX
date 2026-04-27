@@ -70,14 +70,14 @@ export class UpdateUserRealName
     const firstName = cleanDisplayStr(input.firstName);
     if (!firstName) {
       return D2Result.validationFailed({
-        inputErrors: [["firstName", "First name is required."]],
+        inputErrors: [["firstName", TK.auth.errors.FIRST_NAME_REQUIRED]],
       });
     }
 
     const lastName = cleanDisplayStr(input.lastName);
     if (!lastName) {
       return D2Result.validationFailed({
-        inputErrors: [["lastName", "Last name is required."]],
+        inputErrors: [["lastName", TK.auth.errors.LAST_NAME_REQUIRED]],
       });
     }
 

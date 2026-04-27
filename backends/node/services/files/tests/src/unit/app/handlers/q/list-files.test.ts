@@ -37,7 +37,7 @@ describe("ListFiles", () => {
       displayName: "avatar.jpg",
       sizeBytes: 1024,
     });
-    vi.mocked(repo.findByContext.handleAsync).mockResolvedValue(
+    vi.mocked(repo.getByContext.handleAsync).mockResolvedValue(
       D2Result.ok({ data: { files: [file], total: 1 } }),
     );
     const { handler } = createHandler({ repo });
@@ -103,7 +103,7 @@ describe("ListFiles", () => {
       relatedEntityId: "user-123",
     });
 
-    expect(repo.findByContext.handleAsync).toHaveBeenCalledWith({
+    expect(repo.getByContext.handleAsync).toHaveBeenCalledWith({
       contextKey: "user_avatar",
       relatedEntityId: "user-123",
       limit: 50,

@@ -168,17 +168,17 @@ public class JwksConfigurationRetrieverTests
     /// </summary>
     private sealed class StaticDocumentRetriever : IDocumentRetriever
     {
-        private readonly string _document;
+        private readonly string r_document;
 
         public StaticDocumentRetriever(string document)
         {
-            _document = document;
+            r_document = document;
         }
 
         /// <inheritdoc/>
         public Task<string> GetDocumentAsync(string address, CancellationToken cancel)
         {
-            return Task.FromResult(_document);
+            return Task.FromResult(r_document);
         }
     }
 }

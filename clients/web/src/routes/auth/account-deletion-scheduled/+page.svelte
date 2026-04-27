@@ -1,5 +1,6 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
+  import favicon from "$lib/assets/favicon.svg";
   import * as Card from "$lib/client/components/ui/card/index.js";
   import { Button } from "$lib/client/components/ui/button/index.js";
   import CircleAlertIcon from "@lucide/svelte/icons/circle-alert";
@@ -7,10 +8,10 @@
 </script>
 
 <svelte:head>
-  <title>{m.account_delete_scheduled_page_title()} — {m.webclient_nav_brand()}</title>
+  <title>{m.webclient_app_account_delete_scheduled_page_title()} — {m.webclient_nav_brand()}</title>
   <meta
     name="description"
-    content={m.account_delete_scheduled_page_body()}
+    content={m.webclient_app_account_delete_scheduled_page_body()}
   />
   <meta
     name="robots"
@@ -18,11 +19,11 @@
   />
   <meta
     property="og:title"
-    content="{m.account_delete_scheduled_page_title()} — {m.webclient_nav_brand()}"
+    content="{m.webclient_app_account_delete_scheduled_page_title()} — {m.webclient_nav_brand()}"
   />
   <meta
     property="og:description"
-    content={m.account_delete_scheduled_page_body()}
+    content={m.webclient_app_account_delete_scheduled_page_body()}
   />
   <meta
     property="og:type"
@@ -37,11 +38,13 @@
         href={resolve("/")}
         class="flex items-center gap-2"
       >
-        <div
-          class="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg text-sm font-bold"
-        >
-          DW
-        </div>
+        <img
+          src={favicon}
+          alt=""
+          class="size-8 rounded-lg"
+          width="32"
+          height="32"
+        />
         <span class="text-xl font-semibold">{m.webclient_nav_brand()}</span>
       </a>
     </div>
@@ -54,18 +57,18 @@
           <CircleAlertIcon class="text-destructive size-6" />
         </div>
         <Card.Title class="text-2xl">
-          {m.account_delete_scheduled_page_title()}
+          {m.webclient_app_account_delete_scheduled_page_title()}
         </Card.Title>
       </Card.Header>
       <Card.Content class="text-center">
-        <p class="text-sm">{m.account_delete_scheduled_page_body()}</p>
+        <p class="text-sm">{m.webclient_app_account_delete_scheduled_page_body()}</p>
       </Card.Content>
       <Card.Footer>
         <Button
           href={resolve("/")}
           class="w-full"
         >
-          {m.account_delete_scheduled_page_signin_link()}
+          {m.webclient_app_account_delete_scheduled_page_signin_link()}
         </Button>
       </Card.Footer>
     </Card.Root>

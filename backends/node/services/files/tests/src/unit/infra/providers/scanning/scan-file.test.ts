@@ -13,7 +13,7 @@ vi.mock("node:net", () => ({
 
 // --- Imports (after mocks) ---
 
-import { ScanFile, type ClamdConfig } from "@d2/files-infra";
+import { ScanFile, type ClamdConfig, DEFAULT_FILES_SCANNING_OPTIONS } from "@d2/files-infra";
 
 // --- Helpers ---
 
@@ -147,7 +147,7 @@ describe("ScanFile", () => {
   let handler: ScanFile;
 
   beforeEach(() => {
-    handler = new ScanFile(TEST_CLAMD_CONFIG, createTestContext());
+    handler = new ScanFile(TEST_CLAMD_CONFIG, DEFAULT_FILES_SCANNING_OPTIONS, createTestContext());
   });
 
   it("should return clean=true for OK response", async () => {

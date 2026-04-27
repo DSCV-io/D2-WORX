@@ -7,8 +7,7 @@ import type {
   PresignPutUrlOutput as O,
   IPresignPutUrl,
 } from "@d2/files-app";
-
-const DEFAULT_EXPIRY_SECONDS = 900; // 15 minutes
+import type { FilesStorageOptions } from "../../../options.js";
 
 export class PresignPutUrl extends BaseHandler<I, O> implements IPresignPutUrl {
   override get redaction(): RedactionSpec {
@@ -17,16 +16,23 @@ export class PresignPutUrl extends BaseHandler<I, O> implements IPresignPutUrl {
 
   private readonly s3: S3Client;
   private readonly bucket: string;
+  private readonly options: FilesStorageOptions;
 
   /**
    * @param s3 — S3 client used for presigned URL generation. When a public endpoint
    *   is configured (e.g., cloudflared tunnel), this should be a separate client
    *   pointing at the public URL so browsers can reach MinIO directly.
    */
-  constructor(s3: S3Client, bucket: string, context: IHandlerContext) {
+  constructor(
+    s3: S3Client,
+    bucket: string,
+    options: FilesStorageOptions,
+    context: IHandlerContext,
+  ) {
     super(context);
     this.s3 = s3;
     this.bucket = bucket;
+    this.options = options;
   }
 
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {
@@ -41,7 +47,7 @@ export class PresignPutUrl extends BaseHandler<I, O> implements IPresignPutUrl {
       });
 
       const url = await getSignedUrl(this.s3, command, {
-        expiresIn: DEFAULT_EXPIRY_SECONDS,
+        expiresIn: this.options.presignPutExpirySeconds,
       });
 
       return D2Result.ok({ data: { url } });

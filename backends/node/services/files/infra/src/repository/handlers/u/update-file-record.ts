@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
@@ -10,6 +11,23 @@ import type {
 } from "@d2/files-app";
 import { file } from "../../schema/tables.js";
 import { toFile } from "../../mappers/file-mapper.js";
+
+const schema = z.object({
+  file: z.object({
+    id: z.string().min(1).max(36),
+    contextKey: z.string().min(1).max(100),
+    relatedEntityId: z.string().min(1).max(255),
+    uploaderUserId: z.string().min(1).max(36),
+    status: z.string().min(1).max(20),
+    contentType: z.string().min(1).max(255),
+    displayName: z.string().min(1).max(255),
+    sizeBytes: z.number().int().nonnegative(),
+    variants: z.array(z.unknown()).optional(),
+    rejectionReason: z.string().max(50).optional(),
+    createdAt: z.date(),
+  }),
+  expectedStatus: z.string().min(1).max(20).optional(),
+}) as unknown as z.ZodType<I>;
 
 export class UpdateFileRecord extends BaseHandler<I, O> implements IUpdateFileRecordHandler {
   override get redaction(): RedactionSpec {
@@ -24,6 +42,9 @@ export class UpdateFileRecord extends BaseHandler<I, O> implements IUpdateFileRe
   }
 
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {
+    const validation = this.validateInput(schema, input);
+    if (!validation.success) return D2Result.bubbleFail(validation);
+
     const f = input.file;
 
     const conditions: SQL[] = [eq(file.id, f.id)];

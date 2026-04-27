@@ -32,6 +32,7 @@ import {
   DeleteStorageObjects,
   PresignPutUrl,
   PingStorage,
+  DEFAULT_FILES_STORAGE_OPTIONS,
 } from "@d2/files-infra";
 
 // --- Helpers ---
@@ -354,7 +355,12 @@ describe("PresignPutUrl", () => {
   let handler: PresignPutUrl;
 
   beforeEach(() => {
-    handler = new PresignPutUrl(createMockS3(), TEST_BUCKET, createTestContext());
+    handler = new PresignPutUrl(
+      createMockS3(),
+      TEST_BUCKET,
+      DEFAULT_FILES_STORAGE_OPTIONS,
+      createTestContext(),
+    );
   });
 
   it("should return presigned URL on success", async () => {

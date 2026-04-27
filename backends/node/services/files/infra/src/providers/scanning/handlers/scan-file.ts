@@ -2,6 +2,7 @@ import { Socket } from "node:net";
 import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handler";
 import { D2Result } from "@d2/result";
 import type { ScanFileInput as I, ScanFileOutput as O, IScanFile } from "@d2/files-app";
+import type { FilesScanningOptions } from "../../../options.js";
 
 export interface ClamdConfig {
   readonly host: string;
@@ -20,10 +21,12 @@ export interface ClamdConfig {
  */
 export class ScanFile extends BaseHandler<I, O> implements IScanFile {
   private readonly config: ClamdConfig;
+  private readonly options: FilesScanningOptions;
 
-  constructor(config: ClamdConfig, context: IHandlerContext) {
+  constructor(config: ClamdConfig, options: FilesScanningOptions, context: IHandlerContext) {
     super(context);
     this.config = config;
+    this.options = options;
   }
 
   override get redaction(): RedactionSpec {
@@ -61,7 +64,7 @@ export class ScanFile extends BaseHandler<I, O> implements IScanFile {
       const socket = new Socket();
       const chunks: Buffer[] = [];
 
-      socket.setTimeout(30_000);
+      socket.setTimeout(this.options.socketTimeoutMs);
 
       socket.on("data", (chunk) => chunks.push(chunk));
       socket.on("end", () => {

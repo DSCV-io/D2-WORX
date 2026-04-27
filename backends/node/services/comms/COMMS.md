@@ -488,17 +488,17 @@ await notify.handleAsync({
 
 **Universal message shape (`NotifyInput`):**
 
-| Field                | Type                      | Required | Description                                            |
-| -------------------- | ------------------------- | -------- | ------------------------------------------------------ |
-| `recipientContactId` | `string` (UUID)           | Yes      | Geo contact ID -- the ONLY recipient identifier        |
-| `title`              | `string` (max 255)        | Yes      | Email subject, SMS prefix, push title                  |
-| `content`            | `string` (max 50,000)     | Yes      | Markdown body -- rendered to HTML for email            |
-| `plaintext`          | `string` (max 50,000)     | Yes      | Plain text -- SMS body, email fallback                 |
+| Field                | Type                      | Required | Description                                                                    |
+| -------------------- | ------------------------- | -------- | ------------------------------------------------------------------------------ |
+| `recipientContactId` | `string` (UUID)           | Yes      | Geo contact ID -- the ONLY recipient identifier                                |
+| `title`              | `string` (max 255)        | Yes      | Email subject, SMS prefix, push title                                          |
+| `content`            | `string` (max 50,000)     | Yes      | Markdown body -- rendered to HTML for email                                    |
+| `plaintext`          | `string` (max 50,000)     | Yes      | Plain text -- SMS body, email fallback                                         |
 | `channels`           | `Channel[]`               | No       | Caller override -- exactly these channels. Empty/omitted = use recipient prefs |
-| `urgency`            | `"normal"` \| `"urgent"`  | No       | Default `"normal"`. `"urgent"` forces all channels     |
-| `correlationId`      | `string` (max 36)         | Yes      | Idempotency key for deduplication                      |
-| `senderService`      | `string` (max 50)         | Yes      | Source service identifier (e.g. `"auth"`, `"billing"`) |
-| `metadata`           | `Record<string, unknown>` | No       | Arbitrary key-value pairs for future use               |
+| `urgency`            | `"normal"` \| `"urgent"`  | No       | Default `"normal"`. `"urgent"` forces all channels                             |
+| `correlationId`      | `string` (max 36)         | Yes      | Idempotency key for deduplication                                              |
+| `senderService`      | `string` (max 50)         | Yes      | Source service identifier (e.g. `"auth"`, `"billing"`)                         |
+| `metadata`           | `Record<string, unknown>` | No       | Arbitrary key-value pairs for future use                                       |
 
 All fields validated via Zod before publishing. Published to `comms.notifications` fanout exchange (empty routing key). When `publisher` is omitted during registration, the handler logs the notification and returns success (safe for tests and local dev).
 
@@ -583,14 +583,14 @@ backends/node/services/comms/
 
 ### App Layer (comms-app)
 
-| Handler                    | Type    | Category | Description                                                                                                                                                                                                                                                                              |
-| -------------------------- | ------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Deliver`                  | Complex | `x/`     | Orchestrates full delivery: create Message + DeliveryRequest, resolve recipient, resolve channels, render markdown, dispatch via providers, record attempts                                                                                                                              |
-| `RecipientResolver`        | Query   | `q/`     | Resolves email/phone from contactId via geo-client `GetContactsByIds`                                                                                                                                                                                                                    |
-| `SetChannelPreference`     | Command | `c/`     | Creates or updates channel preferences for a `contactId`                                                                                                                                                                                                                                 |
-| `GetChannelPreference`     | Query   | `q/`     | Returns channel preferences for a `contactId` (creates defaults if missing)                                                                                                                                                                                                              |
+| Handler                    | Type    | Category | Description                                                                                                                                                                                                                                                                                |
+| -------------------------- | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Deliver`                  | Complex | `x/`     | Orchestrates full delivery: create Message + DeliveryRequest, resolve recipient, resolve channels, render markdown, dispatch via providers, record attempts                                                                                                                                |
+| `RecipientResolver`        | Query   | `q/`     | Resolves email/phone from contactId via geo-client `GetContactsByIds`                                                                                                                                                                                                                      |
+| `SetChannelPreference`     | Command | `c/`     | Creates or updates channel preferences for a `contactId`                                                                                                                                                                                                                                   |
+| `GetChannelPreference`     | Query   | `q/`     | Returns channel preferences for a `contactId` (creates defaults if missing)                                                                                                                                                                                                                |
 | `SetUserChannelPreference` | Command | `c/`     | User-centric variant. Accepts `(contextKey, relatedEntityId)`, resolves contact via geo-client `GetContactsByExtKeys` (memory-cached), then delegates to `SetChannelPreference`. Returns `404 NOT_FOUND` when no Geo contact exists for the user (can't attach prefs to a missing contact) |
-| `GetUserChannelPreference` | Query   | `q/`     | User-centric variant. Accepts `(contextKey, relatedEntityId)`, resolves contact via geo-client `GetContactsByExtKeys` (memory-cached), then delegates to `GetChannelPreference`. Returns `pref: undefined` when the user has no Geo contact yet -- caller treats that as "use defaults"   |
+| `GetUserChannelPreference` | Query   | `q/`     | User-centric variant. Accepts `(contextKey, relatedEntityId)`, resolves contact via geo-client `GetContactsByExtKeys` (memory-cached), then delegates to `GetChannelPreference`. Returns `pref: undefined` when the user has no Geo contact yet -- caller treats that as "use defaults"    |
 
 ### Repository Interfaces (comms-app) + Implementations (comms-infra)
 
@@ -615,21 +615,21 @@ backends/node/services/comms/
 
 The Comms gRPC server (`@d2/comms-api`) exposes the handlers above as RPCs consumed by the .NET REST gateway. Channel-preference RPCs come in two flavours: a low-level **contact-id-based** pair, and a higher-level **user-centric** pair that resolves the contact for the caller.
 
-| RPC                          | Handler                    | Purpose                                                                               |
-| ---------------------------- | -------------------------- | ------------------------------------------------------------------------------------- |
-| `GetChannelPreference`       | `GetChannelPreference`     | Direct contact-id lookup (creates defaults if missing). Used by service-to-service callers that already have a `contactId` |
-| `SetChannelPreference`       | `SetChannelPreference`     | Direct contact-id upsert. Used by service-to-service callers that already have a `contactId`                               |
-| `GetUserChannelPreference`   | `GetUserChannelPreference` | Accepts `(contextKey, relatedEntityId)`, internally resolves contact via `GetContactsByExtKeys` (memory-cached), then delegates to `GetChannelPreference`. Returns `pref: undefined` when the user has no Geo contact yet -- caller treats that as "use defaults" |
-| `SetUserChannelPreference`   | `SetUserChannelPreference` | Accepts `(contextKey, relatedEntityId)`, internally resolves contact via `GetContactsByExtKeys` (memory-cached), then delegates to `SetChannelPreference`. Returns `404 NOT_FOUND` when no contact exists (can't attach prefs to a missing contact) |
+| RPC                        | Handler                    | Purpose                                                                                                                                                                                                                                                           |
+| -------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GetChannelPreference`     | `GetChannelPreference`     | Direct contact-id lookup (creates defaults if missing). Used by service-to-service callers that already have a `contactId`                                                                                                                                        |
+| `SetChannelPreference`     | `SetChannelPreference`     | Direct contact-id upsert. Used by service-to-service callers that already have a `contactId`                                                                                                                                                                      |
+| `GetUserChannelPreference` | `GetUserChannelPreference` | Accepts `(contextKey, relatedEntityId)`, internally resolves contact via `GetContactsByExtKeys` (memory-cached), then delegates to `GetChannelPreference`. Returns `pref: undefined` when the user has no Geo contact yet -- caller treats that as "use defaults" |
+| `SetUserChannelPreference` | `SetUserChannelPreference` | Accepts `(contextKey, relatedEntityId)`, internally resolves contact via `GetContactsByExtKeys` (memory-cached), then delegates to `SetChannelPreference`. Returns `404 NOT_FOUND` when no contact exists (can't attach prefs to a missing contact)               |
 
 ### HTTP Equivalents (gateway routes)
 
 The .NET REST gateway exposes the user-centric pair as the public HTTP surface for end-user notification preference management:
 
-| Method | Path                              | Delegates to RPC             |
-| ------ | --------------------------------- | ---------------------------- |
-| GET    | `/api/v1/notification-preferences` | `GetUserChannelPreference`   |
-| PUT    | `/api/v1/notification-preferences` | `SetUserChannelPreference`   |
+| Method | Path                               | Delegates to RPC           |
+| ------ | ---------------------------------- | -------------------------- |
+| GET    | `/api/v1/notification-preferences` | `GetUserChannelPreference` |
+| PUT    | `/api/v1/notification-preferences` | `SetUserChannelPreference` |
 
 The gateway derives `contextKey` (e.g., `auth_user`) and `relatedEntityId` (the authenticated user's id) from the JWT, so the browser never supplies them. The contact-id RPCs are not exposed over HTTP -- they are reserved for trusted service-to-service calls where the `contactId` is already known.
 
