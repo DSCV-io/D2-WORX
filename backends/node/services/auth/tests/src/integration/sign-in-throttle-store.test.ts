@@ -98,6 +98,39 @@ describe("SignInThrottleStore (integration)", () => {
       expect(pttl).toBeGreaterThan(expectedMs - 5000);
       expect(pttl).toBeLessThanOrEqual(expectedMs);
     });
+
+    // -------------------------------------------------------------------------
+    // Sliding-window contract.
+    //
+    // The first failed attempt opens the window; every subsequent failure
+    // counts against the SAME window without extending it. If TTL refresh
+    // ever creeps back into the Increment handler, a slow brute-force
+    // attacker would never trip the throttle — every attempt would refresh
+    // the TTL and the per-window cap would never be reachable. This test
+    // catches that regression directly against Redis.
+    // -------------------------------------------------------------------------
+    it("preserves the original window TTL across subsequent failures (sliding behavior)", async () => {
+      await store.incrementFailures(ID, IDENTITY);
+
+      // Wait long enough that the assertion bound below CANNOT be satisfied
+      // by a buggy refresh-on-write implementation. With NX semantics: PTTL
+      // drops by ~`waitMs` between the two failures. Without NX: PTTL is
+      // refreshed back to ~`expectedMs` and the assertion fails.
+      const waitMs = 300;
+      await new Promise((r) => setTimeout(r, waitMs));
+
+      await store.incrementFailures(ID, IDENTITY);
+
+      const redis = getRedis();
+      const pttl = await redis.pttl(`signin:attempts:${ID}:${IDENTITY}`);
+
+      const expectedMs = SIGN_IN_THROTTLE.ATTEMPT_WINDOW_SECONDS * 1000;
+      // Must reflect that real time elapsed — strictly less than expected
+      // minus a margin smaller than `waitMs` so a refresh would fail this.
+      expect(pttl).toBeLessThan(expectedMs - 100);
+      // Sanity: still within the original window, not negative or absurd.
+      expect(pttl).toBeGreaterThan(expectedMs - 10_000);
+    });
   });
 
   // -----------------------------------------------------------------------

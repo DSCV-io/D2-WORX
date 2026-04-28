@@ -58,7 +58,9 @@ export class OtpRateLimitStore {
   }
 
   async recordSend(userId: string, type: AccountChangeType): Promise<void> {
-    // Increment counter (sets TTL on first send)
+    // The Increment contract sets TTL on the first send only — see
+    // `IncrementInput` jsdoc. Subsequent sends count against the same window
+    // without extending it, which is what makes the per-window cap enforceable.
     const incrementResult = await this.increment.handleAsync({
       key: attemptsKey(type, userId),
       amount: 1,

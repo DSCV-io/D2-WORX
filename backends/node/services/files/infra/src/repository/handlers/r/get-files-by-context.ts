@@ -55,7 +55,11 @@ export class GetFilesByContext extends BaseHandler<I, O> implements IGetFilesByC
         .where(where)
         .limit(limit)
         .offset(offset)
-        .orderBy(sql`${file.createdAt} DESC`),
+        // Tiebreaker on id: when two files are created in the same ms (UUIDv7
+        // shares the 48-bit timestamp prefix), createdAt alone is ambiguous.
+        // Sorting by id DESC as well gives a stable, deterministic order to
+        // both callers and tests.
+        .orderBy(sql`${file.createdAt} DESC, ${file.id} DESC`),
       this.db.select({ total: count() }).from(file).where(where),
     ]);
 

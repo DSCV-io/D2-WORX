@@ -190,6 +190,11 @@ describe("Repository handlers (integration)", () => {
       const fileIds: string[] = [];
 
       for (let i = 0; i < 3; i++) {
+        // Stagger creates by 2ms so each file's createdAt lands in a distinct
+        // millisecond. Without this, all three records can share a timestamp
+        // and the sort then falls back to the id tiebreaker — which is the
+        // UUIDv7 random tail, not creation order.
+        if (i > 0) await new Promise((r) => setTimeout(r, 2));
         const f = makeFile({ relatedEntityId: entityId });
         fileIds.push(f.id);
         await createFileRecord.handleAsync({ file: f });

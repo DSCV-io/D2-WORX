@@ -39,7 +39,11 @@ export async function startAuthService(opts: {
   corsOrigins?: string[];
   /** Enable Auth gRPC server on this port (for FileCallback, etc.). */
   grpcPort?: number;
-  /** API keys for gRPC authentication (required when grpcPort is set). */
+  /**
+   * API keys for S2S authentication. Defaults to a single test key so the
+   * HTTP server's fail-closed posture (commit 95ca94c7) doesn't block E2E
+   * setup. Override only when a test specifically asserts on key contents.
+   */
   authApiKeys?: string[];
 }): Promise<AuthServiceHandle> {
   // Create RabbitMQ publisher for auth events
@@ -69,7 +73,7 @@ export async function startAuthService(opts: {
     geoAddress: opts.geoAddress,
     geoApiKey: opts.geoApiKey,
     grpcPort: opts.grpcPort,
-    authApiKeys: opts.authApiKeys,
+    authApiKeys: opts.authApiKeys ?? ["e2e-test-auth-key"],
   };
 
   // Skip HIBP API in E2E tests — domain validation still runs

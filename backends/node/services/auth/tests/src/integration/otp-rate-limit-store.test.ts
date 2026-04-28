@@ -156,9 +156,12 @@ describe("OtpRateLimitStore (integration)", () => {
     it("preserves the original window TTL across subsequent sends (sliding behavior)", async () => {
       await store.recordSend(USER_ID, "email");
 
-      // The attempts key TTL is set on first send only; subsequent INCR does NOT
-      // refresh TTL (`expirationMs` is treated as "set if not present"). Verify.
-      await new Promise((r) => setTimeout(r, 50)); // small delay to advance clock
+      // Wait long enough that the assertion bound below CANNOT be satisfied
+      // by a buggy refresh-on-write implementation. With NX semantics: PTTL
+      // drops by ~`waitMs` between the two sends. Without NX: PTTL is
+      // refreshed back to ~`expectedMs` and the assertion fails.
+      const waitMs = 300;
+      await new Promise((r) => setTimeout(r, waitMs));
 
       await store.recordSend(USER_ID, "email");
 
@@ -166,9 +169,11 @@ describe("OtpRateLimitStore (integration)", () => {
       const pttl = await redis.pttl(`otp:send:attempts:email:${USER_ID}`);
 
       const expectedMs = OTP_RATE_LIMIT.ATTEMPT_WINDOW_SECONDS * 1000;
-      // Should be slightly LESS than full window since some time has elapsed
-      expect(pttl).toBeGreaterThan(expectedMs - 10000);
-      expect(pttl).toBeLessThan(expectedMs);
+      // Must reflect that real time elapsed — strictly less than expected
+      // minus a margin smaller than `waitMs` so a refresh would fail this.
+      expect(pttl).toBeLessThan(expectedMs - 100);
+      // Sanity: still within the original window, not negative or absurd.
+      expect(pttl).toBeGreaterThan(expectedMs - 10_000);
     });
   });
 
