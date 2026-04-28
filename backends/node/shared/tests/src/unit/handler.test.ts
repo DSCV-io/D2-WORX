@@ -466,12 +466,16 @@ describe("Ambient context via AsyncLocalStorage", () => {
 // ---------------------------------------------------------------------------
 
 describe("OrgType", () => {
-  it("has all .NET enum values", () => {
-    expect(OrgType.Admin).toBe("Admin");
-    expect(OrgType.Support).toBe("Support");
-    expect(OrgType.Affiliate).toBe("Affiliate");
-    expect(OrgType.Customer).toBe("Customer");
-    expect(OrgType.ThirdParty).toBe("ThirdParty");
+  // Wire format is lowercase to match the Postgres `organization.org_type`
+  // column AND .NET's `OrgTypeValues` constants. The PascalCase TS
+  // identifier (`OrgType.Admin`) is convenient at call sites; the
+  // underlying string is what crosses every wire (DB, JWT, gRPC).
+  it("has all .NET wire-format values (lowercase)", () => {
+    expect(OrgType.Admin).toBe("admin");
+    expect(OrgType.Support).toBe("support");
+    expect(OrgType.Affiliate).toBe("affiliate");
+    expect(OrgType.Customer).toBe("customer");
+    expect(OrgType.ThirdParty).toBe("third_party");
   });
 
   it("has exactly 5 members", () => {
