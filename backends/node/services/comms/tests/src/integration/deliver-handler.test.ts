@@ -243,6 +243,136 @@ describe("Deliver handler (integration)", () => {
     expect(failedAttempt!.nextRetryAt).not.toBeNull();
   });
 
+  it("should re-dispatch on retry when first attempt failed with retry budget", async () => {
+    // Regression: prior to this test, hitting Step 0b's idempotency lookup
+    // unconditionally returned ok with the existing data — silently no-op'ing
+    // every consumer-scheduled retry. This test fails the email provider on
+    // call #1 and succeeds on call #2 with the SAME correlationId, asserting
+    // the retry actually re-dispatches and creates a new attempt row.
+    const contactId = newContactId();
+    mockGeo.setContactEmail(contactId, "retry@example.com");
+
+    const flakeyEmail = createStubEmailProvider(context);
+    let callCount = 0;
+    vi.spyOn(flakeyEmail, "handleAsync").mockImplementation(async () => {
+      callCount += 1;
+      if (callCount === 1) {
+        return D2Result.fail({ messages: ["transient SMTP timeout"], statusCode: 503 });
+      }
+      return D2Result.ok({
+        data: { providerMessageId: `msg-${callCount}` },
+      });
+    });
+
+    const db = getDb();
+    const repos = {
+      message: createMessageRepoHandlers(db, context),
+      request: createDeliveryRequestRepoHandlers(db, context),
+      attempt: createDeliveryAttemptRepoHandlers(db, context),
+      channelPref: createChannelPreferenceRepoHandlers(db, context),
+    };
+    const flakeyHandlers = createDeliveryHandlers(
+      repos,
+      { email: flakeyEmail },
+      mockGeo.getContactsByIds,
+      context,
+    );
+
+    const correlationId = generateUuidV7();
+
+    // Call 1 — provider fails transiently → DELIVERY_FAILED. The result does
+    // not carry `data` on a serviceUnavailable return, so the requestId is
+    // recovered from the DB row that the handler persisted before failing.
+    const first = await flakeyHandlers.deliver.handleAsync({
+      senderService: "auth",
+      title: "Retry test",
+      content: "<p>retry</p>",
+      plainTextContent: "retry",
+      recipientContactId: contactId,
+      correlationId,
+    });
+    expect(first.success).toBe(false);
+    expect(first.errorCode).toBe("DELIVERY_FAILED");
+
+    const [persistedRequest] = await db
+      .select()
+      .from(deliveryRequestTable)
+      .where(eq(deliveryRequestTable.correlationId, correlationId));
+    expect(persistedRequest).toBeDefined();
+    const requestId = persistedRequest!.id;
+
+    // Call 2 — same correlationId, simulates the consumer's retry topology
+    // re-publishing the same message body. Provider succeeds this time.
+    const second = await flakeyHandlers.deliver.handleAsync({
+      senderService: "auth",
+      title: "Retry test",
+      content: "<p>retry</p>",
+      plainTextContent: "retry",
+      recipientContactId: contactId,
+      correlationId,
+    });
+
+    expect(second.success).toBe(true);
+    expect(second.data!.requestId).toBe(requestId);
+    // The retry actually dispatched (not just early-returned the failed attempt)
+    expect(callCount).toBe(2);
+
+    // Two attempt rows: #1 failed, #2 sent. Same requestId.
+    const attemptRows = await db
+      .select()
+      .from(deliveryAttemptTable)
+      .where(eq(deliveryAttemptTable.requestId, requestId));
+    expect(attemptRows).toHaveLength(2);
+    const sorted = [...attemptRows].sort((a, b) => a.attemptNumber - b.attemptNumber);
+    expect(sorted[0]!.attemptNumber).toBe(1);
+    expect(sorted[0]!.status).toBe("failed");
+    expect(sorted[1]!.attemptNumber).toBe(2);
+    expect(sorted[1]!.status).toBe("sent");
+
+    // Request marked processed (all channels terminal: sent)
+    const [reqRow] = await db
+      .select()
+      .from(deliveryRequestTable)
+      .where(eq(deliveryRequestTable.id, requestId));
+    expect(reqRow.processedAt).not.toBeNull();
+  });
+
+  it("should not re-dispatch a channel that already succeeded on a prior attempt", async () => {
+    // When the consumer republishes after a partial failure (e.g. email
+    // succeeded, SMS failed), the retry must only re-dispatch the failed
+    // channel — re-dispatching `sent` channels would deliver a duplicate.
+    // This test confirms that re-running a fully-successful delivery
+    // (same correlationId) doesn't trigger another provider call.
+    const contactId = newContactId();
+    mockGeo.setContactEmail(contactId, "noredup@example.com");
+
+    const correlationId = generateUuidV7();
+    const baseline = stubEmail.sentCount();
+
+    const first = await handlers.deliver.handleAsync({
+      senderService: "auth",
+      title: "no-redup",
+      content: "<p>once</p>",
+      plainTextContent: "once",
+      recipientContactId: contactId,
+      correlationId,
+    });
+    expect(first.success).toBe(true);
+    expect(stubEmail.sentCount()).toBe(baseline + 1);
+
+    const second = await handlers.deliver.handleAsync({
+      senderService: "auth",
+      title: "no-redup",
+      content: "<p>once</p>",
+      plainTextContent: "once",
+      recipientContactId: contactId,
+      correlationId,
+    });
+    expect(second.success).toBe(true);
+    // No second dispatch — provider stayed at +1, not +2
+    expect(stubEmail.sentCount()).toBe(baseline + 1);
+  });
+
   it("should return not-found when recipient has no deliverable address", async () => {
     // Don't register any geo contact — RecipientResolver returns empty
     const result = await handlers.deliver.handleAsync({
