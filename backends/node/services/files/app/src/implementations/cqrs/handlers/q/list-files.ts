@@ -50,7 +50,7 @@ export class ListFiles extends BaseHandler<Input, Output> implements Queries.ILi
 
     const accessResult = await this.resolveAccess.handleAsync({
       config,
-      action: "read",
+      action: "list",
       relatedEntityId: input.relatedEntityId,
     });
     if (!accessResult.success) return D2Result.bubbleFail(accessResult);

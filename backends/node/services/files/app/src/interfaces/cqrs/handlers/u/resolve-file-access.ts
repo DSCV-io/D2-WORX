@@ -3,7 +3,15 @@ import type { ContextKeyConfig } from "../../../../context-key-config.js";
 
 export interface ResolveFileAccessInput {
   readonly config: ContextKeyConfig;
-  readonly action: "upload" | "read";
+  /**
+   * - `upload` → uses `config.uploadResolution`
+   * - `read`   → uses `config.readResolution` (fetch one by id; permits the
+   *              broader `authenticated` strategy for public-by-id files)
+   * - `list`   → uses `config.listResolution` (enumerate the collection;
+   *              `authenticated` is intentionally excluded at the type level
+   *              to prevent cross-tenant enumeration)
+   */
+  readonly action: "upload" | "read" | "list";
   readonly relatedEntityId: string;
 }
 

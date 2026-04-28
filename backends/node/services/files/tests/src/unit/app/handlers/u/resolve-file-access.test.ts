@@ -9,6 +9,7 @@ function makeConfig(overrides: Partial<ContextKeyConfig> = {}): ContextKeyConfig
     contextKey: "user_avatar",
     uploadResolution: "jwt_owner",
     readResolution: "jwt_owner",
+    listResolution: "jwt_owner",
     callbackAddress: "auth:5101",
     allowedCategories: ["image"],
     maxSizeBytes: 5 * 1024 * 1024,
@@ -58,6 +59,34 @@ describe("ResolveFileAccess", () => {
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it("should use listResolution when action is list (NOT readResolution)", async () => {
+    // Regression for B6: prior to the split, listing fell back to
+    // readResolution. A contextKey shipping with `read=authenticated` would
+    // accidentally allow any logged-in user to enumerate `relatedEntityId=*`
+    // — cross-tenant leak. The split makes list semantics explicit.
+    const context = createMockContext({ userId: "user-123", isAuthenticated: true });
+    const handler = new ResolveFileAccess(context);
+
+    // Read is `authenticated` (public-by-id), but list is `jwt_owner`
+    // (only your own collection). Listing for someone else's id should fail.
+    const result = await handler.handleAsync({
+      config: makeConfig({ readResolution: "authenticated", listResolution: "jwt_owner" }),
+      action: "list",
+      relatedEntityId: "another-user-id",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.statusCode).toBe(403);
+
+    // And listing your own id with the same config should succeed.
+    const ownResult = await handler.handleAsync({
+      config: makeConfig({ readResolution: "authenticated", listResolution: "jwt_owner" }),
+      action: "list",
+      relatedEntityId: "user-123",
+    });
+    expect(ownResult.success).toBe(true);
   });
 
   // --- jwt_org resolution ---

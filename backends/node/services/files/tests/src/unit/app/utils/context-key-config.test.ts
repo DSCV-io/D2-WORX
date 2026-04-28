@@ -27,12 +27,52 @@ describe("parseContextKeyConfigs", () => {
     expect(config.contextKey).toBe("user_avatar");
     expect(config.uploadResolution).toBe("jwt_owner");
     expect(config.readResolution).toBe("jwt_owner");
+    // listResolution auto-derives from readResolution when read is narrow
+    // enough (jwt_owner/jwt_org/callback). Saves operators from repeating
+    // the value when the semantics line up.
+    expect(config.listResolution).toBe("jwt_owner");
     expect(config.callbackAddress).toBe("auth:5101");
     expect(config.allowedCategories).toEqual(["image"]);
     expect(config.maxSizeBytes).toBe(5242880);
     expect(config.variants).toHaveLength(2);
     expect(config.variants[0]).toEqual({ name: "thumb", maxDimension: 64 });
     expect(config.variants[1]).toEqual({ name: "original" });
+  });
+
+  it("should auto-derive listResolution from readResolution when read is narrow", () => {
+    const env = makeEnv(0, {
+      FILES_CK__0__READ_RESOLUTION: "jwt_org",
+    });
+    const map = parseContextKeyConfigs(env);
+    expect(map.get("user_avatar")!.listResolution).toBe("jwt_org");
+  });
+
+  it("should respect explicit LIST_RESOLUTION override", () => {
+    const env = makeEnv(0, {
+      FILES_CK__0__READ_RESOLUTION: "jwt_owner",
+      FILES_CK__0__LIST_RESOLUTION: "callback",
+    });
+    const map = parseContextKeyConfigs(env);
+    expect(map.get("user_avatar")!.listResolution).toBe("callback");
+  });
+
+  it("should require explicit LIST_RESOLUTION when READ_RESOLUTION=authenticated (fail-closed)", () => {
+    // Regression for B6: a contextKey that is read-public-by-id MUST opt
+    // into a list strategy explicitly. Without this, list would inherit
+    // `authenticated` and any signed-in user could enumerate the inventory
+    // for any relatedEntityId.
+    const env = makeEnv(0, {
+      FILES_CK__0__READ_RESOLUTION: "authenticated",
+      // No LIST_RESOLUTION
+    });
+    expect(() => parseContextKeyConfigs(env)).toThrow(/LIST_RESOLUTION is required/);
+  });
+
+  it("should reject explicit LIST_RESOLUTION='authenticated' (type-level guard)", () => {
+    const env = makeEnv(0, {
+      FILES_CK__0__LIST_RESOLUTION: "authenticated",
+    });
+    expect(() => parseContextKeyConfigs(env)).toThrow(/LIST_RESOLUTION must be one of/);
   });
 
   it("should parse multiple configs", () => {
@@ -68,6 +108,7 @@ describe("parseContextKeyConfigs", () => {
       FILES_CK__0__KEY: "thread_attachment",
       FILES_CK__0__UPLOAD_RESOLUTION: "callback",
       FILES_CK__0__READ_RESOLUTION: "authenticated",
+      FILES_CK__0__LIST_RESOLUTION: "callback",
       FILES_CK__0__CALLBACK_ADDR: "comms:3200",
       FILES_CK__0__CATEGORY__0: "image",
       FILES_CK__0__CATEGORY__1: "document",
@@ -77,6 +118,7 @@ describe("parseContextKeyConfigs", () => {
     expect(config.callbackAddress).toBe("comms:3200");
     expect(config.uploadResolution).toBe("callback");
     expect(config.readResolution).toBe("authenticated");
+    expect(config.listResolution).toBe("callback");
   });
 
   it("should return empty map when no env vars exist", () => {

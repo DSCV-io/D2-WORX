@@ -11,14 +11,37 @@ import type { VariantConfig } from "@d2/files-domain";
 export type UploadResolution = "jwt_owner" | "jwt_org" | "callback";
 
 /**
- * Access resolution strategy for read operations.
+ * Access resolution strategy for fetching a single file by id.
  *
  * - `jwt_owner` — requestContext.userId must match relatedEntityId
  * - `jwt_org` — requestContext.orgId must match relatedEntityId
- * - `authenticated` — any authenticated user can read
+ * - `authenticated` — any authenticated user can read (the file content is
+ *   public-by-id, e.g. avatars or org brochures intended for anyone with
+ *   the link)
  * - `callback` — gRPC CanAccess check via callbackAddress
  */
 export type ReadResolution = "jwt_owner" | "jwt_org" | "authenticated" | "callback";
+
+/**
+ * Access resolution strategy for LISTING files under a contextKey + relatedEntityId.
+ *
+ * Deliberately narrower than `ReadResolution` — `authenticated` is excluded.
+ * "This single file is public-by-id" and "the inventory of all files under
+ * this scope is public to enumerate" are different security questions, and
+ * defaulting them to the same answer would let any contextKey ship with
+ * `readResolution: "authenticated"` accidentally enable cross-tenant
+ * enumeration via the list endpoint (e.g. competitor doing recon on org
+ * brochures or document uploads).
+ *
+ * - `jwt_owner` — relatedEntityId must equal session userId (you list yours)
+ * - `jwt_org`   — relatedEntityId must equal session orgId  (org members list theirs)
+ * - `callback`  — owning service decides per-list via gRPC CanAccess
+ *
+ * To intentionally expose a public-listing surface (e.g. an Instagram-style
+ * profile gallery), wire it through `callback` and have the owning service
+ * approve any caller.
+ */
+export type ListResolution = "jwt_owner" | "jwt_org" | "callback";
 
 /**
  * Per-context-key runtime configuration for the Files service.
@@ -30,6 +53,7 @@ export interface ContextKeyConfig {
   readonly contextKey: string;
   readonly uploadResolution: UploadResolution;
   readonly readResolution: ReadResolution;
+  readonly listResolution: ListResolution;
   readonly callbackAddress: string;
   readonly allowedCategories: readonly ContentCategory[];
   readonly maxSizeBytes: number;
@@ -49,6 +73,7 @@ const VALID_READ_RESOLUTIONS: readonly string[] = [
   "authenticated",
   "callback",
 ];
+const VALID_LIST_RESOLUTIONS: readonly string[] = ["jwt_owner", "jwt_org", "callback"];
 const VALID_CATEGORIES: readonly string[] = ["image", "document", "video", "audio"];
 
 /**
@@ -81,6 +106,10 @@ export function parseContextKeyConfigs(
 
     const uploadResolution = env[`${prefix}__${i}__UPLOAD_RESOLUTION`];
     const readResolution = env[`${prefix}__${i}__READ_RESOLUTION`];
+    // List resolution defaults to read resolution when explicit and read is
+    // narrow enough (jwt_owner/jwt_org/callback). If read is `authenticated`
+    // the operator MUST set list explicitly — there is no safe auto-derive.
+    const listResolutionRaw = env[`${prefix}__${i}__LIST_RESOLUTION`];
     const callbackAddr = env[`${prefix}__${i}__CALLBACK_ADDR`];
     const maxSizeBytesRaw = env[`${prefix}__${i}__MAX_SIZE_BYTES`];
 
@@ -97,6 +126,25 @@ export function parseContextKeyConfigs(
     if (!readResolution || !VALID_READ_RESOLUTIONS.includes(readResolution)) {
       throw new Error(
         `FILES_CK__${i}__READ_RESOLUTION must be one of: ${VALID_READ_RESOLUTIONS.join(", ")}. Got: '${readResolution}'.`,
+      );
+    }
+
+    let listResolution: string;
+    if (listResolutionRaw !== undefined) {
+      if (!VALID_LIST_RESOLUTIONS.includes(listResolutionRaw)) {
+        throw new Error(
+          `FILES_CK__${i}__LIST_RESOLUTION must be one of: ${VALID_LIST_RESOLUTIONS.join(", ")}. Got: '${listResolutionRaw}'. (Note: 'authenticated' is intentionally excluded — list endpoints would otherwise enable cross-tenant enumeration; route public-listing through 'callback' if needed.)`,
+        );
+      }
+      listResolution = listResolutionRaw;
+    } else if (VALID_LIST_RESOLUTIONS.includes(readResolution)) {
+      // Auto-derive when read is already narrow enough.
+      listResolution = readResolution;
+    } else {
+      // read = 'authenticated' and no explicit list set — fail closed.
+      throw new Error(
+        `FILES_CK__${i}__LIST_RESOLUTION is required when READ_RESOLUTION='authenticated'. ` +
+          `Set explicitly to one of: ${VALID_LIST_RESOLUTIONS.join(", ")}.`,
       );
     }
 
@@ -173,6 +221,7 @@ export function parseContextKeyConfigs(
       contextKey: key,
       uploadResolution: uploadResolution as UploadResolution,
       readResolution: readResolution as ReadResolution,
+      listResolution: listResolution as ListResolution,
       callbackAddress: callbackAddr.trim(),
       allowedCategories: allowedCategories as ContentCategory[],
       maxSizeBytes,

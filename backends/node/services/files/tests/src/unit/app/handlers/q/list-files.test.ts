@@ -133,7 +133,9 @@ describe("ListFiles", () => {
 
     expect(resolveAccess.handleAsync).toHaveBeenCalledWith({
       config: TEST_USER_AVATAR_CONFIG,
-      action: "read",
+      // ListFiles asks for the `list` action specifically — semantically
+      // narrower than `read` (no `authenticated` fallback).
+      action: "list",
       relatedEntityId: "user-123",
     });
   });

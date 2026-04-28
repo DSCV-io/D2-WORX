@@ -6,7 +6,7 @@ export interface CallCanAccessInput {
   readonly relatedEntityId: string;
   readonly requestingUserId: string;
   readonly requestingOrgId?: string;
-  readonly action: "upload" | "read";
+  readonly action: "upload" | "read" | "list";
 }
 
 export interface CallCanAccessOutput {

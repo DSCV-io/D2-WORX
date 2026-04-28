@@ -32,8 +32,17 @@ export class ResolveFileAccess
   }
 
   protected async executeAsync(input: Input): Promise<D2Result<Output | undefined>> {
+    // Per-action dispatch: upload uses uploadResolution, read uses
+    // readResolution (allows `authenticated`), list uses listResolution
+    // (deliberately narrower — no `authenticated` to prevent cross-tenant
+    // enumeration; routed through `callback` if a contextKey wants public
+    // listing).
     const resolution =
-      input.action === "upload" ? input.config.uploadResolution : input.config.readResolution;
+      input.action === "upload"
+        ? input.config.uploadResolution
+        : input.action === "list"
+          ? input.config.listResolution
+          : input.config.readResolution;
 
     const request = this.context.request;
 

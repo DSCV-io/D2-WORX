@@ -4,6 +4,7 @@ export const TEST_USER_AVATAR_CONFIG: ContextKeyConfig = {
   contextKey: "user_avatar",
   uploadResolution: "jwt_owner",
   readResolution: "jwt_owner",
+  listResolution: "jwt_owner",
   callbackAddress: "auth:5101",
   allowedCategories: ["image"],
   maxSizeBytes: 5 * 1024 * 1024, // 5 MB
@@ -19,6 +20,7 @@ export const TEST_ORG_LOGO_CONFIG: ContextKeyConfig = {
   contextKey: "org_logo",
   uploadResolution: "jwt_org",
   readResolution: "jwt_org",
+  listResolution: "jwt_org",
   callbackAddress: "auth:5101",
   allowedCategories: ["image"],
   maxSizeBytes: 10 * 1024 * 1024, // 10 MB
@@ -33,6 +35,10 @@ export const TEST_THREAD_ATTACHMENT_CONFIG: ContextKeyConfig = {
   contextKey: "thread_attachment",
   uploadResolution: "callback",
   readResolution: "authenticated",
+  // List delegated to Comms — public-by-id read for thread attachments is
+  // fine, but listing all attachments under a thread requires the owning
+  // service to confirm thread membership.
+  listResolution: "callback",
   callbackAddress: "comms:3200",
   allowedCategories: ["image", "document", "video", "audio"],
   maxSizeBytes: 25 * 1024 * 1024, // 25 MB
