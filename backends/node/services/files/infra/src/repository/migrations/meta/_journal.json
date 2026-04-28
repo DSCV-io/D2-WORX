@@ -15,6 +15,13 @@
       "when": 1773948596470,
       "tag": "0001_familiar_starfox",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777414381957,
+      "tag": "0002_add_file_status_updated_idx",
+      "breakpoints": true
     }
   ]
 }

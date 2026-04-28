@@ -93,8 +93,15 @@ describe("RunCleanup", () => {
     expect(getStaleFiles.handleAsync).toHaveBeenCalledTimes(3);
     // Storage deleteMany called for each status that has files
     expect(storage.deleteMany.handleAsync).toHaveBeenCalled();
-    // DB delete called for each status that has files
+    // DB delete called for each status that has files — and MUST pass
+    // `expectedStatus` so the CAS guard scopes the DELETE to rows whose
+    // status hasn't moved past the candidate state under us (cleanup race
+    // fix).
     expect(deleteByIds.handleAsync).toHaveBeenCalled();
+    const deleteCalls = vi.mocked(deleteByIds.handleAsync).mock.calls;
+    for (const [arg] of deleteCalls) {
+      expect(arg.expectedStatus).toBeDefined();
+    }
   });
 
   it("should report zero cleaned when no stale files found", async () => {

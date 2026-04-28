@@ -356,6 +356,43 @@ describe("Repository handlers (integration)", () => {
 
       expect(result.data!.files).toHaveLength(2);
     });
+
+    it("should filter by updatedAt — a transitioned file is shielded for the new threshold window", async () => {
+      // Regression for the cleanup race fix: previously the query filtered
+      // by `createdAt`, so a file uploaded long ago that JUST transitioned
+      // into `processing` (via Intake) would be eligible for cleanup while
+      // ProcessFile was mid-flight. With `updatedAt`, the transition resets
+      // the stale clock — the file gets a fresh threshold window.
+      const f = makeFile({ status: "pending" as const });
+      await createFileRecord.handleAsync({ file: f });
+
+      // Capture the moment BEFORE the status transition
+      const beforeTransition = new Date(Date.now() - 1_000);
+
+      // Transition to `processing` — bumps updatedAt to ~now
+      const transitioned: File = { ...f, status: "processing" as const };
+      const updateResult = await updateFileRecord.handleAsync({ file: transitioned });
+      expect(updateResult.success).toBe(true);
+
+      // Cutoff just BEFORE the transition: must NOT match.
+      // (It would have matched under the old `createdAt` filter, since
+      //  `createdAt < beforeTransition`.)
+      const beforeResult = await getStaleFiles.handleAsync({
+        status: "processing",
+        cutoffDate: beforeTransition,
+        limit: 10,
+      });
+      expect(beforeResult.success).toBe(true);
+      expect(beforeResult.data!.files.some((r) => r.id === f.id)).toBe(false);
+
+      // Cutoff well AFTER the transition: file qualifies as stale.
+      const afterResult = await getStaleFiles.handleAsync({
+        status: "processing",
+        cutoffDate: new Date(Date.now() + 60_000),
+        limit: 10,
+      });
+      expect(afterResult.data!.files.some((r) => r.id === f.id)).toBe(true);
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -502,6 +539,48 @@ describe("Repository handlers (integration)", () => {
         ids: [f.id, generateUuidV7(), generateUuidV7()],
       });
 
+      expect(result.success).toBe(true);
+      expect(result.data!.rowsAffected).toBe(1);
+    });
+
+    it("should respect expectedStatus CAS — leaves rows alone whose status changed under us", async () => {
+      // Regression for the cleanup race fix: cleanup snapshots a candidate
+      // set with status=processing, but ProcessFile may finish and flip the
+      // row to ready before the DELETE lands. The CAS guard scopes the
+      // DELETE to `status = expectedStatus` so the moved-on row survives.
+      const f1 = makeFile({ status: "processing" as const });
+      const f2 = makeFile({ status: "processing" as const });
+      await createFileRecord.handleAsync({ file: f1 });
+      await createFileRecord.handleAsync({ file: f2 });
+
+      // Simulate ProcessFile racing the cleanup: f2 transitions to ready.
+      const transitioned: File = { ...f2, status: "ready" as const };
+      const updateResult = await updateFileRecord.handleAsync({ file: transitioned });
+      expect(updateResult.success).toBe(true);
+
+      // Cleanup tries to delete both with the CAS guard.
+      const result = await deleteFileRecordsByIds.handleAsync({
+        ids: [f1.id, f2.id],
+        expectedStatus: "processing",
+      });
+      expect(result.success).toBe(true);
+      // f1 deleted (still processing), f2 spared (now ready)
+      expect(result.data!.rowsAffected).toBe(1);
+
+      const f1Read = await getFileById.handleAsync({ id: f1.id });
+      expect(f1Read).toBeFailure();
+      expect(f1Read.statusCode).toBe(404);
+
+      const f2Read = await getFileById.handleAsync({ id: f2.id });
+      expect(f2Read).toBeSuccess();
+      expect(f2Read.data!.file.status).toBe("ready");
+    });
+
+    it("should delete unconditionally when no expectedStatus given (back-compat)", async () => {
+      const f = makeFile({ status: "ready" as const });
+      await createFileRecord.handleAsync({ file: f });
+
+      const result = await deleteFileRecordsByIds.handleAsync({ ids: [f.id] });
       expect(result.success).toBe(true);
       expect(result.data!.rowsAffected).toBe(1);
     });

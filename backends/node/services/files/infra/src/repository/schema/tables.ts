@@ -19,5 +19,9 @@ export const file = pgTable(
   (t) => [
     index("idx_file_context_related").on(t.contextKey, t.relatedEntityId),
     index("idx_file_status_created").on(t.status, t.createdAt),
+    // Cleanup job (`GetStaleFiles`) filters by `(status, updatedAt <= cutoff)`.
+    // Without this index, the planner falls back to filtering by the
+    // status-only prefix of `idx_file_status_created` and sorting in-memory.
+    index("idx_file_status_updated").on(t.status, t.updatedAt),
   ],
 );

@@ -136,9 +136,12 @@ export class RunCleanup extends BaseHandler<Input, Output> implements Commands.I
       }
     }
 
-    // Delete DB records
+    // Delete DB records — CAS guard on `status` so any row that ProcessFile
+    // (or another writer) has flipped past the candidate state in the gap
+    // between GetStaleFiles and here is left intact. Worst case the row is
+    // re-evaluated on the next cleanup pass.
     const ids = files.map((f: File) => f.id);
-    const deleteResult = await this.deleteByIds.handleAsync({ ids });
+    const deleteResult = await this.deleteByIds.handleAsync({ ids, expectedStatus: status });
     if (!deleteResult.success) {
       this.context.logger.warn("DB cleanup failed", { status, fileCount: files.length });
       return 0;

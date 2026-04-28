@@ -34,10 +34,18 @@ export class GetStaleFiles extends BaseHandler<I, O> implements IGetStaleFilesHa
     const validation = this.validateInput(schema, input);
     if (!validation.success) return D2Result.bubbleFail(validation);
 
+    // Filter on `updatedAt`, not `createdAt`. For `pending` files, updatedAt
+    // defaults to createdAt on insert (never changes) — equivalent semantic.
+    // For `processing`/`rejected`, updatedAt is the moment of the status
+    // transition (set by UpdateFileRecord), so it correctly measures
+    // "stuck-in-this-state for too long" instead of "old upload that just
+    // started processing." Using createdAt would race against ProcessFile:
+    // a file uploaded 30+ min ago that just intaked into `processing` would
+    // be a cleanup candidate while ProcessFile is mid-flight.
     const rows = await this.db
       .select()
       .from(file)
-      .where(and(eq(file.status, input.status), lte(file.createdAt, input.cutoffDate)))
+      .where(and(eq(file.status, input.status), lte(file.updatedAt, input.cutoffDate)))
       .limit(input.limit);
 
     return D2Result.ok({ data: { files: rows.map(toFile) } });
