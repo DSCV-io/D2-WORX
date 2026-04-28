@@ -20,32 +20,37 @@
 
   let editorOpen = $state(false);
 
-  const sections = [
-    { id: "colors", label: "Colors" },
-    { id: "typography", label: "Typography" },
-    { id: "buttons", label: "Buttons" },
-    { id: "cards", label: "Cards" },
-    { id: "forms", label: "Forms" },
-    { id: "overlays", label: "Overlays" },
-    { id: "navigation", label: "Navigation" },
-    { id: "feedback", label: "Feedback" },
-    { id: "data-display", label: "Data Display" },
-    { id: "charts", label: "Charts" },
-    { id: "layout", label: "Layout & Patterns" },
-  ] as const;
+  const sections = $derived([
+    { id: "colors", label: m.webclient_design_section_colors() },
+    { id: "typography", label: m.webclient_design_section_typography() },
+    { id: "buttons", label: m.webclient_design_section_buttons() },
+    { id: "cards", label: m.webclient_design_section_cards() },
+    { id: "forms", label: m.webclient_design_section_forms() },
+    { id: "overlays", label: m.webclient_design_section_overlays() },
+    { id: "navigation", label: m.webclient_design_section_navigation() },
+    { id: "feedback", label: m.webclient_design_section_feedback() },
+    { id: "data-display", label: m.webclient_design_section_data_display() },
+    { id: "charts", label: m.webclient_design_section_charts() },
+    { id: "layout", label: m.webclient_design_section_layout() },
+  ]);
 
-  const demos = [
+  const demos = $derived([
     {
-      href: "/debug/design/contact-form",
-      label: "Contact Form",
-      description: "Superforms + geo data, phone formatting, cascading selects",
+      href: "/debug/design/contact-form" as const,
+      label: m.webclient_design_demo_contact_form(),
+      description: m.webclient_design_demo_contact_form_description(),
     },
     {
-      href: "/debug/design/signup-form",
-      label: "Signup Form",
-      description: "Password rules, email/password confirmation, show/hide toggle",
+      href: "/debug/design/signup-form" as const,
+      label: m.webclient_design_demo_signup_form(),
+      description: m.webclient_design_demo_signup_form_description(),
     },
-  ] as const;
+    {
+      href: "/debug/design/account-components" as const,
+      label: m.webclient_debug_account_components_title(),
+      description: m.webclient_debug_account_components_subtitle(),
+    },
+  ]);
 </script>
 
 <svelte:head>
@@ -76,9 +81,9 @@
   <!-- Header -->
   <div class="mb-8 flex items-center justify-between">
     <div>
-      <h1 class="text-3xl font-bold tracking-tight">Design System</h1>
+      <h1 class="text-3xl font-bold tracking-tight">{m.common_ui_design_system()}</h1>
       <p class="text-muted-foreground mt-1">
-        Kitchen sink — preview all components with live theme editing.
+        {m.webclient_design_kitchen_sink()}
       </p>
     </div>
     <div class="flex items-center gap-2">
@@ -89,7 +94,7 @@
         onclick={() => (editorOpen = true)}
       >
         <PaletteIcon class="size-4" />
-        Theme Editor
+        {m.webclient_design_theme_editor()}
       </Button>
     </div>
   </div>
@@ -115,7 +120,7 @@
     <div class="mb-8 flex flex-wrap gap-3">
       {#each demos as demo (demo.href)}
         <a
-          href={resolve(demo.href)}
+          href={resolve(demo.href as "/debug/design/contact-form")}
           class="group hover:border-primary hover:bg-accent rounded-lg border p-4 transition-colors"
         >
           <span class="group-hover:text-primary font-medium">{demo.label}</span>

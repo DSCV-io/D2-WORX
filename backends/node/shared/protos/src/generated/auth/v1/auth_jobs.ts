@@ -66,6 +66,20 @@ export const AuthJobServiceService = {
     responseSerialize: (value: TriggerJobResponse): Buffer => Buffer.from(TriggerJobResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): TriggerJobResponse => TriggerJobResponse.decode(value),
   },
+  /**
+   * Anonymize users whose 30-day deletion grace period has expired.
+   * Called nightly by Dkron; transactionally scrubs PII while preserving
+   * referential integrity (status='deleted' tombstone).
+   */
+  cleanupDeletedUsers: {
+    path: "/d2.auth.v1.AuthJobService/CleanupDeletedUsers",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: TriggerJobRequest): Buffer => Buffer.from(TriggerJobRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): TriggerJobRequest => TriggerJobRequest.decode(value),
+    responseSerialize: (value: TriggerJobResponse): Buffer => Buffer.from(TriggerJobResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): TriggerJobResponse => TriggerJobResponse.decode(value),
+  },
 } as const;
 
 export interface AuthJobServiceServer extends UntypedServiceImplementation {
@@ -80,6 +94,12 @@ export interface AuthJobServiceServer extends UntypedServiceImplementation {
   cleanupExpiredInvitations: handleUnaryCall<TriggerJobRequest, TriggerJobResponse>;
   /** Clean up expired or revoked emulation consents. */
   cleanupExpiredEmulationConsents: handleUnaryCall<TriggerJobRequest, TriggerJobResponse>;
+  /**
+   * Anonymize users whose 30-day deletion grace period has expired.
+   * Called nightly by Dkron; transactionally scrubs PII while preserving
+   * referential integrity (status='deleted' tombstone).
+   */
+  cleanupDeletedUsers: handleUnaryCall<TriggerJobRequest, TriggerJobResponse>;
 }
 
 export interface AuthJobServiceClient extends Client {
@@ -145,6 +165,26 @@ export interface AuthJobServiceClient extends Client {
     callback: (error: ServiceError | null, response: TriggerJobResponse) => void,
   ): ClientUnaryCall;
   cleanupExpiredEmulationConsents(
+    request: TriggerJobRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: TriggerJobResponse) => void,
+  ): ClientUnaryCall;
+  /**
+   * Anonymize users whose 30-day deletion grace period has expired.
+   * Called nightly by Dkron; transactionally scrubs PII while preserving
+   * referential integrity (status='deleted' tombstone).
+   */
+  cleanupDeletedUsers(
+    request: TriggerJobRequest,
+    callback: (error: ServiceError | null, response: TriggerJobResponse) => void,
+  ): ClientUnaryCall;
+  cleanupDeletedUsers(
+    request: TriggerJobRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: TriggerJobResponse) => void,
+  ): ClientUnaryCall;
+  cleanupDeletedUsers(
     request: TriggerJobRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,

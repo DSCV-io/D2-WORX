@@ -2,8 +2,8 @@
 // This is the ONLY package that imports better-auth.
 
 // --- Auth Factory ---
-export { createAuth } from "./auth/better-auth/auth-factory.js";
-export type { Auth, AuthHooks } from "./auth/better-auth/auth-factory.js";
+export { createAuth, signUpPrefsStorage } from "./auth/better-auth/auth-factory.js";
+export type { Auth, AuthHooks, SignUpPreferences } from "./auth/better-auth/auth-factory.js";
 
 // --- Config ---
 export { AUTH_CONFIG_DEFAULTS } from "./auth/better-auth/auth-config.js";
@@ -52,6 +52,15 @@ export {
 // --- Sign-In Throttle ---
 export { SignInThrottleStore } from "./auth/sign-in-throttle-store.js";
 
+// --- OTP Rate Limit ---
+export { OtpRateLimitStore } from "./auth/otp-rate-limit-store.js";
+
+// --- Verification Store (BetterAuth-backed) ---
+export { BetterAuthVerificationStore } from "./auth/verification-store.js";
+
+// --- Password Verifier (BetterAuth-backed) ---
+export { BetterAuthPasswordVerifier } from "./auth/password-verifier.js";
+
 // --- Drizzle Schema ---
 export { signInEvent, emulationConsent, orgContact } from "./repository/schema/index.js";
 export type {
@@ -81,24 +90,47 @@ export { runMigrations } from "./repository/migrate.js";
 // --- Email Check (pre-auth repo — constructed manually in composition root) ---
 export { CheckEmailAvailability as CheckEmailAvailabilityRepo } from "./repository/handlers/r/check-email-availability.js";
 
+// --- Organization Existence Check ---
+export { CheckOrgExists } from "./repository/handlers/r/check-org-exists.js";
+
 // --- Purge Handlers (used by integration tests) ---
 export { PurgeExpiredSessions } from "./repository/handlers/d/purge-expired-sessions.js";
 export { PurgeSignInEvents } from "./repository/handlers/d/purge-sign-in-events.js";
 export { PurgeExpiredInvitations } from "./repository/handlers/d/purge-expired-invitations.js";
 export { PurgeExpiredEmulationConsents } from "./repository/handlers/d/purge-expired-emulation-consents.js";
 
+// --- Repository Handlers (file callback) ---
+export { UpdateUserImage } from "./repository/handlers/u/update-user-image.js";
+export { UpdateOrgLogo } from "./repository/handlers/u/update-org-logo.js";
+export { UpdateUserLocale } from "./repository/handlers/u/update-user-locale.js";
+export { UpdateUserTimezone } from "./repository/handlers/u/update-user-timezone.js";
+
+// User-deletion repo handlers
+export { UpdateUserStatus } from "./repository/handlers/u/update-user-status.js";
+export { AnonymizeUser } from "./repository/handlers/u/anonymize-user.js";
+export { GetDeletedUsersToPurge } from "./repository/handlers/r/get-deleted-users-to-purge.js";
+export { CheckSoleOwnerOrgs } from "./repository/handlers/r/check-sole-owner-orgs.js";
+export { DeleteAllUserSessions } from "./repository/handlers/d/delete-all-user-sessions.js";
+
 // --- Messaging Consumers ---
 export { createWhoIsResolutionConsumer } from "./messaging/consumers/whois-resolution-consumer.js";
 export type { WhoIsResolutionConsumerDeps } from "./messaging/consumers/whois-resolution-consumer.js";
 
+// --- Realtime Handlers ---
+export { PushUserUpdated } from "./realtime/handlers/push-user-updated.js";
+
 // --- DI Registration ---
 export { addAuthInfra } from "./registration.js";
+export type { AuthInfraConfig } from "./registration.js";
 export {
   ICreateSignInEventKey,
   IFindSignInEventsByUserIdKey,
   ICountSignInEventsByUserIdKey,
   IGetLatestSignInEventDateKey,
   IUpdateSignInEventWhoIsIdKey,
+  IUpdateSessionWhoIsIdKey,
+  IGetActiveSessionsByUserIdKey,
+  IGetUserIdByIdentifierKey,
   ICreateEmulationConsentRecordKey,
   IFindEmulationConsentByIdKey,
   IFindActiveConsentsByUserIdKey,
@@ -109,5 +141,6 @@ export {
   IFindOrgContactsByOrgIdKey,
   IUpdateOrgContactRecordKey,
   IDeleteOrgContactRecordKey,
+  ICheckOrgExistsKey,
   ISignInThrottleStoreKey,
 } from "./service-keys.js";

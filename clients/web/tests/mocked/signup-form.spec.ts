@@ -87,7 +87,7 @@ test.describe("signup form (/design/signup-form)", () => {
     await passwordInput.fill("123456789012");
     await passwordInput.blur();
 
-    await expect(page.getByText("Password cannot be only numbers", { exact: true })).toBeVisible({
+    await expect(page.getByText("Password cannot be only numbers.", { exact: true })).toBeVisible({
       timeout: 2000,
     });
   });
@@ -170,17 +170,17 @@ test.describe("signup form (/design/signup-form)", () => {
     const passwordInput = page.getByRole("textbox", { name: "Password", exact: true });
     await expect(passwordInput).toHaveAttribute("type", "password");
 
-    await page.getByRole("button", { name: "Show password" }).click();
+    await page.getByRole("button", { name: "Show password", exact: true }).click();
     await expect(passwordInput).toHaveAttribute("type", "text");
   });
 
   test("click eye icon again changes type back to password (masked)", async ({ page }) => {
     const passwordInput = page.getByRole("textbox", { name: "Password", exact: true });
 
-    await page.getByRole("button", { name: "Show password" }).click();
+    await page.getByRole("button", { name: "Show password", exact: true }).click();
     await expect(passwordInput).toHaveAttribute("type", "text");
 
-    await page.getByRole("button", { name: "Hide password" }).click();
+    await page.getByRole("button", { name: "Hide password", exact: true }).click();
     await expect(passwordInput).toHaveAttribute("type", "password");
   });
 
@@ -200,7 +200,7 @@ test.describe("signup form (/design/signup-form)", () => {
     const confirmInput = page.getByRole("textbox", { name: "Confirm Password" });
 
     // Toggle password → text
-    await page.getByRole("button", { name: "Show password" }).click();
+    await page.getByRole("button", { name: "Show password", exact: true }).click();
     await expect(passwordInput).toHaveAttribute("type", "text");
     // Confirm password should still be masked
     await expect(confirmInput).toHaveAttribute("type", "password");
@@ -290,7 +290,7 @@ test.describe("signup form (/design/signup-form)", () => {
     const passwordInput = page.getByRole("textbox", { name: "Password", exact: true });
     await passwordInput.fill("a".repeat(129));
     await passwordInput.blur();
-    await expect(page.getByText("Password must be 128 characters or fewer")).toBeVisible({
+    await expect(page.getByText("Must be 128 characters or fewer")).toBeVisible({
       timeout: 2000,
     });
   });
@@ -299,7 +299,7 @@ test.describe("signup form (/design/signup-form)", () => {
     const passwordInput = page.getByRole("textbox", { name: "Password", exact: true });
     await passwordInput.fill("123456789012");
     await passwordInput.blur();
-    await expect(page.getByText("Password cannot be only numbers", { exact: true })).toBeVisible({
+    await expect(page.getByText("Password cannot be only numbers.", { exact: true })).toBeVisible({
       timeout: 2000,
     });
   });

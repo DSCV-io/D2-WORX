@@ -26,6 +26,22 @@ const result = d2ResultFromProto(proto);
 const result = await handleGrpcCall(() => geoClient.findWhoIs(request));
 ```
 
+## Proto Conversion Details
+
+### `d2ResultFromProto`
+
+Handles optional proto fields defensively with fallback defaults:
+
+- `proto.success ?? false` — defaults to `false` if the success field is unset
+- `proto.messages ?? []` — defaults to empty array if messages are unset
+- `proto.inputErrors ?? []` — defaults to empty array if input errors are unset
+
+This is required because `useOptionals=all` in `buf.gen.yaml` makes all proto fields optional in TypeScript. The `?? false` / `?? []` fallbacks prevent `undefined` from leaking into `D2Result` properties.
+
+### `d2ResultToProto`
+
+Remains unchanged — `D2Result` properties are never optional (always initialized by factory methods), so no defensive defaults are needed on the serialization path.
+
 ## `handleGrpcCall`
 
 Wraps a gRPC client call, catching `ServiceError` from `@grpc/grpc-js` and converting it to a `D2Result` failure. Non-gRPC errors become `UnhandledException` results.

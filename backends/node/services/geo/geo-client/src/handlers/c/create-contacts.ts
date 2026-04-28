@@ -60,7 +60,7 @@ export class CreateContacts
           );
         }),
       (res) => res.result!,
-      (res) => ({ data: res.data }),
+      (res) => ({ data: res.data ?? [] }),
     );
 
     return D2Result.bubble(r, r.data);

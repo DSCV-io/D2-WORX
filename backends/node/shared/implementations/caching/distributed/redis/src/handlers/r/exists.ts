@@ -19,8 +19,8 @@ export class Exists extends BaseHandler<Input, Output> implements DistributedCac
     try {
       const count = await this.redis.exists(input.key);
       return D2Result.ok({ data: { exists: count > 0 } });
-    } catch {
-      return redisErrorResult();
+    } catch (err: unknown) {
+      return redisErrorResult(err);
     }
   }
 }

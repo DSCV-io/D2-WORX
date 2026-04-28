@@ -37,102 +37,111 @@ WORX is a SaaS product designed for use by small-to-medium businesses (SMBs) and
 
 **Phase:** Pre-Alpha (Core Infrastructure + Auth + SvelteKit)
 
-| Area                          | Status     | Tests         |
-| ----------------------------- | ---------- | ------------- |
-| .NET shared infrastructure    | ✅ Done    | 1,585 passing |
-| Node.js shared infrastructure | ✅ Done    | 1,127 passing |
-| Geo service (.NET)            | ✅ Done    | 798 passing   |
-| .NET REST gateway             | ✅ Done    | —             |
-| Auth service (Node.js)        | 🚧 Stage C | 969 passing   |
-| Comms service (Node.js)       | 🚧 Stage B | 575 passing   |
-| Scheduled jobs (Dkron)        | ✅ Done    | 64 passing    |
-| E2E cross-service tests       | ✅ Done    | 31 passing    |
-| SvelteKit web client          | 🚧 Stage B | 706 passing   |
+| Area                          | Status     | Tests          |
+| ----------------------------- | ---------- | -------------- |
+| .NET shared infrastructure    | ✅ Done    | 1,585+ passing |
+| Node.js shared infrastructure | ✅ Done    | 1,127+ passing |
+| Geo service (.NET)            | ✅ Done    | 798 passing    |
+| .NET REST gateway             | ✅ Done    | —              |
+| Auth service (Node.js)        | 🚧 Stage C | 1,037+ passing |
+| Comms service (Node.js)       | 🚧 Stage B | 575+ passing   |
+| Files service (Node.js)       | ✅ Done    | 546+ passing   |
+| Scheduled jobs (Dkron)        | ✅ Done    | 64 passing     |
+| E2E cross-service tests       | ✅ Done    | 31 passing     |
+| SvelteKit web client          | 🚧 Stage B | 706+ passing   |
 
-**Current focus:** SvelteKit web client — design system, routing, auth BFF proxy, API gateway client, forms, auth pages, device fingerprinting, client telemetry (Grafana Faro), and three-tier Playwright test architecture done. Onboarding flow next. See [PLANNING.md](PLANNING.md) for architecture decisions, detailed status, and roadmap.
+**Current focus:** SvelteKit Account area — Profile, Email & Phone, Security (sessions, recent logins, change password), and self-service account deletion (soft-delete + 30-day grace + nightly anonymization) shipped. Onboarding flow + app shell next. See [PLANNING.md](PLANNING.md) for architecture decisions, detailed status, and roadmap.
 
 **NOTE:** this is a **public reference implementation** documenting D²'s evolution from DeCAF's modular monolith architecture into a distributed microservices system. Expect frequent changes and incremental progress.
 
 ## Architecture Diagram 🏗️
 
 ```mermaid
-graph TB
-    BROWSER[Browser / Client]
+block-beta
+    columns 10
 
-    SK[SvelteKit Client App]
-
-    subgraph Backends
-        subgraph Gateways["API Gateways"]
-            REST[REST Gateway<br/>.NET]
-            SR[SignalR Gateway<br/>.NET]
-        end
-
-        subgraph AuthSvc["Auth Service"]
-            AUTH[Auth<br/>Node.js + BetterAuth]
-        end
-
-        subgraph Services["Internal Services"]
-            GEO[Geo<br/>.NET]
-            COMMS[Comms<br/>Node.js]
-        end
-
-        subgraph Jobs["Job Scheduling"]
-            DKRON[Dkron<br/>Container]
-            DKRONMGR[dkron-mgr<br/>Node.js]
-        end
-
-        Gateways <-->|gRPC| Services
-        Gateways <-->|JWKS + gRPC| AuthSvc
-        AuthSvc <-->|gRPC| Services
-        DKRONMGR -->|REST API| DKRON
-        DKRON -->|HTTP + API key| REST
+    block:Client:10
+        columns 10
+        space:3 BROWSER["Browser"] space:2 space:4
     end
 
-    subgraph Infra["Infrastructure"]
-        PG[(PostgreSQL)] ~~~ REDIS[(Redis)] ~~~ RMQ[RabbitMQ]
-        MINIO[MinIO S3] ~~~ LGTM[LGTM Stack]
+    space:10
+
+    block:Edge:10
+        columns 6
+        SK["SvelteKit\nNode.js"]
+        E_MID[" "]
+        AUTH["Auth\nNode.js"]
+        FILES["Files\nNode.js"]
+        SR["SignalR Gateway\n.NET"]
+        REST["REST Gateway\n.NET"]
     end
 
-    %% External connections
-    BROWSER <-->|SSR + Auth| SK
-    BROWSER <-->|JWT API calls| REST
-    BROWSER <-->|WebSocket| SR
-    SK <-->|JWT| REST
-    SK <-->|Auth proxy| AuthSvc
+    space:10
 
-    %% Infra connection
-    Backends --- Infra
+    block:Internal:4
+        columns 3
+        GEO["Geo\n.NET"]
+        I_MID[" "]
+        COMMS["Comms\nNode.js"]
+    end
+    space:2
+    block:Jobs:4
+        columns 3
+        DKRONMGR["dkron-mgr\nNode.js"]
+        space
+        DKRON["Dkron"]
+    end
 
-    %% Node colors
-    classDef browser fill:#6c757d,stroke:#495057,color:#fff
-    classDef svelte fill:#FF3E00,stroke:#c73100,color:#fff
-    classDef gateway fill:#512BD4,stroke:#3d1f9e,color:#fff
-    classDef auth fill:#339933,stroke:#267326,color:#fff
-    classDef service fill:#1a73e8,stroke:#1557b0,color:#fff
-    classDef infra fill:#4169E1,stroke:#2f4fb3,color:#fff
-    classDef redis fill:#DC382D,stroke:#b02d24,color:#fff
-    classDef rabbitmq fill:#FF6600,stroke:#cc5200,color:#fff
-    classDef minio fill:#C72E49,stroke:#9e243a,color:#fff
-    classDef grafana fill:#F46800,stroke:#c35300,color:#fff
+    space:10
 
-    class BROWSER browser
-    class SK svelte
-    class REST,SR gateway
-    class AUTH auth
-    class GEO,COMMS service
-    class DKRON,DKRONMGR infra
-    class PG infra
-    class REDIS redis
-    class RMQ rabbitmq
-    class MINIO minio
-    class LGTM grafana
+    block:Infra:10
+        columns 9
+        PG["PostgreSQL"]
+        INF_MID[" "]
+        REDIS["Redis"]
+        space
+        RMQ["RabbitMQ"]
+        space
+        MINIO["MinIO S3"]
+        space
+        LGTM["LGTM + Alloy"]
+    end
 
-    %% Subgraph colors
-    style Backends fill:#1e1e2e,stroke:#444,color:#ccc
-    style Gateways fill:#2a2a4a,stroke:#555,color:#ccc
-    style AuthSvc fill:#1a3a1a,stroke:#555,color:#ccc
-    style Services fill:#2a2a4a,stroke:#555,color:#ccc
+    BROWSER -- "REST (cookie)" --- SK
+    BROWSER -- "WS (JWT)" --- SR
+    BROWSER -- "REST (JWT)" --- REST
+    BROWSER -- "REST (JWT)" --- FILES
+    SK -- "HTTP (proxy)" --- AUTH
+    E_MID -- "gRPC" --- I_MID
+    Edge -- "infra" --- Infra
+    I_MID -- "infra" --- INF_MID
+    DKRON -- "HTTP" --- REST
+    GEO -- "gRPC" --- COMMS
+    DKRONMGR -- "REST" --- DKRON
+
+    style BROWSER fill:#6c757d,stroke:#495057,color:#fff
+    style SK fill:#FF3E00,stroke:#c73100,color:#fff
+    style REST fill:#512BD4,stroke:#3d1f9e,color:#fff
+    style SR fill:#512BD4,stroke:#3d1f9e,color:#fff
+    style AUTH fill:#339933,stroke:#267326,color:#fff
+    style FILES fill:#E36002,stroke:#b34d01,color:#fff
+    style GEO fill:#1a73e8,stroke:#1557b0,color:#fff
+    style COMMS fill:#1a73e8,stroke:#1557b0,color:#fff
+    style DKRONMGR fill:#3C4A6C,stroke:#2e3a54,color:#fff
+    style DKRON fill:#3C4A6C,stroke:#2e3a54,color:#fff
+    style PG fill:#4169E1,stroke:#2f4fb3,color:#fff
+    style REDIS fill:#DC382D,stroke:#b02d24,color:#fff
+    style RMQ fill:#FF6600,stroke:#cc5200,color:#fff
+    style MINIO fill:#C72E49,stroke:#9e243a,color:#fff
+    style LGTM fill:#F46800,stroke:#c35300,color:#fff
+    style Client fill:#2e2e2e,stroke:#555,color:#ccc
+    style Edge fill:#1e1e2e,stroke:#444,color:#ccc
+    style Internal fill:#1e2e1e,stroke:#444,color:#ccc
     style Jobs fill:#2e2e1e,stroke:#555,color:#ccc
+    style E_MID fill:transparent,stroke:transparent,color:transparent
+    style I_MID fill:transparent,stroke:transparent,color:transparent
+    style INF_MID fill:transparent,stroke:transparent,color:transparent
     style Infra fill:#2e1e2e,stroke:#444,color:#ccc
 ```
 
@@ -298,14 +307,17 @@ _Repository:_
 
 _Middleware:_
 
-| Concern            | .NET                                                                                                                           | Node.js                                                                                                                                                                                           | Description                                           |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| Request Enrichment | [RequestEnrichment.Default](backends/dotnet/shared/Implementations/Middleware/RequestEnrichment.Default/REQUEST_ENRICHMENT.md) | [@d2/request-enrichment](backends/node/shared/implementations/middleware/request-enrichment/default/REQUEST_ENRICHMENT.md)                                                                        | IP resolution, fingerprinting, and WhoIs geolocation  |
-| Rate Limiting      | [RateLimit.Default](backends/dotnet/shared/Implementations/Middleware/RateLimit.Default/RATE_LIMIT.md)                         | [@d2/ratelimit](backends/node/shared/implementations/middleware/ratelimit/default/RATELIMIT.md)                                                                                                   | Multi-dimensional sliding-window rate limiting        |
-| Idempotency        | [Idempotency.Default](backends/dotnet/shared/Implementations/Middleware/Idempotency.Default/IDEMPOTENCY.md)                    | [@d2/idempotency](backends/node/shared/implementations/middleware/idempotency/default/IDEMPOTENCY.md)                                                                                             | Idempotency-Key header middleware (Redis-backed)      |
-| Auth               | [Auth.Default](backends/dotnet/shared/Implementations/Middleware/Auth.Default/)                                                | [@d2/service-key](backends/node/shared/implementations/middleware/service-key/default/) + [@d2/session-fingerprint](backends/node/shared/implementations/middleware/session-fingerprint/default/) | JWT auth, service key validation, fingerprint binding |
-| Translation        | [Translation.Default](backends/dotnet/shared/Implementations/Middleware/Translation.Default/)                                  | [@d2/translation](backends/node/shared/implementations/middleware/translation/default/)                                                                                                           | Gateway-edge D2Result message/inputError translation  |
-| CSRF               | —                                                                                                                              | [@d2/csrf](backends/node/shared/implementations/middleware/csrf/default/)                                                                                                                         | CSRF protection (Origin + Content-Type validation)    |
+| Concern             | .NET                                                                                                                           | Node.js                                                                                                                    | Description                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Request Enrichment  | [RequestEnrichment.Default](backends/dotnet/shared/Implementations/Middleware/RequestEnrichment.Default/REQUEST_ENRICHMENT.md) | [@d2/request-enrichment](backends/node/shared/implementations/middleware/request-enrichment/default/REQUEST_ENRICHMENT.md) | IP resolution, fingerprinting, and WhoIs geolocation                             |
+| Rate Limiting       | [RateLimit.Default](backends/dotnet/shared/Implementations/Middleware/RateLimit.Default/RATE_LIMIT.md)                         | [@d2/ratelimit](backends/node/shared/implementations/middleware/ratelimit/default/RATELIMIT.md)                            | Multi-dimensional sliding-window rate limiting                                   |
+| Idempotency         | [Idempotency.Default](backends/dotnet/shared/Implementations/Middleware/Idempotency.Default/IDEMPOTENCY.md)                    | [@d2/idempotency](backends/node/shared/implementations/middleware/idempotency/default/IDEMPOTENCY.md)                      | Idempotency-Key header middleware (Redis-backed)                                 |
+| JWT Auth            | [JwtAuth.Default](backends/dotnet/shared/Implementations/Middleware/JwtAuth.Default/JWT_AUTH.md)                               | [@d2/jwt-auth](backends/node/shared/implementations/middleware/jwt-auth/default/JWT_AUTH.md)                               | JWT Bearer + JWKS + fingerprint binding                                          |
+| Service Key         | [ServiceKey.Default](backends/dotnet/shared/Implementations/Middleware/ServiceKey.Default/SERVICE_KEY.md)                      | [@d2/service-key](backends/node/shared/implementations/middleware/service-key/default/)                                    | S2S API key validation (constant-time)                                           |
+| Auth Policy         | [AuthPolicy.Default](backends/dotnet/shared/Implementations/Middleware/AuthPolicy.Default/AUTH_POLICY.md)                      | [@d2/auth-policy](backends/node/shared/implementations/middleware/auth-policy/default/AUTH_POLICY.md)                      | Route-level policies (`.RequireAuth()`, `.RequireOrg()`, `.RequireRole()`, etc.) |
+| Session Fingerprint | —                                                                                                                              | [@d2/session-fingerprint](backends/node/shared/implementations/middleware/session-fingerprint/default/)                    | BetterAuth cookie-session binding (Node-only)                                    |
+| Translation         | [Translation.Default](backends/dotnet/shared/Implementations/Middleware/Translation.Default/)                                  | [@d2/translation](backends/node/shared/implementations/middleware/translation/default/)                                    | Gateway-edge D2Result message/inputError translation                             |
+| CSRF                | —                                                                                                                              | [@d2/csrf](backends/node/shared/implementations/middleware/csrf/default/)                                                  | CSRF protection (Origin + Content-Type validation)                               |
 
 _Messaging:_
 
@@ -323,6 +335,7 @@ _Domain-specific microservices. Each service owns its data and communicates via 
 | [Geo](backends/dotnet/services/Geo/GEO_SERVICE.md)         | .NET     | ✅ Done    | Geographic reference data, locations, contacts, and WHOIS with multi-tier caching |
 | [Auth](backends/node/services/auth/AUTH.md)                | Node.js  | 🚧 Stage C | Standalone Hono + BetterAuth + Drizzle — Stages A-B done, BFF client done         |
 | [Comms](backends/node/services/comms/COMMS.md)             | Node.js  | 🚧 Stage B | Stage A done (delivery engine). Stage B next (in-app notifications, SignalR)      |
+| [Files](backends/node/services/files/FILES.md)             | Node.js  | ✅ Done    | File uploads, image processing, MinIO storage — event-driven (ADR-026)            |
 | [dkron-mgr](backends/node/services/dkron-mgr/DKRON_MGR.md) | Node.js  | ✅ Done    | Declarative Dkron job reconciler — drift detection, orphan cleanup                |
 
 _Service internals (DDD layers):_
@@ -332,6 +345,7 @@ _Service internals (DDD layers):_
 | Geo       | [Domain](backends/dotnet/services/Geo/Geo.Domain/GEO_DOMAIN.md) | [App](backends/dotnet/services/Geo/Geo.App/GEO_APP.md) | [Infra](backends/dotnet/services/Geo/Geo.Infra/GEO_INFRA.md) | [API](backends/dotnet/services/Geo/Geo.API/GEO_API.md) | [Tests](backends/dotnet/services/Geo/Geo.Tests/GEO_TESTS.md)       |
 | Auth      | [Domain](backends/node/services/auth/domain/AUTH_DOMAIN.md)     | [App](backends/node/services/auth/app/AUTH_APP.md)     | [Infra](backends/node/services/auth/infra/AUTH_INFRA.md)     | [API](backends/node/services/auth/api/AUTH_API.md)     | [Tests](backends/node/services/auth/tests/AUTH_TESTS.md)           |
 | Comms     | [Domain](backends/node/services/comms/domain/COMMS_DOMAIN.md)   | [App](backends/node/services/comms/app/COMMS_APP.md)   | [Infra](backends/node/services/comms/infra/COMMS_INFRA.md)   | [API](backends/node/services/comms/api/COMMS_API.md)   | [Tests](backends/node/services/comms/tests/COMMS_TESTS.md)         |
+| Files     | [Domain](backends/node/services/files/domain/FILES_DOMAIN.md)   | [App](backends/node/services/files/app/FILES_APP.md)   | [Infra](backends/node/services/files/infra/FILES_INFRA.md)   | [API](backends/node/services/files/api/FILES_API.md)   | —                                                                  |
 | dkron-mgr | —                                                               | —                                                      | —                                                            | —                                                      | [Tests](backends/node/services/dkron-mgr/tests/DKRON_MGR_TESTS.md) |
 
 ### Client Libraries
@@ -348,10 +362,17 @@ _Service-owned client libraries for consumers._
 
 ### Gateways
 
-| Gateway                                               | Platform | Status     | Description                      |
-| ----------------------------------------------------- | -------- | ---------- | -------------------------------- |
-| [REST Gateway](backends/dotnet/gateways/REST/REST.md) | .NET     | ✅ Done    | HTTP/REST → gRPC routing gateway |
-| SignalR Gateway                                       | .NET     | 📋 Planned | WebSocket → gRPC routing gateway |
+| Gateway                                                        | Platform | Status  | Description                                |
+| -------------------------------------------------------------- | -------- | ------- | ------------------------------------------ |
+| [REST Gateway](backends/dotnet/gateways/REST/REST.md)          | .NET     | ✅ Done | HTTP/REST → gRPC routing gateway           |
+| [SignalR Gateway](backends/dotnet/gateways/SignalR/SignalR.md) | .NET     | ✅ Done | Real-time WebSocket push gateway (ADR-028) |
+
+_Gateway internals:_
+
+| Gateway         | Docs                                                      | Description                                                                 |
+| --------------- | --------------------------------------------------------- | --------------------------------------------------------------------------- |
+| REST Gateway    | [REST.md](backends/dotnet/gateways/REST/REST.md)          | JWT auth, gRPC routing, rate limiting, idempotency, request enrichment      |
+| SignalR Gateway | [SignalR.md](backends/dotnet/gateways/SignalR/SignalR.md) | JWT-authed WebSocket connections, gRPC push interface for internal services |
 
 ### Orchestration
 

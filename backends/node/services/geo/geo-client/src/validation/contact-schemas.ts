@@ -73,4 +73,6 @@ export const contactInputSchema = z.object({
   personalDetails: personalDetailsSchema.optional(),
   professionalDetails: professionalDetailsSchema.optional(),
   location: locationInputSchema.optional(),
+  ietfBcp47Tag: z.string().min(1).max(35).optional(),
+  ianaIdentifier: z.string().min(1).max(64).optional(),
 });

@@ -48,8 +48,8 @@ export const COMMS_RETRY = {
   REQUEUE_EXCHANGE: "comms.retry.requeue",
   /** Prefix for tier delay queues (appended with tier number). */
   TIER_QUEUE_PREFIX: "comms.retry.tier-",
-  /** TTL per tier -- indexed by tier (tier-1 = index 0). Matches RETRY_POLICY.DELAYS_MS. */
-  TIER_TTLS: [5_000, 10_000, 30_000, 60_000, 300_000] as readonly number[],
+  /** TTL per tier -- indexed by tier (tier-1 = index 0). References RETRY_POLICY.DELAYS_MS. */
+  TIER_TTLS: RETRY_POLICY.DELAYS_MS,
   /** Domain-specific error code: at least one delivery channel failed with retry scheduled. */
   DELIVERY_FAILED: "DELIVERY_FAILED",
 } as const;

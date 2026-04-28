@@ -38,8 +38,8 @@ describe("toDomainOrganization", () => {
 
     const org = toDomainOrganization(raw);
     expect(org.orgType).toBe("support");
-    expect(org.logo).toBeNull();
-    expect(org.metadata).toBeNull();
+    expect(org.logo).toBeUndefined();
+    expect(org.metadata).toBeUndefined();
   });
 
   it("should default orgType to customer when missing", () => {

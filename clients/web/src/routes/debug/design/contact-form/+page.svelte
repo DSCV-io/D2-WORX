@@ -26,6 +26,7 @@
   import { useCountryState } from "$lib/client/forms/country-state.svelte.js";
   import { useAddressLines } from "$lib/client/forms/address-lines.svelte.js";
   import { useAsyncFieldCheck } from "$lib/client/forms/async-field-check.svelte.js";
+  import { maskDisplayName } from "$lib/client/utils/mask-display-name.js";
   import ArrowLeftIcon from "@lucide/svelte/icons/arrow-left";
   import * as m from "$lib/paraglide/messages.js";
 
@@ -103,21 +104,19 @@
       class="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1 text-sm"
     >
       <ArrowLeftIcon class="size-4" />
-      Back to Design System
+      {m.webclient_design_back_to_design()}
     </a>
-    <h1 class="text-2xl font-bold tracking-tight">Contact Form</h1>
+    <h1 class="text-2xl font-bold tracking-tight">{m.webclient_design_contact_form_heading()}</h1>
     <p class="text-muted-foreground mt-1 text-sm">
-      Demonstrates Superforms + Formsnap with geo reference data, cascading selects, phone
-      formatting, and cross-field validation.
+      {m.webclient_design_contact_form_demo_description()}
     </p>
   </div>
 
   <Card.Root>
     <Card.Header>
-      <Card.Title>New Contact</Card.Title>
+      <Card.Title>{m.webclient_design_contact_new()}</Card.Title>
       <Card.Description>
-        All fields use live geo reference data from the 4-tier cache (Memory &rarr; Redis &rarr;
-        Disk &rarr; gRPC).
+        {m.webclient_design_contact_cache_description()}
       </Card.Description>
     </Card.Header>
     <Card.Content>
@@ -133,11 +132,13 @@
             {form}
             field="firstName"
             {...FIRST_NAME}
+            oninput={maskDisplayName}
           />
           <FormInput
             {form}
             field="lastName"
             {...LAST_NAME}
+            oninput={maskDisplayName}
           />
         </div>
 
@@ -192,7 +193,9 @@
               onclick={addressLines.toggleExtraLines}
               class="text-muted-foreground hover:text-foreground text-sm"
             >
-              {addressLines.showExtraLines ? "- Fewer address lines" : "+ More address lines"}
+              {addressLines.showExtraLines
+                ? m.webclient_design_address_fewer()
+                : m.webclient_design_address_more()}
             </button>
           {/snippet}
         </FormInput>
@@ -217,6 +220,7 @@
             {form}
             field="city"
             {...CITY}
+            oninput={maskDisplayName}
           />
           <FormInput
             {form}
@@ -229,9 +233,9 @@
         <div class="flex justify-end gap-2 pt-2">
           <Button
             variant="outline"
-            type="reset">Reset</Button
+            type="reset">{m.common_ui_reset()}</Button
           >
-          <Button type="submit">Submit</Button>
+          <Button type="submit">{m.common_ui_submit()}</Button>
         </div>
       </form>
     </Card.Content>
@@ -239,6 +243,6 @@
 
   <!-- Data source indicator -->
   <p class="text-muted-foreground mt-4 text-center text-xs">
-    {countries.length} countries loaded (live geo reference data)
+    {m.webclient_design_countries_loaded({ count: String(countries.length) })}
   </p>
 </div>

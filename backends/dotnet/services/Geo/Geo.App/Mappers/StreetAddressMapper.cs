@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="StreetAddressMapper.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -8,6 +8,7 @@ namespace D2.Geo.App.Mappers;
 
 using D2.Geo.Domain.ValueObjects;
 using D2.Services.Protos.Geo.V1;
+using D2.Shared.Utilities.Extensions;
 
 /// <summary>
 /// Mapper for converting between <see cref="StreetAddress"/> and <see cref="StreetAddressDTO"/>.
@@ -32,12 +33,23 @@ public static class StreetAddressMapper
         /// </returns>
         public StreetAddressDTO ToDTO()
         {
-            return new StreetAddressDTO
+            var dto = new StreetAddressDTO
             {
                 Line1 = streetAddress.Line1,
-                Line2 = streetAddress.Line2 ?? string.Empty,
-                Line3 = streetAddress.Line3 ?? string.Empty,
             };
+
+            // Optional fields — only set when non-null to avoid proto CheckNotNull.
+            if (streetAddress.Line2 != null)
+            {
+                dto.Line2 = streetAddress.Line2;
+            }
+
+            if (streetAddress.Line3 != null)
+            {
+                dto.Line3 = streetAddress.Line3;
+            }
+
+            return dto;
         }
     }
 
@@ -61,8 +73,8 @@ public static class StreetAddressMapper
         {
             return StreetAddress.Create(
                 streetAddressDTO.Line1,
-                streetAddressDTO.Line2,
-                streetAddressDTO.Line3);
+                streetAddressDTO.Line2.ToNullIfEmpty(),
+                streetAddressDTO.Line3.ToNullIfEmpty());
         }
     }
 }

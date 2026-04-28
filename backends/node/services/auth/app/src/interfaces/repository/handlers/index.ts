@@ -33,6 +33,7 @@ export type {
   CreateOrgContactRecordOutput,
   ICreateOrgContactRecordHandler,
 } from "./c/create-org-contact-record.js";
+export { CREATE_ORG_CONTACT_RECORD_REDACTION } from "./c/create-org-contact-record.js";
 
 // --- Read (R) ---
 export type {
@@ -40,6 +41,19 @@ export type {
   CheckEmailAvailabilityOutput,
   ICheckEmailAvailabilityHandler,
 } from "./r/check-email-availability.js";
+
+export type {
+  CheckOrgExistsInput,
+  CheckOrgExistsOutput,
+  ICheckOrgExistsHandler,
+} from "./r/check-org-exists.js";
+
+export type {
+  CheckUsernameAvailableInput,
+  CheckUsernameAvailableOutput,
+  ICheckUsernameAvailableHandler,
+} from "./r/check-username-available.js";
+export { CHECK_USERNAME_AVAILABLE_REDACTION } from "./r/check-username-available.js";
 
 export type {
   FindSignInEventsByUserIdInput,
@@ -82,12 +96,14 @@ export type {
   FindOrgContactByIdOutput,
   IFindOrgContactByIdHandler,
 } from "./r/find-org-contact-by-id.js";
+export { FIND_ORG_CONTACT_BY_ID_REDACTION } from "./r/find-org-contact-by-id.js";
 
 export type {
   FindOrgContactsByOrgIdInput,
   FindOrgContactsByOrgIdOutput,
   IFindOrgContactsByOrgIdHandler,
 } from "./r/find-org-contacts-by-org-id.js";
+export { FIND_ORG_CONTACTS_BY_ORG_ID_REDACTION } from "./r/find-org-contacts-by-org-id.js";
 
 // --- Update (U) ---
 export type {
@@ -101,12 +117,133 @@ export type {
   UpdateOrgContactRecordOutput,
   IUpdateOrgContactRecordHandler,
 } from "./u/update-org-contact-record.js";
+export { UPDATE_ORG_CONTACT_RECORD_REDACTION } from "./u/update-org-contact-record.js";
+
+export type {
+  UpdateUserNameInput,
+  UpdateUserNameOutput,
+  IUpdateUserNameHandler,
+} from "./u/update-user-name.js";
+export { UPDATE_USER_NAME_REDACTION } from "./u/update-user-name.js";
+
+export type {
+  UpdateUserUsernameInput,
+  UpdateUserUsernameOutput,
+  IUpdateUserUsernameHandler,
+} from "./u/update-user-username.js";
+export { UPDATE_USER_USERNAME_REDACTION } from "./u/update-user-username.js";
 
 export type {
   UpdateSignInEventWhoIsIdInput,
   UpdateSignInEventWhoIsIdOutput,
   IUpdateSignInEventWhoIsIdHandler,
 } from "./u/update-sign-in-event-who-is-id.js";
+
+export type {
+  UpdateSessionWhoIsIdInput,
+  UpdateSessionWhoIsIdOutput,
+  IUpdateSessionWhoIsIdHandler,
+} from "./u/update-session-who-is-id.js";
+
+export type {
+  UpdateUserImageInput,
+  UpdateUserImageOutput,
+  IUpdateUserImageHandler,
+} from "./u/update-user-image.js";
+export { UPDATE_USER_IMAGE_REDACTION } from "./u/update-user-image.js";
+
+export type {
+  UpdateUserLocaleInput,
+  UpdateUserLocaleOutput,
+  IUpdateUserLocaleHandler,
+} from "./u/update-user-locale.js";
+
+export type {
+  UpdateUserTimezoneInput,
+  UpdateUserTimezoneOutput,
+  IUpdateUserTimezoneHandler,
+} from "./u/update-user-timezone.js";
+
+export type {
+  UpdateUserEmailInput,
+  UpdateUserEmailOutput,
+  IUpdateUserEmailHandler,
+} from "./u/update-user-email.js";
+export { UPDATE_USER_EMAIL_REDACTION } from "./u/update-user-email.js";
+
+export type {
+  UpdateUserPhoneInput,
+  UpdateUserPhoneOutput,
+  IUpdateUserPhoneHandler,
+} from "./u/update-user-phone.js";
+export { UPDATE_USER_PHONE_REDACTION } from "./u/update-user-phone.js";
+
+export type {
+  CheckPhoneAvailabilityInput,
+  CheckPhoneAvailabilityOutput,
+  ICheckPhoneAvailabilityHandler,
+} from "./r/check-phone-availability.js";
+
+export type {
+  GetUserByIdInput,
+  GetUserByIdOutput,
+  IGetUserByIdHandler,
+} from "./r/get-user-by-id.js";
+
+export type {
+  GetActiveSessionsByUserIdInput,
+  GetActiveSessionsByUserIdOutput,
+  IGetActiveSessionsByUserIdHandler,
+} from "./r/get-active-sessions-by-user-id.js";
+
+export type {
+  GetUserIdByIdentifierInput,
+  GetUserIdByIdentifierOutput,
+  IGetUserIdByIdentifierHandler,
+} from "./r/get-user-id-by-identifier.js";
+
+// --- User Deletion Repo Handlers ---
+export type {
+  UpdateUserStatusInput,
+  UpdateUserStatusOutput,
+  IUpdateUserStatusHandler,
+} from "./u/update-user-status.js";
+export { UPDATE_USER_STATUS_REDACTION } from "./u/update-user-status.js";
+
+export type {
+  GetDeletedUsersToPurgeInput,
+  GetDeletedUsersToPurgeOutput,
+  IGetDeletedUsersToPurgeHandler,
+} from "./r/get-deleted-users-to-purge.js";
+export { GET_DELETED_USERS_TO_PURGE_REDACTION } from "./r/get-deleted-users-to-purge.js";
+
+export type {
+  AnonymizeUserInput,
+  AnonymizeUserOutput,
+  IAnonymizeUserHandler,
+} from "./u/anonymize-user.js";
+export { ANONYMIZE_USER_REDACTION } from "./u/anonymize-user.js";
+
+export type {
+  CheckSoleOwnerOrgsInput,
+  CheckSoleOwnerOrgsOutput,
+  ICheckSoleOwnerOrgsHandler,
+} from "./r/check-sole-owner-orgs.js";
+export { CHECK_SOLE_OWNER_ORGS_REDACTION } from "./r/check-sole-owner-orgs.js";
+
+export type {
+  DeleteAllUserSessionsInput,
+  DeleteAllUserSessionsOutput,
+  IDeleteAllUserSessionsHandler,
+} from "./d/delete-all-user-sessions.js";
+export { DELETE_ALL_USER_SESSIONS_REDACTION } from "./d/delete-all-user-sessions.js";
+
+export type {
+  UpdateOrgLogoInput,
+  UpdateOrgLogoOutput,
+  IUpdateOrgLogoHandler,
+} from "./u/update-org-logo.js";
+export { UPDATE_ORG_LOGO_REDACTION } from "./u/update-org-logo.js";
 
 // --- Delete (D) ---
 export type {

@@ -65,4 +65,16 @@ This enables:
 - Consistent error structure with messages, input errors, and status codes
 - Trace ID propagation for debugging and observability
 
+## Proto `optional` Keyword
+
+65 fields across all proto definitions now use the `optional` keyword in proto3. This affects code generation:
+
+- **`HasField` property**: Grpc.Tools generates a `Has{FieldName}` boolean property (e.g., `HasErrorCode`, `HasTraceId`) that distinguishes "field was set" from "field has default value."
+- **Setters still call `CheckNotNull`**: Assigning `null` to an optional string field throws `ArgumentNullException`. Always guard with a conditional before assignment:
+  ```csharp
+  if (value is not null) dto.Field = value;
+  ```
+- **Domain model is source of truth**: Proto `optional` mirrors the domain model's nullability (`string?`, `bool?`). The proto schema does not introduce new nullability — it reflects what the domain already defines.
+- **Backward compatible**: Messages with optional fields are wire-compatible with consumers that were compiled before the `optional` keyword was added.
+
 **Note:** Generated code is produced automatically during build. Modify source .proto files to change contracts.

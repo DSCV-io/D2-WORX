@@ -39,6 +39,7 @@ export type {
   CurrencyDTO,
   LanguageDTO,
   LocaleDTO,
+  TimezoneDTO,
   GeopoliticalEntityDTO,
   CoordinatesDTO,
   StreetAddressDTO,
@@ -218,3 +219,65 @@ export {
   CommsJobServiceClient as CommsJobServiceClientCtor,
   CommsJobServiceService,
 } from "./generated/comms/v1/comms_jobs.js";
+
+// Files service — FileCallback (implemented by owning services, called by Files)
+export type {
+  CanAccessRequest,
+  CanAccessResponse,
+  FileProcessedRequest,
+  FileProcessedResponse,
+  FileCallbackClient,
+  FileCallbackServer,
+} from "./generated/files/v1/files.js";
+
+export {
+  FileCallbackClient as FileCallbackClientCtor,
+  FileCallbackService,
+} from "./generated/files/v1/files.js";
+
+// Files service — message Fns (encode/decode for roundtrip)
+export {
+  CanAccessRequest as CanAccessRequestFns,
+  CanAccessResponse as CanAccessResponseFns,
+  FileProcessedRequest as FileProcessedRequestFns,
+  FileProcessedResponse as FileProcessedResponseFns,
+} from "./generated/files/v1/files.js";
+
+// Files service — FilesService (inbound gRPC API)
+export type { FilesServiceClient, FilesServiceServer } from "./generated/files/v1/files_service.js";
+
+export {
+  FilesServiceClient as FilesServiceClientCtor,
+  FilesServiceService,
+} from "./generated/files/v1/files_service.js";
+
+// Files job service — FilesJobService (inbound gRPC API)
+export type {
+  FilesJobServiceClient,
+  FilesJobServiceServer,
+} from "./generated/files/v1/files_jobs.js";
+
+export {
+  FilesJobServiceClient as FilesJobServiceClientCtor,
+  FilesJobServiceService,
+} from "./generated/files/v1/files_jobs.js";
+
+// Realtime Gateway — general-purpose push gateway (channel-based routing)
+export type {
+  PushToChannelRequest,
+  RemoveFromChannelRequest,
+  PushResponse as RealtimePushResponse,
+  RealtimeGatewayClient,
+  RealtimeGatewayServer,
+} from "./generated/realtime/v1/realtime_gateway.js";
+
+export {
+  RealtimeGatewayClient as RealtimeGatewayClientCtor,
+  RealtimeGatewayService,
+} from "./generated/realtime/v1/realtime_gateway.js";
+
+export {
+  PushToChannelRequest as PushToChannelRequestFns,
+  RemoveFromChannelRequest as RemoveFromChannelRequestFns,
+  PushResponse as RealtimePushResponseFns,
+} from "./generated/realtime/v1/realtime_gateway.js";

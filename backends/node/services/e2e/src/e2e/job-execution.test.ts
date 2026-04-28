@@ -8,6 +8,7 @@ import { ServiceCollection, type ServiceProvider } from "@d2/di";
 import { HandlerContext, IHandlerContextKey, IRequestContextKey } from "@d2/handler";
 import { createLogger, ILoggerKey, type ILogger } from "@d2/logging";
 import { AcquireLock, ReleaseLock } from "@d2/cache-redis";
+import { DistributedCache } from "@d2/interfaces";
 import { generateUuidV7 } from "@d2/utilities";
 // Auth
 import {
@@ -26,8 +27,6 @@ import {
   RunInvitationCleanup,
   RunEmulationConsentCleanup,
   DEFAULT_AUTH_JOB_OPTIONS,
-  IAuthAcquireLockKey,
-  IAuthReleaseLockKey,
   IRunSessionPurgeKey,
   IRunSignInEventPurgeKey,
   IRunInvitationCleanupKey,
@@ -49,8 +48,6 @@ import {
   RunDeletedMessagePurge,
   RunDeliveryHistoryPurge,
   DEFAULT_COMMS_JOB_OPTIONS,
-  ICommsAcquireLockKey,
-  ICommsReleaseLockKey,
   IRunDeletedMessagePurgeKey,
   IRunDeliveryHistoryPurgeKey,
   IPurgeDeletedMessagesKey,
@@ -148,16 +145,22 @@ describe("E2E: Scheduled job execution (full DI → lock → purge → DB)", () 
       IHandlerContextKey,
       (sp) => new HandlerContext(sp.resolve(IRequestContextKey), sp.resolve(ILoggerKey)),
     );
-    authServices.addInstance(IAuthAcquireLockKey, new AcquireLock(redis, serviceContext));
-    authServices.addInstance(IAuthReleaseLockKey, new ReleaseLock(redis, serviceContext));
+    authServices.addInstance(
+      DistributedCache.IDistributedCacheAcquireLockKey,
+      new AcquireLock(redis, serviceContext),
+    );
+    authServices.addInstance(
+      DistributedCache.IDistributedCacheReleaseLockKey,
+      new ReleaseLock(redis, serviceContext),
+    );
     addAuthInfra(authServices, authDb);
     // Register only job CQRS handlers (avoids geo-client deps from addAuthApp)
     authServices.addTransient(
       IRunSessionPurgeKey,
       (sp) =>
         new RunSessionPurge(
-          sp.resolve(IAuthAcquireLockKey),
-          sp.resolve(IAuthReleaseLockKey),
+          sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+          sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
           sp.resolve(IPurgeExpiredSessionsKey),
           DEFAULT_AUTH_JOB_OPTIONS,
           sp.resolve(IHandlerContextKey),
@@ -167,8 +170,8 @@ describe("E2E: Scheduled job execution (full DI → lock → purge → DB)", () 
       IRunSignInEventPurgeKey,
       (sp) =>
         new RunSignInEventPurge(
-          sp.resolve(IAuthAcquireLockKey),
-          sp.resolve(IAuthReleaseLockKey),
+          sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+          sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
           sp.resolve(IPurgeSignInEventsKey),
           DEFAULT_AUTH_JOB_OPTIONS,
           sp.resolve(IHandlerContextKey),
@@ -178,8 +181,8 @@ describe("E2E: Scheduled job execution (full DI → lock → purge → DB)", () 
       IRunInvitationCleanupKey,
       (sp) =>
         new RunInvitationCleanup(
-          sp.resolve(IAuthAcquireLockKey),
-          sp.resolve(IAuthReleaseLockKey),
+          sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+          sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
           sp.resolve(IPurgeExpiredInvitationsKey),
           DEFAULT_AUTH_JOB_OPTIONS,
           sp.resolve(IHandlerContextKey),
@@ -189,8 +192,8 @@ describe("E2E: Scheduled job execution (full DI → lock → purge → DB)", () 
       IRunEmulationConsentCleanupKey,
       (sp) =>
         new RunEmulationConsentCleanup(
-          sp.resolve(IAuthAcquireLockKey),
-          sp.resolve(IAuthReleaseLockKey),
+          sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+          sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
           sp.resolve(IPurgeExpiredEmulationConsentsKey),
           DEFAULT_AUTH_JOB_OPTIONS,
           sp.resolve(IHandlerContextKey),
@@ -205,15 +208,21 @@ describe("E2E: Scheduled job execution (full DI → lock → purge → DB)", () 
       IHandlerContextKey,
       (sp) => new HandlerContext(sp.resolve(IRequestContextKey), sp.resolve(ILoggerKey)),
     );
-    commsServices.addInstance(ICommsAcquireLockKey, new AcquireLock(redis, serviceContext));
-    commsServices.addInstance(ICommsReleaseLockKey, new ReleaseLock(redis, serviceContext));
+    commsServices.addInstance(
+      DistributedCache.IDistributedCacheAcquireLockKey,
+      new AcquireLock(redis, serviceContext),
+    );
+    commsServices.addInstance(
+      DistributedCache.IDistributedCacheReleaseLockKey,
+      new ReleaseLock(redis, serviceContext),
+    );
     addCommsInfra(commsServices, commsDb);
     commsServices.addTransient(
       IRunDeletedMessagePurgeKey,
       (sp) =>
         new RunDeletedMessagePurge(
-          sp.resolve(ICommsAcquireLockKey),
-          sp.resolve(ICommsReleaseLockKey),
+          sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+          sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
           sp.resolve(IPurgeDeletedMessagesKey),
           DEFAULT_COMMS_JOB_OPTIONS,
           sp.resolve(IHandlerContextKey),
@@ -223,8 +232,8 @@ describe("E2E: Scheduled job execution (full DI → lock → purge → DB)", () 
       IRunDeliveryHistoryPurgeKey,
       (sp) =>
         new RunDeliveryHistoryPurge(
-          sp.resolve(ICommsAcquireLockKey),
-          sp.resolve(ICommsReleaseLockKey),
+          sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+          sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
           sp.resolve(IPurgeDeliveryHistoryKey),
           DEFAULT_COMMS_JOB_OPTIONS,
           sp.resolve(IHandlerContextKey),
@@ -450,18 +459,45 @@ describe("E2E: Scheduled job execution (full DI → lock → purge → DB)", () 
     // Old delivery request + attempts (> 365 days)
     const oldReqId = generateUuidV7();
     const recentReqId = generateUuidV7();
+    // delivery_request.message_id has a NOT NULL FK to message.id with
+    // ON DELETE CASCADE — must seed messages first.
+    const oldMsgId = generateUuidV7();
+    const recentMsgId = generateUuidV7();
+
+    await commsDb.insert(message).values([
+      {
+        id: oldMsgId,
+        senderService: "test",
+        title: "old",
+        content: "old",
+        plainTextContent: "old",
+        channels: ["email"],
+        createdAt: daysAgo(400),
+        updatedAt: daysAgo(400),
+      },
+      {
+        id: recentMsgId,
+        senderService: "test",
+        title: "recent",
+        content: "recent",
+        plainTextContent: "recent",
+        channels: ["email"],
+        createdAt: daysAgo(100),
+        updatedAt: daysAgo(100),
+      },
+    ]);
 
     await commsDb.insert(deliveryRequest).values([
       {
         id: oldReqId,
-        messageId: generateUuidV7(),
+        messageId: oldMsgId,
         correlationId: generateUuidV7(),
         recipientContactId: generateUuidV7(),
         createdAt: daysAgo(400), // older than 365-day retention
       },
       {
         id: recentReqId,
-        messageId: generateUuidV7(),
+        messageId: recentMsgId,
         correlationId: generateUuidV7(),
         recipientContactId: generateUuidV7(),
         createdAt: daysAgo(100), // within retention

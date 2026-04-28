@@ -114,7 +114,7 @@ public class RabbitMqRoundTripTests : IAsyncLifetime
                 var count = Interlocked.Increment(ref callCount);
                 if (count == 1)
                 {
-                    throw new InvalidOperationException("Transient failure");
+                    throw new TimeoutException("Transient failure");
                 }
 
                 secondCallTcs.TrySetResult(message);

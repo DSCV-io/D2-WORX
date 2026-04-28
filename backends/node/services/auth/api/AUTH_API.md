@@ -32,7 +32,6 @@ src/
   composition-root.ts       createApp() — DI wiring, BetterAuth, Hono pipeline
   geo/                      Geo client configuration (context keys, caching)
   middleware/
-    authorization.ts        requireOrg, requireOrgType, requireRole, requireStaff, requireAdmin
     cors.ts                 CORS middleware factory
     csrf.ts                 CSRF protection (Origin header validation)
     distributed-rate-limit.ts  Rate limiting middleware (Redis sliding window)
@@ -45,7 +44,9 @@ src/
     session.ts              BetterAuth session extraction (user + session on context)
     session-fingerprint.ts  Session-to-fingerprint binding (stolen token detection)
   routes/
+    account-routes.ts       Per-user account ops (name/username/locale/timezone/avatar/sessions/sign-in events/email+phone OTP/delete)
     auth-routes.ts          BetterAuth catch-all + throttled sign-in endpoints
+    check-email-routes.ts   Public pre-auth email availability check
     emulation-routes.ts     Emulation consent CRUD (POST, DELETE, GET)
     health.ts               Health check endpoint
     invitation-routes.ts    Org invitation with dual-path contact resolution
@@ -78,16 +79,16 @@ Returns `{ app, auth, grpcServer, shutdown }`.
 
 ### Global (all requests)
 
-| Order | Middleware              | Purpose                                                                 |
-| ----- | ----------------------- | ----------------------------------------------------------------------- |
-| 1     | CORS                    | Allows configured SvelteKit origin                                      |
-| 2     | Body limit              | 256 KB max (auth payloads are small JSON)                               |
-| 3     | Service key detection   | `X-Api-Key` → sets `IsTrustedService`. `require: true` → 401 if missing |
-| 4     | Request enrichment      | IP resolution, server fingerprint, WhoIs lookup                         |
-| 5     | Request context logging | Per-request child logger with network/auth bindings                     |
-| 6     | Ambient scope           | `AsyncLocalStorage.run()` — seeds per-request context for all handlers  |
-| 7     | Distributed rate limit  | Multi-dimensional sliding window (Redis, skipped for trusted services)  |
-| 8     | Error handler           | Catches unhandled errors, returns D2Result                              |
+| Order | Middleware              | Purpose                                                                                                                           |
+| ----- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | CORS                    | Allows configured SvelteKit origin                                                                                                |
+| 2     | Body limit              | 256 KB max (auth payloads are small JSON)                                                                                         |
+| 3     | Service key detection   | `X-Api-Key` → sets `IsTrustedService`. `require: true` → 401 if missing. Fail-closed at startup if `authApiKeys` mapping is empty |
+| 4     | Request enrichment      | IP resolution, server fingerprint, WhoIs lookup                                                                                   |
+| 5     | Request context logging | Per-request child logger with network/auth bindings                                                                               |
+| 6     | Ambient scope           | `AsyncLocalStorage.run()` — seeds per-request context for all handlers                                                            |
+| 7     | Distributed rate limit  | Multi-dimensional sliding window (Redis, skipped for trusted services)                                                            |
+| 8     | Error handler           | Catches unhandled errors, returns D2Result                                                                                        |
 
 ### Auth routes (`/api/auth/*`)
 
@@ -151,6 +152,29 @@ Sign-in throttle flow: extract identifier, check throttle (429 if blocked), forw
 | ------ | ------------------ | -------------------- | --------------------------------------------------- |
 | POST   | `/api/invitations` | requireOrg + officer | Create invitation with dual-path contact resolution |
 
+### Account (per-user, org-agnostic)
+
+All routes require an authenticated session (`session` middleware). `userId` is derived from the request context — never accepted from the request body (IDOR safe). Routes that mutate sensitive fields are atomically password-gated (`currentPassword` in the SAME request body as the new value).
+
+| Method | Path                                  | Auth    | Description                                                                                                              |
+| ------ | ------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
+| PATCH  | `/api/account/name`                   | session | Update real name (firstName + lastName) — SAGA via `UpdateUserRealName`                                                  |
+| PATCH  | `/api/account/username`               | session | Update username (+ displayUsername) — uniqueness 409                                                                     |
+| PATCH  | `/api/account/locale`                 | session | Update locale preference — SAGA via `UpdateUserLocale`                                                                   |
+| PATCH  | `/api/account/timezone`               | session | Update timezone preference — SAGA via `UpdateUserTimezone`                                                               |
+| DELETE | `/api/account/avatar`                 | session | Clear user image (`UpdateUserImage` with `clear: true`) + fire-and-forget invalidate-cache → push SignalR `user:updated` |
+| GET    | `/api/account/sessions`               | session | List active sessions enriched with Geo WhoIs + `isCurrent` flag                                                          |
+| POST   | `/api/account/sessions/revoke`        | session | Revoke one session by token — password-gated                                                                             |
+| POST   | `/api/account/sessions/revoke-others` | session | Revoke every other session — password-gated                                                                              |
+| POST   | `/api/account/change-password`        | session | BetterAuth-native change-password, atomic (current + new). Defaults to revoking other sessions; security email via hook  |
+| GET    | `/api/account/sign-in-events`         | session | Paginated sign-in event history (default 50, max 100)                                                                    |
+| POST   | `/api/account/email/request-change`   | session | Initiate email change — password-gated. Sends 15-min OTP to PENDING new email                                            |
+| POST   | `/api/account/email/verify-change`    | session | Verify OTP and apply email change (SAGA). Sends "your email was changed" notification to OLD email                       |
+| POST   | `/api/account/phone/request-change`   | session | Initiate phone change/add — password-gated. Sends 5-min SMS OTP                                                          |
+| POST   | `/api/account/phone/verify-change`    | session | Verify OTP and apply phone change (SAGA) — sets `phoneVerified=true`                                                     |
+| DELETE | `/api/account/phone`                  | session | Remove phone — password-gated, no OTP                                                                                    |
+| POST   | `/api/account/delete`                 | session | Self-service deletion. Returns `{ scheduledFor: ISO date }`. 401 wrong password, 409 sole owner of one or more orgs      |
+
 Invitation flow: validate input, look up user by email, create BetterAuth invitation, create Geo contact for non-existing invitees (contextKey=auth_org_invitation), resolve recipient contactId (via ext-keys for existing users), publish notification via comms-client.
 
 ## gRPC Server (Scheduled Jobs)
@@ -176,13 +200,17 @@ When `authApiKeys` is configured, the gRPC server wraps all handlers with `withA
 
 ## Authorization Middleware
 
-| Middleware         | Purpose                                                  |
-| ------------------ | -------------------------------------------------------- |
-| `requireOrg()`     | Active org required (orgId + valid orgType + valid role) |
-| `requireOrgType()` | Session orgType must be in allowed set                   |
-| `requireRole()`    | Session role must meet minimum hierarchy level           |
-| `requireStaff()`   | Shorthand for `requireOrgType("admin", "support")`       |
-| `requireAdmin()`   | Shorthand for `requireOrgType("admin")`                  |
+Policy middleware lives in `@d2/auth-policy` (`backends/node/shared/implementations/middleware/auth-policy/default/`). `auth-api`'s `index.ts` re-exports them for backward compatibility.
+
+| Middleware                | Purpose                                                     |
+| ------------------------- | ----------------------------------------------------------- |
+| `requireAuth()`           | Authenticated request required (session or trusted service) |
+| `requireTrustedService()` | Trusted service (`X-Api-Key`) required                      |
+| `requireOrg()`            | Active org required (orgId + valid orgType + valid role)    |
+| `requireOrgType()`        | Session orgType must be in allowed set                      |
+| `requireRole()`           | Session role must meet minimum hierarchy level              |
+| `requireStaff()`          | Shorthand for `requireOrgType("admin", "support")`          |
+| `requireAdmin()`          | Shorthand for `requireOrgType("admin")`                     |
 
 ## Configuration
 
@@ -217,32 +245,33 @@ Job options are only parsed when `AUTH_APP__SIGNINEVENTRETENTIONDAYS` is set. Wh
 
 ## Dependencies
 
-| Package                  | Purpose                                                |
-| ------------------------ | ------------------------------------------------------ |
-| `@d2/auth-app`           | CQRS handlers, service keys                            |
-| `@d2/auth-domain`        | Constants, enums, session fields                       |
-| `@d2/auth-infra`         | BetterAuth factory, config, migrations, throttle       |
-| `@d2/cache-memory`       | Local caches (WhoIs, throttle, contacts, HIBP)         |
-| `@d2/cache-redis`        | Redis handlers (session storage, throttle, rate limit) |
-| `@d2/comms-client`       | `INotifyKey` for sending notifications via comms       |
-| `@d2/di`                 | `ServiceCollection`, `ServiceProvider`                 |
-| `@d2/geo-client`         | Geo contact CRUD handlers + FindWhoIs                  |
-| `@d2/handler`            | `HandlerContext`, `IHandlerContextKey`                 |
-| `@d2/logging`            | Pino logger creation                                   |
-| `@d2/messaging`          | RabbitMQ `MessageBus` + `IMessagePublisher`            |
-| `@d2/ratelimit`          | Distributed rate limit check                           |
-| `@d2/request-enrichment` | IP/fingerprint/WhoIs middleware (imported indirectly)  |
-| `@d2/result`             | `D2Result`, `HttpStatusCode`                           |
-| `@d2/protos`             | `AuthJobServiceService` definition for gRPC server     |
-| `@d2/result-extensions`  | `d2ResultToProto()` for gRPC response conversion       |
-| `@d2/service-defaults`   | `setupTelemetry()`, `withApiKeyAuth`, `createRpcScope` |
-| `@d2/utilities`          | General utilities                                      |
-| `hono`                   | HTTP framework                                         |
-| `@grpc/grpc-js`          | gRPC server for scheduled job RPCs                     |
-| `@hono/node-server`      | Node.js adapter for Hono                               |
-| `ioredis`                | Redis client (direct for session fingerprint binding)  |
-| `drizzle-orm`            | Database queries in invitation routes                  |
-| `pg`                     | PostgreSQL connection pool                             |
+| Package                  | Purpose                                                               |
+| ------------------------ | --------------------------------------------------------------------- |
+| `@d2/auth-app`           | CQRS handlers, service keys                                           |
+| `@d2/auth-domain`        | Constants, enums, session fields                                      |
+| `@d2/auth-infra`         | BetterAuth factory, config, migrations, throttle                      |
+| `@d2/auth-policy`        | Authorization middleware (requireAuth, requireOrg, requireRole, etc.) |
+| `@d2/cache-memory`       | Local caches (WhoIs, throttle, contacts, HIBP)                        |
+| `@d2/cache-redis`        | Redis handlers (session storage, throttle, rate limit)                |
+| `@d2/comms-client`       | `INotifyKey` for sending notifications via comms                      |
+| `@d2/di`                 | `ServiceCollection`, `ServiceProvider`                                |
+| `@d2/geo-client`         | Geo contact CRUD handlers + FindWhoIs                                 |
+| `@d2/handler`            | `HandlerContext`, `IHandlerContextKey`                                |
+| `@d2/logging`            | Pino logger creation                                                  |
+| `@d2/messaging`          | RabbitMQ `MessageBus` + `IMessagePublisher`                           |
+| `@d2/ratelimit`          | Distributed rate limit check                                          |
+| `@d2/request-enrichment` | IP/fingerprint/WhoIs middleware (imported indirectly)                 |
+| `@d2/result`             | `D2Result`, `HttpStatusCode`                                          |
+| `@d2/protos`             | `AuthJobServiceService` definition for gRPC server                    |
+| `@d2/result-extensions`  | `d2ResultToProto()` for gRPC response conversion                      |
+| `@d2/service-defaults`   | `setupTelemetry()`, `withApiKeyAuth`, `createRpcScope`                |
+| `@d2/utilities`          | General utilities                                                     |
+| `hono`                   | HTTP framework                                                        |
+| `@grpc/grpc-js`          | gRPC server for scheduled job RPCs                                    |
+| `@hono/node-server`      | Node.js adapter for Hono                                              |
+| `ioredis`                | Redis client (direct for session fingerprint binding)                 |
+| `drizzle-orm`            | Database queries in invitation routes                                 |
+| `pg`                     | PostgreSQL connection pool                                            |
 
 ## Tests
 

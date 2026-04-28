@@ -1,6 +1,7 @@
 import { Connection, ConsumerStatus } from "rabbitmq-client";
 import type {
   MessageBusOptions,
+  MessageBusLogger,
   ConsumerConfig,
   PublisherConfig,
   PublishTarget,
@@ -12,6 +13,11 @@ import type {
 } from "./types.js";
 import { ConsumerResult } from "./types.js";
 
+const CONSOLE_FALLBACK: MessageBusLogger = {
+  warn: (msg, ...args) => console.warn(`[MessageBus] ${msg}`, ...args),
+  error: (msg, ...args) => console.error(`[MessageBus] ${msg}`, ...args),
+};
+
 /**
  * Thin wrapper around rabbitmq-client providing consumer and publisher abstractions.
  * Replaces MassTransit for both inbound (consume) and outbound (publish) messaging.
@@ -20,8 +26,10 @@ import { ConsumerResult } from "./types.js";
  */
 export class MessageBus {
   private readonly connection: Connection;
+  private readonly logger: MessageBusLogger;
 
   constructor(options: MessageBusOptions) {
+    this.logger = options.logger ?? CONSOLE_FALLBACK;
     this.connection = new Connection({
       url: options.url,
       connectionName: options.connectionName,
@@ -53,7 +61,9 @@ export class MessageBus {
     );
 
     // Prevent unhandled rejection — handler throws are expected (NACK path).
-    consumer.on("error", () => {});
+    consumer.on("error", (err) => {
+      this.logger.error(`Consumer error on queue "${config.queue}"`, err);
+    });
 
     return {
       ready: new Promise<void>((resolve) => consumer.on("ready", resolve)),
@@ -99,7 +109,9 @@ export class MessageBus {
     );
 
     // Prevent unhandled rejection — handler throws are expected (DROP path with requeue=false).
-    consumer.on("error", () => {});
+    consumer.on("error", (err) => {
+      this.logger.error(`Enriched consumer error on queue "${config.queue}"`, err);
+    });
 
     return {
       ready: new Promise<void>((resolve) => consumer.on("ready", resolve)),

@@ -42,7 +42,7 @@ const config = defineConfig("auth-service", {
 let messageBus: MessageBus | undefined;
 let publisher: IMessagePublisher | undefined;
 if (config.rabbitMqUrl) {
-  messageBus = new MessageBus({ url: config.rabbitMqUrl, connectionName: "auth-service" });
+  messageBus = new MessageBus({ url: config.rabbitMqUrl, connectionName: "auth-service", logger });
   await messageBus.waitForConnection();
   publisher = messageBus.createPublisher();
   logger.info("RabbitMQ connected");

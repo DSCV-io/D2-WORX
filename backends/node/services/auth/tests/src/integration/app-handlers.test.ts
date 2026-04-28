@@ -1,18 +1,20 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer } from "better-auth/plugins/bearer";
 import { organization } from "better-auth/plugins/organization";
 import { username } from "better-auth/plugins/username";
 import { generateUuidV7 } from "@d2/utilities";
+import { D2Result } from "@d2/result";
+import type { Complex } from "@d2/geo-client";
 import { generateId, ensureUsername } from "@d2/auth-infra";
 import { HandlerContext, type IRequestContext } from "@d2/handler";
 import { createLogger } from "@d2/logging";
 import * as CacheMemory from "@d2/cache-memory";
-import type { SignInEvent } from "@d2/auth-domain";
 import {
   createSignInEventRepoHandlers,
   createEmulationConsentRepoHandlers,
+  CheckOrgExists,
   user as userTable,
   session as sessionTable,
   account as accountTable,
@@ -59,7 +61,11 @@ describe("Sign-in event handlers (integration)", () => {
   let handlers: ReturnType<typeof createSignInEventHandlers>;
   let cacheStore: CacheMemory.MemoryCacheStore;
 
-  type CachedEvents = { events: SignInEvent[]; total: number; latestDate: string | null };
+  type CachedEvents = {
+    events: import("@d2/auth-app").AuthQueries.EnrichedSignInEvent[];
+    total: number;
+    latestDate?: string;
+  };
 
   beforeAll(async () => {
     await startPostgres();
@@ -67,7 +73,13 @@ describe("Sign-in event handlers (integration)", () => {
     const repo = createSignInEventRepoHandlers(getDb(), ctx);
 
     cacheStore = new CacheMemory.MemoryCacheStore();
-    handlers = createSignInEventHandlers(repo, ctx, {
+    // No-op WhoIs resolver: integration tests for the cache/pagination behavior
+    // don't need real Geo lookups. WhoIs hydration is itself fail-open.
+    const noopFindWhoIs: Complex.IFindWhoIsHandler = {
+      handleAsync: vi.fn().mockResolvedValue(D2Result.ok({ data: { whoIs: undefined } })),
+      redaction: { inputFields: ["ipAddress"], suppressOutput: true },
+    } as unknown as Complex.IFindWhoIsHandler;
+    handlers = createSignInEventHandlers(repo, noopFindWhoIs, ctx, {
       get: new CacheMemory.Get<CachedEvents>(cacheStore, ctx),
       set: new CacheMemory.Set<CachedEvents>(cacheStore, ctx),
     });
@@ -96,10 +108,10 @@ describe("Sign-in event handlers (integration)", () => {
     const getResult = await handlers.getByUser.handleAsync({ userId });
     expect(getResult.success).toBe(true);
     expect(getResult.data!.events).toHaveLength(1);
-    expect(getResult.data!.events[0].userId).toBe(userId);
-    expect(getResult.data!.events[0].ipAddress).toBe("10.0.0.1");
-    expect(getResult.data!.events[0].userAgent).toBe("TestBrowser/1.0");
-    expect(getResult.data!.events[0].successful).toBe(true);
+    expect(getResult.data!.events[0].event.userId).toBe(userId);
+    expect(getResult.data!.events[0].event.ipAddress).toBe("10.0.0.1");
+    expect(getResult.data!.events[0].event.userAgent).toBe("TestBrowser/1.0");
+    expect(getResult.data!.events[0].event.successful).toBe(true);
     expect(getResult.data!.total).toBe(1);
   });
 
@@ -122,8 +134,8 @@ describe("Sign-in event handlers (integration)", () => {
 
     // Newest first
     for (let i = 0; i < events.length - 1; i++) {
-      expect(events[i].createdAt.getTime()).toBeGreaterThanOrEqual(
-        events[i + 1].createdAt.getTime(),
+      expect(events[i].event.createdAt.getTime()).toBeGreaterThanOrEqual(
+        events[i + 1].event.createdAt.getTime(),
       );
     }
   });
@@ -159,7 +171,7 @@ describe("Sign-in event handlers (integration)", () => {
 
     expect(page1.data!.events).toHaveLength(2);
     expect(page2.data!.events).toHaveLength(2);
-    expect(page1.data!.events[0].id).not.toBe(page2.data!.events[0].id);
+    expect(page1.data!.events[0].event.id).not.toBe(page2.data!.events[0].event.id);
   });
 
   it("should serve second call from memory cache (same data)", async () => {
@@ -177,7 +189,7 @@ describe("Sign-in event handlers (integration)", () => {
     const second = await handlers.getByUser.handleAsync({ userId });
     expect(second.success).toBe(true);
     expect(second.data!.events).toHaveLength(1);
-    expect(second.data!.events[0].id).toBe(first.data!.events[0].id);
+    expect(second.data!.events[0].event.id).toBe(first.data!.events[0].event.id);
   });
 
   it("should invalidate cache when new event is recorded", async () => {
@@ -259,13 +271,7 @@ describe("Emulation consent handlers (integration)", () => {
       ],
     });
 
-    // checkOrgExists: query real DB
-    async function checkOrgExists(orgId: string): Promise<boolean> {
-      const result = await getPool().query("SELECT 1 FROM organization WHERE id = $1 LIMIT 1", [
-        orgId,
-      ]);
-      return result.rows.length > 0;
-    }
+    const checkOrgExists = new CheckOrgExists(getDb(), ctx);
 
     handlers = createEmulationConsentHandlers(repo, ctx, checkOrgExists);
   }, 120_000);

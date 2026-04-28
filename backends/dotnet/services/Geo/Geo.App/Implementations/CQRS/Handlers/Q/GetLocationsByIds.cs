@@ -117,36 +117,36 @@ public partial class GetLocationsByIds : BaseHandler<GetLocationsByIds, I, O>, H
         {
             // If NO locations were found, return what we have.
             case ErrorCodes.NOT_FOUND:
-            {
-                // If we found some locations in cache, return [fail, SOME found].
-                if (locations.Count > 0)
                 {
-                    // NOTE: Because the DB returned NOT_FOUND, that means the ones found in
-                    // the cache were already present and do not need to be cached again.
-                    return SomeFound(locations);
-                }
+                    // If we found some locations in cache, return [fail, SOME found].
+                    if (locations.Count > 0)
+                    {
+                        // NOTE: Because the DB returned NOT_FOUND, that means the ones found in
+                        // the cache were already present and do not need to be cached again.
+                        return SomeFound(locations);
+                    }
 
-                // Otherwise, return (fail, NOT found).
-                return D2Result<O?>.NotFound();
-            }
+                    // Otherwise, return (fail, NOT found).
+                    return D2Result<O?>.NotFound();
+                }
 
             // If SOME locations were found, add to list, cache and return [fail, SOME found].
             case ErrorCodes.SOME_FOUND:
-            {
-                foreach (var loc in repoOutput?.Locations ?? [])
                 {
-                    locations[loc.Key] = loc.Value;
-                }
+                    foreach (var loc in repoOutput?.Locations ?? [])
+                    {
+                        locations[loc.Key] = loc.Value;
+                    }
 
-                await SetInCacheAsync(repoOutput!.Locations, ct);
-                return SomeFound(locations);
-            }
+                    await SetInCacheAsync(repoOutput!.Locations, ct);
+                    return SomeFound(locations);
+                }
 
             // For other errors, bubble up the failure.
             default:
-            {
-                return D2Result<O?>.BubbleFail(repoR);
-            }
+                {
+                    return D2Result<O?>.BubbleFail(repoR);
+                }
         }
     }
 

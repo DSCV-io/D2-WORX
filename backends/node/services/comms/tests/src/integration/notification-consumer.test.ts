@@ -90,7 +90,7 @@ describe("NotificationConsumer (integration)", () => {
       title: "Test Notification",
       content: "# Hello\nThis is a test.",
       plaintext: "Hello, this is a test.",
-      sensitive: true,
+      channels: ["email"],
       correlationId: "corr-123",
       senderService: "auth",
       ...overrides,
@@ -139,7 +139,7 @@ describe("NotificationConsumer (integration)", () => {
     expect(input.title).toBe("Test Notification");
     expect(input.content).toBe("# Hello\nThis is a test.");
     expect(input.plainTextContent).toBe("Hello, this is a test.");
-    expect(input.sensitive).toBe(true);
+    expect(input.channels).toEqual(["email"]);
     expect(input.correlationId).toBe("corr-123");
     expect(input.senderService).toBe("auth");
   });

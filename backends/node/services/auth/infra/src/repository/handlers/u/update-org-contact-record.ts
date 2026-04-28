@@ -1,11 +1,12 @@
 import { eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { BaseHandler, type IHandlerContext } from "@d2/handler";
+import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handler";
 import { D2Result } from "@d2/result";
-import type {
-  UpdateOrgContactRecordInput as I,
-  UpdateOrgContactRecordOutput as O,
-  IUpdateOrgContactRecordHandler,
+import {
+  UPDATE_ORG_CONTACT_RECORD_REDACTION,
+  type UpdateOrgContactRecordInput as I,
+  type UpdateOrgContactRecordOutput as O,
+  type IUpdateOrgContactRecordHandler,
 } from "@d2/auth-app";
 import { orgContact } from "../../schema/custom-tables.js";
 
@@ -18,6 +19,10 @@ export class UpdateOrgContactRecord
   constructor(db: NodePgDatabase, context: IHandlerContext) {
     super(context);
     this.db = db;
+  }
+
+  override get redaction(): RedactionSpec {
+    return UPDATE_ORG_CONTACT_RECORD_REDACTION;
   }
 
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {

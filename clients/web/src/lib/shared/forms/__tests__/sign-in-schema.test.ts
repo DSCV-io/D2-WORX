@@ -66,7 +66,7 @@ describe("createSignInSchema", () => {
     if (!result.success) {
       const issue = result.error.issues.find((i) => i.path[0] === "password");
       expect(issue).toBeDefined();
-      expect(issue?.message).toBe("Password is required");
+      expect(issue?.message).toBe("Required");
     }
   });
 

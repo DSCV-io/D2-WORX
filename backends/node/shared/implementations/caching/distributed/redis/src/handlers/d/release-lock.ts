@@ -31,8 +31,8 @@ export class ReleaseLock
     try {
       const result = await this.redis.eval(_RELEASE_LOCK_SCRIPT, 1, input.key, input.lockId);
       return D2Result.ok({ data: { released: result === 1 } });
-    } catch {
-      return redisErrorResult();
+    } catch (err: unknown) {
+      return redisErrorResult(err);
     }
   }
 }

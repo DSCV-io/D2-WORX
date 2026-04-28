@@ -6,6 +6,7 @@ import { createEmulationConsent, canEmulate, ORG_TYPES } from "@d2/auth-domain";
 import type {
   ICreateEmulationConsentRecordHandler,
   IFindActiveConsentByUserIdAndOrgHandler,
+  ICheckOrgExistsHandler,
 } from "../../../../interfaces/repository/handlers/index.js";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
 
@@ -40,13 +41,13 @@ export class CreateEmulationConsent
 {
   private readonly createRecord: ICreateEmulationConsentRecordHandler;
   private readonly findActiveByUserIdAndOrg: IFindActiveConsentByUserIdAndOrgHandler;
-  private readonly checkOrgExists: (orgId: string) => Promise<boolean>;
+  private readonly checkOrgExists: ICheckOrgExistsHandler;
 
   constructor(
     createRecord: ICreateEmulationConsentRecordHandler,
     findActiveByUserIdAndOrg: IFindActiveConsentByUserIdAndOrgHandler,
     context: IHandlerContext,
-    checkOrgExists: (orgId: string) => Promise<boolean>,
+    checkOrgExists: ICheckOrgExistsHandler,
   ) {
     super(context);
     this.createRecord = createRecord;
@@ -65,8 +66,9 @@ export class CreateEmulationConsent
     }
 
     // Verify target org exists
-    const orgExists = await this.checkOrgExists(input.grantedToOrgId);
-    if (!orgExists) {
+    const orgResult = await this.checkOrgExists.handleAsync({ orgId: input.grantedToOrgId });
+    if (!orgResult.success) return D2Result.bubbleFail(orgResult);
+    if (!orgResult.data?.exists) {
       return D2Result.notFound();
     }
 

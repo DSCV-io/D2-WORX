@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="ICommands.SetInMem.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>

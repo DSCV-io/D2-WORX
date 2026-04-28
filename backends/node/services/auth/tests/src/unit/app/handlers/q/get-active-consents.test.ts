@@ -35,7 +35,7 @@ function createConsent(id: string): EmulationConsent {
     userId: VALID_USER_ID,
     grantedToOrgId: "abcdef01-2345-6789-abcd-ef0123456789",
     expiresAt: new Date(Date.now() + 86_400_000),
-    revokedAt: null,
+    revokedAt: undefined,
     createdAt: new Date("2026-02-01"),
   };
 }

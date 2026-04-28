@@ -94,7 +94,7 @@ public class UpdateTests
 
         // Assert
         result.Success.Should().BeFalse();
-        result.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
     }
 
     /// <summary>

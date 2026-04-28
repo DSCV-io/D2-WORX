@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="GeoDbContext.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -62,6 +62,11 @@ public class GeoDbContext : DbContext
     public DbSet<Locale> Locales { get; set; } = null!;
 
     /// <summary>
+    /// Gets or sets the Timezones DbSet.
+    /// </summary>
+    public DbSet<Timezone> Timezones { get; set; } = null!;
+
+    /// <summary>
     /// Gets or sets the ReferenceDataVersions DbSet.
     /// </summary>
     public DbSet<ReferenceDataVersion> ReferenceDataVersions { get; set; } = null!;
@@ -104,6 +109,7 @@ public class GeoDbContext : DbContext
         modelBuilder.SeedGeopoliticalEntities();
         modelBuilder.SeedCountryGeopoliticalEntities();
         modelBuilder.SeedLocales();
+        modelBuilder.SeedTimezones();
         modelBuilder.SeedSubdivisions();
     }
 }

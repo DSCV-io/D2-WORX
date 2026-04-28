@@ -49,7 +49,7 @@ describe("RecipientResolver", () => {
     expect(result.errorCode).toBe("NOT_FOUND");
   });
 
-  it("should return empty when contact found but not in result map", async () => {
+  it("should return notFound when contact found but not in result map", async () => {
     // Edge case: geo returns ok with empty map (e.g. empty IDs were requested)
     const geoIds = {
       handleAsync: vi.fn().mockResolvedValue(D2Result.ok({ data: { data: new Map() } })),
@@ -58,9 +58,8 @@ describe("RecipientResolver", () => {
     const resolver = new RecipientResolver(geoIds as any, createMockContext());
     const result = await resolver.handleAsync({ contactId: CONTACT_ID });
 
-    expect(result.success).toBe(true);
-    expect(result.data!.email).toBeUndefined();
-    expect(result.data!.phone).toBeUndefined();
+    expect(result.success).toBe(false);
+    expect(result.errorCode).toBe("NOT_FOUND");
   });
 
   it("should propagate geo failure via bubbleFail", async () => {

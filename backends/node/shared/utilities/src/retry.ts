@@ -147,6 +147,10 @@ function calculateDelay(
 }
 
 async function defaultDelay(ms: number, signal?: AbortSignal): Promise<void> {
+  if (signal?.aborted) {
+    return Promise.reject(signal.reason);
+  }
+
   return new Promise((resolve, reject) => {
     const onAbort = () => {
       clearTimeout(timer);

@@ -20,6 +20,12 @@ service CommsService {
   // Phase 1: Delivery Engine
   rpc GetChannelPreference(GetChannelPreferenceRequest) returns (GetChannelPreferenceResponse);
   rpc SetChannelPreference(SetChannelPreferenceRequest) returns (SetChannelPreferenceResponse);
+  // User-centric variants — caller passes ext-key (context_key + related_entity_id);
+  // comms internally resolves the contact id via the Geo client (memory-cached,
+  // refreshed via cross-process eviction events). Used by the REST gateway for
+  // browser-initiated user preferences without exposing contact_id externally.
+  rpc GetUserChannelPreference(GetUserChannelPreferenceRequest) returns (GetUserChannelPreferenceResponse);
+  rpc SetUserChannelPreference(SetUserChannelPreferenceRequest) returns (SetUserChannelPreferenceResponse);
   // GetTemplate and UpsertTemplate removed — templates dropped from architecture.
   rpc GetDeliveryStatus(GetDeliveryStatusRequest) returns (GetDeliveryStatusResponse);
 
@@ -75,7 +81,7 @@ message DeliveryRequestDTO {
   optional string callback_topic = 8;
   reserved 4, 6, 7; // recipient_user_id, channels, template_name
   google.protobuf.Timestamp created_at = 9;
-  google.protobuf.Timestamp processed_at = 10;
+  optional google.protobuf.Timestamp processed_at = 10;
 }
 
 message DeliveryAttemptDTO {
@@ -88,18 +94,18 @@ message DeliveryAttemptDTO {
   optional string error = 7;                // set on failure
   int32 attempt_number = 8;
   google.protobuf.Timestamp created_at = 9;
-  google.protobuf.Timestamp next_retry_at = 10;
+  optional google.protobuf.Timestamp next_retry_at = 10;
 }
 
 message ThreadDTO {
   string id = 1;
   string type = 2;                  // "chat" | "support" | "forum" | "system"
   string state = 3;                 // "active" | "archived" | "closed"
-  string title = 4;
-  string slug = 5;
+  optional string title = 4;
+  optional string slug = 5;
   string notification_policy = 6;   // "all_messages" | "mentions_only" | "none"
-  string org_id = 7;
-  string created_by_user_id = 8;
+  optional string org_id = 7;
+  optional string created_by_user_id = 8;
   google.protobuf.Timestamp created_at = 9;
   google.protobuf.Timestamp updated_at = 10;
 }
@@ -115,12 +121,12 @@ message MessageDTO {
   string content = 8;
   string plain_text_content = 9;
   string content_format = 10;              // "markdown" | "plain" | "html"
-  bool sensitive = 11;
+  repeated string channels = 11;              // Explicit channel override (empty = resolve from preferences)
   string urgency = 12;                     // "normal" | "important" | "urgent"
   optional string related_entity_id = 13;
   optional string related_entity_type = 14;
-  google.protobuf.Timestamp edited_at = 15;
-  google.protobuf.Timestamp deleted_at = 16;
+  optional google.protobuf.Timestamp edited_at = 15;
+  optional google.protobuf.Timestamp deleted_at = 16;
   google.protobuf.Timestamp created_at = 17;
   google.protobuf.Timestamp updated_at = 18;
 }
@@ -151,9 +157,9 @@ message ParticipantDTO {
   optional string contact_id = 4;
   string role = 5;                  // "observer" | "participant" | "moderator" | "creator"
   bool notifications_muted = 6;
-  google.protobuf.Timestamp last_read_at = 7;
+  optional google.protobuf.Timestamp last_read_at = 7;
   google.protobuf.Timestamp joined_at = 8;
-  google.protobuf.Timestamp left_at = 9;
+  optional google.protobuf.Timestamp left_at = 9;
 }
 
 // ****************************************
@@ -182,6 +188,35 @@ message SetChannelPreferenceRequest {
 }
 
 message SetChannelPreferenceResponse {
+  d2.common.v1.D2ResultProto result = 1;
+  ChannelPreferenceDTO data = 2;
+}
+
+// **************************************************
+// ***** Phase 1: User-centric channel prefs ********
+// **************************************************
+// These wrap the contact-id variants above and resolve the contact via Geo
+// from the (context_key, related_entity_id) tuple. Optional booleans = leave
+// unchanged on Set; null/missing = unset on Get.
+
+message GetUserChannelPreferenceRequest {
+  string context_key = 1;
+  string related_entity_id = 2;
+}
+
+message GetUserChannelPreferenceResponse {
+  d2.common.v1.D2ResultProto result = 1;
+  ChannelPreferenceDTO data = 2;
+}
+
+message SetUserChannelPreferenceRequest {
+  string context_key = 1;
+  string related_entity_id = 2;
+  optional bool email_enabled = 3;
+  optional bool sms_enabled = 4;
+}
+
+message SetUserChannelPreferenceResponse {
   d2.common.v1.D2ResultProto result = 1;
   ChannelPreferenceDTO data = 2;
 }
@@ -239,11 +274,11 @@ message MarkNotificationsReadResponse {
 
 message CreateThreadRequest {
   string type = 1;
-  string title = 2;
-  string slug = 3;
-  string notification_policy = 4;
-  string org_id = 5;
-  string created_by_user_id = 6;
+  optional string title = 2;
+  optional string slug = 3;
+  optional string notification_policy = 4;
+  optional string org_id = 5;
+  optional string created_by_user_id = 6;
 }
 
 message CreateThreadResponse {
@@ -271,7 +306,7 @@ message GetThreadResponse {
 message GetThreadsRequest {
   string org_id = 1;
   string user_id = 2;
-  string type = 3;
+  optional string type = 3;
   PaginationRequest pagination = 4;
 }
 
@@ -378,8 +413,8 @@ message RemoveReactionResponse {
 
 message AddParticipantRequest {
   string thread_id = 1;
-  string user_id = 2;
-  string contact_id = 3;
+  optional string user_id = 2;
+  optional string contact_id = 3;
   string role = 4;
 }
 

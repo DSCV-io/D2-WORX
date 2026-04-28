@@ -6,6 +6,7 @@ import { CreateEmulationConsent } from "@d2/auth-app";
 import type {
   ICreateEmulationConsentRecordHandler,
   IFindActiveConsentByUserIdAndOrgHandler,
+  ICheckOrgExistsHandler,
 } from "@d2/auth-app";
 import type { EmulationConsent } from "@d2/auth-domain";
 
@@ -33,25 +34,31 @@ function createMockCreateRecord() {
 
 function createMockFindActiveByUserIdAndOrg() {
   return {
-    handleAsync: vi.fn().mockResolvedValue(D2Result.ok({ data: { consent: null } })),
+    handleAsync: vi.fn().mockResolvedValue(D2Result.ok({ data: { consent: undefined } })),
+  };
+}
+
+function createMockCheckOrgExists() {
+  return {
+    handleAsync: vi.fn().mockResolvedValue(D2Result.ok({ data: { exists: true } })),
   };
 }
 
 describe("CreateEmulationConsent", () => {
   let createRecord: ReturnType<typeof createMockCreateRecord>;
   let findActiveByUserIdAndOrg: ReturnType<typeof createMockFindActiveByUserIdAndOrg>;
+  let checkOrgExists: ReturnType<typeof createMockCheckOrgExists>;
   let handler: CreateEmulationConsent;
-  let checkOrgExists: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     createRecord = createMockCreateRecord();
     findActiveByUserIdAndOrg = createMockFindActiveByUserIdAndOrg();
-    checkOrgExists = vi.fn().mockResolvedValue(true);
+    checkOrgExists = createMockCheckOrgExists();
     handler = new CreateEmulationConsent(
       createRecord as unknown as ICreateEmulationConsentRecordHandler,
       findActiveByUserIdAndOrg as unknown as IFindActiveConsentByUserIdAndOrgHandler,
       createTestContext(),
-      checkOrgExists,
+      checkOrgExists as unknown as ICheckOrgExistsHandler,
     );
   });
 
@@ -72,7 +79,7 @@ describe("CreateEmulationConsent", () => {
     expect(result.data?.consent).toBeDefined();
     expect(result.data?.consent.userId).toBe(VALID_USER_ID);
     expect(result.data?.consent.grantedToOrgId).toBe(VALID_ORG_ID);
-    expect(result.data?.consent.revokedAt).toBeNull();
+    expect(result.data?.consent.revokedAt).toBeUndefined();
     expect(createRecord.handleAsync).toHaveBeenCalledOnce();
   });
 
@@ -207,7 +214,7 @@ describe("CreateEmulationConsent", () => {
   // -----------------------------------------------------------------------
 
   it("should return NotFound when target organization does not exist", async () => {
-    checkOrgExists.mockResolvedValue(false);
+    checkOrgExists.handleAsync.mockResolvedValue(D2Result.ok({ data: { exists: false } }));
 
     const futureDate = new Date(Date.now() + 86_400_000);
     const result = await handler.handleAsync({
@@ -220,7 +227,7 @@ describe("CreateEmulationConsent", () => {
     expect(result.success).toBe(false);
     expect(result.statusCode).toBe(HttpStatusCode.NotFound);
     expect(result.errorCode).toBe(ErrorCodes.NOT_FOUND);
-    expect(checkOrgExists).toHaveBeenCalledWith(VALID_ORG_ID);
+    expect(checkOrgExists.handleAsync).toHaveBeenCalledWith({ orgId: VALID_ORG_ID });
     expect(createRecord.handleAsync).not.toHaveBeenCalled();
   });
 
@@ -234,7 +241,7 @@ describe("CreateEmulationConsent", () => {
       userId: VALID_USER_ID,
       grantedToOrgId: VALID_ORG_ID,
       expiresAt: new Date(Date.now() + 86_400_000),
-      revokedAt: null,
+      revokedAt: undefined,
       createdAt: new Date("2026-02-01"),
     };
     findActiveByUserIdAndOrg.handleAsync = vi

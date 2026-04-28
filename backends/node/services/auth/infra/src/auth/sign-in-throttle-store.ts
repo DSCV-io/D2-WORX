@@ -53,6 +53,11 @@ export class SignInThrottleStore {
 
   async incrementFailures(identifierHash: string, identityHash: string): Promise<number> {
     const key = `${KEY_PREFIX.ATTEMPTS}${identifierHash}:${identityHash}`;
+    // The Increment contract sets TTL on the first failure only — see
+    // `IncrementInput` jsdoc. The sliding window starts on the first failed
+    // attempt and ticks down naturally; subsequent failures count against the
+    // same window without extending it, so a slow brute-force attacker can't
+    // bypass the cap by pacing attempts under the refresh interval.
     const result = await this.increment.handleAsync({
       key,
       amount: 1,

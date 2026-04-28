@@ -25,65 +25,77 @@ import { Timestamp } from "../../google/protobuf/timestamp";
 export const protobufPackage = "d2.comms.v1";
 
 export interface PaginationRequest {
-  limit: number;
-  offset: number;
+  limit?: number | undefined;
+  offset?: number | undefined;
 }
 
 export interface ChannelPreferenceDTO {
-  id: string;
-  contactId: string;
-  emailEnabled: boolean;
-  smsEnabled: boolean;
-  createdAt: Date | undefined;
-  updatedAt: Date | undefined;
+  id?: string | undefined;
+  contactId?: string | undefined;
+  emailEnabled?: boolean | undefined;
+  smsEnabled?: boolean | undefined;
+  createdAt?: Date | undefined;
+  updatedAt?: Date | undefined;
 }
 
 export interface DeliveryRequestDTO {
-  id: string;
-  messageId: string;
-  correlationId: string;
-  recipientContactId: string;
+  id?: string | undefined;
+  messageId?: string | undefined;
+  correlationId?: string | undefined;
+  recipientContactId?: string | undefined;
   callbackTopic?: string | undefined;
-  createdAt: Date | undefined;
-  processedAt: Date | undefined;
+  createdAt?: Date | undefined;
+  processedAt?: Date | undefined;
 }
 
 export interface DeliveryAttemptDTO {
-  id: string;
-  requestId: string;
-  channel: string;
-  recipientAddress: string;
+  id?: string | undefined;
+  requestId?: string | undefined;
+  channel?: string | undefined;
+  recipientAddress?:
+    | string
+    | undefined;
   /** "pending" | "sent" | "failed" | "retried" */
-  status: string;
+  status?:
+    | string
+    | undefined;
   /** set after successful send */
   providerMessageId?:
     | string
     | undefined;
   /** set on failure */
   error?: string | undefined;
-  attemptNumber: number;
-  createdAt: Date | undefined;
-  nextRetryAt: Date | undefined;
+  attemptNumber?: number | undefined;
+  createdAt?: Date | undefined;
+  nextRetryAt?: Date | undefined;
 }
 
 export interface ThreadDTO {
-  id: string;
+  id?:
+    | string
+    | undefined;
   /** "chat" | "support" | "forum" | "system" */
-  type: string;
+  type?:
+    | string
+    | undefined;
   /** "active" | "archived" | "closed" */
-  state: string;
-  title: string;
-  slug: string;
+  state?: string | undefined;
+  title?: string | undefined;
+  slug?:
+    | string
+    | undefined;
   /** "all_messages" | "mentions_only" | "none" */
-  notificationPolicy: string;
-  orgId: string;
-  createdByUserId: string;
-  createdAt: Date | undefined;
-  updatedAt: Date | undefined;
+  notificationPolicy?: string | undefined;
+  orgId?: string | undefined;
+  createdByUserId?: string | undefined;
+  createdAt?: Date | undefined;
+  updatedAt?: Date | undefined;
 }
 
 export interface MessageDTO {
-  id: string;
+  id?:
+    | string
+    | undefined;
   /** null for standalone/transactional messages */
   threadId?:
     | string
@@ -94,229 +106,258 @@ export interface MessageDTO {
   senderContactId?: string | undefined;
   senderService?: string | undefined;
   title?: string | undefined;
-  content: string;
-  plainTextContent: string;
+  content?: string | undefined;
+  plainTextContent?:
+    | string
+    | undefined;
   /** "markdown" | "plain" | "html" */
-  contentFormat: string;
-  sensitive: boolean;
+  contentFormat?:
+    | string
+    | undefined;
+  /** Explicit channel override (empty = resolve from preferences) */
+  channels?:
+    | string[]
+    | undefined;
   /** "normal" | "important" | "urgent" */
-  urgency: string;
+  urgency?: string | undefined;
   relatedEntityId?: string | undefined;
   relatedEntityType?: string | undefined;
-  editedAt: Date | undefined;
-  deletedAt: Date | undefined;
-  createdAt: Date | undefined;
-  updatedAt: Date | undefined;
+  editedAt?: Date | undefined;
+  deletedAt?: Date | undefined;
+  createdAt?: Date | undefined;
+  updatedAt?: Date | undefined;
 }
 
 export interface NotificationDTO {
-  id: string;
-  userId: string;
-  title: string;
-  body: string;
+  id?: string | undefined;
+  userId?: string | undefined;
+  title?: string | undefined;
+  body?: string | undefined;
   relatedEntityId?: string | undefined;
   relatedEntityType?: string | undefined;
-  read: boolean;
-  createdAt: Date | undefined;
+  read?: boolean | undefined;
+  createdAt?: Date | undefined;
 }
 
 export interface ReactionDTO {
-  id: string;
-  messageId: string;
-  userId: string;
-  reaction: string;
-  createdAt: Date | undefined;
+  id?: string | undefined;
+  messageId?: string | undefined;
+  userId?: string | undefined;
+  reaction?: string | undefined;
+  createdAt?: Date | undefined;
 }
 
 export interface ParticipantDTO {
-  id: string;
-  threadId: string;
+  id?: string | undefined;
+  threadId?: string | undefined;
   userId?: string | undefined;
   contactId?:
     | string
     | undefined;
   /** "observer" | "participant" | "moderator" | "creator" */
-  role: string;
-  notificationsMuted: boolean;
-  lastReadAt: Date | undefined;
-  joinedAt: Date | undefined;
-  leftAt: Date | undefined;
+  role?: string | undefined;
+  notificationsMuted?: boolean | undefined;
+  lastReadAt?: Date | undefined;
+  joinedAt?: Date | undefined;
+  leftAt?: Date | undefined;
 }
 
 export interface GetChannelPreferenceRequest {
-  contactId: string;
+  contactId?: string | undefined;
 }
 
 export interface GetChannelPreferenceResponse {
-  result: D2ResultProto | undefined;
-  data: ChannelPreferenceDTO | undefined;
+  result?: D2ResultProto | undefined;
+  data?: ChannelPreferenceDTO | undefined;
 }
 
 export interface SetChannelPreferenceRequest {
-  contactId: string;
-  emailEnabled: boolean;
-  smsEnabled: boolean;
+  contactId?: string | undefined;
+  emailEnabled?: boolean | undefined;
+  smsEnabled?: boolean | undefined;
 }
 
 export interface SetChannelPreferenceResponse {
-  result: D2ResultProto | undefined;
-  data: ChannelPreferenceDTO | undefined;
+  result?: D2ResultProto | undefined;
+  data?: ChannelPreferenceDTO | undefined;
+}
+
+export interface GetUserChannelPreferenceRequest {
+  contextKey?: string | undefined;
+  relatedEntityId?: string | undefined;
+}
+
+export interface GetUserChannelPreferenceResponse {
+  result?: D2ResultProto | undefined;
+  data?: ChannelPreferenceDTO | undefined;
+}
+
+export interface SetUserChannelPreferenceRequest {
+  contextKey?: string | undefined;
+  relatedEntityId?: string | undefined;
+  emailEnabled?: boolean | undefined;
+  smsEnabled?: boolean | undefined;
+}
+
+export interface SetUserChannelPreferenceResponse {
+  result?: D2ResultProto | undefined;
+  data?: ChannelPreferenceDTO | undefined;
 }
 
 export interface GetDeliveryStatusRequest {
-  deliveryRequestId: string;
+  deliveryRequestId?: string | undefined;
 }
 
 export interface GetDeliveryStatusResponse {
-  result: D2ResultProto | undefined;
-  request: DeliveryRequestDTO | undefined;
-  attempts: DeliveryAttemptDTO[];
+  result?: D2ResultProto | undefined;
+  request?: DeliveryRequestDTO | undefined;
+  attempts?: DeliveryAttemptDTO[] | undefined;
 }
 
 export interface GetNotificationsRequest {
-  userId: string;
-  unreadOnly: boolean;
-  pagination: PaginationRequest | undefined;
+  userId?: string | undefined;
+  unreadOnly?: boolean | undefined;
+  pagination?: PaginationRequest | undefined;
 }
 
 export interface GetNotificationsResponse {
-  result: D2ResultProto | undefined;
-  data: NotificationDTO[];
-  total: number;
+  result?: D2ResultProto | undefined;
+  data?: NotificationDTO[] | undefined;
+  total?: number | undefined;
 }
 
 export interface MarkNotificationsReadRequest {
-  userId: string;
-  notificationIds: string[];
+  userId?: string | undefined;
+  notificationIds?: string[] | undefined;
 }
 
 export interface MarkNotificationsReadResponse {
-  result: D2ResultProto | undefined;
-  markedCount: number;
+  result?: D2ResultProto | undefined;
+  markedCount?: number | undefined;
 }
 
 export interface CreateThreadRequest {
-  type: string;
-  title: string;
-  slug: string;
-  notificationPolicy: string;
-  orgId: string;
-  createdByUserId: string;
+  type?: string | undefined;
+  title?: string | undefined;
+  slug?: string | undefined;
+  notificationPolicy?: string | undefined;
+  orgId?: string | undefined;
+  createdByUserId?: string | undefined;
 }
 
 export interface CreateThreadResponse {
-  result: D2ResultProto | undefined;
-  data: ThreadDTO | undefined;
+  result?: D2ResultProto | undefined;
+  data?: ThreadDTO | undefined;
 }
 
 export interface GetThreadRequest {
-  threadId: string;
+  threadId?: string | undefined;
 }
 
 export interface GetThreadResponse {
-  result: D2ResultProto | undefined;
-  data: ThreadDTO | undefined;
+  result?: D2ResultProto | undefined;
+  data?: ThreadDTO | undefined;
 }
 
 export interface GetThreadsRequest {
-  orgId: string;
-  userId: string;
-  type: string;
-  pagination: PaginationRequest | undefined;
+  orgId?: string | undefined;
+  userId?: string | undefined;
+  type?: string | undefined;
+  pagination?: PaginationRequest | undefined;
 }
 
 export interface GetThreadsResponse {
-  result: D2ResultProto | undefined;
-  data: ThreadDTO[];
-  total: number;
+  result?: D2ResultProto | undefined;
+  data?: ThreadDTO[] | undefined;
+  total?: number | undefined;
 }
 
 export interface PostMessageRequest {
-  threadId: string;
-  senderUserId: string;
-  content: string;
-  plainTextContent: string;
-  contentFormat: string;
+  threadId?: string | undefined;
+  senderUserId?: string | undefined;
+  content?: string | undefined;
+  plainTextContent?: string | undefined;
+  contentFormat?: string | undefined;
   parentMessageId?: string | undefined;
   title?: string | undefined;
 }
 
 export interface PostMessageResponse {
-  result: D2ResultProto | undefined;
-  data: MessageDTO | undefined;
+  result?: D2ResultProto | undefined;
+  data?: MessageDTO | undefined;
 }
 
 export interface EditMessageRequest {
-  messageId: string;
-  senderUserId: string;
-  content: string;
-  plainTextContent: string;
+  messageId?: string | undefined;
+  senderUserId?: string | undefined;
+  content?: string | undefined;
+  plainTextContent?: string | undefined;
 }
 
 export interface EditMessageResponse {
-  result: D2ResultProto | undefined;
-  data: MessageDTO | undefined;
+  result?: D2ResultProto | undefined;
+  data?: MessageDTO | undefined;
 }
 
 export interface DeleteMessageRequest {
-  messageId: string;
-  senderUserId: string;
+  messageId?: string | undefined;
+  senderUserId?: string | undefined;
 }
 
 export interface DeleteMessageResponse {
-  result: D2ResultProto | undefined;
+  result?: D2ResultProto | undefined;
 }
 
 export interface GetThreadMessagesRequest {
-  threadId: string;
-  pagination: PaginationRequest | undefined;
+  threadId?: string | undefined;
+  pagination?: PaginationRequest | undefined;
 }
 
 export interface GetThreadMessagesResponse {
-  result: D2ResultProto | undefined;
-  data: MessageDTO[];
-  total: number;
+  result?: D2ResultProto | undefined;
+  data?: MessageDTO[] | undefined;
+  total?: number | undefined;
 }
 
 export interface AddReactionRequest {
-  messageId: string;
-  userId: string;
-  reaction: string;
+  messageId?: string | undefined;
+  userId?: string | undefined;
+  reaction?: string | undefined;
 }
 
 export interface AddReactionResponse {
-  result: D2ResultProto | undefined;
-  data: ReactionDTO | undefined;
+  result?: D2ResultProto | undefined;
+  data?: ReactionDTO | undefined;
 }
 
 export interface RemoveReactionRequest {
-  reactionId: string;
-  userId: string;
+  reactionId?: string | undefined;
+  userId?: string | undefined;
 }
 
 export interface RemoveReactionResponse {
-  result: D2ResultProto | undefined;
+  result?: D2ResultProto | undefined;
 }
 
 export interface AddParticipantRequest {
-  threadId: string;
-  userId: string;
-  contactId: string;
-  role: string;
+  threadId?: string | undefined;
+  userId?: string | undefined;
+  contactId?: string | undefined;
+  role?: string | undefined;
 }
 
 export interface AddParticipantResponse {
-  result: D2ResultProto | undefined;
-  data: ParticipantDTO | undefined;
+  result?: D2ResultProto | undefined;
+  data?: ParticipantDTO | undefined;
 }
 
 export interface RemoveParticipantRequest {
-  threadId: string;
-  participantId: string;
+  threadId?: string | undefined;
+  participantId?: string | undefined;
 }
 
 export interface RemoveParticipantResponse {
-  result: D2ResultProto | undefined;
+  result?: D2ResultProto | undefined;
 }
 
 function createBasePaginationRequest(): PaginationRequest {
@@ -325,10 +366,10 @@ function createBasePaginationRequest(): PaginationRequest {
 
 export const PaginationRequest: MessageFns<PaginationRequest> = {
   encode(message: PaginationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.limit !== 0) {
+    if (message.limit !== undefined && message.limit !== 0) {
       writer.uint32(8).int32(message.limit);
     }
-    if (message.offset !== 0) {
+    if (message.offset !== undefined && message.offset !== 0) {
       writer.uint32(16).int32(message.offset);
     }
     return writer;
@@ -375,10 +416,10 @@ export const PaginationRequest: MessageFns<PaginationRequest> = {
 
   toJSON(message: PaginationRequest): unknown {
     const obj: any = {};
-    if (message.limit !== 0) {
+    if (message.limit !== undefined && message.limit !== 0) {
       obj.limit = Math.round(message.limit);
     }
-    if (message.offset !== 0) {
+    if (message.offset !== undefined && message.offset !== 0) {
       obj.offset = Math.round(message.offset);
     }
     return obj;
@@ -401,16 +442,16 @@ function createBaseChannelPreferenceDTO(): ChannelPreferenceDTO {
 
 export const ChannelPreferenceDTO: MessageFns<ChannelPreferenceDTO> = {
   encode(message: ChannelPreferenceDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
+    if (message.id !== undefined && message.id !== "") {
       writer.uint32(10).string(message.id);
     }
-    if (message.contactId !== "") {
+    if (message.contactId !== undefined && message.contactId !== "") {
       writer.uint32(26).string(message.contactId);
     }
-    if (message.emailEnabled !== false) {
+    if (message.emailEnabled !== undefined && message.emailEnabled !== false) {
       writer.uint32(32).bool(message.emailEnabled);
     }
-    if (message.smsEnabled !== false) {
+    if (message.smsEnabled !== undefined && message.smsEnabled !== false) {
       writer.uint32(40).bool(message.smsEnabled);
     }
     if (message.createdAt !== undefined) {
@@ -519,16 +560,16 @@ export const ChannelPreferenceDTO: MessageFns<ChannelPreferenceDTO> = {
 
   toJSON(message: ChannelPreferenceDTO): unknown {
     const obj: any = {};
-    if (message.id !== "") {
+    if (message.id !== undefined && message.id !== "") {
       obj.id = message.id;
     }
-    if (message.contactId !== "") {
+    if (message.contactId !== undefined && message.contactId !== "") {
       obj.contactId = message.contactId;
     }
-    if (message.emailEnabled !== false) {
+    if (message.emailEnabled !== undefined && message.emailEnabled !== false) {
       obj.emailEnabled = message.emailEnabled;
     }
-    if (message.smsEnabled !== false) {
+    if (message.smsEnabled !== undefined && message.smsEnabled !== false) {
       obj.smsEnabled = message.smsEnabled;
     }
     if (message.createdAt !== undefined) {
@@ -569,16 +610,16 @@ function createBaseDeliveryRequestDTO(): DeliveryRequestDTO {
 
 export const DeliveryRequestDTO: MessageFns<DeliveryRequestDTO> = {
   encode(message: DeliveryRequestDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
+    if (message.id !== undefined && message.id !== "") {
       writer.uint32(10).string(message.id);
     }
-    if (message.messageId !== "") {
+    if (message.messageId !== undefined && message.messageId !== "") {
       writer.uint32(18).string(message.messageId);
     }
-    if (message.correlationId !== "") {
+    if (message.correlationId !== undefined && message.correlationId !== "") {
       writer.uint32(26).string(message.correlationId);
     }
-    if (message.recipientContactId !== "") {
+    if (message.recipientContactId !== undefined && message.recipientContactId !== "") {
       writer.uint32(42).string(message.recipientContactId);
     }
     if (message.callbackTopic !== undefined) {
@@ -703,16 +744,16 @@ export const DeliveryRequestDTO: MessageFns<DeliveryRequestDTO> = {
 
   toJSON(message: DeliveryRequestDTO): unknown {
     const obj: any = {};
-    if (message.id !== "") {
+    if (message.id !== undefined && message.id !== "") {
       obj.id = message.id;
     }
-    if (message.messageId !== "") {
+    if (message.messageId !== undefined && message.messageId !== "") {
       obj.messageId = message.messageId;
     }
-    if (message.correlationId !== "") {
+    if (message.correlationId !== undefined && message.correlationId !== "") {
       obj.correlationId = message.correlationId;
     }
-    if (message.recipientContactId !== "") {
+    if (message.recipientContactId !== undefined && message.recipientContactId !== "") {
       obj.recipientContactId = message.recipientContactId;
     }
     if (message.callbackTopic !== undefined) {
@@ -760,19 +801,19 @@ function createBaseDeliveryAttemptDTO(): DeliveryAttemptDTO {
 
 export const DeliveryAttemptDTO: MessageFns<DeliveryAttemptDTO> = {
   encode(message: DeliveryAttemptDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
+    if (message.id !== undefined && message.id !== "") {
       writer.uint32(10).string(message.id);
     }
-    if (message.requestId !== "") {
+    if (message.requestId !== undefined && message.requestId !== "") {
       writer.uint32(18).string(message.requestId);
     }
-    if (message.channel !== "") {
+    if (message.channel !== undefined && message.channel !== "") {
       writer.uint32(26).string(message.channel);
     }
-    if (message.recipientAddress !== "") {
+    if (message.recipientAddress !== undefined && message.recipientAddress !== "") {
       writer.uint32(34).string(message.recipientAddress);
     }
-    if (message.status !== "") {
+    if (message.status !== undefined && message.status !== "") {
       writer.uint32(42).string(message.status);
     }
     if (message.providerMessageId !== undefined) {
@@ -781,7 +822,7 @@ export const DeliveryAttemptDTO: MessageFns<DeliveryAttemptDTO> = {
     if (message.error !== undefined) {
       writer.uint32(58).string(message.error);
     }
-    if (message.attemptNumber !== 0) {
+    if (message.attemptNumber !== undefined && message.attemptNumber !== 0) {
       writer.uint32(64).int32(message.attemptNumber);
     }
     if (message.createdAt !== undefined) {
@@ -930,19 +971,19 @@ export const DeliveryAttemptDTO: MessageFns<DeliveryAttemptDTO> = {
 
   toJSON(message: DeliveryAttemptDTO): unknown {
     const obj: any = {};
-    if (message.id !== "") {
+    if (message.id !== undefined && message.id !== "") {
       obj.id = message.id;
     }
-    if (message.requestId !== "") {
+    if (message.requestId !== undefined && message.requestId !== "") {
       obj.requestId = message.requestId;
     }
-    if (message.channel !== "") {
+    if (message.channel !== undefined && message.channel !== "") {
       obj.channel = message.channel;
     }
-    if (message.recipientAddress !== "") {
+    if (message.recipientAddress !== undefined && message.recipientAddress !== "") {
       obj.recipientAddress = message.recipientAddress;
     }
-    if (message.status !== "") {
+    if (message.status !== undefined && message.status !== "") {
       obj.status = message.status;
     }
     if (message.providerMessageId !== undefined) {
@@ -951,7 +992,7 @@ export const DeliveryAttemptDTO: MessageFns<DeliveryAttemptDTO> = {
     if (message.error !== undefined) {
       obj.error = message.error;
     }
-    if (message.attemptNumber !== 0) {
+    if (message.attemptNumber !== undefined && message.attemptNumber !== 0) {
       obj.attemptNumber = Math.round(message.attemptNumber);
     }
     if (message.createdAt !== undefined) {
@@ -987,11 +1028,11 @@ function createBaseThreadDTO(): ThreadDTO {
     id: "",
     type: "",
     state: "",
-    title: "",
-    slug: "",
+    title: undefined,
+    slug: undefined,
     notificationPolicy: "",
-    orgId: "",
-    createdByUserId: "",
+    orgId: undefined,
+    createdByUserId: undefined,
     createdAt: undefined,
     updatedAt: undefined,
   };
@@ -999,28 +1040,28 @@ function createBaseThreadDTO(): ThreadDTO {
 
 export const ThreadDTO: MessageFns<ThreadDTO> = {
   encode(message: ThreadDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
+    if (message.id !== undefined && message.id !== "") {
       writer.uint32(10).string(message.id);
     }
-    if (message.type !== "") {
+    if (message.type !== undefined && message.type !== "") {
       writer.uint32(18).string(message.type);
     }
-    if (message.state !== "") {
+    if (message.state !== undefined && message.state !== "") {
       writer.uint32(26).string(message.state);
     }
-    if (message.title !== "") {
+    if (message.title !== undefined) {
       writer.uint32(34).string(message.title);
     }
-    if (message.slug !== "") {
+    if (message.slug !== undefined) {
       writer.uint32(42).string(message.slug);
     }
-    if (message.notificationPolicy !== "") {
+    if (message.notificationPolicy !== undefined && message.notificationPolicy !== "") {
       writer.uint32(50).string(message.notificationPolicy);
     }
-    if (message.orgId !== "") {
+    if (message.orgId !== undefined) {
       writer.uint32(58).string(message.orgId);
     }
-    if (message.createdByUserId !== "") {
+    if (message.createdByUserId !== undefined) {
       writer.uint32(66).string(message.createdByUserId);
     }
     if (message.createdAt !== undefined) {
@@ -1133,8 +1174,8 @@ export const ThreadDTO: MessageFns<ThreadDTO> = {
       id: isSet(object.id) ? globalThis.String(object.id) : "",
       type: isSet(object.type) ? globalThis.String(object.type) : "",
       state: isSet(object.state) ? globalThis.String(object.state) : "",
-      title: isSet(object.title) ? globalThis.String(object.title) : "",
-      slug: isSet(object.slug) ? globalThis.String(object.slug) : "",
+      title: isSet(object.title) ? globalThis.String(object.title) : undefined,
+      slug: isSet(object.slug) ? globalThis.String(object.slug) : undefined,
       notificationPolicy: isSet(object.notificationPolicy)
         ? globalThis.String(object.notificationPolicy)
         : isSet(object.notification_policy)
@@ -1144,12 +1185,12 @@ export const ThreadDTO: MessageFns<ThreadDTO> = {
         ? globalThis.String(object.orgId)
         : isSet(object.org_id)
         ? globalThis.String(object.org_id)
-        : "",
+        : undefined,
       createdByUserId: isSet(object.createdByUserId)
         ? globalThis.String(object.createdByUserId)
         : isSet(object.created_by_user_id)
         ? globalThis.String(object.created_by_user_id)
-        : "",
+        : undefined,
       createdAt: isSet(object.createdAt)
         ? fromJsonTimestamp(object.createdAt)
         : isSet(object.created_at)
@@ -1165,28 +1206,28 @@ export const ThreadDTO: MessageFns<ThreadDTO> = {
 
   toJSON(message: ThreadDTO): unknown {
     const obj: any = {};
-    if (message.id !== "") {
+    if (message.id !== undefined && message.id !== "") {
       obj.id = message.id;
     }
-    if (message.type !== "") {
+    if (message.type !== undefined && message.type !== "") {
       obj.type = message.type;
     }
-    if (message.state !== "") {
+    if (message.state !== undefined && message.state !== "") {
       obj.state = message.state;
     }
-    if (message.title !== "") {
+    if (message.title !== undefined) {
       obj.title = message.title;
     }
-    if (message.slug !== "") {
+    if (message.slug !== undefined) {
       obj.slug = message.slug;
     }
-    if (message.notificationPolicy !== "") {
+    if (message.notificationPolicy !== undefined && message.notificationPolicy !== "") {
       obj.notificationPolicy = message.notificationPolicy;
     }
-    if (message.orgId !== "") {
+    if (message.orgId !== undefined) {
       obj.orgId = message.orgId;
     }
-    if (message.createdByUserId !== "") {
+    if (message.createdByUserId !== undefined) {
       obj.createdByUserId = message.createdByUserId;
     }
     if (message.createdAt !== undefined) {
@@ -1206,11 +1247,11 @@ export const ThreadDTO: MessageFns<ThreadDTO> = {
     message.id = object.id ?? "";
     message.type = object.type ?? "";
     message.state = object.state ?? "";
-    message.title = object.title ?? "";
-    message.slug = object.slug ?? "";
+    message.title = object.title ?? undefined;
+    message.slug = object.slug ?? undefined;
     message.notificationPolicy = object.notificationPolicy ?? "";
-    message.orgId = object.orgId ?? "";
-    message.createdByUserId = object.createdByUserId ?? "";
+    message.orgId = object.orgId ?? undefined;
+    message.createdByUserId = object.createdByUserId ?? undefined;
     message.createdAt = object.createdAt ?? undefined;
     message.updatedAt = object.updatedAt ?? undefined;
     return message;
@@ -1229,7 +1270,7 @@ function createBaseMessageDTO(): MessageDTO {
     content: "",
     plainTextContent: "",
     contentFormat: "",
-    sensitive: false,
+    channels: [],
     urgency: "",
     relatedEntityId: undefined,
     relatedEntityType: undefined,
@@ -1242,7 +1283,7 @@ function createBaseMessageDTO(): MessageDTO {
 
 export const MessageDTO: MessageFns<MessageDTO> = {
   encode(message: MessageDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
+    if (message.id !== undefined && message.id !== "") {
       writer.uint32(10).string(message.id);
     }
     if (message.threadId !== undefined) {
@@ -1263,19 +1304,21 @@ export const MessageDTO: MessageFns<MessageDTO> = {
     if (message.title !== undefined) {
       writer.uint32(58).string(message.title);
     }
-    if (message.content !== "") {
+    if (message.content !== undefined && message.content !== "") {
       writer.uint32(66).string(message.content);
     }
-    if (message.plainTextContent !== "") {
+    if (message.plainTextContent !== undefined && message.plainTextContent !== "") {
       writer.uint32(74).string(message.plainTextContent);
     }
-    if (message.contentFormat !== "") {
+    if (message.contentFormat !== undefined && message.contentFormat !== "") {
       writer.uint32(82).string(message.contentFormat);
     }
-    if (message.sensitive !== false) {
-      writer.uint32(88).bool(message.sensitive);
+    if (message.channels !== undefined && message.channels.length !== 0) {
+      for (const v of message.channels) {
+        writer.uint32(90).string(v!);
+      }
     }
-    if (message.urgency !== "") {
+    if (message.urgency !== undefined && message.urgency !== "") {
       writer.uint32(98).string(message.urgency);
     }
     if (message.relatedEntityId !== undefined) {
@@ -1387,11 +1430,14 @@ export const MessageDTO: MessageFns<MessageDTO> = {
           continue;
         }
         case 11: {
-          if (tag !== 88) {
+          if (tag !== 90) {
             break;
           }
 
-          message.sensitive = reader.bool();
+          const el = reader.string();
+          if (el !== undefined) {
+            message.channels!.push(el);
+          }
           continue;
         }
         case 12: {
@@ -1499,7 +1545,9 @@ export const MessageDTO: MessageFns<MessageDTO> = {
         : isSet(object.content_format)
         ? globalThis.String(object.content_format)
         : "",
-      sensitive: isSet(object.sensitive) ? globalThis.Boolean(object.sensitive) : false,
+      channels: globalThis.Array.isArray(object?.channels)
+        ? object.channels.map((e: any) => globalThis.String(e))
+        : [],
       urgency: isSet(object.urgency) ? globalThis.String(object.urgency) : "",
       relatedEntityId: isSet(object.relatedEntityId)
         ? globalThis.String(object.relatedEntityId)
@@ -1536,7 +1584,7 @@ export const MessageDTO: MessageFns<MessageDTO> = {
 
   toJSON(message: MessageDTO): unknown {
     const obj: any = {};
-    if (message.id !== "") {
+    if (message.id !== undefined && message.id !== "") {
       obj.id = message.id;
     }
     if (message.threadId !== undefined) {
@@ -1557,19 +1605,19 @@ export const MessageDTO: MessageFns<MessageDTO> = {
     if (message.title !== undefined) {
       obj.title = message.title;
     }
-    if (message.content !== "") {
+    if (message.content !== undefined && message.content !== "") {
       obj.content = message.content;
     }
-    if (message.plainTextContent !== "") {
+    if (message.plainTextContent !== undefined && message.plainTextContent !== "") {
       obj.plainTextContent = message.plainTextContent;
     }
-    if (message.contentFormat !== "") {
+    if (message.contentFormat !== undefined && message.contentFormat !== "") {
       obj.contentFormat = message.contentFormat;
     }
-    if (message.sensitive !== false) {
-      obj.sensitive = message.sensitive;
+    if (message.channels?.length) {
+      obj.channels = message.channels;
     }
-    if (message.urgency !== "") {
+    if (message.urgency !== undefined && message.urgency !== "") {
       obj.urgency = message.urgency;
     }
     if (message.relatedEntityId !== undefined) {
@@ -1608,7 +1656,7 @@ export const MessageDTO: MessageFns<MessageDTO> = {
     message.content = object.content ?? "";
     message.plainTextContent = object.plainTextContent ?? "";
     message.contentFormat = object.contentFormat ?? "";
-    message.sensitive = object.sensitive ?? false;
+    message.channels = object.channels?.map((e) => e) || [];
     message.urgency = object.urgency ?? "";
     message.relatedEntityId = object.relatedEntityId ?? undefined;
     message.relatedEntityType = object.relatedEntityType ?? undefined;
@@ -1635,16 +1683,16 @@ function createBaseNotificationDTO(): NotificationDTO {
 
 export const NotificationDTO: MessageFns<NotificationDTO> = {
   encode(message: NotificationDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
+    if (message.id !== undefined && message.id !== "") {
       writer.uint32(10).string(message.id);
     }
-    if (message.userId !== "") {
+    if (message.userId !== undefined && message.userId !== "") {
       writer.uint32(18).string(message.userId);
     }
-    if (message.title !== "") {
+    if (message.title !== undefined && message.title !== "") {
       writer.uint32(26).string(message.title);
     }
-    if (message.body !== "") {
+    if (message.body !== undefined && message.body !== "") {
       writer.uint32(34).string(message.body);
     }
     if (message.relatedEntityId !== undefined) {
@@ -1653,7 +1701,7 @@ export const NotificationDTO: MessageFns<NotificationDTO> = {
     if (message.relatedEntityType !== undefined) {
       writer.uint32(50).string(message.relatedEntityType);
     }
-    if (message.read !== false) {
+    if (message.read !== undefined && message.read !== false) {
       writer.uint32(56).bool(message.read);
     }
     if (message.createdAt !== undefined) {
@@ -1773,16 +1821,16 @@ export const NotificationDTO: MessageFns<NotificationDTO> = {
 
   toJSON(message: NotificationDTO): unknown {
     const obj: any = {};
-    if (message.id !== "") {
+    if (message.id !== undefined && message.id !== "") {
       obj.id = message.id;
     }
-    if (message.userId !== "") {
+    if (message.userId !== undefined && message.userId !== "") {
       obj.userId = message.userId;
     }
-    if (message.title !== "") {
+    if (message.title !== undefined && message.title !== "") {
       obj.title = message.title;
     }
-    if (message.body !== "") {
+    if (message.body !== undefined && message.body !== "") {
       obj.body = message.body;
     }
     if (message.relatedEntityId !== undefined) {
@@ -1791,7 +1839,7 @@ export const NotificationDTO: MessageFns<NotificationDTO> = {
     if (message.relatedEntityType !== undefined) {
       obj.relatedEntityType = message.relatedEntityType;
     }
-    if (message.read !== false) {
+    if (message.read !== undefined && message.read !== false) {
       obj.read = message.read;
     }
     if (message.createdAt !== undefined) {
@@ -1823,16 +1871,16 @@ function createBaseReactionDTO(): ReactionDTO {
 
 export const ReactionDTO: MessageFns<ReactionDTO> = {
   encode(message: ReactionDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
+    if (message.id !== undefined && message.id !== "") {
       writer.uint32(10).string(message.id);
     }
-    if (message.messageId !== "") {
+    if (message.messageId !== undefined && message.messageId !== "") {
       writer.uint32(18).string(message.messageId);
     }
-    if (message.userId !== "") {
+    if (message.userId !== undefined && message.userId !== "") {
       writer.uint32(26).string(message.userId);
     }
-    if (message.reaction !== "") {
+    if (message.reaction !== undefined && message.reaction !== "") {
       writer.uint32(34).string(message.reaction);
     }
     if (message.createdAt !== undefined) {
@@ -1921,16 +1969,16 @@ export const ReactionDTO: MessageFns<ReactionDTO> = {
 
   toJSON(message: ReactionDTO): unknown {
     const obj: any = {};
-    if (message.id !== "") {
+    if (message.id !== undefined && message.id !== "") {
       obj.id = message.id;
     }
-    if (message.messageId !== "") {
+    if (message.messageId !== undefined && message.messageId !== "") {
       obj.messageId = message.messageId;
     }
-    if (message.userId !== "") {
+    if (message.userId !== undefined && message.userId !== "") {
       obj.userId = message.userId;
     }
-    if (message.reaction !== "") {
+    if (message.reaction !== undefined && message.reaction !== "") {
       obj.reaction = message.reaction;
     }
     if (message.createdAt !== undefined) {
@@ -1969,10 +2017,10 @@ function createBaseParticipantDTO(): ParticipantDTO {
 
 export const ParticipantDTO: MessageFns<ParticipantDTO> = {
   encode(message: ParticipantDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
+    if (message.id !== undefined && message.id !== "") {
       writer.uint32(10).string(message.id);
     }
-    if (message.threadId !== "") {
+    if (message.threadId !== undefined && message.threadId !== "") {
       writer.uint32(18).string(message.threadId);
     }
     if (message.userId !== undefined) {
@@ -1981,10 +2029,10 @@ export const ParticipantDTO: MessageFns<ParticipantDTO> = {
     if (message.contactId !== undefined) {
       writer.uint32(34).string(message.contactId);
     }
-    if (message.role !== "") {
+    if (message.role !== undefined && message.role !== "") {
       writer.uint32(42).string(message.role);
     }
-    if (message.notificationsMuted !== false) {
+    if (message.notificationsMuted !== undefined && message.notificationsMuted !== false) {
       writer.uint32(48).bool(message.notificationsMuted);
     }
     if (message.lastReadAt !== undefined) {
@@ -2131,10 +2179,10 @@ export const ParticipantDTO: MessageFns<ParticipantDTO> = {
 
   toJSON(message: ParticipantDTO): unknown {
     const obj: any = {};
-    if (message.id !== "") {
+    if (message.id !== undefined && message.id !== "") {
       obj.id = message.id;
     }
-    if (message.threadId !== "") {
+    if (message.threadId !== undefined && message.threadId !== "") {
       obj.threadId = message.threadId;
     }
     if (message.userId !== undefined) {
@@ -2143,10 +2191,10 @@ export const ParticipantDTO: MessageFns<ParticipantDTO> = {
     if (message.contactId !== undefined) {
       obj.contactId = message.contactId;
     }
-    if (message.role !== "") {
+    if (message.role !== undefined && message.role !== "") {
       obj.role = message.role;
     }
-    if (message.notificationsMuted !== false) {
+    if (message.notificationsMuted !== undefined && message.notificationsMuted !== false) {
       obj.notificationsMuted = message.notificationsMuted;
     }
     if (message.lastReadAt !== undefined) {
@@ -2185,7 +2233,7 @@ function createBaseGetChannelPreferenceRequest(): GetChannelPreferenceRequest {
 
 export const GetChannelPreferenceRequest: MessageFns<GetChannelPreferenceRequest> = {
   encode(message: GetChannelPreferenceRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.contactId !== "") {
+    if (message.contactId !== undefined && message.contactId !== "") {
       writer.uint32(18).string(message.contactId);
     }
     return writer;
@@ -2227,7 +2275,7 @@ export const GetChannelPreferenceRequest: MessageFns<GetChannelPreferenceRequest
 
   toJSON(message: GetChannelPreferenceRequest): unknown {
     const obj: any = {};
-    if (message.contactId !== "") {
+    if (message.contactId !== undefined && message.contactId !== "") {
       obj.contactId = message.contactId;
     }
     return obj;
@@ -2329,13 +2377,13 @@ function createBaseSetChannelPreferenceRequest(): SetChannelPreferenceRequest {
 
 export const SetChannelPreferenceRequest: MessageFns<SetChannelPreferenceRequest> = {
   encode(message: SetChannelPreferenceRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.contactId !== "") {
+    if (message.contactId !== undefined && message.contactId !== "") {
       writer.uint32(18).string(message.contactId);
     }
-    if (message.emailEnabled !== false) {
+    if (message.emailEnabled !== undefined && message.emailEnabled !== false) {
       writer.uint32(24).bool(message.emailEnabled);
     }
-    if (message.smsEnabled !== false) {
+    if (message.smsEnabled !== undefined && message.smsEnabled !== false) {
       writer.uint32(32).bool(message.smsEnabled);
     }
     return writer;
@@ -2403,13 +2451,13 @@ export const SetChannelPreferenceRequest: MessageFns<SetChannelPreferenceRequest
 
   toJSON(message: SetChannelPreferenceRequest): unknown {
     const obj: any = {};
-    if (message.contactId !== "") {
+    if (message.contactId !== undefined && message.contactId !== "") {
       obj.contactId = message.contactId;
     }
-    if (message.emailEnabled !== false) {
+    if (message.emailEnabled !== undefined && message.emailEnabled !== false) {
       obj.emailEnabled = message.emailEnabled;
     }
-    if (message.smsEnabled !== false) {
+    if (message.smsEnabled !== undefined && message.smsEnabled !== false) {
       obj.smsEnabled = message.smsEnabled;
     }
     return obj;
@@ -2507,13 +2555,393 @@ export const SetChannelPreferenceResponse: MessageFns<SetChannelPreferenceRespon
   },
 };
 
+function createBaseGetUserChannelPreferenceRequest(): GetUserChannelPreferenceRequest {
+  return { contextKey: "", relatedEntityId: "" };
+}
+
+export const GetUserChannelPreferenceRequest: MessageFns<GetUserChannelPreferenceRequest> = {
+  encode(message: GetUserChannelPreferenceRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.contextKey !== undefined && message.contextKey !== "") {
+      writer.uint32(10).string(message.contextKey);
+    }
+    if (message.relatedEntityId !== undefined && message.relatedEntityId !== "") {
+      writer.uint32(18).string(message.relatedEntityId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetUserChannelPreferenceRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetUserChannelPreferenceRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.contextKey = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.relatedEntityId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetUserChannelPreferenceRequest {
+    return {
+      contextKey: isSet(object.contextKey)
+        ? globalThis.String(object.contextKey)
+        : isSet(object.context_key)
+        ? globalThis.String(object.context_key)
+        : "",
+      relatedEntityId: isSet(object.relatedEntityId)
+        ? globalThis.String(object.relatedEntityId)
+        : isSet(object.related_entity_id)
+        ? globalThis.String(object.related_entity_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetUserChannelPreferenceRequest): unknown {
+    const obj: any = {};
+    if (message.contextKey !== undefined && message.contextKey !== "") {
+      obj.contextKey = message.contextKey;
+    }
+    if (message.relatedEntityId !== undefined && message.relatedEntityId !== "") {
+      obj.relatedEntityId = message.relatedEntityId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetUserChannelPreferenceRequest>, I>>(base?: I): GetUserChannelPreferenceRequest {
+    return GetUserChannelPreferenceRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetUserChannelPreferenceRequest>, I>>(
+    object: I,
+  ): GetUserChannelPreferenceRequest {
+    const message = createBaseGetUserChannelPreferenceRequest();
+    message.contextKey = object.contextKey ?? "";
+    message.relatedEntityId = object.relatedEntityId ?? "";
+    return message;
+  },
+};
+
+function createBaseGetUserChannelPreferenceResponse(): GetUserChannelPreferenceResponse {
+  return { result: undefined, data: undefined };
+}
+
+export const GetUserChannelPreferenceResponse: MessageFns<GetUserChannelPreferenceResponse> = {
+  encode(message: GetUserChannelPreferenceResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.result !== undefined) {
+      D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
+    }
+    if (message.data !== undefined) {
+      ChannelPreferenceDTO.encode(message.data, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetUserChannelPreferenceResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetUserChannelPreferenceResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.result = D2ResultProto.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.data = ChannelPreferenceDTO.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetUserChannelPreferenceResponse {
+    return {
+      result: isSet(object.result) ? D2ResultProto.fromJSON(object.result) : undefined,
+      data: isSet(object.data) ? ChannelPreferenceDTO.fromJSON(object.data) : undefined,
+    };
+  },
+
+  toJSON(message: GetUserChannelPreferenceResponse): unknown {
+    const obj: any = {};
+    if (message.result !== undefined) {
+      obj.result = D2ResultProto.toJSON(message.result);
+    }
+    if (message.data !== undefined) {
+      obj.data = ChannelPreferenceDTO.toJSON(message.data);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetUserChannelPreferenceResponse>, I>>(
+    base?: I,
+  ): GetUserChannelPreferenceResponse {
+    return GetUserChannelPreferenceResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetUserChannelPreferenceResponse>, I>>(
+    object: I,
+  ): GetUserChannelPreferenceResponse {
+    const message = createBaseGetUserChannelPreferenceResponse();
+    message.result = (object.result !== undefined && object.result !== null)
+      ? D2ResultProto.fromPartial(object.result)
+      : undefined;
+    message.data = (object.data !== undefined && object.data !== null)
+      ? ChannelPreferenceDTO.fromPartial(object.data)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseSetUserChannelPreferenceRequest(): SetUserChannelPreferenceRequest {
+  return { contextKey: "", relatedEntityId: "", emailEnabled: undefined, smsEnabled: undefined };
+}
+
+export const SetUserChannelPreferenceRequest: MessageFns<SetUserChannelPreferenceRequest> = {
+  encode(message: SetUserChannelPreferenceRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.contextKey !== undefined && message.contextKey !== "") {
+      writer.uint32(10).string(message.contextKey);
+    }
+    if (message.relatedEntityId !== undefined && message.relatedEntityId !== "") {
+      writer.uint32(18).string(message.relatedEntityId);
+    }
+    if (message.emailEnabled !== undefined) {
+      writer.uint32(24).bool(message.emailEnabled);
+    }
+    if (message.smsEnabled !== undefined) {
+      writer.uint32(32).bool(message.smsEnabled);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SetUserChannelPreferenceRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSetUserChannelPreferenceRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.contextKey = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.relatedEntityId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.emailEnabled = reader.bool();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.smsEnabled = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SetUserChannelPreferenceRequest {
+    return {
+      contextKey: isSet(object.contextKey)
+        ? globalThis.String(object.contextKey)
+        : isSet(object.context_key)
+        ? globalThis.String(object.context_key)
+        : "",
+      relatedEntityId: isSet(object.relatedEntityId)
+        ? globalThis.String(object.relatedEntityId)
+        : isSet(object.related_entity_id)
+        ? globalThis.String(object.related_entity_id)
+        : "",
+      emailEnabled: isSet(object.emailEnabled)
+        ? globalThis.Boolean(object.emailEnabled)
+        : isSet(object.email_enabled)
+        ? globalThis.Boolean(object.email_enabled)
+        : undefined,
+      smsEnabled: isSet(object.smsEnabled)
+        ? globalThis.Boolean(object.smsEnabled)
+        : isSet(object.sms_enabled)
+        ? globalThis.Boolean(object.sms_enabled)
+        : undefined,
+    };
+  },
+
+  toJSON(message: SetUserChannelPreferenceRequest): unknown {
+    const obj: any = {};
+    if (message.contextKey !== undefined && message.contextKey !== "") {
+      obj.contextKey = message.contextKey;
+    }
+    if (message.relatedEntityId !== undefined && message.relatedEntityId !== "") {
+      obj.relatedEntityId = message.relatedEntityId;
+    }
+    if (message.emailEnabled !== undefined) {
+      obj.emailEnabled = message.emailEnabled;
+    }
+    if (message.smsEnabled !== undefined) {
+      obj.smsEnabled = message.smsEnabled;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SetUserChannelPreferenceRequest>, I>>(base?: I): SetUserChannelPreferenceRequest {
+    return SetUserChannelPreferenceRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SetUserChannelPreferenceRequest>, I>>(
+    object: I,
+  ): SetUserChannelPreferenceRequest {
+    const message = createBaseSetUserChannelPreferenceRequest();
+    message.contextKey = object.contextKey ?? "";
+    message.relatedEntityId = object.relatedEntityId ?? "";
+    message.emailEnabled = object.emailEnabled ?? undefined;
+    message.smsEnabled = object.smsEnabled ?? undefined;
+    return message;
+  },
+};
+
+function createBaseSetUserChannelPreferenceResponse(): SetUserChannelPreferenceResponse {
+  return { result: undefined, data: undefined };
+}
+
+export const SetUserChannelPreferenceResponse: MessageFns<SetUserChannelPreferenceResponse> = {
+  encode(message: SetUserChannelPreferenceResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.result !== undefined) {
+      D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
+    }
+    if (message.data !== undefined) {
+      ChannelPreferenceDTO.encode(message.data, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SetUserChannelPreferenceResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSetUserChannelPreferenceResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.result = D2ResultProto.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.data = ChannelPreferenceDTO.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SetUserChannelPreferenceResponse {
+    return {
+      result: isSet(object.result) ? D2ResultProto.fromJSON(object.result) : undefined,
+      data: isSet(object.data) ? ChannelPreferenceDTO.fromJSON(object.data) : undefined,
+    };
+  },
+
+  toJSON(message: SetUserChannelPreferenceResponse): unknown {
+    const obj: any = {};
+    if (message.result !== undefined) {
+      obj.result = D2ResultProto.toJSON(message.result);
+    }
+    if (message.data !== undefined) {
+      obj.data = ChannelPreferenceDTO.toJSON(message.data);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SetUserChannelPreferenceResponse>, I>>(
+    base?: I,
+  ): SetUserChannelPreferenceResponse {
+    return SetUserChannelPreferenceResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SetUserChannelPreferenceResponse>, I>>(
+    object: I,
+  ): SetUserChannelPreferenceResponse {
+    const message = createBaseSetUserChannelPreferenceResponse();
+    message.result = (object.result !== undefined && object.result !== null)
+      ? D2ResultProto.fromPartial(object.result)
+      : undefined;
+    message.data = (object.data !== undefined && object.data !== null)
+      ? ChannelPreferenceDTO.fromPartial(object.data)
+      : undefined;
+    return message;
+  },
+};
+
 function createBaseGetDeliveryStatusRequest(): GetDeliveryStatusRequest {
   return { deliveryRequestId: "" };
 }
 
 export const GetDeliveryStatusRequest: MessageFns<GetDeliveryStatusRequest> = {
   encode(message: GetDeliveryStatusRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.deliveryRequestId !== "") {
+    if (message.deliveryRequestId !== undefined && message.deliveryRequestId !== "") {
       writer.uint32(10).string(message.deliveryRequestId);
     }
     return writer;
@@ -2555,7 +2983,7 @@ export const GetDeliveryStatusRequest: MessageFns<GetDeliveryStatusRequest> = {
 
   toJSON(message: GetDeliveryStatusRequest): unknown {
     const obj: any = {};
-    if (message.deliveryRequestId !== "") {
+    if (message.deliveryRequestId !== undefined && message.deliveryRequestId !== "") {
       obj.deliveryRequestId = message.deliveryRequestId;
     }
     return obj;
@@ -2583,8 +3011,10 @@ export const GetDeliveryStatusResponse: MessageFns<GetDeliveryStatusResponse> = 
     if (message.request !== undefined) {
       DeliveryRequestDTO.encode(message.request, writer.uint32(18).fork()).join();
     }
-    for (const v of message.attempts) {
-      DeliveryAttemptDTO.encode(v!, writer.uint32(26).fork()).join();
+    if (message.attempts !== undefined && message.attempts.length !== 0) {
+      for (const v of message.attempts) {
+        DeliveryAttemptDTO.encode(v!, writer.uint32(26).fork()).join();
+      }
     }
     return writer;
   },
@@ -2617,7 +3047,10 @@ export const GetDeliveryStatusResponse: MessageFns<GetDeliveryStatusResponse> = 
             break;
           }
 
-          message.attempts.push(DeliveryAttemptDTO.decode(reader, reader.uint32()));
+          const el = DeliveryAttemptDTO.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.attempts!.push(el);
+          }
           continue;
         }
       }
@@ -2675,10 +3108,10 @@ function createBaseGetNotificationsRequest(): GetNotificationsRequest {
 
 export const GetNotificationsRequest: MessageFns<GetNotificationsRequest> = {
   encode(message: GetNotificationsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.userId !== "") {
+    if (message.userId !== undefined && message.userId !== "") {
       writer.uint32(10).string(message.userId);
     }
-    if (message.unreadOnly !== false) {
+    if (message.unreadOnly !== undefined && message.unreadOnly !== false) {
       writer.uint32(16).bool(message.unreadOnly);
     }
     if (message.pagination !== undefined) {
@@ -2745,10 +3178,10 @@ export const GetNotificationsRequest: MessageFns<GetNotificationsRequest> = {
 
   toJSON(message: GetNotificationsRequest): unknown {
     const obj: any = {};
-    if (message.userId !== "") {
+    if (message.userId !== undefined && message.userId !== "") {
       obj.userId = message.userId;
     }
-    if (message.unreadOnly !== false) {
+    if (message.unreadOnly !== undefined && message.unreadOnly !== false) {
       obj.unreadOnly = message.unreadOnly;
     }
     if (message.pagination !== undefined) {
@@ -2780,10 +3213,12 @@ export const GetNotificationsResponse: MessageFns<GetNotificationsResponse> = {
     if (message.result !== undefined) {
       D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
     }
-    for (const v of message.data) {
-      NotificationDTO.encode(v!, writer.uint32(18).fork()).join();
+    if (message.data !== undefined && message.data.length !== 0) {
+      for (const v of message.data) {
+        NotificationDTO.encode(v!, writer.uint32(18).fork()).join();
+      }
     }
-    if (message.total !== 0) {
+    if (message.total !== undefined && message.total !== 0) {
       writer.uint32(24).int32(message.total);
     }
     return writer;
@@ -2809,7 +3244,10 @@ export const GetNotificationsResponse: MessageFns<GetNotificationsResponse> = {
             break;
           }
 
-          message.data.push(NotificationDTO.decode(reader, reader.uint32()));
+          const el = NotificationDTO.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.data!.push(el);
+          }
           continue;
         }
         case 3: {
@@ -2845,7 +3283,7 @@ export const GetNotificationsResponse: MessageFns<GetNotificationsResponse> = {
     if (message.data?.length) {
       obj.data = message.data.map((e) => NotificationDTO.toJSON(e));
     }
-    if (message.total !== 0) {
+    if (message.total !== undefined && message.total !== 0) {
       obj.total = Math.round(message.total);
     }
     return obj;
@@ -2871,11 +3309,13 @@ function createBaseMarkNotificationsReadRequest(): MarkNotificationsReadRequest 
 
 export const MarkNotificationsReadRequest: MessageFns<MarkNotificationsReadRequest> = {
   encode(message: MarkNotificationsReadRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.userId !== "") {
+    if (message.userId !== undefined && message.userId !== "") {
       writer.uint32(10).string(message.userId);
     }
-    for (const v of message.notificationIds) {
-      writer.uint32(18).string(v!);
+    if (message.notificationIds !== undefined && message.notificationIds.length !== 0) {
+      for (const v of message.notificationIds) {
+        writer.uint32(18).string(v!);
+      }
     }
     return writer;
   },
@@ -2900,7 +3340,10 @@ export const MarkNotificationsReadRequest: MessageFns<MarkNotificationsReadReque
             break;
           }
 
-          message.notificationIds.push(reader.string());
+          const el = reader.string();
+          if (el !== undefined) {
+            message.notificationIds!.push(el);
+          }
           continue;
         }
       }
@@ -2929,7 +3372,7 @@ export const MarkNotificationsReadRequest: MessageFns<MarkNotificationsReadReque
 
   toJSON(message: MarkNotificationsReadRequest): unknown {
     const obj: any = {};
-    if (message.userId !== "") {
+    if (message.userId !== undefined && message.userId !== "") {
       obj.userId = message.userId;
     }
     if (message.notificationIds?.length) {
@@ -2958,7 +3401,7 @@ export const MarkNotificationsReadResponse: MessageFns<MarkNotificationsReadResp
     if (message.result !== undefined) {
       D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
     }
-    if (message.markedCount !== 0) {
+    if (message.markedCount !== undefined && message.markedCount !== 0) {
       writer.uint32(16).int32(message.markedCount);
     }
     return writer;
@@ -3012,7 +3455,7 @@ export const MarkNotificationsReadResponse: MessageFns<MarkNotificationsReadResp
     if (message.result !== undefined) {
       obj.result = D2ResultProto.toJSON(message.result);
     }
-    if (message.markedCount !== 0) {
+    if (message.markedCount !== undefined && message.markedCount !== 0) {
       obj.markedCount = Math.round(message.markedCount);
     }
     return obj;
@@ -3034,27 +3477,34 @@ export const MarkNotificationsReadResponse: MessageFns<MarkNotificationsReadResp
 };
 
 function createBaseCreateThreadRequest(): CreateThreadRequest {
-  return { type: "", title: "", slug: "", notificationPolicy: "", orgId: "", createdByUserId: "" };
+  return {
+    type: "",
+    title: undefined,
+    slug: undefined,
+    notificationPolicy: undefined,
+    orgId: undefined,
+    createdByUserId: undefined,
+  };
 }
 
 export const CreateThreadRequest: MessageFns<CreateThreadRequest> = {
   encode(message: CreateThreadRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.type !== "") {
+    if (message.type !== undefined && message.type !== "") {
       writer.uint32(10).string(message.type);
     }
-    if (message.title !== "") {
+    if (message.title !== undefined) {
       writer.uint32(18).string(message.title);
     }
-    if (message.slug !== "") {
+    if (message.slug !== undefined) {
       writer.uint32(26).string(message.slug);
     }
-    if (message.notificationPolicy !== "") {
+    if (message.notificationPolicy !== undefined) {
       writer.uint32(34).string(message.notificationPolicy);
     }
-    if (message.orgId !== "") {
+    if (message.orgId !== undefined) {
       writer.uint32(42).string(message.orgId);
     }
-    if (message.createdByUserId !== "") {
+    if (message.createdByUserId !== undefined) {
       writer.uint32(50).string(message.createdByUserId);
     }
     return writer;
@@ -3127,44 +3577,44 @@ export const CreateThreadRequest: MessageFns<CreateThreadRequest> = {
   fromJSON(object: any): CreateThreadRequest {
     return {
       type: isSet(object.type) ? globalThis.String(object.type) : "",
-      title: isSet(object.title) ? globalThis.String(object.title) : "",
-      slug: isSet(object.slug) ? globalThis.String(object.slug) : "",
+      title: isSet(object.title) ? globalThis.String(object.title) : undefined,
+      slug: isSet(object.slug) ? globalThis.String(object.slug) : undefined,
       notificationPolicy: isSet(object.notificationPolicy)
         ? globalThis.String(object.notificationPolicy)
         : isSet(object.notification_policy)
         ? globalThis.String(object.notification_policy)
-        : "",
+        : undefined,
       orgId: isSet(object.orgId)
         ? globalThis.String(object.orgId)
         : isSet(object.org_id)
         ? globalThis.String(object.org_id)
-        : "",
+        : undefined,
       createdByUserId: isSet(object.createdByUserId)
         ? globalThis.String(object.createdByUserId)
         : isSet(object.created_by_user_id)
         ? globalThis.String(object.created_by_user_id)
-        : "",
+        : undefined,
     };
   },
 
   toJSON(message: CreateThreadRequest): unknown {
     const obj: any = {};
-    if (message.type !== "") {
+    if (message.type !== undefined && message.type !== "") {
       obj.type = message.type;
     }
-    if (message.title !== "") {
+    if (message.title !== undefined) {
       obj.title = message.title;
     }
-    if (message.slug !== "") {
+    if (message.slug !== undefined) {
       obj.slug = message.slug;
     }
-    if (message.notificationPolicy !== "") {
+    if (message.notificationPolicy !== undefined) {
       obj.notificationPolicy = message.notificationPolicy;
     }
-    if (message.orgId !== "") {
+    if (message.orgId !== undefined) {
       obj.orgId = message.orgId;
     }
-    if (message.createdByUserId !== "") {
+    if (message.createdByUserId !== undefined) {
       obj.createdByUserId = message.createdByUserId;
     }
     return obj;
@@ -3176,11 +3626,11 @@ export const CreateThreadRequest: MessageFns<CreateThreadRequest> = {
   fromPartial<I extends Exact<DeepPartial<CreateThreadRequest>, I>>(object: I): CreateThreadRequest {
     const message = createBaseCreateThreadRequest();
     message.type = object.type ?? "";
-    message.title = object.title ?? "";
-    message.slug = object.slug ?? "";
-    message.notificationPolicy = object.notificationPolicy ?? "";
-    message.orgId = object.orgId ?? "";
-    message.createdByUserId = object.createdByUserId ?? "";
+    message.title = object.title ?? undefined;
+    message.slug = object.slug ?? undefined;
+    message.notificationPolicy = object.notificationPolicy ?? undefined;
+    message.orgId = object.orgId ?? undefined;
+    message.createdByUserId = object.createdByUserId ?? undefined;
     return message;
   },
 };
@@ -3269,7 +3719,7 @@ function createBaseGetThreadRequest(): GetThreadRequest {
 
 export const GetThreadRequest: MessageFns<GetThreadRequest> = {
   encode(message: GetThreadRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.threadId !== "") {
+    if (message.threadId !== undefined && message.threadId !== "") {
       writer.uint32(10).string(message.threadId);
     }
     return writer;
@@ -3311,7 +3761,7 @@ export const GetThreadRequest: MessageFns<GetThreadRequest> = {
 
   toJSON(message: GetThreadRequest): unknown {
     const obj: any = {};
-    if (message.threadId !== "") {
+    if (message.threadId !== undefined && message.threadId !== "") {
       obj.threadId = message.threadId;
     }
     return obj;
@@ -3406,18 +3856,18 @@ export const GetThreadResponse: MessageFns<GetThreadResponse> = {
 };
 
 function createBaseGetThreadsRequest(): GetThreadsRequest {
-  return { orgId: "", userId: "", type: "", pagination: undefined };
+  return { orgId: "", userId: "", type: undefined, pagination: undefined };
 }
 
 export const GetThreadsRequest: MessageFns<GetThreadsRequest> = {
   encode(message: GetThreadsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.orgId !== "") {
+    if (message.orgId !== undefined && message.orgId !== "") {
       writer.uint32(10).string(message.orgId);
     }
-    if (message.userId !== "") {
+    if (message.userId !== undefined && message.userId !== "") {
       writer.uint32(18).string(message.userId);
     }
-    if (message.type !== "") {
+    if (message.type !== undefined) {
       writer.uint32(26).string(message.type);
     }
     if (message.pagination !== undefined) {
@@ -3486,20 +3936,20 @@ export const GetThreadsRequest: MessageFns<GetThreadsRequest> = {
         : isSet(object.user_id)
         ? globalThis.String(object.user_id)
         : "",
-      type: isSet(object.type) ? globalThis.String(object.type) : "",
+      type: isSet(object.type) ? globalThis.String(object.type) : undefined,
       pagination: isSet(object.pagination) ? PaginationRequest.fromJSON(object.pagination) : undefined,
     };
   },
 
   toJSON(message: GetThreadsRequest): unknown {
     const obj: any = {};
-    if (message.orgId !== "") {
+    if (message.orgId !== undefined && message.orgId !== "") {
       obj.orgId = message.orgId;
     }
-    if (message.userId !== "") {
+    if (message.userId !== undefined && message.userId !== "") {
       obj.userId = message.userId;
     }
-    if (message.type !== "") {
+    if (message.type !== undefined) {
       obj.type = message.type;
     }
     if (message.pagination !== undefined) {
@@ -3515,7 +3965,7 @@ export const GetThreadsRequest: MessageFns<GetThreadsRequest> = {
     const message = createBaseGetThreadsRequest();
     message.orgId = object.orgId ?? "";
     message.userId = object.userId ?? "";
-    message.type = object.type ?? "";
+    message.type = object.type ?? undefined;
     message.pagination = (object.pagination !== undefined && object.pagination !== null)
       ? PaginationRequest.fromPartial(object.pagination)
       : undefined;
@@ -3532,10 +3982,12 @@ export const GetThreadsResponse: MessageFns<GetThreadsResponse> = {
     if (message.result !== undefined) {
       D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
     }
-    for (const v of message.data) {
-      ThreadDTO.encode(v!, writer.uint32(18).fork()).join();
+    if (message.data !== undefined && message.data.length !== 0) {
+      for (const v of message.data) {
+        ThreadDTO.encode(v!, writer.uint32(18).fork()).join();
+      }
     }
-    if (message.total !== 0) {
+    if (message.total !== undefined && message.total !== 0) {
       writer.uint32(24).int32(message.total);
     }
     return writer;
@@ -3561,7 +4013,10 @@ export const GetThreadsResponse: MessageFns<GetThreadsResponse> = {
             break;
           }
 
-          message.data.push(ThreadDTO.decode(reader, reader.uint32()));
+          const el = ThreadDTO.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.data!.push(el);
+          }
           continue;
         }
         case 3: {
@@ -3597,7 +4052,7 @@ export const GetThreadsResponse: MessageFns<GetThreadsResponse> = {
     if (message.data?.length) {
       obj.data = message.data.map((e) => ThreadDTO.toJSON(e));
     }
-    if (message.total !== 0) {
+    if (message.total !== undefined && message.total !== 0) {
       obj.total = Math.round(message.total);
     }
     return obj;
@@ -3631,19 +4086,19 @@ function createBasePostMessageRequest(): PostMessageRequest {
 
 export const PostMessageRequest: MessageFns<PostMessageRequest> = {
   encode(message: PostMessageRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.threadId !== "") {
+    if (message.threadId !== undefined && message.threadId !== "") {
       writer.uint32(10).string(message.threadId);
     }
-    if (message.senderUserId !== "") {
+    if (message.senderUserId !== undefined && message.senderUserId !== "") {
       writer.uint32(18).string(message.senderUserId);
     }
-    if (message.content !== "") {
+    if (message.content !== undefined && message.content !== "") {
       writer.uint32(26).string(message.content);
     }
-    if (message.plainTextContent !== "") {
+    if (message.plainTextContent !== undefined && message.plainTextContent !== "") {
       writer.uint32(34).string(message.plainTextContent);
     }
-    if (message.contentFormat !== "") {
+    if (message.contentFormat !== undefined && message.contentFormat !== "") {
       writer.uint32(42).string(message.contentFormat);
     }
     if (message.parentMessageId !== undefined) {
@@ -3761,19 +4216,19 @@ export const PostMessageRequest: MessageFns<PostMessageRequest> = {
 
   toJSON(message: PostMessageRequest): unknown {
     const obj: any = {};
-    if (message.threadId !== "") {
+    if (message.threadId !== undefined && message.threadId !== "") {
       obj.threadId = message.threadId;
     }
-    if (message.senderUserId !== "") {
+    if (message.senderUserId !== undefined && message.senderUserId !== "") {
       obj.senderUserId = message.senderUserId;
     }
-    if (message.content !== "") {
+    if (message.content !== undefined && message.content !== "") {
       obj.content = message.content;
     }
-    if (message.plainTextContent !== "") {
+    if (message.plainTextContent !== undefined && message.plainTextContent !== "") {
       obj.plainTextContent = message.plainTextContent;
     }
-    if (message.contentFormat !== "") {
+    if (message.contentFormat !== undefined && message.contentFormat !== "") {
       obj.contentFormat = message.contentFormat;
     }
     if (message.parentMessageId !== undefined) {
@@ -3887,16 +4342,16 @@ function createBaseEditMessageRequest(): EditMessageRequest {
 
 export const EditMessageRequest: MessageFns<EditMessageRequest> = {
   encode(message: EditMessageRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.messageId !== "") {
+    if (message.messageId !== undefined && message.messageId !== "") {
       writer.uint32(10).string(message.messageId);
     }
-    if (message.senderUserId !== "") {
+    if (message.senderUserId !== undefined && message.senderUserId !== "") {
       writer.uint32(18).string(message.senderUserId);
     }
-    if (message.content !== "") {
+    if (message.content !== undefined && message.content !== "") {
       writer.uint32(26).string(message.content);
     }
-    if (message.plainTextContent !== "") {
+    if (message.plainTextContent !== undefined && message.plainTextContent !== "") {
       writer.uint32(34).string(message.plainTextContent);
     }
     return writer;
@@ -3973,16 +4428,16 @@ export const EditMessageRequest: MessageFns<EditMessageRequest> = {
 
   toJSON(message: EditMessageRequest): unknown {
     const obj: any = {};
-    if (message.messageId !== "") {
+    if (message.messageId !== undefined && message.messageId !== "") {
       obj.messageId = message.messageId;
     }
-    if (message.senderUserId !== "") {
+    if (message.senderUserId !== undefined && message.senderUserId !== "") {
       obj.senderUserId = message.senderUserId;
     }
-    if (message.content !== "") {
+    if (message.content !== undefined && message.content !== "") {
       obj.content = message.content;
     }
-    if (message.plainTextContent !== "") {
+    if (message.plainTextContent !== undefined && message.plainTextContent !== "") {
       obj.plainTextContent = message.plainTextContent;
     }
     return obj;
@@ -4087,10 +4542,10 @@ function createBaseDeleteMessageRequest(): DeleteMessageRequest {
 
 export const DeleteMessageRequest: MessageFns<DeleteMessageRequest> = {
   encode(message: DeleteMessageRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.messageId !== "") {
+    if (message.messageId !== undefined && message.messageId !== "") {
       writer.uint32(10).string(message.messageId);
     }
-    if (message.senderUserId !== "") {
+    if (message.senderUserId !== undefined && message.senderUserId !== "") {
       writer.uint32(18).string(message.senderUserId);
     }
     return writer;
@@ -4145,10 +4600,10 @@ export const DeleteMessageRequest: MessageFns<DeleteMessageRequest> = {
 
   toJSON(message: DeleteMessageRequest): unknown {
     const obj: any = {};
-    if (message.messageId !== "") {
+    if (message.messageId !== undefined && message.messageId !== "") {
       obj.messageId = message.messageId;
     }
-    if (message.senderUserId !== "") {
+    if (message.senderUserId !== undefined && message.senderUserId !== "") {
       obj.senderUserId = message.senderUserId;
     }
     return obj;
@@ -4231,7 +4686,7 @@ function createBaseGetThreadMessagesRequest(): GetThreadMessagesRequest {
 
 export const GetThreadMessagesRequest: MessageFns<GetThreadMessagesRequest> = {
   encode(message: GetThreadMessagesRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.threadId !== "") {
+    if (message.threadId !== undefined && message.threadId !== "") {
       writer.uint32(10).string(message.threadId);
     }
     if (message.pagination !== undefined) {
@@ -4285,7 +4740,7 @@ export const GetThreadMessagesRequest: MessageFns<GetThreadMessagesRequest> = {
 
   toJSON(message: GetThreadMessagesRequest): unknown {
     const obj: any = {};
-    if (message.threadId !== "") {
+    if (message.threadId !== undefined && message.threadId !== "") {
       obj.threadId = message.threadId;
     }
     if (message.pagination !== undefined) {
@@ -4316,10 +4771,12 @@ export const GetThreadMessagesResponse: MessageFns<GetThreadMessagesResponse> = 
     if (message.result !== undefined) {
       D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
     }
-    for (const v of message.data) {
-      MessageDTO.encode(v!, writer.uint32(18).fork()).join();
+    if (message.data !== undefined && message.data.length !== 0) {
+      for (const v of message.data) {
+        MessageDTO.encode(v!, writer.uint32(18).fork()).join();
+      }
     }
-    if (message.total !== 0) {
+    if (message.total !== undefined && message.total !== 0) {
       writer.uint32(24).int32(message.total);
     }
     return writer;
@@ -4345,7 +4802,10 @@ export const GetThreadMessagesResponse: MessageFns<GetThreadMessagesResponse> = 
             break;
           }
 
-          message.data.push(MessageDTO.decode(reader, reader.uint32()));
+          const el = MessageDTO.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.data!.push(el);
+          }
           continue;
         }
         case 3: {
@@ -4381,7 +4841,7 @@ export const GetThreadMessagesResponse: MessageFns<GetThreadMessagesResponse> = 
     if (message.data?.length) {
       obj.data = message.data.map((e) => MessageDTO.toJSON(e));
     }
-    if (message.total !== 0) {
+    if (message.total !== undefined && message.total !== 0) {
       obj.total = Math.round(message.total);
     }
     return obj;
@@ -4407,13 +4867,13 @@ function createBaseAddReactionRequest(): AddReactionRequest {
 
 export const AddReactionRequest: MessageFns<AddReactionRequest> = {
   encode(message: AddReactionRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.messageId !== "") {
+    if (message.messageId !== undefined && message.messageId !== "") {
       writer.uint32(10).string(message.messageId);
     }
-    if (message.userId !== "") {
+    if (message.userId !== undefined && message.userId !== "") {
       writer.uint32(18).string(message.userId);
     }
-    if (message.reaction !== "") {
+    if (message.reaction !== undefined && message.reaction !== "") {
       writer.uint32(26).string(message.reaction);
     }
     return writer;
@@ -4477,13 +4937,13 @@ export const AddReactionRequest: MessageFns<AddReactionRequest> = {
 
   toJSON(message: AddReactionRequest): unknown {
     const obj: any = {};
-    if (message.messageId !== "") {
+    if (message.messageId !== undefined && message.messageId !== "") {
       obj.messageId = message.messageId;
     }
-    if (message.userId !== "") {
+    if (message.userId !== undefined && message.userId !== "") {
       obj.userId = message.userId;
     }
-    if (message.reaction !== "") {
+    if (message.reaction !== undefined && message.reaction !== "") {
       obj.reaction = message.reaction;
     }
     return obj;
@@ -4587,10 +5047,10 @@ function createBaseRemoveReactionRequest(): RemoveReactionRequest {
 
 export const RemoveReactionRequest: MessageFns<RemoveReactionRequest> = {
   encode(message: RemoveReactionRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.reactionId !== "") {
+    if (message.reactionId !== undefined && message.reactionId !== "") {
       writer.uint32(10).string(message.reactionId);
     }
-    if (message.userId !== "") {
+    if (message.userId !== undefined && message.userId !== "") {
       writer.uint32(18).string(message.userId);
     }
     return writer;
@@ -4645,10 +5105,10 @@ export const RemoveReactionRequest: MessageFns<RemoveReactionRequest> = {
 
   toJSON(message: RemoveReactionRequest): unknown {
     const obj: any = {};
-    if (message.reactionId !== "") {
+    if (message.reactionId !== undefined && message.reactionId !== "") {
       obj.reactionId = message.reactionId;
     }
-    if (message.userId !== "") {
+    if (message.userId !== undefined && message.userId !== "") {
       obj.userId = message.userId;
     }
     return obj;
@@ -4726,21 +5186,21 @@ export const RemoveReactionResponse: MessageFns<RemoveReactionResponse> = {
 };
 
 function createBaseAddParticipantRequest(): AddParticipantRequest {
-  return { threadId: "", userId: "", contactId: "", role: "" };
+  return { threadId: "", userId: undefined, contactId: undefined, role: "" };
 }
 
 export const AddParticipantRequest: MessageFns<AddParticipantRequest> = {
   encode(message: AddParticipantRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.threadId !== "") {
+    if (message.threadId !== undefined && message.threadId !== "") {
       writer.uint32(10).string(message.threadId);
     }
-    if (message.userId !== "") {
+    if (message.userId !== undefined) {
       writer.uint32(18).string(message.userId);
     }
-    if (message.contactId !== "") {
+    if (message.contactId !== undefined) {
       writer.uint32(26).string(message.contactId);
     }
-    if (message.role !== "") {
+    if (message.role !== undefined && message.role !== "") {
       writer.uint32(34).string(message.role);
     }
     return writer;
@@ -4805,28 +5265,28 @@ export const AddParticipantRequest: MessageFns<AddParticipantRequest> = {
         ? globalThis.String(object.userId)
         : isSet(object.user_id)
         ? globalThis.String(object.user_id)
-        : "",
+        : undefined,
       contactId: isSet(object.contactId)
         ? globalThis.String(object.contactId)
         : isSet(object.contact_id)
         ? globalThis.String(object.contact_id)
-        : "",
+        : undefined,
       role: isSet(object.role) ? globalThis.String(object.role) : "",
     };
   },
 
   toJSON(message: AddParticipantRequest): unknown {
     const obj: any = {};
-    if (message.threadId !== "") {
+    if (message.threadId !== undefined && message.threadId !== "") {
       obj.threadId = message.threadId;
     }
-    if (message.userId !== "") {
+    if (message.userId !== undefined) {
       obj.userId = message.userId;
     }
-    if (message.contactId !== "") {
+    if (message.contactId !== undefined) {
       obj.contactId = message.contactId;
     }
-    if (message.role !== "") {
+    if (message.role !== undefined && message.role !== "") {
       obj.role = message.role;
     }
     return obj;
@@ -4838,8 +5298,8 @@ export const AddParticipantRequest: MessageFns<AddParticipantRequest> = {
   fromPartial<I extends Exact<DeepPartial<AddParticipantRequest>, I>>(object: I): AddParticipantRequest {
     const message = createBaseAddParticipantRequest();
     message.threadId = object.threadId ?? "";
-    message.userId = object.userId ?? "";
-    message.contactId = object.contactId ?? "";
+    message.userId = object.userId ?? undefined;
+    message.contactId = object.contactId ?? undefined;
     message.role = object.role ?? "";
     return message;
   },
@@ -4931,10 +5391,10 @@ function createBaseRemoveParticipantRequest(): RemoveParticipantRequest {
 
 export const RemoveParticipantRequest: MessageFns<RemoveParticipantRequest> = {
   encode(message: RemoveParticipantRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.threadId !== "") {
+    if (message.threadId !== undefined && message.threadId !== "") {
       writer.uint32(10).string(message.threadId);
     }
-    if (message.participantId !== "") {
+    if (message.participantId !== undefined && message.participantId !== "") {
       writer.uint32(18).string(message.participantId);
     }
     return writer;
@@ -4989,10 +5449,10 @@ export const RemoveParticipantRequest: MessageFns<RemoveParticipantRequest> = {
 
   toJSON(message: RemoveParticipantRequest): unknown {
     const obj: any = {};
-    if (message.threadId !== "") {
+    if (message.threadId !== undefined && message.threadId !== "") {
       obj.threadId = message.threadId;
     }
-    if (message.participantId !== "") {
+    if (message.participantId !== undefined && message.participantId !== "") {
       obj.participantId = message.participantId;
     }
     return obj;
@@ -5103,6 +5563,38 @@ export const CommsServiceService = {
     responseSerialize: (value: SetChannelPreferenceResponse): Buffer =>
       Buffer.from(SetChannelPreferenceResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): SetChannelPreferenceResponse => SetChannelPreferenceResponse.decode(value),
+  },
+  /**
+   * User-centric variants — caller passes ext-key (context_key + related_entity_id);
+   * comms internally resolves the contact id via the Geo client (memory-cached,
+   * refreshed via cross-process eviction events). Used by the REST gateway for
+   * browser-initiated user preferences without exposing contact_id externally.
+   */
+  getUserChannelPreference: {
+    path: "/d2.comms.v1.CommsService/GetUserChannelPreference",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetUserChannelPreferenceRequest): Buffer =>
+      Buffer.from(GetUserChannelPreferenceRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetUserChannelPreferenceRequest =>
+      GetUserChannelPreferenceRequest.decode(value),
+    responseSerialize: (value: GetUserChannelPreferenceResponse): Buffer =>
+      Buffer.from(GetUserChannelPreferenceResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetUserChannelPreferenceResponse =>
+      GetUserChannelPreferenceResponse.decode(value),
+  },
+  setUserChannelPreference: {
+    path: "/d2.comms.v1.CommsService/SetUserChannelPreference",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: SetUserChannelPreferenceRequest): Buffer =>
+      Buffer.from(SetUserChannelPreferenceRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): SetUserChannelPreferenceRequest =>
+      SetUserChannelPreferenceRequest.decode(value),
+    responseSerialize: (value: SetUserChannelPreferenceResponse): Buffer =>
+      Buffer.from(SetUserChannelPreferenceResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): SetUserChannelPreferenceResponse =>
+      SetUserChannelPreferenceResponse.decode(value),
   },
   /** GetTemplate and UpsertTemplate removed — templates dropped from architecture. */
   getDeliveryStatus: {
@@ -5257,6 +5749,14 @@ export interface CommsServiceServer extends UntypedServiceImplementation {
   /** Phase 1: Delivery Engine */
   getChannelPreference: handleUnaryCall<GetChannelPreferenceRequest, GetChannelPreferenceResponse>;
   setChannelPreference: handleUnaryCall<SetChannelPreferenceRequest, SetChannelPreferenceResponse>;
+  /**
+   * User-centric variants — caller passes ext-key (context_key + related_entity_id);
+   * comms internally resolves the contact id via the Geo client (memory-cached,
+   * refreshed via cross-process eviction events). Used by the REST gateway for
+   * browser-initiated user preferences without exposing contact_id externally.
+   */
+  getUserChannelPreference: handleUnaryCall<GetUserChannelPreferenceRequest, GetUserChannelPreferenceResponse>;
+  setUserChannelPreference: handleUnaryCall<SetUserChannelPreferenceRequest, SetUserChannelPreferenceResponse>;
   /** GetTemplate and UpsertTemplate removed — templates dropped from architecture. */
   getDeliveryStatus: handleUnaryCall<GetDeliveryStatusRequest, GetDeliveryStatusResponse>;
   /** Phase 2: In-App Notifications (stubs) */
@@ -5323,6 +5823,42 @@ export interface CommsServiceClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: SetChannelPreferenceResponse) => void,
+  ): ClientUnaryCall;
+  /**
+   * User-centric variants — caller passes ext-key (context_key + related_entity_id);
+   * comms internally resolves the contact id via the Geo client (memory-cached,
+   * refreshed via cross-process eviction events). Used by the REST gateway for
+   * browser-initiated user preferences without exposing contact_id externally.
+   */
+  getUserChannelPreference(
+    request: GetUserChannelPreferenceRequest,
+    callback: (error: ServiceError | null, response: GetUserChannelPreferenceResponse) => void,
+  ): ClientUnaryCall;
+  getUserChannelPreference(
+    request: GetUserChannelPreferenceRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetUserChannelPreferenceResponse) => void,
+  ): ClientUnaryCall;
+  getUserChannelPreference(
+    request: GetUserChannelPreferenceRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetUserChannelPreferenceResponse) => void,
+  ): ClientUnaryCall;
+  setUserChannelPreference(
+    request: SetUserChannelPreferenceRequest,
+    callback: (error: ServiceError | null, response: SetUserChannelPreferenceResponse) => void,
+  ): ClientUnaryCall;
+  setUserChannelPreference(
+    request: SetUserChannelPreferenceRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: SetUserChannelPreferenceResponse) => void,
+  ): ClientUnaryCall;
+  setUserChannelPreference(
+    request: SetUserChannelPreferenceRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: SetUserChannelPreferenceResponse) => void,
   ): ClientUnaryCall;
   /** GetTemplate and UpsertTemplate removed — templates dropped from architecture. */
   getDeliveryStatus(

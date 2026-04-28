@@ -46,6 +46,7 @@ export { GetContactsByExtKeys } from "./handlers/q/get-contacts-by-ext-keys.js";
 export type {
   GetContactsByExtKeysInput,
   GetContactsByExtKeysOutput,
+  IGetContactsByExtKeysHandler,
 } from "./interfaces/q/get-contacts-by-ext-keys.js";
 export { GetContactsByIds } from "./handlers/q/get-contacts-by-ids.js";
 export type {
@@ -74,6 +75,8 @@ export type {
   IContactsEvictedHandler,
 } from "./messaging/handlers/sub/contacts-evicted.js";
 export { createContactsEvictedConsumer } from "./messaging/consumers/contacts-evicted-consumer.js";
+export { wireGeoClientConsumers } from "./messaging/wire-consumers.js";
+export type { WireGeoClientConsumersOptions } from "./messaging/wire-consumers.js";
 
 // Service Keys (DI registration tokens)
 export {

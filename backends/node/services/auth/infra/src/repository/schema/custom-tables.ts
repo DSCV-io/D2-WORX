@@ -26,11 +26,33 @@ export const signInEvent = pgTable(
     ipAddress: varchar("ip_address", { length: 45 }).notNull(),
     userAgent: text("user_agent").notNull(),
     whoIsId: varchar("who_is_id", { length: 64 }),
+    // Combined fingerprint (sha256(clientFp + serverFp + clientIp)). Kept for
+    // backward compat + as the canonical "this exact request signature" hash.
     deviceFingerprint: varchar("device_fingerprint", { length: 64 }),
+    // Stable hardware/browser signature (canvas/WebGL/timezone/etc) — survives
+    // network changes. Used to render device identicons + group sign-ins by
+    // physical device.
+    clientFingerprint: varchar("client_fingerprint", { length: 64 }),
+    // Network-derived signature (UA + accept headers + IP class) — changes
+    // when the user roams networks. Useful for forensic investigation.
+    serverFingerprint: varchar("server_fingerprint", { length: 64 }),
     failureReason: varchar("failure_reason", { length: 100 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
-  (table) => [index("idx_sign_in_event_user_id").on(table.userId)],
+  (table) => [
+    // Composite (user_id, created_at DESC) covers every query in this table:
+    //   - findByUserId: WHERE user_id = ? ORDER BY created_at DESC LIMIT/OFFSET
+    //   - countByUserId: WHERE user_id = ? (left-prefix on user_id)
+    //   - getLatestEventDate: SELECT MAX(created_at) WHERE user_id = ? (PG can use index-only scan from the leading edge)
+    // Replaces the old single-column user_id index — left-prefix lookup keeps
+    // user_id-only queries fast.
+    index("idx_sign_in_event_user_id_created_at").on(table.userId, sql`${table.createdAt} DESC`),
+    // Indexes on the three fingerprints — supports "which events came from
+    // this device / this network / this exact request signature" lookups.
+    index("idx_sign_in_event_client_fingerprint").on(table.clientFingerprint),
+    index("idx_sign_in_event_server_fingerprint").on(table.serverFingerprint),
+    index("idx_sign_in_event_device_fingerprint").on(table.deviceFingerprint),
+  ],
 );
 
 export const emulationConsent = pgTable(

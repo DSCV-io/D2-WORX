@@ -18,19 +18,25 @@ function createTestContext(): HandlerContext {
   return new HandlerContext(request, createLogger({ level: "silent" as never }));
 }
 
-function createMockDb(executeFn: ReturnType<typeof vi.fn> = vi.fn().mockResolvedValue(undefined)) {
-  return { execute: executeFn } as never;
+function createMockDb(limitFn: ReturnType<typeof vi.fn> = vi.fn().mockResolvedValue([])) {
+  return {
+    select: vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        limit: limitFn,
+      }),
+    }),
+  } as never;
 }
 
 describe("PingDb", () => {
-  let mockExecute: ReturnType<typeof vi.fn>;
+  let mockLimit: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    mockExecute = vi.fn().mockResolvedValue(undefined);
+    mockLimit = vi.fn().mockResolvedValue([]);
   });
 
-  it("should return healthy:true with latencyMs when db.execute succeeds", async () => {
-    const handler = new PingDb(createMockDb(mockExecute), createTestContext());
+  it("should return healthy:true with latencyMs when db query succeeds", async () => {
+    const handler = new PingDb(createMockDb(mockLimit), createTestContext());
 
     const result = await handler.handleAsync({});
 
@@ -40,9 +46,9 @@ describe("PingDb", () => {
     expect(result.data?.error).toBeUndefined();
   });
 
-  it("should return healthy:false with error message when db.execute throws Error", async () => {
-    mockExecute.mockRejectedValue(new Error("Connection refused"));
-    const handler = new PingDb(createMockDb(mockExecute), createTestContext());
+  it("should return healthy:false with error message when db query throws Error", async () => {
+    mockLimit.mockRejectedValue(new Error("Connection refused"));
+    const handler = new PingDb(createMockDb(mockLimit), createTestContext());
 
     const result = await handler.handleAsync({});
 
@@ -51,9 +57,9 @@ describe("PingDb", () => {
     expect(result.data?.error).toBe("Connection refused");
   });
 
-  it('should return healthy:false with "Unknown error" when db.execute throws non-Error', async () => {
-    mockExecute.mockRejectedValue("some string error");
-    const handler = new PingDb(createMockDb(mockExecute), createTestContext());
+  it('should return healthy:false with "Unknown error" when db query throws non-Error', async () => {
+    mockLimit.mockRejectedValue("some string error");
+    const handler = new PingDb(createMockDb(mockLimit), createTestContext());
 
     const result = await handler.handleAsync({});
 
@@ -63,7 +69,7 @@ describe("PingDb", () => {
   });
 
   it("should return latencyMs as a non-negative integer", async () => {
-    const handler = new PingDb(createMockDb(mockExecute), createTestContext());
+    const handler = new PingDb(createMockDb(mockLimit), createTestContext());
 
     const result = await handler.handleAsync({});
 
@@ -74,8 +80,8 @@ describe("PingDb", () => {
   });
 
   it("should return D2Result.ok even on DB failure (health check never fails)", async () => {
-    mockExecute.mockRejectedValue(new Error("Database crashed"));
-    const handler = new PingDb(createMockDb(mockExecute), createTestContext());
+    mockLimit.mockRejectedValue(new Error("Database crashed"));
+    const handler = new PingDb(createMockDb(mockLimit), createTestContext());
 
     const result = await handler.handleAsync({});
 

@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="RedactDataAttribute.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>

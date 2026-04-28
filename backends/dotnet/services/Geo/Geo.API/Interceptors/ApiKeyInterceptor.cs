@@ -6,6 +6,8 @@
 
 namespace Geo.API.Interceptors;
 
+using System.Security.Cryptography;
+using System.Text;
 using D2.Geo.App;
 using D2.Services.Protos.Geo.V1;
 using D2.Shared.Utilities.Extensions;
@@ -28,8 +30,8 @@ using Microsoft.Extensions.Options;
 /// </summary>
 public partial class ApiKeyInterceptor : Interceptor
 {
-    private readonly GeoAppOptions r_options;
     private readonly ILogger<ApiKeyInterceptor> r_logger;
+    private readonly (byte[] KeyBytes, List<string> AllowedContextKeys)[] r_validKeys;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ApiKeyInterceptor"/> class.
@@ -40,8 +42,12 @@ public partial class ApiKeyInterceptor : Interceptor
         IOptions<GeoAppOptions> options,
         ILogger<ApiKeyInterceptor> logger)
     {
-        r_options = options.Value;
         r_logger = logger;
+
+        // Pre-compute key bytes for constant-time comparison.
+        r_validKeys = options.Value.ApiKeyMappings
+            .Select(kvp => (Encoding.UTF8.GetBytes(kvp.Key), kvp.Value))
+            .ToArray();
     }
 
     /// <inheritdoc/>
@@ -64,7 +70,7 @@ public partial class ApiKeyInterceptor : Interceptor
         var methodName = GetMethodName(context.Method);
 
         // Fail closed: if API key mappings are not configured, reject protected RPCs.
-        if (r_options.ApiKeyMappings.Count == 0)
+        if (r_validKeys.Length == 0)
         {
             LogApiKeyMappingsNotConfigured(r_logger, methodName);
             throw new RpcException(
@@ -82,8 +88,21 @@ public partial class ApiKeyInterceptor : Interceptor
                 new Status(StatusCode.Unauthenticated, "Missing x-api-key header."));
         }
 
-        // Validate API key exists in mappings.
-        if (!r_options.ApiKeyMappings.TryGetValue(apiKey!, out var allowedContextKeys))
+        // Timing-safe key validation: compare against ALL keys using
+        // FixedTimeEquals to prevent timing side-channel attacks.
+        var apiKeyBytes = Encoding.UTF8.GetBytes(apiKey!);
+        List<string>? allowedContextKeys = null;
+        foreach (var (keyBytes, contextKeys) in r_validKeys)
+        {
+            if (CryptographicOperations.FixedTimeEquals(apiKeyBytes, keyBytes))
+            {
+                allowedContextKeys = contextKeys;
+            }
+
+            // Continue loop — always compare ALL keys to prevent timing leaks.
+        }
+
+        if (allowedContextKeys is null)
         {
             LogInvalidApiKey(r_logger, methodName);
             throw new RpcException(

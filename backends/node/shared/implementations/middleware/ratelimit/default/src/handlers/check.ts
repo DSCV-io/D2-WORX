@@ -49,7 +49,7 @@ export class CheckRateLimit
   private static readonly checkSchema = z.object({
     requestContext: z
       .object({
-        clientIp: validators.zodIpAddress.optional(),
+        clientIp: z.union([validators.zodIpAddress, z.literal("unknown")]).optional(),
         deviceFingerprint: z.string().length(64).optional(),
         countryCode: z.string().length(2).optional(),
       })

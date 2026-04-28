@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="ErrorCodes.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -9,7 +9,7 @@ namespace D2.Shared.Result;
 /// <summary>
 /// Standardized error codes used across the application.
 /// </summary>
-public class ErrorCodes
+public static class ErrorCodes
 {
     /// <summary>
     /// Indicates that the requested resource was not found.

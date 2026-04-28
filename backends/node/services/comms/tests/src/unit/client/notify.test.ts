@@ -226,18 +226,18 @@ describe("Notify", () => {
       expect(target.routingKey).toBe("");
     });
 
-    it("should default sensitive to false when not provided", async () => {
+    it("should default channels to empty array when not provided", async () => {
       await handler.handleAsync(validInput());
 
       const [, message] = (publisher.send as ReturnType<typeof vi.fn>).mock.calls[0];
-      expect(message.sensitive).toBe(false);
+      expect(message.channels).toEqual([]);
     });
 
-    it("should pass sensitive through when explicitly set to true", async () => {
-      await handler.handleAsync(validInput({ sensitive: true }));
+    it("should pass channels through when explicitly set", async () => {
+      await handler.handleAsync(validInput({ channels: ["email"] }));
 
       const [, message] = (publisher.send as ReturnType<typeof vi.fn>).mock.calls[0];
-      expect(message.sensitive).toBe(true);
+      expect(message.channels).toEqual(["email"]);
     });
 
     it("should default urgency to 'normal' when not provided", async () => {
@@ -283,7 +283,7 @@ describe("Notify", () => {
   // -------------------------------------------------------------------------
 
   describe("publisher error handling", () => {
-    it("should return unhandled exception result when publisher.send throws", async () => {
+    it("should return serviceUnavailable when publisher.send throws", async () => {
       (publisher.send as ReturnType<typeof vi.fn>).mockRejectedValue(
         new Error("RabbitMQ connection lost"),
       );
@@ -291,18 +291,18 @@ describe("Notify", () => {
       const result = await handler.handleAsync(validInput());
 
       expect(result).toBeFailure();
-      expect(result).toHaveStatusCode(500);
-      expect(result).toHaveErrorCode("UNHANDLED_EXCEPTION");
+      expect(result).toHaveStatusCode(503);
+      expect(result).toHaveErrorCode("SERVICE_UNAVAILABLE");
     });
 
-    it("should return unhandled exception result for non-Error throws", async () => {
+    it("should return serviceUnavailable for non-Error throws", async () => {
       (publisher.send as ReturnType<typeof vi.fn>).mockRejectedValue("connection timeout");
 
       const result = await handler.handleAsync(validInput());
 
       expect(result).toBeFailure();
-      expect(result).toHaveStatusCode(500);
-      expect(result).toHaveErrorCode("UNHANDLED_EXCEPTION");
+      expect(result).toHaveStatusCode(503);
+      expect(result).toHaveErrorCode("SERVICE_UNAVAILABLE");
     });
   });
 
@@ -357,6 +357,120 @@ describe("Notify", () => {
       const result = await handler.handleAsync(validInput({ title: "t".repeat(255) }));
 
       expect(result).toBeSuccess();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // alternativeContactInfo (XOR with recipientContactId)
+  // -------------------------------------------------------------------------
+
+  describe("alternativeContactInfo", () => {
+    it("should accept alternativeContactInfo with email and no recipientContactId", async () => {
+      const input: NotifyInput = {
+        alternativeContactInfo: { email: "new@example.com" },
+        title: "Test",
+        content: "Hi",
+        plaintext: "Hi",
+        correlationId: "corr-1",
+        senderService: "auth",
+      };
+      const result = await handler.handleAsync(input);
+      expect(result).toBeSuccess();
+      expect(publisher.send).toHaveBeenCalledWith(
+        expect.objectContaining({ exchange: expect.any(String), routingKey: expect.any(String) }),
+        expect.objectContaining({
+          alternativeContactInfo: { email: "new@example.com" },
+          recipientContactId: undefined,
+        }),
+      );
+    });
+
+    it("should accept alternativeContactInfo with phone and no recipientContactId", async () => {
+      const input: NotifyInput = {
+        alternativeContactInfo: { phone: "13213214321" },
+        title: "Test",
+        content: "Hi",
+        plaintext: "Hi",
+        correlationId: "corr-2",
+        senderService: "auth",
+      };
+      const result = await handler.handleAsync(input);
+      expect(result).toBeSuccess();
+    });
+
+    it("should reject when neither recipientContactId nor alternativeContactInfo is provided", async () => {
+      const input = {
+        title: "Test",
+        content: "Hi",
+        plaintext: "Hi",
+        correlationId: "corr-3",
+        senderService: "auth",
+      } as unknown as NotifyInput;
+      const result = await handler.handleAsync(input);
+      expect(result).toBeFailure();
+      expect(result).toHaveStatusCode(400);
+      expect(result).toHaveErrorCode("VALIDATION_FAILED");
+    });
+
+    it("should reject when BOTH recipientContactId and alternativeContactInfo are provided", async () => {
+      const input: NotifyInput = {
+        recipientContactId: "019505e1-4a28-7000-8000-000000000001",
+        alternativeContactInfo: { email: "new@example.com" },
+        title: "Test",
+        content: "Hi",
+        plaintext: "Hi",
+        correlationId: "corr-4",
+        senderService: "auth",
+      };
+      const result = await handler.handleAsync(input);
+      expect(result).toBeFailure();
+      expect(result).toHaveStatusCode(400);
+      expect(result).toHaveErrorCode("VALIDATION_FAILED");
+    });
+
+    it("should reject alternativeContactInfo with neither email nor phone", async () => {
+      const input: NotifyInput = {
+        alternativeContactInfo: {},
+        title: "Test",
+        content: "Hi",
+        plaintext: "Hi",
+        correlationId: "corr-5",
+        senderService: "auth",
+      };
+      const result = await handler.handleAsync(input);
+      expect(result).toBeFailure();
+      expect(result).toHaveStatusCode(400);
+      expect(result).toHaveErrorCode("VALIDATION_FAILED");
+    });
+
+    it("should reject alternativeContactInfo with invalid email", async () => {
+      const input: NotifyInput = {
+        alternativeContactInfo: { email: "not-an-email" },
+        title: "Test",
+        content: "Hi",
+        plaintext: "Hi",
+        correlationId: "corr-6",
+        senderService: "auth",
+      };
+      const result = await handler.handleAsync(input);
+      expect(result).toBeFailure();
+      expect(result).toHaveStatusCode(400);
+      expect(result).toHaveErrorCode("VALIDATION_FAILED");
+    });
+
+    it("should reject alternativeContactInfo with non-digit phone", async () => {
+      const input: NotifyInput = {
+        alternativeContactInfo: { phone: "+1 (555) 123-4567" },
+        title: "Test",
+        content: "Hi",
+        plaintext: "Hi",
+        correlationId: "corr-7",
+        senderService: "auth",
+      };
+      const result = await handler.handleAsync(input);
+      expect(result).toBeFailure();
+      expect(result).toHaveStatusCode(400);
+      expect(result).toHaveErrorCode("VALIDATION_FAILED");
     });
   });
 });

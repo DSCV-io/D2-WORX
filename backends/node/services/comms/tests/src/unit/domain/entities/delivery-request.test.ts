@@ -20,7 +20,7 @@ describe("DeliveryRequest", () => {
       expect(req.recipientContactId).toBe("contact-789");
       expect(req.id).toHaveLength(36);
       expect(req.createdAt).toBeInstanceOf(Date);
-      expect(req.processedAt).toBeNull();
+      expect(req.processedAt).toBeUndefined();
     });
 
     it("should generate unique IDs", () => {
@@ -34,9 +34,9 @@ describe("DeliveryRequest", () => {
       expect(req.id).toBe("custom-id");
     });
 
-    it("should default nullable fields to null", () => {
+    it("should default optional fields to undefined", () => {
       const req = createDeliveryRequest(validInput);
-      expect(req.callbackTopic).toBeNull();
+      expect(req.callbackTopic).toBeUndefined();
     });
 
     it("should accept callbackTopic", () => {
@@ -58,14 +58,23 @@ describe("DeliveryRequest", () => {
       );
     });
 
-    it("should throw when no recipient is provided", () => {
-      expect(() =>
-        createDeliveryRequest({
-          messageId: "msg-1",
-          correlationId: "corr-1",
-          recipientContactId: "",
-        }),
-      ).toThrow(CommsValidationError);
+    it("should accept undefined recipientContactId (transient sends use alternativeContactInfo at app layer)", () => {
+      const req = createDeliveryRequest({
+        messageId: "msg-1",
+        correlationId: "corr-1",
+      });
+      expect(req.recipientContactId).toBeUndefined();
+    });
+
+    it("should accept empty-string recipientContactId by treating it as undefined-equivalent (XOR enforced at API layer)", () => {
+      // Domain entity is permissive; the XOR rule between recipientContactId and
+      // alternativeContactInfo is enforced by the Deliver handler's Zod schema.
+      const req = createDeliveryRequest({
+        messageId: "msg-1",
+        correlationId: "corr-1",
+        recipientContactId: undefined,
+      });
+      expect(req.recipientContactId).toBeUndefined();
     });
   });
 

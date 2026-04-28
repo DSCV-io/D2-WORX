@@ -6,7 +6,6 @@
 
 namespace D2.Geo.Infra.Repository.Handlers.C;
 
-using System.Net;
 using D2.Shared.Handler;
 using D2.Shared.Repository.Errors.Pg;
 using D2.Shared.Result;
@@ -64,9 +63,9 @@ public class CreateContacts : BaseHandler<CreateContacts, I, O>, H
         }
         catch (DbUpdateException ex) when (PgErrorCodes.IsUniqueViolation(ex))
         {
-            return D2Result<O?>.Fail(
-                ["A contact with the same context key and related entity ID already exists."],
-                HttpStatusCode.Conflict);
+            return D2Result<O?>.Conflict(
+                messages: ["A contact with the same context key and related entity ID already exists."],
+                traceId: TraceId);
         }
 
         return D2Result<O?>.Ok(new O());

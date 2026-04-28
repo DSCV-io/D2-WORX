@@ -83,7 +83,7 @@ describe("handleRpc", () => {
 
     handleRpc(provider, call, callback, {
       handlerKey: ITestHandlerKey,
-      mapInput: (req) => ({ id: req.userId }),
+      mapInput: (req: TestRequest) => ({ id: req.userId }),
       mapResponse: (result) => ({
         data: result.data ? { name: result.data.name, age: result.data.age } : undefined,
         ok: result.success,
@@ -109,7 +109,7 @@ describe("handleRpc", () => {
 
     handleRpc(provider, call, callback, {
       handlerKey: ITestHandlerKey,
-      mapInput: (req) => ({ id: req.userId }),
+      mapInput: (req: TestRequest) => ({ id: req.userId }),
       mapResponse: (result) => ({
         data: undefined,
         ok: result.success,
@@ -131,7 +131,7 @@ describe("handleRpc", () => {
 
     handleRpc(provider, call, callback, {
       handlerKey: ITestHandlerKey,
-      mapInput: (req) => ({ id: req.userId }),
+      mapInput: (req: TestRequest) => ({ id: req.userId }),
       mapResponse: (result) => ({ data: undefined, ok: result.success }),
     });
 
@@ -152,7 +152,7 @@ describe("handleRpc", () => {
 
     handleRpc(provider, call, callback, {
       handlerKey: ITestHandlerKey,
-      mapInput: (req) => ({ id: req.userId }),
+      mapInput: (req: TestRequest) => ({ id: req.userId }),
       mapResponse: (result) => ({ data: undefined, ok: result.success }),
     });
 

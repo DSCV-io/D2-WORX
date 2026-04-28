@@ -12,13 +12,13 @@ import { CommsValidationError } from "../exceptions/comms-validation-error.js";
 export interface ThreadParticipant {
   readonly id: string;
   readonly threadId: string;
-  readonly userId: string | null;
-  readonly contactId: string | null;
+  readonly userId?: string;
+  readonly contactId?: string;
   readonly role: ParticipantRole;
   readonly notificationsMuted: boolean;
-  readonly lastReadAt: Date | null;
+  readonly lastReadAt?: Date;
   readonly joinedAt: Date;
-  readonly leftAt: Date | null;
+  readonly leftAt?: Date;
   readonly updatedAt: Date;
 }
 
@@ -26,15 +26,15 @@ export interface CreateThreadParticipantInput {
   readonly threadId: string;
   readonly role: ParticipantRole;
   readonly id?: string;
-  readonly userId?: string | null;
-  readonly contactId?: string | null;
+  readonly userId?: string;
+  readonly contactId?: string;
   readonly notificationsMuted?: boolean;
 }
 
 export interface UpdateThreadParticipantInput {
   readonly role?: ParticipantRole;
   readonly notificationsMuted?: boolean;
-  readonly lastReadAt?: Date | null;
+  readonly lastReadAt?: Date;
 }
 
 /**
@@ -69,13 +69,13 @@ export function createThreadParticipant(input: CreateThreadParticipantInput): Th
   return {
     id: input.id ?? generateUuidV7(),
     threadId: input.threadId,
-    userId: input.userId ?? null,
-    contactId: input.contactId ?? null,
+    userId: input.userId,
+    contactId: input.contactId,
     role: input.role,
     notificationsMuted: input.notificationsMuted ?? false,
-    lastReadAt: null,
+    lastReadAt: undefined,
     joinedAt: now,
-    leftAt: null,
+    leftAt: undefined,
     updatedAt: now,
   };
 }

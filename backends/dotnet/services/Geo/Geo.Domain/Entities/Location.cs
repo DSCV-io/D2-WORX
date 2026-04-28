@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="Location.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -42,7 +42,7 @@ public record Location
 
     #endregion
 
-    #region Content Addressible Properties
+    #region Content Addressable Properties
 
     /// <summary>
     /// Gets the geographical coordinates (latitude and longitude) of the location.

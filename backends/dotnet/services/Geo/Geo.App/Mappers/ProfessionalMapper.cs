@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="ProfessionalMapper.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -8,6 +8,7 @@ namespace D2.Geo.App.Mappers;
 
 using D2.Geo.Domain.ValueObjects;
 using D2.Services.Protos.Geo.V1;
+using D2.Shared.Utilities.Extensions;
 
 /// <summary>
 /// Mapper for converting between <see cref="Professional"/> and <see cref="ProfessionalDTO"/>.
@@ -32,13 +33,28 @@ public static class ProfessionalMapper
         /// </returns>
         public ProfessionalDTO ToDTO()
         {
-            return new ProfessionalDTO
+            var dto = new ProfessionalDTO
             {
                 CompanyName = professional.CompanyName,
-                JobTitle = professional.JobTitle ?? string.Empty,
-                Department = professional.Department ?? string.Empty,
-                CompanyWebsite = professional.CompanyWebsite?.ToString() ?? string.Empty,
             };
+
+            // Optional fields — only set when non-null to avoid proto CheckNotNull.
+            if (professional.JobTitle != null)
+            {
+                dto.JobTitle = professional.JobTitle;
+            }
+
+            if (professional.Department != null)
+            {
+                dto.Department = professional.Department;
+            }
+
+            if (professional.CompanyWebsite != null)
+            {
+                dto.CompanyWebsite = professional.CompanyWebsite.ToString();
+            }
+
+            return dto;
         }
     }
 
@@ -62,9 +78,9 @@ public static class ProfessionalMapper
         {
             return Professional.Create(
                 professionalDTO.CompanyName,
-                professionalDTO.JobTitle,
-                professionalDTO.Department,
-                Uri.TryCreate(professionalDTO.CompanyWebsite, UriKind.Absolute, out var uri) ? uri : null);
+                professionalDTO.JobTitle.ToNullIfEmpty(),
+                professionalDTO.Department.ToNullIfEmpty(),
+                Uri.TryCreate(professionalDTO.CompanyWebsite.ToNullIfEmpty(), UriKind.Absolute, out var uri) ? uri : null);
         }
     }
 }

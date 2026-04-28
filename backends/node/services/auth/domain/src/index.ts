@@ -8,16 +8,19 @@ export {
   REQUEST_HEADERS,
   PASSWORD_POLICY,
   SIGN_IN_THROTTLE,
+  USER_DELETION,
   GEO_CONTEXT_KEYS,
+  AUTH_FILE_CONTEXT_KEYS,
 } from "./constants/auth-constants.js";
 export { AUTH_MESSAGING } from "./constants/messaging.js";
 export { AUTH_ERROR_CODES } from "./constants/error-codes.js";
 export type { AuthErrorCode } from "./constants/error-codes.js";
+export { OTP_RATE_LIMIT, OTP_EXPIRY, OTP_VERIFY } from "./constants/otp-constants.js";
 
 // --- Enums ---
 export { ORG_TYPES, isValidOrgType } from "./enums/org-type.js";
 export type { OrgType } from "./enums/org-type.js";
-export { ROLES, ROLE_HIERARCHY, isValidRole } from "./enums/role.js";
+export { ROLES, ROLE_HIERARCHY, isValidRole, rolesAtOrAbove } from "./enums/role.js";
 export type { Role } from "./enums/role.js";
 export {
   INVITATION_STATUSES,
@@ -25,6 +28,8 @@ export {
   isValidInvitationStatus,
 } from "./enums/invitation-status.js";
 export type { InvitationStatus } from "./enums/invitation-status.js";
+export { USER_STATUS } from "./enums/user-status.js";
+export type { UserStatus } from "./enums/user-status.js";
 
 // --- Exceptions ---
 export { AuthDomainError } from "./exceptions/auth-domain-error.js";
@@ -80,3 +85,11 @@ export { validatePassword } from "./rules/password-rules.js";
 export type { PasswordValidationResult } from "./rules/password-rules.js";
 export { computeSignInDelay } from "./rules/sign-in-throttle-rules.js";
 export { generateUsername, USERNAME_RULES } from "./rules/username-rules.js";
+export {
+  generateOtpCode,
+  hashOtpCode,
+  pendingChangeIdentifier,
+  encodePendingValue,
+  decodePendingValue,
+} from "./rules/otp-rules.js";
+export type { AccountChangeType, PendingChangeValue } from "./rules/otp-rules.js";

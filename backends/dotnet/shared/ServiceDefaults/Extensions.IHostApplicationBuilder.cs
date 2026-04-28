@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="Extensions.IHostApplicationBuilder.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>

@@ -1,0 +1,55 @@
+{
+  "name": "@d2/files-api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "dev": "tsx watch --import @d2/service-defaults/register src/main.ts",
+    "start": "node --import @d2/service-defaults/register dist/main.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.821.0",
+    "@aws-sdk/s3-request-presigner": "3.821.0",
+    "@d2/cache-memory": "workspace:*",
+    "@d2/cache-redis": "workspace:*",
+    "@d2/database-startup-pg": "workspace:*",
+    "@d2/di": "workspace:*",
+    "@d2/files-app": "workspace:*",
+    "@d2/files-domain": "workspace:*",
+    "@d2/files-infra": "workspace:*",
+    "@d2/geo-client": "workspace:*",
+    "@d2/handler": "workspace:*",
+    "@d2/i18n": "workspace:*",
+    "@d2/interfaces": "workspace:*",
+    "@d2/jwt-auth": "workspace:*",
+    "@d2/logging": "workspace:*",
+    "@d2/messaging": "workspace:*",
+    "@d2/ratelimit": "workspace:*",
+    "@d2/request-enrichment": "workspace:*",
+    "@d2/utilities": "workspace:*",
+    "@d2/protos": "workspace:*",
+    "@d2/result": "workspace:*",
+    "@d2/service-defaults": "workspace:*",
+    "@grpc/grpc-js": "1.14.3",
+    "@hono/node-server": "1.19.9",
+    "drizzle-orm": "0.45.1",
+    "hono": "4.12.3",
+    "ioredis": "5.10.0",
+    "pg": "8.19.0"
+  },
+  "devDependencies": {
+    "@types/pg": "8.16.0",
+    "tsx": "4.21.0"
+  }
+}

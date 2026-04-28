@@ -43,7 +43,7 @@ function makeMessage(overrides?: Partial<Record<string, unknown>>) {
     content: "test content",
     plainTextContent: "test content",
     contentFormat: "markdown",
-    sensitive: false,
+    channels: [],
     urgency: "normal",
     senderService: "test",
     createdAt: new Date(),
@@ -169,8 +169,13 @@ describe("PurgeDeliveryHistory (integration)", () => {
   it("should delete old delivery requests and keep recent ones", async () => {
     const cutoff = daysAgo(365);
 
-    const oldReq = makeDeliveryRequest({ createdAt: daysAgo(400) });
-    const recentReq = makeDeliveryRequest({ createdAt: daysAgo(100) });
+    // Create parent messages first (FK constraint requires valid messageId).
+    const msg1 = makeMessage();
+    const msg2 = makeMessage();
+    await getDb().insert(message).values([msg1, msg2]);
+
+    const oldReq = makeDeliveryRequest({ messageId: msg1.id, createdAt: daysAgo(400) });
+    const recentReq = makeDeliveryRequest({ messageId: msg2.id, createdAt: daysAgo(100) });
 
     await getDb().insert(deliveryRequest).values([oldReq, recentReq]);
 
@@ -187,8 +192,12 @@ describe("PurgeDeliveryHistory (integration)", () => {
   it("should delete associated delivery attempts when deleting requests", async () => {
     const cutoff = daysAgo(365);
 
-    const oldReq = makeDeliveryRequest({ createdAt: daysAgo(400) });
-    const recentReq = makeDeliveryRequest({ createdAt: daysAgo(100) });
+    const msg1 = makeMessage();
+    const msg2 = makeMessage();
+    await getDb().insert(message).values([msg1, msg2]);
+
+    const oldReq = makeDeliveryRequest({ messageId: msg1.id, createdAt: daysAgo(400) });
+    const recentReq = makeDeliveryRequest({ messageId: msg2.id, createdAt: daysAgo(100) });
 
     await getDb().insert(deliveryRequest).values([oldReq, recentReq]);
 
@@ -218,9 +227,12 @@ describe("PurgeDeliveryHistory (integration)", () => {
   it("should handle requests without attempts", async () => {
     const cutoff = daysAgo(365);
 
+    const msg = makeMessage();
+    await getDb().insert(message).values([msg]);
+
     await getDb()
       .insert(deliveryRequest)
-      .values([makeDeliveryRequest({ createdAt: daysAgo(400) })]);
+      .values([makeDeliveryRequest({ messageId: msg.id, createdAt: daysAgo(400) })]);
 
     const result = await handler.handleAsync({ cutoffDate: cutoff });
 

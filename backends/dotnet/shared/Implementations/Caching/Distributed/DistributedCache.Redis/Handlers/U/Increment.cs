@@ -6,9 +6,7 @@
 
 namespace D2.Shared.DistributedCache.Redis.Handlers.U;
 
-using System.Net;
 using D2.Shared.Handler;
-using D2.Shared.I18n;
 using D2.Shared.Result;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
@@ -20,6 +18,14 @@ using S = D2.Shared.Interfaces.Caching.Distributed.Handlers.U.IUpdate;
 public partial class Increment : BaseHandler<S.IIncrementHandler, S.IncrementInput, S.IncrementOutput>,
     S.IIncrementHandler
 {
+    private const string _INCREMENT_WITH_EXPIRE_SCRIPT = """
+        local result = redis.call('INCRBY', KEYS[1], ARGV[1])
+        if ARGV[2] ~= '0' then
+            redis.call('PEXPIRE', KEYS[1], ARGV[2])
+        end
+        return result
+        """;
+
     private readonly IConnectionMultiplexer r_redis;
 
     /// <summary>
@@ -49,14 +55,18 @@ public partial class Increment : BaseHandler<S.IIncrementHandler, S.IncrementInp
         {
             var db = r_redis.GetDatabase();
 
-            // Atomic increment.
-            var newValue = await db.StringIncrementAsync(input.Key, input.Amount);
+            // Atomic increment with optional expiration via Lua script.
+            // This ensures INCRBY and PEXPIRE execute atomically in a single round-trip.
+            var expirationMs = input.Expiration.HasValue
+                ? (long)input.Expiration.Value.TotalMilliseconds
+                : 0L;
 
-            // Set expiration if provided.
-            if (input.Expiration.HasValue)
-            {
-                await db.KeyExpireAsync(input.Key, input.Expiration.Value);
-            }
+            var result = await db.ScriptEvaluateAsync(
+                _INCREMENT_WITH_EXPIRE_SCRIPT,
+                [(RedisKey)input.Key],
+                [input.Amount, expirationMs]);
+
+            var newValue = (long)result;
 
             return D2Result<S.IncrementOutput?>.Ok(
                 new S.IncrementOutput(newValue));
@@ -65,10 +75,7 @@ public partial class Increment : BaseHandler<S.IIncrementHandler, S.IncrementInp
         {
             LogIncrementFailed(Context.Logger, ex, input.Key, TraceId);
 
-            return D2Result<S.IncrementOutput?>.Fail(
-                [TK.Common.Errors.SERVICE_UNAVAILABLE],
-                HttpStatusCode.ServiceUnavailable,
-                errorCode: ErrorCodes.SERVICE_UNAVAILABLE);
+            return D2Result<S.IncrementOutput?>.ServiceUnavailable(traceId: TraceId);
         }
 
         // Let the base handler catch any other exceptions.

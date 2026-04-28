@@ -13,20 +13,20 @@ export interface CheckHealthRequest {
 }
 
 export interface CheckHealthResponse {
-  status: string;
-  timestamp: string;
-  components: { [key: string]: ComponentHealth };
+  status?: string | undefined;
+  timestamp?: string | undefined;
+  components?: { [key: string]: ComponentHealth } | undefined;
 }
 
 export interface CheckHealthResponse_ComponentsEntry {
   key: string;
-  value: ComponentHealth | undefined;
+  value?: ComponentHealth | undefined;
 }
 
 export interface ComponentHealth {
-  status: string;
-  latencyMs: string;
-  error: string;
+  status?: string | undefined;
+  latencyMs?: string | undefined;
+  error?: string | undefined;
 }
 
 function createBaseCheckHealthRequest(): CheckHealthRequest {
@@ -78,13 +78,13 @@ function createBaseCheckHealthResponse(): CheckHealthResponse {
 
 export const CheckHealthResponse: MessageFns<CheckHealthResponse> = {
   encode(message: CheckHealthResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.status !== "") {
+    if (message.status !== undefined && message.status !== "") {
       writer.uint32(10).string(message.status);
     }
-    if (message.timestamp !== "") {
+    if (message.timestamp !== undefined && message.timestamp !== "") {
       writer.uint32(18).string(message.timestamp);
     }
-    globalThis.Object.entries(message.components).forEach(([key, value]: [string, ComponentHealth]) => {
+    globalThis.Object.entries(message.components || {}).forEach(([key, value]: [string, ComponentHealth]) => {
       CheckHealthResponse_ComponentsEntry.encode({ key: key as any, value }, writer.uint32(26).fork()).join();
     });
     return writer;
@@ -120,7 +120,7 @@ export const CheckHealthResponse: MessageFns<CheckHealthResponse> = {
 
           const entry3 = CheckHealthResponse_ComponentsEntry.decode(reader, reader.uint32());
           if (entry3.value !== undefined) {
-            message.components[entry3.key] = entry3.value;
+            message.components![entry3.key] = entry3.value;
           }
           continue;
         }
@@ -151,10 +151,10 @@ export const CheckHealthResponse: MessageFns<CheckHealthResponse> = {
 
   toJSON(message: CheckHealthResponse): unknown {
     const obj: any = {};
-    if (message.status !== "") {
+    if (message.status !== undefined && message.status !== "") {
       obj.status = message.status;
     }
-    if (message.timestamp !== "") {
+    if (message.timestamp !== undefined && message.timestamp !== "") {
       obj.timestamp = message.timestamp;
     }
     if (message.components) {
@@ -272,18 +272,18 @@ export const CheckHealthResponse_ComponentsEntry: MessageFns<CheckHealthResponse
 };
 
 function createBaseComponentHealth(): ComponentHealth {
-  return { status: "", latencyMs: "0", error: "" };
+  return { status: "", latencyMs: "0", error: undefined };
 }
 
 export const ComponentHealth: MessageFns<ComponentHealth> = {
   encode(message: ComponentHealth, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.status !== "") {
+    if (message.status !== undefined && message.status !== "") {
       writer.uint32(10).string(message.status);
     }
-    if (message.latencyMs !== "0") {
+    if (message.latencyMs !== undefined && message.latencyMs !== "0") {
       writer.uint32(16).int64(message.latencyMs);
     }
-    if (message.error !== "") {
+    if (message.error !== undefined) {
       writer.uint32(26).string(message.error);
     }
     return writer;
@@ -337,19 +337,19 @@ export const ComponentHealth: MessageFns<ComponentHealth> = {
         : isSet(object.latency_ms)
         ? globalThis.String(object.latency_ms)
         : "0",
-      error: isSet(object.error) ? globalThis.String(object.error) : "",
+      error: isSet(object.error) ? globalThis.String(object.error) : undefined,
     };
   },
 
   toJSON(message: ComponentHealth): unknown {
     const obj: any = {};
-    if (message.status !== "") {
+    if (message.status !== undefined && message.status !== "") {
       obj.status = message.status;
     }
-    if (message.latencyMs !== "0") {
+    if (message.latencyMs !== undefined && message.latencyMs !== "0") {
       obj.latencyMs = message.latencyMs;
     }
-    if (message.error !== "") {
+    if (message.error !== undefined) {
       obj.error = message.error;
     }
     return obj;
@@ -362,7 +362,7 @@ export const ComponentHealth: MessageFns<ComponentHealth> = {
     const message = createBaseComponentHealth();
     message.status = object.status ?? "";
     message.latencyMs = object.latencyMs ?? "0";
-    message.error = object.error ?? "";
+    message.error = object.error ?? undefined;
     return message;
   },
 };

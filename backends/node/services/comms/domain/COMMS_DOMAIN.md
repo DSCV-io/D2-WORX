@@ -13,10 +13,11 @@ Defines entities, enums, business rules, and constants for both the **delivery e
 ## Design Decisions
 
 | Decision                            | Rationale                                                                          |
-| ----------------------------------- | ---------------------------------------------------------------------------------- |
+| ----------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | Readonly interfaces + factories     | More idiomatic TS than classes. Better tree-shaking, consistent functional style   |
 | Immutable-by-default                | "Mutation" returns new objects via spread+override                                 |
 | String literal unions (not enums)   | `as const` arrays + derived types. No TS `enum` keyword                            |
+| `?: T` for optional data fields     | Optional entity fields use `?: T` (not `                                           | null`). Factories return `undefined` for absent values |
 | contactId-only recipients           | Decouples identity from delivery. Comms resolves addresses via geo-client          |
 | 2 urgency levels (normal, urgent)   | Simple model -- urgent bypasses preferences, normal respects them                  |
 | No quiet hours                      | Deferred to a future phase                                                         |
@@ -81,37 +82,37 @@ All "enums" are `as const` arrays with derived union types and type guard functi
 
 ### Delivery Engine
 
-| Entity            | Factory                   | Update / Transition                | Key Rules                                                          |
-| ----------------- | ------------------------- | ---------------------------------- | ------------------------------------------------------------------ |
-| Message           | `createMessage`           | `editMessage`, `softDeleteMessage` | Content + plaintext required, at least one sender, UUIDv7 ID       |
-| DeliveryRequest   | `createDeliveryRequest`   | `markDeliveryRequestProcessed`     | Immutable except processedAt, correlationId for idempotency        |
-| DeliveryAttempt   | `createDeliveryAttempt`   | `transitionDeliveryAttemptStatus`  | Starts as "pending", state machine enforced, tracks attempt number |
-| ChannelPreference | `createChannelPreference` | `updateChannelPreference`          | Per-contact, defaults: email+sms enabled                           |
+| Entity            | Factory                   | Update / Transition                | Key Rules                                                                                                                |
+| ----------------- | ------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Message           | `createMessage`           | `editMessage`, `softDeleteMessage` | Content + plaintext required, at least one sender, UUIDv7 ID. 11 optional fields are `?: T`                              |
+| DeliveryRequest   | `createDeliveryRequest`   | `markDeliveryRequestProcessed`     | Immutable except processedAt, correlationId for idempotency                                                              |
+| DeliveryAttempt   | `createDeliveryAttempt`   | `transitionDeliveryAttemptStatus`  | Starts as "pending", state machine enforced, tracks attempt number. `providerMessageId`/`error`/`nextRetryAt` are `?: T` |
+| ChannelPreference | `createChannelPreference` | `updateChannelPreference`          | Per-contact, defaults: email+sms enabled                                                                                 |
 
 ### Conversational Messaging
 
-| Entity            | Factory                   | Update / Transition                              | Key Rules                                                                              |
-| ----------------- | ------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------- |
-| Thread            | `createThread`            | `updateThread`, `transitionThreadState`          | Starts as "active", slug accepted for any type (convention: forum only), state machine |
-| ThreadParticipant | `createThreadParticipant` | `updateThreadParticipant`, `markParticipantLeft` | userId OR contactId required, role hierarchy enforced                                  |
-| MessageReceipt    | `createMessageReceipt`    | --                                               | Immutable, UNIQUE(messageId, userId) at DB level                                       |
-| MessageAttachment | `createMessageAttachment` | --                                               | Immutable, max 50 MB, file metadata only (storage via media svc)                       |
-| MessageReaction   | `createMessageReaction`   | --                                               | Immutable, max 64 chars                                                                |
+| Entity            | Factory                   | Update / Transition                              | Key Rules                                                                                                          |
+| ----------------- | ------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| Thread            | `createThread`            | `updateThread`, `transitionThreadState`          | Starts as "active", slug accepted for any type (convention: forum only), state machine. Optional fields are `?: T` |
+| ThreadParticipant | `createThreadParticipant` | `updateThreadParticipant`, `markParticipantLeft` | userId OR contactId required, role hierarchy enforced. Optional fields are `?: T`                                  |
+| MessageReceipt    | `createMessageReceipt`    | --                                               | Immutable, UNIQUE(messageId, userId) at DB level                                                                   |
+| MessageAttachment | `createMessageAttachment` | --                                               | Immutable, max 50 MB, file metadata only (storage via media svc)                                                   |
+| MessageReaction   | `createMessageReaction`   | --                                               | Immutable, max 64 chars                                                                                            |
 
 ## Business Rules
 
-| Rule                 | Function                                                                               |
-| -------------------- | -------------------------------------------------------------------------------------- |
-| Channel resolution   | `resolveChannels(prefs, message)` -- sensitive=email only, urgent=all, normal=by prefs |
-| Retry delay          | `computeRetryDelay(attempt)` -- 5s, 10s, 30s, 60s, 300s (capped at last value)         |
-| Max attempts check   | `isMaxAttemptsReached(attempt)` -- true at 10 attempts                                 |
-| Next retry timestamp | `computeNextRetryAt(attempt, now)` -- current time + computed delay                    |
-| Post permission      | `canPostMessage(participant)` -- active + participant role or higher                   |
-| Edit permission      | `canEditMessage(participant, message)` -- own=participant+, others=moderator+          |
-| Delete permission    | `canDeleteMessage(participant, message)` -- same rules as edit                         |
-| Manage participants  | `canManageParticipants(participant)` -- active + moderator role or higher              |
-| Manage thread        | `canManageThread(participant)` -- active + moderator role or higher                    |
-| Add reaction         | `canAddReaction(participant)` -- active + participant role or higher                   |
+| Rule                 | Function                                                                       |
+| -------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| Channel resolution   | `resolveChannels(prefs, message)` -- `prefs` parameter is `ChannelPreference   | undefined`. sensitive=email only, urgent=all, normal=by prefs |
+| Retry delay          | `computeRetryDelay(attempt)` -- 5s, 10s, 30s, 60s, 300s (capped at last value) |
+| Max attempts check   | `isMaxAttemptsReached(attempt)` -- true at 10 attempts                         |
+| Next retry timestamp | `computeNextRetryAt(attempt, now)` -- current time + computed delay            |
+| Post permission      | `canPostMessage(participant)` -- active + participant role or higher           |
+| Edit permission      | `canEditMessage(participant, message)` -- own=participant+, others=moderator+  |
+| Delete permission    | `canDeleteMessage(participant, message)` -- same rules as edit                 |
+| Manage participants  | `canManageParticipants(participant)` -- active + moderator role or higher      |
+| Manage thread        | `canManageThread(participant)` -- active + moderator role or higher            |
+| Add reaction         | `canAddReaction(participant)` -- active + participant role or higher           |
 
 ## Constants
 

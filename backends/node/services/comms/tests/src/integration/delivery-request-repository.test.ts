@@ -61,8 +61,8 @@ describe("DeliveryRequestRepository (integration)", () => {
     expect(found.messageId).toBe(testMessageId);
     expect(found.correlationId).toBe(req.correlationId);
     expect(found.recipientContactId).toBe("contact-1");
-    expect(found.callbackTopic).toBeNull();
-    expect(found.processedAt).toBeNull();
+    expect(found.callbackTopic).toBeUndefined();
+    expect(found.processedAt).toBeUndefined();
     expect(found.createdAt).toBeInstanceOf(Date);
   });
 
@@ -79,16 +79,16 @@ describe("DeliveryRequestRepository (integration)", () => {
       correlationId: req.correlationId,
     });
     expect(result.success).toBe(true);
-    expect(result.data!.request).not.toBeNull();
+    expect(result.data!.request).toBeDefined();
     expect(result.data!.request!.id).toBe(req.id);
   });
 
-  it("should return null for missing correlationId", async () => {
+  it("should return undefined for missing correlationId", async () => {
     const result = await repo.findByCorrelationId.handleAsync({
       correlationId: "nonexistent",
     });
     expect(result.success).toBe(true);
-    expect(result.data!.request).toBeNull();
+    expect(result.data!.request).toBeUndefined();
   });
 
   it("should markProcessed set processedAt", async () => {

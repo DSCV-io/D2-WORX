@@ -7,6 +7,9 @@ export {
   ICountSignInEventsByUserIdKey,
   IGetLatestSignInEventDateKey,
   IUpdateSignInEventWhoIsIdKey,
+  IUpdateSessionWhoIsIdKey,
+  IGetActiveSessionsByUserIdKey,
+  IGetUserIdByIdentifierKey,
   ICreateEmulationConsentRecordKey,
   IFindEmulationConsentByIdKey,
   IFindActiveConsentsByUserIdKey,
@@ -17,5 +20,6 @@ export {
   IFindOrgContactsByOrgIdKey,
   IUpdateOrgContactRecordKey,
   IDeleteOrgContactRecordKey,
+  ICheckOrgExistsKey,
   ISignInThrottleStoreKey,
 } from "@d2/auth-app";

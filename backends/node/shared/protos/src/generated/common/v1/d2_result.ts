@@ -10,42 +10,46 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 export const protobufPackage = "d2.common.v1";
 
 export interface D2ResultProto {
-  success: boolean;
-  statusCode: number;
-  errorCode: string;
-  traceId: string;
-  messages: string[];
-  inputErrors: InputErrorProto[];
+  success?: boolean | undefined;
+  statusCode?: number | undefined;
+  errorCode?: string | undefined;
+  traceId?: string | undefined;
+  messages?: string[] | undefined;
+  inputErrors?: InputErrorProto[] | undefined;
 }
 
 export interface InputErrorProto {
-  field: string;
-  errors: string[];
+  field?: string | undefined;
+  errors?: string[] | undefined;
 }
 
 function createBaseD2ResultProto(): D2ResultProto {
-  return { success: false, statusCode: 0, errorCode: "", traceId: "", messages: [], inputErrors: [] };
+  return { success: false, statusCode: 0, errorCode: undefined, traceId: undefined, messages: [], inputErrors: [] };
 }
 
 export const D2ResultProto: MessageFns<D2ResultProto> = {
   encode(message: D2ResultProto, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.success !== false) {
+    if (message.success !== undefined && message.success !== false) {
       writer.uint32(8).bool(message.success);
     }
-    if (message.statusCode !== 0) {
+    if (message.statusCode !== undefined && message.statusCode !== 0) {
       writer.uint32(16).int32(message.statusCode);
     }
-    if (message.errorCode !== "") {
+    if (message.errorCode !== undefined) {
       writer.uint32(26).string(message.errorCode);
     }
-    if (message.traceId !== "") {
+    if (message.traceId !== undefined) {
       writer.uint32(34).string(message.traceId);
     }
-    for (const v of message.messages) {
-      writer.uint32(42).string(v!);
+    if (message.messages !== undefined && message.messages.length !== 0) {
+      for (const v of message.messages) {
+        writer.uint32(42).string(v!);
+      }
     }
-    for (const v of message.inputErrors) {
-      InputErrorProto.encode(v!, writer.uint32(50).fork()).join();
+    if (message.inputErrors !== undefined && message.inputErrors.length !== 0) {
+      for (const v of message.inputErrors) {
+        InputErrorProto.encode(v!, writer.uint32(50).fork()).join();
+      }
     }
     return writer;
   },
@@ -94,7 +98,10 @@ export const D2ResultProto: MessageFns<D2ResultProto> = {
             break;
           }
 
-          message.messages.push(reader.string());
+          const el = reader.string();
+          if (el !== undefined) {
+            message.messages!.push(el);
+          }
           continue;
         }
         case 6: {
@@ -102,7 +109,10 @@ export const D2ResultProto: MessageFns<D2ResultProto> = {
             break;
           }
 
-          message.inputErrors.push(InputErrorProto.decode(reader, reader.uint32()));
+          const el = InputErrorProto.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.inputErrors!.push(el);
+          }
           continue;
         }
       }
@@ -126,12 +136,12 @@ export const D2ResultProto: MessageFns<D2ResultProto> = {
         ? globalThis.String(object.errorCode)
         : isSet(object.error_code)
         ? globalThis.String(object.error_code)
-        : "",
+        : undefined,
       traceId: isSet(object.traceId)
         ? globalThis.String(object.traceId)
         : isSet(object.trace_id)
         ? globalThis.String(object.trace_id)
-        : "",
+        : undefined,
       messages: globalThis.Array.isArray(object?.messages) ? object.messages.map((e: any) => globalThis.String(e)) : [],
       inputErrors: globalThis.Array.isArray(object?.inputErrors)
         ? object.inputErrors.map((e: any) => InputErrorProto.fromJSON(e))
@@ -143,16 +153,16 @@ export const D2ResultProto: MessageFns<D2ResultProto> = {
 
   toJSON(message: D2ResultProto): unknown {
     const obj: any = {};
-    if (message.success !== false) {
+    if (message.success !== undefined && message.success !== false) {
       obj.success = message.success;
     }
-    if (message.statusCode !== 0) {
+    if (message.statusCode !== undefined && message.statusCode !== 0) {
       obj.statusCode = Math.round(message.statusCode);
     }
-    if (message.errorCode !== "") {
+    if (message.errorCode !== undefined) {
       obj.errorCode = message.errorCode;
     }
-    if (message.traceId !== "") {
+    if (message.traceId !== undefined) {
       obj.traceId = message.traceId;
     }
     if (message.messages?.length) {
@@ -171,8 +181,8 @@ export const D2ResultProto: MessageFns<D2ResultProto> = {
     const message = createBaseD2ResultProto();
     message.success = object.success ?? false;
     message.statusCode = object.statusCode ?? 0;
-    message.errorCode = object.errorCode ?? "";
-    message.traceId = object.traceId ?? "";
+    message.errorCode = object.errorCode ?? undefined;
+    message.traceId = object.traceId ?? undefined;
     message.messages = object.messages?.map((e) => e) || [];
     message.inputErrors = object.inputErrors?.map((e) => InputErrorProto.fromPartial(e)) || [];
     return message;
@@ -185,11 +195,13 @@ function createBaseInputErrorProto(): InputErrorProto {
 
 export const InputErrorProto: MessageFns<InputErrorProto> = {
   encode(message: InputErrorProto, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.field !== "") {
+    if (message.field !== undefined && message.field !== "") {
       writer.uint32(10).string(message.field);
     }
-    for (const v of message.errors) {
-      writer.uint32(18).string(v!);
+    if (message.errors !== undefined && message.errors.length !== 0) {
+      for (const v of message.errors) {
+        writer.uint32(18).string(v!);
+      }
     }
     return writer;
   },
@@ -214,7 +226,10 @@ export const InputErrorProto: MessageFns<InputErrorProto> = {
             break;
           }
 
-          message.errors.push(reader.string());
+          const el = reader.string();
+          if (el !== undefined) {
+            message.errors!.push(el);
+          }
           continue;
         }
       }
@@ -235,7 +250,7 @@ export const InputErrorProto: MessageFns<InputErrorProto> = {
 
   toJSON(message: InputErrorProto): unknown {
     const obj: any = {};
-    if (message.field !== "") {
+    if (message.field !== undefined && message.field !== "") {
       obj.field = message.field;
     }
     if (message.errors?.length) {

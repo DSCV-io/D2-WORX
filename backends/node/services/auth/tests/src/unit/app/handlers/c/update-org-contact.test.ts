@@ -6,7 +6,7 @@ import { UpdateOrgContactHandler } from "@d2/auth-app";
 import type { IFindOrgContactByIdHandler, IUpdateOrgContactRecordHandler } from "@d2/auth-app";
 import type { OrgContact } from "@d2/auth-domain";
 import type { ContactDTO } from "@d2/protos";
-import type { Complex } from "@d2/geo-client";
+import type { Complex, Queries as GeoQueries } from "@d2/geo-client";
 
 const VALID_CONTACT_ID = "01234567-89ab-cdef-0123-456789abcdef";
 const VALID_ORG_ID = "abcdef01-2345-6789-abcd-ef0123456789";
@@ -37,6 +37,30 @@ function createMockUpdateRecord() {
   return {
     handleAsync: vi.fn().mockResolvedValue(D2Result.ok({ data: {} })),
   };
+}
+
+function createMockGetContactsByExtKeys(): GeoQueries.IGetContactsByExtKeysHandler {
+  return {
+    handleAsync: vi.fn().mockResolvedValue(
+      D2Result.ok({
+        data: {
+          data: new Map([
+            [
+              "auth_org_contact:" + VALID_CONTACT_ID,
+              [
+                {
+                  id: "old-geo-contact-001",
+                  contextKey: "auth_org_contact",
+                  relatedEntityId: VALID_CONTACT_ID,
+                  ietfBcp47Tag: "en-US",
+                },
+              ],
+            ],
+          ]),
+        },
+      }),
+    ),
+  } as unknown as GeoQueries.IGetContactsByExtKeysHandler;
 }
 
 function createMockUpdateContactsByExtKeys(): Complex.IUpdateContactsByExtKeysHandler {
@@ -81,17 +105,20 @@ function createExistingContact(overrides?: Partial<OrgContact>): OrgContact {
 describe("UpdateOrgContactHandler", () => {
   let findById: ReturnType<typeof createMockFindById>;
   let updateRecord: ReturnType<typeof createMockUpdateRecord>;
+  let getContactsByExtKeys: GeoQueries.IGetContactsByExtKeysHandler;
   let updateContactsByExtKeys: Complex.IUpdateContactsByExtKeysHandler;
   let handler: UpdateOrgContactHandler;
 
   beforeEach(() => {
     findById = createMockFindById();
     updateRecord = createMockUpdateRecord();
+    getContactsByExtKeys = createMockGetContactsByExtKeys();
     updateContactsByExtKeys = createMockUpdateContactsByExtKeys();
     handler = new UpdateOrgContactHandler(
       findById as unknown as IFindOrgContactByIdHandler,
       updateRecord as unknown as IUpdateOrgContactRecordHandler,
       createTestContext(),
+      getContactsByExtKeys,
       updateContactsByExtKeys,
     );
   });
@@ -345,6 +372,7 @@ describe("UpdateOrgContactHandler", () => {
 
     expect(result.success).toBe(false);
     // Should not proceed to update the junction since Geo returned no contact
+    // (saga aborts auth update via the no-newGeoContact guard, then attempts rollback)
     expect(updateRecord.handleAsync).not.toHaveBeenCalled();
   });
 

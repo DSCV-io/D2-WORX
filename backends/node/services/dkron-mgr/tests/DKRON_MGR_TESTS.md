@@ -54,7 +54,7 @@ src/
 
 **dkron-client.test.ts** (12 tests) -- Tests the thin `fetch` wrapper functions against mocked `globalThis.fetch`. `checkHealth`: 200 with leader address, non-2xx, empty body (Raft not ready), network error. `listJobs`: parsed job array, null response, empty array, non-2xx error. `upsertJob`: POST payload shape, 200 as update success, non-2xx error. `deleteJob`: DELETE by name, 404 as graceful success with warning log, non-2xx error, URL-encoding of special characters in job names.
 
-**job-definitions.test.ts** (14 tests) -- Validates `getDesiredJobs` output correctness. Covers: exactly 8 jobs returned, all expected job names present, unique names, gateway URL resolution in `executor_config`, service key injection into headers, UTC timezone for all jobs, http executor, `forbid` concurrency, 2 retries, all jobs enabled, POST method, 30s timeout, staggered schedules (no duplicates), and correct ordering (geo WhoIs purge before orphaned location cleanup).
+**job-definitions.test.ts** (14 tests) -- Validates `getDesiredJobs` output correctness. Covers: exactly 9 jobs returned, all expected job names present, unique names, gateway URL resolution in `executor_config`, service key injection into headers, UTC timezone for all jobs, http executor, `forbid` concurrency, 2 retries, all jobs enabled, POST method, 30s timeout, staggered schedules (no duplicates), and correct ordering (geo WhoIs purge before orphaned location cleanup).
 
 **reconciler.test.ts** (7 tests) -- Tests `buildComparableKey` (identical keys for identical jobs, key-order independence in `executor_config`, key changes on schedule/URL change, name excluded from comparison) and `reconcile` (create all 8 when empty, all unchanged when state matches, update on schedule drift, delete orphaned managed jobs, ignore unmanaged jobs, accumulate errors without blocking other operations).
 
@@ -78,7 +78,7 @@ src/
 
 ### E2E Tests (1 file)
 
-**main-process.test.ts** (1 test) -- Spawns the actual `main.ts` entry point as a child process via `node --import tsx` against a real Dkron container. Validates end-to-end: process starts without crash, environment variables parse correctly, health wait loop succeeds, first reconciliation completes (all 8 jobs created in Dkron), process is terminable. Catches issues that module-level imports miss: TDZ bugs, top-level await failures, env parsing errors, and shutdown handling.
+**main-process.test.ts** (1 test) -- Spawns the actual `main.ts` entry point as a child process via `node --import tsx` against a real Dkron container. Validates end-to-end: process starts without crash, environment variables parse correctly, health wait loop succeeds, first reconciliation completes (all 9 jobs created in Dkron), process is terminable. Catches issues that module-level imports miss: TDZ bugs, top-level await failures, env parsing errors, and shutdown handling.
 
 ## Running Tests
 

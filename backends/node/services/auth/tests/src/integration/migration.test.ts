@@ -234,7 +234,10 @@ describe("Drizzle migrations (integration)", () => {
     `);
 
     const indexNames = result.rows.map((r) => r.indexname);
-    expect(indexNames).toContain("idx_sign_in_event_user_id");
+    // Migration 0010_sign_in_event_composite_idx.sql DROPped the
+    // single-column `idx_sign_in_event_user_id` and replaced it with a
+    // composite (user_id, created_at DESC) for paginated queries.
+    expect(indexNames).toContain("idx_sign_in_event_user_id_created_at");
     expect(indexNames).toContain("idx_emulation_consent_user_id");
     expect(indexNames).toContain("idx_emulation_consent_active_unique");
     expect(indexNames).toContain("idx_org_contact_organization_id");

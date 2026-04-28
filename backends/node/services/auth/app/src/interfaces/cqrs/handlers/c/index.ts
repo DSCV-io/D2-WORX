@@ -52,6 +52,20 @@ export type {
 export { CREATE_USER_CONTACT_REDACTION } from "./create-user-contact.js";
 
 export type {
+  UpdateUserRealNameInput,
+  UpdateUserRealNameOutput,
+  IUpdateUserRealNameHandler,
+} from "./update-user-real-name.js";
+export { UPDATE_USER_REAL_NAME_REDACTION } from "./update-user-real-name.js";
+
+export type {
+  UpdateUsernameInput,
+  UpdateUsernameOutput,
+  IUpdateUsernameHandler,
+} from "./update-username.js";
+export { UPDATE_USERNAME_REDACTION } from "./update-username.js";
+
+export type {
   RunSessionPurgeInput,
   RunSessionPurgeOutput,
   IRunSessionPurgeHandler,
@@ -74,3 +88,86 @@ export type {
   RunEmulationConsentCleanupOutput,
   IRunEmulationConsentCleanupHandler,
 } from "./run-emulation-consent-cleanup.js";
+
+export type {
+  HandleFileProcessedInput,
+  HandleFileProcessedOutput,
+  IHandleFileProcessedHandler,
+} from "./handle-file-processed.js";
+
+export type {
+  InvalidateUserSessionCacheInput,
+  InvalidateUserSessionCacheOutput,
+  IInvalidateUserSessionCacheHandler,
+} from "./invalidate-user-session-cache.js";
+
+export type {
+  UpdateUserLocaleInput,
+  UpdateUserLocaleOutput,
+  IUpdateUserLocaleHandler,
+} from "./update-user-locale.js";
+
+export type {
+  UpdateUserTimezoneInput,
+  UpdateUserTimezoneOutput,
+  IUpdateUserTimezoneHandler,
+} from "./update-user-timezone.js";
+
+export type {
+  RequestEmailChangeInput,
+  RequestEmailChangeOutput,
+  IRequestEmailChangeHandler,
+} from "./request-email-change.js";
+export { REQUEST_EMAIL_CHANGE_REDACTION } from "./request-email-change.js";
+
+export type {
+  VerifyEmailChangeInput,
+  VerifyEmailChangeOutput,
+  IVerifyEmailChangeHandler,
+} from "./verify-email-change.js";
+export { VERIFY_EMAIL_CHANGE_REDACTION } from "./verify-email-change.js";
+
+export type {
+  RequestPhoneChangeInput,
+  RequestPhoneChangeOutput,
+  IRequestPhoneChangeHandler,
+} from "./request-phone-change.js";
+export { REQUEST_PHONE_CHANGE_REDACTION } from "./request-phone-change.js";
+
+export type {
+  VerifyPhoneChangeInput,
+  VerifyPhoneChangeOutput,
+  IVerifyPhoneChangeHandler,
+} from "./verify-phone-change.js";
+export { VERIFY_PHONE_CHANGE_REDACTION } from "./verify-phone-change.js";
+
+export type { RemovePhoneInput, RemovePhoneOutput, IRemovePhoneHandler } from "./remove-phone.js";
+export { REMOVE_PHONE_REDACTION } from "./remove-phone.js";
+
+// --- User deletion (self-service) ---
+export type {
+  RequestUserDeletionInput,
+  RequestUserDeletionOutput,
+  IRequestUserDeletionHandler,
+} from "./request-user-deletion.js";
+export { REQUEST_USER_DELETION_REDACTION } from "./request-user-deletion.js";
+
+export type {
+  CancelUserDeletionInput,
+  CancelUserDeletionOutput,
+  ICancelUserDeletionHandler,
+} from "./cancel-user-deletion.js";
+export { CANCEL_USER_DELETION_REDACTION } from "./cancel-user-deletion.js";
+
+export type {
+  FinalizeDeletedUserInput,
+  FinalizeDeletedUserOutput,
+  IFinalizeDeletedUserHandler,
+} from "./finalize-deleted-user.js";
+export { FINALIZE_DELETED_USER_REDACTION } from "./finalize-deleted-user.js";
+
+export type {
+  CleanupDeletedUsersInput,
+  CleanupDeletedUsersOutput,
+  ICleanupDeletedUsersHandler,
+} from "./cleanup-deleted-users.js";

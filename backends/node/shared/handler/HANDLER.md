@@ -74,7 +74,12 @@ interface RedactionSpec {
 - Field masking only applies when logging is not suppressed
 - Suppression wins over field masking when both are set
 
-**Every handler touching PII MUST declare a `RedactionSpec`.** This includes repo handlers that receive the same data as their parent app handler — each `BaseHandler` independently logs its I/O.
+**Every handler touching PII MUST declare a `RedactionSpec`.** This applies to BOTH app AND repo handlers — each `BaseHandler` independently logs its I/O, so a repo handler that receives the same PII as its parent app handler needs its own redaction declaration.
+
+**When to use suppression vs. field masking:**
+
+- **`suppressInput: true`** — use when the input contains raw buffers (e.g., file upload content) or deeply nested structures that cannot be meaningfully field-masked
+- **`suppressOutput: true`** — use when the output contains complex PII objects (e.g., `File` entities with `displayName`, contact records) where listing every field would be fragile
 
 ---
 

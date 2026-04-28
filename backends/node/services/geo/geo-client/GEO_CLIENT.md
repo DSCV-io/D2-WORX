@@ -162,6 +162,15 @@ Compose into handler schemas: `z.object({ contact: contactInputSchema, label: z.
 
 ---
 
+## Proto Optional Field Handling
+
+Proto responses use `optional` fields (65 fields across all proto definitions). Handler implementations account for this:
+
+- **Array fields**: Use `?? []` when accessing repeated fields from proto responses to handle `undefined`.
+- **String fields**: Use `?.` optional chaining when reading proto DTO properties (e.g., `whoIs.location?.city`, `contact.personalDetails?.firstName`).
+- **Cache key construction**: Guards against `undefined` key components — skips the cache entry if required key fields are missing rather than constructing an invalid key.
+- **`truthyOrUndefined()`**: Applied at proto→domain boundaries to convert empty strings (proto3 default) to `undefined` where the domain model expects `T | undefined`.
+
 ## .NET Equivalent
 
 `Geo.Client` — same interface + handler structure, `DefaultOptions` overrides for logging suppression, `[RedactData]` annotations on `FindWhoIsInput`. `ContactToCreateValidator` (FluentValidation) exported from `Geo.Client/Validators/` for the same reuse pattern (`.SetValidator()` composition).

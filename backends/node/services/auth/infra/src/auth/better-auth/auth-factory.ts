@@ -1,4 +1,5 @@
-import { betterAuth } from "better-auth";
+import { AsyncLocalStorage } from "node:async_hooks";
+import { betterAuth, APIError } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer } from "better-auth/plugins/bearer";
 import { jwt } from "better-auth/plugins/jwt";
@@ -8,8 +9,22 @@ import { username } from "better-auth/plugins/username";
 import type { SecondaryStorage } from "better-auth";
 import { eq, and } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { JWT_CLAIM_TYPES, SESSION_FIELDS } from "@d2/auth-domain";
-import { BASE_LOCALE } from "@d2/i18n";
+import { JWT_CLAIM_TYPES, SESSION_FIELDS, USER_STATUS } from "@d2/auth-domain";
+import { BASE_LOCALE, TK } from "@d2/i18n";
+
+/**
+ * Per-request sign-up preferences (locale + timezone from cookies).
+ *
+ * BetterAuth's databaseHooks don't have access to the HTTP request, so
+ * we stash cookie values here via Hono middleware and read them in the
+ * user.create.before hook. Exported for use by the middleware.
+ */
+export interface SignUpPreferences {
+  locale?: string;
+  timezone?: string;
+}
+
+export const signUpPrefsStorage = new AsyncLocalStorage<SignUpPreferences>();
 import type { AuthServiceConfig } from "./auth-config.js";
 import { AUTH_CONFIG_DEFAULTS } from "./auth-config.js";
 import { generateId } from "./hooks/id-hooks.js";
@@ -25,6 +40,21 @@ import {
 import * as betterAuthSchema from "../../repository/schema/better-auth-tables.js";
 
 /**
+ * Returns true when `tz` is a geographic IANA timezone name (Region/City or
+ * Region/Subregion/City — e.g. "America/New_York", "Europe/Paris",
+ * "America/Argentina/Buenos_Aires"). Geo's `timezones` reference table seeds
+ * geographic names only; "UTC", "GMT", "Etc/*", and other technical names
+ * trip the FK on contact insert. Anything that doesn't match this shape is
+ * rejected at the auth boundary so the literal "America/New_York" default
+ * applies instead.
+ */
+function isGeographicIanaName(tz: unknown): tz is string {
+  return (
+    typeof tz === "string" && /^[A-Z][A-Za-z_]+\/[A-Z][A-Za-z_]+(\/[A-Z][A-Za-z_]+)?$/.test(tz)
+  );
+}
+
+/**
  * Callback interface for app-layer hooks.
  *
  * The auth-infra package does not import from auth-app. Instead,
@@ -32,13 +62,24 @@ import * as betterAuthSchema from "../../repository/schema/better-auth-tables.js
  * creating the BetterAuth instance, enabling auth-infra to trigger
  * app-layer logic without a circular dependency.
  */
+/** Minimal logger for BetterAuth callback hooks (avoids scope/DI dependency). */
+export interface AuthHooksLogger {
+  warn(msg: string, ...args: unknown[]): void;
+  debug(msg: string, ...args: unknown[]): void;
+}
+
 export interface AuthHooks {
+  /** Structured logger for BetterAuth callback error logging. Falls back to console if not provided. */
+  logger?: AuthHooksLogger;
   /** Called after a successful sign-in to record audit events. */
   onSignIn?: (data: {
     userId: string;
+    sessionId: string;
     ipAddress: string;
     userAgent: string;
     deviceFingerprint?: string;
+    clientFingerprint?: string;
+    serverFingerprint?: string;
   }) => Promise<void>;
   /**
    * Returns the client fingerprint for the current request.
@@ -49,9 +90,23 @@ export interface AuthHooks {
   getFingerprintForCurrentRequest?: () => string | undefined;
   /**
    * Returns the device fingerprint for the current request (from enrichment middleware).
-   * Typically backed by `AsyncLocalStorage` in the composition root.
+   * Combined hash: sha256(clientFp + serverFp + clientIp). Typically backed by
+   * `AsyncLocalStorage` in the composition root.
    */
   getDeviceFingerprintForCurrentRequest?: () => string | undefined;
+  /**
+   * Returns the client (hardware/browser) fingerprint for the current request.
+   * Stable across networks — derived from canvas/WebGL/timezone/etc on the
+   * browser and forwarded as the `d2-cfp` cookie or `X-Client-Fingerprint`
+   * header.
+   */
+  getClientFingerprintForCurrentRequest?: () => string | undefined;
+  /**
+   * Returns the server (network) fingerprint for the current request.
+   * Derived from request headers (UA + accept headers + IP class) — changes
+   * when the user roams networks.
+   */
+  getServerFingerprintForCurrentRequest?: () => string | undefined;
   /**
    * Custom password hash/verify functions with domain validation + HIBP checks.
    * Created by `createPasswordFunctions()` in the composition root.
@@ -83,6 +138,16 @@ export interface AuthHooks {
     token: string;
   }) => Promise<void>;
   /**
+   * Publishes a password-changed security notification email.
+   * Called in databaseHooks.account.update.after when a password hash changes.
+   * Fire-and-forget — password change is already committed.
+   */
+  publishPasswordChanged?: (input: {
+    userId: string;
+    email: string;
+    name: string;
+  }) => Promise<void>;
+  /**
    * Creates a Geo contact for a newly registered user.
    * Called in databaseHooks.user.create.before (Contact BEFORE User pattern).
    * If this throws, sign-up fails entirely (fail-fast — no stale users).
@@ -92,7 +157,31 @@ export interface AuthHooks {
     email: string;
     name: string;
     locale: string;
+    timezone: string;
   }) => Promise<void>;
+  /**
+   * Cancels a pending user deletion when an account in the grace window
+   * signs back in successfully. Invoked from `session.create.before` —
+   * fire-and-forget so a downstream failure (Comms email send, etc.)
+   * does not block the session creation.
+   *
+   * The implementation is in auth-app (CancelUserDeletion handler); the
+   * composition root wires it via a fresh DI scope per call.
+   */
+  cancelUserDeletion?: (data: { userId: string }) => Promise<void>;
+  /**
+   * Busts the Redis session-cache + pushes a `user:updated` SignalR event
+   * after a password change. The frontend's root-layout listener picks up
+   * the event, calls `bustSessionCache()` + `invalidateAll()`, and every
+   * open tab refreshes its data — including the security tab's active
+   * sessions list (which shrinks if `revokeOtherSessions=true`).
+   *
+   * Fire-and-forget — password change is already committed before this fires.
+   * Without this, components that mutate password-related state would have
+   * to call `invalidateAll()` themselves (which CLAUDE.md §5 SvelteKit
+   * forbids — single source of truth for cache-bust is the SignalR event).
+   */
+  invalidateAndPushUserUpdated?: (input: { userId: string }) => Promise<void>;
 }
 
 /**
@@ -113,6 +202,7 @@ export function createAuth(
   secondaryStorage?: SecondaryStorage,
   hooks?: AuthHooks,
 ) {
+  const log: AuthHooksLogger = hooks?.logger ?? { warn: console.warn, debug: console.debug };
   const sessionExpiresIn = config.sessionExpiresIn ?? AUTH_CONFIG_DEFAULTS.sessionExpiresIn;
   const sessionUpdateAge = config.sessionUpdateAge ?? AUTH_CONFIG_DEFAULTS.sessionUpdateAge;
   const cookieCacheMaxAge = config.cookieCacheMaxAge ?? AUTH_CONFIG_DEFAULTS.cookieCacheMaxAge;
@@ -142,6 +232,13 @@ export function createAuth(
     }),
 
     secondaryStorage,
+
+    // We use the verification table for our own account-change OTP records
+    // (RequestEmailChange, RequestPhoneChange). Records persist in Postgres
+    // so that updateValue (attempts increment) and id-based lookups work.
+    // Without this, BetterAuth omits "verification" from its internal schema
+    // when secondaryStorage is set, breaking any DB-backed verification ops.
+    verification: { disableCleanup: false, storeInDatabase: true },
 
     emailAndPassword: {
       enabled: true,
@@ -183,10 +280,13 @@ export function createAuth(
                 verificationUrl: rewritten.toString(),
                 token,
               });
-            } catch {
+            } catch (err: unknown) {
               // Fail-open: RabbitMQ down shouldn't crash sign-in/sign-up.
               // BetterAuth awaits this callback — if it throws, the entire flow
               // fails with 500. The user can re-trigger via sign-in (sendOnSignIn: true).
+              log.warn("sendVerificationEmail: failed (fail-open)", {
+                error: err instanceof Error ? err.message : String(err),
+              });
             }
           }
         : undefined,
@@ -225,6 +325,26 @@ export function createAuth(
           required: false,
           input: false,
         },
+        [SESSION_FIELDS.WHO_IS_ID]: {
+          type: "string",
+          required: false,
+          input: false,
+        },
+        [SESSION_FIELDS.DEVICE_FINGERPRINT]: {
+          type: "string",
+          required: false,
+          input: false,
+        },
+        [SESSION_FIELDS.CLIENT_FINGERPRINT]: {
+          type: "string",
+          required: false,
+          input: false,
+        },
+        [SESSION_FIELDS.SERVER_FINGERPRINT]: {
+          type: "string",
+          required: false,
+          input: false,
+        },
       },
     },
 
@@ -246,13 +366,40 @@ export function createAuth(
             const userId = (user.id as string) ?? generateId();
             data = { ...data, id: userId };
 
+            // Read sign-up preferences from AsyncLocalStorage (set by Hono middleware
+            // from PARAGLIDE_LOCALE + D2_TIMEZONE cookies). BetterAuth's databaseHooks
+            // don't have request access, so this is the bridge.
+            //
+            // `||` (not `??`): BetterAuth's `additionalFields` may surface `""` here
+            // when no value is set + `input: false`. Empty string is non-nullish, so
+            // `??` would propagate `""` straight into the Geo contact insert and
+            // violate `FK_contacts_timezones_iana_identifier` / `FK_contacts_locales_*`.
+            // `||` falls through on empty string too, hitting the literal default.
+            //
+            // Defense-in-depth: only honor the cookie/user timezone if it matches
+            // a geographic IANA name (Region/City). Geo's timezones reference seed
+            // is geographic-only — "UTC", "Etc/*", and other technical names trip
+            // the FK constraint. Browsers on CI runners (and some misconfigured
+            // user environments) report "UTC", so reject those at the boundary
+            // and fall back to the literal default. Same defensive shape for locale.
+            const prefs = signUpPrefsStorage.getStore();
+            const requestedTimezone = prefs?.timezone || (user.timezone as string);
+            const timezone = isGeographicIanaName(requestedTimezone)
+              ? requestedTimezone
+              : "America/New_York";
+            const locale = prefs?.locale || (user.locale as string) || BASE_LOCALE;
+
+            // Inject into user data so BetterAuth persists them to the DB row.
+            data = { ...data, locale, timezone };
+
             // Create Geo contact BEFORE user (fail-fast if Geo unavailable)
             if (hooks?.createUserContact) {
               await hooks.createUserContact({
                 userId,
                 email: user.email as string,
-                name: (user.name as string) ?? "",
-                locale: (user.locale as string) ?? BASE_LOCALE,
+                name: user.name as string,
+                locale,
+                timezone,
               });
             }
 
@@ -307,33 +454,175 @@ export function createAuth(
                   [SESSION_FIELDS.ACTIVE_ORG_ROLE]: memberRow?.role ?? null,
                 },
               };
-            } catch {
+            } catch (err: unknown) {
               // DB error — don't block session update. Fields stay null.
+              log.warn(
+                "session.update.before: failed to resolve org type/role (fields stay null)",
+                { error: err instanceof Error ? err.message : String(err) },
+              );
               return;
             }
           },
         },
         create: {
+          before: async (session) => {
+            // Snapshot the request's three fingerprints (combined / client / server)
+            // from AsyncLocalStorage onto the session row. The `data` return
+            // pattern is how BetterAuth merges custom additionalFields into
+            // the row before INSERT (mirrors the update.before hook above).
+            const deviceFp = hooks?.getDeviceFingerprintForCurrentRequest?.();
+            const clientFp = hooks?.getClientFingerprintForCurrentRequest?.();
+            const serverFp = hooks?.getServerFingerprintForCurrentRequest?.();
+            const fpFields: Record<string, string | null> = {
+              [SESSION_FIELDS.DEVICE_FINGERPRINT]: deviceFp ?? null,
+              [SESSION_FIELDS.CLIENT_FINGERPRINT]: clientFp ?? null,
+              [SESSION_FIELDS.SERVER_FINGERPRINT]: serverFp ?? null,
+            };
+
+            // Block sign-in for fully anonymized users; cancel pending deletion
+            // for users still in the grace window. This runs alongside the admin
+            // plugin's own ban check (BetterAuth merges hooks per lifecycle slot).
+            const userId = (session as Record<string, unknown>)["userId"] as string | undefined;
+            if (!userId) return { data: { ...session, ...fpFields } };
+
+            try {
+              const [row] = await db
+                .select({ status: betterAuthSchema.user.status })
+                .from(betterAuthSchema.user)
+                .where(eq(betterAuthSchema.user.id, userId))
+                .limit(1);
+              const status = row?.status as string | undefined;
+
+              if (status === USER_STATUS.DELETED) {
+                // Pass the raw TK key as the message; the SvelteKit BFF
+                // (`translateMessage` helper) resolves it against the user's
+                // locale before rendering. BetterAuth doesn't run inside our
+                // D2Result/translator layer, so we cannot translate here —
+                // the FE owns the actual i18n round-trip.
+                throw new APIError("FORBIDDEN", { message: TK.auth.errors.ACCOUNT_DELETED });
+              }
+
+              if (status === USER_STATUS.PENDING_DELETION && hooks?.cancelUserDeletion) {
+                // Fire-and-forget the side effect; let the session create proceed.
+                // CancelUserDeletion flips status back to active + sends the
+                // cancellation email — none of which should block sign-in.
+                hooks.cancelUserDeletion({ userId }).catch((err: unknown) => {
+                  log.warn("session.create.before: cancelUserDeletion failed (non-blocking)", {
+                    error: err instanceof Error ? err.message : String(err),
+                    userId,
+                  });
+                });
+              }
+            } catch (err: unknown) {
+              if (err instanceof APIError) throw err;
+              // DB lookup failure — fail-open. Sign-in proceeds; we'd rather a
+              // pending-deletion user occasionally not get their cancel-email
+              // than block all sign-ins on a transient DB blip.
+              log.warn("session.create.before: status lookup failed (fail-open)", {
+                error: err instanceof Error ? err.message : String(err),
+                userId,
+              });
+            }
+
+            return { data: { ...session, ...fpFields } };
+          },
           after: async (session) => {
             // Record sign-in event via app-layer callback
             if (hooks?.onSignIn) {
               const ipAddress = (session["ipAddress"] as string) ?? "unknown";
               const userAgent = (session["userAgent"] as string) ?? "unknown";
               const userId = session["userId"] as string;
+              const sessionId = session["id"] as string;
 
-              if (userId) {
+              if (userId && sessionId) {
                 // Fire-and-forget — don't block session creation
                 hooks
                   .onSignIn({
                     userId,
+                    sessionId,
                     ipAddress,
                     userAgent,
                     deviceFingerprint: hooks.getDeviceFingerprintForCurrentRequest?.(),
+                    clientFingerprint: hooks.getClientFingerprintForCurrentRequest?.(),
+                    serverFingerprint: hooks.getServerFingerprintForCurrentRequest?.(),
                   })
-                  .catch(() => {
+                  .catch((err: unknown) => {
                     // Swallow errors — sign-in audit is non-critical
+                    log.warn("session.create.after: onSignIn callback failed (non-critical)", {
+                      error: err instanceof Error ? err.message : String(err),
+                    });
                   });
               }
+            }
+          },
+        },
+      },
+      account: {
+        update: {
+          after: async (account) => {
+            // BetterAuth's `changePassword` endpoint commits a new hash via
+            // `internalAdapter.updateAccount({ password })`, which lands here.
+            // Other account.update flows (OAuth token refresh, etc.) also pass
+            // `password` because the `after` hook receives the full row, not
+            // just changed fields — accept the over-fire (rare for credential
+            // accounts) over a "did password actually change" comparison that
+            // would require carrying state across `before`/`after`.
+            if (!hooks?.publishPasswordChanged || !account.password) return;
+            const userId = account.userId as string;
+            if (!userId) return;
+
+            log.debug("account.update.after: password-changed hook fired", { userId });
+
+            try {
+              // Look up the user to get their name and email for the notification.
+              const [userRow] = await db
+                .select({
+                  email: betterAuthSchema.user.email,
+                  name: betterAuthSchema.user.name,
+                })
+                .from(betterAuthSchema.user)
+                .where(eq(betterAuthSchema.user.id, userId))
+                .limit(1);
+
+              if (!userRow) {
+                log.warn("account.update.after: user row not found for password notification", {
+                  userId,
+                });
+                return;
+              }
+
+              hooks
+                .publishPasswordChanged({
+                  userId,
+                  email: userRow.email,
+                  name: userRow.name,
+                })
+                .catch((err: unknown) => {
+                  log.warn("account.update.after: publishPasswordChanged failed (non-critical)", {
+                    error: err instanceof Error ? err.message : String(err),
+                    userId,
+                  });
+                });
+
+              // Bust session cache + push user:updated so every open tab
+              // refreshes its data (security tab's session list shrinks if
+              // other sessions were revoked). Without this, the frontend
+              // would have to call invalidateAll() itself — which violates
+              // §5 SvelteKit single-source-of-truth-for-cache-bust rule.
+              hooks.invalidateAndPushUserUpdated?.({ userId }).catch((err: unknown) => {
+                log.warn(
+                  "account.update.after: invalidateAndPushUserUpdated failed (non-critical)",
+                  {
+                    error: err instanceof Error ? err.message : String(err),
+                    userId,
+                  },
+                );
+              });
+            } catch (err: unknown) {
+              log.warn("account.update.after: failed to look up user for password notification", {
+                error: err instanceof Error ? err.message : String(err),
+                userId,
+              });
             }
           },
         },
@@ -348,6 +637,23 @@ export function createAuth(
           type: "string",
           required: false,
           defaultValue: BASE_LOCALE,
+          input: false,
+        },
+        timezone: {
+          type: "string",
+          required: false,
+          defaultValue: "America/New_York",
+          input: false,
+        },
+        phone: {
+          type: "string",
+          required: false,
+          input: false,
+        },
+        phoneVerified: {
+          type: "boolean",
+          required: false,
+          defaultValue: false,
           input: false,
         },
       },
@@ -393,8 +699,11 @@ export function createAuth(
                   impersonatingEmail = imp.email;
                   impersonatingUsername = imp.username;
                 }
-              } catch {
+              } catch (err: unknown) {
                 // Non-critical — impersonator details are for audit only
+                log.debug("definePayload: impersonator lookup failed (non-critical)", {
+                  error: err instanceof Error ? err.message : String(err),
+                });
               }
             }
 

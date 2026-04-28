@@ -40,7 +40,15 @@ export function createTranslator(options: {
     const locale = file.replace(".json", "");
     const filePath = join(options.messagesDir, file);
     const content = readFileSync(filePath, "utf-8");
-    const messages = JSON.parse(content) as Record<string, string>;
+    let messages: Record<string, string>;
+    try {
+      messages = JSON.parse(content) as Record<string, string>;
+    } catch (err) {
+      throw new Error(
+        `Failed to parse locale file ${filePath}: ${err instanceof Error ? err.message : String(err)}`,
+        { cause: err },
+      );
+    }
 
     // Strip $schema key if present
     const { $schema: _, ...rest } = messages;

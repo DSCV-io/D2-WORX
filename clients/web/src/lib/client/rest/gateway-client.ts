@@ -84,7 +84,7 @@ async function fetchToken(): Promise<string | null> {
  * Get a valid JWT, using cache when possible.
  * Returns null if the user is not authenticated.
  */
-async function getToken(): Promise<string | null> {
+export async function getToken(): Promise<string | null> {
   if (cachedToken && Date.now() < tokenExpiresAt - REFRESH_BUFFER_MS) {
     return cachedToken;
   }

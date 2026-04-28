@@ -117,19 +117,23 @@ export function getServerSpan(request: Request): Span | undefined {
   return undefined;
 }
 
-const serviceName = "d2-sveltekit";
+const serviceName = process.env.OTEL_SERVICE_NAME ?? "d2-sveltekit";
 
-const traceExporter = new OTLPTraceExporter({
-  url: process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ?? "http://localhost:4318/v1/traces",
-});
+const tracesEndpoint = process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT;
+const logsEndpoint = process.env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT;
+const metricsEndpoint = process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT;
 
-const logExporter = new OTLPLogExporter({
-  url: process.env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT ?? "http://localhost:4318/v1/logs",
-});
+if (!tracesEndpoint || !logsEndpoint || !metricsEndpoint) {
+  console.error(
+    "[OTel] FATAL: Missing OTEL_EXPORTER_OTLP_*_ENDPOINT env vars. " +
+      "Telemetry will not be exported. Set OTEL_EXPORTER_OTLP_TRACES_ENDPOINT, " +
+      "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT, and OTEL_EXPORTER_OTLP_METRICS_ENDPOINT.",
+  );
+}
 
-const metricExporter = new OTLPMetricExporter({
-  url: process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT ?? "http://localhost:4318/v1/metrics",
-});
+const traceExporter = new OTLPTraceExporter({ url: tracesEndpoint });
+const logExporter = new OTLPLogExporter({ url: logsEndpoint });
+const metricExporter = new OTLPMetricExporter({ url: metricsEndpoint });
 
 // Set up logging
 const loggerProvider = new LoggerProvider({

@@ -55,8 +55,11 @@ export class RecordSignInOutcome
 
       // Other status codes (e.g. 500) — no-op
       return D2Result.ok({ data: { recorded: false } });
-    } catch {
+    } catch (err: unknown) {
       // Fail-open: swallow all store errors
+      this.context.logger.warn("RecordSignInOutcome: throttle store error (fail-open)", {
+        error: err instanceof Error ? err.message : String(err),
+      });
       return D2Result.ok({ data: { recorded: false } });
     }
   }
@@ -76,7 +79,11 @@ export class RecordSignInOutcome
           value: true,
           expirationMs: SIGN_IN_THROTTLE.KNOWN_GOOD_CACHE_TTL_MS,
         })
-        .catch(() => {});
+        .catch((err: unknown) =>
+          this.context.logger.debug("RecordSignInOutcome: cache set failed", {
+            error: err instanceof Error ? err.message : String(err),
+          }),
+        );
     }
 
     return D2Result.ok({ data: { recorded: true } });

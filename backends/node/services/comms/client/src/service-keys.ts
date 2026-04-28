@@ -1,4 +1,4 @@
 import { createServiceKey } from "@d2/di";
-import type { Notify } from "./handlers/pub/notify.js";
+import type { INotifyHandler } from "./interfaces/pub/notify.js";
 
-export const INotifyKey = createServiceKey<Notify>("CommsClient.Notify");
+export const INotifyKey = createServiceKey<INotifyHandler>("CommsClient.Notify");

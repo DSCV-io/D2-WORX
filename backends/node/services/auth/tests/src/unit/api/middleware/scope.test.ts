@@ -17,7 +17,7 @@ function createMockConsentHandler(hasActiveConsent = true) {
     handleAsync: vi.fn(async () =>
       hasActiveConsent
         ? D2Result.ok({ data: { consent: { id: "consent-1" } } })
-        : D2Result.ok({ data: { consent: null } }),
+        : D2Result.ok({ data: { consent: undefined } }),
     ),
   };
 }
@@ -149,7 +149,7 @@ describe("Scope Middleware", () => {
 
       expect(ctx.isAgentStaff).toBe(true);
       expect(ctx.isAgentAdmin).toBe(true);
-      expect(ctx.agentOrgType).toBe("Admin");
+      expect(ctx.agentOrgType).toBe("admin");
     });
 
     it("should map support org type to isAgentStaff true and isAgentAdmin false", async () => {
@@ -166,7 +166,7 @@ describe("Scope Middleware", () => {
 
       expect(ctx.isAgentStaff).toBe(true);
       expect(ctx.isAgentAdmin).toBe(false);
-      expect(ctx.agentOrgType).toBe("Support");
+      expect(ctx.agentOrgType).toBe("support");
     });
 
     it("should map customer org type to isAgentStaff false and isAgentAdmin false", async () => {
@@ -183,7 +183,7 @@ describe("Scope Middleware", () => {
 
       expect(ctx.isAgentStaff).toBe(false);
       expect(ctx.isAgentAdmin).toBe(false);
-      expect(ctx.agentOrgType).toBe("Customer");
+      expect(ctx.agentOrgType).toBe("customer");
     });
 
     it("should map third_party org type correctly (Bug 1 fix)", async () => {
@@ -200,7 +200,7 @@ describe("Scope Middleware", () => {
 
       expect(ctx.isAgentStaff).toBe(false);
       expect(ctx.isAgentAdmin).toBe(false);
-      expect(ctx.agentOrgType).toBe("ThirdParty");
+      expect(ctx.agentOrgType).toBe("third_party");
     });
 
     it("should map affiliate org type correctly", async () => {
@@ -216,7 +216,7 @@ describe("Scope Middleware", () => {
       const ctx = (await res.json()) as IRequestContext;
 
       expect(ctx.isAgentStaff).toBe(false);
-      expect(ctx.agentOrgType).toBe("Affiliate");
+      expect(ctx.agentOrgType).toBe("affiliate");
     });
 
     it("should set emulation fields when emulating", async () => {
@@ -236,8 +236,8 @@ describe("Scope Middleware", () => {
       expect(ctx.isOrgEmulating).toBe(true);
       expect(ctx.targetOrgId).toBe("org-customer");
       expect(ctx.agentOrgId).toBe("org-admin");
-      expect(ctx.targetOrgType).toBe("Customer");
-      expect(ctx.agentOrgType).toBe("Admin");
+      expect(ctx.targetOrgType).toBe("customer");
+      expect(ctx.agentOrgType).toBe("admin");
     });
 
     it("should strip emulation when consent is expired or revoked", async () => {
@@ -257,9 +257,9 @@ describe("Scope Middleware", () => {
       // Emulation should be stripped — falls back to agent's own org
       expect(ctx.isOrgEmulating).toBe(false);
       expect(ctx.targetOrgId).toBe("org-admin");
-      expect(ctx.targetOrgType).toBe("Admin");
+      expect(ctx.targetOrgType).toBe("admin");
       expect(ctx.agentOrgId).toBe("org-admin");
-      expect(ctx.agentOrgType).toBe("Admin");
+      expect(ctx.agentOrgType).toBe("admin");
       expect(ctx.isTargetingStaff).toBe(true);
       expect(ctx.isTargetingAdmin).toBe(true);
     });
@@ -281,7 +281,7 @@ describe("Scope Middleware", () => {
       // Emulation should be preserved — consent is active
       expect(ctx.isOrgEmulating).toBe(true);
       expect(ctx.targetOrgId).toBe("org-customer");
-      expect(ctx.targetOrgType).toBe("Customer");
+      expect(ctx.targetOrgType).toBe("customer");
       expect(ctx.agentOrgId).toBe("org-admin");
       expect(mock.consentHandler.handleAsync).toHaveBeenCalledOnce();
     });
@@ -370,7 +370,7 @@ describe("Scope Middleware", () => {
       const ctx = (await res.json()) as IRequestContext;
 
       expect(ctx.isOrgEmulating).toBe(true);
-      expect(ctx.agentOrgType).toBe("Admin");
+      expect(ctx.agentOrgType).toBe("admin");
       // Emulated type doesn't map — undefined propagates
       expect(ctx.targetOrgType).toBeUndefined();
       expect(ctx.isTargetingStaff).toBe(false);
@@ -389,7 +389,8 @@ describe("Scope Middleware", () => {
       const res = await get(app);
       const ctx = (await res.json()) as IRequestContext;
 
-      // PascalCase "Admin" is NOT in ORG_TYPE_MAP (keys are lowercase)
+      // Wire format is lowercase ("admin"); PascalCase is treated as unknown
+      // and falls through to undefined orgType (fail-closed).
       expect(ctx.isAgentStaff).toBe(false);
       expect(ctx.isAgentAdmin).toBe(false);
       expect(ctx.agentOrgType).toBeUndefined();

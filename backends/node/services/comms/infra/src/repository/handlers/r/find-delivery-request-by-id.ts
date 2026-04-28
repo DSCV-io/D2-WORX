@@ -43,9 +43,9 @@ export function toDeliveryRequest(row: DeliveryRequestRow): DeliveryRequest {
     id: row.id,
     messageId: row.messageId,
     correlationId: row.correlationId,
-    recipientContactId: row.recipientContactId,
-    callbackTopic: row.callbackTopic,
+    recipientContactId: row.recipientContactId ?? undefined,
+    callbackTopic: row.callbackTopic ?? undefined,
     createdAt: row.createdAt,
-    processedAt: row.processedAt,
+    processedAt: row.processedAt ?? undefined,
   };
 }

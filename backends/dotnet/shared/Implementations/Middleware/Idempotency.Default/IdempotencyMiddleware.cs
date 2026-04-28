@@ -12,6 +12,7 @@ using D2.Shared.I18n;
 using D2.Shared.Idempotency.Default.Interfaces;
 using D2.Shared.Interfaces.Caching.Distributed.Handlers.D;
 using D2.Shared.Interfaces.Caching.Distributed.Handlers.U;
+using D2.Shared.RequestEnrichment.Default;
 using D2.Shared.Result;
 using D2.Shared.Utilities.Extensions;
 using D2.Shared.Utilities.Serialization;
@@ -84,6 +85,13 @@ public partial class IdempotencyMiddleware
         IUpdate.ISetHandler<string> setHandler,
         IDelete.IRemoveHandler removeHandler)
     {
+        // 0. Skip idempotency for infrastructure endpoints (health checks, metrics).
+        if (InfrastructurePaths.IsInfrastructure(context))
+        {
+            await r_next(context);
+            return;
+        }
+
         // 1. Skip non-mutation methods.
         if (!r_options.ApplicableMethods.Contains(context.Request.Method))
         {

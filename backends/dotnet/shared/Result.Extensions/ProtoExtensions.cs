@@ -40,9 +40,17 @@ public static partial class ProtoExtensions
             {
                 Success = result.Success,
                 StatusCode = (int)result.StatusCode,
-                ErrorCode = result.ErrorCode ?? string.Empty,
-                TraceId = result.TraceId ?? string.Empty,
             };
+
+            if (result.ErrorCode != null)
+            {
+                proto.ErrorCode = result.ErrorCode;
+            }
+
+            if (result.TraceId != null)
+            {
+                proto.TraceId = result.TraceId;
+            }
 
             // Map messages.
             proto.Messages.AddRange(result.Messages);
@@ -164,11 +172,7 @@ public static partial class ProtoExtensions
                     LogGrpcTransportFailure(logger, ex, ex.StatusCode, traceId);
                 }
 
-                return D2Result<TData>.Fail(
-                    ["Service is unavailable."],
-                    HttpStatusCode.ServiceUnavailable,
-                    errorCode: ErrorCodes.SERVICE_UNAVAILABLE,
-                    traceId: traceId);
+                return D2Result<TData>.ServiceUnavailable(traceId: traceId);
             }
             catch (Exception ex)
             {

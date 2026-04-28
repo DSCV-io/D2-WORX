@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="ITransaction.Rollback.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>

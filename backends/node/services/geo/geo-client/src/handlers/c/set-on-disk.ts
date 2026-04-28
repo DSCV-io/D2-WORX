@@ -32,9 +32,10 @@ export class SetOnDisk extends BaseHandler<Input, Output> implements Commands.IS
       await mkdir(join(this.filePath, ".."), { recursive: true });
       await writeFile(this.filePath, bytes);
       return D2Result.ok({ data: {} });
-    } catch {
+    } catch (err: unknown) {
       this.context.logger.error(
         `IOException occurred while writing georeference data to disk. TraceId: ${this.traceId}`,
+        { error: err instanceof Error ? err.message : String(err) },
       );
       return D2Result.unhandledException({
         messages: ["Unable to write to disk."],

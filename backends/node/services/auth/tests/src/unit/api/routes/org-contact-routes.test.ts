@@ -8,6 +8,25 @@ import {
   IGetOrgContactsKey,
 } from "@d2/auth-app";
 import { createOrgContactRoutes, SCOPE_KEY } from "@d2/auth-api";
+import { OrgType } from "@d2/handler";
+
+/** Maps the legacy lowercase org-type strings used by the test fixture to the OrgType enum. */
+function toOrgTypeEnum(value: string): OrgType | undefined {
+  switch (value) {
+    case "admin":
+      return OrgType.Admin;
+    case "support":
+      return OrgType.Support;
+    case "customer":
+      return OrgType.Customer;
+    case "third_party":
+      return OrgType.ThirdParty;
+    case "affiliate":
+      return OrgType.Affiliate;
+    default:
+      return undefined;
+  }
+}
 
 function createMockHandlers() {
   return {
@@ -58,12 +77,32 @@ function createTestApp(
   const app = new Hono();
 
   app.use("*", async (c, next) => {
+    const orgId = session.activeOrganizationId ?? "org-1";
+    const orgType = session.activeOrganizationType ?? "customer";
+    const orgRole = session.activeOrganizationRole ?? "owner";
     c.set("user", { id: "user-123", email: "test@test.com", name: "Test" });
     c.set("session", {
-      activeOrganizationId: session.activeOrganizationId ?? "org-1",
-      activeOrganizationType: session.activeOrganizationType ?? "customer",
-      activeOrganizationRole: session.activeOrganizationRole ?? "owner",
+      activeOrganizationId: orgId,
+      activeOrganizationType: orgType,
+      activeOrganizationRole: orgRole,
     });
+    c.set(
+      "requestContext" as never,
+      {
+        isAuthenticated: true,
+        isTrustedService: false,
+        isOrgEmulating: false,
+        isUserImpersonating: false,
+        userId: "user-123",
+        email: "test@test.com",
+        targetOrgId: orgId,
+        targetOrgType: toOrgTypeEnum(orgType),
+        targetOrgRole: orgRole,
+        agentOrgId: orgId,
+        agentOrgType: toOrgTypeEnum(orgType),
+        agentOrgRole: orgRole,
+      } as never,
+    );
     // Mock DI scope — routes resolve handlers from c.get("scope")
     c.set(SCOPE_KEY as never, createMockScope(handlers) as never);
     await next();
@@ -372,6 +411,17 @@ describe("Org contact routes", () => {
       app.use("*", async (c, next) => {
         c.set("user", { id: "user-123", email: "test@test.com", name: "Test" });
         c.set("session", {}); // No org fields
+        c.set(
+          "requestContext" as never,
+          {
+            isAuthenticated: true,
+            isTrustedService: false,
+            isOrgEmulating: false,
+            isUserImpersonating: false,
+            userId: "user-123",
+            email: "test@test.com",
+          } as never,
+        );
         c.set(SCOPE_KEY as never, createMockScope(handlers) as never);
         await next();
       });
@@ -392,6 +442,17 @@ describe("Org contact routes", () => {
       app.use("*", async (c, next) => {
         c.set("user", { id: "user-123", email: "test@test.com", name: "Test" });
         c.set("session", {});
+        c.set(
+          "requestContext" as never,
+          {
+            isAuthenticated: true,
+            isTrustedService: false,
+            isOrgEmulating: false,
+            isUserImpersonating: false,
+            userId: "user-123",
+            email: "test@test.com",
+          } as never,
+        );
         c.set(SCOPE_KEY as never, createMockScope(handlers) as never);
         await next();
       });

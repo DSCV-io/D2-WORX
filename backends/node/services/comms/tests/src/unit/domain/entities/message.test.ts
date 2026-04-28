@@ -46,23 +46,23 @@ describe("Message", () => {
       expect(msg.urgency).toBe("normal");
     });
 
-    it("should default sensitive to false", () => {
+    it("should default channels to empty array", () => {
       const msg = createMessage(validInput);
-      expect(msg.sensitive).toBe(false);
+      expect(msg.channels).toEqual([]);
     });
 
-    it("should default nullable fields to null", () => {
+    it("should default optional fields to undefined", () => {
       const msg = createMessage(validInput);
-      expect(msg.threadId).toBeNull();
-      expect(msg.parentMessageId).toBeNull();
-      expect(msg.senderContactId).toBeNull();
-      expect(msg.senderService).toBeNull();
-      expect(msg.title).toBeNull();
-      expect(msg.relatedEntityId).toBeNull();
-      expect(msg.relatedEntityType).toBeNull();
-      expect(msg.metadata).toBeNull();
-      expect(msg.editedAt).toBeNull();
-      expect(msg.deletedAt).toBeNull();
+      expect(msg.threadId).toBeUndefined();
+      expect(msg.parentMessageId).toBeUndefined();
+      expect(msg.senderContactId).toBeUndefined();
+      expect(msg.senderService).toBeUndefined();
+      expect(msg.title).toBeUndefined();
+      expect(msg.relatedEntityId).toBeUndefined();
+      expect(msg.relatedEntityType).toBeUndefined();
+      expect(msg.metadata).toBeUndefined();
+      expect(msg.editedAt).toBeUndefined();
+      expect(msg.deletedAt).toBeUndefined();
     });
 
     it("should accept all optional fields", () => {
@@ -74,7 +74,7 @@ describe("Message", () => {
         senderService: "auth",
         title: "Test Title",
         contentFormat: "html",
-        sensitive: true,
+        channels: ["email"],
         urgency: "urgent",
         relatedEntityId: "entity-1",
         relatedEntityType: "invoice",
@@ -84,7 +84,7 @@ describe("Message", () => {
       expect(msg.parentMessageId).toBe("msg-parent");
       expect(msg.title).toBe("Test Title");
       expect(msg.contentFormat).toBe("html");
-      expect(msg.sensitive).toBe(true);
+      expect(msg.channels).toEqual(["email"]);
       expect(msg.urgency).toBe("urgent");
       expect(msg.relatedEntityId).toBe("entity-1");
       expect(msg.relatedEntityType).toBe("invoice");
@@ -226,7 +226,7 @@ describe("Message", () => {
       });
       expect(msg.threadId).toBeNull();
       expect(msg.parentMessageId).toBeNull();
-      expect(msg.title).toBeNull();
+      expect(msg.title).toBeUndefined();
       expect(msg.relatedEntityId).toBeNull();
       expect(msg.relatedEntityType).toBeNull();
       expect(msg.metadata).toBeNull();

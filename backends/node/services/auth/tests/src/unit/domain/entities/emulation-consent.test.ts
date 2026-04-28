@@ -20,7 +20,7 @@ describe("EmulationConsent", () => {
       expect(consent.userId).toBe("user-123");
       expect(consent.grantedToOrgId).toBe("org-456");
       expect(consent.expiresAt).toBe(futureDate);
-      expect(consent.revokedAt).toBeNull();
+      expect(consent.revokedAt).toBeUndefined();
       expect(consent.id).toHaveLength(36);
       expect(consent.createdAt).toBeInstanceOf(Date);
     });

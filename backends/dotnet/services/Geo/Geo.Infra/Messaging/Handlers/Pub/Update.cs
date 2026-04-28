@@ -6,7 +6,6 @@
 
 namespace D2.Geo.Infra.Messaging.Handlers.Pub;
 
-using System.Net;
 using D2.Events.Protos.V1;
 using D2.Geo.Infra.Messaging.Publishers;
 using D2.Shared.Handler;
@@ -69,9 +68,9 @@ public partial class Update : BaseHandler<Update, I, O>, H
         {
             LogPublishGeoRefDataUpdatedFailed(Context.Logger, input.Version, TraceId);
 
-            return D2Result<O?>.Fail(
-                [TK.Common.Errors.REQUEST_FAILED],
-                HttpStatusCode.InternalServerError);
+            return D2Result<O?>.ServiceUnavailable(
+                messages: [TK.Common.Errors.REQUEST_FAILED],
+                traceId: TraceId);
         }
 
         LogPublishedGeoRefDataUpdated(Context.Logger, input.Version, TraceId);

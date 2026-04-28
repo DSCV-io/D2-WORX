@@ -6,9 +6,7 @@
 
 namespace D2.Shared.DistributedCache.Redis.Handlers.R;
 
-using System.Net;
 using D2.Shared.Handler;
-using D2.Shared.I18n;
 using D2.Shared.Result;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
@@ -57,10 +55,7 @@ public partial class GetTtl : BaseHandler<S.IGetTtlHandler, S.GetTtlInput, S.Get
         {
             LogGetTtlFailed(Context.Logger, ex, input.Key, TraceId);
 
-            return D2Result<S.GetTtlOutput?>.Fail(
-                [TK.Common.Errors.SERVICE_UNAVAILABLE],
-                HttpStatusCode.ServiceUnavailable,
-                errorCode: ErrorCodes.SERVICE_UNAVAILABLE);
+            return D2Result<S.GetTtlOutput?>.ServiceUnavailable(traceId: TraceId);
         }
 
         // Let the base handler catch any other exceptions.

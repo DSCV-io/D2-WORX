@@ -91,7 +91,7 @@ public class WhoIsMapperTests
         dto.Year.Should().Be(2025);
         dto.Month.Should().Be(1);
         dto.Asn.Should().Be(0);
-        dto.AsName.Should().BeEmpty();
+        dto.HasAsName.Should().BeFalse();
         dto.IsAnonymous.Should().BeFalse(); // null defaults to false in proto
         dto.Location.Should().BeNull(); // No location passed to ToDTO
     }

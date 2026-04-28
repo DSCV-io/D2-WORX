@@ -45,7 +45,7 @@ function createActiveConsent(overrides?: Partial<EmulationConsent>): EmulationCo
     userId: VALID_USER_ID,
     grantedToOrgId: "fedcba98-7654-3210-fedc-ba9876543210",
     expiresAt: new Date(Date.now() + 86_400_000),
-    revokedAt: null,
+    revokedAt: undefined,
     createdAt: new Date("2026-02-01"),
     ...overrides,
   };

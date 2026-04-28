@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+# Reject commits whose message contains an AI-tool Co-Authored-By trailer.
+# See CLAUDE.md §6 (Git): "No `Co-Authored-By` lines in commit messages".
+# Pattern matches Claude / Anthropic / GPT / Copilot / Cursor / Codeium.
+
+msg_file="$1"
+
+# grep -E returns 0 (success) when ANY matching line is found.
+if grep -qiE '^Co-Authored-By:.*(claude|anthropic|gpt|openai|copilot|cursor|codeium|aider)' "$msg_file"; then
+  echo ""
+  echo "  ✖  Commit rejected: AI-tool Co-Authored-By trailer detected."
+  echo ""
+  echo "     CLAUDE.md §6 forbids \`Co-Authored-By\` lines in commit messages."
+  echo "     Edit the message and remove the trailer (and the blank line above it)."
+  echo ""
+  exit 1
+fi
+
+exit 0

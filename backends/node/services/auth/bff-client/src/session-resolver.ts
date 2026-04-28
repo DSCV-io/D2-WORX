@@ -134,9 +134,14 @@ function mapUser(raw: BetterAuthSessionResponse["user"]): AuthUser {
   return {
     id: raw.id,
     email: raw.email,
+    emailVerified: raw.emailVerified ?? undefined,
     name: raw.name,
-    username: raw.username ?? "",
-    displayUsername: raw.displayUsername ?? "",
-    image: raw.image ?? null,
+    username: raw.username ?? undefined,
+    displayUsername: raw.displayUsername ?? undefined,
+    image: raw.image ?? undefined,
+    locale: raw.locale ?? undefined,
+    timezone: raw.timezone ?? undefined,
+    phone: raw.phone ?? undefined,
+    phoneVerified: raw.phoneVerified ?? undefined,
   };
 }

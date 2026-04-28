@@ -18,5 +18,5 @@ message CheckHealthResponse {
 message ComponentHealth {
   string status = 1;
   int64 latency_ms = 2;
-  string error = 3;
+  optional string error = 3;
 }

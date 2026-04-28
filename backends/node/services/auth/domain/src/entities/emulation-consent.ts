@@ -6,7 +6,7 @@ export interface EmulationConsent {
   readonly userId: string;
   readonly grantedToOrgId: string;
   readonly expiresAt: Date;
-  readonly revokedAt: Date | null;
+  readonly revokedAt?: Date;
   readonly createdAt: Date;
 }
 
@@ -54,7 +54,7 @@ export function createEmulationConsent(input: CreateEmulationConsentInput): Emul
     userId: input.userId,
     grantedToOrgId: input.grantedToOrgId,
     expiresAt: input.expiresAt,
-    revokedAt: null,
+    revokedAt: undefined,
     createdAt: new Date(),
   };
 }
@@ -67,5 +67,5 @@ export function revokeEmulationConsent(consent: EmulationConsent): EmulationCons
 }
 
 export function isConsentActive(consent: EmulationConsent): boolean {
-  return consent.revokedAt === null && consent.expiresAt.getTime() > Date.now();
+  return consent.revokedAt == null && consent.expiresAt.getTime() > Date.now();
 }

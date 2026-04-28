@@ -34,6 +34,7 @@ export { runMigrations } from "./repository/migrate.js";
 // --- Providers ---
 export { ResendEmailProvider } from "./providers/email/resend/resend-email-provider.js";
 export { TwilioSmsProvider } from "./providers/sms/twilio/twilio-sms-provider.js";
+export { MockSmsProvider } from "./providers/sms/mock/mock-sms-provider.js";
 
 // --- Messaging ---
 export { createNotificationConsumer } from "./messaging/consumers/notification-consumer.js";

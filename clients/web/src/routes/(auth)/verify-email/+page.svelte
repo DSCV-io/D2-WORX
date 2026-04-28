@@ -39,28 +39,28 @@
     <div class="bg-muted mx-auto mb-2 flex size-12 items-center justify-center rounded-full">
       <MailIcon class="text-muted-foreground size-6" />
     </div>
-    <Card.Title class="text-2xl">Check Your Email</Card.Title>
+    <Card.Title class="text-2xl">{m.auth_verify_email_check_email()}</Card.Title>
   </Card.Header>
   <Card.Content class="flex flex-col gap-3 text-center">
     {#if resent}
       <p class="text-sm">
-        Your email hasn't been verified yet. We've resent the verification link.
+        {m.auth_verify_email_resent_message()}
       </p>
     {:else}
-      <p class="text-sm">We've sent a verification link to your email.</p>
+      <p class="text-sm">{m.auth_verify_email_sent_message()}</p>
     {/if}
     {#if email}
       <p class="font-medium">{email}</p>
     {/if}
     <p class="text-muted-foreground text-sm">
-      Click the link in the email to activate your account.
+      {m.auth_verify_email_activate_message()}
     </p>
   </Card.Content>
   <Card.Footer>
     <Button
       variant="outline"
       href={resolve("/sign-in")}
-      class="w-full">Back to Sign In</Button
+      class="w-full">{m.auth_verify_email_back_to_sign_in()}</Button
     >
   </Card.Footer>
 </Card.Root>

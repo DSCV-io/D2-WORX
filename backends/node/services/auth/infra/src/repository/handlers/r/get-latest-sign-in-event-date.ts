@@ -26,7 +26,7 @@ export class GetLatestSignInEventDate
       .from(signInEvent)
       .where(eq(signInEvent.userId, input.userId));
 
-    let date: Date | null = null;
+    let date: Date | undefined;
     if (result?.latest) {
       date = result.latest instanceof Date ? result.latest : new Date(result.latest as string);
     }

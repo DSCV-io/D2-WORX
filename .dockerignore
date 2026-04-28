@@ -8,3 +8,6 @@
 **/out
 **/.next
 **/.env
+**/.env.local
+**/.env.local.*
+**/dist

@@ -44,12 +44,12 @@ describe("toDomainUser", () => {
     const user = toDomainUser(raw);
 
     expect(user.emailVerified).toBe(false);
-    expect(user.image).toBeNull();
+    expect(user.image).toBeUndefined();
     expect(user.username).toBe("brightfalcon123");
     expect(user.displayUsername).toBe("BrightFalcon123");
   });
 
-  it("should default image to null when missing", () => {
+  it("should default image to undefined when missing", () => {
     const raw = {
       id: "user-789",
       email: "noimg@example.com",
@@ -62,7 +62,7 @@ describe("toDomainUser", () => {
     };
 
     const user = toDomainUser(raw);
-    expect(user.image).toBeNull();
+    expect(user.image).toBeUndefined();
   });
 
   it("should map locale field when present", () => {
@@ -73,7 +73,7 @@ describe("toDomainUser", () => {
       username: "localeuser",
       displayUsername: "LocaleUser",
       emailVerified: true,
-      image: null,
+      image: undefined,
       locale: "de",
       createdAt: new Date(),
       updatedAt: new Date(),

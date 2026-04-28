@@ -177,7 +177,7 @@ describe("GetOrgContacts", () => {
     });
   });
 
-  it("should return geoContact: null for orphaned junctions (Geo contact missing)", async () => {
+  it("should return geoContact: undefined for orphaned junctions (Geo contact missing)", async () => {
     const contacts = [createContact("oc-1"), createContact("oc-2")];
     findByOrgId.handleAsync = vi.fn().mockResolvedValue(D2Result.ok({ data: { contacts } }));
 
@@ -193,10 +193,10 @@ describe("GetOrgContacts", () => {
 
     expect(result.success).toBe(true);
     expect(result.data?.contacts[0].geoContact?.id).toBe("geo-1");
-    expect(result.data?.contacts[1].geoContact).toBeNull();
+    expect(result.data?.contacts[1].geoContact).toBeUndefined();
   });
 
-  it("should return all contacts with geoContact: null when Geo call fails", async () => {
+  it("should return all contacts with geoContact: undefined when Geo call fails", async () => {
     const contacts = [createContact("oc-1")];
     findByOrgId.handleAsync = vi.fn().mockResolvedValue(D2Result.ok({ data: { contacts } }));
     getContactsByExtKeys.handleAsync = vi.fn().mockResolvedValue(
@@ -210,7 +210,7 @@ describe("GetOrgContacts", () => {
 
     expect(result.success).toBe(true);
     expect(result.data?.contacts).toHaveLength(1);
-    expect(result.data?.contacts[0].geoContact).toBeNull();
+    expect(result.data?.contacts[0].geoContact).toBeUndefined();
   });
 
   // -----------------------------------------------------------------------
@@ -226,7 +226,7 @@ describe("GetOrgContacts", () => {
     expect(getContactsByExtKeys.handleAsync).not.toHaveBeenCalled();
   });
 
-  it("should treat empty Geo contact array for a key as orphaned (geoContact: null)", async () => {
+  it("should treat empty Geo contact array for a key as orphaned (geoContact: undefined)", async () => {
     const contacts = [createContact("oc-1")];
     findByOrgId.handleAsync = vi.fn().mockResolvedValue(D2Result.ok({ data: { contacts } }));
 
@@ -240,17 +240,16 @@ describe("GetOrgContacts", () => {
 
     expect(result.success).toBe(true);
     expect(result.data?.contacts).toHaveLength(1);
-    expect(result.data?.contacts[0].geoContact).toBeNull();
+    expect(result.data?.contacts[0].geoContact).toBeUndefined();
   });
 
-  it("should return empty contacts when findByOrgId returns failure", async () => {
+  it("should propagate failure when findByOrgId returns failure", async () => {
     findByOrgId.handleAsync = vi.fn().mockResolvedValue(D2Result.fail({ messages: ["DB error"] }));
 
     const result = await handler.handleAsync({ organizationId: VALID_ORG_ID });
 
-    expect(result.success).toBe(true);
-    expect(result.data?.contacts).toHaveLength(0);
-    // Should not call Geo when no junctions were loaded
+    expect(result.success).toBe(false);
+    // Should not call Geo when repo failed
     expect(getContactsByExtKeys.handleAsync).not.toHaveBeenCalled();
   });
 

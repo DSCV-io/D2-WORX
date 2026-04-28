@@ -84,7 +84,10 @@
         {rows}
         oninput={handleInput}
         onblur={handleBlur}
-        class={cn(fieldStatus === "valid" && "border-success/70 dark:border-success/50")}
+        class={cn(
+          fieldStatus === "valid" && "border-success dark:border-success border-2",
+          fieldStatus === "invalid" && "border-2",
+        )}
       />
     {/snippet}
   </Control>

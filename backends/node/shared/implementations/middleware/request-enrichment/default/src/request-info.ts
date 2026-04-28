@@ -59,23 +59,23 @@ export class MutableRequestContext implements IRequestContext {
   // Trust
   isTrustedService: boolean | null;
 
-  // Computed helpers
+  // Computed helpers — wire format is lowercase; matches DB + .NET OrgTypeValues.
   get isAgentStaff(): boolean {
     const t = this.agentOrgType;
-    return t === "Admin" || t === "Support";
+    return t === "admin" || t === "support";
   }
 
   get isAgentAdmin(): boolean {
-    return this.agentOrgType === "Admin";
+    return this.agentOrgType === "admin";
   }
 
   get isTargetingStaff(): boolean {
     const t = this.targetOrgType;
-    return t === "Admin" || t === "Support";
+    return t === "admin" || t === "support";
   }
 
   get isTargetingAdmin(): boolean {
-    return this.targetOrgType === "Admin";
+    return this.targetOrgType === "admin";
   }
 
   constructor(params: {

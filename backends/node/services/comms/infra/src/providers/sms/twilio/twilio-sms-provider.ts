@@ -38,8 +38,14 @@ export class TwilioSmsProvider
         data: { providerMessageId: message.sid },
       });
     } catch (error: unknown) {
+      // Log raw provider error for ops visibility, but never propagate it
+      // to the caller — return ONLY a translated TK key so the FE can
+      // resolve it without leaking provider/English copy to end users.
+      this.context.logger.warn("Twilio SMS send failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return D2Result.serviceUnavailable({
-        messages: [error instanceof Error ? error.message : TK.comms.errors.PROVIDER_UNKNOWN],
+        messages: [TK.comms.errors.PROVIDER_UNKNOWN],
       });
     }
   }

@@ -10,24 +10,30 @@ HTTP/REST gateway providing public API access to D2 microservices via gRPC backe
 | [ResultExtensions.cs](ResultExtensions.cs)             | Extension methods for converting gRPC `D2ResultProto` responses to HTTP results.                      |
 | [REST.csproj](REST.csproj)                             | Project file — references shared middleware packages, gRPC client factory, and proto-generated types. |
 | [REST.http](REST.http)                                 | HTTP request file for testing endpoints in Rider/VS Code.                                             |
-| [GeoEndpoints.cs](Endpoints/GeoEndpoints.cs)           | Geo service endpoints and gRPC client registration.                                                   |
-| [AuthJobEndpoints.cs](Endpoints/AuthJobEndpoints.cs)   | Auth scheduled job endpoints — proxies to Auth gRPC `AuthJobService`.                                 |
-| [GeoJobEndpoints.cs](Endpoints/GeoJobEndpoints.cs)     | Geo scheduled job endpoints — proxies to Geo gRPC `GeoJobService`.                                    |
-| [CommsJobEndpoints.cs](Endpoints/CommsJobEndpoints.cs) | Comms scheduled job endpoints — proxies to Comms gRPC `CommsJobService`.                              |
+| [GeoEndpoints.cs](Endpoints/GeoEndpoints.cs)           | Geo gRPC client + REST routes that proxy to Geo (`/api/v1/geo/...`).                                  |
+| [AuthEndpoints.cs](Endpoints/AuthEndpoints.cs)         | Auth gRPC client (placeholder — no REST routes yet).                                                  |
+| [CommsEndpoints.cs](Endpoints/CommsEndpoints.cs)       | Comms gRPC client + `/api/v1/notification-preferences` (GET + PUT).                                   |
+| [FilesEndpoints.cs](Endpoints/FilesEndpoints.cs)       | Files gRPC client (placeholder — no REST routes yet).                                                 |
+| [SignalREndpoints.cs](Endpoints/SignalREndpoints.cs)   | SignalR push gRPC client (placeholder — no REST routes yet).                                          |
+| [AuthJobEndpoints.cs](Endpoints/AuthJobEndpoints.cs)   | Auth scheduled job endpoints — proxies to Auth gRPC `AuthJobService` (Dkron-only).                    |
+| [GeoJobEndpoints.cs](Endpoints/GeoJobEndpoints.cs)     | Geo scheduled job endpoints — proxies to Geo gRPC `GeoJobService` (Dkron-only).                       |
+| [CommsJobEndpoints.cs](Endpoints/CommsJobEndpoints.cs) | Comms scheduled job endpoints — proxies to Comms gRPC `CommsJobService` (Dkron-only).                 |
 | [HealthEndpoints.cs](Endpoints/HealthEndpoints.cs)     | Aggregated health check endpoint fanning out to Geo, Auth, Comms, and gateway cache.                  |
 
 All middleware (JWT auth, service key, fingerprint validation, request enrichment, rate limiting, idempotency, translation) lives in shared packages under `backends/dotnet/shared/Implementations/Middleware/`. The REST gateway has no local `Auth/` or `Middleware/` directories — it consumes shared packages via project references.
 
 ### Shared Middleware Packages
 
-| Package                                                                                           | Provides                                                                              |
-| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| [`Auth.Default`](../../shared/Implementations/Middleware/Auth.Default/)                           | JWT Bearer auth (RS256/JWKS), service key validation, fingerprint middleware          |
-| [`RequestEnrichment.Default`](../../shared/Implementations/Middleware/RequestEnrichment.Default/) | IP resolution, fingerprinting, WhoIs lookup, `IRequestContext` population             |
-| [`RateLimit.Default`](../../shared/Implementations/Middleware/RateLimit.Default/)                 | Multi-dimensional sliding-window rate limiting                                        |
-| [`Idempotency.Default`](../../shared/Implementations/Middleware/Idempotency.Default/)             | `Idempotency-Key` header middleware (SET NX + response caching)                       |
-| [`Translation.Default`](../../shared/Implementations/Middleware/Translation.Default/)             | `D2-Locale` header parsing, BCP 47 locale resolution, `D2Result.messages` translation |
-| [`I18n`](../../shared/I18n/)                                                                      | `SupportedLocales` (IETF BCP 47 tags), `ITranslator`, translation key constants       |
+| Package                                                                                           | Provides                                                                                |
+| ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| [`JwtAuth.Default`](../../shared/Implementations/Middleware/JwtAuth.Default/)                     | JWT Bearer auth (RS256/JWKS) and `JwtFingerprintMiddleware` / `JwtFingerprintValidator` |
+| [`ServiceKey.Default`](../../shared/Implementations/Middleware/ServiceKey.Default/)               | `ServiceKeyMiddleware`, constant-time API key validation, `RequireServiceKey()` filter  |
+| [`AuthPolicy.Default`](../../shared/Implementations/Middleware/AuthPolicy.Default/)               | `AuthPolicies` constants, `AddD2Policies()`, fluent `RequireAuth()` route extensions    |
+| [`RequestEnrichment.Default`](../../shared/Implementations/Middleware/RequestEnrichment.Default/) | IP resolution, fingerprinting, WhoIs lookup, `IRequestContext` population               |
+| [`RateLimit.Default`](../../shared/Implementations/Middleware/RateLimit.Default/)                 | Multi-dimensional sliding-window rate limiting                                          |
+| [`Idempotency.Default`](../../shared/Implementations/Middleware/Idempotency.Default/)             | `Idempotency-Key` header middleware (SET NX + response caching)                         |
+| [`Translation.Default`](../../shared/Implementations/Middleware/Translation.Default/)             | `D2-Locale` header parsing, BCP 47 locale resolution, `D2Result.messages` translation   |
+| [`I18n`](../../shared/I18n/)                                                                      | `SupportedLocales` (IETF BCP 47 tags), `ITranslator`, translation key constants         |
 
 ## API Versioning
 
@@ -81,11 +87,27 @@ All job endpoints require `RequireServiceKey()` — accessible only to Dkron or 
 
 ## Endpoint Organization
 
-Endpoints are organized by service/area using C# 14 extension blocks:
+Each backing service owns one endpoint file under [`Endpoints/`](Endpoints/). The file owns BOTH the `IServiceCollection.Add*GrpcClient()` extension AND the `IEndpointRouteBuilder.Map*EndpointsV1()` extension. `Program.cs` calls each one — no per-route logic lives in `Program.cs` itself.
+
+| File                   | gRPC Client                     | REST Routes                                                     |
+| ---------------------- | ------------------------------- | --------------------------------------------------------------- |
+| `GeoEndpoints.cs`      | Geo data client                 | `/api/v1/geo/...` (reference data + update)                     |
+| `AuthEndpoints.cs`     | Auth client                     | _(placeholder — no REST routes yet)_                            |
+| `CommsEndpoints.cs`    | Comms client                    | `/api/v1/notification-preferences` (GET + PUT)                  |
+| `FilesEndpoints.cs`    | Files client                    | _(placeholder — no REST routes yet)_                            |
+| `SignalREndpoints.cs`  | SignalR push client             | _(placeholder — no REST routes yet)_                            |
+| `AuthJobEndpoints.cs`  | Auth job client (with API key)  | `/api/v1/auth/jobs/...` (Dkron-only via `RequireServiceKey()`)  |
+| `GeoJobEndpoints.cs`   | Geo job client (with API key)   | `/api/v1/geo/jobs/...` (Dkron-only via `RequireServiceKey()`)   |
+| `CommsJobEndpoints.cs` | Comms job client (with API key) | `/api/v1/comms/jobs/...` (Dkron-only via `RequireServiceKey()`) |
+| `HealthEndpoints.cs`   | Reuses Geo/Auth/Comms clients   | `/api/health`                                                   |
 
 ```csharp
 // Program.cs — gRPC client registration
 builder.Services.AddGeoGrpcClient();
+builder.Services.AddAuthGrpcClient();
+builder.Services.AddCommsGrpcClient();
+builder.Services.AddFilesGrpcClient();
+builder.Services.AddSignalRGrpcClient();
 builder.Services.AddAuthJobsGrpcClient();
 builder.Services.AddGeoJobsGrpcClient();
 builder.Services.AddCommsJobsGrpcClient();
@@ -93,16 +115,17 @@ builder.Services.AddHealthEndpointDependencies();
 
 // Program.cs — endpoint mapping
 app.MapGeoEndpointsV1();
+app.MapCommsEndpointsV1();
 app.MapAuthJobEndpointsV1();
 app.MapGeoJobEndpointsV1();
 app.MapCommsJobEndpointsV1();
 app.MapHealthEndpointsV1();
 ```
 
-Each `*Endpoints.cs` file contains:
+Authorization is applied via fluent route extensions at the group level:
 
-- `Add*GrpcClient()` — Registers the gRPC client using env var addresses (`*_GRPC_ADDRESS`)
-- `Map*EndpointsV1()` — Maps the REST endpoints using `MapGroup()` for route prefixing
+- `.RequireAuth()` — from `D2.Shared.AuthPolicy.Default`, applied to user-facing protected route groups (JWT bearer required)
+- `.RequireServiceKey()` — from `D2.Shared.ServiceKey.Default`, applied to S2S-only route groups (job endpoints, internal callers)
 
 ## gRPC Client Registration
 
@@ -176,6 +199,7 @@ Trusted services (valid `X-Api-Key`) bypass rate limiting and fingerprint valida
 CORS origins are configurable via the `CorsOrigin` setting (comma-separated). Allowed headers:
 
 - `Content-Type`, `Authorization`, `Idempotency-Key`, `X-Client-Fingerprint`, `D2-Locale`
+- `traceparent`, `tracestate` — W3C Trace Context — Faro/OTel browser SDK propagates trace context on every fetch.
 
 ### Translation & i18n
 
@@ -236,7 +260,7 @@ Both are registered via `AddServiceDefaults()`.
 
 ## Service-to-Service Authentication
 
-Trusted backend callers (e.g., SvelteKit server, Dkron) authenticate via `X-Api-Key` header. All auth middleware lives in [`D2.Shared.Auth.Default`](../../shared/Implementations/Middleware/Auth.Default/).
+Trusted backend callers (e.g., SvelteKit server, Dkron) authenticate via `X-Api-Key` header. The service-key middleware lives in [`D2.Shared.ServiceKey.Default`](../../shared/Implementations/Middleware/ServiceKey.Default/); JWT bearer auth lives in [`D2.Shared.JwtAuth.Default`](../../shared/Implementations/Middleware/JwtAuth.Default/); shared authorization policies live in [`D2.Shared.AuthPolicy.Default`](../../shared/Implementations/Middleware/AuthPolicy.Default/).
 
 1. `ServiceKeyMiddleware` validates the key early in the pipeline (after request enrichment, before rate limiting)
 2. Valid key → sets `IRequestContext.IsTrustedService = true` (trusted services bypass rate limiting and fingerprint validation)
@@ -270,4 +294,4 @@ foreach (var validKeyBytes in r_validKeyBytes)
 
 **Fail-closed on missing config:** If no valid keys are configured, the middleware returns 401 immediately. Empty key lists never silently bypass authentication.
 
-**Registration:** `AddServiceKeyAuth(configuration)` + `UseServiceKeyDetection()` in `Program.cs` (provided by `D2.Shared.Auth.Default`).
+**Registration:** `AddServiceKeyAuth(configuration)` + `UseServiceKeyDetection()` in `Program.cs` (provided by `D2.Shared.ServiceKey.Default`).

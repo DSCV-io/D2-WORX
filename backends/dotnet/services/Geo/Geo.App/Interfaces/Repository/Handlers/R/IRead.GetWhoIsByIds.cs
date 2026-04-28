@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="IRead.GetWhoIsByIds.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>

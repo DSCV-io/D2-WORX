@@ -167,6 +167,15 @@ discovery.relabel "containers" {
     target_label  = "stream"
   }
 
+  // Drop .NET services that export logs via OTLP Serilog sink — they would be
+  // ingested twice (Docker scrape + OTLP push) with inconsistent level labels.
+  // Node.js services use Pino → stdout only (no OTLP log export), so keep them.
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(d2-geo|d2-gateway|d2-signalr)"
+    action        = "drop"
+  }
+
   // Set log file path
   rule {
     source_labels = ["__meta_docker_container_id"]
@@ -178,8 +187,41 @@ discovery.relabel "containers" {
 loki.source.docker "containers" {
   host          = "unix:///var/run/docker.sock"
   targets       = discovery.relabel.containers.output
-  forward_to    = [loki.write.local.receiver]
+  forward_to    = [loki.process.docker_levels.receiver]
   relabel_rules = discovery.relabel.containers.rules
+}
+
+// Parse Pino JSON numeric levels from Docker-scraped Node.js service logs.
+// Only applies to Node.js services (d2-auth, d2-comms, d2-files, d2-sveltekit, d2-dkron-mgr).
+// Infrastructure containers (postgres, redis, etc.) pass through untouched.
+loki.process "docker_levels" {
+  // Only process Pino JSON for Node.js services.
+  stage.match {
+    selector = "{container=~\"d2-auth|d2-comms|d2-files|d2-sveltekit|d2-dkron-mgr\"}"
+
+    // Extract Pino numeric level from JSON log line.
+    stage.json {
+      expressions = { pino_level = "level" }
+    }
+
+    // Map numeric Pino levels to lowercase strings.
+    stage.template {
+      source   = "level"
+      template = "{{ if eq .pino_level \"10\" }}trace{{ else if eq .pino_level \"20\" }}debug{{ else if eq .pino_level \"30\" }}info{{ else if eq .pino_level \"40\" }}warn{{ else if eq .pino_level \"50\" }}error{{ else if eq .pino_level \"60\" }}fatal{{ else if eq .pino_level \"\" }}debug{{ else }}debug{{ end }}"
+    }
+
+    // Set the level label from the mapped value.
+    stage.labels {
+      values = { level = "" }
+    }
+
+    // Clean up extracted field.
+    stage.label_drop {
+      values = ["pino_level"]
+    }
+  }
+
+  forward_to = [loki.write.local.receiver]
 }
 
 loki.write "local" {
@@ -218,6 +260,37 @@ otelcol.exporter.prometheus "default" {
 }
 
 otelcol.exporter.loki "default" {
+  forward_to = [loki.process.normalize_levels.receiver]
+}
+
+// Normalize OTel log level labels to lowercase for consistent Grafana queries.
+// otelcol.exporter.loki maps OTel severity to ALL-CAPS: INFO, WARN, ERROR, DEBUG, FATAL.
+// Standardize to lowercase so Grafana queries use a single case convention.
+loki.process "normalize_levels" {
+  stage.match {
+    selector = "{level=\"INFO\"}"
+    stage.static_labels { values = { level = "info" } }
+  }
+  stage.match {
+    selector = "{level=\"WARN\"}"
+    stage.static_labels { values = { level = "warn" } }
+  }
+  stage.match {
+    selector = "{level=\"ERROR\"}"
+    stage.static_labels { values = { level = "error" } }
+  }
+  stage.match {
+    selector = "{level=\"DEBUG\"}"
+    stage.static_labels { values = { level = "debug" } }
+  }
+  stage.match {
+    selector = "{level=\"FATAL\"}"
+    stage.static_labels { values = { level = "fatal" } }
+  }
+  stage.match {
+    selector = "{level=\"unknown\"}"
+    stage.static_labels { values = { level = "debug" } }
+  }
   forward_to = [loki.write.local.receiver]
 }
 

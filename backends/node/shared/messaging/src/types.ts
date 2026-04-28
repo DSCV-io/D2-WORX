@@ -1,6 +1,14 @@
+/** Minimal logger interface for MessageBus (avoids dependency on @d2/logging). */
+export interface MessageBusLogger {
+  warn(msg: string, ...args: unknown[]): void;
+  error(msg: string, ...args: unknown[]): void;
+}
+
 export interface MessageBusOptions {
   url: string;
   connectionName?: string;
+  /** Optional structured logger. Falls back to console if not provided. */
+  logger?: MessageBusLogger;
   /** Pass-through options for the underlying rabbitmq-client Connection (reconnection tuning, etc.). */
   connectionOptions?: {
     retryLow?: number;
@@ -13,7 +21,7 @@ export interface ConsumerConfig<T = unknown> {
   queue: string;
   queueOptions?: { durable?: boolean; arguments?: Record<string, unknown> };
   prefetchCount?: number;
-  exchanges?: Array<{ exchange: string; type: "topic" | "direct" | "fanout" }>;
+  exchanges?: Array<{ exchange: string; type: "topic" | "direct" | "fanout"; durable?: boolean }>;
   queueBindings?: Array<{ exchange: string; routingKey: string }>;
   /** Optional deserializer for the raw message body. When provided, the raw JSON is passed through this function before reaching the handler. */
   deserialize?: (raw: unknown) => T;
@@ -22,7 +30,7 @@ export interface ConsumerConfig<T = unknown> {
 export interface PublisherConfig {
   confirm?: boolean;
   maxAttempts?: number;
-  exchanges?: Array<{ exchange: string; type: "topic" | "direct" | "fanout" }>;
+  exchanges?: Array<{ exchange: string; type: "topic" | "direct" | "fanout"; durable?: boolean }>;
 }
 
 export interface PublishTarget {

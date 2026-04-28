@@ -18,11 +18,11 @@ export interface DeliveryAttempt {
   readonly channel: Channel;
   readonly recipientAddress: string;
   readonly status: DeliveryStatus;
-  readonly providerMessageId: string | null;
-  readonly error: string | null;
+  readonly providerMessageId?: string;
+  readonly error?: string;
   readonly attemptNumber: number;
   readonly createdAt: Date;
-  readonly nextRetryAt: Date | null;
+  readonly nextRetryAt?: Date;
 }
 
 export interface CreateDeliveryAttemptInput {
@@ -36,7 +36,7 @@ export interface CreateDeliveryAttemptInput {
 export interface TransitionDeliveryAttemptOptions {
   readonly providerMessageId?: string;
   readonly error?: string;
-  readonly nextRetryAt?: Date | null;
+  readonly nextRetryAt?: Date;
 }
 
 /**
@@ -80,11 +80,11 @@ export function createDeliveryAttempt(input: CreateDeliveryAttemptInput): Delive
     channel: input.channel,
     recipientAddress: input.recipientAddress,
     status: "pending",
-    providerMessageId: null,
-    error: null,
+    providerMessageId: undefined,
+    error: undefined,
     attemptNumber: input.attemptNumber,
     createdAt: new Date(),
-    nextRetryAt: null,
+    nextRetryAt: undefined,
   };
 }
 

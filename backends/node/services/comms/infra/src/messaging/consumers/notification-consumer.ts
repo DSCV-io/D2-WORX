@@ -23,17 +23,33 @@ export interface NotificationConsumerDeps {
  * Zod schema for validating incoming notification messages.
  * Matches the NotifyInput shape published by @d2/comms-client.
  */
-const notificationMessageSchema = z.object({
-  recipientContactId: zodGuid,
-  title: z.string().min(1).max(255),
-  content: z.string().min(1).max(50_000),
-  plaintext: z.string().min(1).max(50_000),
-  sensitive: z.boolean().optional(),
-  urgency: z.enum(["normal", "urgent"]).optional(),
-  correlationId: z.string().min(1).max(36),
-  senderService: z.string().min(1).max(50),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-});
+const notificationMessageSchema = z
+  .object({
+    recipientContactId: zodGuid.optional(),
+    alternativeContactInfo: z
+      .object({
+        email: z.string().email().max(254).optional(),
+        phone: z
+          .string()
+          .regex(/^\d{7,15}$/)
+          .optional(),
+      })
+      .refine((v) => !!(v.email || v.phone), {
+        message: "alternativeContactInfo must include at least one of email or phone",
+      })
+      .optional(),
+    title: z.string().min(1).max(255),
+    content: z.string().min(1).max(50_000),
+    plaintext: z.string().min(1).max(50_000),
+    channels: z.array(z.enum(["email", "sms"])).optional(),
+    urgency: z.enum(["normal", "urgent"]).optional(),
+    correlationId: z.string().min(1).max(36),
+    senderService: z.string().min(1).max(50),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+  })
+  .refine((v) => !!v.recipientContactId !== !!v.alternativeContactInfo, {
+    message: "Exactly one of recipientContactId or alternativeContactInfo must be provided",
+  });
 
 type NotificationMessage = z.infer<typeof notificationMessageSchema>;
 
@@ -71,7 +87,8 @@ export function createNotificationConsumer(deps: NotificationConsumerDeps) {
       if (!parseResult.success) {
         logger.warn("Invalid notification message — validation failed, dropping", {
           errors: parseResult.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
-          body: msg.body,
+          correlationId: (msg.body as Record<string, unknown>)?.correlationId,
+          senderService: (msg.body as Record<string, unknown>)?.senderService,
         });
         return ConsumerResult.ACK;
       }
@@ -85,9 +102,10 @@ export function createNotificationConsumer(deps: NotificationConsumerDeps) {
           title: body.title,
           content: body.content,
           plainTextContent: body.plaintext,
-          sensitive: body.sensitive,
+          channels: body.channels,
           urgency: body.urgency,
           recipientContactId: body.recipientContactId,
+          alternativeContactInfo: body.alternativeContactInfo,
           correlationId: body.correlationId,
           metadata: body.metadata,
         });
@@ -123,8 +141,16 @@ async function scheduleRetry(
   const retryCount = Number(msg.headers[COMMS_RETRY.RETRY_COUNT_HEADER] ?? 0);
   const tierQueue = getRetryTierQueue(retryCount);
 
-  if (tierQueue === null) {
-    logger.error("Max retry attempts reached, dropping message", { retryCount, body }, error);
+  if (tierQueue == null) {
+    logger.error(
+      "Max retry attempts reached, dropping message",
+      {
+        retryCount,
+        correlationId: (body as Record<string, unknown>)?.correlationId,
+        senderService: (body as Record<string, unknown>)?.senderService,
+      },
+      error,
+    );
     return;
   }
 

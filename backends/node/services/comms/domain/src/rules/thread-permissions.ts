@@ -6,7 +6,7 @@ import { PARTICIPANT_ROLE_HIERARCHY } from "../enums/participant-role.js";
  * Checks whether a participant is currently active (has not left the thread).
  */
 function isActive(participant: ThreadParticipant): boolean {
-  return participant.leftAt === null;
+  return participant.leftAt == null;
 }
 
 /**

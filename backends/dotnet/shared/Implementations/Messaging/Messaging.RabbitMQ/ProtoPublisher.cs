@@ -6,6 +6,7 @@
 
 namespace D2.Shared.Messaging.RabbitMQ;
 
+using System.Collections.Concurrent;
 using System.Text;
 using global::RabbitMQ.Client;
 using Google.Protobuf;
@@ -22,7 +23,7 @@ public partial class ProtoPublisher : IAsyncDisposable
 {
     private readonly IConnection r_connection;
     private readonly ILogger<ProtoPublisher> r_logger;
-    private readonly HashSet<string> r_declaredExchanges = new();
+    private readonly ConcurrentDictionary<string, bool> r_declaredExchanges = new();
     private readonly SemaphoreSlim r_channelLock = new(1, 1);
     private IChannel? _channel;
 
@@ -155,7 +156,7 @@ public partial class ProtoPublisher : IAsyncDisposable
         string exchange,
         CancellationToken ct)
     {
-        if (r_declaredExchanges.Contains(exchange))
+        if (r_declaredExchanges.ContainsKey(exchange))
         {
             return;
         }
@@ -167,6 +168,6 @@ public partial class ProtoPublisher : IAsyncDisposable
             autoDelete: false,
             cancellationToken: ct);
 
-        r_declaredExchanges.Add(exchange);
+        r_declaredExchanges.TryAdd(exchange, true);
     }
 }

@@ -65,7 +65,7 @@ export class DeleteContactsByExtKeys
           );
         }),
       (res) => res.result!,
-      (res) => ({ deleted: res.deleted }),
+      (res) => ({ deleted: res.deleted ?? 0 }),
     );
 
     // Evict ext-key cache for each input key regardless of gRPC result

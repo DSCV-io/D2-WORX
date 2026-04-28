@@ -20,8 +20,8 @@ describe("ThreadParticipant", () => {
       expect(p.userId).toBe("user-456");
       expect(p.role).toBe("participant");
       expect(p.notificationsMuted).toBe(false);
-      expect(p.lastReadAt).toBeNull();
-      expect(p.leftAt).toBeNull();
+      expect(p.lastReadAt).toBeUndefined();
+      expect(p.leftAt).toBeUndefined();
       expect(p.joinedAt).toBeInstanceOf(Date);
       expect(p.id).toHaveLength(36);
     });
@@ -33,7 +33,7 @@ describe("ThreadParticipant", () => {
         role: "observer",
       });
       expect(p.contactId).toBe("contact-1");
-      expect(p.userId).toBeNull();
+      expect(p.userId).toBeUndefined();
     });
 
     it("should accept notificationsMuted", () => {

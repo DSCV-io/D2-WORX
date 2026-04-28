@@ -1,4 +1,4 @@
-import { cleanStr, cleanAndValidateEmail, generateUuidV7 } from "@d2/utilities";
+import { cleanDisplayStr, cleanAndValidateEmail, generateUuidV7 } from "@d2/utilities";
 import { AuthValidationError } from "../exceptions/auth-validation-error.js";
 
 export interface User {
@@ -8,8 +8,9 @@ export interface User {
   readonly username: string;
   readonly displayUsername: string;
   readonly emailVerified: boolean;
-  readonly image: string | null;
+  readonly image?: string;
   readonly locale: string;
+  readonly timezone: string;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
@@ -20,9 +21,10 @@ export interface CreateUserInput {
   readonly username: string;
   readonly displayUsername: string;
   readonly id?: string;
-  readonly image?: string | null;
+  readonly image?: string;
   readonly emailVerified?: boolean;
   readonly locale?: string;
+  readonly timezone?: string;
 }
 
 export interface UpdateUserInput {
@@ -31,14 +33,15 @@ export interface UpdateUserInput {
   readonly username?: string;
   readonly displayUsername?: string;
   readonly emailVerified?: boolean;
-  readonly image?: string | null;
+  readonly image?: string;
   readonly locale?: string;
+  readonly timezone?: string;
 }
 
 export function createUser(input: CreateUserInput): User {
   const email = cleanAndValidateEmail(input.email);
 
-  const name = cleanStr(input.name);
+  const name = cleanDisplayStr(input.name);
   if (!name) {
     throw new AuthValidationError("User", "name", input.name, "is required.");
   }
@@ -57,8 +60,9 @@ export function createUser(input: CreateUserInput): User {
     username: input.username,
     displayUsername: input.displayUsername,
     emailVerified: input.emailVerified ?? false,
-    image: input.image ?? null,
+    image: input.image,
     locale: input.locale ?? "en-US",
+    timezone: input.timezone ?? "America/New_York",
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -72,7 +76,7 @@ export function updateUser(user: User, updates: UpdateUserInput): User {
 
   let name = user.name;
   if (updates.name !== undefined) {
-    const cleaned = cleanStr(updates.name);
+    const cleaned = cleanDisplayStr(updates.name);
     if (!cleaned) {
       throw new AuthValidationError("User", "name", updates.name, "is required.");
     }
@@ -88,6 +92,7 @@ export function updateUser(user: User, updates: UpdateUserInput): User {
     emailVerified: updates.emailVerified ?? user.emailVerified,
     image: updates.image !== undefined ? updates.image : user.image,
     locale: updates.locale ?? user.locale,
+    timezone: updates.timezone ?? user.timezone,
     updatedAt: new Date(),
   };
 }

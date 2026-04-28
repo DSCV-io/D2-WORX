@@ -21,12 +21,8 @@ export function createServiceScope(provider: ServiceProvider, logger?: ILogger):
     traceId: crypto.randomUUID(),
     isAuthenticated: false,
     isTrustedService: null,
-    isAgentStaff: false,
-    isAgentAdmin: false,
-    isTargetingStaff: false,
-    isTargetingAdmin: false,
-    isOrgEmulating: false,
-    isUserImpersonating: false,
+    isOrgEmulating: null,
+    isUserImpersonating: null,
   };
   scope.setInstance(IRequestContextKey, requestContext);
   const resolvedLogger = logger ?? provider.resolve(ILoggerKey);

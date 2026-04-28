@@ -42,6 +42,9 @@ Run `pnpm --filter @d2/protos generate` to regenerate.
 
 - `verbatimModuleSyntax: false` in `tsconfig.json` — generated code doesn't comply with strict module syntax
 - Proto source at `contracts/protos/` is the single source of truth — both .NET and Node.js read from there
+- **`useOptionals=all`** is set in `buf.gen.yaml` — all proto fields generate as `field?: T | undefined` in TypeScript (both proto3 default-value fields and `optional`-keyword fields)
+- **Proto3 `optional` keyword** is used on all nullable domain fields (65 fields across geo, comms, common protos). The domain model is the source of truth for nullability — if a field is `?: T` in the domain entity, it MUST be `optional` in the proto
+- **C# proto behavior**: Optional string fields still return `""` when unset (protobuf default). Use the generated `HasXxx` property to distinguish "not set" from "empty string." C# mappers use conditional assignment + `.ToNullIfEmpty()` to convert proto empty strings to `null` at the boundary
 
 ## .NET Equivalent
 

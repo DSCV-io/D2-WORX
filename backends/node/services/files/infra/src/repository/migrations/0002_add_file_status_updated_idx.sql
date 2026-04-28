@@ -1,0 +1,1 @@
+CREATE INDEX "idx_file_status_updated" ON "file" USING btree ("status","updated_at");

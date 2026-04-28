@@ -23,8 +23,8 @@ test.describe("route navigation", () => {
     await expect(page.locator("[data-slot='card-title']").getByText("Sign In")).toBeVisible();
   });
 
-  test("/profile redirects unauthenticated users to /sign-in", async ({ page }) => {
-    await page.goto("/profile");
+  test("/account/profile redirects unauthenticated users to /sign-in", async ({ page }) => {
+    await page.goto("/account/profile");
 
     await expect(page).toHaveURL(/\/sign-in\?returnTo=/);
     await expect(page.locator("[data-slot='card-title']").getByText("Sign In")).toBeVisible();

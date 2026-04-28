@@ -1,22 +1,73 @@
 import { describe, it, expect } from "vitest";
 import { Hono } from "hono";
 import { requireOrg, requireOrgType, requireRole, requireStaff, requireAdmin } from "@d2/auth-api";
-import type { SessionVariables } from "@d2/auth-api";
+import { OrgType, type IRequestContext } from "@d2/handler";
+
+/**
+ * Maps a domain (lowercase) org-type string to the `OrgType` enum value used
+ * by `IRequestContext.targetOrgType`. Returns `undefined` for unrecognized
+ * values — mirrors what the production scope middleware does, so policies
+ * that read `targetOrgType` see `undefined` for invalid input rather than a
+ * raw string they can't compare to the enum.
+ */
+function toOrgType(value: unknown): OrgType | undefined {
+  if (typeof value !== "string") return undefined;
+  switch (value) {
+    case "admin":
+      return OrgType.Admin;
+    case "support":
+      return OrgType.Support;
+    case "customer":
+      return OrgType.Customer;
+    case "third_party":
+      return OrgType.ThirdParty;
+    case "affiliate":
+      return OrgType.Affiliate;
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Builds an `IRequestContext` from the legacy BetterAuth session shape used
+ * throughout this file (`activeOrganizationId/Type/Role`). Lets us keep the
+ * existing test bodies unchanged while having the policies read identity
+ * from `c.var.requestContext` (the new contract).
+ */
+function sessionToRequestContext(session: Record<string, unknown> | null): IRequestContext | null {
+  if (!session) return null;
+  const orgIdRaw = session["activeOrganizationId"];
+  const orgTypeRaw = session["activeOrganizationType"];
+  const roleRaw = session["activeOrganizationRole"];
+  return {
+    isAuthenticated: true,
+    isTrustedService: false,
+    isOrgEmulating: false,
+    isUserImpersonating: false,
+    userId: "user-1",
+    email: "test@test.com",
+    targetOrgId: typeof orgIdRaw === "string" ? orgIdRaw : undefined,
+    targetOrgType: toOrgType(orgTypeRaw),
+    targetOrgRole: typeof roleRaw === "string" ? roleRaw : undefined,
+    agentOrgId: typeof orgIdRaw === "string" ? orgIdRaw : undefined,
+    agentOrgType: toOrgType(orgTypeRaw),
+    agentOrgRole: typeof roleRaw === "string" ? roleRaw : undefined,
+  };
+}
 
 /**
  * Creates a test Hono app with the given middleware applied.
- * A setup middleware injects session variables before the auth middleware runs.
+ * A setup middleware injects requestContext before the auth middleware runs.
  */
 function createApp(
   session: Record<string, unknown> | null,
   ...middlewares: ReturnType<typeof requireOrg>[]
 ) {
-  const app = new Hono<{ Variables: SessionVariables }>();
+  const app = new Hono();
 
-  // Inject session into c.var (simulates session middleware)
+  // Inject requestContext into c.var (simulates session+scope middleware)
   app.use("*", async (c, next) => {
-    c.set("user", session ? { id: "user-1", email: "test@test.com", name: "Test" } : null);
-    c.set("session", session);
+    c.set("requestContext", sessionToRequestContext(session));
     await next();
   });
 
@@ -28,7 +79,7 @@ function createApp(
   return app;
 }
 
-/** Helper to build a session with active org fields. */
+/** Helper to build a session with active org fields (legacy shape, translated by sessionToRequestContext). */
 function sessionWith(
   orgId: string,
   orgType: string,
@@ -93,7 +144,7 @@ describe("requireOrg", () => {
 
 describe("requireOrgType", () => {
   it("should pass when orgType matches single allowed type", async () => {
-    const app = createApp(sessionWith("org-1", "admin", "owner"), requireOrgType("admin"));
+    const app = createApp(sessionWith("org-1", "admin", "owner"), requireOrgType(OrgType.Admin));
     const res = await app.request("/test");
     expect(res.status).toBe(200);
   });
@@ -101,14 +152,14 @@ describe("requireOrgType", () => {
   it("should pass when orgType matches one of multiple allowed types", async () => {
     const app = createApp(
       sessionWith("org-1", "support", "officer"),
-      requireOrgType("admin", "support"),
+      requireOrgType(OrgType.Admin, OrgType.Support),
     );
     const res = await app.request("/test");
     expect(res.status).toBe(200);
   });
 
   it("should reject when orgType does not match", async () => {
-    const app = createApp(sessionWith("org-1", "customer", "owner"), requireOrgType("admin"));
+    const app = createApp(sessionWith("org-1", "customer", "owner"), requireOrgType(OrgType.Admin));
     const res = await app.request("/test");
     expect(res.status).toBe(403);
     const body = await res.json();
@@ -116,7 +167,7 @@ describe("requireOrgType", () => {
   });
 
   it("should reject with 401 when no session", async () => {
-    const app = createApp(null, requireOrgType("admin"));
+    const app = createApp(null, requireOrgType(OrgType.Admin));
     const res = await app.request("/test");
     expect(res.status).toBe(401);
   });
@@ -363,19 +414,19 @@ describe("requireRole — defensive edge cases", () => {
 
 describe("requireOrgType — defensive edge cases", () => {
   it("should reject PascalCase orgType when expecting lowercase", async () => {
-    const app = createApp(sessionWith("org-1", "Admin", "owner"), requireOrgType("admin"));
+    const app = createApp(sessionWith("org-1", "Admin", "owner"), requireOrgType(OrgType.Admin));
     const res = await app.request("/test");
     expect(res.status).toBe(403);
   });
 
   it("should reject empty string orgType", async () => {
-    const app = createApp(sessionWith("org-1", "", "owner"), requireOrgType("admin"));
+    const app = createApp(sessionWith("org-1", "", "owner"), requireOrgType(OrgType.Admin));
     const res = await app.request("/test");
     expect(res.status).toBe(403);
   });
 
   it("should reject orgType with trailing whitespace", async () => {
-    const app = createApp(sessionWith("org-1", "admin ", "owner"), requireOrgType("admin"));
+    const app = createApp(sessionWith("org-1", "admin ", "owner"), requireOrgType(OrgType.Admin));
     const res = await app.request("/test");
     expect(res.status).toBe(403);
   });

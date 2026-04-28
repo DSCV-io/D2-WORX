@@ -77,6 +77,16 @@ public record Contact
     /// </example>
     public required string IETFBCP47Tag { get; init; }
 
+    /// <summary>
+    /// Gets the IANA timezone identifier (e.g., "America/New_York"). Foreign key to the Timezone
+    /// reference entity. Synced from the owning user's timezone preference. Used by the Comms
+    /// service for formatting dates/times in notifications.
+    /// </summary>
+    /// <example>
+    /// "America/New_York", "Europe/London", "Asia/Tokyo".
+    /// </example>
+    public required string IANAIdentifier { get; init; }
+
     #endregion
 
     #region Nested Properties (Value Objects)
@@ -126,6 +136,12 @@ public record Contact
     /// </summary>
     public Locale? Locale { get; init; }
 
+    /// <summary>
+    /// Gets navigation property to the <see cref="D2.Geo.Domain.Entities.Timezone"/> reference
+    /// entity for the contact's timezone.
+    /// </summary>
+    public Timezone? Timezone { get; init; }
+
     #endregion
 
     #region Functionality
@@ -154,6 +170,9 @@ public record Contact
     /// </param>
     /// <param name="ietfBcp47Tag">
     /// IETF BCP 47 locale tag (e.g., "en-US", "fr-CA"). Defaults to "en-US".
+    /// </param>
+    /// <param name="ianaIdentifier">
+    /// IANA timezone identifier (e.g., "America/New_York"). Defaults to "America/New_York".
     /// </param>
     ///
     /// <returns>
@@ -184,7 +203,8 @@ public record Contact
         Personal? personalDetails = null,
         Professional? professionalDetails = null,
         string? locationHashId = null,
-        string? ietfBcp47Tag = null)
+        string? ietfBcp47Tag = null,
+        string? ianaIdentifier = null)
     {
         if (contextKey.Falsey())
         {
@@ -224,6 +244,10 @@ public record Contact
             // EF Core ContactConfig also has HasDefaultValue("en-US") for DB-level default.
             // Falsey() catches null, empty, and whitespace — all would violate the locales FK.
             IETFBCP47Tag = ietfBcp47Tag.Falsey() ? "en-US" : ietfBcp47Tag!,
+
+            // Same pattern as locale — Falsey() catches null/empty/whitespace, defaults to
+            // "America/New_York". EF Core ContactConfig also has HasDefaultValue("America/New_York").
+            IANAIdentifier = ianaIdentifier.Falsey() ? "America/New_York" : ianaIdentifier!,
             LocationHashId = locationHashId,
         };
     }
@@ -265,7 +289,8 @@ public record Contact
             contact.PersonalDetails,
             contact.ProfessionalDetails,
             contact.LocationHashId,
-            contact.IETFBCP47Tag);
+            contact.IETFBCP47Tag,
+            contact.IANAIdentifier);
 
     #endregion
 }

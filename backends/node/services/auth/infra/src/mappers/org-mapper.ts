@@ -12,8 +12,8 @@ export function toDomainOrganization(raw: Record<string, unknown>): Organization
     name: raw["name"] as string,
     slug: raw["slug"] as string,
     orgType: (raw["orgType"] ?? raw["org_type"] ?? "customer") as OrgType,
-    logo: (raw["logo"] as string | null) ?? null,
-    metadata: (raw["metadata"] as string | null) ?? null,
+    logo: (raw["logo"] as string | undefined) ?? undefined,
+    metadata: (raw["metadata"] as string | undefined) ?? undefined,
     createdAt: toDate(raw["createdAt"] ?? raw["created_at"]),
     updatedAt: toDate(raw["updatedAt"] ?? raw["updated_at"]),
   };

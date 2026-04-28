@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { APIError } from "better-auth";
 import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { validatePassword, PASSWORD_POLICY } from "@d2/auth-domain";
+import { TK } from "@d2/i18n";
 
 /** Minimal cache interface — satisfied by MemoryCacheStore. */
 export interface PrefixCache {
@@ -102,8 +103,7 @@ export function createPasswordFunctions(cache: PrefixCache, logger?: Logger): Pa
       const hibp = await checkBreachedPassword(password, cache, logger);
       if (hibp.breached) {
         throw new APIError("BAD_REQUEST", {
-          message:
-            "This password has appeared in a data breach. Please choose a different password.",
+          message: TK.auth.errors.PASSWORD_BREACHED,
         });
       }
 

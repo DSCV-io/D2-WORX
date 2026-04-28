@@ -61,7 +61,7 @@ export function getAuthContext(): AuthContext | null {
 
   const apiKey = process.env.SVELTEKIT_AUTH__API_KEY;
 
-  const logger = createLogger({ serviceName: "d2-sveltekit-auth" });
+  const logger = createLogger({ serviceName: process.env.OTEL_SERVICE_NAME ?? "d2-sveltekit" });
   const config: AuthBffConfig = { authServiceUrl, apiKey };
 
   const sessionResolver = new SessionResolver(config, logger);

@@ -3,6 +3,7 @@
   generics="T extends Record<string, unknown>, U extends FormPath<T>"
 >
   import type { Snippet } from "svelte";
+  import type { HTMLInputAttributes } from "svelte/elements";
   import type { FormPath, SuperForm } from "sveltekit-superforms";
   import { Control } from "formsnap";
   import { cn } from "$lib/shared/utils/utils.js";
@@ -25,6 +26,8 @@
     labelRight?: Snippet;
     /** Optional clickable action inside the input (e.g. show/hide toggle). Renders at the trailing edge. */
     inputAction?: Snippet;
+    /** Browser autocomplete hint. Defaults to "off". Set per-field for password manager integration. */
+    autocomplete?: HTMLInputAttributes["autocomplete"];
     oninput?: (e: Event & { currentTarget: HTMLInputElement }) => void;
     onblur?: () => void;
   };
@@ -40,6 +43,7 @@
     status: statusOverride,
     labelRight,
     inputAction,
+    autocomplete = "off",
     oninput,
     onblur,
   }: Props = $props();
@@ -118,7 +122,7 @@
           {placeholder}
           {disabled}
           {value}
-          autocomplete="off"
+          {autocomplete}
           oninput={handleInput}
           onblur={handleBlur}
           class={cn(
@@ -126,7 +130,8 @@
             inputAction && effectiveStatus !== "idle" && "pr-14",
             inputAction && effectiveStatus === "idle" && "pr-8",
             !inputAction && effectiveStatus !== "idle" && "pr-8",
-            effectiveStatus === "valid" && "border-success/70 dark:border-success/50",
+            effectiveStatus === "valid" && "border-success dark:border-success border-2",
+            effectiveStatus === "invalid" && "border-2",
           )}
         />
         {#if effectiveStatus !== "idle"}

@@ -30,7 +30,10 @@ export class SetNx<TValue>
       let serialized: string | Buffer;
       try {
         serialized = this.serializer.serialize(input.value);
-      } catch {
+      } catch (err: unknown) {
+        this.context.logger.warn(
+          `Cache serialization failed: ${err instanceof Error ? err.message : String(err)}`,
+        );
         return D2Result.fail({
           messages: [TK.common.errors.COULD_NOT_BE_SERIALIZED],
           statusCode: HttpStatusCode.InternalServerError,
@@ -46,8 +49,8 @@ export class SetNx<TValue>
       }
 
       return D2Result.ok({ data: { wasSet: wasSet === "OK" } });
-    } catch {
-      return redisErrorResult();
+    } catch (err: unknown) {
+      return redisErrorResult(err);
     }
   }
 }

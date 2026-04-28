@@ -1,4 +1,4 @@
-import type { IHandler } from "@d2/handler";
+import type { IHandler, RedactionSpec } from "@d2/handler";
 import type { OrgContact } from "@d2/auth-domain";
 
 export interface CreateOrgContactRecordInput {
@@ -7,7 +7,14 @@ export interface CreateOrgContactRecordInput {
 
 export interface CreateOrgContactRecordOutput {}
 
-export type ICreateOrgContactRecordHandler = IHandler<
+/** Input `contact.label` is user-supplied free text (PII) — suppress full input. */
+export const CREATE_ORG_CONTACT_RECORD_REDACTION: RedactionSpec = {
+  suppressInput: true,
+};
+
+export interface ICreateOrgContactRecordHandler extends IHandler<
   CreateOrgContactRecordInput,
   CreateOrgContactRecordOutput
->;
+> {
+  readonly redaction: RedactionSpec;
+}

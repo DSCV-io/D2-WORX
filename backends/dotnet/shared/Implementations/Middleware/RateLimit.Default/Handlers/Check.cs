@@ -132,7 +132,7 @@ public partial class Check : BaseHandler<Check, I, O>, H
         }
 
         if (requestContext.CountryCode.Truthy() &&
-            !r_options.WhitelistedCountryCodes.Contains(requestContext.CountryCode!))
+            !r_options.WhitelistedCountryCodes.Contains(requestContext.CountryCode!, StringComparer.OrdinalIgnoreCase))
         {
             checks.Add(CheckDimensionAsync(
                 RateLimitDimension.Country,
@@ -276,7 +276,7 @@ public partial class Check : BaseHandler<Check, I, O>, H
             var currCount = incrOutput?.NewValue ?? 0;
 
             // 3. Calculate weighted estimate.
-            var secondsIntoCurrentWindow = now.Second + (now.Millisecond / 1000.0);
+            var secondsIntoCurrentWindow = now.TimeOfDay.TotalSeconds % windowSeconds;
             var weight = 1.0 - (secondsIntoCurrentWindow / windowSeconds);
             var estimated = (long)((prevCount * weight) + currCount);
 

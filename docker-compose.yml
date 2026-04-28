@@ -42,6 +42,7 @@ volumes:
   d2-redisinsight-data:
   d2-rabbitmq-data:
   d2-dkron-data:
+  d2-clamav-data:
   d2-portainer-data:
   d2-node-modules:
   d2-sveltekit-modules:
@@ -61,10 +62,20 @@ services:
       MINIO_ROOT_USER: ${S3_USERNAME}
       MINIO_ROOT_PASSWORD: ${S3_PASSWORD}
       MINIO_BROWSER: "on"
+      # AMQP notification — file-uploaded events → RabbitMQ
+      MINIO_NOTIFY_AMQP_ENABLE_PRIMARY: "on"
+      MINIO_NOTIFY_AMQP_URL_PRIMARY: "amqp://${MQ_USERNAME}:${MQ_PASSWORD}@${RABBITMQ_NAME}:5672"
+      MINIO_NOTIFY_AMQP_EXCHANGE_PRIMARY: "files.events"
+      MINIO_NOTIFY_AMQP_EXCHANGE_TYPE_PRIMARY: "direct"
+      MINIO_NOTIFY_AMQP_ROUTING_KEY_PRIMARY: "file-uploaded"
+      MINIO_NOTIFY_AMQP_DURABLE_PRIMARY: "on"
     volumes:
       - d2-minio-data:/data
     command: server /data --console-address :9001
     networks: [d2-network]
+    depends_on:
+      d2-rabbitmq:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:9000/minio/health/live || exit 1"]
       interval: 10s
@@ -90,6 +101,8 @@ services:
       mc mb --ignore-existing myminio/${MINIO_BUCKET_MIMIR_BLOCKS} &&
       mc mb --ignore-existing myminio/${MINIO_BUCKET_MIMIR_RULER} &&
       mc mb --ignore-existing myminio/${MINIO_BUCKET_UPLOADS} &&
+      mc mb --ignore-existing myminio/${MINIO_BUCKET_FILES} &&
+      mc event add myminio/${MINIO_BUCKET_FILES} arn:minio:sqs::PRIMARY:amqp --event put --ignore-existing &&
       mc admin prometheus generate myminio > /minio-token/prometheus-config.yaml &&
       echo 'MinIO buckets and Prometheus token initialized successfully'
       "
@@ -390,13 +403,33 @@ services:
     ports:
       - "${REDIS_EXPORTER_PORT}:9121"
     environment:
-      REDIS_ADDR: "${REDIS_NAME}:${REDIS_PORT}"
+      REDIS_ADDR: "${REDIS_NAME}:6379"
       REDIS_PASSWORD: ${CACHE_PASSWORD}
     networks: [d2-network]
     depends_on:
       d2-redis:
         condition: service_healthy
     # Redis exporter is a distroless image — no shell or health check tools available.
+    restart: unless-stopped
+
+  # ==========================================================================
+  # Malware Scanning
+  # ==========================================================================
+
+  d2-clamav:
+    image: ${CLAMAV_IMAGE}:${CLAMAV_TAG}
+    container_name: ${CLAMAV_NAME}
+    ports:
+      - "${CLAMAV_PORT}:3310"
+    volumes:
+      - d2-clamav-data:/var/lib/clamav
+    networks: [d2-network]
+    healthcheck:
+      test: ["CMD-SHELL", "clamdscan --version || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
     restart: unless-stopped
 
   d2-rabbitmq:
@@ -501,17 +534,19 @@ services:
       ASPNETCORE_URLS: "http://+:${GEO_PORT}"
       # Docker DNS overrides (internal port 5432, not host-mapped ${POSTGRES_PORT}).
       GEO_DATABASE_URL: "postgresql://${DB_USERNAME}:${DB_PASSWORD}@${POSTGRES_NAME}:5432/${GEO_DB_NAME}"
-      REDIS_URL: "redis://:${CACHE_PASSWORD}@${REDIS_NAME}:${REDIS_PORT}"
-      RABBITMQ_URL: "amqp://${MQ_USERNAME}:${MQ_PASSWORD}@${RABBITMQ_NAME}:${RABBITMQ_PORT}"
+      REDIS_URL: "redis://:${CACHE_PASSWORD}@${REDIS_NAME}:6379"
+      RABBITMQ_URL: "amqp://${MQ_USERNAME}:${MQ_PASSWORD}@${RABBITMQ_NAME}:5672"
       # OTel → Alloy (inside Docker network).
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://${ALLOY_NAME}:${OTLP_HTTP_PORT}/v1/traces"
       OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "http://${ALLOY_NAME}:${OTLP_HTTP_PORT}/v1/logs"
       OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://${ALLOY_NAME}:${OTLP_HTTP_PORT}/v1/metrics"
       LOG_LEVEL: debug
     volumes:
+      - ./D2.sln:/src/D2.sln:ro
       - ./backends/dotnet:/src/backends/dotnet
       - ./contracts:/src/contracts
       - ./Directory.Build.props:/src/Directory.Build.props:ro
+      - ./.editorconfig:/src/.editorconfig:ro
       - ./stylecop.json:/src/stylecop.json:ro
     networks: [d2-network]
     depends_on:
@@ -547,8 +582,8 @@ services:
       OTEL_SERVICE_NAME: ${AUTH_SERVICE_NAME}
       # Docker DNS overrides.
       AUTH_DATABASE_URL: "postgresql://${DB_USERNAME}:${DB_PASSWORD}@${POSTGRES_NAME}:5432/${AUTH_DB_NAME}"
-      REDIS_URL: "redis://:${CACHE_PASSWORD}@${REDIS_NAME}:${REDIS_PORT}"
-      RABBITMQ_URL: "amqp://${MQ_USERNAME}:${MQ_PASSWORD}@${RABBITMQ_NAME}:${RABBITMQ_PORT}"
+      REDIS_URL: "redis://:${CACHE_PASSWORD}@${REDIS_NAME}:6379"
+      RABBITMQ_URL: "amqp://${MQ_USERNAME}:${MQ_PASSWORD}@${RABBITMQ_NAME}:5672"
       GEO_GRPC_ADDRESS: "${GEO_SERVICE_NAME}:${GEO_PORT}"
       # OTel → Alloy.
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://${ALLOY_NAME}:${OTLP_HTTP_PORT}/v1/traces"
@@ -601,8 +636,8 @@ services:
       OTEL_SERVICE_NAME: ${COMMS_SERVICE_NAME}
       # Docker DNS overrides.
       COMMS_DATABASE_URL: "postgresql://${DB_USERNAME}:${DB_PASSWORD}@${POSTGRES_NAME}:5432/${COMMS_DB_NAME}"
-      REDIS_URL: "redis://:${CACHE_PASSWORD}@${REDIS_NAME}:${REDIS_PORT}"
-      RABBITMQ_URL: "amqp://${MQ_USERNAME}:${MQ_PASSWORD}@${RABBITMQ_NAME}:${RABBITMQ_PORT}"
+      REDIS_URL: "redis://:${CACHE_PASSWORD}@${REDIS_NAME}:6379"
+      RABBITMQ_URL: "amqp://${MQ_USERNAME}:${MQ_PASSWORD}@${RABBITMQ_NAME}:5672"
       GEO_GRPC_ADDRESS: "${GEO_SERVICE_NAME}:${GEO_PORT}"
       # OTel → Alloy.
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://${ALLOY_NAME}:${OTLP_HTTP_PORT}/v1/traces"
@@ -618,6 +653,7 @@ services:
       - ./contracts:/app/contracts
       - ./clients/web/package.json:/app/clients/web/package.json:ro
       - d2-node-modules:/app/node_modules
+      - ./.dev-data:/app/.dev-data
     networks: [d2-network]
     depends_on:
       d2-node-init:
@@ -642,6 +678,75 @@ services:
       start_period: 60s
     restart: unless-stopped
 
+  d2-files:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.files
+      target: dev
+    container_name: d2-files
+    ports:
+      - "${FILES_HTTP_PORT}:${FILES_HTTP_PORT}"
+      - "${FILES_GRPC_PORT}:${FILES_GRPC_PORT}"
+    env_file: .env.local
+    environment:
+      OTEL_SERVICE_NAME: ${FILES_SERVICE_NAME}
+      # Docker DNS overrides.
+      FILES_DATABASE_URL: "postgresql://${DB_USERNAME}:${DB_PASSWORD}@${POSTGRES_NAME}:5432/${FILES_DB_NAME}"
+      REDIS_URL: "redis://:${CACHE_PASSWORD}@${REDIS_NAME}:6379"
+      RABBITMQ_URL: "amqp://${MQ_USERNAME}:${MQ_PASSWORD}@${RABBITMQ_NAME}:5672"
+      FILES_S3_ENDPOINT: "http://${MINIO_NAME}:9000"
+      FILES_S3_ACCESS_KEY: "${S3_USERNAME}"
+      FILES_S3_SECRET_KEY: "${S3_PASSWORD}"
+      FILES_JWKS_URL: "http://${AUTH_SERVICE_NAME}:${AUTH_HTTP_PORT}/api/auth/jwks"
+      CLAMAV_HOST: "${CLAMAV_NAME}"
+      GEO_GRPC_ADDRESS: "${GEO_SERVICE_NAME}:${GEO_PORT}"
+      SIGNALR_GRPC_ADDRESS: "${SIGNALR_SERVICE_NAME}:${SIGNALR_GRPC_PORT}"
+      # OTel → Alloy.
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://${ALLOY_NAME}:${OTLP_HTTP_PORT}/v1/traces"
+      OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "http://${ALLOY_NAME}:${OTLP_HTTP_PORT}/v1/logs"
+      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://${ALLOY_NAME}:${OTLP_HTTP_PORT}/v1/metrics"
+      LOG_LEVEL: debug
+    volumes:
+      - ./package.json:/app/package.json:ro
+      - ./pnpm-lock.yaml:/app/pnpm-lock.yaml:ro
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml:ro
+      - ./.npmrc:/app/.npmrc:ro
+      - ./backends/node:/app/backends/node
+      - ./contracts:/app/contracts
+      - ./clients/web/package.json:/app/clients/web/package.json:ro
+      - d2-node-modules:/app/node_modules
+    networks: [d2-network]
+    depends_on:
+      d2-node-init:
+        condition: service_completed_successfully
+      d2-postgres:
+        condition: service_healthy
+      d2-redis:
+        condition: service_healthy
+      d2-rabbitmq:
+        condition: service_healthy
+      d2-minio:
+        condition: service_healthy
+      d2-clamav:
+        condition: service_healthy
+      d2-geo:
+        condition: service_healthy
+      d2-auth:
+        condition: service_healthy
+      d2-signalr:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "const s=require(''net'').createConnection(${FILES_HTTP_PORT},()=>{s.destroy();process.exit(0)});s.on(''error'',()=>process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 60s
+    restart: unless-stopped
+
   d2-gateway:
     build:
       context: .
@@ -656,10 +761,12 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: "http://+:${GATEWAY_PORT}"
       # Docker DNS overrides.
-      REDIS_URL: "redis://:${CACHE_PASSWORD}@${REDIS_NAME}:${REDIS_PORT}"
+      REDIS_URL: "redis://:${CACHE_PASSWORD}@${REDIS_NAME}:6379"
       GEO_GRPC_ADDRESS: "${GEO_SERVICE_NAME}:${GEO_PORT}"
       AUTH_GRPC_ADDRESS: "${AUTH_SERVICE_NAME}:${AUTH_GRPC_PORT}"
       COMMS_GRPC_ADDRESS: "${COMMS_SERVICE_NAME}:${COMMS_GRPC_PORT}"
+      FILES_GRPC_ADDRESS: "${FILES_SERVICE_NAME:-d2-files}:${FILES_GRPC_PORT:-5301}"
+      SIGNALR_GRPC_ADDRESS: "${SIGNALR_SERVICE_NAME}:${SIGNALR_GRPC_PORT}"
       GATEWAY_AUTH__AUTHSERVICEBASEURL: "http://${AUTH_SERVICE_NAME}:${AUTH_HTTP_PORT}"
       # OTel → Alloy.
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://${ALLOY_NAME}:${OTLP_HTTP_PORT}/v1/traces"
@@ -667,9 +774,11 @@ services:
       OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://${ALLOY_NAME}:${OTLP_HTTP_PORT}/v1/metrics"
       LOG_LEVEL: debug
     volumes:
+      - ./D2.sln:/src/D2.sln:ro
       - ./backends/dotnet:/src/backends/dotnet
       - ./contracts:/src/contracts
       - ./Directory.Build.props:/src/Directory.Build.props:ro
+      - ./.editorconfig:/src/.editorconfig:ro
       - ./stylecop.json:/src/stylecop.json:ro
     networks: [d2-network]
     depends_on:
@@ -679,10 +788,56 @@ services:
         condition: service_healthy
       d2-comms:
         condition: service_healthy
+      d2-files:
+        condition: service_healthy
+      d2-signalr:
+        condition: service_healthy
       d2-redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:${GATEWAY_PORT}/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 60s
+    restart: unless-stopped
+
+  d2-signalr:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.signalr
+      target: dev
+    container_name: d2-signalr
+    ports:
+      - "${SIGNALR_HTTP_PORT}:${SIGNALR_HTTP_PORT}"
+      - "${SIGNALR_GRPC_PORT}:${SIGNALR_GRPC_PORT}"
+    env_file: .env.local
+    environment:
+      OTEL_SERVICE_NAME: ${SIGNALR_SERVICE_NAME}
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "http://+:${SIGNALR_HTTP_PORT};http://+:${SIGNALR_GRPC_PORT}"
+      # Docker DNS overrides.
+      REDIS_URL: "redis://:${CACHE_PASSWORD}@${REDIS_NAME}:6379"
+      SIGNALR_AUTH__AUTHSERVICEBASEURL: "http://${AUTH_SERVICE_NAME}:${AUTH_HTTP_PORT}"
+      # OTel → Alloy.
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://${ALLOY_NAME}:${OTLP_HTTP_PORT}/v1/traces"
+      OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "http://${ALLOY_NAME}:${OTLP_HTTP_PORT}/v1/logs"
+      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://${ALLOY_NAME}:${OTLP_HTTP_PORT}/v1/metrics"
+    volumes:
+      - ./D2.sln:/src/D2.sln:ro
+      - ./Directory.Build.props:/src/Directory.Build.props:ro
+      - ./.editorconfig:/src/.editorconfig:ro
+      - ./stylecop.json:/src/stylecop.json:ro
+      - ./backends/dotnet:/src/backends/dotnet
+      - ./contracts:/src/contracts
+    networks: [d2-network]
+    depends_on:
+      d2-redis:
+        condition: service_healthy
+      d2-auth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:${SIGNALR_HTTP_PORT}/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 15
@@ -712,6 +867,7 @@ services:
       - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml:ro
       - ./.npmrc:/app/.npmrc:ro
       - ./backends/node:/app/backends/node
+      - ./contracts:/app/contracts:ro
       - ./clients/web/package.json:/app/clients/web/package.json:ro
       - d2-node-modules:/app/node_modules
     networks: [d2-network]
@@ -741,7 +897,11 @@ services:
       SVELTEKIT_AUTH__URL: "http://${AUTH_SERVICE_NAME}:${AUTH_HTTP_PORT}"
       SVELTEKIT_GATEWAY__URL: "http://${GATEWAY_SERVICE_NAME}:${GATEWAY_PORT}"
       GEO_GRPC_ADDRESS: "${GEO_SERVICE_NAME}:${GEO_PORT}"
-      REDIS_URL: "redis://:${CACHE_PASSWORD}@${REDIS_NAME}:${REDIS_PORT}"
+      REDIS_URL: "redis://:${CACHE_PASSWORD}@${REDIS_NAME}:6379"
+      # OTel → Alloy (inside Docker network).
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://${ALLOY_NAME}:${OTLP_HTTP_PORT}/v1/traces"
+      OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "http://${ALLOY_NAME}:${OTLP_HTTP_PORT}/v1/logs"
+      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://${ALLOY_NAME}:${OTLP_HTTP_PORT}/v1/metrics"
       # Browser-facing URLs (PUBLIC_GATEWAY_URL, PUBLIC_FARO_COLLECTOR_URL,
       # AUTH_BASE_URL, AUTH_EMAIL_BASE_URL) come from .env.local — they are
       # hit by the user's browser or used in email links, not by containers.

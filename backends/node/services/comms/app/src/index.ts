@@ -83,6 +83,8 @@ export type {
   IPingDbHandler,
 } from "./interfaces/repository/handlers/index.js";
 
+export { UPDATE_DELIVERY_ATTEMPT_STATUS_REDACTION } from "./interfaces/repository/handlers/index.js";
+
 // --- Complex Handlers ---
 export { Deliver } from "./implementations/cqrs/handlers/x/deliver.js";
 export type { DeliverInput, DeliverOutput } from "./interfaces/cqrs/handlers/x/deliver.js";
@@ -106,6 +108,13 @@ export type {
   SetChannelPreferenceInput,
   SetChannelPreferenceOutput,
 } from "./interfaces/cqrs/handlers/c/set-channel-preference.js";
+
+export { SetUserChannelPreference } from "./implementations/cqrs/handlers/c/set-user-channel-preference.js";
+export type {
+  SetUserChannelPreferenceInput,
+  SetUserChannelPreferenceOutput,
+  ISetUserChannelPreferenceHandler,
+} from "./interfaces/cqrs/handlers/c/set-user-channel-preference.js";
 
 // --- Job Handlers (Command) ---
 export { RunDeletedMessagePurge } from "./implementations/cqrs/handlers/c/run-deleted-message-purge.js";
@@ -136,6 +145,13 @@ export type {
   GetChannelPreferenceInput,
   GetChannelPreferenceOutput,
 } from "./interfaces/cqrs/handlers/q/get-channel-preference.js";
+
+export { GetUserChannelPreference } from "./implementations/cqrs/handlers/q/get-user-channel-preference.js";
+export type {
+  GetUserChannelPreferenceInput,
+  GetUserChannelPreferenceOutput,
+  IGetUserChannelPreferenceHandler,
+} from "./interfaces/cqrs/handlers/q/get-user-channel-preference.js";
 
 // ---------------------------------------------------------------------------
 // Factory Functions
@@ -235,7 +251,9 @@ export {
   IDeliverKey,
   IRecipientResolverKey,
   ISetChannelPreferenceKey,
+  ISetUserChannelPreferenceKey,
   IGetChannelPreferenceKey,
+  IGetUserChannelPreferenceKey,
   IPingDbKey,
   ICheckHealthKey,
   IPurgeDeletedMessagesKey,
@@ -243,5 +261,3 @@ export {
   IRunDeletedMessagePurgeKey,
   IRunDeliveryHistoryPurgeKey,
 } from "./service-keys.js";
-
-export { ICommsAcquireLockKey, ICommsReleaseLockKey } from "./registration.js";

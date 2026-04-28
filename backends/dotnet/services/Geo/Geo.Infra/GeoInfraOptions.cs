@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="GeoInfraOptions.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>

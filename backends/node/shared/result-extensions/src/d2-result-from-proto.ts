@@ -10,10 +10,12 @@ export function d2ResultFromProto<TData = void>(
   data?: TData,
 ): D2Result<TData> {
   return new D2Result<TData>({
-    success: proto.success,
+    success: proto.success ?? false,
     data,
-    messages: [...proto.messages],
-    inputErrors: proto.inputErrors.map((ie): InputError => [ie.field, ...ie.errors]),
+    messages: [...(proto.messages ?? [])],
+    inputErrors: (proto.inputErrors ?? []).map(
+      (ie): InputError => [ie.field ?? "", ...(ie.errors ?? [])],
+    ),
     statusCode: proto.statusCode as HttpStatusCode,
     errorCode: proto.errorCode || undefined,
     traceId: proto.traceId || undefined,

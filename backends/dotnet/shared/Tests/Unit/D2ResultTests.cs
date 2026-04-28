@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="D2ResultTests.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -148,6 +148,82 @@ public class D2ResultTests
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
         Assert.Equal(ErrorCodes.VALIDATION_FAILED, result.ErrorCode);
         Assert.Equal(trace_id, result.TraceId);
+    }
+
+    /// <summary>
+    /// Tests that ValidationFailed accepts an errorCode override for client-side discrimination.
+    /// </summary>
+    [Fact]
+    public void ValidationFailed_AcceptsErrorCodeOverride()
+    {
+        // Act
+        var result = D2Result.ValidationFailed(errorCode: "PHONE_NO_CHANGE");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+        Assert.Equal("PHONE_NO_CHANGE", result.ErrorCode);
+        Assert.Contains("common_errors_VALIDATION_FAILED", result.Messages);
+    }
+
+    /// <summary>
+    /// Tests that TooManyRequests creates a 429 result with the RATE_LIMITED code.
+    /// </summary>
+    [Fact]
+    public void TooManyRequests_CreatesRateLimitedResult()
+    {
+        // Act
+        var result = D2Result.TooManyRequests();
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal(HttpStatusCode.TooManyRequests, result.StatusCode);
+        Assert.Equal(ErrorCodes.RATE_LIMITED, result.ErrorCode);
+        Assert.Contains("common_errors_TOO_MANY_REQUESTS", result.Messages);
+    }
+
+    /// <summary>
+    /// Tests that TooManyRequests accepts an errorCode override (e.g. OTP_RATE_LIMITED).
+    /// </summary>
+    [Fact]
+    public void TooManyRequests_AcceptsErrorCodeOverride()
+    {
+        // Act
+        var result = D2Result.TooManyRequests(errorCode: "OTP_RATE_LIMITED");
+
+        // Assert
+        Assert.Equal("OTP_RATE_LIMITED", result.ErrorCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, result.StatusCode);
+    }
+
+    /// <summary>
+    /// Tests that ServiceUnavailable creates a 503 result with the default SERVICE_UNAVAILABLE code.
+    /// </summary>
+    [Fact]
+    public void ServiceUnavailable_CreatesServiceUnavailableResult()
+    {
+        // Act
+        var result = D2Result.ServiceUnavailable();
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, result.StatusCode);
+        Assert.Equal(ErrorCodes.SERVICE_UNAVAILABLE, result.ErrorCode);
+        Assert.Contains("common_errors_SERVICE_UNAVAILABLE", result.Messages);
+    }
+
+    /// <summary>
+    /// Tests that ServiceUnavailable accepts an errorCode override for downstream discrimination.
+    /// </summary>
+    [Fact]
+    public void ServiceUnavailable_AcceptsErrorCodeOverride()
+    {
+        // Act
+        var result = D2Result.ServiceUnavailable(errorCode: "DELIVERY_FAILED");
+
+        // Assert
+        Assert.Equal("DELIVERY_FAILED", result.ErrorCode);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, result.StatusCode);
     }
 
     /// <summary>

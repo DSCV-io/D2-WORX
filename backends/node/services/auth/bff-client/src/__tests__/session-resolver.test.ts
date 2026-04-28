@@ -49,7 +49,7 @@ const validSessionResponse = {
     name: "Test User",
     username: "testuser",
     displayUsername: "TestUser",
-    image: null,
+    image: undefined,
   },
 };
 
@@ -85,7 +85,7 @@ describe("SessionResolver", () => {
       name: "Test User",
       username: "testuser",
       displayUsername: "TestUser",
-      image: null,
+      image: undefined,
     });
   });
 
@@ -208,9 +208,9 @@ describe("SessionResolver", () => {
       id: "user-2",
       email: "minimal@example.com",
       name: "Minimal User",
-      username: "",
-      displayUsername: "",
-      image: null,
+      username: undefined,
+      displayUsername: undefined,
+      image: undefined,
     });
   });
 

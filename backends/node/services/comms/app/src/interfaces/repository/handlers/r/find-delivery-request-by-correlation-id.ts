@@ -6,7 +6,7 @@ export interface FindDeliveryRequestByCorrelationIdInput {
 }
 
 export interface FindDeliveryRequestByCorrelationIdOutput {
-  readonly request: DeliveryRequest | null;
+  readonly request?: DeliveryRequest;
 }
 
 export type IFindDeliveryRequestByCorrelationIdHandler = IHandler<

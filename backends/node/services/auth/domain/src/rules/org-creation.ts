@@ -9,10 +9,7 @@ import type { OrgType } from "../enums/org-type.js";
  * - `third_party`: Only users in a `customer` org
  * - `admin`, `support`, `affiliate`: Only users in an `admin` org
  */
-export function canCreateOrgType(
-  targetType: OrgType,
-  creatorActiveOrgType?: OrgType | null,
-): boolean {
+export function canCreateOrgType(targetType: OrgType, creatorActiveOrgType?: OrgType): boolean {
   switch (targetType) {
     case "customer":
       return true;

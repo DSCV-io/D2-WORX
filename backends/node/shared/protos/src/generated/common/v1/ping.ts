@@ -22,12 +22,12 @@ import {
 export const protobufPackage = "d2.common.v1";
 
 export interface PingRequest {
-  message: string;
+  message?: string | undefined;
 }
 
 export interface PingResponse {
-  message: string;
-  timestamp: string;
+  message?: string | undefined;
+  timestamp?: string | undefined;
 }
 
 function createBasePingRequest(): PingRequest {
@@ -36,7 +36,7 @@ function createBasePingRequest(): PingRequest {
 
 export const PingRequest: MessageFns<PingRequest> = {
   encode(message: PingRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.message !== "") {
+    if (message.message !== undefined && message.message !== "") {
       writer.uint32(10).string(message.message);
     }
     return writer;
@@ -72,7 +72,7 @@ export const PingRequest: MessageFns<PingRequest> = {
 
   toJSON(message: PingRequest): unknown {
     const obj: any = {};
-    if (message.message !== "") {
+    if (message.message !== undefined && message.message !== "") {
       obj.message = message.message;
     }
     return obj;
@@ -94,10 +94,10 @@ function createBasePingResponse(): PingResponse {
 
 export const PingResponse: MessageFns<PingResponse> = {
   encode(message: PingResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.message !== "") {
+    if (message.message !== undefined && message.message !== "") {
       writer.uint32(10).string(message.message);
     }
-    if (message.timestamp !== "0") {
+    if (message.timestamp !== undefined && message.timestamp !== "0") {
       writer.uint32(16).int64(message.timestamp);
     }
     return writer;
@@ -144,10 +144,10 @@ export const PingResponse: MessageFns<PingResponse> = {
 
   toJSON(message: PingResponse): unknown {
     const obj: any = {};
-    if (message.message !== "") {
+    if (message.message !== undefined && message.message !== "") {
       obj.message = message.message;
     }
-    if (message.timestamp !== "0") {
+    if (message.timestamp !== undefined && message.timestamp !== "0") {
       obj.timestamp = message.timestamp;
     }
     return obj;

@@ -28,152 +28,173 @@ export interface RequestReferenceDataUpdateRequest {
 }
 
 export interface RequestReferenceDataUpdateResponse {
-  result: D2ResultProto | undefined;
-  data: RequestReferenceDataUpdateData | undefined;
+  result?: D2ResultProto | undefined;
+  data?: RequestReferenceDataUpdateData | undefined;
 }
 
 export interface RequestReferenceDataUpdateData {
-  version: string;
+  version?: string | undefined;
 }
 
 export interface GetReferenceDataRequest {
 }
 
 export interface GetReferenceDataResponse {
-  result: D2ResultProto | undefined;
-  data: GeoRefData | undefined;
+  result?: D2ResultProto | undefined;
+  data?: GeoRefData | undefined;
 }
 
 export interface GeoRefData {
   /** Semantic version of the reference data. */
-  version: string;
+  version?:
+    | string
+    | undefined;
   /** Timestamp of the last update. */
-  updatedAt:
+  updatedAt?:
     | Date
     | undefined;
   /** Key is iso_3166_1_alpha_2_code. */
-  countries: { [key: string]: CountryDTO };
+  countries?:
+    | { [key: string]: CountryDTO }
+    | undefined;
   /** Key is iso_3166_2_code. */
-  subdivisions: { [key: string]: SubdivisionDTO };
+  subdivisions?:
+    | { [key: string]: SubdivisionDTO }
+    | undefined;
   /** Key is iso_4217_alpha_code. */
-  currencies: { [key: string]: CurrencyDTO };
+  currencies?:
+    | { [key: string]: CurrencyDTO }
+    | undefined;
   /** Key is iso_639_1_code. */
-  languages: { [key: string]: LanguageDTO };
+  languages?:
+    | { [key: string]: LanguageDTO }
+    | undefined;
   /** Key is ietf_bcp_47_tag. */
-  locales: { [key: string]: LocaleDTO };
+  locales?:
+    | { [key: string]: LocaleDTO }
+    | undefined;
   /** Key is short_code. */
-  geopoliticalEntities: { [key: string]: GeopoliticalEntityDTO };
+  geopoliticalEntities?:
+    | { [key: string]: GeopoliticalEntityDTO }
+    | undefined;
+  /** Key is iana_identifier. */
+  timezones?: { [key: string]: TimezoneDTO } | undefined;
 }
 
 export interface GeoRefData_CountriesEntry {
   key: string;
-  value: CountryDTO | undefined;
+  value?: CountryDTO | undefined;
 }
 
 export interface GeoRefData_SubdivisionsEntry {
   key: string;
-  value: SubdivisionDTO | undefined;
+  value?: SubdivisionDTO | undefined;
 }
 
 export interface GeoRefData_CurrenciesEntry {
   key: string;
-  value: CurrencyDTO | undefined;
+  value?: CurrencyDTO | undefined;
 }
 
 export interface GeoRefData_LanguagesEntry {
   key: string;
-  value: LanguageDTO | undefined;
+  value?: LanguageDTO | undefined;
 }
 
 export interface GeoRefData_LocalesEntry {
   key: string;
-  value: LocaleDTO | undefined;
+  value?: LocaleDTO | undefined;
 }
 
 export interface GeoRefData_GeopoliticalEntitiesEntry {
   key: string;
-  value: GeopoliticalEntityDTO | undefined;
+  value?: GeopoliticalEntityDTO | undefined;
+}
+
+export interface GeoRefData_TimezonesEntry {
+  key: string;
+  value?: TimezoneDTO | undefined;
 }
 
 export interface FindWhoIsRequest {
-  requests: FindWhoIsKeys[];
+  requests?: FindWhoIsKeys[] | undefined;
 }
 
 export interface FindWhoIsKeys {
-  ipAddress: string;
+  ipAddress?: string | undefined;
 }
 
 export interface FindWhoIsResponse {
-  result: D2ResultProto | undefined;
-  data: FindWhoIsData[];
+  result?: D2ResultProto | undefined;
+  data?: FindWhoIsData[] | undefined;
 }
 
 export interface FindWhoIsData {
-  key: FindWhoIsKeys | undefined;
-  whois: WhoIsDTO | undefined;
+  key?: FindWhoIsKeys | undefined;
+  whois?: WhoIsDTO | undefined;
 }
 
 export interface GetContactsRequest {
-  ids: string[];
+  ids?: string[] | undefined;
 }
 
 export interface GetContactsResponse {
-  result:
+  result?:
     | D2ResultProto
     | undefined;
   /** Key is id. */
-  data: { [key: string]: ContactDTO };
+  data?: { [key: string]: ContactDTO } | undefined;
 }
 
 export interface GetContactsResponse_DataEntry {
   key: string;
-  value: ContactDTO | undefined;
+  value?: ContactDTO | undefined;
 }
 
 export interface GetContactsByExtKeysRequest {
-  keys: GetContactsExtKeys[];
+  keys?: GetContactsExtKeys[] | undefined;
 }
 
 export interface GetContactsExtKeys {
-  contextKey: string;
-  relatedEntityId: string;
+  contextKey?: string | undefined;
+  relatedEntityId?: string | undefined;
 }
 
 export interface GetContactsByExtKeysResponse {
-  result: D2ResultProto | undefined;
-  data: GetContactsByExtKeysData[];
+  result?: D2ResultProto | undefined;
+  data?: GetContactsByExtKeysData[] | undefined;
 }
 
 export interface GetContactsByExtKeysData {
-  key: GetContactsExtKeys | undefined;
-  contacts: ContactDTO[];
+  key?: GetContactsExtKeys | undefined;
+  contacts?: ContactDTO[] | undefined;
 }
 
 export interface CreateContactsRequest {
-  contactsToCreate: ContactToCreateDTO[];
+  contactsToCreate?: ContactToCreateDTO[] | undefined;
 }
 
 export interface CreateContactsResponse {
-  result: D2ResultProto | undefined;
-  data: ContactDTO[];
+  result?: D2ResultProto | undefined;
+  data?: ContactDTO[] | undefined;
 }
 
 export interface DeleteContactsRequest {
-  ids: string[];
+  ids?: string[] | undefined;
 }
 
 export interface DeleteContactsResponse {
-  result: D2ResultProto | undefined;
-  deleted: number;
+  result?: D2ResultProto | undefined;
+  deleted?: number | undefined;
 }
 
 export interface DeleteContactsByExtKeysRequest {
-  keys: GetContactsExtKeys[];
+  keys?: GetContactsExtKeys[] | undefined;
 }
 
 export interface DeleteContactsByExtKeysResponse {
-  result: D2ResultProto | undefined;
-  deleted: number;
+  result?: D2ResultProto | undefined;
+  deleted?: number | undefined;
 }
 
 /**
@@ -181,229 +202,302 @@ export interface DeleteContactsByExtKeysResponse {
  * Uses the same ContactToCreateDTO shape (which already contains context_key + related_entity_id).
  */
 export interface UpdateContactsByExtKeysRequest {
-  contacts: ContactToCreateDTO[];
+  contacts?: ContactToCreateDTO[] | undefined;
 }
 
 export interface UpdateContactsByExtKeysResponse {
-  result: D2ResultProto | undefined;
-  replacements: ContactReplacement[];
+  result?: D2ResultProto | undefined;
+  replacements?: ContactReplacement[] | undefined;
 }
 
 /** Rich key identifying which old contact was replaced, with full ext-key context. */
 export interface ContactReplacementKey {
-  contextKey: string;
-  relatedEntityId: string;
-  oldContactId: string;
+  contextKey?: string | undefined;
+  relatedEntityId?: string | undefined;
+  oldContactId?: string | undefined;
 }
 
 /** One entry per old contact that was replaced. */
 export interface ContactReplacement {
-  key: ContactReplacementKey | undefined;
-  newContact: ContactDTO | undefined;
+  key?: ContactReplacementKey | undefined;
+  newContact?: ContactDTO | undefined;
 }
 
 export interface ContactToCreateDTO {
-  createdAt: Date | undefined;
-  contextKey: string;
-  relatedEntityId: string;
-  contactMethods: ContactMethodsDTO | undefined;
-  personalDetails: PersonalDTO | undefined;
-  professionalDetails:
+  createdAt?: Date | undefined;
+  contextKey?: string | undefined;
+  relatedEntityId?: string | undefined;
+  contactMethods?: ContactMethodsDTO | undefined;
+  personalDetails?: PersonalDTO | undefined;
+  professionalDetails?:
     | ProfessionalDTO
     | undefined;
   /** Full location data or just hash_id to reference existing. */
-  location:
+  location?:
     | LocationDTO
     | undefined;
   /** IETF BCP 47 locale tag (e.g. "en-US", "fr-CA"). Synced from User.locale. */
-  ietfBcp47Tag: string;
+  ietfBcp47Tag?:
+    | string
+    | undefined;
+  /** IANA timezone identifier (e.g. "America/New_York"). Synced from User.timezone. */
+  ianaIdentifier?: string | undefined;
 }
 
 export interface CountryDTO {
   /** Primary key. */
-  iso31661Alpha2Code: string;
+  iso31661Alpha2Code?:
+    | string
+    | undefined;
   /** Unique keys. */
-  iso31661Alpha3Code: string;
-  iso31661NumericCode: string;
+  iso31661Alpha3Code?: string | undefined;
+  iso31661NumericCode?:
+    | string
+    | undefined;
   /** Properties. */
-  displayName: string;
-  officialName: string;
-  phoneNumberPrefix: string;
-  phoneNumberFormat: string;
+  displayName?: string | undefined;
+  officialName?: string | undefined;
+  phoneNumberPrefix?: string | undefined;
+  phoneNumberFormat?:
+    | string
+    | undefined;
   /** Foreign keys. */
-  sovereignIso31661Alpha2Code: string;
-  primaryCurrencyIso4217AlphaCode: string;
-  primaryLocaleIetfBcp47Tag: string;
+  sovereignIso31661Alpha2Code?: string | undefined;
+  primaryCurrencyIso4217AlphaCode?: string | undefined;
+  primaryLocaleIetfBcp47Tag?:
+    | string
+    | undefined;
   /** Navigation properties as lists of identifiers. */
-  territoryIso31661Alpha2Codes: string[];
+  territoryIso31661Alpha2Codes?:
+    | string[]
+    | undefined;
   /** One-to-many. */
-  subdivisionIso31662Codes: string[];
+  subdivisionIso31662Codes?:
+    | string[]
+    | undefined;
   /** Many-to-many. */
-  currencyIso4217AlphaCodes: string[];
+  currencyIso4217AlphaCodes?:
+    | string[]
+    | undefined;
   /** One-to-many. */
-  localeIetfBcp47Tags: string[];
+  localeIetfBcp47Tags?:
+    | string[]
+    | undefined;
   /** Many-to-many. */
-  geopoliticalEntityShortCodes: string[];
+  geopoliticalEntityShortCodes?: string[] | undefined;
 }
 
 export interface SubdivisionDTO {
   /** Primary key. */
-  iso31662Code: string;
+  iso31662Code?:
+    | string
+    | undefined;
   /** Properties. */
-  shortCode: string;
-  displayName: string;
-  officialName: string;
+  shortCode?: string | undefined;
+  displayName?: string | undefined;
+  officialName?:
+    | string
+    | undefined;
   /** Foreign keys. */
-  countryIso31661Alpha2Code: string;
+  countryIso31661Alpha2Code?: string | undefined;
 }
 
 export interface CurrencyDTO {
   /** Primary key. */
-  iso4217AlphaCode: string;
+  iso4217AlphaCode?:
+    | string
+    | undefined;
   /** Unique keys. */
-  iso4217NumericCode: string;
+  iso4217NumericCode?:
+    | string
+    | undefined;
   /** Properties. */
-  displayName: string;
-  officialName: string;
-  decimalPlaces: number;
-  symbol: string;
+  displayName?: string | undefined;
+  officialName?: string | undefined;
+  decimalPlaces?: number | undefined;
+  symbol?:
+    | string
+    | undefined;
   /** Navigation properties as lists of identifiers. */
-  countryIso31661Alpha2Codes: string[];
+  countryIso31661Alpha2Codes?: string[] | undefined;
 }
 
 export interface LanguageDTO {
   /** Primary key. */
-  iso6391Code: string;
+  iso6391Code?:
+    | string
+    | undefined;
   /** Properties. */
-  name: string;
-  endonym: string;
+  name?: string | undefined;
+  endonym?: string | undefined;
 }
 
 export interface LocaleDTO {
   /** Primary key. */
-  ietfBcp47Tag: string;
+  ietfBcp47Tag?:
+    | string
+    | undefined;
   /** Properties. */
-  name: string;
-  endonym: string;
+  name?: string | undefined;
+  endonym?:
+    | string
+    | undefined;
   /** Foreign keys. */
-  languageIso6391Code: string;
-  countryIso31661Alpha2Code: string;
+  languageIso6391Code?: string | undefined;
+  countryIso31661Alpha2Code?: string | undefined;
+}
+
+export interface TimezoneDTO {
+  /** Primary key. */
+  ianaIdentifier?:
+    | string
+    | undefined;
+  /** Properties. */
+  displayName?: string | undefined;
+  utcOffsetStd?: string | undefined;
+  utcOffsetDst?: string | undefined;
+  abbreviationStd?: string | undefined;
+  abbreviationDst?:
+    | string
+    | undefined;
+  /** Foreign keys. */
+  countryIso31661Alpha2Code?: string | undefined;
 }
 
 export interface GeopoliticalEntityDTO {
   /** Primary key. */
-  shortCode: string;
+  shortCode?:
+    | string
+    | undefined;
   /** Properties. */
-  name: string;
-  type: string;
+  name?: string | undefined;
+  type?:
+    | string
+    | undefined;
   /** Navigation properties as lists of identifiers. */
-  countryIso31661Alpha2Codes: string[];
+  countryIso31661Alpha2Codes?: string[] | undefined;
 }
 
 export interface CoordinatesDTO {
-  latitude: number;
-  longitude: number;
+  latitude?: number | undefined;
+  longitude?: number | undefined;
 }
 
 export interface StreetAddressDTO {
-  line1: string;
-  line2: string;
-  line3: string;
+  line1?: string | undefined;
+  line2?: string | undefined;
+  line3?: string | undefined;
 }
 
 export interface EmailAddressDTO {
-  value: string;
-  labels: string[];
+  value?: string | undefined;
+  labels?: string[] | undefined;
 }
 
 export interface PhoneNumberDTO {
-  value: string;
-  labels: string[];
+  value?: string | undefined;
+  labels?: string[] | undefined;
 }
 
 export interface PersonalDTO {
-  title: string;
-  firstName: string;
-  preferredName: string;
-  middleName: string;
-  lastName: string;
-  generationalSuffix: string;
-  professionalCredentials: string[];
-  dateOfBirth: string;
-  biologicalSex: string;
+  title?: string | undefined;
+  firstName?: string | undefined;
+  preferredName?: string | undefined;
+  middleName?: string | undefined;
+  lastName?: string | undefined;
+  generationalSuffix?: string | undefined;
+  professionalCredentials?: string[] | undefined;
+  dateOfBirth?: string | undefined;
+  biologicalSex?: string | undefined;
 }
 
 export interface ProfessionalDTO {
-  companyName: string;
-  jobTitle: string;
-  department: string;
-  companyWebsite: string;
+  companyName?: string | undefined;
+  jobTitle?: string | undefined;
+  department?: string | undefined;
+  companyWebsite?: string | undefined;
 }
 
 export interface ContactMethodsDTO {
-  emails: EmailAddressDTO[];
-  phoneNumbers: PhoneNumberDTO[];
+  emails?: EmailAddressDTO[] | undefined;
+  phoneNumbers?: PhoneNumberDTO[] | undefined;
 }
 
 export interface LocationDTO {
-  hashId: string;
-  coordinates: CoordinatesDTO | undefined;
-  address: StreetAddressDTO | undefined;
-  city: string;
-  postalCode: string;
-  subdivisionIso31662Code: string;
-  countryIso31661Alpha2Code: string;
+  hashId?: string | undefined;
+  coordinates?: CoordinatesDTO | undefined;
+  address?: StreetAddressDTO | undefined;
+  city?: string | undefined;
+  postalCode?: string | undefined;
+  subdivisionIso31662Code?: string | undefined;
+  countryIso31661Alpha2Code?: string | undefined;
 }
 
 export interface WhoIsDTO {
-  hashId: string;
+  hashId?:
+    | string
+    | undefined;
   /** Content-addressable properties. */
-  ipAddress: string;
-  year: number;
-  month: number;
+  ipAddress?: string | undefined;
+  year?: number | undefined;
+  month?:
+    | number
+    | undefined;
   /** ASN properties. */
-  asn: number;
-  asName: string;
-  asDomain: string;
-  asType: string;
+  asn?: number | undefined;
+  asName?: string | undefined;
+  asDomain?: string | undefined;
+  asType?:
+    | string
+    | undefined;
   /** Carrier properties. */
-  carrierName: string;
-  mcc: string;
-  mnc: string;
+  carrierName?: string | undefined;
+  mcc?: string | undefined;
+  mnc?:
+    | string
+    | undefined;
   /** Change dates (ISO 8601 date strings). */
-  asChanged: string;
-  geoChanged: string;
+  asChanged?: string | undefined;
+  geoChanged?:
+    | string
+    | undefined;
   /** Network flags. */
-  isAnonymous: boolean;
-  isAnycast: boolean;
-  isHosting: boolean;
-  isMobile: boolean;
-  isSatellite: boolean;
-  isProxy: boolean;
-  isRelay: boolean;
-  isTor: boolean;
-  isVpn: boolean;
-  privacyName: string;
+  isAnonymous?: boolean | undefined;
+  isAnycast?: boolean | undefined;
+  isHosting?: boolean | undefined;
+  isMobile?: boolean | undefined;
+  isSatellite?: boolean | undefined;
+  isProxy?: boolean | undefined;
+  isRelay?: boolean | undefined;
+  isTor?: boolean | undefined;
+  isVpn?: boolean | undefined;
+  privacyName?:
+    | string
+    | undefined;
   /** Location data. */
-  location: LocationDTO | undefined;
+  location?: LocationDTO | undefined;
 }
 
 export interface ContactDTO {
-  id: string;
-  createdAt: Date | undefined;
-  contextKey: string;
-  relatedEntityId: string;
-  contactMethods: ContactMethodsDTO | undefined;
-  personalDetails: PersonalDTO | undefined;
-  professionalDetails:
+  id?: string | undefined;
+  createdAt?: Date | undefined;
+  contextKey?: string | undefined;
+  relatedEntityId?: string | undefined;
+  contactMethods?: ContactMethodsDTO | undefined;
+  personalDetails?: PersonalDTO | undefined;
+  professionalDetails?:
     | ProfessionalDTO
     | undefined;
   /** Full location data (null if no location). */
-  location:
+  location?:
     | LocationDTO
     | undefined;
   /** IETF BCP 47 locale tag (e.g. "en-US", "fr-CA"). Synced from User.locale. */
-  ietfBcp47Tag: string;
+  ietfBcp47Tag?:
+    | string
+    | undefined;
+  /** IANA timezone identifier (e.g. "America/New_York"). Synced from User.timezone. */
+  ianaIdentifier?: string | undefined;
 }
 
 function createBaseRequestReferenceDataUpdateRequest(): RequestReferenceDataUpdateRequest {
@@ -543,7 +637,7 @@ function createBaseRequestReferenceDataUpdateData(): RequestReferenceDataUpdateD
 
 export const RequestReferenceDataUpdateData: MessageFns<RequestReferenceDataUpdateData> = {
   encode(message: RequestReferenceDataUpdateData, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.version !== "") {
+    if (message.version !== undefined && message.version !== "") {
       writer.uint32(10).string(message.version);
     }
     return writer;
@@ -579,7 +673,7 @@ export const RequestReferenceDataUpdateData: MessageFns<RequestReferenceDataUpda
 
   toJSON(message: RequestReferenceDataUpdateData): unknown {
     const obj: any = {};
-    if (message.version !== "") {
+    if (message.version !== undefined && message.version !== "") {
       obj.version = message.version;
     }
     return obj;
@@ -730,34 +824,40 @@ function createBaseGeoRefData(): GeoRefData {
     languages: {},
     locales: {},
     geopoliticalEntities: {},
+    timezones: {},
   };
 }
 
 export const GeoRefData: MessageFns<GeoRefData> = {
   encode(message: GeoRefData, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.version !== "") {
+    if (message.version !== undefined && message.version !== "") {
       writer.uint32(10).string(message.version);
     }
     if (message.updatedAt !== undefined) {
       Timestamp.encode(toTimestamp(message.updatedAt), writer.uint32(18).fork()).join();
     }
-    globalThis.Object.entries(message.countries).forEach(([key, value]: [string, CountryDTO]) => {
+    globalThis.Object.entries(message.countries || {}).forEach(([key, value]: [string, CountryDTO]) => {
       GeoRefData_CountriesEntry.encode({ key: key as any, value }, writer.uint32(26).fork()).join();
     });
-    globalThis.Object.entries(message.subdivisions).forEach(([key, value]: [string, SubdivisionDTO]) => {
+    globalThis.Object.entries(message.subdivisions || {}).forEach(([key, value]: [string, SubdivisionDTO]) => {
       GeoRefData_SubdivisionsEntry.encode({ key: key as any, value }, writer.uint32(34).fork()).join();
     });
-    globalThis.Object.entries(message.currencies).forEach(([key, value]: [string, CurrencyDTO]) => {
+    globalThis.Object.entries(message.currencies || {}).forEach(([key, value]: [string, CurrencyDTO]) => {
       GeoRefData_CurrenciesEntry.encode({ key: key as any, value }, writer.uint32(42).fork()).join();
     });
-    globalThis.Object.entries(message.languages).forEach(([key, value]: [string, LanguageDTO]) => {
+    globalThis.Object.entries(message.languages || {}).forEach(([key, value]: [string, LanguageDTO]) => {
       GeoRefData_LanguagesEntry.encode({ key: key as any, value }, writer.uint32(50).fork()).join();
     });
-    globalThis.Object.entries(message.locales).forEach(([key, value]: [string, LocaleDTO]) => {
+    globalThis.Object.entries(message.locales || {}).forEach(([key, value]: [string, LocaleDTO]) => {
       GeoRefData_LocalesEntry.encode({ key: key as any, value }, writer.uint32(58).fork()).join();
     });
-    globalThis.Object.entries(message.geopoliticalEntities).forEach(([key, value]: [string, GeopoliticalEntityDTO]) => {
-      GeoRefData_GeopoliticalEntitiesEntry.encode({ key: key as any, value }, writer.uint32(66).fork()).join();
+    globalThis.Object.entries(message.geopoliticalEntities || {}).forEach(
+      ([key, value]: [string, GeopoliticalEntityDTO]) => {
+        GeoRefData_GeopoliticalEntitiesEntry.encode({ key: key as any, value }, writer.uint32(66).fork()).join();
+      },
+    );
+    globalThis.Object.entries(message.timezones || {}).forEach(([key, value]: [string, TimezoneDTO]) => {
+      GeoRefData_TimezonesEntry.encode({ key: key as any, value }, writer.uint32(74).fork()).join();
     });
     return writer;
   },
@@ -792,7 +892,7 @@ export const GeoRefData: MessageFns<GeoRefData> = {
 
           const entry3 = GeoRefData_CountriesEntry.decode(reader, reader.uint32());
           if (entry3.value !== undefined) {
-            message.countries[entry3.key] = entry3.value;
+            message.countries![entry3.key] = entry3.value;
           }
           continue;
         }
@@ -803,7 +903,7 @@ export const GeoRefData: MessageFns<GeoRefData> = {
 
           const entry4 = GeoRefData_SubdivisionsEntry.decode(reader, reader.uint32());
           if (entry4.value !== undefined) {
-            message.subdivisions[entry4.key] = entry4.value;
+            message.subdivisions![entry4.key] = entry4.value;
           }
           continue;
         }
@@ -814,7 +914,7 @@ export const GeoRefData: MessageFns<GeoRefData> = {
 
           const entry5 = GeoRefData_CurrenciesEntry.decode(reader, reader.uint32());
           if (entry5.value !== undefined) {
-            message.currencies[entry5.key] = entry5.value;
+            message.currencies![entry5.key] = entry5.value;
           }
           continue;
         }
@@ -825,7 +925,7 @@ export const GeoRefData: MessageFns<GeoRefData> = {
 
           const entry6 = GeoRefData_LanguagesEntry.decode(reader, reader.uint32());
           if (entry6.value !== undefined) {
-            message.languages[entry6.key] = entry6.value;
+            message.languages![entry6.key] = entry6.value;
           }
           continue;
         }
@@ -836,7 +936,7 @@ export const GeoRefData: MessageFns<GeoRefData> = {
 
           const entry7 = GeoRefData_LocalesEntry.decode(reader, reader.uint32());
           if (entry7.value !== undefined) {
-            message.locales[entry7.key] = entry7.value;
+            message.locales![entry7.key] = entry7.value;
           }
           continue;
         }
@@ -847,7 +947,18 @@ export const GeoRefData: MessageFns<GeoRefData> = {
 
           const entry8 = GeoRefData_GeopoliticalEntitiesEntry.decode(reader, reader.uint32());
           if (entry8.value !== undefined) {
-            message.geopoliticalEntities[entry8.key] = entry8.value;
+            message.geopoliticalEntities![entry8.key] = entry8.value;
+          }
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          const entry9 = GeoRefData_TimezonesEntry.decode(reader, reader.uint32());
+          if (entry9.value !== undefined) {
+            message.timezones![entry9.key] = entry9.value;
           }
           continue;
         }
@@ -930,12 +1041,21 @@ export const GeoRefData: MessageFns<GeoRefData> = {
           {},
         )
         : {},
+      timezones: isObject(object.timezones)
+        ? (globalThis.Object.entries(object.timezones) as [string, any][]).reduce(
+          (acc: { [key: string]: TimezoneDTO }, [key, value]: [string, any]) => {
+            acc[key] = TimezoneDTO.fromJSON(value);
+            return acc;
+          },
+          {},
+        )
+        : {},
     };
   },
 
   toJSON(message: GeoRefData): unknown {
     const obj: any = {};
-    if (message.version !== "") {
+    if (message.version !== undefined && message.version !== "") {
       obj.version = message.version;
     }
     if (message.updatedAt !== undefined) {
@@ -992,6 +1112,15 @@ export const GeoRefData: MessageFns<GeoRefData> = {
         obj.geopoliticalEntities = {};
         entries.forEach(([k, v]) => {
           obj.geopoliticalEntities[k] = GeopoliticalEntityDTO.toJSON(v);
+        });
+      }
+    }
+    if (message.timezones) {
+      const entries = globalThis.Object.entries(message.timezones) as [string, TimezoneDTO][];
+      if (entries.length > 0) {
+        obj.timezones = {};
+        entries.forEach(([k, v]) => {
+          obj.timezones[k] = TimezoneDTO.toJSON(v);
         });
       }
     }
@@ -1060,6 +1189,15 @@ export const GeoRefData: MessageFns<GeoRefData> = {
         },
         {},
       );
+    message.timezones = (globalThis.Object.entries(object.timezones ?? {}) as [string, TimezoneDTO][]).reduce(
+      (acc: { [key: string]: TimezoneDTO }, [key, value]: [string, TimezoneDTO]) => {
+        if (value !== undefined) {
+          acc[key] = TimezoneDTO.fromPartial(value);
+        }
+        return acc;
+      },
+      {},
+    );
     return message;
   },
 };
@@ -1536,14 +1674,94 @@ export const GeoRefData_GeopoliticalEntitiesEntry: MessageFns<GeoRefData_Geopoli
   },
 };
 
+function createBaseGeoRefData_TimezonesEntry(): GeoRefData_TimezonesEntry {
+  return { key: "", value: undefined };
+}
+
+export const GeoRefData_TimezonesEntry: MessageFns<GeoRefData_TimezonesEntry> = {
+  encode(message: GeoRefData_TimezonesEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== undefined) {
+      TimezoneDTO.encode(message.value, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GeoRefData_TimezonesEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGeoRefData_TimezonesEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = TimezoneDTO.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GeoRefData_TimezonesEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? TimezoneDTO.fromJSON(object.value) : undefined,
+    };
+  },
+
+  toJSON(message: GeoRefData_TimezonesEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== undefined) {
+      obj.value = TimezoneDTO.toJSON(message.value);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GeoRefData_TimezonesEntry>, I>>(base?: I): GeoRefData_TimezonesEntry {
+    return GeoRefData_TimezonesEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GeoRefData_TimezonesEntry>, I>>(object: I): GeoRefData_TimezonesEntry {
+    const message = createBaseGeoRefData_TimezonesEntry();
+    message.key = object.key ?? "";
+    message.value = (object.value !== undefined && object.value !== null)
+      ? TimezoneDTO.fromPartial(object.value)
+      : undefined;
+    return message;
+  },
+};
+
 function createBaseFindWhoIsRequest(): FindWhoIsRequest {
   return { requests: [] };
 }
 
 export const FindWhoIsRequest: MessageFns<FindWhoIsRequest> = {
   encode(message: FindWhoIsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.requests) {
-      FindWhoIsKeys.encode(v!, writer.uint32(10).fork()).join();
+    if (message.requests !== undefined && message.requests.length !== 0) {
+      for (const v of message.requests) {
+        FindWhoIsKeys.encode(v!, writer.uint32(10).fork()).join();
+      }
     }
     return writer;
   },
@@ -1560,7 +1778,10 @@ export const FindWhoIsRequest: MessageFns<FindWhoIsRequest> = {
             break;
           }
 
-          message.requests.push(FindWhoIsKeys.decode(reader, reader.uint32()));
+          const el = FindWhoIsKeys.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.requests!.push(el);
+          }
           continue;
         }
       }
@@ -1604,7 +1825,7 @@ function createBaseFindWhoIsKeys(): FindWhoIsKeys {
 
 export const FindWhoIsKeys: MessageFns<FindWhoIsKeys> = {
   encode(message: FindWhoIsKeys, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.ipAddress !== "") {
+    if (message.ipAddress !== undefined && message.ipAddress !== "") {
       writer.uint32(10).string(message.ipAddress);
     }
     return writer;
@@ -1646,7 +1867,7 @@ export const FindWhoIsKeys: MessageFns<FindWhoIsKeys> = {
 
   toJSON(message: FindWhoIsKeys): unknown {
     const obj: any = {};
-    if (message.ipAddress !== "") {
+    if (message.ipAddress !== undefined && message.ipAddress !== "") {
       obj.ipAddress = message.ipAddress;
     }
     return obj;
@@ -1671,8 +1892,10 @@ export const FindWhoIsResponse: MessageFns<FindWhoIsResponse> = {
     if (message.result !== undefined) {
       D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
     }
-    for (const v of message.data) {
-      FindWhoIsData.encode(v!, writer.uint32(18).fork()).join();
+    if (message.data !== undefined && message.data.length !== 0) {
+      for (const v of message.data) {
+        FindWhoIsData.encode(v!, writer.uint32(18).fork()).join();
+      }
     }
     return writer;
   },
@@ -1697,7 +1920,10 @@ export const FindWhoIsResponse: MessageFns<FindWhoIsResponse> = {
             break;
           }
 
-          message.data.push(FindWhoIsData.decode(reader, reader.uint32()));
+          const el = FindWhoIsData.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.data!.push(el);
+          }
           continue;
         }
       }
@@ -1824,8 +2050,10 @@ function createBaseGetContactsRequest(): GetContactsRequest {
 
 export const GetContactsRequest: MessageFns<GetContactsRequest> = {
   encode(message: GetContactsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.ids) {
-      writer.uint32(10).string(v!);
+    if (message.ids !== undefined && message.ids.length !== 0) {
+      for (const v of message.ids) {
+        writer.uint32(10).string(v!);
+      }
     }
     return writer;
   },
@@ -1842,7 +2070,10 @@ export const GetContactsRequest: MessageFns<GetContactsRequest> = {
             break;
           }
 
-          message.ids.push(reader.string());
+          const el = reader.string();
+          if (el !== undefined) {
+            message.ids!.push(el);
+          }
           continue;
         }
       }
@@ -1885,7 +2116,7 @@ export const GetContactsResponse: MessageFns<GetContactsResponse> = {
     if (message.result !== undefined) {
       D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
     }
-    globalThis.Object.entries(message.data).forEach(([key, value]: [string, ContactDTO]) => {
+    globalThis.Object.entries(message.data || {}).forEach(([key, value]: [string, ContactDTO]) => {
       GetContactsResponse_DataEntry.encode({ key: key as any, value }, writer.uint32(18).fork()).join();
     });
     return writer;
@@ -1913,7 +2144,7 @@ export const GetContactsResponse: MessageFns<GetContactsResponse> = {
 
           const entry2 = GetContactsResponse_DataEntry.decode(reader, reader.uint32());
           if (entry2.value !== undefined) {
-            message.data[entry2.key] = entry2.value;
+            message.data![entry2.key] = entry2.value;
           }
           continue;
         }
@@ -2065,8 +2296,10 @@ function createBaseGetContactsByExtKeysRequest(): GetContactsByExtKeysRequest {
 
 export const GetContactsByExtKeysRequest: MessageFns<GetContactsByExtKeysRequest> = {
   encode(message: GetContactsByExtKeysRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.keys) {
-      GetContactsExtKeys.encode(v!, writer.uint32(10).fork()).join();
+    if (message.keys !== undefined && message.keys.length !== 0) {
+      for (const v of message.keys) {
+        GetContactsExtKeys.encode(v!, writer.uint32(10).fork()).join();
+      }
     }
     return writer;
   },
@@ -2083,7 +2316,10 @@ export const GetContactsByExtKeysRequest: MessageFns<GetContactsByExtKeysRequest
             break;
           }
 
-          message.keys.push(GetContactsExtKeys.decode(reader, reader.uint32()));
+          const el = GetContactsExtKeys.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.keys!.push(el);
+          }
           continue;
         }
       }
@@ -2125,10 +2361,10 @@ function createBaseGetContactsExtKeys(): GetContactsExtKeys {
 
 export const GetContactsExtKeys: MessageFns<GetContactsExtKeys> = {
   encode(message: GetContactsExtKeys, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.contextKey !== "") {
+    if (message.contextKey !== undefined && message.contextKey !== "") {
       writer.uint32(10).string(message.contextKey);
     }
-    if (message.relatedEntityId !== "") {
+    if (message.relatedEntityId !== undefined && message.relatedEntityId !== "") {
       writer.uint32(18).string(message.relatedEntityId);
     }
     return writer;
@@ -2183,10 +2419,10 @@ export const GetContactsExtKeys: MessageFns<GetContactsExtKeys> = {
 
   toJSON(message: GetContactsExtKeys): unknown {
     const obj: any = {};
-    if (message.contextKey !== "") {
+    if (message.contextKey !== undefined && message.contextKey !== "") {
       obj.contextKey = message.contextKey;
     }
-    if (message.relatedEntityId !== "") {
+    if (message.relatedEntityId !== undefined && message.relatedEntityId !== "") {
       obj.relatedEntityId = message.relatedEntityId;
     }
     return obj;
@@ -2212,8 +2448,10 @@ export const GetContactsByExtKeysResponse: MessageFns<GetContactsByExtKeysRespon
     if (message.result !== undefined) {
       D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
     }
-    for (const v of message.data) {
-      GetContactsByExtKeysData.encode(v!, writer.uint32(18).fork()).join();
+    if (message.data !== undefined && message.data.length !== 0) {
+      for (const v of message.data) {
+        GetContactsByExtKeysData.encode(v!, writer.uint32(18).fork()).join();
+      }
     }
     return writer;
   },
@@ -2238,7 +2476,10 @@ export const GetContactsByExtKeysResponse: MessageFns<GetContactsByExtKeysRespon
             break;
           }
 
-          message.data.push(GetContactsByExtKeysData.decode(reader, reader.uint32()));
+          const el = GetContactsByExtKeysData.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.data!.push(el);
+          }
           continue;
         }
       }
@@ -2292,8 +2533,10 @@ export const GetContactsByExtKeysData: MessageFns<GetContactsByExtKeysData> = {
     if (message.key !== undefined) {
       GetContactsExtKeys.encode(message.key, writer.uint32(10).fork()).join();
     }
-    for (const v of message.contacts) {
-      ContactDTO.encode(v!, writer.uint32(18).fork()).join();
+    if (message.contacts !== undefined && message.contacts.length !== 0) {
+      for (const v of message.contacts) {
+        ContactDTO.encode(v!, writer.uint32(18).fork()).join();
+      }
     }
     return writer;
   },
@@ -2318,7 +2561,10 @@ export const GetContactsByExtKeysData: MessageFns<GetContactsByExtKeysData> = {
             break;
           }
 
-          message.contacts.push(ContactDTO.decode(reader, reader.uint32()));
+          const el = ContactDTO.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.contacts!.push(el);
+          }
           continue;
         }
       }
@@ -2369,8 +2615,10 @@ function createBaseCreateContactsRequest(): CreateContactsRequest {
 
 export const CreateContactsRequest: MessageFns<CreateContactsRequest> = {
   encode(message: CreateContactsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.contactsToCreate) {
-      ContactToCreateDTO.encode(v!, writer.uint32(10).fork()).join();
+    if (message.contactsToCreate !== undefined && message.contactsToCreate.length !== 0) {
+      for (const v of message.contactsToCreate) {
+        ContactToCreateDTO.encode(v!, writer.uint32(10).fork()).join();
+      }
     }
     return writer;
   },
@@ -2387,7 +2635,10 @@ export const CreateContactsRequest: MessageFns<CreateContactsRequest> = {
             break;
           }
 
-          message.contactsToCreate.push(ContactToCreateDTO.decode(reader, reader.uint32()));
+          const el = ContactToCreateDTO.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.contactsToCreate!.push(el);
+          }
           continue;
         }
       }
@@ -2436,8 +2687,10 @@ export const CreateContactsResponse: MessageFns<CreateContactsResponse> = {
     if (message.result !== undefined) {
       D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
     }
-    for (const v of message.data) {
-      ContactDTO.encode(v!, writer.uint32(18).fork()).join();
+    if (message.data !== undefined && message.data.length !== 0) {
+      for (const v of message.data) {
+        ContactDTO.encode(v!, writer.uint32(18).fork()).join();
+      }
     }
     return writer;
   },
@@ -2462,7 +2715,10 @@ export const CreateContactsResponse: MessageFns<CreateContactsResponse> = {
             break;
           }
 
-          message.data.push(ContactDTO.decode(reader, reader.uint32()));
+          const el = ContactDTO.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.data!.push(el);
+          }
           continue;
         }
       }
@@ -2511,8 +2767,10 @@ function createBaseDeleteContactsRequest(): DeleteContactsRequest {
 
 export const DeleteContactsRequest: MessageFns<DeleteContactsRequest> = {
   encode(message: DeleteContactsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.ids) {
-      writer.uint32(10).string(v!);
+    if (message.ids !== undefined && message.ids.length !== 0) {
+      for (const v of message.ids) {
+        writer.uint32(10).string(v!);
+      }
     }
     return writer;
   },
@@ -2529,7 +2787,10 @@ export const DeleteContactsRequest: MessageFns<DeleteContactsRequest> = {
             break;
           }
 
-          message.ids.push(reader.string());
+          const el = reader.string();
+          if (el !== undefined) {
+            message.ids!.push(el);
+          }
           continue;
         }
       }
@@ -2572,7 +2833,7 @@ export const DeleteContactsResponse: MessageFns<DeleteContactsResponse> = {
     if (message.result !== undefined) {
       D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
     }
-    if (message.deleted !== 0) {
+    if (message.deleted !== undefined && message.deleted !== 0) {
       writer.uint32(16).int32(message.deleted);
     }
     return writer;
@@ -2622,7 +2883,7 @@ export const DeleteContactsResponse: MessageFns<DeleteContactsResponse> = {
     if (message.result !== undefined) {
       obj.result = D2ResultProto.toJSON(message.result);
     }
-    if (message.deleted !== 0) {
+    if (message.deleted !== undefined && message.deleted !== 0) {
       obj.deleted = Math.round(message.deleted);
     }
     return obj;
@@ -2647,8 +2908,10 @@ function createBaseDeleteContactsByExtKeysRequest(): DeleteContactsByExtKeysRequ
 
 export const DeleteContactsByExtKeysRequest: MessageFns<DeleteContactsByExtKeysRequest> = {
   encode(message: DeleteContactsByExtKeysRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.keys) {
-      GetContactsExtKeys.encode(v!, writer.uint32(10).fork()).join();
+    if (message.keys !== undefined && message.keys.length !== 0) {
+      for (const v of message.keys) {
+        GetContactsExtKeys.encode(v!, writer.uint32(10).fork()).join();
+      }
     }
     return writer;
   },
@@ -2665,7 +2928,10 @@ export const DeleteContactsByExtKeysRequest: MessageFns<DeleteContactsByExtKeysR
             break;
           }
 
-          message.keys.push(GetContactsExtKeys.decode(reader, reader.uint32()));
+          const el = GetContactsExtKeys.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.keys!.push(el);
+          }
           continue;
         }
       }
@@ -2712,7 +2978,7 @@ export const DeleteContactsByExtKeysResponse: MessageFns<DeleteContactsByExtKeys
     if (message.result !== undefined) {
       D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
     }
-    if (message.deleted !== 0) {
+    if (message.deleted !== undefined && message.deleted !== 0) {
       writer.uint32(16).int32(message.deleted);
     }
     return writer;
@@ -2762,7 +3028,7 @@ export const DeleteContactsByExtKeysResponse: MessageFns<DeleteContactsByExtKeys
     if (message.result !== undefined) {
       obj.result = D2ResultProto.toJSON(message.result);
     }
-    if (message.deleted !== 0) {
+    if (message.deleted !== undefined && message.deleted !== 0) {
       obj.deleted = Math.round(message.deleted);
     }
     return obj;
@@ -2789,8 +3055,10 @@ function createBaseUpdateContactsByExtKeysRequest(): UpdateContactsByExtKeysRequ
 
 export const UpdateContactsByExtKeysRequest: MessageFns<UpdateContactsByExtKeysRequest> = {
   encode(message: UpdateContactsByExtKeysRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.contacts) {
-      ContactToCreateDTO.encode(v!, writer.uint32(10).fork()).join();
+    if (message.contacts !== undefined && message.contacts.length !== 0) {
+      for (const v of message.contacts) {
+        ContactToCreateDTO.encode(v!, writer.uint32(10).fork()).join();
+      }
     }
     return writer;
   },
@@ -2807,7 +3075,10 @@ export const UpdateContactsByExtKeysRequest: MessageFns<UpdateContactsByExtKeysR
             break;
           }
 
-          message.contacts.push(ContactToCreateDTO.decode(reader, reader.uint32()));
+          const el = ContactToCreateDTO.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.contacts!.push(el);
+          }
           continue;
         }
       }
@@ -2856,8 +3127,10 @@ export const UpdateContactsByExtKeysResponse: MessageFns<UpdateContactsByExtKeys
     if (message.result !== undefined) {
       D2ResultProto.encode(message.result, writer.uint32(10).fork()).join();
     }
-    for (const v of message.replacements) {
-      ContactReplacement.encode(v!, writer.uint32(18).fork()).join();
+    if (message.replacements !== undefined && message.replacements.length !== 0) {
+      for (const v of message.replacements) {
+        ContactReplacement.encode(v!, writer.uint32(18).fork()).join();
+      }
     }
     return writer;
   },
@@ -2882,7 +3155,10 @@ export const UpdateContactsByExtKeysResponse: MessageFns<UpdateContactsByExtKeys
             break;
           }
 
-          message.replacements.push(ContactReplacement.decode(reader, reader.uint32()));
+          const el = ContactReplacement.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.replacements!.push(el);
+          }
           continue;
         }
       }
@@ -2935,13 +3211,13 @@ function createBaseContactReplacementKey(): ContactReplacementKey {
 
 export const ContactReplacementKey: MessageFns<ContactReplacementKey> = {
   encode(message: ContactReplacementKey, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.contextKey !== "") {
+    if (message.contextKey !== undefined && message.contextKey !== "") {
       writer.uint32(10).string(message.contextKey);
     }
-    if (message.relatedEntityId !== "") {
+    if (message.relatedEntityId !== undefined && message.relatedEntityId !== "") {
       writer.uint32(18).string(message.relatedEntityId);
     }
-    if (message.oldContactId !== "") {
+    if (message.oldContactId !== undefined && message.oldContactId !== "") {
       writer.uint32(26).string(message.oldContactId);
     }
     return writer;
@@ -3009,13 +3285,13 @@ export const ContactReplacementKey: MessageFns<ContactReplacementKey> = {
 
   toJSON(message: ContactReplacementKey): unknown {
     const obj: any = {};
-    if (message.contextKey !== "") {
+    if (message.contextKey !== undefined && message.contextKey !== "") {
       obj.contextKey = message.contextKey;
     }
-    if (message.relatedEntityId !== "") {
+    if (message.relatedEntityId !== undefined && message.relatedEntityId !== "") {
       obj.relatedEntityId = message.relatedEntityId;
     }
-    if (message.oldContactId !== "") {
+    if (message.oldContactId !== undefined && message.oldContactId !== "") {
       obj.oldContactId = message.oldContactId;
     }
     return obj;
@@ -3126,7 +3402,8 @@ function createBaseContactToCreateDTO(): ContactToCreateDTO {
     personalDetails: undefined,
     professionalDetails: undefined,
     location: undefined,
-    ietfBcp47Tag: "",
+    ietfBcp47Tag: undefined,
+    ianaIdentifier: undefined,
   };
 }
 
@@ -3135,10 +3412,10 @@ export const ContactToCreateDTO: MessageFns<ContactToCreateDTO> = {
     if (message.createdAt !== undefined) {
       Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(10).fork()).join();
     }
-    if (message.contextKey !== "") {
+    if (message.contextKey !== undefined && message.contextKey !== "") {
       writer.uint32(18).string(message.contextKey);
     }
-    if (message.relatedEntityId !== "") {
+    if (message.relatedEntityId !== undefined && message.relatedEntityId !== "") {
       writer.uint32(26).string(message.relatedEntityId);
     }
     if (message.contactMethods !== undefined) {
@@ -3153,8 +3430,11 @@ export const ContactToCreateDTO: MessageFns<ContactToCreateDTO> = {
     if (message.location !== undefined) {
       LocationDTO.encode(message.location, writer.uint32(58).fork()).join();
     }
-    if (message.ietfBcp47Tag !== "") {
+    if (message.ietfBcp47Tag !== undefined) {
       writer.uint32(66).string(message.ietfBcp47Tag);
+    }
+    if (message.ianaIdentifier !== undefined) {
+      writer.uint32(74).string(message.ianaIdentifier);
     }
     return writer;
   },
@@ -3230,6 +3510,14 @@ export const ContactToCreateDTO: MessageFns<ContactToCreateDTO> = {
           message.ietfBcp47Tag = reader.string();
           continue;
         }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.ianaIdentifier = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -3276,7 +3564,12 @@ export const ContactToCreateDTO: MessageFns<ContactToCreateDTO> = {
         ? globalThis.String(object.ietfBcp47Tag)
         : isSet(object.ietf_bcp47_tag)
         ? globalThis.String(object.ietf_bcp47_tag)
-        : "",
+        : undefined,
+      ianaIdentifier: isSet(object.ianaIdentifier)
+        ? globalThis.String(object.ianaIdentifier)
+        : isSet(object.iana_identifier)
+        ? globalThis.String(object.iana_identifier)
+        : undefined,
     };
   },
 
@@ -3285,10 +3578,10 @@ export const ContactToCreateDTO: MessageFns<ContactToCreateDTO> = {
     if (message.createdAt !== undefined) {
       obj.createdAt = message.createdAt.toISOString();
     }
-    if (message.contextKey !== "") {
+    if (message.contextKey !== undefined && message.contextKey !== "") {
       obj.contextKey = message.contextKey;
     }
-    if (message.relatedEntityId !== "") {
+    if (message.relatedEntityId !== undefined && message.relatedEntityId !== "") {
       obj.relatedEntityId = message.relatedEntityId;
     }
     if (message.contactMethods !== undefined) {
@@ -3303,8 +3596,11 @@ export const ContactToCreateDTO: MessageFns<ContactToCreateDTO> = {
     if (message.location !== undefined) {
       obj.location = LocationDTO.toJSON(message.location);
     }
-    if (message.ietfBcp47Tag !== "") {
+    if (message.ietfBcp47Tag !== undefined) {
       obj.ietfBcp47Tag = message.ietfBcp47Tag;
+    }
+    if (message.ianaIdentifier !== undefined) {
+      obj.ianaIdentifier = message.ianaIdentifier;
     }
     return obj;
   },
@@ -3329,7 +3625,8 @@ export const ContactToCreateDTO: MessageFns<ContactToCreateDTO> = {
     message.location = (object.location !== undefined && object.location !== null)
       ? LocationDTO.fromPartial(object.location)
       : undefined;
-    message.ietfBcp47Tag = object.ietfBcp47Tag ?? "";
+    message.ietfBcp47Tag = object.ietfBcp47Tag ?? undefined;
+    message.ianaIdentifier = object.ianaIdentifier ?? undefined;
     return message;
   },
 };
@@ -3356,50 +3653,60 @@ function createBaseCountryDTO(): CountryDTO {
 
 export const CountryDTO: MessageFns<CountryDTO> = {
   encode(message: CountryDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.iso31661Alpha2Code !== "") {
+    if (message.iso31661Alpha2Code !== undefined && message.iso31661Alpha2Code !== "") {
       writer.uint32(10).string(message.iso31661Alpha2Code);
     }
-    if (message.iso31661Alpha3Code !== "") {
+    if (message.iso31661Alpha3Code !== undefined && message.iso31661Alpha3Code !== "") {
       writer.uint32(18).string(message.iso31661Alpha3Code);
     }
-    if (message.iso31661NumericCode !== "") {
+    if (message.iso31661NumericCode !== undefined && message.iso31661NumericCode !== "") {
       writer.uint32(26).string(message.iso31661NumericCode);
     }
-    if (message.displayName !== "") {
+    if (message.displayName !== undefined && message.displayName !== "") {
       writer.uint32(34).string(message.displayName);
     }
-    if (message.officialName !== "") {
+    if (message.officialName !== undefined && message.officialName !== "") {
       writer.uint32(42).string(message.officialName);
     }
-    if (message.phoneNumberPrefix !== "") {
+    if (message.phoneNumberPrefix !== undefined && message.phoneNumberPrefix !== "") {
       writer.uint32(50).string(message.phoneNumberPrefix);
     }
-    if (message.phoneNumberFormat !== "") {
+    if (message.phoneNumberFormat !== undefined && message.phoneNumberFormat !== "") {
       writer.uint32(58).string(message.phoneNumberFormat);
     }
-    if (message.sovereignIso31661Alpha2Code !== "") {
+    if (message.sovereignIso31661Alpha2Code !== undefined && message.sovereignIso31661Alpha2Code !== "") {
       writer.uint32(66).string(message.sovereignIso31661Alpha2Code);
     }
-    if (message.primaryCurrencyIso4217AlphaCode !== "") {
+    if (message.primaryCurrencyIso4217AlphaCode !== undefined && message.primaryCurrencyIso4217AlphaCode !== "") {
       writer.uint32(74).string(message.primaryCurrencyIso4217AlphaCode);
     }
-    if (message.primaryLocaleIetfBcp47Tag !== "") {
+    if (message.primaryLocaleIetfBcp47Tag !== undefined && message.primaryLocaleIetfBcp47Tag !== "") {
       writer.uint32(82).string(message.primaryLocaleIetfBcp47Tag);
     }
-    for (const v of message.territoryIso31661Alpha2Codes) {
-      writer.uint32(90).string(v!);
+    if (message.territoryIso31661Alpha2Codes !== undefined && message.territoryIso31661Alpha2Codes.length !== 0) {
+      for (const v of message.territoryIso31661Alpha2Codes) {
+        writer.uint32(90).string(v!);
+      }
     }
-    for (const v of message.subdivisionIso31662Codes) {
-      writer.uint32(98).string(v!);
+    if (message.subdivisionIso31662Codes !== undefined && message.subdivisionIso31662Codes.length !== 0) {
+      for (const v of message.subdivisionIso31662Codes) {
+        writer.uint32(98).string(v!);
+      }
     }
-    for (const v of message.currencyIso4217AlphaCodes) {
-      writer.uint32(106).string(v!);
+    if (message.currencyIso4217AlphaCodes !== undefined && message.currencyIso4217AlphaCodes.length !== 0) {
+      for (const v of message.currencyIso4217AlphaCodes) {
+        writer.uint32(106).string(v!);
+      }
     }
-    for (const v of message.localeIetfBcp47Tags) {
-      writer.uint32(114).string(v!);
+    if (message.localeIetfBcp47Tags !== undefined && message.localeIetfBcp47Tags.length !== 0) {
+      for (const v of message.localeIetfBcp47Tags) {
+        writer.uint32(114).string(v!);
+      }
     }
-    for (const v of message.geopoliticalEntityShortCodes) {
-      writer.uint32(122).string(v!);
+    if (message.geopoliticalEntityShortCodes !== undefined && message.geopoliticalEntityShortCodes.length !== 0) {
+      for (const v of message.geopoliticalEntityShortCodes) {
+        writer.uint32(122).string(v!);
+      }
     }
     return writer;
   },
@@ -3496,7 +3803,10 @@ export const CountryDTO: MessageFns<CountryDTO> = {
             break;
           }
 
-          message.territoryIso31661Alpha2Codes.push(reader.string());
+          const el = reader.string();
+          if (el !== undefined) {
+            message.territoryIso31661Alpha2Codes!.push(el);
+          }
           continue;
         }
         case 12: {
@@ -3504,7 +3814,10 @@ export const CountryDTO: MessageFns<CountryDTO> = {
             break;
           }
 
-          message.subdivisionIso31662Codes.push(reader.string());
+          const el = reader.string();
+          if (el !== undefined) {
+            message.subdivisionIso31662Codes!.push(el);
+          }
           continue;
         }
         case 13: {
@@ -3512,7 +3825,10 @@ export const CountryDTO: MessageFns<CountryDTO> = {
             break;
           }
 
-          message.currencyIso4217AlphaCodes.push(reader.string());
+          const el = reader.string();
+          if (el !== undefined) {
+            message.currencyIso4217AlphaCodes!.push(el);
+          }
           continue;
         }
         case 14: {
@@ -3520,7 +3836,10 @@ export const CountryDTO: MessageFns<CountryDTO> = {
             break;
           }
 
-          message.localeIetfBcp47Tags.push(reader.string());
+          const el = reader.string();
+          if (el !== undefined) {
+            message.localeIetfBcp47Tags!.push(el);
+          }
           continue;
         }
         case 15: {
@@ -3528,7 +3847,10 @@ export const CountryDTO: MessageFns<CountryDTO> = {
             break;
           }
 
-          message.geopoliticalEntityShortCodes.push(reader.string());
+          const el = reader.string();
+          if (el !== undefined) {
+            message.geopoliticalEntityShortCodes!.push(el);
+          }
           continue;
         }
       }
@@ -3622,34 +3944,34 @@ export const CountryDTO: MessageFns<CountryDTO> = {
 
   toJSON(message: CountryDTO): unknown {
     const obj: any = {};
-    if (message.iso31661Alpha2Code !== "") {
+    if (message.iso31661Alpha2Code !== undefined && message.iso31661Alpha2Code !== "") {
       obj.iso31661Alpha2Code = message.iso31661Alpha2Code;
     }
-    if (message.iso31661Alpha3Code !== "") {
+    if (message.iso31661Alpha3Code !== undefined && message.iso31661Alpha3Code !== "") {
       obj.iso31661Alpha3Code = message.iso31661Alpha3Code;
     }
-    if (message.iso31661NumericCode !== "") {
+    if (message.iso31661NumericCode !== undefined && message.iso31661NumericCode !== "") {
       obj.iso31661NumericCode = message.iso31661NumericCode;
     }
-    if (message.displayName !== "") {
+    if (message.displayName !== undefined && message.displayName !== "") {
       obj.displayName = message.displayName;
     }
-    if (message.officialName !== "") {
+    if (message.officialName !== undefined && message.officialName !== "") {
       obj.officialName = message.officialName;
     }
-    if (message.phoneNumberPrefix !== "") {
+    if (message.phoneNumberPrefix !== undefined && message.phoneNumberPrefix !== "") {
       obj.phoneNumberPrefix = message.phoneNumberPrefix;
     }
-    if (message.phoneNumberFormat !== "") {
+    if (message.phoneNumberFormat !== undefined && message.phoneNumberFormat !== "") {
       obj.phoneNumberFormat = message.phoneNumberFormat;
     }
-    if (message.sovereignIso31661Alpha2Code !== "") {
+    if (message.sovereignIso31661Alpha2Code !== undefined && message.sovereignIso31661Alpha2Code !== "") {
       obj.sovereignIso31661Alpha2Code = message.sovereignIso31661Alpha2Code;
     }
-    if (message.primaryCurrencyIso4217AlphaCode !== "") {
+    if (message.primaryCurrencyIso4217AlphaCode !== undefined && message.primaryCurrencyIso4217AlphaCode !== "") {
       obj.primaryCurrencyIso4217AlphaCode = message.primaryCurrencyIso4217AlphaCode;
     }
-    if (message.primaryLocaleIetfBcp47Tag !== "") {
+    if (message.primaryLocaleIetfBcp47Tag !== undefined && message.primaryLocaleIetfBcp47Tag !== "") {
       obj.primaryLocaleIetfBcp47Tag = message.primaryLocaleIetfBcp47Tag;
     }
     if (message.territoryIso31661Alpha2Codes?.length) {
@@ -3700,19 +4022,19 @@ function createBaseSubdivisionDTO(): SubdivisionDTO {
 
 export const SubdivisionDTO: MessageFns<SubdivisionDTO> = {
   encode(message: SubdivisionDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.iso31662Code !== "") {
+    if (message.iso31662Code !== undefined && message.iso31662Code !== "") {
       writer.uint32(10).string(message.iso31662Code);
     }
-    if (message.shortCode !== "") {
+    if (message.shortCode !== undefined && message.shortCode !== "") {
       writer.uint32(18).string(message.shortCode);
     }
-    if (message.displayName !== "") {
+    if (message.displayName !== undefined && message.displayName !== "") {
       writer.uint32(26).string(message.displayName);
     }
-    if (message.officialName !== "") {
+    if (message.officialName !== undefined && message.officialName !== "") {
       writer.uint32(34).string(message.officialName);
     }
-    if (message.countryIso31661Alpha2Code !== "") {
+    if (message.countryIso31661Alpha2Code !== undefined && message.countryIso31661Alpha2Code !== "") {
       writer.uint32(42).string(message.countryIso31661Alpha2Code);
     }
     return writer;
@@ -3806,19 +4128,19 @@ export const SubdivisionDTO: MessageFns<SubdivisionDTO> = {
 
   toJSON(message: SubdivisionDTO): unknown {
     const obj: any = {};
-    if (message.iso31662Code !== "") {
+    if (message.iso31662Code !== undefined && message.iso31662Code !== "") {
       obj.iso31662Code = message.iso31662Code;
     }
-    if (message.shortCode !== "") {
+    if (message.shortCode !== undefined && message.shortCode !== "") {
       obj.shortCode = message.shortCode;
     }
-    if (message.displayName !== "") {
+    if (message.displayName !== undefined && message.displayName !== "") {
       obj.displayName = message.displayName;
     }
-    if (message.officialName !== "") {
+    if (message.officialName !== undefined && message.officialName !== "") {
       obj.officialName = message.officialName;
     }
-    if (message.countryIso31661Alpha2Code !== "") {
+    if (message.countryIso31661Alpha2Code !== undefined && message.countryIso31661Alpha2Code !== "") {
       obj.countryIso31661Alpha2Code = message.countryIso31661Alpha2Code;
     }
     return obj;
@@ -3852,26 +4174,28 @@ function createBaseCurrencyDTO(): CurrencyDTO {
 
 export const CurrencyDTO: MessageFns<CurrencyDTO> = {
   encode(message: CurrencyDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.iso4217AlphaCode !== "") {
+    if (message.iso4217AlphaCode !== undefined && message.iso4217AlphaCode !== "") {
       writer.uint32(10).string(message.iso4217AlphaCode);
     }
-    if (message.iso4217NumericCode !== "") {
+    if (message.iso4217NumericCode !== undefined && message.iso4217NumericCode !== "") {
       writer.uint32(18).string(message.iso4217NumericCode);
     }
-    if (message.displayName !== "") {
+    if (message.displayName !== undefined && message.displayName !== "") {
       writer.uint32(26).string(message.displayName);
     }
-    if (message.officialName !== "") {
+    if (message.officialName !== undefined && message.officialName !== "") {
       writer.uint32(34).string(message.officialName);
     }
-    if (message.decimalPlaces !== 0) {
+    if (message.decimalPlaces !== undefined && message.decimalPlaces !== 0) {
       writer.uint32(40).int32(message.decimalPlaces);
     }
-    if (message.symbol !== "") {
+    if (message.symbol !== undefined && message.symbol !== "") {
       writer.uint32(50).string(message.symbol);
     }
-    for (const v of message.countryIso31661Alpha2Codes) {
-      writer.uint32(58).string(v!);
+    if (message.countryIso31661Alpha2Codes !== undefined && message.countryIso31661Alpha2Codes.length !== 0) {
+      for (const v of message.countryIso31661Alpha2Codes) {
+        writer.uint32(58).string(v!);
+      }
     }
     return writer;
   },
@@ -3936,7 +4260,10 @@ export const CurrencyDTO: MessageFns<CurrencyDTO> = {
             break;
           }
 
-          message.countryIso31661Alpha2Codes.push(reader.string());
+          const el = reader.string();
+          if (el !== undefined) {
+            message.countryIso31661Alpha2Codes!.push(el);
+          }
           continue;
         }
       }
@@ -3986,22 +4313,22 @@ export const CurrencyDTO: MessageFns<CurrencyDTO> = {
 
   toJSON(message: CurrencyDTO): unknown {
     const obj: any = {};
-    if (message.iso4217AlphaCode !== "") {
+    if (message.iso4217AlphaCode !== undefined && message.iso4217AlphaCode !== "") {
       obj.iso4217AlphaCode = message.iso4217AlphaCode;
     }
-    if (message.iso4217NumericCode !== "") {
+    if (message.iso4217NumericCode !== undefined && message.iso4217NumericCode !== "") {
       obj.iso4217NumericCode = message.iso4217NumericCode;
     }
-    if (message.displayName !== "") {
+    if (message.displayName !== undefined && message.displayName !== "") {
       obj.displayName = message.displayName;
     }
-    if (message.officialName !== "") {
+    if (message.officialName !== undefined && message.officialName !== "") {
       obj.officialName = message.officialName;
     }
-    if (message.decimalPlaces !== 0) {
+    if (message.decimalPlaces !== undefined && message.decimalPlaces !== 0) {
       obj.decimalPlaces = Math.round(message.decimalPlaces);
     }
-    if (message.symbol !== "") {
+    if (message.symbol !== undefined && message.symbol !== "") {
       obj.symbol = message.symbol;
     }
     if (message.countryIso31661Alpha2Codes?.length) {
@@ -4032,13 +4359,13 @@ function createBaseLanguageDTO(): LanguageDTO {
 
 export const LanguageDTO: MessageFns<LanguageDTO> = {
   encode(message: LanguageDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.iso6391Code !== "") {
+    if (message.iso6391Code !== undefined && message.iso6391Code !== "") {
       writer.uint32(10).string(message.iso6391Code);
     }
-    if (message.name !== "") {
+    if (message.name !== undefined && message.name !== "") {
       writer.uint32(18).string(message.name);
     }
-    if (message.endonym !== "") {
+    if (message.endonym !== undefined && message.endonym !== "") {
       writer.uint32(26).string(message.endonym);
     }
     return writer;
@@ -4098,13 +4425,13 @@ export const LanguageDTO: MessageFns<LanguageDTO> = {
 
   toJSON(message: LanguageDTO): unknown {
     const obj: any = {};
-    if (message.iso6391Code !== "") {
+    if (message.iso6391Code !== undefined && message.iso6391Code !== "") {
       obj.iso6391Code = message.iso6391Code;
     }
-    if (message.name !== "") {
+    if (message.name !== undefined && message.name !== "") {
       obj.name = message.name;
     }
-    if (message.endonym !== "") {
+    if (message.endonym !== undefined && message.endonym !== "") {
       obj.endonym = message.endonym;
     }
     return obj;
@@ -4128,19 +4455,19 @@ function createBaseLocaleDTO(): LocaleDTO {
 
 export const LocaleDTO: MessageFns<LocaleDTO> = {
   encode(message: LocaleDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.ietfBcp47Tag !== "") {
+    if (message.ietfBcp47Tag !== undefined && message.ietfBcp47Tag !== "") {
       writer.uint32(10).string(message.ietfBcp47Tag);
     }
-    if (message.name !== "") {
+    if (message.name !== undefined && message.name !== "") {
       writer.uint32(18).string(message.name);
     }
-    if (message.endonym !== "") {
+    if (message.endonym !== undefined && message.endonym !== "") {
       writer.uint32(26).string(message.endonym);
     }
-    if (message.languageIso6391Code !== "") {
+    if (message.languageIso6391Code !== undefined && message.languageIso6391Code !== "") {
       writer.uint32(34).string(message.languageIso6391Code);
     }
-    if (message.countryIso31661Alpha2Code !== "") {
+    if (message.countryIso31661Alpha2Code !== undefined && message.countryIso31661Alpha2Code !== "") {
       writer.uint32(42).string(message.countryIso31661Alpha2Code);
     }
     return writer;
@@ -4226,19 +4553,19 @@ export const LocaleDTO: MessageFns<LocaleDTO> = {
 
   toJSON(message: LocaleDTO): unknown {
     const obj: any = {};
-    if (message.ietfBcp47Tag !== "") {
+    if (message.ietfBcp47Tag !== undefined && message.ietfBcp47Tag !== "") {
       obj.ietfBcp47Tag = message.ietfBcp47Tag;
     }
-    if (message.name !== "") {
+    if (message.name !== undefined && message.name !== "") {
       obj.name = message.name;
     }
-    if (message.endonym !== "") {
+    if (message.endonym !== undefined && message.endonym !== "") {
       obj.endonym = message.endonym;
     }
-    if (message.languageIso6391Code !== "") {
+    if (message.languageIso6391Code !== undefined && message.languageIso6391Code !== "") {
       obj.languageIso6391Code = message.languageIso6391Code;
     }
-    if (message.countryIso31661Alpha2Code !== "") {
+    if (message.countryIso31661Alpha2Code !== undefined && message.countryIso31661Alpha2Code !== "") {
       obj.countryIso31661Alpha2Code = message.countryIso31661Alpha2Code;
     }
     return obj;
@@ -4258,23 +4585,217 @@ export const LocaleDTO: MessageFns<LocaleDTO> = {
   },
 };
 
+function createBaseTimezoneDTO(): TimezoneDTO {
+  return {
+    ianaIdentifier: "",
+    displayName: "",
+    utcOffsetStd: "",
+    utcOffsetDst: undefined,
+    abbreviationStd: "",
+    abbreviationDst: undefined,
+    countryIso31661Alpha2Code: "",
+  };
+}
+
+export const TimezoneDTO: MessageFns<TimezoneDTO> = {
+  encode(message: TimezoneDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.ianaIdentifier !== undefined && message.ianaIdentifier !== "") {
+      writer.uint32(10).string(message.ianaIdentifier);
+    }
+    if (message.displayName !== undefined && message.displayName !== "") {
+      writer.uint32(18).string(message.displayName);
+    }
+    if (message.utcOffsetStd !== undefined && message.utcOffsetStd !== "") {
+      writer.uint32(26).string(message.utcOffsetStd);
+    }
+    if (message.utcOffsetDst !== undefined) {
+      writer.uint32(34).string(message.utcOffsetDst);
+    }
+    if (message.abbreviationStd !== undefined && message.abbreviationStd !== "") {
+      writer.uint32(42).string(message.abbreviationStd);
+    }
+    if (message.abbreviationDst !== undefined) {
+      writer.uint32(50).string(message.abbreviationDst);
+    }
+    if (message.countryIso31661Alpha2Code !== undefined && message.countryIso31661Alpha2Code !== "") {
+      writer.uint32(58).string(message.countryIso31661Alpha2Code);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TimezoneDTO {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTimezoneDTO();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.ianaIdentifier = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.displayName = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.utcOffsetStd = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.utcOffsetDst = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.abbreviationStd = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.abbreviationDst = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.countryIso31661Alpha2Code = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TimezoneDTO {
+    return {
+      ianaIdentifier: isSet(object.ianaIdentifier)
+        ? globalThis.String(object.ianaIdentifier)
+        : isSet(object.iana_identifier)
+        ? globalThis.String(object.iana_identifier)
+        : "",
+      displayName: isSet(object.displayName)
+        ? globalThis.String(object.displayName)
+        : isSet(object.display_name)
+        ? globalThis.String(object.display_name)
+        : "",
+      utcOffsetStd: isSet(object.utcOffsetStd)
+        ? globalThis.String(object.utcOffsetStd)
+        : isSet(object.utc_offset_std)
+        ? globalThis.String(object.utc_offset_std)
+        : "",
+      utcOffsetDst: isSet(object.utcOffsetDst)
+        ? globalThis.String(object.utcOffsetDst)
+        : isSet(object.utc_offset_dst)
+        ? globalThis.String(object.utc_offset_dst)
+        : undefined,
+      abbreviationStd: isSet(object.abbreviationStd)
+        ? globalThis.String(object.abbreviationStd)
+        : isSet(object.abbreviation_std)
+        ? globalThis.String(object.abbreviation_std)
+        : "",
+      abbreviationDst: isSet(object.abbreviationDst)
+        ? globalThis.String(object.abbreviationDst)
+        : isSet(object.abbreviation_dst)
+        ? globalThis.String(object.abbreviation_dst)
+        : undefined,
+      countryIso31661Alpha2Code: isSet(object.countryIso31661Alpha2Code)
+        ? globalThis.String(object.countryIso31661Alpha2Code)
+        : isSet(object.country_iso_3166_1_alpha_2_code)
+        ? globalThis.String(object.country_iso_3166_1_alpha_2_code)
+        : "",
+    };
+  },
+
+  toJSON(message: TimezoneDTO): unknown {
+    const obj: any = {};
+    if (message.ianaIdentifier !== undefined && message.ianaIdentifier !== "") {
+      obj.ianaIdentifier = message.ianaIdentifier;
+    }
+    if (message.displayName !== undefined && message.displayName !== "") {
+      obj.displayName = message.displayName;
+    }
+    if (message.utcOffsetStd !== undefined && message.utcOffsetStd !== "") {
+      obj.utcOffsetStd = message.utcOffsetStd;
+    }
+    if (message.utcOffsetDst !== undefined) {
+      obj.utcOffsetDst = message.utcOffsetDst;
+    }
+    if (message.abbreviationStd !== undefined && message.abbreviationStd !== "") {
+      obj.abbreviationStd = message.abbreviationStd;
+    }
+    if (message.abbreviationDst !== undefined) {
+      obj.abbreviationDst = message.abbreviationDst;
+    }
+    if (message.countryIso31661Alpha2Code !== undefined && message.countryIso31661Alpha2Code !== "") {
+      obj.countryIso31661Alpha2Code = message.countryIso31661Alpha2Code;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<TimezoneDTO>, I>>(base?: I): TimezoneDTO {
+    return TimezoneDTO.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<TimezoneDTO>, I>>(object: I): TimezoneDTO {
+    const message = createBaseTimezoneDTO();
+    message.ianaIdentifier = object.ianaIdentifier ?? "";
+    message.displayName = object.displayName ?? "";
+    message.utcOffsetStd = object.utcOffsetStd ?? "";
+    message.utcOffsetDst = object.utcOffsetDst ?? undefined;
+    message.abbreviationStd = object.abbreviationStd ?? "";
+    message.abbreviationDst = object.abbreviationDst ?? undefined;
+    message.countryIso31661Alpha2Code = object.countryIso31661Alpha2Code ?? "";
+    return message;
+  },
+};
+
 function createBaseGeopoliticalEntityDTO(): GeopoliticalEntityDTO {
   return { shortCode: "", name: "", type: "", countryIso31661Alpha2Codes: [] };
 }
 
 export const GeopoliticalEntityDTO: MessageFns<GeopoliticalEntityDTO> = {
   encode(message: GeopoliticalEntityDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.shortCode !== "") {
+    if (message.shortCode !== undefined && message.shortCode !== "") {
       writer.uint32(10).string(message.shortCode);
     }
-    if (message.name !== "") {
+    if (message.name !== undefined && message.name !== "") {
       writer.uint32(18).string(message.name);
     }
-    if (message.type !== "") {
+    if (message.type !== undefined && message.type !== "") {
       writer.uint32(26).string(message.type);
     }
-    for (const v of message.countryIso31661Alpha2Codes) {
-      writer.uint32(34).string(v!);
+    if (message.countryIso31661Alpha2Codes !== undefined && message.countryIso31661Alpha2Codes.length !== 0) {
+      for (const v of message.countryIso31661Alpha2Codes) {
+        writer.uint32(34).string(v!);
+      }
     }
     return writer;
   },
@@ -4315,7 +4836,10 @@ export const GeopoliticalEntityDTO: MessageFns<GeopoliticalEntityDTO> = {
             break;
           }
 
-          message.countryIso31661Alpha2Codes.push(reader.string());
+          const el = reader.string();
+          if (el !== undefined) {
+            message.countryIso31661Alpha2Codes!.push(el);
+          }
           continue;
         }
       }
@@ -4346,13 +4870,13 @@ export const GeopoliticalEntityDTO: MessageFns<GeopoliticalEntityDTO> = {
 
   toJSON(message: GeopoliticalEntityDTO): unknown {
     const obj: any = {};
-    if (message.shortCode !== "") {
+    if (message.shortCode !== undefined && message.shortCode !== "") {
       obj.shortCode = message.shortCode;
     }
-    if (message.name !== "") {
+    if (message.name !== undefined && message.name !== "") {
       obj.name = message.name;
     }
-    if (message.type !== "") {
+    if (message.type !== undefined && message.type !== "") {
       obj.type = message.type;
     }
     if (message.countryIso31661Alpha2Codes?.length) {
@@ -4380,10 +4904,10 @@ function createBaseCoordinatesDTO(): CoordinatesDTO {
 
 export const CoordinatesDTO: MessageFns<CoordinatesDTO> = {
   encode(message: CoordinatesDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.latitude !== 0) {
+    if (message.latitude !== undefined && message.latitude !== 0) {
       writer.uint32(9).double(message.latitude);
     }
-    if (message.longitude !== 0) {
+    if (message.longitude !== undefined && message.longitude !== 0) {
       writer.uint32(17).double(message.longitude);
     }
     return writer;
@@ -4430,10 +4954,10 @@ export const CoordinatesDTO: MessageFns<CoordinatesDTO> = {
 
   toJSON(message: CoordinatesDTO): unknown {
     const obj: any = {};
-    if (message.latitude !== 0) {
+    if (message.latitude !== undefined && message.latitude !== 0) {
       obj.latitude = message.latitude;
     }
-    if (message.longitude !== 0) {
+    if (message.longitude !== undefined && message.longitude !== 0) {
       obj.longitude = message.longitude;
     }
     return obj;
@@ -4451,18 +4975,18 @@ export const CoordinatesDTO: MessageFns<CoordinatesDTO> = {
 };
 
 function createBaseStreetAddressDTO(): StreetAddressDTO {
-  return { line1: "", line2: "", line3: "" };
+  return { line1: "", line2: undefined, line3: undefined };
 }
 
 export const StreetAddressDTO: MessageFns<StreetAddressDTO> = {
   encode(message: StreetAddressDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.line1 !== "") {
+    if (message.line1 !== undefined && message.line1 !== "") {
       writer.uint32(10).string(message.line1);
     }
-    if (message.line2 !== "") {
+    if (message.line2 !== undefined) {
       writer.uint32(18).string(message.line2);
     }
-    if (message.line3 !== "") {
+    if (message.line3 !== undefined) {
       writer.uint32(26).string(message.line3);
     }
     return writer;
@@ -4519,24 +5043,24 @@ export const StreetAddressDTO: MessageFns<StreetAddressDTO> = {
         ? globalThis.String(object.line2)
         : isSet(object.line_2)
         ? globalThis.String(object.line_2)
-        : "",
+        : undefined,
       line3: isSet(object.line3)
         ? globalThis.String(object.line3)
         : isSet(object.line_3)
         ? globalThis.String(object.line_3)
-        : "",
+        : undefined,
     };
   },
 
   toJSON(message: StreetAddressDTO): unknown {
     const obj: any = {};
-    if (message.line1 !== "") {
+    if (message.line1 !== undefined && message.line1 !== "") {
       obj.line1 = message.line1;
     }
-    if (message.line2 !== "") {
+    if (message.line2 !== undefined) {
       obj.line2 = message.line2;
     }
-    if (message.line3 !== "") {
+    if (message.line3 !== undefined) {
       obj.line3 = message.line3;
     }
     return obj;
@@ -4548,8 +5072,8 @@ export const StreetAddressDTO: MessageFns<StreetAddressDTO> = {
   fromPartial<I extends Exact<DeepPartial<StreetAddressDTO>, I>>(object: I): StreetAddressDTO {
     const message = createBaseStreetAddressDTO();
     message.line1 = object.line1 ?? "";
-    message.line2 = object.line2 ?? "";
-    message.line3 = object.line3 ?? "";
+    message.line2 = object.line2 ?? undefined;
+    message.line3 = object.line3 ?? undefined;
     return message;
   },
 };
@@ -4560,11 +5084,13 @@ function createBaseEmailAddressDTO(): EmailAddressDTO {
 
 export const EmailAddressDTO: MessageFns<EmailAddressDTO> = {
   encode(message: EmailAddressDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.value !== "") {
+    if (message.value !== undefined && message.value !== "") {
       writer.uint32(10).string(message.value);
     }
-    for (const v of message.labels) {
-      writer.uint32(18).string(v!);
+    if (message.labels !== undefined && message.labels.length !== 0) {
+      for (const v of message.labels) {
+        writer.uint32(18).string(v!);
+      }
     }
     return writer;
   },
@@ -4589,7 +5115,10 @@ export const EmailAddressDTO: MessageFns<EmailAddressDTO> = {
             break;
           }
 
-          message.labels.push(reader.string());
+          const el = reader.string();
+          if (el !== undefined) {
+            message.labels!.push(el);
+          }
           continue;
         }
       }
@@ -4610,7 +5139,7 @@ export const EmailAddressDTO: MessageFns<EmailAddressDTO> = {
 
   toJSON(message: EmailAddressDTO): unknown {
     const obj: any = {};
-    if (message.value !== "") {
+    if (message.value !== undefined && message.value !== "") {
       obj.value = message.value;
     }
     if (message.labels?.length) {
@@ -4636,11 +5165,13 @@ function createBasePhoneNumberDTO(): PhoneNumberDTO {
 
 export const PhoneNumberDTO: MessageFns<PhoneNumberDTO> = {
   encode(message: PhoneNumberDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.value !== "") {
+    if (message.value !== undefined && message.value !== "") {
       writer.uint32(10).string(message.value);
     }
-    for (const v of message.labels) {
-      writer.uint32(18).string(v!);
+    if (message.labels !== undefined && message.labels.length !== 0) {
+      for (const v of message.labels) {
+        writer.uint32(18).string(v!);
+      }
     }
     return writer;
   },
@@ -4665,7 +5196,10 @@ export const PhoneNumberDTO: MessageFns<PhoneNumberDTO> = {
             break;
           }
 
-          message.labels.push(reader.string());
+          const el = reader.string();
+          if (el !== undefined) {
+            message.labels!.push(el);
+          }
           continue;
         }
       }
@@ -4686,7 +5220,7 @@ export const PhoneNumberDTO: MessageFns<PhoneNumberDTO> = {
 
   toJSON(message: PhoneNumberDTO): unknown {
     const obj: any = {};
-    if (message.value !== "") {
+    if (message.value !== undefined && message.value !== "") {
       obj.value = message.value;
     }
     if (message.labels?.length) {
@@ -4708,45 +5242,47 @@ export const PhoneNumberDTO: MessageFns<PhoneNumberDTO> = {
 
 function createBasePersonalDTO(): PersonalDTO {
   return {
-    title: "",
+    title: undefined,
     firstName: "",
-    preferredName: "",
-    middleName: "",
-    lastName: "",
-    generationalSuffix: "",
+    preferredName: undefined,
+    middleName: undefined,
+    lastName: undefined,
+    generationalSuffix: undefined,
     professionalCredentials: [],
-    dateOfBirth: "",
-    biologicalSex: "",
+    dateOfBirth: undefined,
+    biologicalSex: undefined,
   };
 }
 
 export const PersonalDTO: MessageFns<PersonalDTO> = {
   encode(message: PersonalDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.title !== "") {
+    if (message.title !== undefined) {
       writer.uint32(10).string(message.title);
     }
-    if (message.firstName !== "") {
+    if (message.firstName !== undefined && message.firstName !== "") {
       writer.uint32(18).string(message.firstName);
     }
-    if (message.preferredName !== "") {
+    if (message.preferredName !== undefined) {
       writer.uint32(26).string(message.preferredName);
     }
-    if (message.middleName !== "") {
+    if (message.middleName !== undefined) {
       writer.uint32(34).string(message.middleName);
     }
-    if (message.lastName !== "") {
+    if (message.lastName !== undefined) {
       writer.uint32(42).string(message.lastName);
     }
-    if (message.generationalSuffix !== "") {
+    if (message.generationalSuffix !== undefined) {
       writer.uint32(50).string(message.generationalSuffix);
     }
-    for (const v of message.professionalCredentials) {
-      writer.uint32(58).string(v!);
+    if (message.professionalCredentials !== undefined && message.professionalCredentials.length !== 0) {
+      for (const v of message.professionalCredentials) {
+        writer.uint32(58).string(v!);
+      }
     }
-    if (message.dateOfBirth !== "") {
+    if (message.dateOfBirth !== undefined) {
       writer.uint32(66).string(message.dateOfBirth);
     }
-    if (message.biologicalSex !== "") {
+    if (message.biologicalSex !== undefined) {
       writer.uint32(74).string(message.biologicalSex);
     }
     return writer;
@@ -4812,7 +5348,10 @@ export const PersonalDTO: MessageFns<PersonalDTO> = {
             break;
           }
 
-          message.professionalCredentials.push(reader.string());
+          const el = reader.string();
+          if (el !== undefined) {
+            message.professionalCredentials!.push(el);
+          }
           continue;
         }
         case 8: {
@@ -4842,7 +5381,7 @@ export const PersonalDTO: MessageFns<PersonalDTO> = {
 
   fromJSON(object: any): PersonalDTO {
     return {
-      title: isSet(object.title) ? globalThis.String(object.title) : "",
+      title: isSet(object.title) ? globalThis.String(object.title) : undefined,
       firstName: isSet(object.firstName)
         ? globalThis.String(object.firstName)
         : isSet(object.first_name)
@@ -4852,22 +5391,22 @@ export const PersonalDTO: MessageFns<PersonalDTO> = {
         ? globalThis.String(object.preferredName)
         : isSet(object.preferred_name)
         ? globalThis.String(object.preferred_name)
-        : "",
+        : undefined,
       middleName: isSet(object.middleName)
         ? globalThis.String(object.middleName)
         : isSet(object.middle_name)
         ? globalThis.String(object.middle_name)
-        : "",
+        : undefined,
       lastName: isSet(object.lastName)
         ? globalThis.String(object.lastName)
         : isSet(object.last_name)
         ? globalThis.String(object.last_name)
-        : "",
+        : undefined,
       generationalSuffix: isSet(object.generationalSuffix)
         ? globalThis.String(object.generationalSuffix)
         : isSet(object.generational_suffix)
         ? globalThis.String(object.generational_suffix)
-        : "",
+        : undefined,
       professionalCredentials: globalThis.Array.isArray(object?.professionalCredentials)
         ? object.professionalCredentials.map((e: any) => globalThis.String(e))
         : globalThis.Array.isArray(object?.professional_credentials)
@@ -4877,42 +5416,42 @@ export const PersonalDTO: MessageFns<PersonalDTO> = {
         ? globalThis.String(object.dateOfBirth)
         : isSet(object.date_of_birth)
         ? globalThis.String(object.date_of_birth)
-        : "",
+        : undefined,
       biologicalSex: isSet(object.biologicalSex)
         ? globalThis.String(object.biologicalSex)
         : isSet(object.biological_sex)
         ? globalThis.String(object.biological_sex)
-        : "",
+        : undefined,
     };
   },
 
   toJSON(message: PersonalDTO): unknown {
     const obj: any = {};
-    if (message.title !== "") {
+    if (message.title !== undefined) {
       obj.title = message.title;
     }
-    if (message.firstName !== "") {
+    if (message.firstName !== undefined && message.firstName !== "") {
       obj.firstName = message.firstName;
     }
-    if (message.preferredName !== "") {
+    if (message.preferredName !== undefined) {
       obj.preferredName = message.preferredName;
     }
-    if (message.middleName !== "") {
+    if (message.middleName !== undefined) {
       obj.middleName = message.middleName;
     }
-    if (message.lastName !== "") {
+    if (message.lastName !== undefined) {
       obj.lastName = message.lastName;
     }
-    if (message.generationalSuffix !== "") {
+    if (message.generationalSuffix !== undefined) {
       obj.generationalSuffix = message.generationalSuffix;
     }
     if (message.professionalCredentials?.length) {
       obj.professionalCredentials = message.professionalCredentials;
     }
-    if (message.dateOfBirth !== "") {
+    if (message.dateOfBirth !== undefined) {
       obj.dateOfBirth = message.dateOfBirth;
     }
-    if (message.biologicalSex !== "") {
+    if (message.biologicalSex !== undefined) {
       obj.biologicalSex = message.biologicalSex;
     }
     return obj;
@@ -4923,35 +5462,35 @@ export const PersonalDTO: MessageFns<PersonalDTO> = {
   },
   fromPartial<I extends Exact<DeepPartial<PersonalDTO>, I>>(object: I): PersonalDTO {
     const message = createBasePersonalDTO();
-    message.title = object.title ?? "";
+    message.title = object.title ?? undefined;
     message.firstName = object.firstName ?? "";
-    message.preferredName = object.preferredName ?? "";
-    message.middleName = object.middleName ?? "";
-    message.lastName = object.lastName ?? "";
-    message.generationalSuffix = object.generationalSuffix ?? "";
+    message.preferredName = object.preferredName ?? undefined;
+    message.middleName = object.middleName ?? undefined;
+    message.lastName = object.lastName ?? undefined;
+    message.generationalSuffix = object.generationalSuffix ?? undefined;
     message.professionalCredentials = object.professionalCredentials?.map((e) => e) || [];
-    message.dateOfBirth = object.dateOfBirth ?? "";
-    message.biologicalSex = object.biologicalSex ?? "";
+    message.dateOfBirth = object.dateOfBirth ?? undefined;
+    message.biologicalSex = object.biologicalSex ?? undefined;
     return message;
   },
 };
 
 function createBaseProfessionalDTO(): ProfessionalDTO {
-  return { companyName: "", jobTitle: "", department: "", companyWebsite: "" };
+  return { companyName: "", jobTitle: undefined, department: undefined, companyWebsite: undefined };
 }
 
 export const ProfessionalDTO: MessageFns<ProfessionalDTO> = {
   encode(message: ProfessionalDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.companyName !== "") {
+    if (message.companyName !== undefined && message.companyName !== "") {
       writer.uint32(10).string(message.companyName);
     }
-    if (message.jobTitle !== "") {
+    if (message.jobTitle !== undefined) {
       writer.uint32(18).string(message.jobTitle);
     }
-    if (message.department !== "") {
+    if (message.department !== undefined) {
       writer.uint32(26).string(message.department);
     }
-    if (message.companyWebsite !== "") {
+    if (message.companyWebsite !== undefined) {
       writer.uint32(34).string(message.companyWebsite);
     }
     return writer;
@@ -5016,28 +5555,28 @@ export const ProfessionalDTO: MessageFns<ProfessionalDTO> = {
         ? globalThis.String(object.jobTitle)
         : isSet(object.job_title)
         ? globalThis.String(object.job_title)
-        : "",
-      department: isSet(object.department) ? globalThis.String(object.department) : "",
+        : undefined,
+      department: isSet(object.department) ? globalThis.String(object.department) : undefined,
       companyWebsite: isSet(object.companyWebsite)
         ? globalThis.String(object.companyWebsite)
         : isSet(object.company_website)
         ? globalThis.String(object.company_website)
-        : "",
+        : undefined,
     };
   },
 
   toJSON(message: ProfessionalDTO): unknown {
     const obj: any = {};
-    if (message.companyName !== "") {
+    if (message.companyName !== undefined && message.companyName !== "") {
       obj.companyName = message.companyName;
     }
-    if (message.jobTitle !== "") {
+    if (message.jobTitle !== undefined) {
       obj.jobTitle = message.jobTitle;
     }
-    if (message.department !== "") {
+    if (message.department !== undefined) {
       obj.department = message.department;
     }
-    if (message.companyWebsite !== "") {
+    if (message.companyWebsite !== undefined) {
       obj.companyWebsite = message.companyWebsite;
     }
     return obj;
@@ -5049,9 +5588,9 @@ export const ProfessionalDTO: MessageFns<ProfessionalDTO> = {
   fromPartial<I extends Exact<DeepPartial<ProfessionalDTO>, I>>(object: I): ProfessionalDTO {
     const message = createBaseProfessionalDTO();
     message.companyName = object.companyName ?? "";
-    message.jobTitle = object.jobTitle ?? "";
-    message.department = object.department ?? "";
-    message.companyWebsite = object.companyWebsite ?? "";
+    message.jobTitle = object.jobTitle ?? undefined;
+    message.department = object.department ?? undefined;
+    message.companyWebsite = object.companyWebsite ?? undefined;
     return message;
   },
 };
@@ -5062,11 +5601,15 @@ function createBaseContactMethodsDTO(): ContactMethodsDTO {
 
 export const ContactMethodsDTO: MessageFns<ContactMethodsDTO> = {
   encode(message: ContactMethodsDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.emails) {
-      EmailAddressDTO.encode(v!, writer.uint32(10).fork()).join();
+    if (message.emails !== undefined && message.emails.length !== 0) {
+      for (const v of message.emails) {
+        EmailAddressDTO.encode(v!, writer.uint32(10).fork()).join();
+      }
     }
-    for (const v of message.phoneNumbers) {
-      PhoneNumberDTO.encode(v!, writer.uint32(18).fork()).join();
+    if (message.phoneNumbers !== undefined && message.phoneNumbers.length !== 0) {
+      for (const v of message.phoneNumbers) {
+        PhoneNumberDTO.encode(v!, writer.uint32(18).fork()).join();
+      }
     }
     return writer;
   },
@@ -5083,7 +5626,10 @@ export const ContactMethodsDTO: MessageFns<ContactMethodsDTO> = {
             break;
           }
 
-          message.emails.push(EmailAddressDTO.decode(reader, reader.uint32()));
+          const el = EmailAddressDTO.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.emails!.push(el);
+          }
           continue;
         }
         case 2: {
@@ -5091,7 +5637,10 @@ export const ContactMethodsDTO: MessageFns<ContactMethodsDTO> = {
             break;
           }
 
-          message.phoneNumbers.push(PhoneNumberDTO.decode(reader, reader.uint32()));
+          const el = PhoneNumberDTO.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.phoneNumbers!.push(el);
+          }
           continue;
         }
       }
@@ -5143,16 +5692,16 @@ function createBaseLocationDTO(): LocationDTO {
     hashId: "",
     coordinates: undefined,
     address: undefined,
-    city: "",
-    postalCode: "",
-    subdivisionIso31662Code: "",
-    countryIso31661Alpha2Code: "",
+    city: undefined,
+    postalCode: undefined,
+    subdivisionIso31662Code: undefined,
+    countryIso31661Alpha2Code: undefined,
   };
 }
 
 export const LocationDTO: MessageFns<LocationDTO> = {
   encode(message: LocationDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.hashId !== "") {
+    if (message.hashId !== undefined && message.hashId !== "") {
       writer.uint32(10).string(message.hashId);
     }
     if (message.coordinates !== undefined) {
@@ -5161,16 +5710,16 @@ export const LocationDTO: MessageFns<LocationDTO> = {
     if (message.address !== undefined) {
       StreetAddressDTO.encode(message.address, writer.uint32(26).fork()).join();
     }
-    if (message.city !== "") {
+    if (message.city !== undefined) {
       writer.uint32(34).string(message.city);
     }
-    if (message.postalCode !== "") {
+    if (message.postalCode !== undefined) {
       writer.uint32(42).string(message.postalCode);
     }
-    if (message.subdivisionIso31662Code !== "") {
+    if (message.subdivisionIso31662Code !== undefined) {
       writer.uint32(50).string(message.subdivisionIso31662Code);
     }
-    if (message.countryIso31661Alpha2Code !== "") {
+    if (message.countryIso31661Alpha2Code !== undefined) {
       writer.uint32(58).string(message.countryIso31661Alpha2Code);
     }
     return writer;
@@ -5257,28 +5806,28 @@ export const LocationDTO: MessageFns<LocationDTO> = {
         : "",
       coordinates: isSet(object.coordinates) ? CoordinatesDTO.fromJSON(object.coordinates) : undefined,
       address: isSet(object.address) ? StreetAddressDTO.fromJSON(object.address) : undefined,
-      city: isSet(object.city) ? globalThis.String(object.city) : "",
+      city: isSet(object.city) ? globalThis.String(object.city) : undefined,
       postalCode: isSet(object.postalCode)
         ? globalThis.String(object.postalCode)
         : isSet(object.postal_code)
         ? globalThis.String(object.postal_code)
-        : "",
+        : undefined,
       subdivisionIso31662Code: isSet(object.subdivisionIso31662Code)
         ? globalThis.String(object.subdivisionIso31662Code)
         : isSet(object.subdivision_iso_3166_2_code)
         ? globalThis.String(object.subdivision_iso_3166_2_code)
-        : "",
+        : undefined,
       countryIso31661Alpha2Code: isSet(object.countryIso31661Alpha2Code)
         ? globalThis.String(object.countryIso31661Alpha2Code)
         : isSet(object.country_iso_3166_1_alpha_2_code)
         ? globalThis.String(object.country_iso_3166_1_alpha_2_code)
-        : "",
+        : undefined,
     };
   },
 
   toJSON(message: LocationDTO): unknown {
     const obj: any = {};
-    if (message.hashId !== "") {
+    if (message.hashId !== undefined && message.hashId !== "") {
       obj.hashId = message.hashId;
     }
     if (message.coordinates !== undefined) {
@@ -5287,16 +5836,16 @@ export const LocationDTO: MessageFns<LocationDTO> = {
     if (message.address !== undefined) {
       obj.address = StreetAddressDTO.toJSON(message.address);
     }
-    if (message.city !== "") {
+    if (message.city !== undefined) {
       obj.city = message.city;
     }
-    if (message.postalCode !== "") {
+    if (message.postalCode !== undefined) {
       obj.postalCode = message.postalCode;
     }
-    if (message.subdivisionIso31662Code !== "") {
+    if (message.subdivisionIso31662Code !== undefined) {
       obj.subdivisionIso31662Code = message.subdivisionIso31662Code;
     }
-    if (message.countryIso31661Alpha2Code !== "") {
+    if (message.countryIso31661Alpha2Code !== undefined) {
       obj.countryIso31661Alpha2Code = message.countryIso31661Alpha2Code;
     }
     return obj;
@@ -5314,10 +5863,10 @@ export const LocationDTO: MessageFns<LocationDTO> = {
     message.address = (object.address !== undefined && object.address !== null)
       ? StreetAddressDTO.fromPartial(object.address)
       : undefined;
-    message.city = object.city ?? "";
-    message.postalCode = object.postalCode ?? "";
-    message.subdivisionIso31662Code = object.subdivisionIso31662Code ?? "";
-    message.countryIso31661Alpha2Code = object.countryIso31661Alpha2Code ?? "";
+    message.city = object.city ?? undefined;
+    message.postalCode = object.postalCode ?? undefined;
+    message.subdivisionIso31662Code = object.subdivisionIso31662Code ?? undefined;
+    message.countryIso31661Alpha2Code = object.countryIso31661Alpha2Code ?? undefined;
     return message;
   },
 };
@@ -5328,98 +5877,98 @@ function createBaseWhoIsDTO(): WhoIsDTO {
     ipAddress: "",
     year: 0,
     month: 0,
-    asn: 0,
-    asName: "",
-    asDomain: "",
-    asType: "",
-    carrierName: "",
-    mcc: "",
-    mnc: "",
-    asChanged: "",
-    geoChanged: "",
-    isAnonymous: false,
-    isAnycast: false,
-    isHosting: false,
-    isMobile: false,
-    isSatellite: false,
-    isProxy: false,
-    isRelay: false,
-    isTor: false,
-    isVpn: false,
-    privacyName: "",
+    asn: undefined,
+    asName: undefined,
+    asDomain: undefined,
+    asType: undefined,
+    carrierName: undefined,
+    mcc: undefined,
+    mnc: undefined,
+    asChanged: undefined,
+    geoChanged: undefined,
+    isAnonymous: undefined,
+    isAnycast: undefined,
+    isHosting: undefined,
+    isMobile: undefined,
+    isSatellite: undefined,
+    isProxy: undefined,
+    isRelay: undefined,
+    isTor: undefined,
+    isVpn: undefined,
+    privacyName: undefined,
     location: undefined,
   };
 }
 
 export const WhoIsDTO: MessageFns<WhoIsDTO> = {
   encode(message: WhoIsDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.hashId !== "") {
+    if (message.hashId !== undefined && message.hashId !== "") {
       writer.uint32(10).string(message.hashId);
     }
-    if (message.ipAddress !== "") {
+    if (message.ipAddress !== undefined && message.ipAddress !== "") {
       writer.uint32(18).string(message.ipAddress);
     }
-    if (message.year !== 0) {
+    if (message.year !== undefined && message.year !== 0) {
       writer.uint32(24).int32(message.year);
     }
-    if (message.month !== 0) {
+    if (message.month !== undefined && message.month !== 0) {
       writer.uint32(32).int32(message.month);
     }
-    if (message.asn !== 0) {
+    if (message.asn !== undefined) {
       writer.uint32(48).int32(message.asn);
     }
-    if (message.asName !== "") {
+    if (message.asName !== undefined) {
       writer.uint32(58).string(message.asName);
     }
-    if (message.asDomain !== "") {
+    if (message.asDomain !== undefined) {
       writer.uint32(66).string(message.asDomain);
     }
-    if (message.asType !== "") {
+    if (message.asType !== undefined) {
       writer.uint32(74).string(message.asType);
     }
-    if (message.carrierName !== "") {
+    if (message.carrierName !== undefined) {
       writer.uint32(82).string(message.carrierName);
     }
-    if (message.mcc !== "") {
+    if (message.mcc !== undefined) {
       writer.uint32(90).string(message.mcc);
     }
-    if (message.mnc !== "") {
+    if (message.mnc !== undefined) {
       writer.uint32(98).string(message.mnc);
     }
-    if (message.asChanged !== "") {
+    if (message.asChanged !== undefined) {
       writer.uint32(106).string(message.asChanged);
     }
-    if (message.geoChanged !== "") {
+    if (message.geoChanged !== undefined) {
       writer.uint32(114).string(message.geoChanged);
     }
-    if (message.isAnonymous !== false) {
+    if (message.isAnonymous !== undefined) {
       writer.uint32(120).bool(message.isAnonymous);
     }
-    if (message.isAnycast !== false) {
+    if (message.isAnycast !== undefined) {
       writer.uint32(128).bool(message.isAnycast);
     }
-    if (message.isHosting !== false) {
+    if (message.isHosting !== undefined) {
       writer.uint32(136).bool(message.isHosting);
     }
-    if (message.isMobile !== false) {
+    if (message.isMobile !== undefined) {
       writer.uint32(144).bool(message.isMobile);
     }
-    if (message.isSatellite !== false) {
+    if (message.isSatellite !== undefined) {
       writer.uint32(152).bool(message.isSatellite);
     }
-    if (message.isProxy !== false) {
+    if (message.isProxy !== undefined) {
       writer.uint32(160).bool(message.isProxy);
     }
-    if (message.isRelay !== false) {
+    if (message.isRelay !== undefined) {
       writer.uint32(168).bool(message.isRelay);
     }
-    if (message.isTor !== false) {
+    if (message.isTor !== undefined) {
       writer.uint32(176).bool(message.isTor);
     }
-    if (message.isVpn !== false) {
+    if (message.isVpn !== undefined) {
       writer.uint32(184).bool(message.isVpn);
     }
-    if (message.privacyName !== "") {
+    if (message.privacyName !== undefined) {
       writer.uint32(194).string(message.privacyName);
     }
     if (message.location !== undefined) {
@@ -5650,162 +6199,162 @@ export const WhoIsDTO: MessageFns<WhoIsDTO> = {
         : "",
       year: isSet(object.year) ? globalThis.Number(object.year) : 0,
       month: isSet(object.month) ? globalThis.Number(object.month) : 0,
-      asn: isSet(object.asn) ? globalThis.Number(object.asn) : 0,
+      asn: isSet(object.asn) ? globalThis.Number(object.asn) : undefined,
       asName: isSet(object.asName)
         ? globalThis.String(object.asName)
         : isSet(object.as_name)
         ? globalThis.String(object.as_name)
-        : "",
+        : undefined,
       asDomain: isSet(object.asDomain)
         ? globalThis.String(object.asDomain)
         : isSet(object.as_domain)
         ? globalThis.String(object.as_domain)
-        : "",
+        : undefined,
       asType: isSet(object.asType)
         ? globalThis.String(object.asType)
         : isSet(object.as_type)
         ? globalThis.String(object.as_type)
-        : "",
+        : undefined,
       carrierName: isSet(object.carrierName)
         ? globalThis.String(object.carrierName)
         : isSet(object.carrier_name)
         ? globalThis.String(object.carrier_name)
-        : "",
-      mcc: isSet(object.mcc) ? globalThis.String(object.mcc) : "",
-      mnc: isSet(object.mnc) ? globalThis.String(object.mnc) : "",
+        : undefined,
+      mcc: isSet(object.mcc) ? globalThis.String(object.mcc) : undefined,
+      mnc: isSet(object.mnc) ? globalThis.String(object.mnc) : undefined,
       asChanged: isSet(object.asChanged)
         ? globalThis.String(object.asChanged)
         : isSet(object.as_changed)
         ? globalThis.String(object.as_changed)
-        : "",
+        : undefined,
       geoChanged: isSet(object.geoChanged)
         ? globalThis.String(object.geoChanged)
         : isSet(object.geo_changed)
         ? globalThis.String(object.geo_changed)
-        : "",
+        : undefined,
       isAnonymous: isSet(object.isAnonymous)
         ? globalThis.Boolean(object.isAnonymous)
         : isSet(object.is_anonymous)
         ? globalThis.Boolean(object.is_anonymous)
-        : false,
+        : undefined,
       isAnycast: isSet(object.isAnycast)
         ? globalThis.Boolean(object.isAnycast)
         : isSet(object.is_anycast)
         ? globalThis.Boolean(object.is_anycast)
-        : false,
+        : undefined,
       isHosting: isSet(object.isHosting)
         ? globalThis.Boolean(object.isHosting)
         : isSet(object.is_hosting)
         ? globalThis.Boolean(object.is_hosting)
-        : false,
+        : undefined,
       isMobile: isSet(object.isMobile)
         ? globalThis.Boolean(object.isMobile)
         : isSet(object.is_mobile)
         ? globalThis.Boolean(object.is_mobile)
-        : false,
+        : undefined,
       isSatellite: isSet(object.isSatellite)
         ? globalThis.Boolean(object.isSatellite)
         : isSet(object.is_satellite)
         ? globalThis.Boolean(object.is_satellite)
-        : false,
+        : undefined,
       isProxy: isSet(object.isProxy)
         ? globalThis.Boolean(object.isProxy)
         : isSet(object.is_proxy)
         ? globalThis.Boolean(object.is_proxy)
-        : false,
+        : undefined,
       isRelay: isSet(object.isRelay)
         ? globalThis.Boolean(object.isRelay)
         : isSet(object.is_relay)
         ? globalThis.Boolean(object.is_relay)
-        : false,
+        : undefined,
       isTor: isSet(object.isTor)
         ? globalThis.Boolean(object.isTor)
         : isSet(object.is_tor)
         ? globalThis.Boolean(object.is_tor)
-        : false,
+        : undefined,
       isVpn: isSet(object.isVpn)
         ? globalThis.Boolean(object.isVpn)
         : isSet(object.is_vpn)
         ? globalThis.Boolean(object.is_vpn)
-        : false,
+        : undefined,
       privacyName: isSet(object.privacyName)
         ? globalThis.String(object.privacyName)
         : isSet(object.privacy_name)
         ? globalThis.String(object.privacy_name)
-        : "",
+        : undefined,
       location: isSet(object.location) ? LocationDTO.fromJSON(object.location) : undefined,
     };
   },
 
   toJSON(message: WhoIsDTO): unknown {
     const obj: any = {};
-    if (message.hashId !== "") {
+    if (message.hashId !== undefined && message.hashId !== "") {
       obj.hashId = message.hashId;
     }
-    if (message.ipAddress !== "") {
+    if (message.ipAddress !== undefined && message.ipAddress !== "") {
       obj.ipAddress = message.ipAddress;
     }
-    if (message.year !== 0) {
+    if (message.year !== undefined && message.year !== 0) {
       obj.year = Math.round(message.year);
     }
-    if (message.month !== 0) {
+    if (message.month !== undefined && message.month !== 0) {
       obj.month = Math.round(message.month);
     }
-    if (message.asn !== 0) {
+    if (message.asn !== undefined) {
       obj.asn = Math.round(message.asn);
     }
-    if (message.asName !== "") {
+    if (message.asName !== undefined) {
       obj.asName = message.asName;
     }
-    if (message.asDomain !== "") {
+    if (message.asDomain !== undefined) {
       obj.asDomain = message.asDomain;
     }
-    if (message.asType !== "") {
+    if (message.asType !== undefined) {
       obj.asType = message.asType;
     }
-    if (message.carrierName !== "") {
+    if (message.carrierName !== undefined) {
       obj.carrierName = message.carrierName;
     }
-    if (message.mcc !== "") {
+    if (message.mcc !== undefined) {
       obj.mcc = message.mcc;
     }
-    if (message.mnc !== "") {
+    if (message.mnc !== undefined) {
       obj.mnc = message.mnc;
     }
-    if (message.asChanged !== "") {
+    if (message.asChanged !== undefined) {
       obj.asChanged = message.asChanged;
     }
-    if (message.geoChanged !== "") {
+    if (message.geoChanged !== undefined) {
       obj.geoChanged = message.geoChanged;
     }
-    if (message.isAnonymous !== false) {
+    if (message.isAnonymous !== undefined) {
       obj.isAnonymous = message.isAnonymous;
     }
-    if (message.isAnycast !== false) {
+    if (message.isAnycast !== undefined) {
       obj.isAnycast = message.isAnycast;
     }
-    if (message.isHosting !== false) {
+    if (message.isHosting !== undefined) {
       obj.isHosting = message.isHosting;
     }
-    if (message.isMobile !== false) {
+    if (message.isMobile !== undefined) {
       obj.isMobile = message.isMobile;
     }
-    if (message.isSatellite !== false) {
+    if (message.isSatellite !== undefined) {
       obj.isSatellite = message.isSatellite;
     }
-    if (message.isProxy !== false) {
+    if (message.isProxy !== undefined) {
       obj.isProxy = message.isProxy;
     }
-    if (message.isRelay !== false) {
+    if (message.isRelay !== undefined) {
       obj.isRelay = message.isRelay;
     }
-    if (message.isTor !== false) {
+    if (message.isTor !== undefined) {
       obj.isTor = message.isTor;
     }
-    if (message.isVpn !== false) {
+    if (message.isVpn !== undefined) {
       obj.isVpn = message.isVpn;
     }
-    if (message.privacyName !== "") {
+    if (message.privacyName !== undefined) {
       obj.privacyName = message.privacyName;
     }
     if (message.location !== undefined) {
@@ -5823,25 +6372,25 @@ export const WhoIsDTO: MessageFns<WhoIsDTO> = {
     message.ipAddress = object.ipAddress ?? "";
     message.year = object.year ?? 0;
     message.month = object.month ?? 0;
-    message.asn = object.asn ?? 0;
-    message.asName = object.asName ?? "";
-    message.asDomain = object.asDomain ?? "";
-    message.asType = object.asType ?? "";
-    message.carrierName = object.carrierName ?? "";
-    message.mcc = object.mcc ?? "";
-    message.mnc = object.mnc ?? "";
-    message.asChanged = object.asChanged ?? "";
-    message.geoChanged = object.geoChanged ?? "";
-    message.isAnonymous = object.isAnonymous ?? false;
-    message.isAnycast = object.isAnycast ?? false;
-    message.isHosting = object.isHosting ?? false;
-    message.isMobile = object.isMobile ?? false;
-    message.isSatellite = object.isSatellite ?? false;
-    message.isProxy = object.isProxy ?? false;
-    message.isRelay = object.isRelay ?? false;
-    message.isTor = object.isTor ?? false;
-    message.isVpn = object.isVpn ?? false;
-    message.privacyName = object.privacyName ?? "";
+    message.asn = object.asn ?? undefined;
+    message.asName = object.asName ?? undefined;
+    message.asDomain = object.asDomain ?? undefined;
+    message.asType = object.asType ?? undefined;
+    message.carrierName = object.carrierName ?? undefined;
+    message.mcc = object.mcc ?? undefined;
+    message.mnc = object.mnc ?? undefined;
+    message.asChanged = object.asChanged ?? undefined;
+    message.geoChanged = object.geoChanged ?? undefined;
+    message.isAnonymous = object.isAnonymous ?? undefined;
+    message.isAnycast = object.isAnycast ?? undefined;
+    message.isHosting = object.isHosting ?? undefined;
+    message.isMobile = object.isMobile ?? undefined;
+    message.isSatellite = object.isSatellite ?? undefined;
+    message.isProxy = object.isProxy ?? undefined;
+    message.isRelay = object.isRelay ?? undefined;
+    message.isTor = object.isTor ?? undefined;
+    message.isVpn = object.isVpn ?? undefined;
+    message.privacyName = object.privacyName ?? undefined;
     message.location = (object.location !== undefined && object.location !== null)
       ? LocationDTO.fromPartial(object.location)
       : undefined;
@@ -5860,21 +6409,22 @@ function createBaseContactDTO(): ContactDTO {
     professionalDetails: undefined,
     location: undefined,
     ietfBcp47Tag: "",
+    ianaIdentifier: "",
   };
 }
 
 export const ContactDTO: MessageFns<ContactDTO> = {
   encode(message: ContactDTO, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
+    if (message.id !== undefined && message.id !== "") {
       writer.uint32(10).string(message.id);
     }
     if (message.createdAt !== undefined) {
       Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(18).fork()).join();
     }
-    if (message.contextKey !== "") {
+    if (message.contextKey !== undefined && message.contextKey !== "") {
       writer.uint32(26).string(message.contextKey);
     }
-    if (message.relatedEntityId !== "") {
+    if (message.relatedEntityId !== undefined && message.relatedEntityId !== "") {
       writer.uint32(34).string(message.relatedEntityId);
     }
     if (message.contactMethods !== undefined) {
@@ -5889,8 +6439,11 @@ export const ContactDTO: MessageFns<ContactDTO> = {
     if (message.location !== undefined) {
       LocationDTO.encode(message.location, writer.uint32(66).fork()).join();
     }
-    if (message.ietfBcp47Tag !== "") {
+    if (message.ietfBcp47Tag !== undefined && message.ietfBcp47Tag !== "") {
       writer.uint32(74).string(message.ietfBcp47Tag);
+    }
+    if (message.ianaIdentifier !== undefined && message.ianaIdentifier !== "") {
+      writer.uint32(82).string(message.ianaIdentifier);
     }
     return writer;
   },
@@ -5974,6 +6527,14 @@ export const ContactDTO: MessageFns<ContactDTO> = {
           message.ietfBcp47Tag = reader.string();
           continue;
         }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.ianaIdentifier = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -6022,21 +6583,26 @@ export const ContactDTO: MessageFns<ContactDTO> = {
         : isSet(object.ietf_bcp47_tag)
         ? globalThis.String(object.ietf_bcp47_tag)
         : "",
+      ianaIdentifier: isSet(object.ianaIdentifier)
+        ? globalThis.String(object.ianaIdentifier)
+        : isSet(object.iana_identifier)
+        ? globalThis.String(object.iana_identifier)
+        : "",
     };
   },
 
   toJSON(message: ContactDTO): unknown {
     const obj: any = {};
-    if (message.id !== "") {
+    if (message.id !== undefined && message.id !== "") {
       obj.id = message.id;
     }
     if (message.createdAt !== undefined) {
       obj.createdAt = message.createdAt.toISOString();
     }
-    if (message.contextKey !== "") {
+    if (message.contextKey !== undefined && message.contextKey !== "") {
       obj.contextKey = message.contextKey;
     }
-    if (message.relatedEntityId !== "") {
+    if (message.relatedEntityId !== undefined && message.relatedEntityId !== "") {
       obj.relatedEntityId = message.relatedEntityId;
     }
     if (message.contactMethods !== undefined) {
@@ -6051,8 +6617,11 @@ export const ContactDTO: MessageFns<ContactDTO> = {
     if (message.location !== undefined) {
       obj.location = LocationDTO.toJSON(message.location);
     }
-    if (message.ietfBcp47Tag !== "") {
+    if (message.ietfBcp47Tag !== undefined && message.ietfBcp47Tag !== "") {
       obj.ietfBcp47Tag = message.ietfBcp47Tag;
+    }
+    if (message.ianaIdentifier !== undefined && message.ianaIdentifier !== "") {
+      obj.ianaIdentifier = message.ianaIdentifier;
     }
     return obj;
   },
@@ -6079,6 +6648,7 @@ export const ContactDTO: MessageFns<ContactDTO> = {
       ? LocationDTO.fromPartial(object.location)
       : undefined;
     message.ietfBcp47Tag = object.ietfBcp47Tag ?? "";
+    message.ianaIdentifier = object.ianaIdentifier ?? "";
     return message;
   },
 };

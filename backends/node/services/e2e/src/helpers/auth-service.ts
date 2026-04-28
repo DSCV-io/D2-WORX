@@ -3,6 +3,17 @@ import { createApp } from "@d2/auth-api";
 import { COMMS_EVENTS } from "@d2/comms-client";
 import { createPasswordFunctions, type AuthServiceConfig, type PrefixCache } from "@d2/auth-infra";
 
+/**
+ * Test-fixture API key. Anywhere E2E code calls a non-`/api/auth/*` route
+ * (account routes, invitations, etc.) it MUST send this as `x-api-key`,
+ * otherwise the auth API's fail-closed S2S middleware rejects with 401.
+ *
+ * The same key is plumbed into the SvelteKit dev server via
+ * `SVELTEKIT_AUTH__API_KEY` so its auth proxy can identify as a trusted
+ * service when forwarding browser requests.
+ */
+export const E2E_AUTH_API_KEY = "e2e-test-auth-key";
+
 let messageBus: MessageBus | undefined;
 let publisher: IMessagePublisher | undefined;
 let shutdownFn: (() => Promise<void>) | undefined;
@@ -12,6 +23,8 @@ export interface AuthServiceHandle {
   auth: Awaited<ReturnType<typeof createApp>>["auth"];
   /** Hono app for HTTP route testing (invitation routes, etc.). */
   app: Awaited<ReturnType<typeof createApp>>["app"];
+  /** gRPC address (e.g., "localhost:54321") — only set when grpcPort is provided. */
+  grpcAddress?: string;
 }
 
 /**
@@ -35,6 +48,14 @@ export async function startAuthService(opts: {
   geoAddress: string;
   geoApiKey: string;
   corsOrigins?: string[];
+  /** Enable Auth gRPC server on this port (for FileCallback, etc.). */
+  grpcPort?: number;
+  /**
+   * API keys for S2S authentication. Defaults to a single test key so the
+   * HTTP server's fail-closed posture (commit 95ca94c7) doesn't block E2E
+   * setup. Override only when a test specifically asserts on key contents.
+   */
+  authApiKeys?: string[];
 }): Promise<AuthServiceHandle> {
   // Create RabbitMQ publisher for auth events
   messageBus = new MessageBus({
@@ -47,7 +68,10 @@ export async function startAuthService(opts: {
     exchanges: [{ exchange: COMMS_EVENTS.NOTIFICATIONS_EXCHANGE, type: "fanout" }],
   });
 
-  const config: AuthServiceConfig = {
+  const config: AuthServiceConfig & {
+    authApiKeys?: string[];
+    grpcPort?: number;
+  } = {
     databaseUrl: opts.databaseUrl,
     redisUrl: opts.redisUrl,
     baseUrl: "http://localhost:3333",
@@ -59,15 +83,28 @@ export async function startAuthService(opts: {
     passwordMaxLength: 128,
     geoAddress: opts.geoAddress,
     geoApiKey: opts.geoApiKey,
+    grpcPort: opts.grpcPort,
+    authApiKeys: opts.authApiKeys ?? [E2E_AUTH_API_KEY],
   };
 
   // Skip HIBP API in E2E tests — domain validation still runs
   const passwordFunctions = createPasswordFunctions(noBreachCache);
 
-  const { app, auth, shutdown } = await createApp(config, publisher, { passwordFunctions });
+  // Pass `messageBus` as the 4th arg so composition-root spins up the
+  // WhoIs resolution consumer (which declares the `auth.whois-resolution`
+  // exchange). Without it, every sign-in's onSignIn publish fails with
+  // "no exchange auth.whois-resolution" — fail-open, but spammy + masks
+  // real downstream wiring problems in the test logs.
+  const { app, auth, shutdown } = await createApp(
+    config,
+    publisher,
+    { passwordFunctions },
+    messageBus,
+  );
   shutdownFn = shutdown;
 
-  return { auth, app };
+  const grpcAddress = opts.grpcPort ? `localhost:${opts.grpcPort}` : undefined;
+  return { auth, app, grpcAddress };
 }
 
 /** Race a promise against a timeout (resolves even if inner hangs). */

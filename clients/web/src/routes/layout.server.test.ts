@@ -39,10 +39,20 @@ interface LayoutData {
 
 const fakeUrl = { pathname: "/" } as URL;
 
+// Stub `cookies` API — the layout loader reads D2_TIMEZONE; tests don't
+// exercise that path so a no-op getter is enough to satisfy the call.
+const fakeCookies = {
+  get: () => undefined,
+  getAll: () => [],
+  set: () => {},
+  delete: () => {},
+  serialize: () => "",
+};
+
 async function callLoad(locals: Record<string, unknown> = {}): Promise<LayoutData> {
   // Dynamic import so mocks are in place before the module executes
   const { load } = await import("./+layout.server");
-  return (await load({ locals, url: fakeUrl } as any)) as LayoutData;
+  return (await load({ locals, url: fakeUrl, cookies: fakeCookies } as any)) as LayoutData;
 }
 
 describe("root +layout.server.ts", () => {

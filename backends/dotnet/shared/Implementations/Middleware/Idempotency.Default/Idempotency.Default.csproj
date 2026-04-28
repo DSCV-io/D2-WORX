@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\RequestEnrichment.Default\RequestEnrichment.Default.csproj" />
         <ProjectReference Include="..\..\..\Handler\Handler.csproj" />
         <ProjectReference Include="..\..\..\I18n\I18n.csproj" />
         <ProjectReference Include="..\..\..\Result\Result.csproj" />

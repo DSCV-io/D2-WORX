@@ -11,3 +11,4 @@ plugins:
       - env=node
       - esModuleInterop=true
       - forceLong=string
+      - useOptionals=all

@@ -19,8 +19,8 @@ export class Remove extends BaseHandler<Input, Output> implements DistributedCac
     try {
       await this.redis.del(input.key);
       return D2Result.ok({ data: {} });
-    } catch {
-      return redisErrorResult();
+    } catch (err: unknown) {
+      return redisErrorResult(err);
     }
   }
 }

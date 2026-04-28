@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+import "common/v1/d2_result.proto";
+
+package d2.files.v1;
+
+option csharp_namespace = "D2.Services.Protos.Files.V1";
+
+// FileCallback — implemented by owning services (auth, comms).
+// The Files service calls these RPCs to check access and notify on processing completion.
+service FileCallback {
+  // Check whether the requesting user has access to upload/read files for the given context.
+  rpc CanAccess(CanAccessRequest) returns (CanAccessResponse);
+
+  // Notify the owning service that file processing completed (ready or rejected).
+  rpc OnFileProcessed(FileProcessedRequest) returns (FileProcessedResponse);
+}
+
+// ****************************************
+// ***** CanAccess ************************
+// ****************************************
+
+message CanAccessRequest {
+  string context_key = 1;
+  string related_entity_id = 2;
+  string requesting_user_id = 3;
+  optional string requesting_org_id = 4;
+  string action = 5; // "upload" | "read" | "list"
+}
+
+message CanAccessResponse {
+  d2.common.v1.D2ResultProto result = 1;
+  bool allowed = 2;
+}
+
+// ****************************************
+// ***** OnFileProcessed ******************
+// ****************************************
+
+message FileProcessedRequest {
+  string file_id = 1;
+  string context_key = 2;
+  string related_entity_id = 3;
+  string status = 4; // "ready" | "rejected"
+  repeated string variants = 5; // variant names (e.g., "original", "thumbnail")
+}
+
+message FileProcessedResponse {
+  d2.common.v1.D2ResultProto result = 1;
+  bool success = 2;
+}

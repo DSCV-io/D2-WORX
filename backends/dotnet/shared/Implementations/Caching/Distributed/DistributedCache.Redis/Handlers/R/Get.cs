@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="Get.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -7,7 +7,6 @@
 namespace D2.Shared.DistributedCache.Redis.Handlers.R;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
-using System.Net;
 using System.Text.Json;
 using D2.Shared.Handler;
 using D2.Shared.I18n;
@@ -86,20 +85,15 @@ public partial class Get<TValue> : BaseHandler<
         {
             LogGetFailed(Context.Logger, ex, input.Key, TraceId);
 
-            return D2Result<S.GetOutput<TValue>?>.Fail(
-                [TK.Common.Errors.SERVICE_UNAVAILABLE],
-                HttpStatusCode.ServiceUnavailable,
-                errorCode: ErrorCodes.SERVICE_UNAVAILABLE);
+            return D2Result<S.GetOutput<TValue>?>.ServiceUnavailable(traceId: TraceId);
         }
         catch (JsonException ex)
         {
             LogGetDeserializationFailed(Context.Logger, ex, input.Key, TraceId);
 
-            return D2Result<S.GetOutput<TValue>?>.Fail(
-                [TK.Common.Errors.REQUEST_FAILED],
-                HttpStatusCode.InternalServerError,
-                [[nameof(S.GetInput.Key), TK.Common.Errors.REQUEST_FAILED]],
-                ErrorCodes.COULD_NOT_BE_DESERIALIZED);
+            return D2Result<S.GetOutput<TValue>?>.UnhandledException(
+                messages: [TK.Common.Errors.COULD_NOT_BE_DESERIALIZED],
+                traceId: TraceId);
         }
 
         // Let the base handler catch any other exceptions.

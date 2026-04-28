@@ -8,7 +8,7 @@ namespace D2.Gateways.REST.Endpoints;
 
 using D2.Services.Protos.Common.V1;
 using D2.Services.Protos.Geo.V1;
-using D2.Shared.Auth.Default;
+using D2.Shared.ServiceKey.Default;
 using D2.Shared.Utilities.Extensions;
 
 /// <summary>

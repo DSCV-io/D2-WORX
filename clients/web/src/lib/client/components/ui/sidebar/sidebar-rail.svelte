@@ -1,5 +1,6 @@
 <script lang="ts">
   import { cn, type WithElementRef } from "$lib/shared/utils/utils.js";
+  import * as m from "$lib/paraglide/messages.js";
   import type { HTMLAttributes } from "svelte/elements";
   import { useSidebar } from "./context.svelte.js";
 
@@ -17,10 +18,10 @@
   bind:this={ref}
   data-sidebar="rail"
   data-slot="sidebar-rail"
-  aria-label="Toggle Sidebar"
+  aria-label={m.common_ui_toggle_sidebar()}
   tabIndex={-1}
   onclick={sidebar.toggle}
-  title="Toggle Sidebar"
+  title={m.common_ui_toggle_sidebar()}
   class={cn(
     "hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear group-data-[side=left]:-end-4 group-data-[side=right]:start-0 after:absolute after:inset-y-0 after:start-[calc(1/2*100%-1px)] after:w-[2px] sm:flex",
     "in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize",

@@ -57,7 +57,7 @@ describe("toDomainSession", () => {
     expect(session.emulatedOrganizationType).toBe("customer");
   });
 
-  it("should default nullable fields to null", () => {
+  it("should default optional fields to undefined and auth-state fields to null", () => {
     const raw = {
       id: "session-minimal",
       userId: "user-1",
@@ -69,8 +69,8 @@ describe("toDomainSession", () => {
 
     const session = toDomainSession(raw);
 
-    expect(session.ipAddress).toBeNull();
-    expect(session.userAgent).toBeNull();
+    expect(session.ipAddress).toBeUndefined();
+    expect(session.userAgent).toBeUndefined();
     expect(session.activeOrganizationId).toBeNull();
     expect(session.activeOrganizationType).toBeNull();
     expect(session.activeOrganizationRole).toBeNull();

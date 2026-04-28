@@ -64,7 +64,12 @@ export class CheckEmailAvailability
 
     // 1. Check in-memory cache (fail-open on error)
     if (this.cache) {
-      const cached = await this.cache.get.handleAsync({ key: cacheKey }).catch(() => undefined);
+      const cached = await this.cache.get.handleAsync({ key: cacheKey }).catch((err: unknown) => {
+        this.context.logger.debug("CheckEmailAvailability: cache get failed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        return undefined;
+      });
       if (cached?.success && cached.data) {
         return D2Result.ok({ data: { available: cached.data.value } });
       }
@@ -79,7 +84,11 @@ export class CheckEmailAvailability
       const ttl = result.data.available ? AVAILABLE_CACHE_TTL_MS : TAKEN_CACHE_TTL_MS;
       this.cache.set
         .handleAsync({ key: cacheKey, value: result.data.available, expirationMs: ttl })
-        .catch(() => {});
+        .catch((err: unknown) =>
+          this.context.logger.debug("CheckEmailAvailability: cache set failed", {
+            error: err instanceof Error ? err.message : String(err),
+          }),
+        );
     }
 
     return result;

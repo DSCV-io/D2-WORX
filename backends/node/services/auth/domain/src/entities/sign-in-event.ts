@@ -7,9 +7,11 @@ export interface SignInEvent {
   readonly successful: boolean;
   readonly ipAddress: string;
   readonly userAgent: string;
-  readonly whoIsId: string | null;
-  readonly deviceFingerprint: string | null;
-  readonly failureReason: string | null;
+  readonly whoIsId?: string;
+  readonly deviceFingerprint?: string;
+  readonly clientFingerprint?: string;
+  readonly serverFingerprint?: string;
+  readonly failureReason?: string;
   readonly createdAt: Date;
 }
 
@@ -18,9 +20,11 @@ export interface CreateSignInEventInput {
   readonly successful: boolean;
   readonly ipAddress: string;
   readonly userAgent: string;
-  readonly whoIsId?: string | null;
-  readonly deviceFingerprint?: string | null;
-  readonly failureReason?: string | null;
+  readonly whoIsId?: string;
+  readonly deviceFingerprint?: string;
+  readonly clientFingerprint?: string;
+  readonly serverFingerprint?: string;
+  readonly failureReason?: string;
   readonly id?: string;
 }
 
@@ -43,9 +47,11 @@ export function createSignInEvent(input: CreateSignInEventInput): SignInEvent {
     successful: input.successful,
     ipAddress: input.ipAddress,
     userAgent: input.userAgent,
-    whoIsId: input.whoIsId ?? null,
-    deviceFingerprint: input.deviceFingerprint ?? null,
-    failureReason: input.failureReason ?? null,
+    whoIsId: input.whoIsId,
+    deviceFingerprint: input.deviceFingerprint,
+    clientFingerprint: input.clientFingerprint,
+    serverFingerprint: input.serverFingerprint,
+    failureReason: input.failureReason,
     createdAt: new Date(),
   };
 }

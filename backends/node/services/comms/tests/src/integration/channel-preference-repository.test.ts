@@ -47,10 +47,10 @@ describe("ChannelPreferenceRepository (integration)", () => {
     expect(found!.updatedAt).toBeInstanceOf(Date);
   });
 
-  it("should return null for unknown contactId", async () => {
+  it("should return undefined for unknown contactId", async () => {
     const result = await repo.findByContactId.handleAsync({ contactId: generateUuidV7() });
     expect(result.success).toBe(true);
-    expect(result.data!.pref).toBeNull();
+    expect(result.data!.pref).toBeUndefined();
   });
 
   it("should update emailEnabled and smsEnabled", async () => {

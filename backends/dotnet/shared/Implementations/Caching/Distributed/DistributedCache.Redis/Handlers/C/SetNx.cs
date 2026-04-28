@@ -6,7 +6,6 @@
 
 namespace D2.Shared.DistributedCache.Redis.Handlers.C;
 
-using System.Net;
 using System.Text.Json;
 using D2.Shared.Handler;
 using D2.Shared.I18n;
@@ -78,20 +77,15 @@ public partial class SetNx<TValue> : BaseHandler<
         {
             LogSetNxFailed(Context.Logger, ex, input.Key, TraceId);
 
-            return D2Result<C.SetNxOutput?>.Fail(
-                [TK.Common.Errors.SERVICE_UNAVAILABLE],
-                HttpStatusCode.ServiceUnavailable,
-                errorCode: ErrorCodes.SERVICE_UNAVAILABLE);
+            return D2Result<C.SetNxOutput?>.ServiceUnavailable(traceId: TraceId);
         }
         catch (JsonException ex)
         {
             LogSetNxSerializationFailed(Context.Logger, ex, input.Key, TraceId);
 
-            return D2Result<C.SetNxOutput?>.Fail(
-                [TK.Common.Errors.REQUEST_FAILED],
-                HttpStatusCode.InternalServerError,
-                [[nameof(C.SetNxInput<TValue>.Value), TK.Common.Errors.REQUEST_FAILED]],
-                ErrorCodes.COULD_NOT_BE_SERIALIZED);
+            return D2Result<C.SetNxOutput?>.UnhandledException(
+                messages: [TK.Common.Errors.COULD_NOT_BE_SERIALIZED],
+                traceId: TraceId);
         }
 
         // Let the base handler catch any other exceptions.

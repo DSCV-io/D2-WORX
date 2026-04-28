@@ -31,7 +31,7 @@ public class ProtoExtensionsTests
         Assert.True(proto.Success);
         Assert.Equal((int)HttpStatusCode.OK, proto.StatusCode);
         Assert.Equal("trace-123", proto.TraceId);
-        Assert.Empty(proto.ErrorCode);
+        Assert.False(proto.HasErrorCode);
         Assert.Empty(proto.Messages);
         Assert.Empty(proto.InputErrors);
     }
@@ -118,7 +118,7 @@ public class ProtoExtensionsTests
     /// Tests that ToProto handles null error code and trace ID.
     /// </summary>
     [Fact]
-    public void ToProto_NullErrorCodeAndTraceId_ConvertsToEmptyStrings()
+    public void ToProto_NullErrorCodeAndTraceId_FieldsNotSet()
     {
         // Arrange
         var result = D2Result.Fail();
@@ -127,8 +127,8 @@ public class ProtoExtensionsTests
         var proto = result.ToProto();
 
         // Assert
-        Assert.Empty(proto.ErrorCode);
-        Assert.Empty(proto.TraceId);
+        Assert.False(proto.HasErrorCode);
+        Assert.False(proto.HasTraceId);
     }
 
     /// <summary>

@@ -45,7 +45,7 @@ describe("createSignupSchema", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       const confirmEmailIssue = result.error.issues.find(
-        (i) => i.path[0] === "confirmEmail" && i.message === "Emails do not match",
+        (i) => i.path[0] === "confirmEmail" && i.message === "Emails do not match.",
       );
       expect(confirmEmailIssue).toBeDefined();
     }
@@ -59,7 +59,7 @@ describe("createSignupSchema", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       const confirmPasswordIssue = result.error.issues.find(
-        (i) => i.path[0] === "confirmPassword" && i.message === "Passwords do not match",
+        (i) => i.path[0] === "confirmPassword" && i.message === "Passwords do not match.",
       );
       expect(confirmPasswordIssue).toBeDefined();
     }
@@ -87,7 +87,7 @@ describe("createSignupSchema", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       const passwordIssue = result.error.issues.find(
-        (i) => i.path[0] === "password" && i.message === "Password cannot be only numbers",
+        (i) => i.path[0] === "password" && i.message === "Password cannot be only numbers.",
       );
       expect(passwordIssue).toBeDefined();
     }
@@ -104,7 +104,7 @@ describe("createSignupSchema", () => {
       const passwordIssue = result.error.issues.find(
         (i) =>
           i.path[0] === "password" &&
-          i.message === "Password cannot be only numbers and date separators",
+          i.message === "Password cannot be only numbers and date separators.",
       );
       expect(passwordIssue).toBeDefined();
     }

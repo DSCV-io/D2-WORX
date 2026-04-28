@@ -10,8 +10,8 @@ describe("Organization", () => {
       expect(org.name).toBe("Acme Corp");
       expect(org.slug).toBe("acme-corp");
       expect(org.orgType).toBe("customer");
-      expect(org.logo).toBeNull();
-      expect(org.metadata).toBeNull();
+      expect(org.logo).toBeUndefined();
+      expect(org.metadata).toBeUndefined();
       expect(org.id).toHaveLength(36);
       expect(org.createdAt).toBeInstanceOf(Date);
     });
@@ -83,10 +83,10 @@ describe("Organization", () => {
       expect(updated.logo).toBe("https://new-logo.png");
     });
 
-    it("should allow setting logo to null", () => {
+    it("should preserve logo when update passes undefined", () => {
       const withLogo = createOrganization({ ...validInput, logo: "https://logo.png" });
-      const updated = updateOrganization(withLogo, { logo: null });
-      expect(updated.logo).toBeNull();
+      const updated = updateOrganization(withLogo, { logo: undefined });
+      expect(updated.logo).toBe("https://logo.png");
     });
 
     it("should set updatedAt to a new timestamp", () => {
@@ -99,10 +99,10 @@ describe("Organization", () => {
       expect(updated.metadata).toBe('{"plan":"pro"}');
     });
 
-    it("should allow setting metadata to null", () => {
+    it("should preserve metadata when update passes undefined", () => {
       const withMeta = createOrganization({ ...validInput, metadata: '{"x":1}' });
-      const updated = updateOrganization(withMeta, { metadata: null });
-      expect(updated.metadata).toBeNull();
+      const updated = updateOrganization(withMeta, { metadata: undefined });
+      expect(updated.metadata).toBe('{"x":1}');
     });
 
     it("should preserve immutable fields (slug, orgType)", () => {

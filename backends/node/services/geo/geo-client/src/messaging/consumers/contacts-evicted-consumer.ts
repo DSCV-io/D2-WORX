@@ -21,7 +21,8 @@ export function createContactsEvictedConsumer(
   return bus.subscribe<ContactsEvictedEvent>(
     { ...config, deserialize: ContactsEvictedEventFns.fromJSON },
     async (message) => {
-      logger.info(`Received ContactsEvicted event for ${message.contacts.length} contact(s)`);
+      const contacts = message.contacts ?? [];
+      logger.info(`Received ContactsEvicted event for ${contacts.length} contact(s)`);
 
       const handler = handlerFactory();
       const result = await handler.handleAsync(message);
@@ -31,9 +32,7 @@ export function createContactsEvictedConsumer(
         throw new Error(`Failed to process ContactsEvicted event`);
       }
 
-      logger.info(
-        `Successfully processed ContactsEvicted event for ${message.contacts.length} contact(s)`,
-      );
+      logger.info(`Successfully processed ContactsEvicted event for ${contacts.length} contact(s)`);
     },
   );
 }

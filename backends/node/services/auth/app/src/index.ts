@@ -3,6 +3,26 @@
 
 export { AUTH_CACHE_KEYS } from "./cache-keys.js";
 
+// --- Repo redaction specs (re-exported for handlers that need them) ---
+export {
+  UPDATE_USER_STATUS_REDACTION,
+  GET_DELETED_USERS_TO_PURGE_REDACTION,
+  ANONYMIZE_USER_REDACTION,
+  CHECK_SOLE_OWNER_ORGS_REDACTION,
+  DELETE_ALL_USER_SESSIONS_REDACTION,
+  UPDATE_USER_EMAIL_REDACTION,
+  UPDATE_USER_PHONE_REDACTION,
+  UPDATE_USER_NAME_REDACTION,
+  UPDATE_USER_USERNAME_REDACTION,
+  UPDATE_USER_IMAGE_REDACTION,
+  UPDATE_ORG_LOGO_REDACTION,
+  CHECK_USERNAME_AVAILABLE_REDACTION,
+  FIND_ORG_CONTACTS_BY_ORG_ID_REDACTION,
+  FIND_ORG_CONTACT_BY_ID_REDACTION,
+  CREATE_ORG_CONTACT_RECORD_REDACTION,
+  UPDATE_ORG_CONTACT_RECORD_REDACTION,
+} from "./interfaces/repository/handlers/index.js";
+
 // --- CQRS Handler Interfaces (app-layer contracts) ---
 export {
   Commands as AuthCommands,
@@ -10,8 +30,8 @@ export {
 } from "./interfaces/cqrs/handlers/index.js";
 
 import type { IHandlerContext } from "@d2/handler";
-import type { SignInEvent } from "@d2/auth-domain";
 import type { Commands, Queries, Complex } from "@d2/geo-client";
+import type { Queries as AuthQueriesNS } from "./interfaces/cqrs/handlers/index.js";
 
 // --- Interfaces (Repository Handler Bundles) ---
 export type {
@@ -25,6 +45,34 @@ export type {
   ICountSignInEventsByUserIdHandler,
   IGetLatestSignInEventDateHandler,
   IUpdateSignInEventWhoIsIdHandler,
+  IUpdateSessionWhoIsIdHandler,
+  IGetActiveSessionsByUserIdHandler,
+  GetActiveSessionsByUserIdInput,
+  GetActiveSessionsByUserIdOutput,
+  IGetUserIdByIdentifierHandler,
+  GetUserIdByIdentifierInput,
+  GetUserIdByIdentifierOutput,
+  IUpdateUserStatusHandler,
+  UpdateUserStatusInput,
+  UpdateUserStatusOutput,
+  IGetDeletedUsersToPurgeHandler,
+  GetDeletedUsersToPurgeInput,
+  GetDeletedUsersToPurgeOutput,
+  IAnonymizeUserHandler,
+  AnonymizeUserInput,
+  AnonymizeUserOutput,
+  ICheckSoleOwnerOrgsHandler,
+  CheckSoleOwnerOrgsInput,
+  CheckSoleOwnerOrgsOutput,
+  IDeleteAllUserSessionsHandler,
+  DeleteAllUserSessionsInput,
+  DeleteAllUserSessionsOutput,
+  IUpdateUserImageHandler,
+  UpdateUserImageInput,
+  UpdateUserImageOutput,
+  IUpdateOrgLogoHandler,
+  UpdateOrgLogoInput,
+  UpdateOrgLogoOutput,
   ICreateEmulationConsentRecordHandler,
   IFindEmulationConsentByIdHandler,
   IFindActiveConsentsByUserIdHandler,
@@ -64,12 +112,54 @@ export type {
   UpdateOrgContactRecordOutput,
   UpdateSignInEventWhoIsIdInput,
   UpdateSignInEventWhoIsIdOutput,
+  UpdateSessionWhoIsIdInput,
+  UpdateSessionWhoIsIdOutput,
   DeleteOrgContactRecordInput,
   DeleteOrgContactRecordOutput,
   // Read (R) — Email Availability
   CheckEmailAvailabilityInput as CheckEmailAvailabilityRepoInput,
   CheckEmailAvailabilityOutput as CheckEmailAvailabilityRepoOutput,
   ICheckEmailAvailabilityHandler,
+  // Read (R) — Organization Existence
+  CheckOrgExistsInput,
+  CheckOrgExistsOutput,
+  ICheckOrgExistsHandler,
+  // Read (R) — Username Availability
+  CheckUsernameAvailableInput,
+  CheckUsernameAvailableOutput,
+  ICheckUsernameAvailableHandler,
+  // Update (U) — User Name
+  UpdateUserNameInput,
+  UpdateUserNameOutput,
+  IUpdateUserNameHandler,
+  // Update (U) — User Locale
+  UpdateUserLocaleInput as UpdateUserLocaleRepoInput,
+  UpdateUserLocaleOutput as UpdateUserLocaleRepoOutput,
+  IUpdateUserLocaleHandler as IUpdateUserLocaleRepoHandler,
+  // Update (U) — User Timezone
+  UpdateUserTimezoneInput as UpdateUserTimezoneRepoInput,
+  UpdateUserTimezoneOutput as UpdateUserTimezoneRepoOutput,
+  IUpdateUserTimezoneHandler as IUpdateUserTimezoneRepoHandler,
+  // Update (U) — User Email
+  UpdateUserEmailInput,
+  UpdateUserEmailOutput,
+  IUpdateUserEmailHandler,
+  // Update (U) — User Phone
+  UpdateUserPhoneInput,
+  UpdateUserPhoneOutput,
+  IUpdateUserPhoneHandler,
+  // Read (R) — Phone availability
+  CheckPhoneAvailabilityInput,
+  CheckPhoneAvailabilityOutput,
+  ICheckPhoneAvailabilityHandler,
+  // Read (R) — Get user
+  GetUserByIdInput,
+  GetUserByIdOutput,
+  IGetUserByIdHandler,
+  // Update (U) — User Username
+  UpdateUserUsernameInput,
+  UpdateUserUsernameOutput,
+  IUpdateUserUsernameHandler,
   // Read (R) — PingDb
   PingDbInput,
   PingDbOutput,
@@ -90,6 +180,12 @@ export type {
 } from "./interfaces/repository/handlers/index.js";
 
 export type { ISignInThrottleStore } from "./interfaces/repository/sign-in-throttle-store.js";
+
+export type {
+  PushUserUpdatedInput,
+  PushUserUpdatedOutput,
+  IPushUserUpdated,
+} from "./interfaces/realtime/handlers/index.js";
 
 // --- Command Handlers ---
 export { RecordSignInEvent } from "./implementations/cqrs/handlers/c/record-sign-in-event.js";
@@ -135,6 +231,84 @@ export type {
   CreateUserContactOutput,
 } from "./interfaces/cqrs/handlers/c/create-user-contact.js";
 
+export { UpdateUserRealName } from "./implementations/cqrs/handlers/c/update-user-real-name.js";
+export type {
+  UpdateUserRealNameInput,
+  UpdateUserRealNameOutput,
+} from "./interfaces/cqrs/handlers/c/update-user-real-name.js";
+
+export { UpdateUsername } from "./implementations/cqrs/handlers/c/update-username.js";
+export type {
+  UpdateUsernameInput,
+  UpdateUsernameOutput,
+} from "./interfaces/cqrs/handlers/c/update-username.js";
+
+export { UpdateUserLocale } from "./implementations/cqrs/handlers/c/update-user-locale.js";
+export type {
+  UpdateUserLocaleInput,
+  UpdateUserLocaleOutput,
+} from "./interfaces/cqrs/handlers/c/update-user-locale.js";
+
+export { UpdateUserTimezone } from "./implementations/cqrs/handlers/c/update-user-timezone.js";
+export type {
+  UpdateUserTimezoneInput,
+  UpdateUserTimezoneOutput,
+} from "./interfaces/cqrs/handlers/c/update-user-timezone.js";
+
+// --- Email/Phone change (OTP) handlers ---
+
+export { RequestEmailChange } from "./implementations/cqrs/handlers/c/request-email-change.js";
+export type {
+  RequestEmailChangeInput,
+  RequestEmailChangeOutput,
+  IRequestEmailChangeHandler,
+} from "./interfaces/cqrs/handlers/c/request-email-change.js";
+export { REQUEST_EMAIL_CHANGE_REDACTION } from "./interfaces/cqrs/handlers/c/request-email-change.js";
+
+export { VerifyEmailChange } from "./implementations/cqrs/handlers/c/verify-email-change.js";
+export type {
+  VerifyEmailChangeInput,
+  VerifyEmailChangeOutput,
+  IVerifyEmailChangeHandler,
+} from "./interfaces/cqrs/handlers/c/verify-email-change.js";
+export { VERIFY_EMAIL_CHANGE_REDACTION } from "./interfaces/cqrs/handlers/c/verify-email-change.js";
+
+export { RequestPhoneChange } from "./implementations/cqrs/handlers/c/request-phone-change.js";
+export type {
+  RequestPhoneChangeInput,
+  RequestPhoneChangeOutput,
+  IRequestPhoneChangeHandler,
+} from "./interfaces/cqrs/handlers/c/request-phone-change.js";
+export { REQUEST_PHONE_CHANGE_REDACTION } from "./interfaces/cqrs/handlers/c/request-phone-change.js";
+
+export { VerifyPhoneChange } from "./implementations/cqrs/handlers/c/verify-phone-change.js";
+export type {
+  VerifyPhoneChangeInput,
+  VerifyPhoneChangeOutput,
+  IVerifyPhoneChangeHandler,
+} from "./interfaces/cqrs/handlers/c/verify-phone-change.js";
+export { VERIFY_PHONE_CHANGE_REDACTION } from "./interfaces/cqrs/handlers/c/verify-phone-change.js";
+
+export { RemovePhone } from "./implementations/cqrs/handlers/c/remove-phone.js";
+export type {
+  RemovePhoneInput,
+  RemovePhoneOutput,
+  IRemovePhoneHandler,
+} from "./interfaces/cqrs/handlers/c/remove-phone.js";
+export { REMOVE_PHONE_REDACTION } from "./interfaces/cqrs/handlers/c/remove-phone.js";
+
+// --- SAGA helpers (CQRS x/) ---
+export { runCrossServiceUpdate } from "./implementations/cqrs/handlers/x/cross-service-update.js";
+export type { CrossServiceUpdateParams } from "./implementations/cqrs/handlers/x/cross-service-update.js";
+
+// --- Repository interfaces (verification, password, OTP rate limit) ---
+
+export type {
+  IVerificationStore,
+  VerificationRecord,
+} from "./interfaces/repository/verification-store.js";
+export type { IVerifyUserPassword } from "./interfaces/repository/password-verifier.js";
+
 export { RecordSignInOutcome } from "./implementations/cqrs/handlers/c/record-sign-in-outcome.js";
 export type {
   RecordSignInOutcomeInput,
@@ -179,6 +353,7 @@ import type {
   SignInEventRepoHandlers,
   EmulationConsentRepoHandlers,
   OrgContactRepoHandlers,
+  ICheckOrgExistsHandler,
 } from "./interfaces/repository/handlers/index.js";
 import type { ISignInThrottleStore } from "./interfaces/repository/sign-in-throttle-store.js";
 import type { InMemoryCache } from "@d2/interfaces";
@@ -198,17 +373,18 @@ import { CreateUserContact } from "./implementations/cqrs/handlers/c/create-user
 /** Creates sign-in event handlers (mirrors .NET AddXxx() pattern). */
 export function createSignInEventHandlers(
   repo: SignInEventRepoHandlers,
+  findWhoIs: import("@d2/geo-client").Complex.IFindWhoIsHandler,
   context: IHandlerContext,
   memoryCache?: {
     get: InMemoryCache.IGetHandler<{
-      events: SignInEvent[];
+      events: AuthQueriesNS.EnrichedSignInEvent[];
       total: number;
-      latestDate: string | null;
+      latestDate?: string;
     }>;
     set: InMemoryCache.ISetHandler<{
-      events: SignInEvent[];
+      events: AuthQueriesNS.EnrichedSignInEvent[];
       total: number;
-      latestDate: string | null;
+      latestDate?: string;
     }>;
   },
 ) {
@@ -218,6 +394,7 @@ export function createSignInEventHandlers(
       repo.findByUserId,
       repo.countByUserId,
       repo.getLatestEventDate,
+      findWhoIs,
       context,
       memoryCache,
     ),
@@ -228,7 +405,7 @@ export function createSignInEventHandlers(
 export function createEmulationConsentHandlers(
   repo: EmulationConsentRepoHandlers,
   context: IHandlerContext,
-  checkOrgExists: (orgId: string) => Promise<boolean>,
+  checkOrgExists: ICheckOrgExistsHandler,
 ) {
   return {
     create: new CreateEmulationConsent(
@@ -262,6 +439,7 @@ export function createOrgContactHandlers(
       repo.findById,
       repo.update,
       context,
+      geo.getContactsByExtKeys,
       geo.updateContactsByExtKeys,
     ),
     delete: new DeleteOrgContact(repo.findById, repo.delete, context, geo.deleteContactsByExtKeys),
@@ -328,13 +506,33 @@ export type {
   RunEmulationConsentCleanupOutput,
 } from "./interfaces/cqrs/handlers/c/run-emulation-consent-cleanup.js";
 
+// User-deletion app handlers (self-service)
+export {
+  RequestUserDeletion,
+  formatDateTimeLong,
+} from "./implementations/cqrs/handlers/c/request-user-deletion.js";
+export { CancelUserDeletion } from "./implementations/cqrs/handlers/c/cancel-user-deletion.js";
+export { FinalizeDeletedUser } from "./implementations/cqrs/handlers/c/finalize-deleted-user.js";
+export { CleanupDeletedUsers } from "./implementations/cqrs/handlers/c/cleanup-deleted-users.js";
+
+export { HandleFileProcessed } from "./implementations/cqrs/handlers/c/handle-file-processed.js";
+export type {
+  HandleFileProcessedInput,
+  HandleFileProcessedOutput,
+} from "./interfaces/cqrs/handlers/c/handle-file-processed.js";
+
+export { InvalidateUserSessionCache } from "./implementations/cqrs/handlers/c/invalidate-user-session-cache.js";
+export type {
+  InvalidateUserSessionCacheInput,
+  InvalidateUserSessionCacheOutput,
+} from "./interfaces/cqrs/handlers/c/invalidate-user-session-cache.js";
+
 // --- Job Options ---
 export type { AuthJobOptions } from "./auth-job-options.js";
 export { DEFAULT_AUTH_JOB_OPTIONS } from "./auth-job-options.js";
 
 // --- DI Registration ---
-export { addAuthApp, type AddAuthAppOptions } from "./registration.js";
-export { IAuthAcquireLockKey, IAuthReleaseLockKey } from "./registration.js";
+export { addAuthApp } from "./registration.js";
 export {
   // Infra-layer keys (interfaces defined here, implemented in auth-infra)
   ICreateSignInEventKey,
@@ -342,6 +540,14 @@ export {
   ICountSignInEventsByUserIdKey,
   IGetLatestSignInEventDateKey,
   IUpdateSignInEventWhoIsIdKey,
+  IUpdateSessionWhoIsIdKey,
+  IGetActiveSessionsByUserIdKey,
+  IGetUserIdByIdentifierKey,
+  IUpdateUserStatusKey,
+  IGetDeletedUsersToPurgeKey,
+  IAnonymizeUserKey,
+  ICheckSoleOwnerOrgsKey,
+  IDeleteAllUserSessionsKey,
   ICreateEmulationConsentRecordKey,
   IFindEmulationConsentByIdKey,
   IFindActiveConsentsByUserIdKey,
@@ -363,12 +569,15 @@ export {
   IDeleteOrgContactKey,
   ICreateUserContactKey,
   IGetSignInEventsKey,
+  IGetMySessionsKey,
   IGetActiveConsentsKey,
   IGetOrgContactsKey,
   ICheckSignInThrottleKey,
   ICheckEmailAvailabilityKey,
   ICheckEmailAvailabilityRepoKey,
+  ICheckOrgExistsKey,
   IPingDbKey,
+  IPushUserUpdatedKey,
   ICheckHealthKey,
   // Job keys
   IPurgeExpiredSessionsKey,
@@ -379,4 +588,37 @@ export {
   IRunSignInEventPurgeKey,
   IRunInvitationCleanupKey,
   IRunEmulationConsentCleanupKey,
+  IHandleFileProcessedKey,
+  IInvalidateUserSessionCacheKey,
+  IUpdateUserImageKey,
+  IUpdateOrgLogoKey,
+  IUpdateUserRealNameKey,
+  IUpdateUsernameKey,
+  IUpdateUserLocaleKey,
+  IUpdateUserLocaleRepoKey,
+  IUpdateUserTimezoneKey,
+  IUpdateUserTimezoneRepoKey,
+  IUpdateUserNameKey,
+  ICheckUsernameAvailableKey,
+  IUpdateUserUsernameKey,
+  // Email/Phone change (OTP) handler keys
+  IRequestEmailChangeKey,
+  IVerifyEmailChangeKey,
+  IRequestPhoneChangeKey,
+  IVerifyPhoneChangeKey,
+  IRemovePhoneKey,
+  // User-deletion handler keys (self-service)
+  IRequestUserDeletionKey,
+  ICancelUserDeletionKey,
+  IFinalizeDeletedUserKey,
+  ICleanupDeletedUsersKey,
+  // Repo + store keys for the OTP/account-change flows
+  IOtpRateLimitStoreKey,
+  IVerificationStoreKey,
+  IVerifyUserPasswordKey,
+  ICheckPhoneAvailabilityKey,
+  IGetUserByIdKey,
+  IUpdateUserEmailKey,
+  IUpdateUserPhoneKey,
+  ITranslatorKey,
 } from "./service-keys.js";

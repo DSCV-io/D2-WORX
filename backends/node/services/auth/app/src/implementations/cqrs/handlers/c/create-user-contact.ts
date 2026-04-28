@@ -15,6 +15,7 @@ const schema = z.object({
   email: zodNonEmptyString(254), // Geo contact-schemas max
   name: zodNonEmptyString(511), // firstName(255) + " " + lastName(255)
   locale: zodNonEmptyString(35), // BCP 47 tag (e.g. "en", "fr-CA")
+  timezone: z.string().min(1).max(64).default("America/New_York"), // IANA identifier
 });
 
 /**
@@ -64,19 +65,14 @@ export class CreateUserContact
       personalDetails: {
         firstName,
         lastName,
-        title: "",
-        preferredName: "",
-        middleName: "",
-        generationalSuffix: "",
         professionalCredentials: [],
-        dateOfBirth: "",
-        biologicalSex: "",
       },
       professionalDetails: undefined,
       location: undefined,
       // Resolve bare language codes (e.g., "en" from pre-BCP47 users) to full tags.
       // Passes through full tags as-is to preserve case matching with Geo locales FK.
       ietfBcp47Tag: input.locale.includes("-") ? input.locale : BASE_LOCALE,
+      ianaIdentifier: input.timezone,
     };
 
     const result = await this.createContacts.handleAsync({ contacts: [contactToCreate] });

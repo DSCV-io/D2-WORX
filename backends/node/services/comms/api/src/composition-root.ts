@@ -6,11 +6,12 @@ import { createLogger, type ILogger } from "@d2/logging";
 import { ILoggerKey } from "@d2/logging";
 import { HandlerContext, IHandlerContextKey, IRequestContextKey } from "@d2/handler";
 import { ServiceCollection } from "@d2/di";
-import { ICachePingKey, PingCache, AcquireLock, ReleaseLock } from "@d2/cache-redis";
+import { addRedisCaching } from "@d2/cache-redis";
 import { MessageBus, PingMessageBus, IMessageBusPingKey } from "@d2/messaging";
-import { addCommsApp, ICommsAcquireLockKey, ICommsReleaseLockKey } from "@d2/comms-app";
+import { addCommsApp } from "@d2/comms-app";
 import { DEFAULT_COMMS_JOB_OPTIONS, type CommsJobOptions } from "@d2/comms-app";
 import { addCommsInfra, runMigrations } from "@d2/comms-infra";
+import { wireGeoClientConsumers } from "@d2/geo-client";
 import {
   addGeoClientHandlers,
   addDeliveryProviders,
@@ -28,6 +29,10 @@ export interface CommsServiceConfig {
   twilioAccountSid?: string;
   twilioAuthToken?: string;
   twilioPhoneNumber?: string;
+  /** "twilio" | "mock" — when omitted, auto-detects based on Twilio creds. Read from env as a string; provider-setup narrows. */
+  smsProvider?: string;
+  /** JSONL log file path used by the mock SMS provider. */
+  smsMockLogPath?: string;
   geoAddress?: string;
   geoApiKey?: string;
   commsApiKeys?: string[];
@@ -54,7 +59,12 @@ export interface CommsServiceConfig {
  */
 export async function createCommsService(config: CommsServiceConfig) {
   // 1. Singletons
-  const pool = new pg.Pool({ connectionString: config.databaseUrl });
+  const pool = new pg.Pool({
+    connectionString: config.databaseUrl,
+    max: 20,
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 5_000,
+  });
   const logger: ILogger = createLogger({ serviceName: "comms-service" });
 
   const serviceContext = new HandlerContext(
@@ -65,8 +75,8 @@ export async function createCommsService(config: CommsServiceConfig) {
       isAgentAdmin: false,
       isTargetingStaff: false,
       isTargetingAdmin: false,
-      isOrgEmulating: false,
-      isUserImpersonating: false,
+      isOrgEmulating: null,
+      isUserImpersonating: null,
     },
     logger,
   );
@@ -85,8 +95,10 @@ export async function createCommsService(config: CommsServiceConfig) {
     (sp) => new HandlerContext(sp.resolve(IRequestContextKey), sp.resolve(ILoggerKey)),
   );
 
-  // Geo client for recipient resolution
-  addGeoClientHandlers(services, config, serviceContext);
+  // Geo client for recipient resolution + ext-key contact lookup. Returns
+  // the cache store and eviction handler so we can wire the cross-process
+  // cache invalidation consumer once the message bus is up.
+  const geoClientSetup = addGeoClientHandlers(services, config, serviceContext);
 
   // Layer registrations
   addCommsInfra(services, db);
@@ -103,7 +115,11 @@ export async function createCommsService(config: CommsServiceConfig) {
   // 4. MessageBus (connect early so PingMessageBus can be registered)
   let messageBus: MessageBus | undefined;
   if (config.rabbitMqUrl) {
-    messageBus = new MessageBus({ url: config.rabbitMqUrl, connectionName: "comms-service" });
+    messageBus = new MessageBus({
+      url: config.rabbitMqUrl,
+      connectionName: "comms-service",
+      logger,
+    });
     await messageBus.waitForConnection();
     logger.info("RabbitMQ connected");
     services.addInstance(IMessageBusPingKey, new PingMessageBus(messageBus, serviceContext));
@@ -121,10 +137,8 @@ export async function createCommsService(config: CommsServiceConfig) {
   let redis: Redis | undefined;
   if (config.redisUrl) {
     redis = new Redis(config.redisUrl);
-    services.addInstance(ICachePingKey, new PingCache(redis, serviceContext));
-    services.addInstance(ICommsAcquireLockKey, new AcquireLock(redis, serviceContext));
-    services.addInstance(ICommsReleaseLockKey, new ReleaseLock(redis, serviceContext));
-    logger.info("Redis connected (cache ping + distributed locks registered)");
+    addRedisCaching(services, redis, serviceContext);
+    logger.info("Redis connected (distributed cache handlers registered)");
   }
 
   // 5. Build ServiceProvider
@@ -140,9 +154,20 @@ export async function createCommsService(config: CommsServiceConfig) {
     logger,
   });
 
-  // 7. RabbitMQ notification consumer
+  // 7. RabbitMQ notification consumer + geo-client cache invalidation
   if (messageBus) {
     await startNotificationConsumer(messageBus, provider, logger);
+
+    // Wire the geo-client's cross-process cache invalidation. Every service
+    // with a geo-client cache must do this; the helper subscribes to the
+    // `events.geo.contacts` fanout and evicts on any contact mutation
+    // anywhere in the cluster.
+    await wireGeoClientConsumers({
+      bus: messageBus,
+      cacheStore: geoClientSetup.contactCacheStore,
+      context: serviceContext,
+      logger,
+    });
   }
 
   // 8. Shutdown

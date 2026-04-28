@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="Set.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -6,7 +6,6 @@
 
 namespace D2.Shared.DistributedCache.Redis.Handlers.U;
 
-using System.Net;
 using System.Text.Json;
 using D2.Shared.Handler;
 using D2.Shared.I18n;
@@ -77,20 +76,15 @@ public partial class Set<TValue> : BaseHandler<
         {
             LogSetFailed(Context.Logger, ex, input.Key, TraceId);
 
-            return D2Result<S.SetOutput?>.Fail(
-                [TK.Common.Errors.SERVICE_UNAVAILABLE],
-                HttpStatusCode.ServiceUnavailable,
-                errorCode: ErrorCodes.SERVICE_UNAVAILABLE);
+            return D2Result<S.SetOutput?>.ServiceUnavailable(traceId: TraceId);
         }
         catch (JsonException ex)
         {
             LogSetSerializationFailed(Context.Logger, ex, input.Key, TraceId);
 
-            return D2Result<S.SetOutput?>.Fail(
-                [TK.Common.Errors.REQUEST_FAILED],
-                HttpStatusCode.InternalServerError,
-                [[nameof(S.SetInput<TValue>.Value), TK.Common.Errors.REQUEST_FAILED]],
-                ErrorCodes.COULD_NOT_BE_SERIALIZED);
+            return D2Result<S.SetOutput?>.UnhandledException(
+                messages: [TK.Common.Errors.COULD_NOT_BE_SERIALIZED],
+                traceId: TraceId);
         }
 
         // Let the base handler catch any other exceptions.

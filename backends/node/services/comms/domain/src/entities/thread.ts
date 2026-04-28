@@ -24,11 +24,11 @@ export interface Thread {
   readonly id: string;
   readonly type: ThreadType;
   readonly state: ThreadState;
-  readonly title: string | null;
-  readonly slug: string | null;
+  readonly title?: string;
+  readonly slug?: string;
   readonly notificationPolicy: NotificationPolicy;
-  readonly orgId: string | null;
-  readonly createdByUserId: string | null;
+  readonly orgId?: string;
+  readonly createdByUserId?: string;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
@@ -36,24 +36,24 @@ export interface Thread {
 export interface CreateThreadInput {
   readonly type: ThreadType;
   readonly id?: string;
-  readonly title?: string | null;
-  readonly slug?: string | null;
+  readonly title?: string;
+  readonly slug?: string;
   readonly notificationPolicy?: NotificationPolicy;
-  readonly orgId?: string | null;
-  readonly createdByUserId?: string | null;
+  readonly orgId?: string;
+  readonly createdByUserId?: string;
 }
 
 export interface UpdateThreadInput {
-  readonly title?: string | null;
-  readonly slug?: string | null;
+  readonly title?: string;
+  readonly slug?: string;
   readonly notificationPolicy?: NotificationPolicy;
 }
 
-function validateSlug(slug: string | null | undefined): string | null {
-  if (slug == null) return null;
+function validateSlug(slug: string | undefined): string | undefined {
+  if (slug == null) return undefined;
 
   const cleaned = cleanStr(slug);
-  if (!cleaned) return null;
+  if (!cleaned) return undefined;
 
   if (!SLUG_REGEX.test(cleaned)) {
     throw new CommsValidationError(
@@ -84,7 +84,7 @@ export function createThread(input: CreateThreadInput): Thread {
     throw new CommsValidationError("Thread", "type", input.type, "is not a valid thread type.");
   }
 
-  const title = input.title != null ? (cleanStr(input.title) ?? null) : null;
+  const title = input.title != null ? (cleanStr(input.title) ?? undefined) : undefined;
   if (title && title.length > THREAD_CONSTRAINTS.MAX_TITLE_LENGTH) {
     throw new CommsValidationError(
       "Thread",
@@ -115,8 +115,8 @@ export function createThread(input: CreateThreadInput): Thread {
     title,
     slug,
     notificationPolicy,
-    orgId: input.orgId ?? null,
-    createdByUserId: input.createdByUserId ?? null,
+    orgId: input.orgId,
+    createdByUserId: input.createdByUserId,
     createdAt: now,
     updatedAt: now,
   };
@@ -130,8 +130,8 @@ export function updateThread(thread: Thread, updates: UpdateThreadInput): Thread
   const title =
     updates.title !== undefined
       ? updates.title != null
-        ? (cleanStr(updates.title) ?? null)
-        : null
+        ? (cleanStr(updates.title) ?? undefined)
+        : undefined
       : thread.title;
 
   if (title && title.length > THREAD_CONSTRAINTS.MAX_TITLE_LENGTH) {

@@ -17,8 +17,6 @@ using System.Net;
 /// </remarks>
 public static class D2RetryHelper
 {
-    private static readonly Random sr_random = new();
-
     /// <summary>
     /// Determines whether a D2Result represents a transient failure that may succeed on retry.
     /// </summary>
@@ -99,7 +97,7 @@ public static class D2RetryHelper
             {
                 lastResult = await operation(attempt, ct);
             }
-            catch
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 lastResult = D2Result<TData>.UnhandledException();
             }
@@ -225,7 +223,7 @@ public static class D2RetryHelper
         bool jitter)
     {
         var calculated = Math.Min(baseDelayMs * Math.Pow(backoffMultiplier, retryIndex), maxDelayMs);
-        var actual = jitter ? sr_random.NextDouble() * calculated : calculated;
+        var actual = jitter ? Random.Shared.NextDouble() * calculated : calculated;
         return TimeSpan.FromMilliseconds(actual);
     }
 }

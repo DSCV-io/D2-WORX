@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="StringExtensions.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -41,6 +41,25 @@ public static partial class StringExtensions
         public bool Falsey() => string.IsNullOrWhiteSpace(str);
 
         /// <summary>
+        /// Returns null if the string is null, empty, or whitespace-only; otherwise
+        /// returns the trimmed string. Use at boundaries (DB rows, proto mapping,
+        /// user input) to convert empty strings to null before they propagate.
+        /// </summary>
+        ///
+        /// <returns>
+        /// The trimmed string, or null if falsey.
+        /// </returns>
+        public string? ToNullIfEmpty()
+        {
+            if (str.Falsey())
+            {
+                return null;
+            }
+
+            return str!.Trim();
+        }
+
+        /// <summary>
         /// Cleans a string by trimming leading/trailing whitespace and replacing duplicate whitespace.
         /// </summary>
         ///
@@ -57,6 +76,33 @@ public static partial class StringExtensions
             }
 
             return WhitespaceRegex().Replace(trimmed!, " ");
+        }
+
+        /// <summary>
+        /// Cleans a display name by stripping dangerous/unreasonable characters
+        /// (HTML tags, markdown syntax, brackets, quotes, backticks, etc.),
+        /// then trims whitespace and collapses duplicates.
+        /// <para>
+        /// Allowed: letters (any Unicode script), digits, spaces, hyphens,
+        /// apostrophes, periods, commas.
+        /// </para>
+        /// <para>
+        /// Mirrors <c>cleanDisplayStr()</c> in <c>@d2/utilities</c> (TypeScript).
+        /// </para>
+        /// </summary>
+        ///
+        /// <returns>
+        /// The cleaned display name, or null if the result is empty after cleaning.
+        /// </returns>
+        public string? CleanDisplayStr()
+        {
+            if (str.Falsey())
+            {
+                return null;
+            }
+
+            var stripped = DisplayNameInvalidRegex().Replace(str!, string.Empty);
+            return stripped.CleanStr();
         }
     }
 
@@ -141,25 +187,31 @@ public static partial class StringExtensions
     }
 
     /// <summary>
-    /// Generates a normalized string for hashing by cleaning and lowercasing each part, then
-    /// joining them with a pipe ("|") character.
+    /// Extension methods for string arrays used in hash normalization.
     /// </summary>
     ///
     /// <param name="parts">
     /// The individual values you would like to normalize for hashing.
     /// </param>
-    ///
-    /// <returns>
-    /// A normalized string suitable for hashing.
-    /// </returns>
-    ///
-    /// <example>
-    /// If you enter the values " Test One ", "   ", "TEST3", the resulting string will be
-    /// "testone||test3".
-    /// </example>
-    public static string GetNormalizedStrForHashing(this string?[] parts)
+    extension(string?[] parts)
     {
-        return string.Join("|", parts.Select(x => CleanStr(x)?.ToLowerInvariant() ?? string.Empty));
+        /// <summary>
+        /// Generates a normalized string for hashing by cleaning and lowercasing each part, then
+        /// joining them with a pipe ("|") character.
+        /// </summary>
+        ///
+        /// <returns>
+        /// A normalized string suitable for hashing.
+        /// </returns>
+        ///
+        /// <example>
+        /// If you enter the values " Test One ", "   ", "TEST3", the resulting string will be
+        /// "testone||test3".
+        /// </example>
+        public string GetNormalizedStrForHashing()
+        {
+            return string.Join("|", parts.Select(x => CleanStr(x)?.ToLowerInvariant() ?? string.Empty));
+        }
     }
 
     /// <summary>
@@ -181,6 +233,14 @@ public static partial class StringExtensions
     /// </returns>
     [GeneratedRegex(@"\s+", RegexOptions.None, matchTimeoutMilliseconds: 100)]
     private static partial Regex WhitespaceRegex();
+
+    /// <summary>
+    /// Matches characters NOT allowed in display names.
+    /// Allowed: letters (any Unicode script), digits, spaces, hyphens, apostrophes, periods, commas.
+    /// Mirrors <c>DISPLAY_NAME_INVALID_RE</c> in <c>@d2/utilities</c> (TypeScript).
+    /// </summary>
+    [GeneratedRegex(@"[^\p{L}\p{N}\s\-'.,]", RegexOptions.None, matchTimeoutMilliseconds: 100)]
+    private static partial Regex DisplayNameInvalidRegex();
 
     /// <summary>
     /// A regular expression that matches anything that is not a digit.

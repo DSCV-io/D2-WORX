@@ -37,7 +37,8 @@ export class GetActiveConsents
       offset: input.offset ?? 0,
     });
 
-    const consents = findResult.success ? (findResult.data?.consents ?? []) : [];
+    if (!findResult.success) return D2Result.bubbleFail(findResult);
+    const consents = findResult.data?.consents ?? [];
 
     return D2Result.ok({ data: { consents } });
   }

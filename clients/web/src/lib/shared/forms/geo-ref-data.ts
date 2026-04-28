@@ -66,16 +66,24 @@ export interface SubdivisionOption {
  * then remaining countries sorted alphabetically by display name.
  */
 export function countriesToOptions(countries: Record<string, CountryDTO>): CountryOption[] {
-  const all = Object.values(countries).map((c) => ({
-    value: c.iso31661Alpha2Code,
-    label: c.displayName,
-    flag: `/flags/4x3/${c.iso31661Alpha2Code.toLowerCase()}.svg`,
-    phonePrefix: c.phoneNumberPrefix
-      ? `+${c.phoneNumberPrefix}`
-      : getCountryCallingCode(c.iso31661Alpha2Code),
-    phoneFormat: c.phoneNumberFormat,
-    subdivisionCodes: c.subdivisionIso31662Codes ?? [],
-  }));
+  // Drop entries missing the iso code or display name — without either,
+  // the option has nothing to render. Proto3 makes both fields optional
+  // on the wire so we have to guard explicitly.
+  const all = Object.values(countries).flatMap((c): CountryOption[] => {
+    if (!c.iso31661Alpha2Code || !c.displayName) return [];
+    return [
+      {
+        value: c.iso31661Alpha2Code,
+        label: c.displayName,
+        flag: `/flags/4x3/${c.iso31661Alpha2Code.toLowerCase()}.svg`,
+        phonePrefix: c.phoneNumberPrefix
+          ? `+${c.phoneNumberPrefix}`
+          : getCountryCallingCode(c.iso31661Alpha2Code),
+        phoneFormat: c.phoneNumberFormat ?? "",
+        subdivisionCodes: c.subdivisionIso31662Codes ?? [],
+      },
+    ];
+  });
 
   const popularSet = new Set(POPULAR_COUNTRIES);
   const byCode = new Map(all.map((o) => [o.value, o]));
@@ -103,10 +111,10 @@ export function subdivisionsForCountry(
 ): SubdivisionOption[] {
   return Object.values(subdivisions)
     .filter((s) => s.countryIso31661Alpha2Code === countryIso2)
-    .map((s) => ({
-      value: s.iso31662Code,
-      label: s.displayName,
-    }))
+    .flatMap((s): SubdivisionOption[] => {
+      if (!s.iso31662Code || !s.displayName) return [];
+      return [{ value: s.iso31662Code, label: s.displayName }];
+    })
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 

@@ -38,21 +38,13 @@ public static class WhoIsMapper
         /// </returns>
         public WhoIsDTO ToDTO(Location? location = null)
         {
-            return new WhoIsDTO
+            var dto = new WhoIsDTO
             {
                 HashId = whoIs.HashId,
                 IpAddress = whoIs.IPAddress,
                 Year = whoIs.Year,
                 Month = whoIs.Month,
                 Asn = whoIs.ASN ?? 0,
-                AsName = whoIs.ASName ?? string.Empty,
-                AsDomain = whoIs.ASDomain ?? string.Empty,
-                AsType = whoIs.ASType ?? string.Empty,
-                CarrierName = whoIs.CarrierName ?? string.Empty,
-                Mcc = whoIs.MCC ?? string.Empty,
-                Mnc = whoIs.MNC ?? string.Empty,
-                AsChanged = whoIs.ASChanged?.ToString("O", CultureInfo.InvariantCulture) ?? string.Empty,
-                GeoChanged = whoIs.GeoChanged?.ToString("O", CultureInfo.InvariantCulture) ?? string.Empty,
                 IsAnonymous = whoIs.IsAnonymous ?? false,
                 IsAnycast = whoIs.IsAnycast ?? false,
                 IsHosting = whoIs.IsHosting ?? false,
@@ -62,9 +54,56 @@ public static class WhoIsMapper
                 IsRelay = whoIs.IsRelay ?? false,
                 IsTor = whoIs.IsTor ?? false,
                 IsVpn = whoIs.IsVPN ?? false,
-                PrivacyName = whoIs.PrivacyName ?? string.Empty,
                 Location = location?.ToDTO(),
             };
+
+            // Optional fields — only set when non-null to avoid proto CheckNotNull.
+            if (whoIs.ASName != null)
+            {
+                dto.AsName = whoIs.ASName;
+            }
+
+            if (whoIs.ASDomain != null)
+            {
+                dto.AsDomain = whoIs.ASDomain;
+            }
+
+            if (whoIs.ASType != null)
+            {
+                dto.AsType = whoIs.ASType;
+            }
+
+            if (whoIs.CarrierName != null)
+            {
+                dto.CarrierName = whoIs.CarrierName;
+            }
+
+            if (whoIs.MCC != null)
+            {
+                dto.Mcc = whoIs.MCC;
+            }
+
+            if (whoIs.MNC != null)
+            {
+                dto.Mnc = whoIs.MNC;
+            }
+
+            if (whoIs.ASChanged != null)
+            {
+                dto.AsChanged = whoIs.ASChanged.Value.ToString("O", CultureInfo.InvariantCulture);
+            }
+
+            if (whoIs.GeoChanged != null)
+            {
+                dto.GeoChanged = whoIs.GeoChanged.Value.ToString("O", CultureInfo.InvariantCulture);
+            }
+
+            if (whoIs.PrivacyName != null)
+            {
+                dto.PrivacyName = whoIs.PrivacyName;
+            }
+
+            return dto;
         }
     }
 
@@ -91,12 +130,12 @@ public static class WhoIsMapper
                 whoIsDTO.Year,
                 whoIsDTO.Month,
                 whoIsDTO.Asn == 0 ? null : whoIsDTO.Asn,
-                whoIsDTO.AsName.Falsey() ? null : whoIsDTO.AsName,
-                whoIsDTO.AsDomain.Falsey() ? null : whoIsDTO.AsDomain,
-                whoIsDTO.AsType.Falsey() ? null : whoIsDTO.AsType,
-                whoIsDTO.CarrierName.Falsey() ? null : whoIsDTO.CarrierName,
-                whoIsDTO.Mcc.Falsey() ? null : whoIsDTO.Mcc,
-                whoIsDTO.Mnc.Falsey() ? null : whoIsDTO.Mnc,
+                whoIsDTO.AsName.ToNullIfEmpty(),
+                whoIsDTO.AsDomain.ToNullIfEmpty(),
+                whoIsDTO.AsType.ToNullIfEmpty(),
+                whoIsDTO.CarrierName.ToNullIfEmpty(),
+                whoIsDTO.Mcc.ToNullIfEmpty(),
+                whoIsDTO.Mnc.ToNullIfEmpty(),
                 DateOnly.TryParse(whoIsDTO.AsChanged, out var asChanged) ? asChanged : null,
                 DateOnly.TryParse(whoIsDTO.GeoChanged, out var geoChanged) ? geoChanged : null,
                 whoIsDTO.IsAnonymous,
@@ -108,8 +147,8 @@ public static class WhoIsMapper
                 whoIsDTO.IsRelay,
                 whoIsDTO.IsTor,
                 whoIsDTO.IsVpn,
-                whoIsDTO.PrivacyName.Falsey() ? null : whoIsDTO.PrivacyName,
-                whoIsDTO.Location?.HashId.Falsey() != false ? null : whoIsDTO.Location.HashId);
+                whoIsDTO.PrivacyName.ToNullIfEmpty(),
+                whoIsDTO.Location?.HashId.ToNullIfEmpty());
         }
     }
 }

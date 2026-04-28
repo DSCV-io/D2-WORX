@@ -4,9 +4,7 @@ import { CommsValidationError, CommsDomainError } from "@d2/comms-domain";
 describe("CommsValidationError", () => {
   it("should format the message correctly", () => {
     const error = new CommsValidationError("Message", "content", "bad", "is required.");
-    expect(error.message).toBe(
-      "Validation failed for Message.content with value 'bad': is required.",
-    );
+    expect(error.message).toBe("Validation failed for Message.content: is required.");
   });
 
   it("should store structured properties", () => {
@@ -19,15 +17,13 @@ describe("CommsValidationError", () => {
 
   it("should handle null invalidValue in message", () => {
     const error = new CommsValidationError("Message", "sender", null, "is required.");
-    expect(error.message).toBe(
-      "Validation failed for Message.sender with value 'null': is required.",
-    );
+    expect(error.message).toBe("Validation failed for Message.sender: is required.");
     expect(error.invalidValue).toBeNull();
   });
 
   it("should handle undefined invalidValue in message", () => {
     const error = new CommsValidationError("Message", "content", undefined, "is required.");
-    expect(error.message).toContain("'undefined'");
+    expect(error.message).toBe("Validation failed for Message.content: is required.");
     expect(error.invalidValue).toBeUndefined();
   });
 

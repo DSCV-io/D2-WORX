@@ -11,8 +11,8 @@ export function toDomainSession(raw: Record<string, unknown>): Session {
     userId: (raw["userId"] ?? raw["user_id"]) as string,
     token: raw["token"] as string,
     expiresAt: toDate(raw["expiresAt"] ?? raw["expires_at"]),
-    ipAddress: (raw["ipAddress"] ?? raw["ip_address"] ?? null) as string | null,
-    userAgent: (raw["userAgent"] ?? raw["user_agent"] ?? null) as string | null,
+    ipAddress: (raw["ipAddress"] ?? raw["ip_address"]) as string | undefined,
+    userAgent: (raw["userAgent"] ?? raw["user_agent"]) as string | undefined,
     createdAt: toDate(raw["createdAt"] ?? raw["created_at"]),
     updatedAt: toDate(raw["updatedAt"] ?? raw["updated_at"]),
     // Custom session extension fields

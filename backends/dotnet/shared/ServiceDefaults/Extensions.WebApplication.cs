@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="Extensions.WebApplication.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>

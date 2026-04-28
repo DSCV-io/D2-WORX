@@ -33,7 +33,7 @@
     "better-auth": "1.4.18",
     "drizzle-orm": "0.45.1",
     "hono": "4.11.9",
-    "ioredis": "5.8.0",
+    "ioredis": "5.10.0",
     "pg": "8.18.0",
     "vitest": "4.0.18"
   }

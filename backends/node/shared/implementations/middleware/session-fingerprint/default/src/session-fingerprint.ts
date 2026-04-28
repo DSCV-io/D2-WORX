@@ -15,6 +15,8 @@ export interface CheckSessionFingerprintOptions {
   getFingerprint: GetFingerprint;
   /** Revoke the session (called when fingerprint mismatch is detected). */
   revokeSession: RevokeSession;
+  /** Optional logger for diagnostic output on catch-block failures. */
+  logger?: { warn?: (msg: string, ...args: unknown[]) => void };
 }
 
 /**
@@ -49,8 +51,12 @@ export async function checkSessionFingerprint(
   let storedFingerprint: string | null;
   try {
     storedFingerprint = await options.getFingerprint(sessionToken);
-  } catch {
+  } catch (err: unknown) {
     // Redis down — fail open (same as rate limiter fail-open policy).
+    options.logger?.warn?.(
+      "Failed to get stored fingerprint, failing open",
+      err instanceof Error ? err.message : String(err),
+    );
     return null;
   }
 
@@ -58,8 +64,12 @@ export async function checkSessionFingerprint(
     // First request with this session token — store the fingerprint
     try {
       await options.storeFingerprint(sessionToken, fingerprint);
-    } catch {
+    } catch (err: unknown) {
       // Storage failure — continue without fingerprint binding
+      options.logger?.warn?.(
+        "Failed to store session fingerprint",
+        err instanceof Error ? err.message : String(err),
+      );
     }
     return null;
   }
@@ -68,8 +78,12 @@ export async function checkSessionFingerprint(
     // Fingerprint mismatch — session token is likely stolen
     try {
       await options.revokeSession(sessionToken);
-    } catch {
+    } catch (err: unknown) {
       // Best-effort revocation — even if it fails, we reject this request
+      options.logger?.warn?.(
+        "Failed to revoke session after fingerprint mismatch",
+        err instanceof Error ? err.message : String(err),
+      );
     }
     return D2Result.unauthorized();
   }

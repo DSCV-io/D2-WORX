@@ -14,17 +14,19 @@ export interface TriggerJobRequest {
 }
 
 export interface TriggerJobResponse {
-  result: D2ResultProto | undefined;
-  data: JobExecutionData | undefined;
+  result?: D2ResultProto | undefined;
+  data?: JobExecutionData | undefined;
 }
 
 export interface JobExecutionData {
-  jobName: string;
-  rowsAffected: number;
-  durationMs: string;
-  lockAcquired: boolean;
+  jobName?: string | undefined;
+  rowsAffected?: number | undefined;
+  durationMs?: string | undefined;
+  lockAcquired?:
+    | boolean
+    | undefined;
   /** ISO 8601 */
-  executedAt: string;
+  executedAt?: string | undefined;
 }
 
 function createBaseTriggerJobRequest(): TriggerJobRequest {
@@ -156,19 +158,19 @@ function createBaseJobExecutionData(): JobExecutionData {
 
 export const JobExecutionData: MessageFns<JobExecutionData> = {
   encode(message: JobExecutionData, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.jobName !== "") {
+    if (message.jobName !== undefined && message.jobName !== "") {
       writer.uint32(10).string(message.jobName);
     }
-    if (message.rowsAffected !== 0) {
+    if (message.rowsAffected !== undefined && message.rowsAffected !== 0) {
       writer.uint32(16).int32(message.rowsAffected);
     }
-    if (message.durationMs !== "0") {
+    if (message.durationMs !== undefined && message.durationMs !== "0") {
       writer.uint32(24).int64(message.durationMs);
     }
-    if (message.lockAcquired !== false) {
+    if (message.lockAcquired !== undefined && message.lockAcquired !== false) {
       writer.uint32(32).bool(message.lockAcquired);
     }
-    if (message.executedAt !== "") {
+    if (message.executedAt !== undefined && message.executedAt !== "") {
       writer.uint32(42).string(message.executedAt);
     }
     return writer;
@@ -262,19 +264,19 @@ export const JobExecutionData: MessageFns<JobExecutionData> = {
 
   toJSON(message: JobExecutionData): unknown {
     const obj: any = {};
-    if (message.jobName !== "") {
+    if (message.jobName !== undefined && message.jobName !== "") {
       obj.jobName = message.jobName;
     }
-    if (message.rowsAffected !== 0) {
+    if (message.rowsAffected !== undefined && message.rowsAffected !== 0) {
       obj.rowsAffected = Math.round(message.rowsAffected);
     }
-    if (message.durationMs !== "0") {
+    if (message.durationMs !== undefined && message.durationMs !== "0") {
       obj.durationMs = message.durationMs;
     }
-    if (message.lockAcquired !== false) {
+    if (message.lockAcquired !== undefined && message.lockAcquired !== false) {
       obj.lockAcquired = message.lockAcquired;
     }
-    if (message.executedAt !== "") {
+    if (message.executedAt !== undefined && message.executedAt !== "") {
       obj.executedAt = message.executedAt;
     }
     return obj;

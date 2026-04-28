@@ -11,14 +11,14 @@ export const protobufPackage = "d2.events.v1";
 
 /** Event published when geographic reference data has been updated. */
 export interface GeoRefDataUpdatedEvent {
-  version: string;
+  version?: string | undefined;
 }
 
 /** A single contact that was evicted (deleted or replaced). */
 export interface EvictedContact {
-  contactId: string;
-  contextKey: string;
-  relatedEntityId: string;
+  contactId?: string | undefined;
+  contextKey?: string | undefined;
+  relatedEntityId?: string | undefined;
 }
 
 /**
@@ -26,7 +26,7 @@ export interface EvictedContact {
  * All geo-client instances should evict matching cache entries.
  */
 export interface ContactsEvictedEvent {
-  contacts: EvictedContact[];
+  contacts?: EvictedContact[] | undefined;
 }
 
 function createBaseGeoRefDataUpdatedEvent(): GeoRefDataUpdatedEvent {
@@ -35,7 +35,7 @@ function createBaseGeoRefDataUpdatedEvent(): GeoRefDataUpdatedEvent {
 
 export const GeoRefDataUpdatedEvent: MessageFns<GeoRefDataUpdatedEvent> = {
   encode(message: GeoRefDataUpdatedEvent, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.version !== "") {
+    if (message.version !== undefined && message.version !== "") {
       writer.uint32(10).string(message.version);
     }
     return writer;
@@ -71,7 +71,7 @@ export const GeoRefDataUpdatedEvent: MessageFns<GeoRefDataUpdatedEvent> = {
 
   toJSON(message: GeoRefDataUpdatedEvent): unknown {
     const obj: any = {};
-    if (message.version !== "") {
+    if (message.version !== undefined && message.version !== "") {
       obj.version = message.version;
     }
     return obj;
@@ -93,13 +93,13 @@ function createBaseEvictedContact(): EvictedContact {
 
 export const EvictedContact: MessageFns<EvictedContact> = {
   encode(message: EvictedContact, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.contactId !== "") {
+    if (message.contactId !== undefined && message.contactId !== "") {
       writer.uint32(10).string(message.contactId);
     }
-    if (message.contextKey !== "") {
+    if (message.contextKey !== undefined && message.contextKey !== "") {
       writer.uint32(18).string(message.contextKey);
     }
-    if (message.relatedEntityId !== "") {
+    if (message.relatedEntityId !== undefined && message.relatedEntityId !== "") {
       writer.uint32(26).string(message.relatedEntityId);
     }
     return writer;
@@ -167,13 +167,13 @@ export const EvictedContact: MessageFns<EvictedContact> = {
 
   toJSON(message: EvictedContact): unknown {
     const obj: any = {};
-    if (message.contactId !== "") {
+    if (message.contactId !== undefined && message.contactId !== "") {
       obj.contactId = message.contactId;
     }
-    if (message.contextKey !== "") {
+    if (message.contextKey !== undefined && message.contextKey !== "") {
       obj.contextKey = message.contextKey;
     }
-    if (message.relatedEntityId !== "") {
+    if (message.relatedEntityId !== undefined && message.relatedEntityId !== "") {
       obj.relatedEntityId = message.relatedEntityId;
     }
     return obj;
@@ -197,8 +197,10 @@ function createBaseContactsEvictedEvent(): ContactsEvictedEvent {
 
 export const ContactsEvictedEvent: MessageFns<ContactsEvictedEvent> = {
   encode(message: ContactsEvictedEvent, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.contacts) {
-      EvictedContact.encode(v!, writer.uint32(10).fork()).join();
+    if (message.contacts !== undefined && message.contacts.length !== 0) {
+      for (const v of message.contacts) {
+        EvictedContact.encode(v!, writer.uint32(10).fork()).join();
+      }
     }
     return writer;
   },
@@ -215,7 +217,10 @@ export const ContactsEvictedEvent: MessageFns<ContactsEvictedEvent> = {
             break;
           }
 
-          message.contacts.push(EvictedContact.decode(reader, reader.uint32()));
+          const el = EvictedContact.decode(reader, reader.uint32());
+          if (el !== undefined) {
+            message.contacts!.push(el);
+          }
           continue;
         }
       }

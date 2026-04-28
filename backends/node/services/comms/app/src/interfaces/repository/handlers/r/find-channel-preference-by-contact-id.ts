@@ -6,7 +6,7 @@ export interface FindChannelPreferenceByContactIdInput {
 }
 
 export interface FindChannelPreferenceByContactIdOutput {
-  readonly pref: ChannelPreference | null;
+  readonly pref?: ChannelPreference;
 }
 
 export type IFindChannelPreferenceByContactIdHandler = IHandler<

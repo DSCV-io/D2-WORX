@@ -6,6 +6,17 @@
 const WHITESPACE_RE = /\s+/g;
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const NON_DIGITS_RE = /[^\d]/g;
+/**
+ * Matches characters NOT allowed in display names.
+ * Allowed: letters (any Unicode script), digits, spaces, hyphens,
+ * apostrophes, periods, commas.
+ *
+ * Use with `str.replace(DISPLAY_NAME_INVALID_RE, "")` to strip, or
+ * `DISPLAY_NAME_INVALID_RE.test(str)` to validate in form inputs.
+ *
+ * Exported for frontend form input masking (shared rules, no drift).
+ */
+export const DISPLAY_NAME_INVALID_RE = /[^\p{L}\p{N}\s\-'.,]/gu;
 
 /**
  * Cleans a string by trimming leading/trailing whitespace and collapsing
@@ -17,6 +28,28 @@ export function cleanStr(str: string | null | undefined): string | undefined {
   const trimmed = str?.trim();
   if (!trimmed) return undefined;
   return trimmed.replace(WHITESPACE_RE, " ");
+}
+
+/**
+ * Cleans a display name by stripping dangerous/unreasonable characters
+ * (HTML tags, markdown syntax, brackets, quotes, backticks, etc.),
+ * then trims whitespace and collapses duplicates.
+ *
+ * Allowed: letters (any Unicode script), digits, spaces, hyphens,
+ * apostrophes, periods, commas.
+ *
+ * Returns `undefined` if the result is empty after cleaning.
+ *
+ * @example
+ * cleanDisplayStr("John O'Brien-Smith") // "John O'Brien-Smith"
+ * cleanDisplayStr("<script>alert(1)</script>") // "scriptalert1script"
+ * cleanDisplayStr("**bold** [link](url)") // "bold linkurl"
+ * cleanDisplayStr("Dr. José María") // "Dr. José María"
+ */
+export function cleanDisplayStr(name: string | null | undefined): string | undefined {
+  if (name == null) return undefined;
+  const stripped = name.replace(DISPLAY_NAME_INVALID_RE, "");
+  return cleanStr(stripped);
 }
 
 /**
@@ -56,6 +89,22 @@ export function cleanAndValidatePhoneNumber(phoneNumber: string | null | undefin
   }
 
   return cleaned;
+}
+
+/**
+ * Returns the trimmed string if non-empty, or `undefined` if the value is
+ * null, undefined, empty, or whitespace-only.
+ *
+ * Use at boundaries (user input, DB rows, proto mapping) to convert
+ * empty strings to `undefined` before they propagate as "valid" data.
+ *
+ * Unlike {@link cleanStr}, this does NOT collapse internal whitespace —
+ * it only trims and checks for emptiness.
+ */
+export function truthyOrUndefined(value: string | null | undefined): string | undefined {
+  if (value == null) return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
 }
 
 /**

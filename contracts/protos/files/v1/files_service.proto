@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+import "common/v1/health.proto";
+
+package d2.files.v1;
+
+option csharp_namespace = "D2.Services.Protos.Files.V1";
+
+// **********************************
+// **** FilesService gRPC API *******
+// **********************************
+
+service FilesService {
+  // Health check — pings all dependencies (DB, storage, messaging).
+  rpc CheckHealth(d2.common.v1.CheckHealthRequest)
+      returns (d2.common.v1.CheckHealthResponse);
+}

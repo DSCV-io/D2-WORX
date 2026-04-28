@@ -64,7 +64,7 @@ process.exit(0);
 async function waitForHealth(): Promise<void> {
   let delay = INITIAL_BACKOFF_MS;
 
-  while (true) {
+  while (!shutdownRequested) {
     const healthy = await checkHealth(config.dkronUrl, logger);
     if (healthy) return;
 
@@ -72,6 +72,7 @@ async function waitForHealth(): Promise<void> {
       `Dkron not ready at ${config.dkronUrl} (waiting for Raft leader), retrying in ${delay}ms`,
     );
     await sleep(delay);
+    if (shutdownRequested) return;
     delay = Math.min(delay * 2, MAX_BACKOFF_MS);
   }
 }

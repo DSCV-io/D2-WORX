@@ -7,6 +7,25 @@ import {
   IGetActiveConsentsKey,
 } from "@d2/auth-app";
 import { createEmulationRoutes, SCOPE_KEY } from "@d2/auth-api";
+import { OrgType } from "@d2/handler";
+
+/** Maps the legacy lowercase org-type strings used by the test fixture to the OrgType enum. */
+function toOrgTypeEnum(value: string): OrgType | undefined {
+  switch (value) {
+    case "admin":
+      return OrgType.Admin;
+    case "support":
+      return OrgType.Support;
+    case "customer":
+      return OrgType.Customer;
+    case "third_party":
+      return OrgType.ThirdParty;
+    case "affiliate":
+      return OrgType.Affiliate;
+    default:
+      return undefined;
+  }
+}
 
 /** Creates mock handlers for emulation routes. */
 function createMockHandlers() {
@@ -63,14 +82,39 @@ function createTestApp(
 ) {
   const app = new Hono();
 
-  // Mock session middleware
+  // Mock session + scope + requestContext middleware
   app.use("*", async (c, next) => {
-    c.set("user", { id: session.userId ?? "user-123", email: "test@test.com", name: "Test" });
+    const userId = session.userId ?? "user-123";
+    const orgType = session.activeOrganizationType ?? "support";
+    const orgRole = session.activeOrganizationRole ?? "owner";
+    const orgId = session.activeOrganizationId ?? "org-session-1";
+
+    c.set("user", { id: userId, email: "test@test.com", name: "Test" });
     c.set("session", {
-      activeOrganizationType: session.activeOrganizationType ?? "support",
-      activeOrganizationRole: session.activeOrganizationRole ?? "owner",
-      activeOrganizationId: session.activeOrganizationId ?? "org-session-1",
+      activeOrganizationType: orgType,
+      activeOrganizationRole: orgRole,
+      activeOrganizationId: orgId,
     });
+    // Populate requestContext (shape that @d2/auth-policy reads from). Maps
+    // the legacy lowercase orgType strings to the OrgType enum values used
+    // throughout the platform.
+    c.set(
+      "requestContext" as never,
+      {
+        isAuthenticated: true,
+        isTrustedService: false,
+        isOrgEmulating: false,
+        isUserImpersonating: false,
+        userId,
+        email: "test@test.com",
+        targetOrgId: orgId,
+        targetOrgType: toOrgTypeEnum(orgType),
+        targetOrgRole: orgRole,
+        agentOrgId: orgId,
+        agentOrgType: toOrgTypeEnum(orgType),
+        agentOrgRole: orgRole,
+      } as never,
+    );
     // Mock DI scope — routes resolve handlers from c.get("scope")
     c.set(SCOPE_KEY as never, createMockScope(handlers) as never);
     await next();

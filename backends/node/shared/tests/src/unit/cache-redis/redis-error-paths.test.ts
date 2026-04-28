@@ -47,7 +47,9 @@ describe("DistributedCache Redis error paths (SERVICE_UNAVAILABLE)", () => {
     expect(result).toBeFailure();
     expect(result.statusCode).toBe(HttpStatusCode.ServiceUnavailable);
     expect(result.errorCode).toBe(ErrorCodes.SERVICE_UNAVAILABLE);
-    expect(result.messages).toContain("common_errors_SERVICE_UNAVAILABLE");
+    expect(result.messages).toEqual(
+      expect.arrayContaining([expect.stringContaining("Redis operation failed")]),
+    );
   });
 
   it("Set returns SERVICE_UNAVAILABLE when Redis is down", async () => {

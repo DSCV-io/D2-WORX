@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="IsolationLevel.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -11,14 +11,14 @@ namespace D2.Shared.Utilities.Enums;
 /// </summary>
 public enum IsolationLevel
 {
-// Table of isolation levels and their phenomena:
-//
-// Isolation level  | Dirty Reads  | Non-Repeatable Reads | Phantom Reads  | Serialization Anomaly
-// -----------------|--------------|----------------------|----------------|-----------------------
-// Read Uncommitted | Yes          | Yes                  | Yes            | Yes
-// Read Committed   | No           | Yes                  | Yes            | Yes
-// Repeatable Read  | No           | No                   | Yes            | Yes
-// Serializable     | No           | No                   | No             | No
+    // Table of isolation levels and their phenomena:
+    //
+    // Isolation level  | Dirty Reads  | Non-Repeatable Reads | Phantom Reads  | Serialization Anomaly
+    // -----------------|--------------|----------------------|----------------|-----------------------
+    // Read Uncommitted | Yes          | Yes                  | Yes            | Yes
+    // Read Committed   | No           | Yes                  | Yes            | Yes
+    // Repeatable Read  | No           | No                   | Yes            | Yes
+    // Serializable     | No           | No                   | No             | No
 
     /// <summary>
     /// The default isolation level of the database. Sets and reads data in its own snapshot.

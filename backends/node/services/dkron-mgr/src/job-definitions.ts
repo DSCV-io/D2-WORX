@@ -91,6 +91,16 @@ const JOB_SPECS: readonly JobSpec[] = [
     schedule: "0 15 3 * * *",
     path: "/api/v1/auth/jobs/cleanup-emulation-consents",
   },
+  {
+    name: "auth-cleanup-deleted-users",
+    displayname: "Anonymize users past the 30-day deletion grace window",
+    // 04:00 UTC — runs AFTER the comms purges (03:30 + 03:45) so when this
+    // job publishes `auth.user-anonymize`, downstream consumers (Geo, Comms,
+    // Files in future tickets) hit a settled DB rather than racing other
+    // nightly cleanup. Stays on the documented 15-min daily stagger.
+    schedule: "0 0 4 * * *",
+    path: "/api/v1/auth/jobs/cleanup-deleted-users",
+  },
 
   // -- Comms -------------------------------------------------------------
   {

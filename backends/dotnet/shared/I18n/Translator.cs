@@ -105,7 +105,7 @@ public partial class Translator : ITranslator
         return false;
     }
 
-    [GeneratedRegex(@"\{(\w+)\}")]
+    [GeneratedRegex(@"\{(\w+)\}", RegexOptions.None, matchTimeoutMilliseconds: 100)]
     private static partial Regex ParamRegex();
 
     /// <summary>

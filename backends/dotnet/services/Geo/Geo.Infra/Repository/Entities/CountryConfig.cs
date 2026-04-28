@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="CountryConfig.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -136,6 +136,13 @@ public class CountryConfig : IEntityTypeConfiguration<Country>
 
         // Locales (Navigation Collection - One-to-many).
         builder.HasMany(x => x.Locales)
+            .WithOne(x => x.Country)
+            .HasForeignKey(x => x.CountryISO31661Alpha2Code)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Timezones (Navigation Collection - One-to-many).
+        builder.HasMany(x => x.Timezones)
             .WithOne(x => x.Country)
             .HasForeignKey(x => x.CountryISO31661Alpha2Code)
             .IsRequired()

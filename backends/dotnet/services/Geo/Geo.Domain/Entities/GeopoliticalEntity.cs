@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="GeopoliticalEntity.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>

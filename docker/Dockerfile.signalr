@@ -1,0 +1,58 @@
+# =============================================================================
+# Dockerfile.signalr — .NET SignalR Real-Time Gateway
+# Build context: repo root (../)
+# Targets: dev (hot reload), prod (optimized runtime)
+# =============================================================================
+
+# --- Build stage: restore + publish release binaries ---
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+# Copy solution-level files needed for restore (central package management)
+COPY D2.sln Directory.Build.props stylecop.json ./
+
+# Copy all .NET source and contracts (proto definitions)
+COPY backends/dotnet/ backends/dotnet/
+COPY contracts/ contracts/
+
+# Restore dependencies for the SignalR gateway project
+RUN dotnet restore backends/dotnet/gateways/SignalR/SignalR.csproj
+
+# Publish self-contained release build
+RUN dotnet publish backends/dotnet/gateways/SignalR/SignalR.csproj \
+    -c Release -o /app/publish --no-restore
+
+# --- Dev stage: SDK image with hot reload via dotnet watch ---
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS dev
+WORKDIR /src
+
+ENV ASPNETCORE_ENVIRONMENT=Development
+# Polling watcher required inside containers (inotify not available on bind mounts)
+ENV DOTNET_USE_POLLING_FILE_WATCHER=true
+# HTTP/WebSocket + gRPC on separate ports
+ARG SIGNALR_HTTP_PORT=5400
+ARG SIGNALR_GRPC_PORT=5401
+ENV ASPNETCORE_URLS=http://+:${SIGNALR_HTTP_PORT};http://+:${SIGNALR_GRPC_PORT}
+
+EXPOSE ${SIGNALR_HTTP_PORT} ${SIGNALR_GRPC_PORT}
+
+# Source tree is volume-mounted at runtime for live editing
+ENTRYPOINT ["dotnet", "watch", "run", \
+    "--no-launch-profile", \
+    "--project", "backends/dotnet/gateways/SignalR/SignalR.csproj"]
+
+# --- Prod stage: minimal ASP.NET runtime ---
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS prod
+WORKDIR /app
+
+ARG SIGNALR_HTTP_PORT=5400
+ARG SIGNALR_GRPC_PORT=5401
+ENV ASPNETCORE_URLS=http://+:${SIGNALR_HTTP_PORT};http://+:${SIGNALR_GRPC_PORT}
+
+EXPOSE ${SIGNALR_HTTP_PORT} ${SIGNALR_GRPC_PORT}
+
+COPY --from=build /app/publish .
+
+USER $APP_UID
+
+ENTRYPOINT ["dotnet", "SignalR.dll"]

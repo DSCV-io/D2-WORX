@@ -48,7 +48,7 @@ function makeEvent(overrides?: Partial<SignInEvent>): SignInEvent {
     successful: true,
     ipAddress: "203.0.113.42",
     userAgent: "Mozilla/5.0 Integration Test",
-    whoIsId: null,
+    whoIsId: undefined,
     createdAt: new Date(),
     ...overrides,
   };
@@ -165,17 +165,17 @@ describe("WhoIsResolutionConsumer (integration)", () => {
   }, 15_000);
 
   it("should update whoIsId on sign-in event after consuming message", async () => {
-    // 1. Create a sign-in event with null whoIsId
+    // 1. Create a sign-in event with undefined whoIsId
     const event = makeEvent();
     await repo.create.handleAsync({ event });
 
-    // Verify whoIsId is null initially
+    // Verify whoIsId is undefined initially
     const before = await repo.findByUserId.handleAsync({
       userId: event.userId,
       limit: 1,
       offset: 0,
     });
-    expect(before.data!.events[0].whoIsId).toBeNull();
+    expect(before.data!.events[0].whoIsId).toBeUndefined();
 
     // 2. Set up the consumer with a mock FindWhoIs that returns a known hash
     const expectedHashId = "a".repeat(64);
@@ -298,13 +298,13 @@ describe("WhoIsResolutionConsumer (integration)", () => {
     await withTimeout(processed);
     await new Promise((r) => setTimeout(r, 200));
 
-    // whoIsId should still be null — fail-open behavior
+    // whoIsId should still be undefined — fail-open behavior
     const after = await repo.findByUserId.handleAsync({
       userId: event.userId,
       limit: 1,
       offset: 0,
     });
-    expect(after.data!.events[0].whoIsId).toBeNull();
+    expect(after.data!.events[0].whoIsId).toBeUndefined();
   }, 30_000);
 
   it("should drop invalid messages without crashing", async () => {

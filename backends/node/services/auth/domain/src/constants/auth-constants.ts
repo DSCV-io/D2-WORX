@@ -31,6 +31,10 @@ export const SESSION_FIELDS = {
   ACTIVE_ORG_ID: "activeOrganizationId",
   EMULATED_ORG_ID: "emulatedOrganizationId",
   EMULATED_ORG_TYPE: "emulatedOrganizationType",
+  WHO_IS_ID: "whoIsId",
+  DEVICE_FINGERPRINT: "deviceFingerprint",
+  CLIENT_FINGERPRINT: "clientFingerprint",
+  SERVER_FINGERPRINT: "serverFingerprint",
 } as const;
 
 /**
@@ -91,6 +95,21 @@ export const GEO_CONTEXT_KEYS = {
   ORG_INVITATION: "auth_org_invitation",
 } as const;
 
+/**
+ * Context keys used by the auth service for file uploads via the Files service.
+ * These must match the context key configs registered on the Files service side.
+ */
+export const AUTH_FILE_CONTEXT_KEYS = {
+  /** User avatar image. */
+  USER_AVATAR: "user_avatar",
+  /** Organization logo image. */
+  ORG_LOGO: "org_logo",
+  /** Organization document. */
+  ORG_DOCUMENT: "org_document",
+  /** Conversational thread attachment (owned by Comms, but callback routed through Auth). */
+  THREAD_ATTACHMENT: "thread_attachment",
+} as const;
+
 export const SIGN_IN_THROTTLE = {
   /** Number of failed attempts before delays begin. */
   FREE_ATTEMPTS: 3,
@@ -102,4 +121,19 @@ export const SIGN_IN_THROTTLE = {
   KNOWN_GOOD_TTL_SECONDS: 90 * 24 * 60 * 60,
   /** Local memory cache TTL for known-good lookups in milliseconds (5 minutes). */
   KNOWN_GOOD_CACHE_TTL_MS: 5 * 60 * 1000,
+} as const;
+
+/**
+ * Self-service user deletion grace period.
+ *
+ * On initiate, status flips to `pending_deletion` + `deleted_at = NOW()`.
+ * Signing back in within the grace window flips status back to `active`.
+ * The nightly purge job (`CleanupDeletedUsers`) anonymizes any pending row
+ * whose `deleted_at` is older than the grace cutoff.
+ *
+ * Configurable per environment via `AuthJobOptions.userDeletionGracePeriodMs`.
+ */
+export const USER_DELETION = {
+  GRACE_PERIOD_DAYS: 30,
+  GRACE_PERIOD_MS: 30 * 24 * 60 * 60 * 1000,
 } as const;

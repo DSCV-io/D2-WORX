@@ -17,7 +17,7 @@ describe("User", () => {
       expect(user.username).toBe("swiftriver482");
       expect(user.displayUsername).toBe("SwiftRiver482");
       expect(user.emailVerified).toBe(false);
-      expect(user.image).toBeNull();
+      expect(user.image).toBeUndefined();
       expect(user.id).toHaveLength(36);
       expect(user.createdAt).toBeInstanceOf(Date);
       expect(user.updatedAt).toBeInstanceOf(Date);
@@ -138,10 +138,10 @@ describe("User", () => {
       expect(updated.createdAt).toBe(baseUser.createdAt);
     });
 
-    it("should allow setting image to null", () => {
+    it("should preserve image when update passes undefined", () => {
       const withImage = createUser({ ...validInput, image: "https://example.com/photo.jpg" });
-      const updated = updateUser(withImage, { image: null });
-      expect(updated.image).toBeNull();
+      const updated = updateUser(withImage, { image: undefined });
+      expect(updated.image).toBe("https://example.com/photo.jpg");
     });
 
     it("should update the locale", () => {

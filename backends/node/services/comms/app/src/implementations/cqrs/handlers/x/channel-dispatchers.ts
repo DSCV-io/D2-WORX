@@ -1,6 +1,5 @@
 import { readFileSync } from "node:fs";
 import { marked } from "marked";
-import DOMPurify from "isomorphic-dompurify";
 import type { Channel } from "@d2/comms-domain";
 import type { IEmailProvider, SendEmailInput } from "../../../../interfaces/providers/index.js";
 import type { ISmsProvider } from "../../../../interfaces/providers/index.js";
@@ -78,8 +77,12 @@ export function loadEmailWrapper(footerText: string, templatePath?: string): str
   if (templatePath) {
     try {
       return readFileSync(templatePath, "utf-8");
-    } catch {
+    } catch (err: unknown) {
       // File missing or unreadable — fall through to built-in default
+      console.warn(
+        `loadEmailWrapper: failed to read template at "${templatePath}", falling back to default`,
+        { error: err instanceof Error ? err.message : String(err) },
+      );
     }
   }
   return createEmailWrapper(footerText);
@@ -114,7 +117,7 @@ export class EmailDispatcher implements IChannelDispatcher {
     const html = renderTemplate(this.emailWrapper, {
       title: input.title,
       body: renderedBody,
-      unsubscribeUrl: "",
+      unsubscribeUrl: "", // TODO: wire unsubscribe URL (PLANNING.md issue #81)
     });
 
     const sendInput: SendEmailInput = {
@@ -158,15 +161,16 @@ export class SmsDispatcher implements IChannelDispatcher {
   }
 }
 
-/** Simple {{key}} template interpolation. */
+/** Simple {{key}} template interpolation — no escaping (callers escape inputs as needed). */
 function renderTemplate(template: string, vars: Record<string, string>): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? "");
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => vars[key] ?? "");
 }
 
 /**
- * Renders markdown to sanitized HTML using `marked` + `isomorphic-dompurify`.
+ * Renders markdown to HTML using `marked`.
+ * No escaping — callers are responsible for sanitizing user-provided values
+ * before embedding them in the markdown content.
  */
 function renderMarkdownToHtml(markdown: string): string {
-  const rawHtml = marked.parse(markdown, { async: false }) as string;
-  return DOMPurify.sanitize(rawHtml);
+  return marked.parse(markdown, { async: false }) as string;
 }

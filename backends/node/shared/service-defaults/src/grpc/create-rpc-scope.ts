@@ -52,8 +52,8 @@ export function createRpcScope(
         isAgentAdmin: false,
         isTargetingStaff: false,
         isTargetingAdmin: false,
-        isOrgEmulating: false,
-        isUserImpersonating: false,
+        isOrgEmulating: null,
+        isUserImpersonating: null,
       };
 
   scope.setInstance(IRequestContextKey, requestContext);

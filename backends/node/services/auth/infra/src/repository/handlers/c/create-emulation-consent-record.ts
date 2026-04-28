@@ -28,7 +28,7 @@ export class CreateEmulationConsentRecord
         userId: input.consent.userId,
         grantedToOrgId: input.consent.grantedToOrgId,
         expiresAt: input.consent.expiresAt,
-        revokedAt: input.consent.revokedAt,
+        revokedAt: input.consent.revokedAt ?? null,
         createdAt: input.consent.createdAt,
       });
 

@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { BaseHandler, type IHandlerContext } from "@d2/handler";
+import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handler";
 import { D2Result } from "@d2/result";
 import type {
   FindMessageByIdInput as I,
@@ -19,6 +19,10 @@ export class FindMessageById extends BaseHandler<I, O> implements IFindMessageBy
     this.db = db;
   }
 
+  override get redaction(): RedactionSpec {
+    return { suppressOutput: true };
+  }
+
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {
     const rows = await this.db.select().from(message).where(eq(message.id, input.id)).limit(1);
 
@@ -34,22 +38,22 @@ export class FindMessageById extends BaseHandler<I, O> implements IFindMessageBy
 function toMessage(row: MessageRow): Message {
   return {
     id: row.id,
-    threadId: row.threadId,
-    parentMessageId: row.parentMessageId,
-    senderUserId: row.senderUserId,
-    senderContactId: row.senderContactId,
-    senderService: row.senderService,
-    title: row.title,
+    threadId: row.threadId ?? undefined,
+    parentMessageId: row.parentMessageId ?? undefined,
+    senderUserId: row.senderUserId ?? undefined,
+    senderContactId: row.senderContactId ?? undefined,
+    senderService: row.senderService ?? undefined,
+    title: row.title ?? undefined,
     content: row.content,
     plainTextContent: row.plainTextContent,
     contentFormat: row.contentFormat as ContentFormat,
-    sensitive: row.sensitive,
+    channels: (row.channels ?? []) as ("email" | "sms")[],
     urgency: row.urgency as Urgency,
-    relatedEntityId: row.relatedEntityId,
-    relatedEntityType: row.relatedEntityType,
-    metadata: row.metadata as Record<string, unknown> | null,
-    editedAt: row.editedAt,
-    deletedAt: row.deletedAt,
+    relatedEntityId: row.relatedEntityId ?? undefined,
+    relatedEntityType: row.relatedEntityType ?? undefined,
+    metadata: (row.metadata as Record<string, unknown>) ?? undefined,
+    editedAt: row.editedAt ?? undefined,
+    deletedAt: row.deletedAt ?? undefined,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

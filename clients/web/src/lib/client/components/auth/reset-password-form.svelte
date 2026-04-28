@@ -8,14 +8,12 @@
     createResetPasswordSchema,
     type ResetPasswordFormData,
   } from "$lib/shared/forms/reset-password-schema.js";
-  import { FormInput } from "$lib/client/components/forms/index.js";
+  import { FormPasswordInput } from "$lib/client/components/forms/index.js";
   import { Button } from "$lib/client/components/ui/button/index.js";
   import * as Card from "$lib/client/components/ui/card/index.js";
   import { authClient } from "$lib/client/stores/auth-client.js";
   import { NEW_PASSWORD, CONFIRM_NEW_PASSWORD } from "$lib/shared/forms/field-presets.js";
   import * as m from "$lib/paraglide/messages.js";
-  import EyeIcon from "@lucide/svelte/icons/eye";
-  import EyeOffIcon from "@lucide/svelte/icons/eye-off";
   import CircleCheckIcon from "@lucide/svelte/icons/circle-check";
   import CircleXIcon from "@lucide/svelte/icons/circle-x";
 
@@ -30,7 +28,6 @@
 
   let submitting = $state(false);
   let serverError = $state("");
-  let showPassword = $state(false);
   let result = $state<"success" | "token-error" | null>(null);
   let countdown = $state(5);
 
@@ -148,33 +145,24 @@
       autocomplete="off"
       class="flex flex-col gap-5"
     >
-      <FormInput
+      <FormPasswordInput
         {form}
         field="newPassword"
         {...NEW_PASSWORD}
-        type={showPassword ? "text" : "password"}
-      >
-        {#snippet inputAction()}
-          <button
-            type="button"
-            onclick={() => (showPassword = !showPassword)}
-            class="text-muted-foreground hover:text-foreground"
-            aria-label={showPassword ? "Hide password" : "Show password"}
-          >
-            {#if showPassword}
-              <EyeOffIcon class="size-4" />
-            {:else}
-              <EyeIcon class="size-4" />
-            {/if}
-          </button>
-        {/snippet}
-      </FormInput>
+        toggleLabel={{
+          show: m.webclient_forms_show_new_password(),
+          hide: m.webclient_forms_hide_new_password(),
+        }}
+      />
 
-      <FormInput
+      <FormPasswordInput
         {form}
         field="confirmNewPassword"
         {...CONFIRM_NEW_PASSWORD}
-        type={showPassword ? "text" : "password"}
+        toggleLabel={{
+          show: m.webclient_forms_show_confirm_password(),
+          hide: m.webclient_forms_hide_confirm_password(),
+        }}
       />
 
       {#if serverError}

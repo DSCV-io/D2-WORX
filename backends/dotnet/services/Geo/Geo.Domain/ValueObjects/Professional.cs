@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="Professional.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -96,9 +96,9 @@ public record Professional
 
         return new Professional
         {
-            CompanyName = companyName.CleanStr()!,
-            JobTitle = jobTitle?.CleanStr(),
-            Department = department?.CleanStr(),
+            CompanyName = companyName.CleanDisplayStr()!,
+            JobTitle = jobTitle?.CleanDisplayStr(),
+            Department = department?.CleanDisplayStr(),
             CompanyWebsite = companyWebsite,
         };
     }

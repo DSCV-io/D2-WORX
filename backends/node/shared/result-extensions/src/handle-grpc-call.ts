@@ -31,8 +31,12 @@ export async function handleGrpcCall<TResponse, TData>(
     return d2ResultFromProto<TData>(proto, data);
   } catch (err: unknown) {
     if (isServiceError(err)) {
-      return D2Result.serviceUnavailable<TData>();
+      return D2Result.serviceUnavailable<TData>({
+        messages: [`gRPC call failed with status ${err.code}: ${err.details || err.message}`],
+      });
     }
-    return D2Result.unhandledException<TData>();
+    return D2Result.unhandledException<TData>({
+      messages: [`gRPC call failed: ${err instanceof Error ? err.message : String(err)}`],
+    });
   }
 }

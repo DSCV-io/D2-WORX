@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="D2Result.Generic.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -224,7 +224,7 @@ public class D2Result<TData> : D2Result
     /// <returns>
     /// A not found <see cref="D2Result{TResult}"/> instance containing error details.
     /// </returns>
-    public static D2Result<TData> NotFound(
+    public static new D2Result<TData> NotFound(
         List<string>? messages = null,
         string? traceId = null)
     {
@@ -252,7 +252,7 @@ public class D2Result<TData> : D2Result
     /// <returns>
     /// A forbidden <see cref="D2Result{TResult}"/> instance containing error details.
     /// </returns>
-    public static D2Result<TData> Forbidden(
+    public static new D2Result<TData> Forbidden(
         List<string>? messages = null,
         string? traceId = null)
     {
@@ -305,6 +305,10 @@ public class D2Result<TData> : D2Result
     /// A two-dimensional list representing input errors, where each inner list contains the name
     /// of the field and each proceeding string is an error message related to that field. Optional.
     /// </param>
+    /// <param name="errorCode">
+    /// Overrides the default <see cref="ErrorCodes.VALIDATION_FAILED"/> code so callers can attach
+    /// a more specific code for client-side discrimination. Optional.
+    /// </param>
     /// <param name="traceId">
     /// The trace identifier to correlate logs and diagnostics for the operation. Optional.
     /// </param>
@@ -315,6 +319,7 @@ public class D2Result<TData> : D2Result
     public static new D2Result<TData> ValidationFailed(
         List<string>? messages = null,
         List<List<string>>? inputErrors = null,
+        string? errorCode = null,
         string? traceId = null)
     {
         messages ??= ["common_errors_VALIDATION_FAILED"];
@@ -324,7 +329,7 @@ public class D2Result<TData> : D2Result
             messages,
             inputErrors,
             statusCode: HttpStatusCode.BadRequest,
-            errorCode: ErrorCodes.VALIDATION_FAILED,
+            errorCode: errorCode ?? ErrorCodes.VALIDATION_FAILED,
             traceId: traceId);
     }
 
@@ -342,7 +347,7 @@ public class D2Result<TData> : D2Result
     /// <returns>
     /// A conflict <see cref="D2Result{TResult}"/> instance containing error details.
     /// </returns>
-    public static D2Result<TData> Conflict(
+    public static new D2Result<TData> Conflict(
         List<string>? messages = null,
         string? traceId = null)
     {
@@ -411,6 +416,7 @@ public class D2Result<TData> : D2Result
         List<string>? messages = null,
         string? traceId = null)
     {
+        messages ??= ["common_errors_SOME_FOUND"];
         return new(
             false,
             data,
@@ -427,6 +433,12 @@ public class D2Result<TData> : D2Result
     /// <param name="messages">
     /// A list of messages related to the service unavailability. Optional.
     /// </param>
+    /// <param name="errorCode">
+    /// Overrides the default <see cref="ErrorCodes.SERVICE_UNAVAILABLE"/> code so callers can attach
+    /// a more specific code (e.g. a domain-specific retry signal) for downstream discrimination —
+    /// e.g. message consumers that branch on the error code to decide between retry and dead-letter
+    /// — without dropping back to raw <see cref="Fail"/>. Optional.
+    /// </param>
     /// <param name="traceId">
     /// The trace identifier to correlate logs and diagnostics for the operation. Optional.
     /// </param>
@@ -436,6 +448,7 @@ public class D2Result<TData> : D2Result
     /// </returns>
     public static new D2Result<TData> ServiceUnavailable(
         List<string>? messages = null,
+        string? errorCode = null,
         string? traceId = null)
     {
         messages ??= ["common_errors_SERVICE_UNAVAILABLE"];
@@ -444,7 +457,7 @@ public class D2Result<TData> : D2Result
             default,
             messages,
             statusCode: HttpStatusCode.ServiceUnavailable,
-            errorCode: ErrorCodes.SERVICE_UNAVAILABLE,
+            errorCode: errorCode ?? ErrorCodes.SERVICE_UNAVAILABLE,
             traceId: traceId);
     }
 
@@ -473,6 +486,39 @@ public class D2Result<TData> : D2Result
             messages,
             statusCode: HttpStatusCode.RequestEntityTooLarge,
             errorCode: ErrorCodes.PAYLOAD_TOO_LARGE,
+            traceId: traceId);
+    }
+
+    /// <summary>
+    /// Factory method to create a too many requests <see cref="D2Result{TResult}"/> instance.
+    /// </summary>
+    ///
+    /// <param name="messages">
+    /// A list of messages related to the rate limit. Optional.
+    /// </param>
+    /// <param name="errorCode">
+    /// Overrides the default <see cref="ErrorCodes.RATE_LIMITED"/> code so callers can attach
+    /// a more specific code (e.g. "OTP_RATE_LIMITED") for client-side discrimination. Optional.
+    /// </param>
+    /// <param name="traceId">
+    /// The trace identifier to correlate logs and diagnostics for the operation. Optional.
+    /// </param>
+    ///
+    /// <returns>
+    /// A too many requests <see cref="D2Result{TResult}"/> instance containing error details.
+    /// </returns>
+    public static new D2Result<TData> TooManyRequests(
+        List<string>? messages = null,
+        string? errorCode = null,
+        string? traceId = null)
+    {
+        messages ??= ["common_errors_TOO_MANY_REQUESTS"];
+        return new(
+            false,
+            default,
+            messages,
+            statusCode: HttpStatusCode.TooManyRequests,
+            errorCode: errorCode ?? ErrorCodes.RATE_LIMITED,
             traceId: traceId);
     }
 

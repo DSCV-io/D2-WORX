@@ -1,8 +1,8 @@
-import { sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { BaseHandler, type IHandlerContext } from "@d2/handler";
 import { D2Result } from "@d2/result";
 import type { PingDbInput as I, PingDbOutput as O, IPingDbHandler } from "@d2/auth-app";
+import { user } from "../../schema/better-auth-tables.js";
 
 export class PingDb extends BaseHandler<I, O> implements IPingDbHandler {
   private readonly db: NodePgDatabase;
@@ -15,7 +15,7 @@ export class PingDb extends BaseHandler<I, O> implements IPingDbHandler {
   protected async executeAsync(_input: I): Promise<D2Result<O | undefined>> {
     const start = performance.now();
     try {
-      await this.db.execute(sql`SELECT 1`);
+      await this.db.select({ id: user.id }).from(user).limit(0);
       const latencyMs = Math.round(performance.now() - start);
       return D2Result.ok({ data: { healthy: true, latencyMs } });
     } catch (err) {

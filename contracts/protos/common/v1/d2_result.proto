@@ -7,8 +7,8 @@ option csharp_namespace = "D2.Services.Protos.Common.V1";
 message D2ResultProto {
   bool success = 1;
   int32 status_code = 2;
-  string error_code = 3;
-  string trace_id = 4;
+  optional string error_code = 3;
+  optional string trace_id = 4;
   repeated string messages = 5;
   repeated InputErrorProto input_errors = 6;
 }

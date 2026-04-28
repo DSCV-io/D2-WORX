@@ -92,14 +92,16 @@ export async function enrichRequest(
         });
 
         logger?.debug(
-          `Enriched request from IP ${clientIp} with WhoIs data. City: ${whoIs.location?.city}, Country: ${whoIs.location?.countryIso31661Alpha2Code}`,
+          `Enriched request with WhoIs data. City: ${whoIs.location?.city}, Country: ${whoIs.location?.countryIso31661Alpha2Code}`,
         );
       } else {
-        logger?.debug(`WhoIs lookup for IP ${clientIp} returned no data`);
+        logger?.debug("WhoIs lookup returned no data for client");
       }
-    } catch {
+    } catch (err: unknown) {
       // Fail-open: log warning and continue without WhoIs data.
-      logger?.warn(`WhoIs lookup failed for IP ${clientIp}. Proceeding without WhoIs data.`);
+      logger?.warn(
+        `WhoIs lookup failed. Proceeding without WhoIs data: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 

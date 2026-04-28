@@ -35,7 +35,7 @@ export class FindActiveConsentByUserIdAndOrg
         ),
       );
 
-    const consent: EmulationConsent | null = row ? toEmulationConsent(row) : null;
+    const consent = row ? toEmulationConsent(row) : undefined;
     return D2Result.ok({ data: { consent } });
   }
 }
@@ -46,7 +46,7 @@ function toEmulationConsent(row: typeof emulationConsent.$inferSelect): Emulatio
     userId: row.userId,
     grantedToOrgId: row.grantedToOrgId,
     expiresAt: row.expiresAt,
-    revokedAt: row.revokedAt,
+    revokedAt: row.revokedAt ?? undefined,
     createdAt: row.createdAt,
   };
 }

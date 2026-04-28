@@ -28,7 +28,9 @@ export class ContactsEvicted
   protected async executeAsync(
     input: ContactsEvictedEvent,
   ): Promise<D2Result<ContactsEvictedOutput | undefined>> {
-    for (const contact of input.contacts) {
+    const contacts = input.contacts ?? [];
+    for (const contact of contacts) {
+      if (!contact.contactId || !contact.contextKey || !contact.relatedEntityId) continue;
       // Evict by contact ID.
       this.store.delete(GEO_CACHE_KEYS.contact(contact.contactId));
       // Evict by ext-key.
@@ -37,7 +39,7 @@ export class ContactsEvicted
       );
     }
 
-    this.context.logger.info(`Evicted ${input.contacts.length} contact(s) from cache`);
+    this.context.logger.info(`Evicted ${contacts.length} contact(s) from cache`);
 
     return D2Result.ok({ data: {} });
   }

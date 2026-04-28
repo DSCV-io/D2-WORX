@@ -104,11 +104,15 @@ export const IRecipientResolverKey = createServiceKey<Queries.IRecipientResolver
 export const ISetChannelPreferenceKey = createServiceKey<Commands.ISetChannelPreferenceHandler>(
   "Comms.App.SetChannelPreference",
 );
+export const ISetUserChannelPreferenceKey =
+  createServiceKey<Commands.ISetUserChannelPreferenceHandler>("Comms.App.SetUserChannelPreference");
 
 // --- Query Handlers ---
 export const IGetChannelPreferenceKey = createServiceKey<Queries.IGetChannelPreferenceHandler>(
   "Comms.App.GetChannelPreference",
 );
+export const IGetUserChannelPreferenceKey =
+  createServiceKey<Queries.IGetUserChannelPreferenceHandler>("Comms.App.GetUserChannelPreference");
 export const ICheckHealthKey =
   createServiceKey<Queries.ICheckHealthHandler>("Comms.App.CheckHealth");
 

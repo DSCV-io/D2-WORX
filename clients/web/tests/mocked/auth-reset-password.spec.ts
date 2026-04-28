@@ -48,7 +48,14 @@ test.describe("reset-password page — with token (/reset-password?token=...)", 
   });
 
   test("has password toggle button", async ({ page }) => {
-    await expect(page.getByRole("button", { name: "Show password" })).toBeVisible();
+    // Reset form has TWO password inputs (new + confirm) — each toggle has a
+    // unique aria-label so screen readers and locators can disambiguate.
+    await expect(
+      page.getByRole("button", { name: "Show new password", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Show confirm password", exact: true }),
+    ).toBeVisible();
   });
 
   // --- SEO ---
@@ -94,7 +101,7 @@ test.describe("reset-password page — with token (/reset-password?token=...)", 
     const passwordInput = page.getByRole("textbox", { name: "New Password", exact: true });
     await passwordInput.fill("123456789012");
     await passwordInput.blur();
-    await expect(page.getByText("Password cannot be only numbers", { exact: true })).toBeVisible({
+    await expect(page.getByText("Password cannot be only numbers.", { exact: true })).toBeVisible({
       timeout: 2000,
     });
   });
@@ -167,13 +174,16 @@ test.describe("reset-password page — with token (/reset-password?token=...)", 
     await expect(newPasswordInput).toHaveAttribute("type", "password");
     await expect(confirmInput).toHaveAttribute("type", "password");
 
-    // Click show — both should become text
-    await page.getByRole("button", { name: "Show password" }).click();
+    // Each FormPasswordInput owns its own toggle — there is no single
+    // "show both" button. Click each to reveal its own field, then each
+    // hide to mask its own field.
+    await page.getByRole("button", { name: "Show new password", exact: true }).click();
+    await page.getByRole("button", { name: "Show confirm password", exact: true }).click();
     await expect(newPasswordInput).toHaveAttribute("type", "text");
     await expect(confirmInput).toHaveAttribute("type", "text");
 
-    // Click hide — both should become password again
-    await page.getByRole("button", { name: "Hide password" }).click();
+    await page.getByRole("button", { name: "Hide new password", exact: true }).click();
+    await page.getByRole("button", { name: "Hide confirm password", exact: true }).click();
     await expect(newPasswordInput).toHaveAttribute("type", "password");
     await expect(confirmInput).toHaveAttribute("type", "password");
   });

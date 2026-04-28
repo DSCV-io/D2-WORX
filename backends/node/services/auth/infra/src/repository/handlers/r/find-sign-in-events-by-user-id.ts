@@ -45,9 +45,11 @@ function toSignInEvent(row: typeof signInEvent.$inferSelect): SignInEvent {
     successful: row.successful,
     ipAddress: row.ipAddress,
     userAgent: row.userAgent,
-    whoIsId: row.whoIsId,
-    deviceFingerprint: row.deviceFingerprint,
-    failureReason: row.failureReason,
+    whoIsId: row.whoIsId ?? undefined,
+    deviceFingerprint: row.deviceFingerprint ?? undefined,
+    clientFingerprint: row.clientFingerprint ?? undefined,
+    serverFingerprint: row.serverFingerprint ?? undefined,
+    failureReason: row.failureReason ?? undefined,
     createdAt: row.createdAt,
   };
 }

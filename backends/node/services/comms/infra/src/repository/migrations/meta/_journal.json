@@ -29,6 +29,20 @@
       "when": 1773376490777,
       "tag": "0003_familiar_miracleman",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1774609200000,
+      "tag": "0004_replace_sensitive_with_channels_add_fks",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1776495039429,
+      "tag": "0005_delivery_request_nullable_contact_id",
+      "breakpoints": true
     }
   ]
 }

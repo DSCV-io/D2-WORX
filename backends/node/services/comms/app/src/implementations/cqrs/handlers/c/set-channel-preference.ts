@@ -45,7 +45,7 @@ export class SetChannelPreference
     if (!validation.success) return D2Result.bubbleFail(validation);
 
     // Check if existing pref exists
-    let existing: ChannelPreference | null = null;
+    let existing: ChannelPreference | undefined;
     const result = await this.repo.findByContactId.handleAsync({ contactId: input.contactId });
     if (result.success && result.data) existing = result.data.pref;
 
@@ -55,14 +55,16 @@ export class SetChannelPreference
         emailEnabled: input.emailEnabled,
         smsEnabled: input.smsEnabled,
       });
-      await this.repo.update.handleAsync({ pref });
+      const updateResult = await this.repo.update.handleAsync({ pref });
+      if (!updateResult.success) return D2Result.bubbleFail(updateResult);
     } else {
       pref = createChannelPreference({
         contactId: input.contactId,
         emailEnabled: input.emailEnabled,
         smsEnabled: input.smsEnabled,
       });
-      await this.repo.create.handleAsync({ pref });
+      const createResult = await this.repo.create.handleAsync({ pref });
+      if (!createResult.success) return D2Result.bubbleFail(createResult);
     }
 
     // Evict + repopulate cache

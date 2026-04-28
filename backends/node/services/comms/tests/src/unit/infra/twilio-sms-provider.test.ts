@@ -56,7 +56,12 @@ describe("TwilioSmsProvider", () => {
     expect(result.data!.providerMessageId).toBe("SM_abc123def456");
   });
 
-  it("should return 503 on Twilio error", async () => {
+  it("should return 503 on Twilio error with a generic TK key (not the raw provider message)", async () => {
+    // Provider raises a Twilio-specific error string. The handler must NOT
+    // leak it to the caller — raw provider strings can include account SIDs,
+    // partial numbers, etc. We assert the response carries only the generic
+    // TK key (PROVIDER_UNKNOWN); the raw err.message is logged via logger.warn
+    // for ops visibility, not surfaced to clients.
     mockCreate.mockRejectedValue(new Error("Authentication error"));
 
     const result = await provider.handleAsync({
@@ -66,7 +71,8 @@ describe("TwilioSmsProvider", () => {
 
     expect(result.success).toBe(false);
     expect(result.statusCode).toBe(503);
-    expect(result.messages).toContain("Authentication error");
+    expect(result.messages).toContain("comms_errors_PROVIDER_UNKNOWN");
+    expect(result.messages).not.toContain("Authentication error");
   });
 
   it("should pass correct fields to Twilio SDK", async () => {

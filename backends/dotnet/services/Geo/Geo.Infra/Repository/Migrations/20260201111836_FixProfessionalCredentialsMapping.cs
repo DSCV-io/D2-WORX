@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="20260201111836_FixProfessionalCredentialsMapping.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>

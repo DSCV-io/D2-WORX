@@ -1,0 +1,29 @@
+{
+  "name": "@d2/files-app",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@d2/cache-redis": "workspace:*",
+    "@d2/di": "workspace:*",
+    "@d2/files-domain": "workspace:*",
+    "@d2/handler": "workspace:*",
+    "@d2/interfaces": "workspace:*",
+    "@d2/result": "workspace:*",
+    "@d2/utilities": "workspace:*",
+    "zod": "4.3.6"
+  }
+}

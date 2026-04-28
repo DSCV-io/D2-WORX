@@ -67,8 +67,8 @@ describe("D2ResultProto", () => {
 
     expect(result.success).toBe(true);
     expect(result.statusCode).toBe(200);
-    expect(result.errorCode).toBe("");
-    expect(result.traceId).toBe("");
+    expect(result.errorCode).toBeUndefined();
+    expect(result.traceId).toBeUndefined();
     expect(result.messages).toEqual([]);
     expect(result.inputErrors).toEqual([]);
   });

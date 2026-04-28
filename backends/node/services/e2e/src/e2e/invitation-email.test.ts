@@ -14,6 +14,7 @@ import { startGeoService, stopGeoService } from "../helpers/geo-dotnet-service.j
 import {
   startAuthService,
   stopAuthService,
+  E2E_AUTH_API_KEY,
   type AuthServiceHandle,
 } from "../helpers/auth-service.js";
 import {
@@ -146,6 +147,7 @@ describe("E2E: Invitation → invitation email delivery", () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-api-key": E2E_AUTH_API_KEY,
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
@@ -222,6 +224,7 @@ describe("E2E: Invitation → invitation email delivery", () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-api-key": E2E_AUTH_API_KEY,
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({

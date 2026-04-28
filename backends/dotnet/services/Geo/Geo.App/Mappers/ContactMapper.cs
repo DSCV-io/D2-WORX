@@ -49,6 +49,7 @@ public static class ContactMapper
                 ProfessionalDetails = contact.ProfessionalDetails?.ToDTO(),
                 Location = location?.ToDTO(),
                 IetfBcp47Tag = contact.IETFBCP47Tag,
+                IanaIdentifier = contact.IANAIdentifier,
             };
         }
     }
@@ -79,7 +80,8 @@ public static class ContactMapper
                 contactDTO.PersonalDetails?.ToDomain(),
                 contactDTO.ProfessionalDetails?.ToDomain(),
                 locationHashId.Falsey() ? null : locationHashId,
-                contactDTO.IetfBcp47Tag.Falsey() ? null : contactDTO.IetfBcp47Tag);
+                contactDTO.IetfBcp47Tag.Falsey() ? null : contactDTO.IetfBcp47Tag,
+                contactDTO.IanaIdentifier.Falsey() ? null : contactDTO.IanaIdentifier);
         }
     }
 
@@ -112,7 +114,8 @@ public static class ContactMapper
                 contactToCreateDTO.PersonalDetails?.ToDomain(),
                 contactToCreateDTO.ProfessionalDetails?.ToDomain(),
                 locationHashId,
-                contactToCreateDTO.IetfBcp47Tag.Falsey() ? null : contactToCreateDTO.IetfBcp47Tag);
+                contactToCreateDTO.IetfBcp47Tag.Falsey() ? null : contactToCreateDTO.IetfBcp47Tag,
+                contactToCreateDTO.IanaIdentifier.Falsey() ? null : contactToCreateDTO.IanaIdentifier);
         }
 
         /// <summary>

@@ -7,6 +7,7 @@
 namespace D2.Shared.Messaging.RabbitMQ;
 
 using System.Text;
+using System.Text.Json;
 using global::RabbitMQ.Client;
 using global::RabbitMQ.Client.Events;
 using Google.Protobuf;
@@ -112,8 +113,21 @@ public sealed partial class ProtoConsumer<T> : IAsyncDisposable
 
                 await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: ct);
             }
+            catch (Exception ex) when (ex is JsonException or InvalidOperationException or InvalidProtocolBufferException)
+            {
+                // Permanent failure — malformed message cannot be deserialized.
+                // Do not requeue to prevent infinite redelivery (poison message loop).
+                LogMessageDeserializationFailed(logger, ex, typeof(T).Name);
+
+                await channel.BasicNackAsync(
+                    ea.DeliveryTag,
+                    multiple: false,
+                    requeue: false,
+                    cancellationToken: ct);
+            }
             catch (Exception ex)
             {
+                // Transient failure — requeue for retry.
                 LogMessageProcessingFailed(logger, ex, typeof(T).Name);
 
                 await channel.BasicNackAsync(
@@ -157,9 +171,15 @@ public sealed partial class ProtoConsumer<T> : IAsyncDisposable
     }
 
     /// <summary>
+    /// Logs that message deserialization failed permanently and the message is being dropped.
+    /// </summary>
+    [LoggerMessage(EventId = 1, Level = LogLevel.Error, Message = "Failed to deserialize {ProtoType} message, dropping (permanent failure)")]
+    private static partial void LogMessageDeserializationFailed(ILogger logger, Exception ex, string protoType);
+
+    /// <summary>
     /// Logs that message processing failed and the message is being requeued.
     /// </summary>
-    [LoggerMessage(EventId = 1, Level = LogLevel.Error, Message = "Failed to process {ProtoType} message, requeueing")]
+    [LoggerMessage(EventId = 4, Level = LogLevel.Error, Message = "Failed to process {ProtoType} message, requeueing")]
     private static partial void LogMessageProcessingFailed(ILogger logger, Exception ex, string protoType);
 
     /// <summary>

@@ -11,9 +11,7 @@ export class CommsValidationError extends CommsDomainError {
   readonly reason: string;
 
   constructor(entityName: string, propertyName: string, invalidValue: unknown, reason: string) {
-    super(
-      `Validation failed for ${entityName}.${propertyName} with value '${invalidValue}': ${reason}`,
-    );
+    super(`Validation failed for ${entityName}.${propertyName}: ${reason}`);
     this.name = "CommsValidationError";
     this.entityName = entityName;
     this.propertyName = propertyName;

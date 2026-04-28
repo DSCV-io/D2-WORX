@@ -51,8 +51,11 @@ test.describe("layout rendering", () => {
 
     // Should show DCSV WORX branding
     await expect(page.getByText("DCSV WORX")).toBeVisible();
-    // Should show theme toggle
-    await expect(page.getByRole("button", { name: /toggle theme/i })).toBeVisible();
+    // Should show the Preferences dropdown trigger (which contains the
+    // theme segmented control + locale picker). The standalone "toggle
+    // theme" button this test originally expected was consolidated into
+    // the Preferences popover.
+    await expect(page.getByRole("button", { name: /preferences/i })).toBeVisible();
     // No sidebar
     await expect(page.locator("[data-slot='sidebar']")).not.toBeVisible();
   });

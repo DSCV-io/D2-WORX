@@ -18,9 +18,27 @@ Standardized result types for operation outcomes with HTTP-aware status codes an
 
 > **Note:** `traceId` is auto-injected by `BaseHandler` on both .NET and Node.js. Handlers do NOT pass `traceId:` manually — `BaseHandler.InjectTraceId()` sets it automatically if the handler didn't. Only pass `traceId:` explicitly when constructing `D2Result` outside of a handler (e.g., middleware, error mappers).
 
+The non-generic `D2Result` now has full factory parity with `D2Result<T>`. All semantic factories are available on both types.
+
 ```csharp
 // Success (200 OK)
 D2Result.Ok();
+
+// Created (201 Created)
+D2Result.Created();
+
+// Not found (404, NOT_FOUND) — default message: "common_errors_NOT_FOUND"
+D2Result.NotFound();
+D2Result.NotFound(["geo_errors_LOCATION_NOT_FOUND"]);
+
+// Forbidden (403, FORBIDDEN) — default message: "common_errors_FORBIDDEN"
+D2Result.Forbidden();
+
+// Conflict (409, CONFLICT) — default message: "common_errors_CONFLICT"
+D2Result.Conflict();
+
+// Some found (206, SOME_FOUND) — default message: "common_errors_SOME_FOUND"
+D2Result.SomeFound();
 
 // Generic failure (400 Bad Request by default, or specify status/error)
 D2Result.Fail(["Something went wrong."], HttpStatusCode.BadGateway);

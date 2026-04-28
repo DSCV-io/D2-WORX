@@ -24,7 +24,7 @@ const schema = z.object({
  * Loads junction records from the repo, batch-fetches Geo contact data
  * via GetContactsByExtKeys (using contextKey="auth_org_contact", relatedEntityId=junction.id),
  * then joins the results. Orphaned junctions (where the Geo contact no longer
- * exists) are returned with geoContact: null.
+ * exists) are returned with geoContact: undefined.
  */
 export class GetOrgContacts
   extends BaseHandler<Input, Output>
@@ -53,11 +53,12 @@ export class GetOrgContacts
 
     const findResult = await this.findByOrgId.handleAsync({
       organizationId: input.organizationId,
-      limit: input.limit,
-      offset: input.offset,
+      limit: input.limit ?? 50,
+      offset: input.offset ?? 0,
     });
 
-    const junctions: OrgContact[] = findResult.success ? (findResult.data?.contacts ?? []) : [];
+    if (!findResult.success) return D2Result.bubbleFail(findResult);
+    const junctions: OrgContact[] = findResult.data?.contacts ?? [];
 
     if (junctions.length === 0) {
       return D2Result.ok({ data: { contacts: [] } });
@@ -76,7 +77,7 @@ export class GetOrgContacts
       geoContactMap = geoResult.data.data;
     }
 
-    // Join: each junction gets its matching Geo contact (or null if orphaned)
+    // Join: each junction gets its matching Geo contact (or undefined if orphaned)
     const contacts: HydratedOrgContact[] = junctions.map((j) => ({
       id: j.id,
       organizationId: j.organizationId,
@@ -84,7 +85,7 @@ export class GetOrgContacts
       isPrimary: j.isPrimary,
       createdAt: j.createdAt,
       updatedAt: j.updatedAt,
-      geoContact: geoContactMap.get(`${GEO_CONTEXT_KEYS.ORG_CONTACT}:${j.id}`)?.[0] ?? null,
+      geoContact: geoContactMap.get(`${GEO_CONTEXT_KEYS.ORG_CONTACT}:${j.id}`)?.[0],
     }));
 
     return D2Result.ok({ data: { contacts } });

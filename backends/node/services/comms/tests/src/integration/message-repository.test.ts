@@ -51,17 +51,17 @@ describe("MessageRepository (integration)", () => {
     expect(found.senderService).toBe("auth-service");
     expect(found.contentFormat).toBe("markdown");
     expect(found.urgency).toBe("normal");
-    expect(found.sensitive).toBe(false);
-    expect(found.threadId).toBeNull();
-    expect(found.parentMessageId).toBeNull();
-    expect(found.senderUserId).toBeNull();
-    expect(found.senderContactId).toBeNull();
-    expect(found.title).toBeNull();
-    expect(found.relatedEntityId).toBeNull();
-    expect(found.relatedEntityType).toBeNull();
-    expect(found.metadata).toBeNull();
-    expect(found.editedAt).toBeNull();
-    expect(found.deletedAt).toBeNull();
+    expect(found.channels).toEqual([]);
+    expect(found.threadId).toBeUndefined();
+    expect(found.parentMessageId).toBeUndefined();
+    expect(found.senderUserId).toBeUndefined();
+    expect(found.senderContactId).toBeUndefined();
+    expect(found.title).toBeUndefined();
+    expect(found.relatedEntityId).toBeUndefined();
+    expect(found.relatedEntityType).toBeUndefined();
+    expect(found.metadata).toBeUndefined();
+    expect(found.editedAt).toBeUndefined();
+    expect(found.deletedAt).toBeUndefined();
     expect(found.createdAt).toBeInstanceOf(Date);
     expect(found.updatedAt).toBeInstanceOf(Date);
   });
@@ -71,23 +71,23 @@ describe("MessageRepository (integration)", () => {
     expect(result.success).toBe(false);
   });
 
-  it("should store nullable fields as null", async () => {
+  it("should store nullable fields as undefined when read back", async () => {
     const msg = makeMessage({
-      threadId: null,
-      title: null,
-      metadata: null,
-      senderUserId: null,
-      senderContactId: null,
+      threadId: undefined,
+      title: undefined,
+      metadata: undefined,
+      senderUserId: undefined,
+      senderContactId: undefined,
     });
     await repo.create.handleAsync({ message: msg });
 
     const result = await repo.findById.handleAsync({ id: msg.id });
     const found = result.data!.message;
-    expect(found.threadId).toBeNull();
-    expect(found.title).toBeNull();
-    expect(found.metadata).toBeNull();
-    expect(found.senderUserId).toBeNull();
-    expect(found.senderContactId).toBeNull();
+    expect(found.threadId).toBeUndefined();
+    expect(found.title).toBeUndefined();
+    expect(found.metadata).toBeUndefined();
+    expect(found.senderUserId).toBeUndefined();
+    expect(found.senderContactId).toBeUndefined();
   });
 
   it("should store jsonb metadata", async () => {
@@ -127,27 +127,33 @@ describe("MessageRepository (integration)", () => {
   });
 
   it("should store optional fields when provided", async () => {
+    // Create thread root + parent messages first (FK constraints require valid references).
+    const threadRoot = makeMessage({ senderService: "test" });
+    const parent = makeMessage({ senderService: "test", threadId: threadRoot.id });
+    await repo.create.handleAsync({ message: threadRoot });
+    await repo.create.handleAsync({ message: parent });
+
     const msg = makeMessage({
-      threadId: "thread-1",
-      parentMessageId: "parent-1",
+      threadId: threadRoot.id,
+      parentMessageId: parent.id,
       senderUserId: "user-1",
       senderContactId: "contact-1",
       title: "Important Notice",
       relatedEntityId: "entity-1",
       relatedEntityType: "invoice",
-      sensitive: true,
+      channels: ["email"],
     });
     await repo.create.handleAsync({ message: msg });
 
     const result = await repo.findById.handleAsync({ id: msg.id });
     const found = result.data!.message;
-    expect(found.threadId).toBe("thread-1");
-    expect(found.parentMessageId).toBe("parent-1");
+    expect(found.threadId).toBe(threadRoot.id);
+    expect(found.parentMessageId).toBe(parent.id);
     expect(found.senderUserId).toBe("user-1");
     expect(found.senderContactId).toBe("contact-1");
     expect(found.title).toBe("Important Notice");
     expect(found.relatedEntityId).toBe("entity-1");
     expect(found.relatedEntityType).toBe("invoice");
-    expect(found.sensitive).toBe(true);
+    expect(found.channels).toEqual(["email"]);
   });
 });

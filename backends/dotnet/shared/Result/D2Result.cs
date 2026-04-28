@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="D2Result.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -61,12 +61,12 @@ public class D2Result
     }
 
     /// <summary>
-    /// Gets a value indicating whether indicates whether the operation was successful.
+    /// Gets a value indicating whether the operation was successful.
     /// </summary>
     public bool Success { get; }
 
     /// <summary>
-    /// Gets a value indicating whether indicates whether the operation failed.
+    /// Gets a value indicating whether the operation failed.
     /// </summary>
     public bool Failed => !Success;
 
@@ -165,6 +165,11 @@ public class D2Result
     /// A two-dimensional list representing input errors, where each inner list contains the name
     /// of the field and each proceeding string is an error message related to that field. Optional.
     /// </param>
+    /// <param name="errorCode">
+    /// Overrides the default <see cref="ErrorCodes.VALIDATION_FAILED"/> code so callers can attach
+    /// a more specific code (e.g. "FILES_INVALID_CONTENT_TYPE") for client-side discrimination
+    /// without dropping back to raw <see cref="Fail"/>. Optional.
+    /// </param>
     /// <param name="traceId">
     /// The trace identifier to correlate logs and diagnostics for the operation. Optional.
     /// </param>
@@ -175,6 +180,7 @@ public class D2Result
     public static D2Result ValidationFailed(
         List<string>? messages = null,
         List<List<string>>? inputErrors = null,
+        string? errorCode = null,
         string? traceId = null)
     {
         messages ??= ["common_errors_VALIDATION_FAILED"];
@@ -183,7 +189,7 @@ public class D2Result
             messages,
             inputErrors,
             statusCode: HttpStatusCode.BadRequest,
-            errorCode: ErrorCodes.VALIDATION_FAILED,
+            errorCode: errorCode ?? ErrorCodes.VALIDATION_FAILED,
             traceId: traceId);
     }
 
@@ -194,6 +200,12 @@ public class D2Result
     /// <param name="messages">
     /// A list of messages related to the service unavailability. Optional.
     /// </param>
+    /// <param name="errorCode">
+    /// Overrides the default <see cref="ErrorCodes.SERVICE_UNAVAILABLE"/> code so callers can attach
+    /// a more specific code (e.g. a domain-specific retry signal) for downstream discrimination —
+    /// e.g. message consumers that branch on the error code to decide between retry and dead-letter
+    /// — without dropping back to raw <see cref="Fail"/>. Optional.
+    /// </param>
     /// <param name="traceId">
     /// The trace identifier to correlate logs and diagnostics for the operation. Optional.
     /// </param>
@@ -203,6 +215,7 @@ public class D2Result
     /// </returns>
     public static D2Result ServiceUnavailable(
         List<string>? messages = null,
+        string? errorCode = null,
         string? traceId = null)
     {
         messages ??= ["common_errors_SERVICE_UNAVAILABLE"];
@@ -210,7 +223,7 @@ public class D2Result
             false,
             messages,
             statusCode: HttpStatusCode.ServiceUnavailable,
-            errorCode: ErrorCodes.SERVICE_UNAVAILABLE,
+            errorCode: errorCode ?? ErrorCodes.SERVICE_UNAVAILABLE,
             traceId: traceId);
     }
 
@@ -296,6 +309,38 @@ public class D2Result
     }
 
     /// <summary>
+    /// Factory method to create a too many requests (rate limited) <see cref="D2Result"/> instance.
+    /// </summary>
+    ///
+    /// <param name="messages">
+    /// A list of messages related to the rate limit. Optional.
+    /// </param>
+    /// <param name="errorCode">
+    /// Overrides the default <see cref="ErrorCodes.RATE_LIMITED"/> code so callers can attach
+    /// a more specific code (e.g. "OTP_RATE_LIMITED") for client-side discrimination. Optional.
+    /// </param>
+    /// <param name="traceId">
+    /// The trace identifier to correlate logs and diagnostics for the operation. Optional.
+    /// </param>
+    ///
+    /// <returns>
+    /// A new too many requests <see cref="D2Result"/> instance.
+    /// </returns>
+    public static D2Result TooManyRequests(
+        List<string>? messages = null,
+        string? errorCode = null,
+        string? traceId = null)
+    {
+        messages ??= ["common_errors_TOO_MANY_REQUESTS"];
+        return new(
+            false,
+            messages,
+            statusCode: HttpStatusCode.TooManyRequests,
+            errorCode: errorCode ?? ErrorCodes.RATE_LIMITED,
+            traceId: traceId);
+    }
+
+    /// <summary>
     /// Factory method to create a cancelled <see cref="D2Result"/> instance.
     /// </summary>
     ///
@@ -319,6 +364,144 @@ public class D2Result
             messages,
             statusCode: HttpStatusCode.BadRequest,
             errorCode: ErrorCodes.CANCELLED,
+            traceId: traceId);
+    }
+
+    /// <summary>
+    /// Factory method to create a not found <see cref="D2Result"/> instance.
+    /// </summary>
+    ///
+    /// <param name="messages">
+    /// A list of messages related to the operation. Optional.
+    /// </param>
+    /// <param name="traceId">
+    /// The trace identifier to correlate logs and diagnostics for the operation. Optional.
+    /// </param>
+    ///
+    /// <returns>
+    /// A new not found <see cref="D2Result"/> instance.
+    /// </returns>
+    public static D2Result NotFound(
+        List<string>? messages = null,
+        string? traceId = null)
+    {
+        messages ??= ["common_errors_NOT_FOUND"];
+        return new(
+            false,
+            messages,
+            statusCode: HttpStatusCode.NotFound,
+            errorCode: ErrorCodes.NOT_FOUND,
+            traceId: traceId);
+    }
+
+    /// <summary>
+    /// Factory method to create a forbidden <see cref="D2Result"/> instance.
+    /// </summary>
+    ///
+    /// <param name="messages">
+    /// A list of messages related to the operation. Optional.
+    /// </param>
+    /// <param name="traceId">
+    /// The trace identifier to correlate logs and diagnostics for the operation. Optional.
+    /// </param>
+    ///
+    /// <returns>
+    /// A new forbidden <see cref="D2Result"/> instance.
+    /// </returns>
+    public static D2Result Forbidden(
+        List<string>? messages = null,
+        string? traceId = null)
+    {
+        messages ??= ["common_errors_FORBIDDEN"];
+        return new(
+            false,
+            messages,
+            statusCode: HttpStatusCode.Forbidden,
+            errorCode: ErrorCodes.FORBIDDEN,
+            traceId: traceId);
+    }
+
+    /// <summary>
+    /// Factory method to create a conflict <see cref="D2Result"/> instance.
+    /// </summary>
+    ///
+    /// <param name="messages">
+    /// A list of messages related to the operation. Optional.
+    /// </param>
+    /// <param name="traceId">
+    /// The trace identifier to correlate logs and diagnostics for the operation. Optional.
+    /// </param>
+    ///
+    /// <returns>
+    /// A new conflict <see cref="D2Result"/> instance.
+    /// </returns>
+    public static D2Result Conflict(
+        List<string>? messages = null,
+        string? traceId = null)
+    {
+        messages ??= ["common_errors_CONFLICT"];
+        return new(
+            false,
+            messages,
+            statusCode: HttpStatusCode.Conflict,
+            errorCode: ErrorCodes.CONFLICT,
+            traceId: traceId);
+    }
+
+    /// <summary>
+    /// Factory method to create a created <see cref="D2Result"/> instance.
+    /// </summary>
+    ///
+    /// <param name="messages">
+    /// A list of messages related to the operation. Optional.
+    /// </param>
+    /// <param name="traceId">
+    /// The trace identifier to correlate logs and diagnostics for the operation. Optional.
+    /// </param>
+    ///
+    /// <returns>
+    /// A new created <see cref="D2Result"/> instance.
+    /// </returns>
+    public static D2Result Created(
+        List<string>? messages = null,
+        string? traceId = null)
+    {
+        return new(
+            true,
+            messages,
+            statusCode: HttpStatusCode.Created,
+            traceId: traceId);
+    }
+
+    /// <summary>
+    /// Factory method to create a some found <see cref="D2Result"/> instance.
+    /// </summary>
+    ///
+    /// <param name="messages">
+    /// A list of messages related to the operation. Optional.
+    /// </param>
+    /// <param name="traceId">
+    /// The trace identifier to correlate logs and diagnostics for the operation. Optional.
+    /// </param>
+    ///
+    /// <remarks>
+    /// When this method is used, the <see cref="Success"/> flag is set to <c>false</c> to
+    /// indicate that not all requested items were found.
+    /// </remarks>
+    ///
+    /// <returns>
+    /// A new some found <see cref="D2Result"/> instance.
+    /// </returns>
+    public static D2Result SomeFound(
+        List<string>? messages = null,
+        string? traceId = null)
+    {
+        messages ??= ["common_errors_SOME_FOUND"];
+        return new(
+            false,
+            messages,
+            statusCode: HttpStatusCode.PartialContent,
+            errorCode: ErrorCodes.SOME_FOUND,
             traceId: traceId);
     }
 

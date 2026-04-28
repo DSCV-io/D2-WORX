@@ -33,7 +33,7 @@ Domain model for geographic data including content-addressable locations, immuta
 
 ### Location (Content-Addressable)
 
-A geographic location with a SHA-256 hash ID computed from its content. Two locations with identical data produce the same hash → automatic deduplication. The `Create()` factory normalizes inputs and computes the hash:
+A geographic location with a SHA-256 hash ID computed from its content. Two locations with identical data produce the same hash → automatic deduplication. Optional fields (`City`, `PostalCode`, `SubdivisionCode`, `CountryCode`) are `string?`. The `Create()` factory normalizes inputs and computes the hash:
 
 ```csharp
 public static Location Create(
@@ -63,7 +63,7 @@ public static Location Create(
 
 ### WhoIs (Content-Addressable)
 
-IP geolocation data with a hash computed from `(IP, year, month, fingerprint)`. Temporal versioning: the same IP gets a new hash each month. The `ComputeHashAndNormalizeIp()` method validates inputs and produces the hash:
+IP geolocation data with a hash computed from `(IP, year, month, fingerprint)`. Temporal versioning: the same IP gets a new hash each month. Optional string fields (`ASName`, `ASDomain`, `AsType`, `CarrierName`, `MCC`, `MNC`) are `string?`. Boolean flags (`IsVpn`, `IsTor`, `IsProxy`, `IsHosting`, `IsRelay`) are `bool?` — `null` means the data source did not provide a value. The `ComputeHashAndNormalizeIp()` method validates inputs and produces the hash:
 
 ```csharp
 public static (string Hash, string NormalizedIp) ComputeHashAndNormalizeIp(
@@ -82,7 +82,7 @@ public static (string Hash, string NormalizedIp) ComputeHashAndNormalizeIp(
 
 Contacts use regular UUIDv7 IDs (NOT content-addressable). They are **immutable** — created and deleted, never modified in place. If contact info changes: create new contact → repoint references → delete old contact. This simplifies cache invalidation across consumers (geo-client caches contacts heavily).
 
-Key fields: `ContextKey` + `RelatedEntityId` for loose coupling (e.g., `contextKey: "auth_user"`, `relatedEntityId: userId`).
+Key fields: `ContextKey` + `RelatedEntityId` for loose coupling (e.g., `contextKey: "auth_user"`, `relatedEntityId: userId`). Sub-objects `PersonalDetails` (`Personal?`), `ProfessionalDetails` (`Professional?`), and `Location` are nullable — a contact may have any combination of these.
 
 ## Value Objects
 

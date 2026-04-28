@@ -6,7 +6,6 @@
 
 namespace D2.Geo.Infra.Messaging.Handlers.Pub;
 
-using System.Net;
 using D2.Geo.Infra.Messaging.Publishers;
 using D2.Shared.Handler;
 using D2.Shared.I18n;
@@ -52,9 +51,9 @@ public partial class ContactEviction : BaseHandler<ContactEviction, I, O>, H
         {
             LogPublishContactsEvictedFailed(Context.Logger, TraceId);
 
-            return D2Result<O?>.Fail(
-                [TK.Common.Errors.REQUEST_FAILED],
-                HttpStatusCode.InternalServerError);
+            return D2Result<O?>.ServiceUnavailable(
+                messages: [TK.Common.Errors.REQUEST_FAILED],
+                traceId: TraceId);
         }
 
         LogPublishedContactsEvicted(Context.Logger, input.Event.Contacts.Count, TraceId);

@@ -219,6 +219,60 @@ jobs:
       - name: Run integration tests
         run: pnpm vitest run --project comms-tests "integration"
 
+  node-files-unit:
+    name: D2 Node.js Files - Unit Tests (v1)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Run unit tests
+        run: pnpm vitest run --project files-tests --exclude "**/integration/**"
+
+  node-files-integration:
+    name: D2 Node.js Files - Integration Tests (v1)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Run integration tests
+        run: pnpm vitest run --project files-tests "integration"
+
   node-shared-unit:
     name: D2 Node.js Shared - Unit Tests (v1)
     runs-on: ubuntu-latest

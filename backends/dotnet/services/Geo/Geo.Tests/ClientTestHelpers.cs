@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="ClientTestHelpers.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -21,10 +21,10 @@ public static class ClientTestHelpers
     /// Gets a test reference data response for GeoRefDataService tests.
     /// </summary>
     public static GeoRefData TestGeoRefData => new GeoRefData
-        {
-            Version = "0.0.0",
-            UpdatedAt = Timestamp.FromDateTime(DateTime.UtcNow),
-            Countries =
+    {
+        Version = "0.0.0",
+        UpdatedAt = Timestamp.FromDateTime(DateTime.UtcNow),
+        Countries =
             {
                 {
                     "US", new CountryDTO
@@ -44,7 +44,7 @@ public static class ClientTestHelpers
                     }
                 },
             },
-            Subdivisions =
+        Subdivisions =
             {
                 {
                     "US-AL", new SubdivisionDTO
@@ -57,7 +57,7 @@ public static class ClientTestHelpers
                     }
                 },
             },
-            Currencies =
+        Currencies =
             {
                 {
                     "USD", new CurrencyDTO
@@ -71,7 +71,7 @@ public static class ClientTestHelpers
                     }
                 },
             },
-            Languages =
+        Languages =
             {
                 {
                     "en", new LanguageDTO
@@ -82,7 +82,7 @@ public static class ClientTestHelpers
                     }
                 },
             },
-            Locales =
+        Locales =
             {
                 {
                     "en-US", new LocaleDTO
@@ -95,7 +95,7 @@ public static class ClientTestHelpers
                     }
                 },
             },
-            GeopoliticalEntities =
+        GeopoliticalEntities =
             {
                 {
                     "NATO", new GeopoliticalEntityDTO
@@ -107,7 +107,7 @@ public static class ClientTestHelpers
                     }
                 },
             },
-        };
+    };
 
     /// <summary>
     /// Creates a mock handler context for testing.

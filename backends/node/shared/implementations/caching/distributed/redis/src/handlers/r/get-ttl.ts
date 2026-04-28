@@ -22,8 +22,8 @@ export class GetTtl extends BaseHandler<Input, Output> implements DistributedCac
       // -2 = key doesn't exist, -1 = no expiry
       const timeToLiveMs = pttl > 0 ? pttl : undefined;
       return D2Result.ok({ data: { timeToLiveMs } });
-    } catch {
-      return redisErrorResult();
+    } catch (err: unknown) {
+      return redisErrorResult(err);
     }
   }
 }

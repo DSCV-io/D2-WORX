@@ -28,8 +28,8 @@ export class AcquireLock
     try {
       const wasSet = await this.redis.set(input.key, input.lockId, "PX", input.expirationMs, "NX");
       return D2Result.ok({ data: { acquired: wasSet === "OK" } });
-    } catch {
-      return redisErrorResult();
+    } catch (err: unknown) {
+      return redisErrorResult(err);
     }
   }
 }

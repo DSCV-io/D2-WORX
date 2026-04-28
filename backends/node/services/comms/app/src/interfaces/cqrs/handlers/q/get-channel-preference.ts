@@ -6,7 +6,7 @@ export interface GetChannelPreferenceInput {
 }
 
 export interface GetChannelPreferenceOutput {
-  readonly pref: ChannelPreference | null;
+  readonly pref?: ChannelPreference;
 }
 
 /** Handler for retrieving channel preferences. */

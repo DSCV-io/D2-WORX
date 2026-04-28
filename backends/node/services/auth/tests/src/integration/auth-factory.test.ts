@@ -38,8 +38,21 @@ describe("createAuth() full integration", () => {
   };
 
   let auth: ReturnType<typeof createAuth>;
-  let onSignInCalls: Array<{ userId: string; ipAddress: string; userAgent: string }>;
+  let onSignInCalls: Array<{
+    userId: string;
+    sessionId: string;
+    ipAddress: string;
+    userAgent: string;
+    deviceFingerprint?: string;
+    clientFingerprint?: string;
+    serverFingerprint?: string;
+  }>;
   let hooks: AuthHooks;
+  // Test fingerprints — sign-in tests can override these to assert on the
+  // session.create.before hook stamping the values onto the row.
+  let currentDeviceFp: string | undefined;
+  let currentClientFp: string | undefined;
+  let currentServerFp: string | undefined;
 
   /**
    * Mock HIBP cache — always returns empty response (no breaches found).
@@ -62,6 +75,9 @@ describe("createAuth() full integration", () => {
       onSignIn: async (data) => {
         onSignInCalls.push(data);
       },
+      getDeviceFingerprintForCurrentRequest: () => currentDeviceFp,
+      getClientFingerprintForCurrentRequest: () => currentClientFp,
+      getServerFingerprintForCurrentRequest: () => currentServerFp,
       passwordFunctions: passwordFns,
     };
 
@@ -75,6 +91,9 @@ describe("createAuth() full integration", () => {
   beforeEach(async () => {
     await cleanAllTables();
     onSignInCalls = [];
+    currentDeviceFp = undefined;
+    currentClientFp = undefined;
+    currentServerFp = undefined;
   });
 
   /**
@@ -336,6 +355,71 @@ describe("createAuth() full integration", () => {
       const call = onSignInCalls.find((c) => c.userId === user.id);
       expect(call).toBeDefined();
       expect(call!.userId).toBe(user.id);
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Session fingerprint storage (combined / client / server FPs persisted
+  // on the session row at create time)
+  // -----------------------------------------------------------------------
+  describe("session fingerprint storage", () => {
+    it("should stamp deviceFp + clientFp + serverFp on the session row at create", async () => {
+      currentDeviceFp = "d".repeat(64);
+      currentClientFp = "c".repeat(64);
+      currentServerFp = "s".repeat(64);
+
+      const { user } = await signUpAndVerify("fp-stamp@example.com", "FP Stamp");
+
+      const sessionRows = await getPool().query(
+        "SELECT device_fingerprint, client_fingerprint, server_fingerprint FROM session WHERE user_id = $1",
+        [user.id],
+      );
+      expect(sessionRows.rows).toHaveLength(1);
+      const row = sessionRows.rows[0];
+      // All three columns populated from AsyncLocalStorage at session.create.before.
+      // This is the foundation for the device-identicon UI in the security tab —
+      // without clientFp on the row, the active-sessions list can't render the
+      // per-device avatar.
+      expect(row.device_fingerprint).toBe("d".repeat(64));
+      expect(row.client_fingerprint).toBe("c".repeat(64));
+      expect(row.server_fingerprint).toBe("s".repeat(64));
+    });
+
+    it("should leave session FP columns null when no FPs are bound (e.g. internal RPC sign-in)", async () => {
+      // Default beforeEach state: all currentXxxFp = undefined
+      const { user } = await signUpAndVerify("fp-null@example.com", "FP Null");
+
+      const sessionRows = await getPool().query(
+        "SELECT device_fingerprint, client_fingerprint, server_fingerprint FROM session WHERE user_id = $1",
+        [user.id],
+      );
+      expect(sessionRows.rows).toHaveLength(1);
+      const row = sessionRows.rows[0];
+      // null (not empty string, not "unknown") — preserves the meaning
+      // "we couldn't determine the FP for this session" vs "we determined
+      // the FP and it was empty."
+      expect(row.device_fingerprint).toBeNull();
+      expect(row.client_fingerprint).toBeNull();
+      expect(row.server_fingerprint).toBeNull();
+    });
+
+    it("should pass all three FPs into onSignIn callback so audit chain receives them", async () => {
+      currentDeviceFp = "d".repeat(64);
+      currentClientFp = "c".repeat(64);
+      currentServerFp = "s".repeat(64);
+
+      const { user } = await signUpAndVerify("fp-onsignin@example.com", "FP OnSignIn");
+
+      // Fire-and-forget callback — wait briefly
+      await new Promise((r) => setTimeout(r, 100));
+
+      const call = onSignInCalls.find((c) => c.userId === user.id);
+      expect(call).toBeDefined();
+      // RecordSignInEvent persists these to sign_in_event row alongside the
+      // session FPs, giving a forensic audit trail per attempt.
+      expect(call!.deviceFingerprint).toBe("d".repeat(64));
+      expect(call!.clientFingerprint).toBe("c".repeat(64));
+      expect(call!.serverFingerprint).toBe("s".repeat(64));
     });
   });
 

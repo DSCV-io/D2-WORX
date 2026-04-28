@@ -54,9 +54,7 @@ const sampleRequest: DeliveryRequest = {
   messageId: "msg-1",
   correlationId: "corr-1",
   recipientContactId: "contact-1",
-  callbackTopic: null,
   createdAt: new Date("2026-01-01"),
-  processedAt: null,
 };
 
 const sampleAttempt: DeliveryAttempt = {
@@ -66,10 +64,8 @@ const sampleAttempt: DeliveryAttempt = {
   recipientAddress: "user@example.com",
   status: "sent",
   providerMessageId: "resend-123",
-  error: null,
   attemptNumber: 1,
   createdAt: new Date("2026-01-01"),
-  nextRetryAt: null,
 };
 
 // Import service keys indirectly — we need their symbols for mock routing

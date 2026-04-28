@@ -56,7 +56,7 @@ describe("SignInEventRepository (integration)", () => {
       successful: true,
       ipAddress: "127.0.0.1",
       userAgent: "test-agent",
-      whoIsId: null,
+      whoIsId: undefined,
       createdAt: new Date(),
       ...overrides,
     };
@@ -79,7 +79,7 @@ describe("SignInEventRepository (integration)", () => {
     expect(events[0].successful).toBe(true);
     expect(events[0].ipAddress).toBe("127.0.0.1");
     expect(events[0].userAgent).toBe("test-agent");
-    expect(events[0].whoIsId).toBeNull();
+    expect(events[0].whoIsId).toBeUndefined();
   });
 
   it("should create an event with whoIsId", async () => {
@@ -160,10 +160,10 @@ describe("SignInEventRepository (integration)", () => {
     expect(result.data!.date!.getTime()).toBe(d2.getTime());
   });
 
-  it("should return null latest date for unknown user", async () => {
+  it("should return undefined latest date for unknown user", async () => {
     const result = await repo.getLatestEventDate.handleAsync({ userId: "nonexistent" });
     expect(result.success).toBe(true);
-    expect(result.data!.date).toBeNull();
+    expect(result.data!.date).toBeUndefined();
   });
 
   it("should not cross-contaminate between users", async () => {
@@ -255,7 +255,7 @@ describe("EmulationConsentRepository (integration)", () => {
       userId: "user-1",
       grantedToOrgId: "org-1",
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // +1 day
-      revokedAt: null,
+      revokedAt: undefined,
       createdAt: new Date(),
       ...overrides,
     };
@@ -272,7 +272,7 @@ describe("EmulationConsentRepository (integration)", () => {
     expect(found!.id).toBe(consent.id);
     expect(found!.userId).toBe(consent.userId);
     expect(found!.grantedToOrgId).toBe(consent.grantedToOrgId);
-    expect(found!.revokedAt).toBeNull();
+    expect(found!.revokedAt).toBeUndefined();
   });
 
   it("should return not-found for nonexistent id", async () => {
@@ -336,17 +336,17 @@ describe("EmulationConsentRepository (integration)", () => {
       grantedToOrgId: "org-1",
     });
     expect(result.success).toBe(true);
-    expect(result.data!.consent).not.toBeNull();
+    expect(result.data!.consent).toBeDefined();
     expect(result.data!.consent!.id).toBe(consent.id);
   });
 
-  it("should return null consent for nonexistent user+org combo", async () => {
+  it("should return undefined consent for nonexistent user+org combo", async () => {
     const result = await repo.findActiveByUserIdAndOrg.handleAsync({
       userId: "user-1",
       grantedToOrgId: "org-999",
     });
     expect(result.success).toBe(true);
-    expect(result.data!.consent).toBeNull();
+    expect(result.data!.consent).toBeUndefined();
   });
 
   it("should revoke a consent", async () => {

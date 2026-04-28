@@ -81,10 +81,11 @@ export class GetContactsByIds
           },
         );
       });
-    } catch {
+    } catch (err: unknown) {
       // gRPC failed — return whatever was cached with appropriate status
       this.context.logger.warn(
         `gRPC call to Geo service failed for GetContactsByIds. TraceId: ${this.traceId}`,
+        { error: err instanceof Error ? err.message : String(err) },
       );
       return this.resolveStatus(input.ids.length, result);
     }

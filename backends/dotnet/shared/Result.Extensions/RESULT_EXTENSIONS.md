@@ -8,6 +8,30 @@ Extension methods for converting between D2Result and Protocol Buffer representa
 | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | [ProtoExtensions.cs](ProtoExtensions.cs) | Extension methods for D2Result to/from D2ResultProto conversion and AsyncUnaryCall handling with automatic error translation. |
 
+## Proto Optional Fields
+
+`ErrorCode` and `TraceId` on `D2ResultProto` are declared with the `optional` keyword in proto3:
+
+```protobuf
+optional string error_code = 3;
+optional string trace_id = 6;
+```
+
+Grpc.Tools generates `HasErrorCode` / `HasTraceId` properties, and setters still call `CheckNotNull` (assigning `null` throws). The conversion methods handle this:
+
+- **`ToProto()`** uses conditional assignment — only sets a field when the value is non-null:
+  ```csharp
+  if (result.ErrorCode is not null) proto.ErrorCode = result.ErrorCode;
+  if (result.TraceId is not null) proto.TraceId = result.TraceId;
+  ```
+- **`ToD2Result()`** handles optional fields with `HasField` guards:
+  ```csharp
+  ErrorCode = proto.HasErrorCode ? proto.ErrorCode : null
+  ```
+- **Node.js `d2ResultFromProto()`** uses null-coalescing: `errorCode: proto.errorCode ?? undefined`
+
+The domain model is the source of truth for nullability — proto `optional` merely mirrors it on the wire. Collections use `?? []` defaults; booleans use `?? false`.
+
 ## Extension Methods
 
 ### D2Result → D2ResultProto

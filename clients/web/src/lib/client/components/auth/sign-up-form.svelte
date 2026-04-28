@@ -5,7 +5,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { createSignUpSchema, type SignUpFormData } from "$lib/shared/forms/sign-up-schema.js";
-  import { FormInput } from "$lib/client/components/forms/index.js";
+  import { FormInput, FormPasswordInput } from "$lib/client/components/forms/index.js";
   import { Button } from "$lib/client/components/ui/button/index.js";
   import TextLink from "$lib/client/components/ui/text-link.svelte";
   import { useAsyncFieldCheck } from "$lib/client/forms/async-field-check.svelte.js";
@@ -19,9 +19,8 @@
     PASSWORD,
     CONFIRM_PASSWORD,
   } from "$lib/shared/forms/field-presets.js";
+  import { maskDisplayName } from "$lib/client/utils/mask-display-name.js";
   import * as m from "$lib/paraglide/messages.js";
-  import EyeIcon from "@lucide/svelte/icons/eye";
-  import EyeOffIcon from "@lucide/svelte/icons/eye-off";
 
   type Props = {
     data: SuperValidated<SignUpFormData>;
@@ -56,7 +55,9 @@
           if (result.error) {
             // Always show server errors at the form level — field-level errors
             // get cleared by client-side revalidation on the next interaction.
-            serverError = result.error.message ?? m.auth_sign_in_sign_up_failed();
+            // BetterAuth's `result.error.message` is raw English; ignore it and
+            // render a single localized fallback.
+            serverError = m.auth_sign_in_sign_up_failed();
             f.valid = false;
             return;
           }
@@ -92,9 +93,6 @@
       };
     },
   });
-
-  let showPassword = $state(false);
-  let showConfirmPassword = $state(false);
 </script>
 
 <form
@@ -108,11 +106,13 @@
       {form}
       field="firstName"
       {...FIRST_NAME}
+      oninput={maskDisplayName}
     />
     <FormInput
       {form}
       field="lastName"
       {...LAST_NAME}
+      oninput={maskDisplayName}
     />
   </div>
 
@@ -131,49 +131,21 @@
     {...CONFIRM_EMAIL}
   />
 
-  <FormInput
+  <FormPasswordInput
     {form}
     field="password"
     {...PASSWORD}
-    type={showPassword ? "text" : "password"}
-  >
-    {#snippet inputAction()}
-      <button
-        type="button"
-        onclick={() => (showPassword = !showPassword)}
-        class="text-muted-foreground hover:text-foreground"
-        aria-label={showPassword ? "Hide password" : "Show password"}
-      >
-        {#if showPassword}
-          <EyeOffIcon class="size-4" />
-        {:else}
-          <EyeIcon class="size-4" />
-        {/if}
-      </button>
-    {/snippet}
-  </FormInput>
+  />
 
-  <FormInput
+  <FormPasswordInput
     {form}
     field="confirmPassword"
     {...CONFIRM_PASSWORD}
-    type={showConfirmPassword ? "text" : "password"}
-  >
-    {#snippet inputAction()}
-      <button
-        type="button"
-        onclick={() => (showConfirmPassword = !showConfirmPassword)}
-        class="text-muted-foreground hover:text-foreground"
-        aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-      >
-        {#if showConfirmPassword}
-          <EyeOffIcon class="size-4" />
-        {:else}
-          <EyeIcon class="size-4" />
-        {/if}
-      </button>
-    {/snippet}
-  </FormInput>
+    toggleLabel={{
+      show: m.webclient_forms_show_confirm_password(),
+      hide: m.webclient_forms_hide_confirm_password(),
+    }}
+  />
 
   {#if serverError}
     <p class="text-destructive text-sm">{serverError}</p>

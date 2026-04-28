@@ -4,6 +4,9 @@ node_modules/
 **/dist/
 *.tsbuildinfo
 
+# Dev runtime data (mock SMS log, etc.)
+.dev-data/
+
 # SvelteKit build output
 **/build/
 **/.svelte-kit/

@@ -90,8 +90,10 @@ export class CreateOrgContact
       // Rollback: delete the junction since Geo contact creation failed
       try {
         await this.deleteRecord.handleAsync({ id: orgContactId });
-      } catch {
-        // Best-effort rollback — log elsewhere
+      } catch (err: unknown) {
+        this.context.logger.error("CreateOrgContact: rollback failed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
       return D2Result.bubbleFail(geoResult);
     }
@@ -100,8 +102,10 @@ export class CreateOrgContact
     if (!geoContact) {
       try {
         await this.deleteRecord.handleAsync({ id: orgContactId });
-      } catch {
-        // Best-effort rollback
+      } catch (err: unknown) {
+        this.context.logger.error("CreateOrgContact: rollback failed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
       return D2Result.bubbleFail(geoResult);
     }

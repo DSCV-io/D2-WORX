@@ -7,16 +7,15 @@ describe("theme-toggle.svelte", () => {
   it("should render a button with accessible label", async () => {
     render(ThemeToggle);
 
-    const button = page.getByRole("button", { name: /toggle theme/i });
+    const button = page.getByRole("button", { name: /toggle mode/i });
     await expect.element(button).toBeInTheDocument();
   });
 
   it("should contain an SVG icon", async () => {
     render(ThemeToggle);
 
-    const button = page.getByRole("button", { name: /toggle theme/i });
+    const button = page.getByRole("button", { name: /toggle mode/i });
     await expect.element(button).toBeInTheDocument();
-    // The button should contain an icon (SVG element)
     const svg = button.element().querySelector("svg");
     expect(svg).not.toBeNull();
   });
@@ -24,7 +23,7 @@ describe("theme-toggle.svelte", () => {
   it("should open a dropdown with Light, Dark, and System options", async () => {
     render(ThemeToggle);
 
-    const button = page.getByRole("button", { name: /toggle theme/i });
+    const button = page.getByRole("button", { name: /toggle mode/i });
     await button.click();
 
     await expect.element(page.getByRole("menuitem", { name: /light/i })).toBeInTheDocument();

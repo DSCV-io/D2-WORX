@@ -43,6 +43,14 @@ namespace D2.Geo.Infra.Repository.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("IANAIdentifier")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasDefaultValue("America/New_York")
+                        .HasColumnName("iana_identifier");
+
                     b.Property<string>("IETFBCP47Tag")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -61,6 +69,8 @@ namespace D2.Geo.Infra.Repository.Migrations
                         .HasColumnName("related_entity_id");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IANAIdentifier");
 
                     b.HasIndex("IETFBCP47Tag");
 
@@ -5853,6 +5863,2740 @@ namespace D2.Geo.Infra.Repository.Migrations
                         });
                 });
 
+            modelBuilder.Entity("D2.Geo.Domain.Entities.Timezone", b =>
+                {
+                    b.Property<string>("IANAIdentifier")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("iana_identifier");
+
+                    b.Property<string>("AbbreviationDST")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("abbreviation_dst");
+
+                    b.Property<string>("AbbreviationSTD")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("abbreviation_std");
+
+                    b.Property<string>("CountryISO31661Alpha2Code")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("country_iso_3166_1_alpha_2_code");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("display_name");
+
+                    b.Property<string>("UTCOffsetDST")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasColumnName("utc_offset_dst");
+
+                    b.Property<string>("UTCOffsetSTD")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasColumnName("utc_offset_std");
+
+                    b.HasKey("IANAIdentifier");
+
+                    b.HasIndex("CountryISO31661Alpha2Code");
+
+                    b.ToTable("timezones", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            IANAIdentifier = "Africa/Abidjan",
+                            AbbreviationSTD = "GMT",
+                            CountryISO31661Alpha2Code = "CI",
+                            DisplayName = "Africa / Abidjan",
+                            UTCOffsetSTD = "+00:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Africa/Algiers",
+                            AbbreviationSTD = "CET",
+                            CountryISO31661Alpha2Code = "DZ",
+                            DisplayName = "Africa / Algiers",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Africa/Bissau",
+                            AbbreviationSTD = "GMT",
+                            CountryISO31661Alpha2Code = "GW",
+                            DisplayName = "Africa / Bissau",
+                            UTCOffsetSTD = "+00:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Africa/Cairo",
+                            AbbreviationDST = "EEST",
+                            AbbreviationSTD = "EET",
+                            CountryISO31661Alpha2Code = "EG",
+                            DisplayName = "Africa / Cairo",
+                            UTCOffsetDST = "+03:00",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Africa/Casablanca",
+                            AbbreviationDST = "+00",
+                            AbbreviationSTD = "+01",
+                            CountryISO31661Alpha2Code = "MA",
+                            DisplayName = "Africa / Casablanca",
+                            UTCOffsetDST = "+00:00",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Africa/Ceuta",
+                            AbbreviationDST = "CEST",
+                            AbbreviationSTD = "CET",
+                            CountryISO31661Alpha2Code = "ES",
+                            DisplayName = "Africa / Ceuta",
+                            UTCOffsetDST = "+02:00",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Africa/El_Aaiun",
+                            AbbreviationDST = "+00",
+                            AbbreviationSTD = "+01",
+                            CountryISO31661Alpha2Code = "EH",
+                            DisplayName = "Africa / El Aaiun",
+                            UTCOffsetDST = "+00:00",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Africa/Johannesburg",
+                            AbbreviationSTD = "SAST",
+                            CountryISO31661Alpha2Code = "ZA",
+                            DisplayName = "Africa / Johannesburg",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Africa/Juba",
+                            AbbreviationSTD = "CAT",
+                            CountryISO31661Alpha2Code = "SS",
+                            DisplayName = "Africa / Juba",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Africa/Khartoum",
+                            AbbreviationSTD = "CAT",
+                            CountryISO31661Alpha2Code = "SD",
+                            DisplayName = "Africa / Khartoum",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Africa/Lagos",
+                            AbbreviationSTD = "WAT",
+                            CountryISO31661Alpha2Code = "NG",
+                            DisplayName = "Africa / Lagos",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Africa/Maputo",
+                            AbbreviationSTD = "CAT",
+                            CountryISO31661Alpha2Code = "MZ",
+                            DisplayName = "Africa / Maputo",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Africa/Monrovia",
+                            AbbreviationSTD = "GMT",
+                            CountryISO31661Alpha2Code = "LR",
+                            DisplayName = "Africa / Monrovia",
+                            UTCOffsetSTD = "+00:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Africa/Nairobi",
+                            AbbreviationSTD = "EAT",
+                            CountryISO31661Alpha2Code = "KE",
+                            DisplayName = "Africa / Nairobi",
+                            UTCOffsetSTD = "+03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Africa/Ndjamena",
+                            AbbreviationSTD = "WAT",
+                            CountryISO31661Alpha2Code = "TD",
+                            DisplayName = "Africa / Ndjamena",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Africa/Sao_Tome",
+                            AbbreviationSTD = "GMT",
+                            CountryISO31661Alpha2Code = "ST",
+                            DisplayName = "Africa / Sao Tome",
+                            UTCOffsetSTD = "+00:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Africa/Tripoli",
+                            AbbreviationSTD = "EET",
+                            CountryISO31661Alpha2Code = "LY",
+                            DisplayName = "Africa / Tripoli",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Africa/Tunis",
+                            AbbreviationSTD = "CET",
+                            CountryISO31661Alpha2Code = "TN",
+                            DisplayName = "Africa / Tunis",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Africa/Windhoek",
+                            AbbreviationSTD = "CAT",
+                            CountryISO31661Alpha2Code = "NA",
+                            DisplayName = "Africa / Windhoek",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Adak",
+                            AbbreviationDST = "HDT",
+                            AbbreviationSTD = "HST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Adak",
+                            UTCOffsetDST = "-09:00",
+                            UTCOffsetSTD = "-10:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Anchorage",
+                            AbbreviationDST = "AKDT",
+                            AbbreviationSTD = "AKST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Anchorage",
+                            UTCOffsetDST = "-08:00",
+                            UTCOffsetSTD = "-09:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Araguaina",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "BR",
+                            DisplayName = "America / Araguaina",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Argentina/Buenos_Aires",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "AR",
+                            DisplayName = "America / Argentina / Buenos Aires",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Argentina/Catamarca",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "AR",
+                            DisplayName = "America / Argentina / Catamarca",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Argentina/Cordoba",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "AR",
+                            DisplayName = "America / Argentina / Cordoba",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Argentina/Jujuy",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "AR",
+                            DisplayName = "America / Argentina / Jujuy",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Argentina/La_Rioja",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "AR",
+                            DisplayName = "America / Argentina / La Rioja",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Argentina/Mendoza",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "AR",
+                            DisplayName = "America / Argentina / Mendoza",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Argentina/Rio_Gallegos",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "AR",
+                            DisplayName = "America / Argentina / Rio Gallegos",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Argentina/Salta",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "AR",
+                            DisplayName = "America / Argentina / Salta",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Argentina/San_Juan",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "AR",
+                            DisplayName = "America / Argentina / San Juan",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Argentina/San_Luis",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "AR",
+                            DisplayName = "America / Argentina / San Luis",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Argentina/Tucuman",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "AR",
+                            DisplayName = "America / Argentina / Tucuman",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Argentina/Ushuaia",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "AR",
+                            DisplayName = "America / Argentina / Ushuaia",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Asuncion",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "PY",
+                            DisplayName = "America / Asuncion",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Bahia",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "BR",
+                            DisplayName = "America / Bahia",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Bahia_Banderas",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "MX",
+                            DisplayName = "America / Bahia Banderas",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Barbados",
+                            AbbreviationSTD = "AST",
+                            CountryISO31661Alpha2Code = "BB",
+                            DisplayName = "America / Barbados",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Belem",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "BR",
+                            DisplayName = "America / Belem",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Belize",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "BZ",
+                            DisplayName = "America / Belize",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Boa_Vista",
+                            AbbreviationSTD = "-04",
+                            CountryISO31661Alpha2Code = "BR",
+                            DisplayName = "America / Boa Vista",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Bogota",
+                            AbbreviationSTD = "-05",
+                            CountryISO31661Alpha2Code = "CO",
+                            DisplayName = "America / Bogota",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Boise",
+                            AbbreviationDST = "MDT",
+                            AbbreviationSTD = "MST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Boise",
+                            UTCOffsetDST = "-06:00",
+                            UTCOffsetSTD = "-07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Cambridge_Bay",
+                            AbbreviationDST = "MDT",
+                            AbbreviationSTD = "MST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Cambridge Bay",
+                            UTCOffsetDST = "-06:00",
+                            UTCOffsetSTD = "-07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Campo_Grande",
+                            AbbreviationSTD = "-04",
+                            CountryISO31661Alpha2Code = "BR",
+                            DisplayName = "America / Campo Grande",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Cancun",
+                            AbbreviationSTD = "EST",
+                            CountryISO31661Alpha2Code = "MX",
+                            DisplayName = "America / Cancun",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Caracas",
+                            AbbreviationSTD = "-04",
+                            CountryISO31661Alpha2Code = "VE",
+                            DisplayName = "America / Caracas",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Cayenne",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "GF",
+                            DisplayName = "America / Cayenne",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Chicago",
+                            AbbreviationDST = "CDT",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Chicago",
+                            UTCOffsetDST = "-05:00",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Chihuahua",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "MX",
+                            DisplayName = "America / Chihuahua",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Ciudad_Juarez",
+                            AbbreviationDST = "MDT",
+                            AbbreviationSTD = "MST",
+                            CountryISO31661Alpha2Code = "MX",
+                            DisplayName = "America / Ciudad Juarez",
+                            UTCOffsetDST = "-06:00",
+                            UTCOffsetSTD = "-07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Costa_Rica",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "CR",
+                            DisplayName = "America / Costa Rica",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Coyhaique",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "CL",
+                            DisplayName = "America / Coyhaique",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Cuiaba",
+                            AbbreviationSTD = "-04",
+                            CountryISO31661Alpha2Code = "BR",
+                            DisplayName = "America / Cuiaba",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Danmarkshavn",
+                            AbbreviationSTD = "GMT",
+                            CountryISO31661Alpha2Code = "GL",
+                            DisplayName = "America / Danmarkshavn",
+                            UTCOffsetSTD = "+00:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Dawson",
+                            AbbreviationSTD = "MST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Dawson",
+                            UTCOffsetSTD = "-07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Dawson_Creek",
+                            AbbreviationSTD = "MST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Dawson Creek",
+                            UTCOffsetSTD = "-07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Denver",
+                            AbbreviationDST = "MDT",
+                            AbbreviationSTD = "MST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Denver",
+                            UTCOffsetDST = "-06:00",
+                            UTCOffsetSTD = "-07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Detroit",
+                            AbbreviationDST = "EDT",
+                            AbbreviationSTD = "EST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Detroit",
+                            UTCOffsetDST = "-04:00",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Edmonton",
+                            AbbreviationDST = "MDT",
+                            AbbreviationSTD = "MST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Edmonton",
+                            UTCOffsetDST = "-06:00",
+                            UTCOffsetSTD = "-07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Eirunepe",
+                            AbbreviationSTD = "-05",
+                            CountryISO31661Alpha2Code = "BR",
+                            DisplayName = "America / Eirunepe",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/El_Salvador",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "SV",
+                            DisplayName = "America / El Salvador",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Fort_Nelson",
+                            AbbreviationSTD = "MST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Fort Nelson",
+                            UTCOffsetSTD = "-07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Fortaleza",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "BR",
+                            DisplayName = "America / Fortaleza",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Glace_Bay",
+                            AbbreviationDST = "ADT",
+                            AbbreviationSTD = "AST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Glace Bay",
+                            UTCOffsetDST = "-03:00",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Goose_Bay",
+                            AbbreviationDST = "ADT",
+                            AbbreviationSTD = "AST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Goose Bay",
+                            UTCOffsetDST = "-03:00",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Grand_Turk",
+                            AbbreviationDST = "EDT",
+                            AbbreviationSTD = "EST",
+                            CountryISO31661Alpha2Code = "TC",
+                            DisplayName = "America / Grand Turk",
+                            UTCOffsetDST = "-04:00",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Guatemala",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "GT",
+                            DisplayName = "America / Guatemala",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Guayaquil",
+                            AbbreviationSTD = "-05",
+                            CountryISO31661Alpha2Code = "EC",
+                            DisplayName = "America / Guayaquil",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Guyana",
+                            AbbreviationSTD = "-04",
+                            CountryISO31661Alpha2Code = "GY",
+                            DisplayName = "America / Guyana",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Halifax",
+                            AbbreviationDST = "ADT",
+                            AbbreviationSTD = "AST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Halifax",
+                            UTCOffsetDST = "-03:00",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Havana",
+                            AbbreviationDST = "CDT",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "CU",
+                            DisplayName = "America / Havana",
+                            UTCOffsetDST = "-04:00",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Hermosillo",
+                            AbbreviationSTD = "MST",
+                            CountryISO31661Alpha2Code = "MX",
+                            DisplayName = "America / Hermosillo",
+                            UTCOffsetSTD = "-07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Indiana/Indianapolis",
+                            AbbreviationDST = "EDT",
+                            AbbreviationSTD = "EST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Indiana / Indianapolis",
+                            UTCOffsetDST = "-04:00",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Indiana/Knox",
+                            AbbreviationDST = "CDT",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Indiana / Knox",
+                            UTCOffsetDST = "-05:00",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Indiana/Marengo",
+                            AbbreviationDST = "EDT",
+                            AbbreviationSTD = "EST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Indiana / Marengo",
+                            UTCOffsetDST = "-04:00",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Indiana/Petersburg",
+                            AbbreviationDST = "EDT",
+                            AbbreviationSTD = "EST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Indiana / Petersburg",
+                            UTCOffsetDST = "-04:00",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Indiana/Tell_City",
+                            AbbreviationDST = "CDT",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Indiana / Tell City",
+                            UTCOffsetDST = "-05:00",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Indiana/Vevay",
+                            AbbreviationDST = "EDT",
+                            AbbreviationSTD = "EST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Indiana / Vevay",
+                            UTCOffsetDST = "-04:00",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Indiana/Vincennes",
+                            AbbreviationDST = "EDT",
+                            AbbreviationSTD = "EST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Indiana / Vincennes",
+                            UTCOffsetDST = "-04:00",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Indiana/Winamac",
+                            AbbreviationDST = "EDT",
+                            AbbreviationSTD = "EST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Indiana / Winamac",
+                            UTCOffsetDST = "-04:00",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Inuvik",
+                            AbbreviationDST = "MDT",
+                            AbbreviationSTD = "MST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Inuvik",
+                            UTCOffsetDST = "-06:00",
+                            UTCOffsetSTD = "-07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Iqaluit",
+                            AbbreviationDST = "EDT",
+                            AbbreviationSTD = "EST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Iqaluit",
+                            UTCOffsetDST = "-04:00",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Jamaica",
+                            AbbreviationSTD = "EST",
+                            CountryISO31661Alpha2Code = "JM",
+                            DisplayName = "America / Jamaica",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Juneau",
+                            AbbreviationDST = "AKDT",
+                            AbbreviationSTD = "AKST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Juneau",
+                            UTCOffsetDST = "-08:00",
+                            UTCOffsetSTD = "-09:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Kentucky/Louisville",
+                            AbbreviationDST = "EDT",
+                            AbbreviationSTD = "EST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Kentucky / Louisville",
+                            UTCOffsetDST = "-04:00",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Kentucky/Monticello",
+                            AbbreviationDST = "EDT",
+                            AbbreviationSTD = "EST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Kentucky / Monticello",
+                            UTCOffsetDST = "-04:00",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/La_Paz",
+                            AbbreviationSTD = "-04",
+                            CountryISO31661Alpha2Code = "BO",
+                            DisplayName = "America / La Paz",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Lima",
+                            AbbreviationSTD = "-05",
+                            CountryISO31661Alpha2Code = "PE",
+                            DisplayName = "America / Lima",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Los_Angeles",
+                            AbbreviationDST = "PDT",
+                            AbbreviationSTD = "PST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Los Angeles",
+                            UTCOffsetDST = "-07:00",
+                            UTCOffsetSTD = "-08:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Maceio",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "BR",
+                            DisplayName = "America / Maceio",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Managua",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "NI",
+                            DisplayName = "America / Managua",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Manaus",
+                            AbbreviationSTD = "-04",
+                            CountryISO31661Alpha2Code = "BR",
+                            DisplayName = "America / Manaus",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Martinique",
+                            AbbreviationSTD = "AST",
+                            CountryISO31661Alpha2Code = "MQ",
+                            DisplayName = "America / Martinique",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Matamoros",
+                            AbbreviationDST = "CDT",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "MX",
+                            DisplayName = "America / Matamoros",
+                            UTCOffsetDST = "-05:00",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Mazatlan",
+                            AbbreviationSTD = "MST",
+                            CountryISO31661Alpha2Code = "MX",
+                            DisplayName = "America / Mazatlan",
+                            UTCOffsetSTD = "-07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Menominee",
+                            AbbreviationDST = "CDT",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Menominee",
+                            UTCOffsetDST = "-05:00",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Merida",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "MX",
+                            DisplayName = "America / Merida",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Metlakatla",
+                            AbbreviationDST = "AKDT",
+                            AbbreviationSTD = "AKST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Metlakatla",
+                            UTCOffsetDST = "-08:00",
+                            UTCOffsetSTD = "-09:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Mexico_City",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "MX",
+                            DisplayName = "America / Mexico City",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Miquelon",
+                            AbbreviationDST = "-02",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "PM",
+                            DisplayName = "America / Miquelon",
+                            UTCOffsetDST = "-02:00",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Moncton",
+                            AbbreviationDST = "ADT",
+                            AbbreviationSTD = "AST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Moncton",
+                            UTCOffsetDST = "-03:00",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Monterrey",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "MX",
+                            DisplayName = "America / Monterrey",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Montevideo",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "UY",
+                            DisplayName = "America / Montevideo",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/New_York",
+                            AbbreviationDST = "EDT",
+                            AbbreviationSTD = "EST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / New York",
+                            UTCOffsetDST = "-04:00",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Nome",
+                            AbbreviationDST = "AKDT",
+                            AbbreviationSTD = "AKST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Nome",
+                            UTCOffsetDST = "-08:00",
+                            UTCOffsetSTD = "-09:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Noronha",
+                            AbbreviationSTD = "-02",
+                            CountryISO31661Alpha2Code = "BR",
+                            DisplayName = "America / Noronha",
+                            UTCOffsetSTD = "-02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/North_Dakota/Beulah",
+                            AbbreviationDST = "CDT",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / North Dakota / Beulah",
+                            UTCOffsetDST = "-05:00",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/North_Dakota/Center",
+                            AbbreviationDST = "CDT",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / North Dakota / Center",
+                            UTCOffsetDST = "-05:00",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/North_Dakota/New_Salem",
+                            AbbreviationDST = "CDT",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / North Dakota / New Salem",
+                            UTCOffsetDST = "-05:00",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Nuuk",
+                            AbbreviationDST = "-01",
+                            AbbreviationSTD = "-02",
+                            CountryISO31661Alpha2Code = "GL",
+                            DisplayName = "America / Nuuk",
+                            UTCOffsetDST = "-01:00",
+                            UTCOffsetSTD = "-02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Ojinaga",
+                            AbbreviationDST = "CDT",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "MX",
+                            DisplayName = "America / Ojinaga",
+                            UTCOffsetDST = "-05:00",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Panama",
+                            AbbreviationSTD = "EST",
+                            CountryISO31661Alpha2Code = "PA",
+                            DisplayName = "America / Panama",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Paramaribo",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "SR",
+                            DisplayName = "America / Paramaribo",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Phoenix",
+                            AbbreviationSTD = "MST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Phoenix",
+                            UTCOffsetSTD = "-07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Port-au-Prince",
+                            AbbreviationDST = "EDT",
+                            AbbreviationSTD = "EST",
+                            CountryISO31661Alpha2Code = "HT",
+                            DisplayName = "America / Port-au-Prince",
+                            UTCOffsetDST = "-04:00",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Porto_Velho",
+                            AbbreviationSTD = "-04",
+                            CountryISO31661Alpha2Code = "BR",
+                            DisplayName = "America / Porto Velho",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Puerto_Rico",
+                            AbbreviationSTD = "AST",
+                            CountryISO31661Alpha2Code = "PR",
+                            DisplayName = "America / Puerto Rico",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Punta_Arenas",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "CL",
+                            DisplayName = "America / Punta Arenas",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Rankin_Inlet",
+                            AbbreviationDST = "CDT",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Rankin Inlet",
+                            UTCOffsetDST = "-05:00",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Recife",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "BR",
+                            DisplayName = "America / Recife",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Regina",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Regina",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Resolute",
+                            AbbreviationDST = "CDT",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Resolute",
+                            UTCOffsetDST = "-05:00",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Rio_Branco",
+                            AbbreviationSTD = "-05",
+                            CountryISO31661Alpha2Code = "BR",
+                            DisplayName = "America / Rio Branco",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Santarem",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "BR",
+                            DisplayName = "America / Santarem",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Santiago",
+                            AbbreviationDST = "-03",
+                            AbbreviationSTD = "-04",
+                            CountryISO31661Alpha2Code = "CL",
+                            DisplayName = "America / Santiago",
+                            UTCOffsetDST = "-03:00",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Santo_Domingo",
+                            AbbreviationSTD = "AST",
+                            CountryISO31661Alpha2Code = "DO",
+                            DisplayName = "America / Santo Domingo",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Sao_Paulo",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "BR",
+                            DisplayName = "America / Sao Paulo",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Scoresbysund",
+                            AbbreviationDST = "-01",
+                            AbbreviationSTD = "-02",
+                            CountryISO31661Alpha2Code = "GL",
+                            DisplayName = "America / Scoresbysund",
+                            UTCOffsetDST = "-01:00",
+                            UTCOffsetSTD = "-02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Sitka",
+                            AbbreviationDST = "AKDT",
+                            AbbreviationSTD = "AKST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Sitka",
+                            UTCOffsetDST = "-08:00",
+                            UTCOffsetSTD = "-09:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/St_Johns",
+                            AbbreviationDST = "NDT",
+                            AbbreviationSTD = "NST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / St Johns",
+                            UTCOffsetDST = "-02:30",
+                            UTCOffsetSTD = "-03:30"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Swift_Current",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Swift Current",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Tegucigalpa",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "HN",
+                            DisplayName = "America / Tegucigalpa",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Thule",
+                            AbbreviationDST = "ADT",
+                            AbbreviationSTD = "AST",
+                            CountryISO31661Alpha2Code = "GL",
+                            DisplayName = "America / Thule",
+                            UTCOffsetDST = "-03:00",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Tijuana",
+                            AbbreviationDST = "PDT",
+                            AbbreviationSTD = "PST",
+                            CountryISO31661Alpha2Code = "MX",
+                            DisplayName = "America / Tijuana",
+                            UTCOffsetDST = "-07:00",
+                            UTCOffsetSTD = "-08:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Toronto",
+                            AbbreviationDST = "EDT",
+                            AbbreviationSTD = "EST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Toronto",
+                            UTCOffsetDST = "-04:00",
+                            UTCOffsetSTD = "-05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Vancouver",
+                            AbbreviationDST = "PDT",
+                            AbbreviationSTD = "PST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Vancouver",
+                            UTCOffsetDST = "-07:00",
+                            UTCOffsetSTD = "-08:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Whitehorse",
+                            AbbreviationSTD = "MST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Whitehorse",
+                            UTCOffsetSTD = "-07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Winnipeg",
+                            AbbreviationDST = "CDT",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "CA",
+                            DisplayName = "America / Winnipeg",
+                            UTCOffsetDST = "-05:00",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "America/Yakutat",
+                            AbbreviationDST = "AKDT",
+                            AbbreviationSTD = "AKST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "America / Yakutat",
+                            UTCOffsetDST = "-08:00",
+                            UTCOffsetSTD = "-09:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Antarctica/Casey",
+                            AbbreviationSTD = "+08",
+                            CountryISO31661Alpha2Code = "AQ",
+                            DisplayName = "Antarctica / Casey",
+                            UTCOffsetSTD = "+08:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Antarctica/Davis",
+                            AbbreviationSTD = "+07",
+                            CountryISO31661Alpha2Code = "AQ",
+                            DisplayName = "Antarctica / Davis",
+                            UTCOffsetSTD = "+07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Antarctica/Macquarie",
+                            AbbreviationDST = "AEDT",
+                            AbbreviationSTD = "AEST",
+                            CountryISO31661Alpha2Code = "AU",
+                            DisplayName = "Antarctica / Macquarie",
+                            UTCOffsetDST = "+11:00",
+                            UTCOffsetSTD = "+10:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Antarctica/Mawson",
+                            AbbreviationSTD = "+05",
+                            CountryISO31661Alpha2Code = "AQ",
+                            DisplayName = "Antarctica / Mawson",
+                            UTCOffsetSTD = "+05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Antarctica/Palmer",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "AQ",
+                            DisplayName = "Antarctica / Palmer",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Antarctica/Rothera",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "AQ",
+                            DisplayName = "Antarctica / Rothera",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Antarctica/Troll",
+                            AbbreviationDST = "+02",
+                            AbbreviationSTD = "+00",
+                            CountryISO31661Alpha2Code = "AQ",
+                            DisplayName = "Antarctica / Troll",
+                            UTCOffsetDST = "+02:00",
+                            UTCOffsetSTD = "+00:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Antarctica/Vostok",
+                            AbbreviationSTD = "+05",
+                            CountryISO31661Alpha2Code = "AQ",
+                            DisplayName = "Antarctica / Vostok",
+                            UTCOffsetSTD = "+05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Almaty",
+                            AbbreviationSTD = "+05",
+                            CountryISO31661Alpha2Code = "KZ",
+                            DisplayName = "Asia / Almaty",
+                            UTCOffsetSTD = "+05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Amman",
+                            AbbreviationSTD = "+03",
+                            CountryISO31661Alpha2Code = "JO",
+                            DisplayName = "Asia / Amman",
+                            UTCOffsetSTD = "+03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Anadyr",
+                            AbbreviationSTD = "+12",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Asia / Anadyr",
+                            UTCOffsetSTD = "+12:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Aqtau",
+                            AbbreviationSTD = "+05",
+                            CountryISO31661Alpha2Code = "KZ",
+                            DisplayName = "Asia / Aqtau",
+                            UTCOffsetSTD = "+05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Aqtobe",
+                            AbbreviationSTD = "+05",
+                            CountryISO31661Alpha2Code = "KZ",
+                            DisplayName = "Asia / Aqtobe",
+                            UTCOffsetSTD = "+05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Ashgabat",
+                            AbbreviationSTD = "+05",
+                            CountryISO31661Alpha2Code = "TM",
+                            DisplayName = "Asia / Ashgabat",
+                            UTCOffsetSTD = "+05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Atyrau",
+                            AbbreviationSTD = "+05",
+                            CountryISO31661Alpha2Code = "KZ",
+                            DisplayName = "Asia / Atyrau",
+                            UTCOffsetSTD = "+05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Baghdad",
+                            AbbreviationSTD = "+03",
+                            CountryISO31661Alpha2Code = "IQ",
+                            DisplayName = "Asia / Baghdad",
+                            UTCOffsetSTD = "+03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Baku",
+                            AbbreviationSTD = "+04",
+                            CountryISO31661Alpha2Code = "AZ",
+                            DisplayName = "Asia / Baku",
+                            UTCOffsetSTD = "+04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Bangkok",
+                            AbbreviationSTD = "+07",
+                            CountryISO31661Alpha2Code = "TH",
+                            DisplayName = "Asia / Bangkok",
+                            UTCOffsetSTD = "+07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Barnaul",
+                            AbbreviationSTD = "+07",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Asia / Barnaul",
+                            UTCOffsetSTD = "+07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Beirut",
+                            AbbreviationDST = "EEST",
+                            AbbreviationSTD = "EET",
+                            CountryISO31661Alpha2Code = "LB",
+                            DisplayName = "Asia / Beirut",
+                            UTCOffsetDST = "+03:00",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Bishkek",
+                            AbbreviationSTD = "+06",
+                            CountryISO31661Alpha2Code = "KG",
+                            DisplayName = "Asia / Bishkek",
+                            UTCOffsetSTD = "+06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Colombo",
+                            AbbreviationSTD = "+0530",
+                            CountryISO31661Alpha2Code = "LK",
+                            DisplayName = "Asia / Colombo",
+                            UTCOffsetSTD = "+05:30"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Damascus",
+                            AbbreviationSTD = "+03",
+                            CountryISO31661Alpha2Code = "SY",
+                            DisplayName = "Asia / Damascus",
+                            UTCOffsetSTD = "+03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Dhaka",
+                            AbbreviationSTD = "+06",
+                            CountryISO31661Alpha2Code = "BD",
+                            DisplayName = "Asia / Dhaka",
+                            UTCOffsetSTD = "+06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Dili",
+                            AbbreviationSTD = "+09",
+                            CountryISO31661Alpha2Code = "TL",
+                            DisplayName = "Asia / Dili",
+                            UTCOffsetSTD = "+09:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Dubai",
+                            AbbreviationSTD = "+04",
+                            CountryISO31661Alpha2Code = "AE",
+                            DisplayName = "Asia / Dubai",
+                            UTCOffsetSTD = "+04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Dushanbe",
+                            AbbreviationSTD = "+05",
+                            CountryISO31661Alpha2Code = "TJ",
+                            DisplayName = "Asia / Dushanbe",
+                            UTCOffsetSTD = "+05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Famagusta",
+                            AbbreviationDST = "EEST",
+                            AbbreviationSTD = "EET",
+                            CountryISO31661Alpha2Code = "CY",
+                            DisplayName = "Asia / Famagusta",
+                            UTCOffsetDST = "+03:00",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Gaza",
+                            AbbreviationDST = "EEST",
+                            AbbreviationSTD = "EET",
+                            CountryISO31661Alpha2Code = "PS",
+                            DisplayName = "Asia / Gaza",
+                            UTCOffsetDST = "+03:00",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Hebron",
+                            AbbreviationDST = "EEST",
+                            AbbreviationSTD = "EET",
+                            CountryISO31661Alpha2Code = "PS",
+                            DisplayName = "Asia / Hebron",
+                            UTCOffsetDST = "+03:00",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Ho_Chi_Minh",
+                            AbbreviationSTD = "+07",
+                            CountryISO31661Alpha2Code = "VN",
+                            DisplayName = "Asia / Ho Chi Minh",
+                            UTCOffsetSTD = "+07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Hong_Kong",
+                            AbbreviationSTD = "HKT",
+                            CountryISO31661Alpha2Code = "HK",
+                            DisplayName = "Asia / Hong Kong",
+                            UTCOffsetSTD = "+08:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Hovd",
+                            AbbreviationSTD = "+07",
+                            CountryISO31661Alpha2Code = "MN",
+                            DisplayName = "Asia / Hovd",
+                            UTCOffsetSTD = "+07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Irkutsk",
+                            AbbreviationSTD = "+08",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Asia / Irkutsk",
+                            UTCOffsetSTD = "+08:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Jakarta",
+                            AbbreviationSTD = "WIB",
+                            CountryISO31661Alpha2Code = "ID",
+                            DisplayName = "Asia / Jakarta",
+                            UTCOffsetSTD = "+07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Jayapura",
+                            AbbreviationSTD = "WIT",
+                            CountryISO31661Alpha2Code = "ID",
+                            DisplayName = "Asia / Jayapura",
+                            UTCOffsetSTD = "+09:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Jerusalem",
+                            AbbreviationDST = "IDT",
+                            AbbreviationSTD = "IST",
+                            CountryISO31661Alpha2Code = "IL",
+                            DisplayName = "Asia / Jerusalem",
+                            UTCOffsetDST = "+03:00",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Kabul",
+                            AbbreviationSTD = "+0430",
+                            CountryISO31661Alpha2Code = "AF",
+                            DisplayName = "Asia / Kabul",
+                            UTCOffsetSTD = "+04:30"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Kamchatka",
+                            AbbreviationSTD = "+12",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Asia / Kamchatka",
+                            UTCOffsetSTD = "+12:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Karachi",
+                            AbbreviationSTD = "PKT",
+                            CountryISO31661Alpha2Code = "PK",
+                            DisplayName = "Asia / Karachi",
+                            UTCOffsetSTD = "+05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Kathmandu",
+                            AbbreviationSTD = "+0545",
+                            CountryISO31661Alpha2Code = "NP",
+                            DisplayName = "Asia / Kathmandu",
+                            UTCOffsetSTD = "+05:45"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Khandyga",
+                            AbbreviationSTD = "+09",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Asia / Khandyga",
+                            UTCOffsetSTD = "+09:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Kolkata",
+                            AbbreviationSTD = "IST",
+                            CountryISO31661Alpha2Code = "IN",
+                            DisplayName = "Asia / Kolkata",
+                            UTCOffsetSTD = "+05:30"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Krasnoyarsk",
+                            AbbreviationSTD = "+07",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Asia / Krasnoyarsk",
+                            UTCOffsetSTD = "+07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Kuching",
+                            AbbreviationSTD = "+08",
+                            CountryISO31661Alpha2Code = "MY",
+                            DisplayName = "Asia / Kuching",
+                            UTCOffsetSTD = "+08:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Macau",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "MO",
+                            DisplayName = "Asia / Macau",
+                            UTCOffsetSTD = "+08:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Magadan",
+                            AbbreviationSTD = "+11",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Asia / Magadan",
+                            UTCOffsetSTD = "+11:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Makassar",
+                            AbbreviationSTD = "WITA",
+                            CountryISO31661Alpha2Code = "ID",
+                            DisplayName = "Asia / Makassar",
+                            UTCOffsetSTD = "+08:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Manila",
+                            AbbreviationSTD = "PST",
+                            CountryISO31661Alpha2Code = "PH",
+                            DisplayName = "Asia / Manila",
+                            UTCOffsetSTD = "+08:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Nicosia",
+                            AbbreviationDST = "EEST",
+                            AbbreviationSTD = "EET",
+                            CountryISO31661Alpha2Code = "CY",
+                            DisplayName = "Asia / Nicosia",
+                            UTCOffsetDST = "+03:00",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Novokuznetsk",
+                            AbbreviationSTD = "+07",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Asia / Novokuznetsk",
+                            UTCOffsetSTD = "+07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Novosibirsk",
+                            AbbreviationSTD = "+07",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Asia / Novosibirsk",
+                            UTCOffsetSTD = "+07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Omsk",
+                            AbbreviationSTD = "+06",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Asia / Omsk",
+                            UTCOffsetSTD = "+06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Oral",
+                            AbbreviationSTD = "+05",
+                            CountryISO31661Alpha2Code = "KZ",
+                            DisplayName = "Asia / Oral",
+                            UTCOffsetSTD = "+05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Pontianak",
+                            AbbreviationSTD = "WIB",
+                            CountryISO31661Alpha2Code = "ID",
+                            DisplayName = "Asia / Pontianak",
+                            UTCOffsetSTD = "+07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Pyongyang",
+                            AbbreviationSTD = "KST",
+                            CountryISO31661Alpha2Code = "KP",
+                            DisplayName = "Asia / Pyongyang",
+                            UTCOffsetSTD = "+09:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Qatar",
+                            AbbreviationSTD = "+03",
+                            CountryISO31661Alpha2Code = "QA",
+                            DisplayName = "Asia / Qatar",
+                            UTCOffsetSTD = "+03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Qostanay",
+                            AbbreviationSTD = "+05",
+                            CountryISO31661Alpha2Code = "KZ",
+                            DisplayName = "Asia / Qostanay",
+                            UTCOffsetSTD = "+05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Qyzylorda",
+                            AbbreviationSTD = "+05",
+                            CountryISO31661Alpha2Code = "KZ",
+                            DisplayName = "Asia / Qyzylorda",
+                            UTCOffsetSTD = "+05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Riyadh",
+                            AbbreviationSTD = "+03",
+                            CountryISO31661Alpha2Code = "SA",
+                            DisplayName = "Asia / Riyadh",
+                            UTCOffsetSTD = "+03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Sakhalin",
+                            AbbreviationSTD = "+11",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Asia / Sakhalin",
+                            UTCOffsetSTD = "+11:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Samarkand",
+                            AbbreviationSTD = "+05",
+                            CountryISO31661Alpha2Code = "UZ",
+                            DisplayName = "Asia / Samarkand",
+                            UTCOffsetSTD = "+05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Seoul",
+                            AbbreviationSTD = "KST",
+                            CountryISO31661Alpha2Code = "KR",
+                            DisplayName = "Asia / Seoul",
+                            UTCOffsetSTD = "+09:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Shanghai",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "CN",
+                            DisplayName = "Asia / Shanghai",
+                            UTCOffsetSTD = "+08:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Singapore",
+                            AbbreviationSTD = "+08",
+                            CountryISO31661Alpha2Code = "SG",
+                            DisplayName = "Asia / Singapore",
+                            UTCOffsetSTD = "+08:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Srednekolymsk",
+                            AbbreviationSTD = "+11",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Asia / Srednekolymsk",
+                            UTCOffsetSTD = "+11:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Taipei",
+                            AbbreviationSTD = "CST",
+                            CountryISO31661Alpha2Code = "TW",
+                            DisplayName = "Asia / Taipei",
+                            UTCOffsetSTD = "+08:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Tashkent",
+                            AbbreviationSTD = "+05",
+                            CountryISO31661Alpha2Code = "UZ",
+                            DisplayName = "Asia / Tashkent",
+                            UTCOffsetSTD = "+05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Tbilisi",
+                            AbbreviationSTD = "+04",
+                            CountryISO31661Alpha2Code = "GE",
+                            DisplayName = "Asia / Tbilisi",
+                            UTCOffsetSTD = "+04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Tehran",
+                            AbbreviationSTD = "+0330",
+                            CountryISO31661Alpha2Code = "IR",
+                            DisplayName = "Asia / Tehran",
+                            UTCOffsetSTD = "+03:30"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Thimphu",
+                            AbbreviationSTD = "+06",
+                            CountryISO31661Alpha2Code = "BT",
+                            DisplayName = "Asia / Thimphu",
+                            UTCOffsetSTD = "+06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Tokyo",
+                            AbbreviationSTD = "JST",
+                            CountryISO31661Alpha2Code = "JP",
+                            DisplayName = "Asia / Tokyo",
+                            UTCOffsetSTD = "+09:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Tomsk",
+                            AbbreviationSTD = "+07",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Asia / Tomsk",
+                            UTCOffsetSTD = "+07:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Ulaanbaatar",
+                            AbbreviationSTD = "+08",
+                            CountryISO31661Alpha2Code = "MN",
+                            DisplayName = "Asia / Ulaanbaatar",
+                            UTCOffsetSTD = "+08:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Urumqi",
+                            AbbreviationSTD = "+06",
+                            CountryISO31661Alpha2Code = "CN",
+                            DisplayName = "Asia / Urumqi",
+                            UTCOffsetSTD = "+06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Ust-Nera",
+                            AbbreviationSTD = "+10",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Asia / Ust-Nera",
+                            UTCOffsetSTD = "+10:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Vladivostok",
+                            AbbreviationSTD = "+10",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Asia / Vladivostok",
+                            UTCOffsetSTD = "+10:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Yakutsk",
+                            AbbreviationSTD = "+09",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Asia / Yakutsk",
+                            UTCOffsetSTD = "+09:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Yangon",
+                            AbbreviationSTD = "+0630",
+                            CountryISO31661Alpha2Code = "MM",
+                            DisplayName = "Asia / Yangon",
+                            UTCOffsetSTD = "+06:30"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Yekaterinburg",
+                            AbbreviationSTD = "+05",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Asia / Yekaterinburg",
+                            UTCOffsetSTD = "+05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Asia/Yerevan",
+                            AbbreviationSTD = "+04",
+                            CountryISO31661Alpha2Code = "AM",
+                            DisplayName = "Asia / Yerevan",
+                            UTCOffsetSTD = "+04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Atlantic/Azores",
+                            AbbreviationDST = "+00",
+                            AbbreviationSTD = "-01",
+                            CountryISO31661Alpha2Code = "PT",
+                            DisplayName = "Atlantic / Azores",
+                            UTCOffsetDST = "+00:00",
+                            UTCOffsetSTD = "-01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Atlantic/Bermuda",
+                            AbbreviationDST = "ADT",
+                            AbbreviationSTD = "AST",
+                            CountryISO31661Alpha2Code = "BM",
+                            DisplayName = "Atlantic / Bermuda",
+                            UTCOffsetDST = "-03:00",
+                            UTCOffsetSTD = "-04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Atlantic/Cape_Verde",
+                            AbbreviationSTD = "-01",
+                            CountryISO31661Alpha2Code = "CV",
+                            DisplayName = "Atlantic / Cape Verde",
+                            UTCOffsetSTD = "-01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Atlantic/Faroe",
+                            AbbreviationDST = "WEST",
+                            AbbreviationSTD = "WET",
+                            CountryISO31661Alpha2Code = "FO",
+                            DisplayName = "Atlantic / Faroe",
+                            UTCOffsetDST = "+01:00",
+                            UTCOffsetSTD = "+00:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Atlantic/Madeira",
+                            AbbreviationDST = "WEST",
+                            AbbreviationSTD = "WET",
+                            CountryISO31661Alpha2Code = "PT",
+                            DisplayName = "Atlantic / Madeira",
+                            UTCOffsetDST = "+01:00",
+                            UTCOffsetSTD = "+00:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Atlantic/South_Georgia",
+                            AbbreviationSTD = "-02",
+                            CountryISO31661Alpha2Code = "GS",
+                            DisplayName = "Atlantic / South Georgia",
+                            UTCOffsetSTD = "-02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Atlantic/Stanley",
+                            AbbreviationSTD = "-03",
+                            CountryISO31661Alpha2Code = "FK",
+                            DisplayName = "Atlantic / Stanley",
+                            UTCOffsetSTD = "-03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Australia/Adelaide",
+                            AbbreviationDST = "ACDT",
+                            AbbreviationSTD = "ACST",
+                            CountryISO31661Alpha2Code = "AU",
+                            DisplayName = "Australia / Adelaide",
+                            UTCOffsetDST = "+10:30",
+                            UTCOffsetSTD = "+09:30"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Australia/Brisbane",
+                            AbbreviationSTD = "AEST",
+                            CountryISO31661Alpha2Code = "AU",
+                            DisplayName = "Australia / Brisbane",
+                            UTCOffsetSTD = "+10:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Australia/Broken_Hill",
+                            AbbreviationDST = "ACDT",
+                            AbbreviationSTD = "ACST",
+                            CountryISO31661Alpha2Code = "AU",
+                            DisplayName = "Australia / Broken Hill",
+                            UTCOffsetDST = "+10:30",
+                            UTCOffsetSTD = "+09:30"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Australia/Darwin",
+                            AbbreviationSTD = "ACST",
+                            CountryISO31661Alpha2Code = "AU",
+                            DisplayName = "Australia / Darwin",
+                            UTCOffsetSTD = "+09:30"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Australia/Eucla",
+                            AbbreviationSTD = "+0845",
+                            CountryISO31661Alpha2Code = "AU",
+                            DisplayName = "Australia / Eucla",
+                            UTCOffsetSTD = "+08:45"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Australia/Hobart",
+                            AbbreviationDST = "AEDT",
+                            AbbreviationSTD = "AEST",
+                            CountryISO31661Alpha2Code = "AU",
+                            DisplayName = "Australia / Hobart",
+                            UTCOffsetDST = "+11:00",
+                            UTCOffsetSTD = "+10:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Australia/Lindeman",
+                            AbbreviationSTD = "AEST",
+                            CountryISO31661Alpha2Code = "AU",
+                            DisplayName = "Australia / Lindeman",
+                            UTCOffsetSTD = "+10:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Australia/Lord_Howe",
+                            AbbreviationDST = "+11",
+                            AbbreviationSTD = "+1030",
+                            CountryISO31661Alpha2Code = "AU",
+                            DisplayName = "Australia / Lord Howe",
+                            UTCOffsetDST = "+11:00",
+                            UTCOffsetSTD = "+10:30"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Australia/Melbourne",
+                            AbbreviationDST = "AEDT",
+                            AbbreviationSTD = "AEST",
+                            CountryISO31661Alpha2Code = "AU",
+                            DisplayName = "Australia / Melbourne",
+                            UTCOffsetDST = "+11:00",
+                            UTCOffsetSTD = "+10:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Australia/Perth",
+                            AbbreviationSTD = "AWST",
+                            CountryISO31661Alpha2Code = "AU",
+                            DisplayName = "Australia / Perth",
+                            UTCOffsetSTD = "+08:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Australia/Sydney",
+                            AbbreviationDST = "AEDT",
+                            AbbreviationSTD = "AEST",
+                            CountryISO31661Alpha2Code = "AU",
+                            DisplayName = "Australia / Sydney",
+                            UTCOffsetDST = "+11:00",
+                            UTCOffsetSTD = "+10:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Andorra",
+                            AbbreviationDST = "CEST",
+                            AbbreviationSTD = "CET",
+                            CountryISO31661Alpha2Code = "AD",
+                            DisplayName = "Europe / Andorra",
+                            UTCOffsetDST = "+02:00",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Astrakhan",
+                            AbbreviationSTD = "+04",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Europe / Astrakhan",
+                            UTCOffsetSTD = "+04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Athens",
+                            AbbreviationDST = "EEST",
+                            AbbreviationSTD = "EET",
+                            CountryISO31661Alpha2Code = "GR",
+                            DisplayName = "Europe / Athens",
+                            UTCOffsetDST = "+03:00",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Belgrade",
+                            AbbreviationDST = "CEST",
+                            AbbreviationSTD = "CET",
+                            CountryISO31661Alpha2Code = "RS",
+                            DisplayName = "Europe / Belgrade",
+                            UTCOffsetDST = "+02:00",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Berlin",
+                            AbbreviationDST = "CEST",
+                            AbbreviationSTD = "CET",
+                            CountryISO31661Alpha2Code = "DE",
+                            DisplayName = "Europe / Berlin",
+                            UTCOffsetDST = "+02:00",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Brussels",
+                            AbbreviationDST = "CEST",
+                            AbbreviationSTD = "CET",
+                            CountryISO31661Alpha2Code = "BE",
+                            DisplayName = "Europe / Brussels",
+                            UTCOffsetDST = "+02:00",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Bucharest",
+                            AbbreviationDST = "EEST",
+                            AbbreviationSTD = "EET",
+                            CountryISO31661Alpha2Code = "RO",
+                            DisplayName = "Europe / Bucharest",
+                            UTCOffsetDST = "+03:00",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Budapest",
+                            AbbreviationDST = "CEST",
+                            AbbreviationSTD = "CET",
+                            CountryISO31661Alpha2Code = "HU",
+                            DisplayName = "Europe / Budapest",
+                            UTCOffsetDST = "+02:00",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Chisinau",
+                            AbbreviationDST = "EEST",
+                            AbbreviationSTD = "EET",
+                            CountryISO31661Alpha2Code = "MD",
+                            DisplayName = "Europe / Chisinau",
+                            UTCOffsetDST = "+03:00",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Dublin",
+                            AbbreviationDST = "IST",
+                            AbbreviationSTD = "GMT",
+                            CountryISO31661Alpha2Code = "IE",
+                            DisplayName = "Europe / Dublin",
+                            UTCOffsetDST = "+01:00",
+                            UTCOffsetSTD = "+00:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Gibraltar",
+                            AbbreviationDST = "CEST",
+                            AbbreviationSTD = "CET",
+                            CountryISO31661Alpha2Code = "GI",
+                            DisplayName = "Europe / Gibraltar",
+                            UTCOffsetDST = "+02:00",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Helsinki",
+                            AbbreviationDST = "EEST",
+                            AbbreviationSTD = "EET",
+                            CountryISO31661Alpha2Code = "FI",
+                            DisplayName = "Europe / Helsinki",
+                            UTCOffsetDST = "+03:00",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Istanbul",
+                            AbbreviationSTD = "+03",
+                            CountryISO31661Alpha2Code = "TR",
+                            DisplayName = "Europe / Istanbul",
+                            UTCOffsetSTD = "+03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Kaliningrad",
+                            AbbreviationSTD = "EET",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Europe / Kaliningrad",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Kirov",
+                            AbbreviationSTD = "MSK",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Europe / Kirov",
+                            UTCOffsetSTD = "+03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Kyiv",
+                            AbbreviationDST = "EEST",
+                            AbbreviationSTD = "EET",
+                            CountryISO31661Alpha2Code = "UA",
+                            DisplayName = "Europe / Kyiv",
+                            UTCOffsetDST = "+03:00",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Lisbon",
+                            AbbreviationDST = "WEST",
+                            AbbreviationSTD = "WET",
+                            CountryISO31661Alpha2Code = "PT",
+                            DisplayName = "Europe / Lisbon",
+                            UTCOffsetDST = "+01:00",
+                            UTCOffsetSTD = "+00:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/London",
+                            AbbreviationDST = "BST",
+                            AbbreviationSTD = "GMT",
+                            CountryISO31661Alpha2Code = "GB",
+                            DisplayName = "Europe / London",
+                            UTCOffsetDST = "+01:00",
+                            UTCOffsetSTD = "+00:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Madrid",
+                            AbbreviationDST = "CEST",
+                            AbbreviationSTD = "CET",
+                            CountryISO31661Alpha2Code = "ES",
+                            DisplayName = "Europe / Madrid",
+                            UTCOffsetDST = "+02:00",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Malta",
+                            AbbreviationDST = "CEST",
+                            AbbreviationSTD = "CET",
+                            CountryISO31661Alpha2Code = "MT",
+                            DisplayName = "Europe / Malta",
+                            UTCOffsetDST = "+02:00",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Minsk",
+                            AbbreviationSTD = "+03",
+                            CountryISO31661Alpha2Code = "BY",
+                            DisplayName = "Europe / Minsk",
+                            UTCOffsetSTD = "+03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Moscow",
+                            AbbreviationSTD = "MSK",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Europe / Moscow",
+                            UTCOffsetSTD = "+03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Paris",
+                            AbbreviationDST = "CEST",
+                            AbbreviationSTD = "CET",
+                            CountryISO31661Alpha2Code = "FR",
+                            DisplayName = "Europe / Paris",
+                            UTCOffsetDST = "+02:00",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Prague",
+                            AbbreviationDST = "CEST",
+                            AbbreviationSTD = "CET",
+                            CountryISO31661Alpha2Code = "CZ",
+                            DisplayName = "Europe / Prague",
+                            UTCOffsetDST = "+02:00",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Riga",
+                            AbbreviationDST = "EEST",
+                            AbbreviationSTD = "EET",
+                            CountryISO31661Alpha2Code = "LV",
+                            DisplayName = "Europe / Riga",
+                            UTCOffsetDST = "+03:00",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Rome",
+                            AbbreviationDST = "CEST",
+                            AbbreviationSTD = "CET",
+                            CountryISO31661Alpha2Code = "IT",
+                            DisplayName = "Europe / Rome",
+                            UTCOffsetDST = "+02:00",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Samara",
+                            AbbreviationSTD = "+04",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Europe / Samara",
+                            UTCOffsetSTD = "+04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Saratov",
+                            AbbreviationSTD = "+04",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Europe / Saratov",
+                            UTCOffsetSTD = "+04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Simferopol",
+                            AbbreviationSTD = "MSK",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Europe / Simferopol",
+                            UTCOffsetSTD = "+03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Sofia",
+                            AbbreviationDST = "EEST",
+                            AbbreviationSTD = "EET",
+                            CountryISO31661Alpha2Code = "BG",
+                            DisplayName = "Europe / Sofia",
+                            UTCOffsetDST = "+03:00",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Tallinn",
+                            AbbreviationDST = "EEST",
+                            AbbreviationSTD = "EET",
+                            CountryISO31661Alpha2Code = "EE",
+                            DisplayName = "Europe / Tallinn",
+                            UTCOffsetDST = "+03:00",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Tirane",
+                            AbbreviationDST = "CEST",
+                            AbbreviationSTD = "CET",
+                            CountryISO31661Alpha2Code = "AL",
+                            DisplayName = "Europe / Tirane",
+                            UTCOffsetDST = "+02:00",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Ulyanovsk",
+                            AbbreviationSTD = "+04",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Europe / Ulyanovsk",
+                            UTCOffsetSTD = "+04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Vienna",
+                            AbbreviationDST = "CEST",
+                            AbbreviationSTD = "CET",
+                            CountryISO31661Alpha2Code = "AT",
+                            DisplayName = "Europe / Vienna",
+                            UTCOffsetDST = "+02:00",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Vilnius",
+                            AbbreviationDST = "EEST",
+                            AbbreviationSTD = "EET",
+                            CountryISO31661Alpha2Code = "LT",
+                            DisplayName = "Europe / Vilnius",
+                            UTCOffsetDST = "+03:00",
+                            UTCOffsetSTD = "+02:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Volgograd",
+                            AbbreviationSTD = "MSK",
+                            CountryISO31661Alpha2Code = "RU",
+                            DisplayName = "Europe / Volgograd",
+                            UTCOffsetSTD = "+03:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Warsaw",
+                            AbbreviationDST = "CEST",
+                            AbbreviationSTD = "CET",
+                            CountryISO31661Alpha2Code = "PL",
+                            DisplayName = "Europe / Warsaw",
+                            UTCOffsetDST = "+02:00",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Europe/Zurich",
+                            AbbreviationDST = "CEST",
+                            AbbreviationSTD = "CET",
+                            CountryISO31661Alpha2Code = "CH",
+                            DisplayName = "Europe / Zurich",
+                            UTCOffsetDST = "+02:00",
+                            UTCOffsetSTD = "+01:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Indian/Chagos",
+                            AbbreviationSTD = "+06",
+                            CountryISO31661Alpha2Code = "IO",
+                            DisplayName = "Indian / Chagos",
+                            UTCOffsetSTD = "+06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Indian/Maldives",
+                            AbbreviationSTD = "+05",
+                            CountryISO31661Alpha2Code = "MV",
+                            DisplayName = "Indian / Maldives",
+                            UTCOffsetSTD = "+05:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Indian/Mauritius",
+                            AbbreviationSTD = "+04",
+                            CountryISO31661Alpha2Code = "MU",
+                            DisplayName = "Indian / Mauritius",
+                            UTCOffsetSTD = "+04:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Apia",
+                            AbbreviationSTD = "+13",
+                            CountryISO31661Alpha2Code = "WS",
+                            DisplayName = "Pacific / Apia",
+                            UTCOffsetSTD = "+13:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Auckland",
+                            AbbreviationDST = "NZDT",
+                            AbbreviationSTD = "NZST",
+                            CountryISO31661Alpha2Code = "NZ",
+                            DisplayName = "Pacific / Auckland",
+                            UTCOffsetDST = "+13:00",
+                            UTCOffsetSTD = "+12:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Bougainville",
+                            AbbreviationSTD = "+11",
+                            CountryISO31661Alpha2Code = "PG",
+                            DisplayName = "Pacific / Bougainville",
+                            UTCOffsetSTD = "+11:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Chatham",
+                            AbbreviationDST = "+1345",
+                            AbbreviationSTD = "+1245",
+                            CountryISO31661Alpha2Code = "NZ",
+                            DisplayName = "Pacific / Chatham",
+                            UTCOffsetDST = "+13:45",
+                            UTCOffsetSTD = "+12:45"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Easter",
+                            AbbreviationDST = "-05",
+                            AbbreviationSTD = "-06",
+                            CountryISO31661Alpha2Code = "CL",
+                            DisplayName = "Pacific / Easter",
+                            UTCOffsetDST = "-05:00",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Efate",
+                            AbbreviationSTD = "+11",
+                            CountryISO31661Alpha2Code = "VU",
+                            DisplayName = "Pacific / Efate",
+                            UTCOffsetSTD = "+11:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Fakaofo",
+                            AbbreviationSTD = "+13",
+                            CountryISO31661Alpha2Code = "TK",
+                            DisplayName = "Pacific / Fakaofo",
+                            UTCOffsetSTD = "+13:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Fiji",
+                            AbbreviationSTD = "+12",
+                            CountryISO31661Alpha2Code = "FJ",
+                            DisplayName = "Pacific / Fiji",
+                            UTCOffsetSTD = "+12:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Galapagos",
+                            AbbreviationSTD = "-06",
+                            CountryISO31661Alpha2Code = "EC",
+                            DisplayName = "Pacific / Galapagos",
+                            UTCOffsetSTD = "-06:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Gambier",
+                            AbbreviationSTD = "-09",
+                            CountryISO31661Alpha2Code = "PF",
+                            DisplayName = "Pacific / Gambier",
+                            UTCOffsetSTD = "-09:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Guadalcanal",
+                            AbbreviationSTD = "+11",
+                            CountryISO31661Alpha2Code = "SB",
+                            DisplayName = "Pacific / Guadalcanal",
+                            UTCOffsetSTD = "+11:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Guam",
+                            AbbreviationSTD = "ChST",
+                            CountryISO31661Alpha2Code = "GU",
+                            DisplayName = "Pacific / Guam",
+                            UTCOffsetSTD = "+10:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Honolulu",
+                            AbbreviationSTD = "HST",
+                            CountryISO31661Alpha2Code = "US",
+                            DisplayName = "Pacific / Honolulu",
+                            UTCOffsetSTD = "-10:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Kanton",
+                            AbbreviationSTD = "+13",
+                            CountryISO31661Alpha2Code = "KI",
+                            DisplayName = "Pacific / Kanton",
+                            UTCOffsetSTD = "+13:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Kiritimati",
+                            AbbreviationSTD = "+14",
+                            CountryISO31661Alpha2Code = "KI",
+                            DisplayName = "Pacific / Kiritimati",
+                            UTCOffsetSTD = "+14:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Kosrae",
+                            AbbreviationSTD = "+11",
+                            CountryISO31661Alpha2Code = "FM",
+                            DisplayName = "Pacific / Kosrae",
+                            UTCOffsetSTD = "+11:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Kwajalein",
+                            AbbreviationSTD = "+12",
+                            CountryISO31661Alpha2Code = "MH",
+                            DisplayName = "Pacific / Kwajalein",
+                            UTCOffsetSTD = "+12:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Marquesas",
+                            AbbreviationSTD = "-0930",
+                            CountryISO31661Alpha2Code = "PF",
+                            DisplayName = "Pacific / Marquesas",
+                            UTCOffsetSTD = "-09:30"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Nauru",
+                            AbbreviationSTD = "+12",
+                            CountryISO31661Alpha2Code = "NR",
+                            DisplayName = "Pacific / Nauru",
+                            UTCOffsetSTD = "+12:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Niue",
+                            AbbreviationSTD = "-11",
+                            CountryISO31661Alpha2Code = "NU",
+                            DisplayName = "Pacific / Niue",
+                            UTCOffsetSTD = "-11:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Norfolk",
+                            AbbreviationDST = "+12",
+                            AbbreviationSTD = "+11",
+                            CountryISO31661Alpha2Code = "NF",
+                            DisplayName = "Pacific / Norfolk",
+                            UTCOffsetDST = "+12:00",
+                            UTCOffsetSTD = "+11:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Noumea",
+                            AbbreviationSTD = "+11",
+                            CountryISO31661Alpha2Code = "NC",
+                            DisplayName = "Pacific / Noumea",
+                            UTCOffsetSTD = "+11:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Pago_Pago",
+                            AbbreviationSTD = "SST",
+                            CountryISO31661Alpha2Code = "AS",
+                            DisplayName = "Pacific / Pago Pago",
+                            UTCOffsetSTD = "-11:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Palau",
+                            AbbreviationSTD = "+09",
+                            CountryISO31661Alpha2Code = "PW",
+                            DisplayName = "Pacific / Palau",
+                            UTCOffsetSTD = "+09:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Pitcairn",
+                            AbbreviationSTD = "-08",
+                            CountryISO31661Alpha2Code = "PN",
+                            DisplayName = "Pacific / Pitcairn",
+                            UTCOffsetSTD = "-08:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Port_Moresby",
+                            AbbreviationSTD = "+10",
+                            CountryISO31661Alpha2Code = "PG",
+                            DisplayName = "Pacific / Port Moresby",
+                            UTCOffsetSTD = "+10:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Rarotonga",
+                            AbbreviationSTD = "-10",
+                            CountryISO31661Alpha2Code = "CK",
+                            DisplayName = "Pacific / Rarotonga",
+                            UTCOffsetSTD = "-10:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Tarawa",
+                            AbbreviationSTD = "+12",
+                            CountryISO31661Alpha2Code = "KI",
+                            DisplayName = "Pacific / Tarawa",
+                            UTCOffsetSTD = "+12:00"
+                        },
+                        new
+                        {
+                            IANAIdentifier = "Pacific/Tongatapu",
+                            AbbreviationSTD = "+13",
+                            CountryISO31661Alpha2Code = "TO",
+                            DisplayName = "Pacific / Tongatapu",
+                            UTCOffsetSTD = "+13:00"
+                        });
+                });
+
             modelBuilder.Entity("D2.Geo.Domain.Entities.WhoIs", b =>
                 {
                     b.Property<string>("HashId")
@@ -5996,8 +8740,8 @@ namespace D2.Geo.Infra.Repository.Migrations
                         new
                         {
                             Id = 0,
-                            UpdatedAt = new DateTime(2025, 11, 28, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Version = "1.4.0"
+                            UpdatedAt = new DateTime(2026, 3, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Version = "1.5.0"
                         });
                 });
 
@@ -12726,6 +15470,12 @@ namespace D2.Geo.Infra.Repository.Migrations
 
             modelBuilder.Entity("D2.Geo.Domain.Entities.Contact", b =>
                 {
+                    b.HasOne("D2.Geo.Domain.Entities.Timezone", "Timezone")
+                        .WithMany()
+                        .HasForeignKey("IANAIdentifier")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("D2.Geo.Domain.Entities.Locale", "Locale")
                         .WithMany()
                         .HasForeignKey("IETFBCP47Tag")
@@ -12836,6 +15586,8 @@ namespace D2.Geo.Infra.Repository.Migrations
                     b.Navigation("PersonalDetails");
 
                     b.Navigation("ProfessionalDetails");
+
+                    b.Navigation("Timezone");
                 });
 
             modelBuilder.Entity("D2.Geo.Domain.Entities.Country", b =>
@@ -12963,6 +15715,17 @@ namespace D2.Geo.Infra.Repository.Migrations
                     b.Navigation("Country");
                 });
 
+            modelBuilder.Entity("D2.Geo.Domain.Entities.Timezone", b =>
+                {
+                    b.HasOne("D2.Geo.Domain.Entities.Country", "Country")
+                        .WithMany("Timezones")
+                        .HasForeignKey("CountryISO31661Alpha2Code")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Country");
+                });
+
             modelBuilder.Entity("D2.Geo.Domain.Entities.WhoIs", b =>
                 {
                     b.HasOne("D2.Geo.Domain.Entities.Location", "Location")
@@ -13010,6 +15773,8 @@ namespace D2.Geo.Infra.Repository.Migrations
                     b.Navigation("Subdivisions");
 
                     b.Navigation("Territories");
+
+                    b.Navigation("Timezones");
                 });
 #pragma warning restore 612, 618
         }

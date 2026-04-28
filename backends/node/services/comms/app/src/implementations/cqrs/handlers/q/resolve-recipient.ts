@@ -46,32 +46,17 @@ export class RecipientResolver
     }
 
     const contact = result.data.data.get(input.contactId);
-    const contacts = contact ? [contact] : [];
-
-    if (contacts.length === 0) {
-      return D2Result.ok({ data: {} });
+    if (!contact) {
+      return D2Result.notFound();
     }
 
-    // Extract email and phone from contacts' methods (ContactDTO -> ContactMethodsDTO)
-    let email: string | undefined;
-    let phone: string | undefined;
-
-    for (const c of contacts) {
-      const methods = c.contactMethods;
-      if (!methods) continue;
-
-      const firstEmail = methods.emails[0];
-      if (!email && firstEmail) {
-        email = firstEmail.value;
-      }
-      const firstPhone = methods.phoneNumbers[0];
-      if (!phone && firstPhone) {
-        phone = firstPhone.value;
-      }
-      if (email && phone) break;
-    }
-
-    return D2Result.ok({ data: { email, phone } });
+    const methods = contact.contactMethods;
+    return D2Result.ok({
+      data: {
+        email: methods?.emails?.[0]?.value,
+        phone: methods?.phoneNumbers?.[0]?.value,
+      },
+    });
   }
 }
 

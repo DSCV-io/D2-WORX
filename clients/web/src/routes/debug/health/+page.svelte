@@ -31,6 +31,16 @@
     if (status === "degraded") return "bg-yellow-100 dark:bg-yellow-950";
     return "bg-red-100 dark:bg-red-950";
   }
+
+  // Map raw API status strings to localized labels. Falls back to the raw
+  // status string for unknown values (defensive — surfaces unexpected new
+  // statuses the API might add without breaking the UI).
+  function statusLabel(status: string): string {
+    if (status === "healthy") return m.webclient_debug_health_status_healthy();
+    if (status === "degraded") return m.webclient_debug_health_status_degraded();
+    if (status === "unhealthy") return m.webclient_debug_health_status_unhealthy();
+    return status;
+  }
 </script>
 
 <svelte:head>
@@ -58,7 +68,7 @@
 </svelte:head>
 
 {#if !dev}
-  <p>Not available in production.</p>
+  <p>{m.webclient_debug_health_not_available()}</p>
 {:else}
   <div class="mx-auto flex max-w-4xl flex-col gap-6 p-6">
     <div class="flex items-center justify-between">
@@ -67,9 +77,9 @@
           <ActivityIcon class="text-muted-foreground size-5" />
         </div>
         <div>
-          <h1 class="text-2xl font-bold">System Health</h1>
+          <h1 class="text-2xl font-bold">{m.webclient_debug_health_title()}</h1>
           <p class="text-muted-foreground text-sm">
-            Dev-only — aggregated health from Gateway &rarr; all services via gRPC
+            {m.webclient_debug_health_dev_description()}
           </p>
         </div>
       </div>
@@ -80,7 +90,7 @@
         disabled={refreshing}
       >
         <RefreshCwIcon class="mr-2 size-4" />
-        {refreshing ? "Refreshing..." : "Refresh"}
+        {refreshing ? m.webclient_debug_health_refreshing() : m.common_ui_refresh()}
       </Button>
     </div>
 
@@ -89,10 +99,10 @@
         <Card.Header>
           <Card.Title class="flex items-center gap-2 text-base text-red-600 dark:text-red-400">
             <CircleXIcon class="size-5" />
-            Gateway Unreachable
+            {m.webclient_debug_health_gateway_unreachable()}
           </Card.Title>
           <Card.Description>
-            Could not connect to the .NET Gateway health endpoint.
+            {m.webclient_debug_health_gateway_unreachable_description()}
           </Card.Description>
         </Card.Header>
         <Card.Content>
@@ -113,7 +123,7 @@
         {/if}
         <div>
           <p class="font-semibold {statusColor(health.status)}">
-            {health.status.charAt(0).toUpperCase() + health.status.slice(1)}
+            {statusLabel(health.status)}
           </p>
           <p class="text-muted-foreground text-xs">
             {new Date(health.timestamp).toLocaleString()}
@@ -140,11 +150,11 @@
                   {:else}
                     <CircleXIcon class="size-4" />
                   {/if}
-                  {service.status}
+                  {statusLabel(service.status)}
                 </span>
               </Card.Title>
               <Card.Description>
-                {service.latencyMs}ms round-trip
+                {m.webclient_debug_health_round_trip({ ms: service.latencyMs })}
               </Card.Description>
             </Card.Header>
             <Card.Content>
@@ -159,7 +169,7 @@
                       <dd class="flex items-center gap-2">
                         <span class="text-muted-foreground text-xs">{comp.latencyMs}ms</span>
                         <span class="text-xs font-medium {statusColor(comp.status)}">
-                          {comp.status}
+                          {statusLabel(comp.status)}
                         </span>
                       </dd>
                     </div>
@@ -173,7 +183,9 @@
                   {/each}
                 </dl>
               {:else}
-                <p class="text-muted-foreground text-sm italic">No component details</p>
+                <p class="text-muted-foreground text-sm italic">
+                  {m.webclient_debug_health_no_component_details()}
+                </p>
               {/if}
             </Card.Content>
           </Card.Root>
@@ -183,9 +195,9 @@
       <!-- Raw JSON -->
       <Card.Root>
         <Card.Header>
-          <Card.Title class="text-base">Raw Response</Card.Title>
+          <Card.Title class="text-base">{m.webclient_debug_health_raw_response()}</Card.Title>
           <Card.Description>
-            <code>GET /api/health</code> from .NET Gateway
+            {m.webclient_debug_health_source_gateway({ path: "GET /api/health" })}
           </Card.Description>
         </Card.Header>
         <Card.Content>

@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="TestHelpers.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -21,10 +21,10 @@ public static class TestHelpers
     /// Gets a test reference data response for GeoRefDataService tests.
     /// </summary>
     public static GeoRefData TestGeoRefData => new GeoRefData
-        {
-            Version = "0.0.0",
-            UpdatedAt = Timestamp.FromDateTime(DateTime.UtcNow),
-            Countries =
+    {
+        Version = "0.0.0",
+        UpdatedAt = Timestamp.FromDateTime(DateTime.UtcNow),
+        Countries =
             {
                 {
                     "US", new CountryDTO
@@ -44,7 +44,7 @@ public static class TestHelpers
                     }
                 },
             },
-            Subdivisions =
+        Subdivisions =
             {
                 {
                     "US-AL", new SubdivisionDTO
@@ -57,7 +57,7 @@ public static class TestHelpers
                     }
                 },
             },
-            Currencies =
+        Currencies =
             {
                 {
                     "USD", new CurrencyDTO
@@ -71,7 +71,7 @@ public static class TestHelpers
                     }
                 },
             },
-            Languages =
+        Languages =
             {
                 {
                     "en", new LanguageDTO
@@ -82,7 +82,7 @@ public static class TestHelpers
                     }
                 },
             },
-            Locales =
+        Locales =
             {
                 {
                     "en-US", new LocaleDTO
@@ -95,7 +95,7 @@ public static class TestHelpers
                     }
                 },
             },
-            GeopoliticalEntities =
+        GeopoliticalEntities =
             {
                 {
                     "NATO", new GeopoliticalEntityDTO
@@ -107,7 +107,7 @@ public static class TestHelpers
                     }
                 },
             },
-        };
+    };
 
     /// <summary>
     /// Creates a mock handler context for testing.

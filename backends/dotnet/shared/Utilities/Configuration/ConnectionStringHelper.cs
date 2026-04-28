@@ -67,10 +67,20 @@ public static class ConnectionStringHelper
         }
 
         var uri = new Uri(value);
+        var database = uri.AbsolutePath.TrimStart('/');
+
+        if (string.IsNullOrEmpty(uri.UserInfo))
+        {
+            return string.Join(
+                ";",
+                $"Host={uri.Host}",
+                $"Port={(uri.Port > 0 ? uri.Port : 5432)}",
+                $"Database={database}");
+        }
+
         var parts = uri.UserInfo.Split(':', 2);
         var username = Uri.UnescapeDataString(parts[0]);
         var password = parts.Length > 1 ? Uri.UnescapeDataString(parts[1]) : string.Empty;
-        var database = uri.AbsolutePath.TrimStart('/');
 
         return string.Join(
             ";",

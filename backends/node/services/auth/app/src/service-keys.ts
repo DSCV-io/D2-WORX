@@ -1,4 +1,5 @@
 import { createServiceKey } from "@d2/di";
+import type { Translator } from "@d2/i18n";
 
 // Import interface types for keys
 import type {
@@ -17,15 +18,39 @@ import type {
   IUpdateOrgContactRecordHandler,
   IDeleteOrgContactRecordHandler,
   IUpdateSignInEventWhoIsIdHandler,
+  IUpdateSessionWhoIsIdHandler,
+  IUpdateUserImageHandler,
+  IUpdateUserLocaleHandler,
+  IUpdateUserTimezoneHandler,
+  IUpdateOrgLogoHandler,
   IPurgeExpiredSessionsHandler,
   IPurgeSignInEventsHandler,
   IPurgeExpiredInvitationsHandler,
   IPurgeExpiredEmulationConsentsHandler,
   IPingDbHandler,
+  IUpdateUserNameHandler,
+  ICheckUsernameAvailableHandler,
+  IUpdateUserUsernameHandler,
+  IUpdateUserEmailHandler,
+  IUpdateUserPhoneHandler,
+  ICheckPhoneAvailabilityHandler,
+  IGetUserByIdHandler,
+  IGetActiveSessionsByUserIdHandler,
+  IGetUserIdByIdentifierHandler,
+  IUpdateUserStatusHandler,
+  IGetDeletedUsersToPurgeHandler,
+  IAnonymizeUserHandler,
+  ICheckSoleOwnerOrgsHandler,
+  IDeleteAllUserSessionsHandler,
 } from "./interfaces/repository/handlers/index.js";
 import type { ISignInThrottleStore } from "./interfaces/repository/sign-in-throttle-store.js";
+import type { IOtpRateLimitStore } from "./interfaces/repository/otp-rate-limit-store.js";
+import type { IVerificationStore } from "./interfaces/repository/verification-store.js";
+import type { IVerifyUserPassword } from "./interfaces/repository/password-verifier.js";
 import type { ICheckEmailAvailabilityHandler } from "./interfaces/repository/handlers/r/check-email-availability.js";
+import type { ICheckOrgExistsHandler } from "./interfaces/repository/handlers/r/check-org-exists.js";
 import type { Commands, Queries } from "./interfaces/cqrs/handlers/index.js";
+import type { IPushUserUpdated } from "./interfaces/realtime/handlers/index.js";
 // =============================================================================
 // Infrastructure-layer keys (interfaces defined in auth-app, implemented in auth-infra)
 // =============================================================================
@@ -47,6 +72,13 @@ export const IGetLatestSignInEventDateKey = createServiceKey<IGetLatestSignInEve
 export const IUpdateSignInEventWhoIsIdKey = createServiceKey<IUpdateSignInEventWhoIsIdHandler>(
   "Auth.Repo.UpdateSignInEventWhoIsId",
 );
+export const IUpdateSessionWhoIsIdKey = createServiceKey<IUpdateSessionWhoIsIdHandler>(
+  "Auth.Repo.UpdateSessionWhoIsId",
+);
+export const IUpdateUserImageKey = createServiceKey<IUpdateUserImageHandler>(
+  "Auth.Repo.UpdateUserImage",
+);
+export const IUpdateOrgLogoKey = createServiceKey<IUpdateOrgLogoHandler>("Auth.Repo.UpdateOrgLogo");
 
 // --- Emulation Consent Repository Handlers ---
 
@@ -105,6 +137,30 @@ export const ICheckEmailAvailabilityRepoKey = createServiceKey<ICheckEmailAvaila
   "Auth.Repo.CheckEmailAvailability",
 );
 
+// --- Organization Existence Repository Handler ---
+
+export const ICheckOrgExistsKey = createServiceKey<ICheckOrgExistsHandler>(
+  "Auth.Repo.CheckOrgExists",
+);
+
+// --- User Account Repository Handlers ---
+
+export const IUpdateUserNameKey = createServiceKey<IUpdateUserNameHandler>(
+  "Auth.Repo.UpdateUserName",
+);
+export const ICheckUsernameAvailableKey = createServiceKey<ICheckUsernameAvailableHandler>(
+  "Auth.Repo.CheckUsernameAvailable",
+);
+export const IUpdateUserUsernameKey = createServiceKey<IUpdateUserUsernameHandler>(
+  "Auth.Repo.UpdateUserUsername",
+);
+export const IUpdateUserLocaleRepoKey = createServiceKey<IUpdateUserLocaleHandler>(
+  "Auth.Repo.UpdateUserLocale",
+);
+export const IUpdateUserTimezoneRepoKey = createServiceKey<IUpdateUserTimezoneHandler>(
+  "Auth.Repo.UpdateUserTimezone",
+);
+
 // --- Health Check Repository Handler ---
 
 export const IPingDbKey = createServiceKey<IPingDbHandler>("Auth.Repo.PingDb");
@@ -113,6 +169,25 @@ export const IPingDbKey = createServiceKey<IPingDbHandler>("Auth.Repo.PingDb");
 
 export const ISignInThrottleStoreKey = createServiceKey<ISignInThrottleStore>(
   "Auth.SignInThrottleStore",
+);
+
+// --- OTP Rate Limit Store ---
+
+export const IOtpRateLimitStoreKey = createServiceKey<IOtpRateLimitStore>("Auth.OtpRateLimitStore");
+
+// --- Verification Store ---
+
+export const IVerificationStoreKey = createServiceKey<IVerificationStore>("Auth.VerificationStore");
+
+// --- Password Verifier ---
+
+export const IVerifyUserPasswordKey =
+  createServiceKey<IVerifyUserPassword>("Auth.VerifyUserPassword");
+
+// --- Realtime Handlers ---
+
+export const IPushUserUpdatedKey = createServiceKey<IPushUserUpdated>(
+  "Auth.Realtime.PushUserUpdated",
 );
 
 // =============================================================================
@@ -145,12 +220,25 @@ export const IDeleteOrgContactKey = createServiceKey<Commands.IDeleteOrgContactH
 export const ICreateUserContactKey = createServiceKey<Commands.ICreateUserContactHandler>(
   "Auth.App.CreateUserContact",
 );
+export const IUpdateUserRealNameKey = createServiceKey<Commands.IUpdateUserRealNameHandler>(
+  "Auth.App.UpdateUserRealName",
+);
+export const IUpdateUsernameKey =
+  createServiceKey<Commands.IUpdateUsernameHandler>("Auth.App.UpdateUsername");
+export const IUpdateUserLocaleKey = createServiceKey<Commands.IUpdateUserLocaleHandler>(
+  "Auth.App.UpdateUserLocale",
+);
+export const IUpdateUserTimezoneKey = createServiceKey<Commands.IUpdateUserTimezoneHandler>(
+  "Auth.App.UpdateUserTimezone",
+);
 
 // --- Query Handlers ---
 
 export const IGetSignInEventsKey = createServiceKey<Queries.IGetSignInEventsHandler>(
   "Auth.App.GetSignInEvents",
 );
+export const IGetMySessionsKey =
+  createServiceKey<Queries.IGetMySessionsHandler>("Auth.App.GetMySessions");
 export const IGetActiveConsentsKey = createServiceKey<Queries.IGetActiveConsentsHandler>(
   "Auth.App.GetActiveConsents",
 );
@@ -180,3 +268,86 @@ export const IRunEmulationConsentCleanupKey =
   createServiceKey<Commands.IRunEmulationConsentCleanupHandler>(
     "Auth.App.RunEmulationConsentCleanup",
   );
+
+export const IHandleFileProcessedKey = createServiceKey<Commands.IHandleFileProcessedHandler>(
+  "Auth.App.HandleFileProcessed",
+);
+
+export const IInvalidateUserSessionCacheKey =
+  createServiceKey<Commands.IInvalidateUserSessionCacheHandler>(
+    "Auth.App.InvalidateUserSessionCache",
+  );
+
+// --- Email/Phone change (OTP) handlers ---
+
+export const IRequestEmailChangeKey = createServiceKey<Commands.IRequestEmailChangeHandler>(
+  "Auth.App.RequestEmailChange",
+);
+export const IVerifyEmailChangeKey = createServiceKey<Commands.IVerifyEmailChangeHandler>(
+  "Auth.App.VerifyEmailChange",
+);
+export const IRequestPhoneChangeKey = createServiceKey<Commands.IRequestPhoneChangeHandler>(
+  "Auth.App.RequestPhoneChange",
+);
+export const IVerifyPhoneChangeKey = createServiceKey<Commands.IVerifyPhoneChangeHandler>(
+  "Auth.App.VerifyPhoneChange",
+);
+export const IRemovePhoneKey =
+  createServiceKey<Commands.IRemovePhoneHandler>("Auth.App.RemovePhone");
+
+// --- User deletion (self-service) ---
+
+export const IRequestUserDeletionKey = createServiceKey<Commands.IRequestUserDeletionHandler>(
+  "Auth.App.RequestUserDeletion",
+);
+export const ICancelUserDeletionKey = createServiceKey<Commands.ICancelUserDeletionHandler>(
+  "Auth.App.CancelUserDeletion",
+);
+export const IFinalizeDeletedUserKey = createServiceKey<Commands.IFinalizeDeletedUserHandler>(
+  "Auth.App.FinalizeDeletedUser",
+);
+export const ICleanupDeletedUsersKey = createServiceKey<Commands.ICleanupDeletedUsersHandler>(
+  "Auth.App.CleanupDeletedUsers",
+);
+
+// --- Repository keys for new lookups/updates ---
+
+export const ICheckPhoneAvailabilityKey = createServiceKey<ICheckPhoneAvailabilityHandler>(
+  "Auth.Repo.CheckPhoneAvailability",
+);
+
+export const IGetUserByIdKey = createServiceKey<IGetUserByIdHandler>("Auth.Repo.GetUserById");
+
+export const IGetActiveSessionsByUserIdKey = createServiceKey<IGetActiveSessionsByUserIdHandler>(
+  "Auth.Repo.GetActiveSessionsByUserId",
+);
+
+export const IGetUserIdByIdentifierKey = createServiceKey<IGetUserIdByIdentifierHandler>(
+  "Auth.Repo.GetUserIdByIdentifier",
+);
+
+// --- User Deletion Repo Keys ---
+export const IUpdateUserStatusKey = createServiceKey<IUpdateUserStatusHandler>(
+  "Auth.Repo.UpdateUserStatus",
+);
+export const IGetDeletedUsersToPurgeKey = createServiceKey<IGetDeletedUsersToPurgeHandler>(
+  "Auth.Repo.GetDeletedUsersToPurge",
+);
+export const IAnonymizeUserKey = createServiceKey<IAnonymizeUserHandler>("Auth.Repo.AnonymizeUser");
+export const ICheckSoleOwnerOrgsKey = createServiceKey<ICheckSoleOwnerOrgsHandler>(
+  "Auth.Repo.CheckSoleOwnerOrgs",
+);
+export const IDeleteAllUserSessionsKey = createServiceKey<IDeleteAllUserSessionsHandler>(
+  "Auth.Repo.DeleteAllUserSessions",
+);
+
+export const IUpdateUserEmailKey = createServiceKey<IUpdateUserEmailHandler>(
+  "Auth.Repo.UpdateUserEmail",
+);
+
+export const IUpdateUserPhoneKey = createServiceKey<IUpdateUserPhoneHandler>(
+  "Auth.Repo.UpdateUserPhone",
+);
+
+// --- i18n Translator (singleton, registered in composition-root) ---
+export const ITranslatorKey = createServiceKey<Translator>("Auth.Translator");

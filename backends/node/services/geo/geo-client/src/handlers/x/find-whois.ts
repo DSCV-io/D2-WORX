@@ -90,23 +90,26 @@ export class FindWhoIs extends BaseHandler<Input, Output> implements Complex.IFi
             }),
         ),
       );
-    } catch {
+    } catch (err: unknown) {
       // Fail-open: handles gRPC errors AND circuit-open rejections identically.
       // When the circuit is open this returns instantly (no timeout wait).
       // Do not log input.ipAddress directly — it bypasses BaseHandler's redaction.
       if (this.circuitBreaker.state !== CircuitState.OPEN) {
-        this.context.logger.warn(`gRPC call to Geo service failed. TraceId: ${this.traceId}`);
+        this.context.logger.warn(`gRPC call to Geo service failed. TraceId: ${this.traceId}`, {
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
       return D2Result.ok({ data: { whoIs: undefined } });
     }
 
-    if (!response.result?.success || response.data.length === 0) {
+    const responseData = response.data ?? [];
+    if (!response.result?.success || responseData.length === 0) {
       // Negative cache: avoid repeated gRPC calls for unknown IPs
       this.store.set(cacheKey, null, this.options.whoIsNegativeCacheExpirationMs);
       return D2Result.ok({ data: { whoIs: undefined } });
     }
 
-    const whoIs = response.data[0]?.whois;
+    const whoIs = responseData[0]?.whois;
 
     // Cache the result
     if (whoIs !== undefined) {

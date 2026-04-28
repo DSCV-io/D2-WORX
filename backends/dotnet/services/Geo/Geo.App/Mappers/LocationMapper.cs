@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="LocationMapper.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -8,6 +8,7 @@ namespace D2.Geo.App.Mappers;
 
 using D2.Geo.Domain.Entities;
 using D2.Services.Protos.Geo.V1;
+using D2.Shared.Utilities.Extensions;
 
 /// <summary>
 /// Mapper for converting between <see cref="Location"/> and <see cref="LocationDTO"/>.
@@ -32,16 +33,35 @@ public static class LocationMapper
         /// </returns>
         public LocationDTO ToDTO()
         {
-            return new LocationDTO
+            var dto = new LocationDTO
             {
                 HashId = location.HashId,
                 Coordinates = location.Coordinates?.ToDTO(),
                 Address = location.Address?.ToDTO(),
-                City = location.City ?? string.Empty,
-                PostalCode = location.PostalCode ?? string.Empty,
-                SubdivisionIso31662Code = location.SubdivisionISO31662Code ?? string.Empty,
-                CountryIso31661Alpha2Code = location.CountryISO31661Alpha2Code ?? string.Empty,
             };
+
+            // Optional fields — only set when non-null to avoid proto CheckNotNull.
+            if (location.City != null)
+            {
+                dto.City = location.City;
+            }
+
+            if (location.PostalCode != null)
+            {
+                dto.PostalCode = location.PostalCode;
+            }
+
+            if (location.SubdivisionISO31662Code != null)
+            {
+                dto.SubdivisionIso31662Code = location.SubdivisionISO31662Code;
+            }
+
+            if (location.CountryISO31661Alpha2Code != null)
+            {
+                dto.CountryIso31661Alpha2Code = location.CountryISO31661Alpha2Code;
+            }
+
+            return dto;
         }
     }
 
@@ -66,10 +86,10 @@ public static class LocationMapper
             return Location.Create(
                 locationDTO.Coordinates?.ToDomain(),
                 locationDTO.Address?.ToDomain(),
-                locationDTO.City,
-                locationDTO.PostalCode,
-                locationDTO.SubdivisionIso31662Code,
-                locationDTO.CountryIso31661Alpha2Code);
+                locationDTO.City.ToNullIfEmpty(),
+                locationDTO.PostalCode.ToNullIfEmpty(),
+                locationDTO.SubdivisionIso31662Code.ToNullIfEmpty(),
+                locationDTO.CountryIso31661Alpha2Code.ToNullIfEmpty());
         }
     }
 }

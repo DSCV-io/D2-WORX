@@ -17,26 +17,15 @@
     "dist"
   ],
   "dependencies": {
-    "@d2/result": "workspace:*"
+    "@d2/result": "workspace:*",
+    "@testcontainers/postgresql": "10.25.0",
+    "drizzle-orm": "0.45.1",
+    "pg": "8.16.0"
   },
   "devDependencies": {
     "@types/pg": "8.16.0"
   },
   "peerDependencies": {
-    "vitest": ">=4.0.0",
-    "@testcontainers/postgresql": ">=10.0.0",
-    "pg": ">=8.0.0",
-    "drizzle-orm": ">=0.40.0"
-  },
-  "peerDependenciesMeta": {
-    "@testcontainers/postgresql": {
-      "optional": true
-    },
-    "pg": {
-      "optional": true
-    },
-    "drizzle-orm": {
-      "optional": true
-    }
+    "vitest": ">=4.0.0"
   }
 }

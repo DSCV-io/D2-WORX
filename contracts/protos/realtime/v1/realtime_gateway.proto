@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+import "common/v1/d2_result.proto";
+import "common/v1/health.proto";
+
+package d2.realtime.v1;
+
+option csharp_namespace = "D2.Gateways.Protos.Realtime.V1";
+
+// *****************************************
+// **** RealtimeGateway gRPC API ***********
+// *****************************************
+
+// General-purpose realtime push gateway.
+// Internal services call these RPCs to push events to connected browser clients.
+// The gateway resolves channels → SignalR Groups → WebSocket connections.
+service RealtimeGateway {
+  // Push an event to all connections subscribed to a channel.
+  // Channel naming: "user:{userId}", "org:{orgId}", "thread:{threadId}".
+  rpc PushToChannel(PushToChannelRequest) returns (PushResponse);
+
+  // Remove a specific connection from a channel (e.g., user removed from thread).
+  rpc RemoveFromChannel(RemoveFromChannelRequest) returns (PushResponse);
+
+  // Health check — reports gateway status and connected client count.
+  rpc CheckHealth(d2.common.v1.CheckHealthRequest)
+      returns (d2.common.v1.CheckHealthResponse);
+}
+
+// ****************************************
+// ***** PushToChannel ********************
+// ****************************************
+
+message PushToChannelRequest {
+  // Target channel name (e.g., "user:abc-123", "org:def-456").
+  string channel = 1;
+  // Event type (e.g., "file:ready", "file:rejected", "message:new").
+  string event = 2;
+  // JSON-serialized event payload.
+  string payload_json = 3;
+}
+
+// ****************************************
+// ***** RemoveFromChannel ****************
+// ****************************************
+
+message RemoveFromChannelRequest {
+  // Target channel name.
+  string channel = 1;
+  // SignalR connection ID to evict.
+  string connection_id = 2;
+}
+
+// ****************************************
+// ***** PushResponse *********************
+// ****************************************
+
+message PushResponse {
+  d2.common.v1.D2ResultProto result = 1;
+  // Whether the event was delivered to at least one connection.
+  bool delivered = 2;
+  // Number of connections that received the event.
+  int32 connections_reached = 3;
+}

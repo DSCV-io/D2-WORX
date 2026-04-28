@@ -7,7 +7,7 @@ describe("validatePassword", () => {
       const result = validatePassword("123456789012");
       expect(result.valid).toBe(false);
       expect(result.code).toBe("PASSWORD_NUMERIC_ONLY");
-      expect(result.message).toBe("Password cannot be only numbers.");
+      expect(result.message).toBe("auth_errors_PASSWORD_NUMERIC_ONLY");
     });
 
     it("should reject long numeric strings", () => {
@@ -22,7 +22,7 @@ describe("validatePassword", () => {
       const result = validatePassword("2025-10-01");
       expect(result.valid).toBe(false);
       expect(result.code).toBe("PASSWORD_DATE_LIKE");
-      expect(result.message).toBe("Password cannot be only numbers and date separators.");
+      expect(result.message).toBe("auth_errors_PASSWORD_DATE_LIKE");
     });
 
     it("should reject date with slashes", () => {
@@ -55,7 +55,7 @@ describe("validatePassword", () => {
       const result = validatePassword("q1w2e3r4t5y6");
       expect(result.valid).toBe(false);
       expect(result.code).toBe("PASSWORD_TOO_COMMON");
-      expect(result.message).toBe("This password is too common.");
+      expect(result.message).toBe("auth_errors_PASSWORD_TOO_COMMON");
     });
 
     it("should reject another keyboard-pattern common password", () => {

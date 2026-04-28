@@ -16,7 +16,7 @@ describe("SignInEvent", () => {
       expect(event.successful).toBe(true);
       expect(event.ipAddress).toBe("192.168.1.1");
       expect(event.userAgent).toBe("Mozilla/5.0");
-      expect(event.whoIsId).toBeNull();
+      expect(event.whoIsId).toBeUndefined();
       expect(event.id).toHaveLength(36);
       expect(event.createdAt).toBeInstanceOf(Date);
     });

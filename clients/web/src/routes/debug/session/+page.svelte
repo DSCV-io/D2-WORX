@@ -90,7 +90,7 @@
 </svelte:head>
 
 {#if !dev}
-  <p>Not available in production.</p>
+  <p>{m.webclient_debug_health_not_available()}</p>
 {:else}
   <div class="mx-auto flex max-w-4xl flex-col gap-6 p-6">
     <div class="flex items-center justify-between">
@@ -99,9 +99,9 @@
           <BugIcon class="text-muted-foreground size-5" />
         </div>
         <div>
-          <h1 class="text-2xl font-bold">Debug Session</h1>
+          <h1 class="text-2xl font-bold">{m.webclient_debug_session_title()}</h1>
           <p class="text-muted-foreground text-sm">
-            Dev-only — inspects all auth & request context
+            {m.webclient_debug_session_dev_description()}
           </p>
         </div>
       </div>
@@ -112,7 +112,7 @@
         disabled={loading}
       >
         <RefreshCwIcon class="mr-2 size-4" />
-        {loading ? "Loading..." : "Fetch Client Data"}
+        {loading ? m.common_ui_loading() : m.webclient_debug_session_fetch_client_data()}
       </Button>
     </div>
 
@@ -120,7 +120,7 @@
       <!-- Server: Session -->
       <Card.Root>
         <Card.Header>
-          <Card.Title class="text-base">Server Session</Card.Title>
+          <Card.Title class="text-base">{m.webclient_debug_session_server_session()}</Card.Title>
           <Card.Description
             >From <code>event.locals.session</code> (via SessionResolver)</Card.Description
           >
@@ -160,7 +160,9 @@
               </div>
             </dl>
           {:else}
-            <p class="text-muted-foreground text-sm italic">No session (not authenticated)</p>
+            <p class="text-muted-foreground text-sm italic">
+              {m.webclient_debug_session_no_session()}
+            </p>
           {/if}
         </Card.Content>
       </Card.Root>
@@ -168,7 +170,7 @@
       <!-- Server: User -->
       <Card.Root>
         <Card.Header>
-          <Card.Title class="text-base">Server User</Card.Title>
+          <Card.Title class="text-base">{m.webclient_debug_session_server_user()}</Card.Title>
           <Card.Description
             >From <code>event.locals.user</code> (via SessionResolver)</Card.Description
           >
@@ -202,7 +204,9 @@
               </div>
             </dl>
           {:else}
-            <p class="text-muted-foreground text-sm italic">No user (not authenticated)</p>
+            <p class="text-muted-foreground text-sm italic">
+              {m.webclient_debug_session_no_user()}
+            </p>
           {/if}
         </Card.Content>
       </Card.Root>
@@ -210,7 +214,7 @@
       <!-- Request Context: Tracing -->
       <Card.Root>
         <Card.Header>
-          <Card.Title class="text-base">Request Context — Tracing</Card.Title>
+          <Card.Title class="text-base">{m.webclient_debug_session_request_tracing()}</Card.Title>
           <Card.Description>
             From <code>event.locals.requestContext</code> (enrichment + auth middleware)
           </Card.Description>
@@ -243,7 +247,7 @@
             </dl>
           {:else}
             <p class="text-muted-foreground text-sm italic">
-              No request context (middleware not running — Redis/Geo not available)
+              {m.webclient_debug_session_no_request_context_middleware()}
             </p>
           {/if}
         </Card.Content>
@@ -252,7 +256,7 @@
       <!-- Request Context: Identity & Auth -->
       <Card.Root>
         <Card.Header>
-          <Card.Title class="text-base">Request Context — Identity</Card.Title>
+          <Card.Title class="text-base">{m.webclient_debug_session_request_identity()}</Card.Title>
           <Card.Description>User identity and auth flags from scope middleware</Card.Description>
         </Card.Header>
         <Card.Content>
@@ -297,7 +301,9 @@
               </div>
             </dl>
           {:else}
-            <p class="text-muted-foreground text-sm italic">No request context</p>
+            <p class="text-muted-foreground text-sm italic">
+              {m.webclient_debug_session_no_request_context()}
+            </p>
           {/if}
         </Card.Content>
       </Card.Root>
@@ -305,7 +311,7 @@
       <!-- Request Context: Organization -->
       <Card.Root>
         <Card.Header>
-          <Card.Title class="text-base">Request Context — Organizations</Card.Title>
+          <Card.Title class="text-base">{m.webclient_debug_session_request_orgs()}</Card.Title>
           <Card.Description>Agent (actual) vs Target (effective) org context</Card.Description>
         </Card.Header>
         <Card.Content>
@@ -385,7 +391,9 @@
               </div>
             </dl>
           {:else}
-            <p class="text-muted-foreground text-sm italic">No request context</p>
+            <p class="text-muted-foreground text-sm italic">
+              {m.webclient_debug_session_no_request_context()}
+            </p>
           {/if}
         </Card.Content>
       </Card.Root>
@@ -393,7 +401,7 @@
       <!-- Request Context: Network & Geo -->
       <Card.Root>
         <Card.Header>
-          <Card.Title class="text-base">Request Context — Network & Geo</Card.Title>
+          <Card.Title class="text-base">{m.webclient_debug_session_request_network()}</Card.Title>
           <Card.Description>IP resolution, fingerprints, WhoIs enrichment</Card.Description>
         </Card.Header>
         <Card.Content>
@@ -472,7 +480,7 @@
             </dl>
           {:else}
             <p class="text-muted-foreground text-sm italic">
-              No request context (middleware not running — Redis/Geo not available)
+              {m.webclient_debug_session_no_request_context_middleware()}
             </p>
           {/if}
         </Card.Content>
@@ -481,8 +489,8 @@
       <!-- Cookies -->
       <Card.Root>
         <Card.Header>
-          <Card.Title class="text-base">Cookies</Card.Title>
-          <Card.Description>Cookie names only (values hidden for security)</Card.Description>
+          <Card.Title class="text-base">{m.webclient_debug_session_cookies()}</Card.Title>
+          <Card.Description>{m.webclient_debug_session_cookies_description()}</Card.Description>
         </Card.Header>
         <Card.Content>
           {#if data.cookieNames.length > 0}
@@ -492,7 +500,9 @@
               {/each}
             </ul>
           {:else}
-            <p class="text-muted-foreground text-sm italic">No cookies</p>
+            <p class="text-muted-foreground text-sm italic">
+              {m.webclient_debug_session_no_cookies()}
+            </p>
           {/if}
         </Card.Content>
       </Card.Root>
@@ -501,7 +511,7 @@
     <!-- Client-side section (full width) -->
     <Card.Root>
       <Card.Header>
-        <Card.Title class="text-base">Client-Side Auth</Card.Title>
+        <Card.Title class="text-base">{m.webclient_debug_session_client_auth()}</Card.Title>
         <Card.Description>
           From <code>authClient.getSession()</code> and <code>/api/auth/token</code> — click "Fetch Client
           Data" above
@@ -511,7 +521,7 @@
         {#if clientSession || clientSessionError || clientToken || clientTokenError}
           <div class="grid gap-6 md:grid-cols-2">
             <div>
-              <h4 class="mb-2 text-sm font-medium">Raw BetterAuth Session</h4>
+              <h4 class="mb-2 text-sm font-medium">{m.webclient_debug_session_raw_session()}</h4>
               {#if clientSessionError}
                 <pre
                   class="bg-destructive/10 text-destructive rounded-md p-3 text-xs">{clientSessionError}</pre>
@@ -522,11 +532,13 @@
                     2,
                   )}</pre>
               {:else}
-                <p class="text-muted-foreground text-sm italic">No session returned</p>
+                <p class="text-muted-foreground text-sm italic">
+                  {m.webclient_debug_session_no_session_returned()}
+                </p>
               {/if}
             </div>
             <div>
-              <h4 class="mb-2 text-sm font-medium">JWT Claims (Decoded)</h4>
+              <h4 class="mb-2 text-sm font-medium">{m.webclient_debug_session_jwt_claims()}</h4>
               {#if clientTokenError}
                 <pre
                   class="bg-destructive/10 text-destructive rounded-md p-3 text-xs">{clientTokenError}</pre>
@@ -538,14 +550,14 @@
                   )}</pre>
               {:else}
                 <p class="text-muted-foreground text-sm italic">
-                  No JWT (token endpoint returned null)
+                  {m.webclient_debug_session_no_jwt()}
                 </p>
               {/if}
             </div>
           </div>
         {:else}
           <p class="text-muted-foreground text-sm italic">
-            Click "Fetch Client Data" to load client-side session and JWT.
+            {m.webclient_debug_session_click_fetch()}
           </p>
         {/if}
       </Card.Content>
@@ -554,7 +566,7 @@
     <!-- Role Audit Note -->
     <Card.Root class="border-info/30 bg-info/5">
       <Card.Header>
-        <Card.Title class="text-base">Role Audit Note</Card.Title>
+        <Card.Title class="text-base">{m.webclient_debug_session_role_audit()}</Card.Title>
       </Card.Header>
       <Card.Content class="space-y-2 text-sm">
         <p>

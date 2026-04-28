@@ -1,10 +1,11 @@
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { BaseHandler, type IHandlerContext } from "@d2/handler";
+import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handler";
 import { D2Result } from "@d2/result";
-import type {
-  CreateOrgContactRecordInput as I,
-  CreateOrgContactRecordOutput as O,
-  ICreateOrgContactRecordHandler,
+import {
+  CREATE_ORG_CONTACT_RECORD_REDACTION,
+  type CreateOrgContactRecordInput as I,
+  type CreateOrgContactRecordOutput as O,
+  type ICreateOrgContactRecordHandler,
 } from "@d2/auth-app";
 import { orgContact } from "../../schema/custom-tables.js";
 import { isPgUniqueViolation } from "@d2/errors-pg";
@@ -18,6 +19,10 @@ export class CreateOrgContactRecord
   constructor(db: NodePgDatabase, context: IHandlerContext) {
     super(context);
     this.db = db;
+  }
+
+  override get redaction(): RedactionSpec {
+    return CREATE_ORG_CONTACT_RECORD_REDACTION;
   }
 
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {

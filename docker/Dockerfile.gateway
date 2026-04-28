@@ -50,4 +50,6 @@ EXPOSE ${GATEWAY_PORT}
 
 COPY --from=build /app/publish .
 
+USER $APP_UID
+
 ENTRYPOINT ["dotnet", "REST.dll"]

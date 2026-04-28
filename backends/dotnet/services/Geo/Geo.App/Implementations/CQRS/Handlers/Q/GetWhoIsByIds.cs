@@ -125,34 +125,34 @@ public partial class GetWhoIsByIds : BaseHandler<GetWhoIsByIds, I, O>, H
         {
             // If NO WhoIs were found, return what we have.
             case ErrorCodes.NOT_FOUND:
-            {
-                // If we found some in cache, return [fail, SOME found].
-                if (whoIsRecords.Count > 0)
                 {
-                    return await SomeFoundAsync(whoIsRecords, ct);
-                }
+                    // If we found some in cache, return [fail, SOME found].
+                    if (whoIsRecords.Count > 0)
+                    {
+                        return await SomeFoundAsync(whoIsRecords, ct);
+                    }
 
-                // Otherwise, return (fail, NOT found).
-                return D2Result<O?>.NotFound();
-            }
+                    // Otherwise, return (fail, NOT found).
+                    return D2Result<O?>.NotFound();
+                }
 
             // If SOME WhoIs were found, add to list, cache and return [fail, SOME found].
             case ErrorCodes.SOME_FOUND:
-            {
-                foreach (var kvp in repoOutput?.WhoIs ?? [])
                 {
-                    whoIsRecords[kvp.Key] = kvp.Value;
-                }
+                    foreach (var kvp in repoOutput?.WhoIs ?? [])
+                    {
+                        whoIsRecords[kvp.Key] = kvp.Value;
+                    }
 
-                await SetInCacheAsync(repoOutput!.WhoIs, ct);
-                return await SomeFoundAsync(whoIsRecords, ct);
-            }
+                    await SetInCacheAsync(repoOutput!.WhoIs, ct);
+                    return await SomeFoundAsync(whoIsRecords, ct);
+                }
 
             // For other errors, bubble up the failure.
             default:
-            {
-                return D2Result<O?>.BubbleFail(repoR);
-            }
+                {
+                    return D2Result<O?>.BubbleFail(repoR);
+                }
         }
     }
 

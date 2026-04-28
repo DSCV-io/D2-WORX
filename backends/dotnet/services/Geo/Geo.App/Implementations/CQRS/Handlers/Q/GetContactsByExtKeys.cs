@@ -148,26 +148,26 @@ public partial class GetContactsByExtKeys : BaseHandler<GetContactsByExtKeys, I,
         {
             // If NO contacts were found in repo, return what we have from cache.
             case ErrorCodes.NOT_FOUND:
-            {
-                if (contacts.Count > 0)
                 {
-                    return await SomeFoundAsync(contacts, ct);
-                }
+                    if (contacts.Count > 0)
+                    {
+                        return await SomeFoundAsync(contacts, ct);
+                    }
 
-                return D2Result<O?>.NotFound();
-            }
+                    return D2Result<O?>.NotFound();
+                }
 
             // If SOME contacts were found, add to list, cache and return [fail, SOME found].
             case ErrorCodes.SOME_FOUND:
-            {
-                foreach (var kvp in repoOutput?.Contacts ?? [])
                 {
-                    contacts[kvp.Key] = kvp.Value;
-                }
+                    foreach (var kvp in repoOutput?.Contacts ?? [])
+                    {
+                        contacts[kvp.Key] = kvp.Value;
+                    }
 
-                await SetInCacheAsync(repoOutput!.Contacts, ct);
-                return await SomeFoundAsync(contacts, ct);
-            }
+                    await SetInCacheAsync(repoOutput!.Contacts, ct);
+                    return await SomeFoundAsync(contacts, ct);
+                }
 
             default:
                 return D2Result<O?>.BubbleFail(repoR);

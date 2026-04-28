@@ -1,0 +1,1 @@
+ALTER TABLE "file" ADD COLUMN "uploader_user_id" varchar(36) NOT NULL;

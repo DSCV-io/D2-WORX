@@ -47,11 +47,11 @@ export async function declareRetryTopology(messageBus: MessageBus): Promise<void
  * Returns `null` when max attempts (10) have been reached — the message should be dropped.
  *
  * @param retryCount - The current retry count (0 = first attempt, 1 = first retry, etc.)
- * @returns The tier queue name, or `null` if max attempts reached.
+ * @returns The tier queue name, or `undefined` if max attempts reached.
  */
-export function getRetryTierQueue(retryCount: number): string | null {
+export function getRetryTierQueue(retryCount: number): string | undefined {
   if (retryCount >= RETRY_POLICY.MAX_ATTEMPTS) {
-    return null;
+    return undefined;
   }
 
   // retryCount 0 → tier 1, retryCount 1 → tier 2, ..., retryCount 4+ → tier 5

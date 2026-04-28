@@ -1,0 +1,25 @@
+{
+  "name": "@d2/jwt-auth",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@d2/handler": "workspace:*",
+    "@d2/result": "workspace:*",
+    "hono": "4.12.3",
+    "jose": "6.0.11"
+  }
+}

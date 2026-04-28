@@ -69,15 +69,13 @@ describe("deliveryRequestToProto", () => {
     expect(result.processedAt).toEqual(new Date("2026-01-01T00:01:00Z"));
   });
 
-  it("should map nullable fields to undefined and not include removed fields", () => {
+  it("should map optional fields to undefined and not include removed fields", () => {
     const req: DeliveryRequest = {
       id: "req-2",
       messageId: "msg-2",
       correlationId: "corr-2",
       recipientContactId: "contact-2",
-      callbackTopic: null,
       createdAt: new Date("2026-01-01T00:00:00Z"),
-      processedAt: null,
     };
 
     const result = deliveryRequestToProto(req);
@@ -100,10 +98,8 @@ describe("deliveryAttemptToProto", () => {
       recipientAddress: "user@example.com",
       status: "sent",
       providerMessageId: "resend-123",
-      error: null,
       attemptNumber: 1,
       createdAt: new Date("2026-01-01T00:00:00Z"),
-      nextRetryAt: null,
     };
 
     const result = deliveryAttemptToProto(attempt);
@@ -117,14 +113,13 @@ describe("deliveryAttemptToProto", () => {
     expect(result.attemptNumber).toBe(1);
   });
 
-  it("should map nullable fields to undefined", () => {
+  it("should map optional fields to undefined", () => {
     const attempt: DeliveryAttempt = {
       id: "att-2",
       requestId: "req-2",
       channel: "sms",
       recipientAddress: "+15551234567",
       status: "failed",
-      providerMessageId: null,
       error: "Twilio timeout",
       attemptNumber: 3,
       createdAt: new Date("2026-01-01T00:00:00Z"),

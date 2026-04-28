@@ -57,6 +57,18 @@ public class ContactConfig : IEntityTypeConfiguration<Contact>
             .HasForeignKey(c => c.IETFBCP47Tag)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Property(c => c.IANAIdentifier)
+            .HasColumnName("iana_identifier")
+            .HasMaxLength(64)
+            .HasDefaultValue("America/New_York")
+            .IsRequired();
+
+        // FK relationship to Timezone entity (mirrors Locale FK above).
+        builder.HasOne(c => c.Timezone)
+            .WithMany()
+            .HasForeignKey(c => c.IANAIdentifier)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // ContactMethods (stored as JSONB via value converter).
         // Using value converter instead of OwnsOne because nested types contain
         // ImmutableHashSet<string> which EF Core can't model, but System.Text.Json handles fine.

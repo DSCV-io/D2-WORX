@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="ICommands.ReqUpdate.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>

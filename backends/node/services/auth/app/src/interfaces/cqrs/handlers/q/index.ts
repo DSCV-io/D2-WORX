@@ -35,6 +35,15 @@ export { GET_ORG_CONTACTS_REDACTION } from "./get-org-contacts.js";
 export type {
   GetSignInEventsInput,
   GetSignInEventsOutput,
+  EnrichedSignInEvent,
   IGetSignInEventsHandler,
 } from "./get-sign-in-events.js";
 export { GET_SIGN_IN_EVENTS_REDACTION } from "./get-sign-in-events.js";
+
+export type {
+  GetMySessionsInput,
+  GetMySessionsOutput,
+  EnrichedSession,
+  IGetMySessionsHandler,
+} from "./get-my-sessions.js";
+export { GET_MY_SESSIONS_REDACTION } from "./get-my-sessions.js";

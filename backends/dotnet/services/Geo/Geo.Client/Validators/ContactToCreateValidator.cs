@@ -98,6 +98,11 @@ public class ContactToCreateValidator : AbstractValidator<ContactToCreateDTO>
             .MaximumLength(35)
             .OverridePropertyName($"{indexPrefix}ietfBcp47Tag");
 
+        // IanaIdentifier: optional (defaults in domain), max 64 chars.
+        RuleFor(c => c.IanaIdentifier)
+            .MaximumLength(64)
+            .OverridePropertyName($"{indexPrefix}ianaIdentifier");
+
         // Contact methods — emails (if present).
         When(c => c.ContactMethods is not null && c.ContactMethods.Emails.Count > 0, () =>
         {

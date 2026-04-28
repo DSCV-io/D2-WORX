@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>D2.Shared.JwtAuth.Default</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Handler\Handler.csproj" />
+        <ProjectReference Include="..\..\..\Handler.Extensions\Handler.Extensions.csproj" />
+        <ProjectReference Include="..\..\..\Result\Result.csproj" />
+        <ProjectReference Include="..\..\..\I18n\I18n.csproj" />
+        <ProjectReference Include="..\..\..\Utilities\Utilities.csproj" />
+        <ProjectReference Include="..\AuthPolicy.Default\AuthPolicy.Default.csproj" />
+        <ProjectReference Include="..\RequestEnrichment.Default\RequestEnrichment.Default.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+</Project>

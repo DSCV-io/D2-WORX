@@ -34,15 +34,18 @@ export class Get<TValue>
       try {
         const value = this.serializer.deserialize(raw);
         return D2Result.ok({ data: { value } });
-      } catch {
+      } catch (err: unknown) {
+        this.context.logger.warn(
+          `Cache deserialization failed for key "${input.key}": ${err instanceof Error ? err.message : String(err)}`,
+        );
         return D2Result.fail({
           messages: [TK.common.errors.COULD_NOT_BE_DESERIALIZED],
           statusCode: HttpStatusCode.InternalServerError,
           errorCode: ErrorCodes.COULD_NOT_BE_DESERIALIZED,
         });
       }
-    } catch {
-      return redisErrorResult();
+    } catch (err: unknown) {
+      return redisErrorResult(err);
     }
   }
 }

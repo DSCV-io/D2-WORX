@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="RedisDistributedCacheTests.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -321,7 +321,7 @@ public class RedisDistributedCacheTests : IAsyncLifetime
         // Assert
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
-        result.ErrorCode.Should().Be(ErrorCodes.COULD_NOT_BE_DESERIALIZED);
+        result.ErrorCode.Should().Be(ErrorCodes.UNHANDLED_EXCEPTION);
     }
 
     /// <summary>

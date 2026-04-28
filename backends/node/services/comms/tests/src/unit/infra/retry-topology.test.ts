@@ -29,46 +29,46 @@ describe("getRetryTierQueue", () => {
     expect(getRetryTierQueue(9)).toBe("comms.retry.tier-5");
   });
 
-  it("should return null when max attempts (10) reached", () => {
-    expect(getRetryTierQueue(10)).toBeNull();
+  it("should return undefined when max attempts (10) reached", () => {
+    expect(getRetryTierQueue(10)).toBeUndefined();
   });
 
-  it("should return null for counts beyond max attempts", () => {
-    expect(getRetryTierQueue(11)).toBeNull();
-    expect(getRetryTierQueue(100)).toBeNull();
+  it("should return undefined for counts beyond max attempts", () => {
+    expect(getRetryTierQueue(11)).toBeUndefined();
+    expect(getRetryTierQueue(100)).toBeUndefined();
   });
 
   describe("tier exhaustion (max attempts boundary)", () => {
     it("should return a valid tier queue for retryCount 9 (last valid retry)", () => {
       const result = getRetryTierQueue(9);
 
-      expect(result).not.toBeNull();
+      expect(result).not.toBeUndefined();
       expect(result).toBe("comms.retry.tier-5");
     });
 
-    it("should return null for retryCount 10 (max attempts reached)", () => {
-      expect(getRetryTierQueue(10)).toBeNull();
+    it("should return undefined for retryCount 10 (max attempts reached)", () => {
+      expect(getRetryTierQueue(10)).toBeUndefined();
     });
 
-    it("should return null for retryCount 11 (beyond max attempts)", () => {
-      expect(getRetryTierQueue(11)).toBeNull();
+    it("should return undefined for retryCount 11 (beyond max attempts)", () => {
+      expect(getRetryTierQueue(11)).toBeUndefined();
     });
 
-    it("should return null for any retryCount >= MAX_ATTEMPTS", () => {
-      // MAX_ATTEMPTS is 10, so retryCount 10+ should all be null
+    it("should return undefined for any retryCount >= MAX_ATTEMPTS", () => {
+      // MAX_ATTEMPTS is 10, so retryCount 10+ should all be undefined
       for (let i = 10; i <= 15; i++) {
-        expect(getRetryTierQueue(i)).toBeNull();
+        expect(getRetryTierQueue(i)).toBeUndefined();
       }
     });
 
-    it("should transition from valid queue to null exactly at MAX_ATTEMPTS boundary", () => {
+    it("should transition from valid queue to undefined exactly at MAX_ATTEMPTS boundary", () => {
       // retryCount 9 = last valid attempt → tier queue returned
       const lastValid = getRetryTierQueue(9);
-      // retryCount 10 = max attempts reached → null (message should be dropped)
+      // retryCount 10 = max attempts reached → undefined (message should be dropped)
       const firstExhausted = getRetryTierQueue(10);
 
       expect(lastValid).toEqual(expect.any(String));
-      expect(firstExhausted).toBeNull();
+      expect(firstExhausted).toBeUndefined();
     });
   });
 });

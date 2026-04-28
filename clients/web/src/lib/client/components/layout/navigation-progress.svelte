@@ -1,5 +1,6 @@
 <script lang="ts">
   import { navigating } from "$app/stores";
+  import * as m from "$lib/paraglide/messages.js";
 
   let visible = $state(false);
   let completing = $state(false);
@@ -40,7 +41,7 @@
   <div
     class="fixed top-0 right-0 left-0 z-[9999] h-1"
     role="progressbar"
-    aria-label="Loading page"
+    aria-label={m.common_ui_loading_page()}
   >
     <div
       class="bg-primary h-full origin-left"

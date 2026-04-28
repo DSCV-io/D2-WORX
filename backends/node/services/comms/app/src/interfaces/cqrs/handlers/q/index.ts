@@ -12,6 +12,12 @@ export type {
 } from "./get-channel-preference.js";
 
 export type {
+  GetUserChannelPreferenceInput,
+  GetUserChannelPreferenceOutput,
+  IGetUserChannelPreferenceHandler,
+} from "./get-user-channel-preference.js";
+
+export type {
   CheckHealthInput,
   CheckHealthOutput,
   ComponentHealth,

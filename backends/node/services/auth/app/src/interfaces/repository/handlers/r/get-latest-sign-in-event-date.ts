@@ -5,7 +5,7 @@ export interface GetLatestSignInEventDateInput {
 }
 
 export interface GetLatestSignInEventDateOutput {
-  readonly date: Date | null;
+  readonly date?: Date;
 }
 
 export type IGetLatestSignInEventDateHandler = IHandler<

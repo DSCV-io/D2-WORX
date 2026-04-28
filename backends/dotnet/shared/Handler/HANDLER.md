@@ -50,6 +50,8 @@ protected override HandlerOptions DefaultOptions => new(LogInput: false, LogOutp
 await handler.HandleAsync(input, ct, options: new HandlerOptions(LogInput: true));
 ```
 
+**BOTH app AND repo handlers** must declare a `DefaultOptions` override when processing PII. This is not app-layer-only — each `BaseHandler` independently logs its I/O, so a repo handler that receives PII (e.g., contact details, IP addresses, filenames) needs its own `DefaultOptions => new(LogInput: false, LogOutput: false)` to prevent PII leaks in logs.
+
 **Interaction with `[RedactData]`:** `DefaultOptions` controls whether `BaseHandler` logs input/output at all. The `RedactDataDestructuringPolicy` (in ServiceDefaults) handles _how_ logged objects are serialized — masking `[RedactData]`-annotated fields. Both mechanisms work together: `DefaultOptions` is the coarse switch, `[RedactData]` is the fine-grained field-level mask.
 
 ## OTel Metrics
@@ -228,3 +230,4 @@ public class SetInMem : BaseHandler<SetInMem, I, O>, H
 - **Constructor takes `IHandlerContext`** — bundles `IRequestContext` + `ILogger`. Always pass to `base(context)`.
 - **`DefaultOptions`** — optional override. Suppresses I/O logging for PII-heavy handlers.
 - **Return `D2Result<O?>`** — use semantic factories (`Ok`, `NotFound`, `BubbleFail`, etc.). See `RESULT.md`.
+- **traceId auto-injection** — `BaseHandler` automatically injects `traceId` into every `D2Result` it returns. Handlers should NOT pass `traceId: TraceId` manually when constructing results.

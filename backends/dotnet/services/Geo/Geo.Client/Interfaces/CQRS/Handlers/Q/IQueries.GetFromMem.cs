@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="IQueries.GetFromMem.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>

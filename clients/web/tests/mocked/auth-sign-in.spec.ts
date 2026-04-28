@@ -20,7 +20,9 @@ test.describe("sign-in page (/sign-in)", () => {
   });
 
   test("has sign-up link", async ({ page }) => {
-    const signUpLink = page.getByRole("link", { name: "Sign up" });
+    // Footer link in the form body — disambiguated from the nav-bar's
+    // "Sign Up" button by the trailing period and exact-name match.
+    const signUpLink = page.getByRole("link", { name: "Sign up.", exact: true });
     await expect(signUpLink).toBeVisible();
     await expect(signUpLink).toHaveAttribute("href", "/sign-up");
   });
@@ -38,7 +40,7 @@ test.describe("sign-in page (/sign-in)", () => {
     const passwordInput = page.getByRole("textbox", { name: "Password" });
     await passwordInput.focus();
     await passwordInput.blur();
-    await expect(page.getByText("Password is required")).toBeVisible({ timeout: 2000 });
+    await expect(page.getByText("Required").first()).toBeVisible({ timeout: 2000 });
   });
 
   test("invalid email format shows error on blur", async ({ page }) => {
@@ -70,11 +72,11 @@ test.describe("sign-in page (/sign-in)", () => {
     const passwordInput = page.getByRole("textbox", { name: "Password" });
     await passwordInput.focus();
     await passwordInput.blur();
-    await expect(page.getByText("Password is required")).toBeVisible({ timeout: 2000 });
+    await expect(page.getByText("Required").first()).toBeVisible({ timeout: 2000 });
 
     await passwordInput.fill("anything");
     await passwordInput.blur();
-    await expect(page.getByText("Password is required")).not.toBeVisible({ timeout: 2000 });
+    await expect(page.getByText("Required").first()).not.toBeVisible({ timeout: 2000 });
   });
 
   // --- Password field has no type constraint ---

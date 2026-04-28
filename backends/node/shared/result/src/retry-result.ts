@@ -103,8 +103,12 @@ export async function retryResultAsync<T>(
 
     try {
       lastResult = await operation(attempt);
-    } catch {
-      lastResult = D2Result.unhandledException<T>();
+    } catch (err: unknown) {
+      lastResult = D2Result.unhandledException<T>({
+        messages: [
+          `Retry attempt ${attempt} threw: ${err instanceof Error ? err.message : String(err)}`,
+        ],
+      });
     }
 
     // Success → return

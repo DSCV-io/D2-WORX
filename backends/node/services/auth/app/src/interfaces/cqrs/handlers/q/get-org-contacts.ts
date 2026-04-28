@@ -9,8 +9,8 @@ export interface HydratedOrgContact {
   readonly isPrimary: boolean;
   readonly createdAt: Date;
   readonly updatedAt: Date;
-  /** Full Geo contact data. Null if the Geo contact was not found (orphaned). */
-  readonly geoContact: ContactDTO | null;
+  /** Full Geo contact data. Undefined if the Geo contact was not found (orphaned). */
+  readonly geoContact?: ContactDTO;
 }
 
 export interface GetOrgContactsInput {

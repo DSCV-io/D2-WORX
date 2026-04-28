@@ -148,34 +148,34 @@ public partial class GetContactsByIds : BaseHandler<GetContactsByIds, I, O>, H
         {
             // If NO Contacts were found, return what we have.
             case ErrorCodes.NOT_FOUND:
-            {
-                // If we found some in cache, return [fail, SOME found].
-                if (contacts.Count > 0)
                 {
-                    return await SomeFoundAsync(contacts, ct);
-                }
+                    // If we found some in cache, return [fail, SOME found].
+                    if (contacts.Count > 0)
+                    {
+                        return await SomeFoundAsync(contacts, ct);
+                    }
 
-                // Otherwise, return (fail, NOT found).
-                return D2Result<O?>.NotFound();
-            }
+                    // Otherwise, return (fail, NOT found).
+                    return D2Result<O?>.NotFound();
+                }
 
             // If SOME Contacts were found, add to list, cache and return [fail, SOME found].
             case ErrorCodes.SOME_FOUND:
-            {
-                foreach (var kvp in repoOutput?.Contacts ?? [])
                 {
-                    contacts[kvp.Key] = kvp.Value;
-                }
+                    foreach (var kvp in repoOutput?.Contacts ?? [])
+                    {
+                        contacts[kvp.Key] = kvp.Value;
+                    }
 
-                await SetInCacheAsync(repoOutput!.Contacts, ct);
-                return await SomeFoundAsync(contacts, ct);
-            }
+                    await SetInCacheAsync(repoOutput!.Contacts, ct);
+                    return await SomeFoundAsync(contacts, ct);
+                }
 
             // For other errors, bubble up the failure.
             default:
-            {
-                return D2Result<O?>.BubbleFail(repoR);
-            }
+                {
+                    return D2Result<O?>.BubbleFail(repoR);
+                }
         }
     }
 

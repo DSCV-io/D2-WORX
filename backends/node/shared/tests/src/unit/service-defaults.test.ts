@@ -477,8 +477,8 @@ describe("@d2/service-defaults/grpc", () => {
       expect(reqCtx.isAgentAdmin).toBe(false);
       expect(reqCtx.isTargetingStaff).toBe(false);
       expect(reqCtx.isTargetingAdmin).toBe(false);
-      expect(reqCtx.isOrgEmulating).toBe(false);
-      expect(reqCtx.isUserImpersonating).toBe(false);
+      expect(reqCtx.isOrgEmulating).toBeNull();
+      expect(reqCtx.isUserImpersonating).toBeNull();
 
       scope.dispose();
       provider.dispose();

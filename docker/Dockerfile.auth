@@ -68,6 +68,8 @@ COPY --from=build /app/ .
 # Remove devDependencies to shrink the image
 RUN pnpm prune --prod
 
+USER node
+
 # Entry uses --import loader for OTel auto-instrumentation (service-defaults/register)
 ENTRYPOINT ["node", "--import", "@d2/service-defaults/register", \
     "backends/node/services/auth/api/dist/main.js"]

@@ -55,7 +55,7 @@ describe("RecordSignInEvent", () => {
     expect(createRecord.handleAsync).toHaveBeenCalledOnce();
   });
 
-  it("should set whoIsId to null when not provided", async () => {
+  it("should set whoIsId to undefined when not provided", async () => {
     const result = await handler.handleAsync({
       userId: "01234567-89ab-cdef-0123-456789abcdef",
       successful: false,
@@ -64,7 +64,7 @@ describe("RecordSignInEvent", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(result.data?.event.whoIsId).toBeNull();
+    expect(result.data?.event.whoIsId).toBeUndefined();
   });
 
   it("should record deviceFingerprint when provided", async () => {
@@ -80,7 +80,63 @@ describe("RecordSignInEvent", () => {
     expect(result.data?.event.deviceFingerprint).toBe("a".repeat(64));
   });
 
-  it("should set deviceFingerprint to null when not provided", async () => {
+  it("should record clientFingerprint and serverFingerprint when provided", async () => {
+    const result = await handler.handleAsync({
+      userId: "01234567-89ab-cdef-0123-456789abcdef",
+      successful: true,
+      ipAddress: "192.168.1.1",
+      userAgent: "Mozilla/5.0",
+      deviceFingerprint: "d".repeat(64),
+      clientFingerprint: "c".repeat(64),
+      serverFingerprint: "s".repeat(64),
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.event.deviceFingerprint).toBe("d".repeat(64));
+    expect(result.data?.event.clientFingerprint).toBe("c".repeat(64));
+    expect(result.data?.event.serverFingerprint).toBe("s".repeat(64));
+    // The repo handler must receive all three so they land in the
+    // sign_in_event row. Without this, the security tab can't render the
+    // identicon (clientFp) or display the per-network forensic chip
+    // (serverFp).
+    expect(createRecord.handleAsync).toHaveBeenCalledWith({
+      event: expect.objectContaining({
+        deviceFingerprint: "d".repeat(64),
+        clientFingerprint: "c".repeat(64),
+        serverFingerprint: "s".repeat(64),
+      }),
+    });
+  });
+
+  it("should reject clientFingerprint exceeding 64 characters", async () => {
+    const result = await handler.handleAsync({
+      userId: "01234567-89ab-cdef-0123-456789abcdef",
+      successful: true,
+      ipAddress: "10.0.0.1",
+      userAgent: "TestAgent",
+      clientFingerprint: "x".repeat(65),
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.statusCode).toBe(HttpStatusCode.BadRequest);
+    expect(createRecord.handleAsync).not.toHaveBeenCalled();
+  });
+
+  it("should reject serverFingerprint exceeding 64 characters", async () => {
+    const result = await handler.handleAsync({
+      userId: "01234567-89ab-cdef-0123-456789abcdef",
+      successful: true,
+      ipAddress: "10.0.0.1",
+      userAgent: "TestAgent",
+      serverFingerprint: "x".repeat(65),
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.statusCode).toBe(HttpStatusCode.BadRequest);
+    expect(createRecord.handleAsync).not.toHaveBeenCalled();
+  });
+
+  it("should set deviceFingerprint to undefined when not provided", async () => {
     const result = await handler.handleAsync({
       userId: "01234567-89ab-cdef-0123-456789abcdef",
       successful: true,
@@ -89,7 +145,7 @@ describe("RecordSignInEvent", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(result.data?.event.deviceFingerprint).toBeNull();
+    expect(result.data?.event.deviceFingerprint).toBeUndefined();
   });
 
   it("should reject deviceFingerprint exceeding 64 characters", async () => {

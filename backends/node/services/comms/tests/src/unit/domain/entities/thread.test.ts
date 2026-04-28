@@ -21,12 +21,12 @@ describe("Thread", () => {
       expect(thread.createdAt).toBeInstanceOf(Date);
     });
 
-    it("should default nullable fields to null", () => {
+    it("should default optional fields to undefined", () => {
       const thread = createThread(validInput);
-      expect(thread.title).toBeNull();
-      expect(thread.slug).toBeNull();
-      expect(thread.orgId).toBeNull();
-      expect(thread.createdByUserId).toBeNull();
+      expect(thread.title).toBeUndefined();
+      expect(thread.slug).toBeUndefined();
+      expect(thread.orgId).toBeUndefined();
+      expect(thread.createdByUserId).toBeUndefined();
     });
 
     it("should accept all optional fields", () => {
@@ -108,9 +108,9 @@ describe("Thread", () => {
       );
     });
 
-    it("should return null slug when slug is whitespace only", () => {
+    it("should return undefined slug when slug is whitespace only", () => {
       const thread = createThread({ ...validInput, slug: "   " });
-      expect(thread.slug).toBeNull();
+      expect(thread.slug).toBeUndefined();
     });
 
     it("should trim slug before validation", () => {
@@ -171,12 +171,12 @@ describe("Thread", () => {
 
     it("should clear title by setting to null", () => {
       const updated = updateThread(baseThread, { title: null });
-      expect(updated.title).toBeNull();
+      expect(updated.title).toBeUndefined();
     });
 
     it("should clear slug by setting to null", () => {
       const updated = updateThread(baseThread, { slug: null });
-      expect(updated.slug).toBeNull();
+      expect(updated.slug).toBeUndefined();
     });
 
     it("should preserve unchanged fields", () => {

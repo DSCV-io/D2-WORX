@@ -15,23 +15,28 @@ import {
   IRequestContextKey,
   createServiceScope,
 } from "@d2/handler";
-import { AcquireLock, ReleaseLock, PingCache, ICachePingKey } from "@d2/cache-redis";
+import { addRedisCaching } from "@d2/cache-redis";
 import { PingMessageBus, IMessageBusPingKey } from "@d2/messaging";
 import type { IMessagePublisher } from "@d2/messaging";
 import { addCommsClient } from "@d2/comms-client";
+import { wireGeoClientConsumers, IFindWhoIsKey } from "@d2/geo-client";
 import {
   createAuth,
   runMigrations,
   addAuthInfra,
   createWhoIsResolutionConsumer,
+  BetterAuthPasswordVerifier,
+  BetterAuthVerificationStore,
   type AuthServiceConfig,
   type PasswordFunctions,
 } from "@d2/auth-infra";
 import {
   addAuthApp,
   ISignInThrottleStoreKey,
-  IAuthAcquireLockKey,
-  IAuthReleaseLockKey,
+  IOtpRateLimitStoreKey,
+  IVerificationStoreKey,
+  IVerifyUserPasswordKey,
+  ITranslatorKey,
   DEFAULT_AUTH_JOB_OPTIONS,
   type AuthJobOptions,
 } from "@d2/auth-app";
@@ -42,6 +47,7 @@ import {
   addGeoClientHandlers,
   createPreAuthHandlers,
   createAuthCallbacks,
+  createRecordFailedSignIn,
   buildHonoApp,
   buildGrpcServer,
 } from "./setup/index.js";
@@ -78,7 +84,12 @@ export async function createApp(
   messageBus?: import("@d2/messaging").MessageBus,
 ) {
   // 1. Singletons (infrastructure)
-  const pool = new pg.Pool({ connectionString: config.databaseUrl });
+  const pool = new pg.Pool({
+    connectionString: config.databaseUrl,
+    max: 20,
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 5_000,
+  });
   const redis = new Redis(config.redisUrl);
   const logger = createLogger({
     serviceName: config.appName ?? "auth-service",
@@ -92,8 +103,8 @@ export async function createApp(
       isAgentAdmin: false,
       isTargetingStaff: false,
       isTargetingAdmin: false,
-      isOrgEmulating: false,
-      isUserImpersonating: false,
+      isOrgEmulating: null,
+      isUserImpersonating: null,
     },
     logger,
   );
@@ -116,30 +127,60 @@ export async function createApp(
   );
 
   services.addInstance(ISignInThrottleStoreKey, redisSetup.throttleStore);
-
-  // Helper: checks whether an organization exists in BetterAuth's organization table.
-  async function checkOrgExists(orgId: string): Promise<boolean> {
-    const result = await pool.query("SELECT 1 FROM organization WHERE id = $1 LIMIT 1", [orgId]);
-    return result.rows.length > 0;
-  }
+  services.addInstance(IOtpRateLimitStoreKey, redisSetup.otpRateLimitStore);
 
   // Geo client handlers (gRPC-backed with local caching)
   const geoSetup = addGeoClientHandlers(services, config, serviceContext);
 
-  // Lock handlers for job execution
-  services.addInstance(IAuthAcquireLockKey, new AcquireLock(redis, serviceContext));
-  services.addInstance(IAuthReleaseLockKey, new ReleaseLock(redis, serviceContext));
+  // Distributed cache handlers (Get, Set, Remove, Lock, Ping, etc.)
+  addRedisCaching(services, redis, serviceContext);
 
   // Layer registrations
-  addAuthInfra(services, db);
-  addAuthApp(services, { checkOrgExists }, config.jobOptions ?? DEFAULT_AUTH_JOB_OPTIONS);
+  const jobOptions = config.jobOptions ?? DEFAULT_AUTH_JOB_OPTIONS;
+  addAuthInfra(services, db, {
+    signalrGatewayAddress: process.env.AUTH_SIGNALR_GATEWAY_ADDRESS,
+    signalrApiKey: process.env.AUTH_SIGNALR_API_KEY,
+    userPurgeBatchSize: jobOptions.userPurgeBatchSize,
+  });
+  addAuthApp(services, jobOptions, publisher);
   addCommsClient(services, { publisher });
 
-  // Health check handlers
-  services.addInstance(ICachePingKey, new PingCache(redis, serviceContext));
   if (messageBus) {
     services.addInstance(IMessageBusPingKey, new PingMessageBus(messageBus, serviceContext));
   }
+
+  // i18n translator (loads contracts/messages/*.json at startup) — needs to be
+  // registered BEFORE build so handlers can resolve it.
+  const messagesDir = pathResolve(
+    dirname(fileURLToPath(import.meta.url)),
+    "../../../../../../contracts/messages",
+  );
+  const translator = createTranslator({ messagesDir });
+  services.addInstance(ITranslatorKey, translator);
+
+  // BetterAuth-backed stores depend on `auth`, which is created AFTER `build()`
+  // (because `createAuth` needs `provider` via callbacks → cyclic dependency).
+  // Register lazy singleton factories that capture the eventual `auth` reference
+  // — first resolution happens during request handling, well after auth is set.
+  let authInstance: ReturnType<typeof createAuth> | undefined = undefined;
+  services.addSingleton(IVerificationStoreKey, () => {
+    if (!authInstance) throw new Error("auth instance not initialized");
+    return new BetterAuthVerificationStore(authInstance);
+  });
+  services.addSingleton(IVerifyUserPasswordKey, () => {
+    if (!authInstance) throw new Error("auth instance not initialized");
+    return new BetterAuthPasswordVerifier(authInstance);
+  });
+
+  // FindWhoIs is constructed by `createPreAuthHandlers` AFTER `services.build()`
+  // (it depends on the geo singleflight + circuit breaker that live with the
+  // service-level HandlerContext). Register a lazy singleton that captures the
+  // eventual instance — same pattern as the BetterAuth-backed stores above.
+  let findWhoIsInstance: import("@d2/geo-client").FindWhoIs | undefined = undefined;
+  services.addSingleton(IFindWhoIsKey, () => {
+    if (!findWhoIsInstance) throw new Error("FindWhoIs not initialized");
+    return findWhoIsInstance;
+  });
 
   // 5. Build ServiceProvider
   const provider = services.build();
@@ -155,17 +196,15 @@ export async function createApp(
     logger,
     overrides?.passwordFunctions,
   );
+  // Bind the FindWhoIs lazy singleton registered earlier so DI consumers
+  // (GetMySessions, GetSignInEvents) can resolve it.
+  findWhoIsInstance = preAuth.findWhoIs;
 
-  // 7. i18n translator (loads contracts/messages/*.json at startup)
-  const messagesDir = pathResolve(
-    dirname(fileURLToPath(import.meta.url)),
-    "../../../../../../contracts/messages",
-  );
-  const translator = createTranslator({ messagesDir });
-
-  // 8. Session fingerprint binding (stolen token detection)
+  // 7. Session fingerprint binding (stolen token detection)
   const fingerprintStorage = new AsyncLocalStorage<string>();
   const deviceFingerprintStorage = new AsyncLocalStorage<string>();
+  const clientFingerprintStorage = new AsyncLocalStorage<string>();
+  const serverFingerprintStorage = new AsyncLocalStorage<string>();
   const SESSION_FP_PREFIX = "session:fp:";
   const SESSION_FP_TTL_SECONDS = 7 * 24 * 60 * 60;
 
@@ -176,13 +215,18 @@ export async function createApp(
     translator,
     publisher,
   );
+  const recordFailedSignIn = createRecordFailedSignIn(provider, logger, publisher);
 
   const auth = createAuth(config, db, redisSetup.secondaryStorage, {
     ...callbacks,
+    logger,
     getFingerprintForCurrentRequest: () => fingerprintStorage.getStore(),
     getDeviceFingerprintForCurrentRequest: () => deviceFingerprintStorage.getStore(),
+    getClientFingerprintForCurrentRequest: () => clientFingerprintStorage.getStore(),
+    getServerFingerprintForCurrentRequest: () => serverFingerprintStorage.getStore(),
     passwordFunctions: preAuth.passwordFns,
   });
+  authInstance = auth; // unblock the lazy factories registered earlier
 
   const sessionFingerprintMiddleware = createSessionFingerprintMiddleware({
     storeFingerprint: async (token, fp) => {
@@ -208,26 +252,42 @@ export async function createApp(
       corsOrigins: config.corsOrigins,
       authApiKeys: config.authApiKeys,
       baseUrl: config.baseUrl,
+      emailBaseUrl: config.emailBaseUrl,
     },
     findWhoIs: preAuth.findWhoIs,
     rateLimitCheck: preAuth.rateLimitCheck,
     throttleCheck: preAuth.throttleCheck,
     throttleRecord: preAuth.throttleRecord,
+    recordFailedSignIn,
     checkEmailHandler: preAuth.checkEmailHandler,
     fingerprintStorage,
     deviceFingerprintStorage,
+    clientFingerprintStorage,
+    serverFingerprintStorage,
     sessionFingerprintMiddleware,
+    translator,
     logger,
     db,
   });
 
-  // 9. WhoIs resolution consumer
+  // 9. WhoIs resolution consumer + geo-client cache invalidation
   if (messageBus) {
     createWhoIsResolutionConsumer({
       messageBus,
       provider,
       createScope: createServiceScope,
       findWhoIs: preAuth.findWhoIs,
+      logger,
+    });
+
+    // Cross-process geo-client cache invalidation. Auth's local cache evicts
+    // when auth itself mutates a contact (via the cacheRemove handler injected
+    // into UpdateContactsByExtKeys/DeleteContactsByExtKeys), but only this
+    // subscription keeps it consistent when ANOTHER service mutates contacts.
+    await wireGeoClientConsumers({
+      bus: messageBus,
+      cacheStore: geoSetup.contactCacheStore,
+      context: serviceContext,
       logger,
     });
   }

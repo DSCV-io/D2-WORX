@@ -1,3 +1,4 @@
+export { createApiKeyInterceptor } from "./create-api-key-interceptor.js";
 export { extractGrpcTraceContext } from "./extract-trace-context.js";
 export { createTraceContextInterceptor } from "./inject-trace-context.js";
 export { withTraceContext } from "./with-trace-context.js";

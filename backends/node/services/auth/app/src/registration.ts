@@ -5,6 +5,7 @@ import {
   IDeleteContactsByExtKeysKey,
   IGetContactsByExtKeysKey,
   IUpdateContactsByExtKeysKey,
+  IFindWhoIsKey,
 } from "@d2/geo-client";
 import {
   // Infra keys (interfaces defined here, implemented in auth-infra)
@@ -33,11 +34,14 @@ import {
   IDeleteOrgContactKey,
   ICreateUserContactKey,
   IGetSignInEventsKey,
+  IGetMySessionsKey,
+  IGetActiveSessionsByUserIdKey,
   IGetActiveConsentsKey,
   IGetOrgContactsKey,
   ICheckSignInThrottleKey,
   ICheckEmailAvailabilityKey,
   ICheckEmailAvailabilityRepoKey,
+  ICheckOrgExistsKey,
   IPingDbKey,
   ICheckHealthKey,
 } from "./service-keys.js";
@@ -49,24 +53,37 @@ import { CreateOrgContact } from "./implementations/cqrs/handlers/c/create-org-c
 import { UpdateOrgContactHandler } from "./implementations/cqrs/handlers/c/update-org-contact.js";
 import { DeleteOrgContact } from "./implementations/cqrs/handlers/c/delete-org-contact.js";
 import { CreateUserContact } from "./implementations/cqrs/handlers/c/create-user-contact.js";
+import { UpdateUserRealName } from "./implementations/cqrs/handlers/c/update-user-real-name.js";
+import { UpdateUsername } from "./implementations/cqrs/handlers/c/update-username.js";
+import { UpdateUserLocale } from "./implementations/cqrs/handlers/c/update-user-locale.js";
+import { UpdateUserTimezone } from "./implementations/cqrs/handlers/c/update-user-timezone.js";
 import { GetSignInEvents } from "./implementations/cqrs/handlers/q/get-sign-in-events.js";
+import { GetMySessions } from "./implementations/cqrs/handlers/q/get-my-sessions.js";
 import { GetActiveConsents } from "./implementations/cqrs/handlers/q/get-active-consents.js";
 import { GetOrgContacts } from "./implementations/cqrs/handlers/q/get-org-contacts.js";
 import { CheckSignInThrottle } from "./implementations/cqrs/handlers/q/check-sign-in-throttle.js";
 import { CheckHealth } from "./implementations/cqrs/handlers/q/check-health.js";
 import { CheckEmailAvailability } from "./implementations/cqrs/handlers/q/check-email-availability.js";
-import {
-  ICachePingKey,
-  createRedisAcquireLockKey,
-  createRedisReleaseLockKey,
-} from "@d2/cache-redis";
-import type { ServiceKey } from "@d2/di";
-import type { DistributedCache } from "@d2/interfaces";
-import { IMessageBusPingKey } from "@d2/messaging";
+import { RequestEmailChange } from "./implementations/cqrs/handlers/c/request-email-change.js";
+import { VerifyEmailChange } from "./implementations/cqrs/handlers/c/verify-email-change.js";
+import { RequestPhoneChange } from "./implementations/cqrs/handlers/c/request-phone-change.js";
+import { VerifyPhoneChange } from "./implementations/cqrs/handlers/c/verify-phone-change.js";
+import { RemovePhone } from "./implementations/cqrs/handlers/c/remove-phone.js";
+import { INotifyKey } from "@d2/comms-client";
+import { DistributedCache } from "@d2/interfaces";
+import { IMessageBusPingKey, type IMessagePublisher } from "@d2/messaging";
+import * as CacheMemory from "@d2/cache-memory";
+import type { Queries as AuthQueries } from "./interfaces/cqrs/handlers/index.js";
 import { RunSessionPurge } from "./implementations/cqrs/handlers/c/run-session-purge.js";
 import { RunSignInEventPurge } from "./implementations/cqrs/handlers/c/run-sign-in-event-purge.js";
 import { RunInvitationCleanup } from "./implementations/cqrs/handlers/c/run-invitation-cleanup.js";
 import { RunEmulationConsentCleanup } from "./implementations/cqrs/handlers/c/run-emulation-consent-cleanup.js";
+import { HandleFileProcessed } from "./implementations/cqrs/handlers/c/handle-file-processed.js";
+import { InvalidateUserSessionCache } from "./implementations/cqrs/handlers/c/invalidate-user-session-cache.js";
+import { RequestUserDeletion } from "./implementations/cqrs/handlers/c/request-user-deletion.js";
+import { CancelUserDeletion } from "./implementations/cqrs/handlers/c/cancel-user-deletion.js";
+import { FinalizeDeletedUser } from "./implementations/cqrs/handlers/c/finalize-deleted-user.js";
+import { CleanupDeletedUsers } from "./implementations/cqrs/handlers/c/cleanup-deleted-users.js";
 import type { AuthJobOptions } from "./auth-job-options.js";
 import { DEFAULT_AUTH_JOB_OPTIONS } from "./auth-job-options.js";
 import {
@@ -78,18 +95,43 @@ import {
   IRunSignInEventPurgeKey,
   IRunInvitationCleanupKey,
   IRunEmulationConsentCleanupKey,
+  IHandleFileProcessedKey,
+  IUpdateUserImageKey,
+  IUpdateOrgLogoKey,
+  IUpdateUserRealNameKey,
+  IUpdateUsernameKey,
+  IUpdateUserLocaleKey,
+  IUpdateUserLocaleRepoKey,
+  IUpdateUserTimezoneKey,
+  IUpdateUserTimezoneRepoKey,
+  IPushUserUpdatedKey,
+  IUpdateUserNameKey,
+  ICheckUsernameAvailableKey,
+  IUpdateUserUsernameKey,
+  IInvalidateUserSessionCacheKey,
+  IRequestEmailChangeKey,
+  IVerifyEmailChangeKey,
+  IRequestPhoneChangeKey,
+  IVerifyPhoneChangeKey,
+  IRemovePhoneKey,
+  IOtpRateLimitStoreKey,
+  IVerificationStoreKey,
+  IVerifyUserPasswordKey,
+  ICheckPhoneAvailabilityKey,
+  IGetUserByIdKey,
+  IUpdateUserEmailKey,
+  IUpdateUserPhoneKey,
+  ITranslatorKey,
+  IRequestUserDeletionKey,
+  ICancelUserDeletionKey,
+  IFinalizeDeletedUserKey,
+  ICleanupDeletedUsersKey,
+  IUpdateUserStatusKey,
+  IGetDeletedUsersToPurgeKey,
+  IAnonymizeUserKey,
+  ICheckSoleOwnerOrgsKey,
+  IDeleteAllUserSessionsKey,
 } from "./service-keys.js";
-
-/** DI key for the auth-scoped AcquireLock handler (registered in composition root). */
-export const IAuthAcquireLockKey: ServiceKey<DistributedCache.IAcquireLockHandler> =
-  createRedisAcquireLockKey("auth");
-/** DI key for the auth-scoped ReleaseLock handler (registered in composition root). */
-export const IAuthReleaseLockKey: ServiceKey<DistributedCache.IReleaseLockHandler> =
-  createRedisReleaseLockKey("auth");
-
-export interface AddAuthAppOptions {
-  checkOrgExists: (orgId: string) => Promise<boolean>;
-}
 
 /**
  * Registers auth application-layer services (CQRS handlers, notification publishers)
@@ -99,8 +141,8 @@ export interface AddAuthAppOptions {
  */
 export function addAuthApp(
   services: ServiceCollection,
-  options: AddAuthAppOptions,
   jobOptions: AuthJobOptions = DEFAULT_AUTH_JOB_OPTIONS,
+  publisher?: IMessagePublisher,
 ): void {
   // --- Command Handlers ---
 
@@ -123,7 +165,7 @@ export function addAuthApp(
         sp.resolve(ICreateEmulationConsentRecordKey),
         sp.resolve(IFindActiveConsentByUserIdAndOrgKey),
         sp.resolve(IHandlerContextKey),
-        options.checkOrgExists,
+        sp.resolve(ICheckOrgExistsKey),
       ),
   );
 
@@ -155,6 +197,7 @@ export function addAuthApp(
         sp.resolve(IFindOrgContactByIdKey),
         sp.resolve(IUpdateOrgContactRecordKey),
         sp.resolve(IHandlerContextKey),
+        sp.resolve(IGetContactsByExtKeysKey),
         sp.resolve(IUpdateContactsByExtKeysKey),
       ),
   );
@@ -175,8 +218,154 @@ export function addAuthApp(
     (sp) => new CreateUserContact(sp.resolve(ICreateContactsKey), sp.resolve(IHandlerContextKey)),
   );
 
+  services.addTransient(
+    IUpdateUserRealNameKey,
+    (sp) =>
+      new UpdateUserRealName(
+        sp.resolve(IGetContactsByExtKeysKey),
+        sp.resolve(IUpdateContactsByExtKeysKey),
+        sp.resolve(IUpdateUserNameKey),
+        sp.resolve(IHandlerContextKey),
+        sp.tryResolve(IPushUserUpdatedKey),
+        sp.tryResolve(IInvalidateUserSessionCacheKey),
+      ),
+  );
+
+  services.addTransient(
+    IUpdateUsernameKey,
+    (sp) =>
+      new UpdateUsername(
+        sp.resolve(ICheckUsernameAvailableKey),
+        sp.resolve(IUpdateUserUsernameKey),
+        sp.resolve(IHandlerContextKey),
+        sp.tryResolve(IPushUserUpdatedKey),
+        sp.tryResolve(IInvalidateUserSessionCacheKey),
+      ),
+  );
+
+  services.addTransient(
+    IUpdateUserLocaleKey,
+    (sp) =>
+      new UpdateUserLocale(
+        sp.resolve(IGetContactsByExtKeysKey),
+        sp.resolve(IUpdateContactsByExtKeysKey),
+        sp.resolve(IUpdateUserLocaleRepoKey),
+        sp.resolve(IHandlerContextKey),
+        sp.tryResolve(IPushUserUpdatedKey),
+        sp.tryResolve(IInvalidateUserSessionCacheKey),
+      ),
+  );
+
+  services.addTransient(
+    IUpdateUserTimezoneKey,
+    (sp) =>
+      new UpdateUserTimezone(
+        sp.resolve(IGetContactsByExtKeysKey),
+        sp.resolve(IUpdateContactsByExtKeysKey),
+        sp.resolve(IUpdateUserTimezoneRepoKey),
+        sp.resolve(IHandlerContextKey),
+        sp.tryResolve(IPushUserUpdatedKey),
+        sp.tryResolve(IInvalidateUserSessionCacheKey),
+      ),
+  );
+
+  services.addTransient(
+    IRequestEmailChangeKey,
+    (sp) =>
+      new RequestEmailChange(
+        sp.resolve(IVerifyUserPasswordKey),
+        sp.resolve(IOtpRateLimitStoreKey),
+        sp.resolve(IVerificationStoreKey),
+        sp.resolve(ICheckEmailAvailabilityRepoKey),
+        sp.resolve(IUpdateUserEmailKey),
+        sp.resolve(IGetUserByIdKey),
+        sp.resolve(INotifyKey),
+        sp.resolve(ITranslatorKey),
+        sp.resolve(IHandlerContextKey),
+      ),
+  );
+
+  services.addTransient(
+    IVerifyEmailChangeKey,
+    (sp) =>
+      new VerifyEmailChange(
+        sp.resolve(IVerificationStoreKey),
+        sp.resolve(IOtpRateLimitStoreKey),
+        sp.resolve(IUpdateUserEmailKey),
+        sp.resolve(IGetUserByIdKey),
+        sp.resolve(IGetContactsByExtKeysKey),
+        sp.resolve(IUpdateContactsByExtKeysKey),
+        sp.resolve(INotifyKey),
+        sp.resolve(ITranslatorKey),
+        sp.resolve(IHandlerContextKey),
+        sp.tryResolve(IPushUserUpdatedKey),
+        sp.tryResolve(IInvalidateUserSessionCacheKey),
+      ),
+  );
+
+  services.addTransient(
+    IRequestPhoneChangeKey,
+    (sp) =>
+      new RequestPhoneChange(
+        sp.resolve(IVerifyUserPasswordKey),
+        sp.resolve(IOtpRateLimitStoreKey),
+        sp.resolve(IVerificationStoreKey),
+        sp.resolve(ICheckPhoneAvailabilityKey),
+        sp.resolve(IGetUserByIdKey),
+        sp.resolve(INotifyKey),
+        sp.resolve(ITranslatorKey),
+        sp.resolve(IHandlerContextKey),
+      ),
+  );
+
+  services.addTransient(
+    IVerifyPhoneChangeKey,
+    (sp) =>
+      new VerifyPhoneChange(
+        sp.resolve(IVerificationStoreKey),
+        sp.resolve(IOtpRateLimitStoreKey),
+        sp.resolve(IUpdateUserPhoneKey),
+        sp.resolve(IGetUserByIdKey),
+        sp.resolve(IGetContactsByExtKeysKey),
+        sp.resolve(IUpdateContactsByExtKeysKey),
+        sp.resolve(INotifyKey),
+        sp.resolve(ITranslatorKey),
+        sp.resolve(IHandlerContextKey),
+        sp.tryResolve(IPushUserUpdatedKey),
+        sp.tryResolve(IInvalidateUserSessionCacheKey),
+      ),
+  );
+
+  services.addTransient(
+    IRemovePhoneKey,
+    (sp) =>
+      new RemovePhone(
+        sp.resolve(IVerifyUserPasswordKey),
+        sp.resolve(IGetUserByIdKey),
+        sp.resolve(IUpdateUserPhoneKey),
+        sp.resolve(IGetContactsByExtKeysKey),
+        sp.resolve(IUpdateContactsByExtKeysKey),
+        sp.resolve(INotifyKey),
+        sp.resolve(ITranslatorKey),
+        sp.resolve(IHandlerContextKey),
+        sp.tryResolve(IPushUserUpdatedKey),
+        sp.tryResolve(IInvalidateUserSessionCacheKey),
+      ),
+  );
+
   // --- Query Handlers ---
 
+  // In-process LRU cache for sign-in event pages. Keyed by userId+limit+offset,
+  // validated against the user's latest event date on every read. Sized for
+  // ~1000 distinct (user, page) combos before LRU eviction kicks in. Each
+  // entry holds the FULL enriched response — hits skip both the row fetch
+  // and WhoIs hydration.
+  type CachedEvents = {
+    events: AuthQueries.EnrichedSignInEvent[];
+    total: number;
+    latestDate?: string;
+  };
+  const signInEventCacheStore = new CacheMemory.MemoryCacheStore({ maxEntries: 1000 });
   services.addTransient(
     IGetSignInEventsKey,
     (sp) =>
@@ -184,6 +373,27 @@ export function addAuthApp(
         sp.resolve(IFindSignInEventsByUserIdKey),
         sp.resolve(ICountSignInEventsByUserIdKey),
         sp.resolve(IGetLatestSignInEventDateKey),
+        sp.resolve(IFindWhoIsKey),
+        sp.resolve(IHandlerContextKey),
+        {
+          get: new CacheMemory.Get<CachedEvents>(
+            signInEventCacheStore,
+            sp.resolve(IHandlerContextKey),
+          ),
+          set: new CacheMemory.Set<CachedEvents>(
+            signInEventCacheStore,
+            sp.resolve(IHandlerContextKey),
+          ),
+        },
+      ),
+  );
+
+  services.addTransient(
+    IGetMySessionsKey,
+    (sp) =>
+      new GetMySessions(
+        sp.resolve(IGetActiveSessionsByUserIdKey),
+        sp.resolve(IFindWhoIsKey),
         sp.resolve(IHandlerContextKey),
       ),
   );
@@ -227,7 +437,7 @@ export function addAuthApp(
     (sp) =>
       new CheckHealth(
         sp.resolve(IPingDbKey),
-        sp.resolve(ICachePingKey),
+        sp.resolve(DistributedCache.IDistributedCachePingKey),
         sp.resolve(IHandlerContextKey),
         sp.tryResolve(IMessageBusPingKey),
       ),
@@ -239,8 +449,8 @@ export function addAuthApp(
     IRunSessionPurgeKey,
     (sp) =>
       new RunSessionPurge(
-        sp.resolve(IAuthAcquireLockKey),
-        sp.resolve(IAuthReleaseLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
         sp.resolve(IPurgeExpiredSessionsKey),
         jobOptions,
         sp.resolve(IHandlerContextKey),
@@ -251,8 +461,8 @@ export function addAuthApp(
     IRunSignInEventPurgeKey,
     (sp) =>
       new RunSignInEventPurge(
-        sp.resolve(IAuthAcquireLockKey),
-        sp.resolve(IAuthReleaseLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
         sp.resolve(IPurgeSignInEventsKey),
         jobOptions,
         sp.resolve(IHandlerContextKey),
@@ -263,8 +473,8 @@ export function addAuthApp(
     IRunInvitationCleanupKey,
     (sp) =>
       new RunInvitationCleanup(
-        sp.resolve(IAuthAcquireLockKey),
-        sp.resolve(IAuthReleaseLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
         sp.resolve(IPurgeExpiredInvitationsKey),
         jobOptions,
         sp.resolve(IHandlerContextKey),
@@ -275,9 +485,88 @@ export function addAuthApp(
     IRunEmulationConsentCleanupKey,
     (sp) =>
       new RunEmulationConsentCleanup(
-        sp.resolve(IAuthAcquireLockKey),
-        sp.resolve(IAuthReleaseLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
         sp.resolve(IPurgeExpiredEmulationConsentsKey),
+        jobOptions,
+        sp.resolve(IHandlerContextKey),
+      ),
+  );
+
+  // Session cache invalidation (bust BetterAuth's Redis-cached sessions after user mutations)
+  services.addTransient(
+    IInvalidateUserSessionCacheKey,
+    (sp) =>
+      new InvalidateUserSessionCache(
+        sp.resolve(DistributedCache.IDistributedCacheGetKey),
+        sp.resolve(DistributedCache.IDistributedCacheRemoveKey),
+        sp.resolve(IHandlerContextKey),
+      ),
+  );
+
+  // File callback handler
+  services.addTransient(
+    IHandleFileProcessedKey,
+    (sp) =>
+      new HandleFileProcessed(
+        sp.resolve(IUpdateUserImageKey),
+        sp.resolve(IUpdateOrgLogoKey),
+        sp.resolve(IHandlerContextKey),
+        sp.tryResolve(IPushUserUpdatedKey),
+        sp.tryResolve(IInvalidateUserSessionCacheKey),
+      ),
+  );
+
+  // --- User deletion (self-service) ---
+
+  services.addTransient(
+    IRequestUserDeletionKey,
+    (sp) =>
+      new RequestUserDeletion(
+        sp.resolve(IVerifyUserPasswordKey),
+        sp.resolve(IGetUserByIdKey),
+        sp.resolve(ICheckSoleOwnerOrgsKey),
+        sp.resolve(IUpdateUserStatusKey),
+        sp.resolve(IDeleteAllUserSessionsKey),
+        sp.resolve(INotifyKey),
+        sp.resolve(ITranslatorKey),
+        sp.resolve(IHandlerContextKey),
+        sp.tryResolve(IInvalidateUserSessionCacheKey),
+      ),
+  );
+
+  services.addTransient(
+    ICancelUserDeletionKey,
+    (sp) =>
+      new CancelUserDeletion(
+        sp.resolve(IGetUserByIdKey),
+        sp.resolve(IUpdateUserStatusKey),
+        sp.resolve(INotifyKey),
+        sp.resolve(ITranslatorKey),
+        sp.resolve(IHandlerContextKey),
+      ),
+  );
+
+  services.addTransient(
+    IFinalizeDeletedUserKey,
+    (sp) =>
+      new FinalizeDeletedUser(
+        sp.resolve(IAnonymizeUserKey),
+        sp.resolve(INotifyKey),
+        sp.resolve(ITranslatorKey),
+        sp.resolve(IHandlerContextKey),
+        publisher,
+      ),
+  );
+
+  services.addTransient(
+    ICleanupDeletedUsersKey,
+    (sp) =>
+      new CleanupDeletedUsers(
+        sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
+        sp.resolve(IGetDeletedUsersToPurgeKey),
+        sp.resolve(IFinalizeDeletedUserKey),
         jobOptions,
         sp.resolve(IHandlerContextKey),
       ),

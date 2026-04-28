@@ -68,8 +68,11 @@ export class DeleteOrgContact
       await this.deleteContactsByExtKeys.handleAsync({
         keys: [{ contextKey: GEO_CONTEXT_KEYS.ORG_CONTACT, relatedEntityId: existing.id }],
       });
-    } catch {
+    } catch (err: unknown) {
       // Swallow — Geo cleanup is non-critical
+      this.context.logger.warn("DeleteOrgContact: Geo contact cleanup failed (non-critical)", {
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
 
     // Delete the junction record

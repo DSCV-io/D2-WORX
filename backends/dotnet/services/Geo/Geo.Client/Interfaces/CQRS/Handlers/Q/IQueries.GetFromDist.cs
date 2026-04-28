@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="IQueries.GetFromDist.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>

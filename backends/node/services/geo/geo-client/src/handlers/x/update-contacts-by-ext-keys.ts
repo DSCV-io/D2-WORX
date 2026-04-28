@@ -70,12 +70,14 @@ export class UpdateContactsByExtKeys
           );
         }),
       (res) => res.result!,
-      (res) => ({ replacements: res.replacements }),
+      (res) => ({ replacements: res.replacements ?? [] }),
     );
 
     // Evict ext-key cache for each input contact regardless of gRPC result
     for (const c of input.contacts) {
-      this.store.delete(GEO_CACHE_KEYS.contactsByExtKey(c.contextKey, c.relatedEntityId));
+      if (c.contextKey && c.relatedEntityId) {
+        this.store.delete(GEO_CACHE_KEYS.contactsByExtKey(c.contextKey, c.relatedEntityId));
+      }
     }
 
     return D2Result.bubble(r, r.data);

@@ -26,11 +26,11 @@ describe("DeliveryAttempt", () => {
       expect(attempt.createdAt).toBeInstanceOf(Date);
     });
 
-    it("should default nullable fields to null", () => {
+    it("should default optional fields to undefined", () => {
       const attempt = createDeliveryAttempt(validInput);
-      expect(attempt.providerMessageId).toBeNull();
-      expect(attempt.error).toBeNull();
-      expect(attempt.nextRetryAt).toBeNull();
+      expect(attempt.providerMessageId).toBeUndefined();
+      expect(attempt.error).toBeUndefined();
+      expect(attempt.nextRetryAt).toBeUndefined();
     });
 
     it("should accept sms channel", () => {
@@ -175,7 +175,7 @@ describe("DeliveryAttempt", () => {
       });
       // providerMessageId already set, transition with only error — should keep providerMessageId
       expect(sent.providerMessageId).toBe("sg-abc");
-      expect(sent.error).toBeNull();
+      expect(sent.error).toBeUndefined();
     });
 
     it("should throw for failed → sent (invalid transition)", () => {
@@ -214,7 +214,7 @@ describe("DeliveryAttempt", () => {
       });
       expect(sent.status).toBe("sent");
       expect(sent.providerMessageId).toBe("twilio-sid-123");
-      expect(sent.error).toBeNull();
+      expect(sent.error).toBeUndefined();
     });
   });
 });

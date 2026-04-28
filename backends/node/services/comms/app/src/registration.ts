@@ -1,6 +1,6 @@
 import type { ServiceCollection } from "@d2/di";
 import { IHandlerContextKey } from "@d2/handler";
-import { IGetContactsByIdsKey } from "@d2/geo-client";
+import { IGetContactsByExtKeysKey, IGetContactsByIdsKey } from "@d2/geo-client";
 import {
   // Infra keys
   ICreateMessageRecordKey,
@@ -23,7 +23,9 @@ import {
   IDeliverKey,
   IRecipientResolverKey,
   ISetChannelPreferenceKey,
+  ISetUserChannelPreferenceKey,
   IGetChannelPreferenceKey,
+  IGetUserChannelPreferenceKey,
   IPingDbKey,
   ICheckHealthKey,
   IRunDeletedMessagePurgeKey,
@@ -38,27 +40,16 @@ import {
 import type { IChannelDispatcher } from "./implementations/cqrs/handlers/x/channel-dispatchers.js";
 import { RecipientResolver } from "./implementations/cqrs/handlers/q/resolve-recipient.js";
 import { SetChannelPreference } from "./implementations/cqrs/handlers/c/set-channel-preference.js";
+import { SetUserChannelPreference } from "./implementations/cqrs/handlers/c/set-user-channel-preference.js";
 import { GetChannelPreference } from "./implementations/cqrs/handlers/q/get-channel-preference.js";
+import { GetUserChannelPreference } from "./implementations/cqrs/handlers/q/get-user-channel-preference.js";
 import { CheckHealth } from "./implementations/cqrs/handlers/q/check-health.js";
 import { RunDeletedMessagePurge } from "./implementations/cqrs/handlers/c/run-deleted-message-purge.js";
 import { RunDeliveryHistoryPurge } from "./implementations/cqrs/handlers/c/run-delivery-history-purge.js";
 import { IMessageBusPingKey } from "@d2/messaging";
-import {
-  ICachePingKey,
-  createRedisAcquireLockKey,
-  createRedisReleaseLockKey,
-} from "@d2/cache-redis";
-import type { ServiceKey } from "@d2/di";
-import type { DistributedCache } from "@d2/interfaces";
+import { DistributedCache } from "@d2/interfaces";
 import type { CommsJobOptions } from "./comms-job-options.js";
 import { DEFAULT_COMMS_JOB_OPTIONS } from "./comms-job-options.js";
-
-/** DI key for the comms-scoped AcquireLock handler (registered in composition root). */
-export const ICommsAcquireLockKey: ServiceKey<DistributedCache.IAcquireLockHandler> =
-  createRedisAcquireLockKey("comms");
-/** DI key for the comms-scoped ReleaseLock handler (registered in composition root). */
-export const ICommsReleaseLockKey: ServiceKey<DistributedCache.IReleaseLockHandler> =
-  createRedisReleaseLockKey("comms");
 
 /**
  * Registers comms application-layer services (CQRS handlers)
@@ -136,6 +127,16 @@ export function addCommsApp(
       ),
   );
 
+  services.addTransient(
+    ISetUserChannelPreferenceKey,
+    (sp) =>
+      new SetUserChannelPreference(
+        sp.resolve(IGetContactsByExtKeysKey),
+        sp.resolve(ISetChannelPreferenceKey),
+        sp.resolve(IHandlerContextKey),
+      ),
+  );
+
   // --- Query Handlers ---
 
   services.addTransient(
@@ -152,12 +153,22 @@ export function addCommsApp(
   );
 
   services.addTransient(
+    IGetUserChannelPreferenceKey,
+    (sp) =>
+      new GetUserChannelPreference(
+        sp.resolve(IGetContactsByExtKeysKey),
+        sp.resolve(IGetChannelPreferenceKey),
+        sp.resolve(IHandlerContextKey),
+      ),
+  );
+
+  services.addTransient(
     ICheckHealthKey,
     (sp) =>
       new CheckHealth(
         sp.resolve(IPingDbKey),
         sp.resolve(IHandlerContextKey),
-        sp.tryResolve(ICachePingKey),
+        sp.tryResolve(DistributedCache.IDistributedCachePingKey),
         sp.tryResolve(IMessageBusPingKey),
       ),
   );
@@ -168,8 +179,8 @@ export function addCommsApp(
     IRunDeletedMessagePurgeKey,
     (sp) =>
       new RunDeletedMessagePurge(
-        sp.resolve(ICommsAcquireLockKey),
-        sp.resolve(ICommsReleaseLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
         sp.resolve(IPurgeDeletedMessagesKey),
         jobOptions,
         sp.resolve(IHandlerContextKey),
@@ -180,8 +191,8 @@ export function addCommsApp(
     IRunDeliveryHistoryPurgeKey,
     (sp) =>
       new RunDeliveryHistoryPurge(
-        sp.resolve(ICommsAcquireLockKey),
-        sp.resolve(ICommsReleaseLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
         sp.resolve(IPurgeDeliveryHistoryKey),
         jobOptions,
         sp.resolve(IHandlerContextKey),

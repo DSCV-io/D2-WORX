@@ -5,10 +5,19 @@ import type { IMessagePublisher } from "@d2/messaging";
 import type { GetContactsByExtKeys } from "@d2/geo-client";
 import { INotifyKey } from "@d2/comms-client";
 import { GEO_CONTEXT_KEYS, AUTH_MESSAGING } from "@d2/auth-domain";
-import { IRecordSignInEventKey, ICreateUserContactKey } from "@d2/auth-app";
+import {
+  IRecordSignInEventKey,
+  ICreateUserContactKey,
+  IGetUserIdByIdentifierKey,
+  ICancelUserDeletionKey,
+  IInvalidateUserSessionCacheKey,
+  IPushUserUpdatedKey,
+} from "@d2/auth-app";
 import type { AuthHooks } from "@d2/auth-infra";
+import { signUpPrefsStorage } from "@d2/auth-infra";
 import type { Translator } from "@d2/i18n";
 import { resolveLocale } from "@d2/i18n";
+import type { RecordFailedSignIn } from "../routes/auth-routes.js";
 
 /**
  * Creates the BetterAuth callback hooks that bridge app-layer logic
@@ -34,9 +43,12 @@ export function createAuthCallbacks(
           ipAddress: data.ipAddress,
           userAgent: data.userAgent,
           deviceFingerprint: data.deviceFingerprint,
+          clientFingerprint: data.clientFingerprint,
+          serverFingerprint: data.serverFingerprint,
         });
 
         // Fire-and-forget: publish to WhoIs resolution queue for async enrichment
+        // of BOTH the sign_in_event row and the session row (consumer updates both).
         if (result.success && result.data?.event && publisher) {
           publisher
             .send(
@@ -46,11 +58,16 @@ export function createAuthCallbacks(
               },
               {
                 signInEventId: result.data.event.id,
+                sessionId: data.sessionId,
                 ipAddress: data.ipAddress,
                 userAgent: data.userAgent,
               },
             )
-            .catch(() => {}); // Fail-open: ipAddress already persisted
+            .catch((err: unknown) =>
+              logger.warn("onSignIn: WhoIs resolution publish failed (fail-open)", {
+                error: err instanceof Error ? err.message : String(err),
+              }),
+            ); // Fail-open: ipAddress already persisted
         }
       } finally {
         scope.dispose();
@@ -70,7 +87,8 @@ export function createAuthCallbacks(
 
         const t = translator.t;
         const locale = resolveLocale(
-          (input as Record<string, unknown>).locale as string | undefined,
+          ((input as Record<string, unknown>).locale as string | undefined) ??
+            signUpPrefsStorage.getStore()?.locale,
         );
 
         const notifier = scope.resolve(INotifyKey);
@@ -91,7 +109,7 @@ export function createAuthCallbacks(
             name: input.name,
             url: input.verificationUrl,
           }),
-          sensitive: true,
+          channels: ["email"],
           correlationId: crypto.randomUUID(),
           senderService: "auth",
         });
@@ -113,7 +131,8 @@ export function createAuthCallbacks(
 
         const t = translator.t;
         const locale = resolveLocale(
-          (input as Record<string, unknown>).locale as string | undefined,
+          ((input as Record<string, unknown>).locale as string | undefined) ??
+            signUpPrefsStorage.getStore()?.locale,
         );
 
         const notifier = scope.resolve(INotifyKey);
@@ -136,9 +155,69 @@ export function createAuthCallbacks(
             name: input.name,
             url: input.resetUrl,
           }),
-          sensitive: true,
+          channels: ["email"],
           correlationId: crypto.randomUUID(),
           senderService: "auth",
+        });
+      } finally {
+        scope.dispose();
+      }
+    },
+
+    publishPasswordChanged: async (input) => {
+      logger.info("publishPasswordChanged: invoked", { userId: input.userId });
+      const scope = createCallbackScope();
+      try {
+        const contactId = await resolveUserContactId(
+          getContactsByExtKeys,
+          input.userId,
+          logger,
+          "password changed notification",
+        );
+        if (!contactId) {
+          logger.warn("publishPasswordChanged: no Geo contact for user — security email skipped", {
+            userId: input.userId,
+          });
+          return;
+        }
+
+        const t = translator.t;
+        const locale = resolveLocale(
+          ((input as Record<string, unknown>).locale as string | undefined) ??
+            signUpPrefsStorage.getStore()?.locale,
+        );
+
+        const notifier = scope.resolve(INotifyKey);
+        const result = await notifier.handleAsync({
+          recipientContactId: contactId,
+          title: t(locale, "auth_email_password_changed_subject"),
+          content: [
+            t(locale, "auth_email_password_changed_greeting", { name: input.name }),
+            "",
+            t(locale, "auth_email_password_changed_body"),
+            "",
+            t(locale, "auth_email_password_changed_disclaimer"),
+          ].join("\n"),
+          plaintext: t(locale, "auth_email_password_changed_plaintext", { name: input.name }),
+          channels: ["email"],
+          correlationId: crypto.randomUUID(),
+          senderService: "auth",
+        });
+        if (!result.success) {
+          logger.warn("publishPasswordChanged: Notify returned non-success", {
+            userId: input.userId,
+            statusCode: result.statusCode,
+            errorCode: result.errorCode,
+            messages: result.messages,
+          });
+        } else {
+          logger.info("publishPasswordChanged: security email queued", { userId: input.userId });
+        }
+      } catch (err: unknown) {
+        // Fail-open: password change is already committed, notification is best-effort.
+        logger.warn("publishPasswordChanged: failed to send notification (fail-open)", {
+          error: err instanceof Error ? err.message : String(err),
+          userId: input.userId,
         });
       } finally {
         scope.dispose();
@@ -159,6 +238,123 @@ export function createAuthCallbacks(
         scope.dispose();
       }
     },
+
+    cancelUserDeletion: async (data) => {
+      // Wrapper around the CancelUserDeletion app handler — invoked from the
+      // BetterAuth sign-in `before` hook. Per-call DI scope keeps the traceId
+      // isolated from any concurrent callbacks.
+      const scope = createCallbackScope();
+      try {
+        const handler = scope.resolve(ICancelUserDeletionKey);
+        const result = await handler.handleAsync({ userId: data.userId });
+        if (!result.success) {
+          logger.warn("cancelUserDeletion: handler returned non-success (non-blocking)", {
+            userId: data.userId,
+            statusCode: result.statusCode,
+            errorCode: result.errorCode,
+            messages: result.messages,
+          });
+        }
+      } finally {
+        scope.dispose();
+      }
+    },
+
+    invalidateAndPushUserUpdated: async (input) => {
+      // Invoked from databaseHooks.account.update.after on password change
+      // (and any future writes that need to broadcast a "your data changed"
+      // signal). Bust Redis session cache first (so the next session lookup
+      // re-reads PG truth), then push the SignalR event so every open tab
+      // refreshes via the root-layout listener (`bustSessionCache()` +
+      // `invalidateAll()`). Both calls are best-effort — the underlying
+      // mutation has already committed.
+      const scope = createCallbackScope();
+      try {
+        const invalidate = scope.resolve(IInvalidateUserSessionCacheKey);
+        const push = scope.resolve(IPushUserUpdatedKey);
+        await invalidate.handleAsync({ userId: input.userId }).catch((err: unknown) => {
+          logger.warn("invalidateAndPushUserUpdated: cache bust failed (non-blocking)", {
+            userId: input.userId,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        });
+        await push.handleAsync({ userId: input.userId }).catch((err: unknown) => {
+          logger.warn("invalidateAndPushUserUpdated: SignalR push failed (non-blocking)", {
+            userId: input.userId,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        });
+      } finally {
+        scope.dispose();
+      }
+    },
+  };
+}
+
+/**
+ * Builds the audit-record callback for FAILED sign-in attempts.
+ *
+ * Resolves the userId from the supplied email/username — if no user matches
+ * (attacker probing nonexistent identifiers) the failure is dropped from the
+ * audit table (the throttle layer still tracks it by hashed identifier).
+ *
+ * On a successful resolution, writes a `sign_in_event` row with `successful:
+ * false` + the failure reason, then publishes a WhoIs resolution message so
+ * the row gets enriched with city/country/ASN — same pipeline as the success
+ * path (`onSignIn`).
+ */
+export function createRecordFailedSignIn(
+  provider: ServiceProvider,
+  logger: ILogger,
+  publisher?: IMessagePublisher,
+): RecordFailedSignIn {
+  return async (data) => {
+    const scope = createServiceScope(provider, logger);
+    try {
+      // Resolve userId — drop the audit if nobody matches.
+      const finder = scope.resolve(IGetUserIdByIdentifierKey);
+      const lookup = await finder.handleAsync({
+        email: data.email?.toLowerCase(),
+        username: data.username?.toLowerCase(),
+      });
+      const userId = lookup.success ? lookup.data?.userId : undefined;
+      if (!userId) return;
+
+      const recorder = scope.resolve(IRecordSignInEventKey);
+      const result = await recorder.handleAsync({
+        userId,
+        successful: false,
+        ipAddress: data.ipAddress,
+        userAgent: data.userAgent,
+        deviceFingerprint: data.deviceFingerprint,
+        clientFingerprint: data.clientFingerprint,
+        serverFingerprint: data.serverFingerprint,
+        failureReason: data.failureReason,
+      });
+
+      // Enqueue WhoIs resolution (no sessionId — failed attempts have no session).
+      if (result.success && result.data?.event && publisher) {
+        publisher
+          .send(
+            {
+              exchange: AUTH_MESSAGING.WHOIS_RESOLUTION_EXCHANGE,
+              routingKey: AUTH_MESSAGING.WHOIS_RESOLUTION_QUEUE,
+            },
+            {
+              signInEventId: result.data.event.id,
+              ipAddress: data.ipAddress,
+              userAgent: data.userAgent,
+            },
+          )
+          .catch((err: unknown) =>
+            logger.warn("recordFailedSignIn: WhoIs resolution publish failed (fail-open)", {
+              error: err instanceof Error ? err.message : String(err),
+            }),
+          );
+      }
+    } finally {
+      scope.dispose();
+    }
   };
 }
 

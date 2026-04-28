@@ -1,4 +1,5 @@
-import { pgTable, text, boolean, timestamp, index } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { pgTable, text, boolean, timestamp, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
 
 /**
  * Drizzle schema for BetterAuth-managed tables.
@@ -33,13 +34,35 @@ export const user = pgTable(
     displayUsername: text("display_username").notNull().unique(),
     // i18n
     locale: text("locale").default("en-US"),
+    timezone: text("timezone").default("America/New_York"),
+    // Phone (digits-only E.164 like Geo). Verified flag tracks OTP confirmation.
+    phone: text("phone"),
+    phoneVerified: boolean("phone_verified").notNull().default(false),
     // Admin plugin
     role: text("role"),
     banned: boolean("banned").default(false),
     banReason: text("ban_reason"),
     banExpires: timestamp("ban_expires"),
+    // Account lifecycle: 'active' | 'pending_deletion' | 'deleted'.
+    // Banned is orthogonal (admin plugin's own boolean); status drives the
+    // self-service deletion flow. `deleted_at` is the grace clock for
+    // pending_deletion (independent of `updated_at` so normal mutations
+    // don't reset it). On full anonymization it's repurposed to record the
+    // anonymization timestamp.
+    status: text("status").notNull().default("active"),
+    deletedAt: timestamp("deleted_at"),
+    deletionFeedback: jsonb("deletion_feedback"),
   },
-  () => [],
+  (t) => [
+    // Partial unique index: enforces one user per phone, allows multiple null phones.
+    uniqueIndex("user_phone_unique")
+      .on(t.phone)
+      .where(sql`${t.phone} IS NOT NULL`),
+    // Partial index for the nightly purge job — only indexes pending users.
+    index("user_pending_deletion_idx")
+      .on(t.deletedAt)
+      .where(sql`${t.status} = 'pending_deletion'`),
+  ],
 );
 
 export const session = pgTable(
@@ -64,8 +87,25 @@ export const session = pgTable(
     activeOrganizationRole: text("active_organization_role"),
     emulatedOrganizationId: text("emulated_organization_id"),
     emulatedOrganizationType: text("emulated_organization_type"),
+    // Resolved at sign-in via cross-service Geo FindWhoIs (async, fail-open).
+    // Populated by the WhoIs resolution consumer ~milliseconds after the row is
+    // inserted. Null until resolved (or if resolution fails). References the
+    // content-addressable Geo WhoIs hash — frontend re-hydrates via Geo client.
+    whoIsId: text("who_is_id"),
+    // Fingerprint snapshots taken at session-create time. Stamped from the
+    // request enrichment middleware via AsyncLocalStorage. See sign_in_event
+    // for full semantics — same three values, persisted on the session row so
+    // active-session UIs can render device identicons without joining.
+    deviceFingerprint: text("device_fingerprint"),
+    clientFingerprint: text("client_fingerprint"),
+    serverFingerprint: text("server_fingerprint"),
   },
-  (table) => [index("session_user_id_idx").on(table.userId)],
+  (table) => [
+    index("session_user_id_idx").on(table.userId),
+    index("session_client_fingerprint_idx").on(table.clientFingerprint),
+    index("session_server_fingerprint_idx").on(table.serverFingerprint),
+    index("session_device_fingerprint_idx").on(table.deviceFingerprint),
+  ],
 );
 
 export const account = pgTable(
@@ -147,6 +187,10 @@ export const member = pgTable(
   (table) => [
     index("member_organization_id_idx").on(table.organizationId),
     index("member_user_id_idx").on(table.userId),
+    // Composite (organization_id, role) — backs the correlated COUNT(*) in
+    // CheckSoleOwnerOrgs so the per-org "are you the only owner?" check
+    // stays an index-only scan even on large orgs.
+    index("member_organization_role_idx").on(table.organizationId, table.role),
   ],
 );
 

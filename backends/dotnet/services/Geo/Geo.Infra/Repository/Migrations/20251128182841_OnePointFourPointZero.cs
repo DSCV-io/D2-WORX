@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="20251128182841_OnePointFourPointZero.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>

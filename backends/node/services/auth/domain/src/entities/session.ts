@@ -12,8 +12,8 @@ export interface Session {
   readonly userId: string;
   readonly token: string;
   readonly expiresAt: Date;
-  readonly ipAddress: string | null;
-  readonly userAgent: string | null;
+  readonly ipAddress?: string;
+  readonly userAgent?: string;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 
@@ -23,4 +23,15 @@ export interface Session {
   readonly activeOrganizationRole: Role | null;
   readonly emulatedOrganizationId: string | null;
   readonly emulatedOrganizationType: OrgType | null;
+  /** Resolved at sign-in via cross-service Geo FindWhoIs (async, fail-open). */
+  readonly whoIsId?: string;
+
+  // Fingerprint snapshots taken at session-create time. Surfaced for the
+  // active-sessions UI (identicon rendering + forensic display).
+  /** Combined sha256(clientFp + serverFp + clientIp). */
+  readonly deviceFingerprint?: string;
+  /** Stable hardware/browser signature — derived from canvas/WebGL/etc. */
+  readonly clientFingerprint?: string;
+  /** Network-derived signature — UA + accept headers + IP class. */
+  readonly serverFingerprint?: string;
 }

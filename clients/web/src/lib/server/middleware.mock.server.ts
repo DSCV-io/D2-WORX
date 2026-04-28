@@ -141,7 +141,7 @@ const MOCK_GEO_REF_DATA: GeoRefData = {
       "United States",
       "1",
       "XXX-XXX-XXXX",
-      US_SUBDIVISIONS.map((s) => s.iso31662Code),
+      US_SUBDIVISIONS.map((s) => s.iso31662Code).filter((c): c is string => !!c),
     ),
     CA: mockCountry(
       "CA",
@@ -150,7 +150,7 @@ const MOCK_GEO_REF_DATA: GeoRefData = {
       "Canada",
       "1",
       "XXX-XXX-XXXX",
-      CA_SUBDIVISIONS.map((s) => s.iso31662Code),
+      CA_SUBDIVISIONS.map((s) => s.iso31662Code).filter((c): c is string => !!c),
     ),
     SG: mockCountry("SG", "SGP", "702", "Singapore", "65", "XXXX XXXX", []),
     AF: mockCountry("AF", "AFG", "004", "Afghanistan", "93", "XXX XXX XXXX", []),

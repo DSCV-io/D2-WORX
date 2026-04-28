@@ -52,7 +52,7 @@ export class GetChannelPreference
     }
 
     // Fetch from DB
-    let pref: ChannelPreference | null = null;
+    let pref: ChannelPreference | undefined;
     const result = await this.repo.findByContactId.handleAsync({ contactId: input.contactId });
     if (result.success && result.data) pref = result.data.pref;
 

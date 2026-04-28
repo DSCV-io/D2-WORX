@@ -6,6 +6,8 @@ import {
   ICheckHealthKey,
   IGetChannelPreferenceKey,
   ISetChannelPreferenceKey,
+  IGetUserChannelPreferenceKey,
+  ISetUserChannelPreferenceKey,
   IFindDeliveryRequestByIdKey,
   IFindDeliveryAttemptsByRequestIdKey,
 } from "@d2/comms-app";
@@ -64,7 +66,11 @@ export function createCommsGrpcService(provider: ServiceProvider): CommsServiceS
       return withTraceContext(call, async () => {
         const scope = createRpcScope(provider, call);
         try {
-          const { contactId } = call.request;
+          const contactId = call.request.contactId;
+          if (!contactId) {
+            callback({ code: grpc.status.INVALID_ARGUMENT, message: "contactId is required." });
+            return;
+          }
           const handler = scope.resolve(IGetChannelPreferenceKey);
           const result = await handler.handleAsync({
             contactId,
@@ -100,6 +106,10 @@ export function createCommsGrpcService(provider: ServiceProvider): CommsServiceS
         const scope = createRpcScope(provider, call);
         try {
           const req = call.request;
+          if (!req.contactId) {
+            callback({ code: grpc.status.INVALID_ARGUMENT, message: "contactId is required." });
+            return;
+          }
           const handler = scope.resolve(ISetChannelPreferenceKey);
           const result = await handler.handleAsync({
             contactId: req.contactId,
@@ -130,11 +140,93 @@ export function createCommsGrpcService(provider: ServiceProvider): CommsServiceS
       });
     },
 
+    getUserChannelPreference: (call, callback) => {
+      return withTraceContext(call, async () => {
+        const scope = createRpcScope(provider, call);
+        try {
+          const { contextKey, relatedEntityId } = call.request;
+          if (!contextKey || !relatedEntityId) {
+            callback({
+              code: grpc.status.INVALID_ARGUMENT,
+              message: "contextKey and relatedEntityId are required.",
+            });
+            return;
+          }
+          const handler = scope.resolve(IGetUserChannelPreferenceKey);
+          const result = await handler.handleAsync({ contextKey, relatedEntityId });
+
+          if (!result.success) {
+            callback(null, { result: d2ResultToProto(result), data: undefined });
+            return;
+          }
+
+          callback(null, {
+            result: d2ResultToProto(result),
+            data: result.data?.pref ? channelPreferenceToProto(result.data.pref) : undefined,
+          });
+        } catch (err) {
+          callback({
+            code: grpc.status.INTERNAL,
+            message: err instanceof Error ? err.message : "Unknown error",
+          });
+        } finally {
+          scope.dispose();
+        }
+      });
+    },
+
+    setUserChannelPreference: (call, callback) => {
+      return withTraceContext(call, async () => {
+        const scope = createRpcScope(provider, call);
+        try {
+          const req = call.request;
+          if (!req.contextKey || !req.relatedEntityId) {
+            callback({
+              code: grpc.status.INVALID_ARGUMENT,
+              message: "contextKey and relatedEntityId are required.",
+            });
+            return;
+          }
+          const handler = scope.resolve(ISetUserChannelPreferenceKey);
+          const result = await handler.handleAsync({
+            contextKey: req.contextKey,
+            relatedEntityId: req.relatedEntityId,
+            emailEnabled: req.emailEnabled,
+            smsEnabled: req.smsEnabled,
+          });
+
+          if (!result.success || !result.data) {
+            callback(null, { result: d2ResultToProto(result), data: undefined });
+            return;
+          }
+
+          callback(null, {
+            result: d2ResultToProto(result),
+            data: channelPreferenceToProto(result.data.pref),
+          });
+        } catch (err) {
+          callback({
+            code: grpc.status.INTERNAL,
+            message: err instanceof Error ? err.message : "Unknown error",
+          });
+        } finally {
+          scope.dispose();
+        }
+      });
+    },
+
     getDeliveryStatus: (call, callback) => {
       return withTraceContext(call, async () => {
         const scope = createRpcScope(provider, call);
         try {
-          const { deliveryRequestId } = call.request;
+          const deliveryRequestId = call.request.deliveryRequestId;
+          if (!deliveryRequestId) {
+            callback({
+              code: grpc.status.INVALID_ARGUMENT,
+              message: "deliveryRequestId is required.",
+            });
+            return;
+          }
 
           const findRequestById = scope.resolve(IFindDeliveryRequestByIdKey);
           const reqResult = await findRequestById.handleAsync({

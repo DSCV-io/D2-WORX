@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="GetReferenceData.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
@@ -69,9 +69,9 @@ public class GetReferenceData : BaseHandler<GetReferenceData, I, O>, H
                 c.DisplayName,
                 c.OfficialName,
                 c.PhoneNumberPrefix,
-                SovereignCode = c.SovereignISO31661Alpha2Code ?? string.Empty,
-                PrimaryCurrency = c.PrimaryCurrencyISO4217AlphaCode ?? string.Empty,
-                PrimaryLocale = c.PrimaryLocaleIETFBCP47Tag ?? string.Empty,
+                SovereignCode = c.SovereignISO31661Alpha2Code,
+                PrimaryCurrency = c.PrimaryCurrencyISO4217AlphaCode,
+                PrimaryLocale = c.PrimaryLocaleIETFBCP47Tag,
                 Subdivisions = c.Subdivisions.Select(s => s.ISO31662Code).ToList(),
                 Currencies = c.Currencies.Select(cur => cur.ISO4217AlphaCode).ToList(),
                 Locales = c.Locales.Select(l => l.IETFBCP47Tag).ToList(),
@@ -92,10 +92,24 @@ public class GetReferenceData : BaseHandler<GetReferenceData, I, O>, H
                     DisplayName = c.DisplayName,
                     OfficialName = c.OfficialName,
                     PhoneNumberPrefix = c.PhoneNumberPrefix,
-                    SovereignIso31661Alpha2Code = c.SovereignCode,
-                    PrimaryCurrencyIso4217AlphaCode = c.PrimaryCurrency,
-                    PrimaryLocaleIetfBcp47Tag = c.PrimaryLocale,
                 };
+
+                // Optional fields — only set when non-null to avoid proto CheckNotNull.
+                if (c.SovereignCode != null)
+                {
+                    dto.SovereignIso31661Alpha2Code = c.SovereignCode;
+                }
+
+                if (c.PrimaryCurrency != null)
+                {
+                    dto.PrimaryCurrencyIso4217AlphaCode = c.PrimaryCurrency;
+                }
+
+                if (c.PrimaryLocale != null)
+                {
+                    dto.PrimaryLocaleIetfBcp47Tag = c.PrimaryLocale;
+                }
+
                 dto.SubdivisionIso31662Codes.AddRange(c.Subdivisions);
                 dto.CurrencyIso4217AlphaCodes.AddRange(c.Currencies);
                 dto.LocaleIetfBcp47Tags.AddRange(c.Locales);
@@ -154,6 +168,47 @@ public class GetReferenceData : BaseHandler<GetReferenceData, I, O>, H
             })
             .ToDictionaryAsync(l => l.IetfBcp47Tag, ct);
 
+        // Query timezones (project to anonymous type for nullable DST fields).
+        var timezonesRaw = await r_db.Timezones
+            .AsNoTracking()
+            .Select(t => new
+            {
+                t.IANAIdentifier,
+                t.DisplayName,
+                t.UTCOffsetSTD,
+                t.UTCOffsetDST,
+                t.AbbreviationSTD,
+                t.AbbreviationDST,
+                t.CountryISO31661Alpha2Code,
+            })
+            .ToListAsync(ct);
+
+        var timezones = timezonesRaw.ToDictionary(
+            t => t.IANAIdentifier,
+            t =>
+            {
+                var dto = new TimezoneDTO
+                {
+                    IanaIdentifier = t.IANAIdentifier,
+                    DisplayName = t.DisplayName,
+                    UtcOffsetStd = t.UTCOffsetSTD,
+                    AbbreviationStd = t.AbbreviationSTD,
+                    CountryIso31661Alpha2Code = t.CountryISO31661Alpha2Code,
+                };
+
+                if (t.UTCOffsetDST != null)
+                {
+                    dto.UtcOffsetDst = t.UTCOffsetDST;
+                }
+
+                if (t.AbbreviationDST != null)
+                {
+                    dto.AbbreviationDst = t.AbbreviationDST;
+                }
+
+                return dto;
+            });
+
         // Query geopolitical entities (project to anonymous type for EF compatibility).
         var geopoliticalEntitiesRaw = await r_db.GeopoliticalEntities
             .AsNoTracking()
@@ -208,6 +263,7 @@ public class GetReferenceData : BaseHandler<GetReferenceData, I, O>, H
             Currencies = { currencies },
             Languages = { languages },
             Locales = { locales },
+            Timezones = { timezones },
             GeopoliticalEntities = { geopoliticalEntities },
         };
 

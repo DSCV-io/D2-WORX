@@ -85,6 +85,7 @@ message GeoRefData {
   map<string, LanguageDTO> languages = 6; // Key is iso_639_1_code.
   map<string, LocaleDTO> locales = 7; // Key is ietf_bcp_47_tag.
   map<string, GeopoliticalEntityDTO> geopolitical_entities = 8; // Key is short_code.
+  map<string, TimezoneDTO> timezones = 9; // Key is iana_identifier.
 }
 
 // *********************
@@ -222,11 +223,12 @@ message ContactToCreateDTO {
   google.protobuf.Timestamp created_at = 1;
   string context_key = 2;
   string related_entity_id = 3;
-  ContactMethodsDTO contact_methods = 4;
-  PersonalDTO personal_details = 5;
-  ProfessionalDTO professional_details = 6;
-  LocationDTO location = 7;  // Full location data or just hash_id to reference existing.
-  string ietf_bcp47_tag = 8;  // IETF BCP 47 locale tag (e.g. "en-US", "fr-CA"). Synced from User.locale.
+  optional ContactMethodsDTO contact_methods = 4;
+  optional PersonalDTO personal_details = 5;
+  optional ProfessionalDTO professional_details = 6;
+  optional LocationDTO location = 7;  // Full location data or just hash_id to reference existing.
+  optional string ietf_bcp47_tag = 8;  // IETF BCP 47 locale tag (e.g. "en-US", "fr-CA"). Synced from User.locale.
+  optional string iana_identifier = 9;  // IANA timezone identifier (e.g. "America/New_York"). Synced from User.timezone.
 }
 
 // *********************
@@ -312,6 +314,21 @@ message LocaleDTO {
   string country_iso_3166_1_alpha_2_code = 5;
 }
 
+message TimezoneDTO {
+  // Primary key.
+  string iana_identifier = 1;
+
+  // Properties.
+  string display_name = 2;
+  string utc_offset_std = 3;
+  optional string utc_offset_dst = 4;
+  string abbreviation_std = 5;
+  optional string abbreviation_dst = 6;
+
+  // Foreign keys.
+  string country_iso_3166_1_alpha_2_code = 7;
+}
+
 message GeopoliticalEntityDTO {
   // Primary key.
   string short_code = 1;
@@ -331,8 +348,8 @@ message CoordinatesDTO {
 
 message StreetAddressDTO {
   string line_1 = 1;
-  string line_2 = 2;
-  string line_3 = 3;
+  optional string line_2 = 2;
+  optional string line_3 = 3;
 }
 
 message EmailAddressDTO {
@@ -346,22 +363,22 @@ message PhoneNumberDTO {
 }
 
 message PersonalDTO {
-  string title = 1;
+  optional string title = 1;
   string first_name = 2;
-  string preferred_name = 3;
-  string middle_name = 4;
-  string last_name = 5;
-  string generational_suffix = 6;
+  optional string preferred_name = 3;
+  optional string middle_name = 4;
+  optional string last_name = 5;
+  optional string generational_suffix = 6;
   repeated string professional_credentials = 7;
-  string date_of_birth = 8;
-  string biological_sex = 9;
+  optional string date_of_birth = 8;
+  optional string biological_sex = 9;
 }
 
 message ProfessionalDTO {
   string company_name = 1;
-  string job_title = 2;
-  string department = 3;
-  string company_website = 4;
+  optional string job_title = 2;
+  optional string department = 3;
+  optional string company_website = 4;
 }
 
 message ContactMethodsDTO {
@@ -371,12 +388,12 @@ message ContactMethodsDTO {
 
 message LocationDTO {
   string hash_id = 1;
-  CoordinatesDTO coordinates = 2;
-  StreetAddressDTO address = 3;
-  string city = 4;
-  string postal_code = 5;
-  string subdivision_iso_3166_2_code = 6;
-  string country_iso_3166_1_alpha_2_code = 7;
+  optional CoordinatesDTO coordinates = 2;
+  optional StreetAddressDTO address = 3;
+  optional string city = 4;
+  optional string postal_code = 5;
+  optional string subdivision_iso_3166_2_code = 6;
+  optional string country_iso_3166_1_alpha_2_code = 7;
 }
 
 message WhoIsDTO {
@@ -389,34 +406,34 @@ message WhoIsDTO {
   reserved 5;  // Removed: fingerprint (no longer part of WhoIs identity).
 
   // ASN properties.
-  int32 asn = 6;
-  string as_name = 7;
-  string as_domain = 8;
-  string as_type = 9;
+  optional int32 asn = 6;
+  optional string as_name = 7;
+  optional string as_domain = 8;
+  optional string as_type = 9;
 
   // Carrier properties.
-  string carrier_name = 10;
-  string mcc = 11;
-  string mnc = 12;
+  optional string carrier_name = 10;
+  optional string mcc = 11;
+  optional string mnc = 12;
 
   // Change dates (ISO 8601 date strings).
-  string as_changed = 13;
-  string geo_changed = 14;
+  optional string as_changed = 13;
+  optional string geo_changed = 14;
 
   // Network flags.
-  bool is_anonymous = 15;
-  bool is_anycast = 16;
-  bool is_hosting = 17;
-  bool is_mobile = 18;
-  bool is_satellite = 19;
-  bool is_proxy = 20;
-  bool is_relay = 21;
-  bool is_tor = 22;
-  bool is_vpn = 23;
-  string privacy_name = 24;
+  optional bool is_anonymous = 15;
+  optional bool is_anycast = 16;
+  optional bool is_hosting = 17;
+  optional bool is_mobile = 18;
+  optional bool is_satellite = 19;
+  optional bool is_proxy = 20;
+  optional bool is_relay = 21;
+  optional bool is_tor = 22;
+  optional bool is_vpn = 23;
+  optional string privacy_name = 24;
 
   // Location data.
-  LocationDTO location = 25;  // Full location data (null if no location).
+  optional LocationDTO location = 25;  // Full location data (null if no location).
 }
 
 message ContactDTO {
@@ -424,9 +441,10 @@ message ContactDTO {
   google.protobuf.Timestamp created_at = 2;
   string context_key = 3;
   string related_entity_id = 4;
-  ContactMethodsDTO contact_methods = 5;
-  PersonalDTO personal_details = 6;
-  ProfessionalDTO professional_details = 7;
-  LocationDTO location = 8;  // Full location data (null if no location).
+  optional ContactMethodsDTO contact_methods = 5;
+  optional PersonalDTO personal_details = 6;
+  optional ProfessionalDTO professional_details = 7;
+  optional LocationDTO location = 8;  // Full location data (null if no location).
   string ietf_bcp47_tag = 9;  // IETF BCP 47 locale tag (e.g. "en-US", "fr-CA"). Synced from User.locale.
+  string iana_identifier = 10;  // IANA timezone identifier (e.g. "America/New_York"). Synced from User.timezone.
 }

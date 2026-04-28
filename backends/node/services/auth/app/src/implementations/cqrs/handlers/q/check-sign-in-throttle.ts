@@ -70,7 +70,11 @@ export class CheckSignInThrottle
               value: true,
               expirationMs: SIGN_IN_THROTTLE.KNOWN_GOOD_CACHE_TTL_MS,
             })
-            .catch(() => {});
+            .catch((err: unknown) =>
+              this.context.logger.debug("CheckSignInThrottle: cache set failed", {
+                error: err instanceof Error ? err.message : String(err),
+              }),
+            );
         }
         return D2Result.ok({ data: { blocked: false } });
       }
@@ -84,8 +88,11 @@ export class CheckSignInThrottle
 
       // 5. Not known-good, not locked → allow
       return D2Result.ok({ data: { blocked: false } });
-    } catch {
+    } catch (err: unknown) {
       // Fail-open: any error → allow the sign-in attempt
+      this.context.logger.warn("CheckSignInThrottle: store error (fail-open)", {
+        error: err instanceof Error ? err.message : String(err),
+      });
       return D2Result.ok({ data: { blocked: false } });
     }
   }

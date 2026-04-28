@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { nameField, emailField, passwordField } from "$lib/shared/forms/schemas.js";
+import * as m from "$lib/paraglide/messages.js";
 
 /**
  * Sign-up form schema — real auth integration.
@@ -16,14 +17,14 @@ export function createSignUpSchema() {
       email: emailField(),
       confirmEmail: emailField(),
       password: passwordField(),
-      confirmPassword: z.string().min(1, "Required"),
+      confirmPassword: z.string().min(1, { error: () => m.webclient_forms_required() }),
     })
     .refine((d) => d.email === d.confirmEmail, {
-      message: "Emails do not match",
+      error: () => m.webclient_forms_emails_mismatch(),
       path: ["confirmEmail"],
     })
     .refine((d) => d.password === d.confirmPassword, {
-      message: "Passwords do not match",
+      error: () => m.webclient_forms_passwords_mismatch(),
       path: ["confirmPassword"],
     });
 }

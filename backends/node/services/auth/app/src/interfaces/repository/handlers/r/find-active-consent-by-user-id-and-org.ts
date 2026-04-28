@@ -7,7 +7,7 @@ export interface FindActiveConsentByUserIdAndOrgInput {
 }
 
 export interface FindActiveConsentByUserIdAndOrgOutput {
-  readonly consent: EmulationConsent | null;
+  readonly consent?: EmulationConsent;
 }
 
 export type IFindActiveConsentByUserIdAndOrgHandler = IHandler<

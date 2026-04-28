@@ -27,19 +27,16 @@ export interface ScopeVariables {
 }
 
 /**
- * Maps auth-domain org type strings (lowercase) to handler OrgType enum values.
+ * The `OrgType` enum values are now identical to the lowercase wire strings
+ * stored in the session / DB / JWT, so this is a typed membership check
+ * rather than a translation. Returns undefined for unknown / missing values
+ * so consumers can fail-closed.
  */
-const ORG_TYPE_MAP: Record<string, OrgType> = {
-  admin: OrgType.Admin,
-  support: OrgType.Support,
-  customer: OrgType.Customer,
-  third_party: OrgType.ThirdParty,
-  affiliate: OrgType.Affiliate,
-};
-
 function toHandlerOrgType(domainOrgType: string | undefined): OrgType | undefined {
   if (!domainOrgType) return undefined;
-  return ORG_TYPE_MAP[domainOrgType];
+  return (Object.values(OrgType) as string[]).includes(domainOrgType)
+    ? (domainOrgType as OrgType)
+    : undefined;
 }
 
 /**
@@ -182,6 +179,11 @@ export function createScopeMiddleware(provider: ServiceProvider) {
       // scope.resolve() would fail. The logger comes from what we just built.
       requestContextStorage.enterWith(requestContext);
       requestLoggerStorage.enterWith(logger);
+
+      // Re-publish the merged requestContext into c.var so policy middleware
+      // (`@d2/auth-policy` requireAuth/requireOrg/etc.) can read it.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (c as any).set(REQUEST_CONTEXT_KEY, requestContext);
 
       c.set(SCOPE_KEY, scope);
       await next();

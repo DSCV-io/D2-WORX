@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+import "common/v1/jobs.proto";
+
+package d2.files.v1;
+
+option csharp_namespace = "D2.Services.Protos.Files.V1";
+
+// ***********************************
+// **** FilesJobService gRPC API *****
+// ***********************************
+
+service FilesJobService {
+  // Hard-delete stale files past the retention period and clean orphaned storage objects.
+  rpc RunCleanup(d2.common.v1.TriggerJobRequest)
+      returns (d2.common.v1.TriggerJobResponse);
+}

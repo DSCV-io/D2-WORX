@@ -8,13 +8,13 @@ import {
   createDeliveryRequest,
   createDeliveryAttempt,
   transitionDeliveryAttemptStatus,
-  markDeliveryRequestProcessed,
   resolveChannels,
   computeNextRetryAt,
   isMaxAttemptsReached,
   COMMS_RETRY,
+  RETRY_POLICY,
 } from "@d2/comms-domain";
-import type { Channel, DeliveryAttempt } from "@d2/comms-domain";
+import type { Channel, ChannelPreference, DeliveryAttempt } from "@d2/comms-domain";
 import type {
   MessageRepoHandlers,
   DeliveryRequestRepoHandlers,
@@ -26,22 +26,45 @@ import type { IChannelDispatcher } from "./channel-dispatchers.js";
 type Input = Complex.DeliverInput;
 type Output = Complex.DeliverOutput;
 
-const deliverSchema = z.object({
-  correlationId: zodGuid,
-  recipientContactId: zodGuid,
-  title: z.string().min(1).max(255),
-  content: z.string().min(1).max(50_000),
-  plainTextContent: z.string().max(50_000),
-  sensitive: z.boolean().optional(),
-  urgency: z.enum(["normal", "urgent"]).optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-  senderService: z.string().min(1).max(50),
-});
+const deliverSchema = z
+  .object({
+    correlationId: zodGuid,
+    recipientContactId: zodGuid.optional(),
+    alternativeContactInfo: z
+      .object({
+        email: z.string().email().max(254).optional(),
+        phone: z
+          .string()
+          .regex(/^\d{7,15}$/)
+          .optional(),
+      })
+      .refine((v) => !!(v.email || v.phone), {
+        message: "alternativeContactInfo must include at least one of email or phone",
+      })
+      .optional(),
+    title: z.string().min(1).max(255),
+    content: z.string().min(1).max(50_000),
+    plainTextContent: z.string().min(1).max(50_000),
+    channels: z.array(z.enum(["email", "sms"])).optional(),
+    urgency: z.enum(["normal", "urgent"]).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+    senderService: z.string().min(1).max(50),
+  })
+  .refine((v) => !!v.recipientContactId !== !!v.alternativeContactInfo, {
+    message: "Exactly one of recipientContactId or alternativeContactInfo must be provided",
+  });
 
 /**
  * Core delivery orchestrator. Creates Message + DeliveryRequest, resolves
  * the recipient's address, determines channels, and dispatches via channel
  * dispatchers in parallel (Promise.allSettled).
+ *
+ * Two recipient modes:
+ * - **Contact-based** (`recipientContactId`): resolves email/phone via
+ *   geo-client, applies channel preferences.
+ * - **Transient** (`alternativeContactInfo`): bypasses Geo and channel-pref
+ *   lookup; uses provided email/phone directly. Used for OTP delivery to
+ *   unverified addresses.
  *
  * Channel-specific logic (content transformation, provider invocation) is
  * delegated to IChannelDispatcher implementations. The handler owns
@@ -84,86 +107,151 @@ export class Deliver extends BaseHandler<Input, Output> implements Complex.IDeli
     const validation = this.validateInput(deliverSchema, input);
     if (!validation.success) return D2Result.bubbleFail(validation);
 
-    // Step 0b: Idempotency check via correlationId
+    // Step 0b: Idempotency lookup via correlationId. The retry topology
+    // re-publishes the SAME message body (same correlationId) on transient
+    // failures, so a hit here means either:
+    //   (a) a duplicate of a fully-processed delivery (early-return ok), OR
+    //   (b) a tier-queue retry where one or more channels still have
+    //       unconsumed retry budget — in which case we re-dispatch the
+    //       still-failed channels at attemptNumber + 1. Without (b) the
+    //       retry topology silently no-ops every transient provider failure.
     const existing = await this.requestRepo.findByCorrelationId.handleAsync({
       correlationId: input.correlationId,
     });
+
+    let messageId: string;
+    let requestId: string;
+    /** When set, the run is a retry — only these channels (and the corresponding
+     *  attemptNumber) should be re-dispatched. Empty map = fresh run. */
+    const retryAttemptByChannel = new Map<Channel, number>();
+    let priorAttempts: DeliveryAttempt[] = [];
+
     if (existing.success && existing.data?.request) {
-      // Already processed — return existing data
-      const existingAttempts = await this.attemptRepo.findByRequestId.handleAsync({
-        requestId: existing.data.request.id,
+      const existingReq = existing.data.request;
+      const existingAttemptsResult = await this.attemptRepo.findByRequestId.handleAsync({
+        requestId: existingReq.id,
       });
-      return D2Result.ok({
-        data: {
-          messageId: existing.data.request.messageId,
-          requestId: existing.data.request.id,
-          attempts: existingAttempts.data?.attempts ?? [],
-        },
+      priorAttempts = existingAttemptsResult.data?.attempts ?? [];
+
+      // Per-channel: pick the highest attemptNumber. A channel needs another
+      // dispatch when its latest attempt is `failed`, has `nextRetryAt`, and
+      // hasn't hit the cap yet.
+      const latestPerChannel = new Map<Channel, DeliveryAttempt>();
+      for (const a of priorAttempts) {
+        const cur = latestPerChannel.get(a.channel);
+        if (!cur || a.attemptNumber > cur.attemptNumber) latestPerChannel.set(a.channel, a);
+      }
+      for (const [channel, attempt] of latestPerChannel) {
+        if (
+          attempt.status === "failed" &&
+          attempt.nextRetryAt != null &&
+          attempt.attemptNumber < RETRY_POLICY.MAX_ATTEMPTS
+        ) {
+          retryAttemptByChannel.set(channel, attempt.attemptNumber + 1);
+        }
+      }
+
+      // No channel has unconsumed retry budget → fully-processed duplicate.
+      if (retryAttemptByChannel.size === 0) {
+        return D2Result.ok({
+          data: {
+            messageId: existingReq.messageId,
+            requestId: existingReq.id,
+            attempts: priorAttempts,
+          },
+        });
+      }
+
+      messageId = existingReq.messageId;
+      requestId = existingReq.id;
+    } else {
+      // Step 1: Create domain Message
+      const message = createMessage({
+        senderService: input.senderService,
+        title: input.title,
+        content: input.content,
+        plainTextContent: input.plainTextContent,
+        channels: input.channels,
+        urgency: input.urgency,
+        metadata: input.metadata,
       });
+
+      // Step 2: Create domain DeliveryRequest (recipientContactId may be undefined for transient sends)
+      const request = createDeliveryRequest({
+        messageId: message.id,
+        correlationId: input.correlationId,
+        recipientContactId: input.recipientContactId,
+      });
+
+      // Step 3: Persist message + request
+      const msgResult = await this.messageRepo.create.handleAsync({ message });
+      if (!msgResult.success) return D2Result.bubbleFail(msgResult);
+
+      const reqResult = await this.requestRepo.create.handleAsync({ request });
+      if (!reqResult.success) return D2Result.bubbleFail(reqResult);
+
+      messageId = message.id;
+      requestId = request.id;
     }
 
-    // Step 1: Create domain Message
-    const message = createMessage({
-      senderService: input.senderService,
-      title: input.title,
-      content: input.content,
-      plainTextContent: input.plainTextContent,
-      sensitive: input.sensitive,
-      urgency: input.urgency,
-      metadata: input.metadata,
-    });
+    // Step 4: Resolve recipient addresses
+    let email: string | undefined;
+    let phone: string | undefined;
+    let prefs: ChannelPreference | undefined;
 
-    // Step 2: Create domain DeliveryRequest
-    const request = createDeliveryRequest({
-      messageId: message.id,
-      correlationId: input.correlationId,
-      recipientContactId: input.recipientContactId,
-    });
+    if (input.alternativeContactInfo) {
+      // Transient send — addresses provided directly, skip Geo + preference lookup.
+      email = input.alternativeContactInfo.email;
+      phone = input.alternativeContactInfo.phone;
+    } else if (input.recipientContactId) {
+      const resolved = await this.recipientResolver.handleAsync({
+        contactId: input.recipientContactId,
+      });
+      if (!resolved.success || !resolved.data) {
+        return D2Result.bubbleFail(resolved);
+      }
+      email = resolved.data.email;
+      phone = resolved.data.phone;
 
-    // Step 3: Persist message + request
-    const msgResult = await this.messageRepo.create.handleAsync({ message });
-    if (!msgResult.success) return D2Result.bubbleFail(msgResult);
-
-    const reqResult = await this.requestRepo.create.handleAsync({ request });
-    if (!reqResult.success) return D2Result.bubbleFail(reqResult);
-
-    // Step 4: Resolve recipient address
-    const resolved = await this.recipientResolver.handleAsync({
-      contactId: input.recipientContactId,
-    });
-
-    if (!resolved.success || !resolved.data) {
-      return D2Result.bubbleFail(resolved);
+      // Step 5: Resolve channel preferences (only meaningful when we have a contactId)
+      const prefResult = await this.channelPrefRepo.findByContactId.handleAsync({
+        contactId: input.recipientContactId,
+      });
+      if (prefResult.success && prefResult.data) {
+        prefs = prefResult.data.pref;
+      }
     }
 
-    const { email, phone } = resolved.data;
-
-    // Step 5: Resolve channel preferences
-    let prefs = null;
-    const prefResult = await this.channelPrefRepo.findByContactId.handleAsync({
-      contactId: input.recipientContactId,
+    // Step 6: Resolve channels via domain rule. On a fresh run we use the
+    // `Message` we just built; on a retry we don't have that local — channels
+    // resolution only depends on `urgency` + `channels` from the input, which
+    // are stable across retry attempts (same body re-published), so building
+    // an ephemeral Message-shaped object for the rule is correct here.
+    // (`createMessage` defaults the same way.)
+    const channelsResult = resolveChannels(prefs, {
+      urgency: input.urgency ?? "normal",
+      channels: input.channels ?? [],
     });
-    if (prefResult.success && prefResult.data) {
-      prefs = prefResult.data.pref;
-    }
 
-    // Step 6: Resolve channels via domain rule
-    const channelsResult = resolveChannels(prefs, message);
-
-    // Step 7: Filter to deliverable channels (must have address + dispatcher)
+    // Step 7: Filter to deliverable channels (must have address + dispatcher).
+    // On a retry run we ALSO restrict to channels that still have unconsumed
+    // retry budget — otherwise we'd re-send to a channel that already
+    // succeeded (duplicate email/SMS) or hit max attempts (wasted dispatch).
+    const isRetryRun = retryAttemptByChannel.size > 0;
     const deliverableChannels: Array<{ channel: Channel; address: string }> = [];
     const skippedReasons: string[] = [];
     for (const ch of channelsResult.channels) {
+      if (isRetryRun && !retryAttemptByChannel.has(ch)) continue;
       if (ch === "email" && email && this.dispatchers.has("email")) {
         deliverableChannels.push({ channel: "email", address: email });
       } else if (ch === "sms" && phone && this.dispatchers.has("sms")) {
         deliverableChannels.push({ channel: "sms", address: phone });
       } else if (ch === "email" && !email) {
-        skippedReasons.push("email: no address on contact");
+        skippedReasons.push("email: no address available");
       } else if (ch === "email" && !this.dispatchers.has("email")) {
         skippedReasons.push("email: no dispatcher configured");
       } else if (ch === "sms" && !phone) {
-        skippedReasons.push("sms: no phone number on contact");
+        skippedReasons.push("sms: no phone number available");
       } else if (ch === "sms" && !this.dispatchers.has("sms")) {
         skippedReasons.push("sms: no dispatcher configured");
       }
@@ -181,15 +269,17 @@ export class Deliver extends BaseHandler<Input, Output> implements Complex.IDeli
       });
     }
 
-    // Step 8: Dispatch to all channels in parallel
+    // Step 8: Dispatch to all channels in parallel. On a retry the
+    // attemptNumber is the prior latest + 1 (set in retryAttemptByChannel);
+    // on a fresh run every channel starts at 1.
     const dispatchTasks = deliverableChannels.map(({ channel, address }) => ({
       channel,
       address,
       attempt: createDeliveryAttempt({
-        requestId: request.id,
+        requestId,
         channel,
         recipientAddress: address,
-        attemptNumber: 1,
+        attemptNumber: retryAttemptByChannel.get(channel) ?? 1,
       }),
     }));
 
@@ -220,7 +310,7 @@ export class Deliver extends BaseHandler<Input, Output> implements Complex.IDeli
           });
         } else {
           const nextRetryAt = isMaxAttemptsReached(attempt.attemptNumber)
-            ? null
+            ? undefined
             : computeNextRetryAt(attempt.attemptNumber);
           attempt = transitionDeliveryAttemptStatus(attempt, "failed", {
             error: dispatchResult.error,
@@ -230,7 +320,7 @@ export class Deliver extends BaseHandler<Input, Output> implements Complex.IDeli
       } else {
         // Dispatcher threw — treat as failed with retry
         const nextRetryAt = isMaxAttemptsReached(attempt.attemptNumber)
-          ? null
+          ? undefined
           : computeNextRetryAt(attempt.attemptNumber);
         attempt = transitionDeliveryAttemptStatus(attempt, "failed", {
           error: settled.reason instanceof Error ? settled.reason.message : "Dispatch error",
@@ -239,54 +329,82 @@ export class Deliver extends BaseHandler<Input, Output> implements Complex.IDeli
       }
 
       // Persist attempt
-      await this.attemptRepo.create.handleAsync({ attempt });
+      const createAttemptResult = await this.attemptRepo.create.handleAsync({ attempt });
+      if (!createAttemptResult.success) {
+        this.context.logger.warn("Deliver: failed to persist delivery attempt", {
+          attemptId: attempt.id,
+          channel: attempt.channel,
+        });
+      }
 
       if (attempt.status !== "pending") {
-        await this.attemptRepo.updateStatus.handleAsync({
+        const updateStatusResult = await this.attemptRepo.updateStatus.handleAsync({
           id: attempt.id,
           status: attempt.status,
-          providerMessageId: attempt.providerMessageId ?? undefined,
-          error: attempt.error ?? undefined,
+          providerMessageId: attempt.providerMessageId,
+          error: attempt.error,
           nextRetryAt: attempt.nextRetryAt,
         });
+        if (!updateStatusResult.success) {
+          this.context.logger.warn("Deliver: failed to update attempt status", {
+            attemptId: attempt.id,
+            status: attempt.status,
+          });
+        }
       }
 
       attempts.push(attempt);
     }
 
-    // Step 8b: Check for retryable delivery failures
+    // Step 8b: Check for retryable delivery failures across the JUST-dispatched
+    // attempts. Prior attempts (from a retry hit) cannot be retried again
+    // here — the consumer's retry topology re-publishes; this run only
+    // commits the new attempts. If any new attempt failed with retry budget,
+    // signal the consumer to schedule another tier-queue retry.
     const retryableFailures = attempts.filter(
-      (a) => a.status === "failed" && a.nextRetryAt !== null,
+      (a) => a.status === "failed" && a.nextRetryAt != null,
     );
     if (retryableFailures.length > 0) {
-      return D2Result.fail({
+      return D2Result.serviceUnavailable({
         messages: [TK.comms.errors.DELIVERY_RETRY_SCHEDULED],
-        statusCode: 503,
         errorCode: COMMS_RETRY.DELIVERY_FAILED,
       });
     }
 
-    // Step 9: If all attempts are terminal, mark request as processed
-    const allTerminal = attempts.every((a) => a.status === "sent" || a.status === "failed");
-    const allFailed = attempts.every((a) => a.status === "failed");
-    const noRetries = allFailed && attempts.every((a) => a.nextRetryAt === null);
+    // Step 9: Mark request processed iff every channel (across prior + new
+    // attempts, latest per channel) is terminal — i.e. either `sent` or
+    // `failed` with no remaining retry budget. On a retry run we MUST
+    // include `priorAttempts` here, otherwise channels that succeeded in the
+    // initial dispatch would never close out the request.
+    const allAttempts = [...priorAttempts, ...attempts];
+    const latestPerChannel = new Map<Channel, DeliveryAttempt>();
+    for (const a of allAttempts) {
+      const cur = latestPerChannel.get(a.channel);
+      if (!cur || a.attemptNumber > cur.attemptNumber) latestPerChannel.set(a.channel, a);
+    }
+    const isTerminal = (a: DeliveryAttempt): boolean =>
+      a.status === "sent" || (a.status === "failed" && a.nextRetryAt == null);
+    const allTerminal = [...latestPerChannel.values()].every(isTerminal);
 
-    if (allTerminal && (!allFailed || noRetries)) {
-      const processed = markDeliveryRequestProcessed(request);
-      await this.requestRepo.markProcessed.handleAsync({ id: processed.id });
+    if (allTerminal) {
+      // We don't have the in-memory `DeliveryRequest` entity on the retry
+      // path, and the `processedAt` transition is purely persistence — bypass
+      // the domain helper and persist by id directly.
+      await this.requestRepo.markProcessed.handleAsync({ id: requestId });
     }
 
     return D2Result.ok({
       data: {
-        messageId: message.id,
-        requestId: request.id,
-        attempts,
+        messageId,
+        requestId,
+        attempts: allAttempts,
       },
     });
   }
 }
 
 export type {
+  AlternativeContactInfo,
   DeliverInput,
   DeliverOutput,
 } from "../../../../interfaces/cqrs/handlers/x/deliver.js";

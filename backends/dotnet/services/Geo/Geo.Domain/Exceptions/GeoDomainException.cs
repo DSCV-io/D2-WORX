@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="GeoDomainException.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>

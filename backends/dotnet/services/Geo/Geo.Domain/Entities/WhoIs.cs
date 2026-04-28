@@ -43,7 +43,7 @@ public record WhoIs
 
     #endregion
 
-    #region Content Addressible Properties
+    #region Content Addressable Properties
 
     /// <summary>
     /// Gets the IP address of the record.

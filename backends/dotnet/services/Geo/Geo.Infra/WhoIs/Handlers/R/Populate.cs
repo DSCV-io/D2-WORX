@@ -10,6 +10,7 @@ using System.Globalization;
 using System.Net;
 using D2.Geo.App.Interfaces.WhoIs;
 using D2.Geo.Domain.Entities;
+using D2.Geo.Domain.Exceptions;
 using D2.Geo.Domain.ValueObjects;
 using D2.Shared.Handler;
 using D2.Shared.Result;
@@ -178,9 +179,9 @@ public partial class Populate : BaseHandler<Populate, I, O>, H
             {
                 coordinates = Coordinates.Create(lat, lon);
             }
-            catch
+            catch (GeoValidationException)
             {
-                // Invalid coordinates, skip.
+                // Invalid coordinates — skip location association.
             }
         }
 

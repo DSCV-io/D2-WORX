@@ -30,7 +30,7 @@ export class FindDeliveryRequestByCorrelationId
 
     const row = rows[0];
     return D2Result.ok({
-      data: { request: row ? toDeliveryRequest(row) : null },
+      data: { request: row ? toDeliveryRequest(row) : undefined },
     });
   }
 }

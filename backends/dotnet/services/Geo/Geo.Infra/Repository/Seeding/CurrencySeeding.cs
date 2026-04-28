@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="CurrencySeeding.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>

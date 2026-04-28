@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="HandlerOptions.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
