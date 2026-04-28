@@ -276,7 +276,7 @@ describe("createAuthHandle", () => {
       userId: { value: "user-99" },
       username: { value: "alice" },
       agentOrgId: { value: "org-1" },
-      agentOrgType: { value: "Customer" },
+      agentOrgType: { value: "customer" },
     });
   });
 

@@ -130,14 +130,14 @@ describe("verifyToken", () => {
       sub: "user-42",
       email: "test@d2.io",
       orgId: "org-1",
-      orgType: "Customer",
+      orgType: "customer",
       role: "member",
     });
     const result = await verifyToken(token, verifyOptions);
     expect(result.success).toBe(true);
     expect(result.data?.payload["email"]).toBe("test@d2.io");
     expect(result.data?.payload["orgId"]).toBe("org-1");
-    expect(result.data?.payload["orgType"]).toBe("Customer");
+    expect(result.data?.payload["orgType"]).toBe("customer");
     expect(result.data?.payload["role"]).toBe("member");
   });
 });
@@ -235,7 +235,7 @@ describe("populateRequestContext", () => {
       sub: "user-1",
       orgId: "org-1",
       orgName: "Test Org",
-      orgType: "Customer",
+      orgType: "customer",
       role: "admin",
     });
 
@@ -255,12 +255,12 @@ describe("populateRequestContext", () => {
       sub: "support-user",
       orgId: "support-org",
       orgName: "Support Org",
-      orgType: "Support",
+      orgType: "support",
       role: "member",
       isEmulating: true,
       emulatedOrgId: "customer-org",
       emulatedOrgName: "Customer Org",
-      emulatedOrgType: "Customer",
+      emulatedOrgType: "customer",
     });
 
     expect(ctx.isOrgEmulating).toBe(true);
@@ -292,7 +292,7 @@ describe("populateRequestContext", () => {
   it("computes isAgentStaff/isAgentAdmin for support org", () => {
     const ctx = populateRequestContext({
       sub: "user-1",
-      orgType: "Support",
+      orgType: "support",
     });
     expect(ctx.isAgentStaff).toBe(true);
     expect(ctx.isAgentAdmin).toBe(false);
@@ -301,7 +301,7 @@ describe("populateRequestContext", () => {
   it("computes isAgentStaff/isAgentAdmin for admin org", () => {
     const ctx = populateRequestContext({
       sub: "user-1",
-      orgType: "Admin",
+      orgType: "admin",
     });
     expect(ctx.isAgentStaff).toBe(true);
     expect(ctx.isAgentAdmin).toBe(true);
@@ -310,7 +310,7 @@ describe("populateRequestContext", () => {
   it("computes isAgentStaff=false for customer org", () => {
     const ctx = populateRequestContext({
       sub: "user-1",
-      orgType: "Customer",
+      orgType: "customer",
     });
     expect(ctx.isAgentStaff).toBe(false);
     expect(ctx.isAgentAdmin).toBe(false);
@@ -527,7 +527,7 @@ describe("jwtAuth middleware", () => {
       sub: "user-42",
       email: "test@d2.io",
       orgId: "org-1",
-      orgType: "Customer",
+      orgType: "customer",
       role: "member",
     });
 

@@ -75,7 +75,8 @@ function stringClaim(payload: JWTPayload, key: string): string | undefined {
 
 function parseOrgType(value: unknown): OrgType | undefined {
   if (typeof value !== "string") return undefined;
-  // JWT stores PascalCase org types matching the OrgType enum
+  // JWT stores the lowercase wire value (matches DB + .NET); the OrgType enum
+  // values are likewise lowercase, so a direct membership check is correct.
   if (Object.values(OrgType).includes(value as OrgType)) {
     return value as OrgType;
   }

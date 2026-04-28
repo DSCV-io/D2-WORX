@@ -27,19 +27,16 @@ export interface ScopeVariables {
 }
 
 /**
- * Maps auth-domain org type strings (lowercase) to handler OrgType enum values.
+ * The `OrgType` enum values are now identical to the lowercase wire strings
+ * stored in the session / DB / JWT, so this is a typed membership check
+ * rather than a translation. Returns undefined for unknown / missing values
+ * so consumers can fail-closed.
  */
-const ORG_TYPE_MAP: Record<string, OrgType> = {
-  admin: OrgType.Admin,
-  support: OrgType.Support,
-  customer: OrgType.Customer,
-  third_party: OrgType.ThirdParty,
-  affiliate: OrgType.Affiliate,
-};
-
 function toHandlerOrgType(domainOrgType: string | undefined): OrgType | undefined {
   if (!domainOrgType) return undefined;
-  return ORG_TYPE_MAP[domainOrgType];
+  return (Object.values(OrgType) as string[]).includes(domainOrgType)
+    ? (domainOrgType as OrgType)
+    : undefined;
 }
 
 /**
