@@ -10,6 +10,8 @@ import {
   createMockNotifier,
   createMockPushFileUpdate,
   createMockContext,
+  createMockAcquireLock,
+  createMockReleaseLock,
 } from "../../helpers/mock-handlers.js";
 import { TEST_CONFIG_MAP } from "../../helpers/test-config.js";
 
@@ -39,6 +41,8 @@ function createHandler(
     processVariants?: ReturnType<typeof createMockProcessVariants>;
     notifier?: ReturnType<typeof createMockNotifier>;
     pushFileUpdate?: ReturnType<typeof createMockPushFileUpdate>;
+    acquireLock?: ReturnType<typeof createMockAcquireLock>;
+    releaseLock?: ReturnType<typeof createMockReleaseLock>;
     skipDefaultFindById?: boolean;
   } = {},
 ) {
@@ -48,6 +52,8 @@ function createHandler(
   const processVariants = overrides.processVariants ?? createMockProcessVariants();
   const notifier = overrides.notifier ?? createMockNotifier();
   const pushFileUpdate = overrides.pushFileUpdate ?? createMockPushFileUpdate();
+  const acquireLock = overrides.acquireLock ?? createMockAcquireLock(true);
+  const releaseLock = overrides.releaseLock ?? createMockReleaseLock();
   const context = createMockContext();
 
   const file = makeProcessingFile();
@@ -64,6 +70,8 @@ function createHandler(
       notifier,
       pushFileUpdate,
       TEST_CONFIG_MAP,
+      acquireLock,
+      releaseLock,
       context,
     ),
     repo,
@@ -72,6 +80,8 @@ function createHandler(
     processVariants,
     notifier,
     pushFileUpdate,
+    acquireLock,
+    releaseLock,
     file,
   };
 }
@@ -85,6 +95,48 @@ describe("ProcessFile", () => {
     expect(result.data?.file.status).toBe("ready");
     expect(result.data?.file.variants).toBeTruthy();
     expect(repo.update.handleAsync).toHaveBeenCalled();
+  });
+
+  it("should bail out without dispatching when per-fileId lock cannot be acquired", async () => {
+    // Regression: prior to the fix, two consumer runs (broker channel close +
+    // redelivery during a long ClamAV/Sharp run) could both pass the
+    // `status !== "processing"` guard and both fire the gRPC callback,
+    // producing duplicate `user:updated` SignalR pushes and duplicate audit
+    // rows on the consuming service. The per-fileId lock now ensures only
+    // one worker proceeds.
+    const acquireLock = createMockAcquireLock(false);
+    const { handler, repo, notifier, scanFile } = createHandler({ acquireLock });
+
+    const result = await handler.handleAsync({ fileId: "file-001" });
+
+    expect(result.success).toBe(true);
+    // Critically: NO scan, NO notify, NO DB update happened — the lock
+    // holder owns the run.
+    expect(scanFile.handleAsync).not.toHaveBeenCalled();
+    expect(notifier.handleAsync).not.toHaveBeenCalled();
+    expect(repo.update.handleAsync).not.toHaveBeenCalled();
+  });
+
+  it("should always release the per-fileId lock, even on inner failure", async () => {
+    const scanFile = createMockScanFile();
+    vi.mocked(scanFile.handleAsync).mockResolvedValue(D2Result.serviceUnavailable());
+    const { handler, releaseLock } = createHandler({ scanFile });
+
+    await handler.handleAsync({ fileId: "file-001" });
+
+    expect(releaseLock.handleAsync).toHaveBeenCalled();
+  });
+
+  it("should pass `expectedStatus: processing` when transitioning to ready (CAS guard)", async () => {
+    const { handler, repo } = createHandler();
+    await handler.handleAsync({ fileId: "file-001" });
+
+    // Verify the final ready transition carries the CAS — otherwise a stale
+    // lock-holder could clobber the work of the next worker.
+    const updateCalls = vi.mocked(repo.update.handleAsync).mock.calls;
+    const readyCall = updateCalls.find(([arg]) => arg.file.status === "ready");
+    expect(readyCall).toBeDefined();
+    expect(readyCall![0].expectedStatus).toBe("processing");
   });
 
   it("should call OnFileProcessed notifier before DB update (fail-last)", async () => {

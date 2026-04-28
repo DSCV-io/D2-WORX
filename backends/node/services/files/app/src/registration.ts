@@ -128,6 +128,7 @@ export function addFilesApp(
           head: sp.resolve(IHeadStorageObjectKey),
           delete: sp.resolve(IDeleteStorageObjectKey),
         },
+        contextKeyConfigs,
         sp.resolve(IHandlerContextKey),
       ),
   );
@@ -159,6 +160,8 @@ export function addFilesApp(
         sp.resolve(INotifyFileProcessedKey),
         sp.resolve(IPushFileUpdateKey),
         contextKeyConfigs,
+        sp.resolve(DistributedCache.IDistributedCacheAcquireLockKey),
+        sp.resolve(DistributedCache.IDistributedCacheReleaseLockKey),
         sp.resolve(IHandlerContextKey),
       ),
   );

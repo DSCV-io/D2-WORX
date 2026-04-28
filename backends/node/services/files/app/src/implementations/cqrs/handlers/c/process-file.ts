@@ -1,5 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handler";
 import { D2Result } from "@d2/result";
+import type { DistributedCache } from "@d2/interfaces";
 import { z } from "zod";
 import {
   transitionFileStatus,
@@ -16,6 +18,14 @@ import type { INotifyFileProcessedHandler } from "../../../../interfaces/cqrs/ha
 import type { IPushFileUpdate } from "../../../../interfaces/realtime/handlers/push-file-update.js";
 import type { ContextKeyConfigMap } from "../../../../context-key-config.js";
 import { buildRawStorageKey, buildVariantStorageKey } from "@d2/files-domain";
+
+/**
+ * Per-fileId lock TTL. Long enough to outlast a worst-case ClamAV + Sharp
+ * pipeline on a large file, short enough that a crashed worker's lock auto-
+ * expires and the next redelivery can pick the file up. Renew if the
+ * pipeline ever needs to run longer than this.
+ */
+const _PROCESS_LOCK_TTL_MS = 10 * 60 * 1000; // 10 min
 
 type Input = Commands.ProcessFileInput;
 type Output = Commands.ProcessFileOutput;
@@ -46,6 +56,8 @@ export class ProcessFile
   private readonly notifier: INotifyFileProcessedHandler;
   private readonly pushFileUpdate: IPushFileUpdate;
   private readonly configs: ContextKeyConfigMap;
+  private readonly acquireLock: DistributedCache.IAcquireLockHandler;
+  private readonly releaseLock: DistributedCache.IReleaseLockHandler;
 
   constructor(
     repo: FileRepoHandlers,
@@ -55,6 +67,8 @@ export class ProcessFile
     notifier: INotifyFileProcessedHandler,
     pushFileUpdate: IPushFileUpdate,
     configs: ContextKeyConfigMap,
+    acquireLock: DistributedCache.IAcquireLockHandler,
+    releaseLock: DistributedCache.IReleaseLockHandler,
     context: IHandlerContext,
   ) {
     super(context);
@@ -65,12 +79,46 @@ export class ProcessFile
     this.notifier = notifier;
     this.pushFileUpdate = pushFileUpdate;
     this.configs = configs;
+    this.acquireLock = acquireLock;
+    this.releaseLock = releaseLock;
   }
 
   protected async executeAsync(input: Input): Promise<D2Result<Output | undefined>> {
     const validation = this.validateInput(schema, input);
     if (!validation.success) return D2Result.bubbleFail(validation);
 
+    // Per-fileId lock prevents two concurrent runs (broker channel close +
+    // redelivery during a long ClamAV/Sharp run, or two consumer instances)
+    // from racing past the status guard and double-firing the gRPC callback
+    // — which would otherwise produce duplicate `user:updated` SignalR pushes
+    // and duplicate audit rows on the consuming service.
+    const lockKey = `lock:files:process:${input.fileId}`;
+    const lockId = randomUUID();
+    const lockResult = await this.acquireLock.handleAsync({
+      key: lockKey,
+      lockId,
+      expirationMs: _PROCESS_LOCK_TTL_MS,
+    });
+    if (!lockResult.success || !lockResult.data?.acquired) {
+      // Another worker is processing this file; let the broker retry later.
+      return D2Result.ok({});
+    }
+
+    try {
+      return await this.runProcessing(input);
+    } finally {
+      await this.releaseLock
+        .handleAsync({ key: lockKey, lockId })
+        .catch((err) =>
+          this.context.logger.warn("ProcessFile: lock release failed", {
+            fileId: input.fileId,
+            err,
+          }),
+        );
+    }
+  }
+
+  private async runProcessing(input: Input): Promise<D2Result<Output | undefined>> {
     // Fetch file record
     const findResult = await this.repo.getById.handleAsync({ id: input.fileId });
     if (!findResult.success) return D2Result.bubbleFail(findResult);
@@ -227,9 +275,15 @@ export class ProcessFile
     });
     if (!notifyResult.success) return D2Result.bubbleFail(notifyResult);
 
-    // Only on callback success: transition to ready
+    // Only on callback success: transition to ready. CAS guard on `processing`
+    // is belt-and-suspenders against the lock TTL elapsing mid-pipeline (very
+    // long running processing) — without it a stale lock holder could clobber
+    // the work of the next worker.
     const readyFile = transitionFileStatus(file, "ready", { variants: fileVariants });
-    const updateResult = await this.repo.update.handleAsync({ file: readyFile });
+    const updateResult = await this.repo.update.handleAsync({
+      file: readyFile,
+      expectedStatus: "processing",
+    });
     if (!updateResult.success) return D2Result.bubbleFail(updateResult);
 
     // Clean up raw upload (fire-and-forget — orphaned objects cleaned by RunCleanup)

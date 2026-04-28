@@ -5,6 +5,7 @@ import { transitionFileStatus } from "@d2/files-domain";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
 import type { FileRepoHandlers } from "../../../../interfaces/repository/handlers/index.js";
 import type { FileStorageHandlers } from "../../../../interfaces/storage/handlers/index.js";
+import type { ContextKeyConfigMap } from "../../../../context-key-config.js";
 import { buildRawStorageKey } from "@d2/files-domain";
 
 type Input = Commands.IntakeFileInput;
@@ -32,15 +33,18 @@ export class IntakeFile extends BaseHandler<Input, Output> implements Commands.I
 
   private readonly repo: FileRepoHandlers;
   private readonly storage: Pick<FileStorageHandlers, "head" | "delete">;
+  private readonly configs: ContextKeyConfigMap;
 
   constructor(
     repo: FileRepoHandlers,
     storage: Pick<FileStorageHandlers, "head" | "delete">,
+    configs: ContextKeyConfigMap,
     context: IHandlerContext,
   ) {
     super(context);
     this.repo = repo;
     this.storage = storage;
+    this.configs = configs;
   }
 
   protected async executeAsync(input: Input): Promise<D2Result<Output | undefined>> {
@@ -54,33 +58,49 @@ export class IntakeFile extends BaseHandler<Input, Output> implements Commands.I
 
     const file = findResult.data.file;
 
-    // Verify actual upload size matches declared size (S3 presigned URLs can't enforce Content-Length)
+    // Verify actual upload size against BOTH the user-declared size AND the
+    // contextKey config's hard ceiling. S3 presigned PUT URLs can't enforce
+    // Content-Length client-side, so the actual bytes only get measured here
+    // (post-upload, via HEAD). The declared-size check catches honest clients
+    // that under-reported; the config-ceiling check catches a malicious client
+    // that declared a small size to pass UploadFile's pre-signing validation
+    // and then PUT a much larger object — declaring 5MB and uploading 5GB
+    // would otherwise pass the `actualSize > file.sizeBytes` test only if the
+    // declared size is also above the ceiling, which it never is. Without
+    // this second check the cap is bypassable for storage-cost amplification.
+    const config = this.configs.get(file.contextKey);
     const headResult = await this.storage.head.handleAsync({
       key: buildRawStorageKey(file),
     });
     if (headResult.success && headResult.data) {
       const actualSize = headResult.data.sizeBytes;
-      if (actualSize !== undefined && actualSize > file.sizeBytes) {
-        // Actual upload exceeds declared size — reject and clean up
-        this.context.logger.warn("Upload size mismatch", {
-          fileId: input.fileId,
-          declaredSize: file.sizeBytes,
-          actualSize,
-        });
-        const deleteResult = await this.storage.delete.handleAsync({
-          key: buildRawStorageKey(file),
-        });
-        if (!deleteResult.success) {
-          this.context.logger.warn("IntakeFile: failed to delete oversized object from storage", {
+      if (actualSize !== undefined) {
+        const exceedsDeclared = actualSize > file.sizeBytes;
+        const exceedsConfigCap = config !== undefined && actualSize > config.maxSizeBytes;
+        if (exceedsDeclared || exceedsConfigCap) {
+          this.context.logger.warn("Upload size rejected", {
             fileId: input.fileId,
+            declaredSize: file.sizeBytes,
+            actualSize,
+            configMaxSizeBytes: config?.maxSizeBytes,
+            reason: exceedsConfigCap ? "exceeds_config_cap" : "exceeds_declared",
           });
+          const deleteResult = await this.storage.delete.handleAsync({
+            key: buildRawStorageKey(file),
+          });
+          if (!deleteResult.success) {
+            this.context.logger.warn(
+              "IntakeFile: failed to delete oversized object from storage",
+              { fileId: input.fileId },
+            );
+          }
+          const rejectedFile = transitionFileStatus(file, "rejected", {
+            rejectionReason: "size_mismatch",
+          });
+          const rejectUpdateResult = await this.repo.update.handleAsync({ file: rejectedFile });
+          if (!rejectUpdateResult.success) return D2Result.bubbleFail(rejectUpdateResult);
+          return D2Result.ok({ data: { discarded: true, reason: "size_mismatch" } });
         }
-        const rejectedFile = transitionFileStatus(file, "rejected", {
-          rejectionReason: "size_mismatch",
-        });
-        const rejectUpdateResult = await this.repo.update.handleAsync({ file: rejectedFile });
-        if (!rejectUpdateResult.success) return D2Result.bubbleFail(rejectUpdateResult);
-        return D2Result.ok({ data: { discarded: true, reason: "size_mismatch" } });
       }
     }
 
