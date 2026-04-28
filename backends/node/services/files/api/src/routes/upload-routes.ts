@@ -6,6 +6,7 @@ import { D2Result } from "@d2/result";
 import { IUploadFileKey } from "@d2/files-app";
 import { TK } from "@d2/i18n";
 import { cleanDisplayStr } from "@d2/utilities";
+import { isValidGuid } from "@d2/handler";
 import type { ContextKeyConfigMap } from "@d2/files-app";
 import type { FilesVariables } from "../context-keys.js";
 
@@ -42,7 +43,19 @@ export function createUploadRoutes(
   });
 
   app.post("/threads/:threadId/attachments", async (c) => {
-    return handleUpload(c, contextKeyConfigs, "thread_attachment", () => c.req.param("threadId"));
+    // Validate threadId shape at the route boundary. The downstream
+    // `CanAccess` callback in Comms is the real authorization gate, but a
+    // UUID check here keeps malformed IDs out of the S3 key path and out of
+    // the gRPC payload — both of which embed `relatedEntityId` as a string
+    // segment that could otherwise carry path traversal or wildcard chars.
+    const threadId = c.req.param("threadId");
+    if (!isValidGuid(threadId)) {
+      return c.json(
+        D2Result.validationFailed({ messages: [TK.common.validation.ID_INVALID] }),
+        400 as ContentfulStatusCode,
+      );
+    }
+    return handleUpload(c, contextKeyConfigs, "thread_attachment", () => threadId);
   });
 
   return app;
