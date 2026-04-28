@@ -1,7 +1,6 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { resolve } from "node:path";
 import net from "node:net";
-import pg from "pg";
 
 let geoProcess: ChildProcess | undefined;
 let geoPort: number | undefined;
@@ -122,74 +121,7 @@ export async function startGeoService(opts: {
   // Wait for the HTTP health endpoint to be ready
   await waitForGeoReady(httpPort);
 
-  // Defensive: verify the timezones table is populated and seed any rows the
-  // contact FK relies on. EF Core migrations DO include InsertData for the full
-  // IANA list (incl. "America/New_York"), and the migration history shows
-  // `20260326190046_AddTimezones` applied — but in CI the seed rows aren't
-  // observable at contact-insert time, causing every browser-flow sign-up to
-  // fail with `FK_contacts_timezones_iana_identifier`. Root cause is being
-  // investigated separately; this seeds the minimum set of timezones that
-  // production code defaults to so tests can proceed. ON CONFLICT DO NOTHING
-  // keeps it idempotent if the migration's seed eventually shows up.
-  await ensureMinimumTimezoneSeed(opts.pgUrl);
-
   return `localhost:${grpcPort}`;
-}
-
-/**
- * Inserts the small set of timezones that auth/contact creation paths
- * default to, so foreign-key checks pass even if the EF migration seed
- * isn't observable in the test environment.
- */
-async function ensureMinimumTimezoneSeed(pgUrl: string): Promise<void> {
-  const client = new pg.Client({ connectionString: pgUrl });
-  try {
-    await client.connect();
-
-    // Pre-check: count rows so we can see in CI logs what the migration
-    // actually produced.
-    const before = await client.query<{ count: string }>("SELECT COUNT(*) FROM timezones");
-    console.log(`[Geo seed] timezones row count BEFORE manual seed: ${before.rows[0]?.count}`);
-
-    const checkBefore = await client.query<{ exists: boolean }>(
-      "SELECT EXISTS(SELECT 1 FROM timezones WHERE iana_identifier = 'America/New_York') AS exists",
-    );
-    console.log(
-      `[Geo seed] America/New_York exists BEFORE manual seed: ${checkBefore.rows[0]?.exists}`,
-    );
-
-    // Match the column shape from migration `20260326190046_AddTimezones`.
-    // Only "America/New_York" is strictly required — it's the EF column
-    // default + the auth-side fallback. Seeding a US-only set so we don't
-    // need to know about other country FK rows. ON CONFLICT keeps it
-    // idempotent if the migration's seed eventually does show up.
-    const result = await client.query(`
-      INSERT INTO timezones (
-        iana_identifier, abbreviation_dst, abbreviation_std,
-        country_iso_3166_1_alpha_2_code, display_name, utc_offset_dst, utc_offset_std
-      ) VALUES
-        ('America/New_York',    'EDT', 'EST', 'US', 'America / New York',    '-04:00', '-05:00'),
-        ('America/Los_Angeles', 'PDT', 'PST', 'US', 'America / Los Angeles', '-07:00', '-08:00'),
-        ('America/Chicago',     'CDT', 'CST', 'US', 'America / Chicago',     '-05:00', '-06:00')
-      ON CONFLICT (iana_identifier) DO NOTHING;
-    `);
-    console.log(`[Geo seed] manual INSERT affected ${result.rowCount ?? 0} row(s)`);
-
-    const after = await client.query<{ count: string }>("SELECT COUNT(*) FROM timezones");
-    console.log(`[Geo seed] timezones row count AFTER manual seed: ${after.rows[0]?.count}`);
-
-    const checkAfter = await client.query<{ exists: boolean }>(
-      "SELECT EXISTS(SELECT 1 FROM timezones WHERE iana_identifier = 'America/New_York') AS exists",
-    );
-    console.log(
-      `[Geo seed] America/New_York exists AFTER manual seed: ${checkAfter.rows[0]?.exists}`,
-    );
-  } catch (err) {
-    console.error(`[Geo seed] ERROR: ${err instanceof Error ? err.message : String(err)}`);
-    throw err;
-  } finally {
-    await client.end();
-  }
 }
 
 /**

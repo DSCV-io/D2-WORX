@@ -354,9 +354,15 @@ export function createAuth(
             // Read sign-up preferences from AsyncLocalStorage (set by Hono middleware
             // from PARAGLIDE_LOCALE + D2_TIMEZONE cookies). BetterAuth's databaseHooks
             // don't have request access, so this is the bridge.
+            //
+            // `||` (not `??`): BetterAuth's `additionalFields` may surface `""` here
+            // when no value is set + `input: false`. Empty string is non-nullish, so
+            // `??` would propagate `""` straight into the Geo contact insert and
+            // violate `FK_contacts_timezones_iana_identifier` / `FK_contacts_locales_*`.
+            // `||` falls through on empty string too, hitting the literal default.
             const prefs = signUpPrefsStorage.getStore();
-            const locale = prefs?.locale ?? (user.locale as string) ?? BASE_LOCALE;
-            const timezone = prefs?.timezone ?? (user.timezone as string) ?? "America/New_York";
+            const locale = prefs?.locale || (user.locale as string) || BASE_LOCALE;
+            const timezone = prefs?.timezone || (user.timezone as string) || "America/New_York";
 
             // Inject into user data so BetterAuth persists them to the DB row.
             data = { ...data, locale, timezone };
