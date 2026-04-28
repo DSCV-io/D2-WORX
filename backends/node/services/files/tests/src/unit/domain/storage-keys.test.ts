@@ -11,7 +11,6 @@ describe("Storage Key Utilities", () => {
       ["image/jpeg", "jpg"],
       ["image/png", "png"],
       ["image/webp", "webp"],
-      ["image/svg+xml", "svg"],
       ["application/pdf", "pdf"],
       ["video/mp4", "mp4"],
       ["audio/mpeg", "mp3"],

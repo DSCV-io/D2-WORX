@@ -21,7 +21,7 @@ const MIME_TO_EXT: Readonly<Record<string, string>> = {
   "image/png": "png",
   "image/gif": "gif",
   "image/webp": "webp",
-  "image/svg+xml": "svg",
+  // image/svg+xml deliberately excluded — see ALLOWED_CONTENT_TYPES.image
   "image/avif": "avif",
   "image/heic": "heic",
   "image/heif": "heif",

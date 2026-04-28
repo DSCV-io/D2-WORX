@@ -94,6 +94,25 @@ describe("UploadFile", () => {
     expect(result.statusCode).toBe(400);
   });
 
+  it("should reject SVG uploads in the image category (XSS via presigned GET — see B1)", async () => {
+    // Regression: `image/svg+xml` was previously in ALLOWED_CONTENT_TYPES.image,
+    // letting attackers upload SVG-with-script as avatar/org-logo. Presigned
+    // MinIO GET URLs serve the bytes with `Content-Type: image/svg+xml` and
+    // no `attachment` disposition, so the script executes in the storage
+    // origin. Drop SVG outright — no current product use case justifies the
+    // exposure.
+    const { handler } = createHandler();
+    const result = await handler.handleAsync({
+      ...validInput,
+      contextKey: "user_avatar",
+      contentType: "image/svg+xml",
+      displayName: "evil.svg",
+    });
+    expect(result.success).toBe(false);
+    expect(result.statusCode).toBe(400);
+    expect(result.errorCode).toBe("FILES_CONTENT_TYPE_NOT_ALLOWED");
+  });
+
   it("should return 413 when size exceeds config limit", async () => {
     const { handler } = createHandler();
     const result = await handler.handleAsync({

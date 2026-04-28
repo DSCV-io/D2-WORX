@@ -12,7 +12,6 @@ describe("Content Type Rules", () => {
       ["image/png", "image"],
       ["image/gif", "image"],
       ["image/webp", "image"],
-      ["image/svg+xml", "image"],
       ["image/avif", "image"],
       ["image/heic", "image"],
       ["image/heif", "image"],
@@ -53,6 +52,13 @@ describe("Content Type Rules", () => {
       expect(resolveContentCategory("text/html")).toBeUndefined();
       expect(resolveContentCategory("application/json")).toBeUndefined();
     });
+
+    it("should NOT classify image/svg+xml as image (B1: SVG dropped due to XSS via presigned GET)", () => {
+      // Regression: SVG was previously in the image category but enables script
+      // execution in the storage origin via presigned GET URLs. Stays out of
+      // every category so UploadFile rejects it as a disallowed content type.
+      expect(resolveContentCategory("image/svg+xml")).toBeUndefined();
+    });
   });
 
   describe("isContentTypeAllowed", () => {
@@ -81,6 +87,11 @@ describe("Content Type Rules", () => {
       expect(types).toContain("image/jpeg");
       expect(types).toContain("image/png");
       expect(types).toContain("image/webp");
+    });
+
+    it("should NOT include image/svg+xml in the image category (B1)", () => {
+      const types = getAllowedContentTypes(["image"]);
+      expect(types).not.toContain("image/svg+xml");
     });
 
     it("should return combined MIME types for multiple categories", () => {

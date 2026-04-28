@@ -11,11 +11,15 @@ import type {
 /**
  * Image processing provider using sharp.
  *
- * For each variant config with a maxDimension, resizes the image
- * to fit within that dimension (preserving aspect ratio, no enlargement)
- * and converts to WebP.
+ * For each variant config with a maxDimension, resizes the image to fit
+ * within that dimension (preserving aspect ratio, no enlargement) and
+ * converts to WebP.
  *
- * SVG content is returned as-is for all variants (no resize needed).
+ * SVG is not supported: it's excluded from `ALLOWED_CONTENT_TYPES.image`
+ * because SVGs can embed `<script>` and would execute in the storage origin
+ * via presigned GET URLs. UploadFile rejects unsupported content types
+ * before this handler ever runs, so any SVG reaching here is a contract
+ * violation.
  */
 export class ProcessVariants extends BaseHandler<I, O> implements IProcessVariants {
   constructor(context: IHandlerContext) {
@@ -27,23 +31,9 @@ export class ProcessVariants extends BaseHandler<I, O> implements IProcessVarian
   }
 
   protected async executeAsync(input: I): Promise<D2Result<O | undefined>> {
-    const isSvg = input.contentType === "image/svg+xml";
     const variants: ProcessedVariant[] = [];
 
     for (const variantConfig of input.variants) {
-      if (isSvg) {
-        // SVG: return original buffer for all variants
-        variants.push({
-          size: variantConfig.name,
-          buffer: input.buffer,
-          width: 0,
-          height: 0,
-          sizeBytes: input.buffer.length,
-          contentType: "image/svg+xml",
-        });
-        continue;
-      }
-
       const maxDim = variantConfig.maxDimension;
       const result = await sharp(input.buffer)
         .resize({

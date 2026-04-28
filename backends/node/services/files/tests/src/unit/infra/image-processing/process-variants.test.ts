@@ -168,32 +168,9 @@ describe("ProcessVariants", () => {
     expect(result.data!.variants[2]!.size).toBe("medium");
   });
 
-  it("should pass through SVG without processing", async () => {
-    const svgBuffer = Buffer.from("<svg>...</svg>");
-
-    const variants: VariantConfig[] = [{ name: "thumb", maxDimension: 64 }, { name: "original" }];
-
-    const result = await handler.handleAsync({
-      buffer: svgBuffer,
-      contentType: "image/svg+xml",
-      variants,
-    });
-
-    expect(result).toBeSuccess();
-    expect(result.data?.variants).toHaveLength(2);
-
-    // SVG variants should return original buffer as-is
-    for (const variant of result.data!.variants) {
-      expect(variant.buffer).toBe(svgBuffer);
-      expect(variant.width).toBe(0);
-      expect(variant.height).toBe(0);
-      expect(variant.sizeBytes).toBe(svgBuffer.length);
-      expect(variant.contentType).toBe("image/svg+xml");
-    }
-
-    // sharp should NOT be called for SVG
-    expect(mockSharpFn).not.toHaveBeenCalled();
-  });
+  // SVG support was removed (XSS via presigned GET URLs in storage origin).
+  // UploadFile rejects `image/svg+xml` before this handler ever runs;
+  // the handler no longer special-cases SVG. See process-variants.ts.
 
   it("should call webp() for non-SVG images", async () => {
     const { webp } = createSharpPipeline([makeSharpResult(64, 64, 100)]);
@@ -231,16 +208,6 @@ describe("ProcessVariants", () => {
     expect(result.data!.variants[0]!.size).toBe("preview");
   });
 
-  it("should handle SVG with empty variants array", async () => {
-    const result = await handler.handleAsync({
-      buffer: Buffer.from("<svg/>"),
-      contentType: "image/svg+xml",
-      variants: [],
-    });
-
-    expect(result).toBeSuccess();
-    expect(result.data?.variants).toHaveLength(0);
-  });
 
   it("should use maxDimension for both width and height in resize", async () => {
     const { resize } = createSharpPipeline([makeSharpResult(150, 150, 300)]);

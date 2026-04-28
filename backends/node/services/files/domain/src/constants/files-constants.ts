@@ -24,12 +24,19 @@ export const FILES_FIELD_LIMITS = {
  * Allowed MIME content types per content category.
  */
 export const ALLOWED_CONTENT_TYPES: Readonly<Record<ContentCategory, readonly string[]>> = {
+  // SVG is intentionally excluded — SVG files can embed `<script>` and other
+  // active content. The download path forces `Content-Disposition: attachment`,
+  // but presigned MinIO GET URLs (used by browsers for direct image rendering)
+  // serve the raw bytes with `Content-Type: image/svg+xml` and no disposition
+  // override, which executes embedded scripts in the storage origin.
+  // Sanitizing SVGs (e.g. via DOMPurify in process-variants) is feasible but
+  // adds a dependency for a content type with no current product use case;
+  // dropping it outright is the simpler, stronger fix.
   image: [
     "image/jpeg",
     "image/png",
     "image/gif",
     "image/webp",
-    "image/svg+xml",
     "image/avif",
     "image/heic",
     "image/heif",
