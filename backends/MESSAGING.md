@@ -29,6 +29,18 @@ Event types are defined in **Protocol Buffers** under `contracts/protos/events/v
 > (JSON over RabbitMQ), not proto-defined event types. The old `auth_events.proto` was
 > removed as dead code — Comms receives generic notification payloads instead.
 
+### Non-Proto Exchanges & Queues
+
+Several exchanges carry JSON payloads (universal shapes) rather than proto-encoded events:
+
+| Exchange              | Type   | Routing Keys                    | Queue(s)                                 | Producer / Consumers                                                                                                                                                                                                        |
+| --------------------- | ------ | ------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `comms.notifications` | fanout | _(none)_                        | `comms.notifications`                    | Producers: any service via `@d2/comms-client`. Consumer: Comms notification consumer.                                                                                                                                       |
+| `auth.user-anonymize` | fanout | _(none)_                        | _(per-consumer; defined by subscribers)_ | Producer: Auth `FinalizeDeletedUser` (called from `cleanup-deleted-users` Dkron job). Consumers: planned in Geo / Comms / Files (separate tickets) — each subscribes independently and anonymizes its own user-scoped refs. |
+| `files.events`        | direct | `file-uploaded`, `file-process` | `files.intake`, `files.processing`       | Producers: MinIO bucket notification (`file-uploaded`) and Files `IntakeFileUploaded` (`file-process`). Consumers (competing): `files.intake` → IntakeFileUploaded; `files.processing` → ProcessUploadedFile.               |
+
+`auth.user-anonymize` is fire-and-forget from Auth's perspective. Downstream consumers are expected to be idempotent (the same userId may be re-published if a Dkron run is retried). See `OPERATIONAL-GUARANTEES.md` for the at-least-once contract.
+
 ## Exchange Naming
 
 | Pattern              | Exchange Type | Example         | Use Case                          |

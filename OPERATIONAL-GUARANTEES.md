@@ -32,18 +32,19 @@ How D²-WORX prevents duplicate actions, ensures idempotency, and maintains corr
 
 ### No Duplicate Execution
 
-Each of the 8 daily maintenance jobs uses a **Redis distributed lock** (`SET NX PX`) to ensure only one instance processes a job at any given time:
+Each of the 9 daily maintenance jobs uses a **Redis distributed lock** (`SET NX PX`) to ensure only one instance processes a job at any given time:
 
-| Job                          | Service | Lock TTL     | Retention          |
-| ---------------------------- | ------- | ------------ | ------------------ |
-| `purge-stale-whois`          | Geo     | Configurable | 180 days           |
-| `cleanup-orphaned-locations` | Geo     | Configurable | Zero references    |
-| `purge-sessions`             | Auth    | Configurable | Expired sessions   |
-| `purge-sign-in-events`       | Auth    | Configurable | 90 days            |
-| `cleanup-invitations`        | Auth    | Configurable | 7 days post-expiry |
-| `cleanup-emulation-consents` | Auth    | Configurable | Expired/revoked    |
-| `purge-deleted-messages`     | Comms   | Configurable | 90 days            |
-| `purge-delivery-history`     | Comms   | Configurable | 365 days           |
+| Job                          | Service | Lock TTL     | Retention                                |
+| ---------------------------- | ------- | ------------ | ---------------------------------------- |
+| `purge-stale-whois`          | Geo     | Configurable | 180 days                                 |
+| `cleanup-orphaned-locations` | Geo     | Configurable | Zero references                          |
+| `purge-sessions`             | Auth    | Configurable | Expired sessions                         |
+| `purge-sign-in-events`       | Auth    | Configurable | 90 days                                  |
+| `cleanup-invitations`        | Auth    | Configurable | 7 days post-expiry                       |
+| `cleanup-emulation-consents` | Auth    | Configurable | Expired/revoked                          |
+| `purge-deleted-messages`     | Comms   | Configurable | 90 days                                  |
+| `purge-delivery-history`     | Comms   | Configurable | 365 days                                 |
+| `cleanup-deleted-users`      | Auth    | Configurable | 30-day soft-delete grace, then anonymize |
 
 **Execution flow:** Dkron (cron trigger) → HTTP POST to REST Gateway (service key auth) → Gateway forwards via gRPC (API key credentials) → Service handler acquires Redis lock → Batch delete loop → Release lock → Return result
 
@@ -120,6 +121,35 @@ US, CA, GB are exempt from country-level blocking to avoid false positives from 
 - `delivery_attempt` rows are linked to their parent request via `delivery_request_id` — deduplication is at the request level
 - A unique constraint on `(request_id, channel, attempt_number)` enforces attempt-level deduplication (`uq_delivery_attempt_request_channel_attempt`)
 
+### Anonymize Fanout (`auth.user-anonymize`)
+
+- Producer: Auth `FinalizeDeletedUser` (called from the `cleanup-deleted-users` Dkron job).
+- Topology: fanout exchange — every interested service binds its own queue.
+- Delivery semantics: **at-least-once.** A Dkron retry or a consumer crash can result in the same userId being delivered more than once.
+- **Consumer requirement: idempotent processing.** Anonymization handlers must treat a duplicate `userId` as a no-op (already-anonymized rows are skipped, not failed).
+- Auth does not wait for downstream confirmation — fire-and-forget by design.
+
+---
+
+## Cross-Service Updates (SAGA)
+
+For mutations that must touch state in multiple services (e.g., updating a user's profile contact data: Geo contact + Auth user row), D²-WORX uses a **synchronous SAGA helper** rather than choreographed events. The canonical helper lives at
+`backends/node/services/auth/app/src/implementations/cqrs/handlers/x/cross-service-update.ts` (`runCrossServiceUpdate`).
+
+### Ordering & Compensation
+
+1. **Geo first** — write the contact (or other Geo-owned data). If this fails, abort and surface the error; nothing else has changed.
+2. **Auth second** — write the BetterAuth-owned row that references the new Geo data. If this fails, attempt to **compensate Geo** (delete or revert the just-written record) so the cross-service state stays consistent.
+3. **Compensation failure** is escalated via `logger.fatal` so an operator can manually reconcile. The handler still returns the original Auth failure to the caller — the user's request is not silently "succeeded" when state is inconsistent.
+
+### Why Synchronous SAGA, Not Eventual
+
+These flows return a result the user expects to see immediately (the new phone number, the new contact). Choreographed events would require optimistic UI + eventual consistency, which is the wrong tradeoff for foreground profile edits. SAGA bounded by a single request gives "all or rolled-back" semantics with bounded latency.
+
+### Anonymize Is Not a SAGA
+
+The user-deletion anonymize flow is **not** a SAGA — it is a fire-and-forget fanout. Anonymization is irreversible by design (the deletion grace window closed; no compensation is meaningful), so each downstream service owns its own idempotent consumer rather than coordinating rollback.
+
 ---
 
 ## Request Enrichment
@@ -144,6 +174,8 @@ When adding a new service or endpoint, verify:
 - [ ] **Cache invalidation** — Use fanout exchanges with exclusive auto-delete queues (not competing consumers)
 - [ ] **Connection strings** — Externalized via config/environment, not hardcoded
 - [ ] **DB constraints** — Catch unique violations (PG `23505`) gracefully — return 409, not 500
+- [ ] **Migrations** — Never hand-write migration SQL / journal / snapshot files. Always use the framework generator (`pnpm db:generate` / `dotnet ef migrations add`). Hand-written migrations desync the framework's model snapshot and silently break the runtime migrator (Drizzle skips on `when` mismatch; EF Core compares `__EFMigrationsHistory`).
+- [ ] **Cross-service mutations** — Use SAGA helper (`runCrossServiceUpdate`) for foreground multi-service writes (Geo-first → Auth-second → compensate Geo on Auth failure → `logger.fatal` on rollback failure). Don't invent new SAGA flows without review (see BACKENDS.md § SAGA Pattern)
 
 ---
 

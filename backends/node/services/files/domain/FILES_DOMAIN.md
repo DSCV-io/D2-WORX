@@ -51,7 +51,11 @@ src/
     variant-config.ts         VariantConfig interface + requiresResize helper
   rules/
     content-type-rules.ts     resolveContentCategory, isContentTypeAllowed, getAllowedContentTypes
+  storage-keys.ts             buildRawStorageKey, buildVariantStorageKey, getExtensionForContentType
+                              + RawStorageKeyFile / VariantStorageKeyFile interfaces
 ```
+
+> Storage-key construction lives in domain (single source of truth). `@d2/files-app` re-exports the helpers and types so consumers import from either layer transparently.
 
 ## Enums
 
@@ -94,6 +98,16 @@ rejected → (terminal)
 | Content type allowed | `isContentTypeAllowed(type, categories)` | Checks MIME type belongs to one of the allowed categories |
 | All allowed types    | `getAllowedContentTypes(categories)`     | Flat array of all MIME types for given categories         |
 | Resize needed        | `requiresResize(config)`                 | True when `maxDimension > 0` (original = no resize)       |
+
+## Storage Keys
+
+| Function                                          | Purpose                                                                        |
+| ------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `getExtensionForContentType(contentType)`         | MIME → file extension (falls back to `bin` for unknown types)                  |
+| `buildRawStorageKey(file)`                        | `{contextKey}/{relatedEntityId}/{fileId}/raw.{ext}` — raw upload key           |
+| `buildVariantStorageKey(file, size, contentType)` | `{contextKey}/{relatedEntityId}/{fileId}/{size}.{ext}` — processed variant key |
+
+`RawStorageKeyFile` (`contextKey`, `relatedEntityId`, `id`, `contentType`) and `VariantStorageKeyFile` (without `contentType`) are minimal interfaces — consumers pass the full `File` entity or any object satisfying the shape.
 
 ## Constants
 
@@ -163,6 +177,7 @@ src/unit/domain/
   entities/      file.test.ts
   value-objects/  file-variant.test.ts, variant-config.test.ts
   rules/         content-type-rules.test.ts
+  storage-keys.test.ts
 ```
 
 Run: `pnpm vitest run --project files-tests`

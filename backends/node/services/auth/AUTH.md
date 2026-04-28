@@ -18,12 +18,13 @@ This document describes the complete authentication and authorization infrastruc
 10. [CQRS Handlers](#cqrs-handlers)
 11. [Request Flow Diagrams](#request-flow-diagrams) (includes [plain-language overview](#how-authentication-works-plain-language-overview))
 12. [Email & Phone Change (OTP)](#email--phone-change-otp)
-13. [Cross-Service Consistency (SAGA Pattern)](#cross-service-consistency-saga-pattern)
-14. [Constants Cross-Reference](#constants-cross-reference)
-15. [Security Controls Summary](#security-controls-summary)
-16. [Known Security Gaps & Pre-Production Requirements](#known-security-gaps--pre-production-requirements)
-17. [Secure Endpoint Construction Checklist](#secure-endpoint-construction-checklist)
-18. [Test Coverage Map](#test-coverage-map)
+13. [Self-Service User Deletion](#self-service-user-deletion)
+14. [Cross-Service Consistency (SAGA Pattern)](#cross-service-consistency-saga-pattern)
+15. [Constants Cross-Reference](#constants-cross-reference)
+16. [Security Controls Summary](#security-controls-summary)
+17. [Known Security Gaps & Pre-Production Requirements](#known-security-gaps--pre-production-requirements)
+18. [Secure Endpoint Construction Checklist](#secure-endpoint-construction-checklist)
+19. [Test Coverage Map](#test-coverage-map)
 
 ---
 
@@ -92,7 +93,7 @@ The auth service is a standalone Node.js application built on **Hono** + **Bette
 | CancelUserDeletion     | Command | Idempotent — re-activates a `pending_deletion` user when they sign back in (fired by BetterAuth `session.create.before` hook)                           |
 | FinalizeDeletedUser    | Command | Per-user worker invoked by `CleanupDeletedUsers` job — calls AnonymizeUser, sends "complete" notification, publishes `auth.user-anonymize` fanout event |
 
-**DI pattern**: `@d2/di` registration functions — `addAuthApp(services, options)` registers all 23 CQRS handlers (12 command + 6 query + 5 job) as transient services, `addAuthInfra(services, db)` registers all 28 repo handlers as transient services. Both accept a `ServiceCollection` and use `ServiceKey<T>` tokens for type-safe registration/resolution. Handlers resolve their dependencies (repo handlers, geo-client handlers, `IHandlerContext`) from the `ServiceProvider` at resolve time. Notification publishing uses `@d2/comms-client` (configured in `@d2/auth-api` composition root via `addCommsClient(services, { publisher })`), not app-layer handlers. See ADR-011 in `PLANNING.md`.
+**DI pattern**: `@d2/di` registration functions — `addAuthApp(services, options)` registers every CQRS handler in the `c/`, `q/`, and `x/` subtrees as transient services, `addAuthInfra(services, db)` registers every repo handler (in `c/`, `r/`, `u/`, `d/`) as transient services. Both accept a `ServiceCollection` and use `ServiceKey<T>` tokens for type-safe registration/resolution. Handlers resolve their dependencies (repo handlers, geo-client handlers, `IHandlerContext`) from the `ServiceProvider` at resolve time. Notification publishing uses `@d2/comms-client` (configured in `@d2/auth-api` composition root via `addCommsClient(services, { publisher })`), not app-layer handlers. See ADR-011 in `PLANNING.md`. See [AUTH_APP.md](app/AUTH_APP.md) for the full handler inventory.
 
 **Geo integration**: Org contact handlers take `@d2/geo-client` handler interfaces directly as constructor deps (`Commands.ICreateContactsHandler`, `Commands.IDeleteContactsByExtKeysHandler`, `Complex.IUpdateContactsByExtKeysHandler`, `Queries.IGetContactsByExtKeysHandler`). Contacts are accessed exclusively via ext keys (`contextKey="org_contact"`, `relatedEntityId=junction.id`). Contacts are cached locally in the geo-client's `MemoryCacheStore` (immutable, no TTL, LRU eviction). Auth-app depends on `@d2/geo-client` for handler interfaces but remains zero-gRPC (gRPC calls happen inside geo-client handlers). The geo-client is configured with `allowedContextKeys: ["auth_org_contact", "auth_user", "auth_org_invitation"]` (from `GEO_CONTEXT_KEYS`) and an `apiKey` for gRPC authentication.
 
@@ -990,6 +991,42 @@ OTP notifications are published via `@d2/comms-client` using `alternativeContact
 | Email change success | `alternativeContactInfo: { email: OLD email }` — security notification to the previous address |
 
 The old-email security notification ("your email was changed") fires after `VerifyEmailChange` applies the new email, giving the previous account owner a window to detect takeover.
+
+---
+
+## Self-Service User Deletion
+
+Users can self-initiate account deletion. The flow is soft-delete first → 30-day grace window → asynchronous anonymization, with an idempotent "sign-back-in cancels deletion" escape hatch.
+
+### Lifecycle
+
+```
+active ──RequestUserDeletion──► pending_deletion ──30d grace──► deleted (anonymized)
+   ▲                                    │
+   │                                    │
+   └────CancelUserDeletion──────────────┘
+        (sign-back-in via session.create.before hook)
+```
+
+| Phase                       | What happens                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Status                     | Sessions                          |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | --------------------------------- |
+| 1. Initiate                 | `POST /api/account/delete` → `RequestUserDeletion`. Atomic password gate. `CheckSoleOwnerOrgs` returns 409 `SOLE_OWNER_OF_ORGS` if the user is the sole owner of any org (must transfer ownership first). Otherwise: `UpdateUserStatus` → `pending_deletion` + `deletedAt = NOW()`, `DeleteAllUserSessions`, bust BetterAuth Redis cookie cache, send "scheduled" notification via `alternativeContactInfo` (security-relevant — bypasses channel preferences). Returns `{ scheduledFor: ISO date }` (= `deletedAt + GRACE_PERIOD_DAYS`) | active → pending_deletion  | All revoked                       |
+| 2. Cancel (sign back in)    | BetterAuth `session.create.before` hook fires `cancelUserDeletion` (fire-and-forget, isolated DI scope). Idempotent — no-op if `status ≠ pending_deletion`. `UpdateUserStatus` flips status → `active`, clears `deletedAt`, sends "cancelled" notification                                                                                                                                                                                                                                                                               | pending_deletion → active  | New session created normally      |
+| 3. Finalize (grace expired) | Nightly Dkron job `auth-cleanup-deleted-users` (`0 0 3 * * *`, 03:00 UTC) runs `CleanupDeletedUsers`: `GetDeletedUsersToPurge` (cursor over `status='pending_deletion' AND deleted_at < now() - GRACE_PERIOD_MS`, capped at `userPurgeBatchSize`), then per-user `FinalizeDeletedUser`. Per-user failures isolated as `skipped`                                                                                                                                                                                                          | pending_deletion → deleted | N/A (already revoked)             |
+| 4. Anonymize (per user)     | `AnonymizeUser` runs in a single transaction with a `WHERE status='pending_deletion'` guard (race-safe vs concurrent cancel). Captures `originalEmail` + `originalName` BEFORE the scrub. PII replaced: `name='Deleted user'`, `email='deleted-{id}@deleted.local'`, `username`/`displayUsername='deleted_{id}'`, `image`/`phone` NULL. DELETEs `account` + `session` rows. `sign_in_event` rows scrubbed (IP/UA → `[anonymized]`, fingerprints → null) but `successful` + `created_at` preserved for retention metrics                  | pending_deletion → deleted | Account/session rows hard-deleted |
+| 5. Fanout                   | `FinalizeDeletedUser` publishes `auth.user-anonymize` (fanout) with `{ userId, originalEmail, originalName }`. Geo / Comms / Files each subscribe independently and scrub their own user-scoped refs. Fire-and-forget — Auth never waits for downstream confirmation                                                                                                                                                                                                                                                                     | —                          | —                                 |
+
+### `auth.user-anonymize` Event Contract
+
+Fanout exchange `auth.user-anonymize` (constant: `AUTH_MESSAGING.USER_ANONYMIZE_EXCHANGE`). Published once per finalized user. Empty routing key (fanout). Downstream consumers in Geo / Comms / Files are deferred follow-ups and are NOT yet wired — Auth publishes the event regardless, which is the intended design (the message bus retains the message; consumers attach when ready).
+
+| Field           | Type   | Purpose                                                                                                           |
+| --------------- | ------ | ----------------------------------------------------------------------------------------------------------------- |
+| `userId`        | string | UUIDv7 of the now-anonymized user                                                                                 |
+| `originalEmail` | string | Pre-scrub email — lets downstream services find their refs by the original email when the userId is missing/stale |
+| `originalName`  | string | Pre-scrub name — same rationale as `originalEmail` for display-name-keyed records                                 |
+
+Sign-in is blocked when `status !== 'active'` (orthogonal to the BetterAuth admin plugin's `banned` boolean — both apply).
 
 ---
 

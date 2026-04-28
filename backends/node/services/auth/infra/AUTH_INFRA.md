@@ -69,14 +69,31 @@ src/
         find-active-consent-by-user-id-and-org.ts  Duplicate check for consent creation
         find-org-contact-by-id.ts           Single junction record by ID
         find-org-contacts-by-org-id.ts      Paginated junctions for an org
+        get-active-sessions-by-user-id.ts   Non-expired sessions for a user (used by GetMySessions)
+        get-user-by-id.ts                   Single user by id; clearable fields → undefined via truthyOrUndefined
+        get-user-id-by-identifier.ts        Resolve userId from email OR username (failed-sign-in audit)
         check-org-exists.ts                 Boolean existence check by org ID
+        check-email-availability.ts         Boolean for email availability (backs the public query)
+        check-phone-availability.ts         Boolean for phone availability
+        check-username-available.ts         Boolean for username availability
         get-deleted-users-to-purge.ts       Cursor-batched id list of pending_deletion users past grace
         check-sole-owner-orgs.ts            Org ids where userId is the sole `owner`
+        ping-db.ts                          DB liveness check (used by CheckHealth)
       u/
         revoke-emulation-consent-record.ts  Sets revokedAt timestamp
         update-org-contact-record.ts        Updates label/isPrimary + updatedAt
-        update-user-status.ts               UPDATE user.status (+ optional deleted_at, deletion_feedback)
-        anonymize-user.ts                   Single-tx PII scrub of user + cascade DELETE on account/session
+        update-user-status.ts               UPDATE user.status with two independent clear flags (clearDeletedAt, clearDeletionFeedback) — divergent column lifecycles
+        update-user-name.ts                 UPDATE user.name (joined string)
+        update-user-username.ts             UPDATE user.username + display_username
+        update-user-email.ts                UPDATE user.email + email_verified=true
+        update-user-locale.ts               UPDATE user.locale
+        update-user-timezone.ts             UPDATE user.timezone
+        update-user-image.ts                Clearable-field shape: { image?, clear } (clear=true + image=undefined → NULL)
+        update-user-phone.ts                Clearable-field shape: { phone?, clear, phoneVerified? } (mirrors image)
+        update-org-logo.ts                  Clearable-field shape for org logos
+        update-session-who-is-id.ts         Async WhoIs enrichment of session row
+        update-sign-in-event-who-is-id.ts   Async WhoIs enrichment of sign_in_event row
+        anonymize-user.ts                   Single-tx PII scrub of user with WHERE status='pending_deletion' guard (race-safe vs cancel) + cascade DELETE on account/session
       d/
         delete-org-contact-record.ts              Deletes junction row by ID
         delete-all-user-sessions.ts               DELETE FROM session WHERE user_id = ? RETURNING id
@@ -194,11 +211,18 @@ Hierarchical role permissions (each level inherits from below):
 
 ### Custom Tables (3)
 
-| Table               | Columns                                                                                    | Indexes                                                                                    |
-| ------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| `sign_in_event`     | id, user_id, successful, ip_address, user_agent, who_is_id, device_fingerprint, created_at | idx_sign_in_event_user_id                                                                  |
-| `emulation_consent` | id, user_id, granted_to_org_id, expires_at, revoked_at, created_at                         | idx_emulation_consent_user_id, unique(user_id, granted_to_org_id) WHERE revoked_at IS NULL |
-| `org_contact`       | id, organization_id, label, is_primary, created_at, updated_at                             | idx_org_contact_organization_id                                                            |
+| Table               | Columns                                                                                                                                            | Indexes                                                                                                          |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `sign_in_event`     | id, user_id, successful, ip_address, user_agent, who_is_id, device_fingerprint, client_fingerprint, server_fingerprint, failure_reason, created_at | composite `(user_id, created_at DESC)`, plus per-fingerprint indexes (client/server/device) for forensic lookups |
+| `emulation_consent` | id, user_id, granted_to_org_id, expires_at, revoked_at, created_at                                                                                 | idx_emulation_consent_user_id, unique(user_id, granted_to_org_id) WHERE revoked_at IS NULL                       |
+| `org_contact`       | id, organization_id, label, is_primary, created_at, updated_at                                                                                     | idx_org_contact_organization_id                                                                                  |
+
+The BetterAuth-managed `user` table also carries the self-service deletion columns (`status text default 'active'`, `deleted_at timestamp`, `deletion_feedback jsonb`), the phone columns (`phone text` + `phone_verified bool`), and i18n columns (`locale`, `timezone`). Indexes added to the `user` table:
+
+| Index                                 | Predicate                                     | Used by                                                                                                                |
+| ------------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `user_phone_unique` (unique partial)  | `phone IS NOT NULL`                           | One user per phone, allows multiple NULL phones                                                                        |
+| `user_pending_deletion_idx` (partial) | `status = 'pending_deletion'` on `deleted_at` | Backs `GetDeletedUsersToPurge` — only the small set of pending-deletion users is indexed, keeps the partial index tiny |
 
 ## Purge Repository Handlers
 

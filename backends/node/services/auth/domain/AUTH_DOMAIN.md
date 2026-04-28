@@ -28,11 +28,15 @@ Defines the public contract for all auth data leaving the service. These types a
 src/
   index.ts                  Barrel exports
   constants/
-    auth-constants.ts       JWT_CLAIM_TYPES, SESSION_FIELDS, AUTH_POLICIES, REQUEST_HEADERS, PASSWORD_POLICY, SIGN_IN_THROTTLE
+    auth-constants.ts       JWT_CLAIM_TYPES, SESSION_FIELDS, AUTH_POLICIES, REQUEST_HEADERS, PASSWORD_POLICY, SIGN_IN_THROTTLE, USER_DELETION
+    error-codes.ts          Auth-specific D2Result error codes (e.g., SOLE_OWNER_OF_ORGS)
+    messaging.ts            AUTH_MESSAGING (WHOIS_RESOLUTION_*, USER_ANONYMIZE_EXCHANGE)
+    otp-constants.ts        OTP_EXPIRY (email/phone TTL), OTP_VERIFY (code length, max attempts)
   enums/
     org-type.ts             OrgType: admin | support | customer | third_party | affiliate
     role.ts                 Role: owner | officer | agent | auditor (+ ROLE_HIERARCHY)
     invitation-status.ts    InvitationStatus: pending | accepted | rejected | canceled | expired
+    user-status.ts          UserStatus: active | pending_deletion | deleted (USER_STATUS const)
   exceptions/
     auth-domain-error.ts    Base error (extends Error)
     auth-validation-error.ts  Structured validation error (entityName, propertyName, invalidValue, reason)
@@ -60,25 +64,26 @@ src/
 
 All "enums" are `as const` arrays with derived union types and type guard functions.
 
-| Enum             | Values                                           | Extras                                    |
-| ---------------- | ------------------------------------------------ | ----------------------------------------- |
-| OrgType          | admin, support, customer, third_party, affiliate | `isValidOrgType` guard                    |
-| Role             | owner, officer, agent, auditor                   | `ROLE_HIERARCHY` map, `isValidRole` guard |
-| InvitationStatus | pending, accepted, rejected, canceled, expired   | `INVITATION_TRANSITIONS` state machine    |
+| Enum             | Values                                           | Extras                                                                                                                                                                                                                   |
+| ---------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| OrgType          | admin, support, customer, third_party, affiliate | `isValidOrgType` guard                                                                                                                                                                                                   |
+| Role             | owner, officer, agent, auditor                   | `ROLE_HIERARCHY` map, `isValidRole` guard                                                                                                                                                                                |
+| InvitationStatus | pending, accepted, rejected, canceled, expired   | `INVITATION_TRANSITIONS` state machine                                                                                                                                                                                   |
+| UserStatus       | active, pending_deletion, deleted                | `USER_STATUS` const — drives self-service deletion (active → pending_deletion → deleted). Stored as plain text (not PG enum) for cross-platform parity. Sign-in is blocked if `banned === true` OR `status !== 'active'` |
 
 ## Entities
 
-| Entity           | Factory         | Update          | Key Rules                                                                                                                                                                   |
-| ---------------- | --------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| Account          | —               | —               | BetterAuth-managed. Password excluded                                                                                                                                       |
-| Session          | —               | —               | BetterAuth-managed. 5 custom extension fields. `ipAddress`/`userAgent` are `?: string`. Auth-state fields (`activeOrganizationId`, `emulatedOrganizationId`, etc.) remain ` | null` (three-state pre-auth semantics) |
-| User             | `createUser`    | `updateUser`    | Email cleaned+validated, name required, UUIDv7 ID. `image` is `?: string`                                                                                                   |
-| Organization     | `createOrg...`  | `updateOrg...`  | Slug lowercased, slug+orgType immutable after creation. `logo`/`metadata` are `?: string`                                                                                   |
-| Member           | `createMember`  | —               | Valid role required, BetterAuth manages role changes                                                                                                                        |
-| Invitation       | `createInv...`  | —               | Status via rules/, always starts as "pending"                                                                                                                               |
-| SignInEvent      | `createSign...` | —               | Immutable audit record. `whoIsId`/`deviceFingerprint`/`failureReason` are `?: string`                                                                                       |
-| EmulationConsent | `createEmu...`  | `revokeEmu...`  | Future expiresAt required, `isConsentActive` helper. `revokedAt` is `?: Date`                                                                                               |
-| OrgContact       | `createOrgC...` | `updateOrgC...` | Junction to Geo Contact, label required                                                                                                                                     |
+| Entity           | Factory         | Update          | Key Rules                                                                                                                                                                                                                                                                                    |
+| ---------------- | --------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| Account          | —               | —               | BetterAuth-managed. Password excluded                                                                                                                                                                                                                                                        |
+| Session          | —               | —               | BetterAuth-managed. 5 custom extension fields. `ipAddress`/`userAgent` are `?: string`. Auth-state fields (`activeOrganizationId`, `emulatedOrganizationId`, etc.) remain `                                                                                                                  | null` (three-state pre-auth semantics) |
+| User             | `createUser`    | `updateUser`    | Email cleaned+validated, name required, UUIDv7 ID. `image` is `?: string`. Carries `locale` (default `"en-US"`) + `timezone` (default `"America/New_York"`). `status`/`deletedAt`/`deletionFeedback`/`phone`/`phoneVerified` live on the BetterAuth row — not on the domain `User` interface |
+| Organization     | `createOrg...`  | `updateOrg...`  | Slug lowercased, slug+orgType immutable after creation. `logo`/`metadata` are `?: string`                                                                                                                                                                                                    |
+| Member           | `createMember`  | —               | Valid role required, BetterAuth manages role changes                                                                                                                                                                                                                                         |
+| Invitation       | `createInv...`  | —               | Status via rules/, always starts as "pending"                                                                                                                                                                                                                                                |
+| SignInEvent      | `createSign...` | —               | Immutable audit record. `whoIsId`/`deviceFingerprint`/`failureReason` are `?: string`                                                                                                                                                                                                        |
+| EmulationConsent | `createEmu...`  | `revokeEmu...`  | Future expiresAt required, `isConsentActive` helper. `revokedAt` is `?: Date`                                                                                                                                                                                                                |
+| OrgContact       | `createOrgC...` | `updateOrgC...` | Junction to Geo Contact, label required                                                                                                                                                                                                                                                      |
 
 ## Business Rules
 
@@ -108,6 +113,36 @@ Progressive brute-force delay constants used by `computeSignInDelay` and the app
 | `KNOWN_GOOD_CACHE_TTL_MS` | 300,000 (5 min)     | Local memory cache TTL for known-good lookups |
 
 Redis key prefixes (`signin:known:`, `signin:attempts:`, `signin:locked:`) are infra concerns — defined in `SignInThrottleStore`, not in domain.
+
+### USER_DELETION
+
+Self-service user deletion grace window. Used by `RequestUserDeletion` (sets `deletedAt = NOW()`) and consumed by the nightly `CleanupDeletedUsers` job to compute the cutoff.
+
+| Constant            | Value         | Purpose                                                                                                        |
+| ------------------- | ------------- | -------------------------------------------------------------------------------------------------------------- |
+| `GRACE_PERIOD_DAYS` | 30            | Days a `pending_deletion` user can sign back in to cancel deletion                                             |
+| `GRACE_PERIOD_MS`   | 2,592,000,000 | Same value in milliseconds (job math). Override per environment via `AuthJobOptions.userDeletionGracePeriodMs` |
+
+### AUTH_MESSAGING
+
+RabbitMQ exchange / queue names owned by Auth.
+
+| Constant                    | Type   | Purpose                                                                                                                                                                                                                                 |
+| --------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `WHOIS_RESOLUTION_QUEUE`    | direct | `auth.whois-resolution` — work-queue: each Auth instance competes to enrich a sign-in event's WhoIs data (city/country/ASN)                                                                                                             |
+| `WHOIS_RESOLUTION_EXCHANGE` | direct | Same name as the queue (named queue + routing key = work-queue load balancing)                                                                                                                                                          |
+| `USER_ANONYMIZE_EXCHANGE`   | fanout | `auth.user-anonymize` — fired by `FinalizeDeletedUser` after a user is anonymized. Geo / Comms / Files each subscribe independently and scrub their own user-scoped refs. Fire-and-forget; downstream consumers are deferred follow-ups |
+
+### OTP_EXPIRY / OTP_VERIFY
+
+Used by the email and phone change OTP flows.
+
+| Constant                   | Value | Purpose                                      |
+| -------------------------- | ----- | -------------------------------------------- |
+| `OTP_EXPIRY.EMAIL_SECONDS` | 900   | 15 min — email OTP TTL                       |
+| `OTP_EXPIRY.PHONE_SECONDS` | 300   | 5 min — SMS OTP TTL                          |
+| `OTP_VERIFY.CODE_LENGTH`   | 6     | Numeric digits                               |
+| `OTP_VERIFY.MAX_ATTEMPTS`  | 5     | Wrong-code tries before the record is burned |
 
 ## Tests
 

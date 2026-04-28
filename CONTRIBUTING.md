@@ -12,6 +12,8 @@ Use descriptive, lowercased branches with a slash-separated prefix:
 - `fix/...` for bug fixes.
 - `infra/...` for CI/CD, deployment, or infrastructure changes.
 - `refactor/...` for codebase cleanup without new features.
+- `test/...` for test-only additions or updates.
+- `chore/...` for maintenance tasks (deps, tooling, repo housekeeping).
 - `wip/...` for exploratory or incomplete work.
 
 ## Commits
@@ -24,6 +26,8 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `refactor:` code change that neither fixes a bug nor adds a feature
 - `test:` adding or updating tests
 - `chore:` maintenance tasks
+
+**No `Co-Authored-By` trailers** (including AI co-authors). The `commit-msg` Husky hook rejects them automatically — see CLAUDE.md §6 for the rationale.
 
 ## Pull Requests
 

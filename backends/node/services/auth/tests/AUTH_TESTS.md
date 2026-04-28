@@ -1,6 +1,6 @@
 # @d2/auth-tests
 
-Test suite for the Auth service — covers all four packages (`@d2/auth-domain`, `@d2/auth-app`, `@d2/auth-infra`, `@d2/auth-api`). 874 tests across 66 files.
+Test suite for the Auth service — covers all four packages (`@d2/auth-domain`, `@d2/auth-app`, `@d2/auth-infra`, `@d2/auth-api`). Comprehensive coverage across the unit and integration layers; the file inventory below is the source of truth (test counts drift faster than the docs).
 
 ## Purpose
 
@@ -38,9 +38,17 @@ src/
         c/                      record-sign-in-event, record-sign-in-outcome,
                                 create-emulation-consent, revoke-emulation-consent,
                                 create-org-contact, update-org-contact,
-                                delete-org-contact, create-user-contact tests
-        q/                      get-sign-in-events, get-active-consents,
-                                get-org-contacts, check-sign-in-throttle tests
+                                delete-org-contact, create-user-contact,
+                                update-user-real-name, update-username,
+                                update-user-locale, update-user-timezone,
+                                request-email-change, verify-email-change,
+                                request-phone-change, verify-phone-change, remove-phone,
+                                request-user-deletion, cancel-user-deletion,
+                                finalize-deleted-user, cleanup-deleted-users,
+                                handle-file-processed, invalidate-user-session-cache tests
+        q/                      get-sign-in-events, get-my-sessions, get-active-consents,
+                                get-org-contacts, check-sign-in-throttle, check-email-availability tests
+        x/                      cross-service-update tests (SAGA helper)
     infra/
       access-control.test.ts
       password-hooks.test.ts
@@ -52,8 +60,8 @@ src/
     api/
       middleware/               authorization, csrf, error-handler, jwt-fingerprint,
                                 scope, service-key, session, session-fingerprint tests
-      routes/                   auth-routes, emulation-routes, invitation-routes,
-                                org-contact-routes tests
+      routes/                   auth-routes, account-routes, check-email-routes,
+                                emulation-routes, invitation-routes, org-contact-routes tests
   integration/
     postgres-test-helpers.ts    Testcontainers PG setup + Drizzle migration runner
     rabbitmq-test-helpers.ts    RabbitMQ Testcontainers setup
@@ -72,17 +80,15 @@ src/
     whois-resolution-consumer.test.ts  WhoIs resolution consumer (RabbitMQ)
 ```
 
-## Test Counts
+## Coverage by Layer
 
-| Layer       | Files  | Description                                       |
-| ----------- | ------ | ------------------------------------------------- |
-| Domain      | 17     | Enums, entities, rules, exceptions                |
-| App         | 13     | CQRS handlers (8 command + 5 query)               |
-| Infra       | 10     | Mappers, hooks, throttle store, secondary storage |
-| API         | 12     | Middleware (8) + routes (4)                       |
-| Integration | 12     | Testcontainers (PG + Redis) + BetterAuth behavior |
-| Helpers     | 3      | Container setup helpers (not test files)          |
-| **Total**   | **66** | **874 tests**                                     |
+| Layer       | Description                                                                                                                                                                                                    |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Domain      | Enums (incl. UserStatus), entities, rules, exceptions                                                                                                                                                          |
+| App         | Every CQRS handler (`c/`, `q/`, `x/`) — command flows, queries, SAGA helper, deletion lifecycle, OTP flows, account ops                                                                                        |
+| Infra       | Mappers, hooks, throttle/OTP/verification stores, secondary storage, password verifier, SignalR push                                                                                                           |
+| API         | All middleware (session, fingerprints, CSRF, scope, error handler, service-key, etc.) + every route file (auth, account, emulation, contacts, invitations, check-email)                                        |
+| Integration | Testcontainers (PG + Redis + RabbitMQ) — migrations, BetterAuth behavior, repo handlers, throttle store, secondary storage, fingerprint binding, anonymization, fanout publish, WhoIs consumer, redis failover |
 
 ## Test Categories
 

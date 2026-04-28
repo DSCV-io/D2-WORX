@@ -37,19 +37,20 @@ WORX is a SaaS product designed for use by small-to-medium businesses (SMBs) and
 
 **Phase:** Pre-Alpha (Core Infrastructure + Auth + SvelteKit)
 
-| Area                          | Status     | Tests         |
-| ----------------------------- | ---------- | ------------- |
-| .NET shared infrastructure    | ✅ Done    | 1,585 passing |
-| Node.js shared infrastructure | ✅ Done    | 1,127 passing |
-| Geo service (.NET)            | ✅ Done    | 798 passing   |
-| .NET REST gateway             | ✅ Done    | —             |
-| Auth service (Node.js)        | 🚧 Stage C | 969 passing   |
-| Comms service (Node.js)       | 🚧 Stage B | 575 passing   |
-| Scheduled jobs (Dkron)        | ✅ Done    | 64 passing    |
-| E2E cross-service tests       | ✅ Done    | 31 passing    |
-| SvelteKit web client          | 🚧 Stage B | 706 passing   |
+| Area                          | Status     | Tests          |
+| ----------------------------- | ---------- | -------------- |
+| .NET shared infrastructure    | ✅ Done    | 1,585+ passing |
+| Node.js shared infrastructure | ✅ Done    | 1,127+ passing |
+| Geo service (.NET)            | ✅ Done    | 798 passing    |
+| .NET REST gateway             | ✅ Done    | —              |
+| Auth service (Node.js)        | 🚧 Stage C | 1,037+ passing |
+| Comms service (Node.js)       | 🚧 Stage B | 575+ passing   |
+| Files service (Node.js)       | ✅ Done    | 546+ passing   |
+| Scheduled jobs (Dkron)        | ✅ Done    | 64 passing     |
+| E2E cross-service tests       | ✅ Done    | 31 passing     |
+| SvelteKit web client          | 🚧 Stage B | 706+ passing   |
 
-**Current focus:** SvelteKit web client — design system, routing, auth BFF proxy, API gateway client, forms, auth pages, device fingerprinting, client telemetry (Grafana Faro), and three-tier Playwright test architecture done. Onboarding flow next. See [PLANNING.md](PLANNING.md) for architecture decisions, detailed status, and roadmap.
+**Current focus:** SvelteKit Account area — Profile, Email & Phone, Security (sessions, recent logins, change password), and self-service account deletion (soft-delete + 30-day grace + nightly anonymization) shipped. Onboarding flow + app shell next. See [PLANNING.md](PLANNING.md) for architecture decisions, detailed status, and roadmap.
 
 **NOTE:** this is a **public reference implementation** documenting D²'s evolution from DeCAF's modular monolith architecture into a distributed microservices system. Expect frequent changes and incremental progress.
 

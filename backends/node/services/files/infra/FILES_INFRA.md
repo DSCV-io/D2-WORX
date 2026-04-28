@@ -32,12 +32,12 @@ src/
       d/  delete-file-record.ts, delete-file-records-by-ids.ts
     mappers/
       file-mapper.ts           toFile(row) → File domain entity
-  storage/handlers/            7 S3 handlers (C/R/D 3LC — see BACKENDS.md)
+  storage/handlers/            8 S3 handlers (C/R/D 3LC — see BACKENDS.md)
     c/  put-storage-object.ts        PutObjectCommand
         presign-put-url.ts           getSignedUrl (configurable expiry, default 15min)
     r/  get-storage-object.ts        GetObjectCommand → stream to buffer
         head-storage-object.ts       HeadObjectCommand (exists check)
-        presign-get-url.ts           getSignedUrl (read access)
+        presign-get-url.ts           getSignedUrl (read access, default 1 hour)
         ping-storage.ts              ListBucketsCommand (latency probe)
     d/  delete-storage-object.ts     DeleteObjectCommand (idempotent)
         delete-storage-objects.ts    DeleteObjectsCommand (batch)
@@ -75,9 +75,9 @@ src/
 | DeleteFileRecord       | D/  | Delete + `.returning()`, `notFound` if empty     |
 | DeleteFileRecordsByIds | D/  | Batch delete by ID array                         |
 
-### Storage Handlers (7)
+### Storage Handlers (8)
 
-All receive `S3Client` + `bucketName` in constructor. Transient.
+All receive `S3Client` + `bucketName` in constructor. Transient. Presign handlers also take `FilesStorageOptions` for expiry.
 
 | Handler              | S3 Command           | Notes                                        |
 | -------------------- | -------------------- | -------------------------------------------- |
@@ -86,7 +86,8 @@ All receive `S3Client` + `bucketName` in constructor. Transient.
 | HeadStorageObject    | HeadObjectCommand    | Returns `{ exists, contentType, sizeBytes }` |
 | DeleteStorageObject  | DeleteObjectCommand  | Idempotent (missing = success)               |
 | DeleteStorageObjects | DeleteObjectsCommand | Batch delete                                 |
-| PresignPutUrl        | PutObjectCommand     | `getSignedUrl`, default 900s                 |
+| PresignPutUrl        | PutObjectCommand     | `getSignedUrl`, default 900s (15 min)        |
+| PresignGetUrl        | GetObjectCommand     | `getSignedUrl`, default 3600s (1 hour)       |
 | PingStorage          | ListBucketsCommand   | Latency probe                                |
 
 ### Scanning Handlers (1)
@@ -190,13 +191,22 @@ interface FilesInfraConfig {
   readonly clamd: ClamdConfig; // { host, port }
   readonly publisher: IMessagePublisher;
   readonly signalrGatewayAddress: string; // e.g., "d2-signalr:5200"
+  readonly callbackApiKey: string; // S2S key for OnFileProcessed / CanAccess
+  readonly signalrApiKey: string; // S2S key for SignalR Gateway PushToChannel
   readonly s3Public?: S3Client;
+  readonly storageOptions?: FilesStorageOptions; // presign expiries (PUT 15m, GET 1h)
+  readonly scanningOptions?: FilesScanningOptions; // clamd socket timeout (30s)
+  readonly outboundOptions?: FilesOutboundOptions; // gRPC call deadline (10s)
 }
 ```
 
-The optional `s3Public` field is a separate `S3Client` configured with a browser-reachable endpoint (e.g., a cloudflared tunnel URL via `FILES_S3_PUBLIC_ENDPOINT`). It is used only by `PresignPutUrl` to generate presigned URLs that browsers can PUT to directly. When MinIO runs inside Docker, its internal hostname is not reachable from the browser -- `s3Public` provides an alternative endpoint for presigning. Falls back to the primary `s3` client if not provided.
+The optional `s3Public` field is a separate `S3Client` configured with a browser-reachable endpoint (e.g., a cloudflared tunnel URL via `FILES_S3_PUBLIC_ENDPOINT`). It is used by both `PresignPutUrl` (uploads) and `PresignGetUrl` (image-tag URLs) to generate presigned URLs that browsers can reach directly. When MinIO runs inside Docker, its internal hostname is not reachable from the browser -- `s3Public` provides an alternative endpoint for presigning. Falls back to the primary `s3` client if not provided.
 
-All handlers are transient. gRPC callback clients share a `Map<string, FileCallbackClient>` connection cache.
+The three `*Options` fields hold tunables (presign expiries, clamd socket timeout, outbound gRPC deadline) defined in [`infra/src/options.ts`](src/options.ts) with `DEFAULT_FILES_STORAGE_OPTIONS` / `DEFAULT_FILES_SCANNING_OPTIONS` / `DEFAULT_FILES_OUTBOUND_OPTIONS` defaults. The composition root reads them from the `FILES_APP` config section.
+
+`addFilesInfra` returns a `FilesInfraDisposable` whose `dispose()` closes every cached gRPC `FileCallback` client — call this during graceful shutdown.
+
+All handlers are transient. gRPC callback clients share a `Map<string, FileCallbackClient>` connection cache. Repository handlers validate input with Zod (`this.validateInput(schema, input)`) before touching the DB.
 
 ## Docker Compose
 

@@ -106,6 +106,8 @@ pnpm --filter @d2/xxx exec tsc                      # Single Node.js package (em
 pnpm --filter @d2/xxx exec tsc --noEmit             # Type-check only (no dist/ output)
 ```
 
+> ⚠️ **NEVER run `dotnet build` or `dotnet restore` on the host while `d2-geo`, `d2-gateway`, or `d2-signalr` are running.** All three .NET dev containers run `dotnet watch run` against `./backends/dotnet` mounted live; a host build writes to the same shared `obj/` and races with the containers' parallel restore. Symptoms: NETSDK1064, `Handler.csproj.nuget.g.targets already exists`, all 3 containers crash, Cloudflare 502 / browser CORS failures on `https://t-d2-ws.dcsv.io`. Build inside the container instead (`docker exec d2-geo dotnet build /src/backends/dotnet/services/Geo/Geo.API`), or stop all 3 .NET containers first, build, clean `obj/` + `bin/`, then sequential restart `geo → gateway → signalr` with health waits between.
+
 **Rider/ReSharper Inspections (.NET):**
 
 ```bash

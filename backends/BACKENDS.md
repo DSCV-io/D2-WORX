@@ -646,8 +646,9 @@ All jobs run daily during a 2–4 AM UTC maintenance window, staggered by 15 min
 | `auth-cleanup-emulation-consents` | 03:15          | `POST /api/v1/auth/jobs/cleanup-emulation-consents` |
 | `comms-purge-deleted-messages`    | 03:30          | `POST /api/v1/comms/jobs/purge-deleted-messages`    |
 | `comms-purge-delivery-history`    | 03:45          | `POST /api/v1/comms/jobs/purge-delivery-history`    |
+| `auth-cleanup-deleted-users`      | 04:00          | `POST /api/v1/auth/jobs/cleanup-deleted-users`      |
 
-**Ordering:** Geo WhoIs purge runs _before_ orphaned location cleanup — deleting WhoIs records may orphan locations.
+**Ordering:** Geo WhoIs purge runs _before_ orphaned location cleanup — deleting WhoIs records may orphan locations. `auth-cleanup-deleted-users` runs last (04:00) so when it publishes `auth.user-anonymize`, downstream consumers hit a settled DB rather than racing the other nightly cleanups.
 
 ### Provisioning
 

@@ -87,17 +87,18 @@
 - [x] 5E. Notification preferences — gateway + Comms wiring, i18n + defaults fix
 - [x] 5F. Session WhoIs hydration — `session.who_is_id` column + Drizzle migration `0009`, `IFindActiveSessionsByUserId` repo handler, async resolution via existing WhoIs RabbitMQ consumer (extended with optional `sessionId` field)
 - [x] 5G. Saga consistency for revoke routes — `currentPassword` is sent in the same HTTP body as the action (atomic, mirrors email/phone OTP pattern), `BetterAuthPasswordVerifier` checked BEFORE any state change, 401 on mismatch
-- [ ] **Review Checkpoint 5** — security/sessions/logins fully functional
+- [x] 5H. Self-service account deletion — soft-delete with 30-day grace, anonymize-don't-hard-delete, async cross-service teardown via `auth.user-anonymize` fanout. Sole-org-owner blocked (must transfer ownership first). Sign-back-in during grace cancels. Nightly Dkron job (`auth-cleanup-deleted-users`, 04:00 UTC) anonymizes users past the cutoff. Frontend: deletion modal in Security tab + clean sign-out. Deletion email respects user timezone. See `AUTH.md` § User-status lifecycle and `AUTH_APP.md` for the handler surface
+- [x] **Review Checkpoint 5** — security/sessions/logins/deletion fully functional
 
-**Explicitly deferred (not done in this pass):**
+**Follow-ups required separately (deferred):**
 
 - **5C-map**: Leaflet map view of recent-login WhoIs locations (Phase 6 polish — needs Leaflet install, marker clustering for repeat IPs, per-row map-toggle UI). All the data is already on the response (lat/lng would require expanding `LocationDTO` with coordinates — currently only city/subdivision/country are returned).
-- **Delete Account flow**: ✅ shipped. Self-service soft-delete with 30-day grace, anonymize-don't-hard-delete, async cross-service teardown via `auth.user-anonymize` fanout. Sole-org-owner blocked (must transfer ownership first). Sign-back-in during grace cancels. Nightly Dkron job (`auth-cleanup-deleted-users`, 04:00 UTC) anonymizes users past the cutoff. See `AUTH.md` § User-status lifecycle and `AUTH_APP.md` for the handler surface. **Follow-ups required separately:**
+- **`auth.user-anonymize` consumers** (one ticket per service in PLANNING.md Open Issues — #83/#84/#85):
   - Geo consumer for `auth.user-anonymize` (anonymize the user's Geo Contact)
   - Comms consumer for `auth.user-anonymize` (scrub thread participants + delivery history refs)
   - Files consumer for `auth.user-anonymize` (anonymize file ownership refs / scrub displayNames)
-  - Email-confirmed org-deletion flow — the path that unblocks sole-owner deletes
-  - Native-speaker review of the new i18n keys (`account_delete_*`, `auth_email_user_deletion_*`, `auth_errors_ACCOUNT_DELETED`, `auth_errors_SOLE_OWNER_OF_ORGS`) across all 10 locales
+- **Email-confirmed org-deletion flow** — the path that unblocks sole-owner deletes (PLANNING.md #86).
+- **Native-speaker review of the new deletion i18n keys** (`account_delete_*`, `auth_email_user_deletion_*`, `auth_errors_ACCOUNT_DELETED`, `auth_errors_SOLE_OWNER_OF_ORGS`) across all 10 locales (PLANNING.md #87).
 - **Country-name resolution in WhoIs display**: `formatLocation()` currently shows raw ISO codes (e.g. "Toronto, ON, CA"). The user has Geo ref data available server-side; the layout loader does not currently propagate the `countries` map to page data. Plumbing it through is the next polish step — the UI is forward-compatible, just swap raw codes for `displayName` lookups.
 - **CountryDTO/SubdivisionDTO `displayName` lookup endpoints in `+layout.server.ts`**: tracked alongside the country-name resolution above.
 

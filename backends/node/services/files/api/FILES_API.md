@@ -17,18 +17,21 @@ All protected routes are under `/api/v1` and require a valid JWT (`Authorization
 
 ### Protected (`/api/v1/*`)
 
-| Method | Path                                    | Auth | Description                                      |
-| ------ | --------------------------------------- | ---- | ------------------------------------------------ |
-| POST   | `/api/v1/avatar`                        | JWT  | Upload user avatar (`user_avatar` context key)   |
-| POST   | `/api/v1/org/:orgId/logo`               | JWT  | Upload org logo (`org_logo` context key)         |
-| POST   | `/api/v1/org/:orgId/documents`          | JWT  | Upload org document (`org_document` context key) |
-| POST   | `/api/v1/threads/:threadId/attachments` | JWT  | Upload thread attachment (`thread_attachment`)   |
-| GET    | `/api/v1/files/:fileId/:variantName`    | JWT  | Download file variant (streams from MinIO)       |
-| GET    | `/api/v1/files`                         | JWT  | List files by contextKey + relatedEntityId       |
+| Method | Path                                     | Auth | Description                                           |
+| ------ | ---------------------------------------- | ---- | ----------------------------------------------------- |
+| POST   | `/api/v1/avatar`                         | JWT  | Upload user avatar (`user_avatar` context key)        |
+| POST   | `/api/v1/org/logo`                       | JWT  | Upload org logo (`org_logo`, target org from JWT)     |
+| POST   | `/api/v1/org/documents`                  | JWT  | Upload org document (`org_document`, target from JWT) |
+| POST   | `/api/v1/threads/:threadId/attachments`  | JWT  | Upload thread attachment (`thread_attachment`)        |
+| GET    | `/api/v1/files/:fileId/:variantName`     | JWT  | Download file variant (streams via app handler)       |
+| GET    | `/api/v1/files/:fileId/:variantName/url` | JWT  | Returns a presigned GET URL for the variant           |
+| GET    | `/api/v1/files`                          | JWT  | List files by contextKey + relatedEntityId            |
 
-**Upload endpoints** accept JSON body `{ contentType, displayName, sizeBytes }`. The `contextKey` is hardcoded per route -- users never provide it directly. `relatedEntityId` is derived from the route param or JWT claims (userId for avatar).
+**Upload endpoints** accept JSON body `{ contentType, displayName, sizeBytes }`. The `contextKey` is hardcoded per route -- users never provide it directly. `relatedEntityId` is derived from JWT claims: `userId` for avatar, `targetOrgId` for org_logo / org_document, route param for thread attachments. Org routes return 401 if no active org is in the session (IDOR-safe — never accept org IDs from the URL).
 
-**Download endpoint** looks up file metadata, verifies the variant exists and file status is `ready`, then streams the object from MinIO with `Cache-Control: public, max-age=31536000, immutable`.
+**Download endpoint** delegates to the app-layer `DownloadFileVariant` query. The handler performs file lookup, access resolution, variant validation, and storage retrieval; the route serializes the buffer with `Content-Type`, `Cache-Control: public, max-age=31536000, immutable`, and `Content-Disposition: attachment` (the latter prevents XSS via uploaded SVG/HTML).
+
+**Variant URL endpoint** delegates to `GetFileVariantUrl`. Returns a time-limited presigned GET URL (default 1 hour, see `FilesStorageOptions.presignGetExpirySeconds`) that browsers can drop straight into `<img src>`. Useful for hot-path image rendering — avoids streaming through the API.
 
 **List endpoint** requires `contextKey` and `relatedEntityId` query params. Pagination: `limit` (default 50, max 100), `offset` (default 0).
 
@@ -38,6 +41,10 @@ All protected routes are under `/api/v1` and require a valid JWT (`Authorization
 | ------ | --------- | ----------------------------------------- |
 | GET    | `/health` | Full health check with component statuses |
 | GET    | `/ready`  | Readiness probe (same as `/health`)       |
+
+## Hono Context Typing
+
+Routes declare `new Hono<{ Variables: FilesVariables }>()` so `c.var.scope`, `c.var.requestContext`, and `c.var.requestLogger` type-check without `any` casts. The shape is centralized in [`context-keys.ts`](src/context-keys.ts) (mirrors auth-api's `SessionVariables` pattern).
 
 ## Middleware Pipeline
 
@@ -235,9 +242,16 @@ src/
   routes/
     index.ts                     Barrel
     health-routes.ts             GET /health, GET /ready (public)
-    upload-routes.ts             POST /avatar, /org/:orgId/logo, /org/:orgId/documents, /threads/:threadId/attachments
-    download-routes.ts           GET /files/:fileId/:variantName (stream from MinIO)
+    upload-routes.ts             POST /avatar, /org/logo, /org/documents, /threads/:threadId/attachments
+    download-routes.ts           GET /files/:fileId/:variantName (delegates to DownloadFileVariant)
+    variant-url-routes.ts        GET /files/:fileId/:variantName/url (presigned GET URL)
     list-routes.ts               GET /files (paginated by context)
+  middleware/
+    request-enrichment.ts        IP / fingerprint / WhoIs (calls Geo client)
+    request-context-logging.ts   Child logger with traceId
+    ambient-scope.ts             AsyncLocalStorage for pre-auth singletons
+    distributed-rate-limit.ts    Multi-dimensional sliding-window check
+  context-keys.ts                Hono `c.var` typing — FilesVariables (scope, requestContext, …)
   services/
     files-grpc-service.ts        FilesServiceServer implementation (CheckHealth)
     files-jobs-grpc-service.ts   FilesJobServiceServer implementation (RunCleanup)
