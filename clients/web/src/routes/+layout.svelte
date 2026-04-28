@@ -26,10 +26,21 @@
 
   // Auto-set D2_TIMEZONE cookie from browser on first visit (if not already set).
   // Server reads this cookie for SSR and sign-up flows.
+  //
+  // Skip "UTC" + "Etc/*" — these are technical/fallback values (CI runners,
+  // headless browsers, misconfigured systems) rather than user preferences,
+  // and they aren't in Geo's `timezones` reference table (which only seeds
+  // geographic IANA names: Africa/*, America/*, Asia/*, etc). Persisting one
+  // would propagate into the Geo contact insert and trip the
+  // FK_contacts_timezones_iana_identifier constraint. The server-side
+  // default ("America/New_York") applies instead. Real UTC-region users can
+  // set it explicitly via the timezone modal.
   $effect(() => {
     if (!document.cookie.includes("D2_TIMEZONE=")) {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      document.cookie = `D2_TIMEZONE=${tz}; path=/; max-age=34560000; SameSite=Lax`;
+      if (tz && tz !== "UTC" && !tz.startsWith("Etc/")) {
+        document.cookie = `D2_TIMEZONE=${tz}; path=/; max-age=34560000; SameSite=Lax`;
+      }
     }
   });
 

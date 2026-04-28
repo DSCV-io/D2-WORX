@@ -40,6 +40,21 @@ import {
 import * as betterAuthSchema from "../../repository/schema/better-auth-tables.js";
 
 /**
+ * Returns true when `tz` is a geographic IANA timezone name (Region/City or
+ * Region/Subregion/City — e.g. "America/New_York", "Europe/Paris",
+ * "America/Argentina/Buenos_Aires"). Geo's `timezones` reference table seeds
+ * geographic names only; "UTC", "GMT", "Etc/*", and other technical names
+ * trip the FK on contact insert. Anything that doesn't match this shape is
+ * rejected at the auth boundary so the literal "America/New_York" default
+ * applies instead.
+ */
+function isGeographicIanaName(tz: unknown): tz is string {
+  return (
+    typeof tz === "string" && /^[A-Z][A-Za-z_]+\/[A-Z][A-Za-z_]+(\/[A-Z][A-Za-z_]+)?$/.test(tz)
+  );
+}
+
+/**
  * Callback interface for app-layer hooks.
  *
  * The auth-infra package does not import from auth-app. Instead,
@@ -360,9 +375,19 @@ export function createAuth(
             // `??` would propagate `""` straight into the Geo contact insert and
             // violate `FK_contacts_timezones_iana_identifier` / `FK_contacts_locales_*`.
             // `||` falls through on empty string too, hitting the literal default.
+            //
+            // Defense-in-depth: only honor the cookie/user timezone if it matches
+            // a geographic IANA name (Region/City). Geo's timezones reference seed
+            // is geographic-only — "UTC", "Etc/*", and other technical names trip
+            // the FK constraint. Browsers on CI runners (and some misconfigured
+            // user environments) report "UTC", so reject those at the boundary
+            // and fall back to the literal default. Same defensive shape for locale.
             const prefs = signUpPrefsStorage.getStore();
+            const requestedTimezone = prefs?.timezone || (user.timezone as string);
+            const timezone = isGeographicIanaName(requestedTimezone)
+              ? requestedTimezone
+              : "America/New_York";
             const locale = prefs?.locale || (user.locale as string) || BASE_LOCALE;
-            const timezone = prefs?.timezone || (user.timezone as string) || "America/New_York";
 
             // Inject into user data so BetterAuth persists them to the DB row.
             data = { ...data, locale, timezone };
