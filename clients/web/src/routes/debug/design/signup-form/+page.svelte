@@ -145,6 +145,10 @@
           {form}
           field="confirmPassword"
           {...CONFIRM_PASSWORD}
+          toggleLabel={{
+            show: m.webclient_forms_show_confirm_password(),
+            hide: m.webclient_forms_hide_confirm_password(),
+          }}
         />
 
         <!-- Actions -->

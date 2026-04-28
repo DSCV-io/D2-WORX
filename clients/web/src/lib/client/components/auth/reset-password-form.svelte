@@ -149,12 +149,20 @@
         {form}
         field="newPassword"
         {...NEW_PASSWORD}
+        toggleLabel={{
+          show: m.webclient_forms_show_new_password(),
+          hide: m.webclient_forms_hide_new_password(),
+        }}
       />
 
       <FormPasswordInput
         {form}
         field="confirmNewPassword"
         {...CONFIRM_NEW_PASSWORD}
+        toggleLabel={{
+          show: m.webclient_forms_show_confirm_password(),
+          hide: m.webclient_forms_hide_confirm_password(),
+        }}
       />
 
       {#if serverError}

@@ -120,6 +120,10 @@
         placeholder={m.webclient_app_account_change_password_current_placeholder()}
         autocomplete="current-password"
         disabled={submitting}
+        toggleLabel={{
+          show: m.webclient_forms_show_current_password(),
+          hide: m.webclient_forms_hide_current_password(),
+        }}
       />
       <FormPasswordInput
         {form}
@@ -128,6 +132,10 @@
         placeholder={m.webclient_app_account_change_password_new_placeholder()}
         autocomplete="new-password"
         disabled={submitting}
+        toggleLabel={{
+          show: m.webclient_forms_show_new_password(),
+          hide: m.webclient_forms_hide_new_password(),
+        }}
       />
       <FormPasswordInput
         {form}
@@ -136,6 +144,10 @@
         placeholder={m.webclient_app_account_change_password_confirm_placeholder()}
         autocomplete="new-password"
         disabled={submitting}
+        toggleLabel={{
+          show: m.webclient_forms_show_confirm_password(),
+          hide: m.webclient_forms_hide_confirm_password(),
+        }}
       />
       <FormCheckbox
         {form}

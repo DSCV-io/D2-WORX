@@ -17,6 +17,14 @@
     disabled?: boolean;
     /** Password-manager hint — `current-password` for sign-in/verify, `new-password` for change/reset. */
     autocomplete?: "current-password" | "new-password" | "off";
+    /**
+     * Override for the visibility-toggle button's `aria-label`. Required when
+     * a screen contains more than one password field (sign-up, reset, change),
+     * otherwise both buttons share the same accessible name and screen-reader
+     * users / role-based locators can't disambiguate them. Defaults to the
+     * generic "Show / Hide password" pair.
+     */
+    toggleLabel?: { show: string; hide: string };
   };
 
   let {
@@ -27,7 +35,11 @@
     description,
     disabled = false,
     autocomplete,
+    toggleLabel,
   }: Props = $props();
+
+  const showLabel = $derived(toggleLabel?.show ?? m.webclient_forms_show_password());
+  const hideLabel = $derived(toggleLabel?.hide ?? m.webclient_forms_hide_password());
 
   let showPassword = $state(false);
 </script>
@@ -47,9 +59,7 @@
       type="button"
       onclick={() => (showPassword = !showPassword)}
       class="text-muted-foreground hover:text-foreground"
-      aria-label={showPassword
-        ? m.webclient_forms_hide_password()
-        : m.webclient_forms_show_password()}
+      aria-label={showPassword ? hideLabel : showLabel}
     >
       {#if showPassword}
         <EyeOffIcon class="size-4" />

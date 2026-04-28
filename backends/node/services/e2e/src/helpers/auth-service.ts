@@ -3,6 +3,17 @@ import { createApp } from "@d2/auth-api";
 import { COMMS_EVENTS } from "@d2/comms-client";
 import { createPasswordFunctions, type AuthServiceConfig, type PrefixCache } from "@d2/auth-infra";
 
+/**
+ * Test-fixture API key. Anywhere E2E code calls a non-`/api/auth/*` route
+ * (account routes, invitations, etc.) it MUST send this as `x-api-key`,
+ * otherwise the auth API's fail-closed S2S middleware rejects with 401.
+ *
+ * The same key is plumbed into the SvelteKit dev server via
+ * `SVELTEKIT_AUTH__API_KEY` so its auth proxy can identify as a trusted
+ * service when forwarding browser requests.
+ */
+export const E2E_AUTH_API_KEY = "e2e-test-auth-key";
+
 let messageBus: MessageBus | undefined;
 let publisher: IMessagePublisher | undefined;
 let shutdownFn: (() => Promise<void>) | undefined;
@@ -73,7 +84,7 @@ export async function startAuthService(opts: {
     geoAddress: opts.geoAddress,
     geoApiKey: opts.geoApiKey,
     grpcPort: opts.grpcPort,
-    authApiKeys: opts.authApiKeys ?? ["e2e-test-auth-key"],
+    authApiKeys: opts.authApiKeys ?? [E2E_AUTH_API_KEY],
   };
 
   // Skip HIBP API in E2E tests — domain validation still runs

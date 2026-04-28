@@ -16,7 +16,11 @@ import {
   getRabbitUrl,
 } from "../helpers/containers.js";
 import { startGeoService } from "../helpers/geo-dotnet-service.js";
-import { startAuthService, type AuthServiceHandle } from "../helpers/auth-service.js";
+import {
+  startAuthService,
+  E2E_AUTH_API_KEY,
+  type AuthServiceHandle,
+} from "../helpers/auth-service.js";
 import { startAuthHttpServer, type AuthHttpServer } from "../helpers/auth-http-server.js";
 import { startCommsService, type CommsServiceHandle } from "../helpers/comms-service.js";
 import { startSvelteKitServer, getAvailablePort } from "../helpers/sveltekit-server.js";
@@ -74,6 +78,7 @@ export default async function globalSetup() {
   // 6. Start SvelteKit dev server on the pre-allocated port
   const svelteKitUrl = await startSvelteKitServer({
     authUrl: authHttp.baseUrl,
+    authApiKey: E2E_AUTH_API_KEY,
     redisUrl: getRedisUrl(),
     geoAddress,
     geoApiKey: GEO_API_KEY,

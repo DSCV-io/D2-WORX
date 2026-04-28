@@ -37,7 +37,9 @@ test.describe("sign-up page (/sign-up)", () => {
   });
 
   test("has sign-in link", async ({ page }) => {
-    const signInLink = page.getByRole("link", { name: "Sign in" });
+    // Footer link in the form body — disambiguated from the nav-bar's
+    // "Sign In" button by the trailing period and exact-name match.
+    const signInLink = page.getByRole("link", { name: "Sign in.", exact: true });
     await expect(signInLink).toBeVisible();
     await expect(signInLink).toHaveAttribute("href", "/sign-in");
   });
@@ -97,10 +99,10 @@ test.describe("sign-up page (/sign-up)", () => {
     const passwordInput = page.getByRole("textbox", { name: "Password", exact: true });
     await expect(passwordInput).toHaveAttribute("type", "password");
 
-    await page.getByRole("button", { name: "Show password" }).click();
+    await page.getByRole("button", { name: "Show password", exact: true }).click();
     await expect(passwordInput).toHaveAttribute("type", "text");
 
-    await page.getByRole("button", { name: "Hide password" }).click();
+    await page.getByRole("button", { name: "Hide password", exact: true }).click();
     await expect(passwordInput).toHaveAttribute("type", "password");
   });
 
@@ -131,7 +133,7 @@ test.describe("sign-up page (/sign-up)", () => {
     const passwordInput = page.getByRole("textbox", { name: "Password", exact: true });
     await passwordInput.fill("123456789012");
     await passwordInput.blur();
-    await expect(page.getByText("Password cannot be only numbers", { exact: true })).toBeVisible({
+    await expect(page.getByText("Password cannot be only numbers.", { exact: true })).toBeVisible({
       timeout: 2000,
     });
   });
@@ -149,7 +151,7 @@ test.describe("sign-up page (/sign-up)", () => {
     const passwordInput = page.getByRole("textbox", { name: "Password", exact: true });
     await passwordInput.fill("a".repeat(129));
     await passwordInput.blur();
-    await expect(page.getByText("Password must be 128 characters or fewer")).toBeVisible({
+    await expect(page.getByText("Must be 128 characters or fewer")).toBeVisible({
       timeout: 2000,
     });
   });

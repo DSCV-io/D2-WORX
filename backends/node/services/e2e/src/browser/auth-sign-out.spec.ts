@@ -39,8 +39,12 @@ test.describe("sign-out flow (full stack)", () => {
     // Wait for redirect away from sign-in (new user without org → /welcome onboarding)
     await expect(page).not.toHaveURL(/\/sign-in$/, { timeout: 15_000 });
 
-    // Click the sign-out button (available on the onboarding layout)
-    await page.getByRole("button", { name: /sign out/i }).click();
+    // Sign-out lives inside the user-avatar dropdown (consolidated from the
+    // previously-directly-visible button). Open the dropdown first, then
+    // click the sign-out menu item.
+    const avatarTrigger = page.locator('button:has([data-slot="avatar"])').first();
+    await avatarTrigger.click();
+    await page.getByRole("menuitem", { name: /sign out/i }).click();
 
     // Should end up on sign-in page after sign-out clears session
     await expect(page).toHaveURL(/\/sign-in/, { timeout: 15_000 });

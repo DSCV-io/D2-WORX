@@ -57,6 +57,8 @@ async function waitForSvelteKitReady(port: number, timeoutMs = 60_000): Promise<
  */
 export async function startSvelteKitServer(opts: {
   authUrl: string;
+  /** S2S API key the SvelteKit auth proxy sends as `x-api-key` to the auth API. */
+  authApiKey: string;
   redisUrl: string;
   geoAddress: string;
   geoApiKey: string;
@@ -69,8 +71,10 @@ export async function startSvelteKitServer(opts: {
 
   const env: Record<string, string> = {
     ...process.env,
-    // SvelteKit auth proxy config
+    // SvelteKit auth proxy config — apiKey is required since the auth API
+    // service-key middleware is fail-closed (commit 95ca94c7).
     SVELTEKIT_AUTH__URL: opts.authUrl,
+    SVELTEKIT_AUTH__API_KEY: opts.authApiKey,
     // Geo gRPC config
     GEO_GRPC_ADDRESS: opts.geoAddress,
     SVELTEKIT_GEO_CLIENT__APIKEY: opts.geoApiKey,

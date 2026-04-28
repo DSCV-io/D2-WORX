@@ -31,11 +31,14 @@ async function getAvailablePort(): Promise<number> {
 /**
  * Polls the Gateway health endpoint until it responds.
  *
- * 120s default — the .NET gateway compiles + binds slowly under Docker
+ * 180s default — the .NET gateway compiles + binds slowly under Docker
  * resource pressure when several other Testcontainer-backed services boot
- * in the same suite. 60s was tight enough to flake.
+ * in the same suite. 60s was tight enough to flake; 120s also flaked
+ * intermittently on cold CI runners; 180s gives headroom for first-restore
+ * NuGet downloads + JIT warmup without bloating green-path runtime
+ * (the wait exits as soon as `/health` 200s).
  */
-async function waitForGatewayReady(port: number, timeoutMs = 120_000): Promise<void> {
+async function waitForGatewayReady(port: number, timeoutMs = 180_000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   const url = `http://localhost:${port}/health`;
 

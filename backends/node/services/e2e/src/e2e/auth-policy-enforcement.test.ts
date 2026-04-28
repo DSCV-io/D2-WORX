@@ -12,6 +12,7 @@ import { startGeoService, stopGeoService } from "../helpers/geo-dotnet-service.j
 import {
   startAuthService,
   stopAuthService,
+  E2E_AUTH_API_KEY,
   type AuthServiceHandle,
 } from "../helpers/auth-service.js";
 import { startAuthHttpServer, type AuthHttpServer } from "../helpers/auth-http-server.js";
@@ -98,9 +99,15 @@ describe("E2E: auth policy enforcement", () => {
   }
 
   it("rejects an unauthenticated PATCH /api/account/locale with 401", async () => {
+    // Send the S2S key so the request gets PAST the service-key gate and
+    // the auth-policy gate is what produces the 401. Without it, this test
+    // would pass by accident (S2S layer 401s before the policy ever runs).
     const res = await fetch(`${httpServer.baseUrl}/api/account/locale`, {
       method: "PATCH",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": E2E_AUTH_API_KEY,
+      },
       body: JSON.stringify({ locale: "en-US" }),
     });
 
@@ -114,6 +121,7 @@ describe("E2E: auth policy enforcement", () => {
       method: "PATCH",
       headers: {
         "content-type": "application/json",
+        "x-api-key": E2E_AUTH_API_KEY,
         cookie,
       },
       body: JSON.stringify({ locale: "en-US" }),
