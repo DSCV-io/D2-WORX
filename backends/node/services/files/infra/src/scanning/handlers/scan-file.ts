@@ -2,7 +2,7 @@ import { Socket } from "node:net";
 import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handler";
 import { D2Result } from "@d2/result";
 import type { ScanFileInput as I, ScanFileOutput as O, IScanFile } from "@d2/files-app";
-import type { FilesScanningOptions } from "../../../options.js";
+import type { FilesScanningOptions } from "../../options.js";
 
 export interface ClamdConfig {
   readonly host: string;

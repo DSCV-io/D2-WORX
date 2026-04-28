@@ -7,8 +7,8 @@ import { DOWNLOAD_FILE_VARIANT_REDACTION } from "../../../../interfaces/cqrs/han
 import type { IGetFileByIdHandler } from "../../../../interfaces/repository/handlers/index.js";
 import type { ContextKeyConfigMap } from "../../../../context-key-config.js";
 import type { IResolveFileAccessHandler } from "../../../../interfaces/cqrs/handlers/u/resolve-file-access.js";
-import type { IGetStorageObject } from "../../../../interfaces/providers/storage/handlers/get-storage-object.js";
-import { buildVariantStorageKey } from "../../../utils/storage-keys.js";
+import type { IGetStorageObject } from "../../../../interfaces/storage/handlers/r/get-storage-object.js";
+import { buildVariantStorageKey } from "@d2/files-domain";
 
 type Input = Queries.DownloadFileVariantInput;
 type Output = Queries.DownloadFileVariantOutput;

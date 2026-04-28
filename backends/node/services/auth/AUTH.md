@@ -1008,7 +1008,7 @@ Several handlers update both Geo (user/org contact data) and Auth (BetterAuth us
 
 ### Shared Helper
 
-`runCrossServiceUpdate` in `@d2/auth-app/cqrs/handlers/u/cross-service-update.ts` is the single implementation of the pattern. Handlers above delegate to it with three callbacks: `snapshot` (capture Geo pre-state), `applyGeo` (primary write), `applyAuth` (secondary write).
+`runCrossServiceUpdate` in `@d2/auth-app/cqrs/handlers/x/cross-service-update.ts` is the single implementation of the pattern. Handlers above delegate to it with three callbacks: `snapshot` (capture Geo pre-state), `applyGeo` (primary write), `applyAuth` (secondary write). It is a free function (not a `BaseHandler` subclass) — see [BACKENDS.md](../../BACKENDS.md) § "SAGA Pattern" for why this is a sanctioned exception to the BaseHandler shape.
 
 ### Flow
 

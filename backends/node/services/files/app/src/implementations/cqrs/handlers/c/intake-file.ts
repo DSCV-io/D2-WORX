@@ -4,8 +4,8 @@ import { z } from "zod";
 import { transitionFileStatus } from "@d2/files-domain";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
 import type { FileRepoHandlers } from "../../../../interfaces/repository/handlers/index.js";
-import type { FileStorageHandlers } from "../../../../interfaces/providers/storage/handlers/index.js";
-import { buildRawStorageKey } from "../../../utils/storage-keys.js";
+import type { FileStorageHandlers } from "../../../../interfaces/storage/handlers/index.js";
+import { buildRawStorageKey } from "@d2/files-domain";
 
 type Input = Commands.IntakeFileInput;
 type Output = Commands.IntakeFileOutput;

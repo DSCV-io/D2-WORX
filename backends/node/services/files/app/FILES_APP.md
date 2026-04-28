@@ -31,8 +31,6 @@ src/
         check-health.ts        DB + storage health probe
       u/                      Utilities (1 handler)
         resolve-file-access.ts  Access resolution strategy dispatcher (jwt_owner/jwt_org/callback)
-    utils/
-      storage-keys.ts         MinIO storage key construction helpers
   interfaces/
     cqrs/handlers/             CQRS handler interfaces (Commands, Queries, Utilities namespaces)
     repository/handlers/       Repository handler interfaces (C/R/U/D)
@@ -40,10 +38,12 @@ src/
       r/  get-file-by-id.ts, get-files-by-context.ts, get-stale-files.ts, ping-db.ts
       u/  update-file-record.ts
       d/  delete-file-record.ts, delete-file-records-by-ids.ts
-    providers/
-      storage/handlers/        7 storage interfaces (put, get, delete, deleteMany, presign, head, ping)
-      scanning/handlers/       scan-file.ts (ClamAV interface)
-      image-processing/handlers/  process-variants.ts (sharp interface)
+    storage/handlers/          7 storage interfaces (C/R/D 3LC — see BACKENDS.md)
+      c/  put-storage-object, presign-put-url
+      r/  get-storage-object, head-storage-object, presign-get-url, ping-storage
+      d/  delete-storage-object, delete-storage-objects
+    scanning/handlers/         scan-file.ts (ClamAV interface)
+    image-processing/handlers/ process-variants.ts (sharp interface)
     outbound/handlers/         gRPC callback interfaces
       call-on-file-processed.ts   Notify owning service of processing completion
       call-can-access.ts          Query owning service for access authorization
@@ -72,16 +72,19 @@ src/
 
 ## Service Keys (35 total)
 
-| Group      | Count | Key pattern         |
-| ---------- | ----- | ------------------- |
-| Repository | 8     | `Files.Repo.*`      |
-| Storage    | 7     | `Files.Infra.*`     |
-| Providers  | 2     | `Files.Provider.*`  |
-| Outbound   | 2     | `Files.Outbound.*`  |
-| Realtime   | 1     | `Files.Realtime.*`  |
-| App (CQRS) | 11    | `Files.App.*`       |
-| Messaging  | 3     | `Files.Messaging.*` |
-| Config     | 1     | `Files.Config.*`    |
+| Group            | Count | Key pattern         |
+| ---------------- | ----- | ------------------- |
+| Repository       | 8     | `Files.Repo.*`      |
+| Storage          | 7     | `Files.Infra.*`     |
+| Scanning         | 1     | `Files.Provider.*`  |
+| Image-processing | 1     | `Files.Provider.*`  |
+| Outbound         | 2     | `Files.Outbound.*`  |
+| Realtime         | 1     | `Files.Realtime.*`  |
+| App (CQRS)       | 11    | `Files.App.*`       |
+| Messaging        | 3     | `Files.Messaging.*` |
+| Config           | 1     | `Files.Config.*`    |
+
+> Storage / scanning / image-processing live as first-class TLCs (see [BACKENDS.md](../../../BACKENDS.md) for the canonical TLC list). Service-key string identifiers retain the legacy `Files.Provider.*` / `Files.Infra.*` prefixes for runtime compatibility — only the folder layout changed.
 
 ## Context Key Configuration
 
@@ -127,7 +130,9 @@ src/unit/app/
   handlers/q/   check-file-access, check-health, get-file-metadata, list-files
   handlers/u/   resolve-file-access
   helpers/      mock-handlers.ts, test-config.ts
-  utils/        context-key-config.test.ts, storage-keys.test.ts
+  utils/        context-key-config.test.ts
 ```
+
+The `storage-keys` helpers live in `@d2/files-domain` — see `tests/src/unit/domain/storage-keys.test.ts`.
 
 Run: `pnpm vitest run --project files-tests`

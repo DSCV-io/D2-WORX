@@ -28,6 +28,39 @@ The D²-WORX backend follows a **hierarchical, three-tier categorization system*
 
 ---
 
+## Canonical TLCs
+
+The following TLCs are first-class architectural concerns. Each has a defined 3LC pattern. See
+"New TLC Governance" below for when (and how) to introduce a new one.
+
+| TLC                 | Purpose                                         | 3LC pattern                            | Example handlers                       |
+| ------------------- | ----------------------------------------------- | -------------------------------------- | -------------------------------------- |
+| `cqrs/`             | Application orchestration handlers              | `c/` `q/` `u/` `x/` (operation intent) | `UploadFile`, `GetFileMetadata`        |
+| `messaging/`        | Pub/sub via RabbitMQ                            | `pub/` `sub/`                          | `PublishFileForProcessing`             |
+| `repository/`       | DB read/write via ORM                           | `c/` `r/` `u/` `d/` (CRUD)             | `CreateFileRecord`, `GetFileById`      |
+| `caching/`          | Distributed/local cache abstractions            | `c/` `r/` `u/` `d/` (CRUD)             | `Set`, `Get`, `Remove`                 |
+| `outbound/`         | gRPC client wrappers calling **other** services | flat (one handler per RPC)             | `CallCanAccess`, `CallOnFileProcessed` |
+| `realtime/`         | Real-time push handlers (SignalR / WebSocket)   | flat (one handler per event type)      | `PushFileUpdate`, `PushUserUpdated`    |
+| `storage/`          | Object/blob storage (S3, MinIO)                 | `c/` `r/` `u/` `d/` (CRUD)             | `PutStorageObject`, `GetStorageObject` |
+| `scanning/`         | Content scanning (ClamAV, future moderation)    | flat                                   | `ScanFile`                             |
+| `image-processing/` | Image transforms (Sharp variants, EXIF, etc.)   | flat                                   | `ProcessVariants`                      |
+
+### New TLC Governance
+
+Before introducing a new top-level folder, ask: **"Is this a _capability_ the service exposes,
+or just a _kind of dependency_?"**
+
+- **Capability** → new TLC. Document it here in BACKENDS.md as part of the same change. Get a
+  second opinion before merging — TLCs proliferate quickly when each developer answers this
+  differently.
+- **Dependency** → fold into an existing TLC. (`providers/` was an anti-pattern: it grouped by
+  _kind of dependency_ — "things we call out to" — rather than by capability. It's been
+  decomposed into `outbound/`, `storage/`, `scanning/`, `image-processing/`.)
+
+3LC choice within a new TLC: prefer the existing alphabets (`c/r/u/d`, `c/q/u/x`, `pub/sub`)
+when they fit the operation taxonomy. Use flat layout when the TLC has only a handful of
+handlers and they don't fall on a clear axis.
+
 ## Category Definitions
 
 ### CQRS (Command Query Responsibility Segregation)
@@ -45,26 +78,43 @@ services.
 - **Q (Queries):** Read-only from the perspective of persistent/shared state. Local/in-memory
   caching is permitted as an invisible optimization — it's instance-scoped and ephemeral,
   so it doesn't affect other service instances or survive process restarts.
+  Read-only external I/O is also permitted (e.g., gRPC fetches, S3 reads, presign-URL
+  generation) — it's part of "answering the query," not a side effect.
 
-- **U (Utilities):** Stateless helper operations (validation, transformation, computation)
-  that neither read from nor write to any data store.
+- **U (Utilities):** Stateless helper operations (validation, transformation, dispatch,
+  composition) that don't write to any data store. May call read-only external services
+  to compose an answer; must not publish, mutate, or persist.
 
 - **X (Complex):** Primary intent is retrieval, but may mutate persistent/shared state as a
   side effect to ensure future availability (e.g., fetching from external source then persisting
-  to database, write-through to distributed cache).
+  to database, write-through to distributed cache). Also: SAGA orchestrators that coordinate
+  multiple handler calls with rollback semantics — see "SAGA Pattern" below.
 
 **Side Effect Classification:**
 
-| Effect Type           | Query | Command | Complex |
-| --------------------- | ----- | ------- | ------- |
-| Local/in-memory cache | ✅    | ✅      | ✅      |
-| Distributed cache     | ❌    | ✅      | ✅      |
-| Database              | ❌    | ✅      | ✅      |
-| File system           | ❌    | ✅      | ✅      |
-| Message publishing    | ❌    | ✅      | ✅      |
+| Effect Type                  | Query | Command | Complex | Utility |
+| ---------------------------- | ----- | ------- | ------- | ------- |
+| Local/in-memory cache        | ✅    | ✅      | ✅      | ✅      |
+| Distributed cache (read)     | ✅    | ✅      | ✅      | ✅      |
+| Distributed cache (mutate)   | ❌    | ✅      | ✅      | ❌      |
+| Database (read)              | ✅    | ✅      | ✅      | ✅      |
+| Database (mutate)            | ❌    | ✅      | ✅      | ❌      |
+| External read I/O (gRPC, S3) | ✅    | ✅      | ✅      | ✅      |
+| External mutation            | ❌    | ✅      | ✅      | ❌      |
+| File system (write)          | ❌    | ✅      | ✅      | ❌      |
+| Message publishing           | ❌    | ✅      | ✅      | ❌      |
 
-**Key Distinction:** If the process dies immediately after the handler completes, would any
-state change persist or be visible to other instances? For Queries, the answer must be "no."
+**Key Distinction (the persistence test):** If the process dies immediately after the handler
+completes, would any state change persist or be visible to other instances? For **Q** and **U**,
+the answer must be "no." For **X** and **C**, mutations are expected.
+
+**Canonical examples (Files service):**
+
+- `CheckFileAccess` (Q/) — calls `callCanAccess` (gRPC out), no mutations → ✅ Q
+- `DownloadFileVariant` (Q/) — pure read composition through `getById` / `resolveAccess`
+  / `getStorage` → ✅ Q
+- `GetFileVariantUrl` (Q/) — pure read + presigned-URL generation → ✅ Q
+- `ResolveFileAccess` (U/) — strategy dispatcher that may invoke read-only callbacks → ✅ U
 
 **Structure:**
 
@@ -74,10 +124,32 @@ CQRS/
 |__ Handlers/
     |
     |__ C/ -> Commands (state-changing operations)
-    |__ Q/ -> Queries (read-only operations)
-    |__ U/ -> Utilities (neither read nor write, e.g., validation)
-    |__ X/ -> Complex (operations with side effects spanning multiple concerns)
+    |__ Q/ -> Queries (read-only persistent state, may do read-only external I/O)
+    |__ U/ -> Utilities (neither read nor write of persistent state, may do read-only external I/O)
+    |__ X/ -> Complex (mixed side effects, SAGA orchestrators)
 ```
+
+### SAGA Pattern (Multi-Service Orchestrators)
+
+When a single logical operation must mutate state in multiple services with rollback semantics
+on failure, the orchestrator does not fit the BaseHandler shape (single input → single output).
+**Sanctioned exception:** SAGA helpers may live in `cqrs/handlers/x/` as **free functions**
+(not BaseHandler subclasses). They are:
+
+- Pure orchestrators — they accept handler dependencies + payload via params, invoke them in
+  order, and compensate on failure.
+- Documented with the operations they coordinate, the failure-compensation paths, and the
+  expected logger.fatal escalation when compensation also fails.
+- Re-exported from the package's `index.ts` like any other public surface.
+
+**Canonical example:** `runCrossServiceUpdate` in
+`backends/node/services/auth/app/src/implementations/cqrs/handlers/x/cross-service-update.ts`.
+Coordinates Geo (contact data) + Auth (BetterAuth user/session rows) writes:
+`Geo first → Auth second → compensate Geo on Auth failure → logger.fatal on rollback failure`.
+
+Adding a new SAGA helper requires the same governance as adding a new TLC: review for whether
+this is genuinely a multi-step orchestration with rollback, or whether it can be modeled as a
+regular Command (`c/`) handler that publishes events and lets each service own its own consumer.
 
 ### Messaging (Async Event-Driven Communication)
 

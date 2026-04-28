@@ -10,7 +10,7 @@ import type { IUpdateUserNameHandler } from "../../../../interfaces/repository/h
 import type { IPushUserUpdated } from "../../../../interfaces/realtime/handlers/index.js";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
 import type { IInvalidateUserSessionCacheHandler } from "../../../../interfaces/cqrs/handlers/c/invalidate-user-session-cache.js";
-import { runCrossServiceUpdate } from "../u/cross-service-update.js";
+import { runCrossServiceUpdate } from "../x/cross-service-update.js";
 
 type Input = Commands.UpdateUserRealNameInput;
 type Output = Commands.UpdateUserRealNameOutput;

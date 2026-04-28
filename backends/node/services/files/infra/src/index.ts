@@ -35,19 +35,21 @@ export { DeleteFileRecordsByIds } from "./repository/handlers/d/delete-file-reco
 export { toFile } from "./repository/mappers/file-mapper.js";
 
 // --- Storage Handlers ---
-export { PutStorageObject } from "./providers/storage/handlers/put-storage-object.js";
-export { GetStorageObject } from "./providers/storage/handlers/get-storage-object.js";
-export { DeleteStorageObject } from "./providers/storage/handlers/delete-storage-object.js";
-export { DeleteStorageObjects } from "./providers/storage/handlers/delete-storage-objects.js";
-export { PresignPutUrl } from "./providers/storage/handlers/presign-put-url.js";
-export { PresignGetUrl } from "./providers/storage/handlers/presign-get-url.js";
-export { HeadStorageObject } from "./providers/storage/handlers/head-storage-object.js";
-export { PingStorage } from "./providers/storage/handlers/ping-storage.js";
+export { PutStorageObject } from "./storage/handlers/c/put-storage-object.js";
+export { GetStorageObject } from "./storage/handlers/r/get-storage-object.js";
+export { DeleteStorageObject } from "./storage/handlers/d/delete-storage-object.js";
+export { DeleteStorageObjects } from "./storage/handlers/d/delete-storage-objects.js";
+export { PresignPutUrl } from "./storage/handlers/c/presign-put-url.js";
+export { PresignGetUrl } from "./storage/handlers/r/presign-get-url.js";
+export { HeadStorageObject } from "./storage/handlers/r/head-storage-object.js";
+export { PingStorage } from "./storage/handlers/r/ping-storage.js";
 
-// --- Provider Handlers ---
-export { ScanFile } from "./providers/scanning/handlers/scan-file.js";
-export type { ClamdConfig } from "./providers/scanning/handlers/scan-file.js";
-export { ProcessVariants } from "./providers/image-processing/handlers/process-variants.js";
+// --- Scanning Handlers ---
+export { ScanFile } from "./scanning/handlers/scan-file.js";
+export type { ClamdConfig } from "./scanning/handlers/scan-file.js";
+
+// --- Image-processing Handlers ---
+export { ProcessVariants } from "./image-processing/handlers/process-variants.js";
 
 // --- Outbound Handlers ---
 export { CallOnFileProcessed } from "./outbound/handlers/call-on-file-processed.js";

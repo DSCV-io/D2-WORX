@@ -14,7 +14,7 @@ import type {
 } from "../../../../interfaces/repository/handlers/index.js";
 import type { IPushUserUpdated } from "../../../../interfaces/realtime/handlers/index.js";
 import type { IInvalidateUserSessionCacheHandler } from "../../../../interfaces/cqrs/handlers/c/invalidate-user-session-cache.js";
-import { runCrossServiceUpdate } from "../u/cross-service-update.js";
+import { runCrossServiceUpdate } from "../x/cross-service-update.js";
 
 type Input = Commands.RemovePhoneInput;
 type Output = Commands.RemovePhoneOutput;

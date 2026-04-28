@@ -6,8 +6,8 @@ import { GET_FILE_VARIANT_URL_REDACTION } from "../../../../interfaces/cqrs/hand
 import type { IGetFileByIdHandler } from "../../../../interfaces/repository/handlers/index.js";
 import type { ContextKeyConfigMap } from "../../../../context-key-config.js";
 import type { IResolveFileAccessHandler } from "../../../../interfaces/cqrs/handlers/u/resolve-file-access.js";
-import type { IPresignGetUrl } from "../../../../interfaces/providers/storage/handlers/presign-get-url.js";
-import { buildVariantStorageKey } from "../../../utils/storage-keys.js";
+import type { IPresignGetUrl } from "../../../../interfaces/storage/handlers/r/presign-get-url.js";
+import { buildVariantStorageKey } from "@d2/files-domain";
 
 type Input = Queries.GetFileVariantUrlInput;
 type Output = Queries.GetFileVariantUrlOutput;

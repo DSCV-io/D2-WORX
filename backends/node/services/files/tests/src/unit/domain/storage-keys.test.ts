@@ -3,7 +3,7 @@ import {
   buildRawStorageKey,
   buildVariantStorageKey,
   getExtensionForContentType,
-} from "@d2/files-app";
+} from "@d2/files-domain";
 
 describe("Storage Key Utilities", () => {
   describe("getExtensionForContentType", () => {

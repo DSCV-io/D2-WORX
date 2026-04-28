@@ -32,19 +32,19 @@ src/
       d/  delete-file-record.ts, delete-file-records-by-ids.ts
     mappers/
       file-mapper.ts           toFile(row) → File domain entity
-  providers/
-    storage/handlers/          7 S3 handlers
-      put-storage-object.ts    PutObjectCommand
-      get-storage-object.ts    GetObjectCommand → stream to buffer
-      head-storage-object.ts   HeadObjectCommand (exists check)
-      delete-storage-object.ts DeleteObjectCommand (idempotent)
-      delete-storage-objects.ts DeleteObjectsCommand (batch)
-      presign-put-url.ts       getSignedUrl (configurable expiry, default 15min)
-      ping-storage.ts          ListBucketsCommand (latency probe)
-    scanning/handlers/
-      scan-file.ts             Direct TCP clamd INSTREAM protocol
-    image-processing/handlers/
-      process-variants.ts      Sharp resize + WebP (SVG passthrough)
+  storage/handlers/            7 S3 handlers (C/R/D 3LC — see BACKENDS.md)
+    c/  put-storage-object.ts        PutObjectCommand
+        presign-put-url.ts           getSignedUrl (configurable expiry, default 15min)
+    r/  get-storage-object.ts        GetObjectCommand → stream to buffer
+        head-storage-object.ts       HeadObjectCommand (exists check)
+        presign-get-url.ts           getSignedUrl (read access)
+        ping-storage.ts              ListBucketsCommand (latency probe)
+    d/  delete-storage-object.ts     DeleteObjectCommand (idempotent)
+        delete-storage-objects.ts    DeleteObjectsCommand (batch)
+  scanning/handlers/
+    scan-file.ts               Direct TCP clamd INSTREAM protocol
+  image-processing/handlers/
+    process-variants.ts        Sharp resize + WebP (SVG passthrough)
   outbound/handlers/           gRPC FileCallback clients
     call-on-file-processed.ts  OnFileProcessed RPC (dynamic connection cache)
     call-can-access.ts         CanAccess RPC (dynamic connection cache)
@@ -89,12 +89,17 @@ All receive `S3Client` + `bucketName` in constructor. Transient.
 | PresignPutUrl        | PutObjectCommand     | `getSignedUrl`, default 900s                 |
 | PingStorage          | ListBucketsCommand   | Latency probe                                |
 
-### Provider Handlers (2)
+### Scanning Handlers (1)
 
-| Handler         | Technology      | Notes                                                        |
-| --------------- | --------------- | ------------------------------------------------------------ |
-| ScanFile        | ClamAV (TCP)    | INSTREAM protocol, `net.Socket`, returns `{ clean, threat }` |
-| ProcessVariants | Sharp (libvips) | Resize + WebP, SVG passthrough, returns processed buffers    |
+| Handler  | Technology   | Notes                                                        |
+| -------- | ------------ | ------------------------------------------------------------ |
+| ScanFile | ClamAV (TCP) | INSTREAM protocol, `net.Socket`, returns `{ clean, threat }` |
+
+### Image-processing Handlers (1)
+
+| Handler         | Technology      | Notes                                                     |
+| --------------- | --------------- | --------------------------------------------------------- |
+| ProcessVariants | Sharp (libvips) | Resize + WebP, SVG passthrough, returns processed buffers |
 
 ### Outbound Handlers (2)
 
@@ -235,10 +240,9 @@ src/unit/infra/
                     get-stale-files, ping-db, update-file-record, delete-file-record,
                     delete-file-records-by-ids
     mappers/        file-mapper.test.ts
-  providers/
-    storage/        storage-handlers.test.ts (29 tests)
-    scanning/       scan-file.test.ts
-    image-processing/ process-variants.test.ts
+  storage/          storage-handlers.test.ts (29 tests) — covers all C/R/D storage handlers
+  scanning/         scan-file.test.ts
+  image-processing/ process-variants.test.ts
   outbound/         outbound-handlers.test.ts
   messaging/        messaging-handlers.test.ts
 ```

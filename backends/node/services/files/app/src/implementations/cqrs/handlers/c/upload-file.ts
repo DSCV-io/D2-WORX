@@ -5,10 +5,10 @@ import { createFile, isContentTypeAllowed } from "@d2/files-domain";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
 import { UPLOAD_FILE_REDACTION } from "../../../../interfaces/cqrs/handlers/c/upload-file.js";
 import type { FileRepoHandlers } from "../../../../interfaces/repository/handlers/index.js";
-import type { FileStorageHandlers } from "../../../../interfaces/providers/storage/handlers/index.js";
+import type { FileStorageHandlers } from "../../../../interfaces/storage/handlers/index.js";
 import type { ContextKeyConfigMap } from "../../../../context-key-config.js";
 import type { IResolveFileAccessHandler } from "../../../../interfaces/cqrs/handlers/u/resolve-file-access.js";
-import { buildRawStorageKey } from "../../../utils/storage-keys.js";
+import { buildRawStorageKey } from "@d2/files-domain";
 
 type Input = Commands.UploadFileInput;
 type Output = Commands.UploadFileOutput;

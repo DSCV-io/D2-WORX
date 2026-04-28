@@ -297,9 +297,9 @@ export type {
 } from "./interfaces/cqrs/handlers/c/remove-phone.js";
 export { REMOVE_PHONE_REDACTION } from "./interfaces/cqrs/handlers/c/remove-phone.js";
 
-// --- Utility helpers (CQRS u/) ---
-export { runCrossServiceUpdate } from "./implementations/cqrs/handlers/u/cross-service-update.js";
-export type { CrossServiceUpdateParams } from "./implementations/cqrs/handlers/u/cross-service-update.js";
+// --- SAGA helpers (CQRS x/) ---
+export { runCrossServiceUpdate } from "./implementations/cqrs/handlers/x/cross-service-update.js";
+export type { CrossServiceUpdateParams } from "./implementations/cqrs/handlers/x/cross-service-update.js";
 
 // --- Repository interfaces (verification, password, OTP rate limit) ---
 

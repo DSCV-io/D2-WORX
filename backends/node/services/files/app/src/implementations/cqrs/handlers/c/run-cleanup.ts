@@ -6,9 +6,9 @@ import type { File, FileStatus } from "@d2/files-domain";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
 import type { IGetStaleFilesHandler } from "../../../../interfaces/repository/handlers/r/get-stale-files.js";
 import type { IDeleteFileRecordsByIdsHandler } from "../../../../interfaces/repository/handlers/d/delete-file-records-by-ids.js";
-import type { FileStorageHandlers } from "../../../../interfaces/providers/storage/handlers/index.js";
+import type { FileStorageHandlers } from "../../../../interfaces/storage/handlers/index.js";
 import type { FilesJobOptions } from "../../../../files-job-options.js";
-import { buildRawStorageKey, buildVariantStorageKey } from "../../../utils/storage-keys.js";
+import { buildRawStorageKey, buildVariantStorageKey } from "@d2/files-domain";
 
 type Input = Commands.RunCleanupInput;
 type Output = Commands.RunCleanupOutput;

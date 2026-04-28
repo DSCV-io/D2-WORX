@@ -50,18 +50,18 @@ import { DeleteFileRecord } from "./repository/handlers/d/delete-file-record.js"
 import { DeleteFileRecordsByIds } from "./repository/handlers/d/delete-file-records-by-ids.js";
 
 // Storage handlers
-import { PutStorageObject } from "./providers/storage/handlers/put-storage-object.js";
-import { GetStorageObject } from "./providers/storage/handlers/get-storage-object.js";
-import { DeleteStorageObject } from "./providers/storage/handlers/delete-storage-object.js";
-import { DeleteStorageObjects } from "./providers/storage/handlers/delete-storage-objects.js";
-import { PresignPutUrl } from "./providers/storage/handlers/presign-put-url.js";
-import { PresignGetUrl } from "./providers/storage/handlers/presign-get-url.js";
-import { HeadStorageObject } from "./providers/storage/handlers/head-storage-object.js";
-import { PingStorage } from "./providers/storage/handlers/ping-storage.js";
+import { PutStorageObject } from "./storage/handlers/c/put-storage-object.js";
+import { GetStorageObject } from "./storage/handlers/r/get-storage-object.js";
+import { DeleteStorageObject } from "./storage/handlers/d/delete-storage-object.js";
+import { DeleteStorageObjects } from "./storage/handlers/d/delete-storage-objects.js";
+import { PresignPutUrl } from "./storage/handlers/c/presign-put-url.js";
+import { PresignGetUrl } from "./storage/handlers/r/presign-get-url.js";
+import { HeadStorageObject } from "./storage/handlers/r/head-storage-object.js";
+import { PingStorage } from "./storage/handlers/r/ping-storage.js";
 
-// Provider handlers
-import type { ClamdConfig } from "./providers/scanning/handlers/scan-file.js";
-import { ScanFile } from "./providers/scanning/handlers/scan-file.js";
+// Scanning handlers
+import type { ClamdConfig } from "./scanning/handlers/scan-file.js";
+import { ScanFile } from "./scanning/handlers/scan-file.js";
 
 // Infra-layer options
 import type { FilesStorageOptions, FilesScanningOptions, FilesOutboundOptions } from "./options.js";
@@ -70,7 +70,9 @@ import {
   DEFAULT_FILES_SCANNING_OPTIONS,
   DEFAULT_FILES_OUTBOUND_OPTIONS,
 } from "./options.js";
-import { ProcessVariants } from "./providers/image-processing/handlers/process-variants.js";
+
+// Image-processing handlers
+import { ProcessVariants } from "./image-processing/handlers/process-variants.js";
 // Outbound handlers
 import { CallOnFileProcessed } from "./outbound/handlers/call-on-file-processed.js";
 import { CallCanAccess } from "./outbound/handlers/call-can-access.js";
@@ -212,12 +214,15 @@ export function addFilesInfra(
     (sp) => new PingStorage(s3, sp.resolve(IHandlerContextKey)),
   );
 
-  // --- Provider handlers ---
+  // --- Scanning handlers ---
 
   services.addTransient(
     IScanFileKey,
     (sp) => new ScanFile(clamd, scanningOptions, sp.resolve(IHandlerContextKey)),
   );
+
+  // --- Image-processing handlers ---
+
   services.addTransient(
     IProcessVariantsKey,
     (sp) => new ProcessVariants(sp.resolve(IHandlerContextKey)),

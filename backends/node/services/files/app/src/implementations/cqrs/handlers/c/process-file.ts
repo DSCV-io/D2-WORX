@@ -9,13 +9,13 @@ import {
 } from "@d2/files-domain";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
 import type { FileRepoHandlers } from "../../../../interfaces/repository/handlers/index.js";
-import type { FileStorageHandlers } from "../../../../interfaces/providers/storage/handlers/index.js";
-import type { IScanFile } from "../../../../interfaces/providers/scanning/handlers/scan-file.js";
-import type { IProcessVariants } from "../../../../interfaces/providers/image-processing/handlers/process-variants.js";
+import type { FileStorageHandlers } from "../../../../interfaces/storage/handlers/index.js";
+import type { IScanFile } from "../../../../interfaces/scanning/handlers/scan-file.js";
+import type { IProcessVariants } from "../../../../interfaces/image-processing/handlers/process-variants.js";
 import type { INotifyFileProcessedHandler } from "../../../../interfaces/cqrs/handlers/c/notify-file-processed.js";
 import type { IPushFileUpdate } from "../../../../interfaces/realtime/handlers/push-file-update.js";
 import type { ContextKeyConfigMap } from "../../../../context-key-config.js";
-import { buildRawStorageKey, buildVariantStorageKey } from "../../../utils/storage-keys.js";
+import { buildRawStorageKey, buildVariantStorageKey } from "@d2/files-domain";
 
 type Input = Commands.ProcessFileInput;
 type Output = Commands.ProcessFileOutput;

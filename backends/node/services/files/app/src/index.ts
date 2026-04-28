@@ -13,14 +13,14 @@ export { parseContextKeyConfigs } from "./context-key-config.js";
 export type { FilesJobOptions } from "./files-job-options.js";
 export { DEFAULT_FILES_JOB_OPTIONS } from "./files-job-options.js";
 
-// --- Storage Key Utilities ---
+// --- Storage Key Utilities (re-exported from @d2/files-domain) ---
 export {
   getExtensionForContentType,
   buildRawStorageKey,
   buildVariantStorageKey,
-} from "./implementations/utils/storage-keys.js";
+} from "@d2/files-domain";
 
-export type { RawStorageKeyFile, VariantStorageKeyFile } from "./interfaces/utils/storage-keys.js";
+export type { RawStorageKeyFile, VariantStorageKeyFile } from "@d2/files-domain";
 
 // --- CQRS Handler Interfaces (app-layer contracts) ---
 export {
@@ -62,26 +62,27 @@ export type {
   PingStorageOutput,
   IPingStorage,
   FileStorageHandlers,
-} from "./interfaces/providers/storage/handlers/index.js";
+} from "./interfaces/storage/handlers/index.js";
 export {
   DELETE_STORAGE_OBJECT_REDACTION,
   DELETE_STORAGE_OBJECTS_REDACTION,
   HEAD_STORAGE_OBJECT_REDACTION,
-} from "./interfaces/providers/storage/handlers/index.js";
+} from "./interfaces/storage/handlers/index.js";
 
-// --- Interfaces (Provider Contracts) ---
+// --- Interfaces (Scanning Contracts) ---
 export type {
   ScanFileInput,
   ScanFileOutput,
   IScanFile,
-} from "./interfaces/providers/scanning/handlers/index.js";
+} from "./interfaces/scanning/handlers/index.js";
 
+// --- Interfaces (Image-processing Contracts) ---
 export type {
   ProcessedVariant,
   ProcessVariantsInput,
   ProcessVariantsOutput,
   IProcessVariants,
-} from "./interfaces/providers/image-processing/handlers/index.js";
+} from "./interfaces/image-processing/handlers/index.js";
 
 // --- Interfaces (Outbound Contracts) ---
 export type {

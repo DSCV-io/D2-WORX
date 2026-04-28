@@ -2,7 +2,7 @@ import { BaseHandler, type IHandlerContext } from "@d2/handler";
 import { Queries } from "../../../../interfaces/cqrs/handlers/index.js";
 import { D2Result } from "@d2/result";
 import type { IPingDbHandler } from "../../../../interfaces/repository/handlers/index.js";
-import type { FileStorageHandlers } from "../../../../interfaces/providers/storage/handlers/index.js";
+import type { FileStorageHandlers } from "../../../../interfaces/storage/handlers/index.js";
 
 type Input = Queries.CheckHealthInput;
 type Output = Queries.CheckHealthOutput;

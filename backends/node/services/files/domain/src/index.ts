@@ -43,3 +43,11 @@ export {
   isContentTypeAllowed,
   getAllowedContentTypes,
 } from "./rules/content-type-rules.js";
+
+// --- Storage Keys ---
+export {
+  getExtensionForContentType,
+  buildRawStorageKey,
+  buildVariantStorageKey,
+} from "./storage-keys.js";
+export type { RawStorageKeyFile, VariantStorageKeyFile } from "./storage-keys.js";

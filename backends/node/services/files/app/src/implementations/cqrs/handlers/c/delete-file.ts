@@ -3,10 +3,10 @@ import { D2Result } from "@d2/result";
 import { z } from "zod";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
 import type { FileRepoHandlers } from "../../../../interfaces/repository/handlers/index.js";
-import type { FileStorageHandlers } from "../../../../interfaces/providers/storage/handlers/index.js";
+import type { FileStorageHandlers } from "../../../../interfaces/storage/handlers/index.js";
 import type { ContextKeyConfigMap } from "../../../../context-key-config.js";
 import type { IResolveFileAccessHandler } from "../../../../interfaces/cqrs/handlers/u/resolve-file-access.js";
-import { buildRawStorageKey, buildVariantStorageKey } from "../../../utils/storage-keys.js";
+import { buildRawStorageKey, buildVariantStorageKey } from "@d2/files-domain";
 
 type Input = Commands.DeleteFileInput;
 type Output = Commands.DeleteFileOutput;

@@ -10,7 +10,7 @@ import type {
   IUpdateOrgContactRecordHandler,
 } from "../../../../interfaces/repository/handlers/index.js";
 import { Commands } from "../../../../interfaces/cqrs/handlers/index.js";
-import { runCrossServiceUpdate } from "../u/cross-service-update.js";
+import { runCrossServiceUpdate } from "../x/cross-service-update.js";
 
 type Input = Commands.UpdateOrgContactHandlerInput;
 type Output = Commands.UpdateOrgContactOutput;

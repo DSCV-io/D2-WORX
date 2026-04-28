@@ -20,9 +20,9 @@ import type {
   IPresignGetUrl,
   IHeadStorageObject,
   IPingStorage,
-} from "./interfaces/providers/storage/handlers/index.js";
-import type { IScanFile } from "./interfaces/providers/scanning/handlers/index.js";
-import type { IProcessVariants } from "./interfaces/providers/image-processing/handlers/index.js";
+} from "./interfaces/storage/handlers/index.js";
+import type { IScanFile } from "./interfaces/scanning/handlers/index.js";
+import type { IProcessVariants } from "./interfaces/image-processing/handlers/index.js";
 import type { ICallOnFileProcessed, ICallCanAccess } from "./interfaces/outbound/handlers/index.js";
 import type { IPushFileUpdate } from "./interfaces/realtime/handlers/index.js";
 
@@ -84,10 +84,15 @@ export const IHeadStorageObjectKey = createServiceKey<IHeadStorageObject>(
 export const IPingStorageKey = createServiceKey<IPingStorage>("Files.Infra.PingStorage");
 
 // =============================================================================
-// Provider keys (interfaces defined here, implemented in files-infra)
+// Scanning keys (interfaces defined here, implemented in files-infra)
 // =============================================================================
 
 export const IScanFileKey = createServiceKey<IScanFile>("Files.Provider.ScanFile");
+
+// =============================================================================
+// Image-processing keys (interfaces defined here, implemented in files-infra)
+// =============================================================================
+
 export const IProcessVariantsKey = createServiceKey<IProcessVariants>(
   "Files.Provider.ProcessVariants",
 );
