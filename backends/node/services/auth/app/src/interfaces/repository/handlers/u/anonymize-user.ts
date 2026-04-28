@@ -6,16 +6,33 @@ export interface AnonymizeUserInput {
 
 export interface AnonymizeUserOutput {
   /**
-   * False when the row didn't match the `status='pending_deletion'` guard
-   * (already anonymized OR cancelled by sign-in between job find + job
-   * finalize). Caller should treat this as a successful no-op.
+   * False when the anonymization didn't run. Two reasons:
+   *
+   *   - Status guard miss: row no longer `pending_deletion` (already
+   *     anonymized OR cancelled by sign-in between job find + finalize).
+   *     `autoCancelledSoleOwner` is undefined.
+   *
+   *   - Auto-cancelled because the user became sole owner of one or more
+   *     orgs during the grace window (TOCTOU between RequestUserDeletion
+   *     and grace expiry). The transaction flips the row back to ACTIVE
+   *     and clears `deletedAt`; `autoCancelledSoleOwner` is populated so
+   *     the caller can notify the user. Anonymization is forfeit — they
+   *     must re-request after transferring ownership.
    */
   readonly anonymized: boolean;
   /**
-   * Captured BEFORE the scrub for use by the final notification (sent via
-   * `alternativeContactInfo` since Geo will tear down the contact when it
-   * consumes the user-anonymize event) and by the fanout payload.
-   * Undefined when `anonymized: false`.
+   * When set, the anonymization was auto-cancelled because the user is now
+   * the sole owner of these orgs. The user record has been flipped back
+   * to ACTIVE atomically. Caller should notify the user via the
+   * "deletion auto-cancelled" email template.
+   */
+  readonly autoCancelledSoleOwner?: {
+    readonly soleOwnerOrgIds: readonly string[];
+  };
+  /**
+   * Captured BEFORE the scrub (or before the auto-cancel) for use by the
+   * caller's notification email. Set whenever the user row exists, regardless
+   * of which outcome path ran.
    */
   readonly originalEmail?: string;
   readonly originalName?: string;

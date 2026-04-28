@@ -124,6 +124,11 @@ export const TK = {
         body: "auth_email_user_deletion_cancelled_body",
         plaintext: "auth_email_user_deletion_cancelled_plaintext",
       },
+      userDeletionAutoCancelledSoleOwner: {
+        subject: "auth_email_user_deletion_auto_cancelled_sole_owner_subject",
+        body: "auth_email_user_deletion_auto_cancelled_sole_owner_body",
+        plaintext: "auth_email_user_deletion_auto_cancelled_sole_owner_plaintext",
+      },
       userDeletionComplete: {
         subject: "auth_email_user_deletion_complete_subject",
         body: "auth_email_user_deletion_complete_body",

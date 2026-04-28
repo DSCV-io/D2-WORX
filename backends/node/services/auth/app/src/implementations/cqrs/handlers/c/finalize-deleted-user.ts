@@ -53,6 +53,37 @@ export class FinalizeDeletedUser
 
     const data = result.data;
     if (!data?.anonymized) {
+      // AnonymizeUser may auto-cancel the deletion (atomically flipped the
+      // user back to ACTIVE) when the user became sole owner of one or more
+      // orgs during the grace window. Notify them so they understand why
+      // their account is still active and what to do next.
+      if (data?.autoCancelledSoleOwner && data.originalEmail) {
+        const t = this.translator.t;
+        const userLocale = resolveLocale(undefined);
+        const displayName = data.originalName ?? t(userLocale, TK.common.ui.USER_FALLBACK);
+        this.notify
+          .handleAsync({
+            alternativeContactInfo: { email: data.originalEmail },
+            channels: ["email"],
+            title: t(userLocale, TK.auth.email.userDeletionAutoCancelledSoleOwner.subject),
+            content: t(userLocale, TK.auth.email.userDeletionAutoCancelledSoleOwner.body, {
+              name: displayName,
+            }),
+            plaintext: t(
+              userLocale,
+              TK.auth.email.userDeletionAutoCancelledSoleOwner.plaintext,
+              { name: displayName },
+            ),
+            correlationId: crypto.randomUUID(),
+            senderService: "auth",
+          })
+          .catch((err: unknown) => {
+            this.context.logger.warn(
+              "FinalizeDeletedUser: sole-owner auto-cancel email notify failed (non-critical)",
+              { error: err instanceof Error ? err.message : String(err) },
+            );
+          });
+      }
       return D2Result.ok({ data: { anonymized: false } });
     }
 
@@ -90,12 +121,20 @@ export class FinalizeDeletedUser
     }
 
     // 3. Publish fanout — downstream services (Geo / Comms / Files) each
-    //    subscribe independently. Routing key is empty for fanout exchanges.
+    //    subscribe independently and look up by userId from their own
+    //    user-keyed tables. Routing key is empty for fanout exchanges.
+    //
+    //    PII (email, name) is intentionally NOT included in the payload:
+    //    fanout messages durably persist in every bound queue until consumed,
+    //    and any DLX capture would persist them indefinitely. The whole point
+    //    of this event is to scrub the user — broadcasting their PII to a
+    //    fanout queue defeats the scrub. Consumers that need email/name for
+    //    their own teardown should query their own records by userId.
     if (this.publisher) {
       this.publisher
         .send(
           { exchange: AUTH_MESSAGING.USER_ANONYMIZE_EXCHANGE, routingKey: "" },
-          { userId: input.userId, email: originalEmail, name: originalName, anonymizedAt },
+          { userId: input.userId, anonymizedAt },
         )
         .catch((err: unknown) => {
           this.context.logger.warn(

@@ -1,6 +1,6 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { BaseHandler, type IHandlerContext, type RedactionSpec } from "@d2/handler";
+import { BaseHandler, type IHandlerContext, type RedactionSpec, type Role } from "@d2/handler";
 import { D2Result } from "@d2/result";
 import { USER_STATUS } from "@d2/auth-domain";
 import {
@@ -11,6 +11,8 @@ import {
 } from "@d2/auth-app";
 import { user, account, session } from "../../schema/better-auth-tables.js";
 import { signInEvent } from "../../schema/custom-tables.js";
+
+const _OWNER_ROLE = "owner" satisfies Role;
 
 /**
  * Sentinel value written to non-nullable PII columns on sign_in_event rows
@@ -85,6 +87,64 @@ export class AnonymizeUser extends BaseHandler<I, O> implements IAnonymizeUserHa
         // active in the gap between job find + finalize. Silent no-op so the
         // job is fully idempotent and concurrency-safe.
         return D2Result.ok<O>({ data: { anonymized: false } });
+      }
+
+      // TOCTOU guard for sole-owner: RequestUserDeletion blocks initial
+      // request when the user is sole owner of any org, but the grace window
+      // is days long — a co-owner can leave and leave the user as the sole
+      // owner before anonymization runs. Anonymizing here would tombstone
+      // the user while membership rows still point at them, leaving an org
+      // with zero owners (un-administrable).
+      //
+      // Re-check inside the same tx as the anonymization so the decision is
+      // atomic. If sole owner: flip the user back to ACTIVE atomically and
+      // signal the caller to notify them — the caller cannot retry the
+      // anonymization without a fresh ownership transfer.
+      const soleOwnerRows = await tx.execute<{ organization_id: string }>(sql`
+        SELECT m.organization_id
+        FROM "member" m
+        WHERE m.user_id = ${input.userId}
+          AND m.role = ${_OWNER_ROLE}
+          AND (
+            SELECT COUNT(*)
+            FROM "member" m2
+            WHERE m2.organization_id = m.organization_id
+              AND m2.role = ${_OWNER_ROLE}
+          ) = 1
+      `);
+
+      if (soleOwnerRows.rows.length > 0) {
+        // Auto-cancel the deletion: flip back to ACTIVE, clear deletedAt.
+        // Belt-and-suspenders CAS on `status='pending_deletion'` so a
+        // concurrent sign-in hook (which races us in the same direction)
+        // can't double-flip.
+        const reactivated = await tx
+          .update(user)
+          .set({
+            status: USER_STATUS.ACTIVE,
+            deletedAt: null,
+            updatedAt: new Date(),
+          })
+          .where(and(eq(user.id, input.userId), eq(user.status, USER_STATUS.PENDING_DELETION)))
+          .returning({ id: user.id });
+
+        // CAS miss = sign-in hook beat us to the cancel. Either way the user
+        // is back to ACTIVE; the sign-in hook would have notified separately,
+        // so we don't double-notify here.
+        if (reactivated.length === 0) {
+          return D2Result.ok<O>({ data: { anonymized: false } });
+        }
+
+        return D2Result.ok<O>({
+          data: {
+            anonymized: false,
+            autoCancelledSoleOwner: {
+              soleOwnerOrgIds: soleOwnerRows.rows.map((r) => r.organization_id),
+            },
+            originalEmail: before.email,
+            originalName: before.name,
+          },
+        });
       }
 
       const now = new Date();

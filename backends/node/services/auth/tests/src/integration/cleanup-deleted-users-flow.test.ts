@@ -15,6 +15,8 @@ import {
   account,
   session,
   signInEvent,
+  organization,
+  member,
 } from "@d2/auth-infra";
 import { startPostgres, stopPostgres, getDb, cleanAllTables } from "./postgres-test-helpers.js";
 
@@ -321,6 +323,112 @@ describe("CleanupDeletedUsers — full job flow (integration)", () => {
     expect(second.data?.skipped).toBe(0);
     expect(second.data?.lockAcquired).toBe(true);
     expect(mockNotify.calls).toHaveLength(0);
+  }, 60_000);
+
+  it("publishes user-anonymize fanout WITHOUT PII (only userId + anonymizedAt)", async () => {
+    // Regression for D3: the fanout payload previously included `email` and
+    // `name`. That PII durably persisted in every bound queue (and any DLX
+    // capture) until consumed — defeating the point of the anonymization
+    // event itself. Consumers that need PII for their own teardown should
+    // look it up by userId from their own user-keyed tables.
+    const seed = await seedEligibleUser();
+    const publishedMessages: Array<{ exchange: string; routingKey: string; body: unknown }> = [];
+    const mockPublisher = {
+      send: vi.fn(
+        async (
+          target: { exchange: string; routingKey: string; headers?: Record<string, unknown> },
+          body: unknown,
+        ) => {
+          publishedMessages.push({
+            exchange: target.exchange,
+            routingKey: target.routingKey,
+            body,
+          });
+        },
+      ),
+    } as unknown as import("@d2/messaging").IMessagePublisher;
+
+    const finalizeWithPublisher = new FinalizeDeletedUser(
+      new AnonymizeUser(getDb(), ctx()),
+      mockNotify.notify,
+      noopTranslator,
+      ctx(),
+      mockPublisher,
+    );
+
+    const result = await finalizeWithPublisher.handleAsync({ userId: seed.id });
+    expect(result.success).toBe(true);
+    expect(result.data?.anonymized).toBe(true);
+
+    // The send is fire-and-forget (best-effort) — give the queued promise a
+    // microtask tick to settle.
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(publishedMessages).toHaveLength(1);
+    const msg = publishedMessages[0]!;
+    expect(msg.exchange).toBe("auth.user-anonymize");
+    expect(msg.body).toEqual({
+      userId: seed.id,
+      anonymizedAt: expect.any(String),
+    });
+    // Critically: PII must NOT appear in the payload.
+    const body = msg.body as Record<string, unknown>;
+    expect(body).not.toHaveProperty("email");
+    expect(body).not.toHaveProperty("name");
+  });
+
+  it("auto-cancels deletion + notifies user when they became sole owner during the grace window (E2 TOCTOU)", async () => {
+    // Regression: RequestUserDeletion blocks the initial request when the
+    // user is sole owner of any org, but the grace window is days long. A
+    // co-owner can leave before anonymization runs. Without this fix the
+    // anonymization would tombstone the user while the org still references
+    // them, leaving an org with zero owners. The fix re-checks inside the
+    // anonymization tx and atomically auto-cancels (flips back to ACTIVE)
+    // if sole-owner-now, and FinalizeDeletedUser sends an explanatory email.
+    const seed = await seedEligibleUser();
+
+    // Seed an org owned solely by this user (simulating "co-owner left
+    // during grace"). The seed uses a minimal org row + one member row.
+    const orgId = generateUuidV7();
+    await getDb().insert(organization).values({
+      id: orgId,
+      name: `org-${orgId}`,
+      slug: `org-${orgId}`,
+      orgType: "customer",
+      createdAt: daysAgo(60),
+    });
+    await getDb().insert(member).values({
+      id: generateUuidV7(),
+      organizationId: orgId,
+      userId: seed.id,
+      role: "owner",
+      createdAt: daysAgo(60),
+    });
+
+    mockNotify.calls.length = 0;
+    const result = await cleanup.handleAsync({});
+    expect(result.success).toBe(true);
+    // Processed but not anonymized — auto-cancelled instead.
+    expect(result.data?.processed).toBe(1);
+    expect(result.data?.anonymized).toBe(0);
+    expect(result.data?.skipped).toBe(1);
+
+    // The user MUST be flipped back to ACTIVE atomically (no tombstone left
+    // behind), with deletedAt cleared.
+    const [row] = await getDb().select().from(user).where(eq(user.id, seed.id));
+    expect(row?.status).toBe(USER_STATUS.ACTIVE);
+    expect(row?.deletedAt).toBeNull();
+    // Email + name preserved (NOT scrubbed) so the user can recover normally.
+    expect(row?.email).toBe(seed.originalEmail);
+
+    // Notify MUST fire with the auto-cancel email template (subject TK key)
+    // and route via alternativeContactInfo (the contact pipeline isn't torn
+    // down on auto-cancel, but the handler routes by email directly to keep
+    // the path consistent with the deletion-complete email).
+    expect(mockNotify.calls).toHaveLength(1);
+    const call = mockNotify.calls[0]!;
+    expect(call.alternativeContactInfo?.email).toBe(seed.originalEmail);
+    expect(call.title).toBe("auth_email_user_deletion_auto_cancelled_sole_owner_subject");
   }, 60_000);
 
   it("returns lockAcquired:false and zero counts when the lock is held by another instance", async () => {
