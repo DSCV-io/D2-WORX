@@ -90,7 +90,17 @@ export async function startAuthService(opts: {
   // Skip HIBP API in E2E tests — domain validation still runs
   const passwordFunctions = createPasswordFunctions(noBreachCache);
 
-  const { app, auth, shutdown } = await createApp(config, publisher, { passwordFunctions });
+  // Pass `messageBus` as the 4th arg so composition-root spins up the
+  // WhoIs resolution consumer (which declares the `auth.whois-resolution`
+  // exchange). Without it, every sign-in's onSignIn publish fails with
+  // "no exchange auth.whois-resolution" — fail-open, but spammy + masks
+  // real downstream wiring problems in the test logs.
+  const { app, auth, shutdown } = await createApp(
+    config,
+    publisher,
+    { passwordFunctions },
+    messageBus,
+  );
   shutdownFn = shutdown;
 
   const grpcAddress = opts.grpcPort ? `localhost:${opts.grpcPort}` : undefined;

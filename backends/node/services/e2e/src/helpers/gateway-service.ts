@@ -83,11 +83,14 @@ export async function startGateway(opts: {
     REDIS_URL: opts.redisUrl,
     // Geo gRPC address (the only service we actually call)
     GEO_GRPC_ADDRESS: opts.geoGrpcAddress,
-    // Auth + Comms + Files gRPC addresses (required by config validation,
-    // but not called in Geo-only tests).
+    // Auth + Comms + Files + SignalR gRPC addresses (required by config
+    // validation, but not called in Geo-only tests). SignalR was added to
+    // the fail-closed startup check in `SignalREndpoints.cs:37` and the
+    // sentinel here keeps the gateway from crashing during e2e setup.
     AUTH_GRPC_ADDRESS: "localhost:1",
     COMMS_GRPC_ADDRESS: "localhost:1",
     FILES_GRPC_ADDRESS: "localhost:1",
+    SIGNALR_GRPC_ADDRESS: "localhost:1",
     // Service key config: allow Dkron's X-Api-Key to pass
     GATEWAY_SERVICEKEY__ValidKeys__0: opts.serviceKey,
     // gRPC API keys (sent as call credentials to downstream services)
