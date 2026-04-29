@@ -139,10 +139,427 @@ Auth service architecture documented in [`AUTH.md`](backends/node/services/auth/
 | 85  | `auth.user-anonymize` Files consumer   | Files | Medium | Files must consume `auth.user-anonymize` and anonymize file ownership refs + scrub `displayName` for files owned by the anonymized userId.                                                                                                                                                                                                                                                     |
 | 86  | Email-confirmed org-deletion flow      | Auth  | Medium | Sole-org-owner deletes are blocked today (must transfer ownership first). The unblock path is an email-confirmed org-deletion flow. Tracked alongside the user-deletion follow-ups.                                                                                                                                                                                                            |
 | 87  | Native-speaker review of deletion i18n | All   | Small  | New keys (`account_delete_*`, `auth_email_user_deletion_*`, `auth_errors_ACCOUNT_DELETED`, `auth_errors_SOLE_OWNER_OF_ORGS`) need native-speaker review across all 10 locales. Initial drafts auto-translated.                                                                                                                                                                                 |
+| 88  | Admin UI wrapping BetterAuth admin plugin | Auth + Web | Medium | BetterAuth admin plugin is wired (ban, list-users, force sign-out, impersonation control), but no UI surface exists. Currently admin work goes through `/api/auth/admin/*` directly. Build a SvelteKit `(admin)/` route group with user search, ban toggle, force sign-out, and impersonation grant flow. Gates on `requireAdmin()` from `@d2/auth-bff-client`.                              |
+| 89  | Comms `CanAccess` for `thread_attachment` (B6 follow-up) | Comms | Medium | `thread_attachment` contextKey is configured with `LIST_RESOLUTION=callback`, but Comms has no `CanAccess` gRPC handler — listing currently fails closed (accidentally correct since threads are pre-Stage-A). Wire up Comms `FileCallbackService.CanAccess` once Stage B threads ship: confirm the requesting user is a thread participant for `action=list`, owner-or-participant for read. |
+| 90  | ProcessFile lock TTL vs pipeline runtime | Files | Small | `ProcessFile` holds a per-fileId distributed lock with a 10-min TTL (`_PROCESS_LOCK_TTL_MS`). Default works for typical avatars but a worst-case pipeline (large video + ClamAV + multi-variant Sharp) could exceed it. Belt-and-suspenders CAS prevents data corruption (stale lock holder gets fenced) but the slow worker silently abandons its work. Options: per-contextKey TTL via config, periodic lock renewal during long phases, or explicit progress checkpoints. Revisit when video uploads ship.                                  |
+| 91  | Pending-upload table for Auth callback verification (B5) | Auth + Files | Medium | `HandleFileProcessed` in Auth currently trusts the gRPC `relatedEntityId` payload (gated by service-key auth + Files's upload-time `resolveAccess`). Defense-in-depth alternative: Auth records "user X opened the avatar dialog for file Y" when the upload URL is issued; the callback then verifies `fileId ∈ user's expected list`. New table + cleanup of stale pending entries. Deferred until/unless we see a real incident — current trust chain is reasonable.                                                                       |
 
 ### Open Questions
 
 - **Emulation/impersonation implementation details**: Authorization model decided (org emulation = read-only no consent, user impersonation = user-level consent, admin bypass). Remaining: should impersonation require 2FA? Should there be a max impersonation duration? How does `emulation_consent` integrate with BetterAuth's `impersonation` plugin hooks?
+
+### Architectural Pivots Under Consideration
+
+These are foundational re-shapings of the system, not incremental tickets. Each one would touch large swaths of the codebase and warrants an ADR + dedicated planning before any code is written. Many of the below were originally framed as separate pivots (P1 single-language, P2 unified gateway, P3 ref-data extraction) but consolidated through extended design discussion in 2026-Q2 into one cohesive target architecture.
+
+The summary below is the **current target**. The original per-pivot framing is preserved further down as "Background — original framing" for historical context.
+
+---
+
+#### Target architecture (Shape A — bundled Edge + thin internal services)
+
+```
+PUBLIC INTERNET
+       │
+       ▼
+┌──────────────────────────────────────────────────┐
+│ D2.Edge (.NET 10, single public-facing app)      │
+│  ├─ YARP routing (HTTP→ internal HTTP)           │
+│  ├─ Auth module (sign-in, JWT mint + JWKS,       │
+│  │   OAuth callbacks, OTP, password reset,       │
+│  │   3-tier session storage, admin endpoints)    │
+│  ├─ SignalR hubs (WS termination + push)         │
+│  ├─ WhoIs module (in-process IPinfo lookups,     │
+│  │   results propagated to backends as headers)  │
+│  ├─ Cross-cutting middleware (rate limit,        │
+│  │   fingerprint, idempotency, CSRF, CORS)       │
+│  └─ Hand-rolled REST↔gRPC translation for now    │
+│     (migrate to gRPC JSON Transcoding later)     │
+└──────────────────────────────────────────────────┘
+       │  (private network, optional mTLS later)
+       ▼
+┌──────────────────┐    ┌─────────────┐  ┌──────────────┐  ┌──────────────────────┐
+│ D2.SvelteKit     │    │ D2.Files    │  │ D2.Dispatch  │  │ Future services       │
+│ Node.js,         │    │ .NET, gRPC  │  │ .NET, gRPC + │  │ (Payments, Invoicing, │
+│ SSR + load fns + │    │ + HTTP for  │  │ HTTP notify  │  │  Orders, Quotes,      │
+│ form actions.    │    │ presigned   │  │ API; pure    │  │  Threads, Notifs…)    │
+│ Reads user ctx   │    │ URLs;       │  │ outbound     │  │ Each owns its own     │
+│ from Edge        │    │ internal    │  │ email+SMS    │  │ contacts table.       │
+│ headers; no JWT  │    │ only.       │  │ delivery +   │  │                       │
+│ validation own.  │    │             │  │ prefs gate.  │  │                       │
+│ Internal only.   │    │             │  │              │  │                       │
+└──────────────────┘    └─────────────┘  └──────────────┘  └──────────────────────┘
+
+Domain split: today's "Comms" service splits into three distinct services
+(only Dispatch built initially):
+  - D2.Dispatch       — outbound transactional email + SMS (this phase)
+  - D2.Threads        — conversational messaging (future, when needed)
+  - D2.Notifications  — in-app activity feed (future, when needed)
+These are separate domains that share infra (SignalR, RabbitMQ, Redis)
+but not domain logic. See "Dispatch" subsection below.
+       │                │                       │
+       ▼                ▼                       ▼
+┌────────────────────────────────────────────────────────┐
+│ Postgres │ Redis │ RabbitMQ │ MinIO │ ClamAV          │
+└────────────────────────────────────────────────────────┘
+
+SHARED LIBRARIES (compiled into services that need them):
+  D2.Shared.GeoReference   — embedded countries / IANA timezones /
+                              currencies / locales / regions (no service)
+  D2.Shared.Location       — three value objects (see below); shape only
+  D2.Shared.Dispatch       — message-shape contract + composer helpers
+                              (table builder, escaping primitives) for sending
+                              to D2.Dispatch
+  D2.Shared.Auth           — claims constants, permission constants,
+                              actor-claim helpers, internal-token issuer
+  D2.Shared.Contacts       — Contact record shape + ownership scoping
+                              + ContactCreated/Updated/Revoked event types
+  (existing) D2.Shared.Handler, D2.Shared.Result, etc.
+```
+
+**What's gone vs today:**
+- ❌ `d2-gateway` (.NET REST facade) — endpoints absorbed into Edge
+- ❌ `d2-signalr` (.NET SignalR gateway) — hubs absorbed into Edge
+- ❌ `d2-auth` (Node.js + BetterAuth) — replaced by Auth module inside Edge, self-rolled .NET (no framework wrapper)
+- ❌ `d2-geo` (.NET Geo service) — reference data → embedded library, WhoIs → Edge module, Contacts → distributed (no service); deleted entirely
+- ❌ Per-service rate-limit / fingerprint / JWT / idempotency / CORS middleware (5× duplication today)
+- ❌ "Contacts service" as originally envisioned — replaced by per-service contact tables + event-driven local replication
+
+**Net container count change**: today's `gateway + signalr + auth + geo + files + comms + sveltekit + dkron-mgr + assorted infra` → tomorrow's `Edge + files + comms + sveltekit + dkron-mgr + assorted infra`. Three Node/.NET service containers collapse into Edge; Geo deleted. **Net −4** application containers.
+
+---
+
+#### Phasing
+
+Each phase de-risks the next.
+
+| # | Phase | Effort | Why this slot |
+|---|-------|--------|---------------|
+| 0 | **Geo decomposition** — extract `D2.Shared.GeoReference` library, build `D2.Shared.Location` value objects, replace Geo gRPC calls in Files/Comms/Auth with library references. Don't touch WhoIs yet (stays in Geo until Phase 3). Ship the Contacts library + event shape spec; no consumers wired yet. | ~4 wks | Largely orthogonal. Validates the embedded-library pattern. Establishes the value-object shapes Phase 3 will lean on. Does not delete Geo yet (WhoIs still hosted there). |
+| 1 | **Files service → .NET** | ~2-3 wks | Smallest Node→.NET port. Establishes the template (DbContext + handlers + S3 + RabbitMQ + gRPC). Validates the polyglot-collapse pattern works. |
+| 2 | **Build D2.Dispatch in .NET** — pure outbound (email + SMS) delivery engine + prefs gate. Replaces today's `Comms` service entirely. Drops contact resolution, drops template management; callers provide markdown + vars (or pre-rendered HTML). Wire subscription to (still-Node) Auth's contact events for prefs lookup. | ~3-4 wks | Today's "Comms" was lumping outbound delivery, future threads, and future notifications under one roof. Splitting them into separate services from the start keeps each domain crisp. |
+| 3 | **Build Edge** — YARP routing + self-rolled Auth + SignalR hubs + in-process WhoIs (IPinfo) + all cross-cutting middleware + permission/claims model. Replaces `d2-gateway`, `d2-signalr`, `d2-auth`, deletes Geo. SvelteKit BFF role shrinks to SSR + cookie↔JWT exchange. | ~3-4 mo | The big one. Self-rolled auth is the longest unknown; everything else is mechanical by then. |
+| 4 | **Build D2.Threads** *(future, when product priority demands)* | TBD | Conversational messaging. Persistent threads, participants, messages, replies, edits, deletes, mentions, read receipts. Real-time push via Edge's SignalR. Designed in .NET from day one. |
+| 5 | **Build D2.Notifications** *(future, when product priority demands)* | TBD | In-app activity feed. Persistent read/unread state, pagination, aggregation. Real-time push via Edge's SignalR. Designed in .NET from day one. |
+
+The original Phase 4/5 split ("rework Node Auth claims first, then port Auth") collapses into Phase 3 because Auth is being rewritten from scratch as a module inside Edge — the new permission/claims model is part of the rewrite, not a separate refactor of the old code. Phases 4 and 5 in the new numbering are the future Threads / Notifications services that were previously implicit in "Comms Stage B."
+
+---
+
+#### Stack decisions
+
+These are stable answers, agreed through extended discussion.
+
+**Auth (inside Edge, self-rolled, primitives only)**
+- No framework wrapper. `Microsoft.IdentityModel.Tokens` + `IDataProtectionProvider` + `AuthorizationPolicyBuilder` + `Microsoft.AspNetCore.RateLimiting` + `Antiforgery` + `IHostedService` are framework *primitives*, not framework *flow control*. We compose. No IdentityServer, no OpenIddict-as-framework, no ASP.NET Identity-as-framework.
+- Password hashing: `Konscious.Security.Cryptography` (Argon2id), tuned to 400-800ms per hash.
+- Sessions: 3-tier (cookie cache 5min compact → Redis → Postgres), `IDataProtectionProvider` for cookie signing, dual-write pattern.
+- OAuth: hand-rolled `HttpClient` flows for each provider (Google to start), no `AddGoogle()`-style wrappers.
+- OTP: `RandomNumberGenerator` + Redis store with TTL + max-attempt counter.
+- CSRF: built-in `Antiforgery` middleware (double-submit cookie under the hood).
+- JWT issuance: RS256, 15-min external tokens, JWKS exposed at `/.well-known/jwks.json` for any future external validators.
+
+**Gateway (YARP inside Edge)**
+- YARP for routing — native WebSocket + gRPC pass-through, `PartitionedRateLimiter.CreateChained()` for multi-dimensional rate limit, hot-reload config, custom `ITransformFactory` for per-route shaping.
+- YARP does HTTP→HTTP only (incl. WS upgrade + gRPC pass-through). It does NOT translate REST↔gRPC. Short-term: hand-rolled translation lives inside Edge alongside YARP routing (today's `d2-gateway` endpoint pattern, just sitting in the Edge process). Long-term: `Microsoft.AspNetCore.Grpc.JsonTranscoding` on each backend (auto-exposes HTTP from `[google.api.http]` proto annotations) and YARP just routes HTTP. Migrate per service when convenient.
+- MinIO presigned URLs stay client-direct. Don't proxy file bytes through Edge — saturates the gateway. Rate limit at the request layer (presigned-URL issuance), not the byte layer.
+- **YARP IS the load balancer for backends.** Multiple destinations per cluster, configurable LB policy (round-robin, least-connections, power-of-two-choices, custom `ILoadBalancingPolicy`), active health checks against each backend's `/health`, automatic removal of unhealthy destinations, retry-against-another-instance on failed-destination. There is no separate "internal LB" — Edge IS it for everything inside the perimeter (SvelteKit, Files, Dispatch, future services).
+- **SvelteKit is one of the backends YARP load-balances.** SvelteKit sits behind Edge on the private network (not publicly accessible). Browser → Edge → SvelteKit. Edge handles all auth / JWT / cookie / enrichment; SvelteKit reads user context from headers Edge propagates. See "SvelteKit auth posture (behind Edge)" below.
+
+**Production topology (single instance vs HA)**
+
+Early production — single Edge instance, no front LB:
+```
+Browser → Cloudflare (DNS, TLS, WAF, geo) → Edge → backends
+```
+Acceptable for early phases. Single point of failure on the Edge process itself.
+
+HA — multiple Edge instances behind a Layer 7 LB:
+```
+Browser → Cloudflare (or other L7 LB) → Edge-1, Edge-2, Edge-3 → backends
+                  ↑
+       L7 because Edge is stateful via WS (long-lived
+       SignalR connections per-instance). L7 also gives:
+       sticky-on-WS reconnection, TLS termination at LB,
+       HTTP/2 negotiation, path-based routing.
+```
+Cloudflare is the natural fit since we already use it for DNS + tunnels. WS connections still need the Redis backplane for cross-instance push regardless of LB stickiness — backplane handles "service X pushed to user Y, find which Edge has Y's WS and deliver." Sticky reconnection just makes connection-state recovery cheaper, not load-bearing for correctness.
+
+**Internal service-to-service** *(open — see open decisions)*
+- The general direction is short-lived (~5-min) internal JWTs carrying user context + scoped permissions + optional `actor` claim (impersonation chain), minted by Edge after validating the external JWT. The exact mechanism (hand-rolled vs RFC 8693 token exchange vs something else) is **not yet decided** — listed under open decisions.
+- Authorisation enforced via ASP.NET Core claims-based policies (`[Authorize(Policy = "X")]`) regardless of which mint mechanism we pick.
+- Permission constants live in `D2.Shared.Auth`, codified compile-time across all services.
+- **Static service keys (today's `X-Api-Key` model) are explicitly being moved away from.** Replacement mechanism for service identity (the non-user-driven case — scheduled jobs, RabbitMQ consumers, service A calling service B without a user context) is **not yet decided** — listed under open decisions.
+
+**WhoIs (inside Edge)**
+- IPinfo (current provider — not MaxMind; that was a research-fork hallucination earlier in the doc, corrected here).
+- In-process: Edge calls IPinfo on cold cache misses, caches results in memory + Redis. Per-request lookups don't hit IPinfo unless cold.
+- Result propagated downstream via header (e.g. `X-WhoIs-Json`, ~200-400 bytes). Backends 30 layers deep can read the WhoIs without a service hop.
+- Persistence: WhoIs records carry **denormalized** location data (no FK to a separate Location row). Drops cross-service location-table dependency. Audit trail (sign_in_event etc. references) stays via direct columns or by stashing the WhoIs record's hash.
+
+**Reference data (`D2.Shared.GeoReference` library)**
+- Embedded via MSBuild `EmbeddedResource` + single indexed JSON per data type (with per-locale name tables nested under each entry — `{ "code": "US", "names": { "en": "...", "fr": "...", ... } }`).
+- Source generators are overkill at our scale. Build-time codegen unnecessary.
+- IANA tzdata updates fold into normal CI/redeploy cadence (auto-PR via cron job when upstream releases) — there is no service hosting this anymore.
+- Loaded once at startup (lazy static), O(1) dictionary lookups thereafter.
+
+**Locations (`D2.Shared.Location` library, three value objects)**
+
+```csharp
+public sealed record AdminLocation(
+    string CountryCode,
+    string? Region,
+    string? Locality,
+    string? PostalCode,
+    string Hash);  // SHA-256 of normalized fields
+
+public sealed record Coordinates(
+    decimal Lat,    // 5-decimal precision (~1m)
+    decimal Lng,    // 5-decimal precision (~1m)
+    string Geohash); // separate field (geohash IS the dedup unit)
+
+public sealed record StreetAddress(
+    string Line1,
+    string? Line2,
+    string? Line3,
+    string Hash);   // SHA-256 of normalized lines
+```
+
+- `WhoIsRecord` composes `AdminLocation + Coordinates` (no street ever — type system prevents it).
+- `Contact` composes all three flattened into a single row (denormalized).
+- Each hash answers a different question: same `StreetAddress.Hash` = same physical address; same `AdminLocation.Hash` = same city; same `Geohash` prefix = within N meters.
+- All fields indexed independently — `(CountryCode, Region)` for admin queries, `Geohash` for proximity, `StreetAddress.Hash` for exact-address dedup.
+- Address normalisation: light canonicalisation (lowercase + trim + strip punctuation + standardise whitespace). Heavy NLP libraries like libpostal explicitly excluded — adds native dependency for marginal benefit at our scale.
+
+**Contacts (no service — distributed model)**
+- No `D2.Contacts` service exists. Contacts are owned by whichever service has authority over the relevant domain.
+- Auth owns canonical user/org contacts (because Auth is the user/org authority).
+- Future services (Payments, Invoicing, Orders, Quotes, etc.) own their own contacts. Each service has its own contact table optimised for its read patterns.
+- `D2.Shared.Contacts` library defines the Contact record shape + event types (`ContactCreated`, `ContactUpdated`, `ContactRevoked`) + ownership scoping.
+- Services that need contact data from another service subscribe to that service's events on the fanout exchange and maintain their own local cache. Eventually consistent (~ms via RabbitMQ).
+- Most notifications won't need contact resolution at all — callers provide delivery info inline (the `alternativeContactInfo` shape we already use). Comms cache is only for the cases where caller can't or won't (batch jobs, preference-aware delivery).
+
+**Contact ownership shape**
+```csharp
+public sealed record Contact(
+    Guid Id,
+    Guid? UserId,                 // explicit owner — user
+    Guid? OrgId,                  // explicit owner — org
+    string? RelatedServiceName,   // human-readable: "Invoicing"
+    string? RelatedServiceKey,    // stable id: "invoicing.svc.d2.local"
+    string? RelatedServiceId,     // entity id within service: "invoice-12345"
+    // ...contact data flattened (email, phone, AdminLocation, Coordinates, StreetAddress)...
+    DateTimeOffset CreatedAt);
+```
+- `UserId` / `OrgId` axes for permission gates and audit (a token's permissions can target "user-owned contacts" specifically).
+- `RelatedService*` axis for cross-service context links — "this contact was created by Invoicing in the context of invoice-12345."
+- Authorisation: the calling service can only mutate contacts whose `RelatedServiceName` / `RelatedServiceKey` matches its own identity (or where it has explicit cross-service grants).
+
+**Immutability**
+- Contacts and WhoIs records are both immutable.
+- Enforced at the **domain layer**: records use `init`-only properties; "updates" are new records with new IDs.
+- Enforced at the **DB layer**: no `UPDATE` permitted via constraints. Soft-delete is a `RevokedAt` timestamp, never a content edit.
+- Implication: hash-as-identity is rock-solid (never breaks), cache-forever is safe, audit trail is automatic.
+
+**Dispatch (pure outbound delivery + prefs gate)** — replaces today's "Comms"
+
+After redesign + rename, Dispatch shrinks dramatically:
+- ❌ No contact storage, no contact resolution.
+- ❌ No template entity, no template management.
+- ❌ No conversational messaging concept (that's the future `D2.Threads` service).
+- ❌ No in-app notification feed concept (that's the future `D2.Notifications` service).
+- ✅ Receives notification with: subject (markdown w/ placeholders), body (markdown w/ placeholders), variables map (untrusted), channel hints, recipient delivery info, prefs scoping context.
+- ✅ Substitutes variables into subject + body — variables HTML-escaped on insertion (always; no "trusted markdown variable" escape hatch).
+- ✅ For email: renders markdown → HTML via Markdig (`UseAdvancedExtensions().DisableHtml()` so no inline HTML smuggling), runs through `Ganss.Xss` HTML sanitiser as defense-in-depth, wraps in brand chrome (Razor template parameterised by org branding vars — colour, logo image — no per-tenant raw HTML).
+- ✅ For SMS: substitutes variables into plain-text body, no rendering, no chrome — just forward via Twilio.
+- ✅ Plain-text fallback for email derived automatically via Markdig's `PlainTextRenderer` (caller doesn't have to provide both).
+- ✅ Looks up delivery preferences scoped by `(UserId/OrgId) × (RelatedServiceName/Key/Id)`. Most-specific match wins. Filters channels, applies quiet hours.
+- ✅ Delivers via SMTP / Twilio dispatcher.
+- ✅ Retries via tier-queue topology (existing pattern).
+- ✅ Tracks delivery status (existing).
+
+**D2.Threads (future)** — conversational messaging only. Persistent thread + participants + message entities, edits / deletes / mentions / read receipts. Real-time delivery via Edge's SignalR for online users; may call `D2.Dispatch` to email an offline user when mentioned. No outbound-delivery logic of its own.
+
+**D2.Notifications (future)** — in-app activity feed only. Persistent feed entries with read/unread state, pagination, aggregation ("Alice and 3 others liked your post"). Real-time delivery via Edge's SignalR. May call `D2.Dispatch` for digest emails. No outbound-delivery logic of its own.
+
+**SvelteKit (behind Edge)** — pure SSR, nothing else
+
+- SvelteKit binds to the private network only (Edge is the only thing that can reach it). Browser → Edge → SvelteKit. Header spoofing from external attackers is impossible because there's no external path to SvelteKit.
+- **No `+server.ts` endpoints.** Today's `/api/auth/[...path]/+server.ts` and `/api/account/[...path]/+server.ts` proxies are deleted. The browser hits Edge directly for `/api/*` routes; Edge's YARP/handlers process them in-process. SvelteKit doesn't see these requests.
+- **No form actions.** Today's pattern (everything uses `superForm` with `SPA: true`, calls `fetch("/api/...")` from JS) is preserved. No progressive enhancement; same client-side AJAX flow as today, just retargeted at Edge endpoints instead of the SvelteKit proxy.
+- **No proxying.** SvelteKit is not a forwarder. It does not see auth-state mutations, account mutations, file uploads, or anything else that's not page rendering.
+- SvelteKit's server-side responsibilities collapse to:
+  - SSR rendering of Svelte components
+  - `+page.server.ts` `load()` functions for data fetching during SSR
+  - That's it.
+- `load()` functions make **direct server-to-server calls** to backend services on the private network (Files, Dispatch, future services). SvelteKit is on the same private network as the backends — no Edge hop in between. SvelteKit forwards the user's internal JWT (from Edge's `X-Internal-Token` header) on each outbound call; backends validate against Edge's JWKS. No service identity needed — the user's JWT IS the credential for SSR data fetching.
+- SvelteKit reads user context from request headers Edge populates: `X-User-Id`, `X-Org-Id`, `X-Permissions`, `X-Internal-Token`, `X-WhoIs-Json`, `X-Trace-Id`, `X-Locale` (exact shape TBD). No JWT validation in SvelteKit, no cookie management in SvelteKit, no session lookup in SvelteKit.
+- `@d2/auth-bff-client` shrinks dramatically — from ~1000 lines (SessionResolver + JwtManager + AuthProxy + route guards) to ~50-100 lines (typed header readers + `requireAuth()` / `requireOrg()` helpers that read `event.locals` populated from Edge headers).
+- Hooks chain shrinks to one thin hook that copies Edge's headers into `event.locals`. No auth chain, no enrichment chain, no rate-limit chain, no proxy logic — Edge does all of it.
+- All auth UI flows + account mutations: browser POSTs directly to Edge endpoints (`/api/auth/*`, `/api/account/*`). SvelteKit renders the pages that contain these forms but doesn't process the mutations.
+- CSRF: Edge handles for all POSTs to Edge endpoints (the only POSTs the browser ever makes). SvelteKit doesn't see POSTs and doesn't need its own CSRF protection.
+- Local dev: Edge runs alongside SvelteKit. Browser hits Edge on `localhost:5000`, Edge handles `/api/*` in-process and forwards page-render requests to SvelteKit on `localhost:5173`. One extra component in the dev loop, but routine. `make dev` starts Edge + SvelteKit + Postgres + Redis + RabbitMQ together.
+
+**Auth/security posture summary (browser + non-browser)**
+
+| Client | Authn at Edge | Token transport | Backend auth |
+|---|---|---|---|
+| Browser | Opaque session cookie (HttpOnly, Secure, SameSite=Lax) → 3-tier store | Cookie automatic on every request | Edge mints internal JWT per request, propagates to SvelteKit and backends |
+| Mobile (future) | Username/password → bearer access JWT + opaque refresh token | `Authorization: Bearer <jwt>` header | Same internal JWT path |
+| User PAT (CLI / scripts) | Pre-issued long-lived token (opaque or JWT) | `Authorization: Bearer <token>` | Same internal JWT path |
+| Org API key (B2B) | Org-admin-issued long-lived token, scoped permissions | `Authorization: Bearer <token>` | Same internal JWT path |
+| Internal SvelteKit → backend | (n/a — uses forwarded user JWT) | `X-Internal-Token` header from Edge | Backend validates against Edge JWKS |
+| Internal service → service (non-user) | (open question — see decisions) | TBD | TBD |
+
+Browser stays on opaque cookies (instant revocation, smaller payload, mature browser support). Mobile / CLI / third-party use bearer tokens. Both paths converge to "Edge mints internal JWT for backend communication."
+
+**Redis as a SPOF (accepted)**
+The 3-tier session store hits Redis on every cookie-cache miss. The rate limiter hits Redis on every request. The cache layer for hot reference lookups hits Redis. **Redis down = site down**, regardless of whether session validation specifically is in the dependency chain. This is acknowledged. Mitigation is the same as for any other critical infra: horizontal scaling (Redis Cluster or Sentinel + replicas), multi-AZ deployment, monitoring with alerting, and a clear "Redis recovery" runbook. The cookie-cache (5-min compact strategy) means Redis can be down for short windows without blocking actively-cached sessions. Not a reason to avoid the architecture.
+
+**Templating**
+- Markdown body with `{{var}}` placeholders. No full handlebars (no conditionals/loops in templates). Anything that needs branching, the caller renders in its own template engine and passes the resulting markdown.
+- For tables (invoices, receipts) with dynamic rows: `D2.Shared.Notifications.MarkdownHelpers.Table(headers, rows)` — caller-side helper that escapes each cell and produces safe markdown ready to inline into the body. The body itself is treated as trusted markdown; the helper output is part of the trusted body.
+- All variables (the `{{var}}` substitutions) are HTML-escaped — strict, no exceptions, no `{{html:trusted}}` syntax.
+- No per-tenant raw HTML or pixel-perfect branded layouts. Branding customisation is scoped to a few simple vars (brand colour, logo image URL) consumed by the Edge-side Razor chrome template. Org admins can't inject arbitrary HTML.
+
+**Library picks**
+| Concern | Library | Notes |
+|---|---|---|
+| Password hashing | `Konscious.Security.Cryptography` | Argon2id; tuned 400-800ms |
+| Cookie signing | `Microsoft.AspNetCore.DataProtection` + `…StackExchangeRedis` | DP keys stored in Redis |
+| Distributed locks / cache | `StackExchange.Redis` (with Lua for atomic ops) | Per-fileId locks pattern from Files |
+| Postgres ORM | `Npgsql.EntityFrameworkCore.PostgreSQL` 10 | EF Core 10 |
+| RabbitMQ | `RabbitMQ.Client` 7.x | Official, low-level, no MassTransit |
+| S3 | `AWSSDK.S3` | MinIO-compatible |
+| Image variants | `SixLabors.ImageSharp` | Pure C#, no native deps |
+| ClamAV | `nClam` | Streaming virus scan |
+| Markdown→HTML | `Markdig` | Raw HTML disabled at render |
+| HTML sanitiser | `Ganss.Xss` (HtmlSanitizer) | Allowlist-based, defense-in-depth after Markdig |
+| Email chrome | Razor `.cshtml` compiled at build time | Branding vars only (colour, logo) |
+| WhoIs | IPinfo HTTP client (existing) | In-process inside Edge |
+| Reverse proxy | `Yarp.ReverseProxy` 2.3+ | Inside Edge |
+| Rate limiting | `Microsoft.AspNetCore.RateLimiting` (built-in) | `PartitionedRateLimiter.CreateChained()` |
+
+---
+
+#### Open decisions still needing a call
+
+None of these block starting Phase 0 or 1.
+
+1. **Internal token mint mechanism** *(blocks Phase 3 design)*. The user-context-carrying short-lived JWT model is agreed in shape (claims, ~5min TTL, `permissions` array, optional `actor`), but the *issuance* mechanism is open. Candidates: (a) hand-rolled — Edge mints directly using its signing keys, no protocol; (b) RFC 8693 OAuth Token Exchange — formal grant type, exchange endpoint, standardized claims; (c) something between (e.g., a private gRPC `MintToken(externalToken, scope)` API on Edge). Each has trade-offs around standards alignment vs simplicity.
+2. **Service identity (replacing static `X-Api-Key`)** *(blocks Phase 3 design)*. Static API keys for S2S are being moved away from. Candidates for the replacement — these aren't mutually exclusive:
+   - **mTLS between services** — cryptographic identity at transport layer; cert IS the auth. Requires cert distribution + rotation infra (could be Edge-issued at startup, or external like Smallstep / cert-manager). Eliminates bearer-token replay risk. Local dev complexity.
+   - **Per-service signing keys + service-identity JWTs** — each backend has its own keypair, mints short-lived JWTs for outbound calls, others validate via JWKS. Same machinery as user JWTs; bearer-token risks but easier to debug than mTLS.
+   - **Edge-issued service identity tokens** — service requests a token from Edge before making an outbound call (round-trip on cold path). Edge controls everything centrally; high coupling to Edge availability.
+   - **Workload-identity system (SPIFFE-lite)** — Edge issues short-lived service certs at startup, services use them for mTLS or to mint own JWTs. More machinery; aligns with cloud-native patterns.
+3. **Permission registry storage** *(blocks Phase 3 design)*. Hard-coded enum (compile-time, deploy-to-change), DB table (operator-editable, requires admin UI), or DB + Redis cache (operator-editable + fast)? Trade-off: operator UX vs cache-invalidation complexity.
+2. **Emulation/impersonation in the new claim model** *(blocks Phase 3 design)*. Today: BetterAuth impersonation plugin + `emulation_consent` table (separate concepts — emulation is no-consent for support staff, impersonation is consent-required). New: `actor` claim. Sub-questions:
+   - Collapse user impersonation and org emulation into one `actor` claim with a `kind` discriminator, or keep distinct claims?
+   - Does `emulation_consent` survive as a separate table, or fold into the permission registry?
+3. **WebSocket / SignalR auth lifetime** *(blocks Phase 3 design)*. JWTs expire in 15 min; WS connections live for hours. Options: accept that connections outlive their JWT (most systems do this), periodic re-auth via WS control message (security-sensitive systems), or kick clients on token expiry. Need a call.
+4. **MinIO replacement** *(parallel to Phase 1, already flagged in Deferred Upgrades)*. Garage / RustFS / SeaweedFS. If we're touching Files anyway, fold in or keep as a separate later initiative?
+5. **SvelteKit BFF after Phase 3** *(blocks Phase 3 spec)*. Once Edge owns auth + JWT validation + cookie ↔ JWT exchange, the BFF role shrinks to SSR only. `@d2/auth-bff-client` becomes thin. Worth a redesign pass.
+6. **Comms thread / inbox model in Phase 2** *(blocks Phase 2 design)*. Stage B currently un-designed. If we port to .NET in Phase 2 with the new shape (pure delivery + prefs), threads happen *after* Phase 2 in their own design pass — separate from the port.
+7. **Drizzle migration handoff during Auth port** *(blocks Phase 3 execution)*. Hard-cut: existing Drizzle migrations stay as read-only baseline, EF Core takes over forward. Don't try to keep both alive.
+8. **Free-floating contacts** *(blocks Contacts library design)*. Do we have any? Current Geo Contact entity allows it but nothing actually uses it. Decision: lean on "every contact has an owner — user, org, or originating service — never floating." If a real free-floating use case emerges later, we revisit.
+
+---
+
+#### Background — original framing (superseded by the consolidated decisions above)
+
+The pivots were originally framed as three separate items (P1 = polyglot consolidation, P2 = unified gateway, P3 = ref-data extraction). Through extended design discussion in 2026-Q2, they merged into a single architectural target (Shape A above), with the addition of a Geo decomposition that wasn't in the original P3. The original framing is preserved below for context.
+
+#### P1 — Consolidate to a single backend language (.NET)
+
+**Current state.** Polyglot: .NET (Geo, Gateway, SignalR) + Node.js (Auth, Comms, Files). Each side has its own DI container, handler base class, result type, OTel integration, test infrastructure, and dependency-management discipline. We've been mirroring patterns across both sides (`@d2/handler` vs `D2.Shared.Handler`, `@d2/di` vs `IServiceCollection`, etc.) which works but doubles the cognitive load and the maintenance surface.
+
+**Proposed change.** Move every Node.js service to .NET. The retained Node.js footprint would be limited to the SvelteKit BFF (no choice — SvelteKit is Node-only).
+
+**Motivation.**
+- One DI/handler/result/test paradigm — every existing parity rule (PARITY.md, mirrored handler categories, mirrored constants like `OrgTypeValues`) becomes free.
+- One dependency tree, one CVE feed, one upgrade cadence.
+- BetterAuth replacement needed regardless — it's TypeScript-only and pulling it into .NET means rewriting auth on a different framework. That's the main lift.
+- Static typing parity is moot today (TS strict + Drizzle types ≈ C#), but ecosystem maturity around RabbitMQ, gRPC, OTel, and Postgres is meaningfully better in .NET.
+
+**Open questions / trade-offs.**
+- **Auth replacement.** BetterAuth's social providers, OTP, JWT, organization plugin, sessions store would need a .NET equivalent. Candidates: ASP.NET Identity + custom org plugin, OpenIddict, IdentityServer (commercial), or a hand-rolled solution. None are 1:1 drop-ins. **This is the biggest unknown.**
+- **Drizzle → EF Core migration.** Schema is small (auth ~12 tables, comms ~6, files ~1), but the migration history would need to be re-baselined (or kept as Drizzle artifacts referenced read-only by EF Core).
+- **Hono routing → Minimal API / Carter.** Mechanical translation, ~1 week per service.
+- **All Node tests rewritten in xUnit.** ~2,000 tests. Could do a phased migration where new code is .NET and Node tests run until parity is reached.
+- **Impact on the SvelteKit BFF.** The BFF still calls services over HTTP/gRPC — protocol stays the same. SvelteKit-side `@d2/auth-bff-client` would need to be rebuilt to talk to the new auth service. ~1 week.
+
+**Effort.** Multi-month. Probably best done one service at a time: Files first (smallest), Comms second (medium, threads pending), Auth last (largest, blocks on BetterAuth replacement).
+
+---
+
+#### P2 — Unified gateway (single ingress)
+
+**Current state.** Three public-ish ingress points:
+1. .NET REST Gateway (`d2-gateway`, port 5461) — proxies to Geo + future services
+2. .NET SignalR Gateway (`d2-signalr`, port 5400/5401) — WebSocket + gRPC push
+3. SvelteKit (`d2-sveltekit`) — BFF with its own auth-proxy
+4. Files API (`d2-files`) — direct browser ↔ service for uploads/downloads
+5. Auth API (`d2-auth`) — direct browser ↔ service for `/api/auth/*` (BetterAuth)
+
+Plus internal-only gRPC endpoints (Geo, Auth FileCallback, Comms, etc.).
+
+**Proposed change.** Single ingress that does:
+- TLS termination (today: cloudflared tunnel + per-service)
+- Rate limiting (today: per-service middleware, duplicated)
+- Request enrichment / fingerprinting (today: per-service middleware, duplicated)
+- JWT validation (today: per-service middleware, duplicated)
+- Request routing (today: cloudflared rules + DNS)
+- Idempotency-Key (today: per-service middleware, duplicated)
+
+Backends become inward-facing only (gRPC or HTTP behind the gateway).
+
+**Motivation.**
+- Six identical middleware stacks → one. Today every service re-implements rate limit / fingerprinting / JWT / idempotency. Centralising removes ~5 directories of duplicated code.
+- One CORS configuration. Today CORS is wired in three+ places and we've already had a "missing header in allow-list" production-breaking bug.
+- Easier to add cross-cutting concerns (request signing, geo-blocking, WAF rules) in one place.
+- Internal services no longer need to be public-facing → MinIO can drop the cloudflared tunnel, Files API becomes internal-only, etc.
+
+**Open questions / trade-offs.**
+- **WebSockets through the gateway.** SignalR's hub protocol over WS adds latency-sensitive considerations. Most reverse-proxy gateways (Envoy, Kong, Traefik) handle WS fine but require explicit upgrade rules.
+- **Direct browser → MinIO presigned URLs.** Today the browser PUTs/GETs MinIO directly via the cloudflared tunnel. With a unified gateway either MinIO stays public-facing, or the gateway proxies the presigned-URL streams (latency cost, throughput cost). Most file-heavy systems keep S3-style direct uploads.
+- **Build vs buy.** Roll our own (.NET YARP / Node.js with Hono) vs Envoy + Lua / WASM filters vs Kong. Buying gives us battle-tested middleware but adds a non-D2 component to operate.
+- **The SvelteKit BFF role.** Does SvelteKit still proxy `/api/auth/*` to BetterAuth, or do those go through the unified gateway directly? If the latter, the BFF only owns SSR + cookie ↔ JWT exchange.
+
+**Effort.** ~6 weeks for a YARP-based .NET gateway with parity to current middleware. Less if we adopt Envoy/Kong (but adds operational complexity).
+
+---
+
+#### P3 — Geo reference data out of the database
+
+**Current state.** Geo's reference data (countries: ~250 rows, US states + Canadian provinces: ~60 rows, IANA timezones: 309 rows, currencies, locales) lives in Postgres. EF Core migrations seed it on startup. Multi-tier caching (memory → Redis → DB) reads it back at query time. Geo Client (`@d2/geo-client` + `D2.Geo.Client`) hits Geo gRPC for these lookups.
+
+**Proposed change.** Reference data becomes a static, versioned data package:
+- JSON files bundled with the build (or fetched once at startup from a CDN-pinned URL)
+- Loaded into memory at service boot (tiny — a few hundred KB total)
+- No DB tables, no migration seed, no Redis cache, no gRPC round-trip
+- Updates ship as new versions of the data package alongside code releases
+
+**Motivation.**
+- The data is static — updates are infrequent (new IANA tzdata once or twice a year, currency additions even less). It's not domain data.
+- DB tables are pure ceremony. Every query goes through three cache tiers to retrieve data that could be a `Dictionary<string, Country>` lookup.
+- The migration path to add a new country / timezone / currency is currently: write seed migration → deploy → restart → cache invalidates → fresh fetch propagates. Could be: bump data-package version → deploy. Same outcome, no DB hop.
+- FK constraints to ref tables (e.g. `contacts.iana_identifier → timezones.iana_identifier`) become application-level validation. Slight loss of strictness; trade for not having to keep a 309-row table in sync forever.
+- Smaller Geo service, simpler deployment, faster cold starts.
+
+**Open questions / trade-offs.**
+- **Cross-service lookups.** Today services that need country/timezone/currency lookups call Geo via geo-client. With a static data package, each service could embed the package directly — no gRPC call. Simpler but means every service ships the same ~500KB.
+- **What stays in Geo's DB.** User contacts, user-created locations, and WhoIs lookups are dynamic — those stay. The pivot is purely about reference data (countries / states / timezones / currencies / locales).
+- **FK validation.** Today FK enforcement is at the DB layer. After the move, the only place Geo enforces "this IANA identifier exists" is in domain code. Acceptable for ref data that's frozen-at-release-time; less acceptable if we want auditors to be able to verify integrity at the SQL layer.
+- **Migration path.** Need to migrate existing FK rows (`contacts.iana_identifier`) when ref data changes. With DB-resident ref data, an ALTER on the FK target propagates via constraint. With static data, a removed timezone means orphaned contact rows — needs an explicit data migration.
+- **i18n of reference data.** Country names + currency names are localized today (resolved per-locale at query time). Static package can carry the same per-locale tables; just colder updates.
+
+**Effort.** ~3 weeks. Build the data package (JSON + types), add a loader, replace Geo's reference-data handlers, deprecate the seed migrations + ref tables (one-shot data migration to drop them), update geo-client to use the new lookup path (or removed entirely if every service embeds the package).
+
+---
+
+#### Other foundational questions raised, not yet captured
+
+Add as they crystallize. The above three are the ones explicitly discussed; likely candidates worth listing as we get to them: the BetterAuth dependency (replace?), gRPC vs HTTP/2 for inter-service (consolidate to one transport?), Drizzle vs EF Core for the Node side (irrelevant if P1 happens), Comms thread/inbox model design (Stage B foundational decisions).
 
 ### Pre-Launch SEO Checklist
 
