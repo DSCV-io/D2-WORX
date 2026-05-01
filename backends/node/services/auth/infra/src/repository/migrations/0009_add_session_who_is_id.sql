@@ -1,1 +1,0 @@
-ALTER TABLE "session" ADD COLUMN "who_is_id" text;

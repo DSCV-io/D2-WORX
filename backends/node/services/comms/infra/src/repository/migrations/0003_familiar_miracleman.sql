@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX "uq_delivery_attempt_request_channel_attempt" ON "delivery_attempt" USING btree ("request_id","channel","attempt_number");
