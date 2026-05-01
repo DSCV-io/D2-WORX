@@ -30,12 +30,9 @@ Microservices SaaS: C# 14 / .NET 10, TypeScript 5.9, Svelte 5. Full conventions 
 - **API key comparisons must be constant-time** — `CryptographicOperations.FixedTimeEquals` (.NET), `timingSafeEqual` (Node.js).
 - **New JWT claims** → add to BOTH `JWT_CLAIM_TYPES` (Node.js) and `JwtClaimTypes` (.NET).
 
-## TypeScript / Node.js
+## TypeScript
 
-- **Drizzle UPDATE/DELETE must chain `.returning()`** — empty result = row didn't exist → return `notFound()`.
 - **`.d.ts` files in `src/` are NOT emitted to `dist/`** — module augmentations must be in `.ts` files.
-- **After modifying `@d2/*` source**: full `tsc` build (not `--noEmit`) so `dist/` is updated.
-- **Cross-platform enum changes in one commit** — `OrgType`, `Role`, or any text-stored enum must be updated in BOTH .NET and Node.js.
 
 ## SvelteKit
 

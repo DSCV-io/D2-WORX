@@ -116,7 +116,7 @@
             "type": "prometheus",
             "uid": "mimir"
           },
-          "expr": "histogram_quantile(0.95, sum by(le, http_route) (rate(http_server_request_duration_seconds_bucket{job=\"gateway-rest\"}[5m]))) * 1000",
+          "expr": "histogram_quantile(0.95, sum by(le, http_route) (rate(http_server_request_duration_seconds_bucket{job=\"edge\"}[5m]))) * 1000",
           "legendFormat": "{{http_route}}",
           "refId": "A"
         }
@@ -206,7 +206,7 @@
             "type": "prometheus",
             "uid": "mimir"
           },
-          "expr": "histogram_quantile(0.99, sum by(le, http_route) (rate(http_server_request_duration_seconds_bucket{job=\"gateway-rest\"}[5m]))) * 1000",
+          "expr": "histogram_quantile(0.99, sum by(le, http_route) (rate(http_server_request_duration_seconds_bucket{job=\"edge\"}[5m]))) * 1000",
           "legendFormat": "{{http_route}}",
           "refId": "A"
         }
@@ -296,7 +296,7 @@
             "type": "prometheus",
             "uid": "mimir"
           },
-          "expr": "sum by(http_route) (rate(http_server_request_duration_seconds_count{job=\"gateway-rest\"}[5m]))",
+          "expr": "sum by(http_route) (rate(http_server_request_duration_seconds_count{job=\"edge\"}[5m]))",
           "legendFormat": "{{http_route}}",
           "refId": "A"
         }
@@ -396,7 +396,7 @@
             "type": "prometheus",
             "uid": "mimir"
           },
-          "expr": "(sum by(http_route) (rate(http_server_request_duration_seconds_count{job=\"gateway-rest\", http_response_status_code=~\"[45]..\"}[5m])) / sum by(http_route) (rate(http_server_request_duration_seconds_count{job=\"gateway-rest\"}[5m])) * 100) or (sum by(http_route) (rate(http_server_request_duration_seconds_count{job=\"gateway-rest\"}[5m])) * 0)",
+          "expr": "(sum by(http_route) (rate(http_server_request_duration_seconds_count{job=\"edge\", http_response_status_code=~\"[45]..\"}[5m])) / sum by(http_route) (rate(http_server_request_duration_seconds_count{job=\"edge\"}[5m])) * 100) or (sum by(http_route) (rate(http_server_request_duration_seconds_count{job=\"edge\"}[5m])) * 0)",
           "legendFormat": "{{http_route}}",
           "refId": "A"
         }
@@ -465,7 +465,7 @@
             "type": "prometheus",
             "uid": "mimir"
           },
-          "expr": "sum(rate(process_cpu_time_seconds_total{job=\"gateway-rest\"}[5m])) * 100",
+          "expr": "sum(rate(process_cpu_time_seconds_total{job=\"edge\"}[5m])) * 100",
           "refId": "A"
         }
       ],
@@ -532,7 +532,7 @@
             "type": "prometheus",
             "uid": "mimir"
           },
-          "expr": "dotnet_process_memory_working_set_bytes{job=\"gateway-rest\"} / 1024 / 1024",
+          "expr": "dotnet_process_memory_working_set_bytes{job=\"edge\"} / 1024 / 1024",
           "refId": "A"
         }
       ],
@@ -552,7 +552,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "REST Gateway Performance",
+  "title": "Edge Performance",
   "uid": null,
   "version": 0,
   "weekStart": ""

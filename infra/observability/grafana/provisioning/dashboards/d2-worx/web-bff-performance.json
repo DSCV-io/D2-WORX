@@ -124,7 +124,7 @@
             "type": "prometheus",
             "uid": "mimir"
           },
-          "expr": "histogram_quantile(0.95, sum by(le, http_method, http_status_code) (rate(http_server_duration_milliseconds_bucket{job=\"d2-sveltekit\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by(le, http_method, http_status_code) (rate(http_server_duration_milliseconds_bucket{job=\"d2-web\"}[5m])))",
           "legendFormat": "{{http_method}} {{http_status_code}}",
           "refId": "A"
         }
@@ -222,7 +222,7 @@
             "type": "prometheus",
             "uid": "mimir"
           },
-          "expr": "histogram_quantile(0.99, sum by(le, http_method, http_status_code) (rate(http_server_duration_milliseconds_bucket{job=\"d2-sveltekit\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by(le, http_method, http_status_code) (rate(http_server_duration_milliseconds_bucket{job=\"d2-web\"}[5m])))",
           "legendFormat": "{{http_method}} {{http_status_code}}",
           "refId": "A"
         }
@@ -312,7 +312,7 @@
             "type": "prometheus",
             "uid": "mimir"
           },
-          "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"d2-sveltekit\"}[5m]))",
+          "expr": "sum(rate(http_server_duration_milliseconds_count{job=\"d2-web\"}[5m]))",
           "legendFormat": "Total Requests",
           "refId": "A"
         }
@@ -412,7 +412,7 @@
             "type": "prometheus",
             "uid": "mimir"
           },
-          "expr": "(sum(rate(http_server_duration_milliseconds_count{job=\"d2-sveltekit\", http_status_code=~\"[45]..\"}[5m])) or vector(0)) / (sum(rate(http_server_duration_milliseconds_count{job=\"d2-sveltekit\"}[5m])) or vector(1)) * 100",
+          "expr": "(sum(rate(http_server_duration_milliseconds_count{job=\"d2-web\", http_status_code=~\"[45]..\"}[5m])) or vector(0)) / (sum(rate(http_server_duration_milliseconds_count{job=\"d2-web\"}[5m])) or vector(1)) * 100",
           "legendFormat": "Error Rate",
           "refId": "A"
         }
@@ -512,7 +512,7 @@
             "type": "prometheus",
             "uid": "mimir"
           },
-          "expr": "(sum(rate(http_server_duration_milliseconds_count{job=\"d2-sveltekit\", http_status_code=~\"2..\"}[5m])) / sum(rate(http_server_duration_milliseconds_count{job=\"d2-sveltekit\"}[5m]))) * 100",
+          "expr": "(sum(rate(http_server_duration_milliseconds_count{job=\"d2-web\", http_status_code=~\"2..\"}[5m])) / sum(rate(http_server_duration_milliseconds_count{job=\"d2-web\"}[5m]))) * 100",
           "legendFormat": "Success Rate",
           "refId": "A"
         }
@@ -581,7 +581,7 @@
             "type": "prometheus",
             "uid": "mimir"
           },
-          "expr": "nodejs_eventloop_utilization_ratio{job=\"d2-sveltekit\"} * 100",
+          "expr": "nodejs_eventloop_utilization_ratio{job=\"d2-web\"} * 100",
           "refId": "A"
         }
       ],
@@ -648,7 +648,7 @@
             "type": "prometheus",
             "uid": "mimir"
           },
-          "expr": "sum(v8js_memory_heap_used_bytes{job=\"d2-sveltekit\"}) / 1024 / 1024",
+          "expr": "sum(v8js_memory_heap_used_bytes{job=\"d2-web\"}) / 1024 / 1024",
           "refId": "A"
         }
       ],
@@ -745,7 +745,7 @@
             "type": "prometheus",
             "uid": "mimir"
           },
-          "expr": "nodejs_eventloop_delay_p99_seconds{job=\"d2-sveltekit\"} * 1000",
+          "expr": "nodejs_eventloop_delay_p99_seconds{job=\"d2-web\"} * 1000",
           "legendFormat": "P99 Delay",
           "refId": "A"
         }
@@ -843,7 +843,7 @@
             "type": "prometheus",
             "uid": "mimir"
           },
-          "expr": "nodejs_eventloop_delay_p90_seconds{job=\"d2-sveltekit\"} * 1000",
+          "expr": "nodejs_eventloop_delay_p90_seconds{job=\"d2-web\"} * 1000",
           "legendFormat": "P90 Delay",
           "refId": "A"
         }
@@ -854,7 +854,7 @@
   ],
   "refresh": "10s",
   "schemaVersion": 39,
-  "tags": ["d2-worx", "sveltekit", "bff"],
+  "tags": ["d2-worx", "web", "bff"],
   "templating": {
     "list": []
   },
@@ -864,7 +864,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "SvelteKit BFF Performance",
+  "title": "Web BFF Performance",
   "uid": null,
   "version": 0,
   "weekStart": ""

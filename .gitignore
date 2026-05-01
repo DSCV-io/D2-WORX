@@ -27,7 +27,7 @@ node_modules/
 # Build results
 
 [Dd]ebug/
-!clients/web/src/routes/debug/
+!server/web/src/routes/debug/
 [Rr]elease/
 x64/
 [Bb]in/
@@ -162,10 +162,17 @@ georefdata.bin
 .env.local
 .env.*.local
 !.env.local.example
+.env.secrets
+.env.secrets.*
+!.env.secrets.example
+
+# Key material — never committed
+secrets/*
+!secrets/.gitkeep
 
 # Local tool settings (machine-specific)
-.claude/
-.aspire/settings.json
+.claude/*
+!.claude/settings.json
 
 # Coverage
 /Coverage

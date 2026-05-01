@@ -26,19 +26,14 @@ prometheus.scrape "infrastructure" {
       service     = "cadvisor",
     },
 
-    // Application services (running in Docker Compose)
-    // Note: Node.js services (Auth, Comms) push metrics via OTLP, not Prometheus scrape.
-    // Only .NET services expose /metrics endpoints for pull-based scraping.
+    // Application services (running in Docker Compose).
+    // All v2 services are .NET — expose /metrics for Prometheus scrape.
+    // SvelteKit BFF (d2-web) uses Pino → stdout, no /metrics endpoint.
+    // TODO: add scrape blocks for d2-edge / d2-files / d2-courier / d2-notifications / d2-audit as services come online per V2.md §4 phases.
     {
-      __address__      = env("GATEWAY_METRICS_ENDPOINT"),
-      job              = "gateway-rest",
-      service          = "REST",
-      __metrics_path__ = "/metrics",
-    },
-    {
-      __address__      = env("GEO_METRICS_ENDPOINT"),
-      job              = "service-geo",
-      service          = "Geo.API",
+      __address__      = env("EDGE_METRICS_ENDPOINT"),
+      job              = "edge",
+      service          = "Edge",
       __metrics_path__ = "/metrics",
     },
 
@@ -169,10 +164,10 @@ discovery.relabel "containers" {
 
   // Drop .NET services that export logs via OTLP Serilog sink — they would be
   // ingested twice (Docker scrape + OTLP push) with inconsistent level labels.
-  // Node.js services use Pino → stdout only (no OTLP log export), so keep them.
+  // SvelteKit BFF (d2-web) uses Pino → stdout only (no OTLP log export), so keep it.
   rule {
     source_labels = ["__meta_docker_container_name"]
-    regex         = "/(d2-geo|d2-gateway|d2-signalr)"
+    regex         = "/(d2-edge|d2-files|d2-courier|d2-notifications|d2-audit)"
     action        = "drop"
   }
 
@@ -191,13 +186,14 @@ loki.source.docker "containers" {
   relabel_rules = discovery.relabel.containers.rules
 }
 
-// Parse Pino JSON numeric levels from Docker-scraped Node.js service logs.
-// Only applies to Node.js services (d2-auth, d2-comms, d2-files, d2-sveltekit, d2-dkron-mgr).
+// Parse Pino JSON numeric levels from Docker-scraped SvelteKit BFF logs.
+// Only applies to d2-web (the only Node service in v2). All .NET services drop
+// to OTLP and are filtered out above.
 // Infrastructure containers (postgres, redis, etc.) pass through untouched.
 loki.process "docker_levels" {
-  // Only process Pino JSON for Node.js services.
+  // Only process Pino JSON for the SvelteKit BFF.
   stage.match {
-    selector = "{container=~\"d2-auth|d2-comms|d2-files|d2-sveltekit|d2-dkron-mgr\"}"
+    selector = "{container=~\"d2-web\"}"
 
     // Extract Pino numeric level from JSON log line.
     stage.json {
