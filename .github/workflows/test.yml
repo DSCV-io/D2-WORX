@@ -1,613 +1,187 @@
-name: Tests
+name: PR
+
+# Single-lane CI per V2.md §8.
+#
+# Active jobs ramp up as services come online per V2.md §4 phases.
+# Jobs are commented out (TODO) until their target service exists.
+# Total wall time target: <5 minutes (all active jobs run in parallel).
+#
+# Required gates (non-skippable once active):
+#   - integration-key-rotation (per V2.md §5.4 KeyCustodian)
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main, nova]
   push:
-    branches: [main, develop]
+    branches: [main, nova]
 
 jobs:
-  dotnet-shared-unit:
-    name: D2 .NET Shared - Unit Tests (v1)
+  # ==========================================================================
+  # Active now (no service dependencies)
+  # ==========================================================================
+
+  # TODO: proto-checks — enable when buf.yaml is committed
+  # proto-checks:
+  #   name: Proto checks (buf lint + format)
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: bufbuild/buf-setup-action@v1
+  #     - run: buf lint
+  #     - run: buf format --diff --exit-code
+
+  # TODO: lint-and-format — enable when SvelteKit deps are restored (Phase 7)
+  # AND server/D2.slnx contains projects (Phase 0+)
+  # lint-and-format:
+  #   name: Lint + format
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "24"
+  #     - uses: pnpm/action-setup@v4
+  #       with:
+  #         version: 10
+  #     - uses: actions/setup-dotnet@v4
+  #       with:
+  #         dotnet-version: "10.0.x"
+  #     - name: pnpm install (server/web)
+  #       run: pnpm install --frozen-lockfile
+  #       working-directory: server/web
+  #     - name: ESLint + Prettier (server/web)
+  #       run: |
+  #         pnpm exec eslint .
+  #         pnpm exec prettier --check .
+  #       working-directory: server/web
+  #     - name: dotnet build (StyleCop + analyzers)
+  #       run: dotnet build server/D2.slnx --configuration Release
+  #     - name: jb inspectcode
+  #       run: |
+  #         dotnet tool restore
+  #         dotnet jb inspectcode server/D2.slnx --severity=WARNING --no-build
+
+  # ==========================================================================
+  # Active per phase (TODO — uncomment as each service ships per V2.md §4)
+  # ==========================================================================
+
+  # TODO: build — Phase 0 (shared libs ship first .NET projects into D2.slnx)
+  # build:
+  #   name: Build
+  #   runs-on: ubuntu-latest
+  #   needs: [lint-and-format]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-dotnet@v4
+  #       with:
+  #         dotnet-version: "10.0.x"
+  #     - run: dotnet build server/D2.slnx --configuration Release
+
+  # TODO: unit-tests-dotnet — Phase 0 (D2.Shared.Tests ships)
+  # unit-tests-dotnet:
+  #   name: Unit tests (.NET)
+  #   runs-on: ubuntu-latest
+  #   needs: [build]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-dotnet@v4
+  #       with:
+  #         dotnet-version: "10.0.x"
+  #     - run: dotnet test server/D2.slnx --filter Category=Unit --no-build --configuration Release
+
+  # TODO: unit-tests-web — Phase 7 (SvelteKit rebuilt with v2 deps)
+  # unit-tests-web:
+  #   name: Unit tests (web — Vitest browser mode)
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "24"
+  #     - uses: pnpm/action-setup@v4
+  #       with:
+  #         version: 10
+  #     - run: pnpm install --frozen-lockfile
+  #       working-directory: server/web
+  #     - run: pnpm exec vitest run
+  #       working-directory: server/web
+
+  # TODO: integration-edge — Phase 3 (Edge ships)
+  # TODO: integration-files — Phase 6
+  # TODO: integration-courier — Phase 5
+  # TODO: integration-notifications — Phase 5
+  # TODO: integration-audit — Phase 4
+  #
+  # Pattern (one per service):
+  # integration-{service}:
+  #   name: Integration tests ({service})
+  #   runs-on: ubuntu-latest
+  #   needs: [build]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-dotnet@v4
+  #       with:
+  #         dotnet-version: "10.0.x"
+  #     - run: dotnet test server/services/{service}/tests --no-build --configuration Release
+
+  # TODO: integration-key-rotation — REQUIRED GATE per V2.md §5.4
+  # Phase 3 (KeyCustodian module ships with Edge)
+  # integration-key-rotation:
+  #   name: Key rotation (REQUIRED)
+  #   runs-on: ubuntu-latest
+  #   needs: [build]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-dotnet@v4
+  #       with:
+  #         dotnet-version: "10.0.x"
+  #     - run: dotnet test server/services/edge/tests --filter Category=KeyRotation --no-build --configuration Release
+
+  # TODO: web-component-tests — Phase 7
+  # web-component-tests:
+  #   name: Web component tests (Vitest browser mode)
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "24"
+  #     - uses: pnpm/action-setup@v4
+  #       with:
+  #         version: 10
+  #     - run: pnpm install --frozen-lockfile
+  #       working-directory: server/web
+  #     - run: pnpm exec vitest run --browser
+  #       working-directory: server/web
+
+  # TODO: web-mock-playwright-tests — Phase 7
+  # web-mock-playwright-tests:
+  #   name: Web Playwright (mocked)
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "24"
+  #     - uses: pnpm/action-setup@v4
+  #       with:
+  #         version: 10
+  #     - run: pnpm install --frozen-lockfile
+  #       working-directory: server/web
+  #     - run: pnpm exec playwright install chromium
+  #       working-directory: server/web
+  #     - run: pnpm exec playwright test
+  #       working-directory: server/web
+  #       env:
+  #         D2_MOCK_INFRA: "true"
+
+  # ==========================================================================
+  # Placeholder — keeps the workflow valid while all real jobs are TODO.
+  # Remove this once the first real job (proto-checks or lint-and-format) is enabled.
+  # ==========================================================================
+  noop:
+    name: noop (placeholder until first real job enables)
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "10.0.x"
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-
-      - name: Run unit tests
-        run: >
-          dotnet test backends/dotnet/shared/Tests/
-          --no-build --configuration Release --verbosity normal
-          -p:TestingPlatformDotnetTestSupport=false
-          --filter "FullyQualifiedName!~Integration"
-
-  dotnet-shared-integration:
-    name: D2 .NET Shared - Integration Tests (v1)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "10.0.x"
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-
-      - name: Run integration tests
-        run: >
-          dotnet test backends/dotnet/shared/Tests/
-          --no-build --configuration Release --verbosity normal
-          -p:TestingPlatformDotnetTestSupport=false
-          --filter "FullyQualifiedName~Integration"
-
-  dotnet-geo-unit:
-    name: D2 .NET Geo - Unit Tests (v1)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "10.0.x"
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-
-      - name: Run unit tests
-        run: >
-          dotnet test backends/dotnet/services/Geo/Geo.Tests/
-          --no-build --configuration Release --verbosity normal
-          -p:TestingPlatformDotnetTestSupport=false
-          --filter "FullyQualifiedName!~Integration"
-
-  dotnet-geo-integration:
-    name: D2 .NET Geo - Integration Tests (v1)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "10.0.x"
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-
-      - name: Run integration tests
-        run: >
-          dotnet test backends/dotnet/services/Geo/Geo.Tests/
-          --no-build --configuration Release --verbosity normal
-          -p:TestingPlatformDotnetTestSupport=false
-          --filter "FullyQualifiedName~Integration"
-
-  node-auth-unit:
-    name: D2 Node.js Auth - Unit Tests (v1)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm build
-
-      - name: Run unit tests
-        run: pnpm vitest run --project auth-tests --exclude "**/integration/**"
-
-  node-auth-integration:
-    name: D2 Node.js Auth - Integration Tests (v1)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm build
-
-      - name: Run integration tests
-        run: pnpm vitest run --project auth-tests "integration"
-
-  node-comms-unit:
-    name: D2 Node.js Comms - Unit Tests (v1)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm build
-
-      - name: Run unit tests
-        run: pnpm vitest run --project comms-tests --exclude "**/integration/**"
-
-  node-comms-integration:
-    name: D2 Node.js Comms - Integration Tests (v1)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm build
-
-      - name: Run integration tests
-        run: pnpm vitest run --project comms-tests "integration"
-
-  node-files-unit:
-    name: D2 Node.js Files - Unit Tests (v1)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm build
-
-      - name: Run unit tests
-        run: pnpm vitest run --project files-tests --exclude "**/integration/**"
-
-  node-files-integration:
-    name: D2 Node.js Files - Integration Tests (v1)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm build
-
-      - name: Run integration tests
-        run: pnpm vitest run --project files-tests "integration"
-
-  node-shared-unit:
-    name: D2 Node.js Shared - Unit Tests (v1)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm build
-
-      - name: Run unit tests
-        run: pnpm vitest run --project shared-tests --exclude "**/integration/**"
-
-  node-shared-integration:
-    name: D2 Node.js Shared - Integration Tests (v1)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm build
-
-      - name: Run integration tests
-        run: pnpm vitest run --project shared-tests "integration"
-
-  node-dkron-mgr-unit:
-    name: D2 Node.js dkron-mgr - Unit Tests (v1)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm build
-
-      - name: Run unit tests
-        run: pnpm vitest run --project dkron-mgr-tests --exclude "**/integration/**" --exclude "**/e2e/**"
-
-  node-dkron-mgr-integration:
-    name: D2 Node.js dkron-mgr - Integration + E2E Tests (v1)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm build
-
-      - name: Run integration and E2E tests
-        run: pnpm vitest run --project dkron-mgr-tests integration e2e
-
-  node-bff-client-unit:
-    name: D2 Node.js Auth BFF Client - Unit Tests (v1)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm build
-
-      - name: Run unit tests
-        run: pnpm --filter @d2/auth-bff-client exec vitest run
-
-  web-vitest:
-    name: D2 Web Client - Vitest (v1)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm build
-
-      - name: Install Playwright browsers (for vitest-browser-svelte)
-        run: npx playwright install chromium
-        working-directory: clients/web
-
-      - name: Run Vitest
-        run: npx vitest run
-        working-directory: clients/web
-
-  web-playwright-mocked:
-    name: D2 Web Client - Playwright Mocked (v2)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm build
-
-      - name: Install Playwright browsers
-        run: npx playwright install chromium
-        working-directory: clients/web
-
-      - name: Run mocked Playwright tests
-        run: npx playwright test
-        working-directory: clients/web
-        env:
-          D2_MOCK_INFRA: "true"
-
-  e2e-prebuild:
-    name: D2 E2E - .NET Prebuild (v2)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "10.0.x"
-
-      - name: Restore and build Geo.API
-        run: |
-          dotnet restore backends/dotnet/services/Geo/Geo.API
-          dotnet build backends/dotnet/services/Geo/Geo.API --no-restore
-
-      - name: Restore and build REST Gateway
-        run: |
-          dotnet restore backends/dotnet/gateways/REST
-          dotnet build backends/dotnet/gateways/REST --no-restore
-
-      - name: Upload Geo.API build
-        uses: actions/upload-artifact@v4
-        with:
-          name: geo-api-build
-          path: backends/dotnet/services/Geo/Geo.API/bin/Debug/
-          retention-days: 1
-
-      - name: Upload Gateway build
-        uses: actions/upload-artifact@v4
-        with:
-          name: gateway-build
-          path: backends/dotnet/gateways/REST/bin/Debug/
-          retention-days: 1
-
-  e2e-vitest:
-    name: D2 E2E - Vitest API Tests (v2)
-    runs-on: ubuntu-latest
-    needs: [e2e-prebuild]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "10.0.x"
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install Node.js dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Node.js packages
-        run: pnpm build
-
-      - name: Download .NET builds
-        uses: actions/download-artifact@v4
-        with:
-          pattern: "*-build"
-          merge-multiple: false
-
-      - name: Restore .NET build artifacts
-        run: |
-          mkdir -p backends/dotnet/services/Geo/Geo.API/bin/Debug
-          mkdir -p backends/dotnet/gateways/REST/bin/Debug
-          cp -r geo-api-build/* backends/dotnet/services/Geo/Geo.API/bin/Debug/ || true
-          cp -r gateway-build/* backends/dotnet/gateways/REST/bin/Debug/ || true
-          chmod +x backends/dotnet/services/Geo/Geo.API/bin/Debug/net10.0/Geo.API || true
-          chmod +x backends/dotnet/gateways/REST/bin/Debug/net10.0/REST || true
-
-      - name: Run E2E tests
-        run: pnpm vitest run --project e2e-tests
-
-  e2e-browser:
-    name: D2 E2E - Browser Auth Flows (v2)
-    runs-on: ubuntu-latest
-    needs: [e2e-prebuild]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "10.0.x"
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install Node.js dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Node.js packages
-        run: pnpm build
-
-      - name: Install Playwright browsers
-        run: npx playwright install chromium
-        working-directory: backends/node/services/e2e
-
-      - name: Download .NET builds
-        uses: actions/download-artifact@v4
-        with:
-          pattern: "*-build"
-          merge-multiple: false
-
-      - name: Restore .NET build artifacts
-        run: |
-          mkdir -p backends/dotnet/services/Geo/Geo.API/bin/Debug
-          mkdir -p backends/dotnet/gateways/REST/bin/Debug
-          cp -r geo-api-build/* backends/dotnet/services/Geo/Geo.API/bin/Debug/ || true
-          cp -r gateway-build/* backends/dotnet/gateways/REST/bin/Debug/ || true
-          chmod +x backends/dotnet/services/Geo/Geo.API/bin/Debug/net10.0/Geo.API || true
-          chmod +x backends/dotnet/gateways/REST/bin/Debug/net10.0/REST || true
-
-      - name: Run browser E2E tests
-        run: npx playwright test --config playwright.config.ts
-        working-directory: backends/node/services/e2e
+      - name: noop
+        run: echo "v2 wipe complete; CI jobs activate per V2.md §4 phases"
