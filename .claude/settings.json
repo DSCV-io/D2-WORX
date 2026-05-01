@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(**/.env.secrets)",
+      "Write(**/.env.secrets)",
+      "Edit(**/.env.secrets)",
+      "Read(**/secrets/**)",
+      "Write(**/secrets/**)",
+      "Edit(**/secrets/**)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/.npmrc)",
+      "Read(**/.aws/**)",
+      "Read(**/.ssh/**)",
+      "Bash(cat **/.env.secrets*)",
+      "Bash(cat **/secrets/**)",
+      "Bash(less **/.env.secrets*)",
+      "Bash(head **/.env.secrets*)",
+      "Bash(tail **/.env.secrets*)"
+    ]
+  }
+}
