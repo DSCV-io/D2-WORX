@@ -1,6 +1,9 @@
 # CLAUDE.md — D²-WORX Development Guide
 
-**D²-WORX** — Microservices SaaS framework. C# 14 / .NET 10, TypeScript 5.9, Svelte 5. Pre-Alpha. PolyForm Strict license (reference implementation, non-commercial).
+**D²-WORX** — Microservices SaaS framework. C# 14 / .NET 10 backend, SvelteKit BFF (TypeScript 5.9 / Svelte 5). Pre-Alpha. PolyForm Strict license (reference implementation, non-commercial).
+
+> **Architectural source of truth**: [V2.md](V2.md). This doc covers process, patterns, and code rules. V2.md covers what we're building.
+> **Current execution state**: [PHASE_0.md](PHASE_0.md). Tracks the v1 → v2 wipe and Phase 0 work.
 
 > **⚠️ MANDATORY: Every code change MUST follow the Development Workflow (§1). No exceptions.**
 
@@ -14,12 +17,12 @@ This process applies to every change — bug fix, feature, refactor, or test. Fo
 
 Before writing any code, understand what you're changing and what it touches.
 
-- Read the ENTIRE CLAUDE.md so you know WHICH reference docs (§3) are relevant to the task
+- Read CLAUDE.md so you know WHICH reference docs (§3) are relevant to the task
 - Read the relevant `.md` docs for the areas being touched (§3 tells you which and when)
-- Find similar existing implementations (§4 has the patterns)
-- Check [PLANNING.md](PLANNING.md) for current phase, resolved ADRs, status
-- Identify ALL affected files (`findReferences`, Grep, Glob)
-- Check existing utilities before creating helpers ([`D2.Shared.Utilities`](backends/dotnet/shared/Utilities/) / [`@d2/utilities`](backends/node/shared/utilities/))
+- Check [V2.md](V2.md) for architectural intent (§5 for stack decisions, §6 for code patterns, §7 for versioning)
+- Find similar existing implementations
+- Identify ALL affected files (`mcp__cclsp__find_references`, Grep, Glob)
+- For historical v1 reference (patterns, prior decisions), check `/old/v1/D2-WORX/`
 - **If uncertain → ASK. Do not guess. Do not assume. This is the #1 rule.**
 
 ### Step 2: Plan
@@ -29,14 +32,14 @@ Before writing any code, understand what you're changing and what it touches.
 Design your approach before touching code. Plans must address:
 
 - **Scope**: Files to create/modify
-- **Pattern adherence**: Which established patterns apply (§4)? Identify explicitly. Note the correct TLC/2LC/3LC layer and operation verbiage.
+- **Pattern adherence**: Which V2.md §6 patterns apply? Identify explicitly. Note the correct TLC/2LC/3LC layer and operation verbiage.
 - **Risks**: What could break? Side effects? Hard to reverse?
-- **Test plan**: Happy path + adversarial cases (→ case coverage checklist in [TESTS.md](backends/dotnet/shared/Tests/TESTS.md))
+- **Test plan**: Happy path + adversarial cases (→ case coverage checklist in [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIST.md) and (when published) `docs/TESTS.md`)
 - **i18n impact**: Does this change add or modify user-visible strings? This includes:
   - SvelteKit UI (Paraglide translations)
   - Backend handler messages (`D2Result` `messages` array — end users can see these)
   - Backend input errors (`D2Result` `inputErrors` — field-level errors shown in forms)
-  - Comms service notification content (email/SMS templates via `contracts/messages/`)
+  - D2.Courier notification content (email/SMS templates)
   - If YES → add keys to ALL present locale files in `contracts/messages/`
 - **Documentation**: Which `.md` files need updating?
 
@@ -57,22 +60,21 @@ Write code following §5 (Code Quality Rules) and §6 (Code Conventions).
 
 Every item MUST pass before a change is "done":
 
-- [ ] **Builds clean** — zero warnings/errors on ALL affected platforms:
-  - `.NET`: `dotnet build` — zero StyleCop (SA\***\*), CS\*\*** warnings, null ref warnings
-  - `.NET`: `jb inspectcode` — zero Rider/ReSharper warnings (see §2 for command)
-  - `Node.js @d2/*`: `pnpm --filter @d2/xxx exec tsc` (full build if consumers need `dist/`)
-  - `SvelteKit`: `pnpm --filter d2-sveltekit exec svelte-check`
+- [ ] **Builds clean** — zero warnings/errors:
+  - `.NET`: `dotnet build server/D2.slnx` — zero StyleCop (SA****), CS**** warnings, null ref warnings
+  - `.NET`: `jb inspectcode server/D2.slnx --severity=WARNING` — zero Rider/ReSharper warnings (see §2)
+  - `SvelteKit`: `cd server/web && pnpm exec svelte-check`
 - [ ] **Lint/style clean** — zero warnings:
-  - `pnpm lint` — ESLint across all TS/JS/Svelte
-  - `pnpm format:check` — Prettier formatting
+  - `cd server/web && pnpm exec eslint .`
+  - `cd server/web && pnpm exec prettier --check .`
   - (StyleCop is part of `dotnet build` above)
 - [ ] **Tests pass** — existing tests still pass + new tests for new behavior
-- [ ] **Pattern adherence** — code follows established patterns (§4), correct TLC/2LC/3LC structure
+- [ ] **Pattern adherence** — code follows established patterns (V2.md §6), correct TLC/2LC/3LC structure
 - [ ] **Zero tolerance** — ALL errors/warnings encountered anywhere in the project are fixed, not just in branch-modified files. If you see it, fix it.
 - [ ] **i18n** — no hardcoded user-visible strings (UI, handler messages, input errors, notifications). All locale files in sync.
 - [ ] **Documentation** — affected `.md` files updated
 - [ ] **TS diagnostics** — `mcp__cclsp__get_diagnostics` clean for edited TS files
-- [ ] **Container health** — if Docker Compose is running, verify affected containers are healthy (`docker compose --env-file .env.local ps`). Restart any containers that are unhealthy or have stale code (`docker compose --env-file .env.local restart <service>`). Changes to shared packages, dependencies, or service code can leave containers in a broken state until restarted.
+- [ ] **Container health** — if Docker Compose is running, verify affected containers are healthy (`docker compose --env-file .env.local --env-file .env.secrets ps`). Restart any containers that are unhealthy.
 
 ### Step 6: Report
 
@@ -92,30 +94,27 @@ After completing a task, briefly report:
 **Docker Compose (service lifecycle):**
 
 ```bash
-make up                                             # Start all services (detached)
-make down                                           # Stop all services
-docker compose --env-file .env.local up -d          # Start with explicit env file
-docker compose --env-file .env.local down           # Stop with explicit env file
+make up                                                                    # Start all services (detached)
+make down                                                                  # Stop all services
+docker compose -f infra/compose/compose.yml --env-file .env.local --env-file .env.secrets up -d      # Direct invocation
 ```
 
 **Build:**
 
 ```bash
-dotnet build                                        # Full .NET solution
-pnpm --filter @d2/xxx exec tsc                      # Single Node.js package (emits dist/)
-pnpm --filter @d2/xxx exec tsc --noEmit             # Type-check only (no dist/ output)
+dotnet build server/D2.slnx                                                # Full .NET solution
+dotnet build server/services/{service}/api/{service}.API.csproj            # Single project
+cd server/web && pnpm install && pnpm exec svelte-check                    # SvelteKit type check
 ```
-
-> ⚠️ **NEVER run `dotnet build` or `dotnet restore` on the host while `d2-geo`, `d2-gateway`, or `d2-signalr` are running.** All three .NET dev containers run `dotnet watch run` against `./backends/dotnet` mounted live; a host build writes to the same shared `obj/` and races with the containers' parallel restore. Symptoms: NETSDK1064, `Handler.csproj.nuget.g.targets already exists`, all 3 containers crash, Cloudflare 502 / browser CORS failures on `https://t-d2-ws.dcsv.io`. Build inside the container instead (`docker exec d2-geo dotnet build /src/backends/dotnet/services/Geo/Geo.API`), or stop all 3 .NET containers first, build, clean `obj/` + `bin/`, then sequential restart `geo → gateway → signalr` with health waits between.
 
 **Rider/ReSharper Inspections (.NET):**
 
 ```bash
 # Full solution (WARNING+ severity, text output, no build — run after dotnet build)
-jb inspectcode D2.sln --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log
+jb inspectcode server/D2.slnx --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log
 
 # Single project (faster — use during focused work)
-jb inspectcode D2.sln --project="Geo.App" --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log
+jb inspectcode server/D2.slnx --project="Edge.App" --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log
 ```
 
 These catch warnings that `dotnet build` does NOT surface: `[MustDisposeResource]` misuse, captured variable/closure issues, object initialization suggestions, and other JetBrains-specific inspections. Must be zero warnings.
@@ -123,72 +122,56 @@ These catch warnings that `dotnet build` does NOT surface: `[MustDisposeResource
 **Test:**
 
 ```bash
-# Node.js (Vitest 4.x — run from repo root)
-pnpm vitest run                                     # All test projects
-pnpm vitest run --project shared-tests              # Specific project
-pnpm vitest run --project auth-tests                # Auth service tests
-pnpm --filter @d2/auth-bff-client exec vitest run   # Package-local tests (bff-client)
-
 # .NET (xUnit)
-dotnet test                                         # Full solution
-dotnet test --filter FindWhoIs                      # Specific test filter
+dotnet test server/D2.slnx                                                 # Full solution
+dotnet test server/D2.slnx --filter Category=Unit                          # Unit only
+dotnet test server/services/edge/tests                                      # Specific service
 
 # SvelteKit
-pnpm --filter d2-sveltekit exec vitest run          # Unit tests (browser mode)
-pnpm --filter d2-sveltekit exec playwright test     # Mocked Playwright tests
-
-# E2E (full-stack, self-contained via Testcontainers)
-pnpm vitest run --project e2e-tests                 # API-level E2E tests
-cd backends/node/services/e2e && npx playwright test  # Browser E2E tests
+cd server/web && pnpm exec vitest run                                       # Unit tests (browser mode)
+cd server/web && pnpm exec playwright test                                  # Playwright (mocked by default)
 ```
 
 **Lint/Style:**
 
 ```bash
-pnpm lint                                           # ESLint (all TS/JS/Svelte)
-pnpm format:check                                   # Prettier check
+cd server/web && pnpm exec eslint .                                         # ESLint
+cd server/web && pnpm exec prettier --check .                               # Prettier check
 ```
 
-**Important:** After modifying a `@d2/*` package's source, always `tsc` (full build, not `--noEmit`) so `dist/` is updated. Consumers import from `dist/` — stale output causes silent runtime failures.
+**Versioning (per V2.md §7):**
+
+```bash
+dotnet tool restore                                                        # First-time setup
+dotnet versionize --dry-run                                                # Preview bump (always do this first)
+dotnet versionize                                                          # Bump version + update CHANGELOG + tag
+git push --follow-tags
+```
+
+**Important:** When editing shared `.NET` libs in `server/shared/dotnet/`, run `dotnet build server/D2.slnx` to verify all consumers still compile. SvelteKit changes are isolated — `cd server/web && pnpm exec svelte-check`.
 
 ---
 
 ## §3. Reference Documents
 
-Read these docs BEFORE working in the relevant area. Each doc is the authority for its domain. The summary tells you enough to know whether you need the full doc.
+Read these docs BEFORE working in the relevant area. Each doc is the authority for its domain.
 
-| Document                                                                                                                   | Summary                                                                                                                                                                                                   | When to Read                                    |
-| -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| [PLANNING.md](PLANNING.md)                                                                                                 | Current phase, ADRs (1-18), resolved decisions, implementation status, open issues, roadmap                                                                                                               | **Always first** — before any task              |
-| [BACKENDS.md](backends/BACKENDS.md)                                                                                        | TLC/2LC/3LC folder convention, handler categories (Q/C/U/X), layer-specific verbiage, DI registration, Node.js workspace, package dependency graph, Dkron jobs                                            | Any backend work (services, handlers, repos)    |
-| [.NET HANDLER.md](backends/dotnet/shared/Handler/HANDLER.md)                                                               | BaseHandler pattern, IHandlerContext, HandlerOptions, OTel metrics (4), IRequestContext field tables, implementation example with using aliases                                                           | Adding/modifying any .NET handler               |
-| [Node.js HANDLER.md](backends/node/shared/handler/HANDLER.md)                                                              | BaseHandler, RedactionSpec, validateInput (Zod), HandlerOptions, OTel metrics, ambient context (AsyncLocalStorage), IRequestContext fields, createServiceScope, implementation + interface + DI examples  | Adding/modifying any Node.js handler            |
-| [.NET RESULT.md](backends/dotnet/shared/Result/RESULT.md)                                                                  | D2Result factory methods (12+), BubbleFail/Bubble error propagation, CheckSuccess/CheckFailure pattern matching, best practices                                                                           | .NET error handling, result patterns            |
-| [Node.js RESULT.md](backends/node/shared/result/RESULT.md)                                                                 | D2Result factory methods (camelCase), bubbleFail/bubble, checkSuccess/checkFailure, error codes table, retry helpers (retryResultAsync/retryExternalAsync), transient detection                           | Node.js error handling, result patterns         |
-| [.NET TESTS.md](backends/dotnet/shared/Tests/TESTS.md)                                                                     | Case coverage checklist (8 categories), test naming conventions, form/endpoint testing patterns, frameworks per platform                                                                                  | Writing any tests                               |
-| [Node.js TESTING.md](backends/node/shared/testing/TESTING.md)                                                              | Custom Vitest matchers (7), PostgresTestHelper (Testcontainers), test project architecture, vitest monorepo setup, createTestContext pattern                                                              | Node.js test infrastructure, Vitest setup       |
-| [GEO_SERVICE.md](backends/dotnet/services/Geo/GEO_SERVICE.md)                                                              | Geo service architecture — domain model, caching strategy, validation, DB design. **Primary reference implementation**                                                                                    | Understanding established service structure     |
-| [GEO_CLIENT.md](backends/dotnet/services/Geo/Geo.Client/GEO_CLIENT.md)                                                     | Client library pattern: inter-service gRPC calls, multi-tier caching (Mem→Redis→DB→Disk), singleflight dedup, circuit breaker, DI registration, usage examples                                            | Client library work, caching, gRPC calls        |
-| [AUTH.md](backends/node/services/auth/AUTH.md)                                                                             | Auth architecture (BetterAuth + Hono), sessions (3-tier: cookie→Redis→PG), JWT (RS256/JWKS), request flow (Hybrid C), SvelteKit proxy, S2S trust, secure endpoint checklist, cookie signing               | Any auth, security, session, or JWT work        |
-| [AUTH_BFF_CLIENT.md](backends/node/services/auth/bff-client/AUTH_BFF_CLIENT.md)                                            | SvelteKit BFF auth client: SessionResolver, JwtManager, AuthProxy, route guards (`requireAuth`, `requireOrg`, `redirectIfAuthenticated`), cookie signing, config                                          | SvelteKit auth hooks, SSR session, route guards |
-| [JWT_AUTH.md](backends/node/shared/implementations/middleware/jwt-auth/default/JWT_AUTH.md)                                | JWT validation middleware for Hono: JWKS provider, RS256 verification, fingerprint check, IRequestContext population, middleware factory                                                                  | JWT auth for public-facing Node.js services     |
-| [AUTH_POLICY.md](backends/node/shared/implementations/middleware/auth-policy/default/AUTH_POLICY.md)                       | Hono route-level policy middleware (`requireAuth`, `requireOrg`, `requireRole`, etc.). Mirrors .NET `AuthPolicy.Default`. Reads identity from `c.var.requestContext`                                      | Adding a route-level auth gate on Node          |
-| [JWT_AUTH.md (.NET)](backends/dotnet/shared/Implementations/Middleware/JwtAuth.Default/JWT_AUTH.md)                        | .NET JWT Bearer middleware: JWKS retrieval, fp claim binding, `AddJwtAuth`/`UseJwtAuth` extensions. Mirrors `@d2/jwt-auth`                                                                                | JWT auth on .NET gateway / SignalR              |
-| [SERVICE_KEY.md (.NET)](backends/dotnet/shared/Implementations/Middleware/ServiceKey.Default/SERVICE_KEY.md)               | .NET S2S API key middleware: `X-Api-Key` validation (constant-time), `IsTrustedService` flag, `.RequireServiceKey()` endpoint filter. Mirrors `@d2/service-key`                                           | S2S authentication on .NET                      |
-| [AUTH_POLICY.md (.NET)](backends/dotnet/shared/Implementations/Middleware/AuthPolicy.Default/AUTH_POLICY.md)               | .NET route-level policy extensions (`.RequireAuth`, `.RequireOrg`, `.RequireRole`, etc.). Wraps named `AuthPolicies` + builds parameterized policies inline. Mirrors `@d2/auth-policy`                    | Adding a route-level auth gate on .NET          |
-| [AUTH_APP.md](backends/node/services/auth/app/AUTH_APP.md)                                                                 | Auth CQRS handlers (18): sign-in events, throttle, emulation consent, org contacts, user contacts, 4 job handlers. Repository interfaces, DI registration, service keys                                   | Auth handler work, auth DI, org contacts        |
-| [COMMS.md](backends/node/services/comms/COMMS.md)                                                                          | Comms service architecture: delivery engine (RabbitMQ), in-app notifications, conversational messaging (threads), entity model, channel resolution, retry topology, SignalR gateway, client library usage | Any notification, messaging, or delivery work   |
-| [COMMS_CLIENT.md](backends/node/services/comms/client/COMMS_CLIENT.md)                                                     | Thin RabbitMQ publisher client: `Notify` handler with universal message shape, DI registration (`addCommsClient`), Auth caller example, fire-and-forget via fanout exchange                               | Sending notifications from any service          |
-| [COMMS_APP.md](backends/node/services/comms/app/COMMS_APP.md)                                                              | Comms CQRS handlers (7): Deliver orchestrator, RecipientResolver, channel preferences, 2 job handlers. Provider interfaces, repository bundles, DI registration                                           | Comms handler work, delivery pipeline           |
-| [FILES.md](backends/node/services/files/FILES.md)                                                                          | Files service architecture — context keys, access control, MinIO topology, processing pipeline, gRPC callbacks, phasing                                                                                   | Understanding the Files service as a whole      |
-| [FILES_DOMAIN.md](backends/node/services/files/domain/FILES_DOMAIN.md)                                                     | Files domain: File entity, FileVariant, VariantConfig, content type rules, status state machine, messaging constants, error codes                                                                         | Files service domain model, business rules      |
-| [FILES_APP.md](backends/node/services/files/app/FILES_APP.md)                                                              | Files app layer: 11 CQRS handlers (6C/4Q/1U), 35 service keys, context key config, provider/repo/outbound/realtime interfaces, DI registration                                                            | Files handler work, upload/processing pipeline  |
-| [FILES_INFRA.md](backends/node/services/files/infra/FILES_INFRA.md)                                                        | Files infra: 8 repo handlers (Drizzle), 7 S3 storage, ClamAV scanning, Sharp processing, 2 gRPC outbound, SignalR push, 2 consumers, Drizzle schema                                                       | Files infrastructure implementations            |
-| [SignalR.md](backends/dotnet/gateways/SignalR/SignalR.md)                                                                  | SignalR real-time gateway: authenticated hub, channel-based routing, gRPC push API, Redis backplane, JWT via query param                                                                                  | SignalR gateway work, realtime push             |
-| [REQUEST_ENRICHMENT.md](backends/dotnet/shared/Implementations/Middleware/RequestEnrichment.Default/REQUEST_ENRICHMENT.md) | IP resolution (CF-Connecting-IP→X-Real-IP→X-Forwarded-For→RemoteIp), fingerprinting (server/client/device SHA-256), WhoIs lookup, IRequestContext population, config                                      | Middleware, request context, fingerprinting     |
-| [RATE_LIMIT.md](backends/dotnet/shared/Implementations/Middleware/RateLimit.Default/RATE_LIMIT.md)                         | Sliding window approximation algorithm, 4 dimensions (fingerprint 100/min, IP 5K, city 25K, country 100K), fail-open, country whitelist, trusted service bypass, config                                   | Rate limiting changes                           |
-| [IDEMPOTENCY.md](backends/dotnet/shared/Implementations/Middleware/Idempotency.Default/IDEMPOTENCY.md)                     | Idempotency-Key header, Redis SET NX with sentinel, response caching, edge cases table, Node.js orchestrator, config                                                                                      | Idempotency middleware                          |
-| [CONTRIBUTING.md](CONTRIBUTING.md)                                                                                         | Branch naming, conventional commits, PR process, license notice                                                                                                                                           | PR preparation                                  |
+| Document | Summary | When to Read |
+|---|---|---|
+| [V2.md](V2.md) | Architectural source of truth — phasing, stack decisions per layer, code patterns (§6), versioning (§7), testing strategy (§8), wipe plan (§12) | **Always first** — before any architectural work |
+| [PHASE_0.md](PHASE_0.md) | Wipe + Phase 0 execution tracking. Defines doc pass + per-lib + per-service placeholder READMEs. Archived once Phase 0 ships. | Reference during the wipe / Phase 0 work |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Branch naming, conventional commits, PR process, license notice | PR preparation |
+| [CHANGELOG.md](CHANGELOG.md) | Conventional-commits-driven (versionize). Don't hand-edit. | Reference only |
+| [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIST.md) | Quality audit checklist — Security / Logic / Code Quality / Conventions / Cross-Service / Tests / Docs | Before merging substantial work |
+| [docs/OPERATIONAL-GUARANTEES.md](docs/OPERATIONAL-GUARANTEES.md) | Idempotency, rate limiting, session consistency, RabbitMQ patterns, SAGA, multi-instance scaling | Any cross-service correctness work |
+| (TBD) [docs/PATTERNS.md](docs/PATTERNS.md) | Distilled tribal knowledge — TLC/2LC/3LC, handler, D2Result, middleware, repo, cache, RedactionSpec, i18n. To be created in the doc pass per PHASE_0.md. | Planned — see PHASE_0.md |
+| (TBD) [docs/TESTS.md](docs/TESTS.md) | 8-category adversarial Case Coverage Checklist. To be created in the doc pass per PHASE_0.md. | Planned — see PHASE_0.md |
+| (TBD) [docs/MESSAGING.md](docs/MESSAGING.md) | Proto-canonical-JSON wire format, exchange naming, queue patterns, AMQP headers. To be created in the doc pass per PHASE_0.md. | Planned — see PHASE_0.md |
+| (TBD) [docs/ARCHITECTURAL_PRINCIPLES.md](docs/ARCHITECTURAL_PRINCIPLES.md) | Cross-cutting principles. To be created in the doc pass per PHASE_0.md. | Planned — see PHASE_0.md |
+| (TBD) [docs/SECURITY-RUNBOOKS.md](docs/SECURITY-RUNBOOKS.md) | KeyCustodian compromise runbooks. Filled in detail during Phase 3. | Planned — see PHASE_0.md |
+| `/old/v1/D2-WORX/` | Frozen v1 snapshot. Historical reference for any v1 patterns / decisions / docs that don't have v2 equivalents yet. **Read-only — never modify.** | When researching how v1 did something or hunting for tribal knowledge not yet extracted |
+
+Per-service / per-library `README.md` files appear in `server/services/{service}/` and `server/shared/dotnet/{lib}/` as those are built per V2.md §4 phases. Consult them when working on a specific service/lib.
 
 ---
 
@@ -196,26 +179,28 @@ Read these docs BEFORE working in the relevant area. Each doc is the authority f
 
 **Rule: Follow existing patterns. Do not invent new ones when established patterns apply. If no pattern fits, ASK before inventing. Behavioral Guidelines (§7) apply to ALL work in this section — especially: ask when uncertain, research first, follow existing conventions.**
 
+**Architectural intent for v2 lives in [V2.md](V2.md) §5 (Stack Decisions) and §6 (Library & Code Patterns). This section summarizes the operational rules.**
+
 ### TLC/2LC/3LC Folder Convention
 
 Three-tier folder hierarchy for all backend code. TLC = architectural concern, 2LC = implementation type, 3LC = operation type. **3LC verbiage varies by layer:**
 
-| TLC            | 3LC Verbiage                                              | Meaning                   |
-| -------------- | --------------------------------------------------------- | ------------------------- |
-| **CQRS**       | `C/` Commands, `Q/` Queries, `U/` Utilities, `X/` Complex | Business operation intent |
-| **Messaging**  | `Pub/` Publishers, `Sub/` Subscribers                     | Message direction         |
-| **Repository** | `C/` Create, `R/` Read, `U/` Update, `D/` Delete          | CRUD operation            |
-| **Caching**    | `C/` Create, `R/` Read, `U/` Update, `D/` Delete          | CRUD operation            |
+| TLC | 3LC Verbiage | Meaning |
+|---|---|---|
+| **CQRS** | `C/` Commands, `Q/` Queries, `U/` Utilities, `X/` Complex | Business operation intent |
+| **Messaging** | `Pub/` Publishers, `Sub/` Subscribers | Message direction |
+| **Repository** | `C/` Create, `R/` Read, `U/` Update, `D/` Delete | CRUD operation |
+| **Caching** | `C/` Create, `R/` Read, `U/` Update, `D/` Delete | CRUD operation |
 
-Interfaces live in `Interfaces/{TLC}/Handlers/{3LC}/`. Implementations live in `Implementations/{TLC}/Handlers/{3LC}/` (app layer) or `{TLC}/Handlers/{3LC}/` (infra layer). Full details → [BACKENDS.md](backends/BACKENDS.md)
+Interfaces live in `Interfaces/{TLC}/Handlers/{3LC}/`. Implementations live in `Implementations/{TLC}/Handlers/{3LC}/` (app layer) or `{TLC}/Handlers/{3LC}/` (infra layer).
 
 ### CQRS Handler Categories
 
-| Type        | Distributed Cache | DB Write | External API | Message Publish | Key Test                                                   |
-| ----------- | ----------------- | -------- | ------------ | --------------- | ---------------------------------------------------------- |
-| **Query**   | No                | No       | No           | No              | "If the process dies after, would state persist?" → **No** |
-| **Command** | Yes               | Yes      | Yes          | Yes             | Primary intent = mutation of persistent/shared state       |
-| **Complex** | Yes               | Yes      | Yes          | Yes             | Primary intent = retrieval, but may mutate as side effect  |
+| Type | Distributed Cache | DB Write | External API | Message Publish | Key Test |
+|---|---|---|---|---|---|
+| **Query** | No | No | No | No | "If the process dies after, would state persist?" → **No** |
+| **Command** | Yes | Yes | Yes | Yes | Primary intent = mutation of persistent/shared state |
+| **Complex** | Yes | Yes | Yes | Yes | Primary intent = retrieval, but may mutate as side effect |
 
 Local/in-memory caching is always OK (instance-scoped, ephemeral — doesn't affect other instances).
 
@@ -226,44 +211,43 @@ Local/in-memory caching is always OK (instance-scoped, ephemeral — doesn't aff
 
 ### Handler Pattern
 
-`.NET`: `BaseHandler<TSelf, TInput, TOutput>` with using aliases (`H`, `I`, `O`), `IHandlerContext`, `DefaultOptions` override. Implementation example → [.NET HANDLER.md](backends/dotnet/shared/Handler/HANDLER.md)
-
-`Node.js`: `BaseHandler<Input, Output>` with `implements` interface, `override get redaction()`, `executeAsync`. Implementation + interface examples → [Node.js HANDLER.md](backends/node/shared/handler/HANDLER.md)
+`.NET`: `BaseHandler<TSelf, TInput, TOutput>` with using aliases (`H`, `I`, `O`), `IHandlerContext`, `DefaultOptions` override. Per-handler PII redaction via the `[RedactData]` attribute on data types (KEEP — see V2.md §6.10) + `DefaultOptions` overrides for proto-generated DTOs that can't carry the attribute.
 
 ### D2Result Pattern
 
 Result objects replace exceptions for control flow. **Always use semantic factories** — never raw `Fail()` with manual status codes when a factory exists. Available: `Ok`, `Created`, `NotFound`, `Unauthorized`, `Forbidden`, `ValidationFailed`, `Conflict`, `ServiceUnavailable`, `UnhandledException`, `PayloadTooLarge`, `Cancelled`, `SomeFound`. Raw `Fail` only when no factory matches (e.g., re-mapping arbitrary upstream status codes).
 
-Partial success: `NOT_FOUND` (none found) → `SOME_FOUND` (partial, data returned) → `OK` (all found). Full examples → [RESULT.md](backends/dotnet/shared/Result/RESULT.md)
+Partial success: `NOT_FOUND` (none found) → `SOME_FOUND` (partial, data returned) → `OK` (all found).
 
 ### Partial Interface Extension
 
-Interfaces are `partial`, split by operation. `ICommands.cs` (base) + `ICommands.DoSomething.cs` (per-handler). One file per operation for discoverability. Full example → [BACKENDS.md](backends/BACKENDS.md) § Extension Pattern
+Interfaces are `partial`, split by operation. `ICommands.cs` (base) + `ICommands.DoSomething.cs` (per-handler). One file per operation for discoverability.
 
 ### DI Registration
 
-`.NET`: `services.AddTransient<IXxx, Xxx>()`. `Node.js`: `@d2/di` ([`backends/node/shared/di/`](backends/node/shared/di/)) `ServiceCollection` with `ServiceKey<T>` branded tokens as DI keys. Each layer exports `addXxx(services)`. Full examples → [BACKENDS.md](backends/BACKENDS.md) § Handler Registration
+`.NET`: `services.AddTransient<IXxx, Xxx>()` via `Microsoft.Extensions.DependencyInjection`. Each layer exports `AddXxx(services)` extension method.
 
 ### Other Established Patterns
 
-- **Options pattern**: `IOptions<T>` with defaults. Config section = `SERVICE_LAYER` (e.g., `"GEO_APP"`, `"GATEWAY_AUTH"`). Never hardcode batch sizes or cache expirations.
-- **Multi-tier caching**: Memory → Redis → Database → Disk. Populate upward on miss. Key convention: `EntityName:{id}`. → [GEO_CLIENT.md](backends/dotnet/services/Geo/Geo.Client/GEO_CLIENT.md)
+- **Options pattern**: `IOptions<T>` with defaults. Config section per V2.md §5. Never hardcode batch sizes or cache expirations.
+- **Multi-tier caching** (in client libraries): Memory → Redis → Database → Disk. Populate upward on miss. Key convention: `EntityName:{id}`.
 - **Content-addressable entities**: `Location` and `WhoIs` use SHA-256 hash IDs (64-char hex). Factory method computes hash. Enables dedup.
-- **Mappers**: C# 14 extension members: `extension(Entity e) { public DTO ToDTO() { ... } }`. Live in `ServiceName.App/Mappers/`.
+- **Mappers**: C# 14 extension members: `extension(Entity e) { public DTO ToDTO() { ... } }`. Live in `{Service}.App/Mappers/`.
 - **Batch operations**: `input.HashIds.Chunk(_BATCH_SIZE)` via Options pattern (default 500).
-- **Health checks must use the same code path as production** — DB health checks go through the ORM (Drizzle/EF Core), not raw `pool.query()`. A check that bypasses the ORM won't detect ORM-layer issues.
+- **Health checks must use the same code path as production** — DB health checks go through EF Core, not raw `pool.query()`. A check that bypasses the ORM won't detect ORM-layer issues.
 
-### Key Architecture Decisions
+### Key Architecture Decisions (per V2.md §5)
 
-- **Auth**: BetterAuth (Node.js + Hono). **NO Keycloak** — removed, do not reference. → [AUTH.md](backends/node/services/auth/AUTH.md)
-- **JWT**: RS256 only. **NO EdDSA**. JWKS at `/api/auth/jwks`. 15min expiry. → [AUTH.md](backends/node/services/auth/AUTH.md)
-- **SvelteKit auth**: Proxy pattern (`/api/auth/*` → Auth Service). Cookie sessions for browser ↔ SvelteKit.
-- **Dependencies**: ALL npm versions pinned exactly. No `^`, no `~`. Enforced by [`.npmrc`](.npmrc).
-- **DI**: `@d2/di` mirrors .NET `IServiceCollection/IServiceProvider`. `ServiceKey<T>` as DI tokens. → [BACKENDS.md](backends/BACKENDS.md)
-- **Sync**: gRPC between services (HTTP/2). **Async**: RabbitMQ for side effects (emails, events).
-- **Notifications**: ALL deliveries through `@d2/comms-client` → Comms service → Geo contact resolution. No direct emails/texts. → [COMMS.md](backends/node/services/comms/COMMS.md), [COMMS_CLIENT.md](backends/node/services/comms/client/COMMS_CLIENT.md)
-- **Sessions**: 3-tier (cookie cache 5min → Redis → PostgreSQL dual-write). → [AUTH.md](backends/node/services/auth/AUTH.md)
-- **SvelteKit BFF auth**: `@d2/auth-bff-client` — SessionResolver, JwtManager, AuthProxy, route guards. → [AUTH_BFF_CLIENT.md](backends/node/services/auth/bff-client/AUTH_BFF_CLIENT.md)
+- **Auth**: self-rolled .NET auth as a module within Edge (V2.md §5.4). RFC 8693 token exchange + RFC 6749 §4.4 client_credentials for service identity. JWKS at the OIDC-canonical `/.well-known/jwks.json`.
+- **JWT**: RS256 only. 15min expiry. Custom claims namespaced with `d2:` prefix.
+- **KeyCustodian**: module within Auth — owns lifecycle of ALL long-lived secrets (JWKS, message payload encryption keys, cookie signing, service-identity client_secrets). State machine + JWKS-style overlap rotation. See V2.md §5.4.
+- **SvelteKit BFF**: pure SSR. Browser → Edge directly for auth state mutations. Server-side route guards (`requireAuth`, `requireOrg`, etc.) at `server/web/src/lib/server/auth/`. Browser-side `authClient` at `server/web/src/lib/client/auth/`. NOT separate packages.
+- **Sync**: gRPC between services (HTTP/2). **Async**: RabbitMQ for side effects (emails, events). Sensitive RMQ payloads encrypted via `D2.Shared.Encryption` (V2.md §5.7).
+- **Notifications**: ALL deliveries through D2.Courier → contact resolution. No direct emails/texts.
+- **Sessions**: 3-tier (cookie cache 5min → Redis → PostgreSQL `auth_db` dual-write).
+- **Database topology**: one PG server, many DBs (auth_db, files_db, courier_db, notifications_db, audit_db, seaweedfs_filer_db, plus per-service contacts DBs). Multi-replica migration safety via PG advisory locks.
+- **Object storage**: SeaweedFS for user files (V2.md §5.6). MinIO retained as backend for LGTM block storage.
+- **Production deployment**: eventually Docker Swarm + Portainer; pre-launch is Compose on a VPS (V2.md §5.9).
 
 ---
 
@@ -271,93 +255,81 @@ Interfaces are `partial`, split by operation. `ICommands.cs` (base) + `ICommands
 
 **These rules are mandatory — not suggestions. Behavioral Guidelines (§7) are equally binding: ask when uncertain, never leave broken things behind, always write adversarial tests. Violations of §5 or §7 are equally unacceptable.**
 
-### Cross-Platform
+### Cross-Platform (.NET + SvelteKit)
 
 - **D2Result semantic factories**: Never raw `Fail()` with manual `statusCode` when a factory exists. See list in §4.
-- **RedactionSpec on PII handlers**: Every handler touching PII (emails, phones, IPs, addresses, names, message content, filenames, presigned URLs) MUST declare a `RedactionSpec`. Applies to BOTH app AND repo handlers — each `BaseHandler` independently logs its I/O. Redact actual PII and secrets (displayName, presignedUrl, email, IP), NOT opaque identifiers (userId, orgId, relatedEntityId — these are UUIDs, not PII). Use `suppressOutput: true` when output contains nested PII (e.g., File objects with displayNames).
-- **Input validation on all handlers**: Node.js = Zod via `this.validateInput()`. .NET = FluentValidation/DataAnnotations. All string fields need max length.
-- **Build warnings = bugs**: Fix ALL warnings — StyleCop (SA\***\*), CS\*\*** (null refs, hiding), ESLint, `svelte-check`. Never suppress with `#pragma warning disable`, `!` (for silencing warnings), or `@ts-ignore`.
-- **Lint/style warnings = bugs**: `pnpm lint` (ESLint) and `pnpm format:check` (Prettier) must be zero warnings.
+- **`[RedactData]` on PII types**: Every data type carrying PII (emails, phones, IPs, addresses, names, message content, filenames, presigned URLs) MUST have the `[RedactData]` attribute (per V2.md §6.10). Lives on the type, applies to ALL Serilog logging recursively, reflection-cached. Don't reach for per-handler RedactionSpec when `[RedactData]` does the job.
+- **Input validation on all handlers**: Validate inputs BEFORE infrastructure calls (FluentValidation .NET / equivalent). Never let Redis/DB be the first to reject invalid data.
+- **Build warnings = bugs**: Fix ALL warnings — StyleCop (SA****), CS**** (null refs, hiding), ESLint, `svelte-check`. Never suppress with `#pragma warning disable`, `!` (for silencing warnings), or `@ts-ignore`.
+- **Lint/style warnings = bugs**: ESLint and Prettier must be zero warnings.
 - **Zero tolerance for warnings/errors**: Fix ALL errors and warnings encountered anywhere in the project — not just in branch-modified files. Never dismiss as "pre-existing." If you see it during your work, fix it. Every session leaves the codebase cleaner.
-- **Tests are adversarial**: Happy path + garbage input + boundary values + cross-field deps + error propagation + idempotency + concurrency. Full checklist → [TESTS.md](backends/dotnet/shared/Tests/TESTS.md).
-- **Validate inputs BEFORE infrastructure calls** — never let Redis/DB be the first to reject invalid data. Call `this.validateInput(schema, input)` (Node.js) or validate with FluentValidation (.NET) at the TOP of `executeAsync`, before any downstream calls. → [AUTH_APP.md](backends/node/services/auth/app/AUTH_APP.md) § Handler Implementation Patterns
-- **RedactionSpec covers automatic I/O logging only** — any `this.context.logger.*` calls inside `executeAsync()` must be manually reviewed. Never log fields that appear in your `inputFields`/`outputFields` redaction list via manual log calls. → [AUTH_APP.md](backends/node/services/auth/app/AUTH_APP.md) § Handler Implementation Patterns, [Node.js HANDLER.md](backends/node/shared/handler/HANDLER.md)
-- **Verify DI registration when adding handlers** — missing registrations are silent at compile time and only crash at runtime. After creating a handler, immediately add its registration in the corresponding `registration.ts` / `Extensions.cs`.
-- **Never return `ok()` after a branching operation unconditionally** — if a nested handler or provider can fail, check its result. Returning `ok()` after a try/catch that swallows failures is almost always a bug. Either `bubbleFail` or explicitly handle the error.
-- **Cross-platform enum/constant changes in one commit** — when renaming `OrgType`, `Role`, or any enum stored as text in the database, update BOTH .NET and Node.js simultaneously. Mismatches are data integrity bugs.
-- **Auth flags initialize to `null`, not `false`** — `isAuthenticated`, `isTrustedService`, `isOrgEmulating`, `isUserImpersonating` on `IRequestContext` use `boolean | null` (.NET: `bool?`). `null` = "not yet determined" (pre-auth). `false` = "confirmed not." Never treat `null` as `false` in logic.
-- **Domain model is source of truth for nullability** — if a domain field is optional, the proto field MUST use the `optional` keyword. Never rely on `""`, `0`, or `false` as "not set" sentinels. See per-platform rules below.
-- **Proto3 `optional` keyword for all nullable fields** — proto3 defaults strings to `""`, numbers to `0`, bools to `false`. Without `optional`, receivers cannot distinguish "not provided" from the zero value. Every field that is nullable in the domain model (`string?` in C#, `field?: string` in TS) MUST be `optional` in the `.proto` definition. Required fields (IDs, keys, status) stay as plain (non-optional).
+- **Tests are adversarial**: Happy path + garbage input + boundary values + cross-field deps + error propagation + idempotency + concurrency. Full checklist → [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIST.md) "Test Coverage" + (planned) `docs/TESTS.md` 8-category checklist.
+- **Verify DI registration when adding handlers** — missing registrations are silent at compile time and only crash at runtime. After creating a handler, immediately add its registration in the corresponding extension method.
+- **Never return `Ok()` after a branching operation unconditionally** — if a nested handler or provider can fail, check its result. Returning `Ok()` after a try/catch that swallows failures is almost always a bug. Either `BubbleFail` or explicitly handle the error.
+- **Auth flags initialize to `null`, not `false`** — `IsAuthenticated`, `IsTrustedService`, `IsUserImpersonating` use `bool?`. `null` = "not yet determined" (pre-auth). `false` = "confirmed not." Never treat `null` as `false` in logic.
+- **Domain model is source of truth for nullability** — if a domain field is optional, the proto field MUST use the `optional` keyword. Never rely on `""`, `0`, or `false` as "not set" sentinels.
+- **Proto3 `optional` keyword for all nullable fields** — proto3 defaults strings to `""`, numbers to `0`, bools to `false`. Without `optional`, receivers cannot distinguish "not provided" from the zero value. Required fields (IDs, keys, status) stay as plain (non-optional).
 - **No empty strings as data** — `""` must NEVER represent absent/missing data. Use `null` (C#) or `undefined` (TS). The ONLY acceptable uses of `""` are: Svelte form field `bind:value` initialization, string concatenation building, `string.Empty` in C# hash/fingerprint computation (where null would break), and OTel span attributes (SDK requires non-null). At all other boundaries (user input, DB, proto mapping), convert empty strings: TS `truthyOrUndefined()`, C# `.ToNullIfEmpty()`.
-- **NEVER hand-write database migrations** — applies to ALL stacks (Drizzle / EF Core / Flyway / etc.). Always use the framework's migration generator (`pnpm db:generate` for Drizzle, `dotnet ef migrations add <Name>` for EF Core). Do NOT manually create or edit migration SQL/`.cs` files, snapshot files (`meta/{N}_snapshot.json`, `*ModelSnapshot.cs`), journal files, or invent timestamps. Hand-writing puts the framework's internal model snapshot out of sync with the actual schema, and arbitrary timestamps poison the runtime migrator (e.g., Drizzle's `migrate()` silently skips any migration whose journal `when` ≤ the latest applied `created_at`; EF Core compares against `__EFMigrationsHistory` similarly). One bad timestamp blocks every subsequent migration. If the generator fails (Windows pnpm symlink rotation for Drizzle, missing design-time factory for EF Core, etc.), STOP and ask. Do not patch by hand. The Drizzle recovery on Windows is `pnpm install` on host → `pnpm db:generate` → `docker compose up -d --force-recreate d2-node-init`.
-- **Don't create patterns**: Follow existing ones (§4). If no pattern fits, ask before inventing.
+- **NEVER hand-write database migrations** — use `dotnet ef migrations add <Name>`. Do NOT manually create or edit migration `.cs` files, snapshot files (`*ModelSnapshot.cs`), or `__EFMigrationsHistory` rows. Hand-writing puts EF Core's internal model snapshot out of sync with the actual schema. If the generator fails, STOP and ask. **Multi-replica safety**: startup migrator acquires PG advisory lock per V2.md §5.6 — only one replica migrates, others wait.
+- **Don't create patterns**: Follow existing ones (§4 + V2.md §6). If no pattern fits, ask before inventing.
 - **Don't leave broken things behind**: Fix ALL issues you encounter in the project — not just in files you touched. Every session leaves the codebase cleaner.
 
 ### C#
 
 - **Falsey()/Truthy() handle null**: Never `if (value is null || value.Falsey())`. Just `if (value.Falsey())`. After early return, use `value!` — the value is guaranteed non-null. This is one of the few valid uses of `!`.
 - **`string.Empty`**: Always. Never `""`. (StyleCop SA1122)
-- **`ToNullIfEmpty()` at boundaries** — use `.ToNullIfEmpty()` when converting proto/DB/external strings to domain types. Returns `null` if the string is null, empty, or whitespace-only (trims first). Prevents empty strings from polluting domain models. Defined in `D2.Shared.Utilities.Extensions.StringExtensions`.
+- **`ToNullIfEmpty()` at boundaries** — use `.ToNullIfEmpty()` when converting proto/DB/external strings to domain types. Returns `null` if the string is null, empty, or whitespace-only (trims first). Defined in `D2.Shared.Utilities`.
 - **Nullable types for optional domain fields** — use `string?`, `bool?`, `int?`, `DateTime?` for optional fields. Never `= string.Empty` on optional record properties. `null` = "not provided."
 - **C# 14 extension members**: `extension(T target) { ... }` — NOT old `this T` parameter style.
 - **File headers**: Required on all `.cs` files (see §6).
 - **Record types for entities**: `record`, `required init`, empty collection initializers (`[]`).
 - **Field prefixes**: `_camelCase` (mutable), `r_camelCase` (readonly), `s_camelCase` (static), `sr_camelCase` (static readonly). Full table → §6.
+  - **Carve-out**: handlers using **primary constructors** per V2.md §6.1 omit the `r_` prefix on constructor parameters (they're not fields, they're params accessed directly). The carve-out applies ONLY to handler primary-constructor parameters. Regular fields keep their prefixes.
 - **XML docs**: Required for public APIs.
 - **Implement the interface**: Handlers MUST implement their interface for DI registration.
 - **`ValueTask` must not be awaited more than once** — call `.AsTask()` once, store the `Task` reference, reuse it for `Task.WhenAll()` and subsequent `await`.
 - **`Random.Shared`** — never `new Random()` in static/singleton contexts. `Random.Shared` is thread-safe.
-- **`[MustDisposeResource]`** (JetBrains.Annotations): `true` = caller is responsible for disposal (factory methods returning `IDisposable`). `false` = framework/DI manages lifetime (DI-injected services, `IHostedService` subclasses, test fixtures with `IAsyncLifetime`). Apply to classes, constructors, and factory methods as appropriate. Audit existing usage when touching disposable types.
-- **Rider inspections are NOT optional**: `jb inspectcode` catches warnings invisible to `dotnet build` — `[MustDisposeResource]` misuse, captured variable/closure issues, `AccessToModifiedClosure`, `AccessToDisposedClosure`. Run after `dotnet build` and fix all warnings. Use `// ReSharper disable once AccessToModifiedClosure` (or `AccessToDisposedClosure`) only for intentional test patterns where the closure capture is by design.
+- **`[MustDisposeResource]`** (JetBrains.Annotations): `true` = caller is responsible for disposal (factory methods returning `IDisposable`). `false` = framework/DI manages lifetime (DI-injected services, `IHostedService` subclasses, test fixtures with `IAsyncLifetime`). Apply to classes, constructors, and factory methods as appropriate.
+- **Rider inspections are NOT optional**: `jb inspectcode` catches warnings invisible to `dotnet build` — `[MustDisposeResource]` misuse, captured variable/closure issues, `AccessToModifiedClosure`, `AccessToDisposedClosure`. Run after `dotnet build` and fix all warnings.
 
-### TypeScript / Node.js
+### TypeScript / SvelteKit
 
 - **Strict mode**: Always enabled.
 - **Type imports**: `import type { ... }` for type-only imports.
-- **Error handling**: `@d2/result` (D2Result) — same semantics as .NET.
-- **ESM only**: All packages `"type": "module"`.
-- **Prefer `undefined` over `null`** — `undefined` is JS's native "absent" value. Use optional syntax (`field?: string`) instead of `field: string | null` or `field: string | undefined`. The ONLY exception is `IRequestContext` auth flags which use `boolean | null` for three-state pre-auth semantics. Never use `null` for "not provided" in domain entities — use `undefined` (omit the field).
-- **`truthyOrUndefined()` at boundaries** — use `truthyOrUndefined()` from `@d2/utilities` when converting user input, DB rows, or proto values to domain types. Returns `undefined` if the string is null, empty, or whitespace-only (trims first). Prevents empty strings from polluting domain models.
+- **ESM only**: SvelteKit is `"type": "module"`.
+- **Prefer `undefined` over `null`** — `undefined` is JS's native "absent" value. Use optional syntax (`field?: string`) instead of `field: string | null`. Exception: explicit three-state semantics for pre-auth flags (`boolean | null`).
+- **`truthyOrUndefined()` at boundaries** — use when converting user input, DB rows, or proto values to domain types. Returns `undefined` if the string is null, empty, or whitespace-only (trims first).
 - **Zod schemas use `.optional()` not `.nullable()`** — since domain types use `?: T` (undefined), Zod schemas must use `.optional()`. Never `.nullable()` or `.nullish()` for domain-aligned validation.
 - **After editing**: Check `mcp__cclsp__get_diagnostics`. Fix type errors and missing imports immediately.
-- **After modifying @d2/\* source**: Full `tsc` build (not `--noEmit`) so `dist/` is updated. Stale output = silent runtime failures.
-- **Drizzle UPDATE/DELETE must chain `.returning()`** — check the result array. Empty = row didn't exist → return `notFound()`, not `ok()`. → [AUTH_INFRA.md](backends/node/services/auth/infra/AUTH_INFRA.md) § Repository Handler Patterns
-- **`.d.ts` files in `src/` are NOT emitted to `dist/`** — module augmentations (`declare module`) and ambient declarations must be inside `.ts` source files, not standalone `.d.ts`.
-- **Non-TS assets (SQL migrations, JSON fixtures) not copied by `tsc`** — use path construction relative to `src/` at runtime, not `import.meta.dirname` which resolves to `dist/`.
 
-### SvelteKit
+### SvelteKit (BFF)
 
 - **i18n everywhere**: ALL user-visible strings MUST use Paraglide translations (`m.key_name()` from `$lib/paraglide/messages.js`). Includes `<title>`, meta tags, OG tags, headings, labels, placeholders, error messages. Never hardcode — not even for dev/debug pages.
-- **i18n is NOT just frontend**: Backend handler messages (`D2Result.messages`), input errors (`D2Result.inputErrors`), and comms notification content also use translation keys from [`contracts/messages/`](contracts/messages/). End users can see ALL of these. When adding i18n keys, consider all consumers.
-- **Adding translation keys**: Add to ALL present locale files ([`contracts/messages/*.json`](contracts/messages/)). They MUST stay in sync. Run Paraglide compile from [`clients/web/`](clients/web/) for frontend keys.
+- **i18n is NOT just frontend**: Backend handler messages (`D2Result.messages`), input errors (`D2Result.inputErrors`), and notification content (D2.Courier) also use translation keys from `contracts/messages/`. End users can see ALL of these. When adding i18n keys, consider all consumers.
+- **Adding translation keys**: Add to ALL present locale files (`contracts/messages/*.json`). They MUST stay in sync. Run Paraglide compile from `server/web/` for frontend keys.
 - **New pages MUST include** in `<svelte:head>`: translated `<title>`, `<meta name="description">`, OG tags (`og:title`, `og:description`, `og:type="website"`), `noindex` if not indexable.
 - **`resolve()` from `$app/paths`**: Only typed pathnames. Query strings appended separately: `` `${resolve("/path")}?key=value` ``.
-- **Never write bare `href="/path"` or `goto("/path")`** — always wrap with `resolve("/path")` from `$app/paths`. Without this, i18n locale routing breaks for non-default locales. → [clients/web/README.md](clients/web/README.md) § Navigation & resolve()
+- **Never write bare `href="/path"` or `goto("/path")`** — always wrap with `resolve("/path")` from `$app/paths`. Without this, i18n locale routing breaks for non-default locales.
 - **Client-side telemetry must never include PII** — Faro user identity is limited to `userId` + `username`. Never email, real name, or contact details.
-- **Playwright screenshots**: Save to [`clients/web/screenshots/`](clients/web/screenshots/), never project root.
-- **REST client modules own all fetch calls** — never use raw `fetch` outside of `*-client.ts` files in `$lib/client/rest/`. Components and pages call client functions (`updateName()`, `removeAvatar()`, etc.), never `fetch("/api/...")` directly. Clients handle headers (CSRF `Content-Type`), credentials, timeouts, and D2Result parsing in one place.
-- **Real-time session refresh via SignalR** — when user data changes (name, username, avatar), the backend invalidates BetterAuth's Redis session cache (via `InvalidateUserSessionCache` command) then pushes a `user:updated` event via SignalR. The root layout listener calls `get-session?disableCookieCache=true` → `invalidateAll()` to refresh all components reactively. Components NEVER call `invalidateAll()` themselves after mutations — they rely on the SignalR event. Pattern: `invalidateCache → then pushSignalR`, always chained, always fire-and-forget. Resolve DI handlers upfront (before async chains) to avoid scope disposal issues.
-- **Skeleton loading states** — every component that displays async or server-loaded data must show a `<Skeleton>` placeholder until the data is ready. Use a `loaded` flag (set by `$effect` after data sync) rather than checking `!user` (which is never null with SSR). For async resources like presigned URLs, initialize the loading flag from the data: `let avatarLoading = $state(!!user.image)` so SSR renders the skeleton immediately. Match skeleton dimensions to the actual controls (`h-5` for labels, `h-9` for inputs, `rounded-full` for avatars).
-- **Avatar `{#key}` blocks** — shadcn's `Avatar.Root` caches internal "image loaded" state. When the image URL changes (upload, remove), wrap `Avatar.Root` in `{#key url}` to force re-mount so the Fallback renders correctly. Apply to all avatar locations (profile uploader, header menu, mobile nav).
-- **DI service keys must be abstract** — app layers import cache/lock service keys from `@d2/interfaces` (e.g., `DistributedCache.IDistributedCacheGetKey`), NEVER from implementation packages like `@d2/cache-redis`. Composition roots call `addRedisCaching(services, redis, context)` to register concrete implementations against generic keys.
+- **REST client modules own all fetch calls** — never use raw `fetch` outside of `*-client.ts` files in `$lib/client/rest/`. Components and pages call client functions, not `fetch("/api/...")` directly. Clients handle headers, credentials, timeouts, and D2Result parsing in one place.
+- **Skeleton loading states** — every component that displays async or server-loaded data must show a `<Skeleton>` placeholder until the data is ready.
 
 ### Security (New Endpoints)
 
-Full checklist → [AUTH.md](backends/node/services/auth/AUTH.md) § "Secure Endpoint Construction Checklist". Key points:
+Full checklist → [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIST.md) "Security" section. Key points:
 
-- **IDOR prevention** — derive org/user scope from session/claims, never from user-supplied input. Endpoints must NEVER accept userId, orgId, or role as request parameters when those values are available from the session/JWT. User-supplied identifiers for session-resolvable fields = IDOR vulnerability
+- **IDOR prevention** — derive org/user scope from session/claims, never from user-supplied input. Endpoints must NEVER accept userId, orgId, or role as request parameters when those values are available from the session/JWT.
 - **Pagination limits** — default 50, max 100 on all list queries
 - **DB constraint errors** — catch PG `23505` → 409 Conflict, not 500
-- **Auth middleware visible at route declaration** — Node.js: `requireOrg()`, `requireRole()`. .NET: `RequireAuthorization()`, `RequireServiceKey()`
-- **New JWT claims** → add to BOTH Node.js (`JWT_CLAIM_TYPES`) and .NET (`JwtClaimTypes`), update [AUTH.md](backends/node/services/auth/AUTH.md)
+- **Auth middleware visible at route declaration** — `.RequireAuth()`, `.RequireServiceKey()`, `.RequireOrg()`
+- **New JWT claims** → custom claims MUST be namespaced with `d2:` per V2.md §5.4 (`act["d2:kind"]`, `d2:session_id`, etc.). Document in `docs/JWT-CLAIMS.md` (created at Phase 3).
 - **No sensitive IDs in JWT** — admin user IDs, internal audit data stays server-side (session only)
-- **Per-user caches keyed by identity** — any cache storing user-specific data (JWTs, session state) MUST be keyed by session identity, not shared
-- **API key comparisons must be constant-time** — .NET: `CryptographicOperations.FixedTimeEquals`. Node.js: `timingSafeEqual` from `node:crypto`. Plain `===` is vulnerable to timing attacks. → [REST.md](backends/dotnet/gateways/REST/REST.md) § Service Key Validation
-- **Auth middleware must fail-closed on missing config** — empty API key mappings or missing secrets = 401 immediately. Never silently bypass.
-- **Sign-out must clear ALL auth state**: (1) server session via BetterAuth `signOut()`, (2) `invalidateToken()` for client-side in-memory JWT, (3) `invalidateAll()` for SvelteKit data loaders. → [clients/web/README.md](clients/web/README.md) § Sign-Out Flow
-- **CORS `allowHeaders` must include every custom header** any middleware reads — when adding a new header to security middleware (CSRF, fingerprint), verify CORS allows it. Missing = preflight blocks the request.
+- **API key comparisons must be constant-time** — `CryptographicOperations.FixedTimeEquals`. Plain `==` is vulnerable to timing attacks.
+- **Auth middleware must fail-closed on missing config** — empty service-identity client mappings or missing secrets = 401 immediately. Never silently bypass.
+- **Sign-out must clear ALL auth state**: server session via Auth, in-memory JWT invalidation, SvelteKit `invalidateAll()` for data loaders.
+- **CORS `allowHeaders` must include every custom `X-D2-*` header** any middleware reads — when adding a new header, verify CORS allows it. Missing = preflight blocks the request.
 - **Multi-column key lookups must use paired predicates** — `(col1=A AND col2=1) OR (col1=B AND col2=2)`. Independent `OR`s produce cross-product false positives.
-- **Infrastructure paths must be exempt from ALL business middleware** — use shared `InfrastructurePaths.IsInfrastructure()` (.NET) or equivalent. Never add a new infra path bypass to only one middleware. → [REQUEST_ENRICHMENT.md](backends/dotnet/shared/Implementations/Middleware/RequestEnrichment.Default/REQUEST_ENRICHMENT.md) § Infrastructure Path Bypass
+- **Infrastructure paths must be exempt from ALL business middleware** — use shared `InfrastructurePaths.IsInfrastructure()`. Never add a new infra path bypass to only one middleware.
 
 ---
 
@@ -365,19 +337,21 @@ Full checklist → [AUTH.md](backends/node/services/auth/AUTH.md) § "Secure End
 
 ### C# Naming
 
-| Element                          | Convention      | Example             |
-| -------------------------------- | --------------- | ------------------- |
-| Classes/Records/Interfaces       | `PascalCase`    | `GetReferenceData`  |
-| Methods/Properties               | `PascalCase`    | `HandleAsync`       |
-| Private instance fields          | `_camelCase`    | `_memoryCache`      |
-| Private readonly instance fields | `r_camelCase`   | `r_getFromMem`      |
-| Private static fields            | `s_camelCase`   | `s_instance`        |
-| Private static readonly fields   | `sr_camelCase`  | `sr_activitySource` |
-| Static readonly (non-private)    | `SR_PascalCase` | `SR_ActivitySource` |
-| Private constants                | `_UPPER_CASE`   | `_BATCH_SIZE`       |
-| Public/Internal constants        | `UPPER_CASE`    | `MAX_ATTEMPTS`      |
-| Local constants (tests)          | `snake_case`    | `expected_count`    |
-| Local variables                  | `camelCase`     | `result`            |
+| Element | Convention | Example |
+|---|---|---|
+| Classes/Records/Interfaces | `PascalCase` | `GetReferenceData` |
+| Methods/Properties | `PascalCase` | `HandleAsync` |
+| Private instance fields | `_camelCase` | `_memoryCache` |
+| Private readonly instance fields | `r_camelCase` | `r_getFromMem` |
+| Private static fields | `s_camelCase` | `s_instance` |
+| Private static readonly fields | `sr_camelCase` | `sr_activitySource` |
+| Static readonly (non-private) | `SR_PascalCase` | `SR_ActivitySource` |
+| Private constants | `_UPPER_CASE` | `_BATCH_SIZE` |
+| Public/Internal constants | `UPPER_CASE` | `MAX_ATTEMPTS` |
+| Local constants (tests) | `snake_case` | `expected_count` |
+| Local variables | `camelCase` | `result` |
+
+**Primary-constructor handlers (V2.md §6.1)**: Constructor parameters do NOT take the `r_` prefix — they're parameters, not fields, even though they're accessed like fields inside the class body. The carve-out applies ONLY to handler primary-constructor parameters; regular fields keep their prefixes.
 
 ### C# File Header (required on all .cs files)
 
@@ -389,11 +363,27 @@ Full checklist → [AUTH.md](backends/node/services/auth/AUTH.md) § "Secure End
 // -----------------------------------------------------------------------
 ```
 
-### TypeScript Naming
+### TypeScript Naming (SvelteKit BFF)
 
 - `camelCase` for variables/functions
 - `PascalCase` for types/classes/interfaces/components
 - `kebab-case` for modules/files
+
+### Folder Casing Convention (per V2.md §2)
+
+- **Folders OUTSIDE a project** (csproj-grouping, organizational) → **lowercase**, kebab-case for multi-word: `server/`, `services/`, `edge/`, `app/`, `clients/`, `dotnet/`, `caching-redis/`, `geo-reference/`, `service-defaults/`, `infra/`, `tools/`, `docs/`
+- **Folders INSIDE a project** (namespace-mapping, where Rider auto-creates folders from namespace operations) → **PascalCase**: `Implementations/`, `Interfaces/`, `CQRS/`, `Handlers/`, `C/`, `Q/`, `U/`, `X/`, `Repository/`, `Messaging/`
+- **`.cs` file names** → **PascalCase** (matches the type they contain — one-class-per-file)
+- **`.csproj` file names** → **PascalCase**, dot-separated (`D2.Shared.Handler.csproj`) — the csproj filename IS the assembly name
+- **Namespaces and type names** → **PascalCase** (C# language convention)
+
+The rule: **if Rider auto-generates a folder from a namespace operation, that folder must be PascalCase. Anything else is lowercase.**
+
+### Scope vs Permission Terminology (per V2.md §5.4)
+
+**These are the same thing in our model.** JWT carries them as the OAuth-canonical `scope` claim (space-separated string). Code references them as constants in `D2.Shared.Auth.Scopes` (a static class with `const string` members). The string values match exactly.
+
+We use **"scope"** as the primary term throughout because it's universal in OAuth/OIDC specs and tooling, it's the name of the JWT claim, and every off-the-shelf library and policy attribute speaks "scope." "Permission" survives only in informal/conversational usage; in code and docs the term is "scope."
 
 ### Translation Key Conventions
 
@@ -402,32 +392,32 @@ Full checklist → [AUTH.md](backends/node/services/auth/AUTH.md) § "Secure End
 - Design/demo/debug: `webclient_{section}_{purpose}` (e.g., `webclient_debug_session_title`)
 - Common UI/errors: `common_ui_*` / `common_errors_*`
 - Backend handler messages: Use `common_errors_*` keys where possible
-- Reuse existing keys where they match (e.g., `common_ui_dashboard` for Dashboard title)
+- Reuse existing keys where they match
 
 ### Observability
 
 All logs and spans MUST include these fields for cross-service correlation:
 
-| Field         | Source                                           | Purpose                    |
-| ------------- | ------------------------------------------------ | -------------------------- |
-| traceId       | `IRequestContext.traceId` (auto via BaseHandler) | End-to-end request tracing |
-| correlationId | `Idempotency-Key` / RabbitMQ header              | Async message tracking     |
-| userId        | JWT `sub` claim / session                        | User audit trail           |
-| orgId         | JWT `activeOrganizationId` / session             | Multi-tenant context       |
-| service       | `OTEL_SERVICE_NAME`                              | Service origin             |
+| Field | Source | Purpose |
+|---|---|---|
+| traceId | `IRequestContext.traceId` (auto via BaseHandler) | End-to-end request tracing |
+| correlationId | `Idempotency-Key` / RabbitMQ header | Async message tracking |
+| userId | JWT `sub` claim / session | User audit trail |
+| orgId | JWT `org` claim / session | Multi-tenant context |
+| service | `OTEL_SERVICE_NAME` | Service origin |
 
 ### Git
 
-- **Branch naming**: `feat/...`, `fix/...`, `docs/...`, `refactor/...`, `test/...`, `infra/...`
-- **Commits**: Conventional commits with scope: `feat(geo): add primary locales`
-- **No `Co-Authored-By` lines** in commit messages
+- **Branch naming**: `feat/...`, `fix/...`, `docs/...`, `refactor/...`, `test/...`, `infra/...`, `chore/...`, `ci/...`
+- **Commits**: Conventional commits with scope: `feat(edge): add primary locales`
+- **No `Co-Authored-By` lines** in commit messages (enforced by `.husky/commit-msg` hook — will reject if present)
 - **Markdown tables**: Aligned columns for plain-text readability
 
 ### Documentation
 
-- Every project/module has a corresponding `.md` file (`ProjectName/PROJECT_NAME.md`)
+- Every project/module has a corresponding `README.md` (`server/services/{service}/README.md`, `server/shared/dotnet/{lib}/README.md`)
 - Update docs as part of completing a feature — it's part of the definition of done
-- When adding new handlers, entities, config options, or public APIs → update the relevant `.md`
+- When adding new handlers, entities, config options, or public APIs → update the relevant `README.md`
 
 ---
 
@@ -439,13 +429,13 @@ All logs and spans MUST include these fields for cross-service correlation:
 2. **Read freely** — Explore any files needed for context.
 3. **Ask before changing** — Do not modify files without explicit user approval.
 4. **Research first** — Check related files (tests, interfaces, existing implementations) before proposing changes.
-5. **Follow existing conventions** — Geo service ([GEO_SERVICE.md](backends/dotnet/services/Geo/GEO_SERVICE.md)) is the primary reference implementation.
+5. **Follow existing conventions** — V2.md §5/§6 documents the v2 patterns. `/old/v1/D2-WORX/` is reference for any historical patterns not yet captured in v2 docs.
 6. **Never leave broken things behind** — Fix ALL issues in files you touch.
-7. **Always write tests** — Adversarial, not just happy-path. Every behavioral change needs coverage. → [TESTS.md](backends/dotnet/shared/Tests/TESTS.md)
-8. **Check [PLANNING.md](PLANNING.md)** — For current phase, status, and resolved decisions.
+7. **Always write tests** — Adversarial, not just happy-path. Every behavioral change needs coverage.
+8. **Check [V2.md](V2.md)** — For current phase, status, and resolved decisions.
 9. **Provide options** — When multiple approaches exist, present them for user decision.
 10. **Maximize parallelization** — Spawn as many sub-agents as makes sense to complete tasks as fast as possible. Independent work (file reads, doc updates, code fixes, test runs, audits) should run in parallel, not sequentially. Use background agents for non-blocking work. The user values speed — don't serialize work that can be parallelized.
-11. **Never defer work without explicit permission** — Do NOT unilaterally decide to defer, skip, or deprioritize any planned work. If you think something should be deferred, **ASK the user first** and present the tradeoff. If the user approves deferral, **document it** in PLANNING.md as a tracked issue with rationale. Never silently omit planned work or rationalize skipping it with "not blocking" or "can add later." Any work item that is deferred for any reason MUST appear as a documented issue in PLANNING.md.
+11. **Never defer work without explicit permission** — Do NOT unilaterally decide to defer, skip, or deprioritize any planned work. If you think something should be deferred, **ASK the user first** and present the tradeoff. If the user approves deferral, **document it** in PHASE_0.md (or successor) as a tracked issue with rationale. Any work item that is deferred for any reason MUST appear as a documented issue.
 12. **Never commit without explicit permission** — Do NOT create git commits unless the user explicitly asks you to commit. Present changes for review first. Committing without permission is as serious as pushing without permission.
 
 ### Code Intelligence Tools
@@ -454,11 +444,11 @@ All logs and spans MUST include these fields for cross-service correlation:
 
 **C#**: `csharp-ls` via built-in `LSP` tool — `workspaceSymbol` works, diagnostics flow automatically, but `hover`/`documentSymbol` time out (30s limit on large solution). Fall back to Grep/Glob/Read.
 
-Before renaming or changing a function signature, use `findReferences` to find all call sites first. Use Grep/Glob for text/pattern searches (comments, strings, config values) where LSP doesn't help.
+Before renaming or changing a function signature, use `find_references` to find all call sites first. Use Grep/Glob for text/pattern searches (comments, strings, config values) where LSP doesn't help.
 
 After writing or editing TS code, check `mcp__cclsp__get_diagnostics` before moving on. Fix type errors and missing imports immediately.
 
-After writing or editing .NET code, run `dotnet build` (zero warnings) AND `jb inspectcode` (zero warnings). The two tools catch different issues — Roslyn analyzers vs JetBrains inspections. Both must be clean.
+After writing or editing .NET code, run `dotnet build server/D2.slnx` (zero warnings) AND `jb inspectcode server/D2.slnx --severity=WARNING` (zero warnings). The two tools catch different issues — Roslyn analyzers vs JetBrains inspections. Both must be clean.
 
 ### Windows LSP Workaround
 
@@ -466,4 +456,49 @@ Edit `~/.claude/plugins/marketplaces/claude-plugins-official/.claude-plugin/mark
 
 ### Project Structure
 
-Key roots: [`contracts/protos/`](contracts/protos/) (proto source of truth), [`backends/dotnet/`](backends/dotnet/) (.NET services + shared), [`backends/node/`](backends/node/) (Node.js services + shared `@d2/*` packages), [`clients/web/`](clients/web/) (SvelteKit), [`observability/`](observability/) (LGTM configs), [`D2.sln`](D2.sln) (.NET solution). See [`README.md`](README.md) for the full tree.
+See [V2.md](V2.md) §2 for the full v2 tree layout. Key roots:
+
+- `contracts/` — proto source of truth + i18n message files + fixtures
+- `server/` — all trusted code (.NET services + SvelteKit BFF + .NET shared libs)
+- `infra/` — deployment + observability (compose, docker, observability)
+- `tools/` — dev tooling (scripts, generators)
+- `docs/` — non-essential project documentation (audit checklist, operational guarantees, planned PATTERNS.md / TESTS.md / etc.)
+- `secrets/` — gitignored + Claude-deny-ruled key material (root key, encryption keys, dev TLS certs). Populated by `tools/scripts/gen-dev-keys.sh`.
+- `.claude/` — project-level Claude Code settings (`settings.json` with deny rules per V2.md §12)
+- `old/v1/D2-WORX/` — frozen v1 snapshot, read-only reference
+
+---
+
+## §8. Local Secrets & Claude Deny Rules
+
+Per V2.md §12, environment configuration is split:
+
+| File | Contents | Committed? | Claude can read? | Claude can edit? |
+|---|---|---|---|---|
+| `.env.local` | Non-secret config — service URLs, ports, log levels, feature flags, CORS origins | No (gitignored) | **Yes** | **Yes** |
+| `.env.local.example` | Template with safe defaults | **Yes** | Yes | Yes |
+| `.env.secrets` | Real third-party creds — Twilio, Resend, IPinfo, OAuth client secrets, prod-like DB passwords | No (gitignored) | **No (deny-ruled)** | **No (deny-ruled)** |
+| `.env.secrets.example` | Template with placeholder values like `TWILIO_AUTH_TOKEN=replace_with_real_value` | **Yes** | Yes | Yes |
+| `secrets/` | Key material — root key, dev encryption keys, dev TLS certs | No (gitignored, populated by `tools/scripts/gen-dev-keys.sh`) | **No (deny-ruled)** | **No (deny-ruled)** |
+
+Compose loads both env files (`.env.local` first, `.env.secrets` second so secrets override placeholders if any collision):
+
+```yaml
+services:
+  edge:
+    env_file:
+      - .env.local
+      - .env.secrets
+```
+
+**Workflow when adding a new secret**:
+1. Edit `.env.secrets.example` adding `NEW_THING_API_KEY=replace_with_real_value`
+2. Update `infra/compose/compose.yml` to load it into the right service
+3. Tell the operator: "Added `NEW_THING_API_KEY` — copy into `.env.secrets`, set the real value, restart the service"
+4. Operator manually syncs (Claude cannot edit `.env.secrets` — deny rule)
+
+Same pattern for encryption keys: update `tools/scripts/gen-dev-keys.sh` to generate keys for new domains; operator runs the script; output lands in `secrets/`.
+
+The deny rules live in `.claude/settings.json` (committed). The exact-match `**/.env.secrets` deliberately does NOT match `.env.secrets.example` — the template file remains fully editable.
+
+**Behavioral rule**: never `Grep` the `secrets/` directory or `.env.secrets` file by name. If a secret accidentally enters context (runtime output, grep match), STOP and tell the operator immediately so they can rotate the exposed value.
