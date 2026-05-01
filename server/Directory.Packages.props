@@ -1,0 +1,30 @@
+<Project>
+  <!--
+    Central Package Management — single source of truth for every NuGet
+    version across every .csproj in the solution.
+    See V2.md §7 "NuGet Package Versions".
+
+    Every PackageReference in any .csproj omits Version="..." and inherits from here.
+    Add new entries below as packages are introduced per V2.md §4 phases.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Analyzers (pulled in via Directory.Build.props) -->
+    <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
+
+    <!-- Phase 0+ packages will be added here as shared libraries are built. -->
+    <!-- Example placeholders (commented out — uncomment when first consumer arrives):
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
+    <PackageVersion Include="Asp.Versioning.Http" Version="10.0.0" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <PackageVersion Include="StackExchange.Redis" Version="2.8.16" />
+    <PackageVersion Include="RabbitMQ.Client" Version="7.0.0" />
+    <PackageVersion Include="FluentValidation" Version="11.10.0" />
+    <PackageVersion Include="Serilog.AspNetCore" Version="9.0.0" />
+    -->
+  </ItemGroup>
+</Project>

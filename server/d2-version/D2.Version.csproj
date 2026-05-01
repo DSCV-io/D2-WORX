@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Version anchor — single source of truth for the D²-WORX product version.
+    Bumped automatically by `dotnet versionize` from conventional commits.
+    See V2.md §7 "Versioning" + .versionize at repo root.
+  -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <IsPackable>false</IsPackable>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+</Project>

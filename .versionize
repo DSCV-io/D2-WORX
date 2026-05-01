@@ -1,0 +1,22 @@
+{
+  "skipDirty": false,
+  "silent": false,
+  "tagTemplate": "v{version}",
+  "projects": [
+    { "name": "d2-worx", "path": "server/d2-version" }
+  ],
+  "changelog": {
+    "header": "# Changelog\n\nAll notable changes to this project will be documented in this file.\n\nThis project follows [Semantic Versioning](https://semver.org/) and uses [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) to drive automated changelog generation via [versionize](https://github.com/versionize/versionize).\n\n",
+    "sections": [
+      { "type": "feat",     "section": "Features",      "hidden": false },
+      { "type": "fix",      "section": "Bug Fixes",     "hidden": false },
+      { "type": "perf",     "section": "Performance",   "hidden": false },
+      { "type": "refactor", "section": "Refactors",     "hidden": false },
+      { "type": "docs",     "section": "Documentation", "hidden": false },
+      { "type": "test",     "section": "Tests",         "hidden": true  },
+      { "type": "chore",    "section": "Chores",        "hidden": true  },
+      { "type": "build",    "section": "Build",         "hidden": true  },
+      { "type": "ci",       "section": "CI",            "hidden": true  }
+    ]
+  }
+}
