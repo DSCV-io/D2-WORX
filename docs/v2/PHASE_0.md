@@ -16,16 +16,41 @@ Phase 0 has four execution stages. The **Granular checklist** column links to th
 
 | Stage | Status | Granular checklist |
 |---|---|---|
-| 1. Pre-wipe checkpoint (tag `pre-v2-wipe`) | ☐ Not started | (single git tag — no detail checklist) |
-| 2. Wipe commit (single commit on `nova` branch) | ☐ Not started | [Definition of done (wipe commit)](#definition-of-done-wipe-commit) |
-| 3. Documentation pass (placeholder READMEs + extracted patterns) | 🔄 In progress | [Definition of done (documentation pass)](#definition-of-done-documentation-pass) |
-| 4. Shared library implementation (14 libs per V2.md §4 Phase 0) | ☐ Not started | (added when stage begins — break into per-library DoD) |
+| 1. Pre-wipe checkpoint (tag `pre-v2-wipe`) | ✅ Complete | (single git tag — no detail checklist) |
+| 2. Wipe commit (single commit on `nova` branch) | ✅ Complete | [Definition of done (wipe commit)](#definition-of-done-wipe-commit) |
+| 3. Documentation pass (placeholder READMEs + extracted patterns) | ✅ Complete | [Definition of done (documentation pass)](#definition-of-done-documentation-pass) |
+| 4. Shared library implementation (11 libs per V2.md §4 Phase 0) | 🔄 **In progress — LLM: read this stage's per-lib checklist below before any work** | [Per-library checklist (Stage 4)](#per-library-checklist-stage-4) |
 
 **Status legend**: ✅ Complete · 🔄 In progress · ☐ Not started · ⏸ Blocked
 
 **LLM CTA**: when starting work in this phase, scan the snapshot above to identify the active 🔄 stage, then jump to its granular checklist via the link. Don't start work that doesn't match the active stage without explicit user approval.
 
 When all four stages flip to ✅, this doc gets archived (move to `docs/archive/PHASE_0_WIPE.md` or delete) per the lifecycle rule in V2.md §10.
+
+---
+
+## Per-library checklist (Stage 4)
+
+Build order respects the dependency graph. Each lib lands as one squash-merged commit on `nova` (from a `nova/{lib}` branch). Flip ✅ when the lib ships with: full code + adversarial tests + README expanded from placeholder to real doc + zero `dotnet build` / `jb inspectcode` warnings.
+
+| Wave | Lib | Status | Branch | Depends on |
+|---|---|---|---|---|
+| 1 | `D2.Shared.Result` | 🔄 **Active** | `nova/result` | (none — foundational) |
+| 1 | `D2.Shared.Utilities` | ☐ Not started | `nova/utilities` | (none — foundational) |
+| 2 | `D2.Shared.Handler` | ☐ Not started | `nova/handler` | Result, Utilities — includes BaseRepoHandler design (see [Phase 0 design notes](#phase-0-design-notes)) |
+| 3 | `D2.Shared.Tests` | ☐ Not started | `nova/tests` | Handler (test infra for the libs above) |
+| 3 | `D2.Shared.I18n` | ☐ Not started | `nova/i18n` | Utilities |
+| 4 | `D2.Shared.Encryption` | ☐ Not started | `nova/encryption` | Result, Utilities |
+| 4 | `D2.Shared.Auth` | ☐ Not started | `nova/auth` | Result, Utilities |
+| 5 | `D2.Shared.Caching.Memory` | ☐ Not started | `nova/caching-memory` | Handler |
+| 5 | `D2.Shared.Caching.Redis` | ☐ Not started | `nova/caching-redis` | Handler |
+| 6 | `D2.Shared.Messaging` | ☐ Not started | `nova/messaging` | Handler, Encryption |
+| 7 | `D2.Shared.ServiceDefaults` | ☐ Not started | `nova/service-defaults` | All of the above (composition root) |
+
+**Notes:**
+- Geo, Location, Contacts placeholder READMEs in `server/shared/dotnet/` belong to **Phase 1** (Geo libs) and **Phase 2** (Contacts) per V2.md §4 — not Stage 4.
+- Within a wave, libs can ship in either order or together if small enough to bundle.
+- Each lib's commit message: `feat(shared/{lib}): {one-line summary of public API}` plus a body listing key types / OTel metrics / tests added.
 
 ---
 
