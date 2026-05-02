@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { describe, it, expect, vi } from "vitest";
 import { z } from "zod";
 import { D2Result, type HttpStatusCode } from "@d2/result";

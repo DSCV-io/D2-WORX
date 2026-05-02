@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import type { WithElementRef } from "$lib/shared/utils/utils.js";
 import type {
   EmblaCarouselSvelteType,

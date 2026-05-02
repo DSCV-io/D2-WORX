@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import ArrowLeftIcon from "@lucide/svelte/icons/arrow-left";
   import type { WithoutChildren } from "bits-ui";

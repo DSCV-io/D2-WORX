@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import type { HandleClientError } from "@sveltejs/kit";
 import { initFaro, getFaro } from "$lib/client/telemetry/faro.js";
 

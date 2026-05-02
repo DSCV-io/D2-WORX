@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import AvatarUploader from "$lib/client/components/account/avatar-uploader.svelte";
   import InlineEditField from "$lib/client/components/forms/inline-edit-field.svelte";

@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import Root from "./drawer.svelte";
 import Content from "./drawer-content.svelte";
 import Description from "./drawer-description.svelte";

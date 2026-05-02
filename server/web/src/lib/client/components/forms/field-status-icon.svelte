@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import type { FieldStatus } from "$lib/shared/forms/field-status.js";
   import CircleCheckIcon from "@lucide/svelte/icons/circle-check";

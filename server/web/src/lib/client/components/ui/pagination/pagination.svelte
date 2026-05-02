@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { Pagination as PaginationPrimitive } from "bits-ui";
 

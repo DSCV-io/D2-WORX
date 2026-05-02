@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { AlertDialog as AlertDialogPrimitive } from "bits-ui";
   import { buttonVariants } from "$lib/client/components/ui/button/index.js";

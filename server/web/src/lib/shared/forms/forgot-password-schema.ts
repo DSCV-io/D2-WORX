@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { z } from "zod";
 import { emailField } from "$lib/shared/forms/schemas.js";
 

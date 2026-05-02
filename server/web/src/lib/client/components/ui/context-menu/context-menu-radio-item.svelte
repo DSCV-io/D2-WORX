@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { ContextMenu as ContextMenuPrimitive } from "bits-ui";
   import CircleIcon from "@lucide/svelte/icons/circle";

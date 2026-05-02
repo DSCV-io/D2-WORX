@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import Root from "./popover.svelte";
 import Close from "./popover-close.svelte";
 import Content from "./popover-content.svelte";

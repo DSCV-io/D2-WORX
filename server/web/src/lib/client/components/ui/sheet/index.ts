@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import Root from "./sheet.svelte";
 import Portal from "./sheet-portal.svelte";
 import Trigger from "./sheet-trigger.svelte";

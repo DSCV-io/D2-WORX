@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { env } from "$env/dynamic/public";
 import { localesToOptions, type LocaleOption } from "$lib/shared/forms/locale-options.js";
 import { timezonesToOptions, type TimezoneOption } from "$lib/shared/forms/timezone-options.js";

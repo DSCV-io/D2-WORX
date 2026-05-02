@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { ForgotPasswordForm } from "$lib/client/components/auth/index.js";
   import * as Card from "$lib/client/components/ui/card/index.js";

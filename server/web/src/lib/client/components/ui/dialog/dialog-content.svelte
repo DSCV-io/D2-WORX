@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { Dialog as DialogPrimitive } from "bits-ui";
   import DialogPortal from "./dialog-portal.svelte";

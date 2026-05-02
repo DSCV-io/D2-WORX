@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { describe, it, expect } from "vitest";
 import { createSignUpSchema as createSignupSchema } from "$lib/shared/forms/sign-up-schema.js";
 

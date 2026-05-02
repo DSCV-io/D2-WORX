@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { THEMES, type ChartConfig } from "./chart-utils.js";
 

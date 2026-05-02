@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { redirectIfAuthenticated } from "@d2/auth-bff-client";
 import type { LayoutServerLoad } from "./$types";
 

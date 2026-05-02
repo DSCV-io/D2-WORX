@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { Button } from "$lib/client/components/ui/button/index.js";
   import { Separator } from "$lib/client/components/ui/separator/index.js";

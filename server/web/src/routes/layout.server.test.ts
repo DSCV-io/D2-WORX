@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { LocaleOption } from "$lib/shared/forms/locale-options.js";
 

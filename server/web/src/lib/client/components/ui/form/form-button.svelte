@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { Button, type ButtonProps } from "$lib/client/components/ui/button/index.js";
 

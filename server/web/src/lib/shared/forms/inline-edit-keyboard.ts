@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 /**
  * Shared keyboard handler for inline edit components.
  * Enter = save (when dirty), Escape = revert (when dirty).

@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 /**
  * SvelteKit Handle wrapper for request enrichment.
  * Mirrors auth/api/src/middleware/request-enrichment.ts (~15 lines).

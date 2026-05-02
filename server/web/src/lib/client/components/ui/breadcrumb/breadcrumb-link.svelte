@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import type { HTMLAnchorAttributes } from "svelte/elements";
   import type { Snippet } from "svelte";

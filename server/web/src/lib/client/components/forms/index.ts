@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 export { default as FormInput } from "./form-input.svelte";
 export { default as FormPasswordInput } from "./form-password-input.svelte";
 export { default as FormSelect } from "./form-select.svelte";

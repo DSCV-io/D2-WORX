@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import emblaCarouselSvelte from "embla-carousel-svelte";
   import type { HTMLAttributes } from "svelte/elements";

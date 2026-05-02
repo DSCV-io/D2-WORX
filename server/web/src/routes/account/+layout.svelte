@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import type { Snippet } from "svelte";
   import { resolve } from "$app/paths";

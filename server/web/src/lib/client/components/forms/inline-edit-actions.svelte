@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { cn } from "$lib/shared/utils/utils.js";
   import * as m from "$lib/paraglide/messages.js";

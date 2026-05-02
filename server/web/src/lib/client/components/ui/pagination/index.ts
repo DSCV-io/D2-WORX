@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import Root from "./pagination.svelte";
 import Content from "./pagination-content.svelte";
 import Item from "./pagination-item.svelte";

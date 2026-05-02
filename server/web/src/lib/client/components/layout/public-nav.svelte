@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { page } from "$app/stores";
   import { invalidateAll } from "$app/navigation";

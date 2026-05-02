@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import Root from "./card.svelte";
 import Content from "./card-content.svelte";
 import Description from "./card-description.svelte";

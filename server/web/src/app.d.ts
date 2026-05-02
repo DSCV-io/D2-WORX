@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 import type { IRequestContext } from "@d2/handler";

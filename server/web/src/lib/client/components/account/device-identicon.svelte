@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { createAvatar } from "@dicebear/core";
   import * as identicon from "@dicebear/identicon";

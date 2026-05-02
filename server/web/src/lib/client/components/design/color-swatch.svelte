@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   let { name, value }: { name: string; value: string } = $props();
 </script>

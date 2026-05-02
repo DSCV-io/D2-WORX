@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import ConfirmationDialog from "$lib/client/components/ui/confirmation-dialog.svelte";
   import { Button } from "$lib/client/components/ui/button/index.js";

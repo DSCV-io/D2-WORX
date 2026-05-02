@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import ChevronUpIcon from "@lucide/svelte/icons/chevron-up";
   import { Select as SelectPrimitive } from "bits-ui";

@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { page } from "$app/state";
   import { SignInForm } from "$lib/client/components/auth/index.js";

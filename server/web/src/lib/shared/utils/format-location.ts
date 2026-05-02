@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import type { WhoIsLite } from "$lib/client/rest/account-client.js";
 
 /**

@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import ArrowRightIcon from "@lucide/svelte/icons/arrow-right";
   import type { WithoutChildren } from "bits-ui";

@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { expect, test } from "@playwright/test";
 
 test.describe("reset-password page — no token (/reset-password)", () => {

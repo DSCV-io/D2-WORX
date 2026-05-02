@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { Calendar as CalendarPrimitive } from "bits-ui";
   import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";

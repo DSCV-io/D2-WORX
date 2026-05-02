@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import Section from "./section.svelte";
   import { Progress } from "$lib/client/components/ui/progress/index.js";

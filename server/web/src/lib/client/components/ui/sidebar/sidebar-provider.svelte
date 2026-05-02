@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import * as Tooltip from "$lib/client/components/ui/tooltip/index.js";
   import { cn, type WithElementRef } from "$lib/shared/utils/utils.js";

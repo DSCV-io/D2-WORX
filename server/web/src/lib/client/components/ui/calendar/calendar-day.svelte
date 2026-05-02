@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { buttonVariants } from "$lib/client/components/ui/button/index.js";
   import { cn } from "$lib/shared/utils/utils.js";

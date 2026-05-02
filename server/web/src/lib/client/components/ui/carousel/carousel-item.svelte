@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import type { HTMLAttributes } from "svelte/elements";
   import { getEmblaContext } from "./context.js";

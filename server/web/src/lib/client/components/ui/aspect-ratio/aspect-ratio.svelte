@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { AspectRatio as AspectRatioPrimitive } from "bits-ui";
 

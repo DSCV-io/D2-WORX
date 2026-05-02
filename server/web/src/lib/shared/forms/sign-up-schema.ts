@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { z } from "zod";
 import { nameField, emailField, passwordField } from "$lib/shared/forms/schemas.js";
 import * as m from "$lib/paraglide/messages.js";

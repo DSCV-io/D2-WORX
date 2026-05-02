@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import LayoutDashboardIcon from "@lucide/svelte/icons/layout-dashboard";
   import SettingsIcon from "@lucide/svelte/icons/settings";

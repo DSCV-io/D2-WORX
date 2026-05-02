@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import type { SuperValidated } from "sveltekit-superforms";
   import { superForm } from "sveltekit-superforms";

@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { ScrollArea as ScrollAreaPrimitive } from "bits-ui";
   import { cn, type WithoutChild } from "$lib/shared/utils/utils.js";

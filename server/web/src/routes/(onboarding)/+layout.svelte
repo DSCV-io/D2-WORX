@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import PublicNav from "$lib/client/components/layout/public-nav.svelte";
 

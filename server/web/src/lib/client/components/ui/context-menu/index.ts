@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import Root from "./context-menu.svelte";
 import Sub from "./context-menu-sub.svelte";
 import Portal from "./context-menu-portal.svelte";

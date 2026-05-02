@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { cn } from "$lib/shared/utils/utils.js";
   import { Command as CommandPrimitive } from "bits-ui";

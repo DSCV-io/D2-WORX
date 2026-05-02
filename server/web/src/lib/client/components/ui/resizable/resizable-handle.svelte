@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import GripVerticalIcon from "@lucide/svelte/icons/grip-vertical";
   import * as ResizablePrimitive from "paneforge";

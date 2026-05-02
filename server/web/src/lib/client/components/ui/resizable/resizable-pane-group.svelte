@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import * as ResizablePrimitive from "paneforge";
   import { cn } from "$lib/shared/utils/utils.js";

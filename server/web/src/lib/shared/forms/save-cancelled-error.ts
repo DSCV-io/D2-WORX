@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 /**
  * Sentinel error thrown by an `onSave` callback when the user dismissed an
  * intermediate confirmation step rather than committing the change. Inline

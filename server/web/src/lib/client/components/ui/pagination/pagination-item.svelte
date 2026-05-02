@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import type { HTMLLiAttributes } from "svelte/elements";
   import type { WithElementRef } from "$lib/shared/utils/utils.js";

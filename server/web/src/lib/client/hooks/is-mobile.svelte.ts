@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { MediaQuery } from "svelte/reactivity";
 
 const DEFAULT_MOBILE_BREAKPOINT = 768;

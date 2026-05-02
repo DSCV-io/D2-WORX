@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import Section from "./section.svelte";
   import { Avatar, AvatarFallback, AvatarImage } from "$lib/client/components/ui/avatar/index.js";

@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { error } from "@sveltejs/kit";
 import { countriesToOptions } from "$lib/shared/forms/geo-ref-data.js";
 import { getGeoRefData } from "$lib/server/geo-ref-data.server.js";

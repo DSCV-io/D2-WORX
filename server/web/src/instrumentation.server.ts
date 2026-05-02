@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { IncomingMessage } from "node:http";
 import { loadEnv } from "@d2/service-defaults/config";
 import { NodeSDK } from "@opentelemetry/sdk-node";

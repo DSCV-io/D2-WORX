@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
   import { cn, type WithElementRef } from "$lib/shared/utils/utils.js";

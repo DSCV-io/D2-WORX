@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { describe, it, expect } from "vitest";
 import { digitsOnly, alphaOnly, noSpaces, uppercase, maxLength } from "../input-filters.js";
 

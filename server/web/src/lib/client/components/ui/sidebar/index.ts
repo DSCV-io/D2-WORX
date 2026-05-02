@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { useSidebar } from "./context.svelte.js";
 import Content from "./sidebar-content.svelte";
 import Footer from "./sidebar-footer.svelte";

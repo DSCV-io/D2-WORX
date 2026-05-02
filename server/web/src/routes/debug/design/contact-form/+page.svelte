@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { resolve } from "$app/paths";
   import { superForm } from "sveltekit-superforms";

@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import type { ComponentProps } from "svelte";
   import type Calendar from "./calendar.svelte";

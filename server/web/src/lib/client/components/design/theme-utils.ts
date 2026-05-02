@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 /**
  * Pure functions for deriving OKLCH theme tokens from primary color values.
  * No runes — this module is plain TypeScript.

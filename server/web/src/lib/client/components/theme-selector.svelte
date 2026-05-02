@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import PaletteIcon from "@lucide/svelte/icons/palette";
   import CheckIcon from "@lucide/svelte/icons/check";

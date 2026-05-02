@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { expect, test } from "@playwright/test";
 
 test.describe("sign-up page (/sign-up)", () => {

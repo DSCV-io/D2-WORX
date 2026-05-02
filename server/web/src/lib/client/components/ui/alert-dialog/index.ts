@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import Root from "./alert-dialog.svelte";
 import Portal from "./alert-dialog-portal.svelte";
 import Trigger from "./alert-dialog-trigger.svelte";

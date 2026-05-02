@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { Pane } from "paneforge";
 import Handle from "./resizable-handle.svelte";
 import PaneGroup from "./resizable-pane-group.svelte";

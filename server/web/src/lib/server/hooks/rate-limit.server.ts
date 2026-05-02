@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 /**
  * SvelteKit Handle wrapper for distributed rate limiting.
  * Mirrors auth/api/src/middleware/distributed-rate-limit.ts (~20 lines).

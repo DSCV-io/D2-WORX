@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { cn, type WithElementRef } from "$lib/shared/utils/utils.js";
   import { Skeleton } from "$lib/client/components/ui/skeleton/index.js";

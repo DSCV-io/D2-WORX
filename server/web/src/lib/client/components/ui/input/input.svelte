@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import type { HTMLInputAttributes, HTMLInputTypeAttribute } from "svelte/elements";
   import { cn, type WithElementRef } from "$lib/shared/utils/utils.js";

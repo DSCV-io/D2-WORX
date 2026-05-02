@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import ThemeToggle from "$lib/client/components/theme-toggle.svelte";
   import ThemeSelector from "$lib/client/components/theme-selector.svelte";

@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import type { Tooltip } from "layerchart";
 import { getContext, setContext, type Component, type ComponentProps, type Snippet } from "svelte";
 

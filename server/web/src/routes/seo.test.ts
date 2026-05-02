@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { describe, it, expect } from "vitest";
 import { GET as getRobotsTxt } from "./robots.txt/+server";
 import { GET as getSitemapXml } from "./sitemap.xml/+server";

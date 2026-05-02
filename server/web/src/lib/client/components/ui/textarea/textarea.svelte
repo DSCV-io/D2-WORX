@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { cn, type WithElementRef, type WithoutChildren } from "$lib/shared/utils/utils.js";
   import type { HTMLTextareaAttributes } from "svelte/elements";

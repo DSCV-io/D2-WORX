@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { expect, test } from "@playwright/test";
 
 test("home page renders public landing with h1", async ({ page }) => {

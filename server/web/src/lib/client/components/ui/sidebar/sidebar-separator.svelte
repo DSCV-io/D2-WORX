@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { Separator } from "$lib/client/components/ui/separator/index.js";
   import { cn } from "$lib/shared/utils/utils.js";

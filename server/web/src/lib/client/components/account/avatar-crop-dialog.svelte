@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import * as Dialog from "$lib/client/components/ui/dialog/index.js";
   import { Button } from "$lib/client/components/ui/button/index.js";

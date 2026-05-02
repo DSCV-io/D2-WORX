@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import Root from "./accordion.svelte";
 import Content from "./accordion-content.svelte";
 import Item from "./accordion-item.svelte";

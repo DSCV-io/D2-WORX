@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import Root from "./dialog.svelte";
 import Portal from "./dialog-portal.svelte";
 import Title from "./dialog-title.svelte";

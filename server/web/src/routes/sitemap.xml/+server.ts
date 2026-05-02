@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import type { RequestHandler } from "./$types";
 import { locales, baseLocale } from "$lib/paraglide/runtime.js";
 

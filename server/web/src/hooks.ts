@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import type { Reroute } from "@sveltejs/kit";
 import { deLocalizeUrl } from "$lib/paraglide/runtime";
 

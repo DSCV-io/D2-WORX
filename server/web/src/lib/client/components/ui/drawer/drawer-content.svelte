@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { Drawer as DrawerPrimitive } from "vaul-svelte";
   import DrawerPortal from "./drawer-portal.svelte";

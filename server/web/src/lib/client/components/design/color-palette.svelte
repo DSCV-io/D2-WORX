@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import Section from "./section.svelte";
   import ColorSwatch from "./color-swatch.svelte";

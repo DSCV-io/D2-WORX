@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import * as Avatar from "$lib/client/components/ui/avatar/index.js";
   import * as DropdownMenu from "$lib/client/components/ui/dropdown-menu/index.js";

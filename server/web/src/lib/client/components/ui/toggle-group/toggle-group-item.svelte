@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { ToggleGroup as ToggleGroupPrimitive } from "bits-ui";
   import { getToggleGroupCtx } from "./toggle-group.svelte";

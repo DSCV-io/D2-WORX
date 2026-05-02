@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Helper: creates a constructable mock class.

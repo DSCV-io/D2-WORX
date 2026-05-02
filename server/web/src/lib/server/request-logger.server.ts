@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { logger } from "./logger.server";
 import type { RequestEvent } from "@sveltejs/kit";
 

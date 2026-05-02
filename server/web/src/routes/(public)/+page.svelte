@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { resolve } from "$app/paths";
   import { Button } from "$lib/client/components/ui/button/index.js";

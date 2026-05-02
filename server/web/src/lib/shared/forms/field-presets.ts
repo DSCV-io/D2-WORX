@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 /**
  * Field presets — reusable UI metadata (labels, placeholders, descriptions)
  * for common form fields.

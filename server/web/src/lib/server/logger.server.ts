@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { logs } from "@opentelemetry/api-logs";
 import { trace, context } from "@opentelemetry/api";
 

@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import InlineEditField from "$lib/client/components/forms/inline-edit-field.svelte";
   import InlineEditFieldGroup from "$lib/client/components/forms/inline-edit-field-group.svelte";

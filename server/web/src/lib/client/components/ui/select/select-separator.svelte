@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import type { Separator as SeparatorPrimitive } from "bits-ui";
   import { Separator } from "$lib/client/components/ui/separator/index.js";

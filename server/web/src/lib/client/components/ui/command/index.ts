@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import Root from "./command.svelte";
 import Loading from "./command-loading.svelte";
 import Dialog from "./command-dialog.svelte";

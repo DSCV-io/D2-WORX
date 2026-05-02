@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import * as m from "$lib/paraglide/messages.js";
   import * as Dialog from "$lib/client/components/ui/dialog/index.js";

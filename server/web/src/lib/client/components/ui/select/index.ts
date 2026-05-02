@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import Root from "./select.svelte";
 import Group from "./select-group.svelte";
 import Label from "./select-label.svelte";

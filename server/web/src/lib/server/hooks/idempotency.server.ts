@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 /**
  * SvelteKit Handle wrapper for idempotency.
  * Mirrors the checkIdempotency() orchestrator pattern from @d2/idempotency.

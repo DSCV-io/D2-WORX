@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { cn, type WithoutChildrenOrChild } from "$lib/shared/utils/utils.js";
   import DropdownMenuPortal from "./dropdown-menu-portal.svelte";

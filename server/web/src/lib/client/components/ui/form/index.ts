@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import * as FormPrimitive from "formsnap";
 import Description from "./form-description.svelte";
 import Label from "./form-label.svelte";

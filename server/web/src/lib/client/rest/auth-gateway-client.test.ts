@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { D2Result } from "@d2/result";
 

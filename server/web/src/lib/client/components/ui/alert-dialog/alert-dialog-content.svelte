@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { AlertDialog as AlertDialogPrimitive } from "bits-ui";
   import AlertDialogPortal from "./alert-dialog-portal.svelte";

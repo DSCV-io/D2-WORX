@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { z } from "zod";
 import { postcodeValidator } from "postcode-validator";
 import { nameField, emailField, phoneField, streetField } from "$lib/shared/forms/schemas.js";

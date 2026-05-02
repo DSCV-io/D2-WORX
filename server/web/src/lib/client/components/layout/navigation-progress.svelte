@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { navigating } from "$app/stores";
   import * as m from "$lib/paraglide/messages.js";

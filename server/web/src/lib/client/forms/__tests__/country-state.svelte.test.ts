@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { writable } from "svelte/store";
 import { flushSync } from "svelte";

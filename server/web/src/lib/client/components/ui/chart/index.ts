@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import ChartContainer from "./chart-container.svelte";
 import ChartTooltip from "./chart-tooltip.svelte";
 

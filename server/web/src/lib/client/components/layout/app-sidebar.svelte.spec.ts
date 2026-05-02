@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { page } from "vitest/browser";
 import { describe, expect, it, beforeEach } from "vitest";
 import { render } from "vitest-browser-svelte";

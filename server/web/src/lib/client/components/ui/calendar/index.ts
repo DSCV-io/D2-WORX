@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import Root from "./calendar.svelte";
 import Cell from "./calendar-cell.svelte";
 import Day from "./calendar-day.svelte";

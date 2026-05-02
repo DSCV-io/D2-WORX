@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { describe, it, expect } from "vitest";
 import { mapD2Errors } from "../form-helpers.js";
 import type { InputError } from "@d2/result";

@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import * as Sheet from "$lib/client/components/ui/sheet/index.js";
   import { cn, type WithElementRef } from "$lib/shared/utils/utils.js";

@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import LanguagesIcon from "@lucide/svelte/icons/languages";
   import CheckIcon from "@lucide/svelte/icons/check";

@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import Root from "./breadcrumb.svelte";
 import Ellipsis from "./breadcrumb-ellipsis.svelte";
 import Item from "./breadcrumb-item.svelte";

@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { dev } from "$app/environment";
   import { invalidateAll } from "$app/navigation";

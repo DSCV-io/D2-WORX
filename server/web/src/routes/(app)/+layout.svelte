@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { SidebarProvider, SidebarInset } from "$lib/client/components/ui/sidebar/index.js";
   import AppSidebar from "$lib/client/components/layout/app-sidebar.svelte";

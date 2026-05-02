@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import CheckIcon from "@lucide/svelte/icons/check";
   import { Select as SelectPrimitive } from "bits-ui";

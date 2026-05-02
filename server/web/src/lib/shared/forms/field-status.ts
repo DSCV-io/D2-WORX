@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 /** Field validation status for inline visual feedback. */
 export type FieldStatus = "idle" | "validating" | "valid" | "invalid";
 

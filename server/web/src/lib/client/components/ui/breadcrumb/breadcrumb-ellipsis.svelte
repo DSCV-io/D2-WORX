@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import EllipsisIcon from "@lucide/svelte/icons/ellipsis";
   import type { HTMLAttributes } from "svelte/elements";

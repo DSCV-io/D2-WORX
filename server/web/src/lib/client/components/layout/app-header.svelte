@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import { SidebarTrigger } from "$lib/client/components/ui/sidebar/index.js";
   import { Separator } from "$lib/client/components/ui/separator/index.js";

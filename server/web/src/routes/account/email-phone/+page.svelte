@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 <script lang="ts">
   import InlineSwitch from "$lib/client/components/forms/inline-switch.svelte";
   import * as Alert from "$lib/client/components/ui/alert/index.js";
