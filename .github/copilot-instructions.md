@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # D2-WORX Code Review Instructions
 
 Microservices SaaS: C# 14 / .NET 10, TypeScript 5.9, Svelte 5. Full conventions in `CLAUDE.md`.

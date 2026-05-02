@@ -1,8 +1,11 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
 <Project Sdk="Microsoft.NET.Sdk">
   <!--
     Version anchor — single source of truth for the D²-WORX product version.
     Bumped automatically by `dotnet versionize` from conventional commits.
-    See V2.md §7 "Versioning" + .versionize at repo root.
+   See `.versionize` at repo root for the configuration that drives this anchor.
   -->
   <PropertyGroup>
     <Version>0.1.0</Version>

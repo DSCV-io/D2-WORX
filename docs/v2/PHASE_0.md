@@ -1,8 +1,31 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # PHASE_0.md — Wipe + v2 Foundation
 
 **Purpose**: tracking doc for the v1 → v2 wipe + Phase 0 (shared libraries) execution. This doc lives only until Phase 0 ships, then gets archived.
 
 **Architectural source of truth**: [V2.md](V2.md). This doc is execution detail.
+
+---
+
+## Status snapshot
+
+Phase 0 has four execution stages. The **Granular checklist** column links to the section that breaks each stage into individual line items — flip those and update the stage status here when each stage's checklist completes.
+
+| Stage | Status | Granular checklist |
+|---|---|---|
+| 1. Pre-wipe checkpoint (tag `pre-v2-wipe`) | ☐ Not started | (single git tag — no detail checklist) |
+| 2. Wipe commit (single commit on `nova` branch) | ☐ Not started | [Definition of done (wipe commit)](#definition-of-done-wipe-commit) |
+| 3. Documentation pass (placeholder READMEs + extracted patterns) | 🔄 In progress | [Definition of done (documentation pass)](#definition-of-done-documentation-pass) |
+| 4. Shared library implementation (14 libs per V2.md §4 Phase 0) | ☐ Not started | (added when stage begins — break into per-library DoD) |
+
+**Status legend**: ✅ Complete · 🔄 In progress · ☐ Not started · ⏸ Blocked
+
+**LLM CTA**: when starting work in this phase, scan the snapshot above to identify the active 🔄 stage, then jump to its granular checklist via the link. Don't start work that doesn't match the active stage without explicit user approval.
+
+When all four stages flip to ✅, this doc gets archived (move to `docs/archive/PHASE_0_WIPE.md` or delete) per the lifecycle rule in V2.md §10.
 
 ---
 
@@ -258,11 +281,10 @@ The 5x compression is the point: surviving content is exactly the load-bearing t
 2. `docs/TESTS.md` — references PATTERNS.md for handler categories.
 3. `docs/MESSAGING.md` — independent, but references PATTERNS.md handler pattern.
 4. `docs/PARITY.md` — short template-style doc; can land any time.
-5. `docs/ARCHITECTURAL_PRINCIPLES.md` — references PATTERNS.md for terminology.
-6. `docs/SECURITY-RUNBOOKS.md` placeholder — single TOC stub; expanded in Phase 3.
-7. Phase-scoped reference docs (`PHASE_5/6/8_REFERENCE.md`) — independent, can land in any order or be deferred to just-before-each-phase.
-8. `server/web/STRATEGY.md` and `server/web/README.md` — moves with edits; happens during the wipe (file relocation), trim happens in doc pass.
-9. V2.md §5 inline edits — small surgical edits; verify each is missing before adding.
+5. `docs/SECURITY-RUNBOOKS.md` placeholder — single TOC stub; expanded in Phase 3.
+6. Phase-scoped reference docs (`PHASE_5/6/8_REFERENCE.md`) — independent, can land in any order or be deferred to just-before-each-phase.
+7. `server/web/STRATEGY.md` and `server/web/README.md` — moves with edits; happens during the wipe (file relocation), trim happens in doc pass.
+8. V2.md §5 inline edits — small surgical edits; verify each is missing before adding.
 
 #### Evergreen docs (create in `docs/`)
 
@@ -272,7 +294,6 @@ The 5x compression is the point: surviving content is exactly the load-bearing t
 | **`docs/TESTS.md`** | .NET TESTS.md + Node testing TESTING.md | 8-category adversarial Case Coverage Checklist (happy / garbage / boundary / format / cross-field / error-prop / idempotency / concurrency); test naming convention; form + endpoint testing patterns; "if it accepts user input, try to break it" principle; 7 Vitest custom matchers (`toBeSuccess`/`toBeFailure`/`toHaveData`/`toHaveErrorCode`/`toHaveStatusCode`/`toHaveMessages`/`toHaveInputErrors`) — pattern transfers to xUnit assertion helpers. **Single highest-value extraction.** |
 | **`docs/MESSAGING.md`** | backends/MESSAGING.md (drop v1 exchange/event tables, keep rules) | Proto-canonical-JSON wire format; exchange naming `events.{service}` / `commands.{service}`; queue patterns (exclusive auto-delete vs durable shared); AMQP headers contract (content-type / x-proto-type / message-id / timestamp); at-least-once + idempotent-consumer requirement. |
 | **`docs/PARITY.md`** | backends/PARITY.md (reset row inventory for v2) | Parity-tracking template + the "Why exclusive?" justification framework for any future cross-language additions. |
-| **`docs/ARCHITECTURAL_PRINCIPLES.md`** | GEO_SERVICE.md + AUTH.md + COMMS.md + AUTH_BFF_CLIENT.md + service docs cross-cutting | Immutability + content-addressable rationale (4 reasons each from GEO_SERVICE.md); "two role concepts" distinction (user-level vs org-level from AUTH.md); session enrichment timing (BEFORE-write hooks eliminate staleness); "don't bypass security middleware via shortcut" (AUTH_BFF_CLIENT.md); sender-vs-presentation separation (COMMS.md 6 design principles). |
 | **`docs/SECURITY-RUNBOOKS.md`** | placeholder during wipe | Expanded in Phase 3 (Edge build) with compromise runbooks per V2.md §5.4 KeyCustodian: root key rotation, JWT signing key compromise, message-key compromise. |
 
 #### Phase-scoped reference docs (deleted as each phase ships)
@@ -364,7 +385,6 @@ docs(v2): post-wipe documentation pass — placeholder READMEs + extracted patte
 - [ ] `docs/TESTS.md` — 8-category Case Coverage Checklist + Vitest matchers reference present
 - [ ] `docs/MESSAGING.md` — proto-canonical-JSON + exchange naming + queue patterns + AMQP headers + at-least-once present
 - [ ] `docs/PARITY.md` — template + "Why exclusive?" framework present (rows reset for v2)
-- [ ] `docs/ARCHITECTURAL_PRINCIPLES.md` — immutability + content-addressable + role concepts + sender/presentation separation + middleware-bypass principle present
 - [ ] `docs/SECURITY-RUNBOOKS.md` — placeholder with TOC stub (expanded Phase 3)
 
 **Tribal knowledge extraction (phase-scoped)**:
@@ -402,6 +422,80 @@ docs(v2): post-wipe documentation pass — placeholder READMEs + extracted patte
 **Commit**:
 - [ ] Single docs commit on `nova` branch immediately following the wipe commit
 - [ ] Commit message: `docs(v2): post-wipe documentation pass — placeholder READMEs + extracted patterns`
+
+---
+
+## Phase 0 design notes
+
+Design decisions captured during planning that govern Phase 0 implementation. Each note describes the *intent*; implementation lands in the per-library code under `server/shared/dotnet/{lib}/` when `D2.Shared.Handler` (and its consumers) are built. Summarised in `docs/PATTERNS.md` once landed.
+
+### `BaseHandler` refactor + `BaseRepoHandler` for EF exception mapping
+
+**Problem.** v1 `BaseHandler.HandleAsync` (`old/v1/D2-WORX/backends/dotnet/shared/Handler/BaseHandler.cs`) has a universal try/catch that swallows every exception and converts it to `D2Result.UnhandledException`. Repo handlers that need to map EF exceptions (e.g., PG unique-violation → `Conflict`) must add their own try/catch at the top of `ExecuteAsync` — survey of v1 Geo.Infra showed only `CreateContacts.cs` does this; the other ~15 repo handlers have zero exception handling, so constraint violations surface as generic 500s.
+
+**Goal.** Centralise EF→`D2Result` mapping into a dedicated `BaseRepoHandler` so repo handlers stop having to think about it. Eliminate boilerplate while keeping the original `Exception` object out of every wire-format type (per the long-standing rule that `D2Result` is pure data — no exception coupling).
+
+**Shape.**
+
+1. **Extract today's `HandleAsync` body into a sealed-by-default protected method.** Name: `RunCorePipelineAsync`. Returns a value tuple `(D2Result<TOutput?> Result, Exception? CapturedException)`. The existing universal catch sets `CapturedException` to the thrown exception (and returns `UnhandledException` as the Result). On success, `CapturedException` is null. The method is `protected` (not `virtual`) — subclasses cannot tamper with the observability/metrics pipeline; they consume its outcome only.
+
+2. **Make `HandleAsync` `virtual`.** Default implementation is a one-line pass-through:
+   ```csharp
+   public virtual async ValueTask<D2Result<TOutput?>> HandleAsync(
+       TInput input, CancellationToken ct = default, HandlerOptions? options = null)
+       => (await RunCorePipelineAsync(input, ct, options)).Result;
+   ```
+   Existing concrete handlers need zero changes.
+
+3. **Add `BaseRepoHandler<TSelf, TInput, TOutput> : BaseHandler<...>`.** Overrides `HandleAsync`, calls `RunCorePipelineAsync`, switches on `CapturedException` type to remap known EF exceptions to specific `D2Result` codes via existing factories. Unknown exceptions fall through (the original `UnhandledException` Result is returned unchanged).
+
+4. **The `Exception` object lives only on the stack frame inside the BaseHandler hierarchy.** The protected tuple is destructured locally. Only `D2Result` ever escapes. **`D2Result` itself is unchanged** — no new field, no `[JsonIgnore]`, no proto exclusion, no TS parity work. The "no exception details on D2Result" rule (intentional removal during the DeCAF→D2 transition) is preserved by *structure*, not by attribute discipline.
+
+**Why structure-not-attribute matters.** Any `D2Result` field guarded by `[JsonIgnore]` is one new serializer (or one Newtonsoft consumer, or one YAML log destructurer, or one .ts JSON.stringify) away from leaking. A field that doesn't exist can't leak. The exception travels through OTel (`activity?.AddException(ex)` in `RunCorePipelineAsync`) and Loki (log scope) — both already secured against client exposure — and those carriers are the join keys (via `traceId` on `D2Result`) that ops uses for triage.
+
+**Mapping table.** Match on EF exception *type* first (the type is the reliable signal). EF doesn't guarantee that inner driver exceptions populate primitives like `SqlState` or `ConstraintName`, so use those only as opportunistic refinement. v1 already provides `D2.Shared.Repository.Errors.Pg.PgErrorCodes` static predicates (`IsUniqueViolation`, `IsForeignKeyViolation`, `IsNotNullViolation`, `IsCheckViolation`) that handle both direct `PostgresException` and EF-wrapped `DbUpdateException.InnerException` — port these forward and reuse.
+
+| EF exception type (Microsoft.EntityFrameworkCore + Npgsql) | Default mapping | Notes |
+|---|---|---|
+| `DbUpdateConcurrencyException` | `D2Result.Conflict` | Row-version mismatch / optimistic concurrency. EF-determined, no driver involvement. |
+| `DbUpdateException` w/ `PgErrorCodes.IsUniqueViolation` | `D2Result.Conflict` | PG `23505`. |
+| `DbUpdateException` w/ `PgErrorCodes.IsForeignKeyViolation` | `D2Result.ValidationFailed` | PG `23503`. Caller passed an invalid FK. |
+| `DbUpdateException` w/ `PgErrorCodes.IsNotNullViolation` | `D2Result.ValidationFailed` | PG `23502`. Required field missing. |
+| `DbUpdateException` w/ `PgErrorCodes.IsCheckViolation` | `D2Result.ValidationFailed` | PG `23514`. Check constraint failed. |
+| `DbUpdateException` (no recognized inner) | Fall through | Forces handlers that hit unrecognized DB errors to add a recognizer rather than papering over with broad `Conflict`. |
+| `RetryLimitExceededException` | Fall through (= `UnhandledException`) | EF execution-strategy gave up; root cause is in the inner. Logs already capture it. |
+| `OperationCanceledException` when `ct.IsCancellationRequested` | `D2Result.Cancelled` | User-initiated cancellation only. Other `OperationCanceledException` flavors (framework-internal) fall through — they're a different bug class. |
+| Anything else | Fall through | Original `UnhandledException` Result unchanged. |
+
+**Per-handler refinement.** Subclasses needing constraint-specific mapping override `HandleAsync` themselves. Pattern:
+
+```csharp
+public override async ValueTask<D2Result<TOutput?>> HandleAsync(
+    TInput input, CancellationToken ct = default, HandlerOptions? options = null)
+{
+    var ctx = await RunCorePipelineAsync(input, ct, options);
+    if (ctx.CapturedException is DbUpdateException dbEx
+        && dbEx.InnerException is Npgsql.PostgresException { ConstraintName: "users_email_unique" })
+    {
+        return D2Result<TOutput?>.Conflict(messages: [TK.account_errors_emailTaken], traceId: TraceId);
+    }
+    return await base.HandleAsync(input, ct, options);
+}
+```
+
+**Observability is unchanged.** `RunCorePipelineAsync` still calls `activity?.AddException(ex)`, records the exception metric, emits the unhandled-exception log. Tempo + Loki get the full exception regardless of whether a subclass remaps the Result. **Add one enhancement** at implementation time: push `exceptionType` + `innermostExceptionType` onto the log scope (via `BeginScope`) so Loki queries can filter by type without parsing the message.
+
+**Open questions to resolve at implementation time.**
+
+1. Naming: `RunCorePipelineAsync` vs `RunPipelineAsync` vs `ExecuteWithObservabilityAsync`. Default proposal: `RunCorePipelineAsync`.
+2. `DbUpdateException` with no recognized inner — fall through (conservative) vs default `Conflict` (broad). Default proposal: **fall through**, force explicit recognition.
+3. Tuple element naming — `(Result, CapturedException)` vs `(Result, Exception)`. Default proposal: `CapturedException` (reads better at the call site, avoids shadowing the type name).
+4. Does this also get a parallel `BaseRepoHandler` for the SvelteKit BFF or any future Node.js backend? Per current scope (.NET-only backend per V2.md §5.1), **no**. Revisit if cross-language services land later.
+
+**Out of scope (rejected during design).**
+
+- Adding any exception-metadata field to `D2Result` itself — including sanitised "type-name only" variants. Leakage surface, cross-platform coupling, OTel span already carries this.
+- Generalising the wrapping pattern into a `Pipeline` delegate property or middleware-style stack. The simple virtual-`HandleAsync` + protected `RunCorePipelineAsync` covers every realistic use case. Future bases (`BaseAuditedHandler`, etc.) override `HandleAsync` the same way without changing `BaseHandler`.
 
 ---
 

@@ -1,0 +1,233 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
+# TESTS.md — D²-WORX Testing Discipline
+
+> **Purpose**: evergreen rules for writing tests in D²-WORX. The single most-reused checklist in the codebase. Without it, tests drift back to happy-path-only.
+>
+> **Frameworks per platform**:
+> - **.NET**: xUnit + FluentAssertions + Moq + Testcontainers
+> - **SvelteKit BFF**: Vitest (browser mode) + Playwright (mocked by default)
+
+This doc covers HOW to write each test well. CI lane shape (which jobs run when) lives in `.github/workflows/test.yml`.
+
+---
+
+## The Principle
+
+**"If it accepts user input, try to break it."**
+
+Tests aren't reassurance that the happy path works — they're an adversarial probe of every assumption. Every behavioral change needs coverage. Every input boundary needs a test that pushes past it.
+
+---
+
+## 8-Category Case Coverage Checklist
+
+For every behavioral change (new handler, new endpoint, new validation rule, etc.), explicitly cover all 8 categories. If a category doesn't apply, state why in the test file or PR.
+
+### 1. Happy Path
+
+The "it works as designed" baseline. One test per success scenario.
+
+- All required inputs present + valid
+- Output matches expectations (shape + values)
+- Side effects fired (DB row created, message published, cache populated)
+- Returns the right `D2Result` factory (`Ok`, `Created`, `SomeFound` for partial, etc.)
+
+### 2. Garbage Input
+
+Hostile / nonsensical input. The handler should reject CLEANLY, not crash.
+
+- `null` where a value is expected
+- Empty strings (`""`) — treated as missing per CLAUDE.md §5 ("No empty strings as data")
+- Whitespace-only strings
+- Wrong type entirely (object where string expected, array where number expected)
+- Malformed UUIDs / IDs
+- Strings with leading/trailing whitespace (should be trimmed by `truthyOrUndefined()` / `ToNullIfEmpty()`)
+- Negative numbers where positive required
+- Special characters (`<script>`, SQL injection patterns, control chars)
+
+Expected: `D2Result.ValidationFailed` with the right `inputErrors`. NOT `UnhandledException` (handler-level safety net only).
+
+### 3. Boundary Values
+
+Off-by-one is real. Test each boundary.
+
+- Max string length + 1 (over)
+- Max string length (at)
+- Max string length - 1 (under)
+- Empty collection (length 0)
+- Single-element collection (length 1)
+- Max collection size + 1 (over — pagination + batch limits)
+- Numeric min / max / zero / negative (where applicable)
+- Date boundaries (epoch, far future, leap years if relevant)
+
+### 4. Format Validation
+
+For typed fields with format constraints.
+
+- Email: missing @, missing TLD, multiple @, leading/trailing spaces, internationalized (with CLAUDE.md §6 i18n in mind)
+- Phone: country-code formats per `libphonenumber-js`
+- URL: missing scheme, double scheme, path traversal (`..`), unicode
+- ISO 8601 dates: invalid days (Feb 30), wrong format, timezone variants
+- Hex IDs (content-addressable): wrong length, non-hex chars
+
+### 5. Cross-Field Dependencies
+
+Fields whose validity depends on other fields.
+
+- Conditional required (field A required only if field B = X)
+- Mutual exclusion (A and B can't both be set)
+- Ordering (start ≤ end)
+- Sum constraints (parts must total whole)
+
+### 6. Error Propagation
+
+Downstream failures bubble correctly. **`Ok()` after a failed downstream call is a critical bug** — see CLAUDE.md §5.
+
+- Mock the inner handler to return `D2Result.NotFound` → outer handler returns `BubbleFail`
+- Mock the inner handler to return `ServiceUnavailable` → outer handler bubbles, doesn't swallow
+- Database constraint violation (PG `23505`) → outer handler returns `Conflict`, not `UnhandledException`
+- External API timeout → outer handler returns `ServiceUnavailable` or `Cancelled`, not silent success
+
+### 7. Idempotency
+
+Duplicate submissions must produce duplicate-safe outcomes.
+
+- Run the same operation twice with the same input + same `Idempotency-Key` → second call returns the cached response (per `Idempotency.Default`)
+- Run the same content-addressable creation twice (e.g., `CreateLocation` with same address) → second call returns the existing entity, no duplicate row
+- Run a fanout consumer with the same payload twice → second call is a no-op (per OPERATIONAL-GUARANTEES.md "At-Least-Once Fanouts")
+
+### 8. Concurrency
+
+Race conditions, double-processing, lock contention.
+
+- Two concurrent requests with the same `Idempotency-Key` → exactly one executes the handler, the other gets the cached response
+- Two replicas processing the same Dkron job → only one acquires the Redis lock, the other returns early
+- Two concurrent migrations (multi-replica startup) → only one runs (PG advisory lock at startup migrator)
+- Two consumers competing for the same RabbitMQ message → exactly one delivers (RMQ competing-consumer semantics)
+
+---
+
+## Test Naming
+
+Format: `MethodName_Scenario_ExpectedResult`.
+
+Examples:
+- `HandleAsync_HappyPath_ReturnsOk`
+- `HandleAsync_EmailMissingAt_ReturnsValidationFailed`
+- `HandleAsync_DownstreamReturnsNotFound_BubblesFailure`
+- `HandleAsync_DuplicateIdempotencyKey_ReturnsCachedResponse`
+- `HandleAsync_ConcurrentExecution_OnlyOneAcquiresLock`
+
+Local constants in test methods use `snake_case`:
+```csharp
+const string expected_email = "test@example.com";
+const int expected_count = 5;
+```
+
+(See CLAUDE.md §6 — local-test-constant exception to the standard naming convention.)
+
+---
+
+## Form / Endpoint Testing Patterns
+
+### Form fields (SvelteKit)
+
+For every form field that accepts user input:
+- Unit test (Zod schema): all 8 categories on the schema directly
+- E2E test (Playwright + mocks): blur validation, error display, error clearing on fix, submit rejection while errors present, successful submit after fix
+- Cross-field interaction (if applicable): cleanly transitions between valid + invalid states
+
+Don't test form fields with only happy-path Playwright. The schema test covers garbage; the Playwright test covers UX.
+
+### REST endpoints
+
+For every endpoint:
+- 8 categories on the handler (unit + integration)
+- Auth tests: unauthenticated (401), wrong scope (403), wrong org (403), correct (200)
+- Pagination: max + 1 → 400 ValidationFailed (per CLAUDE.md §5 "pagination limits")
+- Idempotency-Key: duplicate returns cached response
+
+### gRPC RPCs
+
+For every RPC:
+- 8 categories on the handler
+- Service-key auth tests: missing key (401), wrong key (401, fail-closed), correct key (200)
+- Proto field handling: optional fields default-correctly, `HasField` predicates work
+
+---
+
+## Vitest Custom Matchers
+
+For SvelteKit BFF tests against `D2Result` shapes, prefer custom matchers over inline assertion. Mirrors the v1 Node.js matchers — equivalent xUnit assertion helpers should exist on the .NET side.
+
+| Matcher | Purpose |
+|---|---|
+| `toBeSuccess()` | Asserts `result.success === true` |
+| `toBeFailure()` | Asserts `result.success === false` |
+| `toHaveData(expected)` | Asserts `result.data` matches `expected` (deep equality) |
+| `toHaveErrorCode(code)` | Asserts `result.errorCode === code` |
+| `toHaveStatusCode(code)` | Asserts `result.statusCode === code` |
+| `toHaveMessages(...messages)` | Asserts `result.messages` contains the expected TK keys |
+| `toHaveInputErrors(...fields)` | Asserts `result.inputErrors` covers the expected field names |
+
+Example:
+```typescript
+const result = await handler.handle(input);
+expect(result).toBeSuccess();
+expect(result).toHaveData({ id: expected_id });
+```
+
+vs. raw:
+```typescript
+expect(result.success).toBe(true);
+expect(result.data).toEqual({ id: expected_id });
+```
+
+The matcher version produces better failure messages and forces consistency.
+
+---
+
+## Test Categories
+
+CI runs each category in parallel. Don't lump categories together — separation enables faster failure feedback.
+
+| Category | Speed | Spins up | Where |
+|---|---|---|---|
+| **Unit** | ms | Pure functions, mocked deps | `server/services/{svc}/tests/Unit/` and `server/web/src/**/*.test.ts` |
+| **Per-service integration** | seconds–1 min | ONE service + its direct deps (PG, Redis, RabbitMQ) via Testcontainers | `server/services/{svc}/tests/Integration/` |
+| **Web component tests** | ms–seconds | JSDOM-like browser env, mocked fetch | `server/web/src/**/*.test.ts` (Vitest browser mode) |
+| **Web Playwright (mocked)** | seconds–min | Real browser, ALL `fetch()` mocked | `server/web/tests/` |
+
+Explicitly **NOT** in scope:
+- ~~System spin-up tests~~
+- ~~Cross-service integration tests with multiple services~~
+- ~~Browser E2E with real backend~~
+
+These tiers added wall-clock time without commensurate value at our scale.
+
+---
+
+## Required CI Gate
+
+`integration-key-rotation` is non-skippable. Coverage:
+
+- Graceful rotation under load (publishers + consumers; no message loss; in-flight old-kid messages still decrypt during grace)
+- Grace expiry (retired kids removed from production keyring; stale messages → DLQ with explicit error)
+- Emergency rotation (compromise marking is terminal; cannot be promoted back)
+- Race conditions (rotation while N replicas publishing concurrently)
+- Archive decryption (ops CLI fetches retired/compromised kids on demand)
+
+This test ships in Phase 3 with KeyCustodian. Until then, the workflow job is commented out per `.github/workflows/test.yml`.
+
+---
+
+## What We Accept Losing
+
+By dropping the cross-service tier we lose:
+- **Cross-service contract drift detection in CI** — caught by code review + the proto versioning policy + production observability
+- **Full-flow happy-path verification** — caught by manual testing (you click through critical flows after meaningful changes)
+
+For pre-alpha (no users), this is acceptable. **When to revisit**: when DAU > N, or first paying customer, or first incident caused by missed cross-service bug. At that point, add a pre-merge gate with thin smoke tests.

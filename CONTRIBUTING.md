@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # Contributing to D²-WORX
 
 Thanks for your interest in contributing! 🎉

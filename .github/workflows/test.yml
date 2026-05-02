@@ -1,13 +1,17 @@
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
+
 name: PR
 
-# Single-lane CI per V2.md §8.
+# Single-lane CI.
 #
-# Active jobs ramp up as services come online per V2.md §4 phases.
+# Active jobs ramp up as services come online.
 # Jobs are commented out (TODO) until their target service exists.
 # Total wall time target: <5 minutes (all active jobs run in parallel).
 #
 # Required gates (non-skippable once active):
-#   - integration-key-rotation (per V2.md §5.4 KeyCustodian)
+#   - integration-key-rotation (KeyCustodian rotation flow)
 
 on:
   pull_request:

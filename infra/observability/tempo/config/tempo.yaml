@@ -1,3 +1,7 @@
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
+
 # Documentation: https://grafana.com/docs/tempo/latest/configuration/
 
 server:

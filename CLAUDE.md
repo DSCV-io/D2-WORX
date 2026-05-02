@@ -1,9 +1,14 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # CLAUDE.md — D²-WORX Development Guide
 
 **D²-WORX** — Microservices SaaS framework. C# 14 / .NET 10 backend, SvelteKit BFF (TypeScript 5.9 / Svelte 5). Pre-Alpha. PolyForm Strict license (reference implementation, non-commercial).
 
-> **Architectural source of truth**: [V2.md](V2.md). This doc covers process, patterns, and code rules. V2.md covers what we're building.
-> **Current execution state**: [PHASE_0.md](PHASE_0.md). Tracks the v1 → v2 wipe and Phase 0 work.
+> This doc covers process, patterns, and code rules. Architectural decisions live distributed across the docs in `docs/` (PATTERNS.md, TESTS.md, MESSAGING.md, OPERATIONAL-GUARANTEES.md, AUDIT_CHECKLIST.md, etc.) and the per-lib / per-service `README.md` files.
+
+> **📍 PROJECT STATE — READ FIRST**: The active project tracking doc is **[docs/v2/PHASE_0.md](docs/v2/PHASE_0.md)** (current phase, status, open questions, deferred work, resolved decisions). This pointer is the single source for "what's the project doing right now" — when this doc archives, the pointer here gets updated to its successor. A frozen v1 snapshot lives at `/old/v1/D2-WORX/` (read-only, reference for historical patterns not yet captured in current docs).
 
 > **⚠️ MANDATORY: Every code change MUST follow the Development Workflow (§1). No exceptions.**
 
@@ -19,10 +24,9 @@ Before writing any code, understand what you're changing and what it touches.
 
 - Read CLAUDE.md so you know WHICH reference docs (§3) are relevant to the task
 - Read the relevant `.md` docs for the areas being touched (§3 tells you which and when)
-- Check [V2.md](V2.md) for architectural intent (§5 for stack decisions, §6 for code patterns, §7 for versioning)
+- Check the relevant `docs/*.md` (PATTERNS, TESTS, MESSAGING, OPERATIONAL-GUARANTEES) for the patterns + invariants that apply
 - Find similar existing implementations
 - Identify ALL affected files (`mcp__cclsp__find_references`, Grep, Glob)
-- For historical v1 reference (patterns, prior decisions), check `/old/v1/D2-WORX/`
 - **If uncertain → ASK. Do not guess. Do not assume. This is the #1 rule.**
 
 ### Step 2: Plan
@@ -32,7 +36,7 @@ Before writing any code, understand what you're changing and what it touches.
 Design your approach before touching code. Plans must address:
 
 - **Scope**: Files to create/modify
-- **Pattern adherence**: Which V2.md §6 patterns apply? Identify explicitly. Note the correct TLC/2LC/3LC layer and operation verbiage.
+- **Pattern adherence**: Which patterns apply? Identify explicitly. Note the correct TLC/2LC/3LC layer and operation verbiage.
 - **Risks**: What could break? Side effects? Hard to reverse?
 - **Test plan**: Happy path + adversarial cases (→ case coverage checklist in [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIST.md) and (when published) `docs/TESTS.md`)
 - **i18n impact**: Does this change add or modify user-visible strings? This includes:
@@ -69,10 +73,11 @@ Every item MUST pass before a change is "done":
   - `cd server/web && pnpm exec prettier --check .`
   - (StyleCop is part of `dotnet build` above)
 - [ ] **Tests pass** — existing tests still pass + new tests for new behavior
-- [ ] **Pattern adherence** — code follows established patterns (V2.md §6), correct TLC/2LC/3LC structure
+- [ ] **Pattern adherence** — code follows established patterns, correct TLC/2LC/3LC structure
 - [ ] **Zero tolerance** — ALL errors/warnings encountered anywhere in the project are fixed, not just in branch-modified files. If you see it, fix it.
 - [ ] **i18n** — no hardcoded user-visible strings (UI, handler messages, input errors, notifications). All locale files in sync.
-- [ ] **Documentation** — affected `.md` files updated
+- [ ] **Documentation** — affected `.md` files updated per the Doc Update Map (§3.5)
+- [ ] **File headers** — every source file you created or modified carries the standard copyright header for its language (see §6 "File Headers"). Files that don't support comments (`.json`, `.lock`) and machine-generated files are exempt.
 - [ ] **TS diagnostics** — `mcp__cclsp__get_diagnostics` clean for edited TS files
 - [ ] **Container health** — if Docker Compose is running, verify affected containers are healthy (`docker compose --env-file .env.local --env-file .env.secrets ps`). Restart any containers that are unhealthy.
 
@@ -139,7 +144,7 @@ cd server/web && pnpm exec eslint .                                         # ES
 cd server/web && pnpm exec prettier --check .                               # Prettier check
 ```
 
-**Versioning (per V2.md §7):**
+**Versioning:**
 
 ```bash
 dotnet tool restore                                                        # First-time setup
@@ -158,20 +163,42 @@ Read these docs BEFORE working in the relevant area. Each doc is the authority f
 
 | Document | Summary | When to Read |
 |---|---|---|
-| [V2.md](V2.md) | Architectural source of truth — phasing, stack decisions per layer, code patterns (§6), versioning (§7), testing strategy (§8), wipe plan (§12) | **Always first** — before any architectural work |
-| [PHASE_0.md](PHASE_0.md) | Wipe + Phase 0 execution tracking. Defines doc pass + per-lib + per-service placeholder READMEs. Archived once Phase 0 ships. | Reference during the wipe / Phase 0 work |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Branch naming, conventional commits, PR process, license notice | PR preparation |
 | [CHANGELOG.md](CHANGELOG.md) | Conventional-commits-driven (versionize). Don't hand-edit. | Reference only |
-| [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIST.md) | Quality audit checklist — Security / Logic / Code Quality / Conventions / Cross-Service / Tests / Docs | Before merging substantial work |
+| [docs/PATTERNS.md](docs/PATTERNS.md) | TLC/2LC/3LC convention, handler, D2Result, middleware, repo, cache, RedactionSpec, i18n, configuration. The single biggest pattern reference. | Any handler / DI / repo / cache / middleware work |
+| [docs/MESSAGING.md](docs/MESSAGING.md) | Proto-canonical JSON wire format, encryption, exchange naming, queue patterns, AMQP headers, DLQ inspection | Any RabbitMQ / async messaging work |
+| [docs/TESTS.md](docs/TESTS.md) | 8-category adversarial Case Coverage Checklist, test categories, custom matchers | Adding or modifying tests |
 | [docs/OPERATIONAL-GUARANTEES.md](docs/OPERATIONAL-GUARANTEES.md) | Idempotency, rate limiting, session consistency, RabbitMQ patterns, SAGA, multi-instance scaling | Any cross-service correctness work |
-| (TBD) [docs/PATTERNS.md](docs/PATTERNS.md) | Distilled tribal knowledge — TLC/2LC/3LC, handler, D2Result, middleware, repo, cache, RedactionSpec, i18n. To be created in the doc pass per PHASE_0.md. | Planned — see PHASE_0.md |
-| (TBD) [docs/TESTS.md](docs/TESTS.md) | 8-category adversarial Case Coverage Checklist. To be created in the doc pass per PHASE_0.md. | Planned — see PHASE_0.md |
-| (TBD) [docs/MESSAGING.md](docs/MESSAGING.md) | Proto-canonical-JSON wire format, exchange naming, queue patterns, AMQP headers. To be created in the doc pass per PHASE_0.md. | Planned — see PHASE_0.md |
-| (TBD) [docs/ARCHITECTURAL_PRINCIPLES.md](docs/ARCHITECTURAL_PRINCIPLES.md) | Cross-cutting principles. To be created in the doc pass per PHASE_0.md. | Planned — see PHASE_0.md |
-| (TBD) [docs/SECURITY-RUNBOOKS.md](docs/SECURITY-RUNBOOKS.md) | KeyCustodian compromise runbooks. Filled in detail during Phase 3. | Planned — see PHASE_0.md |
+| [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIST.md) | Quality audit checklist — Security / Logic / Code Quality / Conventions / Cross-Service / Tests / Docs | Before merging substantial work |
+| [docs/PARITY.md](docs/PARITY.md) | Cross-language parity tracking + "Why exclusive?" framework | Adding cross-language components |
+| [docs/SECURITY-RUNBOOKS.md](docs/SECURITY-RUNBOOKS.md) | KeyCustodian compromise runbooks. | Security incident response |
+| **Active project tracking doc** (see header) | Current phase, status, open questions, deferred work, resolved decisions. | Before starting any task |
 | `/old/v1/D2-WORX/` | Frozen v1 snapshot. Historical reference for any v1 patterns / decisions / docs that don't have v2 equivalents yet. **Read-only — never modify.** | When researching how v1 did something or hunting for tribal knowledge not yet extracted |
 
-Per-service / per-library `README.md` files appear in `server/services/{service}/` and `server/shared/dotnet/{lib}/` as those are built per V2.md §4 phases. Consult them when working on a specific service/lib.
+Per-service / per-library `README.md` files appear in `server/services/{service}/` and `server/shared/dotnet/{lib}/` as those are built/lib.
+
+---
+
+## §3.5. Doc Update Map
+
+**KEEP docs describe current reality, not the journey from v1.** Don't add v1-retrospective framing to PATTERNS / TESTS / MESSAGING / etc. — the v1→v2 journey lives in `docs/v2/` (V2.md, PHASE_*.md), and those tracking docs get archived once their phase ships.
+
+When you change something, update the right doc. The map below is the routing table:
+
+| If you change... | Update... |
+|---|---|
+| A handler / TLC pattern / DI registration / `D2Result` factory usage / RedactionSpec / mapper / repo pattern | [docs/PATTERNS.md](docs/PATTERNS.md) |
+| AMQP headers, exchange/routing-key naming, encryption frame, queue topology, DLQ behavior | [docs/MESSAGING.md](docs/MESSAGING.md) |
+| Test category, custom matcher, adversarial-coverage rule, fixture pattern | [docs/TESTS.md](docs/TESTS.md) |
+| Idempotency / rate-limit / SAGA / migration locking / multi-instance correctness | [docs/OPERATIONAL-GUARANTEES.md](docs/OPERATIONAL-GUARANTEES.md) |
+| Audit checklist item (security / logic / code-quality / conventions / cross-service / tests / docs gate) | [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIST.md) |
+| Anything cross-language (.NET ↔ SvelteKit ↔ future) | [docs/PARITY.md](docs/PARITY.md) |
+| KeyCustodian, key rotation, secret handling, compromise runbook | [docs/SECURITY-RUNBOOKS.md](docs/SECURITY-RUNBOOKS.md) |
+| Add/modify a public API on a lib or service | the relevant `README.md` (`server/services/{svc}/README.md` or `server/shared/dotnet/{lib}/README.md`) |
+| Phase progression / wipe state / open Phase 0 questions / new tracked issue | [docs/v2/PHASE_0.md](docs/v2/PHASE_0.md) |
+| Architectural decision that overrides prior v2 plan | [docs/v2/V2.md](docs/v2/V2.md) (and note in PHASE_0.md) |
+
+If your change spans multiple categories, update each. If no entry fits, the change probably needs a new doc — ASK before creating one.
 
 ---
 
@@ -179,7 +206,7 @@ Per-service / per-library `README.md` files appear in `server/services/{service}
 
 **Rule: Follow existing patterns. Do not invent new ones when established patterns apply. If no pattern fits, ASK before inventing. Behavioral Guidelines (§7) apply to ALL work in this section — especially: ask when uncertain, research first, follow existing conventions.**
 
-**Architectural intent for v2 lives in [V2.md](V2.md) §5 (Stack Decisions) and §6 (Library & Code Patterns). This section summarizes the operational rules.**
+**Patterns are documented in detail in [docs/PATTERNS.md](docs/PATTERNS.md). This section summarizes the operational rules every D² engineer needs daily.**
 
 ### TLC/2LC/3LC Folder Convention
 
@@ -211,7 +238,7 @@ Local/in-memory caching is always OK (instance-scoped, ephemeral — doesn't aff
 
 ### Handler Pattern
 
-`.NET`: `BaseHandler<TSelf, TInput, TOutput>` with using aliases (`H`, `I`, `O`), `IHandlerContext`, `DefaultOptions` override. Per-handler PII redaction via the `[RedactData]` attribute on data types (KEEP — see V2.md §6.10) + `DefaultOptions` overrides for proto-generated DTOs that can't carry the attribute.
+`.NET`: `BaseHandler<TSelf, TInput, TOutput>` with using aliases (`H`, `I`, `O`), `IHandlerContext`, `DefaultOptions` override. Per-handler PII redaction via the `[RedactData]` attribute on data types (KEEP) + `DefaultOptions` overrides for proto-generated DTOs that can't carry the attribute.
 
 ### D2Result Pattern
 
@@ -219,9 +246,9 @@ Result objects replace exceptions for control flow. **Always use semantic factor
 
 Partial success: `NOT_FOUND` (none found) → `SOME_FOUND` (partial, data returned) → `OK` (all found).
 
-### Partial Interface Extension
+### Interface organization
 
-Interfaces are `partial`, split by operation. `ICommands.cs` (base) + `ICommands.DoSomething.cs` (per-handler). One file per operation for discoverability.
+One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consumers `using` the namespaces directly — no `partial` interface aggregation, no grouping aliases. The folder structure IS the discoverability mechanism.
 
 ### DI Registration
 
@@ -229,25 +256,25 @@ Interfaces are `partial`, split by operation. `ICommands.cs` (base) + `ICommands
 
 ### Other Established Patterns
 
-- **Options pattern**: `IOptions<T>` with defaults. Config section per V2.md §5. Never hardcode batch sizes or cache expirations.
+- **Options pattern**: `IOptions<T>` with defaults. Config section
 - **Multi-tier caching** (in client libraries): Memory → Redis → Database → Disk. Populate upward on miss. Key convention: `EntityName:{id}`.
 - **Content-addressable entities**: `Location` and `WhoIs` use SHA-256 hash IDs (64-char hex). Factory method computes hash. Enables dedup.
 - **Mappers**: C# 14 extension members: `extension(Entity e) { public DTO ToDTO() { ... } }`. Live in `{Service}.App/Mappers/`.
 - **Batch operations**: `input.HashIds.Chunk(_BATCH_SIZE)` via Options pattern (default 500).
 - **Health checks must use the same code path as production** — DB health checks go through EF Core, not raw `pool.query()`. A check that bypasses the ORM won't detect ORM-layer issues.
 
-### Key Architecture Decisions (per V2.md §5)
+### Key Architecture Decisions
 
-- **Auth**: self-rolled .NET auth as a module within Edge (V2.md §5.4). RFC 8693 token exchange + RFC 6749 §4.4 client_credentials for service identity. JWKS at the OIDC-canonical `/.well-known/jwks.json`.
+- **Auth**: self-rolled .NET auth as a module within Edge. RFC 8693 token exchange + RFC 6749 §4.4 client_credentials for service identity. JWKS at the OIDC-canonical `/.well-known/jwks.json`.
 - **JWT**: RS256 only. 15min expiry. Custom claims namespaced with `d2:` prefix.
-- **KeyCustodian**: module within Auth — owns lifecycle of ALL long-lived secrets (JWKS, message payload encryption keys, cookie signing, service-identity client_secrets). State machine + JWKS-style overlap rotation. See V2.md §5.4.
+- **KeyCustodian**: module within Auth — owns lifecycle of ALL long-lived secrets (JWKS, message payload encryption keys, cookie signing, service-identity client_secrets). State machine + JWKS-style overlap rotation.
 - **SvelteKit BFF**: pure SSR. Browser → Edge directly for auth state mutations. Server-side route guards (`requireAuth`, `requireOrg`, etc.) at `server/web/src/lib/server/auth/`. Browser-side `authClient` at `server/web/src/lib/client/auth/`. NOT separate packages.
-- **Sync**: gRPC between services (HTTP/2). **Async**: RabbitMQ for side effects (emails, events). Sensitive RMQ payloads encrypted via `D2.Shared.Encryption` (V2.md §5.7).
+- **Sync**: gRPC between services (HTTP/2). **Async**: RabbitMQ for side effects (emails, events). Sensitive RMQ payloads encrypted via `D2.Shared.Encryption`.
 - **Notifications**: ALL deliveries through D2.Courier → contact resolution. No direct emails/texts.
 - **Sessions**: 3-tier (cookie cache 5min → Redis → PostgreSQL `auth_db` dual-write).
 - **Database topology**: one PG server, many DBs (auth_db, files_db, courier_db, notifications_db, audit_db, seaweedfs_filer_db, plus per-service contacts DBs). Multi-replica migration safety via PG advisory locks.
-- **Object storage**: SeaweedFS for user files (V2.md §5.6). MinIO retained as backend for LGTM block storage.
-- **Production deployment**: eventually Docker Swarm + Portainer; pre-launch is Compose on a VPS (V2.md §5.9).
+- **Object storage**: SeaweedFS for user files. MinIO retained as backend for LGTM block storage.
+- **Production deployment**: eventually Docker Swarm + Portainer; pre-launch is Compose on a VPS.
 
 ---
 
@@ -258,7 +285,7 @@ Interfaces are `partial`, split by operation. `ICommands.cs` (base) + `ICommands
 ### Cross-Platform (.NET + SvelteKit)
 
 - **D2Result semantic factories**: Never raw `Fail()` with manual `statusCode` when a factory exists. See list in §4.
-- **`[RedactData]` on PII types**: Every data type carrying PII (emails, phones, IPs, addresses, names, message content, filenames, presigned URLs) MUST have the `[RedactData]` attribute (per V2.md §6.10). Lives on the type, applies to ALL Serilog logging recursively, reflection-cached. Don't reach for per-handler RedactionSpec when `[RedactData]` does the job.
+- **`[RedactData]` on PII types**: Every data type carrying PII (emails, phones, IPs, addresses, names, message content, filenames, presigned URLs) MUST have the `[RedactData]` attribute. Lives on the type, applies to ALL Serilog logging recursively, reflection-cached. Don't reach for per-handler RedactionSpec when `[RedactData]` does the job.
 - **Input validation on all handlers**: Validate inputs BEFORE infrastructure calls (FluentValidation .NET / equivalent). Never let Redis/DB be the first to reject invalid data.
 - **Build warnings = bugs**: Fix ALL warnings — StyleCop (SA****), CS**** (null refs, hiding), ESLint, `svelte-check`. Never suppress with `#pragma warning disable`, `!` (for silencing warnings), or `@ts-ignore`.
 - **Lint/style warnings = bugs**: ESLint and Prettier must be zero warnings.
@@ -270,8 +297,8 @@ Interfaces are `partial`, split by operation. `ICommands.cs` (base) + `ICommands
 - **Domain model is source of truth for nullability** — if a domain field is optional, the proto field MUST use the `optional` keyword. Never rely on `""`, `0`, or `false` as "not set" sentinels.
 - **Proto3 `optional` keyword for all nullable fields** — proto3 defaults strings to `""`, numbers to `0`, bools to `false`. Without `optional`, receivers cannot distinguish "not provided" from the zero value. Required fields (IDs, keys, status) stay as plain (non-optional).
 - **No empty strings as data** — `""` must NEVER represent absent/missing data. Use `null` (C#) or `undefined` (TS). The ONLY acceptable uses of `""` are: Svelte form field `bind:value` initialization, string concatenation building, `string.Empty` in C# hash/fingerprint computation (where null would break), and OTel span attributes (SDK requires non-null). At all other boundaries (user input, DB, proto mapping), convert empty strings: TS `truthyOrUndefined()`, C# `.ToNullIfEmpty()`.
-- **NEVER hand-write database migrations** — use `dotnet ef migrations add <Name>`. Do NOT manually create or edit migration `.cs` files, snapshot files (`*ModelSnapshot.cs`), or `__EFMigrationsHistory` rows. Hand-writing puts EF Core's internal model snapshot out of sync with the actual schema. If the generator fails, STOP and ask. **Multi-replica safety**: startup migrator acquires PG advisory lock per V2.md §5.6 — only one replica migrates, others wait.
-- **Don't create patterns**: Follow existing ones (§4 + V2.md §6). If no pattern fits, ask before inventing.
+- **NEVER hand-write database migrations** — use `dotnet ef migrations add <Name>`. Do NOT manually create or edit migration `.cs` files, snapshot files (`*ModelSnapshot.cs`), or `__EFMigrationsHistory` rows. Hand-writing puts EF Core's internal model snapshot out of sync with the actual schema. If the generator fails, STOP and ask. **Multi-replica safety**: startup migrator acquires PG advisory lock— only one replica migrates, others wait.
+- **Don't create patterns**: Follow existing ones (§4). If no pattern fits, ask before inventing.
 - **Don't leave broken things behind**: Fix ALL issues you encounter in the project — not just in files you touched. Every session leaves the codebase cleaner.
 
 ### C#
@@ -284,7 +311,7 @@ Interfaces are `partial`, split by operation. `ICommands.cs` (base) + `ICommands
 - **File headers**: Required on all `.cs` files (see §6).
 - **Record types for entities**: `record`, `required init`, empty collection initializers (`[]`).
 - **Field prefixes**: `_camelCase` (mutable), `r_camelCase` (readonly), `s_camelCase` (static), `sr_camelCase` (static readonly). Full table → §6.
-  - **Carve-out**: handlers using **primary constructors** per V2.md §6.1 omit the `r_` prefix on constructor parameters (they're not fields, they're params accessed directly). The carve-out applies ONLY to handler primary-constructor parameters. Regular fields keep their prefixes.
+  - **Carve-out**: handlers using **primary constructors**`r_` prefix on constructor parameters (they're not fields, they're params accessed directly). The carve-out applies ONLY to handler primary-constructor parameters. Regular fields keep their prefixes.
 - **XML docs**: Required for public APIs.
 - **Implement the interface**: Handlers MUST implement their interface for DI registration.
 - **`ValueTask` must not be awaited more than once** — call `.AsTask()` once, store the `Task` reference, reuse it for `Task.WhenAll()` and subsequent `await`.
@@ -322,7 +349,7 @@ Full checklist → [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIST.md) "Security"
 - **Pagination limits** — default 50, max 100 on all list queries
 - **DB constraint errors** — catch PG `23505` → 409 Conflict, not 500
 - **Auth middleware visible at route declaration** — `.RequireAuth()`, `.RequireServiceKey()`, `.RequireOrg()`
-- **New JWT claims** → custom claims MUST be namespaced with `d2:` per V2.md §5.4 (`act["d2:kind"]`, `d2:session_id`, etc.). Document in `docs/JWT-CLAIMS.md` (created at Phase 3).
+- **New JWT claims** → custom claims MUST be namespaced with `d2:`(`act["d2:kind"]`, `d2:session_id`, etc.). Document in `docs/JWT-CLAIMS.md`.
 - **No sensitive IDs in JWT** — admin user IDs, internal audit data stays server-side (session only)
 - **API key comparisons must be constant-time** — `CryptographicOperations.FixedTimeEquals`. Plain `==` is vulnerable to timing attacks.
 - **Auth middleware must fail-closed on missing config** — empty service-identity client mappings or missing secrets = 401 immediately. Never silently bypass.
@@ -351,10 +378,21 @@ Full checklist → [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIST.md) "Security"
 | Local constants (tests) | `snake_case` | `expected_count` |
 | Local variables | `camelCase` | `result` |
 
-**Primary-constructor handlers (V2.md §6.1)**: Constructor parameters do NOT take the `r_` prefix — they're parameters, not fields, even though they're accessed like fields inside the class body. The carve-out applies ONLY to handler primary-constructor parameters; regular fields keep their prefixes.
+**Primary-constructor handlers**: Constructor parameters do NOT take the `r_` prefix — they're parameters, not fields, even though they're accessed like fields inside the class body. The carve-out applies ONLY to handler primary-constructor parameters; regular fields keep their prefixes.
 
-### C# File Header (required on all .cs files)
+### File Headers (required on every source file that supports comments)
 
+**Every source file that supports comments MUST start with a copyright header.** Comment syntax varies by language — match the file format. The rule is binary: if the file format permits comments, it gets a header. No exceptions for "small" files, configs, or dotfiles.
+
+**Exempt** (no comment syntax / machine-generated):
+- Comment-less formats: `.json`, `.lock`, `.snap`, plain text without comment syntax
+- Machine-generated: EF migrations, paraglide compile output, proto-codegen outputs, husky `_/` shims, JetBrains `.idea/` files, package-manager lock files
+
+#### `//` line comments
+
+**Languages**: C#, TypeScript, JavaScript, Proto, Go, Rust, Java (anything in the C-family). File extensions: `.cs`, `.ts`, `.tsx`, `.js`, `.cjs`, `.mjs`, `.proto`, `.go`, `.rs`, `.java`.
+
+**C#** (`.cs`) — StyleCop SA1633 enforces; XML `<copyright>` element required:
 ```csharp
 // -----------------------------------------------------------------------
 // <copyright file="FileName.cs" company="DCSV">
@@ -363,13 +401,104 @@ Full checklist → [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIST.md) "Security"
 // -----------------------------------------------------------------------
 ```
 
+**Everything else in this family** (TypeScript / JavaScript / Proto / Go / Rust / Java):
+```ts
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+```
+
+#### `/* */` block comments (CSS family)
+
+**Languages**: CSS, SCSS, LESS. File extensions: `.css`, `.scss`, `.less`.
+
+```css
+/* -----------------------------------------------------------------------
+ * Copyright (c) DCSV. All rights reserved.
+ * ----------------------------------------------------------------------- */
+```
+
+#### `#` line comments (Unix-config family)
+
+**Languages**: Bash, YAML, Dockerfile, PowerShell, Makefile, Grafana Alloy, env files, gitignore-family, editorconfig, npmrc, prettierignore, TOML, INI, Python, Ruby, R. File patterns: `.sh`, `.yml`, `.yaml`, `Dockerfile`, `.ps1`, `Makefile`, `.alloy`, `.env*`, `.gitignore`, `.gitattributes`, `.dockerignore`, `.editorconfig`, `.npmrc`, `.prettierignore`, `.toml`, `.ini`, `.py`, `.rb`, `.r`, `.R`.
+
+For shebang-bearing files, the shebang stays on line 1; the header follows:
+```bash
+#!/usr/bin/env bash
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
+```
+
+For files without shebang (most config files), the header is line 1:
+```yaml
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
+```
+
+#### `<!-- -->` HTML-comment block (markup family)
+
+**Languages**: Markdown, HTML, Svelte, Vue, JSX-as-template. File extensions: `.md`, `.html`, `.svelte`, `.vue`.
+
+```markdown
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
+# Document title here
+```
+
+For `.svelte` / `.vue`, the header lives at the very top of the file before `<script>` / `<template>`.
+
+#### `<!-- -->` XML-comment block (XML family)
+
+**Languages**: XML and XML-flavored project files. File extensions: `.xml`, `.csproj`, `.slnx`, `.props`, `.targets`, `.config` (when XML).
+
+The XML declaration (`<?xml version="1.0" ... ?>`) stays on line 1 when present; otherwise the comment is line 1. The comment lives at the document root, before or after the opening root element — whichever is valid for the file:
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project>
+  ...
+</Project>
+```
+
+For `.csproj` / `.slnx` / `.props` / `.targets` (no `<?xml ... ?>` declaration in our convention), the comment can also live inside the root element on the first line after the opening tag — both are valid:
+```xml
+<Project>
+  <!--
+  Copyright (c) DCSV. All rights reserved.
+  -->
+  ...
+</Project>
+```
+
+#### `--` line comments (SQL family)
+
+**Languages**: SQL, Lua, Haskell, Ada. File extensions: `.sql`, `.lua`, `.hs`, `.ads`, `.adb`.
+
+```sql
+-- -----------------------------------------------------------------------
+-- Copyright (c) DCSV. All rights reserved.
+-- -----------------------------------------------------------------------
+```
+
+#### Adding a new language
+
+If you encounter a language not listed above and it supports comments, add a new sub-section here using the language's native comment syntax. The header content stays `Copyright (c) DCSV. All rights reserved.` — only the comment delimiter changes.
+
+**Definition of Done**: Every source file you create or modify must carry the appropriate header. This is enforced — see §1 Step 5.
+
 ### TypeScript Naming (SvelteKit BFF)
 
 - `camelCase` for variables/functions
 - `PascalCase` for types/classes/interfaces/components
 - `kebab-case` for modules/files
 
-### Folder Casing Convention (per V2.md §2)
+### Folder Casing Convention
 
 - **Folders OUTSIDE a project** (csproj-grouping, organizational) → **lowercase**, kebab-case for multi-word: `server/`, `services/`, `edge/`, `app/`, `clients/`, `dotnet/`, `caching-redis/`, `geo-reference/`, `service-defaults/`, `infra/`, `tools/`, `docs/`
 - **Folders INSIDE a project** (namespace-mapping, where Rider auto-creates folders from namespace operations) → **PascalCase**: `Implementations/`, `Interfaces/`, `CQRS/`, `Handlers/`, `C/`, `Q/`, `U/`, `X/`, `Repository/`, `Messaging/`
@@ -379,7 +508,7 @@ Full checklist → [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIST.md) "Security"
 
 The rule: **if Rider auto-generates a folder from a namespace operation, that folder must be PascalCase. Anything else is lowercase.**
 
-### Scope vs Permission Terminology (per V2.md §5.4)
+### Scope vs Permission Terminology
 
 **These are the same thing in our model.** JWT carries them as the OAuth-canonical `scope` claim (space-separated string). Code references them as constants in `D2.Shared.Auth.Scopes` (a static class with `const string` members). The string values match exactly.
 
@@ -429,13 +558,13 @@ All logs and spans MUST include these fields for cross-service correlation:
 2. **Read freely** — Explore any files needed for context.
 3. **Ask before changing** — Do not modify files without explicit user approval.
 4. **Research first** — Check related files (tests, interfaces, existing implementations) before proposing changes.
-5. **Follow existing conventions** — V2.md §5/§6 documents the v2 patterns. `/old/v1/D2-WORX/` is reference for any historical patterns not yet captured in v2 docs.
+5. **Follow existing conventions** — the patterns docs are the source of truth for current code patterns.
 6. **Never leave broken things behind** — Fix ALL issues in files you touch.
 7. **Always write tests** — Adversarial, not just happy-path. Every behavioral change needs coverage.
-8. **Check [V2.md](V2.md)** — For current phase, status, and resolved decisions.
+8. **Check the project tracking doc** referenced in the header at the top of this file before starting work — for current phase, status, and resolved decisions.
 9. **Provide options** — When multiple approaches exist, present them for user decision.
 10. **Maximize parallelization** — Spawn as many sub-agents as makes sense to complete tasks as fast as possible. Independent work (file reads, doc updates, code fixes, test runs, audits) should run in parallel, not sequentially. Use background agents for non-blocking work. The user values speed — don't serialize work that can be parallelized.
-11. **Never defer work without explicit permission** — Do NOT unilaterally decide to defer, skip, or deprioritize any planned work. If you think something should be deferred, **ASK the user first** and present the tradeoff. If the user approves deferral, **document it** in PHASE_0.md (or successor) as a tracked issue with rationale. Any work item that is deferred for any reason MUST appear as a documented issue.
+11. **Never defer work without explicit permission** — Do NOT unilaterally decide to defer, skip, or deprioritize any planned work. If you think something should be deferred, **ASK the user first** and present the tradeoff. If the user approves deferral, **document it as a tracked issue** in the active project tracking doc (see header) with rationale. Any work item that is deferred for any reason MUST appear as a documented issue.
 12. **Never commit without explicit permission** — Do NOT create git commits unless the user explicitly asks you to commit. Present changes for review first. Committing without permission is as serious as pushing without permission.
 
 ### Code Intelligence Tools
@@ -456,22 +585,21 @@ Edit `~/.claude/plugins/marketplaces/claude-plugins-official/.claude-plugin/mark
 
 ### Project Structure
 
-See [V2.md](V2.md) §2 for the full v2 tree layout. Key roots:
+Key roots in the tree:
 
 - `contracts/` — proto source of truth + i18n message files + fixtures
 - `server/` — all trusted code (.NET services + SvelteKit BFF + .NET shared libs)
 - `infra/` — deployment + observability (compose, docker, observability)
 - `tools/` — dev tooling (scripts, generators)
-- `docs/` — non-essential project documentation (audit checklist, operational guarantees, planned PATTERNS.md / TESTS.md / etc.)
+- `docs/` — project documentation (PATTERNS, TESTS, MESSAGING, OPERATIONAL-GUARANTEES, etc.)
 - `secrets/` — gitignored + Claude-deny-ruled key material (root key, encryption keys, dev TLS certs). Populated by `tools/scripts/gen-dev-keys.sh`.
-- `.claude/` — project-level Claude Code settings (`settings.json` with deny rules per V2.md §12)
-- `old/v1/D2-WORX/` — frozen v1 snapshot, read-only reference
+- `.claude/` — project-level Claude Code settings (`settings.json` with deny rules)
 
 ---
 
 ## §8. Local Secrets & Claude Deny Rules
 
-Per V2.md §12, environment configuration is split:
+Environment configuration is split:
 
 | File | Contents | Committed? | Claude can read? | Claude can edit? |
 |---|---|---|---|---|

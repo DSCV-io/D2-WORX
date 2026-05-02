@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 // Grafana Alloy Configuration for D²-WORX
 // Handles metrics scraping, log collection, and trace forwarding
 //

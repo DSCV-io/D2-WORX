@@ -1,7 +1,10 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
 <Solution>
   <!--
     D²-WORX v2 solution (modern XML format, .NET 10).
-    Projects are added here per V2.md §4 phases as they ship.
+    Projects are added here per V2 phasing (see docs/v2/PHASE_0.md while it exists).
 
     Phase 0 will populate this with the foundational shared libraries
     (D2.Shared.Handler, D2.Shared.Result, D2.Shared.Utilities, etc.).

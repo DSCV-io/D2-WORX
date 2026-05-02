@@ -1,0 +1,58 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
+# D2.Notifications
+
+> **Status**: placeholder — not yet implemented.
+
+## Purpose
+
+In-app activity feed. Persistent feed entries with read/unread state, pagination, aggregation ("Alice and 3 others liked your post").
+
+The persistent feed is the source of truth for in-app notifications — WS push is an optimization for live delivery. Without persistence, entity-notification reliability collapses to "WS-only delivery, lost if offline."
+
+## Public API surface
+
+- REST API:
+  - `GET /api/v1/notifications` — paginated feed
+  - `PATCH /api/v1/notifications/{id}/read` — mark read
+  - `PATCH /api/v1/notifications/read-all` — mark all read
+- RabbitMQ consumer: `d2.notifications.requests` exchange (encrypted) — producers publish `NotificationRequestedEvent`
+- Outbound: gRPC to Edge SignalR push API (`notification.created` push to recipient's connections)
+
+## Dependencies (.NET shared libs)
+
+- `D2.Shared.Messaging` (consumer for `d2.notifications.requests` + publisher to `d2.audit.events`)
+- `D2.Shared.Encryption` (decrypts RMQ payloads)
+- `D2.Shared.Auth` (recipient identity validation, scope checks on REST endpoints)
+- `D2.Shared.I18n` (notification subject + body rendering with locale)
+- `D2.Shared.Contacts` (recipient resolution via `notifications_contacts_db`)
+
+## Database
+
+- `notifications_db` — owned by D2.Notifications. Schema: `notification_feed_entry` (id, recipient_user_id, producer_service, event_type, subject markdown, body markdown, link, metadata JSONB, urgency, aggregation_key nullable, read_at, created_at). Indexed on `(recipient_user_id, read_at, created_at)`.
+- `notifications_contacts_db` — via `D2.Shared.Contacts` library.
+
+## Aggregation
+
+Aggregation rules live in Notifications (it owns the feed shape). Producers don't decide whether their event is aggregated — they emit the event with an `aggregation_key`; Notifications decides how to roll up.
+
+## What Notifications does NOT do
+
+- **Does NOT decide whether to also send email/SMS** — that's the producer's call. Producers publish to BOTH `d2.notifications.requests` (for in-app) AND call D2.Courier (for email/SMS) explicitly.
+- **Not a delivery service** — D2.Courier handles outbound delivery. Notifications handles in-app feed only.
+- **Not conversational** — D2.Threads (deferred) handles user-to-user messaging.
+
+## Client library
+
+`server/services/notifications/clients/dotnet/D2.Notifications.Client.csproj` — thin RabbitMQ publisher for `NotificationRequestedEvent`. Shipped alongside the service.
+
+## References
+
+- [docs/MESSAGING.md](../../../docs/MESSAGING.md) — RabbitMQ patterns + at-least-once delivery semantics
+- [docs/PATTERNS.md](../../../docs/PATTERNS.md) — handler / D2Result / RedactionSpec patterns
+
+## When to expand this README
+
+When this service is built out, expand sections with: pagination + filtering API details, aggregation rule examples, real-time push integration with Edge SignalR.

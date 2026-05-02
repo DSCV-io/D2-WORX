@@ -1,3 +1,7 @@
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
+
 # D2-WORX Docker Compose — Production / Staging Stack
 # Extends compose.yml with production-specific overrides.
 #

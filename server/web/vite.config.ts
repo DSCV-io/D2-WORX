@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
 import { paraglideVitePlugin } from "@inlang/paraglide-js";
 import tailwindcss from "@tailwindcss/vite";
 import { playwright } from "@vitest/browser-playwright";

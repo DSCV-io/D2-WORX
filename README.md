@@ -1,8 +1,10 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # D²-WORX
 
 Pre-alpha — v2 architectural rewrite in progress.
-
-See [V2.md](V2.md) for the architectural plan and [PHASE_0.md](PHASE_0.md) for current execution status. The v1 codebase is preserved at `/old/v1/D2-WORX/` as a frozen reference.
 
 ## License
 

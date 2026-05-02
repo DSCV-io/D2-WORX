@@ -1,4 +1,8 @@
 #!/usr/bin/env sh
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
+
 # Reject commits whose message contains an AI-tool Co-Authored-By trailer.
 # See CLAUDE.md §6 (Git): "No `Co-Authored-By` lines in commit messages".
 # Pattern matches Claude / Anthropic / GPT / Copilot / Cursor / Codeium.

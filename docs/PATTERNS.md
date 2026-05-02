@@ -1,0 +1,427 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
+# PATTERNS.md — D²-WORX Code Patterns
+
+> The load-bearing patterns + invariants that every D²-WORX shared library and service embodies.
+
+---
+
+## TLC / 2LC / 3LC Folder Convention
+
+Three-tier folder hierarchy for all backend code. **TLC** = architectural concern, **2LC** = implementation type, **3LC** = operation type.
+
+### Canonical TLCs (with their 3LC alphabets)
+
+| TLC | 3LC verbiage | Meaning |
+|---|---|---|
+| **CQRS** | `C/` Commands, `Q/` Queries, `U/` Utilities, `X/` Complex | Business operation intent |
+| **Messaging** | `Pub/` Publishers, `Sub/` Subscribers | Message direction |
+| **Repository** | `C/` Create, `R/` Read, `U/` Update, `D/` Delete | CRUD operation |
+| **Caching** | `C/` Create, `R/` Read, `U/` Update, `D/` Delete | CRUD operation |
+| **Outbound** | (per-protocol — `Grpc/`, `Http/`, `S3/`, etc.) | Outbound integrations |
+| **Realtime** | `Push/` (and future `Stream/`) | Real-time push (SignalR) |
+| **Storage** | `C/` Create, `R/` Read, `U/` Update, `D/` Delete | Object/file storage |
+
+### Layout
+
+- **Interfaces** live in `Interfaces/{TLC}/Handlers/{3LC}/`
+- **Implementations** live in `Implementations/{TLC}/Handlers/{3LC}/` (app layer) or `{TLC}/Handlers/{3LC}/` (infra layer)
+- **One handler per file** under each 3LC subdirectory
+
+### Capability vs Dependency
+
+A handler's TLC reflects **what it does** (capability), not **what it uses** (dependency). A query handler that internally consults a cache is still a `Q/` handler — it doesn't become `Caching/Q/` because it reads cache. Reserve TLC for the primary capability of the handler.
+
+### CQRS Q vs C distinction
+
+| Type | Distributed cache | DB write | External API | Message publish | Test |
+|---|---|---|---|---|---|
+| **Query** | No | No | No | No | "If the process dies after, would state persist?" → **No** |
+| **Command** | Yes | Yes | Yes | Yes | Primary intent = mutation of persistent/shared state |
+| **Complex** | Yes | Yes | Yes | Yes | Primary intent = retrieval, but may mutate as side effect |
+| **Utility** | Varies (per caller) | Varies | Varies | Varies | Shared logic invoked by other handlers as a building block — see "Why Utility lives in app, not domain" below |
+
+**Local / in-memory caching is permitted as an invisible optimization** — instance-scoped, ephemeral, doesn't affect other instances. A query that warms a local memory cache is still a query.
+
+#### Why Utility lives in app layer, not domain
+
+A Utility handler exists when the same piece of logic is needed by multiple Q/C/X handlers AND that logic requires something the domain layer shouldn't carry. The default instinct — "it's pure logic, put it in domain" — is wrong when:
+
+- The logic depends on **third-party libraries** (HTTP client, JSON / XML parser, regex engine, date / locale library, image processor, crypto provider, etc.) that would pollute domain's dep graph and force every domain consumer to transitively pull them in
+- The logic depends on **DI-injected services** (logger, telemetry, options, other handlers) that the domain layer doesn't have access to
+- The logic benefits from **handler-pattern infrastructure** (auto-emitted OTel metrics, `[RedactData]` integration, `DefaultOptions`, structured input/output logging) that pure domain methods can't access
+
+Domain stays pure: only entities, value objects, business rules, and helper methods that need ZERO external deps. Anything heavier becomes a Utility handler in the app layer.
+
+The reverse is also true — if the logic is genuinely pure (no third-party deps, no DI services, no need for handler infra), put it on the domain entity / value object as a method. Don't manufacture a Utility handler just because "it might be called from multiple places."
+
+### Interface organization
+
+One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consumers `using` the namespaces directly — no `partial` interface aggregation, no grouping aliases. The folder structure IS the discoverability mechanism. (We tried per-operation partial-interface aggregation; it added more friction than it removed.)
+
+### Verb Semantics
+
+- **Find** = "Resolve this for me" — may fetch from external source, may cache/persist. Example: `FindWhoIs`
+- **Get** = "Give me this by ID" — direct lookup, read-only. Example: `GetWhoIsByIds`
+
+---
+
+## Handler
+
+`.NET`: `BaseHandler<TSelf, TInput, TOutput>` with using aliases (`H`, `I`, `O`), `IHandlerContext`, `DefaultOptions` override.
+
+### Pipeline shape — `HandleAsync` is virtual; `RunCorePipelineAsync` is sealed
+
+`HandleAsync` is `virtual` and acts as a thin policy layer. The actual observability pipeline (activity, span tags, log scope, stopwatch, metrics, the universal try/catch) lives in a `protected` (non-virtual) `RunCorePipelineAsync` that returns a tuple:
+
+```csharp
+(D2Result<TOutput?> Result, Exception? CapturedException)
+```
+
+`CapturedException` is non-null only when the universal catch fired (= the Result will be `UnhandledException`). The tuple is `protected` to the BaseHandler hierarchy; **the `Exception` object never escapes BaseHandler — it is not a field on D2Result, never serialized, never crosses a wire boundary**. Subclasses that want to inspect it must do so by overriding `HandleAsync` and consuming the tuple locally.
+
+Default `HandleAsync` is a one-line pass-through: `return (await RunCorePipelineAsync(...)).Result`. Existing handlers need zero changes.
+
+### `BaseRepoHandler` — EF exception → `D2Result` mapping
+
+`BaseRepoHandler<TSelf, TInput, TOutput> : BaseHandler<...>` overrides `HandleAsync` to switch on `CapturedException` *type* and remap to specific `D2Result` codes via the existing semantic factories. Match on EF exception type first (the type is the reliable signal); use `D2.Shared.Repository.Errors.Pg.PgErrorCodes` predicates only as opportunistic refinement when the inner exception happens to be a `PostgresException` with usable primitives (the driver doesn't always populate `SqlState` / `ConstraintName`).
+
+| EF exception type | Mapping |
+|---|---|
+| `DbUpdateConcurrencyException` | `D2Result.Conflict` (optimistic concurrency / row-version mismatch — EF-determined, no driver involvement) |
+| `DbUpdateException` w/ `PgErrorCodes.IsUniqueViolation` | `D2Result.Conflict` |
+| `DbUpdateException` w/ `PgErrorCodes.IsForeignKeyViolation` | `D2Result.ValidationFailed` |
+| `DbUpdateException` w/ `PgErrorCodes.IsNotNullViolation` | `D2Result.ValidationFailed` |
+| `DbUpdateException` w/ `PgErrorCodes.IsCheckViolation` | `D2Result.ValidationFailed` |
+| `DbUpdateException` (no recognized inner) | Fall through (original `UnhandledException` Result unchanged — forces explicit recognizers) |
+| `OperationCanceledException` when `ct.IsCancellationRequested` | `D2Result.Cancelled` |
+| Anything else | Fall through |
+
+**Per-handler refinement.** A subclass needing constraint-specific mapping (e.g., `users_email_unique` → `account_errors_emailTaken` instead of generic `Conflict`) overrides `HandleAsync`, inspects `CapturedException` for the specific case, then chains to `base.HandleAsync(...)` for everything else.
+
+**Observability is unchanged.** `RunCorePipelineAsync` still calls `activity?.AddException(ex)`, records the exception metric, and emits the unhandled-exception log. Tempo + Loki get the full picture regardless of whether a subclass remaps the result. Type names (`exceptionType`, `innermostExceptionType`) are pushed to the log scope so Loki can filter by type without parsing message text.
+
+### HandlerOptions resolution order
+
+Per call → `DefaultOptions` (handler-level override) → BaseHandler defaults. Higher-precedence options shadow lower. `DefaultOptions` lets a handler set policies that apply to every invocation without forcing every caller to specify them.
+
+### PII redaction — `[RedactData]` is canonical
+
+Every data type carrying PII (emails, phones, IPs, addresses, names, message content, filenames, presigned URLs) MUST have the `[RedactData]` attribute. This:
+- Lives on the type / property — not on handlers
+- Applies to ALL Serilog logging recursively (not just handler I/O)
+- Reflection-cached per type
+- Works for `{@obj}` structured logging
+
+When `[RedactData]` can't be applied (proto-generated DTOs that ts-proto / protoc-gen-csharp emit without our attribute), use `DefaultOptions.LogInput=false` / `LogOutput=false` on the handler. Document in the handler's class comment which proto type triggered the suppression.
+
+### 4 OTel metrics every handler emits
+
+Auto-emitted by `BaseHandler`:
+1. **Invocation count** — incremented per `HandleAsync` call
+2. **Success count** — incremented when result is `success: true`
+3. **Failure count** — incremented per failure, labeled by `errorCode`
+4. **Duration histogram** — ms from invoke to result
+
+These don't need to be wired by the handler author — `BaseHandler` does it. Adding new handlers gets observability for free.
+
+### Both app AND repo handlers declare PII redaction
+
+A repo handler's input/output is logged independently of its app-layer caller. If the repo handler returns rows containing PII, the repo handler's redaction must cover them. Don't assume the app handler's redaction "trickles down" — each `BaseHandler` is independent.
+
+---
+
+## D2Result
+
+Result objects replace exceptions for control flow.
+
+### Factories (use semantic factories — never raw `Fail()`)
+
+| Factory | Status | Use case |
+|---|---|---|
+| `Ok<T>(data)` | 200 | Success with data |
+| `Created<T>(data)` | 201 | Resource created |
+| `NotFound` | 404 | Lookup miss |
+| `Unauthorized` | 401 | Missing / invalid auth |
+| `Forbidden` | 403 | Authenticated but lacks permission |
+| `ValidationFailed(inputErrors)` | 400 | Input failed schema/business validation |
+| `Conflict(message)` | 409 | DB constraint violation, version conflict |
+| `ServiceUnavailable` | 503 | Downstream dep down (use sparingly — prefer specific) |
+| `UnhandledException(ex)` | 500 | Top-level safety net only |
+| `PayloadTooLarge` | 413 | Upload exceeded limit |
+| `Cancelled` | 499 | CancellationToken triggered (client disconnected) |
+| `SomeFound<T>(data, missingKeys)` | 207 | Partial success on batch lookup |
+
+`Fail<T>(statusCode, errorCode)` exists for re-mapping arbitrary upstream codes (HTTP proxy passthrough). **If a factory matches your case, USE the factory.**
+
+### Partial-Success Ladder
+
+Batch lookups return one of three results:
+- **`NotFound`** — none of the keys resolved
+- **`SomeFound`** — partial; data + missingKeys both populated
+- **`Ok`** — all keys resolved
+
+Callers branch on `success` + check `missingKeys` to decide retry / surface.
+
+### Bubble / BubbleFail
+
+Propagate downstream failures without re-wrapping:
+- `BubbleFail(downstream)` — current handler failed because downstream failed; preserves status + errorCode + messages
+- `Bubble(downstream)` — passes downstream success through untouched (for thin pass-through handlers — prefer to eliminate these entirely; depend on the inner handler directly per the anti-patterns at the bottom of this doc)
+
+### Auto-injected `traceId`
+
+`BaseHandler` injects the current `IRequestContext.traceId` into the result object automatically. Handlers don't manually pass `traceId: this.traceId`. The trace ID flows through cross-service responses for end-to-end correlation.
+
+---
+
+## Utilities
+
+`D2.Shared.Utilities` ships these. Use them at every boundary — they prevent a class of subtle bugs.
+
+### `Truthy()` / `Falsey()` — null-safe predicates
+
+Both handle `null` cleanly. **Never** `if (value is null || value.Falsey())` — just `if (value.Falsey())`. After early return on `Falsey`, use `value!` — value is guaranteed non-null. This is one of the few legitimate uses of the null-forgiving operator.
+
+### `ToNullIfEmpty()` — boundary normalizer
+
+C#: `string?` extension that returns `null` if input is null, empty, or whitespace-only (trims first). Use at every boundary where external strings enter the domain (proto, DB rows, request bodies). Prevents empty strings from polluting domain models.
+
+TS equivalent: `truthyOrUndefined()` — same semantics, returns `undefined` instead of `null` to match TS conventions.
+
+### `CleanStr()` — normalize-or-null
+
+Like `ToNullIfEmpty()` but also strips control characters and normalizes Unicode. Use for user-input strings going into search indexes / display names.
+
+### `CircuitBreaker`
+
+Three states: `Closed` (normal), `Open` (failing fast), `HalfOpen` (probing). State transitions guarded by `Interlocked` — no locks, lock-free fast path. Wrap any external call where cascading failure would tank request latency.
+
+### `Singleflight<T>`
+
+Deduplicates concurrent calls for the same key. First caller does the work; concurrent callers await the same task. Used heavily in cache-fill paths to prevent thundering-herd backend hits.
+
+### `retryAsync`
+
+Generic retrier — wraps any throwing async call with exponential backoff + jitter + abort-signal + transient-error predicate. Use for raw external calls (DB, Redis, RMQ, third-party HTTP) where the operation throws on failure. Defaults: 5 attempts, 1s base, 2x backoff, max 30s, full jitter.
+
+### `retryResultAsync`
+
+D2Result-aware retrier — wraps handler-to-handler calls. Auto-detects transient by status / error code (any 5xx, 429, `SERVICE_UNAVAILABLE`, `UNHANDLED_EXCEPTION`, `RATE_LIMITED`, `CONFLICT`). Same backoff/jitter/signal config as `retryAsync`. Use for cross-handler invocations.
+
+### `retryExternalAsync`
+
+Dirty retrier for raw external responses — caller provides `mapResult` / `mapError` to adapt the upstream payload (gRPC, HTTP) into a D2Result, then standard transient detection runs against it. Use when the upstream isn't already D2Result-shaped.
+
+---
+
+## Repository
+
+EF Core for all relational data.
+
+### Batch chunking — PG ~32K parameter limit
+
+PG has a hard limit of ~32K parameters per query (signed-int parameter index). At ~5 columns per row, that's ~6500 rows max per batch. Default chunk size is **500** — comfortable margin, keeps statement plans cacheable.
+
+`input.HashIds.Chunk(_BATCH_SIZE)` for any batch lookup / update. Configure `_BATCH_SIZE` via the Options pattern, never hardcode.
+
+### Partial success → D2Result mapping
+
+Batch ops return:
+- All keys resolved → `Ok`
+- Some keys resolved → `SomeFound` (data + missing keys)
+- No keys resolved → `NotFound`
+
+Don't return `Ok` with empty data when nothing matched — that's a `NotFound`.
+
+### PG error predicates
+
+Catch and map cleanly:
+
+| PG `SqlState` | D2Result | Cause |
+|---|---|---|
+| `23505` | `Conflict` | Unique constraint violation |
+| `23503` | `Conflict` | Foreign key constraint violation |
+| `23502` | `ValidationFailed` | NOT NULL constraint violation |
+| `23514` | `ValidationFailed` | CHECK constraint violation |
+
+**Catch and return `Conflict`, never let constraint violations bubble as `500` `UnhandledException`.**
+
+### EF Core UPDATE/DELETE check affected rows
+
+`SaveChangesAsync()` returns the number of rows affected. If zero where you expected ≥1, return `NotFound` — the row didn't exist. Don't return `Ok` on a no-op update.
+
+### Migrations — generator only
+
+`dotnet ef migrations add <Name>` is the only path. **Never** hand-edit `*.cs` migration files, `*ModelSnapshot.cs`, or `__EFMigrationsHistory` rows. EF Core's internal model snapshot will desync silently and break all subsequent migrations.
+
+If the generator fails, **STOP and ask** — don't patch by hand. Multi-replica safety: startup migrator acquires PG advisory lock so only one replica migrates at a time; others wait.
+
+---
+
+## Cache
+
+### Memory cache — lazy TTL + always-on LRU
+
+- Lazy TTL (eviction on next access, not via timer)
+- Always-on LRU eviction for capacity management
+- Default max 10K entries (configurable via Options)
+- Per-instance (not shared across replicas) — fine for read-heavy TTL-bounded data
+
+### Distributed cache (Redis) — pluggable serializer
+
+- `ICacheSerializer` interface — swap between JSON (default), MessagePack, or raw protobuf bytes per cache namespace
+- `JsonCacheSerializer` is the default — readable in `redis-cli`, easy to debug
+- Custom serializers for binary protobuf when message size matters
+
+### Multi-tier pattern (in client libraries)
+
+Memory → Redis → Database → Disk. Populate upward on miss. Key convention: `EntityName:{id}`. Used in `D2.{Service}.Client` libraries to keep service round-trips off the hot path.
+
+---
+
+## Middleware
+
+### Idempotency — SET NX + sentinel pattern
+
+- Storage: Redis `SET NX` with 24h TTL — shared across all Edge instances
+- First request with a given `Idempotency-Key` writes a **sentinel** (`{ status: "in-flight" }`) with a short TTL (default 30s), processes the handler, then writes the **cached response** with the full 24h TTL
+- Concurrent duplicate request: SET NX fails → reads existing value → if sentinel, polls briefly + retries; if cached response, returns it immediately
+- Cached response shape: `{ statusCode, body, contentType }` — only what's needed for replay
+- Fail-open: if Redis is unreachable, request passes through (availability > strictness)
+
+### RateLimit — multi-dimensional sliding window
+
+4 dimensions, hierarchically ordered (most specific first):
+
+| Dimension | Default cap | Why |
+|---|---|---|
+| Client fingerprint | 100/min | Per-device cap |
+| IP | 5,000/min | Per-source-IP cap |
+| City | 25,000/min | Per-city aggregate (NAT/proxy ranges) |
+| Country | 100,000/min | Per-country aggregate (CDN ranges) |
+
+If ANY dimension exceeds, block the request for 5min.
+
+**Algorithm: sliding window approximation** — two fixed-window counters per dimension + weighted average of (current + previous) windows based on elapsed time within the current window. **No Lua scripts needed** — pure Redis `INCR` + `TTL`, atomic, cross-instance safe.
+
+Fail-open + service-identity bypass: same as Idempotency.
+
+### RequestEnrichment
+
+IP resolution priority:
+1. `CF-Connecting-IP` (Cloudflare)
+2. `X-Real-IP` (proxy)
+3. `X-Forwarded-For` (last entry — leftmost is client)
+4. `Context.Connection.RemoteIpAddress` (direct connection)
+
+Fingerprints (composite — server-side + client-side components combined):
+- Server fingerprint = `SHA256(UA | Accept-Language | Accept-Encoding | Accept)`
+- Device fingerprint = `SHA256(client-side hash | server-side hash)`
+
+Populates `MutableRequestContext` progressively as middleware layers run. Infrastructure paths (health, metrics, observability scrape endpoints) bypass enrichment via shared `InfrastructurePaths.IsInfrastructure()` — see CLAUDE.md §5.
+
+### JwtAuth — RS256 + fingerprint binding
+
+Pipeline order:
+1. **Authentication** — JWT validation (RS256, JWKS-based)
+2. **Fingerprint check** — JWT's `fp` claim must match the request's computed server fingerprint (`SHA256(UA + "|" + Accept)`). Mismatch → 401
+3. **Authorization** — scope-based gates per `AuthPolicy.Default`
+
+JWKS at the OIDC-canonical `/.well-known/jwks.json` (off-the-shelf JWT libraries auto-discover via `/.well-known/openid-configuration` — no custom paths).
+
+### ServiceKey — constant-time comparison
+
+`X-D2-Service-Key` header for inter-service auth — eventually replaced with RFC 6749 §4.4 `client_credentials` flow once the KeyCustodian module ships with the Edge auth module.
+
+`CryptographicOperations.FixedTimeEquals` for the comparison. **Plain `==` is vulnerable to timing attacks**.
+
+**Compare against EVERY valid key, no short-circuit.** Even after a match, iterate the rest of the valid-key list. Otherwise the comparison time leaks which key matched.
+
+`.RequireServiceKey()` endpoint filter for one-line gating.
+
+### AuthPolicy — route-level gates
+
+Policy methods (composable on route declarations):
+
+| Method | Gate |
+|---|---|
+| `.RequireAuth()` | Authenticated user |
+| `.RequireOrg(...types)` | User has active org membership matching org type(s) |
+| `.RequireRole(...roles)` | User has role within active org |
+| `.RequireScope(...scopes)` | JWT carries the listed scope(s) |
+| `.RequireStaff()` | Org type = staff/admin (impersonation-aware) |
+| `.RequireTrustedService()` | Service-identity JWT (not user JWT) |
+
+**Gate at route level — no handler-level re-checks.** Handlers should trust `IRequestContext`. Route-level gates make security visible at the endpoint declaration.
+
+### Translation — D2Result interception
+
+Edge-edge middleware that intercepts D2Result responses and translates `messages[]` + `inputErrors[]` to the request's locale.
+
+- Detects D2Result by top-level `statusCode` field
+- Buffers response, parses, translates message keys via `D2.Shared.I18n`, rewrites response
+- For `inputErrors[]`: index-0 is the canonical key, indices 1+ are alternates / context — only index 0 is translated; the rest pass through unchanged
+- Pass-through for non-D2Result responses (no overhead for non-localized payloads)
+
+---
+
+## Configuration
+
+### `parseEnvArray()` — indexed env-var convention
+
+D2's env vars use **indexed convention** for arrays: `PREFIX__0=value0`, `PREFIX__1=value1`, etc. (NOT comma-separated — that breaks for values containing commas).
+
+`parseEnvArray("PREFIX")` returns `["value0", "value1", ...]`. Used everywhere arrays land in env: locale lists, CORS origins, API key lists, etc.
+
+Also matches .NET `IConfiguration`'s array handling (`__N` index → array element). Cross-platform-compatible env conventions.
+
+### URL parsers
+
+Connection-string parsers for `postgres://`, `redis://`, `amqp://`. Centralize parsing — never `new Uri(connStr)` ad-hoc. The shared parser handles edge cases (passwords with `@`, special characters, multi-host fallback).
+
+---
+
+## i18n
+
+### BCP 47 locale convention
+
+10-locale list from V1 (matches `contracts/messages/`):
+- `en-US`, `en-CA`, `en-GB`
+- `fr-FR`, `fr-CA`
+- `es-ES`, `es-MX`
+- `de-DE`
+- `it-IT`
+- `ja-JP`
+
+Driven by env vars (per `parseEnvArray()` above): `PUBLIC_ENABLED_LOCALES__0`, `PUBLIC_ENABLED_LOCALES__1`, etc. + `PUBLIC_DEFAULT_LOCALE`.
+
+### TK constants
+
+All translation keys live as constants in `D2.Shared.I18n.TK` (or Paraglide `m.*` in SvelteKit). **Never bare string literals** outside `D2Result` factory `messageKey:` parameters (those are themselves TK constants).
+
+Backend handler messages (`D2Result.messages`), input errors (`D2Result.inputErrors`), and notification content (D2.Courier) all use TK keys. End users see all of these.
+
+### Translation key conventions (per CLAUDE.md §6)
+
+- Auth pages: `auth_{feature}_{purpose}`
+- App pages: `webclient_app_{page}_{purpose}`
+- Design / demo / debug: `webclient_{section}_{purpose}`
+- Common UI / errors: `common_ui_*` / `common_errors_*`
+- Backend handler messages: prefer `common_errors_*` keys
+- Reuse existing keys where they match
+
+When adding new keys: add to ALL locale files in `contracts/messages/` simultaneously. They MUST stay in sync.
+
+---
+
+## Anti-Patterns to Actively Avoid
+
+- **Thin handlers that just call another handler** — eliminate per-handler cleanup. If an app-layer handler's body is `return otherHandler.HandleAsync(input)`, delete it; depend on the inner handler directly.
+- **Hand-written DB migrations** — generator-driven only.
+- **String error codes outside `D2Result` factories** — use `TK.*` constants from `D2.Shared.I18n`.
+- **Wrapping framework primitives without an opinionated semantic** — use `IDistributedCache` directly only if Microsoft's `Get`/`Set`/`Refresh`/`Remove` is enough. If you need `SetNx` / `Increment` / `AcquireLock` — use D²'s richer abstraction.
+- **Returning `Ok()` after a fallible operation** — a `try/catch` that swallows failure and returns success is almost always a bug. Either `BubbleFail` or explicitly handle.
+- **Hardcoding what should be in Options** — batch sizes, cache expirations, retry attempts, lock TTLs all go through `IOptions<T>`.

@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # OPERATIONAL-GUARANTEES.md — D²-WORX Correctness & Safety
 
 How D²-WORX prevents duplicate actions, ensures idempotency, and maintains correct behavior across services, instances, and scheduled jobs.
@@ -34,7 +38,7 @@ How D²-WORX prevents duplicate actions, ensures idempotency, and maintains corr
 
 Each maintenance job uses a **Redis distributed lock** (`SET NX PX`) to ensure only one instance processes a job at any given time:
 
-**Execution flow:** Cron trigger → HTTP POST to Edge (service-identity JWT auth per V2.md §5.4) → Edge forwards via gRPC to the owning service → Service handler acquires Redis lock → Batch delete loop → Release lock → Return result
+**Execution flow:** Cron trigger → HTTP POST to Edge (service-identity JWT auth) → Edge forwards via gRPC to the owning service → Service handler acquires Redis lock → Batch delete loop → Release lock → Return result
 
 **If the lock is held:** The handler returns early with a success result (no error, no retry). The job is simply skipped on that instance. This is safe because all jobs are periodic cleanup — the next scheduled run will process any remaining records.
 
@@ -84,7 +88,7 @@ US, CA, GB are exempt from country-level blocking to avoid false positives from 
 
 - JWTs are self-contained — any instance validates with the cached JWKS public key
 - JWKS endpoint at the OIDC-canonical **`/.well-known/jwks.json`** — all consumers fetch from the same source; key rotation propagates via JWKS refresh
-- Key rotation handled by the KeyCustodian (V2.md §5.4) — 90-day cadence, dual-key window during grace
+- Key rotation handled by the KeyCustodian — 90-day cadence, dual-key window during grace
 - JWT expiration: 15 minutes — limits the window of a revoked-but-still-valid token
 
 ---
@@ -113,7 +117,7 @@ For any fanout exchange (e.g., audit events, future user-anonymize fanouts):
 
 ### Payload Encryption
 
-All sensitive RabbitMQ payloads are encrypted at the publisher and decrypted at the consumer per V2.md §5.7 (`D2.Shared.Encryption`):
+All sensitive RabbitMQ payloads are encrypted at the publisher and decrypted at the consumer via `D2.Shared.Encryption`:
 
 - AES-256-GCM, JWKS-style multi-key keyring (overlap supported for graceful rotation)
 - Per encryption-domain keys (audit, notifications, courier at launch)
@@ -149,7 +153,7 @@ Irreversible flows (e.g., user-deletion anonymize) are **not** SAGAs — they ar
 - Request enrichment is **stateless middleware** — resolves client IP, computes fingerprint, calls the in-process WhoIs cache (Edge only)
 - Identical input always produces identical output regardless of which instance processes the request
 - No instance affinity required
-- Downstream services receive the resolved WhoIs via the `X-D2-WhoIs` header (per V2.md §5.4 — no per-service WhoIs cache)
+- Downstream services receive the resolved WhoIs via the `X-D2-WhoIs` header (no per-service WhoIs cache — Edge is the single source)
 
 ---
 
@@ -165,9 +169,9 @@ When adding a new service or endpoint, verify:
 - [ ] **Cache invalidation** — Use fanout exchanges with exclusive auto-delete queues (not competing consumers)
 - [ ] **Connection strings** — Externalized via `.env.local` / `.env.secrets`, not hardcoded
 - [ ] **DB constraints** — Catch unique violations (PG `23505`) gracefully — return 409, not 500
-- [ ] **Migrations** — Never hand-write migration SQL / snapshot / `__EFMigrationsHistory` edits. Always use `dotnet ef migrations add <Name>`. Multi-replica safety via PG advisory lock per V2.md §5.6
+- [ ] **Migrations** — Never hand-write migration SQL / snapshot / `__EFMigrationsHistory` edits. Always use `dotnet ef migrations add <Name>`. Multi-replica safety via PG advisory lock at the startup migrator
 - [ ] **Cross-service mutations** — Use SAGA pattern (per "Cross-Service Updates" above) for foreground multi-service writes. Don't invent new SAGA flows without review
-- [ ] **Encryption** — Sensitive payloads on RabbitMQ marked with `[Encrypted(Domain.X)]` per V2.md §5.7
+- [ ] **Encryption** — Sensitive payloads on RabbitMQ marked with `[Encrypted(Domain.X)]` (auto-encrypts via `D2.Shared.Encryption`)
 
 ---
 
