@@ -1,0 +1,8 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Shared.Result</RootNamespace>
+  </PropertyGroup>
+</Project>

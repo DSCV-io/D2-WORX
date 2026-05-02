@@ -8,6 +8,48 @@ Copyright (c) DCSV. All rights reserved.
 
 ---
 
+## .NET project layout (`.csproj`)
+
+Universal build properties (`TargetFramework`, `LangVersion`, `Nullable`, `ImplicitUsings`, `TreatWarningsAsErrors`, `GenerateDocumentationFile`, the `StyleCop.Analyzers` package, the `stylecop.json` link, and the four global usings — `System` / `System.Collections.Generic` / `System.Threading` / `System.Threading.Tasks`) live in `server/Directory.Build.props` and apply to every `.csproj` automatically. Per-csproj files only declare what's project-specific.
+
+**Canonical lib `.csproj` (minimal):**
+
+```xml
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Shared.{LibName}</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Other\Other.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SomePackage" />   <!-- no Version="..." — Central Package Mgmt handles it -->
+  </ItemGroup>
+</Project>
+```
+
+**Per-project flags by project type:**
+
+| Project type | SDK | Add to PropertyGroup |
+|---|---|---|
+| Shared lib | `Microsoft.NET.Sdk` | `<RootNamespace>` |
+| Service (api/app/domain/infra) | `Microsoft.NET.Sdk` | `<RootNamespace>` |
+| Service API (HTTP/gRPC entry) | `Microsoft.NET.Sdk.Web` | `<RootNamespace>` |
+| Test project | `Microsoft.NET.Sdk` | `<RootNamespace>`, `<IsPackable>false</IsPackable>`, `<IsTestProject>true</IsTestProject>`, `<UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>`, `<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>` (xUnit v3 + MTP) |
+
+**`RootNamespace` rule:** always declared explicitly; follows the **namespace structure**, not the directory path. Example: `DistributedCache.Redis.csproj` lives at `server/shared/dotnet/Implementations/Caching/Distributed/DistributedCache.Redis/` but its `RootNamespace` is `D2.Shared.DistributedCache.Redis` — the `Implementations/Caching/Distributed/` path noise is dropped. Folder layout serves discoverability; namespace serves consumers.
+
+**Central Package Management:** every package version is pinned in `server/Directory.Packages.props`. `<PackageReference>` items in csproj files reference by ID only — **never** include `Version="..."` (CPM rejects it).
+
+**`dotnet build` enforces zero warnings.** `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` makes every StyleCop / CA**** / null-ref / CS1591 (missing XML doc on public API) warning a hard build failure. There is no "warning we can ignore" — fix it or document why with an `.editorconfig` rule override.
+
+---
+
 ## TLC / 2LC / 3LC Folder Convention
 
 Three-tier folder hierarchy for all backend code. **TLC** = architectural concern, **2LC** = implementation type, **3LC** = operation type.
@@ -135,41 +177,94 @@ A repo handler's input/output is logged independently of its app-layer caller. I
 
 ## D2Result
 
-Result objects replace exceptions for control flow.
+Result objects replace exceptions for control flow. Class hierarchy: `D2Result<T> : D2Result` (NOT a record / discriminated union — preserved for polymorphism in `BubbleFail(D2Result)`). Default failure messages are TK translation keys (`"common_errors_NOT_FOUND"`); the gateway translation middleware resolves them before they reach the client.
 
 ### Factories (use semantic factories — never raw `Fail()`)
 
-| Factory | Status | Use case |
-|---|---|---|
-| `Ok<T>(data)` | 200 | Success with data |
-| `Created<T>(data)` | 201 | Resource created |
-| `NotFound` | 404 | Lookup miss |
-| `Unauthorized` | 401 | Missing / invalid auth |
-| `Forbidden` | 403 | Authenticated but lacks permission |
-| `ValidationFailed(inputErrors)` | 400 | Input failed schema/business validation |
-| `Conflict(message)` | 409 | DB constraint violation, version conflict |
-| `ServiceUnavailable` | 503 | Downstream dep down (use sparingly — prefer specific) |
-| `UnhandledException(ex)` | 500 | Top-level safety net only |
-| `PayloadTooLarge` | 413 | Upload exceeded limit |
-| `Cancelled` | 499 | CancellationToken triggered (client disconnected) |
-| `SomeFound<T>(data, missingKeys)` | 207 | Partial success on batch lookup |
+| Factory | Status | ErrorCode | Use case |
+|---|---|---|---|
+| `Ok<T>(data)` | 200 | (none) | Success with data |
+| `Created<T>(data)` | 201 | (none) | Resource created |
+| `NotFound` | 404 | `NOT_FOUND` | Lookup miss (none of the keys resolved) |
+| `Unauthorized` | 401 | `UNAUTHORIZED` | Missing / invalid auth |
+| `Forbidden` | 403 | `FORBIDDEN` | Authenticated but lacks permission |
+| `ValidationFailed(inputErrors, errorCode?)` | 400 | `VALIDATION_FAILED` (overridable) | Input failed schema/business validation. Override `errorCode` for domain-specific signals (e.g. `"FILES_INVALID_CONTENT_TYPE"`). |
+| `Conflict(messages?)` | 409 | `CONFLICT` | DB constraint violation, version conflict |
+| `ServiceUnavailable(messages?, errorCode?)` | 503 | `SERVICE_UNAVAILABLE` (overridable) | Downstream dep down. Override `errorCode` for retry-vs-DLQ signals. |
+| `UnhandledException(messages?)` | 500 | `UNHANDLED_EXCEPTION` | Top-level safety net only. **Excluded from `IsTransientRetryable`** — unknown system state is never auto-retried. Exception details live in OTel span + log scope, never on the result. |
+| `PayloadTooLarge` | 413 | `PAYLOAD_TOO_LARGE` | Upload exceeded limit |
+| `TooManyRequests(messages?, errorCode?)` | 429 | `RATE_LIMITED` (overridable) | Rate-limit middleware tripped. Override `errorCode` for client-side discrimination (e.g. `"OTP_RATE_LIMITED"`). |
+| `Cancelled` | 400 | `CANCELLED` | CancellationToken triggered |
+| `SomeFound<T>(data)` | 206 | `SOME_FOUND` | Partial success on batch lookup. `Success` is **false** — see partial-success ladder below. |
 
 `Fail<T>(statusCode, errorCode)` exists for re-mapping arbitrary upstream codes (HTTP proxy passthrough). **If a factory matches your case, USE the factory.**
 
 ### Partial-Success Ladder
 
 Batch lookups return one of three results:
-- **`NotFound`** — none of the keys resolved
-- **`SomeFound`** — partial; data + missingKeys both populated
-- **`Ok`** — all keys resolved
+- **`NotFound`** — none of the keys resolved (Success = false)
+- **`SomeFound`** — partial; data carries what was found (Success = false)
+- **`Ok`** — all keys resolved (Success = true)
 
-Callers branch on `success` + check `missingKeys` to decide retry / surface.
+Only `Ok` sets `Success = true`. Callers use `IsPartialOrMissing` (`IsNotFound || IsSomeFound`) for cache-fallback flows — both warrant a downstream lookup, while other failures (Forbidden, etc.) do not.
 
 ### Bubble / BubbleFail
 
 Propagate downstream failures without re-wrapping:
-- `BubbleFail(downstream)` — current handler failed because downstream failed; preserves status + errorCode + messages
-- `Bubble(downstream)` — passes downstream success through untouched (for thin pass-through handlers — prefer to eliminate these entirely; depend on the inner handler directly per the anti-patterns at the bottom of this doc)
+- `BubbleFail<T>(downstream)` — current handler failed because downstream failed; preserves status + errorCode + messages + inputErrors + traceId. Sets `Data` to default.
+- `Bubble<T>(downstream, data?)` — passes upstream success OR failure through with attached data. Used for `SomeFound` partial-result propagation.
+
+### Per-code booleans + combined helpers
+
+Prefer these over manual `result.ErrorCode == ErrorCodes.X` comparisons:
+
+```csharp
+result.IsOk / IsCreated / IsNotFound / IsSomeFound / IsConflict / IsForbidden /
+   IsUnauthorized / IsValidationFailed / IsServiceUnavailable / IsRateLimited /
+   IsUnhandledException / IsPayloadTooLarge / IsCancelled / IsIdempotencyInFlight
+
+result.IsPartialOrMissing      // IsNotFound || IsSomeFound
+result.IsTransientRetryable    // IsServiceUnavailable || IsRateLimited (UnhandledException EXCLUDED)
+```
+
+When a factory's `errorCode` is overridden, the corresponding boolean returns false (the comparison is on `ErrorCode`). Domain-overridden codes bypass auto-classification — that's intentional.
+
+### `BubbleOnFailure` — the workhorse guard helper
+
+For multi-value-threading in command + complex handlers — bail early on upstream failure, continue with locals on success:
+
+```csharp
+if (orderR.BubbleOnFailure<Order, OutputDto>(out var bubbled, out var order)) return bubbled;
+// continue with `order` as a local — strongly typed, no .Data! noise
+```
+
+Returns `true` on failure (caller returns `bubbled`); `false` on success (caller continues with `data`). This is the dominant pattern across the codebase.
+
+### Monadic ops — `Bind` / `Map` / `Match`
+
+For genuine linear pipelines where state flows step-to-step (sign-in, file processing, risk scoring):
+
+```csharp
+var result = await GetUserAsync(id)
+    .BindAsync(user => ValidateConsentAsync(user))
+    .BindAsync(user => UpgradeRoleAsync(user))
+    .MapAsync(user => user.ToDto());
+```
+
+| Operator | Sync / Async | Purpose |
+|---|---|---|
+| `Bind<TNext>(Func<T, D2Result<TNext>>)` | sync | Chain to next handler that can fail |
+| `Map<TNext>(Func<T, TNext>)` | sync | Pure projection that can't fail |
+| `Match<R>(Func<T, R>, Func<D2Result<T>, R>)` | sync, terminal | Reduce both branches to one value |
+| `BindAsync` (Task + ValueTask) | async | Async equivalent of Bind |
+| `MapAsync` (Task + ValueTask) | async | Async equivalent of Map (sync projection) |
+| `ThenAsync` (Task + ValueTask) | async, same shape | `BindAsync` sugar when `T == TNext` |
+
+All chaining operators **short-circuit on failure** — the next/projection step is NOT invoked, the upstream failure propagates.
+
+**When to use which tool:**
+- **`BubbleOnFailure` + locals**: multi-value threading. Most command + complex handlers, multi-tier query handlers.
+- **`Bind` / `Map` / `ThenAsync` / `Match`**: linear pipelines where state accumulates step-by-step.
 
 ### Auto-injected `traceId`
 

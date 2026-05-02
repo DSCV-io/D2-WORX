@@ -18,15 +18,19 @@ Copyright (c) DCSV. All rights reserved.
     <!-- Analyzers (pulled in via Directory.Build.props) -->
     <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
 
-    <!-- Phase 0+ packages will be added here as shared libraries are built. -->
-    <!-- Example placeholders (commented out — uncomment when first consumer arrives):
-    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
-    <PackageVersion Include="Asp.Versioning.Http" Version="10.0.0" />
-    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
-    <PackageVersion Include="StackExchange.Redis" Version="2.8.16" />
-    <PackageVersion Include="RabbitMQ.Client" Version="7.0.0" />
-    <PackageVersion Include="FluentValidation" Version="11.10.0" />
-    <PackageVersion Include="Serilog.AspNetCore" Version="9.0.0" />
-    -->
+    <!-- JetBrains annotations ([MustDisposeResource], [Pure], etc.) — used across libs + tests -->
+    <PackageVersion Include="JetBrains.Annotations" Version="2025.2.4" />
+  </ItemGroup>
+
+  <!-- Test infrastructure — referenced by D2.Shared.Tests + per-service test csprojs -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
+
+    <!-- coverlet.msbuild: code coverage via MSBuild props (independent of MTP version
+         coupling that bites Microsoft.Testing.Extensions.CodeCoverage on xunit.v3). -->
+    <PackageVersion Include="coverlet.msbuild" Version="10.0.0" />
   </ItemGroup>
 </Project>

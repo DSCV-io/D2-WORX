@@ -44,7 +44,19 @@ dotnet_diagnostic.SA1101.severity = none
 
 # Prefer simple names
 dotnet_diagnostic.IDE0001.severity = warning
-csharp_using_directive_placement = outside_namespace
+
+# IDE0065: project convention is `namespace` FIRST, then `using` directives.
+# For file-scoped namespaces, "inside_namespace" means usings come AFTER the
+# namespace declaration. Keep this in sync with CLAUDE.md §6 + the team-wide
+# rule about namespace/using ordering.
+csharp_using_directive_placement = inside_namespace
+
+# IDE0036 / R# "Modifiers Order": match StyleCop SA1206 ordering — access keyword
+# first, then `static`, then `new` and other modifiers. R# defaults to
+# `public new static`, which conflicts with SA1206's `public static new`.
+# Setting this explicitly makes both Roslyn IDE0036 and JetBrains R# agree
+# with StyleCop and stops the "inconsistent modifier order" warning.
+csharp_preferred_modifier_order = public, private, protected, internal, file, static, extern, new, virtual, abstract, sealed, override, readonly, unsafe, required, volatile, async:warning
 
 # SA1310: Field names should not contain underscore
 dotnet_diagnostic.SA1310.severity = none
@@ -57,6 +69,22 @@ dotnet_diagnostic.SA1124.severity = none
 
 # SA1601: Partial elements should be documented
 dotnet_diagnostic.SA1601.severity = none
+
+# SA1615: Element return value should be documented
+# Suppressed — for factory methods, fluent-API methods, and obvious-projection
+# extensions, the return value is fully implied by the method name + <summary>.
+# Forcing a `<returns>A new D2Result instance.</returns>` after every factory
+# is noise without semantic value. CS1591 still enforces that every public
+# member has a `<summary>`, which is where the actual documentation lives.
+dotnet_diagnostic.SA1615.severity = none
+
+# SA1619: Generic, partial element should include type parameter documentation
+# Suppressed — when a generic type is split across multiple partial files
+# (e.g. D2Result.Generic.cs / D2Result.Generic.Factories.cs / D2Result.Generic.Monadic.cs),
+# the type-parameter <typeparam> doc lives on the main partial declaration only.
+# Repeating it on every partial is noise; SA1601 is already suppressed for the
+# same reason at the type-summary level.
+dotnet_diagnostic.SA1619.severity = none
 
 # SA1308: Variable names should not be prefixed (project uses s_ for mutable static, sr_ for static readonly)
 dotnet_diagnostic.SA1308.severity = none
@@ -103,3 +131,16 @@ resharper_not_accessed_positional_property_global_highlighting = none
 
 # ReSharper: Auto-property accessor never used (set by JSON deserialization or config binding)
 resharper_unused_auto_property_accessor_global_highlighting = none
+
+# ReSharper: Inconsistent modifiers declaration order — R# enforces its own modifier
+# ordering ("public new static") that conflicts with StyleCop SA1206
+# ("public static new"). Project chose to follow StyleCop; SA1206 is enforced at
+# build time via TreatWarningsAsErrors, so R#'s parallel check is redundant.
+resharper_arrange_modifiers_order_highlighting = none
+
+# ReSharper: Inconsistent naming — R#'s default rule wants PascalCase for non-private
+# constants ("NotFound"), but project convention per CLAUDE.md §6 is UPPER_CASE
+# ("NOT_FOUND"). The dotnet_naming_rule above ("public_constants_must_be_upper_case")
+# enforces UPPER_CASE at the Roslyn analyzer level (build-enforced); suppress R#'s
+# parallel inspection that uses its own naming rules.
+resharper_inconsistent_naming_highlighting = none

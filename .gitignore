@@ -11,6 +11,12 @@ node_modules/
 # Dev runtime data (mock SMS log, etc.)
 .dev-data/
 
+# Code coverage output (coverlet.msbuild)
+**/coverage/
+*.cobertura.xml
+coverage.opencover.xml
+coverage.json
+
 # SvelteKit build output
 **/build/
 **/.svelte-kit/

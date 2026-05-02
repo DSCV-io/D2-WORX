@@ -1,0 +1,45 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Shared.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+
+    <!--
+      Test-project-only warning suppressions. Public-API XML-doc + comment-style
+      enforcement remains active for non-test libraries.
+
+      CS1591 (Roslyn) / SA1600 (StyleCop): missing XML doc on public types/members.
+      Test method names follow `Method_Scenario_ExpectedResult` which IS the
+      documentation; requiring a `summary` echo on every test adds noise.
+
+      SA1512: single-line `//` comments not followed by blank lines. Section
+      dividers inside test classes are clearer with a blank line before the next
+      test method; SA1512 disagrees. Tests prioritise scan readability over the rule.
+    -->
+    <NoWarn>$(NoWarn);1591;SA1600;SA1512</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="AwesomeAssertions" />
+    <PackageReference Include="JetBrains.Annotations" />
+    <PackageReference Include="coverlet.msbuild">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
+  </ItemGroup>
+</Project>

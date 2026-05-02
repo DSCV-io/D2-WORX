@@ -35,22 +35,24 @@ Build order respects the dependency graph. Each lib lands as one squash-merged c
 
 | Wave | Lib | Status | Branch | Depends on |
 |---|---|---|---|---|
-| 1 | `D2.Shared.Result` | 🔄 **Active** | `nova/result` | (none — foundational) |
-| 1 | `D2.Shared.Utilities` | ☐ Not started | `nova/utilities` | (none — foundational) |
-| 2 | `D2.Shared.Handler` | ☐ Not started | `nova/handler` | Result, Utilities — includes BaseRepoHandler design (see [Phase 0 design notes](#phase-0-design-notes)) |
-| 3 | `D2.Shared.Tests` | ☐ Not started | `nova/tests` | Handler (test infra for the libs above) |
-| 3 | `D2.Shared.I18n` | ☐ Not started | `nova/i18n` | Utilities |
-| 4 | `D2.Shared.Encryption` | ☐ Not started | `nova/encryption` | Result, Utilities |
-| 4 | `D2.Shared.Auth` | ☐ Not started | `nova/auth` | Result, Utilities |
-| 5 | `D2.Shared.Caching.Memory` | ☐ Not started | `nova/caching-memory` | Handler |
-| 5 | `D2.Shared.Caching.Redis` | ☐ Not started | `nova/caching-redis` | Handler |
-| 6 | `D2.Shared.Messaging` | ☐ Not started | `nova/messaging` | Handler, Encryption |
-| 7 | `D2.Shared.ServiceDefaults` | ☐ Not started | `nova/service-defaults` | All of the above (composition root) |
+| 1 | `D2.Shared.Result` | ✅ Complete | `n/result` | (none — foundational) |
+| 1 | `D2.Shared.Utilities` | 🔄 **Active** | `n/utilities` | (none — foundational) |
+| 2 | `D2.Shared.Handler` | ☐ Not started | `n/handler` | Result, Utilities — includes BaseRepoHandler design (see [Phase 0 design notes](#phase-0-design-notes)) |
+| 3 | `D2.Shared.Tests` | 🔄 In progress (scaffolded with Result coverage; grows per-lib) | `n/result` (born here) | Handler (test infra for the libs above) |
+| 3 | `D2.Shared.I18n` | ☐ Not started | `n/i18n` | Utilities |
+| 4 | `D2.Shared.Encryption` | ☐ Not started | `n/encryption` | Result, Utilities |
+| 4 | `D2.Shared.Auth` | ☐ Not started | `n/auth` | Result, Utilities |
+| 5 | `D2.Shared.Caching.Memory` | ☐ Not started | `n/caching-memory` | Handler |
+| 5 | `D2.Shared.Caching.Redis` | ☐ Not started | `n/caching-redis` | Handler |
+| 6 | `D2.Shared.Messaging` | ☐ Not started | `n/messaging` | Handler, Encryption |
+| 7 | `D2.Shared.ServiceDefaults` | ☐ Not started | `n/service-defaults` | All of the above (composition root) |
 
 **Notes:**
 - Geo, Location, Contacts placeholder READMEs in `server/shared/dotnet/` belong to **Phase 1** (Geo libs) and **Phase 2** (Contacts) per V2.md §4 — not Stage 4.
 - Within a wave, libs can ship in either order or together if small enough to bundle.
 - Each lib's commit message: `feat(shared/{lib}): {one-line summary of public API}` plus a body listing key types / OTel metrics / tests added.
+- Branches use the `n/` prefix (not `nova/`) so they coexist with the `nova` leaf branch in `refs/heads/n/...`.
+- `D2.Shared.Tests` was scaffolded alongside `D2.Shared.Result` (rather than waiting for Wave 3) so the Result lib lands with full test coverage at point-of-merge. Each subsequent shared-lib PR adds its own `Unit/{Lib}/` subdirectory.
 
 ---
 

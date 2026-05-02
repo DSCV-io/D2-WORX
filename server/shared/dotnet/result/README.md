@@ -4,27 +4,193 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.Result
 
-> **Status**: placeholder — not yet implemented.
+`D2Result<T>` — errors-as-values pattern for D²-WORX. Replaces exception-based control flow throughout the backend. Every handler returns a `D2Result<T>`; callers branch on `result.Success` and propagate failures via `BubbleFail`.
 
-## Purpose
+Foundational lib (zero runtime deps); consumed by every other library and service.
 
-`D2Result<T>` — errors-as-values pattern. Replaces exception-based control flow throughout D²-WORX. Every handler returns a `D2Result<T>`; callers branch on `result.Success` and propagate failures via `BubbleFail`.
+---
+
+## File layout
+
+| File | Contents |
+|---|---|
+| `D2Result.cs` | Non-generic base — constructor + properties (`Success`, `Failed`, `Messages`, `InputErrors`, `StatusCode`, `ErrorCode`, `TraceId`) |
+| `D2Result.Factories.cs` | Static semantic factories on `D2Result` (Ok, Created, Fail, NotFound, Forbidden, Unauthorized, ValidationFailed, Conflict, ServiceUnavailable, UnhandledException, PayloadTooLarge, TooManyRequests, Cancelled, SomeFound) |
+| `D2Result.Booleans.cs` | Per-error-code discriminators (`IsOk`, `IsNotFound`, `IsConflict`, etc.) + combined helpers (`IsPartialOrMissing`, `IsTransientRetryable`) |
+| `D2Result.Generic.cs` | Generic `D2Result<TData>` — adds `Data` + `CheckSuccess` / `CheckFailure` for inline destructuring |
+| `D2Result.Generic.Factories.cs` | Generic factories mirroring the non-generic ones, plus `BubbleFail` / `Bubble` for upstream-result propagation |
+| `D2Result.Generic.Monadic.cs` | Instance methods `Bind` / `Map` / `Match` for genuine monadic pipelines |
+| `D2ResultAsyncExtensions.cs` | Extension methods on `Task<D2Result<T>>` + `ValueTask<D2Result<T>>`: `BindAsync` / `MapAsync` / `ThenAsync` |
+| `D2ResultGuardExtensions.cs` | `BubbleOnFailure` — the workhorse guard helper for the multi-value-threading pattern |
+| `ErrorCodes.cs` | Standardized error code constants — `NOT_FOUND`, `FORBIDDEN`, `VALIDATION_FAILED`, etc. |
+
+---
 
 ## Public API surface
 
-- `D2Result<T>` — discriminated result (success + data) or (failure + statusCode + errorCode + messages + inputErrors)
-- Semantic factories: `Ok`, `Created`, `NotFound`, `Unauthorized`, `Forbidden`, `ValidationFailed`, `Conflict`, `ServiceUnavailable`, `UnhandledException`, `PayloadTooLarge`, `Cancelled`, `SomeFound`
-- `BubbleFail<TOuter, TInner>(inner)` — propagate downstream failure preserving status + errorCode + messages
-- `Bubble<TOuter, TInner>(inner)` — propagate downstream success untouched (use sparingly— prefer to depend on inner directly)
-- Pattern-matching helpers (CheckSuccess / CheckFailure)
-- Auto-injected `traceId` from `IRequestContext.TraceId`
+### Properties (every result)
 
-## Dependencies
+| Member | Purpose |
+|---|---|
+| `Success` (bool) | True on the Ok path; false on every failure factory (including `SomeFound` — it's on the partial-success ladder). |
+| `Failed` (bool) | Convenience inverse of `Success`. |
+| `Messages` (`List<string>`) | TK translation keys (resolved by gateway middleware before reaching the client) or domain-specific message strings. |
+| `InputErrors` (`List<List<string>>`) | Per-field error rows. Each inner list begins with the field name, followed by one or more error messages for that field. |
+| `StatusCode` (HttpStatusCode) | HTTP-equivalent status. Defaults to 200 on success, 400 on failure. Each semantic factory sets the canonical code. |
+| `ErrorCode` (string?) | One of `ErrorCodes.*`, or a domain-specific override (e.g. `"FILES_INVALID_CONTENT_TYPE"`). |
+| `TraceId` (string?) | Trace identifier for cross-service correlation. Auto-injected by `BaseHandler`; manual on factory calls outside handlers. |
+| `Data` (TData?) | (Generic only) The payload. Default for the type when not provided. |
 
-- (none — foundational; consumed by every other lib)
+### Semantic factories — when to use which
 
-## References
+The partial-success ladder for queries:
 
-- D2Result monadic operations + guard helper
-- Per-code booleans + concept-named combined helpers
-- [docs/PATTERNS.md](../../../../docs/PATTERNS.md) "D2Result" section — full factory list + partial-success ladder
+```
+NOT_FOUND  →  SOME_FOUND  →  OK
+(none)        (partial)      (all)
+```
+
+Only `Ok` sets `Success=true`. `SomeFound` and `NotFound` are both failures; consumers use `IsPartialOrMissing` to discriminate.
+
+| Factory | StatusCode | ErrorCode | Use when |
+|---|---|---|---|
+| `Ok` | 200 | (none) | Operation succeeded; payload (if generic) is the result. |
+| `Created` | 201 | (none) | Operation succeeded and created a new resource. |
+| `NotFound` | 404 | `NOT_FOUND` | Lookup found zero of the requested entities. |
+| `SomeFound` | 206 | `SOME_FOUND` | Batch lookup found some-but-not-all of the requested entities. |
+| `Forbidden` | 403 | `FORBIDDEN` | Caller is authenticated but lacks permission. |
+| `Unauthorized` | 401 | `UNAUTHORIZED` | Caller is not authenticated. |
+| `ValidationFailed` | 400 | `VALIDATION_FAILED` (overridable) | Input failed validation; populate `InputErrors`. Override `errorCode` for domain-specific signals (e.g. `"FILES_INVALID_CONTENT_TYPE"`). |
+| `Conflict` | 409 | `CONFLICT` | DB unique-constraint violation, optimistic-concurrency conflict, etc. |
+| `ServiceUnavailable` | 503 | `SERVICE_UNAVAILABLE` (overridable) | Downstream service unavailable. Override `errorCode` to give consumers retry-vs-DLQ signals. |
+| `UnhandledException` | 500 | `UNHANDLED_EXCEPTION` | Caught exception with no specific mapping. **Excluded from `IsTransientRetryable`** — unknown system state is never auto-retried. |
+| `PayloadTooLarge` | 413 | `PAYLOAD_TOO_LARGE` | Request body exceeds limit. |
+| `TooManyRequests` | 429 | `RATE_LIMITED` (overridable) | Rate-limit middleware tripped. Override `errorCode` for client-side discrimination (e.g. `"OTP_RATE_LIMITED"`). |
+| `Cancelled` | 400 | `CANCELLED` | Operation cancelled by client or server. |
+| `Fail` | 400 (overridable) | (overridable) | Last-resort raw factory. Use only when no semantic factory matches. |
+
+### Per-code booleans
+
+```csharp
+result.IsOk                    // == Success
+result.IsCreated               // StatusCode == Created
+result.IsNotFound              // ErrorCode == NOT_FOUND
+result.IsSomeFound             // ErrorCode == SOME_FOUND
+result.IsConflict              // ErrorCode == CONFLICT
+result.IsForbidden             // ErrorCode == FORBIDDEN
+result.IsUnauthorized          // ErrorCode == UNAUTHORIZED
+result.IsValidationFailed      // ErrorCode == VALIDATION_FAILED
+result.IsServiceUnavailable    // ErrorCode == SERVICE_UNAVAILABLE
+result.IsRateLimited           // ErrorCode == RATE_LIMITED
+result.IsUnhandledException    // ErrorCode == UNHANDLED_EXCEPTION
+result.IsPayloadTooLarge       // ErrorCode == PAYLOAD_TOO_LARGE
+result.IsCancelled             // ErrorCode == CANCELLED
+result.IsIdempotencyInFlight   // ErrorCode == IDEMPOTENCY_IN_FLIGHT
+```
+
+Combined helpers — name the concept, not the code:
+
+```csharp
+result.IsPartialOrMissing     // IsNotFound || IsSomeFound — both warrant downstream lookup in cache flows
+result.IsTransientRetryable   // IsServiceUnavailable || IsRateLimited — UnhandledException is INTENTIONALLY excluded
+```
+
+> **Caveat:** when a factory's `errorCode` is overridden (e.g. `ServiceUnavailable(errorCode: "DOMAIN_RETRY_LATER")`), the corresponding boolean (`IsServiceUnavailable`) returns false because the comparison is on `ErrorCode`. Domain overrides bypass the auto-retry classification — that's intentional: domain-specific codes need domain-specific retry decisions.
+
+### Bubble propagation
+
+Pass an upstream failure through a generic boundary without losing detail:
+
+```csharp
+// Inner returns D2Result<int>; outer returns D2Result<OutputDto>
+var inner = await GetCountAsync();
+if (inner.Failed) return D2Result<OutputDto>.BubbleFail(inner);
+```
+
+`BubbleFail<TData>(D2Result)` copies `Messages`, `InputErrors`, `StatusCode`, `ErrorCode`, `TraceId` and sets `Data` to `default`. Use whenever an upstream failure should propagate up the call chain unchanged.
+
+`Bubble<TData>(D2Result, TData?)` is the same but preserves both success AND failure (carries data even when the upstream failed) — used for `SomeFound` partial-result propagation.
+
+### `CheckSuccess` / `CheckFailure` — inline destructuring
+
+```csharp
+if (cacheR.CheckSuccess(out var data))
+{
+    return D2Result<OutputDto>.Ok(data!.ToDto());
+}
+```
+
+`CheckFailure` exposes data on failure too — useful for `SomeFound` flows where partial data is present despite `Success=false`.
+
+### Monadic ops — `Bind` / `Map` / `Match`
+
+For **genuine linear pipelines** where state flows step-to-step (sign-in flow, file processing, risk scoring):
+
+```csharp
+var result = await GetUserAsync(id)
+    .BindAsync(user => ValidateConsentAsync(user))
+    .BindAsync(user => UpgradeRoleAsync(user))
+    .MapAsync(user => user.ToDto());
+```
+
+All chaining operators **short-circuit on failure**: the next/projection step is NOT invoked, and the upstream failure propagates via `BubbleFail`.
+
+| Operator | Signature | When |
+|---|---|---|
+| `Bind<TNext>(Func<TData, D2Result<TNext>>)` | sync, can change shape | `D2Result<T> → D2Result<U>` where the next step itself can fail |
+| `Map<TNext>(Func<TData, TNext>)` | sync, can change shape, projection can't fail | Pure transformation of the success payload |
+| `Match<R>(Func<TData, R>, Func<D2Result<TData>, R>)` | sync, terminal | Reduce both success + failure branches to a single value (e.g. for HTTP response shaping) |
+| `BindAsync` (Task + ValueTask) | async, can change shape | Async equivalent of `Bind` |
+| `MapAsync` (Task + ValueTask) | async with sync projection | Async equivalent of `Map` |
+| `ThenAsync` (Task + ValueTask) | async, **same shape** | Sugar for `BindAsync` when `TData == TNext` (state evolves within one payload type) |
+
+### `BubbleOnFailure` — the workhorse guard helper
+
+For the **dominant pattern** in command + complex handlers — guard against upstream failure, continue with locals on success:
+
+```csharp
+public override async ValueTask<D2Result<OutputDto?>> ExecuteAsync(I input, CancellationToken ct)
+{
+    var orderR = await getOrderById.HandleAsync(input.OrderId, ct);
+    if (orderR.BubbleOnFailure<Order, OutputDto>(out var bubbled, out var order)) return bubbled;
+    // continue with `order` as a local — strongly typed, no .Data! noise
+    
+    var contactR = await getContact.HandleAsync(order.ContactId, ct);
+    if (contactR.BubbleOnFailure<Contact, OutputDto>(out var bubbled2, out var contact)) return bubbled2;
+    
+    return D2Result<OutputDto?>.Ok(BuildDto(order, contact));
+}
+```
+
+Returns `true` when failure (caller returns `bubbled` immediately); `false` when success (caller continues with `data`).
+
+**When to use which tool:**
+
+- **`BubbleOnFailure` + locals** (workhorse): multi-value threading. Most command + complex handlers, multi-tier query handlers, anything orchestrating across services.
+- **`Bind` / `Map` / `ThenAsync` / `Match`**: genuine linear pipelines where state accumulates step-by-step (sign-in, file processing, risk scoring).
+
+---
+
+## Default messages — TK translation keys
+
+Failure factories default `Messages` to TK key strings (`"common_errors_NOT_FOUND"`, `"common_errors_VALIDATION_FAILED"`, etc.) rather than English prose. The translation middleware resolves these keys to locale-appropriate text before they reach the client. Keys are hardcoded inside this lib instead of referencing a TK constants class to keep `D2.Shared.Result` free of an `I18n` dependency.
+
+When a factory accepts `messages: [...]`, the supplied list **replaces** the default — caller is responsible for using TK keys (or domain-specific strings if the message is intentionally not localised).
+
+---
+
+## Tests
+
+`server/shared/dotnet/tests/Unit/Result/` — 132 unit tests covering:
+
+- All factory shapes + custom-message override paths
+- Per-code booleans, including the `IsTransientRetryable` exclusion of `UnhandledException`
+- Generic factories + `BubbleFail` / `Bubble` cross-type propagation
+- `CheckSuccess` / `CheckFailure` including partial-success data exposure
+- Monadic laws (left identity, right identity, associativity)
+- Lazy evaluation (next / projection NOT invoked on failure)
+- Sync + async chaining, short-circuiting on mid-chain failure
+- `BubbleOnFailure` happy path + handler-shaped call site
+- Adversarial: empty/null/whitespace inputs, errorCode override breaking auto-classification, exception propagation through Map/Bind, SomeFound treated-as-failure-but-carrying-data
+
+Run: `dotnet test server/shared/dotnet/tests`

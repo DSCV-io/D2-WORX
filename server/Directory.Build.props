@@ -2,8 +2,28 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 <Project>
+  <!--
+    Universal properties applied to every .csproj in the solution.
+    Per-project files only need to declare RootNamespace (and any project-specific
+    properties like IsTestProject / Sdk overrides for Web projects).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <!-- Build gates: every warning is a build-failure. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!-- Emit XML doc files; combined with TreatWarningsAsErrors this enforces
+         CS1591 (missing XML doc on public API) per CLAUDE.md "XML docs: Required
+         for public APIs". -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
+    <PackageReference Include="StyleCop.Analyzers">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
@@ -12,10 +32,6 @@ Copyright (c) DCSV. All rights reserved.
   <ItemGroup>
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)stylecop.json" Link="stylecop.json" />
   </ItemGroup>
-
-  <PropertyGroup>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-  </PropertyGroup>
 
   <!-- Global usings for all projects -->
   <ItemGroup>

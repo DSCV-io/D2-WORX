@@ -9,4 +9,12 @@ Copyright (c) DCSV. All rights reserved.
     Phase 0 will populate this with the foundational shared libraries
     (D2.Shared.Handler, D2.Shared.Result, D2.Shared.Utilities, etc.).
   -->
+  <Folder Name="/shared/" />
+  <Folder Name="/shared/dotnet/" />
+  <Folder Name="/shared/dotnet/result/">
+    <Project Path="shared/dotnet/result/D2.Shared.Result.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/tests/">
+    <Project Path="shared/dotnet/tests/D2.Shared.Tests.csproj" />
+  </Folder>
 </Solution>
