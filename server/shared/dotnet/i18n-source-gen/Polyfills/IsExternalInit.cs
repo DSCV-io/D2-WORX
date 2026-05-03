@@ -4,6 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+// ReSharper disable once CheckNamespace -- polyfill MUST live in
+// System.Runtime.CompilerServices for the C# compiler to recognize it
+// as the synthesized init-accessor marker. Folder location is irrelevant.
 namespace System.Runtime.CompilerServices;
 
 using System.ComponentModel;

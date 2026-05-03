@@ -11,27 +11,20 @@ Copyright (c) DCSV. All rights reserved.
     <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
 
-  <ItemGroup>
-    <!--
-      The source-gen subfolder is a SEPARATE csproj (netstandard2.0, Roslyn analyzer);
-      its sources must NOT be compiled into this project's net10.0 assembly.
-      Without this exclude, SDK's implicit <Compile Include="**/*.cs" /> would pull
-      them in, producing duplicate AssemblyAttribute errors and missing Roslyn refs.
-    -->
-    <Compile Remove="source-gen\**\*.cs" />
-    <None Include="source-gen\**\*.cs" />
-  </ItemGroup>
-
   <!--
     Zero non-BCL deps by design. This project is the domain-safe slice
     that domain layers can reference without dragging in DI / Configuration / IO.
 
     The runtime D2.Shared.I18n (Translator + SupportedLocales + AddD2I18n)
     is a separate sibling project that consumes this and adds the infra.
+
+    The TK constants in this assembly are emitted at build time by the
+    sibling D2.Shared.I18n.SourceGen project (../i18n-source-gen/),
+    referenced below as a Roslyn analyzer (no runtime dll dependency).
   -->
 
   <ItemGroup>
-    <ProjectReference Include="source-gen\D2.Shared.I18n.SourceGen.csproj"
+    <ProjectReference Include="..\i18n-source-gen\D2.Shared.I18n.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
   </ItemGroup>

@@ -541,9 +541,10 @@ Connection-string parsers for `postgres://`, `redis://`, `amqp://`. Centralize p
 
 ## i18n
 
-The i18n stack splits into two libs:
+The i18n stack splits across three csprojs (two consumption-facing libs + one Roslyn analyzer):
 
 - **`D2.Shared.I18n.Abstractions`** — zero non-BCL deps. Owns `TKMessage`, the `ITranslator` interface, and the SrcGen-emitted `TK.*` constants. Domain layers reference this; `D2.Shared.Result` and `D2.Shared.Utilities` depend on it.
+- **`D2.Shared.I18n.SourceGen`** — Roslyn `IIncrementalGenerator` (netstandard2.0) referenced by Abstractions as an analyzer (`OutputItemType="Analyzer"`, no runtime dll). Emits the `TK.*` constants from `contracts/messages/en-US.json` at every build. Lives at `server/shared/dotnet/i18n-source-gen/` as its own top-level slot — different TFM, different consumption pattern, conceptually a sibling of Abstractions, not a sub-component.
 - **`D2.Shared.I18n`** — runtime. Owns `Translator`, `SupportedLocales`, and the `AddD2I18n` DI extension. Pulls `IConfiguration` + DI Abstractions. **Domain code never references this** — only composition roots and outbound-notification handlers (Courier).
 
 ### `TKMessage` — the structural primitive

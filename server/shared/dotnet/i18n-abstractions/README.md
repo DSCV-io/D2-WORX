@@ -25,8 +25,7 @@ The pattern matches `Microsoft.Extensions.Logging.Abstractions` vs `Microsoft.Ex
 | `TKMessage.cs` | `TKMessage` sealed record — translation key + optional parameter bindings. Internal ctor; can only be constructed via the SrcGen-emitted `TK.*` constants. |
 | `TKMessageJsonConverter.cs` | `JsonConverter<TKMessage>` — wire format `{ "key": "..." }` or `{ "key": "...", "params": { ... } }`. Applied to `TKMessage` via `[JsonConverter]`. |
 | `ITranslator.cs` | The translation interface. `string T(string locale, TKMessage message)` and `bool HasKey(string key)`. Implementation lives in the runtime lib. |
-| `source-gen/` | The `D2.Shared.I18n.SourceGen` Roslyn IIncrementalGenerator that emits `TK` from `en-US.json`. Separate csproj (netstandard2.0) referenced as Analyzer; its built dll never ships into the consuming assembly. |
-| `(generated) TK.g.cs` | Emitted into `obj/Generated/D2.Shared.I18n.SourceGen/D2.Shared.I18n.SourceGen.TKGenerator/TK.g.cs` at every build. Contains nested `static partial class` chains (`TK.Common.Errors.NOT_FOUND` etc.), one `TKMessage` constant per JSON key. |
+| `(generated) TK.g.cs` | Emitted by the sibling **`D2.Shared.I18n.SourceGen`** project at [`../i18n-source-gen/`](../i18n-source-gen/) — a Roslyn `IIncrementalGenerator` (netstandard2.0; referenced as Analyzer, not a runtime dll). Output lands at `obj/Generated/D2.Shared.I18n.SourceGen/D2.Shared.I18n.SourceGen.TKGenerator/TK.g.cs` at every build. Contains nested `static partial class` chains (`TK.Common.Errors.NOT_FOUND` etc.), one `TKMessage` constant per JSON key. |
 
 ---
 

@@ -40,8 +40,9 @@ Build order respects the dependency graph. Each lib lands as one squash-merged c
 | 1 | `D2.Shared.Resilience` | ✅ Complete | `n/utilities` (merged) | Result (for the `RetryD2ResultAsync` predicate) — split out from Utilities so retry / circuit-breaker / singleflight can be consumed independently of the boundary helpers |
 | 2 | `D2.Shared.Handler` | ☐ Not started | `n/handler` | Result, Utilities, Resilience — includes BaseRepoHandler design (see [Phase 0 design notes](#phase-0-design-notes)) |
 | 3 | `D2.Shared.Tests` | 🔄 In progress (Result + Utilities + Resilience + I18n.Abstractions + I18n covered; grows per-lib) | `n/result` (born here); subsequent libs add `Unit/{Lib}/` per-PR | Handler (test infra for the libs above) |
-| 3 | `D2.Shared.I18n.Abstractions` | ✅ Complete | `n/i18n` | (none — zero non-BCL deps; ships TKMessage + ITranslator + SrcGen-emitted TK constants) |
-| 3 | `D2.Shared.I18n` | ✅ Complete | `n/i18n` | I18n.Abstractions, Utilities, IConfiguration, DI Abstractions |
+| 3 | `D2.Shared.I18n.Abstractions` | ✅ Complete | `n/i18n` (merged) | (none — zero non-BCL deps; ships TKMessage + ITranslator + SrcGen-emitted TK constants) |
+| 3 | `D2.Shared.I18n.SourceGen` | ✅ Complete | `n/i18n` (merged) | (none — netstandard2.0 Roslyn analyzer; consumed by I18n.Abstractions as `OutputItemType="Analyzer"`. Lives at its own top-level slot, `server/shared/dotnet/i18n-source-gen/`.) |
+| 3 | `D2.Shared.I18n` | ✅ Complete | `n/i18n` (merged) | I18n.Abstractions, Utilities, IConfiguration, DI Abstractions |
 | 4 | `D2.Shared.Encryption` | ☐ Not started | `n/encryption` | Result, Utilities |
 | 4 | `D2.Shared.Auth` | ☐ Not started | `n/auth` | Result, Utilities |
 | 5 | `D2.Shared.Caching.Memory` | ☐ Not started | `n/caching-memory` | Handler |
