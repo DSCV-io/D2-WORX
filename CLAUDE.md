@@ -300,6 +300,7 @@ One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consume
 - **NEVER hand-write database migrations** — use `dotnet ef migrations add <Name>`. Do NOT manually create or edit migration `.cs` files, snapshot files (`*ModelSnapshot.cs`), or `__EFMigrationsHistory` rows. Hand-writing puts EF Core's internal model snapshot out of sync with the actual schema. If the generator fails, STOP and ask. **Multi-replica safety**: startup migrator acquires PG advisory lock— only one replica migrates, others wait.
 - **Don't create patterns**: Follow existing ones (§4). If no pattern fits, ask before inventing.
 - **Don't leave broken things behind**: Fix ALL issues you encounter in the project — not just in files you touched. Every session leaves the codebase cleaner.
+- **Update the shared-libs dependency graph** in `server/shared/dotnet/README.md` whenever you add a new shared lib, remove one, or change its `<ProjectReference>` set. The chart is the authoritative visual of how the foundational layer composes — it must reflect actual reality, not aspirational shape. Use solid arrows for `<ProjectReference>` and dashed arrows for `OutputItemType="Analyzer"` (build-time-only) edges.
 
 ### C#
 
@@ -508,7 +509,7 @@ If you encounter a language not listed above and it supports comments, add a new
 
 ### Folder Casing Convention
 
-- **Folders OUTSIDE a project** (csproj-grouping, organizational) → **lowercase**, kebab-case for multi-word: `server/`, `services/`, `edge/`, `app/`, `clients/`, `dotnet/`, `caching-redis/`, `geo-reference/`, `service-defaults/`, `infra/`, `tools/`, `docs/`
+- **Folders OUTSIDE a project** (csproj-grouping, organizational) → **lowercase**, kebab-case for multi-word: `server/`, `services/`, `edge/`, `app/`, `clients/`, `dotnet/`, `caching-distributed-redis/`, `geo-reference/`, `service-defaults/`, `infra/`, `tools/`, `docs/`
 - **Folders INSIDE a project** (namespace-mapping, where Rider auto-creates folders from namespace operations) → **PascalCase**: `Implementations/`, `Interfaces/`, `CQRS/`, `Handlers/`, `C/`, `Q/`, `U/`, `X/`, `Repository/`, `Messaging/`
 - **`.cs` file names** → **PascalCase** (matches the type they contain — one-class-per-file)
 - **`.csproj` file names** → **PascalCase**, dot-separated (`D2.Shared.Handler.csproj`) — the csproj filename IS the assembly name

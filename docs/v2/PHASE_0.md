@@ -40,13 +40,15 @@ Build order respects the dependency graph. Each lib lands as one squash-merged c
 | 1 | `D2.Shared.Resilience` | ✅ Complete | `n/utilities` (merged) | Result (for the `RetryD2ResultAsync` predicate) — split out from Utilities so retry / circuit-breaker / singleflight can be consumed independently of the boundary helpers |
 | 2 | `D2.Shared.Handler` | ☐ Not started | `n/handler` | Result, Utilities, Resilience — includes BaseRepoHandler design (see [Phase 0 design notes](#phase-0-design-notes)) |
 | 3 | `D2.Shared.Tests` | 🔄 In progress (Result + Utilities + Resilience + I18n.Abstractions + I18n covered; grows per-lib) | `n/result` (born here); subsequent libs add `Unit/{Lib}/` per-PR | Handler (test infra for the libs above) |
-| 3 | `D2.Shared.I18n.Abstractions` | ✅ Complete | `n/i18n` (merged) | (none — zero non-BCL deps; ships TKMessage + ITranslator + SrcGen-emitted TK constants) |
+| 3 | `D2.Shared.I18n.Abstractions` | ✅ Complete | `n/i18n` (merged) | (none — zero external deps; ships TKMessage + ITranslator + SrcGen-emitted TK constants) |
 | 3 | `D2.Shared.I18n.SourceGen` | ✅ Complete | `n/i18n` (merged) | (none — netstandard2.0 Roslyn analyzer; consumed by I18n.Abstractions as `OutputItemType="Analyzer"`. Lives at its own top-level slot, `server/shared/dotnet/i18n-source-gen/`.) |
 | 3 | `D2.Shared.I18n` | ✅ Complete | `n/i18n` (merged) | I18n.Abstractions, Utilities, IConfiguration, DI Abstractions |
 | 4 | `D2.Shared.Encryption` | ☐ Not started | `n/encryption` | Result, Utilities |
 | 4 | `D2.Shared.Auth` | ☐ Not started | `n/auth` | Result, Utilities |
-| 5 | `D2.Shared.Caching.Memory` | ☐ Not started | `n/caching-memory` | Handler |
-| 5 | `D2.Shared.Caching.Redis` | ☐ Not started | `n/caching-redis` | Handler |
+| 5 | `D2.Shared.Caching.Local.Abstractions` | ☐ Not started | `n/caching-local` | (none — zero external deps; ships ID2LocalCache + LocalCacheOptions) |
+| 5 | `D2.Shared.Caching.Local.Default` | ☐ Not started | `n/caching-local` | Caching.Local.Abstractions, Handler, Result |
+| 5 | `D2.Shared.Caching.Distributed.Abstractions` | ☐ Not started | `n/caching-distributed` | (none — zero external deps; ships ID2DistributedCache + ICacheSerializer + DistributedCacheOptions) |
+| 5 | `D2.Shared.Caching.Distributed.Redis` | ☐ Not started | `n/caching-distributed` | Caching.Distributed.Abstractions, Handler, Result, StackExchange.Redis |
 | 6 | `D2.Shared.Messaging` | ☐ Not started | `n/messaging` | Handler, Encryption |
 | 7 | `D2.Shared.ServiceDefaults` | ☐ Not started | `n/service-defaults` | All of the above (composition root) |
 
@@ -220,7 +222,7 @@ Single commit at the end. Tag `pre-v2-wipe` first as the safety net.
 6. Create server/ tree per V2.md §2:
    - server/services/{edge,files,courier,notifications,audit}/{api,app,domain,infra,tests}/ (empty placeholders)
    - server/services/{files,courier,notifications,audit}/clients/dotnet/ (empty placeholders)
-   - server/shared/dotnet/{handler,result,i18n,utilities,service-defaults,caching-memory,caching-redis,messaging,encryption,geo-reference,location,contacts,auth,tests}/ (empty placeholders)
+   - server/shared/dotnet/{handler,result,i18n,utilities,service-defaults,caching-local-abstractions,caching-local-default,caching-distributed-abstractions,caching-distributed-redis,messaging,encryption,geo-reference,location,contacts,auth,tests}/ (empty placeholders)
    - server/shared/typescript/README.md (deferred placeholder)
    - server/d2-version/D2.Version.csproj (per V2.md §7)
    - server/web/ (recipient of /clients/web/)
@@ -372,8 +374,10 @@ Files to create (14 total):
 - `server/shared/dotnet/i18n/README.md`
 - `server/shared/dotnet/utilities/README.md`
 - `server/shared/dotnet/service-defaults/README.md`
-- `server/shared/dotnet/caching-memory/README.md`
-- `server/shared/dotnet/caching-redis/README.md`
+- `server/shared/dotnet/caching-local-abstractions/README.md`
+- `server/shared/dotnet/caching-local-default/README.md`
+- `server/shared/dotnet/caching-distributed-abstractions/README.md`
+- `server/shared/dotnet/caching-distributed-redis/README.md`
 - `server/shared/dotnet/messaging/README.md`
 - `server/shared/dotnet/encryption/README.md`
 - `server/shared/dotnet/geo-reference/README.md`

@@ -4,7 +4,7 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.I18n.Abstractions
 
-Domain-safe slice of the i18n stack: the `TKMessage` primitive, the `TK` constants (Source-Generated from `contracts/messages/en-US.json`), and the `ITranslator` interface. **Zero non-BCL deps** — domain layers can reference this without dragging in DI containers, configuration loading, or file IO.
+Domain-safe slice of the i18n stack: the `TKMessage` primitive, the `TK` constants (Source-Generated from `contracts/messages/en-US.json`), and the `ITranslator` interface. **Zero external deps** (no NuGet packages, no other shared-lib references — only what the .NET runtime ships) so domain layers can reference this without dragging in DI containers, configuration loading, or file IO.
 
 The runtime piece (`Translator`, `SupportedLocales`, `AddD2I18n` DI extension) lives in the sibling [`D2.Shared.I18n`](../i18n/) project. Domain code never references that one.
 
@@ -162,7 +162,7 @@ Implementation in `D2.Shared.I18n.Translator`. Domain code references this inter
 ## Dependencies
 
 ```xml
-<!-- Zero non-BCL deps. -->
+<!-- Zero external deps. -->
 ```
 
 The csproj has no `<PackageReference>`s and no `<ProjectReference>`s. The Source Generator is referenced as an Analyzer (its dll doesn't propagate to consumers).
