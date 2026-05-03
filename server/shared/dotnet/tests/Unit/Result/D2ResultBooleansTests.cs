@@ -10,7 +10,7 @@ using AwesomeAssertions;
 using D2.Shared.Result;
 using Xunit;
 
-public class D2ResultBooleansTests
+public sealed class D2ResultBooleansTests
 {
     // ----------------------------------------------------------------------
     // Per-code booleans — true on the matching factory, false on others

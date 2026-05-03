@@ -11,7 +11,7 @@ using AwesomeAssertions;
 using D2.Shared.Result;
 using Xunit;
 
-public class D2ResultGenericTests
+public sealed class D2ResultGenericTests
 {
     // ----------------------------------------------------------------------
     // Constructor + Data property

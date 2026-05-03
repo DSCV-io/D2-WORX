@@ -108,6 +108,20 @@ dotnet_diagnostic.CA1707.severity = none
 # CA1861: Prefer static readonly fields over constant array arguments (mostly test [InlineData])
 dotnet_diagnostic.CA1861.severity = none
 
+# SA1503: Braces should not be omitted (single-statement if/else/for/while/etc.)
+# Project convention: brace-less form is allowed when the line BEFORE the
+# statement is blank or a comment, AND the line AFTER is blank. This visually
+# isolates the guarded statement and reduces boilerplate around early-return
+# guards. Where the surrounding context is dense (no blank/comment buffer),
+# braces remain to preserve scan readability.
+dotnet_diagnostic.SA1503.severity = none
+
+# SA1642: Constructor summary should begin with rigid "Initializes a new
+# instance of the X class." text. Project preference: ctor docs read as
+# natural prose explaining intent / behaviour / parameter semantics rather
+# than echoing the boilerplate template.
+dotnet_diagnostic.SA1642.severity = none
+
 # CA1000: Do not declare static members on generic types (D2Result<T> factory pattern)
 dotnet_diagnostic.CA1000.severity = none
 

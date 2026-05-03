@@ -25,6 +25,7 @@ The `BaseHandler<TSelf, TInput, TOutput>` pattern that every handler in every se
 
 ## References
 
-- Primary constructors for handlers (carve-out — handler params don't take `r_` prefix)
-- `[RedactData]` attribute (canonical PII redaction; works with this lib's destructuring policy)
-- [docs/PATTERNS.md](../../../../docs/PATTERNS.md) "Handler" section — full mechanics
+- [docs/PATTERNS.md](../../../../docs/PATTERNS.md) "Handler" section — full mechanics, TLC/2LC/3LC folder convention, primary-constructor carve-out
+- [CLAUDE.md §6 "C# Naming"](../../../../CLAUDE.md) — primary-constructor parameter carve-out (handler params don't take the `r_` prefix)
+- [`../utilities/README.md`](../utilities/README.md) — `[RedactData]` attribute (this lib's Serilog destructuring policy is what makes it active)
+- [`../service-defaults/README.md`](../service-defaults/README.md) — registers the `RedactDataDestructuringPolicy` at service startup

@@ -20,6 +20,10 @@ Copyright (c) DCSV. All rights reserved.
 
     <!-- JetBrains annotations ([MustDisposeResource], [Pure], etc.) — used across libs + tests -->
     <PackageVersion Include="JetBrains.Annotations" Version="2025.2.4" />
+
+    <PackageVersion Include="dotenv.net" Version="4.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
   </ItemGroup>
 
   <!-- Test infrastructure — referenced by D2.Shared.Tests + per-service test csprojs -->

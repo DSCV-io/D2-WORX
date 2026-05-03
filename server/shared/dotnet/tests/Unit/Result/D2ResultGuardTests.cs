@@ -11,7 +11,7 @@ using AwesomeAssertions;
 using D2.Shared.Result;
 using Xunit;
 
-public class D2ResultGuardTests
+public sealed class D2ResultGuardTests
 {
     // ----------------------------------------------------------------------
     // BubbleOnFailure — happy path (success returns false, data populated)
@@ -153,9 +153,7 @@ public class D2ResultGuardTests
     private static D2Result<string?> ExampleHandler(D2Result<int> upstream)
     {
         if (upstream.BubbleOnFailure<int, string>(out var bubbled, out var data))
-        {
             return bubbled;
-        }
 
         return D2Result<string?>.Ok($"doubled={data * 2}");
     }

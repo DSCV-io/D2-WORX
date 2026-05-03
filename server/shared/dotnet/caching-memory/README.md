@@ -23,8 +23,8 @@ In-memory cache — per-instance, lazy TTL eviction + always-on LRU + max 10K de
 
 ## References
 
-- [docs/PATTERNS.md](../../../../docs/PATTERNS.md) "Cache" section — lazy TTL + LRU mechanics
-- MultiTierFetcher utility (consumes memory cache as L1)
+- [docs/PATTERNS.md](../../../../docs/PATTERNS.md) "Cache" section — lazy TTL + LRU mechanics, multi-tier fetcher pattern (memory → Redis → DB)
+- [`../caching-redis/README.md`](../caching-redis/README.md) — the L2 distributed cache that pairs with this lib in client-library multi-tier hierarchies
 
 ## Important
 

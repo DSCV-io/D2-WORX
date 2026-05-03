@@ -31,8 +31,8 @@ Contacts use **UUIDv7 IDs + are immutable post-create**. UUIDs (not content-addr
 
 ## References
 
-- Storage — per-service contacts DB pattern; library owns its own DbContext + migrations, consuming service provides connection string
-- Auth (Contact architecture / immutability rationale)
+- [docs/OPERATIONAL-GUARANTEES.md](../../../../docs/OPERATIONAL-GUARANTEES.md) — multi-replica migration safety (PG advisory lock at startup), immutability rationale
+- [docs/PATTERNS.md](../../../../docs/PATTERNS.md) — per-consuming-service DB pattern, repository handler convention
 
 ## Per-service DB convention
 

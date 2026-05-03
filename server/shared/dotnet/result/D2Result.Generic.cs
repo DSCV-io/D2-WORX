@@ -15,7 +15,7 @@ using System.Net;
 /// <typeparam name="TData">
 /// The type of the data returned by the operation.
 /// </typeparam>
-public partial class D2Result<TData> : D2Result
+public sealed partial class D2Result<TData> : D2Result
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="D2Result{TData}"/> class.

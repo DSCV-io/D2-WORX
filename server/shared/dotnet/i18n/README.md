@@ -24,6 +24,6 @@ Translation key constants + `Translator` for backend message + input-error trans
 
 ## References
 
-- (i18n is referenced throughout — keys for backend messages, input errors, notification content)
-- CLAUDE.md §6 Translation Key Conventions — `auth_*`, `webclient_app_*`, `common_*` naming
-- [docs/PATTERNS.md](../../../../docs/PATTERNS.md) "i18n" section
+- [CLAUDE.md §6 "Translation Key Conventions"](../../../../CLAUDE.md) — `auth_*`, `webclient_app_*`, `common_*` naming + per-locale-file sync rule
+- [docs/PATTERNS.md](../../../../docs/PATTERNS.md) "i18n" section — full design (TK constants, locale resolution, variable substitution)
+- [`../result/README.md`](../result/README.md) — `D2Result.messages` and `D2Result.inputErrors` carry TK keys that `Translator` resolves at the response boundary

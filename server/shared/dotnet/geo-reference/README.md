@@ -30,7 +30,8 @@ Embedded geographic reference data — countries, IANA timezones, currencies, lo
 
 ## References
 
-- Embedded library replaces what would otherwise be reference-data RPCs from a Geo service
+- [`../location/README.md`](../location/README.md) — `D2.Shared.Location` consumes this lib to validate country / state / region codes against the embedded reference data
+- [docs/PATTERNS.md](../../../../docs/PATTERNS.md) — embedded-vs-service decision rationale (see "Why embedded" below)
 
 ## Why embedded (not service)
 

@@ -10,7 +10,7 @@ using AwesomeAssertions;
 using D2.Shared.Result;
 using Xunit;
 
-public class D2ResultMonadicTests
+public sealed class D2ResultMonadicTests
 {
     // ----------------------------------------------------------------------
     // Bind

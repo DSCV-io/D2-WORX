@@ -274,41 +274,76 @@ All chaining operators **short-circuit on failure** — the next/projection step
 
 ## Utilities
 
-`D2.Shared.Utilities` ships these. Use them at every boundary — they prevent a class of subtle bugs.
+`D2.Shared.Utilities` ships these. Use them at every boundary — they prevent a class of subtle bugs. See the lib's [README](../server/shared/dotnet/utilities/README.md) for the full API surface.
 
 ### `Truthy()` / `Falsey()` — null-safe predicates
 
-Both handle `null` cleanly. **Never** `if (value is null || value.Falsey())` — just `if (value.Falsey())`. After early return on `Falsey`, use `value!` — value is guaranteed non-null. This is one of the few legitimate uses of the null-forgiving operator.
+Defined for `string?`, `IEnumerable<T>?`, `Guid`, and `Guid?`. All handle `null` cleanly. **Never** `if (value is null || value.Falsey())` — just `if (value.Falsey())`. After early return on `Falsey`, use `value!` — value is guaranteed non-null. This is one of the few legitimate uses of the null-forgiving operator.
 
 ### `ToNullIfEmpty()` — boundary normalizer
 
-C#: `string?` extension that returns `null` if input is null, empty, or whitespace-only (trims first). Use at every boundary where external strings enter the domain (proto, DB rows, request bodies). Prevents empty strings from polluting domain models.
+`string?` extension that returns `null` if input is null, empty, or whitespace-only (trims first). Use at every boundary where external strings enter the domain (proto, DB rows, request bodies). Prevents empty strings from polluting domain models.
 
-TS equivalent: `truthyOrUndefined()` — same semantics, returns `undefined` instead of `null` to match TS conventions.
+### `CleanStr()` / `CleanDisplayStr()` — normalize-or-null
 
-### `CleanStr()` — normalize-or-null
+`CleanStr()` trims and collapses internal whitespace runs into a single space; returns `null` when empty afterward. `CleanDisplayStr()` additionally strips characters not allowed in display names (HTML tags, brackets, quotes, backticks, etc.) — preserves any Unicode-letter script + digits + spaces + `-` `'` `.` `,`.
 
-Like `ToNullIfEmpty()` but also strips control characters and normalizes Unicode. Use for user-input strings going into search indexes / display names.
+### `CleanAndValidateEmail()` / `CleanAndValidatePhoneNumber()`
 
-### `CircuitBreaker`
+**Domain-layer** validators. Intentionally throw `ArgumentException` on invalid input — domain types should fail fast on invariant violations. Application/handler layers prefer errors-as-values: use `FluentValidation` + `D2Result.ValidationFailed()` instead.
 
-Three states: `Closed` (normal), `Open` (failing fast), `HalfOpen` (probing). State transitions guarded by `Interlocked` — no locks, lock-free fast path. Wrap any external call where cascading failure would tank request latency.
+### `[RedactData]` attribute
 
-### `Singleflight<T>`
+Marker attribute on PII / secret types/properties. Reflectively consumed by the Serilog destructuring policy in `D2.Shared.ServiceDefaults` to redact from logs / spans / metrics. Reasons: `PersonalInformation`, `FinancialInformation`, `SecretInformation`, `VerboseContent`, `Other`, `Unspecified`.
 
-Deduplicates concurrent calls for the same key. First caller does the work; concurrent callers await the same task. Used heavily in cache-fill paths to prevent thundering-herd backend hits.
+### `SerializerOptions` — frozen `JsonSerializerOptions` presets
 
-### `retryAsync`
+`SR_IgnoreCycles`, `SR_Web` (camelCase + string enums), `SR_WebIgnoreNull` (same + omit nulls). Thread-safe and reused per call — share them across the process, never construct ad-hoc.
 
-Generic retrier — wraps any throwing async call with exponential backoff + jitter + abort-signal + transient-error predicate. Use for raw external calls (DB, Redis, RMQ, third-party HTTP) where the operation throws on failure. Defaults: 5 attempts, 1s base, 2x backoff, max 30s, full jitter.
+### `ConnectionStringHelper` — URI ↔ wire-format
 
-### `retryResultAsync`
+Standard `REDIS_URL=redis://...`, `*_DATABASE_URL=postgresql://...`, `RABBITMQ_URL=amqp://...` env vars get parsed into the wire format expected by .NET clients (`StackExchange.Redis`, `Npgsql`). RabbitMQ accepts AMQP URIs natively. Pass-through for already-converted values.
 
-D2Result-aware retrier — wraps handler-to-handler calls. Auto-detects transient by status / error code (any 5xx, 429, `SERVICE_UNAVAILABLE`, `UNHANDLED_EXCEPTION`, `RATE_LIMITED`, `CONFLICT`). Same backoff/jitter/signal config as `retryAsync`. Use for cross-handler invocations.
+### `D2Env.Load(params string[] fileNames)` — `.env*` loader for host scenarios
 
-### `retryExternalAsync`
+Default file list: `[".env", ".env.local", ".env.secrets"]`. Walks up from `AppContext.BaseDirectory` (max 12 levels) and finds the FIRST directory containing AT LEAST ONE of the named files; loads ALL matching files from THAT directory only (never mixes files across ancestor directories). Process env wins over every file; later files in the list override earlier files (matches Docker Compose's `--env-file` ordering). No-op inside Compose containers (env already set by the time `Load()` runs).
 
-Dirty retrier for raw external responses — caller provides `mapResult` / `mapError` to adapt the upstream payload (gRPC, HTTP) into a D2Result, then standard transient detection runs against it. Use when the upstream isn't already D2Result-shaped.
+---
+
+## Resilience
+
+`D2.Shared.Resilience` ships these. See the lib's [README](../server/shared/dotnet/resilience/README.md) for the full state-machine documentation.
+
+### `CircuitBreaker<T>` — three-state lock-free breaker
+
+`Closed` (normal — failures tracked) → `Open` (fast-fail past `FailureThreshold`) → `HalfOpen` (one probe allowed past `CooldownDuration`). State transitions via `Interlocked.CompareExchange` — no locks. The `isFailure` predicate counts value-failures alongside thrown exceptions (e.g., `r => !r.Success`). Open state with a fallback returns the fallback; without one, throws `CircuitOpenException`. Probe-in-flight flag ensures only ONE caller probes at a time during HalfOpen; concurrent callers receive the fallback.
+
+`CircuitBreakerOptions` is the canonical **small-Options-record** (CLAUDE.md §5): nullable-param ctor + parameterless ctor that chains to defaults. Call sites stay terse — `new()`, `new(3)`, `new(3, TimeSpan.FromMilliseconds(100), clock.Now)`, `new(failureThreshold: 3, nowFunc: clock.Now)` all work. Explicit `0` / `TimeSpan.Zero` are preserved (no sentinel coercion).
+
+### `Singleflight<TKey, TValue>` — concurrent-call deduplication
+
+Type-safe per-key + per-value-shape variant (v1's `Singleflight` was loosely typed via object boxing). The first caller for a given key runs the operation; concurrent callers share the same `Task<TValue>`. Once the operation completes (success OR failure), the key is removed — **NOT a cache.** Per-caller cancellation only cancels that caller's wait; the shared operation runs with `CancellationToken.None` so siblings are isolated. Used heavily in cache-fill paths to prevent thundering-herd backend hits.
+
+### `RetryHelper.RetryAsync<T>` — exponential backoff with jitter
+
+Generic retrier — wraps any throwing async call with exponential backoff + optional jitter + transient-error predicate + configurable `DelayFunc` (test seam). The default classifier flags `HttpRequestException` (5xx / 429 / 408), `TaskCanceledException`, `TimeoutException`, `SocketException`. Defaults: 5 attempts, 1s base, ×2 backoff, 30s ceiling, full jitter. `OperationCanceledException` from the supplied `ct` is re-raised as cancellation, NEVER classified transient.
+
+### `RetryHelper.RetryD2ResultAsync<TData>` — `D2Result`-aware overload
+
+When the operation returns a `D2Result<TData>`, the default `ShouldRetry` becomes `r => r.Failed && r.IsTransientRetryable` (retries `ServiceUnavailable` and `RateLimited`; deliberately does NOT retry `UnhandledException` — unknown system state must never be auto-retried because side effects may have committed). Caller-supplied `ShouldRetry` always wins.
+
+### Composing — `ResilientPipeline<TKey, TValue>` (the canonical surface)
+
+For combining two or three of the primitives behind ONE call site, use `D2.Shared.Resilience.Pipeline.ResilientPipeline<TKey, TValue>` rather than nesting the raw primitives. It returns `D2Result<TValue>` (never throws) and converts CircuitOpen / cancellation / transient / unknown exceptions to the appropriate result code.
+
+Two-tier API:
+
+- **Lib composition root** uses the fluent DSL — `services.AddResilientPipeline<TKey, TValue>(p => p.UseSingleflight().UseCircuitBreaker().UseRetries(opts));`
+- **Handler** injects `ResilientPipeline<TKey, TValue>` and calls `pipeline.ExecuteAsync(key, op, ct)` — one line, returns `D2Result`.
+
+**Layer order = protection semantic.** `UseCircuitBreaker()` BEFORE `UseRetries()` means retry-INSIDE-CB (upstream-protecting; backoff between attempts gives a fragile upstream air). `UseRetries()` BEFORE `UseCircuitBreaker()` means retry-OUTSIDE-CB (restart-recovery; the retry layer treats `CircuitOpenException` as transient and backs off through it, so a breaker that cools down mid-retry lets the next attempt succeed). The retry-outside composition trades caller-side latency for resilience to upstream restarts; size `MaxAttempts + backoff` to span `CooldownDuration` or retries exhaust on perpetual CO. Full discussion → [resilience/README.md § Pipeline](../server/shared/dotnet/resilience/README.md).
+
+Reach for the raw primitives directly only when you need behavior the pipeline doesn't offer (custom fallback delegates, observation hooks, etc.).
 
 ---
 

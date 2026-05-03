@@ -14,7 +14,7 @@ using System.Net;
 /// payloads, plus <see cref="BubbleFail"/> / <see cref="Bubble"/> for propagating an
 /// upstream <see cref="D2Result"/> into a typed result without re-stating its details.
 /// </summary>
-public partial class D2Result<TData>
+public sealed partial class D2Result<TData>
 {
     /// <summary>
     /// Creates a successful result with optional <paramref name="data"/>.

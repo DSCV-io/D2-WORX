@@ -30,6 +30,6 @@ AES-256-GCM payload encryption with **JWKS-style multi-key keyring** for gracefu
 
 ## References
 
-- Payload encryption (D2.Shared.Encryption) — full design
-- KeyCustodian — manages key lifecycle; this lib consumes keys via `KeyringClient`
-- [docs/SECURITY-RUNBOOKS.md](../../../../docs/SECURITY-RUNBOOKS.md) — compromise response runbooks
+- [docs/SECURITY-RUNBOOKS.md](../../../../docs/SECURITY-RUNBOOKS.md) — KeyCustodian compromise response runbooks (key lifecycle is owned server-side; this lib is the consumer)
+- [`../auth/README.md`](../auth/README.md) — `KeyringClient` (the keyring source this lib consumes via DI)
+- [docs/MESSAGING.md](../../../../docs/MESSAGING.md) — wire format integration via `[Encrypted(Domain.X)]` in `D2.Shared.Messaging`

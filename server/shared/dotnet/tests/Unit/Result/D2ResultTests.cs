@@ -11,7 +11,7 @@ using AwesomeAssertions;
 using D2.Shared.Result;
 using Xunit;
 
-public class D2ResultTests
+public sealed class D2ResultTests
 {
     // ----------------------------------------------------------------------
     // Constructor — direct invocation

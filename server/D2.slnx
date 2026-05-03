@@ -11,10 +11,16 @@ Copyright (c) DCSV. All rights reserved.
   -->
   <Folder Name="/shared/" />
   <Folder Name="/shared/dotnet/" />
+  <Folder Name="/shared/dotnet/resilience/">
+    <Project Path="shared/dotnet/resilience/D2.Shared.Resilience.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/result/">
     <Project Path="shared/dotnet/result/D2.Shared.Result.csproj" />
   </Folder>
   <Folder Name="/shared/dotnet/tests/">
     <Project Path="shared/dotnet/tests/D2.Shared.Tests.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/utilities/">
+    <Project Path="shared/dotnet/utilities/D2.Shared.Utilities.csproj" />
   </Folder>
 </Solution>

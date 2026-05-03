@@ -13,7 +13,7 @@ namespace D2.Shared.Result;
 /// with locals" pattern, prefer <c>BubbleOnFailure</c> from
 /// <see cref="D2ResultGuardExtensions"/>.
 /// </summary>
-public partial class D2Result<TData>
+public sealed partial class D2Result<TData>
 {
     /// <summary>
     /// Monadic bind. If this result is successful, invokes <paramref name="next"/>

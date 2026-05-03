@@ -30,5 +30,6 @@ Thin RabbitMQ wrapper — proto-canonical-JSON serialization, `[Encrypted(Domain
 
 ## References
 
-- Messaging & Notifications — exchange naming convention, queue patterns, encryption integration
-- [docs/MESSAGING.md](../../../../docs/MESSAGING.md) — full wire format + headers + delivery semantics
+- [docs/MESSAGING.md](../../../../docs/MESSAGING.md) — full wire format, AMQP headers, exchange / routing-key naming, encryption frame, queue topology, DLQ behavior
+- [`../encryption/README.md`](../encryption/README.md) — `[Encrypted(Domain.X)]` integration mechanics + frame format
+- [docs/OPERATIONAL-GUARANTEES.md](../../../../docs/OPERATIONAL-GUARANTEES.md) — at-least-once delivery, idempotency contract for consumers

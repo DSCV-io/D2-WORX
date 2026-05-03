@@ -28,7 +28,8 @@ Location value objects — `AdminLocation`, `Coordinates`, `StreetAddress`. **Co
 
 ## References
 
-- Storage — Location used by Edge WhoIs + future services
+- [docs/OPERATIONAL-GUARANTEES.md](../../../../docs/OPERATIONAL-GUARANTEES.md) — content-addressable entities (Location + WhoIs both use SHA-256 hash IDs)
+- [`../geo-reference/README.md`](../geo-reference/README.md) — embedded reference data this lib validates against (country / state / region codes)
 
 ## Important
 

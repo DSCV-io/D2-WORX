@@ -29,8 +29,8 @@ Copyright (c) DCSV. All rights reserved.
 
 ## References
 
-- Auth & Security — full architectural context (scope registry, custom-claim namespacing, impersonation, KeyCustodian)
-- Code Conventions — scope vs permission terminology
+- [CLAUDE.md §6 "Scope vs Permission Terminology"](../../../../CLAUDE.md) — authoritative terminology + JWT claim shape
+- [docs/SECURITY-RUNBOOKS.md](../../../../docs/SECURITY-RUNBOOKS.md) — KeyCustodian compromise response runbooks
 - `docs/JWT-CLAIMS.md` (TBD — created when the first `d2:`-prefixed claim ships)
 
 ## Why the lib is named "Auth" but lives in `shared/`

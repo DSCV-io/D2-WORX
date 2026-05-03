@@ -24,10 +24,10 @@ Redis distributed cache. Pluggable `ICacheSerializer` (JSON default, custom for 
 
 ## References
 
-- [docs/PATTERNS.md](../../../../docs/PATTERNS.md) "Cache" section — pluggable serializer pattern
-- Multiple consumer use cases — sessions tier-2 (Redis), idempotency (SET NX), rate limit (sliding-window counters)
-- [OPERATIONAL-GUARANTEES.md](../../../../docs/OPERATIONAL-GUARANTEES.md) — Redis as the cross-instance coordination point
+- [docs/PATTERNS.md](../../../../docs/PATTERNS.md) "Cache" section — pluggable serializer pattern, multi-tier hierarchy (memory → Redis → DB)
+- [docs/OPERATIONAL-GUARANTEES.md](../../../../docs/OPERATIONAL-GUARANTEES.md) — Redis as the cross-instance coordination point (sessions tier-2, idempotency `SET NX`, rate-limit sliding-window counters)
+- [`../caching-memory/README.md`](../caching-memory/README.md) — the L1 in-memory tier that pairs with this lib
 
 ## Important
 
-Don't reach for Microsoft's `IDistributedCache` when you need `SetNx` / `Increment` / `AcquireLock`. Use this lib's richer abstraction. (Per CLAUDE.md §5 anti-pattern: "wrapping framework primitives without an opinionated semantic.")
+Don't reach for Microsoft's `IDistributedCache` when you need `SetNx` / `Increment` / `AcquireLock`. Use this lib's richer abstraction. (Per [CLAUDE.md §5](../../../../CLAUDE.md) anti-pattern: "wrapping framework primitives without an opinionated semantic.")

@@ -36,8 +36,9 @@ Build order respects the dependency graph. Each lib lands as one squash-merged c
 | Wave | Lib | Status | Branch | Depends on |
 |---|---|---|---|---|
 | 1 | `D2.Shared.Result` | ✅ Complete | `n/result` | (none — foundational) |
-| 1 | `D2.Shared.Utilities` | 🔄 **Active** | `n/utilities` | (none — foundational) |
-| 2 | `D2.Shared.Handler` | ☐ Not started | `n/handler` | Result, Utilities — includes BaseRepoHandler design (see [Phase 0 design notes](#phase-0-design-notes)) |
+| 1 | `D2.Shared.Utilities` | ✅ Complete | `n/utilities` | (none — foundational) |
+| 1 | `D2.Shared.Resilience` | ✅ Complete | `n/utilities` | Result (for the `RetryD2ResultAsync` predicate) — split out from Utilities so retry / circuit-breaker / singleflight can be consumed independently of the boundary helpers |
+| 2 | `D2.Shared.Handler` | ☐ Not started | `n/handler` | Result, Utilities, Resilience — includes BaseRepoHandler design (see [Phase 0 design notes](#phase-0-design-notes)) |
 | 3 | `D2.Shared.Tests` | 🔄 In progress (scaffolded with Result coverage; grows per-lib) | `n/result` (born here) | Handler (test infra for the libs above) |
 | 3 | `D2.Shared.I18n` | ☐ Not started | `n/i18n` | Utilities |
 | 4 | `D2.Shared.Encryption` | ☐ Not started | `n/encryption` | Result, Utilities |

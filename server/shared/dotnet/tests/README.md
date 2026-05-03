@@ -16,13 +16,43 @@ Per-service tests (Edge, Audit, Courier, Notifications, Files) live separately a
 server/shared/dotnet/tests/
 ├─ D2.Shared.Tests.csproj
 └─ Unit/
-   └─ Result/                                # tests for D2.Shared.Result
-      ├─ D2ResultTests.cs                    # non-generic factories + ctor
-      ├─ D2ResultBooleansTests.cs            # per-code booleans + combined helpers
-      ├─ D2ResultGenericTests.cs             # generic factories + Check* + BubbleFail / Bubble
-      ├─ D2ResultMonadicTests.cs             # Bind / Map / Match + monadic laws
-      ├─ D2ResultAsyncExtensionsTests.cs     # BindAsync / MapAsync / ThenAsync (Task + ValueTask)
-      └─ D2ResultGuardTests.cs               # BubbleOnFailure
+   ├─ Result/                                          # tests for D2.Shared.Result
+   │  ├─ D2ResultTests.cs                              # non-generic factories + ctor
+   │  ├─ D2ResultBooleansTests.cs                      # per-code booleans + combined helpers
+   │  ├─ D2ResultGenericTests.cs                       # generic factories + Check* + BubbleFail / Bubble
+   │  ├─ D2ResultMonadicTests.cs                       # Bind / Map / Match + monadic laws
+   │  ├─ D2ResultAsyncExtensionsTests.cs               # BindAsync / MapAsync / ThenAsync (Task + ValueTask)
+   │  └─ D2ResultGuardTests.cs                         # BubbleOnFailure
+   ├─ Resilience/                                      # tests for D2.Shared.Resilience
+   │  ├─ CircuitBreaker/
+   │  │  ├─ CircuitBreakerOptionsTests.cs              # defaults + nullable-param ctor convention
+   │  │  ├─ CircuitBreakerTests.cs                     # state machine + concurrency + adversarial
+   │  │  └─ CircuitOpenExceptionTests.cs               # exception ctor variants
+   │  ├─ Retry/
+   │  │  ├─ RetryHelperTests.cs                        # transient classifier + backoff math + cancellation
+   │  │  └─ RetryOptionsTests.cs                       # defaults + init-only overrides
+   │  ├─ Singleflight/
+   │  │  └─ SingleflightTests.cs                       # dedup + cancellation isolation + concurrency stress
+   │  └─ Pipeline/
+   │     ├─ ResilientPipelineTests.cs                  # composition order + exception → D2Result mapping
+   │     ├─ ResilientPipelineBuilderTests.cs           # fluent DSL + keyed-DI overloads
+   │     ├─ ResilientPipelineServiceCollectionExtensionsTests.cs  # AddResilientPipeline registration
+   │     ├─ SingleflightLayerTests.cs                  # SF layer wrapping
+   │     ├─ CircuitBreakerLayerTests.cs                # CB layer wrapping
+   │     └─ RetryLayerTests.cs                         # Retry layer wrapping
+   └─ Utilities/                                       # tests for D2.Shared.Utilities
+      ├─ Attributes/
+      │  └─ RedactDataAttributeTests.cs                # attribute defaults + reflective discovery
+      ├─ Configuration/
+      │  ├─ ConnectionStringHelperTests.cs             # URI ↔ wire-format conversion + env-var resolution
+      │  ├─ D2EnvTests.cs                              # .env file loader + discovery + precedence
+      │  └─ EnvVarMutatingFixture.cs                   # collection fixture for env-var-touching tests
+      ├─ Extensions/
+      │  ├─ EnumerableExtensionsTests.cs               # Truthy / Falsey / Clean
+      │  ├─ GuidExtensionsTests.cs                     # Truthy / Falsey for Guid / Guid?
+      │  └─ StringExtensionsTests.cs                   # Truthy / Falsey / ToNullIfEmpty / CleanStr / validators
+      └─ Serialization/
+         └─ SerializerOptionsTests.cs                  # frozen JsonSerializerOptions presets
 ```
 
 The tree mirrors the source layout: `Unit/{LibName}/{LibSourceFile}Tests.cs` per lib being tested. New libs add their own subdirectory under `Unit/`.

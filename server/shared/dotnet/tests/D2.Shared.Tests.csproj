@@ -21,7 +21,13 @@ Copyright (c) DCSV. All rights reserved.
       dividers inside test classes are clearer with a blank line before the next
       test method; SA1512 disagrees. Tests prioritise scan readability over the rule.
     -->
-    <NoWarn>$(NoWarn);1591;SA1600;SA1512</NoWarn>
+    <!--
+      xUnit1051: "use TestContext.Current.CancellationToken on every awaited
+      method that accepts a ct" — well-intentioned but exceptionally noisy in
+      unit tests that don't model cancellation; xUnit's own timeout already
+      bounds runaway tests. Suppressed for clarity.
+    -->
+    <NoWarn>$(NoWarn);1591;SA1600;SA1512;xUnit1051</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -33,6 +39,7 @@ Copyright (c) DCSV. All rights reserved.
     </PackageReference>
     <PackageReference Include="AwesomeAssertions" />
     <PackageReference Include="JetBrains.Annotations" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="coverlet.msbuild">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -40,6 +47,8 @@ Copyright (c) DCSV. All rights reserved.
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\resilience\D2.Shared.Resilience.csproj" />
     <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
+    <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
   </ItemGroup>
 </Project>
