@@ -12,6 +12,17 @@ Copyright (c) DCSV. All rights reserved.
   </ItemGroup>
 
   <ItemGroup>
+    <!--
+      D2.Shared.Result + D2.Shared.I18n.Abstractions enable Utilities to expose
+      D2Result-returning validators (TryParseEmail / TryParsePhoneNumber) that
+      domain layers can chain into smart-constructor factories. Both deps are
+      zero-runtime-dep / domain-safe — Utilities stays so too.
+    -->
+    <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
+    <ProjectReference Include="..\i18n-abstractions\D2.Shared.I18n.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="D2.Shared.Tests" />
   </ItemGroup>
 </Project>

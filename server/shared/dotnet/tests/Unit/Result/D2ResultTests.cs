@@ -8,6 +8,7 @@ namespace D2.Shared.Tests.Unit.Result;
 
 using System.Net;
 using AwesomeAssertions;
+using D2.Shared.I18n;
 using D2.Shared.Result;
 using Xunit;
 
@@ -79,27 +80,41 @@ public sealed class D2ResultTests
     [Fact]
     public void Ctor_WithMultipleMessages_PreservesAll()
     {
-        List<string> messages = ["one", "two", "three"];
+        IReadOnlyList<TKMessage> messages =
+        [
+            TK.Common.Errors.NOT_FOUND,
+            TK.Common.Errors.FORBIDDEN,
+            TK.Common.Errors.UNAUTHORIZED,
+        ];
 
         var result = new D2Result(success: false, messages: messages);
 
-        result.Messages.Should().Equal("one", "two", "three");
+        result.Messages.Should().Equal(
+            TK.Common.Errors.NOT_FOUND,
+            TK.Common.Errors.FORBIDDEN,
+            TK.Common.Errors.UNAUTHORIZED);
     }
 
     [Fact]
     public void Ctor_WithMultipleInputErrors_PreservesAll()
     {
-        List<List<string>> errors =
+        IReadOnlyList<InputError> errors =
         [
-            ["email", "Required.", "Must be valid."],
-            ["age", "Must be >= 18."],
+            new InputError(
+                "email",
+                [TK.Common.Validation.EMAIL_INVALID, TK.Common.Validation.NON_EMPTY_LIST]),
+            new InputError("age", [TK.Common.Validation.NON_EMPTY_LIST]),
         ];
 
         var result = new D2Result(success: false, inputErrors: errors);
 
         result.InputErrors.Should().HaveCount(2);
-        result.InputErrors[0].Should().Equal("email", "Required.", "Must be valid.");
-        result.InputErrors[1].Should().Equal("age", "Must be >= 18.");
+        result.InputErrors[0].Field.Should().Be("email");
+        result.InputErrors[0].Errors.Should().Equal(
+            TK.Common.Validation.EMAIL_INVALID,
+            TK.Common.Validation.NON_EMPTY_LIST);
+        result.InputErrors[1].Field.Should().Be("age");
+        result.InputErrors[1].Errors.Should().Equal(TK.Common.Validation.NON_EMPTY_LIST);
     }
 
     [Fact]
@@ -167,13 +182,13 @@ public sealed class D2ResultTests
     [Fact]
     public void Created_WithMessagesAndTraceId_CarriesBoth()
     {
-        List<string> messages = ["Resource created."];
+        IReadOnlyList<TKMessage> messages = [TK.Common.Errors.SOME_FOUND];
 
         var result = D2Result.Created(messages, traceId: "t1");
 
         result.Success.Should().BeTrue();
         result.StatusCode.Should().Be(HttpStatusCode.Created);
-        result.Messages.Should().Equal("Resource created.");
+        result.Messages.Should().Equal(TK.Common.Errors.SOME_FOUND);
         result.TraceId.Should().Be("t1");
     }
 
@@ -195,8 +210,11 @@ public sealed class D2ResultTests
     [Fact]
     public void Fail_WithAllFields_CarriesEverything()
     {
-        List<string> messages = ["err1"];
-        List<List<string>> inputErrors = [["field", "msg"]];
+        IReadOnlyList<TKMessage> messages = [TK.Common.Errors.UNKNOWN];
+        IReadOnlyList<InputError> inputErrors =
+        [
+            new InputError("field", [TK.Common.Validation.NON_EMPTY_LIST]),
+        ];
 
         var result = D2Result.Fail(
             messages: messages,
@@ -206,7 +224,7 @@ public sealed class D2ResultTests
             traceId: "t2");
 
         result.Success.Should().BeFalse();
-        result.Messages.Should().Equal("err1");
+        result.Messages.Should().Equal(TK.Common.Errors.UNKNOWN);
         result.InputErrors.Should().HaveCount(1);
         result.StatusCode.Should().Be(HttpStatusCode.Forbidden);
         result.ErrorCode.Should().Be("CUSTOM_CODE");
@@ -225,17 +243,19 @@ public sealed class D2ResultTests
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.NotFound);
         result.ErrorCode.Should().Be(ErrorCodes.NOT_FOUND);
-        result.Messages.Should().Equal("common_errors_NOT_FOUND");
+        result.Messages.Should().Equal(TK.Common.Errors.NOT_FOUND);
     }
 
     [Fact]
     public void NotFound_WithCustomMessages_UsesCustomNotDefault()
     {
-        List<string> custom = ["my custom not-found"];
+        // A non-default TKMessage proves the custom argument overrides the
+        // TK.Common.Errors.NOT_FOUND default.
+        IReadOnlyList<TKMessage> custom = [TK.Common.Errors.FORBIDDEN];
 
         var result = D2Result.NotFound(custom);
 
-        result.Messages.Should().Equal("my custom not-found");
+        result.Messages.Should().Equal(TK.Common.Errors.FORBIDDEN);
     }
 
     [Fact]
@@ -246,7 +266,7 @@ public sealed class D2ResultTests
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.Forbidden);
         result.ErrorCode.Should().Be(ErrorCodes.FORBIDDEN);
-        result.Messages.Should().Equal("common_errors_FORBIDDEN");
+        result.Messages.Should().Equal(TK.Common.Errors.FORBIDDEN);
     }
 
     [Fact]
@@ -257,7 +277,7 @@ public sealed class D2ResultTests
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         result.ErrorCode.Should().Be(ErrorCodes.UNAUTHORIZED);
-        result.Messages.Should().Equal("common_errors_UNAUTHORIZED");
+        result.Messages.Should().Equal(TK.Common.Errors.UNAUTHORIZED);
     }
 
     [Fact]
@@ -268,18 +288,22 @@ public sealed class D2ResultTests
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         result.ErrorCode.Should().Be(ErrorCodes.VALIDATION_FAILED);
-        result.Messages.Should().Equal("common_errors_VALIDATION_FAILED");
+        result.Messages.Should().Equal(TK.Common.Errors.VALIDATION_FAILED);
     }
 
     [Fact]
     public void ValidationFailed_WithInputErrors_CarriesThem()
     {
-        List<List<string>> errors = [["email", "Required."]];
+        IReadOnlyList<InputError> errors =
+        [
+            new InputError("email", [TK.Common.Validation.EMAIL_INVALID]),
+        ];
 
         var result = D2Result.ValidationFailed(inputErrors: errors);
 
         result.InputErrors.Should().HaveCount(1);
-        result.InputErrors[0].Should().Equal("email", "Required.");
+        result.InputErrors[0].Field.Should().Be("email");
+        result.InputErrors[0].Errors.Should().Equal(TK.Common.Validation.EMAIL_INVALID);
     }
 
     [Fact]
@@ -288,7 +312,7 @@ public sealed class D2ResultTests
         var result = D2Result.ValidationFailed(errorCode: "FILES_INVALID_CONTENT_TYPE");
 
         result.ErrorCode.Should().Be("FILES_INVALID_CONTENT_TYPE");
-        result.Messages.Should().Equal("common_errors_VALIDATION_FAILED");
+        result.Messages.Should().Equal(TK.Common.Errors.VALIDATION_FAILED);
     }
 
     [Fact]
@@ -299,7 +323,7 @@ public sealed class D2ResultTests
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.Conflict);
         result.ErrorCode.Should().Be(ErrorCodes.CONFLICT);
-        result.Messages.Should().Equal("common_errors_CONFLICT");
+        result.Messages.Should().Equal(TK.Common.Errors.CONFLICT);
     }
 
     [Fact]
@@ -310,7 +334,7 @@ public sealed class D2ResultTests
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
         result.ErrorCode.Should().Be(ErrorCodes.SERVICE_UNAVAILABLE);
-        result.Messages.Should().Equal("common_errors_SERVICE_UNAVAILABLE");
+        result.Messages.Should().Equal(TK.Common.Errors.SERVICE_UNAVAILABLE);
     }
 
     [Fact]
@@ -329,7 +353,7 @@ public sealed class D2ResultTests
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
         result.ErrorCode.Should().Be(ErrorCodes.UNHANDLED_EXCEPTION);
-        result.Messages.Should().Equal("common_errors_unknown");
+        result.Messages.Should().Equal(TK.Common.Errors.UNKNOWN);
     }
 
     [Fact]
@@ -340,7 +364,7 @@ public sealed class D2ResultTests
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.RequestEntityTooLarge);
         result.ErrorCode.Should().Be(ErrorCodes.PAYLOAD_TOO_LARGE);
-        result.Messages.Should().Equal("common_errors_PAYLOAD_TOO_LARGE");
+        result.Messages.Should().Equal(TK.Common.Errors.PAYLOAD_TOO_LARGE);
     }
 
     [Fact]
@@ -351,7 +375,7 @@ public sealed class D2ResultTests
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
         result.ErrorCode.Should().Be(ErrorCodes.RATE_LIMITED);
-        result.Messages.Should().Equal("common_errors_TOO_MANY_REQUESTS");
+        result.Messages.Should().Equal(TK.Common.Errors.TOO_MANY_REQUESTS);
     }
 
     [Fact]
@@ -370,7 +394,7 @@ public sealed class D2ResultTests
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         result.ErrorCode.Should().Be(ErrorCodes.CANCELLED);
-        result.Messages.Should().Equal("common_errors_CANCELLED");
+        result.Messages.Should().Equal(TK.Common.Errors.CANCELLED);
     }
 
     [Fact]
@@ -384,7 +408,7 @@ public sealed class D2ResultTests
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.PartialContent);
         result.ErrorCode.Should().Be(ErrorCodes.SOME_FOUND);
-        result.Messages.Should().Equal("common_errors_SOME_FOUND");
+        result.Messages.Should().Equal(TK.Common.Errors.SOME_FOUND);
     }
 
     [Fact]

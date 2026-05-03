@@ -99,7 +99,7 @@ public sealed class SingleflightTests
         var results = await Task.WhenAll(ta, tb);
 
         invocations.Should().Be(2);
-        results.Should().BeEquivalentTo(new[] { 1, 2 });
+        results.Should().BeEquivalentTo([1, 2]);
     }
 
     // ----------------------------------------------------------------------

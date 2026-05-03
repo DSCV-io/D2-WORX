@@ -101,7 +101,7 @@ public sealed class EnumerableExtensionsTests
     [Fact]
     public void Clean_OnEmptyInput_DefaultBehavior_ReturnsNull()
     {
-        IEnumerable<string> input = Array.Empty<string>();
+        IEnumerable<string> input = [];
 
         var result = input.Clean(s => s);
 

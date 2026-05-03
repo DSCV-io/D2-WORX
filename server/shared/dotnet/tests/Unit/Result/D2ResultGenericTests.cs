@@ -8,6 +8,7 @@ namespace D2.Shared.Tests.Unit.Result;
 
 using System.Net;
 using AwesomeAssertions;
+using D2.Shared.I18n;
 using D2.Shared.Result;
 using Xunit;
 
@@ -59,15 +60,15 @@ public sealed class D2ResultGenericTests
         var result = new D2Result<Payload>(
             success: false,
             data: null,
-            messages: ["m1"],
-            inputErrors: [["f", "e"]],
+            messages: [TK.Common.Errors.UNKNOWN],
+            inputErrors: [new InputError("f", [TK.Common.Validation.NON_EMPTY_LIST])],
             statusCode: HttpStatusCode.Conflict,
             errorCode: ErrorCodes.CONFLICT,
             traceId: "t1");
 
         result.Success.Should().BeFalse();
         result.Data.Should().BeNull();
-        result.Messages.Should().Equal("m1");
+        result.Messages.Should().Equal(TK.Common.Errors.UNKNOWN);
         result.InputErrors.Should().HaveCount(1);
         result.StatusCode.Should().Be(HttpStatusCode.Conflict);
         result.ErrorCode.Should().Be(ErrorCodes.CONFLICT);
@@ -156,12 +157,12 @@ public sealed class D2ResultGenericTests
     public void Ok_WithMessagesAndTraceId_CarriesBoth()
     {
         var data = new Payload("y");
-        List<string> messages = ["ok"];
+        IReadOnlyList<TKMessage> messages = [TK.Common.Errors.SOME_FOUND];
 
         var result = D2Result<Payload>.Ok(data, messages, traceId: "t");
 
         result.Data.Should().Be(data);
-        result.Messages.Should().Equal("ok");
+        result.Messages.Should().Equal(TK.Common.Errors.SOME_FOUND);
         result.TraceId.Should().Be("t");
     }
 
@@ -184,13 +185,15 @@ public sealed class D2ResultGenericTests
     [Fact]
     public void BubbleFail_CopiesAllFieldsFromUpstreamFailure()
     {
-        var upstream = D2Result.NotFound(messages: ["custom"], traceId: "t-upstream");
+        var upstream = D2Result.NotFound(
+            messages: [TK.Common.Errors.UNKNOWN],
+            traceId: "t-upstream");
 
         var bubbled = D2Result<Payload>.BubbleFail(upstream);
 
         bubbled.Success.Should().BeFalse();
         bubbled.Data.Should().BeNull();
-        bubbled.Messages.Should().Equal("custom");
+        bubbled.Messages.Should().Equal(TK.Common.Errors.UNKNOWN);
         bubbled.StatusCode.Should().Be(HttpStatusCode.NotFound);
         bubbled.ErrorCode.Should().Be(ErrorCodes.NOT_FOUND);
         bubbled.TraceId.Should().Be("t-upstream");
@@ -199,12 +202,14 @@ public sealed class D2ResultGenericTests
     [Fact]
     public void BubbleFail_CopiesInputErrors()
     {
-        var upstream = D2Result.ValidationFailed(inputErrors: [["email", "Required."]]);
+        var upstream = D2Result.ValidationFailed(
+            inputErrors: [new InputError("email", [TK.Common.Validation.EMAIL_INVALID])]);
 
         var bubbled = D2Result<Payload>.BubbleFail(upstream);
 
         bubbled.InputErrors.Should().HaveCount(1);
-        bubbled.InputErrors[0].Should().Equal("email", "Required.");
+        bubbled.InputErrors[0].Field.Should().Be("email");
+        bubbled.InputErrors[0].Errors.Should().Equal(TK.Common.Validation.EMAIL_INVALID);
     }
 
     [Fact]
@@ -212,14 +217,14 @@ public sealed class D2ResultGenericTests
     {
         // Adversarial: BubbleFail goes from ANY upstream type to ANY downstream type.
         // The generic argument of upstream doesn't constrain the bubble target.
-        var upstream = D2Result<int>.Conflict(messages: ["m"]);
+        var upstream = D2Result<int>.Conflict(messages: [TK.Common.Errors.UNKNOWN]);
 
         var bubbled = D2Result<Payload>.BubbleFail(upstream);
 
         bubbled.Success.Should().BeFalse();
         bubbled.Data.Should().BeNull();
         bubbled.ErrorCode.Should().Be(ErrorCodes.CONFLICT);
-        bubbled.Messages.Should().Equal("m");
+        bubbled.Messages.Should().Equal(TK.Common.Errors.UNKNOWN);
     }
 
     [Fact]
@@ -275,7 +280,7 @@ public sealed class D2ResultGenericTests
         result.Data.Should().BeNull();
         result.StatusCode.Should().Be(HttpStatusCode.NotFound);
         result.ErrorCode.Should().Be(ErrorCodes.NOT_FOUND);
-        result.Messages.Should().Equal("common_errors_NOT_FOUND");
+        result.Messages.Should().Equal(TK.Common.Errors.NOT_FOUND);
     }
 
     [Fact]
@@ -303,7 +308,8 @@ public sealed class D2ResultGenericTests
     [Fact]
     public void ValidationFailed_Generic_CarriesInputErrors()
     {
-        var result = D2Result<Payload>.ValidationFailed(inputErrors: [["email", "Required."]]);
+        var result = D2Result<Payload>.ValidationFailed(
+            inputErrors: [new InputError("email", [TK.Common.Validation.EMAIL_INVALID])]);
 
         result.Success.Should().BeFalse();
         result.Data.Should().BeNull();
@@ -338,7 +344,7 @@ public sealed class D2ResultGenericTests
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
         result.ErrorCode.Should().Be(ErrorCodes.SERVICE_UNAVAILABLE);
-        result.Messages.Should().Equal("common_errors_SERVICE_UNAVAILABLE");
+        result.Messages.Should().Equal(TK.Common.Errors.SERVICE_UNAVAILABLE);
     }
 
     [Fact]
@@ -415,15 +421,15 @@ public sealed class D2ResultGenericTests
     public void Fail_Generic_CarriesAllFieldsAndDataIsDefault()
     {
         var result = D2Result<Payload>.Fail(
-            messages: ["err"],
+            messages: [TK.Common.Errors.UNKNOWN],
             statusCode: HttpStatusCode.Forbidden,
-            inputErrors: [["f", "e"]],
+            inputErrors: [new InputError("f", [TK.Common.Validation.NON_EMPTY_LIST])],
             errorCode: "X",
             traceId: "t");
 
         result.Success.Should().BeFalse();
         result.Data.Should().BeNull();
-        result.Messages.Should().Equal("err");
+        result.Messages.Should().Equal(TK.Common.Errors.UNKNOWN);
         result.StatusCode.Should().Be(HttpStatusCode.Forbidden);
         result.ErrorCode.Should().Be("X");
         result.TraceId.Should().Be("t");

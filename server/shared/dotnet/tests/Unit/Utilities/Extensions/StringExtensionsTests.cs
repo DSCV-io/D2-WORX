@@ -7,6 +7,8 @@
 namespace D2.Shared.Tests.Unit.Utilities.Extensions;
 
 using AwesomeAssertions;
+using D2.Shared.I18n;
+using D2.Shared.Result;
 using D2.Shared.Utilities.Extensions;
 using Xunit;
 
@@ -134,7 +136,7 @@ public sealed class StringExtensionsTests
     }
 
     // ----------------------------------------------------------------------
-    // CleanAndValidateEmail
+    // TryParseEmail — returns D2Result<string>
     // ----------------------------------------------------------------------
 
     [Theory]
@@ -142,11 +144,14 @@ public sealed class StringExtensionsTests
     [InlineData("USER@EXAMPLE.COM", "user@example.com")]
     [InlineData("  user@example.com  ", "user@example.com")]
     [InlineData("First.Last+tag@sub.example.co.uk", "first.last+tag@sub.example.co.uk")]
-    public void CleanAndValidateEmail_OnValid_LowercasesAndReturns(
+    public void TryParseEmail_OnValid_LowercasesAndReturnsOk(
         string input,
         string expected)
     {
-        input.CleanAndValidateEmail().Should().Be(expected);
+        var result = input.TryParseEmail();
+
+        result.Success.Should().BeTrue();
+        result.Data.Should().Be(expected);
     }
 
     [Theory]
@@ -161,15 +166,17 @@ public sealed class StringExtensionsTests
     [InlineData("user@example.")]
     [InlineData("user@@example.com")]
     [InlineData("us er@example.com")]
-    public void CleanAndValidateEmail_OnInvalid_ThrowsArgumentException(string? input)
+    public void TryParseEmail_OnInvalid_ReturnsValidationFailedWithEmailInvalidKey(string? input)
     {
-        var act = () => input.CleanAndValidateEmail();
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("Invalid email address format.*");
+        var result = input.TryParseEmail();
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(ErrorCodes.VALIDATION_FAILED);
+        result.Messages.Should().Equal(TK.Common.Validation.EMAIL_INVALID);
     }
 
     // ----------------------------------------------------------------------
-    // CleanAndValidatePhoneNumber
+    // TryParsePhoneNumber — returns D2Result<string>
     // ----------------------------------------------------------------------
 
     [Theory]
@@ -178,41 +185,49 @@ public sealed class StringExtensionsTests
     [InlineData("(555) 123-4567", "5551234567")]
     [InlineData("+44 20 7946 0958", "442079460958")]
     [InlineData("123456789012345", "123456789012345")] // exactly 15
-    public void CleanAndValidatePhoneNumber_OnValid_StripsNonDigits(
+    public void TryParsePhoneNumber_OnValid_StripsNonDigitsAndReturnsOk(
         string input,
         string expected)
     {
-        input.CleanAndValidatePhoneNumber().Should().Be(expected);
+        var result = input.TryParsePhoneNumber();
+
+        result.Success.Should().BeTrue();
+        result.Data.Should().Be(expected);
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void CleanAndValidatePhoneNumber_OnFalsey_Throws(string? input)
+    public void TryParsePhoneNumber_OnFalsey_ReturnsValidationFailedWithPhoneInvalidKey(
+        string? input)
     {
-        var act = () => input.CleanAndValidatePhoneNumber();
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("Phone number cannot be null or empty.*");
+        var result = input.TryParsePhoneNumber();
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(ErrorCodes.VALIDATION_FAILED);
+        result.Messages.Should().Equal(TK.Common.Validation.PHONE_INVALID);
     }
 
     [Fact]
-    public void CleanAndValidatePhoneNumber_OnNoDigits_Throws()
+    public void TryParsePhoneNumber_OnNoDigits_ReturnsValidationFailed()
     {
-        var act = () => "abc-def".CleanAndValidatePhoneNumber();
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("Invalid phone number format.*");
+        var result = "abc-def".TryParsePhoneNumber();
+
+        result.Success.Should().BeFalse();
+        result.Messages.Should().Equal(TK.Common.Validation.PHONE_INVALID);
     }
 
     [Theory]
     [InlineData("123456")] // 6 digits
     [InlineData("1")]
     [InlineData("1234567890123456")] // 16 digits
-    public void CleanAndValidatePhoneNumber_OnLengthOutOfBounds_Throws(string input)
+    public void TryParsePhoneNumber_OnLengthOutOfBounds_ReturnsValidationFailed(string input)
     {
-        var act = () => input.CleanAndValidatePhoneNumber();
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("Phone number must be between 7 and 15 digits in length.*");
+        var result = input.TryParsePhoneNumber();
+
+        result.Success.Should().BeFalse();
+        result.Messages.Should().Equal(TK.Common.Validation.PHONE_INVALID);
     }
 
     // ----------------------------------------------------------------------

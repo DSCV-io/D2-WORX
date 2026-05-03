@@ -11,6 +11,13 @@ Copyright (c) DCSV. All rights reserved.
   -->
   <Folder Name="/shared/" />
   <Folder Name="/shared/dotnet/" />
+  <Folder Name="/shared/dotnet/i18n/">
+    <Project Path="shared/dotnet/i18n/D2.Shared.I18n.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/i18n-abstractions/">
+    <Project Path="shared/dotnet/i18n-abstractions/D2.Shared.I18n.Abstractions.csproj" />
+    <Project Path="shared/dotnet/i18n-abstractions/source-gen/D2.Shared.I18n.SourceGen.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/resilience/">
     <Project Path="shared/dotnet/resilience/D2.Shared.Resilience.csproj" />
   </Folder>

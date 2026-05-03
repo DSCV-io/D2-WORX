@@ -8,6 +8,7 @@ namespace D2.Shared.Tests.Unit.Result;
 
 using System.Net;
 using AwesomeAssertions;
+using D2.Shared.I18n;
 using D2.Shared.Result;
 using Xunit;
 
@@ -48,7 +49,7 @@ public sealed class D2ResultGuardTests
     [Fact]
     public void BubbleOnFailure_OnFailure_ReturnsTrueAndBubblesMetadata()
     {
-        var inner = D2Result<int>.NotFound(messages: ["upstream"], traceId: "t");
+        var inner = D2Result<int>.NotFound(messages: [TK.Common.Errors.UNKNOWN], traceId: "t");
 
         var failed = inner.BubbleOnFailure<int, string>(out var bubbled, out _);
 
@@ -57,7 +58,7 @@ public sealed class D2ResultGuardTests
         bubbled.Success.Should().BeFalse();
         bubbled.ErrorCode.Should().Be(ErrorCodes.NOT_FOUND);
         bubbled.StatusCode.Should().Be(HttpStatusCode.NotFound);
-        bubbled.Messages.Should().Equal("upstream");
+        bubbled.Messages.Should().Equal(TK.Common.Errors.UNKNOWN);
         bubbled.TraceId.Should().Be("t");
     }
 
@@ -77,25 +78,27 @@ public sealed class D2ResultGuardTests
         // Adversarial: TInner (upstream payload) and TOuter (caller's outer return
         // payload) need not be the same. The bubbled result is shaped to TOuter while
         // metadata is preserved.
-        var inner = D2Result<int>.Forbidden(messages: ["nope"]);
+        var inner = D2Result<int>.Forbidden(messages: [TK.Common.Errors.UNKNOWN]);
 
         var failed = inner.BubbleOnFailure<int, string>(out var bubbled, out _);
 
         failed.Should().BeTrue();
         bubbled.Should().BeOfType<D2Result<string?>>();
         bubbled.ErrorCode.Should().Be(ErrorCodes.FORBIDDEN);
-        bubbled.Messages.Should().Equal("nope");
+        bubbled.Messages.Should().Equal(TK.Common.Errors.UNKNOWN);
     }
 
     [Fact]
     public void BubbleOnFailure_OnFailure_PreservesInputErrors()
     {
-        var inner = D2Result<int>.ValidationFailed(inputErrors: [["email", "Required."]]);
+        var inner = D2Result<int>.ValidationFailed(
+            inputErrors: [new InputError("email", [TK.Common.Validation.EMAIL_INVALID])]);
 
         inner.BubbleOnFailure<int, string>(out var bubbled, out _);
 
         bubbled.InputErrors.Should().HaveCount(1);
-        bubbled.InputErrors[0].Should().Equal("email", "Required.");
+        bubbled.InputErrors[0].Field.Should().Be("email");
+        bubbled.InputErrors[0].Errors.Should().Equal(TK.Common.Validation.EMAIL_INVALID);
     }
 
     // ----------------------------------------------------------------------
@@ -138,14 +141,14 @@ public sealed class D2ResultGuardTests
     [Fact]
     public void BubbleOnFailure_HandlerPatternUsage_OnFailure_BubblesToOuter()
     {
-        var upstream = D2Result<int>.NotFound(messages: ["the source"]);
+        var upstream = D2Result<int>.NotFound(messages: [TK.Common.Errors.UNKNOWN]);
 
         var output = ExampleHandler(upstream);
 
         output.Success.Should().BeFalse();
         output.Data.Should().BeNull();
         output.ErrorCode.Should().Be(ErrorCodes.NOT_FOUND);
-        output.Messages.Should().Equal("the source");
+        output.Messages.Should().Equal(TK.Common.Errors.UNKNOWN);
     }
 
     // Handler-shaped helper that uses BubbleOnFailure exactly as the workhorse pattern

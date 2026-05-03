@@ -6,7 +6,13 @@ Copyright (c) DCSV. All rights reserved.
 
 Foundational helpers used at every boundary across D²-WORX. The "no value too small to centralize" library — preventing whole classes of bugs (empty-string-as-data, env-var collisions, JSON cycles) from ever entering domain code.
 
-Zero runtime dependencies beyond `dotenv.net` (loaded only when `D2Env.Load()` is called) and `JetBrains.Annotations` (compile-time markers). Consumed by every other shared lib + service.
+Runtime dependencies are kept minimal so this lib stays domain-safe:
+
+- `dotenv.net` — only loaded when `D2Env.Load()` is called
+- `JetBrains.Annotations` — compile-time markers
+- `D2.Shared.Result` + `D2.Shared.I18n.Abstractions` — both zero-runtime-dep themselves; pulled in so `TryParseEmail` / `TryParsePhoneNumber` can return `D2Result<string>` with `TK.*`-keyed messages
+
+Consumed by every other shared lib + service.
 
 ---
 
@@ -19,7 +25,7 @@ Zero runtime dependencies beyond `dotenv.net` (loaded only when `D2Env.Load()` i
 | `Configuration/D2Env.cs` | `.env*` file loader for host-side scenarios (tests, IDE debug, ad-hoc `dotnet run`). No-op inside Docker Compose (Compose handles env injection natively). |
 | `Enums/RedactReason.cs` | Standard reasons for redaction (`PersonalInformation`, `FinancialInformation`, `SecretInformation`, etc.) used by `[RedactData]`. |
 | `Enums/IsolationLevel.cs` | DB isolation level enum with phenomena-matrix doc, mirroring the standard SQL isolation taxonomy. |
-| `Extensions/StringExtensions.cs` | `Truthy()` / `Falsey()` / `ToNullIfEmpty()` / `CleanStr()` / `CleanDisplayStr()` / `CleanAndValidateEmail()` / `CleanAndValidatePhoneNumber()` / `GetNormalizedStrForHashing()`. |
+| `Extensions/StringExtensions.cs` | `Truthy()` / `Falsey()` / `ToNullIfEmpty()` / `CleanStr()` / `CleanDisplayStr()` / `TryParseEmail()` / `TryParsePhoneNumber()` / `GetNormalizedStrForHashing()`. |
 | `Extensions/EnumerableExtensions.cs` | `Truthy()` / `Falsey()` for `IEnumerable<T>?` + the `Clean()` helper with configurable empty/null behavior. |
 | `Extensions/CleanEnumEmptyBehavior.cs`, `CleanValueNullBehavior.cs` | Behavior enums for `EnumerableExtensions.Clean()`. |
 | `Extensions/GuidExtensions.cs` | `Truthy()` / `Falsey()` for `Guid` and `Guid?` (treats `Guid.Empty` as falsey). |
@@ -79,23 +85,53 @@ if (id.Truthy()) ...                      // true for non-null AND non-empty
 "@@@***".CleanDisplayStr()                       // null — nothing left after stripping
 ```
 
-### Throwing validators — `CleanAndValidateEmail()` / `CleanAndValidatePhoneNumber()`
+### `D2Result`-returning validators — `TryParseEmail()` / `TryParsePhoneNumber()`
 
-Domain-layer constructors. **Intentionally throw** `ArgumentException` on invalid input — domain types should fail fast on invariant violations.
-
-> Application/handler layers prefer errors-as-values: use `FluentValidation` + `D2Result.ValidationFailed()` instead. The throwing helpers exist for places where a violated invariant SHOULD halt execution (typically inside record constructors).
+`string?` extensions that return `D2Result<string>` carrying `TK.*` keys on failure. Compose with the smart-constructor pattern in domain layers — chain via `BubbleFail` instead of try/catch.
 
 ```csharp
-"USER@EXAMPLE.COM".CleanAndValidateEmail()       // "user@example.com"
-"  user@example.com  ".CleanAndValidateEmail()   // "user@example.com"
-"noatsign".CleanAndValidateEmail()               // throws ArgumentException
+"USER@EXAMPLE.COM".TryParseEmail()
+// D2Result<string>.Ok("user@example.com")
 
-"+44 20 7946 0958".CleanAndValidatePhoneNumber() // "442079460958" (digits only, 7–15 length)
-"555-123-4567".CleanAndValidatePhoneNumber()     // "5551234567"
-"123456".CleanAndValidatePhoneNumber()           // throws — 6 digits, below floor
+"  user@example.com  ".TryParseEmail()
+// D2Result<string>.Ok("user@example.com")
+
+"noatsign".TryParseEmail()
+// D2Result<string>.ValidationFailed(messages: [TK.Common.Validation.EMAIL_INVALID])
+
+"+44 20 7946 0958".TryParsePhoneNumber()
+// D2Result<string>.Ok("442079460958")    // digits only
+
+"555-123-4567".TryParsePhoneNumber()
+// D2Result<string>.Ok("5551234567")
+
+"123456".TryParsePhoneNumber()
+// D2Result<string>.ValidationFailed(messages: [TK.Common.Validation.PHONE_INVALID])
 ```
 
 Length envelope: 7–15 digits (E.164's effective range after the `+`).
+
+Used inside domain factory methods:
+
+```csharp
+public sealed record Contact
+{
+    public string Email { get; init; }
+
+    private Contact(string email) => Email = email;
+
+    public static D2Result<Contact> Create(string? rawEmail)
+    {
+        var emailResult = rawEmail.TryParseEmail();
+        if (emailResult.BubbleOnFailure<string, Contact>(out var bubbled, out var email))
+            return bubbled;
+
+        return D2Result<Contact>.Ok(new Contact(email!));
+    }
+}
+```
+
+Failure messages are wire-format `TKMessage`s; the SvelteKit client renders them in the active locale via Paraglide. Server stays locale-unaware on the response path.
 
 ### Hash key composition — `GetNormalizedStrForHashing()`
 
@@ -259,7 +295,7 @@ Standard SQL isolation level enum with phenomena matrix. Values: `ReadUncommitte
 - All `Truthy`/`Falsey` overloads — null, empty, whitespace-only, multi-element, boundary values.
 - `ToNullIfEmpty` — null/empty/whitespace/trim/identity paths.
 - `CleanStr` / `CleanDisplayStr` — Unicode multi-script preservation, allowed-char retention, all-stripped → null.
-- `CleanAndValidateEmail` / `CleanAndValidatePhoneNumber` — happy paths AND every documented throw condition (null, empty, no `@`, no dot, double `@`, embedded space, length out of bounds, non-digit input, etc.).
+- `TryParseEmail` / `TryParsePhoneNumber` — happy paths + every documented failure condition (null, empty, whitespace, no `@`, no dot, double `@`, embedded space, length out of bounds, non-digit input, etc.). Asserts `D2Result.IsValidationFailed` and the carried `TK.Common.Validation.EMAIL_INVALID` / `PHONE_INVALID` key.
 - `GetNormalizedStrForHashing` — empty array, all-falsey, mixed, position-preservation property.
 - `EnumerableExtensions.Clean` — every (3 × 2) combination of empty-behavior and value-null-behavior, plus generator-backed single-enumeration property.
 - `RedactDataAttribute` — defaults, init-only setters, `AttributeUsage` target, reflective attribute discovery.

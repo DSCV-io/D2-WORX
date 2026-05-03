@@ -177,27 +177,53 @@ A repo handler's input/output is logged independently of its app-layer caller. I
 
 ## D2Result
 
-Result objects replace exceptions for control flow. Class hierarchy: `D2Result<T> : D2Result` (NOT a record / discriminated union — preserved for polymorphism in `BubbleFail(D2Result)`). Default failure messages are TK translation keys (`"common_errors_NOT_FOUND"`); the gateway translation middleware resolves them before they reach the client.
+Result objects replace exceptions for control flow. Class hierarchy: `D2Result<T> : D2Result` (NOT a record / discriminated union — preserved for polymorphism in `BubbleFail(D2Result)`).
+
+`Messages` is `IReadOnlyList<TKMessage>` and `InputErrors` is `IReadOnlyList<InputError>` (where `InputError = (string Field, IReadOnlyList<TKMessage> Errors)`). Typing both slots as `TKMessage` (rather than raw strings) makes "every user-visible message is a translation key" structurally enforced — the only way to construct a `TKMessage` is via the SrcGen-emitted `TK.*` constants in `D2.Shared.I18n.Abstractions`. See [i18n](#i18n) below.
+
+`TKMessage` ships over the wire as `{ "key": "...", "params": { ... }? }`; the SvelteKit client translates client-side via Paraglide. Server-side rendering only happens for outbound notifications (Courier emails / SMS) where the recipient locale comes from their profile.
 
 ### Factories (use semantic factories — never raw `Fail()`)
+
+Every factory that takes `messages:` accepts an `IReadOnlyList<TKMessage>`. `ValidationFailed` additionally takes `inputErrors:` as `IReadOnlyList<InputError>`. The compiler refuses to build a literal-string array — the caller MUST use the SrcGen-emitted `TK.*` constants. See [i18n](#i18n) below.
+
+Every factory with a `messages?` parameter ships a sensible default — pass nothing for the canonical message, pass your own `TK.*` constants for context-specific wording.
 
 | Factory | Status | ErrorCode | Use case |
 |---|---|---|---|
 | `Ok<T>(data)` | 200 | (none) | Success with data |
 | `Created<T>(data)` | 201 | (none) | Resource created |
-| `NotFound` | 404 | `NOT_FOUND` | Lookup miss (none of the keys resolved) |
-| `Unauthorized` | 401 | `UNAUTHORIZED` | Missing / invalid auth |
-| `Forbidden` | 403 | `FORBIDDEN` | Authenticated but lacks permission |
-| `ValidationFailed(inputErrors, errorCode?)` | 400 | `VALIDATION_FAILED` (overridable) | Input failed schema/business validation. Override `errorCode` for domain-specific signals (e.g. `"FILES_INVALID_CONTENT_TYPE"`). |
+| `NotFound(messages?)` | 404 | `NOT_FOUND` | Lookup miss (none of the keys resolved) |
+| `Unauthorized(messages?)` | 401 | `UNAUTHORIZED` | Missing / invalid auth |
+| `Forbidden(messages?)` | 403 | `FORBIDDEN` | Authenticated but lacks permission |
+| `ValidationFailed(messages?, inputErrors?, errorCode?)` | 400 | `VALIDATION_FAILED` (overridable) | Input failed schema / business validation. `inputErrors` is `IReadOnlyList<InputError>`. Override `errorCode` for domain-specific signals (e.g. `"FILES_INVALID_CONTENT_TYPE"`). |
 | `Conflict(messages?)` | 409 | `CONFLICT` | DB constraint violation, version conflict |
 | `ServiceUnavailable(messages?, errorCode?)` | 503 | `SERVICE_UNAVAILABLE` (overridable) | Downstream dep down. Override `errorCode` for retry-vs-DLQ signals. |
 | `UnhandledException(messages?)` | 500 | `UNHANDLED_EXCEPTION` | Top-level safety net only. **Excluded from `IsTransientRetryable`** — unknown system state is never auto-retried. Exception details live in OTel span + log scope, never on the result. |
-| `PayloadTooLarge` | 413 | `PAYLOAD_TOO_LARGE` | Upload exceeded limit |
+| `PayloadTooLarge(messages?)` | 413 | `PAYLOAD_TOO_LARGE` | Upload exceeded limit |
 | `TooManyRequests(messages?, errorCode?)` | 429 | `RATE_LIMITED` (overridable) | Rate-limit middleware tripped. Override `errorCode` for client-side discrimination (e.g. `"OTP_RATE_LIMITED"`). |
-| `Cancelled` | 400 | `CANCELLED` | CancellationToken triggered |
-| `SomeFound<T>(data)` | 206 | `SOME_FOUND` | Partial success on batch lookup. `Success` is **false** — see partial-success ladder below. |
+| `Cancelled(messages?)` | 400 | `CANCELLED` | CancellationToken triggered |
+| `SomeFound<T>(data, messages?)` | 206 | `SOME_FOUND` | Partial success on batch lookup. `Success` is **false** — see partial-success ladder below. |
 
-`Fail<T>(statusCode, errorCode)` exists for re-mapping arbitrary upstream codes (HTTP proxy passthrough). **If a factory matches your case, USE the factory.**
+`Fail<T>(statusCode, errorCode, messages?)` exists for re-mapping arbitrary upstream codes (HTTP proxy passthrough). **If a factory matches your case, USE the factory.**
+
+### `InputError` — per-field errors
+
+```csharp
+public sealed record InputError(string Field, IReadOnlyList<TKMessage> Errors);
+```
+
+`Field` is the form-field name (matches the wire-format key the client uses to attach errors to inputs). `Errors` is one or more `TKMessage`s for that field. Wire format:
+
+```json
+{
+  "inputErrors": [
+    { "field": "email", "errors": [{ "key": "common_validation_EMAIL_INVALID" }] }
+  ]
+}
+```
+
+Self-describing — clients render under each input directly without needing to know positional layouts.
 
 ### Partial-Success Ladder
 
@@ -288,9 +314,11 @@ Defined for `string?`, `IEnumerable<T>?`, `Guid`, and `Guid?`. All handle `null`
 
 `CleanStr()` trims and collapses internal whitespace runs into a single space; returns `null` when empty afterward. `CleanDisplayStr()` additionally strips characters not allowed in display names (HTML tags, brackets, quotes, backticks, etc.) — preserves any Unicode-letter script + digits + spaces + `-` `'` `.` `,`.
 
-### `CleanAndValidateEmail()` / `CleanAndValidatePhoneNumber()`
+### `TryParseEmail()` / `TryParsePhoneNumber()` — `D2Result<string>`-returning validators
 
-**Domain-layer** validators. Intentionally throw `ArgumentException` on invalid input — domain types should fail fast on invariant violations. Application/handler layers prefer errors-as-values: use `FluentValidation` + `D2Result.ValidationFailed()` instead.
+`string?` extensions that return `D2Result<string>` with TK-keyed messages on failure. Compose naturally with the smart-constructor pattern in domain layers — chain via `Bind` / `BubbleFail` instead of try/catch. Worked example in [Domain Validation](#domain-validation--smart-constructor-pattern) below.
+
+Failure carries `TK.Common.Validation.EMAIL_INVALID` / `TK.Common.Validation.PHONE_INVALID` keys (translated client-side). Phone validation strips non-digits and enforces the 7-15 length envelope (E.164-compatible).
 
 ### `[RedactData]` attribute
 
@@ -487,14 +515,11 @@ Policy methods (composable on route declarations):
 
 **Gate at route level — no handler-level re-checks.** Handlers should trust `IRequestContext`. Route-level gates make security visible at the endpoint declaration.
 
-### Translation — D2Result interception
+### Translation — none (intentionally)
 
-Edge-edge middleware that intercepts D2Result responses and translates `messages[]` + `inputErrors[]` to the request's locale.
+There is **no** server-side HTTP translation middleware. `D2Result` ships `TKMessage` objects (`{ "key": "...", "params": { ... }? }`) verbatim over the wire; the SvelteKit client translates on receipt via Paraglide. This decision is permanent — see [i18n](#i18n) for the rationale.
 
-- Detects D2Result by top-level `statusCode` field
-- Buffers response, parses, translates message keys via `D2.Shared.I18n`, rewrites response
-- For `inputErrors[]`: index-0 is the canonical key, indices 1+ are alternates / context — only index 0 is translated; the rest pass through unchanged
-- Pass-through for non-D2Result responses (no overhead for non-localized payloads)
+The runtime `D2.Shared.I18n.Translator` does exist, but it is consumed only by **outbound notifications** (Courier emails / SMS / push) where the recipient locale is on their user profile and the rendered text must be inlined into the notification payload before delivery.
 
 ---
 
@@ -516,9 +541,97 @@ Connection-string parsers for `postgres://`, `redis://`, `amqp://`. Centralize p
 
 ## i18n
 
+The i18n stack splits into two libs:
+
+- **`D2.Shared.I18n.Abstractions`** — zero non-BCL deps. Owns `TKMessage`, the `ITranslator` interface, and the SrcGen-emitted `TK.*` constants. Domain layers reference this; `D2.Shared.Result` and `D2.Shared.Utilities` depend on it.
+- **`D2.Shared.I18n`** — runtime. Owns `Translator`, `SupportedLocales`, and the `AddD2I18n` DI extension. Pulls `IConfiguration` + DI Abstractions. **Domain code never references this** — only composition roots and outbound-notification handlers (Courier).
+
+### `TKMessage` — the structural primitive
+
+```csharp
+public sealed record TKMessage
+{
+    public string Key { get; }
+    public IReadOnlyDictionary<string, string>? Parameters { get; }
+    internal TKMessage(string key, IReadOnlyDictionary<string, string>? parameters = null);
+    public TKMessage With(string name, string value);
+    public TKMessage With(IReadOnlyDictionary<string, string> parameters);
+}
+```
+
+- **Internal constructor.** Producers can ONLY construct a `TKMessage` via the SrcGen-emitted `TK.*` constants. There is no public ctor. "Untranslated literal in `D2Result.Messages`" is structurally unrepresentable.
+- **Immutable.** `With(...)` returns a new instance; the static-readonly `TK` constants stay pinned.
+- **Order-independent param equality.** Two `TKMessage`s with the same key and same param bindings (regardless of `With()` call order) compare equal.
+
+```csharp
+// No params:
+D2Result<T>.NotFound(messages: [TK.Common.Errors.NOT_FOUND]);
+
+// With params:
+D2Result<T>.ValidationFailed(messages: [
+    TK.Auth.Errors.PASSWORD_WEAK.With("minLength", "12")]);
+
+// Per-field:
+D2Result<T>.ValidationFailed(inputErrors: [
+    new InputError("email", [TK.Common.Validation.EMAIL_INVALID])]);
+```
+
+### Wire format = code shape
+
+`TKMessage` ships verbatim over the wire — same JSON shape in code and on the wire, no separate "in-memory" vs "wire" representation:
+
+```json
+{ "key": "auth_errors_PASSWORD_WEAK", "params": { "minLength": "12" } }
+```
+
+Inside a full `D2Result`:
+
+```json
+{
+  "success": false,
+  "statusCode": 422,
+  "messages": [{ "key": "common_errors_VALIDATION_FAILED" }],
+  "inputErrors": [
+    { "field": "email", "errors": [{ "key": "common_validation_EMAIL_INVALID" }] }
+  ]
+}
+```
+
+**Translation happens client-side.** SvelteKit / Paraglide consumes the wire-format `TKMessage` objects and renders them in the active locale. The server is locale-unaware on the HTTP response path. CDN caching benefits, no `Vary: Accept-Language` fragmentation. The runtime `Translator` is invoked only for outbound notifications where recipient locale comes from the user profile.
+
+### TK Source Generator
+
+> **TL;DR.** Edit `contracts/messages/en-US.json`, save, build. The constant `TK.Domain.Category.IDENTIFIER` appears at next IntelliSense hit. No registration step, no manual TK class to maintain. Drift between JSON and code is impossible by construction. Read on for the rules; you can skip the internals on first pass.
+
+`D2.Shared.I18n.SourceGen.TKGenerator` (a Roslyn `IIncrementalGenerator` referenced as Analyzer) reads `contracts/messages/*.json` via `<AdditionalFiles>`, treats `en-US.json` as the source of truth, decomposes each key (`{domain}_{category}_{IDENTIFIER}`) into a TK path (`TK.Domain.Category.IDENTIFIER`), and emits a `TK.g.cs` containing nested `static partial class` chains with one `static readonly TKMessage` per key.
+
+| JSON key | Generated path |
+|---|---|
+| `common_errors_NOT_FOUND` | `TK.Common.Errors.NOT_FOUND` |
+| `auth_email_invitation_subject` | `TK.Auth.Email.INVITATION_SUBJECT` |
+| `geo_validation_address_line1_required` | `TK.Geo.Validation.ADDRESS_LINE1_REQUIRED` |
+
+Build-time diagnostics (`D2I18N001`–`D2I18N006`) cover invalid keys, per-locale coverage gaps, key collisions, orphaned keys in non-en-US catalogs, missing `en-US.json`, and malformed JSON. Drift between code constants and JSON catalog keys is structurally impossible — the constant doesn't exist if the JSON key doesn't.
+
+Full surface in [`server/shared/dotnet/i18n-abstractions/README.md`](../server/shared/dotnet/i18n-abstractions/README.md).
+
+### TK constants — never bare literals
+
+Outside the SrcGen-emitted `TK.*` constants, **never write a translation-key string literal**. The `TKMessage` ctor is `internal` precisely to make this impossible:
+
+```csharp
+// ✗ Compile error — no public ctor
+new TKMessage("common_errors_NOT_FOUND");
+
+// ✓ Use the constant
+TK.Common.Errors.NOT_FOUND
+```
+
+Backend handler messages (`D2Result.Messages`), input errors (`D2Result.InputErrors`), and notification content (D2.Courier) all consume `TKMessage`. End users see all of these — they all need to be translation keys.
+
 ### BCP 47 locale convention
 
-10-locale list from V1 (matches `contracts/messages/`):
+10-locale list from v1 (matches `contracts/messages/`):
 - `en-US`, `en-CA`, `en-GB`
 - `fr-FR`, `fr-CA`
 - `es-ES`, `es-MX`
@@ -526,13 +639,7 @@ Connection-string parsers for `postgres://`, `redis://`, `amqp://`. Centralize p
 - `it-IT`
 - `ja-JP`
 
-Driven by env vars (per `parseEnvArray()` above): `PUBLIC_ENABLED_LOCALES__0`, `PUBLIC_ENABLED_LOCALES__1`, etc. + `PUBLIC_DEFAULT_LOCALE`.
-
-### TK constants
-
-All translation keys live as constants in `D2.Shared.I18n.TK` (or Paraglide `m.*` in SvelteKit). **Never bare string literals** outside `D2Result` factory `messageKey:` parameters (those are themselves TK constants).
-
-Backend handler messages (`D2Result.messages`), input errors (`D2Result.inputErrors`), and notification content (D2.Courier) all use TK keys. End users see all of these.
+Driven by env vars (per `parseEnvArray()` above): `PUBLIC_ENABLED_LOCALES__0`, `PUBLIC_ENABLED_LOCALES__1`, etc. + `PUBLIC_DEFAULT_LOCALE`. `SupportedLocales` reads these at construction and exposes canonical-cased `All` / `Base` / `LanguageDefaults` properties.
 
 ### Translation key conventions (per CLAUDE.md §6)
 
@@ -543,7 +650,58 @@ Backend handler messages (`D2Result.messages`), input errors (`D2Result.inputErr
 - Backend handler messages: prefer `common_errors_*` keys
 - Reuse existing keys where they match
 
-When adding new keys: add to ALL locale files in `contracts/messages/` simultaneously. They MUST stay in sync.
+When adding new keys: add to ALL locale files in `contracts/messages/` simultaneously. They MUST stay in sync. The SrcGen surfaces gaps via D2I18N002 at build time — but adding-to-en-US-only still ships a missing-translation latent bug; catch it at PR review.
+
+---
+
+## Domain Validation — smart-constructor pattern
+
+Domain types use **smart-constructor factories returning `D2Result<T>`** for all input-validating construction. Throwing constructors are reserved for programmer-bug invariants (null where non-null is required, internal state corruption that can't be triggered by user input).
+
+```csharp
+public sealed record Contact
+{
+    public string Email { get; init; }
+
+    private Contact(string email) => Email = email;
+
+    public static D2Result<Contact> Create(string? rawEmail)
+    {
+        var emailResult = rawEmail.TryParseEmail();
+        if (emailResult.BubbleOnFailure<string, Contact>(out var bubbled, out var email))
+            return bubbled;
+
+        return D2Result<Contact>.Ok(new Contact(email!));
+    }
+}
+```
+
+The pattern:
+
+1. **Private constructor** — domain instances cannot be created bypassing validation.
+2. **Static `Create` returning `D2Result<TSelf>`** — primitive-level rules go through the `string?.TryParse*` extensions in `D2.Shared.Utilities`; cross-field rules belong to the `Create` method itself.
+3. **`BubbleFail` chains.** Each primitive validation result bubbles up. The composite never reports half-validated state — either everything passes and you get `Ok`, or the first failure shapes the response.
+4. **`TKMessage` keys.** Failure messages are `TK.*` constants; the wire-format response slots them straight into `Messages` / `InputErrors`.
+
+### FluentValidation removed from v2
+
+v1 had two validation layers — FluentValidation in the app layer + defensive throws in domain. v2 collapses to one: smart-constructor factories on domain types. **No `FluentValidation` package reference anywhere in v2.**
+
+- Primitive rules (email shape, phone shape, URL shape) → `string?.TryParse*` in `D2.Shared.Utilities`.
+- Cross-field rules (start-date < end-date, password matches confirm, etc.) → composite `Create` method on the domain type.
+- DTO-bag pre-validation at HTTP boundaries (when the body has so many disjoint shape concerns that mapping straight to a domain type would be premature) → a thin static method per route that returns `D2Result<TInput>`. Keep these tiny — most boundaries can map directly to the domain type and let `Create` validate.
+
+### When to throw vs return
+
+| Case | Mechanism |
+|---|---|
+| User input fails validation | `D2Result<T>.ValidationFailed` with `TK.*` keys |
+| External lookup misses | `D2Result<T>.NotFound` |
+| Downstream service errors | `BubbleFail` from the result |
+| Programmer-bug invariant (null param marked non-null, internal corrupted state) | Throw `ArgumentNullException` / `InvalidOperationException` |
+| Cancellation | Re-throw `OperationCanceledException` (or let it propagate); `BaseRepoHandler` maps it to `D2Result.Cancelled` |
+
+The rule: **anything caused by data the caller controls is a result, not an exception. Anything caused by code that should be impossible is an exception.**
 
 ---
 

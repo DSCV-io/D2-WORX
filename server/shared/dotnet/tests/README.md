@@ -40,19 +40,29 @@ server/shared/dotnet/tests/
    │     ├─ SingleflightLayerTests.cs                  # SF layer wrapping
    │     ├─ CircuitBreakerLayerTests.cs                # CB layer wrapping
    │     └─ RetryLayerTests.cs                         # Retry layer wrapping
-   └─ Utilities/                                       # tests for D2.Shared.Utilities
-      ├─ Attributes/
-      │  └─ RedactDataAttributeTests.cs                # attribute defaults + reflective discovery
-      ├─ Configuration/
-      │  ├─ ConnectionStringHelperTests.cs             # URI ↔ wire-format conversion + env-var resolution
-      │  ├─ D2EnvTests.cs                              # .env file loader + discovery + precedence
-      │  └─ EnvVarMutatingFixture.cs                   # collection fixture for env-var-touching tests
-      ├─ Extensions/
-      │  ├─ EnumerableExtensionsTests.cs               # Truthy / Falsey / Clean
-      │  ├─ GuidExtensionsTests.cs                     # Truthy / Falsey for Guid / Guid?
-      │  └─ StringExtensionsTests.cs                   # Truthy / Falsey / ToNullIfEmpty / CleanStr / validators
-      └─ Serialization/
-         └─ SerializerOptionsTests.cs                  # frozen JsonSerializerOptions presets
+   ├─ Utilities/                                       # tests for D2.Shared.Utilities
+   │  ├─ Attributes/
+   │  │  └─ RedactDataAttributeTests.cs                # attribute defaults + reflective discovery
+   │  ├─ Configuration/
+   │  │  ├─ ConnectionStringHelperTests.cs             # URI ↔ wire-format conversion + env-var resolution
+   │  │  ├─ D2EnvTests.cs                              # .env file loader + discovery + precedence
+   │  │  └─ EnvVarMutatingFixture.cs                   # collection fixture for env-var-touching tests
+   │  ├─ Extensions/
+   │  │  ├─ EnumerableExtensionsTests.cs               # Truthy / Falsey / Clean
+   │  │  ├─ GuidExtensionsTests.cs                     # Truthy / Falsey for Guid / Guid?
+   │  │  └─ StringExtensionsTests.cs                   # boundary helpers + TryParseEmail / TryParsePhoneNumber → D2Result<string>
+   │  └─ Serialization/
+   │     └─ SerializerOptionsTests.cs                  # frozen JsonSerializerOptions presets
+   └─ I18n/                                            # tests for D2.Shared.I18n + .Abstractions + .SourceGen
+      ├─ TKMessageTests.cs                             # equality + immutability + JSON wire format roundtrip
+      ├─ SupportedLocalesTests.cs                      # ToBcp47 + Configure + IsValid + Resolve (instance, no [Collection] needed)
+      ├─ TranslatorTests.cs                            # T() lookup + parameter substitution + concurrency stress
+      ├─ I18nServiceCollectionExtensionsTests.cs       # AddD2I18n DI registration
+      ├─ TKGeneratedTests.cs                           # smoke: SrcGen output matches en-US.json end-to-end
+      └─ SourceGen/
+         ├─ KeyDecomposerTests.cs                      # JSON-key → TK-path decomposition, all invalid edges
+         ├─ TKEmitterTests.cs                          # snapshot + adversarial (D2I18N001-006 emission)
+         └─ DiagnosticIdsTests.cs                      # diagnostic ID stability gate
 ```
 
 The tree mirrors the source layout: `Unit/{LibName}/{LibSourceFile}Tests.cs` per lib being tested. New libs add their own subdirectory under `Unit/`.

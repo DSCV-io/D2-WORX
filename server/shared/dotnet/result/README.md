@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 `D2Result<T>` — errors-as-values pattern for D²-WORX. Replaces exception-based control flow throughout the backend. Every handler returns a `D2Result<T>`; callers branch on `result.Success` and propagate failures via `BubbleFail`.
 
-Foundational lib (zero runtime deps); consumed by every other library and service.
+Foundational lib. References only `D2.Shared.I18n.Abstractions` (itself zero-runtime-dep) so `Messages` and `InputErrors` can be typed as `TKMessage` — a structural compile-time guarantee that every user-visible message is a translation key. Consumed by every other library and service.
 
 ---
 
@@ -22,6 +22,7 @@ Foundational lib (zero runtime deps); consumed by every other library and servic
 | `D2Result.Generic.Monadic.cs` | Instance methods `Bind` / `Map` / `Match` for genuine monadic pipelines |
 | `D2ResultAsyncExtensions.cs` | Extension methods on `Task<D2Result<T>>` + `ValueTask<D2Result<T>>`: `BindAsync` / `MapAsync` / `ThenAsync` |
 | `D2ResultGuardExtensions.cs` | `BubbleOnFailure` — the workhorse guard helper for the multi-value-threading pattern |
+| `InputError.cs` | `sealed record InputError(string Field, IReadOnlyList<TKMessage> Errors)` — per-field error rows used in `D2Result.InputErrors`. |
 | `ErrorCodes.cs` | Standardized error code constants — `NOT_FOUND`, `FORBIDDEN`, `VALIDATION_FAILED`, etc. |
 
 ---
@@ -34,8 +35,8 @@ Foundational lib (zero runtime deps); consumed by every other library and servic
 |---|---|
 | `Success` (bool) | True on the Ok path; false on every failure factory (including `SomeFound` — it's on the partial-success ladder). |
 | `Failed` (bool) | Convenience inverse of `Success`. |
-| `Messages` (`List<string>`) | TK translation keys (resolved by gateway middleware before reaching the client) or domain-specific message strings. |
-| `InputErrors` (`List<List<string>>`) | Per-field error rows. Each inner list begins with the field name, followed by one or more error messages for that field. |
+| `Messages` (`IReadOnlyList<TKMessage>`) | Translation-key messages. Wire format: `[{ "key": "...", "params": { ... }? }, ...]`. The SvelteKit client renders these via Paraglide; the server stays locale-unaware. Producers MUST use the SrcGen-emitted `TK.*` constants from `D2.Shared.I18n.Abstractions` — `TKMessage` has an internal ctor, so untranslated literals are unrepresentable. |
+| `InputErrors` (`IReadOnlyList<InputError>`) | Per-field error rows. `InputError = (string Field, IReadOnlyList<TKMessage> Errors)`. Wire format: `[{ "field": "email", "errors": [{ "key": "..." }, ...] }, ...]` — self-describing; clients render under each input directly. |
 | `StatusCode` (HttpStatusCode) | HTTP-equivalent status. Defaults to 200 on success, 400 on failure. Each semantic factory sets the canonical code. |
 | `ErrorCode` (string?) | One of `ErrorCodes.*`, or a domain-specific override (e.g. `"FILES_INVALID_CONTENT_TYPE"`). |
 | `TraceId` (string?) | Trace identifier for cross-service correlation. Auto-injected by `BaseHandler`; manual on factory calls outside handlers. |
@@ -171,26 +172,29 @@ Returns `true` when failure (caller returns `bubbled` immediately); `false` when
 
 ---
 
-## Default messages — TK translation keys
+## Default messages
 
-Failure factories default `Messages` to TK key strings (`"common_errors_NOT_FOUND"`, `"common_errors_VALIDATION_FAILED"`, etc.) rather than English prose. The translation middleware resolves these keys to locale-appropriate text before they reach the client. Keys are hardcoded inside this lib instead of referencing a TK constants class to keep `D2.Shared.Result` free of an `I18n` dependency.
+Every failure factory with a `messages?` parameter ships a sensible default `TKMessage`, so the canonical case is `D2Result<T>.NotFound()` with no arguments. Pass your own `TK.*` constants for context-specific wording. The supplied list **replaces** the default — never appended.
 
-When a factory accepts `messages: [...]`, the supplied list **replaces** the default — caller is responsible for using TK keys (or domain-specific strings if the message is intentionally not localised).
+The `TKMessage` type has an `internal` ctor in `D2.Shared.I18n.Abstractions`, so callers must reach for the SrcGen-emitted `TK.*` constants — raw-string escape hatches don't compile.
+
+There is **no server-side translation middleware**. `TKMessage` ships verbatim over the wire; the SvelteKit client (Paraglide) renders in the active locale. Server-side translation happens only for outbound notifications (Courier emails / SMS) where the recipient locale comes from the user profile.
 
 ---
 
 ## Tests
 
-`server/shared/dotnet/tests/Unit/Result/` — 132 unit tests covering:
+`server/shared/dotnet/tests/Unit/Result/` — adversarial coverage at 100 % lines / 100 % branches. Categories:
 
-- All factory shapes + custom-message override paths
+- All factory shapes + custom-message override paths (asserting `TKMessage` Key + Params equality, not raw strings)
 - Per-code booleans, including the `IsTransientRetryable` exclusion of `UnhandledException`
 - Generic factories + `BubbleFail` / `Bubble` cross-type propagation
+- `InputError` shape — record equality, `TKMessage[]`-typed errors, JSON wire-format roundtrip
 - `CheckSuccess` / `CheckFailure` including partial-success data exposure
 - Monadic laws (left identity, right identity, associativity)
 - Lazy evaluation (next / projection NOT invoked on failure)
 - Sync + async chaining, short-circuiting on mid-chain failure
 - `BubbleOnFailure` happy path + handler-shaped call site
-- Adversarial: empty/null/whitespace inputs, errorCode override breaking auto-classification, exception propagation through Map/Bind, SomeFound treated-as-failure-but-carrying-data
+- Adversarial: empty/null/whitespace inputs, errorCode override breaking auto-classification, exception propagation through Map/Bind, `SomeFound` treated-as-failure-but-carrying-data
 
 Run: `dotnet test server/shared/dotnet/tests`

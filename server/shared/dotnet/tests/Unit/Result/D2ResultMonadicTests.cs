@@ -7,6 +7,7 @@
 namespace D2.Shared.Tests.Unit.Result;
 
 using AwesomeAssertions;
+using D2.Shared.I18n;
 using D2.Shared.Result;
 using Xunit;
 
@@ -48,13 +49,13 @@ public sealed class D2ResultMonadicTests
     [Fact]
     public void Bind_OnFailure_PropagatesUpstreamMetadata()
     {
-        var seed = D2Result<int>.Conflict(messages: ["upstream conflict"], traceId: "t-up");
+        var seed = D2Result<int>.Conflict(messages: [TK.Common.Errors.UNKNOWN], traceId: "t-up");
 
         var result = seed.Bind(_ => D2Result<string>.Ok("never"));
 
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(ErrorCodes.CONFLICT);
-        result.Messages.Should().Equal("upstream conflict");
+        result.Messages.Should().Equal(TK.Common.Errors.UNKNOWN);
         result.TraceId.Should().Be("t-up");
     }
 
@@ -65,11 +66,12 @@ public sealed class D2ResultMonadicTests
         // (not the upstream success).
         var seed = D2Result<int>.Ok(5);
 
-        var result = seed.Bind(_ => D2Result<string>.Forbidden(messages: ["downstream forbidden"]));
+        var result = seed.Bind(_ =>
+            D2Result<string>.Forbidden(messages: [TK.Common.Errors.UNKNOWN]));
 
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(ErrorCodes.FORBIDDEN);
-        result.Messages.Should().Equal("downstream forbidden");
+        result.Messages.Should().Equal(TK.Common.Errors.UNKNOWN);
     }
 
     [Fact]
@@ -81,7 +83,7 @@ public sealed class D2ResultMonadicTests
         var step3Invoked = false;
 
         var result = seed
-            .Bind(_ => D2Result<int>.NotFound(messages: ["step2 failed"]))
+            .Bind(_ => D2Result<int>.NotFound(messages: [TK.Common.Errors.UNKNOWN]))
             .Bind(x =>
             {
                 step3Invoked = true;
@@ -90,7 +92,7 @@ public sealed class D2ResultMonadicTests
 
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(ErrorCodes.NOT_FOUND);
-        result.Messages.Should().Equal("step2 failed");
+        result.Messages.Should().Equal(TK.Common.Errors.UNKNOWN);
         step3Invoked.Should().BeFalse();
     }
 
@@ -140,15 +142,15 @@ public sealed class D2ResultMonadicTests
     public void Map_OnFailure_PropagatesUpstreamMetadata()
     {
         var seed = D2Result<int>.ValidationFailed(
-            messages: ["bad input"],
-            inputErrors: [["x", "negative"]],
+            messages: [TK.Common.Errors.UNKNOWN],
+            inputErrors: [new InputError("x", [TK.Common.Validation.NON_EMPTY_LIST])],
             traceId: "t");
 
         var result = seed.Map(x => x.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(ErrorCodes.VALIDATION_FAILED);
-        result.Messages.Should().Equal("bad input");
+        result.Messages.Should().Equal(TK.Common.Errors.UNKNOWN);
         result.InputErrors.Should().HaveCount(1);
         result.TraceId.Should().Be("t");
     }
@@ -185,7 +187,7 @@ public sealed class D2ResultMonadicTests
     [Fact]
     public void Match_OnFailure_InvokesOnFailureWithFullResult()
     {
-        var seed = D2Result<int>.NotFound(messages: ["custom"]);
+        var seed = D2Result<int>.NotFound(messages: [TK.Common.Errors.UNKNOWN]);
 
         var result = seed.Match(
             onSuccess: _ => "should not be called",
@@ -265,13 +267,13 @@ public sealed class D2ResultMonadicTests
     public void MonadLaw_RightIdentity_HoldsForFailureToo()
     {
         // For failure, "Ok" is never invoked, but the failure propagates unchanged.
-        var m = D2Result<int>.Conflict(messages: ["msg"]);
+        var m = D2Result<int>.Conflict(messages: [TK.Common.Errors.UNKNOWN]);
 
         var rhs = m.Bind(x => D2Result<int>.Ok(x));
 
         rhs.Success.Should().BeFalse();
         rhs.ErrorCode.Should().Be(ErrorCodes.CONFLICT);
-        rhs.Messages.Should().Equal("msg");
+        rhs.Messages.Should().Equal(TK.Common.Errors.UNKNOWN);
     }
 
     [Fact]

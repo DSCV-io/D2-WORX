@@ -5,4 +5,15 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <RootNamespace>D2.Shared.Result</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      D2.Shared.I18n.Abstractions provides TKMessage + the SrcGen-emitted TK
+      constants. D2Result.Messages and InputError.Errors are typed as
+      IReadOnlyList<TKMessage> so the type system enforces "all user-facing
+      messages are translation keys." Abstractions is zero-runtime-dep so
+      D2.Shared.Result stays domain-safe.
+    -->
+    <ProjectReference Include="..\i18n-abstractions\D2.Shared.I18n.Abstractions.csproj" />
+  </ItemGroup>
 </Project>

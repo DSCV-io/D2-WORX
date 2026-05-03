@@ -47,6 +47,15 @@ Copyright (c) DCSV. All rights reserved.
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\i18n-abstractions\D2.Shared.I18n.Abstractions.csproj" />
+    <ProjectReference Include="..\i18n\D2.Shared.I18n.csproj" />
+    <!--
+      SrcGen is referenced as a NORMAL library (not as an Analyzer) so
+      KeyDecomposer / TKEmitter / EmitDiagnostic etc. can be unit-tested
+      directly. The Tests project does NOT run the generator (no
+      AdditionalFiles for messages JSON wired here).
+    -->
+    <ProjectReference Include="..\i18n-abstractions\source-gen\D2.Shared.I18n.SourceGen.csproj" />
     <ProjectReference Include="..\resilience\D2.Shared.Resilience.csproj" />
     <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />

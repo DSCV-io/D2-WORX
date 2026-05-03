@@ -7,6 +7,7 @@
 namespace D2.Shared.Tests.Unit.Result;
 
 using AwesomeAssertions;
+using D2.Shared.I18n;
 using D2.Shared.Result;
 using Xunit;
 
@@ -51,11 +52,11 @@ public sealed class D2ResultAsyncExtensionsTests
         ValueTask<D2Result<int>> upstream = ValueTask.FromResult(D2Result<int>.Ok(5));
 
         var result = await upstream.BindAsync(_ =>
-            ValueTask.FromResult(D2Result<string>.Forbidden(messages: ["downstream"])));
+            ValueTask.FromResult(D2Result<string>.Forbidden(messages: [TK.Common.Errors.UNKNOWN])));
 
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(ErrorCodes.FORBIDDEN);
-        result.Messages.Should().Equal("downstream");
+        result.Messages.Should().Equal(TK.Common.Errors.UNKNOWN);
     }
 
     // ----------------------------------------------------------------------
@@ -227,7 +228,8 @@ public sealed class D2ResultAsyncExtensionsTests
 
         var result = await seed
             .BindAsync(x => ValueTask.FromResult(D2Result<int>.Ok(x + 1)))
-            .BindAsync(_ => ValueTask.FromResult(D2Result<int>.NotFound(messages: ["mid"])))
+            .BindAsync(_ => ValueTask.FromResult(
+                D2Result<int>.NotFound(messages: [TK.Common.Errors.UNKNOWN])))
             .BindAsync(x =>
             {
                 step3Invoked = true;
@@ -236,7 +238,7 @@ public sealed class D2ResultAsyncExtensionsTests
 
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(ErrorCodes.NOT_FOUND);
-        result.Messages.Should().Equal("mid");
+        result.Messages.Should().Equal(TK.Common.Errors.UNKNOWN);
         step3Invoked.Should().BeFalse();
     }
 

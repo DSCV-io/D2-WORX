@@ -19,7 +19,7 @@ Phase 0 has four execution stages. The **Granular checklist** column links to th
 | 1. Pre-wipe checkpoint (tag `pre-v2-wipe`) | ✅ Complete | (single git tag — no detail checklist) |
 | 2. Wipe commit (single commit on `nova` branch) | ✅ Complete | [Definition of done (wipe commit)](#definition-of-done-wipe-commit) |
 | 3. Documentation pass (placeholder READMEs + extracted patterns) | ✅ Complete | [Definition of done (documentation pass)](#definition-of-done-documentation-pass) |
-| 4. Shared library implementation (11 libs per V2.md §4 Phase 0) | 🔄 **In progress — LLM: read this stage's per-lib checklist below before any work** | [Per-library checklist (Stage 4)](#per-library-checklist-stage-4) |
+| 4. Shared library implementation (11 libs per V2.md §4 Phase 0) | 🔄 **In progress — Waves 1-3 done (Result, Utilities, Resilience, I18n.Abstractions, I18n). LLM: pick the next lib from the per-library checklist with the user before starting work.** | [Per-library checklist (Stage 4)](#per-library-checklist-stage-4) |
 
 **Status legend**: ✅ Complete · 🔄 In progress · ☐ Not started · ⏸ Blocked
 
@@ -35,12 +35,13 @@ Build order respects the dependency graph. Each lib lands as one squash-merged c
 
 | Wave | Lib | Status | Branch | Depends on |
 |---|---|---|---|---|
-| 1 | `D2.Shared.Result` | ✅ Complete | `n/result` | (none — foundational) |
-| 1 | `D2.Shared.Utilities` | ✅ Complete | `n/utilities` | (none — foundational) |
-| 1 | `D2.Shared.Resilience` | ✅ Complete | `n/utilities` | Result (for the `RetryD2ResultAsync` predicate) — split out from Utilities so retry / circuit-breaker / singleflight can be consumed independently of the boundary helpers |
+| 1 | `D2.Shared.Result` | ✅ Complete | `n/result` (merged) | I18n.Abstractions (TKMessage typing on `Messages` / `InputErrors`) — split was retroactively introduced during the I18n branch and merged back into Result via the same squash |
+| 1 | `D2.Shared.Utilities` | ✅ Complete | `n/utilities` (merged) | Result + I18n.Abstractions (`TryParseEmail` / `TryParsePhoneNumber` return `D2Result<string>` with `TK.*` keys) |
+| 1 | `D2.Shared.Resilience` | ✅ Complete | `n/utilities` (merged) | Result (for the `RetryD2ResultAsync` predicate) — split out from Utilities so retry / circuit-breaker / singleflight can be consumed independently of the boundary helpers |
 | 2 | `D2.Shared.Handler` | ☐ Not started | `n/handler` | Result, Utilities, Resilience — includes BaseRepoHandler design (see [Phase 0 design notes](#phase-0-design-notes)) |
-| 3 | `D2.Shared.Tests` | 🔄 In progress (scaffolded with Result coverage; grows per-lib) | `n/result` (born here) | Handler (test infra for the libs above) |
-| 3 | `D2.Shared.I18n` | ☐ Not started | `n/i18n` | Utilities |
+| 3 | `D2.Shared.Tests` | 🔄 In progress (Result + Utilities + Resilience + I18n.Abstractions + I18n covered; grows per-lib) | `n/result` (born here); subsequent libs add `Unit/{Lib}/` per-PR | Handler (test infra for the libs above) |
+| 3 | `D2.Shared.I18n.Abstractions` | ✅ Complete | `n/i18n` | (none — zero non-BCL deps; ships TKMessage + ITranslator + SrcGen-emitted TK constants) |
+| 3 | `D2.Shared.I18n` | ✅ Complete | `n/i18n` | I18n.Abstractions, Utilities, IConfiguration, DI Abstractions |
 | 4 | `D2.Shared.Encryption` | ☐ Not started | `n/encryption` | Result, Utilities |
 | 4 | `D2.Shared.Auth` | ☐ Not started | `n/auth` | Result, Utilities |
 | 5 | `D2.Shared.Caching.Memory` | ☐ Not started | `n/caching-memory` | Handler |

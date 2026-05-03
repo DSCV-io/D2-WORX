@@ -7,32 +7,40 @@
 namespace D2.Shared.Result;
 
 using System.Net;
+using D2.Shared.I18n;
 
 /// <summary>
 /// Represents the result of an operation, including success status, messages, errors,
 /// and related metadata. The non-generic base type for results that do not carry a payload.
 /// </summary>
 /// <remarks>
-/// Default failure messages are TK translation key strings (e.g. <c>"common_errors_NOT_FOUND"</c>)
-/// rather than English prose. The translation middleware resolves these keys to locale-appropriate
-/// text before they reach the client. Keys are hardcoded here instead of referencing a TK constants
-/// class to keep <c>D2.Shared.Result</c> free of an <c>I18n</c> dependency.
+/// <para>
+/// <see cref="Messages"/> entries are <see cref="TKMessage"/> instances — translation
+/// keys with optional parameter bindings. The wire format ships them as
+/// <c>{ "key": "..." }</c> objects; SvelteKit / browser-side Paraglide translates
+/// them on receipt. Server-side translation (for outbound notifications) goes
+/// through <see cref="ITranslator"/>.
+/// </para>
+/// <para>
+/// Producers obtain <see cref="TKMessage"/> instances exclusively via the
+/// SrcGen-emitted <c>TK</c> constants (e.g. <c>TK.Common.Errors.NOT_FOUND</c>);
+/// the type system makes "untranslated literal in <c>Messages</c>" structurally
+/// unrepresentable.
+/// </para>
 /// </remarks>
 public partial class D2Result
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="D2Result"/> class.
     /// </summary>
-    ///
     /// <param name="success">
     /// Whether the operation was successful. Required.
     /// </param>
     /// <param name="messages">
-    /// Messages related to the operation. Optional; defaults to empty list.
+    /// Translation messages related to the operation. Optional; defaults to empty.
     /// </param>
     /// <param name="inputErrors">
-    /// Two-dimensional list of input errors. Each inner list begins with the field name
-    /// followed by one or more error messages for that field. Optional; defaults to empty list.
+    /// Per-field input validation errors. Optional; defaults to empty.
     /// </param>
     /// <param name="statusCode">
     /// The <see cref="HttpStatusCode"/> for the operation. Optional; defaults to
@@ -47,8 +55,8 @@ public partial class D2Result
     /// </param>
     public D2Result(
         bool success,
-        List<string>? messages = null,
-        List<List<string>>? inputErrors = null,
+        IReadOnlyList<TKMessage>? messages = null,
+        IReadOnlyList<InputError>? inputErrors = null,
         HttpStatusCode? statusCode = null,
         string? errorCode = null,
         string? traceId = null)
@@ -72,16 +80,17 @@ public partial class D2Result
     public bool Failed => !Success;
 
     /// <summary>
-    /// Gets the list of messages related to the operation.
+    /// Gets the translation messages related to the operation. Each message is a
+    /// <see cref="TKMessage"/> (translation key + optional parameter bindings).
     /// </summary>
-    public List<string> Messages { get; }
+    public IReadOnlyList<TKMessage> Messages { get; }
 
     /// <summary>
-    /// Gets the two-dimensional list of input errors. Each inner list begins with the
-    /// field name, followed by one or more error messages for that field. Allows multiple
-    /// errors per field while letting clients group them by field for display.
+    /// Gets the per-field input validation errors. Each <see cref="InputError"/>
+    /// pairs a field name with one or more <see cref="TKMessage"/> entries
+    /// describing what's wrong with that field.
     /// </summary>
-    public List<List<string>> InputErrors { get; }
+    public IReadOnlyList<InputError> InputErrors { get; }
 
     /// <summary>
     /// Gets the <see cref="HttpStatusCode"/> for the operation.

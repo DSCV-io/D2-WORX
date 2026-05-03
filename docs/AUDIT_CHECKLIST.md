@@ -18,7 +18,7 @@ Copyright (c) DCSV. All rights reserved.
 - [ ] IDOR checks on every endpoint/handler that accesses resources by ID
 - [ ] **Session-derived identifiers** — endpoints must NEVER accept user-provided userId, orgId, or role when those values can be resolved from the session/JWT. Derive scope from claims, not from request body/params. User-supplied identifiers for these fields = IDOR vulnerability
 - [ ] Auth bypass paths — can unauthenticated requests reach protected handlers?
-- [ ] Input validation completeness — every handler validates input at top of `executeAsync` (FluentValidation .NET / equivalent)
+- [ ] Input validation completeness — every handler validates input at top of `ExecuteAsync` (smart-constructor `Domain.Create(...) → D2Result<Domain>` or per-route DTO pre-validation; **no FluentValidation in v2**)
 - [ ] String max lengths on all string fields
 - [ ] Constant-time comparisons on all secret/key comparisons (`CryptographicOperations.FixedTimeEquals` .NET / `timingSafeEqual` Node)
 - [ ] Header injection / XSS via user-controlled response data (Content-Disposition, error messages)
@@ -51,7 +51,7 @@ Copyright (c) DCSV. All rights reserved.
 - [ ] `[RedactData]` attribute on every PII-bearing type / property — auto-redacted across all Serilog logging (recursive, type-cached). Verify new types touching emails / phones / IPs / addresses / names / message content carry the attribute
 - [ ] Manual `logger.*` calls reviewed for PII leaks — never log fields that should be redacted via manual calls; let `[RedactData]` + structured logger handle it
 - [ ] Semantic D2Result factories — no raw `Fail()` when a factory exists (Ok, Created, NotFound, Unauthorized, Forbidden, ValidationFailed, Conflict, ServiceUnavailable, UnhandledException, PayloadTooLarge, Cancelled, SomeFound)
-- [ ] Validate inputs BEFORE infrastructure calls — FluentValidation at TOP of `executeAsync`, before any downstream calls
+- [ ] Validate inputs BEFORE infrastructure calls — smart-constructor `Domain.Create(input) → D2Result<Domain>` at the TOP of `ExecuteAsync`, before any downstream / infrastructure calls. `BubbleFail` on the validation result; never let Redis / DB be the first to reject invalid data
 - [ ] No `!` for silencing warnings (only after `Falsey/Truthy` early return guard where value is guaranteed non-null)
 - [ ] Build warnings = bugs — zero warnings on `dotnet build`, `jb inspectcode`, ESLint, Prettier
 - [ ] Domain model is source of truth for nullability — if domain field is optional, proto field MUST use `optional` keyword
@@ -62,6 +62,7 @@ Copyright (c) DCSV. All rights reserved.
 - [ ] (SvelteKit BFF only) Prefer `undefined` over `null` in TypeScript — use `field?: string` over `field: string | null`
 - [ ] (SvelteKit BFF only) `truthyOrUndefined()` at boundaries — user input, proto values → domain types
 - [ ] Structured logger (`ILogger`) not `Console.*` — all logging through the structured logger for OTel correlation
+- [ ] Regex `matchTimeout` ONLY on patterns with **super-linear** backtracking (nested quantifiers `(a+)+`, alternation overlap `(a|aa)+`). Patterns with no backtracking (`\s+`, `[^\d]`) or with linear backtracking against upstream-bounded input (`[^@\s]+\.[^@\s]+` against HTTP-bounded email length) need NO timeout — a tight timeout there flakes on system jitter and protects nothing real. When a timeout IS warranted, set 10-25 ms AND pre-warm the JIT in a `static readonly` field initializer. Document the bucket (no-backtrack / linear-bounded / super-linear) in the pattern's XML doc. Full rule → CLAUDE.md §5 "Regex `matchTimeout` discipline"
 
 ## Conventions
 

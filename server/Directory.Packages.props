@@ -24,6 +24,15 @@ Copyright (c) DCSV. All rights reserved.
     <PackageVersion Include="dotenv.net" Version="4.0.2" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.7" />
+
+    <!-- Roslyn — for D2.Shared.I18n.SourceGen (TK constants generator). -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" />
+    <!-- System.Text.Json — for the SrcGen's catalog parsing (netstandard2.0
+         doesn't ship S.T.Json in-box; pinned version avoids host conflicts). -->
+    <PackageVersion Include="System.Text.Json" Version="9.0.0" />
   </ItemGroup>
 
   <!-- Test infrastructure — referenced by D2.Shared.Tests + per-service test csprojs -->

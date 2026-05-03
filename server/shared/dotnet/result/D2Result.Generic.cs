@@ -7,6 +7,7 @@
 namespace D2.Shared.Result;
 
 using System.Net;
+using D2.Shared.I18n;
 
 /// <summary>
 /// Represents the result of an operation that produces a payload of type
@@ -20,33 +21,20 @@ public sealed partial class D2Result<TData> : D2Result
     /// <summary>
     /// Initializes a new instance of the <see cref="D2Result{TData}"/> class.
     /// </summary>
-    ///
-    /// <param name="success">
-    /// Whether the operation was successful.
-    /// </param>
-    /// <param name="data">
-    /// The resulting data of the operation. Optional.
-    /// </param>
-    /// <param name="messages">
-    /// Messages related to the operation. Optional.
-    /// </param>
-    /// <param name="inputErrors">
-    /// Input-error rows. Optional.
-    /// </param>
+    /// <param name="success">Whether the operation was successful.</param>
+    /// <param name="data">The resulting data of the operation. Optional.</param>
+    /// <param name="messages">Translation messages related to the operation. Optional.</param>
+    /// <param name="inputErrors">Per-field input errors. Optional.</param>
     /// <param name="statusCode">
     /// The <see cref="HttpStatusCode"/> for the operation. Optional.
     /// </param>
-    /// <param name="errorCode">
-    /// A standardized error code. Optional.
-    /// </param>
-    /// <param name="traceId">
-    /// Trace identifier for correlating logs. Optional.
-    /// </param>
+    /// <param name="errorCode">A standardized error code. Optional.</param>
+    /// <param name="traceId">Trace identifier for correlating logs. Optional.</param>
     public D2Result(
         bool success,
         TData? data = default,
-        List<string>? messages = null,
-        List<List<string>>? inputErrors = null,
+        IReadOnlyList<TKMessage>? messages = null,
+        IReadOnlyList<InputError>? inputErrors = null,
         HttpStatusCode? statusCode = null,
         string? errorCode = null,
         string? traceId = null)
@@ -65,10 +53,8 @@ public sealed partial class D2Result<TData> : D2Result
     /// out parameter. Convenience for inline destructuring at the call site:
     /// <c>if (result.CheckSuccess(out var data)) { … }</c>.
     /// </summary>
-    ///
-    /// <param name="data">
-    /// Receives <see cref="Data"/> regardless of success.
-    /// </param>
+    /// <param name="data">Receives <see cref="Data"/> regardless of success.</param>
+    /// <returns><see langword="true"/> if the result is successful.</returns>
     public bool CheckSuccess(out TData? data)
     {
         data = Data;
@@ -80,10 +66,8 @@ public sealed partial class D2Result<TData> : D2Result
     /// out parameter. Useful for partial-success flows (<see cref="ErrorCodes.SOME_FOUND"/>)
     /// where data is still present despite <see cref="D2Result.Success"/> being <c>false</c>.
     /// </summary>
-    ///
-    /// <param name="data">
-    /// Receives <see cref="Data"/> regardless of failure.
-    /// </param>
+    /// <param name="data">Receives <see cref="Data"/> regardless of failure.</param>
+    /// <returns><see langword="true"/> if the result is a failure.</returns>
     public bool CheckFailure(out TData? data)
     {
         data = Data;

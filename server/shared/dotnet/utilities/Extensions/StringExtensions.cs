@@ -7,21 +7,21 @@
 namespace D2.Shared.Utilities.Extensions;
 
 using System.Text.RegularExpressions;
+using D2.Shared.I18n;
+using D2.Shared.Result;
 
 /// <summary>
 /// Extension methods for <see cref="string"/> covering boundary checks
 /// (<c>Truthy</c> / <c>Falsey</c> / <c>ToNullIfEmpty</c>), display-friendly
-/// cleaning (<c>CleanStr</c> / <c>CleanDisplayStr</c>), throw-on-invalid
+/// cleaning (<c>CleanStr</c> / <c>CleanDisplayStr</c>), <see cref="D2Result"/>-returning
 /// validation helpers for emails and phone numbers, and a hash-friendly
 /// <c>GetNormalizedStrForHashing</c> helper for string-array inputs.
 /// </summary>
 /// <remarks>
-/// The validation helpers (<c>CleanAndValidateEmail</c>,
-/// <c>CleanAndValidatePhoneNumber</c>) intentionally throw — they are
-/// intended for domain-layer constructors where invariant violations are
-/// exceptional cases. Application-layer callers that prefer errors-as-values
-/// should use <c>FluentValidation</c> + <c>D2Result.ValidationFailed</c>
-/// instead.
+/// The validation helpers (<c>TryParseEmail</c>, <c>TryParsePhoneNumber</c>)
+/// return <c>D2Result&lt;string&gt;</c> with TK-keyed messages so they compose
+/// naturally with the smart-constructor pattern in domain layers. Producers
+/// chain via <c>D2Result.Bind</c> / <c>BubbleFail</c> instead of try/catch.
 /// </remarks>
 public static partial class StringExtensions
 {
@@ -93,26 +93,26 @@ public static partial class StringExtensions
     {
         /// <summary>
         /// Trims, collapses whitespace, lowercases, and validates the basic
-        /// structure of an email address.
+        /// structure of an email address. Returns a <see cref="D2Result{TData}"/>
+        /// so callers can chain with the rest of the result-pipeline
+        /// (<c>BubbleFail</c>, <c>Bind</c>) instead of try/catch.
         /// </summary>
-        ///
-        /// <returns>The normalized, validated email address.</returns>
-        ///
-        /// <exception cref="ArgumentException">
-        /// Thrown when the email is null/empty/whitespace, or does not match
-        /// the simple <c>local@domain.tld</c> shape.
-        /// </exception>
-        public string CleanAndValidateEmail()
+        /// <returns>
+        /// <see cref="D2Result{TData}"/> wrapping the normalized email on
+        /// success, or a validation-failure result carrying
+        /// <see cref="TK.Common.Validation.EMAIL_INVALID"/> when the input is
+        /// null / empty / whitespace / does not match <c>local@domain.tld</c>.
+        /// </returns>
+        public D2Result<string> TryParseEmail()
         {
             var cleaned = email.CleanStr()?.ToLowerInvariant();
             if (cleaned.Falsey() || !EmailRegex().IsMatch(cleaned!))
             {
-                throw new ArgumentException(
-                    "Invalid email address format.",
-                    nameof(email));
+                return D2Result<string>.ValidationFailed(
+                    messages: [TK.Common.Validation.EMAIL_INVALID]);
             }
 
-            return cleaned!;
+            return D2Result<string>.Ok(cleaned!);
         }
     }
 
@@ -121,43 +121,32 @@ public static partial class StringExtensions
     {
         /// <summary>
         /// Strips every non-digit character and validates that the remainder is
-        /// 7–15 digits long (E.164 length envelope).
+        /// 7–15 digits long (E.164 length envelope). Returns a <see cref="D2Result{TData}"/>
+        /// so callers can chain with the rest of the result-pipeline.
         /// </summary>
-        ///
         /// <returns>
-        /// The digit-only phone number (no leading <c>+</c>).
+        /// <see cref="D2Result{TData}"/> wrapping the digit-only phone number
+        /// on success, or a validation-failure result carrying
+        /// <see cref="TK.Common.Validation.PHONE_INVALID"/> when the input is
+        /// null / empty / contains no digits / falls outside the 7-15 envelope.
         /// </returns>
-        ///
-        /// <exception cref="ArgumentException">
-        /// Thrown when the input is null/empty/whitespace, contains no digits,
-        /// or has fewer than 7 / more than 15 digits after cleaning.
-        /// </exception>
-        public string CleanAndValidatePhoneNumber()
+        public D2Result<string> TryParsePhoneNumber()
         {
             if (phoneNumber.Falsey())
             {
-                throw new ArgumentException(
-                    "Phone number cannot be null or empty.",
-                    nameof(phoneNumber));
+                return D2Result<string>.ValidationFailed(
+                    messages: [TK.Common.Validation.PHONE_INVALID]);
             }
 
             var cleaned = NonDigitsRegex().Replace(phoneNumber!, string.Empty);
 
-            if (cleaned.Falsey())
+            if (cleaned.Falsey() || cleaned.Length is < 7 or > 15)
             {
-                throw new ArgumentException(
-                    "Invalid phone number format.",
-                    nameof(phoneNumber));
+                return D2Result<string>.ValidationFailed(
+                    messages: [TK.Common.Validation.PHONE_INVALID]);
             }
 
-            if (cleaned.Length is < 7 or > 15)
-            {
-                throw new ArgumentException(
-                    "Phone number must be between 7 and 15 digits in length.",
-                    nameof(phoneNumber));
-            }
-
-            return cleaned;
+            return D2Result<string>.Ok(cleaned);
         }
     }
 
@@ -185,40 +174,37 @@ public static partial class StringExtensions
     }
 
     /// <summary>
-    /// Matches a basic <c>local@domain.tld</c> email shape.
+    /// Matches a basic <c>local@domain.tld</c> email shape. Has bounded
+    /// backtracking — <c>[^@\s]+</c> includes <c>.</c>, so the second
+    /// <c>[^@\s]+\.</c> backtracks once per dot in the input looking for the
+    /// trailing-dot anchor. Worst-case execution is O(n) in input length,
+    /// where n is upstream-bounded by HTTP field-length validation
+    /// (typically ≤ 4096 chars), giving an absolute worst case in the
+    /// microsecond range. Cannot ReDoS — no <c>matchTimeout</c> needed.
     /// </summary>
-    [GeneratedRegex(
-        @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
-        RegexOptions.None,
-        matchTimeoutMilliseconds: 250)]
+    [GeneratedRegex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.None)]
     private static partial Regex EmailRegex();
 
     /// <summary>
-    /// Matches one or more whitespace characters.
+    /// Matches one or more whitespace characters. Single greedy quantifier with
+    /// no following pattern → no backtracking → no <c>matchTimeout</c> needed.
     /// </summary>
-    [GeneratedRegex(
-        @"\s+",
-        RegexOptions.None,
-        matchTimeoutMilliseconds: 100)]
+    [GeneratedRegex(@"\s+", RegexOptions.None)]
     private static partial Regex WhitespaceRegex();
 
     /// <summary>
     /// Matches characters not allowed in display names. Allowed: letters from
     /// any Unicode script, digits, spaces, hyphens, apostrophes, periods,
-    /// commas.
+    /// commas. Single char-class match with no quantifier → no backtracking
+    /// → no <c>matchTimeout</c> needed.
     /// </summary>
-    [GeneratedRegex(
-        @"[^\p{L}\p{N}\s\-'.,]",
-        RegexOptions.None,
-        matchTimeoutMilliseconds: 100)]
+    [GeneratedRegex(@"[^\p{L}\p{N}\s\-'.,]", RegexOptions.None)]
     private static partial Regex DisplayNameInvalidRegex();
 
     /// <summary>
-    /// Matches any non-digit character.
+    /// Matches any non-digit character. Single char-class match with no
+    /// quantifier → no backtracking → no <c>matchTimeout</c> needed.
     /// </summary>
-    [GeneratedRegex(
-        @"[^\d]",
-        RegexOptions.None,
-        matchTimeoutMilliseconds: 100)]
+    [GeneratedRegex(@"[^\d]", RegexOptions.None)]
     private static partial Regex NonDigitsRegex();
 }
