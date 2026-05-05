@@ -28,6 +28,7 @@ Copyright (c) DCSV. All rights reserved.
     <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.7" />
 
     <!-- EF Core + Npgsql — for D2.Shared.Handler.Repo (PG error code → D2Result mapping) -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />

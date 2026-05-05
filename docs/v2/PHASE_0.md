@@ -19,7 +19,7 @@ Phase 0 has four execution stages. The **Granular checklist** column links to th
 | 1. Pre-wipe checkpoint (tag `pre-v2-wipe`) | ✅ Complete | (single git tag — no detail checklist) |
 | 2. Wipe commit (single commit on `nova` branch) | ✅ Complete | [Definition of done (wipe commit)](#definition-of-done-wipe-commit) |
 | 3. Documentation pass (placeholder READMEs + extracted patterns) | ✅ Complete | [Definition of done (documentation pass)](#definition-of-done-documentation-pass) |
-| 4. Shared library implementation (per V2.md §4 Phase 0) | 🔄 **In progress — Waves 1-3 done (Result, Utilities, Resilience, I18n trio); Wave 2 done (full handler stack + repo-handler trio + auth/context vocabulary + spec-driven codegen, all on `n/handler` awaiting squash to `nova`). Remaining: Encryption, Auth runtime, Caching libs, Messaging, ServiceDefaults. LLM: pick the next lib from the per-library checklist with the user before starting work.** | [Per-library checklist (Stage 4)](#per-library-checklist-stage-4) |
+| 4. Shared library implementation (per V2.md §4 Phase 0) | 🔄 **In progress — Waves 1-3 done (Result, Utilities, Resilience, I18n trio); Wave 2 done (full handler stack + repo-handler trio + auth/context vocabulary + spec-driven codegen). Wave 4 partial — `D2.Shared.Encryption` shipped (1520 tests). Remaining: Auth runtime, Caching libs, Messaging, ServiceDefaults. LLM: pick the next lib from the per-library checklist with the user before starting work.** | [Per-library checklist (Stage 4)](#per-library-checklist-stage-4) |
 
 **Status legend**: ✅ Complete · 🔄 In progress · ☐ Not started · ⏸ Blocked
 
@@ -53,7 +53,7 @@ Build order respects the dependency graph. Each lib lands as one squash-merged c
 | 3 | `D2.Shared.I18n.Abstractions` | ✅ Complete | `n/i18n` (merged) | (none — zero external deps; ships TKMessage + ITranslator + SrcGen-emitted TK constants) |
 | 3 | `D2.Shared.I18n.SourceGen` | ✅ Complete | `n/i18n` (merged) | (none — netstandard2.0 Roslyn analyzer; consumed by I18n.Abstractions as `OutputItemType="Analyzer"`. Lives at its own top-level slot, `server/shared/dotnet/i18n-source-gen/`.) |
 | 3 | `D2.Shared.I18n` | ✅ Complete | `n/i18n` (merged) | I18n.Abstractions, Utilities, IConfiguration, DI Abstractions |
-| 4 | `D2.Shared.Encryption` | ☐ Not started | `n/encryption` | Result, Utilities |
+| 4 | `D2.Shared.Encryption` | ✅ Complete | `n/encryption` (merged) | (none — pure crypto primitive; depends only on DI / Hosting / Logging abstractions + BCL `AesGcm`) |
 | 4 | `D2.Shared.Auth` (runtime — JWT validator + KeyringClient + `AddD2Auth` DI) | ☐ Not started | `n/auth` | Auth.Abstractions, AuthContext.Abstractions, Result, Utilities |
 | 5 | `D2.Shared.Caching.Local.Abstractions` | ☐ Not started | `n/caching-local` | (none — zero external deps; ships ID2LocalCache + LocalCacheOptions) |
 | 5 | `D2.Shared.Caching.Local.Default` | ☐ Not started | `n/caching-local` | Caching.Local.Abstractions, Handler, Result |

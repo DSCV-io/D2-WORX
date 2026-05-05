@@ -38,7 +38,7 @@ Per project convention, every library has its own `README.md`. The list below po
 | [`caching-distributed-abstractions/`](caching-distributed-abstractions/README.md) | Placeholder | Domain-safe slice — `ID2DistributedCache` interface + `ICacheSerializer` + `DistributedCacheOptions`. Includes the atomic `SetNx` / `Increment` / `AcquireLock` semantic surface that distinguishes distributed from local. Zero external deps. | [PATTERNS.md](../../../docs/PATTERNS.md) Cache section |
 | [`caching-distributed-redis/`](caching-distributed-redis/README.md) | Placeholder | Redis-backed implementation of `ID2DistributedCache`. Future implementations (Valkey, Memcached, Garnet) would land as sibling `caching-distributed-{impl}/` projects. | [PATTERNS.md](../../../docs/PATTERNS.md) Cache section |
 | [`messaging/`](messaging/README.md) | Placeholder | RabbitMQ wrapper — proto-canonical-JSON serialization, `[Encrypted(Domain.X)]` attribute integration with `D2.Shared.Encryption`, AMQP headers contract. | [MESSAGING.md](../../../docs/MESSAGING.md) |
-| [`encryption/`](encryption/README.md) | Placeholder | `PayloadCryptoKeyring` (JWKS-style multi-key), `IPayloadCrypto` (AES-256-GCM), frame format. Consumes the keyring from `KeyringClient` (auth lib) at runtime. | [SECURITY-RUNBOOKS.md](../../../docs/SECURITY-RUNBOOKS.md) |
+| [`encryption/`](encryption/README.md) | **Built** | `PayloadCryptoKeyring` (immutable, JWKS-style multi-kid, `IDisposable` zeroes key bytes), `IPayloadCrypto` + `PayloadCrypto` (AES-256-GCM, per-call `AesGcm`, AAD bound to the keyring's context bytes), self-describing frame format `[v1][kid_len][kid][nonce:12][cipher+tag]`, typed exception hierarchy, keyed-services DI helper (`AddD2EncryptionFor`), and an opt-in `AddD2EncryptionStartupCheck` that round-trips a sentinel per registered domain at boot. Pure crypto primitive — knows nothing about domains, message buses, or key fetching. | [SECURITY-RUNBOOKS.md](../../../docs/SECURITY-RUNBOOKS.md) |
 | [`geo-reference/`](geo-reference/README.md) | Placeholder | Embedded geographic reference data — countries, IANA timezones, currencies, locales, regions. Not a service. | — |
 | [`location/`](location/README.md) | Placeholder | Location value objects — `AdminLocation` (country / state / city / postal), `Coordinates`, `StreetAddress`. Content-addressable hash IDs (built-in dedup + cacheability). | [OPERATIONAL-GUARANTEES.md](../../../docs/OPERATIONAL-GUARANTEES.md) (content-addressable entities) |
 | [`contacts/`](contacts/README.md) | Placeholder | Contact entity + per-consuming-service DB pattern. Library owns its own `DbContext` + migrations; consuming service provides connection string. | [OPERATIONAL-GUARANTEES.md](../../../docs/OPERATIONAL-GUARANTEES.md) (immutability rationale) |
@@ -110,6 +110,11 @@ graph LR
         RepoPg --> RepoAbs
     end
 
+    subgraph CRYPTO["Crypto primitives"]
+        direction TB
+        Encryption[encryption]
+    end
+
     %% Cross-subgraph dependencies (only direct refs that aren't transitively
     %% implied by an intra-subgraph path).
     ReqCtx --> Utilities
@@ -118,7 +123,7 @@ graph LR
     Repo --> Handler
     RepoAbs --> I18n
 
-    class I18nAbs,I18n,Result,Utilities,Resilience,AuthAbs,AuthCtxAbs,ReqCtxAbs,ReqCtx,HandlerAbs,Handler,RepoAbs,Repo,RepoPg built
+    class I18nAbs,I18n,Result,Utilities,Resilience,AuthAbs,AuthCtxAbs,ReqCtxAbs,ReqCtx,HandlerAbs,Handler,RepoAbs,Repo,RepoPg,Encryption built
 ```
 
 **Reading the chart:**

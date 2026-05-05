@@ -80,5 +80,6 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\handler-repo-abstractions\D2.Shared.Handler.Repo.Abstractions.csproj" />
     <ProjectReference Include="..\handler-repo\D2.Shared.Handler.Repo.csproj" />
     <ProjectReference Include="..\handler-repo-postgres\D2.Shared.Handler.Repo.Postgres.csproj" />
+    <ProjectReference Include="..\encryption\D2.Shared.Encryption.csproj" />
   </ItemGroup>
 </Project>

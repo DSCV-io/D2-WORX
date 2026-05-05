@@ -25,6 +25,9 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/context-source-gen/">
     <Project Path="shared/dotnet/context-source-gen/D2.Shared.Context.SourceGen.csproj" />
   </Folder>
+  <Folder Name="/shared/dotnet/encryption/">
+    <Project Path="shared/dotnet/encryption/D2.Shared.Encryption.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/request-context/">
     <Project Path="shared/dotnet/request-context/D2.Shared.RequestContext.csproj" />
   </Folder>
