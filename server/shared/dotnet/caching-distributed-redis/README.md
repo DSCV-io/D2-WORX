@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.Caching.Distributed.Redis
 
+> Parent: [`server/shared/dotnet/`](../README.md)
+
 > **Status**: placeholder — not yet implemented.
 
 ## Purpose
@@ -22,7 +24,3 @@ This is one possible implementation; if we ever need to swap to Valkey, Memcache
 ## Dependencies
 
 (planned) `D2.Shared.Caching.Distributed.Abstractions`, `D2.Shared.Handler`, `D2.Shared.Result`, `StackExchange.Redis`.
-
-## V2.md reference
-
-§4 Phase 0 (Stage 4 — Wave 5).

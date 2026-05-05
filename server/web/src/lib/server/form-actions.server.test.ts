@@ -209,7 +209,7 @@ describe("validateAndSubmit", () => {
       submit,
     });
 
-    expect(result).toHaveProperty("message", "common_errors_unknown");
+    expect(result).toHaveProperty("message", "common_errors_UNKNOWN");
   });
 
   it("uses D2Result statusCode for inputError failures", async () => {

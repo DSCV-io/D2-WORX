@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
   import { cn } from "$lib/shared/utils/utils.js";
   import { Combobox } from "bits-ui";
   import { createInlineEditKeyHandler } from "$lib/shared/forms/inline-edit-keyboard.js";
-  import { isSaveCancelledError } from "$lib/shared/forms/save-cancelled-error.js";
+  import { isSaveCanceledError } from "$lib/shared/forms/save-canceled-error.js";
   import * as m from "$lib/paraglide/messages.js";
   import InlineEditActions from "./inline-edit-actions.svelte";
   import InlineFieldStatusIcon from "./inline-field-status-icon.svelte";
@@ -154,13 +154,13 @@ Copyright (c) DCSV. All rights reserved.
       }, 2000);
       return true;
     } catch (err) {
-      // User-cancelled flow (e.g., dismissed a confirmation modal). Stay
+      // User-canceled flow (e.g., dismissed a confirmation modal). Stay
       // dirty so save/revert reappear; do NOT show an error.
-      if (isSaveCancelledError(err)) {
+      if (isSaveCanceledError(err)) {
         saveState = "idle";
         return false;
       }
-      errorMessage = err instanceof Error ? err.message : m.common_errors_save_failed();
+      errorMessage = err instanceof Error ? err.message : m.common_errors_SAVE_FAILED();
       saveState = "error";
       validationStatus = "invalid";
       return false;

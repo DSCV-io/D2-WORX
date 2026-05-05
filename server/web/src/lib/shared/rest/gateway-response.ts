@@ -173,7 +173,7 @@ export async function executeFetch<TData>(
   } catch (error: unknown) {
     if (error instanceof DOMException && error.name === "AbortError") {
       return D2Result.fail<TData>({
-        messages: [TK.common.errors.CANCELLED],
+        messages: [TK.common.errors.CANCELED],
         statusCode: 408 as HttpStatusCode,
       });
     }

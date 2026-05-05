@@ -40,6 +40,16 @@ Copyright (c) DCSV. All rights reserved.
     <PackageReference Include="AwesomeAssertions" />
     <PackageReference Include="JetBrains.Annotations" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <!--
+      Microsoft.CodeAnalysis.CSharp — needed by SrcGen integration tests
+      (Unit/Auth/SourceGen, Unit/Context/SourceGen) which drive
+      CSharpGeneratorDriver against synthetic compilations. The SrcGen csprojs
+      mark this PrivateAssets="all" so it doesn't propagate; tests need an
+      explicit reference.
+    -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <PackageReference Include="coverlet.msbuild">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -50,14 +60,25 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\i18n-abstractions\D2.Shared.I18n.Abstractions.csproj" />
     <ProjectReference Include="..\i18n\D2.Shared.I18n.csproj" />
     <!--
-      SrcGen is referenced as a NORMAL library (not as an Analyzer) so
-      KeyDecomposer / TKEmitter / EmitDiagnostic etc. can be unit-tested
-      directly. The Tests project does NOT run the generator (no
-      AdditionalFiles for messages JSON wired here).
+      SrcGens (i18n / context / scopes) are referenced as NORMAL libraries
+      (not as Analyzers) so the loader / emitter / EmitDiagnostic logic can
+      be unit-tested directly. The Tests project does NOT run the generators
+      (no AdditionalFiles for messages JSON / spec JSON wired here).
     -->
     <ProjectReference Include="..\i18n-source-gen\D2.Shared.I18n.SourceGen.csproj" />
+    <ProjectReference Include="..\auth-scopes-source-gen\D2.Shared.Auth.Scopes.SourceGen.csproj" />
+    <ProjectReference Include="..\context-source-gen\D2.Shared.Context.SourceGen.csproj" />
     <ProjectReference Include="..\resilience\D2.Shared.Resilience.csproj" />
     <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
+    <ProjectReference Include="..\auth-abstractions\D2.Shared.Auth.Abstractions.csproj" />
+    <ProjectReference Include="..\auth-context-abstractions\D2.Shared.AuthContext.Abstractions.csproj" />
+    <ProjectReference Include="..\request-context-abstractions\D2.Shared.RequestContext.Abstractions.csproj" />
+    <ProjectReference Include="..\request-context\D2.Shared.RequestContext.csproj" />
+    <ProjectReference Include="..\handler-abstractions\D2.Shared.Handler.Abstractions.csproj" />
+    <ProjectReference Include="..\handler\D2.Shared.Handler.csproj" />
+    <ProjectReference Include="..\handler-repo-abstractions\D2.Shared.Handler.Repo.Abstractions.csproj" />
+    <ProjectReference Include="..\handler-repo\D2.Shared.Handler.Repo.csproj" />
+    <ProjectReference Include="..\handler-repo-postgres\D2.Shared.Handler.Repo.Postgres.csproj" />
   </ItemGroup>
 </Project>

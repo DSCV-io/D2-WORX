@@ -18,7 +18,7 @@ Copyright (c) DCSV. All rights reserved.
 - [ ] IDOR checks on every endpoint/handler that accesses resources by ID
 - [ ] **Session-derived identifiers** — endpoints must NEVER accept user-provided userId, orgId, or role when those values can be resolved from the session/JWT. Derive scope from claims, not from request body/params. User-supplied identifiers for these fields = IDOR vulnerability
 - [ ] Auth bypass paths — can unauthenticated requests reach protected handlers?
-- [ ] Input validation completeness — every handler validates input at top of `ExecuteAsync` (smart-constructor `Domain.Create(...) → D2Result<Domain>` or per-route DTO pre-validation; **no FluentValidation in v2**)
+- [ ] Input validation completeness — every handler validates input at top of `ExecuteAsync` (smart-constructor `Domain.Create(...) → D2Result<Domain>` or per-route DTO pre-validation) BEFORE any infrastructure call
 - [ ] String max lengths on all string fields
 - [ ] Constant-time comparisons on all secret/key comparisons (`CryptographicOperations.FixedTimeEquals` .NET / `timingSafeEqual` Node)
 - [ ] Header injection / XSS via user-controlled response data (Content-Disposition, error messages)
@@ -31,7 +31,7 @@ Copyright (c) DCSV. All rights reserved.
 - [ ] Auth middleware must fail-closed on missing config — empty service-identity client mappings or missing secrets = 401 immediately
 - [ ] Infrastructure paths exempt from ALL business middleware (not just some)
 - [ ] Multi-column key lookups use paired predicates — `(col1=A AND col2=1) OR (col1=B AND col2=2)`, not independent `OR`s
-- [ ] Custom JWT claims namespaced with `d2:` prefix (avoids future spec collisions; `d2:kind`, `d2:session_id`, etc.)
+- [ ] Custom JWT claims namespaced with `d2_` prefix (avoids future spec collisions; `d2_kind`, `d2_session_id`, etc.)
 
 ## Logic / Data Integrity
 
@@ -41,6 +41,12 @@ Copyright (c) DCSV. All rights reserved.
 - [ ] Status state machine adherence — can entities get stuck in invalid states?
 - [ ] Fire-and-forget operations properly caught (`.ContinueWith(...)` / `try/catch` with logging)
 - [ ] EF Core UPDATE/DELETE checks affected rows and returns `NotFound()` when zero
+- [ ] Repo handlers inherit from `BaseRepoHandler` (not `BaseHandler`) when they call EF / a real DB. The injected `IDbExceptionClassifier` maps DB failures to typed `D2Result` outcomes (`UniqueViolation`, `ForeignKeyViolation`, `NotNullViolation`, `CheckViolation`, `ConcurrencyConflict`, `DbDeadlock`, `DbTimeout`, `DbConnectionFailure`) — no raw SQLSTATE catches in handler code
+- [ ] Composition roots register the provider classifier (`services.AddD2Postgres()` for PG). Without it, `BaseRepoHandler` resolution fails fast at the container — verify every service that uses repo handlers calls the registration extension
+- [ ] Callers branching on DB failures use the typed booleans (`result.IsUniqueViolation` / `result.IsConcurrencyConflict` / `result.IsDbDeadlock` / `result.IsTransientDbFailure`), not raw SQLSTATE catches or string `ErrorCode` comparisons
+- [ ] Optimistic concurrency: branch on `result.IsConcurrencyConflict` → reload-then-merge-then-retry. Do NOT include in generic retry policies — concurrency requires explicit merge logic and is intentionally excluded from the `IsTransientDbFailure` roll-up
+- [ ] Generic retry policies that span both HTTP-flavored and DB-flavored transient failures check the union: `result.IsTransientRetryable || result.IsTransientDbFailure` (the two axes are distinct)
+- [ ] Domain-specific UX: handlers override `MapDbException(ex, kind)` to translate specific constraint violations (e.g. unique-violation on `users_email_key`) into per-field `InputError`s + localized TK messages — instead of letting the generic fallback message ("This value is already in use") reach the user
 - [ ] DI registration completeness — every handler registered, no missing keys, no stale registrations
 - [ ] Race conditions — concurrent operations, duplicate messages, double-processing
 - [ ] Resource leaks — DI scopes disposed, gRPC clients cleaned up, connections closed
@@ -50,7 +56,7 @@ Copyright (c) DCSV. All rights reserved.
 
 - [ ] `[RedactData]` attribute on every PII-bearing type / property — auto-redacted across all Serilog logging (recursive, type-cached). Verify new types touching emails / phones / IPs / addresses / names / message content carry the attribute
 - [ ] Manual `logger.*` calls reviewed for PII leaks — never log fields that should be redacted via manual calls; let `[RedactData]` + structured logger handle it
-- [ ] Semantic D2Result factories — no raw `Fail()` when a factory exists (Ok, Created, NotFound, Unauthorized, Forbidden, ValidationFailed, Conflict, ServiceUnavailable, UnhandledException, PayloadTooLarge, Cancelled, SomeFound)
+- [ ] Semantic D2Result factories — no raw `Fail()` when a factory exists (Ok, Created, NotFound, Unauthorized, Forbidden, ValidationFailed, Conflict, ServiceUnavailable, UnhandledException, PayloadTooLarge, TooManyRequests, Canceled, SomeFound)
 - [ ] Validate inputs BEFORE infrastructure calls — smart-constructor `Domain.Create(input) → D2Result<Domain>` at the TOP of `ExecuteAsync`, before any downstream / infrastructure calls. `BubbleFail` on the validation result; never let Redis / DB be the first to reject invalid data
 - [ ] No `!` for silencing warnings (only after `Falsey/Truthy` early return guard where value is guaranteed non-null)
 - [ ] Build warnings = bugs — zero warnings on `dotnet build`, `jb inspectcode`, ESLint, Prettier
@@ -62,7 +68,7 @@ Copyright (c) DCSV. All rights reserved.
 - [ ] (SvelteKit BFF only) Prefer `undefined` over `null` in TypeScript — use `field?: string` over `field: string | null`
 - [ ] (SvelteKit BFF only) `truthyOrUndefined()` at boundaries — user input, proto values → domain types
 - [ ] Structured logger (`ILogger`) not `Console.*` — all logging through the structured logger for OTel correlation
-- [ ] Regex `matchTimeout` ONLY on patterns with **super-linear** backtracking (nested quantifiers `(a+)+`, alternation overlap `(a|aa)+`). Patterns with no backtracking (`\s+`, `[^\d]`) or with linear backtracking against upstream-bounded input (`[^@\s]+\.[^@\s]+` against HTTP-bounded email length) need NO timeout — a tight timeout there flakes on system jitter and protects nothing real. When a timeout IS warranted, set 10-25 ms AND pre-warm the JIT in a `static readonly` field initializer. Document the bucket (no-backtrack / linear-bounded / super-linear) in the pattern's XML doc. Full rule → CLAUDE.md §5 "Regex `matchTimeout` discipline"
+- [ ] Regex `matchTimeout` ONLY on patterns with **super-linear** backtracking (nested quantifiers `(a+)+`, alternation overlap `(a|aa)+`). Patterns with no backtracking (`\s+`, `[^\d]`) or with linear backtracking against upstream-bounded input (`[^@\s]+\.[^@\s]+` against HTTP-bounded email length) need NO timeout — a tight timeout there flakes on system jitter and protects nothing real. When a timeout IS warranted, set 10-25 ms AND pre-warm the JIT in a `static readonly` field initializer. Document the bucket (no-backtrack / linear-bounded / super-linear) in the pattern's XML doc.
 
 ## Conventions
 
@@ -100,5 +106,5 @@ Copyright (c) DCSV. All rights reserved.
 ## Documentation
 
 - [ ] Every new handler / service / endpoint reflected in its `README.md`
-- [ ] CLAUDE.md reference table includes all new docs
+- [ ] `docs/README.md` index includes all new docs
 - [ ] No stale "Pending" or "not yet implemented" references for completed work

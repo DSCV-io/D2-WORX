@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.Utilities
 
+> Parent: [`server/shared/dotnet/`](../README.md)
+
 Foundational helpers used at every boundary across D²-WORX. The "no value too small to centralize" library — preventing whole classes of bugs (empty-string-as-data, env-var collisions, JSON cycles) from ever entering domain code.
 
 Runtime dependencies are kept minimal so this lib stays domain-safe:
@@ -53,7 +55,7 @@ var trimmed = userInput!.Trim();
 var stored = rawValue.ToNullIfEmpty();   // null | trimmed-non-empty
 ```
 
-`ToNullIfEmpty()` is the workhorse for "convert empty/whitespace to null at every system boundary" — DB rows, proto mappings, user input. It's mandatory per [CLAUDE.md §5](../../../../CLAUDE.md) for keeping empty strings out of domain models.
+`ToNullIfEmpty()` is the workhorse for "convert empty/whitespace to null at every system boundary" — DB rows, proto mappings, user input. It's mandatory for keeping empty strings out of domain models.
 
 ```csharp
 IEnumerable<T>? items = ...;
@@ -173,7 +175,7 @@ The implementation calls `.ToList()` once upfront — generator-backed enumerabl
 
 ### `[RedactData]` attribute
 
-Marker attribute consumed by the Serilog destructuring policy in `D2.Shared.ServiceDefaults` (later phase). Apply to types, properties, fields, parameters — anywhere PII or secrets might leak into logs/spans/metrics.
+Marker attribute consumed by the Serilog destructuring policy in `D2.Shared.ServiceDefaults`. Apply to types, properties, fields, parameters — anywhere PII or secrets might leak into logs/spans/metrics.
 
 ```csharp
 public sealed record User

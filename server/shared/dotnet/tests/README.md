@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.Tests
 
+> Parent: [`server/shared/dotnet/`](../README.md)
+
 Test infrastructure for ALL `D2.Shared.*` libraries. Deliberately one test csproj rather than per-lib — the foundational shared libs are small enough that per-lib test projects would be overkill.
 
 Per-service tests (Edge, Audit, Courier, Notifications, Files) live separately at `server/services/{service}/tests/D2.{Service}.Tests.csproj` — this project covers shared libs only.
@@ -103,7 +105,7 @@ CS1591 / SA1600 (missing XML doc) are suppressed in this csproj only; non-test l
 
 ### Local constants
 
-`snake_case` for local consts in test bodies (per CLAUDE.md §6 naming table):
+`snake_case` for local consts in test bodies:
 
 ```csharp
 const string trace_id = "trace-abc-123";
@@ -111,7 +113,7 @@ const string trace_id = "trace-abc-123";
 
 ### Adversarial coverage
 
-Per CLAUDE.md §5 + `docs/TESTS.md`, every test file aims at the 8-category checklist where applicable:
+Per `docs/TESTS.md`, every test file aims at the 8-category checklist where applicable:
 
 1. **Happy path** — every factory creates the expected shape
 2. **Garbage input** — null/empty messages, null traceId, default ErrorCode

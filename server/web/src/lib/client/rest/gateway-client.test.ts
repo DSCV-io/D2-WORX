@@ -2,6 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
+import { TK } from "@d2/i18n/keys";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Mock $env/dynamic/public
@@ -379,7 +380,7 @@ describe("gateway-client", () => {
 
       expect(result.success).toBe(false);
       expect(result.statusCode).toBe(408);
-      expect(result.messages[0]).toContain("common_errors_CANCELLED");
+      expect(result.messages[0]).toContain(TK.common.errors.CANCELED);
     });
 
     it("returns 408 on TimeoutError", async () => {
@@ -391,7 +392,7 @@ describe("gateway-client", () => {
 
       expect(result.success).toBe(false);
       expect(result.statusCode).toBe(408);
-      expect(result.messages[0]).toContain("common_errors_REQUEST_FAILED");
+      expect(result.messages[0]).toContain(TK.common.errors.REQUEST_FAILED);
     });
   });
 

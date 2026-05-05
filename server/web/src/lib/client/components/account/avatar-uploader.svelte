@@ -170,7 +170,7 @@ Copyright (c) DCSV. All rights reserved.
       uploadState = "processing";
     } catch (err: unknown) {
       uploadState = "idle";
-      const msg = err instanceof Error ? err.message : m.common_errors_unknown();
+      const msg = err instanceof Error ? err.message : m.common_errors_UNKNOWN();
       toast.error(msg);
     }
 
@@ -187,7 +187,7 @@ Copyright (c) DCSV. All rights reserved.
       toast.success(m.webclient_app_account_profile_avatar_success());
     } else {
       uploadState = "idle";
-      toast.error(translateMessage(result.messages?.[0], undefined, m.common_errors_unknown()));
+      toast.error(translateMessage(result.messages?.[0], undefined, m.common_errors_UNKNOWN()));
     }
   }
 </script>

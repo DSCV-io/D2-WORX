@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.Caching.Local.Abstractions
 
+> Parent: [`server/shared/dotnet/`](../README.md)
+
 > **Status**: placeholder — not yet implemented.
 
 ## Purpose
@@ -20,7 +22,3 @@ The implementation lives in the sibling [`caching-local-default/`](../caching-lo
 ## Dependencies
 
 (planned) None — only the .NET runtime.
-
-## V2.md reference
-
-§4 Phase 0 (Stage 4 — Wave 5).

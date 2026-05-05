@@ -4,7 +4,19 @@ Copyright (c) DCSV. All rights reserved.
 
 # D²-WORX
 
-Pre-alpha — v2 architectural rewrite in progress.
+Microservices SaaS framework. C# 14 / .NET 10 backend, SvelteKit BFF (TypeScript 5.9 / Svelte 5). Pre-Alpha. PolyForm Strict license — reference implementation, non-commercial.
+
+## Repo layout
+
+| Path | What |
+|---|---|
+| [`server/`](server/README.md) | All trusted code — .NET services, shared .NET libraries, SvelteKit BFF |
+| [`docs/`](docs/README.md) | Cross-cutting documentation — patterns, messaging, audit checklist, security runbooks, test discipline |
+| [`infra/`](infra/README.md) | Deployment + observability — Docker Compose, per-service Dockerfiles, LGTM stack configs |
+| [`tools/`](tools/README.md) | Dev tooling — scripts + small utilities |
+| [`contracts/`](contracts/) | Source-of-truth contract files — proto definitions, i18n message catalogs, JSON schemas + spec files for codegen |
+
+`secrets/` is gitignored + Claude-deny-ruled. `.env.local` is gitignored; `.env.local.example` + `.env.secrets.example` are committed templates.
 
 ## License
 

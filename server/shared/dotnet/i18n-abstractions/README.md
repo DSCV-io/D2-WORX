@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.I18n.Abstractions
 
+> Parent: [`server/shared/dotnet/`](../README.md)
+
 Domain-safe slice of the i18n stack: the `TKMessage` primitive, the `TK` constants (Source-Generated from `contracts/messages/en-US.json`), and the `ITranslator` interface. **Zero external deps** (no NuGet packages, no other shared-lib references — only what the .NET runtime ships) so domain layers can reference this without dragging in DI containers, configuration loading, or file IO.
 
 The runtime piece (`Translator`, `SupportedLocales`, `AddD2I18n` DI extension) lives in the sibling [`D2.Shared.I18n`](../i18n/) project. Domain code never references that one.
@@ -126,14 +128,14 @@ JSON keys follow `{domain}_{category}_{IDENTIFIER}` where:
 
 All diagnostics include the offending key/locale in the message — they appear directly in the build output and IDE error list.
 
-### Why it's safer than v1's hand-maintained TK class
+### Why codegen, not hand-maintained constants
 
-v1 maintained `TK.cs` by hand and used a reflection-based test (`TKConstantsTests`) to detect drift between code constants and JSON catalog keys. With the SrcGen, **drift is structurally impossible**: the constant doesn't exist if the JSON key doesn't. Adding a new translation key is a single edit (the JSON file); the TK constant appears at next build with no manual TK update.
+**Drift is structurally impossible**: the constant doesn't exist if the JSON key doesn't. Adding a new translation key is a single edit (the JSON file); the TK constant appears at next build, no manual update step.
 
-The SrcGen also catches things v1's drift test couldn't:
+The SrcGen also surfaces:
 - Per-locale coverage gaps (D2I18N002)
 - Orphan keys in non-en-US locales (D2I18N004)
-- Decomposition rule violations (D2I18N001) before they become runtime mysteries
+- Decomposition rule violations (D2I18N001) — caught at build time rather than as runtime mysteries
 
 ### Inspecting generated TK
 

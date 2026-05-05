@@ -127,7 +127,7 @@ public sealed class D2ResultGuardTests
     [Fact]
     public void BubbleOnFailure_HandlerPatternUsage_OnSuccess_ContinuesWithLocal()
     {
-        // Simulates the real handler pattern from V2.md §6.3:
+        // Simulates the canonical handler pattern:
         //   if (upstream.BubbleOnFailure<_, OutputType>(out var b, out var data)) return b;
         //   // continue with `data` as a local
         var upstream = D2Result<int>.Ok(15);

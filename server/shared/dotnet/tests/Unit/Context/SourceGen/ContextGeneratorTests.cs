@@ -1,0 +1,211 @@
+// -----------------------------------------------------------------------
+// <copyright file="ContextGeneratorTests.cs" company="DCSV">
+// Copyright (c) DCSV. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace D2.Shared.Tests.Unit.Context.SourceGen;
+
+using System.Collections.Immutable;
+using System.IO;
+using System.Linq;
+using AwesomeAssertions;
+using D2.Shared.Context.SourceGen;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Text;
+using Xunit;
+
+/// <summary>
+/// IIncrementalGenerator integration tests for <see cref="ContextGenerator"/>.
+/// Drives synthetic compilations targeting each of the three recognized
+/// assembly names and asserts the per-target dispatch (interface emission vs
+/// mutable + envelope emission vs no-op).
+/// </summary>
+public sealed class ContextGeneratorTests
+{
+    private const string _AUTH_SPEC = """
+    {
+      "name": "IAuthContext",
+      "namespace": "D2.Shared.AuthContext.Abstractions",
+      "extends": null,
+      "sections": [
+        {
+          "name": "Token",
+          "properties": [
+            { "name": "IsAuthenticated", "type": "bool?", "trinaryAuth": true },
+            { "name": "Subject", "type": "string?", "claim": "sub" }
+          ]
+        }
+      ]
+    }
+    """;
+
+    private const string _REQUEST_SPEC = """
+    {
+      "name": "IRequestContext",
+      "namespace": "D2.Shared.RequestContext.Abstractions",
+      "extends": "D2.Shared.AuthContext.Abstractions.IAuthContext",
+      "sections": [
+        {
+          "name": "Tracing",
+          "properties": [ { "name": "TraceId", "type": "string?" } ]
+        }
+      ]
+    }
+    """;
+
+    [Fact]
+    public void Generator_AuthContextAbstractionsAssembly_EmitsIAuthContextOnly()
+    {
+        var driver = RunGenerator(
+            assemblyName: "D2.Shared.AuthContext.Abstractions",
+            authSpec: _AUTH_SPEC,
+            requestSpec: _REQUEST_SPEC);
+
+        var trees = driver.GetRunResult().GeneratedTrees;
+        trees.Should().HaveCount(1);
+        Path.GetFileName(trees.Single().FilePath).Should().Be("IAuthContext.g.cs");
+
+        trees.Single().ToString().Should().Contain("public interface IAuthContext");
+    }
+
+    [Fact]
+    public void Generator_RequestContextAbstractionsAssembly_EmitsIRequestContextWithExtendsClause()
+    {
+        var driver = RunGenerator(
+            assemblyName: "D2.Shared.RequestContext.Abstractions",
+            authSpec: _AUTH_SPEC,
+            requestSpec: _REQUEST_SPEC);
+
+        var trees = driver.GetRunResult().GeneratedTrees;
+        trees.Should().HaveCount(1);
+        Path.GetFileName(trees.Single().FilePath).Should().Be("IRequestContext.g.cs");
+
+        var src = trees.Single().ToString();
+        src.Should()
+            .Contain("public interface IRequestContext : global::D2.Shared.AuthContext.Abstractions.IAuthContext");
+    }
+
+    [Fact]
+    public void Generator_RequestContextAssembly_EmitsMutableAndEnvelope()
+    {
+        var driver = RunGenerator(
+            assemblyName: "D2.Shared.RequestContext",
+            authSpec: _AUTH_SPEC,
+            requestSpec: _REQUEST_SPEC);
+
+        var trees = driver.GetRunResult().GeneratedTrees.ToArray();
+        trees.Should().HaveCount(2);
+        trees.Select(t => Path.GetFileName(t.FilePath)).Should()
+            .BeEquivalentTo(["MutableRequestContext.g.cs", "ContextEnvelope.g.cs"]);
+    }
+
+    [Fact]
+    public void Generator_OtherAssembly_EmitsNothing()
+    {
+        var driver = RunGenerator(
+            assemblyName: "Some.Random.Assembly",
+            authSpec: _AUTH_SPEC,
+            requestSpec: _REQUEST_SPEC);
+
+        driver.GetRunResult().GeneratedTrees.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Generator_RequestContextAssemblyMissingAuthSpec_EmitsMissingSpecFileDiagnostic()
+    {
+        // The combined emitter requires BOTH specs — auth is needed even when
+        // the target is RequestContext. If only request spec is present, fire
+        // D2CTX006.
+        var driver = RunGenerator(
+            assemblyName: "D2.Shared.RequestContext",
+            authSpec: null,
+            requestSpec: _REQUEST_SPEC);
+
+        var diagnostics = driver.GetRunResult().Diagnostics;
+        diagnostics.Should().Contain(d => d.Id == DiagnosticIds.MissingSpecFile);
+    }
+
+    [Fact]
+    public void Generator_TargetAssemblyButNoSpecsAtAll_EmitsMissingSpecFileDiagnostic()
+    {
+        var driver = RunGenerator(
+            assemblyName: "D2.Shared.AuthContext.Abstractions",
+            authSpec: null,
+            requestSpec: null);
+
+        var diagnostics = driver.GetRunResult().Diagnostics;
+        diagnostics.Should().Contain(d => d.Id == DiagnosticIds.MissingSpecFile);
+    }
+
+    [Fact]
+    public void Generator_RunTwice_SameInputs_ProducesIdenticalOutput()
+    {
+        // Cache stability — identical inputs must produce identical generator
+        // output (so downstream incremental builds can reuse cached results).
+        var firstSrc = RunGenerator(
+                assemblyName: "D2.Shared.RequestContext",
+                authSpec: _AUTH_SPEC,
+                requestSpec: _REQUEST_SPEC)
+            .GetRunResult().GeneratedTrees.Single(t => Path.GetFileName(t.FilePath) == "ContextEnvelope.g.cs")
+            .ToString();
+
+        var secondSrc = RunGenerator(
+                assemblyName: "D2.Shared.RequestContext",
+                authSpec: _AUTH_SPEC,
+                requestSpec: _REQUEST_SPEC)
+            .GetRunResult().GeneratedTrees.Single(t => Path.GetFileName(t.FilePath) == "ContextEnvelope.g.cs")
+            .ToString();
+
+        Normalize(secondSrc).Should().Be(Normalize(firstSrc));
+    }
+
+    private static GeneratorDriver RunGenerator(
+        string assemblyName, string? authSpec, string? requestSpec)
+    {
+        var compilation = CSharpCompilation.Create(
+            assemblyName: assemblyName,
+            syntaxTrees: [],
+            references:
+            [
+                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+            ],
+            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+        var generator = new ContextGenerator().AsSourceGenerator();
+
+        var additionalTexts = ImmutableArray.CreateBuilder<AdditionalText>();
+        if (authSpec is not null)
+            additionalTexts.Add(new InMemoryAdditionalText("IAuthContext.spec.json", authSpec));
+        if (requestSpec is not null)
+            additionalTexts.Add(new InMemoryAdditionalText("IRequestContext.spec.json", requestSpec));
+
+        var driver = CSharpGeneratorDriver.Create(
+            generators: [generator],
+            additionalTexts: additionalTexts.ToImmutable());
+
+        return driver.RunGenerators(compilation);
+    }
+
+    private static string Normalize(string s) => s.Replace("\r\n", "\n").Trim();
+
+    /// <summary>
+    /// Minimal AdditionalText shim for synthesizing AdditionalFiles in
+    /// generator tests without filesystem I/O.
+    /// </summary>
+    private sealed class InMemoryAdditionalText : AdditionalText
+    {
+        private readonly SourceText r_text;
+
+        public InMemoryAdditionalText(string path, string content)
+        {
+            Path = path;
+            r_text = SourceText.From(content);
+        }
+
+        public override string Path { get; }
+
+        public override SourceText GetText(System.Threading.CancellationToken cancellationToken = default) => r_text;
+    }
+}

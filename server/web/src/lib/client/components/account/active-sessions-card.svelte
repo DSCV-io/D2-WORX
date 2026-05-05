@@ -53,7 +53,7 @@ Copyright (c) DCSV. All rights reserved.
     const result = await listMySessions();
     loading = false;
     if (!result.success) {
-      errorMessage = translateMessage(result.messages?.[0], undefined, m.common_errors_unknown());
+      errorMessage = translateMessage(result.messages?.[0], undefined, m.common_errors_UNKNOWN());
       sessions = [];
       loaded = true;
       return;

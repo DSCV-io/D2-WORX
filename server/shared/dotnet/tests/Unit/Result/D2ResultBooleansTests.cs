@@ -126,10 +126,10 @@ public sealed class D2ResultBooleansTests
     }
 
     [Fact]
-    public void IsCancelled_TrueOnCancelled_FalseOnOthers()
+    public void IsCanceled_TrueOnCanceled_FalseOnOthers()
     {
-        D2Result.Cancelled().IsCancelled.Should().BeTrue();
-        D2Result.UnhandledException().IsCancelled.Should().BeFalse();
+        D2Result.Canceled().IsCanceled.Should().BeTrue();
+        D2Result.UnhandledException().IsCanceled.Should().BeFalse();
     }
 
     [Fact]
@@ -186,7 +186,7 @@ public sealed class D2ResultBooleansTests
         D2Result.Unauthorized().IsTransientRetryable.Should().BeFalse();
         D2Result.ValidationFailed().IsTransientRetryable.Should().BeFalse();
         D2Result.PayloadTooLarge().IsTransientRetryable.Should().BeFalse();
-        D2Result.Cancelled().IsTransientRetryable.Should().BeFalse();
+        D2Result.Canceled().IsTransientRetryable.Should().BeFalse();
         D2Result.Ok().IsTransientRetryable.Should().BeFalse();
     }
 

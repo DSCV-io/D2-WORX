@@ -22,7 +22,7 @@ public sealed class TKMessageTests
     public void GeneratedConstants_HaveCorrectKey()
     {
         TK.Common.Errors.NOT_FOUND.Key.Should().Be("common_errors_NOT_FOUND");
-        TK.Common.Errors.UNKNOWN.Key.Should().Be("common_errors_unknown");
+        TK.Common.Errors.UNKNOWN.Key.Should().Be("common_errors_UNKNOWN");
         TK.Auth.Errors.SOLE_OWNER_OF_ORGS.Key.Should().Be("auth_errors_SOLE_OWNER_OF_ORGS");
         TK.Geo.Validation.IP_REQUIRED.Key.Should().Be("geo_validation_ip_required");
     }

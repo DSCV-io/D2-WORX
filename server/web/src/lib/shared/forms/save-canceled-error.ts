@@ -12,10 +12,10 @@
  * Use it when an `onSave` flow involves a confirmation modal or any other
  * gate that the user can back out of without it being a real failure.
  */
-export class SaveCancelledError extends Error {
-  constructor(message = "Save cancelled by user.") {
+export class SaveCanceledError extends Error {
+  constructor(message = "Save canceled by user.") {
     super(message);
-    this.name = "SaveCancelledError";
+    this.name = "SaveCanceledError";
   }
 }
 
@@ -24,8 +24,8 @@ export class SaveCancelledError extends Error {
  * cross-realm cases (e.g., errors thrown from a different module bundle)
  * where `instanceof` can return false even for the same class.
  */
-export function isSaveCancelledError(err: unknown): boolean {
+export function isSaveCanceledError(err: unknown): boolean {
   return (
-    err instanceof SaveCancelledError || (err instanceof Error && err.name === "SaveCancelledError")
+    err instanceof SaveCanceledError || (err instanceof Error && err.name === "SaveCanceledError")
   );
 }

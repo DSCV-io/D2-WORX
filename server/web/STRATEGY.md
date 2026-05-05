@@ -134,7 +134,7 @@ Dashboard: `infra/observability/grafana/provisioning/dashboards/d2-worx/web-vita
 
 ### User Identity
 
-**PII rule**: Faro user identity is limited to `userId` + `username`. Never email, real name, contact details, or session payload contents. (Per CLAUDE.md §5.)
+**PII rule**: Faro user identity is limited to `userId` + `username`. Never email, real name, contact details, or session payload contents.
 
 
 ### Session Replay

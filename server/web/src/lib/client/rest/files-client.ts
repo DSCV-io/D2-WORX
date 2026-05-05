@@ -62,7 +62,7 @@ export async function uploadFile(
   displayName: string,
 ): Promise<{ fileId: string }> {
   const token = await getToken();
-  if (!token) throw new Error(m.common_errors_not_authenticated());
+  if (!token) throw new Error(m.common_errors_NOT_AUTHENTICATED());
 
   // Step 1: Request presigned URL from Files API
   const baseUrl = getFilesBaseUrl();
@@ -115,7 +115,7 @@ export async function uploadFile(
  */
 export async function getVariantUrl(fileId: string, variantName: string): Promise<string> {
   const token = await getToken();
-  if (!token) throw new Error(m.common_errors_not_authenticated());
+  if (!token) throw new Error(m.common_errors_NOT_AUTHENTICATED());
 
   const baseUrl = getFilesBaseUrl();
   const response = await fetch(`${baseUrl}/api/v1/files/${fileId}/${variantName}/url`, {

@@ -1,0 +1,38 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Shared.Handler</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    BaseHandler + HandlerContext + HandlerTelemetry + AddD2Handler. The runtime
+    piece every handler in every service inherits — CQRS handlers, repo handlers,
+    messaging consumers, scheduled jobs, any handler-shaped operation. Auto-emits
+    4 OTel metrics per call (invoked, succeeded, failed, duration_ms) plus
+    per-call span via System.Diagnostics.ActivitySource.
+
+    Universal try/catch shape: ExecuteAsync exceptions surface as
+    D2Result.UnhandledException at HandleAsync return; OperationCanceledException
+    surfaces as D2Result.Cancelled. RunCorePipelineAsync exposes the captured
+    exception so BaseRepoHandler can remap EF/PG-specific exceptions to typed
+    D2Result failure codes.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\handler-abstractions\D2.Shared.Handler.Abstractions.csproj" />
+    <ProjectReference Include="..\request-context-abstractions\D2.Shared.RequestContext.Abstractions.csproj" />
+    <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D2.Shared.Tests" />
+  </ItemGroup>
+</Project>

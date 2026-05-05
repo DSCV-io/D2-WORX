@@ -1,0 +1,59 @@
+{
+  "$schema": "./schema.json",
+  "scopes": [
+    {
+      "name": "anon.public.health",
+      "description": "Public health-check endpoint. Liveness signal — no auth.",
+      "actionSensitivity": "Routine",
+      "impersonationBlocked": false
+    },
+    {
+      "name": "anon.auth.signin.attempt",
+      "description": "Anonymous sign-in attempt — issuing an authentication request before a session exists.",
+      "actionSensitivity": "Routine",
+      "impersonationBlocked": false
+    },
+    {
+      "name": "self.read",
+      "description": "Read the caller's own user data (profile, preferences, contact details).",
+      "actionSensitivity": "Routine",
+      "impersonationBlocked": false,
+      "grantedTo": { "*": ["*"] }
+    },
+    {
+      "name": "self.write",
+      "description": "Write the caller's own non-auth-relevant data (display name, avatar, preferences). Auth-relevant changes (email, password) require sensitive scopes.",
+      "actionSensitivity": "Routine",
+      "impersonationBlocked": false,
+      "grantedTo": { "*": ["*"] }
+    },
+    {
+      "name": "auth.password.change",
+      "description": "Change the caller's own password. Self-service.",
+      "actionSensitivity": "Sensitive",
+      "impersonationBlocked": true,
+      "grantedTo": { "*": ["*"] }
+    },
+    {
+      "name": "auth.user.impersonate.consent",
+      "description": "Initiate consent-based impersonation of another user. Requires OTP authorization from the target user.",
+      "actionSensitivity": "Sensitive",
+      "impersonationBlocked": true,
+      "grantedTo": { "Support": ["Owner", "Officer"], "Admin": ["Owner", "Officer", "Agent"] }
+    },
+    {
+      "name": "auth.user.impersonate.force",
+      "description": "Initiate force impersonation (no consent — silent). Admin-org-only fallback for emergency support scenarios.",
+      "actionSensitivity": "Critical",
+      "impersonationBlocked": true,
+      "grantedTo": { "Admin": ["Owner", "Officer", "Agent"] }
+    },
+    {
+      "name": "billing.payment.charge",
+      "description": "Initiate a payment charge against a customer's billing instrument.",
+      "actionSensitivity": "Critical",
+      "impersonationBlocked": true,
+      "grantedTo": { "Customer": ["Owner"] }
+    }
+  ]
+}

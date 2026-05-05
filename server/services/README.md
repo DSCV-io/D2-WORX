@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # server/services/ — D²-WORX Services
 
+> Parent: [`server/`](../README.md)
+
 .NET service implementations. Each service is a self-contained DDD-layered project (api / app / domain / infra / tests + clients/dotnet for client libraries) built in bottom-up dependency order.
 
 ## Services
@@ -37,7 +39,7 @@ Adding a `clients/typescript/` later (e.g., for a future TS-based service) is ju
 - **Folder naming**: lowercase outer (`edge/`, `api/`, `app/`)
 - **Project naming**: PascalCase dot-separated (`D2.Edge.API.csproj` lives in `edge/api/`)
 - **One handler per file** under `Implementations/{TLC}/Handlers/{3LC}/` per [PATTERNS.md](../../docs/PATTERNS.md) TLC convention
-- **Every service + project has a `README.md`** per CLAUDE.md §6 documentation rule
+- **Every service + project has a `README.md`**
 
 ## Build
 
@@ -49,4 +51,4 @@ dotnet test server/services/edge/tests --no-build --configuration Release       
 
 ## Compose integration
 
-Each service gets a block in [`infra/compose/compose.yml`](../../infra/compose/compose.yml) when it ships per its phase. Until shipped, the compose file has a TODO comment listing the planned services.
+Each service gets a block in [`infra/compose/compose.yml`](../../infra/compose/compose.yml) when it ships. Until shipped, the compose file has a TODO comment listing the planned services.

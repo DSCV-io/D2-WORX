@@ -67,7 +67,7 @@ Copyright (c) DCSV. All rights reserved.
       toast.success(m.common_ui_changes_saved());
       open = false;
     } catch {
-      toast.error(m.common_errors_unknown());
+      toast.error(m.common_errors_UNKNOWN());
     } finally {
       saving = false;
     }

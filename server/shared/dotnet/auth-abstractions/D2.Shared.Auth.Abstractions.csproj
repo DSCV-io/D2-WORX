@@ -1,0 +1,41 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Shared.Auth.Abstractions</RootNamespace>
+
+    <!-- Emit the generator's output (Scopes.g.cs) to obj/Generated/ so it's
+         visible for inspection / debugging (Rider also picks them up). -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <!--
+    Zero external deps by design. This is the identity / authorization vocabulary
+    slice that domain code, request-context, handler-abstractions, and the runtime
+    D2.Shared.Auth all reference for shared enums and string constants.
+
+    The Scopes static partial class is emitted at build time by the sibling
+    D2.Shared.Auth.Scopes.SourceGen project (../auth-scopes-source-gen/),
+    referenced below as a Roslyn analyzer (no runtime dll dependency).
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\auth-scopes-source-gen\D2.Shared.Auth.Scopes.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Surface the contracts/auth-scopes spec to the source generator. Single
+      source of truth for the platform's scope catalog.
+    -->
+    <AdditionalFiles Include="..\..\..\..\contracts\auth-scopes\scopes.spec.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D2.Shared.Tests" />
+  </ItemGroup>
+</Project>

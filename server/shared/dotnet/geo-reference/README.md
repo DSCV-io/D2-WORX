@@ -4,11 +4,13 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.GeoReference
 
+> Parent: [`server/shared/dotnet/`](../README.md)
+
 > **Status**: placeholder — not yet implemented.
 
 ## Purpose
 
-Embedded geographic reference data — countries, IANA timezones, currencies, locales, regions. **NOT a service** (replaces v1 D2.Geo's reference-data RPCs). Loaded once at process startup; consumed in-process with no network round-trip.
+Embedded geographic reference data — countries, IANA timezones, currencies, locales, regions. **NOT a service** — loaded once at process startup; consumed in-process with no network round-trip.
 
 ## Public API surface
 

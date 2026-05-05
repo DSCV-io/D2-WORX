@@ -70,7 +70,7 @@ Copyright (c) DCSV. All rights reserved.
           // eslint-disable-next-line svelte/no-navigation-without-resolve -- pre-resolved above
           await goto(verifyUrl);
         } catch {
-          serverError = m.common_errors_unknown();
+          serverError = m.common_errors_UNKNOWN();
         } finally {
           submitting = false;
         }

@@ -386,13 +386,13 @@ public sealed class D2ResultGenericTests
     }
 
     [Fact]
-    public void Cancelled_Generic_Produces400()
+    public void Canceled_Generic_Produces400()
     {
-        var result = D2Result<Payload>.Cancelled();
+        var result = D2Result<Payload>.Canceled();
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        result.ErrorCode.Should().Be(ErrorCodes.CANCELLED);
+        result.ErrorCode.Should().Be(ErrorCodes.CANCELED);
     }
 
     [Fact]

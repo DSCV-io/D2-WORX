@@ -40,5 +40,5 @@ export function getErrorMessage(errorCode: string | undefined, fallback?: string
   if (errorCode && errorCode in ERROR_CODE_MAP) {
     return ERROR_CODE_MAP[errorCode]();
   }
-  return fallback ?? m.common_errors_unknown();
+  return fallback ?? m.common_errors_UNKNOWN();
 }

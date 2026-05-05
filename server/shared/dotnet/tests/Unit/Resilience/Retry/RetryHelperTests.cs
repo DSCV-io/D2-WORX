@@ -266,7 +266,7 @@ public sealed class RetryHelperTests
     // ----------------------------------------------------------------------
 
     [Fact]
-    public async Task RetryAsync_PreCancelled_ThrowsImmediately()
+    public async Task RetryAsync_PreCanceled_ThrowsImmediately()
     {
         // Capture the token by VALUE before the closure so the closure never
         // closes over the IDisposable cts itself (R# AccessToDisposedClosure).
@@ -579,11 +579,11 @@ public sealed class RetryHelperTests
     }
 
     [Fact]
-    public async Task RetryAsync_CtCancelledDuringDelayFunc_PropagatesOce()
+    public async Task RetryAsync_CtCanceledDuringDelayFunc_PropagatesOce()
     {
         // Adversarial: caller cancels the CT mid-backoff. The DelayFunc
         // (Task.Delay or override) honours the CT; the OCE escapes RetryAsync
-        // because the catch filter excludes "OCE when ct is cancelled."
+        // because the catch filter excludes "OCE when ct is canceled."
         //
         // Note: cts is disposed manually AFTER `act` is awaited so the
         // captured-disposable lambda discipline holds (no `using` here would
@@ -620,7 +620,7 @@ public sealed class RetryHelperTests
             await act.Should().ThrowAsync<OperationCanceledException>();
 
             // ReSharper restore AccessToDisposedClosure
-            // First attempt threw transient; DelayFunc cancelled mid-backoff;
+            // First attempt threw transient; DelayFunc canceled mid-backoff;
             // OCE escaped before the second attempt could begin.
             attempts.Should().Be(1);
         }

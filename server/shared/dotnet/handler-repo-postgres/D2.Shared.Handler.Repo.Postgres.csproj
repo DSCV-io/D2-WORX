@@ -1,0 +1,30 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Shared.Handler.Repo.Postgres</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    PostgreSQL implementation of IDbExceptionClassifier. Plugs into
+    BaseRepoHandler via DI (services.AddD2Postgres()). Owns the SQLSTATE
+    matrix + the wrapping rules for DbUpdateException ↔ PostgresException
+    ↔ raw NpgsqlException. Sibling packages would provide the same
+    interface for SQL Server, SQLite, MySQL, etc.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\handler-repo-abstractions\D2.Shared.Handler.Repo.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D2.Shared.Tests" />
+  </ItemGroup>
+</Project>

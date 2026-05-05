@@ -22,7 +22,7 @@ Copyright (c) DCSV. All rights reserved.
   import { changeLocale } from "$lib/client/utils/change-locale.js";
   import { changeTimezone } from "$lib/client/utils/change-timezone.js";
   import { translateMessage } from "$lib/client/utils/translate-message.js";
-  import { SaveCancelledError } from "$lib/shared/forms/save-cancelled-error.js";
+  import { SaveCanceledError } from "$lib/shared/forms/save-canceled-error.js";
   import * as m from "$lib/paraglide/messages.js";
   import type { LocaleOption } from "$lib/shared/forms/locale-options.js";
   import type { TimezoneOption } from "$lib/shared/forms/timezone-options.js";
@@ -119,7 +119,7 @@ Copyright (c) DCSV. All rights reserved.
     const result = await updateNameApi(values.firstName, values.lastName);
     if (!result.success) {
       const key = result.messages?.[0] ?? result.inputErrors?.[0]?.[1];
-      throw new Error(translateMessage(key, undefined, m.common_errors_unknown()));
+      throw new Error(translateMessage(key, undefined, m.common_errors_UNKNOWN()));
     }
     toast.success(m.common_ui_changes_saved());
   }
@@ -128,7 +128,7 @@ Copyright (c) DCSV. All rights reserved.
     const result = await updateUsernameApi(value);
     if (!result.success) {
       const key = result.messages?.[0] ?? result.inputErrors?.[0]?.[1];
-      throw new Error(translateMessage(key, undefined, m.common_errors_unknown()));
+      throw new Error(translateMessage(key, undefined, m.common_errors_UNKNOWN()));
     }
     toast.success(m.common_ui_changes_saved());
   }
@@ -147,9 +147,9 @@ Copyright (c) DCSV. All rights reserved.
       localeConfirmOpen = true;
     });
     if (!confirmed) {
-      // User cancelled — let the dropdown stay dirty (save/revert reappear)
+      // User canceled — let the dropdown stay dirty (save/revert reappear)
       // by signalling cancellation via the sentinel.
-      throw new SaveCancelledError();
+      throw new SaveCanceledError();
     }
     await changeLocale(value, true);
   }

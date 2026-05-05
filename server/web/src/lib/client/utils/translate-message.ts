@@ -5,7 +5,7 @@
 /**
  * Resolve a backend D2Result message into a translated string.
  *
- * Backend handlers return TK constant strings (e.g. "common_errors_unknown")
+ * Backend handlers return TK constant strings (e.g. "common_errors_UNKNOWN")
  * in `D2Result.messages`. Paraglide compiles each key into a callable on the
  * `messages` module. This helper looks up the key at runtime and invokes it,
  * falling back to the original string if it isn't a known translation key

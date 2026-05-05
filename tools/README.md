@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # tools/ — Dev Tooling
 
+> Parent: [`/`](../README.md)
+
 Scripts + utilities for developer workflows that aren't part of any service.
 
 ## Layout

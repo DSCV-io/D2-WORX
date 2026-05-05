@@ -2,6 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
+import { TK } from "@d2/i18n/keys";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { D2Result } from "@d2/result";
 
@@ -116,7 +117,7 @@ describe("gateway.server", () => {
 
       expect(result.success).toBe(false);
       expect(result.statusCode).toBe(401);
-      expect(result.messages[0]).toContain("common_errors_UNAUTHORIZED");
+      expect(result.messages[0]).toContain(TK.common.errors.UNAUTHORIZED);
     });
 
     it("sends Authorization and X-Api-Key headers", async () => {
@@ -236,7 +237,7 @@ describe("gateway.server", () => {
 
       expect(result.success).toBe(false);
       expect(result.statusCode).toBe(408);
-      expect(result.messages[0]).toContain("common_errors_CANCELLED");
+      expect(result.messages[0]).toContain(TK.common.errors.CANCELED);
 
       fetchSpy.mockRestore();
     });
@@ -253,7 +254,7 @@ describe("gateway.server", () => {
 
       expect(result.success).toBe(false);
       expect(result.statusCode).toBe(408);
-      expect(result.messages[0]).toContain("common_errors_REQUEST_FAILED");
+      expect(result.messages[0]).toContain(TK.common.errors.REQUEST_FAILED);
 
       fetchSpy.mockRestore();
     });

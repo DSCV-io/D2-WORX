@@ -99,7 +99,7 @@ Copyright (c) DCSV. All rights reserved.
             errorMessage = translateMessage(
               result.messages?.[0],
               undefined,
-              m.common_errors_unknown(),
+              m.common_errors_UNKNOWN(),
             );
             return;
           }

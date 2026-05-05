@@ -12,7 +12,7 @@ Copyright (c) DCSV. All rights reserved.
     INLINE_BORDER_INVALID,
   } from "$lib/shared/forms/input-styles.js";
   import { createInlineEditKeyHandler } from "$lib/shared/forms/inline-edit-keyboard.js";
-  import { isSaveCancelledError } from "$lib/shared/forms/save-cancelled-error.js";
+  import { isSaveCanceledError } from "$lib/shared/forms/save-canceled-error.js";
   import * as m from "$lib/paraglide/messages.js";
   import InlineEditActions from "./inline-edit-actions.svelte";
   import InlineFieldStatusIcon from "./inline-field-status-icon.svelte";
@@ -117,13 +117,13 @@ Copyright (c) DCSV. All rights reserved.
       }, 2000);
       return true;
     } catch (err) {
-      // User-cancelled flow (e.g., dismissed a confirmation modal). Stay
+      // User-canceled flow (e.g., dismissed a confirmation modal). Stay
       // dirty so save/revert reappear; do NOT show an error.
-      if (isSaveCancelledError(err)) {
+      if (isSaveCanceledError(err)) {
         saveState = "idle";
         return false;
       }
-      fieldErrors = { _form: err instanceof Error ? err.message : m.common_errors_save_failed() };
+      fieldErrors = { _form: err instanceof Error ? err.message : m.common_errors_SAVE_FAILED() };
       saveState = "error";
       return false;
     }

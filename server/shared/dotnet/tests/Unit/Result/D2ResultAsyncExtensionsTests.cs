@@ -182,7 +182,7 @@ public sealed class D2ResultAsyncExtensionsTests
     [Fact]
     public async Task ThenAsync_ValueTask_OnFailure_ShortCircuits()
     {
-        ValueTask<D2Result<int>> upstream = ValueTask.FromResult(D2Result<int>.Cancelled());
+        ValueTask<D2Result<int>> upstream = ValueTask.FromResult(D2Result<int>.Canceled());
         var nextInvoked = false;
 
         var result = await upstream.ThenAsync(x =>
@@ -192,7 +192,7 @@ public sealed class D2ResultAsyncExtensionsTests
         });
 
         nextInvoked.Should().BeFalse();
-        result.ErrorCode.Should().Be(ErrorCodes.CANCELLED);
+        result.ErrorCode.Should().Be(ErrorCodes.CANCELED);
     }
 
     [Fact]

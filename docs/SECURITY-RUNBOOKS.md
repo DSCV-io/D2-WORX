@@ -40,7 +40,7 @@ d2 keys rotate --domain <audit|notifications|courier|jwks|cookie> --reason "<sho
 
 ---
 
-## Runbook Stubs (to be expanded in Phase 3)
+## Runbook Stubs (to be expanded when KeyCustodian ships)
 
 ### TBD: Message-payload key compromise (audit / notifications / courier domain)
 
@@ -94,13 +94,13 @@ Steps:
 
 ## When This Doc Goes from Placeholder to Real
 
-Phase 3 completion criteria includes:
+Completion criteria (when KeyCustodian ships):
 - [ ] All 6 stub runbooks above expanded with concrete commands, alert criteria, recovery steps
 - [ ] Each runbook tested in a dev/staging environment (operator walks through it end-to-end)
 - [ ] Operator on-call rotation knows where to find this doc
 - [ ] Alert routing references runbook sections (alert → page → "see SECURITY-RUNBOOKS.md §X")
 
-Until then: anyone who hits a compromise scenario before Phase 3 ships should:
+Until then: anyone who hits a compromise scenario should:
 1. Pause and consult the on-call security contact
 2. Don't wing the rotation — KeyCustodian state machine has terminal states; incorrect operation can lock you out
 3. Document what you did so this runbook can be informed by it

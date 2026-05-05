@@ -58,7 +58,7 @@ using D2.Shared.Result;
 ///   </description></item>
 ///   <item><description>
 ///     <see cref="OperationCanceledException"/> when the supplied token
-///     was the source → <see cref="D2Result{TValue}.Cancelled"/>
+///     was the source → <see cref="D2Result{TValue}.Canceled"/>
 ///   </description></item>
 ///   <item><description>
 ///     Any other exception classified as transient by
@@ -127,7 +127,7 @@ public sealed class ResilientPipeline<TKey, TValue>
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
-            return D2Result<TValue>.Cancelled();
+            return D2Result<TValue>.Canceled();
         }
         catch (Exception ex) when (RetryHelper.IsTransientException(ex))
         {

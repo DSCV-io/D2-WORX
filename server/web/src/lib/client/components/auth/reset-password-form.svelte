@@ -62,13 +62,13 @@ Copyright (c) DCSV. All rights reserved.
             }
 
             // Password validation or other errors — show inline (user can retry)
-            serverError = res.error.message ?? m.common_errors_unknown();
+            serverError = res.error.message ?? m.common_errors_UNKNOWN();
             return;
           }
 
           result = "success";
         } catch {
-          serverError = m.common_errors_unknown();
+          serverError = m.common_errors_UNKNOWN();
         } finally {
           submitting = false;
         }

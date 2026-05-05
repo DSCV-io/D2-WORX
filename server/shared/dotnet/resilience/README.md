@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.Resilience
 
+> Parent: [`server/shared/dotnet/`](../README.md)
+
 Resilience primitives for protecting outbound calls — `RetryHelper` (with optional `D2Result` awareness), `CircuitBreaker<T>`, and `Singleflight<TKey, TValue>`. Lock-free where possible (`Interlocked` operations, `ConcurrentDictionary`); test seams baked in (clock + delay overrides).
 
 Depends only on `D2.Shared.Result` (for the `D2Result`-aware retry overload).
@@ -92,7 +94,7 @@ var result = await cb.ExecuteAsync(
     ct);
 ```
 
-`CircuitBreakerOptions` follows the project's small-Options-record convention (CLAUDE.md §5): every parameter is nullable + falls back to its documented default in the ctor body, so call sites stay terse:
+`CircuitBreakerOptions` follows the project's small-Options-record convention: every parameter is nullable + falls back to its documented default in the ctor body, so call sites stay terse:
 
 ```csharp
 new()                                                 // all defaults (5, 30s, null)
@@ -187,7 +189,7 @@ The three primitives compose naturally. The `Pipeline` namespace is the canonica
 
 - composes layers in **outer-first order** (first layer wraps everything else)
 - exposes ONE call: `ExecuteAsync(key, operation, ct)` returning `D2Result<TValue>`
-- **never throws** — every terminating exception is converted to a `D2Result` per the documented mapping (CircuitOpen → ServiceUnavailable, caller-cancelled → Cancelled, transient that slipped past layers → ServiceUnavailable, anything else → UnhandledException)
+- **never throws** — every terminating exception is converted to a `D2Result` per the documented mapping (CircuitOpen → ServiceUnavailable, caller-canceled → Canceled, transient that slipped past layers → ServiceUnavailable, anything else → UnhandledException)
 
 ### Two-tier API: fluent at registration, dead-simple at call site
 
@@ -197,7 +199,7 @@ The intent is that **client-lib authors** configure the pipeline once at the lib
 
 **All registrations are keyed.** The lib provides no unkeyed registration or resolution path because two unkeyed registrations of the same `(TKey, TValue)` shape would silently overwrite each other (last-wins) — the keyed-mandatory rule eliminates that footgun by construction. Every layer call says EXACTLY which keyed primitive it pulls.
 
-In practice, service keys live in a per-domain constants class in the consumer's app layer (NOT inline strings in registration code), so refactor-renames stay safe and `[FromKeyedServices(...)]` attributes on consumers stay in sync. The convention follows CLAUDE.md §6 — public consts are `UPPER_CASE`:
+In practice, service keys live in a per-domain constants class in the consumer's app layer (NOT inline strings in registration code), so refactor-renames stay safe and `[FromKeyedServices(...)]` attributes on consumers stay in sync. Public consts are `UPPER_CASE`:
 
 ```csharp
 // app layer constants — single source of truth for every key.
@@ -418,7 +420,7 @@ services.AddResilientPipeline<string, T>("sync-deadline", p => p
 // no CB — failures are surfaced; caller controls deadline via the CT
 ```
 
-Total worst-case ≈ 200 + 400 + 800 = 1400 ms (no jitter). Caller passes a CancellationToken with their deadline; OCE flows through as `Cancelled`. Use when you want retry but not the breaker semantics — typical for handlers that already live behind their own gateway-level CB.
+Total worst-case ≈ 200 + 400 + 800 = 1400 ms (no jitter). Caller passes a CancellationToken with their deadline; OCE flows through as `Canceled`. Use when you want retry but not the breaker semantics — typical for handlers that already live behind their own gateway-level CB.
 
 **Real-world:** Synchronous gRPC call from one service handler to another, where the outer request has a 2s deadline. Retry to absorb a single transient blip without busting the deadline.
 
@@ -510,7 +512,7 @@ The pattern generalizes to any domain client where one operation has multiple cr
 
 `server/shared/dotnet/tests/Unit/Resilience/` — adversarial coverage at 100% lines + 100% branches. Categories:
 
-- **`RetryHelper`**: full transient-classifier matrix (HTTP 5xx / 429 / 408 / non-transient codes / null status / TaskCanceled / Timeout / Socket / arbitrary). Happy path, throws-then-succeeds, throws-every-attempt-exhaustion, ShouldRetry-true-then-false, ShouldRetry-always-true (last-value wins on exhaustion), alternating throw+return (last terminator wins), pre-cancelled token, OCE-from-ct (NOT classified transient), DelayFunc-invoked-between-retries.
+- **`RetryHelper`**: full transient-classifier matrix (HTTP 5xx / 429 / 408 / non-transient codes / null status / TaskCanceled / Timeout / Socket / arbitrary). Happy path, throws-then-succeeds, throws-every-attempt-exhaustion, ShouldRetry-true-then-false, ShouldRetry-always-true (last-value wins on exhaustion), alternating throw+return (last terminator wins), pre-canceled token, OCE-from-ct (NOT classified transient), DelayFunc-invoked-between-retries.
 - **`RetryD2ResultAsync`**: default predicate retries `ServiceUnavailable`, default predicate does NOT retry `NotFound`, caller-`ShouldRetry`-override wins, null-options behaviour.
 - **`CalculateDelay`** (internal): zero-index returns base, multiplier applied, max-delay clamp, exponent overflow clamp, jitter range property (200 samples in `[0, calculated)`).
 - **`CircuitBreaker`**: initial state, single success/failure, threshold transition Closed→Open, mixed exception+value-failure threshold, success resets counter, Open without/with fallback, Open→HalfOpen on cooldown, HalfOpen probe success closes, HalfOpen probe failure (exception OR value-failure) reopens, HalfOpen probe-lock (concurrent caller gets fallback / throws), `Reset` from Open fires callback, `Reset` from Closed is no-op, callback-null branches on every transition.

@@ -13,6 +13,39 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/">
     <File Path="shared/dotnet/README.md" />
   </Folder>
+  <Folder Name="/shared/dotnet/auth-abstractions/">
+    <Project Path="shared/dotnet/auth-abstractions/D2.Shared.Auth.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/auth-scopes-source-gen/">
+    <Project Path="shared/dotnet/auth-scopes-source-gen/D2.Shared.Auth.Scopes.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/auth-context-abstractions/">
+    <Project Path="shared/dotnet/auth-context-abstractions/D2.Shared.AuthContext.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/context-source-gen/">
+    <Project Path="shared/dotnet/context-source-gen/D2.Shared.Context.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/request-context/">
+    <Project Path="shared/dotnet/request-context/D2.Shared.RequestContext.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/request-context-abstractions/">
+    <Project Path="shared/dotnet/request-context-abstractions/D2.Shared.RequestContext.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/handler/">
+    <Project Path="shared/dotnet/handler/D2.Shared.Handler.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/handler-abstractions/">
+    <Project Path="shared/dotnet/handler-abstractions/D2.Shared.Handler.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/handler-repo/">
+    <Project Path="shared/dotnet/handler-repo/D2.Shared.Handler.Repo.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/handler-repo-abstractions/">
+    <Project Path="shared/dotnet/handler-repo-abstractions/D2.Shared.Handler.Repo.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/handler-repo-postgres/">
+    <Project Path="shared/dotnet/handler-repo-postgres/D2.Shared.Handler.Repo.Postgres.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/i18n/">
     <Project Path="shared/dotnet/i18n/D2.Shared.I18n.csproj" />
   </Folder>

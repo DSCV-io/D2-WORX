@@ -54,7 +54,7 @@ Copyright (c) DCSV. All rights reserved.
     loading = false;
     loaded = true;
     if (!result.success) {
-      errorMessage = translateMessage(result.messages?.[0], undefined, m.common_errors_unknown());
+      errorMessage = translateMessage(result.messages?.[0], undefined, m.common_errors_UNKNOWN());
       events = [];
       total = 0;
       return;

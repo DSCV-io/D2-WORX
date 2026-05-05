@@ -172,6 +172,7 @@ Read these docs BEFORE working in the relevant area. Each doc is the authority f
 | [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIST.md) | Quality audit checklist — Security / Logic / Code Quality / Conventions / Cross-Service / Tests / Docs | Before merging substantial work |
 | [docs/PARITY.md](docs/PARITY.md) | Cross-language parity tracking + "Why exclusive?" framework | Adding cross-language components |
 | [docs/SECURITY-RUNBOOKS.md](docs/SECURITY-RUNBOOKS.md) | KeyCustodian compromise runbooks. | Security incident response |
+| [docs/RATE-LIMITING.md](docs/RATE-LIMITING.md) | v2 rate-limiting design — `RateLimitTier` enum, 18-bucket model, cookie-shortcut, FP-too-common detection (option d hybrid), pub/sub session-invalidation backplane, runtime kill-switch hierarchy, per-class fail behavior. Phase 3 (Edge) implementation reference. | Any rate-limit / request-enrichment middleware work |
 | **Active project tracking doc** (see header) | Current phase, status, open questions, deferred work, resolved decisions. | Before starting any task |
 | `/old/v1/D2-WORX/` | Frozen v1 snapshot. Historical reference for any v1 patterns / decisions / docs that don't have v2 equivalents yet. **Read-only — never modify.** | When researching how v1 did something or hunting for tribal knowledge not yet extracted |
 
@@ -190,7 +191,8 @@ When you change something, update the right doc. The map below is the routing ta
 | A handler / TLC pattern / DI registration / `D2Result` factory usage / RedactionSpec / mapper / repo pattern | [docs/PATTERNS.md](docs/PATTERNS.md) |
 | AMQP headers, exchange/routing-key naming, encryption frame, queue topology, DLQ behavior | [docs/MESSAGING.md](docs/MESSAGING.md) |
 | Test category, custom matcher, adversarial-coverage rule, fixture pattern | [docs/TESTS.md](docs/TESTS.md) |
-| Idempotency / rate-limit / SAGA / migration locking / multi-instance correctness | [docs/OPERATIONAL-GUARANTEES.md](docs/OPERATIONAL-GUARANTEES.md) |
+| Idempotency / SAGA / migration locking / multi-instance correctness | [docs/OPERATIONAL-GUARANTEES.md](docs/OPERATIONAL-GUARANTEES.md) |
+| Rate-limit middleware design / bucket math / kill-switch / FP-too-common detection / cookie shortcut | [docs/RATE-LIMITING.md](docs/RATE-LIMITING.md) |
 | Audit checklist item (security / logic / code-quality / conventions / cross-service / tests / docs gate) | [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIST.md) |
 | Anything cross-language (.NET ↔ SvelteKit ↔ future) | [docs/PARITY.md](docs/PARITY.md) |
 | KeyCustodian, key rotation, secret handling, compromise runbook | [docs/SECURITY-RUNBOOKS.md](docs/SECURITY-RUNBOOKS.md) |
@@ -242,7 +244,7 @@ Local/in-memory caching is always OK (instance-scoped, ephemeral — doesn't aff
 
 ### D2Result Pattern
 
-Result objects replace exceptions for control flow. **Always use semantic factories** — never raw `Fail()` with manual status codes when a factory exists. Available: `Ok`, `Created`, `NotFound`, `Unauthorized`, `Forbidden`, `ValidationFailed`, `Conflict`, `ServiceUnavailable`, `UnhandledException`, `PayloadTooLarge`, `Cancelled`, `SomeFound`. Raw `Fail` only when no factory matches (e.g., re-mapping arbitrary upstream status codes).
+Result objects replace exceptions for control flow. **Always use semantic factories** — never raw `Fail()` with manual status codes when a factory exists. Available: `Ok`, `Created`, `NotFound`, `Unauthorized`, `Forbidden`, `ValidationFailed`, `Conflict`, `ServiceUnavailable`, `UnhandledException`, `PayloadTooLarge`, `Canceled`, `SomeFound`. Raw `Fail` only when no factory matches (e.g., re-mapping arbitrary upstream status codes).
 
 Partial success: `NOT_FOUND` (none found) → `SOME_FOUND` (partial, data returned) → `OK` (all found).
 
@@ -266,7 +268,7 @@ One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consume
 ### Key Architecture Decisions
 
 - **Auth**: self-rolled .NET auth as a module within Edge. RFC 8693 token exchange + RFC 6749 §4.4 client_credentials for service identity. JWKS at the OIDC-canonical `/.well-known/jwks.json`.
-- **JWT**: RS256 only. 15min expiry. Custom claims namespaced with `d2:` prefix.
+- **JWT**: RS256 only. 15min expiry. Custom claims namespaced with `d2_` prefix (snake_case — avoids spec-collision with `:` punctuation used in scope strings).
 - **KeyCustodian**: module within Auth — owns lifecycle of ALL long-lived secrets (JWKS, message payload encryption keys, cookie signing, service-identity client_secrets). State machine + JWKS-style overlap rotation.
 - **SvelteKit BFF**: pure SSR. Browser → Edge directly for auth state mutations. Server-side route guards (`requireAuth`, `requireOrg`, etc.) at `server/web/src/lib/server/auth/`. Browser-side `authClient` at `server/web/src/lib/client/auth/`. NOT separate packages.
 - **Sync**: gRPC between services (HTTP/2). **Async**: RabbitMQ for side effects (emails, events). Sensitive RMQ payloads encrypted via `D2.Shared.Encryption`.
@@ -286,7 +288,7 @@ One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consume
 
 - **D2Result semantic factories**: Never raw `Fail()` with manual `statusCode` when a factory exists. See list in §4.
 - **`[RedactData]` on PII types**: Every data type carrying PII (emails, phones, IPs, addresses, names, message content, filenames, presigned URLs) MUST have the `[RedactData]` attribute. Lives on the type, applies to ALL Serilog logging recursively, reflection-cached. Don't reach for per-handler RedactionSpec when `[RedactData]` does the job.
-- **Input validation on all handlers**: Validate inputs BEFORE infrastructure calls — smart-constructor `Domain.Create(input) → D2Result<Domain>` at the TOP of `ExecuteAsync`, then `BubbleFail` on the result. Primitive-level rules use `string?.TryParse*` from `D2.Shared.Utilities`; cross-field rules belong in the composite `Create`. Never let Redis / DB be the first to reject invalid data. **No FluentValidation in v2.**
+- **Input validation on all handlers**: Validate inputs BEFORE infrastructure calls — smart-constructor `Domain.Create(input) → D2Result<Domain>` at the TOP of `ExecuteAsync`, then `BubbleFail` on the result. Primitive-level rules use `string?.TryParse*` from `D2.Shared.Utilities`; cross-field rules belong in the composite `Create`. Never let Redis / DB be the first to reject invalid data.
 - **Build warnings = bugs**: Fix ALL warnings — StyleCop (SA****), CS**** (null refs, hiding), ESLint, `svelte-check`. Never suppress with `#pragma warning disable`, `!` (for silencing warnings), or `@ts-ignore`.
 - **Lint/style warnings = bugs**: ESLint and Prettier must be zero warnings.
 - **Zero tolerance for warnings/errors**: Fix ALL errors and warnings encountered anywhere in the project — not just in branch-modified files. Never dismiss as "pre-existing." If you see it during your work, fix it. Every session leaves the codebase cleaner.
@@ -347,7 +349,7 @@ One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consume
 - **`resolve()` from `$app/paths`**: Only typed pathnames. Query strings appended separately: `` `${resolve("/path")}?key=value` ``.
 - **Never write bare `href="/path"` or `goto("/path")`** — always wrap with `resolve("/path")` from `$app/paths`. Without this, i18n locale routing breaks for non-default locales.
 - **Client-side telemetry must never include PII** — Faro user identity is limited to `userId` + `username`. Never email, real name, or contact details.
-- **REST client modules own all fetch calls** — never use raw `fetch` outside of `*-client.ts` files in `$lib/client/rest/`. Components and pages call client functions, not `fetch("/api/...")` directly. Clients handle headers, credentials, timeouts, and D2Result parsing in one place.
+- **REST client modules own all fetch calls** — components and pages call client functions, never `fetch("/api/...")` directly. Two-tier layout: `$lib/client/rest/*-client.ts` modules expose the per-feature client API and own credentials / headers / timeouts; `$lib/shared/rest/` holds isomorphic low-level helpers (e.g. `gateway-response.ts` — the gateway response parser used by both server-side and browser-side clients). Raw `fetch()` is allowed inside `$lib/shared/rest/` helpers AND inside `*-client.ts` files; it is NOT allowed in components, pages, or any other path.
 - **Skeleton loading states** — every component that displays async or server-loaded data must show a `<Skeleton>` placeholder until the data is ready.
 
 ### Security (New Endpoints)
@@ -358,7 +360,7 @@ Full checklist → [docs/AUDIT_CHECKLIST.md](docs/AUDIT_CHECKLIST.md) "Security"
 - **Pagination limits** — default 50, max 100 on all list queries
 - **DB constraint errors** — catch PG `23505` → 409 Conflict, not 500
 - **Auth middleware visible at route declaration** — `.RequireAuth()`, `.RequireServiceKey()`, `.RequireOrg()`
-- **New JWT claims** → custom claims MUST be namespaced with `d2:`(`act["d2:kind"]`, `d2:session_id`, etc.). Document in `docs/JWT-CLAIMS.md`.
+- **New JWT claims** → custom claims MUST be namespaced with `d2_` (snake_case — `act["d2_kind"]`, `d2_session_id`, etc.). Document in `docs/JWT-CLAIMS.md`.
 - **No sensitive IDs in JWT** — admin user IDs, internal audit data stays server-side (session only)
 - **API key comparisons must be constant-time** — `CryptographicOperations.FixedTimeEquals`. Plain `==` is vulnerable to timing attacks.
 - **Auth middleware must fail-closed on missing config** — empty service-identity client mappings or missing secrets = 401 immediately. Never silently bypass.

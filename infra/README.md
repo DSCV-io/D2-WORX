@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # infra/ — Deployment + Observability
 
+> Parent: [`/`](../README.md)
+
 ## Layout
 
 ```

@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "D² context interface specification",
+  "description": "Schema for IAuthContext.spec.json and IRequestContext.spec.json — the source-of-truth shape that D2.Shared.Context.SourceGen reads to emit interfaces + MutableRequestContext.",
+  "type": "object",
+  "required": ["name", "namespace", "sections"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": {
+      "type": "string",
+      "pattern": "^I[A-Z][A-Za-z0-9]+$",
+      "description": "Interface name. Conventionally starts with 'I' (e.g. IAuthContext)."
+    },
+    "namespace": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Za-z0-9]+(\\.[A-Z][A-Za-z0-9]+)*$",
+      "description": "Target .NET namespace (e.g. D2.Shared.AuthContext.Abstractions)."
+    },
+    "description": { "type": "string" },
+    "extends": {
+      "type": ["string", "null"],
+      "description": "Fully-qualified base interface name (e.g. D2.Shared.AuthContext.Abstractions.IAuthContext) or null."
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/section" }
+    }
+  },
+  "definitions": {
+    "section": {
+      "type": "object",
+      "required": ["name", "properties"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "properties": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/property" }
+        }
+      }
+    },
+    "property": {
+      "type": "object",
+      "required": ["name", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]+$",
+          "description": "Property name in PascalCase."
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "string?",
+            "bool?",
+            "int?",
+            "double?",
+            "Guid?",
+            "DateTimeOffset?",
+            "OrgType?",
+            "Role?",
+            "ActorKind?",
+            "ImpersonationKind?",
+            "IReadOnlyList<ActorEntry>",
+            "IReadOnlyList<string>",
+            "IReadOnlySet<string>"
+          ],
+          "description": "Closed type vocabulary recognized by the generator. New types require schema + emitter updates in lockstep."
+        },
+        "claim": {
+          "type": "string",
+          "description": "JWT claim name this property maps to (used by FromClaims / FromJwtPayload factories)."
+        },
+        "trinaryAuth": {
+          "type": "boolean",
+          "default": false,
+          "description": "True for `bool?` properties whose null vs false distinction is meaningful (pre-auth vs confirmed-not). Defaults the property to null instead of falling back to default(bool?)."
+        },
+        "derived": {
+          "type": "string",
+          "enum": ["actorChain"],
+          "description": "Marks this property as computed from other properties at read-time. The named rule is implemented by the generator's MutableEmitter."
+        },
+        "default": {
+          "type": "string",
+          "description": "Default value expression (C# literal). Examples: '[]' for empty collections, 'null' for explicit null."
+        },
+        "doc": {
+          "type": "string",
+          "description": "XML doc <summary> text rendered on the generated property."
+        }
+      }
+    }
+  }
+}

@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # server/web/ — SvelteKit BFF
 
+> Parent: [`server/`](../README.md)
+
 > **Status**: transitional — this directory holds prior SvelteKit code awaiting a substantial rebuild. The `@d2/*` workspace deps in `package.json` no longer resolve, so `pnpm install` will fail until the rebuild lands.
 >
 > **Strategy reference** (library choices, testing approach): [STRATEGY.md](STRATEGY.md).

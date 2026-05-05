@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.Caching.Distributed.Abstractions
 
+> Parent: [`server/shared/dotnet/`](../README.md)
+
 > **Status**: placeholder — not yet implemented.
 
 ## Purpose
@@ -21,7 +23,3 @@ The default implementation lives in the sibling [`caching-distributed-redis/`](.
 ## Dependencies
 
 (planned) None — only the .NET runtime.
-
-## V2.md reference
-
-§4 Phase 0 (Stage 4 — Wave 5).

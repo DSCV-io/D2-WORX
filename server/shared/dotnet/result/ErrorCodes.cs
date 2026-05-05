@@ -81,7 +81,7 @@ public static class ErrorCodes
     public const string PAYLOAD_TOO_LARGE = nameof(PAYLOAD_TOO_LARGE);
 
     /// <summary>
-    /// Indicates that the operation was cancelled (client or server cancellation).
+    /// Indicates that the operation was canceled (client or server cancellation).
     /// </summary>
-    public const string CANCELLED = nameof(CANCELLED);
+    public const string CANCELED = nameof(CANCELED);
 }

@@ -60,10 +60,11 @@ public sealed class TKGeneratedTests
         // The generated constants embed the literal JSON key. Sample to verify
         // case is preserved exactly (catches accidental normalisation in SrcGen).
         TK.Common.Errors.NOT_FOUND.Key.Should().Be("common_errors_NOT_FOUND");
-
-        // Lowercase 'unknown' identifier is preserved verbatim from the JSON.
-        TK.Common.Errors.UNKNOWN.Key.Should().Be("common_errors_unknown");
+        TK.Common.Errors.UNKNOWN.Key.Should().Be("common_errors_UNKNOWN");
         TK.Auth.Errors.SOLE_OWNER_OF_ORGS.Key.Should().Be("auth_errors_SOLE_OWNER_OF_ORGS");
+
+        // Lowercase identifier is preserved verbatim from the JSON for any
+        // legacy keys that haven't been promoted to SCREAMING_SNAKE yet.
         TK.Geo.Validation.IP_REQUIRED.Key.Should().Be("geo_validation_ip_required");
     }
 

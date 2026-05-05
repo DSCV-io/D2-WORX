@@ -4,13 +4,15 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Edge
 
+> Parent: [`server/services/`](../README.md)
+
 > **Status**: placeholder — not yet implemented.
 
 ## Purpose
 
 The unified gateway. Single public ingress for all of D²-WORX. Combines gateway + signalr + auth + WhoIs into one service with multiple modules.
 
-Edge is intentionally "thick" — middleware, routing, auth, real-time push, WhoIs, OAuth token issuance — all in one process. The thinness model (gateway-only) had measurable per-request latency from the extra hop + lost type safety from JSON pivoting.
+Edge is intentionally "thick" — middleware, routing, auth, real-time push, WhoIs, OAuth token issuance — all in one process. Co-locating these along the request path avoids per-hop latency and keeps cross-cutting concerns strongly typed end-to-end.
 
 ## Modules
 

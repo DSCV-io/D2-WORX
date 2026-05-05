@@ -74,7 +74,7 @@ Copyright (c) DCSV. All rights reserved.
   async function saveEmailPref(value: boolean): Promise<void> {
     const result = await setMyNotificationPreferences({ emailEnabled: value });
     if (!result.success) {
-      throw new Error(translateMessage(result.messages?.[0], undefined, m.common_errors_unknown()));
+      throw new Error(translateMessage(result.messages?.[0], undefined, m.common_errors_UNKNOWN()));
     }
     toast.success(m.common_ui_changes_saved());
   }
@@ -82,7 +82,7 @@ Copyright (c) DCSV. All rights reserved.
   async function saveSmsPref(value: boolean): Promise<void> {
     const result = await setMyNotificationPreferences({ smsEnabled: value });
     if (!result.success) {
-      throw new Error(translateMessage(result.messages?.[0], undefined, m.common_errors_unknown()));
+      throw new Error(translateMessage(result.messages?.[0], undefined, m.common_errors_UNKNOWN()));
     }
     toast.success(m.common_ui_changes_saved());
   }

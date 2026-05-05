@@ -87,10 +87,10 @@ public partial class D2Result
     public bool IsPayloadTooLarge => ErrorCode == ErrorCodes.PAYLOAD_TOO_LARGE;
 
     /// <summary>
-    /// Gets a value indicating whether this result is a cancelled failure
-    /// (<see cref="ErrorCodes.CANCELLED"/>).
+    /// Gets a value indicating whether this result is a canceled failure
+    /// (<see cref="ErrorCodes.CANCELED"/>).
     /// </summary>
-    public bool IsCancelled => ErrorCode == ErrorCodes.CANCELLED;
+    public bool IsCanceled => ErrorCode == ErrorCodes.CANCELED;
 
     /// <summary>
     /// Gets a value indicating whether this result is an idempotency-in-flight failure

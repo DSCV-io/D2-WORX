@@ -56,14 +56,14 @@ Copyright (c) DCSV. All rights reserved.
               serverError = m.common_errors_TOO_MANY_REQUESTS();
               return;
             }
-            serverError = result.error.message ?? m.common_errors_unknown();
+            serverError = result.error.message ?? m.common_errors_UNKNOWN();
             return;
           }
 
           sentEmail = email;
           sent = true;
         } catch {
-          serverError = m.common_errors_unknown();
+          serverError = m.common_errors_UNKNOWN();
         } finally {
           submitting = false;
         }

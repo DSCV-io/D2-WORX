@@ -258,7 +258,7 @@ public sealed class KeyDecomposerTests
     [InlineData("common_errors_VALIDATION_FAILED")]
     [InlineData("common_errors_SERVICE_UNAVAILABLE")]
     [InlineData("common_errors_PAYLOAD_TOO_LARGE")]
-    [InlineData("common_errors_CANCELLED")]
+    [InlineData("common_errors_CANCELED")]
     [InlineData("common_errors_SOME_FOUND")]
     [InlineData("common_errors_unknown")]
     [InlineData("common_validation_IP_INVALID")]

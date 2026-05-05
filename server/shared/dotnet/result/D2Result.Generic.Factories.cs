@@ -234,18 +234,18 @@ public sealed partial class D2Result<TData>
             traceId: traceId);
     }
 
-    /// <inheritdoc cref="D2Result.Cancelled"/>
-    public static new D2Result<TData> Cancelled(
+    /// <inheritdoc cref="D2Result.Canceled"/>
+    public static new D2Result<TData> Canceled(
         IReadOnlyList<TKMessage>? messages = null,
         string? traceId = null)
     {
-        messages ??= [TK.Common.Errors.CANCELLED];
+        messages ??= [TK.Common.Errors.CANCELED];
         return new(
             false,
             default,
             messages,
             statusCode: HttpStatusCode.BadRequest,
-            errorCode: ErrorCodes.CANCELLED,
+            errorCode: ErrorCodes.CANCELED,
             traceId: traceId);
     }
 

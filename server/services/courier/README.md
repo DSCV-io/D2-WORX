@@ -4,13 +4,15 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Courier
 
+> Parent: [`server/services/`](../README.md)
+
 > **Status**: placeholder — not yet implemented.
 
 ## Purpose
 
 Pure outbound delivery — email + SMS + future webhooks / Slack / Teams / push. The "send" side. Markdown content rendered to HTML via Markdig; brand chrome via Razor.
 
-Replaces v1 Comms entirely (which conflated outbound delivery + in-app feed + future conversational messaging). D2.Notifications is the "show in the UI" side; D2.Threads (deferred) is conversational.
+D2.Notifications is the "show in the UI" side; D2.Threads (deferred) is conversational. Each owns one slice — Courier never persists feed state; Notifications never sends emails.
 
 ## Six design principles
 

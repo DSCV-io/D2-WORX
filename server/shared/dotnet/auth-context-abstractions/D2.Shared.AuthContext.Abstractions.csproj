@@ -1,0 +1,47 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Shared.AuthContext.Abstractions</RootNamespace>
+
+    <!-- Emit the generator's output (IAuthContext.g.cs) to obj/Generated/ so it's
+         visible for inspection / debugging (Rider also picks them up). -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <!--
+    Domain-safe slice of the request-context. Domain code references this for
+    typed access to caller identity, scopes, and impersonation context — without
+    pulling DI / AspNetCore / Configuration.
+
+    The IAuthContext interface itself is emitted at build time by the sibling
+    D2.Shared.Context.SourceGen project (../context-source-gen/), referenced
+    below as a Roslyn analyzer (no runtime dll dependency).
+
+    The hand-written IAuthContextExtensions live alongside the generated
+    interface and provide convenience checks (HasScope / IsStaff / etc.).
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\auth-abstractions\D2.Shared.Auth.Abstractions.csproj" />
+    <ProjectReference Include="..\context-source-gen\D2.Shared.Context.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Surface BOTH context spec files so the generator can resolve the
+      `extends` chain on IRequestContext. Only IAuthContext.spec.json drives
+      emission for THIS assembly (per-assembly dispatch in ContextGenerator).
+    -->
+    <AdditionalFiles Include="..\..\..\..\contracts\auth-context\IAuthContext.spec.json" />
+    <AdditionalFiles Include="..\..\..\..\contracts\request-context\IRequestContext.spec.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D2.Shared.Tests" />
+  </ItemGroup>
+</Project>

@@ -18,7 +18,7 @@ namespace D2.Shared.Resilience.Retry;
 /// in the helper itself.
 /// <para>
 /// Eight properties — past the threshold for the small-Options-record ctor
-/// pattern (see CLAUDE.md §5). Use object-initializer syntax for overrides.
+/// pattern. Use object-initializer syntax for overrides.
 /// </para>
 /// </remarks>
 public sealed record RetryOptions<T>

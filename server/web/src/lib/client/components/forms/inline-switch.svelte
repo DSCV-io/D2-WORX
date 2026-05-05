@@ -37,7 +37,7 @@ Copyright (c) DCSV. All rights reserved.
       await onSave(checked);
     } catch (err) {
       value = previous;
-      errorMessage = err instanceof Error ? err.message : m.common_errors_save_failed();
+      errorMessage = err instanceof Error ? err.message : m.common_errors_SAVE_FAILED();
     } finally {
       saving = false;
     }

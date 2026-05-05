@@ -288,24 +288,24 @@ public partial class D2Result
     }
 
     /// <summary>
-    /// Creates a cancelled failure (HTTP 400, error code
-    /// <see cref="ErrorCodes.CANCELLED"/>).
+    /// Creates a canceled failure (HTTP 400, error code
+    /// <see cref="ErrorCodes.CANCELED"/>).
     /// </summary>
     /// <param name="messages">
-    /// Optional translation messages; defaults to <c>[TK.Common.Errors.CANCELLED]</c>.
+    /// Optional translation messages; defaults to <c>[TK.Common.Errors.CANCELED]</c>.
     /// </param>
     /// <param name="traceId">Optional trace identifier.</param>
-    /// <returns>A cancelled <see cref="D2Result"/>.</returns>
-    public static D2Result Cancelled(
+    /// <returns>A canceled <see cref="D2Result"/>.</returns>
+    public static D2Result Canceled(
         IReadOnlyList<TKMessage>? messages = null,
         string? traceId = null)
     {
-        messages ??= [TK.Common.Errors.CANCELLED];
+        messages ??= [TK.Common.Errors.CANCELED];
         return new(
             false,
             messages,
             statusCode: HttpStatusCode.BadRequest,
-            errorCode: ErrorCodes.CANCELLED,
+            errorCode: ErrorCodes.CANCELED,
             traceId: traceId);
     }
 

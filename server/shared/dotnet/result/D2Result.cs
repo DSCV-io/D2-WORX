@@ -106,4 +106,18 @@ public partial class D2Result
     /// Gets the trace identifier for correlating logs and diagnostics, if available.
     /// </summary>
     public string? TraceId { get; }
+
+    /// <summary>
+    /// Returns a new <see cref="D2Result"/> with the same shape (Success,
+    /// Messages, InputErrors, StatusCode, ErrorCode) but with the supplied
+    /// <paramref name="traceId"/> in place of the original. Used by
+    /// <c>BaseHandler.RunCorePipelineAsync</c> to auto-inject the request
+    /// trace id on every result that crosses the handler boundary, so
+    /// handlers don't have to thread it through every <c>D2Result.Ok(...)</c>
+    /// call site.
+    /// </summary>
+    /// <param name="traceId">The trace id to attach.</param>
+    /// <returns>A new <see cref="D2Result"/> with <paramref name="traceId"/> applied.</returns>
+    public D2Result WithTraceId(string? traceId)
+        => new(Success, Messages, InputErrors, StatusCode, ErrorCode, traceId);
 }

@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.I18n
 
+> Parent: [`server/shared/dotnet/`](../README.md)
+
 Runtime translation lib — `Translator` (loads `contracts/messages/*.json` catalogs and renders `TKMessage` instances per locale), `SupportedLocales` (env-driven BCP 47 locale registry with canonical-casing + language-fallback), and the `AddD2I18n` DI extension that wires both as singletons.
 
 The pure-types slice (`TKMessage`, `TK` constants, `ITranslator` interface) lives in [`D2.Shared.I18n.Abstractions`](../i18n-abstractions/). Domain layers reference Abstractions; this runtime is for infrastructure / composition-root code that actually renders translated strings (Courier emails, SMS, push notifications).
@@ -143,5 +145,4 @@ No `Microsoft.AspNetCore.App` framework reference — this lib is HTTP-stack-agn
 
 - [`../i18n-abstractions/README.md`](../i18n-abstractions/README.md) — `TKMessage`, `TK` SrcGen, the wire format
 - [`../result/README.md`](../result/README.md) — `D2Result.Messages` / `InputError.Errors` consume TKMessage
-- [CLAUDE.md §6 "Translation Key Conventions"](../../../../CLAUDE.md)
 - [`contracts/messages/`](../../../../contracts/messages/) — the source-of-truth catalogs

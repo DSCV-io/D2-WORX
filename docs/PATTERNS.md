@@ -126,24 +126,98 @@ One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consume
 
 Default `HandleAsync` is a one-line pass-through: `return (await RunCorePipelineAsync(...)).Result`. Existing handlers need zero changes.
 
-### `BaseRepoHandler` — EF exception → `D2Result` mapping
+### `BaseRepoHandler` — typed DB-failure mapping (provider-agnostic)
 
-`BaseRepoHandler<TSelf, TInput, TOutput> : BaseHandler<...>` overrides `HandleAsync` to switch on `CapturedException` *type* and remap to specific `D2Result` codes via the existing semantic factories. Match on EF exception type first (the type is the reliable signal); use `D2.Shared.Repository.Errors.Pg.PgErrorCodes` predicates only as opportunistic refinement when the inner exception happens to be a `PostgresException` with usable primitives (the driver doesn't always populate `SqlState` / `ConstraintName`).
+Repo handlers — anything that calls EF / a real database — inherit from `BaseRepoHandler<TSelf, TInput, TOutput>` (in `D2.Shared.Handler.Repo`) instead of `BaseHandler` directly. The base converts any database exception captured by `RunCorePipelineAsync` into a typed `D2Result` failure (concurrency conflict, unique violation, deadlock, connection failure, etc.) so callers can branch on **what actually went wrong** instead of getting a generic 500.
 
-| EF exception type | Mapping |
-|---|---|
-| `DbUpdateConcurrencyException` | `D2Result.Conflict` (optimistic concurrency / row-version mismatch — EF-determined, no driver involvement) |
-| `DbUpdateException` w/ `PgErrorCodes.IsUniqueViolation` | `D2Result.Conflict` |
-| `DbUpdateException` w/ `PgErrorCodes.IsForeignKeyViolation` | `D2Result.ValidationFailed` |
-| `DbUpdateException` w/ `PgErrorCodes.IsNotNullViolation` | `D2Result.ValidationFailed` |
-| `DbUpdateException` w/ `PgErrorCodes.IsCheckViolation` | `D2Result.ValidationFailed` |
-| `DbUpdateException` (no recognized inner) | Fall through (original `UnhandledException` Result unchanged — forces explicit recognizers) |
-| `OperationCanceledException` when `ct.IsCancellationRequested` | `D2Result.Cancelled` |
-| Anything else | Fall through |
+**Provider-agnostic by design.** `BaseRepoHandler` itself depends only on EF Core (`DbUpdateConcurrencyException` is BCL-typed and handled directly). All other DB exceptions are routed through an injected `IDbExceptionClassifier` (in `D2.Shared.Handler.Repo.Abstractions`). Provider-specific knowledge lives in sibling packages — PostgreSQL ships in `D2.Shared.Handler.Repo.Postgres`; future SQL Server / SQLite / MySQL providers would be sibling packages with the same shape.
 
-**Per-handler refinement.** A subclass needing constraint-specific mapping (e.g., `users_email_unique` → `account_errors_emailTaken` instead of generic `Conflict`) overrides `HandleAsync`, inspects `CapturedException` for the specific case, then chains to `base.HandleAsync(...)` for everything else.
+#### Mapping
 
-**Observability is unchanged.** `RunCorePipelineAsync` still calls `activity?.AddException(ex)`, records the exception metric, and emits the unhandled-exception log. Tempo + Loki get the full picture regardless of whether a subclass remaps the result. Type names (`exceptionType`, `innermostExceptionType`) are pushed to the log scope so Loki can filter by type without parsing message text.
+| Captured exception | Classified as | Default `D2Result` factory |
+|---|---|---|
+| `DbUpdateConcurrencyException` | `ConcurrencyConflict` (handled directly — BCL-typed) | `D2Result.ConcurrencyConflict()` |
+| Anything else → `IDbExceptionClassifier.Classify(ex)` returns `UniqueViolation` | `UniqueViolation` | `D2Result.UniqueViolation()` |
+| Returns `ForeignKeyViolation` | `ForeignKeyViolation` | `D2Result.ForeignKeyViolation()` |
+| Returns `NotNullViolation` | `NotNullViolation` | `D2Result.NotNullViolation()` |
+| Returns `CheckViolation` | `CheckViolation` | `D2Result.CheckViolation()` |
+| Returns `Timeout` | `Timeout` | `D2Result.DbTimeout()` |
+| Returns `Deadlock` | `Deadlock` | `D2Result.DbDeadlock()` |
+| Returns `ConnectionFailure` | `ConnectionFailure` | `D2Result.DbConnectionFailure()` |
+| Classifier returns `null` | unknown | Falls through — `BaseHandler`'s `UnhandledException` preserved |
+
+`OperationCanceledException` is intentionally NOT remapped here — `BaseHandler.RunCorePipelineAsync` already handles it (`D2Result.Canceled` for caller-initiated cancellation, `D2Result.ServiceUnavailable` for downstream timeouts not tied to the request token).
+
+The 8 typed factories all live as `D2Result` extensions in `D2.Shared.Handler.Repo.Abstractions` (`D2ResultDbFactories` / `D2ResultDbGenericFactories`). HTTP status mapping: `ConcurrencyConflict` / `UniqueViolation` / `ForeignKeyViolation` / `DbDeadlock` → 409; `NotNullViolation` / `CheckViolation` → 400; `DbTimeout` / `DbConnectionFailure` → 503.
+
+#### Per-handler refinement — `MapDbException` override
+
+The default factory dispatch produces a generic message ("This value is already in use") with no field-level information — useful for diagnostics but weak UX for form-driven flows. Handlers that know their constraint identity override `MapDbException` to attach a domain-specific `TKMessage` + `InputError`:
+
+```csharp
+public sealed class CreateUser(
+    HandlerContext<CreateUser> context,
+    IDbExceptionClassifier classifier,
+    IAppDbContext db)
+    : BaseRepoHandler<CreateUser, CreateUserInput, UserDto>(context, classifier), ICreateUser
+{
+    protected override async ValueTask<D2Result<UserDto?>> ExecuteAsync(
+        CreateUserInput input, CancellationToken ct)
+    {
+        var user = User.Create(input);
+        db.Users.Add(user);
+        await db.SaveChangesAsync(ct);
+        return D2Result<UserDto?>.Created(user.ToDto());
+    }
+
+    protected override D2Result<UserDto?>? MapDbException(Exception ex, DbFailureKind kind)
+    {
+        // The DB-side unique index `users_email_key` covers the email column.
+        if (kind == DbFailureKind.UniqueViolation && IsEmailIndex(ex))
+        {
+            return D2Result<UserDto?>.UniqueViolation(
+                messages: [TK.Auth.Errors.EMAIL_ALREADY_TAKEN],
+                inputErrors: [new InputError("email", "EMAIL_ALREADY_TAKEN")]);
+        }
+
+        return null; // fall back to the generic factory
+    }
+}
+```
+
+Returning `null` falls through to the default factory — handlers only customize the cases they care about.
+
+#### Caller-side discrimination — typed booleans
+
+Callers branch on the typed `IsXxx` extension properties (in `D2ResultDbBooleans`) instead of catching SQLSTATE strings or comparing raw `ErrorCode` values:
+
+```csharp
+var result = await createUser.HandleAsync(input);
+
+if (result.IsUniqueViolation)        return Conflict(result);                  // 409, surface to user
+if (result.IsConcurrencyConflict)    return await ReloadAndMergeAsync(input);  // optimistic-concurrency retry
+if (result.IsTransientDbFailure)     return await retry.RetryAsync(...);       // deadlock / timeout / connection
+if (result.IsForeignKeyViolation)    return BadRequest(result);                // referenced item missing
+```
+
+Roll-up: `IsTransientDbFailure = IsDbDeadlock || IsDbTimeout || IsDbConnectionFailure`. **Concurrency conflicts are intentionally excluded** — they need reload-then-merge logic, not a blind retry.
+
+This sits on a different axis from the HTTP-flavored `IsTransientRetryable` (`IsServiceUnavailable || IsRateLimited`) on `D2Result` itself. A generic retry policy that wants to catch BOTH HTTP-flavored and DB-flavored transient failures should check the union: `result.IsTransientRetryable || result.IsTransientDbFailure`.
+
+#### DI registration
+
+`BaseRepoHandler` requires an `IDbExceptionClassifier` from DI. The composition root registers a provider-specific implementation:
+
+```csharp
+services.AddD2Handler();
+services.AddD2Postgres();   // registers PostgresDbExceptionClassifier as IDbExceptionClassifier
+services.AddDbContext<AppDbContext>(o => o.UseNpgsql(...));
+services.AddTransient<ICreateUser, CreateUser>();
+```
+
+Without a registered classifier, resolving any `BaseRepoHandler` subclass fails fast at the container.
+
+**Observability is unchanged.** `RunCorePipelineAsync` still calls `activity?.AddException(ex)`, records the exception metric, and emits the unhandled-exception log regardless of whether `BaseRepoHandler` remaps the result. Tempo + Loki get the full picture; type names (`exceptionType`, `innermostExceptionType`) are pushed to the log scope so Loki can filter by type without parsing message text.
 
 ### HandlerOptions resolution order
 
@@ -202,7 +276,7 @@ Every factory with a `messages?` parameter ships a sensible default — pass not
 | `UnhandledException(messages?)` | 500 | `UNHANDLED_EXCEPTION` | Top-level safety net only. **Excluded from `IsTransientRetryable`** — unknown system state is never auto-retried. Exception details live in OTel span + log scope, never on the result. |
 | `PayloadTooLarge(messages?)` | 413 | `PAYLOAD_TOO_LARGE` | Upload exceeded limit |
 | `TooManyRequests(messages?, errorCode?)` | 429 | `RATE_LIMITED` (overridable) | Rate-limit middleware tripped. Override `errorCode` for client-side discrimination (e.g. `"OTP_RATE_LIMITED"`). |
-| `Cancelled(messages?)` | 400 | `CANCELLED` | CancellationToken triggered |
+| `Canceled(messages?)` | 400 | `CANCELED` | CancellationToken triggered |
 | `SomeFound<T>(data, messages?)` | 206 | `SOME_FOUND` | Partial success on batch lookup. `Success` is **false** — see partial-success ladder below. |
 
 `Fail<T>(statusCode, errorCode, messages?)` exists for re-mapping arbitrary upstream codes (HTTP proxy passthrough). **If a factory matches your case, USE the factory.**
@@ -247,7 +321,7 @@ Prefer these over manual `result.ErrorCode == ErrorCodes.X` comparisons:
 ```csharp
 result.IsOk / IsCreated / IsNotFound / IsSomeFound / IsConflict / IsForbidden /
    IsUnauthorized / IsValidationFailed / IsServiceUnavailable / IsRateLimited /
-   IsUnhandledException / IsPayloadTooLarge / IsCancelled / IsIdempotencyInFlight
+   IsUnhandledException / IsPayloadTooLarge / IsCanceled / IsIdempotencyInFlight
 
 result.IsPartialOrMissing      // IsNotFound || IsSomeFound
 result.IsTransientRetryable    // IsServiceUnavailable || IsRateLimited (UnhandledException EXCLUDED)
@@ -346,11 +420,11 @@ Default file list: `[".env", ".env.local", ".env.secrets"]`. Walks up from `AppC
 
 `Closed` (normal — failures tracked) → `Open` (fast-fail past `FailureThreshold`) → `HalfOpen` (one probe allowed past `CooldownDuration`). State transitions via `Interlocked.CompareExchange` — no locks. The `isFailure` predicate counts value-failures alongside thrown exceptions (e.g., `r => !r.Success`). Open state with a fallback returns the fallback; without one, throws `CircuitOpenException`. Probe-in-flight flag ensures only ONE caller probes at a time during HalfOpen; concurrent callers receive the fallback.
 
-`CircuitBreakerOptions` is the canonical **small-Options-record** (CLAUDE.md §5): nullable-param ctor + parameterless ctor that chains to defaults. Call sites stay terse — `new()`, `new(3)`, `new(3, TimeSpan.FromMilliseconds(100), clock.Now)`, `new(failureThreshold: 3, nowFunc: clock.Now)` all work. Explicit `0` / `TimeSpan.Zero` are preserved (no sentinel coercion).
+`CircuitBreakerOptions` is the canonical **small-Options-record**: nullable-param ctor + parameterless ctor that chains to defaults. Call sites stay terse — `new()`, `new(3)`, `new(3, TimeSpan.FromMilliseconds(100), clock.Now)`, `new(failureThreshold: 3, nowFunc: clock.Now)` all work. Explicit `0` / `TimeSpan.Zero` are preserved (no sentinel coercion).
 
 ### `Singleflight<TKey, TValue>` — concurrent-call deduplication
 
-Type-safe per-key + per-value-shape variant (v1's `Singleflight` was loosely typed via object boxing). The first caller for a given key runs the operation; concurrent callers share the same `Task<TValue>`. Once the operation completes (success OR failure), the key is removed — **NOT a cache.** Per-caller cancellation only cancels that caller's wait; the shared operation runs with `CancellationToken.None` so siblings are isolated. Used heavily in cache-fill paths to prevent thundering-herd backend hits.
+Type-safe per-key + per-value-shape concurrent-call deduplication. The first caller for a given key runs the operation; concurrent callers share the same `Task<TValue>`. Once the operation completes (success OR failure), the key is removed — **NOT a cache.** Per-caller cancellation only cancels that caller's wait; the shared operation runs with `CancellationToken.None` so siblings are isolated. Used heavily in cache-fill paths to prevent thundering-herd backend hits.
 
 ### `RetryHelper.RetryAsync<T>` — exponential backoff with jitter
 
@@ -394,18 +468,11 @@ Batch ops return:
 
 Don't return `Ok` with empty data when nothing matched — that's a `NotFound`.
 
-### PG error predicates
+### DB-failure mapping — `BaseRepoHandler` does this for you
 
-Catch and map cleanly:
+Repo handlers do **not** catch SQLSTATE strings or `PostgresException` directly. Inherit from `BaseRepoHandler` (see [BaseRepoHandler](#baserepohandler--typed-db-failure-mapping-provider-agnostic) above) and the registered `IDbExceptionClassifier` translates DB exceptions into typed `D2Result` failures (`UniqueViolation`, `ForeignKeyViolation`, `NotNullViolation`, `CheckViolation`, `ConcurrencyConflict`, `DbDeadlock`, `DbTimeout`, `DbConnectionFailure`).
 
-| PG `SqlState` | D2Result | Cause |
-|---|---|---|
-| `23505` | `Conflict` | Unique constraint violation |
-| `23503` | `Conflict` | Foreign key constraint violation |
-| `23502` | `ValidationFailed` | NOT NULL constraint violation |
-| `23514` | `ValidationFailed` | CHECK constraint violation |
-
-**Catch and return `Conflict`, never let constraint violations bubble as `500` `UnhandledException`.**
+Callers branch on the typed booleans (`result.IsUniqueViolation`, `result.IsConcurrencyConflict`, `result.IsTransientDbFailure`, etc.) — never on raw SQLSTATE catches. **Never let constraint violations bubble as `500 UnhandledException`** — that's a missing `BaseRepoHandler` inheritance or a missing `services.AddD2Postgres()` registration.
 
 ### EF Core UPDATE/DELETE check affected rows
 
@@ -479,7 +546,7 @@ Fingerprints (composite — server-side + client-side components combined):
 - Server fingerprint = `SHA256(UA | Accept-Language | Accept-Encoding | Accept)`
 - Device fingerprint = `SHA256(client-side hash | server-side hash)`
 
-Populates `MutableRequestContext` progressively as middleware layers run. Infrastructure paths (health, metrics, observability scrape endpoints) bypass enrichment via shared `InfrastructurePaths.IsInfrastructure()` — see CLAUDE.md §5.
+Populates `MutableRequestContext` progressively as middleware layers run. Infrastructure paths (health, metrics, observability scrape endpoints) bypass enrichment via shared `InfrastructurePaths.IsInfrastructure()`.
 
 ### JwtAuth — RS256 + fingerprint binding
 
@@ -492,7 +559,7 @@ JWKS at the OIDC-canonical `/.well-known/jwks.json` (off-the-shelf JWT libraries
 
 ### ServiceKey — constant-time comparison
 
-`X-D2-Service-Key` header for inter-service auth — eventually replaced with RFC 6749 §4.4 `client_credentials` flow once the KeyCustodian module ships with the Edge auth module.
+`X-D2-Service-Key` header for inter-service auth. (Long-term direction is RFC 6749 §4.4 `client_credentials` once the KeyCustodian module ships.)
 
 `CryptographicOperations.FixedTimeEquals` for the comparison. **Plain `==` is vulnerable to timing attacks**.
 
@@ -632,7 +699,7 @@ Backend handler messages (`D2Result.Messages`), input errors (`D2Result.InputErr
 
 ### BCP 47 locale convention
 
-10-locale list from v1 (matches `contracts/messages/`):
+10-locale list (matches `contracts/messages/`):
 - `en-US`, `en-CA`, `en-GB`
 - `fr-FR`, `fr-CA`
 - `es-ES`, `es-MX`
@@ -642,7 +709,7 @@ Backend handler messages (`D2Result.Messages`), input errors (`D2Result.InputErr
 
 Driven by env vars (per `parseEnvArray()` above): `PUBLIC_ENABLED_LOCALES__0`, `PUBLIC_ENABLED_LOCALES__1`, etc. + `PUBLIC_DEFAULT_LOCALE`. `SupportedLocales` reads these at construction and exposes canonical-cased `All` / `Base` / `LanguageDefaults` properties.
 
-### Translation key conventions (per CLAUDE.md §6)
+### Translation key conventions
 
 - Auth pages: `auth_{feature}_{purpose}`
 - App pages: `webclient_app_{page}_{purpose}`
@@ -684,12 +751,12 @@ The pattern:
 3. **`BubbleFail` chains.** Each primitive validation result bubbles up. The composite never reports half-validated state — either everything passes and you get `Ok`, or the first failure shapes the response.
 4. **`TKMessage` keys.** Failure messages are `TK.*` constants; the wire-format response slots them straight into `Messages` / `InputErrors`.
 
-### FluentValidation removed from v2
+### Validation layers
 
-v1 had two validation layers — FluentValidation in the app layer + defensive throws in domain. v2 collapses to one: smart-constructor factories on domain types. **No `FluentValidation` package reference anywhere in v2.**
+Validation is single-layered: smart-constructor factories on domain types are the one place input gets checked.
 
-- Primitive rules (email shape, phone shape, URL shape) → `string?.TryParse*` in `D2.Shared.Utilities`.
-- Cross-field rules (start-date < end-date, password matches confirm, etc.) → composite `Create` method on the domain type.
+- Primitive rules (email shape, phone shape, URL shape) → `string?.TryParse*` extensions in `D2.Shared.Utilities`. Each returns a `D2Result<T>` so failures slot straight into the composite.
+- Cross-field rules (start-date < end-date, password matches confirm, etc.) → composite `Create` method on the domain type. Aggregate per-field failures with `D2Result.Combine` so a single submit surfaces every problem at once instead of bailing on the first.
 - DTO-bag pre-validation at HTTP boundaries (when the body has so many disjoint shape concerns that mapping straight to a domain type would be premature) → a thin static method per route that returns `D2Result<TInput>`. Keep these tiny — most boundaries can map directly to the domain type and let `Create` validate.
 
 ### When to throw vs return
@@ -700,7 +767,7 @@ v1 had two validation layers — FluentValidation in the app layer + defensive t
 | External lookup misses | `D2Result<T>.NotFound` |
 | Downstream service errors | `BubbleFail` from the result |
 | Programmer-bug invariant (null param marked non-null, internal corrupted state) | Throw `ArgumentNullException` / `InvalidOperationException` |
-| Cancellation | Re-throw `OperationCanceledException` (or let it propagate); `BaseRepoHandler` maps it to `D2Result.Cancelled` |
+| Cancellation | Re-throw `OperationCanceledException` (or let it propagate); `BaseRepoHandler` maps it to `D2Result.Canceled` |
 
 The rule: **anything caused by data the caller controls is a result, not an exception. Anything caused by code that should be impossible is an exception.**
 

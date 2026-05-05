@@ -387,14 +387,14 @@ public sealed class D2ResultTests
     }
 
     [Fact]
-    public void Cancelled_DefaultsToTkMessage()
+    public void Canceled_DefaultsToTkMessage()
     {
-        var result = D2Result.Cancelled();
+        var result = D2Result.Canceled();
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        result.ErrorCode.Should().Be(ErrorCodes.CANCELLED);
-        result.Messages.Should().Equal(TK.Common.Errors.CANCELLED);
+        result.ErrorCode.Should().Be(ErrorCodes.CANCELED);
+        result.Messages.Should().Equal(TK.Common.Errors.CANCELED);
     }
 
     [Fact]
@@ -426,7 +426,7 @@ public sealed class D2ResultTests
         D2Result.UnhandledException(traceId: trace_id).TraceId.Should().Be(trace_id);
         D2Result.PayloadTooLarge(traceId: trace_id).TraceId.Should().Be(trace_id);
         D2Result.TooManyRequests(traceId: trace_id).TraceId.Should().Be(trace_id);
-        D2Result.Cancelled(traceId: trace_id).TraceId.Should().Be(trace_id);
+        D2Result.Canceled(traceId: trace_id).TraceId.Should().Be(trace_id);
         D2Result.SomeFound(traceId: trace_id).TraceId.Should().Be(trace_id);
     }
 }

@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.Location
 
+> Parent: [`server/shared/dotnet/`](../README.md)
+
 > **Status**: placeholder — not yet implemented.
 
 ## Purpose

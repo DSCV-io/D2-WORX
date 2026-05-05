@@ -90,10 +90,10 @@ public sealed class ResilientPipelineTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_OperationCancelled_MapsToCancelled()
+    public async Task ExecuteAsync_OperationCanceled_MapsToCanceled()
     {
-        // Caller-cancelled token: the OCE has its source in `ct`, so the
-        // pipeline maps to Cancelled (not UnhandledException).
+        // Caller-canceled token: the OCE has its source in `ct`, so the
+        // pipeline maps to Canceled (not UnhandledException).
         using var cts = new CancellationTokenSource();
         var pipeline = new ResilientPipeline<string, int>();
 
@@ -108,7 +108,7 @@ public sealed class ResilientPipelineTests
             cts.Token);
 
         result.Success.Should().BeFalse();
-        result.IsCancelled.Should().BeTrue();
+        result.IsCanceled.Should().BeTrue();
     }
 
     [Fact]
@@ -143,10 +143,10 @@ public sealed class ResilientPipelineTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_OceWithoutCancelledToken_MapsToUnhandledException()
+    public async Task ExecuteAsync_OceWithoutCanceledToken_MapsToUnhandledException()
     {
         // Adversarial: an OCE thrown by the operation when the supplied ct
-        // was NOT actually cancelled — the `when` filter doesn't match, the
+        // was NOT actually canceled — the `when` filter doesn't match, the
         // OCE flows to the catch-all → UnhandledException.
         var pipeline = new ResilientPipeline<string, int>();
 
@@ -205,7 +205,10 @@ public sealed class ResilientPipelineTests
         var clock = new FakeClock();
         var cb = new CircuitBreaker<int>(
             isFailure: _ => false,
-            options: new(failureThreshold: 1, cooldownDuration: TimeSpan.FromSeconds(1), nowFunc: clock.Now));
+            options: new(
+                failureThreshold: 1,
+                cooldownDuration: TimeSpan.FromSeconds(1),
+                nowFunc: clock.Now));
 
         var attempts = 0;
         var retryOptions = NoDelayOptions(maxAttempts: 3) with
@@ -318,7 +321,8 @@ public sealed class ResilientPipelineTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_SingleflightInPipeline_OperationFails_AllConcurrentCallersGetSameFailure()
+    public async Task
+        ExecuteAsync_SingleflightInPipeline_OperationFails_AllConcurrentCallersGetSameFailure()
     {
         // Adversarial: when SF dedupes a failing operation, EVERY waiter
         // sees the same exception → same D2Result mapping. No caller gets
@@ -367,7 +371,10 @@ public sealed class ResilientPipelineTests
         var clock = new FakeClock();
         var cb = new CircuitBreaker<int>(
             isFailure: _ => false,
-            options: new(failureThreshold: 1, cooldownDuration: TimeSpan.FromSeconds(60), nowFunc: clock.Now));
+            options: new(
+                failureThreshold: 1,
+                cooldownDuration: TimeSpan.FromSeconds(60),
+                nowFunc: clock.Now));
 
         // Force the CB open BEFORE running through the pipeline, so the
         // pipeline sees a breaker that's already tripped.

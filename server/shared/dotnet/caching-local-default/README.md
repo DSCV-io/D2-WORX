@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.Caching.Local.Default
 
+> Parent: [`server/shared/dotnet/`](../README.md)
+
 > **Status**: placeholder — not yet implemented.
 
 ## Purpose
@@ -21,7 +23,3 @@ This is one possible implementation of the local-cache abstraction; future imple
 ## Dependencies
 
 (planned) `D2.Shared.Caching.Local.Abstractions`, `D2.Shared.Handler` (since cache ops are handlers and inherit observability), `D2.Shared.Result`.
-
-## V2.md reference
-
-§4 Phase 0 (Stage 4 — Wave 5).

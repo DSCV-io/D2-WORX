@@ -31,7 +31,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `test:` adding or updating tests
 - `chore:` maintenance tasks
 
-**No `Co-Authored-By` trailers** (including AI co-authors). The `commit-msg` Husky hook rejects them automatically — see CLAUDE.md §6 for the rationale.
+**No `Co-Authored-By` trailers** (including AI co-authors). The `commit-msg` Husky hook rejects them automatically.
 
 ## Pull Requests
 

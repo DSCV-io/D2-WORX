@@ -173,7 +173,7 @@ Copyright (c) DCSV. All rights reserved.
           step = "input";
           return;
         }
-        errorMessage = translateMessage(result.messages?.[0], undefined, m.common_errors_unknown());
+        errorMessage = translateMessage(result.messages?.[0], undefined, m.common_errors_UNKNOWN());
         return;
       }
 
@@ -214,7 +214,7 @@ Copyright (c) DCSV. All rights reserved.
           errorMessage = m.webclient_app_account_otp_max_attempts();
           return;
         }
-        errorMessage = translateMessage(result.messages?.[0], undefined, m.common_errors_unknown());
+        errorMessage = translateMessage(result.messages?.[0], undefined, m.common_errors_UNKNOWN());
         return;
       }
 

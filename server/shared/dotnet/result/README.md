@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.Result
 
+> Parent: [`server/shared/dotnet/`](../README.md)
+
 `D2Result<T>` — errors-as-values pattern for D²-WORX. Replaces exception-based control flow throughout the backend. Every handler returns a `D2Result<T>`; callers branch on `result.Success` and propagate failures via `BubbleFail`.
 
 Foundational lib. References only `D2.Shared.I18n.Abstractions` (itself zero-runtime-dep) so `Messages` and `InputErrors` can be typed as `TKMessage` — a structural compile-time guarantee that every user-visible message is a translation key. Consumed by every other library and service.
@@ -15,7 +17,7 @@ Foundational lib. References only `D2.Shared.I18n.Abstractions` (itself zero-run
 | File | Contents |
 |---|---|
 | `D2Result.cs` | Non-generic base — constructor + properties (`Success`, `Failed`, `Messages`, `InputErrors`, `StatusCode`, `ErrorCode`, `TraceId`) |
-| `D2Result.Factories.cs` | Static semantic factories on `D2Result` (Ok, Created, Fail, NotFound, Forbidden, Unauthorized, ValidationFailed, Conflict, ServiceUnavailable, UnhandledException, PayloadTooLarge, TooManyRequests, Cancelled, SomeFound) |
+| `D2Result.Factories.cs` | Static semantic factories on `D2Result` (Ok, Created, Fail, NotFound, Forbidden, Unauthorized, ValidationFailed, Conflict, ServiceUnavailable, UnhandledException, PayloadTooLarge, TooManyRequests, Canceled, SomeFound) |
 | `D2Result.Booleans.cs` | Per-error-code discriminators (`IsOk`, `IsNotFound`, `IsConflict`, etc.) + combined helpers (`IsPartialOrMissing`, `IsTransientRetryable`) |
 | `D2Result.Generic.cs` | Generic `D2Result<TData>` — adds `Data` + `CheckSuccess` / `CheckFailure` for inline destructuring |
 | `D2Result.Generic.Factories.cs` | Generic factories mirroring the non-generic ones, plus `BubbleFail` / `Bubble` for upstream-result propagation |
@@ -67,7 +69,7 @@ Only `Ok` sets `Success=true`. `SomeFound` and `NotFound` are both failures; con
 | `UnhandledException` | 500 | `UNHANDLED_EXCEPTION` | Caught exception with no specific mapping. **Excluded from `IsTransientRetryable`** — unknown system state is never auto-retried. |
 | `PayloadTooLarge` | 413 | `PAYLOAD_TOO_LARGE` | Request body exceeds limit. |
 | `TooManyRequests` | 429 | `RATE_LIMITED` (overridable) | Rate-limit middleware tripped. Override `errorCode` for client-side discrimination (e.g. `"OTP_RATE_LIMITED"`). |
-| `Cancelled` | 400 | `CANCELLED` | Operation cancelled by client or server. |
+| `Canceled` | 400 | `CANCELED` | Operation canceled by client or server. |
 | `Fail` | 400 (overridable) | (overridable) | Last-resort raw factory. Use only when no semantic factory matches. |
 
 ### Per-code booleans
@@ -85,7 +87,7 @@ result.IsServiceUnavailable    // ErrorCode == SERVICE_UNAVAILABLE
 result.IsRateLimited           // ErrorCode == RATE_LIMITED
 result.IsUnhandledException    // ErrorCode == UNHANDLED_EXCEPTION
 result.IsPayloadTooLarge       // ErrorCode == PAYLOAD_TOO_LARGE
-result.IsCancelled             // ErrorCode == CANCELLED
+result.IsCanceled              // ErrorCode == CANCELED
 result.IsIdempotencyInFlight   // ErrorCode == IDEMPOTENCY_IN_FLIGHT
 ```
 

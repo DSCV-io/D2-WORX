@@ -40,7 +40,7 @@ The "it works as designed" baseline. One test per success scenario.
 Hostile / nonsensical input. The handler should reject CLEANLY, not crash.
 
 - `null` where a value is expected
-- Empty strings (`""`) — treated as missing per CLAUDE.md §5 ("No empty strings as data")
+- Empty strings (`""`) — treated as missing (no empty strings as data anywhere in the system)
 - Whitespace-only strings
 - Wrong type entirely (object where string expected, array where number expected)
 - Malformed UUIDs / IDs
@@ -67,7 +67,7 @@ Off-by-one is real. Test each boundary.
 
 For typed fields with format constraints.
 
-- Email: missing @, missing TLD, multiple @, leading/trailing spaces, internationalized (with CLAUDE.md §6 i18n in mind)
+- Email: missing @, missing TLD, multiple @, leading/trailing spaces, internationalized
 - Phone: country-code formats per `libphonenumber-js`
 - URL: missing scheme, double scheme, path traversal (`..`), unicode
 - ISO 8601 dates: invalid days (Feb 30), wrong format, timezone variants
@@ -84,12 +84,12 @@ Fields whose validity depends on other fields.
 
 ### 6. Error Propagation
 
-Downstream failures bubble correctly. **`Ok()` after a failed downstream call is a critical bug** — see CLAUDE.md §5.
+Downstream failures bubble correctly. **`Ok()` after a failed downstream call is a critical bug.**
 
 - Mock the inner handler to return `D2Result.NotFound` → outer handler returns `BubbleFail`
 - Mock the inner handler to return `ServiceUnavailable` → outer handler bubbles, doesn't swallow
 - Database constraint violation (PG `23505`) → outer handler returns `Conflict`, not `UnhandledException`
-- External API timeout → outer handler returns `ServiceUnavailable` or `Cancelled`, not silent success
+- External API timeout → outer handler returns `ServiceUnavailable` or `Canceled`, not silent success
 
 ### 7. Idempotency
 
@@ -127,7 +127,7 @@ const string expected_email = "test@example.com";
 const int expected_count = 5;
 ```
 
-(See CLAUDE.md §6 — local-test-constant exception to the standard naming convention.)
+(`snake_case` for local test constants is the carve-out from the standard `camelCase` for locals.)
 
 ---
 
@@ -147,7 +147,7 @@ Don't test form fields with only happy-path Playwright. The schema test covers g
 For every endpoint:
 - 8 categories on the handler (unit + integration)
 - Auth tests: unauthenticated (401), wrong scope (403), wrong org (403), correct (200)
-- Pagination: max + 1 → 400 ValidationFailed (per CLAUDE.md §5 "pagination limits")
+- Pagination: max + 1 → 400 ValidationFailed (default 50, max 100 on every list endpoint)
 - Idempotency-Key: duplicate returns cached response
 
 ### gRPC RPCs
@@ -161,7 +161,7 @@ For every RPC:
 
 ## Vitest Custom Matchers
 
-For SvelteKit BFF tests against `D2Result` shapes, prefer custom matchers over inline assertion. Mirrors the v1 Node.js matchers — equivalent xUnit assertion helpers should exist on the .NET side.
+For SvelteKit BFF tests against `D2Result` shapes, prefer custom matchers over inline assertion. Equivalent xUnit assertion helpers should exist on the .NET side so both stacks read the same way.
 
 | Matcher | Purpose |
 |---|---|
@@ -220,7 +220,7 @@ These tiers added wall-clock time without commensurate value at our scale.
 - Race conditions (rotation while N replicas publishing concurrently)
 - Archive decryption (ops CLI fetches retired/compromised kids on demand)
 
-This test ships in Phase 3 with KeyCustodian. Until then, the workflow job is commented out per `.github/workflows/test.yml`.
+This test ships with the KeyCustodian module. Until then, the workflow job is commented out per `.github/workflows/test.yml`.
 
 ---
 
