@@ -145,6 +145,7 @@
   "common_errors_NOT_AUTHENTICATED": "Non hai effettuato l'accesso. Accedi e riprova.",
   "common_errors_NOT_FOUND": "La risorsa richiesta non è stata trovata.",
   "common_errors_NOT_NULL_VIOLATION": "Manca un campo obbligatorio.",
+  "common_errors_PARTIAL_SUCCESS": "L'operazione è parzialmente riuscita. Alcuni obiettivi non sono riusciti.",
   "common_errors_PAYLOAD_TOO_LARGE": "Il payload della richiesta è troppo grande.",
   "common_errors_REQUEST_FAILED": "Richiesta fallita.",
   "common_errors_SAVE_FAILED": "Salvataggio non riuscito.",

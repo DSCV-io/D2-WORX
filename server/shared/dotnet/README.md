@@ -33,10 +33,10 @@ Per project convention, every library has its own `README.md`. The list below po
 | [`handler-repo-postgres/`](handler-repo-postgres/README.md) | **Built** | PostgreSQL implementation of `IDbExceptionClassifier`. Plugs into `BaseRepoHandler` via DI (`services.AddD2Postgres()`). Owns the SQLSTATE matrix + the wrapping rules for `DbUpdateException` ↔ `PostgresException` ↔ raw `NpgsqlException`. | [PATTERNS.md](../../../docs/PATTERNS.md) Repository section |
 | [`tests/`](tests/README.md) | **Built** | Test infrastructure for ALL shared libs (deliberately one project — overkill to spin up a separate test csproj for every lightweight lib). | [TESTS.md](../../../docs/TESTS.md) |
 | [`service-defaults/`](service-defaults/README.md) | Placeholder | Service composition root — OTel SDK bootstrap, Serilog setup, structured request logging, `[RedactData]` destructuring policy registration. | [PATTERNS.md](../../../docs/PATTERNS.md) (RedactDataDestructuringPolicy mechanics) |
-| [`caching-local-abstractions/`](caching-local-abstractions/README.md) | Placeholder | Domain-safe slice — `ID2LocalCache` interface + `LocalCacheOptions`. Zero external deps. | [PATTERNS.md](../../../docs/PATTERNS.md) Cache section |
-| [`caching-local-default/`](caching-local-default/README.md) | Placeholder | Default in-memory implementation of `ID2LocalCache` — lazy TTL + always-on LRU + max 10K default. Per-instance only. | [PATTERNS.md](../../../docs/PATTERNS.md) Cache section |
-| [`caching-distributed-abstractions/`](caching-distributed-abstractions/README.md) | Placeholder | Domain-safe slice — `ID2DistributedCache` interface + `ICacheSerializer` + `DistributedCacheOptions`. Includes the atomic `SetNx` / `Increment` / `AcquireLock` semantic surface that distinguishes distributed from local. Zero external deps. | [PATTERNS.md](../../../docs/PATTERNS.md) Cache section |
-| [`caching-distributed-redis/`](caching-distributed-redis/README.md) | Placeholder | Redis-backed implementation of `ID2DistributedCache`. Future implementations (Valkey, Memcached, Garnet) would land as sibling `caching-distributed-{impl}/` projects. | [PATTERNS.md](../../../docs/PATTERNS.md) Cache section |
+| [`caching-abstractions/`](caching-abstractions/README.md) | **Built** | Shared abstractions for the whole cache stack. Three building-block interfaces (`ICacheBasic`, `ICacheAtomic`, `ICacheBroadcast`) are composed by three marker interfaces — `ILocalCache` (basic + atomic, no broadcast — per-process scope), `IDistributedCache` (all three — cluster scope, every read hits remote), `ITieredCache` (all three — L1+L2 composed, reads from L1 first). Distributed and tiered are method-for-method identical; the marker name carries behavioral intent at the dependency site. All ops return `D2Result<T>` / `D2Result`. | [PATTERNS.md](../../../docs/PATTERNS.md) Cache section |
+| [`caching-local-default/`](caching-local-default/README.md) | **Built** | `DefaultLocalCache : ILocalCache` wraps `Microsoft.Extensions.Caching.Memory.IMemoryCache` for value storage + a `ConcurrentDictionary` for the in-process lock state. Direct method dispatch — no `BaseHandler` (per-call handler overhead would be 100× the ~60ns cache work). Static `Meter` for hit/miss/eviction counters. Always sets `Size=1` per entry so `MaxEntries` enforces a real entry-count cap (mitigates the IMemoryCache SizeLimit footgun). | [PATTERNS.md](../../../docs/PATTERNS.md) Cache section |
+| [`caching-distributed-redis/`](caching-distributed-redis/README.md) | **Built** | `RedisDistributedCache : IDistributedCache` over StackExchange.Redis — implements all four building blocks (Basic + Atomic + Broadcast + Set). `RedisCacheInvalidationBackplane : ICacheInvalidationBackplane` via Redis pub/sub. `JsonCacheSerializer` default. Internal Lua scripts make compound atomic ops single-round-trip (Increment+TTL, ReleaseLock compare-and-delete, SADD+TTL on first-add). Aggregate `Meter` for hits/misses/sets/removes/broadcasts/errors. Future implementations (Valkey, Memcached, Garnet) would land as sibling `caching-distributed-{impl}/` projects with the same surface. | [PATTERNS.md](../../../docs/PATTERNS.md) Cache section |
+| [`caching-tiered/`](caching-tiered/README.md) | **Built** | `DefaultTieredCache : ITieredCache` composes one `ILocalCache` (L1) + one `IDistributedCache` (L2). L2-first writes (no partial-write states), L1-then-L2 reads with populate-on-L2-hit, atomic ops route through L2 with L1 invalidation as side effect. Subscribes to optional `ICacheInvalidationBackplane` at construction for cluster-wide L1 coherency. | [PATTERNS.md](../../../docs/PATTERNS.md) Cache section |
 | [`messaging/`](messaging/README.md) | Placeholder | RabbitMQ wrapper — proto-canonical-JSON serialization, `[Encrypted(Domain.X)]` attribute integration with `D2.Shared.Encryption`, AMQP headers contract. | [MESSAGING.md](../../../docs/MESSAGING.md) |
 | [`encryption/`](encryption/README.md) | **Built** | `PayloadCryptoKeyring` (immutable, JWKS-style multi-kid, `IDisposable` zeroes key bytes), `IPayloadCrypto` + `PayloadCrypto` (AES-256-GCM, per-call `AesGcm`, AAD bound to the keyring's context bytes), self-describing frame format `[v1][kid_len][kid][nonce:12][cipher+tag]`, typed exception hierarchy, keyed-services DI helper (`AddD2EncryptionFor`), and an opt-in `AddD2EncryptionStartupCheck` that round-trips a sentinel per registered domain at boot. Pure crypto primitive — knows nothing about domains, message buses, or key fetching. | [SECURITY-RUNBOOKS.md](../../../docs/SECURITY-RUNBOOKS.md) |
 | [`geo-reference/`](geo-reference/README.md) | Placeholder | Embedded geographic reference data — countries, IANA timezones, currencies, locales, regions. Not a service. | — |
@@ -115,6 +115,18 @@ graph LR
         Encryption[encryption]
     end
 
+    subgraph CACHING["Cache stack"]
+        direction TB
+        CacheAbs[caching-abstractions]
+        CacheLocal[caching-local-default]
+        CacheRedis[caching-distributed-redis]
+        CacheTiered[caching-tiered]
+
+        CacheLocal --> CacheAbs
+        CacheRedis --> CacheAbs
+        CacheTiered --> CacheAbs
+    end
+
     %% Cross-subgraph dependencies (only direct refs that aren't transitively
     %% implied by an intra-subgraph path).
     ReqCtx --> Utilities
@@ -122,8 +134,9 @@ graph LR
     HandlerAbs --> Result
     Repo --> Handler
     RepoAbs --> I18n
+    CacheAbs --> Result
 
-    class I18nAbs,I18n,Result,Utilities,Resilience,AuthAbs,AuthCtxAbs,ReqCtxAbs,ReqCtx,HandlerAbs,Handler,RepoAbs,Repo,RepoPg,Encryption built
+    class I18nAbs,I18n,Result,Utilities,Resilience,AuthAbs,AuthCtxAbs,ReqCtxAbs,ReqCtx,HandlerAbs,Handler,RepoAbs,Repo,RepoPg,Encryption,CacheAbs,CacheLocal,CacheRedis,CacheTiered built
 ```
 
 **Reading the chart:**
@@ -140,13 +153,14 @@ graph LR
 - `handler-repo` directly refs `handler-abstractions`, `result` (transitive via `handler` and `handler-repo-abstractions`)
 - `handler-repo-abstractions` directly refs `result` (transitive via `i18n`)
 
-The five cross-subgraph arrows that ARE drawn capture every load-bearing inter-cluster dep:
+The cross-subgraph arrows that ARE drawn capture every load-bearing inter-cluster dep:
 
 - `request-context → utilities` — uses `Falsey` / `TryParseTruthyNull` extensions in the parsers
 - `handler-abstractions → request-context-abstractions` — `IHandlerContext` exposes `IRequestContext`
 - `handler-abstractions → result` — `IHandler.HandleAsync` returns `D2Result<TOutput?>`
 - `handler-repo → handler` — `BaseRepoHandler` extends `BaseHandler`
 - `handler-repo-abstractions → i18n` — typed `D2Result.X()` factories use `TK.Common.Errors.*` for default messages
+- `caching-abstractions → result` — every cache op returns `D2Result<T>` / `D2Result`
 
 ## Conventions
 

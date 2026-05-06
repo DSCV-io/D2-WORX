@@ -145,6 +145,7 @@
   "common_errors_NOT_AUTHENTICATED": "Sie sind nicht angemeldet. Bitte melden Sie sich an und versuchen Sie es erneut.",
   "common_errors_NOT_FOUND": "Die angeforderte Ressource wurde nicht gefunden.",
   "common_errors_NOT_NULL_VIOLATION": "Ein erforderliches Feld fehlt.",
+  "common_errors_PARTIAL_SUCCESS": "Der Vorgang war teilweise erfolgreich. Einige Ziele sind fehlgeschlagen.",
   "common_errors_PAYLOAD_TOO_LARGE": "Die Anfragenutzlast ist zu groß.",
   "common_errors_REQUEST_FAILED": "Anfrage fehlgeschlagen.",
   "common_errors_SAVE_FAILED": "Speichern fehlgeschlagen.",

@@ -145,6 +145,7 @@
   "common_errors_NOT_AUTHENTICATED": "No has iniciado sesión. Inicia sesión e inténtalo de nuevo.",
   "common_errors_NOT_FOUND": "El recurso solicitado no fue encontrado.",
   "common_errors_NOT_NULL_VIOLATION": "Falta un campo obligatorio.",
+  "common_errors_PARTIAL_SUCCESS": "La operación tuvo éxito parcial. Algunos destinos fallaron.",
   "common_errors_PAYLOAD_TOO_LARGE": "La carga útil de la solicitud es demasiado grande.",
   "common_errors_REQUEST_FAILED": "La solicitud falló.",
   "common_errors_SAVE_FAILED": "Error al guardar.",

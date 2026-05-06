@@ -50,6 +50,8 @@ Copyright (c) DCSV. All rights reserved.
       explicit reference.
     -->
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <!-- Testcontainers.Redis — for Integration/Caching/Distributed tests against a real Redis container -->
+    <PackageReference Include="Testcontainers.Redis" />
     <PackageReference Include="coverlet.msbuild">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -81,5 +83,9 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\handler-repo\D2.Shared.Handler.Repo.csproj" />
     <ProjectReference Include="..\handler-repo-postgres\D2.Shared.Handler.Repo.Postgres.csproj" />
     <ProjectReference Include="..\encryption\D2.Shared.Encryption.csproj" />
+    <ProjectReference Include="..\caching-abstractions\D2.Shared.Caching.Abstractions.csproj" />
+    <ProjectReference Include="..\caching-local-default\D2.Shared.Caching.Local.Default.csproj" />
+    <ProjectReference Include="..\caching-distributed-redis\D2.Shared.Caching.Distributed.Redis.csproj" />
+    <ProjectReference Include="..\caching-tiered\D2.Shared.Caching.Tiered.csproj" />
   </ItemGroup>
 </Project>

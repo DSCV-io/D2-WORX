@@ -276,4 +276,33 @@ public sealed partial class D2Result<TData>
             errorCode: ErrorCodes.SOME_FOUND,
             traceId: traceId);
     }
+
+    /// <summary>
+    /// Creates a partial-success result (HTTP 207 Multi-Status, error code
+    /// <see cref="ErrorCodes.PARTIAL_SUCCESS"/>) for a multi-target write
+    /// where some targets succeeded and others failed.
+    /// <see cref="D2Result.Success"/> is <c>true</c> — the operation did
+    /// partially succeed. Callers inspect <c>IsPartialSuccess</c> and the
+    /// payload to decide on retry / compensation for the failed target(s).
+    /// </summary>
+    /// <param name="data">Outcome payload describing which targets succeeded.</param>
+    /// <param name="messages">
+    /// Optional translation messages; defaults to <c>[TK.Common.Errors.PARTIAL_SUCCESS]</c>.
+    /// </param>
+    /// <param name="traceId">Optional trace identifier.</param>
+    /// <returns>A partial-success <see cref="D2Result{TData}"/>.</returns>
+    public static D2Result<TData> PartialSuccess(
+        TData? data = default,
+        IReadOnlyList<TKMessage>? messages = null,
+        string? traceId = null)
+    {
+        messages ??= [TK.Common.Errors.PARTIAL_SUCCESS];
+        return new(
+            true,
+            data,
+            messages,
+            statusCode: HttpStatusCode.MultiStatus,
+            errorCode: ErrorCodes.PARTIAL_SUCCESS,
+            traceId: traceId);
+    }
 }

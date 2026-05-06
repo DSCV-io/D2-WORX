@@ -145,6 +145,7 @@
   "common_errors_NOT_AUTHENTICATED": "Vous n'êtes pas connecté. Veuillez vous connecter et réessayer.",
   "common_errors_NOT_FOUND": "La ressource demandée est introuvable.",
   "common_errors_NOT_NULL_VIOLATION": "Un champ obligatoire est manquant.",
+  "common_errors_PARTIAL_SUCCESS": "L'opération a partiellement réussi. Certaines cibles ont échoué.",
   "common_errors_PAYLOAD_TOO_LARGE": "La charge utile de la requête est trop volumineuse.",
   "common_errors_REQUEST_FAILED": "La requête a échoué.",
   "common_errors_SAVE_FAILED": "Échec de l'enregistrement.",

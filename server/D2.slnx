@@ -25,6 +25,18 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/context-source-gen/">
     <Project Path="shared/dotnet/context-source-gen/D2.Shared.Context.SourceGen.csproj" />
   </Folder>
+  <Folder Name="/shared/dotnet/caching-abstractions/">
+    <Project Path="shared/dotnet/caching-abstractions/D2.Shared.Caching.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/caching-local-default/">
+    <Project Path="shared/dotnet/caching-local-default/D2.Shared.Caching.Local.Default.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/caching-distributed-redis/">
+    <Project Path="shared/dotnet/caching-distributed-redis/D2.Shared.Caching.Distributed.Redis.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/caching-tiered/">
+    <Project Path="shared/dotnet/caching-tiered/D2.Shared.Caching.Tiered.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/encryption/">
     <Project Path="shared/dotnet/encryption/D2.Shared.Encryption.csproj" />
   </Folder>

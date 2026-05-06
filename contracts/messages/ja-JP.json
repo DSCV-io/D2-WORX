@@ -145,6 +145,7 @@
   "common_errors_NOT_AUTHENTICATED": "サインインしていません。サインインしてからもう一度お試しください。",
   "common_errors_NOT_FOUND": "リクエストされたリソースが見つかりませんでした。",
   "common_errors_NOT_NULL_VIOLATION": "必須項目が入力されていません。",
+  "common_errors_PARTIAL_SUCCESS": "操作は部分的に成功しました。一部の対象が失敗しました。",
   "common_errors_PAYLOAD_TOO_LARGE": "リクエストのペイロードが大きすぎます。",
   "common_errors_REQUEST_FAILED": "リクエストに失敗しました。",
   "common_errors_SAVE_FAILED": "保存に失敗しました。",

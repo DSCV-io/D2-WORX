@@ -488,22 +488,31 @@ If the generator fails, **STOP and ask** — don't patch by hand. Multi-replica 
 
 ## Cache
 
-### Memory cache — lazy TTL + always-on LRU
+The cache stack is fronted by `D2.Shared.Caching.Abstractions`. **Four building-block interfaces** — `ICacheBasic` (Get/Set/Remove + bulk variants + Exists/GetTtl), `ICacheAtomic` (SetNx, Increment, Acquire/ReleaseLock), `ICacheBroadcast` (`*AndBroadcast*` write variants that publish to a backplane), `ICacheSet` (SADD/SCARD/SREM/SISMEMBER, cluster-only) — are composed by **three marker interfaces** that callers actually inject:
 
-- Lazy TTL (eviction on next access, not via timer)
-- Always-on LRU eviction for capacity management
-- Default max 10K entries (configurable via Options)
-- Per-instance (not shared across replicas) — fine for read-heavy TTL-bounded data
+| Marker | Composes | Scope | Use for |
+|---|---|---|---|
+| `ILocalCache` | Basic + Atomic | Per-process. Atomic ops at process scope. | Instance-scoped caches: per-instance fingerprint cache, hot in-process lookups, single-writer counters. |
+| `IDistributedCache` | Basic + Atomic + Broadcast + Set | Cluster. Every read hits the remote store. | Rate-limit counters, distributed locks, ephemeral session lookups, FP-too-common detection (the one Set primitive consumer). |
+| `ITieredCache` | Basic + Atomic + Broadcast | Composed L1 + L2. | Read-heavy entity data where freshness within a few seconds is acceptable. |
 
-### Distributed cache (Redis) — pluggable serializer
+`IDistributedCache` and `ITieredCache` are method-for-method identical (the only surface difference is `ICacheSet`, which tiered deliberately omits — set cardinality is inherently cluster-only and tiered composition would silently hide that). The marker name carries behavioral intent at the dependency site so the reader knows the scope without checking registration.
 
-- `ICacheSerializer` interface — swap between JSON (default), MessagePack, or raw protobuf bytes per cache namespace
-- `JsonCacheSerializer` is the default — readable in `redis-cli`, easy to debug
-- Custom serializers for binary protobuf when message size matters
+**Every op returns `D2Result<T>` / `D2Result`**. Null/empty inputs return `D2Result.ValidationFailed` with an `InputError` naming the offending parameter — implementations never throw `ArgumentException` for caller mistakes.
 
-### Multi-tier pattern (in client libraries)
+### Default implementations
 
-Memory → Redis → Database → Disk. Populate upward on miss. Key convention: `EntityName:{id}`. Used in `D2.{Service}.Client` libraries to keep service round-trips off the hot path.
+- **`DefaultLocalCache : ILocalCache`** (`caching-local-default`) — wraps `Microsoft.Extensions.Caching.Memory.IMemoryCache` (ConcurrentDictionary-backed, lock-free reads). Direct method dispatch — no `BaseHandler` wrapping (per-call handler overhead would be 100× the ~60ns cache work). Always sets `entry.Size = 1` so `MaxEntries` enforces a real entry-count cap (mitigates the IMemoryCache SizeLimit footgun where unset Size means unbounded growth). Static `Meter` for hits/misses/sets/removes/evictions.
+- **`RedisDistributedCache : IDistributedCache`** (`caching-distributed-redis`) — over `StackExchange.Redis`. Compound atomic ops (Increment+TTL, ReleaseLock compare-and-delete, SADD+TTL on first-add) use Lua scripts so each op is a single round-trip. WRONGTYPE / "value is not an integer" both map to `D2Result.Conflict`. Pluggable `ICacheSerializer` (default `JsonCacheSerializer` — `System.Text.Json`, dev-friendly because Redis CLI can inspect values directly).
+- **`RedisCacheInvalidationBackplane : ICacheInvalidationBackplane`** — Redis pub/sub. Universal "everyone acts" rule: every subscriber receives every message, including the publisher's own. No sender-ID filter; the cost of self-receive is bounded (re-fetch from L2 on next read). `Subscribe(Func<string, CancellationToken, ValueTask>) → IAsyncDisposable` — explicit lifetime tracking, not `event +=`.
+- **`DefaultTieredCache : ITieredCache, IAsyncDisposable`** (`caching-tiered`) — composes one `ILocalCache` (L1) + one `IDistributedCache` (L2) via DI. **Reads**: try L1 → on miss fall through to L2 → populate L1 from L2 hit. **Writes**: L2 first, then L1 only if L2 succeeded (no partial-write states; nothing to roll back). **Atomic ops**: route through L2 (the cluster source of truth) with L1 invalidation as side effect. **`*AndBroadcast*` writes**: publish to the registered backplane after the underlying op succeeds. Subscribes to the backplane in its constructor for cluster-wide L1 coherency.
+
+### Picking a marker
+
+- **Need to share state across instances?** → `IDistributedCache` (every read fresh from cluster) or `ITieredCache` (L1-cached but kept coherent via backplane).
+- **Need atomic at cluster scope?** → `IDistributedCache` (or `ITieredCache`, which delegates atomics to L2).
+- **Need set primitives (SADD/SCARD)?** → `IDistributedCache` only. Tiered does not compose `ICacheSet` because cardinality is meaningful only at cluster scope.
+- **Per-instance ephemeral data?** → `ILocalCache`. No backplane involvement, no remote round-trip.
 
 ---
 

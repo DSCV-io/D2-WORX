@@ -33,10 +33,18 @@ public partial class D2Result
     public bool IsNotFound => ErrorCode == ErrorCodes.NOT_FOUND;
 
     /// <summary>
-    /// Gets a value indicating whether this result is a partial-success
+    /// Gets a value indicating whether this result is a partial-found read
     /// (<see cref="ErrorCodes.SOME_FOUND"/>).
     /// </summary>
     public bool IsSomeFound => ErrorCode == ErrorCodes.SOME_FOUND;
+
+    /// <summary>
+    /// Gets a value indicating whether this result is a partial-success
+    /// write (<see cref="ErrorCodes.PARTIAL_SUCCESS"/>) — multi-target
+    /// operation where some targets succeeded and others failed.
+    /// <see cref="Success"/> is <c>true</c> here, unlike <see cref="IsSomeFound"/>.
+    /// </summary>
+    public bool IsPartialSuccess => ErrorCode == ErrorCodes.PARTIAL_SUCCESS;
 
     /// <summary>
     /// Gets a value indicating whether this result is a conflict failure

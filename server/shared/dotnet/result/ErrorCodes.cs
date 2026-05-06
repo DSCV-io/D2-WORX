@@ -66,6 +66,15 @@ public static class ErrorCodes
     public const string SOME_FOUND = nameof(SOME_FOUND);
 
     /// <summary>
+    /// Indicates that a multi-target write operation succeeded against some
+    /// targets but not all (e.g. tiered cache wrote L1 but not L2).
+    /// <see cref="D2Result.Success"/> stays <c>true</c> — the operation did
+    /// succeed in part. Callers inspect <c>IsPartialSuccess</c> + the result
+    /// data to decide what to do about the failed target(s).
+    /// </summary>
+    public const string PARTIAL_SUCCESS = nameof(PARTIAL_SUCCESS);
+
+    /// <summary>
     /// Indicates that the request has been rate limited.
     /// </summary>
     public const string RATE_LIMITED = nameof(RATE_LIMITED);

@@ -259,7 +259,7 @@ One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consume
 ### Other Established Patterns
 
 - **Options pattern**: `IOptions<T>` with defaults. Config section
-- **Multi-tier caching** (in client libraries): Memory → Redis → Database → Disk. Populate upward on miss. Key convention: `EntityName:{id}`.
+- **Caching**: inject one of three marker interfaces from `D2.Shared.Caching.Abstractions` — `ILocalCache` (per-process; basic + atomic), `IDistributedCache` (cluster-wide; basic + atomic + broadcast + set), or `ITieredCache` (composed L1+L2; reads check L1 → fall through to L2 → populate L1; writes go L2-first; atomic ops route through L2). Cluster-wide L1 coherency uses the `ICacheInvalidationBackplane` (Redis pub/sub) — the `*AndBroadcast*` write variants publish on every send. Every op returns `D2Result<T>`; null/empty inputs return `ValidationFailed` (impls never throw). Key convention: `EntityName:{id}`. Full reference: [PATTERNS.md](docs/PATTERNS.md) cache section.
 - **Content-addressable entities**: `Location` and `WhoIs` use SHA-256 hash IDs (64-char hex). Factory method computes hash. Enables dedup.
 - **Mappers**: C# 14 extension members: `extension(Entity e) { public DTO ToDTO() { ... } }`. Live in `{Service}.App/Mappers/`.
 - **Batch operations**: `input.HashIds.Chunk(_BATCH_SIZE)` via Options pattern (default 500).
@@ -306,7 +306,10 @@ One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consume
 
 ### C#
 
-- **Falsey()/Truthy() handle null**: Never `if (value is null || value.Falsey())`. Just `if (value.Falsey())`. After early return, use `value!` — the value is guaranteed non-null. This is one of the few valid uses of `!`.
+- **Falsey()/Truthy() are the standard null+empty checks** — defined in `D2.Shared.Utilities.Extensions` for `string?`, `Guid?`, `Guid`, and `IEnumerable<T>?`. **Never hand-roll the equivalents**: no `string.IsNullOrEmpty(s)`, no `string.IsNullOrWhiteSpace(s)`, no `coll is null || coll.Count == 0`, no `coll?.Any() != true`, no `guid == Guid.Empty`. Use `s.Falsey()` / `coll.Falsey()` / `guid.Falsey()` (and the `Truthy()` inverses) at every call site.
+  - **They handle null themselves** — never `if (value is null || value.Falsey())`. Just `if (value.Falsey())`. After early return, use `value!` — the value is guaranteed non-null. This is one of the few valid uses of `!`.
+  - **No redundant size check after `.Falsey()`** — `coll.Falsey()` already covers null + empty, so a follow-up `coll.Count == 0` check is dead code. If null and empty need different handling, branch on `is null` first, then on `Count == 0`; do NOT layer `.Falsey()` over the same predicate.
+- **Braces — single-line statement no, multi-line statement yes** — `if` / `while` / `for` / `foreach` bodies that fit on **one** line do NOT get braces (`if (cond) return X;`). Bodies that span **multiple** lines (because the body itself wraps, or a constructor / method call breaks across several lines) DO get braces. The rule is purely visual: braces are required whenever the child statement is multi-line, regardless of how many statements it logically contains. Why: a multi-line body without braces lets the next sibling statement visually merge with the body, which is the C dangling-`else` footgun and a real source of bugs when refactoring.
 - **`string.Empty`**: Always. Never `""`. (StyleCop SA1122)
 - **`ToNullIfEmpty()` at boundaries** — use `.ToNullIfEmpty()` when converting proto/DB/external strings to domain types. Returns `null` if the string is null, empty, or whitespace-only (trims first). Defined in `D2.Shared.Utilities`.
 - **Nullable types for optional domain fields** — use `string?`, `bool?`, `int?`, `DateTime?` for optional fields. Never `= string.Empty` on optional record properties. `null` = "not provided."

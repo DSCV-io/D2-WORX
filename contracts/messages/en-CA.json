@@ -145,6 +145,7 @@
   "common_errors_NOT_AUTHENTICATED": "You are not signed in. Please sign in and try again.",
   "common_errors_NOT_FOUND": "The requested resource was not found.",
   "common_errors_NOT_NULL_VIOLATION": "A required field is missing.",
+  "common_errors_PARTIAL_SUCCESS": "The operation partially succeeded. Some targets failed.",
   "common_errors_PAYLOAD_TOO_LARGE": "The request payload is too large.",
   "common_errors_REQUEST_FAILED": "Request failed.",
   "common_errors_SAVE_FAILED": "Failed to save.",
