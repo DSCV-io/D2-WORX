@@ -6,16 +6,31 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
-Roslyn incremental source generator that emits context interfaces, the mutable concrete class, and the cross-transport envelope record from JSON spec files. Multi-target — dispatches per consuming assembly:
+Roslyn incremental source generator that emits context interfaces + the
+mutable concrete class from JSON spec files. Multi-target — dispatches per
+consuming assembly:
 
 | Assembly | Emitted file(s) |
 |---|---|
 | `D2.Shared.AuthContext.Abstractions` | `IAuthContext.g.cs` |
-| `D2.Shared.RequestContext.Abstractions` | `IRequestContext.g.cs` (extends `IAuthContext`) |
-| `D2.Shared.RequestContext` | `MutableRequestContext.g.cs` + `ContextEnvelope.g.cs` |
+| `D2.Shared.Context.Abstractions` | `IRequestContext.g.cs` (extends `IAuthContext`) |
+| `D2.Shared.Context.Abstractions` | `MutableRequestContext.g.cs` |
 | Anything else | nothing |
 
-The spec files are the single source of truth for the auth + request context shape. Adding a property is a one-line change to `contracts/auth-context/IAuthContext.spec.json` or `contracts/request-context/IRequestContext.spec.json` — the interface, mutable concrete, envelope, and three factory methods all update on next build.
+The spec files are the single source of truth for the auth + request context
+shape. Adding a property is a one-line change to
+`contracts/auth-context/IAuthContext.spec.json` or
+`contracts/request-context/IRequestContext.spec.json` — the interface, the
+mutable concrete, and the two factory methods (`FromClaims`,
+`FromJwtPayloadNoValidation`) all update on next build.
+
+> **Cross-hop propagation does NOT go through codegen.** The small subset of
+> fields a downstream consumer can't recompute (`RequestId`, `RequestPath`,
+> fingerprints, `WhoIsHashId`) is propagated via the hand-written
+> `PropagatedContext` record + serializer in `D2.Shared.Context.Abstractions`,
+> wired into transport headers (`x-d2-context` on AMQP / gRPC / HTTP).
+> Identity (UserId, OrgId, Scopes, etc.) rebuilds at every hop from the JWT
+> — never propagated.
 
 ---
 
@@ -31,7 +46,7 @@ The spec files are the single source of truth for the auth + request context sha
 | `SpecLoader.cs` | JSON → `ContextSpec` parser. Emits `D2CTX001` on parse failure |
 | `LoadResult.cs` | `(Spec?, Diagnostic?)` |
 | `InterfaceEmitter.cs` | `ContextSpec` → interface `*.g.cs` (single-spec). Validates types + derived rules |
-| `MutableEmitter.cs` | `(authSpec, requestSpec)` → `MutableRequestContext.g.cs` + `ContextEnvelope.g.cs`. Cross-spec property collision check |
+| `MutableEmitter.cs` | `(authSpec, requestSpec)` → `MutableRequestContext.g.cs`. Cross-spec property collision check |
 | `EmitDiagnostic.cs` / `EmitResult.cs` | Roslyn-decoupled diagnostic + emit-result records |
 | `DiagnosticIds.cs` / `DiagnosticDescriptors.cs` | `D2CTX001`–`D2CTX006` |
 | `ContextGenerator.cs` | `[Generator]` `IIncrementalGenerator`. Filters AdditionalFiles to `*.spec.json`, dispatches per assembly |
@@ -107,7 +122,7 @@ The generated `MutableRequestContext.g.cs` references:
 - `ActorChainParser.ParseFromJson(JsonElement)` / `ActorChainParser.ParseFromJsonString(string)` — RFC 8693 actor-chain parsing
 - `ScopeClaimParser.Parse(JsonElement)` / `ScopeClaimParser.ParseString(string)` — RFC 6749 §3.3 space-separated string OR JSON-array scope parsing
 
-These hand-written helpers live in `D2.Shared.RequestContext` — the parsing rules are stable RFC text and don't benefit from spec-driven codegen. Tests for the parsers pin RFC compliance.
+These hand-written helpers live in `D2.Shared.Context.Abstractions` — the parsing rules are stable RFC text and don't benefit from spec-driven codegen. Tests for the parsers pin RFC compliance.
 
 ---
 

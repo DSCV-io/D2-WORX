@@ -1,0 +1,104 @@
+// -----------------------------------------------------------------------
+// <copyright file="MessagingHostBuilder.cs" company="DCSV">
+// Copyright (c) DCSV. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace D2.Shared.Tests.Integration.Messaging;
+
+using System.Security.Cryptography;
+using System.Text;
+using D2.Shared.Context.Abstractions;
+using D2.Shared.Encryption;
+using D2.Shared.Handler;
+using D2.Shared.Messaging.RabbitMq;
+using D2.Shared.Messaging.RabbitMq.Connection;
+using D2.Shared.Messaging.RabbitMq.Subscribing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
+/// <summary>
+/// Wires a real <see cref="IHost"/> with <c>AddD2MessagingRabbitMq</c>
+/// pointed at the test container. Encapsulates the boilerplate so each
+/// test can focus on a single behavior.
+/// </summary>
+internal static class MessagingHostBuilder
+{
+    /// <summary>
+    /// Builds + starts a host wired to the broker. Returns the running host
+    /// — caller must <c>StopAsync</c> + <c>Dispose</c>. Hooks an in-process
+    /// keyring for the audit domain (used by encrypted publish tests).
+    /// </summary>
+    /// <param name="fixture">The Testcontainers fixture.</param>
+    /// <param name="configure">Optional further DI configuration (subscribers, etc.).</param>
+    /// <param name="activeKid">Active kid for the audit-domain keyring.</param>
+    /// <param name="extraKeys">
+    /// Additional kids the keyring can decrypt (rotation testing). Defaults to
+    /// an empty set — only the active kid is registered.
+    /// </param>
+    public static async Task<IHost> BuildAndStartAsync(
+        RabbitMqFixture fixture,
+        Action<IServiceCollection>? configure = null,
+        string activeKid = "kid-active",
+        IReadOnlyDictionary<string, byte[]>? extraKeys = null)
+    {
+        // Seed the resolver cache with descriptors for the test fixture types
+        // before any publish/dispatch can hit the resolver.
+        IntegrationMessageFixtures.EnsureRegistered();
+
+        var keys = new Dictionary<string, byte[]>(StringComparer.Ordinal)
+        {
+            [activeKid] = RandomNumberGenerator.GetBytes(PayloadCryptoKeyring.KEY_SIZE_BYTES),
+        };
+        if (extraKeys is not null)
+        {
+            foreach (var kvp in extraKeys)
+                keys[kvp.Key] = kvp.Value;
+        }
+
+        var hostBuilder = Host.CreateDefaultBuilder()
+            .ConfigureServices((_, services) =>
+            {
+                services.AddD2EncryptionFor(EncryptionDomains.Audit, _ =>
+                    new PayloadCryptoKeyring(
+                        activeKid: activeKid,
+                        keys: keys,
+                        aadContext: Encoding.UTF8.GetBytes("d2/" + EncryptionDomains.Audit)));
+
+                // Handler stack: HandlerContext<T> for handler activation +
+                // a per-scope MutableRequestContext registered as both the
+                // mutable type and the IRequestContext interface (consumer
+                // dispatch builds an empty context per delivery).
+                services.AddD2Handler();
+                services.AddScoped<MutableRequestContext>();
+                services.AddScoped<IRequestContext>(
+                    sp => sp.GetRequiredService<MutableRequestContext>());
+
+                services.AddD2MessagingRabbitMq(
+                    configureConnection: o =>
+                    {
+                        o.ConnectionUri = fixture.ConnectionString;
+                    });
+
+                configure?.Invoke(services);
+            });
+
+        var host = hostBuilder.Build();
+        await host.StartAsync();
+
+        // Wait for connection ready before returning — tests can publish /
+        // subscribe immediately after this returns.
+        var conn = host.Services.GetRequiredService<ID2Connection>();
+        await conn.ReadyTask.WaitAsync(TimeSpan.FromSeconds(30));
+
+        // ConsumerHostedService starts subscribers in a background task.
+        // Wait for every channel to finish BasicConsume so the first
+        // publish from the test can't race the queue binding.
+        var consumerHost = host.Services.GetServices<IHostedService>()
+            .OfType<ConsumerHostedService>()
+            .Single();
+        await consumerHost.ReadyTask.WaitAsync(TimeSpan.FromSeconds(30));
+
+        return host;
+    }
+}

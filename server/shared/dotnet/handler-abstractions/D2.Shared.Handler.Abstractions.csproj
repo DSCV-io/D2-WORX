@@ -17,7 +17,7 @@ Copyright (c) DCSV. All rights reserved.
 
   <ItemGroup>
     <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
-    <ProjectReference Include="..\request-context-abstractions\D2.Shared.RequestContext.Abstractions.csproj" />
+    <ProjectReference Include="..\context-abstractions\D2.Shared.Context.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

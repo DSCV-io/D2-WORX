@@ -29,6 +29,8 @@ internal static class SpecLoader
     private const string _DERIVED_KEY = "derived";
     private const string _DEFAULT_KEY = "default";
     private const string _DOC_KEY = "doc";
+    private const string _PROPAGATE_KEY = "propagate";
+    private const string _MAX_LENGTH_KEY = "maxLength";
 
     /// <summary>
     /// Parses raw JSON spec content into a <see cref="ContextSpec"/>. Returns
@@ -217,6 +219,17 @@ internal static class SpecLoader
             docElement.ValueKind == JsonValueKind.String)
             doc = docElement.GetString();
 
+        var propagate = false;
+        if (element.TryGetProperty(_PROPAGATE_KEY, out var propagateElement) &&
+            (propagateElement.ValueKind == JsonValueKind.True ||
+             propagateElement.ValueKind == JsonValueKind.False))
+            propagate = propagateElement.GetBoolean();
+
+        int? maxLength = null;
+        if (element.TryGetProperty(_MAX_LENGTH_KEY, out var maxLengthElement) &&
+            maxLengthElement.ValueKind == JsonValueKind.Number)
+            maxLength = maxLengthElement.GetInt32();
+
         var prop = new PropertySpec(
             Name: name,
             Type: typeElement.GetString()!,
@@ -224,7 +237,9 @@ internal static class SpecLoader
             TrinaryAuth: trinaryAuth,
             Derived: derived,
             Default: defaultValue,
-            Doc: doc);
+            Doc: doc,
+            Propagate: propagate,
+            MaxLength: maxLength);
 
         return (prop, null);
     }

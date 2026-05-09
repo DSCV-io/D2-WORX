@@ -72,7 +72,7 @@ public sealed class InterfaceEmitterTests
     {
         var spec = Spec(
             "IRequestContext",
-            "D2.Shared.RequestContext.Abstractions",
+            "D2.Shared.Context.Abstractions",
             extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
             sections: [Section("Tracing", Property("TraceId", "string?"))]);
 
@@ -302,6 +302,8 @@ public sealed class InterfaceEmitterTests
         bool trinaryAuth = false,
         string? derived = null,
         string? @default = null,
-        string? doc = null) =>
-        new(name, type, claim, trinaryAuth, derived, @default, doc);
+        string? doc = null,
+        bool propagate = false,
+        int? maxLength = null) =>
+        new(name, type, claim, trinaryAuth, derived, @default, doc, propagate, maxLength);
 }

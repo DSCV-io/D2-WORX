@@ -50,7 +50,7 @@ Domain code (entities + value objects + domain services) shouldn't depend on `Mi
 
 Project references:
 - `D2.Shared.Result` — `D2Result<T>` return type
-- `D2.Shared.RequestContext.Abstractions` — `IRequestContext` on the context
+- `D2.Shared.Context.Abstractions` — `IRequestContext` on the context
 
 Package references:
 - `Microsoft.Extensions.Logging.Abstractions` — `ILogger` on the context

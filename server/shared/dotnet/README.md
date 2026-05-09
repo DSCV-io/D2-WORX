@@ -20,12 +20,11 @@ Per project convention, every library has its own `README.md`. The list below po
 | [`i18n-abstractions/`](i18n-abstractions/README.md) | **Built** | Domain-safe slice — `TKMessage` primitive, SrcGen-emitted `TK` constants from `contracts/messages/en-US.json`, `ITranslator` interface. Zero external deps. Drift between JSON and TK code constants is structurally impossible (the constant doesn't exist if the JSON key doesn't). | [PATTERNS.md](../../../docs/PATTERNS.md) i18n section |
 | [`i18n-source-gen/`](i18n-source-gen/) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits the `TK.*` constants consumed by `i18n-abstractions/`. Referenced as Analyzer; its dll never ships into any consuming assembly. Lives at its own top-level slot because it has a different TFM and a different consumption pattern from a normal lib. | [PATTERNS.md](../../../docs/PATTERNS.md) i18n section |
 | [`i18n/`](i18n/README.md) | **Built** | Runtime `Translator` + `SupportedLocales` + `AddD2I18n` DI extension. Used by Courier-style outbound notifications; HTTP responses ship `TKMessage` objects unchanged for client-side translation via SvelteKit/Paraglide. | [PATTERNS.md](../../../docs/PATTERNS.md) i18n section |
-| [`auth-abstractions/`](auth-abstractions/README.md) | **Built** | Identity / authorization vocabulary — `OrgType`, `Role`, `ActorKind`, `ImpersonationKind`, `ActionSensitivity`, `JwtClaimTypes`, `RequestHeaders`, `ActorEntry`, plus the SrcGen-emitted `Scopes` static partial class. Zero external deps; consumed by domain code, request-context, handler-abstractions, and the eventual runtime auth lib. | [PATTERNS.md](../../../docs/PATTERNS.md) Scopes / authorization section |
+| [`auth-abstractions/`](auth-abstractions/README.md) | **Built** | Identity / authorization vocabulary — `OrgType`, `Role`, `ActorKind`, `ImpersonationKind`, `ActionSensitivity`, `JwtClaimTypes`, `RequestHeaders`, `ActorEntry`, plus the SrcGen-emitted `Scopes` static partial class. Zero external deps; consumed by domain code, context-abstractions, handler-abstractions, and the eventual runtime auth lib. | [PATTERNS.md](../../../docs/PATTERNS.md) Scopes / authorization section |
 | [`auth-scopes-source-gen/`](auth-scopes-source-gen/) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits the `Scopes.*` constants for `auth-abstractions/` from `contracts/auth-scopes/scopes.spec.json`. Referenced as Analyzer; its dll never ships into any consuming assembly. | [PATTERNS.md](../../../docs/PATTERNS.md) Scopes / authorization section |
 | [`auth-context-abstractions/`](auth-context-abstractions/README.md) | **Built** | Domain-safe slice of the request context — `IAuthContext` (codegen-emitted from `contracts/auth-context/IAuthContext.spec.json`) plus hand-written `IAuthContextExtensions` (`HasScope`, `IsStaff`, etc.). Lets domain code read caller identity / scopes / impersonation without pulling DI / AspNetCore / Configuration. | [PATTERNS.md](../../../docs/PATTERNS.md) Context section |
-| [`context-source-gen/`](context-source-gen/) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits `IAuthContext` + `IRequestContext` interfaces and the `MutableRequestContext` / `ContextEnvelope` concretes from the context spec JSON. Per-assembly dispatch — referenced as Analyzer by `auth-context-abstractions/`, `request-context-abstractions/`, and `request-context/`. | [PATTERNS.md](../../../docs/PATTERNS.md) Context section |
-| [`request-context-abstractions/`](request-context-abstractions/README.md) | **Built** | Per-request runtime context interface — `IRequestContext` (codegen-emitted) extends `IAuthContext` with transport + network + fingerprint + WhoIs sections. Read-only contract that handlers and middleware consume. | [PATTERNS.md](../../../docs/PATTERNS.md) Context section |
-| [`request-context/`](request-context/README.md) | **Built** | Runtime concretes — `MutableRequestContext` (codegen-emitted), `ContextEnvelope` cross-transport record, plus hand-written `ActorChainParser` (RFC 8693 §2.1 nested actor chain, depth-limited, strict-mode) and `ScopeClaimParser` (RFC 6749 §3.3 scope string OR JSON array). Transport-specific filling extensions live in their respective handler libs. | [PATTERNS.md](../../../docs/PATTERNS.md) Context section |
+| [`context-source-gen/`](context-source-gen/) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0). Reads `contracts/{auth,request}-context/*.spec.json` and emits, per target assembly: `IAuthContext.g.cs` into `auth-context-abstractions/`; `IRequestContext.g.cs` + `MutableRequestContext.g.cs` + `PropagatedContext.g.cs` + `PropagatedContextExtensions.g.cs` + `PropagatedContextSerializer.g.cs` (with per-field `maxLength` validation baked from the spec) into `context-abstractions/`. | [PATTERNS.md](../../../docs/PATTERNS.md) Context section |
+| [`context-abstractions/`](context-abstractions/README.md) | **Built** | Single-lib home for every spec-driven context primitive. Codegen-emitted: `IRequestContext` interface (extends `IAuthContext`), `MutableRequestContext` concrete, `PropagatedContext` record (the `propagate: true` field subset), `PropagatedContextExtensions` (`ToPropagatedContext` / `ApplyPropagatedContext` projections), `PropagatedContextSerializer` (base64url + JSON codec for the cross-hop `x-d2-context` header, with per-field length caps from the spec). Hand-written RFC helpers ship here too: `ActorChainParser` (RFC 8693 §2.1 nested actor chain, depth-limited strict-mode), `ScopeClaimParser` (RFC 6749 §3.3 SP-only scope string or JSON array). Identity (UserId / OrgId / Scopes / ActorChain) rebuilds from JWT each hop; only the small operational subset propagates. | [PATTERNS.md](../../../docs/PATTERNS.md) Context section |
 | [`handler-abstractions/`](handler-abstractions/README.md) | **Built** | Domain-safe slice of the handler stack — `IHandler` / `IHandlerContext` interfaces + the `HandlerOptions` record. Lets domain code reference handler contracts without pulling DI / OpenTelemetry / AspNetCore. | [PATTERNS.md](../../../docs/PATTERNS.md) Handler section |
 | [`handler/`](handler/README.md) | **Built** | `BaseHandler<TSelf, TInput, TOutput>` + `HandlerContext` + `HandlerTelemetry` + `AddD2Handler` — the runtime piece every handler in every service inherits (CQRS handlers, repo handlers, messaging consumers, scheduled jobs). Auto-emits 4 OTel metrics per call (invoked / succeeded / failed / duration_ms) plus a per-call span via `ActivitySource`. Universal try/catch shape: `ExecuteAsync` exceptions surface as `D2Result.UnhandledException`; `OperationCanceledException` surfaces as `D2Result.Canceled`. `RunCorePipelineAsync` exposes the captured exception so `BaseRepoHandler` can remap EF/PG-specific exceptions to typed `D2Result` failure codes. | [PATTERNS.md](../../../docs/PATTERNS.md) Handler section |
 | [`handler-repo-abstractions/`](handler-repo-abstractions/README.md) | **Built** | Vocabulary for repo-flavored handlers — `DbFailureKind` enum + `IDbExceptionClassifier` interface, plus `D2Result` extension factories (`UniqueViolation()`, `IsDeadlock`, etc.) parallel to the built-in semantic factories on `result/`. Pure abstractions: no EF Core, no Npgsql, no provider deps. | [PATTERNS.md](../../../docs/PATTERNS.md) Repository section |
@@ -37,7 +36,9 @@ Per project convention, every library has its own `README.md`. The list below po
 | [`caching-local-default/`](caching-local-default/README.md) | **Built** | `DefaultLocalCache : ILocalCache` wraps `Microsoft.Extensions.Caching.Memory.IMemoryCache` for value storage + a `ConcurrentDictionary` for the in-process lock state. Direct method dispatch — no `BaseHandler` (per-call handler overhead would be 100× the ~60ns cache work). Static `Meter` for hit/miss/eviction counters. Always sets `Size=1` per entry so `MaxEntries` enforces a real entry-count cap (mitigates the IMemoryCache SizeLimit footgun). | [PATTERNS.md](../../../docs/PATTERNS.md) Cache section |
 | [`caching-distributed-redis/`](caching-distributed-redis/README.md) | **Built** | `RedisDistributedCache : IDistributedCache` over StackExchange.Redis — implements all four building blocks (Basic + Atomic + Broadcast + Set). `RedisCacheInvalidationBackplane : ICacheInvalidationBackplane` via Redis pub/sub. `JsonCacheSerializer` default. Internal Lua scripts make compound atomic ops single-round-trip (Increment+TTL, ReleaseLock compare-and-delete, SADD+TTL on first-add). Aggregate `Meter` for hits/misses/sets/removes/broadcasts/errors. Future implementations (Valkey, Memcached, Garnet) would land as sibling `caching-distributed-{impl}/` projects with the same surface. | [PATTERNS.md](../../../docs/PATTERNS.md) Cache section |
 | [`caching-tiered/`](caching-tiered/README.md) | **Built** | `DefaultTieredCache : ITieredCache` composes one `ILocalCache` (L1) + one `IDistributedCache` (L2). L2-first writes (no partial-write states), L1-then-L2 reads with populate-on-L2-hit, atomic ops route through L2 with L1 invalidation as side effect. Subscribes to optional `ICacheInvalidationBackplane` at construction for cluster-wide L1 coherency. | [PATTERNS.md](../../../docs/PATTERNS.md) Cache section |
-| [`messaging/`](messaging/README.md) | Placeholder | RabbitMQ wrapper — proto-canonical-JSON serialization, `[Encrypted(Domain.X)]` attribute integration with `D2.Shared.Encryption`, AMQP headers contract. | [MESSAGING.md](../../../docs/MESSAGING.md) |
+| [`messaging-source-gen/`](messaging-source-gen/) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0). Reads `contracts/mq-messages/mq-messages.spec.json` + `contracts/mq-subscriptions/mq-subscriptions.spec.json` and emits `MqMessages.g.cs` + `MqSubscriptions.g.cs` (constants + immutable `MqMessagesRegistry` / `MqSubscriptionsRegistry` lookup tables) into `messaging-abstractions/`. Validates encryption-domain whitelist (against `D2.Shared.Encryption.EncryptionDomains`) at codegen time. | [MESSAGING.md](../../../docs/MESSAGING.md) |
+| [`messaging-abstractions/`](messaging-abstractions/README.md) | **Built** | Transport-agnostic surface — `IMessageBus` (+ `WaitForReadyAsync`), `IMessageIdempotencyStore`, `[MqPub(MqMessages.X)]` / `[MqSub(MqSubscriptions.X)]` attributes (default-deny), codegen-emitted `MqMessageDescriptor` / `MqSubscriptionDescriptor` records (+ `TieredRetryDescriptor`), `AmqpHeaders` constants (incl. `traceparent` / `tracestate` / `x-d2-context` / `x-d2-failure-reason`), `QueuePattern` enum, `PublisherOptions`, `SubscriberRegistry` + `SubscriberRegistrar`, `MessagingFailures`, `MessagingJsonOptions`, `DlqFailureMetadata`, plus `services.AddD2SubscribersFromAssembly(...)` + programmatic `AddD2Subscriber<TSub, TIn>(MqSubscriptionDescriptor)` escape hatch. Zero transport deps so domain code can attach `[MqPub]` and request `IMessageBus` without dragging in `RabbitMQ.Client`. | [MESSAGING.md](../../../docs/MESSAGING.md) |
+| [`messaging-rabbitmq/`](messaging-rabbitmq/README.md) | **Built** | Default `RabbitMQ.Client 7.x` impl of `messaging-abstractions/`. Singleton bus (per-publish transient scope for keyed crypto + `IRequestContext` snapshot), `ID2Connection` with lazy reconnect loop, bounded publisher channel pool with `IdleTtl` eviction, body composition (typed message JSON, optional AES-256-GCM via `D2.Shared.Encryption` — no envelope wrapper), `MessageWireResolver` (`Type → MqMessageDescriptor` via `[MqPub]` + codegen registry), full W3C `traceparent` / `tracestate` cross-hop propagation, `x-d2-context` header for `PropagatedContext`, publisher confirms + transient-classifier retry, idempotent topology (exchanges + DLX + DLQ + optional retry tiers), per-subscriber `IChannel` + dedicated republish channel (DLQ republish-with-failure-header), in-flight callback drain on disposal, narrow-catch around `BasicAck`, `x-death`-driven `RETRIES_EXHAUSTED` enforcement (filtered by reason), composition-time `WaitForConfirm`↔`PublisherConfirmsEnabled` validation, `CacheIdempotencyStore` over `IDistributedCache` (or operator-provided fake), PII-safe log delegates (`SanitizedExceptionRender`). One-call DI: `AddD2MessagingRabbitMq(...)`. | [MESSAGING.md](../../../docs/MESSAGING.md) |
 | [`encryption/`](encryption/README.md) | **Built** | `PayloadCryptoKeyring` (immutable, JWKS-style multi-kid, `IDisposable` zeroes key bytes), `IPayloadCrypto` + `PayloadCrypto` (AES-256-GCM, per-call `AesGcm`, AAD bound to the keyring's context bytes), self-describing frame format `[v1][kid_len][kid][nonce:12][cipher+tag]`, typed exception hierarchy, keyed-services DI helper (`AddD2EncryptionFor`), and an opt-in `AddD2EncryptionStartupCheck` that round-trips a sentinel per registered domain at boot. Pure crypto primitive — knows nothing about domains, message buses, or key fetching. | [SECURITY-RUNBOOKS.md](../../../docs/SECURITY-RUNBOOKS.md) |
 | [`geo-reference/`](geo-reference/README.md) | Placeholder | Embedded geographic reference data — countries, IANA timezones, currencies, locales, regions. Not a service. | — |
 | [`location/`](location/README.md) | Placeholder | Location value objects — `AdminLocation` (country / state / city / postal), `Coordinates`, `StreetAddress`. Content-addressable hash IDs (built-in dedup + cacheability). | [OPERATIONAL-GUARANTEES.md](../../../docs/OPERATIONAL-GUARANTEES.md) (content-addressable entities) |
@@ -80,16 +81,14 @@ graph LR
         AuthAbs[auth-abstractions]
         ContextSG[context-source-gen]:::analyzer
         AuthCtxAbs[auth-context-abstractions]
-        ReqCtxAbs[request-context-abstractions]
-        ReqCtx[request-context]
+        CtxAbs[context-abstractions]
 
         AuthScopesSG -.->|analyzer| AuthAbs
         ContextSG -.->|analyzer| AuthCtxAbs
-        ContextSG -.->|analyzer| ReqCtxAbs
-        ContextSG -.->|analyzer| ReqCtx
+        ContextSG -.->|analyzer| CtxAbs
         AuthCtxAbs --> AuthAbs
-        ReqCtxAbs --> AuthCtxAbs
-        ReqCtx --> ReqCtxAbs
+        CtxAbs --> AuthCtxAbs
+        CtxAbs --> AuthAbs
     end
 
     subgraph HANDLER["Handler stack"]
@@ -127,16 +126,30 @@ graph LR
         CacheTiered --> CacheAbs
     end
 
+    subgraph MESSAGING["Messaging stack"]
+        direction TB
+        MsgSrcGen[messaging-source-gen]:::analyzer
+        MsgAbs[messaging-abstractions]
+        MsgRabbit[messaging-rabbitmq]
+
+        MsgSrcGen -.->|analyzer| MsgAbs
+        MsgRabbit --> MsgAbs
+    end
+
     %% Cross-subgraph dependencies (only direct refs that aren't transitively
     %% implied by an intra-subgraph path).
-    ReqCtx --> Utilities
-    HandlerAbs --> ReqCtxAbs
+    CtxAbs --> Utilities
+    HandlerAbs --> CtxAbs
     HandlerAbs --> Result
     Repo --> Handler
     RepoAbs --> I18n
     CacheAbs --> Result
+    MsgAbs --> Handler
+    MsgRabbit --> Encryption
+    MsgRabbit --> CacheAbs
+    MsgRabbit --> Resilience
 
-    class I18nAbs,I18n,Result,Utilities,Resilience,AuthAbs,AuthCtxAbs,ReqCtxAbs,ReqCtx,HandlerAbs,Handler,RepoAbs,Repo,RepoPg,Encryption,CacheAbs,CacheLocal,CacheRedis,CacheTiered built
+    class I18nAbs,I18n,Result,Utilities,Resilience,AuthAbs,AuthCtxAbs,CtxAbs,HandlerAbs,Handler,RepoAbs,Repo,RepoPg,Encryption,CacheAbs,CacheLocal,CacheRedis,CacheTiered,MsgAbs,MsgRabbit,MsgSrcGen built
 ```
 
 **Reading the chart:**
@@ -148,19 +161,25 @@ graph LR
 
 **Why some arrows are not drawn explicitly:** several csprojs add direct `<ProjectReference>`s that are also reachable transitively through an intra-subgraph hop. To keep the chart legible, those redundant edges are hidden — the live deps still exist in the csprojs:
 
-- `request-context` directly refs `auth-context-abstractions`, `auth-abstractions` (transitive via `request-context-abstractions`)
-- `handler` directly refs `request-context-abstractions`, `result` (transitive via `handler-abstractions`)
+- `context-abstractions` directly refs `auth-context-abstractions` + `auth-abstractions` (parsers use `ActorEntry` / enums)
+- `handler` directly refs `result` (transitive via `handler-abstractions`)
 - `handler-repo` directly refs `handler-abstractions`, `result` (transitive via `handler` and `handler-repo-abstractions`)
 - `handler-repo-abstractions` directly refs `result` (transitive via `i18n`)
+- `messaging-abstractions` directly refs `result`, `i18n-abstractions`, `utilities` (transitive via `handler`)
+- `messaging-rabbitmq` directly refs `handler`, `result`, `i18n-abstractions`, `utilities` (transitive via `messaging-abstractions`)
 
 The cross-subgraph arrows that ARE drawn capture every load-bearing inter-cluster dep:
 
-- `request-context → utilities` — uses `Falsey` / `TryParseTruthyNull` extensions in the parsers
-- `handler-abstractions → request-context-abstractions` — `IHandlerContext` exposes `IRequestContext`
+- `context-abstractions → utilities` — uses `Falsey` / `TryParseTruthyNull` extensions in the parsers
+- `handler-abstractions → context-abstractions` — `IHandlerContext` exposes `IRequestContext`
 - `handler-abstractions → result` — `IHandler.HandleAsync` returns `D2Result<TOutput?>`
 - `handler-repo → handler` — `BaseRepoHandler` extends `BaseHandler`
 - `handler-repo-abstractions → i18n` — typed `D2Result.X()` factories use `TK.Common.Errors.*` for default messages
 - `caching-abstractions → result` — every cache op returns `D2Result<T>` / `D2Result`
+- `messaging-abstractions → handler` — `BaseHandler<THandler, TIn, Unit>` is the type constraint on subscribers + `IHandlerContext` flows into messaging through the same context envelope
+- `messaging-rabbitmq → encryption` — `IPayloadCrypto` per encryption domain is keyed-DI-resolved when composing message bodies
+- `messaging-rabbitmq → caching-abstractions` — `CacheIdempotencyStore` backs `IMessageIdempotencyStore` onto `IDistributedCache`
+- `messaging-rabbitmq → resilience` — `RetryHelper.RetryAsync` drives the publisher's transient-retry loop
 
 ## Conventions
 

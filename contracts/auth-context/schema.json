@@ -92,6 +92,16 @@
         "doc": {
           "type": "string",
           "description": "XML doc <summary> text rendered on the generated property."
+        },
+        "propagate": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, this property is included in the codegen-emitted PropagatedContext record (the cross-hop subset that ships in the x-d2-context AMQP / gRPC / HTTP header). Identity fields (UserId / OrgId / Scopes / ActorChain) MUST NOT be propagated — they rebuild from the JWT at every sync hop."
+        },
+        "maxLength": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Wire-level per-field length cap, enforced by the codegen-emitted PropagatedContextSerializer.TryDecode. A forged x-d2-context header with any propagatable field exceeding its cap is dropped wholesale (propagation is opportunistic, never required). Only meaningful when propagate=true on a string-typed field."
         }
       }
     }

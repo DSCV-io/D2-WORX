@@ -9,7 +9,7 @@ namespace D2.Shared.Tests.Unit.RequestContext;
 using System;
 using System.Text.Json;
 using AwesomeAssertions;
-using D2.Shared.RequestContext;
+using D2.Shared.Context.Abstractions;
 using Xunit;
 
 public sealed class MalformedActorChainExceptionTests

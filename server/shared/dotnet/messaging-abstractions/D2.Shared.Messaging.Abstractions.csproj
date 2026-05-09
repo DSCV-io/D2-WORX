@@ -1,0 +1,52 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Shared.Messaging</RootNamespace>
+
+    <!-- Surface the Messaging.SourceGen output in obj/Generated for inspection. -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Zero external runtime deps so domain code can reference [MqPub] /
+      [MqSub] and the messaging interfaces without dragging in
+      RabbitMQ.Client or any transport. Future Kafka / NATS impls live in
+      sibling csprojs with the same surface.
+    -->
+    <PackageReference Include="JetBrains.Annotations" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+
+    <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
+    <ProjectReference Include="..\i18n-abstractions\D2.Shared.I18n.Abstractions.csproj" />
+    <ProjectReference Include="..\handler\D2.Shared.Handler.csproj" />
+    <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
+
+    <!--
+      Encryption ref needed for D2.Shared.Encryption.EncryptionDomains constants —
+      Messaging.SourceGen reads them at codegen time to validate the encryption
+      value on each message spec entry (whitelist of registered domains + the
+      literal "plaintext").
+    -->
+    <ProjectReference Include="..\encryption\D2.Shared.Encryption.csproj" />
+
+    <!-- Messaging.SourceGen — emits MqMessages / MqSubscriptions + their registries. -->
+    <ProjectReference Include="..\messaging-source-gen\D2.Shared.Messaging.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The two spec files the source-gen reads. -->
+    <AdditionalFiles Include="..\..\..\..\contracts\mq-messages\mq-messages.spec.json" />
+    <AdditionalFiles Include="..\..\..\..\contracts\mq-subscriptions\mq-subscriptions.spec.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D2.Shared.Messaging.RabbitMq" />
+    <InternalsVisibleTo Include="D2.Shared.Tests" />
+  </ItemGroup>
+</Project>

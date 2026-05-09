@@ -42,6 +42,7 @@ Copyright (c) DCSV. All rights reserved.
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
     <!--
       Microsoft.CodeAnalysis.CSharp — needed by SrcGen integration tests
       (Unit/Auth/SourceGen, Unit/Context/SourceGen) which drive
@@ -52,6 +53,10 @@ Copyright (c) DCSV. All rights reserved.
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <!-- Testcontainers.Redis — for Integration/Caching/Distributed tests against a real Redis container -->
     <PackageReference Include="Testcontainers.Redis" />
+    <!-- Testcontainers.RabbitMq — for Integration/Messaging tests against a real RabbitMQ container -->
+    <PackageReference Include="Testcontainers.RabbitMq" />
+    <!-- RabbitMQ.Client — for unit tests that need to construct AMQP exception types directly -->
+    <PackageReference Include="RabbitMQ.Client" />
     <PackageReference Include="coverlet.msbuild">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -75,8 +80,7 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
     <ProjectReference Include="..\auth-abstractions\D2.Shared.Auth.Abstractions.csproj" />
     <ProjectReference Include="..\auth-context-abstractions\D2.Shared.AuthContext.Abstractions.csproj" />
-    <ProjectReference Include="..\request-context-abstractions\D2.Shared.RequestContext.Abstractions.csproj" />
-    <ProjectReference Include="..\request-context\D2.Shared.RequestContext.csproj" />
+    <ProjectReference Include="..\context-abstractions\D2.Shared.Context.Abstractions.csproj" />
     <ProjectReference Include="..\handler-abstractions\D2.Shared.Handler.Abstractions.csproj" />
     <ProjectReference Include="..\handler\D2.Shared.Handler.csproj" />
     <ProjectReference Include="..\handler-repo-abstractions\D2.Shared.Handler.Repo.Abstractions.csproj" />
@@ -87,5 +91,7 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\caching-local-default\D2.Shared.Caching.Local.Default.csproj" />
     <ProjectReference Include="..\caching-distributed-redis\D2.Shared.Caching.Distributed.Redis.csproj" />
     <ProjectReference Include="..\caching-tiered\D2.Shared.Caching.Tiered.csproj" />
+    <ProjectReference Include="..\messaging-abstractions\D2.Shared.Messaging.Abstractions.csproj" />
+    <ProjectReference Include="..\messaging-rabbitmq\D2.Shared.Messaging.RabbitMq.csproj" />
   </ItemGroup>
 </Project>

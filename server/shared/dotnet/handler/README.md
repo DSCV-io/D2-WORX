@@ -26,7 +26,7 @@ If you can't guarantee the redaction policy is in place (e.g. a one-off tool, an
 
 | Path | Contents |
 |---|---|
-| `D2.Shared.Handler.csproj` | csproj — refs handler-abstractions + request-context-abstractions + result + DI/Logging.Abstractions |
+| `D2.Shared.Handler.csproj` | csproj — refs handler-abstractions + context-abstractions + result + DI/Logging.Abstractions |
 | `BaseHandler.cs` | Abstract base. Virtual `HandleAsync` (entry point) + non-virtual `RunCorePipelineAsync` (observability + try/catch) + abstract `ExecuteAsync` (subclass logic) |
 | `BaseHandler.Logging.cs` | Source-generated `LoggerMessage` delegates for the pipeline |
 | `HandlerContext.cs` | `HandlerContext<T>` — typed-logger context. Open-generic registration via `AddD2Handler` |

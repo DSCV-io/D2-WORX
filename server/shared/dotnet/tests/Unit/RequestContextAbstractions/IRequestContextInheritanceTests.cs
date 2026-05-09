@@ -8,7 +8,7 @@ namespace D2.Shared.Tests.Unit.RequestContextAbstractions;
 
 using AwesomeAssertions;
 using D2.Shared.AuthContext.Abstractions;
-using D2.Shared.RequestContext.Abstractions;
+using D2.Shared.Context.Abstractions;
 using Xunit;
 
 /// <summary>

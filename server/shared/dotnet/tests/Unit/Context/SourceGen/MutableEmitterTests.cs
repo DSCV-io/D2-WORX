@@ -13,7 +13,7 @@ using Xunit;
 
 /// <summary>
 /// Adversarial coverage for <see cref="MutableEmitter.Emit"/>. Asserts the
-/// shape of the generated <c>MutableRequestContext</c> + <c>ContextEnvelope</c>
+/// shape of the generated <c>MutableRequestContext</c>
 /// — get/set vs computed getters, three named factories, claim-source dispatch,
 /// and the property-name collision diagnostic (D2CTX003).
 /// </summary>
@@ -28,7 +28,7 @@ public sealed class MutableEmitterTests
     {
         var (auth, request) = MinimalSpecs();
 
-        var (mutable, _) = MutableEmitter.Emit(auth, request);
+        var mutable = MutableEmitter.Emit(auth, request);
 
         mutable.Diagnostics.Should().BeEmpty();
         mutable.HintName.Should().Be("MutableRequestContext.g.cs");
@@ -41,7 +41,7 @@ public sealed class MutableEmitterTests
     {
         var (auth, request) = MinimalSpecs();
 
-        var (mutable, _) = MutableEmitter.Emit(auth, request);
+        var mutable = MutableEmitter.Emit(auth, request);
 
         // ImmediateCallerClientId / OriginatingClientId / IsServiceIdentity are
         // computed from ActorChain — must NOT have a setter.
@@ -58,7 +58,7 @@ public sealed class MutableEmitterTests
     {
         var (auth, request) = MinimalSpecs();
 
-        var (mutable, _) = MutableEmitter.Emit(auth, request);
+        var mutable = MutableEmitter.Emit(auth, request);
 
         // Trinary semantics: when IsAuthenticated is null, derived auth flags
         // also return null (pre-auth state). The emitter pattern is identical
@@ -67,19 +67,26 @@ public sealed class MutableEmitterTests
     }
 
     // ----------------------------------------------------------------------
-    // Three factories — FromContextEnvelope / FromJwtPayloadNoValidation / FromClaims
+    // Two factories — FromJwtPayloadNoValidation / FromClaims
     // ----------------------------------------------------------------------
 
     [Fact]
-    public void Emit_AllThreeFactoriesPresent()
+    public void Emit_BothFactoriesPresent()
     {
         var (auth, request) = MinimalSpecs();
 
-        var (mutable, _) = MutableEmitter.Emit(auth, request);
+        var mutable = MutableEmitter.Emit(auth, request);
 
-        mutable.GeneratedSource.Should().Contain("FromContextEnvelope(ContextEnvelope envelope)");
         mutable.GeneratedSource.Should().Contain("FromJwtPayloadNoValidation(JsonElement payload)");
         mutable.GeneratedSource.Should().Contain("FromClaims(ClaimsPrincipal principal)");
+
+        // No more envelope wire-shape — propagation now goes via the hand-
+        // written PropagatedContext + a single x-d2-context header. Asserting
+        // the generated source doesn't reintroduce envelope methods.
+        mutable.GeneratedSource.Should().NotContain("ContextEnvelope");
+        mutable.GeneratedSource.Should().NotContain("FromContextEnvelope");
+        mutable.GeneratedSource.Should().NotContain("ToContextEnvelope");
+        mutable.GeneratedSource.Should().NotContain("PopulateFromEnvelope");
     }
 
     [Fact]
@@ -87,7 +94,7 @@ public sealed class MutableEmitterTests
     {
         var (auth, request) = MinimalSpecs();
 
-        var (mutable, _) = MutableEmitter.Emit(auth, request);
+        var mutable = MutableEmitter.Emit(auth, request);
 
         // Loud-warning XML doc — DOES NOT VALIDATE / forged-token impersonation
         // primitive — both phrases must appear.
@@ -107,7 +114,7 @@ public sealed class MutableEmitterTests
         // use FindAll, not FindFirst, for IReadOnlyList<string> properties.
         var (auth, request) = MinimalSpecs();
 
-        var (mutable, _) = MutableEmitter.Emit(auth, request);
+        var mutable = MutableEmitter.Emit(auth, request);
 
         mutable.GeneratedSource.Should().Contain("principal.FindAll(\"aud\")");
     }
@@ -120,62 +127,11 @@ public sealed class MutableEmitterTests
         // IReadOnlyList<string> property.
         var (auth, request) = MinimalSpecs();
 
-        var (mutable, _) = MutableEmitter.Emit(auth, request);
+        var mutable = MutableEmitter.Emit(auth, request);
 
         var src = mutable.GeneratedSource;
         src.Should().Contain("JsonValueKind.String");
         src.Should().Contain("JsonValueKind.Array");
-    }
-
-    // ----------------------------------------------------------------------
-    // Envelope shape — every non-derived prop, init-only
-    // ----------------------------------------------------------------------
-
-    [Fact]
-    public void Emit_Envelope_OnePropertyPerNonDerivedField()
-    {
-        var (auth, request) = MinimalSpecs();
-
-        var (_, envelope) = MutableEmitter.Emit(auth, request);
-
-        envelope.HintName.Should().Be("ContextEnvelope.g.cs");
-        envelope.GeneratedSource.Should().Contain("public sealed record ContextEnvelope");
-
-        // Non-derived: Subject, UserId, ActorChain, Audience, TraceId
-        // → present.
-        envelope.GeneratedSource.Should().Contain("public string? Subject { get; init; }");
-        envelope.GeneratedSource.Should().Contain("public Guid? UserId { get; init; }");
-        envelope.GeneratedSource.Should().Contain("public string? TraceId { get; init; }");
-
-        // Envelope swaps interface collection types (IReadOnlyList<T> /
-        // IReadOnlySet<string>) for concrete ones (List<T> / HashSet<string>)
-        // so System.Text.Json can construct the init-only properties on the
-        // consume side. HashSet IS-A IReadOnlySet, List IS-A IReadOnlyList,
-        // so consumer contracts via the abstraction continue to work.
-        envelope.GeneratedSource.Should().Contain("public List<string> Audience { get; init; }");
-
-        // Derived: ImmediateCallerClientId, OriginatingClientId, IsServiceIdentity
-        // → ABSENT (envelope only carries data, not computed values).
-        envelope.GeneratedSource.Should().NotContain("ImmediateCallerClientId { get; init; }");
-        envelope.GeneratedSource.Should().NotContain("OriginatingClientId { get; init; }");
-        envelope.GeneratedSource.Should().NotContain("IsServiceIdentity { get; init; }");
-    }
-
-    [Fact]
-    public void Emit_EnvelopePropertyDefault_FollowsCollectionExpressionForLists()
-    {
-        var (auth, request) = MinimalSpecs();
-
-        var (_, envelope) = MutableEmitter.Emit(auth, request);
-
-        // ActorChain default is `[]` (collection expression). Envelope's
-        // emitted type is List<ActorEntry> (the concrete swap), but the
-        // collection-expression literal is the same.
-        envelope.GeneratedSource.Should().Contain("List<ActorEntry> ActorChain { get; init; } = [];");
-
-        // Audience default is `[]` for List<string> (the envelope swap from
-        // IReadOnlyList<string>).
-        envelope.GeneratedSource.Should().Contain("List<string> Audience { get; init; } = [];");
     }
 
     // ----------------------------------------------------------------------
@@ -192,11 +148,11 @@ public sealed class MutableEmitterTests
 
         var request = Spec(
             name: "IRequestContext",
-            @namespace: "D2.Shared.RequestContext.Abstractions",
+            @namespace: "D2.Shared.Context.Abstractions",
             extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
             sections: [Section("S", Property("Subject", "string?"))]); // collision
 
-        var (mutable, _) = MutableEmitter.Emit(auth, request);
+        var mutable = MutableEmitter.Emit(auth, request);
 
         mutable.Diagnostics.Should().ContainSingle(d => d.DescriptorId == DiagnosticIds.PropertyNameCollision);
         var diag = mutable.Diagnostics.Single(d => d.DescriptorId == DiagnosticIds.PropertyNameCollision);
@@ -221,11 +177,11 @@ public sealed class MutableEmitterTests
 
         var request = Spec(
             name: "IRequestContext",
-            @namespace: "D2.Shared.RequestContext.Abstractions",
+            @namespace: "D2.Shared.Context.Abstractions",
             extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
             sections: [Section("Tracing", Property("TraceId", "string?"))]);
 
-        var (mutable, _) = MutableEmitter.Emit(auth, request);
+        var mutable = MutableEmitter.Emit(auth, request);
 
         // Different property names — no collision (the carve-out is structural,
         // not name-based; the test asserts no false positives on legit twin claims).
@@ -249,11 +205,11 @@ public sealed class MutableEmitterTests
 
         var request = Spec(
             name: "IRequestContext",
-            @namespace: "D2.Shared.RequestContext.Abstractions",
+            @namespace: "D2.Shared.Context.Abstractions",
             extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
             sections: [Section("Tracing", Property("TraceId", "string?"))]);
 
-        var (mutable, envelope) = MutableEmitter.Emit(auth, request);
+        var mutable = MutableEmitter.Emit(auth, request);
 
         mutable.Diagnostics.Should().BeEmpty();
 
@@ -265,7 +221,6 @@ public sealed class MutableEmitterTests
 
         // No phantom invented fields.
         mutable.GeneratedSource.Should().NotContain("public string? OrgName { get; set; }");
-        envelope.GeneratedSource.Should().NotContain("public string? OrgName { get; init; }");
     }
 
     [Fact]
@@ -281,11 +236,11 @@ public sealed class MutableEmitterTests
 
         var request = Spec(
             name: "IRequestContext",
-            @namespace: "D2.Shared.RequestContext.Abstractions",
+            @namespace: "D2.Shared.Context.Abstractions",
             extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
             sections: [Section("S", Property("TraceId", "string?"))]);
 
-        var (mutable, _) = MutableEmitter.Emit(auth, request);
+        var mutable = MutableEmitter.Emit(auth, request);
 
         mutable.Diagnostics.Should().BeEmpty();
         mutable.GeneratedSource.Should().NotContain("ActorChain");
@@ -300,11 +255,10 @@ public sealed class MutableEmitterTests
     {
         var (auth, request) = MinimalSpecs();
 
-        var (firstMutable, firstEnvelope) = MutableEmitter.Emit(auth, request);
-        var (secondMutable, secondEnvelope) = MutableEmitter.Emit(auth, request);
+        var first = MutableEmitter.Emit(auth, request);
+        var second = MutableEmitter.Emit(auth, request);
 
-        Normalize(secondMutable.GeneratedSource).Should().Be(Normalize(firstMutable.GeneratedSource));
-        Normalize(secondEnvelope.GeneratedSource).Should().Be(Normalize(firstEnvelope.GeneratedSource));
+        Normalize(second.GeneratedSource).Should().Be(Normalize(first.GeneratedSource));
     }
 
     // ----------------------------------------------------------------------
@@ -342,7 +296,7 @@ public sealed class MutableEmitterTests
 
         var request = Spec(
             name: "IRequestContext",
-            @namespace: "D2.Shared.RequestContext.Abstractions",
+            @namespace: "D2.Shared.Context.Abstractions",
             extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
             sections: [
                 Section("Tracing", Property("TraceId", "string?")),
@@ -376,8 +330,10 @@ public sealed class MutableEmitterTests
         bool trinaryAuth = false,
         string? derived = null,
         string? @default = null,
-        string? doc = null) =>
-        new(name, type, claim, trinaryAuth, derived, @default, doc);
+        string? doc = null,
+        bool propagate = false,
+        int? maxLength = null) =>
+        new(name, type, claim, trinaryAuth, derived, @default, doc, propagate, maxLength);
 
     private static string Normalize(string s) => s.Replace("\r\n", "\n").Trim();
 }

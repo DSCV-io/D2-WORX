@@ -1,7 +1,7 @@
 {
   "$schema": "./schema.json",
   "name": "IRequestContext",
-  "namespace": "D2.Shared.RequestContext.Abstractions",
+  "namespace": "D2.Shared.Context.Abstractions",
   "description": "Per-request runtime context. Extends IAuthContext with transport-level (tracing) and network/enrichment information. Populated by transport-specific middleware (handler-aspnetcore for HTTP, handler-messaging for RabbitMQ, etc.) into a MutableRequestContext concrete instance; downstream consumers see only the read-only IRequestContext interface.",
   "extends": "D2.Shared.AuthContext.Abstractions.IAuthContext",
   "sections": [
@@ -16,11 +16,15 @@
         {
           "name": "RequestId",
           "type": "string?",
+          "propagate": true,
+          "maxLength": 256,
           "doc": "Per-request unique identifier (HttpContext.TraceIdentifier for HTTP; message-id property for AMQP)."
         },
         {
           "name": "RequestPath",
           "type": "string?",
+          "propagate": true,
+          "maxLength": 2048,
           "doc": "Request path (HTTP) or routing key (AMQP) — descriptive context for logs."
         }
       ]
@@ -52,17 +56,22 @@
           "name": "SessionFingerprint",
           "type": "string?",
           "claim": "d2_fp",
-          "doc": "The fingerprint that was bound to this session at JWT mint time (the d2_fp claim). Format: 'v{N}.c1.c2.c3.c4.c5.s1.s2.s3.s4.s5' — leading version token then 10 component hashes (5 client-side: FingerprintJS-OSS, WebGL renderer, speech voices, media devices, extended fonts; 5 server-side: HTTP/2 SETTINGS frame, header order, Sec-CH-UA, Accept-Encoding, Accept-Language). Each component hash is the first 16 hex chars of SHA-256. Stable across all requests in a session. Propagated to async consumers (Audit, Courier) inside the encrypted ContextEnvelope on the message payload — never as a plaintext AMQP header (broker stays blind to sensitive context)."
+          "propagate": true,
+          "maxLength": 512,
+          "doc": "The fingerprint that was bound to this session at JWT mint time (the d2_fp claim). Format: 'v{N}.c1.c2.c3.c4.c5.s1.s2.s3.s4.s5' — leading version token then 10 component hashes (5 client-side: FingerprintJS-OSS, WebGL renderer, speech voices, media devices, extended fonts; 5 server-side: HTTP/2 SETTINGS frame, header order, Sec-CH-UA, Accept-Encoding, Accept-Language). Each component hash is the first 16 hex chars of SHA-256. Stable across all requests in a session. Propagated to async consumers (Audit, Courier) via the cross-hop x-d2-context header — never as plaintext caller identity (broker stays blind to identity)."
         },
         {
           "name": "CurrentFingerprint",
           "type": "string?",
-          "doc": "The fingerprint recomputed for THIS request by Edge fingerprint middleware, in the same dot-separated format as SessionFingerprint. Captures the actual device fingerprint of the originating request (vs the session-bound one). Propagated inside the encrypted ContextEnvelope so audit rows for async-triggered actions record the originating request's actual fingerprint — not just what the session was bound to."
+          "propagate": true,
+          "maxLength": 512,
+          "doc": "The fingerprint recomputed for THIS request by Edge fingerprint middleware, in the same dot-separated format as SessionFingerprint. Captures the actual device fingerprint of the originating request (vs the session-bound one). Propagated via x-d2-context so audit rows for async-triggered actions record the originating request's actual fingerprint — not just what the session was bound to."
         },
         {
           "name": "FingerprintMatchScore",
           "type": "int?",
-          "doc": "Component-by-component fuzzy match score (0-100) between SessionFingerprint and CurrentFingerprint, weighted server-side 60% / client-side 40%. ≥70 = no risk; 60-70 = +10 risk; <60 = +50 risk. Set by Edge binding-check middleware. Null on internal services and pre-fingerprint-middleware paths. Propagated inside the encrypted ContextEnvelope so audit rows record Edge's binding-check verdict at the moment of the originating request. Use the GetFingerprintMismatches extension method on IRequestContextExtensions for per-component breakdown."
+          "propagate": true,
+          "doc": "Component-by-component fuzzy match score (0-100) between SessionFingerprint and CurrentFingerprint, weighted server-side 60% / client-side 40%. ≥70 = no risk; 60-70 = +10 risk; <60 = +50 risk. Set by Edge binding-check middleware. Null on internal services and pre-fingerprint-middleware paths. Propagated via x-d2-context so audit rows record Edge's binding-check verdict at the moment of the originating request. Use the GetFingerprintMismatches extension method on IRequestContextExtensions for per-component breakdown."
         }
       ]
     },
@@ -72,6 +81,8 @@
         {
           "name": "WhoIsHashId",
           "type": "string?",
+          "propagate": true,
+          "maxLength": 128,
           "doc": "Content-addressable hash identifier of the full WhoIs record (admin-location + coordinates). Stable across calls for the same client signal."
         },
         {

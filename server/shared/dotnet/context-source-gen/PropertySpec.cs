@@ -42,6 +42,21 @@ namespace D2.Shared.Context.SourceGen;
 /// <param name="Doc">
 /// XML doc <c>&lt;summary&gt;</c> text rendered on the generated property.
 /// </param>
+/// <param name="Propagate">
+/// When true, this property is included in the codegen-emitted
+/// <c>PropagatedContext</c> record (the cross-hop subset that ships in the
+/// <c>x-d2-context</c> AMQP / gRPC / HTTP header). Identity fields
+/// (UserId / OrgId / Scopes / ActorChain) MUST NOT be propagated — they
+/// rebuild from the JWT at every sync hop.
+/// </param>
+/// <param name="MaxLength">
+/// Wire-level per-field length cap, enforced by the codegen-emitted
+/// <c>PropagatedContextSerializer.TryDecode</c>. A forged
+/// <c>x-d2-context</c> header with any propagatable field exceeding its
+/// cap is dropped wholesale — propagation is opportunistic, never required.
+/// Only meaningful when <see cref="Propagate"/> is true on a string-typed
+/// field.
+/// </param>
 internal sealed record PropertySpec(
     string Name,
     string Type,
@@ -49,4 +64,6 @@ internal sealed record PropertySpec(
     bool TrinaryAuth,
     string? Derived,
     string? Default,
-    string? Doc);
+    string? Doc,
+    bool Propagate,
+    int? MaxLength);

@@ -8,7 +8,7 @@ Copyright (c) DCSV. All rights reserved.
 
 Read-only `IAuthContext` interface — the typed contract domain code uses to reason about caller identity, organization, scopes, and impersonation context. Codegen-emitted from `contracts/auth-context/IAuthContext.spec.json` by `D2.Shared.Context.SourceGen`. Plus hand-written `IAuthContextExtensions` convenience helpers.
 
-This is the domain-safe slice. Anything heavier (HTTP middleware, JWT validation, runtime population) lives in sibling libs: `D2.Shared.RequestContext.Abstractions` (transport-level fields), `D2.Shared.RequestContext` (mutable concrete + factories), `D2.Shared.Auth` (runtime JWT validation + KeyringClient).
+This is the domain-safe slice. Anything heavier (HTTP middleware, JWT validation, runtime population) lives in sibling libs: `D2.Shared.Context.Abstractions` (transport-level fields), `D2.Shared.Context.Abstractions` (mutable concrete + factories), `D2.Shared.Auth` (runtime JWT validation + KeyringClient).
 
 ---
 

@@ -9,32 +9,37 @@ namespace D2.Shared.Context.SourceGen;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Text;
 
 /// <summary>
-/// Pure logic for emitting <c>MutableRequestContext</c> + <c>ContextEnvelope</c>
-/// from the COMBINED non-derived properties of all parsed context specs in a
-/// generator run. Derived properties (e.g. impersonation flavor / impersonator
-/// org) are emitted as computed getters that walk the actor chain.
+/// Pure logic for emitting <c>MutableRequestContext</c> from the COMBINED
+/// non-derived properties of all parsed context specs in a generator run.
+/// Derived properties (e.g. impersonation flavor / impersonator org) are
+/// emitted as computed getters that walk the actor chain.
 /// </summary>
+/// <remarks>
+/// Cross-transport propagation of the small operational subset
+/// (<c>RequestId</c>, <c>RequestPath</c>, fingerprints, <c>WhoIsHashId</c>)
+/// happens via the hand-written <c>PropagatedContext</c> record + a single
+/// transport-portable header (<c>x-d2-context</c>). Identity (UserId, OrgId,
+/// Scopes, etc.) rebuilds at every hop from the JWT — the messaging /
+/// gRPC layers do not propagate it.
+/// </remarks>
 internal static class MutableEmitter
 {
-    private const string _TARGET_NAMESPACE = "D2.Shared.RequestContext";
+    private const string _TARGET_NAMESPACE = "D2.Shared.Context.Abstractions";
     private const string _CLASS_NAME = "MutableRequestContext";
-    private const string _ENVELOPE_NAME = "ContextEnvelope";
     private const string _REQUEST_INTERFACE =
-        "D2.Shared.RequestContext.Abstractions.IRequestContext";
+        "D2.Shared.Context.Abstractions.IRequestContext";
 
     /// <summary>
-    /// Emits the mutable concrete + the cross-transport envelope record from
-    /// the combined property set of <paramref name="auth"/> + <paramref name="request"/>.
+    /// Emits the mutable concrete from the combined property set of
+    /// <paramref name="auth"/> + <paramref name="request"/>.
     /// </summary>
     /// <param name="auth">The auth-context spec.</param>
     /// <param name="request">The request-context spec.</param>
-    /// <returns>Two emit results — one per generated file.</returns>
-    public static (EmitResult Mutable, EmitResult Envelope) Emit(
-        ContextSpec auth, ContextSpec request)
+    /// <returns>The mutable emit result.</returns>
+    public static EmitResult Emit(ContextSpec auth, ContextSpec request)
     {
         var diagnostics = ImmutableArray.CreateBuilder<EmitDiagnostic>();
 
@@ -72,15 +77,13 @@ internal static class MutableEmitter
             }
         }
 
-        var mutableSource = EmitMutable(auth, request);
-        var envelopeSource = EmitEnvelope(allProps);
+        // allProps is built for collision detection above; reading it here
+        // keeps the variable from looking unused now that the envelope
+        // emission has been retired.
+        _ = allProps;
 
-        return (
-            new EmitResult($"{_CLASS_NAME}.g.cs", mutableSource, diagnostics.ToImmutable()),
-            new EmitResult(
-                $"{_ENVELOPE_NAME}.g.cs",
-                envelopeSource,
-                ImmutableArray<EmitDiagnostic>.Empty));
+        var mutableSource = EmitMutable(auth, request);
+        return new EmitResult($"{_CLASS_NAME}.g.cs", mutableSource, diagnostics.ToImmutable());
     }
 
     private static string EmitMutable(ContextSpec auth, ContextSpec request)
@@ -115,8 +118,6 @@ internal static class MutableEmitter
         EmitMutableSections(sb, request);
         sb.AppendLine();
 
-        EmitFromContextEnvelope(sb, auth, request);
-        sb.AppendLine();
         EmitFromJwtPayloadNoValidation(sb, auth, request);
         sb.AppendLine();
         EmitFromClaims(sb, auth, request);
@@ -124,79 +125,6 @@ internal static class MutableEmitter
         sb.AppendLine("}");
         return sb.ToString();
     }
-
-    private static string EmitEnvelope(List<(ContextSpec Spec, PropertySpec Property)> allProps)
-    {
-        var nonDerived = allProps
-            .Where(t => string.IsNullOrEmpty(t.Property.Derived))
-            .ToList();
-
-        var sb = new StringBuilder();
-        EmitFileHeader(sb);
-        sb.AppendLine();
-        sb.AppendLine("using System;");
-        sb.AppendLine("using System.Collections.Generic;");
-        sb.AppendLine("using D2.Shared.Auth.Abstractions;");
-        sb.AppendLine();
-        sb.AppendLine($"namespace {_TARGET_NAMESPACE};");
-        sb.AppendLine();
-        sb.AppendLine("/// <summary>");
-        sb.AppendLine(
-            "/// Cross-transport context envelope — JSON-serializable record carrying every");
-        sb.AppendLine("/// non-derived field on");
-        sb.AppendLine(
-            "/// <see cref=\"global::" + _REQUEST_INTERFACE + "\"/>. Used as the");
-        sb.AppendLine(
-            "/// payload-embedded propagation shape for AMQP messages (encrypted at rest in");
-        sb.AppendLine(
-            "/// the broker per docs/MESSAGING.md). Derived fields rebuild on the consumer side.");
-        sb.AppendLine("/// </summary>");
-        sb.AppendLine("/// <remarks>");
-        sb.AppendLine(
-            "/// Identity claims, NOT a token. Envelopes don't expire — they're snapshots of");
-        sb.AppendLine(
-            "/// who-is-acting and where-from at the moment of publication. Consumers needing to");
-        sb.AppendLine(
-            "/// make sync calls request fresh tokens via the auth lib's exchange endpoint,");
-        sb.AppendLine(
-            "/// presenting their own service identity + the envelope's identity claims.");
-        sb.AppendLine("/// </remarks>");
-        sb.AppendLine($"public sealed record {_ENVELOPE_NAME}");
-        sb.AppendLine("{");
-
-        var firstProp = true;
-        foreach (var (_, prop) in nonDerived)
-        {
-            if (!firstProp)
-                sb.AppendLine();
-
-            firstProp = false;
-            EmitXmlDocSummary(sb, prop.Doc ?? prop.Name, indent: 1);
-            var defaultExpr = string.IsNullOrEmpty(prop.Default)
-                ? TypeVocabulary.DefaultExpression(prop.Type)
-                : prop.Default!;
-
-            // Swap interface collection types for concrete ones — System.Text.Json
-            // cannot deserialize an init-only property typed as an interface
-            // (no constructor to call). HashSet<string> / List<T> still satisfy
-            // the IReadOnlySet<string> / IReadOnlyList<T> contracts on every
-            // consumer that reads via the abstraction.
-            var envelopeType = EnvelopePropertyType(prop.Type);
-            sb.AppendLine(
-                $"    public {envelopeType} {prop.Name} {{ get; init; }} = {defaultExpr};");
-        }
-
-        sb.AppendLine("}");
-        return sb.ToString();
-    }
-
-    private static string EnvelopePropertyType(string specType) => specType switch
-    {
-        TypeVocabulary.StringSet => "HashSet<string>",
-        TypeVocabulary.ActorChainList => "List<ActorEntry>",
-        TypeVocabulary.StringList => "List<string>",
-        _ => specType,
-    };
 
     private static void EmitMutableSections(StringBuilder sb, ContextSpec spec)
     {
@@ -380,43 +308,6 @@ internal static class MutableEmitter
                 sb.AppendLine($"{pad}public {prop.Type} {prop.Name} => default;");
                 return;
         }
-    }
-
-    private static void EmitFromContextEnvelope(
-        StringBuilder sb, ContextSpec auth, ContextSpec request)
-    {
-        sb.AppendLine("    /// <summary>");
-        sb.AppendLine(
-            "    /// Reconstructs a <see cref=\"" + _CLASS_NAME + "\"/> from a previously-");
-        sb.AppendLine(
-            "    /// serialized <see cref=\"" + _ENVELOPE_NAME + "\"/> (e.g. on the consume");
-        sb.AppendLine("    /// side of an AMQP message).");
-        sb.AppendLine("    /// </summary>");
-        sb.AppendLine("    /// <param name=\"envelope\">The deserialized envelope.</param>");
-        sb.AppendLine(
-            "    /// <returns>A new mutable context populated from "
-            + "<paramref name=\"envelope\"/>.</returns>");
-        sb.AppendLine(
-            $"    public static {_CLASS_NAME} FromContextEnvelope({_ENVELOPE_NAME} envelope)");
-        sb.AppendLine("    {");
-        sb.AppendLine($"        var ctx = new {_CLASS_NAME}();");
-
-        foreach (var spec in new[] { auth, request })
-        {
-            foreach (var section in spec.Sections)
-            {
-                foreach (var prop in section.Properties)
-                {
-                    if (!string.IsNullOrEmpty(prop.Derived))
-                        continue;
-
-                    sb.AppendLine($"        ctx.{prop.Name} = envelope.{prop.Name};");
-                }
-            }
-        }
-
-        sb.AppendLine("        return ctx;");
-        sb.AppendLine("    }");
     }
 
     private static void EmitFromJwtPayloadNoValidation(

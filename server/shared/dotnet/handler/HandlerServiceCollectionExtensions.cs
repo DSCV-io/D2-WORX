@@ -17,7 +17,7 @@ public static class HandlerServiceCollectionExtensions
     /// <summary>
     /// Registers the open-generic <see cref="HandlerContext{T}"/> as Transient.
     /// Idempotent — safe to call multiple times. Does NOT register
-    /// <see cref="D2.Shared.RequestContext.Abstractions.IRequestContext"/> —
+    /// <see cref="D2.Shared.Context.Abstractions.IRequestContext"/> —
     /// that's transport-specific (HTTP middleware via handler-aspnetcore,
     /// RabbitMQ consumer middleware via handler-messaging).
     /// </summary>

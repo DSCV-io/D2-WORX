@@ -12,18 +12,24 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
 /// <summary>
-/// Roslyn incremental source generator that emits context interfaces +
-/// mutable concrete + envelope record. Reads BOTH context spec files via
+/// Roslyn incremental source generator that emits all context types from
+/// the JSON spec files. Reads BOTH context spec files via
 /// <c>AdditionalFiles</c>; dispatches per assembly:
 /// <list type="bullet">
-///   <item><c>D2.Shared.AuthContext.Abstractions</c> → <c>IAuthContext.g.cs</c>.</item>
-///   <item><c>D2.Shared.RequestContext.Abstractions</c> → <c>IRequestContext.g.cs</c>.</item>
 ///   <item>
-///     <c>D2.Shared.RequestContext</c> → <c>MutableRequestContext.g.cs</c> +
-///     <c>ContextEnvelope.g.cs</c>.
+///     <c>D2.Shared.AuthContext.Abstractions</c> → <c>IAuthContext.g.cs</c>.
+///   </item>
+///   <item>
+///     <c>D2.Shared.Context.Abstractions</c> → <c>IRequestContext.g.cs</c>,
+///     <c>MutableRequestContext.g.cs</c>, <c>PropagatedContext.g.cs</c>,
+///     <c>PropagatedContextExtensions.g.cs</c>,
+///     <c>PropagatedContextSerializer.g.cs</c>.
 ///   </item>
 ///   <item>Anything else → emit nothing.</item>
 /// </list>
+/// Per-field <c>maxLength</c> caps + the <c>propagate: true</c> field
+/// subset are spec-driven — codegen reads them and bakes the wire-format
+/// validator + projection extensions into the abstractions assembly.
 /// </summary>
 [Generator]
 public sealed class ContextGenerator : IIncrementalGenerator
@@ -32,10 +38,8 @@ public sealed class ContextGenerator : IIncrementalGenerator
 
     private const string _AUTH_CONTEXT_ASSEMBLY = "D2.Shared.AuthContext.Abstractions";
 
-    private const string _REQUEST_CONTEXT_ABSTRACTIONS_ASSEMBLY =
-        "D2.Shared.RequestContext.Abstractions";
-
-    private const string _REQUEST_CONTEXT_ASSEMBLY = "D2.Shared.RequestContext";
+    private const string _CONTEXT_ABSTRACTIONS_ASSEMBLY =
+        "D2.Shared.Context.Abstractions";
 
     private const string _AUTH_SPEC_NAME = "IAuthContext";
 
@@ -58,15 +62,13 @@ public sealed class ContextGenerator : IIncrementalGenerator
             var (specFiles, compilation) = tuple;
             var assemblyName = compilation.AssemblyName ?? string.Empty;
 
-            // Only the three target assemblies get emission.
+            // Only the two target assemblies get emission.
             var isAuthTarget = string.Equals(
                 assemblyName, _AUTH_CONTEXT_ASSEMBLY, StringComparison.Ordinal);
-            var isRequestAbstractionsTarget = string.Equals(
-                assemblyName, _REQUEST_CONTEXT_ABSTRACTIONS_ASSEMBLY, StringComparison.Ordinal);
-            var isRequestTarget = string.Equals(
-                assemblyName, _REQUEST_CONTEXT_ASSEMBLY, StringComparison.Ordinal);
+            var isContextAbstractionsTarget = string.Equals(
+                assemblyName, _CONTEXT_ABSTRACTIONS_ASSEMBLY, StringComparison.Ordinal);
 
-            if (!isAuthTarget && !isRequestAbstractionsTarget && !isRequestTarget)
+            if (!isAuthTarget && !isContextAbstractionsTarget)
                 return;
 
             if (specFiles.IsDefaultOrEmpty)
@@ -109,9 +111,9 @@ public sealed class ContextGenerator : IIncrementalGenerator
                 return;
             }
 
-            if (isRequestAbstractionsTarget)
+            if (isContextAbstractionsTarget)
             {
-                if (requestSpec is null)
+                if (authSpec is null || requestSpec is null)
                 {
                     spc.ReportDiagnostic(Diagnostic.Create(
                         DiagnosticDescriptors.MissingSpecFile, Location.None, assemblyName));
@@ -124,8 +126,7 @@ public sealed class ContextGenerator : IIncrementalGenerator
                     const string expectedExtends
                         = $"D2.Shared.AuthContext.Abstractions.{_AUTH_SPEC_NAME}";
                     if (!string.Equals(
-                            requestSpec.Extends, expectedExtends, StringComparison.Ordinal) &&
-                        authSpec is null)
+                            requestSpec.Extends, expectedExtends, StringComparison.Ordinal))
                     {
                         spc.ReportDiagnostic(Diagnostic.Create(
                             DiagnosticDescriptors.UnresolvableExtends,
@@ -136,21 +137,10 @@ public sealed class ContextGenerator : IIncrementalGenerator
                 }
 
                 EmitAndAddSource(spc, InterfaceEmitter.Emit(requestSpec));
-                return;
-            }
+                EmitAndAddSource(spc, MutableEmitter.Emit(authSpec, requestSpec));
 
-            if (isRequestTarget)
-            {
-                if (authSpec is null || requestSpec is null)
-                {
-                    spc.ReportDiagnostic(Diagnostic.Create(
-                        DiagnosticDescriptors.MissingSpecFile, Location.None, assemblyName));
-                    return;
-                }
-
-                var (mutable, envelope) = MutableEmitter.Emit(authSpec, requestSpec);
-                EmitAndAddSource(spc, mutable);
-                EmitAndAddSource(spc, envelope);
+                foreach (var emit in PropagatedEmitter.EmitAll(authSpec, requestSpec))
+                    EmitAndAddSource(spc, emit);
             }
         });
     }

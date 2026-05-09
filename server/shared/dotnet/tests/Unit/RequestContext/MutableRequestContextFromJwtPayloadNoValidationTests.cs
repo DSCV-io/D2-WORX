@@ -11,7 +11,7 @@ using System.Globalization;
 using System.Text.Json;
 using AwesomeAssertions;
 using D2.Shared.Auth.Abstractions;
-using D2.Shared.RequestContext;
+using D2.Shared.Context.Abstractions;
 using Xunit;
 
 /// <summary>

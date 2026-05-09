@@ -14,7 +14,7 @@ using System.Reflection;
 using System.Text.Json;
 using AwesomeAssertions;
 using D2.Shared.AuthContext.Abstractions;
-using D2.Shared.RequestContext.Abstractions;
+using D2.Shared.Context.Abstractions;
 using D2.Shared.Tests.Unit.Auth;
 using Xunit;
 

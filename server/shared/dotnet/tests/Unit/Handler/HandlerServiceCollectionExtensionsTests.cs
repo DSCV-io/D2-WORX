@@ -8,9 +8,9 @@ namespace D2.Shared.Tests.Unit.Handler;
 
 using System.Linq;
 using AwesomeAssertions;
+using D2.Shared.Context.Abstractions;
 using D2.Shared.Handler;
 using D2.Shared.Handler.Abstractions;
-using D2.Shared.RequestContext.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

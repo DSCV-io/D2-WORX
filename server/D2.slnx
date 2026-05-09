@@ -25,6 +25,9 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/context-source-gen/">
     <Project Path="shared/dotnet/context-source-gen/D2.Shared.Context.SourceGen.csproj" />
   </Folder>
+  <Folder Name="/shared/dotnet/messaging-source-gen/">
+    <Project Path="shared/dotnet/messaging-source-gen/D2.Shared.Messaging.SourceGen.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/caching-abstractions/">
     <Project Path="shared/dotnet/caching-abstractions/D2.Shared.Caching.Abstractions.csproj" />
   </Folder>
@@ -40,11 +43,8 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/encryption/">
     <Project Path="shared/dotnet/encryption/D2.Shared.Encryption.csproj" />
   </Folder>
-  <Folder Name="/shared/dotnet/request-context/">
-    <Project Path="shared/dotnet/request-context/D2.Shared.RequestContext.csproj" />
-  </Folder>
-  <Folder Name="/shared/dotnet/request-context-abstractions/">
-    <Project Path="shared/dotnet/request-context-abstractions/D2.Shared.RequestContext.Abstractions.csproj" />
+  <Folder Name="/shared/dotnet/context-abstractions/">
+    <Project Path="shared/dotnet/context-abstractions/D2.Shared.Context.Abstractions.csproj" />
   </Folder>
   <Folder Name="/shared/dotnet/handler/">
     <Project Path="shared/dotnet/handler/D2.Shared.Handler.csproj" />
@@ -69,6 +69,12 @@ Copyright (c) DCSV. All rights reserved.
   </Folder>
   <Folder Name="/shared/dotnet/i18n-source-gen/">
     <Project Path="shared/dotnet/i18n-source-gen/D2.Shared.I18n.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/messaging-abstractions/">
+    <Project Path="shared/dotnet/messaging-abstractions/D2.Shared.Messaging.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/messaging-rabbitmq/">
+    <Project Path="shared/dotnet/messaging-rabbitmq/D2.Shared.Messaging.RabbitMq.csproj" />
   </Folder>
   <Folder Name="/shared/dotnet/resilience/">
     <Project Path="shared/dotnet/resilience/D2.Shared.Resilience.csproj" />

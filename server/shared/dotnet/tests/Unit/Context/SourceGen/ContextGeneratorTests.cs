@@ -20,7 +20,7 @@ using Xunit;
 /// IIncrementalGenerator integration tests for <see cref="ContextGenerator"/>.
 /// Drives synthetic compilations targeting each of the three recognized
 /// assembly names and asserts the per-target dispatch (interface emission vs
-/// mutable + envelope emission vs no-op).
+/// mutable emission vs no-op).
 /// </summary>
 public sealed class ContextGeneratorTests
 {
@@ -44,7 +44,7 @@ public sealed class ContextGeneratorTests
     private const string _REQUEST_SPEC = """
     {
       "name": "IRequestContext",
-      "namespace": "D2.Shared.RequestContext.Abstractions",
+      "namespace": "D2.Shared.Context.Abstractions",
       "extends": "D2.Shared.AuthContext.Abstractions.IAuthContext",
       "sections": [
         {
@@ -71,34 +71,38 @@ public sealed class ContextGeneratorTests
     }
 
     [Fact]
-    public void Generator_RequestContextAbstractionsAssembly_EmitsIRequestContextWithExtendsClause()
+    public void Generator_ContextAbstractionsAssembly_EmitsIRequestContextWithExtendsClause()
     {
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.RequestContext.Abstractions",
+            assemblyName: "D2.Shared.Context.Abstractions",
             authSpec: _AUTH_SPEC,
             requestSpec: _REQUEST_SPEC);
 
         var trees = driver.GetRunResult().GeneratedTrees;
-        trees.Should().HaveCount(1);
-        Path.GetFileName(trees.Single().FilePath).Should().Be("IRequestContext.g.cs");
-
-        var src = trees.Single().ToString();
-        src.Should()
+        var iRequest = trees.Single(
+            t => Path.GetFileName(t.FilePath) == "IRequestContext.g.cs");
+        iRequest.ToString().Should()
             .Contain("public interface IRequestContext : global::D2.Shared.AuthContext.Abstractions.IAuthContext");
     }
 
     [Fact]
-    public void Generator_RequestContextAssembly_EmitsMutableAndEnvelope()
+    public void Generator_ContextAbstractionsAssembly_EmitsAllRequestSideArtifacts()
     {
+        // The unified abstractions target receives the IRequestContext
+        // interface PLUS MutableRequestContext + the PropagatedContext trio
+        // (record / extensions / serializer) — five files in total.
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.RequestContext",
+            assemblyName: "D2.Shared.Context.Abstractions",
             authSpec: _AUTH_SPEC,
             requestSpec: _REQUEST_SPEC);
 
         var trees = driver.GetRunResult().GeneratedTrees.ToArray();
-        trees.Should().HaveCount(2);
-        trees.Select(t => Path.GetFileName(t.FilePath)).Should()
-            .BeEquivalentTo(["MutableRequestContext.g.cs", "ContextEnvelope.g.cs"]);
+        var fileNames = trees.Select(t => Path.GetFileName(t.FilePath)).ToArray();
+        fileNames.Should().Contain("IRequestContext.g.cs");
+        fileNames.Should().Contain("MutableRequestContext.g.cs");
+        fileNames.Should().Contain("PropagatedContext.g.cs");
+        fileNames.Should().Contain("PropagatedContextExtensions.g.cs");
+        fileNames.Should().Contain("PropagatedContextSerializer.g.cs");
     }
 
     [Fact]
@@ -119,7 +123,7 @@ public sealed class ContextGeneratorTests
         // the target is RequestContext. If only request spec is present, fire
         // D2CTX006.
         var driver = RunGenerator(
-            assemblyName: "D2.Shared.RequestContext",
+            assemblyName: "D2.Shared.Context.Abstractions",
             authSpec: null,
             requestSpec: _REQUEST_SPEC);
 
@@ -145,17 +149,19 @@ public sealed class ContextGeneratorTests
         // Cache stability — identical inputs must produce identical generator
         // output (so downstream incremental builds can reuse cached results).
         var firstSrc = RunGenerator(
-                assemblyName: "D2.Shared.RequestContext",
+                assemblyName: "D2.Shared.Context.Abstractions",
                 authSpec: _AUTH_SPEC,
                 requestSpec: _REQUEST_SPEC)
-            .GetRunResult().GeneratedTrees.Single(t => Path.GetFileName(t.FilePath) == "ContextEnvelope.g.cs")
+            .GetRunResult().GeneratedTrees
+                .Single(t => Path.GetFileName(t.FilePath) == "MutableRequestContext.g.cs")
             .ToString();
 
         var secondSrc = RunGenerator(
-                assemblyName: "D2.Shared.RequestContext",
+                assemblyName: "D2.Shared.Context.Abstractions",
                 authSpec: _AUTH_SPEC,
                 requestSpec: _REQUEST_SPEC)
-            .GetRunResult().GeneratedTrees.Single(t => Path.GetFileName(t.FilePath) == "ContextEnvelope.g.cs")
+            .GetRunResult().GeneratedTrees
+                .Single(t => Path.GetFileName(t.FilePath) == "MutableRequestContext.g.cs")
             .ToString();
 
         Normalize(secondSrc).Should().Be(Normalize(firstSrc));

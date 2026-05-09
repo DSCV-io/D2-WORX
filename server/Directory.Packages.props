@@ -28,12 +28,20 @@ Copyright (c) DCSV. All rights reserved.
     <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.7" />
     <PackageVersion Include="StackExchange.Redis" Version="2.8.31" />
     <PackageVersion Include="Testcontainers.Redis" Version="4.0.0" />
+
+    <!-- RabbitMQ.Client 7.x — D2.Shared.Messaging.RabbitMq's transport client.
+         v7 brings full async APIs (BasicPublishAsync, IAsyncBasicConsumer,
+         publisher confirms) + topology auto-recovery. Major version bump from
+         v6; don't downgrade. -->
+    <PackageVersion Include="RabbitMQ.Client" Version="7.2.1" />
+    <PackageVersion Include="Testcontainers.RabbitMq" Version="4.0.0" />
 
     <!-- EF Core + Npgsql — for D2.Shared.Handler.Repo (PG error code → D2Result mapping) -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />

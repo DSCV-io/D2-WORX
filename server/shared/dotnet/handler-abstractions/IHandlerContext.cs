@@ -6,7 +6,7 @@
 
 namespace D2.Shared.Handler.Abstractions;
 
-using D2.Shared.RequestContext.Abstractions;
+using D2.Shared.Context.Abstractions;
 using Microsoft.Extensions.Logging;
 
 /// <summary>

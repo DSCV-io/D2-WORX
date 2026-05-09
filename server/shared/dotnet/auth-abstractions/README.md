@@ -123,13 +123,13 @@ RFC 8693 §4.1 leaves it to the AS's discretion whether to preserve nested `act`
 
 **The D² auth runtime (`D2.Shared.Auth`) MUST preserve nested `act` on every token exchange.** Specifically: when service A presents a token with `act = { sub: B, act: { sub: Edge } }` and exchanges for a new audience, the resulting token's `act` must be `{ sub: A, act: { sub: B, act: { sub: Edge } } }` — A is added as the new immediate actor, the prior chain is preserved unchanged.
 
-Without this preservation, `IAuthContext.OriginatingClientId` becomes unrecoverable beyond the first hop and audit traceability breaks across multi-hop chains. The exchange-helper API on the auth runtime accepts an optional `prior_actor_chain` parameter for callers that need to forward an existing chain (e.g. async consumers reconstructing context from a `ContextEnvelope`).
+Without this preservation, `IAuthContext.OriginatingClientId` becomes unrecoverable beyond the first hop and audit traceability breaks across multi-hop chains. The exchange-helper API on the auth runtime accepts an optional `prior_actor_chain` parameter for callers that need to forward an existing chain (rare — typically only used by token-exchange middleware itself; async consumers do not propagate identity claims via the wire — JWTs rebuild identity each hop).
 
-The depth limit lives in `D2.Shared.RequestContext.ActorChainParser.MaxActDepth` (currently 20). The auth runtime should enforce the same limit at mint time so issued tokens never exceed what consumers can parse.
+The depth limit lives in `D2.Shared.Context.Abstractions.ActorChainParser.MaxActDepth` (currently 20). The auth runtime should enforce the same limit at mint time so issued tokens never exceed what consumers can parse.
 
 ### Strict-mode parsing of the `act` chain
 
-`D2.Shared.RequestContext.ActorChainParser` rejects malformed actor chains by throwing `MalformedActorChainException`:
+`D2.Shared.Context.Abstractions.ActorChainParser` rejects malformed actor chains by throwing `MalformedActorChainException`:
 - Any entry missing `sub` (RFC 8693 §2.1 violation)
 - Any impersonation entry missing `d2_kind` / `d2_session_id` / `d2_org_id` / `d2_org_type` / `d2_org_role`
 - Depth exceeds `MaxActDepth` (DoS protection)

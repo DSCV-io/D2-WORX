@@ -9,7 +9,7 @@ namespace D2.Shared.Tests.Unit.Handler;
 using System;
 using System.Collections.Generic;
 using D2.Shared.Auth.Abstractions;
-using D2.Shared.RequestContext.Abstractions;
+using D2.Shared.Context.Abstractions;
 
 /// <summary>
 /// Hand-rolled <see cref="IRequestContext"/> for tests. All properties are
