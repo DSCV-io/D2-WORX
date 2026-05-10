@@ -80,9 +80,9 @@ public sealed class IdempotencyTests
     }
 
     [Fact]
-    public async Task F2_MarkSeenFails_MessageRoutesToDlq_HandlerNotReplayed()
+    public async Task MarkSeenFails_MessageRoutesToDlq_HandlerNotReplayed()
     {
-        // F2 verification (Phase 6 race-audit): a failing MarkSeenAsync
+        // A failing MarkSeenAsync
         // must NACK to DLQ rather than silently ack. Acking without a
         // written mark would leave the dedup window unguarded for that
         // message-id; a redelivery would re-run the handler, which is the

@@ -15,6 +15,9 @@ consuming assembly:
 | `D2.Shared.AuthContext.Abstractions` | `IAuthContext.g.cs` |
 | `D2.Shared.Context.Abstractions` | `IRequestContext.g.cs` (extends `IAuthContext`) |
 | `D2.Shared.Context.Abstractions` | `MutableRequestContext.g.cs` |
+| `D2.Shared.Context.Abstractions` | `PropagatedContext.g.cs` (cross-hop wire record) |
+| `D2.Shared.Context.Abstractions` | `PropagatedContextExtensions.g.cs` (`MutableRequestContext.ToPropagated()` / `Apply()`) |
+| `D2.Shared.Context.Abstractions` | `PropagatedContextSerializer.g.cs` (`Encode` / `TryDecode` for transport headers) |
 | Anything else | nothing |
 
 The spec files are the single source of truth for the auth + request context
@@ -47,6 +50,7 @@ mutable concrete, and the two factory methods (`FromClaims`,
 | `LoadResult.cs` | `(Spec?, Diagnostic?)` |
 | `InterfaceEmitter.cs` | `ContextSpec` → interface `*.g.cs` (single-spec). Validates types + derived rules |
 | `MutableEmitter.cs` | `(authSpec, requestSpec)` → `MutableRequestContext.g.cs`. Cross-spec property collision check |
+| `PropagatedEmitter.cs` | `(authSpec, requestSpec)` → `PropagatedContext.g.cs` + `PropagatedContextExtensions.g.cs` + `PropagatedContextSerializer.g.cs`. Filters spec properties by `propagated` flag; emits the wire record + `MutableRequestContext` round-trip extensions + base64url-of-JSON header serializer |
 | `EmitDiagnostic.cs` / `EmitResult.cs` | Roslyn-decoupled diagnostic + emit-result records |
 | `DiagnosticIds.cs` / `DiagnosticDescriptors.cs` | `D2CTX001`–`D2CTX006` |
 | `ContextGenerator.cs` | `[Generator]` `IIncrementalGenerator`. Filters AdditionalFiles to `*.spec.json`, dispatches per assembly |
@@ -73,7 +77,7 @@ These are the only types a spec property can declare (enforced via `D2CTX002`):
 ```
 string?, bool?, int?, double?, Guid?, DateTimeOffset?,
 OrgType?, Role?, ActorKind?, ImpersonationKind?,
-IReadOnlyList<ActorEntry>, IReadOnlySet<string>
+IReadOnlyList<ActorEntry>, IReadOnlyList<string>, IReadOnlySet<string>
 ```
 
 New types require schema (`*.spec.json`'s JSON Schema enum) + `TypeVocabulary` + `MutableEmitter` per-type emit helpers — all in lockstep.

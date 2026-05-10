@@ -32,11 +32,13 @@ public static class MessagingRabbitMqServiceCollectionExtensions
         /// Registers everything the RabbitMQ messaging lib needs:
         /// <see cref="ID2Connection"/> (singleton), <see cref="IChannelPool"/>
         /// (singleton), <see cref="IMessageBus"/> →
-        /// <c>RabbitMqMessageBus</c> (scoped — pulls per-request context
-        /// from the resolving scope), <see cref="ITopologyDeclarer"/>
-        /// (singleton), and the two hosted services that drive connection
-        /// startup + topology declaration. Idempotent — safe to call
-        /// multiple times.
+        /// <c>RabbitMqMessageBus</c> (singleton — builds a transient scope
+        /// per <c>PublishAsync</c> to resolve the keyed <c>IPayloadCrypto</c>
+        /// + the calling scope's <c>IRequestContext</c> snapshot),
+        /// <see cref="ITopologyDeclarer"/> (singleton), and the four hosted
+        /// services that drive idempotency-store-presence enforcement,
+        /// connection startup, topology declaration, and consumer host.
+        /// Idempotent — safe to call multiple times.
         /// </summary>
         /// <param name="configureConnection">
         /// Optional configuration for the connection (host / port / vhost /

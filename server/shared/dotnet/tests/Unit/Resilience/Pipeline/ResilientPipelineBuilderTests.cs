@@ -175,7 +175,8 @@ public sealed class ResilientPipelineBuilderTests
         await auditPipeline.ExecuteAsync("k", _ => throw new InvalidOperationException());
 
         var auditAfter = await auditPipeline.ExecuteAsync("k", _ => ValueTask.FromResult(1));
-        var notificationsAfter = await notificationsPipeline.ExecuteAsync("k", _ => ValueTask.FromResult(2));
+        var notificationsAfter = await notificationsPipeline
+            .ExecuteAsync("k", _ => ValueTask.FromResult(2));
 
         auditAfter.IsServiceUnavailable.Should().BeTrue();   // audit breaker is open
         notificationsAfter.Success.Should().BeTrue();        // notifications breaker is unaffected

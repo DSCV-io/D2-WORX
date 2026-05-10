@@ -24,7 +24,8 @@ public static class PostgresServiceCollectionExtensions
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Uses <see cref="ServiceCollectionDescriptorExtensions.TryAddSingleton{TService, TImplementation}(IServiceCollection)"/>
+    /// Uses
+    /// <see cref="ServiceCollectionDescriptorExtensions.TryAddSingleton{TService, TImplementation}(IServiceCollection)"/>
     /// — calling multiple times is safe (no duplicate registration). A
     /// custom <see cref="IDbExceptionClassifier"/> registered BEFORE this
     /// call wins (TryAdd sees an existing registration and is a no-op):
@@ -44,8 +45,10 @@ public static class PostgresServiceCollectionExtensions
     /// Postgres, one to an embedded SQLite for tests), use keyed
     /// registration + keyed resolution:
     /// <code>
-    /// services.AddKeyedSingleton&lt;IDbExceptionClassifier, PostgresDbExceptionClassifier&gt;("primary");
-    /// services.AddKeyedSingleton&lt;IDbExceptionClassifier, SqliteDbExceptionClassifier&gt;("scratch");
+    /// services.AddKeyedSingleton&lt;IDbExceptionClassifier,
+    ///     PostgresDbExceptionClassifier&gt;("primary");
+    /// services.AddKeyedSingleton&lt;IDbExceptionClassifier,
+    ///     SqliteDbExceptionClassifier&gt;("scratch");
     /// // Inject via [FromKeyedServices("primary")] IDbExceptionClassifier classifier
     /// </code>
     /// (Keyed services require .NET 8+ — the codebase targets .NET 10, so

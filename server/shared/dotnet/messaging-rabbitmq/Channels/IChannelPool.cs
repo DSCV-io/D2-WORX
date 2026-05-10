@@ -18,7 +18,7 @@ internal interface IChannelPool : IAsyncDisposable
 {
     /// <summary>
     /// Acquires a channel from the pool. Blocks (asynchronously) until one
-    /// is available or <paramref name="ct"/> is cancelled / the configured
+    /// is available or <paramref name="ct"/> is canceled / the configured
     /// acquire timeout elapses.
     /// </summary>
     /// <param name="ct">Cancellation token.</param>

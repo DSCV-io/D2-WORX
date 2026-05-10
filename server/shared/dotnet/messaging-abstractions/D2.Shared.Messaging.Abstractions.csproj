@@ -17,7 +17,6 @@ Copyright (c) DCSV. All rights reserved.
       RabbitMQ.Client or any transport. Future Kafka / NATS impls live in
       sibling csprojs with the same surface.
     -->
-    <PackageReference Include="JetBrains.Annotations" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
 
     <ProjectReference Include="..\result\D2.Shared.Result.csproj" />

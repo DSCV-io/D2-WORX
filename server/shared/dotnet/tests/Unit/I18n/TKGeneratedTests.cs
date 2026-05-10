@@ -58,7 +58,7 @@ public sealed class TKGeneratedTests
     public void TK_ConstantKeys_MatchExactJsonKeys()
     {
         // The generated constants embed the literal JSON key. Sample to verify
-        // case is preserved exactly (catches accidental normalisation in SrcGen).
+        // case is preserved exactly (catches accidental normalization in SrcGen).
         TK.Common.Errors.NOT_FOUND.Key.Should().Be("common_errors_NOT_FOUND");
         TK.Common.Errors.UNKNOWN.Key.Should().Be("common_errors_UNKNOWN");
         TK.Auth.Errors.SOLE_OWNER_OF_ORGS.Key.Should().Be("auth_errors_SOLE_OWNER_OF_ORGS");
@@ -76,12 +76,10 @@ public sealed class TKGeneratedTests
         // this should be structurally impossible — but cheap insurance and a
         // useful smoke-test for the build wiring.
         var enUsPath = Path.Combine(AppContext.BaseDirectory, "messages", "en-US.json");
-        if (!File.Exists(enUsPath))
-        {
-            // Translator content-copy didn't land in this test project's bin
-            // (Tests doesn't directly reference contracts/messages); skip.
-            return;
-        }
+        File.Exists(enUsPath).Should().BeTrue(
+            $"test wiring requires en-US.json at {enUsPath} (D2.Shared.I18n's content-copy " +
+            "must land in the test project's output — check the i18n csproj's <None> Pack/Copy " +
+            "directives if this fails).");
 
         var json = File.ReadAllText(enUsPath);
         var keys = JsonSerializer.Deserialize<Dictionary<string, string>>(json);

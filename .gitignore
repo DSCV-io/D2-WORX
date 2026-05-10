@@ -180,6 +180,14 @@ georefdata.bin
 secrets/*
 !secrets/.gitkeep
 
+# Per-deliverable workflow journals — append-only working memory for the
+# audit-loop process. Lives locally during a deliverable. At SHIP time the
+# root README is COPIED out as a snapshot to docs/dev/deliverables/<name>.md
+# (committed); the per-step journals stay here, gitignored + local-only. The
+# workflow does NOT auto-delete them; the user removes them manually whenever
+# they want. See docs/dev/workflow.md.
+docs/wip/
+
 # Local tool settings (machine-specific)
 .claude/*
 !.claude/settings.json

@@ -470,7 +470,7 @@ docs(v2): post-wipe documentation pass — placeholder READMEs + extracted patte
 
 ## Phase 0 design notes
 
-Design decisions captured during planning that govern Phase 0 implementation. Each note describes the *intent*; implementation lands in the per-library code under `server/shared/dotnet/{lib}/` when `D2.Shared.Handler` (and its consumers) are built. Summarised in `docs/PATTERNS.md` once landed.
+Design decisions captured during planning that govern Phase 0 implementation. Each note describes the *intent*; implementation lands in the per-library code under `server/shared/dotnet/{lib}/` when `D2.Shared.Handler` (and its consumers) are built. Summarized in `docs/PATTERNS.md` once landed.
 
 ### `BaseHandler` refactor + `BaseRepoHandler` for EF exception mapping
 
@@ -507,7 +507,7 @@ Design decisions captured during planning that govern Phase 0 implementation. Ea
 | `DbUpdateException` w/ `PgErrorCodes.IsCheckViolation` | `D2Result.ValidationFailed` | PG `23514`. Check constraint failed. |
 | `DbUpdateException` (no recognized inner) | Fall through | Forces handlers that hit unrecognized DB errors to add a recognizer rather than papering over with broad `Conflict`. |
 | `RetryLimitExceededException` | Fall through (= `UnhandledException`) | EF execution-strategy gave up; root cause is in the inner. Logs already capture it. |
-| `OperationCanceledException` when `ct.IsCancellationRequested` | `D2Result.Cancelled` | User-initiated cancellation only. Other `OperationCanceledException` flavors (framework-internal) fall through — they're a different bug class. |
+| `OperationCanceledException` when `ct.IsCancellationRequested` | `D2Result.Canceled` | User-initiated cancellation only. Other `OperationCanceledException` flavors (framework-internal) fall through — they're a different bug class. |
 | Anything else | Fall through | Original `UnhandledException` Result unchanged. |
 
 **Per-handler refinement.** Subclasses needing constraint-specific mapping override `HandleAsync` themselves. Pattern:
@@ -542,7 +542,7 @@ public override async ValueTask<D2Result<TOutput?>> HandleAsync(
 
 **Implementation update (post-design).** The handler-repo split landed as 3 packages instead of one — `D2.Shared.Handler.Repo.Abstractions` (typed `D2Result.UniqueViolation` / `.ConcurrencyConflict` / `.DbDeadlock` / etc. extension factories + `IsXxx` discriminators + `IDbExceptionClassifier` interface + `DbFailureKind` enum + `DbErrorCodes` constants), `D2.Shared.Handler.Repo` (`BaseRepoHandler` consumes the injected classifier; provider-agnostic), `D2.Shared.Handler.Repo.Postgres` (`PostgresDbExceptionClassifier` impl + SQLSTATE matrix + `services.AddD2Postgres()`). The mapping table above expanded — instead of collapsing FK / NOT-NULL / CHECK into generic `ValidationFailed`, every classifiable failure gets its own typed factory + error code so callers can branch on what specifically went wrong (e.g. `if (result.IsDbDeadlock) await retry...`, `if (result.IsConcurrencyConflict) await ReloadAndMerge...`). Per-handler refinement is now a `protected virtual MapDbException(ex, kind)` override that returns null to fall through to the typed default.
 
-> **⚠ Integration test requirement (deferred but tracked).** The classifier matrix lives in `D2.Shared.Handler.Repo.Postgres` and dispatches on real `PostgresException.SqlState` values + raw `NpgsqlException` shapes (`08***` connection class, `40P01` deadlock, `57014` query_canceled, `53300` too_many_connections, etc.). Unit tests can only verify the switch logic against synthesized exceptions; **the actual Npgsql wire behaviour for each SQLSTATE must be validated by integration tests against a real Postgres instance** (Testcontainers fixture, throwaway DB, force each constraint violation / deadlock / timeout, assert the resulting `D2Result.IsXxx` discriminator fires). Without this, a future Npgsql version that changes how it surfaces a given SQLSTATE silently breaks `BaseRepoHandler`'s mapping with zero unit-test signal. Add to the integration-test backlog when Phase 0 wraps and the first repo-handler-using service stands up.
+> **⚠ Integration test requirement (deferred but tracked).** The classifier matrix lives in `D2.Shared.Handler.Repo.Postgres` and dispatches on real `PostgresException.SqlState` values + raw `NpgsqlException` shapes (`08***` connection class, `40P01` deadlock, `57014` query_canceled, `53300` too_many_connections, etc.). Unit tests can only verify the switch logic against synthesized exceptions; **the actual Npgsql wire behavior for each SQLSTATE must be validated by integration tests against a real Postgres instance** (Testcontainers fixture, throwaway DB, force each constraint violation / deadlock / timeout, assert the resulting `D2Result.IsXxx` discriminator fires). Without this, a future Npgsql version that changes how it surfaces a given SQLSTATE silently breaks `BaseRepoHandler`'s mapping with zero unit-test signal. Add to the integration-test backlog when Phase 0 wraps and the first repo-handler-using service stands up.
 
 ---
 

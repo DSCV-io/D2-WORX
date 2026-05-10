@@ -47,10 +47,19 @@ internal static partial class TopologyLog
     [LoggerMessage(
         EventId = 204,
         Level = LogLevel.Error,
-        Message = "Topology declaration failed (queue={Queue}); host startup will fail. "
-            + "Likely causes: broker permissions, conflicting pre-existing declarations.")]
+        Message = "Topology declaration failed ({ExceptionType}, queue={Queue}); "
+            + "host startup will fail. Likely causes: broker permissions, "
+            + "conflicting pre-existing declarations.")]
     public static partial void DeclarationFailed(
-        ILogger logger, Exception ex, string queue);
+        ILogger logger, string exceptionType, string queue);
+
+    [LoggerMessage(
+        EventId = 206,
+        Level = LogLevel.Error,
+        Message = "Topology declaration cycle faulted in background; "
+            + "host startup will fail.")]
+    public static partial void DeclarationFailedFaultSink(
+        ILogger logger, Exception ex);
 
     [LoggerMessage(
         EventId = 205,

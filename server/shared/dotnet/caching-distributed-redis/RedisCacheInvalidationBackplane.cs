@@ -62,7 +62,7 @@ public sealed class RedisCacheInvalidationBackplane : ICacheInvalidationBackplan
     }
 
     /// <inheritdoc />
-    [MustDisposeResource(false)]
+    [MustDisposeResource]
     public IAsyncDisposable Subscribe(Func<string, CancellationToken, ValueTask> handler)
     {
         ArgumentNullException.ThrowIfNull(handler);
@@ -87,7 +87,7 @@ public sealed class RedisCacheInvalidationBackplane : ICacheInvalidationBackplan
         }
         catch (RedisException ex)
         {
-            RedisCacheLog.RedisOpFailed(r_logger, ex, "Backplane.Publish", key);
+            RedisCacheLog.RedisOpFailed(r_logger, "Backplane.Publish", ex.GetType().Name, key);
             return D2Result.ServiceUnavailable();
         }
     }
@@ -111,7 +111,7 @@ public sealed class RedisCacheInvalidationBackplane : ICacheInvalidationBackplan
         catch (RedisException ex)
         {
             RedisCacheLog.RedisOpFailed(
-                r_logger, ex, "Backplane.PublishMany", $"{keys.Count} keys");
+                r_logger, "Backplane.PublishMany", ex.GetType().Name, $"{keys.Count} keys");
             return D2Result.ServiceUnavailable();
         }
     }
@@ -165,7 +165,7 @@ public sealed class RedisCacheInvalidationBackplane : ICacheInvalidationBackplan
         }
         catch (Exception ex)
         {
-            RedisCacheLog.BackplaneHandlerThrew(r_logger, ex, key);
+            RedisCacheLog.BackplaneHandlerThrew(r_logger, ex.GetType().Name, key);
         }
     }
 

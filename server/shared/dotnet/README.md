@@ -20,8 +20,9 @@ Per project convention, every library has its own `README.md`. The list below po
 | [`i18n-abstractions/`](i18n-abstractions/README.md) | **Built** | Domain-safe slice — `TKMessage` primitive, SrcGen-emitted `TK` constants from `contracts/messages/en-US.json`, `ITranslator` interface. Zero external deps. Drift between JSON and TK code constants is structurally impossible (the constant doesn't exist if the JSON key doesn't). | [PATTERNS.md](../../../docs/PATTERNS.md) i18n section |
 | [`i18n-source-gen/`](i18n-source-gen/) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits the `TK.*` constants consumed by `i18n-abstractions/`. Referenced as Analyzer; its dll never ships into any consuming assembly. Lives at its own top-level slot because it has a different TFM and a different consumption pattern from a normal lib. | [PATTERNS.md](../../../docs/PATTERNS.md) i18n section |
 | [`i18n/`](i18n/README.md) | **Built** | Runtime `Translator` + `SupportedLocales` + `AddD2I18n` DI extension. Used by Courier-style outbound notifications; HTTP responses ship `TKMessage` objects unchanged for client-side translation via SvelteKit/Paraglide. | [PATTERNS.md](../../../docs/PATTERNS.md) i18n section |
-| [`auth-abstractions/`](auth-abstractions/README.md) | **Built** | Identity / authorization vocabulary — `OrgType`, `Role`, `ActorKind`, `ImpersonationKind`, `ActionSensitivity`, `JwtClaimTypes`, `RequestHeaders`, `ActorEntry`, plus the SrcGen-emitted `Scopes` static partial class. Zero external deps; consumed by domain code, context-abstractions, handler-abstractions, and the eventual runtime auth lib. | [PATTERNS.md](../../../docs/PATTERNS.md) Scopes / authorization section |
+| [`auth-abstractions/`](auth-abstractions/README.md) | **Built** | Identity / authorization vocabulary — `OrgType`, `Role`, `ActorKind`, `ImpersonationKind`, `ActionSensitivity`, `JwtClaimTypes`, `RequestHeaders`, `ActorEntry`, plus the SrcGen-emitted `Scopes` and `Audiences` static partial classes. Zero external deps; consumed by domain code, context-abstractions, handler-abstractions, and the eventual runtime auth lib. | [PATTERNS.md](../../../docs/PATTERNS.md) Scopes / authorization section |
 | [`auth-scopes-source-gen/`](auth-scopes-source-gen/) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits the `Scopes.*` constants for `auth-abstractions/` from `contracts/auth-scopes/scopes.spec.json`. Referenced as Analyzer; its dll never ships into any consuming assembly. | [PATTERNS.md](../../../docs/PATTERNS.md) Scopes / authorization section |
+| [`auth-audiences-source-gen/`](auth-audiences-source-gen/README.md) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits the `Audiences.*` const-string catalog for `auth-abstractions/` from `contracts/auth-audiences/audiences.spec.json`. Single source of truth for JWT `aud` claim values + `TokenExchangeClient.ExchangeAsync` `targetAudience` arguments. Referenced as Analyzer. | [PATTERNS.md](../../../docs/PATTERNS.md) Scopes / authorization section |
 | [`auth-context-abstractions/`](auth-context-abstractions/README.md) | **Built** | Domain-safe slice of the request context — `IAuthContext` (codegen-emitted from `contracts/auth-context/IAuthContext.spec.json`) plus hand-written `IAuthContextExtensions` (`HasScope`, `IsStaff`, etc.). Lets domain code read caller identity / scopes / impersonation without pulling DI / AspNetCore / Configuration. | [PATTERNS.md](../../../docs/PATTERNS.md) Context section |
 | [`context-source-gen/`](context-source-gen/) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0). Reads `contracts/{auth,request}-context/*.spec.json` and emits, per target assembly: `IAuthContext.g.cs` into `auth-context-abstractions/`; `IRequestContext.g.cs` + `MutableRequestContext.g.cs` + `PropagatedContext.g.cs` + `PropagatedContextExtensions.g.cs` + `PropagatedContextSerializer.g.cs` (with per-field `maxLength` validation baked from the spec) into `context-abstractions/`. | [PATTERNS.md](../../../docs/PATTERNS.md) Context section |
 | [`context-abstractions/`](context-abstractions/README.md) | **Built** | Single-lib home for every spec-driven context primitive. Codegen-emitted: `IRequestContext` interface (extends `IAuthContext`), `MutableRequestContext` concrete, `PropagatedContext` record (the `propagate: true` field subset), `PropagatedContextExtensions` (`ToPropagatedContext` / `ApplyPropagatedContext` projections), `PropagatedContextSerializer` (base64url + JSON codec for the cross-hop `x-d2-context` header, with per-field length caps from the spec). Hand-written RFC helpers ship here too: `ActorChainParser` (RFC 8693 §2.1 nested actor chain, depth-limited strict-mode), `ScopeClaimParser` (RFC 6749 §3.3 SP-only scope string or JSON array). Identity (UserId / OrgId / Scopes / ActorChain) rebuilds from JWT each hop; only the small operational subset propagates. | [PATTERNS.md](../../../docs/PATTERNS.md) Context section |
@@ -44,6 +45,7 @@ Per project convention, every library has its own `README.md`. The list below po
 | [`location/`](location/README.md) | Placeholder | Location value objects — `AdminLocation` (country / state / city / postal), `Coordinates`, `StreetAddress`. Content-addressable hash IDs (built-in dedup + cacheability). | [OPERATIONAL-GUARANTEES.md](../../../docs/OPERATIONAL-GUARANTEES.md) (content-addressable entities) |
 | [`contacts/`](contacts/README.md) | Placeholder | Contact entity + per-consuming-service DB pattern. Library owns its own `DbContext` + migrations; consuming service provides connection string. | [OPERATIONAL-GUARANTEES.md](../../../docs/OPERATIONAL-GUARANTEES.md) (immutability rationale) |
 | [`auth/`](auth/README.md) | Placeholder | Runtime auth surface — JWT claim helpers, token primitives, `KeyringClient` (consumes the Edge KeyCustodian). The vocabulary slice (`Scopes` constants, enums, claim type strings) already ships in `auth-abstractions/`. | [SECURITY-RUNBOOKS.md](../../../docs/SECURITY-RUNBOOKS.md) |
+| [`auth-outbound/`](auth-outbound/README.md) | **Built** | Outbound auth runtime — `IServiceIdentityClient` (`client_credentials`) + `ITokenExchangeClient` (RFC 8693) + `.AddD2ServiceIdentity()` per-channel gRPC opt-in. OIDC discovery via `D2_AUTH_ISSUER`. ServiceIdentity caches in-process with proactive refresh; TokenExchange caches in `ILocalCache` with sessionId reverse-index for backplane-driven invalidation. | [PHASE_0_AUTH.md](../../../docs/v2/PHASE_0_AUTH.md) |
 
 ## Dependency graph (built libs only)
 
@@ -78,12 +80,14 @@ graph LR
     subgraph AUTHCTX["Auth + per-request context (codegen-driven)"]
         direction TB
         AuthScopesSG[auth-scopes-source-gen]:::analyzer
+        AuthAudiencesSG[auth-audiences-source-gen]:::analyzer
         AuthAbs[auth-abstractions]
         ContextSG[context-source-gen]:::analyzer
         AuthCtxAbs[auth-context-abstractions]
         CtxAbs[context-abstractions]
 
         AuthScopesSG -.->|analyzer| AuthAbs
+        AuthAudiencesSG -.->|analyzer| AuthAbs
         ContextSG -.->|analyzer| AuthCtxAbs
         ContextSG -.->|analyzer| CtxAbs
         AuthCtxAbs --> AuthAbs
@@ -97,6 +101,14 @@ graph LR
         Handler[handler]
 
         Handler --> HandlerAbs
+    end
+
+    subgraph AUTHRUNTIME["Auth runtime"]
+        direction TB
+        AuthOutbound[auth-outbound]
+
+        AuthOutbound --> AuthAbs
+        AuthOutbound --> CtxAbs
     end
 
     subgraph REPO["Repo handler (provider-pluggable)"]
@@ -144,7 +156,12 @@ graph LR
     Repo --> Handler
     RepoAbs --> I18n
     CacheAbs --> Result
+    CacheLocal --> Utilities
+    CacheRedis --> Utilities
+    AuthOutbound --> CacheAbs
+    AuthOutbound --> Resilience
     MsgAbs --> Handler
+    MsgAbs --> Encryption
     MsgRabbit --> Encryption
     MsgRabbit --> CacheAbs
     MsgRabbit --> Resilience
@@ -165,6 +182,9 @@ graph LR
 - `handler` directly refs `result` (transitive via `handler-abstractions`)
 - `handler-repo` directly refs `handler-abstractions`, `result` (transitive via `handler` and `handler-repo-abstractions`)
 - `handler-repo-abstractions` directly refs `result` (transitive via `i18n`)
+- `caching-abstractions`, `caching-local-default`, `caching-distributed-redis` each directly ref `i18n-abstractions` (transitive via `result → i18n-abstractions`)
+- `caching-tiered` directly refs `result` (transitive via `caching-abstractions → result`)
+- `auth-outbound` directly refs `auth-context-abstractions` (transitive via `context-abstractions → auth-context-abstractions`)
 - `messaging-abstractions` directly refs `result`, `i18n-abstractions`, `utilities` (transitive via `handler`)
 - `messaging-rabbitmq` directly refs `handler`, `result`, `i18n-abstractions`, `utilities` (transitive via `messaging-abstractions`)
 
@@ -177,6 +197,11 @@ The cross-subgraph arrows that ARE drawn capture every load-bearing inter-cluste
 - `handler-repo-abstractions → i18n` — typed `D2Result.X()` factories use `TK.Common.Errors.*` for default messages
 - `caching-abstractions → result` — every cache op returns `D2Result<T>` / `D2Result`
 - `messaging-abstractions → handler` — `BaseHandler<THandler, TIn, Unit>` is the type constraint on subscribers + `IHandlerContext` flows into messaging through the same context envelope
+- `messaging-abstractions → encryption` — `messaging-source-gen` reads the encryption-domain constants from `D2.Shared.Encryption.EncryptionDomains` at codegen time to validate every `mq-messages.spec.json` entry's `encryption` value (D2MQ004 fires on drift)
+- `caching-local-default → utilities` — `Falsey()` / `IsNonPositive` for input validation
+- `caching-distributed-redis → utilities` — `Falsey()` / extension methods for input validation
+- `auth-outbound → caching-abstractions` — `ILocalCache` backs the service-identity cache; `IDistributedCache` backs the token-exchange cache
+- `auth-outbound → resilience` — `Singleflight` collapses concurrent token-fetch attempts; `RetryHelper` drives transient-failure retries
 - `messaging-rabbitmq → encryption` — `IPayloadCrypto` per encryption domain is keyed-DI-resolved when composing message bodies
 - `messaging-rabbitmq → caching-abstractions` — `CacheIdempotencyStore` backs `IMessageIdempotencyStore` onto `IDistributedCache`
 - `messaging-rabbitmq → resilience` — `RetryHelper.RetryAsync` drives the publisher's transient-retry loop

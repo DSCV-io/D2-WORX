@@ -116,7 +116,10 @@ Thread-safety:
 
 - All state via `Interlocked` operations + `Volatile.Read`. No locks.
 - `onStateChange` callback fires synchronously on the thread that triggered the transition. Idempotent transitions (Closed → Closed) do NOT fire it. Keep callbacks fast and non-blocking.
+- **Footgun — `onStateChange` MUST NOT throw.** A throwing callback REPLACES the upstream exception that triggered the transition: a buggy logger inside the callback can swap a meaningful "TimeoutException from upstream X" with its own "InvalidOperationException from logger", making outage diagnosis painful. Wrap the callback body in your own try/catch (or stick to plain log/metric calls that won't throw) to preserve the upstream exception for callers.
 - `Reset()` manually returns the breaker to Closed (clears counter + probe flag); only fires `onStateChange` if state actually changed.
+
+> **Telemetry is consumer-owned.** This lib emits no spans / metrics / logs of its own — by design, to stay free of `System.Diagnostics.DiagnosticSource` and `Microsoft.Extensions.Logging` transitive deps. The `onStateChange` callback is the canonical observability seam for circuit-breaker transitions; the `RetryHelper.RetryAsync` `logger` parameter is the seam for retry attempts. Pipeline-level observability (per-layer counters, per-attempt spans) is future work.
 
 Test seams:
 
@@ -513,7 +516,7 @@ The pattern generalizes to any domain client where one operation has multiple cr
 `server/shared/dotnet/tests/Unit/Resilience/` — adversarial coverage at 100% lines + 100% branches. Categories:
 
 - **`RetryHelper`**: full transient-classifier matrix (HTTP 5xx / 429 / 408 / non-transient codes / null status / TaskCanceled / Timeout / Socket / arbitrary). Happy path, throws-then-succeeds, throws-every-attempt-exhaustion, ShouldRetry-true-then-false, ShouldRetry-always-true (last-value wins on exhaustion), alternating throw+return (last terminator wins), pre-canceled token, OCE-from-ct (NOT classified transient), DelayFunc-invoked-between-retries.
-- **`RetryD2ResultAsync`**: default predicate retries `ServiceUnavailable`, default predicate does NOT retry `NotFound`, caller-`ShouldRetry`-override wins, null-options behaviour.
+- **`RetryD2ResultAsync`**: default predicate retries `ServiceUnavailable`, default predicate does NOT retry `NotFound`, caller-`ShouldRetry`-override wins, null-options behavior.
 - **`CalculateDelay`** (internal): zero-index returns base, multiplier applied, max-delay clamp, exponent overflow clamp, jitter range property (200 samples in `[0, calculated)`).
 - **`CircuitBreaker`**: initial state, single success/failure, threshold transition Closed→Open, mixed exception+value-failure threshold, success resets counter, Open without/with fallback, Open→HalfOpen on cooldown, HalfOpen probe success closes, HalfOpen probe failure (exception OR value-failure) reopens, HalfOpen probe-lock (concurrent caller gets fallback / throws), `Reset` from Open fires callback, `Reset` from Closed is no-op, callback-null branches on every transition.
 - **`Singleflight`**: single-call sanity, concurrent-callers-same-key dedup (1 invocation, 3 returns), concurrent-callers-different-keys both run, sequential-calls-same-key re-run (proves no caching), exception propagation to all waiters + key removed for retry, per-caller cancellation does NOT affect siblings, no-cancellable-token fast path, non-string key (Guid).

@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using D2.Shared.Utilities.Extensions;
 
 /// <summary>
 /// Loads JSON message catalogs from a directory and resolves
@@ -142,7 +143,7 @@ public sealed partial class Translator : ITranslator
         string template,
         IReadOnlyDictionary<string, string>? parameters)
     {
-        if (parameters is null || parameters.Count == 0)
+        if (parameters.Falsey())
         {
             return template;
         }
@@ -150,7 +151,7 @@ public sealed partial class Translator : ITranslator
         return sr_paramPattern.Replace(template, match =>
         {
             var paramName = match.Groups[1].Value;
-            return parameters.TryGetValue(paramName, out var replacement)
+            return parameters!.TryGetValue(paramName, out var replacement)
                 ? replacement
                 : match.Value;
         });

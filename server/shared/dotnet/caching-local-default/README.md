@@ -14,8 +14,10 @@ for in-process lock state.
 
 **`DefaultLocalCache : ILocalCache, IDisposable`** — the implementation.
 
-**`LocalCacheOptions`** — `MaxEntries` (default 10_000), `DefaultExpiration` (1h),
-`KeyPrefix` (empty).
+**`LocalCacheOptions`** — `MaxEntries` (default 100_000), `DefaultExpiration` (1h),
+`KeyPrefix` (empty). Default sized for production Edge / Files-class workloads where
+session-liveness, JWKS, token-exchange, and other per-process caches share a single
+singleton; ~100 MB process RSS worst-case at ~1 KB / entry.
 
 **`services.AddD2LocalCache(opts => …)`** — DI registration. Singleton lifetime.
 
@@ -81,12 +83,24 @@ coordination requires `IDistributedCache`.
 
 ## Test coverage
 
-- **Unit tests** (`Unit/Caching/Local/`) — surface tests on D2Result mapping, argument validation,
-  key prefixing, idempotency. Fast.
-- **Integration tests** (`Integration/Caching/Local/`) — exercise real `IMemoryCache` behaviors:
-  capacity-driven eviction, real TTL expiration with wall-clock waits, concurrent-stress on
-  Increment + AcquireLock, multi-thread GetMany consistency. Slower (real time / real concurrency)
-  but verifies the actual behavior consumers depend on.
+- **Unit tests** (`Unit/Caching/Local/DefaultLocalCacheUnitTests.cs`) — surface tests on D2Result
+  mapping, argument validation, key prefixing, idempotency, TTL semantics (preservation across
+  Increment, rejection of non-positive values), per-entry validation in multi-key ops. Fast.
+- **Behavior tests** (`Unit/Caching/Local/DefaultLocalCacheBehaviorTests.cs`) — exercise real
+  `IMemoryCache` semantics: capacity-driven eviction, real TTL expiration with wall-clock waits,
+  16-32 thread concurrency stress on Increment + AcquireLock, race-protection probes for SetCore +
+  SetNx contender races. Stay in the unit tier because no external infra is required (in-process
+  `IMemoryCache` covers everything).
+
+## Notes
+
+- **Calls on a disposed instance throw `ObjectDisposedException`** — matching `IMemoryCache`'s own
+  contract. The "ops never throw" guarantee applies to per-call data flow under a live instance, not
+  to misuse-after-dispose. Don't share the cache instance between the disposing scope and any
+  in-flight async caller.
+- **`GetTtlAsync` may transiently report no-TTL after a Capacity eviction** — see the
+  `r_expirations` field doc on `DefaultLocalCache.cs`. Workloads needing strict-LRU-with-coherent-TTL
+  semantics should compose a sibling impl rather than rely on this one's tradeoffs.
 
 ## Dependencies
 

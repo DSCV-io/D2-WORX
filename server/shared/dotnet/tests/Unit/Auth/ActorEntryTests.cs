@@ -35,15 +35,15 @@ public sealed class ActorEntryTests
     [Fact]
     public void Construction_ImpersonationEntry_AllFieldsRoundTrip()
     {
-        var session_id = Guid.Parse("11111111-1111-1111-1111-111111111111");
-        var org_id = Guid.Parse("22222222-2222-2222-2222-222222222222");
+        var sessionId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var orgId = Guid.Parse("22222222-2222-2222-2222-222222222222");
 
         var entry = new ActorEntry(
             ActorKind.Impersonation,
             Subject: "agent-user-id",
             ImpersonationKind: ImpersonationKind.Consent,
-            SessionId: session_id,
-            OrgId: org_id,
+            SessionId: sessionId,
+            OrgId: orgId,
             OrgName: "Customer Support",
             OrgType: OrgType.Support,
             OrgRole: Role.Officer);
@@ -51,8 +51,8 @@ public sealed class ActorEntryTests
         entry.Kind.Should().Be(ActorKind.Impersonation);
         entry.Subject.Should().Be("agent-user-id");
         entry.ImpersonationKind.Should().Be(ImpersonationKind.Consent);
-        entry.SessionId.Should().Be(session_id);
-        entry.OrgId.Should().Be(org_id);
+        entry.SessionId.Should().Be(sessionId);
+        entry.OrgId.Should().Be(orgId);
         entry.OrgName.Should().Be("Customer Support");
         entry.OrgType.Should().Be(OrgType.Support);
         entry.OrgRole.Should().Be(Role.Officer);
@@ -61,13 +61,13 @@ public sealed class ActorEntryTests
     [Fact]
     public void RecordEquality_IdenticalFields_AreEqual()
     {
-        var session_id = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
 
         var a = new ActorEntry(
             ActorKind.Impersonation,
             Subject: "agent",
             ImpersonationKind: ImpersonationKind.Force,
-            SessionId: session_id,
+            SessionId: sessionId,
             OrgType: OrgType.Admin,
             OrgRole: Role.Owner);
 
@@ -75,7 +75,7 @@ public sealed class ActorEntryTests
             ActorKind.Impersonation,
             Subject: "agent",
             ImpersonationKind: ImpersonationKind.Force,
-            SessionId: session_id,
+            SessionId: sessionId,
             OrgType: OrgType.Admin,
             OrgRole: Role.Owner);
 
@@ -101,17 +101,17 @@ public sealed class ActorEntryTests
         // equality will still consider them. Test that two Service entries
         // differing ONLY in those nominally-meaningless fields are NOT equal,
         // i.e. the fields ARE carried by the record (no contract-level
-        // normalization). Documents the actual behaviour: callers must not
+        // normalization). Documents the actual behavior: callers must not
         // populate impersonation fields on Service entries unless they want
         // those fields to participate in equality.
-        var with_session = new ActorEntry(
+        var withSession = new ActorEntry(
             ActorKind.Service,
             Subject: "svc",
             SessionId: Guid.NewGuid());
 
-        var without_session = new ActorEntry(ActorKind.Service, Subject: "svc");
+        var withoutSession = new ActorEntry(ActorKind.Service, Subject: "svc");
 
-        with_session.Should().NotBe(without_session);
+        withSession.Should().NotBe(withoutSession);
     }
 
     [Fact]
@@ -164,36 +164,36 @@ public sealed class ActorEntryTests
         // Adversarial: two outermost entries with identical surface fields but
         // DIFFERENT nested Act subtrees must NOT be equal — the chain shape is
         // load-bearing for OriginatingClientId derivation per RFC 8693.
-        var nested_a = new ActorEntry(ActorKind.Service, Subject: "deep-a");
-        var nested_b = new ActorEntry(ActorKind.Service, Subject: "deep-b");
+        var nestedA = new ActorEntry(ActorKind.Service, Subject: "deep-a");
+        var nestedB = new ActorEntry(ActorKind.Service, Subject: "deep-b");
 
-        var outer_a = new ActorEntry(
+        var outerA = new ActorEntry(
             ActorKind.Impersonation,
             Subject: "agent",
-            Act: nested_a);
+            Act: nestedA);
 
-        var outer_b = new ActorEntry(
+        var outerB = new ActorEntry(
             ActorKind.Impersonation,
             Subject: "agent",
-            Act: nested_b);
+            Act: nestedB);
 
-        outer_a.Should().NotBe(outer_b);
+        outerA.Should().NotBe(outerB);
     }
 
     [Fact]
     public void RecordEquality_BothNestedNullVsBothNestedSame_AreEqual()
     {
         // Sanity baseline for the "different Act → different record" test.
-        var no_act_a = new ActorEntry(ActorKind.Service, Subject: "svc");
-        var no_act_b = new ActorEntry(ActorKind.Service, Subject: "svc");
+        var noActA = new ActorEntry(ActorKind.Service, Subject: "svc");
+        var noActB = new ActorEntry(ActorKind.Service, Subject: "svc");
 
-        no_act_a.Should().Be(no_act_b);
+        noActA.Should().Be(noActB);
 
         var nested = new ActorEntry(ActorKind.Service, Subject: "deep");
-        var with_act_a = new ActorEntry(ActorKind.Service, Subject: "svc", Act: nested);
-        var with_act_b = new ActorEntry(ActorKind.Service, Subject: "svc", Act: nested);
+        var withActA = new ActorEntry(ActorKind.Service, Subject: "svc", Act: nested);
+        var withActB = new ActorEntry(ActorKind.Service, Subject: "svc", Act: nested);
 
-        with_act_a.Should().Be(with_act_b);
+        withActA.Should().Be(withActB);
     }
 
     [Fact]

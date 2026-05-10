@@ -40,7 +40,8 @@ public sealed class ScopesEmitterTests
         result.Diagnostics.Should().BeEmpty();
 
         // Constant was emitted.
-        result.GeneratedSource.Should().Contain("public const string Health = \"anon.public.health\";");
+        result.GeneratedSource.Should().Contain(
+            "public const string Health = \"anon.public.health\";");
 
         // AnonymousScopes set carries the entry.
         result.GeneratedSource.Should().Contain("sr_anonymousScopes")
@@ -133,16 +134,21 @@ public sealed class ScopesEmitterTests
         result.Diagnostics.Should().BeEmpty();
 
         // Helper functions.
-        result.GeneratedSource.Should().Contain("public static ActionSensitivity GetActionSensitivity(string scope)");
-        result.GeneratedSource.Should().Contain("public static bool IsImpersonationBlocked(string scope)");
+        result.GeneratedSource.Should().Contain(
+            "public static ActionSensitivity GetActionSensitivity(string scope)");
+        result.GeneratedSource.Should().Contain(
+            "public static bool IsImpersonationBlocked(string scope)");
         result.GeneratedSource.Should().Contain("public static bool IsAnonymous(string scope)");
         result.GeneratedSource.Should().Contain("public static bool IsKnown(string scope)");
-        result.GeneratedSource.Should().Contain("public static bool IsGrantedTo(string scope, OrgType orgType, Role role)");
+        result.GeneratedSource.Should().Contain(
+            "public static bool IsGrantedTo(string scope, OrgType orgType, Role role)");
 
         // Public read-only set surfaces.
         result.GeneratedSource.Should().Contain("public static IReadOnlySet<string> AllScopes");
-        result.GeneratedSource.Should().Contain("public static IReadOnlySet<string> AllAnonymousScopes");
-        result.GeneratedSource.Should().Contain("public static IReadOnlySet<string> AllImpersonationBlockedScopes");
+        result.GeneratedSource.Should().Contain(
+            "public static IReadOnlySet<string> AllAnonymousScopes");
+        result.GeneratedSource.Should().Contain(
+            "public static IReadOnlySet<string> AllImpersonationBlockedScopes");
         result.GeneratedSource.Should().Contain("GrantedScopes");
     }
 
@@ -160,7 +166,8 @@ public sealed class ScopesEmitterTests
 
         var result = ScopesEmitter.Emit(spec, sr_orgTypes, sr_roles);
 
-        result.Diagnostics.Should().ContainSingle(d => d.DescriptorId == DiagnosticIds.UnknownEnumValue);
+        result.Diagnostics.Should().ContainSingle(
+            d => d.DescriptorId == DiagnosticIds.UnknownEnumValue);
         var diag = result.Diagnostics.Single(d => d.DescriptorId == DiagnosticIds.UnknownEnumValue);
         ((string)diag.Args[2]).Should().Be("ActionSensitivity");
         ((string)diag.Args[3]).Should().Be("NotARealSensitivity");
@@ -230,7 +237,8 @@ public sealed class ScopesEmitterTests
 
         var result = ScopesEmitter.Emit(spec, sr_orgTypes, sr_roles);
 
-        result.Diagnostics.Should().ContainSingle(d => d.DescriptorId == DiagnosticIds.DuplicateScope);
+        result.Diagnostics.Should().ContainSingle(
+            d => d.DescriptorId == DiagnosticIds.DuplicateScope);
         var diag = result.Diagnostics.Single(d => d.DescriptorId == DiagnosticIds.DuplicateScope);
         ((string)diag.Args[0]).Should().Be("self.read");
     }
@@ -246,7 +254,8 @@ public sealed class ScopesEmitterTests
 
         var result = ScopesEmitter.Emit(spec, sr_orgTypes, sr_roles);
 
-        result.Diagnostics.Should().ContainSingle(d => d.DescriptorId == DiagnosticIds.AnonImpersonationBlockedNoise);
+        result.Diagnostics.Should().ContainSingle(
+            d => d.DescriptorId == DiagnosticIds.AnonImpersonationBlockedNoise);
 
         // Warning is non-fatal — the scope still emits.
         result.GeneratedSource.Should().Contain("\"anon.public.health\"");
@@ -282,7 +291,8 @@ public sealed class ScopesEmitterTests
 
         var result = ScopesEmitter.Emit(spec, sr_orgTypes, sr_roles);
 
-        result.Diagnostics.Should().ContainSingle(d => d.DescriptorId == DiagnosticIds.MissingGrantedTo);
+        result.Diagnostics.Should().ContainSingle(
+            d => d.DescriptorId == DiagnosticIds.MissingGrantedTo);
     }
 
     // ----------------------------------------------------------------------
@@ -298,7 +308,8 @@ public sealed class ScopesEmitterTests
 
         var result = ScopesEmitter.Emit(spec, sr_orgTypes, sr_roles);
 
-        result.Diagnostics.Should().ContainSingle(d => d.DescriptorId == DiagnosticIds.TreePositionCollision);
+        result.Diagnostics.Should().ContainSingle(
+            d => d.DescriptorId == DiagnosticIds.TreePositionCollision);
 
         // Parent is dropped; child remains.
         result.GeneratedSource.Should().Contain("\"auth.user.impersonate.force\"");
@@ -313,7 +324,8 @@ public sealed class ScopesEmitterTests
     public void Emit_VeryLongScopeName_EmitsCleanly()
     {
         // 200+ char single segment (just dots between two-segment minimums).
-        const string longSegment = "abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789"
+        const string longSegment =
+            "abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789"
             + "abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789";
         var name = $"foo.{longSegment}";
 
@@ -410,7 +422,8 @@ public sealed class ScopesEmitterTests
         var forwardResult = ScopesEmitter.Emit(forward, sr_orgTypes, sr_roles);
         var reverseResult = ScopesEmitter.Emit(reverse, sr_orgTypes, sr_roles);
 
-        Normalize(reverseResult.GeneratedSource).Should().Be(Normalize(forwardResult.GeneratedSource));
+        Normalize(reverseResult.GeneratedSource).Should()
+            .Be(Normalize(forwardResult.GeneratedSource));
     }
 
     // ----------------------------------------------------------------------

@@ -19,6 +19,13 @@ using System;
 /// <c>D2.Shared.Handler.Repo.Postgres</c>; future SQL Server / SQLite /
 /// MySQL implementations would be sibling packages registering the same
 /// interface. The base repo handler stays provider-agnostic.
+/// <para>
+/// Implementations MUST be thread-safe. The classifier is registered as a
+/// DI singleton and concurrently invoked from request threads via
+/// <c>BaseRepoHandler</c>. Stateless designs (static helpers, no instance
+/// fields) trivially satisfy the contract; if state is added, lock or use
+/// <see cref="System.Collections.Concurrent"/> primitives.
+/// </para>
 /// </remarks>
 public interface IDbExceptionClassifier
 {

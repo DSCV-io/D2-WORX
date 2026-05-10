@@ -455,11 +455,12 @@ public sealed class ActorChainParserTests
     }
 
     [Fact]
-    public void ParseFromJsonString_NestedActNull_DoesNotThrow_TreatedAsAbsent()
+    public void ParseFromJsonString_NestedActNull_Throws()
     {
         // Adversarial: JSON null for nested act — parser checks ValueKind != Object
         // AND != Undefined. Null ValueKind is Null, not Undefined, so it WILL throw.
-        // Document the actual behavior.
+        // Pin the actual behavior so a future "treat null as absent" change is
+        // an intentional contract decision rather than a silent regression.
         const string input = """{"sub":"outer","act":null}""";
 
         var act = () => ActorChainParser.ParseFromJsonString(input);

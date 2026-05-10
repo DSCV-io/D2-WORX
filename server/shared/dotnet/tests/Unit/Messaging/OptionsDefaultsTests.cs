@@ -8,9 +8,12 @@ namespace D2.Shared.Tests.Unit.Messaging;
 
 using AwesomeAssertions;
 using D2.Shared.Messaging;
+using D2.Shared.Messaging.RabbitMq;
 using D2.Shared.Messaging.RabbitMq.Channels;
 using D2.Shared.Messaging.RabbitMq.Connection;
 using D2.Shared.Messaging.RabbitMq.Publishing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 /// <summary>
@@ -75,4 +78,45 @@ public sealed class OptionsDefaultsTests
     // and emitted into MqSubscriptionDescriptor by D2.Shared.Messaging.SourceGen
     // — the source-gen test suite covers shape + validation; this file is
     // for transport-level options only.
+
+    [Fact]
+    public void PublisherOptions_WaitForConfirmTrueWithConfirmsDisabled_FailsValidateOnStart()
+    {
+        // WaitForConfirm=true with PublisherConfirmsEnabled=false leaves the
+        // channel with no protocol mechanism to confirm a publish — every
+        // "confirmed" publish becomes a silent fire-and-forget. ValidateOnStart
+        // must hard-fail at composition time so the misconfiguration can't
+        // ship to production.
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddD2MessagingRabbitMq(
+            configureConnection: o => o.ConnectionUri = "amqp://nowhere:5672",
+            configureChannelPool: o => o.PublisherConfirmsEnabled = false,
+            configurePublisher: o => o.WaitForConfirm = true);
+        var sp = services.BuildServiceProvider();
+
+        var act = () => sp.GetRequiredService<IOptions<RabbitMqPublisherOptions>>().Value;
+
+        act.Should().Throw<OptionsValidationException>(
+            "WaitForConfirm=true requires PublisherConfirmsEnabled=true");
+    }
+
+    [Fact]
+    public void PublisherOptions_WaitForConfirmTrueWithConfirmsEnabled_PassesValidateOnStart()
+    {
+        // Inverse of the mismatch test: when both flags align (or
+        // WaitForConfirm is false), ValidateOnStart's predicate evaluates
+        // to true and host start can proceed.
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddD2MessagingRabbitMq(
+            configureConnection: o => o.ConnectionUri = "amqp://nowhere:5672",
+            configureChannelPool: o => o.PublisherConfirmsEnabled = true,
+            configurePublisher: o => o.WaitForConfirm = true);
+        var sp = services.BuildServiceProvider();
+
+        var act = () => sp.GetRequiredService<IOptions<RabbitMqPublisherOptions>>().Value;
+
+        act.Should().NotThrow("matched flags must pass ValidateOnStart");
+    }
 }

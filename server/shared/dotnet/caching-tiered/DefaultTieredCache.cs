@@ -27,6 +27,7 @@ public sealed class DefaultTieredCache : ITieredCache, IAsyncDisposable
 {
     private readonly ILocalCache r_l1;
     private readonly IDistributedCache r_l2;
+    private readonly ILogger<DefaultTieredCache> r_logger;
     private readonly ICacheInvalidationBackplane? r_backplane;
     private readonly IAsyncDisposable? r_subscription;
     private bool _disposed;
@@ -49,12 +50,14 @@ public sealed class DefaultTieredCache : ITieredCache, IAsyncDisposable
         ArgumentNullException.ThrowIfNull(logger);
         r_l1 = l1;
         r_l2 = l2;
+        r_logger = logger;
         r_backplane = backplane;
 
         if (backplane is not null)
         {
-            // Capture the logger in the lambda — only the subscription handler logs;
-            // no other method on this class needs it, so it stays out of instance state.
+            // Capture into locals for the lambda closure to avoid an
+            // implicit `this` capture (subscription outlives the immediate
+            // ctor frame).
             var capturedLogger = logger;
             var capturedL1 = l1;
             r_subscription = backplane.Subscribe(async (key, ct) =>
@@ -63,9 +66,7 @@ public sealed class DefaultTieredCache : ITieredCache, IAsyncDisposable
                 if (!result.IsOk)
                 {
                     TieredCacheLog.L1InvalidationFailed(
-                        capturedLogger,
-                        new InvalidOperationException(result.ErrorCode ?? "unknown"),
-                        key);
+                        capturedLogger, key, result.ErrorCode ?? "unknown");
                 }
             });
         }
@@ -164,10 +165,23 @@ public sealed class DefaultTieredCache : ITieredCache, IAsyncDisposable
         string key, T value, TimeSpan? expiration = null, CancellationToken ct = default)
     {
         // L2 first — if L2 fails, don't touch L1 (L2-first ordering means
-        // partial-write states are impossible and we never need to roll back).
+        // partial-write states are impossible).
         var l2 = await r_l2.SetAsync(key, value, expiration, ct);
         if (!l2.IsOk) return l2;
-        return await r_l1.SetAsync(key, value, expiration, ct);
+
+        // L1 is the optional layer (§18 graceful degradation): L2 has the
+        // canonical write; an L1 failure here just means this instance's
+        // L1 misses the warm-up. Log + return L2 success — never fail a
+        // write the cluster successfully accepted just because the local
+        // L1 sneeze.
+        var l1 = await r_l1.SetAsync(key, value, expiration, ct);
+        if (!l1.IsOk)
+        {
+            TieredCacheLog.L1WriteFailedAfterL2Success(
+                r_logger, "SetAsync", key, l1.ErrorCode ?? "unknown");
+        }
+
+        return l2;
     }
 
     /// <inheritdoc />
@@ -178,7 +192,14 @@ public sealed class DefaultTieredCache : ITieredCache, IAsyncDisposable
     {
         var l2 = await r_l2.SetManyAsync(entries, expiration, ct);
         if (!l2.IsOk) return l2;
-        return await r_l1.SetManyAsync(entries, expiration, ct);
+        var l1 = await r_l1.SetManyAsync(entries, expiration, ct);
+        if (!l1.IsOk)
+        {
+            TieredCacheLog.L1WriteFailedAfterL2Success(
+                r_logger, "SetManyAsync", $"{entries.Count} entries", l1.ErrorCode ?? "unknown");
+        }
+
+        return l2;
     }
 
     /// <inheritdoc />
@@ -186,7 +207,14 @@ public sealed class DefaultTieredCache : ITieredCache, IAsyncDisposable
     {
         var l2 = await r_l2.RemoveAsync(key, ct);
         if (!l2.IsOk) return l2;
-        return await r_l1.RemoveAsync(key, ct);
+        var l1 = await r_l1.RemoveAsync(key, ct);
+        if (!l1.IsOk)
+        {
+            TieredCacheLog.L1WriteFailedAfterL2Success(
+                r_logger, "RemoveAsync", key, l1.ErrorCode ?? "unknown");
+        }
+
+        return l2;
     }
 
     /// <inheritdoc />
@@ -195,7 +223,14 @@ public sealed class DefaultTieredCache : ITieredCache, IAsyncDisposable
     {
         var l2 = await r_l2.RemoveManyAsync(keys, ct);
         if (!l2.IsOk) return l2;
-        return await r_l1.RemoveManyAsync(keys, ct);
+        var l1 = await r_l1.RemoveManyAsync(keys, ct);
+        if (!l1.IsOk)
+        {
+            TieredCacheLog.L1WriteFailedAfterL2Success(
+                r_logger, "RemoveManyAsync", $"{keys.Count} keys", l1.ErrorCode ?? "unknown");
+        }
+
+        return l2;
     }
 
     // ----- ICacheAtomic — route through L2 (cluster source of truth) -----

@@ -17,18 +17,18 @@ using Xunit;
 /// <summary>
 /// End-to-end smoke tests for the codegen-emitted <c>Scopes.g.cs</c> static
 /// partial class. Probes structure (nested classes), specific constants,
-/// helper behaviour, and wildcard expansion in the GrantedScopes dictionary.
+/// helper behavior, and wildcard expansion in the GrantedScopes dictionary.
 /// </summary>
 public sealed class ScopesGeneratedTests
 {
     [Fact]
     public void Scopes_TypeExists()
     {
-        var scopes_type = typeof(Scopes);
+        var scopesType = typeof(Scopes);
 
-        scopes_type.Should().NotBeNull();
-        scopes_type.IsAbstract.Should().BeTrue("static classes are abstract+sealed at IL");
-        scopes_type.IsSealed.Should().BeTrue();
+        scopesType.Should().NotBeNull();
+        scopesType.IsAbstract.Should().BeTrue("static classes are abstract+sealed at IL");
+        scopesType.IsSealed.Should().BeTrue();
     }
 
     [Theory]
@@ -36,13 +36,13 @@ public sealed class ScopesGeneratedTests
     [InlineData("Self")]
     [InlineData("Auth")]
     [InlineData("Billing")]
-    public void Scopes_HasNestedNamespaceClass(string nested_name)
+    public void Scopes_HasNestedNamespaceClass(string nestedName)
     {
         // Adversarial: the nested-class structure is the discoverability
         // mechanism. Emitting a flat list would defeat the purpose.
-        var nested = typeof(Scopes).GetNestedType(nested_name, BindingFlags.Public);
+        var nested = typeof(Scopes).GetNestedType(nestedName, BindingFlags.Public);
 
-        nested.Should().NotBeNull(nested_name + " nested class must be emitted");
+        nested.Should().NotBeNull(nestedName + " nested class must be emitted");
         nested.IsAbstract.Should().BeTrue();
         nested.IsSealed.Should().BeTrue();
     }
@@ -229,8 +229,8 @@ public sealed class ScopesGeneratedTests
         Scopes.AllAnonymousScopes.Should().BeSubsetOf(Scopes.AllScopes);
         Scopes.AllImpersonationBlockedScopes.Should().BeSubsetOf(Scopes.AllScopes);
 
-        var all_granted = Scopes.GrantedScopes.Values.SelectMany(s => s).ToHashSet();
-        all_granted.Should().BeSubsetOf(Scopes.AllScopes);
+        var allGranted = Scopes.GrantedScopes.Values.SelectMany(s => s).ToHashSet();
+        allGranted.Should().BeSubsetOf(Scopes.AllScopes);
     }
 
     // ----------------------------------------------------------------------
@@ -244,10 +244,10 @@ public sealed class ScopesGeneratedTests
         // emitter must expand wildcards against the full OrgType x Role
         // cross product (5 * 4 = 20 keys). Missing pairs would silently
         // deny scopes for some (orgType, role) combos.
-        var expected_count = Enum.GetValues<OrgType>().Length
+        var expectedCount = Enum.GetValues<OrgType>().Length
             * Enum.GetValues<Role>().Length;
 
-        Scopes.GrantedScopes.Should().HaveCount(expected_count);
+        Scopes.GrantedScopes.Should().HaveCount(expectedCount);
     }
 
     [Fact]
@@ -275,13 +275,13 @@ public sealed class ScopesGeneratedTests
         // Adversarial: billing.payment.charge is { "Customer": ["Owner"] }.
         // If wildcard expansion accidentally fanned this out, every org would
         // be charging cards.
-        var pairs_with_billing = Scopes.GrantedScopes
+        var pairsWithBilling = Scopes.GrantedScopes
             .Where(kvp => kvp.Value.Contains("billing.payment.charge"))
             .Select(kvp => kvp.Key)
             .ToList();
 
-        pairs_with_billing.Should().HaveCount(1);
-        pairs_with_billing.Should().Contain((OrgType.Customer, Role.Owner));
+        pairsWithBilling.Should().HaveCount(1);
+        pairsWithBilling.Should().Contain((OrgType.Customer, Role.Owner));
     }
 
     [Fact]
@@ -290,13 +290,13 @@ public sealed class ScopesGeneratedTests
         // Adversarial: spec restricts force-impersonation to Admin org only.
         // Any leak to Support / Customer / ThirdParty / Affiliate is a
         // critical security defect.
-        var pairs_with_force = Scopes.GrantedScopes
+        var pairsWithForce = Scopes.GrantedScopes
             .Where(kvp => kvp.Value.Contains("auth.user.impersonate.force"))
             .Select(kvp => kvp.Key)
             .ToList();
 
-        pairs_with_force.Should().NotBeEmpty();
-        pairs_with_force.Should().AllSatisfy(pair =>
+        pairsWithForce.Should().NotBeEmpty();
+        pairsWithForce.Should().AllSatisfy(pair =>
             pair.Item1.Should().Be(
                 OrgType.Admin,
                 "force-impersonation must be Admin-only"));

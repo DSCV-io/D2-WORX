@@ -9,7 +9,15 @@
 
 COMPOSE := docker compose -f infra/compose/compose.yml --env-file .env.local --env-file .env.secrets
 
-.PHONY: up down build logs ps infra otel clean restart
+.PHONY: up down build logs ps infra otel clean restart audit-lint
+
+## Run audit-lint inspection over the entire tree. Advisory only — surfaces
+## mechanical patterns (phase verbiage, audit-named files, British spellings,
+## line length, test method prefixes). Use as an aid during the audit loop;
+## findings need human judgment (codegen output and similar can produce
+## expected hits).
+audit-lint:
+	bash tools/scripts/audit-lint.sh
 
 ## Start all services
 up:

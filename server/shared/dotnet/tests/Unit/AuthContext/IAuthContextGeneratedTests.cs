@@ -30,26 +30,26 @@ public sealed class IAuthContextGeneratedTests
     [Fact]
     public void Interface_HasEveryPropertyDeclaredInSpec()
     {
-        var spec_path = TestPaths.AuthContextSpec();
-        File.Exists(spec_path).Should().BeTrue("spec must be present at " + spec_path);
+        var specPath = TestPaths.AuthContextSpec();
+        File.Exists(specPath).Should().BeTrue("spec must be present at " + specPath);
 
-        var spec = JsonDocument.Parse(File.ReadAllText(spec_path));
+        var spec = JsonDocument.Parse(File.ReadAllText(specPath));
 
-        var spec_property_names = new List<string>();
+        var specPropertyNames = new List<string>();
         foreach (var section in spec.RootElement.GetProperty("sections").EnumerateArray())
         {
             foreach (var property in section.GetProperty("properties").EnumerateArray())
-                spec_property_names.Add(property.GetProperty("name").GetString()!);
+                specPropertyNames.Add(property.GetProperty("name").GetString()!);
         }
 
-        spec_property_names.Should().NotBeEmpty();
+        specPropertyNames.Should().NotBeEmpty();
 
         var declared = typeof(IAuthContext)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Select(p => p.Name)
             .ToHashSet();
 
-        var missing = spec_property_names.Where(n => !declared.Contains(n)).ToList();
+        var missing = specPropertyNames.Where(n => !declared.Contains(n)).ToList();
         missing.Should().BeEmpty(
             "every spec property must appear on IAuthContext; missing: "
             + string.Join(", ", missing));

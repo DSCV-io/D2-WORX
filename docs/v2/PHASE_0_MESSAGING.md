@@ -872,7 +872,7 @@ lost-on-broker-crash is acceptable. Confirm timeout default 5s.
   task-cancel)
 
 NOT retried (caller-side bugs / terminal): `ArgumentException`, `JsonException`,
-`KidNotInKeyringException` (encryption), `OperationCanceledException` (caller cancelled).
+`KidNotInKeyringException` (encryption), `OperationCanceledException` (caller canceled).
 
 **Per-call override**:
 - `PublisherOptions.MaxAttempts = 1` → fire-and-forget; one shot, no retry.

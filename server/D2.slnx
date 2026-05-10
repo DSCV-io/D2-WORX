@@ -19,6 +19,12 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/auth-scopes-source-gen/">
     <Project Path="shared/dotnet/auth-scopes-source-gen/D2.Shared.Auth.Scopes.SourceGen.csproj" />
   </Folder>
+  <Folder Name="/shared/dotnet/auth-audiences-source-gen/">
+    <Project Path="shared/dotnet/auth-audiences-source-gen/D2.Shared.Auth.Audiences.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/auth-outbound/">
+    <Project Path="shared/dotnet/auth-outbound/D2.Shared.Auth.Outbound.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/auth-context-abstractions/">
     <Project Path="shared/dotnet/auth-context-abstractions/D2.Shared.AuthContext.Abstractions.csproj" />
   </Folder>

@@ -19,7 +19,8 @@ public sealed class CircuitBreakerLayerTests
         var cb = new CircuitBreaker<int>(_ => false);
         var layer = new CircuitBreakerLayer<string, int>(cb);
 
-        var result = await layer.WrapAsync("k", _ => ValueTask.FromResult(42), CancellationToken.None);
+        var result = await layer.WrapAsync(
+            "k", _ => ValueTask.FromResult(42), CancellationToken.None);
 
         result.Should().Be(42);
         cb.State.Should().Be(CircuitState.Closed);
@@ -36,7 +37,8 @@ public sealed class CircuitBreakerLayerTests
 
         try
         {
-            await layer.WrapAsync("k", _ => throw new InvalidOperationException(), CancellationToken.None);
+            await layer.WrapAsync(
+                "k", _ => throw new InvalidOperationException(), CancellationToken.None);
         }
         catch (InvalidOperationException)
         {
@@ -45,7 +47,8 @@ public sealed class CircuitBreakerLayerTests
 
         cb.State.Should().Be(CircuitState.Open);
 
-        var act = async () => await layer.WrapAsync("k", _ => ValueTask.FromResult(1), CancellationToken.None);
+        var act = async () => await layer.WrapAsync(
+            "k", _ => ValueTask.FromResult(1), CancellationToken.None);
 
         await act.Should().ThrowAsync<CircuitOpenException>();
     }
@@ -54,11 +57,13 @@ public sealed class CircuitBreakerLayerTests
     public async Task WrapAsync_KeyArgument_IsIgnored()
     {
         // The CB layer ignores the per-call key — any value yields the same
-        // behaviour. Verify by passing two different keys; both succeed.
+        // behavior. Verify by passing two different keys; both succeed.
         var cb = new CircuitBreaker<int>(_ => false);
         var layer = new CircuitBreakerLayer<string, int>(cb);
 
-        (await layer.WrapAsync("a", _ => ValueTask.FromResult(1), CancellationToken.None)).Should().Be(1);
-        (await layer.WrapAsync("b", _ => ValueTask.FromResult(2), CancellationToken.None)).Should().Be(2);
+        (await layer.WrapAsync("a", _ => ValueTask.FromResult(1), CancellationToken.None))
+            .Should().Be(1);
+        (await layer.WrapAsync("b", _ => ValueTask.FromResult(2), CancellationToken.None))
+            .Should().Be(2);
     }
 }

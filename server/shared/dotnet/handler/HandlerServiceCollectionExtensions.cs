@@ -25,7 +25,8 @@ public static class HandlerServiceCollectionExtensions
     /// <returns>The same <paramref name="services"/> for chaining.</returns>
     public static IServiceCollection AddD2Handler(this IServiceCollection services)
     {
-        services.TryAdd(ServiceDescriptor.Transient(typeof(HandlerContext<>), typeof(HandlerContext<>)));
+        services.TryAdd(ServiceDescriptor.Transient(
+            typeof(HandlerContext<>), typeof(HandlerContext<>)));
         return services;
     }
 }

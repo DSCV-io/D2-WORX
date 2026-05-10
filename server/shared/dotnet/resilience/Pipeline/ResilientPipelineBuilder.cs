@@ -37,7 +37,8 @@ public sealed class ResilientPipelineBuilder<TKey, TValue>
 
     /// <inheritdoc/>
     public IResilientPipelineBuilder<TKey, TValue> UseSingleflight(object serviceKey)
-        => UseSingleflight(r_serviceProvider.GetRequiredKeyedService<Singleflight<TKey, TValue>>(serviceKey));
+        => UseSingleflight(
+            r_serviceProvider.GetRequiredKeyedService<Singleflight<TKey, TValue>>(serviceKey));
 
     /// <inheritdoc/>
     public IResilientPipelineBuilder<TKey, TValue> UseSingleflight(
@@ -49,7 +50,8 @@ public sealed class ResilientPipelineBuilder<TKey, TValue>
 
     /// <inheritdoc/>
     public IResilientPipelineBuilder<TKey, TValue> UseCircuitBreaker(object serviceKey)
-        => UseCircuitBreaker(r_serviceProvider.GetRequiredKeyedService<CircuitBreaker<TValue>>(serviceKey));
+        => UseCircuitBreaker(
+            r_serviceProvider.GetRequiredKeyedService<CircuitBreaker<TValue>>(serviceKey));
 
     /// <inheritdoc/>
     public IResilientPipelineBuilder<TKey, TValue> UseCircuitBreaker(

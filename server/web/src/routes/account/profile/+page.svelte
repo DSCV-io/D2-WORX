@@ -148,7 +148,7 @@ Copyright (c) DCSV. All rights reserved.
     });
     if (!confirmed) {
       // User canceled — let the dropdown stay dirty (save/revert reappear)
-      // by signalling cancellation via the sentinel.
+      // by signaling cancellation via the sentinel.
       throw new SaveCanceledError();
     }
     await changeLocale(value, true);

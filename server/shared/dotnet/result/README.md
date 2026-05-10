@@ -25,7 +25,8 @@ Foundational lib. References only `D2.Shared.I18n.Abstractions` (itself zero-run
 | `D2ResultAsyncExtensions.cs` | Extension methods on `Task<D2Result<T>>` + `ValueTask<D2Result<T>>`: `BindAsync` / `MapAsync` / `ThenAsync` |
 | `D2ResultGuardExtensions.cs` | `BubbleOnFailure` — the workhorse guard helper for the multi-value-threading pattern |
 | `InputError.cs` | `sealed record InputError(string Field, IReadOnlyList<TKMessage> Errors)` — per-field error rows used in `D2Result.InputErrors`. |
-| `ErrorCodes.cs` | Standardized error code constants — `NOT_FOUND`, `FORBIDDEN`, `VALIDATION_FAILED`, etc. |
+| `ErrorCodes.cs` | Standardized error code constants — `NOT_FOUND`, `FORBIDDEN`, `VALIDATION_FAILED`, `PARTIAL_SUCCESS`, `IDEMPOTENCY_IN_FLIGHT`, `COULD_NOT_BE_SERIALIZED`, `COULD_NOT_BE_DESERIALIZED`, etc. (16 total). |
+| `Unit.cs` | `readonly record struct Unit` with canonical `Unit.Value` — payload-less success marker for handlers whose Ok state carries no data (subscribers, fire-and-forget commands). Used as the `TData` in `D2Result<Unit>`. |
 
 ---
 
@@ -70,6 +71,7 @@ Only `Ok` sets `Success=true`. `SomeFound` and `NotFound` are both failures; con
 | `PayloadTooLarge` | 413 | `PAYLOAD_TOO_LARGE` | Request body exceeds limit. |
 | `TooManyRequests` | 429 | `RATE_LIMITED` (overridable) | Rate-limit middleware tripped. Override `errorCode` for client-side discrimination (e.g. `"OTP_RATE_LIMITED"`). |
 | `Canceled` | 400 | `CANCELED` | Operation canceled by client or server. |
+| `PartialSuccess` (generic only) | 207 | `PARTIAL_SUCCESS` | Multi-target write where SOME targets succeeded (e.g. tiered cache wrote L1 but not L2). **Distinct from `SomeFound`**: `Success=true` here — the operation did partially succeed; callers branch on `IsPartialSuccess`. |
 | `Fail` | 400 (overridable) | (overridable) | Last-resort raw factory. Use only when no semantic factory matches. |
 
 ### Per-code booleans
@@ -79,6 +81,7 @@ result.IsOk                    // == Success
 result.IsCreated               // StatusCode == Created
 result.IsNotFound              // ErrorCode == NOT_FOUND
 result.IsSomeFound             // ErrorCode == SOME_FOUND
+result.IsPartialSuccess        // ErrorCode == PARTIAL_SUCCESS (and Success=true)
 result.IsConflict              // ErrorCode == CONFLICT
 result.IsForbidden             // ErrorCode == FORBIDDEN
 result.IsUnauthorized          // ErrorCode == UNAUTHORIZED
@@ -167,10 +170,26 @@ public override async ValueTask<D2Result<OutputDto?>> ExecuteAsync(I input, Canc
 
 Returns `true` when failure (caller returns `bubbled` immediately); `false` when success (caller continues with `data`).
 
+> **`TOuter?` wrapping is intentional.** `BubbleOnFailure<TInner, TOuter>(out D2Result<TOuter?> bubbled, ...)` returns the outer wrapped as nullable. This means handler signatures consistently end in `D2Result<OutputDto?>` rather than `D2Result<OutputDto>` — the trailing `?` is the codebase convention for handler outputs and ensures `default!` on the success path of `BubbleOnFailure` doesn't lie about non-nullness. New handlers should follow the `D2Result<OutputDto?>` shape.
+
 **When to use which tool:**
 
 - **`BubbleOnFailure` + locals** (workhorse): multi-value threading. Most command + complex handlers, multi-tier query handlers, anything orchestrating across services.
 - **`Bind` / `Map` / `ThenAsync` / `Match`**: genuine linear pipelines where state accumulates step-by-step (sign-in, file processing, risk scoring).
+
+### `WithTraceId` — auto-injection seam
+
+```csharp
+result.WithTraceId(traceId);  // returns a NEW result with TraceId set; original unchanged
+```
+
+`BaseHandler.RunCorePipelineAsync` calls this on every result before returning, auto-injecting the request trace id without touching handler code. Handlers don't normally call `WithTraceId` directly; it's documented because tests + custom pipelines occasionally need it.
+
+### `Combine` — N-input aggregation
+
+`D2Result.Combine(...)` takes 2-5 typed `D2Result<T>` inputs (or an `IEnumerable<D2Result<T>>`) and returns either a tuple/list of unwrapped data on all-success or an aggregated `ValidationFailed` with concatenated `Messages` + `InputErrors` on any-failure. The first non-null `TraceId` across inputs wins; `ErrorCode`s collapse to `VALIDATION_FAILED` (errorCode discrimination is lost intentionally — Combine's failure semantic is "input-bag rejected").
+
+**No `CombineAsync` overload.** Callers materialize first: `var (a, b) = (await taskA, await taskB); D2Result.Combine(a, b);` (or `await Task.WhenAll(...)` for arrays). Folding async into Combine ergonomics adds surface without removing call-site complexity.
 
 ---
 
@@ -186,7 +205,7 @@ There is **no server-side translation middleware**. `TKMessage` ships verbatim o
 
 ## Tests
 
-`server/shared/dotnet/tests/Unit/Result/` — adversarial coverage at 100 % lines / 100 % branches. Categories:
+`server/shared/dotnet/tests/Unit/Result/` — adversarial coverage across every public surface. Categories:
 
 - All factory shapes + custom-message override paths (asserting `TKMessage` Key + Params equality, not raw strings)
 - Per-code booleans, including the `IsTransientRetryable` exclusion of `UnhandledException`

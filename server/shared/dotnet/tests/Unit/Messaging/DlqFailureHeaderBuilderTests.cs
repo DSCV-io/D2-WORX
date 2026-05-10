@@ -144,6 +144,29 @@ public sealed class DlqFailureHeaderBuilderTests
         json.Should().Contain("\"errorCode\"");
     }
 
+    [Fact]
+    public void FromRetriesExhausted_SetsCorrectCauseAndAttemptCount()
+    {
+        var bytes = DlqFailureHeaderBuilder.FromRetriesExhausted(
+            attemptCount: 5, traceId: "abcdef", nackedBy: "audit");
+        var meta = Decode(bytes);
+        meta.Cause.Should().Be(DlqFailureHeaderBuilder.Causes.RETRIES_EXHAUSTED);
+        meta.ErrorCode.Should().Be(DlqFailureHeaderBuilder.Causes.RETRIES_EXHAUSTED);
+        meta.Detail.Should().BeNull();
+        meta.AttemptCount.Should().Be(5);
+        meta.TraceId.Should().Be("abcdef");
+        meta.NackedBy.Should().Be("audit");
+    }
+
+    [Fact]
+    public void FromRetriesExhausted_AttemptCountZero_StillValid()
+    {
+        var bytes = DlqFailureHeaderBuilder.FromRetriesExhausted(attemptCount: 0);
+        var meta = Decode(bytes);
+        meta.Cause.Should().Be(DlqFailureHeaderBuilder.Causes.RETRIES_EXHAUSTED);
+        meta.AttemptCount.Should().Be(0);
+    }
+
     private static DlqFailureMetadata Decode(byte[] bytes)
     {
         return JsonSerializer.Deserialize<DlqFailureMetadata>(

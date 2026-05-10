@@ -402,11 +402,11 @@ public sealed class TKMessageTests
     {
         // Smoke test for the actual D2Result.Messages wire format, which is
         // an array of TKMessage objects.
-        var messages = new[]
-        {
+        TKMessage[] messages =
+        [
             TK.Common.Errors.NOT_FOUND,
             TK.Common.Errors.UNAUTHORIZED.With("scope", "admin"),
-        };
+        ];
 
         var json = JsonSerializer.Serialize(messages);
 

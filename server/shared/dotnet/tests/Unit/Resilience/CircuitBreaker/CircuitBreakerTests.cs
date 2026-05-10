@@ -13,7 +13,7 @@ using Xunit;
 public sealed class CircuitBreakerTests
 {
     // ----------------------------------------------------------------------
-    // Initial state + Closed-path behaviour
+    // Initial state + Closed-path behavior
     // ----------------------------------------------------------------------
 
     [Fact]
@@ -424,9 +424,10 @@ public sealed class CircuitBreakerTests
         try
         {
             // ReSharper disable AccessToDisposedClosure -- await Task.WhenAll
-            // synchronises all closures before the finally Dispose, which R#
+            // synchronizes all closures before the finally Dispose, which R#
             // can't prove statically.
-            await Task.WhenAll(Enumerable.Range(0, concurrent_threads).Select(_ => Task.Run(async () =>
+            await Task.WhenAll(Enumerable.Range(0, concurrent_threads)
+                .Select(_ => Task.Run(async () =>
             {
                 barrier.SignalAndWait();
                 try
@@ -468,7 +469,8 @@ public sealed class CircuitBreakerTests
             // ReSharper disable AccessToDisposedClosure -- await Task.WhenAll
             // synchronises all closures before the finally Dispose, which R#
             // can't prove statically.
-            await Task.WhenAll(Enumerable.Range(0, concurrent_threads).Select(i => Task.Run(async () =>
+            await Task.WhenAll(Enumerable.Range(0, concurrent_threads)
+                .Select(i => Task.Run(async () =>
             {
                 barrier.SignalAndWait();
                 await cb.ExecuteAsync(_ => ValueTask.FromResult(i));
@@ -491,7 +493,7 @@ public sealed class CircuitBreakerTests
         // Defensive: the onStateChange callback is invoked synchronously on
         // the thread triggering the transition, with no try/catch wrapper.
         // A throwing callback propagates to the caller — the test pins the
-        // current behaviour. (Could be argued either way; the explicit
+        // current behavior. (Could be argued either way; the explicit
         // contract documented here is "keep your callback fast and safe".)
         var cb = new CircuitBreaker<int>(
             isFailure: _ => false,

@@ -58,6 +58,8 @@ The classifier accepts any `Exception` and walks three shapes:
 
 Bare `NpgsqlException` instances with no recognizable inner cause (bad connection-string parse, SSL handshake failure, concurrent-connection misuse, internal Npgsql state errors) return `null` — `BaseRepoHandler` then preserves the original `UnhandledException` result. These are programmer / config failures and should NOT be silently treated as transient and retried.
 
+**Precedence**: when both shapes apply (e.g., a `PostgresException` whose inner exception chain also contains a `SocketException`), pass 1 (SQLSTATE classification) wins. Pass 2 (network detection) only fires when pass 1 yields `null` — either the `PostgresException` had no recognized SQLSTATE, the SQLSTATE was `null`, or no `PostgresException` was found at all. Tests pin this ordering.
+
 Client-side `NpgsqlCommand.CommandTimeout` blowups are NOT classified here — Npgsql surfaces them as `OperationCanceledException`, which `BaseHandler.RunCorePipelineAsync` already handles before `BaseRepoHandler` sees the captured exception. Server-side `statement_timeout` cancellations DO reach this classifier as `PostgresException` SQLSTATE `57014` (pass 1) → `DbFailureKind.Timeout`.
 
 ---

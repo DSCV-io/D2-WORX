@@ -62,7 +62,7 @@ The contract producers use to send notifications. Phase 5 D2.Courier client must
 - ❌ No in-app feed (that's Notifications)
 - ✅ Receives delivery request: subject (markdown w/ placeholders), body (markdown w/ placeholders), variables map, channel hints, recipient delivery info, prefs scoping context
 - ✅ Substitutes variables (HTML-escaped on insertion)
-- ✅ Email rendering: markdown → HTML via `Markdig` (`UseAdvancedExtensions().DisableHtml()`), HTML sanitiser via `Ganss.Xss`, brand chrome via Razor template (branding vars only — colour, logo image)
+- ✅ Email rendering: markdown → HTML via `Markdig` (`UseAdvancedExtensions().DisableHtml()`), HTML sanitizer via `Ganss.Xss`, brand chrome via Razor template (branding vars only — color, logo image)
 - ✅ SMS: substitute variables into plain-text body, no rendering, forward via Twilio
 - ✅ Plain-text fallback for email derived automatically via Markdig's `PlainTextRenderer`
 - ✅ Lookup delivery preferences scoped by `(UserId/OrgId) × (RelatedServiceName/Key/Id)`; most-specific match wins

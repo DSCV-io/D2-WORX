@@ -64,16 +64,14 @@ public sealed class MqGenerator : IIncrementalGenerator
 
             if (messagesFile is null)
             {
-                spc.ReportDiagnostic(Diagnostic.Create(
-                    DiagnosticDescriptors.MissingMessagesSpecFile, Location.None));
+                spc.ReportDiagnostic(ToRoslyn(EmitDiagnostic.MissingMessagesSpecFile()));
                 EmitEmpty(spc);
                 return;
             }
 
             if (subsFile is null)
             {
-                spc.ReportDiagnostic(Diagnostic.Create(
-                    DiagnosticDescriptors.MissingSubscriptionsSpecFile, Location.None));
+                spc.ReportDiagnostic(ToRoslyn(EmitDiagnostic.MissingSubscriptionsSpecFile()));
                 EmitEmpty(spc);
                 return;
             }

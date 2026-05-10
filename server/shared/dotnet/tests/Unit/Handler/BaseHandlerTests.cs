@@ -125,10 +125,15 @@ public sealed class BaseHandlerTests
         result.IsUnhandledException.Should().BeTrue();
         result.TraceId.Should().Be(trace_id);
 
-        // Adversarial: the exception details ARE captured in logs (so on-call
-        // can debug) but NOT bled into the D2Result (which crosses transport
-        // boundaries to clients).
-        logger.Entries.Should().Contain(e => e.EventId.Id == 4 && e.Exception != null);
+        // Adversarial: per §3.1, the log MUST NOT receive the raw Exception
+        // object — `ex.Message` can carry connection strings / broker URIs /
+        // OAuth tokens / raw user input. The HandlerThrew delegate now takes
+        // `string exceptionType` only; the structured log entry's Exception
+        // field stays null. On-call still gets the type name + duration; the
+        // full stack/Message has to come from a separate, PII-scrubbed
+        // diagnostic channel (or the consuming service's Serilog
+        // destructuring policy applied to the activity error attribute).
+        logger.Entries.Should().Contain(e => e.EventId.Id == 4 && e.Exception == null);
     }
 
     // ----------------------------------------------------------------------
@@ -550,7 +555,12 @@ public sealed class BaseHandlerTests
         await handler.HandleAsync(new TestInput());
 
         act.Last!.Status.Should().Be(ActivityStatusCode.Error);
-        act.Last.StatusDescription.Should().Be("kaboom");
+
+        // Per §3.1: StatusDescription gets the exception type name only —
+        // never `ex.Message` — because Message can carry connection strings /
+        // broker URIs / OAuth tokens / raw user input. The OTel exporter
+        // surfaces this as a string tag with the same leak surface as logs.
+        act.Last.StatusDescription.Should().Be(nameof(InvalidOperationException));
     }
 
     [Fact]
@@ -769,7 +779,9 @@ public sealed class BaseHandlerTests
 
     private sealed class TestHandler : BaseHandler<TestHandler, TestInput, TestOutput>
     {
-        private readonly Func<TestInput, CancellationToken, ValueTask<D2Result<TestOutput?>>> r_body;
+        private readonly Func<TestInput, CancellationToken, ValueTask<D2Result<TestOutput?>>>
+            r_body;
+
         private readonly HandlerOptions? r_defaultOptions;
         private int _executeCallCount;
 

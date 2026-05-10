@@ -374,7 +374,7 @@ internal static class MutableEmitter
         sb.AppendLine("        if (payload.ValueKind != JsonValueKind.Object)");
         sb.AppendLine("            return ctx;");
 
-        foreach (var spec in new[] { auth, request })
+        foreach (var spec in (ContextSpec[])[auth, request])
         {
             foreach (var section in spec.Sections)
             {
@@ -578,7 +578,7 @@ internal static class MutableEmitter
         sb.AppendLine(
             "        ctx.IsAuthenticated = principal.Identity?.IsAuthenticated ?? false;");
 
-        foreach (var spec in new[] { auth, request })
+        foreach (var spec in (ContextSpec[])[auth, request])
         {
             foreach (var section in spec.Sections)
             {

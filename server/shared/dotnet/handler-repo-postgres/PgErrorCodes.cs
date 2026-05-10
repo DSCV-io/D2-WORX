@@ -64,7 +64,8 @@ public static class PgErrorCodes
     /// </summary>
     /// <param name="ex">The exception to unwrap.</param>
     /// <returns>The underlying <see cref="PostgresException"/>, or null.</returns>
-    public static PostgresException? TryGetPgException(Exception ex) => TryGetPgException(ex, depth: 0);
+    public static PostgresException? TryGetPgException(Exception ex)
+        => TryGetPgException(ex, depth: 0);
 
     private static PostgresException? TryGetPgException(Exception? exception, int depth)
     {

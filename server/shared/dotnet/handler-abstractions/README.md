@@ -31,12 +31,13 @@ public sealed record HandlerOptions
 {
     public bool LogInput { get; init; } = true;
     public bool LogOutput { get; init; } = true;
-    public TimeSpan? SlowThreshold { get; init; }
-    public TimeSpan? CriticalThreshold { get; init; }
-    public bool ValidateAudience { get; init; } = true;
+    public TimeSpan? SlowThreshold { get; init; } = TimeSpan.FromMilliseconds(100);
+    public TimeSpan? CriticalThreshold { get; init; } = TimeSpan.FromMilliseconds(500);
     public IReadOnlySet<string>? RequiredScopes { get; init; }
 }
 ```
+
+> **JWT signature / expiry / audience / fingerprint-binding validation are NOT per-handler.** They're transport-level concerns handled by auth middleware (HTTP / gRPC / AMQP) BEFORE the handler runs. Per-handler scope requirements (`RequiredScopes`) ARE here because they vary by operation; audience / signature / etc. are per-service constants and putting them on `HandlerOptions` would be a footgun. See `HandlerOptions.cs` `<remarks>` for the fuller rationale.
 
 ---
 

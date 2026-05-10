@@ -28,14 +28,19 @@ public sealed record RetryOptions<T>
     /// retries are driven by exceptions only). The only default that
     /// genuinely depends on <c>T</c>; lives on the generic type so the
     /// signature matches without runtime casting. <see cref="RetryHelper"/>
-    /// uses reference-equality against this delegate to detect "caller
-    /// didn't customize ShouldRetry".
+    /// uses <b>reference-equality</b> against this delegate to detect
+    /// "caller didn't customize ShouldRetry" — do NOT rebind to a
+    /// structurally-identical lambda (e.g. <c>options with { ShouldRetry =
+    /// _ => false }</c>) expecting the smart-substitution path to fire.
+    /// Reference, not behavior, is the discriminator.
     /// </summary>
     internal static readonly Func<T, bool> SR_DefaultShouldRetry = static _ => false;
 
     /// <summary>
     /// Gets the maximum number of attempts (including the initial call).
-    /// Default: 5.
+    /// Default: 5. <c>0</c> and <c>1</c> are observably equivalent — the
+    /// attempt counter is post-incremented, so a single execution always
+    /// happens regardless of the cap; values below 2 disable retries.
     /// </summary>
     public int MaxAttempts { get; init; } = RetryDefaults.MAX_ATTEMPTS;
 

@@ -19,7 +19,8 @@ The spec file is the single source of truth for the platform's scope catalog. Ev
 | `D2.Shared.Auth.Scopes.SourceGen.csproj` | csproj — `netstandard2.0`, `IsRoslynComponent`, `PrivateAssets="all"` on Roslyn deps + bundled `System.Text.Json` |
 | `Polyfills/IsExternalInit.cs` | Polyfill enabling `init` accessors on `netstandard2.0` records |
 | `SpecFile.cs` | Pipeline-boundary record `(Path, Content)` — value-equatable for incremental cache stability |
-| `ScopeSpecModels.cs` | Parsed-shape records: `ScopesSpec`, `ScopeEntry` |
+| `ScopesSpec.cs` | Parsed-shape record for the top-level spec — `(IReadOnlyList<ScopeEntry> Scopes)` |
+| `ScopeEntry.cs` | Parsed-shape record for one spec entry — `(string Name, string Description, string ActionSensitivity, bool ImpersonationBlocked, IReadOnlyDictionary<string, string[]>? GrantedTo)` |
 | `ScopeSpecLoader.cs` | JSON → `ScopesSpec` parser. Emits `D2SCP001` on parse failure |
 | `ScopesEmitter.cs` | `ScopesSpec` → C# source. Validates names, enum values, tree positions, etc. Emits `D2SCP002`–`D2SCP008` |
 | `EmitDiagnostic.cs` | Roslyn-decoupled diagnostic record + factories |

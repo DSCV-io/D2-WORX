@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using D2.Shared.I18n.SourceGen.Polyfills;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -49,7 +50,7 @@ public sealed class TKGenerator : IIncrementalGenerator
             var enUs = files.FirstOrDefault(f =>
                 string.Equals(f.Locale, _EN_US_LOCALE, StringComparison.OrdinalIgnoreCase));
 
-            if (enUs is null || string.IsNullOrEmpty(enUs.Content))
+            if (enUs is null || enUs.Content.Falsey())
             {
                 spc.ReportDiagnostic(Diagnostic.Create(
                     DiagnosticDescriptors.MissingEnUsJson,

@@ -51,4 +51,4 @@ dotnet test server/services/edge/tests --no-build --configuration Release       
 
 ## Compose integration
 
-Each service gets a block in [`infra/compose/compose.yml`](../../infra/compose/compose.yml) when it ships. Until shipped, the compose file has a TODO comment listing the planned services.
+Each service gets a block in [`infra/compose/compose.yml`](../../infra/compose/compose.yml) when it ships.

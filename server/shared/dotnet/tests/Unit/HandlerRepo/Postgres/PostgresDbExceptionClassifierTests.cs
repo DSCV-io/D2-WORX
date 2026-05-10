@@ -25,7 +25,7 @@ using Xunit;
 /// This class is the security-critical seam. A misclassification here causes
 /// either silent retries on programmer errors (e.g. a bug surfacing as a
 /// "transient" failure) or pass-through of recoverable failures as
-/// UnhandledException (which kills retries). Every behaviour listed in
+/// UnhandledException (which kills retries). Every behavior listed in
 /// PostgresDbExceptionClassifier's XML doc is asserted below.
 /// </remarks>
 public sealed class PostgresDbExceptionClassifierTests
@@ -210,8 +210,8 @@ public sealed class PostgresDbExceptionClassifierTests
     [Fact]
     public void Classify_BareNpgsqlExceptionWithNoInner_ReturnsNull()
     {
-        // KEY BEHAVIOUR: bare NpgsqlException with NO inner cause
-        // returns null. Used to be ConnectionFailure (per old behaviour
+        // KEY BEHAVIOR: bare NpgsqlException with NO inner cause
+        // returns null. Used to be ConnectionFailure (per old behavior
         // alluded to in PG classifier XML doc); current code makes this
         // explicit programmer-error / config-failure surface that
         // requires investigation.

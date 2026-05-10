@@ -15,7 +15,7 @@ using Xunit;
 
 /// <summary>
 /// DI registration tests. The order-sensitivity of <c>TryAdd</c> is
-/// counter-intuitive — these tests pin both the documented behaviour AND
+/// counter-intuitive — these tests pin both the documented behavior AND
 /// the trap (custom-classifier-after-AddD2Postgres LOSES).
 /// </summary>
 public sealed class PostgresServiceCollectionExtensionsTests
@@ -52,7 +52,7 @@ public sealed class PostgresServiceCollectionExtensionsTests
     [Fact]
     public void AddD2Postgres_CustomClassifierRegisteredFirst_CustomWins()
     {
-        // Documented behaviour: TryAddSingleton sees an existing registration
+        // Documented behavior: TryAddSingleton sees an existing registration
         // and bails. Custom impls registered BEFORE AddD2Postgres win.
         var services = new ServiceCollection();
         services.AddSingleton<IDbExceptionClassifier, CustomClassifier>();
@@ -68,27 +68,19 @@ public sealed class PostgresServiceCollectionExtensionsTests
     [Fact]
     public void AddD2Postgres_CustomClassifierRegisteredAfter_BclLastWinsResolvesCustom()
     {
-        // FLAGGED CLASSIFIER GOTCHA — README contradicts BCL behaviour.
+        // BCL ServiceProvider semantics: when multiple plain
+        // AddSingleton<I, X>() registrations exist for the same service type,
+        // GetRequiredService<I>() returns the LAST-registered impl. AddD2Postgres
+        // uses TryAddSingleton — so a custom IDbExceptionClassifier registered
+        // AFTER still wins because the AddSingleton append is a separate entry.
         //
-        // PostgresServiceCollectionExtensions XML doc + README claim that
-        // a custom IDbExceptionClassifier registered AFTER AddD2Postgres
-        // is "ignored." That is INCORRECT for the singleton path — the
-        // BCL ServiceProvider resolves the LAST-registered service of a
-        // given type when there are multiple registrations.
-        //
-        // Resolution sequence:
-        //   services.AddD2Postgres();             // TryAddSingleton → adds 1st entry (Postgres)
-        //   services.AddSingleton<I, Custom>();   // append → 2nd entry (Custom)
-        //   sp.GetRequiredService<I>();           // returns LAST → Custom
-        //
-        // README/XML wording implies users adding a custom AFTER
-        // AddD2Postgres get the Postgres impl silently. They actually
-        // get their custom impl — but they ALSO get a leaked Postgres
-        // singleton sitting in the DI graph (memory + lifetime cost).
-        //
-        // Either: (a) the doc needs updating to match reality, OR
-        // (b) the impl should switch to Replace() / call Remove() first
-        // so the doc's promise holds.
+        // The trade-off this test pins: the earlier Postgres entry stays in
+        // the descriptor list as an orphaned singleton (constructed if anyone
+        // enumerates IEnumerable<IDbExceptionClassifier>). This is exactly
+        // why the docs steer users toward registering custom BEFORE the call
+        // (TryAdd-no-ops) or using keyed services for multi-classifier
+        // scenarios — both avoid leaving an unused-but-constructable orphan
+        // in the graph.
         var services = new ServiceCollection();
 
         services.AddD2Postgres();
@@ -99,7 +91,8 @@ public sealed class PostgresServiceCollectionExtensionsTests
 
         resolved.Should().BeOfType<CustomClassifier>(
             "BCL ServiceProvider resolves the LAST-registered singleton — "
-            + "the custom registered AFTER wins. README's 'AFTER is ignored' is wrong.");
+            + "the custom registered AFTER wins (with the orphaned Postgres "
+            + "entry as the tradeoff the docs warn against).");
     }
 
     [Fact]

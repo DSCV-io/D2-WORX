@@ -115,7 +115,7 @@ public sealed class IAuthContextExtensionsTests
     public void HasAllScopes_NoArgs_ReturnsTrue()
     {
         // Adversarial: empty params — `All()` over empty returns true. Document
-        // the vacuous-truth behaviour. Callers passing a dynamic empty array
+        // the vacuous-truth behavior. Callers passing a dynamic empty array
         // get an "all of nothing" pass; if that matters for an authz check,
         // the caller must guard at the call site.
         var ctx = new TestAuthContext { Scopes = ScopeSet() };

@@ -35,7 +35,7 @@ public sealed class RetryOptionsTests
     [Fact]
     public void DefaultShouldRetry_NeverRetries()
     {
-        // Sanity check on the cached default predicate's behaviour — accepts
+        // Sanity check on the cached default predicate's behavior — accepts
         // every returned value (i.e. retries are exception-driven only).
         RetryOptions<int>.SR_DefaultShouldRetry(0).Should().BeFalse();
         RetryOptions<int>.SR_DefaultShouldRetry(int.MaxValue).Should().BeFalse();
@@ -52,7 +52,7 @@ public sealed class RetryOptionsTests
     [Fact]
     public void DefaultDelayFunc_DelegatesToTaskDelay()
     {
-        // Behaviour check: zero delay completes ~immediately (matches Task.Delay).
+        // Behavior check: zero delay completes ~immediately (matches Task.Delay).
         RetryDefaults.SR_DelayFunc(TimeSpan.Zero, CancellationToken.None)
             .IsCompletedSuccessfully.Should().BeTrue();
     }

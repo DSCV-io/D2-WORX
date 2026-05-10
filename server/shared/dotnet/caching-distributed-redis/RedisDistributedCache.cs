@@ -91,12 +91,7 @@ public sealed class RedisDistributedCache : IDistributedCache
             if (deserialized.IsOk)
                 return D2Result<T?>.Ok(deserialized.Data);
 
-            return new D2Result<T?>(
-                false,
-                default,
-                deserialized.Messages,
-                statusCode: deserialized.StatusCode,
-                errorCode: deserialized.ErrorCode);
+            return D2Result<T?>.BubbleFail(deserialized);
         }
         catch (RedisException ex)
         {
@@ -146,7 +141,8 @@ public sealed class RedisDistributedCache : IDistributedCache
         catch (RedisException ex)
         {
             RedisCacheTelemetry.SR_Errors.Add(1);
-            RedisCacheLog.RedisOpFailed(r_logger, ex, "GetManyAsync", $"{keys.Count} keys");
+            RedisCacheLog.RedisOpFailed(
+                r_logger, "GetManyAsync", ex.GetType().Name, $"{keys.Count} keys");
             return D2Result<IReadOnlyDictionary<string, T?>>.ServiceUnavailable();
         }
     }
@@ -204,6 +200,9 @@ public sealed class RedisDistributedCache : IDistributedCache
             var serialized = r_serializer.Serialize(value);
             if (!serialized.IsOk)
             {
+                // No non-generic D2Result.BubbleFail overload exists today —
+                // construct manually to surface the serializer failure with
+                // its original messages / errorCode / statusCode intact.
                 return new D2Result(
                     false,
                     serialized.Messages,
@@ -314,14 +313,7 @@ public sealed class RedisDistributedCache : IDistributedCache
         {
             var serialized = r_serializer.Serialize(value);
             if (!serialized.IsOk)
-            {
-                return new D2Result<bool>(
-                    false,
-                    default,
-                    serialized.Messages,
-                    statusCode: serialized.StatusCode,
-                    errorCode: serialized.ErrorCode);
-            }
+                return D2Result<bool>.BubbleFail(serialized);
 
             var written = await Db.StringSetAsync(
                 Prefixed(key),
@@ -576,14 +568,14 @@ public sealed class RedisDistributedCache : IDistributedCache
     private D2Result ServiceUnavailable(RedisException ex, string op, string keyOrCount)
     {
         RedisCacheTelemetry.SR_Errors.Add(1);
-        RedisCacheLog.RedisOpFailed(r_logger, ex, op, keyOrCount);
+        RedisCacheLog.RedisOpFailed(r_logger, op, ex.GetType().Name, keyOrCount);
         return D2Result.ServiceUnavailable();
     }
 
     private D2Result<T?> ServiceUnavailable<T>(RedisException ex, string op, string keyOrCount)
     {
         RedisCacheTelemetry.SR_Errors.Add(1);
-        RedisCacheLog.RedisOpFailed(r_logger, ex, op, keyOrCount);
+        RedisCacheLog.RedisOpFailed(r_logger, op, ex.GetType().Name, keyOrCount);
         return D2Result<T?>.ServiceUnavailable();
     }
 }

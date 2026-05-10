@@ -82,9 +82,12 @@ public sealed class ScopeSpecLoaderTests
         const string json = """
         {
           "scopes": [
-            { "name": "z.last",   "actionSensitivity": "Routine", "impersonationBlocked": false, "grantedTo": { "*": ["*"] } },
-            { "name": "a.first",  "actionSensitivity": "Routine", "impersonationBlocked": false, "grantedTo": { "*": ["*"] } },
-            { "name": "m.middle", "actionSensitivity": "Routine", "impersonationBlocked": false, "grantedTo": { "*": ["*"] } }
+            { "name": "z.last",   "actionSensitivity": "Routine",
+              "impersonationBlocked": false, "grantedTo": { "*": ["*"] } },
+            { "name": "a.first",  "actionSensitivity": "Routine",
+              "impersonationBlocked": false, "grantedTo": { "*": ["*"] } },
+            { "name": "m.middle", "actionSensitivity": "Routine",
+              "impersonationBlocked": false, "grantedTo": { "*": ["*"] } }
           ]
         }
         """;
@@ -92,7 +95,8 @@ public sealed class ScopeSpecLoaderTests
         var result = ScopeSpecLoader.Load("scopes.spec.json", json);
 
         result.Diagnostic.Should().BeNull();
-        result.Spec!.Scopes.Select(s => s.Name).Should().ContainInOrder("z.last", "a.first", "m.middle");
+        result.Spec!.Scopes.Select(s => s.Name)
+            .Should().ContainInOrder("z.last", "a.first", "m.middle");
     }
 
     // ----------------------------------------------------------------------
@@ -165,7 +169,8 @@ public sealed class ScopeSpecLoaderTests
     public void Load_ScopeNameIsNumber_EmitsD2SCP001()
     {
         const string json = """
-        { "scopes": [ { "name": 42, "actionSensitivity": "Routine", "impersonationBlocked": false } ] }
+        { "scopes": [
+            { "name": 42, "actionSensitivity": "Routine", "impersonationBlocked": false } ] }
         """;
 
         var result = ScopeSpecLoader.Load("scopes.spec.json", json);
@@ -203,7 +208,8 @@ public sealed class ScopeSpecLoaderTests
     public void Load_ImpersonationBlockedIsString_EmitsD2SCP001()
     {
         const string json = """
-        { "scopes": [ { "name": "x.y", "actionSensitivity": "Routine", "impersonationBlocked": "true" } ] }
+        { "scopes": [
+            { "name": "x.y", "actionSensitivity": "Routine", "impersonationBlocked": "true" } ] }
         """;
 
         var result = ScopeSpecLoader.Load("scopes.spec.json", json);
@@ -300,7 +306,8 @@ public sealed class ScopeSpecLoaderTests
         const string json = """
         {
           "scopes": [
-            { "name": "x.y", "description": 42, "actionSensitivity": "Routine", "impersonationBlocked": false,
+            { "name": "x.y", "description": 42,
+              "actionSensitivity": "Routine", "impersonationBlocked": false,
               "grantedTo": { "*": ["*"] } }
           ]
         }

@@ -245,7 +245,7 @@ public sealed class PayloadCryptoKeyringTests
     public void AllKids_ReturnsBothActiveAndRetiring()
     {
         using var ring = TestKeyrings.AuditTwoKeys();
-        ring.AllKids.OrderBy(k => k).Should().BeEquivalentTo(new[] { "audit-2026q1", "audit-2026q2" });
+        ring.AllKids.OrderBy(k => k).Should().BeEquivalentTo(["audit-2026q1", "audit-2026q2"]);
     }
 
     [Fact]

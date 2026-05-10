@@ -59,7 +59,7 @@ public sealed class SupportedLocales
             .Select(v => ToBcp47(v!.Trim()))
             .ToList();
 
-        All = values.Count > 0 ? values.AsReadOnly() : [_DEFAULT_BASE_LOCALE];
+        All = values.Truthy() ? values.AsReadOnly() : [_DEFAULT_BASE_LOCALE];
 
         // Build language-prefix → first-locale map. First locale wins per language.
         var langDefaults = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -96,7 +96,7 @@ public sealed class SupportedLocales
     /// <c>"FR-CA"</c> → <c>"fr-CA"</c>). Bare language codes are lowercased
     /// (e.g. <c>"EN"</c> → <c>"en"</c>).
     /// </summary>
-    /// <param name="tag">The locale tag to normalise.</param>
+    /// <param name="tag">The locale tag to normalize.</param>
     /// <returns>The tag in canonical BCP 47 casing.</returns>
     public static string ToBcp47(string tag)
     {
@@ -120,8 +120,10 @@ public sealed class SupportedLocales
     public bool IsValid(string locale) => All.Contains(ToBcp47(locale));
 
     /// <summary>
-    /// Resolves a locale code to its canonical BCP 47 form, falling back to
-    /// <see cref="Base"/> when the input is null or unsupported.
+    /// Resolves a locale code to its canonical BCP 47 form. Resolution order:
+    /// canonical match → language-prefix fallback (first registered locale of
+    /// the same language family) → <see cref="Base"/>. Null / empty / whitespace
+    /// input collapses to <see cref="Base"/>.
     /// </summary>
     /// <param name="locale">The locale code to resolve, or <see langword="null"/>.</param>
     /// <returns>A supported locale code in canonical BCP 47 casing.</returns>

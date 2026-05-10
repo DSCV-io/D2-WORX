@@ -316,6 +316,40 @@ public sealed class RetryHelperTests
         captured.Should().NotBeNull();
     }
 
+    [Fact]
+    public async Task RetryAsync_CtCanceledOce_BypassesCatch_EvenWhenClassifierSaysTransient()
+    {
+        // Pin: the catch filter `ex is not OperationCanceledException ||
+        // !ct.IsCancellationRequested` is what bails out — NOT the IsTransient
+        // classifier. Override IsTransient to ALWAYS say "transient." Without
+        // the catch-filter exclusion, the OCE would be retried — which would
+        // be wrong (caller asked to cancel; retrying is hostile).
+        using var cts = new CancellationTokenSource();
+        var attempts = 0;
+        Exception? captured = null;
+
+        try
+        {
+            await RetryHelper.RetryAsync(
+                (_, ct) =>
+                {
+                    attempts++;
+                    cts.Cancel();
+                    ct.ThrowIfCancellationRequested();
+                    return ValueTask.FromResult(1);
+                },
+                NoDelayOptions() with { IsTransient = _ => true },
+                cts.Token);
+        }
+        catch (OperationCanceledException ex)
+        {
+            captured = ex;
+        }
+
+        captured.Should().NotBeNull();
+        attempts.Should().Be(1, "the catch filter must bail out, not the classifier");
+    }
+
     // ----------------------------------------------------------------------
     // RetryAsync — DelayFunc invoked between attempts
     // ----------------------------------------------------------------------
@@ -428,7 +462,7 @@ public sealed class RetryHelperTests
     public async Task RetryD2ResultAsync_NullOptions_StillUsesDefaultPredicate()
     {
         // Adversarial: caller passes null options. Default classifier still
-        // wires up — but with default delays (1s+), so prove behaviour with a
+        // wires up — but with default delays (1s+), so prove behavior with a
         // single attempt + ShouldRetry never invoked because attempt == max.
         var nullOptionsForceSingleAttempt = new RetryOptions<D2Result<int>>
         {
@@ -528,7 +562,7 @@ public sealed class RetryHelperTests
         // Boundary: MaxAttempts=0 means `attempt < MaxAttempts` is false on
         // attempt 1 (since attempt starts at 0 then increments to 1), so the
         // first attempt's outcome is the FINAL outcome — no retry loop body
-        // executes the continue path. Observable behaviour identical to
+        // executes the continue path. Observable behavior identical to
         // MaxAttempts=1.
         var attempts = 0;
         var act = async () => await RetryHelper.RetryAsync(
@@ -582,7 +616,7 @@ public sealed class RetryHelperTests
     public async Task RetryAsync_CtCanceledDuringDelayFunc_PropagatesOce()
     {
         // Adversarial: caller cancels the CT mid-backoff. The DelayFunc
-        // (Task.Delay or override) honours the CT; the OCE escapes RetryAsync
+        // (Task.Delay or override) honors the CT; the OCE escapes RetryAsync
         // because the catch filter excludes "OCE when ct is canceled."
         //
         // Note: cts is disposed manually AFTER `act` is awaited so the

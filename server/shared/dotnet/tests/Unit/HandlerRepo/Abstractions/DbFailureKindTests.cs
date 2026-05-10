@@ -18,7 +18,7 @@ using Xunit;
 /// dispatch switch has one arm per value plus a wildcard that throws —
 /// adding an enum value WITHOUT updating the switch is a runtime crash on
 /// the first dispatch of the new kind. These tests force the conversation:
-/// when the count changes, the dispatch site needs an audit pass.
+/// when the count changes, the dispatch site needs review.
 /// </summary>
 public sealed class DbFailureKindTests
 {

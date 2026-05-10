@@ -22,7 +22,7 @@ internal static class DiagnosticDescriptors
         id: DiagnosticIds.InvalidTranslationKey,
         title: "Translation key cannot be decomposed into TK constant",
         messageFormat: "Translation key '{0}' is invalid: {1}; the key was skipped",
-        category: Category,
+        category: _CATEGORY,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
 
@@ -31,7 +31,7 @@ internal static class DiagnosticDescriptors
         id: DiagnosticIds.MissingKeyInLocale,
         title: "Translation key missing in locale",
         messageFormat: "Translation key '{0}' is present in en-US but missing in locale '{1}'",
-        category: Category,
+        category: _CATEGORY,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
 
@@ -41,7 +41,7 @@ internal static class DiagnosticDescriptors
         title: "Translation key collision after decomposition",
         messageFormat:
             "Translation keys '{0}' and '{1}' both decompose to '{2}'; the latter was skipped",
-        category: Category,
+        category: _CATEGORY,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
@@ -52,7 +52,7 @@ internal static class DiagnosticDescriptors
         messageFormat:
             "Translation key '{0}' exists in locale '{1}' but is missing from en-US " +
             "(the source of truth); the key is not represented in TK",
-        category: Category,
+        category: _CATEGORY,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
 
@@ -63,7 +63,7 @@ internal static class DiagnosticDescriptors
         messageFormat:
             "The TK source generator could not locate 'en-US.json' among AdditionalFiles; " +
             "verify the consuming csproj declares the contracts/messages/*.json glob",
-        category: Category,
+        category: _CATEGORY,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
@@ -72,9 +72,9 @@ internal static class DiagnosticDescriptors
         id: DiagnosticIds.MalformedJsonCatalog,
         title: "Translation catalog JSON is malformed",
         messageFormat: "Translation catalog '{0}' could not be parsed: {1}",
-        category: Category,
+        category: _CATEGORY,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
-    private const string Category = "D2.Shared.I18n.SourceGen";
+    private const string _CATEGORY = "D2.Shared.I18n.SourceGen";
 }

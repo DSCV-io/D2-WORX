@@ -45,6 +45,15 @@ public sealed class CircuitBreaker<T>
     /// <param name="onStateChange">
     /// Optional callback fired on state transitions. Invoked synchronously on
     /// the thread that triggered the transition.
+    /// <para>
+    /// <b>Footgun:</b> a throwing callback REPLACES the upstream exception that
+    /// caused the transition. A buggy logger or metric emitter inside this
+    /// callback can swap a meaningful "TimeoutException from upstream X"
+    /// with its own "InvalidOperationException from logger" — making outage
+    /// diagnosis painful. Wrap the callback body in your own try/catch (or
+    /// keep it to plain log/metric calls that don't throw) to preserve the
+    /// upstream exception for callers.
+    /// </para>
     /// </param>
     public CircuitBreaker(
         Func<T, bool> isFailure,

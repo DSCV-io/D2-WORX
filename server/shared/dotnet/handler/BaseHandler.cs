@@ -143,6 +143,40 @@ public abstract class BaseHandler<TSelf, TInput, TOutput> : IHandler<TInput, TOu
                 activity?.SetTag("d2.impersonator_org_role", impersonatorOrgRole.ToString());
         }
 
+        // Open a logger scope so every log emitted inside ExecuteAsync (and
+        // every BaseHandlerLog.* call below) carries the universal correlation
+        // fields per §21.2 — traceId, userId, orgId, orgType, orgRole, plus
+        // impersonation kind when relevant. IRequestContext doesn't carry a
+        // separate correlationId field today (transport-middleware concern);
+        // traceId IS the cross-service correlator.
+        var scopeFields = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["d2.handler.name"] = handlerName,
+        };
+
+        if (traceId is not null)
+            scopeFields["d2.trace_id"] = traceId;
+
+        if (Context.Request.UserId is { } scopeUserId)
+            scopeFields["d2.user_id"] = scopeUserId.ToString();
+
+        if (Context.Request.OrgId is { } scopeOrgId)
+            scopeFields["d2.org_id"] = scopeOrgId.ToString();
+
+        if (Context.Request.OrgType is { } scopeOrgType)
+            scopeFields["d2.org_type"] = scopeOrgType.ToString();
+
+        if (Context.Request.OrgRole is { } scopeOrgRole)
+            scopeFields["d2.org_role"] = scopeOrgRole.ToString();
+
+        if (Context.Request.IsImpersonating == true)
+        {
+            scopeFields["d2.impersonation_kind"] =
+                Context.Request.ImpersonationKind?.ToString();
+        }
+
+        using var logScope = Context.Logger.BeginScope(scopeFields);
+
         var stopwatch = Stopwatch.StartNew();
         HandlerTelemetry.Invoked.Add(1, handlerTag);
 
@@ -206,8 +240,8 @@ public abstract class BaseHandler<TSelf, TInput, TOutput> : IHandler<TInput, TOu
             HandlerTelemetry.Failed.Add(1, handlerTag);
             BaseHandlerLog.HandlerDownstreamTimeout(
                 Context.Logger,
-                oce,
                 handlerName,
+                oce.GetType().Name,
                 stopwatch.Elapsed.TotalMilliseconds);
             activity?.SetStatus(ActivityStatusCode.Error, "downstream timeout");
             return (D2Result<TOutput?>.ServiceUnavailable(traceId: traceId), oce);
@@ -217,13 +251,19 @@ public abstract class BaseHandler<TSelf, TInput, TOutput> : IHandler<TInput, TOu
             stopwatch.Stop();
             HandlerTelemetry.Duration.Record(stopwatch.Elapsed.TotalMilliseconds, handlerTag);
             HandlerTelemetry.Failed.Add(1, handlerTag);
+
+            // Per §3.1: pass exception-type-name only — never `ex.Message` —
+            // because Message can carry broker URIs / connection strings /
+            // bearer tokens / raw user input. SetStatus description gets
+            // the type name too (it ends up in OTel exporters as a string
+            // tag, same leak surface).
+            var exceptionType = ex.GetType().Name;
             BaseHandlerLog.HandlerThrew(
                 Context.Logger,
-                ex,
                 handlerName,
-                ex.GetType().Name,
+                exceptionType,
                 stopwatch.Elapsed.TotalMilliseconds);
-            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetStatus(ActivityStatusCode.Error, exceptionType);
             return (D2Result<TOutput?>.UnhandledException(traceId: traceId), ex);
         }
     }

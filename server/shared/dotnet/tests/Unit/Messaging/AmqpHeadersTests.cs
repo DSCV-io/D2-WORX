@@ -47,4 +47,16 @@ public sealed class AmqpHeadersTests
     [Fact]
     public void FailureReason_HasExpectedValue()
         => AmqpHeaders.FAILURE_REASON.Should().Be("x-d2-failure-reason");
+
+    [Fact]
+    public void Context_HasExpectedValue()
+    {
+        // Pin: the propagated-context envelope rides on this exact header
+        // name. RabbitMqMessageBus.PublishAsync writes the base64url-of-JSON
+        // payload to it on publish, and SubscriberChannel reads it back
+        // on consume — both sides parse by exact string match. A silent
+        // rename of this constant would re-route the envelope on the wire
+        // and break cross-service context propagation.
+        AmqpHeaders.CONTEXT.Should().Be("x-d2-context");
+    }
 }

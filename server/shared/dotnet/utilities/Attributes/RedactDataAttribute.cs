@@ -20,6 +20,7 @@ public sealed class RedactDataAttribute : Attribute
     /// <summary>
     /// Gets a custom reason for redaction, if applicable.
     /// </summary>
+    [UsedImplicitly]
     public string? CustomReason { get; init; }
 
     /// <summary>

@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "D² audience spec",
+  "description": "Schema for contracts/auth-audiences/audiences.spec.json — the source-of-truth catalog that D2.Shared.Auth.Audiences.SourceGen reads to emit the Audiences static class into D2.Shared.Auth.Abstractions. Each entry surfaces as a 'public const string {Name} = \"{url}\"' on the emitted Audiences class plus name→url / url→name lookup helpers.",
+  "type": "object",
+  "required": ["audiences"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "audiences": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/audience" }
+    }
+  },
+  "definitions": {
+    "audience": {
+      "type": "object",
+      "required": ["name", "url"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$",
+          "description": "PascalCase identifier — emitted as the const name (e.g. 'Files' → Audiences.Files). Must start with an uppercase letter and contain only letters and digits."
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Absolute URI used as the JWT 'aud' claim value AND as the targetAudience argument to TokenExchangeClient.ExchangeAsync. The const's value is this URL string."
+        },
+        "description": {
+          "type": "string",
+          "description": "Free-form description rendered as XML doc on the emitted constant."
+        }
+      }
+    }
+  }
+}

@@ -6,6 +6,7 @@
 
 namespace D2.Shared.Tests.Unit.Caching.Local;
 
+using System.Collections.Generic;
 using AwesomeAssertions;
 using D2.Shared.Caching;
 using D2.Shared.Caching.Local.Default;
@@ -230,6 +231,116 @@ public sealed class DefaultLocalCacheUnitTests
         await cache.SetAsync("k", "not-a-number");
         var result = await cache.IncrementAsync("k");
         result.IsConflict.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task IncrementAsync_ExistingKeyWithTtl_PreservesTtl_NotResetToDefault()
+    {
+        // Regression for the bug where SetCore was called with `expiration: null`
+        // on the increment-existing path, which fell back to DefaultExpiration
+        // (1h) instead of preserving the existing TTL. Redis-parity contract:
+        // INCR on a key with TTL must keep the TTL; only the first SET sets it.
+        using var cache = NewCache();
+        var shortTtl = TimeSpan.FromMinutes(2);
+
+        await cache.SetAsync("counter", 5L, shortTtl);
+        await Task.Delay(50); // observable bleed in the remaining-TTL window
+        await cache.IncrementAsync("counter");
+
+        var ttlR = await cache.GetTtlAsync("counter");
+        ttlR.IsOk.Should().BeTrue();
+        ttlR.Data.Should().NotBeNull();
+
+        // TTL must remain bounded by the original 2-minute window — not jump
+        // back up to the 1-hour default. Allow generous slack for timer skew.
+        ttlR.Data!.Value.Should().BeLessThan(TimeSpan.FromMinutes(2.1));
+    }
+
+    [Fact]
+    public async Task IncrementAsync_ExistingKeyWithoutTtl_StaysWithoutTtl()
+    {
+        // Companion: existing-no-TTL must stay no-TTL after increment (don't
+        // accidentally introduce a TTL on the increment path either).
+        using var cache = NewCache();
+
+        await cache.SetAsync("counter", 5L); // null expiration → DefaultExpiration applied
+        await cache.IncrementAsync("counter");
+
+        // The original DefaultExpiration is still applied from the initial Set;
+        // increment must NOT layer another TTL on top — verify TTL hasn't been
+        // re-extended by checking it's still bounded by the default window.
+        var ttlR = await cache.GetTtlAsync("counter");
+        ttlR.IsOk.Should().BeTrue();
+        ttlR.Data.Should().NotBeNull();
+        ttlR.Data!.Value.Should().BeLessThan(TimeSpan.FromHours(1.1));
+    }
+
+    [Fact]
+    public async Task SetAsync_ZeroExpiration_ReturnsValidationFailed()
+    {
+        // Regression: previously SetCore silently treated TimeSpan.Zero as
+        // "no expiration" — the worst possible behavior (cache slot kept
+        // forever despite caller signaling zero TTL). Now public surface
+        // validates and rejects.
+        using var cache = NewCache();
+
+        var result = await cache.SetAsync("k", "value", TimeSpan.Zero);
+
+        result.Success.Should().BeFalse();
+        result.IsValidationFailed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SetAsync_NegativeExpiration_ReturnsValidationFailed()
+    {
+        using var cache = NewCache();
+
+        var result = await cache.SetAsync("k", "value", TimeSpan.FromSeconds(-1));
+
+        result.Success.Should().BeFalse();
+        result.IsValidationFailed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SetManyAsync_ContainsEmptyKey_ReturnsValidationFailed()
+    {
+        // Regression: per-entry validation gap. Top-level dict was validated
+        // but individual keys weren't — empty-key entries silently merged
+        // into the prefix-only cache slot.
+        using var cache = NewCache();
+
+        var entries = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["valid"] = "v1",
+            [string.Empty] = "v2",
+        };
+
+        var result = await cache.SetManyAsync(entries);
+
+        result.Success.Should().BeFalse();
+        result.IsValidationFailed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task RemoveManyAsync_ContainsEmptyKey_ReturnsValidationFailed()
+    {
+        using var cache = NewCache();
+
+        var result = await cache.RemoveManyAsync(new[] { "valid", string.Empty });
+
+        result.Success.Should().BeFalse();
+        result.IsValidationFailed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetManyAsync_ContainsEmptyKey_ReturnsValidationFailed()
+    {
+        using var cache = NewCache();
+
+        var result = await cache.GetManyAsync<string>(new[] { "valid", string.Empty });
+
+        result.Success.Should().BeFalse();
+        result.IsValidationFailed.Should().BeTrue();
     }
 
     [Fact]

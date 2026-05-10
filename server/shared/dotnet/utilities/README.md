@@ -30,7 +30,8 @@ Consumed by every other shared lib + service.
 | `Extensions/StringExtensions.cs` | `Truthy()` / `Falsey()` / `ToNullIfEmpty()` / `CleanStr()` / `CleanDisplayStr()` / `TryParseEmail()` / `TryParsePhoneNumber()` / `GetNormalizedStrForHashing()`. |
 | `Extensions/EnumerableExtensions.cs` | `Truthy()` / `Falsey()` for `IEnumerable<T>?` + the `Clean()` helper with configurable empty/null behavior. |
 | `Extensions/CleanEnumEmptyBehavior.cs`, `CleanValueNullBehavior.cs` | Behavior enums for `EnumerableExtensions.Clean()`. |
-| `Extensions/GuidExtensions.cs` | `Truthy()` / `Falsey()` for `Guid` and `Guid?` (treats `Guid.Empty` as falsey). |
+| `Extensions/GuidExtensions.cs` | `Truthy()` / `Falsey()` for `Guid` and `Guid?` (treats `Guid.Empty` as falsey) PLUS `string?.TryParseTruthyNull(out Guid?)` — the canonical "parse a Guid from optional string input, collapse missing/unparseable/empty to null" helper. |
+| `Extensions/EnumExtensions.cs` | `string?.TryParseTruthyNull<TEnum>(out TEnum?)` — case-insensitive `Enum.TryParse` wrapper that collapses missing/unparseable/empty to `null`; pass-through on numeric strings (matches BCL behavior — does NOT call `Enum.IsDefined`); supports comma-separated `[Flags]` syntax. |
 | `Serialization/SerializerOptions.cs` | Frozen `JsonSerializerOptions` presets — `SR_IgnoreCycles`, `SR_Web`, `SR_WebIgnoreNull`. |
 
 ---
@@ -64,6 +65,30 @@ if (items.Falsey()) ...                   // true for null OR zero elements
 Guid? id = ...;
 if (id.Truthy()) ...                      // true for non-null AND non-empty
 ```
+
+### Optional-string parsers — `TryParseTruthyNull(out Guid?)` / `TryParseTruthyNull<TEnum>(out TEnum?)`
+
+The **canonical** way to parse a `Guid` or enum from optional string input. Use these instead of hand-rolled `Guid.TryParse` + null check or `Enum.TryParse` + `Enum.IsDefined` — they collapse every "missing / unparseable / empty / `Guid.Empty`" case into a single `null` outcome.
+
+```csharp
+// Guid parser — string -> Guid? (Guid.Empty maps to null)
+"3fa85f64-5717-4562-b3fc-2c963f66afa6".TryParseTruthyNull(out Guid? id);
+// id = Guid("3fa85f64-...")
+
+((string?)null).TryParseTruthyNull(out Guid? id);              // id = null
+"  ".TryParseTruthyNull(out Guid? id);                          // id = null
+"00000000-0000-0000-0000-000000000000".TryParseTruthyNull(out Guid? id); // id = null
+"not-a-guid".TryParseTruthyNull(out Guid? id);                  // id = null
+
+// Enum parser — string -> TEnum? (case-insensitive)
+"Active".TryParseTruthyNull(out Status? s);                     // s = Status.Active
+"active".TryParseTruthyNull(out Status? s);                     // s = Status.Active (case-insensitive)
+"Read,Write".TryParseTruthyNull(out Permission? p);             // p = Read | Write ([Flags] syntax)
+((string?)null).TryParseTruthyNull(out Status? s);              // s = null
+"NotADefinedMember".TryParseTruthyNull(out Status? s);          // s = null
+```
+
+**Gotcha — numeric-string pass-through**: `Enum.TryParse` accepts ANY integer literal as a value (it does NOT call `Enum.IsDefined`). So `"99999".TryParseTruthyNull<Status>(out var s)` returns `true` with `s = (Status)99999`, even though no member matches. This matches BCL behavior; `[Flags]` enums depend on it for combined-value parsing. If you need to reject undefined integer values for unflagged enums, layer your own `Enum.IsDefined` check on top.
 
 ### Display-friendly cleaners — `CleanStr()` / `CleanDisplayStr()`
 
@@ -136,6 +161,8 @@ public sealed record Contact
 Failure messages are wire-format `TKMessage`s; the SvelteKit client renders them in the active locale via Paraglide. Server stays locale-unaware on the response path.
 
 ### Hash key composition — `GetNormalizedStrForHashing()`
+
+
 
 Joins a `string?[]` with `|` separators after lowercasing + cleaning each part. Empty parts are preserved as empty segments so positional alignment is retained — important when callers build composite hash keys like `"city|region|country"` where any field may be missing.
 
@@ -292,18 +319,20 @@ Standard SQL isolation level enum with phenomena matrix. Values: `ReadUncommitte
 
 ## Tests
 
-`server/shared/dotnet/tests/Unit/Utilities/` — adversarial coverage at 100% lines + 100% branches. Categories:
+`server/shared/dotnet/tests/Unit/Utilities/` — adversarial coverage across every public surface. Categories:
 
 - All `Truthy`/`Falsey` overloads — null, empty, whitespace-only, multi-element, boundary values.
 - `ToNullIfEmpty` — null/empty/whitespace/trim/identity paths.
 - `CleanStr` / `CleanDisplayStr` — Unicode multi-script preservation, allowed-char retention, all-stripped → null.
 - `TryParseEmail` / `TryParsePhoneNumber` — happy paths + every documented failure condition (null, empty, whitespace, no `@`, no dot, double `@`, embedded space, length out of bounds, non-digit input, etc.). Asserts `D2Result.IsValidationFailed` and the carried `TK.Common.Validation.EMAIL_INVALID` / `PHONE_INVALID` key.
+- `GuidExtensions.TryParseTruthyNull` — happy path + null/empty/whitespace/`Guid.Empty`-string/malformed/oversized adversarial coverage; verifies the null-out-Guid? semantic.
+- `EnumExtensions.TryParseTruthyNull<TEnum>` — case-insensitive matching, comma-separated `[Flags]` syntax, numeric-string pass-through (documents the BCL "no `Enum.IsDefined`" behavior), null/empty/whitespace/unknown-name adversarial coverage.
 - `GetNormalizedStrForHashing` — empty array, all-falsey, mixed, position-preservation property.
 - `EnumerableExtensions.Clean` — every (3 × 2) combination of empty-behavior and value-null-behavior, plus generator-backed single-enumeration property.
 - `RedactDataAttribute` — defaults, init-only setters, `AttributeUsage` target, reflective attribute discovery.
 - `SerializerOptions` — camelCase, string-enums, null preservation/omission, cycle tolerance.
 - `ConnectionStringHelper` — pass-through cases, URI parsing for both Redis and Postgres, default ports, URL-encoded credentials, env-var resolution including missing-var throws (with collection-isolated env-mutating tests).
-- `D2Env` — `ApplyVars` precedence (process-env wins, later files override earlier), file discovery ("first dir with any match wins"), depth-limit exhaustion, platform comparer test seam, `Load()` idempotency.
+- `D2Env` — `ApplyVars` precedence (process-env wins, later files override earlier), file discovery ("first dir with any match wins"), depth-limit exhaustion, platform comparer test seam, `Load()` idempotency. Discovery tests use explicit non-existent file names to avoid loading the repo's real `.env.secrets` into the test process.
 
 Run: `dotnet test server/shared/dotnet/tests`
 

@@ -208,7 +208,7 @@ public static class RetryHelper
     /// actualDelay     = jitter ? random(0, calculatedDelay) : calculatedDelay
     /// </code>
     /// The exponent is clamped to 63 so <c>Math.Pow</c> cannot overflow into
-    /// a signalling NaN; <c>Math.Min(double.PositiveInfinity, maxDelayMs)</c>
+    /// a signaling NaN; <c>Math.Min(double.PositiveInfinity, maxDelayMs)</c>
     /// safely returns <c>maxDelayMs</c>.
     /// </remarks>
     internal static TimeSpan CalculateDelay(

@@ -81,7 +81,9 @@ public sealed partial class D2Result<TData> : D2Result
     /// to auto-inject the request trace id on every typed result.
     /// </summary>
     /// <param name="traceId">The trace id to attach.</param>
-    /// <returns>A new <see cref="D2Result{TData}"/> with <paramref name="traceId"/> applied.</returns>
+    /// <returns>
+    /// A new <see cref="D2Result{TData}"/> with <paramref name="traceId"/> applied.
+    /// </returns>
     public new D2Result<TData> WithTraceId(string? traceId)
         => new(Success, Data, Messages, InputErrors, StatusCode, ErrorCode, traceId);
 }

@@ -16,23 +16,32 @@ Copyright (c) DCSV. All rights reserved.
     slice that domain code, request-context, handler-abstractions, and the runtime
     D2.Shared.Auth all reference for shared enums and string constants.
 
-    The Scopes static partial class is emitted at build time by the sibling
-    D2.Shared.Auth.Scopes.SourceGen project (../auth-scopes-source-gen/),
-    referenced below as a Roslyn analyzer (no runtime dll dependency).
+    Two sibling Roslyn analyzers contribute generated code to this assembly:
+
+      - D2.Shared.Auth.Scopes.SourceGen (../auth-scopes-source-gen/) →
+        Scopes.g.cs, driven by contracts/auth-scopes/scopes.spec.json
+      - D2.Shared.Auth.Audiences.SourceGen (../auth-audiences-source-gen/) →
+        Audiences.g.cs, driven by contracts/auth-audiences/audiences.spec.json
+
+    Both reference below with OutputItemType="Analyzer" (no runtime dll dep).
   -->
 
   <ItemGroup>
     <ProjectReference Include="..\auth-scopes-source-gen\D2.Shared.Auth.Scopes.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\auth-audiences-source-gen\D2.Shared.Auth.Audiences.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
     <!--
-      Surface the contracts/auth-scopes spec to the source generator. Single
-      source of truth for the platform's scope catalog.
+      Surface the spec files to the source generators. Single source of truth
+      for both the platform's scope catalog and audience catalog.
     -->
     <AdditionalFiles Include="..\..\..\..\contracts\auth-scopes\scopes.spec.json" />
+    <AdditionalFiles Include="..\..\..\..\contracts\auth-audiences\audiences.spec.json" />
   </ItemGroup>
 
   <ItemGroup>

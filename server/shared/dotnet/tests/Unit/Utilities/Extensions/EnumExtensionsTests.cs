@@ -32,7 +32,9 @@ public sealed class EnumExtensionsTests
         Blue = 2,
     }
 
-    /// <summary>Test enum with no members — verifies "no defined value can match" handling.</summary>
+    /// <summary>
+    /// Test enum with no members — verifies "no defined value can match" handling.
+    /// </summary>
     public enum EmptyTest
     {
     }
@@ -184,7 +186,7 @@ public sealed class EnumExtensionsTests
     }
 
     [Fact]
-    public void TryParseTruthyNull_OnNumericStringOutsideDefinedMembers_ReturnsTrueWithUndefinedValue()
+    public void TryParseTruthyNull_OnUndefinedNumericValue_ReturnsTrueWithIntegerValue()
     {
         // Adversarial: Enum.TryParse with a numeric string accepts ANY integer
         // representable as the underlying type — even when no enum member matches.

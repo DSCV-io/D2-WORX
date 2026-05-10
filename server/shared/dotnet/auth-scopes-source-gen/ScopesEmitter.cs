@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using D2.Shared.Auth.Scopes.SourceGen.Polyfills;
 
 /// <summary>
 /// Pure logic for emitting the <c>Scopes</c> static partial class source from
@@ -186,7 +187,7 @@ internal static class ScopesEmitter
 
     private static bool ValidateScopeName(string name, out string reason)
     {
-        if (string.IsNullOrEmpty(name))
+        if (name.Falsey())
         {
             reason = "name is empty";
             return false;
@@ -362,12 +363,12 @@ internal static class ScopesEmitter
 
             foreach (var kvp in scope.GrantedTo)
             {
-                var orgsFor = kvp.Key == "*" ? orgTypeNames : new[] { kvp.Key };
+                IEnumerable<string> orgsFor = kvp.Key == "*" ? orgTypeNames : [kvp.Key];
                 foreach (var org in orgsFor)
                 {
                     foreach (var role in kvp.Value)
                     {
-                        var rolesFor = role == "*" ? roleNames : new[] { role };
+                        IEnumerable<string> rolesFor = role == "*" ? roleNames : [role];
                         foreach (var r in rolesFor)
                         {
                             var key = (org, r);

@@ -59,7 +59,7 @@ internal static class PropagatedEmitter
         ContextSpec auth, ContextSpec request)
     {
         var list = new List<PropertySpec>();
-        foreach (var spec in new[] { auth, request })
+        foreach (var spec in (ContextSpec[])[auth, request])
         {
             foreach (var section in spec.Sections)
             {
@@ -204,6 +204,7 @@ internal static class PropagatedEmitter
         sb.AppendLine("using System;");
         sb.AppendLine("using System.Text.Json;");
         sb.AppendLine("using System.Text.Json.Serialization;");
+        sb.AppendLine("using D2.Shared.Utilities.Extensions;");
         sb.AppendLine();
         sb.AppendLine($"namespace {_TARGET_NAMESPACE};");
         sb.AppendLine();
@@ -263,12 +264,14 @@ internal static class PropagatedEmitter
         sb.AppendLine("    /// <param name=\"encoded\">The encoded header value.</param>");
         sb.AppendLine($"    public static {_RECORD_NAME}? TryDecode(string? encoded)");
         sb.AppendLine("    {");
-        sb.AppendLine("        if (string.IsNullOrWhiteSpace(encoded)) return null;");
-        sb.AppendLine("        if (encoded.Length > MAX_HEADER_LENGTH) return null;");
+        sb.AppendLine("        if (encoded.Falsey()) return null;");
+        sb.AppendLine("        // null/empty/whitespace-only header → no propagation context.");
+        sb.AppendLine("        // Falsey()-returns-false guarantees non-null; the ! is per rules.md §5.1.");
+        sb.AppendLine("        if (encoded!.Length > MAX_HEADER_LENGTH) return null;");
         sb.AppendLine();
         sb.AppendLine("        try");
         sb.AppendLine("        {");
-        sb.AppendLine("            var json = Base64Url.Decode(encoded);");
+        sb.AppendLine("            var json = Base64Url.Decode(encoded!);");
         sb.AppendLine($"            var context = JsonSerializer.Deserialize<{_RECORD_NAME}>(json, sr_jsonOptions);");
         sb.AppendLine("            return context is null || !FieldsWithinBounds(context) ? null : context;");
         sb.AppendLine("        }");

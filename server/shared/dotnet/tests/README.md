@@ -17,57 +17,45 @@ Per-service tests (Edge, Audit, Courier, Notifications, Files) live separately a
 ```
 server/shared/dotnet/tests/
 ├─ D2.Shared.Tests.csproj
-└─ Unit/
-   ├─ Result/                                          # tests for D2.Shared.Result
-   │  ├─ D2ResultTests.cs                              # non-generic factories + ctor
-   │  ├─ D2ResultBooleansTests.cs                      # per-code booleans + combined helpers
-   │  ├─ D2ResultGenericTests.cs                       # generic factories + Check* + BubbleFail / Bubble
-   │  ├─ D2ResultMonadicTests.cs                       # Bind / Map / Match + monadic laws
-   │  ├─ D2ResultAsyncExtensionsTests.cs               # BindAsync / MapAsync / ThenAsync (Task + ValueTask)
-   │  └─ D2ResultGuardTests.cs                         # BubbleOnFailure
-   ├─ Resilience/                                      # tests for D2.Shared.Resilience
-   │  ├─ CircuitBreaker/
-   │  │  ├─ CircuitBreakerOptionsTests.cs              # defaults + nullable-param ctor convention
-   │  │  ├─ CircuitBreakerTests.cs                     # state machine + concurrency + adversarial
-   │  │  └─ CircuitOpenExceptionTests.cs               # exception ctor variants
-   │  ├─ Retry/
-   │  │  ├─ RetryHelperTests.cs                        # transient classifier + backoff math + cancellation
-   │  │  └─ RetryOptionsTests.cs                       # defaults + init-only overrides
-   │  ├─ Singleflight/
-   │  │  └─ SingleflightTests.cs                       # dedup + cancellation isolation + concurrency stress
-   │  └─ Pipeline/
-   │     ├─ ResilientPipelineTests.cs                  # composition order + exception → D2Result mapping
-   │     ├─ ResilientPipelineBuilderTests.cs           # fluent DSL + keyed-DI overloads
-   │     ├─ ResilientPipelineServiceCollectionExtensionsTests.cs  # AddResilientPipeline registration
-   │     ├─ SingleflightLayerTests.cs                  # SF layer wrapping
-   │     ├─ CircuitBreakerLayerTests.cs                # CB layer wrapping
-   │     └─ RetryLayerTests.cs                         # Retry layer wrapping
-   ├─ Utilities/                                       # tests for D2.Shared.Utilities
-   │  ├─ Attributes/
-   │  │  └─ RedactDataAttributeTests.cs                # attribute defaults + reflective discovery
-   │  ├─ Configuration/
-   │  │  ├─ ConnectionStringHelperTests.cs             # URI ↔ wire-format conversion + env-var resolution
-   │  │  ├─ D2EnvTests.cs                              # .env file loader + discovery + precedence
-   │  │  └─ EnvVarMutatingFixture.cs                   # collection fixture for env-var-touching tests
-   │  ├─ Extensions/
-   │  │  ├─ EnumerableExtensionsTests.cs               # Truthy / Falsey / Clean
-   │  │  ├─ GuidExtensionsTests.cs                     # Truthy / Falsey for Guid / Guid?
-   │  │  └─ StringExtensionsTests.cs                   # boundary helpers + TryParseEmail / TryParsePhoneNumber → D2Result<string>
-   │  └─ Serialization/
-   │     └─ SerializerOptionsTests.cs                  # frozen JsonSerializerOptions presets
-   └─ I18n/                                            # tests for D2.Shared.I18n + .Abstractions + .SourceGen
-      ├─ TKMessageTests.cs                             # equality + immutability + JSON wire format roundtrip
-      ├─ SupportedLocalesTests.cs                      # ToBcp47 + Configure + IsValid + Resolve (instance, no [Collection] needed)
-      ├─ TranslatorTests.cs                            # T() lookup + parameter substitution + concurrency stress
-      ├─ I18nServiceCollectionExtensionsTests.cs       # AddD2I18n DI registration
-      ├─ TKGeneratedTests.cs                           # smoke: SrcGen output matches en-US.json end-to-end
-      └─ SourceGen/
-         ├─ KeyDecomposerTests.cs                      # JSON-key → TK-path decomposition, all invalid edges
-         ├─ TKEmitterTests.cs                          # snapshot + adversarial (D2I18N001-006 emission)
-         └─ DiagnosticIdsTests.cs                      # diagnostic ID stability gate
+├─ Unit/                                                # in-process unit + behavior tests
+│  ├─ Auth/                                             # → auth-abstractions enums + records + JwtClaimTypes + RequestHeaders
+│  │  └─ SourceGen/                                     # → auth-scopes-source-gen + auth-audiences-source-gen
+│  ├─ AuthContext/                                      # → auth-context-abstractions
+│  ├─ AuthOutbound/                                     # → auth-outbound (ServiceIdentity / TokenExchange / Grpc / Telemetry)
+│  │  └─ Fixtures/                                      # stubs + jwt builder + counter listeners
+│  ├─ Caching/                                          # → caching-abstractions + caching-local-default
+│  │  ├─ Abstractions/                                  # InputFailures + LocalCacheOptions
+│  │  ├─ Distributed/                                   # JsonCacheSerializer
+│  │  └─ Local/                                         # DefaultLocalCache (unit + behavior with real IMemoryCache)
+│  ├─ Context/                                          # → context-abstractions (request-context interfaces + propagation)
+│  │  └─ SourceGen/                                     # → context-source-gen
+│  ├─ Encryption/                                       # → encryption (PayloadCrypto + keyring + frame)
+│  ├─ Handler/                                          # → handler (BaseHandler + telemetry + DI)
+│  ├─ HandlerRepo/                                      # → handler-repo (BaseRepoHandler)
+│  │  ├─ Abstractions/                                  # → handler-repo-abstractions (D2ResultDb* + DbErrorCodes + IDbExceptionClassifier)
+│  │  └─ Postgres/                                      # → handler-repo-postgres (PgErrorCodes + PostgresDbExceptionClassifier)
+│  ├─ I18n/                                             # → i18n + i18n-abstractions
+│  │  └─ SourceGen/                                     # → i18n-source-gen
+│  ├─ Messaging/                                        # → messaging-abstractions + messaging-rabbitmq
+│  │  ├─ Channels/, Connection/, Encryption/, Idempotency/, Publishing/, Subscribing/, Telemetry/, Topology/
+│  │  └─ SourceGen/                                     # → messaging-source-gen (test coverage TBD)
+│  ├─ RequestContext/, RequestContextAbstractions/      # → context-abstractions (folder rename pending)
+│  ├─ Resilience/                                       # → resilience (CircuitBreaker / Retry / Singleflight / Pipeline)
+│  ├─ Result/                                           # → result (D2Result + factories + monadic + guard + Combine + Unit + ErrorCodes)
+│  └─ Utilities/                                        # → utilities (Falsey/Truthy + TryParseTruthyNull + RedactDataAttribute + D2Env + ConnectionStringHelper)
+└─ Integration/                                         # Testcontainers-backed real-infrastructure tests
+   ├─ Caching/
+   │  ├─ Distributed/                                   # RedisDistributedCache + RedisCacheInvalidationBackplane (Redis container)
+   │  └─ Tiered/                                        # DefaultTieredCache (Redis container shared with Distributed)
+   └─ Messaging/                                        # RabbitMQ container — publish/consume + idempotency + DLQ + topology + adversarial
 ```
 
-The tree mirrors the source layout: `Unit/{LibName}/{LibSourceFile}Tests.cs` per lib being tested. New libs add their own subdirectory under `Unit/`.
+The tree mostly mirrors the source layout (`Unit/{LibName}/{LibSourceFile}Tests.cs` per lib). Two exceptions worth flagging:
+
+- `Unit/RequestContext/` and `Unit/RequestContextAbstractions/` test code that lives in `context-abstractions/` — the source dirs they used to mirror were consolidated. Folder consolidation to `Unit/Context/` is on the follow-up backlog.
+- `Unit/AuthOutbound/Fixtures/` is the only sub-folder under `Unit/` that explicitly groups fixtures into a `Fixtures/` directory; everywhere else, fixture types live next to the tests that use them. Consistent with the prevailing codebase pattern; not re-organized for now.
+
+Integration tests use xUnit collection fixtures (`[Collection("Redis")]`, `[Collection("RabbitMq")]`) so the heavyweight container fixtures spin up exactly once per test run.
 
 ---
 
@@ -80,6 +68,9 @@ The tree mirrors the source layout: `Unit/{LibName}/{LibSourceFile}Tests.cs` per
 | `Microsoft.NET.Test.Sdk` | per CPM | MSBuild test integration. |
 | `AwesomeAssertions` | per CPM | Fluent assertion API (`result.Should().BeOk()`). MIT-licensed fork of FluentAssertions; v8+ of FA went commercial, AwesomeAssertions preserves the Apache 2.0 lineage. |
 | `JetBrains.Annotations` | per CPM | `[MustDisposeResource]`, `[Pure]`, etc. on test fixtures. |
+| `Testcontainers.Redis` / `Testcontainers.RabbitMq` | per CPM | Integration test containers (real Redis + real RabbitMQ via Docker). Skipped when Docker isn't reachable. |
+| `Microsoft.Data.Sqlite` | per CPM | EF / DbException test fakes (e.g. PgExceptionFactory shaping for handler-repo-postgres tests). |
+| `FakeItEasy` | per CPM | Lightweight fake / stub framework where hand-rolled stubs would be too verbose. |
 | MTP (Microsoft Testing Platform) | SDK-bundled | Modern test runner — `<UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>` in csproj. Replaces VSTest. |
 
 Test packages are pinned in `server/Directory.Packages.props` (Central Package Management); this csproj references by ID only.
@@ -111,20 +102,22 @@ CS1591 / SA1600 (missing XML doc) are suppressed in this csproj only; non-test l
 const string trace_id = "trace-abc-123";
 ```
 
+Non-const test-locals (var, out var, etc.) MUST be `camelCase` per `docs/dev/rules.md §7.1`.
+
 ### Adversarial coverage
 
 Per `docs/TESTS.md`, every test file aims at the 8-category checklist where applicable:
 
 1. **Happy path** — every factory creates the expected shape
-2. **Garbage input** — null/empty messages, null traceId, default ErrorCode
-3. **Boundary values** — empty list vs single-item vs multi-item; default(T) for value types vs null for ref types
-4. **Format validation** — N/A for value types
-5. **Cross-field deps** — Success vs Data nullability, errorCode-override breaking the per-code boolean
-6. **Error propagation** — `BubbleFail` chain preservation, `Bind` short-circuiting, async chain mid-failure
-7. **Idempotency** — N/A for immutable value types
-8. **Concurrency** — N/A for immutable value types (verified by inspection — all properties are init-only / readonly)
+2. **Garbage input** — null/empty/whitespace, oversized, malformed
+3. **Boundary values** — empty list vs single-item vs multi-item; default(T) vs explicit; off-by-one
+4. **Format validation** — regex / length / type checks
+5. **Cross-field deps** — interaction between two arguments / two state slots
+6. **Error propagation** — `BubbleFail` chain preservation, `Bind` short-circuiting, exception → D2Result mapping
+7. **Idempotency** — repeat-call semantics on mutating ops
+8. **Concurrency** — thread-stress on mutable shared state (`Parallel.ForEachAsync`, `Task.WhenAll`)
 
-For pure value types like `D2Result`, categories 4/7/8 are degenerate. For libs with I/O (caching, messaging, repository) that join this test project later, those categories become live.
+For pure value types like `D2Result`, categories 4/7/8 are degenerate. For libs with I/O (caching, messaging, repository) those categories are live and pinned.
 
 ### Lazy-evaluation tests
 
@@ -152,17 +145,20 @@ For each monad-shaped type (currently just `D2Result<T>`'s `Bind`), verify:
 
 Both success and failure paths exercised.
 
+### `[LoggerMessage]` PII contract
+
+Every `[LoggerMessage]` partial method whose source-side call sites observe potentially PII-bearing exceptions (broker URIs, connection strings, OAuth tokens, raw user input) is reflection-pinned by `Unit/Messaging/Telemetry/LoggerMessageDelegateContractTests.cs` to forbid `Exception` parameters. The pattern is the standard guard for `docs/dev/rules.md §3.1` across the messaging, caching-redis, caching-tiered, handler, and auth-outbound libs. Sibling libs follow the same rule even where a contract test isn't (yet) in place.
+
 ---
 
 ## Running
 
 ```bash
 dotnet test server/shared/dotnet/tests                # all tests in this project
-dotnet test server/shared/dotnet/tests --filter Result # only Result tests
 dotnet test server/D2.slnx                             # full solution (all test projects)
 ```
 
-Test discovery is via xunit.v3 + MTP. Rider / VS Test Explorer pick up tests automatically.
+Test discovery is via xunit.v3 + MTP. Rider / VS Test Explorer pick up tests automatically. Integration tests skip cleanly when Docker isn't reachable.
 
 ### Coverage
 
@@ -179,18 +175,19 @@ dotnet test server/shared/dotnet/tests -property:CollectCoverage=true -property:
 The full Cobertura XML lands at `server/shared/dotnet/tests/coverage/coverage.cobertura.xml`. The top of the file has the summary attributes — read these for the at-a-glance result:
 
 ```xml
-<coverage line-rate="1" branch-rate="1" version="..." timestamp="..."
-          lines-covered="324" lines-valid="324"
-          branches-covered="84" branches-valid="84">
+<coverage line-rate="0.99" branch-rate="0.95" version="..." timestamp="..."
+          lines-covered="..." lines-valid="..."
+          branches-covered="..." branches-valid="...">
 ```
 
-`line-rate="1"` = 100%. `branch-rate="0.988"` = 98.8%. Lines / branches covered vs valid are the absolute counts.
+`line-rate="1"` = 100%. Lines / branches covered vs valid are the absolute counts.
 
 A summary table also prints to stdout when the test run goes through the MSBuild VSTest target (e.g. when source files changed and a build is required). When the build is up-to-date and MTP runs the test exe directly, the table is suppressed but the XML is still written.
 
 **For line-by-line view:** open `coverage.cobertura.xml` in Rider via `Tools → Unit Tests → Show Coverage Tree → Add Coverage Snapshot`. Or just use Rider's "Cover Unit Tests" gutter button which produces the same data interactively.
 
 **Use this BEFORE committing** a new lib's tests to catch:
+
 - Lib lines / branches / methods not exercised by any test
 - Branches missed because tests cover only one side of a `??` / ternary / nullable check (the most common gap)
 
@@ -200,6 +197,4 @@ A summary table also prints to stdout when the test run goes through the MSBuild
 
 ## When to expand this project
 
-A new shared lib lands in `server/shared/dotnet/{lib}/` → create `Unit/{Lib}/` here with one test file per source file (`{SourceFile}Tests.cs`). Project reference to the lib goes in `D2.Shared.Tests.csproj`.
-
-Integration tests (Testcontainers spin-up of Postgres, Redis, RabbitMQ) will land in `Integration/` subdirectory when libs that need real infrastructure (caching-redis, messaging) ship.
+A new shared lib lands in `server/shared/dotnet/{lib}/` → create `Unit/{Lib}/` here with one test file per source file (`{SourceFile}Tests.cs`). If the lib needs real infrastructure (a real DB, a real broker, a real cache), add `Integration/{Lib}/` with a Testcontainers fixture instead. Project reference to the lib goes in `D2.Shared.Tests.csproj`.

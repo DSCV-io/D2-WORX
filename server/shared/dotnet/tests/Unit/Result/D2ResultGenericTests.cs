@@ -435,5 +435,63 @@ public sealed class D2ResultGenericTests
         result.TraceId.Should().Be("t");
     }
 
+    // ----------------------------------------------------------------------
+    // PartialSuccess — generic-only factory; Success=true with PARTIAL_SUCCESS
+    // ----------------------------------------------------------------------
+
+    [Fact]
+    public void PartialSuccess_DefaultMessages_UsesPartialSuccessTk()
+    {
+        var data = new Payload("partial");
+
+        var result = D2Result<Payload>.PartialSuccess(data);
+
+        result.Success.Should().BeTrue();
+        result.Data.Should().Be(data);
+        result.StatusCode.Should().Be(HttpStatusCode.MultiStatus);
+        result.ErrorCode.Should().Be(ErrorCodes.PARTIAL_SUCCESS);
+        result.Messages.Should().Equal(TK.Common.Errors.PARTIAL_SUCCESS);
+        result.IsPartialSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public void PartialSuccess_CustomMessages_OverridesDefault()
+    {
+        var result = D2Result<Payload>.PartialSuccess(
+            data: new Payload("p"),
+            messages: [TK.Common.Errors.UNKNOWN]);
+
+        result.Messages.Should().Equal(TK.Common.Errors.UNKNOWN);
+    }
+
+    [Fact]
+    public void PartialSuccess_NoData_AllowsDefaultPayload()
+    {
+        // Adversarial: callers may want to signal partial-success with no payload
+        // (e.g. async fire-and-forget multi-target). Default(TData) must be valid.
+        var result = D2Result<Payload>.PartialSuccess();
+
+        result.Success.Should().BeTrue();
+        result.Data.Should().BeNull();
+        result.IsPartialSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public void PartialSuccess_TraceId_IsCarried()
+    {
+        var result = D2Result<int>.PartialSuccess(1, traceId: "trace-123");
+
+        result.TraceId.Should().Be("trace-123");
+    }
+
+    [Fact]
+    public void PartialSuccess_ValueType_PreservesData()
+    {
+        var result = D2Result<int>.PartialSuccess(42);
+
+        result.Data.Should().Be(42);
+        result.Success.Should().BeTrue();
+    }
+
     private sealed record Payload(string Name);
 }

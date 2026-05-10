@@ -38,6 +38,7 @@ Copyright (c) DCSV. All rights reserved.
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="AwesomeAssertions" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
     <PackageReference Include="JetBrains.Annotations" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
@@ -74,12 +75,14 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <ProjectReference Include="..\i18n-source-gen\D2.Shared.I18n.SourceGen.csproj" />
     <ProjectReference Include="..\auth-scopes-source-gen\D2.Shared.Auth.Scopes.SourceGen.csproj" />
+    <ProjectReference Include="..\auth-audiences-source-gen\D2.Shared.Auth.Audiences.SourceGen.csproj" />
     <ProjectReference Include="..\context-source-gen\D2.Shared.Context.SourceGen.csproj" />
     <ProjectReference Include="..\resilience\D2.Shared.Resilience.csproj" />
     <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
     <ProjectReference Include="..\auth-abstractions\D2.Shared.Auth.Abstractions.csproj" />
     <ProjectReference Include="..\auth-context-abstractions\D2.Shared.AuthContext.Abstractions.csproj" />
+    <ProjectReference Include="..\auth-outbound\D2.Shared.Auth.Outbound.csproj" />
     <ProjectReference Include="..\context-abstractions\D2.Shared.Context.Abstractions.csproj" />
     <ProjectReference Include="..\handler-abstractions\D2.Shared.Handler.Abstractions.csproj" />
     <ProjectReference Include="..\handler\D2.Shared.Handler.csproj" />

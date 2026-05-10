@@ -66,7 +66,7 @@ public static class ConnectionStringHelper
         var uri = new Uri(value);
         var database = uri.AbsolutePath.TrimStart('/');
 
-        if (string.IsNullOrEmpty(uri.UserInfo))
+        if (uri.UserInfo.Falsey())
         {
             return string.Join(
                 ';',

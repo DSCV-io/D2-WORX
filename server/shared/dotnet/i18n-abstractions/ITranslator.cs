@@ -34,7 +34,11 @@ public interface ITranslator
     /// <param name="locale">
     /// The BCP 47 locale code (e.g. <c>"en-US"</c>, <c>"fr-FR"</c>). Resolved
     /// to a supported locale via the implementation's locale resolution chain
-    /// (canonical match → language-family fallback → base locale).
+    /// (canonical match → language-family fallback → base locale). Must be
+    /// non-null and non-empty — implementations validate input rather than
+    /// silently substitute the base locale (callers should make a deliberate
+    /// locale choice; pass the supported-locales' base explicitly when no
+    /// recipient preference is known).
     /// </param>
     /// <param name="message">
     /// The message to translate, comprising a translation key and optional
@@ -44,9 +48,16 @@ public interface ITranslator
     /// The localized, parameter-substituted string. Falls back to the base
     /// locale's translation if the requested locale lacks the key, then to
     /// the raw key string itself if no translation exists at all (the
-    /// raw-key fallback ensures translation never throws — keys are
+    /// raw-key fallback ensures missing translations never throw — keys are
     /// dev-readable identifiers that serve as a useful debugging signal).
     /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="locale"/> is empty or whitespace.
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="locale"/> or <paramref name="message"/> is
+    /// <see langword="null"/>.
+    /// </exception>
     string T(string locale, TKMessage message);
 
     /// <summary>

@@ -22,7 +22,8 @@ The runtime piece (`AddD2Auth`, JWT validation, KeyringClient, token introspecti
 | `Role.cs` | Enum — `Auditor` / `Agent` / `Officer` / `Owner`. Discrete capability sets — not a hierarchy. |
 | `ActionSensitivity.cs` | Enum — `Routine` / `Sensitive` / `Critical`. Per-scope discriminator driving audit verbosity, OTP step-up triggers, and impersonation defaults. |
 | `ActorEntry.cs` | `sealed record ActorEntry(ActorKind Kind, string Subject, string? ClientId, ImpersonationKind?, Guid? SessionId, Guid? OrgId, string? OrgName, OrgType?, Role? OrgRole, ActorEntry? Act)`. The recursive `Act` field models RFC 8693 §2.1 nested chains; the `ImpersonationKind` / `SessionId` / four `Org*` fields apply when `Kind == Impersonation` (they describe the agent / impersonator's own context). |
-| `Scopes.cs` (codegen) | Static partial class — OAuth-canonical scope string constants emitted from `contracts/auth-scopes/scopes.spec.json` by the sibling `D2.Shared.Auth.Scopes.SourceGen` analyzer. Single source of truth for the platform's scope catalog. |
+| `Scopes.g.cs` (codegen, in `obj/Generated/D2.Shared.Auth.Scopes.SourceGen/...`) | Static partial class — OAuth-canonical scope string constants emitted from `contracts/auth-scopes/scopes.spec.json` by the sibling `D2.Shared.Auth.Scopes.SourceGen` analyzer. Single source of truth for the platform's scope catalog. |
+| `Audiences.g.cs` (codegen, in `obj/Generated/D2.Shared.Auth.Audiences.SourceGen/...`) | Static partial class — JWT `aud`-claim audience constants emitted from `contracts/auth-audiences/audiences.spec.json` by the sibling `D2.Shared.Auth.Audiences.SourceGen` analyzer. Single source of truth for both inbound `aud`-claim validation AND outbound `TokenExchangeClient.ExchangeAsync` `targetAudience` arguments. Provides `IsKnown(url)`, `Resolve(name)`, `ResolveByUrl(url)` helpers, plus `AllUrls` (read-only set of every audience URL) and `ByName` (read-only name → URL map) collection projections for enumeration. |
 | `JwtClaimTypes.cs` | Static class — claim name constants. Standard claims (`sub`, `aud`, `act`, `scope`, ...) keep canonical names; D² custom claims use the `d2_` prefix. The `act.d2_kind` claim discriminates impersonation flavor (Consent vs Force) — see `ImpersonationKind` for the values. |
 | `RequestHeaders.cs` | Static class — custom HTTP header names (`X-D2-Client-Fingerprint`, etc.). |
 
@@ -80,6 +81,7 @@ The four `Org*` fields on Impersonation entries carry the agent's own organizati
 JwtClaimTypes.SUB                          // "sub"
 JwtClaimTypes.SCOPE                        // "scope"
 JwtClaimTypes.ACT                          // "act"
+JwtClaimTypes.CLIENT_ID                    // "client_id"      (RFC 8693 §4.3 / RFC 9068 §2.2)
 JwtClaimTypes.SESSION_ID                   // "d2_session_id"
 JwtClaimTypes.ORG_ID                       // "d2_org_id"
 JwtClaimTypes.ORG_ROLE                     // "d2_org_role"

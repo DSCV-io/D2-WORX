@@ -45,7 +45,8 @@ public sealed class BaseRepoHandlerTests
         var result = await built.HandleAsync("input");
 
         result.Success.Should().BeTrue();
-        classifier.LastSeen.Should().BeNull("classifier MUST NOT be called when ExecuteAsync succeeds");
+        classifier.LastSeen.Should().BeNull(
+            "classifier MUST NOT be called when ExecuteAsync succeeds");
     }
 
     // ----------------------------------------------------------------------
@@ -53,7 +54,7 @@ public sealed class BaseRepoHandlerTests
     // ----------------------------------------------------------------------
 
     [Fact]
-    public async Task HandleAsync_DbUpdateConcurrency_ReturnsConcurrencyConflict_ClassifierNotCalled()
+    public async Task HandleAsync_DbUpdateConcurrency_ReturnsConflict_ClassifierNotCalled()
     {
         var classifier = new StubClassifier(returnValue: DbFailureKind.UniqueViolation);
         var ex = new DbUpdateConcurrencyException("concurrency");
@@ -65,7 +66,8 @@ public sealed class BaseRepoHandlerTests
         result.IsConcurrencyConflict.Should().BeTrue();
         result.TraceId.Should().Be(_TRACE_ID);
         classifier.LastSeen.Should().BeNull(
-            "BCL-typed DbUpdateConcurrencyException is dispatched directly — classifier is NOT consulted");
+            "BCL-typed DbUpdateConcurrencyException is dispatched directly — "
+            + "classifier is NOT consulted");
     }
 
     [Fact]
@@ -118,7 +120,7 @@ public sealed class BaseRepoHandlerTests
     // ----------------------------------------------------------------------
 
     [Fact]
-    public async Task HandleAsync_GenericExceptionAndClassifierReturnsNull_PreservesUnhandledException()
+    public async Task HandleAsync_GenericExceptionClassifiedNull_PreservesUnhandledException()
     {
         var classifier = new StubClassifier(returnValue: null);
         var ex = new InvalidOperationException("boom");
@@ -191,7 +193,7 @@ public sealed class BaseRepoHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_ClassifierConnectionFailure_DispatchesToDbConnectionFailureFactory()
+    public async Task HandleAsync_ClassifierConnectionFailure_DispatchesToConnectionFactory()
     {
         var result = await DispatchAsync(DbFailureKind.ConnectionFailure);
 
@@ -200,7 +202,7 @@ public sealed class BaseRepoHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_ClassifierConcurrencyConflictReturnedForGenericException_Dispatches()
+    public async Task HandleAsync_ClassifierReturnsConcurrencyConflictForGenericEx_Dispatches()
     {
         // Adversarial: even though the BCL-typed path catches concurrency
         // conflicts directly, a CUSTOM classifier might return
@@ -256,7 +258,7 @@ public sealed class BaseRepoHandlerTests
     // ----------------------------------------------------------------------
 
     [Fact]
-    public async Task HandleAsync_ClassifierReturnsInvalidEnumValue_ThrowsArgumentOutOfRangeException()
+    public async Task HandleAsync_ClassifierReturnsInvalidEnum_ThrowsArgumentOutOfRange()
     {
         // Adversarial: the wildcard arm in DispatchDefault throws rather
         // than returning a degraded result. A future DbFailureKind value
@@ -285,7 +287,8 @@ public sealed class BaseRepoHandlerTests
         // classification. Documents actual behavior.
         var ctx = MakeContext();
         var ex = new InvalidOperationException("boom");
-        var handler = new TestRepoHandler(ctx, classifier: null!, action: TestRepoHandler.Throw(ex));
+        var handler = new TestRepoHandler(
+            ctx, classifier: null!, action: TestRepoHandler.Throw(ex));
 
         Func<Task> act = async () => await handler.HandleAsync("input");
 
@@ -300,7 +303,8 @@ public sealed class BaseRepoHandlerTests
         // Documents the partial-failure surface area.
         var ctx = MakeContext();
         var ex = new DbUpdateConcurrencyException("boom");
-        var handler = new TestRepoHandler(ctx, classifier: null!, action: TestRepoHandler.Throw(ex));
+        var handler = new TestRepoHandler(
+            ctx, classifier: null!, action: TestRepoHandler.Throw(ex));
 
         var result = await handler.HandleAsync("input");
 
@@ -440,7 +444,8 @@ public sealed class BaseRepoHandlerTests
 
         public DbFailureKind? LastMapKind { get; private set; }
 
-        protected override D2Result<string?>? MapDbException(Exception exception, DbFailureKind kind)
+        protected override D2Result<string?>? MapDbException(
+            Exception exception, DbFailureKind kind)
         {
             LastMapException = exception;
             LastMapKind = kind;

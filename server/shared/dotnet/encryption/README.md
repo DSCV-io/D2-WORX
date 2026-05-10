@@ -129,6 +129,10 @@ var encryptedKeyMaterial = wrapper.Encrypt(perDomainKeyBytes);
 
 No deps on `D2.Shared.Result`, `D2.Shared.Utilities`, etc. The lib is intentionally narrow — it's a primitive, not a domain helper.
 
+## Telemetry
+
+None by design. This lib is a low-level crypto primitive — instrumentation lives in the consumer (`D2.Shared.Messaging.RabbitMq` emits the encrypted-publish / encrypted-consume spans + counters). Adding spans here would obscure who actually paid the encrypt/decrypt cost in distributed traces.
+
 ## References
 
 - [SECURITY-RUNBOOKS.md](../../../../docs/SECURITY-RUNBOOKS.md) — KeyCustodian compromise + rotation runbooks (this lib is the encrypt/decrypt half; KeyCustodian owns the lifecycle).

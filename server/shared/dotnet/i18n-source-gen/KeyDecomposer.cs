@@ -8,6 +8,7 @@ namespace D2.Shared.I18n.SourceGen;
 
 using System;
 using System.Collections.Generic;
+using D2.Shared.I18n.SourceGen.Polyfills;
 
 /// <summary>
 /// Pure logic for decomposing a translation key (e.g. <c>"common_errors_NOT_FOUND"</c>)
@@ -63,7 +64,7 @@ internal static class KeyDecomposer
     /// </returns>
     public static DecomposedKey Decompose(string? key)
     {
-        if (string.IsNullOrEmpty(key))
+        if (key.Falsey())
         {
             return DecomposedKey.Invalid(string.Empty, "key is null or empty");
         }
@@ -150,7 +151,7 @@ internal static class KeyDecomposer
     /// </summary>
     private static bool IsValidCSharpIdentifier(string identifier)
     {
-        if (string.IsNullOrEmpty(identifier))
+        if (identifier.Falsey())
         {
             return false;
         }

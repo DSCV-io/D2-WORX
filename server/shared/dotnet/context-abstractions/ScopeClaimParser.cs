@@ -51,9 +51,15 @@ public static class ScopeClaimParser
             var set = new HashSet<string>(StringComparer.Ordinal);
             foreach (var item in element.EnumerateArray())
             {
+                // RFC 6749 §3.3: scope-token = 1*( %x21 / %x23-5B / %x5D-7E )
+                // — visible non-SP. Whitespace-only tokens are not valid;
+                // reject them in both the array path and the string path
+                // (the string path already does this via RemoveEmptyEntries +
+                // SP split — but a whitespace-only array element would slip
+                // past `s.Length > 0`). Use Falsey() for symmetric handling.
                 if (item.ValueKind == JsonValueKind.String
                     && item.GetString() is { } s
-                    && s.Length > 0)
+                    && !s.Falsey())
                 {
                     set.Add(s);
                 }

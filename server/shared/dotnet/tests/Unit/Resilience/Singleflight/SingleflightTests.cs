@@ -204,7 +204,7 @@ public sealed class SingleflightTests
         // singleflight design.
         var sf = new Singleflight<string, int>();
         var gate = new TaskCompletionSource();
-        var operationCancelledFlag = false;
+        var operationCanceledFlag = false;
 
         async ValueTask<int> Operation(CancellationToken ct)
         {
@@ -212,7 +212,7 @@ public sealed class SingleflightTests
 
             // The shared operation receives CancellationToken.None — it
             // ignores per-caller cancellations.
-            operationCancelledFlag = ct.IsCancellationRequested;
+            operationCanceledFlag = ct.IsCancellationRequested;
             return 7;
         }
 
@@ -231,7 +231,7 @@ public sealed class SingleflightTests
         var resultB = await taskB;
 
         resultB.Should().Be(7);
-        operationCancelledFlag.Should().BeFalse();
+        operationCanceledFlag.Should().BeFalse();
     }
 
     [Fact]

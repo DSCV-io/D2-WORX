@@ -22,6 +22,7 @@ public sealed class JwtClaimTypesTests
     [InlineData(nameof(JwtClaimTypes.AZP), "azp")]
     [InlineData(nameof(JwtClaimTypes.SCOPE), "scope")]
     [InlineData(nameof(JwtClaimTypes.ACT), "act")]
+    [InlineData(nameof(JwtClaimTypes.CLIENT_ID), "client_id")]
     public void StandardOAuthClaims_HaveCanonicalLowercaseNames(string fieldName, string expected)
     {
         // Adversarial: standard OAuth/OIDC claims MUST keep their canonical
@@ -62,20 +63,18 @@ public sealed class JwtClaimTypesTests
         // Standard set: RFC 7519 (sub/aud/iat/exp), RFC 7519 §4.1.7 (azp),
         // RFC 6749 §3.3 (scope), RFC 8693 §2.1 (act), RFC 8693 §4.3 / RFC 9068
         // §2.2 (client_id) — these keep their canonical names.
-        var canonical_standard_names = new[]
-        {
-            "sub", "aud", "iat", "exp", "azp", "scope", "act", "client_id",
-        };
+        string[] canonicalStandardNames =
+            ["sub", "aud", "iat", "exp", "azp", "scope", "act", "client_id"];
 
-        var d2_constants = typeof(JwtClaimTypes)
+        var d2Constants = typeof(JwtClaimTypes)
             .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
             .Where(f => f.IsLiteral && f.FieldType == typeof(string))
             .Select(f => (string)f.GetValue(null)!)
-            .Where(v => !canonical_standard_names.Contains(v))
+            .Where(v => !canonicalStandardNames.Contains(v))
             .ToList();
 
-        d2_constants.Should().NotBeEmpty();
-        d2_constants.Should().AllSatisfy(c =>
+        d2Constants.Should().NotBeEmpty();
+        d2Constants.Should().AllSatisfy(c =>
             c.Should().StartWith("d2_", "every D² custom claim must be d2_-namespaced"));
     }
 
@@ -84,13 +83,13 @@ public sealed class JwtClaimTypesTests
     {
         // Adversarial: scope strings (RFC 6749 §3.3) use `:` as the punctuation
         // separator (e.g. `org:read`). Claims must not collide.
-        var all_constants = typeof(JwtClaimTypes)
+        var allConstants = typeof(JwtClaimTypes)
             .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
             .Where(f => f.IsLiteral && f.FieldType == typeof(string))
             .Select(f => (string)f.GetValue(null)!)
             .ToList();
 
-        all_constants.Should().AllSatisfy(c =>
+        allConstants.Should().AllSatisfy(c =>
             c.Should().NotContain(":", "claim names must not use colons"));
     }
 }

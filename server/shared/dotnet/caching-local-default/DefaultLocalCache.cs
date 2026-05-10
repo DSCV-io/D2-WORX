@@ -7,7 +7,6 @@
 namespace D2.Shared.Caching.Local.Default;
 
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using D2.Shared.Caching;
 using D2.Shared.I18n;
 using D2.Shared.Result;
@@ -47,17 +46,19 @@ using Microsoft.Extensions.Options;
 [MustDisposeResource(false)]
 public sealed class DefaultLocalCache : ILocalCache, IDisposable
 {
-    /// <summary>
-    /// Backing IMemoryCache for value storage. Doubles as the monitor for
-    /// the cache-state lock taken by every write op (SetCore + Remove
-    /// variants) and by GetTtlAsync's read pair.
-    /// </summary>
-    [SuppressMessage(
-        "ReSharper",
-        "InconsistentlySynchronizedField",
-        Justification = "Lock-free reads on IMemoryCache are safe (CD-backed); "
-            + "writes synchronize against r_expirations.")]
+    /// <summary>Backing IMemoryCache for value storage.</summary>
     private readonly IMemoryCache r_cache;
+
+    /// <summary>
+    /// Dedicated monitor for the cache-state write lock. Locking on a
+    /// dedicated private object (instead of on <see cref="r_cache"/>)
+    /// avoids the CA2002-spirit anti-pattern of locking on a public-typed
+    /// instance whose own internal locks could in principle deadlock with
+    /// future BCL changes. Lock-free reads on <see cref="r_cache"/> are
+    /// safe (CD-backed by <see cref="MemoryCache"/>'s implementation);
+    /// writes synchronize against <see cref="r_expirations"/> via this lock.
+    /// </summary>
+    private readonly object r_writeLock = new();
 
     private readonly LocalCacheOptions r_options;
 
@@ -66,14 +67,22 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
 
     /// <summary>
     /// Tracks absolute expiration per key so <see cref="GetTtlAsync"/> can
-    /// report remaining time. Cheap parallel structure; pruned on remove
-    /// and on eviction callbacks.
+    /// report remaining time AND <see cref="IncrementAsync"/> can preserve
+    /// existing TTL across read-modify-write. Cheap parallel structure;
+    /// pruned on remove and on eviction callbacks.
     /// </summary>
-    [SuppressMessage(
-        "ReSharper",
-        "InconsistentlySynchronizedField",
-        Justification = "Eviction callback writes intentionally outside the lock; "
-            + "filtered to non-caller-driven reasons so it can't race concurrent SetCore.")]
+    /// <remarks>
+    /// The eviction callback writes outside <see cref="r_writeLock"/> by
+    /// design — see <see cref="EvictionCallback"/>. The narrow window where
+    /// a concurrent capacity-eviction-then-re-Set could leave a stale
+    /// <c>TryRemove</c> firing after the new TTL is recorded is accepted:
+    /// <see cref="GetTtlAsync"/> may transiently report no-TTL for a TTL'd
+    /// key in the immediate aftermath of a Capacity eviction. Reads of the
+    /// cached value remain correct; the only observable degradation is the
+    /// TTL report. Workloads needing strict-LRU-with-coherent-TTL semantics
+    /// should compose a sibling impl rather than tighten the lock here
+    /// (which would block reads on every eviction callback).
+    /// </remarks>
     private readonly ConcurrentDictionary<string, DateTimeOffset> r_expirations
         = new(StringComparer.Ordinal);
 
@@ -118,6 +127,9 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     {
         if (keys.Falsey())
             return new(InputFailures.Required<IReadOnlyDictionary<string, T?>>(nameof(keys)));
+
+        foreach (var key in keys)
+            if (key.Falsey()) return new(InputFailures.Required<IReadOnlyDictionary<string, T?>>(nameof(keys)));
 
         var hits = new Dictionary<string, T?>(keys.Count, StringComparer.Ordinal);
         var hitCount = 0;
@@ -168,7 +180,7 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
         // IMemoryCache doesn't expose absolute expiration; we mirror it in
         // r_expirations on every Set. Lock the read pair against SetCore so
         // we can't observe a half-applied write.
-        lock (r_cache)
+        lock (r_writeLock)
         {
             if (!r_cache.TryGetValue(prefixed, out _))
                 return new(D2Result<TimeSpan?>.NotFound());
@@ -191,6 +203,9 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
         if (key.Falsey())
             return new(InputFailures.Required(nameof(key)));
 
+        if (IsNonPositive(expiration))
+            return new(InputFailures.Required(nameof(expiration)));
+
         SetCore(Prefixed(key), value, expiration);
         LocalCacheTelemetry.SR_Sets.Add(1);
         return new(D2Result.Ok());
@@ -204,6 +219,12 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     {
         if (entries.Falsey())
             return new(InputFailures.Required(nameof(entries)));
+
+        if (IsNonPositive(expiration))
+            return new(InputFailures.Required(nameof(expiration)));
+
+        foreach (var key in entries.Keys)
+            if (key.Falsey()) return new(InputFailures.Required(nameof(entries)));
 
         foreach (var (key, value) in entries)
             SetCore(Prefixed(key), value, expiration);
@@ -220,7 +241,7 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
         var prefixed = Prefixed(key);
 
         // Lock the cache+r_expirations pair against SetCore.
-        lock (r_cache)
+        lock (r_writeLock)
         {
             r_cache.Remove(prefixed);
             r_expirations.TryRemove(prefixed, out _);
@@ -238,9 +259,12 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
             return new(InputFailures.Required(nameof(keys)));
 
         foreach (var key in keys)
+            if (key.Falsey()) return new(InputFailures.Required(nameof(keys)));
+
+        foreach (var key in keys)
         {
             var prefixed = Prefixed(key);
-            lock (r_cache)
+            lock (r_writeLock)
             {
                 r_cache.Remove(prefixed);
                 r_expirations.TryRemove(prefixed, out _);
@@ -258,10 +282,13 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
         if (key.Falsey())
             return new(InputFailures.Required<bool>(nameof(key)));
 
+        if (IsNonPositive(expiration))
+            return new(InputFailures.Required<bool>(nameof(expiration)));
+
         var prefixed = Prefixed(key);
 
         // Atomicity via the same per-cache lock IncrementAsync uses.
-        lock (r_cache)
+        lock (r_writeLock)
         {
             // false = key already existed; no write
             if (r_cache.TryGetValue(prefixed, out _))
@@ -280,10 +307,13 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
         if (key.Falsey())
             return new(InputFailures.Required<long>(nameof(key)));
 
+        if (IsNonPositive(expiration))
+            return new(InputFailures.Required<long>(nameof(expiration)));
+
         var prefixed = Prefixed(key);
 
         // Atomicity via a small per-key critical section.
-        lock (r_cache)
+        lock (r_writeLock)
         {
             if (r_cache.TryGetValue(prefixed, out var raw))
             {
@@ -291,7 +321,18 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
                     return new(D2Result<long>.Conflict([TK.Common.Errors.CONFLICT]));
 
                 var next = current + amount;
-                SetCore(prefixed, next, expiration: null);  // preserve existing TTL
+
+                // Preserve existing TTL — Redis-parity. Read absolute
+                // expiration from r_expirations under the same lock and
+                // pass it through verbatim. Absent r_expirations entry =
+                // existing entry has no TTL set; new entry stays no-TTL.
+                // Ignores the per-call `expiration` arg on the increment
+                // path (parity with Redis INCR-with-TTL: TTL set only on
+                // first call, not subsequent increments).
+                var existingAbsolute = r_expirations.TryGetValue(prefixed, out var absolute)
+                    ? absolute
+                    : (DateTimeOffset?)null;
+                SetCoreAbsolute(prefixed, next, existingAbsolute);
                 return new(D2Result<long>.Ok(next));
             }
 
@@ -307,8 +348,12 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     {
         if (key.Falsey())
             return new(InputFailures.Required<bool>(nameof(key)));
+
         if (lockId.Falsey())
             return new(InputFailures.Required<bool>(nameof(lockId)));
+
+        if (expiration <= TimeSpan.Zero)
+            return new(InputFailures.Required<bool>(nameof(expiration)));
 
         var prefixed = Prefixed(key);
         var now = DateTimeOffset.UtcNow;
@@ -329,6 +374,7 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     {
         if (key.Falsey())
             return new(InputFailures.Required(nameof(key)));
+
         if (lockId.Falsey())
             return new(InputFailures.Required(nameof(lockId)));
 
@@ -371,6 +417,9 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
             expirations.TryRemove(keyString, out _);
     }
 
+    private static bool IsNonPositive(TimeSpan? expiration)
+        => expiration is { } e && e <= TimeSpan.Zero;
+
     private string Prefixed(string key)
         => r_options.KeyPrefix.Falsey() ? key : r_options.KeyPrefix + key;
 
@@ -378,11 +427,16 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
     {
         var ttl = expiration ?? r_options.DefaultExpiration;
         var expiresAt = ttl > TimeSpan.Zero ? DateTimeOffset.UtcNow + ttl : (DateTimeOffset?)null;
+        SetCoreAbsolute(prefixedKey, value, expiresAt);
+    }
 
+    private void SetCoreAbsolute<T>(
+        string prefixedKey, T value, DateTimeOffset? absoluteExpiration)
+    {
         // Lock the cache + r_expirations write pair so concurrent SetAsync /
-        // SetManyAsync / SetNxAsync calls can't interleave their cache writes
-        // and TTL writes.
-        lock (r_cache)
+        // SetManyAsync / SetNxAsync / IncrementAsync calls can't interleave
+        // their cache writes and TTL writes.
+        lock (r_writeLock)
         {
             using (var entry = r_cache.CreateEntry(prefixedKey))
             {
@@ -391,22 +445,22 @@ public sealed class DefaultLocalCache : ILocalCache, IDisposable
                 // Every entry counts as 1 against MaxEntries — fixes the
                 // IMemoryCache SizeLimit footgun.
                 entry.Size = 1;
-                if (expiresAt is not null)
-                    entry.AbsoluteExpiration = (DateTimeOffset)expiresAt;
+                if (absoluteExpiration is { } absolute)
+                    entry.AbsoluteExpiration = absolute;
                 entry.RegisterPostEvictionCallback(EvictionCallback, r_expirations);
             }
 
-            if (expiresAt is not null)
-                r_expirations[prefixedKey] = (DateTimeOffset)expiresAt;
+            if (absoluteExpiration is { } a)
+                r_expirations[prefixedKey] = a;
             else
                 r_expirations.TryRemove(prefixedKey, out _);
         }
 
-        // Defensive sweep: if the entry got capacity-evicted during SetCore,
-        // drop the r_expirations entry so it doesn't leak. Cache-side check
-        // is cheap.
-        // ReSharper disable InconsistentlySynchronizedField — defensive sweep
-        // intentionally outside the write lock.
+        // Defensive sweep: if the entry got capacity-evicted during the write,
+        // drop the r_expirations entry so it doesn't leak. Cache-side check is
+        // cheap; intentionally outside the write lock (single read, no atomicity
+        // requirement against subsequent writes).
+        // ReSharper disable InconsistentlySynchronizedField
         if (!r_cache.TryGetValue(prefixedKey, out _))
             r_expirations.TryRemove(prefixedKey, out _);
 

@@ -35,31 +35,31 @@ public sealed class RequestHeadersTests
         // Adversarial: catch future additions that forget the X-D2- prefix
         // discipline. The ONLY exempt header is Idempotency-Key (well-known
         // industry convention).
-        var conventional_exempt = new[] { "Idempotency-Key" };
+        string[] conventionalExempt = ["Idempotency-Key"];
 
-        var d2_specific = typeof(RequestHeaders)
+        var d2Specific = typeof(RequestHeaders)
             .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
             .Where(f => f.IsLiteral && f.FieldType == typeof(string))
             .Select(f => (string)f.GetValue(null)!)
-            .Where(v => !conventional_exempt.Contains(v))
+            .Where(v => !conventionalExempt.Contains(v))
             .ToList();
 
-        d2_specific.Should().NotBeEmpty();
-        d2_specific.Should().AllSatisfy(h =>
+        d2Specific.Should().NotBeEmpty();
+        d2Specific.Should().AllSatisfy(h =>
             h.Should().StartWith("X-D2-", "every D²-custom header must use the X-D2- prefix"));
     }
 
     [Fact]
     public void HeaderConstants_AreNonEmptyTrimmedStrings()
     {
-        var all_headers = typeof(RequestHeaders)
+        var allHeaders = typeof(RequestHeaders)
             .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
             .Where(f => f.IsLiteral && f.FieldType == typeof(string))
             .Select(f => (string)f.GetValue(null)!)
             .ToList();
 
-        all_headers.Should().NotBeEmpty();
-        all_headers.Should().AllSatisfy(h =>
+        allHeaders.Should().NotBeEmpty();
+        allHeaders.Should().AllSatisfy(h =>
         {
             h.Should().NotBeNullOrWhiteSpace();
             h.Should().Be(h.Trim(), "header constants must not carry surrounding whitespace");

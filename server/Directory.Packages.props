@@ -30,9 +30,19 @@ Copyright (c) DCSV. All rights reserved.
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.7" />
+
+    <!-- Microsoft.IdentityModel — OIDC discovery doc handling for D2.Shared.Auth.Outbound
+         (ConfigurationManager<OpenIdConnectConfiguration> auto-fetches /.well-known/openid-configuration
+         and exposes token_endpoint / jwks_uri). -->
+    <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.16.0" />
+
+    <!-- Grpc.Net.ClientFactory — gRPC client typed-builder + ConfigureChannel for the
+         D2.Shared.Auth.Outbound .AddD2ServiceIdentity() per-channel opt-in extension. -->
+    <PackageVersion Include="Grpc.Net.ClientFactory" Version="2.71.0" />
     <PackageVersion Include="StackExchange.Redis" Version="2.8.31" />
     <PackageVersion Include="Testcontainers.Redis" Version="4.0.0" />
 
@@ -66,5 +76,11 @@ Copyright (c) DCSV. All rights reserved.
     <!-- coverlet.msbuild: code coverage via MSBuild props (independent of MTP version
          coupling that bites Microsoft.Testing.Extensions.CodeCoverage on xunit.v3). -->
     <PackageVersion Include="coverlet.msbuild" Version="10.0.0" />
+
+    <!-- FakeTimeProvider — canonical TimeProvider stub used in tests of code that
+         takes a TimeProvider for scheduled / time-based behavior. Required for
+         deterministic tests of Task.Delay-on-TimeProvider, refresh hosted services,
+         expiry-window-driven caches, etc. -->
+    <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="9.10.0" />
   </ItemGroup>
 </Project>

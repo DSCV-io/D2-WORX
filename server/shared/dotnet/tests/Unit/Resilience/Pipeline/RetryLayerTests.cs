@@ -44,7 +44,8 @@ public sealed class RetryLayerTests
         // Sanity check: a non-throwing operation completes on first attempt.
         var layer = new RetryLayer<string, int>(options: null);
 
-        var result = await layer.WrapAsync("k", _ => ValueTask.FromResult(7), CancellationToken.None);
+        var result = await layer.WrapAsync(
+            "k", _ => ValueTask.FromResult(7), CancellationToken.None);
 
         result.Should().Be(7);
     }
@@ -55,8 +56,10 @@ public sealed class RetryLayerTests
         // Retry policy is per-operation, not per-key — the key is ignored.
         var layer = new RetryLayer<string, int>(NoDelayOptions());
 
-        (await layer.WrapAsync("a", _ => ValueTask.FromResult(1), CancellationToken.None)).Should().Be(1);
-        (await layer.WrapAsync("b", _ => ValueTask.FromResult(2), CancellationToken.None)).Should().Be(2);
+        (await layer.WrapAsync("a", _ => ValueTask.FromResult(1), CancellationToken.None))
+            .Should().Be(1);
+        (await layer.WrapAsync("b", _ => ValueTask.FromResult(2), CancellationToken.None))
+            .Should().Be(2);
     }
 
     private static RetryOptions<int> NoDelayOptions(int maxAttempts = 3)

@@ -68,7 +68,7 @@ public sealed class D2EnvTests
     public void ApplyVars_SecondCallOverwritesFirst_WhenNotPreExisting()
     {
         // Within a single Load(), later files in the list override earlier
-        // ones — modelled by two ApplyVars calls sharing one snapshot.
+        // ones — modeled by two ApplyVars calls sharing one snapshot.
         var key = $"D2_TEST_LATER_{Guid.NewGuid():N}";
         try
         {
@@ -266,11 +266,17 @@ public sealed class D2EnvTests
     [Fact]
     public void Load_SecondCall_IsNoOp()
     {
+        // SECURITY: pass explicit non-existent file names so discovery walk
+        // never finds the repo's real .env.local / .env.secrets and silently
+        // loads them into the test process. The default-args overload would
+        // contaminate downstream tests with real-world secret values.
+        var safeName = $".env.testonly-{Guid.NewGuid():N}";
+
         D2Env.ResetForTests();
-        D2Env.Load();
+        D2Env.Load(safeName);
 
         // Second call must not re-walk the file system.
-        D2Env.Load();
+        D2Env.Load(safeName);
 
         // No assertion needed beyond "did not throw"; this hits the
         // s_loaded short-circuit branch.
@@ -279,11 +285,15 @@ public sealed class D2EnvTests
     [Fact]
     public void Load_AfterReset_WalksAgain()
     {
-        D2Env.ResetForTests();
-        D2Env.Load();
+        // SECURITY: same isolation as Load_SecondCall_IsNoOp — pin the no-op
+        // re-walk behavior without loading real secrets.
+        var safeName = $".env.testonly-{Guid.NewGuid():N}";
 
         D2Env.ResetForTests();
-        D2Env.Load();
+        D2Env.Load(safeName);
+
+        D2Env.ResetForTests();
+        D2Env.Load(safeName);
 
         // No exception; the short-circuit was bypassed by ResetForTests.
     }

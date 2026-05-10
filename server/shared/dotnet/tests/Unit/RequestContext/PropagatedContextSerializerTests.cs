@@ -6,6 +6,7 @@
 
 namespace D2.Shared.Tests.Unit.RequestContext;
 
+using System.Text;
 using AwesomeAssertions;
 using D2.Shared.Context.Abstractions;
 using Xunit;
@@ -142,5 +143,51 @@ public sealed class PropagatedContextSerializerTests
         new PropagatedContext { SessionFingerprint = "x" }.HasAnyField.Should().BeTrue();
         new PropagatedContext { FingerprintMatchScore = 0 }.HasAnyField.Should().BeTrue();
         new PropagatedContext { WhoIsHashId = "x" }.HasAnyField.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Decode_OversizeRequestPath_DropsContext()
+    {
+        // A forged x-d2-context with a 3 KiB RequestPath would otherwise
+        // pollute log scope keys. The decoder caps fields and drops the
+        // whole context if any field is over budget — and the wire-level
+        // header cap (MAX_HEADER_LENGTH = 2048) catches a 3 KB string
+        // first since it base64-encodes to ~4 KB.
+        var oversize = new string('x', 3000);
+        var ctx = new PropagatedContext { RequestPath = oversize };
+        var encoded = PropagatedContextSerializer.Encode(ctx);
+
+        PropagatedContextSerializer.TryDecode(encoded).Should().BeNull(
+            "wire-level header cap should drop the oversize payload");
+    }
+
+    [Fact]
+    public void Decode_MidsizeFieldOverPerFieldCap_DropsContext()
+    {
+        // Construct JSON small enough to fit under the 2 KiB header cap
+        // but with a single field over its per-field bound (RequestId cap
+        // is 256 chars). Should be dropped by the per-field guard.
+        var json = "{\"requestId\":\"" + new string('a', 500) + "\"}";
+        var b64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+        PropagatedContextSerializer.TryDecode(b64).Should().BeNull(
+            "per-field length guard should drop a 500-char RequestId");
+    }
+
+    [Fact]
+    public void Decode_MalformedBase64_ReturnsNull()
+    {
+        PropagatedContextSerializer.TryDecode("not-valid-base64!!!").Should().BeNull();
+    }
+
+    [Fact]
+    public void Decode_ValidBase64NotJson_ReturnsNull()
+    {
+        var raw = Encoding.UTF8.GetBytes("not json at all");
+        var b64 = Convert.ToBase64String(raw)
+            .TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+        PropagatedContextSerializer.TryDecode(b64).Should().BeNull();
     }
 }

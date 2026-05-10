@@ -67,17 +67,21 @@ public sealed class ResilientPipelineServiceCollectionExtensionsTests
             "notifications", (_, _) => new(_ => false, options: new(failureThreshold: 1)));
 
         services.AddResilientPipeline<string, int>("audit", p => p.UseCircuitBreaker("audit"));
-        services.AddResilientPipeline<string, int>("notifications", p => p.UseCircuitBreaker("notifications"));
+        services.AddResilientPipeline<string, int>(
+            "notifications",
+            p => p.UseCircuitBreaker("notifications"));
 
         var sp = services.BuildServiceProvider();
         var auditPipeline = sp.GetRequiredKeyedService<ResilientPipeline<string, int>>("audit");
-        var notificationsPipeline = sp.GetRequiredKeyedService<ResilientPipeline<string, int>>("notifications");
+        var notificationsPipeline = sp
+            .GetRequiredKeyedService<ResilientPipeline<string, int>>("notifications");
 
         // Trip audit only.
         await auditPipeline.ExecuteAsync("k", _ => throw new InvalidOperationException());
 
         var auditAfter = await auditPipeline.ExecuteAsync("k", _ => ValueTask.FromResult(1));
-        var notificationsAfter = await notificationsPipeline.ExecuteAsync("k", _ => ValueTask.FromResult(2));
+        var notificationsAfter = await notificationsPipeline
+            .ExecuteAsync("k", _ => ValueTask.FromResult(2));
 
         auditAfter.IsServiceUnavailable.Should().BeTrue();
         notificationsAfter.Success.Should().BeTrue();

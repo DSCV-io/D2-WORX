@@ -75,7 +75,8 @@ public sealed class D2ResultWithTraceIdTests
         D2Result.Created().WithTraceId(_NEW_TRACE).StatusCode.Should().Be(HttpStatusCode.Created);
         D2Result.NotFound().WithTraceId(_NEW_TRACE).StatusCode.Should().Be(HttpStatusCode.NotFound);
         D2Result.Conflict().WithTraceId(_NEW_TRACE).StatusCode.Should().Be(HttpStatusCode.Conflict);
-        D2Result.Forbidden().WithTraceId(_NEW_TRACE).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        D2Result.Forbidden().WithTraceId(_NEW_TRACE).StatusCode
+            .Should().Be(HttpStatusCode.Forbidden);
     }
 
     [Fact]

@@ -14,14 +14,16 @@ namespace D2.Shared.Caching.Distributed.Redis;
 internal static class RedisLuaScripts
 {
     /// <summary>
-    /// Atomic INCRBY + optional PEXPIRE. ARGV[1] = amount; ARGV[2] = TTL
-    /// in milliseconds (0 = no expiration). Sets the TTL only when the
-    /// key is created or when a TTL is explicitly requested — Redis
-    /// PEXPIRE on every call would clobber existing TTLs each increment.
+    /// Atomic INCRBY + optional PEXPIRE on first creation. ARGV[1] = amount;
+    /// ARGV[2] = TTL in milliseconds (0 = no expiration). Sets the TTL only
+    /// when the key has no existing TTL (PTTL &lt; 0 covers both "key new"
+    /// and "key exists with no expiration") — existing TTLs survive
+    /// subsequent increments. Matches the SET_ADD_WITH_OPTIONAL_TTL gating
+    /// pattern below.
     /// </summary>
     internal const string INCREMENT_WITH_OPTIONAL_TTL = """
         local result = redis.call('INCRBY', KEYS[1], ARGV[1])
-        if ARGV[2] ~= '0' then
+        if ARGV[2] ~= '0' and redis.call('PTTL', KEYS[1]) < 0 then
             redis.call('PEXPIRE', KEYS[1], ARGV[2])
         end
         return result

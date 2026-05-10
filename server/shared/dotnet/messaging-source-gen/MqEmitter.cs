@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using D2.Shared.Messaging.SourceGen.Polyfills;
 
 /// <summary>
 /// Pure logic for emitting the messaging spec output: <c>MqMessages</c> +
@@ -114,7 +115,7 @@ internal static class MqEmitter
 
             if (string.Equals(entry.Encryption, _PLAINTEXT_LITERAL, StringComparison.Ordinal))
             {
-                if (string.IsNullOrWhiteSpace(entry.EncryptionReason)
+                if (entry.EncryptionReason.Falsey()
                     || (entry.EncryptionReason?.Trim().Length ?? 0) < 10)
                 {
                     diagnostics.Add(EmitDiagnostic.MissingPlaintextReason(entry.Constant));
@@ -197,7 +198,7 @@ internal static class MqEmitter
 
     private static bool ValidateConstant(string value, out string reason)
     {
-        if (string.IsNullOrEmpty(value))
+        if (value.Falsey())
         {
             reason = "empty";
             return false;

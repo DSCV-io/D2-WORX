@@ -75,6 +75,46 @@ public sealed class IdempotencyStartupCheckTests
         await Task.CompletedTask;
     }
 
+    [Fact]
+    public async Task StartAsync_OperatorProvidedStore_BypassesCacheRequirement()
+    {
+        // An operator-provided IMessageIdempotencyStore (e.g. integration
+        // test fakes) satisfies the startup check even when IDistributedCache
+        // is missing. Without this bypass, GetService would throw on the
+        // default CacheIdempotencyStore's missing dependency before reaching
+        // the operator-store check.
+        var registry = new SubscriberRegistry([
+            BuildRegistration<SampleAuditHandler, SampleAuditEvent>("q-op", idempotency: true),
+        ]);
+        var services = new ServiceCollection();
+        services.AddSingleton<IMessageIdempotencyStore>(new FakeIdemStore());
+        var sp = services.BuildServiceProvider();
+        var check = new IdempotencyStartupCheck(registry, sp);
+
+        var act = async () => await check.StartAsync(CancellationToken.None);
+
+        await act.Should().NotThrowAsync(
+            "operator-provided IMessageIdempotencyStore must satisfy the "
+            + "startup check even when IDistributedCache is missing");
+    }
+
+    [Fact]
+    public async Task StartAsync_NoOperatorStore_NoCache_StillFails()
+    {
+        // Inverse of above: with neither operator-provided store nor
+        // distributed cache, the check still hard-fails. Pin so a refactor
+        // doesn't soften the guard.
+        var registry = new SubscriberRegistry([
+            BuildRegistration<SampleAuditHandler, SampleAuditEvent>("q-bare", idempotency: true),
+        ]);
+        var sp = new ServiceCollection().BuildServiceProvider();
+        var check = new IdempotencyStartupCheck(registry, sp);
+
+        var act = async () => await check.StartAsync(CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+    }
+
     private static ISubscriberRegistration BuildRegistration<TSub, TIn>(
         string queueName, bool idempotency)
         where TSub : BaseHandler<TSub, TIn, Unit>
@@ -195,5 +235,21 @@ public sealed class IdempotencyStartupCheckTests
         public ValueTask<D2Result<bool>> SetContainsAsync(
             string k, string m, CancellationToken c = default)
             => throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Operator-provided <see cref="IMessageIdempotencyStore"/> stub for the
+    /// "bypass cache requirement" tests. The startup check only probes for
+    /// presence; it never invokes any method on the resolved instance.
+    /// </summary>
+    private sealed class FakeIdemStore : IMessageIdempotencyStore
+    {
+        public ValueTask<D2Result<bool>> HasSeenAsync(
+            string messageId, CancellationToken ct = default)
+            => new(D2Result<bool>.Ok(data: false));
+
+        public ValueTask<D2Result> MarkSeenAsync(
+            string messageId, CancellationToken ct = default)
+            => new(D2Result.Ok());
     }
 }

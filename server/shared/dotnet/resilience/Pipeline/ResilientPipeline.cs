@@ -127,6 +127,15 @@ public sealed class ResilientPipeline<TKey, TValue>
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
+            // Intentional: filter on `ct.IsCancellationRequested`, not on
+            // `ex.CancellationToken == ct`. Matches BCL convention (e.g.
+            // `Task.WaitAsync(ct)`) — if the caller's token is canceled,
+            // any OCE (even one whose source token is unrelated) surfaces
+            // as Canceled. Without ct cancellation: derived
+            // `TaskCanceledException` falls through to `IsTransientException`
+            // (transient → ServiceUnavailable); base `OperationCanceledException`
+            // is NOT classified transient and falls to the catch-all
+            // (UnhandledException).
             return D2Result<TValue>.Canceled();
         }
         catch (Exception ex) when (RetryHelper.IsTransientException(ex))

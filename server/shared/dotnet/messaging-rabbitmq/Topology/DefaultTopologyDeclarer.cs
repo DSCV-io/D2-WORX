@@ -67,8 +67,13 @@ internal sealed class DefaultTopologyDeclarer : ITopologyDeclarer
             }
             catch (Exception ex)
             {
+                // Per §3.1: pass exception type name only, never the
+                // exception itself — `OperationInterruptedException.Message`
+                // from RabbitMQ.Client can include broker-side text such as
+                // PRECONDITION_FAILED arg dumps that operators may have
+                // configured (declaration arguments, queue settings, etc.).
                 TopologyLog.DeclarationFailed(
-                    r_logger, ex, registration.ResolvedQueueName);
+                    r_logger, ex.GetType().Name, registration.ResolvedQueueName);
                 throw;
             }
         }

@@ -70,10 +70,7 @@ internal sealed class TopologyHostedService : IHostedService, IAsyncDisposable
         // (e.g. PRECONDITION_FAILED on a queue declared with mismatched
         // arguments). Surface the failure structured so it's actionable.
         _declareTask.ContinueWith(
-            t => TopologyLog.DeclarationFailed(
-                r_logger,
-                t.Exception!,
-                queue: "<declaration cycle>"),
+            t => TopologyLog.DeclarationFailedFaultSink(r_logger, t.Exception!),
             CancellationToken.None,
             TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
             TaskScheduler.Default);

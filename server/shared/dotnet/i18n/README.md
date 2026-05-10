@@ -65,7 +65,7 @@ After lookup, any `{paramName}` placeholders in the template are substituted fro
 | Method | Description |
 |---|---|
 | `static string ToBcp47(string tag)` | Normalises any tag to canonical casing (lowercase language, uppercase region). Pure function. |
-| `bool IsValid(string locale)` | Whether the locale (after normalisation) is in `All`. |
+| `bool IsValid(string locale)` | Whether the locale (after normalization) is in `All`. |
 | `string Resolve(string? locale)` | Canonical match → language fallback → `Base`. Trims whitespace. Returns `Base` for null/empty. |
 
 ### `AddD2I18n`
@@ -132,7 +132,7 @@ No `Microsoft.AspNetCore.App` framework reference — this lib is HTTP-stack-agn
 
 `server/shared/dotnet/tests/Unit/I18n/` —
 
-- `SupportedLocalesTests` — ToBcp47 normalisation, configuration ingestion (defaults, mixed-case, empty entries, dedup behaviour), language-default ordering, `IsValid` / `Resolve` adversarial coverage.
+- `SupportedLocalesTests` — ToBcp47 normalization, configuration ingestion (defaults, mixed-case, empty entries, dedup behavior), language-default ordering, `IsValid` / `Resolve` adversarial coverage.
 - `TranslatorTests` — construction validation (null / missing / malformed dir), basic lookup, base-locale fallback, language-prefix resolution, parameter substitution (single, multiple, missing param, extra param, placeholder twice, brace-in-value non-recursion), `HasKey`, 100-caller concurrency stress.
 - `I18nServiceCollectionExtensionsTests` — singleton registration, `IConfiguration` propagation, `TryAdd` idempotency, fluent return.
 - `TKGeneratedTests` — end-to-end smoke that the SrcGen + Abstractions integration produces TK constants matching the live `en-US.json`.

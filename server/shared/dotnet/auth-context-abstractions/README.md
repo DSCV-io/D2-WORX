@@ -8,7 +8,7 @@ Copyright (c) DCSV. All rights reserved.
 
 Read-only `IAuthContext` interface — the typed contract domain code uses to reason about caller identity, organization, scopes, and impersonation context. Codegen-emitted from `contracts/auth-context/IAuthContext.spec.json` by `D2.Shared.Context.SourceGen`. Plus hand-written `IAuthContextExtensions` convenience helpers.
 
-This is the domain-safe slice. Anything heavier (HTTP middleware, JWT validation, runtime population) lives in sibling libs: `D2.Shared.Context.Abstractions` (transport-level fields), `D2.Shared.Context.Abstractions` (mutable concrete + factories), `D2.Shared.Auth` (runtime JWT validation + KeyringClient).
+This is the domain-safe slice. Anything heavier (HTTP middleware, JWT validation, runtime population) lives in sibling libs: `D2.Shared.Context.Abstractions` (request-context interfaces + `MutableRequestContext` + propagation codecs), `D2.Shared.Auth` (runtime JWT validation + KeyringClient).
 
 ---
 
@@ -61,6 +61,21 @@ auth.IsConsentImpersonation();   // ImpersonationKind == Consent
 auth.IsImpersonatorStaff();      // ImpersonatorOrgType is Admin or Support
 auth.IsImpersonatorAdmin();      // ImpersonatorOrgType is Admin
 ```
+
+---
+
+## Edge cases / gotchas
+
+- **`HasAllScopes()` with zero arguments returns `true`** (vacuous truth — `[].All(...)` is `true`). Callers that pass a runtime-built array should guard the empty-input case if absence-of-scopes should be a denial.
+- **Scope comparison is case-sensitive** per RFC 6749 §3.3. The runtime `MutableRequestContext` uses `StringComparer.Ordinal` when building the set; consumers must pass exact-case scope names.
+- **`IsImpersonator*` helpers are correct when not impersonating** — `ImpersonatorOrgType` is `null` outside an impersonation context, so `is OrgType.Admin or OrgType.Support` short-circuits to `false` cleanly. Callers that want "this user is staff (regardless of impersonation)" should use `IsStaff()` instead.
+- **`IsForcedImpersonation()` and `IsConsentImpersonation()` are mutually exclusive but neither implies `IsImpersonating`** — when not impersonating, both return `false`. Combine with `IsImpersonating` if your branch logic needs both flavor and presence.
+
+---
+
+## Telemetry
+
+None — this lib is read-only abstractions + pure-function extension methods. Callers (auth middleware, handlers, audit emitters) are responsible for any auth-related spans / counters.
 
 ---
 

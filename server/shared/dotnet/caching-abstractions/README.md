@@ -28,8 +28,18 @@ All operations return `D2Result<T>` / `D2Result`.
 
 Null or empty inputs (missing key, missing keys collection, missing entries dictionary) return
 `D2Result.ValidationFailed` with an `InputError` naming the offending parameter (built via the
-internal `InputFailures.Required(...)` helper). Implementations never throw `ArgumentException` for
-caller mistakes — every failure shape is observable on the result.
+shared `InputFailures.Required(...)` helper). Implementations never throw `ArgumentException`
+for **per-call** caller mistakes — every per-call failure shape is observable on the result.
+(Construction-time / DI-registration errors are a different lifecycle concern and DO surface as
+exceptions — see the `*AndBroadcast*` carve-out below.)
+
+### Cache key convention
+
+Cache keys follow the `EntityName:{id}` shape (`Session:{userId}`, `Jwks:{kid}`,
+`WhoIs:{ip}`, etc.) per `docs/PATTERNS.md`. The `LocalCacheOptions.KeyPrefix` is a
+*namespace* prefix layered on top of that convention (handy when multiple caches share a
+process), not a substitute for it. Keep PII out of keys — keys leak into logs, traces, and
+Redis MONITOR / OBJECT inspection. Hash any user-supplied identifier first.
 
 ### Marker interfaces (three)
 
@@ -64,8 +74,14 @@ composed." Implementation behavior differs significantly; the contract surface d
 
 ### Supporting types
 
-**`LocalCacheOptions`** — `MaxEntries` (10_000), `DefaultExpiration` (1h),
+**`LocalCacheOptions`** — `MaxEntries` (100_000), `DefaultExpiration` (1h),
 `KeyPrefix` (empty).
+
+**`InputFailures`** — pre-built `D2Result.ValidationFailed` factory
+(`Required<T>(paramName)` / `Required(paramName)`) used by impls so the cache surface
+stays errors-as-values rather than `ArgumentException`-throws for per-call caller
+mistakes. Constructors / DI registration still throw — that's a registration-time concern,
+not per-call input.
 
 **`ICacheSerializer`** — pluggable serialization for distributed caches. Default
 impl in `caching-distributed-redis` is JSON; provider-specific impls may swap in
@@ -101,7 +117,8 @@ own options when there's a real knob to expose.
 - `ReleaseLockAsync` — `Ok` (idempotent — no-op if not held by this caller).
 - `*AndBroadcast*` — same as their plain counterparts. Throws
   `InvalidOperationException` if no `ICacheInvalidationBackplane` is
-  registered.
+  registered. (Registration error, not a per-call failure — caught by
+  the same lifecycle carve-out as construction-time exceptions.)
 - `SetAddAsync` — new member → `Ok(true)`; already present → `Ok(false)`.
 - `SetCardinalityAsync` — `Ok(count)`; absent set → `Ok(0)`.
 - `SetRemoveAsync` — was present → `Ok(true)`; was absent → `Ok(false)`

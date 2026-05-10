@@ -41,7 +41,7 @@ public sealed class SupportedLocalesTests
     [Fact]
     public void ToBcp47_LeadingHyphen_LowercasesEmptyLanguageAndUppercasesRegion()
     {
-        // Adversarial: degenerate input "-CA" — pin behaviour even though no
+        // Adversarial: degenerate input "-CA" — pin behavior even though no
         // real BCP 47 tag looks like this.
         SupportedLocales.ToBcp47("-CA").Should().Be("-CA");
     }
@@ -157,7 +157,7 @@ public sealed class SupportedLocalesTests
     [Fact]
     public void Ctor_DuplicateLocalesAfterNormalisation_KeepsBoth()
     {
-        // Pin behaviour: two entries that normalise to the same canonical
+        // Pin behavior: two entries that normalize to the same canonical
         // string are NOT deduped at config time. Callers / ops are expected
         // to keep PUBLIC_ENABLED_LOCALES clean.
         var sl = new SupportedLocales(ConfigWith(

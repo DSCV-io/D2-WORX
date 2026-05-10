@@ -158,6 +158,27 @@ public sealed class ResilientPipelineTests
         result.IsUnhandledException.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task ExecuteAsync_TaskCanceledExceptionWithoutCanceledToken_MapsToServiceUnavailable()
+    {
+        // Pin the DIVERGENT classification: `TaskCanceledException` IS in
+        // `IsTransientException`'s switch arms (line 73 of RetryHelper.cs),
+        // unlike its base `OperationCanceledException`. So an unattributed
+        // `TaskCanceledException` falls through the OCE-when-ct catch and
+        // hits the IsTransientException catch instead → ServiceUnavailable.
+        // Critical because TCE-without-ct is what surfaces from many
+        // HttpClient timeouts internal to a downstream call.
+        var pipeline = new ResilientPipeline<string, int>();
+
+        var result = await pipeline.ExecuteAsync(
+            "k",
+            _ => throw new TaskCanceledException("inner timeout, not our ct"));
+
+        result.Success.Should().BeFalse();
+        result.IsServiceUnavailable.Should().BeTrue();
+        result.IsUnhandledException.Should().BeFalse();
+    }
+
     // ----------------------------------------------------------------------
     // Realistic full-stack composition
     // ----------------------------------------------------------------------
@@ -335,7 +356,7 @@ public sealed class ResilientPipelineTests
         try
         {
             // ReSharper disable AccessToDisposedClosure -- await Task.WhenAll
-            // synchronises all closures before the finally Dispose, which R#
+            // synchronizes all closures before the finally Dispose, which R#
             // can't prove statically.
             var tasks = Enumerable.Range(0, concurrent_callers).Select(_ => Task.Run(async () =>
             {

@@ -28,8 +28,12 @@ Two-tier cache that composes one [`ILocalCache`](../caching-abstractions/README.
 **Writes** (`SetAsync` / `SetManyAsync` / `RemoveAsync` / `RemoveManyAsync`):
 - L2 first — if L2 fails, return that failure and do not touch L1
 - L1 second — only fires after L2 succeeded
-- L2-first ordering means partial-write states are impossible; the result is binary (success or the
-  L2 failure bubbled up) and L1 never needs rolling back
+- **If L1 fails after L2 succeeded**, the L2-success result is what's returned — the L1 failure is
+  logged at Warning (`L1WriteFailedAfterL2Success`) and swallowed. Rationale (§18 graceful
+  degradation): L1 is the optional layer; an L1 sneeze on this instance must not fail a write the
+  cluster has successfully accepted. Next read on this instance re-fetches from L2.
+- L2-first ordering means partial-write states are impossible; the result is binary (L2's outcome,
+  with any L1 noise logged separately).
 
 **Atomic primitives** (`SetNxAsync` / `IncrementAsync` / `AcquireLockAsync` / `ReleaseLockAsync`):
 - Route through L2 (the cluster source of truth)
@@ -52,7 +56,9 @@ Two-tier cache that composes one [`ILocalCache`](../caching-abstractions/README.
 
 If an `ICacheInvalidationBackplane` is registered, the tiered cache subscribes to it in its
 constructor. Every received invalidation key triggers a `RemoveAsync` on the L1 cache — that's the
-entire L1-coherency mechanism. The subscription disposes when the tiered cache disposes.
+entire L1-coherency mechanism. **If the L1 `RemoveAsync` fails**, the failure is logged at Warning
+(`L1InvalidationFailed`) and processing continues; L1 stays stale on this instance until TTL or the
+next write/broadcast for that key. The subscription disposes when the tiered cache disposes.
 
 If no backplane is registered, `*AndBroadcast*` methods throw `InvalidOperationException`. The plain
 ops (`SetAsync` / `RemoveAsync` etc.) work fine; L1 caches drift from each other until their TTLs

@@ -174,6 +174,17 @@ public sealed class EncryptedBodyComposerTests
     }
 
     [Fact]
+    public void ReadKidFromFrame_UnknownVersionByte_Throws()
+    {
+        // Version byte 2 (unknown) — the version gate must reject before
+        // attempting to read the rest of the frame as a v1 kid.
+        var frame = new byte[] { 2, 5, (byte)'k', (byte)'i', (byte)'d', (byte)'-', (byte)'a' };
+        var act = () => EncryptedBodyComposer.ReadKidFromFrame(frame);
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Unknown encryption frame version*");
+    }
+
+    [Fact]
     public void ReadKidFromFrame_DeclaresKidLengthBeyondBuffer_Throws()
     {
         var bogus = new byte[] { 1, 100 };
