@@ -4,7 +4,9 @@ Copyright (c) DCSV. All rights reserved.
 
 # Audit Framework — orchestrator + sub-agents + JSON evidence + recipe-runner
 
-> **Status**: design proposal, not yet implemented. This doc captures the architecture decisions made on `n/auth` for the next-generation audit framework that will replace the current self-policed model.
+> **Status — split:**
+> - **Orchestrator-only main thread + adversarial sub-agent role separation: CANONICAL workflow, in effect now.** §2 (architecture) + §3 (sub-agent roles) describe what we DO, not what we plan to do. Trialed across deliverable 0002-auth-inbound (8 steps + final-review + 3 polish rounds). Empirical results captured in [Appendix C: Trial outcomes](#appendix-c-trial-outcomes-from-deliverable-0002-auth-inbound). Cross-referenced from [CLAUDE.md (orchestrator-only block)](../../CLAUDE.md#mandatory-block-0-orchestrator-only-main-thread) and [workflow.md (Orchestrator-only main thread)](workflow.md#orchestrator-only-main-thread-canonical).
+> - **JSON-first audit artifacts + recipe-runners + validator scripts + `rules.md` recipe/judgment/process bucketing: ASPIRATIONAL.** §4-§9 describe tooling not yet built. The current canonical workflow uses the markdown 3-artifact journal model (big table + findings log + fix log) per [workflow.md §3](workflow.md#3-audit-loop-the-core-forcing-function-fresh-auditor--fixer-sub-agents-per-round) and [rules.md §24](rules.md#24-audit-evidence-discipline-meta--how-to-audit). The tooling buildout is a future phase.
 >
 > **Author note**: written by the agent in collaboration with the user. The intent is for THE AGENT to find this framework reliable to follow — it is designed for agent ergonomics first, human readability second (with renderers bridging the gap).
 
@@ -12,23 +14,33 @@ Copyright (c) DCSV. All rights reserved.
 
 ## Table of contents
 
-1. [Motivation — why the current model breaks](#1-motivation--why-the-current-model-breaks)
+**Canonical (in effect now):**
+1. [Motivation — why the prior self-policed model breaks](#1-motivation--why-the-current-model-breaks)
 2. [Architecture — orchestrator-only main thread + sub-agents](#2-architecture--orchestrator-only-main-thread--sub-agents)
 3. [Sub-agent roles](#3-sub-agent-roles)
+
+**Aspirational (tooling buildout, not yet implemented):**
+
 4. [JSON-first audit artifacts](#4-json-first-audit-artifacts)
 5. [Anti-cheat: validator + recipe-runners](#5-anti-cheat-validator--recipe-runners)
 6. [`rules.md` transformation: recipe / judgment / process buckets](#6-rulesmd-transformation-recipe--judgment--process-buckets)
-7. [Per-step flow (state machine)](#7-per-step-flow-state-machine)
+7. [Per-step flow (state machine — full tooled version)](#7-per-step-flow-state-machine)
 8. [Tooling layout (`tools/audit/`)](#8-tooling-layout-toolsaudit)
-9. [Implementation phases](#9-implementation-phases)
+9. [Tooling buildout phases](#9-implementation-phases)
 10. [Open decisions](#10-open-decisions)
 11. [Research references](#11-research-references)
 
+**Appendices:**
+
+- [Appendix A: How this addresses each empirical failure mode](#appendix-a-how-this-addresses-each-empirical-failure-mode)
+- [Appendix B: Mapping to Anthropic's five workflow patterns](#appendix-b-mapping-to-anthropics-five-workflow-patterns)
+- [Appendix C: Trial outcomes from deliverable 0002-auth-inbound](#appendix-c-trial-outcomes-from-deliverable-0002-auth-inbound)
+
 ---
 
-## 1. Motivation — why the current model breaks
+## 1. Motivation — why the prior self-policed model breaks
 
-The current framework relies on the agent self-policing adherence to ~200 predicates in `rules.md`. Empirically (multiple audit cycles in deliverable 0002-auth-inbound) this fails in predictable ways:
+Before this framework, the workflow relied on the main-thread agent self-policing adherence to ~200 predicates in `rules.md`. Empirically (multiple audit cycles in deliverable 0002-auth-inbound) this failed in predictable ways:
 
 - **Prose-as-evidence drift**: agent writes "PASS — verified" without actually re-reading the file. File:line citation requirement helps but doesn't eliminate.
 - **Convergence illusion**: agent declares CLEAN one round too early because the alternative (more rounds) feels like failure. Motivated stopping.
@@ -36,63 +48,82 @@ The current framework relies on the agent self-policing adherence to ~200 predic
 - **Scope-narrowing under cost**: 200+ predicates feels expensive → agent rationalizes "obviously N/A" without specific evidence.
 - **Self-review leniency bias**: validated by [Anthropic-adjacent research](https://dev.to/rih0z/why-ai-agent-outputs-need-adversarial-review-and-how-to-add-it-in-one-api-call-1l92) — when an LLM reviews its own output it overwhelmingly approves.
 
-Adding more verbal rules (CAPS, "DO NOT BE LAZY", longer prose) doesn't fix these — they're ignored when convenient. The fix is structural: separate roles, mechanical evidence, and tool-mediated verification.
+Adding more verbal rules (CAPS, "DO NOT BE LAZY", longer prose) does not fix these — they're ignored when convenient. The fix is structural: separate roles, mechanical evidence, and tool-mediated verification.
 
-Real bugs that slipped past per-step audits in the current model and were only caught because someone (user OR a fresh sub-agent) re-walked from scratch:
+Real bugs that slipped past per-step audits in the prior self-policed model and were only caught because someone (user OR a fresh sub-agent) re-walked from scratch:
 - `AuthOptions` `required init` incompatible with `Action<T>` configure pattern (Step 02 — masked by missing composition test)
 - `JwksFetchDurationMs` histogram declared but never recorded (Step 03 — silent dead metric)
 - HTTP 100s default timeout unset on OIDC discovery client (Step 03 — would have hung threads under Edge outage)
 - Empty `BackplaneChannelKey` would silently drop every rotation event (Step 03)
 
-These are the kind of failures that compound silently. The framework has to catch them BEFORE production, not "when an audit happens to be diligent."
+These are the kind of failures that compound silently. The framework has to catch them BEFORE production, not "when an audit happens to be diligent." The orchestrator + adversarial sub-agent separation in §2-§3 is the structural fix and is in effect now; the JSON-first / recipe-runner / validator-script tooling in §4-§9 will mechanize what is currently a discipline-based workflow.
 
 ---
 
 ## 2. Architecture — orchestrator-only main thread + sub-agents
 
-Anthropic's [multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) uses orchestrator-Opus + worker-Sonnet and outperforms single-agent Opus by 90.2% on internal evals. The pattern: lead agent decomposes + delegates; workers execute in isolated context; results synthesize back.
+**Status: CANONICAL — in effect now.** This is the workflow.
 
-Apply that pattern to the audit loop:
+Anthropic's [multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) uses orchestrator-Opus + worker-Sonnet and outperforms single-agent Opus by 90.2% on internal evals. The pattern: lead agent decomposes + delegates; workers execute in isolated context; results synthesize back. We apply that pattern to the audit loop.
 
 **Main thread = pure orchestrator.** Restricted tool access:
 - ✅ `Agent` (spawn sub-agents)
-- ✅ `Bash` — only for `git`, `dotnet build` summary, validator script invocations
-- ✅ `Read` — only for plan files, deliverable README, journal review at decision points
-- ✅ `TaskUpdate`
-- ❌ `Edit` / `Write` to source / tests (sub-agents do this)
-- ❌ `Edit` / `Write` to journal big-table or findings log (Aggregator sub-agent does this)
-- ✅ `Edit` / `Write` to its own decision log (`docs/wip/<deliverable>/orchestrator-log.json`)
+- ✅ `Bash` — only for git plumbing (`git status`, `git log`, `git commit -F <file>` when authorized, `git push` when authorized) and (in the aspirational tooled flow) validator script invocations
+- ✅ `Read` — only for the deliverable root README and the orchestrator's own decision log; sub-agents handle source / test / journal content reads
+- ✅ `TaskCreate` / `TaskUpdate` / `TaskList` / `TaskGet` / `TaskStop`
+- ❌ `Edit` / `Write` to source / tests / per-lib READMEs / framework docs (sub-agents do this)
+- ❌ `Edit` / `Write` to journal big-table or findings log (Auditor / Aggregator sub-agents do this)
+- ✅ `Edit` / `Write` to the deliverable root README's tracking sections + its own decision log (`docs/wip/<deliverable>/orchestrator-log.md` if used)
 
-The main thread's job is decision-making, not implementation, not auditing. It reads sub-agent outputs and routes the next step. **It cannot mark anything CLEAN or PASS itself** — it only consumes those verdicts from sub-agents and validator script output.
+The main thread's job is decision-making, not implementation, not auditing. It reads sub-agent summaries and routes the next step. **It cannot mark anything CLEAN or PASS itself** — it only consumes those verdicts from sub-agents (and, in the aspirational tooled flow, from validator script output).
 
-This mirrors Claude Code's [sub-agent design](https://code.claude.com/docs/en/sub-agents): each sub-agent gets a fresh isolated context, encapsulates work, and returns only relevant output to the orchestrator. Context rot in the main thread becomes near-impossible because the main thread holds almost no state.
+This mirrors Claude Code's [sub-agent design](https://code.claude.com/docs/en/sub-agents): each sub-agent gets a fresh isolated context, encapsulates work, and returns only relevant output to the orchestrator. Context rot in the main thread is near-impossible because the main thread holds almost no domain state.
+
+**Every round = a NEW fresh sub-agent.** A second audit round is a brand-new Auditor, not the same Auditor "running again." A fix follow-up is a brand-new Fixer. The fresh-context property is the entire point — reusing context defeats the adversarial separation.
+
+Cross-references: [CLAUDE.md orchestrator-only block](../../CLAUDE.md#mandatory-block-0-orchestrator-only-main-thread), [workflow.md Orchestrator-only main thread (canonical)](workflow.md#orchestrator-only-main-thread-canonical).
 
 ---
 
 ## 3. Sub-agent roles
 
-Five distinct roles. Each is spawned with a fresh context and a tightly-scoped prompt.
+**Status: CANONICAL — in effect now.**
+
+Six distinct roles (Final-reviewer added at deliverable end). Each is spawned with a fresh context and a tightly-scoped prompt. **No reuse across roles or across rounds.**
 
 | Role | Spawned when | Tool access | Returns |
 |---|---|---|---|
-| **Implementer** | Start of each step | All | JSON: `{ filesTouched: [...], testsAdded: N, testsTotal: N, buildStatus: "clean" }` |
-| **Auditor** (parallel ×K) | After Implementer | Read, Grep, Glob, Bash (read-only), recipe-runner | Partial big-table chunk (JSON) for assigned categories |
-| **Aggregator** | After all Auditors | Read, Edit (journal + audit JSON only) | Updated journal: replaces big table, appends per-category findings log |
-| **Fixer** | When findings exist | All | JSON: `{ filesChanged: [...], fixLogEntries: [...] }` |
+| **Planner** | Start of each step | Read, Grep, Glob, Edit (journal Plan section only) | Step Plan section appended to journal + summary |
+| **Implementer** | After Planner | All | Files touched + tests added + build / inspectcode status |
+| **Auditor** (parallel ×K) | After Implementer | Read, Grep, Glob, Bash (read-only), recipe-runner (when tooled) | Partial big-table chunk for assigned categories |
+| **Aggregator** | After all Auditors | Read, Edit (journal + audit artifacts only) | Updated journal: replaces big table, appends per-category findings log |
+| **Fixer** | When findings exist | All | Files changed + appended fix-log entries |
 | **Final-reviewer** (parallel ×K, deliverable-end only) | Before SHIP | Same as Auditor | Deliverable-wide partial big tables |
 
 **Key design decisions:**
 
-- **Auditors cannot modify source.** They have read-only Bash. This makes "audit + fix in same session" structurally impossible — fixes always happen in a separate Fixer invocation, after the Aggregator has consolidated findings, which means findings get RECORDED before fixes are applied (no "I fixed it before recording it" sleight-of-hand).
+- **Planner is its own role.** Spawned at the start of each step with the step description + applicable rules.md categories + relevant docs to read. It writes the step's Plan section (goal, files to touch, decisions, pre-emptive gate checks) and returns. The Implementer then receives the Plan as input — fresh context, no exposure to whatever the orchestrator was discussing with the user.
+- **Auditors cannot modify source.** Read-only Bash. This makes "audit + fix in same session" structurally impossible — fixes always happen in a separate Fixer invocation, after findings are RECORDED in the journal (no "I fixed it before recording it" sleight-of-hand).
 - **Auditor adversarial framing.** Per [adversarial code review research](https://asdlc.io/patterns/adversarial-code-review/): the Auditor prompt explicitly states it's rewarded for finding issues, not for declaring CLEAN. Its role is hostile critic.
 - **Effort-scaling rules in prompts** (per Anthropic guidance): each sub-agent prompt caps effort proportional to the step's surface area. Small step = "don't write 17 ctor variants for a 1-property record."
-- **Aggregator is mechanical.** Cannot change verdicts — only combines K partial tables into one canonical table. If two Auditors disagree on the same row, escalate to orchestrator (which spawns a tie-breaker Auditor).
+- **Aggregator is mechanical.** Cannot change verdicts — only combines K partial tables into one canonical table. If two Auditors disagree on the same row, escalate to orchestrator (which spawns a tie-breaker Auditor). In the current markdown-journal flow, when K=1 the Auditor often does the embed itself; an Aggregator becomes load-bearing only when running parallel Auditors.
+- **Single-Auditor option for small steps.** The orchestrator may run K=1 Auditor when the step's surface area is small enough that splitting into K parallel Auditors offers no parallelism win. The fresh-context property still holds — what's prohibited is reusing the Implementer's context for auditing, not running fewer parallel Auditors.
+
+---
+
+---
+
+> # ⚠️ Sections 4-9 below: ASPIRATIONAL TOOLING BUILDOUT
+>
+> Everything from here through §9 describes tooling that is **not yet built**. The current canonical workflow uses the markdown 3-artifact journal model (`## Latest sweep results` big table + `## Sweep findings log (append-only)` + `## Fix log (append-only)`) per [workflow.md §3](workflow.md#3-audit-loop-the-core-forcing-function-fresh-auditor--fixer-sub-agents-per-round) and [rules.md §24](rules.md#24-audit-evidence-discipline-meta--how-to-audit). The orchestrator + sub-agent separation in §2-§3 is in effect now; the JSON-first artifacts + recipe-runner + validator-script + `rules.md` recipe/judgment/process bucketing described below are the future tooling buildout.
 
 ---
 
 ## 4. JSON-first audit artifacts
 
-The audit output is JSON, not markdown. Markdown views are GENERATED from JSON by a renderer for human readability, but JSON is the source of truth.
+**Status: ASPIRATIONAL — not yet built.** Will replace the markdown journal artifacts when shipped.
+
+The audit output will be JSON, not markdown. Markdown views are GENERATED from JSON by a renderer for human readability, but JSON is the source of truth.
 
 ### Directory layout per step
 
@@ -187,6 +218,8 @@ Schemas live in `tools/audit/schemas/` as JSON Schema (or zod TS definitions if 
 
 ## 5. Anti-cheat: validator + recipe-runners
 
+**Status: ASPIRATIONAL — not yet built.**
+
 Two layers of mechanical checking.
 
 ### Layer 1 — Schema validator
@@ -221,7 +254,9 @@ This is the critical anti-cheat. The agent literally cannot fabricate evidence b
 
 ## 6. `rules.md` transformation: recipe / judgment / process buckets
 
-Each numbered subsection in `rules.md` gets classified into one of three buckets:
+**Status: ASPIRATIONAL — not yet applied to `rules.md`.** Currently every subsection is walked as judgment-required by the Auditor sub-agent.
+
+Each numbered subsection in `rules.md` will be classified into one of three buckets:
 
 ### (i) Recipe-verifiable (~70% expected)
 
@@ -287,6 +322,8 @@ For judgment-required:
 ---
 
 ## 7. Per-step flow (state machine)
+
+**Status: ASPIRATIONAL — describes the fully-tooled flow.** The current canonical flow follows the same shape (Implementer → Auditor → Aggregator → Fixer, looped) but uses markdown journal artifacts instead of JSON; see [workflow.md §EXECUTE](workflow.md#execute) for the in-effect version.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -364,6 +401,8 @@ Key invariants:
 
 ## 8. Tooling layout (`tools/audit/`)
 
+**Status: ASPIRATIONAL — directory does not yet exist.**
+
 ```
 tools/audit/
 ├── README.md                        # how to invoke + dev guide
@@ -406,7 +445,9 @@ Invocation surface:
 
 ---
 
-## 9. Implementation phases
+## 9. Tooling buildout phases
+
+**Status: ASPIRATIONAL — these phases describe the JSON-first / recipe-runner / validator-script tooling buildout, not the workflow itself.** The orchestrator + sub-agent separation (§2-§3) is already canonical and in effect now; this section is about mechanizing the markdown 3-artifact journal model into JSON-validated artifacts.
 
 | Phase | Task | Estimated effort | Order |
 |---|---|---|---|
@@ -414,13 +455,11 @@ Invocation surface:
 | 2 | Convert `rules.md` predicates: classify into recipe/judgment/process buckets. | 2-3 days | Second |
 | 3 | Author recipe files for the recipe-verifiable bucket (~70% of predicates). | 3-5 days | Third |
 | 4 | Build `orchestrate.js` state machine + `run-recipes.js` + `render.js`. | 1-2 days | Fourth |
-| 5 | Update `CLAUDE.md` / `workflow.md` to point at new flow. Strip self-policed verbiage. | 1 day | Fifth |
-| 6 | Live-test on a real step (Step 06 or 07 of 0002-auth-inbound). Iterate. | ongoing | Sixth |
+| 5 | Update `CLAUDE.md` / `workflow.md` / this doc to reference JSON-tooled flow as canonical (right now §2-§3 are canonical against the markdown journal model). | 1 day | Fifth |
+| 6 | Live-test on a real step. Iterate. | ongoing | Sixth |
 | 7 | Backfill recipes for predicates that prove flaky in live tests. | ongoing | Seventh |
 
-**Recommended approach**: implement the framework AFTER deliverable 0002 ships using the simplified non-tier workflow. Use Steps 05-08 as instrumented live data — track every cheating-temptation moment, every false claim, every "I should have caught that earlier." Then build the framework with that ground truth in hand.
-
-**Alternative**: ship Phase 1 (`validate-schema.js` + `verify-evidence.js`) early, even within the current loose framework. It would catch fabricated PASS rows immediately. Defer Phase 2-7 until 0002 ships.
+**Recommended approach**: ship Phase 1 (`validate-schema.js` + `verify-evidence.js`) opportunistically — it will catch fabricated PASS rows in the current markdown journals immediately, even before the rest of the JSON-first artifact model lands. Defer Phase 2-7 until there's a coherent block of agent-time to author recipes against the post-0002 rules.md.
 
 ---
 
@@ -473,3 +512,42 @@ Invocation surface:
 | Evaluator-optimizer | Auditor evaluates, Fixer optimizes — looped until clean |
 
 All five patterns compose into one framework. This is what Anthropic's research system achieves at scale; this design applies the same pattern to the audit loop specifically.
+
+---
+
+## Appendix C: Trial outcomes from deliverable 0002-auth-inbound
+
+The orchestrator + adversarial sub-agent separation pattern (§2-§3) was trialed across deliverable 0002-auth-inbound (8 steps + final-review + 3 polish rounds) before being promoted to canonical workflow status. This appendix captures empirical outcomes that justified the promotion.
+
+### Two production bugs caught by adversarial separation that single-context implementation would have shipped
+
+**Bug 1 — wrong UserState slot in JwtAuthInterceptor**
+
+`JwtAuthInterceptor.ResolveMethodScopeMetadata` was reading the wrong `UserState` slot — code path that compiled clean and passed the Implementer's unit tests. The miss was caught by an integration test the Implementer had skipped (judging it "thin glue, no logic to test"). A separate Fixer sub-agent was forced to author the integration test as part of resolving the finding; the test then surfaced the wrong-slot read. Single-context implementation would have shipped this — the test that caught it only existed because adversarial separation forced its creation.
+
+**Bug 2 — `act_chain_malformed` dead-letter chain**
+
+`MalformedActorChainException` propagated uncaught from `ClaimsToContextMapper.Map` → JwtValidator was returning UnhandledException-shaped failures instead of the canonical `act_chain_malformed` AuthErrorCode. The miss was structural: the `AuthFailures.ActChainMalformed` helper existed, the `AuthErrorCodes.ActChainMalformed` constant existed, the `JwtValidator` xmldoc enumerated the outcome, the README documented it — but the validator implementation never emitted the outcome. The mismatch surfaced only at deliverable-wide final-review, when a fresh Final-reviewer sub-agent enumerated "what is documented vs what is actually emitted." A per-step Auditor would have walked just the JwtValidator step and seen consistent code+docs+tests; the cross-cutting gap required the deliverable-wide adversarial walk.
+
+### Convergence in 1-3 rounds (mostly 2)
+
+Per-step audit loops converged in 1-3 rounds across all 8 steps, with 2 rounds being the modal case. This is the empirical validation that the pattern works at scale — predicate satisfaction can be reached through fresh-context iteration without runaway round counts. The 10-iteration ceiling was never approached.
+
+### Main-thread context stayed small
+
+Across the whole deliverable (8 step-level audits + final-review + 3 rounds of polish + cross-deliverable design discussions about the auth-outbound stack), the main-thread context remained well under capacity. This is the key win of orchestrator-only main-thread: domain detail lives in sub-agent contexts that die on return, leaving the orchestrator free to handle long-arc decision-making across many steps.
+
+### User feedback after the trial
+
+> "the subagents, while slower to complete work, are actually doing a cleanly better job"
+
+The wall-clock-time tradeoff is real — sub-agent spawning adds overhead per round. But the quality differential in resulting code is the dominant factor; production-bug-catch rate is what justifies the workflow.
+
+### Why this promotes from "trial" to "canonical"
+
+The trial established three things simultaneously:
+1. The pattern catches bugs that single-context implementation ships (concrete: the two bugs above).
+2. Convergence is achievable in practice (concrete: 1-3 rounds per step, 8/8 steps reached CLEAN).
+3. Main-thread context stays small enough that the orchestrator can drive long deliverables (concrete: 8-step deliverable + 3-round polish + cross-deliverable discussion fit comfortably).
+
+All three together = the pattern is fit-for-purpose for D²-WORX's enterprise-readiness bar. Promotion to canonical removes the per-deliverable "should we use sub-agents this time?" decision and makes adversarial separation the default execution shape.

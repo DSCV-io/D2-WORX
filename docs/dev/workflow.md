@@ -6,20 +6,21 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2-WORX Development Workflow
 
-The loop that turns a design discussion into shipped, audited, regression-tested code without requiring the user to push the agent through audit rounds. Three phases: **PLAN → EXECUTE → REVIEW**. Convergence is autonomous — the agent loops until each step's audit terminates clean, then ships to user review.
+The loop that turns a design discussion into shipped, audited, regression-tested code without requiring the user to push the agent through audit rounds. Three phases: **PLAN → EXECUTE → REVIEW**. Convergence is autonomous — the **main-thread orchestrator** spawns fresh sub-agents for every round of planning, implementation, auditing, and fixing, and loops until each step's audit terminates clean, then ships to user review.
 
 ## Table of contents
 
 - [Mission context](#-mission-context)
 - [Glossary](#glossary)
+- [Orchestrator-only main thread (canonical)](#orchestrator-only-main-thread-canonical)
 - [Folder shape](#folder-shape)
 - [PLAN](#plan)
   - [Steps](#steps)
   - [`docs/wip/<deliverable>/README.md` template](#docswipdeliverablereadmemd-template-initial-form-populated-during-plan)
 - [EXECUTE](#execute)
-  - [1. Step plan entry](#1-step-plan-entry)
-  - [2. Implementation](#2-implementation)
-  - [3. Audit loop (the core forcing function)](#3-audit-loop-the-core-forcing-function)
+  - [1. Spawn Planner sub-agent (step plan entry)](#1-spawn-planner-sub-agent-step-plan-entry)
+  - [2. Spawn Implementer sub-agent](#2-spawn-implementer-sub-agent)
+  - [3. Audit loop (the core forcing function — fresh Auditor + Fixer sub-agents per round)](#3-audit-loop-the-core-forcing-function)
     - [Three-artifact journal model](#three-artifact-journal-model-mirror-of-claudemd--rulesmd-24)
     - [Mandatory round sequence](#mandatory-round-sequence-do-not-skip-steps-do-not-collapse-roles)
     - [Why the table is sweep-only-replaceable](#why-the-table-is-sweep-only-replaceable)
@@ -54,6 +55,67 @@ The loop that turns a design discussion into shipped, audited, regression-tested
 - **Clean round** — an audit round that produces zero findings across every category. The termination signal.
 - **Iteration ceiling** — 10 audit rounds per step (and 10 at final review). Hitting 11 means escalate to the user; the agent's mental model is wrong, not its execution.
 - **Self-improvement** — at each step's audit termination AND at deliverable ship, the agent distills the kinds of misses surfaced into proposed additions to `rules.md`. User approves; rules are appended; future deliverables start with a stricter ruleset.
+- **Orchestrator** — the main-thread agent. Decision-making + delegation only. Cannot edit / write / read source code; cannot walk `rules.md`; cannot mark anything CLEAN. Spawns sub-agents for everything domain-level.
+- **Sub-agent** — a fresh-context worker spawned via the `Agent` tool for one specific role (Planner / Implementer / Auditor / Aggregator / Fixer / Final-reviewer). Returns a structured summary; its context dies on return.
+
+
+<sup>[↑ jump to top](#top)</sup>
+
+---
+
+## Orchestrator-only main thread (canonical)
+
+**The main thread is an ORCHESTRATOR. It does not plan, implement, audit, or fix domain work itself. EVERY round of planning, implementation, auditing, and fixing is performed by a FRESH sub-agent spawned via the `Agent` tool.** This is the canonical workflow, not aspirational and not optional.
+
+### Why this is structural, not stylistic
+
+[Anthropic's multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) (orchestrator-Opus + worker-Sonnet) outperforms single-agent Opus by 90.2% on internal evals — the orchestrator-worker pattern is empirically validated for tasks that involve adversarial separation of concerns. [Adversarial code review research](https://asdlc.io/patterns/adversarial-code-review/) shows that LLM self-review has systematic leniency bias, and that reviewer + generator sharing the same context share blind spots. "Most agent reviews agent implementations are one LLM with a clever prompt pretending to be three reviewers, where the model can rubber-stamp itself" — the structural fix is SEPARATE sub-agent invocations with fresh contexts, not roleplay.
+
+Empirical justification from the deliverable 0002-auth-inbound trial: per-step audits converged in 1-3 rounds (mostly 2), and two real production bugs were caught by adversarial separation that single-context implementation would have shipped:
+1. `JwtAuthInterceptor.ResolveMethodScopeMetadata` reading the wrong `UserState` slot — caught by an integration test the Implementer skipped, that a Fixer was forced to add.
+2. `act_chain_malformed` dead-letter chain: `MalformedActorChainException` propagating uncaught from `ClaimsToContextMapper.Map` — caught only by the deliverable-wide enumeration that surfaced "AuthFailures helper exists + AuthErrorCodes constant exists + xmldoc enumerates the outcome + README documents it — but JwtValidator never emits it."
+
+Main-thread context stayed small across the whole deliverable (8 step-level audits + final-review + 3 rounds of polish + cross-deliverable design discussions all fit comfortably). User feedback after the trial: "the subagents, while slower to complete work, are actually doing a cleanly better job."
+
+### Allowed in main-thread context
+
+- `Agent` — spawn sub-agents (the primary orchestrator activity)
+- `TaskCreate` / `TaskUpdate` / `TaskList` / `TaskGet` / `TaskStop` — tracking
+- `Bash` for **git plumbing only** (`git status`, `git log`, `git commit -F <file>` when user-authorized, `git push` when user-authorized) — small non-domain output only
+- Reading sub-agent summaries (returned in `Agent` tool results)
+- `Read` / `Edit` / `Write` to the orchestrator's own decision log (`docs/wip/<deliverable>/orchestrator-log.md` if used) and the deliverable root README's tracking sections (status flips, kinds-of-misses log appends, proposed-rules accumulator)
+
+### Forbidden in main-thread context
+
+- `Edit` / `Write` to ANY source file, test file, per-csproj README, per-service README, or framework doc
+- `Bash` for builds, tests, `jb inspectcode`, or any domain-level grep / inspection
+- `Read` on source files, test files, or per-lib READMEs — delegate to sub-agents (they have the fresh context to absorb domain detail)
+- Reading journal files mid-deliverable for content review — delegate state-checks to sub-agents that report back summary
+- Walking `rules.md` predicates — always done by Auditor sub-agents
+- Marking anything CLEAN / PASS / converged from main-thread judgment — those verdicts come from Auditor sub-agent output
+
+### Canonical sub-agent roles
+
+Spec lives in [docs/dev/audit-framework.md §3](audit-framework.md#3-sub-agent-roles). Summary:
+
+| Role | When spawned | Tool access | Returns |
+|---|---|---|---|
+| **Planner** | Start of each step | All | Step Plan section appended to journal |
+| **Implementer** | After Planner approval | All | Files-touched + tests-added + build/inspectcode status |
+| **Auditor** (parallel ×K) | After Implementer | READ-ONLY (Read, Grep, Glob, Bash read-only) | Partial big-table chunk + per-category findings |
+| **Aggregator** | After all Auditors | Edit (journal only) | Canonical big table embedded in journal + findings appended to log |
+| **Fixer** | When Auditor surfaces FINDINGs | All | Files-changed + appended fix-log entries |
+| **Final-reviewer** (parallel ×K) | Before SHIP | READ-ONLY | Deliverable-wide partial big tables (cumulative output) |
+
+### Every round = a NEW fresh sub-agent
+
+A second audit round is a brand-new Auditor sub-agent, NOT the same Auditor "running again." A fix follow-up after a Fixer's first attempt is a brand-new Fixer. The fresh-context property is the entire point — it's what prevents leniency / motivated-stopping / stale-memory failure modes. Reusing context across roles defeats the whole pattern.
+
+The orchestrator never short-circuits this for "quick" work. A one-line typo fix still spawns a Planner, Implementer, Auditor, and (if findings) Fixer. Sub-agent invocation cost is small; production regression cost is large.
+
+### The orchestrator cannot mark CLEAN
+
+The orchestrator consumes Auditor verdicts; it cannot promote a step to CLEAN by judgment. CLEAN means "the latest Auditor sub-agent's big table contained zero FINDING rows." If the orchestrator wants to confirm closure, it spawns a fresh Auditor — it does not eyeball.
 
 
 <sup>[↑ jump to top](#top)</sup>
@@ -146,11 +208,11 @@ Status: PLAN | EXECUTE step N | FINAL-REVIEW | SHIPPED
 
 ## EXECUTE
 
-For each step in order (respecting prerequisites):
+For each step in order (respecting prerequisites), the **main-thread orchestrator** drives the per-step loop by spawning fresh sub-agents (per [Orchestrator-only main thread](#orchestrator-only-main-thread-canonical) above). The orchestrator itself never edits source, never walks `rules.md`, never marks anything CLEAN.
 
-### 1. Step plan entry
+### 1. Spawn Planner sub-agent (step plan entry)
 
-Append to `docs/wip/<deliverable>/<NN>-<step>/journal.md`:
+The orchestrator spawns a fresh **Planner** sub-agent with: step description, prerequisites, applicable rules.md categories, and references to relevant docs. The Planner reads what it needs, then appends to `docs/wip/<deliverable>/<NN>-<step>/journal.md`:
 
 ```
 =================================================
@@ -167,11 +229,11 @@ Pre-emptive gate checks (try to nail first-pass):
   - Layer check: <transport vs handler decisions; alternatives considered>
 ```
 
-The pre-emptive gate checks exist to push category-A/E/F catches to BEFORE the code is written, not after. This is where the loop count drops from 5 rounds to 1-2.
+The Planner returns a summary; its context dies on return. The pre-emptive gate checks exist to push category-A/E/F catches to BEFORE the code is written, not after. This is where the loop count drops from 5 rounds to 1-2.
 
-### 2. Implementation
+### 2. Spawn Implementer sub-agent
 
-Write the code + the corresponding tests. Append:
+The orchestrator spawns a fresh **Implementer** sub-agent with: the journal Plan section + the applicable rules.md categories + files-to-touch list. The Implementer writes the code + the corresponding tests, then appends:
 
 ```
 =================================================
@@ -187,9 +249,15 @@ Adversarial coverage: <count, summary>
 Build state: clean | <warnings to address>
 ```
 
+The Implementer returns a structured files-touched + tests-added + build status summary; its context dies on return. The orchestrator does NOT read the source files itself — it consumes the summary.
+
 ### 3. Audit loop (the core forcing function)
 
-Walk every category in [rules.md](rules.md). For each predicate, produce evidence — grep results, file:line lists, "checked X by Y, found Z." Vibes ("looks fine") are not evidence. Findings get fixed in the same round; the next round runs against post-fix state.
+For EACH round, the orchestrator spawns a **fresh Auditor sub-agent** (READ-ONLY tools — cannot edit source). The Auditor walks every category in [rules.md](rules.md) and produces evidence per predicate — grep results, file:line lists, "checked X by Y, found Z." Vibes ("looks fine") are not evidence. The Auditor REPLACES the journal's big table with its sweep output and APPENDS a `### Round N findings` subsection.
+
+When the Auditor surfaces FINDING rows, the orchestrator spawns a **fresh Fixer sub-agent** with the findings list. The Fixer applies fixes + appends fix-log entries — it cannot mark anything CLEAN; closure is proven only by the NEXT round's fresh Auditor walking the predicate again and not surfacing the finding.
+
+A second audit round is a BRAND-NEW Auditor sub-agent, not the same one re-running. The fresh-context property is non-negotiable.
 
 #### MANDATORY: per-round evidence table embedded in the journal (no exceptions)
 
@@ -306,7 +374,7 @@ Question for user: <specific ask>
 
 ### 4. Per-step distillation
 
-Once the step terminates clean, append to the step journal:
+Once the step terminates clean (a fresh Auditor's big table came back with zero FINDING rows), the orchestrator spawns a fresh sub-agent (or reuses the last Auditor's summary) to append the distillation to the step journal:
 
 ```
 =================================================
@@ -328,14 +396,14 @@ These candidates surface in the root README's "Kinds-of-misses log" so they're v
 
 ### 5. Update root README
 
-After the step distillation, the agent updates `docs/wip/<deliverable>/README.md`:
+After the step distillation, the **orchestrator** updates `docs/wip/<deliverable>/README.md` (this is one of the few `Edit` activities the orchestrator may perform itself, since the root README is the orchestrator's tracking artifact):
 - Step status: ⏸ → 🔄 → ✅ (with iteration count: "✅ 02-service-identity-stack (3 audit rounds to clean)")
 - Append to "Kinds-of-misses log" with the step's distillation summary
 - If new cross-cutting decisions surfaced, append to that section
 
 ### 6. Move to next step
 
-Steps run in prerequisite order. Step N can start when all listed prerequisites are ✅. The agent does NOT start a new step while the previous step has open audit findings.
+Steps run in prerequisite order. Step N can start when all listed prerequisites are ✅. The orchestrator does NOT spawn a new Planner sub-agent for step N while the previous step has open audit findings.
 
 
 <sup>[↑ jump to top](#top)</sup>
@@ -344,18 +412,19 @@ Steps run in prerequisite order. Step N can start when all listed prerequisites 
 
 ## FINAL-REVIEW (the last "step" of every deliverable)
 
-Same loop as EXECUTE, but scope = the whole deliverable. Catches integration / consistency bugs that no single-step audit would find: cross-step type drift, telemetry tag drift between two libs, README parity across all touched files, end-to-end integration paths.
+Same orchestrator-driven loop as EXECUTE, but scope = the whole deliverable. Catches integration / consistency bugs that no single-step audit would find: cross-step type drift, telemetry tag drift between two libs, README parity across all touched files, end-to-end integration paths.
 
 Folder: `docs/wip/<deliverable>/final-review/journal.md`.
 
-Same structure as a step:
-1. Plan entry (what cross-step concerns to walk)
-2. Implementation (any cross-cutting fixes)
-3. Audit loop with the SAME `rules.md` ruleset, scope = whole deliverable
-4. 10-iteration ceiling, escalate if hit
-5. Distillation entry
+Same structure as a step — the orchestrator spawns fresh sub-agents per phase:
+1. Spawn fresh **Planner** for cross-step concerns to walk
+2. Spawn fresh **Implementer** for any cross-cutting fixes (only if planning surfaces work)
+3. Spawn fresh **Final-reviewer** sub-agent(s) per round (READ-ONLY) — same `rules.md` ruleset, scope = whole deliverable. Each round = a brand-new Final-reviewer.
+4. Spawn fresh **Fixer** when findings exist
+5. 10-iteration ceiling, escalate if hit
+6. Distillation entry
 
-When final-review terminates clean → deliverable is ready to SHIP.
+When the latest Final-reviewer's big table comes back with zero FINDING rows → deliverable is ready to SHIP.
 
 
 <sup>[↑ jump to top](#top)</sup>
@@ -441,7 +510,7 @@ This workflow scales to deliverables of meaningfully different sizes. Two exampl
 
 **Large deliverable** — multi-csproj refactor or build-out. Step list: `01-csproj-1` through `09-csproj-9` + `final-review`. Ten journals. Cross-cutting decisions surface in the root README; per-step journals carry per-csproj detail.
 
-There's no "lightweight path" for trivial changes — even a typo fix benefits from "did you check whether this typo appears elsewhere in the same doc?" The cost of running the full ruleset on a small change is minutes; the cost of NOT running it (and missing the parallel typo) is a future audit round.
+There's no "lightweight path" for trivial changes — even a typo fix benefits from "did you check whether this typo appears elsewhere in the same doc?" The cost of running the full ruleset on a small change is minutes; the cost of NOT running it (and missing the parallel typo) is a future audit round. **The orchestrator-only-main-thread + fresh-sub-agent-per-round pattern (see [Orchestrator-only main thread](#orchestrator-only-main-thread-canonical) above) applies at every scope: a one-line typo fix still spawns a Planner / Implementer / Auditor / (if findings) Fixer chain. Sub-agent invocation cost is small; production regression cost is large.**
 
 
 <sup>[↑ jump to top](#top)</sup>

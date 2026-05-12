@@ -13,6 +13,7 @@ Copyright (c) DCSV. All rights reserved.
 **Top-of-file mandatory blocks** (read these every session):
 
 - [📍 Project state pointer](#claudemd--dworx-development-guide)
+- [⚠️ MANDATORY — orchestrator-only main thread](#mandatory-block-0-orchestrator-only-main-thread)
 - [⚠️ MANDATORY — applies to every code change](#mandatory-block-1-every-code-change)
 - [⚠️ MANDATORY — audit evidence & proof discipline](#mandatory-block-2-audit-evidence--proof-discipline)
 - [⚠️ Deliverable completeness checklist — gate before user review](#mandatory-block-3-deliverable-completeness-checklist)
@@ -45,6 +46,54 @@ Copyright (c) DCSV. All rights reserved.
 > This doc covers process, patterns, and code rules. Architectural decisions live distributed across the docs in `docs/` (PATTERNS.md, TESTS.md, MESSAGING.md, OPERATIONAL-GUARANTEES.md, AUDIT_CHECKLIST.md, etc.) and the per-lib / per-service `README.md` files.
 
 > **📍 PROJECT STATE — READ FIRST**: The active project tracking doc is **[docs/v2/PHASE_0.md](docs/v2/PHASE_0.md)** (current phase, status, open questions, deferred work, resolved decisions). This pointer is the single source for "what's the project doing right now" — when this doc archives, the pointer here gets updated to its successor. A frozen v1 snapshot lives at `/old/v1/D2-WORX/` (read-only, reference for historical patterns not yet captured in current docs).
+
+<a name="mandatory-block-0-orchestrator-only-main-thread"></a>
+
+> # ⚠️⚠️⚠️ MANDATORY — ORCHESTRATOR-ONLY MAIN THREAD ⚠️⚠️⚠️
+>
+> **The main thread is an ORCHESTRATOR. It does NOT plan, implement, audit, or fix domain work itself. EVERY round of planning, implementation, auditing, and fixing is performed by a FRESH sub-agent spawned via the `Agent` tool. Reusing one sub-agent across roles, or letting the main thread do the domain work, defeats the entire pattern. This is the canonical workflow — not aspirational, not optional, not a "trial."**
+>
+> Empirical justification: deliverable 0002-auth-inbound trialed this pattern across 8 steps + final-review + 3 polish rounds. Per-step audits converged in 1-3 rounds (mostly 2). Two real production bugs were caught by adversarial separation that single-context implementation would have shipped:
+> 1. `JwtAuthInterceptor.ResolveMethodScopeMetadata` reading the wrong `UserState` slot — caught by an integration test the Implementer skipped, that a Fixer was forced to add.
+> 2. `act_chain_malformed` dead-letter chain: `MalformedActorChainException` propagating uncaught from `ClaimsToContextMapper.Map` — caught only by deliverable-wide enumeration ("AuthFailures helper exists + AuthErrorCodes constant exists + xmldoc enumerates the outcome + README documents it — but JwtValidator never emits it").
+>
+> The architectural justification is published research: Anthropic's [multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) (orchestrator-Opus + worker-Sonnet) outperforms single-agent Opus by 90.2% on internal evals; [adversarial code review research](https://asdlc.io/patterns/adversarial-code-review/) shows LLM self-review has systematic leniency bias and reviewer + generator share blind spots when run in the same context. "Most agent reviews agent implementations are one LLM with a clever prompt pretending to be three reviewers, where the model can rubber-stamp itself" — the only structural fix is SEPARATE sub-agent invocations with fresh contexts, not roleplay.
+>
+> **Allowed in main-thread context:**
+> - `Agent` — spawn sub-agents (this is the primary orchestrator activity)
+> - `TaskCreate` / `TaskUpdate` / `TaskList` / `TaskGet` / `TaskStop` — tracking
+> - `Bash` for **git plumbing only** (`git status`, `git log`, `git commit -F <file>` when user-authorized, `git push` when user-authorized) — small non-domain output only
+> - Reading sub-agent summaries (returned in `Agent` tool results)
+> - `Read` / `Edit` / `Write` to the orchestrator's own decision log (`docs/wip/<deliverable>/orchestrator-log.md` or equivalent) and the deliverable root README's tracking sections
+>
+> **Forbidden in main-thread context:**
+> - `Edit` / `Write` to ANY source file, test file, per-csproj README, per-service README, or framework doc
+> - `Bash` for builds, tests, `jb inspectcode`, or any domain-level grep / inspection
+> - `Read` on source files, test files, or per-lib READMEs — delegate to sub-agents (they have the fresh context to absorb domain detail)
+> - Reading journal files mid-deliverable for content review — delegate state-checks to sub-agents that report back summary
+> - Walking `rules.md` predicates — always done by Auditor sub-agents
+> - Marking anything CLEAN / PASS / converged — those verdicts come from Auditor sub-agent output, never from main-thread judgment
+>
+> **Canonical sub-agent roles** (mirroring Anthropic's orchestrator-worker architecture; spec lives in [docs/dev/audit-framework.md §3](docs/dev/audit-framework.md#3-sub-agent-roles)):
+>
+> | Role | When spawned | Returns |
+> |---|---|---|
+> | **Planner** | Start of each step | Step Plan section appended to journal; rationale + decisions + pre-emptive gate checks |
+> | **Implementer** | After Planner approval | Files-touched list + tests-added count + build/inspectcode status |
+> | **Auditor** (parallel ×K) | After Implementer | Partial big-table chunk + per-category findings list (READ-ONLY tools — cannot edit source) |
+> | **Aggregator** | After all Auditors | Canonical big table embedded in journal + per-category findings appended to findings log |
+> | **Fixer** | When Auditor surfaces FINDING rows | Files-changed list + appended fix-log entries |
+> | **Final-reviewer** (parallel ×K) | Before SHIP | Deliverable-wide partial big tables (cumulative output) |
+>
+> **EVERY ROUND of planning, implementation, auditing, and fixing requires a NEW fresh sub-agent.** A second audit round = a brand-new Auditor sub-agent, NOT the same Auditor "running again." A fix follow-up after a Fixer's first attempt = a brand-new Fixer. The fresh-context property is the entire point — it's what prevents the leniency / motivated-stopping / stale-memory failure modes.
+>
+> **The orchestrator NEVER short-circuits this for "quick" work.** A one-line typo fix still spawns a Planner, Implementer, Auditor, and (if findings) Fixer. The cost asymmetry is in your favor: sub-agent invocation is cheap, production regressions are expensive. The ONLY bypass is an explicit user request.
+>
+> **Detailed protocol → [docs/dev/workflow.md §EXECUTE](docs/dev/workflow.md#execute) and [docs/dev/audit-framework.md](docs/dev/audit-framework.md). The orchestrator + sub-agent separation is canonical now; the JSON-first / recipe-runner / validator-script tooling described in audit-framework.md is still aspirational (to-be-built).**
+>
+> **If you find yourself about to `Edit` a source file from the main thread, STOP. Spawn an Implementer sub-agent with the change spec. If you find yourself about to walk `rules.md` from the main thread, STOP. Spawn an Auditor. If you find yourself about to read a journal file to "check progress," STOP. Spawn a sub-agent to summarize state and report back. The discipline is structural, not optional.**
+
+---
 
 <a name="mandatory-block-1-every-code-change"></a>
 
@@ -154,21 +203,22 @@ Copyright (c) DCSV. All rights reserved.
 
 ## §1. Development Workflow
 
-The agent reaches alignment with the user during PLAN, then executes autonomously through EXECUTE (per-step audit loop with 10-iteration ceiling, append-only journal capturing every round) and FINAL-REVIEW (same loop scoped to whole deliverable), then hands off to REVIEW. The user's value lives in PLAN (design decisions) and REVIEW (architectural feedback) — not in pushing the agent through audit rounds.
+The agent reaches alignment with the user during PLAN, then **the main-thread orchestrator drives EXECUTE by spawning fresh sub-agents** for every round of planning, implementation, auditing, and fixing (per-step audit loop with 10-iteration ceiling, append-only journal capturing every round) and FINAL-REVIEW (same loop scoped to whole deliverable), then hands off to REVIEW. The user's value lives in PLAN (design decisions) and REVIEW (architectural feedback) — not in pushing the agent through audit rounds.
 
 **Detailed protocol → [docs/dev/workflow.md](docs/dev/workflow.md).**
+**Orchestrator + sub-agent architecture → [docs/dev/audit-framework.md](docs/dev/audit-framework.md).**
 **Verbose audit rule catalog walked each round → [docs/dev/rules.md](docs/dev/rules.md).**
 **Past deliverables' final reports + lessons → [docs/dev/deliverables/](docs/dev/deliverables/).**
 
 ### Phase summary
 
 - **PLAN** — Discuss with user. Lock high-level goal + step breakdown (one csproj or equivalent per step) + cross-cutting decisions + risk analysis. Output: `docs/wip/<deliverable>/README.md` (gitignored workspace) populated with step list, decisions, prerequisites.
-- **EXECUTE** — Per step, in prerequisite order:
-  1. Plan substep (append to `docs/wip/<deliverable>/<NN>-<step>/journal.md`) — including pre-emptive gate checks (test coverage plan, convention check, PII check, layer check) to push catches BEFORE writing code, not after.
-  2. Implement code + tests.
-  3. **Audit loop** — walk every category in `rules.md`, produce evidence per predicate via the **3-artifact journal model** (big table replaced each sweep + append-only findings log + append-only fix log; see the AUDIT EVIDENCE & PROOF DISCIPLINE block above + workflow.md §3 + rules.md §24). **DO NOT BE LAZY — walk EVERY subsection, no skipping, no assuming irrelevance without specific evidence; LEAVE NO STONE UNTURNED.** PASS rows require file:line citations; N/A rows require step-scope-specific reasons; FINDING rows require severity + file:line + description + fix. **The journal must contain all three artifacts: the big table under `## Latest sweep results` (REPLACED each sweep with anti-laziness preamble above), the findings log under `## Sweep findings log (append-only)` (per-round subsections), and the fix log under `## Fix log (append-only)`. The big table is sweep-only — fixes go in the fix log, never in the table. Closure is proven by ABSENCE of the finding from the next sweep's big table.** Terminate on a complete-table CLEAN sweep (zero FINDING rows). 10-iteration ceiling per step; iteration 11 = escalate.
-  4. Per-step distillation → root README's kinds-of-misses log + candidate predicate additions for `rules.md`.
-- **FINAL-REVIEW** — Same audit loop, scope = whole deliverable. Catches integration / cross-step / consistency bugs.
+- **EXECUTE** — Per step, in prerequisite order, the **main-thread orchestrator** spawns fresh sub-agents for each phase (per the orchestrator-only main-thread block above):
+  1. **Spawn Planner sub-agent** — given step description + applicable rules.md categories + relevant docs to read; appends Plan section to `docs/wip/<deliverable>/<NN>-<step>/journal.md` including pre-emptive gate checks (test coverage plan, convention check, PII check, layer check) to push catches BEFORE writing code, not after.
+  2. **Spawn Implementer sub-agent** — given the journal Plan + applicable rules.md categories; writes code + tests; returns files-touched + build/inspectcode status.
+  3. **Audit loop** — for EACH round, spawn fresh Auditor sub-agent(s) (READ-ONLY tools) that walk every category in `rules.md` and produce evidence per predicate via the **3-artifact journal model** (big table replaced each sweep + append-only findings log + append-only fix log; see the AUDIT EVIDENCE & PROOF DISCIPLINE block above + workflow.md §3 + rules.md §24). **DO NOT BE LAZY — walk EVERY subsection, no skipping, no assuming irrelevance without specific evidence; LEAVE NO STONE UNTURNED.** PASS rows require file:line citations; N/A rows require step-scope-specific reasons; FINDING rows require severity + file:line + description + fix. When findings exist, the orchestrator spawns a **fresh Fixer sub-agent** to apply fixes + append fix-log entries. **The journal must contain all three artifacts: the big table under `## Latest sweep results` (REPLACED each sweep with anti-laziness preamble above), the findings log under `## Sweep findings log (append-only)` (per-round subsections), and the fix log under `## Fix log (append-only)`. The big table is sweep-only — fixes go in the fix log, never in the table. Closure is proven by ABSENCE of the finding from the next sweep's big table.** Each next round = a NEW fresh Auditor sub-agent (no context reuse). Terminate on a complete-table CLEAN sweep (zero FINDING rows). 10-iteration ceiling per step; iteration 11 = escalate.
+  4. Per-step distillation → root README's kinds-of-misses log + candidate predicate additions for `rules.md` (orchestrator may delegate distillation to a sub-agent if the journal is large).
+- **FINAL-REVIEW** — Same orchestrator-driven audit loop, scope = whole deliverable. Fresh Final-reviewer sub-agent(s) per round. Catches integration / cross-step / consistency bugs.
 - **SHIP** — Aggregate proposed rule additions FROM the per-step + final-review journals (they MUST still be readable at this point — they're the evidence behind every proposed rule). Present root README to user. Apply approved rules to `rules.md`. **Copy the root README as a snapshot** from `docs/wip/NNNN-<name>/README.md` to `docs/dev/deliverables/NNNN-<name>.md` (committed — single file; 4-digit index prefix so deliverables sort naturally in ship order). The per-step journals stay where they are in the gitignored `docs/wip/NNNN-<name>/` workspace — local-only artifacts that the workflow NEVER auto-deletes. User removes them manually whenever they want.
 - **REVIEW** — User reviews shipped deliverable. Feedback is captured-and-confirmed first, NOT fixed-on-sight. Bugs that the audit should have caught become new predicates (self-improvement loop).
 
