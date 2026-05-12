@@ -71,15 +71,15 @@ public sealed class JwtAuthInterceptorTests
         act.Should().Throw<ArgumentNullException>();
     }
 
-    // ---- Anonymous opt-in ----
+    // ---- Harmless-endpoint opt-in ----
 
     [Fact]
-    public async Task UnaryServerHandler_AnonymousMetadata_SkipsValidatorAndCallsContinuation()
+    public async Task UnaryServerHandler_HarmlessEndpointMetadata_SkipsValidatorAndCallsNext()
     {
         using var builder = new TestJwtBuilder();
         var liveness = new FakeSessionLivenessTracker();
         var interceptor = MakeInterceptor(builder, liveness);
-        var ctx = MakeContext(authorization: null, metadata: MethodScopeMetadata.Anonymous);
+        var ctx = MakeContext(authorization: null, metadata: MethodScopeMetadata.HarmlessEndpoint);
         var continuationCalled = false;
 
         await interceptor.UnaryServerHandler<string, string>(

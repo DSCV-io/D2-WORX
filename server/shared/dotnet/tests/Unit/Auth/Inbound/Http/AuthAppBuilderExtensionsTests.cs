@@ -61,13 +61,13 @@ public sealed class AuthAppBuilderExtensionsTests
     }
 
     [Fact]
-    public async Task UseD2Auth_AnonymousEndpoint_PassesWithoutBearer()
+    public async Task UseD2Auth_HarmlessEndpoint_PassesWithoutBearer()
     {
         using var builder = new TestJwtBuilder();
         using var host = await BuildHostAsync(builder);
         var client = host.GetTestClient();
 
-        var response = await client.GetAsync(new Uri("/anon", UriKind.Relative));
+        var response = await client.GetAsync(new Uri("/harmless", UriKind.Relative));
 
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
     }
@@ -132,7 +132,8 @@ public sealed class AuthAppBuilderExtensionsTests
                         {
                             endpoints.MapGet(
                                 "/protected", () => "authenticated");
-                            endpoints.MapGet("/anon", () => "anon-ok").AllowD2Anonymous();
+                            endpoints.MapGet("/harmless", () => "harmless-ok")
+                                .MarkAsD2HarmlessEndpoint();
                         });
                     });
             });

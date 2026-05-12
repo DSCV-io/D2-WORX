@@ -29,7 +29,7 @@ services
 app.UseRouting();
 app.UseD2Auth();              // BETWEEN UseRouting() and the endpoint dispatcher
 app.MapGet("/files/{id}", H).RequireD2Scope("files.read");
-app.MapPost("/auth/sign-in", H).AllowD2Anonymous();
+app.MapGet("/healthz", () => "ok").MarkAsD2HarmlessEndpoint();
 ```
 
 `AddD2AuthHttp()` registers `IHttpContextAccessor` and a scoped `IRequestContext` resolver that reads from `HttpContext.Items` (populated by the middleware). `AddD2Auth(...)` MUST be called first — fail-fast `InvalidOperationException` otherwise.
@@ -70,10 +70,10 @@ For HTTP-only or gRPC-only hosts, omit the unused `AddD2AuthXxx()` call — each
 
 ### Endpoint metadata — `EndpointScopeMetadata`
 
-Carries the per-endpoint scope requirement (or anonymous opt-in). Two flavors:
+Carries the per-endpoint scope requirement (or harmless-endpoint opt-in). Two flavors:
 
 - `EndpointScopeMetadata.ForScopes(["files.read", "files.admin"])` — at-least-one-of semantics. Mirrors `IAuthContextExtensions.HasAnyScope` and `BaseHandler.RequiredScopes` enforcement.
-- `EndpointScopeMetadata.Anonymous` — singleton; middleware short-circuits the validator + liveness pipeline.
+- `EndpointScopeMetadata.HarmlessEndpoint` — singleton; middleware short-circuits the validator + liveness pipeline.
 
 Attach via the fluent builder extensions:
 
@@ -81,9 +81,9 @@ Attach via the fluent builder extensions:
 |---|---|
 | `.RequireD2Scope("scope")` | Endpoint requires this scope. |
 | `.RequireD2Scope("scope", "alt-scope")` | Endpoint requires at least one of these scopes. |
-| `.AllowD2Anonymous()` | Endpoint accepts anonymous requests. |
+| `.MarkAsD2HarmlessEndpoint()` | Endpoint bypasses auth entirely (probes / OIDC discovery / harmless intra-cluster info only). |
 
-The deny-by-default state: an endpoint with NO `EndpointScopeMetadata` attached gets the FULL pipeline (validator + liveness; scope check passes against the empty required set). Endpoints that need anonymous access MUST opt in explicitly via `.AllowD2Anonymous()` — the codebase deliberately does NOT recognize the BCL `[AllowAnonymous]` attribute (its semantic is tied to the BCL `AuthenticationMiddleware` chain we bypass).
+The deny-by-default state: an endpoint with NO `EndpointScopeMetadata` attached gets the FULL pipeline (validator + liveness; scope check passes against the empty required set). Endpoints that need to bypass auth entirely MUST opt in explicitly via `.MarkAsD2HarmlessEndpoint()` — the codebase deliberately does NOT recognize the BCL `[AllowAnonymous]` attribute (its semantic is tied to the BCL `AuthenticationMiddleware` chain we bypass).
 
 ### ProblemDetails — `D2ProblemDetailsExtensions`
 
@@ -117,7 +117,7 @@ endpoints.MapGet("/me", (HttpContext ctx) =>
 {
     var requestContext = ctx.GetD2RequestContext();
     // requestContext is the validated IRequestContext when the middleware ran;
-    // null on anonymous endpoints / pre-auth pipeline stages.
+    // null on harmless endpoints / pre-auth pipeline stages.
 });
 ```
 
@@ -184,8 +184,8 @@ The auth-core lib's `AuthLog` enforces the no-`Exception`-parameter contract via
 
 `server/shared/dotnet/tests/Unit/Auth/Inbound/Http/`:
 
-- `Middleware/JwtAuthMiddlewareTests.cs` — every `InvokeAsync` branch (anonymous endpoint short-circuit, no-metadata endpoint, bearer-missing / wrong-prefix / empty-after-prefix / multi-Authorization-header, validator failures, liveness outcomes, scope pass / fail, cancellation propagation, HttpContext.Items contract, double-write avoidance).
-- `Endpoints/EndpointScopeMetadataTests.cs` — `Anonymous` singleton invariants; `ForScopes` deduping + frozen; record equality; zero-scope throws.
+- `Middleware/JwtAuthMiddlewareTests.cs` — every `InvokeAsync` branch (harmless-endpoint short-circuit, no-metadata endpoint, bearer-missing / wrong-prefix / empty-after-prefix / multi-Authorization-header, validator failures, liveness outcomes, scope pass / fail, cancellation propagation, HttpContext.Items contract, double-write avoidance).
+- `Endpoints/EndpointScopeMetadataTests.cs` — `HarmlessEndpoint` singleton invariants; `ForScopes` deduping + frozen; record equality; zero-scope throws; **`HarmlessEndpoint` factory + `IsHarmlessEndpoint` property names pinned via reflection (literal-string lookup) for the future analyzer that keys against those names.**
 - `Endpoints/RequireD2ScopeExtensionsTests.cs` — fluent extensions correctly attach metadata; null/whitespace argument throws.
 - `ProblemDetails/D2ProblemDetailsExtensionsTests.cs` — every AuthFailures surface → expected ProblemDetails JSON shape; `Type` URI scheme; `Status` per error; `d2_error_code` extension verbatim; `d2_messages` array shape; `traceId` presence/absence per `Activity.Current`; counter increment.
 - `AuthHttpServiceCollectionExtensionsTests.cs` — `IRequestContext` resolves via accessor adapter; throws when middleware hasn't run; throws when slot holds wrong type; missing-`AddD2Auth` fail-fast; idempotency.

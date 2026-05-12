@@ -28,7 +28,7 @@ using Microsoft.Extensions.Logging;
 /// session liveness check (via <see cref="ISessionLivenessTracker"/>) on
 /// inbound gRPC calls, enforces per-method scope requirements declared via
 /// <see cref="MethodScopeMetadata"/> / <see cref="D2RequireScopeAttribute"/>
-/// / <see cref="D2AllowAnonymousAttribute"/>, and emits
+/// / <see cref="D2HarmlessEndpointAttribute"/>, and emits
 /// <see cref="RpcException"/> with translated <see cref="Status"/> +
 /// <c>d2_error_code</c> / <c>d2_messages</c> / <c>traceid</c> trailers on
 /// failure.
@@ -39,7 +39,7 @@ using Microsoft.Extensions.Logging;
 /// </para>
 /// <list type="number">
 ///   <item>Resolve the matched gRPC method's <see cref="MethodScopeMetadata"/>
-///     (or fall back to attribute pickup). If anonymous → invoke
+///     (or fall back to attribute pickup). If harmless-endpoint → invoke
 ///     <c>continuation</c> immediately, skipping all auth work.</item>
 ///   <item>Extract the bearer from the <c>authorization</c> metadata entry
 ///     (RFC 6750 §2.1; gRPC metadata keys are lowercased per HTTP/2).
@@ -245,58 +245,58 @@ internal sealed class JwtAuthInterceptor : Interceptor
             return fluent;
 
         // Attribute precedence (matches BCL [Authorize] / [AllowAnonymous]
-        // semantics): a method-level [D2AllowAnonymous] overrides any
+        // semantics): a method-level [D2HarmlessEndpoint] overrides any
         // class-level [D2RequireScope]. ASP.NET routing pickup orders
         // metadata: class-level first, then method-level — so we walk the
         // collection in order and let the LAST matching entry win for the
-        // anonymous case, while also surfacing a method-level
-        // [D2AllowAnonymous] over any [D2RequireScope].
-        var anon = endpoint.Metadata.GetMetadata<D2AllowAnonymousAttribute>();
+        // harmless-endpoint case, while also surfacing a method-level
+        // [D2HarmlessEndpoint] over any [D2RequireScope].
+        var harmlessEndpoint = endpoint.Metadata.GetMetadata<D2HarmlessEndpointAttribute>();
         var require = endpoint.Metadata.GetMetadata<D2RequireScopeAttribute>();
 
-        // [D2AllowAnonymous] wins regardless of source level (ASP.NET
+        // [D2HarmlessEndpoint] wins regardless of source level (ASP.NET
         // metadata order ensures GetMetadata<T>() returns the LAST entry,
         // so a method-level attribute supersedes a class-level one for the
-        // SAME attribute type). When both [D2AllowAnonymous] AND
-        // [D2RequireScope] are present, anonymous wins to mirror the BCL
-        // [AllowAnonymous]-over-[Authorize] precedence; the typical case is
-        // a class-level [D2RequireScope] with a method-level
-        // [D2AllowAnonymous] opting one method out.
-        if (anon is not null && IsAnonymousLastDeclaration(endpoint, require))
-            return MethodScopeMetadata.Anonymous;
+        // SAME attribute type). When both [D2HarmlessEndpoint] AND
+        // [D2RequireScope] are present, harmless-endpoint wins to mirror the
+        // BCL [AllowAnonymous]-over-[Authorize] precedence; the typical case
+        // is a class-level [D2RequireScope] with a method-level
+        // [D2HarmlessEndpoint] opting one method out.
+        if (harmlessEndpoint is not null && IsHarmlessEndpointLastDeclaration(endpoint, require))
+            return MethodScopeMetadata.HarmlessEndpoint;
 
         if (require is not null)
             return MethodScopeMetadata.ForScopes(require.Scopes);
 
-        return anon is not null ? MethodScopeMetadata.Anonymous : null;
+        return harmlessEndpoint is not null ? MethodScopeMetadata.HarmlessEndpoint : null;
     }
 
-    private static bool IsAnonymousLastDeclaration(
+    private static bool IsHarmlessEndpointLastDeclaration(
         Microsoft.AspNetCore.Http.Endpoint endpoint,
         D2RequireScopeAttribute? require)
     {
         // When BOTH attributes are present, ASP.NET metadata walking order
         // (class-level then method-level) lets the LAST one win. This mirrors
         // BCL [AllowAnonymous]-over-[Authorize] precedence — a method-level
-        // [D2AllowAnonymous] on a class with [D2RequireScope] resolves to
-        // anonymous; a class-level [D2AllowAnonymous] with a method-level
+        // [D2HarmlessEndpoint] on a class with [D2RequireScope] resolves to
+        // harmless; a class-level [D2HarmlessEndpoint] with a method-level
         // [D2RequireScope] resolves to scope-required.
         if (require is null)
             return true;
 
-        var lastAnon = -1;
+        var lastHarmless = -1;
         var lastRequire = -1;
         var index = 0;
         foreach (var item in endpoint.Metadata)
         {
-            if (item is D2AllowAnonymousAttribute)
-                lastAnon = index;
+            if (item is D2HarmlessEndpointAttribute)
+                lastHarmless = index;
             else if (item is D2RequireScopeAttribute)
                 lastRequire = index;
             index++;
         }
 
-        return lastAnon > lastRequire;
+        return lastHarmless > lastRequire;
     }
 
     private static bool RequestContextHasAnyScope(
@@ -394,8 +394,8 @@ internal sealed class JwtAuthInterceptor : Interceptor
         var ct = context.CancellationToken;
         var metadata = ResolveMethodScopeMetadata(context);
 
-        // Anonymous opt-in short-circuit: skip validator + liveness entirely.
-        if (metadata is { IsAnonymous: true })
+        // Harmless-endpoint opt-in short-circuit: skip validator + liveness entirely.
+        if (metadata is { IsHarmlessEndpoint: true })
             return;
 
         // Bearer extraction.

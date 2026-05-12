@@ -28,7 +28,7 @@ public static class HttpContextRequestContextExtensions
         /// </summary>
         /// <returns>
         /// The <see cref="IRequestContext"/> when the auth middleware has run
-        /// and populated the slot; <see langword="null"/> otherwise (anonymous
+        /// and populated the slot; <see langword="null"/> otherwise (harmless
         /// endpoints, requests where the middleware was bypassed, or pre-auth
         /// pipeline stages).
         /// </returns>

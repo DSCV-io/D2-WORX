@@ -43,7 +43,7 @@ using GrpcStatusCode = global::Grpc.Core.StatusCode;
 /// </summary>
 /// <remarks>
 /// Method-level metadata is supplied via the fluent
-/// <c>RequireD2Scope</c> / <c>AllowD2Anonymous</c> extensions on
+/// <c>RequireD2Scope</c> / <c>MarkAsD2HarmlessEndpoint</c> extensions on
 /// <see cref="GrpcServiceEndpointConventionBuilder"/> — the most reliable
 /// production wiring (the attribute path is covered by separate unit tests
 /// over hand-built endpoint metadata; gRPC AspNetCore does not auto-pull
@@ -61,10 +61,10 @@ public sealed class GrpcAuthIntegrationTests
     private const string _SCOPE = "test.scope";
 
     [Fact]
-    public async Task AnonymousService_NoBearer_Succeeds()
+    public async Task HarmlessEndpointService_NoBearer_Succeeds()
     {
-        // TestHealth is wired with .AllowD2Anonymous(); the pipeline must
-        // short-circuit and never inspect the (absent) bearer.
+        // TestHealth is wired with .MarkAsD2HarmlessEndpoint(); the pipeline
+        // must short-circuit and never inspect the (absent) bearer.
         using var jwt = new TestJwtBuilder();
         using var host = await BuildHostAsync(jwt);
         using var channel = CreateChannel(host);
@@ -219,7 +219,7 @@ public sealed class GrpcAuthIntegrationTests
                             endpoints.MapGrpcService<TestEchoService>()
                                 .RequireD2Scope(_SCOPE);
                             endpoints.MapGrpcService<TestHealthService>()
-                                .AllowD2Anonymous();
+                                .MarkAsD2HarmlessEndpoint();
                         });
                     });
             });
@@ -266,7 +266,7 @@ public sealed class GrpcAuthIntegrationTests
 
     /// <summary>
     /// Test-only gRPC service. Exposes <c>Health</c>; wired with
-    /// <c>.AllowD2Anonymous()</c> at <c>MapGrpcService</c> time.
+    /// <c>.MarkAsD2HarmlessEndpoint()</c> at <c>MapGrpcService</c> time.
     /// </summary>
     private sealed class TestHealthService : TestHealth.TestHealthBase
     {

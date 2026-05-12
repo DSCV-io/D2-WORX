@@ -36,12 +36,13 @@ public sealed class JwtAuthMiddlewareTests
     private const string _BEARER_PREFIX = "Bearer ";
 
     [Fact]
-    public async Task InvokeAsync_AnonymousEndpoint_SkipsValidatorAndCallsNext()
+    public async Task InvokeAsync_HarmlessEndpoint_SkipsValidatorAndCallsNext()
     {
         using var builder = new TestJwtBuilder();
         var liveness = new FakeSessionLivenessTracker();
         var (mw, nextCalled) = MakeMiddleware(builder, liveness);
-        var ctx = MakeContext(authorization: null, metadata: EndpointScopeMetadata.Anonymous);
+        var ctx = MakeContext(
+            authorization: null, metadata: EndpointScopeMetadata.HarmlessEndpoint);
 
         await mw.InvokeAsync(ctx);
 

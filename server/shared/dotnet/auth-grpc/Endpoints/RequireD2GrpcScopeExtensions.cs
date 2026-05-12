@@ -10,8 +10,8 @@ using Microsoft.AspNetCore.Builder;
 
 /// <summary>
 /// Fluent <see cref="IEndpointConventionBuilder"/> extensions for declaring
-/// the scope requirements (or anonymous opt-in) of a gRPC method on the
-/// builder returned by <c>MapGrpcService&lt;T&gt;()</c>. Read by the auth
+/// the scope requirements (or harmless-endpoint opt-in) of a gRPC method on
+/// the builder returned by <c>MapGrpcService&lt;T&gt;()</c>. Read by the auth
 /// interceptor via the matched endpoint's metadata collection.
 /// </summary>
 /// <remarks>
@@ -20,11 +20,11 @@ using Microsoft.AspNetCore.Builder;
 /// </para>
 /// <code>
 /// app.MapGrpcService&lt;FilesService&gt;().RequireD2Scope("files.read");
-/// app.MapGrpcService&lt;PublicLookupService&gt;().AllowD2Anonymous();
+/// app.MapGrpcService&lt;HealthProbeService&gt;().MarkAsD2HarmlessEndpoint();
 /// </code>
 /// <para>
 /// The attribute path (<see cref="D2RequireScopeAttribute"/> /
-/// <see cref="D2AllowAnonymousAttribute"/>) is the recommended primary
+/// <see cref="D2HarmlessEndpointAttribute"/>) is the recommended primary
 /// surface for gRPC services because gRPC service implementations are
 /// concrete classes overriding generated <c>*ServiceBase</c> types; declaring
 /// scope requirements at the method declaration is the most ergonomic. The
@@ -88,26 +88,41 @@ public static class RequireD2GrpcScopeExtensions
     }
 
     /// <summary>
-    /// Declares that the gRPC method (or every method on the service this
-    /// builder represents) accepts anonymous requests — the auth interceptor
-    /// short-circuits the validator + liveness pipeline. Required for the
-    /// codegen anonymous family (sign-in, password reset, public lookups).
+    /// Marks the endpoint (or every method on the gRPC service this builder
+    /// represents) as a HARMLESS endpoint — the auth middleware / interceptor
+    /// SKIPS the entire JWT validation pipeline for matching calls. This is a
+    /// SECURITY-CRITICAL annotation — misuse causes sensitive data to be returned
+    /// without any authentication.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <strong>Legitimate use cases ONLY</strong>: k8s / Docker liveness +
+    /// readiness probes; intra-cluster service-to-service health or info
+    /// endpoints returning closed-enumeration constants only; OIDC discovery
+    /// endpoints (Edge-only). Every other case — anything that returns user
+    /// data, organization data, session-derived state, or any field an operator
+    /// would consider sensitive — is a security bug if it reaches this surface.
+    /// Declare an anon-scope-required endpoint instead.
+    /// </para>
+    /// <para>
     /// Does NOT recognize the BCL <c>[AllowAnonymous]</c> attribute (that
     /// semantic ties to the BCL <c>AuthorizationMiddleware</c> chain we
-    /// deliberately bypass).
-    /// </summary>
+    /// deliberately bypass). The <c>MarkAs</c> verb signals an explicit
+    /// declarative annotation — the friction at the call site is intentional.
+    /// </para>
+    /// </remarks>
     /// <typeparam name="TBuilder">Endpoint convention builder type.</typeparam>
     /// <param name="builder">The endpoint convention builder.</param>
     /// <returns>The same <paramref name="builder"/> for fluent chaining.</returns>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="builder"/> is <see langword="null"/>.
     /// </exception>
-    public static TBuilder AllowD2Anonymous<TBuilder>(this TBuilder builder)
+    public static TBuilder MarkAsD2HarmlessEndpoint<TBuilder>(this TBuilder builder)
         where TBuilder : IEndpointConventionBuilder
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        builder.Add(b => b.Metadata.Add(MethodScopeMetadata.Anonymous));
+        builder.Add(b => b.Metadata.Add(MethodScopeMetadata.HarmlessEndpoint));
         return builder;
     }
 }

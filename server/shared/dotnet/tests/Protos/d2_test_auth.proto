@@ -5,7 +5,7 @@
 // auth pipeline through the fluent-metadata path:
 //
 //   - TestEcho (Echo) — wired with .RequireD2Scope("test.scope") at MapGrpcService time
-//   - TestHealth (Health) — wired with .AllowD2Anonymous() at MapGrpcService time
+//   - TestHealth (Health) — wired with .MarkAsD2HarmlessEndpoint() at MapGrpcService time
 //
 // Two services (rather than one mixed service) sidestep the fluent-metadata
 // "applies to all methods on the builder" semantic. The auth-grpc unit tests

@@ -562,8 +562,8 @@ Populates `MutableRequestContext` progressively as middleware layers run. Infras
 Inbound JWT auth ships as three sibling csprojs:
 
 - **`D2.Shared.Auth`** — runtime: `JwtValidator` (signature + standard-claim checks), `HttpJwksProvider` (JWKS fetch + Singleflight + cooldown + circuit-breaker), `TieredCacheSessionLivenessTracker` (sentinel-only liveness), telemetry, failure helpers (`AuthFailures.Jwt*` returning `D2Result`). Pure handler-shaped logic — no transport coupling. One DI extension: `services.AddD2Auth(opts => { opts.Issuer = ...; opts.Audience = ...; })`.
-- **`D2.Shared.Auth.Http`** — HTTP transport binding: `JwtAuthMiddleware`, RFC 7807 `ProblemDetails` shape with `d2_error_code` extension, `RequireD2Scope("…")` fluent metadata + `[D2RequireScope("…")]` attribute, opt-out via `AllowD2Anonymous()` / `[D2AllowAnonymous]`. Wired with `services.AddD2AuthHttp()` + `app.UseD2Auth()`.
-- **`D2.Shared.Auth.Grpc`** — gRPC transport binding: `JwtAuthInterceptor`, `RpcException(Status, Trailers)` shape with `d2_error_code` / `d2_messages` / `traceid` trailers, `[D2RequireScope("…")]` method attributes, `[D2AllowAnonymous]` opt-out. Wired with `services.AddD2AuthGrpc()`.
+- **`D2.Shared.Auth.Http`** — HTTP transport binding: `JwtAuthMiddleware`, RFC 7807 `ProblemDetails` shape with `d2_error_code` extension, `RequireD2Scope("…")` fluent metadata + `[D2RequireScope("…")]` attribute, harmless-endpoint opt-out via `MarkAsD2HarmlessEndpoint()`. Wired with `services.AddD2AuthHttp()` + `app.UseD2Auth()`.
+- **`D2.Shared.Auth.Grpc`** — gRPC transport binding: `JwtAuthInterceptor`, `RpcException(Status, Trailers)` shape with `d2_error_code` / `d2_messages` / `traceid` trailers, `[D2RequireScope("…")]` method attributes, `[D2HarmlessEndpoint]` opt-out. Wired with `services.AddD2AuthGrpc()`.
 
 Per-validation pipeline (order is important for what happens at WHICH layer):
 
@@ -601,7 +601,11 @@ Per-endpoint required-scope sets are declared in the route surface, NOT in handl
 | HTTP | `app.MapGet("/files/{id}", H).RequireD2Scope("files.read");` | n/a (Minimal API surface uses fluent) |
 | gRPC | n/a (gRPC services use class/method attributes) | `[D2RequireScope("files.read")] public override Task<...> GetFile(...)` |
 
-Anonymous opt-outs (`AllowD2Anonymous` / `[D2AllowAnonymous]`) are explicit — there is NO fall-through to "anonymous if no scope declared." An endpoint with no scope metadata is rejected at startup.
+Three endpoint states, evaluated by the auth boundary:
+
+- **No scope metadata** — runs the FULL pipeline (JWT validator + session-liveness check) and accepts any authenticated caller. Equivalent to "auth required, no specific scope required."
+- **`RequireD2Scope("...")` / `[D2RequireScope("...")]`** — runs the FULL pipeline, then requires the caller's scopes to overlap (any-of) with the declared set. Insufficient scopes → uniform `AUTH_SCOPE_INSUFFICIENT` 401.
+- **`MarkAsD2HarmlessEndpoint()` / `[D2HarmlessEndpoint]`** — SKIPS the entire pipeline (no validator, no liveness, no scope check). The deny-by-default pressure is at the SCOPE level, not the endpoint-registration level — harmless-endpoint opt-out is the explicit, security-sensitive escape hatch reserved for k8s probes, intra-cluster health/info endpoints, and OIDC discovery (Edge-only). Any other use is a security bug.
 
 ### Other route-level gates
 

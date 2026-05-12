@@ -21,7 +21,7 @@ using System.Collections.Generic;
 /// <strong>Precedence</strong> (matches BCL <c>[Authorize]</c> /
 /// <c>[AllowAnonymous]</c>): a method-level attribute overrides any
 /// class-level attribute on the same service. A method-level
-/// <see cref="D2AllowAnonymousAttribute"/> overrides any class-level
+/// <see cref="D2HarmlessEndpointAttribute"/> overrides any class-level
 /// <see cref="D2RequireScopeAttribute"/>. Fluent metadata
 /// (<c>MethodScopeMetadata</c> attached via the builder extensions) takes
 /// precedence over both.

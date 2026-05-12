@@ -76,15 +76,15 @@ public sealed class FilesService : Files.FilesBase
 {
     public override Task<GetFileReply> GetFile(GetFileRequest req, ServerCallContext ctx) { ... }
 
-    [D2AllowAnonymous]
+    [D2HarmlessEndpoint]
     public override Task<HealthReply> Health(Empty req, ServerCallContext ctx) { ... }
 }
 ```
 
-`D2RequireScopeAttribute` and `D2AllowAnonymousAttribute` apply at method level OR class level. ASP.NET routing auto-pulls them onto endpoint metadata during `MapGrpcService<T>()` — no extra wiring required.
+`D2RequireScopeAttribute` and `D2HarmlessEndpointAttribute` apply at method level OR class level. ASP.NET routing auto-pulls them onto endpoint metadata during `MapGrpcService<T>()` — no extra wiring required.
 
 **Precedence** (mirrors BCL `[AllowAnonymous]` over `[Authorize]`):
-- Method-level `[D2AllowAnonymous]` overrides any class-level `[D2RequireScope]`.
+- Method-level `[D2HarmlessEndpoint]` overrides any class-level `[D2RequireScope]`.
 - Method-level `[D2RequireScope]` overrides any class-level `[D2RequireScope]`.
 - Fluent metadata (see below) takes precedence over both attribute paths.
 
@@ -92,14 +92,14 @@ public sealed class FilesService : Files.FilesBase
 
 ```csharp
 app.MapGrpcService<FilesService>().RequireD2Scope("files.read");
-app.MapGrpcService<PublicLookupService>().AllowD2Anonymous();
+app.MapGrpcService<HealthProbeService>().MarkAsD2HarmlessEndpoint();
 ```
 
 Useful for tests that need to inject metadata without modifying production code, conditional registration based on feature flags, and endpoint-builder composition pipelines.
 
 #### Deny-by-default
 
-A gRPC method with NO `MethodScopeMetadata` / `[D2RequireScope]` / `[D2AllowAnonymous]` gets the FULL pipeline (validator + liveness; scope check passes against the empty required set). Methods that need anonymous access MUST opt in explicitly — the codebase deliberately does NOT recognize the BCL `[AllowAnonymous]` attribute (its semantic is tied to the BCL `AuthorizationMiddleware` chain we bypass).
+A gRPC method with NO `MethodScopeMetadata` / `[D2RequireScope]` / `[D2HarmlessEndpoint]` gets the FULL pipeline (validator + liveness; scope check passes against the empty required set). Methods that need to bypass auth entirely MUST opt in explicitly via `[D2HarmlessEndpoint]` — the codebase deliberately does NOT recognize the BCL `[AllowAnonymous]` attribute (its semantic is tied to the BCL `AuthorizationMiddleware` chain we bypass).
 
 ### `RpcException` shape — `D2RpcStatusExtensions`
 
@@ -132,7 +132,7 @@ public override Task<GetFileReply> GetFile(GetFileRequest req, ServerCallContext
 {
     var requestContext = ctx.GetD2RequestContext();
     // requestContext is the validated IRequestContext when the interceptor ran;
-    // null on anonymous methods / pre-interceptor pipeline stages.
+    // null on harmless endpoints / pre-interceptor pipeline stages.
 }
 ```
 
@@ -140,9 +140,9 @@ Or better, constructor-inject `IRequestContext` directly — the scoped adapter 
 
 ## Footguns / common pitfalls
 
-### Anonymous methods + ctor-injected `IRequestContext`
+### Harmless-endpoint methods + ctor-injected `IRequestContext`
 
-The scoped `IRequestContext` adapter registered by `AddD2AuthGrpc()` resolves from `HttpContext.Items[D2HttpContextItems.REQUEST_CONTEXT]` — populated by the interceptor AFTER successful auth (the same write also lands on `ServerCallContext.UserState` for the gRPC-specific hot-path accessor `ServerCallContext.GetD2RequestContext()`, but the cross-transport DI resolver reads from the `HttpContext.Items` slot, NOT `UserState` — that's how a single resolver lambda works identically under HTTP and gRPC). On methods marked `[D2AllowAnonymous]` (or class-level anon services), the interceptor SHORT-CIRCUITS the auth pipeline and never writes to either slot. A gRPC service that constructor-injects `IRequestContext` will then fail at resolve time with:
+The scoped `IRequestContext` adapter registered by `AddD2AuthGrpc()` resolves from `HttpContext.Items[D2HttpContextItems.REQUEST_CONTEXT]` — populated by the interceptor AFTER successful auth (the same write also lands on `ServerCallContext.UserState` for the gRPC-specific hot-path accessor `ServerCallContext.GetD2RequestContext()`, but the cross-transport DI resolver reads from the `HttpContext.Items` slot, NOT `UserState` — that's how a single resolver lambda works identically under HTTP and gRPC). On methods marked `[D2HarmlessEndpoint]` (or class-level harmless-endpoint services), the interceptor SHORT-CIRCUITS the auth pipeline and never writes to either slot. A gRPC service that constructor-injects `IRequestContext` will then fail at resolve time with:
 
 ```text
 InvalidOperationException: IRequestContext was resolved before the auth
@@ -156,12 +156,12 @@ Why fail-fast: returning a sentinel "anonymous" context would let downstream cod
 
 **Workarounds**:
 
-1. **Resolve lazily inside the method body** (preferred for mixed services). Inject `IServiceProvider` / `IServiceScopeFactory` instead of `IRequestContext`; resolve `IRequestContext` only inside non-anonymous method bodies:
+1. **Resolve lazily inside the method body** (preferred for mixed services). Inject `IServiceProvider` / `IServiceScopeFactory` instead of `IRequestContext`; resolve `IRequestContext` only inside non-harmless method bodies:
 
    ```csharp
    public sealed class FilesService(IServiceProvider sp) : Files.FilesBase
    {
-       [D2AllowAnonymous]
+       [D2HarmlessEndpoint]
        public override Task<HealthReply> Health(Empty req, ServerCallContext ctx)
            => Task.FromResult(new HealthReply());
 
@@ -179,19 +179,19 @@ Why fail-fast: returning a sentinel "anonymous" context would let downstream cod
    public override Task<GetFileReply> GetFile(GetFileRequest req, ServerCallContext ctx)
    {
        var requestContext = ctx.GetD2RequestContext();
-       // requestContext is non-null on authenticated calls; null on anonymous.
+       // requestContext is non-null on authenticated calls; null on harmless endpoints.
    }
    ```
 
-3. **Split the service** — keep anonymous methods on a separate gRPC service class that doesn't inject `IRequestContext` at all. Cleanest for fully-anonymous services like health/info endpoints.
+3. **Split the service** — keep harmless-endpoint methods on a separate gRPC service class that doesn't inject `IRequestContext` at all. Cleanest for fully-harmless services like health/info endpoints.
 
-### `[D2AllowAnonymous]` does NOT honor the BCL `[AllowAnonymous]`
+### `[D2HarmlessEndpoint]` does NOT honor the BCL `[AllowAnonymous]`
 
-The interceptor deliberately ignores `Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute` — its semantic is wired to the BCL `AuthorizationMiddleware` chain that the D2 auth pipeline bypasses. Use `[D2AllowAnonymous]` exclusively. A method decorated only with the BCL attribute will be treated as deny-by-default and the interceptor will require a valid bearer.
+The interceptor deliberately ignores `Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute` — its semantic is wired to the BCL `AuthorizationMiddleware` chain that the D2 auth pipeline bypasses. Use `[D2HarmlessEndpoint]` exclusively. A method decorated only with the BCL attribute will be treated as deny-by-default and the interceptor will require a valid bearer.
 
 ### Fluent metadata silently overrides attributes
 
-`MapGrpcService<T>().RequireD2Scope("scope")` and `.AllowD2Anonymous()` take precedence over BOTH method-level and class-level attribute declarations — by design (lets tests inject metadata + lets feature flags conditionally adjust scope without modifying production code). If a method appears auth-failing under unexpected scopes, audit the fluent-metadata wiring at the `MapGrpcService` site BEFORE assuming the attribute is correct.
+`MapGrpcService<T>().RequireD2Scope("scope")` and `.MarkAsD2HarmlessEndpoint()` take precedence over BOTH method-level and class-level attribute declarations — by design (lets tests inject metadata + lets feature flags conditionally adjust scope without modifying production code). If a method appears auth-failing under unexpected scopes, audit the fluent-metadata wiring at the `MapGrpcService` site BEFORE assuming the attribute is correct.
 
 ### Streaming methods can't bypass auth — but they CAN bypass scope checks via wrong endpoint metadata
 
@@ -266,9 +266,9 @@ Bearer bytes, claim values, and scope strings NEVER reach logs / span tags / met
 - `Interceptors/JwtAuthInterceptorTests.cs` — every `RunAuthAsync` branch across all four RPC kinds; bearer-extraction edge cases; validator failure surfaces; liveness outcomes; scope pass / fail; cancellation propagation; `UserState` contract; double-write avoidance; constructor null-guards.
 - `Interceptors/D2GrpcUserStateKeysTests.cs` — slot-key constant value pinned (`"D2.RequestContext"`).
 - `Interceptors/ServerCallContextRequestContextExtensionsTests.cs` — typed accessor returns null pre-interceptor / non-`IRequestContext` slot; populated value post-interceptor.
-- `Endpoints/MethodScopeMetadataTests.cs` — `Anonymous` singleton invariants; `ForScopes` deduping + frozen; record equality; zero-scope throws.
+- `Endpoints/MethodScopeMetadataTests.cs` — `HarmlessEndpoint` singleton invariants; `ForScopes` deduping + frozen; record equality; zero-scope throws; **`HarmlessEndpoint` factory + `IsHarmlessEndpoint` property names pinned via reflection (literal-string lookup) for the future analyzer that keys against those names.**
 - `Endpoints/D2RequireScopeAttributeTests.cs` — construction (single + multiple scopes); null/whitespace argument throws; class-level vs method-level precedence.
-- `Endpoints/D2AllowAnonymousAttributeTests.cs` — construction; class-level vs method-level precedence; overrides sibling `[D2RequireScope]`.
+- `Endpoints/D2HarmlessEndpointAttributeTests.cs` — construction; class-level vs method-level precedence; overrides sibling `[D2RequireScope]`; **type name `"D2HarmlessEndpointAttribute"` + full-namespace pinned via literal-string assertion for the future analyzer.**
 - `Endpoints/RequireD2GrpcScopeExtensionsTests.cs` — fluent extensions correctly attach metadata; null/whitespace throws.
 - `Status/D2RpcStatusExtensionsTests.cs` — every `AuthFailures` surface → expected `Status.StatusCode` + trailer set; `Status.Detail` empty; `traceid` presence/absence per `Activity.Current`; counter increment.
 - `AuthGrpcServiceCollectionExtensionsTests.cs` — DI registration; `AddD2Auth` precondition fail-fast; idempotent re-call; interceptor type registered as singleton; appears in `GrpcServiceOptions.Interceptors` exactly once; scoped `IRequestContext` adapter resolution.
@@ -325,12 +325,12 @@ Same wire shape as the HTTP middleware's ProblemDetails `d2_messages` extension 
 
 The `traceid` trailer is the W3C trace-id of the active `Activity.Current` at the time of failure (lower-hex format, 32 chars). Correlate with the server-side span in your OTel backend (Tempo / Jaeger / etc.) — the `JwtAuthInterceptor` runs inside the gRPC server-call activity, so the span will carry the auth-failure logs (via `AuthLog` delegates) and the `AuthTelemetry.ProblemEmitted` counter increment.
 
-### `IRequestContext` resolution failures (anonymous methods + DI ctor injection)
+### `IRequestContext` resolution failures (harmless-endpoint methods + DI ctor injection)
 
 Two distinct `InvalidOperationException` surfaces from the cross-transport scoped `IRequestContext` resolver registered by `AddD2AuthGrpc()` (lambda body byte-equivalent to the one `AddD2AuthHttp()` registers — both read `HttpContext.Items[D2HttpContextItems.REQUEST_CONTEXT]`):
 
 - **`"IRequestContext was resolved without an active HttpContext. Ensure the resolution site runs inside an AspNetCore request (UseD2Auth() for HTTP; AddD2AuthGrpc() for gRPC) and that an HttpContext is on the execution context."`** — the resolver fetched `IHttpContextAccessor` and got `null`. Background-service / hosted-service code that takes a constructor `IRequestContext` would surface this. Resolution sites must be inside an inbound request.
-- **`"IRequestContext was resolved before the auth pipeline ran. Ensure UseD2Auth() (for HTTP) or AddD2AuthGrpc()'s interceptor (for gRPC) has run before resolving IRequestContext."`** — `HttpContext` is present but the slot is empty. Two common causes: (a) the gRPC method is decorated with `[D2AllowAnonymous]` (interceptor short-circuited; nothing was written to the slot) — see [Footguns / common pitfalls → Anonymous methods + ctor-injected `IRequestContext`](#anonymous-methods--ctor-injected-irequestcontext) for the three workarounds; (b) the resolution site runs upstream of the interceptor — rarer for gRPC since the interceptor is the first hop in the gRPC service-call pipeline, but possible when middleware on the AspNetCore pipeline (above gRPC) tries to constructor-inject `IRequestContext`.
+- **`"IRequestContext was resolved before the auth pipeline ran. Ensure UseD2Auth() (for HTTP) or AddD2AuthGrpc()'s interceptor (for gRPC) has run before resolving IRequestContext."`** — `HttpContext` is present but the slot is empty. Two common causes: (a) the gRPC method is decorated with `[D2HarmlessEndpoint]` (interceptor short-circuited; nothing was written to the slot) — see [Footguns / common pitfalls → Harmless-endpoint methods + ctor-injected `IRequestContext`](#harmless-endpoint-methods--ctor-injected-irequestcontext) for the three workarounds; (b) the resolution site runs upstream of the interceptor — rarer for gRPC since the interceptor is the first hop in the gRPC service-call pipeline, but possible when middleware on the AspNetCore pipeline (above gRPC) tries to constructor-inject `IRequestContext`.
 
 The error messages are produced by the resolver lambda in `AuthGrpcServiceCollectionExtensions.AddD2AuthGrpc()`. The matching `AddD2AuthHttp()` lambda emits identical text — both transports surface the same diagnostics.
 

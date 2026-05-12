@@ -13,17 +13,17 @@ using Xunit;
 public sealed class EndpointScopeMetadataTests
 {
     [Fact]
-    public void Anonymous_IsAnonymousTrueAndRequiredScopesEmpty()
+    public void HarmlessEndpoint_IsHarmlessEndpointTrueAndRequiredScopesEmpty()
     {
-        EndpointScopeMetadata.Anonymous.IsAnonymous.Should().BeTrue();
-        EndpointScopeMetadata.Anonymous.RequiredScopes.Should().BeEmpty();
+        EndpointScopeMetadata.HarmlessEndpoint.IsHarmlessEndpoint.Should().BeTrue();
+        EndpointScopeMetadata.HarmlessEndpoint.RequiredScopes.Should().BeEmpty();
     }
 
     [Fact]
-    public void Anonymous_IsSingleton()
+    public void HarmlessEndpoint_IsSingleton()
     {
-        var first = EndpointScopeMetadata.Anonymous;
-        var second = EndpointScopeMetadata.Anonymous;
+        var first = EndpointScopeMetadata.HarmlessEndpoint;
+        var second = EndpointScopeMetadata.HarmlessEndpoint;
 
         first.Should().BeSameAs(second);
     }
@@ -33,7 +33,7 @@ public sealed class EndpointScopeMetadataTests
     {
         var meta = EndpointScopeMetadata.ForScopes(new[] { "files.read", "files.admin" });
 
-        meta.IsAnonymous.Should().BeFalse();
+        meta.IsHarmlessEndpoint.Should().BeFalse();
         meta.RequiredScopes.Should().Contain(["files.read", "files.admin"]);
         meta.RequiredScopes.Should().HaveCount(2);
     }
@@ -61,8 +61,8 @@ public sealed class EndpointScopeMetadataTests
     [Fact]
     public void ForScopes_EmptyEnumerable_ThrowsArgumentException()
     {
-        // Empty required-set semantic is "anonymous" — but anonymous is an
-        // explicit opt-in via the singleton, never via an empty-set side door.
+        // Empty required-set semantic is "harmless" — but harmless-endpoint is
+        // an explicit opt-in via the singleton, never via an empty-set side door.
         var act = () => EndpointScopeMetadata.ForScopes(Array.Empty<string>());
 
         act.Should().Throw<ArgumentException>();
@@ -77,10 +77,28 @@ public sealed class EndpointScopeMetadataTests
     }
 
     [Fact]
-    public void Anonymous_NotEqualToScopedInstance()
+    public void HarmlessEndpoint_NotEqualToScopedInstance()
     {
         var scoped = EndpointScopeMetadata.ForScopes(new[] { "files.read" });
 
-        EndpointScopeMetadata.Anonymous.Should().NotBe(scoped);
+        EndpointScopeMetadata.HarmlessEndpoint.Should().NotBe(scoped);
+    }
+
+    [Fact]
+    public void HarmlessEndpoint_FactoryAndPropertyName_PinnedForFutureAnalyzer()
+    {
+        // A future Roslyn analyzer will error on
+        // .MarkAsD2HarmlessEndpoint() / EndpointScopeMetadata.HarmlessEndpoint
+        // use outside an allowlist of legitimate endpoint types. The analyzer
+        // pins against the property + factory names as LITERAL STRINGS — a
+        // silent rename without updating the analyzer would break the contract.
+        // We deliberately do NOT use nameof() here: nameof() is compile-time
+        // resolved and would silently follow any rename, defeating the pin.
+        typeof(EndpointScopeMetadata).GetField(
+            "HarmlessEndpoint",
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+            .Should().NotBeNull();
+        typeof(EndpointScopeMetadata).GetProperty("IsHarmlessEndpoint")
+            .Should().NotBeNull();
     }
 }

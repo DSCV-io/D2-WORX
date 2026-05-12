@@ -10,22 +10,24 @@ using System.Collections.Frozen;
 using System.Collections.Generic;
 
 /// <summary>
-/// gRPC endpoint metadata that declares the scope requirements (or anonymous
-/// opt-in) for a single gRPC method. Attached via the fluent extensions
-/// <c>RequireD2Scope</c> / <c>AllowD2Anonymous</c>, OR derived from
-/// <c>D2RequireScopeAttribute</c> / <c>D2AllowAnonymousAttribute</c>
-/// declarations on the service implementation. Consumed by the
-/// <c>JwtAuthInterceptor</c> during inbound RPC dispatch.
+/// gRPC endpoint metadata that declares the scope requirements (or
+/// harmless-endpoint opt-in) for a single gRPC method. Attached via the
+/// fluent extensions <c>RequireD2Scope</c> / <c>MarkAsD2HarmlessEndpoint</c>,
+/// OR derived from <c>D2RequireScopeAttribute</c> /
+/// <c>D2HarmlessEndpointAttribute</c> declarations on the service
+/// implementation. Consumed by the <c>JwtAuthInterceptor</c> during inbound
+/// RPC dispatch.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <strong>Anonymous opt-in is explicit</strong>. The absence of any
+/// <strong>Harmless-endpoint opt-in is explicit</strong>. The absence of any
 /// <see cref="MethodScopeMetadata"/> on a gRPC method is the deny-by-default
 /// state: the interceptor runs the full validator + liveness pipeline and
 /// passes any authenticated caller (empty <see cref="RequiredScopes"/> set
-/// matches every authenticated request). Methods that need anonymous access
-/// MUST opt in explicitly via <see cref="Anonymous"/> + the
-/// <c>AllowD2Anonymous</c> builder extension or <c>D2AllowAnonymousAttribute</c>.
+/// matches every authenticated request). Methods that need to bypass auth
+/// entirely MUST opt in explicitly via <see cref="HarmlessEndpoint"/> + the
+/// <c>MarkAsD2HarmlessEndpoint</c> builder extension or
+/// <c>D2HarmlessEndpointAttribute</c>.
 /// </para>
 /// <para>
 /// <strong>Scope-set semantics</strong> are "any-of": a request passes the
@@ -46,35 +48,41 @@ using System.Collections.Generic;
 public sealed record MethodScopeMetadata
 {
     /// <summary>
-    /// Singleton instance representing "this gRPC method accepts anonymous
-    /// requests" — the interceptor short-circuits to <c>continuation</c>
-    /// without invoking the validator or liveness check when this metadata
-    /// is attached.
+    /// Singleton instance representing a HARMLESS ENDPOINT — the auth
+    /// middleware / interceptor SKIPS the entire JWT validation pipeline for
+    /// matching calls. Attached at use-time via the
+    /// <c>MarkAsD2HarmlessEndpoint()</c> builder extension or the
+    /// <c>[D2HarmlessEndpoint]</c> attribute. Legitimate use cases ONLY:
+    /// k8s probes, intra-cluster health/info endpoints returning
+    /// closed-enumeration constants only, OIDC discovery (Edge-only). Any other
+    /// data exposure via this surface is a security bug.
     /// </summary>
-    public static readonly MethodScopeMetadata Anonymous = new(
+    public static readonly MethodScopeMetadata HarmlessEndpoint = new(
         requiredScopes: FrozenSet<string>.Empty,
-        isAnonymous: true);
+        isHarmlessEndpoint: true);
 
-    private MethodScopeMetadata(IReadOnlySet<string> requiredScopes, bool isAnonymous)
+    private MethodScopeMetadata(IReadOnlySet<string> requiredScopes, bool isHarmlessEndpoint)
     {
         RequiredScopes = requiredScopes;
-        IsAnonymous = isAnonymous;
+        IsHarmlessEndpoint = isHarmlessEndpoint;
     }
 
     /// <summary>
     /// Gets the scope set the caller must overlap with at least one entry
-    /// from. Empty when <see cref="IsAnonymous"/> is <see langword="true"/>;
-    /// also empty when the method declares no specific scopes (any
-    /// authenticated caller passes).
+    /// from. Empty when <see cref="IsHarmlessEndpoint"/> is
+    /// <see langword="true"/>; also empty when the method declares no specific
+    /// scopes (any authenticated caller passes).
     /// </summary>
     public IReadOnlySet<string> RequiredScopes { get; }
 
     /// <summary>
-    /// Gets a value indicating whether this gRPC method is anonymously
-    /// accessible — the interceptor skips the validator + liveness pipeline
-    /// entirely.
+    /// Gets a value indicating whether this endpoint is a HARMLESS endpoint —
+    /// the middleware / interceptor SKIPS the validator + liveness + scope
+    /// pipeline entirely. <see langword="true"/> ONLY for the legitimate use
+    /// cases of probes / OIDC discovery / harmless intra-cluster info
+    /// endpoints; <see langword="false"/> for every authenticated path.
     /// </summary>
-    public bool IsAnonymous { get; }
+    public bool IsHarmlessEndpoint { get; }
 
     /// <summary>
     /// Creates a metadata instance declaring the given scope set as required.
@@ -87,8 +95,8 @@ public sealed record MethodScopeMetadata
     /// </exception>
     /// <exception cref="ArgumentException">
     /// Thrown when <paramref name="scopes"/> is empty (use
-    /// <see cref="Anonymous"/> for anonymous methods — explicit opt-in is
-    /// required, never implicit via empty scope set).
+    /// <see cref="HarmlessEndpoint"/> for harmless endpoints — explicit opt-in
+    /// is required, never implicit via empty scope set).
     /// </exception>
     public static MethodScopeMetadata ForScopes(IEnumerable<string> scopes)
     {
@@ -99,11 +107,11 @@ public sealed record MethodScopeMetadata
         {
             throw new ArgumentException(
                 "Required scopes set must contain at least one entry. "
-                    + "For anonymous gRPC methods, use AllowD2Anonymous() / "
-                    + "[D2AllowAnonymous] / MethodScopeMetadata.Anonymous instead.",
+                    + "For harmless endpoints, use MarkAsD2HarmlessEndpoint() / "
+                    + "[D2HarmlessEndpoint] / MethodScopeMetadata.HarmlessEndpoint instead.",
                 nameof(scopes));
         }
 
-        return new MethodScopeMetadata(frozen, isAnonymous: false);
+        return new MethodScopeMetadata(frozen, isHarmlessEndpoint: false);
     }
 }

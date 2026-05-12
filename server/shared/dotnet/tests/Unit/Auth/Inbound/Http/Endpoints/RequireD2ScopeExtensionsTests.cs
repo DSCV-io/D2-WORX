@@ -24,7 +24,7 @@ public sealed class RequireD2ScopeExtensionsTests
 
         var meta = ApplyAndExtract(builder);
         meta.Should().NotBeNull();
-        meta.IsAnonymous.Should().BeFalse();
+        meta.IsHarmlessEndpoint.Should().BeFalse();
         meta.RequiredScopes.Should().BeEquivalentTo(new[] { "files.read" });
     }
 
@@ -110,32 +110,32 @@ public sealed class RequireD2ScopeExtensionsTests
     }
 
     [Fact]
-    public void AllowD2Anonymous_AttachesAnonymousSingleton()
+    public void MarkAsD2HarmlessEndpoint_AttachesHarmlessEndpointSingleton()
     {
         var builder = new TestEndpointConventionBuilder();
 
-        builder.AllowD2Anonymous();
+        builder.MarkAsD2HarmlessEndpoint();
 
         var meta = ApplyAndExtract(builder);
-        meta.Should().BeSameAs(EndpointScopeMetadata.Anonymous);
+        meta.Should().BeSameAs(EndpointScopeMetadata.HarmlessEndpoint);
     }
 
     [Fact]
-    public void AllowD2Anonymous_NullBuilder_Throws()
+    public void MarkAsD2HarmlessEndpoint_NullBuilder_Throws()
     {
         TestEndpointConventionBuilder? builder = null;
 
-        var act = () => builder!.AllowD2Anonymous();
+        var act = () => builder!.MarkAsD2HarmlessEndpoint();
 
         act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
-    public void AllowD2Anonymous_FluentReturn_IsSameBuilder()
+    public void MarkAsD2HarmlessEndpoint_FluentReturn_IsSameBuilder()
     {
         var builder = new TestEndpointConventionBuilder();
 
-        var returned = builder.AllowD2Anonymous();
+        var returned = builder.MarkAsD2HarmlessEndpoint();
 
         returned.Should().BeSameAs(builder);
     }

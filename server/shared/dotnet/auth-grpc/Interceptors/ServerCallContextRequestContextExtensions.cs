@@ -27,8 +27,8 @@ public static class ServerCallContextRequestContextExtensions
         /// </summary>
         /// <returns>
         /// The <see cref="IRequestContext"/> when the auth interceptor has run
-        /// and populated the slot; <see langword="null"/> otherwise (anonymous
-        /// methods, calls where the interceptor was bypassed, slot holds a
+        /// and populated the slot; <see langword="null"/> otherwise (harmless
+        /// endpoints, calls where the interceptor was bypassed, slot holds a
         /// non-<see cref="IRequestContext"/> value).
         /// </returns>
         public IRequestContext? GetD2RequestContext()

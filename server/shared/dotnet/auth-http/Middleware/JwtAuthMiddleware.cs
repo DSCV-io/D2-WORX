@@ -36,7 +36,7 @@ using Microsoft.Extensions.Primitives;
 /// </para>
 /// <list type="number">
 ///   <item>Resolve the matched endpoint's <see cref="EndpointScopeMetadata"/>.
-///     If anonymous → call <c>next</c> immediately, skipping all auth work.</item>
+///     If harmless-endpoint → call <c>next</c> immediately, skipping all auth work.</item>
 ///   <item>Extract the bearer token from the <c>Authorization</c> header
 ///     (RFC 6750 §2.1). Missing / wrong-prefix / empty-after-prefix →
 ///     <see cref="AuthFailures.BearerMissing"/> 401.</item>
@@ -132,8 +132,8 @@ internal sealed class JwtAuthMiddleware
         var ct = context.RequestAborted;
         var endpointMetadata = context.GetEndpoint()?.Metadata.GetMetadata<EndpointScopeMetadata>();
 
-        // Anonymous opt-in short-circuit: skip validator + liveness entirely.
-        if (endpointMetadata is { IsAnonymous: true })
+        // Harmless-endpoint opt-in short-circuit: skip validator + liveness entirely.
+        if (endpointMetadata is { IsHarmlessEndpoint: true })
         {
             await r_next(context).ConfigureAwait(false);
             return;
