@@ -31,6 +31,18 @@ Copyright (c) DCSV. All rights reserved.
   </PropertyGroup>
 
   <ItemGroup>
+    <!--
+      Microsoft.AspNetCore.App framework reference — required so test code can
+      construct AspNetCore primitives (DefaultHttpContext, RouteEndpointBuilder,
+      EndpointBuilder, IApplicationBuilder for integration tests, etc.) when
+      exercising D2.Shared.Auth.Http (and D2.Shared.Auth.Grpc). Adding via
+      FrameworkReference (not a PackageReference) follows the AspNetCore
+      conventional opt-in.
+    -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="xunit.runner.visualstudio">
@@ -40,10 +52,16 @@ Copyright (c) DCSV. All rights reserved.
     <PackageReference Include="AwesomeAssertions" />
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
     <PackageReference Include="JetBrains.Annotations" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
-    <PackageReference Include="Microsoft.Extensions.Logging" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <!--
+      Microsoft.Extensions.{DependencyInjection,Logging,Logging.Abstractions,Hosting}
+      packages were previously listed here as explicit PackageReferences. They've
+      been removed because the test project now declares a FrameworkReference to
+      Microsoft.AspNetCore.App (so it can construct AspNetCore primitives for
+      D2.Shared.Auth.Http + D2.Shared.Auth.Grpc tests), and the framework
+      reference ships those packages — leaving explicit PackageReferences
+      triggers NU1510 ("will not be pruned"). Versions are still pinned via
+      Directory.Packages.props.
+    -->
     <!--
       Microsoft.CodeAnalysis.CSharp — needed by SrcGen integration tests
       (Unit/Auth/SourceGen, Unit/Context/SourceGen) which drive
@@ -58,6 +76,24 @@ Copyright (c) DCSV. All rights reserved.
     <PackageReference Include="Testcontainers.RabbitMq" />
     <!-- RabbitMQ.Client — for unit tests that need to construct AMQP exception types directly -->
     <PackageReference Include="RabbitMQ.Client" />
+    <!-- Microsoft.AspNetCore.TestHost — in-memory web host for end-to-end
+         middleware-pipeline tests of D2.Shared.Auth.Http. -->
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <!-- Grpc.Tools — drives protoc + the C# plugin for the test-only
+         Protos/d2_test_auth.proto (used by GrpcAuthIntegrationTests). Build-
+         only; PrivateAssets="all" so the analyzer / build targets do not flow
+         to anything that ProjectReferences this csproj. -->
+    <PackageReference Include="Grpc.Tools">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <!-- Grpc.Net.Client — client-side channel for the in-process integration
+         test (constructs a GrpcChannel atop the TestServer's HttpClient). -->
+    <PackageReference Include="Grpc.Net.Client" />
+    <!-- Google.Protobuf — runtime types (IMessage, IBufferMessage, etc.)
+         consumed by the generated proto code; required to compile the
+         Grpc.Tools-emitted source files. -->
+    <PackageReference Include="Google.Protobuf" />
     <PackageReference Include="coverlet.msbuild">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -80,7 +116,10 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\resilience\D2.Shared.Resilience.csproj" />
     <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
+    <ProjectReference Include="..\auth\D2.Shared.Auth.csproj" />
     <ProjectReference Include="..\auth-abstractions\D2.Shared.Auth.Abstractions.csproj" />
+    <ProjectReference Include="..\auth-http\D2.Shared.Auth.Http.csproj" />
+    <ProjectReference Include="..\auth-grpc\D2.Shared.Auth.Grpc.csproj" />
     <ProjectReference Include="..\auth-context-abstractions\D2.Shared.AuthContext.Abstractions.csproj" />
     <ProjectReference Include="..\auth-outbound\D2.Shared.Auth.Outbound.csproj" />
     <ProjectReference Include="..\context-abstractions\D2.Shared.Context.Abstractions.csproj" />
@@ -96,5 +135,16 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\caching-tiered\D2.Shared.Caching.Tiered.csproj" />
     <ProjectReference Include="..\messaging-abstractions\D2.Shared.Messaging.Abstractions.csproj" />
     <ProjectReference Include="..\messaging-rabbitmq\D2.Shared.Messaging.RabbitMq.csproj" />
+  </ItemGroup>
+
+  <!--
+    Test-only proto file driving the D2.Shared.Auth.Grpc end-to-end integration
+    test (GrpcAuthIntegrationTests). Compiled in Both mode (server base class
+    + client stub) so the test can host the service via MapGrpcService<T>() AND
+    dial it via the generated client. NOT a wire contract — strictly internal
+    to the test project; lives under Protos/ alongside other test fixtures.
+  -->
+  <ItemGroup>
+    <Protobuf Include="Protos\d2_test_auth.proto" GrpcServices="Both" />
   </ItemGroup>
 </Project>

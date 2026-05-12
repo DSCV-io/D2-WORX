@@ -83,15 +83,23 @@ public partial class D2Result
 
     /// <summary>
     /// Creates a forbidden failure (HTTP 403, error code
-    /// <see cref="ErrorCodes.FORBIDDEN"/>).
+    /// <see cref="ErrorCodes.FORBIDDEN"/> by default — overridable for
+    /// domain-specific discrimination).
     /// </summary>
     /// <param name="messages">
     /// Optional translation messages; defaults to <c>[TK.Common.Errors.FORBIDDEN]</c>.
+    /// </param>
+    /// <param name="errorCode">
+    /// Optional override for the default <see cref="ErrorCodes.FORBIDDEN"/>
+    /// code so callers can attach a more specific code (e.g.
+    /// <c>"AUTH_JWT_AUDIENCE_MISMATCH"</c>) for client-side / SIEM
+    /// discrimination across failure modes that share the 403 status code.
     /// </param>
     /// <param name="traceId">Optional trace identifier.</param>
     /// <returns>A forbidden <see cref="D2Result"/>.</returns>
     public static D2Result Forbidden(
         IReadOnlyList<TKMessage>? messages = null,
+        string? errorCode = null,
         string? traceId = null)
     {
         messages ??= [TK.Common.Errors.FORBIDDEN];
@@ -99,21 +107,29 @@ public partial class D2Result
             false,
             messages,
             statusCode: HttpStatusCode.Forbidden,
-            errorCode: ErrorCodes.FORBIDDEN,
+            errorCode: errorCode ?? ErrorCodes.FORBIDDEN,
             traceId: traceId);
     }
 
     /// <summary>
     /// Creates an unauthorized failure (HTTP 401, error code
-    /// <see cref="ErrorCodes.UNAUTHORIZED"/>).
+    /// <see cref="ErrorCodes.UNAUTHORIZED"/> by default — overridable for
+    /// domain-specific discrimination).
     /// </summary>
     /// <param name="messages">
     /// Optional translation messages; defaults to <c>[TK.Common.Errors.UNAUTHORIZED]</c>.
+    /// </param>
+    /// <param name="errorCode">
+    /// Optional override for the default <see cref="ErrorCodes.UNAUTHORIZED"/>
+    /// code so callers can attach a more specific code (e.g.
+    /// <c>"AUTH_JWT_EXPIRED"</c>) for client-side / SIEM discrimination
+    /// across failure modes that share the 401 status code.
     /// </param>
     /// <param name="traceId">Optional trace identifier.</param>
     /// <returns>An unauthorized <see cref="D2Result"/>.</returns>
     public static D2Result Unauthorized(
         IReadOnlyList<TKMessage>? messages = null,
+        string? errorCode = null,
         string? traceId = null)
     {
         messages ??= [TK.Common.Errors.UNAUTHORIZED];
@@ -121,7 +137,7 @@ public partial class D2Result
             false,
             messages,
             statusCode: HttpStatusCode.Unauthorized,
-            errorCode: ErrorCodes.UNAUTHORIZED,
+            errorCode: errorCode ?? ErrorCodes.UNAUTHORIZED,
             traceId: traceId);
     }
 

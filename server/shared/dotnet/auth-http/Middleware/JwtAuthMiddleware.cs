@@ -1,0 +1,288 @@
+// -----------------------------------------------------------------------
+// <copyright file="JwtAuthMiddleware.cs" company="DCSV">
+// Copyright (c) DCSV. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace D2.Shared.Auth.Http.Middleware;
+
+using System.Net;
+using System.Text.Json;
+using D2.Shared.Auth.Abstractions.Http;
+using D2.Shared.Auth.Abstractions.Sessions;
+using D2.Shared.Auth.Errors;
+using D2.Shared.Auth.Http.Endpoints;
+using D2.Shared.Auth.Http.ProblemDetails;
+using D2.Shared.Auth.Telemetry;
+using D2.Shared.Auth.Validation;
+using D2.Shared.Context.Abstractions;
+using D2.Shared.Result;
+using D2.Shared.Utilities.Extensions;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
+
+/// <summary>
+/// ASP.NET Core convention-based middleware that runs the JWT validation
+/// pipeline (signature + standard claims via <see cref="JwtValidator"/>) +
+/// session liveness check (via <see cref="ISessionLivenessTracker"/>) on
+/// inbound HTTP requests, enforces per-endpoint scope requirements declared
+/// via <see cref="EndpointScopeMetadata"/>, and emits RFC 7807 ProblemDetails
+/// on failure.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <strong>Pipeline order</strong> (per request, in order):
+/// </para>
+/// <list type="number">
+///   <item>Resolve the matched endpoint's <see cref="EndpointScopeMetadata"/>.
+///     If anonymous → call <c>next</c> immediately, skipping all auth work.</item>
+///   <item>Extract the bearer token from the <c>Authorization</c> header
+///     (RFC 6750 §2.1). Missing / wrong-prefix / empty-after-prefix →
+///     <see cref="AuthFailures.BearerMissing"/> 401.</item>
+///   <item>Validate the token via <see cref="JwtValidator.ValidateAsync"/>.
+///     Failure surface bubbles verbatim through ProblemDetails.</item>
+///   <item>If the validated context carries a session id, check liveness via
+///     <see cref="ISessionLivenessTracker.IsAliveAsync"/>. Revoked → 401.
+///     ServiceUnavailable → 503 (fail-closed).</item>
+///   <item>Enforce per-endpoint scope set (any-of). Mismatch →
+///     <see cref="AuthFailures.ScopeInsufficient"/> 401 (NOT 403; see
+///     <see cref="AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT"/> remarks).</item>
+///   <item>Set the populated <see cref="IRequestContext"/> on
+///     <see cref="HttpContext.Items"/> under
+///     <see cref="D2HttpContextItems.REQUEST_CONTEXT"/> and continue.</item>
+/// </list>
+/// <para>
+/// <strong>Pipeline placement invariant</strong>: register via
+/// <c>app.UseD2Auth()</c> AFTER <c>app.UseRouting()</c> (so the matched
+/// endpoint's metadata is available) and BEFORE the endpoint dispatcher
+/// (<c>app.UseEndpoints()</c> / <c>app.MapXxx()</c>).
+/// </para>
+/// <para>
+/// <strong>PII discipline</strong>: bearer bytes, claim values, scope strings
+/// are NEVER logged / span-tagged / serialized into ProblemDetails fields.
+/// The <c>Title</c> field is locale-neutral coarse; <c>Detail</c> is omitted
+/// (info-leak avoidance); <c>Instance</c> is <see cref="HttpRequest.Path"/>
+/// only (no query string).
+/// </para>
+/// <para>
+/// <strong>Cancellation</strong>: <see cref="HttpContext.RequestAborted"/>
+/// is honored on the validator and liveness calls; an
+/// <see cref="OperationCanceledException"/> propagates to the host (we don't
+/// swallow / translate cancellations into 5xx responses).
+/// </para>
+/// <para>
+/// <strong>Thread-safety</strong>: convention-based middleware is
+/// instantiated ONCE per process (singleton-shaped). All injected deps are
+/// singletons. No per-request mutable state on the middleware itself; per-
+/// request state lives on <see cref="HttpContext"/>.
+/// </para>
+/// </remarks>
+internal sealed class JwtAuthMiddleware
+{
+    private const string _AUTHORIZATION_HEADER_NAME = "Authorization";
+    private const string _BEARER_PREFIX = "Bearer ";
+
+    // Pinned so JsonSerializerOptions caching applies; default options match
+    // ASP.NET Core's MVC defaults for ProblemDetails (camelCase property
+    // naming, ignore null, etc.). Static so we allocate once.
+    private static readonly JsonSerializerOptions sr_jsonOptions = new(JsonSerializerDefaults.Web);
+
+    private readonly RequestDelegate r_next;
+    private readonly JwtValidator r_validator;
+    private readonly ISessionLivenessTracker r_livenessTracker;
+    private readonly ILogger<JwtAuthMiddleware> r_logger;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JwtAuthMiddleware"/> class.
+    /// </summary>
+    /// <param name="next">The next middleware in the pipeline.</param>
+    /// <param name="validator">The JWT signature + claims validator.</param>
+    /// <param name="livenessTracker">The session liveness tracker.</param>
+    /// <param name="logger">The logger.</param>
+    public JwtAuthMiddleware(
+        RequestDelegate next,
+        JwtValidator validator,
+        ISessionLivenessTracker livenessTracker,
+        ILogger<JwtAuthMiddleware> logger)
+    {
+        ArgumentNullException.ThrowIfNull(next);
+        ArgumentNullException.ThrowIfNull(validator);
+        ArgumentNullException.ThrowIfNull(livenessTracker);
+        ArgumentNullException.ThrowIfNull(logger);
+
+        r_next = next;
+        r_validator = validator;
+        r_livenessTracker = livenessTracker;
+        r_logger = logger;
+    }
+
+    /// <summary>
+    /// Per-request entry point. Convention-based middleware contract.
+    /// </summary>
+    /// <param name="context">The HTTP context.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="context"/> is <see langword="null"/>.
+    /// </exception>
+    public async Task InvokeAsync(HttpContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        var ct = context.RequestAborted;
+        var endpointMetadata = context.GetEndpoint()?.Metadata.GetMetadata<EndpointScopeMetadata>();
+
+        // Anonymous opt-in short-circuit: skip validator + liveness entirely.
+        if (endpointMetadata is { IsAnonymous: true })
+        {
+            await r_next(context).ConfigureAwait(false);
+            return;
+        }
+
+        // Bearer extraction.
+        var bearerResult = TryExtractBearer(context);
+        if (bearerResult.Failed)
+        {
+            r_logger.BearerHeaderMissing();
+            await WriteProblemAsync(context, bearerResult, ct).ConfigureAwait(false);
+            return;
+        }
+
+        // JWT validation.
+        var validationResult = await r_validator
+            .ValidateAsync(bearerResult.Data!, ct)
+            .ConfigureAwait(false);
+        if (validationResult.Failed)
+        {
+            await WriteProblemAsync(context, validationResult, ct).ConfigureAwait(false);
+            return;
+        }
+
+        var requestContext = validationResult.Data!;
+
+        // Session liveness — only when the validated context surfaces a
+        // session id. RequireSessionIdClaim defaults to true on the
+        // validator, so absence here is a service-identity-token-style
+        // exception path (the validator already accepted the token).
+        if (requestContext.SessionId is { } sessionId && sessionId.Truthy())
+        {
+            var livenessResult = await r_livenessTracker
+                .IsAliveAsync(sessionId, ct)
+                .ConfigureAwait(false);
+
+            if (livenessResult.Failed)
+            {
+                D2Result mapped;
+                if (livenessResult.StatusCode == HttpStatusCode.ServiceUnavailable)
+                    mapped = AuthFailures.SessionLivenessUnavailable();
+                else
+                    mapped = AuthFailures.SessionRevoked();
+                await WriteProblemAsync(context, mapped, ct).ConfigureAwait(false);
+                return;
+            }
+
+            if (livenessResult.Data is false)
+            {
+                r_logger.LivenessRevoked();
+                await WriteProblemAsync(
+                    context, AuthFailures.SessionRevoked(), ct).ConfigureAwait(false);
+                return;
+            }
+        }
+
+        // Per-endpoint scope enforcement (any-of). Empty / null required set
+        // = "any authenticated caller passes."
+        if (endpointMetadata is { RequiredScopes.Count: > 0 } meta)
+        {
+            if (!RequestContextHasAnyScope(requestContext, meta.RequiredScopes))
+            {
+                r_logger.ScopeRequirementUnmet(SummarizeScopes(meta.RequiredScopes));
+                await WriteProblemAsync(
+                    context, AuthFailures.ScopeInsufficient(), ct).ConfigureAwait(false);
+                return;
+            }
+        }
+
+        // Plumb the populated context to downstream handlers + continue.
+        context.Items[D2HttpContextItems.REQUEST_CONTEXT] = requestContext;
+        await r_next(context).ConfigureAwait(false);
+    }
+
+    private static bool RequestContextHasAnyScope(
+        IRequestContext requestContext,
+        IReadOnlySet<string> required)
+    {
+        var granted = requestContext.Scopes;
+        foreach (var scope in required)
+        {
+            if (granted.Contains(scope))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static string SummarizeScopes(IReadOnlySet<string> required)
+    {
+        // Closed-enumeration-derived summary — count + first (sorted) scope
+        // name. Avoids logging full scope sets verbatim (they can be large
+        // and bloat log volume).
+        if (required.Count == 0)
+            return "0 scopes required";
+
+        string? first = null;
+        foreach (var scope in required)
+        {
+            if (first is null || string.CompareOrdinal(scope, first) < 0)
+                first = scope;
+        }
+
+        return $"{required.Count} scopes required, first={first}";
+    }
+
+    private static D2Result<string> TryExtractBearer(HttpContext context)
+    {
+        if (!context.Request.Headers.TryGetValue(_AUTHORIZATION_HEADER_NAME, out StringValues raw)
+            || raw.Count == 0)
+        {
+            return D2Result<string>.BubbleFail(AuthFailures.BearerMissing());
+        }
+
+        // RFC 7230 §3.2.2: multiple values for the same header field are
+        // semantically equivalent to a comma-joined single value. For
+        // Authorization the convention is exactly one — defensively take
+        // the FIRST and pass it through.
+        var headerValue = raw[0];
+        if (headerValue.Falsey())
+            return D2Result<string>.BubbleFail(AuthFailures.BearerMissing());
+
+        // RFC 6750 §2.1: case-insensitive `Bearer` prefix + single space.
+        if (!headerValue!.StartsWith(_BEARER_PREFIX, StringComparison.OrdinalIgnoreCase))
+            return D2Result<string>.BubbleFail(AuthFailures.BearerMissing());
+
+        var token = headerValue.Substring(_BEARER_PREFIX.Length);
+
+        // Empty after prefix = "missing" (semantically nothing to validate)
+        // — distinct from "malformed" (validator's job for actual bytes).
+        // Whitespace inside the token is NOT trimmed: JWTs are 3 base64url
+        // segments separated by dots; whitespace mid-token is invalid by
+        // construction. Trimming would mask client bugs.
+        if (token.Length == 0)
+            return D2Result<string>.BubbleFail(AuthFailures.BearerMissing());
+
+        return D2Result<string>.Ok(token);
+    }
+
+    private static async Task WriteProblemAsync(
+        HttpContext context,
+        D2Result failure,
+        CancellationToken ct)
+    {
+        var problem = failure.ToProblemDetails(context);
+        context.Response.StatusCode = problem.Status ?? (int)HttpStatusCode.InternalServerError;
+        context.Response.ContentType = "application/problem+json";
+        await JsonSerializer
+            .SerializeAsync(context.Response.Body, problem, sr_jsonOptions, ct)
+            .ConfigureAwait(false);
+    }
+}

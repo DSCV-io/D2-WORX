@@ -12,6 +12,19 @@ Copyright (c) DCSV. All rights reserved.
 > proceeds per the build order in §14. **`D2.Shared.Messaging` ships first as its own commit/wave**
 > (per Q3 — RMQ rotation events) before any Auth work begins.
 
+> **⚠ Deliverable 0002 scope tightening (2026-05-10)** — the inbound runtime's authoritative
+> file/scope layout now lives in [`docs/wip/0002-auth-inbound/README.md`](../wip/0002-auth-inbound/README.md).
+> Several decisions in this doc were narrowed during PLAN: **`SessionSnapshot` data record**,
+> **`EffectivePolicy`**, **`FingerprintComparer` / `FingerprintRiskScorer`**, and
+> **`ISessionLivenessWriter`** are **out of scope for this lib** — they're Edge-internal concerns
+> deferred to Phase 3. Q14 stays (Pattern A); **Q15 reverses to option (a) sentinel-only**;
+> the implied writer-side interface from §6.3 is dropped (Edge writes its own snapshot to its own
+> store; the cross-lib contract is the cache backplane, not a typed writer interface).
+> The `FingerprintMatchScore` field is also renamed to **`FingerprintRiskScore`** with semantics
+> inverted (0 = no risk, 100 = max risk; higher = worse). Edge computes it; this lib only reads/propagates.
+> Where this doc says "this lib computes FingerprintMatchScore" or describes a `SessionSnapshot`
+> record, treat the wip README as authoritative.
+
 ---
 
 ## §1. Purpose & non-goals
@@ -54,8 +67,10 @@ issuer.
 - **Own session storage.** Sessions live in `auth_db.session` + Redis on Edge; this lib only
   *tracks* revocations and *checks* liveness against cached state.
 - **Run the risk engine.** The sliding-window risk tracker (impossible travel, ASN diversity, OTP
-  step-up triggers) lives in Edge — Phase 3. This lib computes `FingerprintMatchScore` and surfaces
-  it on `IRequestContext`; Edge consumes the score.
+  step-up triggers) lives in Edge — Phase 3. **Edge also computes the per-request `FingerprintRiskScore`**
+  (composite — fingerprint-mismatch + geo-velocity + ASN/Tor/proxy + policy contributions; 0-100, higher = worse)
+  and populates it on `IRequestContext` before propagating the request to backend services. This lib only reads
+  the score from claims/envelope and surfaces it on `IRequestContext`; it never computes it.
 - **Rate-limit anything.** Rate-limit middleware lives in Edge (per RATE-LIMITING.md). The
   contrast is informative: rate-limit state is write-heavy (every request increments multi-
   dimensional counters across replicas) and uses `IDistributedCache` only — no L1, no tiered cache,
@@ -199,6 +214,177 @@ OPERATIONAL-GUARANTEES.md. Citations inline.
   JSON array in case some upstream lib emits that.
 - No DB scope catalog, no admin UI — code constants are source of truth.
 
+### 3.8 Anon-visitor authentication pattern — Pattern A LOCKED (mint anon JWT at Edge)
+
+Locked design intent — implementation is Phase 3 Edge work, not in this lib. Documented here because
+it shapes the contract this lib is built against (one input shape — a validated JWT — for every
+request, anon or authed).
+
+**Decision**: Edge mints a short-lived **anon-session JWT** for every unauthenticated visitor.
+Backend services see a JWT on every request — there is no "no-JWT" code path in normal traffic
+(only health probes and the like).
+
+**Rejected alternative — Pattern B (no-JWT path with header-based enrichment propagation)**:
+backend services would have had to detect "no JWT present" and fall back to header-driven
+enrichment (WhoIs, fingerprint, anon-cookie). Pushed enrichment-vs-claims branching into every
+consumer, made rate-limiting and audit accept three input shapes (WhoIs / fingerprint / cookie
+state) instead of one, and left no tamper-evident binding between enrichment and the request.
+
+**Why Pattern A wins**: matches mainstream production patterns (every request carries a token —
+auth0 anon tokens, Cloudflare Access bot tokens, etc.); reuses the JWT validation +
+KeyCustodian + 3-tier session machinery already specified for authed users; collapses the
+anon/authed split to a single claim (`d2_kind`) the consumer reads instead of three independent
+signals; gives rate-limiting / audit / risk a tamper-evident, signed enrichment binding via JWT
+claims (`d2_whois_id`, `d2_fingerprint_score`).
+
+#### Anon JWT shape
+
+```jsonc
+{
+  "iss": "https://edge.internal",
+  "aud": "<service>",
+  "sub": "anon:9b3c7e1a...",           // stable per-visitor anon id (also keys the cookie's session-id mapping)
+  "exp": <now + ~15min>,                // short-lived
+  "iat": <now>,
+  "d2_kind": "anonymous",                // ActorKind enum value — explicit "this is an anon JWT, not a user JWT"
+  "d2_session_id": "<session-uuid>",     // 3-tier session mapped from the cookie set in this response
+  "d2_whois_id": "<whois-id>",           // tamper-evident enrichment claim (signed binding to the WhoIs lookup)
+  "d2_fingerprint_score": <int>,         // optional — rate-limit hint as a claim (NOT raw fingerprint material)
+  "scope": ""                            // EMPTY — anon scopes implicit per Scopes.AllAnonymousScopes union
+}
+```
+
+**New claim shapes** vs the §3.1 lock — Phase 3 Edge work needs to add these and this lib's
+mapper needs to consume them:
+
+| Claim | Status today | Phase 3 add |
+|---|---|---|
+| `d2_kind` (top-level) | §3.1 says "only inside `act` chain entries"; `JwtClaimTypes.ACT_KIND` doc explicitly says "There is NO top-level `d2_kind` claim" | Add a top-level `d2_kind` claim carrying the anon/authed discriminator (values keyed off the `ActorKind` enum, plus a new `Anonymous` variant — see §6.4 below). The inside-`act` `d2_kind` (consent/force) stays as-is; lookup paths differ (`d2_kind` vs `act.d2_kind`). |
+| `d2_whois_id` | not defined | New top-level claim — opaque ID into the WhoIs lookup (already cached per IPinfo Singleflight per `RATE-LIMITING.md` §4). Tamper-evident via JWT signature. |
+| `d2_fingerprint_score` | not defined; `FingerprintRiskScore` is on `IRequestContext` propagated via `x-d2-context` header | Optional top-level claim — Edge can elect to bake the `FingerprintRiskScore` into the JWT (vs propagating only via header) when minting anon tokens, since anon visitors have no other identity binding. Authed JWTs continue to carry the score via `IRequestContext` / header propagation. |
+
+**ActorKind enum** — Phase 3 needs a new `Anonymous` variant added alongside the existing
+`Service` / `Impersonation` values. Not a breaking change at the JWT layer (top-level `d2_kind`
+is a new claim, not a redefinition); is a vocabulary addition in `D2.Shared.Auth.Abstractions`.
+
+#### Flows
+
+**First-time visitor (no cookie):**
+
+1. Edge receives request, no cookie present.
+2. WhoIs middleware resolves enrichment slot (IP → city / region / country / ASN / geohash /
+   VPN-proxy-Tor flags) — already specified per `RATE-LIMITING.md` §4.
+3. Edge mints the anon JWT above.
+4. Edge sets the opaque session cookie (mapped to the JWT's `sub` via the 3-tier session store).
+5. Edge forwards the request to the backend with the JWT in the Authorization header.
+6. Backend validates the JWT through this lib's `JwtValidator` — same code path as authed
+   requests (signature, `exp`, `iss`, `aud`, kid lookup via JWKS).
+7. Backend's scope check computes effective scopes as
+   `EffectiveScopes(ctx) = ctx.Scopes ∪ Scopes.AllAnonymousScopes` — meaning anon scopes are
+   always granted (to anon AND authed users; universal grant). See "Algorithm gap" below.
+8. Endpoint declares `[D2RequireScope(Scopes.Anon.Auth.SignIn.Attempt)]`; middleware matches
+   against effective scopes.
+
+**Returning visitor (cookie present):**
+
+1. Edge looks up cookie → 3-tier session (cookie cache 5min → Redis → PostgreSQL `auth_db`).
+2. If the JWT mapped to that session is nearing expiry, Edge re-mints with the same `sub` and
+   forwards.
+3. Forwards to backend; backend validates as above.
+
+**Sign-in flow:**
+
+- Same cookie / same `d2_session_id`. Edge "elevates" the session: replaces the anon JWT with a
+  user JWT carrying real `sub` (`user:<uuid>`), real scopes, real `d2_org_*` claims.
+- Sign-out: revokes the session via `d2.security.session-revoked` (existing flow per §3.4); the
+  next request gets a fresh anon JWT with a fresh anon `sub` (continuity for rate-limit buckets
+  is OWNED by the anon `sub`'s 15-min lifetime, not by the cookie).
+
+#### Implications — load-bearing risks Phase 3 Edge implementers must address
+
+1. **Cookie-presence is no longer an auth signal.** Both anon and authed visitors carry a cookie
+   (mapped to a 3-tier session) plus a JWT. Anything that previously branched on cookie presence
+   MUST move to checking the JWT's `d2_kind` claim or `IRequestContext.IsAuthenticated`.
+   - **Frontend / SvelteKit BFF**: never read "cookie present → user signed in"; call `/me` (or
+     equivalent) and read `IsAuthenticated` from the response.
+   - **Edge cookie → session middleware**: the session record MUST distinguish anon-session vs
+     auth-session in its own metadata (e.g. `auth_state: "anonymous" | "authenticated"`); an
+     anon-session cookie must NEVER mistakenly resolve to an auth-session JWT during the
+     elevate / revoke transitions.
+   - **Sign-out**: must clear the auth-session AND mint a fresh anon-session for continuity
+     (rather than dropping the cookie — that would break rate-limit-bucket continuity AND look
+     identical to a brand-new visitor on the next request).
+2. **CSRF gates.** An anon JWT is NOT a valid bearer for any CSRF-sensitive operation. The
+   `d2_kind: "anonymous"` claim is the gate — endpoint policy must reject anon JWTs on
+   state-mutating endpoints that aren't explicitly anon-eligible (sign-in attempt, password
+   reset start, etc., which carry `Scopes.Anon.*` declarations).
+3. **Audit propagation.** `d2_kind: "anonymous"` MUST propagate into every audit record so anon
+   activity is distinguishable in the audit trail from authed activity. The
+   `IRequestContext.IsAuthenticated` trinary already supports this (`true` / `false` / `null`);
+   audit emitters propagate the resolved value.
+4. **Risk engine inputs.** The Phase 3 risk engine — already specified to compute the composite
+   `FingerprintRiskScore` (see Q6 revision in §12) — must treat anon JWTs as their own
+   risk-scoring lane: anon `sub` has a fresh 15-min lifetime, so historical-pattern signals
+   (geo-velocity drift, sliding-window risk tracker) need a longer-lived anon-visitor identity
+   to key on (the cookie's session-id, NOT the anon `sub`).
+
+#### Implications for `D2.Shared.Auth` (this lib) — algorithm gap, Phase 3 followup
+
+This lib already has the data model in place to support Pattern A:
+
+- `IRequestContext.IsAuthenticated` is a trinary `bool?` — anon JWTs map to `false`, missing
+  JWTs (health probes) map to `null`, authed JWTs map to `true`. Vocabulary already supports
+  the anon-JWT case.
+- `Scopes.AllAnonymousScopes` set is codegen-emitted from the scopes spec.
+- `Scopes.IsAnonymous(scope)` helper exists for per-scope inspection.
+
+**Algorithm gap (Phase 3 followup work — NOT a fix for the shipped lib):**
+
+- Current `JwtAuthMiddleware` + `JwtAuthInterceptor` scope check is
+  `RequiredScopes.Any(s => ctx.Scopes.Contains(s))` — does NOT union with
+  `Scopes.AllAnonymousScopes`.
+- Phase 3 update: introduce
+  `EffectiveScopes(ctx) = ctx.Scopes ∪ Scopes.AllAnonymousScopes` and change the check to
+  `RequiredScopes.Any(s => EffectiveScopes.Contains(s))`. Anon scopes become a universal grant
+  (every request — anon AND authed — gets them).
+- The `ClaimsToContextMapper` will also need to consume the new `d2_kind` (top-level),
+  `d2_whois_id`, and `d2_fingerprint_score` claims and surface them on
+  `MutableRequestContext`.
+
+These changes are small, but they're an architectural commitment that depends on Edge-side
+anon-JWT minting being in place upstream — defer to the Phase 3 Edge work item. The shipped lib
+is unchanged; the design intent above is the contract Phase 3 builds toward.
+
+#### Implications for `D2.Shared.Auth.Http` / `D2.Shared.Auth.Grpc` README footgun sections
+
+Both transport-binding csprojs document a footgun: anonymous-method ctor-injection failure (a
+handler resolved without a `JWT → IRequestContext` populated explodes at construction). Once
+Pattern A is in place, that footgun becomes RARELY-RELEVANT in production — every normal
+request carries a JWT (anon or user), so backend services almost never see no-JWT requests
+(only health probes / `[D2HealthCheck]`-attributed endpoints). Update the README framing when
+the anon-JWT pattern lands in Edge.
+
+#### What's locked vs what's open
+
+- **LOCKED**: Pattern A wins over Pattern B. Anon JWT exists. Anon JWT carries the four
+  `d2_*` claims listed above. Cookie maps 1:1 to a 3-tier session (anon or authed). Sign-out
+  mints a fresh anon-session for continuity. Effective-scopes algorithm = JWT scopes ∪
+  `Scopes.AllAnonymousScopes` for anon AND authed users.
+- **OPEN (Phase 3 Edge implementation decisions)**: exact session-record schema for
+  `auth_state` discriminator; exact cookie attributes (HttpOnly/Secure/SameSite) for the
+  anon-session cookie (likely identical to the authed cookie); exact KeyCustodian anon-issuance
+  flow (whether anon JWTs use the same JWKS kid as user JWTs — recommended yes — or a separate
+  anon-only kid); exact 15-min TTL value (subject to telemetry tuning); exact `d2_kind` enum
+  value naming for the new top-level `Anonymous` variant (likely `"anonymous"` lowercase string
+  to match existing `act.d2_kind` value casing).
+
+**Cross-references**:
+- Rate-limiting bucket-keying implications → [`docs/RATE-LIMITING.md`](../RATE-LIMITING.md) §4
+  (middleware flow) and §11 (Pattern A claims-driven keying — added in lockstep with this
+  decision).
+- Algorithm gap items above → §10 ("What we explicitly defer to Phase 3 (Edge)").
+- Decision rationale + date → §12 Q23.
+
 ---
 
 ## §4. What's already shipped that we lean on
@@ -257,6 +443,39 @@ in place. Auth runtime is the missing operational glue.
 
 ## §5. Lib structure (5 csprojs total — 4 implementation per Q1 + 1 new analyzer)
 
+> **⚠ Csproj-split deviation locked during deliverable 0002 (Steps 06 + 07 + 08, 2026-05-11)**:
+> the inbound-runtime `auth/` csproj is now SPLIT into transport-agnostic core +
+> per-transport binding csprojs. The original single `D2.Shared.Auth` carrying both runtime
+> and ASP.NET Core middleware is replaced by:
+>
+> - `D2.Shared.Auth` — transport-agnostic runtime (`JwtValidator`, `HttpJwksProvider`,
+>   `TieredCacheSessionLivenessTracker`, `ClaimsToContextMapper`, telemetry, options, errors).
+>   No framework refs — gRPC-only services and out-of-process workers consume freely.
+> - `D2.Shared.Auth.Http` — HTTP middleware binding (`JwtAuthMiddleware`,
+>   `EndpointScopeMetadata`, `D2ProblemDetailsExtensions`, `HttpContextRequestContextExtensions`,
+>   `AuthAppBuilderExtensions`). Carries `<FrameworkReference Include="Microsoft.AspNetCore.App" />`
+>   via `Sdk.Web`. Renamed in Step 08 from the original `D2.Shared.Auth.AspNetCore` for
+>   naming-symmetry parity with sibling `.Grpc` (both run on the same AspNetCore Kestrel
+>   runtime — naming the HTTP one for the host runtime while naming the gRPC one for the
+>   transport protocol was misleading).
+> - `D2.Shared.Auth.Grpc` (Step 07) — gRPC interceptor binding (`JwtAuthInterceptor`,
+>   `D2RpcStatusExtensions`). Carries `Grpc.AspNetCore.Server`.
+>
+> Cross-transport `IRequestContext` resolver wiring (Step 08): both `AddD2AuthHttp()` and
+> `AddD2AuthGrpc()` register an IDENTICAL inline `TryAddScoped<IRequestContext>(...)` lambda
+> reading from `HttpContext.Items[D2HttpContextItems.REQUEST_CONTEXT]`. The HTTP middleware
+> writes the slot on successful auth; the gRPC interceptor mirrors the write (alongside its
+> existing `ServerCallContext.UserState` write for the gRPC-specific hot-path accessor). The
+> `D2HttpContextItems` constant lives in `D2.Shared.Auth.Abstractions` so both transport
+> csprojs reach it without an inter-csproj dep — the two transport-binding csprojs remain
+> siblings (no `auth-grpc → auth-http` ProjectReference). A parity test in the test project
+> defends against future drift between the two duplicated lambdas.
+>
+> Rationale: `D2.Shared.Auth` stays free of framework refs so non-HTTP consumers don't pay
+> the ASP.NET Core dep cost. The §5 tree below reflects the ORIGINAL layout — treat the
+> deliverable's authoritative wip README ([`docs/wip/0002-auth-inbound/README.md`](../wip/0002-auth-inbound/README.md))
+> as the current source of truth for the as-shipped layout.
+
 Three new implementation csprojs sit alongside the existing `D2.Shared.Auth.Abstractions`, plus
 one new analyzer csproj that extends Abstractions with codegen'd `Audiences.g.cs` per Q19:
 
@@ -278,26 +497,32 @@ server/shared/dotnet/
 │   └── README.md
 │
 ├── auth/                                # NEW — inbound validation + sessions + JWKS
+│   │                                    # ⚠ Authoritative layout: docs/wip/0002-auth-inbound/README.md
 │   ├── D2.Shared.Auth.csproj
 │   ├── README.md
 │   ├── Validation/
 │   │   ├── JwtValidator.cs              # core token validation orchestration
 │   │   ├── JwtValidatorOptions.cs       # issuer URL (auto-discovers JWKS), audience,
 │   │   │                                  clock skew (default 30s)
-│   │   ├── ClaimsToContextMapper.cs     # JWT claims → MutableRequestContext
-│   │   └── FingerprintComparer.cs       # session fp vs current fp scoring (score only;
-│   │                                      policy lives in Edge per Q6)
+│   │   └── ClaimsToContextMapper.cs     # JWT claims → MutableRequestContext
+│   │                                    # (FingerprintComparer dropped — Edge computes the
+│   │                                    #  composite FingerprintRiskScore; this lib propagates
+│   │                                    #  it from the JWT/envelope, never computes)
 │   ├── Jwks/
-│   │   ├── IJwksProvider.cs             # interface — get verify keys
 │   │   ├── HttpJwksProvider.cs          # default impl using
 │   │   │                                  ConfigurationManager<OpenIdConnectConfiguration>;
 │   │   │                                  honors /.well-known/openid-configuration per Q12
 │   │   ├── JwksProviderOptions.cs       # issuer URL only (rest derived from discovery doc)
-│   │   └── JwksKeySetSnapshot.cs        # immutable snapshot
+│   │   └── JwksBackplaneSubscriber.cs   # IHostedService — drops cached snapshot on key-rotated event
+│   │                                    # (IJwksProvider + JwksKeySetSnapshot moved to auth-abstractions
+│   │                                    #  for Edge sharing)
 │   ├── Sessions/
-│   │   ├── ISessionLivenessTracker.cs   # IsAliveAsync + GetSnapshotAsync
-│   │   ├── TieredCacheSessionLivenessTracker.cs   # ITieredCache-backed (Q14)
-│   │   └── SessionSnapshot.cs           # rich snapshot record (Q15)
+│   │   ├── TieredCacheSessionLivenessTracker.cs   # ITieredCache-backed; sentinel-only value
+│   │   │                                            (Q15 REVERSED to option a — SessionSnapshot is
+│   │   │                                             Edge-internal; this lib only checks alive vs revoked)
+│   │   └── SessionRevokedBackplaneSubscriber.cs   # IHostedService — drops sentinel on event
+│   │                                    # (ISessionLivenessTracker moved to auth-abstractions;
+│   │                                    #  no SessionSnapshot or ISessionLivenessWriter — Edge owns those)
 │   ├── Middleware/
 │   │   ├── JwtAuthMiddleware.cs         # ASP.NET Core middleware
 │   │   └── JwtAuthOptions.cs            # composes Validation + Jwks + Sessions options
@@ -401,12 +626,12 @@ clients (cached locally, refreshed before expiry). All five components inject in
    - Walk `act` via `ActorChainParser` → `IReadOnlyList<ActorEntry>`. Malformed → 401.
    - Parse `scope` via `ScopeClaimParser` → `IReadOnlySet<string>`.
    - Map every claim per `IAuthContext.spec.json` → `MutableRequestContext`.
-5. **Session liveness check** via `ISessionLivenessTracker.IsAliveAsync(d2_session_id)`. Revoked →
-   401. (Implementation pattern is open — see Q14.)
-6. **Compute current fingerprint** + compare to `d2_fp` claim → populate `FingerprintMatchScore`.
-   (Block / step-up logic lives in Edge — this lib only computes the score.)
-7. **Populate `IRequestContext`** (network + WhoIs sections filled by request-enrichment middleware
-   in Edge — for backend services they ride along on the gRPC metadata).
+5. **Session liveness check** via `ISessionLivenessTracker.IsAliveAsync(d2_session_id)`. Sentinel
+   in `ITieredCache` keyed `session:{id}`. Revoked → 401. Cache outage → 401 fail-closed.
+6. **Read** propagated `FingerprintRiskScore` from claims / context envelope (computed upstream by
+   Edge's risk engine — this lib does not compute it, never compares fingerprints itself).
+7. **Populate `IRequestContext`** (network + WhoIs + risk fields ride along on the gRPC metadata
+   from Edge; this lib's role is mapping claims → context, not enrichment).
 
 **Output**: `IRequestContext` set on the DI scope. `BaseHandler.RunCorePipelineAsync` then runs the
 existing `RequiredScopes` + `ValidateAudience` checks against it — Auth doesn't duplicate that work.
@@ -1005,13 +1230,13 @@ Q, it's flagged.
   clock skew tolerance
 - `ClaimsToContextMapper` — every claim → property mapping; `act` chain parsing; scope parsing;
   missing optional claims
-- `FingerprintComparer` — match scoring across all 10 components; partial mismatches; version
-  mismatch
 - `ServiceIdentityCache` — TTL respect, Singleflight dedup, refresh-on-miss
 - `JwksKeySetSnapshot` — kid lookup, version-mismatch handling
 - `SessionLivenessTracker` — `IsAliveAsync` alive case, revoked case, L2 fallback when L1 expires;
-  `GetSnapshotAsync` returns full `SessionSnapshot` on hit, `NotFound` on revoked; round-trip
-  serialization of `SessionSnapshot` through the cache (every required field present)
+  cache outage → `ServiceUnavailable` (fail-closed); `Guid.Empty` → `ValidationFailed`. Sentinel-only
+  cache value per the deliverable 0002 design tightening (no `SessionSnapshot` data record in this lib)
+- (`FingerprintComparer` removed — Edge computes the composite `FingerprintRiskScore`; this lib
+  propagates the value, never compares fingerprints)
 
 ### Integration tests (Testcontainers or in-memory fixtures)
 
@@ -1043,12 +1268,21 @@ Q, it's flagged.
 - **Session revocation end-to-end** — requires Edge's session storage. Tested here only at the
   consumer-side invalidation level.
 - **OAuth `/oauth/token` endpoint behavior** — Edge's responsibility.
+- **Anon-JWT minting at Edge** — first-time-visitor JWT mint, cookie ↔ anon-session mapping,
+  session-elevate-on-sign-in, fresh-anon-on-sign-out. Per §3.8 (Pattern A LOCKED) +
+  Q23 (§12). The vocabulary + caching + JWT validation machinery this lib ships ALREADY
+  supports the anon case (trinary `IsAuthenticated`, `Scopes.AllAnonymousScopes`,
+  `Scopes.IsAnonymous`); Phase 3 adds the issuance side + the small inbound algorithm gap
+  (`EffectiveScopes(ctx) = ctx.Scopes ∪ Scopes.AllAnonymousScopes`, top-level `d2_kind` claim
+  ingestion, new `ActorKind.Anonymous` enum variant, `d2_whois_id` /
+  `d2_fingerprint_score` claim ingestion in `ClaimsToContextMapper`). Tracked separately as a
+  Phase 3 Edge work item.
 
 ---
 
 ## §11. Open questions
 
-All Q1-Q22 are now resolved — see §12 decisions log for each entry's rationale. New questions
+All Q1-Q23 are now resolved — see §12 decisions log for each entry's rationale. New questions
 surfaced during implementation will be appended here as they come up.
 
 (empty — all locked)
@@ -1119,19 +1353,24 @@ jobs / dkron / one-off integrations all become OAuth clients.
 for opting out per-handler was cost; no longer applies. Every request pays the same near-zero cost
 and gets instant revocation across all endpoints.
 
-### Q6 — Fingerprint mismatch handling → **(a) score only in this lib; policy in Edge**
+### Q6 — Fingerprint mismatch handling → **(a) score only in this lib; policy in Edge** *(REVISED — see deliverable 0002)*
 
-**Decided**: 2026-05-07.
+**Decided**: 2026-05-07. **Revised 2026-05-10** during deliverable 0002 PLAN.
 
-**Rationale**: this lib's job is to compute `FingerprintMatchScore` and surface it on
-`IRequestContext`. The block / step-up policy decision lives in Edge's risk engine (Phase 3) — it
-has the broader signal set (impossible travel, ASN diversity, country jumps) and the policy
-hierarchy (platform / org / user) to interpret the score correctly.
+**Original rationale**: this lib's job was to compute `FingerprintMatchScore` and surface it on
+`IRequestContext`. The block / step-up policy decision lives in Edge's risk engine (Phase 3).
+
+**Revision (deliverable 0002)**: even score *computation* moves to Edge. The composite
+`FingerprintRiskScore` (renamed; 0 = no risk, 100 = max risk) factors in fingerprint-mismatch +
+geo-velocity drift from sign-in baseline + ASN / Tor / proxy flags + per-org / per-user policy
+contributions — most of those inputs live in Edge (the risk engine has the historical context, the
+sliding-window risk tracker, and access to the resolved security policy). This lib became
+purely a JWT validator + session-liveness checker + claims-to-context mapper; risk semantics belong
+where the inputs live.
 
 **User preference recorded for Phase 3 design**: when a fingerprint changes in a meaningful way
 or the distance is wildly different, Edge's risk engine should hard-block / kill the session
-(not just flag for step-up). Threshold tuning lives in the risk engine spec; this lib provides the
-input.
+(not just flag for step-up). Threshold tuning lives in the risk engine spec.
 
 ### Q7 — Test strategy → **unit + full integration with mocked Edge**
 
@@ -1474,6 +1713,57 @@ under construction. Per-channel; explicit; safe-by-default.
 `D2.Shared.Auth.AuthTelemetry` (created in Step 2) hosts the parallel pair under
 `"D2.Shared.Auth"`.
 
+### Q23 — Edge anon-visitor authentication pattern → **(a) Pattern A: mint short-lived anon JWT**
+
+**Decided**: 2026-05-11.
+
+**Rationale**:
+- Pattern B (no-JWT path with header-based enrichment propagation) would have forced every backend
+  consumer — middleware, handlers, audit, rate-limit, risk — to handle two input shapes
+  (validated JWT for authed; raw enrichment headers for anon). Branching cost compounds at every
+  layer.
+- Pattern A reuses the JWT validation + JWKS + KeyCustodian + 3-tier session machinery already
+  specified for authed users (§3.4 + §3.5). One input shape (validated JWT) for every code path.
+- Tamper-evident enrichment binding: `d2_whois_id` and (optionally) `d2_fingerprint_score` are
+  signed claims, not headers — Edge's WhoIs lookup result is bound to the request via the JWT
+  signature; backend services trust the claim without re-resolving.
+- Mainstream production pattern: every request carries a token (Auth0 anon tokens, Cloudflare
+  Access bot tokens, AppSync IAM-anon, etc.). Matches the maturity-ladder rung 2 framing in
+  V2.md §5.4 (RFC-standard mechanisms; future SPIFFE / mTLS layer drops in without rewrite).
+
+**Implications captured in §3.8** (load-bearing — read in full before Phase 3 Edge work):
+- New top-level claims: `d2_kind` (carrying anon/authed discriminator — distinct from the existing
+  inside-`act` `d2_kind`), `d2_whois_id`, `d2_fingerprint_score`. Requires `JwtClaimTypes`
+  vocabulary additions.
+- New `ActorKind.Anonymous` enum variant in `D2.Shared.Auth.Abstractions` (alongside `Service`
+  and `Impersonation`).
+- Algorithm gap (Phase 3 followup): `EffectiveScopes(ctx) = ctx.Scopes ∪ Scopes.AllAnonymousScopes`
+  for the scope check in `JwtAuthMiddleware` + `JwtAuthInterceptor`. `Scopes.AllAnonymousScopes`
+  is already codegen-emitted; the union is a small change deferred to Phase 3.
+- Cookie-presence stops being a frontend-side auth signal; SvelteKit BFF must read
+  `IRequestContext.IsAuthenticated` instead.
+- Sign-out mints a fresh anon-session for continuity (does NOT drop the cookie).
+- `d2_kind: "anonymous"` is the CSRF gate — anon JWTs cannot bear CSRF-sensitive operations.
+- Audit propagation: anon activity distinguishable in audit trail via
+  `IRequestContext.IsAuthenticated == false`.
+- Risk engine: anon visitors need a longer-lived identity for historical-pattern signals — the
+  cookie's session-id, NOT the 15-min-rotating anon `sub`.
+
+**Implication for `RATE-LIMITING.md`**: bucket-keying is now claims-driven (every request has a
+validated JWT — anon or user). The "cookie-shortcut bypass" framing collapses into "JWT
+discriminator" framing — see RATE-LIMITING.md §11 (added in lockstep with this decision).
+
+**Implication for `D2.Shared.Auth.Http` / `D2.Shared.Auth.Grpc` README footgun sections**: the
+documented anonymous-method ctor-injection failure becomes RARELY-RELEVANT in production once
+Pattern A ships at Edge — every normal request carries a JWT. Update README framing when
+Phase 3 lands.
+
+**What's open** (Phase 3 Edge implementation): exact `auth_state` discriminator schema on the
+session record; exact cookie attributes for the anon-session cookie (likely identical to authed);
+exact KeyCustodian anon-issuance flow (same JWKS kid as user JWTs recommended); exact 15-min TTL
+value (subject to telemetry tuning); exact `d2_kind` enum value naming (likely `"anonymous"`
+lowercase to match existing `act.d2_kind` value casing).
+
 ---
 
 ## §13. v1 lessons learned (worth preserving)
@@ -1572,7 +1862,7 @@ Each csproj lands as its own buildable unit; tests pass at every checkpoint; zer
 2. `IJwksProvider` + `HttpJwksProvider` (using
    `ConfigurationManager<OpenIdConnectConfiguration>`, honors discovery doc) + tests against
    in-memory OIDC fixture
-3. `JwtValidator` + `ClaimsToContextMapper` + `FingerprintComparer` + unit tests
+3. `JwtValidator` + `ClaimsToContextMapper` + unit tests *(FingerprintComparer dropped — see top-of-doc 2026-05-10 banner; Edge computes the composite `FingerprintRiskScore`)*
 4. `SessionSnapshot` + `ISessionLivenessTracker` + `TieredCacheSessionLivenessTracker` + tests
 5. `JwtAuthMiddleware` + `JwtAuthInterceptor` (gRPC) + integration tests
 6. `D2ProblemDetailsExtensions` (RFC 7807 + D² extensions) + tests

@@ -54,7 +54,7 @@ Copyright (c) DCSV. All rights reserved.
   the consumer would do anyway (encrypted).
 - **Cross-hop propagation of the small operational subset** —
   `RequestId` / `RequestPath` / `CurrentFingerprint` / `SessionFingerprint` /
-  `FingerprintMatchScore` / `WhoIsHashId` — rides on a single header,
+  `FingerprintRiskScore` / `WhoIsHashId` — rides on a single header,
   `x-d2-context`, base64url-of-JSON-encoded `PropagatedContext`. Identical
   shape on every transport (AMQP / gRPC / HTTP). Defined in
   `D2.Shared.Context.Abstractions.PropagatedContext`.
@@ -70,11 +70,12 @@ Copyright (c) DCSV. All rights reserved.
 
 **Code locations**:
 
-- `server/shared/dotnet/context-abstractions/PropagatedContext.cs` — record.
-- `server/shared/dotnet/context-abstractions/PropagatedContextSerializer.cs` —
-  base64url-of-JSON encode/decode.
-- `server/shared/dotnet/context-abstractions/PropagatedContextExtensions.cs` —
-  `IRequestContext.ToPropagatedContext()` + `MutableRequestContext.ApplyPropagatedContext(...)` bridges.
+- `server/shared/dotnet/context-abstractions/PropagatedContext.g.cs` — record (codegen-emitted).
+- `server/shared/dotnet/context-abstractions/PropagatedContextSerializer.g.cs` —
+  base64url-of-JSON encode/decode (codegen-emitted).
+- `server/shared/dotnet/context-abstractions/PropagatedContextExtensions.g.cs` —
+  `IRequestContext.ToPropagatedContext()` + `MutableRequestContext.ApplyPropagatedContext(...)` bridges
+  (codegen-emitted).
 - `server/shared/dotnet/messaging-abstractions/AmqpHeaders.cs:CONTEXT` —
   the `x-d2-context` header constant.
 - `server/shared/dotnet/messaging-rabbitmq/Publishing/RabbitMqMessageBus.cs:BuildPropagatedHeader` —

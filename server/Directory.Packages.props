@@ -37,12 +37,21 @@ Copyright (c) DCSV. All rights reserved.
 
     <!-- Microsoft.IdentityModel — OIDC discovery doc handling for D2.Shared.Auth.Outbound
          (ConfigurationManager<OpenIdConnectConfiguration> auto-fetches /.well-known/openid-configuration
-         and exposes token_endpoint / jwks_uri). -->
+         and exposes token_endpoint / jwks_uri).
+         Tokens is the base — provides SecurityKey type used on JwksKeySetSnapshot
+         (D2.Shared.Auth.Abstractions). OpenIdConnect transitively depends on Tokens
+         but we list both explicitly so each csproj declares what it actually uses. -->
+    <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.16.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.16.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.16.0" />
 
     <!-- Grpc.Net.ClientFactory — gRPC client typed-builder + ConfigureChannel for the
          D2.Shared.Auth.Outbound .AddD2ServiceIdentity() per-channel opt-in extension. -->
     <PackageVersion Include="Grpc.Net.ClientFactory" Version="2.71.0" />
+    <!-- Grpc.AspNetCore.Server — server-side gRPC binding for D2.Shared.Auth.Grpc
+         (the JwtAuthInterceptor + per-method scope metadata on ServerCallContext).
+         Same release train (2.71.0) as the client-only sibling above. -->
+    <PackageVersion Include="Grpc.AspNetCore.Server" Version="2.71.0" />
     <PackageVersion Include="StackExchange.Redis" Version="2.8.31" />
     <PackageVersion Include="Testcontainers.Redis" Version="4.0.0" />
 
@@ -82,5 +91,25 @@ Copyright (c) DCSV. All rights reserved.
          deterministic tests of Task.Delay-on-TimeProvider, refresh hosted services,
          expiry-window-driven caches, etc. -->
     <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="9.10.0" />
+
+    <!-- Microsoft.AspNetCore.TestHost — in-memory test server for end-to-end
+         middleware-pipeline tests of D2.Shared.Auth.AspNetCore. -->
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.7" />
+
+    <!-- Grpc.Tools — protoc + plugin invocation for the test-only minimal
+         .proto files used by D2.Shared.Auth.Grpc end-to-end integration tests
+         (exercises the full MapGrpcService<T>() pipeline through TestServer
+         + an in-process Grpc.Net.Client channel). Build-only PackageReference
+         in test csprojs (PrivateAssets="all"). Same release train (2.71.0) as
+         the runtime gRPC packages above. -->
+    <PackageVersion Include="Grpc.Tools" Version="2.71.0" />
+    <!-- Grpc.Net.Client — client-side gRPC channel for the same integration
+         tests; constructs a GrpcChannel over the TestServer's HttpClient to
+         dispatch real gRPC calls in-process. -->
+    <PackageVersion Include="Grpc.Net.Client" Version="2.71.0" />
+    <!-- Google.Protobuf — runtime types (IMessage, IBufferMessage, etc.)
+         emitted by Grpc.Tools' generated code. Required by the test-only
+         generated proto code; not used in production. -->
+    <PackageVersion Include="Google.Protobuf" Version="3.30.2" />
   </ItemGroup>
 </Project>

@@ -29,32 +29,34 @@ public sealed class IRequestContextGeneratedTests
     [Fact]
     public void Interface_HasEveryPropertyDeclaredInRequestContextSpec()
     {
-        var spec_path = TestPaths.RequestContextSpec();
-        File.Exists(spec_path).Should().BeTrue("spec must be present at " + spec_path);
+        var specPath = TestPaths.RequestContextSpec();
+        File.Exists(specPath).Should().BeTrue("spec must be present at " + specPath);
 
-        var spec = JsonDocument.Parse(File.ReadAllText(spec_path));
+        var spec = JsonDocument.Parse(File.ReadAllText(specPath));
 
-        var spec_property_names = new List<string>();
+        var specPropertyNames = new List<string>();
         foreach (var section in spec.RootElement.GetProperty("sections").EnumerateArray())
         {
             foreach (var property in section.GetProperty("properties").EnumerateArray())
-                spec_property_names.Add(property.GetProperty("name").GetString()!);
+                specPropertyNames.Add(property.GetProperty("name").GetString()!);
         }
 
-        spec_property_names.Should().NotBeEmpty();
+        specPropertyNames.Should().NotBeEmpty();
 
         // GetProperties (no DeclaredOnly) returns inherited too — but we want
         // to assert each NEW spec property is reachable on IRequestContext.
         // Use BindingFlags including FlattenHierarchy.
-        var reachable_via_request = typeof(IRequestContext)
-            .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
+        const BindingFlags public_instance_flat =
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
+        var reachableViaRequest = typeof(IRequestContext)
+            .GetProperties(public_instance_flat)
             .Select(p => p.Name)
             .Concat(typeof(IRequestContext).GetInterfaces()
                 .SelectMany(i => i.GetProperties(BindingFlags.Public | BindingFlags.Instance))
                 .Select(p => p.Name))
             .ToHashSet();
 
-        var missing = spec_property_names.Where(n => !reachable_via_request.Contains(n)).ToList();
+        var missing = specPropertyNames.Where(n => !reachableViaRequest.Contains(n)).ToList();
         missing.Should().BeEmpty(
             "every IRequestContext spec property must appear on the generated interface; "
             + "missing: " + string.Join(", ", missing));
@@ -68,7 +70,7 @@ public sealed class IRequestContextGeneratedTests
     [InlineData("ClientIp", typeof(string))]
     [InlineData("SessionFingerprint", typeof(string))]
     [InlineData("CurrentFingerprint", typeof(string))]
-    [InlineData("FingerprintMatchScore", typeof(int?))]
+    [InlineData("FingerprintRiskScore", typeof(int?))]
     [InlineData("WhoIsHashId", typeof(string))]
     [InlineData("AdminLocationHashId", typeof(string))]
     [InlineData("City", typeof(string))]
@@ -111,21 +113,21 @@ public sealed class IRequestContextGeneratedTests
         // IRequestContext (i.e. the codegen wired the `extends` correctly).
         // A consumer holding an IRequestContext should not need to cast to
         // IAuthContext to read auth fields.
-        var auth_property = typeof(IAuthContext).GetProperty(
+        var authProperty = typeof(IAuthContext).GetProperty(
             propertyName, BindingFlags.Public | BindingFlags.Instance);
 
-        auth_property.Should().NotBeNull(propertyName + " must exist on IAuthContext");
+        authProperty.Should().NotBeNull(propertyName + " must exist on IAuthContext");
 
         // The inherited member is reachable via the interface map.
-        var all_reachable = new HashSet<string>(
+        var allReachable = new HashSet<string>(
             typeof(IRequestContext).GetProperties().Select(p => p.Name));
         foreach (var iface in typeof(IRequestContext).GetInterfaces())
         {
             foreach (var p in iface.GetProperties())
-                all_reachable.Add(p.Name);
+                allReachable.Add(p.Name);
         }
 
-        all_reachable.Should().Contain(propertyName);
+        allReachable.Should().Contain(propertyName);
     }
 
     [Fact]

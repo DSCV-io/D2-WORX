@@ -84,7 +84,7 @@ internal sealed class TestRequestContext : IRequestContext
 
     public string? CurrentFingerprint { get; init; }
 
-    public int? FingerprintMatchScore { get; init; }
+    public int? FingerprintRiskScore { get; init; }
 
     public string? WhoIsHashId { get; init; }
 

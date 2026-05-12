@@ -15,7 +15,7 @@ five files into this assembly:
 |---|---|---|
 | `IRequestContext.g.cs` | interface | Read-only contract domain code consumes (extends `IAuthContext`). |
 | `MutableRequestContext.g.cs` | sealed class | Settable concrete; per-scope DI registration; HTTP / messaging middleware populates this. Implements `IRequestContext`. Includes `FromClaims` + `FromJwtPayloadNoValidation` factories. |
-| `PropagatedContext.g.cs` | sealed record | Cross-hop subset — every property the spec marks `propagate: true` (`RequestId`, `RequestPath`, `SessionFingerprint`, `CurrentFingerprint`, `FingerprintMatchScore`, `WhoIsHashId` today). Identity (`UserId` / `OrgId` / `Scopes` / `ActorChain`) is **never** propagated — it rebuilds from the JWT at every sync hop. |
+| `PropagatedContext.g.cs` | sealed record | Cross-hop subset — every property the spec marks `propagate: true` (`RequestId`, `RequestPath`, `SessionFingerprint`, `CurrentFingerprint`, `FingerprintRiskScore`, `WhoIsHashId` today). Identity (`UserId` / `OrgId` / `Scopes` / `ActorChain`) is **never** propagated — it rebuilds from the JWT at every sync hop. |
 | `PropagatedContextExtensions.g.cs` | static class | Two projections: `IRequestContext.ToPropagatedContext()` (snapshot) and `MutableRequestContext.ApplyPropagatedContext(PropagatedContext?)` (apply). |
 | `PropagatedContextSerializer.g.cs` | static class | Wire codec — base64url-of-JSON for the `x-d2-context` header (AMQP / gRPC / HTTP). `MAX_HEADER_LENGTH = 2048` global cap; per-field length validation baked from each propagatable field's `maxLength` annotation in the spec. `TryDecode` returns null on any failure — propagation is opportunistic, never required. |
 
@@ -61,7 +61,7 @@ spec → N language-specific abstractions libs, all bug-compatible.
 - **Tracing**: `TraceId`, `RequestId`, `RequestPath`
 - **Provenance**: `IsSyntheticEnvelope`
 - **Network**: `ClientIp`
-- **Fingerprints**: `SessionFingerprint`, `CurrentFingerprint`, `FingerprintMatchScore`
+- **Fingerprints**: `SessionFingerprint`, `CurrentFingerprint`, `FingerprintRiskScore`
 - **WhoIs — Admin Location**: `WhoIsHashId`, `AdminLocationHashId`, `City`, `Region`, `SubdivisionCode`, `CountryCode`, `PostalCode`
 - **WhoIs — Coordinates**: `Latitude`, `Longitude`, `Geohash`
 - **WhoIs — Network Privacy**: `IsVpn`, `IsProxy`, `IsTor`, `IsHosting`

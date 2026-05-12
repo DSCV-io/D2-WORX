@@ -147,6 +147,7 @@ Hosts that deploy the inbound `D2.Shared.Auth` lib alongside this one MUST regis
 
 ## References
 
+- [`D2.Shared.Auth`](../auth/) — inbound auth runtime (JWT validator + session liveness + `AddD2Auth` composition root); transport bindings in `D2.Shared.Auth.Http` + `D2.Shared.Auth.Grpc` siblings
 - [`D2.Shared.Auth.Abstractions`](../auth-abstractions/) — `Audiences.*` / `JwtClaimTypes.*` constants
 - [`D2.Shared.Caching.Abstractions`](../caching-abstractions/) — `ILocalCache` + `ICacheInvalidationBackplane` interfaces
 - [`D2.Shared.Resilience`](../resilience/) — `Singleflight` for fetch-path deduplication

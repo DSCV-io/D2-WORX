@@ -5,16 +5,17 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <RootNamespace>D2.Shared.Auth.Abstractions</RootNamespace>
 
-    <!-- Emit the generator's output (Scopes.g.cs) to obj/Generated/ so it's
-         visible for inspection / debugging (Rider also picks them up). -->
+    <!-- Emit the generator's output (Scopes.g.cs, Audiences.g.cs) to obj/Generated/
+         so it's visible for inspection / debugging (Rider also picks them up). -->
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
 
   <!--
-    Zero external deps by design. This is the identity / authorization vocabulary
-    slice that domain code, request-context, handler-abstractions, and the runtime
-    D2.Shared.Auth all reference for shared enums and string constants.
+    Identity / authorization vocabulary AND consumer-side runtime contracts
+    (interfaces + result-shaped types) that domain code, request-context,
+    handler-abstractions, the runtime D2.Shared.Auth, and Edge's issuer-side
+    code all reference.
 
     Two sibling Roslyn analyzers contribute generated code to this assembly:
 
@@ -33,6 +34,29 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\auth-audiences-source-gen\D2.Shared.Auth.Audiences.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Result + I18n.Abstractions — required because consumer-side contracts
+      (IJwksProvider / ISessionLivenessTracker) return D2Result<T>, consistent
+      with caching-abstractions and handler-abstractions. Both upstream libs
+      are zero-runtime-dep and domain-safe.
+    -->
+    <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
+    <ProjectReference Include="..\i18n-abstractions\D2.Shared.I18n.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Microsoft.IdentityModel.Tokens — provides the SecurityKey type used on
+      JwksKeySetSnapshot.Keys. SecurityKey is the de-facto BCL-adjacent
+      abstraction (ASP.NET Core's TokenValidationParameters.IssuerSigningKeys
+      takes it; ConfigurationManager<OpenIdConnectConfiguration> emits it).
+      Adding a deeper abstraction layer would just translate SecurityKey →
+      OurAbstractKey → SecurityKey at every consumer with no value.
+    -->
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" />
   </ItemGroup>
 
   <ItemGroup>

@@ -35,7 +35,7 @@
         {
           "name": "IsSyntheticEnvelope",
           "type": "bool?",
-          "doc": "True when this context was reconstructed from a degraded source (e.g. an S3 event whose original ContextEnvelope expired in Redis, forcing a fall-back to a DB-derived synthetic envelope). When true, fields like SessionFingerprint / FingerprintMatchScore / ImmediateCallerClientId may be null even for requests that originated from authenticated user sessions. Handlers handling sensitive operations should consider rejecting (D2Result.ServiceUnavailable) rather than processing under degraded provenance. Default false."
+          "doc": "True when this context was reconstructed from a degraded source (e.g. an S3 event whose original ContextEnvelope expired in Redis, forcing a fall-back to a DB-derived synthetic envelope). When true, fields like SessionFingerprint / FingerprintRiskScore / ImmediateCallerClientId may be null even for requests that originated from authenticated user sessions. Handlers handling sensitive operations should consider rejecting (D2Result.ServiceUnavailable) rather than processing under degraded provenance. Default false."
         }
       ]
     },
@@ -68,10 +68,10 @@
           "doc": "The fingerprint recomputed for THIS request by Edge fingerprint middleware, in the same dot-separated format as SessionFingerprint. Captures the actual device fingerprint of the originating request (vs the session-bound one). Propagated via x-d2-context so audit rows for async-triggered actions record the originating request's actual fingerprint — not just what the session was bound to."
         },
         {
-          "name": "FingerprintMatchScore",
+          "name": "FingerprintRiskScore",
           "type": "int?",
           "propagate": true,
-          "doc": "Component-by-component fuzzy match score (0-100) between SessionFingerprint and CurrentFingerprint, weighted server-side 60% / client-side 40%. ≥70 = no risk; 60-70 = +10 risk; <60 = +50 risk. Set by Edge binding-check middleware. Null on internal services and pre-fingerprint-middleware paths. Propagated via x-d2-context so audit rows record Edge's binding-check verdict at the moment of the originating request. Use the GetFingerprintMismatches extension method on IRequestContextExtensions for per-component breakdown."
+          "doc": "Composite request-risk score (0-100; higher = more risky) computed by Edge's risk engine for THIS request. Inputs include fingerprint-mismatch components (SessionFingerprint vs CurrentFingerprint), geo-velocity drift from the sign-in baseline, ASN / Tor / proxy flags, and any per-org / per-user policy contributions. 0 = no risk; ≥ user/org step-up threshold = OTP step-up; ≥ user/org block threshold = block + invalidate session. Null on internal services and pre-risk-engine paths. Propagated via x-d2-context so audit rows record Edge's verdict at the moment of the originating request. Edge owns the contribution math + thresholds; consumer-side libs (D2.Shared.Auth) only read this field, never compute it."
         }
       ]
     },

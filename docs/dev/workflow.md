@@ -2,9 +2,39 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
+<a name="top"></a>
+
 # D2-WORX Development Workflow
 
 The loop that turns a design discussion into shipped, audited, regression-tested code without requiring the user to push the agent through audit rounds. Three phases: **PLAN → EXECUTE → REVIEW**. Convergence is autonomous — the agent loops until each step's audit terminates clean, then ships to user review.
+
+## Table of contents
+
+- [Mission context](#-mission-context)
+- [Glossary](#glossary)
+- [Folder shape](#folder-shape)
+- [PLAN](#plan)
+  - [Steps](#steps)
+  - [`docs/wip/<deliverable>/README.md` template](#docswipdeliverablereadmemd-template-initial-form-populated-during-plan)
+- [EXECUTE](#execute)
+  - [1. Step plan entry](#1-step-plan-entry)
+  - [2. Implementation](#2-implementation)
+  - [3. Audit loop (the core forcing function)](#3-audit-loop-the-core-forcing-function)
+    - [Three-artifact journal model](#three-artifact-journal-model-mirror-of-claudemd--rulesmd-24)
+    - [Mandatory round sequence](#mandatory-round-sequence-do-not-skip-steps-do-not-collapse-roles)
+    - [Why the table is sweep-only-replaceable](#why-the-table-is-sweep-only-replaceable)
+    - [Why findings + fixes are append-only](#why-findings--fixes-are-append-only)
+  - [4. Per-step distillation](#4-per-step-distillation)
+  - [5. Update root README](#5-update-root-readme)
+  - [6. Move to next step](#6-move-to-next-step)
+- [FINAL-REVIEW](#final-review-the-last-step-of-every-deliverable)
+- [SHIP (handoff to user REVIEW)](#ship-handoff-to-user-review)
+- [REVIEW (user phase)](#review-user-phase)
+- [Append-only discipline](#append-only-discipline)
+- [Permission gates (must block, no inference allowed)](#permission-gates-must-block-no-inference-allowed)
+- [Scope of work shape](#scope-of-work-shape)
+- [What this workflow does NOT do](#what-this-workflow-does-not-do)
+- [When to invoke this workflow](#when-to-invoke-this-workflow)
 
 > ## ⚠️ MISSION CONTEXT
 >
@@ -24,6 +54,9 @@ The loop that turns a design discussion into shipped, audited, regression-tested
 - **Clean round** — an audit round that produces zero findings across every category. The termination signal.
 - **Iteration ceiling** — 10 audit rounds per step (and 10 at final review). Hitting 11 means escalate to the user; the agent's mental model is wrong, not its execution.
 - **Self-improvement** — at each step's audit termination AND at deliverable ship, the agent distills the kinds of misses surfaced into proposed additions to `rules.md`. User approves; rules are appended; future deliverables start with a stricter ruleset.
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -53,6 +86,9 @@ docs/
 **Naming convention**: deliverables use a 4-digit index prefix (`0001-`, `0002-`, ...) so they sort naturally in directory listings and the order reflects ship sequence. Both the local workspace folder (`docs/wip/NNNN-<name>/`) and the committed snapshot (`docs/dev/deliverables/NNNN-<name>.md`) share the same index — matching prefixes make it trivial to find the local workspace for a past committed snapshot (if the journals still exist locally). Pick the next free index at PLAN time by `ls docs/dev/deliverables/` + incrementing the highest.
 
 At SHIP, **only the root README is copied** out of `wip/NNNN-<name>/` to `docs/dev/deliverables/NNNN-<name>.md` (committed snapshot — single file). The per-step journals stay where they are in `docs/wip/NNNN-<name>/` — gitignored, local-only artifacts. They are NEVER auto-deleted by the workflow; the user removes them manually whenever they want. Locally-preserved journals remain available as evidence that future deliverables can spot-check, but they don't cross the commit boundary — only the distilled README does. See SHIP step 4 below.
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -103,6 +139,9 @@ Status: PLAN | EXECUTE step N | FINAL-REVIEW | SHIPPED
 <empty initially; finalized at final-review termination>
 ```
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## EXECUTE
@@ -152,35 +191,97 @@ Build state: clean | <warnings to address>
 
 Walk every category in [rules.md](rules.md). For each predicate, produce evidence — grep results, file:line lists, "checked X by Y, found Z." Vibes ("looks fine") are not evidence. Findings get fixed in the same round; the next round runs against post-fix state.
 
-Append per round:
+#### MANDATORY: per-round evidence table embedded in the journal (no exceptions)
+
+> **DO NOT BE LAZY. WALK EVERY NUMBERED SUBSECTION IN rules.md. NO SKIPPING. NO ASSUMING IRRELEVANCE WITHOUT EVIDENCE. LEAVE NO STONE UNTURNED.**
+>
+> The whole point of the audit loop is to catch what mechanical gates (build / test / inspectcode) miss. Short-circuiting ("I checked the relevant ones, the rest don't apply") IS the failure mode this whole framework exists to prevent. Most rules.md subsections WILL apply to most code. Be skeptical of your own urge to mark N/A.
+
+### Three-artifact journal model (mirror of CLAUDE.md / rules.md §24)
+
+Every step / final-review journal contains THREE artifacts under canonical headings — strictly separated, never collapsed:
+
+| Artifact | Section heading | Behavior | Written by |
+|---|---|---|---|
+| **Big table** (latest sweep snapshot) | `## Latest sweep results` | REPLACED on every sweep — table reflects ONLY the most recent walk's findings against current code. ~85+ rows, one per rules.md subsection. Anti-laziness preamble above it. | Sweep activity ONLY. Fix-applying agents NEVER touch this. |
+| **Findings log** (per-round audit history) | `## Sweep findings log (append-only)` | APPEND-ONLY. Each sweep appends a `### Round N findings (timestamp)` subsection enumerating every FINDING the sweep surfaced. Never deleted, never re-ordered. | Sweep activity ONLY. |
+| **Fix log** (chronological fix activity) | `## Fix log (append-only)` | APPEND-ONLY. Each fix appends one entry citing rules.md subsection + finding round + what changed + `file.cs:NN` of the change. Never deleted, never re-ordered. | Fix-applying agent ONLY. |
+
+The big table is the canonical "what is true RIGHT NOW" snapshot. Every PASS in it is a fresh file:line citation against current code, freshly walked in the latest sweep. There is NO inheritance of PASS from earlier sweeps — every PASS is earned fresh each sweep.
+
+Closure is proven ONLY by the absence of a FINDING from the next sweep's big table. The fix log captures intent + action; it does NOT certify outcome.
+
+### Mandatory round sequence (do not skip steps, do not collapse roles)
+
+1. **Sweep**: walk every rules.md subsection against current code. REPLACE the big table with the sweep's output. APPEND a `### Round N findings (timestamp)` subsection to the findings log enumerating every FINDING the sweep surfaced.
+2. **Fix work**: for each FINDING in the new big table, apply the fix. After each fix, APPEND one entry to the fix log citing the rules.md subsection + finding round + what changed + the `file.cs:NN` of the change. **The big table is NOT touched between sweeps.**
+3. **Every finding gets fixed**: no silent carryover. If a finding genuinely can't be resolved in this round, get EXPLICIT user permission to defer and append a deferral entry to the fix log (still append-only — never silent omission).
+4. **Next sweep**: when all current-round findings have fix-log entries, run the NEXT sweep. Walk the full rules.md catalog again from scratch. REPLACE the big table with the new sweep's output. Append `### Round N+1 findings` to the findings log. A row that was a FINDING in Round N's findings log and is now PASS in Round N+1's big table = closed (proven by absence). A row STILL a FINDING in Round N+1's table = fix didn't take; append more fix entries, run Round N+2.
+5. **Loop terminates** when ONE sweep produces a big table with zero FINDING rows. Until that happens, the step is not done. No "convergence claimed" without a clean big table from a real sweep.
+
+### Why the table is sweep-only-replaceable
+
+If the fix-applying agent could flip a row to PASS, failure mode: fix doesn't actually take (typo, wrong line, partial replacement, cascade) → agent writes PASS anyway → next sweep "trusts" the PASS and skips re-walking the predicate → bug ships. With sweep-only-replacement of the big table, every PASS in every sweep's table is freshly walked against current code. There's no possibility of a stale PASS being inherited.
+
+### Why findings + fixes are append-only
+
+The append-only logs preserve the audit trail that the table-replacement model would otherwise lose. Anyone reading the journal can answer: "What did Round 1 find?" "What was changed in response?" "Did Round 2's sweep confirm closure?" An agent that could delete entries could quietly hide reversals or corrections — append-only forces every change (including reversals) into chronological visible order.
+
+Every audit round produces a STRUCTURED TABLE with one row per numbered subsection in `rules.md`. The table is the gate — a step is not done until a complete-table round shows zero FINDING rows.
 
 ```
 =================================================
 [YYYY-MM-DD HH:MM] Audit round N
 =================================================
-Categories walked: 1, 2, 3, 4, 5, 6, 7, 8
 
-Category 1 — Test Discipline:
-  Findings: 2
-    1. <description, file:line>
-    2. <description, file:line>
-  Fixes:
-    1. <change made> — <why>
-    2. <change made> — <why>
+MANDATORY PREAMBLE: This audit walks EVERY numbered subsection in rules.md.
+No skipping. No assuming irrelevance without specific evidence. PASS requires
+file:line citation. N/A requires one-sentence reason. FINDING requires
+severity + file:line + description + fix. The step is NOT done until a
+complete-table round shows zero FINDING rows. DO NOT BE LAZY. LEAVE NO STONE
+UNTURNED.
 
-Category 2 — Bug-Fix Regression Testing:
-  Findings: 0 (clean)
+| §    | Predicate                                         | Status            | Evidence / Reason / Finding                              |
+|------|---------------------------------------------------|-------------------|----------------------------------------------------------|
+| 1.1  | Test every public path first-pass                 | ✅ PASS           | HttpJwksProvider.GetKeysAsync → tests/Jwks/HttpJwksProviderTests.cs:23 |
+| 1.2  | Adversarial inputs in tests                       | ❌ FINDING-MEDIUM | tests/Jwks/HttpJwksProviderTests.cs missing oversized-payload case → add test_OversizedJwks_ReturnsServiceUnavailable |
+| 1.3  | DI extension methods tested via composition resolution | ⚪ N/A         | No DI extensions added in this step (existing AddD2Auth stub from Step 02 unchanged) |
+| 1.4  | gRPC client/server registration helpers tested    | ⚪ N/A            | No gRPC code in this step |
+| ...  | (every numbered subsection in rules.md, in order) | ...               | ...                                                      |
+| 23.7 | Config validations at startup, not on first use   | ✅ PASS           | AuthOptions validation runs at AddD2Auth time → AuthServiceCollectionExtensions.cs:46 |
 
-Category 3 — PII / Logging Safety:
-  Findings: 1
-    1. ...
-  Fixes:
-    1. ...
-
-...
-
-Round summary: 3 findings, 3 fixed, post-fix build clean.
+Round summary: 1 HIGH, 2 MEDIUM, 0 LOW findings | 3 fixes applied | post-fix
+build clean | re-running round N+1 against post-fix state.
 ```
+
+#### Evidence requirements (mechanical — no exceptions)
+
+- **PASS** requires a `file:line` citation pointing to code/test/doc that satisfies the predicate. "Verified ✓" / "looks good" / "checked it" are NOT evidence.
+- **N/A** requires a one-sentence REASON specific to the step's scope. "Doesn't apply" / "irrelevant" are NOT reasons. Acceptable reason shapes: "no TS code in this step", "no DI extensions added", "no Redis interaction", etc.
+- **FINDING** requires all four: (severity: HIGH/MEDIUM/LOW) + (file:line) + (specific description of the violation) + (suggested fix). Fix is applied in the same round; the next round runs against post-fix state.
+
+#### MANDATORY: emoji-prefixed Status column (no exceptions)
+
+**The Status column MUST prepend the emoji indicator: ✅ PASS / ❌ FINDING-* / ⚪ N/A / 🟡 anything else. Visual scan-ability is the goal — operators reviewing the journal can spot findings instantly.**
+
+Emoji mapping (the FOUR canonical visual indicators):
+
+- `✅` (green checkmark) — for `PASS` (the canonical clean state)
+- `❌` (red X) — for any `FINDING-*` row (`FINDING-HIGH` / `FINDING-MEDIUM` / `FINDING-LOW`)
+- `⚪` (white circle) — for `N/A` (predicate doesn't apply to this step's scope)
+- `🟡` (yellow circle) — for ANY non-canonical status (`DEFERRED` / `PENDING` / `UNVERIFIED` / `PASS-borderline` / `PASS (contract)` / `PARTIAL` / etc. — anything that isn't strictly `PASS` / `N/A` / `FINDING-*`). Yellow flags "needs human attention" — a borderline PASS, a deferred fix, a pending re-walk, a partial.
+
+Format: emoji + single space + status word — e.g. `| 1.1 | ... | ✅ PASS | <evidence> |` or `| 11.22 | ... | ❌ FINDING-LOW | <description> |` or `| 1.3 | ... | ⚪ N/A | <reason> |` or `| 24.5 | ... | 🟡 DEFERRED | <reason> |`.
+
+A row with a bare `PASS` / `N/A` / `FINDING-*` (no emoji prefix) is a §24.10 violation. The sweep that produced such a row is INCOMPLETE.
+
+#### Loop until zero findings (mechanical)
+
+A step is NOT complete until an audit round produces ZERO FINDING rows across the COMPLETE TABLE. After fixing findings in round N, run round N+1 → re-walk the FULL table against the post-fix state. **DO NOT assume a single round of fixes resolved everything** — fixes can introduce new issues. The loop terminates only when a complete-table walk shows zero FINDING rows.
+
+#### FINAL-REVIEW uses the same table
+
+The deliverable-wide FINAL-REVIEW produces the same complete-table format against the entire deliverable's cumulative output. **No tier-audit layer between per-step and final-review** — per-step audit scope explicitly includes every file the step touched (incl. files modified from prior steps), so cross-step drift is caught at the per-step level. The final-review then walks the deliverable as a whole for cross-cutting integration concerns no individual step would surface.
 
 Continue rounds. Termination: a round produces 0 findings across every category. Append final entry:
 
@@ -236,6 +337,9 @@ After the step distillation, the agent updates `docs/wip/<deliverable>/README.md
 
 Steps run in prerequisite order. Step N can start when all listed prerequisites are ✅. The agent does NOT start a new step while the previous step has open audit findings.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## FINAL-REVIEW (the last "step" of every deliverable)
@@ -253,12 +357,16 @@ Same structure as a step:
 
 When final-review terminates clean → deliverable is ready to SHIP.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## SHIP (handoff to user REVIEW)
 
 Triggered by final-review's clean termination. Agent does:
 
+0. **Walk the [Deliverable completeness checklist](rules.md#deliverable-completeness-checklist-the-gate-before-user-review) BEFORE anything else in SHIP.** Every box must be honest YES with a citation. If any box is NO, SHIP is not ready — go back into fix-loops, re-walk the checklist, only proceed when every box is honestly YES. Then write the verbatim attestation block (from rules.md) into the deliverable's root README. Without the attestation, SHIP cannot proceed.
 1. **Aggregate proposed rule additions** from all step distillations + final-review distillation. Deduplicate. Append the full proposed list to the root README's "Proposed rule additions" section.
 2. **Present the root README to the user**. The user reviews:
    - Did the agent's audit catch what the user would have caught? (Implicit: spot-check 1-2 step journals, see if any obvious miss got past.)
@@ -274,6 +382,9 @@ Triggered by final-review's clean termination. Agent does:
 
 Each commit needs explicit user permission (no auto-commit).
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## REVIEW (user phase)
@@ -287,6 +398,9 @@ User reviews the shipped deliverable. **REVIEW is observe-and-capture, not fix-o
 
 If REVIEW finds bugs that should have been caught by the agent's audit rounds, the right response isn't just "fix the bug" — it's also "what category was this, and why didn't the predicate catch it?" That gap becomes a new predicate in `rules.md`. Without this feedback loop, the rule catalog stays static and the agent keeps making the same kinds of misses.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## Append-only discipline
@@ -298,6 +412,9 @@ Per-step `journal.md` files are append-only at the **substantive content** level
 - ❌ Edit a previous round's "Findings: 0 (clean)" to add the bug a later round found
 
 The reason: the journal IS the evidence of process integrity. If round 3 missed something that round 5 caught, the journal must show that. Hiding the miss prevents the kind from feeding back into `rules.md`, and the agent will re-make the same miss next deliverable. **Honest journals are self-rewarding** — every honest miss becomes a future gate-check.
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -311,6 +428,9 @@ The following actions require explicit user permission **per occurrence**, not i
 - **Deferring planned work.** If a step turns out larger than expected, agent ASKS to defer — does not unilaterally skip.
 - **Architectural decision changes mid-execution.** If implementation surfaces a reason to deviate from the locked PLAN, agent ASKS — does not silently rework.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## Scope of work shape
@@ -323,6 +443,9 @@ This workflow scales to deliverables of meaningfully different sizes. Two exampl
 
 There's no "lightweight path" for trivial changes — even a typo fix benefits from "did you check whether this typo appears elsewhere in the same doc?" The cost of running the full ruleset on a small change is minutes; the cost of NOT running it (and missing the parallel typo) is a future audit round.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## What this workflow does NOT do
@@ -331,6 +454,9 @@ There's no "lightweight path" for trivial changes — even a typo fix benefits f
 - **Doesn't replace `docs/v2/`.** Phase / wave tracking continues to live in the `docs/v2/` set. This workflow is per-deliverable; `docs/v2/` is the long-arc roadmap.
 - **Doesn't replace per-lib READMEs.** Each shared lib still has its own `README.md` documenting its public API. This workflow doesn't generate or maintain those.
 - **Doesn't run scripts.** No pre-commit hook, no CI gate that fires `rules.md` mechanically. The discipline is the agent walking the rules each round and producing evidence — verifiable by inspecting the journal.
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 

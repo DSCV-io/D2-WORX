@@ -22,7 +22,7 @@ public sealed class PropagatedContextExtensionsTests
             RequestPath = "/x/y",
             CurrentFingerprint = "fp-current",
             SessionFingerprint = "fp-session",
-            FingerprintMatchScore = 95,
+            FingerprintRiskScore = 95,
             WhoIsHashId = "whois-h",
 
             // NOT in the propagated subset — must NOT appear in the projection.
@@ -39,7 +39,7 @@ public sealed class PropagatedContextExtensionsTests
         propagated.RequestPath.Should().Be("/x/y");
         propagated.CurrentFingerprint.Should().Be("fp-current");
         propagated.SessionFingerprint.Should().Be("fp-session");
-        propagated.FingerprintMatchScore.Should().Be(95);
+        propagated.FingerprintRiskScore.Should().Be(95);
         propagated.WhoIsHashId.Should().Be("whois-h");
     }
 
@@ -53,7 +53,7 @@ public sealed class PropagatedContextExtensionsTests
             RequestPath = "/p",
             CurrentFingerprint = "fc",
             SessionFingerprint = "fs",
-            FingerprintMatchScore = 50,
+            FingerprintRiskScore = 50,
             WhoIsHashId = "w",
         };
 
@@ -63,7 +63,7 @@ public sealed class PropagatedContextExtensionsTests
         ctx.RequestPath.Should().Be("/p");
         ctx.CurrentFingerprint.Should().Be("fc");
         ctx.SessionFingerprint.Should().Be("fs");
-        ctx.FingerprintMatchScore.Should().Be(50);
+        ctx.FingerprintRiskScore.Should().Be(50);
         ctx.WhoIsHashId.Should().Be("w");
     }
 

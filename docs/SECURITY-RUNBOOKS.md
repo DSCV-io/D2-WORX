@@ -104,3 +104,13 @@ Until then: anyone who hits a compromise scenario should:
 1. Pause and consult the on-call security contact
 2. Don't wing the rotation — KeyCustodian state machine has terminal states; incorrect operation can lock you out
 3. Document what you did so this runbook can be informed by it
+
+---
+
+## Related references
+
+Inbound auth runtime — JWT validation, JWKS handling, session liveness, transport-binding wiring (consult these when a compromise touches the inbound boundary):
+
+- [`server/shared/dotnet/auth/README.md`](../server/shared/dotnet/auth/README.md) — `D2.Shared.Auth` (composition root, JWKS provider, JWT validator, session liveness tracker, telemetry, debugging table for `AUTH_*` failure codes).
+- [`server/shared/dotnet/auth-http/README.md`](../server/shared/dotnet/auth-http/README.md) — `D2.Shared.Auth.Http` (HTTP transport binding: `JwtAuthMiddleware`, `RequireD2Scope` / `[D2RequireScope]`, RFC 7807 ProblemDetails shape).
+- [`server/shared/dotnet/auth-grpc/README.md`](../server/shared/dotnet/auth-grpc/README.md) — `D2.Shared.Auth.Grpc` (gRPC transport binding: `JwtAuthInterceptor`, scope attributes, `RpcException` trailer shape).

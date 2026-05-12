@@ -12,8 +12,8 @@ using D2.Shared.Context.Abstractions;
 using Xunit;
 
 /// <summary>
-/// Adversarial proof of the C1/C2 invariants for the post-envelope-removal
-/// wire shape:
+/// Adversarial proof of the wire-shape invariants for the post-envelope-removal
+/// design:
 /// <list type="bullet">
 ///   <item>The encoded <c>x-d2-context</c> header carries ONLY the propagated
 ///     subset (RequestId / RequestPath / fingerprints / WhoIs hash). Identity
@@ -55,7 +55,7 @@ public sealed class PropagatedHeaderWireShapeTests
             RequestPath = "/admin/secret/path",
             CurrentFingerprint = "fp-cur",
             SessionFingerprint = "fp-sess",
-            FingerprintMatchScore = 90,
+            FingerprintRiskScore = 90,
             WhoIsHashId = "whois-hash",
         };
 
@@ -72,7 +72,7 @@ public sealed class PropagatedHeaderWireShapeTests
         json.Should().Contain("\"requestPath\":\"/admin/secret/path\"");
         json.Should().Contain("\"currentFingerprint\":\"fp-cur\"");
         json.Should().Contain("\"sessionFingerprint\":\"fp-sess\"");
-        json.Should().Contain("\"fingerprintMatchScore\":90");
+        json.Should().Contain("\"fingerprintRiskScore\":90");
         json.Should().Contain("\"whoIsHashId\":\"whois-hash\"");
 
         // Identity / PII absent. (We assert against the field NAMES — values
@@ -110,7 +110,7 @@ public sealed class PropagatedHeaderWireShapeTests
             RequestPath = "/rt/path",
             CurrentFingerprint = "rt-fp-cur",
             SessionFingerprint = "rt-fp-sess",
-            FingerprintMatchScore = 77,
+            FingerprintRiskScore = 77,
             WhoIsHashId = "rt-whois",
         };
         var encoded = PropagatedContextSerializer.Encode(producer.ToPropagatedContext());
@@ -127,7 +127,7 @@ public sealed class PropagatedHeaderWireShapeTests
         consumer.RequestPath.Should().Be("/rt/path");
         consumer.CurrentFingerprint.Should().Be("rt-fp-cur");
         consumer.SessionFingerprint.Should().Be("rt-fp-sess");
-        consumer.FingerprintMatchScore.Should().Be(77);
+        consumer.FingerprintRiskScore.Should().Be(77);
         consumer.WhoIsHashId.Should().Be("rt-whois");
 
         // Identity / PII NOT propagated — consumer-side fields stay at defaults.

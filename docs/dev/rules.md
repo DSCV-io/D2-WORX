@@ -2,6 +2,8 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
+<a name="top"></a>
+
 # D2-WORX Rules
 
 The complete, verbose, authoritative requirements for ANY code change in this repository. **Read this entire document during the PLAN phase of every deliverable** so you know upfront what you're being held to. Use it as the audit checklist after every step (looped until a pass returns zero findings) and again at final-review (scope = whole deliverable).
@@ -22,6 +24,9 @@ The complete, verbose, authoritative requirements for ANY code change in this re
 >
 > **If a predicate in this document feels like overkill for the task at hand, that's the discipline working — the cost of reading and applying it is minutes; the cost of skipping it is a production incident, a security disclosure, or a multi-week rework.** Don't optimize for short-term speed at the expense of robustness. The user's value is design + architectural review; the agent's value is delivering work that doesn't need user-side bug-hunting.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## How to use this doc
@@ -35,7 +40,9 @@ The complete, verbose, authoritative requirements for ANY code change in this re
 
 > **Companion docs**: [workflow.md](workflow.md) (the loop protocol), [deliverables/](deliverables/) (past final reports + lessons), [../PATTERNS.md](../PATTERNS.md) (what each pattern IS — this doc enforces THAT they're followed).
 
-## Categories
+## Table of contents
+
+**Code-quality categories** (the 23 categories the audit walks against the code):
 
 1. [Test Discipline](#1-test-discipline)
 2. [Bug-Fix Regression Testing](#2-bug-fix-regression-testing)
@@ -60,6 +67,23 @@ The complete, verbose, authoritative requirements for ANY code change in this re
 21. [Observability Completeness](#21-observability-completeness)
 22. [Idempotency & Exactly-Once Semantics](#22-idempotency--exactly-once-semantics)
 23. [Configuration Hygiene](#23-configuration-hygiene)
+
+**Meta categories** (govern HOW the audit documents itself + how the deliverable closes out):
+
+24. [Audit Evidence Discipline (meta — how to audit)](#24-audit-evidence-discipline-meta--how-to-audit)
+    - [Three-artifact journal model](#three-artifact-journal-model-one-big-table--append-only-findings-log--append-only-fix-log)
+    - [Predicates §24.0 – §24.12](#predicates)
+    - [Deliverable workflow chart — order of operations with loops](#deliverable-workflow-chart--order-of-operations-with-loops)
+    - [Deliverable completeness checklist (the gate before user review)](#deliverable-completeness-checklist-the-gate-before-user-review)
+    - [Loop count expectations](#loop-count-expectations)
+
+**Process** (catalog growth + closing notes):
+
+- [Self-improvement loop](#self-improvement-loop)
+- [Final reminder](#final-reminder)
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -133,6 +157,9 @@ The #1 cost driver of multi-pass audits is "thin glue" code (DI extensions, gRPC
   - Evidence: per public constant / enum value → dedicated pin test (e.g. `[Theory] [InlineData(...)]` matrix or per-value `[Fact]`).
   - **Why**: a per-class smoke test that asserts "the constants exist and aren't empty" passes after a rename like `CLIENT_ID` → `clientid` because no test pins the actual wire value. Same anti-pattern: `ErrorCodes.X = nameof(X)` constants — the wire format consumed by clients, audit-log queries, alerting rules is the contract; a `nameof(X)` → literal replacement would silently change the wire value without breaking the build.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## 2. Bug-Fix Regression Testing
@@ -160,6 +187,9 @@ Every bug fix in this scope must land with a regression test that **fails-withou
 - **2.5** When a private helper needed to be made `internal` (with `[InternalsVisibleTo]`) for direct testing, is that change documented in the journal as part of the fix?
   - Evidence: per `internal` promotion → journal entry.
   - **Example**: `SubscriberChannel.ReadAttemptCount` was made `internal` so x-death-reason filter could be unit-tested across 7 cases.
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -236,6 +266,9 @@ User input, message bodies, presigned URLs, AMQP URIs, broker passwords, IPs, em
 - **3.14** Do log messages include enough context to debug WITHOUT including PII? (e.g. log `userId` hash + outcome instead of `email`.)
   - Evidence: per log message in scope → information sufficiency vs PII trade-off documented.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## 4. Concurrency / Race Conditions
@@ -304,6 +337,9 @@ The bugs that don't fail unit tests because unit tests are sequential.
   - **Why**: fire-and-forget swallows exceptions silently, doesn't respect SIGTERM, and obscures observability. F7.5 M3 audit fix found "raw upload cleanup fire-and-forget" — failure surfaced only via storage growing unboundedly.
   - **Allowed**: when truly best-effort AND failures are logged AND the operation has no business correctness impact. Document the "best-effort" choice in the call-site comment.
   - Evidence: per non-awaited async invocation → category (allowed best-effort with logging / use hosted service / use background queue).
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -429,6 +465,9 @@ The set of in-language rules that show up everywhere. Memory of these is the dif
 - **5.24** Foundational shared libs (the lib that DEFINES a convention) MUST eat their own dogfood. The lib that exports `Falsey()` cannot use `string.IsNullOrEmpty` internally; the lib that exports `TryParseTruthyNull` cannot hand-roll `Guid.TryParse` + null check; the lib that exports the `[RedactData]` attribute cannot log raw user input. Foundation libs are the strictest dogfood site in the codebase — any lib that publishes a "use this not that" helper must be the canonical demonstration of using it.
   - Evidence: when auditing a foundation lib, grep its OWN source for the forbidden patterns the convention prohibits; expect zero hits.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## 6. TypeScript / SvelteKit Code Conventions
@@ -481,6 +520,9 @@ The set of in-language rules that show up everywhere. Memory of these is the dif
 
 - **6.14** Is the SvelteKit BFF pure SSR? (Browser → Edge directly for auth state mutations. Server-side route guards (`requireAuth`, `requireOrg`, etc.) at `server/web/src/lib/server/auth/`. Browser-side `authClient` at `server/web/src/lib/client/auth/`.)
   - Evidence: per new auth surface → location confirmed.
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -700,6 +742,9 @@ If you encounter a language not listed above and it supports comments, the heade
   - **How**: read `.github/pull_request_template.md` first; fill in each section; use the predefined Changes list (Documentation / New feature / Bug fix / etc.) rather than freeform bullets.
   - Evidence: PR body matches template structure.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## 8. Build & Tooling Hygiene
@@ -728,6 +773,9 @@ If you encounter a language not listed above and it supports comments, the heade
 - **8.7** When verifying SvelteKit / Node code, was `pnpm build` (root) used (which runs `pnpm run format && pnpm run lint && pnpm -r run build` — auto-fixing formatting, linting, then building all packages) — NOT just `pnpm format:check` + `pnpm lint` + individual `tsc`?
   - **Why**: `pnpm format:check` only reports issues without fixing them. `pnpm build` is the canonical verification step.
   - Evidence: tool-call history shows `pnpm build` invocation.
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -856,6 +904,9 @@ The most expensive class of failure — wrong layer chosen at design time, code 
   - **Cross-ref**: [docs/PARITY.md](../PARITY.md) tracks intentional cross-platform parity + the "Why exclusive?" framework for genuinely platform-specific tools.
   - Evidence: per new shared package → corresponding-platform package exists, OR is in tracked plan, OR §9.30 is documented as not-yet-applicable for this lib's domain.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## 10. Security (Endpoints / Auth / Secrets / Input)
@@ -926,6 +977,9 @@ Cross-references [docs/AUDIT_CHECKLIST.md](../AUDIT_CHECKLIST.md) "Security" sec
 
 - **10.22** Are admin / staff actions audit-logged with userId + targetId + action + timestamp + outcome?
   - Evidence: per admin/staff action → audit log entry.
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -1068,6 +1122,9 @@ This category covers BOTH (a) keeping docs in sync with code (parity) AND (b) wr
   - **Acceptable forms**: (a) coverage gate wired up + percentage claim + reference to the gate; (b) qualitative "adversarial coverage across every public surface" framing without numbers.
   - Evidence: per coverage claim → gate reference OR qualitative rephrasing.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## 12. i18n Discipline
@@ -1102,6 +1159,9 @@ ALL user-visible strings — UI, backend handler messages (`D2Result.messages`),
 
 - **12.9** Are translation keys reused when an existing key matches the meaning?
   - Evidence: per new key → search for prior similar keys done.
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -1157,6 +1217,9 @@ Inferring permission from prior turns is a class of bug that compounds quickly. 
   - **How**: enumerate files via Glob → Read each one individually (batch in parallel for speed) → use Grep ONLY as a final verification pass after manual reads, never as the source of truth for content audits.
   - Evidence: per content-sweep task → tool history shows Read calls per file, Grep only as verification.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## 14. Phase / Audit / Conversation Verbiage Hygiene
@@ -1178,6 +1241,9 @@ KEEP docs (READMEs, CLAUDE.md, AUDIT_CHECKLIST.md, source comments, test names) 
 - **14.4** Are comments minimal? Default to writing NO comments. Add one only when WHY is non-obvious (hidden constraint, subtle invariant, workaround for a specific bug, surprising behavior).
   - **Forbidden**: explaining WHAT the code does (well-named identifiers do that). Referencing current task, fix, or callers ("used by X", "added for the Y flow", "handles the case from issue #123") — those belong in PR description and rot.
   - Evidence: per new comment → WHY-non-obvious justification.
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -1216,6 +1282,9 @@ Resource leaks are silent in dev, costly in production. Every `IDisposable` / `I
 
 - **15.10** Does `IHostedService.StopAsync` actually clean up resources (cancel loops, dispose channels, close connections) within the SIGTERM grace window?
   - Evidence: per hosted service → `StopAsync` audit.
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -1273,6 +1342,9 @@ This codebase has a substantial shared-lib stack. Reaching for raw .NET / npm pr
 - **16.5** Is `ResilientPipeline` (or equivalent) used for any retryable network call, NOT a hand-rolled `for (int i = 0; i < 3; i++) try {...}`?
   - Evidence: per retry site → `ResilientPipeline` confirmed.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## 17. D2Result Usage & Extensions
@@ -1303,6 +1375,9 @@ This codebase has a substantial shared-lib stack. Reaching for raw .NET / npm pr
 
 - **17.7** When mapping arbitrary upstream status codes (e.g., from a third-party HTTP API), is raw `D2Result.Fail(statusCode, ...)` justified in journal? Otherwise convert to a semantic factory.
   - Evidence: per raw `Fail` use → justification.
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -1351,6 +1426,9 @@ Production code MUST degrade gracefully. Identify every dependency, document its
 - **18.12** Are bulkheads / concurrency limits in place to prevent one failing dependency from saturating thread pool?
   - Evidence: per heavy-async service → concurrency cap.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## 19. User Experience (UX)
@@ -1397,6 +1475,9 @@ Production-ready UX means: data shows up when expected, loading states tell the 
 
 - **19.13** Do pages use semantic HTML (`<nav>`, `<main>`, `<article>`, `<section>`, `<header>`, `<footer>`) so screen readers / SEO work?
   - Evidence: per page → semantic structure.
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -1449,6 +1530,9 @@ Code that future engineers (including future-you) can read, debug, extend, and r
 - **20.14** Are public extension methods discoverable (named clearly, namespaced consistently, not hidden in obscure namespaces)?
   - Evidence: per new extension → namespace + name.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## 21. Observability Completeness
@@ -1485,6 +1569,9 @@ Production code that you can't observe is production code you can't debug, can't
 - **21.9** Are slow-operation thresholds set per handler (via `HandlerOptions`)?
   - Evidence: per latency-sensitive handler → threshold value.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## 22. Idempotency & Exactly-Once Semantics
@@ -1514,6 +1601,9 @@ Distributed systems retry. Operations must tolerate retries without doubling eff
   - **Required regression test**: SET with a short TTL (e.g. 2 minutes) → INCR → assert `GetTtl` reports remaining ≤ original window (NOT default expiration). Pin per impl.
   - **Why**: the bug is silent — counter values keep working; only the TTL window stretches. Rate-limit / throttle counters under sustained load never expire, so the rate becomes effectively "ever."
   - Evidence: per atomic-op impl → Lua / locked-block code path inspected for TTL-preservation gate + regression test linked.
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -1549,6 +1639,317 @@ Secrets, env vars, defaults, and the `.env.local` / `.env.secrets` split.
 - **23.7** Are config validations done at startup (fail fast) rather than on first use (fail late)?
   - Evidence: per config-using service → startup validation.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
+---
+
+## 24. Audit Evidence Discipline (meta — how to audit)
+
+This category enforces HOW the audit documents itself in step / final-review journals. The other 23 categories enforce WHAT the code looks like; this category enforces what THE AUDIT LOOKS LIKE so the journal is trustworthy as evidence of process integrity.
+
+> ## ⚠️ MANDATORY ANTI-LAZINESS DIRECTIVE
+>
+> **DO NOT BE LAZY. WALK EVERY NUMBERED SUBSECTION IN rules.md. NO SKIPPING. NO ASSUMING IRRELEVANCE WITHOUT EVIDENCE. LEAVE NO STONE UNTURNED.**
+>
+> Short-circuiting the audit ("I checked the relevant ones, the rest don't apply") IS the failure mode this whole framework exists to prevent. Most subsections in rules.md WILL apply to most code. Be skeptical of your own urge to mark N/A. When in doubt, walk the predicate, find the evidence, cite it.
+>
+> The audit table in each step / final-review journal is the GATE. If the table has fewer rows than there are numbered subsections in rules.md, the audit is INCOMPLETE — the step is NOT done. If a row says "PASS" without a file:line citation, the row is INCOMPLETE. If a row says "N/A" without a step-scope-specific reason, the row is INCOMPLETE.
+>
+> The cost of walking every predicate is minutes; the cost of skipping one is a future bug + a future audit round.
+
+### Three-artifact journal model: ONE big table + append-only findings log + append-only fix log
+
+Every step / final-review journal contains THREE artifacts with strictly separated roles. **Read these together — none of them stand alone, and they must NEVER be collapsed.**
+
+| Artifact | Section in journal | Behavior | Written by |
+|---|---|---|---|
+| **Big table** (latest sweep snapshot) | `## Latest sweep results` | REPLACED on every sweep — table reflects ONLY the most recent walk's findings against the current code. | Sweep activity ONLY. Fix-applying agents NEVER touch this. |
+| **Findings log** (per-round audit history) | `## Sweep findings log (append-only)` | APPEND-ONLY. Each sweep appends a `### Round N findings (timestamp)` subsection with every FINDING surfaced in that sweep. Never deleted, never re-ordered, never reclassified. | Sweep activity ONLY. |
+| **Fix log** (chronological fix activity) | `## Fix log (append-only)` | APPEND-ONLY. Each fix appends one entry citing rules.md subsection + finding round + what changed + the `file.cs:NN` of the change. Never deleted, never re-ordered. | Fix-applying agent ONLY. |
+
+The big table is the canonical "what is true RIGHT NOW" — every PASS in it is a fresh file:line citation against the current code, freshly walked in the latest sweep. There is no inheritance of PASS from earlier sweeps.
+
+Closure is proven ONLY by the absence of a FINDING from the next sweep's big table. The fix log captures intent and action; it does NOT certify outcome.
+
+### Predicates
+
+- **24.0** Does the journal contain the THREE artifacts (big table + findings log + fix log) under their canonical headings?
+  - Evidence: open the step / final-review journal file in `docs/wip/<deliverable>/<NN>-<step>/journal.md` → all three sections present (`## Latest sweep results`, `## Sweep findings log (append-only)`, `## Fix log (append-only)`). The big table has ONE ROW per numbered subsection in `rules.md`. The anti-laziness preamble (24.9) appears immediately above the big table.
+  - **Why**: a journal with only the big table loses per-round audit history when sweeps replace it. A journal with only logs has no canonical current-state snapshot. Both pieces are needed for the model to work.
+  - **How**: from the first sweep onward, the journal carries all three artifacts. Prose summaries supplement, never substitute.
+
+- **24.0a** Was the big table written into the journal IMMEDIATELY after the sweep's rules.md walk was complete — BEFORE any fix was applied? And was the same sweep's findings appended to the findings log under a `### Round N findings` subsection?
+  - Evidence: timestamp of big-table write precedes any fix-log entry for the round. Findings log has a `### Round N findings (timestamp)` subsection containing every FINDING in the new big table (so the per-round history is preserved when the table later gets replaced).
+  - **Why**: writing the table only AFTER fixes are done lets findings quietly disappear. Pre-fix big-table snapshot AND simultaneous append to the findings log make every finding a tracked commitment.
+
+- **24.0b** Are fixes recorded EXCLUSIVELY in the append-only fix log — never as edits to the big table?
+  - Evidence: scan the journal's `## Fix log` section → every fix appears as one chronological entry (`- [timestamp] §X.Y (Round N): edited file.cs:NN to ...`). The big table is not touched between sweeps.
+  - **Why**: if the fix-applying agent could flip a row to PASS, failure mode: fix doesn't actually take (typo, wrong line, partial replacement, cascade) → agent writes PASS anyway → next sweep "trusts" the PASS and skips re-walking the predicate → bug ships. Sweep-only-replacement of the big table removes this entirely. Every PASS in every sweep's table is freshly walked against current code; no stale PASS can be inherited.
+
+- **24.0c** Are findings + fixes BOTH append-only? (No deletion, no re-ordering, no silent reclassification.)
+  - Evidence: each round's `### Round N findings` subsection in the findings log preserves the original sweep output verbatim. Fix-log entries are chronological. If a fix turned out to be wrong, a NEW corrective entry is appended — the old entry is never deleted or edited.
+  - **Why**: append-only preserves the audit trail. An agent that could delete a fix entry could quietly hide reversals or corrections. The "what did the agent actually do, in what order" question must always be answerable from the journal.
+
+- **24.0d** Are ALL FINDING rows in the latest big table addressed before the next sweep is run? (No silent carryover.)
+  - Evidence: at sweep-end, every FINDING in the latest big table has a corresponding fix-log entry (or an explicit "deferred per user approval [quote]" entry — also append-only).
+  - **Why**: silent carryover of unresolved findings is how things become stale and forgotten. Either fix it now or get explicit permission to defer.
+
+- **24.0e** Does the NEXT sweep re-walk the FULL rules.md catalog independently, REPLACE the big table with the new sweep's output, and APPEND a `### Round N+1 findings` subsection to the findings log? Does the loop continue until ONE sweep produces a big table with zero FINDING rows?
+  - Evidence: round N+1's sweep produces a complete new big table covering the same step scope (one row per rules.md subsection). A row that was a FINDING in Round N's findings log and is now PASS in Round N+1's big table = closed (proven by absence). A row STILL a FINDING in Round N+1's table = fix didn't take, append more fix entries, run Round N+2.
+  - **Why**: cascade is real. A fix that satisfies one predicate can break another. The only way to know convergence has been reached is a complete-table walk that finds nothing — repeatedly, with sweep-fresh evidence each time. "Walked it once, fixed everything, done" is the failure mode this loop exists to prevent.
+
+- **24.0f** Does the table reflect ONLY the latest sweep — never carry stale rows from earlier sweeps?
+  - Evidence: every PASS row in the latest big table has a file:line citation that was checked DURING the latest sweep (not inherited from an earlier sweep). Every FINDING row was found DURING the latest sweep.
+  - **Why**: the big table is the canonical "right now" snapshot. Stale rows compromise that guarantee. If row content needs to be carried across sweeps because it didn't change, the next sweep MUST re-walk and re-cite anyway.
+
+- **24.1** Does every step / final-review audit-loop journal entry contain a complete evidence table with ONE ROW per numbered subsection in `rules.md`?
+  - Evidence: count rows in journal table → equal to count of numbered subsections in rules.md (currently ~85+ across §1.1 through §24.x).
+  - **Why**: short-circuited audits miss predicates outside the agent's mental model — exactly where the surprises live.
+  - **How**: the table is the gate. If a row is missing, the audit is incomplete. The step is NOT done.
+
+- **24.2** Does every `PASS` row carry a `file:line` citation as evidence?
+  - Evidence: grep journal table for `PASS` rows; verify each has a `file.cs:NN` or `file.json:NN` style citation.
+  - **Why**: "verified ✓", "looks good", "checked it" are vibes, not evidence. The journal is the process-integrity trail; vague entries make spot-checks impossible.
+
+- **24.3** Does every `N/A` row carry a step-scope-specific REASON?
+  - Evidence: grep journal table for `N/A` rows; verify each has a step-scope-specific reason (e.g. "no TS code in this step", "no DI extensions added"), NOT a generic "doesn't apply" / "irrelevant".
+  - **Why**: liberal use of N/A is the most common form of audit short-circuit. A per-row REASON keeps the agent honest.
+
+- **24.4** Does every `FINDING` row carry all four: severity (HIGH/MEDIUM/LOW) + `file:line` + specific description + suggested fix?
+  - Evidence: per FINDING row → all 4 fields present.
+
+- **24.5** Did the audit loop terminate via a COMPLETE-TABLE CLEAN round (zero FINDING rows across every section)?
+  - Evidence: last round's table → zero rows with FINDING status.
+  - **Why**: a step that "stopped fixing" without a final clean walk has unverified post-fix state. The clean round is the convergence proof.
+
+- **24.6** When fixes were applied during a round, did the NEXT round re-walk the FULL table (not just the previously-failing rows)?
+  - Evidence: round N+1 table has same row count as round N → full re-walk happened.
+  - **Why**: fixes can introduce new issues elsewhere. Re-walking only the rows you fixed misses cascading regressions.
+
+- **24.7** Per-step audit scope includes EVERY file the step touched (incl. files modified from prior steps), not just freshly-created files?
+  - Evidence: per-step journal big table cites file:line evidence covering both new and modified files for that step.
+  - **Why**: cross-step drift (constants renamed, telemetry tags diverged, docstrings out-of-sync) is caught at the per-step level when the audit scope properly includes everything the step touched. No separate tier-audit layer needed.
+
+- **24.8** Final-review audit: does the deliverable-wide audit walk the FULL table against the entire deliverable?
+  - Evidence: final-review journal has its own complete table covering all step output across the deliverable.
+
+- **24.9** Is the mandatory anti-laziness preamble (the "DO NOT BE LAZY..." block) present verbatim above EVERY audit table in EVERY journal entry?
+  - Evidence: grep each step / final-review journal → preamble block present immediately above its table.
+  - **Why**: the preamble is enforcement scaffolding — its presence triggers the agent's own mental model into the right shape. Removing it (because "I know already") is the first step toward short-circuiting.
+
+- **24.10** Is the audit table format consistent across journals (`| § | Predicate | Status | Evidence / Reason / Finding |` with the canonical status values prepended by their visual emoji indicator: `✅ PASS` / `⚪ N/A` / `❌ FINDING-HIGH` / `❌ FINDING-MEDIUM` / `❌ FINDING-LOW` / `🟡 <anything-else>` (e.g. `🟡 DEFERRED` / `🟡 PENDING` / `🟡 PASS-borderline` / `🟡 PARTIAL`))?
+  - Evidence: visual scan of journals confirms format match; every Status cell starts with one of `✅` / `❌` / `⚪` / `🟡` followed by a single space then the status word; no bare `PASS` / `N/A` / `FINDING-*` rows missing the emoji prefix; no ad-hoc status values like "ok", "see fix", "later".
+  - **The Status column MUST prepend the emoji indicator: ✅ PASS / ❌ FINDING-* / ⚪ N/A / 🟡 anything else. Visual scan-ability is the goal — operators reviewing the journal can spot findings instantly.**
+
+- **24.11** Are findings classified accurately by severity?
+  - HIGH = blocks step completion (security, correctness, PII leak, data loss, race that can corrupt state).
+  - MEDIUM = should fix before step CLEAN (graceful-degradation gap, missing test for a real-world failure mode, doc/code drift that affects consumers).
+  - LOW = style / consistency / nice-to-have (naming preference, doc improvement, refactor candidate).
+  - Evidence: per FINDING-HIGH/MEDIUM/LOW row → severity matches the predicate's real-world impact.
+
+- **24.12 (self-audit compliance)** Does the sweep that walks rules.md INCLUDE walking §24 itself against the journal it writes into? In other words, does the latest big table have rows for §24.0, §24.0a-f, §24.1-§24.12 — each one PASS-cited or FINDING'd against the journal file itself?
+  - Evidence: open the latest big table → §24.x rows are present, each carrying a citation pointing at the relevant section of the journal (e.g. §24.0 PASS at `journal.md:120-300` for the table; §24.0c PASS at `journal.md:400` for the append-only `## Fix log` section).
+  - **Why**: §24 governs the journal itself. If a sweep skips §24 (or walks it carelessly), the journal can drift out of compliance silently — append-only sections get edited, the big table gets stale rows, the findings log goes missing — and no other category fires because they only check the code, not the journal. §24 self-audit is what keeps the meta-discipline meta-honest.
+  - **How**: when generating the big table, the agent walks §24 against the very journal file the table is being written into. The §24 rows are no different from §1.1 rows — same PASS/N/A/FINDING status, same file:line citations.
+
+
+<sup>[↑ jump to top](#top)</sup>
+
+---
+
+## Deliverable workflow chart — order of operations with loops
+
+This chart shows the FULL flow for a hypothetical 3-step deliverable (PLAN → Step 1 → Step 2 → Step 3 → Final-review → SHIP). Loops at every stage. Read it as a process map: every stage with a sweep has a fix-loop attached; every loop only exits when the sweep produces a clean big table. **Per-step audit scope explicitly includes every file the step touched (incl. files modified from prior steps), so cross-step drift is caught at the per-step level — no separate tier-audit layer.**
+
+```mermaid
+flowchart TD
+  PLAN["PLAN<br/>Read rules.md end-to-end<br/>Lock cross-cutting decisions<br/>Create docs/wip/&lt;deliverable&gt;/<br/>Plan all steps + dependencies"]
+
+  S1[Step 1 — implement code + tests]
+  S1SWEEP{{"Step 1 SWEEP<br/>Walk rules.md against EVERY file<br/>Step 1 created OR modified<br/>REPLACE big table in step-1 journal<br/>APPEND ### Round N findings to findings log"}}
+  S1FIX{Findings in big table?}
+  S1APPLY["APPLY fixes<br/>For each finding:<br/>edit code + APPEND fix-log entry<br/>(big table NOT touched)"]
+
+  S2[Step 2 — implement code + tests]
+  S2SWEEP{{"Step 2 SWEEP<br/>(same 3-artifact model;<br/>scope = every file Step 2 touched)"}}
+  S2FIX{Findings in big table?}
+  S2APPLY[APPLY fixes — APPEND fix log]
+
+  S3[Step 3 — implement code + tests]
+  S3SWEEP{{"Step 3 SWEEP<br/>(same 3-artifact model;<br/>scope = every file Step 3 touched)"}}
+  S3FIX{Findings in big table?}
+  S3APPLY[APPLY fixes — APPEND fix log]
+
+  FINAL[/Final-review/]
+  FINALSWEEP{{"Final-review SWEEP<br/>Walk rules.md against<br/>ENTIRE deliverable<br/>Final-review journal: same 3-artifact model<br/>Catches cross-cutting integration concerns<br/>no individual step would surface"}}
+  FINALFIX{Findings?}
+  FINALAPPLY[APPLY final fixes — APPEND final fix log]
+
+  SHIP["SHIP<br/>Snapshot deliverable README<br/>to docs/dev/deliverables/NNNN-name.md<br/>Apply approved rule additions to rules.md"]
+
+  PLAN --> S1
+  S1 --> S1SWEEP
+  S1SWEEP --> S1FIX
+  S1FIX -- "yes" --> S1APPLY
+  S1APPLY -- "loop: re-sweep" --> S1SWEEP
+  S1FIX -- "no — clean big table" --> S2
+
+  S2 --> S2SWEEP
+  S2SWEEP --> S2FIX
+  S2FIX -- "yes" --> S2APPLY
+  S2APPLY -- "loop: re-sweep" --> S2SWEEP
+  S2FIX -- "no — clean big table" --> S3
+
+  S3 --> S3SWEEP
+  S3SWEEP --> S3FIX
+  S3FIX -- "yes" --> S3APPLY
+  S3APPLY -- "loop: re-sweep" --> S3SWEEP
+  S3FIX -- "no — clean big table" --> FINAL
+
+  FINAL --> FINALSWEEP
+  FINALSWEEP --> FINALFIX
+  FINALFIX -- "yes" --> FINALAPPLY
+  FINALAPPLY -- "loop: re-sweep" --> FINALSWEEP
+  FINALFIX -- "no — clean big table" --> SHIP
+```
+
+### ASCII fallback (if Mermaid doesn't render)
+
+```
+PLAN — read rules.md, lock decisions, create wip dir
+  │
+  ▼
+┌─────────────────────────────────────────────────────────┐
+│ Step 1: implement code + tests                           │
+│   │                                                       │
+│   ▼                                                       │
+│ Step 1 SWEEP (walks rules.md against Step 1 scope)       │
+│   • REPLACE big table in step-1 journal                  │
+│   • APPEND ### Round N findings to findings log          │
+│   │                                                       │
+│   ▼                                                       │
+│ Findings? ──────yes────► APPLY fixes                     │
+│   │                       • edit code                     │
+│   │ no (clean big table)  • APPEND fix-log entry         │
+│   │                       • big table NOT touched        │
+│   │                       │                               │
+│   │                       └──► loop: re-sweep ───────┐   │
+│   │                                                   │   │
+│   │              ◄──────────────────────────────────┘   │
+│   ▼                                                       │
+└──┼──────────────────────────────────────────────────────┘
+   │ (Step 1 has clean big table)
+   ▼
+┌──────────────────────────────────────────────────────────┐
+│ Step 2: same model — implement, sweep, fix, re-sweep,    │
+│ loop until step-2 big table is clean                     │
+└──┼──────────────────────────────────────────────────────┘
+   ▼
+┌──────────────────────────────────────────────────────────┐
+│ Step 3: same model — implement, sweep, fix, re-sweep,    │
+│ loop until step-3 big table is clean                     │
+└──┼──────────────────────────────────────────────────────┘
+   ▼
+┌──────────────────────────────────────────────────────────┐
+│ FINAL-REVIEW: sweep ENTIRE deliverable                   │
+│ Final-review journal carries its own 3-artifact model    │
+│ Loop until final-review big table clean                  │
+│ Catches cross-cutting integration concerns no individual │
+│ step would surface (deliverable-wide coherence)          │
+└──┼──────────────────────────────────────────────────────┘
+   ▼
+SHIP: snapshot README to docs/dev/deliverables/, apply
+      approved rule additions, present to user
+```
+
+### Deliverable completeness checklist (the gate before user review)
+
+**Before declaring a deliverable "ready for REVIEW," walk this entire checklist. Every box must be a YES with a citation. If any box is NO, the deliverable is NOT ready — go finish the gap and re-walk the checklist.**
+
+This is a META-checklist over the whole deliverable's process integrity — distinct from the per-step rules.md walks. Walk it ONCE, immediately before presenting the deliverable for user review.
+
+#### Per-step gates (walk for EACH step in the deliverable)
+
+For each step `NN-<step-name>` in `docs/wip/<deliverable>/`:
+
+- [ ] **Journal exists** at `docs/wip/<deliverable>/<NN>-<step>/journal.md`?
+- [ ] **Big table present** under `## Latest sweep results`, with one row per rules.md numbered subsection (~85+ rows)?
+- [ ] **Anti-laziness preamble** verbatim above the big table?
+- [ ] **Big table has zero FINDING rows** (clean sweep)? If not, step is not done.
+- [ ] **Every PASS row** carries a `file.cs:NN` citation (no "verified ✓", no "looks good")?
+- [ ] **Every N/A row** carries a step-scope-specific reason (no bare "doesn't apply")?
+- [ ] **Findings log** under `## Sweep findings log (append-only)` with at least one `### Round N findings (timestamp)` subsection per sweep that ran?
+- [ ] **Fix log** under `## Fix log (append-only)` with chronological entries for every fix that landed?
+- [ ] **For every FINDING in any round's findings log**, is there a corresponding fix-log entry (or explicit user-approved deferral entry)? No silent carryover.
+- [ ] **Final round of sweep** in the findings log shows zero FINDINGs (closure proven by absence)?
+- [ ] **Self-audit rows §24.0 through §24.12** present in the latest big table, each PASS-cited against the journal file itself?
+- [ ] **Step's code change** has corresponding test coverage (per §1.x predicates)?
+- [ ] **Build clean**: `dotnet build server/D2.slnx` zero StyleCop / CS warnings against current state?
+- [ ] **JetBrains inspect clean**: `jb inspectcode server/D2.slnx --severity=WARNING` zero warnings?
+- [ ] **Test suite passes** at the most recent test run citation in the journal?
+
+#### Final-review gate (the deliverable-wide sweep)
+
+- [ ] **Final-review journal exists** at `docs/wip/<deliverable>/final-review/journal.md`?
+- [ ] **Final-review SWEEPS the ENTIRE deliverable** (every step's output, every modified shared lib, every modified doc)?
+- [ ] **Final-review journal carries the same 3-artifact model** (big table + findings log + fix log)?
+- [ ] **Final-review big table is clean** (zero FINDINGs)?
+- [ ] **Final-review surfaces and records** any deliverable-wide consistency findings (e.g. PATTERNS.md / MESSAGING.md / OPERATIONAL-GUARANTEES.md drift, parent README update misses, Mermaid graph drift)?
+
+#### Deliverable-wide doc gates
+
+- [ ] **Root README** at `docs/wip/<deliverable>/README.md` updated with the final report (kinds-of-misses log, candidate rule additions, summary)?
+- [ ] **Cross-cutting docs** updated per CLAUDE.md §3.5 Doc Update Map (PATTERNS.md / MESSAGING.md / TESTS.md / OPERATIONAL-GUARANTEES.md / RATE-LIMITING.md / SECURITY-RUNBOOKS.md / PARITY.md / AUDIT_CHECKLIST.md as relevant)?
+- [ ] **Per-lib / per-service READMEs** updated for new public APIs?
+- [ ] **Parent `server/shared/dotnet/README.md`** updated for any new lib (status row + Mermaid graph + redundant-edges enumeration)?
+- [ ] **Tracking doc** `docs/v2/PHASE_*.md` updated (or successor) with the deliverable's status?
+- [ ] **No phase / sweep / audit verbiage** leaked into KEEP docs or source code (per §14.x)?
+- [ ] **No conversation-scoped IDs** (Q-IDs, F#-IDs, R# refs) leaked into KEEP docs or source code?
+
+#### Process-integrity gates
+
+- [ ] **No commit was made** without explicit user permission per occurrence?
+- [ ] **No bulk file ops** without scope declared first?
+- [ ] **No destructive git ops** without explicit authorization?
+- [ ] **No deferred work** without user permission (every deferral has a fix-log entry referencing user approval)?
+- [ ] **No mid-execution architectural deviation** from the locked PLAN without ASK?
+
+#### Final attestation (the agent writes this in the deliverable's root README before user review)
+
+> "I attest that this deliverable's process integrity has been verified against the deliverable completeness checklist in `rules.md` (Deliverable completeness checklist section). Every box is YES. The deliverable is ready for user REVIEW."
+>
+> Followed by per-step / final-review journal links so the user can spot-check.
+
+**If the agent cannot honestly attest every box as YES, the deliverable is NOT ready. Go fix the gap, re-walk the checklist, and only present for user review when every box is honestly YES.**
+
+---
+
+### Loop count expectations
+
+- A WELL-PLANNED step typically converges in 1-3 sweep rounds.
+- A POORLY-PLANNED step (or one introducing complex new patterns) may need 5-8 rounds.
+- 10-iteration ceiling per step (workflow.md). Iteration 11 = escalate to user — something is structurally wrong.
+- Final-review surfaces 0-2 deliverable-wide consistency findings — typically 1-2 sweep rounds.
+
+### Worked example (Step 1 of a hypothetical deliverable)
+
+Imagine Step 1 implements a new `FooHandler`. The flow:
+
+1. Code + tests written.
+2. **Sweep round 1**: walks rules.md → REPLACES big table in `01-foo-handler/journal.md` with sweep-1 results. Findings log gets `### Round 1 findings (2026-05-10 14:00)` appended with 5 FINDINGs (1H + 3M + 1L).
+3. Agent reads big table → starts fix work. For each FINDING: edits code + APPENDS one line to `## Fix log` (e.g. `- 2026-05-10 14:15 §3.1 (R1): SanitizedExceptionRender used in FooHandler.cs:42 to replace Exception param`).
+4. All 5 R1 findings have fix-log entries.
+5. **Sweep round 2**: walks rules.md again → REPLACES big table with sweep-2 results. Appends `### Round 2 findings` (1 LOW finding cascaded from R1's §3.1 fix; the 5 R1 findings are now PASS in the big table = closed by absence).
+6. Agent fixes R2 LOW. Appends fix-log entry.
+7. **Sweep round 3**: walks rules.md → big table now has zero FINDINGs. Step 1 is done.
+8. Step 1 journal contains: latest big table (R3 clean), findings log with R1 + R2 + R3 subsections, fix log with chronological R1 + R2 fix entries.
+
+Anyone reading the journal can see: (a) what the latest state is, (b) what was found at each round, (c) what was changed in response, (d) that closure was proven by absence in the next sweep.
+
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## Self-improvement loop
@@ -1570,6 +1971,9 @@ Examples:  <1-2 specific past instances>
 User approves / tweaks / rejects per proposal. Approved proposals get appended to this doc as part of ship's commit batch.
 
 Rejected proposals (one-off mistakes not worth a permanent rule) get noted in the deliverable's final report so the reasoning survives.
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 

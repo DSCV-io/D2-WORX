@@ -6,9 +6,9 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
-Identity and authorization vocabulary — the value types and string constants every consumer references when reasoning about auth. Zero external deps so domain layers, request-context, handler-abstractions, and downstream service code can all consume it freely.
+Identity / authorization vocabulary AND consumer-side runtime contracts — the value types, string constants, and read-only interfaces every consumer references when reasoning about auth. Domain layers, request-context, handler-abstractions, the runtime [`D2.Shared.Auth`](../auth/), and Edge's issuer-side code all reference this slice; impls live in the runtime libs.
 
-The runtime piece (`AddD2Auth`, JWT validation, KeyringClient, token introspection) lives in the sibling [`D2.Shared.Auth`](../auth/) project. Domain code never references the runtime — only this abstractions slice.
+The runtime piece (`AddD2Auth`, JWT validation, JWKS HTTP fetcher, session liveness tracker impl) lives in the sibling [`D2.Shared.Auth`](../auth/) project — those impls satisfy the `IJwksProvider` and `ISessionLivenessTracker` contracts defined here. The HTTP-transport binding lives in [`D2.Shared.Auth.Http`](../auth-http/) (middleware + ProblemDetails); the gRPC-transport binding lives in [`D2.Shared.Auth.Grpc`](../auth-grpc/) (server-side interceptor + RpcException trailers). Domain code never references any of the runtime libs — only this abstractions slice.
 
 ---
 
@@ -26,6 +26,10 @@ The runtime piece (`AddD2Auth`, JWT validation, KeyringClient, token introspecti
 | `Audiences.g.cs` (codegen, in `obj/Generated/D2.Shared.Auth.Audiences.SourceGen/...`) | Static partial class — JWT `aud`-claim audience constants emitted from `contracts/auth-audiences/audiences.spec.json` by the sibling `D2.Shared.Auth.Audiences.SourceGen` analyzer. Single source of truth for both inbound `aud`-claim validation AND outbound `TokenExchangeClient.ExchangeAsync` `targetAudience` arguments. Provides `IsKnown(url)`, `Resolve(name)`, `ResolveByUrl(url)` helpers, plus `AllUrls` (read-only set of every audience URL) and `ByName` (read-only name → URL map) collection projections for enumeration. |
 | `JwtClaimTypes.cs` | Static class — claim name constants. Standard claims (`sub`, `aud`, `act`, `scope`, ...) keep canonical names; D² custom claims use the `d2_` prefix. The `act.d2_kind` claim discriminates impersonation flavor (Consent vs Force) — see `ImpersonationKind` for the values. |
 | `RequestHeaders.cs` | Static class — custom HTTP header names (`X-D2-Client-Fingerprint`, etc.). |
+| `Jwks/IJwksProvider.cs` | Interface — `GetKeysAsync` / `RefreshAsync` returning `D2Result<JwksKeySetSnapshot>` / `D2Result`. The contract every consumer-side service uses to look up JWT verify keys by `kid`. Impl lives in `D2.Shared.Auth/Jwks/HttpJwksProvider.cs`; Edge supplies its own issuer-side impl. |
+| `Jwks/JwksKeySetSnapshot.cs` | Sealed record — immutable snapshot of the verify-key set (kid → `SecurityKey` dictionary + fetched-at timestamp + source URL). Returned by `IJwksProvider.GetKeysAsync`. |
+| `Sessions/ISessionLivenessTracker.cs` | Interface — `IsAliveAsync(sessionId)` returning `D2Result<bool>`. Read-only contract every authenticated request uses to verify the session is still alive. **Cache outage = `ServiceUnavailable` = caller fails closed (401)** — never treat unknown liveness as alive. Impl lives in `D2.Shared.Auth/Sessions/TieredCacheSessionLivenessTracker.cs`; Edge owns the writer side internally (no `ISessionLivenessWriter` here — Edge writes to its own session store + publishes invalidation events on the cache backplane that this lib's impl subscribes to). |
+| `Http/D2HttpContextItems.cs` | Static class — string-key constants for cross-transport `HttpContext.Items` slots. Defines `REQUEST_CONTEXT` (`"D2.RequestContext"`), the slot under which the inbound auth runtime writes the populated `IRequestContext` on successful auth. Lives in the abstractions slice so BOTH transport-binding csprojs (`D2.Shared.Auth.Http` middleware + `D2.Shared.Auth.Grpc` interceptor) can write to the same slot without an inter-csproj dep — that lets a single dual-transport host wire both extensions and resolve `IRequestContext` correctly under either transport. |
 
 ---
 
@@ -103,7 +107,12 @@ Scopes.Auth.Password.Change                // "auth.password.change"
 
 ## Dependencies
 
-Zero external deps. Pure value types + string constants (plus the analyzer-only project reference to `D2.Shared.Auth.Scopes.SourceGen` for the `Scopes` codegen).
+- `D2.Shared.Result` — `D2Result<T>` returns on the consumer-side contracts (`IJwksProvider`, `ISessionLivenessTracker`).
+- `D2.Shared.I18n.Abstractions` — `TKMessage` parameters via `D2Result.Messages` / `InputErrors` shape.
+- `Microsoft.IdentityModel.Tokens` — `SecurityKey` type used on `JwksKeySetSnapshot.Keys`. The de-facto BCL-adjacent abstraction (ASP.NET Core's `TokenValidationParameters.IssuerSigningKeys` takes it; `ConfigurationManager<OpenIdConnectConfiguration>` emits it). No deeper abstraction layer adds value here.
+- Analyzer-only project references to `D2.Shared.Auth.Scopes.SourceGen` and `D2.Shared.Auth.Audiences.SourceGen` for the codegen output.
+
+The package carries the consumer-side runtime contract surface — interfaces + result-shaped types — but no impl logic. Consumer-side runtime libs and Edge's issuer-side code both target these contracts.
 
 ---
 
@@ -154,6 +163,13 @@ JWT claim names + HTTP header names stay hand-written — they're small, stable,
 - `ActorEntryTests.cs` — record equality including nested `Act` chains; null-Act default; multi-level chain traversal; ImpersonationKind / SessionId only-meaningful-when-Impersonation discipline.
 - `JwtClaimTypesTests.cs` / `RequestHeadersTests.cs` — constant value stability; D²-prefix validation.
 - `JwtClaimTypesParityTests.cs` — every `claim:` annotation in `IAuthContext.spec.json` has a matching `JwtClaimTypes` constant.
+
+`server/shared/dotnet/tests/Unit/Auth/Jwks/`:
+- `JwksKeySetSnapshotTests.cs` — defensive-copy guarantee on the `Keys` init setter, per-property record equality, empty-key-set tolerance.
+- `IJwksProviderContractTests.cs` — reflection-based shape pinning (return type, parameter count, ct default, public + interface, exact method count).
+
+`server/shared/dotnet/tests/Unit/Auth/Sessions/`:
+- `ISessionLivenessTrackerContractTests.cs` — same reflection-based shape pinning so accidental method additions / removals fire at the abstractions test layer first.
 
 Run: `dotnet test server/shared/dotnet/tests`.
 

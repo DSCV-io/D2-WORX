@@ -2,13 +2,51 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
+<a name="top"></a>
+
 # CLAUDE.md — D²-WORX Development Guide
 
 **D²-WORX** — Microservices SaaS framework. C# 14 / .NET 10 backend, SvelteKit BFF (TypeScript 5.9 / Svelte 5). Pre-Alpha. PolyForm Strict license (reference implementation, non-commercial).
 
+## Table of contents
+
+**Top-of-file mandatory blocks** (read these every session):
+
+- [📍 Project state pointer](#claudemd--dworx-development-guide)
+- [⚠️ MANDATORY — applies to every code change](#mandatory-block-1-every-code-change)
+- [⚠️ MANDATORY — audit evidence & proof discipline](#mandatory-block-2-audit-evidence--proof-discipline)
+- [⚠️ Deliverable completeness checklist — gate before user review](#mandatory-block-3-deliverable-completeness-checklist)
+
+**Sections:**
+
+1. [§1. Development Workflow](#1-development-workflow)
+   - [Phase summary](#phase-summary)
+   - [Permission gates (must block — no inferred permission)](#permission-gates-must-block--no-inferred-permission)
+   - [Self-improvement (the key insight)](#self-improvement-the-key-insight)
+2. [§2. Commands](#2-commands)
+3. [§3. Reference Documents](#3-reference-documents)
+4. [§3.5. Doc Update Map](#35-doc-update-map)
+5. [§4. Patterns & Architecture](#4-patterns--architecture)
+   - [TLC/2LC/3LC Folder Convention](#tlc2lc3lc-folder-convention)
+   - [CQRS Handler Categories](#cqrs-handler-categories)
+   - [Verb Semantics](#verb-semantics)
+   - [Handler Pattern](#handler-pattern)
+   - [D2Result Pattern](#d2result-pattern)
+   - [Other Established Patterns](#other-established-patterns)
+   - [Key Architecture Decisions](#key-architecture-decisions)
+6. [§5. Critical Reminders (top-of-mind for every change)](#5-critical-reminders-top-of-mind-for-every-change)
+7. [§6. Code Conventions](#6-code-conventions)
+8. [§7. Behavioral Guidelines (how to approach work)](#7-behavioral-guidelines-dispositional--how-to-approach-work)
+   - [Code Intelligence Tools](#code-intelligence-tools)
+   - [Windows LSP Workaround](#windows-lsp-workaround)
+   - [Project Structure](#project-structure)
+9. [§8. Local Secrets & Claude Deny Rules](#8-local-secrets--claude-deny-rules)
+
 > This doc covers process, patterns, and code rules. Architectural decisions live distributed across the docs in `docs/` (PATTERNS.md, TESTS.md, MESSAGING.md, OPERATIONAL-GUARANTEES.md, AUDIT_CHECKLIST.md, etc.) and the per-lib / per-service `README.md` files.
 
 > **📍 PROJECT STATE — READ FIRST**: The active project tracking doc is **[docs/v2/PHASE_0.md](docs/v2/PHASE_0.md)** (current phase, status, open questions, deferred work, resolved decisions). This pointer is the single source for "what's the project doing right now" — when this doc archives, the pointer here gets updated to its successor. A frozen v1 snapshot lives at `/old/v1/D2-WORX/` (read-only, reference for historical patterns not yet captured in current docs).
+
+<a name="mandatory-block-1-every-code-change"></a>
 
 > **⚠️ MANDATORY — APPLIES TO EVERY CODE CHANGE BY DEFAULT, NO EXCEPTIONS UNLESS THE USER EXPLICITLY ASKS FOR A BYPASS:**
 >
@@ -19,6 +57,98 @@ Copyright (c) DCSV. All rights reserved.
 > **The ONLY way to bypass any part of this process is an explicit user request like "skip the journal for this", "no audit needed for this typo fix", "just commit it directly", or "don't write a test for this." Without that explicit bypass instruction, the process applies in full.**
 >
 > If a request seems too small to deserve the full process, ask the user: "this is a one-line change — should I do the full process or do you want to bypass [specific step]?" Default = full process.
+
+---
+
+<a name="mandatory-block-2-audit-evidence--proof-discipline"></a>
+
+> # ⚠️⚠️⚠️ MANDATORY — AUDIT EVIDENCE & PROOF DISCIPLINE ⚠️⚠️⚠️
+>
+> **EVERY audit round, EVERY rule walk, EVERY PASS / N/A / FINDING / ACTION MUST be EMBEDDED — as a complete markdown evidence table — IN the journal markdown file (`docs/wip/<deliverable>/<NN>-<step>/journal.md`, or the final-review equivalent).**
+>
+> This is the SINGLE most important meta-requirement of this codebase's process. The whole framework exists because the user's trust depends on being able to OPEN A JOURNAL FILE and SEE the evidence — directly, completely, no scrolling agent transcripts, no "trust me I checked." If the journal contains only prose ("walked rules.md, fixed 3 findings, all green"), **the audit is INCOMPLETE — the step is NOT done — convergence has NOT been reached.**
+>
+> **What MUST appear in every step / final-review journal:**
+>
+> 1. A `## Latest sweep results` section containing the BIG TABLE (latest sweep's output — see lifecycle block below for the replace-on-each-sweep rule). Above the table: the anti-laziness preamble verbatim, plus a one-line `Last sweep: Round N (timestamp / commit ref)` marker.
+> 2. The big table has **one row per numbered subsection in `rules.md`** (~85+ rows currently — every numbered subsection from §1.1 through §24.x).
+> 3. Each row uses ONE of the canonical statuses ONLY, prepended with its visual emoji indicator: `✅ PASS` / `⚪ N/A` / `❌ FINDING-HIGH` / `❌ FINDING-MEDIUM` / `❌ FINDING-LOW`. Anything else (e.g. `DEFERRED` / `PENDING` / `UNVERIFIED` / `PASS-borderline` / `PASS (contract)` / `PARTIAL`) gets the `🟡` (yellow circle) prefix to flag "needs human attention." **The Status column MUST prepend the emoji indicator: ✅ PASS / ❌ FINDING-* / ⚪ N/A / 🟡 anything else. Visual scan-ability is the goal — operators reviewing the journal can spot findings instantly.** A row with a bare status word and no emoji prefix is a §24.10 violation.
+> 4. **PASS rows** carry a `file.cs:NN` citation (no "verified ✓", no "checked it", no "looks good").
+> 5. **N/A rows** carry a step-scope-specific REASON (no bare "doesn't apply" / "irrelevant").
+> 6. **FINDING rows** carry severity + `file.cs:NN` + specific description + suggested fix — all four.
+> 7. A `## Sweep findings log (append-only)` section containing per-round subsections (`### Round N findings (timestamp)`) — one for every sweep ever run on this step. Append-only.
+> 8. A `## Fix log (append-only)` section containing chronological fix entries. Append-only.
+>
+> **Producing the table only in agent transcript output and writing a prose summary into the journal does NOT count.** The journal must be self-contained evidence — readable in isolation by anyone (the user during REVIEW, the agent in a future round, an auditor doing a post-mortem).
+>
+> ## ⚠️ ONE BIG TABLE = LATEST SWEEP RESULTS. APPEND-ONLY LOGS FOR FINDINGS AND FIXES. CLOSURE PROVEN BY ABSENCE IN NEXT SWEEP.
+>
+> Every step / final-review journal contains THREE artifacts — clearly separated, with strict roles, never collapsed:
+>
+> **Artifact 1: the BIG TABLE — latest-sweep snapshot (REPLACED every sweep).**
+>
+> A single markdown table under `## Latest sweep results` in the journal. One row per numbered subsection in `rules.md` (~85+ rows). The anti-laziness preamble appears verbatim above it. **The table reflects ONLY the most recent sweep's findings. When a new sweep runs, the entire table is REPLACED by the new sweep's output.** Earlier tables don't accumulate inside the journal — their content is preserved in the append-only findings log (Artifact 2). Treat the table as a `git checkout`-style overwrite each sweep, not as edit-in-place.
+>
+> The big table is the canonical "what is true RIGHT NOW" snapshot. Every PASS is a fresh file:line citation against the current code; every FINDING is the predicate failing against the current code. There is no inheritance of PASS from a previous sweep — PASS is earned by being walked AGAIN.
+>
+> **Artifact 2: the FINDINGS LOG — append-only, per-round.**
+>
+> Section under `## Sweep findings log (append-only)`. Each sweep appends a `### Round N findings (timestamp)` subsection containing every FINDING surfaced in that sweep — severity + file:line + description + suggested fix. Carries the full audit history across rounds: anyone can scroll back and see what was broken when, even after the big table got replaced. **Never deleted, never re-ordered, never reclassified.**
+>
+> **Artifact 3: the FIX LOG — append-only, chronological.**
+>
+> Section under `## Fix log (append-only)`. Each fix appends one entry: which finding it addresses (cite rules.md subsection + round it was found in), what was changed, the `file.cs:NN` of the change, the timestamp / commit reference. **Never deleted, never re-ordered.** Capturing intent and action — the trail of what the agent did between sweeps. The fix log does NOT certify outcome; certification comes from the next sweep's big table not surfacing the finding.
+>
+> **The three roles, never collapsed:**
+>
+> | Activity | Writes to |
+> |---|---|
+> | Sweep (rules.md walk) | REPLACES the big table; APPENDS to the findings log |
+> | Fix work (code edits) | APPENDS to the fix log; **NEVER touches the big table** |
+> | Closure verification | Reads next sweep's big table — finding ABSENT = closed; finding STILL PRESENT = re-fix |
+>
+> **Why the big table is REPLACED, not edited in-place by fixes:**
+>
+> If the fix-applying agent could flip a row to PASS, failure mode: fix doesn't actually take (typo, wrong line, partial replacement, cascade) → agent writes PASS anyway → next sweep "trusts" the PASS and skips re-walking the predicate → bug ships. With sweep-only-replacement of the big table, every PASS in every sweep's table is freshly walked against current code. There's no possibility of a stale PASS being inherited.
+>
+> **Why findings + fixes are APPEND-ONLY:**
+>
+> The append-only logs preserve history that the table-replacement model would otherwise lose. Anyone reading the journal can answer: "What did Round 1 find?" "What was changed in response?" "Did Round 2's sweep confirm the fix worked?" Without append-only logs, only the LATEST sweep's findings would be visible — the per-round audit history would be gone.
+>
+> ## ⚠️ MANDATORY ROUND SEQUENCE (do not skip steps, do not collapse roles):
+>
+> 1. **Sweep**: walk every rules.md subsection against the current state of the code. REPLACE the big table with the sweep's output. APPEND a `### Round N findings` subsection to the findings log with every FINDING the sweep surfaced.
+> 2. **Fix work**: for each FINDING in the new big table, apply the fix. After each fix, APPEND one entry to the fix log citing the rules.md subsection + finding round + what changed + the `file.cs:NN` of the change. **The big table is NOT touched.**
+> 3. **EVERY finding gets fixed**. No silent carryover. If a finding genuinely can't be resolved in this round, get EXPLICIT user permission to defer and append a deferral entry to the fix log (still append-only — never silent omission).
+> 4. **Next sweep**: when all current-round findings have fix-log entries, run the NEXT sweep. Walk the full rules.md catalog again from scratch. REPLACE the big table with the new sweep's output. Append `### Round N+1 findings` to the findings log. A row that was a FINDING in Round N and is now PASS in Round N+1's table = closed. A row that's STILL a FINDING in Round N+1's table = fix didn't take; append more fix entries, run Round N+2.
+> 5. **Loop terminates**: when ONE sweep produces a big table with zero FINDING rows. Until that happens, the step is not done. No "convergence claimed" without a clean big table from a real sweep.
+>
+> **Detailed protocol → [docs/dev/workflow.md §3](docs/dev/workflow.md#3-audit-loop-the-core-forcing-function). Predicate-level enforcement → [docs/dev/rules.md §24](docs/dev/rules.md#24-audit-evidence-discipline-meta--how-to-audit), specifically §24.0 (three-artifact journal model) and §24.12 (self-audit compliance).**
+>
+> **Visual map of the full deliverable flow → [rules.md "Deliverable workflow chart — order of operations with loops"](docs/dev/rules.md#deliverable-workflow-chart--order-of-operations-with-loops).** Mermaid diagram + ASCII fallback + worked example showing PLAN → Step 1 (sweep+fix loops) → Step 2 → Step 3 → Final-review (sweep+fix loops) → SHIP.
+>
+> **If you find yourself about to claim "audit complete" without the 3-artifact journal model satisfied, STOP. Walk the model. Embed the artifacts. Then claim convergence.**
+
+---
+
+<a name="mandatory-block-3-deliverable-completeness-checklist"></a>
+
+> # ⚠️⚠️⚠️ DELIVERABLE COMPLETENESS CHECKLIST — THE GATE BEFORE USER REVIEW ⚠️⚠️⚠️
+>
+> **Before declaring ANY deliverable "ready for REVIEW," walk the [Deliverable completeness checklist in rules.md](docs/dev/rules.md#deliverable-completeness-checklist-the-gate-before-user-review). Every box must be a YES with a citation. If any box is NO, the deliverable is NOT ready — go finish the gap and re-walk the checklist.**
+>
+> The checklist is the META-gate over the entire deliverable's process integrity. It covers:
+> - **Per-step gates** — every step's journal has the 3 artifacts, clean big table, every PASS / N/A / FINDING with required evidence, every finding addressed via fix log, build clean, tests pass. Per-step audit scope explicitly includes EVERY file the step touched (including files modified from prior steps), so cross-step drift is caught at the per-step level — no separate tier-audit layer.
+> - **Final-review gate** — deliverable-wide sweep walked the entire deliverable, final-review journal has the 3 artifacts, final big table clean.
+> - **Cross-cutting doc gates** — per CLAUDE.md §3.5 Doc Update Map (PATTERNS / MESSAGING / TESTS / OPERATIONAL-GUARANTEES / RATE-LIMITING / SECURITY-RUNBOOKS / PARITY / AUDIT_CHECKLIST as relevant), parent README + Mermaid graph, tracking doc, no phase verbiage / Q-IDs / conversation-scoped IDs leaked into KEEP docs.
+> - **Process-integrity gates** — no commits without permission, no destructive git, no silent deferrals, no mid-execution architectural deviations.
+>
+> **Final attestation**: before presenting for user REVIEW, write the attestation block from the checklist into the deliverable's root README (verbatim wording in rules.md). The attestation is YOUR signed claim that every box is honest YES — invalidating it is a process-integrity breach.
+>
+> **You MUST walk this checklist immediately before declaring any deliverable ready for user review. No exceptions, no "I'll skip it just this once," no "the steps were clean so the whole deliverable must be clean." Walk every box, write the attestation, then present.**
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -36,7 +166,7 @@ The agent reaches alignment with the user during PLAN, then executes autonomousl
 - **EXECUTE** — Per step, in prerequisite order:
   1. Plan substep (append to `docs/wip/<deliverable>/<NN>-<step>/journal.md`) — including pre-emptive gate checks (test coverage plan, convention check, PII check, layer check) to push catches BEFORE writing code, not after.
   2. Implement code + tests.
-  3. **Audit loop** — walk every category in `rules.md`, produce evidence per predicate, fix findings inside the round, terminate on a clean round. 10-iteration ceiling per step; iteration 11 = escalate.
+  3. **Audit loop** — walk every category in `rules.md`, produce evidence per predicate via the **3-artifact journal model** (big table replaced each sweep + append-only findings log + append-only fix log; see the AUDIT EVIDENCE & PROOF DISCIPLINE block above + workflow.md §3 + rules.md §24). **DO NOT BE LAZY — walk EVERY subsection, no skipping, no assuming irrelevance without specific evidence; LEAVE NO STONE UNTURNED.** PASS rows require file:line citations; N/A rows require step-scope-specific reasons; FINDING rows require severity + file:line + description + fix. **The journal must contain all three artifacts: the big table under `## Latest sweep results` (REPLACED each sweep with anti-laziness preamble above), the findings log under `## Sweep findings log (append-only)` (per-round subsections), and the fix log under `## Fix log (append-only)`. The big table is sweep-only — fixes go in the fix log, never in the table. Closure is proven by ABSENCE of the finding from the next sweep's big table.** Terminate on a complete-table CLEAN sweep (zero FINDING rows). 10-iteration ceiling per step; iteration 11 = escalate.
   4. Per-step distillation → root README's kinds-of-misses log + candidate predicate additions for `rules.md`.
 - **FINAL-REVIEW** — Same audit loop, scope = whole deliverable. Catches integration / cross-step / consistency bugs.
 - **SHIP** — Aggregate proposed rule additions FROM the per-step + final-review journals (they MUST still be readable at this point — they're the evidence behind every proposed rule). Present root README to user. Apply approved rules to `rules.md`. **Copy the root README as a snapshot** from `docs/wip/NNNN-<name>/README.md` to `docs/dev/deliverables/NNNN-<name>.md` (committed — single file; 4-digit index prefix so deliverables sort naturally in ship order). The per-step journals stay where they are in the gitignored `docs/wip/NNNN-<name>/` workspace — local-only artifacts that the workflow NEVER auto-deletes. User removes them manually whenever they want.
@@ -57,6 +187,9 @@ Per [workflow.md §Permission gates](docs/dev/workflow.md#permission-gates-must-
 Every deliverable's distillation surfaces classes of miss. Approved misses become permanent predicates in `rules.md`. Future deliverables start with a stricter ruleset → audit loops converge in fewer rounds → deliverables ship faster → user spends less time pushing the agent through audit cycles.
 
 The journal IS the evidence of process integrity. Honest journals are self-rewarding: every honest miss becomes a future gate-check.
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -124,6 +257,9 @@ git push --follow-tags
 
 **Important:** When editing shared `.NET` libs in `server/shared/dotnet/`, run `dotnet build server/D2.slnx` to verify all consumers still compile. SvelteKit changes are isolated — `cd server/web && pnpm exec svelte-check`.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## §3. Reference Documents
@@ -150,6 +286,9 @@ Read these docs BEFORE working in the relevant area. Each doc is the authority f
 
 Per-service / per-library `README.md` files appear in `server/services/{service}/` and `server/shared/dotnet/{lib}/` as those are built/lib.
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## §3.5. Doc Update Map
@@ -173,6 +312,9 @@ When you change something, update the right doc. The map below is the routing ta
 | Architectural decision that overrides prior v2 plan | [docs/v2/V2.md](docs/v2/V2.md) (and note in PHASE_0.md) |
 
 If your change spans multiple categories, update each. If no entry fits, the change probably needs a new doc — ASK before creating one.
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -249,6 +391,9 @@ One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consume
 - **Database topology**: one PG server, many DBs (auth_db, files_db, courier_db, notifications_db, audit_db, seaweedfs_filer_db, plus per-service contacts DBs). Multi-replica migration safety via PG advisory locks.
 - **Object storage**: SeaweedFS for user files. MinIO retained as backend for LGTM block storage.
 - **Production deployment**: eventually Docker Swarm + Portainer; pre-launch is Compose on a VPS.
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -345,6 +490,9 @@ One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consume
 > **Idempotency / exactly-once predicates live in [docs/dev/rules.md §22](docs/dev/rules.md#22-idempotency--exactly-once-semantics).**
 > **Configuration hygiene predicates live in [docs/dev/rules.md §23](docs/dev/rules.md#23-configuration-hygiene).**
 
+
+<sup>[↑ jump to top](#top)</sup>
+
 ---
 
 ## §6. Code Conventions
@@ -377,6 +525,9 @@ One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consume
 > - **Scope vs Permission terminology** (use "scope" — JWT-canonical, OAuth-standard)
 > - **Observability fields** (`traceId`, `correlationId`, `userId`, `orgId`, `service` — universal)
 > - **Git conventions** (branch prefixes, conventional commits, no `Co-Authored-By`)
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -423,6 +574,9 @@ Key roots in the tree:
 - `docs/` — project documentation (PATTERNS, TESTS, MESSAGING, OPERATIONAL-GUARANTEES, etc.)
 - `secrets/` — gitignored + Claude-deny-ruled key material (root key, encryption keys, dev TLS certs). Populated by `tools/scripts/gen-dev-keys.sh`.
 - `.claude/` — project-level Claude Code settings (`settings.json` with deny rules)
+
+
+<sup>[↑ jump to top](#top)</sup>
 
 ---
 

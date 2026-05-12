@@ -20,7 +20,7 @@ Per project convention, every library has its own `README.md`. The list below po
 | [`i18n-abstractions/`](i18n-abstractions/README.md) | **Built** | Domain-safe slice — `TKMessage` primitive, SrcGen-emitted `TK` constants from `contracts/messages/en-US.json`, `ITranslator` interface. Zero external deps. Drift between JSON and TK code constants is structurally impossible (the constant doesn't exist if the JSON key doesn't). | [PATTERNS.md](../../../docs/PATTERNS.md) i18n section |
 | [`i18n-source-gen/`](i18n-source-gen/) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits the `TK.*` constants consumed by `i18n-abstractions/`. Referenced as Analyzer; its dll never ships into any consuming assembly. Lives at its own top-level slot because it has a different TFM and a different consumption pattern from a normal lib. | [PATTERNS.md](../../../docs/PATTERNS.md) i18n section |
 | [`i18n/`](i18n/README.md) | **Built** | Runtime `Translator` + `SupportedLocales` + `AddD2I18n` DI extension. Used by Courier-style outbound notifications; HTTP responses ship `TKMessage` objects unchanged for client-side translation via SvelteKit/Paraglide. | [PATTERNS.md](../../../docs/PATTERNS.md) i18n section |
-| [`auth-abstractions/`](auth-abstractions/README.md) | **Built** | Identity / authorization vocabulary — `OrgType`, `Role`, `ActorKind`, `ImpersonationKind`, `ActionSensitivity`, `JwtClaimTypes`, `RequestHeaders`, `ActorEntry`, plus the SrcGen-emitted `Scopes` and `Audiences` static partial classes. Zero external deps; consumed by domain code, context-abstractions, handler-abstractions, and the eventual runtime auth lib. | [PATTERNS.md](../../../docs/PATTERNS.md) Scopes / authorization section |
+| [`auth-abstractions/`](auth-abstractions/README.md) | **Built** | Identity / authorization vocabulary AND consumer-side runtime contracts — `OrgType`, `Role`, `ActorKind`, `ImpersonationKind`, `ActionSensitivity`, `JwtClaimTypes`, `RequestHeaders`, `ActorEntry`, the SrcGen-emitted `Scopes` and `Audiences` static partial classes, plus the read-only `IJwksProvider` / `ISessionLivenessTracker` interfaces and `JwksKeySetSnapshot` record returned by them. Depends on `result/` + `i18n-abstractions/` (for `D2Result<T>` returns) + `Microsoft.IdentityModel.Tokens` (for `SecurityKey` on the snapshot). Consumed by domain code, context-abstractions, handler-abstractions, and the runtime auth lib. | [PATTERNS.md](../../../docs/PATTERNS.md) Scopes / authorization section |
 | [`auth-scopes-source-gen/`](auth-scopes-source-gen/) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits the `Scopes.*` constants for `auth-abstractions/` from `contracts/auth-scopes/scopes.spec.json`. Referenced as Analyzer; its dll never ships into any consuming assembly. | [PATTERNS.md](../../../docs/PATTERNS.md) Scopes / authorization section |
 | [`auth-audiences-source-gen/`](auth-audiences-source-gen/README.md) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits the `Audiences.*` const-string catalog for `auth-abstractions/` from `contracts/auth-audiences/audiences.spec.json`. Single source of truth for JWT `aud` claim values + `TokenExchangeClient.ExchangeAsync` `targetAudience` arguments. Referenced as Analyzer. | [PATTERNS.md](../../../docs/PATTERNS.md) Scopes / authorization section |
 | [`auth-context-abstractions/`](auth-context-abstractions/README.md) | **Built** | Domain-safe slice of the request context — `IAuthContext` (codegen-emitted from `contracts/auth-context/IAuthContext.spec.json`) plus hand-written `IAuthContextExtensions` (`HasScope`, `IsStaff`, etc.). Lets domain code read caller identity / scopes / impersonation without pulling DI / AspNetCore / Configuration. | [PATTERNS.md](../../../docs/PATTERNS.md) Context section |
@@ -44,8 +44,10 @@ Per project convention, every library has its own `README.md`. The list below po
 | [`geo-reference/`](geo-reference/README.md) | Placeholder | Embedded geographic reference data — countries, IANA timezones, currencies, locales, regions. Not a service. | — |
 | [`location/`](location/README.md) | Placeholder | Location value objects — `AdminLocation` (country / state / city / postal), `Coordinates`, `StreetAddress`. Content-addressable hash IDs (built-in dedup + cacheability). | [OPERATIONAL-GUARANTEES.md](../../../docs/OPERATIONAL-GUARANTEES.md) (content-addressable entities) |
 | [`contacts/`](contacts/README.md) | Placeholder | Contact entity + per-consuming-service DB pattern. Library owns its own `DbContext` + migrations; consuming service provides connection string. | [OPERATIONAL-GUARANTEES.md](../../../docs/OPERATIONAL-GUARANTEES.md) (immutability rationale) |
-| [`auth/`](auth/README.md) | Placeholder | Runtime auth surface — JWT claim helpers, token primitives, `KeyringClient` (consumes the Edge KeyCustodian). The vocabulary slice (`Scopes` constants, enums, claim type strings) already ships in `auth-abstractions/`. | [SECURITY-RUNBOOKS.md](../../../docs/SECURITY-RUNBOOKS.md) |
-| [`auth-outbound/`](auth-outbound/README.md) | **Built** | Outbound auth runtime — `IServiceIdentityClient` (`client_credentials`) + `ITokenExchangeClient` (RFC 8693) + `.AddD2ServiceIdentity()` per-channel gRPC opt-in. OIDC discovery via `D2_AUTH_ISSUER`. ServiceIdentity caches in-process with proactive refresh; TokenExchange caches in `ILocalCache` with sessionId reverse-index for backplane-driven invalidation. | [PHASE_0_AUTH.md](../../../docs/v2/PHASE_0_AUTH.md) |
+| [`auth/`](auth/README.md) | **Built** | Inbound auth runtime core — `AddD2Auth` DI composition root, `AuthOptions`, `JwtValidator` (signature + standard-claim validation), `ClaimsToContextMapper` (claims → `IRequestContext` projection), `HttpJwksProvider` + `JwksBackplaneSubscriber`, `TieredCacheSessionLivenessTracker` + `SessionRevokedBackplaneSubscriber`, `AuthFailures` semantic-helper failures (`Bearer*` / `Jwt*` / `Jwks*` / `Session*` 401/503 catalogue), `AuthErrorCodes` granular `d2_error_code` constants, `AuthTelemetry` (4 counters + 3 histograms), `AuthLog` PII-safe `[LoggerMessage]` delegates. Transport-binding csprojs `auth-http/` + `auth-grpc/` register the per-transport pipeline. The vocabulary slice (`Scopes`, enums, claim type strings, contracts) ships in `auth-abstractions/`. | [SECURITY-RUNBOOKS.md](../../../docs/SECURITY-RUNBOOKS.md) |
+| [`auth-http/`](auth-http/README.md) | **Built** | HTTP-transport binding for `auth/` — convention-based `JwtAuthMiddleware` that runs the validator + session liveness on inbound HTTP requests, emits RFC 7807 ProblemDetails on failure (single emit point via `D2ProblemDetailsExtensions`), and supports per-endpoint scope requirements via `EndpointScopeMetadata` + `RequireD2Scope` / `AllowD2Anonymous` fluent extensions. `AddD2AuthHttp()` registers `IHttpContextAccessor` + a scoped `IRequestContext` resolver reading from the cross-transport `HttpContext.Items` slot. AspNetCore framework reference is opt-in via this csproj. | [SECURITY-RUNBOOKS.md](../../../docs/SECURITY-RUNBOOKS.md) |
+| [`auth-grpc/`](auth-grpc/README.md) | **Built** | gRPC-transport binding for `auth/` — server-side `JwtAuthInterceptor` (covers all four RPC kinds via a shared pipeline) that runs the validator + session liveness on inbound gRPC calls, emits `RpcException(Status, Trailers)` with the `d2_error_code` / `d2_messages` / `traceid` trailer triple via `D2RpcStatusExtensions`, supports per-method scope metadata via attribute (`[D2RequireScope]` / `[D2AllowAnonymous]`) OR fluent (`RequireD2Scope` / `AllowD2Anonymous` on `MapGrpcService<T>()`). `AddD2AuthGrpc()` registers the interceptor + a scoped `IRequestContext` resolver reading from the cross-transport `HttpContext.Items` slot (interceptor dual-writes to `ServerCallContext.UserState` for the gRPC hot-path accessor). `Grpc.AspNetCore.Server` framework reference is opt-in via this csproj. | [SECURITY-RUNBOOKS.md](../../../docs/SECURITY-RUNBOOKS.md) |
+| [`auth-outbound/`](auth-outbound/README.md) | **Built** | Outbound auth runtime — `IServiceIdentityClient` (`client_credentials`) + `ITokenExchangeClient` (RFC 8693) + `.AddD2ServiceIdentity()` per-channel gRPC opt-in. OIDC discovery via `D2_AUTH_ISSUER`. ServiceIdentity caches in-process with proactive refresh; TokenExchange caches in `ILocalCache` with sessionId reverse-index for backplane-driven invalidation. | [SECURITY-RUNBOOKS.md](../../../docs/SECURITY-RUNBOOKS.md) |
 
 ## Dependency graph (built libs only)
 
@@ -95,6 +97,12 @@ graph LR
         CtxAbs --> AuthAbs
     end
 
+    %% auth-abstractions also references the foundation Result + i18n-abstractions
+    %% (for D2Result<T> on IJwksProvider / ISessionLivenessTracker contracts) plus
+    %% Microsoft.IdentityModel.Tokens (NuGet) for SecurityKey on JwksKeySetSnapshot.
+    %% Cross-subgraph edge from AuthAbs to Result is implicit but load-bearing.
+    AuthAbs --> Result
+
     subgraph HANDLER["Handler stack"]
         direction TB
         HandlerAbs[handler-abstractions]
@@ -105,8 +113,20 @@ graph LR
 
     subgraph AUTHRUNTIME["Auth runtime"]
         direction TB
+        Auth[auth]
+        AuthHttp[auth-http]
+        AuthGrpc[auth-grpc]
         AuthOutbound[auth-outbound]
 
+        Auth --> AuthAbs
+        Auth --> AuthCtxAbs
+        Auth --> CtxAbs
+        AuthHttp --> Auth
+        AuthHttp --> AuthAbs
+        AuthHttp --> CtxAbs
+        AuthGrpc --> Auth
+        AuthGrpc --> AuthAbs
+        AuthGrpc --> CtxAbs
         AuthOutbound --> AuthAbs
         AuthOutbound --> CtxAbs
     end
@@ -160,13 +180,18 @@ graph LR
     CacheRedis --> Utilities
     AuthOutbound --> CacheAbs
     AuthOutbound --> Resilience
+    Auth --> CacheAbs
+    Auth --> CacheTiered
+    Auth --> Resilience
+    Auth --> Result
+    Auth --> Utilities
     MsgAbs --> Handler
     MsgAbs --> Encryption
     MsgRabbit --> Encryption
     MsgRabbit --> CacheAbs
     MsgRabbit --> Resilience
 
-    class I18nAbs,I18n,Result,Utilities,Resilience,AuthAbs,AuthCtxAbs,CtxAbs,HandlerAbs,Handler,RepoAbs,Repo,RepoPg,Encryption,CacheAbs,CacheLocal,CacheRedis,CacheTiered,MsgAbs,MsgRabbit,MsgSrcGen built
+    class I18nAbs,I18n,Result,Utilities,Resilience,AuthAbs,AuthCtxAbs,CtxAbs,HandlerAbs,Handler,RepoAbs,Repo,RepoPg,Encryption,CacheAbs,CacheLocal,CacheRedis,CacheTiered,Auth,AuthHttp,AuthGrpc,AuthOutbound,MsgAbs,MsgRabbit,MsgSrcGen built
 ```
 
 **Reading the chart:**
@@ -183,8 +208,15 @@ graph LR
 - `handler-repo` directly refs `handler-abstractions`, `result` (transitive via `handler` and `handler-repo-abstractions`)
 - `handler-repo-abstractions` directly refs `result` (transitive via `i18n`)
 - `caching-abstractions`, `caching-local-default`, `caching-distributed-redis` each directly ref `i18n-abstractions` (transitive via `result → i18n-abstractions`)
+- `auth-abstractions` directly refs `i18n-abstractions` (transitive via `result → i18n-abstractions`)
 - `caching-tiered` directly refs `result` (transitive via `caching-abstractions → result`)
 - `auth-outbound` directly refs `auth-context-abstractions` (transitive via `context-abstractions → auth-context-abstractions`)
+- `auth` directly refs `i18n-abstractions`, `auth-context-abstractions` (transitive via `auth-abstractions` / `context-abstractions`)
+- `auth-http` and `auth-grpc` directly ref `result`, `i18n-abstractions`, `utilities` (transitive via `auth → result/i18n-abstractions/utilities`)
+
+**Load-bearing direct edges that may LOOK redundant — do NOT prune:**
+
+- `auth-http → auth-abstractions` and `auth-grpc → auth-abstractions` are **NOT** transitively redundant via `auth`. Both transport csprojs reach the shared `D2HttpContextItems` slot key (lives in `auth-abstractions`) directly, NOT via `auth`. The cross-transport `IRequestContext` resolver pattern depends on both transports reading + writing to the same constant — both transports MUST take a direct dep on `auth-abstractions` to see it. Pruning either edge thinking it's redundant via `auth` silently breaks the resolver pattern.
 - `messaging-abstractions` directly refs `result`, `i18n-abstractions`, `utilities` (transitive via `handler`)
 - `messaging-rabbitmq` directly refs `handler`, `result`, `i18n-abstractions`, `utilities` (transitive via `messaging-abstractions`)
 

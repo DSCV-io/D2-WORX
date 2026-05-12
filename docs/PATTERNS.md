@@ -557,18 +557,34 @@ Fingerprints (composite — server-side + client-side components combined):
 
 Populates `MutableRequestContext` progressively as middleware layers run. Infrastructure paths (health, metrics, observability scrape endpoints) bypass enrichment via shared `InfrastructurePaths.IsInfrastructure()`.
 
-### JwtAuth — RS256 + fingerprint binding
+### JwtAuth — RS256 + JWKS-based, transport-binding split
 
-Pipeline order:
-1. **Authentication** — JWT validation (RS256, JWKS-based)
-2. **Fingerprint check** — JWT's `fp` claim must match the request's computed server fingerprint (`SHA256(UA + "|" + Accept)`). Mismatch → 401
-3. **Authorization** — scope-based gates per `AuthPolicy.Default`
+Inbound JWT auth ships as three sibling csprojs:
 
-JWKS at the OIDC-canonical `/.well-known/jwks.json` (off-the-shelf JWT libraries auto-discover via `/.well-known/openid-configuration` — no custom paths).
+- **`D2.Shared.Auth`** — runtime: `JwtValidator` (signature + standard-claim checks), `HttpJwksProvider` (JWKS fetch + Singleflight + cooldown + circuit-breaker), `TieredCacheSessionLivenessTracker` (sentinel-only liveness), telemetry, failure helpers (`AuthFailures.Jwt*` returning `D2Result`). Pure handler-shaped logic — no transport coupling. One DI extension: `services.AddD2Auth(opts => { opts.Issuer = ...; opts.Audience = ...; })`.
+- **`D2.Shared.Auth.Http`** — HTTP transport binding: `JwtAuthMiddleware`, RFC 7807 `ProblemDetails` shape with `d2_error_code` extension, `RequireD2Scope("…")` fluent metadata + `[D2RequireScope("…")]` attribute, opt-out via `AllowD2Anonymous()` / `[D2AllowAnonymous]`. Wired with `services.AddD2AuthHttp()` + `app.UseD2Auth()`.
+- **`D2.Shared.Auth.Grpc`** — gRPC transport binding: `JwtAuthInterceptor`, `RpcException(Status, Trailers)` shape with `d2_error_code` / `d2_messages` / `traceid` trailers, `[D2RequireScope("…")]` method attributes, `[D2AllowAnonymous]` opt-out. Wired with `services.AddD2AuthGrpc()`.
+
+Per-validation pipeline (order is important for what happens at WHICH layer):
+
+1. **Bearer extraction** — transport-binding layer (HTTP middleware reads `Authorization: Bearer …`; gRPC interceptor reads the `authorization` metadata entry).
+2. **Signature + standard-claim validation** — runtime (`JwtValidator`): RS256 (algorithm pinned via `TokenValidationParameters.ValidAlgorithms` — defends against `alg=none` + HMAC confusion); issuer; audience; lifetime (`exp`/`nbf`) with default 30s clock skew; `iss`/`aud`/`exp` MUST be present (`RequireExpirationTime = true`). Reactive-refresh-on-unknown-`kid`: one cooldown-gated JWKS refresh + one retry — persistent miss surfaces as `AUTH_JWT_KID_NOT_FOUND` (401, not 503 — the JWT itself is suspect, not the upstream JWKS). RFC 8693 §2.1 `act` chain malformation surfaces as `AUTH_JWT_ACT_CHAIN_MALFORMED`.
+3. **Session liveness** — transport-binding layer, AFTER validator returns success. Sentinel-only `TieredCacheSessionLivenessTracker` checks `session:{sessionId:N}` against the tiered cache. Fail-closed on liveness store outage (`AUTH_SESSION_LIVENESS_UNAVAILABLE` 503, not silent allow).
+4. **Per-endpoint scope check** — transport-binding layer. The `RequireD2Scope` / `[D2RequireScope]` metadata enumerates scopes; the middleware/interceptor verifies the JWT's `scope` set is a superset.
+
+JWKS at the OIDC-canonical `/.well-known/jwks.json` (off-the-shelf JWT libraries auto-discover via `/.well-known/openid-configuration` — no custom paths). Cluster-wide JWKS rotation via the `ICacheInvalidationBackplane` (Redis pub/sub on `d2.security.key-rotated:jwks`); the `JwksBackplaneSubscriber` triggers `RefreshAsync` on every consumer instance.
+
+### Cross-transport `IRequestContext` resolver
+
+A host can wire HTTP + gRPC simultaneously on the same Kestrel instance. Both transports MUST land the resolved `IRequestContext` in the SAME DI scope so handler injection works regardless of which transport invoked the call. Both transport extensions register a scoped `IRequestContext` resolver lambda that reads from a shared `HttpContext.Items` slot (`D2HttpContextItems.REQUEST_CONTEXT`, lives in `auth-abstractions`). HTTP middleware writes the slot directly. gRPC interceptor mirrors the write into both `HttpContext.Items` AND `ServerCallContext.UserState` (the gRPC hot-path accessor reads the latter for zero-cost lookups). A parity test (`tests/Unit/Auth/Inbound/RequestContextResolverParityTests.cs`) defends against future drift between the two registration paths.
+
+### Uniform 401 — no 403 from the auth boundary
+
+`AUTH_SCOPE_INSUFFICIENT` maps to **401 Unauthorized** in BOTH transports — never 403 Forbidden. Rationale: the auth boundary keeps a uniform shape regardless of whether the JWT was bad (signature / expiry / issuer) or the scopes were insufficient. An attacker probing endpoints can't distinguish "not authenticated" from "authenticated but lacks scope X" via status code — both look the same. Coarse user-facing message (`auth_errors_UNAUTHORIZED` TK key) carries no granularity either; granularity surfaces ONLY on the machine-readable `d2_error_code` extension (and gRPC trailer).
 
 ### ServiceKey — constant-time comparison
 
-`X-D2-Service-Key` header for inter-service auth. (Long-term direction is RFC 6749 §4.4 `client_credentials` once the KeyCustodian module ships.)
+`X-D2-Service-Key` header for inter-service auth (legacy / pre-OAuth deployments). (Long-term direction is RFC 6749 §4.4 `client_credentials` via `D2.Shared.Auth.Outbound`.)
 
 `CryptographicOperations.FixedTimeEquals` for the comparison. **Plain `==` is vulnerable to timing attacks**.
 
@@ -576,20 +592,32 @@ JWKS at the OIDC-canonical `/.well-known/jwks.json` (off-the-shelf JWT libraries
 
 `.RequireServiceKey()` endpoint filter for one-line gating.
 
-### AuthPolicy — route-level gates
+### Endpoint scope metadata
 
-Policy methods (composable on route declarations):
+Per-endpoint required-scope sets are declared in the route surface, NOT in handler code. The two metadata paths feed the same enforcement at the transport-binding layer:
+
+| Transport | Fluent | Attribute |
+|---|---|---|
+| HTTP | `app.MapGet("/files/{id}", H).RequireD2Scope("files.read");` | n/a (Minimal API surface uses fluent) |
+| gRPC | n/a (gRPC services use class/method attributes) | `[D2RequireScope("files.read")] public override Task<...> GetFile(...)` |
+
+Anonymous opt-outs (`AllowD2Anonymous` / `[D2AllowAnonymous]`) are explicit — there is NO fall-through to "anonymous if no scope declared." An endpoint with no scope metadata is rejected at startup.
+
+### Other route-level gates
+
+Beyond per-endpoint scopes, broader policy still composes at the route level (handlers stay clean of re-checks — they trust `IRequestContext`):
 
 | Method | Gate |
 |---|---|
 | `.RequireAuth()` | Authenticated user |
 | `.RequireOrg(...types)` | User has active org membership matching org type(s) |
 | `.RequireRole(...roles)` | User has role within active org |
-| `.RequireScope(...scopes)` | JWT carries the listed scope(s) |
 | `.RequireStaff()` | Org type = staff/admin (impersonation-aware) |
 | `.RequireTrustedService()` | Service-identity JWT (not user JWT) |
 
 **Gate at route level — no handler-level re-checks.** Handlers should trust `IRequestContext`. Route-level gates make security visible at the endpoint declaration.
+
+For full per-csproj reference (JWKS provider internals, telemetry tag enumerations, failure-code debugging table, composition examples for HTTP-only / gRPC-only / both): see [`server/shared/dotnet/auth/README.md`](../server/shared/dotnet/auth/README.md), [`auth-http/README.md`](../server/shared/dotnet/auth-http/README.md), [`auth-grpc/README.md`](../server/shared/dotnet/auth-grpc/README.md).
 
 ### Translation — none (intentionally)
 

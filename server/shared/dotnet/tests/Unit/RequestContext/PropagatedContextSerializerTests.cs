@@ -22,7 +22,7 @@ public sealed class PropagatedContextSerializerTests
             RequestPath = "/admin/users/123",
             CurrentFingerprint = "fp-current-abc",
             SessionFingerprint = "fp-session-xyz",
-            FingerprintMatchScore = 87,
+            FingerprintRiskScore = 87,
             WhoIsHashId = "whois-hash-deadbeef",
         };
 
@@ -141,7 +141,7 @@ public sealed class PropagatedContextSerializerTests
         new PropagatedContext { RequestPath = "x" }.HasAnyField.Should().BeTrue();
         new PropagatedContext { CurrentFingerprint = "x" }.HasAnyField.Should().BeTrue();
         new PropagatedContext { SessionFingerprint = "x" }.HasAnyField.Should().BeTrue();
-        new PropagatedContext { FingerprintMatchScore = 0 }.HasAnyField.Should().BeTrue();
+        new PropagatedContext { FingerprintRiskScore = 0 }.HasAnyField.Should().BeTrue();
         new PropagatedContext { WhoIsHashId = "x" }.HasAnyField.Should().BeTrue();
     }
 

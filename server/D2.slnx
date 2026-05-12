@@ -13,8 +13,17 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/">
     <File Path="shared/dotnet/README.md" />
   </Folder>
+  <Folder Name="/shared/dotnet/auth/">
+    <Project Path="shared/dotnet/auth/D2.Shared.Auth.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/auth-abstractions/">
     <Project Path="shared/dotnet/auth-abstractions/D2.Shared.Auth.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/auth-http/">
+    <Project Path="shared/dotnet/auth-http/D2.Shared.Auth.Http.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/auth-grpc/">
+    <Project Path="shared/dotnet/auth-grpc/D2.Shared.Auth.Grpc.csproj" />
   </Folder>
   <Folder Name="/shared/dotnet/auth-scopes-source-gen/">
     <Project Path="shared/dotnet/auth-scopes-source-gen/D2.Shared.Auth.Scopes.SourceGen.csproj" />

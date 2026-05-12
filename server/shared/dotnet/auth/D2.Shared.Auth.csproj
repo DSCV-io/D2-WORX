@@ -1,0 +1,83 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Shared.Auth</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Inbound auth runtime — JWT validation, session liveness checking, JWKS
+    snapshot management, and the ASP.NET Core middleware / gRPC interceptor
+    that wires it all into a request pipeline.
+
+    Discovery is OIDC-canonical: D2_AUTH_ISSUER → /.well-known/openid-configuration →
+    jwks_uri via Microsoft.IdentityModel.Protocols.OpenIdConnect's
+    ConfigurationManager<OpenIdConnectConfiguration> (wrapped by HttpJwksProvider).
+
+    Sibling outbound runtime is D2.Shared.Auth.Outbound (token acquisition).
+    Both consume the abstractions slice (D2.Shared.Auth.Abstractions); Edge
+    owns the issuer side.
+  -->
+
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" />
+    <!--
+      Microsoft.IdentityModel.JsonWebTokens — provides JsonWebTokenHandler, the modern
+      RFC-compliant + faster replacement for the legacy JwtSecurityTokenHandler (no
+      mutation of inbound claim types, no shadow-mapping). Used by JwtValidator.
+    -->
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      auth-abstractions — IJwksProvider + JwksKeySetSnapshot + ISessionLivenessTracker
+      contracts; vocabulary (Audiences, JwtClaimTypes, Scopes).
+    -->
+    <ProjectReference Include="..\auth-abstractions\D2.Shared.Auth.Abstractions.csproj" />
+    <!--
+      auth-context-abstractions / context-abstractions — IAuthContext / IRequestContext
+      shapes consumed when claims-to-context mapping builds MutableRequestContext from
+      validated JWT claims.
+    -->
+    <ProjectReference Include="..\auth-context-abstractions\D2.Shared.AuthContext.Abstractions.csproj" />
+    <ProjectReference Include="..\context-abstractions\D2.Shared.Context.Abstractions.csproj" />
+    <!--
+      caching-abstractions / caching-tiered — JWKS snapshots and session liveness sentinels
+      both ride the tiered cache. Backplane subscribers use ICacheInvalidationBackplane
+      from caching-abstractions for cluster-wide rotation / revoke event delivery.
+    -->
+    <ProjectReference Include="..\caching-abstractions\D2.Shared.Caching.Abstractions.csproj" />
+    <ProjectReference Include="..\caching-tiered\D2.Shared.Caching.Tiered.csproj" />
+    <!--
+      resilience — Singleflight dedupes concurrent JWKS force-refreshes.
+    -->
+    <ProjectReference Include="..\resilience\D2.Shared.Resilience.csproj" />
+    <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
+    <ProjectReference Include="..\i18n-abstractions\D2.Shared.I18n.Abstractions.csproj" />
+    <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D2.Shared.Tests" />
+    <!--
+      The two transport-binding csprojs (D2.Shared.Auth.Http +
+      D2.Shared.Auth.Grpc) consume JwtValidator (internal sealed) directly —
+      we keep JwtValidator non-public so non-transport consumers can't bypass
+      the middleware/interceptor and call the validator standalone. The
+      transport-binding csprojs are the only legitimate callers;
+      InternalsVisibleTo grants them access without promoting the type to the
+      public surface.
+    -->
+    <InternalsVisibleTo Include="D2.Shared.Auth.Http" />
+    <InternalsVisibleTo Include="D2.Shared.Auth.Grpc" />
+  </ItemGroup>
+</Project>

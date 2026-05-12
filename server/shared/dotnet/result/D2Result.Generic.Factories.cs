@@ -112,6 +112,7 @@ public sealed partial class D2Result<TData>
     /// <inheritdoc cref="D2Result.Forbidden"/>
     public static new D2Result<TData> Forbidden(
         IReadOnlyList<TKMessage>? messages = null,
+        string? errorCode = null,
         string? traceId = null)
     {
         messages ??= [TK.Common.Errors.FORBIDDEN];
@@ -120,13 +121,14 @@ public sealed partial class D2Result<TData>
             default,
             messages,
             statusCode: HttpStatusCode.Forbidden,
-            errorCode: ErrorCodes.FORBIDDEN,
+            errorCode: errorCode ?? ErrorCodes.FORBIDDEN,
             traceId: traceId);
     }
 
     /// <inheritdoc cref="D2Result.Unauthorized"/>
     public static new D2Result<TData> Unauthorized(
         IReadOnlyList<TKMessage>? messages = null,
+        string? errorCode = null,
         string? traceId = null)
     {
         messages ??= [TK.Common.Errors.UNAUTHORIZED];
@@ -135,7 +137,7 @@ public sealed partial class D2Result<TData>
             default,
             messages,
             statusCode: HttpStatusCode.Unauthorized,
-            errorCode: ErrorCodes.UNAUTHORIZED,
+            errorCode: errorCode ?? ErrorCodes.UNAUTHORIZED,
             traceId: traceId);
     }
 
