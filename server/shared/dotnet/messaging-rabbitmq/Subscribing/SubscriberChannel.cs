@@ -12,6 +12,7 @@ using D2.Shared.Messaging.RabbitMq.Connection;
 using D2.Shared.Messaging.RabbitMq.Telemetry;
 using D2.Shared.Messaging.RabbitMq.Topology;
 using D2.Shared.Result;
+using D2.Shared.Utilities.Diagnostics;
 using D2.Shared.Utilities.Extensions;
 using global::RabbitMQ.Client;
 using global::RabbitMQ.Client.Events;

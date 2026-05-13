@@ -54,7 +54,7 @@ Copyright (c) DCSV. All rights reserved.
   the consumer would do anyway (encrypted).
 - **Cross-hop propagation of the small operational subset** —
   `RequestId` / `RequestPath` / `CurrentFingerprint` / `SessionFingerprint` /
-  `FingerprintRiskScore` / `WhoIsHashId` — rides on a single header,
+  `RiskScore` / `WhoIsHashId` — rides on a single header,
   `x-d2-context`, base64url-of-JSON-encoded `PropagatedContext`. Identical
   shape on every transport (AMQP / gRPC / HTTP). Defined in
   `D2.Shared.Context.Abstractions.PropagatedContext`.

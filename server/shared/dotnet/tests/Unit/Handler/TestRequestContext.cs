@@ -76,15 +76,13 @@ internal sealed class TestRequestContext : IRequestContext
 
     public string? RequestPath { get; init; }
 
-    public bool? IsSyntheticEnvelope { get; init; }
-
     public string? ClientIp { get; init; }
 
     public string? SessionFingerprint { get; init; }
 
     public string? CurrentFingerprint { get; init; }
 
-    public int? FingerprintRiskScore { get; init; }
+    public int? RiskScore { get; init; }
 
     public string? WhoIsHashId { get; init; }
 

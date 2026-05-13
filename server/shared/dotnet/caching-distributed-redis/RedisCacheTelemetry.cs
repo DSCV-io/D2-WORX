@@ -14,10 +14,28 @@ using System.Diagnostics.Metrics;
 /// here because Redis ops are network-bound (1-5ms) so a few ns of
 /// counter increment is invisible.
 /// </summary>
-internal static class RedisCacheTelemetry
+/// <remarks>
+/// <para>
+/// Class is <c>public</c> so the meter name constant
+/// (<see cref="METER_NAME"/>) is reachable cross-assembly — consumed by
+/// <c>D2.Shared.Telemetry</c>'s aggregation registration so cache hits /
+/// misses / sets reach the OTLP / Prometheus exporters without per-host
+/// opt-in. The counter fields remain <c>internal</c> — only the lib's own
+/// hot-path code increments them; external callers should use the
+/// <c>IDistributedCache</c> abstractions, not the meter directly.
+/// </para>
+/// </remarks>
+public static class RedisCacheTelemetry
 {
+    /// <summary>
+    /// The OpenTelemetry <see cref="Meter"/> name. Hosts add this via
+    /// <c>.WithMetrics(m =&gt; m.AddMeter(RedisCacheTelemetry.METER_NAME))</c>
+    /// when wiring telemetry without <c>D2.Shared.Telemetry</c>'s aggregator.
+    /// </summary>
+    public const string METER_NAME = "D2.Shared.Caching.Distributed.Redis";
+
     /// <summary>OTel meter for the Redis distributed cache.</summary>
-    internal static readonly Meter SR_Meter = new("D2.Shared.Caching.Distributed.Redis", "1.0.0");
+    internal static readonly Meter SR_Meter = new(METER_NAME, "1.0.0");
 
     /// <summary>Counter incremented on every cache hit.</summary>
     internal static readonly Counter<long> SR_Hits =

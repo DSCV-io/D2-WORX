@@ -118,7 +118,7 @@ builder.Services.AddOpenTelemetry()
 
 ### PII discipline — `SanitizedExceptionRender`
 
-`AuthLog` `[LoggerMessage]` delegates never accept `Exception` — exception messages can interpolate JWT bytes, request URIs, response bodies, or other runtime data that must not reach the log pipeline. Callers pass `SanitizedExceptionRender.TypeName(ex)` and `SanitizedExceptionRender.FirstFrame(ex)` as separate strings instead. The shape is enforced by `AuthLogDelegateContractTests` via reflection across the entire `AuthLog` class.
+`AuthLog` `[LoggerMessage]` delegates never accept `Exception` — exception messages can interpolate JWT bytes, request URIs, response bodies, or other runtime data that must not reach the log pipeline. Callers pass `SanitizedExceptionRender.TypeName(ex)` and `SanitizedExceptionRender.FirstFrame(ex)` as separate strings instead. The helper itself is the canonical `D2.Shared.Utilities.Diagnostics.SanitizedExceptionRender` (consumed by every lib whose log delegates carry exception-derived strings). The no-`Exception`-parameter shape is enforced locally by `AuthLogDelegateContractTests` via reflection across the entire `AuthLog` class.
 
 ## Dependencies
 
@@ -147,7 +147,6 @@ builder.Services.AddOpenTelemetry()
 - `Errors/AuthFailuresTests.cs` — every helper × (status code, error code, TK key) triple pinned.
 - `Telemetry/AuthTelemetryTests.cs` — ActivitySource + Meter names; every counter / histogram name + unit pinned; inbound vs outbound source separation.
 - `Telemetry/AuthLogDelegateContractTests.cs` — reflection scan asserting zero `Exception` parameters across `AuthLog`. PII enforcement gate.
-- `Telemetry/SanitizedExceptionRenderTests.cs` — type-name fallback, first-frame format, null-stack sentinel, anti-leak invariant (rendered strings never contain `Exception.Message`).
 - `AuthServiceCollectionExtensionsTests.cs` — `AddD2Auth` composition resolution, null-arg throws, options validation (Issuer required + HTTPS, Audience required), named HTTP client registration, idempotency.
 
 Run: `dotnet test server/shared/dotnet/tests`.

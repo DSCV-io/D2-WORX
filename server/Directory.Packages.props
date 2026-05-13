@@ -31,6 +31,11 @@ Copyright (c) DCSV. All rights reserved.
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.7" />
+    <!-- Microsoft.Extensions.Http.Resilience — AddStandardResilienceHandler()
+         (retry + circuit-break + timeout) for ConfigureHttpClientDefaults wiring
+         in D2.Shared.ServiceDefaults. Same release train (9.x) as the BCL pin
+         for resilience-stack alignment. -->
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="9.10.0" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.7" />
@@ -66,6 +71,41 @@ Copyright (c) DCSV. All rights reserved.
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
     <PackageVersion Include="Npgsql" Version="10.0.2" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+
+    <!-- Serilog — for D2.Shared.Logging. The umbrella Serilog.AspNetCore package
+         transitively pulls Serilog, Serilog.Extensions.Logging, Serilog.Sinks.Console,
+         and Microsoft.Extensions.Logging.Abstractions; UseSerilogRequestLogging
+         lives there. Serilog.Formatting.Compact is listed explicitly so the
+         CompactJsonFormatter dep is visible (prevents transitive removal silently
+         dropping the formatter). Serilog.Enrichers.Environment provides the
+         WithMachineName() enricher. The OTLP log-exporter sink lives in
+         D2.Shared.Telemetry, not here. -->
+    <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageVersion Include="Serilog.Formatting.Compact" Version="3.0.0" />
+    <PackageVersion Include="Serilog.Enrichers.Environment" Version="3.0.1" />
+
+    <!-- OpenTelemetry — for D2.Shared.Telemetry. Surgical 1.15.3 overrides on
+         OpenTelemetry.Api + OpenTelemetry.Exporter.OpenTelemetryProtocol per the
+         GHSA-g94r-2vxg-569j / GHSA-mr8r-92fq-pj8p / GHSA-q834-8qmm-v933 advisories
+         on the 1.15.0 line. Direct ref on OpenTelemetry.Api is required to override
+         the transitive 1.15.0 pulled by the Instrumentation.* packages.
+
+         Three packages remain pinned at 1.15.0-beta.1:
+         • OpenTelemetry.Exporter.Prometheus.AspNetCore
+         • OpenTelemetry.Instrumentation.GrpcNetClient
+         • OpenTelemetry.Instrumentation.Process
+         These have been on beta for >18 months but are stable in v1 production.
+         Re-evaluate when stable releases ship. -->
+    <PackageVersion Include="OpenTelemetry.Api" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.15.0-beta.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.15.0-beta.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Process" Version="1.15.0-beta.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.0" />
 
     <!-- Roslyn — for D2.Shared.I18n.SourceGen (TK constants generator). -->
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />

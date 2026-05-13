@@ -90,6 +90,9 @@ Copyright (c) DCSV. All rights reserved.
 - [ ] Multi-replica migration safety — startup migrator acquires PG advisory lock (only one replica migrates; others wait)
 - [ ] SAGA cross-service updates ordered by reversibility — write the compensable step first; compensate on later failures; `logger.fatal` on rollback failure
 - [ ] At-least-once fanout consumers are idempotent — duplicate IDs are no-ops, not failures
+- [ ] Service composition roots use `AddD2ServiceDefaults` + `UseD2DefaultPipeline` + `MapD2DefaultEndpoints` + `RunD2ServiceAsync` from `D2.Shared.ServiceDefaults` rather than re-implementing the Serilog + OTel + middleware + DI plumbing. Services that diverge (need a custom pipeline order) call the underlying lib `AddD2X` / `UseD2X` extensions directly and document why the divergence is necessary
+- [ ] Auth wiring on `AddD2ServiceDefaults` is non-null OR `SkipAuthAutoWiring = true` is explicitly set — fail-fast contract throws `InvalidOperationException` at host build otherwise. Defaulted-null `AuthConfigure` without the explicit opt-out is the failure mode the contract exists to prevent; never paper over the throw by leaving the flag unset
+- [ ] Infrastructure-path matching reuses `D2.Shared.AspNetCore.InfrastructurePathMatcher` (the canonical public matcher consumed by Logging + Telemetry + the bypass middleware) rather than per-service duplicates. Re-introducing a local copy silently fragments the path set across consumers
 
 ## Test Coverage
 

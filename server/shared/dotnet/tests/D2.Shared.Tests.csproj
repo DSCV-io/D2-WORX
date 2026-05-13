@@ -116,6 +116,7 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\resilience\D2.Shared.Resilience.csproj" />
     <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
+    <ProjectReference Include="..\aspnetcore\D2.Shared.AspNetCore.csproj" />
     <ProjectReference Include="..\auth\D2.Shared.Auth.csproj" />
     <ProjectReference Include="..\auth-abstractions\D2.Shared.Auth.Abstractions.csproj" />
     <ProjectReference Include="..\auth-http\D2.Shared.Auth.Http.csproj" />
@@ -133,6 +134,9 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\caching-local-default\D2.Shared.Caching.Local.Default.csproj" />
     <ProjectReference Include="..\caching-distributed-redis\D2.Shared.Caching.Distributed.Redis.csproj" />
     <ProjectReference Include="..\caching-tiered\D2.Shared.Caching.Tiered.csproj" />
+    <ProjectReference Include="..\logging\D2.Shared.Logging.csproj" />
+    <ProjectReference Include="..\telemetry\D2.Shared.Telemetry.csproj" />
+    <ProjectReference Include="..\service-defaults\D2.Shared.ServiceDefaults.csproj" />
     <ProjectReference Include="..\messaging-abstractions\D2.Shared.Messaging.Abstractions.csproj" />
     <ProjectReference Include="..\messaging-rabbitmq\D2.Shared.Messaging.RabbitMq.csproj" />
   </ItemGroup>

@@ -25,6 +25,7 @@ Consumed by every other shared lib + service.
 | `Attributes/RedactDataAttribute.cs` | `[RedactData(Reason = ..., CustomReason = "...")]` — marker attribute consumed reflectively by the observability layer (Serilog destructuring policy). Apply to types, properties, fields, parameters — anything `AttributeTargets.All`. |
 | `Configuration/ConnectionStringHelper.cs` | URI ↔ wire-format converters for Redis / PostgreSQL / RabbitMQ env vars. |
 | `Configuration/D2Env.cs` | `.env*` file loader for host-side scenarios (tests, IDE debug, ad-hoc `dotnet run`). No-op inside Docker Compose (Compose handles env injection natively). |
+| `Diagnostics/SanitizedExceptionRender.cs` | PII-safe exception rendering for log + telemetry + DLQ-header surfaces. `TypeName(ex)` + `FirstFrame(ex)` only — never `ex.Message`. |
 | `Enums/RedactReason.cs` | Standard reasons for redaction (`PersonalInformation`, `FinancialInformation`, `SecretInformation`, etc.) used by `[RedactData]`. |
 | `Enums/IsolationLevel.cs` | DB isolation level enum with phenomena-matrix doc, mirroring the standard SQL isolation taxonomy. |
 | `Extensions/StringExtensions.cs` | `Truthy()` / `Falsey()` / `ToNullIfEmpty()` / `CleanStr()` / `CleanDisplayStr()` / `TryParseEmail()` / `TryParsePhoneNumber()` / `GetNormalizedStrForHashing()`. |
@@ -302,6 +303,24 @@ If walk starts in C:\repo\subproj\bin\Debug:
 
 Env-var key collision detection uses the platform comparer: case-INsensitive on Windows (`PATH` and `path` are the same key), case-SENSITIVE everywhere else. D²-WORX's convention is uppercase env-var names; this matters only at the rare cross-OS edge.
 
+### `SanitizedExceptionRender` — PII-safe exception rendering
+
+`Diagnostics/SanitizedExceptionRender.cs` (namespace `D2.Shared.Utilities.Diagnostics`) is the canonical helper consumed by every lib whose `[LoggerMessage]` delegates carry exception-derived strings — pair with the no-`Exception`-parameter `[LoggerMessage]` contract (enforced by per-lib reflection-based contract tests across each log surface) to keep `Exception.Message` out of the log pipeline at the type level.
+
+```csharp
+catch (Exception ex)
+{
+    // Type FullName + first stack frame only; never ex.Message.
+    r_logger.SomeLogDelegate(
+        SanitizedExceptionRender.TypeName(ex),     // "System.InvalidOperationException"
+        SanitizedExceptionRender.FirstFrame(ex));  // "Foo.Bar at C:\...:42" or "<no frame>"
+}
+```
+
+`TypeName(ex)` returns `ex.GetType().FullName ?? ex.GetType().Name`. `FirstFrame(ex)` returns `"{Method} at {File}:{Line}"` for the first stack frame, or the literal sentinel `"<no frame>"` when no stack is available (caller doesn't need to null-check before string interpolation). Both outputs are derived purely from developer-controlled metadata — user input cannot influence either, so they're safe to log / attach to a broker header / record on a span.
+
+**Why "never `ex.Message`"**: exception messages can interpolate JWT bytes, request URIs, response bodies, configured secrets, AMQP connection URIs with embedded passwords, connection strings — any of which would land in the log pipeline / metric tags / DLQ headers verbatim if the raw `Exception` were passed.
+
 ### `IsolationLevel`
 
 Standard SQL isolation level enum with phenomena matrix. Values: `ReadUncommitted`, `ReadCommitted` (default), `RepeatableRead`, `Serializable`. Use to parametrize EF Core / Npgsql transaction scopes.
@@ -333,6 +352,7 @@ Standard SQL isolation level enum with phenomena matrix. Values: `ReadUncommitte
 - `SerializerOptions` — camelCase, string-enums, null preservation/omission, cycle tolerance.
 - `ConnectionStringHelper` — pass-through cases, URI parsing for both Redis and Postgres, default ports, URL-encoded credentials, env-var resolution including missing-var throws (with collection-isolated env-mutating tests).
 - `D2Env` — `ApplyVars` precedence (process-env wins, later files override earlier), file discovery ("first dir with any match wins"), depth-limit exhaustion, platform comparer test seam, `Load()` idempotency. Discovery tests use explicit non-existent file names to avoid loading the repo's real `.env.secrets` into the test process.
+- `Diagnostics/SanitizedExceptionRender` — type-name fallback, first-frame format, never-thrown sentinel, anti-leak invariants on both `TypeName` and `FirstFrame` (rendered strings never contain `Exception.Message` even with sensitive bait values), thrown-exception frame identification, `BrokerUnreachableException`-shaped adversarial coverage (AMQP URI password leak prevention), empty-stack-trace edge case.
 
 Run: `dotnet test server/shared/dotnet/tests`
 

@@ -19,9 +19,10 @@ using Microsoft.Extensions.Logging;
 /// <see cref="Exception"/> parameter directly — exception messages can
 /// interpolate JWT bytes, request URIs, response bodies, or other runtime
 /// data that must not reach the log pipeline. Callers pass
-/// <see cref="SanitizedExceptionRender.TypeName(Exception)"/> and
-/// <see cref="SanitizedExceptionRender.FirstFrame(Exception)"/> as separate
-/// strings instead. Enforced across the class by reflection-based contract
+/// <see cref="D2.Shared.Utilities.Diagnostics.SanitizedExceptionRender.TypeName(Exception)"/>
+/// and
+/// <see cref="D2.Shared.Utilities.Diagnostics.SanitizedExceptionRender.FirstFrame(Exception)"/>
+/// as separate strings instead. Enforced across the class by reflection-based contract
 /// tests in the test project.
 /// </para>
 /// </remarks>

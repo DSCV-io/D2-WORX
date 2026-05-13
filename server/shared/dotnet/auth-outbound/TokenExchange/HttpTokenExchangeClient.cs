@@ -13,6 +13,7 @@ using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Outbound.Telemetry;
 using D2.Shared.Resilience.Singleflight;
 using D2.Shared.Result;
+using D2.Shared.Utilities.Diagnostics;
 using D2.Shared.Utilities.Extensions;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;

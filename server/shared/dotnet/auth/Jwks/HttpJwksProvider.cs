@@ -15,6 +15,7 @@ using D2.Shared.Auth.Telemetry;
 using D2.Shared.Resilience.CircuitBreaker;
 using D2.Shared.Resilience.Singleflight;
 using D2.Shared.Result;
+using D2.Shared.Utilities.Diagnostics;
 using D2.Shared.Utilities.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

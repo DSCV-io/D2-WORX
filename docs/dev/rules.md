@@ -157,6 +157,14 @@ The #1 cost driver of multi-pass audits is "thin glue" code (DI extensions, gRPC
   - Evidence: per public constant / enum value → dedicated pin test (e.g. `[Theory] [InlineData(...)]` matrix or per-value `[Fact]`).
   - **Why**: a per-class smoke test that asserts "the constants exist and aren't empty" passes after a rename like `CLIENT_ID` → `clientid` because no test pins the actual wire value. Same anti-pattern: `ErrorCodes.X = nameof(X)` constants — the wire format consumed by clients, audit-log queries, alerting rules is the contract; a `nameof(X)` → literal replacement would silently change the wire value without breaking the build.
 
+- **1.19** For libs whose runtime composition / wire-up has its own failure modes that pure unit tests cannot surface (logging pipelines, telemetry SDK setup, middleware pipelines, message-bus subscribers, hosted services with cross-component handshake), are per-step integration tests with mocked inputs MANDATORY (not optional)?
+  - **Convention**: harness lives at `server/shared/dotnet/tests/Integration/<lib>/Infrastructure/`; per-feature test cases live at `server/shared/dotnet/tests/Integration/<lib>/<Feature>Tests.cs`.
+  - **Preferred**: in-memory capture (e.g. an in-memory Serilog sink, an in-memory OTel exporter, a TestServer-hosted middleware pipeline) over external fakes (Testcontainers, real broker). External fakes belong to the broader integration-test bucket (§1.11), not per-step composition coverage.
+  - **Negative-regression tests pin design decisions** that cross-cut runtime composition (e.g. "RemoteIp NEVER appears in the rendered log line", "the OTel resource always carries the `d2.*` attribute set", "the locked middleware order is preserved end-to-end").
+  - Evidence: per wire-up-risk lib added or modified in this scope → integration test file path + test count covering the wire-up surface; per cross-cutting design decision → corresponding negative-regression test.
+  - **Why**: pure unit tests against mocks pin the API surface; they do NOT pin the runtime behavior of the lib's composition. Real-world cite: a logging-enricher expansion caught Serilog 9.x's `AddPropertyIfAbsent` silently dropping `IDiagnosticContext.Set` calls for HTTP `RequestId` / `RequestPath` AFTER Serilog had pre-bound them — a design assumption (last-writer-wins) that pure unit tests against `IDiagnosticContext` would have rubber-stamped. The integration test surfaced the actual runtime behavior and forced an honest README + xmldoc correction.
+  - **How**: when planning a wire-up-risk lib, the Plan section includes a "Runtime composition test plan" listing the wire-up surfaces to pin via integration tests + the negative-regression assertions to guard the design decisions. Implementation ships those tests in the same step. Distinct from §1.11 (which covers integration tests for behaviors that genuinely need real-broker / real-DB orchestration); §1.19 covers in-memory wire-up tests that must exist for the lib to be considered shippable, before any external-resource tests are even considered.
+
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -464,6 +472,12 @@ The set of in-language rules that show up everywhere. Memory of these is the dif
 
 - **5.24** Foundational shared libs (the lib that DEFINES a convention) MUST eat their own dogfood. The lib that exports `Falsey()` cannot use `string.IsNullOrEmpty` internally; the lib that exports `TryParseTruthyNull` cannot hand-roll `Guid.TryParse` + null check; the lib that exports the `[RedactData]` attribute cannot log raw user input. Foundation libs are the strictest dogfood site in the codebase — any lib that publishes a "use this not that" helper must be the canonical demonstration of using it.
   - Evidence: when auditing a foundation lib, grep its OWN source for the forbidden patterns the convention prohibits; expect zero hits.
+
+- **5.25** Does production code that emits codegen'd member names (Serilog diagnostic-property keys, OTel span-tag keys, OTel metric-tag keys, JSON field names that mirror an interface property, telemetry counter labels, AMQP header names that mirror a domain property) use `nameof(SourceOfTruthType.Member)` rather than raw string literals?
+  - **EXEMPTION**: spec-pinning tests that explicitly assert "this exact name exists on the wire" KEEP literal strings — the literal IS the pin. Same exemption applies to constants whose literal value IS the wire format (e.g. JWT claim-type constants, OAuth scope constants, AMQP exchange names) — those are spec-anchored and should never be `nameof`-derived.
+  - Evidence: `grep -rEn 'diagnosticContext\.Set\("|Activity\.SetTag\("|AddTag\("|new TagList \{ \{ "' <production scope>` returns zero raw-literal hits where a `nameof(IInterface.Member)` form would compile. Test files that intentionally pin literal wire values are exempted in the per-row N/A reason.
+  - **Why**: raw literals defeat compile-time rename safety. When the source-of-truth member is renamed (e.g. `IRequestContext.SessionId` → `IRequestContext.UserSessionId`), every raw literal `"SessionId"` in production emission code silently drifts to the WRONG wire value while still compiling. Loki / Tempo / Elasticsearch queries that filtered on `SessionId` continue to work for old log lines; new log lines emit the new name; operators see a partial-data outage with no compile-time signal. `nameof(IRequestContext.UserSessionId)` makes the rename surface as a build break in every emission site, forcing an explicit migration decision.
+  - **How**: when emitting a structured-log property, span tag, metric tag, JSON field, or any other wire-format key that mirrors a domain interface member, use `nameof(IInterface.Member)` not the raw string literal. Spec-pinning tests that assert "the literal `\"SessionId\"` appears in the rendered output" stay literal (the pin is the entire point). When in doubt, the rename test is: "if I rename the source-of-truth member tomorrow, do I want this site to break the build?" If yes → `nameof`. If no → literal is correct.
 
 
 <sup>[↑ jump to top](#top)</sup>
@@ -1122,6 +1136,30 @@ This category covers BOTH (a) keeping docs in sync with code (parity) AND (b) wr
   - **Acceptable forms**: (a) coverage gate wired up + percentage claim + reference to the gate; (b) qualitative "adversarial coverage across every public surface" framing without numbers.
   - Evidence: per coverage claim → gate reference OR qualitative rephrasing.
 
+- **11.28** Are KEEP docs (READMEs, per-lib docs, xmldoc summaries / remarks, source comments) free of forward-looking framing about future / deferred work?
+  - **Forbidden tokens / phrasings** (in any KEEP doc — README, xmldoc, source comments — outside the allowlisted paths in §14.1):
+    - `the future <X> lib`
+    - `the future <X> module`
+    - `future aggregator` / `future <X> aggregator` / `future <X> <Y> aggregator` (and same for `lib` / `module` / `matcher` / `middleware` / `extractor` / `emitter` — i.e. any `future [<adjective(s)>] <noun>` framing where 0-3 adjective tokens may sit between `future` and the architectural noun, including hyphenated compound adjectives like `cross-cutting`)
+    - `<X> will eventually`
+    - `<X> will likely`
+    - `will live in <X>` / `will live there` (speculative future location of code)
+    - `when <X> ships`
+    - `until <X> is shipped`
+    - `for now`, `for the time being`, `currently this is X` (when the implication is "soon Y will be...")
+    - `not yet`, `pending <X>`
+    - `in a later phase`, `in a future phase`, `later phase`, `in future phases`
+    - any framing that requires the reader to know about a deferred future state to interpret the current text
+  - **Allowed**:
+    - Present-tense architectural-boundary statements: "X is OUT OF SCOPE for this lib", "responsibility lives in Y" (without temporal "future" / "will" verbs)
+    - Present-tense facts about cross-lib integration: "logs reach OTLP collectors via the MEL pipeline (`writeToProviders: true`); the OTLP exporter wiring is owned by separate observability infrastructure"
+    - Forward-looking framing inside the explicitly-allowlisted paths from §14.1 (`docs/v2/`, `docs/dev/deliverables/`, `MEMORY.md`, `CHANGELOG.md`) — those are tracking docs where deferred-work mention is the point
+    - Forward-looking framing inside `docs/wip/` (gitignored deliverable workspace — same allowlist rationale)
+    - **Tracking-doc allowlist (explicit cross-ref to §14.1)**: `docs/v2/V2.md`, `docs/v2/PHASE_*.md`, and any other doc explicitly marked as a phase / wave tracking doc are EXEMPT from this predicate — their job IS phase / deferred-work tracking, and forward-framing ("the future X lib", "will live in", "in a later phase") IS the legitimate content of those docs. The §14.1 allowlist (`docs/v2/`, `docs/dev/deliverables/`, `MEMORY.md`, `CHANGELOG.md`) plus `docs/wip/` (gitignored deliverable workspace) is the authoritative scope.
+  - Evidence: `grep -rEn 'the future [A-Z]|future(\s+[a-zA-Z][a-zA-Z\.-]*){0,3}\s+(aggregator|lib|module|matcher|middleware|extractor|emitter)\b|will eventually|will likely|will live (in|there)|when [A-Z][a-zA-Z\.]+ ships|until [A-Z][a-zA-Z\.]+ is shipped|for now,|for the time being|not yet [a-z]|pending [A-Z]|in a later phase|in a future phase|later phase|in future phases' <KEEP scope minus allowlist>` returns expected/empty. The `future ... <noun>` clause allows 0-3 adjective tokens (including hyphenated compounds like `cross-cutting`) between `future` and the architectural noun, with `\b` anchoring the noun so plurals like `future modules` and adjacent words like `future moduleX` aren't false-positives.
+  - **Why**: KEEP docs describe CURRENT reality, not the journey from-or-to other states. "The future Y lib's job" rots the moment Y ships (Y is then current; the doc is now wrong). It also implies a reader who knows about deferred work — exactly the v1-retrospective / phase-aware framing CLAUDE.md §3.5 forbids in KEEP docs. The §11.19 "Historical narration" anti-pattern forbids the SYMMETRIC backward-looking case (`This used to use X`); §11.28 closes the forward-looking gap. §14.1 covers the explicit phase-token case (`Phase N`, `Wave N`); §11.28 covers the generic forward-framing case without a phase number.
+  - **How**: when describing cross-lib integration in a KEEP doc, frame in present-tense with explicit responsibility boundaries. Bad: "OpenTelemetry SDK setup — that's the future D2.Shared.Telemetry lib's job." Good: "OpenTelemetry SDK setup is OUT OF SCOPE for this lib." Bad: "the canonical matcher will likely live there once `D2.Shared.AspNetCore` ships." Good: "the canonical cross-middleware matcher lives in `D2.Shared.AspNetCore` (or in this lib if the consumer set is empty)."
+
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -1217,6 +1255,11 @@ Inferring permission from prior turns is a class of bug that compounds quickly. 
   - **How**: enumerate files via Glob → Read each one individually (batch in parallel for speed) → use Grep ONLY as a final verification pass after manual reads, never as the source of truth for content audits.
   - Evidence: per content-sweep task → tool history shows Read calls per file, Grep only as verification.
 
+- **13.13** When Implementation discovers that the Plan's hypothesis is WRONG (runtime / library / framework behavior differs from what the Plan claimed), did the Implementer (a) DOCUMENT the discovered behavior in the Implementation journal section under a "Plan-vs-reality reconciliation" subsection, (b) PIN the discovered behavior via a regression test (§2.1 cross-ref), AND (c) UPDATE the per-lib README + xmldoc + journal to reflect REALITY — never force-fit the implementation to the wrong Plan claim, never silently narrow the contract to "what works"?
+  - Evidence: per Implementation that diverges from a Plan claim → journal "Plan-vs-reality reconciliation" subsection citing the Plan claim + the discovered reality + the test that pins the reality + the README / xmldoc lines updated to reflect it.
+  - **Why**: silent narrowing ("the contract now says X because that's what the runtime does, no need to mention the original hypothesis") is HONEST about behavior but DISHONEST about the discovery process. Future readers — including future Auditors and future engineers who hit the same wrong-hypothesis class — gain ZERO from a silent narrowing; they gain the entire failure-mode-prevention value from an explicit Plan-vs-reality reconciliation note. Force-fitting (the inverse — making the implementation match the wrong Plan claim by hacking around runtime behavior) is the failure mode this predicate prevents at the EXTREME end. Distinct from §13.5 — §13.5 is about whether to ASK before deviating from the locked PLAN; §13.13 is about how to DOCUMENT the discovery once the deviation is implemented (and the reality is now in the code).
+  - **How**: at Implementation, when a runtime behavior surprises you and forces a Plan deviation, add a "Plan-vs-reality reconciliation" subsection to the Implementation journal entry. Format: (1) Plan claimed: <quote>; (2) Reality: <discovered behavior with file:line cite>; (3) Test pinning reality: <test file:line>; (4) Docs updated: <README / xmldoc lines>. The subsection MUST exist regardless of whether the deviation is large or small — small deviations that go undocumented compound into trust loss.
+
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -1228,9 +1271,9 @@ KEEP docs (READMEs, CLAUDE.md, AUDIT_CHECKLIST.md, source comments, test names) 
 
 ### Predicates
 
-- **14.1** Is there NO phase / wave / sweep / audit verbiage in source or KEEP docs? Forbidden tokens: `Phase N`, `Wave N`, `Sweep N`, `Audit pass`, `audit decision`, `audit row`, `Step N.N`, `gap closure`, `pre-fix`, `post-fix`, `temporary for`, `previously lacked`.
-  - **Allowlisted paths**: `docs/v2/`, `docs/dev/deliverables/`, `MEMORY.md`, `CHANGELOG.md`.
-  - Evidence: `grep -rEn 'Phase [0-9]\|Wave [0-9]\|Sweep [0-9]\|audit pass\|audit decision\|audit row\|gap closure\|pre-fix\|post-fix\|previously lacked' <scope minus allowlist>` → expect zero.
+- **14.1** Is there NO phase / wave / sweep / audit verbiage in source or KEEP docs? Forbidden tokens: `Phase N`, `Phase-N` (hyphenated form, e.g. `Phase-0-lib`), `Wave N`, `Wave-N`, `Sweep N`, `Sweep-N`, `Audit pass`, `audit decision`, `audit row`, `Step N`, `Step-N`, `Step NA` / `Step-NA` (digit + uppercase letter suffix, e.g. `Step 1B`, `Step-1B`), `Step N.N`, `Step-N.N`, `gap closure`, `pre-fix`, `post-fix`, `temporary for`, `previously lacked`, `Plan's Risk #N`, `Plan Risk #N`, `Risk #N` (Plan-row references — describe the constraint itself instead).
+  - **Allowlisted paths**: `docs/v2/`, `docs/dev/deliverables/`, `MEMORY.md`, `CHANGELOG.md`. **Rationale**: these docs' job IS phase / wave / sweep / audit tracking — phase verbiage IS their legitimate content, not a violation. The §11.28 forward-framing predicate carries the symmetric clarification for "future X lib" / "will live in" framings (those are also legitimate inside the same allowlist + `docs/wip/`).
+  - Evidence: `grep -rEn 'Phase[ -][0-9]\|Wave[ -][0-9]\|Sweep[ -][0-9]\|Step[ -][0-9]+[A-Z]?\b\|audit pass\|audit decision\|audit row\|gap closure\|pre-fix\|post-fix\|previously lacked\|Plan'\''s Risk #[0-9]\|Plan Risk #[0-9]\|Risk #[0-9]' <scope minus allowlist>` → expect zero. The `[ -]` character class catches both spaced (`Phase 0`) and hyphenated (`Phase-0`) forms; `[0-9]+[A-Z]?` on the Step variant catches plain digits AND digit+uppercase-letter suffixes (`Step 1`, `Step-1`, `Step 1B`, `Step-1B`) without false-positiving lowercase `step into` or bare `Step`.
 
 - **14.2** Is `TODO` / `FIXME` / `HACK` absent from committed code? (Use a tracked issue instead.)
   - Evidence: `grep -rEn 'TODO\|FIXME\|HACK' <scope>` → expect zero.
@@ -1752,6 +1795,39 @@ Closure is proven ONLY by the absence of a FINDING from the next sweep's big tab
   - Evidence: open the latest big table → §24.x rows are present, each carrying a citation pointing at the relevant section of the journal (e.g. §24.0 PASS at `journal.md:120-300` for the table; §24.0c PASS at `journal.md:400` for the append-only `## Fix log` section).
   - **Why**: §24 governs the journal itself. If a sweep skips §24 (or walks it carelessly), the journal can drift out of compliance silently — append-only sections get edited, the big table gets stale rows, the findings log goes missing — and no other category fires because they only check the code, not the journal. §24 self-audit is what keeps the meta-discipline meta-honest.
   - **How**: when generating the big table, the agent walks §24 against the very journal file the table is being written into. The §24 rows are no different from §1.1 rows — same PASS/N/A/FINDING status, same file:line citations.
+
+- **24.13** Did the Implementer run the rules.md "Evidence" greps as PRE-FLIGHT gates BEFORE handing the step to the Auditor — and document the pre-flight grep results (with grep commands + zero-match counts) in the Implementation journal entry?
+  - Evidence: Implementation section in journal contains a "Pre-flight Evidence greps" subsection enumerating each grep run + result. Auditor's first sweep round should not surface mechanical-hygiene findings already covered by predicate Evidence greps (§5.1 Falsey/Truthy, §5.5 string.Empty, §5.21 build-clean, §7.14 line length, §7.15 American English, §14.1 phase tokens, §14.2 TODO/FIXME, etc.).
+  - **Why**: post-hoc Auditor sweeps catching grep-detectable misses is the most preventable category of audit findings — they cost a full Round 1 + Fixer + Round 2 to close, when the Implementer could have caught them at write-time in seconds. Round 1 surfacing zero mechanical-hygiene findings is the operational signal that pre-flight greps actually ran.
+  - **How**: at the end of Implementation, BEFORE marking the step ready for Auditor, the Implementer enumerates every grep command from rules.md "Evidence" lines whose category applies to the step's surface area, runs each, and pastes the result (`<command>` → `0 matches`) into the journal Implementation section. Any non-zero result MUST be addressed before handoff (or explicitly flagged in the journal as "intentional, see line N for justification"). The grep-run record gives the Auditor a fast independent re-verify path AND establishes a post-hoc evidence trail showing the discipline was applied, not just claimed.
+
+- **24.13.1** Were the Implementer's pre-flight Evidence greps (per §24.13) drawn from the **canonical pre-flight grep checklist** enumerated below, NOT constructed ad-hoc? Did the Implementer paste the EXACT command output (the literal grep invocation + the literal stdout — not paraphrased "0 matches") into the journal Implementation section so the Auditor can re-run the same command verbatim and reproduce the result?
+  - **Evidence**: Implementation journal section contains a `### Pre-flight Evidence greps` subsection that enumerates EVERY checklist entry whose category applies to the step's surface area, each with its literal command + literal output (zero-paraphrasing). Auditor's Round 1 sweep should not surface mechanical-hygiene findings already covered by checklist entries.
+  - **Canonical checklist** (pulled mechanically from the inline `Evidence regex:` / `Evidence:` lines below; entries marked N/A get a one-sentence step-scope reason):
+    - §1.8 (audit-prefixed test method names) — `grep -rEn 'public[[:space:]]+(async[[:space:]]+)?(void|Task|ValueTask)[[:space:]]+(Audit[0-9]+_|Audit[A-Z]_|Phase[0-9]+_|[HMFLORSQ][0-9]+_|F[0-9]+F[0-9]+L[0-9]+_)' <test files>` → expect zero
+    - §1.14 (Random.Shared in tests) — `grep -rEn 'new Random\(' tests/` → expect zero
+    - §3.1 ([LoggerMessage] no Exception param) — `grep -rEn '\[LoggerMessage' <scope>` → per hit, inspect parameter list
+    - §3.6 (no `ex.Message` logging) — `grep -rEn 'ex\.Message\|exception\.Message' <scope>` → per hit, classify safe/unsafe
+    - §4.7 (Random.Shared) — `grep -rEn 'new Random\(' <scope>` → expect zero
+    - §5.1 (Falsey/Truthy) — `grep -rEn 'IsNullOrEmpty\|IsNullOrWhiteSpace\|== Guid\.Empty' <scope>` → expect zero (or justify each)
+    - §5.2 (TryParseTruthyNull) — `grep -rEn 'Guid\.TryParse\|Enum\.TryParse' <scope>` → for each, justify or convert
+    - §5.3 (D2Result semantic factories) — `grep -rEn '\.Fail\(' <scope>` → per hit, justify or convert
+    - §5.5 (`string.Empty` vs `""`) — covered MECHANICALLY by `dotnet build` zero-StyleCop predicate (§5.21); not a separate pre-flight grep, but the Implementer should call this out as "covered by build, not pre-flight grep" in the checklist run
+    - §5.9 (no `this.` qualifier) — `grep -rEn 'this\.' <scope C# files>` → expect zero in introduced code
+    - §5.21 / §5.22 — `dotnet build` and `jb inspectcode` are MECHANICAL gates not pre-flight greps; checklist entry documents the distinction
+    - §5.25 (nameof discipline) — `grep -rEn 'diagnosticContext\.Set\("|Activity\.SetTag\("|AddTag\("|new TagList \{ \{ "' <production scope>` → expect zero raw-literal hits
+    - §6.10 (REST clients only) — `grep -rEn 'fetch\(' <scope>` → per hit, classify (allowed/forbidden)
+    - §6.12 (resolve() for navigation) — `grep -rEn 'href="/\|goto\("/' <scope>` → per hit, confirm resolve wrap
+    - §7.14 (line length ≤ 100) — `awk 'length > 100' <new/modified .cs/.ts files>` → expect empty (modulo allowlist)
+    - §7.15 (American English) — `grep -wEn 'analyse|colour|behaviour|cancelled|honour|synchronise|recognise|organisation|favourite|defence|programme|neighbour|labelled|labelling|modelled|modelling|travelled|travelling|signalled|signalling' <scope>` → expect zero (modulo allowlist)
+    - §11.9 (no CLAUDE.md / PHASE_*.md / V2.md cross-doc citation in KEEP docs) — `grep -rEn 'CLAUDE\.md\|PHASE_[0-9_]*\.md\|V2\.md' <scope KEEP files>` → expect zero
+    - §11.28 (KEEP doc forward-framing) — see §11.28 inline regex
+    - §12.1 (Paraglide translations) — `grep -rEn '"[A-Z][a-z][a-z]+ [a-z]' <scope .svelte files>` → per hit, justify or convert
+    - §12.5 (TK constants, not bare strings) — `grep -rEn '"common_errors_\|"webclient_\|"auth_' <scope>` → per hit, justify or convert
+    - §14.1 (phase / wave / sweep / audit verbiage) — see §14.1 inline regex
+    - §14.2 (no TODO/FIXME/HACK) — `grep -rEn 'TODO\|FIXME\|HACK' <scope>` → expect zero
+  - **Why**: closes both EXECUTION-fidelity (the grep ran but its result was wrong because the regex was looser than the predicate intended) AND ENUMERATION-completeness (the Implementer's pre-flight set was constructed ad-hoc and missed §11.9's cross-doc-citation pattern entirely) failure modes. Both classes of miss are addressable by formalizing the checklist + requiring literal command output (so the Auditor can re-run verbatim and surface any drift).
+  - **How**: at the END of Implementation, BEFORE marking the step ready for Auditor, enumerate every checklist entry above whose category applies to the step's surface area. For each: paste the literal command (with the actual scope substituted for `<scope>`) + the literal stdout (typically empty for "expect zero" entries). Non-zero results MUST be addressed before handoff (or explicitly flagged with `// intentional, see line N for justification`). Checklist entries that DON'T apply to the step (e.g. `*.svelte` greps for a pure-C# step) get one-sentence step-scope reasons in the journal and skipped. Future predicate additions that include an Evidence regex MUST also append themselves to the canonical checklist in the same edit — the §24.13.1 enumeration is the canonical source of truth that Implementers consult.
 
 
 <sup>[↑ jump to top](#top)</sup>

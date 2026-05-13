@@ -1,0 +1,93 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>D2.Shared.Logging</RootNamespace>
+    <!--
+      Sdk.Web defaults OutputType to Exe (intended for runnable web apps);
+      explicit Library override since this is a shared library, NOT an app
+      entry point. Sdk.Web is preferred over plain Sdk because it brings the
+      AspNetCore framework reference automatically — UseD2RequestLogging needs
+      Microsoft.AspNetCore.Builder.IApplicationBuilder + Microsoft.AspNetCore.Http
+      types. Plain Sdk + a manual FrameworkReference would be functionally
+      equivalent but not the modern convention (matches sibling Auth.Http csproj).
+    -->
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <!--
+    D2.Shared.Logging — Serilog configuration + [RedactData] enforcement layer +
+    ASP.NET Core request-logging middleware. Foundation lib for the future
+    D2.Shared.ServiceDefaults aggregator (services call AddD2Logging instead of
+    duplicating ~30 lines of LoggerConfiguration boilerplate per service).
+
+    Does NOT own:
+      • OTel SDK setup           — D2.Shared.Telemetry (sibling, ships next)
+      • OTLP log-exporter wiring — D2.Shared.Telemetry registers it on
+                                   builder.Logging; Serilog routes through the
+                                   MEL pipeline via writeToProviders: true.
+      • [LoggerMessage] delegates — this lib bootstraps the log pipeline; logging
+                                   inside its own bootstrap path would be circular.
+
+    The destructuring policy is the safety net for the [RedactData] attribute
+    (defined in D2.Shared.Utilities.Attributes); it intercepts every
+    `@`-captured object in any Serilog Log* call across every service that
+    wires AddD2Logging. Raw `{prop}` capture (no `@`) bypasses destructuring
+    and falls back to .ToString() — see README's "Destructuring discipline".
+  -->
+
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" />
+    <!--
+      Serilog.AspNetCore — the umbrella package. Pulls Serilog,
+      Serilog.Extensions.Logging, Serilog.Sinks.Console, and
+      Microsoft.Extensions.Logging.Abstractions as transitive deps.
+      UseSerilogRequestLogging lives here.
+    -->
+    <PackageReference Include="Serilog.AspNetCore" />
+    <!--
+      Serilog.Formatting.Compact — explicit listing for CompactJsonFormatter so
+      the dep is visible (prevents transitive removal silently dropping the
+      formatter our log pipeline depends on).
+    -->
+    <PackageReference Include="Serilog.Formatting.Compact" />
+    <!--
+      Serilog.Enrichers.Environment — provides Enrich.WithMachineName().
+      Other enrichers ship with Serilog core (FromLogContext, WithProperty).
+    -->
+    <PackageReference Include="Serilog.Enrichers.Environment" />
+    <!--
+      Microsoft.Extensions.{DependencyInjection,Logging,Options}.Abstractions are
+      NOT listed — Microsoft.NET.Sdk.Web's framework reference (Microsoft.AspNetCore.App)
+      ships them, and adding explicit PackageReferences triggers NU1510. Versions
+      are still pinned via Directory.Packages.props.
+    -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      utilities — [RedactData] attribute + RedactReason enum (consumed by the
+      destructuring policy); Falsey() / Truthy() string extensions for options
+      validation.
+    -->
+    <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
+    <!--
+      context-abstractions — IRequestContext interface (the strongly-typed
+      enricher dep). Foundation-tier; trivial transitive surface.
+    -->
+    <ProjectReference Include="..\context-abstractions\D2.Shared.Context.Abstractions.csproj" />
+    <!--
+      aspnetcore — canonical InfrastructurePathMatcher (consumed by
+      UseD2RequestLogging's level callback to demote infrastructure-path
+      request-completion logs to Verbose). Single source of truth shared
+      with D2.Shared.Telemetry's AspNetCore-instrumentation Filter so the
+      two libs stay aligned on /health, /alive, /metrics, /.well-known.
+    -->
+    <ProjectReference Include="..\aspnetcore\D2.Shared.AspNetCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D2.Shared.Tests" />
+  </ItemGroup>
+</Project>

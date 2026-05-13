@@ -516,6 +516,217 @@ The cache stack is fronted by `D2.Shared.Caching.Abstractions`. **Four building-
 
 ---
 
+## Composition root
+
+Every D² service composes its host through one ordered call to `D2.Shared.ServiceDefaults` rather than re-implementing the full Serilog + OTel + middleware + DI plumbing in every `Program.cs`.
+
+### `AddD2ServiceDefaults` + `UseD2DefaultPipeline` + `MapD2DefaultEndpoints` + `RunD2ServiceAsync`
+
+```csharp
+using D2.Shared.ServiceDefaults;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddD2ServiceDefaults(
+    builder.Configuration,
+    opts =>
+    {
+        opts.AuthConfigure = auth =>
+        {
+            auth.Issuer = new Uri("https://edge.example.com");
+            auth.Audience = "files-service";
+        };
+    });
+
+var app = builder.Build();
+
+app.UseD2DefaultPipeline();
+app.MapD2DefaultEndpoints();
+
+// service-specific endpoints + Map* calls here
+
+await app.RunD2ServiceAsync("files");
+```
+
+`AddD2ServiceDefaults` chains `D2Env.Load` → `AddD2Logging` → `AddD2Telemetry` → `AddD2I18n` → `AddD2Handler` → `AddD2Auth` (+ `.Http` + `.Grpc`) → `AddD2LocalCache` → `AddD2HealthChecks` → `AddD2ProblemDetails` → `AddD2Cors` → `ConfigureHttpClientDefaults(http => http.AddStandardResilienceHandler())` in that order. Each step delegates entirely to its owning lib — see [Logging](#logging), [Telemetry](#telemetry), [AspNetCore](#aspnetcore), [i18n](#i18n), [Handler](#handler), [Middleware](#middleware) (Auth subsection), and [Cache](#cache) for what each step wires.
+
+### Pure thin aggregator — ZERO logic
+
+The aggregator csproj owns no `try / catch`, no string literals beyond the per-lib option-name constants it forwards, no `[LoggerMessage]`, no `Activity.SetTag`, no handlers — purely composition + delegation. A convention test pins this: the aggregator assembly contains zero non-static public classes other than the options record. Adding logic to the aggregator instead of to the owning lib is the failure mode this constraint exists to prevent.
+
+The architectural payoff: new options on any owning lib show up at the aggregator's call site automatically through pass-through `Action<TFromOwningLib>?` delegates (`LoggingConfigure`, `TelemetryConfigure`, `AuthConfigure`, etc.) with no aggregator-side maintenance — the aggregator owns ZERO field-level configuration knowledge.
+
+### `UseD2DefaultPipeline` middleware order is LOCKED
+
+```csharp
+app.UseD2SecurityHeaders();
+app.UseD2RequestLogging();
+app.UseD2Cors();
+app.UseRouting();
+app.UseD2InfrastructureBypass();
+app.UseAuthentication();
+app.UseD2Auth();
+app.UseAuthorization();
+```
+
+No insertion points exposed. Services that need bespoke ordering call the underlying lib extensions themselves and skip the aggregator's `UseD2DefaultPipeline` entirely. The order rationale (per [RATE-LIMITING.md](RATE-LIMITING.md) §4):
+
+- **Security headers first** — OWASP headers apply to EVERY response, including responses produced by middleware that short-circuits the pipeline (CORS preflight, infrastructure bypass).
+- **Request logging early (before routing)** — even early-pipeline failures emit a structured request-completion line.
+- **CORS after RequestLogging, before Routing** — CORS preflight (`OPTIONS`) must short-circuit before routing tries to match a verb-specific endpoint.
+- **Routing then InfrastructureBypass** — bypass needs the routing-resolved endpoint on the context to invoke the matched `RequestDelegate` directly when short-circuiting.
+- **Authentication → Auth → Authorization** — JWT auth middleware (`UseD2Auth`) requires the AspNetCore authentication feature on the context (`UseAuthentication`) and runs BEFORE `UseAuthorization` so the authorization stage fires scope / policy gates against the populated `IRequestContext`.
+
+The rate-limit middleware (an Edge-only concern, owned outside the aggregator) slots BETWEEN `UseD2InfrastructureBypass` and `UseAuthentication`. Edge composes the same canonical D² stack but inserts its own `UseD2RateLimit` at that exact slot.
+
+### Auth wiring is fail-fast
+
+`AuthConfigure` MUST be non-null when `SkipAuthAutoWiring = false` (the default) — the aggregator throws `InvalidOperationException` at host build with a clear remediation message otherwise. Setting `SkipAuthAutoWiring = true` opts out of auth wiring entirely (test hosts, anonymous-only admin endpoints). The fail-fast prevents services from accidentally shipping without auth wiring; the explicit opt-out is the only way to bypass.
+
+### Opt-out matrix
+
+| `D2ServiceDefaultsOptions` flag | When `true`, the aggregator does NOT call... |
+|---|---|
+| `SkipAuthAutoWiring` | `AddD2Auth` / `AddD2AuthHttp` / `AddD2AuthGrpc` |
+| `SkipLocalCacheAutoWiring` | `AddD2LocalCache` |
+| `SkipHttpClientResilienceDefaults` | `ConfigureHttpClientDefaults(http => http.AddStandardResilienceHandler())` |
+
+Defaults are all `false`. The opt-out flag set is intentionally narrow — only components where the >95% case wants auto-wire AND a small set of services (test hosts, dry-run admin tools) need to opt out. Components without an opt-out flag (Logging, Telemetry, I18n, Handler, HealthChecks, ProblemDetails, Cors) are wired unconditionally because every D² service needs them.
+
+### 5-layer rename safety net (spec-driven codegen + nameof discipline)
+
+The combination of spec-driven codegen + the `nameof()`-over-literals discipline (forbid raw string literals when emitting codegen'd member names — Serilog property keys, OTel span tag keys, JSON field names mirroring an interface property, telemetry counter tag keys; use `nameof(SourceOfTruthType.Member)` instead) gives a 5-layer safety net against silent drift when a property is renamed in its source-of-truth spec:
+
+1. **Spec change** triggers auto-regeneration of `.g.cs` files — the new property name appears in the generated interface, the old name disappears.
+2. **Consumer compile-fail** — any consumer that referenced the old member name directly (`ctx.OldName`) breaks at the call site.
+3. **Production emission compile-fail** — any production code emitting the property as a structured-log property / span tag / wire-format key via `nameof(IRequestContext.OldName)` breaks at the `nameof` binding.
+4. **Behavioral test compile-fail** — any test that asserted against the property name via `nameof(IRequestContext.OldName)` breaks the same way.
+5. **Spec-pin literal test-fail** — for the cases where ops queries the wire shape by literal string (`service="D2.Shared.Auth"` in Loki, `IRequestContext.RequestId` in a Tempo span tag), a separate spec-pin test asserts the literal value of every emitted symbol. A rename without a corresponding spec-pin update fails the test, forcing explicit acknowledgment of the wire-format change.
+
+Layers 1-4 catch unintended drift at compile time. Layer 5 catches intended renames that weren't propagated to operator dashboards / saved queries / alert rules. Every codegen'd member that ships across an operator-visible boundary (logs, traces, metrics, wire format) earns this 5-layer treatment.
+
+---
+
+## Logging
+
+`D2.Shared.Logging` ships Serilog configuration + `[RedactData]` enforcement + an ASP.NET Core request-logging middleware. See the lib's [README](../server/shared/dotnet/logging/README.md) for the full surface (full LOG-OK / NOT-LOGGED enumeration, per-source overrides, precedence notes).
+
+### `AddD2Logging` — Serilog config + `RedactDataDestructuringPolicy` enforcement
+
+Builds the Serilog `LoggerConfiguration`, sets `Log.Logger`, wires the MEL bridge with `AddSerilog(preserveStaticLogger: true, writeToProviders: true)` so OTel log-exporter providers (registered separately by `D2.Shared.Telemetry`) flow alongside the in-process Console sink. Validates options at host build via `ValidateOnStart` (fail-fast).
+
+Per-source minimum-level overrides applied on top of the configured `MinimumLevel`: `Microsoft.AspNetCore` / `Microsoft.Extensions.Http` / `System.Net.Http` → `Warning` (suppresses framework / HTTP-client noise that Information-level produces by default); `D2` → `Debug` (keeps D² code's diagnostic logs visible).
+
+### `[RedactData]` is the canonical PII redaction mechanism
+
+The `RedactDataDestructuringPolicy` reflects over `BindingFlags.Public | Instance` PROPERTIES (not fields) on every `@`-captured object across every `ILogger.Log*` call across every service that wires `AddD2Logging`. Three rules to know:
+
+1. **Capture mode matters.** Serilog's `@`-prefix invokes destructuring (the policy fires). The default `{prop}` capture (without `@`) calls `.ToString()` and bypasses destructuring entirely. `[RedactData]` on a record + `logger.Information("user {User}", user)` (no `@`) leaks the PII the attribute was supposed to redact.
+2. **Field-level `[RedactData]` is silently ignored.** Use property syntax for redaction.
+3. **Computed properties leak through their inputs.** Redact the computed property too if its inputs are PII.
+
+| Decoration | Effect |
+|---|---|
+| `[RedactData]` on the type | Entire value rendered as `[REDACTED: {Reason}]`. |
+| `[RedactData]` on a property | Only that property is masked; siblings destructure normally. |
+| `[RedactData(CustomReason = "...")]` | The custom string replaces the enum-name reason in the placeholder. |
+
+Reason rendering uses the enum name (`PersonalInformation`, `FinancialInformation`, `SecretInformation`, `VerboseContent`, `Other`, `Unspecified`) unless a `CustomReason` overrides it.
+
+### `UseD2RequestLogging` — request-completion middleware
+
+Wraps Serilog's `UseSerilogRequestLogging` with D² defaults: infrastructure-path suppression (request-completion events for `/health`, `/alive`, `/metrics`, `/.well-known` emit at `Verbose` so the default minimum-level gate filters them out — driven by `InfrastructurePathMatcher` from `D2.Shared.AspNetCore` so the same path set is used by Logging + Telemetry + the bypass middleware), conservative diagnostic-context enrichment, and projection of the spec-driven `IRequestContext` LOG-OK fields onto the request-completion event via `D2RequestContextEnricher`.
+
+### Network/IP enrichment — what is NOT logged
+
+The middleware does NOT log the request's connection-remote IP address (`HttpContext.Connection.RemoteIpAddress`). Two reasons:
+
+- **At internal services**, that address is the upstream Edge instance's IP, not the original client's. Operators reading logs would interpret it as the user's IP, which it isn't — a data-shape footgun.
+- **At Edge**, the resolved client IP is PII. Logging it as a structured-context field would bypass the `[RedactData]` destructuring policy entirely (diagnostic-context `Set` writes a `ScalarValue` directly).
+
+The 8 explicitly-suppressed NOT-LOGGED fields (`ClientIp`, `City`, `Region`, `SubdivisionCode`, `PostalCode`, `Latitude`, `Longitude`, `Geohash`) are pinned by integration test that enumerates each one and asserts NONE appear in the rendered JSON output. Adding a new PII field to the spec without a coverage update is a contract failure that surfaces at test time.
+
+### Caller-added structured fields BYPASS `[RedactData]`
+
+Callers that chain into `RequestLoggingOptions.EnrichDiagnosticContext` to add their own structured fields MUST own PII discipline for anything they add — the diagnostic-context path emits `ScalarValue`s directly, the destructuring policy never sees them. If the data is PII, log a `[RedactData]`-decorated wrapper object using the destructuring capture mode (`{@MyObj}`) inside a `LoggerScope` instead.
+
+### `LOG-OK` / `NOT-LOGGED` field contract
+
+The full 42 LOG-OK / 8 NOT-LOGGED enumeration with per-field PII rationale + precedence notes (where `TraceId` overrides the middleware's local value but `RequestId` and `RequestPath` lose to Serilog's pre-binding on the HTTP path) lives in [logging/README.md](../server/shared/dotnet/logging/README.md). When adding a new spec-driven `IRequestContext` field, add the field to the LOG-OK / NOT-LOGGED list AND update the integration-test contract in the same change.
+
+---
+
+## Telemetry
+
+`D2.Shared.Telemetry` ships OpenTelemetry SDK setup (traces + metrics + logs) + per-signal OTLP exporters + an IP-restricted Prometheus scraping endpoint + cross-lib `ActivitySource` / `Meter` aggregation. See the lib's [README](../server/shared/dotnet/telemetry/README.md) for the full options + per-instrumentation enumeration.
+
+### `AddD2Telemetry` — OTel SDK + auto-instrumentations + cross-lib aggregation
+
+Registers the OpenTelemetry SDK builder, the per-signal OTLP exporters whose corresponding endpoint env vars (`OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` / `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` / `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`) are truthy, the in-process Prometheus exporter (when `EnablePrometheusExporter` is true, default `true`), and the standard auto-instrumentations:
+
+| Instrumentation | Default | Notes |
+|---|---|---|
+| AspNetCore inbound | enabled | `Filter` callback excludes infrastructure paths via the canonical `InfrastructurePathMatcher` from `D2.Shared.AspNetCore`. `RecordException = true` captures exception type + stack trace as span events (no PII — diagnostic-class data). |
+| HttpClient outbound | enabled | `FilterHttpRequestMessage` callback suppresses spans for outbound calls whose URI starts with any configured OTLP endpoint (prevents infinite-loop instrumentation against the OTel exporter itself). `EnrichWithHttpRequestMessage` re-sets `url.full` to scheme + host + port + path (no query string) as defense-in-depth against future SDK regressions on query-string PII. |
+| GrpcNetClient outbound | enabled | Standard span tags. |
+| Process metrics | enabled | CPU, memory, fd count. |
+| Runtime metrics | enabled | GC, threadpool, JIT. |
+| Prometheus exporter | enabled | In-process scraping endpoint mapped via `MapD2PrometheusEndpoint`. |
+
+### `OTEL_SDK_DISABLED` — symmetric short-circuit
+
+When the canonical OpenTelemetry env var `OTEL_SDK_DISABLED` is set to `"true"` (case-insensitive), BOTH `AddD2Telemetry` and `MapD2PrometheusEndpoint` short-circuit:
+
+- `AddD2Telemetry` returns the unmutated `services` collection — no providers / exporters / instrumentations registered.
+- `MapD2PrometheusEndpoint` returns the unmutated `endpoints` builder — no `/metrics` route mapped.
+
+Used in E2E tests where the OTel SDK is undesired (the SDK's per-process singleton state otherwise contaminates tests that build multiple hosts in sequence). Consumers MUST tolerate the absence of both surfaces under the kill-switch condition — code that resolves `MeterProvider` / `TracerProvider` from DI MUST tolerate absence.
+
+### `MapD2PrometheusEndpoint` — IP-restricted scrape endpoint
+
+Maps `/metrics` via OpenTelemetry's `MapPrometheusScrapingEndpoint`, with an endpoint filter that returns `403 Forbidden` for requests whose connection-remote IP is neither loopback nor RFC 1918 private. The IP restriction defends against accidental public exposure of the metrics surface (cardinality / hostname / version disclosure) when a service is mistakenly exposed without an upstream reverse proxy filter.
+
+### Cross-lib `ActivitySource` / `Meter` aggregation — single `AddD2Telemetry()` call
+
+Every shared lib that publishes its `ActivitySource` / `Meter` name through a `public const string` symbol gets aggregated into the SDK builder via `AddD2Telemetry` so a single call wires the entire shared-lib telemetry surface into the configured exporters. The aggregation table currently covers 4 cross-lib `ActivitySource`s (`Handler`, `Auth`, `Auth.Outbound`, `Messaging.RabbitMq`) + 6 cross-lib `Meter`s (the same 4 + `Caching.Distributed.Redis` + `Caching.Local.Default`).
+
+Each cross-lib reference is a `public const string` symbol (NOT a literal string) so a rename in any owning lib surfaces as a build break in `D2.Shared.Telemetry` at compile time. Per the [5-layer rename safety net](#5-layer-rename-safety-net-spec-driven-codegen--nameof-discipline) above, spec-pin tests additionally pin the literal wire values so an in-place value change without a symbol rename surfaces as a test failure — operators querying Loki / Tempo / Prometheus by literal source name (`service="D2.Shared.Auth"`) are protected from silent wire-format drift.
+
+### Cooperation with `D2.Shared.Logging` — independent at compile time, MEL bridge at runtime
+
+The two libs are intentionally independent at the csproj level — neither references the other. They cooperate at runtime via the MEL bridge: `AddD2Logging` sets `writeToProviders: true` on the Serilog → MEL bridge, and the OTLP log-exporter `ILoggerProvider` registered by `AddD2Telemetry` receives the same log events that Serilog routes to its console sink. Hosts may wire one without the other.
+
+---
+
+## AspNetCore
+
+`D2.Shared.AspNetCore` ships cross-cutting AspNetCore middleware + endpoint primitives every D² service composition root needs but that don't belong on a single domain lib. See the lib's [README](../server/shared/dotnet/aspnetcore/README.md) for the full surface.
+
+### Six public extensions
+
+| Extension | What it does |
+|---|---|
+| `UseD2SecurityHeaders` | Writes an OWASP-aligned default header set on every response via `HttpResponse.OnStarting`. HSTS only on HTTPS (the spec forbids HSTS on HTTP). HSTS preload submission is intentionally NOT included by default — preload is a one-way door (once the apex domain is in the browser-built-in preload list, removal is slow and incomplete). Each service that wants preload submission opts in by setting `StrictTransportSecurity` to a value that includes `preload`. |
+| `AddD2Cors` + `UseD2Cors` | Registers the `D2_DEFAULT` CORS policy reading the canonical indexed env-var convention `D2_CORS_ORIGINS__0`, `D2_CORS_ORIGINS__1`, ... per .NET `IConfiguration` array binding. Validates fail-closed at host build via `ValidateOnStart()` — empty origins list is a deliberate decision, not an oversight. The `AllowCredentials = true` + `Origins = ["*"]` combination is forbidden per CORS spec; the validator rejects it at host build. |
+| `UseD2InfrastructureBypass` | For each request, sets `HttpContext.Items["D2.IsInfrastructure"]` to a boolean indicating whether the request path matches the configured infrastructure-path list (default: `/health`, `/alive`, `/metrics`, `/.well-known`). Default short-circuit mode (`TagOnly = false`) invokes the matched endpoint's `RequestDelegate` directly when the path matches, bypassing every middleware registered AFTER this one — heavy business middleware (rate limiting, idempotency, auth) does NOT execute on cheap probe / metrics / well-known requests. |
+| `AddD2ProblemDetails` | RFC 7807 customizer that sets `extensions["traceId"]` from `Activity.Current?.TraceId.ToString()` falling back to `HttpContext.TraceIdentifier`; reads `extensions["correlationId"]` from the configured request header (`X-Correlation-Id` by default; capped at 128 chars; values exceeding the cap are treated as absent and a fresh GUID is generated); sets the RFC 7807 `instance` field to `{Method} {Path}` when `IncludeRequestPath` is true. PII discipline: NEVER reads `HttpContext.Request.QueryString`, `Request.Body`, or any user-input source. |
+| `AddD2HealthChecks` + `MapD2HealthEndpoints` | `AddD2HealthChecks` registers a baseline `"self"` check tagged `"live"` that always returns `Healthy`; idempotent. Per-service infrastructure layers add their own checks (DB, Redis, RabbitMQ, KeyCustodian) by chaining `services.AddHealthChecks().AddDbContextCheck<...>()` etc. `MapD2HealthEndpoints` maps `/health` (full) + `/alive` (only `"live"`-tagged checks — the kubernetes-conventional liveness split). |
+| `RunD2ServiceAsync` | Async wrapper around `WebApplication.RunAsync()` that logs `Log.Information("Starting {ServiceName} ({EnvironmentName})")` at entry, on exception logs `Log.Fatal` with PII-safe exception rendering — type FullName + first stack frame only, NEVER `ex.Message`, since exception messages at host startup can carry connection strings + configured secrets + host-environment specifics. In `finally`: awaits `Log.CloseAndFlushAsync()` to drain Serilog's buffered batch sink before process exit. |
+
+### `InfrastructurePathMatcher` — single source of truth
+
+The public static `InfrastructurePathMatcher` is the canonical infrastructure-path matcher across the D² shared-lib stack. Consumed by:
+
+- `D2.Shared.Logging.WebApplicationLoggingExtensions.UseD2RequestLogging` to down-rank request-completion log lines for infrastructure endpoints to `Verbose`
+- `D2.Shared.Telemetry.TelemetryServiceCollectionExtensions.AddD2Telemetry` in the AspNetCore-instrumentation `Filter` callback to suppress auto-spans
+- `UseD2InfrastructureBypass` (this lib)
+
+Uses the AspNetCore-canonical `PathString.StartsWithSegments(PathString)` overload — case-insensitive, segment-boundary-matched (`/healthz` does NOT match prefix `/health`; `/health/db` does). Empty `PathString`, null configured list, and per-entry null / empty / whitespace prefixes are all defensive no-ops (returns `false` rather than throwing).
+
+The path set (`/health`, `/alive`, `/metrics`, `/.well-known`) stays aligned across the three consumers without per-lib literal duplication. Earlier per-lib `internal` duplicates were collapsed into this canonical public matcher in the same change that introduced `D2.Shared.AspNetCore` so all consumers stay aligned on the path set.
+
+---
+
 ## Middleware
 
 ### Idempotency — SET NX + sentinel pattern

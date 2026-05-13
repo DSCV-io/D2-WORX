@@ -15,7 +15,16 @@ using System.Diagnostics.Metrics;
 /// guidance — generic-static-field issues + listener attachment cost
 /// dominate when these are per-handler instances.
 /// </summary>
-internal static class MessagingTelemetry
+/// <remarks>
+/// Class is <c>public</c> so the source / meter name constant
+/// (<see cref="SOURCE_NAME"/>) is reachable cross-assembly — consumed by
+/// <c>D2.Shared.Telemetry</c>'s aggregation registration so messaging
+/// publish / consume spans + metrics reach the OTLP / Prometheus exporters
+/// without per-host opt-in. The activity source / meter / counter / histogram
+/// fields remain <c>internal</c> — only the lib's own publish + consume
+/// hot-path code emits to them.
+/// </remarks>
+public static class MessagingTelemetry
 {
     /// <summary>OTel source / meter name for the messaging-rabbitmq lib.</summary>
     public const string SOURCE_NAME = "D2.Shared.Messaging.RabbitMq";

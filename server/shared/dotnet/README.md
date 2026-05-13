@@ -32,7 +32,10 @@ Per project convention, every library has its own `README.md`. The list below po
 | [`handler-repo/`](handler-repo/README.md) | **Built** | EF-flavored `BaseRepoHandler` — sits on top of `BaseHandler` and converts captured exceptions into typed `D2Result` failures via an injected `IDbExceptionClassifier`. Provider-specific knowledge lives in sibling packages (`handler-repo-postgres/`, future `handler-repo-sqlserver/`, etc.) — this csproj has zero provider deps. | [PATTERNS.md](../../../docs/PATTERNS.md) Repository section |
 | [`handler-repo-postgres/`](handler-repo-postgres/README.md) | **Built** | PostgreSQL implementation of `IDbExceptionClassifier`. Plugs into `BaseRepoHandler` via DI (`services.AddD2Postgres()`). Owns the SQLSTATE matrix + the wrapping rules for `DbUpdateException` ↔ `PostgresException` ↔ raw `NpgsqlException`. | [PATTERNS.md](../../../docs/PATTERNS.md) Repository section |
 | [`tests/`](tests/README.md) | **Built** | Test infrastructure for ALL shared libs (deliberately one project — overkill to spin up a separate test csproj for every lightweight lib). | [TESTS.md](../../../docs/TESTS.md) |
-| [`service-defaults/`](service-defaults/README.md) | Placeholder | Service composition root — OTel SDK bootstrap, Serilog setup, structured request logging, `[RedactData]` destructuring policy registration. | [PATTERNS.md](../../../docs/PATTERNS.md) (RedactDataDestructuringPolicy mechanics) |
+| [`logging/`](logging/README.md) | **Built** | Serilog configuration + `RedactDataDestructuringPolicy` enforcement of `[RedactData]` + `UseD2RequestLogging` middleware. Always-on `D2RequestContextEnricher` projects 42 LOG-OK fields off the spec-driven `IRequestContext` (Tracing / Auth-Identity / Auth-Token+Trust / Auth-Org / Auth-Impersonation / Scopes / Trust-Risk / Fingerprints / WhoIs-Geo / WhoIs-Network-Privacy / WhoIs-ASN clusters) onto the request-completion log line; 8 NOT-LOGGED fields (raw IP + sub-country geo + lat/long/geohash) explicitly suppressed and pinned by integration test. Per-source minimum-level overrides (Microsoft.AspNetCore / Microsoft.Extensions.Http / System.Net.Http → Warning; D2 → Debug). `CompactJsonFormatter` console sink + MEL bridge with `writeToProviders: true` so observability infra can additionally route through OTLP log exporter. `AddD2Logging` validates options at host build via `ValidateOnStart` (fail-fast). | [PATTERNS.md](../../../docs/PATTERNS.md) Logging section |
+| [`telemetry/`](telemetry/README.md) | **Built** | OpenTelemetry SDK setup (traces + metrics + logs) + per-signal OTLP exporters (env-var-gated truthy) + `MapD2PrometheusEndpoint` (IP-restricted to loopback + RFC 1918 private ranges) + AspNetCore / HttpClient / GrpcNetClient / Process / Runtime auto-instrumentations. Aggregates 4 cross-lib `ActivitySource`s (Handler, Auth, Auth.Outbound, Messaging.RabbitMq) + 6 cross-lib `Meter`s (the same 4 + Caching.Distributed.Redis + Caching.Local.Default) into a single `AddD2Telemetry()` call via `public const string` symbol references for compile-time rename safety, plus spec-pin tests for literal-value drift safety. Honors `OTEL_SDK_DISABLED` symmetrically across `AddD2Telemetry` + `MapD2PrometheusEndpoint`. AspNetCore-instrumentation `Filter` callback excludes infrastructure paths via the canonical `InfrastructurePathMatcher` from `D2.Shared.AspNetCore`; HttpClient instrumentation's self-referential filter prevents infinite-loop instrumentation against the configured OTLP endpoints. | [PATTERNS.md](../../../docs/PATTERNS.md) Telemetry section |
+| [`aspnetcore/`](aspnetcore/README.md) | **Built** | Cross-cutting ASP.NET Core middleware + endpoint primitives — `UseD2SecurityHeaders` (OWASP-aligned defaults; HSTS only on HTTPS, preload submission opt-in only because it's a one-way door), `AddD2Cors` + `UseD2Cors` (`D2_DEFAULT` policy reading the canonical indexed `D2_CORS_ORIGINS__*` env-var convention; fail-closed via `ValidateOnStart` on empty origins), `UseD2InfrastructureBypass` (default short-circuit mode invokes the matched endpoint's `RequestDelegate` directly so heavy business middleware does NOT run on cheap probe / metrics / well-known requests), `AddD2ProblemDetails` (RFC 7807 customizer with `traceId` / `correlationId` / `instance` enrichment + 128-char inbound correlation cap), `AddD2HealthChecks` + `MapD2HealthEndpoints` (`/health` full + `/alive` live-tag split), `RunD2ServiceAsync` (PII-safe `Log.Fatal` startup-failure rendering — type FullName + first stack frame only, NEVER `ex.Message`). Owns the public `InfrastructurePathMatcher` (the single source of truth consumed by Logging's request-logging middleware AND Telemetry's AspNetCore-instrumentation `Filter` callback so all three libs stay aligned on the path set without per-lib literal duplication). | [PATTERNS.md](../../../docs/PATTERNS.md) AspNetCore section |
+| [`service-defaults/`](service-defaults/README.md) | **Built** | Pure thin-aggregator composition-root convenience csproj — `AddD2ServiceDefaults` + `UseD2DefaultPipeline` (LOCKED middleware order; no insertion points) + `MapD2DefaultEndpoints` + `RunD2ServiceAsync`. Wires `D2.Shared.Logging`, `D2.Shared.Telemetry`, `D2.Shared.I18n`, `D2.Shared.Handler`, `D2.Shared.Auth` (+ `.Http` + `.Grpc`), `D2.Shared.Caching.Local.Default`, `D2.Shared.AspNetCore`, plus standard `HttpClient` resilience (BCL `AddStandardResilienceHandler`) into one ordered call. Aggregator owns ZERO logic — every behavior lives in an owning lib; new options on owning libs surface at the call site automatically through pass-through `Action<TFromOwningLib>?` delegates with no aggregator-side maintenance. Auth wiring is fail-fast: `AuthConfigure` MUST be non-null when `SkipAuthAutoWiring = false` (the default); set `SkipAuthAutoWiring = true` to opt out (test hosts, anonymous-only admin tools). Pattern parity inspiration: `Microsoft.Extensions.ServiceDefaults` from .NET Aspire, adapted for the D² stack. | [PATTERNS.md](../../../docs/PATTERNS.md) Composition root section |
 | [`caching-abstractions/`](caching-abstractions/README.md) | **Built** | Shared abstractions for the whole cache stack. Three building-block interfaces (`ICacheBasic`, `ICacheAtomic`, `ICacheBroadcast`) are composed by three marker interfaces — `ILocalCache` (basic + atomic, no broadcast — per-process scope), `IDistributedCache` (all three — cluster scope, every read hits remote), `ITieredCache` (all three — L1+L2 composed, reads from L1 first). Distributed and tiered are method-for-method identical; the marker name carries behavioral intent at the dependency site. All ops return `D2Result<T>` / `D2Result`. | [PATTERNS.md](../../../docs/PATTERNS.md) Cache section |
 | [`caching-local-default/`](caching-local-default/README.md) | **Built** | `DefaultLocalCache : ILocalCache` wraps `Microsoft.Extensions.Caching.Memory.IMemoryCache` for value storage + a `ConcurrentDictionary` for the in-process lock state. Direct method dispatch — no `BaseHandler` (per-call handler overhead would be 100× the ~60ns cache work). Static `Meter` for hit/miss/eviction counters. Always sets `Size=1` per entry so `MaxEntries` enforces a real entry-count cap (mitigates the IMemoryCache SizeLimit footgun). | [PATTERNS.md](../../../docs/PATTERNS.md) Cache section |
 | [`caching-distributed-redis/`](caching-distributed-redis/README.md) | **Built** | `RedisDistributedCache : IDistributedCache` over StackExchange.Redis — implements all four building blocks (Basic + Atomic + Broadcast + Set). `RedisCacheInvalidationBackplane : ICacheInvalidationBackplane` via Redis pub/sub. `JsonCacheSerializer` default. Internal Lua scripts make compound atomic ops single-round-trip (Increment+TTL, ReleaseLock compare-and-delete, SADD+TTL on first-add). Aggregate `Meter` for hits/misses/sets/removes/broadcasts/errors. Future implementations (Valkey, Memcached, Garnet) would land as sibling `caching-distributed-{impl}/` projects with the same surface. | [PATTERNS.md](../../../docs/PATTERNS.md) Cache section |
@@ -168,6 +171,20 @@ graph LR
         MsgRabbit --> MsgAbs
     end
 
+    subgraph COMPOSITION["Composition root + cross-cutting host plumbing"]
+        direction TB
+        AspNetCore[aspnetcore]
+        Logging[logging]
+        Telemetry[telemetry]
+        ServiceDefaults[service-defaults]
+
+        Logging --> AspNetCore
+        Telemetry --> AspNetCore
+        ServiceDefaults --> AspNetCore
+        ServiceDefaults --> Logging
+        ServiceDefaults --> Telemetry
+    end
+
     %% Cross-subgraph dependencies (only direct refs that aren't transitively
     %% implied by an intra-subgraph path).
     CtxAbs --> Utilities
@@ -190,8 +207,25 @@ graph LR
     MsgRabbit --> Encryption
     MsgRabbit --> CacheAbs
     MsgRabbit --> Resilience
+    AspNetCore --> Utilities
+    Logging --> Utilities
+    Logging --> CtxAbs
+    Telemetry --> Utilities
+    Telemetry --> Handler
+    Telemetry --> Auth
+    Telemetry --> AuthOutbound
+    Telemetry --> MsgRabbit
+    Telemetry --> CacheRedis
+    Telemetry --> CacheLocal
+    ServiceDefaults --> I18n
+    ServiceDefaults --> Handler
+    ServiceDefaults --> Auth
+    ServiceDefaults --> AuthHttp
+    ServiceDefaults --> AuthGrpc
+    ServiceDefaults --> CacheLocal
+    ServiceDefaults --> Utilities
 
-    class I18nAbs,I18n,Result,Utilities,Resilience,AuthAbs,AuthCtxAbs,CtxAbs,HandlerAbs,Handler,RepoAbs,Repo,RepoPg,Encryption,CacheAbs,CacheLocal,CacheRedis,CacheTiered,Auth,AuthHttp,AuthGrpc,AuthOutbound,MsgAbs,MsgRabbit,MsgSrcGen built
+    class I18nAbs,I18n,Result,Utilities,Resilience,AuthAbs,AuthCtxAbs,CtxAbs,HandlerAbs,Handler,RepoAbs,Repo,RepoPg,Encryption,CacheAbs,CacheLocal,CacheRedis,CacheTiered,Auth,AuthHttp,AuthGrpc,AuthOutbound,MsgAbs,MsgRabbit,MsgSrcGen,AspNetCore,Logging,Telemetry,ServiceDefaults built
 ```
 
 **Reading the chart:**
@@ -237,6 +271,18 @@ The cross-subgraph arrows that ARE drawn capture every load-bearing inter-cluste
 - `messaging-rabbitmq → encryption` — `IPayloadCrypto` per encryption domain is keyed-DI-resolved when composing message bodies
 - `messaging-rabbitmq → caching-abstractions` — `CacheIdempotencyStore` backs `IMessageIdempotencyStore` onto `IDistributedCache`
 - `messaging-rabbitmq → resilience` — `RetryHelper.RetryAsync` drives the publisher's transient-retry loop
+- `aspnetcore → utilities` — `Falsey()` / `Truthy()` / `ToNullIfEmpty()` for header-override tri-state, options validation, env-var resolution
+- `logging → aspnetcore` — `UseD2RequestLogging`'s level callback consumes the public `InfrastructurePathMatcher` to demote infrastructure-path request-completion logs to `Verbose`. Single source of truth shared with `telemetry`.
+- `logging → context-abstractions` — `D2RequestContextEnricher` projects 42 LOG-OK fields off the spec-driven `IRequestContext` onto the request-completion log line; the strongly-typed dep makes a spec-driven field rename surface as a build break in the enricher
+- `telemetry → aspnetcore` — AspNetCore-instrumentation `Filter` callback consumes the same public `InfrastructurePathMatcher` that `logging` uses; aligned path set without per-lib literal duplication
+- `telemetry → handler / auth / auth-outbound / messaging-rabbitmq / caching-distributed-redis / caching-local-default` — `AddD2Telemetry` aggregates each owning lib's `public const string` `ActivitySource` / `Meter` name through these refs (compile-time symbol references, not literal strings) so a rename in any owning lib surfaces as a build break here
+- `service-defaults → logging / telemetry / aspnetcore / i18n / handler / auth / auth-http / auth-grpc / caching-local-default / utilities` — pure thin-aggregator composition root; each ref is one of the 10 owning-lib `AddD2X` / `UseD2X` extensions the aggregator chains in the LOCKED middleware order
+
+**Load-bearing direct edges in COMPOSITION cluster — do NOT prune:**
+
+- `service-defaults → utilities` is direct (transitive paths exist via `service-defaults → logging → utilities` etc.) because the aggregator calls `D2Env.Load()` directly during `AddD2ServiceDefaults` and the dep MUST be present at compile time.
+- `service-defaults → aspnetcore` is direct (transitive via `service-defaults → logging → aspnetcore`) because the aggregator's `UseD2DefaultPipeline` invokes `UseD2SecurityHeaders` / `UseD2Cors` / `UseD2InfrastructureBypass` / `MapD2HealthEndpoints` / `RunD2ServiceAsync` from `aspnetcore` directly, NOT through `logging`. Pruning would silently break the aggregator's pipeline composition.
+- `telemetry → aspnetcore` and `logging → aspnetcore` are BOTH direct (no transitive path exists between `logging` and `telemetry` — they're independent libs that cooperate at runtime via the MEL bridge). The single-source-of-truth `InfrastructurePathMatcher` rule depends on both reaching it directly.
 
 ## Conventions
 

@@ -61,7 +61,7 @@ using Microsoft.IdentityModel.Tokens;
 /// <strong>PII discipline</strong> — JWT bytes, claim values, and <c>kid</c>
 /// strings NEVER reach logs / span attributes / metric tags / exception
 /// renderings. Logged outcomes are from a closed enumeration; exception
-/// renderings flow through <see cref="SanitizedExceptionRender"/>.
+/// renderings flow through <see cref="D2.Shared.Utilities.Diagnostics.SanitizedExceptionRender"/>.
 /// </para>
 /// <para>
 /// <strong>Thread-safety</strong> — registered as a singleton.

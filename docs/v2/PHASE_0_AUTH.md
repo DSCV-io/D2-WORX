@@ -15,12 +15,12 @@ Copyright (c) DCSV. All rights reserved.
 > **⚠ Deliverable 0002 scope tightening (2026-05-10)** — the inbound runtime's authoritative
 > file/scope layout now lives in [`docs/wip/0002-auth-inbound/README.md`](../wip/0002-auth-inbound/README.md).
 > Several decisions in this doc were narrowed during PLAN: **`SessionSnapshot` data record**,
-> **`EffectivePolicy`**, **`FingerprintComparer` / `FingerprintRiskScorer`**, and
+> **`EffectivePolicy`**, **`FingerprintComparer` / `RiskScorer`**, and
 > **`ISessionLivenessWriter`** are **out of scope for this lib** — they're Edge-internal concerns
 > deferred to Phase 3. Q14 stays (Pattern A); **Q15 reverses to option (a) sentinel-only**;
 > the implied writer-side interface from §6.3 is dropped (Edge writes its own snapshot to its own
 > store; the cross-lib contract is the cache backplane, not a typed writer interface).
-> The `FingerprintMatchScore` field is also renamed to **`FingerprintRiskScore`** with semantics
+> The `FingerprintMatchScore` field is also renamed to **`RiskScore`** with semantics
 > inverted (0 = no risk, 100 = max risk; higher = worse). Edge computes it; this lib only reads/propagates.
 > Where this doc says "this lib computes FingerprintMatchScore" or describes a `SessionSnapshot`
 > record, treat the wip README as authoritative.
@@ -67,7 +67,7 @@ issuer.
 - **Own session storage.** Sessions live in `auth_db.session` + Redis on Edge; this lib only
   *tracks* revocations and *checks* liveness against cached state.
 - **Run the risk engine.** The sliding-window risk tracker (impossible travel, ASN diversity, OTP
-  step-up triggers) lives in Edge — Phase 3. **Edge also computes the per-request `FingerprintRiskScore`**
+  step-up triggers) lives in Edge — Phase 3. **Edge also computes the per-request `RiskScore`**
   (composite — fingerprint-mismatch + geo-velocity + ASN/Tor/proxy + policy contributions; 0-100, higher = worse)
   and populates it on `IRequestContext` before propagating the request to backend services. This lib only reads
   the score from claims/envelope and surfaces it on `IRequestContext`; it never computes it.
@@ -261,7 +261,7 @@ mapper needs to consume them:
 |---|---|---|
 | `d2_kind` (top-level) | §3.1 says "only inside `act` chain entries"; `JwtClaimTypes.ACT_KIND` doc explicitly says "There is NO top-level `d2_kind` claim" | Add a top-level `d2_kind` claim carrying the anon/authed discriminator (values keyed off the `ActorKind` enum, plus a new `Anonymous` variant — see §6.4 below). The inside-`act` `d2_kind` (consent/force) stays as-is; lookup paths differ (`d2_kind` vs `act.d2_kind`). |
 | `d2_whois_id` | not defined | New top-level claim — opaque ID into the WhoIs lookup (already cached per IPinfo Singleflight per `RATE-LIMITING.md` §4). Tamper-evident via JWT signature. |
-| `d2_fingerprint_score` | not defined; `FingerprintRiskScore` is on `IRequestContext` propagated via `x-d2-context` header | Optional top-level claim — Edge can elect to bake the `FingerprintRiskScore` into the JWT (vs propagating only via header) when minting anon tokens, since anon visitors have no other identity binding. Authed JWTs continue to carry the score via `IRequestContext` / header propagation. |
+| `d2_fingerprint_score` | not defined; `RiskScore` is on `IRequestContext` propagated via `x-d2-context` header | Optional top-level claim — Edge can elect to bake the `RiskScore` into the JWT (vs propagating only via header) when minting anon tokens, since anon visitors have no other identity binding. Authed JWTs continue to carry the score via `IRequestContext` / header propagation. |
 
 **ActorKind enum** — Phase 3 needs a new `Anonymous` variant added alongside the existing
 `Service` / `Impersonation` values. Not a breaking change at the JWT layer (top-level `d2_kind`
@@ -323,7 +323,7 @@ is a new claim, not a redefinition); is a vocabulary addition in `D2.Shared.Auth
    `IRequestContext.IsAuthenticated` trinary already supports this (`true` / `false` / `null`);
    audit emitters propagate the resolved value.
 4. **Risk engine inputs.** The Phase 3 risk engine — already specified to compute the composite
-   `FingerprintRiskScore` (see Q6 revision in §12) — must treat anon JWTs as their own
+   `RiskScore` (see Q6 revision in §12) — must treat anon JWTs as their own
    risk-scoring lane: anon `sub` has a fresh 15-min lifetime, so historical-pattern signals
    (geo-velocity drift, sliding-window risk tracker) need a longer-lived anon-visitor identity
    to key on (the cookie's session-id, NOT the anon `sub`).
@@ -506,7 +506,7 @@ server/shared/dotnet/
 │   │   │                                  clock skew (default 30s)
 │   │   └── ClaimsToContextMapper.cs     # JWT claims → MutableRequestContext
 │   │                                    # (FingerprintComparer dropped — Edge computes the
-│   │                                    #  composite FingerprintRiskScore; this lib propagates
+│   │                                    #  composite RiskScore; this lib propagates
 │   │                                    #  it from the JWT/envelope, never computes)
 │   ├── Jwks/
 │   │   ├── HttpJwksProvider.cs          # default impl using
@@ -628,7 +628,7 @@ clients (cached locally, refreshed before expiry). All five components inject in
    - Map every claim per `IAuthContext.spec.json` → `MutableRequestContext`.
 5. **Session liveness check** via `ISessionLivenessTracker.IsAliveAsync(d2_session_id)`. Sentinel
    in `ITieredCache` keyed `session:{id}`. Revoked → 401. Cache outage → 401 fail-closed.
-6. **Read** propagated `FingerprintRiskScore` from claims / context envelope (computed upstream by
+6. **Read** propagated `RiskScore` from claims / context envelope (computed upstream by
    Edge's risk engine — this lib does not compute it, never compares fingerprints itself).
 7. **Populate `IRequestContext`** (network + WhoIs + risk fields ride along on the gRPC metadata
    from Edge; this lib's role is mapping claims → context, not enrichment).
@@ -1235,7 +1235,7 @@ Q, it's flagged.
 - `SessionLivenessTracker` — `IsAliveAsync` alive case, revoked case, L2 fallback when L1 expires;
   cache outage → `ServiceUnavailable` (fail-closed); `Guid.Empty` → `ValidationFailed`. Sentinel-only
   cache value per the deliverable 0002 design tightening (no `SessionSnapshot` data record in this lib)
-- (`FingerprintComparer` removed — Edge computes the composite `FingerprintRiskScore`; this lib
+- (`FingerprintComparer` removed — Edge computes the composite `RiskScore`; this lib
   propagates the value, never compares fingerprints)
 
 ### Integration tests (Testcontainers or in-memory fixtures)
@@ -1361,7 +1361,7 @@ and gets instant revocation across all endpoints.
 `IRequestContext`. The block / step-up policy decision lives in Edge's risk engine (Phase 3).
 
 **Revision (deliverable 0002)**: even score *computation* moves to Edge. The composite
-`FingerprintRiskScore` (renamed; 0 = no risk, 100 = max risk) factors in fingerprint-mismatch +
+`RiskScore` (renamed; 0 = no risk, 100 = max risk) factors in fingerprint-mismatch +
 geo-velocity drift from sign-in baseline + ASN / Tor / proxy flags + per-org / per-user policy
 contributions — most of those inputs live in Edge (the risk engine has the historical context, the
 sliding-window risk tracker, and access to the resolved security policy). This lib became
@@ -1862,7 +1862,7 @@ Each csproj lands as its own buildable unit; tests pass at every checkpoint; zer
 2. `IJwksProvider` + `HttpJwksProvider` (using
    `ConfigurationManager<OpenIdConnectConfiguration>`, honors discovery doc) + tests against
    in-memory OIDC fixture
-3. `JwtValidator` + `ClaimsToContextMapper` + unit tests *(FingerprintComparer dropped — see top-of-doc 2026-05-10 banner; Edge computes the composite `FingerprintRiskScore`)*
+3. `JwtValidator` + `ClaimsToContextMapper` + unit tests *(FingerprintComparer dropped — see top-of-doc 2026-05-10 banner; Edge computes the composite `RiskScore`)*
 4. `SessionSnapshot` + `ISessionLivenessTracker` + `TieredCacheSessionLivenessTracker` + tests
 5. `JwtAuthMiddleware` + `JwtAuthInterceptor` (gRPC) + integration tests
 6. `D2ProblemDetailsExtensions` (RFC 7807 + D² extensions) + tests

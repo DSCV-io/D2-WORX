@@ -387,7 +387,7 @@ But two cases STILL want the raw signals:
    score. The score is the per-request hint; the count is a sliding-window aggregate that
    needs raw IP + raw FP. This continues to live in Edge upstream of the JWT mint.
 2. **Risk-engine inputs** (§5.4 of V2.md / Q6 in PHASE_0_AUTH.md): the composite
-   `FingerprintRiskScore` factors raw inputs Edge has access to. Score lands in the JWT;
+   `RiskScore` factors raw inputs Edge has access to. Score lands in the JWT;
    computation stays at Edge.
 
 Defense-in-depth holds: even if a JWT claim were forged (it can't be — JWT signature gate),
