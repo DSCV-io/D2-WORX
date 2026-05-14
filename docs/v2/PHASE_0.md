@@ -19,13 +19,13 @@ Phase 0 has four execution stages. The **Granular checklist** column links to th
 | 1. Pre-wipe checkpoint (tag `pre-v2-wipe`) | ✅ Complete | (single git tag — no detail checklist) |
 | 2. Wipe commit (single commit on `nova` branch) | ✅ Complete | [Definition of done (wipe commit)](#definition-of-done-wipe-commit) |
 | 3. Documentation pass (placeholder READMEs + extracted patterns) | ✅ Complete | [Definition of done (documentation pass)](#definition-of-done-documentation-pass) |
-| 4. Shared library implementation (per V2.md §4 Phase 0) | 🔄 **In progress — Waves 1-3 done (Result, Utilities, Resilience, I18n trio); Wave 2 done (full handler stack + repo-handler trio + auth/context vocabulary + spec-driven codegen); Wave 4 done (`D2.Shared.Encryption`); Wave 5 done (caching stack — Abstractions / Local.Default / Distributed.Redis / Tiered); Wave 6 done (`D2.Shared.Messaging` — `[MqPub]` / `[MqSub]` spec-driven model + RabbitMQ impl + DLQ republish + W3C trace propagation); Wave 7 done (`D2.Shared.Logging` + `D2.Shared.Telemetry` + `D2.Shared.AspNetCore` + `D2.Shared.ServiceDefaults`); **2918 tests passing across all built libs** incl. Testcontainers Redis + Testcontainers RabbitMQ + synthetic-host integration coverage. All Phase 0 libs ship with the `n/service-defaults` merge — once that lands on nova, this stage flips ✅ Complete and the doc is archive-ready.** | [Per-library checklist (Stage 4)](#per-library-checklist-stage-4) |
+| 4. Shared library implementation (per V2.md §4 Phase 0) | ✅ **Complete — Waves 1-3 done (Result, Utilities, Resilience, I18n trio); Wave 2 done (full handler stack + repo-handler trio + auth/context vocabulary + spec-driven codegen); Wave 4 done (`D2.Shared.Encryption`); Wave 5 done (caching stack — Abstractions / Local.Default / Distributed.Redis / Tiered); Wave 6 done (`D2.Shared.Messaging` — `[MqPub]` / `[MqSub]` spec-driven model + RabbitMQ impl + DLQ republish + W3C trace propagation); Wave 7 done (`D2.Shared.Logging` + `D2.Shared.Telemetry` + `D2.Shared.AspNetCore` + `D2.Shared.ServiceDefaults` — squash `b3a05f1c` on `nova`, deliverable 0004 SHIPPED 2026-05-12 per [`docs/dev/deliverables/0004-service-defaults.md`](../dev/deliverables/0004-service-defaults.md)); **2914 tests passing across all built libs** incl. Testcontainers Redis + Testcontainers RabbitMQ + synthetic-host integration coverage. Phase 0 is closed. Two pre-Phase-1 deliverables are next (codegen cleanup + TS bridge — see "Pre-Phase-1 Plan" section below) before Phase 1 (Geo libs) begins.** | [Per-library checklist (Stage 4)](#per-library-checklist-stage-4) |
 
 **Status legend**: ✅ Complete · 🔄 In progress · ☐ Not started · ⏸ Blocked
 
 **LLM CTA**: when starting work in this phase, scan the snapshot above to identify the active 🔄 stage, then jump to its granular checklist via the link. Don't start work that doesn't match the active stage without explicit user approval.
 
-When all four stages flip to ✅, this doc gets archived (move to `docs/archive/PHASE_0_WIPE.md` or delete) per the lifecycle rule in V2.md §10.
+All four stages are ✅ Complete. This doc remains live through the Pre-Phase-1 Plan deliverables (0005 + 0006) — they're the bridge work between Phase 0 closing and Phase 1 (Geo libs) starting, and PHASE_0.md is the right home for the bridge plan. The doc gets archived (move to `docs/archive/PHASE_0_WIPE.md` or delete) per the lifecycle rule in V2.md §10 once deliverable 0006 ships and Phase 1 begins.
 
 ---
 
@@ -555,4 +555,125 @@ After BOTH the wipe commit AND the documentation pass land, Phase 0 code begins 
 
 Each library, as it's implemented, expands its placeholder README into a full doc (full public API, examples, gotchas, OTel metrics if applicable). Per V2.md §6: "Every project/module has a corresponding `.md` file."
 
-This PHASE_0.md doc gets archived (move to `docs/archive/PHASE_0_WIPE.md` or delete) once Phase 0 ships and all 14 shared libs have full READMEs.
+**Phase 0 is now ✅ Complete** — all libraries shipped per the per-library checklist above; the final Wave 7 squash (`b3a05f1c`) is on `nova` and snapshotted at [`docs/dev/deliverables/0004-service-defaults.md`](../dev/deliverables/0004-service-defaults.md).
+
+---
+
+## Pre-Phase-1 Plan
+
+Two deliverables ship between Phase 0 closing and Phase 1 (Geo libs) starting. Both are **bridge work** — neither produces new runtime services; both prepare the codebase to absorb Phase 1+ at higher quality and lower friction.
+
+| # | Deliverable | Estimated effort | Branch |
+|---|---|---|---|
+| 0005 | `0005-codegen-cleanup-and-dotnet-improvements` (.NET only) | ~3-5 days | `n/codegen-cleanup` (off `nova` post-0004) |
+| 0006 | `0006-ts-bridge` | ~2-3 weeks | `n/ts-bridge` (off `nova` post-0005) |
+
+**Order**: 0005 first (no TS dependency); 0006 second (consumes the spec migrations 0005 produces — particularly AuthErrorCodes — so the TS-side codegen runners have a single canonical spec to read instead of a moving target). Phase 1 (Geo libs) starts AFTER 0006 ships.
+
+### Deliverable 0005 — codegen cleanup + .NET improvements
+
+**Scope (LOCKED)** — four sub-concerns:
+
+#### Sub-concern A — AuthErrorCodes spec migration
+
+Move the .NET hand-authored AuthErrorCodes catalog (`server/shared/dotnet/auth/Errors/AuthErrorCodes.cs` — 14 constants) + the `AuthFailures.cs` factory methods (16 factories) into a single spec at `contracts/auth-error-codes/auth-error-codes.spec.json`.
+
+Each spec entry pairs:
+- The error code string (e.g., `auth.token.expired`)
+- HTTP status code mapping
+- gRPC StatusCode mapping
+- ProblemDetails URI (RFC 7807)
+- i18n message key (TK constant)
+- Telemetry tag whitelist (which `AuthTelemetry.ProblemEmitted` `error_code` tag values are valid)
+
+Codegen emits:
+- `AuthErrorCodes.g.cs` — the constants (replaces today's hand-authored `AuthErrorCodes.cs`)
+- `AuthFailures.g.cs` — the factory methods returning `D2Result.Unauthorized` / `Forbidden` etc. with the right code + message + status tuple
+- A test fixture that validates the `AuthTelemetry.ProblemEmitted` counter's `error_code` tag whitelist matches the spec at startup (tag-discipline enforcement)
+
+**Single source of truth** across (1) the constant catalog, (2) the factory catalog, (3) the telemetry tag whitelist, (4) the i18n key references. **Ready for TS-side emission** in deliverable 0006 (where `@d2/auth-abstractions` reads the same spec).
+
+#### Sub-concern B — Telemetry tag enumerations spec
+
+Move the per-counter tag whitelists currently expressed as xmldoc enumeration comments on each counter into a single spec at `contracts/telemetry/telemetry.spec.json`.
+
+Coverage:
+- `AuthTelemetry` — 4 counters with closed tag sets (validated via Auth integration tests today via xmldoc-only)
+- `OutboundTelemetry` — 2 counters (Auth.Outbound)
+- `HandlerTelemetry` (4 counters)
+- `LoggingTelemetry`
+- `TelemetryTelemetry`
+- `MessagingTelemetry`
+- `RedisCacheTelemetry`
+- `LocalCacheTelemetry`
+
+Codegen emits per-meter `*TelemetryTags.g.cs` files with **typed tag constants** (e.g., `AuthTelemetryTags.ErrorCode.TokenExpired`) so counter `Add()` call sites take typed constants instead of raw strings. Optionally emits Prometheus dashboard JSON snippets per counter (defer if scope balloons).
+
+**Runtime enforcement**: counter `Add()` call sites accept `TagList` populated only via the typed constants — caught at compile time, not at telemetry-export time.
+
+#### Sub-concern C — V2.md §5.8 BFF Trust & Privilege Boundary subsection
+
+Self-referential — **the V2.md edits that this very doc-update produces are the canonical statement**. Deliverable 0005 references the new V2.md §5.8 subsection as the existing locked decision; no further V2.md changes needed in 0005 itself. This sub-concern is listed for completeness so 0005's PLAN doesn't accidentally try to re-litigate the BFF boundary.
+
+#### Sub-concern D — Deferred cleanups
+
+Two small carry-overs from prior deliverables surfaced during Phase 0 close-out:
+
+- **Cross-deliverable §14.1 leak** at `server/shared/dotnet/tests/Unit/Auth/Inbound/Validation/JwtValidatorTests.cs:411` — a `pre-fix` literal carried in from commit `4dc6be74` of deliverable 0002 (auth inbound). Strip per §14.1 forbidden-token regex.
+- **`server/shared/dotnet/utilities/README.md`** — 368 lines, exceeds §11.21 ≤300-line heuristic. Split per §11.21's multi-doc structure (the authoritative split rules live in rules.md §11.21).
+
+#### Explicitly NOT in 0005 scope (with revisit triggers)
+
+- **JwtClaimTypes spec collapse** — DEFERRED. The existing parity test (`server/shared/dotnet/tests/Unit/Auth/JwtClaimTypesParityTests.cs:28`) already prevents drift between the .NET-side constants and any cross-language consumers of the JWT claim namespace. Spec-ifying the catalog would fragment the hand-authored xmldoc that documents the JWT claim semantics and would introduce an architectural wart for the 5 non-spec constants (`IAT`, `EXP`, `AZP`, `FINGERPRINT`, `ACT_KIND`) that aren't part of any spec-driven shape. **Revisit trigger**: cross-language drift surfaces a real correctness issue.
+- **`DbErrorCodes` / `DbFailureKind` / `PgErrorCodes` triple** — DEFERRED. These three files have 2 commits ever between them; the structural drift catches via the wildcard-throw at `BaseRepoHandler.cs:139-163` are excellent (any unrecognized SQLSTATE blows up loudly with the unmapped code in the exception message); only one provider exists today (Postgres). YAGNI applies for a hypothetical 2nd provider. **Revisit trigger**: when a 2nd DB provider's csproj (`D2.Shared.Handler.Repo.SqlServer` / `.Sqlite` / `.MySql` / etc.) is being built — at that point the spec collapse is justified because 2 providers means real cross-provider parity testing.
+
+### Deliverable 0006 — TS bridge
+
+**Scope (LOCKED)** — six sub-concerns. The architectural shape (drops list, parity strategy, i18n approach, BFF trust boundary) is locked in V2.md §5.8 "TS shared lib forecast" — 0006 implements that forecast.
+
+#### Sub-concern A — Workspace bootstrap
+
+- Add `pnpm-workspace.yaml` at repo root pointing at `server/shared/typescript/*` and `server/web/`.
+- Root `package.json` for shared `typescript` / `vitest` / `prettier` versions (single source of truth for tool versions across all TS workspaces).
+- **Carefully sequenced** per the operator's known pain point: `pnpm install` rotates symlinks across the workspace, which can break Node containers if other Node services are running mid-install. The 0006 PLAN must include a "stop all Node containers → workspace bootstrap → restart all Node containers" sequence as Step 0 to avoid mid-deliverable container thrash.
+
+#### Sub-concern B — Tier 1 TS packages (13 packages per V2.md §5.8 forecast)
+
+Per the locked Tier 1 list in V2.md §5.8: `@d2/result`, `@d2/utilities`, `@d2/resilience`, `@d2/protos`, `@d2/auth-context-abstractions`, `@d2/request-context-abstractions`, `@d2/auth-abstractions`, `@d2/i18n`, `@d2/logging`, `@d2/telemetry`, `@d2/service-defaults`, `@d2/headers`, `@d2/grpc-client`. Per-package READMEs follow the .NET shared-lib README convention (Purpose / Public API / Dependencies / V2.md reference).
+
+#### Sub-concern C — TS-side codegen runners
+
+Consume the specs migrated in 0005 (`auth-error-codes`) plus existing specs (`auth-scopes`, `auth-audiences`, `auth-context`, `request-context`, `mq-messages`).
+
+Two implementation options were considered:
+1. Extend the existing .NET SourceGen analyzers with TS emit templates (one source-gen, two output languages).
+2. Sibling Node scripts at `tools/ts-codegen/` reading the same JSON specs.
+
+**Recommendation: option 2** (sibling Node scripts). Cleaner separation of concerns — the TS toolchain stays in TS land, the .NET SourceGen analyzers stay narrowly scoped. Re-evaluate if maintenance burden of two emitters becomes a problem.
+
+#### Sub-concern D — Cross-language contract test infrastructure
+
+Per V2.md §5.8 "Cross-language parity testing":
+
+- `server/shared/typescript/contract-tests/` Vitest suite
+- Fixture generation via `dotnet test --filter Category=ContractFixtures` emitting JSON files
+- Round-trip stdin/stdout JSON-RPC host child process for bidirectional parity (`PropagatedContextSerializer`, `D2Result<T>`, etc.)
+- CI gate: any change to `contracts/*.spec.json` or affected source files triggers parity tests; build fails on drift
+
+#### Sub-concern E — Modules in `server/web/`
+
+Per V2.md §5.8 "Modules in `server/web/`" list:
+- Server-side route guards (`requireAuth` / `requireOrg` / `requireRole` / `requireScope` / `redirectIfAuthenticated`) at `server/web/src/lib/server/auth/`
+- Browser-side `authClient` at `server/web/src/lib/client/auth/`
+- Browser Faro SDK setup
+
+#### Sub-concern F — Cleanup
+
+- Delete stale `server/web/src/paraglide/` outdir (current outdir is `src/lib/paraglide/`; the old path is a v1 leftover).
+- Rip out v1-leftover code in `server/web/src/lib/server/` (`auth.server.ts`, `hooks/*`, `middleware.server.ts`, REST clients) that references dead `@d2/*` packages from v1.
+- Replace v1 `server/web/src/hooks.server.ts` with a thin `X-D2-*` header reader using `@d2/headers` (the application-layer half of the §5.8 Edge-bypass defense-in-depth).
+- Update `server/web/package.json` to reference real workspace deps from the new `server/shared/typescript/*` packages.
+
+---
+
+This PHASE_0.md doc gets archived (move to `docs/archive/PHASE_0_WIPE.md` or delete) once deliverable 0006 ships and Phase 1 (Geo libs) begins.
