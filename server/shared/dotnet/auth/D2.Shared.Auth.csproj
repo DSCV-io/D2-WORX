@@ -4,6 +4,14 @@ Copyright (c) DCSV. All rights reserved.
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>D2.Shared.Auth</RootNamespace>
+    <!--
+      EmitCompilerGeneratedFiles surfaces the SrcGen-emitted AuthErrorCodes.g.cs +
+      AuthFailures.g.cs + AuthTelemetryTags.g.cs into obj/Generated/ so they're
+      visible for inspection / debugging. Required by the auth-error-codes-source-gen +
+      telemetry-tags-source-gen analyzers wired below.
+    -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
 
   <!--
@@ -64,6 +72,27 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
     <ProjectReference Include="..\i18n-abstractions\D2.Shared.I18n.Abstractions.csproj" />
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Source generators driving the codegen-emitted AuthErrorCodes / AuthFailures
+      classes + the AuthTelemetryTags typed-constants class.
+      Spec files are surfaced via AdditionalFiles so the SrcGens can read them
+      at codegen time. Telemetry SrcGen single-targets per the spec's
+      consumingAssembly field; auth-error-codes single-targets on D2.Shared.Auth.
+      Both SrcGens reference the same auth-error-codes spec (auth-error-codes
+      SrcGen uses it as its source of truth; telemetry SrcGen uses it via
+      cross-spec resolution for the d2.auth.problem.emitted tag values).
+    -->
+    <ProjectReference Include="..\auth-error-codes-source-gen\D2.Shared.Auth.ErrorCodes.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\telemetry-tags-source-gen\D2.Shared.Telemetry.Tags.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <AdditionalFiles Include="..\..\..\..\contracts\auth-error-codes\auth-error-codes.spec.json" />
+    <AdditionalFiles Include="..\..\..\..\contracts\telemetry\telemetry.spec.json" />
   </ItemGroup>
 
   <ItemGroup>

@@ -8,7 +8,7 @@ namespace D2.Shared.Auth.Http.ProblemDetails;
 
 using System.Diagnostics;
 using System.Net;
-using System.Text;
+using D2.Shared.Auth.Errors;
 using D2.Shared.Auth.Telemetry;
 using D2.Shared.I18n;
 using D2.Shared.Result;
@@ -99,7 +99,8 @@ public static class D2ProblemDetailsExtensions
 
             AuthTelemetry.ProblemEmitted.Add(
                 1,
-                new KeyValuePair<string, object?>(_COUNTER_TAG_ERROR_CODE, errorCode));
+                new KeyValuePair<string, object?>(
+                    AuthTelemetryTags.ProblemEmitted.TAG_D2_ERROR_CODE, errorCode));
 
             return problem;
         }
@@ -126,8 +127,6 @@ public static class D2ProblemDetailsExtensions
     /// <summary>The extension key carrying the W3C trace id.</summary>
     public const string EXTENSION_TRACE_ID = "traceId";
 
-    private const string _COUNTER_TAG_ERROR_CODE = "d2_error_code";
-
     private static string TitleFor(HttpStatusCode statusCode) =>
         statusCode switch
         {
@@ -144,20 +143,7 @@ public static class D2ProblemDetailsExtensions
         // only happen on a manually-built D2Result going through this path.
         if (errorCode.Length == 0)
             return TYPE_URI_PREFIX + "unknown";
-        return TYPE_URI_PREFIX + KebabCase(errorCode);
-    }
-
-    private static string KebabCase(string upperUnderscore)
-    {
-        // Convert AUTH_BEARER_MISSING → auth-bearer-missing.
-        var sb = new StringBuilder(upperUnderscore.Length);
-        for (var i = 0; i < upperUnderscore.Length; i++)
-        {
-            var c = upperUnderscore[i];
-            sb.Append(c == '_' ? '-' : char.ToLowerInvariant(c));
-        }
-
-        return sb.ToString();
+        return TYPE_URI_PREFIX + AuthErrorCodes.KebabCase(errorCode);
     }
 
     private static IReadOnlyList<TKMessage> MaterializeMessages(

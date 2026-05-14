@@ -95,7 +95,10 @@ internal sealed class HttpServiceIdentityClient : IServiceIdentityClient, IDispo
         if (cached is not null)
         {
             OutboundTelemetry.ServiceIdentityFetches.Add(
-                1, new KeyValuePair<string, object?>("outcome", "cache_hit"));
+                1,
+                new KeyValuePair<string, object?>(
+                    OutboundTelemetryTags.ServiceIdentityFetches.TAG_OUTCOME,
+                    OutboundTelemetryTags.ServiceIdentityFetches.Outcome.CACHE_HIT));
             return D2Result<string>.Ok(cached.Token);
         }
 
@@ -175,7 +178,11 @@ internal sealed class HttpServiceIdentityClient : IServiceIdentityClient, IDispo
         if (preFetchCache is not null)
         {
             OutboundTelemetry.ServiceIdentityFetches.Add(
-                1, new KeyValuePair<string, object?>("outcome", "cache_hit_after_singleflight"));
+                1,
+                new KeyValuePair<string, object?>(
+                    OutboundTelemetryTags.ServiceIdentityFetches.TAG_OUTCOME,
+                    OutboundTelemetryTags
+                        .ServiceIdentityFetches.Outcome.CACHE_HIT_AFTER_SINGLEFLIGHT));
             return FetchResult.Successful(preFetchCache);
         }
 
@@ -191,7 +198,10 @@ internal sealed class HttpServiceIdentityClient : IServiceIdentityClient, IDispo
             {
                 r_logger.OidcDiscoveryMissingTokenEndpoint(r_options.Issuer);
                 OutboundTelemetry.ServiceIdentityFetches.Add(
-                    1, new KeyValuePair<string, object?>("outcome", "discovery_failure"));
+                    1,
+                    new KeyValuePair<string, object?>(
+                        OutboundTelemetryTags.ServiceIdentityFetches.TAG_OUTCOME,
+                        OutboundTelemetryTags.ServiceIdentityFetches.Outcome.DISCOVERY_FAILURE));
                 return FetchResult.TransientFailure();
             }
 
@@ -214,7 +224,10 @@ internal sealed class HttpServiceIdentityClient : IServiceIdentityClient, IDispo
             {
                 r_logger.ServiceIdentityHttpFailure((int)response.StatusCode);
                 OutboundTelemetry.ServiceIdentityFetches.Add(
-                    1, new KeyValuePair<string, object?>("outcome", "http_failure"));
+                    1,
+                    new KeyValuePair<string, object?>(
+                        OutboundTelemetryTags.ServiceIdentityFetches.TAG_OUTCOME,
+                        OutboundTelemetryTags.ServiceIdentityFetches.Outcome.HTTP_FAILURE));
                 return FetchResult.TransientFailure();
             }
 
@@ -223,7 +236,10 @@ internal sealed class HttpServiceIdentityClient : IServiceIdentityClient, IDispo
             var snapshot = ParseTokenResponse(doc.RootElement, r_clock.GetUtcNow());
             r_cache.Set(snapshot);
             OutboundTelemetry.ServiceIdentityFetches.Add(
-                1, new KeyValuePair<string, object?>("outcome", "fetch_success"));
+                1,
+                new KeyValuePair<string, object?>(
+                    OutboundTelemetryTags.ServiceIdentityFetches.TAG_OUTCOME,
+                    OutboundTelemetryTags.ServiceIdentityFetches.Outcome.FETCH_SUCCESS));
             return FetchResult.Successful(snapshot);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -241,7 +257,10 @@ internal sealed class HttpServiceIdentityClient : IServiceIdentityClient, IDispo
                 SanitizedExceptionRender.TypeName(ex),
                 SanitizedExceptionRender.FirstFrame(ex));
             OutboundTelemetry.ServiceIdentityFetches.Add(
-                1, new KeyValuePair<string, object?>("outcome", "fetch_failure"));
+                1,
+                new KeyValuePair<string, object?>(
+                    OutboundTelemetryTags.ServiceIdentityFetches.TAG_OUTCOME,
+                    OutboundTelemetryTags.ServiceIdentityFetches.Outcome.FETCH_FAILURE));
             return FetchResult.TransientFailure();
         }
     }

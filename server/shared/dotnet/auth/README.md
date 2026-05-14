@@ -75,6 +75,8 @@ Pre-built `D2Result` failures. Caller code (middleware, validator, interceptor) 
 - **User-facing message** — coarse on purpose. Two TK keys total (`auth_errors_UNAUTHORIZED`, `auth_errors_TEMPORARILY_UNAVAILABLE`) so we don't tell attackers which validation step failed.
 - **Machine-readable code** — granular. One `AuthErrorCodes.AUTH_*` constant per failure mode, surfaced as the `d2_error_code` on RFC 7807 ProblemDetails.
 
+`AuthErrorCodes` and `AuthFailures` are emitted by [`D2.Shared.Auth.ErrorCodes.SourceGen`](../auth-error-codes-source-gen/) from [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../contracts/auth-error-codes/auth-error-codes.spec.json) — single source of truth. Adding a new error code = editing the JSON spec; the constant + the factory + the cross-spec telemetry tag-value enumeration on `d2.auth.problem.emitted` all materialize automatically.
+
 | Helper | HTTP | Error code | TK key |
 |---|---|---|---|
 | `BearerMissing()` | 401 | `AUTH_BEARER_MISSING` | `UNAUTHORIZED` |
@@ -90,6 +92,7 @@ Pre-built `D2Result` failures. Caller code (middleware, validator, interceptor) 
 | `SessionRevoked()` | 401 | `AUTH_SESSION_REVOKED` | `UNAUTHORIZED` |
 | `JwksUnavailable()` | 503 | `AUTH_JWKS_UNAVAILABLE` | `TEMPORARILY_UNAVAILABLE` |
 | `SessionLivenessUnavailable()` | 503 | `AUTH_SESSION_LIVENESS_UNAVAILABLE` | `TEMPORARILY_UNAVAILABLE` |
+| `ScopeInsufficient()` | 401 | `AUTH_SCOPE_INSUFFICIENT` | `UNAUTHORIZED` |
 
 ### Telemetry
 
@@ -101,12 +104,14 @@ builder.Services.AddOpenTelemetry()
     .WithMetrics(m => m.AddMeter(AuthTelemetry.METER_NAME));
 ```
 
+Tag-key + tag-value constants are emitted by [`D2.Shared.Telemetry.Tags.SourceGen`](../telemetry-tags-source-gen/) into `AuthTelemetryTags.g.cs` from [`contracts/telemetry/telemetry.spec.json`](../../../../contracts/telemetry/telemetry.spec.json). Counter call sites reference `AuthTelemetryTags.JwtValidations.Outcome.SUCCESS` / `AuthTelemetryTags.JwksFetches.Trigger.REACTIVE` / etc. instead of bare string literals — drift between the spec and the runtime tag values is impossible.
+
 | Counter | Tags | Description |
 |---|---|---|
-| `d2.auth.jwt.validations` | `outcome` (success / bearer_missing / bearer_malformed / signature_invalid / expired / not_yet_valid / issuer_mismatch / audience_mismatch / claim_missing / act_chain_malformed / kid_not_found / jwks_unavailable) | Total inbound JWT validations. |
-| `d2.auth.session.liveness.checks` | `outcome` (alive / revoked / unavailable / invalid_input / backplane_revoked) | Total session liveness checks (first four outcomes from `IsAliveAsync`) and revoke-event observations (`backplane_revoked` from `SessionRevokedBackplaneSubscriber`). |
-| `d2.auth.jwks.fetches` | `trigger` (implicit / reactive / cooldown_skipped / backplane_rotation) × `outcome` (success / failure / parse_error / circuit_open / received) | Total JWKS fetches from the upstream OIDC issuer. `parse_error` distinguishes malformed-JSON discovery docs from generic network failures; `circuit_open` indicates the breaker fast-failed without an upstream call. |
-| `d2.auth.problem.emitted` | `d2_error_code` (one of `AUTH_*`) | RFC 7807 ProblemDetails responses emitted by the auth middleware / interceptor. |
+| `d2.auth.jwt.validations` | `outcome` (closed enum; see `AuthTelemetryTags.JwtValidations.Outcome.*`) | Total inbound JWT validations. |
+| `d2.auth.session.liveness.checks` | `outcome` (`AuthTelemetryTags.SessionLivenessChecks.Outcome.*`) | Total session liveness checks (`alive` / `revoked` / `unavailable` / `invalid_input` from `IsAliveAsync`) and revoke-event observations (`backplane_revoked` from `SessionRevokedBackplaneSubscriber`). |
+| `d2.auth.jwks.fetches` | `trigger` × `outcome` (`AuthTelemetryTags.JwksFetches.Trigger.*` / `Outcome.*`) | Total JWKS fetches from the upstream OIDC issuer. `parse_error` distinguishes malformed-JSON discovery docs from generic network failures; `circuit_open` indicates the breaker fast-failed without an upstream call. |
+| `d2.auth.problem.emitted` | `d2_error_code` (one of `AuthErrorCodes.AUTH_*` — cross-spec resolved) | RFC 7807 ProblemDetails / gRPC trailers emitted by the auth-http / auth-grpc transport bindings. |
 
 | Histogram | Unit | Description |
 |---|---|---|

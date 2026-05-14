@@ -714,8 +714,16 @@ If you encounter a language not listed above and it supports comments, the heade
     - `modeled`, `modeling` (single L) — not `modelled`, `modelling`
     - `signaled`, `signaling`, `labeled`, `labeling`, `traveled`, `traveling`
     - `neighbor` not `neighbour`
-  - **Allowlist**: proper nouns, third-party identifiers (e.g. a UK org's name), quoted user content. Note inline (`// proper noun — keep British spelling`).
-  - **Audit grep**: word-bounded grep for the exact list above (`grep -wEn 'analyse|colour|behaviour|cancelled|honour|synchronise|recognise|organisation|favourite|defence|programme|neighbour|labelled|labelling|modelled|modelling|travelled|travelling|signalled|signalling'`) per scope returns expected/empty.
+    - `materialize` not `materialise` (and `materialized`, `materializing`, `materialization`)
+    - `catalog` not `catalogue` (and `catalogs`, `cataloged`, `cataloging`)
+    - `serialize`, `centralize`, `specialize`, `standardize`, `finalize`, `initialize`, `harmonize`, `pressurize` (and conjugations) — not the `-ise` forms
+    - `defense`, `license` (verb), `practice` (verb) — `-se` not `-ce`
+  - **Allowlist**: proper nouns, third-party identifiers (e.g. a UK org's name), quoted user content. Note inline (`// proper noun — keep British spelling`). The `en-GB.json` locale file is exempt — by definition.
+  - **Audit grep**: enumerate root + conjugations (`-e/-ed/-es/-ing/-ation/-able/-er`). Bare `\b<root>\b` is INSUFFICIENT — word boundaries reject the conjugated forms (`\brecognise\b` does NOT match `recognised`). Use:
+    ```
+    grep -rEn '\b(analys(e|ed|es|ing|er)|behaviour(s|al|ally)?|cancell(ed|ing)|catalogu(e|es|ed|ing)|categoris(e|ed|es|ing|ation)|centralis(e|ed|es|ing|ation)|colour(s|ed|ing|ful)?|customis(e|ed|es|ing|ation|able)|defence|emphasis(e|ed|es|ing)|favour(s|ed|ing|ite|ites|able)?|finalis(e|ed|es|ing|ation)|harmonis(e|ed|es|ing|ation)|honour(s|ed|ing|able)?|initialis(e|ed|es|ing|ation)|labell(ed|ing)|licence(s)?|materialis(e|ed|es|ing|ation)|maximis(e|ed|es|ing|ation)|minimis(e|ed|es|ing|ation)|modell(ed|ing)|neighbour(s|hood|ing)?|optimis(e|ed|es|ing|ation|er)|organis(e|ed|es|ing|ation)|practis(e|ed|es|ing)|pressuris(e|ed|es|ing|ation)|prioritis(e|ed|es|ing|ation)|programme(s)?|realis(e|ed|es|ing|ation)|recognis(e|ed|es|ing|able)|serialis(e|ed|es|ing|ation|er)|signall(ed|ing)|specialis(e|ed|es|ing|ation)|standardis(e|ed|es|ing|ation)|summaris(e|ed|es|ing)|synchronis(e|ed|es|ing|ation)|travell(ed|ing)|utilis(e|ed|es|ing|ation))\b' <scope>
+    ```
+    `cancell(ed|ing)` deliberately excludes `cancellation` (double-L is correct in American English for that one noun). `defence` / `licence` are root-only (no common conjugations differ from American forms).
   - Evidence: per-scope grep result.
 
 - **7.16** Are comments minimal? Default to writing **NO comments**. Add one only when the WHY is non-obvious — a hidden constraint, a subtle invariant, a workaround for a specific bug, behavior that would surprise a reader.
@@ -1819,7 +1827,11 @@ Closure is proven ONLY by the absence of a FINDING from the next sweep's big tab
     - §6.10 (REST clients only) — `grep -rEn 'fetch\(' <scope>` → per hit, classify (allowed/forbidden)
     - §6.12 (resolve() for navigation) — `grep -rEn 'href="/\|goto\("/' <scope>` → per hit, confirm resolve wrap
     - §7.14 (line length ≤ 100) — `awk 'length > 100' <new/modified .cs/.ts files>` → expect empty (modulo allowlist)
-    - §7.15 (American English) — `grep -wEn 'analyse|colour|behaviour|cancelled|honour|synchronise|recognise|organisation|favourite|defence|programme|neighbour|labelled|labelling|modelled|modelling|travelled|travelling|signalled|signalling' <scope>` → expect zero (modulo allowlist)
+    - §7.15 (American English) — root + conjugation enumeration (bare `\b<root>\b` cannot match conjugated forms — see §7.15 inline regex):
+      ```
+      grep -rEn '\b(analys(e|ed|es|ing|er)|behaviour(s|al|ally)?|cancell(ed|ing)|catalogu(e|es|ed|ing)|categoris(e|ed|es|ing|ation)|centralis(e|ed|es|ing|ation)|colour(s|ed|ing|ful)?|customis(e|ed|es|ing|ation|able)|defence|emphasis(e|ed|es|ing)|favour(s|ed|ing|ite|ites|able)?|finalis(e|ed|es|ing|ation)|harmonis(e|ed|es|ing|ation)|honour(s|ed|ing|able)?|initialis(e|ed|es|ing|ation)|labell(ed|ing)|licence(s)?|materialis(e|ed|es|ing|ation)|maximis(e|ed|es|ing|ation)|minimis(e|ed|es|ing|ation)|modell(ed|ing)|neighbour(s|hood|ing)?|optimis(e|ed|es|ing|ation|er)|organis(e|ed|es|ing|ation)|practis(e|ed|es|ing)|pressuris(e|ed|es|ing|ation)|prioritis(e|ed|es|ing|ation)|programme(s)?|realis(e|ed|es|ing|ation)|recognis(e|ed|es|ing|able)|serialis(e|ed|es|ing|ation|er)|signall(ed|ing)|specialis(e|ed|es|ing|ation)|standardis(e|ed|es|ing|ation)|summaris(e|ed|es|ing)|synchronis(e|ed|es|ing|ation)|travell(ed|ing)|utilis(e|ed|es|ing|ation))\b' <scope>
+      ```
+      → expect zero (modulo `en-GB.json` locale + proper-noun allowlist)
     - §11.9 (no CLAUDE.md / PHASE_*.md / V2.md cross-doc citation in KEEP docs) — `grep -rEn 'CLAUDE\.md\|PHASE_[0-9_]*\.md\|V2\.md' <scope KEEP files>` → expect zero
     - §11.28 (KEEP doc forward-framing) — see §11.28 inline regex
     - §12.1 (Paraglide translations) — `grep -rEn '"[A-Z][a-z][a-z]+ [a-z]' <scope .svelte files>` → per hit, justify or convert

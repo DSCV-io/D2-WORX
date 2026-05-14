@@ -19,6 +19,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
+using JwtOutcome = D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Outcome;
 
 /// <summary>
 /// JWT signature + standard-claim validator. Wraps
@@ -72,19 +73,6 @@ using Microsoft.IdentityModel.Tokens;
 /// </remarks>
 internal sealed class JwtValidator
 {
-    private const string _OUTCOME_TAG = "outcome";
-    private const string _OUTCOME_SUCCESS = "success";
-    private const string _OUTCOME_BEARER_MALFORMED = "bearer_malformed";
-    private const string _OUTCOME_SIGNATURE_INVALID = "signature_invalid";
-    private const string _OUTCOME_EXPIRED = "expired";
-    private const string _OUTCOME_NOT_YET_VALID = "not_yet_valid";
-    private const string _OUTCOME_ISSUER_MISMATCH = "issuer_mismatch";
-    private const string _OUTCOME_AUDIENCE_MISMATCH = "audience_mismatch";
-    private const string _OUTCOME_CLAIM_MISSING = "claim_missing";
-    private const string _OUTCOME_KID_NOT_FOUND = "kid_not_found";
-    private const string _OUTCOME_JWKS_UNAVAILABLE = "jwks_unavailable";
-    private const string _OUTCOME_ACT_CHAIN_MALFORMED = "act_chain_malformed";
-
     // Reusable + thread-safe per Microsoft.IdentityModel docs — single static
     // instance avoids per-call allocation across the entire process.
     private static readonly JsonWebTokenHandler SR_Handler = new();
@@ -147,14 +135,20 @@ internal sealed class JwtValidator
         // before any JWKS work. The transport middleware MAY also reject
         // bearer-missing earlier; this is defense-in-depth.
         if (bearerToken.Falsey())
-            return RecordAndReturn(_OUTCOME_BEARER_MALFORMED, sw, BearerMalformed());
+        {
+            return RecordAndReturn(
+                JwtOutcome.BEARER_MALFORMED, sw, BearerMalformed());
+        }
 
         // Snapshot the keys once up-front — passed into TokenValidationParameters.
         // OperationCanceledException is allowed to propagate from any await — the
         // transport-layer host owns cancellation semantics; we never swallow.
         var snapshotResult = await r_jwksProvider.GetKeysAsync(ct).ConfigureAwait(false);
         if (snapshotResult.Success is false || snapshotResult.Data is null)
-            return RecordAndReturn(_OUTCOME_JWKS_UNAVAILABLE, sw, JwksUnavailable());
+        {
+            return RecordAndReturn(
+                JwtOutcome.JWKS_UNAVAILABLE, sw, JwksUnavailable());
+        }
 
         var snapshot = snapshotResult.Data;
         var validationParameters = BuildValidationParameters(snapshot);
@@ -172,11 +166,17 @@ internal sealed class JwtValidator
             r_logger.JwtValidationReactiveRefreshTriggered();
             var refreshResult = await r_jwksProvider.RefreshAsync(ct).ConfigureAwait(false);
             if (refreshResult.Success is false)
-                return RecordAndReturn(_OUTCOME_KID_NOT_FOUND, sw, JwtKidNotFound());
+            {
+                return RecordAndReturn(
+                    JwtOutcome.KID_NOT_FOUND, sw, JwtKidNotFound());
+            }
 
             var refreshedSnapshot = await r_jwksProvider.GetKeysAsync(ct).ConfigureAwait(false);
             if (refreshedSnapshot.Success is false || refreshedSnapshot.Data is null)
-                return RecordAndReturn(_OUTCOME_JWKS_UNAVAILABLE, sw, JwksUnavailable());
+            {
+                return RecordAndReturn(
+                    JwtOutcome.JWKS_UNAVAILABLE, sw, JwksUnavailable());
+            }
 
             var retryParameters = BuildValidationParameters(refreshedSnapshot.Data);
             var second = await SR_Handler
@@ -223,32 +223,32 @@ internal sealed class JwtValidator
         return ex switch
         {
             SecurityTokenExpiredException
-                => (_OUTCOME_EXPIRED, JwtExpired()),
+                => (JwtOutcome.EXPIRED, JwtExpired()),
             SecurityTokenNotYetValidException
-                => (_OUTCOME_NOT_YET_VALID, JwtNotYetValid()),
+                => (JwtOutcome.NOT_YET_VALID, JwtNotYetValid()),
             SecurityTokenInvalidLifetimeException
-                => (_OUTCOME_EXPIRED, JwtExpired()),
+                => (JwtOutcome.EXPIRED, JwtExpired()),
             SecurityTokenInvalidIssuerException
-                => (_OUTCOME_ISSUER_MISMATCH, JwtIssuerMismatch()),
+                => (JwtOutcome.ISSUER_MISMATCH, JwtIssuerMismatch()),
             SecurityTokenInvalidAudienceException
-                => (_OUTCOME_AUDIENCE_MISMATCH, JwtAudienceMismatch()),
+                => (JwtOutcome.AUDIENCE_MISMATCH, JwtAudienceMismatch()),
             SecurityTokenSignatureKeyNotFoundException
-                => (_OUTCOME_KID_NOT_FOUND, JwtKidNotFound()),
+                => (JwtOutcome.KID_NOT_FOUND, JwtKidNotFound()),
             SecurityTokenInvalidSignatureException
-                => (_OUTCOME_SIGNATURE_INVALID, JwtSignatureInvalid()),
+                => (JwtOutcome.SIGNATURE_INVALID, JwtSignatureInvalid()),
             SecurityTokenInvalidAlgorithmException
-                => (_OUTCOME_SIGNATURE_INVALID, JwtSignatureInvalid()),
+                => (JwtOutcome.SIGNATURE_INVALID, JwtSignatureInvalid()),
             SecurityTokenNoExpirationException
-                => (_OUTCOME_CLAIM_MISSING, JwtClaimMissing()),
+                => (JwtOutcome.CLAIM_MISSING, JwtClaimMissing()),
             SecurityTokenMalformedException
-                => (_OUTCOME_BEARER_MALFORMED, BearerMalformed()),
+                => (JwtOutcome.BEARER_MALFORMED, BearerMalformed()),
             ArgumentException
-                => (_OUTCOME_BEARER_MALFORMED, BearerMalformed()),
+                => (JwtOutcome.BEARER_MALFORMED, BearerMalformed()),
 
             // Default: any other security-token rejection that didn't match a
             // specific subtype is treated as signature_invalid — closes the
             // outcome enumeration so unknown failures don't escape unclassified.
-            _ => (_OUTCOME_SIGNATURE_INVALID, JwtSignatureInvalid()),
+            _ => (JwtOutcome.SIGNATURE_INVALID, JwtSignatureInvalid()),
         };
     }
 
@@ -256,7 +256,8 @@ internal sealed class JwtValidator
 
     private static void RecordValidation(string outcome, double elapsedMs)
     {
-        var outcomeTag = new KeyValuePair<string, object?>(_OUTCOME_TAG, outcome);
+        var outcomeTag = new KeyValuePair<string, object?>(
+            AuthTelemetryTags.JwtValidations.TAG_OUTCOME, outcome);
         AuthTelemetry.JwtValidations.Add(1, outcomeTag);
         AuthTelemetry.JwtValidationDurationMs.Record(elapsedMs, outcomeTag);
     }
@@ -300,7 +301,7 @@ internal sealed class JwtValidator
             if (r_options.Validator.RequireSessionIdClaim
                 && principal.FindFirst(JwtClaimTypes.SESSION_ID) is null)
             {
-                return RecordAndReturn(_OUTCOME_CLAIM_MISSING, sw, JwtClaimMissing());
+                return RecordAndReturn(JwtOutcome.CLAIM_MISSING, sw, JwtClaimMissing());
             }
 
             // The mapper's call into MutableRequestContext.FromClaims fans out
@@ -320,11 +321,11 @@ internal sealed class JwtValidator
             }
             catch (MalformedActorChainException)
             {
-                return RecordAndReturn(_OUTCOME_ACT_CHAIN_MALFORMED, sw, JwtActChainMalformed());
+                return RecordAndReturn(JwtOutcome.ACT_CHAIN_MALFORMED, sw, JwtActChainMalformed());
             }
 
             sw.Stop();
-            RecordValidation(_OUTCOME_SUCCESS, sw.Elapsed.TotalMilliseconds);
+            RecordValidation(JwtOutcome.SUCCESS, sw.Elapsed.TotalMilliseconds);
             return D2Result<IRequestContext>.Ok(ctx);
         }
 
@@ -338,7 +339,7 @@ internal sealed class JwtValidator
         // After the kid-not-found retry path, a still-not-found result must
         // map to JwtKidNotFound — never mask it as "signature_invalid."
         if (kidPathRetried && ex is SecurityTokenSignatureKeyNotFoundException)
-            return RecordAndReturn(_OUTCOME_KID_NOT_FOUND, sw, JwtKidNotFound());
+            return RecordAndReturn(JwtOutcome.KID_NOT_FOUND, sw, JwtKidNotFound());
 
         var (outcome, failure) = Classify(ex);
         return RecordAndReturn(outcome, sw, failure);

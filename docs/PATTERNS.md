@@ -974,6 +974,38 @@ When adding new keys: add to ALL locale files in `contracts/messages/` simultane
 
 ---
 
+## Spec-driven codegen — the cross-cutting pattern
+
+Shared vocabularies that ship across language boundaries (.NET handlers, TS clients, ops dashboards) live in JSON spec files under `contracts/`. A Roslyn `IIncrementalGenerator` reads the spec at every build and emits typed constants directly into the consuming assembly. Hand-mirrored constants are forbidden — drift between the spec and the code is structurally impossible because the constants don't exist unless the spec entry does.
+
+The pattern:
+
+1. **Spec file** at `contracts/{topic}/{topic}.spec.json` (paired with `schema.json` for editor + CI validation).
+2. **SourceGen csproj** at `server/shared/dotnet/{topic}-source-gen/` — `netstandard2.0`, `IsRoslynComponent=true`, `PrivateAssets="all"` on Roslyn deps + bundled `System.Text.Json`. Diagnostics are split: a Roslyn-decoupled `EmitDiagnostic` record + per-id factories for emitter logic (so pure-logic tests can reference the diagnostic IDs without loading Roslyn), `DiagnosticDescriptors.cs` holds the Roslyn `DiagnosticDescriptor` instances loaded only inside the host.
+3. **Single-target dispatch** — the generator gates emission by `Compilation.AssemblyName` (or per-meter `consumingAssembly` field for multi-meter specs). Other consumers get the analyzer DLL but no emission. Test projects and downstream csprojs that just transitively reference the consuming assembly get the constants for free, without re-running the generator.
+4. **Consumer wiring** — the consuming csproj adds a `<ProjectReference … OutputItemType="Analyzer" ReferenceOutputAssembly="false" />` to the SrcGen csproj plus an `<AdditionalFiles Include="…/{topic}.spec.json" />` entry. Build-time `D2***` diagnostics gate every spec change.
+5. **Cross-spec resolution** — when one spec's emitted vocabulary needs to enumerate values from another spec (e.g. a telemetry tag whose closed-set values are the auth-error-codes catalog), the resolver reads the sibling spec at codegen time via the same `<AdditionalFiles>` mechanism and emits a build error on missing / mismatched references. A test-time spec-consistency assertion (e.g. `tests/Unit/SpecsConsistency/AuthErrorCodesVsTelemetrySpecConsistencyTests.cs`) reads both specs side-by-side and asserts set equality, defending against drift the build-time check might miss.
+
+Four instances ship, all mirroring the same csproj template + diagnostic-split + single-target-dispatch structure:
+
+- **`D2.Shared.I18n.SourceGen`** ← `contracts/messages/*.json` → emits the `TK.*` translation-key constants into `D2.Shared.I18n.Abstractions`. See the [TK Source Generator](#tk-source-generator) section above. Diagnostic prefix `D2I18N`.
+- **`D2.Shared.Auth.Scopes.SourceGen`** ← `contracts/auth-scopes/scopes.spec.json` → emits the OAuth scope-string constants + tree structure into `D2.Shared.Auth.Abstractions`. Diagnostic prefix `D2AS`. Reference template — newer SrcGens mirror its file layout.
+- **`D2.Shared.Auth.ErrorCodes.SourceGen`** ← `contracts/auth-error-codes/auth-error-codes.spec.json` → emits the `AuthErrorCodes` constant catalog (one `public const string` per `code`) PLUS the `AuthFailures` semantic-factory class (one `D2Result FactoryName()` per entry, with typed `<T>` overloads for `infrastructure_unavailable` entries) into `D2.Shared.Auth`. Diagnostic prefix `D2AEC`. Consumed by the transport-binding csprojs (`auth-http`, `auth-grpc`) that surface `d2_error_code` on the wire.
+- **`D2.Shared.Telemetry.Tags.SourceGen`** ← `contracts/telemetry/telemetry.spec.json` → emits per-meter `*TelemetryTags.g.cs` typed-constants classes (one nested static class per instrument with `TAG_*` name constants and one nested `TagName` class per closed-enum tag holding its value constants). Per-meter `consumingAssembly` field drives single-target dispatch. Diagnostic prefix `D2TEL`. The `d2.auth.problem.emitted` instrument's `d2_error_code` tag uses `valuesFromSpec=auth-error-codes` — the cross-spec resolver enumerates the error-code catalog at codegen time and the test-time `AuthErrorCodesVsTelemetrySpecConsistencyTests` asserts set equality.
+
+Adding a new spec-driven codegen lib:
+
+1. Add `contracts/{topic}/{topic}.spec.json` + `schema.json`.
+2. Copy `server/shared/dotnet/auth-scopes-source-gen/` as a template — keep the file layout (`SpecFile.cs`, `{Topic}Spec.cs`, `{Topic}SpecLoader.cs`, `{Topic}Emitter.cs`, `{Topic}Generator.cs`, `EmitDiagnostic.cs`, `EmitResult.cs`, `LoadResult.cs`, `DiagnosticIds.cs`, `DiagnosticDescriptors.cs`, `Polyfills/IsExternalInit.cs`, `Polyfills/StringExt.cs`).
+3. Reserve a 4-letter diagnostic-id prefix (existing: `D2I18N`, `D2AS`, `D2AEC`, `D2TEL`) and number contiguously from `001`.
+4. Gate emission by assembly name in the `[Generator]` so non-target consumers get analyzer-only.
+5. Wire each consumer csproj with `<ProjectReference … OutputItemType="Analyzer" ReferenceOutputAssembly="false" />` + `<AdditionalFiles Include="…/spec.json" />`.
+6. Add a per-lib `README.md` documenting the spec format, field rules, diagnostics table, emitted output, and wiring snippet.
+
+Spec-driven codegen is the structural enforcement behind the [5-layer rename safety net](#5-layer-rename-safety-net-spec-driven-codegen--nameof-discipline) above — every renamed spec field cascades through generated code, consumer compile sites, `nameof()`-bound emission sites, behavioral tests, and spec-pin literal tests, in that order.
+
+---
+
 ## Domain Validation — smart-constructor pattern
 
 Domain types use **smart-constructor factories returning `D2Result<T>`** for all input-validating construction. Throwing constructors are reserved for programmer-bug invariants (null where non-null is required, internal state corruption that can't be triggered by user input).

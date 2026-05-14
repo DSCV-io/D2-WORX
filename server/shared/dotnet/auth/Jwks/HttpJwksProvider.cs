@@ -120,22 +120,34 @@ internal sealed class HttpJwksProvider : IJwksProvider
             if (TryProjectSnapshot(config, out var snapshot, out var missingUriIssuer) is false)
             {
                 r_logger.OidcDiscoveryMissingJwksUri(missingUriIssuer);
-                RecordFetch("implicit", "failure", sw.Elapsed.TotalMilliseconds);
+                RecordFetch(
+                AuthTelemetryTags.JwksFetches.Trigger.IMPLICIT,
+                AuthTelemetryTags.JwksFetches.Outcome.FAILURE,
+                sw.Elapsed.TotalMilliseconds);
                 return AuthFailures.JwksUnavailable<JwksKeySetSnapshot>();
             }
 
-            RecordFetch("implicit", "success", sw.Elapsed.TotalMilliseconds);
+            RecordFetch(
+                AuthTelemetryTags.JwksFetches.Trigger.IMPLICIT,
+                AuthTelemetryTags.JwksFetches.Outcome.SUCCESS,
+                sw.Elapsed.TotalMilliseconds);
             return D2Result<JwksKeySetSnapshot>.Ok(snapshot);
         }
         catch (CircuitOpenException)
         {
-            RecordFetch("implicit", "circuit_open", sw.Elapsed.TotalMilliseconds);
+            RecordFetch(
+                AuthTelemetryTags.JwksFetches.Trigger.IMPLICIT,
+                AuthTelemetryTags.JwksFetches.Outcome.CIRCUIT_OPEN,
+                sw.Elapsed.TotalMilliseconds);
             return AuthFailures.JwksUnavailable<JwksKeySetSnapshot>();
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             var outcome = ClassifyOutcome(ex);
-            RecordFetch("implicit", outcome, sw.Elapsed.TotalMilliseconds);
+            RecordFetch(
+                AuthTelemetryTags.JwksFetches.Trigger.IMPLICIT,
+                outcome,
+                sw.Elapsed.TotalMilliseconds);
             r_logger.JwksFetchFailed(
                 SanitizedExceptionRender.TypeName(ex),
                 SanitizedExceptionRender.FirstFrame(ex));
@@ -148,7 +160,7 @@ internal sealed class HttpJwksProvider : IJwksProvider
     /// The supplied <paramref name="ct"/> propagates only to the first caller
     /// that wins the singleflight slot — concurrent callers piggyback on that
     /// in-flight result and their own <paramref name="ct"/> values do not
-    /// abort the shared upstream call. This is intentional: cancelling the
+    /// abort the shared upstream call. This is intentional: canceling the
     /// shared call would penalize every other caller. To opt out of the
     /// shared call, await <see cref="GetKeysAsync"/> with the per-call ct
     /// instead.
@@ -194,8 +206,10 @@ internal sealed class HttpJwksProvider : IJwksProvider
 
     private static void RecordFetch(string trigger, string outcome, double elapsedMs)
     {
-        var triggerTag = new KeyValuePair<string, object?>("trigger", trigger);
-        var outcomeTag = new KeyValuePair<string, object?>("outcome", outcome);
+        var triggerTag = new KeyValuePair<string, object?>(
+            AuthTelemetryTags.JwksFetches.TAG_TRIGGER, trigger);
+        var outcomeTag = new KeyValuePair<string, object?>(
+            AuthTelemetryTags.JwksFetches.TAG_OUTCOME, outcome);
         AuthTelemetry.JwksFetches.Add(1, triggerTag, outcomeTag);
         AuthTelemetry.JwksFetchDurationMs.Record(elapsedMs, triggerTag, outcomeTag);
     }
@@ -207,8 +221,8 @@ internal sealed class HttpJwksProvider : IJwksProvider
     // transient network outage.
     private static string ClassifyOutcome(Exception ex) => ex switch
     {
-        JsonException => "parse_error",
-        _ => "failure",
+        JsonException => AuthTelemetryTags.JwksFetches.Outcome.PARSE_ERROR,
+        _ => AuthTelemetryTags.JwksFetches.Outcome.FAILURE,
     };
 
     // Adapter from ConfigurationManager's Task-returning API to the ValueTask
@@ -233,8 +247,12 @@ internal sealed class HttpJwksProvider : IJwksProvider
                     cooldownMs: (long)r_options.Jwks.RefreshCooldown.TotalMilliseconds);
                 AuthTelemetry.JwksFetches.Add(
                     1,
-                    new KeyValuePair<string, object?>("trigger", "cooldown_skipped"),
-                    new KeyValuePair<string, object?>("outcome", "success"));
+                    new KeyValuePair<string, object?>(
+                        AuthTelemetryTags.JwksFetches.TAG_TRIGGER,
+                        AuthTelemetryTags.JwksFetches.Trigger.COOLDOWN_SKIPPED),
+                    new KeyValuePair<string, object?>(
+                        AuthTelemetryTags.JwksFetches.TAG_OUTCOME,
+                        AuthTelemetryTags.JwksFetches.Outcome.SUCCESS));
                 return D2Result.Ok();
             }
         }
@@ -255,10 +273,13 @@ internal sealed class HttpJwksProvider : IJwksProvider
                 .ConfigureAwait(false);
             Interlocked.Exchange(ref _lastRefreshTicks, nowTicks);
             r_logger.JwksRefreshTriggered(
-                trigger: "reactive",
+                trigger: AuthTelemetryTags.JwksFetches.Trigger.REACTIVE,
                 kidCount: config.SigningKeys?.Count ?? 0,
                 sourceUri: config.JwksUri ?? "<none>");
-            RecordFetch("reactive", "success", sw.Elapsed.TotalMilliseconds);
+            RecordFetch(
+                AuthTelemetryTags.JwksFetches.Trigger.REACTIVE,
+                AuthTelemetryTags.JwksFetches.Outcome.SUCCESS,
+                sw.Elapsed.TotalMilliseconds);
             return D2Result.Ok();
         }
         catch (OperationCanceledException)
@@ -267,13 +288,19 @@ internal sealed class HttpJwksProvider : IJwksProvider
         }
         catch (CircuitOpenException)
         {
-            RecordFetch("reactive", "circuit_open", sw.Elapsed.TotalMilliseconds);
+            RecordFetch(
+                AuthTelemetryTags.JwksFetches.Trigger.REACTIVE,
+                AuthTelemetryTags.JwksFetches.Outcome.CIRCUIT_OPEN,
+                sw.Elapsed.TotalMilliseconds);
             return AuthFailures.JwksUnavailable();
         }
         catch (Exception ex)
         {
             var outcome = ClassifyOutcome(ex);
-            RecordFetch("reactive", outcome, sw.Elapsed.TotalMilliseconds);
+            RecordFetch(
+                AuthTelemetryTags.JwksFetches.Trigger.REACTIVE,
+                outcome,
+                sw.Elapsed.TotalMilliseconds);
             r_logger.JwksFetchFailed(
                 SanitizedExceptionRender.TypeName(ex),
                 SanitizedExceptionRender.FirstFrame(ex));

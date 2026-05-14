@@ -119,7 +119,10 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
         if (cached is not null)
         {
             OutboundTelemetry.TokenExchangeRequests.Add(
-                1, new KeyValuePair<string, object?>("outcome", "cache_hit"));
+                1,
+                new KeyValuePair<string, object?>(
+                    OutboundTelemetryTags.TokenExchangeRequests.TAG_OUTCOME,
+                    OutboundTelemetryTags.TokenExchangeRequests.Outcome.CACHE_HIT));
             return D2Result<string>.Ok(cached);
         }
 
@@ -252,7 +255,11 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
         if (preFetchCache is not null)
         {
             OutboundTelemetry.TokenExchangeRequests.Add(
-                1, new KeyValuePair<string, object?>("outcome", "cache_hit_after_singleflight"));
+                1,
+                new KeyValuePair<string, object?>(
+                    OutboundTelemetryTags.TokenExchangeRequests.TAG_OUTCOME,
+                    OutboundTelemetryTags
+                        .TokenExchangeRequests.Outcome.CACHE_HIT_AFTER_SINGLEFLIGHT));
             return FetchResult.Successful(preFetchCache);
         }
 
@@ -264,7 +271,10 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
             {
                 r_logger.OidcDiscoveryMissingTokenEndpoint(r_options.Issuer);
                 OutboundTelemetry.TokenExchangeRequests.Add(
-                    1, new KeyValuePair<string, object?>("outcome", "discovery_failure"));
+                    1,
+                    new KeyValuePair<string, object?>(
+                        OutboundTelemetryTags.TokenExchangeRequests.TAG_OUTCOME,
+                        OutboundTelemetryTags.TokenExchangeRequests.Outcome.DISCOVERY_FAILURE));
                 return FetchResult.TransientFailure();
             }
 
@@ -297,7 +307,10 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
             {
                 r_logger.TokenExchangeHttpFailure((int)response.StatusCode);
                 OutboundTelemetry.TokenExchangeRequests.Add(
-                    1, new KeyValuePair<string, object?>("outcome", "http_failure"));
+                    1,
+                    new KeyValuePair<string, object?>(
+                        OutboundTelemetryTags.TokenExchangeRequests.TAG_OUTCOME,
+                        OutboundTelemetryTags.TokenExchangeRequests.Outcome.HTTP_FAILURE));
                 return FetchResult.TransientFailure();
             }
 
@@ -309,7 +322,10 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
 
             await r_cache.SetAsync(req.SessionId, req.CacheKey, token, ttl, ct);
             OutboundTelemetry.TokenExchangeRequests.Add(
-                1, new KeyValuePair<string, object?>("outcome", "fetch_success"));
+                1,
+                new KeyValuePair<string, object?>(
+                    OutboundTelemetryTags.TokenExchangeRequests.TAG_OUTCOME,
+                    OutboundTelemetryTags.TokenExchangeRequests.Outcome.FETCH_SUCCESS));
             return FetchResult.Successful(token);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -325,7 +341,10 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
                 SanitizedExceptionRender.TypeName(ex),
                 SanitizedExceptionRender.FirstFrame(ex));
             OutboundTelemetry.TokenExchangeRequests.Add(
-                1, new KeyValuePair<string, object?>("outcome", "fetch_failure"));
+                1,
+                new KeyValuePair<string, object?>(
+                    OutboundTelemetryTags.TokenExchangeRequests.TAG_OUTCOME,
+                    OutboundTelemetryTags.TokenExchangeRequests.Outcome.FETCH_FAILURE));
             return FetchResult.TransientFailure();
         }
     }

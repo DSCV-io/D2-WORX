@@ -64,7 +64,10 @@ internal sealed class TieredCacheSessionLivenessTracker : ISessionLivenessTracke
         if (sessionId.Falsey())
         {
             AuthTelemetry.SessionLivenessChecks.Add(
-                1, new KeyValuePair<string, object?>("outcome", "invalid_input"));
+                1,
+                new KeyValuePair<string, object?>(
+                    AuthTelemetryTags.SessionLivenessChecks.TAG_OUTCOME,
+                    AuthTelemetryTags.SessionLivenessChecks.Outcome.INVALID_INPUT));
             return D2Result<bool>.ValidationFailed();
         }
 
@@ -81,14 +84,21 @@ internal sealed class TieredCacheSessionLivenessTracker : ISessionLivenessTracke
                 existsResult.ErrorCode ?? "<no-error-code>",
                 existsResult.StatusCode.ToString());
             AuthTelemetry.SessionLivenessChecks.Add(
-                1, new KeyValuePair<string, object?>("outcome", "unavailable"));
+                1,
+                new KeyValuePair<string, object?>(
+                    AuthTelemetryTags.SessionLivenessChecks.TAG_OUTCOME,
+                    AuthTelemetryTags.SessionLivenessChecks.Outcome.UNAVAILABLE));
             return AuthFailures.SessionLivenessUnavailable<bool>();
         }
 
         var alive = existsResult.Data;
         AuthTelemetry.SessionLivenessChecks.Add(
             1,
-            new KeyValuePair<string, object?>("outcome", alive ? "alive" : "revoked"));
+            new KeyValuePair<string, object?>(
+                AuthTelemetryTags.SessionLivenessChecks.TAG_OUTCOME,
+                alive
+                    ? AuthTelemetryTags.SessionLivenessChecks.Outcome.ALIVE
+                    : AuthTelemetryTags.SessionLivenessChecks.Outcome.REVOKED));
         return D2Result<bool>.Ok(alive);
     }
 }

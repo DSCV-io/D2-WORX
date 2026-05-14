@@ -19,7 +19,7 @@ Copyright (c) DCSV. All rights reserved.
 
       SA1512: single-line `//` comments not followed by blank lines. Section
       dividers inside test classes are clearer with a blank line before the next
-      test method; SA1512 disagrees. Tests prioritise scan readability over the rule.
+      test method; SA1512 disagrees. Tests prioritize scan readability over the rule.
     -->
     <!--
       xUnit1051: "use TestContext.Current.CancellationToken on every awaited
@@ -112,6 +112,8 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\i18n-source-gen\D2.Shared.I18n.SourceGen.csproj" />
     <ProjectReference Include="..\auth-scopes-source-gen\D2.Shared.Auth.Scopes.SourceGen.csproj" />
     <ProjectReference Include="..\auth-audiences-source-gen\D2.Shared.Auth.Audiences.SourceGen.csproj" />
+    <ProjectReference Include="..\auth-error-codes-source-gen\D2.Shared.Auth.ErrorCodes.SourceGen.csproj" />
+    <ProjectReference Include="..\telemetry-tags-source-gen\D2.Shared.Telemetry.Tags.SourceGen.csproj" />
     <ProjectReference Include="..\context-source-gen\D2.Shared.Context.SourceGen.csproj" />
     <ProjectReference Include="..\resilience\D2.Shared.Resilience.csproj" />
     <ProjectReference Include="..\result\D2.Shared.Result.csproj" />

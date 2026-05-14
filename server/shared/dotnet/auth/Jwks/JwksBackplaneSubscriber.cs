@@ -108,8 +108,12 @@ internal sealed class JwksBackplaneSubscriber : IHostedService, IAsyncDisposable
             await r_jwksProvider.RefreshAsync(ct).ConfigureAwait(false);
             AuthTelemetry.JwksFetches.Add(
                 1,
-                new KeyValuePair<string, object?>("trigger", "backplane_rotation"),
-                new KeyValuePair<string, object?>("outcome", "received"));
+                new KeyValuePair<string, object?>(
+                    AuthTelemetryTags.JwksFetches.TAG_TRIGGER,
+                    AuthTelemetryTags.JwksFetches.Trigger.BACKPLANE_ROTATION),
+                new KeyValuePair<string, object?>(
+                    AuthTelemetryTags.JwksFetches.TAG_OUTCOME,
+                    AuthTelemetryTags.JwksFetches.Outcome.RECEIVED));
         });
 
         return Task.CompletedTask;

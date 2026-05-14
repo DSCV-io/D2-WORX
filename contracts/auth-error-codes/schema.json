@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "D2 auth error codes spec",
+  "description": "Schema for contracts/auth-error-codes/auth-error-codes.spec.json — the source-of-truth catalog that D2.Shared.Auth.ErrorCodes.SourceGen reads to emit AuthErrorCodes.g.cs + AuthFailures.g.cs into D2.Shared.Auth.",
+  "type": "object",
+  "required": ["errorCodes"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "errorCodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/errorCode" }
+    }
+  },
+  "definitions": {
+    "errorCode": {
+      "type": "object",
+      "required": ["code", "httpStatus", "category", "userMessageKey", "factoryName", "doc"],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^AUTH_[A-Z][A-Z0-9_]*$",
+          "description": "Wire-format error code (SCREAMING_SNAKE, AUTH_*-prefixed). Must be unique across the spec."
+        },
+        "httpStatus": {
+          "type": "integer",
+          "enum": [401, 503],
+          "description": "HTTP status mapping. Drives both transport-side response shape AND gRPC StatusCode mapping at the auth-grpc transport binding (401 -> Unauthenticated; 503 -> Unavailable). Expanding the matrix requires updating the codegen mapping (D2AEC005 fires on unknown values)."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["validation_failure", "infrastructure_unavailable", "policy_denied"],
+          "description": "Closed enum classification. Drives D2Result factory selection (validation_failure / policy_denied -> Unauthorized; infrastructure_unavailable -> ServiceUnavailable) AND telemetry classification."
+        },
+        "userMessageKey": {
+          "type": "string",
+          "description": "Translation key reference rendered as the messages argument on the emitted D2Result factory (e.g. TK.Auth.Errors.UNAUTHORIZED). Coarse on purpose - one key per status bucket so the user-facing surface does not leak which validation step failed."
+        },
+        "factoryName": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$",
+          "description": "PascalCase symbol for the emitted factory method (e.g. BearerMissing, JwksUnavailable). Must be unique across the spec."
+        },
+        "doc": {
+          "type": "string",
+          "description": "XML <summary> text rendered on the emitted constant + factory."
+        }
+      }
+    }
+  }
+}

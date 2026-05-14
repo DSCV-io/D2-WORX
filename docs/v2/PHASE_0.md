@@ -563,14 +563,16 @@ Each library, as it's implemented, expands its placeholder README into a full do
 
 Two deliverables ship between Phase 0 closing and Phase 1 (Geo libs) starting. Both are **bridge work** — neither produces new runtime services; both prepare the codebase to absorb Phase 1+ at higher quality and lower friction.
 
-| # | Deliverable | Estimated effort | Branch |
-|---|---|---|---|
-| 0005 | `0005-codegen-cleanup-and-dotnet-improvements` (.NET only) | ~3-5 days | `n/codegen-cleanup` (off `nova` post-0004) |
-| 0006 | `0006-ts-bridge` | ~2-3 weeks | `n/ts-bridge` (off `nova` post-0005) |
+| # | Deliverable | Status | Estimated effort | Branch |
+|---|---|---|---|---|
+| 0005 | `0005-codegen-cleanup-and-dotnet-improvements` (.NET only) | ✅ Complete | ~3-5 days | `n/codegen-cleanup` (off `nova` post-0004) |
+| 0006 | `0006-ts-bridge` | ⏸ Pending | ~2-3 weeks | `n/ts-bridge` (off `nova` post-0005) |
 
 **Order**: 0005 first (no TS dependency); 0006 second (consumes the spec migrations 0005 produces — particularly AuthErrorCodes — so the TS-side codegen runners have a single canonical spec to read instead of a moving target). Phase 1 (Geo libs) starts AFTER 0006 ships.
 
-### Deliverable 0005 — codegen cleanup + .NET improvements
+### Deliverable 0005 — codegen cleanup + .NET improvements ✅ Complete
+
+**Snapshot**: `docs/dev/deliverables/0005-codegen-cleanup-and-dotnet-improvements.md` (final report + lessons + applied `rules.md` augmentation).
 
 **Scope (LOCKED)** — four sub-concerns:
 

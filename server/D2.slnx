@@ -34,6 +34,12 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/auth-audiences-source-gen/">
     <Project Path="shared/dotnet/auth-audiences-source-gen/D2.Shared.Auth.Audiences.SourceGen.csproj" />
   </Folder>
+  <Folder Name="/shared/dotnet/auth-error-codes-source-gen/">
+    <Project Path="shared/dotnet/auth-error-codes-source-gen/D2.Shared.Auth.ErrorCodes.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/telemetry-tags-source-gen/">
+    <Project Path="shared/dotnet/telemetry-tags-source-gen/D2.Shared.Telemetry.Tags.SourceGen.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/auth-outbound/">
     <Project Path="shared/dotnet/auth-outbound/D2.Shared.Auth.Outbound.csproj" />
   </Folder>

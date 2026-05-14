@@ -123,10 +123,12 @@ The backplane subscription is OPTIONAL. If `ICacheInvalidationBackplane` isn't r
 
 ## Telemetry
 
+Tag-key + tag-value constants are emitted by [`D2.Shared.Telemetry.Tags.SourceGen`](../telemetry-tags-source-gen/) into `OutboundTelemetryTags.g.cs` from [`contracts/telemetry/telemetry.spec.json`](../../../../contracts/telemetry/telemetry.spec.json). Counter call sites reference `OutboundTelemetryTags.ServiceIdentityFetches.Outcome.CACHE_HIT` / etc. instead of bare string literals.
+
 | Counter | Tags | Purpose |
 |---|---|---|
-| `d2.auth.outbound.service_identity.fetches` | `outcome=cache_hit \| cache_hit_after_singleflight \| fetch_success \| fetch_failure \| http_failure \| discovery_failure` | Service-identity token resolutions. One increment per `GetCurrentTokenAsync` / `ForceRefreshAsync` call. |
-| `d2.auth.outbound.token_exchange.requests` | `outcome=cache_hit \| cache_hit_after_singleflight \| fetch_success \| fetch_failure \| http_failure \| discovery_failure` | Token-exchange requests. One increment per `ExchangeAsync` call (input-validation failures aren't counted — caller bug, not auth-runtime traffic). |
+| `d2.auth.outbound.service_identity.fetches` | `outcome` (`OutboundTelemetryTags.ServiceIdentityFetches.Outcome.*`: `cache_hit` / `cache_hit_after_singleflight` / `fetch_success` / `fetch_failure` / `http_failure` / `discovery_failure`) | Service-identity token resolutions. One increment per `GetCurrentTokenAsync` / `ForceRefreshAsync` call. |
+| `d2.auth.outbound.token_exchange.requests` | `outcome` (`OutboundTelemetryTags.TokenExchangeRequests.Outcome.*`; same six values) | Token-exchange requests. One increment per `ExchangeAsync` call (input-validation failures aren't counted — caller bug, not auth-runtime traffic). |
 | `d2.auth.outbound.token_exchange.revoked_purges` | — | Cache entries purged by session-revoked backplane events; one increment per purged key. Useful for verifying cluster-wide invalidation propagation. |
 
 `ActivitySource` and `Meter` both named `D2.Shared.Auth.Outbound`. Hosts wire via `.AddSource(OutboundTelemetry.ACTIVITY_SOURCE_NAME)` / `.AddMeter(OutboundTelemetry.METER_NAME)`.

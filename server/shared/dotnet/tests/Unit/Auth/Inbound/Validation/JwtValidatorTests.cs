@@ -408,10 +408,10 @@ public sealed class JwtValidatorTests
     [Fact]
     public async Task ValidateAsync_MalformedActChain_ReturnsActChainMalformed()
     {
-        // Regression: pre-fix, MalformedActorChainException propagated from
-        // ClaimsToContextMapper.Map → JwtValidator.Finalize uncaught. Now
-        // surfaces as a typed 401 with d2_error_code=AUTH_JWT_ACT_CHAIN_MALFORMED
-        // (the JWT payload is suspect, not a server fault).
+        // MalformedActorChainException raised by ClaimsToContextMapper.Map
+        // during JwtValidator.Finalize must surface as a typed 401 with
+        // d2_error_code=AUTH_JWT_ACT_CHAIN_MALFORMED — the JWT payload is
+        // suspect, not a server fault.
         using var builder = new TestJwtBuilder();
         var token = builder.MintToken(
             issuer: _ISSUER,

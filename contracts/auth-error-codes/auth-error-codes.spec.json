@@ -1,0 +1,117 @@
+{
+  "$schema": "./schema.json",
+  "errorCodes": [
+    {
+      "code": "AUTH_BEARER_MISSING",
+      "httpStatus": 401,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
+      "factoryName": "BearerMissing",
+      "doc": "The Authorization header was missing on a protected endpoint."
+    },
+    {
+      "code": "AUTH_BEARER_MALFORMED",
+      "httpStatus": 401,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
+      "factoryName": "BearerMalformed",
+      "doc": "The Authorization header was present but not a parseable Bearer JWT."
+    },
+    {
+      "code": "AUTH_JWT_SIGNATURE_INVALID",
+      "httpStatus": 401,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
+      "factoryName": "JwtSignatureInvalid",
+      "doc": "JWT signature verification failed against the JWKS."
+    },
+    {
+      "code": "AUTH_JWT_EXPIRED",
+      "httpStatus": 401,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
+      "factoryName": "JwtExpired",
+      "doc": "JWT is expired (exp in the past, beyond clock skew)."
+    },
+    {
+      "code": "AUTH_JWT_NOT_YET_VALID",
+      "httpStatus": 401,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
+      "factoryName": "JwtNotYetValid",
+      "doc": "JWT not yet valid (nbf in the future, beyond clock skew)."
+    },
+    {
+      "code": "AUTH_JWT_ISSUER_MISMATCH",
+      "httpStatus": 401,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
+      "factoryName": "JwtIssuerMismatch",
+      "doc": "JWT iss claim does not match the configured issuer."
+    },
+    {
+      "code": "AUTH_JWT_AUDIENCE_MISMATCH",
+      "httpStatus": 401,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
+      "factoryName": "JwtAudienceMismatch",
+      "doc": "JWT aud claim does not match this service's configured audience."
+    },
+    {
+      "code": "AUTH_JWT_CLAIM_MISSING",
+      "httpStatus": 401,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
+      "factoryName": "JwtClaimMissing",
+      "doc": "JWT is missing a required claim that this service depends on."
+    },
+    {
+      "code": "AUTH_JWT_ACT_CHAIN_MALFORMED",
+      "httpStatus": 401,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
+      "factoryName": "JwtActChainMalformed",
+      "doc": "JWT act chain is malformed (RFC 8693 section 2.1 violation)."
+    },
+    {
+      "code": "AUTH_JWT_KID_NOT_FOUND",
+      "httpStatus": 401,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
+      "factoryName": "JwtKidNotFound",
+      "doc": "JWT signed by an unknown kid; reactive JWKS refresh did not surface it."
+    },
+    {
+      "code": "AUTH_JWKS_UNAVAILABLE",
+      "httpStatus": 503,
+      "category": "infrastructure_unavailable",
+      "userMessageKey": "TK.Auth.Errors.TEMPORARILY_UNAVAILABLE",
+      "factoryName": "JwksUnavailable",
+      "doc": "JWKS upstream is unavailable; no cached snapshot to fall back on."
+    },
+    {
+      "code": "AUTH_SESSION_REVOKED",
+      "httpStatus": 401,
+      "category": "policy_denied",
+      "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
+      "factoryName": "SessionRevoked",
+      "doc": "The bearer's d2_session_id is no longer alive (revoked)."
+    },
+    {
+      "code": "AUTH_SESSION_LIVENESS_UNAVAILABLE",
+      "httpStatus": 503,
+      "category": "infrastructure_unavailable",
+      "userMessageKey": "TK.Auth.Errors.TEMPORARILY_UNAVAILABLE",
+      "factoryName": "SessionLivenessUnavailable",
+      "doc": "Session liveness store unreachable. Caller fails closed: receives a 503-equivalent and may retry; the attempt is NOT treated as authenticated. Treating an unknown liveness state as alive would let revoked sessions ride through outages."
+    },
+    {
+      "code": "AUTH_SCOPE_INSUFFICIENT",
+      "httpStatus": 401,
+      "category": "policy_denied",
+      "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
+      "factoryName": "ScopeInsufficient",
+      "doc": "Caller is authenticated but the per-endpoint scope requirement is not satisfied. Surfaces as 401 (not 403) - the auth boundary keeps a uniform shape regardless of whether the JWT was bad or scopes were insufficient, so attackers cannot deduce which check failed."
+    }
+  ]
+}

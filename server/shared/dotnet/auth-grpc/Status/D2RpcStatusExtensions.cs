@@ -114,7 +114,8 @@ public static class D2RpcStatusExtensions
 
             AuthTelemetry.ProblemEmitted.Add(
                 1,
-                new KeyValuePair<string, object?>(_COUNTER_TAG_ERROR_CODE, errorCode));
+                new KeyValuePair<string, object?>(
+                    AuthTelemetryTags.ProblemEmitted.TAG_D2_ERROR_CODE, errorCode));
 
             // Status.Detail is empty (info-leak parity with HTTP middleware's
             // omitted ProblemDetails Detail). The granular d2_error_code
@@ -131,8 +132,6 @@ public static class D2RpcStatusExtensions
 
     /// <summary>The trailer key carrying the W3C trace id (lower-hex, 32 chars).</summary>
     public const string TRAILER_TRACE_ID = "traceid";
-
-    private const string _COUNTER_TAG_ERROR_CODE = "d2_error_code";
 
     // Pinned so JsonSerializerOptions caching applies; default options match
     // the codebase's Web defaults (camelCase property names, ignore null).

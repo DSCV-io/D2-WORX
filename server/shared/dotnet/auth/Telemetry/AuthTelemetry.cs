@@ -38,12 +38,9 @@ public static class AuthTelemetry
     public static readonly Meter Meter = new(METER_NAME);
 
     /// <summary>
-    /// Counter — total inbound JWT validations. Tagged with <c>outcome</c>:
-    /// <c>success</c>, <c>bearer_missing</c>, <c>bearer_malformed</c>,
-    /// <c>signature_invalid</c>, <c>expired</c>, <c>not_yet_valid</c>,
-    /// <c>issuer_mismatch</c>, <c>audience_mismatch</c>, <c>claim_missing</c>,
-    /// <c>act_chain_malformed</c>, <c>kid_not_found</c>,
-    /// <c>jwks_unavailable</c>.
+    /// Counter — total inbound JWT validations. Tagged with <c>outcome</c>;
+    /// closed-enum values emitted by codegen — see
+    /// <see cref="AuthTelemetryTags.JwtValidations.Outcome"/>.
     /// </summary>
     public static readonly Counter<long> JwtValidations =
         Meter.CreateCounter<long>(
@@ -52,13 +49,12 @@ public static class AuthTelemetry
 
     /// <summary>
     /// Counter — total session liveness checks and revoke-event observations.
-    /// Tagged with <c>outcome</c>: <c>alive</c>, <c>revoked</c>,
-    /// <c>unavailable</c>, <c>invalid_input</c> (emitted by the liveness
-    /// tracker on every <c>IsAliveAsync</c> call), and
-    /// <c>backplane_revoked</c> (emitted by <c>SessionRevokedBackplaneSubscriber</c>
+    /// Tagged with <c>outcome</c>; closed-enum values emitted by codegen — see
+    /// <see cref="AuthTelemetryTags.SessionLivenessChecks.Outcome"/>.
+    /// (<c>backplane_revoked</c> is emitted by <c>SessionRevokedBackplaneSubscriber</c>
     /// for every cluster-wide revoke event matching the configured cache-key
     /// prefix — telemetry-only observation; the underlying liveness check
-    /// remains correct via cache invalidation).
+    /// remains correct via cache invalidation.)
     /// </summary>
     public static readonly Counter<long> SessionLivenessChecks =
         Meter.CreateCounter<long>(
@@ -67,17 +63,17 @@ public static class AuthTelemetry
 
     /// <summary>
     /// Counter — total JWKS fetches / refresh events. Tagged with
-    /// <c>trigger</c>: <c>implicit</c> (passive read via GetKeysAsync —
-    /// hits ConfigurationManager's internal cache or fetches if cold),
-    /// <c>reactive</c> (forced via RefreshAsync after cooldown elapsed),
-    /// <c>cooldown_skipped</c> (RefreshAsync within cooldown window —
-    /// no upstream call), <c>backplane_rotation</c> (RefreshAsync invoked
-    /// by JwksBackplaneSubscriber on a key-rotated event); and
-    /// <c>outcome</c>: <c>success</c>, <c>failure</c>, <c>parse_error</c>
-    /// (malformed-JSON discovery doc — distinguished from generic network
-    /// failures so dashboards can spot upstream contract drift),
-    /// <c>circuit_open</c> (breaker fast-failed without an upstream call
-    /// during sustained outage), <c>received</c>.
+    /// <c>trigger</c> (<see cref="AuthTelemetryTags.JwksFetches.Trigger"/>:
+    /// <c>implicit</c> = passive read via GetKeysAsync; <c>reactive</c> =
+    /// forced via RefreshAsync after cooldown elapsed; <c>cooldown_skipped</c>
+    /// = RefreshAsync within cooldown window — no upstream call;
+    /// <c>backplane_rotation</c> = RefreshAsync invoked by
+    /// JwksBackplaneSubscriber on a key-rotated event) and <c>outcome</c>
+    /// (<see cref="AuthTelemetryTags.JwksFetches.Outcome"/>: <c>success</c>,
+    /// <c>failure</c>, <c>parse_error</c> — malformed-JSON discovery doc, so
+    /// dashboards can spot upstream contract drift, <c>circuit_open</c> —
+    /// breaker fast-failed without an upstream call during sustained outage,
+    /// <c>received</c>).
     /// </summary>
     public static readonly Counter<long> JwksFetches =
         Meter.CreateCounter<long>(
@@ -90,17 +86,12 @@ public static class AuthTelemetry
     /// (<c>D2.Shared.Auth.Http</c>) AND <see cref="System.Exception"/>-
     /// shaped <c>RpcException(Status, Trailers)</c> from the gRPC interceptor
     /// (<c>D2.Shared.Auth.Grpc</c>). Single sink across both transports so
-    /// dashboards aggregate cleanly. Tagged with <c>d2_error_code</c> (one of
-    /// the <c>AUTH_*</c> constants from
-    /// <see cref="D2.Shared.Auth.Errors.AuthErrorCodes"/>:
-    /// <c>AUTH_BEARER_MISSING</c>, <c>AUTH_BEARER_MALFORMED</c>,
-    /// <c>AUTH_JWT_SIGNATURE_INVALID</c>, <c>AUTH_JWT_EXPIRED</c>,
-    /// <c>AUTH_JWT_NOT_YET_VALID</c>, <c>AUTH_JWT_ISSUER_MISMATCH</c>,
-    /// <c>AUTH_JWT_AUDIENCE_MISMATCH</c>, <c>AUTH_JWT_CLAIM_MISSING</c>,
-    /// <c>AUTH_JWT_ACT_CHAIN_MALFORMED</c>,
-    /// <c>AUTH_JWT_KID_NOT_FOUND</c>, <c>AUTH_JWKS_UNAVAILABLE</c>,
-    /// <c>AUTH_SESSION_REVOKED</c>, <c>AUTH_SESSION_LIVENESS_UNAVAILABLE</c>,
-    /// <c>AUTH_SCOPE_INSUFFICIENT</c>).
+    /// dashboards aggregate cleanly. Tagged with <c>d2_error_code</c>
+    /// (<see cref="AuthTelemetryTags.ProblemEmitted.TAG_D2_ERROR_CODE"/>);
+    /// values are the <c>AUTH_*</c> constants from
+    /// <see cref="D2.Shared.Auth.Errors.AuthErrorCodes"/> (cross-spec
+    /// resolved by codegen — see
+    /// <c>contracts/telemetry/telemetry.spec.json</c>).
     /// </summary>
     public static readonly Counter<long> ProblemEmitted =
         Meter.CreateCounter<long>(

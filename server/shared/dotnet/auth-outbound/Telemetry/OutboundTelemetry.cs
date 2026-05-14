@@ -39,9 +39,8 @@ public static class OutboundTelemetry
 
     /// <summary>
     /// Counter — total service-identity token resolutions. Tagged with
-    /// <c>outcome</c>: <c>cache_hit</c>, <c>cache_hit_after_singleflight</c>,
-    /// <c>fetch_success</c>, <c>fetch_failure</c>, <c>http_failure</c>,
-    /// <c>discovery_failure</c>.
+    /// <c>outcome</c>; closed-enum values emitted by codegen — see
+    /// <see cref="OutboundTelemetryTags.ServiceIdentityFetches.Outcome"/>.
     /// </summary>
     public static readonly Counter<long> ServiceIdentityFetches =
         Meter.CreateCounter<long>(
@@ -49,10 +48,9 @@ public static class OutboundTelemetry
             description: "Total service-identity token resolutions.");
 
     /// <summary>
-    /// Counter — total token-exchange requests. Tagged with <c>outcome</c>:
-    /// <c>cache_hit</c>, <c>cache_hit_after_singleflight</c>,
-    /// <c>fetch_success</c>, <c>fetch_failure</c>, <c>http_failure</c>,
-    /// <c>discovery_failure</c>.
+    /// Counter — total token-exchange requests. Tagged with <c>outcome</c>;
+    /// closed-enum values emitted by codegen — see
+    /// <see cref="OutboundTelemetryTags.TokenExchangeRequests.Outcome"/>.
     /// </summary>
     public static readonly Counter<long> TokenExchangeRequests =
         Meter.CreateCounter<long>(

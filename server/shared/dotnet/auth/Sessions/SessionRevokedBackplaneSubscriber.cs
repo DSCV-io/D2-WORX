@@ -83,7 +83,10 @@ internal sealed class SessionRevokedBackplaneSubscriber : IHostedService, IAsync
                 return ValueTask.CompletedTask;
 
             AuthTelemetry.SessionLivenessChecks.Add(
-                1, new KeyValuePair<string, object?>("outcome", "backplane_revoked"));
+                1,
+                new KeyValuePair<string, object?>(
+                    AuthTelemetryTags.SessionLivenessChecks.TAG_OUTCOME,
+                    AuthTelemetryTags.SessionLivenessChecks.Outcome.BACKPLANE_REVOKED));
             return ValueTask.CompletedTask;
         });
 
