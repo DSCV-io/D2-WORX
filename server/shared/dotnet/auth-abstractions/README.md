@@ -22,14 +22,15 @@ The runtime piece (`AddD2Auth`, JWT validation, JWKS HTTP fetcher, session liven
 | `Role.cs` | Enum — `Auditor` / `Agent` / `Officer` / `Owner`. Discrete capability sets — not a hierarchy. |
 | `ActionSensitivity.cs` | Enum — `Routine` / `Sensitive` / `Critical`. Per-scope discriminator driving audit verbosity, OTP step-up triggers, and impersonation defaults. |
 | `ActorEntry.cs` | `sealed record ActorEntry(ActorKind Kind, string Subject, string? ClientId, ImpersonationKind?, Guid? SessionId, Guid? OrgId, string? OrgName, OrgType?, Role? OrgRole, ActorEntry? Act)`. The recursive `Act` field models RFC 8693 §2.1 nested chains; the `ImpersonationKind` / `SessionId` / four `Org*` fields apply when `Kind == Impersonation` (they describe the agent / impersonator's own context). |
-| `Scopes.g.cs` (codegen, in `obj/Generated/D2.Shared.Auth.Scopes.SourceGen/...`) | Static partial class — OAuth-canonical scope string constants emitted from `contracts/auth-scopes/scopes.spec.json` by the sibling `D2.Shared.Auth.Scopes.SourceGen` analyzer. Single source of truth for the platform's scope catalog. |
-| `Audiences.g.cs` (codegen, in `obj/Generated/D2.Shared.Auth.Audiences.SourceGen/...`) | Static partial class — JWT `aud`-claim audience constants emitted from `contracts/auth-audiences/audiences.spec.json` by the sibling `D2.Shared.Auth.Audiences.SourceGen` analyzer. Single source of truth for both inbound `aud`-claim validation AND outbound `TokenExchangeClient.ExchangeAsync` `targetAudience` arguments. Provides `IsKnown(url)`, `Resolve(name)`, `ResolveByUrl(url)` helpers, plus `AllUrls` (read-only set of every audience URL) and `ByName` (read-only name → URL map) collection projections for enumeration. |
-| `JwtClaimTypes.cs` | Static class — claim name constants. Standard claims (`sub`, `aud`, `act`, `scope`, ...) keep canonical names; D² custom claims use the `d2_` prefix. The `act.d2_kind` claim discriminates impersonation flavor (Consent vs Force) — see `ImpersonationKind` for the values. |
-| `RequestHeaders.cs` | Static class — custom HTTP header names (`X-D2-Client-Fingerprint`, etc.). |
+| `Scopes.g.cs` (codegen, in `Generated/D2.Shared.Auth.Scopes.SourceGen/...`) | Static partial class — OAuth-canonical scope string constants emitted from `contracts/auth-scopes/scopes.spec.json` by the sibling `D2.Shared.Auth.Scopes.SourceGen` analyzer. Single source of truth for the platform's scope catalog. |
+| `Audiences.g.cs` (codegen, in `Generated/D2.Shared.Auth.Audiences.SourceGen/...`) | Static partial class — JWT `aud`-claim audience constants emitted from `contracts/auth-audiences/audiences.spec.json` by the sibling `D2.Shared.Auth.Audiences.SourceGen` analyzer. Single source of truth for both inbound `aud`-claim validation AND outbound `TokenExchangeClient.ExchangeAsync` `targetAudience` arguments. Provides `IsKnown(url)`, `Resolve(name)`, `ResolveByUrl(url)` helpers, plus `AllUrls` (read-only set of every audience URL) and `ByName` (read-only name → URL map) collection projections for enumeration. |
+| `JwtClaimTypes.g.cs` (codegen, in `Generated/D2.Shared.Auth.JwtClaims.SourceGen/...`) | Static class — claim name constants emitted from `contracts/jwt-claims/jwt-claims.spec.json` by the sibling `D2.Shared.Auth.JwtClaims.SourceGen` analyzer. Standard claims (`sub`, `aud`, `act`, `scope`, ...) keep canonical names; D² custom claims use the `d2_` prefix. The `act.d2_kind` claim discriminates impersonation flavor (Consent vs Force) — see `ImpersonationKind` for the values. Same spec drives the TS-side `@d2/auth-abstractions` `JwtClaimTypes` catalog. |
 | `Jwks/IJwksProvider.cs` | Interface — `GetKeysAsync` / `RefreshAsync` returning `D2Result<JwksKeySetSnapshot>` / `D2Result`. The contract every consumer-side service uses to look up JWT verify keys by `kid`. Impl lives in `D2.Shared.Auth/Jwks/HttpJwksProvider.cs`; Edge supplies its own issuer-side impl. |
 | `Jwks/JwksKeySetSnapshot.cs` | Sealed record — immutable snapshot of the verify-key set (kid → `SecurityKey` dictionary + fetched-at timestamp + source URL). Returned by `IJwksProvider.GetKeysAsync`. |
 | `Sessions/ISessionLivenessTracker.cs` | Interface — `IsAliveAsync(sessionId)` returning `D2Result<bool>`. Read-only contract every authenticated request uses to verify the session is still alive. **Cache outage = `ServiceUnavailable` = caller fails closed (401)** — never treat unknown liveness as alive. Impl lives in `D2.Shared.Auth/Sessions/TieredCacheSessionLivenessTracker.cs`; Edge owns the writer side internally (no `ISessionLivenessWriter` here — Edge writes to its own session store + publishes invalidation events on the cache backplane that this lib's impl subscribes to). |
-| `Http/D2HttpContextItems.cs` | Static class — string-key constants for cross-transport `HttpContext.Items` slots. Defines `REQUEST_CONTEXT` (`"D2.RequestContext"`), the slot under which the inbound auth runtime writes the populated `IRequestContext` on successful auth. Lives in the abstractions slice so BOTH transport-binding csprojs (`D2.Shared.Auth.Http` middleware + `D2.Shared.Auth.Grpc` interceptor) can write to the same slot without an inter-csproj dep — that lets a single dual-transport host wire both extensions and resolve `IRequestContext` correctly under either transport. |
+| `Http/D2HttpContextItems.g.cs` (codegen, in `Generated/D2.Shared.InProcessKeys.SourceGen/...`) | Static class — string-key constants for cross-transport `HttpContext.Items` slots emitted from `contracts/in-process-keys/keys.spec.json` by the sibling `D2.Shared.InProcessKeys.SourceGen` analyzer. Defines `REQUEST_CONTEXT` (`"D2.RequestContext"`), the slot under which the inbound auth runtime writes the populated `IRequestContext` on successful auth. Lives in the abstractions slice so BOTH transport-binding csprojs (`D2.Shared.Auth.Http` middleware + `D2.Shared.Auth.Grpc` interceptor) can write to the same slot without an inter-csproj dep. The same spec drives the gRPC-side `D2.Shared.Auth.Grpc.Interceptors.D2GrpcUserStateKeys` catalog at identical wire values. |
+
+The `Generated/` directory is tracked in git and contains the SourceGen-emitted output — committed for inspection, IDE navigation, and PR diff review. Files are re-emitted on every `dotnet build` from the spec contracts; never hand-edit. The `*.g.cs` glob is marked `linguist-generated=true` in `.gitattributes` so GitHub PR UI collapses these diffs by default.
 
 ---
 
@@ -93,10 +94,11 @@ JwtClaimTypes.ACT_KIND                     // "d2_kind"        (lookup path: act
 JwtClaimTypes.ACT_SESSION_ID               // "d2_session_id"  (lookup path: act.d2_session_id)
 // ... plus more
 
-RequestHeaders.IDEMPOTENCY_KEY             // "Idempotency-Key"
-RequestHeaders.CLIENT_FINGERPRINT          // "X-D2-Client-Fingerprint"
-
-// AMQP headers live in D2.Shared.Messaging — they're a messaging-infrastructure concern.
+// HTTP request-header constants live in D2.Shared.Headers.Http (codegen-emitted from
+// contracts/headers/headers.spec.json). E.g. HttpHeaders.IDEMPOTENCY_KEY,
+// HttpHeaders.CLIENT_FINGERPRINT, HttpHeaders.AUTHORIZATION, HttpHeaders.INTERNAL_TOKEN.
+// AMQP headers live in D2.Shared.Headers.Amqp; gRPC headers in D2.Shared.Headers.Grpc;
+// cross-transport entries also live in D2.Shared.Headers.Common.
 
 Scopes.Self.Read                           // "self.read"   (codegen-emitted)
 Scopes.Auth.Password.Change                // "auth.password.change"
@@ -148,11 +150,15 @@ The depth limit lives in `D2.Shared.Context.Abstractions.ActorChainParser.MaxAct
 
 Auth middleware MUST catch and convert to `D2Result.Unauthorized` (HTTP 401) — a malformed actor chain is a signed-token-with-bad-payload condition that should never reach a handler.
 
-### Why scope strings are codegen-emitted
+### Why every constant catalog is codegen-emitted
 
-The scope catalog is the kind of growing, system-wide vocabulary that benefits from a single source of truth. `contracts/auth-scopes/scopes.spec.json` defines every scope along with its `actionSensitivity`, `impersonationBlocked` flag, and `(OrgType, Role)` grant matrix. The codegen (`D2.Shared.Auth.Scopes.SourceGen`) emits `Scopes.g.cs` with nested constants + O(1) lookup helpers + a wildcard-expanded grant dictionary that Edge consumes at JWT mint time.
+The scope catalog, audience catalog, JWT claim names, HTTP header names, and in-process slot keys are ALL codegen-emitted from per-topic specs in `contracts/`. Each spec is a single source of truth that drives BOTH the .NET catalog AND the corresponding TS catalog (where applicable) — cross-language drift is structurally impossible.
 
-JWT claim names + HTTP header names stay hand-written — they're small, stable, and there's no second source of truth to mirror against.
+- `Scopes.g.cs` ← `contracts/auth-scopes/scopes.spec.json` via `D2.Shared.Auth.Scopes.SourceGen`
+- `Audiences.g.cs` ← `contracts/auth-audiences/audiences.spec.json` via `D2.Shared.Auth.Audiences.SourceGen`
+- `JwtClaimTypes.g.cs` ← `contracts/jwt-claims/jwt-claims.spec.json` via `D2.Shared.Auth.JwtClaims.SourceGen`
+- `Http/D2HttpContextItems.g.cs` ← `contracts/in-process-keys/keys.spec.json` via `D2.Shared.InProcessKeys.SourceGen`
+- HTTP / AMQP / gRPC / cross-transport header catalogs ← `contracts/headers/headers.spec.json` via `D2.Shared.Headers.SourceGen` (live in their own per-transport csprojs `D2.Shared.Headers.{Http,Amqp,Grpc,Common}`)
 
 ---
 
@@ -161,8 +167,9 @@ JWT claim names + HTTP header names stay hand-written — they're small, stable,
 `server/shared/dotnet/tests/Unit/Auth/`:
 - `ActorKindTests.cs` / `ImpersonationKindTests.cs` / `OrgTypeTests.cs` / `RoleTests.cs` / `ActionSensitivityTests.cs` — enum value stability (rename = breaking change gate).
 - `ActorEntryTests.cs` — record equality including nested `Act` chains; null-Act default; multi-level chain traversal; ImpersonationKind / SessionId only-meaningful-when-Impersonation discipline.
-- `JwtClaimTypesTests.cs` / `RequestHeadersTests.cs` — constant value stability; D²-prefix validation.
-- `JwtClaimTypesParityTests.cs` — every `claim:` annotation in `IAuthContext.spec.json` has a matching `JwtClaimTypes` constant.
+- `JwtClaimTypesTests.cs` — per-VALUE pin against the codegen-emitted catalog; D²-prefix validation.
+- HTTP / AMQP / gRPC / common header per-VALUE pins live in `tests/Unit/Headers/HeaderCatalogPinTests.cs`.
+- `SpecsConsistency/JwtClaimsVsIAuthContextConsistencyTests.cs` — every `claim:` annotation in `IAuthContext.spec.json` references a valid jwt-claims spec entry (forward direction; reverse intentionally not enforced — `ACT_KIND` / `IAT` / `EXP` etc. live outside top-level IAuthContext properties).
 
 `server/shared/dotnet/tests/Unit/Auth/Jwks/`:
 - `JwksKeySetSnapshotTests.cs` — defensive-copy guarantee on the `Keys` init setter, per-property record equality, empty-key-set tolerance.

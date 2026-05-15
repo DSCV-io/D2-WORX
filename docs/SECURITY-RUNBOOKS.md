@@ -4,9 +4,7 @@ Copyright (c) DCSV. All rights reserved.
 
 # SECURITY-RUNBOOKS.md — Compromise Response Runbooks
 
-> **Status**: Placeholder. Filled in detail when KeyCustodian ships with the Edge auth module.
->
-> **Until then**: this doc declares intent. The runbooks themselves are stub bullet points to be expanded with concrete commands, alert criteria, and recovery steps.
+> **Status**: Placeholder — runbooks are stubs until KeyCustodian is operational. Until KeyCustodian's CLI + state machine are real, the per-runbook bullet points below describe intent rather than executable procedures. Once KeyCustodian is operational the stubs are replaced with concrete commands, alert criteria, and recovery steps.
 
 ---
 
@@ -40,7 +38,7 @@ d2 keys rotate --domain <audit|notifications|courier|jwks|cookie> --reason "<sho
 
 ---
 
-## Runbook Stubs (to be expanded when KeyCustodian ships)
+## Runbook Stubs
 
 ### TBD: Message-payload key compromise (audit / notifications / courier domain)
 
@@ -92,15 +90,15 @@ Steps:
 
 ---
 
-## When This Doc Goes from Placeholder to Real
+## Completion criteria
 
-Completion criteria (when KeyCustodian ships):
+The Status block above describes the operational gap; this section enumerates the completion criteria the Status block is gated on:
 - [ ] All 6 stub runbooks above expanded with concrete commands, alert criteria, recovery steps
 - [ ] Each runbook tested in a dev/staging environment (operator walks through it end-to-end)
 - [ ] Operator on-call rotation knows where to find this doc
 - [ ] Alert routing references runbook sections (alert → page → "see SECURITY-RUNBOOKS.md §X")
 
-Until then: anyone who hits a compromise scenario should:
+While the Status above is in effect, anyone who hits a compromise scenario should:
 1. Pause and consult the on-call security contact
 2. Don't wing the rotation — KeyCustodian state machine has terminal states; incorrect operation can lock you out
 3. Document what you did so this runbook can be informed by it

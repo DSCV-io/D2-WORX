@@ -10,6 +10,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
+using D2.Shared.SourceGen;
+using D2.Shared.SourceGen.Polyfills;
 
 /// <summary>
 /// Pure logic for emitting <c>MutableRequestContext</c> from the COMBINED
@@ -67,7 +69,7 @@ internal static class MutableEmitter
             {
                 if (!ReferenceEquals(firstSpec, spec))
                 {
-                    diagnostics.Add(EmitDiagnostic.PropertyNameCollision(
+                    diagnostics.Add(EmitDiagnostics.PropertyNameCollision(
                         prop.Name, firstSpec.Name, spec.Name));
                 }
             }
@@ -97,6 +99,8 @@ internal static class MutableEmitter
         sb.AppendLine("using System.Security.Claims;");
         sb.AppendLine("using System.Text.Json;");
         sb.AppendLine("using D2.Shared.Auth.Abstractions;");
+        sb.AppendLine("using D2.Shared.Utilities.Attributes;");
+        sb.AppendLine("using D2.Shared.Utilities.Enums;");
         sb.AppendLine("using D2.Shared.Utilities.Extensions;");
         sb.AppendLine();
         sb.AppendLine($"namespace {_TARGET_NAMESPACE};");
@@ -159,9 +163,12 @@ internal static class MutableEmitter
 
         EmitXmlDocSummary(sb, prop.Doc ?? prop.Name, indent);
 
-        if (string.IsNullOrEmpty(prop.Derived))
+        if (prop.Redact)
+            sb.AppendLine($"{pad}[RedactData(Reason = RedactReason.PersonalInformation)]");
+
+        if (prop.Derived.Falsey())
         {
-            var defaultExpr = string.IsNullOrEmpty(prop.Default)
+            var defaultExpr = prop.Default.Falsey()
                 ? TypeVocabulary.DefaultExpression(prop.Type)
                 : prop.Default!;
             sb.AppendLine($"{pad}public {prop.Type} {prop.Name} {{ get; set; }} = {defaultExpr};");
@@ -380,7 +387,7 @@ internal static class MutableEmitter
             {
                 foreach (var prop in section.Properties)
                 {
-                    if (!string.IsNullOrEmpty(prop.Derived) || string.IsNullOrEmpty(prop.Claim))
+                    if (prop.Derived.Truthy() || prop.Claim.Falsey())
                         continue;
 
                     EmitJwtPayloadAssignment(sb, prop);
@@ -584,7 +591,7 @@ internal static class MutableEmitter
             {
                 foreach (var prop in section.Properties)
                 {
-                    if (!string.IsNullOrEmpty(prop.Derived) || string.IsNullOrEmpty(prop.Claim))
+                    if (prop.Derived.Truthy() || prop.Claim.Falsey())
                         continue;
 
                     EmitClaimsAssignment(sb, prop);

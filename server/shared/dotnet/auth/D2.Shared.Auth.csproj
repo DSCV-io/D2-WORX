@@ -5,14 +5,26 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <RootNamespace>D2.Shared.Auth</RootNamespace>
     <!--
-      EmitCompilerGeneratedFiles surfaces the SrcGen-emitted AuthErrorCodes.g.cs +
-      AuthFailures.g.cs + AuthTelemetryTags.g.cs into obj/Generated/ so they're
-      visible for inspection / debugging. Required by the auth-error-codes-source-gen +
-      telemetry-tags-source-gen analyzers wired below.
+      Emit SrcGen-emitted AuthErrorCodes.g.cs + AuthFailures.g.cs +
+      AuthTelemetryTags.g.cs (driven by auth-error-codes-source-gen +
+      telemetry-tags-source-gen analyzers wired below) plus the framework
+      LoggerMessage.g.cs to <project-dir>/Generated/. The directory is tracked
+      in git so PR reviewers see codegen diffs without a local build.
     -->
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111). See:
+      https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#compilergeneratedfilesoutputpath
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
 
   <!--
     Inbound auth runtime — JWT validation, session liveness checking, JWKS

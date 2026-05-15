@@ -4,12 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+extern alias TelemetryTagsSourceGen;
+
 namespace D2.Shared.Tests.Unit.Telemetry.SourceGen;
 
 using System.Collections.Immutable;
 using AwesomeAssertions;
 using D2.Shared.Telemetry.Tags.SourceGen;
 using Xunit;
+using SpecFile = TelemetryTagsSourceGen::D2.Shared.SourceGen.SpecFile;
 
 /// <summary>
 /// Pure-logic tests for the telemetry-tags emitter.

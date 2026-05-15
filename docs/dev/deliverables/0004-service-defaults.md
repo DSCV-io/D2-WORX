@@ -1,3 +1,5 @@
+<!-- Copyright (c) DCSV. All rights reserved. -->
+
 # Deliverable 0004 — D2.Shared.ServiceDefaults
 
 **Status**: ✅ SHIPPED 2026-05-12

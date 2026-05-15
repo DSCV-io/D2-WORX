@@ -1,0 +1,27 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
+import { existsSync } from "node:fs";
+import { describe, expect, it } from "vitest";
+import { contractsPath, REPO_ROOT, tsPackagePath } from "../src/lib/paths.js";
+
+describe("paths", () => {
+  it("REPO_ROOT resolves to a real directory containing 'contracts'", () => {
+    expect(existsSync(REPO_ROOT)).toBe(true);
+    expect(existsSync(`${REPO_ROOT}/contracts`)).toBe(true);
+  });
+  it("contractsPath joins parts", () => {
+    const p = contractsPath("auth-context", "IAuthContext.spec.json");
+    expect(p).toContain("contracts");
+    expect(p).toContain("IAuthContext.spec.json");
+    expect(existsSync(p)).toBe(true);
+  });
+  it("tsPackagePath joins parts under server/shared/typescript/<pkg>", () => {
+    const p = tsPackagePath("utilities", "package.json");
+    expect(p).toContain("server");
+    expect(p).toContain("typescript");
+    expect(p).toContain("utilities");
+    expect(existsSync(p)).toBe(true);
+  });
+});

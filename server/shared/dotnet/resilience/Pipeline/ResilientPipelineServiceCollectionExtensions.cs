@@ -25,39 +25,41 @@ using Microsoft.Extensions.DependencyInjection;
 /// </remarks>
 public static class ResilientPipelineServiceCollectionExtensions
 {
-    /// <summary>
-    /// Registers a <see cref="ResilientPipeline{TKey, TValue}"/> as a keyed
-    /// singleton, configured by the supplied <paramref name="configure"/>
-    /// callback. Layers are applied in the order the <c>Use*</c> methods are
-    /// called (outer-first).
-    /// </summary>
-    /// <typeparam name="TKey">Per-call key type.</typeparam>
-    /// <typeparam name="TValue">The value type produced by the operation.</typeparam>
     /// <param name="services">The service collection.</param>
-    /// <param name="serviceKey">
-    /// The DI key under which to register the pipeline. Consumers resolve
-    /// via <c>[FromKeyedServices(serviceKey)]</c>.
-    /// </param>
-    /// <param name="configure">
-    /// Callback receiving an <see cref="IResilientPipelineBuilder{TKey, TValue}"/>
-    /// to compose the layer stack. Use the <c>UseSingleflight(serviceKey)</c>
-    /// / <c>UseCircuitBreaker(serviceKey)</c> overloads inside to resolve
-    /// keyed primitives explicitly.
-    /// </param>
-    /// <returns>The same service collection, for chaining.</returns>
-    public static IServiceCollection AddResilientPipeline<TKey, TValue>(
-        this IServiceCollection services,
-        object serviceKey,
-        Action<IResilientPipelineBuilder<TKey, TValue>> configure)
-        where TKey : notnull
+    extension(IServiceCollection services)
     {
-        services.AddKeyedSingleton<ResilientPipeline<TKey, TValue>>(serviceKey, (sp, _) =>
+        /// <summary>
+        /// Registers a <see cref="ResilientPipeline{TKey, TValue}"/> as a keyed
+        /// singleton, configured by the supplied <paramref name="configure"/>
+        /// callback. Layers are applied in the order the <c>Use*</c> methods are
+        /// called (outer-first).
+        /// </summary>
+        /// <typeparam name="TKey">Per-call key type.</typeparam>
+        /// <typeparam name="TValue">The value type produced by the operation.</typeparam>
+        /// <param name="serviceKey">
+        /// The DI key under which to register the pipeline. Consumers resolve
+        /// via <c>[FromKeyedServices(serviceKey)]</c>.
+        /// </param>
+        /// <param name="configure">
+        /// Callback receiving an <see cref="IResilientPipelineBuilder{TKey, TValue}"/>
+        /// to compose the layer stack. Use the <c>UseSingleflight(serviceKey)</c>
+        /// / <c>UseCircuitBreaker(serviceKey)</c> overloads inside to resolve
+        /// keyed primitives explicitly.
+        /// </param>
+        /// <returns>The same service collection, for chaining.</returns>
+        public IServiceCollection AddResilientPipeline<TKey, TValue>(
+            object serviceKey,
+            Action<IResilientPipelineBuilder<TKey, TValue>> configure)
+            where TKey : notnull
         {
-            var builder = new ResilientPipelineBuilder<TKey, TValue>(sp);
-            configure(builder);
-            return builder.Build();
-        });
+            services.AddKeyedSingleton<ResilientPipeline<TKey, TValue>>(serviceKey, (sp, _) =>
+            {
+                var builder = new ResilientPipelineBuilder<TKey, TValue>(sp);
+                configure(builder);
+                return builder.Build();
+            });
 
-        return services;
+            return services;
+        }
     }
 }

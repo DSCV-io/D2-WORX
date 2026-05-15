@@ -8,7 +8,7 @@ namespace D2.Shared.I18n.SourceGen;
 
 using System;
 using System.Collections.Generic;
-using D2.Shared.I18n.SourceGen.Polyfills;
+using D2.Shared.SourceGen.Polyfills;
 
 /// <summary>
 /// Pure logic for decomposing a translation key (e.g. <c>"common_errors_NOT_FOUND"</c>)

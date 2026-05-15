@@ -11,7 +11,8 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
-using D2.Shared.Auth.Scopes.SourceGen.Polyfills;
+using D2.Shared.SourceGen;
+using D2.Shared.SourceGen.Polyfills;
 
 /// <summary>
 /// Pure logic for emitting the <c>Scopes</c> static partial class source from
@@ -63,19 +64,19 @@ internal static class ScopesEmitter
         {
             if (!seenNames.Add(scope.Name))
             {
-                diagnostics.Add(EmitDiagnostic.DuplicateScope(scope.Name));
+                diagnostics.Add(EmitDiagnostics.DuplicateScope(scope.Name));
                 continue;
             }
 
             if (!ValidateScopeName(scope.Name, out var nameReason))
             {
-                diagnostics.Add(EmitDiagnostic.InvalidScopeName(scope.Name, nameReason));
+                diagnostics.Add(EmitDiagnostics.InvalidScopeName(scope.Name, nameReason));
                 continue;
             }
 
             if (!sr_actionSensitivityNames.Contains(scope.ActionSensitivity))
             {
-                diagnostics.Add(EmitDiagnostic.UnknownEnumValue(
+                diagnostics.Add(EmitDiagnostics.UnknownEnumValue(
                     scope.Name,
                     "actionSensitivity",
                     "ActionSensitivity",
@@ -91,12 +92,12 @@ internal static class ScopesEmitter
             // D2SCP005 (warning only — keep the scope): anon scope marked
             // impersonationBlocked is meaningless noise.
             if (isAnon && scope.ImpersonationBlocked)
-                diagnostics.Add(EmitDiagnostic.AnonImpersonationBlockedNoise(scope.Name));
+                diagnostics.Add(EmitDiagnostics.AnonImpersonationBlockedNoise(scope.Name));
 
             // D2SCP008: non-anon scope must have grantedTo (otherwise unreachable).
             if (!isAnon && scope.GrantedTo is null)
             {
-                diagnostics.Add(EmitDiagnostic.MissingGrantedTo(scope.Name));
+                diagnostics.Add(EmitDiagnostics.MissingGrantedTo(scope.Name));
                 continue;
             }
 
@@ -108,14 +109,14 @@ internal static class ScopesEmitter
                 {
                     if (kvp.Value.Length == 0)
                     {
-                        diagnostics.Add(EmitDiagnostic.EmptyRoleArray(scope.Name, kvp.Key));
+                        diagnostics.Add(EmitDiagnostics.EmptyRoleArray(scope.Name, kvp.Key));
                         grantedToValid = false;
                         break;
                     }
 
                     if (kvp.Key != "*" && !orgTypeSet.Contains(kvp.Key))
                     {
-                        diagnostics.Add(EmitDiagnostic.UnknownEnumValue(
+                        diagnostics.Add(EmitDiagnostics.UnknownEnumValue(
                             scope.Name,
                             kvp.Key,
                             "OrgType",
@@ -129,7 +130,7 @@ internal static class ScopesEmitter
                     {
                         if (role != "*" && !roleSet.Contains(role))
                         {
-                            diagnostics.Add(EmitDiagnostic.UnknownEnumValue(
+                            diagnostics.Add(EmitDiagnostics.UnknownEnumValue(
                                 scope.Name,
                                 kvp.Key,
                                 "Role",
@@ -168,7 +169,7 @@ internal static class ScopesEmitter
                 if (b.StartsWith(a + ".", StringComparison.Ordinal))
                 {
                     if (collidingNames.Add(a))
-                        diagnostics.Add(EmitDiagnostic.TreePositionCollision(a, b));
+                        diagnostics.Add(EmitDiagnostics.TreePositionCollision(a, b));
                 }
             }
         }

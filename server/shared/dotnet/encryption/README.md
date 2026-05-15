@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
-AES-256-GCM payload encryption with a JWKS-style multi-kid keyring. Pure crypto primitive — knows nothing about message buses, domains, or where keys come from. Consumers (a future messaging bus, a future key custodian) construct keyrings out of bytes they got from somewhere and hand them to this lib.
+AES-256-GCM payload encryption with a JWKS-style multi-kid keyring. Pure crypto primitive — knows nothing about message buses, domains, or where keys come from. Messaging-bus integration and KeyCustodian integration are out of scope for this lib; consumers construct keyrings out of bytes they obtained elsewhere and hand them in.
 
 ## Public surface
 

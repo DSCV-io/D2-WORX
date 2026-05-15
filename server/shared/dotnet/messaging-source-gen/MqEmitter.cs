@@ -11,7 +11,8 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
-using D2.Shared.Messaging.SourceGen.Polyfills;
+using D2.Shared.SourceGen;
+using D2.Shared.SourceGen.Polyfills;
 
 /// <summary>
 /// Pure logic for emitting the messaging spec output: <c>MqMessages</c> +
@@ -85,21 +86,21 @@ internal static class MqEmitter
         {
             if (!ValidateConstant(entry.Constant, out var constReason))
             {
-                diagnostics.Add(EmitDiagnostic.InvalidConstantName(
+                diagnostics.Add(EmitDiagnostics.InvalidConstantName(
                     "mq-messages.spec.json", entry.Constant, constReason));
                 continue;
             }
 
             if (!seen.Add(entry.Constant))
             {
-                diagnostics.Add(EmitDiagnostic.DuplicateConstant(
+                diagnostics.Add(EmitDiagnostics.DuplicateConstant(
                     "mq-messages.spec.json", entry.Constant));
                 continue;
             }
 
             if (!sr_exchangeTypes.Contains(entry.ExchangeType))
             {
-                diagnostics.Add(EmitDiagnostic.UnknownExchangeType(
+                diagnostics.Add(EmitDiagnostics.UnknownExchangeType(
                     entry.Constant, entry.ExchangeType));
                 continue;
             }
@@ -108,7 +109,7 @@ internal static class MqEmitter
             {
                 var validList = string.Join(", ",
                     encryptionDomains.OrderBy(s => s, StringComparer.Ordinal));
-                diagnostics.Add(EmitDiagnostic.UnknownEncryption(
+                diagnostics.Add(EmitDiagnostics.UnknownEncryption(
                     entry.Constant, entry.Encryption, validList));
                 continue;
             }
@@ -118,7 +119,7 @@ internal static class MqEmitter
                 if (entry.EncryptionReason.Falsey()
                     || (entry.EncryptionReason?.Trim().Length ?? 0) < 10)
                 {
-                    diagnostics.Add(EmitDiagnostic.MissingPlaintextReason(entry.Constant));
+                    diagnostics.Add(EmitDiagnostics.MissingPlaintextReason(entry.Constant));
                     continue;
                 }
             }
@@ -143,14 +144,14 @@ internal static class MqEmitter
         {
             if (!ValidateConstant(entry.Constant, out var constReason))
             {
-                diagnostics.Add(EmitDiagnostic.InvalidConstantName(
+                diagnostics.Add(EmitDiagnostics.InvalidConstantName(
                     "mq-subscriptions.spec.json", entry.Constant, constReason));
                 continue;
             }
 
             if (!seen.Add(entry.Constant))
             {
-                diagnostics.Add(EmitDiagnostic.DuplicateConstant(
+                diagnostics.Add(EmitDiagnostics.DuplicateConstant(
                     "mq-subscriptions.spec.json", entry.Constant));
                 continue;
             }
@@ -159,14 +160,14 @@ internal static class MqEmitter
             {
                 var validList = string.Join(", ",
                     sr_patterns.OrderBy(s => s, StringComparer.Ordinal));
-                diagnostics.Add(EmitDiagnostic.UnknownPattern(
+                diagnostics.Add(EmitDiagnostics.UnknownPattern(
                     entry.Constant, entry.Pattern, validList));
                 continue;
             }
 
             if (!knownMessageTypes.Contains(entry.MessageType))
             {
-                diagnostics.Add(EmitDiagnostic.UnknownMessageType(
+                diagnostics.Add(EmitDiagnostics.UnknownMessageType(
                     entry.Constant, entry.MessageType));
                 continue;
             }
@@ -181,7 +182,7 @@ internal static class MqEmitter
                         System.Globalization.CultureInfo.InvariantCulture,
                         out _))
                     {
-                        diagnostics.Add(EmitDiagnostic.InvalidTieredRetryDuration(
+                        diagnostics.Add(EmitDiagnostics.InvalidTieredRetryDuration(
                             entry.Constant, tier));
                         anyBadTier = true;
                     }

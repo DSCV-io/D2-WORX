@@ -7,6 +7,7 @@
 namespace D2.Shared.Messaging.SourceGen;
 
 using System.Collections.Immutable;
+using D2.Shared.SourceGen;
 
 /// <summary>
 /// Outcome of a single emitter invocation: a generated source file plus any

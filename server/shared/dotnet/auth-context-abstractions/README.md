@@ -16,8 +16,8 @@ This is the domain-safe slice. Anything heavier (HTTP middleware, JWT validation
 
 | Path | Contents |
 |---|---|
-| `D2.Shared.AuthContext.Abstractions.csproj` | csproj — `<EmitCompilerGeneratedFiles>` for visibility; analyzer ref to `context-source-gen`; `<AdditionalFiles>` for both context specs |
-| `(generated) IAuthContext.g.cs` | Generated interface (lives in `obj/Generated/`) |
+| `D2.Shared.AuthContext.Abstractions.csproj` | csproj — `<EmitCompilerGeneratedFiles>` so SourceGen output lands in tracked `Generated/`; analyzer ref to `context-source-gen`; `<AdditionalFiles>` for both context specs |
+| `(generated) IAuthContext.g.cs` | Generated interface — lives in tracked `Generated/D2.Shared.Context.SourceGen/...`; re-emitted on every `dotnet build` from `contracts/auth-context/IAuthContext.spec.json`; do not hand-edit |
 | `IAuthContextExtensions.cs` | Hand-written convenience helpers — `HasScope`, `HasAnyScope`, `HasAllScopes`, `IsStaff`, `IsAdmin`, `IsForcedImpersonation`, `IsConsentImpersonation`, `IsImpersonatorStaff`, `IsImpersonatorAdmin` |
 
 ---

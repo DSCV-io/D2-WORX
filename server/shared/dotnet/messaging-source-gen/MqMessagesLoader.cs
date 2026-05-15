@@ -9,6 +9,7 @@ namespace D2.Shared.Messaging.SourceGen;
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
+using D2.Shared.SourceGen;
 
 /// <summary>
 /// Pure logic for parsing <c>mq-messages.spec.json</c> into a
@@ -38,7 +39,7 @@ internal static class MqMessagesLoader
 
             if (root.ValueKind != JsonValueKind.Object)
             {
-                return new(null, EmitDiagnostic.MalformedSpec(
+                return new(null, EmitDiagnostics.MalformedSpec(
                     fileName,
                     $"root must be a JSON object, got {root.ValueKind}"));
             }
@@ -46,7 +47,7 @@ internal static class MqMessagesLoader
             if (!root.TryGetProperty(_MESSAGES_KEY, out var arr) ||
                 arr.ValueKind != JsonValueKind.Array)
             {
-                return new(null, EmitDiagnostic.MalformedSpec(
+                return new(null, EmitDiagnostics.MalformedSpec(
                     fileName,
                     "missing required 'messages' array property at root"));
             }
@@ -65,7 +66,7 @@ internal static class MqMessagesLoader
         }
         catch (JsonException ex)
         {
-            return new(null, EmitDiagnostic.MalformedSpec(fileName, ex.Message));
+            return new(null, EmitDiagnostics.MalformedSpec(fileName, ex.Message));
         }
     }
 
@@ -74,22 +75,26 @@ internal static class MqMessagesLoader
     {
         if (el.ValueKind != JsonValueKind.Object)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName, $"messages[{index}] must be an object, got {el.ValueKind}"));
         }
 
         var indexLabel = $"[{index}]";
 
         if (!TryGetString(el, _CONSTANT, out var constant))
-            return (null, EmitDiagnostic.MissingRequiredField(fileName, indexLabel, _CONSTANT));
+            return (null, EmitDiagnostics.MissingRequiredField(fileName, indexLabel, _CONSTANT));
         if (!TryGetString(el, _MESSAGE_TYPE, out var messageType))
-            return (null, EmitDiagnostic.MissingRequiredField(fileName, constant!, _MESSAGE_TYPE));
+            return (null, EmitDiagnostics.MissingRequiredField(fileName, constant!, _MESSAGE_TYPE));
         if (!TryGetString(el, _EXCHANGE, out var exchange))
-            return (null, EmitDiagnostic.MissingRequiredField(fileName, constant!, _EXCHANGE));
+            return (null, EmitDiagnostics.MissingRequiredField(fileName, constant!, _EXCHANGE));
         if (!TryGetString(el, _EXCHANGE_TYPE, out var exchangeType))
-            return (null, EmitDiagnostic.MissingRequiredField(fileName, constant!, _EXCHANGE_TYPE));
+        {
+            return (
+                null, EmitDiagnostics.MissingRequiredField(fileName, constant!, _EXCHANGE_TYPE));
+        }
+
         if (!TryGetString(el, _ENCRYPTION, out var encryption))
-            return (null, EmitDiagnostic.MissingRequiredField(fileName, constant!, _ENCRYPTION));
+            return (null, EmitDiagnostics.MissingRequiredField(fileName, constant!, _ENCRYPTION));
 
         TryGetString(el, _ENCRYPTION_REASON, out var encryptionReason);
         TryGetString(el, _DEFAULT_ROUTING_KEY, out var defaultRoutingKey);

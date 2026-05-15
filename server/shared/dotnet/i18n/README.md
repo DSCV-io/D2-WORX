@@ -137,7 +137,7 @@ No `Microsoft.AspNetCore.App` framework reference — this lib is HTTP-stack-agn
 - `I18nServiceCollectionExtensionsTests` — singleton registration, `IConfiguration` propagation, `TryAdd` idempotency, fluent return.
 - `TKGeneratedTests` — end-to-end smoke that the SrcGen + Abstractions integration produces TK constants matching the live `en-US.json`.
 
-98%+ line / 92%+ branch / 100% method coverage on this lib.
+Comprehensive coverage across every public surface — every translator path, every supported-locale operation, every DI registration branch.
 
 ---
 

@@ -9,6 +9,7 @@ namespace D2.Shared.Auth.Audiences.SourceGen;
 using System;
 using System.IO;
 using System.Linq;
+using D2.Shared.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -56,7 +57,7 @@ public sealed class AudiencesGenerator : IIncrementalGenerator
 
             if (specFiles.IsDefaultOrEmpty)
             {
-                spc.ReportDiagnostic(ToRoslynDiagnostic(EmitDiagnostic.MissingSpecFile()));
+                spc.ReportDiagnostic(ToRoslynDiagnostic(EmitDiagnostics.MissingSpecFile()));
                 spc.AddSource(
                     _GENERATED_SOURCE_NAME,
                     SourceText.From(EmptyAudiencesSource(), System.Text.Encoding.UTF8));

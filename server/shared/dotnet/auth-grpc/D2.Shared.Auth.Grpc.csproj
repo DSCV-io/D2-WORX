@@ -56,6 +56,25 @@ Copyright (c) DCSV. All rights reserved.
     -->
   </ItemGroup>
 
+  <PropertyGroup>
+    <!-- Emit the InProcessKeys SourceGen output (D2GrpcUserStateKeys.g.cs) to
+         <project-dir>/Generated/. The directory is tracked in git so PR
+         reviewers see codegen diffs without a local build. -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111). See:
+      https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#compilergeneratedfilesoutputpath
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <!--
       auth — JwtValidator (internal sealed; consumed via InternalsVisibleTo from auth's csproj),
@@ -73,6 +92,18 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
     <ProjectReference Include="..\i18n-abstractions\D2.Shared.I18n.Abstractions.csproj" />
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
+    <!--
+      InProcessKeys SourceGen — emits D2GrpcUserStateKeys.g.cs from the shared
+      keys.spec.json. The single spec also drives D2HttpContextItems in
+      auth-abstractions; cross-binding parity is structurally guaranteed.
+    -->
+    <ProjectReference Include="..\in-process-keys-source-gen\D2.Shared.InProcessKeys.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="..\..\..\..\contracts\in-process-keys\keys.spec.json" />
   </ItemGroup>
 
   <ItemGroup>

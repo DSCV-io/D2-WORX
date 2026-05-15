@@ -1,3 +1,5 @@
+<!-- Copyright (c) DCSV. All rights reserved. -->
+
 # Deliverable 0005 — codegen cleanup + .NET improvements
 
 **Branch**: `n/codegen-cleanup` (from `nova` @ `0eeb8e81`)

@@ -8,6 +8,8 @@ namespace D2.Shared.Context.SourceGen;
 
 using System;
 using System.Linq;
+using D2.Shared.SourceGen;
+using D2.Shared.SourceGen.Polyfills;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -121,7 +123,7 @@ public sealed class ContextGenerator : IIncrementalGenerator
                 }
 
                 // Validate the extends chain resolves.
-                if (!string.IsNullOrEmpty(requestSpec.Extends))
+                if (requestSpec.Extends.Truthy())
                 {
                     const string expectedExtends
                         = $"D2.Shared.AuthContext.Abstractions.{_AUTH_SPEC_NAME}";

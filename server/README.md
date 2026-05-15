@@ -6,13 +6,13 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`/`](../README.md)
 
-All code that runs inside the trust boundary — .NET services, shared .NET libraries, SvelteKit BFF. The .NET solution at [`D2.slnx`](D2.slnx) is the entry point for `dotnet build` / `dotnet test`.
+All code that runs inside the trust boundary — .NET services, shared .NET + TypeScript libraries, SvelteKit BFF. The .NET solution at [`D2.slnx`](D2.slnx) is the entry point for `dotnet build` / `dotnet test`; the TS workspace is rooted at the repo-level `pnpm-workspace.yaml` and covers `server/shared/typescript/*` plus the `tools/ts-codegen/` emitter package.
 
 ## Layout
 
 | Path | What |
 |---|---|
-| [`shared/`](shared/README.md) | Shared libraries consumed by services — currently .NET only |
+| [`shared/`](shared/README.md) | Shared libraries consumed by services — `dotnet/` for backend, `typescript/` for the SvelteKit BFF (most cross-language catalogs are spec-driven) |
 | [`services/`](services/README.md) | .NET service implementations (Edge gateway, audit, courier, notifications, files) |
 | [`web/`](web/README.md) | SvelteKit Backend-for-Frontend (browser-side UI + SSR) |
 | [`d2-version/`](d2-version/) | Version anchor csproj — drives `dotnet versionize` releases |

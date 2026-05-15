@@ -102,6 +102,76 @@ public sealed class SpecLoaderTests
         result.Spec.Extends.Should().Be("X.Y.IBase");
     }
 
+    [Fact]
+    public void Load_RedactTrueOnProperty_IsParsedAsTrue()
+    {
+        const string json = """
+        {
+          "name": "IThing",
+          "namespace": "X.Y",
+          "sections": [
+            {
+              "name": "S",
+              "properties": [
+                { "name": "Pii", "type": "string?", "redact": true }
+              ]
+            }
+          ]
+        }
+        """;
+
+        var result = SpecLoader.Load("IThing.spec.json", json);
+
+        result.Diagnostic.Should().BeNull();
+        result.Spec!.Sections[0].Properties[0].Redact.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Load_RedactFalseOnProperty_IsParsedAsFalse()
+    {
+        const string json = """
+        {
+          "name": "IThing",
+          "namespace": "X.Y",
+          "sections": [
+            {
+              "name": "S",
+              "properties": [
+                { "name": "Pii", "type": "string?", "redact": false }
+              ]
+            }
+          ]
+        }
+        """;
+
+        var result = SpecLoader.Load("IThing.spec.json", json);
+
+        result.Diagnostic.Should().BeNull();
+        result.Spec!.Sections[0].Properties[0].Redact.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Load_RedactOmitted_DefaultsToFalse()
+    {
+        const string json = """
+        {
+          "name": "IThing",
+          "namespace": "X.Y",
+          "sections": [
+            {
+              "name": "S",
+              "properties": [ { "name": "Plain", "type": "string?" } ]
+            }
+          ]
+        }
+        """;
+
+        var result = SpecLoader.Load("IThing.spec.json", json);
+
+        result.Diagnostic.Should().BeNull();
+        result.Spec!.Sections[0].Properties[0].Redact.Should().BeFalse();
+    }
+
     // ----------------------------------------------------------------------
     // D2CTX001 — malformed JSON / schema-violating
     // ----------------------------------------------------------------------

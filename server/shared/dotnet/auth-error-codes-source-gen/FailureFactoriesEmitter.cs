@@ -8,6 +8,7 @@ namespace D2.Shared.Auth.ErrorCodes.SourceGen;
 
 using System.Collections.Generic;
 using System.Text;
+using D2.Shared.SourceGen;
 
 /// <summary>
 /// Pure logic for emitting the <c>AuthFailures</c> static class source from

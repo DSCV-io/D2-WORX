@@ -70,6 +70,26 @@ mutable concrete, and the two factory methods (`FromClaims`,
 
 ---
 
+## Spec-driven `[RedactData]` placement
+
+Setting `"redact": true` on a property in either spec marks it as PII-bearing.
+The generator emits `[RedactData(Reason = RedactReason.PersonalInformation)]`
+on BOTH the corresponding interface property AND the matching concrete
+property on `MutableRequestContext`. The Serilog destructuring policy
+(`D2.Shared.Logging.Destructuring.RedactDataDestructuringPolicy`) reflects
+on the runtime instance type at log time, so the attribute on the concrete
+is what makes redaction fire; the attribute on the interface is what
+keeps the cross-spec parity gate
+(`server/shared/dotnet/tests/Unit/SpecsConsistency/RedactDataVsSpecRedactConsistencyTests.cs`)
+honest. The two MUST stay in lockstep — codegen places both unconditionally
+when the spec says `redact: true`, so divergence requires hand-editing
+the generated output (which is fenced by the auto-generated banner).
+
+The TS-side codegen (`tools/ts-codegen/src/{auth-context,request-context}-emit.ts`)
+emits a sibling `<TypeName>RedactPaths` constant from the same spec field,
+fed into `setupLogger({ redactPaths })` for Pino's redact configuration.
+The spec is the single source of truth across both languages.
+
 ## Closed type vocabulary
 
 These are the only types a spec property can declare (enforced via `D2CTX002`):

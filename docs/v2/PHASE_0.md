@@ -25,7 +25,7 @@ Phase 0 has four execution stages. The **Granular checklist** column links to th
 
 **LLM CTA**: when starting work in this phase, scan the snapshot above to identify the active 🔄 stage, then jump to its granular checklist via the link. Don't start work that doesn't match the active stage without explicit user approval.
 
-All four stages are ✅ Complete. This doc remains live through the Pre-Phase-1 Plan deliverables (0005 + 0006) — they're the bridge work between Phase 0 closing and Phase 1 (Geo libs) starting, and PHASE_0.md is the right home for the bridge plan. The doc gets archived (move to `docs/archive/PHASE_0_WIPE.md` or delete) per the lifecycle rule in V2.md §10 once deliverable 0006 ships and Phase 1 begins.
+All four stages are ✅ Complete. The Pre-Phase-1 Plan deliverables (0005 + 0006) are also both ✅ SHIPPED. This doc remains live through the SvelteKit BFF rewire deliverable (deferred from 0006; sequenced after Edge ships + Paraglide-translation pattern decided), then archives per the lifecycle rule in V2.md §10 when Phase 1 (Geo libs) begins.
 
 ---
 
@@ -566,7 +566,8 @@ Two deliverables ship between Phase 0 closing and Phase 1 (Geo libs) starting. B
 | # | Deliverable | Status | Estimated effort | Branch |
 |---|---|---|---|---|
 | 0005 | `0005-codegen-cleanup-and-dotnet-improvements` (.NET only) | ✅ Complete | ~3-5 days | `n/codegen-cleanup` (off `nova` post-0004) |
-| 0006 | `0006-ts-bridge` | ⏸ Pending | ~2-3 weeks | `n/ts-bridge` (off `nova` post-0005) |
+| 0006 | `0006-ts-bridge` | ✅ Complete — SHIPPED 2026-05-15 per [`docs/dev/deliverables/0006-ts-bridge.md`](../dev/deliverables/0006-ts-bridge.md) | ~2-3 weeks | `n/ts-bridge` (off `nova` post-0005, squashed to `nova`) |
+| (future) | SvelteKit BFF rewire (deferred from 0006) | ⏸ Pending — sequenced after Edge exists + Paraglide-translation pattern decided; lands BEFORE Phase 7 | TBD | TBD |
 
 **Order**: 0005 first (no TS dependency); 0006 second (consumes the spec migrations 0005 produces — particularly AuthErrorCodes — so the TS-side codegen runners have a single canonical spec to read instead of a moving target). Phase 1 (Geo libs) starts AFTER 0006 ships.
 
@@ -631,50 +632,55 @@ Two small carry-overs from prior deliverables surfaced during Phase 0 close-out:
 
 ### Deliverable 0006 — TS bridge
 
-**Scope (LOCKED)** — six sub-concerns. The architectural shape (drops list, parity strategy, i18n approach, BFF trust boundary) is locked in V2.md §5.8 "TS shared lib forecast" — 0006 implements that forecast.
+**Scope (LOCKED)** — four sub-concerns shipped in 0006. The architectural shape (drops list, parity strategy, i18n approach, BFF trust boundary) is locked in V2.md §5.8 "TS shared lib forecast" — 0006 implements that forecast for the shared-package layer. The `server/web/` BFF rewire was originally enumerated as a fifth sub-concern but is **deferred to a future SvelteKit-focused deliverable** — see "Deferred from 0006" below.
 
 #### Sub-concern A — Workspace bootstrap
 
-- Add `pnpm-workspace.yaml` at repo root pointing at `server/shared/typescript/*` and `server/web/`.
+- Add `pnpm-workspace.yaml` at repo root pointing at `server/shared/typescript/*` + `tools/ts-codegen/` + the `contract-tests/` private workspace package. **Excludes** `server/web/` for now — pnpm 10 validates the FULL workspace dep graph regardless of `--filter` flags, and `server/web/package.json` carries broken `workspace:*` deps until the future BFF rewire deliverable lands.
 - Root `package.json` for shared `typescript` / `vitest` / `prettier` versions (single source of truth for tool versions across all TS workspaces).
-- **Carefully sequenced** per the operator's known pain point: `pnpm install` rotates symlinks across the workspace, which can break Node containers if other Node services are running mid-install. The 0006 PLAN must include a "stop all Node containers → workspace bootstrap → restart all Node containers" sequence as Step 0 to avoid mid-deliverable container thrash.
+- **Carefully sequenced** per the operator's known pain point: `pnpm install` rotates symlinks across the workspace, which can break Node containers if other Node services are running mid-install. The bootstrap step includes a "stop all Node containers → workspace bootstrap → restart all Node containers" sequence to avoid mid-deliverable container thrash.
 
 #### Sub-concern B — Tier 1 TS packages (13 packages per V2.md §5.8 forecast)
 
-Per the locked Tier 1 list in V2.md §5.8: `@d2/result`, `@d2/utilities`, `@d2/resilience`, `@d2/protos`, `@d2/auth-context-abstractions`, `@d2/request-context-abstractions`, `@d2/auth-abstractions`, `@d2/i18n`, `@d2/logging`, `@d2/telemetry`, `@d2/service-defaults`, `@d2/headers`, `@d2/grpc-client`. Per-package READMEs follow the .NET shared-lib README convention (Purpose / Public API / Dependencies / V2.md reference).
+Per the locked Tier 1 list in V2.md §5.8: `@d2/result`, `@d2/utilities`, `@d2/resilience`, `@d2/protos`, `@d2/auth-context-abstractions`, `@d2/request-context-abstractions`, `@d2/auth-abstractions`, `@d2/i18n`, `@d2/logging`, `@d2/telemetry`, `@d2/service-defaults`, `@d2/headers`, `@d2/grpc-client`. Per-package READMEs follow the .NET shared-lib README convention (Purpose / Public API / Dependencies / V2.md reference). The four `@d2/headers-{common,http,amqp,grpc}` per-transport catalogs ship alongside as codegen-emitted siblings to the .NET `D2.Shared.Headers.*` libs (one spec, parallel emission).
 
 #### Sub-concern C — TS-side codegen runners
 
-Consume the specs migrated in 0005 (`auth-error-codes`) plus existing specs (`auth-scopes`, `auth-audiences`, `auth-context`, `request-context`, `mq-messages`).
+Consume the specs migrated in 0005 (`auth-error-codes`) plus existing specs (`auth-scopes`, `auth-audiences`, `auth-context`, `request-context`, `headers`, `jwt-claims`, `in-process-keys`, `mq-messages`).
 
-Two implementation options were considered:
-1. Extend the existing .NET SourceGen analyzers with TS emit templates (one source-gen, two output languages).
-2. Sibling Node scripts at `tools/ts-codegen/` reading the same JSON specs.
-
-**Recommendation: option 2** (sibling Node scripts). Cleaner separation of concerns — the TS toolchain stays in TS land, the .NET SourceGen analyzers stay narrowly scoped. Re-evaluate if maintenance burden of two emitters becomes a problem.
+Implementation: sibling Node scripts at `tools/ts-codegen/` reading the same JSON specs the .NET Roslyn SourceGens consume. The TS toolchain stays in TS land, the .NET SourceGen analyzers stay narrowly scoped. Per-script emitters: `auth-context-emit.ts`, `request-context-emit.ts`, `auth-scopes-emit.ts`, `auth-error-codes-emit.ts`, `auth-failures-emit.ts`, `headers-emit.ts` (per-transport target flag), `jwt-claims-emit.ts` (one runner emits `JwtClaimTypes` constants AND the `JwtPayload` typed shape).
 
 #### Sub-concern D — Cross-language contract test infrastructure
 
 Per V2.md §5.8 "Cross-language parity testing":
 
-- `server/shared/typescript/contract-tests/` Vitest suite
-- Fixture generation via `dotnet test --filter Category=ContractFixtures` emitting JSON files
-- Round-trip stdin/stdout JSON-RPC host child process for bidirectional parity (`PropagatedContextSerializer`, `D2Result<T>`, etc.)
-- CI gate: any change to `contracts/*.spec.json` or affected source files triggers parity tests; build fails on drift
+- `server/shared/typescript/contract-tests/` Vitest workspace package (`private: true`)
+- Fixture generation via `dotnet test --filter Category=ContractFixtures` emitting deterministic JSON files under `server/shared/typescript/contract-tests/fixtures/<catalog>/<scenario>.json`
+- **Forward-only direction**: `.NET emits fixture → TS reads + asserts`. Bidirectional (TS-emit → .NET-read) is intentionally out of scope; any future need lands as a separate test surface. The TS side does NOT spawn a .NET subprocess at test time — fixtures are committed to git so PR diffs surface drift directly.
+- CI gate: scaffold present (commented-out TODO blocks in `.github/workflows/test.yml`) for the `contract-fixtures-emit` (regenerate + assert no `git diff` drift) and `contract-tests-parity` (run Vitest assertions) jobs; activates alongside the .NET `build` job.
+- Initial catalog set: `propagated-context/` (round-trip), `auth-context/` (typed-shape), `request-context/` (typed-shape, transitive), `jwt-payload/` (typed-shape vs constants), `redact-paths/` (`[RedactData]` vs spec-emitted arrays), `headers/` (per-transport `as const` membership + wire values).
 
-#### Sub-concern E — Modules in `server/web/`
+#### Deferred from 0006 — SvelteKit BFF rewire (future deliverable)
 
-Per V2.md §5.8 "Modules in `server/web/`" list:
-- Server-side route guards (`requireAuth` / `requireOrg` / `requireRole` / `requireScope` / `redirectIfAuthenticated`) at `server/web/src/lib/server/auth/`
-- Browser-side `authClient` at `server/web/src/lib/client/auth/`
-- Browser Faro SDK setup
+The `server/web/` BFF rewire was originally enumerated as a fifth sub-concern but **dropped mid-deliverable and deferred to a future SvelteKit-focused deliverable**. Reason: the BFF rewire cannot be validated end-to-end without Edge existing (Edge builds in the main Phase plan after Phase 0), and decisions like the Paraglide-translation pattern (Paraglide can't take runtime keys; the v1 BFF used a server-side translation middleware to map `userMessageKey` → Paraglide functions) need to be made in the context of the actual SvelteKit-focused deliverable, not speculatively here.
 
-#### Sub-concern F — Cleanup
+**Carry-forward items** for the future BFF rewire deliverable:
+- `server/web/` stays broken-by-design (16 `workspace:*` deps in `package.json` unmatched + missing 4 new headers catalogs).
+- `pnpm-workspace.yaml` stays WITHOUT `server/web/` in the globs (re-add is a one-line edit; was deferred because pnpm 10.15 validates the full workspace dep graph regardless of `--filter` flags — keeping `server/web/` in the workspace would have failed `pnpm install` for 0006).
+- 5 server-side guards from `@d2/headers` not yet wired into `hooks.server.ts`.
+- Browser-side `authClient` not yet built (`server/web/src/lib/client/auth/`).
+- **Paraglide-translation-pattern decision** — open: replicate v1's server-side translation middleware, pass-through-key + browser translates, or codegen-emit-switch-table from spec. Pending the SvelteKit-focused deliverable.
+- Faro init verification at `server/web/src/lib/client/telemetry/faro.ts` post-cleanup.
+- `@d2/grpc-client` wiring into `hooks.server.ts` for SSR loaders calling Edge.
+- gRPC channel teardown signal (`process.on('SIGTERM', closeChannel)` or SvelteKit hook).
 
-- Delete stale `server/web/src/paraglide/` outdir (current outdir is `src/lib/paraglide/`; the old path is a v1 leftover).
-- Rip out v1-leftover code in `server/web/src/lib/server/` (`auth.server.ts`, `hooks/*`, `middleware.server.ts`, REST clients) that references dead `@d2/*` packages from v1.
-- Replace v1 `server/web/src/hooks.server.ts` with a thin `X-D2-*` header reader using `@d2/headers` (the application-layer half of the §5.8 Edge-bypass defense-in-depth).
-- Update `server/web/package.json` to reference real workspace deps from the new `server/shared/typescript/*` packages.
+**Sequence trigger**: the future BFF rewire deliverable should be sequenced AFTER (a) Edge exists, (b) the Paraglide-translation-pattern decision is made, (c) we're focused on SvelteKit DX. It should land BEFORE Phase 7 (Rebuild SvelteKit BFF — the mainline phase that consumes Edge + Files + Notifications + Courier) so Phase 7 starts with a working `pnpm install` on `server/web/`. It does NOT block Phase 1 (Geo libs).
+
+#### Mid-deliverable cleanup that DID land in 0006
+
+- Deleted stale `server/web/src/paraglide/` outdir (canonical outdir is `src/lib/paraglide/`).
+- Ripped out v1-leftover code in `server/web/src/lib/server/` (`auth.server.ts`, `hooks/*`, `middleware.server.ts`, REST gateway clients) that referenced dead `@d2/*` packages from v1.
+- Removed v1 `server/web/src/hooks.server.ts` + the `src/routes/api/auth/[...path]/` + `src/routes/api/account/[...path]/` proxy routes (V2.md §5.8 explicitly removes "All `+server.ts` endpoints, all form actions, all proxying").
 
 ---
 

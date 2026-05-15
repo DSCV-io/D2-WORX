@@ -7,6 +7,7 @@
 namespace D2.Shared.Telemetry.Tags.SourceGen;
 
 using System.Collections.Immutable;
+using D2.Shared.SourceGen;
 
 /// <summary>
 /// Result of <see cref="TelemetryTagsEmitter.Emit"/>. Pure data — the Roslyn

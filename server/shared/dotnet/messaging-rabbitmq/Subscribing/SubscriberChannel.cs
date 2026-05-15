@@ -8,6 +8,7 @@ namespace D2.Shared.Messaging.RabbitMq.Subscribing;
 
 using System.Diagnostics;
 using D2.Shared.Context.Abstractions;
+using D2.Shared.Headers.Amqp;
 using D2.Shared.Messaging.RabbitMq.Connection;
 using D2.Shared.Messaging.RabbitMq.Telemetry;
 using D2.Shared.Messaging.RabbitMq.Topology;
@@ -362,7 +363,7 @@ internal sealed class SubscriberChannel : IAsyncDisposable
     private static PropagatedContext? ReadPropagatedContext(BasicDeliverEventArgs ea)
     {
         if (ea.BasicProperties.Headers is null) return null;
-        if (!ea.BasicProperties.Headers.TryGetValue(AmqpHeaders.CONTEXT, out var raw)
+        if (!ea.BasicProperties.Headers.TryGetValue(AmqpHeaders.PROPAGATED_CONTEXT, out var raw)
             || raw is not byte[] bytes)
         {
             return null;

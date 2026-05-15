@@ -5,10 +5,23 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <RootNamespace>D2.Shared.Messaging</RootNamespace>
 
-    <!-- Surface the Messaging.SourceGen output in obj/Generated for inspection. -->
+    <!-- Emit the Messaging.SourceGen output (MqMessages.g.cs, MqSubscriptions.g.cs)
+         to <project-dir>/Generated/. The directory is tracked in git so PR
+         reviewers see codegen diffs without a local build. -->
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111). See:
+      https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#compilergeneratedfilesoutputpath
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <!--

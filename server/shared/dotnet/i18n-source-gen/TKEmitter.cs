@@ -12,6 +12,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using D2.Shared.SourceGen;
 
 /// <summary>
 /// Pure logic for emitting the <c>TK</c> static class source from a parsed
@@ -53,7 +54,7 @@ internal static class TKEmitter
         }
         catch (Exception ex)
         {
-            diagnostics.Add(EmitDiagnostic.MalformedJson("en-US.json", ex.Message));
+            diagnostics.Add(EmitDiagnostics.MalformedJson("en-US.json", ex.Message));
             return new EmitResult(EmptyTKSource(), diagnostics.ToImmutable());
         }
 
@@ -67,7 +68,7 @@ internal static class TKEmitter
             var decomposed = KeyDecomposer.Decompose(kvp.Key);
             if (!decomposed.IsValid)
             {
-                diagnostics.Add(EmitDiagnostic.InvalidKey(kvp.Key, decomposed.InvalidReason!));
+                diagnostics.Add(EmitDiagnostics.InvalidKey(kvp.Key, decomposed.InvalidReason!));
                 continue;
             }
 
@@ -90,7 +91,7 @@ internal static class TKEmitter
                 var fullPath =
                     $"{_TK_CLASS_NAME}.{decomposed.Domain}." +
                     $"{decomposed.Category}.{decomposed.ConstantName}";
-                diagnostics.Add(EmitDiagnostic.Collision(existingKey, kvp.Key, fullPath));
+                diagnostics.Add(EmitDiagnostics.Collision(existingKey, kvp.Key, fullPath));
                 continue;
             }
 
@@ -111,7 +112,7 @@ internal static class TKEmitter
             }
             catch (Exception ex)
             {
-                diagnostics.Add(EmitDiagnostic.MalformedJson(localeKvp.Key + ".json", ex.Message));
+                diagnostics.Add(EmitDiagnostics.MalformedJson(localeKvp.Key + ".json", ex.Message));
                 continue;
             }
 
@@ -120,7 +121,7 @@ internal static class TKEmitter
             {
                 if (!localeKeys.ContainsKey(enUsKey))
                 {
-                    diagnostics.Add(EmitDiagnostic.MissingInLocale(enUsKey, localeKvp.Key));
+                    diagnostics.Add(EmitDiagnostics.MissingInLocale(enUsKey, localeKvp.Key));
                 }
             }
 
@@ -134,7 +135,7 @@ internal static class TKEmitter
 
                 if (!enUsKeySet.Contains(localeKey))
                 {
-                    diagnostics.Add(EmitDiagnostic.OrphanInLocale(localeKey, localeKvp.Key));
+                    diagnostics.Add(EmitDiagnostics.OrphanInLocale(localeKey, localeKvp.Key));
                 }
             }
         }

@@ -434,7 +434,7 @@ One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consume
 - **Auth**: self-rolled .NET auth as a module within Edge. RFC 8693 token exchange + RFC 6749 §4.4 client_credentials for service identity. JWKS at the OIDC-canonical `/.well-known/jwks.json`.
 - **JWT**: RS256 only. 15min expiry. Custom claims namespaced with `d2_` prefix (snake_case — avoids spec-collision with `:` punctuation used in scope strings).
 - **KeyCustodian**: module within Auth — owns lifecycle of ALL long-lived secrets (JWKS, message payload encryption keys, cookie signing, service-identity client_secrets). State machine + JWKS-style overlap rotation.
-- **SvelteKit BFF**: pure SSR. Browser → Edge directly for auth state mutations. Server-side route guards (`requireAuth`, `requireOrg`, etc.) at `server/web/src/lib/server/auth/`. Browser-side `authClient` at `server/web/src/lib/client/auth/`. NOT separate packages.
+- **SvelteKit BFF**: pure SSR. Browser → Edge directly for auth state mutations. Server-side route guards (`requireAuth`, `requireOrg`, etc.) live in the `@d2/headers` package (re-usable across any Node frontend); the SvelteKit BFF imports them and wires them through `hooks.server.ts` + per-route loaders. Browser-side `authClient` lives at `server/web/src/lib/client/auth/` (SvelteKit-internal module — not a separate package).
 - **Sync**: gRPC between services (HTTP/2). **Async**: RabbitMQ for side effects (emails, events). Sensitive RMQ payloads encrypted via `D2.Shared.Encryption`.
 - **Notifications**: ALL deliveries through D2.Courier → contact resolution. No direct emails/texts.
 - **Sessions**: 3-tier (cookie cache 5min → Redis → PostgreSQL `auth_db` dual-write).

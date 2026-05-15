@@ -9,7 +9,9 @@ Copyright (c) DCSV. All rights reserved.
 Single-lib home for every spec-driven context primitive. The spec
 (`contracts/request-context/IRequestContext.spec.json`) is the source of
 truth — `D2.Shared.Context.SourceGen` reads it at build time and emits
-five files into this assembly:
+five files into this assembly under the tracked `Generated/` directory
+(committed for inspection, IDE navigation, and PR diff review; re-emitted
+on every `dotnet build`; do not hand-edit):
 
 | File | Kind | Purpose |
 |---|---|---|

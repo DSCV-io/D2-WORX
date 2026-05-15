@@ -4,10 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 <Solution>
   <!--
     D²-WORX v2 solution (modern XML format, .NET 10).
-    Projects are added here per V2 phasing (see docs/v2/PHASE_0.md while it exists).
-
-    Phase 0 will populate this with the foundational shared libraries
-    (D2.Shared.Handler, D2.Shared.Result, D2.Shared.Utilities, etc.).
+    Project list and ordering for the D²-WORX backend — every csproj built
+    by `dotnet build server/D2.slnx` is registered here.
   -->
   <Folder Name="/shared/" />
   <Folder Name="/shared/dotnet/">
@@ -72,6 +70,27 @@ Copyright (c) DCSV. All rights reserved.
   </Folder>
   <Folder Name="/shared/dotnet/handler/">
     <Project Path="shared/dotnet/handler/D2.Shared.Handler.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/headers-source-gen/">
+    <Project Path="shared/dotnet/headers-source-gen/D2.Shared.Headers.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/headers-common/">
+    <Project Path="shared/dotnet/headers-common/D2.Shared.Headers.Common.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/headers-http/">
+    <Project Path="shared/dotnet/headers-http/D2.Shared.Headers.Http.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/headers-amqp/">
+    <Project Path="shared/dotnet/headers-amqp/D2.Shared.Headers.Amqp.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/headers-grpc/">
+    <Project Path="shared/dotnet/headers-grpc/D2.Shared.Headers.Grpc.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/in-process-keys-source-gen/">
+    <Project Path="shared/dotnet/in-process-keys-source-gen/D2.Shared.InProcessKeys.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/jwt-claims-source-gen/">
+    <Project Path="shared/dotnet/jwt-claims-source-gen/D2.Shared.Auth.JwtClaims.SourceGen.csproj" />
   </Folder>
   <Folder Name="/shared/dotnet/handler-abstractions/">
     <Project Path="shared/dotnet/handler-abstractions/D2.Shared.Handler.Abstractions.csproj" />

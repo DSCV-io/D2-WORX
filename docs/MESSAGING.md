@@ -297,7 +297,7 @@ For each tier i in TieredRetry.Tiers:
   {queue}.retry-{i}.q  → queue with x-message-ttl = tiers[i] and x-dead-letter-exchange = retry-return
 ```
 
-In normal use, a transient handler failure would NACK to one of the retry-tier exchanges (driver responsibility — not yet auto-wired), the message TTL-expires onto the retry-return exchange, RabbitMQ re-routes it to the primary queue. The consumer's `x-death`-driven attempt counter caps the total cycles via `MaxAttempts`.
+In normal use, a transient handler failure NACKs to one of the retry-tier exchanges (the driver is responsible for routing; the framework declares the topology but the per-handler driver code wires the NACK explicitly — the framework does not auto-route on the consumer's behalf). The message TTL-expires onto the retry-return exchange, RabbitMQ re-routes it to the primary queue. The consumer's `x-death`-driven attempt counter caps the total cycles via `MaxAttempts`.
 
 ---
 

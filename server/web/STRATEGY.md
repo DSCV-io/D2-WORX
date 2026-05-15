@@ -198,7 +198,7 @@ SvelteKit does NOT proxy `/api/auth/*`. There is no auth proxy layer in this arc
 For Edge-bypass prevention:
 
 1. **Network-level**: SvelteKit attached only to `internal` overlay network in Swarm; only Edge can reach it
-2. **Application-level**: thin hook rejects any request without `X-D2-Trace-Id` (HTTP 400)
+2. **Application-level**: thin hook validates the inbound `Authorization` JWT shape (3 segments, base64url-decodable, JSON-parseable claim object) and the `x-d2-context` envelope shape via the codegen-emitted `PropagatedContextSerializer` — rejects malformed / unsigned requests with RFC 7807 ProblemDetails matching Edge's response shape
 
 ### Local Dev
 

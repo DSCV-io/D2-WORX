@@ -8,7 +8,7 @@ Copyright (c) DCSV. All rights reserved.
 
 Inbound auth runtime — JWT validation primitives, JWKS snapshot management, session liveness checking, and the DI composition root that wires it all into a service. Consumed by every backend service that validates inbound bearer tokens.
 
-The vocabulary slice (enums, `ActorEntry`, `JwtClaimTypes`, `RequestHeaders`, `IJwksProvider`, `ISessionLivenessTracker`, codegen-emitted `Scopes` / `Audiences`) lives in the sibling [`D2.Shared.Auth.Abstractions`](../auth-abstractions/) project. Domain code references that, never this runtime lib.
+The vocabulary slice (enums, `ActorEntry`, `IJwksProvider`, `ISessionLivenessTracker`, codegen-emitted `Scopes` / `Audiences` / `JwtClaimTypes` / `D2HttpContextItems`) lives in the sibling [`D2.Shared.Auth.Abstractions`](../auth-abstractions/) project. Wire-protocol header constants live in the per-transport `D2.Shared.Headers.{Common,Http,Amqp,Grpc}` catalogs. Domain code references those, never this runtime lib.
 
 The transport bindings live in two sibling csprojs: [`D2.Shared.Auth.Http`](../auth-http/) (HTTP middleware + RFC 7807 ProblemDetails + per-endpoint scope metadata) and [`D2.Shared.Auth.Grpc`](../auth-grpc/) (server-side gRPC interceptor + RpcException trailers + per-method scope metadata / attributes). Either or both can be wired into a host independently — see [Composing with siblings](#composing-with-siblings) below.
 
@@ -75,7 +75,7 @@ Pre-built `D2Result` failures. Caller code (middleware, validator, interceptor) 
 - **User-facing message** — coarse on purpose. Two TK keys total (`auth_errors_UNAUTHORIZED`, `auth_errors_TEMPORARILY_UNAVAILABLE`) so we don't tell attackers which validation step failed.
 - **Machine-readable code** — granular. One `AuthErrorCodes.AUTH_*` constant per failure mode, surfaced as the `d2_error_code` on RFC 7807 ProblemDetails.
 
-`AuthErrorCodes` and `AuthFailures` are emitted by [`D2.Shared.Auth.ErrorCodes.SourceGen`](../auth-error-codes-source-gen/) from [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../contracts/auth-error-codes/auth-error-codes.spec.json) — single source of truth. Adding a new error code = editing the JSON spec; the constant + the factory + the cross-spec telemetry tag-value enumeration on `d2.auth.problem.emitted` all materialize automatically.
+`AuthErrorCodes` and `AuthFailures` are emitted by [`D2.Shared.Auth.ErrorCodes.SourceGen`](../auth-error-codes-source-gen/) from [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../contracts/auth-error-codes/auth-error-codes.spec.json) — single source of truth. Adding a new error code = editing the JSON spec; the constant + the factory + the cross-spec telemetry tag-value enumeration on `d2.auth.problem.emitted` all materialize automatically. The emitted `*.g.cs` files land in the tracked `Generated/` directory (committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build`; do not hand-edit).
 
 | Helper | HTTP | Error code | TK key |
 |---|---|---|---|
@@ -129,7 +129,7 @@ Tag-key + tag-value constants are emitted by [`D2.Shared.Telemetry.Tags.SourceGe
 
 | Package | Why |
 |---|---|
-| `D2.Shared.Auth.Abstractions` | `IJwksProvider`, `ISessionLivenessTracker`, `Audiences`, `JwtClaimTypes`, `RequestHeaders`, `Scopes`. |
+| `D2.Shared.Auth.Abstractions` | `IJwksProvider`, `ISessionLivenessTracker`, `Audiences`, `JwtClaimTypes`, `Scopes`. |
 | `D2.Shared.AuthContext.Abstractions` | `IAuthContext` shape (consumed when claims-to-context mapping lands). |
 | `D2.Shared.Context.Abstractions` | `IRequestContext` extension. |
 | `D2.Shared.Caching.Abstractions` | `ICacheInvalidationBackplane` for cluster-wide rotation / revoke event delivery. |

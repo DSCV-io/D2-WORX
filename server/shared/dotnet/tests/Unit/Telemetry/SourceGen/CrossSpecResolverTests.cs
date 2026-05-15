@@ -4,12 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+extern alias TelemetryTagsSourceGen;
+
 namespace D2.Shared.Tests.Unit.Telemetry.SourceGen;
 
 using System.Collections.Immutable;
 using AwesomeAssertions;
 using D2.Shared.Telemetry.Tags.SourceGen;
 using Xunit;
+using SpecFile = TelemetryTagsSourceGen::D2.Shared.SourceGen.SpecFile;
 
 /// <summary>
 /// Tests for <see cref="CrossSpecResolver"/> — the build-time cross-spec
@@ -54,7 +57,8 @@ public sealed class CrossSpecResolverTests
     }
 
     [Fact]
-    public void Resolve_AuthErrorCodesSpecMissingFromSiblings_EmitsCrossSpecInconsistencyDiagnostic()
+    public void
+        Resolve_AuthErrorCodesSpecMissingFromSiblings_EmitsCrossSpecInconsistencyDiagnostic()
     {
         var (values, diag) = CrossSpecResolver.Resolve(
             "auth-error-codes",
@@ -81,7 +85,8 @@ public sealed class CrossSpecResolverTests
     }
 
     [Fact]
-    public void Resolve_AuthErrorCodesSpecMissingErrorCodesArray_EmitsCrossSpecInconsistencyDiagnostic()
+    public void
+        Resolve_AuthErrorCodesSpecMissingErrorCodesArray_EmitsCrossSpecInconsistencyDiagnostic()
     {
         var siblings = ImmutableArray.Create(
             new SpecFile("/x/auth-error-codes.spec.json", "{}"));

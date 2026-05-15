@@ -1,0 +1,38 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
+# @d2/headers-http
+
+D2 wire-protocol headers applicable to the HTTP transport. Includes the HTTP-specific entries (`Authorization`, `Idempotency-Key`, `X-D2-Client-Fingerprint`, `X-D2-Internal-Token`) AND the cross-transport entries that ride alongside HTTP requests (`x-d2-context`, `traceparent`, `tracestate`) at identical wire values per `headers.spec.json`. Mirrors .NET `D2.Shared.Headers.Http.HttpHeaders`.
+
+## Public API
+
+| Export             | Source              | Mirror                                  |
+| ------------------ | ------------------- | --------------------------------------- |
+| `HttpHeaders`      | `http-headers.g.ts` | `D2.Shared.Headers.Http.HttpHeaders`    |
+| `HttpHeaderName`   | `http-headers.g.ts` | n/a (TS-only union type)                |
+| `ALL_HTTP_HEADERS` | `http-headers.g.ts` | `D2.Shared.Headers.Http.AllHttpHeaders` |
+
+## Codegen workflow
+
+`prebuild` invokes `tools/ts-codegen/src/headers-emit.ts --target=http` before `tsc -b`, so `pnpm -r build` regenerates the catalog from `contracts/headers/headers.spec.json`. Generated files (`*.g.ts`) are committed to git.
+
+## When to reach for this catalog
+
+Use `@d2/headers-http` from any HTTP-context consumer — SvelteKit hooks, fetch wrappers, route guards, BFF outbound calls. The catalog includes BOTH the HTTP-only entries (e.g. `IDEMPOTENCY_KEY`) AND the cross-transport entries (e.g. `TRACEPARENT`) that an HTTP pipeline can encounter; one `import` covers everything that transport's pipeline can encounter.
+
+## Spec contract
+
+`contracts/headers/headers.spec.json` is the single source of truth. Every entry whose `applicability` array contains `"http"` lives in this catalog (cross-transport entries also live in `@d2/headers-common` AND every other transport catalog they apply to, all at identical wire values; codegen-guaranteed and verified by `HeaderCatalogConsistencyTests` on the .NET side).
+
+## Dependencies
+
+None at runtime — pure constants. DevDeps: `vitest` + `@vitest/coverage-v8` + `typescript`.
+
+## Reference
+
+- [`contracts/headers/headers.spec.json`](../../../../contracts/headers/headers.spec.json) — source spec
+- [`@d2/headers-common`](../headers-common/) — cross-transport subset
+- [`@d2/headers-amqp`](../headers-amqp/) — AMQP-applicable subset
+- [`@d2/headers-grpc`](../headers-grpc/) — gRPC-applicable subset

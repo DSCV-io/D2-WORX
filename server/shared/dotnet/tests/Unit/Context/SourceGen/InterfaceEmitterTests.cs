@@ -31,7 +31,9 @@ public sealed class InterfaceEmitterTests
             "D2.Shared.AuthContext.Abstractions",
             description: "Test description",
             sections: [
-                Section("Token", Property("IsAuthenticated", "bool?", doc: "Whether authenticated.")),
+                Section(
+                    "Token",
+                    Property("IsAuthenticated", "bool?", doc: "Whether authenticated.")),
             ]);
 
         var result = InterfaceEmitter.Emit(spec);
@@ -80,7 +82,9 @@ public sealed class InterfaceEmitterTests
 
         result.Diagnostics.Should().BeEmpty();
         result.GeneratedSource.Should()
-            .Contain("public interface IRequestContext : global::D2.Shared.AuthContext.Abstractions.IAuthContext");
+            .Contain(
+                "public interface IRequestContext"
+                + " : global::D2.Shared.AuthContext.Abstractions.IAuthContext");
     }
 
     [Fact]
@@ -185,7 +189,8 @@ public sealed class InterfaceEmitterTests
 
         var result = InterfaceEmitter.Emit(spec);
 
-        var diag = result.Diagnostics.Single(d => d.DescriptorId == DiagnosticIds.UnknownDerivedRule);
+        var diag = result.Diagnostics
+            .Single(d => d.DescriptorId == DiagnosticIds.UnknownDerivedRule);
         ((string)diag.Args[2]).Should().Be("notARealRule");
 
         // Warning-only — property still emitted on the interface.
@@ -274,6 +279,59 @@ public sealed class InterfaceEmitterTests
     }
 
     // ----------------------------------------------------------------------
+    // [RedactData] emission from spec `redact` field
+    // ----------------------------------------------------------------------
+
+    [Fact]
+    public void Emit_PropertyWithRedactTrue_EmitsRedactDataAttribute()
+    {
+        var spec = Spec(
+            "IFoo",
+            "X.Y",
+            sections: [
+                Section("S", Property("Pii", "string?", redact: true)),
+            ]);
+
+        var result = InterfaceEmitter.Emit(spec);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.GeneratedSource.Should().Contain(
+            "[RedactData(Reason = RedactReason.PersonalInformation)]");
+        result.GeneratedSource.Should().Contain("string? Pii { get; }");
+    }
+
+    [Fact]
+    public void Emit_PropertyWithoutRedact_DoesNotEmitRedactDataAttribute()
+    {
+        var spec = Spec(
+            "IFoo",
+            "X.Y",
+            sections: [Section("S", Property("Plain", "string?"))]);
+
+        var result = InterfaceEmitter.Emit(spec);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.GeneratedSource.Should().NotContain("[RedactData");
+        result.GeneratedSource.Should().Contain("string? Plain { get; }");
+    }
+
+    [Fact]
+    public void Emit_RedactAnnotation_AddsUtilitiesAttributeUsings()
+    {
+        var spec = Spec(
+            "IFoo",
+            "X.Y",
+            sections: [
+                Section("S", Property("Pii", "string?", redact: true)),
+            ]);
+
+        var result = InterfaceEmitter.Emit(spec);
+
+        result.GeneratedSource.Should().Contain("using D2.Shared.Utilities.Attributes;");
+        result.GeneratedSource.Should().Contain("using D2.Shared.Utilities.Enums;");
+    }
+
+    // ----------------------------------------------------------------------
     // Helpers
     // ----------------------------------------------------------------------
 
@@ -304,6 +362,7 @@ public sealed class InterfaceEmitterTests
         string? @default = null,
         string? doc = null,
         bool propagate = false,
-        int? maxLength = null) =>
-        new(name, type, claim, trinaryAuth, derived, @default, doc, propagate, maxLength);
+        int? maxLength = null,
+        bool redact = false) =>
+        new(name, type, claim, trinaryAuth, derived, @default, doc, propagate, maxLength, redact);
 }

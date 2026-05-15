@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using D2.Shared.SourceGen;
 
 /// <summary>
 /// Pure logic for emitting a meter's <c>*TelemetryTags.g.cs</c> typed-constants
@@ -48,13 +49,13 @@ internal static class TelemetryTagsEmitter
         {
             if (!seenInstruments.Add(inst.Name))
             {
-                diagnostics.Add(EmitDiagnostic.DuplicateInstrument(inst.Name, meter.Meter));
+                diagnostics.Add(EmitDiagnostics.DuplicateInstrument(inst.Name, meter.Meter));
                 continue;
             }
 
             if (!sr_validKinds.Contains(inst.Kind))
             {
-                diagnostics.Add(EmitDiagnostic.UnknownInstrumentKind(
+                diagnostics.Add(EmitDiagnostics.UnknownInstrumentKind(
                     inst.Name,
                     meter.Meter,
                     inst.Kind,
@@ -91,7 +92,7 @@ internal static class TelemetryTagsEmitter
                     {
                         if (!seenValues.Add(v))
                         {
-                            diagnostics.Add(EmitDiagnostic.DuplicateTagValue(
+                            diagnostics.Add(EmitDiagnostics.DuplicateTagValue(
                                 inst.Name, tag.Name, meter.Meter, v));
                             tagFailed = true;
                             break;

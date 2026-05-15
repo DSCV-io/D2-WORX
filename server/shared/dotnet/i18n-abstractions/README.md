@@ -27,7 +27,7 @@ The pattern matches `Microsoft.Extensions.Logging.Abstractions` vs `Microsoft.Ex
 | `TKMessage.cs` | `TKMessage` sealed record — translation key + optional parameter bindings. Internal ctor; can only be constructed via the SrcGen-emitted `TK.*` constants. |
 | `TKMessageJsonConverter.cs` | `JsonConverter<TKMessage>` — wire format `{ "key": "..." }` or `{ "key": "...", "params": { ... } }`. Applied to `TKMessage` via `[JsonConverter]`. |
 | `ITranslator.cs` | The translation interface. `string T(string locale, TKMessage message)` and `bool HasKey(string key)`. Implementation lives in the runtime lib. |
-| `(generated) TK.g.cs` | Emitted by the sibling **`D2.Shared.I18n.SourceGen`** project at [`../i18n-source-gen/`](../i18n-source-gen/) — a Roslyn `IIncrementalGenerator` (netstandard2.0; referenced as Analyzer, not a runtime dll). Output lands at `obj/Generated/D2.Shared.I18n.SourceGen/D2.Shared.I18n.SourceGen.TKGenerator/TK.g.cs` at every build. Contains nested `static partial class` chains (`TK.Common.Errors.NOT_FOUND` etc.), one `TKMessage` constant per JSON key. |
+| `(generated) TK.g.cs` | Emitted by the sibling **`D2.Shared.I18n.SourceGen`** project at [`../i18n-source-gen/`](../i18n-source-gen/) — a Roslyn `IIncrementalGenerator` (netstandard2.0; referenced as Analyzer, not a runtime dll). Output lands at `Generated/D2.Shared.I18n.SourceGen/D2.Shared.I18n.SourceGen.TKGenerator/TK.g.cs` (tracked in git) at every build. Contains nested `static partial class` chains (`TK.Common.Errors.NOT_FOUND` etc.), one `TKMessage` constant per JSON key. |
 
 ---
 
@@ -139,7 +139,7 @@ The SrcGen also surfaces:
 
 ### Inspecting generated TK
 
-The emitted file is at `obj/Generated/D2.Shared.I18n.SourceGen/D2.Shared.I18n.SourceGen.TKGenerator/TK.g.cs` (the consuming csproj declares `<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>` for visibility). Rider also surfaces it under `Dependencies → Analyzers → D2.Shared.I18n.SourceGen → TKGenerator`.
+The emitted file is at `Generated/D2.Shared.I18n.SourceGen/D2.Shared.I18n.SourceGen.TKGenerator/TK.g.cs`. The consuming csproj declares `<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>` so the output lands in the tracked `Generated/` directory — committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build` from the spec; do not hand-edit. Rider also surfaces it under `Dependencies → Analyzers → D2.Shared.I18n.SourceGen → TKGenerator`.
 
 ---
 
@@ -173,7 +173,7 @@ The csproj has no `<PackageReference>`s and no `<ProjectReference>`s. The Source
 
 ## Tests
 
-`server/shared/dotnet/tests/Unit/I18n/` — 100% line / 100% method, ~92% branch coverage on the abstractions; SrcGen pure-logic at ~95% on the emitter and decomposer. Categories:
+`server/shared/dotnet/tests/Unit/I18n/` — comprehensive coverage across abstractions surface (every `TKMessage` operation + immutability + JSON roundtrip + adversarial inputs) plus broad coverage of the SrcGen emitter and decomposer pure-logic paths. Categories:
 
 - `TKMessageTests` — equality (incl. order-independent params), JSON roundtrip, malformed JSON handling, immutability of `With()`, integration as part of `D2Result.Messages` arrays.
 - `SourceGen/KeyDecomposerTests` — happy path + every invalid edge (leading/trailing/consecutive underscores, identifier-starts-with-digit, unicode rejection, reserved word collision), plus property test against every real key in `en-US.json`.
@@ -184,8 +184,8 @@ The Roslyn-host integration (`TKGenerator.Initialize`) is exercised end-to-end v
 
 ---
 
-## Future considerations (not yet implemented)
+## Out of scope
 
-- **Compile-time call-site safety** — a `T(TKKey)` overload where TKKey is a phantom type that proves the key exists. Currently `T` takes the runtime `TKMessage`, which is already constructor-locked but adds a tiny gap if anyone ever uses reflection. Probably not worth the complexity.
-- **Generator-emitted XML doc comments on TK constants** — embedding the en-US text into the generated `<summary>` would surface the message in IntelliSense. Would require parsing translation values for XML-doc-safe characters and currently isn't worth the build-time complexity.
-- **Per-message context metadata** — e.g., severity, audience tags. Would require extending `TKMessage` and the wire format. No driving use case yet.
+- **Compile-time call-site safety** — a `T(TKKey)` overload where TKKey is a phantom type that proves the key exists. The current `T(TKMessage)` API is already constructor-locked; the additional safety gap is too small to justify the extra type-system complexity.
+- **Generator-emitted XML doc comments on TK constants** — embedding the en-US text into the generated `<summary>` would surface the message in IntelliSense, but would require parsing translation values for XML-doc-safe characters; the build-time complexity isn't justified.
+- **Per-message context metadata** — e.g., severity, audience tags. Would require extending `TKMessage` and the wire format; no driving use case justifies the wire-format change.

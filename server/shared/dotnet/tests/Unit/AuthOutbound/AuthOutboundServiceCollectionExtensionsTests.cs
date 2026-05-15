@@ -13,6 +13,8 @@ using D2.Shared.Auth.Outbound.TokenExchange;
 using D2.Shared.Caching.Local.Default;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Xunit;
@@ -136,5 +138,69 @@ public sealed class AuthOutboundServiceCollectionExtensionsTests
         var act = () => services!.AddD2AuthOutbound(_ => { });
 
         act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public async Task AddD2AuthOutbound_EmptyIssuer_ThrowsOptionsValidationOnStart()
+    {
+        var builder = Host.CreateApplicationBuilder();
+        builder.Logging.ClearProviders();
+        builder.Services.AddD2LocalCache();
+        builder.Services.AddD2AuthOutbound(opts =>
+        {
+            opts.Issuer = string.Empty;
+            opts.ClientId = "test";
+            opts.ClientSecret = "test";
+        });
+
+        using var host = builder.Build();
+
+        var ex = await Record.ExceptionAsync(() => host.StartAsync());
+
+        ex.Should().BeOfType<OptionsValidationException>()
+            .Which.Failures.Should().Contain(f => f.Contains("Issuer", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task AddD2AuthOutbound_EmptyClientId_ThrowsOptionsValidationOnStart()
+    {
+        var builder = Host.CreateApplicationBuilder();
+        builder.Logging.ClearProviders();
+        builder.Services.AddD2LocalCache();
+        builder.Services.AddD2AuthOutbound(opts =>
+        {
+            opts.Issuer = "https://edge.internal";
+            opts.ClientId = "   ";
+            opts.ClientSecret = "test";
+        });
+
+        using var host = builder.Build();
+
+        var ex = await Record.ExceptionAsync(() => host.StartAsync());
+
+        ex.Should().BeOfType<OptionsValidationException>()
+            .Which.Failures.Should().Contain(f => f.Contains("ClientId", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task AddD2AuthOutbound_EmptyClientSecret_ThrowsOptionsValidationOnStart()
+    {
+        var builder = Host.CreateApplicationBuilder();
+        builder.Logging.ClearProviders();
+        builder.Services.AddD2LocalCache();
+        builder.Services.AddD2AuthOutbound(opts =>
+        {
+            opts.Issuer = "https://edge.internal";
+            opts.ClientId = "test";
+            opts.ClientSecret = string.Empty;
+        });
+
+        using var host = builder.Build();
+
+        var ex = await Record.ExceptionAsync(() => host.StartAsync());
+
+        ex.Should().BeOfType<OptionsValidationException>()
+            .Which.Failures.Should()
+            .Contain(f => f.Contains("ClientSecret", StringComparison.Ordinal));
     }
 }

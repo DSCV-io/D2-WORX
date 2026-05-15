@@ -11,7 +11,8 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
-using D2.Shared.Auth.Audiences.SourceGen.Polyfills;
+using D2.Shared.SourceGen;
+using D2.Shared.SourceGen.Polyfills;
 
 /// <summary>
 /// Pure logic for emitting the <c>Audiences</c> static partial class source from
@@ -44,25 +45,25 @@ internal static class AudiencesEmitter
         {
             if (!seenNames.Add(audience.Name))
             {
-                diagnostics.Add(EmitDiagnostic.DuplicateAudienceName(audience.Name));
+                diagnostics.Add(EmitDiagnostics.DuplicateAudienceName(audience.Name));
                 continue;
             }
 
             if (!ValidateAudienceName(audience.Name, out var nameReason))
             {
-                diagnostics.Add(EmitDiagnostic.InvalidAudienceName(audience.Name, nameReason));
+                diagnostics.Add(EmitDiagnostics.InvalidAudienceName(audience.Name, nameReason));
                 continue;
             }
 
             if (!Uri.TryCreate(audience.Url, UriKind.Absolute, out _))
             {
-                diagnostics.Add(EmitDiagnostic.InvalidAudienceUrl(audience.Name, audience.Url));
+                diagnostics.Add(EmitDiagnostics.InvalidAudienceUrl(audience.Name, audience.Url));
                 continue;
             }
 
             if (urlToFirstName.TryGetValue(audience.Url, out var firstName))
             {
-                diagnostics.Add(EmitDiagnostic.DuplicateAudienceUrl(
+                diagnostics.Add(EmitDiagnostics.DuplicateAudienceUrl(
                     firstName,
                     audience.Name,
                     audience.Url));

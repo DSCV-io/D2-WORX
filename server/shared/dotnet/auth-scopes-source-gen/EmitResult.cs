@@ -7,6 +7,7 @@
 namespace D2.Shared.Auth.Scopes.SourceGen;
 
 using System.Collections.Immutable;
+using D2.Shared.SourceGen;
 
 /// <summary>
 /// Result of

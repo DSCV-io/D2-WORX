@@ -10,6 +10,8 @@ gRPC-transport binding for [`D2.Shared.Auth`](../auth/README.md) — server-side
 
 Lives in its own csproj (separate from `D2.Shared.Auth`) so the `Grpc.AspNetCore.Server` framework reference is opt-in: HTTP-only services / worker processes / console hosts that consume `D2.Shared.Auth` for JWT validation in non-gRPC paths don't need to drag in the gRPC server framework. Sibling [`D2.Shared.Auth.Http`](../auth-http/README.md) holds the HTTP-transport binding under the same logic. The two transport-binding csprojs are siblings (no inter-csproj dep): each registers an identical scoped `IRequestContext` resolver lambda that reads from a shared `HttpContext.Items` slot, so a single dual-transport host wires both extensions and resolves `IRequestContext` correctly under either transport.
 
+The codegen-emitted `D2GrpcUserStateKeys.g.cs` (sourced from `contracts/in-process-keys/keys.spec.json` via `D2.Shared.InProcessKeys.SourceGen`) lands in the tracked `Generated/D2.Shared.InProcessKeys.SourceGen/...` directory — committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build`; do not hand-edit.
+
 ## Public API surface
 
 ### Composition
@@ -39,32 +41,18 @@ services.AddGrpc(opts =>
 A host that serves both HTTP endpoints and gRPC services on the same AspNetCore Kestrel host wires all three extensions in a fluent chain:
 
 ```csharp
-builder.Services
-    .AddD2Auth(opts =>
-    {
-        opts.Issuer = new Uri("https://edge.internal");
-        opts.Audience = Audiences.MyService;
-    })
-    .AddD2AuthHttp()
-    .AddD2AuthGrpc();
-
+builder.Services.AddD2Auth(opts => { opts.Issuer = ...; opts.Audience = ...; })
+    .AddD2AuthHttp().AddD2AuthGrpc();
 builder.Services.AddGrpc(o => o.MaxReceiveMessageSize = 16 * 1024 * 1024);
-
-builder.Services.AddOpenTelemetry()
-    .WithTracing(t => t.AddSource(AuthTelemetry.ACTIVITY_SOURCE_NAME))
-    .WithMetrics(m => m.AddMeter(AuthTelemetry.METER_NAME));
-
 var app = builder.Build();
 app.UseRouting();
-app.UseD2Auth();              // HTTP middleware
+app.UseD2Auth();                                              // HTTP middleware
 app.MapGet("/files/{id}", H).RequireD2Scope("files.read");
-app.MapGrpcService<MyGrpcService>();   // interceptor handles gRPC auth
+app.MapGrpcService<MyGrpcService>();                          // interceptor handles gRPC auth
 app.Run();
 ```
 
-Both transport extensions register an IDENTICAL scoped `IRequestContext` resolver lambda reading from the same `HttpContext.Items` slot. Constructor-injecting `IRequestContext` works correctly under either transport. Registration order does not matter: `TryAddScoped` first-wins is harmless because the lambdas behave identically given the same `HttpContext` state.
-
-For HTTP-only or gRPC-only hosts, omit the unused `AddD2AuthXxx()` call — each transport extension is opt-in via the host's csproj `<PackageReference>` chain.
+Both transport extensions register an IDENTICAL scoped `IRequestContext` resolver lambda reading from the same `HttpContext.Items` slot — constructor injection works under either transport; `TryAddScoped` first-wins is harmless. For HTTP-only or gRPC-only hosts, omit the unused `AddD2AuthXxx()` call.
 
 ### Per-method scope metadata
 
@@ -142,17 +130,9 @@ Or better, constructor-inject `IRequestContext` directly — the scoped adapter 
 
 ### Harmless-endpoint methods + ctor-injected `IRequestContext`
 
-The scoped `IRequestContext` adapter registered by `AddD2AuthGrpc()` resolves from `HttpContext.Items[D2HttpContextItems.REQUEST_CONTEXT]` — populated by the interceptor AFTER successful auth (the same write also lands on `ServerCallContext.UserState` for the gRPC-specific hot-path accessor `ServerCallContext.GetD2RequestContext()`, but the cross-transport DI resolver reads from the `HttpContext.Items` slot, NOT `UserState` — that's how a single resolver lambda works identically under HTTP and gRPC). On methods marked `[D2HarmlessEndpoint]` (or class-level harmless-endpoint services), the interceptor SHORT-CIRCUITS the auth pipeline and never writes to either slot. A gRPC service that constructor-injects `IRequestContext` will then fail at resolve time with:
+The scoped `IRequestContext` adapter registered by `AddD2AuthGrpc()` resolves from `HttpContext.Items[D2HttpContextItems.REQUEST_CONTEXT]` — populated by the interceptor AFTER successful auth. On methods marked `[D2HarmlessEndpoint]` (or class-level harmless-endpoint services), the interceptor SHORT-CIRCUITS the auth pipeline and never writes the slot. A gRPC service that constructor-injects `IRequestContext` then fails at resolve time with `InvalidOperationException` — see [Debugging → `IRequestContext` resolution failures](#irequestcontext-resolution-failures) for the exact message variants and root causes.
 
-```text
-InvalidOperationException: IRequestContext was resolved before the auth
-pipeline ran. Ensure UseD2Auth() (for HTTP) or AddD2AuthGrpc()'s
-interceptor (for gRPC) has run before resolving IRequestContext.
-```
-
-(If the resolution site somehow runs without ANY active `HttpContext`, the resolver throws a different message: `"IRequestContext was resolved without an active HttpContext. Ensure the resolution site runs inside an AspNetCore request (UseD2Auth() for HTTP; AddD2AuthGrpc() for gRPC) and that an HttpContext is on the execution context."` This is the "no `HttpContext` on the execution context" surface — distinct from the "`HttpContext` exists but the auth pipeline didn't run yet" surface above.)
-
-Why fail-fast: returning a sentinel "anonymous" context would let downstream code silently degrade (e.g. log "user_id=null" to ALL records, leak rows by querying with a missing tenant filter); a noisy throw at registration time forces the deployer to make an explicit choice.
+Fail-fast rationale: a sentinel "anonymous" context would let downstream code silently degrade (e.g. log `user_id=null` to ALL records, leak rows by querying with a missing tenant filter); the noisy throw forces the deployer to make an explicit choice.
 
 **Workarounds**:
 
@@ -266,9 +246,9 @@ Bearer bytes, claim values, and scope strings NEVER reach logs / span tags / met
 - `Interceptors/JwtAuthInterceptorTests.cs` — every `RunAuthAsync` branch across all four RPC kinds; bearer-extraction edge cases; validator failure surfaces; liveness outcomes; scope pass / fail; cancellation propagation; `UserState` contract; double-write avoidance; constructor null-guards.
 - `Interceptors/D2GrpcUserStateKeysTests.cs` — slot-key constant value pinned (`"D2.RequestContext"`).
 - `Interceptors/ServerCallContextRequestContextExtensionsTests.cs` — typed accessor returns null pre-interceptor / non-`IRequestContext` slot; populated value post-interceptor.
-- `Endpoints/MethodScopeMetadataTests.cs` — `HarmlessEndpoint` singleton invariants; `ForScopes` deduping + frozen; record equality; zero-scope throws; **`HarmlessEndpoint` factory + `IsHarmlessEndpoint` property names pinned via reflection (literal-string lookup) for the future analyzer that keys against those names.**
+- `Endpoints/MethodScopeMetadataTests.cs` — `HarmlessEndpoint` singleton invariants; `ForScopes` deduping + frozen; record equality; zero-scope throws; **`HarmlessEndpoint` factory + `IsHarmlessEndpoint` property names pinned via reflection (literal-string lookup) to guard against type / property renames that downstream analyzers depend on.**
 - `Endpoints/D2RequireScopeAttributeTests.cs` — construction (single + multiple scopes); null/whitespace argument throws; class-level vs method-level precedence.
-- `Endpoints/D2HarmlessEndpointAttributeTests.cs` — construction; class-level vs method-level precedence; overrides sibling `[D2RequireScope]`; **type name `"D2HarmlessEndpointAttribute"` + full-namespace pinned via literal-string assertion for the future analyzer.**
+- `Endpoints/D2HarmlessEndpointAttributeTests.cs` — construction; class-level vs method-level precedence; overrides sibling `[D2RequireScope]`; **type name `"D2HarmlessEndpointAttribute"` + full-namespace pinned via literal-string assertion to guard against renames that downstream analyzers depend on.**
 - `Endpoints/RequireD2GrpcScopeExtensionsTests.cs` — fluent extensions correctly attach metadata; null/whitespace throws.
 - `Status/D2RpcStatusExtensionsTests.cs` — every `AuthFailures` surface → expected `Status.StatusCode` + trailer set; `Status.Detail` empty; `traceid` presence/absence per `Activity.Current`; counter increment.
 - `AuthGrpcServiceCollectionExtensionsTests.cs` — DI registration; `AddD2Auth` precondition fail-fast; idempotent re-call; interceptor type registered as singleton; appears in `GrpcServiceOptions.Interceptors` exactly once; scoped `IRequestContext` adapter resolution.
@@ -277,71 +257,29 @@ Run: `dotnet test server/shared/dotnet/tests`.
 
 ## Debugging
 
-When a gRPC caller starts seeing `RpcException` with `Status.Unauthenticated` / `Status.Unavailable` from a service guarded by this lib:
-
-### Inspecting trailers from the client
-
-Auth failures carry the diagnostic in trailers, NOT in `Status.Detail` (which is intentionally empty — info-leak avoidance). Read them via `RpcException.Trailers`:
+Auth failures terminate the gRPC call with `RpcException(Status.Unauthenticated | Status.Unavailable)` and carry the diagnostic in trailers (`Status.Detail` is intentionally empty — info-leak avoidance). Inspect via `RpcException.Trailers`:
 
 ```csharp
-try
-{
-    var reply = await client.GetFileAsync(request);
-}
 catch (RpcException ex)
 {
     var errorCode = ex.Trailers.GetValue("d2_error_code"); // e.g. "AUTH_JWT_EXPIRED"
     var messages = ex.Trailers.GetValue("d2_messages");    // JSON array of TKMessage
     var traceId = ex.Trailers.GetValue("traceid");         // W3C trace id (lower-hex)
-    logger.LogWarning(
-        "gRPC auth rejected: code={Code} traceid={TraceId}",
-        errorCode,
-        traceId);
 }
 ```
 
-### Inspecting trailers from `grpcurl`
+From `grpcurl`, `-v` surfaces trailer metadata at the bottom of verbose output (`Code: Unauthenticated`, `Trailers received: ...`). `d2_messages` is the same JSON-array-of-TKMessage shape as the HTTP middleware's ProblemDetails extension (`[{"key":"UNAUTHORIZED","params":{}}]`); `key` is a TK constant translated client-side; `params` carries bounded scalar substitutions only (no PII). The `traceid` trailer is the lower-hex 32-char W3C trace-id of `Activity.Current` at failure time — correlate with the server-side span in your OTel backend; the `JwtAuthInterceptor` runs inside the gRPC server-call activity so its `AuthLog` delegates and `AuthTelemetry.ProblemEmitted` counter sit on the same span.
 
-Use `-v` (verbose) to surface trailer metadata:
+For full per-code reference + remediation, see [`../auth/README.md` § Debugging](../auth/README.md#debugging) — the same `AUTH_*` taxonomy applies across HTTP and gRPC transports (single sink at `AuthTelemetry.ProblemEmitted`). Two codes specific to gRPC bearer extraction: `AUTH_BEARER_MISSING` (no `authorization` metadata, wrong scheme, or empty after `Bearer ` — check `Metadata.Add("authorization", "Bearer " + token)` or `Grpc.Net.ClientFactory.ConfigureChannel` + `CallCredentials`); `AUTH_SCOPE_INSUFFICIENT` (bearer valid but `Scopes` set didn't overlap method's required set; `traceid` finds the matching span whose enriched logs show required-vs-presented).
 
-```text
-grpcurl -v -H "authorization: Bearer eyJ..." \
-    localhost:5000 my.package.Files/GetFile
-```
+### `IRequestContext` resolution failures
 
-`Trailers received:` appears at the bottom of verbose output with `d2_error_code`, `d2_messages`, `traceid`. The Status line shows the gRPC status code (e.g. `Code: Unauthenticated`).
+The cross-transport scoped `IRequestContext` resolver registered by `AddD2AuthGrpc()` (lambda byte-equivalent to `AddD2AuthHttp()`'s — both read `HttpContext.Items[D2HttpContextItems.REQUEST_CONTEXT]`) surfaces two distinct `InvalidOperationException` messages:
 
-### `d2_messages` JSON shape
+- **"resolved without an active HttpContext. Ensure the resolution site runs inside an AspNetCore request..."** — `IHttpContextAccessor` returned `null`. Background-service / hosted-service code that takes a constructor `IRequestContext` would surface this; resolution sites must be inside an inbound request.
+- **"resolved before the auth pipeline ran. Ensure UseD2Auth() (for HTTP) or AddD2AuthGrpc()'s interceptor (for gRPC) has run..."** — `HttpContext` is present but the slot is empty. Two common causes: (a) `[D2HarmlessEndpoint]` short-circuited the interceptor — see [Footguns → Harmless-endpoint methods + ctor-injected `IRequestContext`](#harmless-endpoint-methods--ctor-injected-irequestcontext) for the three workarounds; (b) resolution site sits upstream of the interceptor (middleware on the AspNetCore pipeline above gRPC trying to constructor-inject `IRequestContext`).
 
-Same wire shape as the HTTP middleware's ProblemDetails `d2_messages` extension — a JSON array of TKMessage records:
-
-```json
-[{"key":"UNAUTHORIZED","params":{}}]
-```
-
-`key` is a TK constant (translated client-side via the i18n catalog); `params` carries bounded scalar substitutions only (no PII). Auth-surface messages today use `UNAUTHORIZED` / `TEMPORARILY_UNAVAILABLE` keys with no params.
-
-### Correlating `traceid` to OTel spans
-
-The `traceid` trailer is the W3C trace-id of the active `Activity.Current` at the time of failure (lower-hex format, 32 chars). Correlate with the server-side span in your OTel backend (Tempo / Jaeger / etc.) — the `JwtAuthInterceptor` runs inside the gRPC server-call activity, so the span will carry the auth-failure logs (via `AuthLog` delegates) and the `AuthTelemetry.ProblemEmitted` counter increment.
-
-### `IRequestContext` resolution failures (harmless-endpoint methods + DI ctor injection)
-
-Two distinct `InvalidOperationException` surfaces from the cross-transport scoped `IRequestContext` resolver registered by `AddD2AuthGrpc()` (lambda body byte-equivalent to the one `AddD2AuthHttp()` registers — both read `HttpContext.Items[D2HttpContextItems.REQUEST_CONTEXT]`):
-
-- **`"IRequestContext was resolved without an active HttpContext. Ensure the resolution site runs inside an AspNetCore request (UseD2Auth() for HTTP; AddD2AuthGrpc() for gRPC) and that an HttpContext is on the execution context."`** — the resolver fetched `IHttpContextAccessor` and got `null`. Background-service / hosted-service code that takes a constructor `IRequestContext` would surface this. Resolution sites must be inside an inbound request.
-- **`"IRequestContext was resolved before the auth pipeline ran. Ensure UseD2Auth() (for HTTP) or AddD2AuthGrpc()'s interceptor (for gRPC) has run before resolving IRequestContext."`** — `HttpContext` is present but the slot is empty. Two common causes: (a) the gRPC method is decorated with `[D2HarmlessEndpoint]` (interceptor short-circuited; nothing was written to the slot) — see [Footguns / common pitfalls → Harmless-endpoint methods + ctor-injected `IRequestContext`](#harmless-endpoint-methods--ctor-injected-irequestcontext) for the three workarounds; (b) the resolution site runs upstream of the interceptor — rarer for gRPC since the interceptor is the first hop in the gRPC service-call pipeline, but possible when middleware on the AspNetCore pipeline (above gRPC) tries to constructor-inject `IRequestContext`.
-
-The error messages are produced by the resolver lambda in `AuthGrpcServiceCollectionExtensions.AddD2AuthGrpc()`. The matching `AddD2AuthHttp()` lambda emits identical text — both transports surface the same diagnostics.
-
-Note: `ServerCallContext.UserState` IS still written by the interceptor on successful auth (and the typed accessor `ServerCallContext.GetD2RequestContext()` reads it for the gRPC-specific hot-path use case). But the cross-transport DI resolver does NOT read from `UserState` — it reads from `HttpContext.Items` so a single resolver lambda covers both transports. This split keeps the gRPC hot-path accessor available for service code that already has a `ServerCallContext` in hand without forcing the DI resolver into transport-specific branching.
-
-### Common AUTH_* error codes
-
-For full code reference + remediation per code, see [`../auth/README.md` § Debugging](../auth/README.md#debugging) — the same `AUTH_*` taxonomy applies across HTTP and gRPC transports (single sink at `AuthTelemetry.ProblemEmitted`). Two codes specific to the failure surface above:
-
-- **`AUTH_BEARER_MISSING`** — no `authorization` metadata, wrong scheme, or empty after `Bearer `. Check the caller's `Metadata.Add("authorization", "Bearer " + token)` site (or `Grpc.Net.ClientFactory`'s `ConfigureChannel` + `CallCredentials`).
-- **`AUTH_SCOPE_INSUFFICIENT`** — bearer is valid, but the validated `Scopes` set didn't overlap with the method's required set. `traceid` lets you find the matching server-side span — the span's enriched logs will show which scope set was required vs which was presented (without leaking the values into the trailer or `Status.Detail`).
+`ServerCallContext.UserState` IS still written by the interceptor on successful auth (the typed accessor `ServerCallContext.GetD2RequestContext()` reads it for the gRPC-specific hot-path use case), but the cross-transport DI resolver does NOT read from `UserState` — it reads from `HttpContext.Items` so a single resolver lambda covers both transports.
 
 ## References
 

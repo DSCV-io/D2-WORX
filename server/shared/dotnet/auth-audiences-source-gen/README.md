@@ -107,7 +107,7 @@ Consuming csproj (`D2.Shared.Auth.Abstractions`) declares the analyzer as a proj
 </ItemGroup>
 ```
 
-`<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>` on the consuming csproj makes the generated `Audiences.g.cs` visible under `obj/Generated/` for inspection.
+`<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>` on the consuming csproj makes the generated `Audiences.g.cs` visible under the consuming csproj's tracked `Generated/` directory for inspection (committed to git per the codegen-output-committed convention; see [`docs/PATTERNS.md`](../../../../docs/PATTERNS.md)).
 
 ---
 

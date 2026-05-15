@@ -5,13 +5,25 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <RootNamespace>D2.Shared.Auth.Outbound</RootNamespace>
     <!--
-      EmitCompilerGeneratedFiles surfaces the SrcGen-emitted OutboundTelemetryTags.g.cs
-      into obj/Generated/ so it is visible for inspection / debugging. Required by
-      the telemetry-tags-source-gen analyzer wired below.
+      Emit the SrcGen-emitted OutboundTelemetryTags.g.cs (driven by the
+      telemetry-tags-source-gen analyzer wired below) plus the framework
+      LoggerMessage.g.cs to <project-dir>/Generated/. The directory is tracked
+      in git so PR reviewers see codegen diffs without a local build.
     -->
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111). See:
+      https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#compilergeneratedfilesoutputpath
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
 
   <!--
     Outbound auth runtime — service-identity (client_credentials) + token-exchange
@@ -37,8 +49,9 @@ Copyright (c) DCSV. All rights reserved.
   <ItemGroup>
     <!--
       auth-abstractions — Audiences (codegen'd const URLs), JwtClaimTypes (claim name
-      constants), RequestHeaders. Outbound-side audience targeting flows through
-      the Audiences.* constants.
+      constants codegen'd from contracts/jwt-claims/jwt-claims.spec.json).
+      Outbound-side audience targeting flows through the Audiences.* constants.
+      HTTP request-header constants live in D2.Shared.Headers.Http.
     -->
     <ProjectReference Include="..\auth-abstractions\D2.Shared.Auth.Abstractions.csproj" />
     <!--

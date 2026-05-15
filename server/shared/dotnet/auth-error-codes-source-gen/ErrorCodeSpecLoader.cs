@@ -9,6 +9,7 @@ namespace D2.Shared.Auth.ErrorCodes.SourceGen;
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
+using D2.Shared.SourceGen;
 
 /// <summary>
 /// Pure logic for parsing <c>auth-error-codes.spec.json</c> into an
@@ -34,8 +35,8 @@ internal static class ErrorCodeSpecLoader
     /// </summary>
     /// <param name="path">Spec file path (used for diagnostic message context).</param>
     /// <param name="json">Raw JSON content of the spec file.</param>
-    /// <returns>A <see cref="LoadResult"/>.</returns>
-    public static LoadResult Load(string path, string json)
+    /// <returns>A <see cref="LoadResult{TSpec}"/> wrapping <see cref="ErrorCodesSpec"/>.</returns>
+    public static LoadResult<ErrorCodesSpec> Load(string path, string json)
     {
         var fileName = Path.GetFileName(path);
 
@@ -46,9 +47,9 @@ internal static class ErrorCodeSpecLoader
 
             if (root.ValueKind != JsonValueKind.Object)
             {
-                return new LoadResult(
+                return new LoadResult<ErrorCodesSpec>(
                     Spec: null,
-                    Diagnostic: EmitDiagnostic.MalformedSpec(
+                    Diagnostic: EmitDiagnostics.MalformedSpec(
                         fileName,
                         $"root must be a JSON object, got {root.ValueKind}"));
             }
@@ -56,9 +57,9 @@ internal static class ErrorCodeSpecLoader
             if (!root.TryGetProperty(_ERROR_CODES_KEY, out var arr) ||
                 arr.ValueKind != JsonValueKind.Array)
             {
-                return new LoadResult(
+                return new LoadResult<ErrorCodesSpec>(
                     Spec: null,
-                    Diagnostic: EmitDiagnostic.MalformedSpec(
+                    Diagnostic: EmitDiagnostics.MalformedSpec(
                         fileName,
                         "missing required 'errorCodes' array property at root"));
             }
@@ -69,21 +70,21 @@ internal static class ErrorCodeSpecLoader
             {
                 var (entry, diag) = ParseEntry(element, fileName, index);
                 if (diag is not null)
-                    return new LoadResult(Spec: null, Diagnostic: diag);
+                    return new LoadResult<ErrorCodesSpec>(Spec: null, Diagnostic: diag);
 
                 entries.Add(entry!);
                 index++;
             }
 
-            return new LoadResult(
+            return new LoadResult<ErrorCodesSpec>(
                 Spec: new ErrorCodesSpec(entries.ToImmutable()),
                 Diagnostic: null);
         }
         catch (JsonException ex)
         {
-            return new LoadResult(
+            return new LoadResult<ErrorCodesSpec>(
                 Spec: null,
-                Diagnostic: EmitDiagnostic.MalformedSpec(fileName, ex.Message));
+                Diagnostic: EmitDiagnostics.MalformedSpec(fileName, ex.Message));
         }
     }
 
@@ -92,7 +93,7 @@ internal static class ErrorCodeSpecLoader
     {
         if (element.ValueKind != JsonValueKind.Object)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"errorCodes[{index}] must be a JSON object, got {element.ValueKind}"));
         }
@@ -100,7 +101,7 @@ internal static class ErrorCodeSpecLoader
         if (!element.TryGetProperty(_CODE_KEY, out var codeEl) ||
             codeEl.ValueKind != JsonValueKind.String)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"errorCodes[{index}] missing required string 'code'"));
         }
@@ -111,7 +112,7 @@ internal static class ErrorCodeSpecLoader
             statusEl.ValueKind != JsonValueKind.Number ||
             !statusEl.TryGetInt32(out var httpStatus))
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"errorCodes[{index}] '{code}' missing required integer 'httpStatus'"));
         }
@@ -119,7 +120,7 @@ internal static class ErrorCodeSpecLoader
         if (!element.TryGetProperty(_CATEGORY_KEY, out var categoryEl) ||
             categoryEl.ValueKind != JsonValueKind.String)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"errorCodes[{index}] '{code}' missing required string 'category'"));
         }
@@ -129,7 +130,7 @@ internal static class ErrorCodeSpecLoader
         if (!element.TryGetProperty(_USER_MESSAGE_KEY_KEY, out var msgKeyEl) ||
             msgKeyEl.ValueKind != JsonValueKind.String)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"errorCodes[{index}] '{code}' missing required string 'userMessageKey'"));
         }
@@ -139,7 +140,7 @@ internal static class ErrorCodeSpecLoader
         if (!element.TryGetProperty(_FACTORY_NAME_KEY, out var factoryEl) ||
             factoryEl.ValueKind != JsonValueKind.String)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"errorCodes[{index}] '{code}' missing required string 'factoryName'"));
         }
@@ -149,7 +150,7 @@ internal static class ErrorCodeSpecLoader
         if (!element.TryGetProperty(_DOC_KEY, out var docEl) ||
             docEl.ValueKind != JsonValueKind.String)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"errorCodes[{index}] '{code}' missing required string 'doc'"));
         }

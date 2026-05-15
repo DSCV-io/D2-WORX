@@ -5,11 +5,23 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <RootNamespace>D2.Shared.Auth.Abstractions</RootNamespace>
 
-    <!-- Emit the generator's output (Scopes.g.cs, Audiences.g.cs) to obj/Generated/
-         so it's visible for inspection / debugging (Rider also picks them up). -->
+    <!-- Emit the generator's output (Scopes.g.cs, Audiences.g.cs, JwtClaimTypes.g.cs,
+         D2HttpContextItems.g.cs) to <project-dir>/Generated/. The directory is
+         tracked in git so PR reviewers see codegen diffs without a local build. -->
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111). See:
+      https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#compilergeneratedfilesoutputpath
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
 
   <!--
     Identity / authorization vocabulary AND consumer-side runtime contracts
@@ -32,6 +44,12 @@ Copyright (c) DCSV. All rights reserved.
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\auth-audiences-source-gen\D2.Shared.Auth.Audiences.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\jwt-claims-source-gen\D2.Shared.Auth.JwtClaims.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\in-process-keys-source-gen\D2.Shared.InProcessKeys.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
   </ItemGroup>
@@ -66,6 +84,8 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <AdditionalFiles Include="..\..\..\..\contracts\auth-scopes\scopes.spec.json" />
     <AdditionalFiles Include="..\..\..\..\contracts\auth-audiences\audiences.spec.json" />
+    <AdditionalFiles Include="..\..\..\..\contracts\jwt-claims\jwt-claims.spec.json" />
+    <AdditionalFiles Include="..\..\..\..\contracts\in-process-keys\keys.spec.json" />
   </ItemGroup>
 
   <ItemGroup>

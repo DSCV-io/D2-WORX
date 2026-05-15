@@ -7,6 +7,7 @@
 namespace D2.Shared.Context.SourceGen;
 
 using System.Collections.Immutable;
+using D2.Shared.SourceGen;
 
 /// <summary>
 /// Result of an emit operation (interface emission OR mutable+envelope emission).

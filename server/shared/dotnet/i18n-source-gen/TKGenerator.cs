@@ -10,7 +10,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using D2.Shared.I18n.SourceGen.Polyfills;
+using D2.Shared.SourceGen;
+using D2.Shared.SourceGen.Polyfills;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 

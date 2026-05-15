@@ -13,7 +13,7 @@ using Xunit;
 /// <summary>
 /// Pure-logic tests for the AuthErrorCodes spec loader's JSON-shape validation.
 /// Drives the loader directly (no Roslyn host) and asserts the
-/// <see cref="EmitDiagnostic"/> records surfaced for malformed input.
+/// <c>EmitDiagnostic</c> records surfaced for malformed input.
 /// </summary>
 public sealed class ErrorCodeSpecLoaderTests
 {

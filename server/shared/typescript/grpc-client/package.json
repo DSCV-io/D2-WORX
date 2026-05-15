@@ -1,0 +1,36 @@
+{
+  "name": "@d2/grpc-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@d2/auth-abstractions": "workspace:*",
+    "@d2/headers-common": "workspace:*",
+    "@d2/headers-http": "workspace:*",
+    "@d2/logging": "workspace:*",
+    "@d2/protos": "workspace:*",
+    "@d2/request-context-abstractions": "workspace:*",
+    "@d2/resilience": "workspace:*",
+    "@d2/result": "workspace:*",
+    "@d2/utilities": "workspace:*",
+    "@grpc/grpc-js": "1.14.3"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "4.0.18",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
+  }
+}

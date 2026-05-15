@@ -1,0 +1,21 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules", "tests"],
+  "references": [
+    { "path": "../auth-abstractions" },
+    { "path": "../headers-common" },
+    { "path": "../headers-http" },
+    { "path": "../logging" },
+    { "path": "../protos" },
+    { "path": "../request-context-abstractions" },
+    { "path": "../resilience" },
+    { "path": "../result" },
+    { "path": "../utilities" }
+  ]
+}

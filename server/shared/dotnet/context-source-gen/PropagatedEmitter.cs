@@ -9,6 +9,7 @@ namespace D2.Shared.Context.SourceGen;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
+using D2.Shared.SourceGen;
 
 /// <summary>
 /// Emits the cross-hop <c>PropagatedContext</c> trio:
@@ -152,10 +153,12 @@ internal static class PropagatedEmitter
         sb.AppendLine($"public static class {_EXTENSIONS_NAME}");
         sb.AppendLine("{");
         sb.AppendLine("    /// <summary>Projects the propagation subset of");
-        sb.AppendLine($"    /// <paramref name=\"context\"/> into a <see cref=\"{_RECORD_NAME}\"/>.");
+        sb.AppendLine(
+            $"    /// <paramref name=\"context\"/> into a <see cref=\"{_RECORD_NAME}\"/>.");
         sb.AppendLine("    /// </summary>");
         sb.AppendLine("    /// <param name=\"context\">Source context.</param>");
-        sb.AppendLine($"    public static {_RECORD_NAME} ToPropagatedContext(this IRequestContext context)");
+        sb.AppendLine(
+            $"    public static {_RECORD_NAME} ToPropagatedContext(this IRequestContext context)");
         sb.AppendLine("    {");
         sb.AppendLine("        System.ArgumentNullException.ThrowIfNull(context);");
         sb.AppendLine($"        return new {_RECORD_NAME}");
@@ -231,7 +234,8 @@ internal static class PropagatedEmitter
         sb.AppendLine($"public static class {_SERIALIZER_NAME}");
         sb.AppendLine("{");
         sb.AppendLine("    /// <summary>Hard cap on accepted header length. Defends downstream");
-        sb.AppendLine("    /// memory + parser cost from a hostile or accidentally-bloated header.");
+        sb.AppendLine(
+            "    /// memory + parser cost from a hostile or accidentally-bloated header.");
         sb.AppendLine("    /// 2 KiB base64url decodes to ~1.5 KiB of JSON — far above any");
         sb.AppendLine($"    /// legitimate <see cref=\"{_RECORD_NAME}\"/> payload.</summary>");
         sb.AppendLine("    public const int MAX_HEADER_LENGTH = 2048;");
@@ -246,12 +250,14 @@ internal static class PropagatedEmitter
         sb.AppendLine("    /// <summary>Encodes a <see cref=\"" + _RECORD_NAME + "\"/> as a");
         sb.AppendLine("    /// base64url-of-JSON string suitable for any transport's single-value");
         sb.AppendLine("    /// header slot.</summary>");
-        sb.AppendLine($"    /// <param name=\"context\">The context to encode. Must not be null.</param>");
+        sb.AppendLine(
+            "    /// <param name=\"context\">The context to encode. Must not be null.</param>");
         sb.AppendLine("    /// <returns>The encoded header value.</returns>");
         sb.AppendLine($"    public static string Encode({_RECORD_NAME} context)");
         sb.AppendLine("    {");
         sb.AppendLine("        ArgumentNullException.ThrowIfNull(context);");
-        sb.AppendLine("        var json = JsonSerializer.SerializeToUtf8Bytes(context, sr_jsonOptions);");
+        sb.AppendLine(
+            "        var json = JsonSerializer.SerializeToUtf8Bytes(context, sr_jsonOptions);");
         sb.AppendLine("        return Base64Url.Encode(json);");
         sb.AppendLine("    }");
         sb.AppendLine();
@@ -266,14 +272,18 @@ internal static class PropagatedEmitter
         sb.AppendLine("    {");
         sb.AppendLine("        if (encoded.Falsey()) return null;");
         sb.AppendLine("        // null/empty/whitespace-only header → no propagation context.");
-        sb.AppendLine("        // Falsey()-returns-false guarantees non-null; the ! is per rules.md §5.1.");
+        sb.AppendLine("        // Falsey()-returns-false implies non-null;");
+        sb.AppendLine(
+            "        // the ! is required because Falsey doesn't carry NotNullWhenAttribute.");
         sb.AppendLine("        if (encoded!.Length > MAX_HEADER_LENGTH) return null;");
         sb.AppendLine();
         sb.AppendLine("        try");
         sb.AppendLine("        {");
         sb.AppendLine("            var json = Base64Url.Decode(encoded!);");
-        sb.AppendLine($"            var context = JsonSerializer.Deserialize<{_RECORD_NAME}>(json, sr_jsonOptions);");
-        sb.AppendLine("            return context is null || !FieldsWithinBounds(context) ? null : context;");
+        sb.AppendLine($"            var context = JsonSerializer.Deserialize<{_RECORD_NAME}>(");
+        sb.AppendLine("                json, sr_jsonOptions);");
+        sb.AppendLine(
+            "            return context is null || !FieldsWithinBounds(context) ? null : context;");
         sb.AppendLine("        }");
         sb.AppendLine("        catch (FormatException)");
         sb.AppendLine("        {");
@@ -325,7 +335,8 @@ internal static class PropagatedEmitter
         sb.AppendLine("        {");
         sb.AppendLine("            var padded = s.Replace('-', '+').Replace('_', '/');");
         sb.AppendLine("            var pad = padded.Length % 4;");
-        sb.AppendLine("            if (pad > 0) padded = padded.PadRight(padded.Length + (4 - pad), '=');");
+        sb.AppendLine(
+            "            if (pad > 0) padded = padded.PadRight(padded.Length + (4 - pad), '=');");
         sb.AppendLine("            return Convert.FromBase64String(padded);");
         sb.AppendLine("        }");
         sb.AppendLine("    }");

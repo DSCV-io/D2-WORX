@@ -9,6 +9,7 @@ namespace D2.Shared.Telemetry.Tags.SourceGen;
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
+using D2.Shared.SourceGen;
 
 /// <summary>
 /// Pure logic for parsing <c>telemetry.spec.json</c> into a
@@ -41,8 +42,8 @@ internal static class TelemetrySpecLoader
     /// </summary>
     /// <param name="path">Spec file path (used for diagnostic message context).</param>
     /// <param name="json">Raw JSON content of the spec file.</param>
-    /// <returns>A <see cref="LoadResult"/>.</returns>
-    public static LoadResult Load(string path, string json)
+    /// <returns>A <see cref="LoadResult{TSpec}"/> wrapping <see cref="TelemetrySpec"/>.</returns>
+    public static LoadResult<TelemetrySpec> Load(string path, string json)
     {
         var fileName = Path.GetFileName(path);
 
@@ -53,9 +54,9 @@ internal static class TelemetrySpecLoader
 
             if (root.ValueKind != JsonValueKind.Object)
             {
-                return new LoadResult(
+                return new LoadResult<TelemetrySpec>(
                     Spec: null,
-                    Diagnostic: EmitDiagnostic.MalformedSpec(
+                    Diagnostic: EmitDiagnostics.MalformedSpec(
                         fileName,
                         $"root must be a JSON object, got {root.ValueKind}"));
             }
@@ -63,9 +64,9 @@ internal static class TelemetrySpecLoader
             if (!root.TryGetProperty(_METERS_KEY, out var arr) ||
                 arr.ValueKind != JsonValueKind.Array)
             {
-                return new LoadResult(
+                return new LoadResult<TelemetrySpec>(
                     Spec: null,
-                    Diagnostic: EmitDiagnostic.MalformedSpec(
+                    Diagnostic: EmitDiagnostics.MalformedSpec(
                         fileName,
                         "missing required 'meters' array property at root"));
             }
@@ -76,21 +77,21 @@ internal static class TelemetrySpecLoader
             {
                 var (entry, diag) = ParseMeter(element, fileName, index);
                 if (diag is not null)
-                    return new LoadResult(Spec: null, Diagnostic: diag);
+                    return new LoadResult<TelemetrySpec>(Spec: null, Diagnostic: diag);
 
                 meters.Add(entry!);
                 index++;
             }
 
-            return new LoadResult(
+            return new LoadResult<TelemetrySpec>(
                 Spec: new TelemetrySpec(meters.ToImmutable()),
                 Diagnostic: null);
         }
         catch (JsonException ex)
         {
-            return new LoadResult(
+            return new LoadResult<TelemetrySpec>(
                 Spec: null,
-                Diagnostic: EmitDiagnostic.MalformedSpec(fileName, ex.Message));
+                Diagnostic: EmitDiagnostics.MalformedSpec(fileName, ex.Message));
         }
     }
 
@@ -99,7 +100,7 @@ internal static class TelemetrySpecLoader
     {
         if (element.ValueKind != JsonValueKind.Object)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"meters[{index}] must be a JSON object, got {element.ValueKind}"));
         }
@@ -107,7 +108,7 @@ internal static class TelemetrySpecLoader
         if (!element.TryGetProperty(_METER_KEY, out var meterEl) ||
             meterEl.ValueKind != JsonValueKind.String)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"meters[{index}] missing required string 'meter'"));
         }
@@ -117,7 +118,7 @@ internal static class TelemetrySpecLoader
         if (!element.TryGetProperty(_CONSUMING_ASSEMBLY_KEY, out var asmEl) ||
             asmEl.ValueKind != JsonValueKind.String)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"meters[{index}] '{meter}' missing required string 'consumingAssembly'"));
         }
@@ -141,7 +142,7 @@ internal static class TelemetrySpecLoader
         if (!element.TryGetProperty(_INSTRUMENTS_KEY, out var instArr) ||
             instArr.ValueKind != JsonValueKind.Array)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"meters[{index}] '{meter}' missing required 'instruments' array"));
         }
@@ -173,7 +174,7 @@ internal static class TelemetrySpecLoader
     {
         if (element.ValueKind != JsonValueKind.Object)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"meters[{meter}].instruments[{index}] must be a JSON object, "
                 + $"got {element.ValueKind}"));
@@ -182,7 +183,7 @@ internal static class TelemetrySpecLoader
         if (!element.TryGetProperty(_NAME_KEY, out var nameEl) ||
             nameEl.ValueKind != JsonValueKind.String)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"meters[{meter}].instruments[{index}] missing required string 'name'"));
         }
@@ -199,7 +200,7 @@ internal static class TelemetrySpecLoader
         if (!element.TryGetProperty(_KIND_KEY, out var kindEl) ||
             kindEl.ValueKind != JsonValueKind.String)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"meters[{meter}].instruments[{name}] missing required string 'kind'"));
         }
@@ -209,7 +210,7 @@ internal static class TelemetrySpecLoader
         if (!element.TryGetProperty(_DESCRIPTION_KEY, out var descEl) ||
             descEl.ValueKind != JsonValueKind.String)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"meters[{meter}].instruments[{name}] missing required string 'description'"));
         }
@@ -228,7 +229,7 @@ internal static class TelemetrySpecLoader
         {
             if (tagsEl.ValueKind != JsonValueKind.Array)
             {
-                return (null, EmitDiagnostic.MalformedSpec(
+                return (null, EmitDiagnostics.MalformedSpec(
                     fileName,
                     $"meters[{meter}].instruments[{name}].tags must be an array, "
                     + $"got {tagsEl.ValueKind}"));
@@ -265,7 +266,7 @@ internal static class TelemetrySpecLoader
     {
         if (element.ValueKind != JsonValueKind.Object)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"meters[{meter}].instruments[{instrument}].tags[{index}] must be an object, "
                 + $"got {element.ValueKind}"));
@@ -274,7 +275,7 @@ internal static class TelemetrySpecLoader
         if (!element.TryGetProperty(_NAME_KEY, out var nameEl) ||
             nameEl.ValueKind != JsonValueKind.String)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"meters[{meter}].instruments[{instrument}].tags[{index}] missing required "
                 + "string 'name'"));
@@ -289,7 +290,7 @@ internal static class TelemetrySpecLoader
         {
             if (valuesEl.ValueKind != JsonValueKind.Array)
             {
-                return (null, EmitDiagnostic.MalformedSpec(
+                return (null, EmitDiagnostics.MalformedSpec(
                     fileName,
                     $"meters[{meter}].instruments[{instrument}].tags[{name}].values must be an "
                     + $"array, got {valuesEl.ValueKind}"));
@@ -300,7 +301,7 @@ internal static class TelemetrySpecLoader
             {
                 if (v.ValueKind != JsonValueKind.String)
                 {
-                    return (null, EmitDiagnostic.MalformedSpec(
+                    return (null, EmitDiagnostics.MalformedSpec(
                         fileName,
                         $"meters[{meter}].instruments[{instrument}].tags[{name}].values entries "
                         + $"must be strings, got {v.ValueKind}"));
@@ -320,7 +321,7 @@ internal static class TelemetrySpecLoader
 
         if (values.IsEmpty && valuesFromSpec is null)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"meters[{meter}].instruments[{instrument}].tags[{name}] must declare either "
                 + "'values' or 'valuesFromSpec'"));
@@ -328,7 +329,7 @@ internal static class TelemetrySpecLoader
 
         if (!values.IsEmpty && valuesFromSpec is not null)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"meters[{meter}].instruments[{instrument}].tags[{name}] declares both 'values' "
                 + "and 'valuesFromSpec' - exactly one is allowed"));

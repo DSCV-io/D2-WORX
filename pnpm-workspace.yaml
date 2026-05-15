@@ -1,0 +1,11 @@
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
+
+packages:
+  - "server/shared/typescript/*"
+  - "server/shared/typescript/contract-tests"
+  - "tools/ts-codegen"
+
+onlyBuiltDependencies:
+  - "@bufbuild/buf"

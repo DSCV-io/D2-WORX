@@ -9,6 +9,7 @@ namespace D2.Shared.Auth.Audiences.SourceGen;
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
+using D2.Shared.SourceGen;
 
 /// <summary>
 /// Pure logic for parsing <c>audiences.spec.json</c> into an
@@ -29,8 +30,8 @@ internal static class AudienceSpecLoader
     /// </summary>
     /// <param name="path">Spec file path (used for diagnostic message context).</param>
     /// <param name="json">Raw JSON content of the spec file.</param>
-    /// <returns>A <see cref="LoadResult"/>.</returns>
-    public static LoadResult Load(string path, string json)
+    /// <returns>A <see cref="LoadResult{TSpec}"/> wrapping <see cref="AudiencesSpec"/>.</returns>
+    public static LoadResult<AudiencesSpec> Load(string path, string json)
     {
         var fileName = Path.GetFileName(path);
 
@@ -41,9 +42,9 @@ internal static class AudienceSpecLoader
 
             if (root.ValueKind != JsonValueKind.Object)
             {
-                return new LoadResult(
+                return new LoadResult<AudiencesSpec>(
                     Spec: null,
-                    Diagnostic: EmitDiagnostic.MalformedSpec(
+                    Diagnostic: EmitDiagnostics.MalformedSpec(
                         fileName,
                         $"root must be a JSON object, got {root.ValueKind}"));
             }
@@ -51,9 +52,9 @@ internal static class AudienceSpecLoader
             if (!root.TryGetProperty(_AUDIENCES_KEY, out var audiencesElement) ||
                 audiencesElement.ValueKind != JsonValueKind.Array)
             {
-                return new LoadResult(
+                return new LoadResult<AudiencesSpec>(
                     Spec: null,
-                    Diagnostic: EmitDiagnostic.MalformedSpec(
+                    Diagnostic: EmitDiagnostics.MalformedSpec(
                         fileName,
                         "missing required 'audiences' array property at root"));
             }
@@ -64,21 +65,21 @@ internal static class AudienceSpecLoader
             {
                 var (entry, diag) = ParseAudienceEntry(audienceElement, fileName, index);
                 if (diag is not null)
-                    return new LoadResult(Spec: null, Diagnostic: diag);
+                    return new LoadResult<AudiencesSpec>(Spec: null, Diagnostic: diag);
 
                 entries.Add(entry!);
                 index++;
             }
 
-            return new LoadResult(
+            return new LoadResult<AudiencesSpec>(
                 Spec: new AudiencesSpec(entries.ToImmutable()),
                 Diagnostic: null);
         }
         catch (JsonException ex)
         {
-            return new LoadResult(
+            return new LoadResult<AudiencesSpec>(
                 Spec: null,
-                Diagnostic: EmitDiagnostic.MalformedSpec(fileName, ex.Message));
+                Diagnostic: EmitDiagnostics.MalformedSpec(fileName, ex.Message));
         }
     }
 
@@ -87,7 +88,7 @@ internal static class AudienceSpecLoader
     {
         if (element.ValueKind != JsonValueKind.Object)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"audiences[{index}] must be a JSON object, got {element.ValueKind}"));
         }
@@ -95,7 +96,7 @@ internal static class AudienceSpecLoader
         if (!element.TryGetProperty(_NAME_KEY, out var nameElement) ||
             nameElement.ValueKind != JsonValueKind.String)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"audiences[{index}] missing required string 'name'"));
         }
@@ -105,7 +106,7 @@ internal static class AudienceSpecLoader
         if (!element.TryGetProperty(_URL_KEY, out var urlElement) ||
             urlElement.ValueKind != JsonValueKind.String)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"audiences[{index}] '{name}' missing required string 'url'"));
         }

@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using D2.Shared.SourceGen;
 
 /// <summary>
 /// Pure logic for emitting the <c>AuthErrorCodes</c> static class source from
@@ -65,19 +66,19 @@ internal static class ErrorCodesEmitter
         {
             if (!seenCodes.Add(entry.Code))
             {
-                diagnostics.Add(EmitDiagnostic.DuplicateCode(entry.Code));
+                diagnostics.Add(EmitDiagnostics.DuplicateCode(entry.Code));
                 continue;
             }
 
             if (!seenFactories.Add(entry.FactoryName))
             {
-                diagnostics.Add(EmitDiagnostic.DuplicateFactoryName(entry.FactoryName));
+                diagnostics.Add(EmitDiagnostics.DuplicateFactoryName(entry.FactoryName));
                 continue;
             }
 
             if (!sr_validCategories.Contains(entry.Category))
             {
-                diagnostics.Add(EmitDiagnostic.UnknownCategoryEnum(
+                diagnostics.Add(EmitDiagnostics.UnknownCategoryEnum(
                     entry.Code,
                     entry.Category,
                     string.Join(
@@ -88,7 +89,7 @@ internal static class ErrorCodesEmitter
 
             if (!SR_SupportedHttpStatuses.Contains(entry.HttpStatus))
             {
-                diagnostics.Add(EmitDiagnostic.InvalidHttpStatus(
+                diagnostics.Add(EmitDiagnostics.InvalidHttpStatus(
                     entry.Code, entry.HttpStatus, supportedStatuses));
                 continue;
             }

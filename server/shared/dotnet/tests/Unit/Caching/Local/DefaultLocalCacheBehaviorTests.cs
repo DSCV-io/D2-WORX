@@ -203,11 +203,12 @@ public sealed class DefaultLocalCacheBehaviorTests
             new ParallelOptions { MaxDegreeOfParallelism = threads },
             async (i, ct) =>
             {
-                var rng = new Random(i);
                 for (var iter = 0; iter < iterations; iter++)
                 {
-                    var key = $"k{rng.Next(keyCount)}";
-                    var op = rng.Next(7);
+                    // Random.Shared is thread-safe; per-thread instances were
+                    // unnecessary and triggered the §1.14/§4.7 carve-out.
+                    var key = $"k{Random.Shared.Next(keyCount)}";
+                    var op = Random.Shared.Next(7);
                     switch (op)
                     {
                         case 0:

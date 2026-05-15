@@ -57,6 +57,17 @@ namespace D2.Shared.Context.SourceGen;
 /// Only meaningful when <see cref="Propagate"/> is true on a string-typed
 /// field.
 /// </param>
+/// <param name="Redact">
+/// When true, the property is PII-bearing and must be redacted from logs
+/// and telemetry. The emitter places <c>[RedactData]</c> on the generated
+/// interface property AND the matching property on
+/// <c>MutableRequestContext</c>; the Serilog destructuring policy
+/// (<c>D2.Shared.Logging.Destructuring.RedactDataDestructuringPolicy</c>)
+/// reflects over the concrete type at log time. The TS-side codegen
+/// emits the same property name into a <c>RedactPaths</c> array; cross-
+/// spec parity is enforced by the
+/// <c>RedactDataVsSpecRedactConsistencyTests</c> gate.
+/// </param>
 internal sealed record PropertySpec(
     string Name,
     string Type,
@@ -66,4 +77,5 @@ internal sealed record PropertySpec(
     string? Default,
     string? Doc,
     bool Propagate,
-    int? MaxLength);
+    int? MaxLength,
+    bool Redact);

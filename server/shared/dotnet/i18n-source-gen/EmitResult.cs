@@ -8,6 +8,7 @@ namespace D2.Shared.I18n.SourceGen;
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using D2.Shared.SourceGen;
 
 /// <summary>
 /// Result of <see cref="TKEmitter.Emit(string, IReadOnlyDictionary{string, string})"/>.

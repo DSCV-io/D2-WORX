@@ -9,6 +9,7 @@ namespace D2.Shared.Telemetry.Tags.SourceGen;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text.Json;
+using D2.Shared.SourceGen;
 
 /// <summary>
 /// Resolves <c>valuesFromSpec</c> tag references against sibling spec files
@@ -56,7 +57,7 @@ internal static class CrossSpecResolver
             return ResolveAuthErrorCodes(siblingSpecs, instrument, tag, meter);
 
         return (ImmutableArray<string>.Empty,
-            EmitDiagnostic.CrossSpecInconsistency(
+            EmitDiagnostics.CrossSpecInconsistency(
                 instrument,
                 tag,
                 meter,
@@ -89,7 +90,7 @@ internal static class CrossSpecResolver
         if (match is null)
         {
             return (ImmutableArray<string>.Empty,
-                EmitDiagnostic.CrossSpecInconsistency(
+                EmitDiagnostics.CrossSpecInconsistency(
                     instrument,
                     tag,
                     meter,
@@ -108,7 +109,7 @@ internal static class CrossSpecResolver
                 arr.ValueKind != JsonValueKind.Array)
             {
                 return (ImmutableArray<string>.Empty,
-                    EmitDiagnostic.CrossSpecInconsistency(
+                    EmitDiagnostics.CrossSpecInconsistency(
                         instrument,
                         tag,
                         meter,
@@ -135,7 +136,7 @@ internal static class CrossSpecResolver
         catch (JsonException ex)
         {
             return (ImmutableArray<string>.Empty,
-                EmitDiagnostic.CrossSpecInconsistency(
+                EmitDiagnostics.CrossSpecInconsistency(
                     instrument,
                     tag,
                     meter,

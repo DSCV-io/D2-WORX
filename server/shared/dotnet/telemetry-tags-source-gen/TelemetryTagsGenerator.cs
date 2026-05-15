@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using D2.Shared.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -94,7 +95,7 @@ public sealed class TelemetryTagsGenerator : IIncrementalGenerator
                 if (!seenMeters.Add(meter.Meter))
                 {
                     spc.ReportDiagnostic(ToRoslynDiagnostic(
-                        EmitDiagnostic.DuplicateMeter(meter.Meter)));
+                        EmitDiagnostics.DuplicateMeter(meter.Meter)));
                 }
             }
 

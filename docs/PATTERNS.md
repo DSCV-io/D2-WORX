@@ -986,23 +986,100 @@ The pattern:
 4. **Consumer wiring** — the consuming csproj adds a `<ProjectReference … OutputItemType="Analyzer" ReferenceOutputAssembly="false" />` to the SrcGen csproj plus an `<AdditionalFiles Include="…/{topic}.spec.json" />` entry. Build-time `D2***` diagnostics gate every spec change.
 5. **Cross-spec resolution** — when one spec's emitted vocabulary needs to enumerate values from another spec (e.g. a telemetry tag whose closed-set values are the auth-error-codes catalog), the resolver reads the sibling spec at codegen time via the same `<AdditionalFiles>` mechanism and emits a build error on missing / mismatched references. A test-time spec-consistency assertion (e.g. `tests/Unit/SpecsConsistency/AuthErrorCodesVsTelemetrySpecConsistencyTests.cs`) reads both specs side-by-side and asserts set equality, defending against drift the build-time check might miss.
 
-Four instances ship, all mirroring the same csproj template + diagnostic-split + single-target-dispatch structure:
+All instances mirror the same csproj template + diagnostic-split + single-target-dispatch structure:
 
-- **`D2.Shared.I18n.SourceGen`** ← `contracts/messages/*.json` → emits the `TK.*` translation-key constants into `D2.Shared.I18n.Abstractions`. See the [TK Source Generator](#tk-source-generator) section above. Diagnostic prefix `D2I18N`.
-- **`D2.Shared.Auth.Scopes.SourceGen`** ← `contracts/auth-scopes/scopes.spec.json` → emits the OAuth scope-string constants + tree structure into `D2.Shared.Auth.Abstractions`. Diagnostic prefix `D2AS`. Reference template — newer SrcGens mirror its file layout.
-- **`D2.Shared.Auth.ErrorCodes.SourceGen`** ← `contracts/auth-error-codes/auth-error-codes.spec.json` → emits the `AuthErrorCodes` constant catalog (one `public const string` per `code`) PLUS the `AuthFailures` semantic-factory class (one `D2Result FactoryName()` per entry, with typed `<T>` overloads for `infrastructure_unavailable` entries) into `D2.Shared.Auth`. Diagnostic prefix `D2AEC`. Consumed by the transport-binding csprojs (`auth-http`, `auth-grpc`) that surface `d2_error_code` on the wire.
-- **`D2.Shared.Telemetry.Tags.SourceGen`** ← `contracts/telemetry/telemetry.spec.json` → emits per-meter `*TelemetryTags.g.cs` typed-constants classes (one nested static class per instrument with `TAG_*` name constants and one nested `TagName` class per closed-enum tag holding its value constants). Per-meter `consumingAssembly` field drives single-target dispatch. Diagnostic prefix `D2TEL`. The `d2.auth.problem.emitted` instrument's `d2_error_code` tag uses `valuesFromSpec=auth-error-codes` — the cross-spec resolver enumerates the error-code catalog at codegen time and the test-time `AuthErrorCodesVsTelemetrySpecConsistencyTests` asserts set equality.
+| SrcGen | Spec source | Emits into | Diagnostic prefix | Notes |
+|---|---|---|---|---|
+| `D2.Shared.I18n.SourceGen` | `contracts/messages/*.json` | `D2.Shared.I18n.Abstractions` | `D2I18N` | Translation-key constants `TK.*`. See the [TK Source Generator](#tk-source-generator) section above. |
+| `D2.Shared.Auth.Scopes.SourceGen` | `contracts/auth-scopes/scopes.spec.json` | `D2.Shared.Auth.Abstractions` | `D2AS` | OAuth scope-string constants + tree structure. Reference template — newer SrcGens mirror its file layout. |
+| `D2.Shared.Auth.Audiences.SourceGen` | `contracts/auth-audiences/audiences.spec.json` | `D2.Shared.Auth.Abstractions` | `D2AAU` | JWT `aud`-claim audience constants + `AllUrls` / `ByName` / `IsKnown` / `Resolve` / `ResolveByUrl` helpers. |
+| `D2.Shared.Auth.ErrorCodes.SourceGen` | `contracts/auth-error-codes/auth-error-codes.spec.json` | `D2.Shared.Auth` | `D2AEC` | `AuthErrorCodes` constants + `AuthFailures` semantic-factory class. Consumed by transport-binding csprojs that surface `d2_error_code` on the wire. |
+| `D2.Shared.Telemetry.Tags.SourceGen` | `contracts/telemetry/telemetry.spec.json` | per-meter (gated by `consumingAssembly`) | `D2TEL` | Per-meter `*TelemetryTags.g.cs` typed-constants classes. The `d2.auth.problem.emitted` instrument's `d2_error_code` tag uses `valuesFromSpec=auth-error-codes` — cross-spec resolver enumerates at codegen time; `AuthErrorCodesVsTelemetrySpecConsistencyTests` asserts set equality. |
+| `D2.Shared.Headers.SourceGen` | `contracts/headers/headers.spec.json` | `D2.Shared.Headers.{Common,Http,Amqp,Grpc}` (gated by `Compilation.AssemblyName`; `Common` filters `applicability.Length >= 2`, others filter `applicability.Contains(transport)`) | `D2HDR` | Wire-protocol header constants. One spec, four catalogs, identical wire values for cross-transport entries. |
+| `D2.Shared.Auth.JwtClaims.SourceGen` | `contracts/jwt-claims/jwt-claims.spec.json` | `D2.Shared.Auth.Abstractions` | `D2JWT` | JWT claim-name constants. Standard claims keep canonical names (`sub`, `aud`, `act`, `scope`); D² custom claims use `d2_` prefix. Same spec drives the TS-side `@d2/auth-abstractions` `JwtClaimTypes` catalog. |
+| `D2.Shared.InProcessKeys.SourceGen` | `contracts/in-process-keys/keys.spec.json` | `D2.Shared.Auth.Abstractions` (`D2HttpContextItems`) + `D2.Shared.Auth.Grpc` (`D2GrpcUserStateKeys`) (per-binding `consumingAssembly`) | `D2IPK` | In-process slot-key catalogs with cross-binding wire-value parity by construction. |
+| `D2.Shared.Context.SourceGen` | `contracts/auth-context/IAuthContext.spec.json` + `contracts/request-context/IRequestContext.spec.json` | `D2.Shared.AuthContext.Abstractions` (`IAuthContext`) + `D2.Shared.Context.Abstractions` (`IRequestContext`, `MutableRequestContext`, `PropagatedContext`, `PropagatedContextExtensions`, `PropagatedContextSerializer`) (per-assembly dispatch) | `D2CTX` | Spec-driven interface + concrete + propagation codec. Identity fields (`UserId` / `OrgId` / `Scopes` / `ActorChain`) MUST NOT be marked `propagate: true` — those rebuild from the JWT at every sync hop. |
+| `D2.Shared.Messaging.SourceGen` | `contracts/mq-messages/mq-messages.spec.json` + `contracts/mq-subscriptions/mq-subscriptions.spec.json` | `D2.Shared.Messaging.Abstractions` (`MqMessages.g.cs` + `MqSubscriptions.g.cs` constants + immutable `MqMessagesRegistry` / `MqSubscriptionsRegistry` lookup tables) | `D2MQ` | Cross-spec validation against `D2.Shared.Encryption.EncryptionDomains` (D2MQ004 fires on encryption-domain drift). Drives the `[MqPub]` / `[MqSub]` attribute resolution + the wire-routing tables consumed by `D2.Shared.Messaging.RabbitMq`. |
+
+### Codegen output is committed to git
+
+Both languages' codegen output ships **inside the repository**, not as a build artifact:
+
+- **.NET**: each consumer csproj sets `<CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>` so the SourceGen output lands under `<csproj-dir>/Generated/<GeneratorAssembly>/<GeneratorClass>/*.g.cs`. The directory is tracked in git. A `<Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />` `<ItemGroup>` is required alongside, otherwise the SDK-default `<Compile Include="**/*.cs" />` glob picks up the on-disk copy AND the in-memory pipeline emits the same content, producing `CS0101` / `CS0111` duplicate-definition errors. See the [Microsoft Learn reference](https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#compilergeneratedfilesoutputpath).
+- **TS**: each `tsx` emitter under `tools/ts-codegen/` writes `*.g.ts` files into the consuming package's `src/` directory. `pnpm codegen` re-emits all; per-package `pnpm generate` re-emits just one.
+- **`.gitattributes`**: both `*.g.cs` and `*.g.ts` carry `linguist-generated=true` so GitHub PR UI collapses generated-file diffs by default. Reviewers can expand for spot-checks.
+
+Why commit codegen output: PR reviewers see spec → emit fidelity in the diff (a one-line spec edit shows the full downstream catalog change in the same review), IDE navigation works on first checkout without a local build, and spec drift between hand-edits and codegen output is impossible to introduce silently. Idempotency is structural — re-running the SrcGen against the unchanged spec produces byte-identical output, so the second `dotnet build` / `pnpm codegen` after a clean state is a no-op in the working tree.
+
+### Spec-driven catalog migration — the "delete the hand-written outright" pattern
+
+When a hand-written constants catalog (e.g. `RequestHeaders.cs`, `JwtClaimTypes.cs`, `D2HttpContextItems.cs`) gets a spec backing, the migration is **outright deletion of the hand-written file plus net-new spec authoring**, not a parallel-emit-then-deprecate dance:
+
+1. Author the spec (`contracts/{topic}/{topic}.spec.json` + `schema.json`).
+2. Author the SourceGen (`server/shared/dotnet/{topic}-source-gen/`) per the template above.
+3. Wire the consumer csproj's `<ProjectReference OutputItemType="Analyzer">` + `<AdditionalFiles>` entries.
+4. Delete the hand-written `.cs` file in the same change.
+5. Spec-pin tests assert per-VALUE constants for every entry (not just structural reflection) — these tests fail on every spec edit and are intentionally low-cost to update so the test gates the spec change explicitly.
+6. Cross-spec consistency tests assert set-equality across any spec that depends on another (e.g. headers spec driving multiple per-transport catalogs all referencing the same wire values).
+
+The "delete outright" discipline keeps the codebase honest — a parallel-emit phase would let stale hand-written constants drift undetected. Same principle as not committing v1-retrospective framing into KEEP docs: describe what IS, not the journey from what WAS.
 
 Adding a new spec-driven codegen lib:
 
 1. Add `contracts/{topic}/{topic}.spec.json` + `schema.json`.
-2. Copy `server/shared/dotnet/auth-scopes-source-gen/` as a template — keep the file layout (`SpecFile.cs`, `{Topic}Spec.cs`, `{Topic}SpecLoader.cs`, `{Topic}Emitter.cs`, `{Topic}Generator.cs`, `EmitDiagnostic.cs`, `EmitResult.cs`, `LoadResult.cs`, `DiagnosticIds.cs`, `DiagnosticDescriptors.cs`, `Polyfills/IsExternalInit.cs`, `Polyfills/StringExt.cs`).
-3. Reserve a 4-letter diagnostic-id prefix (existing: `D2I18N`, `D2AS`, `D2AEC`, `D2TEL`) and number contiguously from `001`.
+2. Copy `server/shared/dotnet/auth-scopes-source-gen/` as a template — keep the per-source-gen file layout (`{Topic}Spec.cs`, `{Topic}SpecLoader.cs`, `{Topic}Emitter.cs`, `{Topic}Generator.cs`, `EmitDiagnostics.cs` factory shim, `EmitResult.cs`, `DiagnosticIds.cs`, `DiagnosticDescriptors.cs`). The `Polyfills/`, `EmitDiagnostic` record, `LoadResult<TSpec>`, and `SpecFile` types come from the shared `source-gen-shared/` directory via the `<Compile Include>` block (see "Shared source-gen scaffolding" below).
+3. Reserve a 4-letter diagnostic-id prefix (existing: `D2I18N`, `D2AS`, `D2AAU`, `D2AEC`, `D2TEL`, `D2HDR`, `D2JWT`, `D2IPK`, `D2CTX`, `D2MQ`) and number contiguously from `001`.
 4. Gate emission by assembly name in the `[Generator]` so non-target consumers get analyzer-only.
-5. Wire each consumer csproj with `<ProjectReference … OutputItemType="Analyzer" ReferenceOutputAssembly="false" />` + `<AdditionalFiles Include="…/spec.json" />`.
+5. Wire each consumer csproj with `<ProjectReference … OutputItemType="Analyzer" ReferenceOutputAssembly="false" />` + `<AdditionalFiles Include="…/spec.json" />` + `<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>` + `<CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>` + the `<Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />` `<ItemGroup>` block.
 6. Add a per-lib `README.md` documenting the spec format, field rules, diagnostics table, emitted output, and wiring snippet.
+7. If the catalog has a TS-side counterpart, add the matching `tsx` emitter under `tools/ts-codegen/` so both languages stay in lockstep.
 
 Spec-driven codegen is the structural enforcement behind the [5-layer rename safety net](#5-layer-rename-safety-net-spec-driven-codegen--nameof-discipline) above — every renamed spec field cascades through generated code, consumer compile sites, `nameof()`-bound emission sites, behavioral tests, and spec-pin literal tests, in that order.
+
+### Shared source-gen scaffolding
+
+The source-gen scaffolding common to every generator lives under `server/shared/dotnet/source-gen-shared/`:
+
+```
+server/shared/dotnet/source-gen-shared/
+├── Polyfills/
+│   ├── IsExternalInit.cs       — netstandard2.0 init-accessor polyfill (System.Runtime.CompilerServices)
+│   └── StringExt.cs            — Falsey() / Truthy() polyfill (D2.Shared.SourceGen.Polyfills)
+├── EmitDiagnostic.cs            — record (string DescriptorId, ImmutableArray<object> Args)
+├── LoadResult.cs                — generic record LoadResult<TSpec> wrapping spec or diagnostic
+└── SpecFile.cs                  — IIncrementalGenerator pipeline boundary (Path, Content)
+```
+
+`source-gen-shared/` is **not a project** — there's no csproj. Each source-gen csproj wires the shared files in via:
+
+```xml
+<ItemGroup>
+  <Compile Include="..\source-gen-shared\**\*.cs">
+    <Link>Shared\%(RecursiveDir)%(Filename)%(Extension)</Link>
+  </Compile>
+</ItemGroup>
+```
+
+The `<Link>` element groups the included files under a virtual `Shared\` folder in IDE views.
+
+What stays per-source-gen:
+
+- `{Topic}Generator.cs` — `[Generator]`-attributed entry point; topic-specific dispatch + Roslyn-host wiring.
+- `{Topic}Emitter.cs` — pure-logic emitter writing the `.g.cs` source.
+- `{Topic}SpecLoader.cs` — JSON-shape parser for the topic's spec.
+- `{Topic}Spec.cs` / `{Topic}Entry.cs` / etc. — topic-specific data records.
+- `EmitDiagnostics.cs` — topic-specific factory helpers producing the shared `EmitDiagnostic` record (each factory wraps `new(DiagnosticIds.X, [args])`).
+- `EmitResult.cs` — kept per-source-gen because the field shape varies (some carry `(GeneratedSource, Diagnostics)`, others additionally carry a `HintName` for multi-file emission). Extracting a shared shape would be a footgun; per-source-gen control is the safer default.
+- `DiagnosticIds.cs` + `DiagnosticDescriptors.cs` — per-topic IDs + Roslyn descriptors.
+
+What's structurally guaranteed by the shared scaffolding:
+
+- **Falsey/Truthy dogfood** — every source-gen consumes the same polyfill via `using D2.Shared.SourceGen.Polyfills;`. A new generator cannot accidentally fall back to `string.IsNullOrEmpty` for "missing local polyfill" reasons; the polyfill arrives via the shared `Compile Include` automatically. (See `tests/Unit/Context/SourceGen/ContextEmitterDogfoodTests.cs` for the regression-pin pattern; copy that test into any source-gen whose emitter logic depends on Falsey/Truthy semantics.)
+- **`LoadResult<TSpec>` shape** — every loader returns the same generic record; consumers always see `(Spec, Diagnostic)` properties.
+- **`EmitDiagnostic` record shape** — every diagnostic uses the same `(DescriptorId, Args)` shape; tests can write a single helper that handles diagnostics from any source-gen.
+- **`SpecFile` pipeline boundary** — every generator uses the same value-equatable record at the IIncrementalGenerator pipeline boundary, so Roslyn's incremental cache works uniformly.
+
+When a test project (e.g. `D2.Shared.Tests`) directly references multiple source-gen DLLs and constructs the shared types directly (e.g. `new SpecFile(...)`), CS0433 ambiguity surfaces — the same type+namespace is defined in N source-gen assemblies. Resolve via `extern alias` on the relevant `<ProjectReference>` (`Aliases="global,XxxSourceGen"`) plus `extern alias XxxSourceGen;` + `using SpecFile = XxxSourceGen::D2.Shared.SourceGen.SpecFile;` in the test file. Tests that consume the source-gen only through its public API (e.g. `Generator.Initialize` + the Roslyn driver) don't hit the ambiguity and don't need the alias dance.
 
 ---
 

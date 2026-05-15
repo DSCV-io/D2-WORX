@@ -113,8 +113,11 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\auth-scopes-source-gen\D2.Shared.Auth.Scopes.SourceGen.csproj" />
     <ProjectReference Include="..\auth-audiences-source-gen\D2.Shared.Auth.Audiences.SourceGen.csproj" />
     <ProjectReference Include="..\auth-error-codes-source-gen\D2.Shared.Auth.ErrorCodes.SourceGen.csproj" />
-    <ProjectReference Include="..\telemetry-tags-source-gen\D2.Shared.Telemetry.Tags.SourceGen.csproj" />
+    <ProjectReference Include="..\telemetry-tags-source-gen\D2.Shared.Telemetry.Tags.SourceGen.csproj" Aliases="global,TelemetryTagsSourceGen" />
     <ProjectReference Include="..\context-source-gen\D2.Shared.Context.SourceGen.csproj" />
+    <ProjectReference Include="..\headers-source-gen\D2.Shared.Headers.SourceGen.csproj" Aliases="global,HeadersSourceGen" />
+    <ProjectReference Include="..\in-process-keys-source-gen\D2.Shared.InProcessKeys.SourceGen.csproj" Aliases="global,InProcessKeysSourceGen" />
+    <ProjectReference Include="..\jwt-claims-source-gen\D2.Shared.Auth.JwtClaims.SourceGen.csproj" />
     <ProjectReference Include="..\resilience\D2.Shared.Resilience.csproj" />
     <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
@@ -141,6 +144,10 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\service-defaults\D2.Shared.ServiceDefaults.csproj" />
     <ProjectReference Include="..\messaging-abstractions\D2.Shared.Messaging.Abstractions.csproj" />
     <ProjectReference Include="..\messaging-rabbitmq\D2.Shared.Messaging.RabbitMq.csproj" />
+    <ProjectReference Include="..\headers-common\D2.Shared.Headers.Common.csproj" />
+    <ProjectReference Include="..\headers-http\D2.Shared.Headers.Http.csproj" />
+    <ProjectReference Include="..\headers-amqp\D2.Shared.Headers.Amqp.csproj" />
+    <ProjectReference Include="..\headers-grpc\D2.Shared.Headers.Grpc.csproj" />
   </ItemGroup>
 
   <!--

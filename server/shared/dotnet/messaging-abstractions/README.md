@@ -25,7 +25,9 @@ surface.
    live there, not in code.
 2. **Codegen** — the analyzer-only csproj `messaging-source-gen/` references this
    package as an analyzer. It emits two generated files into this assembly
-   at build time:
+   at build time, landing in the tracked `Generated/` directory (committed
+   for inspection, IDE navigation, and PR diff review; re-emitted on every
+   `dotnet build` from the spec; do not hand-edit):
     - `MqMessages.g.cs` — `public static partial class MqMessages` with one
       string `const` per spec entry, plus `MqMessagesRegistry.ByConstant`
       (`Dictionary<string, MqMessageDescriptor>`).
@@ -72,13 +74,16 @@ Prefetch, Idempotency, TieredRetry?)`.
 the optional broker-level retry topology. Carried inside an
 `MqSubscriptionDescriptor` when the spec entry has a `tieredRetry` block.
 
-**`AmqpHeaders`** — static constants for plaintext headers every D² message
-carries (`x-proto-type`, `message-id`, `traceparent`, `tracestate`,
-`x-d2-encryption-kid`, `x-d2-context`, `x-d2-failure-reason`). Headers
-MUST NOT carry identity / raw PII — only routing, observability, and the
-small operational propagation subset (`x-d2-context` is base64url-of-JSON
-of the hand-written `PropagatedContext` record in `D2.Shared.Context.Abstractions`).
-See [MESSAGING.md](../../../../docs/MESSAGING.md) for the full contract.
+AMQP wire-protocol header constants live in
+[`D2.Shared.Headers.Amqp`](../headers-amqp/README.md) (codegen-emitted
+from `contracts/headers/headers.spec.json`). Cross-transport entries
+(e.g. `traceparent`, `tracestate`, `x-d2-context`) appear at identical
+wire values in [`D2.Shared.Headers.Common`](../headers-common/README.md).
+Messages MUST NOT carry identity / raw PII in plaintext headers — only
+routing, observability, and the small operational propagation subset
+(`x-d2-context` is base64url-of-JSON of the hand-written `PropagatedContext`
+record in `D2.Shared.Context.Abstractions`). See
+[MESSAGING.md](../../../../docs/MESSAGING.md) for the full contract.
 
 **`QueuePattern`** — enum: `CompetingConsumer` / `FanoutExclusiveAutoDelete`
 / `DurableShared`. Selects topology declared per subscriber. The transport's

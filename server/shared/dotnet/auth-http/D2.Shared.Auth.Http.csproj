@@ -70,6 +70,12 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
     <ProjectReference Include="..\i18n-abstractions\D2.Shared.I18n.Abstractions.csproj" />
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
+    <!--
+      headers-http — codegen-emitted HTTP wire-protocol header constants
+      (HttpHeaders.IDEMPOTENCY_KEY, .CLIENT_FINGERPRINT, .AUTHORIZATION, ...).
+      Replaces the previously-hand-written D2.Shared.Auth.Abstractions.RequestHeaders.
+    -->
+    <ProjectReference Include="..\headers-http\D2.Shared.Headers.Http.csproj" />
   </ItemGroup>
 
   <ItemGroup>

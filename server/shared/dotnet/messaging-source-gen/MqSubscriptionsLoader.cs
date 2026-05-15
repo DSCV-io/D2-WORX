@@ -9,6 +9,7 @@ namespace D2.Shared.Messaging.SourceGen;
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
+using D2.Shared.SourceGen;
 
 /// <summary>
 /// Pure logic for parsing <c>mq-subscriptions.spec.json</c> into a
@@ -40,7 +41,7 @@ internal static class MqSubscriptionsLoader
 
             if (root.ValueKind != JsonValueKind.Object)
             {
-                return new(null, EmitDiagnostic.MalformedSpec(
+                return new(null, EmitDiagnostics.MalformedSpec(
                     fileName,
                     $"root must be a JSON object, got {root.ValueKind}"));
             }
@@ -48,7 +49,7 @@ internal static class MqSubscriptionsLoader
             if (!root.TryGetProperty(_SUBSCRIPTIONS_KEY, out var arr) ||
                 arr.ValueKind != JsonValueKind.Array)
             {
-                return new(null, EmitDiagnostic.MalformedSpec(
+                return new(null, EmitDiagnostics.MalformedSpec(
                     fileName,
                     "missing required 'subscriptions' array property at root"));
             }
@@ -67,7 +68,7 @@ internal static class MqSubscriptionsLoader
         }
         catch (JsonException ex)
         {
-            return new(null, EmitDiagnostic.MalformedSpec(fileName, ex.Message));
+            return new(null, EmitDiagnostics.MalformedSpec(fileName, ex.Message));
         }
     }
 
@@ -76,7 +77,7 @@ internal static class MqSubscriptionsLoader
     {
         if (el.ValueKind != JsonValueKind.Object)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"subscriptions[{index}] must be an object, got {el.ValueKind}"));
         }
@@ -84,13 +85,13 @@ internal static class MqSubscriptionsLoader
         var indexLabel = $"[{index}]";
 
         if (!TryGetString(el, _CONSTANT, out var constant))
-            return (null, EmitDiagnostic.MissingRequiredField(fileName, indexLabel, _CONSTANT));
+            return (null, EmitDiagnostics.MissingRequiredField(fileName, indexLabel, _CONSTANT));
         if (!TryGetString(el, _MESSAGE_TYPE, out var messageType))
-            return (null, EmitDiagnostic.MissingRequiredField(fileName, constant!, _MESSAGE_TYPE));
+            return (null, EmitDiagnostics.MissingRequiredField(fileName, constant!, _MESSAGE_TYPE));
         if (!TryGetString(el, _QUEUE_NAME, out var queueName))
-            return (null, EmitDiagnostic.MissingRequiredField(fileName, constant!, _QUEUE_NAME));
+            return (null, EmitDiagnostics.MissingRequiredField(fileName, constant!, _QUEUE_NAME));
         if (!TryGetString(el, _PATTERN, out var pattern))
-            return (null, EmitDiagnostic.MissingRequiredField(fileName, constant!, _PATTERN));
+            return (null, EmitDiagnostics.MissingRequiredField(fileName, constant!, _PATTERN));
 
         TryGetString(el, _ROUTING_KEY_BINDING, out var routingKeyBinding);
 
@@ -134,7 +135,7 @@ internal static class MqSubscriptionsLoader
     {
         if (el.ValueKind != JsonValueKind.Object)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"subscription '{subscriptionConstant}' tieredRetry must be an object, "
                 + $"got {el.ValueKind}"));
@@ -143,7 +144,7 @@ internal static class MqSubscriptionsLoader
         if (!el.TryGetProperty(_TIERS, out var tiersEl) ||
             tiersEl.ValueKind != JsonValueKind.Array)
         {
-            return (null, EmitDiagnostic.MissingRequiredField(
+            return (null, EmitDiagnostics.MissingRequiredField(
                 fileName, subscriptionConstant, $"{_TIERED_RETRY}.{_TIERS}"));
         }
 
@@ -151,7 +152,7 @@ internal static class MqSubscriptionsLoader
             maxEl.ValueKind != JsonValueKind.Number ||
             !maxEl.TryGetInt32(out var maxAttempts))
         {
-            return (null, EmitDiagnostic.MissingRequiredField(
+            return (null, EmitDiagnostics.MissingRequiredField(
                 fileName, subscriptionConstant, $"{_TIERED_RETRY}.{_MAX_ATTEMPTS}"));
         }
 
@@ -160,7 +161,7 @@ internal static class MqSubscriptionsLoader
         {
             if (tierEl.ValueKind != JsonValueKind.String)
             {
-                return (null, EmitDiagnostic.MalformedSpec(
+                return (null, EmitDiagnostics.MalformedSpec(
                     fileName,
                     $"subscription '{subscriptionConstant}' tieredRetry.tiers entry must be "
                     + $"a string, got {tierEl.ValueKind}"));

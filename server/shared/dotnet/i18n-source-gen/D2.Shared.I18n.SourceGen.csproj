@@ -32,6 +32,17 @@ Copyright (c) DCSV. All rights reserved.
 
   <ItemGroup>
     <!--
+      Pull in the shared source-gen scaffolding (polyfills + EmitDiagnostic
+      record + LoadResult<TSpec> + SpecFile). The Link metadata groups the
+      included files under a virtual "Shared" folder in IDE views.
+    -->
+    <Compile Include="..\source-gen-shared\**\*.cs">
+      <Link>Shared\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
       PrivateAssets="all" so the analyzer dll travels with this project but
       does NOT propagate to projects that reference it.
     -->

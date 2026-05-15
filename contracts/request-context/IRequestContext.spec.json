@@ -35,6 +35,7 @@
         {
           "name": "ClientIp",
           "type": "string?",
+          "redact": true,
           "doc": "Resolved client IP — precedence CF-Connecting-IP > X-Real-IP > X-Forwarded-For (last entry) > Connection.RemoteIpAddress. Null for non-HTTP transports."
         }
       ]
@@ -48,6 +49,7 @@
           "claim": "d2_fp",
           "propagate": true,
           "maxLength": 512,
+          "redact": true,
           "doc": "The fingerprint that was bound to this session at JWT mint time (the d2_fp claim). Format: 'v{N}.c1.c2.c3.c4.c5.s1.s2.s3.s4.s5' — leading version token then 10 component hashes (5 client-side: FingerprintJS-OSS, WebGL renderer, speech voices, media devices, extended fonts; 5 server-side: HTTP/2 SETTINGS frame, header order, Sec-CH-UA, Accept-Encoding, Accept-Language). Each component hash is the first 16 hex chars of SHA-256. Stable across all requests in a session. Propagated to async consumers (Audit, Courier) via the cross-hop x-d2-context header — never as plaintext caller identity (broker stays blind to identity)."
         },
         {
@@ -55,6 +57,7 @@
           "type": "string?",
           "propagate": true,
           "maxLength": 512,
+          "redact": true,
           "doc": "The fingerprint recomputed for THIS request by Edge fingerprint middleware, in the same dot-separated format as SessionFingerprint. Captures the actual device fingerprint of the originating request (vs the session-bound one). Propagated via x-d2-context so audit rows for async-triggered actions record the originating request's actual fingerprint — not just what the session was bound to."
         },
         {
@@ -78,16 +81,19 @@
         {
           "name": "AdminLocationHashId",
           "type": "string?",
+          "redact": true,
           "doc": "Hash of the admin-location component only (city + region + country + postal). Matches D2.Shared.Location.AdminLocation.HashId for content-addressable lookup."
         },
         {
           "name": "City",
           "type": "string?",
+          "redact": true,
           "doc": "City name from WhoIs lookup."
         },
         {
           "name": "Region",
           "type": "string?",
+          "redact": true,
           "doc": "Human-readable region / state name (e.g. 'California')."
         },
         {
@@ -103,6 +109,7 @@
         {
           "name": "PostalCode",
           "type": "string?",
+          "redact": true,
           "doc": "Postal / zip code from WhoIs lookup. Useful for granular locality risk-scoring."
         }
       ]
@@ -113,16 +120,19 @@
         {
           "name": "Latitude",
           "type": "double?",
+          "redact": true,
           "doc": "Latitude in decimal degrees from WhoIs lookup. Component of the Coordinates value object per D2.Shared.Location."
         },
         {
           "name": "Longitude",
           "type": "double?",
+          "redact": true,
           "doc": "Longitude in decimal degrees from WhoIs lookup. Component of the Coordinates value object."
         },
         {
           "name": "Geohash",
           "type": "string?",
+          "redact": true,
           "doc": "Geohash form of the (Latitude, Longitude) pair. Content-addressable — also serves as Coordinates.HashId. Useful for proximity queries and cache keying."
         }
       ]
@@ -158,16 +168,19 @@
         {
           "name": "Asn",
           "type": "int?",
+          "redact": true,
           "doc": "Autonomous System Number. Risk-scoring input — e.g. '>5 different ASNs in last 2min → +15 risk'."
         },
         {
           "name": "AsnName",
           "type": "string?",
+          "redact": true,
           "doc": "AS organization name (e.g. 'AT&T Internet Services')."
         },
         {
           "name": "AsnType",
           "type": "string?",
+          "redact": true,
           "doc": "ASN type — typically one of: business / isp / hosting / mobile / education / government. Datacenter/Tor policies key on this. Free-form string for now (no enum) — promote to enum if a real handler benefits from typed dispatch."
         }
       ]

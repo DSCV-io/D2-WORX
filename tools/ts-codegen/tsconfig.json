@@ -1,0 +1,11 @@
+{
+  "extends": "../../server/shared/typescript/tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules", "tests"],
+  "references": [{ "path": "../../server/shared/typescript/utilities" }]
+}

@@ -9,6 +9,7 @@ namespace D2.Shared.Tests.Integration.Messaging;
 using System.Text;
 using System.Text.Json;
 using AwesomeAssertions;
+using D2.Shared.Headers.Amqp;
 using D2.Shared.Messaging;
 using D2.Shared.Messaging.RabbitMq.Topology;
 using Microsoft.Extensions.DependencyInjection;

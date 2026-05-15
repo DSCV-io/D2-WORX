@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "D2 wire-protocol headers spec",
+  "description": "Single source of truth for all D2 wire headers. Codegen reads this and emits 4 per-transport catalogs (Common + Http + Amqp + Grpc) on each language side. Cross-transport entries appear in multiple per-transport catalogs at identical wire values, codegen-guaranteed; the Common catalog holds entries with multi-transport applicability for transport-agnostic consumers.",
+  "type": "object",
+  "required": ["headers"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "headers": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/header" }
+    }
+  },
+  "definitions": {
+    "header": {
+      "type": "object",
+      "required": [
+        "name",
+        "constName",
+        "applicability",
+        "convention",
+        "description"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Wire-format header name. Identical across every transport listed in `applicability`."
+        },
+        "constName": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "description": "Public C# / TS constant identifier — UPPER_SNAKE_CASE."
+        },
+        "applicability": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["http", "grpc", "amqp"] },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Closed enum of transport bindings this header can appear on."
+        },
+        "convention": {
+          "type": "string",
+          "enum": ["d2", "rfc", "w3c", "stripe", "amqp", "amqp-x", "oauth"],
+          "description": "Provenance of the header naming convention. Documentation aid; emitter surfaces in xmldoc."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable description of the header's purpose. Emitted as xmldoc / JSDoc on every catalog the header appears in."
+        }
+      }
+    }
+  }
+}

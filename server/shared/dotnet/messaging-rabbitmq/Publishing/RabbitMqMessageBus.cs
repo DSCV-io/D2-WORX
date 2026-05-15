@@ -8,6 +8,7 @@ namespace D2.Shared.Messaging.RabbitMq.Publishing;
 
 using System.Diagnostics;
 using D2.Shared.Context.Abstractions;
+using D2.Shared.Headers.Amqp;
 using D2.Shared.I18n;
 using D2.Shared.Messaging.RabbitMq.Channels;
 using D2.Shared.Messaging.RabbitMq.Connection;
@@ -317,7 +318,7 @@ internal sealed class RabbitMqMessageBus : IMessageBus
         }
 
         if (propagatedHeader.Truthy())
-            props.Headers[AmqpHeaders.CONTEXT] = propagatedHeader;
+            props.Headers[AmqpHeaders.PROPAGATED_CONTEXT] = propagatedHeader;
 
         if (!waitForConfirm)
         {

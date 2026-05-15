@@ -286,13 +286,14 @@ public sealed class RedisDistributedCacheAdversarialTests
         await Parallel.ForEachAsync(
             Enumerable.Range(0, 32),
             new ParallelOptions { MaxDegreeOfParallelism = 32 },
-            async (i, ct) =>
+            async (_, ct) =>
             {
-                var rng = new Random(i);
                 for (var iter = 0; iter < 100; iter++)
                 {
-                    var key = $"k{rng.Next(keyCount)}";
-                    var op = rng.Next(8);
+                    // Random.Shared is thread-safe; per-thread seeded instances
+                    // were unnecessary and triggered the §1.14/§4.7 carve-out.
+                    var key = $"k{Random.Shared.Next(keyCount)}";
+                    var op = Random.Shared.Next(8);
                     switch (op)
                     {
                         case 0:

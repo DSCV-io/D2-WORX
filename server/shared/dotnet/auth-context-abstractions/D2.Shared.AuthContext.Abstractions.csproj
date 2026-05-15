@@ -5,11 +5,23 @@ Copyright (c) DCSV. All rights reserved.
   <PropertyGroup>
     <RootNamespace>D2.Shared.AuthContext.Abstractions</RootNamespace>
 
-    <!-- Emit the generator's output (IAuthContext.g.cs) to obj/Generated/ so it's
-         visible for inspection / debugging (Rider also picks them up). -->
+    <!-- Emit the generator's output (IAuthContext.g.cs) to <project-dir>/Generated/.
+         The directory is tracked in git so PR reviewers see codegen diffs without
+         a local build. -->
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111). See:
+      https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#compilergeneratedfilesoutputpath
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
 
   <!--
     Domain-safe slice of the request-context. Domain code references this for
@@ -26,6 +38,12 @@ Copyright (c) DCSV. All rights reserved.
 
   <ItemGroup>
     <ProjectReference Include="..\auth-abstractions\D2.Shared.Auth.Abstractions.csproj" />
+    <!--
+      D2.Shared.Utilities supplies the [RedactData] attribute + RedactReason
+      enum that the spec-driven codegen places on PII-bearing properties of
+      IAuthContext. Domain-safe (zero runtime deps).
+    -->
+    <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
     <ProjectReference Include="..\context-source-gen\D2.Shared.Context.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />

@@ -1,0 +1,25 @@
+{
+  "name": "@d2/contract-tests",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@d2/auth-abstractions": "workspace:*",
+    "@d2/auth-context-abstractions": "workspace:*",
+    "@d2/headers-amqp": "workspace:*",
+    "@d2/headers-common": "workspace:*",
+    "@d2/headers-grpc": "workspace:*",
+    "@d2/headers-http": "workspace:*",
+    "@d2/request-context-abstractions": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "4.0.18",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
+  }
+}

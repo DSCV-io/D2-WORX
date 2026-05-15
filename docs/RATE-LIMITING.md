@@ -6,16 +6,15 @@ Copyright (c) DCSV. All rights reserved.
 
 > **Status**: design only. The implementation lives in the Edge service. This doc is the authoritative reference for the design intent — implementers read it top-to-bottom and build against it.
 
-> **⚠ Pattern A supersedence (2026-05-11)**: §1-§9 below describe the original design that
+> **⚠ Pattern A supersedence**: §1-§9 below describe the original design that
 > assumed three input shapes (WhoIs lookup + raw fingerprint + cookie state) and used
 > "cookie-shortcut bypass" as the anon/authed discriminator. The locked Edge anon-visitor
-> authentication pattern (see [`docs/v2/PHASE_0_AUTH.md`](v2/PHASE_0_AUTH.md) §3.8 + Q23)
-> changes the upstream contract: every request reaching this middleware now carries a
-> validated JWT (anon or user) with claims that collapse the three input shapes into one.
-> **§11 below is the authoritative description of the Phase 3 implementation contract;
-> §1-§9 are retained for design-history continuity and still describe the model accurately
-> in shape (18 buckets, three dimensions, three tiers, per-tier failure modes), only the
-> KEYING / DISCRIMINATION mechanism changes.**
+> authentication pattern changes the upstream contract: every request reaching this
+> middleware now carries a validated JWT (anon or user) with claims that collapse the
+> three input shapes into one. **§11 below is the authoritative description of the
+> locked implementation contract; §1-§9 are retained for design-history continuity and
+> still describe the model accurately in shape (18 buckets, three dimensions, three
+> tiers, per-tier failure modes), only the KEYING / DISCRIMINATION mechanism changes.**
 
 ---
 
@@ -294,7 +293,7 @@ Rate-limit middleware reads endpoint metadata via `HttpContext.GetEndpoint()?.Me
 
 ---
 
-## 10. Out of scope (for now)
+## 10. Out of scope
 
 - **Adaptive cap tuning** — caps are static config. Dynamic adjustment based on observed traffic patterns deferred.
 - **Per-org overrides** — orgs may want per-org-policy rate-limit overrides (e.g., enterprise plan = 10× standard caps). Defer until org-policy framework lands.
@@ -306,20 +305,20 @@ Rate-limit middleware reads endpoint metadata via `HttpContext.GetEndpoint()?.Me
 
 ## 11. Anon-JWT pattern (claims-driven keying — supersedes cookie-presence detection)
 
-> **Status**: design lock added 2026-05-11 alongside the Edge anon-visitor authentication
-> decision in [`docs/v2/PHASE_0_AUTH.md`](v2/PHASE_0_AUTH.md) §3.8 + Q23. The earlier sections
-> of this doc (§1-§9) describe the 18-bucket model assuming three input shapes (WhoIs +
-> fingerprint + cookie state). Once Pattern A is implemented at Edge, the inputs collapse to
-> one shape (a validated JWT — anon or user) and the bucket-keying logic simplifies. This
-> section is the authoritative description of the Phase 3 implementation contract; §1-§9 are
-> retained for design-history continuity.
+> **Status**: design lock alongside the Edge anon-visitor authentication
+> decision (Pattern A — Edge mints a short-lived anon-session JWT for every unauthenticated
+> visitor, so the rate-limit middleware downstream of Edge sees only validated JWT claims as
+> input). The earlier sections of this doc (§1-§9) describe the 18-bucket model assuming
+> three input shapes (WhoIs + fingerprint + cookie state). Under Pattern A, the inputs
+> collapse to one shape (a validated JWT — anon or user) and the bucket-keying logic
+> simplifies. This section is the authoritative description of the locked implementation
+> contract; §1-§9 are retained for design-history continuity.
 
 ### 11.1 What changes upstream
 
-Edge mints a short-lived anon-session JWT for every unauthenticated visitor — see
-[PHASE_0_AUTH.md §3.8](v2/PHASE_0_AUTH.md#38-anon-visitor-authentication-pattern--pattern-a-locked-mint-anon-jwt-at-edge)
-for the full design. Every request reaching the rate-limit middleware now carries a validated
-JWT with these claims:
+Edge mints a short-lived anon-session JWT for every unauthenticated visitor — same JWT
+pipeline as authed requests, signed via the Edge JWKS, validated downstream. Every request
+reaching the rate-limit middleware now carries a validated JWT with these claims:
 
 - `sub` — `anon:<uuid>` for anon visitors; `user:<uuid>` for authed visitors. Stable per-visitor
   identity for the JWT's lifetime (~15 min for anon, longer for authed).
@@ -359,11 +358,9 @@ matter for the rate-limit middleware's keying.
 
 ### 11.3 Anon-JWT TTL implication for bucket continuity
 
-Anon JWTs have a ~15 min TTL. Edge's contract per
-[PHASE_0_AUTH.md §3.8](v2/PHASE_0_AUTH.md#38-anon-visitor-authentication-pattern--pattern-a-locked-mint-anon-jwt-at-edge)
-"Returning visitor": the same anon visitor (same cookie / same 3-tier session) gets the same
-`sub` across re-mints — treat the `sub` as stable for the cookie's session lifetime, NOT one
-per JWT. **Concrete rule**:
+Anon JWTs have a ~15 min TTL. Edge's locked contract for the "Returning visitor" path: the
+same anon visitor (same cookie / same 3-tier session) gets the same `sub` across re-mints —
+treat the `sub` as stable for the cookie's session lifetime, NOT one per JWT. **Concrete rule**:
 
 - **For per-visitor bucket continuity** (rate limiting an anon visitor across their full session):
   key on `sub` from the JWT. The bucket carries forward across re-mints.
@@ -386,8 +383,8 @@ But two cases STILL want the raw signals:
 1. **FP-too-common detection** (§5): the SADD distinct_ips set is keyed off raw FP, not the
    score. The score is the per-request hint; the count is a sliding-window aggregate that
    needs raw IP + raw FP. This continues to live in Edge upstream of the JWT mint.
-2. **Risk-engine inputs** (§5.4 of V2.md / Q6 in PHASE_0_AUTH.md): the composite
-   `RiskScore` factors raw inputs Edge has access to. Score lands in the JWT;
+2. **Risk-engine inputs**: the composite `RiskScore` factors raw inputs (FP-too-common
+   detection, IP reputation, geo signals) Edge has access to. Score lands in the JWT;
    computation stays at Edge.
 
 Defense-in-depth holds: even if a JWT claim were forged (it can't be — JWT signature gate),
@@ -405,12 +402,15 @@ Edge's per-request enrichment recompute provides a second authoritative source.
 - **Lua-batched Redis ops** (§9) — same shape, just feeding off claims instead of cookie+WhoIs
   lookup.
 
-### 11.6 Cross-references
+### 11.6 Related concepts
 
-- Anon-JWT design + claim shapes + algorithm gap →
-  [`docs/v2/PHASE_0_AUTH.md`](v2/PHASE_0_AUTH.md) §3.8 + Q23.
-- The `IRequestContext.IsAuthenticated` trinary used by audit / observability for the same
-  claims-driven discriminator → V2.md §5.4 + auth-context spec.
+- **Anon-JWT design** — Edge's anon JWT carries `sub=anon:<uuid>`, `d2_kind="anonymous"`,
+  `d2_session_id`, `d2_whois_id`, `d2_fingerprint_score`. RS256-signed via the same Edge
+  JWKS that signs authed JWTs. ~15 min TTL with `sub`-stability across re-mints for the
+  same cookie / 3-tier session.
+- **Trinary `IsAuthenticated`** — the `IRequestContext.IsAuthenticated` field carries
+  three states (`null` = pre-Edge, `false` = anon JWT, `true` = authed JWT). Audit /
+  observability use the same claims-driven discriminator the rate-limit middleware does.
 
 ---
 

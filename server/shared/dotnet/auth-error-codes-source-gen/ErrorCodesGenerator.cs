@@ -9,6 +9,7 @@ namespace D2.Shared.Auth.ErrorCodes.SourceGen;
 using System;
 using System.IO;
 using System.Linq;
+using D2.Shared.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 

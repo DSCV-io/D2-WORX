@@ -15,6 +15,10 @@ tools/
   scripts/                    Shell scripts + small utilities
     gen-dev-keys.sh           Generates dev root key + per-domain encryption keys
                               Output → secrets/ (gitignored, Claude-deny-ruled)
+  ts-codegen/                 TypeScript codegen runner — per-topic tsx scripts
+                              that emit .g.ts catalogs into @d2/* packages from
+                              the same contracts/ JSON specs the .NET Roslyn
+                              SourceGens consume. See ts-codegen/README.md.
 ```
 
 ## `scripts/gen-dev-keys.sh`
@@ -50,9 +54,21 @@ When a new dev tool / script is needed:
 4. If it generates secrets / keys, output to `secrets/` (gitignored + deny-ruled)
 5. If it generates non-secret artifacts, choose a sensible location (often `tools/output/` if temporary)
 
+## `ts-codegen/`
+
+Per-topic `tsx` emitter scripts that read JSON specs from `contracts/` and emit `*.g.ts` catalogs into the consuming `@d2/*` package's `src/` directory. Sibling to the .NET Roslyn source generators (`server/shared/dotnet/*-source-gen/`) — both consume the same spec files so cross-language drift is structural, not aspirational.
+
+```bash
+pnpm codegen                       # runs every emitter via the orchestrator
+pnpm codegen --force               # bypass mtime up-to-date check
+pnpm --filter @d2/headers-http run prebuild   # per-package: re-emits just that catalog
+```
+
+Each codegen-consuming package's `package.json` declares a `prebuild` hook so `pnpm -r build` regenerates transparently. See `ts-codegen/README.md` for the full per-script catalog (auth-context, request-context, auth-scopes, auth-error-codes, auth-failures, headers, jwt-claims) plus diagnostic-ID conventions.
+
 ## What this directory is NOT
 
 - **Not a service** — services live in `server/services/{service}/`
-- **Not a shared library** — shared libs live in `server/shared/dotnet/{lib}/`
+- **Not a shared library** — shared libs live in `server/shared/dotnet/{lib}/` (.NET) or `server/shared/typescript/{pkg}/` (TS)
 - **Not infrastructure config** — that's `infra/`
 - **Not application source** — these are operator/dev tools that run once or on-demand, not part of any service's runtime

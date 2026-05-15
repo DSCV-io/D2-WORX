@@ -254,9 +254,8 @@ public sealed class EnumExtensionsTests
     public void TryParseTruthyNull_OnThousandCharacterRandomString_ReturnsFalseNoThrow()
     {
         const int huge_length = 1000;
-        var rng = new Random(42);
         var input = new string(Enumerable.Range(0, huge_length)
-            .Select(_ => (char)('a' + rng.Next(26)))
+            .Select(_ => (char)('a' + Random.Shared.Next(26)))
             .ToArray());
 
         Action act = () => input.TryParseTruthyNull<TestColor>(out _);

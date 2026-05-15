@@ -9,6 +9,7 @@ namespace D2.Shared.Context.SourceGen;
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
+using D2.Shared.SourceGen;
 
 /// <summary>
 /// Pure logic for parsing a context spec JSON file into a <see cref="ContextSpec"/>
@@ -31,6 +32,7 @@ internal static class SpecLoader
     private const string _DOC_KEY = "doc";
     private const string _PROPAGATE_KEY = "propagate";
     private const string _MAX_LENGTH_KEY = "maxLength";
+    private const string _REDACT_KEY = "redact";
 
     /// <summary>
     /// Parses raw JSON spec content into a <see cref="ContextSpec"/>. Returns
@@ -38,8 +40,8 @@ internal static class SpecLoader
     /// </summary>
     /// <param name="path">Spec file path (used for diagnostic message context).</param>
     /// <param name="json">Raw JSON content of the spec file.</param>
-    /// <returns>A <see cref="LoadResult"/>.</returns>
-    public static LoadResult Load(string path, string json)
+    /// <returns>A <see cref="LoadResult{TSpec}"/> wrapping <see cref="ContextSpec"/>.</returns>
+    public static LoadResult<ContextSpec> Load(string path, string json)
     {
         var fileName = Path.GetFileName(path);
 
@@ -50,27 +52,27 @@ internal static class SpecLoader
 
             if (root.ValueKind != JsonValueKind.Object)
             {
-                return new LoadResult(
+                return new LoadResult<ContextSpec>(
                     Spec: null,
-                    Diagnostic: EmitDiagnostic.MalformedSpec(
+                    Diagnostic: EmitDiagnostics.MalformedSpec(
                         fileName, $"root must be a JSON object, got {root.ValueKind}"));
             }
 
             if (!root.TryGetProperty(_NAME_KEY, out var nameElement) ||
                 nameElement.ValueKind != JsonValueKind.String)
             {
-                return new LoadResult(
+                return new LoadResult<ContextSpec>(
                     Spec: null,
-                    Diagnostic: EmitDiagnostic.MalformedSpec(
+                    Diagnostic: EmitDiagnostics.MalformedSpec(
                         fileName, "missing required string 'name' at root"));
             }
 
             if (!root.TryGetProperty(_NAMESPACE_KEY, out var nsElement) ||
                 nsElement.ValueKind != JsonValueKind.String)
             {
-                return new LoadResult(
+                return new LoadResult<ContextSpec>(
                     Spec: null,
-                    Diagnostic: EmitDiagnostic.MalformedSpec(
+                    Diagnostic: EmitDiagnostics.MalformedSpec(
                         fileName, "missing required string 'namespace' at root"));
             }
 
@@ -87,9 +89,9 @@ internal static class SpecLoader
             if (!root.TryGetProperty(_SECTIONS_KEY, out var sectionsElement) ||
                 sectionsElement.ValueKind != JsonValueKind.Array)
             {
-                return new LoadResult(
+                return new LoadResult<ContextSpec>(
                     Spec: null,
-                    Diagnostic: EmitDiagnostic.MalformedSpec(
+                    Diagnostic: EmitDiagnostics.MalformedSpec(
                         fileName, "missing required 'sections' array at root"));
             }
 
@@ -99,7 +101,7 @@ internal static class SpecLoader
             {
                 var (section, diag) = ParseSection(sectionElement, fileName, sectionIndex);
                 if (diag is not null)
-                    return new LoadResult(Spec: null, Diagnostic: diag);
+                    return new LoadResult<ContextSpec>(Spec: null, Diagnostic: diag);
 
                 sections.Add(section!);
                 sectionIndex++;
@@ -112,13 +114,13 @@ internal static class SpecLoader
                 Extends: extends,
                 Sections: sections.ToImmutable());
 
-            return new LoadResult(Spec: spec, Diagnostic: null);
+            return new LoadResult<ContextSpec>(Spec: spec, Diagnostic: null);
         }
         catch (JsonException ex)
         {
-            return new LoadResult(
+            return new LoadResult<ContextSpec>(
                 Spec: null,
-                Diagnostic: EmitDiagnostic.MalformedSpec(fileName, ex.Message));
+                Diagnostic: EmitDiagnostics.MalformedSpec(fileName, ex.Message));
         }
     }
 
@@ -127,14 +129,14 @@ internal static class SpecLoader
     {
         if (element.ValueKind != JsonValueKind.Object)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName, $"sections[{sectionIndex}] must be an object, got {element.ValueKind}"));
         }
 
         if (!element.TryGetProperty(_NAME_KEY, out var nameElement) ||
             nameElement.ValueKind != JsonValueKind.String)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName, $"sections[{sectionIndex}] missing required string 'name'"));
         }
 
@@ -143,7 +145,7 @@ internal static class SpecLoader
         if (!element.TryGetProperty(_PROPERTIES_KEY, out var propsElement) ||
             propsElement.ValueKind != JsonValueKind.Array)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"sections[{sectionIndex}] '{sectionName}' missing required 'properties' array"));
         }
@@ -168,7 +170,7 @@ internal static class SpecLoader
     {
         if (element.ValueKind != JsonValueKind.Object)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"sections '{sectionName}' properties[{propIndex}] must be an object, "
                 + $"got {element.ValueKind}"));
@@ -177,7 +179,7 @@ internal static class SpecLoader
         if (!element.TryGetProperty(_NAME_KEY, out var nameElement) ||
             nameElement.ValueKind != JsonValueKind.String)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"sections '{sectionName}' properties[{propIndex}] missing required "
                 + "string 'name'"));
@@ -188,7 +190,7 @@ internal static class SpecLoader
         if (!element.TryGetProperty(_TYPE_KEY, out var typeElement) ||
             typeElement.ValueKind != JsonValueKind.String)
         {
-            return (null, EmitDiagnostic.MalformedSpec(
+            return (null, EmitDiagnostics.MalformedSpec(
                 fileName,
                 $"sections '{sectionName}' property '{name}' missing required string 'type'"));
         }
@@ -230,6 +232,12 @@ internal static class SpecLoader
             maxLengthElement.ValueKind == JsonValueKind.Number)
             maxLength = maxLengthElement.GetInt32();
 
+        var redact = false;
+        if (element.TryGetProperty(_REDACT_KEY, out var redactElement) &&
+            (redactElement.ValueKind == JsonValueKind.True ||
+             redactElement.ValueKind == JsonValueKind.False))
+            redact = redactElement.GetBoolean();
+
         var prop = new PropertySpec(
             Name: name,
             Type: typeElement.GetString()!,
@@ -239,7 +247,8 @@ internal static class SpecLoader
             Default: defaultValue,
             Doc: doc,
             Propagate: propagate,
-            MaxLength: maxLength);
+            MaxLength: maxLength,
+            Redact: redact);
 
         return (prop, null);
     }

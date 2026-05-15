@@ -40,7 +40,7 @@ Project documentation that doesn't belong at the repo root.
 
 | Doc | Purpose |
 |---|---|
-| [SECURITY-RUNBOOKS.md](SECURITY-RUNBOOKS.md) | Compromise response runbooks. Stub for now; expanded when KeyCustodian ships with the Edge auth module. |
+| [SECURITY-RUNBOOKS.md](SECURITY-RUNBOOKS.md) | Compromise response runbooks. Stub — see the Status block at the top of that doc for the operational gap. |
 
 ### Build-out tracking (under `v2/`, archived as each milestone ships)
 
@@ -48,10 +48,12 @@ Project documentation that doesn't belong at the repo root.
 |---|---|
 | [v2/V2.md](v2/V2.md) | Architecture & build plan — internal tracking doc. |
 | [v2/PHASE_0.md](v2/PHASE_0.md) | Foundation milestone execution tracking. |
+| [v2/PHASE_0_AUTH.md](v2/PHASE_0_AUTH.md) | Authentication architecture reference — JWT shape, session model, key-rotation flow. |
+| [v2/PHASE_0_MESSAGING.md](v2/PHASE_0_MESSAGING.md) | Async-messaging architecture reference — exchange/queue topology, encryption framing, DLQ flow. |
 | [v2/PHASE_5_REFERENCE.md](v2/PHASE_5_REFERENCE.md) | D2.Courier + D2.Notifications rebuild reference — Universal Message Shape, Comms 6 design principles. |
 | [v2/PHASE_6_REFERENCE.md](v2/PHASE_6_REFERENCE.md) | D2.Files (.NET) rebuild reference — 6 design principles, status state machine, smartphone MIME list, GEO_CLIENT log-suppression pattern. |
 | [v2/PHASE_8_REFERENCE.md](v2/PHASE_8_REFERENCE.md) | dkron-mgr (.NET) rewrite reference — Reconciler pattern, change-detection field list. |
 
-### Future
+### Out of scope (until consumers exist)
 
-`JWT-CLAIMS.md` — full custom-claim catalog (created when the first `d2_`-namespaced claim ships with the Edge auth module).
+`JWT-CLAIMS.md` — full custom-claim catalog. Out of scope until the first `d2_`-namespaced claim has a real consumer; until then the spec lives in `contracts/jwt-claims/jwt-claims.spec.json` and the generated `JwtClaimTypes` constants are the canonical reference.

@@ -1,0 +1,27 @@
+{
+  "name": "ts-codegen",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "codegen": "tsx src/orchestrator.ts",
+    "codegen:auth-context": "tsx src/auth-context-emit.ts",
+    "codegen:request-context": "tsx src/request-context-emit.ts",
+    "codegen:auth-scopes": "tsx src/auth-scopes-emit.ts",
+    "codegen:auth-error-codes": "tsx src/auth-error-codes-emit.ts",
+    "codegen:auth-failures": "tsx src/auth-failures-emit.ts"
+  },
+  "dependencies": {
+    "@d2/utilities": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.0",
+    "@vitest/coverage-v8": "4.0.18",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
+  }
+}

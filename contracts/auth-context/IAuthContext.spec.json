@@ -60,12 +60,14 @@
           "name": "UserId",
           "type": "Guid?",
           "claim": "sub",
+          "redact": true,
           "doc": "User identifier — JWT sub claim parsed as Guid. Null when sub is non-Guid (pure service-identity tokens — see Subject + IsServiceIdentity). During impersonation this is the impersonated user's id (the impersonator's id is recorded inside the act chain — see ImpersonatedBy)."
         },
         {
           "name": "Username",
           "type": "string?",
           "claim": "d2_username",
+          "redact": true,
           "doc": "Login handle — unique, lowercase username."
         },
         {

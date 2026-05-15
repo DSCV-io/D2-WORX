@@ -7,7 +7,8 @@ name: PR
 # Single-lane CI.
 #
 # Active jobs ramp up as services come online.
-# Jobs are commented out (TODO) until their target service exists.
+# Each job below is commented out until its target service or workspace
+# exists; uncomment once the cited path is populated.
 # Total wall time target: <5 minutes (all active jobs run in parallel).
 #
 # Required gates (non-skippable once active):
@@ -24,7 +25,7 @@ jobs:
   # Active now (no service dependencies)
   # ==========================================================================
 
-  # TODO: proto-checks — enable when buf.yaml is committed
+  # proto-checks — activates when `contracts/protos/buf.yaml` is committed
   # proto-checks:
   #   name: Proto checks (buf lint + format)
   #   runs-on: ubuntu-latest
@@ -34,8 +35,8 @@ jobs:
   #     - run: buf lint
   #     - run: buf format --diff --exit-code
 
-  # TODO: lint-and-format — enable when SvelteKit deps are restored (Phase 7)
-  # AND server/D2.slnx contains projects (Phase 0+)
+  # lint-and-format — activates when `server/web/` SvelteKit deps resolve
+  # AND `server/D2.slnx` contains projects
   # lint-and-format:
   #   name: Lint + format
   #   runs-on: ubuntu-latest
@@ -66,10 +67,10 @@ jobs:
   #         dotnet jb inspectcode server/D2.slnx --severity=WARNING --no-build
 
   # ==========================================================================
-  # Active per phase (TODO — uncomment as each service ships per V2.md §4)
+  # Activates per service — uncomment each block as the cited path ships.
   # ==========================================================================
 
-  # TODO: build — Phase 0 (shared libs ship first .NET projects into D2.slnx)
+  # build — activates when `server/D2.slnx` contains projects
   # build:
   #   name: Build
   #   runs-on: ubuntu-latest
@@ -81,7 +82,7 @@ jobs:
   #         dotnet-version: "10.0.x"
   #     - run: dotnet build server/D2.slnx --configuration Release
 
-  # TODO: unit-tests-dotnet — Phase 0 (D2.Shared.Tests ships)
+  # unit-tests-dotnet — activates when `server/shared/dotnet/tests/` ships
   # unit-tests-dotnet:
   #   name: Unit tests (.NET)
   #   runs-on: ubuntu-latest
@@ -93,7 +94,7 @@ jobs:
   #         dotnet-version: "10.0.x"
   #     - run: dotnet test server/D2.slnx --filter Category=Unit --no-build --configuration Release
 
-  # TODO: unit-tests-web — Phase 7 (SvelteKit rebuilt with v2 deps)
+  # unit-tests-web — activates when `server/web/` SvelteKit workspace resolves
   # unit-tests-web:
   #   name: Unit tests (web — Vitest browser mode)
   #   runs-on: ubuntu-latest
@@ -110,11 +111,11 @@ jobs:
   #     - run: pnpm exec vitest run
   #       working-directory: server/web
 
-  # TODO: integration-edge — Phase 3 (Edge ships)
-  # TODO: integration-files — Phase 6
-  # TODO: integration-courier — Phase 5
-  # TODO: integration-notifications — Phase 5
-  # TODO: integration-audit — Phase 4
+  # integration-edge — activates when `server/services/edge/tests/` ships
+  # integration-files — activates when `server/services/files/tests/` ships
+  # integration-courier — activates when `server/services/courier/tests/` ships
+  # integration-notifications — activates when `server/services/notifications/tests/` ships
+  # integration-audit — activates when `server/services/audit/tests/` ships
   #
   # Pattern (one per service):
   # integration-{service}:
@@ -128,8 +129,8 @@ jobs:
   #         dotnet-version: "10.0.x"
   #     - run: dotnet test server/services/{service}/tests --no-build --configuration Release
 
-  # TODO: integration-key-rotation — REQUIRED GATE per V2.md §5.4
-  # Phase 3 (KeyCustodian module ships with Edge)
+  # integration-key-rotation — REQUIRED GATE for KeyCustodian rotation flow.
+  # Activates when the KeyCustodian module ships inside `server/services/edge/`.
   # integration-key-rotation:
   #   name: Key rotation (REQUIRED)
   #   runs-on: ubuntu-latest
@@ -141,7 +142,7 @@ jobs:
   #         dotnet-version: "10.0.x"
   #     - run: dotnet test server/services/edge/tests --filter Category=KeyRotation --no-build --configuration Release
 
-  # TODO: web-component-tests — Phase 7
+  # web-component-tests — activates when `server/web/` SvelteKit workspace resolves
   # web-component-tests:
   #   name: Web component tests (Vitest browser mode)
   #   runs-on: ubuntu-latest
@@ -158,7 +159,7 @@ jobs:
   #     - run: pnpm exec vitest run --browser
   #       working-directory: server/web
 
-  # TODO: web-mock-playwright-tests — Phase 7
+  # web-mock-playwright-tests — activates when `server/web/` SvelteKit workspace resolves
   # web-mock-playwright-tests:
   #   name: Web Playwright (mocked)
   #   runs-on: ubuntu-latest
@@ -179,8 +180,40 @@ jobs:
   #       env:
   #         D2_MOCK_INFRA: "true"
 
+  # contract-fixtures-emit — activates once the dotnet build job activates.
+  # Re-emits the cross-language parity fixtures and asserts no fixture drift.
+  # contract-fixtures-emit:
+  #   name: Contract fixture emission (.NET → fixtures)
+  #   runs-on: ubuntu-latest
+  #   needs: [build]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-dotnet@v4
+  #       with:
+  #         dotnet-version: "10.0.x"
+  #     - run: dotnet test server/D2.slnx --filter "Category=ContractFixtures" --no-build --configuration Release
+  #     - name: assert no fixture drift
+  #       run: git diff --exit-code server/shared/typescript/contract-tests/fixtures/
+
+  # contract-tests-parity — activates with contract-fixtures-emit.
+  # Reads the fixtures and asserts TS-side spec-emitted catalogs / decoders agree.
+  # contract-tests-parity:
+  #   name: Contract parity tests (TS reads fixtures + asserts)
+  #   runs-on: ubuntu-latest
+  #   needs: [contract-fixtures-emit]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "24"
+  #     - uses: pnpm/action-setup@v4
+  #       with:
+  #         version: 10
+  #     - run: pnpm install --frozen-lockfile
+  #     - run: pnpm test:contracts
+
   # ==========================================================================
-  # Placeholder — keeps the workflow valid while all real jobs are TODO.
+  # Placeholder — keeps the workflow valid while all real jobs are commented.
   # Remove this once the first real job (proto-checks or lint-and-format) is enabled.
   # ==========================================================================
   noop:
@@ -188,4 +221,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: noop
-        run: echo "v2 wipe complete; CI jobs activate per V2.md §4 phases"
+        run: echo "v2 wipe complete; CI jobs activate as each service path populates"

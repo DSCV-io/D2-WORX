@@ -1,0 +1,30 @@
+# -----------------------------------------------------------------------
+# Copyright (c) DCSV. All rights reserved.
+# -----------------------------------------------------------------------
+
+# Build output.
+**/dist/**
+**/node_modules/**
+**/.svelte-kit/**
+**/coverage/**
+
+# Codegen-emitted source — formatting is the emitter's responsibility.
+**/*.g.ts
+server/shared/typescript/protos/src/generated/**
+server/web/src/lib/paraglide/**
+
+# Machine-emitted cross-language parity fixtures.
+# Written by the .NET ContractFixtures test suite via System.Text.Json with
+# WriteIndented=true; the parity test reads the JSON regardless of layout, so
+# pretty-print equivalence with Prettier's print-width / array-collapse rules
+# is intentionally not enforced. Format is the .NET emitter's responsibility.
+server/shared/typescript/contract-tests/fixtures/**
+
+# Frozen v1 snapshot.
+old/**
+
+# Claude harness scratch.
+.claude/**
+
+# Lockfiles.
+pnpm-lock.yaml

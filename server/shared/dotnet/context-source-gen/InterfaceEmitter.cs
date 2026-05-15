@@ -8,6 +8,8 @@ namespace D2.Shared.Context.SourceGen;
 
 using System.Collections.Immutable;
 using System.Text;
+using D2.Shared.SourceGen;
+using D2.Shared.SourceGen.Polyfills;
 
 /// <summary>
 /// Pure logic for emitting a read-only interface (e.g. <c>IAuthContext</c>,
@@ -40,14 +42,16 @@ internal static class InterfaceEmitter
         sb.AppendLine("using System;");
         sb.AppendLine("using System.Collections.Generic;");
         sb.AppendLine("using D2.Shared.Auth.Abstractions;");
+        sb.AppendLine("using D2.Shared.Utilities.Attributes;");
+        sb.AppendLine("using D2.Shared.Utilities.Enums;");
         sb.AppendLine();
         sb.AppendLine($"namespace {spec.Namespace};");
         sb.AppendLine();
 
-        if (!string.IsNullOrEmpty(spec.Description))
+        if (spec.Description.Truthy())
             EmitXmlDocSummary(sb, spec.Description!, indent: 0);
 
-        var extendsClause = string.IsNullOrEmpty(spec.Extends)
+        var extendsClause = spec.Extends.Falsey()
             ? string.Empty
             : $" : global::{spec.Extends}";
         sb.AppendLine($"public interface {spec.Name}{extendsClause}");
@@ -74,15 +78,15 @@ internal static class InterfaceEmitter
 
                 if (!TypeVocabulary.IsValid(prop.Type))
                 {
-                    diagnostics.Add(EmitDiagnostic.UnknownType(
+                    diagnostics.Add(EmitDiagnostics.UnknownType(
                         spec.Name, prop.Name, prop.Type, TypeVocabulary.ValidTypesForDiagnostics));
                     continue;
                 }
 
-                if (!string.IsNullOrEmpty(prop.Derived) &&
+                if (prop.Derived.Truthy() &&
                     !TypeVocabulary.IsValidDerivedRule(prop.Derived!))
                 {
-                    diagnostics.Add(EmitDiagnostic.UnknownDerivedRule(
+                    diagnostics.Add(EmitDiagnostics.UnknownDerivedRule(
                         spec.Name,
                         prop.Name,
                         prop.Derived!,
@@ -109,6 +113,9 @@ internal static class InterfaceEmitter
         var pad = new string(' ', indent * 4);
         var doc = prop.Doc ?? prop.Name;
         EmitXmlDocSummary(sb, doc, indent);
+        if (prop.Redact)
+            sb.AppendLine($"{pad}[RedactData(Reason = RedactReason.PersonalInformation)]");
+
         sb.AppendLine($"{pad}{prop.Type} {prop.Name} {{ get; }}");
     }
 

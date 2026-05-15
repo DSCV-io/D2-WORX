@@ -33,6 +33,12 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
     <ProjectReference Include="..\i18n-abstractions\D2.Shared.I18n.Abstractions.csproj" />
+    <!--
+      headers-amqp — codegen-emitted AMQP wire-protocol header constants
+      (AmqpHeaders.MESSAGE_ID, .ENCRYPTION_KID, .TRACEPARENT, .PROPAGATED_CONTEXT, ...).
+      Replaces the previously-hand-written D2.Shared.Messaging.AmqpHeaders.
+    -->
+    <ProjectReference Include="..\headers-amqp\D2.Shared.Headers.Amqp.csproj" />
   </ItemGroup>
 
   <ItemGroup>

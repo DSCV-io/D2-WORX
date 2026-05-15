@@ -45,4 +45,13 @@ internal static class TestPaths
 
     public static string RequestContextSpec() =>
         Path.Combine(RepoRoot(), "contracts", "request-context", "IRequestContext.spec.json");
+
+    public static string HeadersSpec() =>
+        Path.Combine(RepoRoot(), "contracts", "headers", "headers.spec.json");
+
+    public static string InProcessKeysSpec() =>
+        Path.Combine(RepoRoot(), "contracts", "in-process-keys", "keys.spec.json");
+
+    public static string JwtClaimsSpec() =>
+        Path.Combine(RepoRoot(), "contracts", "jwt-claims", "jwt-claims.spec.json");
 }

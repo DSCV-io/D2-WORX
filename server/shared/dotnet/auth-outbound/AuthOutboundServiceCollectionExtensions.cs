@@ -8,6 +8,7 @@ namespace D2.Shared.Auth.Outbound;
 
 using D2.Shared.Auth.Outbound.ServiceIdentity;
 using D2.Shared.Auth.Outbound.TokenExchange;
+using D2.Shared.Utilities.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -33,16 +34,31 @@ public static class AuthOutboundServiceCollectionExtensions
         /// configurators to the named <c>HttpClient</c>s and registers
         /// duplicate <c>IHostedService</c> instances — call once per host.
         /// </summary>
-        /// <param name="configure">Configuration delegate for <see cref="AuthOutboundOptions"/>.</param>
+        /// <param name="configure">
+        /// Configuration delegate for <see cref="AuthOutboundOptions"/>.
+        /// </param>
         /// <returns>The same <paramref name="services"/> instance for chaining.</returns>
         public IServiceCollection AddD2AuthOutbound(Action<AuthOutboundOptions>? configure = null)
         {
             ArgumentNullException.ThrowIfNull(services);
 
+            var optionsBuilder = services.AddOptions<AuthOutboundOptions>();
             if (configure is not null)
-                services.Configure(configure);
-            else
-                services.AddOptions<AuthOutboundOptions>();
+                optionsBuilder.Configure(configure);
+
+            // Required-field validation runs at host startup so misconfiguration
+            // surfaces during composition, not on the first failed token fetch.
+            optionsBuilder
+                .Validate(
+                    o => o.Issuer.Truthy(),
+                    "AuthOutboundOptions.Issuer is required.")
+                .Validate(
+                    o => o.ClientId.Truthy(),
+                    "AuthOutboundOptions.ClientId is required.")
+                .Validate(
+                    o => o.ClientSecret.Truthy(),
+                    "AuthOutboundOptions.ClientSecret is required.")
+                .ValidateOnStart();
 
             services.TryAddSingleton(TimeProvider.System);
 
@@ -62,7 +78,8 @@ public static class AuthOutboundServiceCollectionExtensions
             services.TryAddSingleton<IConfigurationManager<OpenIdConnectConfiguration>>(sp =>
             {
                 var opts = sp.GetRequiredService<IOptions<AuthOutboundOptions>>().Value;
-                var metadataAddress = $"{opts.Issuer.TrimEnd('/')}/.well-known/openid-configuration";
+                var metadataAddress =
+                    $"{opts.Issuer.TrimEnd('/')}/.well-known/openid-configuration";
                 var httpClient = sp.GetRequiredService<IHttpClientFactory>()
                     .CreateClient(AuthOutboundHttpClientNames.OIDC_DISCOVERY);
                 return new ConfigurationManager<OpenIdConnectConfiguration>(

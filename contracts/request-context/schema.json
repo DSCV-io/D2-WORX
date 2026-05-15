@@ -102,6 +102,11 @@
           "type": "integer",
           "minimum": 1,
           "description": "Wire-level per-field length cap, enforced by the codegen-emitted PropagatedContextSerializer.TryDecode. A forged x-d2-context header with any propagatable field exceeding its cap is dropped wholesale (propagation is opportunistic, never required). Only meaningful when propagate=true on a string-typed field."
+        },
+        "redact": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, this property is PII-bearing and must be redacted from logs / telemetry. Codegen emits a `<TypeName>RedactPaths` constant alongside the interface, listing every redact-marked property as a Pino-redact path. The .NET side consumes the matching `[RedactData]` attribute placement; the cross-spec parity gate (RedactDataVsSpecRedactConsistencyTests) asserts the two sides agree."
         }
       }
     }

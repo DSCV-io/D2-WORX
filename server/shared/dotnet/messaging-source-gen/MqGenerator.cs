@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using D2.Shared.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -64,14 +65,14 @@ public sealed class MqGenerator : IIncrementalGenerator
 
             if (messagesFile is null)
             {
-                spc.ReportDiagnostic(ToRoslyn(EmitDiagnostic.MissingMessagesSpecFile()));
+                spc.ReportDiagnostic(ToRoslyn(EmitDiagnostics.MissingMessagesSpecFile()));
                 EmitEmpty(spc);
                 return;
             }
 
             if (subsFile is null)
             {
-                spc.ReportDiagnostic(ToRoslyn(EmitDiagnostic.MissingSubscriptionsSpecFile()));
+                spc.ReportDiagnostic(ToRoslyn(EmitDiagnostics.MissingSubscriptionsSpecFile()));
                 EmitEmpty(spc);
                 return;
             }

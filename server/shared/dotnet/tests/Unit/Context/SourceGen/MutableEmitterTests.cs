@@ -45,8 +45,10 @@ public sealed class MutableEmitterTests
 
         // ImmediateCallerClientId / OriginatingClientId / IsServiceIdentity are
         // computed from ActorChain — must NOT have a setter.
-        mutable.GeneratedSource.Should().NotContain("public string? ImmediateCallerClientId { get; set; }");
-        mutable.GeneratedSource.Should().NotContain("public string? OriginatingClientId { get; set; }");
+        mutable.GeneratedSource.Should()
+            .NotContain("public string? ImmediateCallerClientId { get; set; }");
+        mutable.GeneratedSource.Should()
+            .NotContain("public string? OriginatingClientId { get; set; }");
 
         // The computed getter walks ActorChain.
         mutable.GeneratedSource.Should().Contain("ImmediateCallerClientId");
@@ -154,8 +156,10 @@ public sealed class MutableEmitterTests
 
         var mutable = MutableEmitter.Emit(auth, request);
 
-        mutable.Diagnostics.Should().ContainSingle(d => d.DescriptorId == DiagnosticIds.PropertyNameCollision);
-        var diag = mutable.Diagnostics.Single(d => d.DescriptorId == DiagnosticIds.PropertyNameCollision);
+        mutable.Diagnostics.Should()
+            .ContainSingle(d => d.DescriptorId == DiagnosticIds.PropertyNameCollision);
+        var diag = mutable.Diagnostics
+            .Single(d => d.DescriptorId == DiagnosticIds.PropertyNameCollision);
         ((string)diag.Args[0]).Should().Be("Subject");
     }
 
@@ -185,7 +189,8 @@ public sealed class MutableEmitterTests
 
         // Different property names — no collision (the carve-out is structural,
         // not name-based; the test asserts no false positives on legit twin claims).
-        mutable.Diagnostics.Should().NotContain(d => d.DescriptorId == DiagnosticIds.PropertyNameCollision);
+        mutable.Diagnostics.Should()
+            .NotContain(d => d.DescriptorId == DiagnosticIds.PropertyNameCollision);
     }
 
     // ----------------------------------------------------------------------
@@ -262,6 +267,76 @@ public sealed class MutableEmitterTests
     }
 
     // ----------------------------------------------------------------------
+    // [RedactData] emission from spec `redact` field
+    // ----------------------------------------------------------------------
+
+    [Fact]
+    public void Emit_NonDerivedPropertyWithRedactTrue_PlacesRedactDataAttribute()
+    {
+        var auth = Spec(
+            name: "IAuthContext",
+            @namespace: "D2.Shared.AuthContext.Abstractions",
+            sections: [
+                Section(
+                    "Identity",
+                    Property("Username", "string?", claim: "d2_username", redact: true)),
+            ]);
+        var request = Spec(
+            name: "IRequestContext",
+            @namespace: "D2.Shared.Context.Abstractions",
+            extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
+            sections: [Section("S", Property("TraceId", "string?"))]);
+
+        var mutable = MutableEmitter.Emit(auth, request);
+
+        mutable.Diagnostics.Should().BeEmpty();
+        var src = Normalize(mutable.GeneratedSource);
+        src.Should().Contain("[RedactData(Reason = RedactReason.PersonalInformation)]");
+
+        // Attribute lands immediately above the matching property declaration.
+        src.Should().Contain(
+            "[RedactData(Reason = RedactReason.PersonalInformation)]\n"
+            + "    public string? Username { get; set; }");
+    }
+
+    [Fact]
+    public void Emit_PropertyWithoutRedact_DoesNotPlaceRedactDataAttribute()
+    {
+        var (auth, request) = MinimalSpecs();
+
+        var mutable = MutableEmitter.Emit(auth, request);
+
+        mutable.Diagnostics.Should().BeEmpty();
+
+        // None of the MinimalSpecs properties carry redact, so the concrete
+        // class shouldn't have the attribute on any property.
+        mutable.GeneratedSource.Should().NotContain("[RedactData");
+    }
+
+    [Fact]
+    public void Emit_RedactAnnotation_AddsUtilitiesAttributeUsings()
+    {
+        var auth = Spec(
+            name: "IAuthContext",
+            @namespace: "D2.Shared.AuthContext.Abstractions",
+            sections: [
+                Section(
+                    "Identity",
+                    Property("Username", "string?", redact: true)),
+            ]);
+        var request = Spec(
+            name: "IRequestContext",
+            @namespace: "D2.Shared.Context.Abstractions",
+            extends: "D2.Shared.AuthContext.Abstractions.IAuthContext",
+            sections: [Section("S", Property("TraceId", "string?"))]);
+
+        var mutable = MutableEmitter.Emit(auth, request);
+
+        mutable.GeneratedSource.Should().Contain("using D2.Shared.Utilities.Attributes;");
+        mutable.GeneratedSource.Should().Contain("using D2.Shared.Utilities.Enums;");
+    }
+
+    // ----------------------------------------------------------------------
     // Helpers
     // ----------------------------------------------------------------------
 
@@ -281,17 +356,29 @@ public sealed class MutableEmitterTests
                     "Token",
                     Property("IsAuthenticated", "bool?", trinaryAuth: true),
                     Property("Audience", "IReadOnlyList<string>", claim: "aud"),
-                    Property("ActorChain", "IReadOnlyList<ActorEntry>", claim: "act", @default: "[]")),
+                    Property(
+                        "ActorChain",
+                        "IReadOnlyList<ActorEntry>",
+                        claim: "act",
+                        @default: "[]")),
                 Section(
                     "Identity",
                     Property("Subject", "string?", claim: "sub"),
                     Property("UserId", "Guid?", claim: "sub"),
                     Property("ImmediateCallerClientId", "string?", derived: "actorChain"),
                     Property("OriginatingClientId", "string?", derived: "actorChain"),
-                    Property("IsServiceIdentity", "bool?", trinaryAuth: true, derived: "actorChain")),
+                    Property(
+                        "IsServiceIdentity",
+                        "bool?",
+                        trinaryAuth: true,
+                        derived: "actorChain")),
                 Section(
                     "Impersonation",
-                    Property("IsImpersonating", "bool?", trinaryAuth: true, derived: "actorChain")),
+                    Property(
+                        "IsImpersonating",
+                        "bool?",
+                        trinaryAuth: true,
+                        derived: "actorChain")),
             ]);
 
         var request = Spec(
@@ -332,8 +419,9 @@ public sealed class MutableEmitterTests
         string? @default = null,
         string? doc = null,
         bool propagate = false,
-        int? maxLength = null) =>
-        new(name, type, claim, trinaryAuth, derived, @default, doc, propagate, maxLength);
+        int? maxLength = null,
+        bool redact = false) =>
+        new(name, type, claim, trinaryAuth, derived, @default, doc, propagate, maxLength, redact);
 
     private static string Normalize(string s) => s.Replace("\r\n", "\n").Trim();
 }

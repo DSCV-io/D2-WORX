@@ -143,11 +143,12 @@ public sealed class GuidExtensionsTryParseTruthyNullTests
     public void TryParseTruthyNull_OnThousandCharacterRandomString_ReturnsFalseNoThrow()
     {
         // Adversarial: malicious / oversized input must not throw, must not allocate
-        // unboundedly, must not catch fire.
+        // unboundedly, must not catch fire. Random.Shared is thread-safe; the
+        // input shape (1000 alphabetic chars) is the assertion target, not the
+        // exact byte sequence.
         const int huge_length = 1000;
-        var rng = new Random(42);
         var input = new string(Enumerable.Range(0, huge_length)
-            .Select(_ => (char)('a' + rng.Next(26)))
+            .Select(_ => (char)('a' + Random.Shared.Next(26)))
             .ToArray());
 
         Action act = () => input.TryParseTruthyNull(out _);
