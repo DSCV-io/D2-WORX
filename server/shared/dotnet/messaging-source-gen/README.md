@@ -42,7 +42,7 @@ The spec files are the single source of truth — adding a new message or subscr
 | `D2MQ002` | Error | Spec entry missing a required field (e.g. messages-entry missing `constant`) |
 | `D2MQ003` | Error | Two messages or subscriptions declare the same constant name |
 | `D2MQ004` | Error | Encryption domain referenced by a messages-entry isn't in `D2.Shared.Encryption.EncryptionDomains` (catches drift between encryption keyring registration and message declarations) |
-| `D2MQ005` | Error | Plaintext-encryption messages-entry missing the required `plaintextReason` justification |
+| `D2MQ005` | Error | `plaintext`-encryption messages-entry missing the required `encryptionReason` justification |
 | `D2MQ006` | Error | Subscription `pattern` value isn't in `{CompetingConsumer, FanoutExclusiveAutoDelete, DurableShared}` |
 | `D2MQ007` | Error | Messages-entry `messageType` value isn't in the recognized set |
 | `D2MQ008` | Error | Subscription `exchangeType` value isn't in `{fanout, topic, direct}` |
@@ -61,14 +61,14 @@ The spec files are the single source of truth — adding a new message or subscr
     {
       "constant": "UserCreated",
       "messageType": "Event",
-      "encryption": "Auth",
+      "encryption": "audit",
       "defaultRoutingKey": "user.created"
     },
     {
       "constant": "PaymentReceiptIssued",
       "messageType": "Event",
-      "encryption": "Plaintext",
-      "plaintextReason": "Receipt is downstream-published to billing-public exchange; payment details intentionally exposed to external auditors per SOC 2 retention policy.",
+      "encryption": "plaintext",
+      "encryptionReason": "Receipt is downstream-published to billing-public exchange; payment details intentionally exposed to external auditors per SOC 2 retention policy.",
       "defaultRoutingKey": "billing.payment.receipt"
     }
   ]
@@ -77,8 +77,8 @@ The spec files are the single source of truth — adding a new message or subscr
 
 - **`constant`**: PascalCase C# identifier; becomes `MqMessages.UserCreated` etc.
 - **`messageType`**: one of the recognized message-type tokens (validated by `D2MQ007`).
-- **`encryption`**: name of an `EncryptionDomain` constant in `D2.Shared.Encryption.EncryptionDomains` — the SrcGen extracts the actual constants from the compilation symbol so adding/removing an encryption domain in code surfaces here as `D2MQ004`.
-- **`plaintextReason`**: required iff `encryption == "Plaintext"`. Documents WHY the payload is intentionally unencrypted (audit trail).
+- **`encryption`**: lowercase wire value of an `EncryptionDomain` entry in `D2.Shared.Encryption.EncryptionDomains` (e.g. `audit` / `notifications` / `courier` / `plaintext`) — the closed catalog comes from `contracts/encryption-domains/encryption-domains.spec.json` and a typo surfaces as `D2MQ004`.
+- **`encryptionReason`**: required iff `encryption == "plaintext"`. Documents WHY the payload is intentionally unencrypted (audit trail).
 - **`defaultRoutingKey`**: optional default routing key for publishers.
 
 ## Spec format — subscriptions

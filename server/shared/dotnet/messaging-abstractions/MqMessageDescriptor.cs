@@ -36,9 +36,12 @@ public sealed record MqMessageDescriptor(
     string? DefaultRoutingKey)
 {
     /// <summary>Sentinel value representing "this message type publishes
-    /// without payload encryption." Compare with <see cref="Encryption"/>
-    /// using ordinal equality.</summary>
-    public const string PLAINTEXT = "plaintext";
+    /// without payload encryption." Same wire value as
+    /// <see cref="D2.Shared.Encryption.EncryptionDomains.PLAINTEXT"/> — kept
+    /// as a per-descriptor alias for backward compat with code that imports
+    /// the descriptor type without pulling the encryption assembly into scope.
+    /// </summary>
+    public const string PLAINTEXT = D2.Shared.Encryption.EncryptionDomains.PLAINTEXT;
 
     /// <summary>Gets a value indicating whether this descriptor declares
     /// plaintext (no payload encryption) — i.e. <see cref="Encryption"/>

@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { ErrorCodes } from "../src/error-codes.js";
+import { ErrorCodes } from "../src/error-codes.g.js";
 import {
   canceled,
   conflict,

@@ -12,7 +12,14 @@
     "codegen:request-context": "tsx src/request-context-emit.ts",
     "codegen:auth-scopes": "tsx src/auth-scopes-emit.ts",
     "codegen:auth-error-codes": "tsx src/auth-error-codes-emit.ts",
-    "codegen:auth-failures": "tsx src/auth-failures-emit.ts"
+    "codegen:auth-failures": "tsx src/auth-failures-emit.ts",
+    "codegen:error-codes": "tsx src/error-codes-emit.ts",
+    "codegen:problem-details": "tsx src/problem-details-emit.ts",
+    "codegen:grpc-trailers": "tsx src/grpc-trailers-emit.ts",
+    "codegen:otel-messaging-tags": "tsx src/otel-messaging-tags-emit.ts",
+    "codegen:encryption-domains": "tsx src/encryption-domains-emit.ts",
+    "codegen:dlq-failure-metadata": "tsx src/dlq-failure-metadata-emit.ts",
+    "codegen:encryption-frame": "tsx src/encryption-frame-emit.ts"
   },
   "dependencies": {
     "@d2/utilities": "workspace:*"

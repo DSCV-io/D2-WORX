@@ -30,7 +30,9 @@ Each package owns its own `README.md` describing its public API, codegen workflo
 | [`headers-amqp/`](headers-amqp/)                                 | **Built** | AMQP-applicable wire-protocol headers (AMQP-only entries + cross-transport entries inline). Codegen from the headers spec.                                      | `D2.Shared.Headers.Amqp`                                                                   |
 | [`headers-grpc/`](headers-grpc/)                                 | **Built** | gRPC-applicable wire-protocol headers. Codegen from the headers spec.                                                                                           | `D2.Shared.Headers.Grpc`                                                                   |
 | [`headers/`](headers/)                                           | **Built** | SvelteKit BFF-side glue: JWT claim decode, `x-d2-context` decode, RFC 7807 ProblemDetails builder, 5 server-side guards.                                        | NEW — no .NET counterpart                                                                  |
-| [`grpc-client/`](grpc-client/)                                   | **Built** | Singleton-per-process gRPC channel from BFF to Edge with internal-token + context-propagation interceptors.                                                     | Conceptually parallels `services.AddGrpcClient<T>()` + `IServiceIdentityClient`            |
+| [`grpc-client/`](grpc-client/)                                   | **Built** | Singleton-per-process gRPC channel from BFF to Edge with internal-token + context-propagation interceptors. Also exports the codegen-emitted `D2GrpcTrailers` catalog (mirrors .NET `D2.Shared.Auth.Grpc.Status.D2GrpcTrailers`) for consumer-side trailer-key reads.                | Conceptually parallels `services.AddGrpcClient<T>()` + `IServiceIdentityClient` plus `D2.Shared.Auth.Grpc.Status.D2GrpcTrailers`            |
+| [`encryption-abstractions/`](encryption-abstractions/)           | **Built** | Codegen-emitted `EncryptionDomains` (closed-enum keyring-domain identifiers) + `EncryptionFrame` (binary-layout field-offset + byte-length constants). Exposes the catalog so any TS reader (ops tooling, encryption pipelines, on-wire frame consumers) shares byte-equal identifiers with the .NET encoder. | `D2.Shared.Encryption.EncryptionDomains` + `D2.Shared.Encryption.EncryptionFrameLayout` |
+| [`messaging-abstractions/`](messaging-abstractions/)             | **Built** | Codegen-emitted DLQ failure-metadata wire-shape catalogs — `DlqFailureMetadataFields` (6 JSON property names) + `DlqFailureCauses` (5 closed-enum cause strings). Exposes the catalog so any TS reader (DLQ ops tooling, RabbitMQ subscribers) shares byte-equal identifiers with the .NET producers. | `D2.Shared.Messaging.DlqFailureMetadataFields` + `D2.Shared.Messaging.RabbitMq.Subscribing.DlqFailureCauses` |
 | [`contract-tests/`](contract-tests/)                             | **Built** | Cross-language parity test workspace — Vitest reads fixtures emitted by `D2.Shared.Tests` and asserts TS-side spec-emitted decoders / catalogs agree.           | NEW — no .NET counterpart (consumes fixtures emitted from `Integration/ContractFixtures/`) |
 
 ## Dependency graph
@@ -76,6 +78,12 @@ graph LR
         HeadersGrpc[headers-grpc]
     end
 
+    subgraph WIRE["Wire vocabularies (codegen-emitted)"]
+        direction TB
+        EncryptionAbs[encryption-abstractions]
+        MessagingAbs[messaging-abstractions]
+    end
+
     subgraph BOUNDARY["Edge boundary (BFF↔Edge)"]
         direction TB
         Headers[headers]
@@ -110,6 +118,8 @@ graph LR
         ContractTests --> HeadersHttp
         ContractTests --> HeadersAmqp
         ContractTests --> HeadersGrpc
+        ContractTests --> EncryptionAbs
+        ContractTests --> MessagingAbs
     end
 
     Result --> Utilities
@@ -126,15 +136,16 @@ graph LR
     ServiceDefaults --> Telemetry
     ServiceDefaults --> Utilities
 
-    class Result,Utilities,Resilience,I18n,Logging,Telemetry,ServiceDefaults,Protos,AuthCtxAbs,ReqCtxAbs,AuthAbs,HeadersCommon,HeadersHttp,HeadersAmqp,HeadersGrpc,Headers,GrpcClient,ContractTests built
+    class Result,Utilities,Resilience,I18n,Logging,Telemetry,ServiceDefaults,Protos,AuthCtxAbs,ReqCtxAbs,AuthAbs,HeadersCommon,HeadersHttp,HeadersAmqp,HeadersGrpc,EncryptionAbs,MessagingAbs,Headers,GrpcClient,ContractTests built
 ```
 
 **Reading the chart**
 
-- All Foundation, Context, Auth-vocabulary, and Headers packages are **codegen-emit-only** for their wire constants OR pure runtime helpers — none has internal sub-libraries.
+- All Foundation, Context, Auth-vocabulary, Headers, and Wire-vocabulary packages are **codegen-emit-only** for their wire constants OR pure runtime helpers — none has internal sub-libraries.
 - The 4 `headers-*` packages have ZERO runtime deps (pure constants); the analyzer is `tools/ts-codegen/src/headers-emit.ts`.
 - `auth-abstractions` has one runtime dep (`@d2/result` — the `D2Result` shape returned by `AuthFailures.*` factories).
 - `request-context-abstractions` re-exports types from `auth-context-abstractions` + ships the 1:1 `PropagatedContextSerializer` class from the same spec the .NET side uses.
+- The `WIRE` subgraph holds the 2 cross-language wire-vocabulary packages — `@d2/encryption-abstractions` (codegen `EncryptionDomains` closed-enum + `EncryptionFrame` binary-layout constants exposed for ops tooling and any TS reader of the on-wire encryption frame) and `@d2/messaging-abstractions` (codegen `DlqFailureMetadataFields` JSON property-name catalog + `DlqFailureCauses` closed-enum exposed for DLQ ops tooling and any TS RabbitMQ subscriber). Both are pure-constant packages with zero runtime deps.
 - The `BOUNDARY` subgraph holds the 2 SvelteKit BFF↔Edge glue packages — `@d2/headers` consumes the Auth/Context/Headers catalogs to populate `event.locals.requestContext` from the inbound `Authorization` JWT + `x-d2-context` envelope; `@d2/grpc-client` mirrors `services.AddGrpcClient<T>()` semantics with internal-token + context-propagation interceptors.
 - The `PARITY` subgraph holds the `@d2/contract-tests` private workspace package — Vitest tests read fixtures emitted by `D2.Shared.Tests` `Integration/ContractFixtures/` and assert TS-side spec-emitted catalogs / decoders agree byte-for-byte. Runs via `pnpm test:contracts` from the repo root.
 

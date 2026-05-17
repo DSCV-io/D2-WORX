@@ -104,7 +104,10 @@ describe("parseGatewayResponse — PascalCase responses", () => {
   it("parses a PascalCase failure response", async () => {
     const body = {
       Success: false,
-      Messages: ["Resource not found."],
+      // .NET emits TKMessage objects via TKMessageJsonConverter: {Key, Params?}
+      // → camelCase-normalized to {key, params?} on the TS side. Wire-shape
+      // parity is pinned by contracts/tk-message/tk-message.spec.json.
+      Messages: [{ Key: "common_errors_NOT_FOUND" }],
       InputErrors: [],
       ErrorCode: "NOT_FOUND",
       TraceId: "trace-456",
@@ -119,7 +122,7 @@ describe("parseGatewayResponse — PascalCase responses", () => {
     const result = await parseGatewayResponse(response);
 
     expect(result.success).toBe(false);
-    expect(result.messages).toEqual(["Resource not found."]);
+    expect(result.messages).toEqual([{ key: "common_errors_NOT_FOUND" }]);
     expect(result.errorCode).toBe("NOT_FOUND");
     expect(result.statusCode).toBe(404);
   });
@@ -132,7 +135,7 @@ describe("parseGatewayResponse — camelCase responses", () => {
   it("parses a camelCase middleware error", async () => {
     const body = {
       success: false,
-      messages: ["common_errors_TOO_MANY_REQUESTS"],
+      messages: [{ key: "common_errors_TOO_MANY_REQUESTS" }],
       inputErrors: [],
       errorCode: "RATE_LIMITED",
       traceId: "trace-789",
@@ -147,7 +150,7 @@ describe("parseGatewayResponse — camelCase responses", () => {
     const result = await parseGatewayResponse(response);
 
     expect(result.success).toBe(false);
-    expect(result.messages).toEqual(["common_errors_TOO_MANY_REQUESTS"]);
+    expect(result.messages).toEqual([{ key: "common_errors_TOO_MANY_REQUESTS" }]);
     expect(result.errorCode).toBe("RATE_LIMITED");
     expect(result.statusCode).toBe(429);
   });
@@ -155,7 +158,7 @@ describe("parseGatewayResponse — camelCase responses", () => {
   it("parses a camelCase unauthorized response", async () => {
     const body = {
       success: false,
-      messages: ["Invalid or expired JWT."],
+      messages: [{ key: "auth_errors_INVALID_OR_EXPIRED_JWT" }],
       inputErrors: [],
       errorCode: "UNAUTHORIZED",
       traceId: "trace-auth",
@@ -215,7 +218,10 @@ describe("parseGatewayResponse — edge cases", () => {
 
     expect(result.success).toBe(false);
     expect(result.statusCode).toBe(500);
-    expect(result.messages).toEqual(["Internal Server Error"]);
+    // Non-JSON bodies wrap in a synthetic REQUEST_FAILED TKMessage rather
+    // than smuggling the raw text into the i18n envelope — see §11.30 wire
+    // shape spec at contracts/tk-message.
+    expect(result.messages).toEqual([{ key: "common_errors_REQUEST_FAILED" }]);
   });
 
   it("handles whitespace-only body as empty", async () => {
@@ -243,17 +249,63 @@ describe("parseGatewayResponse — edge cases", () => {
     expect(result.success).toBe(true);
   });
 
-  it("parses inputErrors with field name and error messages", async () => {
+  it("parses inputErrors with field name and TKMessage[] errors (wire-shape object)", async () => {
     const body = {
       Success: false,
-      InputErrors: [["email", "Email is required", "Email must be valid"]],
-      Messages: ["Validation failed"],
+      // .NET emits InputError as {Field, Errors: TKMessage[]} per the
+      // contracts/input-error spec — NOT a tuple. The TS-side parser
+      // camelCase-normalizes Field → field and Errors → errors.
+      InputErrors: [
+        {
+          Field: "email",
+          Errors: [
+            { Key: "common_validation_EMAIL_REQUIRED" },
+            { Key: "common_validation_EMAIL_INVALID" },
+          ],
+        },
+      ],
+      Messages: [{ Key: "common_errors_VALIDATION_FAILED" }],
     };
 
     const response = new Response(JSON.stringify(body), { status: 400 });
     const result = await parseGatewayResponse(response);
 
-    expect(result.inputErrors).toEqual([["email", "Email is required", "Email must be valid"]]);
+    expect(result.inputErrors).toEqual([
+      {
+        field: "email",
+        errors: [
+          { key: "common_validation_EMAIL_REQUIRED" },
+          { key: "common_validation_EMAIL_INVALID" },
+        ],
+      },
+    ]);
+  });
+
+  // -------------------------------------------------------------------
+  // Regression test pinning the `messages` field as TKMessage[]. The
+  // .NET gateway emits TKMessage objects via TKMessageJsonConverter, so
+  // the TS-side type must declare `messages?: TKMessage[]` — consumers
+  // handling the field as `string[]` (e.g. passing to toast
+  // notifications) would crash on the runtime TKMessage objects, which
+  // are `{key, args?}` records. This test pins the TKMessage[]
+  // declaration against any future drift: the parsed value is always an
+  // object with a `key` property, never a bare string.
+  // -------------------------------------------------------------------
+  it("regression: messages field is TKMessage[], not string[]", async () => {
+    const body = {
+      success: false,
+      messages: [{ key: "auth_errors_BEARER_MISSING" }],
+      errorCode: "AUTH_BEARER_MISSING",
+    };
+    const response = new Response(JSON.stringify(body), { status: 401 });
+    const result = await parseGatewayResponse(response);
+
+    expect(result.messages).toHaveLength(1);
+    // The wire-shape pin — value at index 0 is an object with a `key`
+    // property, NOT a bare string.
+    const first = result.messages[0]!;
+    expect(typeof first).toBe("object");
+    expect(first).toHaveProperty("key", "auth_errors_BEARER_MISSING");
   });
 });
 
@@ -261,27 +313,33 @@ describe("parseGatewayResponse — edge cases", () => {
 // networkErrorResult
 // ---------------------------------------------------------------------------
 describe("networkErrorResult", () => {
-  it("creates an unhandled exception result from Error", () => {
+  // Per §11.30 wire-shape spec rollout: the `messages` field is reserved
+  // for translation-key envelopes (TKMessage[]). Raw exception text gets
+  // surfaced via the trace id / log pipeline rather than smuggled into
+  // the i18n field — the runtime never sees ad-hoc English strings on
+  // the wire path. networkErrorResult always emits REQUEST_FAILED
+  // regardless of the underlying error.
+  it("creates an unhandled exception result with REQUEST_FAILED TKMessage from Error", () => {
     const error = new Error("fetch failed: ECONNREFUSED");
     const result = networkErrorResult(error);
 
     expect(result.success).toBe(false);
     expect(result.statusCode).toBe(500);
-    expect(result.messages).toEqual(["fetch failed: ECONNREFUSED"]);
+    expect(result.messages).toEqual([{ key: "common_errors_REQUEST_FAILED" }]);
   });
 
-  it("creates a generic message for non-Error values", () => {
+  it("creates a REQUEST_FAILED TKMessage for non-Error string values", () => {
     const result = networkErrorResult("something went wrong");
 
     expect(result.success).toBe(false);
     expect(result.statusCode).toBe(500);
-    expect(result.messages).toEqual(["common_errors_REQUEST_FAILED"]);
+    expect(result.messages).toEqual([{ key: "common_errors_REQUEST_FAILED" }]);
   });
 
-  it("creates a generic message for null", () => {
+  it("creates a REQUEST_FAILED TKMessage for null", () => {
     const result = networkErrorResult(null);
 
     expect(result.success).toBe(false);
-    expect(result.messages).toEqual(["common_errors_REQUEST_FAILED"]);
+    expect(result.messages).toEqual([{ key: "common_errors_REQUEST_FAILED" }]);
   });
 });

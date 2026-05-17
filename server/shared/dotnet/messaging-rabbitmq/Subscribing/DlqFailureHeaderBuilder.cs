@@ -43,7 +43,7 @@ internal static class DlqFailureHeaderBuilder
         ArgumentNullException.ThrowIfNull(exception);
         var meta = new DlqFailureMetadata
         {
-            Cause = Causes.HANDLER_EXCEPTION,
+            Cause = DlqFailureCauses.HANDLER_EXCEPTION,
             ErrorCode = exception.GetType().FullName ?? exception.GetType().Name,
 
             // PII guard: do NOT propagate exception.Message (handler-built
@@ -71,7 +71,7 @@ internal static class DlqFailureHeaderBuilder
         ArgumentNullException.ThrowIfNull(result);
         var meta = new DlqFailureMetadata
         {
-            Cause = Causes.HANDLER_RESULT_FAILURE,
+            Cause = DlqFailureCauses.HANDLER_RESULT_FAILURE,
             ErrorCode = result.ErrorCode ?? "UNKNOWN",
             Detail = Truncate(string.Join("; ", result.Messages.Select(m => m.Key))),
             AttemptCount = attemptCount,
@@ -96,8 +96,8 @@ internal static class DlqFailureHeaderBuilder
     {
         var meta = new DlqFailureMetadata
         {
-            Cause = Causes.RETRIES_EXHAUSTED,
-            ErrorCode = Causes.RETRIES_EXHAUSTED,
+            Cause = DlqFailureCauses.RETRIES_EXHAUSTED,
+            ErrorCode = DlqFailureCauses.RETRIES_EXHAUSTED,
             Detail = null,
             AttemptCount = attemptCount,
             TraceId = traceId,
@@ -107,7 +107,7 @@ internal static class DlqFailureHeaderBuilder
     }
 
     /// <summary>Builds the header bytes for a body decrypt / parse failure.</summary>
-    /// <param name="cause">One of <see cref="Causes"/>.</param>
+    /// <param name="cause">One of the <see cref="DlqFailureCauses"/> constants.</param>
     /// <param name="exception">The exception caught.</param>
     /// <param name="traceId">Optional W3C trace id for correlation.</param>
     /// <param name="nackedBy">Optional service name.</param>
@@ -145,24 +145,5 @@ internal static class DlqFailureHeaderBuilder
         if (input is null) return null;
 
         return input.Length <= _DETAIL_MAX_CHARS ? input : input[.._DETAIL_MAX_CHARS];
-    }
-
-    /// <summary>Causes — see <see cref="DlqFailureMetadata.Cause"/>.</summary>
-    public static class Causes
-    {
-        /// <summary>Handler returned a non-Ok <see cref="D2Result"/>.</summary>
-        public const string HANDLER_RESULT_FAILURE = "HANDLER_RESULT_FAILURE";
-
-        /// <summary>Handler threw an unhandled exception.</summary>
-        public const string HANDLER_EXCEPTION = "HANDLER_EXCEPTION";
-
-        /// <summary>AEAD decrypt failed (kid missing, tag mismatch, etc.).</summary>
-        public const string DECRYPT_FAILURE = "DECRYPT_FAILURE";
-
-        /// <summary>JSON deserialization of the message body failed.</summary>
-        public const string DESERIALIZE_FAILURE = "DESERIALIZE_FAILURE";
-
-        /// <summary>Retry tier limit hit; message routed direct to DLQ.</summary>
-        public const string RETRIES_EXHAUSTED = "RETRIES_EXHAUSTED";
     }
 }

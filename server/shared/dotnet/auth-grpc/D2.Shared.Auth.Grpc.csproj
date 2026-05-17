@@ -100,10 +100,21 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\in-process-keys-source-gen\D2.Shared.InProcessKeys.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
+    <!--
+      GrpcTrailers SourceGen — emits D2GrpcTrailers.g.cs into this csproj from
+      contracts/grpc-trailers/grpc-trailers.spec.json. Spec-drives the
+      ERROR_CODE / MESSAGES / TRACE_ID trailer-key constants consumed by
+      D2RpcStatusExtensions; cross-language parity with @d2/grpc-client via
+      tools/ts-codegen.
+    -->
+    <ProjectReference Include="..\grpc-trailers-source-gen\D2.Shared.Grpc.Trailers.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
     <AdditionalFiles Include="..\..\..\..\contracts\in-process-keys\keys.spec.json" />
+    <AdditionalFiles Include="..\..\..\..\contracts\grpc-trailers\grpc-trailers.spec.json" />
   </ItemGroup>
 
   <ItemGroup>

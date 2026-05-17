@@ -3,7 +3,11 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { ErrorCodes } from "../src/error-codes.js";
+import {
+  ALL_ERROR_CODES,
+  ErrorCodes,
+  getErrorHttpStatus,
+} from "../src/error-codes.g.js";
 import { HttpStatusCode } from "../src/http-status-codes.js";
 
 describe("ErrorCodes — per-VALUE pinning (defends rename safety)", () => {
@@ -25,6 +29,43 @@ describe("ErrorCodes — per-VALUE pinning (defends rename safety)", () => {
     ["CANCELED", "CANCELED"],
   ])("ErrorCodes.%s = %s", (key, value) => {
     expect(ErrorCodes[key as keyof typeof ErrorCodes]).toBe(value);
+  });
+});
+
+describe("ALL_ERROR_CODES — exhaustiveness", () => {
+  it("contains every ErrorCodes key", () => {
+    expect([...ALL_ERROR_CODES].sort()).toEqual(Object.keys(ErrorCodes).sort());
+  });
+
+  it("preserves spec order (NOT_FOUND first, CANCELED last)", () => {
+    expect(ALL_ERROR_CODES[0]).toBe("NOT_FOUND");
+    expect(ALL_ERROR_CODES[ALL_ERROR_CODES.length - 1]).toBe("CANCELED");
+  });
+});
+
+describe("getErrorHttpStatus — per-VALUE pinning (mirrors .NET ErrorCodes.GetHttpStatus)", () => {
+  it.each([
+    ["NOT_FOUND", 404],
+    ["FORBIDDEN", 403],
+    ["UNAUTHORIZED", 401],
+    ["VALIDATION_FAILED", 400],
+    ["CONFLICT", 409],
+    ["UNHANDLED_EXCEPTION", 500],
+    ["COULD_NOT_BE_SERIALIZED", 500],
+    ["COULD_NOT_BE_DESERIALIZED", 500],
+    ["SERVICE_UNAVAILABLE", 503],
+    ["SOME_FOUND", 206],
+    ["PARTIAL_SUCCESS", 207],
+    ["RATE_LIMITED", 429],
+    ["IDEMPOTENCY_IN_FLIGHT", 409],
+    ["PAYLOAD_TOO_LARGE", 413],
+    ["CANCELED", 400],
+  ])("getErrorHttpStatus(%s) = %s", (code, expectedStatus) => {
+    expect(getErrorHttpStatus(code)).toBe(expectedStatus);
+  });
+
+  it("returns 500 for an unknown code (defensive default)", () => {
+    expect(getErrorHttpStatus("UNKNOWN_TO_THE_CATALOG")).toBe(500);
   });
 });
 

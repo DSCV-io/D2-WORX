@@ -919,6 +919,35 @@ Inside a full `D2Result`:
 
 **Translation happens client-side.** SvelteKit / Paraglide consumes the wire-format `TKMessage` objects and renders them in the active locale. The server is locale-unaware on the HTTP response path. CDN caching benefits, no `Vary: Accept-Language` fragmentation. The runtime `Translator` is invoked only for outbound notifications where recipient locale comes from the user profile.
 
+### Wire-shape spec — property-name single source of truth
+
+The `key` / `params` / `field` / `errors` property names that ride the `TKMessage` and `InputError` JSON envelopes are NOT inline string literals on either side of the wire. They come from the spec-derived `TkMessageWireShape` + `InputErrorWireShape` catalogs:
+
+- **.NET side** — `D2.Shared.WireShapes.SourceGen` (multi-target dispatch by assembly name) emits `TkMessageWireShape.g.cs` (KEY / PARAMS) into `D2.Shared.I18n.Abstractions` and `InputErrorWireShape.g.cs` (FIELD / ERRORS) into `D2.Shared.Result` from `contracts/tk-message/tk-message.spec.json` + `contracts/input-error/input-error.spec.json`. `TKMessageJsonConverter.Read`/`Write` reference `TkMessageWireShape.KEY`/`.PARAMS`; `InputError`'s record parameters carry `[JsonPropertyName(InputErrorWireShape.FIELD/ERRORS)]` so the wire shape stays camelCase under ANY `JsonSerializerOptions`.
+- **TS side** — `tools/ts-codegen/src/wire-shape-emit.ts` emits `tk-message.g.ts` + `input-error.g.ts` into `@d2/result` from the SAME specs.
+
+Cross-language drift on the property names is structurally impossible. Catalogs are parity-tested at `server/shared/typescript/contract-tests/tests/tk-message.parity.test.ts` + `input-error.parity.test.ts` (including round-trip fixtures captured by `TKMessageFixtureEmitter` / `InputErrorFixtureEmitter`).
+
+### BFF boundary translation — `renderMessages`
+
+`@d2/result` exposes three small helpers (`renderMessage`, `renderMessages`, `renderInputErrors`) for the BFF / browser boundary where downstream consumers (toast notifications, form-error display, plain-text logs) expect rendered strings rather than `TKMessage` envelopes. They take a caller-supplied `TranslateFn = (key, params?) => string` so the rendering surface stays decoupled from the consumer's translation backend (Paraglide on the browser, `ITranslator` on a Node-side outbound notification path, etc.):
+
+```ts
+import { renderMessages, renderInputErrors } from "@d2/result";
+import * as m from "$lib/paraglide/messages.js";
+
+const translate = (key, params) => {
+  const fn = (m as Record<string, (p?: Record<string, unknown>) => string>)[key];
+  return fn === undefined ? key : fn(params);
+};
+
+// In a Svelte component / SSR loader:
+const toastLines = renderMessages(result.messages, translate);
+const formErrors = renderInputErrors(result.inputErrors, translate);
+```
+
+The wire path keeps `TKMessage` shapes end-to-end. **Pre-rendering at the .NET server would destroy client-side locale-switching ability** — the server doesn't know the client's locale, and the whole point of TKMessage shipping is so the client can re-render on locale change without a server round-trip. The `render-messages.ts` helper is the explicit, caller-controlled boundary translator — the inverse of the implicit / always-on server-side translation that breaks i18n on locale change.
+
 ### TK Source Generator
 
 > **TL;DR.** Edit `contracts/messages/en-US.json`, save, build. The constant `TK.Domain.Category.IDENTIFIER` appears at next IntelliSense hit. No registration step, no manual TK class to maintain. Drift between JSON and code is impossible by construction. Read on for the rules; you can skip the internals on first pass.
@@ -991,8 +1020,8 @@ All instances mirror the same csproj template + diagnostic-split + single-target
 | SrcGen | Spec source | Emits into | Diagnostic prefix | Notes |
 |---|---|---|---|---|
 | `D2.Shared.I18n.SourceGen` | `contracts/messages/*.json` | `D2.Shared.I18n.Abstractions` | `D2I18N` | Translation-key constants `TK.*`. See the [TK Source Generator](#tk-source-generator) section above. |
-| `D2.Shared.Auth.Scopes.SourceGen` | `contracts/auth-scopes/scopes.spec.json` | `D2.Shared.Auth.Abstractions` | `D2AS` | OAuth scope-string constants + tree structure. Reference template — newer SrcGens mirror its file layout. |
-| `D2.Shared.Auth.Audiences.SourceGen` | `contracts/auth-audiences/audiences.spec.json` | `D2.Shared.Auth.Abstractions` | `D2AAU` | JWT `aud`-claim audience constants + `AllUrls` / `ByName` / `IsKnown` / `Resolve` / `ResolveByUrl` helpers. |
+| `D2.Shared.Auth.Scopes.SourceGen` | `contracts/auth-scopes/scopes.spec.json` | `D2.Shared.Auth.Abstractions` | `D2SCP` | OAuth scope-string constants + tree structure. Reference template — newer SrcGens mirror its file layout. |
+| `D2.Shared.Auth.Audiences.SourceGen` | `contracts/auth-audiences/audiences.spec.json` | `D2.Shared.Auth.Abstractions` | `D2AUD` | JWT `aud`-claim audience constants + `AllUrls` / `ByName` / `IsKnown` / `Resolve` / `ResolveByUrl` helpers. |
 | `D2.Shared.Auth.ErrorCodes.SourceGen` | `contracts/auth-error-codes/auth-error-codes.spec.json` | `D2.Shared.Auth` | `D2AEC` | `AuthErrorCodes` constants + `AuthFailures` semantic-factory class. Consumed by transport-binding csprojs that surface `d2_error_code` on the wire. |
 | `D2.Shared.Telemetry.Tags.SourceGen` | `contracts/telemetry/telemetry.spec.json` | per-meter (gated by `consumingAssembly`) | `D2TEL` | Per-meter `*TelemetryTags.g.cs` typed-constants classes. The `d2.auth.problem.emitted` instrument's `d2_error_code` tag uses `valuesFromSpec=auth-error-codes` — cross-spec resolver enumerates at codegen time; `AuthErrorCodesVsTelemetrySpecConsistencyTests` asserts set equality. |
 | `D2.Shared.Headers.SourceGen` | `contracts/headers/headers.spec.json` | `D2.Shared.Headers.{Common,Http,Amqp,Grpc}` (gated by `Compilation.AssemblyName`; `Common` filters `applicability.Length >= 2`, others filter `applicability.Contains(transport)`) | `D2HDR` | Wire-protocol header constants. One spec, four catalogs, identical wire values for cross-transport entries. |
@@ -1000,6 +1029,15 @@ All instances mirror the same csproj template + diagnostic-split + single-target
 | `D2.Shared.InProcessKeys.SourceGen` | `contracts/in-process-keys/keys.spec.json` | `D2.Shared.Auth.Abstractions` (`D2HttpContextItems`) + `D2.Shared.Auth.Grpc` (`D2GrpcUserStateKeys`) (per-binding `consumingAssembly`) | `D2IPK` | In-process slot-key catalogs with cross-binding wire-value parity by construction. |
 | `D2.Shared.Context.SourceGen` | `contracts/auth-context/IAuthContext.spec.json` + `contracts/request-context/IRequestContext.spec.json` | `D2.Shared.AuthContext.Abstractions` (`IAuthContext`) + `D2.Shared.Context.Abstractions` (`IRequestContext`, `MutableRequestContext`, `PropagatedContext`, `PropagatedContextExtensions`, `PropagatedContextSerializer`) (per-assembly dispatch) | `D2CTX` | Spec-driven interface + concrete + propagation codec. Identity fields (`UserId` / `OrgId` / `Scopes` / `ActorChain`) MUST NOT be marked `propagate: true` — those rebuild from the JWT at every sync hop. |
 | `D2.Shared.Messaging.SourceGen` | `contracts/mq-messages/mq-messages.spec.json` + `contracts/mq-subscriptions/mq-subscriptions.spec.json` | `D2.Shared.Messaging.Abstractions` (`MqMessages.g.cs` + `MqSubscriptions.g.cs` constants + immutable `MqMessagesRegistry` / `MqSubscriptionsRegistry` lookup tables) | `D2MQ` | Cross-spec validation against `D2.Shared.Encryption.EncryptionDomains` (D2MQ004 fires on encryption-domain drift). Drives the `[MqPub]` / `[MqSub]` attribute resolution + the wire-routing tables consumed by `D2.Shared.Messaging.RabbitMq`. |
+| `D2.Shared.Result.Envelope.SourceGen` | `contracts/d2result-envelope/d2result-envelope.spec.json` | `D2.Shared.Result` (`D2ResultEnvelopeFieldNames.g.cs` — 7 JSON property-name constants for the D2Result Shape B wire envelope) | `D2DRE` | Hand-written `D2Result` properties carry `[JsonPropertyName(D2ResultEnvelopeFieldNames.*)]` referencing the codegen constants — single source of truth for the wire-key strings. Same spec drives the TS-side `@d2/result` catalog via `tools/ts-codegen/src/d2result-envelope-emit.ts`; the BFF gateway parser reads via these constants instead of hand-rolled string literals. See [Codegen-emitted JSON property names — partial-property vs direct-attribute decision](#codegen-emitted-json-property-names--partial-property-vs-direct-attribute-decision) below for the design choice. |
+| `D2.Shared.Result.ErrorCodes.SourceGen` | `contracts/error-codes/error-codes.spec.json` | `D2.Shared.Result` (`ErrorCodes.g.cs` — generic D2Result error-code constants + `GetHttpStatus` per-code HTTP-status mapping) | `D2EC` | Sibling pattern to `D2AEC` (AuthErrorCodes) — generic D2Result-level error codes (`OK`, `NOT_FOUND`, `VALIDATION_FAILED`, `CONFLICT`, etc.). Same spec drives the TS-side `@d2/result` catalog via `tools/ts-codegen/src/error-codes-emit.ts`. |
+| `D2.Shared.WireShapes.SourceGen` | `contracts/tk-message/tk-message.spec.json` + `contracts/input-error/input-error.spec.json` | `D2.Shared.I18n.Abstractions` (`TkMessageWireShape.g.cs` — `KEY` + `PARAMS` JSON property-name constants) + `D2.Shared.Result` (`InputErrorWireShape.g.cs` — `FIELD` + `ERRORS` JSON property-name constants) (per-assembly dispatch) | `D2WS` | Wire-shape catalogs for the two record types that compose the D2Result Shape B envelope. Mirrors the TS-side `@d2/i18n` + `@d2/result` catalogs via `tools/ts-codegen/src/wire-shapes-emit.ts`. Aligns `D2Result.messages` to ship as `IReadOnlyList<TKMessage>` on both .NET and TS sides — the spec-driven `{key, params?}` envelope is the single source of truth for the wire shape. |
+| `D2.Shared.ProblemDetails.SourceGen` | `contracts/problem-details/problem-details.spec.json` | `D2.Shared.ProblemDetails.Abstractions` (`D2ProblemDetailsKeys.g.cs` — `TYPE_URI_PREFIX` + `CONTENT_TYPE` + `EXTENSION_*` extension keys + `TITLE_*` per-status titles + `TitleFor` switch helper) | `D2PRB` | RFC 7807 ProblemDetails wire-format catalog. Consumed by BOTH `D2.Shared.Auth.Http` (`D2ProblemDetailsExtensions.ToProblemDetails`) AND `D2.Shared.AspNetCore` (`D2ProblemDetailsCustomizer`). Same spec drives the TS-side `@d2/headers` ProblemDetails builder via `tools/ts-codegen/src/problem-details-emit.ts`. |
+| `D2.Shared.Grpc.Trailers.SourceGen` | `contracts/grpc-trailers/grpc-trailers.spec.json` | `D2.Shared.Auth.Grpc` (`D2GrpcTrailers.g.cs` — gRPC trailer-key constants for cross-service error propagation) | `D2GT` | Single source of truth for the gRPC trailer Metadata keys (e.g. `d2-error-code`, `d2-trace-id`). Same spec drives the TS-side `@d2/grpc-client` catalog via `tools/ts-codegen/src/grpc-trailers-emit.ts`. Pins the trailer wire key for the trace id at the canonical camelCase `traceId` (matches the HTTP ProblemDetails extension key — single mental model for operators). |
+| `D2.Shared.EncryptionDomains.SourceGen` | `contracts/encryption-domains/encryption-domains.spec.json` | `D2.Shared.Encryption` (`EncryptionDomains.g.cs` — closed-enum keyring-domain constants) | `D2ED` | Closed-catalog domain identifiers consumed by `services.AddD2EncryptionFor(domain, factory)`. Cross-spec consumer: `D2MQ004` validates `mq-messages.spec`'s `encryption` field values against this catalog at build time. Mirrors the TS-side `@d2/encryption-abstractions` catalog via `tools/ts-codegen/src/encryption-domains-emit.ts`. |
+| `D2.Shared.EncryptionFrame.SourceGen` | `contracts/encryption-frame/encryption-frame.spec.json` | `D2.Shared.Encryption` (`EncryptionFrameLayout.g.cs` — per-field `*_OFFSET` + `*_LENGTH` byte constants + `CONSTRAINT_*` cap constants) | `D2EF` | Binary-layout source of truth for the D2 on-wire encryption frame. Cross-language critical — TS-side `@d2/encryption-abstractions` decoder reads via the same spec so the binary layout cannot drift across language boundaries. |
+| `D2.Shared.OtelMessagingTags.SourceGen` | `contracts/otel-messaging-tags/otel-messaging-tags.spec.json` | `D2.Shared.Messaging.RabbitMq` (`MessagingActivityTags.g.cs` — OTel activity-tag attribute-name constants for publisher + consumer Activity.SetTag calls) | `D2OMT` | Closes the `messaging.operation` vs `messaging.operation.type` consumer-publisher semconv drift structurally — both sides reference the same constant. Mirrors the TS-side messaging activity-tags catalog via `tools/ts-codegen/src/otel-messaging-tags-emit.ts`. |
+| `D2.Shared.Messaging.DlqMetadata.SourceGen` | `contracts/dlq-failure-metadata/dlq-failure-metadata.spec.json` | `D2.Shared.Messaging.Abstractions` (`DlqFailureMetadataFields.g.cs` — JSON property-name constants for the DLQ failure-metadata wire shape) + `D2.Shared.Messaging.RabbitMq.Subscribing` (`DlqFailureCauses.g.cs` — closed-enum cause-string constants for the `x-d2-failure-reason` header) (per-target dispatch) | `D2DLQ` | DLQ failure-metadata wire catalog consumed by the TS-side `@d2/messaging-abstractions` package. Mirrors via `tools/ts-codegen/src/dlq-failure-metadata-emit.ts`. |
 
 ### Codegen output is committed to git
 
@@ -1024,11 +1062,47 @@ When a hand-written constants catalog (e.g. `RequestHeaders.cs`, `JwtClaimTypes.
 
 The "delete outright" discipline keeps the codebase honest — a parallel-emit phase would let stale hand-written constants drift undetected. Same principle as not committing v1-retrospective framing into KEEP docs: describe what IS, not the journey from what WAS.
 
+### Codegen-emitted JSON property names — partial-property vs direct-attribute decision
+
+When a hand-written type (record / class / struct) carries `[JsonPropertyName]` attributes that need to reference codegen-emitted wire-key constants, two patterns are available. Both achieve identical wire correctness; the choice is structural fit:
+
+**Pattern A (preferred when feasible): C# 13 partial properties.** The hand-written type declares each property as `public partial T Foo { get; }`; a generated `.JsonAttributes.g.cs` file emits the implementation half with `[JsonPropertyName(SomeCatalog.FOO)]`. Pros: every wire key is touched twice (declaration + attribute), making accidental omission impossible. Cons: requires the property's TYPE to be visible to the generator (so the partial halves' signatures match exactly), only works for parameterless-constructor or auto-property shapes, and fragile under mixed-type record signatures where one half is `T` and the other needs `T?` / `required T` adjusters.
+
+**Pattern B (fallback when A is fragile): Direct `[JsonPropertyName(constant)]` on hand-written properties.** The hand-written type carries the attributes directly, referencing the codegen-emitted constants by name (e.g. `[JsonPropertyName(D2ResultEnvelopeFieldNames.SUCCESS)] public bool Success { get; }`). Pros: simple, no partial-property gymnastics, works for any property shape including mixed-type record signatures (`bool` / `string?` / `IReadOnlyList<T>` / `T?` / value-type enums). Cons: the attribute is hand-applied — a new property added without the attribute won't emit the wire key. Mitigation: a `WireKeysSubsetOfCatalog` regression test enumerates the generated wire keys against `Catalog.AllFields` and fails if any property leaks outside the catalog.
+
+**Verdict by use case:**
+- `DlqFailureMetadata` (mixed-type record with `required init` properties) → Pattern B.
+- `D2Result` / `D2Result<TData>` (mixed-type partial class with `bool` / `T?` / `IReadOnlyList<TKMessage>` / `HttpStatusCode` enum / `string?` properties + a generic payload subtype) → Pattern B. The catalog-pin regression test (`D2ResultJsonShapeTests.Serialize_WireKeysSubsetOfCatalog` + `Serialize_DoesNotLeakIsBooleanHelpers`) catches both leakage AND missing-attribute classes of bugs.
+- `InputError` (simple two-field record `Field` / `Errors`) → uses `[property: JsonPropertyName(...)]` on the record parameters (a record-specific application of Pattern B). The shape is small enough that omission would be obvious in code review.
+- `TKMessage` (uses a custom converter via `[JsonConverter(typeof(TKMessageJsonConverter))]`) → the converter references the wire-key constants in `Read`/`Write`, no attributes needed on the type itself.
+
+**Companion invariant: every derived / in-process helper property carries `[JsonIgnore]`.** When a type adds derived properties (e.g. `D2Result.Booleans.IsOk` / `IsNotFound` / etc., or any computed convenience getter), they MUST be `[JsonIgnore]`'d or they leak onto the wire as `{"isOk": true, "isNotFound": false, ...}` garbage that consumers have to filter out. Pinned by the `Serialize_DoesNotLeakIsBooleanHelpers` regression test.
+
+### Source-gen emitter test convention — per-VALUE substring pins, not framework snapshots
+
+Each source-gen ships a canonical 4-file test pattern under `tests/Unit/<Topic>/SourceGen/`:
+
+| File | Asserts |
+|---|---|
+| `<X>EmitterTests.cs` | Pure-logic emitter output — drives `<X>Emitter.Emit(spec)` with valid + ≥3 deliberate-drift specs; asserts per-VALUE substrings (e.g. `Should().Contain("public const string FOO = \"foo\";")`) and per-diagnostic-id verdict on the drift cases. |
+| `<X>SpecLoaderTests.cs` | Pure-logic JSON-shape validation — drives `<X>SpecLoader.Load(path, json)` directly; asserts populated-spec + `MalformedSpec` diagnostic for each of: malformed JSON / root-not-object / missing-required-array / per-entry missing required field / entry-not-object / empty-array-accepted. |
+| `<X>GeneratorTests.cs` | `IIncrementalGenerator` integration via `CSharpGeneratorDriver` — confirms emit-only-when-target-assembly, no-spec → no-emit, malformed-spec → diagnostic, run-twice-same-input → byte-identical output. |
+| `<X>DiagnosticIdsTests.cs` | Diagnostic-ID contract — per-prefix shape pin (`D2XX###`), uniqueness, per-constant per-VALUE pin via `[Theory]` so renaming a constant or changing its ID is a build break, not a silent contract change. |
+
+**Why per-VALUE substring pins, not a snapshot framework like `Verify.SourceGenerators`:**
+
+- The highest-value invariants are the wire VALUES (the constants downstream wire-protocol consumers will read) and the per-spec-error DIAGNOSTIC behavior. Both are exact-string assertions, which substring `.Contain(...)` + `.ContainSingle(d => d.DescriptorId == ...)` express directly.
+- A framework snapshot would capture formatting / whitespace / xmldoc wording too — but those are LOW-value to pin (intentional human edits to emitter prose would fire a snapshot diff with no wire-shape change to review).
+- The `<X>GeneratorTests.cs` `RunTwice_SameInputs_ProducesIdenticalOutput` test pins idempotency end-to-end (whitespace included) without committing a snapshot file to the repo — drift between two runs surfaces as an assertion failure.
+- Combined with the spec-pin tests in `tests/Unit/SpecsConsistency/` (cross-spec set equality) and the regression tests pinning the actual wire values seen from `JsonSerializer.Serialize(...)` against the catalog, the test suite covers every wire-affecting invariant without the costs of a snapshot framework.
+
+Substring assertions are the deliberate convention for source-gen emitter testing across this codebase. New source-gens follow the 4-file pattern above; existing source-gens that ship only the Emitter half should be backfilled with the other three when the next behavioral change touches them.
+
 Adding a new spec-driven codegen lib:
 
 1. Add `contracts/{topic}/{topic}.spec.json` + `schema.json`.
 2. Copy `server/shared/dotnet/auth-scopes-source-gen/` as a template — keep the per-source-gen file layout (`{Topic}Spec.cs`, `{Topic}SpecLoader.cs`, `{Topic}Emitter.cs`, `{Topic}Generator.cs`, `EmitDiagnostics.cs` factory shim, `EmitResult.cs`, `DiagnosticIds.cs`, `DiagnosticDescriptors.cs`). The `Polyfills/`, `EmitDiagnostic` record, `LoadResult<TSpec>`, and `SpecFile` types come from the shared `source-gen-shared/` directory via the `<Compile Include>` block (see "Shared source-gen scaffolding" below).
-3. Reserve a 4-letter diagnostic-id prefix (existing: `D2I18N`, `D2AS`, `D2AAU`, `D2AEC`, `D2TEL`, `D2HDR`, `D2JWT`, `D2IPK`, `D2CTX`, `D2MQ`) and number contiguously from `001`.
+3. Reserve a 4-letter diagnostic-id prefix (existing: `D2I18N`, `D2SCP`, `D2AUD`, `D2AEC`, `D2TEL`, `D2HDR`, `D2JWT`, `D2IPK`, `D2CTX`, `D2MQ`, `D2DRE`, `D2EC`, `D2WS`, `D2PRB`, `D2GT`, `D2ED`, `D2EF`, `D2OMT`, `D2DLQ`) and number contiguously from `001`.
 4. Gate emission by assembly name in the `[Generator]` so non-target consumers get analyzer-only.
 5. Wire each consumer csproj with `<ProjectReference … OutputItemType="Analyzer" ReferenceOutputAssembly="false" />` + `<AdditionalFiles Include="…/spec.json" />` + `<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>` + `<CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>` + the `<Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />` `<ItemGroup>` block.
 6. Add a per-lib `README.md` documenting the spec format, field rules, diagnostics table, emitted output, and wiring snippet.

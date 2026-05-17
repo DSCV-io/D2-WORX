@@ -118,8 +118,12 @@ Copyright (c) DCSV. All rights reserved.
   async function saveName(values: Record<string, string>) {
     const result = await updateNameApi(values.firstName, values.lastName);
     if (!result.success) {
-      const key = result.messages?.[0] ?? result.inputErrors?.[0]?.[1];
-      throw new Error(translateMessage(key, undefined, m.common_errors_UNKNOWN()));
+      // Prefer the first top-level message; fall back to the first
+      // input-error's first TKMessage (object shape per
+      // contracts/input-error spec — NOT tuple indexing).
+      const message =
+        result.messages?.[0] ?? result.inputErrors?.[0]?.errors?.[0];
+      throw new Error(translateMessage(message, undefined, m.common_errors_UNKNOWN()));
     }
     toast.success(m.common_ui_changes_saved());
   }
@@ -127,8 +131,12 @@ Copyright (c) DCSV. All rights reserved.
   async function saveUsername(value: string) {
     const result = await updateUsernameApi(value);
     if (!result.success) {
-      const key = result.messages?.[0] ?? result.inputErrors?.[0]?.[1];
-      throw new Error(translateMessage(key, undefined, m.common_errors_UNKNOWN()));
+      // Prefer the first top-level message; fall back to the first
+      // input-error's first TKMessage (object shape per
+      // contracts/input-error spec — NOT tuple indexing).
+      const message =
+        result.messages?.[0] ?? result.inputErrors?.[0]?.errors?.[0];
+      throw new Error(translateMessage(message, undefined, m.common_errors_UNKNOWN()));
     }
     toast.success(m.common_ui_changes_saved());
   }

@@ -4,6 +4,7 @@
 
 import { fail, HttpStatusCode } from "@d2/result";
 import { falsey } from "@d2/utilities";
+import { PROBLEM_DETAILS_CONTENT_TYPE } from "../problem-details.g.js";
 import { toProblemDetails } from "../problem-details.js";
 import type { GuardRequestEvent, GuardThrowers } from "./guard-types.js";
 
@@ -34,7 +35,11 @@ export function redirectIfAuthenticated(
       instance: event.url.pathname,
       title: "redirectIfAuthenticated invalid target",
     });
-    throwers.throwError(HttpStatusCode.InternalServerError, body);
+    throwers.throwError(
+      HttpStatusCode.InternalServerError,
+      body,
+      PROBLEM_DETAILS_CONTENT_TYPE,
+    );
   }
   const ctx = event.locals.requestContext;
   if (ctx === undefined || ctx === null) return;

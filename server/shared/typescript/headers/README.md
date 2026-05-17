@@ -22,6 +22,11 @@ hook reads `Authorization` and `x-d2-context` directly via
 | `parseAuthHeader(authHeader, opts?)`             | Decode `Authorization: Bearer <jwt>` into a `JwtPayload` (re-exported from `@d2/auth-abstractions`). SHAPE-only validation; signature/expiry are Edge's job. |
 | `parseRequestContextFromHeaders(headers, opts?)` | Decode Authorization + `x-d2-context` into an `IRequestContext` ready to assign to `event.locals.requestContext`.                                            |
 | `toProblemDetails(failure, opts)`                | RFC 7807 ProblemDetails builder; mirrors the .NET `D2ProblemDetailsExtensions` shape.                                                                        |
+| `PROBLEM_TYPE_URI_PREFIX`                        | Base URI for the RFC 7807 `type` field. Codegen-emitted from `contracts/problem-details/problem-details.spec.json` into `./problem-details.g.ts`.            |
+| `ProblemDetailsExtensionKeys`                    | `as const` map of extension-key wire values (`ERROR_CODE`, `MESSAGES`, `TRACE_ID`). Codegen-emitted from the same spec.                                      |
+| `ProblemDetailsTitles`                           | `as const` map of per-status human-readable titles (`UNAUTHORIZED`, `SERVICE_UNAVAILABLE`, etc.). Codegen-emitted from the same spec.                        |
+| `defaultTitleForStatus(status)`                  | Returns the spec-declared title for the given HTTP status code, or `REQUEST_FAILED` as fallback. Codegen-emitted from the same spec.                         |
+| `PROBLEM_DETAILS_CONTENT_TYPE`                   | RFC 7807 §6.1 content-type wire value (`application/problem+json`). Codegen-emitted from the same spec; consumed by guards on every rejection branch.        |
 | `requireAuth(event, throwers)`                   | Asserts authentication. Throws 401 ProblemDetails on failure.                                                                                                |
 | `requireOrg(event, throwers, ...types?)`         | Asserts auth + org context (optionally constrained to specific `OrgType`s). Throws 403.                                                                      |
 | `requireRole(event, throwers, ...roles?)`        | Asserts auth + non-empty role (optionally constrained). Throws 403.                                                                                          |
@@ -40,29 +45,42 @@ claim object, claim types correct.
 ## Pluggable thrower contract
 
 The 5 guards take a `GuardThrowers` parameter — a tiny interface with
-`throwError(status, body)` and `throwRedirect(status, location)`. The
-SvelteKit BFF wires SvelteKit's `error()` / `redirect()` into this
-interface at composition time; this package itself takes NO SvelteKit
-dependency.
+`throwError(status, body, contentType)` and
+`throwRedirect(status, location)`. The SvelteKit BFF wires SvelteKit's
+`error()` / `redirect()` into this interface at composition time; this
+package itself takes NO SvelteKit dependency.
+
+`throwError` is always invoked with `contentType =
+PROBLEM_DETAILS_CONTENT_TYPE` (`application/problem+json` — RFC 7807
+§6.1). Implementations MUST set the supplied content type on the outbound
+response (typically by constructing a SvelteKit `Response` with the
+header set, then throwing it through `error()`); defaulting to
+`application/json` strips ProblemDetails-aware clients of the spec-defined
+content discriminator.
 
 ## ProblemDetails wire contract
 
 Failure envelopes mirror the .NET
-`D2.Shared.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions` shape:
+`D2.Shared.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions` shape.
+The wire-format catalog (`PROBLEM_TYPE_URI_PREFIX`,
+`ProblemDetailsExtensionKeys`, `ProblemDetailsTitles`,
+`defaultTitleForStatus`) is codegen-emitted from
+`contracts/problem-details/problem-details.spec.json` into
+`./problem-details.g.ts`. The SAME spec drives the .NET-side
+`D2ProblemDetailsExtensions` partial class, so cross-language drift is
+structurally impossible (verified by
+`server/shared/typescript/contract-tests/tests/problem-details.parity.test.ts`).
 
-| Field           | Source                                                        |
-| --------------- | ------------------------------------------------------------- |
-| `type`          | `https://problems.d2-worx.com/{kebab-error-code}`             |
-| `title`         | Per-status human-readable title (overridable via opts).       |
-| `status`        | HTTP status from the `D2Result`.                              |
-| `detail`        | Optional opts.detail.                                         |
-| `instance`      | Request URL pathname (mandatory).                             |
-| `d2_error_code` | `failure.errorCode` (e.g. `AUTH_BEARER_MISSING`).             |
-| `d2_messages`   | `failure.messages` (TKMessage[] for client-side translation). |
-| `traceId`       | `failure.traceId` if present.                                 |
-
-Cross-language parity: the extension keys MUST stay in sync with the .NET
-emitter — change here, change in `D2ProblemDetailsExtensions`.
+| Field           | Source                                                                                     |
+| --------------- | ------------------------------------------------------------------------------------------ |
+| `type`          | `https://problems.d2.dcsv.io/{kebab-error-code}` (spec-driven `PROBLEM_TYPE_URI_PREFIX`). |
+| `title`         | Per-status human-readable title from the spec catalog (overridable via opts).              |
+| `status`        | HTTP status from the `D2Result`.                                                           |
+| `detail`        | Optional opts.detail.                                                                      |
+| `instance`      | Request URL pathname (mandatory).                                                          |
+| `d2_error_code` | `failure.errorCode` (e.g. `AUTH_BEARER_MISSING`).                                          |
+| `d2_messages`   | `failure.messages` (TKMessage[] for client-side translation).                              |
+| `traceId`       | `failure.traceId` if present.                                                              |
 
 ## Dependencies
 
@@ -102,9 +120,18 @@ import { error, redirect } from "@sveltejs/kit";
 import { Scopes } from "@d2/auth-abstractions";
 import { OrgType } from "@d2/auth-context-abstractions";
 
-// SvelteKit hook wiring.
+// SvelteKit hook wiring — `error()` accepts a `Response` so the BFF can
+// surface the spec-driven `application/problem+json` content type that
+// the guard threads through every rejection branch.
 const throwers: GuardThrowers = {
-  throwError: (status, body) => error(status, body),
+  throwError: (status, body, contentType) =>
+    error(
+      status,
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { "content-type": contentType },
+      }),
+    ),
   throwRedirect: (status, location) => redirect(status, location),
 };
 

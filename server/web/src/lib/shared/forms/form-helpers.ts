@@ -6,29 +6,53 @@
  * D2Result ↔ Superforms error mapping bridge.
  *
  * Converts D2Result `InputError[]` (from gateway responses) into the
- * `Record<string, string[]>` shape that Superforms expects for per-field errors.
+ * `Record<string, string[]>` shape that Superforms expects for per-field
+ * errors. `InputError` is an OBJECT (`{field, errors: TKMessage[]}`) per
+ * the spec-derived `InputErrorWireShape` catalog — NOT a tuple. The
+ * helper renders each `TKMessage` to a localized string via Paraglide's
+ * `m[key]()` keyed translator lookup; unknown keys fall back to the raw
+ * key string so the form still displays something operators can
+ * recognize.
  */
-import type { InputError } from "@d2/result";
+import type { InputError, TKMessage } from "@d2/result";
 import type { SuperValidated } from "sveltekit-superforms";
+import * as m from "$lib/paraglide/messages.js";
 
 /**
- * Convert D2Result InputError tuples to a field → errors map.
+ * Render one `TKMessage` to a localized string via Paraglide. Unknown
+ * keys fall back to the raw key — never throws, always returns a
+ * presentable string.
+ */
+function renderTk(message: TKMessage): string {
+  const fn = (m as Record<string, (params?: Record<string, unknown>) => string>)[
+    message.key
+  ];
+  return fn === undefined ? message.key : fn(message.params);
+}
+
+/**
+ * Convert D2Result `InputError[]` into a field → localized-strings map.
  *
- * InputError format: `[field, ...errors]`
- * Output format: `{ field: [error1, error2, ...] }`
+ * Wire format: `[{ field, errors: TKMessage[] }, ...]` — self-describing
+ * objects per the spec-derived `InputErrorWireShape` catalog.
+ * Output format: `{ field: [renderedString1, renderedString2, ...] }`.
  *
  * Handles dot-notation field names (e.g. `address.city`) and merges
- * duplicate field entries.
+ * duplicate field entries. Empty field names and zero-error entries are
+ * skipped.
  */
-export function mapD2Errors(inputErrors: readonly InputError[]): Record<string, string[]> {
+export function mapD2Errors(
+  inputErrors: readonly InputError[],
+): Record<string, string[]> {
   const result: Record<string, string[]> = {};
-  for (const [field, ...errors] of inputErrors) {
+  for (const { field, errors } of inputErrors) {
     if (!field || errors.length === 0) continue;
+    const rendered = errors.map(renderTk);
     const existing = result[field];
     if (existing) {
-      existing.push(...errors);
+      existing.push(...rendered);
     } else {
-      result[field] = [...errors];
+      result[field] = rendered;
     }
   }
   return result;

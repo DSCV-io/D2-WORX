@@ -71,6 +71,29 @@ Copyright (c) DCSV. All rights reserved.
       header-override values + per-entry path / origin lists.
     -->
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
+    <!--
+      result — D2Result types consumed by the ProblemDetails customizer when
+      a handler / middleware stashes a D2Result in HttpContext.Items so the
+      customizer can populate Type+Title+Status+d2_error_code+d2_messages+
+      d2_input_errors from spec-derived constants rather than guessing.
+      (Instance, traceId, and correlationId are populated unconditionally
+      regardless of whether a D2Result is stashed.)
+    -->
+    <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
+    <!--
+      problem-details-abstractions — codegen-emitted D2ProblemDetailsKeys
+      (TYPE_URI_PREFIX, CONTENT_TYPE, EXTENSION_*, TITLE_*, TitleFor switch)
+      consumed by D2ProblemDetailsCustomizer. Cross-language parity with the
+      TS-side @d2/headers catalog is structurally guaranteed (single spec).
+    -->
+    <ProjectReference Include="..\problem-details-abstractions\D2.Shared.ProblemDetails.Abstractions.csproj" />
+    <!--
+      headers-http — HttpHeaders.IDEMPOTENCY_KEY consumed by D2CorsOptions
+      to populate the default allowed-headers set with the single spec-driven
+      constant (Stripe-style "Idempotency-Key", per the headers spec). Single
+      wire value for one concept.
+    -->
+    <ProjectReference Include="..\headers-http\D2.Shared.Headers.Http.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -75,6 +75,15 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
     <ProjectReference Include="..\i18n-abstractions\D2.Shared.I18n.Abstractions.csproj" />
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
+    <!--
+      headers-grpc — codegen-emitted gRPC metadata-key constants
+      (GrpcHeaders.AUTHORIZATION etc.). Consumed by
+      ServiceIdentityCallCredentials when attaching the service-identity
+      Bearer token to outbound RPCs. Single spec-driven catalog shared with
+      the TS-side @d2/grpc-* packages so wire-protocol header names are
+      byte-identical across .NET and Node.
+    -->
+    <ProjectReference Include="..\headers-grpc\D2.Shared.Headers.Grpc.csproj" />
   </ItemGroup>
 
   <ItemGroup>

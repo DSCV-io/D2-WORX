@@ -55,13 +55,11 @@ public interface IRequestContext : global::D2.Shared.AuthContext.Abstractions.IA
     /// <summary>
     /// The fingerprint that was bound to this session at JWT mint time (the d2_fp claim). Format: 'v{N}.c1.c2.c3.c4.c5.s1.s2.s3.s4.s5' — leading version token then 10 component hashes (5 client-side: FingerprintJS-OSS, WebGL renderer, speech voices, media devices, extended fonts; 5 server-side: HTTP/2 SETTINGS frame, header order, Sec-CH-UA, Accept-Encoding, Accept-Language). Each component hash is the first 16 hex chars of SHA-256. Stable across all requests in a session. Propagated to async consumers (Audit, Courier) via the cross-hop x-d2-context header — never as plaintext caller identity (broker stays blind to identity).
     /// </summary>
-    [RedactData(Reason = RedactReason.PersonalInformation)]
     string? SessionFingerprint { get; }
 
     /// <summary>
     /// The fingerprint recomputed for THIS request by Edge fingerprint middleware, in the same dot-separated format as SessionFingerprint. Captures the actual device fingerprint of the originating request (vs the session-bound one). Propagated via x-d2-context so audit rows for async-triggered actions record the originating request's actual fingerprint — not just what the session was bound to.
     /// </summary>
-    [RedactData(Reason = RedactReason.PersonalInformation)]
     string? CurrentFingerprint { get; }
 
     /// <summary>
@@ -81,7 +79,6 @@ public interface IRequestContext : global::D2.Shared.AuthContext.Abstractions.IA
     /// <summary>
     /// Hash of the admin-location component only (city + region + country + postal). Matches D2.Shared.Location.AdminLocation.HashId for content-addressable lookup.
     /// </summary>
-    [RedactData(Reason = RedactReason.PersonalInformation)]
     string? AdminLocationHashId { get; }
 
     /// <summary>
@@ -99,6 +96,7 @@ public interface IRequestContext : global::D2.Shared.AuthContext.Abstractions.IA
     /// <summary>
     /// ISO 3166-2 subdivision code (e.g. 'US-CA').
     /// </summary>
+    [RedactData(Reason = RedactReason.PersonalInformation)]
     string? SubdivisionCode { get; }
 
     /// <summary>
@@ -165,19 +163,16 @@ public interface IRequestContext : global::D2.Shared.AuthContext.Abstractions.IA
     /// <summary>
     /// Autonomous System Number. Risk-scoring input — e.g. '&gt;5 different ASNs in last 2min → +15 risk'.
     /// </summary>
-    [RedactData(Reason = RedactReason.PersonalInformation)]
     int? Asn { get; }
 
     /// <summary>
     /// AS organization name (e.g. 'AT&amp;T Internet Services').
     /// </summary>
-    [RedactData(Reason = RedactReason.PersonalInformation)]
     string? AsnName { get; }
 
     /// <summary>
     /// ASN type — typically one of: business / isp / hosting / mobile / education / government. Datacenter/Tor policies key on this. Free-form string for now (no enum) — promote to enum if a real handler benefits from typed dispatch.
     /// </summary>
-    [RedactData(Reason = RedactReason.PersonalInformation)]
     string? AsnType { get; }
 
     #endregion

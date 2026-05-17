@@ -59,11 +59,11 @@ internal static class MessagingHostBuilder
         var hostBuilder = Host.CreateDefaultBuilder()
             .ConfigureServices((_, services) =>
             {
-                services.AddD2EncryptionFor(EncryptionDomains.Audit, _ =>
+                services.AddD2EncryptionFor(EncryptionDomains.AUDIT, _ =>
                     new PayloadCryptoKeyring(
                         activeKid: activeKid,
                         keys: keys,
-                        aadContext: Encoding.UTF8.GetBytes("d2/" + EncryptionDomains.Audit)));
+                        aadContext: Encoding.UTF8.GetBytes("d2/" + EncryptionDomains.AUDIT)));
 
                 // Handler stack: HandlerContext<T> for handler activation +
                 // a per-scope MutableRequestContext registered as both the

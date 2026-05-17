@@ -28,7 +28,7 @@ public sealed class DlqFailureHeaderBuilderTests
             ex, attemptCount: 3, traceId: "abcdef", nackedBy: "audit");
 
         var meta = Decode(bytes);
-        meta.Cause.Should().Be(DlqFailureHeaderBuilder.Causes.HANDLER_EXCEPTION);
+        meta.Cause.Should().Be(DlqFailureCauses.HANDLER_EXCEPTION);
         meta.ErrorCode.Should().Be(typeof(InvalidOperationException).FullName);
         meta.Detail.Should().BeNull("ex.Message must not leak into broker header");
         meta.AttemptCount.Should().Be(3);
@@ -63,7 +63,7 @@ public sealed class DlqFailureHeaderBuilderTests
             result, attemptCount: 1, traceId: "t-1");
 
         var meta = Decode(bytes);
-        meta.Cause.Should().Be(DlqFailureHeaderBuilder.Causes.HANDLER_RESULT_FAILURE);
+        meta.Cause.Should().Be(DlqFailureCauses.HANDLER_RESULT_FAILURE);
         meta.ErrorCode.Should().NotBeNullOrWhiteSpace();
         meta.AttemptCount.Should().Be(1);
         meta.TraceId.Should().Be("t-1");
@@ -82,10 +82,10 @@ public sealed class DlqFailureHeaderBuilderTests
         // H7: same PII guard for boundary failures — type only, no message.
         var ex = new InvalidOperationException("bad frame");
         var bytes = DlqFailureHeaderBuilder.FromBoundary(
-            DlqFailureHeaderBuilder.Causes.DECRYPT_FAILURE, ex, traceId: "trc");
+            DlqFailureCauses.DECRYPT_FAILURE, ex, traceId: "trc");
 
         var meta = Decode(bytes);
-        meta.Cause.Should().Be(DlqFailureHeaderBuilder.Causes.DECRYPT_FAILURE);
+        meta.Cause.Should().Be(DlqFailureCauses.DECRYPT_FAILURE);
         meta.ErrorCode.Should().Be(typeof(InvalidOperationException).FullName);
         meta.Detail.Should().BeNull();
         meta.TraceId.Should().Be("trc");
@@ -97,10 +97,10 @@ public sealed class DlqFailureHeaderBuilderTests
     {
         var ex = new JsonException("malformed");
         var bytes = DlqFailureHeaderBuilder.FromBoundary(
-            DlqFailureHeaderBuilder.Causes.DESERIALIZE_FAILURE, ex);
+            DlqFailureCauses.DESERIALIZE_FAILURE, ex);
 
         var meta = Decode(bytes);
-        meta.Cause.Should().Be(DlqFailureHeaderBuilder.Causes.DESERIALIZE_FAILURE);
+        meta.Cause.Should().Be(DlqFailureCauses.DESERIALIZE_FAILURE);
     }
 
     [Theory]
@@ -150,8 +150,8 @@ public sealed class DlqFailureHeaderBuilderTests
         var bytes = DlqFailureHeaderBuilder.FromRetriesExhausted(
             attemptCount: 5, traceId: "abcdef", nackedBy: "audit");
         var meta = Decode(bytes);
-        meta.Cause.Should().Be(DlqFailureHeaderBuilder.Causes.RETRIES_EXHAUSTED);
-        meta.ErrorCode.Should().Be(DlqFailureHeaderBuilder.Causes.RETRIES_EXHAUSTED);
+        meta.Cause.Should().Be(DlqFailureCauses.RETRIES_EXHAUSTED);
+        meta.ErrorCode.Should().Be(DlqFailureCauses.RETRIES_EXHAUSTED);
         meta.Detail.Should().BeNull();
         meta.AttemptCount.Should().Be(5);
         meta.TraceId.Should().Be("abcdef");
@@ -163,7 +163,7 @@ public sealed class DlqFailureHeaderBuilderTests
     {
         var bytes = DlqFailureHeaderBuilder.FromRetriesExhausted(attemptCount: 0);
         var meta = Decode(bytes);
-        meta.Cause.Should().Be(DlqFailureHeaderBuilder.Causes.RETRIES_EXHAUSTED);
+        meta.Cause.Should().Be(DlqFailureCauses.RETRIES_EXHAUSTED);
         meta.AttemptCount.Should().Be(0);
     }
 

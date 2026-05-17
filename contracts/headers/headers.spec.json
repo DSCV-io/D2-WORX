@@ -16,6 +16,13 @@
       "description": "Idempotency key for request deduplication. Conventional Stripe-style header name."
     },
     {
+      "name": "X-Correlation-Id",
+      "constName": "CORRELATION_ID",
+      "applicability": ["http"],
+      "convention": "d2",
+      "description": "Request correlation id. Inbound value (capped at 128 chars) flows to the response ProblemDetails extensions[correlationId] field; when absent / over-cap a fresh GUID is generated. Echoed back via the same header so callers can include it in subsequent requests / log lines for end-to-end correlation. The X- prefix is retained for compatibility with the widely-deployed convention (Microsoft, AWS, others) despite RFC 6648's deprecation guidance."
+    },
+    {
       "name": "X-D2-Client-Fingerprint",
       "constName": "CLIENT_FINGERPRINT",
       "applicability": ["http"],

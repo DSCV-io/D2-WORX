@@ -438,12 +438,16 @@ internal sealed class SubscriberChannel : IAsyncDisposable
 
         if (activity is not null)
         {
-            activity.SetTag("messaging.system", "rabbitmq");
-            activity.SetTag("messaging.destination.name", queue);
-            activity.SetTag("messaging.operation", "receive");
-            activity.SetTag("messaging.message.id", messageId);
-            activity.SetTag("messaging.rabbitmq.delivery_tag", deliveryTag);
-            activity.SetTag("messaging.rabbitmq.redelivered", ea.Redelivered);
+            activity.SetTag(MessagingActivityTags.MESSAGING_SYSTEM, "rabbitmq");
+            activity.SetTag(MessagingActivityTags.MESSAGING_DESTINATION_NAME, queue);
+
+            // OTel sem-conv canonical attribute is "messaging.operation.type"
+            // (NOT "messaging.operation"). Spec-driving structurally prevents
+            // drift from the standard.
+            activity.SetTag(MessagingActivityTags.MESSAGING_OPERATION_TYPE, "receive");
+            activity.SetTag(MessagingActivityTags.MESSAGING_MESSAGE_ID, messageId);
+            activity.SetTag(MessagingActivityTags.MESSAGING_RABBITMQ_DELIVERY_TAG, deliveryTag);
+            activity.SetTag(MessagingActivityTags.MESSAGING_RABBITMQ_REDELIVERED, ea.Redelivered);
         }
 
         SubscriberLog.DeliveryReceived(
@@ -518,8 +522,8 @@ internal sealed class SubscriberChannel : IAsyncDisposable
             catch (MessageBodyDecodeException dex)
             {
                 var cause = dex.InnerException is System.Text.Json.JsonException
-                    ? DlqFailureHeaderBuilder.Causes.DESERIALIZE_FAILURE
-                    : DlqFailureHeaderBuilder.Causes.DECRYPT_FAILURE;
+                    ? DlqFailureCauses.DESERIALIZE_FAILURE
+                    : DlqFailureCauses.DECRYPT_FAILURE;
                 var rootEx = dex.InnerException ?? dex;
                 await NackToDlqAsync(ea, cause, rootEx, messageId);
                 SubscriberLog.BoundaryFailure(

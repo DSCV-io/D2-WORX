@@ -44,7 +44,7 @@ hosted services pick those up and declare topology accordingly.
 
 ```csharp
 services
-    .AddD2EncryptionFor(EncryptionDomains.Audit, factory: ...)
+    .AddD2EncryptionFor(EncryptionDomains.AUDIT, factory: ...)
     .AddD2MessagingRabbitMq(
         configureConnection: o =>
         {
@@ -159,10 +159,12 @@ in DLQ via `x-dead-letter-exchange`).
 When a subscription's `MqSubscriptionDescriptor.TieredRetry` is non-null
 (via the spec entry's `tieredRetry` block), the declarer adds:
 
-- **Return exchange** `{q}.retry-return` (fanout) bound to the primary queue.
-- **Tier exchanges/queues** `{q}.retry-{0..N-1}.x` and `.q` — durable
-  queues with `x-message-ttl = tiers[i].TotalMilliseconds` and
-  `x-dead-letter-exchange = {q}.retry-return`.
+- **Return exchange** `{queue}.retry.return` (fanout) bound to the primary
+  queue.
+- **Tier exchanges and queues** `{queue}.retry.{i}` for `i` in
+  `0..N-1` — exchange and queue share the same name per tier. Each tier
+  queue is declared with `x-message-ttl = tiers[i].TotalMilliseconds`
+  and `x-dead-letter-exchange = {queue}.retry.return`.
 
 A failed message can be republished to a tier; on TTL expiry the broker
 dead-letters it onto the return exchange, which routes back to the

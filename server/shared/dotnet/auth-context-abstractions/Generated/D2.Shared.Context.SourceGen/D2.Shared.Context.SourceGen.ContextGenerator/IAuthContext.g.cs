@@ -65,13 +65,11 @@ public interface IAuthContext
     /// <summary>
     /// User identifier — JWT sub claim parsed as Guid. Null when sub is non-Guid (pure service-identity tokens — see Subject + IsServiceIdentity). During impersonation this is the impersonated user's id (the impersonator's id is recorded inside the act chain — see ImpersonatedBy).
     /// </summary>
-    [RedactData(Reason = RedactReason.PersonalInformation)]
     Guid? UserId { get; }
 
     /// <summary>
     /// Login handle — unique, lowercase username.
     /// </summary>
-    [RedactData(Reason = RedactReason.PersonalInformation)]
     string? Username { get; }
 
     /// <summary>

@@ -6,6 +6,7 @@ import { AuthErrorCodes } from "@d2/auth-abstractions";
 import type { OrgType } from "@d2/auth-context-abstractions";
 import { forbidden, HttpStatusCode } from "@d2/result";
 import { falsey } from "@d2/utilities";
+import { PROBLEM_DETAILS_CONTENT_TYPE } from "../problem-details.g.js";
 import { toProblemDetails } from "../problem-details.js";
 import type {
   AuthenticatedRequestContext,
@@ -63,5 +64,9 @@ function _throwForbidden(
     traceId,
   });
   const body = toProblemDetails(failure, { instance: event.url.pathname });
-  throwers.throwError(HttpStatusCode.Forbidden, body);
+  throwers.throwError(
+    HttpStatusCode.Forbidden,
+    body,
+    PROBLEM_DETAILS_CONTENT_TYPE,
+  );
 }

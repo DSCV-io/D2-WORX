@@ -41,8 +41,16 @@ export interface EmitResult {
  * - `D2CTX001-006`: context spec (auth-context / request-context).
  * - `D2SCP001-009`: auth-scopes spec.
  * - `D2AEC001-005`: auth-error-codes spec.
+ * - `D2EC001-005`: error-codes spec (generic D2Result error-code catalog).
  * - `D2HDR001-007`: headers spec.
  * - `D2JWT001-006`: jwt-claims spec.
+ * - `D2PRB001-006`: problem-details spec.
+ * - `D2GT001-005`: grpc-trailers spec.
+ * - `D2OMT001-005`: otel-messaging-tags spec.
+ * - `D2ED001-005`: encryption-domains spec.
+ * - `D2DLQ001-006`: dlq-failure-metadata spec.
+ * - `D2EF001-005`: encryption-frame spec.
+ * - `D2DRE001-005`: d2result-envelope spec.
  */
 export const DiagnosticIds = {
   // Context (auth-context + request-context).
@@ -66,6 +74,16 @@ export const DiagnosticIds = {
   AEC_INVALID_HTTP_STATUS: "D2AEC004",
   AEC_MALFORMED_SPEC: "D2AEC005",
 
+  // Generic D2Result error codes. Mirror the .NET
+  // D2.Shared.ResultErrorCodes.SourceGen DiagnosticIds values byte-for-byte
+  // — same spec source on both sides means same predicate violation surface,
+  // so identical IDs are correct.
+  EC_MALFORMED_SPEC: "D2EC001",
+  EC_DUPLICATE_CODE: "D2EC002",
+  EC_INVALID_HTTP_STATUS: "D2EC003",
+  EC_INVALID_CODE: "D2EC004",
+  EC_MISSING_DOC: "D2EC005",
+
   // Headers.
   HDR_MALFORMED_SPEC: "D2HDR001",
   HDR_UNKNOWN_TRANSPORT: "D2HDR002",
@@ -82,6 +100,80 @@ export const DiagnosticIds = {
   JWT_DUPLICATE_CONST_NAME: "D2JWT004",
   JWT_MISSING_SPEC: "D2JWT005",
   JWT_EMPTY_VALUE: "D2JWT006",
+
+  // Problem details. Mirror the .NET D2.Shared.ProblemDetails.SourceGen
+  // DiagnosticIds values byte-for-byte — same spec source on both sides
+  // means same predicate violation surface so identical IDs are correct.
+  PRB_MALFORMED_SPEC: "D2PRB001",
+  PRB_DUPLICATE_EXTENSION_KEY_CONST_NAME: "D2PRB002",
+  PRB_DUPLICATE_EXTENSION_KEY_VALUE: "D2PRB003",
+  PRB_DUPLICATE_TITLE_CONST_NAME: "D2PRB004",
+  PRB_DUPLICATE_TITLE_HTTP_STATUS: "D2PRB005",
+  PRB_TYPE_URI_PREFIX_MISSING_TRAILING_SLASH: "D2PRB006",
+
+  // Wire shapes (TKMessage + InputError). Mirror the .NET
+  // D2.Shared.WireShapes.SourceGen DiagnosticIds values byte-for-byte.
+  WS_MALFORMED_SPEC: "D2WS001",
+  WS_DUPLICATE_PROPERTY_CONST_NAME: "D2WS002",
+  WS_DUPLICATE_PROPERTY_VALUE: "D2WS003",
+  WS_INVALID_CONST_NAME: "D2WS004",
+  WS_MISSING_SPEC: "D2WS005",
+
+  // gRPC trailers. Mirror the .NET D2.Shared.Grpc.Trailers.SourceGen
+  // DiagnosticIds values byte-for-byte — same spec source on both sides
+  // means same predicate violation surface so identical IDs are correct.
+  GT_MALFORMED_SPEC: "D2GT001",
+  GT_DUPLICATE_CONST_NAME: "D2GT002",
+  GT_DUPLICATE_VALUE: "D2GT003",
+  GT_INVALID_CONST_NAME: "D2GT004",
+  GT_EMPTY_VALUE: "D2GT005",
+
+  // OTel messaging activity tags. Mirror the .NET
+  // D2.Shared.OtelMessagingTags.SourceGen DiagnosticIds values
+  // byte-for-byte — same spec source on both sides.
+  OMT_MALFORMED_SPEC: "D2OMT001",
+  OMT_DUPLICATE_CONST_NAME: "D2OMT002",
+  OMT_DUPLICATE_VALUE: "D2OMT003",
+  OMT_INVALID_CONST_NAME: "D2OMT004",
+  OMT_EMPTY_VALUE: "D2OMT005",
+
+  // Encryption domains. Mirror the .NET
+  // D2.Shared.EncryptionDomains.SourceGen DiagnosticIds values
+  // byte-for-byte — same spec source on both sides.
+  ED_MALFORMED_SPEC: "D2ED001",
+  ED_DUPLICATE_CONST_NAME: "D2ED002",
+  ED_DUPLICATE_VALUE: "D2ED003",
+  ED_INVALID_CONST_NAME: "D2ED004",
+  ED_EMPTY_VALUE: "D2ED005",
+
+  // DLQ failure metadata (fields + causes sub-catalogs). Mirror the .NET
+  // D2.Shared.Messaging.DlqMetadata.SourceGen DiagnosticIds values
+  // byte-for-byte — same spec source on both sides.
+  DLQ_MALFORMED_SPEC: "D2DLQ001",
+  DLQ_DUPLICATE_FIELD_CONST_NAME: "D2DLQ002",
+  DLQ_DUPLICATE_FIELD_VALUE: "D2DLQ003",
+  DLQ_DUPLICATE_CAUSE: "D2DLQ004",
+  DLQ_INVALID_CONST_NAME: "D2DLQ005",
+  DLQ_EMPTY_VALUE: "D2DLQ006",
+
+  // Encryption frame binary layout. Mirror the .NET
+  // D2.Shared.EncryptionFrame.SourceGen DiagnosticIds values
+  // byte-for-byte — same spec source on both sides.
+  EF_MALFORMED_SPEC: "D2EF001",
+  EF_DUPLICATE_FIELD_NAME: "D2EF002",
+  EF_OVERLAPPING_FIELDS: "D2EF003",
+  EF_INVALID_LENGTH: "D2EF004",
+  EF_INVALID_VERSION: "D2EF005",
+
+  // D2Result envelope (Shape B field names). Mirror the .NET
+  // D2.Shared.Result.Envelope.SourceGen DiagnosticIds values
+  // byte-for-byte — same spec source on both sides means same predicate
+  // violation surface so identical IDs are correct.
+  DRE_MALFORMED_SPEC: "D2DRE001",
+  DRE_DUPLICATE_FIELD_CONST_NAME: "D2DRE002",
+  DRE_DUPLICATE_FIELD_VALUE: "D2DRE003",
+  DRE_INVALID_CONST_NAME: "D2DRE004",
+  DRE_EMPTY_VALUE: "D2DRE005",
 } as const;
 
 /**

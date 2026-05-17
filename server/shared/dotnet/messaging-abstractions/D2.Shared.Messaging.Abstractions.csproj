@@ -49,12 +49,22 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\messaging-source-gen\D2.Shared.Messaging.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
+    <!--
+      DlqFailureMetadata SourceGen — multi-target. The Fields-half emits into
+      this csproj (DlqFailureMetadataFields.g.cs — the JSON property-name
+      catalog consumed by [JsonPropertyName] attributes on DlqFailureMetadata).
+      The Causes-half emits into messaging-rabbitmq (DlqFailureCauses.g.cs).
+    -->
+    <ProjectReference Include="..\dlq-failure-metadata-source-gen\D2.Shared.Messaging.DlqMetadata.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The two spec files the source-gen reads. -->
+    <!-- Spec files the source-gens read. -->
     <AdditionalFiles Include="..\..\..\..\contracts\mq-messages\mq-messages.spec.json" />
     <AdditionalFiles Include="..\..\..\..\contracts\mq-subscriptions\mq-subscriptions.spec.json" />
+    <AdditionalFiles Include="..\..\..\..\contracts\dlq-failure-metadata\dlq-failure-metadata.spec.json" />
   </ItemGroup>
 
   <ItemGroup>

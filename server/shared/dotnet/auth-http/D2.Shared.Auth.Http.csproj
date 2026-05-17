@@ -73,9 +73,20 @@ Copyright (c) DCSV. All rights reserved.
     <!--
       headers-http — codegen-emitted HTTP wire-protocol header constants
       (HttpHeaders.IDEMPOTENCY_KEY, .CLIENT_FINGERPRINT, .AUTHORIZATION, ...).
-      Replaces the previously-hand-written D2.Shared.Auth.Abstractions.RequestHeaders.
+      Single spec-driven catalog shared with the TS-side @d2/headers package
+      so wire-protocol header names are byte-identical across .NET and Node.
     -->
     <ProjectReference Include="..\headers-http\D2.Shared.Headers.Http.csproj" />
+    <!--
+      problem-details-abstractions — codegen-emitted RFC 7807 wire-format
+      catalog (D2ProblemDetailsKeys.TYPE_URI_PREFIX, .CONTENT_TYPE,
+      .EXTENSION_*, .TITLE_*, + TitleFor switch). Consumed by
+      D2ProblemDetailsExtensions.ToProblemDetails + JwtAuthMiddleware
+      response-write. Cross-language parity with the TS-side @d2/headers
+      ProblemDetails catalog is structurally guaranteed (single spec source
+      emits both sides).
+    -->
+    <ProjectReference Include="..\problem-details-abstractions\D2.Shared.ProblemDetails.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -7,12 +7,22 @@
 namespace D2.Shared.Result;
 
 using System.Net;
+using System.Text.Json.Serialization;
 using D2.Shared.I18n;
 
 /// <summary>
 /// Represents the result of an operation that produces a payload of type
 /// <typeparamref name="TData"/>.
 /// </summary>
+/// <remarks>
+/// The <see cref="Data"/> property carries the wire-shape's payload field,
+/// bound to <see cref="D2ResultEnvelopeFieldNames.DATA"/> via
+/// <see cref="JsonPropertyNameAttribute"/>. Per the deliberate
+/// <c>JsonSerializerOptions.IgnoreReadOnlyProperties=false</c> contract
+/// (the default), the read-only auto-property still serializes; the
+/// <c>System.Text.Json</c> serializer treats parameterless-constructor-set
+/// auto-properties symmetrically.
+/// </remarks>
 /// <typeparam name="TData">
 /// The type of the data returned by the operation.
 /// </typeparam>
@@ -46,6 +56,7 @@ public sealed partial class D2Result<TData> : D2Result
     /// <summary>
     /// Gets the resulting data of the operation, if any.
     /// </summary>
+    [JsonPropertyName(D2ResultEnvelopeFieldNames.DATA)]
     public TData? Data { get; }
 
     /// <summary>

@@ -145,13 +145,13 @@ internal sealed class RabbitMqMessageBus : IMessageBus
         using var activity = MessagingTelemetry.SR_ActivitySource.StartActivity(
             $"publish {route.Exchange}/{route.RoutingKey}",
             ActivityKind.Producer);
-        activity?.SetTag("messaging.system", "rabbitmq");
-        activity?.SetTag("messaging.destination.name", route.Exchange);
-        activity?.SetTag("messaging.rabbitmq.routing_key", route.RoutingKey);
-        activity?.SetTag("d2.message_type", typeof(TMessage).FullName);
-        activity?.SetTag("d2.encryption_kid", kid);
-        activity?.SetTag("messaging.message.id", messageId);
-        activity?.SetTag("messaging.operation.type", "publish");
+        activity?.SetTag(MessagingActivityTags.MESSAGING_SYSTEM, "rabbitmq");
+        activity?.SetTag(MessagingActivityTags.MESSAGING_DESTINATION_NAME, route.Exchange);
+        activity?.SetTag(MessagingActivityTags.MESSAGING_RABBITMQ_ROUTING_KEY, route.RoutingKey);
+        activity?.SetTag(MessagingActivityTags.D2_MESSAGE_TYPE, typeof(TMessage).FullName);
+        activity?.SetTag(MessagingActivityTags.D2_ENCRYPTION_KID, kid);
+        activity?.SetTag(MessagingActivityTags.MESSAGING_MESSAGE_ID, messageId);
+        activity?.SetTag(MessagingActivityTags.MESSAGING_OPERATION_TYPE, "publish");
 
         var stopwatch = Stopwatch.StartNew();
         var attemptsObserved = 0;

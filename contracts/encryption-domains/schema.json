@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "D2 encryption domains spec",
+  "description": "Schema for contracts/encryption-domains/encryption-domains.spec.json — the source-of-truth catalog of encryption-domain identifiers. Each domain corresponds to an independently-rotated keyring registered via services.AddD2EncryptionFor(domain, factory). The 'plaintext' sentinel is included as a closed-catalog entry so spec validation on mq-messages.spec's 'encryption' field cleanly enumerates the only acceptable values. D2.Shared.EncryptionDomains.SourceGen reads it to emit EncryptionDomains into D2.Shared.Encryption; tools/ts-codegen/src/encryption-domains-emit.ts reads it to emit encryption-domains.g.ts into @d2/encryption-abstractions.",
+  "type": "object",
+  "required": ["domains"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "domains": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/domain" }
+    }
+  },
+  "definitions": {
+    "domain": {
+      "type": "object",
+      "required": ["constName", "value", "doc"],
+      "additionalProperties": false,
+      "properties": {
+        "constName": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "description": "Public C# / TS constant identifier — UPPER_SNAKE_CASE. Must be unique across the spec."
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Wire-format domain identifier value. Must be unique across the spec."
+        },
+        "doc": {
+          "type": "string",
+          "minLength": 1,
+          "description": "XML <summary> / JSDoc text rendered on the emitted constant."
+        }
+      }
+    }
+  }
+}

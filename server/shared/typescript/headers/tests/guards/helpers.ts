@@ -13,6 +13,7 @@ export interface ThrownErrorRecord {
   kind: "error";
   status: number;
   body: ProblemDetailsBody;
+  contentType: string;
 }
 
 export interface ThrownRedirectRecord {
@@ -29,8 +30,8 @@ export function makeThrowers(): {
 } {
   const thrown: ThrownRecord[] = [];
   const throwers: GuardThrowers = {
-    throwError(status, body) {
-      thrown.push({ kind: "error", status, body });
+    throwError(status, body, contentType) {
+      thrown.push({ kind: "error", status, body, contentType });
       throw new Error(`HTTP ${status}: ${String(body[`d2_error_code`])}`);
     },
     throwRedirect(status, location) {

@@ -16,6 +16,8 @@ using D2.Shared.Auth.Http.ProblemDetails;
 using D2.Shared.Auth.Telemetry;
 using D2.Shared.Auth.Validation;
 using D2.Shared.Context.Abstractions;
+using D2.Shared.Headers.Http;
+using D2.Shared.ProblemDetails;
 using D2.Shared.Result;
 using D2.Shared.Utilities.Extensions;
 using Microsoft.AspNetCore.Http;
@@ -80,7 +82,6 @@ using Microsoft.Extensions.Primitives;
 /// </remarks>
 internal sealed class JwtAuthMiddleware
 {
-    private const string _AUTHORIZATION_HEADER_NAME = "Authorization";
     private const string _BEARER_PREFIX = "Bearer ";
 
     // Pinned so JsonSerializerOptions caching applies; default options match
@@ -242,7 +243,7 @@ internal sealed class JwtAuthMiddleware
 
     private static D2Result<string> TryExtractBearer(HttpContext context)
     {
-        if (!context.Request.Headers.TryGetValue(_AUTHORIZATION_HEADER_NAME, out StringValues raw)
+        if (!context.Request.Headers.TryGetValue(HttpHeaders.AUTHORIZATION, out StringValues raw)
             || raw.Count == 0)
         {
             return D2Result<string>.BubbleFail(AuthFailures.BearerMissing());
@@ -280,7 +281,7 @@ internal sealed class JwtAuthMiddleware
     {
         var problem = failure.ToProblemDetails(context);
         context.Response.StatusCode = problem.Status ?? (int)HttpStatusCode.InternalServerError;
-        context.Response.ContentType = "application/problem+json";
+        context.Response.ContentType = D2ProblemDetailsKeys.CONTENT_TYPE;
         await JsonSerializer
             .SerializeAsync(context.Response.Body, problem, sr_jsonOptions, ct)
             .ConfigureAwait(false);

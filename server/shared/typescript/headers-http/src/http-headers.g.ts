@@ -26,6 +26,12 @@ export const HttpHeaders = {
    */
   CLIENT_FINGERPRINT: "X-D2-Client-Fingerprint",
   /**
+   * Request correlation id. Inbound value (capped at 128 chars) flows to the response ProblemDetails extensions[correlationId] field; when absent / over-cap a fresh GUID is generated. Echoed back via the same header so callers can include it in subsequent requests / log lines for end-to-end correlation. The X- prefix is retained for compatibility with the widely-deployed convention (Microsoft, AWS, others) despite RFC 6648's deprecation guidance.
+   * Convention: d2.
+   * Applicability: http.
+   */
+  CORRELATION_ID: "X-Correlation-Id",
+  /**
    * Idempotency key for request deduplication. Conventional Stripe-style header name.
    * Convention: stripe.
    * Applicability: http.
@@ -63,6 +69,7 @@ export type HttpHeaderName =
 export const ALL_HTTP_HEADERS: readonly string[] = [
   "Authorization",
   "X-D2-Client-Fingerprint",
+  "X-Correlation-Id",
   "Idempotency-Key",
   "X-D2-Internal-Token",
   "x-d2-context",

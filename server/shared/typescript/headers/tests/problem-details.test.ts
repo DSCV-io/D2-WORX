@@ -14,10 +14,12 @@ import {
   validationFailed,
 } from "@d2/result";
 import {
+  PROBLEM_DETAILS_CONTENT_TYPE,
   PROBLEM_TYPE_URI_PREFIX,
   ProblemDetailsExtensionKeys,
+  ProblemDetailsTitles,
   toProblemDetails,
-} from "../src/problem-details.js";
+} from "../src/index.js";
 
 describe("toProblemDetails — happy path", () => {
   it("renders an unauthorized failure as RFC 7807 body", () => {
@@ -97,7 +99,10 @@ describe("toProblemDetails — per-failure-shape titles", () => {
     [429, "Too Many Requests"],
     [500, "Internal Server Error"],
     [503, "Service Unavailable"],
-    [499, "Error"], // not in switch — defaults
+    // Spec carries REQUEST_FAILED = "Request Failed" as the fallback entry
+    // (null httpStatus row) — any status not in the per-status table maps
+    // here. Cross-language parity locked: .NET emits the same fallback.
+    [499, "Request Failed"],
   ])("status %i defaults to title %s", (status, title) => {
     const failure = fail({ statusCode: status });
     const body = toProblemDetails(failure, { instance: "/x" });
@@ -154,7 +159,7 @@ describe("toProblemDetails — every AuthFailures.* survives the round-trip", ()
 
 describe("PROBLEM_TYPE_URI_PREFIX wire pin", () => {
   it("matches the .NET D2ProblemDetailsExtensions PROBLEM_TYPE_URI_PREFIX value", () => {
-    expect(PROBLEM_TYPE_URI_PREFIX).toBe("https://problems.d2-worx.com/");
+    expect(PROBLEM_TYPE_URI_PREFIX).toBe("https://problems.d2.dcsv.io/");
   });
 });
 
@@ -165,7 +170,59 @@ describe("ProblemDetailsExtensionKeys wire pin", () => {
   it("MESSAGES matches d2_messages", () => {
     expect(ProblemDetailsExtensionKeys.MESSAGES).toBe("d2_messages");
   });
+  it("INPUT_ERRORS matches d2_input_errors", () => {
+    expect(ProblemDetailsExtensionKeys.INPUT_ERRORS).toBe("d2_input_errors");
+  });
   it("TRACE_ID matches traceId", () => {
     expect(ProblemDetailsExtensionKeys.TRACE_ID).toBe("traceId");
+  });
+  it("CORRELATION_ID matches correlationId", () => {
+    expect(ProblemDetailsExtensionKeys.CORRELATION_ID).toBe("correlationId");
+  });
+});
+
+describe("PROBLEM_DETAILS_CONTENT_TYPE wire pin", () => {
+  it("matches application/problem+json (RFC 7807 §6.1)", () => {
+    expect(PROBLEM_DETAILS_CONTENT_TYPE).toBe("application/problem+json");
+  });
+});
+
+describe("toProblemDetails — input errors surfacing", () => {
+  it("emits d2_input_errors extension when failure carries non-empty inputErrors", () => {
+    const failure = validationFailed({
+      inputErrors: [{ field: "email", errors: [{ key: "TK.X" }] }],
+    });
+    const body = toProblemDetails(failure, { instance: "/x" });
+    const ext = body[ProblemDetailsExtensionKeys.INPUT_ERRORS];
+    expect(Array.isArray(ext)).toBe(true);
+    expect((ext as ReadonlyArray<{ field: string }>)[0]?.field).toBe("email");
+  });
+
+  it("omits d2_input_errors extension when failure has empty inputErrors", () => {
+    const failure = unauthorized();
+    const body = toProblemDetails(failure, { instance: "/x" });
+    expect(ProblemDetailsExtensionKeys.INPUT_ERRORS in body).toBe(false);
+  });
+});
+
+describe("ProblemDetailsTitles wire pin", () => {
+  // Per-VALUE pins for the codegen-emitted ProblemDetailsTitles catalog.
+  // Cross-language parity with the .NET side is structurally guaranteed
+  // (same spec source); these pins protect against accidental .g.ts
+  // tampering AND against accidental spec edits.
+  it.each([
+    ["BAD_REQUEST", "Bad Request"],
+    ["UNAUTHORIZED", "Unauthorized"],
+    ["FORBIDDEN", "Forbidden"],
+    ["NOT_FOUND", "Not Found"],
+    ["CONFLICT", "Conflict"],
+    ["PAYLOAD_TOO_LARGE", "Payload Too Large"],
+    ["TOO_MANY_REQUESTS", "Too Many Requests"],
+    ["INTERNAL_SERVER_ERROR", "Internal Server Error"],
+    ["SERVICE_UNAVAILABLE", "Service Unavailable"],
+    ["REQUEST_FAILED", "Request Failed"],
+  ])("%s matches %s", (constName, expected) => {
+    const map = ProblemDetailsTitles as unknown as Record<string, string>;
+    expect(map[constName]).toBe(expected);
   });
 });

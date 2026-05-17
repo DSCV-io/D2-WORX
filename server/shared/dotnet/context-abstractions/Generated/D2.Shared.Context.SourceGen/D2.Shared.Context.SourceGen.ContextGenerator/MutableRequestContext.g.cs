@@ -74,13 +74,11 @@ public sealed class MutableRequestContext : global::D2.Shared.Context.Abstractio
     /// <summary>
     /// User identifier — JWT sub claim parsed as Guid. Null when sub is non-Guid (pure service-identity tokens — see Subject + IsServiceIdentity). During impersonation this is the impersonated user's id (the impersonator's id is recorded inside the act chain — see ImpersonatedBy).
     /// </summary>
-    [RedactData(Reason = RedactReason.PersonalInformation)]
     public Guid? UserId { get; set; } = null;
 
     /// <summary>
     /// Login handle — unique, lowercase username.
     /// </summary>
-    [RedactData(Reason = RedactReason.PersonalInformation)]
     public string? Username { get; set; } = null;
 
     /// <summary>
@@ -272,13 +270,11 @@ public sealed class MutableRequestContext : global::D2.Shared.Context.Abstractio
     /// <summary>
     /// The fingerprint that was bound to this session at JWT mint time (the d2_fp claim). Format: 'v{N}.c1.c2.c3.c4.c5.s1.s2.s3.s4.s5' — leading version token then 10 component hashes (5 client-side: FingerprintJS-OSS, WebGL renderer, speech voices, media devices, extended fonts; 5 server-side: HTTP/2 SETTINGS frame, header order, Sec-CH-UA, Accept-Encoding, Accept-Language). Each component hash is the first 16 hex chars of SHA-256. Stable across all requests in a session. Propagated to async consumers (Audit, Courier) via the cross-hop x-d2-context header — never as plaintext caller identity (broker stays blind to identity).
     /// </summary>
-    [RedactData(Reason = RedactReason.PersonalInformation)]
     public string? SessionFingerprint { get; set; } = null;
 
     /// <summary>
     /// The fingerprint recomputed for THIS request by Edge fingerprint middleware, in the same dot-separated format as SessionFingerprint. Captures the actual device fingerprint of the originating request (vs the session-bound one). Propagated via x-d2-context so audit rows for async-triggered actions record the originating request's actual fingerprint — not just what the session was bound to.
     /// </summary>
-    [RedactData(Reason = RedactReason.PersonalInformation)]
     public string? CurrentFingerprint { get; set; } = null;
 
     /// <summary>
@@ -298,7 +294,6 @@ public sealed class MutableRequestContext : global::D2.Shared.Context.Abstractio
     /// <summary>
     /// Hash of the admin-location component only (city + region + country + postal). Matches D2.Shared.Location.AdminLocation.HashId for content-addressable lookup.
     /// </summary>
-    [RedactData(Reason = RedactReason.PersonalInformation)]
     public string? AdminLocationHashId { get; set; } = null;
 
     /// <summary>
@@ -316,6 +311,7 @@ public sealed class MutableRequestContext : global::D2.Shared.Context.Abstractio
     /// <summary>
     /// ISO 3166-2 subdivision code (e.g. 'US-CA').
     /// </summary>
+    [RedactData(Reason = RedactReason.PersonalInformation)]
     public string? SubdivisionCode { get; set; } = null;
 
     /// <summary>
@@ -382,19 +378,16 @@ public sealed class MutableRequestContext : global::D2.Shared.Context.Abstractio
     /// <summary>
     /// Autonomous System Number. Risk-scoring input — e.g. '&gt;5 different ASNs in last 2min → +15 risk'.
     /// </summary>
-    [RedactData(Reason = RedactReason.PersonalInformation)]
     public int? Asn { get; set; } = null;
 
     /// <summary>
     /// AS organization name (e.g. 'AT&amp;T Internet Services').
     /// </summary>
-    [RedactData(Reason = RedactReason.PersonalInformation)]
     public string? AsnName { get; set; } = null;
 
     /// <summary>
     /// ASN type — typically one of: business / isp / hosting / mobile / education / government. Datacenter/Tor policies key on this. Free-form string for now (no enum) — promote to enum if a real handler benefits from typed dispatch.
     /// </summary>
-    [RedactData(Reason = RedactReason.PersonalInformation)]
     public string? AsnType { get; set; } = null;
 
     #endregion

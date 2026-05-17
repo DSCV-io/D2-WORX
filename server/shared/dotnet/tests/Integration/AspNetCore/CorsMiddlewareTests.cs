@@ -10,6 +10,7 @@ using System.Net;
 using System.Net.Http;
 using AwesomeAssertions;
 using D2.Shared.AspNetCore;
+using D2.Shared.Headers.Http;
 using D2.Shared.Tests.Integration.AspNetCore.Infrastructure;
 using global::Microsoft.AspNetCore.Builder;
 using global::Microsoft.AspNetCore.Hosting;
@@ -81,7 +82,7 @@ public sealed class CorsMiddlewareTests
         request.Headers.Add("Access-Control-Request-Method", "GET");
         request.Headers.Add(
             "Access-Control-Request-Headers",
-            D2AspNetCoreConstants.CORRELATION_ID_HEADER);
+            HttpHeaders.CORRELATION_ID);
 
         var response = await client.SendAsync(request);
 
@@ -89,7 +90,7 @@ public sealed class CorsMiddlewareTests
         var allowed = response.Headers.GetValues("Access-Control-Allow-Headers")
             .First()
             .Split(',', StringSplitOptions.TrimEntries);
-        allowed.Should().Contain(D2AspNetCoreConstants.CORRELATION_ID_HEADER);
+        allowed.Should().Contain(HttpHeaders.CORRELATION_ID);
     }
 
     [Fact]

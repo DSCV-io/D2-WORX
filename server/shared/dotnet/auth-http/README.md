@@ -87,26 +87,31 @@ The deny-by-default state: an endpoint with NO `EndpointScopeMetadata` attached 
 
 ### ProblemDetails — `D2ProblemDetailsExtensions`
 
-Single emit point for every middleware-produced 401 / 503. Usage:
+Single emit point (path A) for every middleware-produced 4xx / 5xx auth failure. Usage:
 
 ```csharp
 var problem = failure.ToProblemDetails(httpContext);
 ```
+
+`D2ProblemDetailsExtensions` is a plain static class carrying the `ToProblemDetails` extension method body + runtime `TypeUriFor` + `MaterializeMessages` helpers. The wire-format catalog (`TYPE_URI_PREFIX`, `CONTENT_TYPE`, `EXTENSION_*` extension keys, `TITLE_*` per-status titles, + the `TitleFor` switch) lives in [`D2ProblemDetailsKeys`](../problem-details-abstractions/README.md) (codegen-emitted into `D2.Shared.ProblemDetails.Abstractions` from `contracts/problem-details/problem-details.spec.json`). The same spec drives the TS-side `@d2/headers` catalog AND the path-B Customizer in `D2.Shared.AspNetCore`, so the three emit paths produce byte-identical Shape A bodies for identical inputs.
 
 Populates an RFC 7807 `Microsoft.AspNetCore.Mvc.ProblemDetails`:
 
 | Field | Source |
 |---|---|
 | `Status` | `D2Result.StatusCode` (verbatim — no remapping). |
-| `Title` | Locale-neutral coarse English from a closed enumeration: `"Unauthorized"` (401), `"Service Unavailable"` (503), or `"Request Failed"` (other). Locale-aware translation is the client's job via the `d2_messages` extension. |
-| `Type` | `https://problems.d2-worx.com/auth/{kebab-cased-error-code}`. |
+| `Title` | Locale-neutral coarse English from the spec-driven closed enumeration (e.g. `"Unauthorized"` for 401, `"Service Unavailable"` for 503, `"Request Failed"` as fallback). Locale-aware translation is the client's job via the `d2_messages` extension. |
+| `Type` | `https://problems.d2.dcsv.io/{kebab-cased-error-code}` (spec-driven `TYPE_URI_PREFIX` value). |
 | `Detail` | DELIBERATELY OMITTED. Telling an attacker which validation step failed (signature vs expired vs claim missing) is an info leak; the granular `d2_error_code` carries the machine-readable taxonomy for legitimate operators. |
-| `Instance` | `HttpRequest.Path` only (no query string). |
+| `Instance` | `"{Method} {Path}"` (no query string — matches the path-B Customizer shape for cross-path consistency). |
 | `Extensions["d2_error_code"]` | `D2Result.ErrorCode` (one of the `AUTH_*` constants from `D2.Shared.Auth.Errors.AuthErrorCodes`). |
 | `Extensions["d2_messages"]` | `D2Result.Messages` array (TK keys + parameter bindings). Client-side Paraglide translates. |
+| `Extensions["d2_input_errors"]` | `D2Result.InputErrors` array — only emitted when non-empty. Field-level form errors keyed by field name; client renders under each input directly. |
 | `Extensions["traceId"]` | `Activity.Current?.TraceId` (W3C lower-hex format). Omitted when no Activity is on the execution context — never surfaced as null. |
 
-Side-effect: increments `AuthTelemetry.ProblemEmitted` tagged with `d2_error_code`.
+**2xx guard**: `ToProblemDetails` throws `InvalidOperationException` when `(int)result.StatusCode < 400`. RFC 7807 frames the wire around 4xx / 5xx; a 2xx partial-success (e.g. `SomeFound` / 206) belongs on the D2Result envelope, not the ProblemDetails body.
+
+Side-effect: increments `AuthTelemetry.ProblemEmitted` tagged with `d2_error_code`. Response `Content-Type` set to `D2ProblemDetailsKeys.CONTENT_TYPE` (`"application/problem+json"` per RFC 7807 §6.1) by the middleware wrapper.
 
 ### `HttpContext.GetD2RequestContext()`
 

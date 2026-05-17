@@ -6,6 +6,8 @@
 
 namespace D2.Shared.AspNetCore;
 
+using D2.Shared.Headers.Http;
+
 /// <summary>
 /// Configuration for
 /// <see cref="ProblemDetailsServiceCollectionExtensions.AddD2ProblemDetails"/>.
@@ -35,12 +37,12 @@ public sealed record D2ProblemDetailsOptions
     /// Gets or sets the header name read for the inbound correlation id
     /// and written for the
     /// outbound echo. Default
-    /// <see cref="D2AspNetCoreConstants.CORRELATION_ID_HEADER"/>
+    /// <see cref="HttpHeaders.CORRELATION_ID"/>
     /// (<c>"X-Correlation-Id"</c>). Override only for legacy compatibility
     /// with services that consume a different header name.
     /// </summary>
     public string CorrelationIdHeaderName { get; set; } =
-        D2AspNetCoreConstants.CORRELATION_ID_HEADER;
+        HttpHeaders.CORRELATION_ID;
 
     /// <summary>
     /// Gets or sets a value indicating whether a freshly-generated

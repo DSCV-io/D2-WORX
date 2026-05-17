@@ -114,7 +114,10 @@ describe("gateway-client", () => {
 
       expect(result.success).toBe(false);
       expect(result.statusCode).toBe(500);
-      expect(result.messages[0]).toContain("Network failure");
+      // Per §11.30 wire-shape spec: network errors render as a synthetic
+      // REQUEST_FAILED TKMessage. The raw exception text is surfaced via
+      // the trace id / log pipeline, not smuggled into the i18n envelope.
+      expect(result.messages[0]).toEqual({ key: TK.common.errors.REQUEST_FAILED });
     });
   });
 
@@ -190,10 +193,15 @@ describe("gateway-client", () => {
           // Second token fetch fails (user signed out)
           return new Response("Unauthorized", { status: 401 });
         }
-        // Gateway always returns 401
-        return new Response(JSON.stringify({ success: false, messages: ["Token invalid"] }), {
-          status: 401,
-        });
+        // Gateway always returns 401 with a TKMessage envelope per the
+        // contracts/tk-message wire shape.
+        return new Response(
+          JSON.stringify({
+            success: false,
+            messages: [{ key: "auth_errors_BEARER_INVALID" }],
+          }),
+          { status: 401 },
+        );
       });
 
       const { apiCall, invalidateToken } = await import("./gateway-client");
@@ -202,7 +210,7 @@ describe("gateway-client", () => {
 
       expect(result.success).toBe(false);
       expect(result.statusCode).toBe(401);
-      expect(result.messages[0]).toContain("Token invalid");
+      expect(result.messages[0]).toEqual({ key: "auth_errors_BEARER_INVALID" });
     });
 
     it("retries once on 401 with a fresh token", async () => {
@@ -380,7 +388,7 @@ describe("gateway-client", () => {
 
       expect(result.success).toBe(false);
       expect(result.statusCode).toBe(408);
-      expect(result.messages[0]).toContain(TK.common.errors.CANCELED);
+      expect(result.messages[0]).toEqual({ key: TK.common.errors.CANCELED });
     });
 
     it("returns 408 on TimeoutError", async () => {
@@ -392,7 +400,7 @@ describe("gateway-client", () => {
 
       expect(result.success).toBe(false);
       expect(result.statusCode).toBe(408);
-      expect(result.messages[0]).toContain(TK.common.errors.REQUEST_FAILED);
+      expect(result.messages[0]).toEqual({ key: TK.common.errors.REQUEST_FAILED });
     });
   });
 

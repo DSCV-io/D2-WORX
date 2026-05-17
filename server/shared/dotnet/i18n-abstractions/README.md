@@ -25,9 +25,10 @@ The pattern matches `Microsoft.Extensions.Logging.Abstractions` vs `Microsoft.Ex
 | Path | Contents |
 |---|---|
 | `TKMessage.cs` | `TKMessage` sealed record — translation key + optional parameter bindings. Internal ctor; can only be constructed via the SrcGen-emitted `TK.*` constants. |
-| `TKMessageJsonConverter.cs` | `JsonConverter<TKMessage>` — wire format `{ "key": "..." }` or `{ "key": "...", "params": { ... } }`. Applied to `TKMessage` via `[JsonConverter]`. |
+| `TKMessageJsonConverter.cs` | `JsonConverter<TKMessage>` — wire format `{ "key": "..." }` or `{ "key": "...", "params": { ... } }`. Applied to `TKMessage` via `[JsonConverter]`. JSON property names come from the spec-derived `TkMessageWireShape.KEY` / `.PARAMS` constants — single source of truth shared with the TS-side parser via `contracts/tk-message/tk-message.spec.json`. |
 | `ITranslator.cs` | The translation interface. `string T(string locale, TKMessage message)` and `bool HasKey(string key)`. Implementation lives in the runtime lib. |
 | `(generated) TK.g.cs` | Emitted by the sibling **`D2.Shared.I18n.SourceGen`** project at [`../i18n-source-gen/`](../i18n-source-gen/) — a Roslyn `IIncrementalGenerator` (netstandard2.0; referenced as Analyzer, not a runtime dll). Output lands at `Generated/D2.Shared.I18n.SourceGen/D2.Shared.I18n.SourceGen.TKGenerator/TK.g.cs` (tracked in git) at every build. Contains nested `static partial class` chains (`TK.Common.Errors.NOT_FOUND` etc.), one `TKMessage` constant per JSON key. |
+| `(generated) TkMessageWireShape.g.cs` | Emitted by the sibling **`D2.Shared.WireShapes.SourceGen`** project at [`../wire-shapes-source-gen/`](../wire-shapes-source-gen/) — a Roslyn `IIncrementalGenerator` with multi-target dispatch. Output lands at `Generated/D2.Shared.WireShapes.SourceGen/D2.Shared.WireShapes.SourceGen.WireShapesGenerator/TkMessageWireShape.g.cs` (tracked in git) at every build. Carries the `KEY` and `PARAMS` JSON property-name constants. Cross-language parity-tested against the TS-side `@d2/result` `TkMessageWireShape` catalog. |
 
 ---
 

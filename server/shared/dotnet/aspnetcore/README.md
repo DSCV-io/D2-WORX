@@ -72,7 +72,7 @@ Default `D2CorsOptions`:
 | Property | Default |
 |---|---|
 | `Origins` | `[]` (validated non-empty at startup; fail-closed) |
-| `AllowedHeaders` | `Content-Type`, `Authorization`, `X-Correlation-Id`, `X-Idempotency-Key`, `X-Forwarded-For`, `X-Real-IP`, `CF-Connecting-IP` |
+| `AllowedHeaders` | `Content-Type`, `Authorization`, `X-Correlation-Id` (from spec-driven `HttpHeaders.CORRELATION_ID`), `Idempotency-Key` (from spec-driven `HttpHeaders.IDEMPOTENCY_KEY`), `X-Forwarded-For`, `X-Real-IP`, `CF-Connecting-IP` |
 | `AllowedMethods` | `GET`, `HEAD`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS` |
 | `AllowCredentials` | `true` (BFF cookies + service-to-service Authorization headers) |
 | `PreflightMaxAgeSeconds` | `600` (10 minutes) |
@@ -93,13 +93,28 @@ Pipeline placement: install AFTER `app.UseRouting()` (which resolves the matched
 
 ### `AddD2ProblemDetails(Action<D2ProblemDetailsOptions>?)`
 
-Registers ASP.NET Core's `IProblemDetailsService` with the D² customizer applied as the `CustomizeProblemDetails` callback. The customizer:
+Registers ASP.NET Core's `IProblemDetailsService` with the D² customizer applied as the `CustomizeProblemDetails` callback. The customizer is FULL D2Result-aware (path B of the RFC 7807 emit stack — sibling to `D2.Shared.Auth.Http`'s path A `D2ProblemDetailsExtensions.ToProblemDetails`).
 
-1. Sets `extensions["traceId"]` from `Activity.Current?.TraceId.ToString()` falling back to `HttpContext.TraceIdentifier`.
-2. Reads `extensions["correlationId"]` from the configured request header (`X-Correlation-Id` by default; capped at 128 chars). When absent / over-cap, generates `Guid.NewGuid().ToString("N")` and (when `EchoCorrelationIdInResponse` is true) writes it to the response header.
-3. Sets the RFC 7807 `instance` field to `{Method} {Path}` when `IncludeRequestPath` is true.
+When the request pipeline has stashed a `D2Result` on `HttpContext.Items[D2ProblemDetailsContextItems.D2_RESULT]` (via the `SetD2Result` typed extension), the customizer populates the RFC 7807 Shape A body from spec-driven constants in `D2ProblemDetailsKeys` ([`problem-details-abstractions/`](../problem-details-abstractions/README.md)):
+
+1. `Type` ← `TYPE_URI_PREFIX + KebabCase(D2Result.ErrorCode)` (fallback `"unhandled-exception"` on empty error code).
+2. `Title` ← `TitleFor(D2Result.StatusCode)`.
+3. `Status` ← `(int)D2Result.StatusCode`.
+4. `Extensions[d2_error_code]` ← `D2Result.ErrorCode`.
+5. `Extensions[d2_messages]` ← `D2Result.Messages`.
+6. `Extensions[d2_input_errors]` ← `D2Result.InputErrors` (only when non-empty).
+
+Whether or not a `D2Result` is stashed, the customizer always populates:
+
+7. `Extensions[traceId]` ← `Activity.Current?.TraceId.ToString()` falling back to `HttpContext.TraceIdentifier`.
+8. `Extensions[correlationId]` ← inbound `X-Correlation-Id` request header (capped at 128 chars). When absent / over-cap, generates `Guid.NewGuid().ToString("N")` and (when `EchoCorrelationIdInResponse` is true) writes it to the response header.
+9. `Instance` ← `"{Method} {Path}"` when `IncludeRequestPath` is true (matches the path-A emit shape exactly — cross-path wire-shape consistency by construction).
+
+Cross-language parity: the .NET path-A + path-B body shapes are byte-identical, AND match the TS-side BFF `toProblemDetails` output for the same `D2Result` inputs. All three emit sites consume the same spec-derived constants.
 
 PII discipline: the customizer NEVER reads `HttpContext.Request.QueryString`, `Request.Body`, or any user-input source. The 128-char cap on the inbound correlation id prevents an arbitrary-length user header from inflating the response body — values exceeding the cap are treated as absent.
+
+**Stashing a D2Result for the customizer**: handlers / middleware call `httpContext.SetD2Result(result)` ahead of letting the response flow through the `AddProblemDetails` pipeline. Consumers that don't stash a D2Result (raw exception path) still get `traceId` + `correlationId` + `instance` for diagnostic correlation; the framework defaults for `Type` / `Title` apply.
 
 ### `AddD2HealthChecks()` + `MapD2HealthEndpoints()`
 
@@ -133,12 +148,20 @@ Async form captures both synchronously-faulted (host build / hosted-service `Sta
 | `LIVE_HEALTH_TAG` | `live` |
 | `SELF_HEALTH_CHECK_NAME` | `self` |
 | `DEFAULT_INFRASTRUCTURE_PATHS` | `[HEALTH_ENDPOINT_PATH, ALIVE_ENDPOINT_PATH, METRICS_ENDPOINT_PATH, WELL_KNOWN_ENDPOINT_PATH]` |
-| `CORRELATION_ID_HEADER` | `X-Correlation-Id` |
-| `IDEMPOTENCY_KEY_HEADER` | `X-Idempotency-Key` |
 | `CORS_ORIGINS_CONFIG_KEY` | `D2_CORS_ORIGINS` |
 | `DEFAULT_CORS_POLICY_NAME` | `D2_DEFAULT` |
 | `MAX_CORRELATION_ID_LENGTH` | `128` |
 | `INFRASTRUCTURE_HTTP_CONTEXT_ITEM_KEY` | `D2.IsInfrastructure` |
+
+Note: wire-header values consumed by this lib live in the spec-driven [`HttpHeaders`](../headers-http/README.md) catalog — `HttpHeaders.CORRELATION_ID` (`"X-Correlation-Id"`) and `HttpHeaders.IDEMPOTENCY_KEY` (`"Idempotency-Key"`) are referenced directly. One wire value for one concept across the platform; no intra-.NET drift between the CORS allowlist / ProblemDetails customizer and the headers-http catalog.
+
+### Constants — `D2ProblemDetailsContextItems`
+
+HttpContext.Items slot keys consumed by the path-B Customizer to source the originating `D2Result`:
+
+| Constant | Value | Use |
+|---|---|---|
+| `D2_RESULT` | `__d2_result` | Slot under which middleware / handlers stash the originating `D2Result` so the customizer can populate the full RFC 7807 Shape A body from spec constants. Set via the typed `httpContext.SetD2Result(result)` extension; read by the customizer via `httpContext.GetD2Result()`. |
 
 ### `InfrastructurePathMatcher` (public static)
 

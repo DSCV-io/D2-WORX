@@ -38,7 +38,7 @@ internal static class IntegrationMessageFixtures
                 MessageTypeName: typeof(IntegrationAuditEvent).FullName!,
                 Exchange: "d2.test.integration-audit",
                 ExchangeType: "topic",
-                Encryption: EncryptionDomains.Audit,
+                Encryption: EncryptionDomains.AUDIT,
                 EncryptionReason: null,
                 DefaultRoutingKey: string.Empty));
         MessageWireResolver.RegisterForTesting(

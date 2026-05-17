@@ -10,6 +10,7 @@ using System.Diagnostics;
 using AwesomeAssertions;
 using D2.Shared.Handler;
 using D2.Shared.Messaging;
+using D2.Shared.Messaging.RabbitMq;
 using D2.Shared.Result;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -241,6 +242,82 @@ public sealed class PublishConsumeRoundTripTests
         consumeSpan.ParentSpanId.Should().NotBe(
             default(ActivitySpanId),
             "consume span must have a parent span id (the publish span)");
+    }
+
+    [Fact]
+    public async Task MessagingOperationType_PublisherEmitsPublishValue_ConsumerEmitsReceiveValue()
+    {
+        // §21.10 runtime-emission pin: the OTel canonical
+        // MESSAGING_OPERATION_TYPE attribute carries the value
+        // "publish" on producer spans and "receive" on consumer spans.
+        // Spec-driving the attribute NAME (MessagingActivityTags catalog)
+        // closes the name-level drift surface; this test closes the
+        // value-level drift surface — a refactor renaming the publisher's
+        // emission from "publish" to "send" would NOT fail any
+        // name-only test, but breaks downstream dashboards / alert
+        // filters. The two values are enumerated in the spec catalog at
+        // contracts/otel-messaging-tags/otel-messaging-tags.spec.json
+        // doc text; this runtime pin asserts the production emit sites
+        // ship those literal values.
+        TestCollector.Reset<AuditCapturingHandler>();
+        var queue = "rt.op-type." + Guid.NewGuid().ToString("N")[..8];
+
+        var collected = new List<Activity>();
+        using var listener = new ActivityListener();
+        listener.ShouldListenTo = src =>
+            src.Name is "D2.Shared.Messaging.RabbitMq";
+        listener.Sample = (ref _) => ActivitySamplingResult.AllDataAndRecorded;
+        listener.ActivityStopped = a =>
+        {
+            lock (collected) collected.Add(a);
+        };
+        ActivitySource.AddActivityListener(listener);
+
+        using var host = await StartHostAsync(services =>
+        {
+            services.AddTransient<AuditCapturingHandler>();
+            services.AddD2Subscriber<AuditCapturingHandler, IntegrationAuditEvent>(
+                IntegrationSubscriptionFactory.ForAuditEvent(queue, prefetch: 5));
+        });
+
+        await using (var scope = host.Services.CreateAsyncScope())
+        {
+            var bus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
+            var publish = await bus.PublishAsync(
+                new IntegrationAuditEvent { Marker = "op-type-test" });
+            publish.Failed.Should().BeFalse();
+        }
+
+        await WaitFor(
+            () => TestCollector.Count<AuditCapturingHandler>() > 0,
+            timeout: TimeSpan.FromSeconds(15));
+
+        // Give the consume span a moment to stop after the handler returns.
+        await Task.Delay(TimeSpan.FromMilliseconds(200));
+
+        Activity[] snapshot;
+        lock (collected) snapshot = [.. collected];
+
+        var publishSpan = snapshot.SingleOrDefault(
+            a => a.Kind == ActivityKind.Producer);
+        publishSpan.Should().NotBeNull(
+            "publisher activity must be started for the publish call");
+        publishSpan.Tags
+            .Should().Contain(
+                t => t.Key == MessagingActivityTags.MESSAGING_OPERATION_TYPE
+                    && t.Value == "publish",
+                "publisher emit site must ship the literal value \"publish\"");
+
+        var consumeSpan = snapshot.SingleOrDefault(
+            a => a.Kind == ActivityKind.Consumer
+                && a.OperationName == $"receive {queue}");
+        consumeSpan.Should().NotBeNull(
+            "consumer activity must be started for the dispatched delivery");
+        consumeSpan.Tags
+            .Should().Contain(
+                t => t.Key == MessagingActivityTags.MESSAGING_OPERATION_TYPE
+                    && t.Value == "receive",
+                "consumer emit site must ship the literal value \"receive\"");
     }
 
     private static async Task WaitFor(

@@ -473,18 +473,23 @@ public sealed class JwtAuthMiddlewareTests
     }
 
     [Fact]
-    public async Task InvokeAsync_ProblemDetails_InstanceIsPathNotPathPlusQuery()
+    public async Task InvokeAsync_ProblemDetails_InstanceIsMethodPlusPathNotPathPlusQuery()
     {
+        // The unified instance shape across emit paths (auth-http path A +
+        // aspnetcore path B) is "{Method} {Path}" — query string is
+        // deliberately stripped because it can carry secrets (?secret=...,
+        // ?token=...). Method is included for operator-diagnostic value.
         using var builder = new TestJwtBuilder();
         var (mw, _) = MakeMiddleware(builder);
         var ctx = MakeContext(authorization: null);
+        ctx.Request.Method = "GET";
         ctx.Request.Path = "/api/x";
         ctx.Request.QueryString = new QueryString("?secret=should-not-leak");
 
         await mw.InvokeAsync(ctx);
 
         var problem = await ReadProblemAsync(ctx);
-        problem.GetProperty("instance").GetString().Should().Be("/api/x");
+        problem.GetProperty("instance").GetString().Should().Be("GET /api/x");
     }
 
     private static (JwtAuthMiddleware Middleware, Func<bool> NextCalled) MakeMiddleware(

@@ -1,0 +1,80 @@
+{
+  "$schema": "./schema.json",
+  "errorCodes": [
+    {
+      "code": "NOT_FOUND",
+      "httpStatus": 404,
+      "doc": "Indicates that the requested resource was not found."
+    },
+    {
+      "code": "FORBIDDEN",
+      "httpStatus": 403,
+      "doc": "Indicates that the action is forbidden due to insufficient permissions."
+    },
+    {
+      "code": "UNAUTHORIZED",
+      "httpStatus": 401,
+      "doc": "Indicates that the user is unauthorized to perform the action (e.g., not authenticated)."
+    },
+    {
+      "code": "VALIDATION_FAILED",
+      "httpStatus": 400,
+      "doc": "Indicates that the input validation has failed."
+    },
+    {
+      "code": "CONFLICT",
+      "httpStatus": 409,
+      "doc": "Indicates that a conflict occurred, such as a resource already existing."
+    },
+    {
+      "code": "UNHANDLED_EXCEPTION",
+      "httpStatus": 500,
+      "doc": "Indicates that an unhandled exception has occurred."
+    },
+    {
+      "code": "COULD_NOT_BE_SERIALIZED",
+      "httpStatus": 500,
+      "doc": "Indicates that the data could not be serialized."
+    },
+    {
+      "code": "COULD_NOT_BE_DESERIALIZED",
+      "httpStatus": 500,
+      "doc": "Indicates that the data could not be deserialized."
+    },
+    {
+      "code": "SERVICE_UNAVAILABLE",
+      "httpStatus": 503,
+      "doc": "Indicates that the service is currently unavailable."
+    },
+    {
+      "code": "SOME_FOUND",
+      "httpStatus": 206,
+      "doc": "Indicates that some items were found in a query operation but not all."
+    },
+    {
+      "code": "PARTIAL_SUCCESS",
+      "httpStatus": 207,
+      "doc": "Indicates that a multi-target write operation succeeded against some targets but not all (e.g. tiered cache wrote L1 but not L2). D2Result.Success stays true - the operation did succeed in part. Callers inspect IsPartialSuccess + the result data to decide what to do about the failed target(s)."
+    },
+    {
+      "code": "RATE_LIMITED",
+      "httpStatus": 429,
+      "doc": "Indicates that the request has been rate limited."
+    },
+    {
+      "code": "IDEMPOTENCY_IN_FLIGHT",
+      "httpStatus": 409,
+      "doc": "Indicates that an idempotent request is already being processed (in-flight)."
+    },
+    {
+      "code": "PAYLOAD_TOO_LARGE",
+      "httpStatus": 413,
+      "doc": "Indicates that the request payload exceeds the maximum allowed size."
+    },
+    {
+      "code": "CANCELED",
+      "httpStatus": 400,
+      "doc": "Indicates that the operation was canceled (client or server cancellation)."
+    }
+  ]
+}

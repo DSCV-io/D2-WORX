@@ -111,7 +111,7 @@ public sealed class JwtAuthInterceptorTests
 
         var ex = await act.Should().ThrowAsync<RpcException>();
         ex.Which.StatusCode.Should().Be(GrpcStatusCode.Unauthenticated);
-        ReadTrailer(ex.Which.Trailers, D2RpcStatusExtensions.TRAILER_ERROR_CODE)
+        ReadTrailer(ex.Which.Trailers, D2GrpcTrailers.ERROR_CODE)
             .Should().Be(AuthErrorCodes.AUTH_BEARER_MISSING);
     }
 
@@ -182,7 +182,7 @@ public sealed class JwtAuthInterceptorTests
                 "req", ctx, (_, _) => Task.FromResult("reply"));
 
         var ex = await act.Should().ThrowAsync<RpcException>();
-        ReadTrailer(ex.Which.Trailers, D2RpcStatusExtensions.TRAILER_ERROR_CODE)
+        ReadTrailer(ex.Which.Trailers, D2GrpcTrailers.ERROR_CODE)
             .Should().Be(AuthErrorCodes.AUTH_BEARER_MISSING);
     }
 
@@ -219,7 +219,7 @@ public sealed class JwtAuthInterceptorTests
                 "req", ctx, (_, _) => Task.FromResult("reply"));
 
         var ex = await act.Should().ThrowAsync<RpcException>();
-        ReadTrailer(ex.Which.Trailers, D2RpcStatusExtensions.TRAILER_ERROR_CODE)
+        ReadTrailer(ex.Which.Trailers, D2GrpcTrailers.ERROR_CODE)
             .Should().Be(AuthErrorCodes.AUTH_BEARER_MISSING);
     }
 
@@ -263,7 +263,7 @@ public sealed class JwtAuthInterceptorTests
                 "req", ctx, (_, _) => Task.FromResult("reply"));
 
         var ex = await act.Should().ThrowAsync<RpcException>();
-        ReadTrailer(ex.Which.Trailers, D2RpcStatusExtensions.TRAILER_ERROR_CODE)
+        ReadTrailer(ex.Which.Trailers, D2GrpcTrailers.ERROR_CODE)
             .Should().Be(AuthErrorCodes.AUTH_BEARER_MALFORMED);
     }
 
@@ -284,7 +284,7 @@ public sealed class JwtAuthInterceptorTests
                 "req", ctx, (_, _) => Task.FromResult("reply"));
 
         var ex = await act.Should().ThrowAsync<RpcException>();
-        ReadTrailer(ex.Which.Trailers, D2RpcStatusExtensions.TRAILER_ERROR_CODE)
+        ReadTrailer(ex.Which.Trailers, D2GrpcTrailers.ERROR_CODE)
             .Should().Be(AuthErrorCodes.AUTH_JWT_EXPIRED);
     }
 
@@ -308,7 +308,7 @@ public sealed class JwtAuthInterceptorTests
 
         var ex = await act.Should().ThrowAsync<RpcException>();
         ex.Which.StatusCode.Should().Be(GrpcStatusCode.Unauthenticated);
-        ReadTrailer(ex.Which.Trailers, D2RpcStatusExtensions.TRAILER_ERROR_CODE)
+        ReadTrailer(ex.Which.Trailers, D2GrpcTrailers.ERROR_CODE)
             .Should().Be(AuthErrorCodes.AUTH_SESSION_REVOKED);
     }
 
@@ -330,7 +330,7 @@ public sealed class JwtAuthInterceptorTests
 
         var ex = await act.Should().ThrowAsync<RpcException>();
         ex.Which.StatusCode.Should().Be(GrpcStatusCode.Unavailable);
-        ReadTrailer(ex.Which.Trailers, D2RpcStatusExtensions.TRAILER_ERROR_CODE)
+        ReadTrailer(ex.Which.Trailers, D2GrpcTrailers.ERROR_CODE)
             .Should().Be(AuthErrorCodes.AUTH_SESSION_LIVENESS_UNAVAILABLE);
     }
 
@@ -563,7 +563,7 @@ public sealed class JwtAuthInterceptorTests
 
         var ex = await act.Should().ThrowAsync<RpcException>();
         ex.Which.StatusCode.Should().Be(GrpcStatusCode.Unauthenticated);
-        ReadTrailer(ex.Which.Trailers, D2RpcStatusExtensions.TRAILER_ERROR_CODE)
+        ReadTrailer(ex.Which.Trailers, D2GrpcTrailers.ERROR_CODE)
             .Should().Be(AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT);
     }
 
@@ -618,7 +618,7 @@ public sealed class JwtAuthInterceptorTests
                 "req", ctx, (_, _) => Task.FromResult("reply"));
 
         var ex = await act.Should().ThrowAsync<RpcException>();
-        ReadTrailer(ex.Which.Trailers, D2RpcStatusExtensions.TRAILER_ERROR_CODE)
+        ReadTrailer(ex.Which.Trailers, D2GrpcTrailers.ERROR_CODE)
             .Should().Be(AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT);
     }
 

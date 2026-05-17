@@ -1500,7 +1500,7 @@ on the JSON object.
 
 ```json
 {
-  "type": "https://problems.d2-worx.com/auth/invalid-signature",
+  "type": "https://problems.d2.dcsv.io/auth/invalid-signature",
   "title": "Invalid token",
   "status": 401,
   "detail": "JWT signature verification failed",

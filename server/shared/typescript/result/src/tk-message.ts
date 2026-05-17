@@ -11,7 +11,11 @@
  *
  * The TS-side TK catalog is provided by Paraglide; this package only
  * declares the shared `TKMessage` interface so cross-language wire
- * round-trips stay byte-identical.
+ * round-trips stay byte-identical. The JSON property names (`key`, `params`)
+ * come from the spec-derived `TkMessageWireShape` catalog
+ * (`./tk-message.g.ts`) — `contracts/tk-message/tk-message.spec.json`
+ * drives BOTH the .NET serializer AND this interface, so cross-language
+ * wire drift on the property names is structurally impossible.
  */
 export interface TKMessage {
   /** Translation key (e.g. `TK.Common.Errors.NOT_FOUND`). */

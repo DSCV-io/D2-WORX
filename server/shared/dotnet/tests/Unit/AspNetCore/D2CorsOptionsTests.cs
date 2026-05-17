@@ -8,6 +8,7 @@ namespace D2.Shared.Tests.Unit.AspNetCore;
 
 using AwesomeAssertions;
 using D2.Shared.AspNetCore;
+using D2.Shared.Headers.Http;
 using Xunit;
 
 public sealed class D2CorsOptionsTests
@@ -25,9 +26,9 @@ public sealed class D2CorsOptionsTests
         var opts = new D2CorsOptions();
         opts.AllowedHeaders.Should()
             .Contain("Content-Type")
-            .And.Contain("Authorization")
-            .And.Contain(D2AspNetCoreConstants.CORRELATION_ID_HEADER)
-            .And.Contain(D2AspNetCoreConstants.IDEMPOTENCY_KEY_HEADER)
+            .And.Contain(HttpHeaders.AUTHORIZATION)
+            .And.Contain(HttpHeaders.CORRELATION_ID)
+            .And.Contain(HttpHeaders.IDEMPOTENCY_KEY)
             .And.Contain("X-Forwarded-For")
             .And.Contain("X-Real-IP")
             .And.Contain("CF-Connecting-IP");

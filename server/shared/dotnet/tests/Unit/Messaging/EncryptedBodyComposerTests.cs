@@ -48,7 +48,7 @@ public sealed class EncryptedBodyComposerTests
     public void Compose_EncryptedDescriptor_ReturnsFrameWithKid()
     {
         var sp = BuildProviderForAudit("kid-a");
-        var descriptor = EncryptedDescriptor(EncryptionDomains.Audit);
+        var descriptor = EncryptedDescriptor(EncryptionDomains.AUDIT);
         var msg = new SampleAuditEvent();
 
         var (body, kid) = EncryptedBodyComposer.Compose(msg, descriptor, sp);
@@ -62,11 +62,11 @@ public sealed class EncryptedBodyComposerTests
     public void Compose_EncryptedDescriptor_FrameDoesNotIncludeEnvelopeWrapper()
     {
         var sp = BuildProviderForAudit("kid-a");
-        var descriptor = EncryptedDescriptor(EncryptionDomains.Audit);
+        var descriptor = EncryptedDescriptor(EncryptionDomains.AUDIT);
 
         var (frame, _) = EncryptedBodyComposer.Compose(new SampleAuditEvent(), descriptor, sp);
 
-        var crypto = sp.GetRequiredKeyedService<IPayloadCrypto>(EncryptionDomains.Audit);
+        var crypto = sp.GetRequiredKeyedService<IPayloadCrypto>(EncryptionDomains.AUDIT);
         var json = Encoding.UTF8.GetString(crypto.Decrypt(frame));
         json.Should().NotContain("\"envelope\":");
         json.Should().NotContain("\"message\":");
@@ -97,7 +97,7 @@ public sealed class EncryptedBodyComposerTests
     public void RoundTrip_EncryptedDescriptor_PreservesMessage()
     {
         var sp = BuildProviderForAudit("kid-a");
-        var descriptor = EncryptedDescriptor(EncryptionDomains.Audit);
+        var descriptor = EncryptedDescriptor(EncryptionDomains.AUDIT);
 
         var (body, _) = EncryptedBodyComposer.Compose(new SampleAuditEvent(), descriptor, sp);
         var message = EncryptedBodyComposer.Decompose<SampleAuditEvent>(body, descriptor, sp);
@@ -109,7 +109,7 @@ public sealed class EncryptedBodyComposerTests
     public void Decompose_TamperedFrame_ThrowsOnTagMismatch()
     {
         var sp = BuildProviderForAudit("kid-a");
-        var descriptor = EncryptedDescriptor(EncryptionDomains.Audit);
+        var descriptor = EncryptedDescriptor(EncryptionDomains.AUDIT);
 
         var (body, _) = EncryptedBodyComposer.Compose(new SampleAuditEvent(), descriptor, sp);
         body[^1] ^= 0xFF;
@@ -123,7 +123,7 @@ public sealed class EncryptedBodyComposerTests
     public void Decompose_KidNotInKeyring_Throws()
     {
         var composeSp = BuildProviderForAudit("kid-a");
-        var descriptor = EncryptedDescriptor(EncryptionDomains.Audit);
+        var descriptor = EncryptedDescriptor(EncryptionDomains.AUDIT);
         var (body, _) = EncryptedBodyComposer.Compose(
             new SampleAuditEvent(), descriptor, composeSp);
 
@@ -137,7 +137,7 @@ public sealed class EncryptedBodyComposerTests
     public void Decompose_TruncatedBody_ThrowsCleanly()
     {
         var sp = BuildProviderForAudit("kid-a");
-        var descriptor = EncryptedDescriptor(EncryptionDomains.Audit);
+        var descriptor = EncryptedDescriptor(EncryptionDomains.AUDIT);
         var (body, _) = EncryptedBodyComposer.Compose(new SampleAuditEvent(), descriptor, sp);
 
         var truncated = body.AsSpan(0, 10).ToArray();
@@ -150,7 +150,7 @@ public sealed class EncryptedBodyComposerTests
     public void Decompose_EmptyBody_ThrowsCleanly()
     {
         var sp = BuildProviderForAudit("kid-a");
-        var descriptor = EncryptedDescriptor(EncryptionDomains.Audit);
+        var descriptor = EncryptedDescriptor(EncryptionDomains.AUDIT);
         var act = () => EncryptedBodyComposer.Decompose<SampleAuditEvent>(
             ReadOnlySpan<byte>.Empty, descriptor, sp);
         act.Should().Throw<Exception>();
@@ -160,7 +160,7 @@ public sealed class EncryptedBodyComposerTests
     public void ReadKidFromFrame_ValidFrame_ReturnsKid()
     {
         var sp = BuildProviderForAudit("kid-a");
-        var descriptor = EncryptedDescriptor(EncryptionDomains.Audit);
+        var descriptor = EncryptedDescriptor(EncryptionDomains.AUDIT);
         var (body, _) = EncryptedBodyComposer.Compose(new SampleAuditEvent(), descriptor, sp);
 
         EncryptedBodyComposer.ReadKidFromFrame(body).Should().Be("kid-a");
@@ -242,11 +242,11 @@ public sealed class EncryptedBodyComposerTests
         var keyring = new PayloadCryptoKeyring(
             activeKid: kid,
             keys: new Dictionary<string, byte[]>(StringComparer.Ordinal) { [kid] = key },
-            aadContext: Encoding.UTF8.GetBytes("d2/" + EncryptionDomains.Audit));
+            aadContext: Encoding.UTF8.GetBytes("d2/" + EncryptionDomains.AUDIT));
         var crypto = new PayloadCrypto(keyring);
 
         var services = new ServiceCollection();
-        services.AddKeyedSingleton<IPayloadCrypto>(EncryptionDomains.Audit, crypto);
+        services.AddKeyedSingleton<IPayloadCrypto>(EncryptionDomains.AUDIT, crypto);
         return services.BuildServiceProvider();
     }
 }

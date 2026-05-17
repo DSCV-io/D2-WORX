@@ -72,22 +72,6 @@ public static class D2AspNetCoreConstants
     public const string SELF_HEALTH_CHECK_NAME = "self";
 
     /// <summary>
-    /// Canonical correlation-id header name consumed by
-    /// <see cref="ProblemDetailsServiceCollectionExtensions.AddD2ProblemDetails"/>
-    /// — when present on the request, its value flows to the response
-    /// <c>extensions["correlationId"]</c>; when absent, a fresh GUID is
-    /// generated and echoed back via the response header.
-    /// </summary>
-    public const string CORRELATION_ID_HEADER = "X-Correlation-Id";
-
-    /// <summary>
-    /// Canonical idempotency-key header name. Listed in
-    /// <see cref="D2CorsOptions.AllowedHeaders"/>'s default so cross-origin
-    /// requests can carry the header without a CORS preflight rejection.
-    /// </summary>
-    public const string IDEMPOTENCY_KEY_HEADER = "X-Idempotency-Key";
-
-    /// <summary>
     /// Canonical configuration key for the CORS allowed-origins list.
     /// Bound via <c>configuration.GetSection(CORS_ORIGINS_CONFIG_KEY).Get&lt;string[]&gt;()</c>;
     /// supports the indexed env-var convention
@@ -106,9 +90,11 @@ public static class D2AspNetCoreConstants
     /// Maximum byte length the
     /// <see cref="ProblemDetailsServiceCollectionExtensions.AddD2ProblemDetails"/>
     /// customizer accepts from the inbound
-    /// <see cref="CORRELATION_ID_HEADER"/> header. Values exceeding the cap
-    /// are treated as absent (a fresh GUID is generated). Prevents an
-    /// arbitrary-length user header from inflating the response body.
+    /// <c>X-Correlation-Id</c> header
+    /// (<see cref="D2.Shared.Headers.Http.HttpHeaders.CORRELATION_ID"/>).
+    /// Values exceeding the cap are treated as absent (a fresh GUID is
+    /// generated). Prevents an arbitrary-length user header from inflating
+    /// the response body.
     /// </summary>
     public const int MAX_CORRELATION_ID_LENGTH = 128;
 

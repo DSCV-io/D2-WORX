@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------
 
 import { D2Result } from "./d2-result.js";
-import { ErrorCodes } from "./error-codes.js";
+import { ErrorCodes } from "./error-codes.g.js";
 import { HttpStatusCode } from "./http-status-codes.js";
 import type { InputError } from "./input-error.js";
 import { tk, type TKMessage } from "./tk-message.js";

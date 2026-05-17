@@ -26,10 +26,27 @@ export interface GuardRequestEvent {
  *
  * BOTH methods MUST throw — they never return. The `never` return
  * type lets the guards' `asserts` narrowing work as expected.
+ *
+ * `throwError` is invoked by every guard with a `ProblemDetailsBody`
+ * payload and the `application/problem+json` content type (re-exported
+ * from `@d2/headers` as `PROBLEM_DETAILS_CONTENT_TYPE` — RFC 7807 §6.1
+ * SHOULD compliance). Implementations MUST honor the supplied
+ * `contentType` on the outbound response (e.g. by constructing a
+ * SvelteKit `Response` with the header set) — defaulting to
+ * `application/json` strips ProblemDetails-aware clients of the
+ * spec-defined content discriminator.
  */
 export interface GuardThrowers {
-  /** Throws an HTTP error with the given ProblemDetails body. */
-  throwError(status: number, body: ProblemDetailsBody): never;
+  /**
+   * Throws an HTTP error with the given ProblemDetails body. Implementations
+   * MUST set the response Content-Type to the supplied `contentType` value
+   * (always `application/problem+json` for guard-issued rejections).
+   */
+  throwError(
+    status: number,
+    body: ProblemDetailsBody,
+    contentType: string,
+  ): never;
   /** Throws a redirect to the given URL. */
   throwRedirect(status: number, location: string): never;
 }

@@ -57,18 +57,6 @@ public sealed class D2AspNetCoreConstantsTests
     }
 
     [Fact]
-    public void CORRELATION_ID_HEADER_PinsCanonicalLiteral()
-    {
-        D2AspNetCoreConstants.CORRELATION_ID_HEADER.Should().Be("X-Correlation-Id");
-    }
-
-    [Fact]
-    public void IDEMPOTENCY_KEY_HEADER_PinsCanonicalLiteral()
-    {
-        D2AspNetCoreConstants.IDEMPOTENCY_KEY_HEADER.Should().Be("X-Idempotency-Key");
-    }
-
-    [Fact]
     public void CORS_ORIGINS_CONFIG_KEY_PinsCanonicalLiteral()
     {
         D2AspNetCoreConstants.CORS_ORIGINS_CONFIG_KEY.Should().Be("D2_CORS_ORIGINS");

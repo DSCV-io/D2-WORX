@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from "vitest";
 import { combine, combineMany } from "../src/combine.js";
-import { ErrorCodes } from "../src/error-codes.js";
+import { ErrorCodes } from "../src/error-codes.g.js";
 import { fail, notFound, ok, validationFailed } from "../src/factories.js";
 import { HttpStatusCode } from "../src/http-status-codes.js";
 

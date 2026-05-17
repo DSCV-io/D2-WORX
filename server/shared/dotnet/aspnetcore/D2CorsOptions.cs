@@ -6,6 +6,8 @@
 
 namespace D2.Shared.AspNetCore;
 
+using D2.Shared.Headers.Http;
+
 /// <summary>
 /// Configuration for
 /// <see cref="CorsServiceCollectionExtensions.AddD2Cors"/>. Init-only
@@ -26,7 +28,9 @@ namespace D2.Shared.AspNetCore;
 /// </para>
 /// <para>
 /// <see cref="AllowedHeaders"/> defaults enumerate the canonical D²
-/// cross-cutting headers (<c>X-Correlation-Id</c>, <c>X-Idempotency-Key</c>)
+/// cross-cutting headers (<c>X-Correlation-Id</c> — spec-driven constant
+/// from <c>HttpHeaders.CORRELATION_ID</c>; <c>Idempotency-Key</c> —
+/// Stripe-style spec-driven constant from <c>HttpHeaders.IDEMPOTENCY_KEY</c>)
 /// + the standard request headers a SPA needs (<c>Content-Type</c>,
 /// <c>Authorization</c>) + IP-forwarding headers used by request enrichment
 /// (<c>X-Forwarded-For</c>, <c>X-Real-IP</c>, <c>CF-Connecting-IP</c>). New
@@ -43,9 +47,9 @@ public sealed record D2CorsOptions
     internal static readonly IReadOnlyList<string> SR_DefaultAllowedHeaders =
     [
         "Content-Type",
-        "Authorization",
-        D2AspNetCoreConstants.CORRELATION_ID_HEADER,
-        D2AspNetCoreConstants.IDEMPOTENCY_KEY_HEADER,
+        HttpHeaders.AUTHORIZATION,
+        HttpHeaders.CORRELATION_ID,
+        HttpHeaders.IDEMPOTENCY_KEY,
         "X-Forwarded-For",
         "X-Real-IP",
         "CF-Connecting-IP",

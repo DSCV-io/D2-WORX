@@ -16,16 +16,18 @@ using System.Text.Json.Serialization;
 /// <c>{ "key": "...", "params": { "name": "value", ... } }</c> (with parameters).
 /// </summary>
 /// <remarks>
-/// Property names are camelCase to match the project's wire convention.
+/// Property names come from the spec-derived
+/// <see cref="TkMessageWireShape"/> constants
+/// (<see cref="TkMessageWireShape.KEY"/> / <see cref="TkMessageWireShape.PARAMS"/>) —
+/// a single source of truth shared with the TS-side parser via
+/// <c>contracts/tk-message/tk-message.spec.json</c>, so cross-language
+/// wire drift on the property names is structurally impossible.
 /// Deserialization is tolerant of property order and ignores unknown
 /// properties. A missing <c>key</c> property is rejected — every message
 /// MUST carry a key.
 /// </remarks>
 public sealed class TKMessageJsonConverter : JsonConverter<TKMessage>
 {
-    private const string _KEY_PROPERTY = "key";
-    private const string _PARAMS_PROPERTY = "params";
-
     /// <inheritdoc/>
     public override TKMessage? Read(
         ref Utf8JsonReader reader,
@@ -53,7 +55,8 @@ public sealed class TKMessageJsonConverter : JsonConverter<TKMessage>
                 if (key is null)
                 {
                     throw new JsonException(
-                        $"{nameof(TKMessage)} JSON is missing required '{_KEY_PROPERTY}'.");
+                        $"{nameof(TKMessage)} JSON is missing required "
+                            + $"'{TkMessageWireShape.KEY}'.");
                 }
 
                 return new TKMessage(key, parameters);
@@ -67,11 +70,14 @@ public sealed class TKMessageJsonConverter : JsonConverter<TKMessage>
             var propertyName = reader.GetString();
             reader.Read();
 
-            if (string.Equals(propertyName, _KEY_PROPERTY, StringComparison.Ordinal))
+            if (string.Equals(propertyName, TkMessageWireShape.KEY, StringComparison.Ordinal))
             {
                 key = reader.GetString();
             }
-            else if (string.Equals(propertyName, _PARAMS_PROPERTY, StringComparison.Ordinal))
+            else if (string.Equals(
+                propertyName,
+                TkMessageWireShape.PARAMS,
+                StringComparison.Ordinal))
             {
                 if (reader.TokenType == JsonTokenType.Null)
                 {
@@ -103,11 +109,11 @@ public sealed class TKMessageJsonConverter : JsonConverter<TKMessage>
         ArgumentNullException.ThrowIfNull(value);
 
         writer.WriteStartObject();
-        writer.WriteString(_KEY_PROPERTY, value.Key);
+        writer.WriteString(TkMessageWireShape.KEY, value.Key);
 
         if (value.Parameters is { Count: > 0 })
         {
-            writer.WritePropertyName(_PARAMS_PROPERTY);
+            writer.WritePropertyName(TkMessageWireShape.PARAMS);
             JsonSerializer.Serialize(writer, value.Parameters, options);
         }
 

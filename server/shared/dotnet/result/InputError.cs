@@ -6,6 +6,7 @@
 
 namespace D2.Shared.Result;
 
+using System.Text.Json.Serialization;
 using D2.Shared.I18n;
 
 /// <summary>
@@ -21,6 +22,17 @@ using D2.Shared.I18n;
 /// consumer.
 /// </para>
 /// <para>
+/// The property names (<c>field</c>, <c>errors</c>) come from the spec-derived
+/// <see cref="InputErrorWireShape"/> catalog —
+/// <c>contracts/input-error/input-error.spec.json</c> drives both the .NET
+/// serializer and the TS-side parser, so cross-language wire drift on the
+/// property names is structurally impossible. The
+/// <c>[JsonPropertyName(InputErrorWireShape.*)]</c> attributes on the
+/// record parameters wire the camelCase wire names directly onto the
+/// PascalCase code-side properties — so the serialization is wire-correct
+/// regardless of whether the call site passes the SR_Web options.
+/// </para>
+/// <para>
 /// Each entry in <see cref="Errors"/> is a <see cref="TKMessage"/>, so the type
 /// system enforces "field-error messages are translation keys" identically to
 /// the top-level <c>D2Result.Messages</c> contract.
@@ -30,4 +42,6 @@ using D2.Shared.I18n;
 /// <param name="Errors">
 /// One or more translatable error messages describing what's wrong with the field.
 /// </param>
-public sealed record InputError(string Field, IReadOnlyList<TKMessage> Errors);
+public sealed record InputError(
+    [property: JsonPropertyName(InputErrorWireShape.FIELD)] string Field,
+    [property: JsonPropertyName(InputErrorWireShape.ERRORS)] IReadOnlyList<TKMessage> Errors);

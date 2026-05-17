@@ -49,14 +49,19 @@ using GrpcStatusCode = global::Grpc.Core.StatusCode;
 ///     <c>Detail</c>.</item>
 ///   <item>Trailers carry only:
 ///     <list type="bullet">
-///       <item><c>d2_error_code</c> — the closed-enum
-///         <see cref="D2.Shared.Auth.Errors.AuthErrorCodes"/> constant.</item>
-///       <item><c>d2_messages</c> — the <see cref="D2Result.Messages"/> array
-///         serialized as JSON (TK keys + bounded params; ASCII-safe;
-///         inspectable in tools like grpcurl).</item>
-///       <item><c>traceid</c> — <see cref="Activity.Current"/>'s W3C trace id
-///         when present, OMITTED otherwise (parity with HTTP middleware's
-///         "absent on no-Activity" choice).</item>
+///       <item><c>d2_error_code</c> (<see cref="D2GrpcTrailers.ERROR_CODE"/>) —
+///         the closed-enum <see cref="D2.Shared.Auth.Errors.AuthErrorCodes"/>
+///         constant.</item>
+///       <item><c>d2_messages</c> (<see cref="D2GrpcTrailers.MESSAGES"/>) —
+///         the <see cref="D2Result.Messages"/> array serialized as JSON (TK
+///         keys + bounded params; ASCII-safe; inspectable in tools like
+///         grpcurl).</item>
+///       <item><c>traceId</c> (<see cref="D2GrpcTrailers.TRACE_ID"/>) —
+///         <see cref="Activity.Current"/>'s W3C trace id when present,
+///         OMITTED otherwise (parity with HTTP middleware's "absent on
+///         no-Activity" choice). camelCase matches the HTTP ProblemDetails
+///         extension key <c>traceId</c> — single mental model across
+///         transports.</item>
 ///     </list>
 ///   </item>
 /// </list>
@@ -104,13 +109,13 @@ public static class D2RpcStatusExtensions
 
             var trailers = new Metadata
             {
-                { TRAILER_ERROR_CODE, errorCode },
-                { TRAILER_MESSAGES, SerializeMessages(result.Messages) },
+                { D2GrpcTrailers.ERROR_CODE, errorCode },
+                { D2GrpcTrailers.MESSAGES, SerializeMessages(result.Messages) },
             };
 
             var traceId = Activity.Current?.TraceId.ToString();
             if (traceId is not null)
-                trailers.Add(TRAILER_TRACE_ID, traceId);
+                trailers.Add(D2GrpcTrailers.TRACE_ID, traceId);
 
             AuthTelemetry.ProblemEmitted.Add(
                 1,
@@ -123,15 +128,6 @@ public static class D2RpcStatusExtensions
             return new RpcException(new GrpcStatus(grpcCode, string.Empty), trailers);
         }
     }
-
-    /// <summary>The trailer key carrying the machine-readable error code.</summary>
-    public const string TRAILER_ERROR_CODE = "d2_error_code";
-
-    /// <summary>The trailer key carrying the array of TK message objects (JSON text).</summary>
-    public const string TRAILER_MESSAGES = "d2_messages";
-
-    /// <summary>The trailer key carrying the W3C trace id (lower-hex, 32 chars).</summary>
-    public const string TRAILER_TRACE_ID = "traceid";
 
     // Pinned so JsonSerializerOptions caching applies; default options match
     // the codebase's Web defaults (camelCase property names, ignore null).

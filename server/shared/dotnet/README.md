@@ -14,7 +14,7 @@ Per project convention, every library has its own `README.md`. The list below po
 
 | Lib | Status | Purpose | Reference |
 |---|---|---|---|
-| [`result/`](result/README.md) | **Built** | `D2Result<T>` — errors-as-values, semantic factories, partial-success ladder, `BubbleFail` propagation, auto-injected `traceId`. `Messages` / `InputErrors` are typed as `IReadOnlyList<TKMessage>` (compile-time enforcement: every user-facing message is a translation key). | [PATTERNS.md](../../../docs/PATTERNS.md) D2Result section |
+| [`result/`](result/README.md) | **Built** | `D2Result<T>` — errors-as-values, semantic factories, partial-success ladder, `BubbleFail` propagation, auto-injected `traceId`. `Messages` / `InputErrors` are typed as `IReadOnlyList<TKMessage>` (compile-time enforcement: every user-facing message is a translation key). The `ErrorCodes` constants class is codegen-emitted via `error-codes-source-gen/` from `contracts/error-codes/error-codes.spec.json` — same spec drives the TS-side `@d2/result` `ErrorCodes` catalog, so cross-language wire-format drift is structurally impossible. | [PATTERNS.md](../../../docs/PATTERNS.md) D2Result section |
 | [`utilities/`](utilities/README.md) | **Built** | `Truthy()` / `Falsey()` / `ToNullIfEmpty()` / `CleanStr()` + `TryParseEmail()` / `TryParsePhoneNumber()` (return `D2Result<string>` for smart-constructor chaining), `[RedactData]` attribute, `D2Env`, `ConnectionStringHelper`, `SerializerOptions`. | [PATTERNS.md](../../../docs/PATTERNS.md) Utilities section |
 | [`resilience/`](resilience/README.md) | **Built** | `RetryHelper` (with `D2Result`-aware overload), `CircuitBreaker<T>`, `Singleflight<TKey, TValue>`, and the `ResilientPipeline<TKey, TValue>` composition surface. | [PATTERNS.md](../../../docs/PATTERNS.md) Resilience section |
 | [`i18n-abstractions/`](i18n-abstractions/README.md) | **Built** | Domain-safe slice — `TKMessage` primitive, SrcGen-emitted `TK` constants from `contracts/messages/en-US.json`, `ITranslator` interface. Zero external deps. Drift between JSON and TK code constants is structurally impossible (the constant doesn't exist if the JSON key doesn't). | [PATTERNS.md](../../../docs/PATTERNS.md) i18n section |
@@ -24,6 +24,11 @@ Per project convention, every library has its own `README.md`. The list below po
 | [`auth-scopes-source-gen/`](auth-scopes-source-gen/) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits the `Scopes.*` constants for `auth-abstractions/` from `contracts/auth-scopes/scopes.spec.json`. Referenced as Analyzer; its dll never ships into any consuming assembly. | [PATTERNS.md](../../../docs/PATTERNS.md) Scopes / authorization section |
 | [`auth-audiences-source-gen/`](auth-audiences-source-gen/README.md) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits the `Audiences.*` const-string catalog for `auth-abstractions/` from `contracts/auth-audiences/audiences.spec.json`. Single source of truth for JWT `aud` claim values + `TokenExchangeClient.ExchangeAsync` `targetAudience` arguments. Referenced as Analyzer. | [PATTERNS.md](../../../docs/PATTERNS.md) Scopes / authorization section |
 | [`auth-error-codes-source-gen/`](auth-error-codes-source-gen/README.md) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits `AuthErrorCodes.g.cs` (constants + `AllCodes` set + `GetHttpStatus` + `KebabCase` helper) plus `AuthFailures.g.cs` (semantic `D2Result` factories) into `auth/` from `contracts/auth-error-codes/auth-error-codes.spec.json`. Single source of truth for the auth-failure taxonomy; cross-spec consumed by the telemetry-tags SrcGen for the `d2.auth.problem.emitted` tag-value enumeration. Referenced as Analyzer. | [SECURITY-RUNBOOKS.md](../../../docs/SECURITY-RUNBOOKS.md) |
+| [`error-codes-source-gen/`](error-codes-source-gen/README.md) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits `ErrorCodes.g.cs` (constants + `AllCodes` set + `GetHttpStatus` switch) into `result/` from `contracts/error-codes/error-codes.spec.json`. Single source of truth for the generic 15-entry D2Result error-code taxonomy (`NOT_FOUND` / `FORBIDDEN` / `VALIDATION_FAILED` / `PARTIAL_SUCCESS` / `IDEMPOTENCY_IN_FLIGHT` / etc.); same spec drives the TS-side `@d2/result` `ErrorCodes` catalog via `tools/ts-codegen/src/error-codes-emit.ts`. Auth-specific codes (`AUTH_*`) live in the sibling `auth-error-codes-source-gen/` spec because they carry additional fields (`factoryName` / `userMessageKey` / `category`) that the generic taxonomy doesn't need. Referenced as Analyzer. | [PATTERNS.md](../../../docs/PATTERNS.md) Spec-driven codegen section |
+| [`d2result-envelope-source-gen/`](d2result-envelope-source-gen/README.md) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits `D2ResultEnvelopeFieldNames.g.cs` (7 JSON property-name constants — `SUCCESS` / `DATA` / `MESSAGES` / `INPUT_ERRORS` / `ERROR_CODE` / `TRACE_ID` / `STATUS_CODE` — plus `AllFields` set) into `result/` from `contracts/d2result-envelope/d2result-envelope.spec.json`. Single source of truth for the D2Result Shape B wire envelope (the BFF gateway response shape every frontend reads). The hand-written `D2Result` / `D2Result<TData>` carry `[JsonPropertyName(D2ResultEnvelopeFieldNames.*)]` attributes referencing the codegen constants — the envelope keys ship as camelCase unconditionally, independent of the calling endpoint's `JsonSerializerOptions.PropertyNamingPolicy`. Same spec drives the TS-side `@d2/result` catalog via `tools/ts-codegen/src/d2result-envelope-emit.ts`; the BFF gateway parser (`server/web/src/lib/shared/rest/gateway-response.ts`) reads via the spec constants instead of hand-rolled string literals. Referenced as Analyzer. | [PATTERNS.md](../../../docs/PATTERNS.md) Spec-driven codegen section |
+| [`problem-details-source-gen/`](problem-details-source-gen/README.md) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits the static-class `D2ProblemDetailsKeys.g.cs` carrying `TYPE_URI_PREFIX` + `CONTENT_TYPE` + `EXTENSION_*` extension keys + `TITLE_*` per-HTTP-status titles + the `TitleFor` switch into `problem-details-abstractions/` from `contracts/problem-details/problem-details.spec.json`. Single source of truth for the RFC 7807 wire shape consumed by every .NET emit path (auth-http path A + aspnetcore Customizer path B); same spec drives the TS-side `@d2/headers` ProblemDetails catalog via `tools/ts-codegen/src/problem-details-emit.ts`. Referenced as Analyzer. | [PATTERNS.md](../../../docs/PATTERNS.md) Spec-driven codegen section |
+| [`problem-details-abstractions/`](problem-details-abstractions/README.md) | **Built** | Single home for the codegen-emitted `D2ProblemDetailsKeys` static class — `TYPE_URI_PREFIX`, `CONTENT_TYPE`, `EXTENSION_*`, `TITLE_*`, and the `TitleFor(HttpStatusCode)` switch. Zero runtime deps. Consumed by both `auth-http/` (path A — auth-middleware `D2ProblemDetailsExtensions.ToProblemDetails`) AND `aspnetcore/` (path B — `D2ProblemDetailsCustomizer` over ASP.NET `IProblemDetailsService`) so both emit paths share one constant set and produce byte-identical Shape A bodies. | [PATTERNS.md](../../../docs/PATTERNS.md) Spec-driven codegen section |
+| [`wire-shapes-source-gen/`](wire-shapes-source-gen/README.md) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) with multi-target dispatch — emits per-wire-shape JSON property-name catalog static classes by reading `contracts/<wire-shape>/<wire-shape>.spec.json` files via `<AdditionalFiles>`. Dispatches per consuming assembly: `D2.Shared.I18n.Abstractions` → `TkMessageWireShape.g.cs` (KEY/PARAMS) from `contracts/tk-message/tk-message.spec.json`; `D2.Shared.Result` → `InputErrorWireShape.g.cs` (FIELD/ERRORS) from `contracts/input-error/input-error.spec.json`. The emitted constants are referenced by `TKMessageJsonConverter` and `InputError`'s `[JsonPropertyName]` attributes; same specs drive the TS-side `@d2/result` catalogs via `tools/ts-codegen/src/wire-shape-emit.ts`. Aligns `D2Result.messages` to ship as `IReadOnlyList<TKMessage>` on both .NET and TS sides — the spec-driven `{key, params?}` envelope is the single source of truth for the wire shape. Referenced as Analyzer. | [PATTERNS.md](../../../docs/PATTERNS.md) Spec-driven codegen section |
 | [`jwt-claims-source-gen/`](jwt-claims-source-gen/README.md) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits `JwtClaimTypes.g.cs` into `auth-abstractions/` from `contracts/jwt-claims/jwt-claims.spec.json`. Single source of truth for every JWT claim D2 reads / writes (standard OAuth/OIDC + D2-custom + inside-act); same spec drives the TS-side `@d2/auth-abstractions` `JwtClaimTypes` catalog. Referenced as Analyzer. | [PATTERNS.md](../../../docs/PATTERNS.md) Scopes / authorization section |
 | [`in-process-keys-source-gen/`](in-process-keys-source-gen/README.md) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits `D2HttpContextItems.g.cs` (public class) into `auth-abstractions/` AND `D2GrpcUserStateKeys.g.cs` (internal class) into `auth-grpc/` from `contracts/in-process-keys/keys.spec.json`. Cross-binding parity is structurally guaranteed (single source emits both at identical wire values; verified by `HttpContextItemsVsGrpcUserStateKeysConsistencyTests`). Referenced as Analyzer. | [PATTERNS.md](../../../docs/PATTERNS.md) Context section |
 | [`headers-source-gen/`](headers-source-gen/README.md) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits per-transport header catalog classes into `headers-{common,http,amqp,grpc}/` from `contracts/headers/headers.spec.json`. Cross-transport entries appear in multiple per-transport catalogs at identical wire values, codegen-guaranteed; same spec drives the TS-side `@d2/headers-{common,http,amqp,grpc}` packages. Referenced as Analyzer by all four catalog csprojs. | [MESSAGING.md](../../../docs/MESSAGING.md) |
@@ -32,6 +37,11 @@ Per project convention, every library has its own `README.md`. The list below po
 | [`headers-amqp/`](headers-amqp/README.md) | **Built** | AMQP-applicable D2 wire-protocol headers (`AmqpHeaders.MESSAGE_ID`, `.PROTO_TYPE`, `.ENCRYPTION_KID`, `.FAILURE_REASON`, `.CONTENT_TYPE`, `.TIMESTAMP` + cross-transport entries). Codegen-emitted from the headers spec. Zero runtime dependencies. Single source of truth for the AMQP-transport header catalog consumed by `messaging-rabbitmq/`. | [MESSAGING.md](../../../docs/MESSAGING.md) |
 | [`headers-grpc/`](headers-grpc/README.md) | **Built** | gRPC-applicable D2 wire-protocol headers (`GrpcHeaders.AUTHORIZATION` + cross-transport entries). Codegen-emitted from the headers spec. Zero runtime dependencies. gRPC framework constants (`grpc-status`, `grpc-encoding`, ...) come from `Grpc.Core.Metadata` and are NOT in this catalog. | [MESSAGING.md](../../../docs/MESSAGING.md) |
 | [`telemetry-tags-source-gen/`](telemetry-tags-source-gen/README.md) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits per-meter `*TelemetryTags.g.cs` typed-constants classes from `contracts/telemetry/telemetry.spec.json`. Per-meter single-target dispatch by `consumingAssembly`. Cross-spec resolution from the AuthErrorCodes spec drives the `d2.auth.problem.emitted` tag-value set. Referenced as Analyzer. | [PATTERNS.md](../../../docs/PATTERNS.md) Telemetry section |
+| [`grpc-trailers-source-gen/`](grpc-trailers-source-gen/README.md) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits `D2GrpcTrailers.g.cs` (constants + `AllTrailers` set) into `auth-grpc/` from `contracts/grpc-trailers/grpc-trailers.spec.json`. Single source of truth for the gRPC trailer-key catalog (`ERROR_CODE` / `MESSAGES` / `TRACE_ID`); same spec drives the TS-side `@d2/grpc-client` `D2GrpcTrailers` catalog via `tools/ts-codegen/src/grpc-trailers-emit.ts`. Resolves the lowercase `traceid` vs camelCase `traceId` casing divergence between gRPC trailer keys and HTTP ProblemDetails extension keys. Referenced as Analyzer. | [MESSAGING.md](../../../docs/MESSAGING.md) |
+| [`otel-messaging-tags-source-gen/`](otel-messaging-tags-source-gen/README.md) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits `MessagingActivityTags.g.cs` into `messaging-rabbitmq/` from `contracts/otel-messaging-tags/otel-messaging-tags.spec.json`. Spec-drives the OTel sem-conv attribute-name catalog emitted on both publisher + consumer spans — both sides reference the same `MESSAGING_OPERATION_TYPE` constant, so publisher and consumer spans emit byte-identical OTel canonical attribute names (e.g. `messaging.operation.type`) with no possibility of drift. Same spec drives the TS-side `@d2/telemetry` `MessagingActivityTags` catalog. Referenced as Analyzer. | [MESSAGING.md](../../../docs/MESSAGING.md) |
+| [`encryption-domains-source-gen/`](encryption-domains-source-gen/README.md) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits `EncryptionDomains.g.cs` into `encryption/` from `contracts/encryption-domains/encryption-domains.spec.json`. Single source of truth for the closed catalog of keyring-domain identifiers (`AUDIT` / `NOTIFICATIONS` / `COURIER` + `PLAINTEXT` sentinel). A typo on a domain identifier surfaces as a compile error rather than silently routing a message to a non-existent keyring. Same spec drives the TS-side `@d2/encryption-abstractions` `EncryptionDomains` catalog. Referenced as Analyzer. | [SECURITY-RUNBOOKS.md](../../../docs/SECURITY-RUNBOOKS.md) |
+| [`encryption-frame-source-gen/`](encryption-frame-source-gen/README.md) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) that emits `EncryptionFrameLayout.g.cs` into `encryption/` from `contracts/encryption-frame/encryption-frame.spec.json`. Spec-drives the binary frame-layout field-offset + byte-length constants (`VERSION_OFFSET=0`, `KID_LENGTH_OFFSET=1`, `NONCE_LENGTH=12`, `CONSTRAINT_TAG_LENGTH=16`, `CURRENT_VERSION=1`, etc.). Consumed by the TS-side `@d2/encryption-abstractions` `EncryptionFrame` catalog so the .NET encoder and the TS decoder reference identical byte offsets. Referenced as Analyzer. | [SECURITY-RUNBOOKS.md](../../../docs/SECURITY-RUNBOOKS.md) |
+| [`dlq-failure-metadata-source-gen/`](dlq-failure-metadata-source-gen/README.md) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0) with multi-target dispatch — emits `DlqFailureMetadataFields.g.cs` (JSON property-name catalog) into `messaging-abstractions/` AND `DlqFailureCauses.g.cs` (closed-enum cause-string catalog) into `messaging-rabbitmq/` from `contracts/dlq-failure-metadata/dlq-failure-metadata.spec.json`. The `DlqFailureMetadata` record uses `[JsonPropertyName(DlqFailureMetadataFields.*)]` referencing the codegen constants — the wire shape ships as camelCase unconditionally, independent of `MessagingJsonOptions`. Same spec drives the TS-side `@d2/messaging-abstractions` package, so any TS consumer of `@d2/messaging-abstractions` reads identical field-name and cause-string constants. Referenced as Analyzer by both target csprojs. | [MESSAGING.md](../../../docs/MESSAGING.md) |
 | [`auth-context-abstractions/`](auth-context-abstractions/README.md) | **Built** | Domain-safe slice of the request context — `IAuthContext` (codegen-emitted from `contracts/auth-context/IAuthContext.spec.json`) plus hand-written `IAuthContextExtensions` (`HasScope`, `IsStaff`, etc.). Lets domain code read caller identity / scopes / impersonation without pulling DI / AspNetCore / Configuration. | [PATTERNS.md](../../../docs/PATTERNS.md) Context section |
 | [`context-source-gen/`](context-source-gen/) | **Built** | Roslyn `IIncrementalGenerator` (netstandard2.0). Reads `contracts/{auth,request}-context/*.spec.json` and emits, per target assembly: `IAuthContext.g.cs` into `auth-context-abstractions/`; `IRequestContext.g.cs` + `MutableRequestContext.g.cs` + `PropagatedContext.g.cs` + `PropagatedContextExtensions.g.cs` + `PropagatedContextSerializer.g.cs` (with per-field `maxLength` validation baked from the spec) into `context-abstractions/`. | [PATTERNS.md](../../../docs/PATTERNS.md) Context section |
 | [`context-abstractions/`](context-abstractions/README.md) | **Built** | Single-lib home for every spec-driven context primitive. Codegen-emitted: `IRequestContext` interface (extends `IAuthContext`), `MutableRequestContext` concrete, `PropagatedContext` record (the `propagate: true` field subset), `PropagatedContextExtensions` (`ToPropagatedContext` / `ApplyPropagatedContext` projections), `PropagatedContextSerializer` (base64url + JSON codec for the cross-hop `x-d2-context` header, with per-field length caps from the spec). Hand-written RFC helpers ship here too: `ActorChainParser` (RFC 8693 §2.1 nested actor chain, depth-limited strict-mode), `ScopeClaimParser` (RFC 6749 §3.3 SP-only scope string or JSON array). Identity (UserId / OrgId / Scopes / ActorChain) rebuilds from JWT each hop; only the small operational subset propagates. | [PATTERNS.md](../../../docs/PATTERNS.md) Context section |
@@ -78,6 +88,9 @@ graph LR
     subgraph FOUNDATION["Foundation (result + i18n + utilities + resilience)"]
         direction TB
         I18nSG[i18n-source-gen]:::analyzer
+        ErrorCodesSG[error-codes-source-gen]:::analyzer
+        D2ResultEnvelopeSG[d2result-envelope-source-gen]:::analyzer
+        WireShapesSG[wire-shapes-source-gen]:::analyzer
         I18nAbs[i18n-abstractions]
         I18n[i18n]
         Result[result]
@@ -85,6 +98,10 @@ graph LR
         Resilience[resilience]
 
         I18nSG -.->|analyzer| I18nAbs
+        ErrorCodesSG -.->|analyzer| Result
+        D2ResultEnvelopeSG -.->|analyzer| Result
+        WireShapesSG -.->|analyzer| I18nAbs
+        WireShapesSG -.->|analyzer| Result
         I18n --> I18nAbs
         I18n --> Utilities
         Result --> I18nAbs
@@ -127,21 +144,27 @@ graph LR
     subgraph AUTHRUNTIME["Auth runtime"]
         direction TB
         AuthErrorCodesSG[auth-error-codes-source-gen]:::analyzer
+        ProblemDetailsSG[problem-details-source-gen]:::analyzer
+        ProblemDetailsAbs[problem-details-abstractions]
         TelemetryTagsSG[telemetry-tags-source-gen]:::analyzer
+        GrpcTrailersSG[grpc-trailers-source-gen]:::analyzer
         Auth[auth]
         AuthHttp[auth-http]
         AuthGrpc[auth-grpc]
         AuthOutbound[auth-outbound]
 
         AuthErrorCodesSG -.->|analyzer| Auth
+        ProblemDetailsSG -.->|analyzer| ProblemDetailsAbs
         TelemetryTagsSG -.->|analyzer| Auth
         TelemetryTagsSG -.->|analyzer| AuthOutbound
+        GrpcTrailersSG -.->|analyzer| AuthGrpc
         Auth --> AuthAbs
         Auth --> AuthCtxAbs
         Auth --> CtxAbs
         AuthHttp --> Auth
         AuthHttp --> AuthAbs
         AuthHttp --> CtxAbs
+        AuthHttp --> ProblemDetailsAbs
         AuthGrpc --> Auth
         AuthGrpc --> AuthAbs
         AuthGrpc --> CtxAbs
@@ -161,7 +184,12 @@ graph LR
 
     subgraph CRYPTO["Crypto primitives"]
         direction TB
+        EncryptionDomainsSG[encryption-domains-source-gen]:::analyzer
+        EncryptionFrameSG[encryption-frame-source-gen]:::analyzer
         Encryption[encryption]
+
+        EncryptionDomainsSG -.->|analyzer| Encryption
+        EncryptionFrameSG -.->|analyzer| Encryption
     end
 
     subgraph CACHING["Cache stack"]
@@ -179,10 +207,15 @@ graph LR
     subgraph MESSAGING["Messaging stack"]
         direction TB
         MsgSrcGen[messaging-source-gen]:::analyzer
+        DlqMetaSG[dlq-failure-metadata-source-gen]:::analyzer
+        OtelMsgTagsSG[otel-messaging-tags-source-gen]:::analyzer
         MsgAbs[messaging-abstractions]
         MsgRabbit[messaging-rabbitmq]
 
         MsgSrcGen -.->|analyzer| MsgAbs
+        DlqMetaSG -.->|analyzer| MsgAbs
+        DlqMetaSG -.->|analyzer| MsgRabbit
+        OtelMsgTagsSG -.->|analyzer| MsgRabbit
         MsgRabbit --> MsgAbs
     end
 
@@ -227,6 +260,9 @@ graph LR
     %% implied by an intra-subgraph path).
     AuthHttp --> HeadersHttp
     MsgRabbit --> HeadersAmqp
+    AspNetCore --> ProblemDetailsAbs
+    AspNetCore --> Result
+    AspNetCore --> HeadersHttp
     InProcessKeysSG -.->|analyzer| AuthGrpc
     AuthCtxAbs --> Utilities
     CtxAbs --> Utilities
@@ -267,7 +303,7 @@ graph LR
     ServiceDefaults --> CacheLocal
     ServiceDefaults --> Utilities
 
-    class I18nAbs,I18n,Result,Utilities,Resilience,AuthAbs,AuthCtxAbs,CtxAbs,HandlerAbs,Handler,RepoAbs,Repo,RepoPg,Encryption,CacheAbs,CacheLocal,CacheRedis,CacheTiered,Auth,AuthHttp,AuthGrpc,AuthOutbound,MsgAbs,MsgRabbit,MsgSrcGen,AspNetCore,Logging,Telemetry,ServiceDefaults,AuthErrorCodesSG,TelemetryTagsSG,HeadersSG,HeadersCommon,HeadersHttp,HeadersAmqp,HeadersGrpc,JwtClaimsSG,InProcessKeysSG built
+    class I18nAbs,I18n,Result,Utilities,Resilience,AuthAbs,AuthCtxAbs,CtxAbs,HandlerAbs,Handler,RepoAbs,Repo,RepoPg,Encryption,CacheAbs,CacheLocal,CacheRedis,CacheTiered,Auth,AuthHttp,AuthGrpc,AuthOutbound,MsgAbs,MsgRabbit,MsgSrcGen,AspNetCore,Logging,Telemetry,ServiceDefaults,AuthErrorCodesSG,ErrorCodesSG,D2ResultEnvelopeSG,WireShapesSG,ProblemDetailsAbs,TelemetryTagsSG,HeadersSG,HeadersCommon,HeadersHttp,HeadersAmqp,HeadersGrpc,JwtClaimsSG,InProcessKeysSG built
 ```
 
 **Reading the chart:**
@@ -321,6 +357,13 @@ The cross-subgraph arrows that ARE drawn capture every load-bearing inter-cluste
 - `telemetry → handler / auth / auth-outbound / messaging-rabbitmq / caching-distributed-redis / caching-local-default` — `AddD2Telemetry` aggregates each owning lib's `public const string` `ActivitySource` / `Meter` name through these refs (compile-time symbol references, not literal strings) so a rename in any owning lib surfaces as a build break here
 - `service-defaults → logging / telemetry / aspnetcore / i18n / handler / auth / auth-http / auth-grpc / caching-local-default / utilities` — pure thin-aggregator composition root; each ref is one of the 10 owning-lib `AddD2X` / `UseD2X` extensions the aggregator chains in the LOCKED middleware order
 - `auth-http → headers-http` — `HttpHeaders.IDEMPOTENCY_KEY`, `.CLIENT_FINGERPRINT`, `.AUTHORIZATION`, `.INTERNAL_TOKEN` are spec-driven constants emitted into the `headers-http/` catalog
+- `auth-http → problem-details-abstractions` — `D2ProblemDetailsKeys.TYPE_URI_PREFIX` / `.CONTENT_TYPE` / `.EXTENSION_*` / `.TITLE_*` / `.TitleFor(...)` constants consumed by `D2ProblemDetailsExtensions.ToProblemDetails` (path A) + `JwtAuthMiddleware.WriteProblemAsync` (Content-Type write)
+- `aspnetcore → problem-details-abstractions` — same constants consumed by `D2ProblemDetailsCustomizer.Apply` (path B over ASP.NET `IProblemDetailsService`); single emitted catalog shared with auth-http for byte-identical Shape A bodies across both emit paths
+- `i18n-abstractions → wire-shapes-source-gen` (analyzer) — `TkMessageWireShape.KEY` / `.PARAMS` constants emitted into `i18n-abstractions/Generated/` from `contracts/tk-message/tk-message.spec.json`. Referenced by `TKMessageJsonConverter` for both `Read` and `Write` paths so the JSON property names come from the same spec source as the TS-side parser.
+- `result → wire-shapes-source-gen` (analyzer) — `InputErrorWireShape.FIELD` / `.ERRORS` constants emitted into `result/Generated/` from `contracts/input-error/input-error.spec.json`. Referenced by `InputError`'s `[JsonPropertyName]` attributes so the .NET serializer ships byte-equal property names regardless of which `JsonSerializerOptions` the call site passes.
+- `result → d2result-envelope-source-gen` (analyzer) — `D2ResultEnvelopeFieldNames.{SUCCESS,DATA,MESSAGES,INPUT_ERRORS,ERROR_CODE,TRACE_ID,STATUS_CODE}` constants emitted into `result/Generated/` from `contracts/d2result-envelope/d2result-envelope.spec.json`. Referenced by `[JsonPropertyName(D2ResultEnvelopeFieldNames.*)]` attributes on every `D2Result` / `D2Result<TData>` property so the BFF gateway always sees canonical camelCase keys regardless of the calling endpoint's `JsonSerializerOptions`. Same spec drives `@d2/result`'s `D2ResultEnvelopeFieldNames` on the TS side; the BFF gateway parser reads via these constants.
+- `aspnetcore → result` — Customizer reads originating `D2Result` from `HttpContext.Items[D2ProblemDetailsContextItems.D2_RESULT]` so it can set `Type`/`Title`/`Status`/extensions from `D2Result` fields
+- `aspnetcore → headers-http` — `HttpHeaders.IDEMPOTENCY_KEY` referenced by `D2CorsOptions.SR_DefaultAllowedHeaders` (spec-driven Stripe-style `Idempotency-Key` constant — single wire value for one concept across all consumers)
 - `messaging-rabbitmq → headers-amqp` — `AmqpHeaders.MESSAGE_ID`, `.PROTO_TYPE`, `.ENCRYPTION_KID`, `.FAILURE_REASON`, `.TRACEPARENT`, `.PROPAGATED_CONTEXT` are spec-driven constants emitted into the `headers-amqp/` catalog
 - `jwt-claims-source-gen → auth-abstractions` (analyzer) — emits `JwtClaimTypes.g.cs` from `contracts/jwt-claims/jwt-claims.spec.json`. Same spec drives `@d2/auth-abstractions` `JwtClaimTypes` on the TS side
 - `in-process-keys-source-gen → auth-abstractions` (analyzer) AND `→ auth-grpc` (analyzer) — emits `D2HttpContextItems.g.cs` (public class in `D2.Shared.Auth.Abstractions.Http`) AND `D2GrpcUserStateKeys.g.cs` (internal class in `D2.Shared.Auth.Grpc.Interceptors`) from one spec; structurally guarantees identical wire values for the cross-binding `IRequestContext` slot

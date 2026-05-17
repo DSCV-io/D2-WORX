@@ -14,6 +14,7 @@ using D2.Shared.Auth.Errors;
 using D2.Shared.Auth.Http.ProblemDetails;
 using D2.Shared.Auth.Telemetry;
 using D2.Shared.I18n;
+using D2.Shared.ProblemDetails;
 using D2.Shared.Result;
 using Microsoft.AspNetCore.Http;
 using Xunit;
@@ -28,12 +29,15 @@ public sealed class D2ProblemDetailsExtensionsTests
         var problem = AuthFailures.BearerMissing().ToProblemDetails(ctx);
 
         problem.Status.Should().Be(401);
-        problem.Title.Should().Be(D2ProblemDetailsExtensions.TITLE_UNAUTHORIZED);
+        problem.Title.Should().Be(D2ProblemDetailsKeys.TITLE_UNAUTHORIZED);
+
+        // Root URI prefix — no /auth/ segment (spec value pinned by the
+        // emitter tests; cross-language parity enforced by the .parity test).
         problem.Type.Should().Be(
-            "https://problems.d2-worx.com/auth/auth-bearer-missing");
-        problem.Extensions[D2ProblemDetailsExtensions.EXTENSION_ERROR_CODE]
+            "https://problems.d2.dcsv.io/auth-bearer-missing");
+        problem.Extensions[D2ProblemDetailsKeys.EXTENSION_ERROR_CODE]
             .Should().Be(AuthErrorCodes.AUTH_BEARER_MISSING);
-        problem.Instance.Should().Be("/api/files/abc");
+        problem.Instance.Should().Be("GET /api/files/abc");
     }
 
     [Fact]
@@ -51,17 +55,19 @@ public sealed class D2ProblemDetailsExtensionsTests
     }
 
     [Fact]
-    public void ToProblemDetails_InstanceIsPathOnly_NoQueryString()
+    public void ToProblemDetails_InstanceShape_IsMethodSpacePath_NoQueryString()
     {
         // Query strings carry referrers / search terms / sometimes
-        // session-binding params. Stay path-only to avoid leaking them onto
-        // ProblemDetails (which may end up in caller logs).
+        // session-binding params. Stay path-only (excluding the query) so
+        // they're not leaked onto ProblemDetails. Method is included for
+        // operator diagnosability and cross-path parity with the Customizer.
         var ctx = MakeContext("/api/x");
+        ctx.Request.Method = "POST";
         ctx.Request.QueryString = new QueryString("?secret=abc&user=alice");
 
         var problem = AuthFailures.BearerMissing().ToProblemDetails(ctx);
 
-        problem.Instance.Should().Be("/api/x");
+        problem.Instance.Should().Be("POST /api/x");
         problem.Instance.Should().NotContain("secret");
     }
 
@@ -93,10 +99,10 @@ public sealed class D2ProblemDetailsExtensionsTests
         var problem = failure.ToProblemDetails(ctx);
 
         problem.Status.Should().Be(401);
-        problem.Title.Should().Be(D2ProblemDetailsExtensions.TITLE_UNAUTHORIZED);
-        problem.Extensions[D2ProblemDetailsExtensions.EXTENSION_ERROR_CODE]
+        problem.Title.Should().Be(D2ProblemDetailsKeys.TITLE_UNAUTHORIZED);
+        problem.Extensions[D2ProblemDetailsKeys.EXTENSION_ERROR_CODE]
             .Should().Be(expectedErrorCode);
-        problem.Type.Should().StartWith(D2ProblemDetailsExtensions.TYPE_URI_PREFIX);
+        problem.Type.Should().StartWith(D2ProblemDetailsKeys.TYPE_URI_PREFIX);
     }
 
     [Fact]
@@ -107,8 +113,8 @@ public sealed class D2ProblemDetailsExtensionsTests
         var problem = AuthFailures.JwksUnavailable().ToProblemDetails(ctx);
 
         problem.Status.Should().Be(503);
-        problem.Title.Should().Be(D2ProblemDetailsExtensions.TITLE_SERVICE_UNAVAILABLE);
-        problem.Extensions[D2ProblemDetailsExtensions.EXTENSION_ERROR_CODE]
+        problem.Title.Should().Be(D2ProblemDetailsKeys.TITLE_SERVICE_UNAVAILABLE);
+        problem.Extensions[D2ProblemDetailsKeys.EXTENSION_ERROR_CODE]
             .Should().Be(AuthErrorCodes.AUTH_JWKS_UNAVAILABLE);
     }
 
@@ -120,8 +126,8 @@ public sealed class D2ProblemDetailsExtensionsTests
         var problem = AuthFailures.SessionLivenessUnavailable().ToProblemDetails(ctx);
 
         problem.Status.Should().Be(503);
-        problem.Title.Should().Be(D2ProblemDetailsExtensions.TITLE_SERVICE_UNAVAILABLE);
-        problem.Extensions[D2ProblemDetailsExtensions.EXTENSION_ERROR_CODE]
+        problem.Title.Should().Be(D2ProblemDetailsKeys.TITLE_SERVICE_UNAVAILABLE);
+        problem.Extensions[D2ProblemDetailsKeys.EXTENSION_ERROR_CODE]
             .Should().Be(AuthErrorCodes.AUTH_SESSION_LIVENESS_UNAVAILABLE);
     }
 
@@ -132,11 +138,45 @@ public sealed class D2ProblemDetailsExtensionsTests
 
         var problem = AuthFailures.BearerMissing().ToProblemDetails(ctx);
 
-        var messages = problem.Extensions[D2ProblemDetailsExtensions.EXTENSION_MESSAGES];
+        var messages = problem.Extensions[D2ProblemDetailsKeys.EXTENSION_MESSAGES];
         messages.Should().BeAssignableTo<IReadOnlyList<TKMessage>>();
         var asList = (IReadOnlyList<TKMessage>)messages;
         asList.Should().ContainSingle()
             .Which.Should().Be(TK.Auth.Errors.UNAUTHORIZED);
+    }
+
+    [Fact]
+    public void ToProblemDetails_InputErrorsEmpty_OmitsInputErrorsExtension()
+    {
+        var ctx = MakeContext("/api/x");
+
+        var problem = AuthFailures.BearerMissing().ToProblemDetails(ctx);
+
+        problem.Extensions
+            .Should().NotContainKey(D2ProblemDetailsKeys.EXTENSION_INPUT_ERRORS);
+    }
+
+    [Fact]
+    public void ToProblemDetails_InputErrorsPresent_PopulatesInputErrorsExtension()
+    {
+        var ctx = MakeContext("/api/x");
+        var inputErrors = new[]
+        {
+            new InputError("email", [TK.Auth.Errors.UNAUTHORIZED]),
+        };
+        var failure = D2Result.Fail(
+            messages: [TK.Auth.Errors.UNAUTHORIZED],
+            inputErrors: inputErrors,
+            errorCode: AuthErrorCodes.AUTH_BEARER_MISSING,
+            statusCode: HttpStatusCode.BadRequest);
+
+        var problem = failure.ToProblemDetails(ctx);
+
+        var emitted = problem.Extensions[D2ProblemDetailsKeys.EXTENSION_INPUT_ERRORS];
+        emitted.Should().BeAssignableTo<IReadOnlyList<InputError>>();
+        ((IReadOnlyList<InputError>)emitted)
+            .Should().ContainSingle()
+            .Which.Field.Should().Be("email");
     }
 
     [Fact]
@@ -151,7 +191,7 @@ public sealed class D2ProblemDetailsExtensionsTests
 
         var problem = AuthFailures.BearerMissing().ToProblemDetails(ctx);
 
-        problem.Extensions[D2ProblemDetailsExtensions.EXTENSION_TRACE_ID]
+        problem.Extensions[D2ProblemDetailsKeys.EXTENSION_TRACE_ID]
             .Should().Be(activity.TraceId.ToString());
     }
 
@@ -166,7 +206,7 @@ public sealed class D2ProblemDetailsExtensionsTests
         var problem = AuthFailures.BearerMissing().ToProblemDetails(ctx);
 
         problem.Extensions
-            .Should().NotContainKey(D2ProblemDetailsExtensions.EXTENSION_TRACE_ID);
+            .Should().NotContainKey(D2ProblemDetailsKeys.EXTENSION_TRACE_ID);
     }
 
     [Fact]
@@ -242,12 +282,60 @@ public sealed class D2ProblemDetailsExtensionsTests
         var problem = weirdFailure.ToProblemDetails(ctx);
 
         problem.Status.Should().Be(418);
-        problem.Title.Should().Be(D2ProblemDetailsExtensions.TITLE_REQUEST_FAILED);
+        problem.Title.Should().Be(D2ProblemDetailsKeys.TITLE_REQUEST_FAILED);
+    }
+
+    [Theory]
+    [InlineData(200)]
+    [InlineData(201)]
+    [InlineData(206)]
+    [InlineData(301)]
+    [InlineData(399)]
+    public void ToProblemDetails_Non4xx5xxStatus_ThrowsInvalidOperationException(int status)
+    {
+        // RFC 7807 frames ProblemDetails around 4xx/5xx error responses. A
+        // 2xx partial-success (e.g. SomeFound / 206) belongs on the D2Result
+        // envelope, not the ProblemDetails body. The guard converts a silent
+        // semantic mismatch into a loud runtime exception so this never
+        // ships unnoticed.
+        var ctx = MakeContext("/api/x");
+        var nonErrorFailure = D2Result.Fail(
+            messages: [TK.Auth.Errors.UNAUTHORIZED],
+            errorCode: "OOPS",
+            statusCode: (HttpStatusCode)status);
+
+        var act = () => nonErrorFailure.ToProblemDetails(ctx);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*non-error status code*");
+    }
+
+    [Theory]
+    [InlineData(400)]
+    [InlineData(401)]
+    [InlineData(403)]
+    [InlineData(404)]
+    [InlineData(409)]
+    [InlineData(429)]
+    [InlineData(500)]
+    [InlineData(503)]
+    public void ToProblemDetails_4xx5xxStatus_DoesNotThrowGuard(int status)
+    {
+        var ctx = MakeContext("/api/x");
+        var failure = D2Result.Fail(
+            messages: [TK.Auth.Errors.UNAUTHORIZED],
+            errorCode: "ANY",
+            statusCode: (HttpStatusCode)status);
+
+        var problem = failure.ToProblemDetails(ctx);
+
+        problem.Status.Should().Be(status);
     }
 
     private static DefaultHttpContext MakeContext(string path)
     {
         var ctx = new DefaultHttpContext();
+        ctx.Request.Method = "GET";
         ctx.Request.Path = path;
         return ctx;
     }

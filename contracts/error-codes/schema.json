@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "D2 generic error codes spec",
+  "description": "Schema for contracts/error-codes/error-codes.spec.json — the source-of-truth catalog that D2.Shared.Result.ErrorCodes.SourceGen reads to emit ErrorCodes.g.cs into D2.Shared.Result, and that tools/ts-codegen/src/error-codes-emit.ts reads to emit error-codes.g.ts into @d2/result.",
+  "type": "object",
+  "required": ["errorCodes"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "errorCodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/errorCode" }
+    }
+  },
+  "definitions": {
+    "errorCode": {
+      "type": "object",
+      "required": ["code", "httpStatus", "doc"],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "description": "Wire-format error code (SCREAMING_SNAKE). Must be unique across the spec. The literal IS the wire format."
+        },
+        "httpStatus": {
+          "type": "integer",
+          "enum": [200, 206, 207, 400, 401, 403, 404, 409, 413, 429, 500, 503],
+          "description": "HTTP status mapping. Drives transport-side response shape. Expanding the matrix requires extending this enum AND the codegen mapping (D2EC005 fires on unknown values)."
+        },
+        "doc": {
+          "type": "string",
+          "description": "XML <summary> text rendered on the emitted constant + JSDoc on the emitted TS constant."
+        }
+      }
+    }
+  }
+}

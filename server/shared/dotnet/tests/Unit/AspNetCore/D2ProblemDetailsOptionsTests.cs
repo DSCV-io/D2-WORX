@@ -8,6 +8,7 @@ namespace D2.Shared.Tests.Unit.AspNetCore;
 
 using AwesomeAssertions;
 using D2.Shared.AspNetCore;
+using D2.Shared.Headers.Http;
 using Xunit;
 
 public sealed class D2ProblemDetailsOptionsTests
@@ -16,7 +17,7 @@ public sealed class D2ProblemDetailsOptionsTests
     public void Defaults_CorrelationIdHeaderName_IsCanonical()
     {
         new D2ProblemDetailsOptions().CorrelationIdHeaderName
-            .Should().Be(D2AspNetCoreConstants.CORRELATION_ID_HEADER);
+            .Should().Be(HttpHeaders.CORRELATION_ID);
     }
 
     [Fact]

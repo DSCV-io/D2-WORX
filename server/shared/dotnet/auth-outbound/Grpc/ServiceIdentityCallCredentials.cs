@@ -7,6 +7,7 @@
 namespace D2.Shared.Auth.Outbound.Grpc;
 
 using D2.Shared.Auth.Outbound.ServiceIdentity;
+using D2.Shared.Headers.Grpc;
 using global::Grpc.Core;
 
 /// <summary>
@@ -33,7 +34,6 @@ using global::Grpc.Core;
 /// </remarks>
 public static class ServiceIdentityCallCredentials
 {
-    private const string _AUTHORIZATION_HEADER = "Authorization";
     private const string _BEARER_SCHEME = "Bearer";
 
     /// <summary>
@@ -66,7 +66,7 @@ public static class ServiceIdentityCallCredentials
                     "D2 service-identity token acquisition failed."));
             }
 
-            metadata.Add(_AUTHORIZATION_HEADER, $"{_BEARER_SCHEME} {tokenResult.Data}");
+            metadata.Add(GrpcHeaders.AUTHORIZATION, $"{_BEARER_SCHEME} {tokenResult.Data}");
         });
     }
 }

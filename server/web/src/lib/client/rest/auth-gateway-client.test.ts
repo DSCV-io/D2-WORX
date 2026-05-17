@@ -215,7 +215,10 @@ describe("authApiCall", () => {
     });
 
     it("returns the D2Result from executeFetch on failure", async () => {
-      const expected = D2Result.fail({ messages: ["Not found"], statusCode: 404 });
+      const expected = D2Result.fail({
+        messages: [{ key: "common_errors_NOT_FOUND" }],
+        statusCode: 404,
+      });
       mockExecuteFetch.mockResolvedValue(expected);
 
       const result = await authApiCall("/api/auth/test");
@@ -223,7 +226,7 @@ describe("authApiCall", () => {
       expect(result).toBe(expected);
       expect(result.success).toBe(false);
       expect(result.statusCode).toBe(404);
-      expect(result.messages[0]).toBe("Not found");
+      expect(result.messages[0]).toEqual({ key: "common_errors_NOT_FOUND" });
     });
 
     it("propagates rejections from executeFetch", async () => {

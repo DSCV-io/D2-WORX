@@ -34,6 +34,11 @@ using System.Text.Json.Serialization;
 /// Wire format via <see cref="TKMessageJsonConverter"/>: <c>{ "key": "..." }</c>
 /// for the no-params case, <c>{ "key": "...", "params": { ... } }</c> when
 /// parameters are bound. The same shape is used in code AND on the wire.
+/// The property names (<c>key</c>, <c>params</c>) come from the spec-derived
+/// <see cref="TkMessageWireShape"/> catalog —
+/// <c>contracts/tk-message/tk-message.spec.json</c> drives both the .NET
+/// serializer and the TS-side parser, so cross-language wire drift on the
+/// property names is structurally impossible.
 /// </para>
 /// </remarks>
 [JsonConverter(typeof(TKMessageJsonConverter))]

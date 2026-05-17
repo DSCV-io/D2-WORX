@@ -74,7 +74,7 @@ public sealed class FilesService : Files.FilesBase
 **Precedence** (mirrors BCL `[AllowAnonymous]` over `[Authorize]`):
 - Method-level `[D2HarmlessEndpoint]` overrides any class-level `[D2RequireScope]`.
 - Method-level `[D2RequireScope]` overrides any class-level `[D2RequireScope]`.
-- Fluent metadata (see below) takes precedence over both attribute paths.
+- Fluent metadata takes precedence over both attribute paths.
 
 #### Fluent path
 
@@ -103,9 +103,11 @@ Builds an `RpcException(Status, Trailers)`:
 |---|---|
 | `Status.StatusCode` | `D2Result.StatusCode` mapped: 401 → `Unauthenticated` (16); 503 → `Unavailable` (14); other → `Internal` (13). |
 | `Status.Detail` | DELIBERATELY EMPTY. Telling an attacker which validation step failed (signature vs expired vs claim missing) is an info leak; the granular `d2_error_code` trailer carries the machine-readable taxonomy for legitimate operators. |
-| `Trailers["d2_error_code"]` | `D2Result.ErrorCode` (one of the `AUTH_*` constants from `D2.Shared.Auth.Errors.AuthErrorCodes`). |
-| `Trailers["d2_messages"]` | `D2Result.Messages` array serialized as JSON text (TK keys + bounded params). Same wire shape as the HTTP middleware's ProblemDetails `d2_messages` extension. |
-| `Trailers["traceid"]` | `Activity.Current?.TraceId` (W3C lower-hex format). Omitted when no Activity is on the execution context — never surfaced as null. |
+| `Trailers[D2GrpcTrailers.ERROR_CODE]` (`"d2_error_code"`) | `D2Result.ErrorCode` (one of the `AUTH_*` constants from `D2.Shared.Auth.Errors.AuthErrorCodes`). |
+| `Trailers[D2GrpcTrailers.MESSAGES]` (`"d2_messages"`) | `D2Result.Messages` array serialized as JSON text (TK keys + bounded params). Same wire shape as the HTTP middleware's ProblemDetails `d2_messages` extension. |
+| `Trailers[D2GrpcTrailers.TRACE_ID]` (`"traceId"`) | `Activity.Current?.TraceId` (W3C lower-hex format, 32 chars). camelCase matches the HTTP ProblemDetails extension key `traceId`. Omitted when no Activity is on the execution context — never surfaced as null. |
+
+The trailer keys are spec-driven via `contracts/grpc-trailers/grpc-trailers.spec.json` — the `D2.Shared.Grpc.Trailers.SourceGen` Roslyn generator emits `D2GrpcTrailers` into this csproj from the spec, and `tools/ts-codegen` emits the cross-language sibling `D2GrpcTrailers` into `@d2/grpc-client`. Both sides reference identical wire values byte-for-byte.
 
 Side-effect: increments `AuthTelemetry.ProblemEmitted` tagged with `d2_error_code` (single sink across HTTP + gRPC, intentionally so dashboards aggregate cleanly).
 
@@ -264,7 +266,7 @@ catch (RpcException ex)
 {
     var errorCode = ex.Trailers.GetValue("d2_error_code"); // e.g. "AUTH_JWT_EXPIRED"
     var messages = ex.Trailers.GetValue("d2_messages");    // JSON array of TKMessage
-    var traceId = ex.Trailers.GetValue("traceid");         // W3C trace id (lower-hex)
+    var traceId = ex.Trailers.GetValue("traceId");         // W3C trace id (lower-hex, 32 chars). camelCase — same key as the HTTP ProblemDetails extension.
 }
 ```
 

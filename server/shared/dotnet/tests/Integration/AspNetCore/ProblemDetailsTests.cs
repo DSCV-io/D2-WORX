@@ -10,6 +10,8 @@ using System.Net;
 using System.Text.Json;
 using AwesomeAssertions;
 using D2.Shared.AspNetCore;
+using D2.Shared.Headers.Http;
+using D2.Shared.ProblemDetails;
 using D2.Shared.Tests.Integration.AspNetCore.Infrastructure;
 using global::Microsoft.AspNetCore.Builder;
 using global::Microsoft.AspNetCore.Diagnostics;
@@ -35,10 +37,12 @@ public sealed class ProblemDetailsTests
         doc.RootElement.TryGetProperty("status", out var status).Should().BeTrue();
         status.GetInt32().Should().Be(500);
 
-        doc.RootElement.TryGetProperty("traceId", out var traceId).Should().BeTrue();
+        doc.RootElement.TryGetProperty(D2ProblemDetailsKeys.EXTENSION_TRACE_ID, out var traceId)
+            .Should().BeTrue();
         traceId.GetString().Should().NotBeNullOrEmpty();
 
-        doc.RootElement.TryGetProperty("correlationId", out var correlationId)
+        doc.RootElement.TryGetProperty(
+            D2ProblemDetailsKeys.EXTENSION_CORRELATION_ID, out var correlationId)
             .Should().BeTrue();
         correlationId.GetString().Should().NotBeNullOrEmpty();
     }
@@ -50,16 +54,16 @@ public sealed class ProblemDetailsTests
 
         var client = host.GetTestClient();
         var request = new HttpRequestMessage(HttpMethod.Get, "https://localhost/throw");
-        request.Headers.Add(D2AspNetCoreConstants.CORRELATION_ID_HEADER, "my-correlation-id");
+        request.Headers.Add(HttpHeaders.CORRELATION_ID, "my-correlation-id");
 
         var response = await client.SendAsync(request);
 
         var body = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(body);
-        doc.RootElement.GetProperty("correlationId").GetString()
+        doc.RootElement.GetProperty(D2ProblemDetailsKeys.EXTENSION_CORRELATION_ID).GetString()
             .Should().Be("my-correlation-id");
 
-        response.Headers.GetValues(D2AspNetCoreConstants.CORRELATION_ID_HEADER)
+        response.Headers.GetValues(HttpHeaders.CORRELATION_ID)
             .Should().ContainSingle().Which.Should().Be("my-correlation-id");
     }
 
@@ -71,10 +75,10 @@ public sealed class ProblemDetailsTests
         var client = host.GetTestClient();
         var response = await client.GetAsync("https://localhost/throw");
 
-        response.Headers.Contains(D2AspNetCoreConstants.CORRELATION_ID_HEADER)
+        response.Headers.Contains(HttpHeaders.CORRELATION_ID)
             .Should().BeTrue();
         var generated = response.Headers
-            .GetValues(D2AspNetCoreConstants.CORRELATION_ID_HEADER)
+            .GetValues(HttpHeaders.CORRELATION_ID)
             .Single();
 
         // 32-char hex GUID (.ToString("N") format)
@@ -82,7 +86,7 @@ public sealed class ProblemDetailsTests
 
         var body = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(body);
-        doc.RootElement.GetProperty("correlationId").GetString()
+        doc.RootElement.GetProperty(D2ProblemDetailsKeys.EXTENSION_CORRELATION_ID).GetString()
             .Should().Be(generated);
     }
 
@@ -94,13 +98,14 @@ public sealed class ProblemDetailsTests
         var client = host.GetTestClient();
         var oversized = new string('x', D2AspNetCoreConstants.MAX_CORRELATION_ID_LENGTH + 1);
         var request = new HttpRequestMessage(HttpMethod.Get, "https://localhost/throw");
-        request.Headers.Add(D2AspNetCoreConstants.CORRELATION_ID_HEADER, oversized);
+        request.Headers.Add(HttpHeaders.CORRELATION_ID, oversized);
 
         var response = await client.SendAsync(request);
 
         var body = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(body);
-        var resolved = doc.RootElement.GetProperty("correlationId").GetString();
+        var resolved = doc.RootElement
+            .GetProperty(D2ProblemDetailsKeys.EXTENSION_CORRELATION_ID).GetString();
         resolved.Should().HaveLength(32);   // generated GUID, not the oversized value
         resolved.Should().NotBe(oversized);
     }

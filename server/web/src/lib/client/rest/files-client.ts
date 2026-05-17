@@ -16,6 +16,7 @@
  *   GET /api/v1/files/:fileId/:variant/url → presigned GET URL for <img src>
  */
 import { env } from "$env/dynamic/public";
+import { HttpHeaders } from "@d2/headers-http";
 import * as m from "$lib/paraglide/messages.js";
 
 import { getToken } from "./gateway-client.js";
@@ -35,7 +36,7 @@ function getFilesBaseUrl(): string {
 
 function buildHeaders(token: string): Headers {
   const headers = new Headers();
-  headers.set("Authorization", `Bearer ${token}`);
+  headers.set(HttpHeaders.AUTHORIZATION, `Bearer ${token}`);
   headers.set("Content-Type", "application/json");
   return headers;
 }
@@ -120,7 +121,7 @@ export async function getVariantUrl(fileId: string, variantName: string): Promis
   const baseUrl = getFilesBaseUrl();
   const response = await fetch(`${baseUrl}/api/v1/files/${fileId}/${variantName}/url`, {
     method: "GET",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { [HttpHeaders.AUTHORIZATION]: `Bearer ${token}` },
     signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
   });
 
@@ -140,12 +141,34 @@ export async function getVariantUrl(fileId: string, variantName: string): Promis
 }
 
 /**
- * Backend D2Result `messages` are TK keys (e.g. "files_errors_UPLOAD_FAILED").
- * Resolve to a localized string at the runtime locale; return undefined when
- * we can't map it so the caller falls back to a typed Paraglide message.
+ * Backend `D2Result.messages` entries are TKMessage objects
+ * (`{key, params?}`) per the spec-derived wire shape at
+ * `contracts/tk-message/tk-message.spec.json`. Resolve to a localized
+ * string at the runtime locale; return undefined when we can't map the
+ * key so the caller falls back to a typed Paraglide message. Also
+ * tolerates a bare `string` (caller already has the raw key and no params to bind).
  */
-function translateBackendMessage(key: unknown): string | undefined {
-  if (typeof key !== "string" || !key) return undefined;
+function translateBackendMessage(message: unknown): string | undefined {
+  if (message === undefined || message === null) return undefined;
+  let key: string;
+  let params: Record<string, unknown> | undefined;
+  if (typeof message === "string") {
+    if (!message) return undefined;
+    key = message;
+    params = undefined;
+  } else if (
+    typeof message === "object" &&
+    "key" in message &&
+    typeof (message as { key: unknown }).key === "string"
+  ) {
+    const tk = message as { key: string; params?: Record<string, unknown> };
+    if (!tk.key) return undefined;
+    key = tk.key;
+    params = tk.params;
+  } else {
+    return undefined;
+  }
+
   const registry = m as unknown as Record<
     string,
     ((args?: Record<string, unknown>) => string) | undefined
@@ -153,7 +176,7 @@ function translateBackendMessage(key: unknown): string | undefined {
   const fn = registry[key];
   if (typeof fn !== "function") return undefined;
   try {
-    return fn();
+    return fn(params);
   } catch {
     return undefined;
   }

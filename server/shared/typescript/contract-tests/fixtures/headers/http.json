@@ -3,6 +3,7 @@
   "data": {
     "AUTHORIZATION": "Authorization",
     "CLIENT_FINGERPRINT": "X-D2-Client-Fingerprint",
+    "CORRELATION_ID": "X-Correlation-Id",
     "IDEMPOTENCY_KEY": "Idempotency-Key",
     "INTERNAL_TOKEN": "X-D2-Internal-Token",
     "PROPAGATED_CONTEXT": "x-d2-context",

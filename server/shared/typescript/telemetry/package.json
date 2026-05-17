@@ -12,6 +12,7 @@
     }
   },
   "scripts": {
+    "prebuild": "pnpm --filter ts-codegen exec tsx src/otel-messaging-tags-emit.ts",
     "build": "tsc -b",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"

@@ -7,10 +7,10 @@
 namespace D2.Shared.Auth.Http.ProblemDetails;
 
 using System.Diagnostics;
-using System.Net;
 using D2.Shared.Auth.Errors;
 using D2.Shared.Auth.Telemetry;
 using D2.Shared.I18n;
+using D2.Shared.ProblemDetails;
 using D2.Shared.Result;
 using Microsoft.AspNetCore.Http;
 using MvcProblemDetails = Microsoft.AspNetCore.Mvc.ProblemDetails;
@@ -18,10 +18,21 @@ using MvcProblemDetails = Microsoft.AspNetCore.Mvc.ProblemDetails;
 /// <summary>
 /// Builds RFC 7807 <see cref="MvcProblemDetails"/> from a failure
 /// <see cref="D2Result"/>. The single emit point for every auth-middleware-
-/// produced response — keeps the <c>d2.auth.problem.emitted</c> counter
-/// total accurate.
+/// produced response (path A) — keeps the <c>d2.auth.problem.emitted</c>
+/// counter total accurate.
 /// </summary>
 /// <remarks>
+/// <para>
+/// The wire-format catalog (<c>TYPE_URI_PREFIX</c>, <c>CONTENT_TYPE</c>,
+/// <c>EXTENSION_*</c>, <c>TITLE_*</c>, + <see cref="D2ProblemDetailsKeys.TitleFor"/>
+/// switch) lives in <see cref="D2ProblemDetailsKeys"/> (codegen-emitted into
+/// <c>D2.Shared.ProblemDetails.Abstractions</c> from
+/// <c>contracts/problem-details/problem-details.spec.json</c>). The same spec
+/// drives the TS-side <c>@d2/headers</c> ProblemDetails catalog AND the path-B
+/// emitter (<c>D2ProblemDetailsCustomizer</c> in <c>D2.Shared.AspNetCore</c>),
+/// so the three emitters produce byte-identical Shape A bodies for identical
+/// inputs.
+/// </para>
 /// <para>
 /// <strong>No info-leak surface</strong>:
 /// </para>
@@ -36,10 +47,23 @@ using MvcProblemDetails = Microsoft.AspNetCore.Mvc.ProblemDetails;
 ///     expired vs claim missing) is an info leak. The granular
 ///     <c>d2_error_code</c> carries the machine-readable taxonomy for
 ///     legitimate operators / dashboards.</item>
-///   <item><c>Instance</c> is <see cref="HttpRequest.Path"/> only — no query
-///     string (query strings carry referrers, search terms, sometimes
-///     session-binding params).</item>
+///   <item><c>Instance</c> is <c>"{Method} {Path}"</c> — method + path only;
+///     query string is excluded (query strings carry referrers, search
+///     terms, sometimes session-binding params). RFC 7807 §3.1 frames
+///     <c>instance</c> as a URI reference (MAY); the space-separated form
+///     is operator-diagnostic-friendly and matches the sibling path-B
+///     <see cref="D2ProblemDetailsKeys"/>-consuming emitter for cross-path
+///     wire-shape parity.</item>
 /// </list>
+/// <para>
+/// <strong>2xx guard</strong>: <see cref="ToProblemDetails"/> throws
+/// <see cref="InvalidOperationException"/> when
+/// <c>(int)result.StatusCode &lt; 400</c>. RFC 7807 §3 frames the
+/// ProblemDetails wire around error responses (4xx / 5xx); a 2xx partial
+/// success (e.g. <c>SomeFound</c>) belongs on the D2Result envelope, not the
+/// ProblemDetails body. The guard converts a silent semantic mismatch into a
+/// loud runtime exception.
+/// </para>
 /// <para>
 /// <strong>Trace correlation</strong>: when an OpenTelemetry
 /// <see cref="Activity"/> is on the current execution context, its trace id
@@ -66,7 +90,10 @@ public static class D2ProblemDetailsExtensions
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// Thrown when the result is a success — this extension is
-        /// failure-only.
+        /// failure-only — OR when the result's status code is 2xx (3xx are
+        /// out of the failure shape too). RFC 7807 frames ProblemDetails
+        /// around 4xx / 5xx responses; success / partial-success bodies
+        /// belong on the D2Result envelope.
         /// </exception>
         public MvcProblemDetails ToProblemDetails(HttpContext context)
         {
@@ -81,21 +108,38 @@ public static class D2ProblemDetailsExtensions
             }
 
             var statusCode = (int)result.StatusCode;
+            if (statusCode < 400)
+            {
+                throw new InvalidOperationException(
+                    $"ToProblemDetails received a non-error status code {statusCode}. "
+                        + "RFC 7807 frames the ProblemDetails wire around 4xx / 5xx; "
+                        + "partial-success (e.g. SomeFound / 206) belongs on the "
+                        + "D2Result envelope, not the ProblemDetails body.");
+            }
+
             var errorCode = result.ErrorCode ?? string.Empty;
+            var method = context.Request.Method;
+            var path = context.Request.Path.Value ?? string.Empty;
             var problem = new MvcProblemDetails
             {
                 Status = statusCode,
-                Title = TitleFor(result.StatusCode),
+                Title = D2ProblemDetailsKeys.TitleFor(result.StatusCode),
                 Type = TypeUriFor(errorCode),
-                Instance = context.Request.Path.Value,
+                Instance = $"{method} {path}",
             };
 
-            problem.Extensions[EXTENSION_ERROR_CODE] = errorCode;
-            problem.Extensions[EXTENSION_MESSAGES] = MaterializeMessages(result.Messages);
+            problem.Extensions[D2ProblemDetailsKeys.EXTENSION_ERROR_CODE] = errorCode;
+            problem.Extensions[D2ProblemDetailsKeys.EXTENSION_MESSAGES] =
+                MaterializeMessages(result.Messages);
+            if (result.InputErrors.Count > 0)
+            {
+                problem.Extensions[D2ProblemDetailsKeys.EXTENSION_INPUT_ERRORS] =
+                    result.InputErrors;
+            }
 
             var traceId = Activity.Current?.TraceId.ToString();
             if (traceId is not null)
-                problem.Extensions[EXTENSION_TRACE_ID] = traceId;
+                problem.Extensions[D2ProblemDetailsKeys.EXTENSION_TRACE_ID] = traceId;
 
             AuthTelemetry.ProblemEmitted.Add(
                 1,
@@ -106,44 +150,15 @@ public static class D2ProblemDetailsExtensions
         }
     }
 
-    /// <summary>The closed-enum coarse <c>Title</c> for 401 responses.</summary>
-    public const string TITLE_UNAUTHORIZED = "Unauthorized";
-
-    /// <summary>The closed-enum coarse <c>Title</c> for 503 responses.</summary>
-    public const string TITLE_SERVICE_UNAVAILABLE = "Service Unavailable";
-
-    /// <summary>The fallback <c>Title</c> for any other failure status code.</summary>
-    public const string TITLE_REQUEST_FAILED = "Request Failed";
-
-    /// <summary>The base URL for the <c>Type</c> URI scheme.</summary>
-    public const string TYPE_URI_PREFIX = "https://problems.d2-worx.com/auth/";
-
-    /// <summary>The extension key carrying the machine-readable error code.</summary>
-    public const string EXTENSION_ERROR_CODE = "d2_error_code";
-
-    /// <summary>The extension key carrying the array of TK message objects.</summary>
-    public const string EXTENSION_MESSAGES = "d2_messages";
-
-    /// <summary>The extension key carrying the W3C trace id.</summary>
-    public const string EXTENSION_TRACE_ID = "traceId";
-
-    private static string TitleFor(HttpStatusCode statusCode) =>
-        statusCode switch
-        {
-            HttpStatusCode.Unauthorized => TITLE_UNAUTHORIZED,
-            HttpStatusCode.ServiceUnavailable => TITLE_SERVICE_UNAVAILABLE,
-            _ => TITLE_REQUEST_FAILED,
-        };
-
     private static string TypeUriFor(string errorCode)
     {
-        // Empty error code falls back to a generic auth-error URI rather than
-        // emitting a malformed `https://.../auth/` (trailing slash). Defensive
+        // Empty error code falls back to a generic URI rather than emitting a
+        // malformed `https://problems.d2.dcsv.io/` (bare prefix). Defensive
         // — every AuthFailures helper carries an error code, so empty would
         // only happen on a manually-built D2Result going through this path.
         if (errorCode.Length == 0)
-            return TYPE_URI_PREFIX + "unknown";
-        return TYPE_URI_PREFIX + AuthErrorCodes.KebabCase(errorCode);
+            return D2ProblemDetailsKeys.TYPE_URI_PREFIX + "unknown";
+        return D2ProblemDetailsKeys.TYPE_URI_PREFIX + AuthErrorCodes.KebabCase(errorCode);
     }
 
     private static IReadOnlyList<TKMessage> MaterializeMessages(

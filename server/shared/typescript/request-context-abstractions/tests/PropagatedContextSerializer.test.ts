@@ -82,6 +82,14 @@ describe("IRequestContextRedactPaths", () => {
     expect(IRequestContextRedactPaths).toContain("geohash");
     expect(IRequestContextRedactPaths).toContain("asn");
     expect(IRequestContextRedactPaths).toContain("asnName");
-    expect(IRequestContextRedactPaths).toContain("asnType");
+  });
+
+  it("excludes generic-category fields that aren't personal data", () => {
+    // asnType ("business" / "isp" / "hosting" / "mobile" / ...) is a
+    // closed-vocabulary CATEGORY of the user's network connection — not
+    // a personal identifier. Many users share the same asnType; the value
+    // alone does not identify or pinpoint a user. asn + asnName remain
+    // redacted because they ARE user network identity.
+    expect(IRequestContextRedactPaths).not.toContain("asnType");
   });
 });

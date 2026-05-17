@@ -124,17 +124,12 @@ export interface IRequestContext extends IAuthContext {
  * feed Pino's `redact: { paths }` config.
  */
 export const IRequestContextRedactPaths: readonly string[] = [
-  "adminLocationHashId",
-  "asn",
-  "asnName",
-  "asnType",
   "city",
   "clientIp",
-  "currentFingerprint",
   "geohash",
   "latitude",
   "longitude",
   "postalCode",
   "region",
-  "sessionFingerprint",
+  "subdivisionCode",
 ];

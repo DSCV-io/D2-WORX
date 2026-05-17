@@ -205,8 +205,20 @@ For each `PublishAsync<TMessage>`:
 | `d2.messaging.rabbitmq.publish_failures` | Counter | Terminal publish failures (after retries exhausted). |
 | `d2.messaging.rabbitmq.publish_retries` | Counter | Publish retry attempts (transient → backoff → re-attempt). |
 | `d2.messaging.rabbitmq.publish_duration` | Histogram (ms) | Wall-clock duration of a publish operation, end-to-end. |
+| `d2.messaging.rabbitmq.dlq_republish_failures` | Counter | Consumer-side DLQ republish failures — falls back to `BasicNack-no-requeue` so the message still leaves the primary queue. |
+| `d2.messaging.rabbitmq.ack_failures` | Counter | Post-handler-success ack failures (narrow catch around `BasicAckAsync`) — the idempotency mark prevents duplicate work on broker redelivery. |
 
-A `publish {exchange}/{routingKey}` Producer-kind activity wraps the whole call; its tags include `messaging.system`, `messaging.destination.name`, `messaging.rabbitmq.routing_key`, `d2.message_type`, `d2.encryption_kid`, `messaging.message.id`.
+A `publish {exchange}/{routingKey}` Producer-kind activity wraps the whole call. Its tags are spec-driven via `contracts/otel-messaging-tags/otel-messaging-tags.spec.json` — emitted by `D2.Shared.OtelMessagingTags.SourceGen` into `MessagingActivityTags` consumed by the publisher AND consumer (see §6.2 for the consumer-side tag set). The publisher emits:
+
+- `MessagingActivityTags.MESSAGING_SYSTEM` (`messaging.system` = `"rabbitmq"`)
+- `MessagingActivityTags.MESSAGING_DESTINATION_NAME` (`messaging.destination.name` = exchange)
+- `MessagingActivityTags.MESSAGING_RABBITMQ_ROUTING_KEY` (`messaging.rabbitmq.routing_key`)
+- `MessagingActivityTags.D2_MESSAGE_TYPE` (`d2.message_type` = CLR FullName)
+- `MessagingActivityTags.D2_ENCRYPTION_KID` (`d2.encryption_kid`; null/absent for plaintext)
+- `MessagingActivityTags.MESSAGING_MESSAGE_ID` (`messaging.message.id` = UUIDv7)
+- `MessagingActivityTags.MESSAGING_OPERATION_TYPE` (`messaging.operation.type` = `"publish"`)
+
+The OTel sem-conv canonical attribute is `messaging.operation.type`, NOT `messaging.operation` — spec-driving the catalog prevents the publisher / consumer drift class.
 
 ### `WaitForReadyAsync`
 
@@ -245,7 +257,13 @@ services.AddD2SubscribersFromAssembly(typeof(MyHandler).Assembly);
 For each delivery on a subscriber channel:
 
 1. **In-flight callback counter** — `Interlocked.Increment` so `DisposeAsync` can drain in-flight handlers (bounded 30s) before closing the channel mid-ack.
-2. **Trace context** — parse `traceparent` / `tracestate` headers via `ActivityContext.TryParse`; start a `Consumer`-kind activity `receive {queue}` with that as the parent context. Activity tags: `messaging.system`, `messaging.destination.name`, `messaging.message.id`, `messaging.rabbitmq.delivery_tag`, `messaging.rabbitmq.redelivered`.
+2. **Trace context** — parse `traceparent` / `tracestate` headers via `ActivityContext.TryParse`; start a `Consumer`-kind activity `receive {queue}` with that as the parent context. Consumer-side activity tags (all spec-driven via `MessagingActivityTags`):
+   - `MESSAGING_SYSTEM` (`messaging.system` = `"rabbitmq"`)
+   - `MESSAGING_DESTINATION_NAME` (`messaging.destination.name` = queue)
+   - `MESSAGING_OPERATION_TYPE` (`messaging.operation.type` = `"receive"`) — note: the OTel canonical attribute is `messaging.operation.type`, NOT `messaging.operation`
+   - `MESSAGING_MESSAGE_ID` (`messaging.message.id` = producer-assigned UUIDv7)
+   - `MESSAGING_RABBITMQ_DELIVERY_TAG` (`messaging.rabbitmq.delivery_tag`)
+   - `MESSAGING_RABBITMQ_REDELIVERED` (`messaging.rabbitmq.redelivered`)
 3. **Per-message DI scope** — `IServiceScopeFactory.CreateAsyncScope`. The scope owns the handler instance + a fresh `MutableRequestContext`.
 4. **Propagated context** — read `x-d2-context`, decode via `PropagatedContextSerializer`, apply onto the scope's `MutableRequestContext`. Identity (UserId / OrgId / Scopes) is NEVER in this header — it would rebuild from a JWT in a sync hop; for async events the consumer-side handler doesn't have one and shouldn't claim caller identity.
 5. **Idempotency pre-check** (when `descriptor.Idempotency`) — `IMessageIdempotencyStore.HasSeenAsync(messageId)`. Hit → `BasicAck`, return without invoking the handler. ServiceUnavailable on the **read** path → fail-open (process the message; better a duplicate than reject during a Redis blip — handlers MUST be at-least-once-safe). The **write** path (after handler success) is different: a failed `MarkSeenAsync` would silently leave the dedup window unguarded for that message-id, so it NACKs to DLQ (cause `RETRIES_EXHAUSTED` ≠ this — it's the same DLQ shape as a handler failure) and emits the `IdempotencyMarkFailed` log + `ack_failures` counter so the operator sees the store-degradation impact.
@@ -274,6 +292,8 @@ For each delivery on a subscriber channel:
 }
 ```
 
+The wire shape is spec-driven via `contracts/dlq-failure-metadata/dlq-failure-metadata.spec.json`. The `D2.Shared.Messaging.DlqMetadata.SourceGen` multi-target source-gen emits `DlqFailureMetadataFields` (property names) into `D2.Shared.Messaging.Abstractions` and `DlqFailureCauses` (closed-enum cause strings) into `D2.Shared.Messaging.RabbitMq`. The `DlqFailureMetadata` record applies `[JsonPropertyName(DlqFailureMetadataFields.*)]` attributes referencing the codegen-emitted constants — drift between the wire shape and the spec is structurally impossible. The TS sibling `@d2/messaging-abstractions` emits identical constants, so any TS reader (DLQ ops tooling, RabbitMQ subscribers) shares byte-equal field-name and cause-string identifiers with the .NET producers.
+
 **PII-safety discipline** (H7): `detail` is **never** built from `exception.Message` (handler code can interpolate user input). For result-failure cases it joins the result's `messages.Select(m => m.Key)` — translation-token strings, developer-controlled, safe. For exception cases it stays `null`. All log delegates that take an `Exception` log only `SanitizedExceptionRender.TypeName(ex)` + `FirstFrame(ex)` — no `ex.Message`, no full stack trace. Handlers MUST NOT include user input in exception messages, but the broker / log pipeline defends against accidents.
 
 ---
@@ -290,11 +310,15 @@ When `descriptor.TieredRetry` is non-null, the topology declarer stands up:
 {queue}.dlx         → fanout DLX
 {queue}.dlq         → bound to {queue}.dlx (the actual DLQ)
 
-{queue}.retry-return → fanout exchange bound BACK to {queue} (route TTL'd messages back in)
+{queue}.retry.return → fanout exchange bound BACK to {queue} (routes TTL'd messages back in)
 
 For each tier i in TieredRetry.Tiers:
-  {queue}.retry-{i}.x  → fanout retry-tier exchange
-  {queue}.retry-{i}.q  → queue with x-message-ttl = tiers[i] and x-dead-letter-exchange = retry-return
+  {queue}.retry.{i}    → single name used for BOTH the fanout retry-tier exchange AND its bound queue.
+                         The exchange's binding routes to the same-name queue; the queue has
+                         x-message-ttl = tiers[i] and x-dead-letter-exchange = {queue}.retry.return.
+                         (Ops tooling that lists queues vs exchanges in the broker management
+                         UI sees the same name in both lists — broker resource type
+                         disambiguates which is which.)
 ```
 
 In normal use, a transient handler failure NACKs to one of the retry-tier exchanges (the driver is responsible for routing; the framework declares the topology but the per-handler driver code wires the NACK explicitly — the framework does not auto-route on the consumer's behalf). The message TTL-expires onto the retry-return exchange, RabbitMQ re-routes it to the primary queue. The consumer's `x-death`-driven attempt counter caps the total cycles via `MaxAttempts`.

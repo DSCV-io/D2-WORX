@@ -4,6 +4,7 @@
 
 import { AuthFailures } from "@d2/auth-abstractions";
 import { HttpStatusCode } from "@d2/result";
+import { PROBLEM_DETAILS_CONTENT_TYPE } from "../problem-details.g.js";
 import { toProblemDetails } from "../problem-details.js";
 import type {
   AuthenticatedRequestContext,
@@ -37,6 +38,10 @@ export function requireAuth(
     const traceId = ctx?.traceId ?? undefined;
     const failure = AuthFailures.bearerMissing(traceId);
     const body = toProblemDetails(failure, { instance: event.url.pathname });
-    throwers.throwError(HttpStatusCode.Unauthorized, body);
+    throwers.throwError(
+      HttpStatusCode.Unauthorized,
+      body,
+      PROBLEM_DETAILS_CONTENT_TYPE,
+    );
   }
 }

@@ -1,5 +1,8 @@
 {
   "permissions": {
+    "allow": [
+      "Agent"
+    ],
     "deny": [
       "Read(**/.env.secrets)",
       "Write(**/.env.secrets)",

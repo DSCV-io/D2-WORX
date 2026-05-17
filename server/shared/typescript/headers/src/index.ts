@@ -14,9 +14,14 @@ export {
   toProblemDetails,
   type ProblemDetailsBody,
   type ProblemDetailsOptions,
+} from "./problem-details.js";
+export {
+  defaultTitleForStatus,
+  PROBLEM_DETAILS_CONTENT_TYPE,
   PROBLEM_TYPE_URI_PREFIX,
   ProblemDetailsExtensionKeys,
-} from "./problem-details.js";
+  ProblemDetailsTitles,
+} from "./problem-details.g.js";
 export type {
   AuthenticatedRequestContext,
   GuardRequestEvent,

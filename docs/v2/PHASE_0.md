@@ -25,7 +25,7 @@ Phase 0 has four execution stages. The **Granular checklist** column links to th
 
 **LLM CTA**: when starting work in this phase, scan the snapshot above to identify the active 🔄 stage, then jump to its granular checklist via the link. Don't start work that doesn't match the active stage without explicit user approval.
 
-All four stages are ✅ Complete. The Pre-Phase-1 Plan deliverables (0005 + 0006) are also both ✅ SHIPPED. This doc remains live through the SvelteKit BFF rewire deliverable (deferred from 0006; sequenced after Edge ships + Paraglide-translation pattern decided), then archives per the lifecycle rule in V2.md §10 when Phase 1 (Geo libs) begins.
+All four stages are ✅ Complete. The Pre-Phase-1 Plan deliverables (0005 + 0006 + 0007) are all ✅ SHIPPED. This doc remains live through the SvelteKit BFF rewire deliverable (deferred from 0006; sequenced after Edge ships + Paraglide-translation pattern decided), then archives per the lifecycle rule in V2.md §10 when Phase 1 (Geo libs) begins.
 
 ---
 
@@ -567,9 +567,10 @@ Two deliverables ship between Phase 0 closing and Phase 1 (Geo libs) starting. B
 |---|---|---|---|---|
 | 0005 | `0005-codegen-cleanup-and-dotnet-improvements` (.NET only) | ✅ Complete | ~3-5 days | `n/codegen-cleanup` (off `nova` post-0004) |
 | 0006 | `0006-ts-bridge` | ✅ Complete — SHIPPED 2026-05-15 per [`docs/dev/deliverables/0006-ts-bridge.md`](../dev/deliverables/0006-ts-bridge.md) | ~2-3 weeks | `n/ts-bridge` (off `nova` post-0005, squashed to `nova`) |
+| 0007 | `0007-wire-parity` | ✅ Complete — SHIPPED 2026-05-16 per [`docs/dev/deliverables/0007-wire-parity.md`](../dev/deliverables/0007-wire-parity.md) | ~1 week | `n/wire-parity` (off `nova` post-0006, squashed to `nova`) |
 | (future) | SvelteKit BFF rewire (deferred from 0006) | ⏸ Pending — sequenced after Edge exists + Paraglide-translation pattern decided; lands BEFORE Phase 7 | TBD | TBD |
 
-**Order**: 0005 first (no TS dependency); 0006 second (consumes the spec migrations 0005 produces — particularly AuthErrorCodes — so the TS-side codegen runners have a single canonical spec to read instead of a moving target). Phase 1 (Geo libs) starts AFTER 0006 ships.
+**Order**: 0005 first (no TS dependency); 0006 second (consumes the spec migrations 0005 produces — particularly AuthErrorCodes — so the TS-side codegen runners have a single canonical spec to read instead of a moving target); 0007 third (cross-language wire-format parity sweep — extends the spec-driven contract pattern to ProblemDetails / ErrorCodes / TKMessage / D2Result envelope / gRPC trailers + AMQP wire surface). Phase 1 (Geo libs) starts AFTER 0007 ships.
 
 ### Deliverable 0005 — codegen cleanup + .NET improvements ✅ Complete
 
@@ -684,4 +685,4 @@ The `server/web/` BFF rewire was originally enumerated as a fifth sub-concern bu
 
 ---
 
-This PHASE_0.md doc gets archived (move to `docs/archive/PHASE_0_WIPE.md` or delete) once deliverable 0006 ships and Phase 1 (Geo libs) begins.
+This PHASE_0.md doc gets archived (move to `docs/archive/PHASE_0_WIPE.md` or delete) once Phase 1 (Geo libs) begins.

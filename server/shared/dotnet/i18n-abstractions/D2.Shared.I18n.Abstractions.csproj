@@ -39,6 +39,17 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\i18n-source-gen\D2.Shared.I18n.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
+    <!--
+      D2.Shared.WireShapes.SourceGen reads tk-message.spec.json via
+      AdditionalFiles below and emits TkMessageWireShape.g.cs into this
+      assembly (per-assembly dispatch table in WireShapesGenerator.cs).
+      The emitted KEY / PARAMS constants replace inline string literals
+      in TKMessageJsonConverter so the .NET serializer and the TS-side
+      parser reference byte-equal property names.
+    -->
+    <ProjectReference Include="..\wire-shapes-source-gen\D2.Shared.WireShapes.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
@@ -48,6 +59,13 @@ Copyright (c) DCSV. All rights reserved.
       and reads the rest for per-locale coverage diagnostics.
     -->
     <AdditionalFiles Include="..\..\..\..\contracts\messages\*.json" />
+    <!--
+      Surface tk-message.spec.json to D2.Shared.WireShapes.SourceGen. The
+      generator dispatches on assembly name (D2.Shared.I18n.Abstractions
+      → TkMessageWireShape.g.cs) and emits a static class carrying the
+      KEY / PARAMS property-name constants.
+    -->
+    <AdditionalFiles Include="..\..\..\..\contracts\tk-message\tk-message.spec.json" />
   </ItemGroup>
 
   <ItemGroup>

@@ -11,18 +11,22 @@ import type {
   GuardThrowers,
 } from "../../src/guards/guard-types.js";
 import type { ProblemDetailsBody } from "../../src/problem-details.js";
+import { ProblemDetailsExtensionKeys } from "../../src/problem-details.g.js";
 
 interface ThrownError {
   status: number;
   body: ProblemDetailsBody;
+  contentType: string;
 }
 
 function makeThrowers(): { throwers: GuardThrowers; thrown: ThrownError[] } {
   const thrown: ThrownError[] = [];
   const throwers: GuardThrowers = {
-    throwError(status, body) {
-      thrown.push({ status, body });
-      throw new Error(`HTTP ${status}: ${body[`d2_error_code`]}`);
+    throwError(status, body, contentType) {
+      thrown.push({ status, body, contentType });
+      throw new Error(
+        `HTTP ${status}: ${body[ProblemDetailsExtensionKeys.ERROR_CODE]}`,
+      );
     },
     throwRedirect() {
       throw new Error("unexpected redirect");
@@ -145,7 +149,9 @@ describe("requireAuth — rejection branches", () => {
     );
     const { throwers, thrown } = makeThrowers();
     expect(() => requireAuth(event, throwers)).toThrow();
-    expect(thrown[0]?.body["traceId"]).toBe("trace-77");
+    expect(thrown[0]?.body[ProblemDetailsExtensionKeys.TRACE_ID]).toBe(
+      "trace-77",
+    );
   });
 
   it("emits ProblemDetails with the request URL pathname as instance", () => {

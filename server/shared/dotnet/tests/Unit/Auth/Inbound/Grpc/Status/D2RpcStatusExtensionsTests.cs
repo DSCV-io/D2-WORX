@@ -29,7 +29,7 @@ public sealed class D2RpcStatusExtensionsTests
 
         rpc.StatusCode.Should().Be(GrpcStatusCode.Unauthenticated);
         var errorCode = ReadTrailerString(
-            rpc.Trailers, D2RpcStatusExtensions.TRAILER_ERROR_CODE);
+            rpc.Trailers, D2GrpcTrailers.ERROR_CODE);
         errorCode.Should().Be(AuthErrorCodes.AUTH_BEARER_MISSING);
     }
 
@@ -71,7 +71,7 @@ public sealed class D2RpcStatusExtensionsTests
         var rpc = failure.ToRpcException();
 
         rpc.StatusCode.Should().Be(GrpcStatusCode.Unauthenticated);
-        ReadTrailerString(rpc.Trailers, D2RpcStatusExtensions.TRAILER_ERROR_CODE)
+        ReadTrailerString(rpc.Trailers, D2GrpcTrailers.ERROR_CODE)
             .Should().Be(expectedErrorCode);
     }
 
@@ -81,7 +81,7 @@ public sealed class D2RpcStatusExtensionsTests
         var rpc = AuthFailures.JwksUnavailable().ToRpcException();
 
         rpc.StatusCode.Should().Be(GrpcStatusCode.Unavailable);
-        ReadTrailerString(rpc.Trailers, D2RpcStatusExtensions.TRAILER_ERROR_CODE)
+        ReadTrailerString(rpc.Trailers, D2GrpcTrailers.ERROR_CODE)
             .Should().Be(AuthErrorCodes.AUTH_JWKS_UNAVAILABLE);
     }
 
@@ -91,7 +91,7 @@ public sealed class D2RpcStatusExtensionsTests
         var rpc = AuthFailures.SessionLivenessUnavailable().ToRpcException();
 
         rpc.StatusCode.Should().Be(GrpcStatusCode.Unavailable);
-        ReadTrailerString(rpc.Trailers, D2RpcStatusExtensions.TRAILER_ERROR_CODE)
+        ReadTrailerString(rpc.Trailers, D2GrpcTrailers.ERROR_CODE)
             .Should().Be(AuthErrorCodes.AUTH_SESSION_LIVENESS_UNAVAILABLE);
     }
 
@@ -128,7 +128,7 @@ public sealed class D2RpcStatusExtensionsTests
     {
         var rpc = AuthFailures.BearerMissing().ToRpcException();
 
-        var json = ReadTrailerString(rpc.Trailers, D2RpcStatusExtensions.TRAILER_MESSAGES);
+        var json = ReadTrailerString(rpc.Trailers, D2GrpcTrailers.MESSAGES);
         json.Should().NotBeEmpty();
 
         // JSON shape: array of TKMessage objects: [{ "key": "auth_errors_UNAUTHORIZED" }]
@@ -151,7 +151,7 @@ public sealed class D2RpcStatusExtensionsTests
         var rpc = AuthFailures.BearerMissing().ToRpcException();
 
         var traceId = ReadTrailerString(
-            rpc.Trailers, D2RpcStatusExtensions.TRAILER_TRACE_ID);
+            rpc.Trailers, D2GrpcTrailers.TRACE_ID);
         traceId.Should().Be(activity.TraceId.ToString());
     }
 
@@ -165,7 +165,7 @@ public sealed class D2RpcStatusExtensionsTests
         var rpc = AuthFailures.BearerMissing().ToRpcException();
 
         rpc.Trailers.Should()
-            .NotContain(e => e.Key == D2RpcStatusExtensions.TRAILER_TRACE_ID);
+            .NotContain(e => e.Key == D2GrpcTrailers.TRACE_ID);
     }
 
     [Fact]

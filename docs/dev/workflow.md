@@ -57,6 +57,8 @@ The loop that turns a design discussion into shipped, audited, regression-tested
 - **Self-improvement** — at each step's audit termination AND at deliverable ship, the agent distills the kinds of misses surfaced into proposed additions to `rules.md`. User approves; rules are appended; future deliverables start with a stricter ruleset.
 - **Orchestrator** — the main-thread agent. Decision-making + delegation only. Cannot edit / write / read source code; cannot walk `rules.md`; cannot mark anything CLEAN. Spawns sub-agents for everything domain-level.
 - **Sub-agent** — a fresh-context worker spawned via the `Agent` tool for one specific role (Planner / Implementer / Auditor / Aggregator / Fixer / Final-reviewer). Returns a structured summary; its context dies on return.
+- **Cluster** — one of five thematic groupings of `rules.md` predicates (A: correctness + reliability, B: code style + idiom, C: architecture + security, D: documentation + framing, E: operational outcomes + audit meta). The canonical partition for K=5 parallel Auditor dispatch lives in [audit-framework.md §3a](audit-framework.md#3a-auditor-cluster-partition-canonical-k5).
+- **Audit round (K=5)** — one full audit pass = 5 parallel cluster Auditors + 1 Aggregator + (if findings) 1 Fixer. The default unit of audit work; sequential K=1 is a carve-out for trivial scope only. Dispatch protocol in [audit-framework.md §3c](audit-framework.md#3c-per-round-dispatch-protocol).
 
 
 <sup>[↑ jump to top](#top)</sup>
@@ -96,16 +98,16 @@ Main-thread context stayed small across the whole deliverable (8 step-level audi
 
 ### Canonical sub-agent roles
 
-Spec lives in [docs/dev/audit-framework.md §3](audit-framework.md#3-sub-agent-roles). Summary:
+Spec lives in [docs/dev/audit-framework.md §3](audit-framework.md#3-sub-agent-roles); K=5 cluster partition in [§3a](audit-framework.md#3a-auditor-cluster-partition-canonical-k5); Aggregator spec in [§3b](audit-framework.md#3b-aggregator-role-post-cluster-consolidation); orchestrator dispatch protocol in [§3c](audit-framework.md#3c-per-round-dispatch-protocol). Summary:
 
 | Role | When spawned | Tool access | Returns |
 |---|---|---|---|
 | **Planner** | Start of each step | All | Step Plan section appended to journal |
 | **Implementer** | After Planner approval | All | Files-touched + tests-added + build/inspectcode status |
-| **Auditor** (parallel ×K) | After Implementer | READ-ONLY (Read, Grep, Glob, Bash read-only) | Partial big-table chunk + per-category findings |
-| **Aggregator** | After all Auditors | Edit (journal only) | Canonical big table embedded in journal + findings appended to log |
-| **Fixer** | When Auditor surfaces FINDINGs | All | Files-changed + appended fix-log entries |
-| **Final-reviewer** (parallel ×K) | Before SHIP | READ-ONLY | Deliverable-wide partial big tables (cumulative output) |
+| **Auditor** (parallel ×K=5, default) | After Implementer | READ-ONLY (Read, Grep, Glob, Bash read-only) | Cluster-scoped partial big-table chunk + cluster findings written to designated partial file |
+| **Aggregator** (one per round) | After all 5 Auditors return | Edit (journal + audit artifacts only) | Canonical merged big table embedded in journal + consolidated `### Round N findings` subsection + cross-cluster sister-sweep + cross-cutting verification |
+| **Fixer** | When Aggregator surfaces FINDINGs | All | Files-changed + appended fix-log entries |
+| **Final-reviewer** (parallel ×K=5) | Before SHIP | READ-ONLY | Cluster-scoped partials; Aggregator merges deliverable-wide |
 
 ### Every round = a NEW fresh sub-agent
 
@@ -253,11 +255,17 @@ The Implementer returns a structured files-touched + tests-added + build status 
 
 ### 3. Audit loop (the core forcing function)
 
-For EACH round, the orchestrator spawns a **fresh Auditor sub-agent** (READ-ONLY tools — cannot edit source). The Auditor walks every category in [rules.md](rules.md) and produces evidence per predicate — grep results, file:line lists, "checked X by Y, found Z." Vibes ("looks fine") are not evidence. The Auditor REPLACES the journal's big table with its sweep output and APPENDS a `### Round N findings` subsection.
+For EACH round, the orchestrator dispatches a **K=5 batch of fresh Auditor sub-agents** in parallel (READ-ONLY tools — cannot edit source), then a **fresh Aggregator sub-agent** once all 5 partials return. Each cluster Auditor walks its slice of [rules.md](rules.md) per the canonical 5-cluster partition in [audit-framework.md §3a](audit-framework.md#3a-auditor-cluster-partition-canonical-k5) and produces evidence per predicate — grep results, file:line lists, "checked X by Y, found Z." Vibes ("looks fine") are not evidence. Each Auditor writes to its own partial file (`r{N}-partial-{LETTER}-{cluster-name}.md`); the **Aggregator** merges the 5 partials into the canonical big table (REPLACES `## Latest sweep results`) and appends a single `### Round N findings` subsection covering all 5 clusters + cross-cluster verification (per [audit-framework.md §3b](audit-framework.md#3b-aggregator-role-post-cluster-consolidation)).
 
-When the Auditor surfaces FINDING rows, the orchestrator spawns a **fresh Fixer sub-agent** with the findings list. The Fixer applies fixes + appends fix-log entries — it cannot mark anything CLEAN; closure is proven only by the NEXT round's fresh Auditor walking the predicate again and not surfacing the finding.
+The orchestrator's per-round dispatch workflow (shared-context file, parallel `Agent` batch in one tool-call message, post-batch Aggregator dispatch, route on Aggregator's recommendation) is canonical in [audit-framework.md §3c](audit-framework.md#3c-per-round-dispatch-protocol).
 
-A second audit round is a BRAND-NEW Auditor sub-agent, not the same one re-running. The fresh-context property is non-negotiable.
+When the Aggregator surfaces FINDING rows, the orchestrator spawns a **fresh Fixer sub-agent** with the consolidated findings list. The Fixer applies fixes + appends fix-log entries — it cannot mark anything CLEAN; closure is proven only by the NEXT round's fresh K=5 Auditor batch + Aggregator walking the predicates again and not surfacing the finding.
+
+A second audit round is a BRAND-NEW K=5 Auditor batch + brand-new Aggregator, not the same ones re-running. The fresh-context property is non-negotiable.
+
+**Wall-clock**: a K=5 batch's wall-clock is dominated by the slowest cluster (not the sum of 5). Empirically ~1/4-1/5 of a sequential K=1 walk against the same predicate count, since parallel Auditors stay in their cluster's mental frame instead of context-switching across all 24 categories.
+
+**K=1 carve-out**: orchestrator MAY run K=1 (single Auditor doubles as Aggregator) for truly tiny steps where partitioning offers no parallelism win (one-line config tweak, single-line typo). Requires a one-sentence justification in the orchestrator's dispatch note. K=5 is the default.
 
 #### MANDATORY: per-round evidence table embedded in the journal (no exceptions)
 
@@ -417,14 +425,14 @@ Same orchestrator-driven loop as EXECUTE, but scope = the whole deliverable. Cat
 Folder: `docs/wip/<deliverable>/final-review/journal.md`.
 
 Same structure as a step — the orchestrator spawns fresh sub-agents per phase:
-1. Spawn fresh **Planner** for cross-step concerns to walk
+1. Spawn fresh **Planner** for cross-step concerns to walk (defines the deliverable-wide cross-cutting focus areas the Aggregator verifies in step 3b/4)
 2. Spawn fresh **Implementer** for any cross-cutting fixes (only if planning surfaces work)
-3. Spawn fresh **Final-reviewer** sub-agent(s) per round (READ-ONLY) — same `rules.md` ruleset, scope = whole deliverable. Each round = a brand-new Final-reviewer.
-4. Spawn fresh **Fixer** when findings exist
-5. 10-iteration ceiling, escalate if hit
+3. Dispatch fresh **K=5 Final-reviewer batch** per round (READ-ONLY) per the canonical cluster partition in [audit-framework.md §3a](audit-framework.md#3a-auditor-cluster-partition-canonical-k5) — same `rules.md` ruleset, scope = whole deliverable. After all 5 partials return, dispatch fresh **Aggregator** to merge per [audit-framework.md §3b](audit-framework.md#3b-aggregator-role-post-cluster-consolidation). Each round = a brand-new K=5 batch + brand-new Aggregator.
+4. Spawn fresh **Fixer** when Aggregator surfaces findings
+5. 10-iteration ceiling (where ONE iteration = one K=5 batch + Aggregator + Fixer); escalate if hit
 6. Distillation entry
 
-When the latest Final-reviewer's big table comes back with zero FINDING rows → deliverable is ready to SHIP.
+When the latest Aggregator's big table comes back with zero FINDING rows → deliverable is ready to SHIP.
 
 
 <sup>[↑ jump to top](#top)</sup>

@@ -35,6 +35,36 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/auth-error-codes-source-gen/">
     <Project Path="shared/dotnet/auth-error-codes-source-gen/D2.Shared.Auth.ErrorCodes.SourceGen.csproj" />
   </Folder>
+  <Folder Name="/shared/dotnet/grpc-trailers-source-gen/">
+    <Project Path="shared/dotnet/grpc-trailers-source-gen/D2.Shared.Grpc.Trailers.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/otel-messaging-tags-source-gen/">
+    <Project Path="shared/dotnet/otel-messaging-tags-source-gen/D2.Shared.OtelMessagingTags.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/encryption-domains-source-gen/">
+    <Project Path="shared/dotnet/encryption-domains-source-gen/D2.Shared.EncryptionDomains.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/dlq-failure-metadata-source-gen/">
+    <Project Path="shared/dotnet/dlq-failure-metadata-source-gen/D2.Shared.Messaging.DlqMetadata.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/encryption-frame-source-gen/">
+    <Project Path="shared/dotnet/encryption-frame-source-gen/D2.Shared.EncryptionFrame.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/error-codes-source-gen/">
+    <Project Path="shared/dotnet/error-codes-source-gen/D2.Shared.Result.ErrorCodes.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/d2result-envelope-source-gen/">
+    <Project Path="shared/dotnet/d2result-envelope-source-gen/D2.Shared.Result.Envelope.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/problem-details-source-gen/">
+    <Project Path="shared/dotnet/problem-details-source-gen/D2.Shared.ProblemDetails.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/problem-details-abstractions/">
+    <Project Path="shared/dotnet/problem-details-abstractions/D2.Shared.ProblemDetails.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/wire-shapes-source-gen/">
+    <Project Path="shared/dotnet/wire-shapes-source-gen/D2.Shared.WireShapes.SourceGen.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/telemetry-tags-source-gen/">
     <Project Path="shared/dotnet/telemetry-tags-source-gen/D2.Shared.Telemetry.Tags.SourceGen.csproj" />
   </Folder>

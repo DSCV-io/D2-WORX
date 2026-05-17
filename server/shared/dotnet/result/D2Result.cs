@@ -7,6 +7,7 @@
 namespace D2.Shared.Result;
 
 using System.Net;
+using System.Text.Json.Serialization;
 using D2.Shared.I18n;
 
 /// <summary>
@@ -26,6 +27,16 @@ using D2.Shared.I18n;
 /// SrcGen-emitted <c>TK</c> constants (e.g. <c>TK.Common.Errors.NOT_FOUND</c>);
 /// the type system makes "untranslated literal in <c>Messages</c>" structurally
 /// unrepresentable.
+/// </para>
+/// <para>
+/// Property names are explicitly bound to <see cref="D2ResultEnvelopeFieldNames"/>
+/// codegen-emitted constants via <see cref="JsonPropertyNameAttribute"/>. The
+/// wire shape is explicit per-property and spec-derived, so the camelCase
+/// envelope ships unchanged under ANY <c>JsonSerializerOptions</c> — callers
+/// do not need to set <c>PropertyNamingPolicy = JsonNamingPolicy.CamelCase</c>
+/// for the envelope keys to render correctly. The TS-side <c>@d2/result</c>
+/// catalog consumes the same spec; cross-language wire drift on these 7
+/// field names is structurally impossible.
 /// </para>
 /// </remarks>
 public partial class D2Result
@@ -72,17 +83,20 @@ public partial class D2Result
     /// <summary>
     /// Gets a value indicating whether the operation was successful.
     /// </summary>
+    [JsonPropertyName(D2ResultEnvelopeFieldNames.SUCCESS)]
     public bool Success { get; }
 
     /// <summary>
     /// Gets a value indicating whether the operation failed.
     /// </summary>
+    [JsonIgnore]
     public bool Failed => !Success;
 
     /// <summary>
     /// Gets the translation messages related to the operation. Each message is a
     /// <see cref="TKMessage"/> (translation key + optional parameter bindings).
     /// </summary>
+    [JsonPropertyName(D2ResultEnvelopeFieldNames.MESSAGES)]
     public IReadOnlyList<TKMessage> Messages { get; }
 
     /// <summary>
@@ -90,21 +104,25 @@ public partial class D2Result
     /// pairs a field name with one or more <see cref="TKMessage"/> entries
     /// describing what's wrong with that field.
     /// </summary>
+    [JsonPropertyName(D2ResultEnvelopeFieldNames.INPUT_ERRORS)]
     public IReadOnlyList<InputError> InputErrors { get; }
 
     /// <summary>
     /// Gets the <see cref="HttpStatusCode"/> for the operation.
     /// </summary>
+    [JsonPropertyName(D2ResultEnvelopeFieldNames.STATUS_CODE)]
     public HttpStatusCode StatusCode { get; }
 
     /// <summary>
     /// Gets the standardized error code, if applicable.
     /// </summary>
+    [JsonPropertyName(D2ResultEnvelopeFieldNames.ERROR_CODE)]
     public string? ErrorCode { get; }
 
     /// <summary>
     /// Gets the trace identifier for correlating logs and diagnostics, if available.
     /// </summary>
+    [JsonPropertyName(D2ResultEnvelopeFieldNames.TRACE_ID)]
     public string? TraceId { get; }
 
     /// <summary>

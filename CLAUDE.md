@@ -80,12 +80,14 @@ Copyright (c) DCSV. All rights reserved.
 > |---|---|---|
 > | **Planner** | Start of each step | Step Plan section appended to journal; rationale + decisions + pre-emptive gate checks |
 > | **Implementer** | After Planner approval | Files-touched list + tests-added count + build/inspectcode status |
-> | **Auditor** (parallel ×K) | After Implementer | Partial big-table chunk + per-category findings list (READ-ONLY tools — cannot edit source) |
-> | **Aggregator** | After all Auditors | Canonical big table embedded in journal + per-category findings appended to findings log |
+> | **Auditor** (parallel ×K=5, default) | After Implementer | Cluster-scoped partial big-table chunk written to designated partial file (READ-ONLY tools — cannot edit source). Canonical 5-cluster partition by `rules.md` §-number lives in [audit-framework.md §3a](docs/dev/audit-framework.md#3a-auditor-cluster-partition-canonical-k5). |
+> | **Aggregator** (one per round) | After all 5 Auditors return | Merges 5 partials → canonical big table embedded in journal (REPLACES per §24 sweep-replacement rule) + consolidated `### Round N findings` subsection appended to findings log + cross-cluster sister-sweep + cross-cutting verification. Spec lives in [audit-framework.md §3b](docs/dev/audit-framework.md#3b-aggregator-role-post-cluster-consolidation). |
 > | **Fixer** | When Auditor surfaces FINDING rows | Files-changed list + appended fix-log entries |
-> | **Final-reviewer** (parallel ×K) | Before SHIP | Deliverable-wide partial big tables (cumulative output) |
+> | **Final-reviewer** (parallel ×K=5) | Before SHIP | Same K=5 cluster partition as Auditor; Aggregator merges deliverable-wide partials |
 >
-> **EVERY ROUND of planning, implementation, auditing, and fixing requires a NEW fresh sub-agent.** A second audit round = a brand-new Auditor sub-agent, NOT the same Auditor "running again." A fix follow-up after a Fixer's first attempt = a brand-new Fixer. The fresh-context property is the entire point — it's what prevents the leniency / motivated-stopping / stale-memory failure modes.
+> **K=5 parallel-cluster dispatch is the default per audit round** (per-step AND final-review). Orchestrator's dispatch protocol — shared-context file, parallel `Agent` batch in one tool-call message, Aggregator after all 5 partials return — lives in [audit-framework.md §3c](docs/dev/audit-framework.md#3c-per-round-dispatch-protocol). K=1 is a carve-out for truly tiny steps (one-line config tweak, single-line typo fix) and requires a one-sentence justification.
+>
+> **EVERY ROUND of planning, implementation, auditing, and fixing requires a NEW fresh sub-agent.** A second audit round = a brand-new K=5 Auditor batch + brand-new Aggregator, NOT the same Auditors "running again." A fix follow-up after a Fixer's first attempt = a brand-new Fixer. The fresh-context property is the entire point — it's what prevents the leniency / motivated-stopping / stale-memory failure modes.
 >
 > **The orchestrator NEVER short-circuits this for "quick" work.** A one-line typo fix still spawns a Planner, Implementer, Auditor, and (if findings) Fixer. The cost asymmetry is in your favor: sub-agent invocation is cheap, production regressions are expensive. The ONLY bypass is an explicit user request.
 >

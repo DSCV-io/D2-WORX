@@ -134,6 +134,4 @@ export interface IAuthContext {
  * feed Pino's `redact: { paths }` config.
  */
 export const IAuthContextRedactPaths: readonly string[] = [
-  "userId",
-  "username",
 ];

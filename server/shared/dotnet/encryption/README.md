@@ -18,6 +18,17 @@ AES-256-GCM payload encryption with a JWKS-style multi-kid keyring. Pure crypto 
 | `EncryptionException` (abstract) | Base type for `KidNotInKeyringException`, `FrameVersionMismatchException`, `FrameMalformedException`. AEAD authentication failures surface as the BCL `AuthenticationTagMismatchException` — not wrapped, since the operational response differs. |
 | `AddD2EncryptionFor(serviceKey, keyringFactory)` | Registers a keyed `PayloadCryptoKeyring` and matching keyed `IPayloadCrypto` so a service holding multiple keyrings can pick with `[FromKeyedServices(...)]`. |
 | `AddD2EncryptionStartupCheck()` | Opt-in `IHostedService` that runs an encrypt → decrypt round-trip against every registered keyed crypto at boot and crashes the host on any failure. |
+| `EncryptionDomains` | Spec-driven closed catalog of keyring-domain identifiers (`AUDIT` / `NOTIFICATIONS` / `COURIER` + the `PLAINTEXT` sentinel). Codegen-emitted from `contracts/encryption-domains/encryption-domains.spec.json` by `D2.Shared.EncryptionDomains.SourceGen`. Consumers reference the constants (e.g. `EncryptionDomains.AUDIT`) when registering / resolving keyrings; the `MqMessages.SourceGen` cross-validates `mq-messages.spec.json:encryption` values against this catalog at codegen time so a typo cannot silently route to a non-existent keyring. |
+| `EncryptionFrameLayout` | Spec-driven closed catalog of binary frame-layout constants — `CURRENT_VERSION`, per-field `*_OFFSET` / `*_LENGTH`, and `CONSTRAINT_*` GCM-spec values (`CONSTRAINT_MIN_KID_LENGTH`, `CONSTRAINT_MAX_KID_LENGTH`, `CONSTRAINT_NONCE_LENGTH`, `CONSTRAINT_TAG_LENGTH`, `CONSTRAINT_MIN_FRAME_SIZE`). Codegen-emitted from `contracts/encryption-frame/encryption-frame.spec.json` by `D2.Shared.EncryptionFrame.SourceGen`. Mirrored on the TS side via `@d2/encryption-abstractions`'s `EncryptionFrame` so the .NET encoder and any TS decoder consume identical byte offsets. |
+
+## Spec-driven catalogs
+
+Two closed catalogs in this library are emitted from contracts, not hand-written:
+
+- **`EncryptionDomains`** — from `contracts/encryption-domains/encryption-domains.spec.json`. Single source of truth for keyring-domain identifiers used at registration (`AddD2EncryptionFor(EncryptionDomains.AUDIT, ...)`) and on the messaging side (`mq-messages.spec.json:encryption` values must come from this catalog). Cross-language mirror: `@d2/encryption-abstractions` `EncryptionDomains`.
+- **`EncryptionFrameLayout`** — from `contracts/encryption-frame/encryption-frame.spec.json`. Binary frame-layout offsets + lengths + GCM-spec constraint values. Frame format (`[1 byte: version][1 byte: kid_length][N bytes: kid (UTF-8)][12 bytes: nonce][M bytes: ciphertext + 16-byte tag]`) is described in `Frame format` below. Cross-language mirror: `@d2/encryption-abstractions` `EncryptionFrame`.
+
+Both catalogs ship as `.g.cs` files under `Generated/` (committed to git so PR reviewers see diffs without a local build).
 
 ## Frame format
 

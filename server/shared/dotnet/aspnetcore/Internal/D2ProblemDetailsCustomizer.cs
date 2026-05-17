@@ -7,6 +7,8 @@
 namespace D2.Shared.AspNetCore.Internal;
 
 using System.Diagnostics;
+using D2.Shared.ProblemDetails;
+using D2.Shared.Result;
 using D2.Shared.Utilities.Extensions;
 using Microsoft.AspNetCore.Http;
 
@@ -19,15 +21,62 @@ using Microsoft.AspNetCore.Http;
 /// (without spinning a TestHost) and so the public extension stays a thin
 /// registration shim.
 /// </summary>
+/// <remarks>
+/// <para>
+/// FULL D2Result-aware path B emitter. When the request pipeline has stashed
+/// a <see cref="D2Result"/> on
+/// <see cref="HttpContext.Items"/> under
+/// <see cref="D2ProblemDetailsContextItems.D2_RESULT"/>, the customizer
+/// populates the following RFC 7807 Shape A body fields from spec-derived
+/// constants in <see cref="D2ProblemDetailsKeys"/>:
+/// </para>
+/// <list type="bullet">
+///   <item><c>Type</c> ← <c>D2ProblemDetailsKeys.TYPE_URI_PREFIX</c> +
+///     kebab-cased <c>D2Result.ErrorCode</c> (fallback
+///     <c>"unhandled-exception"</c> on empty error code).</item>
+///   <item><c>Title</c> ← <c>D2ProblemDetailsKeys.TitleFor(StatusCode)</c>.</item>
+///   <item><c>Status</c> ← <c>(int)D2Result.StatusCode</c>.</item>
+///   <item><c>Extensions[EXTENSION_ERROR_CODE]</c> ← result.ErrorCode.</item>
+///   <item><c>Extensions[EXTENSION_MESSAGES]</c> ← result.Messages.</item>
+///   <item><c>Extensions[EXTENSION_INPUT_ERRORS]</c> ← result.InputErrors
+///     (conditional — only when non-empty).</item>
+/// </list>
+/// <para>
+/// The following fields are populated UNCONDITIONALLY (regardless of whether
+/// a <see cref="D2Result"/> is stashed), so operators always have a
+/// correlation surface for both the D2Result-aware and raw-exception paths:
+/// </para>
+/// <list type="bullet">
+///   <item><c>Instance</c> ← <c>"{Method} {Path}"</c> (matches the path-A
+///     emit shape exactly). Suppressed when
+///     <c>D2ProblemDetailsOptions.IncludeRequestPath</c> is <c>false</c>.</item>
+///   <item><c>Extensions[EXTENSION_TRACE_ID]</c> ← W3C trace id from
+///     <see cref="System.Diagnostics.Activity.Current"/>, falling back to
+///     <see cref="HttpContext.TraceIdentifier"/>.</item>
+///   <item><c>Extensions[EXTENSION_CORRELATION_ID]</c> ← inbound correlation
+///     header value (length-capped) or a freshly generated GUID; echoed back
+///     via the configured response header when
+///     <c>D2ProblemDetailsOptions.EchoCorrelationIdInResponse</c> is <c>true</c>.</item>
+/// </list>
+/// <para>
+/// When NO D2Result is stashed (raw exception path; framework-internal
+/// ProblemDetails generation), the customizer leaves <c>Type</c> /
+/// <c>Title</c> / <c>Status</c> / <c>EXTENSION_ERROR_CODE</c> /
+/// <c>EXTENSION_MESSAGES</c> / <c>EXTENSION_INPUT_ERRORS</c> alone
+/// (framework defaults apply) while still emitting the unconditional fields
+/// listed above.
+/// </para>
+/// </remarks>
 internal static class D2ProblemDetailsCustomizer
 {
     /// <summary>
     /// Applies the D² ProblemDetails enrichment to <paramref name="ctx"/>:
-    /// <c>traceId</c> from <see cref="Activity.Current"/> falling back to
-    /// <see cref="HttpContext.TraceIdentifier"/>; <c>correlationId</c> from
-    /// the configured request header (capped + sanitized) or a freshly
-    /// generated GUID echoed back via the response header; and the RFC 7807
-    /// <c>instance</c> field set to <c>{Method} {Path}</c> when enabled.
+    /// when a <see cref="D2Result"/> is stashed under
+    /// <see cref="D2ProblemDetailsContextItems.D2_RESULT"/>, populates the
+    /// full Shape A body from <see cref="D2ProblemDetailsKeys"/>; otherwise
+    /// populates <c>traceId</c> / <c>correlationId</c> only. Always sets the
+    /// <c>instance</c> field (when enabled) and echoes a fresh correlation
+    /// id back via the response header.
     /// </summary>
     /// <param name="ctx">The ProblemDetails context to enrich.</param>
     /// <param name="options">The configured options snapshot.</param>
@@ -39,6 +88,20 @@ internal static class D2ProblemDetailsCustomizer
         ArgumentNullException.ThrowIfNull(options);
 
         var httpContext = ctx.HttpContext;
+        var problem = ctx.ProblemDetails;
+
+        // D2Result-aware path: when middleware / a handler stashed the
+        // originating D2Result, populate Type+Title+Status+d2_error_code+
+        // d2_messages+d2_input_errors from spec-derived constants. Keeps
+        // path A + path B byte-identical on the D2Result-derived fields.
+        // (Instance, traceId, correlationId are emitted unconditionally
+        // below — they apply on both the D2Result-aware and raw-exception
+        // paths so operators always have a correlation surface.)
+        var d2Result = httpContext.GetD2Result();
+        if (d2Result is not null && d2Result.Failed)
+        {
+            ApplyFromD2Result(problem, d2Result);
+        }
 
         // traceId: prefer the W3C distributed-trace id from Activity.Current
         // (set by AspNetCore-instrumentation OR the application directly);
@@ -49,7 +112,7 @@ internal static class D2ProblemDetailsCustomizer
         var traceId = activityTraceId.Truthy()
             ? activityTraceId
             : httpContext.TraceIdentifier;
-        ctx.ProblemDetails.Extensions["traceId"] = traceId;
+        problem.Extensions[D2ProblemDetailsKeys.EXTENSION_TRACE_ID] = traceId;
 
         // correlationId: read inbound header, validate length cap, fall back
         // to fresh GUID. The cap prevents an arbitrary-length user-supplied
@@ -59,7 +122,7 @@ internal static class D2ProblemDetailsCustomizer
             options.CorrelationIdHeaderName);
         var correlationId = inboundCorrelationId
             ?? Guid.NewGuid().ToString("N");
-        ctx.ProblemDetails.Extensions["correlationId"] = correlationId;
+        problem.Extensions[D2ProblemDetailsKeys.EXTENSION_CORRELATION_ID] = correlationId;
 
         // Echo the resolved correlation id back via the response header so
         // the caller can include it in subsequent requests + log lines for
@@ -68,12 +131,45 @@ internal static class D2ProblemDetailsCustomizer
             httpContext.Response.Headers[options.CorrelationIdHeaderName] = correlationId;
 
         // RFC 7807 instance field — operational metadata, never user input.
+        // Set after ApplyFromD2Result so the customizer's view wins on the
+        // {Method} {Path} shape regardless of whether D2Result-aware path
+        // already populated it (both emit identical strings; assignment is
+        // structurally idempotent).
         if (options.IncludeRequestPath)
         {
             var method = httpContext.Request.Method;
             var path = httpContext.Request.Path.Value ?? string.Empty;
-            ctx.ProblemDetails.Instance = $"{method} {path}";
+            problem.Instance = $"{method} {path}";
         }
+    }
+
+    private static void ApplyFromD2Result(
+        Microsoft.AspNetCore.Mvc.ProblemDetails problem,
+        D2Result result)
+    {
+        var errorCode = result.ErrorCode ?? string.Empty;
+
+        // Type: spec-driven URI prefix + kebab-cased error code. Empty error
+        // code → "unhandled-exception" fallback (defensive — framework
+        // pipelines plumbing a D2Result without an explicit errorCode is
+        // rare but possible).
+        problem.Type = errorCode.Length == 0
+            ? D2ProblemDetailsKeys.TYPE_URI_PREFIX + "unhandled-exception"
+            : D2ProblemDetailsKeys.TYPE_URI_PREFIX + KebabCase(errorCode);
+
+        // Title: spec-driven switch keyed on the D2Result.StatusCode.
+        problem.Title = D2ProblemDetailsKeys.TitleFor(result.StatusCode);
+
+        // Status: D2Result.StatusCode wins over whatever the framework
+        // pre-populated (operator-explicit intent).
+        problem.Status = (int)result.StatusCode;
+
+        // Extensions: spec-driven keys. errorCode + messages always written
+        // (matches path A behavior); inputErrors only when non-empty.
+        problem.Extensions[D2ProblemDetailsKeys.EXTENSION_ERROR_CODE] = errorCode;
+        problem.Extensions[D2ProblemDetailsKeys.EXTENSION_MESSAGES] = result.Messages;
+        if (result.InputErrors.Count > 0)
+            problem.Extensions[D2ProblemDetailsKeys.EXTENSION_INPUT_ERRORS] = result.InputErrors;
     }
 
     /// <summary>
@@ -98,5 +194,20 @@ internal static class D2ProblemDetailsCustomizer
             return null;
 
         return raw;
+    }
+
+    /// <summary>
+    /// Kebab-cases an UPPER_SNAKE_CASE error code (<c>AUTH_BEARER_MISSING</c>
+    /// → <c>auth-bearer-missing</c>) for the RFC 7807 <c>type</c> URI suffix.
+    /// Local helper rather than a shared utility because the auth-http path
+    /// uses an internal <c>AuthErrorCodes.KebabCase</c> that is not visible
+    /// here (separate consuming-csproj boundary).
+    /// </summary>
+    private static string KebabCase(string upperSnake)
+    {
+        var sb = new System.Text.StringBuilder(upperSnake.Length);
+        foreach (var c in upperSnake)
+            sb.Append(c == '_' ? '-' : char.ToLowerInvariant(c));
+        return sb.ToString();
     }
 }

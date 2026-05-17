@@ -1,0 +1,48 @@
+{
+  "$schema": "./schema.json",
+  "version": 1,
+  "fields": [
+    {
+      "constName": "VERSION",
+      "offset": 0,
+      "length": 1,
+      "kind": "byte_fixed",
+      "doc": "Frame format version. Single byte. Currently 1. Decoder MUST throw FrameVersionMismatchException on any other value. Bumping the version is a wire-breaking change that requires every consumer to handle both versions during the rollout window."
+    },
+    {
+      "constName": "KID_LENGTH",
+      "offset": 1,
+      "length": 1,
+      "kind": "byte_fixed",
+      "doc": "Byte count of the UTF-8 encoded kid that follows. Single byte (max 255). Decoder validates against PayloadCryptoKeyring.MIN_KID_LENGTH / MAX_KID_LENGTH."
+    },
+    {
+      "constName": "KID",
+      "offset": 2,
+      "length": -1,
+      "kind": "variable_utf8",
+      "doc": "UTF-8 bytes of the key id used to encrypt this frame. Length is variable, declared by KID_LENGTH. The decoder uses kid to look up the AES-GCM key in the per-domain keyring."
+    },
+    {
+      "constName": "NONCE",
+      "offset": -1,
+      "length": 12,
+      "kind": "byte_fixed",
+      "doc": "AES-GCM nonce. Fixed 12 bytes (GCM-spec). Offset is variable — comes immediately after KID. Generated fresh per encrypt; no nonce reuse with the same key (GCM safety requirement)."
+    },
+    {
+      "constName": "CIPHERTEXT_WITH_TAG",
+      "offset": -1,
+      "length": -1,
+      "kind": "variable_remainder",
+      "doc": "Ciphertext followed by the AES-GCM authentication tag. Length is variable (frame_size - VERSION - KID_LENGTH - KID - NONCE). The trailing CONSTRAINT_TAG_LENGTH bytes are the authentication tag; the decoder slices them off before decrypting the rest."
+    }
+  ],
+  "constraints": {
+    "minKidLength": 1,
+    "maxKidLength": 64,
+    "nonceLength": 12,
+    "tagLength": 16,
+    "minFrameSize": 30
+  }
+}
