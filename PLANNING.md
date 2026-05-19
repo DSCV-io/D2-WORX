@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # D²-WORX Internal Planning Document
 
 > **Purpose**: Internal planning, architecture decisions, and status tracking for D²-WORX development.

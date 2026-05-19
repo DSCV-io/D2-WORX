@@ -180,6 +180,10 @@ georefdata.bin
 secrets/*
 !secrets/.gitkeep
 
+# Operator-local upstream-rejection memory written by `pnpm geo:approve`.
+# Canonical path is contracts/geo/.upstream-rejections.json.
+contracts/geo/.upstream-rejections.json
+
 # Per-deliverable workflow journals — append-only working memory for the
 # audit-loop process. Lives locally during a deliverable. At SHIP time the
 # root README is COPIED out as a snapshot to docs/dev/deliverables/<name>.md

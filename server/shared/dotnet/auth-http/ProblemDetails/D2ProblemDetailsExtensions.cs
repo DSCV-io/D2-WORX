@@ -79,7 +79,7 @@ public static class D2ProblemDetailsExtensions
         /// <summary>
         /// Builds an RFC 7807 ProblemDetails from a failure
         /// <see cref="D2Result"/>. Side-effect: increments
-        /// <see cref="AuthTelemetry.ProblemEmitted"/> tagged with the result's
+        /// <see cref="AuthTelemetry.SR_ProblemEmitted"/> tagged with the result's
         /// error code.
         /// </summary>
         /// <param name="context">The HTTP context (for path → Instance).</param>
@@ -141,7 +141,7 @@ public static class D2ProblemDetailsExtensions
             if (traceId is not null)
                 problem.Extensions[D2ProblemDetailsKeys.EXTENSION_TRACE_ID] = traceId;
 
-            AuthTelemetry.ProblemEmitted.Add(
+            AuthTelemetry.SR_ProblemEmitted.Add(
                 1,
                 new KeyValuePair<string, object?>(
                     AuthTelemetryTags.ProblemEmitted.TAG_D2_ERROR_CODE, errorCode));

@@ -20,40 +20,40 @@ public sealed class AuthTelemetryTests
     [Fact]
     public void ActivitySource_NameMatchesConstant()
     {
-        AuthTelemetry.Activity.Name.Should().Be(AuthTelemetry.ACTIVITY_SOURCE_NAME);
+        AuthTelemetry.SR_Activity.Name.Should().Be(AuthTelemetry.ACTIVITY_SOURCE_NAME);
         AuthTelemetry.ACTIVITY_SOURCE_NAME.Should().Be("D2.Shared.Auth");
     }
 
     [Fact]
     public void Meter_NameMatchesConstant()
     {
-        AuthTelemetry.Meter.Name.Should().Be(AuthTelemetry.METER_NAME);
+        AuthTelemetry.SR_Meter.Name.Should().Be(AuthTelemetry.METER_NAME);
         AuthTelemetry.METER_NAME.Should().Be("D2.Shared.Auth");
     }
 
     [Fact]
     public void Counters_HaveExpectedNames()
     {
-        AuthTelemetry.JwtValidations.Name.Should().Be("d2.auth.jwt.validations");
-        AuthTelemetry.SessionLivenessChecks.Name.Should().Be("d2.auth.session.liveness.checks");
-        AuthTelemetry.JwksFetches.Name.Should().Be("d2.auth.jwks.fetches");
-        AuthTelemetry.ProblemEmitted.Name.Should().Be("d2.auth.problem.emitted");
+        AuthTelemetry.SR_JwtValidations.Name.Should().Be("d2.auth.jwt.validations");
+        AuthTelemetry.SR_SessionLivenessChecks.Name.Should().Be("d2.auth.session.liveness.checks");
+        AuthTelemetry.SR_JwksFetches.Name.Should().Be("d2.auth.jwks.fetches");
+        AuthTelemetry.SR_ProblemEmitted.Name.Should().Be("d2.auth.problem.emitted");
     }
 
     [Fact]
     public void Histograms_HaveExpectedNamesAndMsUnit()
     {
-        AuthTelemetry.JwtValidationDurationMs.Name.Should()
+        AuthTelemetry.SR_JwtValidationDurationMs.Name.Should()
             .Be("d2.auth.jwt.validation.duration");
-        AuthTelemetry.JwtValidationDurationMs.Unit.Should().Be("ms");
+        AuthTelemetry.SR_JwtValidationDurationMs.Unit.Should().Be("ms");
 
-        AuthTelemetry.SessionLivenessLookupDurationMs.Name.Should()
+        AuthTelemetry.SR_SessionLivenessLookupDurationMs.Name.Should()
             .Be("d2.auth.session.liveness.lookup.duration");
-        AuthTelemetry.SessionLivenessLookupDurationMs.Unit.Should().Be("ms");
+        AuthTelemetry.SR_SessionLivenessLookupDurationMs.Unit.Should().Be("ms");
 
-        AuthTelemetry.JwksFetchDurationMs.Name.Should()
+        AuthTelemetry.SR_JwksFetchDurationMs.Name.Should()
             .Be("d2.auth.jwks.fetch.duration");
-        AuthTelemetry.JwksFetchDurationMs.Unit.Should().Be("ms");
+        AuthTelemetry.SR_JwksFetchDurationMs.Unit.Should().Be("ms");
     }
 
     [Fact]

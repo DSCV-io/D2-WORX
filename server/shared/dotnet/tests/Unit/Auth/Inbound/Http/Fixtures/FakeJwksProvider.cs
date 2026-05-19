@@ -8,6 +8,7 @@ namespace D2.Shared.Tests.Unit.Auth.Inbound.Http.Fixtures;
 
 using D2.Shared.Auth.Abstractions.Jwks;
 using D2.Shared.Result;
+using D2.Shared.Utilities.Extensions;
 using Microsoft.IdentityModel.Tokens;
 
 /// <summary>
@@ -24,7 +25,7 @@ internal sealed class FakeJwksProvider : IJwksProvider
     {
         foreach (var key in keys)
         {
-            if (!string.IsNullOrEmpty(key.KeyId))
+            if (key.KeyId.Truthy())
                 r_keys[key.KeyId] = key;
         }
     }

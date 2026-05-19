@@ -1,0 +1,2487 @@
+{
+  "$generated": true,
+  "$source": "pipeline-derived",
+  "$schema": "./languages.schema.json",
+  "$note": "TIER 2 codegen-ready spec — produced by tools/geo-data-pipeline from contracts/geo/src-data/*.spec.json (Tier 1). Matches the canonical entity record shape; consumed directly by codegen (.NET SourceGen + TS emitter — Tier 3) to produce concrete entity types. Do NOT hand-edit — re-run `pnpm geo:refresh` to regenerate. IsSupported derived from contracts/messages/*.json file presence — languages of selectable locales.",
+  "catalogVersion": "0.1.0",
+  "generatedAt": "2026-05-19T18:14:37.998Z",
+  "entries": [
+    {
+      "iso6391Code": "aa",
+      "name": "Afar",
+      "endonym": "Qafár af",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "DJ",
+        "ER",
+        "ET"
+      ]
+    },
+    {
+      "iso6391Code": "ab",
+      "name": "Abkhazian",
+      "endonym": "Аԥсуа бызшәа",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "GE",
+        "TR"
+      ]
+    },
+    {
+      "iso6391Code": "ae",
+      "name": "Avestan",
+      "endonym": null,
+      "writingDirection": "RTL",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": []
+    },
+    {
+      "iso6391Code": "af",
+      "name": "Afrikaans",
+      "endonym": "Afrikaans",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BW",
+        "NA",
+        "ZA"
+      ]
+    },
+    {
+      "iso6391Code": "ak",
+      "name": "Akan",
+      "endonym": null,
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "GH"
+      ]
+    },
+    {
+      "iso6391Code": "am",
+      "name": "Amharic",
+      "endonym": "አማርኛ",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "ET",
+        "IL"
+      ]
+    },
+    {
+      "iso6391Code": "an",
+      "name": "Aragonese",
+      "endonym": "idioma aragonés",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "ES"
+      ]
+    },
+    {
+      "iso6391Code": "ar",
+      "name": "Arabic",
+      "endonym": "العربية",
+      "writingDirection": "RTL",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AE",
+        "BH",
+        "CA",
+        "CM",
+        "CY",
+        "DJ",
+        "DZ",
+        "EG",
+        "EH",
+        "ER",
+        "GB",
+        "IL",
+        "IQ",
+        "IR",
+        "JO",
+        "KE",
+        "KM",
+        "KW",
+        "LB",
+        "LY",
+        "MA",
+        "ML",
+        "MR",
+        "NE",
+        "NG",
+        "OM",
+        "PS",
+        "QA",
+        "SA",
+        "SD",
+        "SO",
+        "SS",
+        "SY",
+        "TD",
+        "TJ",
+        "TN",
+        "TR",
+        "YE"
+      ]
+    },
+    {
+      "iso6391Code": "as",
+      "name": "Assamese",
+      "endonym": "অসমীয়া ভাষা",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "IN"
+      ]
+    },
+    {
+      "iso6391Code": "av",
+      "name": "Avaric",
+      "endonym": "авар мацӀ",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "RU"
+      ]
+    },
+    {
+      "iso6391Code": "ay",
+      "name": "Aymara",
+      "endonym": "Aymar aru",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BO",
+        "PE"
+      ]
+    },
+    {
+      "iso6391Code": "az",
+      "name": "Azerbaijani",
+      "endonym": "Azərbaycan dili",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AM",
+        "AZ",
+        "TR"
+      ]
+    },
+    {
+      "iso6391Code": "ba",
+      "name": "Bashkir",
+      "endonym": "башҡорт теле",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "RU"
+      ]
+    },
+    {
+      "iso6391Code": "be",
+      "name": "Belarusian",
+      "endonym": "беларуская мова",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BY",
+        "PL",
+        "UA"
+      ]
+    },
+    {
+      "iso6391Code": "bg",
+      "name": "Bulgarian",
+      "endonym": "български език",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BG",
+        "GR",
+        "MD",
+        "RO",
+        "TR",
+        "UA"
+      ]
+    },
+    {
+      "iso6391Code": "bi",
+      "name": "Bislama",
+      "endonym": "Bislama",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "VU"
+      ]
+    },
+    {
+      "iso6391Code": "bm",
+      "name": "Bambara",
+      "endonym": "Bamanankan",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "ML"
+      ]
+    },
+    {
+      "iso6391Code": "bn",
+      "name": "Bengali",
+      "endonym": "বাংলা",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BD",
+        "CA",
+        "GB",
+        "IN",
+        "NP"
+      ]
+    },
+    {
+      "iso6391Code": "bo",
+      "name": "Tibetan",
+      "endonym": "བོད་སྐད།",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CN",
+        "IN",
+        "NP"
+      ]
+    },
+    {
+      "iso6391Code": "br",
+      "name": "Breton",
+      "endonym": "brezhoneg",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "FR"
+      ]
+    },
+    {
+      "iso6391Code": "bs",
+      "name": "Bosnian",
+      "endonym": "bosanski jezik",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BA",
+        "XK"
+      ]
+    },
+    {
+      "iso6391Code": "ca",
+      "name": "Catalan; Valencian",
+      "endonym": "català",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AD",
+        "ES",
+        "FR",
+        "IT"
+      ]
+    },
+    {
+      "iso6391Code": "ce",
+      "name": "Chechen",
+      "endonym": "нохчийн мотт",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "RU"
+      ]
+    },
+    {
+      "iso6391Code": "ch",
+      "name": "Chamorro",
+      "endonym": "Fino' Chamoru",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "GU",
+        "MP"
+      ]
+    },
+    {
+      "iso6391Code": "co",
+      "name": "Corsican",
+      "endonym": "corsu",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "FR"
+      ]
+    },
+    {
+      "iso6391Code": "cr",
+      "name": "Cree",
+      "endonym": "ᐃᔨᔫ ᐊᔨᒧᐎᓐ",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CA"
+      ]
+    },
+    {
+      "iso6391Code": "cs",
+      "name": "Czech",
+      "endonym": "čeština",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CZ",
+        "SK"
+      ]
+    },
+    {
+      "iso6391Code": "cu",
+      "name": "Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old Church Slavonic",
+      "endonym": "словѣньскъ ѩꙁꙑкъ",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "RU"
+      ]
+    },
+    {
+      "iso6391Code": "cv",
+      "name": "Chuvash",
+      "endonym": "чăваш чĕлхи",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "RU"
+      ]
+    },
+    {
+      "iso6391Code": "cy",
+      "name": "Welsh",
+      "endonym": "Cymraeg",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AR",
+        "GB"
+      ]
+    },
+    {
+      "iso6391Code": "da",
+      "name": "Danish",
+      "endonym": "dansk",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "DE",
+        "DK",
+        "GL",
+        "IS"
+      ]
+    },
+    {
+      "iso6391Code": "de",
+      "name": "German",
+      "endonym": "Deutsch",
+      "writingDirection": "LTR",
+      "isSupported": true,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AT",
+        "BE",
+        "BG",
+        "BR",
+        "CA",
+        "CH",
+        "CZ",
+        "DE",
+        "DK",
+        "FI",
+        "FR",
+        "GB",
+        "GR",
+        "HU",
+        "IT",
+        "KZ",
+        "LI",
+        "LT",
+        "LU",
+        "NA",
+        "NL",
+        "PL",
+        "PY",
+        "RO",
+        "SI",
+        "SK",
+        "US"
+      ]
+    },
+    {
+      "iso6391Code": "dv",
+      "name": "Divehi; Dhivehi; Maldivian",
+      "endonym": "ދިވެހި",
+      "writingDirection": "RTL",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "IN",
+        "MV"
+      ]
+    },
+    {
+      "iso6391Code": "dz",
+      "name": "Dzongkha",
+      "endonym": "རྫོང་ཁ་",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BT",
+        "IN"
+      ]
+    },
+    {
+      "iso6391Code": "ee",
+      "name": "Ewe",
+      "endonym": "Eʋegbe",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "GH",
+        "TG"
+      ]
+    },
+    {
+      "iso6391Code": "el",
+      "name": "Modern Greek (1453-)",
+      "endonym": "νέα ελληνικά",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AL",
+        "CA",
+        "CY",
+        "DE",
+        "EG",
+        "GR",
+        "IT",
+        "RO",
+        "TR",
+        "UA"
+      ]
+    },
+    {
+      "iso6391Code": "en",
+      "name": "English",
+      "endonym": "English",
+      "writingDirection": "LTR",
+      "isSupported": true,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AE",
+        "AG",
+        "AI",
+        "AR",
+        "AS",
+        "AT",
+        "AU",
+        "AW",
+        "BA",
+        "BB",
+        "BD",
+        "BE",
+        "BG",
+        "BI",
+        "BM",
+        "BN",
+        "BR",
+        "BS",
+        "BT",
+        "BW",
+        "BZ",
+        "CA",
+        "CC",
+        "CH",
+        "CK",
+        "CL",
+        "CM",
+        "CN",
+        "CX",
+        "CY",
+        "CZ",
+        "DE",
+        "DK",
+        "DM",
+        "DO",
+        "DZ",
+        "EE",
+        "EG",
+        "ER",
+        "ES",
+        "ET",
+        "FI",
+        "FJ",
+        "FK",
+        "FM",
+        "FR",
+        "GB",
+        "GD",
+        "GG",
+        "GH",
+        "GI",
+        "GM",
+        "GR",
+        "GS",
+        "GT",
+        "GU",
+        "GY",
+        "HK",
+        "HN",
+        "HR",
+        "HU",
+        "IE",
+        "IL",
+        "IM",
+        "IN",
+        "IO",
+        "IQ",
+        "IT",
+        "JE",
+        "JM",
+        "JO",
+        "KE",
+        "KI",
+        "KN",
+        "KY",
+        "KZ",
+        "LB",
+        "LC",
+        "LK",
+        "LR",
+        "LS",
+        "LT",
+        "LU",
+        "LV",
+        "MA",
+        "MG",
+        "MH",
+        "MO",
+        "MP",
+        "MS",
+        "MT",
+        "MU",
+        "MV",
+        "MW",
+        "MX",
+        "MY",
+        "NA",
+        "NF",
+        "NG",
+        "NL",
+        "NP",
+        "NR",
+        "NU",
+        "NZ",
+        "PA",
+        "PG",
+        "PH",
+        "PK",
+        "PL",
+        "PM",
+        "PN",
+        "PR",
+        "PT",
+        "PW",
+        "RO",
+        "RW",
+        "SB",
+        "SC",
+        "SD",
+        "SE",
+        "SG",
+        "SH",
+        "SI",
+        "SK",
+        "SL",
+        "SS",
+        "SX",
+        "SZ",
+        "TC",
+        "TH",
+        "TK",
+        "TO",
+        "TR",
+        "TT",
+        "TV",
+        "TZ",
+        "UG",
+        "UM",
+        "US",
+        "VC",
+        "VG",
+        "VI",
+        "VU",
+        "WS",
+        "YE",
+        "ZA",
+        "ZM",
+        "ZW"
+      ]
+    },
+    {
+      "iso6391Code": "eo",
+      "name": "Esperanto",
+      "endonym": "Esperanto",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "SM"
+      ]
+    },
+    {
+      "iso6391Code": "es",
+      "name": "Spanish; Castilian",
+      "endonym": "español",
+      "writingDirection": "LTR",
+      "isSupported": true,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AD",
+        "AR",
+        "BO",
+        "BR",
+        "BZ",
+        "CA",
+        "CL",
+        "CO",
+        "CR",
+        "CU",
+        "CW",
+        "DE",
+        "DO",
+        "EC",
+        "ES",
+        "FR",
+        "GB",
+        "GI",
+        "GQ",
+        "GT",
+        "HN",
+        "MA",
+        "MX",
+        "NI",
+        "PA",
+        "PE",
+        "PH",
+        "PR",
+        "PT",
+        "PY",
+        "RO",
+        "SV",
+        "SX",
+        "TT",
+        "US",
+        "UY",
+        "VE"
+      ]
+    },
+    {
+      "iso6391Code": "et",
+      "name": "Estonian",
+      "endonym": "eesti keel",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "EE",
+        "FI"
+      ]
+    },
+    {
+      "iso6391Code": "eu",
+      "name": "Basque",
+      "endonym": "euskara",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "ES",
+        "FR"
+      ]
+    },
+    {
+      "iso6391Code": "fa",
+      "name": "Persian",
+      "endonym": "فارسی",
+      "writingDirection": "RTL",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AE",
+        "AF",
+        "CA",
+        "IQ",
+        "IR",
+        "OM",
+        "PK",
+        "QA",
+        "TJ"
+      ]
+    },
+    {
+      "iso6391Code": "ff",
+      "name": "Fulah",
+      "endonym": "Fulfulde",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BF",
+        "CM",
+        "GH",
+        "GM",
+        "GN",
+        "GW",
+        "LR",
+        "MR",
+        "NE",
+        "NG",
+        "SL",
+        "SN"
+      ]
+    },
+    {
+      "iso6391Code": "fi",
+      "name": "Finnish",
+      "endonym": "suomi",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "EE",
+        "FI",
+        "RU",
+        "SE"
+      ]
+    },
+    {
+      "iso6391Code": "fj",
+      "name": "Fijian",
+      "endonym": "Na vosa vaka-Viti",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "FJ"
+      ]
+    },
+    {
+      "iso6391Code": "fo",
+      "name": "Faroese",
+      "endonym": "Føroyskt mál",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "DK",
+        "FO"
+      ]
+    },
+    {
+      "iso6391Code": "fr",
+      "name": "French",
+      "endonym": "français",
+      "writingDirection": "LTR",
+      "isSupported": true,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AD",
+        "AT",
+        "BE",
+        "BF",
+        "BI",
+        "BJ",
+        "BL",
+        "CA",
+        "CD",
+        "CF",
+        "CG",
+        "CH",
+        "CI",
+        "CM",
+        "CY",
+        "DE",
+        "DJ",
+        "DZ",
+        "FR",
+        "GA",
+        "GB",
+        "GF",
+        "GN",
+        "GP",
+        "GQ",
+        "GR",
+        "GW",
+        "HT",
+        "HU",
+        "IE",
+        "IT",
+        "KM",
+        "LB",
+        "LU",
+        "MA",
+        "MC",
+        "MF",
+        "MG",
+        "ML",
+        "MQ",
+        "MR",
+        "MT",
+        "MU",
+        "NC",
+        "NE",
+        "NL",
+        "PF",
+        "PM",
+        "PT",
+        "RE",
+        "RO",
+        "RW",
+        "SC",
+        "SN",
+        "ST",
+        "SY",
+        "TD",
+        "TF",
+        "TG",
+        "TN",
+        "US",
+        "VU",
+        "WF",
+        "YT"
+      ]
+    },
+    {
+      "iso6391Code": "fy",
+      "name": "Western Frisian",
+      "endonym": "West-Frysk",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "NL"
+      ]
+    },
+    {
+      "iso6391Code": "ga",
+      "name": "Irish",
+      "endonym": "an Ghaeilge",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "GB",
+        "IE"
+      ]
+    },
+    {
+      "iso6391Code": "gd",
+      "name": "Gaelic; Scottish Gaelic",
+      "endonym": "Gàidhlig",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "GB"
+      ]
+    },
+    {
+      "iso6391Code": "gl",
+      "name": "Galician",
+      "endonym": "lingua galega",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "ES",
+        "PT"
+      ]
+    },
+    {
+      "iso6391Code": "gn",
+      "name": "Guarani",
+      "endonym": "avañe'ẽ",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AR",
+        "BO",
+        "PY"
+      ]
+    },
+    {
+      "iso6391Code": "gu",
+      "name": "Gujarati",
+      "endonym": "ગુજરાતી ભાષા",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CA",
+        "GB",
+        "IN",
+        "KE"
+      ]
+    },
+    {
+      "iso6391Code": "gv",
+      "name": "Manx",
+      "endonym": "Gaelg",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "IM"
+      ]
+    },
+    {
+      "iso6391Code": "ha",
+      "name": "Hausa",
+      "endonym": "Hausa",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "GH",
+        "NE",
+        "NG"
+      ]
+    },
+    {
+      "iso6391Code": "he",
+      "name": "Hebrew",
+      "endonym": "עברית",
+      "writingDirection": "RTL",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "IL"
+      ]
+    },
+    {
+      "iso6391Code": "hi",
+      "name": "Hindi",
+      "endonym": "हिन्दी",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CA",
+        "FJ",
+        "IN",
+        "NP",
+        "UG",
+        "ZA"
+      ]
+    },
+    {
+      "iso6391Code": "ho",
+      "name": "Hiri Motu",
+      "endonym": null,
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "PG"
+      ]
+    },
+    {
+      "iso6391Code": "hr",
+      "name": "Croatian",
+      "endonym": "hrvatski jezik",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AT",
+        "BA",
+        "CA",
+        "DE",
+        "HR",
+        "HU",
+        "IT",
+        "RS",
+        "SI"
+      ]
+    },
+    {
+      "iso6391Code": "ht",
+      "name": "Haitian; Haitian Creole",
+      "endonym": "kreyòl ayisyen",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "HT"
+      ]
+    },
+    {
+      "iso6391Code": "hu",
+      "name": "Hungarian",
+      "endonym": "magyar",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AT",
+        "CA",
+        "HU",
+        "IL",
+        "RO",
+        "RS",
+        "SI",
+        "SK",
+        "UA"
+      ]
+    },
+    {
+      "iso6391Code": "hy",
+      "name": "Armenian",
+      "endonym": "հայերեն",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AM",
+        "CY",
+        "GE",
+        "IR",
+        "LB",
+        "RU",
+        "SY",
+        "TR"
+      ]
+    },
+    {
+      "iso6391Code": "hz",
+      "name": "Herero",
+      "endonym": null,
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "NA"
+      ]
+    },
+    {
+      "iso6391Code": "ia",
+      "name": "Interlingua (International Auxiliary Language Association)",
+      "endonym": "interlingua",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "FR",
+        "SE"
+      ]
+    },
+    {
+      "iso6391Code": "id",
+      "name": "Indonesian",
+      "endonym": "bahasa Indonesia",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "ID",
+        "NL"
+      ]
+    },
+    {
+      "iso6391Code": "ie",
+      "name": "Interlingue; Occidental",
+      "endonym": "Interlingue",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "EE"
+      ]
+    },
+    {
+      "iso6391Code": "ig",
+      "name": "Igbo",
+      "endonym": "Asụ̀sụ̀ Ìgbò",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "NG"
+      ]
+    },
+    {
+      "iso6391Code": "ii",
+      "name": "Sichuan Yi; Nuosu",
+      "endonym": null,
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CN"
+      ]
+    },
+    {
+      "iso6391Code": "ik",
+      "name": "Inupiaq",
+      "endonym": "Iñupiatun",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "US"
+      ]
+    },
+    {
+      "iso6391Code": "io",
+      "name": "Ido",
+      "endonym": "Ido",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "US"
+      ]
+    },
+    {
+      "iso6391Code": "is",
+      "name": "Icelandic",
+      "endonym": "íslenska",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "IS"
+      ]
+    },
+    {
+      "iso6391Code": "it",
+      "name": "Italian",
+      "endonym": "italiano",
+      "writingDirection": "LTR",
+      "isSupported": true,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AT",
+        "AU",
+        "BR",
+        "CA",
+        "CH",
+        "DE",
+        "FR",
+        "GB",
+        "HR",
+        "IT",
+        "MT",
+        "SI",
+        "SM",
+        "US",
+        "VA"
+      ]
+    },
+    {
+      "iso6391Code": "iu",
+      "name": "Inuktitut",
+      "endonym": "ᐃᓄᒃᑎᑐᑦ",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CA"
+      ]
+    },
+    {
+      "iso6391Code": "ja",
+      "name": "Japanese",
+      "endonym": "日本語",
+      "writingDirection": "LTR",
+      "isSupported": true,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BR",
+        "CA",
+        "JP"
+      ]
+    },
+    {
+      "iso6391Code": "jv",
+      "name": "Javanese",
+      "endonym": "Jawa",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "ID",
+        "MY"
+      ]
+    },
+    {
+      "iso6391Code": "ka",
+      "name": "Georgian",
+      "endonym": "ქართული ენა",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "GE",
+        "IR",
+        "TR"
+      ]
+    },
+    {
+      "iso6391Code": "kg",
+      "name": "Kongo",
+      "endonym": "Kisikôngo",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CD"
+      ]
+    },
+    {
+      "iso6391Code": "ki",
+      "name": "Kikuyu; Gikuyu",
+      "endonym": "Gĩgĩkũyũ",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "KE"
+      ]
+    },
+    {
+      "iso6391Code": "kj",
+      "name": "Kuanyama; Kwanyama",
+      "endonym": null,
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "NA"
+      ]
+    },
+    {
+      "iso6391Code": "kk",
+      "name": "Kazakh",
+      "endonym": "қазақ тілі",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "KZ",
+        "TR"
+      ]
+    },
+    {
+      "iso6391Code": "kl",
+      "name": "Kalaallisut; Greenlandic",
+      "endonym": "Kalaallisut",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "DK",
+        "GL"
+      ]
+    },
+    {
+      "iso6391Code": "km",
+      "name": "Central Khmer",
+      "endonym": "ភាសាខ្មែរ",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "KH"
+      ]
+    },
+    {
+      "iso6391Code": "kn",
+      "name": "Kannada",
+      "endonym": "ಕನ್ನಡ",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "IN"
+      ]
+    },
+    {
+      "iso6391Code": "ko",
+      "name": "Korean",
+      "endonym": "한국어",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BR",
+        "CA",
+        "CN",
+        "JP",
+        "KP",
+        "KR",
+        "US"
+      ]
+    },
+    {
+      "iso6391Code": "kr",
+      "name": "Kanuri",
+      "endonym": "Kanuri",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": []
+    },
+    {
+      "iso6391Code": "ks",
+      "name": "Kashmiri",
+      "endonym": "کٲشِر زَبان",
+      "writingDirection": "RTL",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "IN",
+        "PK"
+      ]
+    },
+    {
+      "iso6391Code": "ku",
+      "name": "Kurdish",
+      "endonym": "zimanê kurdî",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AM",
+        "AZ",
+        "DE",
+        "SY",
+        "TR"
+      ]
+    },
+    {
+      "iso6391Code": "kv",
+      "name": "Komi",
+      "endonym": "Коми кыв",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "RU"
+      ]
+    },
+    {
+      "iso6391Code": "kw",
+      "name": "Cornish",
+      "endonym": "Kernowek",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "GB"
+      ]
+    },
+    {
+      "iso6391Code": "ky",
+      "name": "Kirghiz; Kyrgyz",
+      "endonym": "кыргыз тили",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "KG"
+      ]
+    },
+    {
+      "iso6391Code": "la",
+      "name": "Latin",
+      "endonym": "lingua Latīna",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "VA"
+      ]
+    },
+    {
+      "iso6391Code": "lb",
+      "name": "Luxembourgish; Letzeburgesch",
+      "endonym": "Lëtzebuergesch",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "LU"
+      ]
+    },
+    {
+      "iso6391Code": "lg",
+      "name": "Ganda",
+      "endonym": null,
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "UG"
+      ]
+    },
+    {
+      "iso6391Code": "li",
+      "name": "Limburgan; Limburger; Limburgish",
+      "endonym": "Limburgs",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "NL"
+      ]
+    },
+    {
+      "iso6391Code": "ln",
+      "name": "Lingala",
+      "endonym": "Lingála",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AO",
+        "CD",
+        "CF",
+        "CG"
+      ]
+    },
+    {
+      "iso6391Code": "lo",
+      "name": "Lao",
+      "endonym": "ພາສາລາວ",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "LA"
+      ]
+    },
+    {
+      "iso6391Code": "lt",
+      "name": "Lithuanian",
+      "endonym": "lietuvių kalba",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "GB",
+        "LT",
+        "PL"
+      ]
+    },
+    {
+      "iso6391Code": "lu",
+      "name": "Luba-Katanga",
+      "endonym": null,
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CD"
+      ]
+    },
+    {
+      "iso6391Code": "lv",
+      "name": "Latvian",
+      "endonym": "latviešu valoda",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "LV"
+      ]
+    },
+    {
+      "iso6391Code": "mg",
+      "name": "Malagasy",
+      "endonym": "Fiteny malagasy",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "MG"
+      ]
+    },
+    {
+      "iso6391Code": "mh",
+      "name": "Marshallese",
+      "endonym": "Kajin M̧ajeļ",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "MH"
+      ]
+    },
+    {
+      "iso6391Code": "mi",
+      "name": "Maori",
+      "endonym": "reo Māori",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "NZ"
+      ]
+    },
+    {
+      "iso6391Code": "mk",
+      "name": "Macedonian",
+      "endonym": "македонски јазик",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AL",
+        "GR",
+        "MK"
+      ]
+    },
+    {
+      "iso6391Code": "ml",
+      "name": "Malayalam",
+      "endonym": "മലയാളം",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AE",
+        "BH",
+        "IL",
+        "IN",
+        "MY",
+        "QA",
+        "SG"
+      ]
+    },
+    {
+      "iso6391Code": "mn",
+      "name": "Mongolian",
+      "endonym": "монгол хэл",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "MN",
+        "RU"
+      ]
+    },
+    {
+      "iso6391Code": "mr",
+      "name": "Marathi",
+      "endonym": "मराठी",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "IN"
+      ]
+    },
+    {
+      "iso6391Code": "ms",
+      "name": "Malay",
+      "endonym": "bahasa Melayu",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BN",
+        "CC",
+        "ID",
+        "MY",
+        "SG"
+      ]
+    },
+    {
+      "iso6391Code": "mt",
+      "name": "Maltese",
+      "endonym": null,
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "MT"
+      ]
+    },
+    {
+      "iso6391Code": "my",
+      "name": "Burmese",
+      "endonym": "မြန်မာဘာသာ",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BD",
+        "MM"
+      ]
+    },
+    {
+      "iso6391Code": "na",
+      "name": "Nauru",
+      "endonym": "Dorerin Naoero",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "NR"
+      ]
+    },
+    {
+      "iso6391Code": "nb",
+      "name": "Norwegian Bokmål",
+      "endonym": "bokmål",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "NO",
+        "SJ"
+      ]
+    },
+    {
+      "iso6391Code": "nd",
+      "name": "North Ndebele",
+      "endonym": null,
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "ZW"
+      ]
+    },
+    {
+      "iso6391Code": "ne",
+      "name": "Nepali",
+      "endonym": "नेपाली भाषा",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BT",
+        "IN",
+        "NP"
+      ]
+    },
+    {
+      "iso6391Code": "ng",
+      "name": "Ndonga",
+      "endonym": "Ndonga",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "NA"
+      ]
+    },
+    {
+      "iso6391Code": "nl",
+      "name": "Dutch; Flemish",
+      "endonym": "Nederlands",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AW",
+        "BE",
+        "BQ",
+        "CA",
+        "CW",
+        "DE",
+        "FR",
+        "NL",
+        "SR",
+        "SX"
+      ]
+    },
+    {
+      "iso6391Code": "nn",
+      "name": "Norwegian Nynorsk",
+      "endonym": "nynorsk",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "NO"
+      ]
+    },
+    {
+      "iso6391Code": "no",
+      "name": "Norwegian",
+      "endonym": null,
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BV",
+        "NO",
+        "SJ"
+      ]
+    },
+    {
+      "iso6391Code": "nr",
+      "name": "South Ndebele",
+      "endonym": "Isindebele",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "ZA"
+      ]
+    },
+    {
+      "iso6391Code": "nv",
+      "name": "Navajo; Navaho",
+      "endonym": "Diné bizaad",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "US"
+      ]
+    },
+    {
+      "iso6391Code": "ny",
+      "name": "Chichewa; Chewa; Nyanja",
+      "endonym": "Chilankhulo cha Chichewa",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "MW",
+        "MZ",
+        "ZM",
+        "ZW"
+      ]
+    },
+    {
+      "iso6391Code": "oc",
+      "name": "Occitan (post 1500)",
+      "endonym": "occitan",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "ES",
+        "FR"
+      ]
+    },
+    {
+      "iso6391Code": "oj",
+      "name": "Ojibwa",
+      "endonym": null,
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CA"
+      ]
+    },
+    {
+      "iso6391Code": "om",
+      "name": "Oromo",
+      "endonym": "Afaan Oromoo",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "ET",
+        "KE",
+        "SO"
+      ]
+    },
+    {
+      "iso6391Code": "or",
+      "name": "Oriya",
+      "endonym": "ଓଡ଼ିଆ",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "IN"
+      ]
+    },
+    {
+      "iso6391Code": "os",
+      "name": "Ossetian; Ossetic",
+      "endonym": "Ирон диалект",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "GE",
+        "RU"
+      ]
+    },
+    {
+      "iso6391Code": "pa",
+      "name": "Panjabi; Punjabi",
+      "endonym": "ਪੰਜਾਬੀ",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CA",
+        "GB",
+        "IN",
+        "KE",
+        "SG"
+      ]
+    },
+    {
+      "iso6391Code": "pi",
+      "name": "Pali",
+      "endonym": "𑀧𑀸𑀮𑀺",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "GB"
+      ]
+    },
+    {
+      "iso6391Code": "pl",
+      "name": "Polish",
+      "endonym": "język polski",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CA",
+        "CZ",
+        "DE",
+        "GB",
+        "IL",
+        "PL",
+        "RO",
+        "SK",
+        "UA"
+      ]
+    },
+    {
+      "iso6391Code": "ps",
+      "name": "Pushto; Pashto",
+      "endonym": "پښتو",
+      "writingDirection": "RTL",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AE",
+        "AF",
+        "IR",
+        "PK"
+      ]
+    },
+    {
+      "iso6391Code": "pt",
+      "name": "Portuguese",
+      "endonym": "português",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AG",
+        "AO",
+        "BR",
+        "CA",
+        "CH",
+        "CV",
+        "FR",
+        "GB",
+        "GQ",
+        "GW",
+        "LU",
+        "MO",
+        "MZ",
+        "PT",
+        "ST",
+        "TL"
+      ]
+    },
+    {
+      "iso6391Code": "qu",
+      "name": "Quechua",
+      "endonym": "Qhichwa",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BO",
+        "EC",
+        "PE"
+      ]
+    },
+    {
+      "iso6391Code": "rm",
+      "name": "Romansh",
+      "endonym": "Rumantsch dal Grischun",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CH"
+      ]
+    },
+    {
+      "iso6391Code": "rn",
+      "name": "Rundi",
+      "endonym": "Ikirundi",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BI"
+      ]
+    },
+    {
+      "iso6391Code": "ro",
+      "name": "Romanian; Moldavian; Moldovan",
+      "endonym": "limba română",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CA",
+        "GB",
+        "HU",
+        "IL",
+        "MD",
+        "RO",
+        "RS",
+        "UA"
+      ]
+    },
+    {
+      "iso6391Code": "ru",
+      "name": "Russian",
+      "endonym": "русский язык",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AM",
+        "BG",
+        "BY",
+        "CA",
+        "CN",
+        "DE",
+        "EE",
+        "FI",
+        "GE",
+        "IL",
+        "KG",
+        "KZ",
+        "LT",
+        "LV",
+        "MD",
+        "MN",
+        "PL",
+        "RU",
+        "SJ",
+        "TJ",
+        "TM",
+        "UA",
+        "US",
+        "UZ"
+      ]
+    },
+    {
+      "iso6391Code": "rw",
+      "name": "Kinyarwanda",
+      "endonym": "Ikinyarwanda",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CD",
+        "RW",
+        "UG"
+      ]
+    },
+    {
+      "iso6391Code": "sa",
+      "name": "Sanskrit",
+      "endonym": "संस्कृतम्",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "IN"
+      ]
+    },
+    {
+      "iso6391Code": "sc",
+      "name": "Sardinian",
+      "endonym": "sardu",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "IT"
+      ]
+    },
+    {
+      "iso6391Code": "sd",
+      "name": "Sindhi",
+      "endonym": "سنڌي",
+      "writingDirection": "RTL",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "IN",
+        "PK"
+      ]
+    },
+    {
+      "iso6391Code": "se",
+      "name": "Northern Sami",
+      "endonym": "davvisámegiella",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "FI",
+        "NO",
+        "SE"
+      ]
+    },
+    {
+      "iso6391Code": "sg",
+      "name": "Sango",
+      "endonym": "Sängö",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CF"
+      ]
+    },
+    {
+      "iso6391Code": "si",
+      "name": "Sinhala; Sinhalese",
+      "endonym": "සිංහල",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "LK"
+      ]
+    },
+    {
+      "iso6391Code": "sk",
+      "name": "Slovak",
+      "endonym": "slovenčina",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CZ",
+        "HU",
+        "RS",
+        "SK"
+      ]
+    },
+    {
+      "iso6391Code": "sl",
+      "name": "Slovenian",
+      "endonym": "slovenščina",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AT",
+        "HU",
+        "IT",
+        "SI"
+      ]
+    },
+    {
+      "iso6391Code": "sm",
+      "name": "Samoan",
+      "endonym": "Gagana fa'a Sāmoa",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AS",
+        "TK",
+        "WS"
+      ]
+    },
+    {
+      "iso6391Code": "sn",
+      "name": "Shona",
+      "endonym": "ChiShona",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "ZW"
+      ]
+    },
+    {
+      "iso6391Code": "so",
+      "name": "Somali",
+      "endonym": "Af-Soomaali",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CA",
+        "DJ",
+        "ET",
+        "GB",
+        "KE",
+        "SO"
+      ]
+    },
+    {
+      "iso6391Code": "sq",
+      "name": "Albanian",
+      "endonym": "shqip",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AL",
+        "GR",
+        "ME",
+        "MK",
+        "RS",
+        "TR",
+        "XK"
+      ]
+    },
+    {
+      "iso6391Code": "sr",
+      "name": "Serbian",
+      "endonym": "српски језик",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BA",
+        "CA",
+        "ME",
+        "RS",
+        "RU",
+        "XK"
+      ]
+    },
+    {
+      "iso6391Code": "ss",
+      "name": "Swati",
+      "endonym": "SiSwati",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "LS",
+        "SZ",
+        "ZA"
+      ]
+    },
+    {
+      "iso6391Code": "st",
+      "name": "Sotho, Southern",
+      "endonym": "Sesotho",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "LS",
+        "ZA"
+      ]
+    },
+    {
+      "iso6391Code": "su",
+      "name": "Sundanese",
+      "endonym": "Sunda",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "ID"
+      ]
+    },
+    {
+      "iso6391Code": "sv",
+      "name": "Swedish",
+      "endonym": "svenska",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AX",
+        "DK",
+        "FI",
+        "SE"
+      ]
+    },
+    {
+      "iso6391Code": "sw",
+      "name": "Swahili",
+      "endonym": "Kiswahili",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BI",
+        "CD",
+        "KE",
+        "MZ",
+        "SO",
+        "TZ",
+        "UG",
+        "YT",
+        "ZA"
+      ]
+    },
+    {
+      "iso6391Code": "ta",
+      "name": "Tamil",
+      "endonym": "தமிழ்",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CA",
+        "GB",
+        "IN",
+        "LK",
+        "MU",
+        "MY",
+        "RE",
+        "SG"
+      ]
+    },
+    {
+      "iso6391Code": "te",
+      "name": "Telugu",
+      "endonym": "తెలుగు",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "IN"
+      ]
+    },
+    {
+      "iso6391Code": "tg",
+      "name": "Tajik",
+      "endonym": "забони тоҷикӣ",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "TJ"
+      ]
+    },
+    {
+      "iso6391Code": "th",
+      "name": "Thai",
+      "endonym": "ภาษาไทย",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "TH"
+      ]
+    },
+    {
+      "iso6391Code": "ti",
+      "name": "Tigrinya",
+      "endonym": "ቋንቋ ትግርኛ",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "ER",
+        "ET",
+        "IL"
+      ]
+    },
+    {
+      "iso6391Code": "tk",
+      "name": "Turkmen",
+      "endonym": "Türkmen dili",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AF",
+        "IR",
+        "TM"
+      ]
+    },
+    {
+      "iso6391Code": "tl",
+      "name": "Tagalog",
+      "endonym": "Tagalog",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "PH"
+      ]
+    },
+    {
+      "iso6391Code": "tn",
+      "name": "Tswana",
+      "endonym": "Setswana",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BW",
+        "NA",
+        "ZA",
+        "ZW"
+      ]
+    },
+    {
+      "iso6391Code": "to",
+      "name": "Tonga (Tonga Islands)",
+      "endonym": "Lea fakatonga",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "TO"
+      ]
+    },
+    {
+      "iso6391Code": "tr",
+      "name": "Turkish",
+      "endonym": "Türkçe",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BG",
+        "CA",
+        "CY",
+        "DE",
+        "GB",
+        "GR",
+        "MK",
+        "NL",
+        "RO",
+        "TR",
+        "UA",
+        "UZ",
+        "XK"
+      ]
+    },
+    {
+      "iso6391Code": "ts",
+      "name": "Tsonga",
+      "endonym": "Xitsonga",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "MZ",
+        "SZ",
+        "ZA"
+      ]
+    },
+    {
+      "iso6391Code": "tt",
+      "name": "Tatar",
+      "endonym": "татар теле",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "RU"
+      ]
+    },
+    {
+      "iso6391Code": "tw",
+      "name": "Twi",
+      "endonym": "Twi",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": []
+    },
+    {
+      "iso6391Code": "ty",
+      "name": "Tahitian",
+      "endonym": "reo Tahiti",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "PF"
+      ]
+    },
+    {
+      "iso6391Code": "ug",
+      "name": "Uighur; Uyghur",
+      "endonym": "ئۇيغۇر تىلى",
+      "writingDirection": "RTL",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "AF",
+        "CN"
+      ]
+    },
+    {
+      "iso6391Code": "uk",
+      "name": "Ukrainian",
+      "endonym": "українська мова",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CA",
+        "MD",
+        "PL",
+        "RS",
+        "SK",
+        "UA"
+      ]
+    },
+    {
+      "iso6391Code": "ur",
+      "name": "Urdu",
+      "endonym": "اردو",
+      "writingDirection": "RTL",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CA",
+        "GB",
+        "IN",
+        "MU",
+        "PK"
+      ]
+    },
+    {
+      "iso6391Code": "uz",
+      "name": "Uzbek",
+      "endonym": "Oʻzbek tili",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "TM",
+        "TR",
+        "UZ"
+      ]
+    },
+    {
+      "iso6391Code": "ve",
+      "name": "Venda",
+      "endonym": "TshiVenḓa",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "ZA",
+        "ZW"
+      ]
+    },
+    {
+      "iso6391Code": "vi",
+      "name": "Vietnamese",
+      "endonym": "tiếng Việt",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CA",
+        "CN",
+        "US",
+        "VN"
+      ]
+    },
+    {
+      "iso6391Code": "vo",
+      "name": "Volapük",
+      "endonym": "Volapük nulik",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": []
+    },
+    {
+      "iso6391Code": "wa",
+      "name": "Walloon",
+      "endonym": "walon",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BE"
+      ]
+    },
+    {
+      "iso6391Code": "wo",
+      "name": "Wolof",
+      "endonym": "Wolof",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "MR",
+        "SN"
+      ]
+    },
+    {
+      "iso6391Code": "xh",
+      "name": "Xhosa",
+      "endonym": "IsiXhosa",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "LS",
+        "ZA"
+      ]
+    },
+    {
+      "iso6391Code": "yi",
+      "name": "Yiddish",
+      "endonym": "יידיש",
+      "writingDirection": "RTL",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "IL",
+        "SE",
+        "UA",
+        "US"
+      ]
+    },
+    {
+      "iso6391Code": "yo",
+      "name": "Yoruba",
+      "endonym": null,
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "BJ",
+        "NG"
+      ]
+    },
+    {
+      "iso6391Code": "za",
+      "name": "Zhuang; Chuang",
+      "endonym": "Vahcuengh",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CN"
+      ]
+    },
+    {
+      "iso6391Code": "zh",
+      "name": "Chinese",
+      "endonym": "中文",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "CA",
+        "CN",
+        "HK",
+        "MN",
+        "MO",
+        "MY",
+        "SG",
+        "TW"
+      ]
+    },
+    {
+      "iso6391Code": "zu",
+      "name": "Zulu",
+      "endonym": "IsiZulu",
+      "writingDirection": "LTR",
+      "isSupported": false,
+      "spokenInCountryISO31661Alpha2Codes": [
+        "LS",
+        "MW",
+        "MZ",
+        "SZ",
+        "ZA"
+      ]
+    }
+  ]
+}

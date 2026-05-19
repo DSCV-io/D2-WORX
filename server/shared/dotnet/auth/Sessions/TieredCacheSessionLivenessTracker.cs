@@ -63,7 +63,7 @@ internal sealed class TieredCacheSessionLivenessTracker : ISessionLivenessTracke
     {
         if (sessionId.Falsey())
         {
-            AuthTelemetry.SessionLivenessChecks.Add(
+            AuthTelemetry.SR_SessionLivenessChecks.Add(
                 1,
                 new KeyValuePair<string, object?>(
                     AuthTelemetryTags.SessionLivenessChecks.TAG_OUTCOME,
@@ -74,7 +74,7 @@ internal sealed class TieredCacheSessionLivenessTracker : ISessionLivenessTracke
         var sw = Stopwatch.StartNew();
         var key = $"{r_options.Sessions.CacheKeyPrefix}{sessionId:N}";
         var existsResult = await r_cache.ExistsAsync(key, ct).ConfigureAwait(false);
-        AuthTelemetry.SessionLivenessLookupDurationMs.Record(sw.Elapsed.TotalMilliseconds);
+        AuthTelemetry.SR_SessionLivenessLookupDurationMs.Record(sw.Elapsed.TotalMilliseconds);
 
         if (!existsResult.Success)
         {
@@ -83,7 +83,7 @@ internal sealed class TieredCacheSessionLivenessTracker : ISessionLivenessTracke
             r_logger.SessionLivenessLookupFailed(
                 existsResult.ErrorCode ?? "<no-error-code>",
                 existsResult.StatusCode.ToString());
-            AuthTelemetry.SessionLivenessChecks.Add(
+            AuthTelemetry.SR_SessionLivenessChecks.Add(
                 1,
                 new KeyValuePair<string, object?>(
                     AuthTelemetryTags.SessionLivenessChecks.TAG_OUTCOME,
@@ -92,7 +92,7 @@ internal sealed class TieredCacheSessionLivenessTracker : ISessionLivenessTracke
         }
 
         var alive = existsResult.Data;
-        AuthTelemetry.SessionLivenessChecks.Add(
+        AuthTelemetry.SR_SessionLivenessChecks.Add(
             1,
             new KeyValuePair<string, object?>(
                 AuthTelemetryTags.SessionLivenessChecks.TAG_OUTCOME,

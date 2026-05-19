@@ -111,7 +111,7 @@ Populates an RFC 7807 `Microsoft.AspNetCore.Mvc.ProblemDetails`:
 
 **2xx guard**: `ToProblemDetails` throws `InvalidOperationException` when `(int)result.StatusCode < 400`. RFC 7807 frames the wire around 4xx / 5xx; a 2xx partial-success (e.g. `SomeFound` / 206) belongs on the D2Result envelope, not the ProblemDetails body.
 
-Side-effect: increments `AuthTelemetry.ProblemEmitted` tagged with `d2_error_code`. Response `Content-Type` set to `D2ProblemDetailsKeys.CONTENT_TYPE` (`"application/problem+json"` per RFC 7807 §6.1) by the middleware wrapper.
+Side-effect: increments `AuthTelemetry.SR_ProblemEmitted` tagged with `d2_error_code`. Response `Content-Type` set to `D2ProblemDetailsKeys.CONTENT_TYPE` (`"application/problem+json"` per RFC 7807 §6.1) by the middleware wrapper.
 
 ### `HttpContext.GetD2RequestContext()`
 

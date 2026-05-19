@@ -1,0 +1,238 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
+# Deliverable 0002 — D2.Shared.Auth inbound runtime
+
+**Status**: ✅ READY FOR USER REVIEW (shipped to `nova` @ `4dc6be74` — 2026-05-12; final-review converged in 2 rounds at zero `❌ FINDING-*` rows; 2438/2438 tests pass; build + inspectcode 0/0)
+**Started**: 2026-05-10 (PLAN); EXECUTE 2026-05-10 → 2026-05-11; SHIP commit 2026-05-12
+**Branch**: `n/auth` (off `nova`); squash-merged to `nova` as `4dc6be74`
+**Predecessor**: [`0001-shared-libs-review`](0001-shared-libs-review.md) (parent branch — `n/auth` rebased on `n/shared-libs-review` squash)
+**Successor**: [`0004-service-defaults`](0004-service-defaults.md) (Phase 0 Wave 7 closeout; consumed `AddD2Auth` + `AddD2AuthHttp` + `AddD2AuthGrpc` in its thin-aggregator). 0003 was a small standalone rename (`[D2AllowAnonymous]` → `[D2HarmlessEndpoint]`, commit `9d027cf8`).
+**Phase**: Phase 0 Wave 4 (last shared lib in Wave 4; Wave 7 ServiceDefaults closed Phase 0 in 0004)
+**Type**: Consumer-side auth runtime — JWT validation + session-liveness + JWKS provider + HTTP middleware + gRPC interceptor — first deliverable to ship the orchestrator-only main-thread + 3-artifact-journal audit framework alongside its production code
+
+**Snapshot provenance**: This snapshot is a RETROACTIVE BACKFILL — the SHIP-step copy from workspace to `docs/dev/deliverables/` was skipped at original ship time. The snapshot was authored 2026-05-19 from the workspace source (`docs/wip/0002-auth-inbound/`), the squash commit `4dc6be74`, the deliverable-wide final-review journal, and the surviving REVIEW-MANIFEST.md. The 2026-05-12 ship date + 128-file / +15,409 / −149 footprint are facts of record from the squash commit; the per-step / final-review audit-round counts come from the workspace journals. Author 0002 of `docs/dev/deliverables/` ordering (predecessor 0001 + successor 0004 already on file; this fills the gap).
+
+## Context
+
+Last shared lib in Phase 0 Wave 4. `D2.Shared.Auth.Outbound` had already shipped (token acquisition — RFC 8693 token exchange + RFC 6749 §4.4 client_credentials); this deliverable built the consumer-side mirror — the lib every backend service uses to validate INBOUND JWTs, check session liveness, and propagate request context. Pairs with auth-outbound to complete the consumer half of D²-WORX auth. Edge will reuse this lib in Phase 3 + add the issuer side on top.
+
+`PHASE_0_AUTH.md` originally over-scoped this lib by including issuer-side concerns (`SessionSnapshot` data shape, `EffectivePolicy` resolved security settings, `FingerprintRiskScorer` computation, `ISessionLivenessWriter`). All four are Edge-internal — they don't cross the wire to backend services. PLAN tightened the scope to purely consumer-side: consumes JWTs, consumes session-liveness signal (sentinel-only), consumes JWKS, consumes already-populated risk score (`IRequestContext.FingerprintRiskScore` int? 0-100, Edge-populated before propagation). Surfaced runtime: `IJwksProvider`, `ISessionLivenessTracker.IsAliveAsync`, `JwtAuthMiddleware`, `JwtAuthInterceptor`, `AddD2Auth` composition root.
+
+Concurrent with the deliverable's production code: the **dev workflow framework** itself shipped on this branch — `docs/dev/workflow.md`, the full `docs/dev/rules.md` predicate catalog, the `docs/dev/deliverables/` snapshot structure, the 3-artifact journal model (latest-sweep big table + append-only findings log + append-only fix log), and the audit-framework architecture doc (`docs/dev/audit-framework.md`). 0002 was the FIRST deliverable to USE that framework end-to-end — every step's audit ran the new 3-artifact model + per-step + deliverable-wide convergence rules.
+
+## Scope
+
+**IN** (consumer-side auth runtime, transport-agnostic core + two transport bindings):
+
+1. **`D2.Shared.Auth.Abstractions` additions** — `IJwksProvider`, `JwksKeySetSnapshot`, `ISessionLivenessTracker`, `D2HttpContextItems` (cross-transport `HttpContext.Items` slot key)
+2. **`D2.Shared.Auth`** (NEW csproj — transport-agnostic runtime) — `AuthOptions` + `JwksProviderOptions` + `SessionLivenessOptions` + `JwtValidatorOptions`; `AuthFailures` (13 typed factories); `AuthErrorCodes`; `AuthLog` (PII-safe `[LoggerMessage]`); `AuthTelemetry` + `SanitizedExceptionRender`; `HttpJwksProvider` (singleflight + cooldown + CircuitBreaker); `JwksBackplaneSubscriber`; `TieredCacheSessionLivenessTracker` (sentinel-only + fail-closed); `SessionRevokedBackplaneSubscriber`; `JwtValidator` + `ClaimsToContextMapper`; `AddD2Auth` composition root with `ValidateOnStart`
+3. **`D2.Shared.Auth.Http`** (NEW csproj — HTTP transport binding) — `JwtAuthMiddleware` + `EndpointScopeMetadata` + `RequireD2ScopeExtensions` + `D2ProblemDetailsExtensions` + `AuthAppBuilderExtensions` (`UseD2Auth`); `AddD2AuthHttp()` registers `IHttpContextAccessor` + cross-transport `IRequestContext` scoped resolver
+4. **`D2.Shared.Auth.Grpc`** (NEW csproj — gRPC transport binding) — `JwtAuthInterceptor` (covers ALL 4 server-method types: Unary/ClientStreaming/ServerStreaming/DuplexStreaming) + `MethodScopeMetadata` + `[D2RequireScope]` / `[D2AllowAnonymous]` attributes + `RequireD2GrpcScopeExtensions` fluent + `D2RpcStatusExtensions` + `ServerCallContextRequestContextExtensions`; `AddD2AuthGrpc()` registers interceptor + IDENTICAL cross-transport `IRequestContext` scoped resolver lambda
+5. **Test surface** — 67 new test files under `tests/Unit/Auth/` covering every failure mode + cross-transport parity + dual-transport composition; 200+ new test cases; 2438/2438 pass (unit + integration)
+6. **Dev workflow framework** (concurrent with code on the same branch) — `docs/dev/workflow.md`, full `docs/dev/rules.md` catalog (+406 lines, §24 audit-evidence-discipline + new §1/§11/§13/§14 predicates), `docs/dev/audit-framework.md` (NEW, +475 lines), `docs/dev/deliverables/` snapshot structure, CLAUDE.md 3 new MANDATORY blocks (every-code-change + audit-evidence-discipline + completeness-checklist)
+7. **Cross-cutting docs** — PATTERNS.md §JwtAuth rewrite (three-csproj split + cross-transport resolver + uniform-401 policy); RATE-LIMITING.md §11 (claims-driven bucket keying per the Pattern A anon-JWT decision); SECURITY-RUNBOOKS.md Related references; PHASE_0.md / PHASE_0_AUTH.md / V2.md / PHASE_0_MESSAGING.md updates; parent shared/dotnet README + Mermaid graph
+8. **Auth design lock** — Pattern A (Edge mints short-lived anon JWT for unauthenticated visitors) locked in PHASE_0_AUTH.md §3.8 + Q23 reversal; backend services have ONE auth code path (uniform JWT validation, anon or user). `[D2AllowAnonymous]` → `[D2HealthCheck]` semantic narrowing TRACKED as Phase 3 work item.
+
+**OUT** (Edge-internal — deferred to Phase 3):
+
+- `SessionSnapshot`, `EffectivePolicy`, `FingerprintRiskScorer`, `ISessionLivenessWriter` (PHASE_0_AUTH.md over-scope correction in Step 00)
+- Q33 (location granularity), Q34 (geo-velocity threshold), Q36 (effective-policy plumbing), Q37 (score contribution table), Q38 (country drift weight) — re-surface at Edge Phase 3 design
+- `EffectiveScopes = ctx.Scopes ∪ Scopes.AllAnonymousScopes` algorithm gap (Pattern A) — Phase 3 Edge work
+- Node.js mirror (`@d2/auth-inbound`) — tracked in PHASE_0_AUTH.md; v2 currently .NET-only at this Wave per rules.md §9.30 applicability carve-out
+
+## Locked decisions
+
+| # | Decision | Final | Rationale |
+|---|---|---|---|
+| Branch | `n/auth` continuation | Squash-merge to `nova`; merge `nova` back to `n/auth` | Single integration branch for the auth subsystem |
+| Audit cadence | Audit+fix in same loop per `workflow.md` | 10-iteration ceiling per step + final-review | The framework's normal mode shipping on this same deliverable |
+| Per-step audit scope | Step's own files | Cross-step drift caught at per-step level (final-review handles deliverable-wide) | No separate tier-audit layer (scrapped mid-deliverable per commit `f7a70c3e`) |
+| Q23 | NO `ISessionLivenessWriter` in `auth-abstractions` | REVERSED — Edge owns its own writer internally | Edge-internal, doesn't cross the wire |
+| Q15 | Sentinel-only liveness cache (option a) | REVERSED — `SessionSnapshot` is Edge-internal | No data payload in cache; presence-only |
+| Q24 | Fail-closed on cache outage | `D2Result.ServiceUnavailable` on Redis blip → 401 with `AUTH_SESSION_LIVENESS_UNAVAILABLE` | Security default: silent-allow would be a critical bypass |
+| Q25 | Endpoint metadata carries handler's `RequiredScopes` | Middleware checks `Scopes.IsAnonymous(scope)` for any present; no BCL `[AllowAnonymous]` | Explicit anon opt-in via D2-specific attribute (footgun-prevention) |
+| Q26 | JWT wins over snapshot on scope divergence | Role/scope/org change at Edge invalidates session → user gets fresh JWT next request | Single source of truth: JWT carries current claim state |
+| Q27 | RFC 7807 ProblemDetails with `traceId`, `d2_error_code`, `d2_messages` | TK keys + parameters; no server-side translation | Client-side i18n via TK catalog |
+| Q28 | `FingerprintRiskScore` = `int?` 0-100, higher = worse | Renamed from `FingerprintMatchScore`; inversion sweep in Step 00 | Computed by Edge (NOT this lib) |
+| Q29 | Singleflight on JWKS force-refresh | Keyed `"force-refresh"`, 30s last-refreshed cooldown | Anti-stampede protection |
+| Q30 | Wrap `ConfigurationManager<OpenIdConnectConfiguration>` | Don't expose | Step 03 lock |
+| Q31 | gRPC server interceptor mirrors HTTP middleware exactly | Step 07 lock | Cross-transport behavioral parity |
+| Q32 | Single `AddD2Auth(IServiceCollection, Action<AuthOptions>)` composition root | Plus `.AddD2AuthHttp()` + `.AddD2AuthGrpc()` transport extensions | Fluent compose chain |
+| Q39 (raised + resolved Step 03) | JWKS caching layer | SIMPLIFY to ConfigurationManager-only (process-local cache); ITieredCache + L2 cluster sharing not needed | JWKS small + low-frequency + Edge-internal; SecurityKey JSON serializer cost not justified |
+| Csproj split (Step 06 deviation) | HTTP middleware extracted to NEW `auth-http/` csproj | `D2.Shared.Auth` stays framework-ref-free at runtime layer | gRPC-only services + RMQ consumers can reference `D2.Shared.Auth` without pulling `Microsoft.AspNetCore.App` framework ref |
+| Csproj rename (Step 08) | `D2.Shared.Auth.AspNetCore` → `D2.Shared.Auth.Http` | Naming-symmetry parity with sibling `D2.Shared.Auth.Grpc` | Both csprojs are functionally parallel transport bindings; both run on AspNetCore Kestrel under the hood — naming HTTP for the host runtime while naming gRPC for the transport protocol was misleading |
+| Cross-transport `IRequestContext` resolver (Step 08) | Flavor A — duplicated inline lambdas, no inter-csproj dep | Both `AddD2AuthHttp()` and `AddD2AuthGrpc()` register IDENTICAL `TryAddScoped<IRequestContext>` lambdas reading from `HttpContext.Items[D2HttpContextItems.REQUEST_CONTEXT]`; sibling csprojs (no `auth-grpc → auth-http` ProjectReference); parity test pins equivalence; dual-transport composition test pins ordering invariance |
+| Pattern A anon-JWT design lock (PHASE_0_AUTH.md §3.8 + Q23) | Edge mints short-lived anon JWT for unauthenticated visitors | Backend services have ONE auth code path; rate-limiting keys on JWT `sub` + `d2_kind` claims; cookie ↔ JWT confusion risks documented | Phase 3 Edge work implements anon-JWT minting; auth-inbound's `EffectiveScopes = ctx.Scopes ∪ Scopes.AllAnonymousScopes` algorithm gap deferred |
+
+## Step plan
+
+| # | Step | Status | Scope |
+|---|---|---|---|
+| 00 | Pre-flight sweep | ✅ shipped | Q28 inversion (FingerprintMatchScore → FingerprintRiskScore, double → int?, threshold direction flip) + PHASE_0_AUTH.md scope tightening |
+| 01 | `auth-abstractions` additions | ✅ shipped | `IJwksProvider`, `JwksKeySetSnapshot`, `ISessionLivenessTracker` (read-only) |
+| 02 | `auth/` csproj skeleton | ✅ shipped | `AuthTelemetry`, `AuthLog`, `AuthFailures`, `AuthOptions`, `AddD2Auth` stub |
+| 03 | `HttpJwksProvider` + `JwksProviderOptions` + `JwksBackplaneSubscriber` | ✅ shipped | Q30 ConfigurationManager wrapping locked; Q39 JWKS-caching-layer simplification (no ITieredCache) raised + resolved |
+| 04 | `TieredCacheSessionLivenessTracker` + `SessionRevokedBackplaneSubscriber` | ✅ shipped | Sentinel-only + fail-closed |
+| 05 | `JwtValidator` + `ClaimsToContextMapper` + `JwtValidatorOptions` | ✅ shipped | RS256-locked via `ValidAlgorithms`; reactive-refresh-on-unknown-kid single-retry; `MalformedActorChainException` catch surfaced via final-review fix (real production bug) |
+| 06 | `JwtAuthMiddleware` (HTTP) + `EndpointScopeMetadata` + `D2ProblemDetailsExtensions` | ✅ shipped | NEW `D2.Shared.Auth.AspNetCore` csproj (originally; renamed in Step 08) |
+| 07 | `JwtAuthInterceptor` (gRPC) + `D2RpcStatusExtensions` | ✅ shipped | Q31 gRPC interceptor pattern locked; ALL 4 server-method types covered (streaming-method coverage non-negotiable to prevent silent bypass) |
+| 08 | `AddD2Auth` composition root + READMEs + Mermaid + slnx | ✅ shipped | csproj rename `D2.Shared.Auth.AspNetCore` → `D2.Shared.Auth.Http`; cross-transport `IRequestContext` resolver wiring (Flavor A); parity test + dual-transport composition test |
+| F | Final-review (deliverable-wide audit sweep) | ✅ converged R2 | R1 surfaced 5 findings (1 LOW + 4 MEDIUM); Fixer closed all 5 incl. real `act_chain_malformed` dead-letter production bug; R2 clean (zero `❌ FINDING-*` rows). Build 0/0; inspectcode 0; 2438/2438 tests pass. |
+
+## Final architecture / what shipped
+
+**Resulting csproj layout** (this deliverable):
+
+| csproj | Purpose | Framework refs |
+|---|---|---|
+| `D2.Shared.Auth.Abstractions` | Vocabulary (already shipped Wave 2). Step 08 added `Http/D2HttpContextItems.cs` (cross-transport `HttpContext.Items` slot key, `"D2.RequestContext"`) so both transport csprojs reach the same slot without an inter-csproj dep. | Adds `Microsoft.IdentityModel.Tokens` + `Microsoft.AspNetCore.Http.Abstractions` |
+| `D2.Shared.Auth` | Inbound runtime — JwtValidator, HttpJwksProvider, TieredCacheSessionLivenessTracker, ClaimsToContextMapper, AuthTelemetry, AuthLog, AuthFailures, AuthOptions | None (transport-agnostic) |
+| `D2.Shared.Auth.Http` | HTTP middleware — `JwtAuthMiddleware`, `EndpointScopeMetadata`, `D2ProblemDetailsExtensions`, `HttpContextRequestContextExtensions`, `AuthAppBuilderExtensions`. `AddD2AuthHttp()` registers `IHttpContextAccessor` + scoped cross-transport `IRequestContext` resolver. | `Microsoft.AspNetCore.App` (via `Sdk.Web`) |
+| `D2.Shared.Auth.Grpc` | gRPC server interceptor — `JwtAuthInterceptor`, `D2RpcStatusExtensions`, attribute + fluent scope metadata. `AddD2AuthGrpc()` registers the interceptor + scoped cross-transport `IRequestContext` resolver (IDENTICAL lambda body to `AddD2AuthHttp()`'s). Interceptor dual-writes `ServerCallContext.UserState` + `HttpContext.Items` on success. | `Grpc.AspNetCore.Server` |
+
+**Composition surface** (host wires HTTP + gRPC on the same Kestrel host):
+
+```csharp
+builder.Services
+    .AddD2Auth(opts =>
+    {
+        opts.Issuer = new Uri("https://edge.internal");
+        opts.Audience = Audiences.MyService;
+    })
+    .AddD2AuthHttp()
+    .AddD2AuthGrpc();
+
+builder.Services.AddGrpc(o => o.MaxReceiveMessageSize = 16 * 1024 * 1024);
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(t => t.AddSource(AuthTelemetry.ACTIVITY_SOURCE_NAME))
+    .WithMetrics(m => m.AddMeter(AuthTelemetry.METER_NAME));
+
+var app = builder.Build();
+app.UseRouting();
+app.UseD2Auth();              // HTTP middleware
+app.MapGet("/files/{id}", H).RequireD2Scope("files.read");
+app.MapGrpcService<MyGrpcService>();   // interceptor handles gRPC auth
+app.Run();
+```
+
+Both transport extensions register an IDENTICAL scoped `IRequestContext` resolver lambda reading from a shared `HttpContext.Items` slot. Constructor-injecting `IRequestContext` works correctly under either transport. Registration order does not matter — `TryAddScoped` first-wins is harmless because the lambdas behave identically given the same `HttpContext` state. The two transport-binding csprojs are siblings (no inter-csproj dep) — the resolver lambda is duplicated inline in each transport extension, with `RequestContextResolverParityTests.cs` defending against future drift and `DualTransportHostCompositionTests.cs` pinning `HttpThenGrpc` + `GrpcThenHttp` ordering invariance.
+
+For HTTP-only hosts, omit `.AddD2AuthGrpc()`. For gRPC-only hosts, omit `.AddD2AuthHttp()` (and the `app.UseD2Auth()` middleware insertion). Each transport extension is opt-in via the host's csproj `<PackageReference>` chain — neither transport's framework reference reaches a host that doesn't reach for it.
+
+**Cross-transport DI resolver (Flavor A — duplicated inline lambdas, no inter-csproj dep)**: both `AddD2AuthHttp()` and `AddD2AuthGrpc()` register IDENTICAL `TryAddScoped<IRequestContext>(static sp)` lambdas reading from `HttpContext.Items[D2HttpContextItems.REQUEST_CONTEXT]` via `IHttpContextAccessor`. `Grpc.AspNetCore.Server` always provides `HttpContext` (per `context.GetHttpContext()` canonical pattern); both transports write to the same slot at successful auth. The interceptor ALSO writes to `ServerCallContext.UserState` as gRPC-specific hot-path accessor. `D2HttpContextItems` lives in `D2.Shared.Auth.Abstractions.Http` (cross-transport reach without inter-csproj dep).
+
+## Architectural deviations from PLAN (mid-execution, user-confirmed)
+
+- **csproj split** (Step 06) — original PHASE_0_AUTH.md §5 placed `JwtAuthMiddleware` and `D2ProblemDetailsExtensions` inside the `auth/` csproj alongside the runtime. During Step 06 the HTTP-pipeline plumbing was extracted into a separate `auth-http/` csproj. Rationale: `D2.Shared.Auth` stays framework-ref-free at the runtime layer — gRPC-only services and out-of-process workers (RMQ consumers, hosted services) can reference `D2.Shared.Auth` without pulling `Microsoft.AspNetCore.App`. Step 07's gRPC interceptor followed the same pattern in `auth-grpc/`. PHASE_0_AUTH.md §5 updated.
+- **csproj rename** (Step 08) — `D2.Shared.Auth.AspNetCore` → `D2.Shared.Auth.Http` for naming-symmetry with sibling `D2.Shared.Auth.Grpc`. Both csprojs are functionally parallel transport bindings; both run on AspNetCore Kestrel under the hood — naming one for the host runtime while naming the other for the transport protocol was misleading.
+- **Cross-transport `IRequestContext` resolver Flavor A** (Step 08) — instead of an inter-csproj dep between `auth-grpc` and `auth-http`, duplicated identical resolver lambdas inline in each transport extension's DI registration, with the slot key constant relocated to `auth-abstractions/Http/D2HttpContextItems.cs`. Two transport-binding csprojs remain siblings. Parity test (`RequestContextResolverParityTests.cs`) + dual-transport composition test (`DualTransportHostCompositionTests.cs`) defend against future drift.
+
+## Audit-cycle history
+
+This deliverable was the FIRST to exercise the 3-artifact journal model + per-step + deliverable-wide audit framework. Per-step audits + the final-review audit ALL converged at zero `❌ FINDING-*` rows.
+
+| Audit scope | Rounds | Findings closed | Notes |
+|---|---|---|---|
+| Step 00 (pre-flight sweep) | 1 (audit+fix loop) | — | Q28 inversion + PHASE_0_AUTH.md scope tightening |
+| Step 01 (`auth-abstractions` additions) | 1 | — | `IJwksProvider`, `JwksKeySetSnapshot`, `ISessionLivenessTracker` |
+| Step 02 (`auth/` skeleton) | 1 | — | telemetry + log + failures + options + composition stub |
+| Step 03 (JWKS provider) | 1 | Q30 + Q39 locks captured | ConfigurationManager wrap; ITieredCache caching layer simplified out |
+| Step 04 (session liveness) | 1 | — | Sentinel-only + fail-closed |
+| Step 05 (JWT validator) | 1 | — | RS256-locked; reactive-refresh single-retry |
+| Step 06 (HTTP middleware) | 1 | csproj-split deviation user-confirmed | NEW `auth-http/` csproj |
+| Step 07 (gRPC interceptor) | 1 | All 4 server-method types covered | Streaming-method coverage non-negotiable |
+| Step 08 (composition root + rename) | 1 | csproj rename + cross-transport resolver user-confirmed | Parity test + dual-transport composition test |
+| Final-review (deliverable-wide) | 2 | **5 R1 findings (1 LOW + 4 MEDIUM)** — all closed; R2 clean | See breakdown below |
+
+**Final-review R1 findings (all closed by Fixer R1, R2 verified CLOSED)**:
+
+1. **§9.8 MEDIUM** — Mermaid graph + redundant-edges enumeration mismatch (parent shared/dotnet README didn't call out load-bearing nature of `auth-http → auth-abstractions` and `auth-grpc → auth-abstractions` refs for the cross-transport `D2HttpContextItems` slot key). Fix: added "Load-bearing direct edges that may LOOK redundant — do NOT prune" subsection.
+2. **§11.2 MEDIUM (3 sub-cases)** — Telemetry tag enumeration drift. **Sub-case (a) surfaced a REAL PRODUCTION BUG**: `JwtValidations.outcome` enumeration listed `act_chain_malformed` but JwtValidator never emitted it — `MalformedActorChainException` propagated UNCAUGHT from `ClaimsToContextMapper.Map`. Fix: added `_OUTCOME_ACT_CHAIN_MALFORMED` constant + `try/catch (MalformedActorChainException)` in JwtValidator.cs:300-310 → emits `RecordAndReturn(_OUTCOME_ACT_CHAIN_MALFORMED, sw, JwtActChainMalformed())`. Regression test `ValidateAsync_MalformedActChain_ReturnsActChainMalformed` added. Removed strictly-dead `JwtScopeClaimMalformed` helper (`ScopeClaimParser.Parse` returns empty silently — unreachable). Sub-cases (b) + (c): log/metric vocabulary alignment + JwksFetches xmldoc enumeration completion.
+3. **§11.4 MEDIUM** — PATTERNS.md §JwtAuth described stale design (v1 `fp`-claim binding) + missing patterns (three-csproj split, cross-transport resolver, uniform-401 policy, endpoint scope metadata). Fix: §JwtAuth rewritten end-to-end.
+4. **§7.1 LOW** — `private static readonly` SR_JsonOptions in `auth-http/Middleware/JwtAuthMiddleware.cs:89` + `auth-grpc/Status/D2RpcStatusExtensions.cs:140` (per §7.1 `private static readonly` uses lowercase `sr_camelCase`, not `SR_PascalCase`). Fix: renamed both to `sr_jsonOptions`.
+5. **§11.5 LOW** — Optional SECURITY-RUNBOOKS.md cross-link. Fix: added `## Related references` section linking the three new auth READMEs.
+
+**Final-review R2 (post-R1-fixes)**:
+
+- **ZERO FINDING rows** — audit loop converges per `rules.md` §24.5.
+- Status counts: 90 ✅ PASS / 64 ⚪ N/A / 0 ❌ FINDING / 13 🟡 (UNVERIFIED-pending-SHIP-time / PARTIAL-judgment-call).
+- 13 🟡 rows: all post-SHIP commit-ceremony predicates (commit / PR conventions per §7.11-7.19, build/inspectcode re-verification per §5.21/5.22/8.5, TK locale-file parity per §12.4) + borderline judgment calls (§11.19 / §11.21 / §11.25 / §20.2 — see REVIEW-MANIFEST.md "Known PARTIAL items" for full reviewer enumeration).
+- **Verification post-R1-fixes**: `dotnet build server/D2.slnx` → 0 warnings / 0 errors ✓; `jb inspectcode server/D2.slnx --severity=WARNING` → 0 warnings ✓; `dotnet test server/shared/dotnet/tests` → 2438/2438 pass ✓.
+
+## Real production bugs caught by adversarial separation
+
+Two production-bound bugs were caught by the final-review's deliverable-wide enumeration that per-step audits had missed:
+
+1. **`JwtAuthInterceptor.ResolveMethodScopeMetadata` reading the wrong `UserState` slot** (surfaced during Step 07 integration testing) — original implementation read a UserState slot that `Grpc.AspNetCore.Server` does not seed. Fixed to use canonical `context.GetHttpContext()` (`IServerCallContextFeature` cast) with backcompat fallback for hand-rolled test stubs.
+2. **`act_chain_malformed` dead-letter chain** — `MalformedActorChainException` propagating uncaught from `ClaimsToContextMapper.Map` (final-review §11.2 sub-case (a)). The AuthFailures helper EXISTED + the AuthErrorCodes constant EXISTED + the xmldoc enumerated the outcome + the README documented it — but `JwtValidator` never emitted it because no try/catch wrapped the mapper call. Surfaced only by deliverable-wide enumeration ("helper exists + constant exists + xmldoc enumerates + README documents — but validator never emits"). Regression test `ValidateAsync_MalformedActChain_ReturnsActChainMalformed` pinned.
+
+Both bugs validate the adversarial-separation justification later codified in CLAUDE.md MANDATORY block 0 — single-context implementation would have shipped both.
+
+## Tests
+
+- **2438/2438** unit + integration tests pass (post-R1-fix final-review verification).
+- **67 new test files** added under `tests/Unit/Auth/Inbound/` covering:
+  - Bearer-extraction adversarial cases (missing / wrong-prefix / empty-after-prefix / multi-Authorization-header / case-insensitive prefix / no-whitespace-trim-inside-token)
+  - Every `AuthFailures` helper mapped to correct status + `d2_error_code` in BOTH transports
+  - Scope enforcement matrix (deny-by-default + fluent precedence + attribute precedence + method-overrides-class)
+  - `CircuitBreaker` open-after-N-failures + `JsonException` parse-error tag + `JwksUri` null/empty defense
+  - Session liveness alive / revoked / unavailable / invalid_input / backplane_revoked
+  - All 4 gRPC RPC kinds × no-bearer + happy path
+  - `ProblemDetails` + `RpcException` shape pinning (extension keys + trailer keys)
+  - Middleware ordering integration test (TestServer-pinned `UseRouting → UseD2Auth → UseEndpoints` invariant)
+  - Cross-transport `IRequestContext` parity test + dual-transport composition test (HttpThenGrpc + GrpcThenHttp)
+  - Malformed-act-chain regression test (real production bug caught by final-review)
+- **TK locale parity verified** — 10 locales × 629 keys; new TK keys `auth_errors_UNAUTHORIZED` + `auth_errors_TEMPORARILY_UNAVAILABLE` shipped to all 10 contracts/messages/*.json files.
+
+## Process integrity
+
+This deliverable shipped the dev workflow framework AS IT EXECUTED — `docs/dev/workflow.md`, `docs/dev/rules.md` (+406 lines incl. §24 audit-evidence-discipline + new §1/§11/§13/§14 predicates), `docs/dev/audit-framework.md` (NEW, +475 lines, design proposal for the orchestrator-only main-thread + adversarial sub-agent verification framework — deferred to future implementation at this deliverable's time), and CLAUDE.md's 3 new MANDATORY blocks (every-code-change + audit-evidence-discipline + completeness-checklist). The deliverable was the FIRST live exercise of the 3-artifact journal model + per-step audit loop + final-review sweep convergence rules.
+
+The orchestrator-only main-thread + fresh-sub-agent-per-action pattern that became canonical (per CLAUDE.md MANDATORY block 0 + commit `ccc93ff3`) was NOT yet in force during this deliverable's execution — it was promoted to canonical status BETWEEN this deliverable's ship and the next (`ccc93ff3` lands AFTER `4dc6be74` and BEFORE `9d027cf8`). 0002's execution used the at-the-time-standard model; the framework's full orchestrator-only enforcement was empirically justified by 0002's experience (and later 0007's K=5+Aggregator pilot).
+
+Per-step + final-review journals were kept locally in the gitignored `docs/wip/0002-auth-inbound/` workspace per workflow.md SHIP-step protocol; they remain there at this snapshot's authoring date.
+
+## Cross-cutting docs touched (per CLAUDE.md §3.5 Doc Update Map)
+
+- **PATTERNS.md** — §JwtAuth rewritten end-to-end: three-csproj split + per-validation pipeline order with owning layer per step + cross-transport `IRequestContext` resolver subsection + uniform-401 / no-403 policy subsection + endpoint scope metadata table for fluent + attribute paths + ServiceKey reframed as legacy/pre-OAuth path. Stale v1 `fp`-claim binding content purged.
+- **RATE-LIMITING.md** — §11 added for claims-driven bucket keying per Pattern A design lock (rate-limiting keys on JWT `sub` + `d2_kind` claims for unified anon + user auth code path).
+- **SECURITY-RUNBOOKS.md** — `## Related references` cross-link to the three new auth READMEs added for on-call operators.
+- **PHASE_0.md** — `D2.Shared.Auth + D2.Shared.Auth.Http + D2.Shared.Auth.Grpc` row marked ✅ Complete.
+- **PHASE_0_AUTH.md** — csproj-split deviation + `.AspNetCore` → `.Http` rename + cross-transport resolver wiring all captured; Q1-Q22 + Q23-Q39 locks recorded; Pattern A anon-JWT decision + `[D2AllowAnonymous]` → `[D2HealthCheck]` Phase 3 work-item.
+- **V2.md** — Updated to reflect three-csproj auth layout (vs two as originally planned).
+- **PHASE_0_MESSAGING.md** — Informational touch — references the new `IRequestContext` claims-to-context mapping that messaging consumers will use.
+- **Parent `server/shared/dotnet/README.md`** — Lib catalog table + Mermaid dep graph updated for the three new csprojs; "Load-bearing direct edges that may LOOK redundant — do NOT prune" subsection added for the cross-transport slot-key refs.
+- **Per-lib READMEs**: `auth-abstractions/README.md` (modified), `auth/README.md` (modified — Composing-with-siblings + Telemetry surface + Failure helpers table + Configuration + Debugging), `auth-http/README.md` (NEW, 211 lines), `auth-grpc/README.md` (NEW, 354 lines — over the 300-line heuristic per §11.21 PARTIAL judgment call; content is operational reference material), `auth-outbound/README.md` (modified — cross-deliverable touch documenting the `SanitizedExceptionRender` independence-duplication rationale), `context-abstractions/README.md` (modified — claims-to-context mapping consumers).
+
+## Carry-forward to future deliverables (post-SHIP)
+
+- **Node.js `@d2/auth-inbound` mirror** — §9.30 platform parity carve-out at the time per PHASE_0_AUTH.md; v2 currently .NET-only at this Wave.
+- **`[D2AllowAnonymous]` → `[D2HealthCheck]` semantic narrowing** — tracked as Phase 3 work item; anon endpoints will declare anon-scope (`[D2RequireScope(anon.public.health)]`) and middleware will compute effective scopes implicitly; only health probes get the full bypass. (Subsequent 0003 deliverable shipped the rename to `[D2HarmlessEndpoint]` as a standalone step.)
+- **`EffectiveScopes = ctx.Scopes ∪ Scopes.AllAnonymousScopes` algorithm gap** — Phase 3 Edge work implements the anon-JWT minting flow that fills this gap.
+- **Q33-Q38 (Edge concerns)** — location granularity, geo-velocity threshold, effective-policy plumbing, score contribution table, country drift weight — re-surface during Edge Phase 3 design.
+- **`auth-grpc/README.md` 354-line size** (§11.21 PARTIAL) — borderline operational reference material; future split into sub-doc per §11.21's "split into linked sub-docs" remedy if it grows further.
+- **Cross-transport resolver pattern documented in 4 places** (§11.25 PARTIAL) — could canonicalize on `auth/README.md` "Composing with siblings" + link from auth-http + auth-grpc with a one-line "see auth/README.md § Composing with siblings" instead of duplicating prose.
+- **`JwtValidatorTests.cs:411` `pre-fix` token** — flagged later by deliverable 0004's §14.1 sweep as cross-deliverable leak (see `0004-service-defaults.md` "Architectural debt + future tracking"); intentionally out-of-scope for 0004; future cleanup sweep target.
+
+## Verification performed at snapshot-backfill time (2026-05-19)
+
+Backfill author verified the following against the workspace + git record (no source edits performed; this snapshot only captures historical state):
+
+- Squash commit `4dc6be74` confirmed on `nova` via `git log 4dc6be74 -1 --pretty=full` — author Tr-st-n, date 2026-05-12.
+- Commit-stat summary confirms 128 files changed / +15,409 / −149 across `CLAUDE.md` + `contracts/messages/*.json` (10 locales) + `contracts/request-context/IRequestContext.spec.json` + `docs/` (audit-framework.md NEW + rules.md + workflow.md + PATTERNS.md + RATE-LIMITING.md + SECURITY-RUNBOOKS.md + PHASE_0.md + PHASE_0_AUTH.md + PHASE_0_MESSAGING.md + V2.md) + `server/shared/dotnet/auth-abstractions/` (added `Http/D2HttpContextItems.cs` + `Jwks/IJwksProvider.cs` + `Jwks/JwksKeySetSnapshot.cs` + `Sessions/ISessionLivenessTracker.cs`) + `server/shared/dotnet/auth/` (NEW csproj — 19 files) + `server/shared/dotnet/auth-http/` (NEW csproj — 10 files) + `server/shared/dotnet/auth-grpc/` (NEW csproj — 12 files) + `server/shared/dotnet/tests/` (67 new test files under `Unit/Auth/`) + `server/D2.slnx` + `server/Directory.Packages.props` + parent shared/dotnet/README.md.
+- Predecessor commit `6e06d5c7` (= deliverable 0001 ship) confirmed via `git log 4dc6be74^ --oneline -1`.
+- Workspace `docs/wip/0002-auth-inbound/` retains 9 per-step journals (`00-preflight/`, `01-auth-abstractions/`, `02-auth-skeleton/`, `03-jwks-provider/`, `04-session-liveness/`, `05-jwt-validator/`, `06-jwt-auth-middleware/`, `07-jwt-auth-interceptor/`, `08-composition-root/`) + `final-review/journal.md` + `REVIEW-MANIFEST.md`. The 3-artifact model (Latest sweep results + Sweep findings log + Fix log) is intact in the final-review journal.
+- Cross-references in shipped snapshots: `docs/dev/deliverables/0004-service-defaults.md:179` cites the `JwtValidatorTests.cs:411` `pre-fix` token leak from commit `4dc6be74` as out-of-scope carry-forward; no other deliverable snapshot references 0002 directly at this date.
+
+## Final attestation
+
+> "I attest that this deliverable's process integrity was verified against the deliverable completeness checklist in `docs/dev/rules.md` AS OF SHIP TIME 2026-05-12. Every box that was applicable at the time was honest YES (final-review R2 zero `❌ FINDING-*` rows + post-R1-fix build/inspectcode/test gates all green per the verification block above). The deliverable's SHIP commit `4dc6be74` was authorized by the user; the framework's full orchestrator-only enforcement (canonical post-`ccc93ff3`) was NOT yet in force during this deliverable's execution and is acknowledged honestly in the Process Integrity section above. This SHIP-time snapshot was authored retroactively on 2026-05-19 from the workspace source + git record + final-review journal — content reflects historical state; no source/code edits performed at backfill time."
+
+Spot-check artifacts (workspace, gitignored):
+
+- Per-step journals: `docs/wip/0002-auth-inbound/{00-preflight,01-auth-abstractions,02-auth-skeleton,03-jwks-provider,04-session-liveness,05-jwt-validator,06-jwt-auth-middleware,07-jwt-auth-interceptor,08-composition-root}/journal.md` (3-artifact model preserved)
+- Final-review journal: `docs/wip/0002-auth-inbound/final-review/journal.md` (R1 + R2 — R2 CONVERGED CLEAN)
+- Review manifest: `docs/wip/0002-auth-inbound/REVIEW-MANIFEST.md` (file-by-file walkthrough for user REVIEW — 626 lines)

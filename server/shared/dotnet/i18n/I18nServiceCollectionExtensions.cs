@@ -16,42 +16,44 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 /// </summary>
 public static class I18nServiceCollectionExtensions
 {
-    private const string _DEFAULT_MESSAGES_DIRECTORY_NAME = "messages";
-
-    /// <summary>
-    /// Registers <see cref="SupportedLocales"/> + <see cref="ITranslator"/> as
-    /// process-wide singletons. Both are constructed eagerly on first resolve;
-    /// the <see cref="Translator"/> loads every JSON catalog from
-    /// <paramref name="messagesDirectory"/> at construction.
-    /// </summary>
     /// <param name="services">The service collection.</param>
-    /// <param name="configuration">
-    /// The application configuration. <c>PUBLIC_DEFAULT_LOCALE</c> + the
-    /// indexed <c>PUBLIC_ENABLED_LOCALES</c> section drive
-    /// <see cref="SupportedLocales"/> construction.
-    /// </param>
-    /// <param name="messagesDirectory">
-    /// Optional override for the messages directory. Defaults to
-    /// <c>{AppContext.BaseDirectory}/messages</c> — populated at build time
-    /// via the consuming csproj's <c>&lt;Content Include="...contracts/messages/*.json" /&gt;</c>
-    /// item group.
-    /// </param>
-    /// <returns>The service collection for chaining.</returns>
-    public static IServiceCollection AddD2I18n(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string? messagesDirectory = null)
+    extension(IServiceCollection services)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(configuration);
+        /// <summary>
+        /// Registers <see cref="SupportedLocales"/> + <see cref="ITranslator"/> as
+        /// process-wide singletons. Both are constructed eagerly on first resolve;
+        /// the <see cref="Translator"/> loads every JSON catalog from
+        /// <paramref name="messagesDirectory"/> at construction.
+        /// </summary>
+        /// <param name="configuration">
+        /// The application configuration. <c>PUBLIC_DEFAULT_LOCALE</c> + the
+        /// indexed <c>PUBLIC_ENABLED_LOCALES</c> section drive
+        /// <see cref="SupportedLocales"/> construction.
+        /// </param>
+        /// <param name="messagesDirectory">
+        /// Optional override for the messages directory. Defaults to
+        /// <c>{AppContext.BaseDirectory}/messages</c> — populated at build time
+        /// via the consuming csproj's
+        /// <c>&lt;Content Include="...contracts/messages/*.json" /&gt;</c> item group.
+        /// </param>
+        /// <returns>The service collection for chaining.</returns>
+        public IServiceCollection AddD2I18n(
+            IConfiguration configuration,
+            string? messagesDirectory = null)
+        {
+            ArgumentNullException.ThrowIfNull(services);
+            ArgumentNullException.ThrowIfNull(configuration);
 
-        var resolvedDirectory = messagesDirectory ??
-            Path.Combine(AppContext.BaseDirectory, _DEFAULT_MESSAGES_DIRECTORY_NAME);
+            var resolvedDirectory = messagesDirectory ??
+                Path.Combine(AppContext.BaseDirectory, DEFAULT_MESSAGES_DIRECTORY_NAME);
 
-        services.TryAddSingleton(_ => new SupportedLocales(configuration));
-        services.TryAddSingleton<ITranslator>(sp =>
-            new Translator(sp.GetRequiredService<SupportedLocales>(), resolvedDirectory));
+            services.TryAddSingleton(_ => new SupportedLocales(configuration));
+            services.TryAddSingleton<ITranslator>(sp =>
+                new Translator(sp.GetRequiredService<SupportedLocales>(), resolvedDirectory));
 
-        return services;
+            return services;
+        }
     }
+
+    private const string DEFAULT_MESSAGES_DIRECTORY_NAME = "messages";
 }

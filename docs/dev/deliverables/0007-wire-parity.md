@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # Deliverable 0007 — Cross-language wire parity
 
 **Branch**: `n/wire-parity` (off `nova` @ `32b71ffb`; previously `n/problem-details-spec`)

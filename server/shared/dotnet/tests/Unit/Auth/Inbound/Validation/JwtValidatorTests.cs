@@ -18,6 +18,7 @@ using D2.Shared.Auth.Abstractions.Jwks;
 using D2.Shared.Auth.Errors;
 using D2.Shared.Auth.Validation;
 using D2.Shared.Result;
+using D2.Shared.Utilities.Extensions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -569,7 +570,7 @@ public sealed class JwtValidatorTests
 
         public void AddKey(SecurityKey key)
         {
-            if (!string.IsNullOrEmpty(key.KeyId))
+            if (key.KeyId.Truthy())
                 r_keys[key.KeyId] = key;
         }
 

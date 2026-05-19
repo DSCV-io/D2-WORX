@@ -106,7 +106,7 @@ internal sealed class JwksBackplaneSubscriber : IHostedService, IAsyncDisposable
             // this safe to call repeatedly. Outcome captured by the provider's
             // own telemetry; we don't double-count.
             await r_jwksProvider.RefreshAsync(ct).ConfigureAwait(false);
-            AuthTelemetry.JwksFetches.Add(
+            AuthTelemetry.SR_JwksFetches.Add(
                 1,
                 new KeyValuePair<string, object?>(
                     AuthTelemetryTags.JwksFetches.TAG_TRIGGER,

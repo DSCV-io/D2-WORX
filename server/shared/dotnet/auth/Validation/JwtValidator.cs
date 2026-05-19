@@ -258,8 +258,8 @@ internal sealed class JwtValidator
     {
         var outcomeTag = new KeyValuePair<string, object?>(
             AuthTelemetryTags.JwtValidations.TAG_OUTCOME, outcome);
-        AuthTelemetry.JwtValidations.Add(1, outcomeTag);
-        AuthTelemetry.JwtValidationDurationMs.Record(elapsedMs, outcomeTag);
+        AuthTelemetry.SR_JwtValidations.Add(1, outcomeTag);
+        AuthTelemetry.SR_JwtValidationDurationMs.Record(elapsedMs, outcomeTag);
     }
 
     private TokenValidationParameters BuildValidationParameters(JwksKeySetSnapshot snapshot)

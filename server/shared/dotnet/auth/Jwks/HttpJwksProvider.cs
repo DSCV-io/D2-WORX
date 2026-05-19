@@ -210,8 +210,8 @@ internal sealed class HttpJwksProvider : IJwksProvider
             AuthTelemetryTags.JwksFetches.TAG_TRIGGER, trigger);
         var outcomeTag = new KeyValuePair<string, object?>(
             AuthTelemetryTags.JwksFetches.TAG_OUTCOME, outcome);
-        AuthTelemetry.JwksFetches.Add(1, triggerTag, outcomeTag);
-        AuthTelemetry.JwksFetchDurationMs.Record(elapsedMs, triggerTag, outcomeTag);
+        AuthTelemetry.SR_JwksFetches.Add(1, triggerTag, outcomeTag);
+        AuthTelemetry.SR_JwksFetchDurationMs.Record(elapsedMs, triggerTag, outcomeTag);
     }
 
     // Splits malformed-JSON parse errors from generic network failures —
@@ -245,7 +245,7 @@ internal sealed class HttpJwksProvider : IJwksProvider
                 r_logger.JwksRefreshCooldownSuppressed(
                     elapsedMs: (long)elapsed.TotalMilliseconds,
                     cooldownMs: (long)r_options.Jwks.RefreshCooldown.TotalMilliseconds);
-                AuthTelemetry.JwksFetches.Add(
+                AuthTelemetry.SR_JwksFetches.Add(
                     1,
                     new KeyValuePair<string, object?>(
                         AuthTelemetryTags.JwksFetches.TAG_TRIGGER,

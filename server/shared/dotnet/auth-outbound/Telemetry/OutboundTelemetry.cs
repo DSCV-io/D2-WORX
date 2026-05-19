@@ -32,18 +32,18 @@ public static class OutboundTelemetry
     public const string METER_NAME = "D2.Shared.Auth.Outbound";
 
     /// <summary>The shared <see cref="ActivitySource"/> for this lib.</summary>
-    public static readonly ActivitySource Activity = new(ACTIVITY_SOURCE_NAME);
+    public static readonly ActivitySource SR_Activity = new(ACTIVITY_SOURCE_NAME);
 
     /// <summary>The shared <see cref="Meter"/> for this lib.</summary>
-    public static readonly Meter Meter = new(METER_NAME);
+    public static readonly Meter SR_Meter = new(METER_NAME);
 
     /// <summary>
     /// Counter — total service-identity token resolutions. Tagged with
     /// <c>outcome</c>; closed-enum values emitted by codegen — see
     /// <see cref="OutboundTelemetryTags.ServiceIdentityFetches.Outcome"/>.
     /// </summary>
-    public static readonly Counter<long> ServiceIdentityFetches =
-        Meter.CreateCounter<long>(
+    public static readonly Counter<long> SR_ServiceIdentityFetches =
+        SR_Meter.CreateCounter<long>(
             name: "d2.auth.outbound.service_identity.fetches",
             description: "Total service-identity token resolutions.");
 
@@ -52,8 +52,8 @@ public static class OutboundTelemetry
     /// closed-enum values emitted by codegen — see
     /// <see cref="OutboundTelemetryTags.TokenExchangeRequests.Outcome"/>.
     /// </summary>
-    public static readonly Counter<long> TokenExchangeRequests =
-        Meter.CreateCounter<long>(
+    public static readonly Counter<long> SR_TokenExchangeRequests =
+        SR_Meter.CreateCounter<long>(
             name: "d2.auth.outbound.token_exchange.requests",
             description: "Total token-exchange requests.");
 
@@ -62,8 +62,8 @@ public static class OutboundTelemetry
     /// backplane events. Useful for verifying cluster-wide invalidation
     /// propagation. Untagged; one increment per purged cache key.
     /// </summary>
-    public static readonly Counter<long> TokenExchangeRevokedPurges =
-        Meter.CreateCounter<long>(
+    public static readonly Counter<long> SR_TokenExchangeRevokedPurges =
+        SR_Meter.CreateCounter<long>(
             name: "d2.auth.outbound.token_exchange.revoked_purges",
             description: "Total token-exchange cache entries purged on session-revoked.");
 }

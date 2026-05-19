@@ -32,18 +32,18 @@ public static class AuthTelemetry
     public const string METER_NAME = "D2.Shared.Auth";
 
     /// <summary>The shared <see cref="ActivitySource"/> for this lib.</summary>
-    public static readonly ActivitySource Activity = new(ACTIVITY_SOURCE_NAME);
+    public static readonly ActivitySource SR_Activity = new(ACTIVITY_SOURCE_NAME);
 
     /// <summary>The shared <see cref="Meter"/> for this lib.</summary>
-    public static readonly Meter Meter = new(METER_NAME);
+    public static readonly Meter SR_Meter = new(METER_NAME);
 
     /// <summary>
     /// Counter — total inbound JWT validations. Tagged with <c>outcome</c>;
     /// closed-enum values emitted by codegen — see
     /// <see cref="AuthTelemetryTags.JwtValidations.Outcome"/>.
     /// </summary>
-    public static readonly Counter<long> JwtValidations =
-        Meter.CreateCounter<long>(
+    public static readonly Counter<long> SR_JwtValidations =
+        SR_Meter.CreateCounter<long>(
             name: "d2.auth.jwt.validations",
             description: "Total inbound JWT validations.");
 
@@ -56,8 +56,8 @@ public static class AuthTelemetry
     /// prefix — telemetry-only observation; the underlying liveness check
     /// remains correct via cache invalidation.)
     /// </summary>
-    public static readonly Counter<long> SessionLivenessChecks =
-        Meter.CreateCounter<long>(
+    public static readonly Counter<long> SR_SessionLivenessChecks =
+        SR_Meter.CreateCounter<long>(
             name: "d2.auth.session.liveness.checks",
             description: "Total session liveness checks.");
 
@@ -75,8 +75,8 @@ public static class AuthTelemetry
     /// breaker fast-failed without an upstream call during sustained outage,
     /// <c>received</c>).
     /// </summary>
-    public static readonly Counter<long> JwksFetches =
-        Meter.CreateCounter<long>(
+    public static readonly Counter<long> SR_JwksFetches =
+        SR_Meter.CreateCounter<long>(
             name: "d2.auth.jwks.fetches",
             description: "Total JWKS fetches from the upstream OIDC issuer.");
 
@@ -93,8 +93,8 @@ public static class AuthTelemetry
     /// resolved by codegen — see
     /// <c>contracts/telemetry/telemetry.spec.json</c>).
     /// </summary>
-    public static readonly Counter<long> ProblemEmitted =
-        Meter.CreateCounter<long>(
+    public static readonly Counter<long> SR_ProblemEmitted =
+        SR_Meter.CreateCounter<long>(
             name: "d2.auth.problem.emitted",
             description:
                 "Total auth-failure responses emitted by the transport-binding libraries "
@@ -106,8 +106,8 @@ public static class AuthTelemetry
     /// session liveness check) in milliseconds. Excludes downstream handler
     /// time.
     /// </summary>
-    public static readonly Histogram<double> JwtValidationDurationMs =
-        Meter.CreateHistogram<double>(
+    public static readonly Histogram<double> SR_JwtValidationDurationMs =
+        SR_Meter.CreateHistogram<double>(
             name: "d2.auth.jwt.validation.duration",
             unit: "ms",
             description: "Wall-clock duration of the JWT validation pipeline.");
@@ -116,8 +116,8 @@ public static class AuthTelemetry
     /// Histogram — wall-clock duration of a session liveness lookup
     /// (cache check + on-miss backplane reconciliation) in milliseconds.
     /// </summary>
-    public static readonly Histogram<double> SessionLivenessLookupDurationMs =
-        Meter.CreateHistogram<double>(
+    public static readonly Histogram<double> SR_SessionLivenessLookupDurationMs =
+        SR_Meter.CreateHistogram<double>(
             name: "d2.auth.session.liveness.lookup.duration",
             unit: "ms",
             description: "Wall-clock duration of a session liveness lookup.");
@@ -126,8 +126,8 @@ public static class AuthTelemetry
     /// Histogram — wall-clock duration of a JWKS fetch from the upstream
     /// OIDC issuer (HTTP round-trip + JSON parse) in milliseconds.
     /// </summary>
-    public static readonly Histogram<double> JwksFetchDurationMs =
-        Meter.CreateHistogram<double>(
+    public static readonly Histogram<double> SR_JwksFetchDurationMs =
+        SR_Meter.CreateHistogram<double>(
             name: "d2.auth.jwks.fetch.duration",
             unit: "ms",
             description: "Wall-clock duration of a JWKS fetch from the upstream issuer.");

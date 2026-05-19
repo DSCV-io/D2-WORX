@@ -82,7 +82,7 @@ public static class D2RpcStatusExtensions
         /// <summary>
         /// Builds an <see cref="RpcException"/> from a failure
         /// <see cref="D2Result"/>. Side-effect: increments
-        /// <see cref="AuthTelemetry.ProblemEmitted"/> tagged with the
+        /// <see cref="AuthTelemetry.SR_ProblemEmitted"/> tagged with the
         /// result's error code.
         /// </summary>
         /// <returns>The populated <see cref="RpcException"/>.</returns>
@@ -117,7 +117,7 @@ public static class D2RpcStatusExtensions
             if (traceId is not null)
                 trailers.Add(D2GrpcTrailers.TRACE_ID, traceId);
 
-            AuthTelemetry.ProblemEmitted.Add(
+            AuthTelemetry.SR_ProblemEmitted.Add(
                 1,
                 new KeyValuePair<string, object?>(
                     AuthTelemetryTags.ProblemEmitted.TAG_D2_ERROR_CODE, errorCode));

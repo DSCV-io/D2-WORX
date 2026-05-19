@@ -1,3 +1,7 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+
 # Deliverable 0006 — TS bridge
 
 **Branch**: `n/ts-bridge` (from `nova` @ `6115584e`)

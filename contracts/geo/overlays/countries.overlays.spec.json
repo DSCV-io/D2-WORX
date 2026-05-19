@@ -1,0 +1,49 @@
+{
+  "$generated": false,
+  "$source": "manual-overlay",
+  "$schema": "./countries.overlays.schema.json",
+  "$note": "Trackable manual patches to the Tier 1 countries catalog. Applied at Tier 2 build time AFTER loading Tier 1 src-data and BEFORE cross-catalog M:M backfill. Each entry carries a `reason` + `addedAt` so the policy decision is audit-trail visible without git-archaeology. Use `pnpm geo:overlays` to list active patches with their reasons. See ./README.md for the pattern + when to add an overlay vs fix upstream.",
+  "catalogVersion": "0.1.0",
+  "lastEditedAt": "2026-05-19",
+  "additions": [
+    {
+      "id": "XK",
+      "addedAt": "2026-05-19",
+      "reason": "Kosovo declared independence 2008; recognized by ~100 UN members but blocked from full UN membership by Russia/China veto. ISO 3166-1 has not officially assigned a code; XK is the user-assigned code adopted by EU institutions, IMF, SWIFT, IBAN registry, Visa/Mastercard, and most commercial systems. Datasets/country-codes (our Tier 1 upstream) conservatively excludes XK because there's no official ISO assignment. Adding here because (a) the hand-rolled GeopoliticalEntity catalog references XK as a member of `EU` (Europe continent) + `BALK` (Balkans region) so the GE→Country FK would be orphan without this addition, and (b) downstream consumers using the geo catalogs for address forms / locale resolution / etc. realistically need Kosovo. Alpha-3 + numeric codes are user-assigned per ISO 3166-1 rules (XKK / 983 are the most widely-used unofficial assignments — EU and IBAN registries use these).",
+      "data": {
+        "iso31661Alpha2Code": "XK",
+        "iso31661Alpha3Code": "XKK",
+        "iso31661NumericCode": "983",
+        "displayName": "Kosovo",
+        "officialName": "Republic of Kosovo",
+        "endonymDisplayName": "Kosovë",
+        "sovereignCountryISO31661Alpha2Code": null,
+        "phoneNumberPrefix": "383",
+        "phoneNumberNationalFormat": null,
+        "phoneNumberMinDigits": 8,
+        "phoneNumberMaxDigits": 9,
+        "phoneNumberInternationalPrefix": "00",
+        "phoneNumberNationalPrefix": "0",
+        "primaryCurrencyISO4217AlphaCode": "EUR",
+        "primaryLanguageISO6391Code": "sq",
+        "primaryLocaleIETFBCP47Tag": "sq-XK",
+        "firstDayOfWeek": "Monday",
+        "weekendStart": "Saturday",
+        "weekendEnd": "Sunday",
+        "measurementSystem": "Metric",
+        "activeLegalTenderCurrencies": [
+          { "isoAlphaCode": "EUR", "fromDate": "2002-01-01" }
+        ],
+        "territoryISO31661Alpha2Codes": [],
+        "spokenLanguages": [
+          { "languageCode": "sq", "populationPercent": 92.0, "officialStatus": "official", "writingPercent": null },
+          { "languageCode": "sr", "populationPercent": 5.0, "officialStatus": "official", "writingPercent": null },
+          { "languageCode": "bs", "populationPercent": 1.7, "officialStatus": "official_minority", "writingPercent": null },
+          { "languageCode": "tr", "populationPercent": 1.0, "officialStatus": "official_minority", "writingPercent": null }
+        ]
+      }
+    }
+  ],
+  "overrides": [],
+  "removals": []
+}

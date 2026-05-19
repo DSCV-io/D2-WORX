@@ -255,6 +255,6 @@ internal sealed class TokenExchangeCache : IAsyncDisposable
         await r_localCache.RemoveManyAsync(keyList, ct);
         r_logger.TokenExchangeSessionRevokedPurged(sessionId, keyList.Count);
 
-        OutboundTelemetry.TokenExchangeRevokedPurges.Add(keyList.Count);
+        OutboundTelemetry.SR_TokenExchangeRevokedPurges.Add(keyList.Count);
     }
 }

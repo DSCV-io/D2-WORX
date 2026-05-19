@@ -119,7 +119,7 @@ Tag-key + tag-value constants are emitted by [`D2.Shared.Telemetry.Tags.SourceGe
 | `d2.auth.session.liveness.lookup.duration` | ms | Wall-clock duration of a session liveness lookup (cache check + on-miss backplane reconciliation). |
 | `d2.auth.jwks.fetch.duration` | ms | Wall-clock duration of a JWKS fetch from the upstream OIDC issuer (HTTP round-trip + JSON parse). |
 
-`AuthTelemetry.Activity` (the static `ActivitySource`) and `AuthTelemetry.Meter` (the static `Meter`) are exposed for pipeline implementations that need to start spans / record histograms directly.
+`AuthTelemetry.SR_Activity` (the static `ActivitySource`) and `AuthTelemetry.SR_Meter` (the static `Meter`) are exposed for pipeline implementations that need to start spans / record histograms directly.
 
 ### PII discipline — `SanitizedExceptionRender`
 

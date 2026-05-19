@@ -94,7 +94,7 @@ internal sealed class HttpServiceIdentityClient : IServiceIdentityClient, IDispo
         var cached = r_cache.TryGet(now);
         if (cached is not null)
         {
-            OutboundTelemetry.ServiceIdentityFetches.Add(
+            OutboundTelemetry.SR_ServiceIdentityFetches.Add(
                 1,
                 new KeyValuePair<string, object?>(
                     OutboundTelemetryTags.ServiceIdentityFetches.TAG_OUTCOME,
@@ -177,7 +177,7 @@ internal sealed class HttpServiceIdentityClient : IServiceIdentityClient, IDispo
         var preFetchCache = r_cache.TryGet(r_clock.GetUtcNow());
         if (preFetchCache is not null)
         {
-            OutboundTelemetry.ServiceIdentityFetches.Add(
+            OutboundTelemetry.SR_ServiceIdentityFetches.Add(
                 1,
                 new KeyValuePair<string, object?>(
                     OutboundTelemetryTags.ServiceIdentityFetches.TAG_OUTCOME,
@@ -197,7 +197,7 @@ internal sealed class HttpServiceIdentityClient : IServiceIdentityClient, IDispo
             if (tokenEndpoint.Falsey())
             {
                 r_logger.OidcDiscoveryMissingTokenEndpoint(r_options.Issuer);
-                OutboundTelemetry.ServiceIdentityFetches.Add(
+                OutboundTelemetry.SR_ServiceIdentityFetches.Add(
                     1,
                     new KeyValuePair<string, object?>(
                         OutboundTelemetryTags.ServiceIdentityFetches.TAG_OUTCOME,
@@ -223,7 +223,7 @@ internal sealed class HttpServiceIdentityClient : IServiceIdentityClient, IDispo
             if (!response.IsSuccessStatusCode)
             {
                 r_logger.ServiceIdentityHttpFailure((int)response.StatusCode);
-                OutboundTelemetry.ServiceIdentityFetches.Add(
+                OutboundTelemetry.SR_ServiceIdentityFetches.Add(
                     1,
                     new KeyValuePair<string, object?>(
                         OutboundTelemetryTags.ServiceIdentityFetches.TAG_OUTCOME,
@@ -235,7 +235,7 @@ internal sealed class HttpServiceIdentityClient : IServiceIdentityClient, IDispo
             using var doc = await JsonDocument.ParseAsync(body, default, ct);
             var snapshot = ParseTokenResponse(doc.RootElement, r_clock.GetUtcNow());
             r_cache.Set(snapshot);
-            OutboundTelemetry.ServiceIdentityFetches.Add(
+            OutboundTelemetry.SR_ServiceIdentityFetches.Add(
                 1,
                 new KeyValuePair<string, object?>(
                     OutboundTelemetryTags.ServiceIdentityFetches.TAG_OUTCOME,
@@ -256,7 +256,7 @@ internal sealed class HttpServiceIdentityClient : IServiceIdentityClient, IDispo
             r_logger.ServiceIdentityFetchFailed(
                 SanitizedExceptionRender.TypeName(ex),
                 SanitizedExceptionRender.FirstFrame(ex));
-            OutboundTelemetry.ServiceIdentityFetches.Add(
+            OutboundTelemetry.SR_ServiceIdentityFetches.Add(
                 1,
                 new KeyValuePair<string, object?>(
                     OutboundTelemetryTags.ServiceIdentityFetches.TAG_OUTCOME,

@@ -16,7 +16,7 @@ using Microsoft.Extensions.Options;
 /// <summary>
 /// Telemetry-only observer for cluster-wide session-revoke events.
 /// Subscribes to <see cref="ICacheInvalidationBackplane"/> and increments
-/// <see cref="AuthTelemetry.SessionLivenessChecks"/> with
+/// <see cref="AuthTelemetry.SR_SessionLivenessChecks"/> with
 /// <c>outcome=backplane_revoked</c> for every key matching the configured
 /// session-cache prefix.
 /// </summary>
@@ -82,7 +82,7 @@ internal sealed class SessionRevokedBackplaneSubscriber : IHostedService, IAsync
             if (!key.StartsWith(prefix, StringComparison.Ordinal))
                 return ValueTask.CompletedTask;
 
-            AuthTelemetry.SessionLivenessChecks.Add(
+            AuthTelemetry.SR_SessionLivenessChecks.Add(
                 1,
                 new KeyValuePair<string, object?>(
                     AuthTelemetryTags.SessionLivenessChecks.TAG_OUTCOME,

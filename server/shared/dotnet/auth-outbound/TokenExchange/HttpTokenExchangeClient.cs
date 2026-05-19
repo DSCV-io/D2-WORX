@@ -118,7 +118,7 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
         var cached = await r_cache.TryGetAsync(key, ct);
         if (cached is not null)
         {
-            OutboundTelemetry.TokenExchangeRequests.Add(
+            OutboundTelemetry.SR_TokenExchangeRequests.Add(
                 1,
                 new KeyValuePair<string, object?>(
                     OutboundTelemetryTags.TokenExchangeRequests.TAG_OUTCOME,
@@ -254,7 +254,7 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
         var preFetchCache = await r_cache.TryGetAsync(req.CacheKey, ct);
         if (preFetchCache is not null)
         {
-            OutboundTelemetry.TokenExchangeRequests.Add(
+            OutboundTelemetry.SR_TokenExchangeRequests.Add(
                 1,
                 new KeyValuePair<string, object?>(
                     OutboundTelemetryTags.TokenExchangeRequests.TAG_OUTCOME,
@@ -270,7 +270,7 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
             if (tokenEndpoint.Falsey())
             {
                 r_logger.OidcDiscoveryMissingTokenEndpoint(r_options.Issuer);
-                OutboundTelemetry.TokenExchangeRequests.Add(
+                OutboundTelemetry.SR_TokenExchangeRequests.Add(
                     1,
                     new KeyValuePair<string, object?>(
                         OutboundTelemetryTags.TokenExchangeRequests.TAG_OUTCOME,
@@ -306,7 +306,7 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
             if (!response.IsSuccessStatusCode)
             {
                 r_logger.TokenExchangeHttpFailure((int)response.StatusCode);
-                OutboundTelemetry.TokenExchangeRequests.Add(
+                OutboundTelemetry.SR_TokenExchangeRequests.Add(
                     1,
                     new KeyValuePair<string, object?>(
                         OutboundTelemetryTags.TokenExchangeRequests.TAG_OUTCOME,
@@ -321,7 +321,7 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
                 r_options.TokenExchangeCacheFallbackTtl);
 
             await r_cache.SetAsync(req.SessionId, req.CacheKey, token, ttl, ct);
-            OutboundTelemetry.TokenExchangeRequests.Add(
+            OutboundTelemetry.SR_TokenExchangeRequests.Add(
                 1,
                 new KeyValuePair<string, object?>(
                     OutboundTelemetryTags.TokenExchangeRequests.TAG_OUTCOME,
@@ -340,7 +340,7 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
             r_logger.TokenExchangeFetchFailed(
                 SanitizedExceptionRender.TypeName(ex),
                 SanitizedExceptionRender.FirstFrame(ex));
-            OutboundTelemetry.TokenExchangeRequests.Add(
+            OutboundTelemetry.SR_TokenExchangeRequests.Add(
                 1,
                 new KeyValuePair<string, object?>(
                     OutboundTelemetryTags.TokenExchangeRequests.TAG_OUTCOME,
