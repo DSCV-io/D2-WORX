@@ -206,3 +206,12 @@ nul
 .playwright-mcp/
 /playwright-report/
 **/playwright-report/
+
+# Microsoft.Extensions.Logging.Generators emits all [LoggerMessage] partial
+# classes into a single LoggerMessage.g.cs file with non-deterministic
+# cross-class ordering (same source, every build = different blob hash).
+# The splitter tool (tools/loggermessage-splitter, wired via
+# server/shared/dotnet/Directory.Build.targets) parses this single file into
+# per-class deterministic LoggerMessage.{Ns}.{Class}.g.cs files — those ARE
+# tracked so PR reviewers still see codegen diffs.
+**/Generated/Microsoft.Extensions.Logging.Generators/Microsoft.Extensions.Logging.Generators.LoggerMessageGenerator/LoggerMessage.g.cs
