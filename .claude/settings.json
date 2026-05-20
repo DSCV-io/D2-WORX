@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Agent"
+      "Agent",
+      "Write(docs/wip/daily-reports/*.md)",
+      "Bash(git log*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git show*)"
     ],
     "deny": [
       "Read(**/.env.secrets)",
