@@ -64,7 +64,7 @@ Only `Ok` sets `Success=true`. `SomeFound` and `NotFound` are both failures; con
 | `Created` | 201 | (none) | Operation succeeded and created a new resource. |
 | `NotFound` | 404 | `NOT_FOUND` | Lookup found zero of the requested entities. |
 | `SomeFound` | 206 | `SOME_FOUND` | Batch lookup found some-but-not-all of the requested entities. |
-| `Forbidden` | 403 | `FORBIDDEN` | Caller is authenticated but lacks permission. |
+| `Forbidden` | 403 | `FORBIDDEN` | Caller is authenticated but lacks the required scope. |
 | `Unauthorized` | 401 | `UNAUTHORIZED` | Caller is not authenticated. |
 | `ValidationFailed` | 400 | `VALIDATION_FAILED` (overridable) | Input failed validation; populate `InputErrors`. Override `errorCode` for domain-specific signals (e.g. `"FILES_INVALID_CONTENT_TYPE"`). |
 | `Conflict` | 409 | `CONFLICT` | DB unique-constraint violation, optimistic-concurrency conflict, etc. |

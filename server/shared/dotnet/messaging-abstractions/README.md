@@ -12,9 +12,9 @@ handlers with `[MqSub(MqSubscriptions.X)]`, and depend on `IMessageBus` /
 `IMessageIdempotencyStore` — without dragging in `RabbitMQ.Client` or any
 specific transport.
 
-The default impl is [`D2.Shared.Messaging.RabbitMq`](../messaging-rabbitmq/README.md);
-future Kafka / NATS impls would land as sibling csprojs and use the same
-surface.
+The default impl is [`D2.Shared.Messaging.RabbitMq`](../messaging-rabbitmq/README.md).
+Alternate transports (where they exist) land as sibling csprojs and
+use the same surface.
 
 ## How publishing + subscribing work end-to-end
 
@@ -40,6 +40,32 @@ surface.
    validates the handler's `BaseHandler<TSelf, TIn, Unit>` `TIn` matches the
    spec entry's `messageType`, and registers an `ISubscriberRegistration`
    for the transport's consumer host to pick up.
+
+The runtime / operational details (per-delivery pipeline, DLQ shape, telemetry,
+encryption posture, queue topology, channel lifecycle) live in
+[`messaging-rabbitmq/README.md`](../messaging-rabbitmq/README.md) — the
+canonical operational home. This package's job is the transport-agnostic
+contract.
+
+## Contract-level anti-patterns
+
+These all fail loud at startup or first call. Listed here so you don't
+discover them as a surprise during deploy.
+
+- **Hand-registering `IMessageBus` or `ISubscriberRegistration` outside of
+  `AddD2MessagingRabbitMq` / `AddD2SubscribersFromAssembly`.** The codegen +
+  scanner are the only blessed paths.
+- **Using `[MqPub]` / `[MqSub]` on a class whose CLR FQN doesn't match the
+  spec entry's `messageType`.** The resolver / registrar hard-fail at build
+  / startup. The spec-driven `[MqPub]` / `[MqSub]` attribute design exists
+  specifically to make silent mismatches impossible.
+- **Stuffing identity (`UserId` / `OrgId` / scopes) into the
+  `x-d2-context` propagated header.** That header carries propagation-only
+  context (request id, fingerprints, WhoIs hash). Identity rebuilds from
+  the JWT at every sync hop; consumer-side handlers operate without one.
+  **Headers stay plaintext at-rest — identity NEVER in headers.**
+
+  > **Duplicated from [`messaging-rabbitmq/README.md` § Encryption posture](../messaging-rabbitmq/README.md#encryption-posture) for at-a-glance contract-side visibility. The canonical runtime-enforcement reference lives there — update both in lockstep.**
 
 ## Public surface
 
@@ -83,7 +109,8 @@ Messages MUST NOT carry identity / raw PII in plaintext headers — only
 routing, observability, and the small operational propagation subset
 (`x-d2-context` is base64url-of-JSON of the hand-written `PropagatedContext`
 record in `D2.Shared.Context.Abstractions`). See
-[MESSAGING.md](../../../../docs/MESSAGING.md) for the full contract.
+[`messaging-rabbitmq/README.md`](../messaging-rabbitmq/README.md) for the
+full runtime + wire-format contract.
 
 **`QueuePattern`** — enum: `CompetingConsumer` / `FanoutExclusiveAutoDelete`
 / `DurableShared`. Selects topology declared per subscriber. The transport's
@@ -148,11 +175,9 @@ code should prefer the scanner.
 
 ## References
 
-- [MESSAGING.md](../../../../docs/MESSAGING.md) — full wire-format / header /
-  queue / encryption contract.
-- [OPERATIONAL-GUARANTEES.md](../../../../docs/OPERATIONAL-GUARANTEES.md) —
-  delivery semantics, idempotency contract, DLQ, startup-ordering hooks.
 - [`messaging-rabbitmq/`](../messaging-rabbitmq/README.md) — default RabbitMQ
-  impl.
-- [`messaging-source-gen/`](../messaging-source-gen/README.md) — codegen that emits the
-  registries from the spec files.
+  impl + canonical runtime / wire-format / header / queue / encryption /
+  delivery-semantics / DLQ / startup-ordering reference.
+- [`messaging-source-gen/`](../messaging-source-gen/README.md) — codegen that
+  emits the registries from the spec files; full spec format + diagnostic
+  catalog + spec evolution rules.

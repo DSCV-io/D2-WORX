@@ -127,5 +127,4 @@ isolation.
   reference
 - [`caching-tiered/README.md`](../caching-tiered/README.md) — composes Local + this lib for L1+L2
   cascades
-- [docs/RATE-LIMITING.md](../../../../docs/RATE-LIMITING.md) — primary consumer of `ICacheSet`
-  (FP-too-common detection)
+- [`docs/v2/PHASE_3_RATE_LIMITING.md`](../../../../docs/v2/PHASE_3_RATE_LIMITING.md) — primary consumer of `ICacheSet` (FP-too-common detection). Canonical: not yet shipped; design at the cited path. Will migrate to a shipped Edge lib README when Edge rate-limiting ships.

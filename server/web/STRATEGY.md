@@ -4,13 +4,13 @@ Copyright (c) DCSV. All rights reserved.
 
 # server/web/ — Frontend Strategy
 
-> Library picks, testing strategy, telemetry, and route + component organization for the SvelteKit BFF rebuild. Source-of-truth for "what stack are we on" decisions.
+> Library picks, testing strategy, telemetry, and route + component organization for the SvelteKit BFF. Source-of-truth for "what stack are we on" decisions.
 
 ---
 
 ## Library Picks
 
-The library landscape is stable — these choices are the baseline for the rebuild.
+The library landscape is stable — these are the canonical picks.
 
 ### Forms
 
@@ -47,7 +47,7 @@ LayerChart 2.0 has good Svelte 5 (runes) support + composable primitives. Avoids
 ### Phone & Address Input
 
 - **`libphonenumber-js`** — phone validation + formatting
-- **`intl-tel-input`** (Svelte 5 wrapper TBD) — international phone input UI
+- **`intl-tel-input`** — international phone input UI (Svelte 5 wrapper authored per integration need)
 - **`postcode-validator`** — postal code validation per country
 - **`@internationalized/date`** — date input + parsing per locale
 
@@ -103,11 +103,7 @@ Happy-path-only is not enough. If a form field accepts user input, try to break 
 
 ### Other Test Types
 
-| Level | Tool | Status |
-|---|---|---|
-| Accessibility | `axe-core` / `axe-playwright` | Defer (install when first incident makes value concrete) |
-| Visual regression | Playwright screenshots | Defer (UI churn rate > useful drift detection) |
-| Performance | Lighthouse CI | Defer (no production users yet) |
+Accessibility audits (`axe-core` / `axe-playwright`), visual regression (Playwright screenshots), and performance gating (Lighthouse CI) are OUT OF SCOPE for the current test surface.
 
 ---
 
@@ -139,13 +135,13 @@ Dashboard: `infra/observability/grafana/provisioning/dashboards/d2-worx/web-vita
 
 ### Session Replay
 
-Deferred. Faro has session replay support (via `@grafana/faro-web-sdk` opt-in), but it's heavy + raises privacy questions. Revisit when first incident requires it.
+OUT OF SCOPE for the current observability surface. Faro has session replay support (via `@grafana/faro-web-sdk` opt-in), but it's heavy + raises privacy questions — not currently enabled.
 
 ---
 
 ## Architecture
 
-The route structure + component organization below is the starting point — refine as the rebuild lands.
+The route structure + component organization is summarized below.
 
 ### Route Groups
 
@@ -232,7 +228,7 @@ For multi-step / cross-field-dependent forms, the pattern is:
 
 ## Appendix: Library Version Matrix
 
-Baseline reference. Bump versions as the rebuild lands.
+Baseline reference. Update versions as releases bump.
 
 | Category | Package | Version |
 |---|---|---|

@@ -38,21 +38,7 @@ services.AddGrpc(opts =>
 
 ### Composing with siblings (dual-transport host)
 
-A host that serves both HTTP endpoints and gRPC services on the same AspNetCore Kestrel host wires all three extensions in a fluent chain:
-
-```csharp
-builder.Services.AddD2Auth(opts => { opts.Issuer = ...; opts.Audience = ...; })
-    .AddD2AuthHttp().AddD2AuthGrpc();
-builder.Services.AddGrpc(o => o.MaxReceiveMessageSize = 16 * 1024 * 1024);
-var app = builder.Build();
-app.UseRouting();
-app.UseD2Auth();                                              // HTTP middleware
-app.MapGet("/files/{id}", H).RequireD2Scope("files.read");
-app.MapGrpcService<MyGrpcService>();                          // interceptor handles gRPC auth
-app.Run();
-```
-
-Both transport extensions register an IDENTICAL scoped `IRequestContext` resolver lambda reading from the same `HttpContext.Items` slot — constructor injection works under either transport; `TryAddScoped` first-wins is harmless. For HTTP-only or gRPC-only hosts, omit the unused `AddD2AuthXxx()` call.
+> See [`../auth/README.md` § Composing with siblings](../auth/README.md#composing-with-siblings) for the canonical dual-transport composition pattern (fluent chain, identical `IRequestContext` resolver across both transports, HTTP-only / gRPC-only carve-outs).
 
 ### Per-method scope metadata
 
@@ -111,7 +97,7 @@ The trailer keys are spec-driven via `contracts/grpc-trailers/grpc-trailers.spec
 
 Side-effect: increments `AuthTelemetry.SR_ProblemEmitted` tagged with `d2_error_code` (single sink across HTTP + gRPC, intentionally so dashboards aggregate cleanly).
 
-**Why no `PermissionDenied` (gRPC code 7)**: the interceptor maps every auth failure (including scope-insufficient) to `Unauthenticated` — never `PermissionDenied` — to avoid leaking which check failed. Same uniform-shape policy as the HTTP middleware's no-403 rule.
+**Design rationale: status code mapping is uniform**: the interceptor maps every auth failure (including scope-insufficient) to `Unauthenticated` — never `PermissionDenied` — to avoid leaking which check failed. Same uniform-shape policy as the HTTP middleware's no-403 rule.
 
 ### `ServerCallContext.GetD2RequestContext()`
 
@@ -181,36 +167,11 @@ Every streaming method dispatches through the same auth pipeline as unary, but p
 
 ## Failure surface
 
-Every failure in this lib's interceptor terminates the call with an `RpcException` carrying `Status.Unauthenticated` or `Status.Unavailable` (NEVER `PermissionDenied` — see [`AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT`](../auth/Errors/AuthErrorCodes.cs) remarks for the rationale).
-
-| `d2_error_code` | gRPC `Status` | Trigger |
-|---|---|---|
-| `AUTH_BEARER_MISSING` | `Unauthenticated` | No `authorization` metadata / non-`Bearer ` prefix / empty token after prefix. |
-| `AUTH_BEARER_MALFORMED` | `Unauthenticated` | Metadata present but token is not a parseable JWT. |
-| `AUTH_JWT_SIGNATURE_INVALID` | `Unauthenticated` | Signature verification failed. |
-| `AUTH_JWT_EXPIRED` | `Unauthenticated` | `exp` in the past, beyond clock skew. |
-| `AUTH_JWT_NOT_YET_VALID` | `Unauthenticated` | `nbf` in the future, beyond clock skew. |
-| `AUTH_JWT_ISSUER_MISMATCH` | `Unauthenticated` | `iss` mismatch. |
-| `AUTH_JWT_AUDIENCE_MISMATCH` | `Unauthenticated` | `aud` mismatch. |
-| `AUTH_JWT_CLAIM_MISSING` | `Unauthenticated` | Required claim absent (e.g. `d2_session_id` when `RequireSessionIdClaim`). |
-| `AUTH_JWT_KID_NOT_FOUND` | `Unauthenticated` | Unknown `kid` after one reactive JWKS refresh. |
-| `AUTH_SESSION_REVOKED` | `Unauthenticated` | Session liveness check returned revoked. |
-| `AUTH_SCOPE_INSUFFICIENT` | `Unauthenticated` | Caller has no scopes overlapping the method's required set. |
-| `AUTH_JWKS_UNAVAILABLE` | `Unavailable` | Upstream OIDC issuer unreachable; no cached snapshot. |
-| `AUTH_SESSION_LIVENESS_UNAVAILABLE` | `Unavailable` | Liveness store unreachable; fail-closed. |
+> See [`../auth/README.md` § Failure helpers — `AuthFailures`](../auth/README.md#failure-helpers--authfailures) for the canonical 14-row failure-code table (single source: [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../contracts/auth-error-codes/auth-error-codes.spec.json)). The gRPC interceptor maps `D2Result.StatusCode` to `Status.StatusCode` per the transport rule documented at [`../auth/README.md` § Failure surface — transport status mapping](../auth/README.md#failure-surface--transport-status-mapping): 401 → `Unauthenticated`, 503 → `Unavailable`, other → `Internal`. NEVER `PermissionDenied` (7) — `AUTH_SCOPE_INSUFFICIENT` also maps to `Unauthenticated` so the wire never leaks which check failed.
 
 ## Bearer extraction edge cases (RFC 6750 §2.1)
 
-| Input | Result |
-|---|---|
-| `authorization` metadata absent | `BearerMissing` |
-| `authorization: Basic foo` | `BearerMissing` (wrong scheme) |
-| `authorization: bearer eyJ...` | OK (case-insensitive prefix match) |
-| `authorization: BEARER eyJ...` | OK |
-| `authorization: Bearer ` (empty after prefix) | `BearerMissing` (semantically nothing to validate) |
-| `authorization: Bearer not.a.jwt.too.many.parts` | Validator returns `BearerMalformed` |
-| Multiple `authorization` entries | First wins (parity with HTTP middleware) |
-| Whitespace inside token | NOT trimmed — passed through verbatim; validator rejects. Trimming would mask client bugs. |
+> See [`../auth/README.md` § Bearer extraction edge cases](../auth/README.md#bearer-extraction-edge-cases-rfc-6750-21) for the canonical edge-case table. The gRPC interceptor reads from the `authorization` request metadata — identical semantics to the HTTP `Authorization` header, only header-name casing differs.
 
 ## Streaming-method coverage invariant
 
@@ -218,13 +179,7 @@ All four server-side handler methods — `UnaryServerHandler`, `ClientStreamingS
 
 ## PII discipline
 
-Bearer bytes, claim values, and scope strings NEVER reach logs / span tags / metric tags / trailer fields / exception interpolations. The interceptor reuses the auth-core lib's `AuthLog` delegates:
-
-- `BearerHeaderMissing` — boolean fact, no header value.
-- `ScopeRequirementUnmet(string requiredScopesSummary)` — closed-enumeration summary (`"N scopes required, first=files.read"`), NOT the full scope set verbatim.
-- `LivenessRevoked` — no parameters; sessionId is PII, never logged.
-
-`Status.Detail` is empty (info-leak avoidance); `d2_error_code` carries closed-enum constants only; `d2_messages` carries TK keys + bounded params (auth surface uses `UNAUTHORIZED` / `TEMPORARILY_UNAVAILABLE` keys with no params today); `traceid` is a non-PII W3C trace identifier.
+> See [`../auth/README.md` § PII discipline — `SanitizedExceptionRender`](../auth/README.md#pii-discipline--sanitizedexceptionrender). PII rules apply uniformly across HTTP and gRPC bindings; both reuse the auth-core lib's `AuthLog` delegates and emit closed-enumeration outcome categories only. `Status.Detail` is DELIBERATELY EMPTY on every auth failure (gRPC parity with the HTTP middleware's empty `ProblemDetails.Detail`); the granular `d2_error_code` trailer carries the machine-readable taxonomy. `d2_messages` carries TK keys + bounded params; `traceId` is a non-PII W3C trace identifier.
 
 ## Dependencies
 

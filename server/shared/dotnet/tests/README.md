@@ -38,7 +38,7 @@ server/shared/dotnet/tests/
 │  │  └─ SourceGen/                                     # → i18n-source-gen
 │  ├─ Messaging/                                        # → messaging-abstractions + messaging-rabbitmq
 │  │  ├─ Channels/, Connection/, Encryption/, Idempotency/, Publishing/, Subscribing/, Telemetry/, Topology/
-│  │  └─ SourceGen/                                     # → messaging-source-gen (test coverage TBD)
+│  │  └─ SourceGen/                                     # → messaging-source-gen
 │  ├─ RequestContext/, RequestContextAbstractions/      # → context-abstractions
 │  ├─ Resilience/                                       # → resilience (CircuitBreaker / Retry / Singleflight / Pipeline)
 │  ├─ Result/                                           # → result (D2Result + factories + monadic + guard + Combine + Unit + ErrorCodes)

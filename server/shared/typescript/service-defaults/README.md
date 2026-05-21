@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # @d2/service-defaults
 
+> Parent: [`server/shared/typescript/`](../README.md)
+
 One-call bundle that composes `@d2/logging` + `@d2/telemetry` plus the
 `D2Env.load()` env loader. Mirrors `D2.Shared.ServiceDefaults` (.NET) at
 the composition role — narrower scope: no middleware aggregator, no auth

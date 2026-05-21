@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # @d2/headers
 
+> Parent: [`server/shared/typescript/`](../README.md)
+
 SvelteKit BFF-side glue for the BFF↔Edge boundary. Reads the inbound
 `Authorization` JWT and `x-d2-context` envelope into an `IRequestContext`
 and exposes server-side route guards (`requireAuth`, `requireOrg`,

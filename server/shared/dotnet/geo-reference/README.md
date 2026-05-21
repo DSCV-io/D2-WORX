@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
-> **Status**: placeholder — not yet implemented.
+> **Status**: NOT IMPLEMENTED — tracked at [docs/v2/PHASE_1.md](../../../../docs/v2/PHASE_1.md).
 
 ## Purpose
 

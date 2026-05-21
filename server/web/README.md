@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/`](../README.md)
 
-> **Status**: BROKEN-BY-DESIGN. The `@d2/*` workspace deps in `package.json` reference packages outside this workspace's resolution graph (this directory is intentionally omitted from `pnpm-workspace.yaml`); `pnpm install` fails on this package. The directory holds prior SvelteKit code retained as a reference surface for the BFF rebuild.
+> **Status**: BROKEN-BY-DESIGN. The `@d2/*` workspace deps in `package.json` reference packages outside this workspace's resolution graph (this directory is intentionally omitted from `pnpm-workspace.yaml`); `pnpm install` fails on this package. The directory holds the SvelteKit BFF source — a working reference for library picks + structure (the workspace re-wire is tracked at [docs/v2/V2.md §5.8](../../docs/v2/V2.md)).
 >
 > **Strategy reference** (library choices, testing approach): [STRATEGY.md](STRATEGY.md).
 
@@ -112,4 +112,4 @@ Cross-service E2E is intentionally NOT in scope — anything requiring multiple 
 
 ## Strategy doc
 
-Library choices + testing approach: [STRATEGY.md](STRATEGY.md). Library recommendations there (Superforms + Formsnap + Zod 4, shadcn-svelte + Bits UI, Sonner toasts, LayerChart 2.0, etc.) are the picks for the rebuild.
+Library choices + testing approach: [STRATEGY.md](STRATEGY.md). Library recommendations there (Superforms + Formsnap + Zod 4, shadcn-svelte + Bits UI, Sonner toasts, LayerChart 2.0, etc.) are the canonical picks for the SvelteKit BFF.

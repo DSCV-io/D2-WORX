@@ -77,6 +77,8 @@ Pre-built `D2Result` failures. Caller code (middleware, validator, interceptor) 
 
 `AuthErrorCodes` and `AuthFailures` are emitted by [`D2.Shared.Auth.ErrorCodes.SourceGen`](../auth-error-codes-source-gen/) from [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../contracts/auth-error-codes/auth-error-codes.spec.json) — single source of truth. Adding a new error code = editing the JSON spec; the constant + the factory + the cross-spec telemetry tag-value enumeration on `d2.auth.problem.emitted` all materialize automatically. The emitted `*.g.cs` files land in the tracked `Generated/` directory (committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build`; do not hand-edit).
 
+> **Duplicated from [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../contracts/auth-error-codes/auth-error-codes.spec.json) — update both in lockstep.** The 14-row failure surface table below is a per-row at-a-glance projection of the spec. The spec is the single source of truth; the `auth-error-codes-source-gen` analyzer emits the constants + factories. Adding a row here without a corresponding spec entry will fail at codegen time; adding a spec entry without updating this table will drift the docs.
+
 | Helper | HTTP | Error code | TK key |
 |---|---|---|---|
 | `BearerMissing()` | 401 | `AUTH_BEARER_MISSING` | `UNAUTHORIZED` |
@@ -121,9 +123,45 @@ Tag-key + tag-value constants are emitted by [`D2.Shared.Telemetry.Tags.SourceGe
 
 `AuthTelemetry.SR_Activity` (the static `ActivitySource`) and `AuthTelemetry.SR_Meter` (the static `Meter`) are exposed for pipeline implementations that need to start spans / record histograms directly.
 
+### Bearer extraction edge cases (RFC 6750 §2.1)
+
+Canonical bearer-extraction behavior for both transport bindings. HTTP middleware reads from the `Authorization` request header; gRPC interceptor reads from the `authorization` request metadata — identical semantics, only header-name casing differs per transport convention.
+
+| Input | Result |
+|---|---|
+| Header / metadata absent | `BearerMissing` |
+| `Basic foo` (wrong scheme) | `BearerMissing` |
+| `bearer eyJ...` | OK (case-insensitive prefix match) |
+| `BEARER eyJ...` | OK |
+| `Bearer ` (empty after prefix) | `BearerMissing` (semantically nothing to validate) |
+| `Bearer not.a.jwt.too.many.parts` | Validator returns `BearerMalformed` |
+| Multiple `Authorization` / `authorization` entries | First wins (RFC 7230 §3.2.2 / gRPC parity) |
+| Whitespace inside token | NOT trimmed — passed through verbatim; validator rejects. Trimming would mask client bugs. |
+
+Per-transport extension catalogs note any transport-specific variation; the table above is the single source of truth for both bindings.
+
+### Failure surface — transport status mapping
+
+Every `AuthFailures.*` factory carries an HTTP status (see the `AuthFailures` table above). Transport bindings render that status verbatim or map it as follows:
+
+| Binding | Rendering |
+|---|---|
+| HTTP middleware (`auth-http`) | `D2Result.StatusCode` written verbatim to the RFC 7807 ProblemDetails `status` field. |
+| gRPC interceptor (`auth-grpc`) | `D2Result.StatusCode` mapped to `Status.StatusCode`: 401 → `Unauthenticated` (16); 503 → `Unavailable` (14); other → `Internal` (13). NEVER `PermissionDenied` (7) — `AUTH_SCOPE_INSUFFICIENT` also maps to `Unauthenticated` so the wire never leaks which check failed. |
+
+The granular `AUTH_*` code (see [Failure helpers — `AuthFailures`](#failure-helpers--authfailures) above) carries the machine-readable taxonomy across both transports via the `d2_error_code` ProblemDetails extension / gRPC trailer.
+
 ### PII discipline — `SanitizedExceptionRender`
 
 `AuthLog` `[LoggerMessage]` delegates never accept `Exception` — exception messages can interpolate JWT bytes, request URIs, response bodies, or other runtime data that must not reach the log pipeline. Callers pass `SanitizedExceptionRender.TypeName(ex)` and `SanitizedExceptionRender.FirstFrame(ex)` as separate strings instead. The helper itself is the canonical `D2.Shared.Utilities.Diagnostics.SanitizedExceptionRender` (consumed by every lib whose log delegates carry exception-derived strings). The no-`Exception`-parameter shape is enforced locally by `AuthLogDelegateContractTests` via reflection across the entire `AuthLog` class.
+
+Bearer bytes, claim values, and scope strings NEVER reach logs / span tags / metric tags / ProblemDetails fields / gRPC trailer fields / exception interpolations. Both transport bindings reuse this lib's `AuthLog` delegates and emit only outcome categories:
+
+- `BearerHeaderMissing` — boolean fact, no header value.
+- `ScopeRequirementUnmet(string requiredScopesSummary)` — closed-enumeration summary (`"N scopes required, first=files.read"`), NOT the full scope set verbatim.
+- `LivenessRevoked` — no parameters; sessionId is PII, never logged.
+
+The HTTP ProblemDetails `Detail` field and the gRPC `Status.Detail` field are DELIBERATELY EMPTY on every auth failure — telling an attacker which validation step failed is an info leak. The closed-enum `d2_error_code` carries the machine-readable taxonomy for legitimate operators.
 
 ## Dependencies
 
@@ -206,6 +244,6 @@ For HTTP-only hosts, omit `.AddD2AuthGrpc()`. For gRPC-only hosts, omit `.AddD2A
 - [`../auth-http/README.md`](../auth-http/README.md) — HTTP-transport binding (middleware + ProblemDetails + endpoint scope metadata)
 - [`../auth-grpc/README.md`](../auth-grpc/README.md) — gRPC-transport binding (interceptor + RpcException trailers + method scope attributes)
 - [`../auth-outbound/README.md`](../auth-outbound/README.md) — token-acquisition complement
-- [`../../../../docs/SECURITY-RUNBOOKS.md`](../../../../docs/SECURITY-RUNBOOKS.md) — KeyCustodian compromise response runbooks
+- [`../../../../docs/v2/PHASE_0_AUTH.md`](../../../../docs/v2/PHASE_0_AUTH.md) §14a — KeyCustodian compromise runbook scaffolding (Canonical: not yet shipped; design at the cited path. Will migrate to a shipped lib README when the KeyCustodian implementation ships.)
 - [RFC 7519](https://datatracker.ietf.org/doc/html/rfc7519) — JSON Web Token
 - [RFC 8414](https://datatracker.ietf.org/doc/html/rfc8414) — OAuth 2.0 Authorization Server Metadata (OIDC discovery)

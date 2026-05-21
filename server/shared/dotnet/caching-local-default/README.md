@@ -21,7 +21,7 @@ singleton; ~100 MB process RSS worst-case at ~1 KB / entry.
 
 **`services.AddD2LocalCache(opts => …)`** — DI registration. Singleton lifetime.
 
-## Why no BaseHandler wrapping
+## Design rationale: no BaseHandler wrapping
 
 Every other shared lib that does I/O wraps each operation in `BaseHandler` for OTel spans +
 structured logs + per-call metrics + universal try/catch. This lib doesn't — and that's deliberate.
@@ -39,7 +39,7 @@ Local cache uses **direct method dispatch** with a static `Meter` for aggregate 
 nearly free (atomic increment) and the aggregate signal is what actually matters for cache health
 (hit rate, eviction pressure).
 
-## Why `IMemoryCache` instead of self-rolling LRU
+## Design rationale: `IMemoryCache` over self-rolling LRU
 
 `IMemoryCache` is `ConcurrentDictionary`-backed (confirmed by Microsoft Learn) — lock-free reads
 with striped writes. The actual cache work is hardware-accelerated. The community consensus

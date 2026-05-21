@@ -96,9 +96,9 @@ services.AddD2Handler();   // registers open-generic HandlerContext<T> as Transi
 services.AddTransient<IGetUserById, GetUserById>();
 ```
 
-`AddD2Handler` does NOT register `IRequestContext` — that's transport-specific:
-- HTTP / gRPC.AspNetCore: registered by `handler-aspnetcore` via HTTP middleware
-- RabbitMQ consumer: registered by `handler-messaging` via consumer middleware
+`AddD2Handler` does NOT register `IRequestContext` — that's transport-specific. Each consuming transport stack is responsible for constructing per-request `IRequestContext` and putting it into the DI scope before any handler resolves:
+- HTTP / gRPC.AspNetCore: the consuming service's startup wires HTTP middleware that builds `IRequestContext` from the validated bearer + ambient request data
+- RabbitMQ consumer: the consuming service's consumer pipeline builds `IRequestContext` from the AMQP frame headers + decrypted body
 
 Tests provide a `MutableRequestContext` test fixture builder.
 

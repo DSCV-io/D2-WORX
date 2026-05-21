@@ -109,8 +109,8 @@ internal static class MutableEmitter
         sb.AppendLine("/// Mutable concrete implementation of");
         sb.AppendLine("/// <see cref=\"global::" + _REQUEST_INTERFACE + "\"/>.");
         sb.AppendLine(
-            "/// Populated by transport-specific middleware (handler-aspnetcore for HTTP,");
-        sb.AppendLine("/// handler-messaging for RabbitMQ, etc.); domain code receives it as");
+            "/// Populated by transport-specific middleware (aspnetcore for HTTP,");
+        sb.AppendLine("/// messaging-rabbitmq for RabbitMQ, etc.); domain code receives it as");
         sb.AppendLine("/// <see cref=\"global::" + _REQUEST_INTERFACE + "\"/>");
         sb.AppendLine("/// only (read-only contract).");
         sb.AppendLine("/// </summary>");

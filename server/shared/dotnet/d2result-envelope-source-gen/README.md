@@ -4,7 +4,11 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.Result.Envelope.SourceGen
 
+> Parent: [`server/shared/dotnet/`](../README.md)
+
 Roslyn incremental source generator that emits the `D2ResultEnvelopeFieldNames` JSON property-name catalog from `contracts/d2result-envelope/d2result-envelope.spec.json` — the source-of-truth for the D2Result Shape B wire envelope (the BFF gateway response shape).
+
+**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
 
 ## Single-target dispatch
 

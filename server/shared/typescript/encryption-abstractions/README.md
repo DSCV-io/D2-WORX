@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # @d2/encryption-abstractions
 
+> Parent: [`server/shared/typescript/`](../README.md)
+
 D2 encryption-domain identifiers + encryption-frame binary layout constants. Mirrors .NET `D2.Shared.Encryption.EncryptionDomains` and the `D2.Shared.Encryption.EncryptionFrame` byte-offset layout — both spec-driven.
 
 ## Public API

@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # `tools/geo-data-pipeline/` — geo reference-data pipeline
 
+> Parent: [`tools/`](../README.md)
+
 TypeScript dev tool that pulls upstream geo reference data (CLDR, IANA tzdb, libphonenumber, datasets/*, Wikidata SPARQL, debian/iso-codes), transforms it, and writes the JSON catalogs at `contracts/geo/` that codegen consumes.
 
 ## Quick start
@@ -20,7 +22,7 @@ Three-tier output layout at `contracts/geo/`:
 
 - **Tier 1 — `src-data/*.spec.json`** — pipeline-raw output (faithful capture of each upstream source with diagnostics + per-entry `_provenance`)
 - **Tier 2 — `*.spec.json` (root)** — codegen-ready entity-shaped specs (6 pipeline-derived + 1 hand-rolled peer: `geopolitical-entities.spec.json`)
-- **Tier 3** — generated C# + TS code in the downstream geo libs (`D2.Shared.Geo.Default` / `@d2/geo-default`); produced from Tier 2; lives OUTSIDE this directory
+- **Tier 3** — generated C# + TS code in the downstream geo libs (`D2.Shared.Geo.Default` / `@d2/geo-default`); produced from Tier 2; lives OUTSIDE this directory. Canonical: the geo lib packages are not yet shipped; design at [`docs/v2/PHASE_1.md`](../../docs/v2/PHASE_1.md) (planned for deliverable 0009-geo-libs).
 
 See [`../../contracts/geo/README.md`](../../contracts/geo/README.md) for the tier details.
 

@@ -94,11 +94,9 @@ JwtClaimTypes.ACT_KIND                     // "d2_kind"        (lookup path: act
 JwtClaimTypes.ACT_SESSION_ID               // "d2_session_id"  (lookup path: act.d2_session_id)
 // ... plus more
 
-// HTTP request-header constants live in D2.Shared.Headers.Http (codegen-emitted from
-// contracts/headers/headers.spec.json). E.g. HttpHeaders.IDEMPOTENCY_KEY,
-// HttpHeaders.CLIENT_FINGERPRINT, HttpHeaders.AUTHORIZATION, HttpHeaders.INTERNAL_TOKEN.
-// AMQP headers live in D2.Shared.Headers.Amqp; gRPC headers in D2.Shared.Headers.Grpc;
-// cross-transport entries also live in D2.Shared.Headers.Common.
+// Wire-protocol header constants live in the per-transport catalogs
+// (D2.Shared.Headers.{Common,Http,Amqp,Grpc}). See ../README.md § Libraries
+// for the full per-transport enumeration.
 
 Scopes.Self.Read                           // "self.read"   (codegen-emitted)
 Scopes.Auth.Password.Change                // "auth.password.change"
@@ -184,6 +182,6 @@ Run: `dotnet test server/shared/dotnet/tests`.
 
 ## Reference
 
-- [`docs/MESSAGING.md`](../../../../docs/MESSAGING.md) — context propagation across AMQP
+- [`server/shared/dotnet/messaging-rabbitmq/README.md`](../messaging-rabbitmq/README.md) — context propagation across AMQP
 - [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) — OAuth 2.0 Token Exchange (`act` chain semantics)
 - [RFC 6749 §4.4](https://datatracker.ietf.org/doc/html/rfc6749#section-4.4) — Client Credentials grant

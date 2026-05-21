@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
-> **Status**: placeholder — not yet implemented.
+> **Status**: NOT IMPLEMENTED — tracked at [docs/v2/PHASE_1.md](../../../../docs/v2/PHASE_1.md).
 
 ## Purpose
 
@@ -33,7 +33,7 @@ Contacts use **UUIDv7 IDs + are immutable post-create**. UUIDs (not content-addr
 
 ## References
 
-- [docs/OPERATIONAL-GUARANTEES.md](../../../../docs/OPERATIONAL-GUARANTEES.md) — multi-replica migration safety (PG advisory lock at startup), immutability rationale
+- [`docs/dev/rules.md §9`](../../../../docs/dev/rules.md#9-architectural-layer-hygiene) — multi-replica migration safety predicate (PG advisory lock at startup) + EF migration discipline
 - [docs/PATTERNS.md](../../../../docs/PATTERNS.md) — per-consuming-service DB pattern, repository handler convention
 
 ## Per-service DB convention

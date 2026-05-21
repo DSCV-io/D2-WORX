@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
+> **Duplicated from [`contracts/headers/headers.spec.json`](../../../../contracts/headers/headers.spec.json) — update both in lockstep.** This catalog mirrors its TS sibling [`@d2/headers-grpc`](../../typescript/headers-grpc/README.md) at byte-equal wire values per the cross-language parity contract documented in [`docs/PARITY.md`](../../../../docs/PARITY.md). Both sides emit from the same spec; physical dedup across .NET ↔ TS is not feasible. Parity is asserted by `HeaderCatalogConsistencyTests` (.NET) and `contract-tests/headers.parity.test.ts` (TS).
+
 D2 wire-protocol headers applicable to the gRPC transport. Today the catalog holds the gRPC-applicable subset of cross-transport entries (`Authorization`, `x-d2-context`, `traceparent`, `tracestate`) at identical wire values. Codegen-emitted from `contracts/headers/headers.spec.json` via `D2.Shared.Headers.SourceGen` (filtered with `applicability.Contains("grpc")`). Mirrors TS `@d2/headers-grpc`.
 
 ---
@@ -40,15 +42,9 @@ Use `D2.Shared.Headers.Grpc` from any gRPC-context consumer — gRPC interceptor
 
 ---
 
-## Build-time diagnostics
+## Build-time diagnostics + generated output
 
-The SourceGen surfaces `D2HDR001`–`D2HDR007` for spec violations. See [`D2.Shared.Headers.SourceGen`](../headers-source-gen/README.md) for the full table.
-
----
-
-## Codegen output
-
-The emitted `GrpcHeaders.g.cs` lands at `Generated/D2.Shared.Headers.SourceGen/D2.Shared.Headers.SourceGen.HeadersGenerator/GrpcHeaders.g.cs` (tracked in git — committed for inspection, IDE navigation, and PR diff review). Re-emitted on every `dotnet build` from the spec; do not hand-edit. The `*.g.cs` glob is marked `linguist-generated=true` in `.gitattributes` so GitHub PR UI collapses these diffs by default.
+> Diagnostic IDs `D2HDR001`–`D2HDR007` and the generated-file path convention (`Generated/D2.Shared.Headers.SourceGen/.../<Catalog>Headers.g.cs`) are documented at [`../headers-source-gen/README.md` § Build-time diagnostics](../headers-source-gen/README.md#build-time-diagnostics) and [§ Generated output convention](../headers-source-gen/README.md#generated-output-convention).
 
 ---
 
@@ -63,7 +59,7 @@ No runtime dependencies — pure constants.
 ## Reference
 
 - [`contracts/headers/headers.spec.json`](../../../../contracts/headers/headers.spec.json) — source spec
-- [`D2.Shared.Headers.SourceGen`](../headers-source-gen/) — emitter
-- [`D2.Shared.Headers.Common`](../headers-common/) — cross-transport subset
-- [`D2.Shared.Headers.Http`](../headers-http/) — HTTP-applicable subset
-- [`D2.Shared.Headers.Amqp`](../headers-amqp/) — AMQP-applicable subset
+- [`D2.Shared.Headers.SourceGen`](../headers-source-gen/README.md) — emitter
+- [`D2.Shared.Headers.Common`](../headers-common/README.md) — cross-transport subset
+- [`D2.Shared.Headers.Http`](../headers-http/README.md) — HTTP-applicable subset
+- [`D2.Shared.Headers.Amqp`](../headers-amqp/README.md) — AMQP-applicable subset

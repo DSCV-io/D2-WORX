@@ -10,24 +10,7 @@ Roslyn incremental source generator that emits the `Scopes` static partial class
 
 The spec file is the single source of truth for the platform's scope catalog. Every scope a handler can require, every scope Edge mints into a token, and every grant-matrix entry lives in one JSON file — no hand-written parallel constants, no per-feature drift.
 
----
-
-## File layout
-
-| Path | Role |
-|---|---|
-| `D2.Shared.Auth.Scopes.SourceGen.csproj` | csproj — `netstandard2.0`, `IsRoslynComponent`, `PrivateAssets="all"` on Roslyn deps + bundled `System.Text.Json` |
-| `Polyfills/IsExternalInit.cs` | Polyfill enabling `init` accessors on `netstandard2.0` records |
-| `SpecFile.cs` | Pipeline-boundary record `(Path, Content)` — value-equatable for incremental cache stability |
-| `ScopesSpec.cs` | Parsed-shape record for the top-level spec — `(IReadOnlyList<ScopeEntry> Scopes)` |
-| `ScopeEntry.cs` | Parsed-shape record for one spec entry — `(string Name, string Description, string ActionSensitivity, bool ImpersonationBlocked, IReadOnlyDictionary<string, string[]>? GrantedTo)` |
-| `ScopeSpecLoader.cs` | JSON → `ScopesSpec` parser. Emits `D2SCP001` on parse failure |
-| `ScopesEmitter.cs` | `ScopesSpec` → C# source. Validates names, enum values, tree positions, etc. Emits `D2SCP002`–`D2SCP008` |
-| `EmitDiagnostic.cs` | Roslyn-decoupled diagnostic record + factories |
-| `EmitResult.cs` | `(GeneratedSource, ImmutableArray<EmitDiagnostic>)` |
-| `DiagnosticIds.cs` | String IDs `D2SCP001`–`D2SCP009` (Roslyn-decoupled — pure-logic tests can reference) |
-| `DiagnosticDescriptors.cs` | Roslyn `DiagnosticDescriptor` instances (loaded only inside the host) |
-| `ScopesGenerator.cs` | `[Generator]` `IIncrementalGenerator`. Filters AdditionalFiles to `scopes.spec.json`, gates by assembly name, drives the loader + emitter |
+**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
 
 ---
 
@@ -135,32 +118,10 @@ All lookup helpers are O(1) — backed by `HashSet<string>` / `Dictionary<,>`. `
 
 ---
 
-## Wiring into a consuming csproj
-
-```xml
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>D2.Shared.Auth.Abstractions</RootNamespace>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\auth-scopes-source-gen\D2.Shared.Auth.Scopes.SourceGen.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="..\..\..\..\contracts\auth-scopes\scopes.spec.json" />
-  </ItemGroup>
-</Project>
-```
-
-The single-target dispatch in `ScopesGenerator` ensures only assemblies named `D2.Shared.Auth.Abstractions` get the emitted `Scopes.g.cs` — other consumers (test projects, runtime libs that just reference `auth-abstractions`) get the analyzer DLL but no emission.
-
----
-
 ## Reference
 
+- [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/auth-scopes/schema.json`](../../../../contracts/auth-scopes/schema.json) — JSON Schema for the spec
 - [`contracts/auth-scopes/scopes.spec.json`](../../../../contracts/auth-scopes/scopes.spec.json) — the source-of-truth scope catalog
 - [`D2.Shared.I18n.SourceGen`](../i18n-source-gen/) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
-- [`docs/RATE-LIMITING.md`](../../../../docs/RATE-LIMITING.md) — companion `RateLimitTier` enum (lives in Edge — orthogonal axis)
+- [`docs/v2/PHASE_3_RATE_LIMITING.md`](../../../../docs/v2/PHASE_3_RATE_LIMITING.md) — companion `RateLimitTier` enum (lives in Edge — orthogonal axis). Canonical: not yet shipped; design at the cited path. Will migrate to a shipped Edge lib README when Edge rate-limiting ships.

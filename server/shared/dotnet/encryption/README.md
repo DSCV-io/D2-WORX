@@ -61,7 +61,7 @@ Overhead is ~14 bytes plus the kid length (typical kid `audit-2026q3` → 26 byt
 - Plaintext-length leakage — pad the plaintext if length-hiding matters.
 - Memory-dump of the running process — OS-level mitigations (disable swap, etc.).
 - Side-channel timing attacks against AES-NI — the BCL / OS handles this.
-- Compromise of the keys themselves — see [SECURITY-RUNBOOKS.md](../../../../docs/SECURITY-RUNBOOKS.md) for rotation procedure.
+- Compromise of the keys themselves — handled by KeyCustodian (see [`docs/v2/PHASE_0_AUTH.md`](../../../../docs/v2/PHASE_0_AUTH.md) §14a for the rotation-procedure scaffolding; canonical lib README emerges when KeyCustodian ships).
 
 ## Usage
 
@@ -146,4 +146,4 @@ None by design. This lib is a low-level crypto primitive — instrumentation liv
 
 ## References
 
-- [SECURITY-RUNBOOKS.md](../../../../docs/SECURITY-RUNBOOKS.md) — KeyCustodian compromise + rotation runbooks (this lib is the encrypt/decrypt half; KeyCustodian owns the lifecycle).
+- [`docs/v2/PHASE_0_AUTH.md`](../../../../docs/v2/PHASE_0_AUTH.md) §14a — KeyCustodian compromise + rotation runbook scaffolding (this lib is the encrypt/decrypt half; KeyCustodian owns the lifecycle). Canonical: not yet shipped; design at the cited path. Will migrate to a shipped lib README when KeyCustodian ships.

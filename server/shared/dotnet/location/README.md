@@ -6,11 +6,11 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
-> **Status**: placeholder — not yet implemented.
+> **Status**: NOT IMPLEMENTED — tracked at [docs/v2/PHASE_1.md](../../../../docs/v2/PHASE_1.md).
 
 ## Purpose
 
-Location value objects — `AdminLocation`, `Coordinates`, `StreetAddress`. **Content-addressable** (SHA-256 hash IDs — identical content produces the same ID, enabling built-in deduplication + cacheability). Immutable. Used wherever a service needs to record / reference a geographic location (sign-in events, contacts, file metadata, future payments).
+Location value objects — `AdminLocation`, `Coordinates`, `StreetAddress`. **Content-addressable** (SHA-256 hash IDs — identical content produces the same ID, enabling built-in deduplication + cacheability). Immutable. Used wherever a service needs to record / reference a geographic location (sign-in events, contacts, file metadata).
 
 ## Public API surface
 
@@ -30,7 +30,7 @@ Location value objects — `AdminLocation`, `Coordinates`, `StreetAddress`. **Co
 
 ## References
 
-- [docs/OPERATIONAL-GUARANTEES.md](../../../../docs/OPERATIONAL-GUARANTEES.md) — content-addressable entities (Location + WhoIs both use SHA-256 hash IDs)
+- [`docs/PATTERNS.md`](../../../../docs/PATTERNS.md) — content-addressable entities pattern (Location + WhoIs both use SHA-256 hash IDs)
 - [`../geo-reference/README.md`](../geo-reference/README.md) — embedded reference data this lib validates against (country / state / region codes)
 
 ## Important

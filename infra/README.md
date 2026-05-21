@@ -64,11 +64,11 @@ docker stack deploy -c infra/compose/compose.yml -c infra/compose/compose.prod.y
 
 ## Production topology
 
-Eventually Docker Swarm + Portainer (until ~$50K/month MRR), then K8s migration unlocks SPIFFE / NetworkPolicy / sophisticated autoscaling. Pre-launch: Compose on a single VPS.
+Pre-launch: Compose on a single VPS. Production: Docker Swarm + Portainer. Full design (cluster shape, overlay networks, secrets/configs management, K8s upgrade path) is documented in [docs/v2/V2.md §5.9](../docs/v2/V2.md#59-production-deployment).
 
 Two overlay networks (Swarm-time):
 - `ingress` — Edge instances attach here; faces L7 LB (Cloudflare)
-- `internal` — everyone else (SvelteKit, Files, Courier, Notifications, Audit, future services, infra)
+- `internal` — everyone else (SvelteKit, Files, Courier, Notifications, Audit, infra)
 
 Edge attaches to both. SvelteKit on `internal` only → cannot be reached from outside Edge.
 

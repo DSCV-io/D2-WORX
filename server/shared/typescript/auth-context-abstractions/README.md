@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # @d2/auth-context-abstractions
 
+> Parent: [`server/shared/typescript/`](../README.md)
+
 `IAuthContext` interface + supporting enums/types. Emitted from
 `contracts/auth-context/IAuthContext.spec.json` via `tools/ts-codegen`.
 Mirrors `D2.Shared.AuthContext.Abstractions` (.NET).

@@ -21,33 +21,23 @@ Project documentation that doesn't belong at the repo root.
 | Doc | Purpose |
 |---|---|
 | [TESTS.md](TESTS.md) | Adversarial test discipline — 8-category Case Coverage Checklist, naming conventions, Vitest custom matchers. The canonical reference for what "tested" means in this codebase. |
-| [AUDIT_CHECKLIST.md](AUDIT_CHECKLIST.md) | Quality audit checklist — Security / Logic / Code Quality / Conventions / Cross-Service / Test Coverage / Documentation. Run before merging substantial work. |
-| [OPERATIONAL-GUARANTEES.md](OPERATIONAL-GUARANTEES.md) | How D²-WORX prevents duplicate actions, ensures idempotency, maintains correct behavior across services, instances, scheduled jobs. |
-
-### Cross-service messaging
-
-| Doc | Purpose |
-|---|---|
-| [MESSAGING.md](MESSAGING.md) | RabbitMQ patterns — wire format (proto-canonical JSON), exchange + routing key naming, queue topology, AMQP headers, delivery semantics, DLQ inspection. |
+| [SRC_GEN.md](SRC_GEN.md) | Spec-driven codegen reference — .NET Roslyn `IIncrementalGenerator` + TypeScript `tools/ts-codegen` emitter patterns. |
+| [dev/process.md](dev/process.md) | Workflow + audit-loop architecture — phase lifecycle (PLAN / EXECUTE / FINAL-REVIEW / SHIP / REVIEW), permission gates, sub-agent orchestrator-worker model, K=5 audit-cluster dispatch protocol, self-improvement loop. |
+| [dev/rules.md](dev/rules.md) | Verbose authoritative predicate catalog — security, race conditions, naming, object disposal, D2Result, OOTB shared libs, logging, PII, graceful degradation, UX, DX, observability, idempotency, configuration, conventions. Walked every audit round. |
+| [ADRs](adrs/README.md) | Architectural Decision Records (Nygard format + Deliverable cross-link field). |
 
 ### Cross-language tracking
 
 | Doc | Purpose |
 |---|---|
-| [PARITY.md](PARITY.md) | Template + "Why exclusive?" framework for cross-language additions (.NET ↔ SvelteKit ↔ future). Backend is currently .NET-only; the table is empty + ready to grow. |
-
-### Security
-
-| Doc | Purpose |
-|---|---|
-| [SECURITY-RUNBOOKS.md](SECURITY-RUNBOOKS.md) | Compromise response runbooks. Stub — see the Status block at the top of that doc for the operational gap. |
+| [PARITY.md](PARITY.md) | Template + "Why exclusive?" framework for cross-language additions (.NET ↔ SvelteKit ↔ other languages). Cross-language parity template — populated as cross-language components ship. |
 
 ### Build-out tracking (under `v2/`, archived as each milestone ships)
 
 | Doc | Purpose |
 |---|---|
 | [v2/V2.md](v2/V2.md) | Architecture & build plan — internal tracking doc. |
-| [v2/PHASE_0.md](v2/PHASE_0.md) | Foundation milestone execution tracking. |
+| [v2/PHASE_1.md](v2/PHASE_1.md) | Geo-library execution tracking. |
 | [v2/PHASE_0_AUTH.md](v2/PHASE_0_AUTH.md) | Authentication architecture reference — JWT shape, session model, key-rotation flow. |
 | [v2/PHASE_0_MESSAGING.md](v2/PHASE_0_MESSAGING.md) | Async-messaging architecture reference — exchange/queue topology, encryption framing, DLQ flow. |
 | [v2/PHASE_5_REFERENCE.md](v2/PHASE_5_REFERENCE.md) | D2.Courier + D2.Notifications rebuild reference — Universal Message Shape, Comms 6 design principles. |

@@ -4,7 +4,7 @@ Copyright (c) DCSV. All rights reserved.
 
 # Shipped Deliverables — Snapshot READMEs
 
-This folder holds the post-ship snapshot of each deliverable's root README, copied out of the local `docs/wip/<deliverable>/` workspace at SHIP time. See [../workflow.md](../workflow.md) for the loop protocol.
+This folder holds the post-ship snapshot of each deliverable's root README, copied out of the local `docs/wip/<deliverable>/` workspace at SHIP time. See [../process.md](../process.md) for the loop protocol.
 
 ## What lives here
 

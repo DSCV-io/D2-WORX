@@ -10,24 +10,7 @@ Roslyn incremental source generator that emits the `Audiences` static partial cl
 
 The spec file is the single source of truth for the platform's JWT-audience catalog. Every value an inbound JWT's `aud` claim can carry, and every `targetAudience` argument passed to `TokenExchangeClient.ExchangeAsync`, lives in one JSON file — no hand-written parallel constants, no per-feature drift.
 
----
-
-## File layout
-
-| Path | Role |
-|---|---|
-| `D2.Shared.Auth.Audiences.SourceGen.csproj` | csproj — `netstandard2.0`, `IsRoslynComponent`, `PrivateAssets="all"` on Roslyn deps + bundled `System.Text.Json` |
-| `Polyfills/IsExternalInit.cs` | Polyfill enabling `init` accessors on `netstandard2.0` records |
-| `SpecFile.cs` | Pipeline-boundary record `(Path, Content)` — value-equatable for incremental cache stability |
-| `AudiencesSpec.cs` / `AudienceEntry.cs` | Parsed-shape records |
-| `AudienceSpecLoader.cs` | JSON → `AudiencesSpec` parser. Emits `D2AUD001` on parse failure |
-| `AudiencesEmitter.cs` | `AudiencesSpec` → C# source. Validates names, URLs, duplicates. Emits `D2AUD002`–`D2AUD005` |
-| `EmitDiagnostic.cs` | Roslyn-decoupled diagnostic record + factories |
-| `EmitResult.cs` | `(GeneratedSource, ImmutableArray<EmitDiagnostic>)` |
-| `LoadResult.cs` | `(Spec, Diagnostic)` — exactly one populated |
-| `DiagnosticIds.cs` | String IDs `D2AUD001`–`D2AUD006` (Roslyn-decoupled — pure-logic tests can reference) |
-| `DiagnosticDescriptors.cs` | Roslyn `DiagnosticDescriptor` instances (loaded only inside the host) |
-| `AudiencesGenerator.cs` | `[Generator]` `IIncrementalGenerator`. Filters AdditionalFiles to `audiences.spec.json`, gates by assembly name, drives the loader + emitter |
+**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
 
 ---
 
@@ -91,38 +74,15 @@ public static partial class Audiences
 
 ---
 
-## Wire-up
+## Sourcegen-specific notes
 
-Consuming csproj (`D2.Shared.Auth.Abstractions`) declares the analyzer as a project reference with `OutputItemType="Analyzer"` and surfaces the spec via `<AdditionalFiles>`:
-
-```xml
-<ItemGroup>
-  <ProjectReference Include="..\auth-audiences-source-gen\D2.Shared.Auth.Audiences.SourceGen.csproj"
-                    OutputItemType="Analyzer"
-                    ReferenceOutputAssembly="false" />
-</ItemGroup>
-
-<ItemGroup>
-  <AdditionalFiles Include="..\..\..\..\contracts\auth-audiences\audiences.spec.json" />
-</ItemGroup>
-```
-
-`<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>` on the consuming csproj makes the generated `Audiences.g.cs` visible under the consuming csproj's tracked `Generated/` directory for inspection (committed to git per the codegen-output-committed convention; see [`docs/PATTERNS.md`](../../../../docs/PATTERNS.md)).
-
----
-
-## Why a separate codegen lib (instead of hand-writing Audiences)
-
-Same reasoning as `auth-scopes-source-gen` and `JwtClaimTypes`:
-
-- **Single source of truth.** Audience strings flow through both the inbound JWT validator (`aud` claim check) AND the outbound `TokenExchangeClient.ExchangeAsync` calls. Hand-written parallel constants on each side drift the moment a new service comes online.
-- **Cross-language parity for free.** When the SvelteKit BFF or a future Node service ships, it reads the same JSON spec and emits its own `audiences.ts` constants. One spec → N language-specific abstractions libs.
-- **Build-time validation.** Duplicate names, duplicate URLs, malformed URLs, and bad identifiers are caught at compile time, not at first JWT validation in production.
+Audience strings flow through both the inbound JWT validator (`aud` claim check) AND the outbound `TokenExchangeClient.ExchangeAsync` calls. Spec-driving the catalog catches duplicate names, duplicate URLs, malformed URLs, and bad identifiers at compile time rather than at first JWT validation in production.
 
 ---
 
 ## References
 
+- [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/auth-audiences/schema.json`](../../../../contracts/auth-audiences/schema.json) — JSON Schema (editor-time gate)
 - [`contracts/auth-audiences/audiences.spec.json`](../../../../contracts/auth-audiences/audiences.spec.json) — the catalog
 - [`D2.Shared.Auth.Abstractions`](../auth-abstractions/) — the consuming lib (where `Audiences.g.cs` lands)

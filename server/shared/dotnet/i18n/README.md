@@ -10,7 +10,7 @@ Runtime translation lib — `Translator` (loads `contracts/messages/*.json` cata
 
 The pure-types slice (`TKMessage`, `TK` constants, `ITranslator` interface) lives in [`D2.Shared.I18n.Abstractions`](../i18n-abstractions/). Domain layers reference Abstractions; this runtime is for infrastructure / composition-root code that actually renders translated strings (Courier emails, SMS, push notifications).
 
-> **Translation strategy reminder.** Most translation in this codebase happens **client-side** via SvelteKit / Paraglide consuming wire-format `TKMessage` objects. This server-side `Translator` exists for outbound notifications where the recipient's preferred locale comes from their user profile and the rendered text must be inlined into the notification payload before delivery. HTTP responses ship `TKMessage` objects unchanged; the FE translates on receipt.
+> **Translation strategy reminder.** See [`../i18n-abstractions/README.md` § Wire format](../i18n-abstractions/README.md#wire-format) for the canonical split: client-side via SvelteKit / Paraglide on HTTP-response payloads, server-side via this `Translator` for outbound notifications where the rendered text must be inlined before delivery.
 
 ---
 

@@ -10,26 +10,20 @@ Roslyn incremental source generator that emits per-transport header catalog clas
 
 The spec file is the single source of truth for every D2 wire header (HTTP / gRPC / AMQP). Cross-transport entries appear in multiple per-transport catalogs at identical wire values — codegen-guaranteed and verified by `HeaderCatalogConsistencyTests`.
 
+**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
+
 ---
 
-## File layout
+## Catalog dispatch
 
-| Path | Role |
-|---|---|
-| `D2.Shared.Headers.SourceGen.csproj` | csproj — `netstandard2.0`, `IsRoslynComponent`, `PrivateAssets="all"` on Roslyn deps + bundled `System.Text.Json` |
-| `Polyfills/IsExternalInit.cs` | Polyfill enabling `init` accessors on `netstandard2.0` records |
-| `Polyfills/StringExt.cs` | Local `Falsey()` polyfill (utilities lib targets `net10`; can't be referenced from `netstandard2.0`) |
-| `SpecFile.cs` | Pipeline-boundary record `(Path, Content)` — value-equatable for incremental cache stability |
-| `HeadersSpec.cs` | Parsed-shape record for the top-level spec — `(ImmutableArray<HeaderEntry> Headers)` |
-| `HeaderEntry.cs` | Parsed-shape record per spec entry — `(Name, ConstName, Applicability, Convention, Description)` |
-| `HeadersSpecLoader.cs` | JSON → `HeadersSpec` parser. Emits `D2HDR001` on parse failure |
-| `HeadersEmitter.cs` | `HeadersSpec` + `CatalogFilter` → catalog source. Validates closed-vocabulary transport / constName pattern / applicability non-empty / per-catalog uniqueness; emits `D2HDR002`–`D2HDR006` |
-| `EmitDiagnostic.cs` | Roslyn-decoupled diagnostic record + per-id factories |
-| `EmitResult.cs` | `(GeneratedSource, ImmutableArray<EmitDiagnostic>)` |
-| `LoadResult.cs` | `(HeadersSpec? Spec, EmitDiagnostic? Diagnostic)` |
-| `DiagnosticIds.cs` | String IDs `D2HDR001`–`D2HDR007` (Roslyn-decoupled — pure-logic tests can reference) |
-| `DiagnosticDescriptors.cs` | Roslyn `DiagnosticDescriptor` instances (loaded only inside the host) |
-| `HeadersGenerator.cs` | `[Generator]` `IIncrementalGenerator`. Filters AdditionalFiles to `headers.spec.json`, dispatches per assembly name to one of four target catalogs |
+| Consuming assembly | Filter | Emitted source |
+|---|---|---|
+| `D2.Shared.Headers.Common` | `applicability.Length >= 2` | `CommonHeaders.g.cs` (class `CommonHeaders`) |
+| `D2.Shared.Headers.Http` | `applicability.Contains("http")` | `HttpHeaders.g.cs` (class `HttpHeaders`) |
+| `D2.Shared.Headers.Amqp` | `applicability.Contains("amqp")` | `AmqpHeaders.g.cs` (class `AmqpHeaders`) |
+| `D2.Shared.Headers.Grpc` | `applicability.Contains("grpc")` | `GrpcHeaders.g.cs` (class `GrpcHeaders`) |
+
+Cross-transport entries appear in multiple catalogs at identical wire values, codegen-guaranteed (verified by `HeaderCatalogConsistencyTests`).
 
 ---
 
@@ -44,6 +38,20 @@ The spec file is the single source of truth for every D2 wire header (HTTP / gRP
 | `D2HDR005` | Error | An entry's `applicability` array is empty (every header must belong to at least one transport) |
 | `D2HDR006` | Warning | An entry's `convention` is outside the recognized set (typo guard — emitter still emits, just flags) |
 | `D2HDR007` | Error | `headers.spec.json` is missing from `<AdditionalFiles>` for the consuming csproj |
+
+---
+
+## Generated output convention
+
+Each consuming catalog csproj receives ONE generated source file at the canonical path:
+
+```
+Generated/D2.Shared.Headers.SourceGen/D2.Shared.Headers.SourceGen.HeadersGenerator/<Catalog>Headers.g.cs
+```
+
+Where `<Catalog>` is one of `Common` / `Http` / `Amqp` / `Grpc` (matching the per-transport class name). The `Generated/` directory is tracked in git — committed for inspection, IDE navigation, and PR diff review. Re-emitted on every `dotnet build` from the spec; do not hand-edit. The `*.g.cs` glob is marked `linguist-generated=true` in `.gitattributes` so GitHub PR UI collapses these diffs by default.
+
+This convention applies uniformly to every per-transport catalog consumed by [`D2.Shared.Headers.Common`](../headers-common/README.md), [`D2.Shared.Headers.Http`](../headers-http/README.md), [`D2.Shared.Headers.Amqp`](../headers-amqp/README.md), and [`D2.Shared.Headers.Grpc`](../headers-grpc/README.md).
 
 ---
 
@@ -81,45 +89,10 @@ The spec file is the single source of truth for every D2 wire header (HTTP / gRP
 
 ---
 
-## Catalog dispatch
-
-| Consuming assembly | Filter | Emitted source |
-|---|---|---|
-| `D2.Shared.Headers.Common` | `applicability.Length >= 2` | `CommonHeaders.g.cs` (class `CommonHeaders`) |
-| `D2.Shared.Headers.Http` | `applicability.Contains("http")` | `HttpHeaders.g.cs` (class `HttpHeaders`) |
-| `D2.Shared.Headers.Amqp` | `applicability.Contains("amqp")` | `AmqpHeaders.g.cs` (class `AmqpHeaders`) |
-| `D2.Shared.Headers.Grpc` | `applicability.Contains("grpc")` | `GrpcHeaders.g.cs` (class `GrpcHeaders`) |
-
-Cross-transport entries appear in multiple catalogs at identical wire values, codegen-guaranteed (verified by `HeaderCatalogConsistencyTests`).
-
----
-
-## Wiring into a consuming csproj
-
-```xml
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>D2.Shared.Headers.Http</RootNamespace>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\headers-source-gen\D2.Shared.Headers.SourceGen.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="..\..\..\..\contracts\headers\headers.spec.json" />
-  </ItemGroup>
-</Project>
-```
-
-The assembly-name dispatch in `HeadersGenerator` ensures only assemblies in the closed dispatch set get emission — other consumers (test projects, transport-binding csprojs that reference `auth`) get the analyzer DLL but no emission.
-
----
-
 ## Reference
 
+- [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/headers/schema.json`](../../../../contracts/headers/schema.json) — JSON Schema for the spec
 - [`contracts/headers/headers.spec.json`](../../../../contracts/headers/headers.spec.json) — the source-of-truth catalog
-- [`D2.Shared.Auth.ErrorCodes.SourceGen`](../auth-error-codes-source-gen/) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
-- [`D2.Shared.InProcessKeys.SourceGen`](../in-process-keys-source-gen/) — sibling SrcGen for cross-binding in-process slot keys
+- [`D2.Shared.Auth.ErrorCodes.SourceGen`](../auth-error-codes-source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
+- [`D2.Shared.InProcessKeys.SourceGen`](../in-process-keys-source-gen/README.md) — sibling SrcGen for cross-binding in-process slot keys

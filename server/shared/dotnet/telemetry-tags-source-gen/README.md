@@ -12,29 +12,13 @@ The spec file is the single source of truth for the platform's OTel meter / inst
 
 Untagged instruments and instruments with open-enum tags (e.g. handler-name) are spec-listed for documentation parity but receive no codegen output.
 
+**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
+
 ---
 
-## File layout
+## Cross-spec resolution (`valuesFromSpec`)
 
-| Path | Role |
-|---|---|
-| `D2.Shared.Telemetry.Tags.SourceGen.csproj` | csproj — `netstandard2.0`, `IsRoslynComponent`, `PrivateAssets="all"` on Roslyn deps + bundled `System.Text.Json` |
-| `Polyfills/IsExternalInit.cs` | Polyfill enabling `init` accessors on `netstandard2.0` records |
-| `Polyfills/StringExt.cs` | Local `Falsey()` polyfill |
-| `SpecFile.cs` | Pipeline-boundary record `(Path, Content)` — value-equatable for incremental cache stability |
-| `TelemetrySpec.cs` | Parsed-shape record `(ImmutableArray<MeterEntry> Meters)` |
-| `MeterEntry.cs` | `(Meter, ConsumingAssembly, TagsNamespace?, TagsClassName?, Instruments)` |
-| `InstrumentEntry.cs` | `(Name, ConstName?, Kind, Description, Unit?, Tags)` |
-| `TagEntry.cs` | `(Name, Values, ValuesFromSpec?)` |
-| `TelemetrySpecLoader.cs` | JSON → `TelemetrySpec` parser. Emits `D2TEL001` on parse failure |
-| `CrossSpecResolver.cs` | Resolves `valuesFromSpec` references against sibling `<AdditionalFiles>` (currently only `auth-error-codes`). Emits `D2TEL006` when references can't be resolved |
-| `TelemetryTagsEmitter.cs` | `MeterEntry` → `*TelemetryTags.g.cs`. Emits `D2TEL002`–`D2TEL005` |
-| `EmitDiagnostic.cs` | Roslyn-decoupled diagnostic record + per-id factories |
-| `EmitResult.cs` | `(GeneratedSource, HintName, Diagnostics)` |
-| `LoadResult.cs` | `(TelemetrySpec? Spec, EmitDiagnostic? Diagnostic)` |
-| `DiagnosticIds.cs` | String IDs `D2TEL001`–`D2TEL006` |
-| `DiagnosticDescriptors.cs` | Roslyn `DiagnosticDescriptor` instances |
-| `TelemetryTagsGenerator.cs` | `[Generator]` `IIncrementalGenerator`. Filters AdditionalFiles to `telemetry.spec.json` (+ sibling `auth-error-codes.spec.json`), gates per-meter by assembly name, drives loader + emitter |
+When a tag declares `"valuesFromSpec": "auth-error-codes"` (instead of an inline `"values": [...]` array), this generator resolves the value set from a sibling spec passed via `<AdditionalFiles>` (currently only `auth-error-codes.spec.json` supported). Consuming csprojs that use a meter with a `valuesFromSpec` tag MUST add BOTH the `telemetry.spec.json` AND the referenced sibling spec to `<AdditionalFiles>` — failure to do so surfaces as `D2TEL006`. This cross-spec link keeps closed-enum tag values structurally in sync with their source-of-truth catalogs (e.g. the `d2.auth.problem.emitted` tag enumerates exactly the codes in `auth-error-codes.spec.json`).
 
 ---
 
@@ -128,33 +112,9 @@ public static class AuthTelemetryTags
 
 ---
 
-## Wiring into a consuming csproj
-
-```xml
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>D2.Shared.Auth</RootNamespace>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\telemetry-tags-source-gen\D2.Shared.Telemetry.Tags.SourceGen.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="..\..\..\..\contracts\telemetry\telemetry.spec.json" />
-    <!-- Required for any meter whose tags use valuesFromSpec=auth-error-codes -->
-    <AdditionalFiles Include="..\..\..\..\contracts\auth-error-codes\auth-error-codes.spec.json" />
-  </ItemGroup>
-</Project>
-```
-
-The per-meter `consumingAssembly` dispatch ensures only the matching assembly receives the emitted file — other consumers get the analyzer DLL but no emission.
-
----
-
 ## Reference
 
+- [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/telemetry/schema.json`](../../../../contracts/telemetry/schema.json) — JSON Schema for the spec
 - [`contracts/telemetry/telemetry.spec.json`](../../../../contracts/telemetry/telemetry.spec.json) — the source-of-truth catalog
 - [`D2.Shared.Auth.ErrorCodes.SourceGen`](../auth-error-codes-source-gen/) — sibling SrcGen whose spec the cross-spec resolver consumes

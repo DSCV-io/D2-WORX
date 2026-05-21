@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # @d2/protos
 
+> Parent: [`server/shared/typescript/`](../README.md)
+
 Buf-generated TS modules + gRPC client stubs from `contracts/protos/`.
 Mirrors `D2.Shared.Protos` (.NET — generated via `Grpc.Tools` at csproj
 build time).
@@ -13,8 +15,9 @@ build time).
 The package re-exports every generated module under `src/generated/`. The
 generation workflow (Buf + ts-proto) runs via `pnpm generate` and writes
 output that is committed to git so consumers don't need to run codegen on
-first build. As `contracts/protos/{namespace}/v1/*.proto` files land they
-auto-generate into `src/generated/{namespace}/v1/{name}.ts`.
+first build. Each `contracts/protos/{namespace}/v1/*.proto` file
+auto-generates into `src/generated/{namespace}/v1/{name}.ts` via the
+build's `generate` step.
 
 ## Dependencies
 
@@ -29,7 +32,7 @@ auto-generate into `src/generated/{namespace}/v1/{name}.ts`.
 pnpm --filter @d2/protos generate
 ```
 
-`buf.gen.yaml` configures `ts-proto` with options matching the v1 reference:
+`buf.gen.yaml` configures `ts-proto` with these options:
 `esModuleInterop=true`, `outputServices=grpc-js`, `useExactTypes=false`,
 `oneof=unions`, `useOptionals=messages`. Output is per-file under
 `src/generated/{namespace}/v1/{name}.ts`.

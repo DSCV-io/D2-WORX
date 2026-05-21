@@ -49,11 +49,10 @@ claim caller identity.
 
 ## Cross-language story
 
-This is the lib a future TypeScript / Python / Go BFF will mirror via the
-same spec → codegen pipeline. The wire format (base64url of canonical
-JSON) is language-neutral; per-field caps come from the same JSON spec;
-the projection extensions are mechanical given the field set. One JSON
-spec → N language-specific abstractions libs, all bug-compatible.
+The wire format (base64url of canonical JSON) is language-neutral; per-field
+caps come from the same JSON spec; the projection extensions are mechanical
+given the field set. Any language consumer that mirrors the spec is
+bug-compatible. One JSON spec → N language-specific abstractions libs.
 
 ---
 

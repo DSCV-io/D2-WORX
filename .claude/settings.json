@@ -1,12 +1,17 @@
 {
   "permissions": {
+    "defaultMode": "auto",
     "allow": [
       "Agent",
+      "Read(**)",
+      "Grep(**)",
+      "Glob(**)",
       "Write(docs/wip/daily-reports/*.md)",
       "Bash(git log*)",
       "Bash(git status*)",
       "Bash(git diff*)",
-      "Bash(git show*)"
+      "Bash(git show*)",
+      "Bash(git rev-parse*)"
     ],
     "deny": [
       "Read(**/.env.secrets)",

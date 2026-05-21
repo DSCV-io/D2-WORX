@@ -15,26 +15,7 @@ The spec file is the single source of truth for the RFC 7807 wire shape emitted 
 
 The same spec drives the TS-side `@d2/headers` catalog (via `tools/ts-codegen/src/problem-details-emit.ts`) so cross-language drift on the URI prefix, content type, extension keys, and per-status titles is structurally impossible.
 
----
-
-## File layout
-
-| Path | Role |
-|---|---|
-| `D2.Shared.ProblemDetails.SourceGen.csproj` | csproj — `netstandard2.0`, `IsRoslynComponent`, `PrivateAssets="all"` on Roslyn deps + bundled `System.Text.Json` |
-| `Polyfills/IsExternalInit.cs` | Polyfill enabling `init` accessors on `netstandard2.0` records (via the shared `source-gen-shared/` include) |
-| `Polyfills/StringExt.cs` | Local `Falsey()` polyfill (via the shared `source-gen-shared/` include) |
-| `SpecFile.cs` | Pipeline-boundary record `(Path, Content)` — value-equatable for incremental cache stability (via the shared `source-gen-shared/` include) |
-| `ProblemDetailsSpec.cs` | Parsed-shape record for the top-level spec — `(TypeUriPrefix, ContentType, ImmutableArray<ExtensionKeyEntry> ExtensionKeys, ImmutableArray<TitleEntry> Titles)` |
-| `ExtensionKeyEntry.cs` | Parsed-shape record per extension-key entry — `(ConstName, Value, Doc)` |
-| `TitleEntry.cs` | Parsed-shape record per title entry — `(ConstName, HttpStatus?, Value, Doc)` |
-| `ProblemDetailsSpecLoader.cs` | JSON → `ProblemDetailsSpec` parser. Emits `D2PRB001` on parse failure |
-| `ProblemDetailsEmitter.cs` | `ProblemDetailsSpec` → `D2ProblemDetailsKeys.g.cs`. Emits the static class with constants + `TitleFor` switch. Emits `D2PRB002`–`D2PRB006` |
-| `EmitDiagnostics.cs` | Per-id `EmitDiagnostic` factories |
-| `EmitResult.cs` | `(GeneratedSource, ImmutableArray<EmitDiagnostic>)` |
-| `DiagnosticIds.cs` | String IDs `D2PRB001`–`D2PRB006` (Roslyn-decoupled — pure-logic tests can reference) |
-| `DiagnosticDescriptors.cs` | Roslyn `DiagnosticDescriptor` instances (loaded only inside the host) |
-| `ProblemDetailsGenerator.cs` | `[Generator]` `IIncrementalGenerator`. Filters AdditionalFiles to `problem-details.spec.json`, gates by assembly name (`D2.Shared.ProblemDetails.Abstractions`), drives loader + emitter |
+**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
 
 ---
 
@@ -109,35 +90,9 @@ The abstractions csproj is referenced by both `D2.Shared.Auth.Http` (path A) and
 
 ---
 
-## Wiring into the consuming csproj
-
-```xml
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>D2.Shared.ProblemDetails</RootNamespace>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\problem-details-source-gen\D2.Shared.ProblemDetails.SourceGen.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="..\..\..\..\contracts\problem-details\problem-details.spec.json" />
-  </ItemGroup>
-</Project>
-```
-
-The single-target dispatch in `ProblemDetailsGenerator` ensures only assemblies named `D2.Shared.ProblemDetails.Abstractions` get the emitted `D2ProblemDetailsKeys.g.cs` — other consumers that reference the analyzer DLL transitively get no emission.
-
----
-
 ## Reference
 
+- [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/problem-details/schema.json`](../../../../contracts/problem-details/schema.json) — JSON Schema for the spec
 - [`contracts/problem-details/problem-details.spec.json`](../../../../contracts/problem-details/problem-details.spec.json) — the source-of-truth catalog
 - [`D2.Shared.ProblemDetails.Abstractions`](../problem-details-abstractions/README.md) — the consuming csproj (single emit target)

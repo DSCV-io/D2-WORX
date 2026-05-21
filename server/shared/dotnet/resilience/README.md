@@ -10,7 +10,7 @@ Resilience primitives for protecting outbound calls — `RetryHelper` (with opti
 
 Depends only on `D2.Shared.Result` (for the `D2Result`-aware retry overload).
 
-> **Why not Polly?** Most of our outbound boundaries are NOT HTTP (RabbitMQ publishes, EF Core, Redis via StackExchange, internal handler chains, SeaweedFS via SDK). Polly's main "free win" — its HttpClientFactory integration via `AddStandardResilienceHandler()` — applies cleanly to gRPC (since `Grpc.Net.Client` rides on `HttpClient`) and external HTTP APIs, but the HTTP-level integration only sees HTTP 200 + trailing gRPC status codes; retry-on-`StatusCode.Unavailable` requires custom predicates anyway. With <500 LOC of working v1 logic + first-class `D2Result.IsTransientRetryable` integration, owning the primitives is cheaper than wrapping Polly.
+> **Design rationale: custom primitives over Polly.** Most of our outbound boundaries are NOT HTTP (RabbitMQ publishes, EF Core, Redis via StackExchange, internal handler chains, SeaweedFS via SDK). Polly's main "free win" — its HttpClientFactory integration via `AddStandardResilienceHandler()` — applies cleanly to gRPC (since `Grpc.Net.Client` rides on `HttpClient`) and external HTTP APIs, but the HTTP-level integration only sees HTTP 200 + trailing gRPC status codes; retry-on-`StatusCode.Unavailable` requires custom predicates anyway. With <500 LOC of pure-logic primitives + first-class `D2Result.IsTransientRetryable` integration, owning the primitives is cheaper than wrapping Polly.
 
 ---
 
@@ -194,11 +194,11 @@ The three primitives compose naturally. The `Pipeline` namespace is the canonica
 - exposes ONE call: `ExecuteAsync(key, operation, ct)` returning `D2Result<TValue>`
 - **never throws** — every terminating exception is converted to a `D2Result` per the documented mapping (CircuitOpen → ServiceUnavailable, caller-canceled → Canceled, transient that slipped past layers → ServiceUnavailable, anything else → UnhandledException)
 
-### Two-tier API: fluent at registration, dead-simple at call site
+### Two-layer API: fluent at registration, dead-simple at call site
 
 The intent is that **client-lib authors** configure the pipeline once at the lib's composition root using the fluent DSL; **handlers inside the lib** see only the one-line call surface; **callers of the lib** see nothing — resilience is invisible.
 
-#### Tier 1 — registration (lib composition root, fluent)
+#### Registration layer (lib composition root, fluent)
 
 **All registrations are keyed.** The lib provides no unkeyed registration or resolution path because two unkeyed registrations of the same `(TKey, TValue)` shape would silently overwrite each other (last-wins) — the keyed-mandatory rule eliminates that footgun by construction. Every layer call says EXACTLY which keyed primitive it pulls.
 
@@ -231,7 +231,7 @@ public static IServiceCollection AddIpinfoLookup(this IServiceCollection service
 }
 ```
 
-#### Tier 2 — call site (handler, brain-dead simple)
+#### Call-site layer (handler, brain-dead simple)
 
 The handler's constructor pulls the keyed pipeline via `[FromKeyedServices]`:
 
@@ -263,9 +263,9 @@ The fluent chain order = layer order in the resulting pipeline (outer-first). Li
 
 Each `Use*` is independent — call zero, one, two, or three. A zero-layer pipeline still does the exception → `D2Result` mapping. To share a primitive across pipelines (e.g. multi-criticality audit pipelines sharing one broker-level CB so any tier's failures count toward the same breaker state), register the shared primitive under its own key and reference that key from each pipeline. The shared topology stays grep-able via the key constant.
 
-### Adding new layers later
+### Extensibility
 
-`IResilientLayer<TKey, TValue>` is a single-method interface. Future layers (timeout, bulkhead, rate-limit, telemetry, etc.) plug in as additional `Use*` methods on the builder + new `XxxLayer` implementations — no breaking changes to existing pipelines or call sites.
+`IResilientLayer<TKey, TValue>` is a single-method interface. Adding a new layer is mechanical: one new `XxxLayer` impl + one new `Use*` builder method on the pipeline — no breaking changes to existing pipelines or call sites.
 
 ---
 

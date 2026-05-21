@@ -8,17 +8,7 @@ Copyright (c) DCSV. All rights reserved.
 
 Roslyn incremental source generator that emits context interfaces + the
 mutable concrete class from JSON spec files. Multi-target — dispatches per
-consuming assembly:
-
-| Assembly | Emitted file(s) |
-|---|---|
-| `D2.Shared.AuthContext.Abstractions` | `IAuthContext.g.cs` |
-| `D2.Shared.Context.Abstractions` | `IRequestContext.g.cs` (extends `IAuthContext`) |
-| `D2.Shared.Context.Abstractions` | `MutableRequestContext.g.cs` |
-| `D2.Shared.Context.Abstractions` | `PropagatedContext.g.cs` (cross-hop wire record) |
-| `D2.Shared.Context.Abstractions` | `PropagatedContextExtensions.g.cs` (`MutableRequestContext.ToPropagated()` / `Apply()`) |
-| `D2.Shared.Context.Abstractions` | `PropagatedContextSerializer.g.cs` (`Encode` / `TryDecode` for transport headers) |
-| Anything else | nothing |
+consuming assembly.
 
 The spec files are the single source of truth for the auth + request context
 shape. Adding a property is a one-line change to
@@ -26,6 +16,8 @@ shape. Adding a property is a one-line change to
 `contracts/request-context/IRequestContext.spec.json` — the interface, the
 mutable concrete, and the two factory methods (`FromClaims`,
 `FromJwtPayloadNoValidation`) all update on next build.
+
+**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
 
 > **Cross-hop propagation does NOT go through codegen.** The small subset of
 > fields a downstream consumer can't recompute (`RequestId`, `RequestPath`,
@@ -37,23 +29,17 @@ mutable concrete, and the two factory methods (`FromClaims`,
 
 ---
 
-## File layout
+## Catalog dispatch
 
-| Path | Role |
+| Assembly | Emitted file(s) |
 |---|---|
-| `D2.Shared.Context.SourceGen.csproj` | csproj — `netstandard2.0`, `IsRoslynComponent`, bundled `System.Text.Json` |
-| `Polyfills/IsExternalInit.cs` | `init`-accessor polyfill for `netstandard2.0` records |
-| `SpecFile.cs` | Pipeline-boundary record `(Path, Content)` — value-equatable for incremental cache stability |
-| `ContextSpec.cs` / `Section.cs` / `PropertySpec.cs` | Parsed-shape records |
-| `TypeVocabulary.cs` | Closed type vocab + derived-rule vocab + per-type default-value map |
-| `SpecLoader.cs` | JSON → `ContextSpec` parser. Emits `D2CTX001` on parse failure |
-| `LoadResult.cs` | `(Spec?, Diagnostic?)` |
-| `InterfaceEmitter.cs` | `ContextSpec` → interface `*.g.cs` (single-spec). Validates types + derived rules |
-| `MutableEmitter.cs` | `(authSpec, requestSpec)` → `MutableRequestContext.g.cs`. Cross-spec property collision check |
-| `PropagatedEmitter.cs` | `(authSpec, requestSpec)` → `PropagatedContext.g.cs` + `PropagatedContextExtensions.g.cs` + `PropagatedContextSerializer.g.cs`. Filters spec properties by `propagated` flag; emits the wire record + `MutableRequestContext` round-trip extensions + base64url-of-JSON header serializer |
-| `EmitDiagnostic.cs` / `EmitResult.cs` | Roslyn-decoupled diagnostic + emit-result records |
-| `DiagnosticIds.cs` / `DiagnosticDescriptors.cs` | `D2CTX001`–`D2CTX006` |
-| `ContextGenerator.cs` | `[Generator]` `IIncrementalGenerator`. Filters AdditionalFiles to `*.spec.json`, dispatches per assembly |
+| `D2.Shared.AuthContext.Abstractions` | `IAuthContext.g.cs` |
+| `D2.Shared.Context.Abstractions` | `IRequestContext.g.cs` (extends `IAuthContext`) |
+| `D2.Shared.Context.Abstractions` | `MutableRequestContext.g.cs` |
+| `D2.Shared.Context.Abstractions` | `PropagatedContext.g.cs` (cross-hop wire record) |
+| `D2.Shared.Context.Abstractions` | `PropagatedContextExtensions.g.cs` (`MutableRequestContext.ToPropagated()` / `Apply()`) |
+| `D2.Shared.Context.Abstractions` | `PropagatedContextSerializer.g.cs` (`Encode` / `TryDecode` for transport headers) |
+| Anything else | nothing |
 
 ---
 
@@ -114,31 +100,6 @@ Adding a rule requires extending `TypeVocabulary.IsValidDerivedRule` plus a per-
 
 ---
 
-## Wiring into a consuming csproj
-
-```xml
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>D2.Shared.AuthContext.Abstractions</RootNamespace>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\auth-abstractions\D2.Shared.Auth.Abstractions.csproj" />
-    <ProjectReference Include="..\context-source-gen\D2.Shared.Context.SourceGen.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="..\..\..\..\contracts\auth-context\IAuthContext.spec.json" />
-    <AdditionalFiles Include="..\..\..\..\contracts\request-context\IRequestContext.spec.json" />
-  </ItemGroup>
-</Project>
-```
-
-The per-assembly dispatch in `ContextGenerator` ensures only assemblies named in the dispatch table get emission. Other consumers (test projects, runtime libs that just reference `auth-context-abstractions`) get the analyzer DLL but no generated source.
-
----
-
 ## Generated runtime helpers (provided by the request-context concrete lib, NOT this generator)
 
 The generated `MutableRequestContext.g.cs` references:
@@ -152,6 +113,7 @@ These hand-written helpers live in `D2.Shared.Context.Abstractions` — the pars
 
 ## Reference
 
+- [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/auth-context/`](../../../../contracts/auth-context/) — auth-context spec + JSON Schema
 - [`contracts/request-context/`](../../../../contracts/request-context/) — request-context spec + JSON Schema
 - [`D2.Shared.Auth.Scopes.SourceGen`](../auth-scopes-source-gen/) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)

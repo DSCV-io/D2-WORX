@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # @d2/grpc-client
 
+> Parent: [`server/shared/typescript/`](../README.md)
+
 Singleton-per-process gRPC channel from the SvelteKit BFF to Edge, with
 two interceptors:
 

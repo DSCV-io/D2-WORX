@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # @d2/logging
 
+> Parent: [`server/shared/typescript/`](../README.md)
+
 Pino-backed `ILogger` interface + `markRedactedFields()` PII registration
 helper + `sanitizedErrorRender()` for safe error logging. Mirrors
 `D2.Shared.Logging` (.NET).

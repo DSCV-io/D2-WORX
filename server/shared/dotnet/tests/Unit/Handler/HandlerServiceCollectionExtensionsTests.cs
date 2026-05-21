@@ -52,8 +52,8 @@ public sealed class HandlerServiceCollectionExtensionsTests
     [Fact]
     public void AddD2Handler_DoesNotRegisterIRequestContext()
     {
-        // IRequestContext is transport-specific (handler-aspnetcore for HTTP,
-        // handler-messaging for AMQP). AddD2Handler must NOT pre-register it
+        // IRequestContext is transport-specific (aspnetcore for HTTP,
+        // messaging-rabbitmq for AMQP). AddD2Handler must NOT pre-register it
         // with a default — otherwise the wrong implementation could win
         // over the transport-specific scoped registration.
         var services = new ServiceCollection();

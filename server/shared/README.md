@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/`](../README.md)
 
-Cross-service libraries grouped by language — `.NET` for backend services and `TypeScript` for the SvelteKit BFF (and any future Node frontend). Most catalogs that span both languages are spec-driven (single JSON spec under `contracts/`, codegen on each side) so cross-language drift is structurally impossible.
+Cross-service libraries grouped by language — `.NET` for backend services and `TypeScript` for the SvelteKit BFF (and any other Node-side workspace package). Most catalogs that span both languages are spec-driven (single JSON spec under `contracts/`, codegen on each side) so cross-language drift is structurally impossible.
 
 ## Layout
 

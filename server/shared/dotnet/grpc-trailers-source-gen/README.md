@@ -4,7 +4,11 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.Grpc.Trailers.SourceGen
 
+> Parent: [`server/shared/dotnet/`](../README.md)
+
 Roslyn incremental source generator that emits the `D2GrpcTrailers` static class — the canonical catalog of gRPC trailer-key constants — from `contracts/grpc-trailers/grpc-trailers.spec.json`.
+
+**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
 
 ## What this emits
 
@@ -42,16 +46,3 @@ gRPC HTTP/2 trailer names are case-insensitive per the HTTP/2 spec; the project 
 | `D2GT003` | Duplicate gRPC trailer wire value | Error |
 | `D2GT004` | gRPC trailer constName has invalid shape | Error |
 | `D2GT005` | gRPC trailer wire value is empty | Error |
-
-## Wiring
-
-The consuming csproj (`D2.Shared.Auth.Grpc`) wires this source-gen by adding it as an analyzer:
-
-```xml
-<ProjectReference Include="..\grpc-trailers-source-gen\D2.Shared.Grpc.Trailers.SourceGen.csproj"
-                  OutputItemType="Analyzer"
-                  ReferenceOutputAssembly="false" />
-<AdditionalFiles Include="..\..\..\..\contracts\grpc-trailers\grpc-trailers.spec.json" />
-```
-
-The `EmitCompilerGeneratedFiles` + `CompilerGeneratedFilesOutputPath` settings on the consumer dump `D2GrpcTrailers.g.cs` under `Generated/` so PR reviewers see codegen diffs without a local build.

@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/services/`](../README.md)
 
-> **Status**: placeholder — not yet implemented.
+> **Status**: NOT IMPLEMENTED — tracked at [docs/v2/V2.md](../../../docs/v2/V2.md).
 
 ## Purpose
 
@@ -20,13 +20,12 @@ Every service publishes `AuditEvent` to the `d2.audit.events` exchange (fanout, 
 - Different access control (compliance / legal can be granted read-only without touching anything else)
 - Append-only easier to enforce in dedicated DB (revoke `UPDATE` / `DELETE` from the service role; only `INSERT` allowed)
 - Cross-service audit (Edge actions, Files actions, Courier actions) all flow into one query surface
-- Optional later upgrade to tamper-evident immutable bucket (S3 Object Lock) without changing producers
+- Producer contract is stable enough to accept a tamper-evident backend swap (e.g. S3 Object Lock) without changes
 
 ## Public API surface
 
 - gRPC: read-only query endpoints for compliance / support / admin lookups
 - RabbitMQ consumer: subscribes to `d2.audit.events` fanout exchange
-- REST API (TBD): admin UI integration for searchable audit log
 
 ## Dependencies (.NET shared libs)
 
@@ -44,9 +43,5 @@ Every service publishes `AuditEvent` to the `d2.audit.events` exchange (fanout, 
 
 - D2.Audit — full architectural details (write path, schema, in-transit opacity)
 - KeyCustodian — D2.Audit publishes `incident` rows on emergency rotations
-- [docs/MESSAGING.md](../../../docs/MESSAGING.md) — at-least-once delivery semantics + idempotent consumer requirement
-- [OPERATIONAL-GUARANTEES.md](../../../docs/OPERATIONAL-GUARANTEES.md) — at-least-once fanout consumer pattern
+- [`server/shared/dotnet/messaging-rabbitmq/README.md`](../../shared/dotnet/messaging-rabbitmq/README.md) — at-least-once delivery semantics + idempotent consumer requirement + fanout consumer pattern
 
-## When to expand this README
-
-When this service is built out, expand sections with: concrete event types accepted, query API documentation, retention policy details, compliance-export flow.

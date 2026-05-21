@@ -64,7 +64,7 @@ If no backplane is registered, `*AndBroadcast*` methods throw `InvalidOperationE
 ops (`SetAsync` / `RemoveAsync` etc.) work fine; L1 caches drift from each other until their TTLs
 expire.
 
-## Why no `ICacheSet`
+## Design rationale: no `ICacheSet`
 
 `ITieredCache` deliberately does NOT implement `ICacheSet` (SADD/SCARD). Set-cardinality is
 inherently cluster-only — there's no honest way to compose it across L1+L2 (an L1 set would only see

@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # @d2/result
 
+> Parent: [`server/shared/typescript/`](../README.md)
+
 `D2Result<T>` + semantic factories + combine/bubble helpers.
 Mirrors `D2.Shared.Result` (.NET) so the cross-language wire is byte-identical.
 

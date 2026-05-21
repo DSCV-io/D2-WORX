@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # @d2/utilities
 
+> Parent: [`server/shared/typescript/`](../README.md)
+
 Boundary helpers — `falsey`/`truthy` semantics, string cleaning, parse-or-null
 helpers, indexed env-var array parsing, and the regex constants used across the
 TS codebase. Mirrors `D2.Shared.Utilities` (.NET).

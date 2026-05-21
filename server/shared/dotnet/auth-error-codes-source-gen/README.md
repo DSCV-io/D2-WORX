@@ -10,27 +10,7 @@ Roslyn incremental source generator that emits the `AuthErrorCodes` const-string
 
 The spec file is the single source of truth for the platform's auth-error taxonomy. Every `d2_error_code` constant a transport binding surfaces, every `D2Result` factory the validator picks, and the cross-spec telemetry tag-value enumeration on `d2.auth.problem.emitted` (resolved by `D2.Shared.Telemetry.Tags.SourceGen` via `valuesFromSpec`) all derive from one JSON file — no hand-written parallel constants, no per-feature drift.
 
----
-
-## File layout
-
-| Path | Role |
-|---|---|
-| `D2.Shared.Auth.ErrorCodes.SourceGen.csproj` | csproj — `netstandard2.0`, `IsRoslynComponent`, `PrivateAssets="all"` on Roslyn deps + bundled `System.Text.Json` |
-| `Polyfills/IsExternalInit.cs` | Polyfill enabling `init` accessors on `netstandard2.0` records |
-| `Polyfills/StringExt.cs` | Local `Falsey()` polyfill (utilities lib targets `net10`; can't be referenced from `netstandard2.0`) |
-| `SpecFile.cs` | Pipeline-boundary record `(Path, Content)` — value-equatable for incremental cache stability |
-| `ErrorCodesSpec.cs` | Parsed-shape record for the top-level spec — `(ImmutableArray<ErrorCodeEntry> ErrorCodes)` |
-| `ErrorCodeEntry.cs` | Parsed-shape record per spec entry — `(Code, HttpStatus, Category, UserMessageKey, FactoryName, Doc)` |
-| `ErrorCodeSpecLoader.cs` | JSON → `ErrorCodesSpec` parser. Emits `D2AEC001` on parse failure |
-| `ErrorCodesEmitter.cs` | `ErrorCodesSpec` → `AuthErrorCodes.g.cs`. Emits SCREAMING_SNAKE constants + `AllCodes` set + `GetHttpStatus` + `KebabCase` helper. Emits `D2AEC002`–`D2AEC005` |
-| `FailureFactoriesEmitter.cs` | `ErrorCodesSpec` → `AuthFailures.g.cs`. Emits per-entry semantic factories returning `D2Result` (plus typed `<T>` overloads for `infrastructure_unavailable` entries) |
-| `EmitDiagnostic.cs` | Roslyn-decoupled diagnostic record + per-id factories |
-| `EmitResult.cs` | `(GeneratedSource, ImmutableArray<EmitDiagnostic>)` |
-| `LoadResult.cs` | `(ErrorCodesSpec? Spec, EmitDiagnostic? Diagnostic)` |
-| `DiagnosticIds.cs` | String IDs `D2AEC001`–`D2AEC005` (Roslyn-decoupled — pure-logic tests can reference) |
-| `DiagnosticDescriptors.cs` | Roslyn `DiagnosticDescriptor` instances (loaded only inside the host) |
-| `ErrorCodesGenerator.cs` | `[Generator]` `IIncrementalGenerator`. Filters AdditionalFiles to `auth-error-codes.spec.json`, gates by assembly name, drives loader + both emitters |
+**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
 
 ---
 
@@ -83,40 +63,20 @@ The spec file is the single source of truth for the platform's auth-error taxono
 
 ---
 
-## Emitted output
+## Emitted output (two `.g.cs` files)
 
-Two `.g.cs` files emitted into the consuming assembly (`D2.Shared.Auth`):
+Both files emit into the consuming assembly (`D2.Shared.Auth`) from the same spec:
 
 1. **`AuthErrorCodes.g.cs`** — `D2.Shared.Auth.Errors.AuthErrorCodes` static class with one `public const string` per spec entry, `IReadOnlyList<string> AllCodes`, `int GetHttpStatus(string)`, and `string KebabCase(string)` for the ProblemDetails `type` URI helper.
 2. **`AuthFailures.g.cs`** — `D2.Shared.Auth.Errors.AuthFailures` static class with one `public static D2Result FactoryName()` per spec entry, plus a typed `D2Result<T> FactoryName<T>()` overload for every `infrastructure_unavailable` entry.
 
----
-
-## Wiring into a consuming csproj
-
-```xml
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>D2.Shared.Auth</RootNamespace>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\auth-error-codes-source-gen\D2.Shared.Auth.ErrorCodes.SourceGen.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="..\..\..\..\contracts\auth-error-codes\auth-error-codes.spec.json" />
-  </ItemGroup>
-</Project>
-```
-
-The single-target dispatch in `ErrorCodesGenerator` ensures only assemblies named `D2.Shared.Auth` get the emitted `AuthErrorCodes.g.cs` + `AuthFailures.g.cs` — other consumers (test projects, transport-binding csprojs that just reference `auth`) get the analyzer DLL but no emission.
+The two-emitter split lives in one sourcegen because both outputs derive from the same spec rows — keeping them co-located ensures any spec edit re-emits both files together and prevents the constants catalog from drifting from the factory surface.
 
 ---
 
 ## Reference
 
+- [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/auth-error-codes/schema.json`](../../../../contracts/auth-error-codes/schema.json) — JSON Schema for the spec
 - [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../contracts/auth-error-codes/auth-error-codes.spec.json) — the source-of-truth catalog
 - [`D2.Shared.Auth.Scopes.SourceGen`](../auth-scopes-source-gen/) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)

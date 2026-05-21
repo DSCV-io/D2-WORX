@@ -4,7 +4,11 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.OtelMessagingTags.SourceGen
 
+> Parent: [`server/shared/dotnet/`](../README.md)
+
 Roslyn incremental source generator that emits `MessagingActivityTags` — the closed catalog of OTel semantic-convention messaging activity-tag attribute names — from `contracts/otel-messaging-tags/otel-messaging-tags.spec.json`.
+
+**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
 
 ## Why spec-drive this catalog
 
@@ -29,7 +33,3 @@ The SAME spec drives `@d2/telemetry` via `tools/ts-codegen/src/otel-messaging-ta
 | `D2OMT003` | Duplicate wire value | Error |
 | `D2OMT004` | constName has invalid shape | Error |
 | `D2OMT005` | Empty wire value | Error |
-
-## Wiring
-
-The consuming csproj (`D2.Shared.Messaging.RabbitMq`) wires this source-gen by adding it as an analyzer alongside an `<AdditionalFiles>` reference to the spec.

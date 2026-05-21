@@ -48,7 +48,7 @@ D2Env.Load();
 D2Env.Load(".env.test", ".env.local");
 ```
 
-### Discovery (option B — "first directory wins")
+### Discovery — "first directory wins"
 
 Walks up from `AppContext.BaseDirectory` (max 12 levels) looking for the FIRST directory that contains AT LEAST ONE of the named files, then loads every matching file from THAT directory only. Files from different ancestor directories are NEVER mixed — prevents weird hybrid situations where the "wrong" `.env.secrets` from a higher directory gets paired with the "right" `.env.local` from a lower one.
 
@@ -57,7 +57,7 @@ C:\repo\.env.secrets         ← FOUND first
 C:\repo\subproj\.env.local   ← FOUND first (different walk start)
 
 If walk starts in C:\repo\subproj\bin\Debug:
-  → discovery dir = C:\repo\subproj
+  → discovery directory = C:\repo\subproj
   → loads C:\repo\subproj\.env.local only
   → does NOT pick up C:\repo\.env.secrets
 ```

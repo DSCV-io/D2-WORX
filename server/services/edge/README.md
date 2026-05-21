@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/services/`](../README.md)
 
-> **Status**: placeholder — not yet implemented.
+> **Status**: NOT IMPLEMENTED — tracked at [docs/v2/PHASE_3_EDGE.md](../../../docs/v2/PHASE_3_EDGE.md).
 
 ## Purpose
 
@@ -17,11 +17,11 @@ Edge is intentionally "thick" — middleware, routing, auth, real-time push, Who
 ## Modules
 
 - **YARP routing** — load-balanced reverse proxy to backend services. YARP IS the load balancer.
-- **Auth module** — RFC 8693 token exchange, RFC 6749 §4.4 client_credentials, scope registry, impersonation, adaptive auth (composite fingerprint + behavioral risk scoring), security policy framework, sessions (3-tier per OPERATIONAL-GUARANTEES.md), OAuth client registry. Owns `auth_db`.
+- **Auth module** — RFC 8693 token exchange, RFC 6749 §4.4 client_credentials, scope registry, impersonation, adaptive auth (composite fingerprint + behavioral risk scoring), security policy framework, sessions (3-tier per [`docs/v2/PHASE_3_EDGE.md`](../../../docs/v2/PHASE_3_EDGE.md)), OAuth client registry. Owns `auth_db`.
 - **KeyCustodian** — module within Auth — manages lifecycle of ALL long-lived secrets (JWKS signing keys, message payload encryption keys, cookie signing secrets, service-identity client_secrets). State machine + JWKS-style overlap rotation.
 - **SignalR hubs** — handshake-only auth + targeted revocation + 10-conn-per-user FIFO + 5s reconnect. Push-only design (no client-to-server hub methods). gRPC push API for backend services.
 - **WhoIs** — in-process (IPinfo client). Edge fetches once per request, passes downstream via `X-D2-WhoIs` header. No multi-tier cache.
-- **Cross-cutting middleware** — rate limit (4-dimensional sliding window), fingerprint binding, JWT validation, idempotency, CSRF, CORS, request enrichment, translation. All composed at startup.
+- **Cross-cutting middleware** — rate limit (multi-dimensional sliding window keyed by `RateLimitTier` × auth state — see [docs/v2/PHASE_3_RATE_LIMITING.md](../../../docs/v2/PHASE_3_RATE_LIMITING.md) for the canonical bucket model), fingerprint binding, JWT validation, idempotency, CSRF, CORS, request enrichment, translation. All composed at startup.
 
 ## Public API surface
 
@@ -61,10 +61,3 @@ Both on the same PG server(one server, many DBs).
 
 Required CI gate: **`integration-key-rotation`** — KeyCustodian rotation flow (graceful + emergency + race conditions + archive decryption). See [docs/TESTS.md](../../../docs/TESTS.md) "Required CI Gate" section.
 
-## When to expand this README
-
-When this service is built out, expand sections with:
-- Concrete endpoint list (HTTP + gRPC)
-- Per-module details (Auth handlers, SignalR channel patterns, etc.)
-- Dev setup instructions
-- Deployment notes

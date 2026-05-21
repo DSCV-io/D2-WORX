@@ -38,35 +38,7 @@ app.MapGet("/healthz", () => "ok").MarkAsD2HarmlessEndpoint();
 
 ### Composing with siblings (dual-transport host)
 
-A host that serves both HTTP endpoints and gRPC services on the same AspNetCore Kestrel host wires all three extensions in a fluent chain:
-
-```csharp
-builder.Services
-    .AddD2Auth(opts =>
-    {
-        opts.Issuer = new Uri("https://edge.internal");
-        opts.Audience = Audiences.MyService;
-    })
-    .AddD2AuthHttp()
-    .AddD2AuthGrpc();
-
-builder.Services.AddGrpc(o => o.MaxReceiveMessageSize = 16 * 1024 * 1024);
-
-builder.Services.AddOpenTelemetry()
-    .WithTracing(t => t.AddSource(AuthTelemetry.ACTIVITY_SOURCE_NAME))
-    .WithMetrics(m => m.AddMeter(AuthTelemetry.METER_NAME));
-
-var app = builder.Build();
-app.UseRouting();
-app.UseD2Auth();              // HTTP middleware
-app.MapGet("/files/{id}", H).RequireD2Scope("files.read");
-app.MapGrpcService<MyGrpcService>();   // interceptor handles gRPC auth
-app.Run();
-```
-
-Both transport extensions register an IDENTICAL scoped `IRequestContext` resolver lambda reading from the same `HttpContext.Items` slot. The HTTP middleware writes the slot on successful auth; the gRPC interceptor mirrors that write (alongside its own `ServerCallContext.UserState` write). Constructor-injecting `IRequestContext` works correctly under either transport. Registration order does not matter: `TryAddScoped` first-wins is harmless because the lambdas behave identically given the same `HttpContext` state.
-
-For HTTP-only or gRPC-only hosts, omit the unused `AddD2AuthXxx()` call — each transport extension is opt-in via the host's csproj `<PackageReference>` chain.
+> See [`../auth/README.md` § Composing with siblings](../auth/README.md#composing-with-siblings) for the canonical dual-transport composition pattern (fluent chain, identical `IRequestContext` resolver across both transports, HTTP-only / gRPC-only carve-outs).
 
 ### Endpoint metadata — `EndpointScopeMetadata`
 
@@ -130,46 +102,15 @@ Or better, constructor-inject `IRequestContext` directly — the scoped resolver
 
 ## Failure surface
 
-Every failure in this lib's middleware terminates the request with a 401 or 503 ProblemDetails (NEVER 403 — see [`AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT`](../auth/Errors/AuthErrorCodes.cs) remarks for the rationale).
-
-| `d2_error_code` | HTTP | Trigger |
-|---|---|---|
-| `AUTH_BEARER_MISSING` | 401 | No `Authorization` header / non-`Bearer ` prefix / empty token after prefix. |
-| `AUTH_BEARER_MALFORMED` | 401 | Header present but token is not a parseable JWT. |
-| `AUTH_JWT_SIGNATURE_INVALID` | 401 | Signature verification failed. |
-| `AUTH_JWT_EXPIRED` | 401 | `exp` in the past, beyond clock skew. |
-| `AUTH_JWT_NOT_YET_VALID` | 401 | `nbf` in the future, beyond clock skew. |
-| `AUTH_JWT_ISSUER_MISMATCH` | 401 | `iss` mismatch. |
-| `AUTH_JWT_AUDIENCE_MISMATCH` | 401 | `aud` mismatch. |
-| `AUTH_JWT_CLAIM_MISSING` | 401 | Required claim absent (e.g. `d2_session_id` when `RequireSessionIdClaim`). |
-| `AUTH_JWT_KID_NOT_FOUND` | 401 | Unknown `kid` after one reactive JWKS refresh. |
-| `AUTH_SESSION_REVOKED` | 401 | Session liveness check returned revoked. |
-| `AUTH_SCOPE_INSUFFICIENT` | 401 | Caller has no scopes overlapping the endpoint's required set. |
-| `AUTH_JWKS_UNAVAILABLE` | 503 | Upstream OIDC issuer unreachable; no cached snapshot. |
-| `AUTH_SESSION_LIVENESS_UNAVAILABLE` | 503 | Liveness store unreachable; fail-closed. |
+> See [`../auth/README.md` § Failure helpers — `AuthFailures`](../auth/README.md#failure-helpers--authfailures) for the canonical 14-row failure-code table (single source: [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../contracts/auth-error-codes/auth-error-codes.spec.json)). HTTP renders `D2Result.StatusCode` verbatim into the RFC 7807 `status` field — no remapping. Every failure terminates with 401 or 503 ProblemDetails (NEVER 403 — see [`../auth/README.md` § Failure surface — transport status mapping](../auth/README.md#failure-surface--transport-status-mapping) for the cross-transport rationale).
 
 ## Bearer extraction edge cases (RFC 6750 §2.1)
 
-| Input | Result |
-|---|---|
-| Header absent | `BearerMissing` |
-| `Authorization: Basic foo` | `BearerMissing` (wrong scheme) |
-| `Authorization: bearer eyJ...` | OK (case-insensitive prefix match) |
-| `Authorization: BEARER eyJ...` | OK |
-| `Authorization: Bearer ` (empty after prefix) | `BearerMissing` (semantically nothing to validate) |
-| `Authorization: Bearer not.a.jwt.too.many.parts` | Validator returns `BearerMalformed` |
-| Multiple `Authorization` headers | First wins (RFC 7230 §3.2.2) |
-| Whitespace inside token | NOT trimmed — passed through verbatim; validator rejects. Trimming would mask client bugs. |
+> See [`../auth/README.md` § Bearer extraction edge cases](../auth/README.md#bearer-extraction-edge-cases-rfc-6750-21) for the canonical edge-case table. HTTP middleware reads from the `Authorization` request header; the table is identical semantics across both transports.
 
 ## PII discipline
 
-Bearer bytes, claim values, and scope strings NEVER reach logs / span tags / metric tags / ProblemDetails fields / exception interpolations. The middleware's `[LoggerMessage]` delegates emit only outcome categories:
-
-- `BearerHeaderMissing` — boolean fact, no header value.
-- `ScopeRequirementUnmet(string requiredScopesSummary)` — closed-enumeration summary (`"N scopes required, first=files.read"`), NOT the full scope set verbatim.
-- `LivenessRevoked` — no parameters; sessionId is PII, never logged.
-
-The auth-core lib's `AuthLog` enforces the no-`Exception`-parameter contract via reflection-based contract tests; this lib reuses the same delegates.
+> See [`../auth/README.md` § PII discipline — `SanitizedExceptionRender`](../auth/README.md#pii-discipline--sanitizedexceptionrender). PII rules apply uniformly across HTTP and gRPC bindings; both reuse the auth-core lib's `AuthLog` delegates and emit closed-enumeration outcome categories only.
 
 ## Dependencies
 

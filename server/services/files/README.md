@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/services/`](../README.md)
 
-> **Status**: placeholder — not yet implemented.
+> **Status**: NOT IMPLEMENTED — tracked at [docs/v2/V2.md](../../../docs/v2/V2.md).
 
 ## Purpose
 
@@ -36,7 +36,7 @@ Transitions managed by `transitionFileStatus()` (transactional, audit-logged). F
 - REST API:
   - `POST /api/v1/files/{contextKey}/upload-url` — issue presigned PUT URL
   - `GET /api/v1/files/{id}` — file metadata + presigned read URL
-  - `GET /api/v1/files/{contextKey}/list` — list files for a context (per `LIST_RESOLUTION` permission)
+  - `GET /api/v1/files/{contextKey}/list` — list files for a context (per `LIST_RESOLUTION` resolution policy)
   - `DELETE /api/v1/files/{id}` — delete file + variants
 - gRPC: callback resolution endpoints (Files calls owning services to verify access)
 - RabbitMQ consumer: storage notifications (SeaweedFS upload-complete events)
@@ -45,7 +45,7 @@ Transitions managed by `transitionFileStatus()` (transactional, audit-logged). F
 ## Dependencies (.NET shared libs)
 
 - `D2.Shared.Messaging` (consumer + publisher)
-- `D2.Shared.Encryption` (NOT used for `d2.files.events` initially — low PII; can opt-in later via `[Encrypted(Domain.X)]` if `metadata` ends up containing filenames)
+- `D2.Shared.Encryption` (NOT used for `d2.files.events` — `metadata` is not classified PII; `[Encrypted(Domain.X)]` is the opt-in attribute when payload encryption is required)
 - `D2.Shared.Auth` (JWT validation on REST endpoints, scope checks)
 - `D2.Shared.Contacts` (file ownership references via `files_contacts_db`)
 - `D2.Shared.GeoReference` (locale-aware filename normalization, optional)
@@ -88,8 +88,5 @@ Smartphone MIME types (HEIC / HEIF, 3GPP, AAC / M4A, etc.) ship in `D2.Files.Dom
 ## References
 
 - [docs/PATTERNS.md](../../../docs/PATTERNS.md) — handler / D2Result / RedactionSpec / cache patterns
-- [docs/MESSAGING.md](../../../docs/MESSAGING.md) — `d2.files.events` exchange contract
+- [`server/shared/dotnet/messaging-rabbitmq/README.md`](../../shared/dotnet/messaging-rabbitmq/README.md) — `d2.files.events` exchange contract + RabbitMQ wire format
 
-## When to expand this README
-
-When this service is built out, expand sections with: per-context-key config reference table, callback flow diagrams, variant generation pipeline, processing retry policy.

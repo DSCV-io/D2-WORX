@@ -6,31 +6,14 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
-Roslyn incremental source generator that emits the messaging registry types (`MqMessages` + `MqMessagesRegistry` + `MqSubscriptions` + `MqSubscriptionsRegistry`) into [`D2.Shared.Messaging.Abstractions`](../messaging-abstractions/) by reading two spec files from `contracts/`:
+Roslyn incremental source generator that emits the messaging registry types (`MqMessages` + `MqMessagesRegistry` + `MqSubscriptions` + `MqSubscriptionsRegistry`) into [`D2.Shared.Messaging.Abstractions`](../messaging-abstractions/README.md) by reading two spec files from `contracts/`:
 
 - `mq-messages.spec.json` — every message type the platform publishes (constant name, runtime descriptor, encryption requirements)
 - `mq-subscriptions.spec.json` — every subscription declaration (consumer name, message types, retry policy, prefetch, idempotency)
 
 The spec files are the single source of truth — adding a new message or subscription is a one-line edit to a JSON file; the generator picks it up next build, emits the constant + descriptor + registry entry, and downstream consumers compile against typed identifiers (`MqMessages.UserCreated` not `"user.created"`).
 
----
-
-## File layout
-
-| Path | Role |
-|---|---|
-| `D2.Shared.Messaging.SourceGen.csproj` | csproj — `netstandard2.0`, `IsRoslynComponent`, `PrivateAssets="all"` on Roslyn deps + bundled `System.Text.Json` |
-| `Polyfills/IsExternalInit.cs` | `init`-accessor polyfill for `netstandard2.0` records |
-| `Polyfills/StringExt.cs` | netstandard2.0 polyfill of `D2.Shared.Utilities.Extensions.Falsey()` (the analyzer can't reference `D2.Shared.Utilities` because that lib targets `net10`) |
-| `SpecFile.cs` | Pipeline-boundary record `(Path, Content)` — value-equatable for incremental cache stability |
-| `MqMessageEntry.cs` / `MqSubscriptionEntry.cs` / `MqMessagesSpec.cs` / `MqSubscriptionsSpec.cs` | Parsed-shape records |
-| `TieredRetryConfig.cs` | Sub-record for subscription tiered-retry config |
-| `MqMessagesLoader.cs` / `MqSubscriptionsLoader.cs` | JSON → spec records. Emit `D2MQ001` on parse failure |
-| `LoadResult.cs` | `(Spec?, Diagnostic?)` |
-| `MqEmitter.cs` | `(messagesSpec, subsSpec, encryptionDomains)` → `(MqMessages.g.cs, MqSubscriptions.g.cs)`. Validates encryption domain names against the runtime-discovered `EncryptionDomains` constants from the consuming compilation |
-| `EmitDiagnostic.cs` / `EmitResult.cs` | Roslyn-decoupled diagnostic + emit-result records |
-| `DiagnosticIds.cs` / `DiagnosticDescriptors.cs` | `D2MQ001`–`D2MQ012` |
-| `MqGenerator.cs` | `[Generator]` `IIncrementalGenerator`. Filters AdditionalFiles to the two spec files, gates by assembly name, drives loaders + emitter |
+**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
 
 ---
 
@@ -105,7 +88,9 @@ The spec files are the single source of truth — adding a new message or subscr
 
 ---
 
-## Emitted shape
+## Emitted output (two `.g.cs` files)
+
+Both files emit into the consuming assembly (`D2.Shared.Messaging.Abstractions`) from the two specs read together:
 
 ```csharp
 // MqMessages.g.cs
@@ -128,37 +113,36 @@ public static partial class MqSubscriptionsRegistry { /* dict */ }
 
 `MqMessagesRegistry.ByConstant[name]` returns the full descriptor (`messageType`, `encryptionReason`, `defaultRoutingKey`, etc.) — used by `D2.Shared.Messaging.RabbitMq` at publish time to look up encryption + routing settings without a parallel hand-written table.
 
+The two-file split lives in one sourcegen because publishers consume `MqMessages*` constants and subscribers consume `MqSubscriptions*` constants — both derive from the same shared encryption-domain validation pass, and keeping them in one generator ensures spec edits re-emit both files together.
+
 ---
 
-## Wiring into a consuming csproj
+## Spec evolution rules
 
-```xml
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>D2.Shared.Messaging.Abstractions</RootNamespace>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
-  </PropertyGroup>
+The spec files ARE the contract. Adding / renaming / removing fields requires
+careful coordination with deployed consumers:
 
-  <ItemGroup>
-    <ProjectReference Include="..\messaging-source-gen\D2.Shared.Messaging.SourceGen.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="..\..\..\..\contracts\mq-messages\mq-messages.spec.json" />
-    <AdditionalFiles Include="..\..\..\..\contracts\mq-subscriptions\mq-subscriptions.spec.json" />
-  </ItemGroup>
-</Project>
-```
-
-The single-target dispatch in `MqGenerator` ensures only `D2.Shared.Messaging.Abstractions` gets the emitted source. Other consumers get the analyzer DLL but no emission.
+- **Adding a message**: add a `messages[]` entry, mark the new class
+  `[MqPub(MqMessages.X)]`, rebuild — codegen surfaces the constant. Consumers
+  pick up the new constant on their next build.
+- **Renaming a constant**: edit the spec, update every `[MqPub("...")]` /
+  `[MqSub("...")]` reference. The resolver / registrar hard-fail on stale
+  references; CI catches it.
+- **Changing the wire shape of an existing message**: the message class itself
+  is the source of truth. JSON serialization tolerates additive changes (new
+  optional fields). Removing or renaming a field is a breaking change — bump
+  to a new constant + new class until every consumer has migrated.
+- **Encryption-domain change**: edit the spec. The publisher picks up the new
+  descriptor on the next build; rolling-upgrade safety needs both keyrings
+  registered during the cutover window.
 
 ---
 
 ## Reference
 
+- [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/mq-messages/mq-messages.spec.json`](../../../../contracts/mq-messages/mq-messages.spec.json) — message catalog
 - [`contracts/mq-subscriptions/mq-subscriptions.spec.json`](../../../../contracts/mq-subscriptions/mq-subscriptions.spec.json) — subscription catalog
-- [`D2.Shared.Messaging.Abstractions`](../messaging-abstractions/) — emission target
-- [`D2.Shared.Messaging.RabbitMq`](../messaging-rabbitmq/) — primary consumer (publish + consume)
+- [`D2.Shared.Messaging.Abstractions`](../messaging-abstractions/README.md) — emission target + transport-agnostic contract
+- [`D2.Shared.Messaging.RabbitMq`](../messaging-rabbitmq/README.md) — primary consumer (publish + consume) + canonical runtime / wire-format / topology reference
 - [`D2.Shared.Auth.Scopes.SourceGen`](../auth-scopes-source-gen/) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
-- [`docs/MESSAGING.md`](../../../../docs/MESSAGING.md) — wire format + AMQP topology + DLQ

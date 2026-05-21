@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/services/`](../README.md)
 
-> **Status**: placeholder — not yet implemented.
+> **Status**: NOT IMPLEMENTED — tracked at [docs/v2/V2.md](../../../docs/v2/V2.md).
 
 ## Purpose
 
@@ -44,7 +44,6 @@ Aggregation rules live in Notifications (it owns the feed shape). Producers don'
 
 - **Does NOT decide whether to also send email/SMS** — that's the producer's call. Producers publish to BOTH `d2.notifications.requests` (for in-app) AND call D2.Courier (for email/SMS) explicitly.
 - **Not a delivery service** — D2.Courier handles outbound delivery. Notifications handles in-app feed only.
-- **Not conversational** — D2.Threads (deferred) handles user-to-user messaging.
 
 ## Client library
 
@@ -52,9 +51,6 @@ Aggregation rules live in Notifications (it owns the feed shape). Producers don'
 
 ## References
 
-- [docs/MESSAGING.md](../../../docs/MESSAGING.md) — RabbitMQ patterns + at-least-once delivery semantics
+- [`server/shared/dotnet/messaging-rabbitmq/README.md`](../../shared/dotnet/messaging-rabbitmq/README.md) — RabbitMQ patterns + at-least-once delivery semantics
 - [docs/PATTERNS.md](../../../docs/PATTERNS.md) — handler / D2Result / RedactionSpec patterns
 
-## When to expand this README
-
-When this service is built out, expand sections with: pagination + filtering API details, aggregation rule examples, real-time push integration with Edge SignalR.

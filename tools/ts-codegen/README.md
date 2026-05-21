@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # tools/ts-codegen
 
+> Parent: [`tools/`](../README.md)
+
 Per-topic TypeScript codegen scripts that emit `.g.ts` abstractions from
 the spec catalogs under `contracts/`. Sibling to the .NET Roslyn source
 generators (`server/shared/dotnet/*-source-gen/`) — both consume the same
@@ -22,25 +24,36 @@ between the two.
 
 ## Public API (per-topic emitters)
 
-Each emitter exports a single `runXxxEmit(force?)` function returning the
-diagnostics array (empty on success). The CLI entry at the bottom of each
-file invokes `runXxxEmit` and exits non-zero on diagnostic count > 0.
+Each emitter exports one or more `runXxxEmit(force?)` functions returning the
+diagnostics array (empty on success). Standalone CLI invocation is supported
+per file; the orchestrator imports the exported runners directly.
 
-| Script                     | Reads spec                                              | Emits into                                                                                                                                                                          |
-| -------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `auth-context-emit.ts`     | `contracts/auth-context/IAuthContext.spec.json`         | `@d2/auth-context-abstractions` (interface + 4 enums + `ActorEntry` type + `IAuthContextRedactPaths`)                                                                               |
-| `request-context-emit.ts`  | `contracts/request-context/IRequestContext.spec.json`   | `@d2/request-context-abstractions` (interface + `IPropagatedContext` + `PropagatedContextSerializer` + `IRequestContextRedactPaths`)                                                |
-| `auth-scopes-emit.ts`      | `contracts/auth-scopes/scopes.spec.json`                | `@d2/auth-abstractions` (`Scopes` nested-const tree)                                                                                                                                |
-| `auth-error-codes-emit.ts` | `contracts/auth-error-codes/auth-error-codes.spec.json` | `@d2/auth-abstractions` (`AuthErrorCodes` constants)                                                                                                                                |
-| `auth-failures-emit.ts`    | same spec as auth-error-codes                           | `@d2/auth-abstractions` (`AuthFailures.*` factories returning `D2Result.fail`)                                                                                                      |
-| `headers-emit.ts`          | `contracts/headers/headers.spec.json`                   | One of `@d2/headers-{common,http,amqp,grpc}` per `--target=<transport>` flag — emits the per-transport catalog of wire-protocol header constants (cross-transport entries inlined). |
-| `jwt-claims-emit.ts`       | `contracts/jwt-claims/jwt-claims.spec.json`             | `@d2/auth-abstractions` (`JwtClaimTypes` string-constant catalog AND the `JwtPayload` typed-shape interface — one runner, two outputs).                                             |
+Listed in `src/orchestrator.ts` dep-graph order:
 
-`src/orchestrator.ts` runs every emitter in dep-graph order
-(auth-context first since request-context extends it; auth-scopes /
-auth-error-codes / auth-failures in sequence so failure factories see
-the emitted error codes; headers per-transport in a fixed order;
-jwt-claims standalone). Invoked via the top-level `pnpm codegen`.
+| Script                          | Reads spec                                              | Emits into                                                                                                                                                                          |
+| ------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth-context-emit.ts`          | `contracts/auth-context/IAuthContext.spec.json`         | `@d2/auth-context-abstractions` (interface + 4 enums + `ActorEntry` type + `IAuthContextRedactPaths`)                                                                               |
+| `request-context-emit.ts`       | `contracts/request-context/IRequestContext.spec.json`   | `@d2/request-context-abstractions` (interface + `IPropagatedContext` + `PropagatedContextSerializer` + `IRequestContextRedactPaths`). Runs after auth-context since request-context extends it. |
+| `auth-scopes-emit.ts`           | `contracts/auth-scopes/scopes.spec.json`                | `@d2/auth-abstractions` (`Scopes` nested-const tree)                                                                                                                                |
+| `auth-error-codes-emit.ts`      | `contracts/auth-error-codes/auth-error-codes.spec.json` | `@d2/auth-abstractions` (`AuthErrorCodes` constants)                                                                                                                                |
+| `auth-failures-emit.ts`         | same spec as auth-error-codes                           | `@d2/auth-abstractions` (`AuthFailures.*` factories returning `D2Result.fail`). Runs after auth-error-codes since the failure factories reference the emitted error-code constants.                                                                                                                                      |
+| `error-codes-emit.ts`           | `contracts/error-codes/error-codes.spec.json`           | `@d2/result` (generic `D2Result` error-code constants)                                                                                                                              |
+| `headers-emit.ts`               | `contracts/headers/headers.spec.json`                   | One of `@d2/headers-{common,http,amqp,grpc}` per `--target=<transport>` flag — emits the per-transport catalog of wire-protocol header constants (cross-transport entries inlined). |
+| `jwt-claims-emit.ts`            | `contracts/jwt-claims/jwt-claims.spec.json`             | `@d2/auth-abstractions` (`JwtClaimTypes` string-constant catalog AND the `JwtPayload` typed-shape interface — one runner, two outputs).                                             |
+| `problem-details-emit.ts`       | `contracts/problem-details/*.spec.json`                 | `@d2/problem-details-abstractions` (RFC 7807 Problem Details catalog)                                                                                                               |
+| `wire-shape-emit.ts`            | `contracts/tk-message/tk-message.spec.json` + `contracts/input-error/input-error.spec.json` | Single multi-target emitter exporting `runTkMessageEmit` (→ `@d2/i18n-abstractions` `TkMessageWireShape`) and `runInputErrorEmit` (→ `@d2/result` `InputErrorWireShape`).             |
+| `d2result-envelope-emit.ts`     | `contracts/d2result-envelope/*.spec.json`               | `@d2/result` (`D2ResultEnvelopeFieldNames` — `success` / `data` / `messages` / `inputErrors` / `errorCode` / `traceId` / `statusCode` JSON keys; mirrors .NET byte-for-byte for the BFF gateway parser). |
+| `grpc-trailers-emit.ts`         | `contracts/grpc-trailers/*.spec.json`                   | `@d2/grpc-client` (gRPC trailer keys: `d2_error_code` / `d2_messages` / `traceId`)                                                                                                  |
+| `otel-messaging-tags-emit.ts`   | `contracts/otel-messaging-tags/*.spec.json`             | `@d2/telemetry` (closed catalog of OTel semantic-convention attribute names referenced by .NET messaging publisher + consumer; TS side exposes identical identifiers).              |
+| `encryption-domains-emit.ts`    | `contracts/encryption-domains/*.spec.json`              | `@d2/encryption-abstractions` (closed catalog: `audit` / `notifications` / `courier` + `plaintext` sentinel for keyring identification)                                            |
+| `dlq-failure-metadata-emit.ts`  | `contracts/dlq-failure-metadata/*.spec.json`            | `@d2/messaging-abstractions` (DLQ failure metadata fields + causes; consumed by DLQ ops tooling + any TS RabbitMQ subscriber that reads DLQ entries)                                |
+| `encryption-frame-emit.ts`      | `contracts/encryption-frame/*.spec.json`                | `@d2/encryption-abstractions` (binary frame layout — field-offset + byte-length constants; consumed by ops tooling + any TS reader of the on-wire encryption frame).               |
+
+`src/orchestrator.ts` invokes every emitter in the order above; see the
+inline comments in `orchestrator.ts` for the cross-emitter dep notes
+(auth-context before request-context; auth-error-codes before
+auth-failures; wire-shape emitters together; etc.). Invoked via the
+top-level `pnpm codegen`.
 
 ## Library helpers (`src/lib/`)
 

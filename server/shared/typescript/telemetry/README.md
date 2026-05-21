@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # @d2/telemetry
 
+> Parent: [`server/shared/typescript/`](../README.md)
+
 One-call OTel SDK bootstrap for Node services. Wires traces, metrics, logs
 OTLP exporters + W3C propagator stack. Mirrors `D2.Shared.Telemetry` (.NET).
 

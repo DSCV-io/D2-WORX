@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # @d2/auth-abstractions
 
+> Parent: [`server/shared/typescript/`](../README.md)
+
 Auth-related constants for TS consumers — `Scopes` tree, `AuthErrorCodes`,
 `AuthFailures` factories, `JwtClaimTypes`. Mirrors
 `D2.Shared.Auth.Abstractions` + `D2.Shared.Auth.Errors` consolidated
@@ -46,13 +48,7 @@ structurally impossible (single source).
 
 ## Header constants
 
-Wire-protocol header constants live in the per-transport catalog
-packages — codegen-emitted from `contracts/headers/headers.spec.json`:
-
-- HTTP-applicable headers — `@d2/headers-http`
-- AMQP-applicable headers — `@d2/headers-amqp`
-- gRPC-applicable headers — `@d2/headers-grpc`
-- Cross-transport headers (transport-agnostic consumers) — `@d2/headers-common`
+> Wire-protocol header catalogs live in the per-transport packages — see [`../README.md` § Packages](../README.md#packages) for the full per-transport catalog enumeration.
 
 ## Dependencies
 

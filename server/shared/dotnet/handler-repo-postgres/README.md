@@ -8,7 +8,7 @@ Copyright (c) DCSV. All rights reserved.
 
 PostgreSQL implementation of `IDbExceptionClassifier` from `D2.Shared.Handler.Repo.Abstractions`. Plugs into `BaseRepoHandler` via DI — composition roots call `services.AddD2Postgres()` once.
 
-A future SQL Server / SQLite / MySQL provider would be a sibling package with the same shape: one `IDbExceptionClassifier` impl + one `services.AddD2X()` extension. `BaseRepoHandler` itself stays provider-agnostic.
+Provider-specific knowledge lives behind `IDbExceptionClassifier`; alternate-provider implementations (where they exist) follow the same shape: one `IDbExceptionClassifier` impl + one `services.AddD2X()` extension. `BaseRepoHandler` itself stays provider-agnostic.
 
 ---
 

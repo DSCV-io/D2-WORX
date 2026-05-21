@@ -17,7 +17,7 @@ using D2.Shared.Utilities.Enums;
 namespace D2.Shared.Context.Abstractions;
 
 /// <summary>
-/// Per-request runtime context. Extends IAuthContext with transport-level (tracing) and network/enrichment information. Populated by transport-specific middleware (handler-aspnetcore for HTTP, handler-messaging for RabbitMQ, etc.) into a MutableRequestContext concrete instance; downstream consumers see only the read-only IRequestContext interface.
+/// Per-request runtime context. Extends IAuthContext with transport-level (tracing) and network/enrichment information. Populated by transport-specific middleware (aspnetcore for HTTP, messaging-rabbitmq for RabbitMQ, etc.) into a MutableRequestContext concrete instance; downstream consumers see only the read-only IRequestContext interface.
 /// </summary>
 public interface IRequestContext : global::D2.Shared.AuthContext.Abstractions.IAuthContext
 {

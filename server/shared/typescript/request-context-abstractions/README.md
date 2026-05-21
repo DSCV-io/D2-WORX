@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # @d2/request-context-abstractions
 
+> Parent: [`server/shared/typescript/`](../README.md)
+
 `IRequestContext` interface (extends `IAuthContext`) + `IPropagatedContext`
 cross-hop subset + `PropagatedContextSerializer` round-trip helper.
 Emitted from `contracts/request-context/IRequestContext.spec.json` via
@@ -75,20 +77,7 @@ Mirrors `D2.Shared.Context.Abstractions`:
 
 ## Nullability convention
 
-Spec-emitted property types use `T | null` rather than the more idiomatic
-TS `T?` / `T | undefined`. This mirrors the .NET side, where
-`Nullable<T>` carries an explicit `null` value; serializing the context
-envelope across the language boundary preserves the `null` literal so
-both sides round-trip the same shape. Optional-chaining and nullish-
-coalescing handle either `null` or `undefined` at consumer call sites,
-so this convention is opaque to most callers — only matters when you're
-constructing or destructuring an `IRequestContext` literal directly.
-
-New domain code outside the codegen-emitted surface should use the
-default TS convention (`T?` / `T | undefined`) per the wider TS
-codebase's nullability rule. The spec's `?` suffix on a type entry
-(e.g. `"string?"` in `IRequestContext.spec.json`) is what triggers the
-`| null` emission.
+> See [`../auth-context-abstractions/README.md` § Nullability convention](../auth-context-abstractions/README.md#nullability-convention) for the canonical rule. `IRequestContext` extends `IAuthContext` and inherits the same spec-driven `T | null` emission for spec-emitted property types (the spec's `?` suffix on a type entry — e.g. `"string?"` in `IRequestContext.spec.json` — triggers the `| null` emission).
 
 ## Edge cases
 

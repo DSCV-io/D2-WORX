@@ -6,13 +6,13 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/services/`](../README.md)
 
-> **Status**: placeholder — not yet implemented.
+> **Status**: NOT IMPLEMENTED — tracked at [docs/v2/V2.md](../../../docs/v2/V2.md).
 
 ## Purpose
 
-Pure outbound delivery — email + SMS + future webhooks / Slack / Teams / push. The "send" side. Markdown content rendered to HTML via Markdig; brand chrome via Razor.
+Pure outbound delivery — email + SMS. The "send" side. Markdown content rendered to HTML via Markdig; brand chrome via Razor.
 
-D2.Notifications is the "show in the UI" side; D2.Threads (deferred) is conversational. Each owns one slice — Courier never persists feed state; Notifications never sends emails.
+D2.Notifications is the "show in the UI" side. Each owns one slice — Courier never persists feed state; Notifications never sends emails.
 
 ## Six design principles
 
@@ -49,9 +49,6 @@ D2.Notifications is the "show in the UI" side; D2.Threads (deferred) is conversa
 
 ## References
 
-- [docs/MESSAGING.md](../../../docs/MESSAGING.md) — RabbitMQ wire format, exchange naming, encryption, delivery semantics
+- [`server/shared/dotnet/messaging-rabbitmq/README.md`](../../shared/dotnet/messaging-rabbitmq/README.md) — RabbitMQ wire format, exchange naming, encryption, delivery semantics
 - [docs/PATTERNS.md](../../../docs/PATTERNS.md) — handler / D2Result / RedactionSpec patterns
 
-## When to expand this README
-
-When this service is built out, expand sections with: concrete channel handler details, delivery preference resolution algorithm, retry topology, brand chrome configuration, dev setup.

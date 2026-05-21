@@ -71,7 +71,7 @@ issuer.
   (composite — fingerprint-mismatch + geo-velocity + ASN/Tor/proxy + policy contributions; 0-100, higher = worse)
   and populates it on `IRequestContext` before propagating the request to backend services. This lib only reads
   the score from claims/envelope and surfaces it on `IRequestContext`; it never computes it.
-- **Rate-limit anything.** Rate-limit middleware lives in Edge (per RATE-LIMITING.md). The
+- **Rate-limit anything.** Rate-limit middleware lives in Edge (per [`PHASE_3_RATE_LIMITING.md`](PHASE_3_RATE_LIMITING.md)). The
   contrast is informative: rate-limit state is write-heavy (every request increments multi-
   dimensional counters across replicas) and uses `IDistributedCache` only — no L1, no tiered cache,
   because L1 would diverge under concurrent writes from different replicas. This lib's caches are
@@ -121,8 +121,9 @@ The split is: **Edge produces auth signal; D2.Shared.Auth consumes it everywhere
 
 ## §3. What's already locked (firm ground we build on)
 
-These come from V2.md §5.4, CLAUDE.md §4-§5, SECURITY-RUNBOOKS.md, RATE-LIMITING.md,
-OPERATIONAL-GUARANTEES.md. Citations inline.
+These come from V2.md §5.4, CLAUDE.md §4-§5, this doc's §14a (KeyCustodian runbook
+scaffolding), PHASE_3_RATE_LIMITING.md, and the dev/rules.md operational predicates.
+Citations inline.
 
 ### 3.1 JWT shape
 
@@ -260,7 +261,7 @@ mapper needs to consume them:
 | Claim | Status today | Phase 3 add |
 |---|---|---|
 | `d2_kind` (top-level) | §3.1 says "only inside `act` chain entries"; `JwtClaimTypes.ACT_KIND` doc explicitly says "There is NO top-level `d2_kind` claim" | Add a top-level `d2_kind` claim carrying the anon/authed discriminator (values keyed off the `ActorKind` enum, plus a new `Anonymous` variant — see §6.4 below). The inside-`act` `d2_kind` (consent/force) stays as-is; lookup paths differ (`d2_kind` vs `act.d2_kind`). |
-| `d2_whois_id` | not defined | New top-level claim — opaque ID into the WhoIs lookup (already cached per IPinfo Singleflight per `RATE-LIMITING.md` §4). Tamper-evident via JWT signature. |
+| `d2_whois_id` | not defined | New top-level claim — opaque ID into the WhoIs lookup (already cached per IPinfo Singleflight per [`PHASE_3_RATE_LIMITING.md`](PHASE_3_RATE_LIMITING.md) §4). Tamper-evident via JWT signature. |
 | `d2_fingerprint_score` | not defined; `RiskScore` is on `IRequestContext` propagated via `x-d2-context` header | Optional top-level claim — Edge can elect to bake the `RiskScore` into the JWT (vs propagating only via header) when minting anon tokens, since anon visitors have no other identity binding. Authed JWTs continue to carry the score via `IRequestContext` / header propagation. |
 
 **ActorKind enum** — Phase 3 needs a new `Anonymous` variant added alongside the existing
@@ -273,7 +274,7 @@ is a new claim, not a redefinition); is a vocabulary addition in `D2.Shared.Auth
 
 1. Edge receives request, no cookie present.
 2. WhoIs middleware resolves enrichment slot (IP → city / region / country / ASN / geohash /
-   VPN-proxy-Tor flags) — already specified per `RATE-LIMITING.md` §4.
+   VPN-proxy-Tor flags) — already specified per [`PHASE_3_RATE_LIMITING.md`](PHASE_3_RATE_LIMITING.md) §4.
 3. Edge mints the anon JWT above.
 4. Edge sets the opaque session cookie (mapped to the JWT's `sub` via the 3-tier session store).
 5. Edge forwards the request to the backend with the JWT in the Authorization header.
@@ -379,9 +380,8 @@ the anon-JWT pattern lands in Edge.
   to match existing `act.d2_kind` value casing).
 
 **Cross-references**:
-- Rate-limiting bucket-keying implications → [`docs/RATE-LIMITING.md`](../RATE-LIMITING.md) §4
-  (middleware flow) and §11 (Pattern A claims-driven keying — added in lockstep with this
-  decision).
+- Rate-limiting bucket-keying implications → [`docs/v2/PHASE_3_RATE_LIMITING.md`](PHASE_3_RATE_LIMITING.md)
+  §4 (middleware flow) and §11 (claims-driven keying — added in lockstep with this decision).
 - Algorithm gap items above → §10 ("What we explicitly defer to Phase 3 (Edge)").
 - Decision rationale + date → §12 Q23.
 
@@ -791,8 +791,12 @@ internal sealed class KeyringBackedPayloadCrypto : IPayloadCrypto, IAsyncDisposa
         IKeyringClient client, string domain, IRotationEventChannel rotationEvents)
     {
         var initial = client.GetKeyringAsync(domain).AsTask().GetAwaiter().GetResult();
-        if (!initial.IsOk) throw new InvalidOperationException(
-            $"Keyring for domain '{domain}' unavailable at startup");
+        if (!initial.IsOk)
+        {
+            throw new InvalidOperationException(
+                $"Keyring for domain '{domain}' unavailable at startup");
+        }
+
         Volatile.Write(ref _currentKeyring, initial.Data!);
         Volatile.Write(ref _currentCrypto, new PayloadCrypto(initial.Data!));
         r_subscription = rotationEvents.Subscribe(domain, async ct =>
@@ -1262,9 +1266,9 @@ Q, it's flagged.
 
 ### What we explicitly defer to Phase 3 (Edge)
 
-- **End-to-end rotation gate** (per AUDIT_CHECKLIST.md "no rotation tests = no merge"). Requires
-  Testcontainers RMQ + the actual KeyCustodian server-side state machine. Belongs in
-  `D2.Edge.Tests`, not here.
+- **End-to-end rotation gate** ("no rotation tests = no merge" — phase-acceptance gate enforced
+  inline). Requires Testcontainers RMQ + the actual KeyCustodian server-side state machine.
+  Belongs in `D2.Edge.Tests`, not here.
 - **Session revocation end-to-end** — requires Edge's session storage. Tested here only at the
   consumer-side invalidation level.
 - **OAuth `/oauth/token` endpoint behavior** — Edge's responsibility.
@@ -1749,9 +1753,10 @@ under construction. Per-channel; explicit; safe-by-default.
 - Risk engine: anon visitors need a longer-lived identity for historical-pattern signals — the
   cookie's session-id, NOT the 15-min-rotating anon `sub`.
 
-**Implication for `RATE-LIMITING.md`**: bucket-keying is now claims-driven (every request has a
-validated JWT — anon or user). The "cookie-shortcut bypass" framing collapses into "JWT
-discriminator" framing — see RATE-LIMITING.md §11 (added in lockstep with this decision).
+**Implication for [`PHASE_3_RATE_LIMITING.md`](PHASE_3_RATE_LIMITING.md)**: bucket-keying is
+now claims-driven (every request has a validated JWT — anon or user). The "cookie-shortcut
+bypass" framing collapses into "JWT discriminator" framing — see PHASE_3_RATE_LIMITING.md §11
+(added in lockstep with this decision).
 
 **Implication for `D2.Shared.Auth.Http` / `D2.Shared.Auth.Grpc` README footgun sections**: the
 documented anonymous-method ctor-injection failure becomes RARELY-RELEVANT in production once
@@ -1892,11 +1897,30 @@ Each csproj lands as its own buildable unit; tests pass at every checkpoint; zer
    csprojs + the audiences source-gen — analyzers are referenced as regular project refs in tests
    so loader/emitter logic can be asserted directly).
 4. PATTERNS.md updates (auth section if needed).
-5. AUDIT_CHECKLIST.md updates (any new auth-related audit items).
-6. PHASE_0.md flip Wave 7 → ✅ Complete; V2.md tree update.
+5. `docs/dev/rules.md` updates (any new auth-related predicate additions).
+6. V2.md tree update (Wave 7 → ✅ Complete).
 7. **This doc archived → folded into PHASE_0.md per the lifecycle rule.**
 
 Each step buildable + testable + zero warnings before moving on.
+
+---
+
+## §14a. Future Phase 3 work — KeyCustodian compromise runbook scaffolding
+
+When KeyCustodian ships in Phase 3 (its CLI + state machine + audit
+forensics), the following compromise-response runbooks need concrete
+detection criteria, executable CLI invocations, and recovery procedures
+authored. Headers are preserved here so the Phase 3 work item has a checklist
+of scenarios to cover:
+
+- **Message-payload key compromise** (audit / notifications / courier domain)
+- **JWT signing key compromise**
+- **Cookie signing secret compromise**
+- **Service-identity OAuth `client_secret` compromise**
+- **Root key compromise** (worst case — encrypts all keys at rest in
+  `auth_db`)
+- **Third-party API key compromise** (Twilio, Resend, IPinfo — provider-side
+  rotation steps)
 
 ---
 
@@ -1905,9 +1929,10 @@ Each step buildable + testable + zero warnings before moving on.
 - [V2.md §5.4](V2.md) — auth model, JWT shape, KeyCustodian, sessions, scopes, impersonation,
   fingerprints
 - [CLAUDE.md §4](../../CLAUDE.md) — Key Architecture Decisions (Auth, JWT, KeyCustodian)
-- [SECURITY-RUNBOOKS.md](../SECURITY-RUNBOOKS.md) — KeyCustodian compromise runbooks (placeholder;
-  expanded Phase 3)
-- [RATE-LIMITING.md](../RATE-LIMITING.md) — auth-related fields + session invalidation backplane
+- [§14a above](#14a-future-phase-3-work--keycustodian-compromise-runbook-scaffolding) —
+  KeyCustodian compromise runbook scaffolding (expanded as Phase 3 ships)
+- [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) — auth-related fields + session
+  invalidation backplane
 - [PATTERNS.md](../PATTERNS.md) — handler / cache / middleware patterns this lib must fit
 - [PHASE_0.md](PHASE_0.md) — per-lib checklist row (D2.Shared.Auth, Wave 4, ☐ Not started)
 - [RFC 6749 §4.4](https://datatracker.ietf.org/doc/html/rfc6749#section-4.4) — `client_credentials`

@@ -8,17 +8,26 @@ Copyright (c) DCSV. All rights reserved.
 
 Scripts + utilities for developer workflows that aren't part of any service.
 
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| [`geo-data-pipeline/`](geo-data-pipeline/README.md) | Geo reference-data ingestion pipeline — CLDR / IANA tzdb / libphonenumber / Wikidata → `contracts/geo/` catalogs codegen consumes |
+| [`loggermessage-splitter/`](loggermessage-splitter/README.md) | Splits the deterministic-ordered `LoggerMessage.g.cs` blob into per-class files for stable git diffs |
+| [`ts-codegen/`](ts-codegen/README.md) | Per-topic `.g.ts` emitter scripts — TypeScript sibling of the .NET Roslyn source generators; both consume the same `contracts/` JSON specs |
+
+`scripts/` holds shell utilities that don't warrant their own subdirectory README — covered inline below.
+
 ## Layout
 
 ```
 tools/
+  geo-data-pipeline/          Geo reference-data ingestion (TypeScript). See geo-data-pipeline/README.md.
+  loggermessage-splitter/     .NET 10 console tool — splits LoggerMessage.g.cs. See loggermessage-splitter/README.md.
+  ts-codegen/                 Per-topic .g.ts emitters. See ts-codegen/README.md.
   scripts/                    Shell scripts + small utilities
     gen-dev-keys.sh           Generates dev root key + per-domain encryption keys
                               Output → secrets/ (gitignored, Claude-deny-ruled)
-  ts-codegen/                 TypeScript codegen runner — per-topic tsx scripts
-                              that emit .g.ts catalogs into @d2/* packages from
-                              the same contracts/ JSON specs the .NET Roslyn
-                              SourceGens consume. See ts-codegen/README.md.
 ```
 
 ## `scripts/gen-dev-keys.sh`

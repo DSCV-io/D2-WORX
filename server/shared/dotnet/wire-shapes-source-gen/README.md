@@ -10,6 +10,8 @@ Roslyn `IIncrementalGenerator` (netstandard2.0) that emits per-wire-shape JSON p
 
 This source-gen enforces **§11.30** (every cross-language wire-format identifier under spec-driven contract + parity-tested) on the `TKMessage` (`{key, params?}`) and `InputError` (`{field, errors}`) wire shapes. Both ship across the .NET ↔ TS boundary inside the `D2Result` envelope; spec-driving the property names means the .NET serializer and the TS parser share one source of truth for the JSON keys, so cross-language drift on the property names is structurally impossible.
 
+**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
+
 ---
 
 ## Dispatch table
@@ -21,23 +23,6 @@ This source-gen enforces **§11.30** (every cross-language wire-format identifie
 | anything else | — | — (no-op) | — |
 
 Adding a new wire-shape catalog: add a `DispatchEntry` to `sr_dispatch` in `WireShapesGenerator.cs`, author the spec + schema under `contracts/`, wire the consuming csproj's `<AdditionalFiles>` + `<ProjectReference OutputItemType="Analyzer">`, and ship.
-
----
-
-## File layout
-
-| Path | Contents |
-|---|---|
-| `D2.Shared.WireShapes.SourceGen.csproj` | netstandard2.0 IsRoslynComponent project; bundles the shared `source-gen-shared/` scaffolding via `<Compile Include>` link. |
-| `WireShapeProperty.cs` | Parsed-shape record for one property entry. |
-| `WireShapeSpec.cs` | Parsed-shape record for the spec root. |
-| `WireShapeSpecLoader.cs` | Pure-logic JSON spec → `WireShapeSpec` parser. |
-| `WireShapeEmitter.cs` | Pure-logic emitter — parameterized by namespace + class name so one emitter serves every catalog. |
-| `WireShapesGenerator.cs` | The Roslyn `[Generator]` entry point. Dispatches per consuming assembly name. |
-| `DiagnosticIds.cs` | String IDs for the analyzer's diagnostics — `D2WS001` through `D2WS005`. |
-| `DiagnosticDescriptors.cs` | Roslyn `DiagnosticDescriptor` instances for the IDs. |
-| `EmitDiagnostics.cs` | Topic-specific factory helpers producing `EmitDiagnostic` records. |
-| `EmitResult.cs` | Pure-logic emit result (generated source + diagnostics). |
 
 ---
 
@@ -55,4 +40,4 @@ Adding a new wire-shape catalog: add a `DispatchEntry` to `sr_dispatch` in `Wire
 
 ## Cross-language parity
 
-The TS-side mirror emitter lives at `tools/ts-codegen/src/tk-message-emit.ts` + `tools/ts-codegen/src/input-error-emit.ts`. Both sides read the SAME `contracts/tk-message/tk-message.spec.json` + `contracts/input-error/input-error.spec.json` files, so the .NET-emitted constants and the TS-emitted constants share byte-equal wire values for every property name. Parity is asserted by `server/shared/typescript/contract-tests/tests/tk-message.parity.test.ts` + `input-error.parity.test.ts` (fixture-driven per-VALUE pins).
+The TS-side mirror lives at `tools/ts-codegen/src/wire-shape-emit.ts` — a single multi-target emitter exporting `runTkMessageEmit` and `runInputErrorEmit`. Both sides read the SAME `contracts/tk-message/tk-message.spec.json` + `contracts/input-error/input-error.spec.json` files, so the .NET-emitted constants and the TS-emitted constants share byte-equal wire values for every property name. Parity is asserted by `server/shared/typescript/contract-tests/tests/tk-message.parity.test.ts` + `input-error.parity.test.ts` (fixture-driven per-VALUE pins).

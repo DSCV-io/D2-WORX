@@ -10,26 +10,7 @@ Roslyn incremental source generator that emits the `JwtClaimTypes` static-class 
 
 The spec file is the single source of truth for every JWT claim D2 reads or writes — standard OAuth/OIDC vocabulary (`sub`, `aud`, ...), D2-specific top-level claims (`d2_session_id`, `d2_org_id`, ...), and nested inside-act claims (`d2_kind` under the act object per RFC 8693 §2.1). A separate parity test (`JwtClaimsVsIAuthContextConsistencyTests`) asserts every `claim:` annotation in `IAuthContext.spec.json` references a valid entry here.
 
----
-
-## File layout
-
-| Path | Role |
-|---|---|
-| `D2.Shared.Auth.JwtClaims.SourceGen.csproj` | csproj — `netstandard2.0`, `IsRoslynComponent`, `PrivateAssets="all"` on Roslyn deps + bundled `System.Text.Json` |
-| `Polyfills/IsExternalInit.cs` | Polyfill enabling `init` accessors on `netstandard2.0` records |
-| `Polyfills/StringExt.cs` | Local `Falsey()` polyfill |
-| `SpecFile.cs` | Pipeline-boundary record `(Path, Content)` |
-| `JwtClaimsSpec.cs` | Parsed-shape record for the top-level spec |
-| `JwtClaimEntry.cs` | Parsed-shape record per spec entry — `(ConstName, Value, Kind, Description)` |
-| `JwtClaimsSpecLoader.cs` | JSON → `JwtClaimsSpec` parser. Emits `D2JWT001` on parse failure |
-| `JwtClaimsEmitter.cs` | `JwtClaimsSpec` → `JwtClaimTypes.g.cs`. Validates closed-vocabulary kind / constName / value-non-empty / no-duplicate; emits `D2JWT002`–`D2JWT004`/`D2JWT006` |
-| `EmitDiagnostic.cs` | Roslyn-decoupled diagnostic record + per-id factories |
-| `EmitResult.cs` | `(GeneratedSource, ImmutableArray<EmitDiagnostic>)` |
-| `LoadResult.cs` | `(JwtClaimsSpec? Spec, EmitDiagnostic? Diagnostic)` |
-| `DiagnosticIds.cs` | String IDs `D2JWT001`–`D2JWT006` |
-| `DiagnosticDescriptors.cs` | Roslyn `DiagnosticDescriptor` instances |
-| `JwtClaimsGenerator.cs` | `[Generator]` `IIncrementalGenerator`. Filters AdditionalFiles to `jwt-claims.spec.json`, gates by assembly name |
+**Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
 
 ---
 
@@ -83,29 +64,9 @@ The spec file is the single source of truth for every JWT claim D2 reads or writ
 
 ---
 
-## Wiring into a consuming csproj
-
-```xml
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>D2.Shared.Auth.Abstractions</RootNamespace>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\jwt-claims-source-gen\D2.Shared.Auth.JwtClaims.SourceGen.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="..\..\..\..\contracts\jwt-claims\jwt-claims.spec.json" />
-  </ItemGroup>
-</Project>
-```
-
-The single-target dispatch ensures only `D2.Shared.Auth.Abstractions` gets the emitted `JwtClaimTypes.g.cs`.
-
----
-
 ## Reference
 
+- [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/jwt-claims/schema.json`](../../../../contracts/jwt-claims/schema.json) — JSON Schema for the spec
 - [`contracts/jwt-claims/jwt-claims.spec.json`](../../../../contracts/jwt-claims/jwt-claims.spec.json) — the source-of-truth catalog
 - [`D2.Shared.Headers.SourceGen`](../headers-source-gen/) — sibling SrcGen for cross-transport wire headers

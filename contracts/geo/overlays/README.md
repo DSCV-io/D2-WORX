@@ -95,7 +95,7 @@ cd tools/geo-data-pipeline
 pnpm geo:overlays   # lists every overlay entry across all overlay files with reason + addedAt
 ```
 
-## Why not just hand-edit Tier 1 src-data directly?
+## Design rationale: overlays vs hand-editing Tier 1 src-data
 
 Tier 1 = upstream-faithful, never hand-edited. The next `pnpm geo:refresh` would overwrite any manual edit. The overlay layer is the persistence point — overlays survive refresh because they're applied AFTER Tier 1 ingestion.
 

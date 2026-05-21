@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # @d2/i18n
 
+> Parent: [`server/shared/typescript/`](../README.md)
+
 `ITranslator` interface + `SupportedLocales` registry + default `Translator`
 implementation. Mirrors `D2.Shared.I18n` (.NET) so cross-language wire stays
 consistent. The TS-side TK constants catalog itself is provided by Paraglide

@@ -23,8 +23,8 @@ namespace D2.Shared.Context.Abstractions;
 /// <summary>
 /// Mutable concrete implementation of
 /// <see cref="global::D2.Shared.Context.Abstractions.IRequestContext"/>.
-/// Populated by transport-specific middleware (handler-aspnetcore for HTTP,
-/// handler-messaging for RabbitMQ, etc.); domain code receives it as
+/// Populated by transport-specific middleware (aspnetcore for HTTP,
+/// messaging-rabbitmq for RabbitMQ, etc.); domain code receives it as
 /// <see cref="global::D2.Shared.Context.Abstractions.IRequestContext"/>
 /// only (read-only contract).
 /// </summary>

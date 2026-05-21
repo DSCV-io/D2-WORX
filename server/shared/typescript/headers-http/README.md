@@ -4,6 +4,10 @@ Copyright (c) DCSV. All rights reserved.
 
 # @d2/headers-http
 
+> Parent: [`server/shared/typescript/`](../README.md)
+
+> **Duplicated from [`contracts/headers/headers.spec.json`](../../../../contracts/headers/headers.spec.json) — update both in lockstep.** This catalog mirrors its .NET sibling [`D2.Shared.Headers.Http`](../../dotnet/headers-http/README.md) at byte-equal wire values per the cross-language parity contract documented in [`docs/PARITY.md`](../../../../docs/PARITY.md). Both sides emit from the same spec; physical dedup across TS ↔ .NET is not feasible. Parity is asserted by `contract-tests/headers.parity.test.ts` (TS) and `HeaderCatalogConsistencyTests` (.NET).
+
 D2 wire-protocol headers applicable to the HTTP transport. Includes the HTTP-specific entries (`Authorization`, `Idempotency-Key`, `X-D2-Client-Fingerprint`, `X-D2-Internal-Token`) AND the cross-transport entries that ride alongside HTTP requests (`x-d2-context`, `traceparent`, `tracestate`) at identical wire values per `headers.spec.json`. Mirrors .NET `D2.Shared.Headers.Http.HttpHeaders`.
 
 ## Public API
@@ -33,6 +37,6 @@ None at runtime — pure constants. DevDeps: `vitest` + `@vitest/coverage-v8` + 
 ## Reference
 
 - [`contracts/headers/headers.spec.json`](../../../../contracts/headers/headers.spec.json) — source spec
-- [`@d2/headers-common`](../headers-common/) — cross-transport subset
-- [`@d2/headers-amqp`](../headers-amqp/) — AMQP-applicable subset
-- [`@d2/headers-grpc`](../headers-grpc/) — gRPC-applicable subset
+- [`@d2/headers-common`](../headers-common/README.md) — cross-transport subset
+- [`@d2/headers-amqp`](../headers-amqp/README.md) — AMQP-applicable subset
+- [`@d2/headers-grpc`](../headers-grpc/README.md) — gRPC-applicable subset

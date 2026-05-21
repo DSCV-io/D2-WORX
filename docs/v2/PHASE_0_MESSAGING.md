@@ -18,10 +18,8 @@ Copyright (c) DCSV. All rights reserved.
 > pass (incl. Testcontainers RabbitMQ integration).
 >
 > **Authoritative docs going forward**:
-> - [docs/MESSAGING.md](../MESSAGING.md) — wire format, headers, queue topology, encryption posture
-> - [docs/OPERATIONAL-GUARANTEES.md](../OPERATIONAL-GUARANTEES.md) — delivery semantics, idempotency contract, DLQ, startup ordering
 > - [server/shared/dotnet/messaging-abstractions/README.md](../../server/shared/dotnet/messaging-abstractions/README.md) — public API surface
-> - [server/shared/dotnet/messaging-rabbitmq/README.md](../../server/shared/dotnet/messaging-rabbitmq/README.md) — RabbitMQ-specific impl details
+> - [server/shared/dotnet/messaging-rabbitmq/README.md](../../server/shared/dotnet/messaging-rabbitmq/README.md) — wire format, headers, queue topology, encryption posture, delivery semantics, idempotency contract, DLQ, startup ordering, RabbitMQ-specific impl details (absorbed from prior cross-cutting framework docs)
 >
 > **Lifecycle**: this tracking doc is now history. The detailed audit-by-audit
 > findings + fixes live in [audit_temp.md](audit_temp.md) which will archive
@@ -193,7 +191,8 @@ flowchart TB
 
 ## §3. What's already locked (firm ground we build on)
 
-These come from MESSAGING.md, V2.md §5.4 / §5.7, OPERATIONAL-GUARANTEES.md, CLAUDE.md §4.
+These come from V2.md §5.4 / §5.7, CLAUDE.md §4, and the absorbed-content homes at
+`server/shared/dotnet/messaging-rabbitmq/README.md` + `messaging-abstractions/README.md`.
 Citations in-line where helpful.
 
 ### 3.1 Wire format
@@ -300,9 +299,9 @@ is a one-line attribute swap.
 
 ### 3.8 Required CI gate
 
-Per AUDIT_CHECKLIST.md: full key-rotation integration test (real Testcontainers Redis +
-Testcontainers RabbitMQ; rotation triggered mid-publish; in-flight messages still decrypt;
-no message loss). "No rotation tests = no merge."
+Phase-acceptance gate ("no rotation tests = no merge"): full key-rotation integration test
+(real Testcontainers Redis + Testcontainers RabbitMQ; rotation triggered mid-publish;
+in-flight messages still decrypt; no message loss).
 
 **This test does NOT live in this lib's tests** (per M10) — it requires the full Auth
 KeyringClient + RotationEventChannel stack to exercise. It lives in `D2.Shared.Auth.Tests`
@@ -1059,7 +1058,7 @@ they come up.
 ### Deferred to Wave 7 (Auth) tests
 
 - Full key rotation integration test (KeyringClient + RotationEventChannel + Messaging +
-  Encryption end-to-end). Per AUDIT_CHECKLIST.md "no rotation tests = no merge."
+  Encryption end-to-end). Phase-acceptance gate: "no rotation tests = no merge."
 
 ---
 
@@ -1111,8 +1110,8 @@ Each step buildable + testable + zero warnings before moving on.
    `Testcontainers.RabbitMq` to packages props)
 2. `D2.Shared.Tests.csproj` adds `<ProjectReference>` to both new libs
 3. Parent README (`server/shared/dotnet/README.md`) Mermaid dep graph + per-lib row updates
-4. `MESSAGING.md` updates (any deltas from this design vs the current spec — should be
-   minimal since this design hews closely to it)
+4. `server/shared/dotnet/messaging-rabbitmq/README.md` updates (any deltas from this design
+   vs the absorbed spec — should be minimal since this design hews closely to it)
 5. `PATTERNS.md` adds a "Messaging — TLC `Sub/` handlers" subsection
 6. `PHASE_0.md` flips D2.Shared.Messaging Wave 6 → ✅ Complete; V2.md tree updates
 7. `PHASE_0_AUTH.md` updates — Auth's Wave 7 build can now resume on `n/auth` branch
@@ -1122,11 +1121,10 @@ Each step buildable + testable + zero warnings before moving on.
 
 ## §16. References
 
-- [MESSAGING.md](../MESSAGING.md) — primary spec doc (wire format, headers, exchange
-  naming, DLQ, etc.)
+- [`server/shared/dotnet/messaging-rabbitmq/README.md`](../../server/shared/dotnet/messaging-rabbitmq/README.md) — primary spec doc (wire format, headers, exchange naming, DLQ, etc. — absorbed-content home)
 - [V2.md §5.4 + §5.7](V2.md) — KeyCustodian rotations, payload encryption, key distribution
-- [OPERATIONAL-GUARANTEES.md](../OPERATIONAL-GUARANTEES.md) — multi-instance correctness,
-  idempotency, ack atomicity, consumer concurrency
+- [`docs/dev/rules.md §22 / §4`](../dev/rules.md) — multi-instance correctness, idempotency,
+  ack atomicity, consumer concurrency (predicates absorbed from prior operational-guarantees doc)
 - [PATTERNS.md](../PATTERNS.md) — TLC `Sub/` handler convention, BaseHandler integration
 - [CLAUDE.md §4](../../CLAUDE.md) — sync gRPC + async RMQ; encryption boundary IS trust
   boundary
@@ -1134,6 +1132,6 @@ Each step buildable + testable + zero warnings before moving on.
   ✅ when this lib ships)
 - [PHASE_0_AUTH.md](PHASE_0_AUTH.md) — Wave 7 design doc; explains why this lib is
   prerequisite (Q3: rotation events ride on RMQ)
-- [AUDIT_CHECKLIST.md](../AUDIT_CHECKLIST.md) — "no rotation tests = no merge" gate
+- "no rotation tests = no merge" — phase-acceptance gate enforced inline (§3.8 + §14)
 - [RabbitMQ.Client 7.x docs](https://www.rabbitmq.com/client-libraries/dotnet)
 - [RFC: AMQP 0-9-1](https://www.rabbitmq.com/specification.html)

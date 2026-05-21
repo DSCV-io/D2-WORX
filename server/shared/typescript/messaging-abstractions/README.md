@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # @d2/messaging-abstractions
 
+> Parent: [`server/shared/typescript/`](../README.md)
+
 D2 messaging-protocol wire identifiers. Today: the DLQ failure-metadata wire shape (`DlqFailureMetadataFields` for JSON property names + `DlqFailureCauses` for the closed-enum cause-string catalog). Mirrors .NET `D2.Shared.Messaging.DlqFailureMetadataFields` (in `D2.Shared.Messaging.Abstractions`) and `D2.Shared.Messaging.RabbitMq.Subscribing.DlqFailureCauses` (in `D2.Shared.Messaging.RabbitMq`).
 
 ## Public API

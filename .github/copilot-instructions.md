@@ -2,61 +2,39 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2-WORX Code Review Instructions
+<!-- §11.33 carve-out: agent-directive doc loaded by Copilot auto-context; not part of the human-navigable docs tree -->
 
-Microservices SaaS: C# 14 / .NET 10, TypeScript 5.9, Svelte 5. Full conventions in `CLAUDE.md`.
+# Copilot review + completion instructions
 
-## D2Result Pattern
+**You are GitHub Copilot acting on the D²-WORX codebase. Before suggesting code, reviewing a PR, or producing any other output, READ THE CANONICAL DOCS FIRST:**
 
-- **Use semantic factories** — `notFound()`, `unauthorized()`, `forbidden()`, `validationFailed()`, `conflict()`, `serviceUnavailable()`, `unhandledException()`, `cancelled()`, `someFound()`. Never raw `Fail()`/`fail()` with manual statusCode when a factory exists.
-- **Never return `ok()` unconditionally after a fallible operation** — if a nested handler or provider can fail, check its result. Use `bubbleFail`/`bubble` to propagate errors.
-- **Partial success**: `notFound()` (none) → `someFound()` (partial) → `ok()` (all).
+- **[CLAUDE.md](../CLAUDE.md)** — at-a-glance project pointer, most critical reminders, behavioral guidelines (§7). Read top-to-bottom.
+- **[docs/dev/rules.md](../docs/dev/rules.md)** — the canonical predicate catalog (~200 enforceable rules across 24 categories: security, race conditions, naming, object disposal, D2Result usage, OOTB shared libs, logging, PII redaction, observability, idempotency, configuration, framing, audit-evidence discipline, and more).
+- **[docs/dev/process.md](../docs/dev/process.md)** — phase lifecycle (PLAN → EXECUTE → FINAL-REVIEW → SHIP → REVIEW), permission gates, sub-agent architecture, audit-loop mechanics.
 
-## Handler Rules
+These three docs are AUTHORITATIVE. If your suggestion conflicts with any predicate in rules.md or any protocol in process.md, you are making a mistake — UNLESS the PR author has explicitly acknowledged in writing the SPECIFIC predicates / steps being bypassed (per rules.md §13.14).
 
-- **RedactionSpec required** on any handler touching PII (emails, phones, IPs, addresses, names, message content). Applies to BOTH app AND repo/infra handlers.
-- **`validateInput()` BEFORE infrastructure calls** — never let Redis/DB be the first to reject invalid data. Validate at the top of `executeAsync`.
-- **Handlers MUST implement their interface** — required for DI registration.
-- **Verify DI registration** — after creating a handler, add its registration in the corresponding `registration.ts` or `Extensions.cs`. Missing registrations are silent at compile time.
-- **Handler categories**: Query (read-only, no side effects), Command (mutations), Complex (read + side-effect mutations). Don't miscategorize.
-- **Verb semantics**: `Find` = resolve/may fetch externally. `Get` = direct lookup by ID.
+## How to apply the canonical docs to a PR review
 
-## TLC/2LC/3LC Layer Convention
+1. Identify which areas the PR touches (handlers, DI, caching, messaging, auth, BFF, codegen, docs, tests, etc.).
+2. Walk the **relevant** rules.md categories for those areas — every category has a numbered predicate list with Evidence / Why / How blocks.
+3. Verify the PR satisfies the predicates that apply. Cite by `rules.md §N.M` when surfacing issues, so the author can resolve directly against the canonical source.
+4. For process / permission / journal / audit-loop concerns, cite `process.md §N`.
+5. For at-a-glance reminders (the Critical Reminders block, the C# Naming table, the Doc Update Map), CLAUDE.md is the appropriate cite — but its content is a CONDENSED view of rules.md / process.md per §11.32, so deep-dives should follow the cross-pointers back to the canonical source.
 
-- **CQRS 3LC**: `C/` Commands, `Q/` Queries, `U/` Utilities, `X/` Complex.
-- **Repository 3LC**: `C/` Create, `R/` Read, `U/` Update, `D/` Delete.
-- Interfaces in `Interfaces/{TLC}/Handlers/{3LC}/`. Implementations in `Implementations/` (app) or `{TLC}/Handlers/{3LC}/` (infra).
+## What this doc INTENTIONALLY does NOT do
 
-## Auth & Security
+- It does NOT restate individual predicates from rules.md. Restated rules drift; the canonical catalog stays canonical.
+- It does NOT enumerate behavioral guidelines from CLAUDE.md §7.
+- It does NOT carry process protocols from process.md.
+- It does NOT cite specific patterns / library usage / convention examples — those live in [docs/PATTERNS.md](../docs/PATTERNS.md) and the per-lib / per-service READMEs reachable from [README.md](../README.md) + [CLAUDE.md §3](../CLAUDE.md#3-reference-documents).
 
-- **Auth flags are `null | boolean`** — `isAuthenticated`, `isTrustedService`, `isOrgEmulating`, `isUserImpersonating`. `null` = not yet determined. Never treat `null` as `false`.
-- **IDOR prevention** — derive org/user scope from session/claims, never from user-supplied input.
-- **API key comparisons must be constant-time** — `CryptographicOperations.FixedTimeEquals` (.NET), `timingSafeEqual` (Node.js).
-- **New JWT claims** → add to BOTH `JWT_CLAIM_TYPES` (Node.js) and `JwtClaimTypes` (.NET).
+## §11.32 lockstep annotation
 
-## TypeScript
+This doc INTENTIONALLY exists alongside CLAUDE.md / rules.md / process.md as part of the meta-doc set (per rules.md §14.1 allowlist + §11 KEEP-doc framing). The pointer-only model means:
 
-- **`.d.ts` files in `src/` are NOT emitted to `dist/`** — module augmentations must be in `.ts` files.
+- Copilot reads this file first (via GitHub's auto-context for PR review + completions).
+- This file directs Copilot to the canonical sources.
+- Substantive updates land in rules.md / process.md / CLAUDE.md — this file rarely changes.
 
-## SvelteKit
-
-- **All user-visible strings use Paraglide** — `m.key_name()` from `$lib/paraglide/messages.js`. Never hardcode text, even for dev pages. Includes `<title>`, meta tags, labels, placeholders, errors.
-- **Never bare `href="/path"` or `goto("/path")`** — always wrap with `resolve("/path")` from `$app/paths`.
-- **Client telemetry must never include PII** — Faro identity limited to `userId` + `username`.
-
-## C# Specifics
-
-- **`Falsey()`/`Truthy()` handle null** — never `if (value is null || value.Falsey())`. After early return, use `value!`.
-- **`string.Empty`** — never `""`.
-- **Extension members**: C# 14 `extension(T)` syntax, not old `this T` parameter style.
-- **Field prefixes**: `_camelCase` (mutable), `r_camelCase` (readonly), `s_camelCase` (static), `sr_camelCase` (static readonly).
-
-## i18n
-
-Backend D2Result `messages` and `inputErrors` are user-visible — they need translation keys too, not just frontend strings. New keys must be added to ALL locale files in `contracts/messages/`.
-
-## What NOT to Flag
-
-- Build warnings, lint, formatting — CI enforces these.
-- Missing tests — CI runs test suites.
-- C# 14 `extension` keyword syntax — this is valid (see `.github/instructions/csharp.instructions.md`).
+When this file IS edited (e.g., to add a new canonical pointer or refine the review workflow above), the same change verifies the linked canonical docs still match — per §11.1 doc-edit-in-same-change discipline.

@@ -4,6 +4,8 @@ Copyright (c) DCSV. All rights reserved.
 
 # @d2/resilience
 
+> Parent: [`server/shared/typescript/`](../README.md)
+
 Retry / circuit breaker / singleflight / composable pipeline. Mirrors
 `D2.Shared.Resilience` (.NET).
 
@@ -24,7 +26,7 @@ Retry / circuit breaker / singleflight / composable pipeline. Mirrors
 
 - `@d2/utilities` (boundary helpers)
 - `@d2/result` (D2Result-aware retry overload)
-- `@d2/logging` (reserved — transient-classification log lines added later)
+- `@d2/logging` (reserved for transient-classification log enrichment; not currently consumed)
 
 ## Usage example
 
