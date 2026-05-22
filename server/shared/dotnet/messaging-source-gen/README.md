@@ -145,4 +145,4 @@ careful coordination with deployed consumers:
 - [`contracts/mq-subscriptions/mq-subscriptions.spec.json`](../../../../contracts/mq-subscriptions/mq-subscriptions.spec.json) — subscription catalog
 - [`D2.Shared.Messaging.Abstractions`](../messaging-abstractions/README.md) — emission target + transport-agnostic contract
 - [`D2.Shared.Messaging.RabbitMq`](../messaging-rabbitmq/README.md) — primary consumer (publish + consume) + canonical runtime / wire-format / topology reference
-- [`D2.Shared.Auth.Scopes.SourceGen`](../auth-scopes-source-gen/) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
+- [`D2.Shared.Auth.Scopes.SourceGen`](../auth-scopes-source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)

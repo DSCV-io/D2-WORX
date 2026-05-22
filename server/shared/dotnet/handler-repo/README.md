@@ -131,7 +131,7 @@ No `Npgsql`, no provider-specific deps.
 
 ## Reference
 
-- [`D2.Shared.Handler.Repo.Abstractions`](../handler-repo-abstractions/) — vocabulary + extension factories + booleans
-- [`D2.Shared.Handler.Repo.Postgres`](../handler-repo-postgres/) — PG classifier impl
-- [`D2.Shared.Handler`](../handler/) — base
+- [`D2.Shared.Handler.Repo.Abstractions`](../handler-repo-abstractions/README.md) — vocabulary + extension factories + booleans
+- [`D2.Shared.Handler.Repo.Postgres`](../handler-repo-postgres/README.md) — PG classifier impl
+- [`D2.Shared.Handler`](../handler/README.md) — base
 - [PostgreSQL error code reference](https://www.postgresql.org/docs/current/errcodes-appendix.html)

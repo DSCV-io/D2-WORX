@@ -85,4 +85,4 @@ Audience strings flow through both the inbound JWT validator (`aud` claim check)
 - [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/auth-audiences/schema.json`](../../../../contracts/auth-audiences/schema.json) — JSON Schema (editor-time gate)
 - [`contracts/auth-audiences/audiences.spec.json`](../../../../contracts/auth-audiences/audiences.spec.json) — the catalog
-- [`D2.Shared.Auth.Abstractions`](../auth-abstractions/) — the consuming lib (where `Audiences.g.cs` lands)
+- [`D2.Shared.Auth.Abstractions`](../auth-abstractions/README.md) — the consuming lib (where `Audiences.g.cs` lands)

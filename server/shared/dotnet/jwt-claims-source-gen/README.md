@@ -69,5 +69,5 @@ The spec file is the single source of truth for every JWT claim D2 reads or writ
 - [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/jwt-claims/schema.json`](../../../../contracts/jwt-claims/schema.json) — JSON Schema for the spec
 - [`contracts/jwt-claims/jwt-claims.spec.json`](../../../../contracts/jwt-claims/jwt-claims.spec.json) — the source-of-truth catalog
-- [`D2.Shared.Headers.SourceGen`](../headers-source-gen/) — sibling SrcGen for cross-transport wire headers
-- [`D2.Shared.InProcessKeys.SourceGen`](../in-process-keys-source-gen/) — sibling SrcGen for cross-binding in-process slot keys
+- [`D2.Shared.Headers.SourceGen`](../headers-source-gen/README.md) — sibling SrcGen for cross-transport wire headers
+- [`D2.Shared.InProcessKeys.SourceGen`](../in-process-keys-source-gen/README.md) — sibling SrcGen for cross-binding in-process slot keys

@@ -116,6 +116,6 @@ These hand-written helpers live in `D2.Shared.Context.Abstractions` — the pars
 - [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/auth-context/`](../../../../contracts/auth-context/) — auth-context spec + JSON Schema
 - [`contracts/request-context/`](../../../../contracts/request-context/) — request-context spec + JSON Schema
-- [`D2.Shared.Auth.Scopes.SourceGen`](../auth-scopes-source-gen/) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
+- [`D2.Shared.Auth.Scopes.SourceGen`](../auth-scopes-source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
 - [RFC 8693 §2.1](https://datatracker.ietf.org/doc/html/rfc8693#section-2.1) — actor chain semantics
 - [RFC 6749 §3.3](https://datatracker.ietf.org/doc/html/rfc6749#section-3.3) — `scope` claim format

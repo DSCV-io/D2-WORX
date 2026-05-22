@@ -114,7 +114,7 @@ isolation.
 
 ## Dependencies
 
-- [`caching-abstractions/`](../caching-abstractions/) — `IDistributedCache`,
+- [`caching-abstractions/`](../caching-abstractions/README.md) — `IDistributedCache`,
   `ICacheInvalidationBackplane`, `ICacheSerializer`
 - `StackExchange.Redis` — Redis client
 - `Microsoft.Extensions.Options`, `Microsoft.Extensions.DependencyInjection.Abstractions`,

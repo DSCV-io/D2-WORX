@@ -123,7 +123,7 @@ The backplane subscription is OPTIONAL. If `ICacheInvalidationBackplane` isn't r
 
 ## Telemetry
 
-Tag-key + tag-value constants are emitted by [`D2.Shared.Telemetry.Tags.SourceGen`](../telemetry-tags-source-gen/) into `OutboundTelemetryTags.g.cs` from [`contracts/telemetry/telemetry.spec.json`](../../../../contracts/telemetry/telemetry.spec.json). Counter call sites reference `OutboundTelemetryTags.ServiceIdentityFetches.Outcome.CACHE_HIT` / etc. instead of bare string literals. The emitted file lands in the tracked `Generated/` directory (committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build`; do not hand-edit).
+Tag-key + tag-value constants are emitted by [`D2.Shared.Telemetry.Tags.SourceGen`](../telemetry-tags-source-gen/README.md) into `OutboundTelemetryTags.g.cs` from [`contracts/telemetry/telemetry.spec.json`](../../../../contracts/telemetry/telemetry.spec.json). Counter call sites reference `OutboundTelemetryTags.ServiceIdentityFetches.Outcome.CACHE_HIT` / etc. instead of bare string literals. The emitted file lands in the tracked `Generated/` directory (committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build`; do not hand-edit).
 
 | Counter | Tags | Purpose |
 |---|---|---|
@@ -149,9 +149,9 @@ Hosts that deploy the inbound `D2.Shared.Auth` lib alongside this one MUST regis
 
 ## References
 
-- [`D2.Shared.Auth`](../auth/) — inbound auth runtime (JWT validator + session liveness + `AddD2Auth` composition root); transport bindings in `D2.Shared.Auth.Http` + `D2.Shared.Auth.Grpc` siblings
-- [`D2.Shared.Auth.Abstractions`](../auth-abstractions/) — `Audiences.*` / `JwtClaimTypes.*` constants
-- [`D2.Shared.Caching.Abstractions`](../caching-abstractions/) — `ILocalCache` + `ICacheInvalidationBackplane` interfaces
-- [`D2.Shared.Resilience`](../resilience/) — `Singleflight` for fetch-path deduplication
+- [`D2.Shared.Auth`](../auth/README.md) — inbound auth runtime (JWT validator + session liveness + `AddD2Auth` composition root); transport bindings in `D2.Shared.Auth.Http` + `D2.Shared.Auth.Grpc` siblings
+- [`D2.Shared.Auth.Abstractions`](../auth-abstractions/README.md) — `Audiences.*` / `JwtClaimTypes.*` constants
+- [`D2.Shared.Caching.Abstractions`](../caching-abstractions/README.md) — `ILocalCache` + `ICacheInvalidationBackplane` interfaces
+- [`D2.Shared.Resilience`](../resilience/README.md) — `Singleflight` for fetch-path deduplication
 - [RFC 6749 §4.4](https://datatracker.ietf.org/doc/html/rfc6749#section-4.4) — `client_credentials` grant for service-identity tokens
 - [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) — token-exchange grant for user-context propagation

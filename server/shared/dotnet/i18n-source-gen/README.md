@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
-Roslyn incremental source generator that emits the `TK` static class — a hierarchical catalog of `TKMessage` constants — into [`D2.Shared.I18n.Abstractions`](../i18n-abstractions/) by reading `contracts/messages/*.json` translation catalogs via `<AdditionalFiles>`. The en-US.json file is the source-of-truth for the catalog; other locales contribute coverage diagnostics (`D2I18N002` per missing key, `D2I18N004` per orphan key). The generator is the original SrcGen pattern in this codebase — sibling generators (`auth-scopes-source-gen`, `auth-audiences-source-gen`, `context-source-gen`, `messaging-source-gen`) all mirror its file layout + diagnostic-decoupling design.
+Roslyn incremental source generator that emits the `TK` static class — a hierarchical catalog of `TKMessage` constants — into [`D2.Shared.I18n.Abstractions`](../i18n-abstractions/README.md) by reading `contracts/messages/*.json` translation catalogs via `<AdditionalFiles>`. The en-US.json file is the source-of-truth for the catalog; other locales contribute coverage diagnostics (`D2I18N002` per missing key, `D2I18N004` per orphan key). The generator is the original SrcGen pattern in this codebase — sibling generators (`auth-scopes-source-gen`, `auth-audiences-source-gen`, `context-source-gen`, `messaging-source-gen`) all mirror its file layout + diagnostic-decoupling design.
 
 The catalog is the single source of truth for translation keys. Every `TK.Common.Errors.NOT_FOUND` reference compiles against an emitted constant — adding a key is a one-line edit to `en-US.json` (the SrcGen picks it up next build); renaming a key breaks every consumer at compile time.
 
@@ -96,5 +96,5 @@ The Node side uses [Paraglide](https://inlang.com/m/gerre34r) for translation ke
 
 - [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/messages/en-US.json`](../../../../contracts/messages/en-US.json) — source-of-truth catalog
-- [`D2.Shared.I18n.Abstractions`](../i18n-abstractions/) — emission target (defines `TKMessage`)
-- [`D2.Shared.Auth.Scopes.SourceGen`](../auth-scopes-source-gen/) — sibling SrcGen modeled on this one
+- [`D2.Shared.I18n.Abstractions`](../i18n-abstractions/README.md) — emission target (defines `TKMessage`)
+- [`D2.Shared.Auth.Scopes.SourceGen`](../auth-scopes-source-gen/README.md) — sibling SrcGen modeled on this one

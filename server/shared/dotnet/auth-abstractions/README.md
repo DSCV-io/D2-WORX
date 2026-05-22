@@ -6,9 +6,9 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
-Identity / authorization vocabulary AND consumer-side runtime contracts — the value types, string constants, and read-only interfaces every consumer references when reasoning about auth. Domain layers, request-context, handler-abstractions, the runtime [`D2.Shared.Auth`](../auth/), and Edge's issuer-side code all reference this slice; impls live in the runtime libs.
+Identity / authorization vocabulary AND consumer-side runtime contracts — the value types, string constants, and read-only interfaces every consumer references when reasoning about auth. Domain layers, request-context, handler-abstractions, the runtime [`D2.Shared.Auth`](../auth/README.md), and Edge's issuer-side code all reference this slice; impls live in the runtime libs.
 
-The runtime piece (`AddD2Auth`, JWT validation, JWKS HTTP fetcher, session liveness tracker impl) lives in the sibling [`D2.Shared.Auth`](../auth/) project — those impls satisfy the `IJwksProvider` and `ISessionLivenessTracker` contracts defined here. The HTTP-transport binding lives in [`D2.Shared.Auth.Http`](../auth-http/) (middleware + ProblemDetails); the gRPC-transport binding lives in [`D2.Shared.Auth.Grpc`](../auth-grpc/) (server-side interceptor + RpcException trailers). Domain code never references any of the runtime libs — only this abstractions slice.
+The runtime piece (`AddD2Auth`, JWT validation, JWKS HTTP fetcher, session liveness tracker impl) lives in the sibling [`D2.Shared.Auth`](../auth/README.md) project — those impls satisfy the `IJwksProvider` and `ISessionLivenessTracker` contracts defined here. The HTTP-transport binding lives in [`D2.Shared.Auth.Http`](../auth-http/README.md) (middleware + ProblemDetails); the gRPC-transport binding lives in [`D2.Shared.Auth.Grpc`](../auth-grpc/README.md) (server-side interceptor + RpcException trailers). Domain code never references any of the runtime libs — only this abstractions slice.
 
 ---
 

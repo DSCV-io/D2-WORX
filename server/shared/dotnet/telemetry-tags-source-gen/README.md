@@ -117,5 +117,5 @@ public static class AuthTelemetryTags
 - [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/telemetry/schema.json`](../../../../contracts/telemetry/schema.json) — JSON Schema for the spec
 - [`contracts/telemetry/telemetry.spec.json`](../../../../contracts/telemetry/telemetry.spec.json) — the source-of-truth catalog
-- [`D2.Shared.Auth.ErrorCodes.SourceGen`](../auth-error-codes-source-gen/) — sibling SrcGen whose spec the cross-spec resolver consumes
-- [`D2.Shared.Auth.Scopes.SourceGen`](../auth-scopes-source-gen/) — sibling SrcGen this one mirrors (incremental-generator + diagnostic-split pattern)
+- [`D2.Shared.Auth.ErrorCodes.SourceGen`](../auth-error-codes-source-gen/README.md) — sibling SrcGen whose spec the cross-spec resolver consumes
+- [`D2.Shared.Auth.Scopes.SourceGen`](../auth-scopes-source-gen/README.md) — sibling SrcGen this one mirrors (incremental-generator + diagnostic-split pattern)

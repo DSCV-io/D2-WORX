@@ -8,7 +8,7 @@ Copyright (c) DCSV. All rights reserved.
 
 Runtime translation lib — `Translator` (loads `contracts/messages/*.json` catalogs and renders `TKMessage` instances per locale), `SupportedLocales` (env-driven BCP 47 locale registry with canonical-casing + language-fallback), and the `AddD2I18n` DI extension that wires both as singletons.
 
-The pure-types slice (`TKMessage`, `TK` constants, `ITranslator` interface) lives in [`D2.Shared.I18n.Abstractions`](../i18n-abstractions/). Domain layers reference Abstractions; this runtime is for infrastructure / composition-root code that actually renders translated strings (Courier emails, SMS, push notifications).
+The pure-types slice (`TKMessage`, `TK` constants, `ITranslator` interface) lives in [`D2.Shared.I18n.Abstractions`](../i18n-abstractions/README.md). Domain layers reference Abstractions; this runtime is for infrastructure / composition-root code that actually renders translated strings (Courier emails, SMS, push notifications).
 
 > **Translation strategy reminder.** See [`../i18n-abstractions/README.md` § Wire format](../i18n-abstractions/README.md#wire-format) for the canonical split: client-side via SvelteKit / Paraglide on HTTP-response payloads, server-side via this `Translator` for outbound notifications where the rendered text must be inlined before delivery.
 

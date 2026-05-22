@@ -92,5 +92,5 @@ Analyzer-only:
 ## Reference
 
 - [`contracts/auth-context/IAuthContext.spec.json`](../../../../contracts/auth-context/IAuthContext.spec.json) — source of truth for the interface shape
-- [`D2.Shared.Context.SourceGen`](../context-source-gen/) — the generator
-- [`D2.Shared.Auth.Abstractions`](../auth-abstractions/) — vocabulary types referenced by the interface
+- [`D2.Shared.Context.SourceGen`](../context-source-gen/README.md) — the generator
+- [`D2.Shared.Auth.Abstractions`](../auth-abstractions/README.md) — vocabulary types referenced by the interface

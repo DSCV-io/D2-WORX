@@ -104,7 +104,7 @@ coordination requires `IDistributedCache`.
 
 ## Dependencies
 
-- [`caching-abstractions/`](../caching-abstractions/) — `ILocalCache` + options
+- [`caching-abstractions/`](../caching-abstractions/README.md) — `ILocalCache` + options
 - `Microsoft.Extensions.Caching.Memory` — backing store
 - `Microsoft.Extensions.Options` — DI options binding
 - `Microsoft.Extensions.DependencyInjection.Abstractions` — registration

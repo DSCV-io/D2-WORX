@@ -66,5 +66,5 @@ The visibility difference (public vs internal) reflects the consumption pattern 
 - [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/in-process-keys/schema.json`](../../../../contracts/in-process-keys/schema.json) — JSON Schema for the spec
 - [`contracts/in-process-keys/keys.spec.json`](../../../../contracts/in-process-keys/keys.spec.json) — the source-of-truth catalog
-- [`D2.Shared.Headers.SourceGen`](../headers-source-gen/) — sibling SrcGen for cross-transport wire headers
-- [`D2.Shared.Auth.JwtClaims.SourceGen`](../jwt-claims-source-gen/) — sibling SrcGen for JWT claim names
+- [`D2.Shared.Headers.SourceGen`](../headers-source-gen/README.md) — sibling SrcGen for cross-transport wire headers
+- [`D2.Shared.Auth.JwtClaims.SourceGen`](../jwt-claims-source-gen/README.md) — sibling SrcGen for JWT claim names

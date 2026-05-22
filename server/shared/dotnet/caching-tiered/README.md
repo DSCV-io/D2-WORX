@@ -85,7 +85,7 @@ this instance's adds; cluster cardinality lives in L2). Callers needing set prim
 
 ## Dependencies
 
-- [`caching-abstractions/`](../caching-abstractions/) — `ITieredCache`, `ILocalCache`,
+- [`caching-abstractions/`](../caching-abstractions/README.md) — `ITieredCache`, `ILocalCache`,
   `IDistributedCache`, `ICacheInvalidationBackplane`
 - No backing-store deps directly — the impl is pure composition
 

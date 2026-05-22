@@ -107,6 +107,6 @@ NuGet packages:
 
 ## Reference
 
-- [`D2.Shared.Handler.Repo.Abstractions`](../handler-repo-abstractions/) — interface + `DbFailureKind` enum + extension factories
-- [`D2.Shared.Handler.Repo`](../handler-repo/) — `BaseRepoHandler` consumes the classifier
+- [`D2.Shared.Handler.Repo.Abstractions`](../handler-repo-abstractions/README.md) — interface + `DbFailureKind` enum + extension factories
+- [`D2.Shared.Handler.Repo`](../handler-repo/README.md) — `BaseRepoHandler` consumes the classifier
 - [PostgreSQL error codes](https://www.postgresql.org/docs/current/errcodes-appendix.html)

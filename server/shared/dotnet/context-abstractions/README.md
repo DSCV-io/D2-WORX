@@ -84,5 +84,5 @@ Plus everything from `IAuthContext` (token / identity / organization / impersona
 
 - [`contracts/request-context/IRequestContext.spec.json`](../../../../contracts/request-context/IRequestContext.spec.json) — source of truth (interface shape + `propagate` + `maxLength`)
 - [`contracts/auth-context/IAuthContext.spec.json`](../../../../contracts/auth-context/IAuthContext.spec.json) — base interface spec
-- [`D2.Shared.AuthContext.Abstractions`](../auth-context-abstractions/) — base interface lib
-- [`D2.Shared.Context.SourceGen`](../context-source-gen/) — analyzer
+- [`D2.Shared.AuthContext.Abstractions`](../auth-context-abstractions/README.md) — base interface lib
+- [`D2.Shared.Context.SourceGen`](../context-source-gen/README.md) — analyzer

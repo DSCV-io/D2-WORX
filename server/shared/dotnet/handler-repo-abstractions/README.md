@@ -93,5 +93,5 @@ Zero external NuGet packages. No EF Core, no Npgsql.
 
 ## Reference
 
-- [`D2.Shared.Handler.Repo`](../handler-repo/) — `BaseRepoHandler` consumes the classifier interface
-- [`D2.Shared.Handler.Repo.Postgres`](../handler-repo-postgres/) — PostgreSQL classifier implementation
+- [`D2.Shared.Handler.Repo`](../handler-repo/README.md) — `BaseRepoHandler` consumes the classifier interface
+- [`D2.Shared.Handler.Repo.Postgres`](../handler-repo-postgres/README.md) — PostgreSQL classifier implementation

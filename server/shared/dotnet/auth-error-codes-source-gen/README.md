@@ -79,5 +79,5 @@ The two-emitter split lives in one sourcegen because both outputs derive from th
 - [`docs/SRC_GEN.md`](../../../../docs/SRC_GEN.md) — canonical how-to-author guide for D² Roslyn source generators
 - [`contracts/auth-error-codes/schema.json`](../../../../contracts/auth-error-codes/schema.json) — JSON Schema for the spec
 - [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../contracts/auth-error-codes/auth-error-codes.spec.json) — the source-of-truth catalog
-- [`D2.Shared.Auth.Scopes.SourceGen`](../auth-scopes-source-gen/) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
-- [`D2.Shared.Telemetry.Tags.SourceGen`](../telemetry-tags-source-gen/) — sibling SrcGen consumes this spec via `valuesFromSpec=auth-error-codes` to drive the `d2.auth.problem.emitted` tag-value enumeration
+- [`D2.Shared.Auth.Scopes.SourceGen`](../auth-scopes-source-gen/README.md) — sibling SrcGen this one mirrors (same incremental-generator + diagnostic-split pattern)
+- [`D2.Shared.Telemetry.Tags.SourceGen`](../telemetry-tags-source-gen/README.md) — sibling SrcGen consumes this spec via `valuesFromSpec=auth-error-codes` to drive the `d2.auth.problem.emitted` tag-value enumeration

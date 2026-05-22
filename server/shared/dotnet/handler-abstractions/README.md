@@ -60,6 +60,6 @@ Package references:
 
 ## Reference
 
-- [`D2.Shared.Handler`](../handler/) — the concrete `BaseHandler` + `HandlerContext` + DI extension
-- [`D2.Shared.Handler.Repo`](../handler-repo/) — EF-flavored handler that maps PG/EF exceptions to `D2Result` failure codes
+- [`D2.Shared.Handler`](../handler/README.md) — the concrete `BaseHandler` + `HandlerContext` + DI extension
+- [`D2.Shared.Handler.Repo`](../handler-repo/README.md) — EF-flavored handler that maps PG/EF exceptions to `D2Result` failure codes
 - [`docs/PATTERNS.md`](../../../../docs/PATTERNS.md) "Handler" section — full mechanics, TLC/2LC/3LC convention
