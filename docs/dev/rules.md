@@ -604,6 +604,15 @@ The set of in-language rules that show up everywhere. Memory of these is the dif
 - **6.14** Is the SvelteKit BFF pure SSR? (Browser → Edge directly for auth state mutations. Server-side route guards (`requireAuth`, `requireOrg`, etc.) at `server/web/src/lib/server/auth/`. Browser-side `authClient` at `server/web/src/lib/client/auth/`.)
   - Evidence: per new auth surface → location confirmed.
 
+- **6.15** Are TypeScript optional fields declared with the shorthand `field?: T` rather than the explicit union `field: T | undefined`? Are `T | null` unions absent from all interface fields, function return types, and local variables?
+  - **Shorthand `field?: T` required on interface fields**: `field: T | undefined` on an interface field is forbidden — use `field?: T`. The shorthand is more permissive at the call site (callers can omit the field entirely, not just pass `undefined` explicitly) and matches the C# `T?` shorthand convention (§5 + §7).
+  - **`T | null` forbidden everywhere**: use `T | undefined` for return types / local variables where "explicitly absent" is the intended semantic, or `field?: T` for optional interface fields. `null` is a distinct value requiring an explicit branch (`=== null`) and has no place in domain types — `undefined` satisfies the "absent" semantic universally.
+  - **Allowed — `T | undefined` on function return types**: when the precise semantic is "this function explicitly returns `undefined` on failure / absent, NOT optional parameter omission," the explicit `T | undefined` union on a return type or local variable is acceptable. Example: `resolve(input: string): CountryCode | undefined` (clearly signals "caller must handle the undefined return path").
+  - **`boolean | null` exception** (per §6.3): explicit three-state semantics for pre-auth flags only.
+  - **Evidence**: `grep -rEn ": [A-Za-z][A-Za-z0-9<>, ]* \| undefined" server/shared/typescript/**/*.ts` on interface field lines → zero matches expected (interface fields must use `?:` form). `grep -rEn ": [A-Za-z][A-Za-z0-9<>, ]* \| null" server/shared/typescript/**/*.ts` → zero matches expected (excluding the `boolean | null` pre-auth exception).
+  - **Why**: consistent with C#'s `T?` shorthand convention; call-site ergonomics — `field?: T` callers can omit the field in object literals, while `field: T | undefined` forces `field: undefined` in every object that includes the field. JSON-wire `null` from .NET nullable value types normalizes to `undefined` at the Zod deserialization boundary, so `T | null` in domain types creates a false expectation of a three-state wire value.
+  - **How to apply**: refactor any `field: T | undefined` on interfaces → `field?: T`; audit all call sites when doing so — switching to `?:` form may allow callers to simplify `{ field: undefined }` → `{}`. For JSDoc annotations on optional fields, use `{T} [field]` form (not `{T|undefined}`).
+
 <sup>[↑ jump to top](#top)</sup>
 
 ---
