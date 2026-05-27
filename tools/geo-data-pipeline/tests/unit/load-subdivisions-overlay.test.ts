@@ -191,9 +191,7 @@ describe("applySubdivisionsOverlay", () => {
   it("override targeting missing id throws with descriptive message", () => {
     const tier1 = [makeSubdivision({ iso31662Code: "US-NY" })];
     const overlay = makeOverlay({
-      overrides: [
-        { ...tracked("ZZ-99"), fields: { displayName: "Phantom" } },
-      ],
+      overrides: [{ ...tracked("ZZ-99"), fields: { displayName: "Phantom" } }],
     });
     expect(() => applySubdivisionsOverlay(tier1, overlay)).toThrow(
       /override targets subdivisions\[ZZ-99\].*no such entry exists in Tier 1/s,

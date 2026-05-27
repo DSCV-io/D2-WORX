@@ -10,7 +10,6 @@ using AwesomeAssertions;
 using D2.Shared.Geo.Abstractions;
 using D2.Shared.Location;
 using D2.Shared.Location.ValueObjects;
-using D2.Shared.Result;
 using Xunit;
 
 /// <summary>

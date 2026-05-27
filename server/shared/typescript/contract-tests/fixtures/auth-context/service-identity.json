@@ -4,6 +4,7 @@
     "properties": [
       "actorChain",
       "audience",
+      "authMethod",
       "immediateCallerClientId",
       "impersonatedBy",
       "impersonationKind",
@@ -15,6 +16,7 @@
       "isAuthenticated",
       "isImpersonating",
       "isServiceIdentity",
+      "lastStepUpAt",
       "orgId",
       "orgName",
       "orgRole",

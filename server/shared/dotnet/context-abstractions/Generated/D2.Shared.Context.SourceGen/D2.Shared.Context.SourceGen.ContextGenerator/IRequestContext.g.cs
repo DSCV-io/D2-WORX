@@ -38,6 +38,21 @@ public interface IRequestContext : global::D2.Shared.AuthContext.Abstractions.IA
     /// </summary>
     string? RequestPath { get; }
 
+    /// <summary>
+    /// HTTP verb captured by Edge middleware (e.g. 'GET', 'POST', 'PUT'). Only meaningful at the HTTP edge — downstream gRPC and AMQP consumers do not carry the originating HTTP verb, so this field does NOT propagate. Null on non-HTTP transports.
+    /// </summary>
+    string? HttpMethod { get; }
+
+    /// <summary>
+    /// Timestamp when Edge began processing the originating request (Category 2 — past UTC instant). Propagates so async consumers (Audit, Courier) can report end-to-end SLA latency. Domain consumers MUST convert to NodaTime.Instant at the consumption boundary before any temporal arithmetic: dto.Value.ToInstant(). Wire form is DateTimeOffset? for JSON-serialization interop.
+    /// </summary>
+    DateTimeOffset? RequestStartedAt { get; }
+
+    /// <summary>
+    /// Parsed value of the Idempotency-Key request header. Propagates so downstream consumers correlate idempotent retries across the call chain. Max 255 chars; values exceeding cap are rejected by Edge middleware with 400 Bad Request. Treat as opaque — do NOT log the raw value; structured logs may emit a SHA-256 prefix for correlation but never the literal value.
+    /// </summary>
+    string? IdempotencyKey { get; }
+
     #endregion
 
     #region Network
@@ -69,6 +84,48 @@ public interface IRequestContext : global::D2.Shared.AuthContext.Abstractions.IA
 
     #endregion
 
+    #region Infrastructure
+
+    /// <summary>
+    /// Edge process identifier (e.g. Kubernetes pod name, EC2 instance id, or region+node tuple). Captured once at Edge process boot by startup middleware. Propagates via x-d2-context so downstream audit and telemetry know which edge node originated the request — important for hot-spot diagnosis and capacity attribution.
+    /// </summary>
+    string? EdgeNodeId { get; }
+
+    #endregion
+
+    #region User Preferences
+
+    /// <summary>
+    /// Resolved user locale as an IETF BCP 47 tag (e.g. 'en-US', 'zh-Hans-SG'). Populated by Edge auth middleware via the locale cascade: user profile preference &gt; org default preference &gt; X-D2-Locale header &gt; Accept-Language header &gt; fallback 'en-US'. Propagates so async consumers (Courier, Notifications) render locale-aware content. Validation of the BCP 47 tag is performed by the LocaleCode typed wrapper at the consumption site.
+    /// </summary>
+    string? LocaleIetfBcp47Tag { get; }
+
+    /// <summary>
+    /// Resolved user timezone as an IANA timezone database name (e.g. 'America/New_York', 'Europe/Berlin'). Populated by Edge auth middleware via the timezone cascade: user profile preference &gt; org default preference &gt; X-D2-Timezone header &gt; WhoIs-derived (CountryIso31661Alpha2Code + SubdivisionIso31662Code mapped via D2.Shared.Geo.Default) &gt; fallback 'UTC'. Propagates so async consumers render timezone-aware timestamps.
+    /// </summary>
+    string? TimezoneIanaName { get; }
+
+    /// <summary>
+    /// Resolved user currency as an ISO 4217 code (e.g. 'USD', 'EUR', 'GBP'). Populated by Edge auth middleware via the currency cascade: user profile preference &gt; org default preference &gt; X-D2-Currency header &gt; CountryIso31661Alpha2Code-derived (ISO 3166 to ISO 4217 primary legal-tender mapping via D2.Shared.Geo.Default) &gt; fallback NULL (no sensible universal default; consumers surface a validation error when null and a currency is required).
+    /// </summary>
+    string? CurrencyIso4217Code { get; }
+
+    #endregion
+
+    #region Entitlements
+
+    /// <summary>
+    /// Operating organization plan tier label (e.g. 'Free', 'Starter', 'Pro', 'Enterprise'). Used by handlers gating premium operations. Stored as a free-form string (not an enum) to allow tier names to evolve without a source-gen rebuild cycle — validate at the consumption site. Propagates so async consumers can apply plan-gated logic.
+    /// </summary>
+    string? OrgPlanTier { get; }
+
+    /// <summary>
+    /// Comma-separated list of active feature flag names for the operating org (e.g. 'new-billing,risk-v2'). Callers split on comma to enumerate active flags. Flag names MUST NOT contain commas — enforced at flag-creation time. CSV form chosen because source-gen does not currently support IReadOnlySet&lt;string&gt; for propagated context fields. Propagates so async consumers can apply flag-gated logic.
+    /// </summary>
+    string? FeatureFlagsCsv { get; }
+
+    #endregion
+
     #region WhoIs — Admin Location
 
     /// <summary>
@@ -88,21 +145,15 @@ public interface IRequestContext : global::D2.Shared.AuthContext.Abstractions.IA
     string? City { get; }
 
     /// <summary>
-    /// Human-readable region / state name (e.g. 'California').
+    /// ISO 3166-2 subdivision code from WhoIs lookup (e.g. 'US-CA', 'DE-BY'). Standards-explicit name per the §7.Z naming convention: the name describes exactly what data IS. Consumers wanting the typed SubdivisionCode wrapper use IRequestContextGeoExtensions.Subdivision().
     /// </summary>
     [RedactData(Reason = RedactReason.PersonalInformation)]
-    string? Region { get; }
+    string? SubdivisionIso31662Code { get; }
 
     /// <summary>
-    /// ISO 3166-2 subdivision code (e.g. 'US-CA').
+    /// ISO 3166-1 alpha-2 country code from WhoIs lookup (e.g. 'US', 'DE'). Standards-explicit name per the §7.Z naming convention: the name describes exactly what data IS. Consumers wanting the typed CountryCode enum use IRequestContextGeoExtensions.Country().
     /// </summary>
-    [RedactData(Reason = RedactReason.PersonalInformation)]
-    string? SubdivisionCode { get; }
-
-    /// <summary>
-    /// ISO 3166-1 alpha-2 country code from WhoIs lookup.
-    /// </summary>
-    string? CountryCode { get; }
+    string? CountryIso31661Alpha2Code { get; }
 
     /// <summary>
     /// Postal / zip code from WhoIs lookup. Useful for granular locality risk-scoring.

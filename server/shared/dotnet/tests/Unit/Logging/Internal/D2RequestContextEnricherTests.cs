@@ -141,7 +141,7 @@ public sealed class D2RequestContextEnricherTests
             // WhoIs/Geo
             WhoIsHashId = "whois-hash-1",
             AdminLocationHashId = "admin-loc-hash-1",
-            CountryCode = "US",
+            CountryIso31661Alpha2Code = "US",
 
             // WhoIs/Network-Privacy
             IsVpn = false,
@@ -246,7 +246,7 @@ public sealed class D2RequestContextEnricherTests
             .WhoseValue.Should().Be("whois-hash-1");
         diag.Recorded.Should().ContainKey(nameof(IRequestContext.AdminLocationHashId))
             .WhoseValue.Should().Be("admin-loc-hash-1");
-        diag.Recorded.Should().ContainKey(nameof(IRequestContext.CountryCode))
+        diag.Recorded.Should().ContainKey(nameof(IRequestContext.CountryIso31661Alpha2Code))
             .WhoseValue.Should().Be("US");
 
         // WhoIs/Network-Privacy
@@ -273,7 +273,7 @@ public sealed class D2RequestContextEnricherTests
     {
         var stub = new StubRequestContext
         {
-            CountryCode = "US",
+            CountryIso31661Alpha2Code = "US",
             IsVpn = true,
         };
         var diag = new RecordingDiagnosticContext();
@@ -282,7 +282,7 @@ public sealed class D2RequestContextEnricherTests
         D2RequestContextEnricher.Enrich(diag, http);
 
         diag.Recorded.Should().HaveCount(2);
-        diag.Recorded.Should().ContainKey(nameof(IRequestContext.CountryCode));
+        diag.Recorded.Should().ContainKey(nameof(IRequestContext.CountryIso31661Alpha2Code));
         diag.Recorded.Should().ContainKey(nameof(IRequestContext.IsVpn));
     }
 
@@ -294,8 +294,7 @@ public sealed class D2RequestContextEnricherTests
             ClientIp = "203.0.113.42",
             City = "San Francisco",
             PostalCode = "94103",
-            Region = "California",
-            SubdivisionCode = "US-CA",
+            SubdivisionIso31662Code = "US-CA",
             Latitude = 37.7749,
             Longitude = -122.4194,
             Geohash = "9q8yy",
@@ -308,8 +307,7 @@ public sealed class D2RequestContextEnricherTests
         diag.Recorded.Should().NotContainKey(nameof(IRequestContext.ClientIp));
         diag.Recorded.Should().NotContainKey(nameof(IRequestContext.City));
         diag.Recorded.Should().NotContainKey(nameof(IRequestContext.PostalCode));
-        diag.Recorded.Should().NotContainKey(nameof(IRequestContext.Region));
-        diag.Recorded.Should().NotContainKey(nameof(IRequestContext.SubdivisionCode));
+        diag.Recorded.Should().NotContainKey(nameof(IRequestContext.SubdivisionIso31662Code));
         diag.Recorded.Should().NotContainKey(nameof(IRequestContext.Latitude));
         diag.Recorded.Should().NotContainKey(nameof(IRequestContext.Longitude));
         diag.Recorded.Should().NotContainKey(nameof(IRequestContext.Geohash));
@@ -326,7 +324,7 @@ public sealed class D2RequestContextEnricherTests
             // Touch one field so the enricher emits SOMETHING (otherwise the
             // partial-populated path emits zero items, which doesn't isolate
             // the empty-collection-gate behavior).
-            CountryCode = "US",
+            CountryIso31661Alpha2Code = "US",
         };
         var diag = new RecordingDiagnosticContext();
         var http = BuildHttpContextWith(stub);
@@ -360,7 +358,7 @@ public sealed class D2RequestContextEnricherTests
     [Fact]
     public void Enrich_ScopesEmpty_NotEmitted()
     {
-        var stub = new StubRequestContext { CountryCode = "US" };
+        var stub = new StubRequestContext { CountryIso31661Alpha2Code = "US" };
         var diag = new RecordingDiagnosticContext();
         var http = BuildHttpContextWith(stub);
 
@@ -390,7 +388,7 @@ public sealed class D2RequestContextEnricherTests
     [Fact]
     public void Enrich_AudienceEmpty_NotEmitted()
     {
-        var stub = new StubRequestContext { CountryCode = "US" };
+        var stub = new StubRequestContext { CountryIso31661Alpha2Code = "US" };
         var diag = new RecordingDiagnosticContext();
         var http = BuildHttpContextWith(stub);
 
@@ -471,12 +469,33 @@ public sealed class D2RequestContextEnricherTests
 
         public string? RequestPath { get; init; }
 
+        public string? HttpMethod { get; init; }
+
+        public DateTimeOffset? RequestStartedAt { get; init; }
+
+        public string? IdempotencyKey { get; init; }
+
         // Fingerprints
         public string? SessionFingerprint { get; init; }
 
         public string? CurrentFingerprint { get; init; }
 
         public int? RiskScore { get; init; }
+
+        // Infrastructure
+        public string? EdgeNodeId { get; init; }
+
+        // User Preferences
+        public string? LocaleIetfBcp47Tag { get; init; }
+
+        public string? TimezoneIanaName { get; init; }
+
+        public string? CurrencyIso4217Code { get; init; }
+
+        // Entitlements
+        public string? OrgPlanTier { get; init; }
+
+        public string? FeatureFlagsCsv { get; init; }
 
         // WhoIs — Admin Location
         public string? WhoIsHashId { get; init; }
@@ -485,11 +504,9 @@ public sealed class D2RequestContextEnricherTests
 
         public string? City { get; init; }
 
-        public string? Region { get; init; }
+        public string? SubdivisionIso31662Code { get; init; }
 
-        public string? SubdivisionCode { get; init; }
-
-        public string? CountryCode { get; init; }
+        public string? CountryIso31661Alpha2Code { get; init; }
 
         public string? PostalCode { get; init; }
 
@@ -528,6 +545,10 @@ public sealed class D2RequestContextEnricherTests
         public DateTimeOffset? TokenExpiresAt { get; init; }
 
         public IReadOnlyList<ActorEntry> ActorChain { get; init; } = [];
+
+        public string? AuthMethod { get; init; }
+
+        public DateTimeOffset? LastStepUpAt { get; init; }
 
         // IAuthContext — Identity
         public string? Subject { get; init; }

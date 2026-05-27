@@ -18,24 +18,15 @@
  */
 export const D2GrpcTrailers = {
   /**
-   * Trailer key carrying the machine-readable d2_error_code constant. Same wire value as the HTTP
-   * ProblemDetails extension key, so operators correlating a gRPC failure with an HTTP failure see
-   * one identifier across both transports.
+   * Trailer key carrying the machine-readable d2_error_code constant. Same wire value as the HTTP ProblemDetails extension key, so operators correlating a gRPC failure with an HTTP failure see one identifier across both transports.
    */
   ERROR_CODE: "d2_error_code",
   /**
-   * Trailer key carrying the JSON-serialized D2Result.Messages array (TKMessage objects: {key,
-   * params?}). Wire-format-compatible with the HTTP ProblemDetails d2_messages extension.
+   * Trailer key carrying the JSON-serialized D2Result.Messages array (TKMessage objects: {key, params?}). Wire-format-compatible with the HTTP ProblemDetails d2_messages extension.
    */
   MESSAGES: "d2_messages",
   /**
-   * Trailer key carrying the W3C trace id (lower-hex, 32 chars) when an Activity is current.
-   * OMITTED when no Activity is present, mirroring the HTTP middleware's omission policy. NOTE:
-   * camelCase 'traceId' value matches the HTTP ProblemDetails extension key 'traceId' — single
-   * mental model across transports. gRPC HTTP/2 trailer names are case-insensitive per the HTTP/2
-   * spec; senders may pick any casing, and the spec pins camelCase so consumers comparing trailer
-   * values against the HTTP ProblemDetails extension key share one string literal across
-   * transports.
+   * Trailer key carrying the W3C trace id (lower-hex, 32 chars) when an Activity is current. OMITTED when no Activity is present, mirroring the HTTP middleware's omission policy. NOTE: camelCase 'traceId' value matches the HTTP ProblemDetails extension key 'traceId' — single mental model across transports. gRPC HTTP/2 trailer names are case-insensitive per the HTTP/2 spec; senders may pick any casing, and the spec pins camelCase so consumers comparing trailer values against the HTTP ProblemDetails extension key share one string literal across transports.
    */
   TRACE_ID: "traceId",
 } as const;

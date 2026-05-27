@@ -53,18 +53,24 @@ export interface PropertySpec {
  * Maps the closed-vocabulary .NET type to its TS equivalent. Mirrors the
  * .NET `InterfaceEmitter` mapping so cross-language consumers see equivalent
  * shapes.
+ *
+ * Nullable spec types (e.g. `string?`, `bool?`) map to their optional TS
+ * counterpart using `| undefined` (never `| null`) per the codebase convention
+ * that `undefined` is the only "absent" sentinel in TypeScript. The generated
+ * interface property is written as `readonly field?: T` which is equivalent to
+ * `readonly field: T | undefined` and matches C#'s `T?` optional-field idiom.
  */
 const TYPE_MAP: Readonly<Record<string, string>> = {
-  "string?": "string | null",
-  "bool?": "boolean | null",
-  "int?": "number | null",
-  "double?": "number | null",
-  "Guid?": "string | null",
-  "DateTimeOffset?": "string | null",
-  "OrgType?": "OrgType | null",
-  "Role?": "Role | null",
-  "ActorKind?": "ActorKind | null",
-  "ImpersonationKind?": "ImpersonationKind | null",
+  "string?": "string | undefined",
+  "bool?": "boolean | undefined",
+  "int?": "number | undefined",
+  "double?": "number | undefined",
+  "Guid?": "string | undefined",
+  "DateTimeOffset?": "string | undefined",
+  "OrgType?": "OrgType | undefined",
+  "Role?": "Role | undefined",
+  "ActorKind?": "ActorKind | undefined",
+  "ImpersonationKind?": "ImpersonationKind | undefined",
   "IReadOnlyList<ActorEntry>": "readonly ActorEntry[]",
   "IReadOnlyList<string>": "readonly string[]",
   "IReadOnlySet<string>": "ReadonlySet<string>",
@@ -275,7 +281,15 @@ function emitInterface(
         sb.appendLine(" */");
       }
       const tsType = TYPE_MAP[prop.type] ?? "unknown";
-      sb.appendLine(`readonly ${camelCase(prop.name)}: ${tsType};`);
+      // Nullable spec types emit as optional properties (`readonly field?: T`)
+      // which is equivalent to `T | undefined`. This matches C#'s `T?` idiom
+      // and the codebase convention that `undefined` is the only absent sentinel.
+      if (tsType.endsWith("| undefined")) {
+        const baseType = tsType.slice(0, -" | undefined".length).trimEnd();
+        sb.appendLine(`readonly ${camelCase(prop.name)}?: ${baseType};`);
+      } else {
+        sb.appendLine(`readonly ${camelCase(prop.name)}: ${tsType};`);
+      }
     }
   }
   sb.decreaseIndent();

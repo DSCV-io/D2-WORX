@@ -32,7 +32,7 @@ describe("redirectIfAuthenticated — pass-through branches", () => {
   });
 
   it("returns void when isAuthenticated is null (pre-auth)", () => {
-    const event = makeEvent(authenticatedCtx({ isAuthenticated: null }));
+    const event = makeEvent(authenticatedCtx({ isAuthenticated: undefined }));
     const { throwers, thrown } = makeThrowers();
     expect(() =>
       redirectIfAuthenticated(event, throwers, "/dashboard"),

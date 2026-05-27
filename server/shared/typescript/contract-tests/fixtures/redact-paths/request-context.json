@@ -8,8 +8,7 @@
       "latitude",
       "longitude",
       "postalCode",
-      "region",
-      "subdivisionCode"
+      "subdivisionIso31662Code"
     ]
   },
   "scenario": "request-context"

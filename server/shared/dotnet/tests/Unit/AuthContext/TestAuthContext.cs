@@ -30,6 +30,10 @@ internal sealed class TestAuthContext : IAuthContext
 
     public IReadOnlyList<ActorEntry> ActorChain { get; init; } = [];
 
+    public string? AuthMethod { get; init; }
+
+    public DateTimeOffset? LastStepUpAt { get; init; }
+
     public string? Subject { get; init; }
 
     public Guid? UserId { get; init; }

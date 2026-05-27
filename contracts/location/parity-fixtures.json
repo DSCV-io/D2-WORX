@@ -38,10 +38,7 @@
       "inputs": {
         "coordinates": {
           "factory": "create",
-          "args": [
-            40.7128,
-            -74.006
-          ]
+          "args": [40.7128, -74.006]
         },
         "streetAddress": {
           "line1": "123 Main St"
@@ -56,10 +53,7 @@
       "inputs": {
         "coordinates": {
           "factory": "create",
-          "args": [
-            40.7128,
-            -74.006
-          ]
+          "args": [40.7128, -74.006]
         },
         "streetAddress": null,
         "adminLocation": {
@@ -90,10 +84,7 @@
       "inputs": {
         "coordinates": {
           "factory": "create",
-          "args": [
-            40.7128,
-            -74.006
-          ]
+          "args": [40.7128, -74.006]
         },
         "streetAddress": {
           "line1": "123 Main St"

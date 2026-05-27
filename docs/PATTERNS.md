@@ -37,7 +37,14 @@ Directory of the load-bearing patterns + cross-cutting conventions every D²-WOR
 25. [PII redaction — `[RedactData]`](#pii-redaction--redactdata)
 26. [Spec-driven codegen — the cross-cutting pattern](#spec-driven-codegen--the-cross-cutting-pattern)
 27. [Domain validation — smart-constructor pattern](#domain-validation--smart-constructor-pattern)
-28. [Anti-patterns to actively avoid](#anti-patterns-to-actively-avoid)
+28. [Reference data](#reference-data)
+    - [Endonym discipline](#endonym-discipline)
+    - [Typed geo catalogs](#typed-geo-catalogs)
+    - [Typed access on IRequestContext](#typed-access-on-irequestcontext)
+    - [Geo name resolution at the integration boundary](#geo-name-resolution-at-the-integration-boundary)
+    - [Reference data — user-preference cascades](#reference-data--user-preference-cascades)
+29. [Hash composition](#hash-composition)
+30. [Anti-patterns to actively avoid](#anti-patterns-to-actively-avoid)
 
 ---
 
@@ -611,6 +618,141 @@ public static class IRequestContextGeoExtensions
 This idiom works only when the two extensions return DIFFERENT types (so the disambiguation has semantic meaning). If both extensions returned the same type, the choice would be invisible at the call site and consumers couldn't reason about it.
 
 TypeScript has no equivalent of extension-method namespace shadowing, so the TS mirror in `@d2/geo-default/extensions/` uses distinct free-function names (`countryFor(context)` / `subdivisionFor(context)`) for clarity. Document the parity asymmetry in the affected per-lib READMEs.
+
+## Reference data
+
+Reference data is static, spec-driven, and versioned. Unlike user-generated entities it is read-only at runtime, ships with the binary, and changes only through a codegen rebuild cycle. D²-WORX manages reference data through three layers:
+
+1. **JSON specs** under `contracts/geo/` — the single source of truth for every country, subdivision, currency, language, locale, and timezone.
+2. **Codegen output** in `D2.Shared.Geo.Abstractions` (record shapes, typed enums, wrapper structs, lookup contracts) and `D2.Shared.Geo.Default` (static catalog instances, FrozenDictionary lookup tables, name-resolver warm-up).
+3. **Deprecation metadata** — the `DeprecationInfo` record on each entity communicates withdrawn or merged entries without deletion (ISO 3166 country changes, superseded subdivision codes, renamed currencies). Consumers check `entry.Deprecated` before use.
+
+### Endonym discipline
+
+Display names follow the endonym-first convention: the entity carries its name in the locale of origin (`"Deutschland"` for Germany, `"日本"` for Japan), plus an `EnglishName` for cross-locale rendering. Sort by `EnglishName` for user-facing lists; use `DisplayName` only when the locale context is known.
+
+### Typed geo catalogs
+
+Closed-set catalogs (country, currency, language, geopolitical entity) are real C# enums with the `Code` suffix: `CountryCode`, `CurrencyCode`, `LanguageCode`, `GeopoliticalEntityCode`. Open-set catalogs (subdivision, locale, timezone) are branded wrapper structs: `SubdivisionCode`, `LocaleCode`, `TimezoneCode`. The distinction is load-bearing:
+
+| Category | .NET shape | Rationale |
+|---|---|---|
+| Closed-set (Countries, Currencies, Languages, GeopoliticalEntities) | Real enum (`ushort` backing for Country; `ushort` for Currency; `ushort` for Language) | IDE autocompletion is exhaustive; switch expressions are exhaustive; `FrozenDictionary` keyed on enum has zero string-allocation overhead per lookup |
+| Open-set (Subdivisions, Locales, Timezones) | `readonly struct` wrapping a `string` | Codes contain hyphens and slashes (`US-NY`, `en-US`, `America/New_York`) that C# identifiers cannot encode; the struct gives a strong type at compile time while the backing string carries the full code |
+
+**Never use a raw `string` for a typed code.** Pass `CountryCode.US`, `SubdivisionCode.US_NY`, `LocaleCode.EnUS`, `TimezoneCode.AmericaNewYork` — not `"US"`, `"US-NY"`, `"en-US"`, `"America/New_York"`. The type system enforces no `NotFound` case is possible when the enum IS the catalog.
+
+```csharp
+// Typed static access — IDE auto-completes the enum member.
+Country us = Countries.US;
+Subdivision ny = SubdivisionLookup[SubdivisionCode.US_NY];
+Currency usd = CurrencyLookup[CurrencyCode.USD];
+Language en = LanguageLookup[LanguageCode.En];
+
+// String-input boundary code (deserialization, name-resolver fallback).
+// Preferred only at ingestion boundaries, not in domain logic.
+CountryCode? code = "US".TryParseTruthyNull<CountryCode>(ignoreCase: true, out var c)
+    ? c : (CountryCode?)null;
+```
+
+Canonical lib references: [D2.Shared.Geo.Abstractions](../server/shared/dotnet/geo-abstractions/README.md) · [@d2/geo-abstractions](../server/shared/typescript/geo-abstractions/README.md) · [D2.Shared.Geo.Default](../server/shared/dotnet/geo-default/README.md) · [@d2/geo-default](../server/shared/typescript/geo-default/README.md).
+
+### Typed access on IRequestContext
+
+The raw string fields on `IRequestContext` (`CountryIso31661Alpha2Code`, `SubdivisionIso31662Code`) carry ISO codes as they arrived over the wire. Extension methods in `D2.Shared.Geo.Abstractions` parse these to typed codes; extensions in `D2.Shared.Geo.Default` return the full record:
+
+```csharp
+// Abstractions-layer — parse only (no catalog dep).
+using D2.Shared.Geo.Abstractions.Extensions;
+CountryCode? code = request.Country();            // null if absent / unknown
+SubdivisionCode? sub = request.Subdivision();    // null if absent / unknown
+
+// Default-layer — catalog lookup (returns full record with all nav properties).
+using D2.Shared.Geo.Default.Extensions;
+Country? country = request.Country();            // null if absent / unknown
+Subdivision? subdivision = request.Subdivision();
+string? lang = request.Country()?.PrimaryLanguage?.DisplayName; // no second lookup needed
+```
+
+The two extension classes share the method names `Country()` and `Subdivision()` but live in different namespaces — the compiler resolves by which `using` is in scope (CS0121 when both are imported, so consumers pick one). TypeScript uses distinct free-function names (`countryFor(context)` / `subdivisionFor(context)`) in `@d2/geo-default/extensions/` for the same reason the TS language lacks extension-method namespace shadowing.
+
+### Geo name resolution at the integration boundary
+
+When third-party text data arrives (geolocation APIs, shipping providers, form submissions), country / subdivision names are free strings that may be in any language or spelling variant. The typed catalog layer cannot accept them directly. Use `IGeoNameResolver` at the ingestion boundary:
+
+```csharp
+// Inject IGeoNameResolver (registered by D2.Shared.Geo.Default DI extension).
+public sealed class IngestWhoIsHandler(IGeoNameResolver geoNames, ...) : BaseHandler<...>
+{
+    protected override async Task<D2Result<WhoIs>> ExecuteAsync(RawWhoIsInput input, ...)
+    {
+        // Resolve free-text country name → typed record (cache-aside: O(n) first,
+        // O(1) thereafter). Partial / fuzzy match via Levenshtein comparer.
+        D2Result<Country> country = await geoNames.FindCountryAsync(input.CountryName);
+        if (country.BubbleOnFailure<Country, WhoIs>(out var failed, out var c))
+            return failed;
+
+        // From here, use the typed Country record — no further resolver calls.
+        CountryCode code = c.Iso31661Alpha2Code;
+        ...
+    }
+}
+```
+
+`IGeoNameResolver` is NOT for typed-code inputs. A handler that already holds `CountryCode.US` from a JWT claim or `IRequestContext` uses the typed accessors (`Countries.US`, `CountryLookup[code]`) — no resolver needed. Resolver calls are reserved for the ingestion boundary where third-party text arrives. Misusing the resolver for typed-code inputs is a correctness regression (Levenshtein distance on `"US"` against all 249 countries may not return `CountryCode.US` if a display name is also `"US"`).
+
+### Reference data — user-preference cascades
+
+The `LocaleIetfBcp47Tag`, `TimezoneIanaName`, and `CurrencyIso4217Code` fields on `IRequestContext` carry the resolved user preference for each category. The resolution algorithm is owned by the Edge auth middleware (outside this lib's scope); the propagated field carries the resolved value to every downstream consumer.
+
+**Locale resolution** (priority high → low):
+
+1. User profile preference (DB; loaded at session start, cached in Redis).
+2. Org default preference (DB; loaded at session start, cached).
+3. `X-D2-Locale` header (explicit user UI override).
+4. `Accept-Language` header (browser / OS preference).
+5. Fallback: `"en-US"`.
+
+**Timezone resolution** (priority high → low):
+
+1. User profile.
+2. Org default.
+3. `X-D2-Timezone` header (BFF-set from `Intl.DateTimeFormat().resolvedOptions().timeZone`).
+4. WhoIs-derived: `CountryIso31661Alpha2Code` + `SubdivisionIso31662Code` → IANA name via `D2.Shared.Geo.Default` lookup.
+5. Fallback: `"UTC"`.
+
+**Currency resolution** (priority high → low):
+
+1. User profile.
+2. Org default.
+3. `X-D2-Currency` header (explicit UI selection).
+4. `CountryIso31661Alpha2Code`-derived: ISO 3166 → ISO 4217 primary legal-tender mapping via `D2.Shared.Geo.Default`.
+5. Fallback: `NULL` — no sensible universal default. Consumers surface a validation error when `CurrencyIso4217Code` is required and absent.
+
+The `X-D2-Locale`, `X-D2-Timezone`, and `X-D2-Currency` headers are `http`-only constants in `HttpHeaders` (generated from `contracts/headers/headers.spec.json`). The Edge auth middleware that reads them is responsible for adding them to `Access-Control-Allow-Headers` in CORS configuration before any cross-origin client starts sending them.
+
+---
+
+## Hash composition
+
+Content-addressable entities compute their hash IDs via a versioned prefix + multi-component slot rule. Two guarantees:
+
+1. **Versioned prefix** — `"v1." + hex` means a future hashing-algorithm change (`v2.*`) never collides with existing IDs. Old and new hashes can coexist in persistence until a migration window closes.
+2. **Multi-component slot rule** — when an entity is composed from independent sub-components (e.g. `Location = f(Coordinates, StreetAddress, AdminLocation)`), each sub-component hashes independently, then the composed hash is SHA-256 over the concatenated sub-component hashes in canonical slot order. Absent sub-components contribute their own canonical empty-slot hash. This prevents "missing field → null → same hash as different-missing-field" collisions.
+
+```csharp
+// Each sub-component is independently content-addressable.
+var coords = Coordinates.Create(lat, lon).Data;     // "v1.<sha256(lat||lon)>"
+var admin  = AdminLocation.Create(...).Data;         // "v1.<sha256(country||sub||city||postal)>"
+
+// Composition: SHA-256 over the two HashIds in slot order (coords first, admin second).
+// Absent sub-component uses a canonical empty-slot sentinel defined per VO.
+string? locationHash = ComposeLocationHash.Compose(coords, admin);
+```
+
+Normalization: string inputs are lower-cased and whitespace-stripped before hashing. The factory documents the canonical slot order and normalization contract. No caller may replicate the hashing logic — only the factory can produce a valid hash for that entity type, so refactoring the hash scheme has exactly one edit site.
+
+---
 
 ## Anti-patterns to actively avoid
 

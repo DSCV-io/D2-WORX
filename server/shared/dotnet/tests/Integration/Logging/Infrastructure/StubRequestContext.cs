@@ -38,6 +38,27 @@ internal sealed class StubRequestContext : IRequestContext
 
     public string? RequestPath { get; init; }
 
+    public string? HttpMethod { get; init; }
+
+    public DateTimeOffset? RequestStartedAt { get; init; }
+
+    public string? IdempotencyKey { get; init; }
+
+    // Infrastructure
+    public string? EdgeNodeId { get; init; }
+
+    // User Preferences
+    public string? LocaleIetfBcp47Tag { get; init; }
+
+    public string? TimezoneIanaName { get; init; }
+
+    public string? CurrencyIso4217Code { get; init; }
+
+    // Entitlements
+    public string? OrgPlanTier { get; init; }
+
+    public string? FeatureFlagsCsv { get; init; }
+
     // Fingerprints
     public string? SessionFingerprint { get; init; }
 
@@ -52,11 +73,9 @@ internal sealed class StubRequestContext : IRequestContext
 
     public string? City { get; init; }
 
-    public string? Region { get; init; }
+    public string? SubdivisionIso31662Code { get; init; }
 
-    public string? SubdivisionCode { get; init; }
-
-    public string? CountryCode { get; init; }
+    public string? CountryIso31661Alpha2Code { get; init; }
 
     public string? PostalCode { get; init; }
 
@@ -95,6 +114,10 @@ internal sealed class StubRequestContext : IRequestContext
     public DateTimeOffset? TokenExpiresAt { get; init; }
 
     public IReadOnlyList<ActorEntry> ActorChain { get; init; } = [];
+
+    public string? AuthMethod { get; init; }
+
+    public DateTimeOffset? LastStepUpAt { get; init; }
 
     // IAuthContext — Identity
     public string? Subject { get; init; }

@@ -80,6 +80,8 @@ internal static class PropagatedEmitter
         var sb = new StringBuilder();
         EmitFileHeader(sb);
         sb.AppendLine();
+        sb.AppendLine("using System.Text.Json.Serialization;");
+        sb.AppendLine();
         sb.AppendLine($"namespace {_TARGET_NAMESPACE};");
         sb.AppendLine();
         sb.AppendLine("/// <summary>");
@@ -122,6 +124,7 @@ internal static class PropagatedEmitter
         sb.AppendLine("    /// <summary>Gets a value indicating whether any propagated");
         sb.AppendLine("    /// field is set — lets callers skip the encode/serialize round-");
         sb.AppendLine("    /// trip when nothing meaningful is in the context.</summary>");
+        sb.AppendLine("    [JsonIgnore]");
         sb.AppendLine("    public bool HasAnyField =>");
         for (var i = 0; i < propagated.Count; i++)
         {

@@ -49,7 +49,7 @@ describe("requireOrg — rejection branches", () => {
   });
 
   it("throws 403 when orgId is null", () => {
-    const event = makeEvent(authenticatedCtx({ orgId: null }));
+    const event = makeEvent(authenticatedCtx({ orgId: undefined }));
     const { throwers, thrown } = makeThrowers();
     expect(() => requireOrg(event, throwers)).toThrow();
     if (thrown[0]?.kind === "error") {
@@ -57,8 +57,8 @@ describe("requireOrg — rejection branches", () => {
     }
   });
 
-  it("throws 403 when orgType is null and types arg non-empty", () => {
-    const event = makeEvent(authenticatedCtx({ orgType: null }));
+  it("throws 403 when orgType is absent and types arg non-empty", () => {
+    const event = makeEvent(authenticatedCtx({ orgType: undefined }));
     const { throwers, thrown } = makeThrowers();
     expect(() => requireOrg(event, throwers, OrgType.Admin)).toThrow();
     if (thrown[0]?.kind === "error") {

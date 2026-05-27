@@ -96,6 +96,7 @@ public static class PropagatedContextSerializer
     {
         if (ctx.RequestId is { Length: > 256 }) return false;
         if (ctx.RequestPath is { Length: > 2048 }) return false;
+        if (ctx.IdempotencyKey is { Length: > 255 }) return false;
         if (ctx.SessionFingerprint is { Length: > 512 }) return false;
         if (ctx.CurrentFingerprint is { Length: > 512 }) return false;
         if (ctx.WhoIsHashId is { Length: > 128 }) return false;

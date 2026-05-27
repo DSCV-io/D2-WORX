@@ -95,8 +95,8 @@ describe("parseRequestContextFromHeaders — happy paths", () => {
     expect(result.success).toBe(true);
     const ctx = result.data!;
     expect(ctx.isAuthenticated).toBe(false);
-    expect(ctx.subject).toBeNull();
-    expect(ctx.userId).toBeNull();
+    expect(ctx.subject).toBeUndefined();
+    expect(ctx.userId).toBeUndefined();
     expect(ctx.scopes.size).toBe(0);
     expect(ctx.actorChain).toEqual([]);
   });
@@ -139,9 +139,9 @@ describe("parseRequestContextFromHeaders — propagated envelope edge cases", ()
     const result = parseRequestContextFromHeaders(headers);
     expect(result.success).toBe(true);
     const ctx = result.data!;
-    expect(ctx.requestId).toBeNull();
-    expect(ctx.sessionFingerprint).toBeNull();
-    expect(ctx.riskScore).toBeNull();
+    expect(ctx.requestId).toBeUndefined();
+    expect(ctx.sessionFingerprint).toBeUndefined();
+    expect(ctx.riskScore).toBeUndefined();
   });
 
   it("rejects malformed x-d2-context (not base64url) silently", () => {
@@ -153,7 +153,7 @@ describe("parseRequestContextFromHeaders — propagated envelope edge cases", ()
     headers.set(CommonHeaders.PROPAGATED_CONTEXT, "@@@@@invalid base64@@@@");
     const result = parseRequestContextFromHeaders(headers);
     expect(result.success).toBe(true);
-    expect(result.data!.requestId).toBeNull();
+    expect(result.data!.requestId).toBeUndefined();
   });
 
   it("rejects x-d2-context envelope with field-cap exceeded", () => {
@@ -169,7 +169,7 @@ describe("parseRequestContextFromHeaders — propagated envelope edge cases", ()
     );
     const result = parseRequestContextFromHeaders(headers);
     expect(result.success).toBe(true);
-    expect(result.data!.requestId).toBeNull();
+    expect(result.data!.requestId).toBeUndefined();
   });
 
   it("rejects x-d2-context with header-injection attempt", () => {
@@ -192,7 +192,7 @@ describe("parseRequestContextFromHeaders — propagated envelope edge cases", ()
     rawHeaders.set(CommonHeaders.PROPAGATED_CONTEXT, "");
     const r = parseRequestContextFromHeaders(rawHeaders);
     expect(r.success).toBe(true);
-    expect(r.data!.requestId).toBeNull();
+    expect(r.data!.requestId).toBeUndefined();
   });
 
   it("rejects x-d2-context whose decoded JSON is malformed", () => {
@@ -207,7 +207,7 @@ describe("parseRequestContextFromHeaders — propagated envelope edge cases", ()
     );
     const result = parseRequestContextFromHeaders(headers);
     expect(result.success).toBe(true);
-    expect(result.data!.requestId).toBeNull();
+    expect(result.data!.requestId).toBeUndefined();
   });
 });
 
@@ -331,18 +331,18 @@ describe("parseRequestContextFromHeaders — service identity", () => {
     const result = parseRequestContextFromHeaders(headers);
     expect(result.success).toBe(true);
     expect(result.data!.isServiceIdentity).toBe(true);
-    expect(result.data!.userId).toBeNull();
+    expect(result.data!.userId).toBeUndefined();
     expect(result.data!.subject).toBe("d2.web");
   });
 
-  it("token with null sub is not a service identity", () => {
+  it("token with absent sub is not a service identity", () => {
     const headers = new Headers();
     // Build a JWT with no sub claim at all.
     const noSubClaims = { aud: "d2.edge", iat: 1, exp: 2 };
     headers.set(CommonHeaders.AUTHORIZATION, `Bearer ${buildJwt(noSubClaims)}`);
     const result = parseRequestContextFromHeaders(headers);
     expect(result.success).toBe(true);
-    expect(result.data!.subject).toBeNull();
+    expect(result.data!.subject).toBeUndefined();
     expect(result.data!.isServiceIdentity).toBe(false);
   });
 
@@ -398,7 +398,7 @@ describe("parseRequestContextFromHeaders — service identity", () => {
 });
 
 describe("parseRequestContextFromHeaders — invalid OrgType / Role mapping", () => {
-  it("unknown OrgType surfaces as null", () => {
+  it("unknown OrgType surfaces as undefined", () => {
     const headers = new Headers();
     headers.set(
       CommonHeaders.AUTHORIZATION,
@@ -406,10 +406,10 @@ describe("parseRequestContextFromHeaders — invalid OrgType / Role mapping", ()
     );
     const result = parseRequestContextFromHeaders(headers);
     expect(result.success).toBe(true);
-    expect(result.data!.orgType).toBeNull();
+    expect(result.data!.orgType).toBeUndefined();
   });
 
-  it("unknown Role surfaces as null", () => {
+  it("unknown Role surfaces as undefined", () => {
     const headers = new Headers();
     headers.set(
       CommonHeaders.AUTHORIZATION,
@@ -417,10 +417,10 @@ describe("parseRequestContextFromHeaders — invalid OrgType / Role mapping", ()
     );
     const result = parseRequestContextFromHeaders(headers);
     expect(result.success).toBe(true);
-    expect(result.data!.orgRole).toBeNull();
+    expect(result.data!.orgRole).toBeUndefined();
   });
 
-  it("non-Guid sub surfaces userId as null but subject as the raw value", () => {
+  it("non-Guid sub surfaces userId as undefined but subject as the raw value", () => {
     const headers = new Headers();
     headers.set(
       CommonHeaders.AUTHORIZATION,
@@ -428,7 +428,7 @@ describe("parseRequestContextFromHeaders — invalid OrgType / Role mapping", ()
     );
     const result = parseRequestContextFromHeaders(headers);
     expect(result.success).toBe(true);
-    expect(result.data!.userId).toBeNull();
+    expect(result.data!.userId).toBeUndefined();
     expect(result.data!.subject).toBe("not-a-guid");
   });
 

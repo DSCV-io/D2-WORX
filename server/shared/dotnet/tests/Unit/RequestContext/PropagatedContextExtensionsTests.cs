@@ -6,6 +6,7 @@
 
 namespace D2.Shared.Tests.Unit.RequestContext;
 
+using System;
 using AwesomeAssertions;
 using D2.Shared.Context.Abstractions;
 using Xunit;
@@ -96,5 +97,100 @@ public sealed class PropagatedContextExtensionsTests
         var ctx = new MutableRequestContext { RequestId = "preserved" };
         ctx.ApplyPropagatedContext(null);
         ctx.RequestId.Should().Be("preserved");
+    }
+
+    // ------------------------------------------------------------------
+    // Step-5 new propagated fields — ToPropagatedContext + ApplyPropagatedContext
+    // Verifies all 8 new fields introduced in Step 5 are projected and applied.
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void ToPropagatedContext_IncludesAllStep5PropagatedFields()
+    {
+        // All 8 new propagated fields must appear in the projected result.
+        var startedAt = new DateTimeOffset(2026, 5, 27, 10, 0, 0, TimeSpan.Zero);
+        var ctx = new MutableRequestContext
+        {
+            // Original 6
+            RequestId = "req-step5",
+            RequestPath = "/step5",
+            CurrentFingerprint = "fp-current-s5",
+            SessionFingerprint = "fp-session-s5",
+            RiskScore = 77,
+            WhoIsHashId = "whois-s5",
+
+            // 8 new Step-5 fields
+            RequestStartedAt = startedAt,
+            IdempotencyKey = "idem-s5-key",
+            EdgeNodeId = "edge-node-s5",
+            LocaleIetfBcp47Tag = "fr-CA",
+            TimezoneIanaName = "America/Toronto",
+            CurrencyIso4217Code = "CAD",
+            OrgPlanTier = "Pro",
+            FeatureFlagsCsv = "flag-a,flag-b",
+        };
+
+        var propagated = ctx.ToPropagatedContext();
+
+        propagated.RequestId.Should().Be("req-step5");
+        propagated.RequestPath.Should().Be("/step5");
+        propagated.CurrentFingerprint.Should().Be("fp-current-s5");
+        propagated.SessionFingerprint.Should().Be("fp-session-s5");
+        propagated.RiskScore.Should().Be(77);
+        propagated.WhoIsHashId.Should().Be("whois-s5");
+        propagated.RequestStartedAt.Should().Be(startedAt);
+        propagated.IdempotencyKey.Should().Be("idem-s5-key");
+        propagated.EdgeNodeId.Should().Be("edge-node-s5");
+        propagated.LocaleIetfBcp47Tag.Should().Be("fr-CA");
+        propagated.TimezoneIanaName.Should().Be("America/Toronto");
+        propagated.CurrencyIso4217Code.Should().Be("CAD");
+        propagated.OrgPlanTier.Should().Be("Pro");
+        propagated.FeatureFlagsCsv.Should().Be("flag-a,flag-b");
+    }
+
+    [Fact]
+    public void ApplyPropagatedContext_PopulatesAllStep5PropagatedFields()
+    {
+        // All 8 new Step-5 propagated fields must land on MutableRequestContext
+        // when ApplyPropagatedContext is called.
+        var startedAt = new DateTimeOffset(2026, 5, 27, 11, 0, 0, TimeSpan.Zero);
+        var propagated = new PropagatedContext
+        {
+            // Original 6
+            RequestId = "r5",
+            RequestPath = "/p5",
+            CurrentFingerprint = "fc5",
+            SessionFingerprint = "fs5",
+            RiskScore = 55,
+            WhoIsHashId = "w5",
+
+            // 8 new Step-5 fields
+            RequestStartedAt = startedAt,
+            IdempotencyKey = "idem-apply-key",
+            EdgeNodeId = "edge-apply-node",
+            LocaleIetfBcp47Tag = "de-DE",
+            TimezoneIanaName = "Europe/Berlin",
+            CurrencyIso4217Code = "EUR",
+            OrgPlanTier = "Enterprise",
+            FeatureFlagsCsv = "new-billing",
+        };
+
+        var ctx = new MutableRequestContext();
+        ctx.ApplyPropagatedContext(propagated);
+
+        ctx.RequestId.Should().Be("r5");
+        ctx.RequestPath.Should().Be("/p5");
+        ctx.CurrentFingerprint.Should().Be("fc5");
+        ctx.SessionFingerprint.Should().Be("fs5");
+        ctx.RiskScore.Should().Be(55);
+        ctx.WhoIsHashId.Should().Be("w5");
+        ctx.RequestStartedAt.Should().Be(startedAt);
+        ctx.IdempotencyKey.Should().Be("idem-apply-key");
+        ctx.EdgeNodeId.Should().Be("edge-apply-node");
+        ctx.LocaleIetfBcp47Tag.Should().Be("de-DE");
+        ctx.TimezoneIanaName.Should().Be("Europe/Berlin");
+        ctx.CurrencyIso4217Code.Should().Be("EUR");
+        ctx.OrgPlanTier.Should().Be("Enterprise");
+        ctx.FeatureFlagsCsv.Should().Be("new-billing");
     }
 }

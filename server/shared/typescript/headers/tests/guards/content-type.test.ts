@@ -71,7 +71,7 @@ describe("guards set Content-Type: application/problem+json on rejections", () =
 
   it("requireRole — no role in org context", () => {
     const { throwers, thrown } = makeThrowers();
-    const event = makeEvent(authenticatedCtx({ orgRole: null }));
+    const event = makeEvent(authenticatedCtx({ orgRole: undefined }));
 
     expect(() => requireRole(event, throwers)).toThrow();
 
@@ -85,7 +85,7 @@ describe("guards set Content-Type: application/problem+json on rejections", () =
 
   it("requireOrg — no org context", () => {
     const { throwers, thrown } = makeThrowers();
-    const event = makeEvent(authenticatedCtx({ orgId: null }));
+    const event = makeEvent(authenticatedCtx({ orgId: undefined }));
 
     expect(() => requireOrg(event, throwers)).toThrow();
 

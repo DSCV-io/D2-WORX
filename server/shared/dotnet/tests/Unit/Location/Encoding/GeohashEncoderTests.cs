@@ -25,9 +25,8 @@ public sealed class GeohashEncoderTests
     {
         const double lat = 51.5074;
         const double lon = -0.1278;
-        const int precision = 10;
 
-        var hash = GeohashEncoder.Encode(lat, lon, precision);
+        var hash = GeohashEncoder.Encode(lat, lon);
         var (decodedLat, decodedLon, latErr, lonErr) = GeohashEncoder.Decode(hash);
 
         Math.Abs(decodedLat - lat).Should().BeLessThanOrEqualTo(latErr * 2);
@@ -41,9 +40,9 @@ public sealed class GeohashEncoderTests
         const double lat = 40.7128;
         const double lon = -74.006;
 
-        var hash1 = GeohashEncoder.Encode(lat, lon, 10);
+        var hash1 = GeohashEncoder.Encode(lat, lon);
         var (centerLat, centerLon, _, _) = GeohashEncoder.Decode(hash1);
-        var hash2 = GeohashEncoder.Encode(centerLat, centerLon, 10);
+        var hash2 = GeohashEncoder.Encode(centerLat, centerLon);
 
         hash2.Should().Be(hash1);
     }
@@ -131,7 +130,7 @@ public sealed class GeohashEncoderTests
     public void TruncateOrPad_LongerHash_TruncatesToPrecision()
     {
         var hash12 = GeohashEncoder.Encode(40.7128, -74.006, 12);
-        var truncated = GeohashEncoder.TruncateOrPad(hash12, 10);
+        var truncated = GeohashEncoder.TruncateOrPad(hash12);
 
         truncated.Length.Should().Be(10);
         truncated.Should().Be(hash12[..10]);
@@ -140,8 +139,8 @@ public sealed class GeohashEncoderTests
     [Fact]
     public void TruncateOrPad_SameLengthHash_ReturnsUnchanged()
     {
-        var hash = GeohashEncoder.Encode(40.7128, -74.006, 10);
-        var result = GeohashEncoder.TruncateOrPad(hash, 10);
+        var hash = GeohashEncoder.Encode(40.7128, -74.006);
+        var result = GeohashEncoder.TruncateOrPad(hash);
 
         result.Should().Be(hash);
     }
@@ -151,7 +150,7 @@ public sealed class GeohashEncoderTests
     {
         // A 5-char hash padded to 10 chars must decode close to original cell center.
         var hash5 = GeohashEncoder.Encode(40.7128, -74.006, 5);
-        var padded = GeohashEncoder.TruncateOrPad(hash5, 10);
+        var padded = GeohashEncoder.TruncateOrPad(hash5);
 
         padded.Length.Should().Be(10);
 
@@ -172,8 +171,8 @@ public sealed class GeohashEncoderTests
         const double lat = 48.8566;
         const double lon = 2.3522;
 
-        var hash1 = GeohashEncoder.Encode(lat, lon, 10);
-        var hash2 = GeohashEncoder.Encode(lat, lon, 10);
+        var hash1 = GeohashEncoder.Encode(lat, lon);
+        var hash2 = GeohashEncoder.Encode(lat, lon);
 
         hash1.Should().Be(hash2);
     }

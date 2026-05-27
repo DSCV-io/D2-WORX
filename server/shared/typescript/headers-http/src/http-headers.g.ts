@@ -14,6 +14,12 @@
  */
 export const HttpHeaders = {
   /**
+   * Standard HTTP locale-preference header (RFC 7231 §5.3.5). Set by browser or OS. Represents the lowest-priority tier of the user locale resolution cascade: profile > org > X-D2-Locale > Accept-Language > fallback 'en-US'. Adding as a typed constant so middleware stops using magic strings.
+   * Convention: rfc.
+   * Applicability: http.
+   */
+  ACCEPT_LANGUAGE: "Accept-Language",
+  /**
    * RFC 6750 bearer token header. Carries the JWT; identity rebuilds from this on every hop. Not used on AMQP (broker uses connection-level credentials).
    * Convention: oauth.
    * Applicability: grpc, http.
@@ -31,6 +37,24 @@ export const HttpHeaders = {
    * Applicability: http.
    */
   CORRELATION_ID: "X-Correlation-Id",
+  /**
+   * User-selected currency override (ISO 4217 code, e.g. 'USD', 'EUR'). No browser-native equivalent — D2-custom. Takes precedence over country-derived currency in the cascade: profile > org > X-D2-Currency > CountryIso31661Alpha2Code-derived > fallback NULL.
+   * Convention: d2.
+   * Applicability: http.
+   */
+  D2_CURRENCY: "X-D2-Currency",
+  /**
+   * D2-specific user-selected locale override (IETF BCP 47 tag, e.g. 'en-US', 'zh-Hans-SG'). Set when the user explicitly picks a locale in the UI. Takes precedence over Accept-Language in the locale cascade. Consumed by Edge auth middleware to populate IRequestContext.LocaleIetfBcp47Tag.
+   * Convention: d2.
+   * Applicability: http.
+   */
+  D2_LOCALE: "X-D2-Locale",
+  /**
+   * Browser-derived IANA timezone name (from Intl.DateTimeFormat().resolvedOptions().timeZone, e.g. 'America/New_York'). Set by the BFF fetch interceptor on every request. Used by Edge auth middleware as the third tier of the timezone cascade: profile > org > X-D2-Timezone > WhoIs-derived > fallback 'UTC'.
+   * Convention: d2.
+   * Applicability: http.
+   */
+  D2_TIMEZONE: "X-D2-Timezone",
   /**
    * Idempotency key for request deduplication. Conventional Stripe-style header name.
    * Convention: stripe.
@@ -67,9 +91,13 @@ export type HttpHeaderName =
   (typeof HttpHeaders)[keyof typeof HttpHeaders];
 
 export const ALL_HTTP_HEADERS: readonly string[] = [
+  "Accept-Language",
   "Authorization",
   "X-D2-Client-Fingerprint",
   "X-Correlation-Id",
+  "X-D2-Currency",
+  "X-D2-Locale",
+  "X-D2-Timezone",
   "Idempotency-Key",
   "X-D2-Internal-Token",
   "x-d2-context",

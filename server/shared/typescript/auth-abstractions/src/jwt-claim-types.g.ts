@@ -103,6 +103,16 @@ export const JwtClaimTypes = {
    * Kind: inside-act.
    */
   ACT_SESSION_ID: "d2_session_id",
+  /**
+   * Authentication Methods Reference (RFC 8176). Array of strings identifying the authentication methods used. Input to risk-scoring and audit — 'password-only vs MFA vs OAuth2-with-WebAuthn' matters for sensitive-action gating.
+   * Kind: standard.
+   */
+  AMR: "amr",
+  /**
+   * Unix-seconds timestamp of last step-up authentication completion. Handlers gating sensitive actions enforce 'step-up within last N minutes'. Edge auth populates from session record at JWT mint.
+   * Kind: d2-custom.
+   */
+  STEP_UP_AT: "d2_step_up_at",
 } as const;
 
 export type JwtClaimType = (typeof JwtClaimTypes)[keyof typeof JwtClaimTypes];

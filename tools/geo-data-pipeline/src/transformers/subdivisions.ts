@@ -304,8 +304,7 @@ export async function loadSubdivisions(
     const country = cldrCode.slice(0, 2).toUpperCase();
     const suffix = cldrCode.slice(2).toUpperCase();
     const isoForm = `${country}-${suffix}`;
-    const cldrEnLabel =
-      cldrByLocale.get("en")?.rawIdToName[cldrCode] ?? null;
+    const cldrEnLabel = cldrByLocale.get("en")?.rawIdToName[cldrCode] ?? null;
     cldrZombieWarnings.push({
       iso31662Code: isoForm,
       countryISO31661Alpha2Code: country,
@@ -313,7 +312,8 @@ export async function loadSubdivisions(
     });
   }
   let debianOnly = 0;
-  for (const c of debianConcatenatedCodes) if (!allCldrCodes.has(c)) debianOnly++;
+  for (const c of debianConcatenatedCodes)
+    if (!allCldrCodes.has(c)) debianOnly++;
 
   // Emit D2GEO011 warnings + a single summary line. Sorted for stable output.
   cldrZombieWarnings.sort((a, b) =>

@@ -44,6 +44,18 @@
           "claim": "act",
           "default": "[]",
           "doc": "RFC 8693 §4.1 actor chain, flattened. Wire format is recursive (act.act.act); we flatten to a list ordered outermost-first. Per RFC 8693 §4.1: the OUTERMOST entry (index 0) is the CURRENT actor (immediate caller); the MOST DEEPLY NESTED (last index) is the EARLIEST actor (originator) — 'the least recent actor is the most deeply nested.' Empty for end-user-direct tokens. Service entries indicate token-exchange delegation; Impersonation entries indicate user-on-behalf-of-user with sub-flavor on the entry's ImpersonationKind field. The auth lib's exchange endpoint MUST preserve nested act on re-exchange so OriginatingClientId remains recoverable through multi-hop chains."
+        },
+        {
+          "name": "AuthMethod",
+          "type": "string?",
+          "claim": "amr",
+          "doc": "Authentication Methods Reference (RFC 8176 standard claim). Space-separated or JSON-array string of authentication method identifiers used to authenticate the subject (e.g. 'pwd', 'otp', 'mfa', 'webauthn'). Input to risk-scoring and audit — 'password-only vs MFA vs OAuth2-with-WebAuthn' matters for sensitive-action gating. Null when the token was minted without AMR (e.g. service-identity client_credentials flows)."
+        },
+        {
+          "name": "LastStepUpAt",
+          "type": "DateTimeOffset?",
+          "claim": "d2_step_up_at",
+          "doc": "Unix-seconds timestamp of the last step-up authentication completion (Category 2 — past UTC instant). Handlers gating sensitive actions (e.g. billing.payment.charge) enforce 'step-up within last N minutes' by comparing this value against the current instant. Edge auth populates from the session record at JWT mint. Domain consumers MUST convert to NodaTime.Instant at the consumption boundary before any temporal arithmetic: dto.Value.ToInstant(). Wire form is DateTimeOffset? for JSON-serialization interop with the cross-language source-gen pipeline."
         }
       ]
     },

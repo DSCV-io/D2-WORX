@@ -32,10 +32,10 @@ import { SubdivisionLookup } from "../subdivisions.js";
  *
  * **Boundary contract.** Each helper:
  *
- * 1. Reads the raw `countryCode` / `subdivisionCode` field from the
- *    request context. The field type is `string | null` per
- *    spec-derived `IRequestContext`.
- * 2. Treats null / empty / whitespace as "geo signal absent" and
+ * 1. Reads the raw `countryIso31661Alpha2Code` / `subdivisionIso31662Code`
+ *    field from the request context. The field type is `string | undefined`
+ *    per spec-derived `IRequestContext`.
+ * 2. Treats undefined / empty / whitespace as "geo signal absent" and
  *    returns `undefined`.
  * 3. Validates the raw string against the spec-derived closed-set
  *    validation table (`ALL_COUNTRY_CODE_SET` / `SUBDIVISION_CODE_SET`)
@@ -57,14 +57,14 @@ import { SubdivisionLookup } from "../subdivisions.js";
 
 /**
  * Returns the full `Country` record for the request context's raw
- * `countryCode` field, or `undefined` when the raw value is absent /
- * unparseable / unknown to the catalog. The raw string is uppercased
- * before validation so lowercase / mixed-case JWT claims (e.g. "us",
- * "Us") resolve to the canonical record — matching the .NET parser's
+ * `countryIso31661Alpha2Code` field, or `undefined` when the raw value is
+ * absent / unparseable / unknown to the catalog. The raw string is uppercased
+ * before validation so lowercase / mixed-case values (e.g. "us", "Us")
+ * resolve to the canonical record — matching the .NET parser's
  * `ignoreCase: true` contract.
  */
 export function countryFor(context: IRequestContext): Country | undefined {
-  const trimmed = truthyOrUndefined(context.countryCode);
+  const trimmed = truthyOrUndefined(context.countryIso31661Alpha2Code);
   if (trimmed === undefined) return undefined;
   const normalized = trimmed.toUpperCase();
   if (!ALL_COUNTRY_CODE_SET.has(normalized)) return undefined;
@@ -73,16 +73,15 @@ export function countryFor(context: IRequestContext): Country | undefined {
 
 /**
  * Returns the full `Subdivision` record for the request context's raw
- * `subdivisionCode` field, or `undefined` when the raw value is absent
- * / unparseable / unknown to the catalog. The raw string is uppercased
- * before validation so lowercase / mixed-case JWT claims (e.g.
- * "us-ny", "Us-Ny") resolve to the canonical record — matching the
- * cross-language lenient parser contract.
+ * `subdivisionIso31662Code` field, or `undefined` when the raw value is absent
+ * / unparseable / unknown to the catalog. The raw string is uppercased before
+ * validation so lowercase / mixed-case values (e.g. "us-ny", "Us-Ny") resolve
+ * to the canonical record — matching the cross-language lenient parser contract.
  */
 export function subdivisionFor(
   context: IRequestContext,
 ): Subdivision | undefined {
-  const trimmed = truthyOrUndefined(context.subdivisionCode);
+  const trimmed = truthyOrUndefined(context.subdivisionIso31662Code);
   if (trimmed === undefined) return undefined;
   const normalized = trimmed.toUpperCase();
   if (!SUBDIVISION_CODE_SET.has(normalized)) return undefined;

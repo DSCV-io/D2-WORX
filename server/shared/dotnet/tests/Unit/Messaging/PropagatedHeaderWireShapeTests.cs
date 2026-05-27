@@ -46,8 +46,7 @@ public sealed class PropagatedHeaderWireShapeTests
             // Network PII (must NOT travel)
             ClientIp = "203.0.113.42",
             City = "Seattle",
-            Region = "Washington",
-            CountryCode = "US",
+            CountryIso31661Alpha2Code = "US",
             Asn = 12345,
 
             // Propagated subset (MAY travel)
@@ -85,8 +84,7 @@ public sealed class PropagatedHeaderWireShapeTests
         json.Should().NotContain("\"scopes\"");
         json.Should().NotContain("\"clientIp\"");
         json.Should().NotContain("\"city\"");
-        json.Should().NotContain("\"region\"");
-        json.Should().NotContain("\"countryCode\"");
+        json.Should().NotContain("\"countryIso31661Alpha2Code\"");
         json.Should().NotContain("\"asn\"");
         json.Should().NotContain("\"isAuthenticated\"");
 

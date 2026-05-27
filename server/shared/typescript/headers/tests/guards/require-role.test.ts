@@ -33,8 +33,8 @@ describe("requireRole — rejection branches", () => {
     }
   });
 
-  it("throws 403 when orgRole is null and no roles arg", () => {
-    const event = makeEvent(authenticatedCtx({ orgRole: null }));
+  it("throws 403 when orgRole is absent and no roles arg", () => {
+    const event = makeEvent(authenticatedCtx({ orgRole: undefined }));
     const { throwers, thrown } = makeThrowers();
     expect(() => requireRole(event, throwers)).toThrow();
     if (thrown[0]?.kind === "error") {
@@ -51,8 +51,8 @@ describe("requireRole — rejection branches", () => {
     }
   });
 
-  it("throws 403 when orgRole null and roles arg present", () => {
-    const event = makeEvent(authenticatedCtx({ orgRole: null }));
+  it("throws 403 when orgRole absent and roles arg present", () => {
+    const event = makeEvent(authenticatedCtx({ orgRole: undefined }));
     const { throwers, thrown } = makeThrowers();
     expect(() => requireRole(event, throwers, Role.Owner)).toThrow();
     if (thrown[0]?.kind === "error") {
@@ -67,7 +67,7 @@ describe("requireRole — RFC 7807 §3.1 wire compliance", () => {
   // 401) but threw HTTP 403 — the two values disagreed and violated RFC
   // 7807 §3.1.
   it("body.status equals HTTP throw status (403) on missing role", () => {
-    const event = makeEvent(authenticatedCtx({ orgRole: null }));
+    const event = makeEvent(authenticatedCtx({ orgRole: undefined }));
     const { throwers, thrown } = makeThrowers();
     expect(() => requireRole(event, throwers)).toThrow();
     if (thrown[0]?.kind === "error") {

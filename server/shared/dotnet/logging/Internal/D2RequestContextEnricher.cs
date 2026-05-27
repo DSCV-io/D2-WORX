@@ -61,7 +61,7 @@ using Serilog;
 ///   </description></item>
 ///   <item><description>
 ///     <b>WhoIs/Geo</b> (3): <c>WhoIsHashId</c>,
-///     <c>AdminLocationHashId</c>, <c>CountryCode</c>.
+///     <c>AdminLocationHashId</c>, <c>CountryIso31661Alpha2Code</c>.
 ///   </description></item>
 ///   <item><description>
 ///     <b>WhoIs/Network-Privacy</b> (4): <c>IsVpn</c>, <c>IsProxy</c>,
@@ -76,8 +76,8 @@ using Serilog;
 /// table including types and rationale.
 /// </para>
 /// <para>
-/// PII fields are NEVER emitted: <c>ClientIp</c>, <c>City</c>, <c>Region</c>,
-/// <c>SubdivisionCode</c>, <c>PostalCode</c>, <c>Latitude</c>,
+/// PII fields are NEVER emitted: <c>ClientIp</c>, <c>City</c>,
+/// <c>SubdivisionIso31662Code</c>, <c>PostalCode</c>, <c>Latitude</c>,
 /// <c>Longitude</c>, <c>Geohash</c>. Sub-country geographic precision
 /// escalates only via <c>WhoIsHashId</c> lookups against the WhoIs store.
 /// </para>
@@ -354,8 +354,12 @@ internal static class D2RequestContextEnricher
                 adminLocationHashId);
         }
 
-        if (ctx.CountryCode is { } countryCode)
-            diagnosticContext.Set(nameof(IRequestContext.CountryCode), countryCode);
+        if (ctx.CountryIso31661Alpha2Code is { } countryIso31661Alpha2Code)
+        {
+            diagnosticContext.Set(
+                nameof(IRequestContext.CountryIso31661Alpha2Code),
+                countryIso31661Alpha2Code);
+        }
 
         // WhoIs/Network-Privacy (4 fields).
         if (ctx.IsVpn is { } isVpn)

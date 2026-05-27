@@ -12,10 +12,10 @@ using D2.Shared.Utilities.Extensions;
 
 /// <summary>
 /// Typed geo accessors layered over <see cref="IRequestContext"/>'s raw
-/// <c>string?</c> WhoIs fields (<c>CountryCode</c>, <c>SubdivisionCode</c>,
-/// etc.). The context interface keeps the raw strings for JWT-claim wire
-/// fidelity + minimal context-source-gen surface; typed access is opt-in
-/// via these extensions.
+/// <c>string?</c> WhoIs fields (<c>CountryIso31661Alpha2Code</c>,
+/// <c>SubdivisionIso31662Code</c>, etc.). The context interface keeps the raw
+/// strings for wire-serialization fidelity + minimal context-source-gen
+/// surface; typed access is opt-in via these extensions.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -23,18 +23,14 @@ using D2.Shared.Utilities.Extensions;
 /// string via the matching typed <c>TryParse</c> (which consults the
 /// closed-set validation table); returns <c>null</c> when the underlying
 /// string is null / empty / whitespace OR when the value is not in the
-/// catalog (defensive: a JWT-claim could carry an out-of-date code from a
+/// catalog (defensive: a value could carry an out-of-date code from a
 /// session minted before a catalog change). Handlers MUST treat <c>null</c>
 /// as "geo signal absent" rather than re-deriving the raw alpha-2.
 /// </para>
 /// <para>
-/// <b>What we expose.</b> Only the two geo fields that
-/// <see cref="IRequestContext"/> currently surfaces from WhoIs enrichment:
-/// <c>CountryCode</c> + <c>SubdivisionCode</c>. Locale / Timezone /
-/// Currency accessors are deferred — the request-context spec does not
-/// currently carry those fields (they live in user-profile / session
-/// preference territory, not in WhoIs response data); add them here when
-/// the spec adds them.
+/// <b>What we expose.</b> The two WhoIs geo fields on
+/// <see cref="IRequestContext"/>: <c>CountryIso31661Alpha2Code</c> +
+/// <c>SubdivisionIso31662Code</c>.
 /// </para>
 /// </remarks>
 public static class IRequestContextGeoExtensions
@@ -42,7 +38,7 @@ public static class IRequestContextGeoExtensions
     extension(IRequestContext context)
     {
         /// <summary>
-        /// Parses <see cref="IRequestContext.CountryCode"/> (ISO 3166-1
+        /// Parses <see cref="IRequestContext.CountryIso31661Alpha2Code"/> (ISO 3166-1
         /// alpha-2 string from WhoIs enrichment) into the typed
         /// <see cref="CountryCode"/> enum. Returns <c>null</c> when the
         /// underlying string is null / empty / whitespace OR when the value
@@ -53,7 +49,7 @@ public static class IRequestContextGeoExtensions
         {
             ArgumentNullException.ThrowIfNull(context);
 
-            var raw = context.CountryCode;
+            var raw = context.CountryIso31661Alpha2Code;
             if (raw.Falsey())
                 return null;
 
@@ -64,12 +60,12 @@ public static class IRequestContextGeoExtensions
         }
 
         /// <summary>
-        /// Parses <see cref="IRequestContext.SubdivisionCode"/> (ISO 3166-2
+        /// Parses <see cref="IRequestContext.SubdivisionIso31662Code"/> (ISO 3166-2
         /// string from WhoIs enrichment) into the typed
         /// <see cref="SubdivisionCode"/> wrapper. Returns <c>null</c> when
         /// the underlying string is null / empty / whitespace OR when the
         /// value is not present in the catalog. The raw string is
-        /// uppercased before parsing so lowercase / mixed-case JWT claims
+        /// uppercased before parsing so lowercase / mixed-case values
         /// (e.g. <c>"us-ny"</c>, <c>"Us-Ny"</c>) resolve to the canonical
         /// record — matching the cross-language lenient parser contract.
         /// </summary>
@@ -78,7 +74,7 @@ public static class IRequestContextGeoExtensions
         {
             ArgumentNullException.ThrowIfNull(context);
 
-            var raw = context.SubdivisionCode;
+            var raw = context.SubdivisionIso31662Code;
             if (raw.Falsey())
                 return null;
 

@@ -28,9 +28,17 @@ public static class PropagatedContextExtensions
         {
             RequestId = context.RequestId,
             RequestPath = context.RequestPath,
+            RequestStartedAt = context.RequestStartedAt,
+            IdempotencyKey = context.IdempotencyKey,
             SessionFingerprint = context.SessionFingerprint,
             CurrentFingerprint = context.CurrentFingerprint,
             RiskScore = context.RiskScore,
+            EdgeNodeId = context.EdgeNodeId,
+            LocaleIetfBcp47Tag = context.LocaleIetfBcp47Tag,
+            TimezoneIanaName = context.TimezoneIanaName,
+            CurrencyIso4217Code = context.CurrencyIso4217Code,
+            OrgPlanTier = context.OrgPlanTier,
+            FeatureFlagsCsv = context.FeatureFlagsCsv,
             WhoIsHashId = context.WhoIsHashId,
         };
     }
@@ -53,6 +61,12 @@ public static class PropagatedContextExtensions
         if (propagated.RequestPath is not null)
             context.RequestPath = propagated.RequestPath;
 
+        if (propagated.RequestStartedAt is not null)
+            context.RequestStartedAt = propagated.RequestStartedAt;
+
+        if (propagated.IdempotencyKey is not null)
+            context.IdempotencyKey = propagated.IdempotencyKey;
+
         if (propagated.SessionFingerprint is not null)
             context.SessionFingerprint = propagated.SessionFingerprint;
 
@@ -61,6 +75,24 @@ public static class PropagatedContextExtensions
 
         if (propagated.RiskScore is not null)
             context.RiskScore = propagated.RiskScore;
+
+        if (propagated.EdgeNodeId is not null)
+            context.EdgeNodeId = propagated.EdgeNodeId;
+
+        if (propagated.LocaleIetfBcp47Tag is not null)
+            context.LocaleIetfBcp47Tag = propagated.LocaleIetfBcp47Tag;
+
+        if (propagated.TimezoneIanaName is not null)
+            context.TimezoneIanaName = propagated.TimezoneIanaName;
+
+        if (propagated.CurrencyIso4217Code is not null)
+            context.CurrencyIso4217Code = propagated.CurrencyIso4217Code;
+
+        if (propagated.OrgPlanTier is not null)
+            context.OrgPlanTier = propagated.OrgPlanTier;
+
+        if (propagated.FeatureFlagsCsv is not null)
+            context.FeatureFlagsCsv = propagated.FeatureFlagsCsv;
 
         if (propagated.WhoIsHashId is not null)
             context.WhoIsHashId = propagated.WhoIsHashId;

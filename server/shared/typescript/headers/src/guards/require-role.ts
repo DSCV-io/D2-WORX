@@ -32,7 +32,7 @@ export function requireRole(
 } {
   requireAuth(event, throwers);
   const ctx = event.locals.requestContext;
-  if (ctx.orgRole === null) {
+  if (ctx.orgRole === undefined) {
     _throwForbidden(event, throwers, ctx.traceId ?? undefined);
   }
   if (roles.length > 0 && !roles.includes(ctx.orgRole as Role)) {

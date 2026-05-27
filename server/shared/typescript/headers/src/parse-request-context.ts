@@ -114,89 +114,103 @@ function _composeRequestContext(
   const ctx: IRequestContext = {
     // Tracing — sourced from propagated envelope; traceId itself comes from
     // OTel's own propagator on the request, not from this header.
-    traceId: null,
-    requestId: propagated?.requestId ?? null,
-    requestPath: propagated?.requestPath ?? null,
+    traceId: undefined,
+    requestId: propagated?.requestId ?? undefined,
+    requestPath: propagated?.requestPath ?? undefined,
+    httpMethod: undefined,
+    requestStartedAt: propagated?.requestStartedAt ?? undefined,
+    idempotencyKey: propagated?.idempotencyKey ?? undefined,
     // Network — populated by Edge upstream, not via headers parsed here.
-    clientIp: null,
+    clientIp: undefined,
     // Fingerprints — propagated subset only.
-    sessionFingerprint: propagated?.sessionFingerprint ?? null,
-    currentFingerprint: propagated?.currentFingerprint ?? null,
-    riskScore: propagated?.riskScore ?? null,
+    sessionFingerprint: propagated?.sessionFingerprint ?? undefined,
+    currentFingerprint: propagated?.currentFingerprint ?? undefined,
+    riskScore: propagated?.riskScore ?? undefined,
+    // Infrastructure — propagated.
+    edgeNodeId: propagated?.edgeNodeId ?? undefined,
+    // User Preferences — propagated.
+    localeIetfBcp47Tag: propagated?.localeIetfBcp47Tag ?? undefined,
+    timezoneIanaName: propagated?.timezoneIanaName ?? undefined,
+    currencyIso4217Code: propagated?.currencyIso4217Code ?? undefined,
+    // Entitlements — propagated.
+    orgPlanTier: propagated?.orgPlanTier ?? undefined,
+    featureFlagsCsv: propagated?.featureFlagsCsv ?? undefined,
     // WhoIs — only the hash propagates; full record is recomputed downstream.
-    whoIsHashId: propagated?.whoIsHashId ?? null,
-    adminLocationHashId: null,
-    city: null,
-    region: null,
-    subdivisionCode: null,
-    countryCode: null,
-    postalCode: null,
-    latitude: null,
-    longitude: null,
-    geohash: null,
-    isVpn: null,
-    isProxy: null,
-    isTor: null,
-    isHosting: null,
-    asn: null,
-    asnName: null,
-    asnType: null,
+    whoIsHashId: propagated?.whoIsHashId ?? undefined,
+    adminLocationHashId: undefined,
+    city: undefined,
+    subdivisionIso31662Code: undefined,
+    countryIso31661Alpha2Code: undefined,
+    postalCode: undefined,
+    latitude: undefined,
+    longitude: undefined,
+    geohash: undefined,
+    isVpn: undefined,
+    isProxy: undefined,
+    isTor: undefined,
+    isHosting: undefined,
+    asn: undefined,
+    asnName: undefined,
+    asnType: undefined,
     // Auth identity — JWT-sourced.
     isAuthenticated,
     audience: payload?.aud ?? [],
-    sessionId: payload?.d2_session_id ?? null,
+    sessionId: payload?.d2_session_id ?? undefined,
     tokenIssuedAt:
       payload?.iat !== null && payload?.iat !== undefined
         ? String(payload.iat)
-        : null,
+        : undefined,
     tokenExpiresAt:
       payload?.exp !== null && payload?.exp !== undefined
         ? String(payload.exp)
-        : null,
+        : undefined,
     actorChain,
-    subject: payload?.sub ?? null,
-    userId: _guidOrNull(payload?.sub ?? null),
-    username: payload?.d2_username ?? null,
-    requestedByClientId: payload?.client_id ?? null,
-    immediateCallerClientId: _immediateCallerClientId(actorChain),
-    originatingClientId: _originatingClientId(actorChain, payload?.sub ?? null),
+    authMethod: payload?.amr ?? undefined,
+    lastStepUpAt: payload?.d2_step_up_at ?? undefined,
+    subject: payload?.sub ?? undefined,
+    userId: _guidOrNull(payload?.sub ?? null) ?? undefined,
+    username: payload?.d2_username ?? undefined,
+    requestedByClientId: payload?.client_id ?? undefined,
+    immediateCallerClientId: _immediateCallerClientId(actorChain) ?? undefined,
+    originatingClientId:
+      _originatingClientId(actorChain, payload?.sub ?? null) ?? undefined,
     isServiceIdentity:
-      payload === undefined ? null : _isServiceIdentity(payload),
-    orgId: payload?.d2_org_id ?? null,
-    orgName: payload?.d2_org_name ?? null,
+      payload === undefined ? undefined : _isServiceIdentity(payload),
+    orgId: payload?.d2_org_id ?? undefined,
+    orgName: payload?.d2_org_name ?? undefined,
     orgType,
     orgRole,
     isImpersonating:
       payload === undefined
-        ? null
+        ? undefined
         : actorChain.some((a) => a.kind === ActorKind.Impersonation),
-    impersonationKind: null,
-    impersonatedBy: null,
-    impersonationSessionId: null,
-    impersonatorOrgId: null,
-    impersonatorOrgName: null,
-    impersonatorOrgType: null,
-    impersonatorOrgRole: null,
+    impersonationKind: undefined,
+    impersonatedBy: undefined,
+    impersonationSessionId: undefined,
+    impersonatorOrgId: undefined,
+    impersonatorOrgName: undefined,
+    impersonatorOrgType: undefined,
+    impersonatorOrgRole: undefined,
     scopes,
   };
   return ctx;
 }
 
-function _toOrgType(value: string | null): OrgType | null {
-  if (value === null || value.length === 0) return null;
+function _toOrgType(value: string | null): OrgType | undefined {
+  if (value === null || value.length === 0) return undefined;
   // Compile-time check that the runtime values match OrgType.
   for (const candidate of Object.values(OrgType)) {
     if (candidate === value) return candidate;
   }
-  return null;
+  return undefined;
 }
 
-function _toRole(value: string | null): Role | null {
-  if (value === null || value.length === 0) return null;
+function _toRole(value: string | null): Role | undefined {
+  if (value === null || value.length === 0) return undefined;
   for (const candidate of Object.values(Role)) {
     if (candidate === value) return candidate;
   }
-  return null;
+  return undefined;
 }
 
 function _guidOrNull(value: string | null): string | null {

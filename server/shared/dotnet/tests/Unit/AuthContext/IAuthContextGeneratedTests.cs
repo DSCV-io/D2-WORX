@@ -82,6 +82,8 @@ public sealed class IAuthContextGeneratedTests
     [InlineData("ImpersonatorOrgType", typeof(OrgType?))]
     [InlineData("ImpersonatorOrgRole", typeof(Role?))]
     [InlineData("Scopes", typeof(IReadOnlySet<string>))]
+    [InlineData("AuthMethod", typeof(string))]
+    [InlineData("LastStepUpAt", typeof(DateTimeOffset?))]
     public void Property_HasExpectedClrType(string propertyName, Type expectedType)
     {
         var property = typeof(IAuthContext).GetProperty(

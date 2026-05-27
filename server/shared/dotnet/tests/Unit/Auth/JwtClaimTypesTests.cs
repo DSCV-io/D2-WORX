@@ -23,6 +23,7 @@ public sealed class JwtClaimTypesTests
     [InlineData(nameof(JwtClaimTypes.SCOPE), "scope")]
     [InlineData(nameof(JwtClaimTypes.ACT), "act")]
     [InlineData(nameof(JwtClaimTypes.CLIENT_ID), "client_id")]
+    [InlineData(nameof(JwtClaimTypes.AMR), "amr")]
     public void StandardOAuthClaims_HaveCanonicalLowercaseNames(string fieldName, string expected)
     {
         // Adversarial: standard OAuth/OIDC claims MUST keep their canonical
@@ -45,6 +46,7 @@ public sealed class JwtClaimTypesTests
     [InlineData(nameof(JwtClaimTypes.ORG_ROLE), "d2_org_role")]
     [InlineData(nameof(JwtClaimTypes.ACT_KIND), "d2_kind")]
     [InlineData(nameof(JwtClaimTypes.ACT_SESSION_ID), "d2_session_id")]
+    [InlineData(nameof(JwtClaimTypes.STEP_UP_AT), "d2_step_up_at")]
     public void D2Claims_HaveExpectedLiteralValues(string fieldName, string expected)
     {
         var actual = (string)typeof(JwtClaimTypes)
@@ -64,7 +66,7 @@ public sealed class JwtClaimTypesTests
         // RFC 6749 §3.3 (scope), RFC 8693 §2.1 (act), RFC 8693 §4.3 / RFC 9068
         // §2.2 (client_id) — these keep their canonical names.
         string[] canonicalStandardNames =
-            ["sub", "aud", "iat", "exp", "azp", "scope", "act", "client_id"];
+            ["sub", "aud", "iat", "exp", "azp", "scope", "act", "client_id", "amr"];
 
         var d2Constants = typeof(JwtClaimTypes)
             .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)

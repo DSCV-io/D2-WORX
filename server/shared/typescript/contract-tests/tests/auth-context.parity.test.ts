@@ -27,6 +27,8 @@ const TS_AUTH_CONTEXT_PROPERTIES: readonly string[] = [
   "tokenIssuedAt",
   "tokenExpiresAt",
   "actorChain",
+  "authMethod",
+  "lastStepUpAt",
   // Identity
   "subject",
   "userId",

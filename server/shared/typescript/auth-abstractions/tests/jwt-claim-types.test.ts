@@ -15,6 +15,7 @@ describe("JwtClaimTypes — per-VALUE pin (mirrors .NET constants)", () => {
     ["SCOPE", "scope"],
     ["ACT", "act"],
     ["CLIENT_ID", "client_id"],
+    ["AMR", "amr"],
     ["SESSION_ID", "d2_session_id"],
     ["USERNAME", "d2_username"],
     ["FINGERPRINT", "d2_fp"],
@@ -24,6 +25,7 @@ describe("JwtClaimTypes — per-VALUE pin (mirrors .NET constants)", () => {
     ["ORG_ROLE", "d2_org_role"],
     ["ACT_KIND", "d2_kind"],
     ["ACT_SESSION_ID", "d2_session_id"],
+    ["STEP_UP_AT", "d2_step_up_at"],
   ])("JwtClaimTypes.%s = %s", (key, value) => {
     expect(JwtClaimTypes[key as keyof typeof JwtClaimTypes]).toBe(value);
   });

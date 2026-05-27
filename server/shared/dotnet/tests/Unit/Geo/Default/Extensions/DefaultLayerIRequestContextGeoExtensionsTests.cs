@@ -23,7 +23,7 @@ public sealed class DefaultLayerIRequestContextGeoExtensionsTests
     [Fact]
     public void Country_ValidUSRaw_ReturnsCountryRecord()
     {
-        var ctx = new MutableRequestContext { CountryCode = "US" };
+        var ctx = new MutableRequestContext { CountryIso31661Alpha2Code = "US" };
 
         var country = ctx.Country();
 
@@ -34,7 +34,7 @@ public sealed class DefaultLayerIRequestContextGeoExtensionsTests
     [Fact]
     public void Country_ValidJPRaw_ReturnsCountryRecord()
     {
-        var ctx = new MutableRequestContext { CountryCode = "JP" };
+        var ctx = new MutableRequestContext { CountryIso31661Alpha2Code = "JP" };
         ctx.Country().Should().NotBeNull();
         ctx.Country()!.Iso31661Alpha2Code.Should().Be(CountryCode.JP);
     }
@@ -43,28 +43,28 @@ public sealed class DefaultLayerIRequestContextGeoExtensionsTests
     [Fact]
     public void Country_NullRaw_ReturnsNull()
     {
-        var ctx = new MutableRequestContext { CountryCode = null };
+        var ctx = new MutableRequestContext { CountryIso31661Alpha2Code = null };
         ctx.Country().Should().BeNull();
     }
 
     [Fact]
     public void Country_EmptyRaw_ReturnsNull()
     {
-        var ctx = new MutableRequestContext { CountryCode = string.Empty };
+        var ctx = new MutableRequestContext { CountryIso31661Alpha2Code = string.Empty };
         ctx.Country().Should().BeNull();
     }
 
     [Fact]
     public void Country_WhitespaceRaw_ReturnsNull()
     {
-        var ctx = new MutableRequestContext { CountryCode = "   " };
+        var ctx = new MutableRequestContext { CountryIso31661Alpha2Code = "   " };
         ctx.Country().Should().BeNull();
     }
 
     [Fact]
     public void Country_UnknownCodeRaw_ReturnsNull()
     {
-        var ctx = new MutableRequestContext { CountryCode = "ZZ" };
+        var ctx = new MutableRequestContext { CountryIso31661Alpha2Code = "ZZ" };
         ctx.Country().Should().BeNull();
     }
 
@@ -74,7 +74,7 @@ public sealed class DefaultLayerIRequestContextGeoExtensionsTests
         // The Abstractions-layer parser uses TryParseTruthyNull<CountryCode>
         // with ignoreCase: true; the Default-layer wrapper inherits that
         // contract verbatim. Lowercase raw "us" resolves to CountryCode.US.
-        var ctx = new MutableRequestContext { CountryCode = "us" };
+        var ctx = new MutableRequestContext { CountryIso31661Alpha2Code = "us" };
         var country = ctx.Country();
         country.Should().NotBeNull();
         country.Iso31661Alpha2Code.Should().Be(CountryCode.US);
@@ -90,7 +90,7 @@ public sealed class DefaultLayerIRequestContextGeoExtensionsTests
         // Cross-language lenient parser contract: any-case input resolves
         // to the canonical uppercase record. JWT claims minted with
         // lowercase / mixed-case codes resolve uniformly across .NET + TS.
-        var ctx = new MutableRequestContext { CountryCode = raw };
+        var ctx = new MutableRequestContext { CountryIso31661Alpha2Code = raw };
         var country = ctx.Country();
         country.Should().NotBeNull();
         country.Iso31661Alpha2Code.Should().Be(CountryCode.US);
@@ -100,7 +100,7 @@ public sealed class DefaultLayerIRequestContextGeoExtensionsTests
     [Fact]
     public void Country_AQRaw_ReturnsAntarcticaWithNullPrimaries()
     {
-        var ctx = new MutableRequestContext { CountryCode = "AQ" };
+        var ctx = new MutableRequestContext { CountryIso31661Alpha2Code = "AQ" };
         var aq = ctx.Country();
 
         aq.Should().NotBeNull();
@@ -114,7 +114,7 @@ public sealed class DefaultLayerIRequestContextGeoExtensionsTests
     [Fact]
     public void Subdivision_ValidUSNYRaw_ReturnsSubdivisionRecord()
     {
-        var ctx = new MutableRequestContext { SubdivisionCode = "US-NY" };
+        var ctx = new MutableRequestContext { SubdivisionIso31662Code = "US-NY" };
 
         var sub = ctx.Subdivision();
 
@@ -125,7 +125,7 @@ public sealed class DefaultLayerIRequestContextGeoExtensionsTests
     [Fact]
     public void Subdivision_ValidCAONRaw_ReturnsSubdivisionRecord()
     {
-        var ctx = new MutableRequestContext { SubdivisionCode = "CA-ON" };
+        var ctx = new MutableRequestContext { SubdivisionIso31662Code = "CA-ON" };
         var sub = ctx.Subdivision();
         sub.Should().NotBeNull();
         sub.Iso31662Code.Value.Should().Be("CA-ON");
@@ -134,28 +134,28 @@ public sealed class DefaultLayerIRequestContextGeoExtensionsTests
     [Fact]
     public void Subdivision_NullRaw_ReturnsNull()
     {
-        var ctx = new MutableRequestContext { SubdivisionCode = null };
+        var ctx = new MutableRequestContext { SubdivisionIso31662Code = null };
         ctx.Subdivision().Should().BeNull();
     }
 
     [Fact]
     public void Subdivision_EmptyRaw_ReturnsNull()
     {
-        var ctx = new MutableRequestContext { SubdivisionCode = string.Empty };
+        var ctx = new MutableRequestContext { SubdivisionIso31662Code = string.Empty };
         ctx.Subdivision().Should().BeNull();
     }
 
     [Fact]
     public void Subdivision_WhitespaceRaw_ReturnsNull()
     {
-        var ctx = new MutableRequestContext { SubdivisionCode = "   " };
+        var ctx = new MutableRequestContext { SubdivisionIso31662Code = "   " };
         ctx.Subdivision().Should().BeNull();
     }
 
     [Fact]
     public void Subdivision_UnknownCodeRaw_ReturnsNull()
     {
-        var ctx = new MutableRequestContext { SubdivisionCode = "ZZ-99" };
+        var ctx = new MutableRequestContext { SubdivisionIso31662Code = "ZZ-99" };
         ctx.Subdivision().Should().BeNull();
     }
 
@@ -170,7 +170,7 @@ public sealed class DefaultLayerIRequestContextGeoExtensionsTests
         // uppercased before parser/catalog lookup so JWT claims minted
         // with lowercase / mixed-case codes resolve uniformly across
         // .NET + TS.
-        var ctx = new MutableRequestContext { SubdivisionCode = raw };
+        var ctx = new MutableRequestContext { SubdivisionIso31662Code = raw };
         var sub = ctx.Subdivision();
         sub.Should().NotBeNull();
         sub.Iso31662Code.Value.Should().Be("US-NY");
@@ -180,7 +180,7 @@ public sealed class DefaultLayerIRequestContextGeoExtensionsTests
     [Fact]
     public void Country_NestedDataAccess_PrimaryLanguageDisplayName_NoSecondLookupNeeded()
     {
-        var ctx = new MutableRequestContext { CountryCode = "US" };
+        var ctx = new MutableRequestContext { CountryIso31661Alpha2Code = "US" };
         var lang = ctx.Country()?.PrimaryLanguage?.DisplayName;
         lang.Should().NotBeNullOrEmpty();
     }

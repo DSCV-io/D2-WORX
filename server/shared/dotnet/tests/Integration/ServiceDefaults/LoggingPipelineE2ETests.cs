@@ -189,8 +189,7 @@ public sealed class LoggingPipelineE2ETests
             ClientIp = "203.0.113.42",
             City = "San Francisco",
             PostalCode = "94103",
-            Region = "California",
-            SubdivisionCode = "US-CA",
+            SubdivisionIso31662Code = "US-CA",
             Latitude = 37.7749,
             Longitude = -122.4194,
             Geohash = "9q8yy",
@@ -206,8 +205,7 @@ public sealed class LoggingPipelineE2ETests
         rendered.Should().NotContain($"\"{nameof(IRequestContext.ClientIp)}\"");
         rendered.Should().NotContain($"\"{nameof(IRequestContext.City)}\"");
         rendered.Should().NotContain($"\"{nameof(IRequestContext.PostalCode)}\"");
-        rendered.Should().NotContain($"\"{nameof(IRequestContext.Region)}\"");
-        rendered.Should().NotContain($"\"{nameof(IRequestContext.SubdivisionCode)}\"");
+        rendered.Should().NotContain($"\"{nameof(IRequestContext.SubdivisionIso31662Code)}\"");
         rendered.Should().NotContain($"\"{nameof(IRequestContext.Latitude)}\"");
         rendered.Should().NotContain($"\"{nameof(IRequestContext.Longitude)}\"");
         rendered.Should().NotContain($"\"{nameof(IRequestContext.Geohash)}\"");

@@ -24,6 +24,12 @@ namespace D2.Shared.Headers.Http;
 public static class HttpHeaders
 {
     /// <summary>
+    /// Standard HTTP locale-preference header (RFC 7231 §5.3.5). Set by browser or OS. Represents the lowest-priority tier of the user locale resolution cascade: profile &gt; org &gt; X-D2-Locale &gt; Accept-Language &gt; fallback 'en-US'. Adding as a typed constant so middleware stops using magic strings.
+    /// </summary>
+    /// <remarks>Convention: <c>rfc</c>. Applicability: <c>http</c>.</remarks>
+    public const string ACCEPT_LANGUAGE = "Accept-Language";
+
+    /// <summary>
     /// RFC 6750 bearer token header. Carries the JWT; identity rebuilds from this on every hop. Not used on AMQP (broker uses connection-level credentials).
     /// </summary>
     /// <remarks>Convention: <c>oauth</c>. Applicability: <c>grpc, http</c>.</remarks>
@@ -40,6 +46,24 @@ public static class HttpHeaders
     /// </summary>
     /// <remarks>Convention: <c>d2</c>. Applicability: <c>http</c>.</remarks>
     public const string CORRELATION_ID = "X-Correlation-Id";
+
+    /// <summary>
+    /// User-selected currency override (ISO 4217 code, e.g. 'USD', 'EUR'). No browser-native equivalent — D2-custom. Takes precedence over country-derived currency in the cascade: profile &gt; org &gt; X-D2-Currency &gt; CountryIso31661Alpha2Code-derived &gt; fallback NULL.
+    /// </summary>
+    /// <remarks>Convention: <c>d2</c>. Applicability: <c>http</c>.</remarks>
+    public const string D2_CURRENCY = "X-D2-Currency";
+
+    /// <summary>
+    /// D2-specific user-selected locale override (IETF BCP 47 tag, e.g. 'en-US', 'zh-Hans-SG'). Set when the user explicitly picks a locale in the UI. Takes precedence over Accept-Language in the locale cascade. Consumed by Edge auth middleware to populate IRequestContext.LocaleIetfBcp47Tag.
+    /// </summary>
+    /// <remarks>Convention: <c>d2</c>. Applicability: <c>http</c>.</remarks>
+    public const string D2_LOCALE = "X-D2-Locale";
+
+    /// <summary>
+    /// Browser-derived IANA timezone name (from Intl.DateTimeFormat().resolvedOptions().timeZone, e.g. 'America/New_York'). Set by the BFF fetch interceptor on every request. Used by Edge auth middleware as the third tier of the timezone cascade: profile &gt; org &gt; X-D2-Timezone &gt; WhoIs-derived &gt; fallback 'UTC'.
+    /// </summary>
+    /// <remarks>Convention: <c>d2</c>. Applicability: <c>http</c>.</remarks>
+    public const string D2_TIMEZONE = "X-D2-Timezone";
 
     /// <summary>
     /// Idempotency key for request deduplication. Conventional Stripe-style header name.
@@ -79,9 +103,13 @@ public static class HttpHeaders
 
     private static readonly IReadOnlyList<string> sr_allHeaders = new string[]
     {
+        "Accept-Language",
         "Authorization",
         "X-D2-Client-Fingerprint",
         "X-Correlation-Id",
+        "X-D2-Currency",
+        "X-D2-Locale",
+        "X-D2-Timezone",
         "Idempotency-Key",
         "X-D2-Internal-Token",
         "x-d2-context",

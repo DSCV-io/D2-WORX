@@ -21,9 +21,17 @@ export class PropagatedContextSerializer {
     const o: Record<string, unknown> = {};
     if (ctx.requestId !== null && ctx.requestId !== undefined) o["requestId"] = ctx.requestId;
     if (ctx.requestPath !== null && ctx.requestPath !== undefined) o["requestPath"] = ctx.requestPath;
+    if (ctx.requestStartedAt !== null && ctx.requestStartedAt !== undefined) o["requestStartedAt"] = ctx.requestStartedAt;
+    if (ctx.idempotencyKey !== null && ctx.idempotencyKey !== undefined) o["idempotencyKey"] = ctx.idempotencyKey;
     if (ctx.sessionFingerprint !== null && ctx.sessionFingerprint !== undefined) o["sessionFingerprint"] = ctx.sessionFingerprint;
     if (ctx.currentFingerprint !== null && ctx.currentFingerprint !== undefined) o["currentFingerprint"] = ctx.currentFingerprint;
     if (ctx.riskScore !== null && ctx.riskScore !== undefined) o["riskScore"] = ctx.riskScore;
+    if (ctx.edgeNodeId !== null && ctx.edgeNodeId !== undefined) o["edgeNodeId"] = ctx.edgeNodeId;
+    if (ctx.localeIetfBcp47Tag !== null && ctx.localeIetfBcp47Tag !== undefined) o["localeIetfBcp47Tag"] = ctx.localeIetfBcp47Tag;
+    if (ctx.timezoneIanaName !== null && ctx.timezoneIanaName !== undefined) o["timezoneIanaName"] = ctx.timezoneIanaName;
+    if (ctx.currencyIso4217Code !== null && ctx.currencyIso4217Code !== undefined) o["currencyIso4217Code"] = ctx.currencyIso4217Code;
+    if (ctx.orgPlanTier !== null && ctx.orgPlanTier !== undefined) o["orgPlanTier"] = ctx.orgPlanTier;
+    if (ctx.featureFlagsCsv !== null && ctx.featureFlagsCsv !== undefined) o["featureFlagsCsv"] = ctx.featureFlagsCsv;
     if (ctx.whoIsHashId !== null && ctx.whoIsHashId !== undefined) o["whoIsHashId"] = ctx.whoIsHashId;
     return JSON.stringify(o);
   }
@@ -41,7 +49,7 @@ export class PropagatedContextSerializer {
     {
       const v = parsed["requestId"];
       if (v === undefined || v === null) {
-        out["requestId"] = null;
+        // absent — leave out["requestId"] unset (undefined)
       } else {
         if (typeof v !== "string") return undefined;
         if (v.length > 256) return undefined;
@@ -51,7 +59,7 @@ export class PropagatedContextSerializer {
     {
       const v = parsed["requestPath"];
       if (v === undefined || v === null) {
-        out["requestPath"] = null;
+        // absent — leave out["requestPath"] unset (undefined)
       } else {
         if (typeof v !== "string") return undefined;
         if (v.length > 2048) return undefined;
@@ -59,9 +67,28 @@ export class PropagatedContextSerializer {
       }
     }
     {
+      const v = parsed["requestStartedAt"];
+      if (v === undefined || v === null) {
+        // absent — leave out["requestStartedAt"] unset (undefined)
+      } else {
+        if (typeof v !== "string") return undefined;
+        out["requestStartedAt"] = v;
+      }
+    }
+    {
+      const v = parsed["idempotencyKey"];
+      if (v === undefined || v === null) {
+        // absent — leave out["idempotencyKey"] unset (undefined)
+      } else {
+        if (typeof v !== "string") return undefined;
+        if (v.length > 255) return undefined;
+        out["idempotencyKey"] = v;
+      }
+    }
+    {
       const v = parsed["sessionFingerprint"];
       if (v === undefined || v === null) {
-        out["sessionFingerprint"] = null;
+        // absent — leave out["sessionFingerprint"] unset (undefined)
       } else {
         if (typeof v !== "string") return undefined;
         if (v.length > 512) return undefined;
@@ -71,7 +98,7 @@ export class PropagatedContextSerializer {
     {
       const v = parsed["currentFingerprint"];
       if (v === undefined || v === null) {
-        out["currentFingerprint"] = null;
+        // absent — leave out["currentFingerprint"] unset (undefined)
       } else {
         if (typeof v !== "string") return undefined;
         if (v.length > 512) return undefined;
@@ -81,16 +108,70 @@ export class PropagatedContextSerializer {
     {
       const v = parsed["riskScore"];
       if (v === undefined || v === null) {
-        out["riskScore"] = null;
+        // absent — leave out["riskScore"] unset (undefined)
       } else {
         if (typeof v !== "number" || !Number.isFinite(v)) return undefined;
         out["riskScore"] = v;
       }
     }
     {
+      const v = parsed["edgeNodeId"];
+      if (v === undefined || v === null) {
+        // absent — leave out["edgeNodeId"] unset (undefined)
+      } else {
+        if (typeof v !== "string") return undefined;
+        out["edgeNodeId"] = v;
+      }
+    }
+    {
+      const v = parsed["localeIetfBcp47Tag"];
+      if (v === undefined || v === null) {
+        // absent — leave out["localeIetfBcp47Tag"] unset (undefined)
+      } else {
+        if (typeof v !== "string") return undefined;
+        out["localeIetfBcp47Tag"] = v;
+      }
+    }
+    {
+      const v = parsed["timezoneIanaName"];
+      if (v === undefined || v === null) {
+        // absent — leave out["timezoneIanaName"] unset (undefined)
+      } else {
+        if (typeof v !== "string") return undefined;
+        out["timezoneIanaName"] = v;
+      }
+    }
+    {
+      const v = parsed["currencyIso4217Code"];
+      if (v === undefined || v === null) {
+        // absent — leave out["currencyIso4217Code"] unset (undefined)
+      } else {
+        if (typeof v !== "string") return undefined;
+        out["currencyIso4217Code"] = v;
+      }
+    }
+    {
+      const v = parsed["orgPlanTier"];
+      if (v === undefined || v === null) {
+        // absent — leave out["orgPlanTier"] unset (undefined)
+      } else {
+        if (typeof v !== "string") return undefined;
+        out["orgPlanTier"] = v;
+      }
+    }
+    {
+      const v = parsed["featureFlagsCsv"];
+      if (v === undefined || v === null) {
+        // absent — leave out["featureFlagsCsv"] unset (undefined)
+      } else {
+        if (typeof v !== "string") return undefined;
+        out["featureFlagsCsv"] = v;
+      }
+    }
+    {
       const v = parsed["whoIsHashId"];
       if (v === undefined || v === null) {
-        out["whoIsHashId"] = null;
+        // absent — leave out["whoIsHashId"] unset (undefined)
       } else {
         if (typeof v !== "string") return undefined;
         if (v.length > 128) return undefined;

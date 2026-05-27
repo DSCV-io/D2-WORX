@@ -62,6 +62,16 @@ public sealed class MutableRequestContext : global::D2.Shared.Context.Abstractio
     /// </summary>
     public IReadOnlyList<ActorEntry> ActorChain { get; set; } = [];
 
+    /// <summary>
+    /// Authentication Methods Reference (RFC 8176 standard claim). Space-separated or JSON-array string of authentication method identifiers used to authenticate the subject (e.g. 'pwd', 'otp', 'mfa', 'webauthn'). Input to risk-scoring and audit — 'password-only vs MFA vs OAuth2-with-WebAuthn' matters for sensitive-action gating. Null when the token was minted without AMR (e.g. service-identity client_credentials flows).
+    /// </summary>
+    public string? AuthMethod { get; set; } = null;
+
+    /// <summary>
+    /// Unix-seconds timestamp of the last step-up authentication completion (Category 2 — past UTC instant). Handlers gating sensitive actions (e.g. billing.payment.charge) enforce 'step-up within last N minutes' by comparing this value against the current instant. Edge auth populates from the session record at JWT mint. Domain consumers MUST convert to NodaTime.Instant at the consumption boundary before any temporal arithmetic: dto.Value.ToInstant(). Wire form is DateTimeOffset? for JSON-serialization interop with the cross-language source-gen pipeline.
+    /// </summary>
+    public DateTimeOffset? LastStepUpAt { get; set; } = null;
+
     #endregion
 
     #region Identity
@@ -253,6 +263,21 @@ public sealed class MutableRequestContext : global::D2.Shared.Context.Abstractio
     /// </summary>
     public string? RequestPath { get; set; } = null;
 
+    /// <summary>
+    /// HTTP verb captured by Edge middleware (e.g. 'GET', 'POST', 'PUT'). Only meaningful at the HTTP edge — downstream gRPC and AMQP consumers do not carry the originating HTTP verb, so this field does NOT propagate. Null on non-HTTP transports.
+    /// </summary>
+    public string? HttpMethod { get; set; } = null;
+
+    /// <summary>
+    /// Timestamp when Edge began processing the originating request (Category 2 — past UTC instant). Propagates so async consumers (Audit, Courier) can report end-to-end SLA latency. Domain consumers MUST convert to NodaTime.Instant at the consumption boundary before any temporal arithmetic: dto.Value.ToInstant(). Wire form is DateTimeOffset? for JSON-serialization interop.
+    /// </summary>
+    public DateTimeOffset? RequestStartedAt { get; set; } = null;
+
+    /// <summary>
+    /// Parsed value of the Idempotency-Key request header. Propagates so downstream consumers correlate idempotent retries across the call chain. Max 255 chars; values exceeding cap are rejected by Edge middleware with 400 Bad Request. Treat as opaque — do NOT log the raw value; structured logs may emit a SHA-256 prefix for correlation but never the literal value.
+    /// </summary>
+    public string? IdempotencyKey { get; set; } = null;
+
     #endregion
 
     #region Network
@@ -284,6 +309,48 @@ public sealed class MutableRequestContext : global::D2.Shared.Context.Abstractio
 
     #endregion
 
+    #region Infrastructure
+
+    /// <summary>
+    /// Edge process identifier (e.g. Kubernetes pod name, EC2 instance id, or region+node tuple). Captured once at Edge process boot by startup middleware. Propagates via x-d2-context so downstream audit and telemetry know which edge node originated the request — important for hot-spot diagnosis and capacity attribution.
+    /// </summary>
+    public string? EdgeNodeId { get; set; } = null;
+
+    #endregion
+
+    #region User Preferences
+
+    /// <summary>
+    /// Resolved user locale as an IETF BCP 47 tag (e.g. 'en-US', 'zh-Hans-SG'). Populated by Edge auth middleware via the locale cascade: user profile preference &gt; org default preference &gt; X-D2-Locale header &gt; Accept-Language header &gt; fallback 'en-US'. Propagates so async consumers (Courier, Notifications) render locale-aware content. Validation of the BCP 47 tag is performed by the LocaleCode typed wrapper at the consumption site.
+    /// </summary>
+    public string? LocaleIetfBcp47Tag { get; set; } = null;
+
+    /// <summary>
+    /// Resolved user timezone as an IANA timezone database name (e.g. 'America/New_York', 'Europe/Berlin'). Populated by Edge auth middleware via the timezone cascade: user profile preference &gt; org default preference &gt; X-D2-Timezone header &gt; WhoIs-derived (CountryIso31661Alpha2Code + SubdivisionIso31662Code mapped via D2.Shared.Geo.Default) &gt; fallback 'UTC'. Propagates so async consumers render timezone-aware timestamps.
+    /// </summary>
+    public string? TimezoneIanaName { get; set; } = null;
+
+    /// <summary>
+    /// Resolved user currency as an ISO 4217 code (e.g. 'USD', 'EUR', 'GBP'). Populated by Edge auth middleware via the currency cascade: user profile preference &gt; org default preference &gt; X-D2-Currency header &gt; CountryIso31661Alpha2Code-derived (ISO 3166 to ISO 4217 primary legal-tender mapping via D2.Shared.Geo.Default) &gt; fallback NULL (no sensible universal default; consumers surface a validation error when null and a currency is required).
+    /// </summary>
+    public string? CurrencyIso4217Code { get; set; } = null;
+
+    #endregion
+
+    #region Entitlements
+
+    /// <summary>
+    /// Operating organization plan tier label (e.g. 'Free', 'Starter', 'Pro', 'Enterprise'). Used by handlers gating premium operations. Stored as a free-form string (not an enum) to allow tier names to evolve without a source-gen rebuild cycle — validate at the consumption site. Propagates so async consumers can apply plan-gated logic.
+    /// </summary>
+    public string? OrgPlanTier { get; set; } = null;
+
+    /// <summary>
+    /// Comma-separated list of active feature flag names for the operating org (e.g. 'new-billing,risk-v2'). Callers split on comma to enumerate active flags. Flag names MUST NOT contain commas — enforced at flag-creation time. CSV form chosen because source-gen does not currently support IReadOnlySet&lt;string&gt; for propagated context fields. Propagates so async consumers can apply flag-gated logic.
+    /// </summary>
+    public string? FeatureFlagsCsv { get; set; } = null;
+
+    #endregion
+
     #region WhoIs — Admin Location
 
     /// <summary>
@@ -303,21 +370,15 @@ public sealed class MutableRequestContext : global::D2.Shared.Context.Abstractio
     public string? City { get; set; } = null;
 
     /// <summary>
-    /// Human-readable region / state name (e.g. 'California').
+    /// ISO 3166-2 subdivision code from WhoIs lookup (e.g. 'US-CA', 'DE-BY'). Standards-explicit name per the §7.Z naming convention: the name describes exactly what data IS. Consumers wanting the typed SubdivisionCode wrapper use IRequestContextGeoExtensions.Subdivision().
     /// </summary>
     [RedactData(Reason = RedactReason.PersonalInformation)]
-    public string? Region { get; set; } = null;
+    public string? SubdivisionIso31662Code { get; set; } = null;
 
     /// <summary>
-    /// ISO 3166-2 subdivision code (e.g. 'US-CA').
+    /// ISO 3166-1 alpha-2 country code from WhoIs lookup (e.g. 'US', 'DE'). Standards-explicit name per the §7.Z naming convention: the name describes exactly what data IS. Consumers wanting the typed CountryCode enum use IRequestContextGeoExtensions.Country().
     /// </summary>
-    [RedactData(Reason = RedactReason.PersonalInformation)]
-    public string? SubdivisionCode { get; set; } = null;
-
-    /// <summary>
-    /// ISO 3166-1 alpha-2 country code from WhoIs lookup.
-    /// </summary>
-    public string? CountryCode { get; set; } = null;
+    public string? CountryIso31661Alpha2Code { get; set; } = null;
 
     /// <summary>
     /// Postal / zip code from WhoIs lookup. Useful for granular locality risk-scoring.
@@ -490,6 +551,26 @@ public sealed class MutableRequestContext : global::D2.Shared.Context.Abstractio
         {
             ctx.ActorChain = ActorChainParser.ParseFromJson(el_ActorChain);
         }
+        if (payload.TryGetProperty("amr", out var el_AuthMethod))
+        {
+            if (el_AuthMethod.ValueKind == JsonValueKind.String)
+            {
+                ctx.AuthMethod = el_AuthMethod.GetString().ToNullIfEmpty();
+            }
+        }
+        if (payload.TryGetProperty("d2_step_up_at", out var el_LastStepUpAt))
+        {
+            if (el_LastStepUpAt.ValueKind == JsonValueKind.Number &&
+                el_LastStepUpAt.TryGetInt64(out var v_LastStepUpAt))
+            {
+                ctx.LastStepUpAt = DateTimeOffset.FromUnixTimeSeconds(v_LastStepUpAt);
+            }
+            else if (el_LastStepUpAt.ValueKind == JsonValueKind.String &&
+                DateTimeOffset.TryParse(el_LastStepUpAt.GetString(), out var vs_LastStepUpAt))
+            {
+                ctx.LastStepUpAt = vs_LastStepUpAt;
+            }
+        }
         if (payload.TryGetProperty("sub", out var el_Subject))
         {
             if (el_Subject.ValueKind == JsonValueKind.String)
@@ -626,6 +707,23 @@ public sealed class MutableRequestContext : global::D2.Shared.Context.Abstractio
         if (claim_ActorChain is not null)
         {
             ctx.ActorChain = ActorChainParser.ParseFromJsonString(claim_ActorChain);
+        }
+        var claim_AuthMethod = principal.FindFirst("amr")?.Value;
+        if (claim_AuthMethod is not null)
+        {
+            ctx.AuthMethod = claim_AuthMethod.ToNullIfEmpty();
+        }
+        var claim_LastStepUpAt = principal.FindFirst("d2_step_up_at")?.Value;
+        if (claim_LastStepUpAt is not null)
+        {
+            if (long.TryParse(claim_LastStepUpAt, out var ts_LastStepUpAt))
+            {
+                ctx.LastStepUpAt = DateTimeOffset.FromUnixTimeSeconds(ts_LastStepUpAt);
+            }
+            else if (DateTimeOffset.TryParse(claim_LastStepUpAt, out var vs_LastStepUpAt))
+            {
+                ctx.LastStepUpAt = vs_LastStepUpAt;
+            }
         }
         var claim_Subject = principal.FindFirst("sub")?.Value;
         if (claim_Subject is not null)

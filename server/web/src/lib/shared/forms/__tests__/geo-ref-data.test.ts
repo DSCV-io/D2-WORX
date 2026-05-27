@@ -29,15 +29,18 @@ function makeCountry(overrides: Partial<Country> = {}): Country {
     measurementSystem: MeasurementSystem.Imperial,
     territoryIso31661Alpha2Codes: new Set() as ReadonlySet<Country["iso31661Alpha2Code"]>,
     territories: [],
-    subdivisionIso31662Codes: new Set(["US-CA", "US-NY"] as SubdivisionCode[]) as
-      ReadonlySet<SubdivisionCode>,
+    subdivisionIso31662Codes: new Set([
+      "US-CA",
+      "US-NY",
+    ] as SubdivisionCode[]) as ReadonlySet<SubdivisionCode>,
     subdivisions: [],
     localeIetfBcp47Tags: new Set() as ReadonlySet<Country["primaryLocaleIetfBcp47Tag"] & string>,
     locales: [],
     geopoliticalEntityShortCodes: new Set() as ReadonlySet<never>,
     geopoliticalEntities: [],
-    currencyIso4217AlphaCodes: new Set() as
-      ReadonlySet<Country["primaryCurrencyIso4217AlphaCode"] & string>,
+    currencyIso4217AlphaCodes: new Set() as ReadonlySet<
+      Country["primaryCurrencyIso4217AlphaCode"] & string
+    >,
     currencies: [],
     ...overrides,
   } as Country;
@@ -65,8 +68,9 @@ describe("countriesToOptions", () => {
         iso31661Alpha2Code: "CA" as Country["iso31661Alpha2Code"],
         displayName: "Canada",
         phoneNumberPrefix: "1",
-        subdivisionIso31662Codes: new Set(["CA-ON"] as SubdivisionCode[]) as
-          ReadonlySet<SubdivisionCode>,
+        subdivisionIso31662Codes: new Set([
+          "CA-ON",
+        ] as SubdivisionCode[]) as ReadonlySet<SubdivisionCode>,
       }),
       makeCountry({
         iso31661Alpha2Code: "AF" as Country["iso31661Alpha2Code"],

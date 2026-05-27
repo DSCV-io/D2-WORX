@@ -22,14 +22,16 @@ import { loadSpec } from "./lib/spec-loader.js";
 import { StringBuilder } from "./lib/string-builder.js";
 
 /**
- * Spec-driven property → IPropagatedContext field type. Strings stay
- * `string | null`; numbers map to `number | null`; booleans map to
- * `boolean | null`. Mirrors the .NET PropagatedEmitter mapping.
+ * Spec-driven property → IPropagatedContext field type. Strings map to
+ * `string | undefined`; numbers map to `number | undefined`; booleans map to
+ * `boolean | undefined`. Uses `undefined` (not `null`) per the codebase
+ * convention. Mirrors the .NET PropagatedEmitter mapping.
  */
 function tsTypeFor(prop: PropertySpec): string {
-  if (prop.type === "int?" || prop.type === "double?") return "number | null";
-  if (prop.type === "bool?") return "boolean | null";
-  return "string | null";
+  if (prop.type === "int?" || prop.type === "double?")
+    return "number | undefined";
+  if (prop.type === "bool?") return "boolean | undefined";
+  return "string | undefined";
 }
 
 /**
@@ -66,7 +68,16 @@ export function emitPropagatedContextInterface(spec: ContextSpec): string {
   for (const section of spec.sections) {
     for (const prop of section.properties) {
       if (prop.propagate !== true) continue;
-      sb.appendLine(`readonly ${camelCase(prop.name)}: ${tsTypeFor(prop)};`);
+      const tsType = tsTypeFor(prop);
+      // Nullable spec types emit as optional properties (`readonly field?: T`)
+      // matching the auth-context-emit.ts convention: undefined is the only
+      // absent sentinel in TypeScript.
+      if (tsType.endsWith("| undefined")) {
+        const baseType = tsType.slice(0, -" | undefined".length).trimEnd();
+        sb.appendLine(`readonly ${camelCase(prop.name)}?: ${baseType};`);
+      } else {
+        sb.appendLine(`readonly ${camelCase(prop.name)}: ${tsType};`);
+      }
     }
   }
   sb.decreaseIndent();
@@ -170,7 +181,11 @@ function emitTryDecodeMethod(sb: StringBuilder, spec: ContextSpec): void {
       sb.appendLine(`const v = parsed["${camel}"];`);
       sb.appendLine(`if (v === undefined || v === null) {`);
       sb.increaseIndent();
-      sb.appendLine(`out["${camel}"] = null;`);
+      // Absent wire values produce undefined (not null) — omit from the output
+      // object so the deserialized IPropagatedContext follows the `T | undefined`
+      // convention. The property is simply not set on `out`, which is equivalent
+      // to `undefined` when accessed.
+      sb.appendLine(`// absent — leave out["${camel}"] unset (undefined)`);
       sb.decreaseIndent();
       sb.appendLine(`} else {`);
       sb.increaseIndent();

@@ -121,8 +121,8 @@ public sealed class PlusCodeEncoderTests
         const double lat = 48.8566;
         const double lon = 2.3522;
 
-        var code1 = PlusCodeEncoder.Encode(lat, lon, 10);
-        var code2 = PlusCodeEncoder.Encode(lat, lon, 10);
+        var code1 = PlusCodeEncoder.Encode(lat, lon);
+        var code2 = PlusCodeEncoder.Encode(lat, lon);
 
         code1.Should().Be(code2);
     }
@@ -137,9 +137,9 @@ public sealed class PlusCodeEncoderTests
         const double lat = 51.5074;
         const double lon = -0.1278;
 
-        var code1 = PlusCodeEncoder.Encode(lat, lon, 10);
+        var code1 = PlusCodeEncoder.Encode(lat, lon);
         var (cLat, cLon, _, _) = PlusCodeEncoder.Decode(code1);
-        var code2 = PlusCodeEncoder.Encode(cLat, cLon, 10);
+        var code2 = PlusCodeEncoder.Encode(cLat, cLon);
 
         code2.Should().Be(code1);
     }

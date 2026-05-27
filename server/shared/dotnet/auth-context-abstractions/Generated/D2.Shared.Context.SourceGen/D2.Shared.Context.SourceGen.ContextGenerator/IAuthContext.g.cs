@@ -53,6 +53,16 @@ public interface IAuthContext
     /// </summary>
     IReadOnlyList<ActorEntry> ActorChain { get; }
 
+    /// <summary>
+    /// Authentication Methods Reference (RFC 8176 standard claim). Space-separated or JSON-array string of authentication method identifiers used to authenticate the subject (e.g. 'pwd', 'otp', 'mfa', 'webauthn'). Input to risk-scoring and audit — 'password-only vs MFA vs OAuth2-with-WebAuthn' matters for sensitive-action gating. Null when the token was minted without AMR (e.g. service-identity client_credentials flows).
+    /// </summary>
+    string? AuthMethod { get; }
+
+    /// <summary>
+    /// Unix-seconds timestamp of the last step-up authentication completion (Category 2 — past UTC instant). Handlers gating sensitive actions (e.g. billing.payment.charge) enforce 'step-up within last N minutes' by comparing this value against the current instant. Edge auth populates from the session record at JWT mint. Domain consumers MUST convert to NodaTime.Instant at the consumption boundary before any temporal arithmetic: dto.Value.ToInstant(). Wire form is DateTimeOffset? for JSON-serialization interop with the cross-language source-gen pipeline.
+    /// </summary>
+    DateTimeOffset? LastStepUpAt { get; }
+
     #endregion
 
     #region Identity

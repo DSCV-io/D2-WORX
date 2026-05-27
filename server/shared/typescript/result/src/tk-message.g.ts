@@ -9,25 +9,17 @@
 /* eslint-disable */
 
 /**
- * Spec-derived JSON property-name catalog for the TKMessage wire shape. Every JSON serializer /
- * deserializer in TypeScript references these constants for property names instead of inline string
- * literals — drift between the wire and the code is structurally impossible.
+ * Spec-derived JSON property-name catalog for the TKMessage wire shape. Every JSON serializer / deserializer in TypeScript references these constants for property names instead of inline string literals — drift between the wire and the code is structurally impossible.
  *
- * Cross-language parity: the SAME spec drives the .NET-side catalog via
- * D2.Shared.WireShapes.SourceGen. Both sides emit the same property names byte-for-byte;
- * cross-language wire drift is impossible.
+ * Cross-language parity: the SAME spec drives the .NET-side catalog via D2.Shared.WireShapes.SourceGen. Both sides emit the same property names byte-for-byte; cross-language wire drift is impossible.
  */
 export const TkMessageWireShape = {
   /**
-   * JSON property name carrying the translation key (e.g. 'common_errors_NOT_FOUND'). REQUIRED on
-   * every TKMessage; absent payloads are rejected by both the .NET TKMessageJsonConverter and the
-   * TS-side parser.
+   * JSON property name carrying the translation key (e.g. 'common_errors_NOT_FOUND'). REQUIRED on every TKMessage; absent payloads are rejected by both the .NET TKMessageJsonConverter and the TS-side parser.
    */
   KEY: "key",
   /**
-   * JSON property name carrying the optional parameter dictionary (Record<string, unknown> of
-   * placeholder name -> substitution value). OMITTED when no parameters are bound; present as a
-   * JSON object when one-or-more bindings exist.
+   * JSON property name carrying the optional parameter dictionary (Record<string, unknown> of placeholder name -> substitution value). OMITTED when no parameters are bound; present as a JSON object when one-or-more bindings exist.
    */
   PARAMS: "params",
 } as const;

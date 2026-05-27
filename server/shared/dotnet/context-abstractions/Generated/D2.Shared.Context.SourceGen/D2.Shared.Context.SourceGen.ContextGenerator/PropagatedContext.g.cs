@@ -8,6 +8,8 @@
 
 #nullable enable
 
+using System.Text.Json.Serialization;
+
 namespace D2.Shared.Context.Abstractions;
 
 /// <summary>
@@ -37,6 +39,16 @@ public sealed record PropagatedContext
     public string? RequestPath { get; init; }
 
     /// <summary>
+    /// Timestamp when Edge began processing the originating request (Category 2 — past UTC instant). Propagates so async consumers (Audit, Courier) can report end-to-end SLA latency. Domain consumers MUST convert to NodaTime.Instant at the consumption boundary before any temporal arithmetic: dto.Value.ToInstant(). Wire form is DateTimeOffset? for JSON-serialization interop.
+    /// </summary>
+    public DateTimeOffset? RequestStartedAt { get; init; }
+
+    /// <summary>
+    /// Parsed value of the Idempotency-Key request header. Propagates so downstream consumers correlate idempotent retries across the call chain. Max 255 chars; values exceeding cap are rejected by Edge middleware with 400 Bad Request. Treat as opaque — do NOT log the raw value; structured logs may emit a SHA-256 prefix for correlation but never the literal value.
+    /// </summary>
+    public string? IdempotencyKey { get; init; }
+
+    /// <summary>
     /// The fingerprint that was bound to this session at JWT mint time (the d2_fp claim). Format: 'v{N}.c1.c2.c3.c4.c5.s1.s2.s3.s4.s5' — leading version token then 10 component hashes (5 client-side: FingerprintJS-OSS, WebGL renderer, speech voices, media devices, extended fonts; 5 server-side: HTTP/2 SETTINGS frame, header order, Sec-CH-UA, Accept-Encoding, Accept-Language). Each component hash is the first 16 hex chars of SHA-256. Stable across all requests in a session. Propagated to async consumers (Audit, Courier) via the cross-hop x-d2-context header — never as plaintext caller identity (broker stays blind to identity).
     /// </summary>
     public string? SessionFingerprint { get; init; }
@@ -52,6 +64,36 @@ public sealed record PropagatedContext
     public int? RiskScore { get; init; }
 
     /// <summary>
+    /// Edge process identifier (e.g. Kubernetes pod name, EC2 instance id, or region+node tuple). Captured once at Edge process boot by startup middleware. Propagates via x-d2-context so downstream audit and telemetry know which edge node originated the request — important for hot-spot diagnosis and capacity attribution.
+    /// </summary>
+    public string? EdgeNodeId { get; init; }
+
+    /// <summary>
+    /// Resolved user locale as an IETF BCP 47 tag (e.g. 'en-US', 'zh-Hans-SG'). Populated by Edge auth middleware via the locale cascade: user profile preference &gt; org default preference &gt; X-D2-Locale header &gt; Accept-Language header &gt; fallback 'en-US'. Propagates so async consumers (Courier, Notifications) render locale-aware content. Validation of the BCP 47 tag is performed by the LocaleCode typed wrapper at the consumption site.
+    /// </summary>
+    public string? LocaleIetfBcp47Tag { get; init; }
+
+    /// <summary>
+    /// Resolved user timezone as an IANA timezone database name (e.g. 'America/New_York', 'Europe/Berlin'). Populated by Edge auth middleware via the timezone cascade: user profile preference &gt; org default preference &gt; X-D2-Timezone header &gt; WhoIs-derived (CountryIso31661Alpha2Code + SubdivisionIso31662Code mapped via D2.Shared.Geo.Default) &gt; fallback 'UTC'. Propagates so async consumers render timezone-aware timestamps.
+    /// </summary>
+    public string? TimezoneIanaName { get; init; }
+
+    /// <summary>
+    /// Resolved user currency as an ISO 4217 code (e.g. 'USD', 'EUR', 'GBP'). Populated by Edge auth middleware via the currency cascade: user profile preference &gt; org default preference &gt; X-D2-Currency header &gt; CountryIso31661Alpha2Code-derived (ISO 3166 to ISO 4217 primary legal-tender mapping via D2.Shared.Geo.Default) &gt; fallback NULL (no sensible universal default; consumers surface a validation error when null and a currency is required).
+    /// </summary>
+    public string? CurrencyIso4217Code { get; init; }
+
+    /// <summary>
+    /// Operating organization plan tier label (e.g. 'Free', 'Starter', 'Pro', 'Enterprise'). Used by handlers gating premium operations. Stored as a free-form string (not an enum) to allow tier names to evolve without a source-gen rebuild cycle — validate at the consumption site. Propagates so async consumers can apply plan-gated logic.
+    /// </summary>
+    public string? OrgPlanTier { get; init; }
+
+    /// <summary>
+    /// Comma-separated list of active feature flag names for the operating org (e.g. 'new-billing,risk-v2'). Callers split on comma to enumerate active flags. Flag names MUST NOT contain commas — enforced at flag-creation time. CSV form chosen because source-gen does not currently support IReadOnlySet&lt;string&gt; for propagated context fields. Propagates so async consumers can apply flag-gated logic.
+    /// </summary>
+    public string? FeatureFlagsCsv { get; init; }
+
+    /// <summary>
     /// Content-addressable hash identifier of the full WhoIs record (admin-location + coordinates). Stable across calls for the same client signal.
     /// </summary>
     public string? WhoIsHashId { get; init; }
@@ -59,11 +101,20 @@ public sealed record PropagatedContext
     /// <summary>Gets a value indicating whether any propagated
     /// field is set — lets callers skip the encode/serialize round-
     /// trip when nothing meaningful is in the context.</summary>
+    [JsonIgnore]
     public bool HasAnyField =>
         RequestId is not null ||
         RequestPath is not null ||
+        RequestStartedAt is not null ||
+        IdempotencyKey is not null ||
         SessionFingerprint is not null ||
         CurrentFingerprint is not null ||
         RiskScore is not null ||
+        EdgeNodeId is not null ||
+        LocaleIetfBcp47Tag is not null ||
+        TimezoneIanaName is not null ||
+        CurrencyIso4217Code is not null ||
+        OrgPlanTier is not null ||
+        FeatureFlagsCsv is not null ||
         WhoIsHashId is not null;
 }

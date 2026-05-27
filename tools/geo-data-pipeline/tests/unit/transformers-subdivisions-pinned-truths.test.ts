@@ -139,7 +139,8 @@ const PINNED_TRUTHS: ReadonlyArray<{
   {
     code: "DE-BY",
     accepted: ["Bavaria"],
-    rationale: "Wikidata.en uses the English-canonical 'Bavaria' (vs endonym 'Bayern')",
+    rationale:
+      "Wikidata.en uses the English-canonical 'Bavaria' (vs endonym 'Bayern')",
   },
   {
     code: "DE-BE",

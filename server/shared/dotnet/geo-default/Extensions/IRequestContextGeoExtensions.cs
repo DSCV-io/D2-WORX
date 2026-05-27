@@ -51,8 +51,8 @@ public static class IRequestContextGeoExtensions
     {
         /// <summary>
         /// Returns the full <see cref="Country"/> record for the
-        /// <see cref="IRequestContext"/>'s <c>CountryCode</c> raw string,
-        /// or <c>null</c> if the raw string is absent / empty /
+        /// <see cref="IRequestContext"/>'s <c>CountryIso31661Alpha2Code</c>
+        /// raw string, or <c>null</c> if the raw string is absent / empty /
         /// whitespace / unparseable / unknown to the catalog.
         /// </summary>
         /// <returns>The matched <see cref="Country"/> record, or <c>null</c>.</returns>
@@ -66,8 +66,8 @@ public static class IRequestContextGeoExtensions
 
         /// <summary>
         /// Returns the full <see cref="Subdivision"/> record for the
-        /// <see cref="IRequestContext"/>'s <c>SubdivisionCode</c> raw
-        /// string, or <c>null</c> if the raw string is absent / empty /
+        /// <see cref="IRequestContext"/>'s <c>SubdivisionIso31662Code</c>
+        /// raw string, or <c>null</c> if the raw string is absent / empty /
         /// whitespace / unparseable / unknown to the catalog.
         /// </summary>
         /// <returns>The matched <see cref="Subdivision"/> record, or <c>null</c>.</returns>

@@ -30,6 +30,10 @@ internal sealed class TestRequestContext : IRequestContext
 
     public IReadOnlyList<ActorEntry> ActorChain { get; init; } = [];
 
+    public string? AuthMethod { get; init; }
+
+    public DateTimeOffset? LastStepUpAt { get; init; }
+
     public string? Subject { get; init; }
 
     public Guid? UserId { get; init; }
@@ -76,6 +80,24 @@ internal sealed class TestRequestContext : IRequestContext
 
     public string? RequestPath { get; init; }
 
+    public string? HttpMethod { get; init; }
+
+    public DateTimeOffset? RequestStartedAt { get; init; }
+
+    public string? IdempotencyKey { get; init; }
+
+    public string? EdgeNodeId { get; init; }
+
+    public string? LocaleIetfBcp47Tag { get; init; }
+
+    public string? TimezoneIanaName { get; init; }
+
+    public string? CurrencyIso4217Code { get; init; }
+
+    public string? OrgPlanTier { get; init; }
+
+    public string? FeatureFlagsCsv { get; init; }
+
     public string? ClientIp { get; init; }
 
     public string? SessionFingerprint { get; init; }
@@ -90,11 +112,9 @@ internal sealed class TestRequestContext : IRequestContext
 
     public string? City { get; init; }
 
-    public string? Region { get; init; }
+    public string? SubdivisionIso31662Code { get; init; }
 
-    public string? SubdivisionCode { get; init; }
-
-    public string? CountryCode { get; init; }
+    public string? CountryIso31661Alpha2Code { get; init; }
 
     public string? PostalCode { get; init; }
 

@@ -135,7 +135,7 @@ public sealed class DefaultPostalCodeValidatorTests
     [Fact]
     public void Validate_CountryArgumentNull_OkPath()
     {
-        var result = sr_Validator.Validate("90210", null);
+        var result = sr_Validator.Validate("90210");
         result.Success.Should().BeTrue();
     }
 

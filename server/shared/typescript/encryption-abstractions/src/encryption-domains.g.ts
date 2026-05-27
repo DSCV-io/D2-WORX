@@ -18,25 +18,19 @@
  */
 export const EncryptionDomains = {
   /**
-   * Audit events. All services publish; D2.Audit consumes. Carries actor + actee identities, action
-   * descriptors, IPs, and fingerprints — fully PII-bearing on every event.
+   * Audit events. All services publish; D2.Audit consumes. Carries actor + actee identities, action descriptors, IPs, and fingerprints — fully PII-bearing on every event.
    */
   AUDIT: "audit",
   /**
-   * Notification requests (the input shape D2.Notifications consumes). Carries recipient identity +
-   * subject / body markdown, often with names, addresses, financial figures, and verification
-   * codes.
+   * Notification requests (the input shape D2.Notifications consumes). Carries recipient identity + subject / body markdown, often with names, addresses, financial figures, and verification codes.
    */
   NOTIFICATIONS: "notifications",
   /**
-   * Courier delivery records (the materialized email / SMS payloads D2.Notifications hands to
-   * D2.Courier). Carries fully-rendered message bodies and recipient addresses.
+   * Courier delivery records (the materialized email / SMS payloads D2.Notifications hands to D2.Courier). Carries fully-rendered message bodies and recipient addresses.
    */
   COURIER: "courier",
   /**
-   * Sentinel value indicating the message body MUST NOT be encrypted (always serialized as
-   * cleartext JSON). Surfaces on mq-messages.spec entries whose payload is non-PII; the message
-   * author MUST also document `encryptionReason` on the spec entry justifying the choice.
+   * Sentinel value indicating the message body MUST NOT be encrypted (always serialized as cleartext JSON). Surfaces on mq-messages.spec entries whose payload is non-PII; the message author MUST also document `encryptionReason` on the spec entry justifying the choice.
    */
   PLAINTEXT: "plaintext",
 } as const;

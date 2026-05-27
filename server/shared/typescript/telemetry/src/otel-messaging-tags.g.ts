@@ -19,60 +19,39 @@
  */
 export const MessagingActivityTags = {
   /**
-   * OTel semantic-convention attribute identifying the messaging system in use (always 'rabbitmq'
-   * for the D2 RabbitMQ transport).
-   * https://opentelemetry.io/docs/specs/semconv/messaging/messaging-spans/
+   * OTel semantic-convention attribute identifying the messaging system in use (always 'rabbitmq' for the D2 RabbitMQ transport). https://opentelemetry.io/docs/specs/semconv/messaging/messaging-spans/
    */
   MESSAGING_SYSTEM: "messaging.system",
   /**
-   * OTel semantic-convention attribute carrying the destination name (the AMQP exchange on the
-   * publisher side; the AMQP queue on the consumer side).
-   * https://opentelemetry.io/docs/specs/semconv/messaging/messaging-spans/
+   * OTel semantic-convention attribute carrying the destination name (the AMQP exchange on the publisher side; the AMQP queue on the consumer side). https://opentelemetry.io/docs/specs/semconv/messaging/messaging-spans/
    */
   MESSAGING_DESTINATION_NAME: "messaging.destination.name",
   /**
-   * OTel semantic-convention attribute carrying the AMQP routing key. Publisher-side only
-   * (consumers receive via queue binding, not by routing key).
-   * https://opentelemetry.io/docs/specs/semconv/messaging/rabbitmq/
+   * OTel semantic-convention attribute carrying the AMQP routing key. Publisher-side only (consumers receive via queue binding, not by routing key). https://opentelemetry.io/docs/specs/semconv/messaging/rabbitmq/
    */
   MESSAGING_RABBITMQ_ROUTING_KEY: "messaging.rabbitmq.routing_key",
   /**
-   * OTel semantic-convention attribute carrying the AMQP delivery tag (broker-assigned monotonic id
-   * within the channel). Consumer-side only.
-   * https://opentelemetry.io/docs/specs/semconv/messaging/rabbitmq/
+   * OTel semantic-convention attribute carrying the AMQP delivery tag (broker-assigned monotonic id within the channel). Consumer-side only. https://opentelemetry.io/docs/specs/semconv/messaging/rabbitmq/
    */
   MESSAGING_RABBITMQ_DELIVERY_TAG: "messaging.rabbitmq.delivery_tag",
   /**
-   * OTel semantic-convention attribute (boolean) flagging an AMQP redelivery. Consumer-side only.
-   * https://opentelemetry.io/docs/specs/semconv/messaging/rabbitmq/
+   * OTel semantic-convention attribute (boolean) flagging an AMQP redelivery. Consumer-side only. https://opentelemetry.io/docs/specs/semconv/messaging/rabbitmq/
    */
   MESSAGING_RABBITMQ_REDELIVERED: "messaging.rabbitmq.redelivered",
   /**
-   * OTel semantic-convention attribute carrying the producer-assigned message id (UUIDv7 hex for
-   * D2). Emitted on both publish and receive spans for end-to-end correlation.
-   * https://opentelemetry.io/docs/specs/semconv/messaging/messaging-spans/
+   * OTel semantic-convention attribute carrying the producer-assigned message id (UUIDv7 hex for D2). Emitted on both publish and receive spans for end-to-end correlation. https://opentelemetry.io/docs/specs/semconv/messaging/messaging-spans/
    */
   MESSAGING_MESSAGE_ID: "messaging.message.id",
   /**
-   * OTel semantic-convention attribute classifying the messaging operation. Closed enum on the OTel
-   * side: 'publish' / 'receive' / 'process' / 'settle'. D2 emits 'publish' on publisher spans and
-   * 'receive' on consumer spans. NOTE: this is the OTel-canonical attribute name; an earlier
-   * version of the consumer code used 'messaging.operation' (no '.type' suffix) which is
-   * non-standard — spec-driving structurally fixes that drift.
-   * https://opentelemetry.io/docs/specs/semconv/messaging/messaging-spans/#messaging-attributes
+   * OTel semantic-convention attribute classifying the messaging operation. Closed enum on the OTel side: 'publish' / 'receive' / 'process' / 'settle'. D2 emits 'publish' on publisher spans and 'receive' on consumer spans. NOTE: this is the OTel-canonical attribute name; an earlier version of the consumer code used 'messaging.operation' (no '.type' suffix) which is non-standard — spec-driving structurally fixes that drift. https://opentelemetry.io/docs/specs/semconv/messaging/messaging-spans/#messaging-attributes
    */
   MESSAGING_OPERATION_TYPE: "messaging.operation.type",
   /**
-   * D2-specific attribute carrying the .NET CLR FullName of the published message type.
-   * Publisher-side only — keeps the consumer-side message type information in the message-type
-   * bound at registration (and visible via descriptor lookup), so the consumer span doesn't need to
-   * enumerate it.
+   * D2-specific attribute carrying the .NET CLR FullName of the published message type. Publisher-side only — keeps the consumer-side message type information in the message-type bound at registration (and visible via descriptor lookup), so the consumer span doesn't need to enumerate it.
    */
   D2_MESSAGE_TYPE: "d2.message_type",
   /**
-   * D2-specific attribute carrying the encryption key id used to wrap the message body.
-   * Publisher-side. Null/absent for plaintext messages. Surfaces alongside the AMQP
-   * x-d2-encryption-kid header in the message envelope itself.
+   * D2-specific attribute carrying the encryption key id used to wrap the message body. Publisher-side. Null/absent for plaintext messages. Surfaces alongside the AMQP x-d2-encryption-kid header in the message envelope itself.
    */
   D2_ENCRYPTION_KID: "d2.encryption_kid",
 } as const;

@@ -41,7 +41,7 @@ export function requireOrg(
   }
   if (types.length > 0) {
     const orgType = ctx.orgType;
-    if (orgType === null || !types.includes(orgType)) {
+    if (orgType === undefined || !types.includes(orgType)) {
       _throwForbidden(event, throwers, ctx.traceId ?? undefined);
     }
   }

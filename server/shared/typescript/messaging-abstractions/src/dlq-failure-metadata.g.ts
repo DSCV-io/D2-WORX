@@ -19,30 +19,23 @@
  */
 export const DlqFailureMetadataFields = {
   /**
-   * JSON property carrying the closed-enum cause string (see DlqFailureCauses). Identifies what
-   * category of failure triggered the dead-letter route.
+   * JSON property carrying the closed-enum cause string (see DlqFailureCauses). Identifies what category of failure triggered the dead-letter route.
    */
   CAUSE: "cause",
   /**
-   * JSON property carrying either the exception type's FullName (HANDLER_EXCEPTION /
-   * DECRYPT_FAILURE / DESERIALIZE_FAILURE) or the D2Result error code (HANDLER_RESULT_FAILURE).
-   * Free-form string.
+   * JSON property carrying either the exception type's FullName (HANDLER_EXCEPTION / DECRYPT_FAILURE / DESERIALIZE_FAILURE) or the D2Result error code (HANDLER_RESULT_FAILURE). Free-form string.
    */
   ERROR_CODE: "errorCode",
   /**
-   * JSON property carrying the truncated diagnostic detail (≤256 chars). NEVER built from
-   * exception.Message — for result-failure cases this is the join of result.messages.Select(m =>
-   * m.Key); for exception cases it stays null.
+   * JSON property carrying the truncated diagnostic detail (≤256 chars). NEVER built from exception.Message — for result-failure cases this is the join of result.messages.Select(m => m.Key); for exception cases it stays null.
    */
   DETAIL: "detail",
   /**
-   * JSON property carrying the number of redelivery attempts observed before final NACK. Parsed
-   * from the AMQP x-death header when available; 0 when not.
+   * JSON property carrying the number of redelivery attempts observed before final NACK. Parsed from the AMQP x-death header when available; 0 when not.
    */
   ATTEMPT_COUNT: "attemptCount",
   /**
-   * JSON property carrying the W3C trace id (lower-hex, 32 chars) copied from the producer-side
-   * headers so the DLQ entry stays correlatable across services.
+   * JSON property carrying the W3C trace id (lower-hex, 32 chars) copied from the producer-side headers so the DLQ entry stays correlatable across services.
    */
   TRACE_ID: "traceId",
   /**
@@ -72,13 +65,11 @@ export const DlqFailureCauses = {
    */
   HANDLER_RESULT_FAILURE: "HANDLER_RESULT_FAILURE",
   /**
-   * Handler threw an unhandled exception. The errorCode field carries the exception type's FullName
-   * (NEVER ex.Message — PII guard).
+   * Handler threw an unhandled exception. The errorCode field carries the exception type's FullName (NEVER ex.Message — PII guard).
    */
   HANDLER_EXCEPTION: "HANDLER_EXCEPTION",
   /**
-   * AEAD decrypt failed (kid missing from keyring, tag mismatch, etc.). Surfaces before the handler
-   * is ever invoked.
+   * AEAD decrypt failed (kid missing from keyring, tag mismatch, etc.). Surfaces before the handler is ever invoked.
    */
   DECRYPT_FAILURE: "DECRYPT_FAILURE",
   /**
@@ -86,8 +77,7 @@ export const DlqFailureCauses = {
    */
   DESERIALIZE_FAILURE: "DESERIALIZE_FAILURE",
   /**
-   * Tiered-retry attempt counter hit MaxAttempts; message routed direct to DLQ without invoking the
-   * handler this time. The errorCode field also carries RETRIES_EXHAUSTED.
+   * Tiered-retry attempt counter hit MaxAttempts; message routed direct to DLQ without invoking the handler this time. The errorCode field also carries RETRIES_EXHAUSTED.
    */
   RETRIES_EXHAUSTED: "RETRIES_EXHAUSTED",
 } as const;

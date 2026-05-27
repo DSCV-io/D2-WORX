@@ -18,105 +18,140 @@ export interface IRequestContext extends IAuthContext {
   /**
    * Trace identifier for this request. Sourced from Activity.Current?.TraceId (HTTP) or AMQP traceparent header (messaging). Auto-injected into D2Result by BaseHandler so cross-service correlation works.
    */
-  readonly traceId: string | null;
+  readonly traceId?: string;
   /**
    * Per-request unique identifier (HttpContext.TraceIdentifier for HTTP; message-id property for AMQP).
    */
-  readonly requestId: string | null;
+  readonly requestId?: string;
   /**
    * Request path (HTTP) or routing key (AMQP) — descriptive context for logs.
    */
-  readonly requestPath: string | null;
+  readonly requestPath?: string;
+  /**
+   * HTTP verb captured by Edge middleware (e.g. 'GET', 'POST', 'PUT'). Only meaningful at the HTTP edge — downstream gRPC and AMQP consumers do not carry the originating HTTP verb, so this field does NOT propagate. Null on non-HTTP transports.
+   */
+  readonly httpMethod?: string;
+  /**
+   * Timestamp when Edge began processing the originating request (Category 2 — past UTC instant). Propagates so async consumers (Audit, Courier) can report end-to-end SLA latency. Domain consumers MUST convert to NodaTime.Instant at the consumption boundary before any temporal arithmetic: dto.Value.ToInstant(). Wire form is DateTimeOffset? for JSON-serialization interop.
+   */
+  readonly requestStartedAt?: string;
+  /**
+   * Parsed value of the Idempotency-Key request header. Propagates so downstream consumers correlate idempotent retries across the call chain. Max 255 chars; values exceeding cap are rejected by Edge middleware with 400 Bad Request. Treat as opaque — do NOT log the raw value; structured logs may emit a SHA-256 prefix for correlation but never the literal value.
+   */
+  readonly idempotencyKey?: string;
   // --- Network ---
   /**
    * Resolved client IP — precedence CF-Connecting-IP > X-Real-IP > X-Forwarded-For (last entry) > Connection.RemoteIpAddress. Null for non-HTTP transports.
    */
-  readonly clientIp: string | null;
+  readonly clientIp?: string;
   // --- Fingerprints ---
   /**
    * The fingerprint that was bound to this session at JWT mint time (the d2_fp claim). Format: 'v{N}.c1.c2.c3.c4.c5.s1.s2.s3.s4.s5' — leading version token then 10 component hashes (5 client-side: FingerprintJS-OSS, WebGL renderer, speech voices, media devices, extended fonts; 5 server-side: HTTP/2 SETTINGS frame, header order, Sec-CH-UA, Accept-Encoding, Accept-Language). Each component hash is the first 16 hex chars of SHA-256. Stable across all requests in a session. Propagated to async consumers (Audit, Courier) via the cross-hop x-d2-context header — never as plaintext caller identity (broker stays blind to identity).
    */
-  readonly sessionFingerprint: string | null;
+  readonly sessionFingerprint?: string;
   /**
    * The fingerprint recomputed for THIS request by Edge fingerprint middleware, in the same dot-separated format as SessionFingerprint. Captures the actual device fingerprint of the originating request (vs the session-bound one). Propagated via x-d2-context so audit rows for async-triggered actions record the originating request's actual fingerprint — not just what the session was bound to.
    */
-  readonly currentFingerprint: string | null;
+  readonly currentFingerprint?: string;
   /**
    * Composite request-risk score (0-100; higher = more risky) computed by Edge's risk engine for THIS request. Inputs include geo-velocity drift from the sign-in baseline, ASN reputation, Tor / proxy / hosting flags, per-org and per-user policy contributions, and fingerprint-mismatch components (SessionFingerprint vs CurrentFingerprint). 0 = no risk; ≥ user/org step-up threshold = OTP step-up; ≥ user/org block threshold = block + invalidate session. Null on internal services and pre-risk-engine paths. Propagated via x-d2-context so audit rows record Edge's verdict at the moment of the originating request. Edge owns the contribution math + thresholds; consumer-side libs (D2.Shared.Auth) only read this field, never compute it.
    */
-  readonly riskScore: number | null;
+  readonly riskScore?: number;
+  // --- Infrastructure ---
+  /**
+   * Edge process identifier (e.g. Kubernetes pod name, EC2 instance id, or region+node tuple). Captured once at Edge process boot by startup middleware. Propagates via x-d2-context so downstream audit and telemetry know which edge node originated the request — important for hot-spot diagnosis and capacity attribution.
+   */
+  readonly edgeNodeId?: string;
+  // --- User Preferences ---
+  /**
+   * Resolved user locale as an IETF BCP 47 tag (e.g. 'en-US', 'zh-Hans-SG'). Populated by Edge auth middleware via the locale cascade: user profile preference > org default preference > X-D2-Locale header > Accept-Language header > fallback 'en-US'. Propagates so async consumers (Courier, Notifications) render locale-aware content. Validation of the BCP 47 tag is performed by the LocaleCode typed wrapper at the consumption site.
+   */
+  readonly localeIetfBcp47Tag?: string;
+  /**
+   * Resolved user timezone as an IANA timezone database name (e.g. 'America/New_York', 'Europe/Berlin'). Populated by Edge auth middleware via the timezone cascade: user profile preference > org default preference > X-D2-Timezone header > WhoIs-derived (CountryIso31661Alpha2Code + SubdivisionIso31662Code mapped via D2.Shared.Geo.Default) > fallback 'UTC'. Propagates so async consumers render timezone-aware timestamps.
+   */
+  readonly timezoneIanaName?: string;
+  /**
+   * Resolved user currency as an ISO 4217 code (e.g. 'USD', 'EUR', 'GBP'). Populated by Edge auth middleware via the currency cascade: user profile preference > org default preference > X-D2-Currency header > CountryIso31661Alpha2Code-derived (ISO 3166 to ISO 4217 primary legal-tender mapping via D2.Shared.Geo.Default) > fallback NULL (no sensible universal default; consumers surface a validation error when null and a currency is required).
+   */
+  readonly currencyIso4217Code?: string;
+  // --- Entitlements ---
+  /**
+   * Operating organization plan tier label (e.g. 'Free', 'Starter', 'Pro', 'Enterprise'). Used by handlers gating premium operations. Stored as a free-form string (not an enum) to allow tier names to evolve without a source-gen rebuild cycle — validate at the consumption site. Propagates so async consumers can apply plan-gated logic.
+   */
+  readonly orgPlanTier?: string;
+  /**
+   * Comma-separated list of active feature flag names for the operating org (e.g. 'new-billing,risk-v2'). Callers split on comma to enumerate active flags. Flag names MUST NOT contain commas — enforced at flag-creation time. CSV form chosen because source-gen does not currently support IReadOnlySet<string> for propagated context fields. Propagates so async consumers can apply flag-gated logic.
+   */
+  readonly featureFlagsCsv?: string;
   // --- WhoIs — Admin Location ---
   /**
    * Content-addressable hash identifier of the full WhoIs record (admin-location + coordinates). Stable across calls for the same client signal.
    */
-  readonly whoIsHashId: string | null;
+  readonly whoIsHashId?: string;
   /**
    * Hash of the admin-location component only (city + region + country + postal). Matches D2.Shared.Location.AdminLocation.HashId for content-addressable lookup.
    */
-  readonly adminLocationHashId: string | null;
+  readonly adminLocationHashId?: string;
   /**
    * City name from WhoIs lookup.
    */
-  readonly city: string | null;
+  readonly city?: string;
   /**
-   * Human-readable region / state name (e.g. 'California').
+   * ISO 3166-2 subdivision code from WhoIs lookup (e.g. 'US-CA', 'DE-BY'). Standards-explicit name per the §7.Z naming convention: the name describes exactly what data IS. Consumers wanting the typed SubdivisionCode wrapper use IRequestContextGeoExtensions.Subdivision().
    */
-  readonly region: string | null;
+  readonly subdivisionIso31662Code?: string;
   /**
-   * ISO 3166-2 subdivision code (e.g. 'US-CA').
+   * ISO 3166-1 alpha-2 country code from WhoIs lookup (e.g. 'US', 'DE'). Standards-explicit name per the §7.Z naming convention: the name describes exactly what data IS. Consumers wanting the typed CountryCode enum use IRequestContextGeoExtensions.Country().
    */
-  readonly subdivisionCode: string | null;
-  /**
-   * ISO 3166-1 alpha-2 country code from WhoIs lookup.
-   */
-  readonly countryCode: string | null;
+  readonly countryIso31661Alpha2Code?: string;
   /**
    * Postal / zip code from WhoIs lookup. Useful for granular locality risk-scoring.
    */
-  readonly postalCode: string | null;
+  readonly postalCode?: string;
   // --- WhoIs — Coordinates ---
   /**
    * Latitude in decimal degrees from WhoIs lookup. Component of the Coordinates value object per D2.Shared.Location.
    */
-  readonly latitude: number | null;
+  readonly latitude?: number;
   /**
    * Longitude in decimal degrees from WhoIs lookup. Component of the Coordinates value object.
    */
-  readonly longitude: number | null;
+  readonly longitude?: number;
   /**
    * Geohash form of the (Latitude, Longitude) pair. Content-addressable — also serves as Coordinates.HashId. Useful for proximity queries and cache keying.
    */
-  readonly geohash: string | null;
+  readonly geohash?: string;
   // --- WhoIs — Network Privacy ---
   /**
    * True when the IP is from a VPN.
    */
-  readonly isVpn: boolean | null;
+  readonly isVpn?: boolean;
   /**
    * True when the IP is from a proxy.
    */
-  readonly isProxy: boolean | null;
+  readonly isProxy?: boolean;
   /**
    * True when the IP is from a Tor exit node.
    */
-  readonly isTor: boolean | null;
+  readonly isTor?: boolean;
   /**
    * True when the IP is from a hosting / cloud provider.
    */
-  readonly isHosting: boolean | null;
+  readonly isHosting?: boolean;
   // --- WhoIs — ASN ---
   /**
    * Autonomous System Number. Risk-scoring input — e.g. '>5 different ASNs in last 2min → +15 risk'.
    */
-  readonly asn: number | null;
+  readonly asn?: number;
   /**
    * AS organization name (e.g. 'AT&T Internet Services').
    */
-  readonly asnName: string | null;
+  readonly asnName?: string;
   /**
    * ASN type — typically one of: business / isp / hosting / mobile / education / government. Datacenter/Tor policies key on this. Free-form string for now (no enum) — promote to enum if a real handler benefits from typed dispatch.
    */
-  readonly asnType: string | null;
+  readonly asnType?: string;
 }
 
 /**
@@ -130,6 +165,5 @@ export const IRequestContextRedactPaths: readonly string[] = [
   "latitude",
   "longitude",
   "postalCode",
-  "region",
-  "subdivisionCode",
+  "subdivisionIso31662Code",
 ];

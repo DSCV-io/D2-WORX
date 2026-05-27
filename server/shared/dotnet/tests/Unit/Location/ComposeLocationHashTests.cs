@@ -38,8 +38,8 @@ public sealed class ComposeLocationHashTests
     public void Compose_OnlyCoordinates_ReturnsV1Prefixed()
     {
         var hash = ComposeLocationHash.Compose(Coord(), null, null);
-        hash.Should().NotBeNull();
-        hash!.Should().StartWith("v1.");
+        Assert.NotNull(hash);
+        hash.Should().StartWith("v1.");
         hash.Length.Should().Be(67);
     }
 
@@ -47,16 +47,16 @@ public sealed class ComposeLocationHashTests
     public void Compose_OnlyStreetAddress_ReturnsV1Prefixed()
     {
         var hash = ComposeLocationHash.Compose(null, Street(), null);
-        hash.Should().NotBeNull();
-        hash!.Should().StartWith("v1.");
+        Assert.NotNull(hash);
+        hash.Should().StartWith("v1.");
     }
 
     [Fact]
     public void Compose_OnlyAdminLocation_ReturnsV1Prefixed()
     {
         var hash = ComposeLocationHash.Compose(null, null, Admin());
-        hash.Should().NotBeNull();
-        hash!.Should().StartWith("v1.");
+        Assert.NotNull(hash);
+        hash.Should().StartWith("v1.");
     }
 
     // -----------------------------------------------------------------------

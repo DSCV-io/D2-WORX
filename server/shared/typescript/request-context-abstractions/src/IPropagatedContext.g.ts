@@ -14,10 +14,18 @@
  * rebuild from the JWT at every sync hop.
  */
 export interface IPropagatedContext {
-  readonly requestId: string | null;
-  readonly requestPath: string | null;
-  readonly sessionFingerprint: string | null;
-  readonly currentFingerprint: string | null;
-  readonly riskScore: number | null;
-  readonly whoIsHashId: string | null;
+  readonly requestId?: string;
+  readonly requestPath?: string;
+  readonly requestStartedAt?: string;
+  readonly idempotencyKey?: string;
+  readonly sessionFingerprint?: string;
+  readonly currentFingerprint?: string;
+  readonly riskScore?: number;
+  readonly edgeNodeId?: string;
+  readonly localeIetfBcp47Tag?: string;
+  readonly timezoneIanaName?: string;
+  readonly currencyIso4217Code?: string;
+  readonly orgPlanTier?: string;
+  readonly featureFlagsCsv?: string;
+  readonly whoIsHashId?: string;
 }

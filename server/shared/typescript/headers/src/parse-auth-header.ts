@@ -138,6 +138,8 @@ export function parseAuthHeader(
     d2_org_name: _stringOrNull(claims[JwtClaimTypes.ORG_NAME]),
     d2_org_type: _stringOrNull(claims[JwtClaimTypes.ORG_TYPE]),
     d2_org_role: _stringOrNull(claims[JwtClaimTypes.ORG_ROLE]),
+    amr: _stringOrNull(claims[JwtClaimTypes.AMR]),
+    d2_step_up_at: _stringOrNull(claims[JwtClaimTypes.STEP_UP_AT]),
     raw: claims,
   };
 

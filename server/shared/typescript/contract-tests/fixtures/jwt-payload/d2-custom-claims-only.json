@@ -14,6 +14,7 @@
     "scenario": "d2-custom-claims-only",
     "specClaimNames": [
       "act",
+      "amr",
       "aud",
       "azp",
       "client_id",
@@ -24,6 +25,7 @@
       "d2_org_role",
       "d2_org_type",
       "d2_session_id",
+      "d2_step_up_at",
       "d2_username",
       "exp",
       "iat",

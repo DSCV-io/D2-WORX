@@ -351,6 +351,170 @@ public sealed class MutableRequestContextFromClaimsTests
     }
 
     // ------------------------------------------------------------------
+    // LastStepUpAt — temporal adversarial tests (§1.2 / §25.12 / §1.22)
+    // Category 2 — past UTC instant; parsed from d2_step_up_at JWT claim.
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void FromClaims_LastStepUpAt_Null_WhenClaimAbsent()
+    {
+        // NULL roundtrip: absent claim must leave LastStepUpAt null.
+        var claims = new (string Type, string Value)[] { ("sub", _USER_GUID) };
+        var principal = BuildPrincipal(authenticated: true, claims);
+
+        var ctx = MutableRequestContext.FromClaims(principal);
+
+        ctx.LastStepUpAt.Should().BeNull();
+    }
+
+    [Fact]
+    public void FromClaims_LastStepUpAt_ParsedFromUnixEpoch()
+    {
+        // Unix epoch (long) form — the primary JWT wire format.
+        // 2026-01-15T12:00:00Z = 1768550400 unix seconds.
+        var claims = new (string Type, string Value)[]
+        {
+            ("sub", _USER_GUID),
+            ("d2_step_up_at", "1768550400"),
+        };
+        var principal = BuildPrincipal(authenticated: true, claims);
+
+        var ctx = MutableRequestContext.FromClaims(principal);
+
+        ctx.LastStepUpAt.Should().Be(DateTimeOffset.FromUnixTimeSeconds(1768550400));
+    }
+
+    [Fact]
+    public void FromClaims_LastStepUpAt_ParsedFromIso8601String()
+    {
+        // ISO 8601 string fallback path.
+        var expected = new DateTimeOffset(2026, 5, 15, 9, 30, 0, TimeSpan.Zero);
+        var claims = new (string Type, string Value)[]
+        {
+            ("sub", _USER_GUID),
+            ("d2_step_up_at", "2026-05-15T09:30:00Z"),
+        };
+        var principal = BuildPrincipal(authenticated: true, claims);
+
+        var ctx = MutableRequestContext.FromClaims(principal);
+
+        ctx.LastStepUpAt.Should().Be(expected);
+    }
+
+    [Fact]
+    public void FromClaims_LastStepUpAt_NonZeroOffset_RoundTrips()
+    {
+        // UTC-normalized deserialization: non-zero offset is preserved by
+        // DateTimeOffset.TryParse — the offset is carried in the string form.
+        var withOffset = new DateTimeOffset(2026, 5, 15, 9, 0, 0, TimeSpan.FromHours(-5));
+        var claims = new (string Type, string Value)[]
+        {
+            ("sub", _USER_GUID),
+            ("d2_step_up_at", withOffset.ToString("O", CultureInfo.InvariantCulture)),
+        };
+        var principal = BuildPrincipal(authenticated: true, claims);
+
+        var ctx = MutableRequestContext.FromClaims(principal);
+
+        ctx.LastStepUpAt.Should().Be(withOffset);
+        ctx.LastStepUpAt!.Value.Offset.Should().Be(TimeSpan.FromHours(-5));
+    }
+
+    [Fact]
+    public void FromClaims_LastStepUpAt_LeapYear_Preserved()
+    {
+        // Leap year / day: 2024-02-29 must survive parsing without date
+        // arithmetic corruption.
+        var leapDay = new DateTimeOffset(2024, 2, 29, 12, 0, 0, TimeSpan.Zero);
+        var claims = new (string Type, string Value)[]
+        {
+            ("sub", _USER_GUID),
+            ("d2_step_up_at", leapDay.ToString("O", CultureInfo.InvariantCulture)),
+        };
+        var principal = BuildPrincipal(authenticated: true, claims);
+
+        var ctx = MutableRequestContext.FromClaims(principal);
+
+        ctx.LastStepUpAt.Should().Be(leapDay);
+        ctx.LastStepUpAt!.Value.Month.Should().Be(2);
+        ctx.LastStepUpAt!.Value.Day.Should().Be(29);
+    }
+
+    [Fact]
+    public void FromClaims_LastStepUpAt_YearBoundary_Preserved()
+    {
+        // Year boundary: 2025-12-31T23:59:59Z must be preserved exactly.
+        var yearEnd = new DateTimeOffset(2025, 12, 31, 23, 59, 59, TimeSpan.Zero);
+        var claims = new (string Type, string Value)[]
+        {
+            ("sub", _USER_GUID),
+            ("d2_step_up_at", yearEnd.ToString("O", CultureInfo.InvariantCulture)),
+        };
+        var principal = BuildPrincipal(authenticated: true, claims);
+
+        var ctx = MutableRequestContext.FromClaims(principal);
+
+        ctx.LastStepUpAt.Should().Be(yearEnd);
+        ctx.LastStepUpAt!.Value.Year.Should().Be(2025);
+        ctx.LastStepUpAt!.Value.Month.Should().Be(12);
+        ctx.LastStepUpAt!.Value.Day.Should().Be(31);
+    }
+
+    [Fact]
+    public void FromClaims_LastStepUpAt_MaxDateTimeOffset_Preserved()
+    {
+        // Max boundary: DateTimeOffset.MaxValue roundtrips without overflow.
+        var claims = new (string Type, string Value)[]
+        {
+            ("sub", _USER_GUID),
+            ("d2_step_up_at", DateTimeOffset.MaxValue.ToString("O", CultureInfo.InvariantCulture)),
+        };
+        var principal = BuildPrincipal(authenticated: true, claims);
+
+        var ctx = MutableRequestContext.FromClaims(principal);
+
+        ctx.LastStepUpAt.Should().Be(DateTimeOffset.MaxValue);
+    }
+
+    [Fact]
+    public void FromClaims_LastStepUpAt_MinDateTimeOffset_Preserved()
+    {
+        // Min boundary: DateTimeOffset.MinValue roundtrips without underflow.
+        var claims = new (string Type, string Value)[]
+        {
+            ("sub", _USER_GUID),
+            ("d2_step_up_at", DateTimeOffset.MinValue.ToString("O", CultureInfo.InvariantCulture)),
+        };
+        var principal = BuildPrincipal(authenticated: true, claims);
+
+        var ctx = MutableRequestContext.FromClaims(principal);
+
+        ctx.LastStepUpAt.Should().Be(DateTimeOffset.MinValue);
+    }
+
+    [Theory]
+    [InlineData("not-a-date")]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("2026-13-45T99:99:99Z")]
+    public void FromClaims_LastStepUpAt_InvalidWireInput_LeavesNull(string invalidValue)
+    {
+        // Invalid-wire-input: malformed d2_step_up_at must yield null,
+        // not bubble an exception. The parser silently ignores values
+        // that are neither a valid unix-epoch long nor a parseable DateTimeOffset.
+        var claims = new (string Type, string Value)[]
+        {
+            ("sub", _USER_GUID),
+            ("d2_step_up_at", invalidValue),
+        };
+        var principal = BuildPrincipal(authenticated: true, claims);
+
+        var ctx = MutableRequestContext.FromClaims(principal);
+
+        ctx.LastStepUpAt.Should().BeNull();
+    }
+
+    // ------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------
 

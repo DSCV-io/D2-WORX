@@ -37,8 +37,12 @@ public sealed class HeaderCatalogPinTests
     }
 
     [Theory]
+    [InlineData(nameof(HttpHeaders.ACCEPT_LANGUAGE), "Accept-Language")]
     [InlineData(nameof(HttpHeaders.AUTHORIZATION), "Authorization")]
     [InlineData(nameof(HttpHeaders.CLIENT_FINGERPRINT), "X-D2-Client-Fingerprint")]
+    [InlineData(nameof(HttpHeaders.D2_CURRENCY), "X-D2-Currency")]
+    [InlineData(nameof(HttpHeaders.D2_LOCALE), "X-D2-Locale")]
+    [InlineData(nameof(HttpHeaders.D2_TIMEZONE), "X-D2-Timezone")]
     [InlineData(nameof(HttpHeaders.IDEMPOTENCY_KEY), "Idempotency-Key")]
     [InlineData(nameof(HttpHeaders.INTERNAL_TOKEN), "X-D2-Internal-Token")]
     [InlineData(nameof(HttpHeaders.PROPAGATED_CONTEXT), "x-d2-context")]

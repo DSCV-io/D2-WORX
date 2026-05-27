@@ -26,7 +26,10 @@
       "properties": {
         "input": { "type": "string", "maxLength": 256 },
         "expectedIso31661Alpha2Code": {
-          "oneOf": [{ "type": "string", "pattern": "^[A-Z]{2}$" }, { "type": "null" }]
+          "oneOf": [
+            { "type": "string", "pattern": "^[A-Z]{2}$" },
+            { "type": "null" }
+          ]
         },
         "comment": { "type": "string" }
       }
@@ -42,7 +45,10 @@
       ],
       "properties": {
         "input": { "type": "string", "maxLength": 256 },
-        "parentCountryIso31661Alpha2Code": { "type": "string", "pattern": "^[A-Z]{2}$" },
+        "parentCountryIso31661Alpha2Code": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        },
         "expectedIso31662Code": {
           "oneOf": [
             { "type": "string", "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$" },

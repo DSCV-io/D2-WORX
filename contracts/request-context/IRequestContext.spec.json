@@ -26,6 +26,24 @@
           "propagate": true,
           "maxLength": 2048,
           "doc": "Request path (HTTP) or routing key (AMQP) — descriptive context for logs."
+        },
+        {
+          "name": "HttpMethod",
+          "type": "string?",
+          "doc": "HTTP verb captured by Edge middleware (e.g. 'GET', 'POST', 'PUT'). Only meaningful at the HTTP edge — downstream gRPC and AMQP consumers do not carry the originating HTTP verb, so this field does NOT propagate. Null on non-HTTP transports."
+        },
+        {
+          "name": "RequestStartedAt",
+          "type": "DateTimeOffset?",
+          "propagate": true,
+          "doc": "Timestamp when Edge began processing the originating request (Category 2 — past UTC instant). Propagates so async consumers (Audit, Courier) can report end-to-end SLA latency. Domain consumers MUST convert to NodaTime.Instant at the consumption boundary before any temporal arithmetic: dto.Value.ToInstant(). Wire form is DateTimeOffset? for JSON-serialization interop."
+        },
+        {
+          "name": "IdempotencyKey",
+          "type": "string?",
+          "propagate": true,
+          "maxLength": 255,
+          "doc": "Parsed value of the Idempotency-Key request header. Propagates so downstream consumers correlate idempotent retries across the call chain. Max 255 chars; values exceeding cap are rejected by Edge middleware with 400 Bad Request. Treat as opaque — do NOT log the raw value; structured logs may emit a SHA-256 prefix for correlation but never the literal value."
         }
       ]
     },
@@ -67,6 +85,57 @@
       ]
     },
     {
+      "name": "Infrastructure",
+      "properties": [
+        {
+          "name": "EdgeNodeId",
+          "type": "string?",
+          "propagate": true,
+          "doc": "Edge process identifier (e.g. Kubernetes pod name, EC2 instance id, or region+node tuple). Captured once at Edge process boot by startup middleware. Propagates via x-d2-context so downstream audit and telemetry know which edge node originated the request — important for hot-spot diagnosis and capacity attribution."
+        }
+      ]
+    },
+    {
+      "name": "User Preferences",
+      "properties": [
+        {
+          "name": "LocaleIetfBcp47Tag",
+          "type": "string?",
+          "propagate": true,
+          "doc": "Resolved user locale as an IETF BCP 47 tag (e.g. 'en-US', 'zh-Hans-SG'). Populated by Edge auth middleware via the locale cascade: user profile preference > org default preference > X-D2-Locale header > Accept-Language header > fallback 'en-US'. Propagates so async consumers (Courier, Notifications) render locale-aware content. Validation of the BCP 47 tag is performed by the LocaleCode typed wrapper at the consumption site."
+        },
+        {
+          "name": "TimezoneIanaName",
+          "type": "string?",
+          "propagate": true,
+          "doc": "Resolved user timezone as an IANA timezone database name (e.g. 'America/New_York', 'Europe/Berlin'). Populated by Edge auth middleware via the timezone cascade: user profile preference > org default preference > X-D2-Timezone header > WhoIs-derived (CountryIso31661Alpha2Code + SubdivisionIso31662Code mapped via D2.Shared.Geo.Default) > fallback 'UTC'. Propagates so async consumers render timezone-aware timestamps."
+        },
+        {
+          "name": "CurrencyIso4217Code",
+          "type": "string?",
+          "propagate": true,
+          "doc": "Resolved user currency as an ISO 4217 code (e.g. 'USD', 'EUR', 'GBP'). Populated by Edge auth middleware via the currency cascade: user profile preference > org default preference > X-D2-Currency header > CountryIso31661Alpha2Code-derived (ISO 3166 to ISO 4217 primary legal-tender mapping via D2.Shared.Geo.Default) > fallback NULL (no sensible universal default; consumers surface a validation error when null and a currency is required)."
+        }
+      ]
+    },
+    {
+      "name": "Entitlements",
+      "properties": [
+        {
+          "name": "OrgPlanTier",
+          "type": "string?",
+          "propagate": true,
+          "doc": "Operating organization plan tier label (e.g. 'Free', 'Starter', 'Pro', 'Enterprise'). Used by handlers gating premium operations. Stored as a free-form string (not an enum) to allow tier names to evolve without a source-gen rebuild cycle — validate at the consumption site. Propagates so async consumers can apply plan-gated logic."
+        },
+        {
+          "name": "FeatureFlagsCsv",
+          "type": "string?",
+          "propagate": true,
+          "doc": "Comma-separated list of active feature flag names for the operating org (e.g. 'new-billing,risk-v2'). Callers split on comma to enumerate active flags. Flag names MUST NOT contain commas — enforced at flag-creation time. CSV form chosen because source-gen does not currently support IReadOnlySet<string> for propagated context fields. Propagates so async consumers can apply flag-gated logic."
+        }
+      ]
+    },
+    {
       "name": "WhoIs — Admin Location",
       "properties": [
         {
@@ -88,21 +157,15 @@
           "doc": "City name from WhoIs lookup."
         },
         {
-          "name": "Region",
+          "name": "SubdivisionIso31662Code",
           "type": "string?",
           "redact": true,
-          "doc": "Human-readable region / state name (e.g. 'California')."
+          "doc": "ISO 3166-2 subdivision code from WhoIs lookup (e.g. 'US-CA', 'DE-BY'). Standards-explicit name per the §7.Z naming convention: the name describes exactly what data IS. Consumers wanting the typed SubdivisionCode wrapper use IRequestContextGeoExtensions.Subdivision()."
         },
         {
-          "name": "SubdivisionCode",
+          "name": "CountryIso31661Alpha2Code",
           "type": "string?",
-          "redact": true,
-          "doc": "ISO 3166-2 subdivision code (e.g. 'US-CA')."
-        },
-        {
-          "name": "CountryCode",
-          "type": "string?",
-          "doc": "ISO 3166-1 alpha-2 country code from WhoIs lookup."
+          "doc": "ISO 3166-1 alpha-2 country code from WhoIs lookup (e.g. 'US', 'DE'). Standards-explicit name per the §7.Z naming convention: the name describes exactly what data IS. Consumers wanting the typed CountryCode enum use IRequestContextGeoExtensions.Country()."
         },
         {
           "name": "PostalCode",

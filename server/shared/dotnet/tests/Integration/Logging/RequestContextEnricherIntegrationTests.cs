@@ -91,7 +91,7 @@ public sealed class RequestContextEnricherIntegrationTests
         // WhoIs/Geo
         requestEvent.Properties.Keys.Should().Contain(nameof(IRequestContext.WhoIsHashId));
         requestEvent.Properties.Keys.Should().Contain(nameof(IRequestContext.AdminLocationHashId));
-        requestEvent.Properties.Keys.Should().Contain(nameof(IRequestContext.CountryCode));
+        requestEvent.Properties.Keys.Should().Contain(nameof(IRequestContext.CountryIso31661Alpha2Code));
 
         // WhoIs/Network-Privacy
         requestEvent.Properties.Keys.Should().Contain(nameof(IRequestContext.IsVpn));
@@ -181,7 +181,7 @@ public sealed class RequestContextEnricherIntegrationTests
         requestEvent.Properties.Keys.Should().NotContain(nameof(IRequestContext.WhoIsHashId));
         requestEvent.Properties.Keys.Should().NotContain(
             nameof(IRequestContext.AdminLocationHashId));
-        requestEvent.Properties.Keys.Should().NotContain(nameof(IRequestContext.CountryCode));
+        requestEvent.Properties.Keys.Should().NotContain(nameof(IRequestContext.CountryIso31661Alpha2Code));
         requestEvent.Properties.Keys.Should().NotContain(nameof(IRequestContext.IsVpn));
         requestEvent.Properties.Keys.Should().NotContain(nameof(IRequestContext.IsProxy));
         requestEvent.Properties.Keys.Should().NotContain(nameof(IRequestContext.IsTor));
@@ -222,8 +222,7 @@ public sealed class RequestContextEnricherIntegrationTests
             ClientIp = "203.0.113.42",
             City = "San Francisco",
             PostalCode = "94103",
-            Region = "California",
-            SubdivisionCode = "US-CA",
+            SubdivisionIso31662Code = "US-CA",
             Latitude = 37.7749,
             Longitude = -122.4194,
             Geohash = "9q8yy",
@@ -240,8 +239,7 @@ public sealed class RequestContextEnricherIntegrationTests
         rendered.Should().NotContain($"\"{nameof(IRequestContext.ClientIp)}\"");
         rendered.Should().NotContain($"\"{nameof(IRequestContext.City)}\"");
         rendered.Should().NotContain($"\"{nameof(IRequestContext.PostalCode)}\"");
-        rendered.Should().NotContain($"\"{nameof(IRequestContext.Region)}\"");
-        rendered.Should().NotContain($"\"{nameof(IRequestContext.SubdivisionCode)}\"");
+        rendered.Should().NotContain($"\"{nameof(IRequestContext.SubdivisionIso31662Code)}\"");
         rendered.Should().NotContain($"\"{nameof(IRequestContext.Latitude)}\"");
         rendered.Should().NotContain($"\"{nameof(IRequestContext.Longitude)}\"");
         rendered.Should().NotContain($"\"{nameof(IRequestContext.Geohash)}\"");
@@ -376,7 +374,7 @@ public sealed class RequestContextEnricherIntegrationTests
         // ActorChain defaults to []; the empty-collection gate must suppress
         // it so end-user-direct requests don't pollute logs with
         // "ActorChain":[] on every line.
-        var stub = new StubRequestContext { CountryCode = "US" };
+        var stub = new StubRequestContext { CountryIso31661Alpha2Code = "US" };
         var (host, sink) = await LoggingTestHostBuilder.BuildAsync(
             extraServices: services =>
                 services.AddScoped<IRequestContext>(_ => stub));
@@ -419,7 +417,7 @@ public sealed class RequestContextEnricherIntegrationTests
     [Fact]
     public async Task ScopesEmpty_NotPresentInRenderedOutput()
     {
-        var stub = new StubRequestContext { CountryCode = "US" };
+        var stub = new StubRequestContext { CountryIso31661Alpha2Code = "US" };
         var (host, sink) = await LoggingTestHostBuilder.BuildAsync(
             extraServices: services =>
                 services.AddScoped<IRequestContext>(_ => stub));
@@ -458,7 +456,7 @@ public sealed class RequestContextEnricherIntegrationTests
     [Fact]
     public async Task AudienceEmpty_NotPresentInRenderedOutput()
     {
-        var stub = new StubRequestContext { CountryCode = "US" };
+        var stub = new StubRequestContext { CountryIso31661Alpha2Code = "US" };
         var (host, sink) = await LoggingTestHostBuilder.BuildAsync(
             extraServices: services =>
                 services.AddScoped<IRequestContext>(_ => stub));
@@ -599,7 +597,7 @@ public sealed class RequestContextEnricherIntegrationTests
             // WhoIs/Geo
             WhoIsHashId = "whois-hash-1",
             AdminLocationHashId = "admin-loc-hash-1",
-            CountryCode = "US",
+            CountryIso31661Alpha2Code = "US",
 
             // WhoIs/Network-Privacy
             IsVpn = false,

@@ -55,10 +55,7 @@ export const ErrorCodes = {
    */
   SOME_FOUND: "SOME_FOUND",
   /**
-   * Indicates that a multi-target write operation succeeded against some targets but not all (e.g.
-   * tiered cache wrote L1 but not L2). D2Result.Success stays true - the operation did succeed in
-   * part. Callers inspect IsPartialSuccess + the result data to decide what to do about the failed
-   * target(s).
+   * Indicates that a multi-target write operation succeeded against some targets but not all (e.g. tiered cache wrote L1 but not L2). D2Result.Success stays true - the operation did succeed in part. Callers inspect IsPartialSuccess + the result data to decide what to do about the failed target(s).
    */
   PARTIAL_SUCCESS: "PARTIAL_SUCCESS",
   /**

@@ -98,6 +98,34 @@
       "applicability": ["amqp"],
       "convention": "d2",
       "description": "Failure reason metadata attached by the consumer when nacking a message to its DLQ. JSON-encoded DlqFailureMetadata."
+    },
+    {
+      "name": "Accept-Language",
+      "constName": "ACCEPT_LANGUAGE",
+      "applicability": ["http"],
+      "convention": "rfc",
+      "description": "Standard HTTP locale-preference header (RFC 7231 §5.3.5). Set by browser or OS. Represents the lowest-priority tier of the user locale resolution cascade: profile > org > X-D2-Locale > Accept-Language > fallback 'en-US'. Adding as a typed constant so middleware stops using magic strings."
+    },
+    {
+      "name": "X-D2-Locale",
+      "constName": "D2_LOCALE",
+      "applicability": ["http"],
+      "convention": "d2",
+      "description": "D2-specific user-selected locale override (IETF BCP 47 tag, e.g. 'en-US', 'zh-Hans-SG'). Set when the user explicitly picks a locale in the UI. Takes precedence over Accept-Language in the locale cascade. Consumed by Edge auth middleware to populate IRequestContext.LocaleIetfBcp47Tag."
+    },
+    {
+      "name": "X-D2-Timezone",
+      "constName": "D2_TIMEZONE",
+      "applicability": ["http"],
+      "convention": "d2",
+      "description": "Browser-derived IANA timezone name (from Intl.DateTimeFormat().resolvedOptions().timeZone, e.g. 'America/New_York'). Set by the BFF fetch interceptor on every request. Used by Edge auth middleware as the third tier of the timezone cascade: profile > org > X-D2-Timezone > WhoIs-derived > fallback 'UTC'."
+    },
+    {
+      "name": "X-D2-Currency",
+      "constName": "D2_CURRENCY",
+      "applicability": ["http"],
+      "convention": "d2",
+      "description": "User-selected currency override (ISO 4217 code, e.g. 'USD', 'EUR'). No browser-native equivalent — D2-custom. Takes precedence over country-derived currency in the cascade: profile > org > X-D2-Currency > CountryIso31661Alpha2Code-derived > fallback NULL."
     }
   ]
 }

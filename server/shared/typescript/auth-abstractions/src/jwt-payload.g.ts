@@ -93,6 +93,16 @@ export interface JwtPayload {
    */
   readonly d2_org_role: string | null;
   /**
+   * Authentication Methods Reference (RFC 8176). Array of strings identifying the authentication methods used. Input to risk-scoring and audit — 'password-only vs MFA vs OAuth2-with-WebAuthn' matters for sensitive-action gating.
+   * Claim wire name: amr (kind: standard).
+   */
+  readonly amr: string | null;
+  /**
+   * Unix-seconds timestamp of last step-up authentication completion. Handlers gating sensitive actions enforce 'step-up within last N minutes'. Edge auth populates from session record at JWT mint.
+   * Claim wire name: d2_step_up_at (kind: d2-custom).
+   */
+  readonly d2_step_up_at: string | null;
+  /**
    * Raw decoded claims object — escape hatch for downstream consumers
    * that need access to non-spec'd claims.
    */
