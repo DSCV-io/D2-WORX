@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
+> **Audience**: Backend .NET service engineers attaching location or postal-address data to domain entities.
+
 > Hash-deduplicatable geographic value objects for handlers and service code attaching location data to entities — covers `Coordinates`, `StreetAddress`, `AdminLocation`, the `ComposeLocationHash` free function, and the `IPostalCodeValidator` boundary contract with a global-range `DefaultPostalCodeValidator`. Produces deterministic identity hashes for civic locations, with normalized variants that dedup typo-distance inputs across languages and scripts.
 
 ## Purpose

@@ -20,13 +20,13 @@ namespace D2.Shared.Geo.Abstractions;
 /// <summary>
 /// <see cref="JsonConverter{T}"/> for <see cref="LocaleCode"/>.
 /// Serializes the wrapped string verbatim; deserialization validates against
-/// the embedded closed-set table (s_validLocaleCodes) and throws
+/// the embedded closed-set table (sr_validLocaleCodes) and throws
 /// <see cref="JsonException"/> for unknown values (strict
 /// deserialization policy).
 /// </summary>
 public sealed class LocaleCodeJsonConverter : JsonConverter<LocaleCode>
 {
-    private static readonly FrozenSet<string> s_validLocaleCodes =
+    private static readonly FrozenSet<string> sr_validLocaleCodes =
         new HashSet<string>(StringComparer.Ordinal)
         {
             "aa",
@@ -1128,7 +1128,7 @@ public sealed class LocaleCodeJsonConverter : JsonConverter<LocaleCode>
     /// </summary>
     /// <param name="value">The candidate value.</param>
     /// <returns>True when the catalog contains this value.</returns>
-    public static bool IsKnown(string value) => s_validLocaleCodes.Contains(value);
+    public static bool IsKnown(string value) => sr_validLocaleCodes.Contains(value);
 
     /// <inheritdoc />
     public override LocaleCode Read(
@@ -1149,7 +1149,7 @@ public sealed class LocaleCodeJsonConverter : JsonConverter<LocaleCode>
                 "Expected a non-empty IETF BCP 47 locale tag; got null / empty / whitespace.");
         }
 
-        if (!s_validLocaleCodes.Contains(value!))
+        if (!sr_validLocaleCodes.Contains(value!))
         {
             throw new JsonException(
                 $"Unknown IETF BCP 47 locale tag '{value}' — not present in the closed catalog set.");

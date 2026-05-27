@@ -24,7 +24,7 @@ using Xunit;
 /// <remarks>
 /// The validation sets live as <c>private static readonly FrozenSet&lt;string&gt;</c>
 /// fields on each <c>*JsonConverter</c> (e.g.
-/// <c>SubdivisionCodeJsonConverter.s_validSubdivisionCodes</c>) — exposed
+/// <c>SubdivisionCodeJsonConverter.sr_validSubdivisionCodes</c>) — exposed
 /// publicly only via the boolean <c>IsKnown(string)</c> probe. Reflection
 /// is the right hammer here: enumerating the full set lets the parity test
 /// pin set equality (sorted string array), not just per-string probes.
@@ -45,13 +45,13 @@ public sealed class GeoWrapperStructsFixtureEmitter
         {
             ["SubdivisionCode"] = ExtractValidationSet(
                 typeof(SubdivisionCodeJsonConverter),
-                fieldName: "s_validSubdivisionCodes"),
+                fieldName: "sr_validSubdivisionCodes"),
             ["LocaleCode"] = ExtractValidationSet(
                 typeof(LocaleCodeJsonConverter),
-                fieldName: "s_validLocaleCodes"),
+                fieldName: "sr_validLocaleCodes"),
             ["TimezoneCode"] = ExtractValidationSet(
                 typeof(TimezoneCodeJsonConverter),
-                fieldName: "s_validTimezoneCodes"),
+                fieldName: "sr_validTimezoneCodes"),
         };
 
         FixturePathHelpers.WriteFixture(_CATALOG, "wrapper-structs", data);
@@ -67,7 +67,7 @@ public sealed class GeoWrapperStructsFixtureEmitter
     /// </param>
     /// <param name="fieldName">
     /// The private static readonly FrozenSet field name (e.g.
-    /// <c>s_validSubdivisionCodes</c>).
+    /// <c>sr_validSubdivisionCodes</c>).
     /// </param>
     private static List<string> ExtractValidationSet(Type converterType, string fieldName)
     {

@@ -40,7 +40,7 @@ internal static class DefaultEmitterHelpers
     /// of C# 12 / .NET 8+. Contextual keywords are EXCLUDED — they're legal
     /// identifiers outside their narrow grammar contexts.
     /// </summary>
-    private static readonly HashSet<string> CSharpReservedKeywords = new HashSet<string>(
+    private static readonly HashSet<string> sr_cSharpReservedKeywords = new HashSet<string>(
         System.StringComparer.Ordinal)
     {
         "abstract", "as", "base", "bool", "break", "byte", "case", "catch",
@@ -102,7 +102,7 @@ internal static class DefaultEmitterHelpers
         // remainder is letters / digits / underscores).
         if (IsValidIdentifier(segment))
         {
-            return CSharpReservedKeywords.Contains(segment)
+            return sr_cSharpReservedKeywords.Contains(segment)
                 ? "@" + segment
                 : segment;
         }

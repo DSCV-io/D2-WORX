@@ -60,7 +60,7 @@ internal static class ParentCountryTableEmitter
         sb.AppendLine("/// </summary>");
         sb.AppendLine("internal static class SubdivisionParentCountryLookup");
         sb.AppendLine("{");
-        sb.AppendLine("    private static readonly FrozenDictionary<string, CountryCode> s_parents =");
+        sb.AppendLine("    private static readonly FrozenDictionary<string, CountryCode> sr_parents =");
         sb.AppendLine("        new Dictionary<string, CountryCode>(StringComparer.Ordinal)");
         sb.AppendLine("        {");
 
@@ -107,7 +107,7 @@ internal static class ParentCountryTableEmitter
         sb.AppendLine(
             "            throw new ArgumentNullException(nameof(subdivisionCode));");
         sb.AppendLine();
-        sb.AppendLine("        if (!s_parents.TryGetValue(subdivisionCode, out var country))");
+        sb.AppendLine("        if (!sr_parents.TryGetValue(subdivisionCode, out var country))");
         sb.AppendLine("        {");
         sb.AppendLine("            throw new InvalidOperationException(");
         sb.AppendLine(

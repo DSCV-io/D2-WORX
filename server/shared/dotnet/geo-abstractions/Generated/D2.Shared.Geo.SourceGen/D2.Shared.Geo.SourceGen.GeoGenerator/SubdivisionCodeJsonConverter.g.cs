@@ -20,13 +20,13 @@ namespace D2.Shared.Geo.Abstractions;
 /// <summary>
 /// <see cref="JsonConverter{T}"/> for <see cref="SubdivisionCode"/>.
 /// Serializes the wrapped string verbatim; deserialization validates against
-/// the embedded closed-set table (s_validSubdivisionCodes) and throws
+/// the embedded closed-set table (sr_validSubdivisionCodes) and throws
 /// <see cref="JsonException"/> for unknown values (strict
 /// deserialization policy).
 /// </summary>
 public sealed class SubdivisionCodeJsonConverter : JsonConverter<SubdivisionCode>
 {
-    private static readonly FrozenSet<string> s_validSubdivisionCodes =
+    private static readonly FrozenSet<string> sr_validSubdivisionCodes =
         new HashSet<string>(StringComparer.Ordinal)
         {
             "AD-02",
@@ -5084,7 +5084,7 @@ public sealed class SubdivisionCodeJsonConverter : JsonConverter<SubdivisionCode
     /// </summary>
     /// <param name="value">The candidate value.</param>
     /// <returns>True when the catalog contains this value.</returns>
-    public static bool IsKnown(string value) => s_validSubdivisionCodes.Contains(value);
+    public static bool IsKnown(string value) => sr_validSubdivisionCodes.Contains(value);
 
     /// <inheritdoc />
     public override SubdivisionCode Read(
@@ -5105,7 +5105,7 @@ public sealed class SubdivisionCodeJsonConverter : JsonConverter<SubdivisionCode
                 "Expected a non-empty ISO 3166-2 subdivision code; got null / empty / whitespace.");
         }
 
-        if (!s_validSubdivisionCodes.Contains(value!))
+        if (!sr_validSubdivisionCodes.Contains(value!))
         {
             throw new JsonException(
                 $"Unknown ISO 3166-2 subdivision code '{value}' — not present in the closed catalog set.");

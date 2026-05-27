@@ -23,7 +23,7 @@ namespace D2.Shared.Geo.Abstractions;
 /// </summary>
 internal static class SubdivisionParentCountryLookup
 {
-    private static readonly FrozenDictionary<string, CountryCode> s_parents =
+    private static readonly FrozenDictionary<string, CountryCode> sr_parents =
         new Dictionary<string, CountryCode>(StringComparer.Ordinal)
         {
             ["AD-02"] = CountryCode.AD,
@@ -5089,7 +5089,7 @@ internal static class SubdivisionParentCountryLookup
         if (subdivisionCode is null)
             throw new ArgumentNullException(nameof(subdivisionCode));
 
-        if (!s_parents.TryGetValue(subdivisionCode, out var country))
+        if (!sr_parents.TryGetValue(subdivisionCode, out var country))
         {
             throw new InvalidOperationException(
                 $"Subdivision code '{subdivisionCode}' is not present in the geo catalog.");

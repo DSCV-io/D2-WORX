@@ -72,21 +72,21 @@ internal static class JsonConverterEmitter
         results.Add(EmitConverter(
             wrapperName: "SubdivisionCode",
             converterClassName: "SubdivisionCodeJsonConverter",
-            validSetFieldName: "s_validSubdivisionCodes",
+            validSetFieldName: "sr_validSubdivisionCodes",
             displayLabel: "ISO 3166-2 subdivision code",
             codes: subdivisionCodes));
 
         results.Add(EmitConverter(
             wrapperName: "LocaleCode",
             converterClassName: "LocaleCodeJsonConverter",
-            validSetFieldName: "s_validLocaleCodes",
+            validSetFieldName: "sr_validLocaleCodes",
             displayLabel: "IETF BCP 47 locale tag",
             codes: localeCodes));
 
         results.Add(EmitConverter(
             wrapperName: "TimezoneCode",
             converterClassName: "TimezoneCodeJsonConverter",
-            validSetFieldName: "s_validTimezoneCodes",
+            validSetFieldName: "sr_validTimezoneCodes",
             displayLabel: "IANA timezone identifier",
             codes: timezoneCodes));
 

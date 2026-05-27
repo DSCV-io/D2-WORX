@@ -6,6 +6,8 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/README.md`](../README.md)
 
+> **Audience**: D² framework engineers extending or maintaining the geo data pipeline and the codegen emitting strongly-typed geo records into `D2.Shared.Geo.Abstractions` and `D2.Shared.Geo.Default`.
+
 Roslyn `IIncrementalGenerator` that turns the seven pipeline-assembled geo spec files
 under `contracts/geo/` into typed .NET source — consumed by `D2.Shared.Geo.Abstractions`
 (TYPES) and `D2.Shared.Geo.Default` (DATA).

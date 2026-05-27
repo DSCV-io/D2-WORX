@@ -20,13 +20,13 @@ namespace D2.Shared.Geo.Abstractions;
 /// <summary>
 /// <see cref="JsonConverter{T}"/> for <see cref="TimezoneCode"/>.
 /// Serializes the wrapped string verbatim; deserialization validates against
-/// the embedded closed-set table (s_validTimezoneCodes) and throws
+/// the embedded closed-set table (sr_validTimezoneCodes) and throws
 /// <see cref="JsonException"/> for unknown values (strict
 /// deserialization policy).
 /// </summary>
 public sealed class TimezoneCodeJsonConverter : JsonConverter<TimezoneCode>
 {
-    private static readonly FrozenSet<string> s_validTimezoneCodes =
+    private static readonly FrozenSet<string> sr_validTimezoneCodes =
         new HashSet<string>(StringComparer.Ordinal)
         {
             "Africa/Abidjan",
@@ -350,7 +350,7 @@ public sealed class TimezoneCodeJsonConverter : JsonConverter<TimezoneCode>
     /// </summary>
     /// <param name="value">The candidate value.</param>
     /// <returns>True when the catalog contains this value.</returns>
-    public static bool IsKnown(string value) => s_validTimezoneCodes.Contains(value);
+    public static bool IsKnown(string value) => sr_validTimezoneCodes.Contains(value);
 
     /// <inheritdoc />
     public override TimezoneCode Read(
@@ -371,7 +371,7 @@ public sealed class TimezoneCodeJsonConverter : JsonConverter<TimezoneCode>
                 "Expected a non-empty IANA timezone identifier; got null / empty / whitespace.");
         }
 
-        if (!s_validTimezoneCodes.Contains(value!))
+        if (!sr_validTimezoneCodes.Contains(value!))
         {
             throw new JsonException(
                 $"Unknown IANA timezone identifier '{value}' — not present in the closed catalog set.");
