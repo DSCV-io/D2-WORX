@@ -21,7 +21,6 @@
     "@d2/headers-common": "workspace:*",
     "@d2/headers-grpc": "workspace:*",
     "@d2/headers-http": "workspace:*",
-    "@d2/location": "workspace:*",
     "@d2/messaging-abstractions": "workspace:*",
     "@d2/request-context-abstractions": "workspace:*",
     "@d2/result": "workspace:*",

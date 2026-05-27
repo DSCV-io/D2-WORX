@@ -1,15 +1,15 @@
 // -----------------------------------------------------------------------
-// <copyright file="LocationFixtureCase.cs" company="DCSV">
+// <copyright file="LocationHashFixtureCase.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Location;
+namespace D2.Shared.Tests.Unit.Location;
 
 using System.Text.Json;
 
-/// <summary>Per-case shape of the location parity fixture JSON.</summary>
-public sealed class LocationFixtureCase
+/// <summary>Per-case shape of the location hash-determinism fixture JSON.</summary>
+public sealed class LocationHashFixtureCase
 {
     public string Name { get; set; } = string.Empty;
 

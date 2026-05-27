@@ -117,7 +117,7 @@ services.Replace(ServiceDescriptor // optional: override with country-specific v
 
 Locations are **immutable**. "Updates" are modeled as create-new + repoint-references + delete-old. Same hash content = same `HashId` = same row in any consumer's local table. Built-in deduplication via the hash ID.
 
-Cross-language parity is enforced by the [`contracts/location/parity-fixtures.json`](../../../contracts/location/parity-fixtures.json) fixture — every `HashId` / `expectedOutcome` row is asserted on BOTH the .NET side (`CrossLanguageLocationParityTests`) and the TypeScript side (`@d2/contract-tests/tests/location.parity.test.ts`). A byte-equal divergence on any case fails the build.
+Hash-algorithm stability is enforced by the [`contracts/location/parity-fixtures.json`](../../../contracts/location/parity-fixtures.json) fixture — every `HashId` / `expectedOutcome` row is asserted by `LocationHashDeterminismTests` in `D2.Shared.Tests`. A byte divergence means the hash algorithm changed and would silently produce duplicate records for previously-identical content-addressable entities.
 
 `ComposeLocationHash.Compose` returns `string?` (NOT `D2Result<string>`) — the operation cannot fail (inputs are already-validated VOs or null); `null` means location is absent, not an error. Documented §17 carve-out.
 
@@ -125,4 +125,4 @@ Cross-language parity is enforced by the [`contracts/location/parity-fixtures.js
 
 - [`docs/PATTERNS.md`](../../../docs/PATTERNS.md) — content-addressable entities + hash composition.
 - [`../geo-abstractions/README.md`](../geo-abstractions/README.md) — the typed `CountryCode` + `SubdivisionCode` surface this lib consumes.
-- [`contracts/location/parity-fixtures.json`](../../../contracts/location/parity-fixtures.json) — cross-language fixture file.
+- [`contracts/location/parity-fixtures.json`](../../../contracts/location/parity-fixtures.json) — hash-determinism fixture file.

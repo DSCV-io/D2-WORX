@@ -15,7 +15,6 @@
     { "path": "../headers-common" },
     { "path": "../headers-grpc" },
     { "path": "../headers-http" },
-    { "path": "../location" },
     { "path": "../request-context-abstractions" },
     { "path": "../result" }
   ]

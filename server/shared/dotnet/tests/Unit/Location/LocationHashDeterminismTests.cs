@@ -1,10 +1,10 @@
 // -----------------------------------------------------------------------
-// <copyright file="CrossLanguageLocationParityTests.cs" company="DCSV">
+// <copyright file="LocationHashDeterminismTests.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace D2.Shared.Tests.Integration.Location;
+namespace D2.Shared.Tests.Unit.Location;
 
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -17,26 +17,20 @@ using Xunit;
 
 /// <summary>
 /// Loads <c>contracts/location/parity-fixtures.json</c> and asserts the
-/// .NET <see cref="Coordinates"/> / <see cref="StreetAddress"/> /
+/// <see cref="Coordinates"/> / <see cref="StreetAddress"/> /
 /// <see cref="AdminLocation"/> / <see cref="ComposeLocationHash"/> /
 /// <see cref="DefaultPostalCodeValidator"/> implementations produce
-/// byte-identical hash output to the TypeScript <c>@d2/location</c>
-/// implementation for every fixture case.
+/// byte-identical hash output to the reference fixture for every case.
 /// </summary>
 /// <remarks>
-/// Cross-language parity gate. A byte divergence here fails the build
-/// before USER REVIEW PAUSE — see the deliberate-drift validation
-/// pattern documented in the Step 4 Plan §6.1 for proof that the
-/// comparator actually catches divergence.
+/// Hash-determinism regression pin. A byte divergence here means the hash
+/// algorithm changed — content-addressable dedup in the geo pipeline would
+/// silently produce duplicate records for entities that were previously
+/// considered identical.
 /// </remarks>
-public sealed class CrossLanguageLocationParityTests
+public sealed class LocationHashDeterminismTests
 {
-    private static readonly LocationParityFixture sr_Fixture = LoadFixture();
-    private static readonly JsonSerializerOptions sr_JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true,
-    };
+    private static readonly LocationHashFixture sr_Fixture = LoadFixture();
 
     public static TheoryData<string> AllCaseNames()
     {
@@ -55,7 +49,7 @@ public sealed class CrossLanguageLocationParityTests
 
     [Theory]
     [MemberData(nameof(AllCaseNames))]
-    public void CrossLanguageParity(string caseName)
+    public void HashDeterminism(string caseName)
     {
         var c = sr_Fixture.Cases.Single(x => x.Name == caseName);
 
@@ -81,7 +75,7 @@ public sealed class CrossLanguageLocationParityTests
         }
     }
 
-    private static void AssertCoordinatesCase(LocationFixtureCase c)
+    private static void AssertCoordinatesCase(LocationHashFixtureCase c)
     {
         var inputs = c.Inputs;
 
@@ -108,7 +102,7 @@ public sealed class CrossLanguageLocationParityTests
         result.Data!.HashId.Should().Be(c.ExpectedHashId, $"case '{c.Name}'");
     }
 
-    private static void AssertStreetAddressCase(LocationFixtureCase c)
+    private static void AssertStreetAddressCase(LocationHashFixtureCase c)
     {
         var inputs = c.Inputs;
         var line1 = inputs.GetProperty("line1").GetString();
@@ -135,7 +129,7 @@ public sealed class CrossLanguageLocationParityTests
         }
     }
 
-    private static void AssertAdminLocationCase(LocationFixtureCase c)
+    private static void AssertAdminLocationCase(LocationHashFixtureCase c)
     {
         var inputs = c.Inputs;
         CountryCode? country = inputs.TryGetProperty("countryCode", out var cc) && cc.ValueKind == JsonValueKind.String
@@ -164,7 +158,7 @@ public sealed class CrossLanguageLocationParityTests
         }
     }
 
-    private static void AssertComposeCase(LocationFixtureCase c)
+    private static void AssertComposeCase(LocationHashFixtureCase c)
     {
         var inputs = c.Inputs;
 
@@ -210,7 +204,7 @@ public sealed class CrossLanguageLocationParityTests
             composed.Should().Be(expected, $"case '{c.Name}'");
     }
 
-    private static void AssertPostalCase(LocationFixtureCase c)
+    private static void AssertPostalCase(LocationHashFixtureCase c)
     {
         var inputs = c.Inputs;
         var postal = inputs.GetProperty("postalCode").GetString();
@@ -229,18 +223,18 @@ public sealed class CrossLanguageLocationParityTests
             result.Data.Should().Be(expected, $"case '{c.Name}'");
     }
 
-    private static LocationParityFixture LoadFixture()
+    private static LocationHashFixture LoadFixture()
     {
-        // Hermetic fixture-path resolution per §1.16: derive the path from
+        // Hermetic fixture-path resolution: derive the path from
         // [CallerFilePath] at compile time (this source file's absolute path
         // is baked into the test binary), then navigate to contracts/location.
         // This avoids the filesystem-walk-up pattern's fragility under hermetic
-        // CI sandboxes and unusual `AppContext.BaseDirectory` layouts.
+        // CI sandboxes and unusual AppContext.BaseDirectory layouts.
         var candidate = ResolveFixturePath();
         if (!File.Exists(candidate))
         {
             throw new FileNotFoundException(
-                $"Cross-language parity fixture not found at expected path '{candidate}' " +
+                $"Location hash fixture not found at expected path '{candidate}' " +
                 $"(derived from [CallerFilePath]; should resolve to contracts/location/parity-fixtures.json " +
                 $"relative to this test source file).");
         }
@@ -252,20 +246,20 @@ public sealed class CrossLanguageLocationParityTests
     /// <summary>
     /// Resolves the absolute path of <c>contracts/location/parity-fixtures.json</c>
     /// using <see cref="CallerFilePathAttribute"/> on this method. The compiler
-    /// substitutes the absolute path of THIS source file (CrossLanguageLocationParityTests.cs)
+    /// substitutes the absolute path of THIS source file (LocationHashDeterminismTests.cs)
     /// at the call site, which is then mapped to the repo-root relative fixture path.
     /// </summary>
     private static string ResolveFixturePath([CallerFilePath] string thisSourcePath = "")
     {
-        // thisSourcePath: <repo>/server/shared/dotnet/tests/Integration/Location/CrossLanguageLocationParityTests.cs
-        // walk up 6 levels (Location -> Integration -> tests -> dotnet -> shared -> server) to reach <repo>.
+        // thisSourcePath: <repo>/server/shared/dotnet/tests/Unit/Location/LocationHashDeterminismTests.cs
+        // walk up 6 levels (Location -> Unit -> tests -> dotnet -> shared -> server) to reach <repo>.
         var dir = Path.GetDirectoryName(thisSourcePath) ?? string.Empty;
         for (var i = 0; i < 6; i++)
             dir = Path.GetDirectoryName(dir) ?? string.Empty;
         return Path.Combine(dir, "contracts", "location", "parity-fixtures.json");
     }
 
-    private static LocationParityFixture ParseFixture(string json)
+    private static LocationHashFixture ParseFixture(string json)
     {
         // Manual parse via JsonDocument — STJ's reflection-based deserializer
         // produced empty Cases on a struct-containing record (likely related to
@@ -274,7 +268,7 @@ public sealed class CrossLanguageLocationParityTests
         if (!doc.RootElement.TryGetProperty("cases", out var casesEl))
             throw new InvalidOperationException("Root JSON does not contain 'cases'.");
 
-        var manual = new LocationParityFixture
+        var manual = new LocationHashFixture
         {
             Version = doc.RootElement.TryGetProperty("version", out var verEl)
                 ? verEl.GetString() ?? string.Empty
@@ -282,7 +276,7 @@ public sealed class CrossLanguageLocationParityTests
         };
         foreach (var caseEl in casesEl.EnumerateArray())
         {
-            var fc = new LocationFixtureCase
+            var fc = new LocationHashFixtureCase
             {
                 Name = caseEl.GetProperty("name").GetString() ?? string.Empty,
                 Kind = caseEl.GetProperty("kind").GetString() ?? string.Empty,
