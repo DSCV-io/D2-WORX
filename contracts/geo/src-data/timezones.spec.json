@@ -2,20 +2,20 @@
   "$schema": "./timezones.schema.json",
   "$note": "PIPELINE-RAW spec — produced by tools/geo-data-pipeline. Not directly consumed by codegen / D2.Shared.Geo.Default. A clean/transform pass to the sibling contracts/geo/timezones.spec.json (one level up) is a separate step. Sources: IANA zone1970.tab + backward (public domain — canonical zones, primary/co-applicable country FKs, aliases, ISO 6709 coordinates) + Node's built-in ICU Intl.DateTimeFormat (current STD/DST offsets + abbreviations sampled at 2026-01-15 and 2026-07-15). Missing: LocalizedDisplayNames (CLDR cldr-dates-full/main/{locale}/timeZoneNames.json follow-up pass), Selectable (Tier 2 curated subset), Deprecation.",
   "catalogVersion": "0.0.1",
-  "generatedAt": "2026-05-19T18:13:21.014Z",
+  "generatedAt": "2026-05-26T13:06:21.420Z",
   "sources": [
     {
       "name": "iana-tzdb",
       "url": "https://data.iana.org/time-zones/data/zone1970.tab",
       "license": "Public Domain (IANA Time Zone Database)",
-      "fetchedAt": "2026-05-19T16:30:59.813Z",
+      "fetchedAt": "2026-05-26T13:06:21.156Z",
       "sha256": "406555546e685b34eb46c24d826b649dd35e9d202f4c13a3c621ff21eddc1583"
     },
     {
       "name": "iana-tzdb",
       "url": "https://data.iana.org/time-zones/data/backward",
       "license": "Public Domain (IANA Time Zone Database)",
-      "fetchedAt": "2026-05-19T16:30:59.811Z",
+      "fetchedAt": "2026-05-26T13:06:21.058Z",
       "sha256": "d2f4c8953f204982ddf4dc0c2debf41b2464de376dad7d546d0fc70f889fa706"
     }
   ],
@@ -283,9 +283,7 @@
       "currentDstAbbrev": "GMT+3",
       "countryISO31661Alpha2Code": "EG",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Egypt"
-      ],
+      "aliases": ["Egypt"],
       "iso6709Coordinates": "+3003+03115",
       "comments": null
     },
@@ -336,14 +334,8 @@
       "currentStdAbbrev": "GMT+2",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "ZA",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "LS",
-        "SZ"
-      ],
-      "aliases": [
-        "Africa/Maseru",
-        "Africa/Mbabane"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["LS", "SZ"],
+      "aliases": ["Africa/Maseru", "Africa/Mbabane"],
       "iso6709Coordinates": "-2615+02800",
       "comments": null
     },
@@ -517,9 +509,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "LY",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Libya"
-      ],
+      "aliases": ["Libya"],
       "iso6709Coordinates": "+3254+01311",
       "comments": null
     },
@@ -558,10 +548,7 @@
       "currentDstAbbrev": "HADT",
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Atka",
-        "US/Aleutian"
-      ],
+      "aliases": ["America/Atka", "US/Aleutian"],
       "iso6709Coordinates": "+515248-1763929",
       "comments": "Alaska - western Aleutians"
     },
@@ -574,9 +561,7 @@
       "currentDstAbbrev": "AKDT",
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "US/Alaska"
-      ],
+      "aliases": ["US/Alaska"],
       "iso6709Coordinates": "+611305-1495401",
       "comments": "Alaska (most areas)"
     },
@@ -602,9 +587,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Buenos_Aires"
-      ],
+      "aliases": ["America/Buenos_Aires"],
       "iso6709Coordinates": "-3436-05827",
       "comments": "Buenos Aires (BA, CF)"
     },
@@ -617,10 +600,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Argentina/ComodRivadavia",
-        "America/Catamarca"
-      ],
+      "aliases": ["America/Argentina/ComodRivadavia", "America/Catamarca"],
       "iso6709Coordinates": "-2828-06547",
       "comments": "Catamarca (CT), Chubut (CH)"
     },
@@ -633,10 +613,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Cordoba",
-        "America/Rosario"
-      ],
+      "aliases": ["America/Cordoba", "America/Rosario"],
       "iso6709Coordinates": "-3124-06411",
       "comments": "most areas: CB, CC, CN, ER, FM, MN, SE, SF"
     },
@@ -649,9 +626,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Jujuy"
-      ],
+      "aliases": ["America/Jujuy"],
       "iso6709Coordinates": "-2411-06518",
       "comments": "Jujuy (JY)"
     },
@@ -677,9 +652,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Mendoza"
-      ],
+      "aliases": ["America/Mendoza"],
       "iso6709Coordinates": "-3253-06849",
       "comments": "Mendoza (MZ)"
     },
@@ -952,10 +925,7 @@
       "currentDstAbbrev": "CDT",
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "CST6CDT",
-        "US/Central"
-      ],
+      "aliases": ["CST6CDT", "US/Central"],
       "iso6709Coordinates": "+415100-0873900",
       "comments": "Central (most areas)"
     },
@@ -1072,12 +1042,7 @@
       "currentDstAbbrev": "MDT",
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Shiprock",
-        "MST7MDT",
-        "Navajo",
-        "US/Mountain"
-      ],
+      "aliases": ["America/Shiprock", "MST7MDT", "Navajo", "US/Mountain"],
       "iso6709Coordinates": "+394421-1045903",
       "comments": "Mountain (most areas)"
     },
@@ -1090,9 +1055,7 @@
       "currentDstAbbrev": "EDT",
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "US/Michigan"
-      ],
+      "aliases": ["US/Michigan"],
       "iso6709Coordinates": "+421953-0830245",
       "comments": "Eastern - MI (most areas)"
     },
@@ -1105,10 +1068,7 @@
       "currentDstAbbrev": "MDT",
       "countryISO31661Alpha2Code": "CA",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Yellowknife",
-        "Canada/Mountain"
-      ],
+      "aliases": ["America/Yellowknife", "Canada/Mountain"],
       "iso6709Coordinates": "+5333-11328",
       "comments": "Mountain - AB, BC(E), NT(E), SK(W)"
     },
@@ -1251,9 +1211,7 @@
       "currentDstAbbrev": "ADT",
       "countryISO31661Alpha2Code": "CA",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Canada/Atlantic"
-      ],
+      "aliases": ["Canada/Atlantic"],
       "iso6709Coordinates": "+4439-06336",
       "comments": "Atlantic - NS (most areas), PE"
     },
@@ -1266,9 +1224,7 @@
       "currentDstAbbrev": "GMT-4",
       "countryISO31661Alpha2Code": "CU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Cuba"
-      ],
+      "aliases": ["Cuba"],
       "iso6709Coordinates": "+2308-08222",
       "comments": null
     },
@@ -1311,10 +1267,7 @@
       "currentDstAbbrev": "CDT",
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Knox_IN",
-        "US/Indiana-Starke"
-      ],
+      "aliases": ["America/Knox_IN", "US/Indiana-Starke"],
       "iso6709Coordinates": "+411745-0863730",
       "comments": "Central - IN (Starke)"
     },
@@ -1418,9 +1371,7 @@
       "currentDstAbbrev": "EDT",
       "countryISO31661Alpha2Code": "CA",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Pangnirtung"
-      ],
+      "aliases": ["America/Pangnirtung"],
       "iso6709Coordinates": "+6344-06828",
       "comments": "Eastern - NU (most areas)"
     },
@@ -1433,9 +1384,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "JM",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Jamaica"
-      ],
+      "aliases": ["Jamaica"],
       "iso6709Coordinates": "+175805-0764736",
       "comments": null
     },
@@ -1461,9 +1410,7 @@
       "currentDstAbbrev": "EDT",
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Louisville"
-      ],
+      "aliases": ["America/Louisville"],
       "iso6709Coordinates": "+381515-0854534",
       "comments": "Eastern - KY (Louisville area)"
     },
@@ -1515,10 +1462,7 @@
       "currentDstAbbrev": "PDT",
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "PST8PDT",
-        "US/Pacific"
-      ],
+      "aliases": ["PST8PDT", "US/Pacific"],
       "iso6709Coordinates": "+340308-1181434",
       "comments": "Pacific"
     },
@@ -1557,9 +1501,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "BR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Brazil/West"
-      ],
+      "aliases": ["Brazil/West"],
       "iso6709Coordinates": "-0308-06001",
       "comments": "Amazonas (east)"
     },
@@ -1598,9 +1540,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "MX",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Mexico/BajaSur"
-      ],
+      "aliases": ["Mexico/BajaSur"],
       "iso6709Coordinates": "+2313-10625",
       "comments": "Baja California Sur, Nayarit (most areas), Sinaloa"
     },
@@ -1652,9 +1592,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "MX",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Mexico/General"
-      ],
+      "aliases": ["Mexico/General"],
       "iso6709Coordinates": "+1924-09909",
       "comments": "Central Mexico"
     },
@@ -1719,10 +1657,7 @@
       "currentDstAbbrev": "EDT",
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "EST5EDT",
-        "US/Eastern"
-      ],
+      "aliases": ["EST5EDT", "US/Eastern"],
       "iso6709Coordinates": "+404251-0740023",
       "comments": "Eastern (most areas)"
     },
@@ -1748,9 +1683,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "BR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Brazil/DeNoronha"
-      ],
+      "aliases": ["Brazil/DeNoronha"],
       "iso6709Coordinates": "-0351-03225",
       "comments": "Atlantic islands"
     },
@@ -1802,9 +1735,7 @@
       "currentDstAbbrev": "GMT-1",
       "countryISO31661Alpha2Code": "GL",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Godthab"
-      ],
+      "aliases": ["America/Godthab"],
       "iso6709Coordinates": "+6411-05144",
       "comments": "most of Greenland"
     },
@@ -1829,10 +1760,7 @@
       "currentStdAbbrev": "EST",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "PA",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "CA",
-        "KY"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["CA", "KY"],
       "aliases": [
         "America/Atikokan",
         "America/Cayman",
@@ -1863,14 +1791,8 @@
       "currentStdAbbrev": "MST",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "US",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "CA"
-      ],
-      "aliases": [
-        "America/Creston",
-        "MST",
-        "US/Arizona"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["CA"],
+      "aliases": ["America/Creston", "MST", "US/Arizona"],
       "iso6709Coordinates": "+332654-1120424",
       "comments": "MST - AZ (most areas), Creston BC"
     },
@@ -2002,9 +1924,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "CA",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Canada/Saskatchewan"
-      ],
+      "aliases": ["Canada/Saskatchewan"],
       "iso6709Coordinates": "+5024-10439",
       "comments": "CST - SK (most areas)"
     },
@@ -2030,10 +1950,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "BR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Porto_Acre",
-        "Brazil/Acre"
-      ],
+      "aliases": ["America/Porto_Acre", "Brazil/Acre"],
       "iso6709Coordinates": "-0958-06748",
       "comments": "Acre"
     },
@@ -2059,9 +1976,7 @@
       "currentDstAbbrev": "GMT-3",
       "countryISO31661Alpha2Code": "CL",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Chile/Continental"
-      ],
+      "aliases": ["Chile/Continental"],
       "iso6709Coordinates": "-3327-07040",
       "comments": "most of Chile"
     },
@@ -2087,9 +2002,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "BR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Brazil/East"
-      ],
+      "aliases": ["Brazil/East"],
       "iso6709Coordinates": "-2332-04637",
       "comments": "Brazil (southeast: GO, DF, MG, ES, RJ, SP, PR, SC, RS)"
     },
@@ -2128,9 +2041,7 @@
       "currentDstAbbrev": "GMT-2:30",
       "countryISO31661Alpha2Code": "CA",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Canada/Newfoundland"
-      ],
+      "aliases": ["Canada/Newfoundland"],
       "iso6709Coordinates": "+4734-05243",
       "comments": "Newfoundland, Labrador (SE)"
     },
@@ -2198,9 +2109,7 @@
       "currentStdAbbrev": "EST",
       "currentDstAbbrev": "EDT",
       "countryISO31661Alpha2Code": "CA",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "BS"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["BS"],
       "aliases": [
         "America/Montreal",
         "America/Nassau",
@@ -2220,9 +2129,7 @@
       "currentDstAbbrev": "PDT",
       "countryISO31661Alpha2Code": "CA",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Canada/Pacific"
-      ],
+      "aliases": ["Canada/Pacific"],
       "iso6709Coordinates": "+4916-12307",
       "comments": "MST - BC (most areas)"
     },
@@ -2235,9 +2142,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "CA",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Canada/Yukon"
-      ],
+      "aliases": ["Canada/Yukon"],
       "iso6709Coordinates": "+6043-13503",
       "comments": "MST - Yukon (east)"
     },
@@ -2250,10 +2155,7 @@
       "currentDstAbbrev": "CDT",
       "countryISO31661Alpha2Code": "CA",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Rainy_River",
-        "Canada/Central"
-      ],
+      "aliases": ["America/Rainy_River", "Canada/Central"],
       "iso6709Coordinates": "+4953-09709",
       "comments": "Central - ON (west), Manitoba"
     },
@@ -2448,9 +2350,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "TM",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Ashkhabad"
-      ],
+      "aliases": ["Asia/Ashkhabad"],
       "iso6709Coordinates": "+3757+05823",
       "comments": null
     },
@@ -2501,17 +2401,8 @@
       "currentStdAbbrev": "GMT+7",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "TH",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "CX",
-        "KH",
-        "LA",
-        "VN"
-      ],
-      "aliases": [
-        "Asia/Phnom_Penh",
-        "Asia/Vientiane",
-        "Indian/Christmas"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["CX", "KH", "LA", "VN"],
+      "aliases": ["Asia/Phnom_Penh", "Asia/Vientiane", "Indian/Christmas"],
       "iso6709Coordinates": "+1345+10031",
       "comments": "north Vietnam"
     },
@@ -2602,9 +2493,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "BD",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Dacca"
-      ],
+      "aliases": ["Asia/Dacca"],
       "iso6709Coordinates": "+2343+09025",
       "comments": null
     },
@@ -2629,17 +2518,8 @@
       "currentStdAbbrev": "GMT+4",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AE",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "OM",
-        "RE",
-        "SC",
-        "TF"
-      ],
-      "aliases": [
-        "Asia/Muscat",
-        "Indian/Mahe",
-        "Indian/Reunion"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["OM", "RE", "SC", "TF"],
+      "aliases": ["Asia/Muscat", "Indian/Mahe", "Indian/Reunion"],
       "iso6709Coordinates": "+2518+05518",
       "comments": "Crozet"
     },
@@ -2704,9 +2584,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "VN",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Saigon"
-      ],
+      "aliases": ["Asia/Saigon"],
       "iso6709Coordinates": "+1045+10640",
       "comments": "south Vietnam"
     },
@@ -2719,9 +2597,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "HK",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Hongkong"
-      ],
+      "aliases": ["Hongkong"],
       "iso6709Coordinates": "+2217+11409",
       "comments": null
     },
@@ -2786,10 +2662,7 @@
       "currentDstAbbrev": "GMT+3",
       "countryISO31661Alpha2Code": "IL",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Tel_Aviv",
-        "Israel"
-      ],
+      "aliases": ["Asia/Tel_Aviv", "Israel"],
       "iso6709Coordinates": "+314650+0351326",
       "comments": null
     },
@@ -2841,9 +2714,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "NP",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Katmandu"
-      ],
+      "aliases": ["Asia/Katmandu"],
       "iso6709Coordinates": "+2743+08519",
       "comments": null
     },
@@ -2869,9 +2740,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "IN",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Calcutta"
-      ],
+      "aliases": ["Asia/Calcutta"],
       "iso6709Coordinates": "+2232+08822",
       "comments": null
     },
@@ -2896,12 +2765,8 @@
       "currentStdAbbrev": "GMT+8",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "MY",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "BN"
-      ],
-      "aliases": [
-        "Asia/Brunei"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["BN"],
+      "aliases": ["Asia/Brunei"],
       "iso6709Coordinates": "+0133+11020",
       "comments": "Sabah, Sarawak"
     },
@@ -2914,9 +2779,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "MO",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Macao"
-      ],
+      "aliases": ["Asia/Macao"],
       "iso6709Coordinates": "+221150+1133230",
       "comments": null
     },
@@ -2942,9 +2805,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "ID",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Ujung_Pandang"
-      ],
+      "aliases": ["Asia/Ujung_Pandang"],
       "iso6709Coordinates": "-0507+11924",
       "comments": "Borneo (east, south), Sulawesi/Celebes, Bali, Nusa Tengarra, Timor (west)"
     },
@@ -2970,9 +2831,7 @@
       "currentDstAbbrev": "GMT+3",
       "countryISO31661Alpha2Code": "CY",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Europe/Nicosia"
-      ],
+      "aliases": ["Europe/Nicosia"],
       "iso6709Coordinates": "+3510+03322",
       "comments": "most of Cyprus"
     },
@@ -3062,12 +2921,8 @@
       "currentStdAbbrev": "GMT+3",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "QA",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "BH"
-      ],
-      "aliases": [
-        "Asia/Bahrain"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["BH"],
+      "aliases": ["Asia/Bahrain"],
       "iso6709Coordinates": "+2517+05132",
       "comments": null
     },
@@ -3105,16 +2960,8 @@
       "currentStdAbbrev": "GMT+3",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "SA",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "AQ",
-        "KW",
-        "YE"
-      ],
-      "aliases": [
-        "Antarctica/Syowa",
-        "Asia/Aden",
-        "Asia/Kuwait"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["AQ", "KW", "YE"],
+      "aliases": ["Antarctica/Syowa", "Asia/Aden", "Asia/Kuwait"],
       "iso6709Coordinates": "+2438+04643",
       "comments": "Syowa"
     },
@@ -3153,9 +3000,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "KR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "ROK"
-      ],
+      "aliases": ["ROK"],
       "iso6709Coordinates": "+3733+12658",
       "comments": null
     },
@@ -3168,12 +3013,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "CN",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Chongqing",
-        "Asia/Chungking",
-        "Asia/Harbin",
-        "PRC"
-      ],
+      "aliases": ["Asia/Chongqing", "Asia/Chungking", "Asia/Harbin", "PRC"],
       "iso6709Coordinates": "+3114+12128",
       "comments": "Beijing Time"
     },
@@ -3185,14 +3025,8 @@
       "currentStdAbbrev": "GMT+8",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "SG",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "AQ",
-        "MY"
-      ],
-      "aliases": [
-        "Asia/Kuala_Lumpur",
-        "Singapore"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["AQ", "MY"],
+      "aliases": ["Asia/Kuala_Lumpur", "Singapore"],
       "iso6709Coordinates": "+0117+10351",
       "comments": "peninsular Malaysia, Concordia"
     },
@@ -3218,9 +3052,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "TW",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "ROC"
-      ],
+      "aliases": ["ROC"],
       "iso6709Coordinates": "+2503+12130",
       "comments": null
     },
@@ -3259,9 +3091,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "IR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Iran"
-      ],
+      "aliases": ["Iran"],
       "iso6709Coordinates": "+3540+05126",
       "comments": null
     },
@@ -3274,9 +3104,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "BT",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Thimbu"
-      ],
+      "aliases": ["Asia/Thimbu"],
       "iso6709Coordinates": "+2728+08939",
       "comments": null
     },
@@ -3288,12 +3116,8 @@
       "currentStdAbbrev": "GMT+9",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "JP",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "AU"
-      ],
-      "aliases": [
-        "Japan"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["AU"],
+      "aliases": ["Japan"],
       "iso6709Coordinates": "+353916+1394441",
       "comments": "Eyre Bird Observatory"
     },
@@ -3319,10 +3143,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "MN",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Choibalsan",
-        "Asia/Ulan_Bator"
-      ],
+      "aliases": ["Asia/Choibalsan", "Asia/Ulan_Bator"],
       "iso6709Coordinates": "+4755+10653",
       "comments": "most of Mongolia"
     },
@@ -3335,9 +3156,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "CN",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Kashgar"
-      ],
+      "aliases": ["Asia/Kashgar"],
       "iso6709Coordinates": "+4348+08735",
       "comments": "Xinjiang Time"
     },
@@ -3388,13 +3207,8 @@
       "currentStdAbbrev": "GMT+6:30",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "MM",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "CC"
-      ],
-      "aliases": [
-        "Asia/Rangoon",
-        "Indian/Cocos"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["CC"],
+      "aliases": ["Asia/Rangoon", "Indian/Cocos"],
       "iso6709Coordinates": "+1647+09610",
       "comments": null
     },
@@ -3485,9 +3299,7 @@
       "currentDstAbbrev": "GMT+1",
       "countryISO31661Alpha2Code": "FO",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Atlantic/Faeroe"
-      ],
+      "aliases": ["Atlantic/Faeroe"],
       "iso6709Coordinates": "+6201-00646",
       "comments": null
     },
@@ -3539,9 +3351,7 @@
       "currentDstAbbrev": "GMT+10:30",
       "countryISO31661Alpha2Code": "AU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Australia/South"
-      ],
+      "aliases": ["Australia/South"],
       "iso6709Coordinates": "-3455+13835",
       "comments": "South Australia"
     },
@@ -3554,9 +3364,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Australia/Queensland"
-      ],
+      "aliases": ["Australia/Queensland"],
       "iso6709Coordinates": "-2728+15302",
       "comments": "Queensland (most areas)"
     },
@@ -3569,9 +3377,7 @@
       "currentDstAbbrev": "GMT+10:30",
       "countryISO31661Alpha2Code": "AU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Australia/Yancowinna"
-      ],
+      "aliases": ["Australia/Yancowinna"],
       "iso6709Coordinates": "-3157+14127",
       "comments": "New South Wales (Yancowinna)"
     },
@@ -3584,9 +3390,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Australia/North"
-      ],
+      "aliases": ["Australia/North"],
       "iso6709Coordinates": "-1228+13050",
       "comments": "Northern Territory"
     },
@@ -3612,10 +3416,7 @@
       "currentDstAbbrev": "GMT+11",
       "countryISO31661Alpha2Code": "AU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Australia/Currie",
-        "Australia/Tasmania"
-      ],
+      "aliases": ["Australia/Currie", "Australia/Tasmania"],
       "iso6709Coordinates": "-4253+14719",
       "comments": "Tasmania"
     },
@@ -3641,9 +3442,7 @@
       "currentDstAbbrev": "GMT+11",
       "countryISO31661Alpha2Code": "AU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Australia/LHI"
-      ],
+      "aliases": ["Australia/LHI"],
       "iso6709Coordinates": "-3133+15905",
       "comments": "Lord Howe Island"
     },
@@ -3656,9 +3455,7 @@
       "currentDstAbbrev": "GMT+11",
       "countryISO31661Alpha2Code": "AU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Australia/Victoria"
-      ],
+      "aliases": ["Australia/Victoria"],
       "iso6709Coordinates": "-3749+14458",
       "comments": "Victoria"
     },
@@ -3671,9 +3468,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Australia/West"
-      ],
+      "aliases": ["Australia/West"],
       "iso6709Coordinates": "-3157+11551",
       "comments": "Western Australia (most areas)"
     },
@@ -3686,11 +3481,7 @@
       "currentDstAbbrev": "GMT+11",
       "countryISO31661Alpha2Code": "AU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Australia/ACT",
-        "Australia/Canberra",
-        "Australia/NSW"
-      ],
+      "aliases": ["Australia/ACT", "Australia/Canberra", "Australia/NSW"],
       "iso6709Coordinates": "-3352+15113",
       "comments": "New South Wales (most areas)"
     },
@@ -3729,9 +3520,7 @@
       "currentDstAbbrev": "GMT+3",
       "countryISO31661Alpha2Code": "GR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "EET"
-      ],
+      "aliases": ["EET"],
       "iso6709Coordinates": "+3758+02343",
       "comments": null
     },
@@ -3743,13 +3532,7 @@
       "currentStdAbbrev": "GMT+1",
       "currentDstAbbrev": "GMT+2",
       "countryISO31661Alpha2Code": "RS",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "BA",
-        "HR",
-        "ME",
-        "MK",
-        "SI"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["BA", "HR", "ME", "MK", "SI"],
       "aliases": [
         "Europe/Ljubljana",
         "Europe/Podgorica",
@@ -3768,12 +3551,7 @@
       "currentStdAbbrev": "GMT+1",
       "currentDstAbbrev": "GMT+2",
       "countryISO31661Alpha2Code": "DE",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "DK",
-        "NO",
-        "SE",
-        "SJ"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["DK", "NO", "SE", "SJ"],
       "aliases": [
         "Arctic/Longyearbyen",
         "Atlantic/Jan_Mayen",
@@ -3792,16 +3570,8 @@
       "currentStdAbbrev": "GMT+1",
       "currentDstAbbrev": "GMT+2",
       "countryISO31661Alpha2Code": "BE",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "LU",
-        "NL"
-      ],
-      "aliases": [
-        "CET",
-        "Europe/Amsterdam",
-        "Europe/Luxembourg",
-        "MET"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["LU", "NL"],
+      "aliases": ["CET", "Europe/Amsterdam", "Europe/Luxembourg", "MET"],
       "iso6709Coordinates": "+5050+00420",
       "comments": null
     },
@@ -3840,9 +3610,7 @@
       "currentDstAbbrev": "GMT+3",
       "countryISO31661Alpha2Code": "MD",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Europe/Tiraspol"
-      ],
+      "aliases": ["Europe/Tiraspol"],
       "iso6709Coordinates": "+4700+02850",
       "comments": null
     },
@@ -3855,9 +3623,7 @@
       "currentDstAbbrev": "GMT+1",
       "countryISO31661Alpha2Code": "IE",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Eire"
-      ],
+      "aliases": ["Eire"],
       "iso6709Coordinates": "+5320-00615",
       "comments": null
     },
@@ -3882,12 +3648,8 @@
       "currentStdAbbrev": "GMT+2",
       "currentDstAbbrev": "GMT+3",
       "countryISO31661Alpha2Code": "FI",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "AX"
-      ],
-      "aliases": [
-        "Europe/Mariehamn"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["AX"],
+      "aliases": ["Europe/Mariehamn"],
       "iso6709Coordinates": "+6010+02458",
       "comments": null
     },
@@ -3900,10 +3662,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "TR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Istanbul",
-        "Turkey"
-      ],
+      "aliases": ["Asia/Istanbul", "Turkey"],
       "iso6709Coordinates": "+4101+02858",
       "comments": null
     },
@@ -3942,11 +3701,7 @@
       "currentDstAbbrev": "GMT+3",
       "countryISO31661Alpha2Code": "UA",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Europe/Kiev",
-        "Europe/Uzhgorod",
-        "Europe/Zaporozhye"
-      ],
+      "aliases": ["Europe/Kiev", "Europe/Uzhgorod", "Europe/Zaporozhye"],
       "iso6709Coordinates": "+5026+03031",
       "comments": "most of Ukraine"
     },
@@ -3959,10 +3714,7 @@
       "currentDstAbbrev": "GMT+1",
       "countryISO31661Alpha2Code": "PT",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Portugal",
-        "WET"
-      ],
+      "aliases": ["Portugal", "WET"],
       "iso6709Coordinates": "+3843-00908",
       "comments": "Portugal (mainland)"
     },
@@ -3974,11 +3726,7 @@
       "currentStdAbbrev": "GMT",
       "currentDstAbbrev": "GMT+1",
       "countryISO31661Alpha2Code": "GB",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "GG",
-        "IM",
-        "JE"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["GG", "IM", "JE"],
       "aliases": [
         "Europe/Belfast",
         "Europe/Guernsey",
@@ -4038,9 +3786,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "RU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "W-SU"
-      ],
+      "aliases": ["W-SU"],
       "iso6709Coordinates": "+554521+0373704",
       "comments": "MSK+00 - Moscow area"
     },
@@ -4052,12 +3798,8 @@
       "currentStdAbbrev": "GMT+1",
       "currentDstAbbrev": "GMT+2",
       "countryISO31661Alpha2Code": "FR",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "MC"
-      ],
-      "aliases": [
-        "Europe/Monaco"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["MC"],
+      "aliases": ["Europe/Monaco"],
       "iso6709Coordinates": "+4852+00220",
       "comments": null
     },
@@ -4069,12 +3811,8 @@
       "currentStdAbbrev": "GMT+1",
       "currentDstAbbrev": "GMT+2",
       "countryISO31661Alpha2Code": "CZ",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "SK"
-      ],
-      "aliases": [
-        "Europe/Bratislava"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["SK"],
+      "aliases": ["Europe/Bratislava"],
       "iso6709Coordinates": "+5005+01426",
       "comments": null
     },
@@ -4099,14 +3837,8 @@
       "currentStdAbbrev": "GMT+1",
       "currentDstAbbrev": "GMT+2",
       "countryISO31661Alpha2Code": "IT",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "SM",
-        "VA"
-      ],
-      "aliases": [
-        "Europe/San_Marino",
-        "Europe/Vatican"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["SM", "VA"],
+      "aliases": ["Europe/San_Marino", "Europe/Vatican"],
       "iso6709Coordinates": "+4154+01229",
       "comments": null
     },
@@ -4144,9 +3876,7 @@
       "currentStdAbbrev": "GMT+3",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "RU",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "UA"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["UA"],
       "aliases": [],
       "iso6709Coordinates": "+4457+03406",
       "comments": "Crimea"
@@ -4251,9 +3981,7 @@
       "currentDstAbbrev": "GMT+2",
       "countryISO31661Alpha2Code": "PL",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Poland"
-      ],
+      "aliases": ["Poland"],
       "iso6709Coordinates": "+5215+02100",
       "comments": null
     },
@@ -4265,14 +3993,8 @@
       "currentStdAbbrev": "GMT+1",
       "currentDstAbbrev": "GMT+2",
       "countryISO31661Alpha2Code": "CH",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "DE",
-        "LI"
-      ],
-      "aliases": [
-        "Europe/Busingen",
-        "Europe/Vaduz"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["DE", "LI"],
+      "aliases": ["Europe/Busingen", "Europe/Vaduz"],
       "iso6709Coordinates": "+4723+00832",
       "comments": "Büsingen"
     },
@@ -4297,12 +4019,8 @@
       "currentStdAbbrev": "GMT+5",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "MV",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "TF"
-      ],
-      "aliases": [
-        "Indian/Kerguelen"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["TF"],
+      "aliases": ["Indian/Kerguelen"],
       "iso6709Coordinates": "+0410+07330",
       "comments": "Kerguelen, St Paul I, Amsterdam I"
     },
@@ -4340,14 +4058,8 @@
       "currentStdAbbrev": "GMT+12",
       "currentDstAbbrev": "GMT+13",
       "countryISO31661Alpha2Code": "NZ",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "AQ"
-      ],
-      "aliases": [
-        "Antarctica/McMurdo",
-        "Antarctica/South_Pole",
-        "NZ"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["AQ"],
+      "aliases": ["Antarctica/McMurdo", "Antarctica/South_Pole", "NZ"],
       "iso6709Coordinates": "-3652+17446",
       "comments": "New Zealand time"
     },
@@ -4373,9 +4085,7 @@
       "currentDstAbbrev": "GMT+13:45",
       "countryISO31661Alpha2Code": "NZ",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "NZ-CHAT"
-      ],
+      "aliases": ["NZ-CHAT"],
       "iso6709Coordinates": "-4357-17633",
       "comments": "Chatham Islands"
     },
@@ -4388,9 +4098,7 @@
       "currentDstAbbrev": "GMT-5",
       "countryISO31661Alpha2Code": "CL",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Chile/EasterIsland"
-      ],
+      "aliases": ["Chile/EasterIsland"],
       "iso6709Coordinates": "-2709-10926",
       "comments": "Easter Island"
     },
@@ -4467,13 +4175,8 @@
       "currentStdAbbrev": "GMT+11",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "SB",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "FM"
-      ],
-      "aliases": [
-        "Pacific/Pohnpei",
-        "Pacific/Ponape"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["FM"],
+      "aliases": ["Pacific/Pohnpei", "Pacific/Ponape"],
       "iso6709Coordinates": "-0932+16012",
       "comments": "Pohnpei"
     },
@@ -4485,12 +4188,8 @@
       "currentStdAbbrev": "GMT+10",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "GU",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "MP"
-      ],
-      "aliases": [
-        "Pacific/Saipan"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["MP"],
+      "aliases": ["Pacific/Saipan"],
       "iso6709Coordinates": "+1328+14445",
       "comments": null
     },
@@ -4503,11 +4202,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "HST",
-        "Pacific/Johnston",
-        "US/Hawaii"
-      ],
+      "aliases": ["HST", "Pacific/Johnston", "US/Hawaii"],
       "iso6709Coordinates": "+211825-1575130",
       "comments": "Hawaii"
     },
@@ -4520,9 +4215,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "KI",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Pacific/Enderbury"
-      ],
+      "aliases": ["Pacific/Enderbury"],
       "iso6709Coordinates": "-0247-17143",
       "comments": "Phoenix Islands"
     },
@@ -4561,9 +4254,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "MH",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Kwajalein"
-      ],
+      "aliases": ["Kwajalein"],
       "iso6709Coordinates": "+0905+16720",
       "comments": "Kwajalein"
     },
@@ -4640,14 +4331,8 @@
       "currentStdAbbrev": "GMT-11",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AS",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "UM"
-      ],
-      "aliases": [
-        "Pacific/Midway",
-        "Pacific/Samoa",
-        "US/Samoa"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["UM"],
+      "aliases": ["Pacific/Midway", "Pacific/Samoa", "US/Samoa"],
       "iso6709Coordinates": "-1416-17042",
       "comments": "Midway"
     },
@@ -4685,10 +4370,7 @@
       "currentStdAbbrev": "GMT+10",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "PG",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "AQ",
-        "FM"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["AQ", "FM"],
       "aliases": [
         "Antarctica/DumontDUrville",
         "Pacific/Chuuk",
@@ -4732,12 +4414,7 @@
       "currentStdAbbrev": "GMT+12",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "KI",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "MH",
-        "TV",
-        "UM",
-        "WF"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["MH", "TV", "UM", "WF"],
       "aliases": [
         "Pacific/Funafuti",
         "Pacific/Majuro",

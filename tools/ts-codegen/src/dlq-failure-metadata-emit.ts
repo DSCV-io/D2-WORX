@@ -149,21 +149,23 @@ export function validateDlqFailureMetadataSpec(
 }
 
 /** Emit a combined `.g.ts` source carrying both sub-catalogs. */
-export function emitDlqFailureMetadata(spec: DlqFailureMetadataSpec): EmitResult {
+export function emitDlqFailureMetadata(
+  spec: DlqFailureMetadataSpec,
+): EmitResult {
   const v = validateDlqFailureMetadataSpec(spec);
   const errors = v.diagnostics.filter((d) => d.severity === "error");
   if (errors.length > 0) return { source: "", diagnostics: v.diagnostics };
 
   const sb = new StringBuilder();
   sb.appendLine(
-    buildHeader("contracts/dlq-failure-metadata/dlq-failure-metadata.spec.json"),
+    buildHeader(
+      "contracts/dlq-failure-metadata/dlq-failure-metadata.spec.json",
+    ),
   );
   sb.appendLine("/* eslint-disable */");
   sb.appendLine();
   sb.appendLine("/**");
-  sb.appendLine(
-    " * Spec-derived DLQ failure-metadata wire-shape catalogs.",
-  );
+  sb.appendLine(" * Spec-derived DLQ failure-metadata wire-shape catalogs.");
   sb.appendLine(
     " * Mirrors .NET D2.Shared.Messaging.DlqFailureMetadataFields and",
   );
@@ -175,7 +177,9 @@ export function emitDlqFailureMetadata(spec: DlqFailureMetadataSpec): EmitResult
 
   // Fields catalog.
   sb.appendLine("/**");
-  sb.appendLine(" * JSON property-name constants for the DlqFailureMetadata record.");
+  sb.appendLine(
+    " * JSON property-name constants for the DlqFailureMetadata record.",
+  );
   sb.appendLine(" */");
   sb.appendLine("export const DlqFailureMetadataFields = {");
   sb.increaseIndent();
@@ -200,15 +204,16 @@ export function emitDlqFailureMetadata(spec: DlqFailureMetadataSpec): EmitResult
     "export const ALL_DLQ_FAILURE_METADATA_FIELDS: readonly string[] = [",
   );
   sb.increaseIndent();
-  for (const e of v.fields)
-    sb.appendLine(`"${escapeStringLiteral(e.value)}",`);
+  for (const e of v.fields) sb.appendLine(`"${escapeStringLiteral(e.value)}",`);
   sb.decreaseIndent();
   sb.appendLine("];");
   sb.appendLine();
 
   // Causes catalog.
   sb.appendLine("/**");
-  sb.appendLine(" * Closed-enum cause-string constants for DlqFailureMetadata.Cause.");
+  sb.appendLine(
+    " * Closed-enum cause-string constants for DlqFailureMetadata.Cause.",
+  );
   sb.appendLine(" */");
   sb.appendLine("export const DlqFailureCauses = {");
   sb.increaseIndent();
@@ -229,8 +234,7 @@ export function emitDlqFailureMetadata(spec: DlqFailureMetadataSpec): EmitResult
   sb.appendLine();
   sb.appendLine("export const ALL_DLQ_FAILURE_CAUSES: readonly string[] = [");
   sb.increaseIndent();
-  for (const e of v.causes)
-    sb.appendLine(`"${escapeStringLiteral(e.value)}",`);
+  for (const e of v.causes) sb.appendLine(`"${escapeStringLiteral(e.value)}",`);
   sb.decreaseIndent();
   sb.appendLine("];");
   sb.appendLine();

@@ -5,6 +5,7 @@
 node_modules/
 dist/
 .cache/
+logs/
 *.log
 
 # Operator-local upstream-rejection memory written by `pnpm geo:approve`.

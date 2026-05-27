@@ -12,11 +12,11 @@ Roslyn incremental source generator that emits the DLQ failure-metadata catalogs
 
 ## Multi-target dispatch
 
-| Consuming assembly | Emits | Class name |
-|---|---|---|
+| Consuming assembly                 | Emits                           | Class name                                       |
+| ---------------------------------- | ------------------------------- | ------------------------------------------------ |
 | `D2.Shared.Messaging.Abstractions` | `DlqFailureMetadataFields.g.cs` | `DlqFailureMetadataFields` (JSON property names) |
-| `D2.Shared.Messaging.RabbitMq` | `DlqFailureCauses.g.cs` | `DlqFailureCauses` (closed-enum cause strings) |
-| any other | (nothing) | — |
+| `D2.Shared.Messaging.RabbitMq`     | `DlqFailureCauses.g.cs`         | `DlqFailureCauses` (closed-enum cause strings)   |
+| any other                          | (nothing)                       | —                                                |
 
 The two catalogs co-live in one spec because they describe two facets of the same wire shape, but they emit into different consumers because the producer of the cause strings (`DlqFailureHeaderBuilder`) lives in the RabbitMq csproj while the consumer-of-the-record (`DlqFailureMetadata`) lives in the abstractions csproj.
 
@@ -31,11 +31,11 @@ The SAME spec drives `@d2/messaging-abstractions` via `tools/ts-codegen/src/dlq-
 
 ## Diagnostics
 
-| ID | Title | Severity |
-|---|---|---|
-| `D2DLQ001` | Spec is malformed | Error |
-| `D2DLQ002` | Duplicate field constName | Error |
-| `D2DLQ003` | Duplicate field value | Error |
-| `D2DLQ004` | Duplicate cause (constName or value) | Error |
-| `D2DLQ005` | constName has invalid shape | Error |
-| `D2DLQ006` | Empty wire value | Error |
+| ID         | Title                                | Severity |
+| ---------- | ------------------------------------ | -------- |
+| `D2DLQ001` | Spec is malformed                    | Error    |
+| `D2DLQ002` | Duplicate field constName            | Error    |
+| `D2DLQ003` | Duplicate field value                | Error    |
+| `D2DLQ004` | Duplicate cause (constName or value) | Error    |
+| `D2DLQ005` | constName has invalid shape          | Error    |
+| `D2DLQ006` | Empty wire value                     | Error    |

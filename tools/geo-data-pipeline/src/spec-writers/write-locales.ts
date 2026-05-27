@@ -5,8 +5,14 @@
 import { mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fetchCldrAvailableLocales } from "../fetchers/cldr-available-locales.js";
-import { fetchCldrDates, type DateFormatPattern } from "../fetchers/cldr-dates.js";
-import { deriveDefaultRegionTag, fetchCldrLikelySubtags } from "../fetchers/cldr-likely-subtags.js";
+import {
+  fetchCldrDates,
+  type DateFormatPattern,
+} from "../fetchers/cldr-dates.js";
+import {
+  deriveDefaultRegionTag,
+  fetchCldrLikelySubtags,
+} from "../fetchers/cldr-likely-subtags.js";
 import { fetchCldrNumbers } from "../fetchers/cldr-numbers.js";
 import {
   transformLocaleTag,
@@ -52,7 +58,10 @@ interface LocalesSpec {
     fetchedAt: string;
     sha256: string;
   }>;
-  fieldCoverage: Record<string, { populated: number; total: number; pct: string }>;
+  fieldCoverage: Record<
+    string,
+    { populated: number; total: number; pct: string }
+  >;
   /** Stats describing locale tag shape distribution. */
   tagShape: {
     bareLanguage: number;
@@ -121,13 +130,22 @@ export async function buildLocalesSpec(): Promise<LocalesSpec> {
         candidateTags.add(defaultRegion);
         derivedCount++;
       }
-    } else if (parts.length === 2 && parts[1] && /^[A-Z][a-z]{3}$/.test(parts[1])) {
+    } else if (
+      parts.length === 2 &&
+      parts[1] &&
+      /^[A-Z][a-z]{3}$/.test(parts[1])
+    ) {
       // Lang-Script tag (e.g., "zh-Hans") — derive lang-Script-Region by looking up the
       // lang-Script form directly in likelySubtags, then reconstructing with script preserved.
       const expanded = likely.bySourceTag.get(tag);
       if (expanded) {
         const expParts = expanded.split("-");
-        if (expParts.length === 3 && expParts[0] && expParts[1] && expParts[2]) {
+        if (
+          expParts.length === 3 &&
+          expParts[0] &&
+          expParts[1] &&
+          expParts[2]
+        ) {
           const derivedTag = `${expParts[0]}-${expParts[1]}-${expParts[2]}`;
           if (!candidateTags.has(derivedTag)) {
             candidateTags.add(derivedTag);
@@ -137,18 +155,26 @@ export async function buildLocalesSpec(): Promise<LocalesSpec> {
       }
     }
   }
-  console.error(`  [derive] +${derivedCount} default-region tags from likelySubtags`);
+  console.error(
+    `  [derive] +${derivedCount} default-region tags from likelySubtags`,
+  );
 
   // Layer A.3 — CLDR numbers + dates per-locale fetches via locale-inheritance fallback chain.
   // For each candidate tag we walk: <tag> → drop last subtag → ... → "en" (root fallback).
   // Cache results keyed by tag so sibling lookups are free. Provenance is collected for each
   // distinct successful upstream fetch.
-  console.error(`[fetch] CLDR per-locale numbers + dates (with inheritance fallback)`);
+  console.error(
+    `[fetch] CLDR per-locale numbers + dates (with inheritance fallback)`,
+  );
   const formattingByTag = new Map<string, LocaleCldrFormattingData>();
   const numbersProvenance = new Map<string, FetchProvenance>();
   const datesProvenance = new Map<string, FetchProvenance>();
   for (const tag of candidateTags) {
-    const resolved = await resolveLocaleFormatting(tag, numbersProvenance, datesProvenance);
+    const resolved = await resolveLocaleFormatting(
+      tag,
+      numbersProvenance,
+      datesProvenance,
+    );
     if (resolved) formattingByTag.set(tag, resolved);
   }
   for (const prov of numbersProvenance.values()) {
@@ -194,7 +220,9 @@ export async function buildLocalesSpec(): Promise<LocalesSpec> {
     else skipped++;
   }
   if (skippedNoFormatting > 0) {
-    console.error(`  [skip] ${skippedNoFormatting} tags missing CLDR formatting data`);
+    console.error(
+      `  [skip] ${skippedNoFormatting} tags missing CLDR formatting data`,
+    );
   }
   entries.sort((a, b) => a.ietfBcp47Tag.localeCompare(b.ietfBcp47Tag));
 
@@ -223,17 +251,32 @@ export async function buildLocalesSpec(): Promise<LocalesSpec> {
     regionSubtag: countNonNull(entries, (e) => e.regionSubtag),
     displayName: countNonNull(entries, (e) => e.displayName),
     endonymDisplayName: countNonNull(entries, (e) => e.endonymDisplayName),
-    localizedDisplayNames_en: countNonNull(entries, (e) => e.localizedDisplayNames["en"] ?? null),
-    localizedDisplayNames_ja: countNonNull(entries, (e) => e.localizedDisplayNames["ja"] ?? null),
-    localizedDisplayNames_zh: countNonNull(entries, (e) => e.localizedDisplayNames["zh"] ?? null),
+    localizedDisplayNames_en: countNonNull(
+      entries,
+      (e) => e.localizedDisplayNames["en"] ?? null,
+    ),
+    localizedDisplayNames_ja: countNonNull(
+      entries,
+      (e) => e.localizedDisplayNames["ja"] ?? null,
+    ),
+    localizedDisplayNames_zh: countNonNull(
+      entries,
+      (e) => e.localizedDisplayNames["zh"] ?? null,
+    ),
     decimalSeparator: countNonNull(entries, (e) => e.decimalSeparator || null),
-    thousandsSeparator: countNonNull(entries, (e) => e.thousandsSeparator || null),
+    thousandsSeparator: countNonNull(
+      entries,
+      (e) => e.thousandsSeparator || null,
+    ),
     dateFormatPattern: countNonNull(entries, (e) => e.dateFormatPattern),
     cldrDataSourceLocale_exact: entries.filter(
       (e) => e.cldrDataSourceLocale === e.ietfBcp47Tag,
     ).length,
   };
-  const fieldCoverage: Record<string, { populated: number; total: number; pct: string }> = {};
+  const fieldCoverage: Record<
+    string,
+    { populated: number; total: number; pct: string }
+  > = {};
   for (const [field, populated] of Object.entries(coverage)) {
     fieldCoverage[field] = {
       populated,
@@ -242,13 +285,17 @@ export async function buildLocalesSpec(): Promise<LocalesSpec> {
     };
   }
 
-  console.error(`[transform] locales: ${entries.length} entries (${skipped} tags skipped)`);
+  console.error(
+    `[transform] locales: ${entries.length} entries (${skipped} tags skipped)`,
+  );
   console.error(`  tag shapes:`);
   for (const [shape, count] of Object.entries(tagShape)) {
     console.error(`    ${shape}: ${count}`);
   }
   for (const [field, stats] of Object.entries(fieldCoverage)) {
-    console.error(`  ${field}: ${stats.populated}/${stats.total} (${stats.pct})`);
+    console.error(
+      `  ${field}: ${stats.populated}/${stats.total} (${stats.pct})`,
+    );
   }
 
   return {
@@ -284,7 +331,10 @@ export async function buildLocalesSpec(): Promise<LocalesSpec> {
   };
 }
 
-function countNonNull<T>(items: readonly T[], pick: (item: T) => string | null): number {
+function countNonNull<T>(
+  items: readonly T[],
+  pick: (item: T) => string | null,
+): number {
   let n = 0;
   for (const item of items) if (pick(item) !== null) n++;
   return n;
@@ -319,7 +369,11 @@ async function resolveLocaleFormatting(
 ): Promise<LocaleCldrFormattingData | null> {
   const chain = buildFallbackChain(tag);
 
-  let numbersResult: { decimal: string; thousands: string; sourceTag: string } | null = null;
+  let numbersResult: {
+    decimal: string;
+    thousands: string;
+    sourceTag: string;
+  } | null = null;
   for (const candidate of chain) {
     if (resolvedNumbersBy.has(candidate)) {
       const cached = resolvedNumbersBy.get(candidate)!;
@@ -359,7 +413,8 @@ async function resolveLocaleFormatting(
   }
   if (!numbersResult) return null;
 
-  let datesResult: { pattern: DateFormatPattern; sourceTag: string } | null = null;
+  let datesResult: { pattern: DateFormatPattern; sourceTag: string } | null =
+    null;
   for (const candidate of chain) {
     if (resolvedDatesBy.has(candidate)) {
       const cached = resolvedDatesBy.get(candidate)!;
@@ -369,7 +424,10 @@ async function resolveLocaleFormatting(
     }
     try {
       const r = await fetchCldrDates(candidate);
-      resolvedDatesBy.set(candidate, { pattern: r.dateFormatPattern, provenance: r.provenance });
+      resolvedDatesBy.set(candidate, {
+        pattern: r.dateFormatPattern,
+        provenance: r.provenance,
+      });
       datesProvenance.set(candidate, r.provenance);
       datesResult = { pattern: r.dateFormatPattern, sourceTag: candidate };
       break;
@@ -393,7 +451,11 @@ async function resolveLocaleFormatting(
     dateFormatPattern: datesResult.pattern,
     // When numbers and dates resolved from different fallback tags, surface the LESS-specific
     // one (the parent further up the chain) so operators see worst-case fallback distance.
-    cldrDataSourceLocale: pickLessSpecific(numbersResult.sourceTag, datesResult.sourceTag, chain),
+    cldrDataSourceLocale: pickLessSpecific(
+      numbersResult.sourceTag,
+      datesResult.sourceTag,
+      chain,
+    ),
   };
 }
 
@@ -408,7 +470,11 @@ function buildFallbackChain(tag: string): string[] {
   return chain;
 }
 
-function pickLessSpecific(a: string, b: string, chain: readonly string[]): string {
+function pickLessSpecific(
+  a: string,
+  b: string,
+  chain: readonly string[],
+): string {
   // The one appearing LATER in the chain is the LESS-specific (more-fallback) one.
   const aIdx = chain.indexOf(a);
   const bIdx = chain.indexOf(b);

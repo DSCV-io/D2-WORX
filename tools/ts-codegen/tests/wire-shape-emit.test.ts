@@ -71,7 +71,9 @@ describe("emitWireShape", () => {
       catalogDescription: "TKMessage",
     });
 
-    expect(result.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+    expect(result.diagnostics.filter((d) => d.severity === "error")).toEqual(
+      [],
+    );
     expect(result.source).toContain("export const TkMessageWireShape = {");
     expect(result.source).toContain('KEY: "key",');
     expect(result.source).toContain('PARAMS: "params",');
@@ -85,7 +87,9 @@ describe("emitWireShape", () => {
       catalogDescription: "InputError",
     });
 
-    expect(result.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+    expect(result.diagnostics.filter((d) => d.severity === "error")).toEqual(
+      [],
+    );
     expect(result.source).toContain("export const InputErrorWireShape = {");
     expect(result.source).toContain('FIELD: "field",');
     expect(result.source).toContain('ERRORS: "errors",');

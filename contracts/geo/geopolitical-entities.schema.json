@@ -5,13 +5,24 @@
   "description": "Hand-rolled catalog of supranational groupings (continents, sub-continents, regions, economic / political / military unions and agreements). No upstream source — humans maintain. Lives alongside the pipeline-generated Tier 2 spec files at contracts/geo/ root and is consumed identically by codegen. Distinguished only by $generated: false / $source: manual.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["$generated", "$source", "$schema", "$note", "catalogVersion", "lastEditedAt", "entries"],
+  "required": [
+    "$generated",
+    "$source",
+    "$schema",
+    "$note",
+    "catalogVersion",
+    "lastEditedAt",
+    "entries"
+  ],
   "properties": {
     "$generated": { "const": false },
     "$source": { "const": "manual" },
     "$schema": { "type": "string" },
     "$note": { "type": "string" },
-    "catalogVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$" },
+    "catalogVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$"
+    },
     "lastEditedAt": {
       "type": "string",
       "description": "Date of last human edit (YYYY-MM-DD). Different from generatedAt on pipeline-derived specs since this catalog has no regen step.",

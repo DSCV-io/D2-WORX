@@ -14,17 +14,18 @@ This is the domain-safe slice. Anything heavier (HTTP middleware, JWT validation
 
 ## File layout
 
-| Path | Contents |
-|---|---|
-| `D2.Shared.AuthContext.Abstractions.csproj` | csproj — `<EmitCompilerGeneratedFiles>` so SourceGen output lands in tracked `Generated/`; analyzer ref to `context-source-gen`; `<AdditionalFiles>` for both context specs |
-| `(generated) IAuthContext.g.cs` | Generated interface — lives in tracked `Generated/D2.Shared.Context.SourceGen/...`; re-emitted on every `dotnet build` from `contracts/auth-context/IAuthContext.spec.json`; do not hand-edit |
-| `IAuthContextExtensions.cs` | Hand-written convenience helpers — `HasScope`, `HasAnyScope`, `HasAllScopes`, `IsStaff`, `IsAdmin`, `IsForcedImpersonation`, `IsConsentImpersonation`, `IsImpersonatorStaff`, `IsImpersonatorAdmin` |
+| Path                                        | Contents                                                                                                                                                                                            |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `D2.Shared.AuthContext.Abstractions.csproj` | csproj — `<EmitCompilerGeneratedFiles>` so SourceGen output lands in tracked `Generated/`; analyzer ref to `context-source-gen`; `<AdditionalFiles>` for both context specs                         |
+| `(generated) IAuthContext.g.cs`             | Generated interface — lives in tracked `Generated/D2.Shared.Context.SourceGen/...`; re-emitted on every `dotnet build` from `contracts/auth-context/IAuthContext.spec.json`; do not hand-edit       |
+| `IAuthContextExtensions.cs`                 | Hand-written convenience helpers — `HasScope`, `HasAnyScope`, `HasAllScopes`, `IsStaff`, `IsAdmin`, `IsForcedImpersonation`, `IsConsentImpersonation`, `IsImpersonatorStaff`, `IsImpersonatorAdmin` |
 
 ---
 
 ## Spec → emitted shape
 
 The spec at `contracts/auth-context/IAuthContext.spec.json` declares 5 sections:
+
 - **Token + Trust**: `IsAuthenticated` (trinary), `Audience` (`IReadOnlyList<string>` per RFC 7519 §4.1.3), `SessionId`, `TokenIssuedAt`, `TokenExpiresAt`, `ActorChain` (RFC 8693 flattened outermost-first)
 - **Identity**: `Subject` (raw `sub`), `UserId` (`sub` parsed as Guid), `Username`, `RequestedByClientId` (RFC 8693 §4.3 / RFC 9068 — client that requested THIS token), `ImmediateCallerClientId` (derived — outermost Service in chain), `OriginatingClientId` (derived — most-deeply-nested Service in chain, fallback to Subject for pure service-identity tokens), `IsServiceIdentity` (derived)
 - **Organization**: `OrgId`, `OrgName`, `OrgType`, `OrgRole`
@@ -35,13 +36,13 @@ All D²-custom claim-mapped properties use `d2_`-prefixed claim names. Standard 
 
 ### The five identity properties — when to use which
 
-| Property | Source | When meaningful |
-|---|---|---|
-| `Subject` | `sub` claim (raw) | Always (when authenticated). For user tokens: a Guid string. For service-identity tokens: the OAuth client_id of the calling service. |
-| `UserId` | `sub` claim parsed as Guid | When the token represents a user. Null for pure service-identity tokens. |
-| `RequestedByClientId` | `client_id` claim (RFC 8693 §4.3) | The client that requested THIS specific token from the AS. Updates on every token exchange — for a multi-hop chain this is the client that triggered the most recent exchange, NOT the originating client. |
-| `ImmediateCallerClientId` | Outermost Service entry in `ActorChain` | The service that immediately called this handler. Null when the user is calling directly with no service intermediary. |
-| `OriginatingClientId` | Most-deeply-nested Service entry in `ActorChain`, fallback to `Subject` for pure service tokens | **The primary audit identifier** for end-to-end traceability across multi-hop sync + async chains. The first service that started this call chain. |
+| Property                  | Source                                                                                          | When meaningful                                                                                                                                                                                            |
+| ------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Subject`                 | `sub` claim (raw)                                                                               | Always (when authenticated). For user tokens: a Guid string. For service-identity tokens: the OAuth client_id of the calling service.                                                                      |
+| `UserId`                  | `sub` claim parsed as Guid                                                                      | When the token represents a user. Null for pure service-identity tokens.                                                                                                                                   |
+| `RequestedByClientId`     | `client_id` claim (RFC 8693 §4.3)                                                               | The client that requested THIS specific token from the AS. Updates on every token exchange — for a multi-hop chain this is the client that triggered the most recent exchange, NOT the originating client. |
+| `ImmediateCallerClientId` | Outermost Service entry in `ActorChain`                                                         | The service that immediately called this handler. Null when the user is calling directly with no service intermediary.                                                                                     |
+| `OriginatingClientId`     | Most-deeply-nested Service entry in `ActorChain`, fallback to `Subject` for pure service tokens | **The primary audit identifier** for end-to-end traceability across multi-hop sync + async chains. The first service that started this call chain.                                                         |
 
 ---
 
@@ -82,9 +83,11 @@ None — this lib is read-only abstractions + pure-function extension methods. C
 ## Dependencies
 
 Project references:
+
 - `D2.Shared.Auth.Abstractions` — `OrgType`, `Role`, `ActorKind`, `ImpersonationKind`, `ActorEntry`
 
 Analyzer-only:
+
 - `D2.Shared.Context.SourceGen` — emits `IAuthContext.g.cs`
 
 ---

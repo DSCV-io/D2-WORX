@@ -50,7 +50,10 @@ export interface CldrSubdivisionsPayload {
   };
 }
 
-export interface CldrSubdivisionsFetchResult extends Pick<CachedFetch, "provenance" | "fromCache"> {
+export interface CldrSubdivisionsFetchResult extends Pick<
+  CachedFetch,
+  "provenance" | "fromCache"
+> {
   locale: string;
   /** Raw CLDR concatenated-id → display name (e.g. `usca` → `California`). */
   rawIdToName: Record<string, string>;
@@ -69,7 +72,9 @@ export async function fetchCldrSubdivisions(
     cacheKey: `${locale}-subdivisions.json`,
     ttlHours: options?.ttlHours,
   });
-  const payload = JSON.parse(fetched.body.toString("utf8")) as CldrSubdivisionsPayload;
+  const payload = JSON.parse(
+    fetched.body.toString("utf8"),
+  ) as CldrSubdivisionsPayload;
   const rawIdToName = payload.subdivisions.localeDisplayNames.subdivisions;
   return {
     locale,

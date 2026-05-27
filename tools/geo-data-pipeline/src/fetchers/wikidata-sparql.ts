@@ -14,7 +14,13 @@ const USER_AGENT =
   "D2-WORX-geo-data-pipeline/0.1 " +
   "(https://github.com/DCSV/D2-WORX; contact: ops@dcsv) Node/24 (Windows)";
 
-const CACHE_DIR = resolve(REPO_ROOT_PATH, "tools", "geo-data-pipeline", ".cache", SOURCE_NAME);
+const CACHE_DIR = resolve(
+  REPO_ROOT_PATH,
+  "tools",
+  "geo-data-pipeline",
+  ".cache",
+  SOURCE_NAME,
+);
 
 /**
  * Wikidata Query Service SPARQL endpoint:
@@ -67,30 +73,54 @@ interface SparqlOptions {
  * Executes a SPARQL query against Wikidata's Query Service with caching + provenance.
  * Cache key = sha256(query) so identical queries hit cache; query changes invalidate.
  */
-export async function fetchSparql(options: SparqlOptions): Promise<SparqlFetchResult> {
+export async function fetchSparql(
+  options: SparqlOptions,
+): Promise<SparqlFetchResult> {
   const ttlHours = options.ttlHours ?? 24;
-  const queryHash = createHash("sha256").update(options.query).digest("hex").substring(0, 16);
+  const queryHash = createHash("sha256")
+    .update(options.query)
+    .digest("hex")
+    .substring(0, 16);
   const cacheFile = join(CACHE_DIR, `${options.cacheLabel}-${queryHash}.json`);
   const provenanceFile = `${cacheFile}.provenance.json`;
 
   if (ttlHours > 0 && (await isFresh(cacheFile, ttlHours))) {
-    const cachedResult = JSON.parse(await readFile(cacheFile, "utf8")) as SparqlResult;
-    const cachedProvenance = JSON.parse(await readFile(provenanceFile, "utf8")) as FetchProvenance;
-    return { result: cachedResult, provenance: cachedProvenance, fromCache: true, queryWallMs: 0 };
+    const cachedResult = JSON.parse(
+      await readFile(cacheFile, "utf8"),
+    ) as SparqlResult;
+    const cachedProvenance = JSON.parse(
+      await readFile(provenanceFile, "utf8"),
+    ) as FetchProvenance;
+    return {
+      result: cachedResult,
+      provenance: cachedProvenance,
+      fromCache: true,
+      queryWallMs: 0,
+    };
   }
 
-  console.error(`[fetch] wikidata SPARQL "${options.cacheLabel}" (${queryHash})`);
+  console.error(
+    `[fetch] wikidata SPARQL "${options.cacheLabel}" (${queryHash})`,
+  );
   const startMs = Date.now();
   const url = `${ENDPOINT}?format=json&query=${encodeURIComponent(options.query)}`;
   let response: Response;
   try {
     response = await fetch(url, {
-      headers: { "User-Agent": USER_AGENT, Accept: "application/sparql-results+json" },
+      headers: {
+        "User-Agent": USER_AGENT,
+        Accept: "application/sparql-results+json",
+      },
       signal: AbortSignal.timeout(120_000),
     });
   } catch (err) {
     if (err instanceof Error && err.name === "TimeoutError") {
-      throw new Error(`Wikidata SPARQL fetch timeout (120s) for "${options.cacheLabel}"`);
+      throw new Error(
+        `Wikidata SPARQL fetch timeout (120s) for "${options.cacheLabel}"`,
+        {
+          cause: err,
+        },
+      );
     }
     throw err;
   }
@@ -150,7 +180,11 @@ export async function fetchSparqlBatch(
     }
   }
 
-  await Promise.all(Array.from({ length: Math.min(concurrency, options.length) }, () => worker()));
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, options.length) }, () =>
+      worker(),
+    ),
+  );
   return results;
 }
 

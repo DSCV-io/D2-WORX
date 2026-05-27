@@ -14,18 +14,18 @@ D2 wire-protocol headers applicable to the AMQP transport. Includes AMQP-only en
 
 ## Public API
 
-| Member | Type | Purpose |
-|---|---|---|
-| `AmqpHeaders.CONTENT_TYPE` | `const string "content-type"` | Always `application/octet-stream` for D2 messages |
-| `AmqpHeaders.ENCRYPTION_KID` | `const string "x-d2-encryption-kid"` | Encryption key id duplicated from the encrypted frame for DLQ ops |
-| `AmqpHeaders.FAILURE_REASON` | `const string "x-d2-failure-reason"` | DLQ failure metadata attached by the consumer on nack |
-| `AmqpHeaders.MESSAGE_ID` | `const string "message-id"` | UUIDv7 message identifier |
-| `AmqpHeaders.PROPAGATED_CONTEXT` | `const string "x-d2-context"` | Base64url-of-JSON propagated context envelope (cross-transport) |
-| `AmqpHeaders.PROTO_TYPE` | `const string "x-proto-type"` | Fully-qualified proto type name |
-| `AmqpHeaders.TIMESTAMP` | `const string "timestamp"` | Producer-set ISO 8601 UTC timestamp |
-| `AmqpHeaders.TRACEPARENT` | `const string "traceparent"` | W3C Trace Context (cross-transport) |
-| `AmqpHeaders.TRACESTATE` | `const string "tracestate"` | W3C tracestate (cross-transport) |
-| `AmqpHeaders.AllAmqpHeaders` | `IReadOnlyList<string>` | All wire values in `constName` order |
+| Member                           | Type                                 | Purpose                                                           |
+| -------------------------------- | ------------------------------------ | ----------------------------------------------------------------- |
+| `AmqpHeaders.CONTENT_TYPE`       | `const string "content-type"`        | Always `application/octet-stream` for D2 messages                 |
+| `AmqpHeaders.ENCRYPTION_KID`     | `const string "x-d2-encryption-kid"` | Encryption key id duplicated from the encrypted frame for DLQ ops |
+| `AmqpHeaders.FAILURE_REASON`     | `const string "x-d2-failure-reason"` | DLQ failure metadata attached by the consumer on nack             |
+| `AmqpHeaders.MESSAGE_ID`         | `const string "message-id"`          | UUIDv7 message identifier                                         |
+| `AmqpHeaders.PROPAGATED_CONTEXT` | `const string "x-d2-context"`        | Base64url-of-JSON propagated context envelope (cross-transport)   |
+| `AmqpHeaders.PROTO_TYPE`         | `const string "x-proto-type"`        | Fully-qualified proto type name                                   |
+| `AmqpHeaders.TIMESTAMP`          | `const string "timestamp"`           | Producer-set ISO 8601 UTC timestamp                               |
+| `AmqpHeaders.TRACEPARENT`        | `const string "traceparent"`         | W3C Trace Context (cross-transport)                               |
+| `AmqpHeaders.TRACESTATE`         | `const string "tracestate"`          | W3C tracestate (cross-transport)                                  |
+| `AmqpHeaders.AllAmqpHeaders`     | `IReadOnlyList<string>`              | All wire values in `constName` order                              |
 
 ---
 

@@ -26,10 +26,10 @@ The SAME spec drives `@d2/telemetry` via `tools/ts-codegen/src/otel-messaging-ta
 
 ## Diagnostics
 
-| ID | Title | Severity |
-|---|---|---|
-| `D2OMT001` | OTel messaging tags spec is malformed | Error |
-| `D2OMT002` | Duplicate constName | Error |
-| `D2OMT003` | Duplicate wire value | Error |
-| `D2OMT004` | constName has invalid shape | Error |
-| `D2OMT005` | Empty wire value | Error |
+| ID         | Title                                 | Severity |
+| ---------- | ------------------------------------- | -------- |
+| `D2OMT001` | OTel messaging tags spec is malformed | Error    |
+| `D2OMT002` | Duplicate constName                   | Error    |
+| `D2OMT003` | Duplicate wire value                  | Error    |
+| `D2OMT004` | constName has invalid shape           | Error    |
+| `D2OMT005` | Empty wire value                      | Error    |

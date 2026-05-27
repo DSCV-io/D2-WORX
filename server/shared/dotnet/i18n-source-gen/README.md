@@ -16,14 +16,14 @@ The catalog is the single source of truth for translation keys. Every `TK.Common
 
 ## Build-time diagnostics
 
-| ID | Severity | Trigger |
-|---|---|---|
-| `D2I18N001` | Error | Translation key violates the segment / identifier / reserved-word rules (see Key decomposition) |
-| `D2I18N002` | Warning | Key present in en-US is missing from another locale file (per-locale coverage gap) |
-| `D2I18N003` | Error | Two source keys decompose to the same TK constant path (e.g. `common_errors_NOT_FOUND` + `Common_Errors_NOT_FOUND`) |
-| `D2I18N004` | Warning | Key present in another locale is orphaned (no en-US equivalent) |
-| `D2I18N005` | Error | No `en-US.json` found in `AdditionalFiles` for a target assembly |
-| `D2I18N006` | Error | A locale file failed to parse (malformed JSON) |
+| ID          | Severity | Trigger                                                                                                             |
+| ----------- | -------- | ------------------------------------------------------------------------------------------------------------------- |
+| `D2I18N001` | Error    | Translation key violates the segment / identifier / reserved-word rules (see Key decomposition)                     |
+| `D2I18N002` | Warning  | Key present in en-US is missing from another locale file (per-locale coverage gap)                                  |
+| `D2I18N003` | Error    | Two source keys decompose to the same TK constant path (e.g. `common_errors_NOT_FOUND` + `Common_Errors_NOT_FOUND`) |
+| `D2I18N004` | Warning  | Key present in another locale is orphaned (no en-US equivalent)                                                     |
+| `D2I18N005` | Error    | No `en-US.json` found in `AdditionalFiles` for a target assembly                                                    |
+| `D2I18N006` | Error    | A locale file failed to parse (malformed JSON)                                                                      |
 
 ---
 
@@ -51,7 +51,7 @@ A decomposition failure produces `D2I18N001` and the offending key is dropped fr
 }
 ```
 
-- **Keys**: snake_case, `<domain>_<category>_<NAME>` shape.
+- **Keys**: snake*case, `<domain>*<category>\_<NAME>` shape.
 - **Values**: free-form translation strings. Embedded `{name}` placeholders correspond to `TKMessage.With(name, value)` parameter substitution at render time.
 - **One JSON file per locale** in `contracts/messages/` (e.g. `en-US.json`, `fr-FR.json`).
 

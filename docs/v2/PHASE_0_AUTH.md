@@ -65,7 +65,7 @@ issuer.
   `auth_db.encryption_key` storage) lives inside Edge's Auth module — Phase 3.
 - **Serve `/oauth/token`** or `/.well-known/jwks.json` endpoints — Edge / Phase 3.
 - **Own session storage.** Sessions live in `auth_db.session` + Redis on Edge; this lib only
-  *tracks* revocations and *checks* liveness against cached state.
+  _tracks_ revocations and _checks_ liveness against cached state.
 - **Run the risk engine.** The sliding-window risk tracker (impossible travel, ASN diversity, OTP
   step-up triggers) lives in Edge — Phase 3. **Edge also computes the per-request `RiskScore`**
   (composite — fingerprint-mismatch + geo-velocity + ASN/Tor/proxy + policy contributions; 0-100, higher = worse)
@@ -258,11 +258,11 @@ claims (`d2_whois_id`, `d2_fingerprint_score`).
 **New claim shapes** vs the §3.1 lock — Phase 3 Edge work needs to add these and this lib's
 mapper needs to consume them:
 
-| Claim | Status today | Phase 3 add |
-|---|---|---|
-| `d2_kind` (top-level) | §3.1 says "only inside `act` chain entries"; `JwtClaimTypes.ACT_KIND` doc explicitly says "There is NO top-level `d2_kind` claim" | Add a top-level `d2_kind` claim carrying the anon/authed discriminator (values keyed off the `ActorKind` enum, plus a new `Anonymous` variant — see §6.4 below). The inside-`act` `d2_kind` (consent/force) stays as-is; lookup paths differ (`d2_kind` vs `act.d2_kind`). |
-| `d2_whois_id` | not defined | New top-level claim — opaque ID into the WhoIs lookup (already cached per IPinfo Singleflight per [`PHASE_3_RATE_LIMITING.md`](PHASE_3_RATE_LIMITING.md) §4). Tamper-evident via JWT signature. |
-| `d2_fingerprint_score` | not defined; `RiskScore` is on `IRequestContext` propagated via `x-d2-context` header | Optional top-level claim — Edge can elect to bake the `RiskScore` into the JWT (vs propagating only via header) when minting anon tokens, since anon visitors have no other identity binding. Authed JWTs continue to carry the score via `IRequestContext` / header propagation. |
+| Claim                  | Status today                                                                                                                      | Phase 3 add                                                                                                                                                                                                                                                                       |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `d2_kind` (top-level)  | §3.1 says "only inside `act` chain entries"; `JwtClaimTypes.ACT_KIND` doc explicitly says "There is NO top-level `d2_kind` claim" | Add a top-level `d2_kind` claim carrying the anon/authed discriminator (values keyed off the `ActorKind` enum, plus a new `Anonymous` variant — see §6.4 below). The inside-`act` `d2_kind` (consent/force) stays as-is; lookup paths differ (`d2_kind` vs `act.d2_kind`).        |
+| `d2_whois_id`          | not defined                                                                                                                       | New top-level claim — opaque ID into the WhoIs lookup (already cached per IPinfo Singleflight per [`PHASE_3_RATE_LIMITING.md`](PHASE_3_RATE_LIMITING.md) §4). Tamper-evident via JWT signature.                                                                                   |
+| `d2_fingerprint_score` | not defined; `RiskScore` is on `IRequestContext` propagated via `x-d2-context` header                                             | Optional top-level claim — Edge can elect to bake the `RiskScore` into the JWT (vs propagating only via header) when minting anon tokens, since anon visitors have no other identity binding. Authed JWTs continue to carry the score via `IRequestContext` / header propagation. |
 
 **ActorKind enum** — Phase 3 needs a new `Anonymous` variant added alongside the existing
 `Service` / `Impersonation` values. Not a breaking change at the JWT layer (top-level `d2_kind`
@@ -380,6 +380,7 @@ the anon-JWT pattern lands in Edge.
   to match existing `act.d2_kind` value casing).
 
 **Cross-references**:
+
 - Rate-limiting bucket-keying implications → [`docs/v2/PHASE_3_RATE_LIMITING.md`](PHASE_3_RATE_LIMITING.md)
   §4 (middleware flow) and §11 (claims-driven keying — added in lockstep with this decision).
 - Algorithm gap items above → §10 ("What we explicitly defer to Phase 3 (Edge)").
@@ -657,10 +658,11 @@ public interface IJwksProvider
 ```
 
 **Backing** (Q12 = honor discovery doc):
+
 - Single config knob: `D2_AUTH_ISSUER` (e.g. `https://edge.internal`).
 - At startup: fetch `<issuer>/.well-known/openid-configuration`, follow `jwks_uri` to fetch the
   JWKS, cache as `JwksKeySetSnapshot`. `Microsoft.IdentityModel.Tokens.ConfigurationManager
-  <OpenIdConnectConfiguration>` does this natively.
+<OpenIdConnectConfiguration>` does this natively.
 - `ITieredCache` keyed by `jwks:default`.
 - TTL: 5 min (proactive refresh; reactive refresh on `kid` not found).
 - RMQ subscriber: on `d2.security.key-rotated` event for `jwks` domain, force-invalidate (Q3).
@@ -765,6 +767,7 @@ public interface IKeyringClient
 ```
 
 **Backing**:
+
 - `ITieredCache` keyed by `keyring:{domain}` for the keyring snapshot.
 - gRPC channel to Edge's `internal/keys/{domain}` endpoint (auth: service-identity token from
   `IServiceIdentityClient` — see §6.5).
@@ -845,8 +848,9 @@ public interface IServiceIdentityClient
 ```
 
 **Backing**:
+
 - HTTP `POST /oauth/token` to Edge with `grant_type=client_credentials`, `Authorization: Basic
-  <client_id:client_secret>`. Edge does the actual issuance — this lib just sends the request and
+<client_id:client_secret>`. Edge does the actual issuance — this lib just sends the request and
   caches the response.
 - HTTP client registered via `IHttpClientFactory` named `"d2-auth-service-identity"` with
   `D2.Shared.Resilience` `CircuitBreaker` + `RetryPolicy` attached as message handlers (Q20).
@@ -861,6 +865,7 @@ public interface IServiceIdentityClient
   not-yet-refreshed during a transient hiccup).
 
 **`client_id` + `client_secret` source** (Q2):
+
 - Read from `IConfiguration` (env vars: `D2_AUTH_CLIENT_ID`, `D2_AUTH_CLIENT_SECRET`).
 - Per-service. Each backend service registered as an OAuth client at Edge.
 - Rotation: 180-day cadence, requires service restart on this rung of the maturity ladder. Future:
@@ -901,6 +906,7 @@ public interface ITokenExchangeClient
 ```
 
 **Backing**:
+
 - HTTP `POST /oauth/token` to Edge with
   `grant_type=urn:ietf:params:oauth:grant-type:token-exchange`. Subject token is the inbound user
   JWT; requested token type is `jwt`; audience is the downstream service (one of the codegen'd
@@ -1088,7 +1094,7 @@ Files: BaseHandler<UploadStarted>
    2. Business logic runs
 ```
 
-**This raises a subtle design question** (Q10): when a service receives a request, *which* scope set
+**This raises a subtle design question** (Q10): when a service receives a request, _which_ scope set
 is authoritative for the `RequiredScopes` check? Options:
 
 - (a) The service-identity JWT's scopes (transport-level — usually narrow, just "may call Files
@@ -1098,8 +1104,8 @@ is authoritative for the `RequiredScopes` check? Options:
 - (c) The intersection — both must grant the required scope.
 
 V2.md §5.4 mentions narrowed scope re-mints via RFC 8693 token exchange, which suggests **the right
-pattern is**: Edge token-exchanges the user JWT for a *new user JWT with
-audience=https://files.internal and narrowed scopes*, then sends THAT to Files. Files then validates
+pattern is**: Edge token-exchanges the user JWT for a _new user JWT with
+audience=https://files.internal and narrowed scopes_, then sends THAT to Files. Files then validates
 the user JWT directly — no separate service-identity layer needed for cross-service business calls.
 Service-identity is only for things like KeyringClient gRPC fetches (where there's no user context).
 
@@ -1302,11 +1308,13 @@ surfaced during implementation will be appended here as they come up.
 **Decided**: 2026-05-07.
 
 **Rationale**:
+
 - Up-front split lets each consumer pull only what it needs. Pure inbound-only services skip the
   Keyring + Messaging deps entirely; outbound-only services skip the middleware.
 - Combine later if it really makes sense; splitting later is harder than collapsing later.
 
 **Resulting structure**:
+
 - `D2.Shared.Auth.Abstractions` — vocabulary (already shipped — Wave 2; nothing new here)
 - `D2.Shared.Auth` — inbound: middleware + interceptor + JwksProvider + SessionLivenessTracker +
   fingerprint scoring + ProblemDetails converter
@@ -1330,6 +1338,7 @@ this rung.
 **Decided**: 2026-05-07.
 
 **Rationale**:
+
 - RMQ's persistence + ack semantics give us retryable-on-failure-to-consume behavior — a service
   that's offline when a rotation fires gets the event when it comes back, instead of permanently
   missing it like a Redis pub/sub fire-and-forget.
@@ -1357,14 +1366,14 @@ jobs / dkron / one-off integrations all become OAuth clients.
 for opting out per-handler was cost; no longer applies. Every request pays the same near-zero cost
 and gets instant revocation across all endpoints.
 
-### Q6 — Fingerprint mismatch handling → **(a) score only in this lib; policy in Edge** *(REVISED — see deliverable 0002)*
+### Q6 — Fingerprint mismatch handling → **(a) score only in this lib; policy in Edge** _(REVISED — see deliverable 0002)_
 
 **Decided**: 2026-05-07. **Revised 2026-05-10** during deliverable 0002 PLAN.
 
 **Original rationale**: this lib's job was to compute `FingerprintMatchScore` and surface it on
 `IRequestContext`. The block / step-up policy decision lives in Edge's risk engine (Phase 3).
 
-**Revision (deliverable 0002)**: even score *computation* moves to Edge. The composite
+**Revision (deliverable 0002)**: even score _computation_ moves to Edge. The composite
 `RiskScore` (renamed; 0 = no risk, 100 = max risk) factors in fingerprint-mismatch +
 geo-velocity drift from sign-in baseline + ASN / Tor / proxy flags + per-org / per-user policy
 contributions — most of those inputs live in Edge (the risk engine has the historical context, the
@@ -1464,6 +1473,7 @@ Phase 3 just swaps the fixture for the actual `/oauth/token` endpoint.
 **Decided**: 2026-05-07.
 
 **Rationale**:
+
 - **Service-identity tokens**: 5 min. Short-lived because they're cached in-memory and refreshed
   by background `IHostedService`; short TTL limits blast radius if a service-secret leaks.
 - **User tokens**: 15 min. Long enough to amortize the token-exchange round-trip across many
@@ -1511,13 +1521,12 @@ on the JSON object.
   "instance": "/api/v1/files/123",
   "trace_id": "00-abc123def456-7890-01",
   "d2_error_code": "INVALID_TOKEN_SIGNATURE",
-  "d2_messages": [
-    { "key": "common.errors.invalid_token", "args": {} }
-  ]
+  "d2_messages": [{ "key": "common.errors.invalid_token", "args": {} }]
 }
 ```
 
 Compatibility points:
+
 - `status` matches `D2Result.StatusCode` directly.
 - `d2_error_code` is from the `ErrorCodes` vocabulary — same values `D2Result.ErrorCode` carries.
 - `d2_messages` is exactly our `TKMessage[]` shape (TK key + args dict). SvelteKit's Paraglide
@@ -1537,6 +1546,7 @@ translation. Lives in `D2.Shared.Auth` initially; can be extracted to a shared
 **Decided**: 2026-05-06.
 
 **Rationale**:
+
 - Read-heavy + revocation-driven invalidation is exactly what `ITieredCache` + backplane is
   designed for. Using the canonical tool is the right call.
 - The "Pattern B is cheaper at runtime" argument doesn't hold up: Pattern B still needs a local
@@ -1551,11 +1561,12 @@ translation. Lives in `D2.Shared.Auth` initially; can be extracted to a shared
 **Decided**: 2026-05-06.
 
 **Rationale**:
-- A liveness-flag-only cache (option a) doesn't say *anything* about the session beyond "it
+
+- A liveness-flag-only cache (option a) doesn't say _anything_ about the session beyond "it
   exists." Edge would still need a separate snapshot store (extra cache + extra invalidation
   path), and backend services that want to compare current session state to claims would need a
   second cache call. Net: more infrastructure for less information.
-- Storing the full `SessionSnapshot` under `session:{id}` makes the snapshot's *presence* the
+- Storing the full `SessionSnapshot` under `session:{id}` makes the snapshot's _presence_ the
   liveness signal AND the data answer in one cache hit. Edge's cookie pipeline collapses to
   `cookie → session_id → snapshot → JWT` with one canonical place for session state.
 - Backend services aren't penalized — they ignore the snapshot fields they don't need (JWT claims
@@ -1576,6 +1587,7 @@ ergonomic shortcut for backend services that just want a yes/no.
 **Decided**: 2026-05-09.
 
 **Rationale**:
+
 - Letting the 5-min TTL drain leaves the system in an ambiguous "revoked but still usable" state
   for up to 5 minutes per cached entry. Downstream services would catch it via session liveness,
   but the cross-service token IS still floating around and would succeed on any service that
@@ -1599,6 +1611,7 @@ delete each.
 **Decided**: 2026-05-09.
 
 **Rationale**:
+
 - `D2.Shared.Caching.Local.Default` registers `ILocalCache` as a process singleton. There is one
   global `MaxEntries` cap shared by every consumer (JWKS, session liveness, token-exchange,
   anything else). No per-item-type limits.
@@ -1621,6 +1634,7 @@ to `D2.Shared.Caching.Local.Default/LocalCacheOptions.cs` that lands alongside A
 **Decided**: 2026-05-09.
 
 **Rationale**:
+
 - If Edge is down, auth is down, and downstream services will reject anything we hand them
   anyway. Pretending we have a working token by serving stale cache entries is the kind of
   graceful-degradation that creates "confusing system state" — the failure surfaces somewhere
@@ -1643,6 +1657,7 @@ queue the operation for later.
 **Decided**: 2026-05-09.
 
 **Rationale**:
+
 - `targetAudience` flows through both the inbound `aud` claim validator AND the outbound
   TokenExchange call. Magic strings on both sides drift the same way `JwtClaimTypes` did before
   we codegen'd the claim names — and same way `Scopes` would have drifted without
@@ -1664,16 +1679,18 @@ constants). Spec entries: `name + url + description` per audience.
 **Decided**: 2026-05-09.
 
 **Rationale**:
+
 - `IHttpClientFactory` is the .NET-native pattern for managed `HttpClient` lifetimes — handles
   socket exhaustion, DNS refresh, per-client policy attachment. Rolling our own is unnecessary
   reinvention.
 - `D2.Shared.Resilience`'s `CircuitBreaker` + `RetryPolicy` already exist and are battle-tested
   via the messaging stack. Standard pattern: register the policy as a named `HttpMessageHandler`
-  + attach via `AddHttpMessageHandler<>()`.
+  - attach via `AddHttpMessageHandler<>()`.
 - `Singleflight` (also in `D2.Shared.Resilience`) wraps the cache-miss / refresh path so N
   concurrent callers waiting on the same token result in 1 outbound HTTP call, not N.
 
 **Implication for this lib**:
+
 - `services.AddHttpClient<HttpServiceIdentityClient>("d2-auth-service-identity", c => c.BaseAddress = ...)`
   with circuit breaker + retry attached.
 - `services.AddHttpClient<HttpTokenExchangeClient>("d2-auth-token-exchange", c => c.BaseAddress = ...)`
@@ -1685,6 +1702,7 @@ constants). Spec entries: `name + url + description` per audience.
 **Decided**: 2026-05-09.
 
 **Rationale**:
+
 - gRPC `CallCredentials` are channel-scoped — once attached to a `GrpcChannel`, every RPC made
   through that channel auto-attaches the bearer token. The architectural choice is: do we attach
   by default to every gRPC client registered via DI, or only when the consumer asks?
@@ -1705,6 +1723,7 @@ under construction. Per-channel; explicit; safe-by-default.
 **Decided**: 2026-05-09.
 
 **Rationale**:
+
 - Outbound (token acquisition) and inbound (token validation) are different operational concerns
   with different SLOs, dashboards, and alert thresholds. Token-acquire latency matters when Edge
   has issues; token-validate latency matters when JWKS cache misses pile up. Sharing one source
@@ -1722,6 +1741,7 @@ under construction. Per-channel; explicit; safe-by-default.
 **Decided**: 2026-05-11.
 
 **Rationale**:
+
 - Pattern B (no-JWT path with header-based enrichment propagation) would have forced every backend
   consumer — middleware, handlers, audit, rate-limit, risk — to handle two input shapes
   (validated JWT for authed; raw enrichment headers for anon). Branching cost compounds at every
@@ -1736,6 +1756,7 @@ under construction. Per-channel; explicit; safe-by-default.
   V2.md §5.4 (RFC-standard mechanisms; future SPIFFE / mTLS layer drops in without rewrite).
 
 **Implications captured in §3.8** (load-bearing — read in full before Phase 3 Edge work):
+
 - New top-level claims: `d2_kind` (carrying anon/authed discriminator — distinct from the existing
   inside-`act` `d2_kind`), `d2_whois_id`, `d2_fingerprint_score`. Requires `JwtClaimTypes`
   vocabulary additions.
@@ -1789,7 +1810,7 @@ From the v1 auth survey (BetterAuth-based; located in `/old/v1/D2-WORX/`):
    middleware are clean. v2 equivalent is `BaseHandler.RequiredScopes` + extension methods like
    `IsStaff()`. Already in place.
 5. **Fingerprint binding** — v1 used `SHA256(UA + "|" + Accept)`. v2's 10-slot composite is much
-   stronger. Carry forward the *concept* (binding fp at mint, comparing on every request) but use
+   stronger. Carry forward the _concept_ (binding fp at mint, comparing on every request) but use
    the new format.
 
 **v1 mistakes to avoid:**
@@ -1867,7 +1888,7 @@ Each csproj lands as its own buildable unit; tests pass at every checkpoint; zer
 2. `IJwksProvider` + `HttpJwksProvider` (using
    `ConfigurationManager<OpenIdConnectConfiguration>`, honors discovery doc) + tests against
    in-memory OIDC fixture
-3. `JwtValidator` + `ClaimsToContextMapper` + unit tests *(FingerprintComparer dropped — see top-of-doc 2026-05-10 banner; Edge computes the composite `RiskScore`)*
+3. `JwtValidator` + `ClaimsToContextMapper` + unit tests _(FingerprintComparer dropped — see top-of-doc 2026-05-10 banner; Edge computes the composite `RiskScore`)_
 4. `SessionSnapshot` + `ISessionLivenessTracker` + `TieredCacheSessionLivenessTracker` + tests
 5. `JwtAuthMiddleware` + `JwtAuthInterceptor` (gRPC) + integration tests
 6. `D2ProblemDetailsExtensions` (RFC 7807 + D² extensions) + tests
@@ -1891,7 +1912,7 @@ Each csproj lands as its own buildable unit; tests pass at every checkpoint; zer
 #### Step 4 — Wrap-up
 
 1. README per csproj + parent README (`server/shared/dotnet/README.md`) updates: Mermaid dep graph
-   + per-lib row in the per-lib table.
+   - per-lib row in the per-lib table.
 2. `D2.slnx` + `Directory.Packages.props` updates for the new csprojs.
 3. `D2.Shared.Tests.csproj` adds `<ProjectReference>` to all four new libs (3 implementation
    csprojs + the audiences source-gen — analyzers are referenced as regular project refs in tests

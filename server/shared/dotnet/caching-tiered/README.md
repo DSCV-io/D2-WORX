@@ -20,12 +20,14 @@ Two-tier cache that composes one [`ILocalCache`](../caching-abstractions/README.
 ## Behavior
 
 **Reads** (`GetAsync` / `GetManyAsync` / `ExistsAsync`):
+
 - Try L1 first
 - On L1 miss, fall through to L2
 - On L2 hit, populate L1 with the value (next read on this instance is sub-microsecond)
 - Return the result
 
 **Writes** (`SetAsync` / `SetManyAsync` / `RemoveAsync` / `RemoveManyAsync`):
+
 - L2 first — if L2 fails, return that failure and do not touch L1
 - L1 second — only fires after L2 succeeded
 - **If L1 fails after L2 succeeded**, the L2-success result is what's returned — the L1 failure is
@@ -36,6 +38,7 @@ Two-tier cache that composes one [`ILocalCache`](../caching-abstractions/README.
   with any L1 noise logged separately).
 
 **Atomic primitives** (`SetNxAsync` / `IncrementAsync` / `AcquireLockAsync` / `ReleaseLockAsync`):
+
 - Route through L2 (the cluster source of truth)
 - After L2 succeeds, invalidate L1 so the next read fetches the canonical value
   - For `SetNxAsync`: if L2 took the write, populate L1 with the same value; if L2 already had the
@@ -46,6 +49,7 @@ Two-tier cache that composes one [`ILocalCache`](../caching-abstractions/README.
     all
 
 **Broadcast variants** (`SetAndBroadcastAsync` etc.):
+
 - Do the underlying write, then publish via the registered `ICacheInvalidationBackplane`
 - All subscribers (across every connected instance, including this one) receive the key and drop
   their L1 entry — universal "everyone acts" rule
@@ -74,6 +78,7 @@ this instance's adds; cluster cardinality lives in L2). Callers needing set prim
 ## Test coverage
 
 `Integration/Caching/Tiered/` (xunit collection `"Redis"`, shared Testcontainers Redis fixture):
+
 - `DefaultTieredCacheRedisTests` — end-to-end against real L1 (IMemoryCache) + real L2 (Redis):
   - `Get_L1Miss_PopulatesFromL2`
   - `Set_WritesToBoth` / `Remove_RemovesFromBoth`

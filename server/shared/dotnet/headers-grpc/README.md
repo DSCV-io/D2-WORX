@@ -14,13 +14,13 @@ D2 wire-protocol headers applicable to the gRPC transport. Today the catalog hol
 
 ## Public API
 
-| Member | Type | Purpose |
-|---|---|---|
-| `GrpcHeaders.AUTHORIZATION` | `const string "Authorization"` | RFC 6750 bearer token header |
-| `GrpcHeaders.PROPAGATED_CONTEXT` | `const string "x-d2-context"` | Base64url-of-JSON propagated context envelope (cross-transport) |
-| `GrpcHeaders.TRACEPARENT` | `const string "traceparent"` | W3C Trace Context (cross-transport) |
-| `GrpcHeaders.TRACESTATE` | `const string "tracestate"` | W3C tracestate (cross-transport) |
-| `GrpcHeaders.AllGrpcHeaders` | `IReadOnlyList<string>` | All wire values in `constName` order |
+| Member                           | Type                           | Purpose                                                         |
+| -------------------------------- | ------------------------------ | --------------------------------------------------------------- |
+| `GrpcHeaders.AUTHORIZATION`      | `const string "Authorization"` | RFC 6750 bearer token header                                    |
+| `GrpcHeaders.PROPAGATED_CONTEXT` | `const string "x-d2-context"`  | Base64url-of-JSON propagated context envelope (cross-transport) |
+| `GrpcHeaders.TRACEPARENT`        | `const string "traceparent"`   | W3C Trace Context (cross-transport)                             |
+| `GrpcHeaders.TRACESTATE`         | `const string "tracestate"`    | W3C tracestate (cross-transport)                                |
+| `GrpcHeaders.AllGrpcHeaders`     | `IReadOnlyList<string>`        | All wire values in `constName` order                            |
 
 ---
 

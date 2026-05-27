@@ -16,14 +16,14 @@ The spec file is the single source of truth for every JWT claim D2 reads or writ
 
 ## Build-time diagnostics
 
-| ID | Severity | Trigger |
-|---|---|---|
-| `D2JWT001` | Error | Spec file is malformed JSON or violates the schema |
-| `D2JWT002` | Error | A claim's `kind` is not in the closed enum (`standard` / `d2-custom` / `inside-act`) |
-| `D2JWT003` | Error | A claim's `constName` violates UPPER_SNAKE_CASE pattern |
-| `D2JWT004` | Error | Two claims share the same `constName` |
-| `D2JWT005` | Error | `jwt-claims.spec.json` is missing from `<AdditionalFiles>` for `D2.Shared.Auth.Abstractions` |
-| `D2JWT006` | Error | A claim's `value` is empty / whitespace-only |
+| ID         | Severity | Trigger                                                                                      |
+| ---------- | -------- | -------------------------------------------------------------------------------------------- |
+| `D2JWT001` | Error    | Spec file is malformed JSON or violates the schema                                           |
+| `D2JWT002` | Error    | A claim's `kind` is not in the closed enum (`standard` / `d2-custom` / `inside-act`)         |
+| `D2JWT003` | Error    | A claim's `constName` violates UPPER_SNAKE_CASE pattern                                      |
+| `D2JWT004` | Error    | Two claims share the same `constName`                                                        |
+| `D2JWT005` | Error    | `jwt-claims.spec.json` is missing from `<AdditionalFiles>` for `D2.Shared.Auth.Abstractions` |
+| `D2JWT006` | Error    | A claim's `value` is empty / whitespace-only                                                 |
 
 ---
 

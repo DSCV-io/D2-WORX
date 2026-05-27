@@ -16,14 +16,14 @@ The spec file is the single source of truth for the platform's JWT-audience cata
 
 ## Build-time diagnostics
 
-| ID | Severity | Trigger |
-|---|---|---|
-| `D2AUD001` | Error | Spec file is malformed JSON or violates the schema (missing required `audiences` array, missing required per-entry `name` / `url`, wrong types) |
-| `D2AUD002` | Error | Audience name violates the C# identifier convention (must match `^[A-Z][A-Za-z0-9]*$`) |
-| `D2AUD003` | Error | Two audience entries share the exact same name (would produce a duplicate `const string`) |
-| `D2AUD004` | Error | Two audience entries share the exact same URL (would silently alias one to the other at JWT `aud` validation time) |
-| `D2AUD005` | Error | Audience URL is not a parseable absolute URI (would never match a real JWT `aud` claim value) |
-| `D2AUD006` | Error | No `audiences.spec.json` found in `AdditionalFiles` |
+| ID         | Severity | Trigger                                                                                                                                         |
+| ---------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `D2AUD001` | Error    | Spec file is malformed JSON or violates the schema (missing required `audiences` array, missing required per-entry `name` / `url`, wrong types) |
+| `D2AUD002` | Error    | Audience name violates the C# identifier convention (must match `^[A-Z][A-Za-z0-9]*$`)                                                          |
+| `D2AUD003` | Error    | Two audience entries share the exact same name (would produce a duplicate `const string`)                                                       |
+| `D2AUD004` | Error    | Two audience entries share the exact same URL (would silently alias one to the other at JWT `aud` validation time)                              |
+| `D2AUD005` | Error    | Audience URL is not a parseable absolute URI (would never match a real JWT `aud` claim value)                                                   |
+| `D2AUD006` | Error    | No `audiences.spec.json` found in `AdditionalFiles`                                                                                             |
 
 ---
 
@@ -42,11 +42,11 @@ The spec file is the single source of truth for the platform's JWT-audience cata
 }
 ```
 
-| Field | Required | Description |
-|---|---|---|
-| `name` | Yes | PascalCase identifier emitted as the `const` name. `^[A-Z][A-Za-z0-9]*$`. |
-| `url` | Yes | Absolute URI used as the `aud` claim value. Must parse as an absolute `Uri`. |
-| `description` | No | Free-form description; emitted as XML doc on the constant. |
+| Field         | Required | Description                                                                  |
+| ------------- | -------- | ---------------------------------------------------------------------------- |
+| `name`        | Yes      | PascalCase identifier emitted as the `const` name. `^[A-Z][A-Za-z0-9]*$`.    |
+| `url`         | Yes      | Absolute URI used as the `aud` claim value. Must parse as an absolute `Uri`. |
+| `description` | No       | Free-form description; emitted as XML doc on the constant.                   |
 
 ---
 

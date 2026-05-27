@@ -14,29 +14,29 @@ Provider-specific knowledge lives behind `IDbExceptionClassifier`; alternate-pro
 
 ## File layout
 
-| Path | Contents |
-|---|---|
-| `D2.Shared.Handler.Repo.Postgres.csproj` | csproj — depends on `handler-repo-abstractions` + EF Core + Npgsql |
-| `PgErrorCodes.cs` | SQLSTATE string constants + `TryGetPgException(Exception)` unwrap helper |
-| `PostgresDbExceptionClassifier.cs` | Maps PG exceptions → `DbFailureKind` |
-| `PostgresServiceCollectionExtensions.cs` | `services.AddD2Postgres()` |
+| Path                                     | Contents                                                                 |
+| ---------------------------------------- | ------------------------------------------------------------------------ |
+| `D2.Shared.Handler.Repo.Postgres.csproj` | csproj — depends on `handler-repo-abstractions` + EF Core + Npgsql       |
+| `PgErrorCodes.cs`                        | SQLSTATE string constants + `TryGetPgException(Exception)` unwrap helper |
+| `PostgresDbExceptionClassifier.cs`       | Maps PG exceptions → `DbFailureKind`                                     |
+| `PostgresServiceCollectionExtensions.cs` | `services.AddD2Postgres()`                                               |
 
 ---
 
 ## SQLSTATE → DbFailureKind matrix
 
-| SQLSTATE | Name | `DbFailureKind` |
-|---|---|---|
-| `23505` | unique_violation | `UniqueViolation` |
-| `23503` | foreign_key_violation | `ForeignKeyViolation` |
-| `23502` | not_null_violation | `NotNullViolation` |
-| `23514` | check_violation | `CheckViolation` |
-| `40001` | serialization_failure | `Deadlock` |
-| `40P01` | deadlock_detected | `Deadlock` |
-| `57014` | query_canceled (statement_timeout) | `Timeout` |
-| `57P03` | cannot_connect_now | `ConnectionFailure` |
-| `53300` | too_many_connections | `ConnectionFailure` |
-| `08***` | connection_exception class | `ConnectionFailure` |
+| SQLSTATE | Name                               | `DbFailureKind`       |
+| -------- | ---------------------------------- | --------------------- |
+| `23505`  | unique_violation                   | `UniqueViolation`     |
+| `23503`  | foreign_key_violation              | `ForeignKeyViolation` |
+| `23502`  | not_null_violation                 | `NotNullViolation`    |
+| `23514`  | check_violation                    | `CheckViolation`      |
+| `40001`  | serialization_failure              | `Deadlock`            |
+| `40P01`  | deadlock_detected                  | `Deadlock`            |
+| `57014`  | query_canceled (statement_timeout) | `Timeout`             |
+| `57P03`  | cannot_connect_now                 | `ConnectionFailure`   |
+| `53300`  | too_many_connections               | `ConnectionFailure`   |
+| `08***`  | connection_exception class         | `ConnectionFailure`   |
 
 `DbUpdateConcurrencyException` (BCL-typed) is handled directly by `BaseRepoHandler` and never reaches the classifier.
 
@@ -96,9 +96,11 @@ Keyed services are .NET 8+ — the codebase targets .NET 10, so the API is avail
 ## Dependencies
 
 Project references:
+
 - `D2.Shared.Handler.Repo.Abstractions` — `IDbExceptionClassifier` + `DbFailureKind`
 
 NuGet packages:
+
 - `Microsoft.EntityFrameworkCore` — for `DbUpdateException` type
 - `Npgsql` — for `PostgresException` + `NpgsqlException` types
 - `Microsoft.Extensions.DependencyInjection.Abstractions` — for `IServiceCollection`

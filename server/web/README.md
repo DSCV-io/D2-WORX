@@ -43,11 +43,11 @@ Sign-out must clear ALL auth state in three steps. Missing any step leaves stale
 </script>
 ```
 
-| Step | What it clears | Without it |
-|---|---|---|
+| Step                   | What it clears                     | Without it                                          |
+| ---------------------- | ---------------------------------- | --------------------------------------------------- |
 | `authClient.signOut()` | Server session (cookie, Redis, PG) | User appears logged in until cookie expires (5 min) |
-| `invalidateToken()` | In-memory JWT in Edge client | Stale JWT keeps authorizing API calls until expiry |
-| `invalidateAll()` | SvelteKit layout/page data | UI shows stale session data until next navigation |
+| `invalidateToken()`    | In-memory JWT in Edge client       | Stale JWT keeps authorizing API calls until expiry  |
+| `invalidateAll()`      | SvelteKit layout/page data         | UI shows stale session data until next navigation   |
 
 ### Navigation & resolve()
 
@@ -101,10 +101,10 @@ When adding translation keys: add to ALL locale files in `contracts/messages/` s
 
 Two tiers:
 
-| Tier | Tool | Purpose |
-|---|---|---|
-| **Unit / component** | Vitest browser mode | Component behavior + schema validation |
-| **Mocked Playwright** | Playwright with `D2_MOCK_INFRA=true` | Real browser, all `fetch()` mocked |
+| Tier                  | Tool                                 | Purpose                                |
+| --------------------- | ------------------------------------ | -------------------------------------- |
+| **Unit / component**  | Vitest browser mode                  | Component behavior + schema validation |
+| **Mocked Playwright** | Playwright with `D2_MOCK_INFRA=true` | Real browser, all `fetch()` mocked     |
 
 Cross-service E2E is intentionally NOT in scope — anything requiring multiple services running is done manually as needed. Adversarial test discipline per [`docs/TESTS.md`](../../docs/TESTS.md) — happy path is not enough. Every form field gets unit + Playwright coverage of the 8-category checklist.
 

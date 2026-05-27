@@ -15,7 +15,8 @@
     "prebuild": "pnpm --filter ts-codegen exec tsx src/otel-messaging-tags-emit.ts",
     "build": "tsc -b",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "type-check:test": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
     "@d2/logging": "workspace:*",

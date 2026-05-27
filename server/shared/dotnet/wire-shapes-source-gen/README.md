@@ -16,11 +16,11 @@ This source-gen enforces **§11.30** (every cross-language wire-format identifie
 
 ## Dispatch table
 
-| Consuming assembly | Spec file | Emitted source | Emitted class |
-|---|---|---|---|
-| `D2.Shared.I18n.Abstractions` | `contracts/tk-message/tk-message.spec.json` | `TkMessageWireShape.g.cs` | `D2.Shared.I18n.TkMessageWireShape` |
-| `D2.Shared.Result` | `contracts/input-error/input-error.spec.json` | `InputErrorWireShape.g.cs` | `D2.Shared.Result.InputErrorWireShape` |
-| anything else | — | — (no-op) | — |
+| Consuming assembly            | Spec file                                     | Emitted source             | Emitted class                          |
+| ----------------------------- | --------------------------------------------- | -------------------------- | -------------------------------------- |
+| `D2.Shared.I18n.Abstractions` | `contracts/tk-message/tk-message.spec.json`   | `TkMessageWireShape.g.cs`  | `D2.Shared.I18n.TkMessageWireShape`    |
+| `D2.Shared.Result`            | `contracts/input-error/input-error.spec.json` | `InputErrorWireShape.g.cs` | `D2.Shared.Result.InputErrorWireShape` |
+| anything else                 | —                                             | — (no-op)                  | —                                      |
 
 Adding a new wire-shape catalog: add a `DispatchEntry` to `sr_dispatch` in `WireShapesGenerator.cs`, author the spec + schema under `contracts/`, wire the consuming csproj's `<AdditionalFiles>` + `<ProjectReference OutputItemType="Analyzer">`, and ship.
 
@@ -28,13 +28,13 @@ Adding a new wire-shape catalog: add a `DispatchEntry` to `sr_dispatch` in `Wire
 
 ## Diagnostic catalog
 
-| ID | Severity | Meaning |
-|---|---|---|
-| `D2WS001` | Error | Spec file is malformed JSON or violates the schema. |
-| `D2WS002` | Error | Two properties share the same `constName`. |
-| `D2WS003` | Error | Two properties share the same wire `value`. |
-| `D2WS004` | Error | Property `constName` does not match `^[A-Z][A-Z0-9_]*$`. |
-| `D2WS005` | Error | No spec file passed to the analyzer for a target catalog assembly. |
+| ID        | Severity | Meaning                                                            |
+| --------- | -------- | ------------------------------------------------------------------ |
+| `D2WS001` | Error    | Spec file is malformed JSON or violates the schema.                |
+| `D2WS002` | Error    | Two properties share the same `constName`.                         |
+| `D2WS003` | Error    | Two properties share the same wire `value`.                        |
+| `D2WS004` | Error    | Property `constName` does not match `^[A-Z][A-Z0-9_]*$`.           |
+| `D2WS005` | Error    | No spec file passed to the analyzer for a target catalog assembly. |
 
 ---
 

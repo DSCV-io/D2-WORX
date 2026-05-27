@@ -12,24 +12,24 @@ Roslyn incremental source generator that emits the `D2ResultEnvelopeFieldNames` 
 
 ## Single-target dispatch
 
-| Consuming assembly | Emits | Class name |
-|---|---|---|
+| Consuming assembly | Emits                             | Class name                   |
+| ------------------ | --------------------------------- | ---------------------------- |
 | `D2.Shared.Result` | `D2ResultEnvelopeFieldNames.g.cs` | `D2ResultEnvelopeFieldNames` |
-| any other | (nothing) | — |
+| any other          | (nothing)                         | —                            |
 
 ## What the catalog contains
 
 7 field-name constants:
 
-| `constName` | wire value | role |
-|---|---|---|
-| `SUCCESS` | `success` | boolean success flag |
-| `DATA` | `data` | result payload (generic over TData) |
-| `MESSAGES` | `messages` | `TKMessage[]` translation messages |
+| `constName`    | wire value    | role                                       |
+| -------------- | ------------- | ------------------------------------------ |
+| `SUCCESS`      | `success`     | boolean success flag                       |
+| `DATA`         | `data`        | result payload (generic over TData)        |
+| `MESSAGES`     | `messages`    | `TKMessage[]` translation messages         |
 | `INPUT_ERRORS` | `inputErrors` | `InputError[]` per-field validation errors |
-| `ERROR_CODE` | `errorCode` | standardized error code string |
-| `TRACE_ID` | `traceId` | W3C trace id for log correlation |
-| `STATUS_CODE` | `statusCode` | HTTP status code integer |
+| `ERROR_CODE`   | `errorCode`   | standardized error code string             |
+| `TRACE_ID`     | `traceId`     | W3C trace id for log correlation           |
+| `STATUS_CODE`  | `statusCode`  | HTTP status code integer                   |
 
 ## How D2Result consumes the catalog
 
@@ -43,10 +43,10 @@ The SAME spec drives the TS-side `@d2/result` catalog via `tools/ts-codegen/src/
 
 ## Diagnostics
 
-| ID | Title | Severity |
-|---|---|---|
-| `D2DRE001` | Spec is malformed | Error |
-| `D2DRE002` | Duplicate field constName | Error |
-| `D2DRE003` | Duplicate field value | Error |
-| `D2DRE004` | constName has invalid shape | Error |
-| `D2DRE005` | Empty wire value | Error |
+| ID         | Title                       | Severity |
+| ---------- | --------------------------- | -------- |
+| `D2DRE001` | Spec is malformed           | Error    |
+| `D2DRE002` | Duplicate field constName   | Error    |
+| `D2DRE003` | Duplicate field value       | Error    |
+| `D2DRE004` | constName has invalid shape | Error    |
+| `D2DRE005` | Empty wire value            | Error    |

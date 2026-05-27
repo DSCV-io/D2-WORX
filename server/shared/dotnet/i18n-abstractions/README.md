@@ -22,12 +22,12 @@ The pattern matches `Microsoft.Extensions.Logging.Abstractions` vs `Microsoft.Ex
 
 ## File layout
 
-| Path | Contents |
-|---|---|
-| `TKMessage.cs` | `TKMessage` sealed record — translation key + optional parameter bindings. Internal ctor; can only be constructed via the SrcGen-emitted `TK.*` constants. |
-| `TKMessageJsonConverter.cs` | `JsonConverter<TKMessage>` — wire format `{ "key": "..." }` or `{ "key": "...", "params": { ... } }`. Applied to `TKMessage` via `[JsonConverter]`. JSON property names come from the spec-derived `TkMessageWireShape.KEY` / `.PARAMS` constants — single source of truth shared with the TS-side parser via `contracts/tk-message/tk-message.spec.json`. |
-| `ITranslator.cs` | The translation interface. `string T(string locale, TKMessage message)` and `bool HasKey(string key)`. Implementation lives in the runtime lib. |
-| `(generated) TK.g.cs` | Emitted by the sibling **`D2.Shared.I18n.SourceGen`** project at [`../i18n-source-gen/`](../i18n-source-gen/README.md) — a Roslyn `IIncrementalGenerator` (netstandard2.0; referenced as Analyzer, not a runtime dll). Output lands at `Generated/D2.Shared.I18n.SourceGen/D2.Shared.I18n.SourceGen.TKGenerator/TK.g.cs` (tracked in git) at every build. Contains nested `static partial class` chains (`TK.Common.Errors.NOT_FOUND` etc.), one `TKMessage` constant per JSON key. |
+| Path                                  | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TKMessage.cs`                        | `TKMessage` sealed record — translation key + optional parameter bindings. Internal ctor; can only be constructed via the SrcGen-emitted `TK.*` constants.                                                                                                                                                                                                                                                                                                                                                                                |
+| `TKMessageJsonConverter.cs`           | `JsonConverter<TKMessage>` — wire format `{ "key": "..." }` or `{ "key": "...", "params": { ... } }`. Applied to `TKMessage` via `[JsonConverter]`. JSON property names come from the spec-derived `TkMessageWireShape.KEY` / `.PARAMS` constants — single source of truth shared with the TS-side parser via `contracts/tk-message/tk-message.spec.json`.                                                                                                                                                                                |
+| `ITranslator.cs`                      | The translation interface. `string T(string locale, TKMessage message)` and `bool HasKey(string key)`. Implementation lives in the runtime lib.                                                                                                                                                                                                                                                                                                                                                                                           |
+| `(generated) TK.g.cs`                 | Emitted by the sibling **`D2.Shared.I18n.SourceGen`** project at [`../i18n-source-gen/`](../i18n-source-gen/README.md) — a Roslyn `IIncrementalGenerator` (netstandard2.0; referenced as Analyzer, not a runtime dll). Output lands at `Generated/D2.Shared.I18n.SourceGen/D2.Shared.I18n.SourceGen.TKGenerator/TK.g.cs` (tracked in git) at every build. Contains nested `static partial class` chains (`TK.Common.Errors.NOT_FOUND` etc.), one `TKMessage` constant per JSON key.                                                       |
 | `(generated) TkMessageWireShape.g.cs` | Emitted by the sibling **`D2.Shared.WireShapes.SourceGen`** project at [`../wire-shapes-source-gen/`](../wire-shapes-source-gen/README.md) — a Roslyn `IIncrementalGenerator` with multi-target dispatch. Output lands at `Generated/D2.Shared.WireShapes.SourceGen/D2.Shared.WireShapes.SourceGen.WireShapesGenerator/TkMessageWireShape.g.cs` (tracked in git) at every build. Carries the `KEY` and `PARAMS` JSON property-name constants. Cross-language parity-tested against the TS-side `@d2/result` `TkMessageWireShape` catalog. |
 
 ---
@@ -52,7 +52,7 @@ D2Result<T>.ValidationFailed(
 Key facts:
 
 - **Internal constructor.** Producers can ONLY construct a `TKMessage` via the SrcGen-emitted `TK.*` constants. There is no public ctor and no escape hatch — "untranslated literal in `D2Result.Messages`" is structurally unrepresentable.
-- **Immutable.** `With(name, value)` and `With(IReadOnlyDictionary<string, string>)` return *new* instances; the original is never mutated. The static-readonly TK constants stay pinned.
+- **Immutable.** `With(name, value)` and `With(IReadOnlyDictionary<string, string>)` return _new_ instances; the original is never mutated. The static-readonly TK constants stay pinned.
 - **Record equality with order-independent params.** Two `TKMessage` instances with the same key and same param bindings (regardless of the order `With()` was called in) compare equal.
 - **Wire format = code shape.** Same JSON shape in code and on the wire — no separate "in-memory" vs "wire" representation.
 
@@ -71,15 +71,17 @@ Key facts:
 ```
 
 Used inside `D2Result.Messages` array:
+
 ```json
 {
   "success": false,
   "statusCode": 422,
-  "messages": [
-    { "key": "common_errors_VALIDATION_FAILED" }
-  ],
+  "messages": [{ "key": "common_errors_VALIDATION_FAILED" }],
   "inputErrors": [
-    { "field": "email", "errors": [{ "key": "common_validation_EMAIL_INVALID" }] }
+    {
+      "field": "email",
+      "errors": [{ "key": "common_validation_EMAIL_INVALID" }]
+    }
   ]
 }
 ```
@@ -109,23 +111,23 @@ JSON keys follow `{domain}_{category}_{IDENTIFIER}` where:
 - Segments 2..N joined by `_` and uppercased → constant name
 - Field value = original JSON key string
 
-| JSON key | Generated path | Field value |
-|---|---|---|
-| `common_errors_NOT_FOUND` | `TK.Common.Errors.NOT_FOUND` | `"common_errors_NOT_FOUND"` |
-| `geo_validation_ip_required` | `TK.Geo.Validation.IP_REQUIRED` | `"geo_validation_ip_required"` |
-| `auth_email_signup_subject` | `TK.Auth.Email.SIGNUP_SUBJECT` | `"auth_email_signup_subject"` |
+| JSON key                                | Generated path                             | Field value                               |
+| --------------------------------------- | ------------------------------------------ | ----------------------------------------- |
+| `common_errors_NOT_FOUND`               | `TK.Common.Errors.NOT_FOUND`               | `"common_errors_NOT_FOUND"`               |
+| `geo_validation_ip_required`            | `TK.Geo.Validation.IP_REQUIRED`            | `"geo_validation_ip_required"`            |
+| `auth_email_signup_subject`             | `TK.Auth.Email.SIGNUP_SUBJECT`             | `"auth_email_signup_subject"`             |
 | `geo_validation_address_line1_required` | `TK.Geo.Validation.ADDRESS_LINE1_REQUIRED` | `"geo_validation_address_line1_required"` |
 
 ### Build-time diagnostics
 
-| ID | Severity | Trigger |
-|---|---|---|
-| `D2I18N001` | Warning | A JSON key cannot be decomposed (fewer than 3 segments, invalid C# identifier, etc.). The offending key is skipped. |
-| `D2I18N002` | Warning | A key in en-US is missing from another locale catalog. The key is still emitted in TK. |
-| `D2I18N003` | Error | Two distinct JSON keys decompose to the same TK path. Build-failing. |
-| `D2I18N004` | Warning | A key exists in a non-en-US locale but has no matching entry in en-US. NOT included in TK. |
-| `D2I18N005` | Error | The generator can't find `en-US.json` among AdditionalFiles. TK class is empty. |
-| `D2I18N006` | Error | A JSON catalog file is malformed (parse failure). The offending file is skipped. |
+| ID          | Severity | Trigger                                                                                                             |
+| ----------- | -------- | ------------------------------------------------------------------------------------------------------------------- |
+| `D2I18N001` | Warning  | A JSON key cannot be decomposed (fewer than 3 segments, invalid C# identifier, etc.). The offending key is skipped. |
+| `D2I18N002` | Warning  | A key in en-US is missing from another locale catalog. The key is still emitted in TK.                              |
+| `D2I18N003` | Error    | Two distinct JSON keys decompose to the same TK path. Build-failing.                                                |
+| `D2I18N004` | Warning  | A key exists in a non-en-US locale but has no matching entry in en-US. NOT included in TK.                          |
+| `D2I18N005` | Error    | The generator can't find `en-US.json` among AdditionalFiles. TK class is empty.                                     |
+| `D2I18N006` | Error    | A JSON catalog file is malformed (parse failure). The offending file is skipped.                                    |
 
 All diagnostics include the offending key/locale in the message — they appear directly in the build output and IDE error list.
 
@@ -134,6 +136,7 @@ All diagnostics include the offending key/locale in the message — they appear 
 **Drift is structurally impossible**: the constant doesn't exist if the JSON key doesn't. Adding a new translation key is a single edit (the JSON file); the TK constant appears at next build, no manual update step.
 
 The SrcGen also surfaces:
+
 - Per-locale coverage gaps (D2I18N002)
 - Orphan keys in non-en-US locales (D2I18N004)
 - Decomposition rule violations (D2I18N001) — caught at build time rather than as runtime mysteries

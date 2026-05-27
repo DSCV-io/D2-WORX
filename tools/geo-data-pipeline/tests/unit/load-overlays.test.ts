@@ -18,7 +18,9 @@ import type { SrcDataCountry } from "../../src/tier-2/load-src-data.js";
 // test rather than on the verbose SrcDataCountry shape.
 // -----------------------------------------------------------------------
 
-const makeCountry = (overrides: Partial<SrcDataCountry> = {}): SrcDataCountry => ({
+const makeCountry = (
+  overrides: Partial<SrcDataCountry> = {},
+): SrcDataCountry => ({
   iso31661Alpha2Code: "ZZ",
   iso31661Alpha3Code: "ZZZ",
   iso31661NumericCode: "999",
@@ -61,7 +63,9 @@ const makeOverlay = (
   removals: parts.removals ?? [],
 });
 
-const tracked = (id: string): { id: string; addedAt: string; reason: string } => ({
+const tracked = (
+  id: string,
+): { id: string; addedAt: string; reason: string } => ({
   id,
   addedAt: "2026-05-19",
   reason: `policy: ${id}`,
@@ -79,7 +83,11 @@ describe("applyCountriesOverlay", () => {
     ];
     const result = applyCountriesOverlay(tier1, null);
     expect(result.countries).toEqual(tier1);
-    expect(result.applied).toEqual({ additions: [], overrides: [], removals: [] });
+    expect(result.applied).toEqual({
+      additions: [],
+      overrides: [],
+      removals: [],
+    });
   });
 
   it("addition appends new entry and emits sorted output", () => {
@@ -91,12 +99,19 @@ describe("applyCountriesOverlay", () => {
       additions: [
         {
           ...tracked("XK"),
-          data: makeCountry({ iso31661Alpha2Code: "XK", displayName: "Kosovo" }),
+          data: makeCountry({
+            iso31661Alpha2Code: "XK",
+            displayName: "Kosovo",
+          }),
         },
       ],
     });
     const result = applyCountriesOverlay(tier1, overlay);
-    expect(result.countries.map((c) => c.iso31661Alpha2Code)).toEqual(["DE", "FR", "XK"]);
+    expect(result.countries.map((c) => c.iso31661Alpha2Code)).toEqual([
+      "DE",
+      "FR",
+      "XK",
+    ]);
     expect(result.applied.additions).toHaveLength(1);
     expect(result.applied.additions[0]).toMatchObject({
       id: "XK",
@@ -108,7 +123,9 @@ describe("applyCountriesOverlay", () => {
   it("addition with id colliding Tier 1 entry throws naming id and suggesting override", () => {
     const tier1 = [makeCountry({ iso31661Alpha2Code: "DE" })];
     const overlay = makeOverlay({
-      additions: [{ ...tracked("DE"), data: makeCountry({ iso31661Alpha2Code: "DE" }) }],
+      additions: [
+        { ...tracked("DE"), data: makeCountry({ iso31661Alpha2Code: "DE" }) },
+      ],
     });
     expect(() => applyCountriesOverlay(tier1, overlay)).toThrow(
       /collides with Tier 1.*DE.*override/s,
@@ -121,7 +138,10 @@ describe("applyCountriesOverlay", () => {
       additions: [
         {
           ...tracked("XK"),
-          data: makeCountry({ iso31661Alpha2Code: "ZK", displayName: "Mismatched" }),
+          data: makeCountry({
+            iso31661Alpha2Code: "ZK",
+            displayName: "Mismatched",
+          }),
         },
       ],
     });
@@ -146,11 +166,16 @@ describe("applyCountriesOverlay", () => {
     expect(result.countries).toHaveLength(1);
     expect(result.countries[0]?.displayName).toBe("Deutschland");
     // Other fields untouched
-    expect(result.countries[0]?.officialName).toBe("Federal Republic of Germany");
+    expect(result.countries[0]?.officialName).toBe(
+      "Federal Republic of Germany",
+    );
     expect(result.countries[0]?.phoneNumberPrefix).toBe("49");
     // Diagnostic captures the patched-field names
     expect(result.applied.overrides).toHaveLength(1);
-    expect(result.applied.overrides[0]).toMatchObject({ id: "DE", fields: ["displayName"] });
+    expect(result.applied.overrides[0]).toMatchObject({
+      id: "DE",
+      fields: ["displayName"],
+    });
   });
 
   it("override targeting missing id throws with descriptive message", () => {
@@ -194,20 +219,28 @@ describe("applyCountriesOverlay", () => {
       additions: [
         {
           ...tracked("XK"),
-          data: makeCountry({ iso31661Alpha2Code: "XK", displayName: "Kosovo" }),
+          data: makeCountry({
+            iso31661Alpha2Code: "XK",
+            displayName: "Kosovo",
+          }),
         },
       ],
-      overrides: [{ ...tracked("FR"), fields: { displayName: "France Patched" } }],
+      overrides: [
+        { ...tracked("FR"), fields: { displayName: "France Patched" } },
+      ],
       removals: [tracked("DE")],
     });
     const result = applyCountriesOverlay(tier1, overlay);
-    expect(result.countries.map((c) => c.iso31661Alpha2Code)).toEqual(["FR", "XK"]);
-    expect(result.countries.find((c) => c.iso31661Alpha2Code === "FR")?.displayName).toBe(
-      "France Patched",
-    );
-    expect(result.countries.find((c) => c.iso31661Alpha2Code === "XK")?.displayName).toBe(
-      "Kosovo",
-    );
+    expect(result.countries.map((c) => c.iso31661Alpha2Code)).toEqual([
+      "FR",
+      "XK",
+    ]);
+    expect(
+      result.countries.find((c) => c.iso31661Alpha2Code === "FR")?.displayName,
+    ).toBe("France Patched");
+    expect(
+      result.countries.find((c) => c.iso31661Alpha2Code === "XK")?.displayName,
+    ).toBe("Kosovo");
     // Applied diagnostic carries all three
     expect(result.applied.additions).toHaveLength(1);
     expect(result.applied.overrides).toHaveLength(1);
@@ -243,7 +276,10 @@ describe("applyCountriesOverlay", () => {
       additions: [
         {
           ...tracked("XK"),
-          data: makeCountry({ iso31661Alpha2Code: "XK", displayName: "Kosovo" }),
+          data: makeCountry({
+            iso31661Alpha2Code: "XK",
+            displayName: "Kosovo",
+          }),
         },
       ],
       overrides: [{ ...tracked("XK"), fields: { displayName: "Kosova" } }],
@@ -256,7 +292,9 @@ describe("applyCountriesOverlay", () => {
   });
 
   it("override-then-removal on same id removes cleanly (override doesn't block removal)", () => {
-    const tier1 = [makeCountry({ iso31661Alpha2Code: "DE", displayName: "Germany" })];
+    const tier1 = [
+      makeCountry({ iso31661Alpha2Code: "DE", displayName: "Germany" }),
+    ];
     const overlay = makeOverlay({
       overrides: [{ ...tracked("DE"), fields: { displayName: "Deutschland" } }],
       removals: [tracked("DE")],
@@ -288,7 +326,11 @@ describe("applyCountriesOverlay", () => {
     const tier1 = [makeCountry({ iso31661Alpha2Code: "DE" })];
     const result = applyCountriesOverlay(tier1, makeOverlay());
     expect(result.countries.map((c) => c.iso31661Alpha2Code)).toEqual(["DE"]);
-    expect(result.applied).toEqual({ additions: [], overrides: [], removals: [] });
+    expect(result.applied).toEqual({
+      additions: [],
+      overrides: [],
+      removals: [],
+    });
   });
 });
 

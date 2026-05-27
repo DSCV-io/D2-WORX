@@ -14,7 +14,8 @@
   "scripts": {
     "prebuild": "pnpm --filter ts-codegen exec tsx src/request-context-emit.ts",
     "build": "tsc -b",
-    "test": "vitest run"
+    "test": "vitest run",
+    "type-check:test": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
     "@d2/auth-context-abstractions": "workspace:*"

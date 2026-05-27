@@ -151,8 +151,7 @@ export function emitOtelMessagingTags(spec: OtelMessagingTagsSpec): EmitResult {
     "export const ALL_MESSAGING_ACTIVITY_TAGS: readonly string[] = [",
   );
   sb.increaseIndent();
-  for (const e of v.tags)
-    sb.appendLine(`"${escapeStringLiteral(e.value)}",`);
+  for (const e of v.tags) sb.appendLine(`"${escapeStringLiteral(e.value)}",`);
   sb.decreaseIndent();
   sb.appendLine("];");
   sb.appendLine();

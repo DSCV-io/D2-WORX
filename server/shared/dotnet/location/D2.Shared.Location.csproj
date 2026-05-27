@@ -1,0 +1,46 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Shared.Location</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Pure-domain location value objects (Coordinates, StreetAddress, AdminLocation),
+    hash composer, and postal-code validator interface + default implementation.
+    Depends ONLY on D2.Shared.Geo.Abstractions (typed code enums + wrapper structs),
+    D2.Shared.Result (D2Result<T> factories), and D2.Shared.Utilities (Falsey/Truthy
+    + string cleaning helpers). NO D2.Shared.Geo.Default, NO NodaTime — keeps Location
+    pure-domain without dragging the ~200KB catalog or any temporal-runtime cost.
+  -->
+  <ItemGroup>
+    <!--
+      Microsoft.Extensions.DependencyInjection.Abstractions — IServiceCollection
+      receiver for the AddD2Location registration extension.
+    -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      D2.Shared.Geo.Abstractions — typed CountryCode enum + SubdivisionCode wrapper
+      struct (including SubdivisionCode.ParentCountry) that AdminLocation references.
+    -->
+    <ProjectReference Include="..\geo-abstractions\D2.Shared.Geo.Abstractions.csproj" />
+    <!--
+      D2.Shared.Result — D2Result<T> semantic factories (Ok, ValidationFailed, etc.)
+      used by all three VO smart-constructors and IPostalCodeValidator.
+    -->
+    <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
+    <!--
+      D2.Shared.Utilities — Falsey()/Truthy() guards + CleanStr() string helpers
+      used in VO validation and normalization pipelines.
+    -->
+    <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D2.Shared.Tests" />
+  </ItemGroup>
+</Project>

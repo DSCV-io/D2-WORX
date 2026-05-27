@@ -4,16 +4,24 @@
 
 import { mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { fetchCldrCurrencies, type CldrCurrencyEntry } from "../fetchers/cldr-currencies.js";
-import { fetchCldrSupplemental, type CurrencyDataPayload } from "../fetchers/cldr-supplemental.js";
+import {
+  fetchCldrCurrencies,
+  type CldrCurrencyEntry,
+} from "../fetchers/cldr-currencies.js";
+import {
+  fetchCldrSupplemental,
+  type CurrencyDataPayload,
+} from "../fetchers/cldr-supplemental.js";
 import { fetchDatasetsCurrencyCodes } from "../fetchers/datasets-currency-codes.js";
-import { buildCurrencyEntries, type CurrencyPartial } from "../transformers/currencies.js";
+import {
+  buildCurrencyEntries,
+  type CurrencyPartial,
+} from "../transformers/currencies.js";
 import { REPO_ROOT_PATH } from "../util/cache.js";
 import { writeSpecJson } from "../util/json-encoding.js";
 import {
   getEndonymLanguageList,
   loadCountryPrimaryLanguageMap,
-  SUPPORTED_LANGUAGE_CODES,
 } from "../util/endonym-languages.js";
 
 const SPEC_OUTPUT_PATH = resolve(
@@ -36,7 +44,10 @@ interface CurrenciesSpec {
     fetchedAt: string;
     sha256: string;
   }>;
-  fieldCoverage: Record<string, { populated: number; total: number; pct: string }>;
+  fieldCoverage: Record<
+    string,
+    { populated: number; total: number; pct: string }
+  >;
   /** Counts split active vs retired so operators see the breakdown at a glance. */
   activityBreakdown: { active: number; retired: number };
   entries: CurrencyPartial[];
@@ -49,25 +60,33 @@ export async function buildCurrenciesSpec(): Promise<CurrenciesSpec> {
 
   // Layer A.2 — CLDR currencyData.json — temporal usage history + fractions
   console.error(`[fetch] CLDR currencyData supplemental`);
-  const cldrCurrencyData = await fetchCldrSupplemental<CurrencyDataPayload>("currencyData");
+  const cldrCurrencyData =
+    await fetchCldrSupplemental<CurrencyDataPayload>("currencyData");
 
   // Layer A.3 — countries.spec.json (already on disk) for the country→primary-language map.
   // Cross-spec dependency; acceptable since both live in the same pipeline output dir.
   console.error(`[load] countries.spec.json for country→primary-language map`);
-  const countryToPrimaryLang = await loadCountryPrimaryLanguageMap().catch((err: unknown) => {
-    throw new Error(
-      `currencies spec needs countries.spec.json on disk for country→primary-language map; ` +
-        `run \`pnpm write:countries\` first, then \`pnpm write:currencies\`. Cause: ${String(err)}`,
-    );
-  });
+  const countryToPrimaryLang = await loadCountryPrimaryLanguageMap().catch(
+    (err: unknown) => {
+      throw new Error(
+        `currencies spec needs countries.spec.json on disk for country→primary-language map; ` +
+          `run \`pnpm write:countries\` first, then \`pnpm write:currencies\`. Cause: ${String(err)}`,
+      );
+    },
+  );
 
   // Layer A.4 — CLDR cldr-numbers-full per-locale currencies files. We fetch the union of
   // (11 supported locales) ∪ (every primary language of every country in the catalog) so
   // endonym derivation works for currencies whose home country speaks Arabic/Hindi/Thai/etc.
   // Some CLDR locales lack a currencies.json file (smaller locales) — gracefully skip 404s.
   const allEndonymLanguages = await getEndonymLanguageList();
-  console.error(`[fetch] CLDR per-locale currencies (${allEndonymLanguages.length} languages)`);
-  const cldrLocaleCurrencies = new Map<string, Map<string, CldrCurrencyEntry>>();
+  console.error(
+    `[fetch] CLDR per-locale currencies (${allEndonymLanguages.length} languages)`,
+  );
+  const cldrLocaleCurrencies = new Map<
+    string,
+    Map<string, CldrCurrencyEntry>
+  >();
   const cldrLocaleProvenances: Array<{
     name: string;
     url: string;
@@ -102,7 +121,9 @@ export async function buildCurrenciesSpec(): Promise<CurrenciesSpec> {
     }
   }
   if (localeSkipped > 0) {
-    console.error(`  [skip] ${localeSkipped} locales without cldr-numbers-full currencies.json`);
+    console.error(
+      `  [skip] ${localeSkipped} locales without cldr-numbers-full currencies.json`,
+    );
   }
 
   // Provenance assembly
@@ -128,7 +149,8 @@ export async function buildCurrenciesSpec(): Promise<CurrenciesSpec> {
   const entries = buildCurrencyEntries({
     datasetsRows: datasets.rows,
     cldrRegion: cldrCurrencyData.payload.supplemental.currencyData.region,
-    cldrFractions: cldrCurrencyData.payload.supplemental.currencyData.fractions ?? {},
+    cldrFractions:
+      cldrCurrencyData.payload.supplemental.currencyData.fractions ?? {},
     cldrLocaleCurrencies,
     countryToPrimaryLang,
   });
@@ -147,13 +169,28 @@ export async function buildCurrenciesSpec(): Promise<CurrenciesSpec> {
     displayName: countNonNull(entries, (e) => e.displayName),
     symbol: countNonNull(entries, (e) => e.symbol),
     endonymDisplayName: countNonNull(entries, (e) => e.endonymDisplayName),
-    localizedDisplayNames_en: countNonNull(entries, (e) => e.localizedDisplayNames["en"] ?? null),
-    localizedDisplayNames_ja: countNonNull(entries, (e) => e.localizedDisplayNames["ja"] ?? null),
-    localizedDisplayNames_zh: countNonNull(entries, (e) => e.localizedDisplayNames["zh"] ?? null),
-    localizedDisplayNames_ar: countNonNull(entries, (e) => e.localizedDisplayNames["ar"] ?? null),
+    localizedDisplayNames_en: countNonNull(
+      entries,
+      (e) => e.localizedDisplayNames["en"] ?? null,
+    ),
+    localizedDisplayNames_ja: countNonNull(
+      entries,
+      (e) => e.localizedDisplayNames["ja"] ?? null,
+    ),
+    localizedDisplayNames_zh: countNonNull(
+      entries,
+      (e) => e.localizedDisplayNames["zh"] ?? null,
+    ),
+    localizedDisplayNames_ar: countNonNull(
+      entries,
+      (e) => e.localizedDisplayNames["ar"] ?? null,
+    ),
     usageHistory: entries.filter((e) => e.usageHistory.length > 0).length,
   };
-  const fieldCoverage: Record<string, { populated: number; total: number; pct: string }> = {};
+  const fieldCoverage: Record<
+    string,
+    { populated: number; total: number; pct: string }
+  > = {};
   for (const [field, populated] of Object.entries(coverage)) {
     fieldCoverage[field] = {
       populated,
@@ -167,7 +204,9 @@ export async function buildCurrenciesSpec(): Promise<CurrenciesSpec> {
       `(${activityBreakdown.active} active, ${activityBreakdown.retired} retired)`,
   );
   for (const [field, stats] of Object.entries(fieldCoverage)) {
-    console.error(`  ${field}: ${stats.populated}/${stats.total} (${stats.pct})`);
+    console.error(
+      `  ${field}: ${stats.populated}/${stats.total} (${stats.pct})`,
+    );
   }
 
   return {
@@ -199,7 +238,10 @@ export async function buildCurrenciesSpec(): Promise<CurrenciesSpec> {
   };
 }
 
-function countNonNull<T>(items: readonly T[], pick: (item: T) => string | null): number {
+function countNonNull<T>(
+  items: readonly T[],
+  pick: (item: T) => string | null,
+): number {
   let n = 0;
   for (const item of items) if (pick(item) !== null) n++;
   return n;

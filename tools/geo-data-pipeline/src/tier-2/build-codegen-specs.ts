@@ -3,7 +3,12 @@
 // -----------------------------------------------------------------------
 
 import { resolve } from "node:path";
-import { loadSrcData, type LoadedSrcData } from "./load-src-data.js";
+import { derivePrimaryLocaleTag } from "../transformers/primary-locale-tag.js";
+import {
+  loadSrcData,
+  type LoadedSrcData,
+  type SrcDataCountry,
+} from "./load-src-data.js";
 import type {
   CatalogFileWrapper,
   CountrySpec,
@@ -24,9 +29,19 @@ const GEO_DIR = resolve(REPO_ROOT_PATH, "contracts", "geo");
 const CATALOG_VERSION = "0.1.0";
 
 const DAY_OF_WEEK_VALUES: readonly DayOfWeek[] = [
-  "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
 ];
-const MEASUREMENT_VALUES: readonly MeasurementSystem[] = ["Metric", "Imperial", "Mixed"];
+const MEASUREMENT_VALUES: readonly MeasurementSystem[] = [
+  "Metric",
+  "Imperial",
+  "Mixed",
+];
 const WRITING_DIRECTION_VALUES: readonly WritingDirection[] = ["LTR", "RTL"];
 const DATE_FORMAT_VALUES: readonly DateFormatPattern[] = ["DMY", "MDY", "YMD"];
 
@@ -69,7 +84,8 @@ export function buildAll(src: LoadedSrcData): BuildResult {
   // Subdivisions per country
   const subdivisionCodesByCountry = new Map<string, string[]>();
   for (const s of src.subdivisions) {
-    const list = subdivisionCodesByCountry.get(s.countryISO31661Alpha2Code) ?? [];
+    const list =
+      subdivisionCodesByCountry.get(s.countryISO31661Alpha2Code) ?? [];
     list.push(s.iso31662Code);
     subdivisionCodesByCountry.set(s.countryISO31661Alpha2Code, list);
   }
@@ -79,7 +95,11 @@ export function buildAll(src: LoadedSrcData): BuildResult {
   const timezoneIdsByCountry = new Map<string, string[]>();
   for (const t of src.timezones) {
     if (t.countryISO31661Alpha2Code) {
-      addToBag(timezoneIdsByCountry, t.countryISO31661Alpha2Code, t.ianaIdentifier);
+      addToBag(
+        timezoneIdsByCountry,
+        t.countryISO31661Alpha2Code,
+        t.ianaIdentifier,
+      );
     }
     for (const co of t.coApplicableCountryISO31661Alpha2Codes) {
       addToBag(timezoneIdsByCountry, co, t.ianaIdentifier);
@@ -128,13 +148,25 @@ export function buildAll(src: LoadedSrcData): BuildResult {
 
   // --- Pass 3: per-entity build ---
 
-  const countries: CountrySpec[] = src.countries.map((c) => buildCountry(c, {
-    geCodes: geCodesByCountry.get(c.iso31661Alpha2Code) ?? [],
-    subdivisionCodes: subdivisionCodesByCountry.get(c.iso31661Alpha2Code) ?? [],
-    timezoneIds: timezoneIdsByCountry.get(c.iso31661Alpha2Code) ?? [],
-    localeTags: localeTagsByCountry.get(c.iso31661Alpha2Code) ?? [],
-    spokenLangs: spokenLangsByCountry.get(c.iso31661Alpha2Code) ?? [],
-  }));
+  // Build the post-overlay locales catalog tag set — used for primary-locale
+  // re-derivation when Tier 1 returned null (e.g., fr-TF for TF which can only
+  // resolve AFTER the locales overlay adds the entry).
+  const postOverlayLocaleTags = new Set(src.locales.map((l) => l.ietfBcp47Tag));
+
+  const countries: CountrySpec[] = src.countries.map((c) =>
+    buildCountry(
+      c,
+      {
+        geCodes: geCodesByCountry.get(c.iso31661Alpha2Code) ?? [],
+        subdivisionCodes:
+          subdivisionCodesByCountry.get(c.iso31661Alpha2Code) ?? [],
+        timezoneIds: timezoneIdsByCountry.get(c.iso31661Alpha2Code) ?? [],
+        localeTags: localeTagsByCountry.get(c.iso31661Alpha2Code) ?? [],
+        spokenLangs: spokenLangsByCountry.get(c.iso31661Alpha2Code) ?? [],
+      },
+      postOverlayLocaleTags,
+    ),
+  );
 
   const subdivisions: SubdivisionSpec[] = src.subdivisions.map((s) => ({
     iso31662Code: s.iso31662Code,
@@ -168,11 +200,14 @@ export function buildAll(src: LoadedSrcData): BuildResult {
       "LTR",
     ),
     isSupported: supportedLanguages.has(l.iso6391Code),
-    spokenInCountryISO31661Alpha2Codes: countriesPerLanguage.get(l.iso6391Code) ?? [],
+    spokenInCountryISO31661Alpha2Codes:
+      countriesPerLanguage.get(l.iso6391Code) ?? [],
   }));
 
   const locales: LocaleSpec[] = src.locales.map((l) => {
-    const country = l.regionSubtag ? src.countriesByCode.get(l.regionSubtag) ?? null : null;
+    const country = l.regionSubtag
+      ? (src.countriesByCode.get(l.regionSubtag) ?? null)
+      : null;
     return {
       ietfBcp47Tag: l.ietfBcp47Tag,
       name: l.displayName,
@@ -203,11 +238,69 @@ export function buildAll(src: LoadedSrcData): BuildResult {
     currentStdAbbrev: t.currentStdAbbrev ?? "",
     currentDstAbbrev: t.currentDstAbbrev,
     countryISO31661Alpha2Code: t.countryISO31661Alpha2Code,
-    coApplicableCountryISO31661Alpha2Codes: [...t.coApplicableCountryISO31661Alpha2Codes].sort(),
+    coApplicableCountryISO31661Alpha2Codes: [
+      ...t.coApplicableCountryISO31661Alpha2Codes,
+    ].sort(),
     aliases: [...t.aliases].sort(),
   }));
 
+  // --- Pass 4: pipeline-time validateLocaleRefs (defense in depth vs .NET D2GEO012) ---
+  // Walks every country's primaryLocaleIETFBCP47Tag + every entry in
+  // localeIETFBCP47Tags[] and verifies the tag exists in the (overlay-applied)
+  // locales catalog. Catches orphan refs at `pnpm tier-2:build` time so issues
+  // surface at the layer that owns the data, not deferred to .NET source-gen.
+  // .NET D2GEO012 stays in place as a downstream backstop.
+  validateLocaleRefs(countries, locales);
+
   return { countries, subdivisions, currencies, languages, locales, timezones };
+}
+
+/**
+ * Cross-checks every `Country.primaryLocaleIETFBCP47Tag` + every entry in
+ * `Country.localeIETFBCP47Tags[]` against the Tier 2 locales catalog (which
+ * already includes overlay additions). Throws on the first miss with a clear
+ * per-country error message — multiple misses are collected into one error so
+ * a single run surfaces every orphan, not one at a time.
+ */
+export function validateLocaleRefs(
+  countries: readonly CountrySpec[],
+  locales: readonly LocaleSpec[],
+): void {
+  const localeTags = new Set(locales.map((l) => l.ietfBcp47Tag));
+  const misses: string[] = [];
+  for (const c of countries) {
+    if (
+      c.primaryLocaleIETFBCP47Tag !== null &&
+      !localeTags.has(c.primaryLocaleIETFBCP47Tag)
+    ) {
+      misses.push(
+        `Country[${c.iso31661Alpha2Code}].primaryLocaleIETFBCP47Tag = ` +
+          `'${c.primaryLocaleIETFBCP47Tag}' not in locales catalog`,
+      );
+    }
+    for (const tag of c.localeIETFBCP47Tags) {
+      if (!localeTags.has(tag)) {
+        misses.push(
+          `Country[${c.iso31661Alpha2Code}].localeIETFBCP47Tags contains ` +
+            `'${tag}' not in locales catalog`,
+        );
+      }
+    }
+  }
+  if (misses.length > 0) {
+    throw new Error(
+      `validateLocaleRefs failed (${misses.length} orphan refs):\n  - ` +
+        misses.join("\n  - ") +
+        `\n\nFix paths (per contracts/geo/overlays/README.md):\n` +
+        `  1. Country-side: adjust the derivation in ` +
+        `tools/geo-data-pipeline/src/transformers/primary-locale-tag.ts (if the algorithm ` +
+        `is wrong) OR add a country-side override in ` +
+        `contracts/geo/overlays/countries.overlays.spec.json.\n` +
+        `  2. Locale-side: add the missing tag via ` +
+        `contracts/geo/overlays/locales.overlays.spec.json additions[] ` +
+        `(e.g., fr-TF when CLDR doesn't ship the territory's primary locale).`,
+    );
+  }
 }
 
 interface CountryNavData {
@@ -219,9 +312,33 @@ interface CountryNavData {
 }
 
 function buildCountry(
-  c: import("./load-src-data.js").SrcDataCountry,
+  c: SrcDataCountry,
   nav: CountryNavData,
+  postOverlayLocaleTags: ReadonlySet<string>,
 ): CountrySpec {
+  // Re-derive primaryLocaleIETFBCP47Tag against the POST-OVERLAY locales catalog
+  // when the Tier 1 value is null. Covers cases like TF where CLDR availableLocales
+  // does not ship the primary locale and the locales overlay supplies it (fr-TF).
+  // When Tier 1 already produced a non-null tag, trust it — write-countries has
+  // already walked the canonical algorithm.
+  let primaryLocaleTag = c.primaryLocaleIETFBCP47Tag;
+  if (primaryLocaleTag === null && nav.localeTags.length > 0) {
+    primaryLocaleTag = derivePrimaryLocaleTag(
+      {
+        regionAlpha2: c.iso31661Alpha2Code,
+        primaryLanguageCode: c.primaryLanguageISO6391Code,
+        candidateLocaleTags: nav.localeTags,
+      },
+      {
+        // No likelySubtags pass at Tier 2 — Tier 1 already exhausted that path
+        // and the overlay-only case (TF) doesn't need script expansion. Empty
+        // map drives the algorithm straight to the candidate-list fallbacks.
+        cldrLikelySubtags: new Map(),
+        cldrAvailableLocaleTags: postOverlayLocaleTags,
+      },
+    );
+  }
+
   return {
     iso31661Alpha2Code: c.iso31661Alpha2Code,
     iso31661Alpha3Code: c.iso31661Alpha3Code ?? "",
@@ -255,7 +372,7 @@ function buildCountry(
     ),
     primaryLanguageISO6391Code: c.primaryLanguageISO6391Code,
     primaryCurrencyISO4217AlphaCode: c.primaryCurrencyISO4217AlphaCode,
-    primaryLocaleIETFBCP47Tag: c.primaryLocaleIETFBCP47Tag,
+    primaryLocaleIETFBCP47Tag: primaryLocaleTag,
     sovereignCountryISO31661Alpha2Code: c.sovereignCountryISO31661Alpha2Code,
     geopoliticalEntityShortCodes: nav.geCodes,
     subdivisionISO31662Codes: nav.subdivisionCodes,
@@ -263,10 +380,20 @@ function buildCountry(
     localeIETFBCP47Tags: nav.localeTags,
     spokenLanguageISO6391Codes: nav.spokenLangs,
     territoryISO31661Alpha2Codes: c.territoryISO31661Alpha2Codes,
-    currencies: c.activeLegalTenderCurrencies.map((cur) => ({
-      iso4217AlphaCode: cur.isoAlphaCode,
-      level: "LegalTender" as const,
-    })),
+    currencies: [
+      ...c.activeLegalTenderCurrencies.map((cur) => ({
+        iso4217AlphaCode: cur.isoAlphaCode,
+        level: "LegalTender" as const,
+      })),
+      ...(c.widelyAcceptedCurrencies ?? []).map((cur) => ({
+        iso4217AlphaCode: cur.isoAlphaCode,
+        level: "WidelyAccepted" as const,
+      })),
+      ...(c.touristCurrencies ?? []).map((cur) => ({
+        iso4217AlphaCode: cur.isoAlphaCode,
+        level: "Tourist" as const,
+      })),
+    ],
   };
 }
 
@@ -275,7 +402,8 @@ function normalizeEnum<T extends string>(
   allowed: readonly T[],
   fallback: T,
 ): T {
-  if (value && (allowed as readonly string[]).includes(value)) return value as T;
+  if (value && (allowed as readonly string[]).includes(value))
+    return value as T;
   return fallback;
 }
 
@@ -286,7 +414,10 @@ function addToBag<K, V>(bag: Map<K, V[]>, key: K, value: V): void {
 }
 
 /** Wraps each catalog with the standard header and writes to contracts/geo/{name}.spec.json. */
-export async function writeAll(result: BuildResult, src: LoadedSrcData): Promise<void> {
+export async function writeAll(
+  result: BuildResult,
+  src: LoadedSrcData,
+): Promise<void> {
   const generatedAt = new Date().toISOString();
   const baseNote = [
     "TIER 2 codegen-ready spec — produced by tools/geo-data-pipeline from",
@@ -319,15 +450,30 @@ export async function writeAll(result: BuildResult, src: LoadedSrcData): Promise
     ],
     [
       "subdivisions.spec.json",
-      wrap("subdivisions.schema.json", baseNote, result.subdivisions, generatedAt),
+      wrap(
+        "subdivisions.schema.json",
+        baseNote,
+        result.subdivisions,
+        generatedAt,
+      ),
     ],
     [
       "currencies.spec.json",
-      wrap("currencies.schema.json", currenciesNote, result.currencies, generatedAt),
+      wrap(
+        "currencies.schema.json",
+        currenciesNote,
+        result.currencies,
+        generatedAt,
+      ),
     ],
     [
       "languages.spec.json",
-      wrap("languages.schema.json", languagesNote, result.languages, generatedAt),
+      wrap(
+        "languages.schema.json",
+        languagesNote,
+        result.languages,
+        generatedAt,
+      ),
     ],
     [
       "locales.spec.json",
@@ -367,7 +513,9 @@ if (
   process.argv[1]?.endsWith("build-codegen-specs.ts") ||
   process.argv[1]?.endsWith("build-codegen-specs.js")
 ) {
-  console.error("[tier-2] loading Tier 1 src-data + overlays + hand-rolled GE catalog");
+  console.error(
+    "[tier-2] loading Tier 1 src-data + overlays + hand-rolled GE catalog",
+  );
   const src = await loadSrcData();
   console.error(
     `  countries=${src.countries.length} ` +
@@ -384,6 +532,22 @@ if (
     console.error(
       `  [overlays] countries: +${c.additions.length} additions, ` +
         `~${c.overrides.length} overrides, -${c.removals.length} removals ` +
+        `(run \`pnpm geo:overlays\` for reasons)`,
+    );
+  }
+  const s = src.overlaysApplied.subdivisions;
+  if (s.additions.length + s.overrides.length + s.removals.length > 0) {
+    console.error(
+      `  [overlays] subdivisions: +${s.additions.length} additions, ` +
+        `~${s.overrides.length} overrides, -${s.removals.length} removals ` +
+        `(run \`pnpm geo:overlays\` for reasons)`,
+    );
+  }
+  const l = src.overlaysApplied.locales;
+  if (l.additions.length + l.overrides.length + l.removals.length > 0) {
+    console.error(
+      `  [overlays] locales: +${l.additions.length} additions, ` +
+        `~${l.overrides.length} overrides, -${l.removals.length} removals ` +
         `(run \`pnpm geo:overlays\` for reasons)`,
     );
   }

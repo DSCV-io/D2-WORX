@@ -20,7 +20,13 @@ const SPEC_OUTPUT_PATH = resolve(
   "src-data",
   "timezones.spec.json",
 );
-const CACHE_DIR = resolve(REPO_ROOT_PATH, "tools", "geo-data-pipeline", ".cache", "iana-tzdb");
+const CACHE_DIR = resolve(
+  REPO_ROOT_PATH,
+  "tools",
+  "geo-data-pipeline",
+  ".cache",
+  "iana-tzdb",
+);
 
 interface TimezonesSpec {
   $schema: string;
@@ -34,7 +40,10 @@ interface TimezonesSpec {
     fetchedAt: string;
     sha256: string;
   }>;
-  fieldCoverage: Record<string, { populated: number; total: number; pct: string }>;
+  fieldCoverage: Record<
+    string,
+    { populated: number; total: number; pct: string }
+  >;
   /** ICU<->IANA reconciliation diagnostics — for operator visibility during refresh. */
   reconciliation: {
     ianaOnlyZones: string[];
@@ -87,16 +96,24 @@ export async function buildTimezonesSpec(): Promise<TimezonesSpec> {
     ianaIdentifier: countNonNull(entries, (e) => e.ianaIdentifier),
     displayName: countNonNull(entries, (e) => e.displayName),
     currentStdOffsetMinutes: total, // always populated
-    currentDstOffsetMinutes: entries.filter((e) => e.currentDstOffsetMinutes !== null).length,
+    currentDstOffsetMinutes: entries.filter(
+      (e) => e.currentDstOffsetMinutes !== null,
+    ).length,
     currentStdAbbrev: countNonNull(entries, (e) => e.currentStdAbbrev),
     currentDstAbbrev: entries.filter((e) => e.currentDstAbbrev !== null).length,
-    countryISO31661Alpha2Code: countNonNull(entries, (e) => e.countryISO31661Alpha2Code),
+    countryISO31661Alpha2Code: countNonNull(
+      entries,
+      (e) => e.countryISO31661Alpha2Code,
+    ),
     aliases: entries.filter((e) => e.aliases.length > 0).length,
     coApplicableCountries: entries.filter(
       (e) => e.coApplicableCountryISO31661Alpha2Codes.length > 0,
     ).length,
   };
-  const fieldCoverage: Record<string, { populated: number; total: number; pct: string }> = {};
+  const fieldCoverage: Record<
+    string,
+    { populated: number; total: number; pct: string }
+  > = {};
   for (const [field, populated] of Object.entries(coverage)) {
     fieldCoverage[field] = {
       populated,
@@ -105,19 +122,27 @@ export async function buildTimezonesSpec(): Promise<TimezonesSpec> {
     };
   }
 
-  console.error(`[transform] timezones: ${entries.length} entries (${skipped} rows skipped)`);
+  console.error(
+    `[transform] timezones: ${entries.length} entries (${skipped} rows skipped)`,
+  );
   for (const [field, stats] of Object.entries(fieldCoverage)) {
-    console.error(`  ${field}: ${stats.populated}/${stats.total} (${stats.pct})`);
+    console.error(
+      `  ${field}: ${stats.populated}/${stats.total} (${stats.pct})`,
+    );
   }
   console.error(
     `[reconcile] IANA-only zones: ${reconciliation.ianaOnlyZones.length}; ` +
       `ICU-only zones: ${reconciliation.icuOnlyZones.length}`,
   );
   if (reconciliation.ianaOnlyZones.length > 0) {
-    console.error(`  IANA-only sample: ${reconciliation.ianaOnlyZones.slice(0, 5).join(", ")}`);
+    console.error(
+      `  IANA-only sample: ${reconciliation.ianaOnlyZones.slice(0, 5).join(", ")}`,
+    );
   }
   if (reconciliation.icuOnlyZones.length > 0) {
-    console.error(`  ICU-only sample: ${reconciliation.icuOnlyZones.slice(0, 5).join(", ")}`);
+    console.error(
+      `  ICU-only sample: ${reconciliation.icuOnlyZones.slice(0, 5).join(", ")}`,
+    );
   }
 
   return {
@@ -140,7 +165,10 @@ export async function buildTimezonesSpec(): Promise<TimezonesSpec> {
   };
 }
 
-function countNonNull<T>(items: readonly T[], pick: (item: T) => string | null): number {
+function countNonNull<T>(
+  items: readonly T[],
+  pick: (item: T) => string | null,
+): number {
   let n = 0;
   for (const item of items) if (pick(item)) n++;
   return n;

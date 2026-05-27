@@ -16,17 +16,17 @@ The spec file is the single source of truth for the platform's scope catalog. Ev
 
 ## Build-time diagnostics
 
-| ID | Severity | Trigger |
-|---|---|---|
-| `D2SCP001` | Error | Spec file is malformed JSON or violates the schema |
-| `D2SCP002` | Error | `grantedTo` references unknown `OrgType` / `Role` enum value |
-| `D2SCP003` | Error | Scope name violates naming convention (lowercase dot-separated; segments must be valid C# identifiers; ≥ 2 segments; no consecutive / leading / trailing dots) |
-| `D2SCP004` | Error | Duplicate scope name |
-| `D2SCP005` | Warning | Anonymous scope marked `impersonationBlocked` (meaningless — anon scopes are pre-auth) |
-| `D2SCP006` | Error | `grantedTo` entry has empty role array — invalid config (omit the entry instead) |
-| `D2SCP007` | Error | Two scopes collide at the same tree position (one is a strict dot-prefix of the other) |
-| `D2SCP008` | Error | Non-anonymous scope omits `grantedTo` (unreachable scope) |
-| `D2SCP009` | Error | No `scopes.spec.json` found in `AdditionalFiles` |
+| ID         | Severity | Trigger                                                                                                                                                        |
+| ---------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `D2SCP001` | Error    | Spec file is malformed JSON or violates the schema                                                                                                             |
+| `D2SCP002` | Error    | `grantedTo` references unknown `OrgType` / `Role` enum value                                                                                                   |
+| `D2SCP003` | Error    | Scope name violates naming convention (lowercase dot-separated; segments must be valid C# identifiers; ≥ 2 segments; no consecutive / leading / trailing dots) |
+| `D2SCP004` | Error    | Duplicate scope name                                                                                                                                           |
+| `D2SCP005` | Warning  | Anonymous scope marked `impersonationBlocked` (meaningless — anon scopes are pre-auth)                                                                         |
+| `D2SCP006` | Error    | `grantedTo` entry has empty role array — invalid config (omit the entry instead)                                                                               |
+| `D2SCP007` | Error    | Two scopes collide at the same tree position (one is a strict dot-prefix of the other)                                                                         |
+| `D2SCP008` | Error    | Non-anonymous scope omits `grantedTo` (unreachable scope)                                                                                                      |
+| `D2SCP009` | Error    | No `scopes.spec.json` found in `AdditionalFiles`                                                                                                               |
 
 ---
 

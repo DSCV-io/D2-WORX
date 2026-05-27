@@ -90,6 +90,7 @@ Two tiers:
 ### Adversarial Discipline
 
 Per [`docs/TESTS.md`](../../docs/TESTS.md), every form field gets unit + Playwright coverage of the 8-category checklist:
+
 1. Happy path
 2. Garbage input (null, empty, whitespace, wrong type, malformed)
 3. Boundary values (max length ±1, empty/single/over-cap collections)
@@ -120,6 +121,7 @@ Accessibility audits (`axe-core` / `axe-playwright`), visual regression (Playwri
 ### Web Vitals (RUM)
 
 Capture and report:
+
 - **TTFB** (Time to First Byte)
 - **FCP** (First Contentful Paint)
 - **LCP** (Largest Contentful Paint)
@@ -131,7 +133,6 @@ Dashboard: `infra/observability/grafana/provisioning/dashboards/d2-worx/web-vita
 ### User Identity
 
 **PII rule**: Faro user identity is limited to `userId` + `username`. Never email, real name, contact details, or session payload contents.
-
 
 ### Session Replay
 
@@ -145,12 +146,12 @@ The route structure + component organization is summarized below.
 
 ### Route Groups
 
-| Group | Purpose | Auth Required | Org Required |
-|---|---|---|---|
-| `(public)/` | Marketing, legal, pricing | No | No |
-| `(auth)/` | Sign-in, sign-up, password reset, OTP | No | No |
-| `(onboarding)/` | Welcome, create/select org | Yes | No |
-| `(app)/` | Main authenticated application | Yes | Yes |
+| Group           | Purpose                               | Auth Required | Org Required |
+| --------------- | ------------------------------------- | ------------- | ------------ |
+| `(public)/`     | Marketing, legal, pricing             | No            | No           |
+| `(auth)/`       | Sign-in, sign-up, password reset, OTP | No            | No           |
+| `(onboarding)/` | Welcome, create/select org            | Yes           | No           |
+| `(app)/`        | Main authenticated application        | Yes           | Yes          |
 
 The `(app)/` group is further subdivided by org type: `(customer)/`, `(support)/`, `(admin)/`, `(shared)/` per the multi-org architecture.
 
@@ -230,24 +231,24 @@ For multi-step / cross-field-dependent forms, the pattern is:
 
 Baseline reference. Update versions as releases bump.
 
-| Category | Package | Version |
-|---|---|---|
-| Framework | `svelte` | 5.53.5 |
-| Framework | `@sveltejs/kit` | 2.53.3 |
-| Build | `vite` | 7.3.1 |
-| Styling | `tailwindcss` | 4.2.1 |
-| UI | `bits-ui` | 2.16.2 |
-| Icons | `@lucide/svelte` | 0.561.0 |
-| Forms | `sveltekit-superforms` | 2.30.0 |
-| Forms | `formsnap` | 2.0.1 |
-| Validation | `zod` | 4.3.6 |
-| i18n | `@inlang/paraglide-js` | 2.13.0 |
-| Phone | `libphonenumber-js` | 1.12.38 |
-| Postal codes | `postcode-validator` | 3.10.9 |
-| Dates | `@internationalized/date` | 3.11.0 |
-| OTel (server) | `@opentelemetry/sdk-node` + exporters | 0.212.0 |
-| Faro (client) | `@grafana/faro-web-sdk` + tracing | 1.19.0 |
-| Charts | `layerchart` | 2.0.0-next.43 |
-| Testing | `vitest` + `@vitest/browser` + `playwright` | 4.0.18 / 1.58.0 |
-| Toast | `svelte-sonner` | 1.0.7 |
-| Theme | `mode-watcher` | 1.1.0 |
+| Category      | Package                                     | Version         |
+| ------------- | ------------------------------------------- | --------------- |
+| Framework     | `svelte`                                    | 5.53.5          |
+| Framework     | `@sveltejs/kit`                             | 2.53.3          |
+| Build         | `vite`                                      | 7.3.1           |
+| Styling       | `tailwindcss`                               | 4.2.1           |
+| UI            | `bits-ui`                                   | 2.16.2          |
+| Icons         | `@lucide/svelte`                            | 0.561.0         |
+| Forms         | `sveltekit-superforms`                      | 2.30.0          |
+| Forms         | `formsnap`                                  | 2.0.1           |
+| Validation    | `zod`                                       | 4.3.6           |
+| i18n          | `@inlang/paraglide-js`                      | 2.13.0          |
+| Phone         | `libphonenumber-js`                         | 1.12.38         |
+| Postal codes  | `postcode-validator`                        | 3.10.9          |
+| Dates         | `@internationalized/date`                   | 3.11.0          |
+| OTel (server) | `@opentelemetry/sdk-node` + exporters       | 0.212.0         |
+| Faro (client) | `@grafana/faro-web-sdk` + tracing           | 1.19.0          |
+| Charts        | `layerchart`                                | 2.0.0-next.43   |
+| Testing       | `vitest` + `@vitest/browser` + `playwright` | 4.0.18 / 1.58.0 |
+| Toast         | `svelte-sonner`                             | 1.0.7           |
+| Theme         | `mode-watcher`                              | 1.1.0           |

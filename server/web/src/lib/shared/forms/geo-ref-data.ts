@@ -5,10 +5,10 @@
 /**
  * GeoRefData → UI option array transforms.
  *
- * Converts raw proto maps (keyed by ISO codes) into combobox-friendly
- * option arrays with display labels, flag paths, phone prefixes, etc.
+ * Converts catalog record arrays into combobox-friendly option arrays
+ * with display labels, flag paths, phone prefixes, etc.
  */
-import type { CountryDTO, SubdivisionDTO } from "@d2/protos";
+import type { Country, Subdivision } from "@d2/geo-abstractions";
 import { getCountryCallingCode } from "./phone-format.js";
 
 /**
@@ -51,7 +51,7 @@ export interface CountryOption {
   flag: string;
   /** International calling code (e.g. "+1"). */
   phonePrefix: string;
-  /** Phone number format hint from proto (e.g. "XXX-XXX-XXXX"). */
+  /** National phone number format hint (e.g. "XXX-XXX-XXXX"). */
   phoneFormat: string;
   /** ISO 3166-2 codes for this country's subdivisions. */
   subdivisionCodes: string[];
@@ -65,15 +65,14 @@ export interface SubdivisionOption {
 }
 
 /**
- * Convert a countries map to a sorted option array.
+ * Convert a countries array to a sorted option array.
  * Popular countries appear first (in POPULAR_COUNTRIES order),
  * then remaining countries sorted alphabetically by display name.
  */
-export function countriesToOptions(countries: Record<string, CountryDTO>): CountryOption[] {
+export function countriesToOptions(countries: readonly Country[]): CountryOption[] {
   // Drop entries missing the iso code or display name — without either,
-  // the option has nothing to render. Proto3 makes both fields optional
-  // on the wire so we have to guard explicitly.
-  const all = Object.values(countries).flatMap((c): CountryOption[] => {
+  // the option has nothing to render. Treat empty strings as absent.
+  const all = countries.flatMap((c): CountryOption[] => {
     if (!c.iso31661Alpha2Code || !c.displayName) return [];
     return [
       {
@@ -83,8 +82,8 @@ export function countriesToOptions(countries: Record<string, CountryDTO>): Count
         phonePrefix: c.phoneNumberPrefix
           ? `+${c.phoneNumberPrefix}`
           : getCountryCallingCode(c.iso31661Alpha2Code),
-        phoneFormat: c.phoneNumberFormat ?? "",
-        subdivisionCodes: c.subdivisionIso31662Codes ?? [],
+        phoneFormat: c.phoneNumberNationalFormat,
+        subdivisionCodes: [...c.subdivisionIso31662Codes],
       },
     ];
   });
@@ -110,10 +109,10 @@ export function countriesToOptions(countries: Record<string, CountryDTO>): Count
  * Returns a sorted option array.
  */
 export function subdivisionsForCountry(
-  subdivisions: Record<string, SubdivisionDTO>,
+  subdivisions: readonly Subdivision[],
   countryIso2: string,
 ): SubdivisionOption[] {
-  return Object.values(subdivisions)
+  return subdivisions
     .filter((s) => s.countryIso31661Alpha2Code === countryIso2)
     .flatMap((s): SubdivisionOption[] => {
       if (!s.iso31662Code || !s.displayName) return [];

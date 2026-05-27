@@ -51,4 +51,3 @@ D2.Notifications is the "show in the UI" side. Each owns one slice — Courier n
 
 - [`server/shared/dotnet/messaging-rabbitmq/README.md`](../../shared/dotnet/messaging-rabbitmq/README.md) — RabbitMQ wire format, exchange naming, encryption, delivery semantics
 - [docs/PATTERNS.md](../../../docs/PATTERNS.md) — handler / D2Result / RedactionSpec patterns
-

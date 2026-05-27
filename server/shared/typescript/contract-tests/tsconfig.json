@@ -10,10 +10,12 @@
   "references": [
     { "path": "../auth-abstractions" },
     { "path": "../auth-context-abstractions" },
+    { "path": "../geo-abstractions" },
     { "path": "../headers-amqp" },
     { "path": "../headers-common" },
     { "path": "../headers-grpc" },
     { "path": "../headers-http" },
+    { "path": "../location" },
     { "path": "../request-context-abstractions" },
     { "path": "../result" }
   ]

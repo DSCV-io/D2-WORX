@@ -12,15 +12,15 @@ Vocabulary for repo-flavored handlers — what app-layer code touches when it ne
 
 ## File layout
 
-| Path | Contents |
-|---|---|
-| `D2.Shared.Handler.Repo.Abstractions.csproj` | csproj — depends only on `D2.Shared.Result` + `D2.Shared.I18n` |
-| `DbFailureKind.cs` | Enum — `ConcurrencyConflict / UniqueViolation / ForeignKeyViolation / NotNullViolation / CheckViolation / Timeout / Deadlock / ConnectionFailure` |
-| `IDbExceptionClassifier.cs` | The provider seam — `DbFailureKind? Classify(Exception)` |
-| `DbErrorCodes.cs` | String constants (`UNIQUE_VIOLATION`, `FOREIGN_KEY_VIOLATION`, etc.) used as `D2Result.ErrorCode` values |
-| `D2ResultDbFactories.cs` | Static C# 14 extension factories on `D2Result` — `D2Result.UniqueViolation()`, `.ConcurrencyConflict()`, `.DbDeadlock()`, etc. |
-| `D2ResultDbGenericFactories.cs` | Same surface on `D2Result<TData>` |
-| `D2ResultDbBooleans.cs` | C# 14 instance extension properties — `result.IsUniqueViolation`, `result.IsConcurrencyConflict`, `result.IsTransientDbFailure`, etc. |
+| Path                                         | Contents                                                                                                                                          |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `D2.Shared.Handler.Repo.Abstractions.csproj` | csproj — depends only on `D2.Shared.Result` + `D2.Shared.I18n`                                                                                    |
+| `DbFailureKind.cs`                           | Enum — `ConcurrencyConflict / UniqueViolation / ForeignKeyViolation / NotNullViolation / CheckViolation / Timeout / Deadlock / ConnectionFailure` |
+| `IDbExceptionClassifier.cs`                  | The provider seam — `DbFailureKind? Classify(Exception)`                                                                                          |
+| `DbErrorCodes.cs`                            | String constants (`UNIQUE_VIOLATION`, `FOREIGN_KEY_VIOLATION`, etc.) used as `D2Result.ErrorCode` values                                          |
+| `D2ResultDbFactories.cs`                     | Static C# 14 extension factories on `D2Result` — `D2Result.UniqueViolation()`, `.ConcurrencyConflict()`, `.DbDeadlock()`, etc.                    |
+| `D2ResultDbGenericFactories.cs`              | Same surface on `D2Result<TData>`                                                                                                                 |
+| `D2ResultDbBooleans.cs`                      | C# 14 instance extension properties — `result.IsUniqueViolation`, `result.IsConcurrencyConflict`, `result.IsTransientDbFailure`, etc.             |
 
 ---
 
@@ -56,15 +56,15 @@ The `IsTransientDbFailure` predicate is a roll-up — `IsDbDeadlock || IsDbTimeo
 
 Each factory accepts an optional `messages` parameter; when omitted, the generic fallback from `TK.Common.Errors.*` is used:
 
-| Factory | Default `TKMessage` |
-|---|---|
-| `ConcurrencyConflict()` | `TK.Common.Errors.CONCURRENCY_CONFLICT` |
-| `UniqueViolation()` | `TK.Common.Errors.UNIQUE_VIOLATION` |
+| Factory                 | Default `TKMessage`                      |
+| ----------------------- | ---------------------------------------- |
+| `ConcurrencyConflict()` | `TK.Common.Errors.CONCURRENCY_CONFLICT`  |
+| `UniqueViolation()`     | `TK.Common.Errors.UNIQUE_VIOLATION`      |
 | `ForeignKeyViolation()` | `TK.Common.Errors.FOREIGN_KEY_VIOLATION` |
-| `NotNullViolation()` | `TK.Common.Errors.NOT_NULL_VIOLATION` |
-| `CheckViolation()` | `TK.Common.Errors.CHECK_VIOLATION` |
-| `DbTimeout()` | `TK.Common.Errors.DB_TIMEOUT` |
-| `DbDeadlock()` | `TK.Common.Errors.DB_DEADLOCK` |
+| `NotNullViolation()`    | `TK.Common.Errors.NOT_NULL_VIOLATION`    |
+| `CheckViolation()`      | `TK.Common.Errors.CHECK_VIOLATION`       |
+| `DbTimeout()`           | `TK.Common.Errors.DB_TIMEOUT`            |
+| `DbDeadlock()`          | `TK.Common.Errors.DB_DEADLOCK`           |
 | `DbConnectionFailure()` | `TK.Common.Errors.DB_CONNECTION_FAILURE` |
 
 These defaults are deliberately generic ("This value is already in use"). Handlers that know the constraint identity should override the message — e.g. `[TK.Auth.Errors.EMAIL_ALREADY_TAKEN]` instead — and attach an `InputError` so the form UI can highlight the offending field.
@@ -73,17 +73,18 @@ These defaults are deliberately generic ("This value is already in use"). Handle
 
 ## Status code mapping
 
-| Factory | HTTP status |
-|---|---|
-| `ConcurrencyConflict` / `UniqueViolation` / `ForeignKeyViolation` / `DbDeadlock` | 409 Conflict |
-| `NotNullViolation` / `CheckViolation` | 400 Bad Request |
-| `DbTimeout` / `DbConnectionFailure` | 503 Service Unavailable |
+| Factory                                                                          | HTTP status             |
+| -------------------------------------------------------------------------------- | ----------------------- |
+| `ConcurrencyConflict` / `UniqueViolation` / `ForeignKeyViolation` / `DbDeadlock` | 409 Conflict            |
+| `NotNullViolation` / `CheckViolation`                                            | 400 Bad Request         |
+| `DbTimeout` / `DbConnectionFailure`                                              | 503 Service Unavailable |
 
 ---
 
 ## Dependencies
 
 Project references:
+
 - `D2.Shared.Result` — base `D2Result` type that the factories extend
 - `D2.Shared.I18n` — `TKMessage` + `TK` codegen entry point
 

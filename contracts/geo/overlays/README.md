@@ -6,19 +6,19 @@ Copyright (c) DCSV. All rights reserved.
 
 ## What this is
 
-Hand-rolled overlay files applied at Tier 2 build time on top of Tier 1 src-data. Used when the upstream sources (CLDR / IANA tzdb / datasets/* / Wikidata SPARQL / debian iso-codes) omit, mislabel, or wrongly include something the platform needs handled differently.
+Hand-rolled overlay files applied at Tier 2 build time on top of Tier 1 src-data. Used when the upstream sources (CLDR / IANA tzdb / datasets/\* / Wikidata SPARQL / debian iso-codes) omit, mislabel, or wrongly include something the platform needs handled differently.
 
 Each overlay entry carries `id` + `addedAt` + `reason` (+ optional `addedBy`) so the policy decision is audit-trail visible. `pnpm geo:overlays` from `tools/geo-data-pipeline/` lists every active patch with its reason.
 
 ## When to overlay vs fix upstream vs hand-roll
 
-| Situation | Decision |
-|---|---|
-| Upstream is wrong AND can be fixed in datasets/CLDR/etc. | Fix upstream, wait for the next refresh. |
-| Upstream is wrong / incomplete AND fixing upstream isn't viable (political deadlock, license issue, abandoned project) | **Add an overlay**. Document the why in `reason`. |
-| Entity has NO upstream source whatsoever (supranational groupings, internal-only classifications) | **Hand-roll a Tier 2 peer** (see `geopolitical-entities.spec.json`). |
-| Field-level policy disagreement with upstream (e.g., disputed border, contested currency status) | **Add an override**. Document the disagreement in `reason`. |
-| Upstream ships an entry we don't want to surface (e.g., a withdrawn ISO code that lingers in caches) | **Add a removal**. Document why in `reason`. |
+| Situation                                                                                                              | Decision                                                             |
+| ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Upstream is wrong AND can be fixed in datasets/CLDR/etc.                                                               | Fix upstream, wait for the next refresh.                             |
+| Upstream is wrong / incomplete AND fixing upstream isn't viable (political deadlock, license issue, abandoned project) | **Add an overlay**. Document the why in `reason`.                    |
+| Entity has NO upstream source whatsoever (supranational groupings, internal-only classifications)                      | **Hand-roll a Tier 2 peer** (see `geopolitical-entities.spec.json`). |
+| Field-level policy disagreement with upstream (e.g., disputed border, contested currency status)                       | **Add an override**. Document the disagreement in `reason`.          |
+| Upstream ships an entry we don't want to surface (e.g., a withdrawn ISO code that lingers in caches)                   | **Add a removal**. Document why in `reason`.                         |
 
 ## Apply order
 
@@ -38,11 +38,13 @@ Result: overlay-injected entries flow through the same Tier 2 logic as upstream 
 
 One overlay file per Tier 1 catalog: `{entity}.overlays.spec.json`. Currently:
 
-| File | Patches | Notes |
-|---|---|---|
-| `countries.overlays.spec.json` | XK (Kosovo addition) | First overlay, sets the pattern |
+| File                              | Patches                                      | Notes                                                                  |
+| --------------------------------- | -------------------------------------------- | ---------------------------------------------------------------------- |
+| `countries.overlays.spec.json`    | XK (Kosovo addition) + 5 overrides           | First overlay, sets the pattern                                        |
+| `subdivisions.overlays.spec.json` | IR-22 (Hormozgān override)                   | Fixes CLDR stale-label bug after 2020-11-24 ISO 3166-2:IR reassignment |
+| `locales.overlays.spec.json`      | fr-TF (French Southern Territories addition) | Fills CLDR availableLocales gap (no fr-TF entry shipped upstream)      |
 
-Currently one overlay file ships (`countries.overlays.spec.json`); additional per-entity overlays land here when needed.
+Additional per-entity overlays land here when needed (one file per Tier 1 catalog).
 
 ## Entry shape
 
@@ -56,7 +58,9 @@ Three operation types, all sharing `id` / `addedAt` / `reason` (+ optional `adde
       "addedAt": "2026-05-19",
       "addedBy": "manual policy review",
       "reason": "Why this entry exists. Future maintainers + auditors read this without git-archaeology.",
-      "data": { /* full Tier 1 SrcData<Entity> shape */ }
+      "data": {
+        /* full Tier 1 SrcData<Entity> shape */
+      }
     }
   ],
   "overrides": [
@@ -64,7 +68,9 @@ Three operation types, all sharing `id` / `addedAt` / `reason` (+ optional `adde
       "id": "AR",
       "addedAt": "...",
       "reason": "Argentina uses USD as de-facto secondary; CLDR doesn't flag this.",
-      "fields": { /* partial: only the fields being patched */ }
+      "fields": {
+        /* partial: only the fields being patched */
+      }
     }
   ],
   "removals": [

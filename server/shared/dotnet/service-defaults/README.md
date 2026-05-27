@@ -105,58 +105,58 @@ Re-exports `D2.Shared.AspNetCore.RunD2ServiceWebApplicationExtensions.RunD2Servi
 
 ## Opt-out matrix
 
-| `D2ServiceDefaultsOptions` flag | When `true`, the aggregator does NOT call... |
-|---|---|
-| `SkipAuthAutoWiring` | `AddD2Auth` / `AddD2AuthHttp` / `AddD2AuthGrpc` |
-| `SkipLocalCacheAutoWiring` | `AddD2LocalCache` |
+| `D2ServiceDefaultsOptions` flag    | When `true`, the aggregator does NOT call...                               |
+| ---------------------------------- | -------------------------------------------------------------------------- |
+| `SkipAuthAutoWiring`               | `AddD2Auth` / `AddD2AuthHttp` / `AddD2AuthGrpc`                            |
+| `SkipLocalCacheAutoWiring`         | `AddD2LocalCache`                                                          |
 | `SkipHttpClientResilienceDefaults` | `ConfigureHttpClientDefaults(http => http.AddStandardResilienceHandler())` |
 
 Defaults are all `false` — every component is auto-wired by default. The opt-out flag set is intentionally narrow: only components where the >95% case wants auto-wire AND a small set of services (test hosts, dry-run admin tools) need to opt out. Components without an opt-out flag (Logging, Telemetry, I18n, Handler, HealthChecks, ProblemDetails, Cors) are wired unconditionally because every D² service needs them.
 
 ## Per-component pass-through `Action<TFromOwningLib>?` delegates
 
-| Property | Forwards to |
-|---|---|
-| `LoggingConfigure` | `AddD2Logging`'s `Action<D2LoggingOptions>?` |
-| `TelemetryConfigure` | `AddD2Telemetry`'s `Action<D2TelemetryOptions>?` |
-| `CorsConfigure` | `AddD2Cors`'s `Action<D2CorsOptions>?` |
-| `ProblemDetailsConfigure` | `AddD2ProblemDetails`'s `Action<D2ProblemDetailsOptions>?` |
-| `SecurityHeadersConfigure` | `UseD2SecurityHeaders`'s `Action<D2SecurityHeadersOptions>?` (applied at pipeline-installation time) |
-| `InfrastructureBypassConfigure` | `UseD2InfrastructureBypass`'s `Action<D2InfrastructureBypassOptions>?` (applied at pipeline-installation time) |
-| `LocalCacheConfigure` | `AddD2LocalCache`'s `Action<LocalCacheOptions>?` |
-| `AuthConfigure` | `AddD2Auth`'s required `Action<AuthOptions>` (the underlying lib has no parameterless overload — every caller MUST populate `Issuer` + `Audience`) |
+| Property                        | Forwards to                                                                                                                                        |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LoggingConfigure`              | `AddD2Logging`'s `Action<D2LoggingOptions>?`                                                                                                       |
+| `TelemetryConfigure`            | `AddD2Telemetry`'s `Action<D2TelemetryOptions>?`                                                                                                   |
+| `CorsConfigure`                 | `AddD2Cors`'s `Action<D2CorsOptions>?`                                                                                                             |
+| `ProblemDetailsConfigure`       | `AddD2ProblemDetails`'s `Action<D2ProblemDetailsOptions>?`                                                                                         |
+| `SecurityHeadersConfigure`      | `UseD2SecurityHeaders`'s `Action<D2SecurityHeadersOptions>?` (applied at pipeline-installation time)                                               |
+| `InfrastructureBypassConfigure` | `UseD2InfrastructureBypass`'s `Action<D2InfrastructureBypassOptions>?` (applied at pipeline-installation time)                                     |
+| `LocalCacheConfigure`           | `AddD2LocalCache`'s `Action<LocalCacheOptions>?`                                                                                                   |
+| `AuthConfigure`                 | `AddD2Auth`'s required `Action<AuthOptions>` (the underlying lib has no parameterless overload — every caller MUST populate `Issuer` + `Audience`) |
 
 The aggregator owns ZERO field-level configuration knowledge. New options on any owning lib show up at the aggregator's call site automatically — no aggregator-side maintenance required.
 
 ## File layout
 
-| Path | Role |
-|---|---|
-| `D2.Shared.ServiceDefaults.csproj` | csproj — `Microsoft.NET.Sdk.Web` + `OutputType=Library`. 10 `ProjectReference`s + `Microsoft.Extensions.Http.Resilience` package. |
-| `ServiceDefaultsServiceCollectionExtensions.cs` | The `AddD2ServiceDefaults` extension. Body = ordered sequence of `services.AddD2X(...)` calls. |
-| `WebApplicationServiceDefaultsExtensions.cs` | The `UseD2DefaultPipeline` + `MapD2DefaultEndpoints` + `RunD2ServiceAsync` extensions. |
-| `D2ServiceDefaultsOptions.cs` | Sealed options class — opt-out flags + per-component pass-through `Action<T>?` delegates. |
-| `D2ServiceDefaultsConstants.cs` | Empty placeholder — this aggregator owns no env-var keys; every constant lives on its owning lib's own `D2*Constants` class. |
+| Path                                            | Role                                                                                                                              |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `D2.Shared.ServiceDefaults.csproj`              | csproj — `Microsoft.NET.Sdk.Web` + `OutputType=Library`. 10 `ProjectReference`s + `Microsoft.Extensions.Http.Resilience` package. |
+| `ServiceDefaultsServiceCollectionExtensions.cs` | The `AddD2ServiceDefaults` extension. Body = ordered sequence of `services.AddD2X(...)` calls.                                    |
+| `WebApplicationServiceDefaultsExtensions.cs`    | The `UseD2DefaultPipeline` + `MapD2DefaultEndpoints` + `RunD2ServiceAsync` extensions.                                            |
+| `D2ServiceDefaultsOptions.cs`                   | Sealed options class — opt-out flags + per-component pass-through `Action<T>?` delegates.                                         |
+| `D2ServiceDefaultsConstants.cs`                 | Empty placeholder — this aggregator owns no env-var keys; every constant lives on its owning lib's own `D2*Constants` class.      |
 
 ## Dependencies
 
-| Project reference | Why |
-|---|---|
-| `D2.Shared.Logging` | `AddD2Logging` + `UseD2RequestLogging` |
-| `D2.Shared.Telemetry` | `AddD2Telemetry` + `MapD2PrometheusEndpoint` |
-| `D2.Shared.AspNetCore` | `AddD2HealthChecks` + `AddD2ProblemDetails` + `AddD2Cors` + `MapD2HealthEndpoints` + `UseD2SecurityHeaders` + `UseD2Cors` + `UseD2InfrastructureBypass` + `RunD2ServiceAsync` |
-| `D2.Shared.I18n` | `AddD2I18n` |
-| `D2.Shared.Handler` | `AddD2Handler` |
-| `D2.Shared.Auth` | `AddD2Auth` |
-| `D2.Shared.Auth.Http` | `AddD2AuthHttp` + `UseD2Auth` |
-| `D2.Shared.Auth.Grpc` | `AddD2AuthGrpc` |
-| `D2.Shared.Caching.Local.Default` | `AddD2LocalCache` |
-| `D2.Shared.Utilities` | `D2Env.Load` |
+| Project reference                 | Why                                                                                                                                                                           |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `D2.Shared.Logging`               | `AddD2Logging` + `UseD2RequestLogging`                                                                                                                                        |
+| `D2.Shared.Telemetry`             | `AddD2Telemetry` + `MapD2PrometheusEndpoint`                                                                                                                                  |
+| `D2.Shared.AspNetCore`            | `AddD2HealthChecks` + `AddD2ProblemDetails` + `AddD2Cors` + `MapD2HealthEndpoints` + `UseD2SecurityHeaders` + `UseD2Cors` + `UseD2InfrastructureBypass` + `RunD2ServiceAsync` |
+| `D2.Shared.I18n`                  | `AddD2I18n`                                                                                                                                                                   |
+| `D2.Shared.Handler`               | `AddD2Handler`                                                                                                                                                                |
+| `D2.Shared.Auth`                  | `AddD2Auth`                                                                                                                                                                   |
+| `D2.Shared.Auth.Http`             | `AddD2AuthHttp` + `UseD2Auth`                                                                                                                                                 |
+| `D2.Shared.Auth.Grpc`             | `AddD2AuthGrpc`                                                                                                                                                               |
+| `D2.Shared.Caching.Local.Default` | `AddD2LocalCache`                                                                                                                                                             |
+| `D2.Shared.Utilities`             | `D2Env.Load`                                                                                                                                                                  |
 
-| Package reference | Why |
-|---|---|
+| Package reference                      | Why                                                                                                                                                                                    |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Microsoft.Extensions.Http.Resilience` | `AddStandardResilienceHandler()` for `ConfigureHttpClientDefaults` (retry + circuit-break + timeout). Not transitively present from any of the 10 ProjectRefs above; added explicitly. |
-| `JetBrains.Annotations` | Transitive helper attributes (consumed nowhere directly here, but matches sibling foundation csproj pattern). |
+| `JetBrains.Annotations`                | Transitive helper attributes (consumed nowhere directly here, but matches sibling foundation csproj pattern).                                                                          |
 
 ## Edge cases / gotchas
 

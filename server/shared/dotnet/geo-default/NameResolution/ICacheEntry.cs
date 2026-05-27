@@ -1,0 +1,21 @@
+// -----------------------------------------------------------------------
+// <copyright file="ICacheEntry.cs" company="DCSV">
+// Copyright (c) DCSV. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace D2.Shared.Geo.Default.NameResolution;
+
+/// <summary>
+/// Cache-entry contract — both record-presence and ambiguity-flag fields
+/// publish atomically because they live in one dictionary value type.
+/// Internal so test code can introspect via the existing
+/// <c>InternalsVisibleTo</c> declaration on this assembly.
+/// </summary>
+internal interface ICacheEntry
+{
+    /// <summary>
+    /// Gets a value indicating whether this entry marks an ambiguous normalized name.
+    /// </summary>
+    bool IsAmbiguous { get; }
+}

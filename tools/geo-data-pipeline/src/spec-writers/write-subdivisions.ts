@@ -6,7 +6,10 @@ import { mkdir, readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import {
   loadSubdivisions,
+  type CldrZombieWarning,
   type CountryOrderReport,
+  type MissingWikidataEnRow,
+  type PerCountryDivergenceRow,
   type SubdivisionPartial,
 } from "../transformers/subdivisions.js";
 import { REPO_ROOT_PATH } from "../util/cache.js";
@@ -25,6 +28,11 @@ const COUNTRIES_SPEC_PATH = resolve(
   "geo",
   "src-data",
   "countries.spec.json",
+);
+const LOGS_DIR = resolve(REPO_ROOT_PATH, "tools", "geo-data-pipeline", "logs");
+const MISSING_WIKIDATA_EN_LOG_PATH = resolve(
+  LOGS_DIR,
+  "missing-wikidata-en.json",
 );
 
 interface CountriesSpecMinimal {
@@ -46,7 +54,10 @@ interface SubdivisionsSpec {
     fetchedAt: string;
     sha256: string;
   }>;
-  fieldCoverage: Record<string, { populated: number; total: number; pct: string }>;
+  fieldCoverage: Record<
+    string,
+    { populated: number; total: number; pct: string }
+  >;
   orderBreakdown: {
     total: number;
     firstOrder: number;
@@ -61,6 +72,23 @@ interface SubdivisionsSpec {
   countryOrderReports: CountryOrderReport[];
   debianVsCldrDrift: { debianOnly: number; cldrOnly: number };
   wikidataFills: { endonymFills: number; localizedNameAdds: number };
+  /**
+   * Codes CLDR ships that Debian no longer considers current. Each row triggers
+   * a D2GEO011 warning at transform time + is logged here for operator review.
+   */
+  cldrZombieWarnings: CldrZombieWarning[];
+  /**
+   * Debian-present codes where Wikidata lacks an `en` label and we fell back
+   * to Debian `name`. Per-row triage signal — operator reviews
+   * `tools/geo-data-pipeline/logs/missing-wikidata-en.json` after each
+   * refresh and adds an overlay if a Debian fallback is awkward.
+   */
+  missingWikidataEnCount: number;
+  /**
+   * Per-country count of subdivisions where Wikidata.en disagrees with the
+   * Debian `name` field. Informational — gauges data drift between sources.
+   */
+  perCountryDivergence: PerCountryDivergenceRow[];
   entries: SubdivisionPartial[];
 }
 
@@ -76,7 +104,17 @@ async function loadCountriesPrimaryLanguageMap(): Promise<Map<string, string>> {
   return map;
 }
 
-export async function buildSubdivisionsSpec(): Promise<SubdivisionsSpec> {
+export interface BuildSubdivisionsResult {
+  spec: SubdivisionsSpec;
+  /**
+   * Triage rows for codes where Wikidata.en was missing and the pipeline fell
+   * back to Debian. Written to `logs/missing-wikidata-en.json` by the CLI
+   * entrypoint — operator reviews after each refresh.
+   */
+  missingWikidataEnRows: MissingWikidataEnRow[];
+}
+
+export async function buildSubdivisionsSpec(): Promise<BuildSubdivisionsResult> {
   const primaryLanguageMap = await loadCountriesPrimaryLanguageMap();
   const loaded = await loadSubdivisions(primaryLanguageMap);
 
@@ -87,13 +125,26 @@ export async function buildSubdivisionsSpec(): Promise<SubdivisionsSpec> {
     countryISO31661Alpha2Code: total,
     displayName: total,
     type: total,
-    parentISO31662Code: loaded.entries.filter((e) => e.parentISO31662Code !== null).length,
-    endonymDisplayName: loaded.entries.filter((e) => e.endonymDisplayName !== null).length,
-    localizedDisplayNames_en: loaded.entries.filter((e) => e.localizedDisplayNames["en"]).length,
-    localizedDisplayNames_ja: loaded.entries.filter((e) => e.localizedDisplayNames["ja"]).length,
-    localizedDisplayNames_zh: loaded.entries.filter((e) => e.localizedDisplayNames["zh"]).length,
+    parentISO31662Code: loaded.entries.filter(
+      (e) => e.parentISO31662Code !== null,
+    ).length,
+    endonymDisplayName: loaded.entries.filter(
+      (e) => e.endonymDisplayName !== null,
+    ).length,
+    localizedDisplayNames_en: loaded.entries.filter(
+      (e) => e.localizedDisplayNames["en"],
+    ).length,
+    localizedDisplayNames_ja: loaded.entries.filter(
+      (e) => e.localizedDisplayNames["ja"],
+    ).length,
+    localizedDisplayNames_zh: loaded.entries.filter(
+      (e) => e.localizedDisplayNames["zh"],
+    ).length,
   };
-  const fieldCoverage: Record<string, { populated: number; total: number; pct: string }> = {};
+  const fieldCoverage: Record<
+    string,
+    { populated: number; total: number; pct: string }
+  > = {};
   for (const [field, populated] of Object.entries(coverage)) {
     fieldCoverage[field] = {
       populated,
@@ -110,25 +161,37 @@ export async function buildSubdivisionsSpec(): Promise<SubdivisionsSpec> {
   ).length;
 
   console.error(`[transform] subdivisions: ${total} entries`);
-  console.error(`  order breakdown: 1st=${firstOrder}, 2nd=${secondOrder}, 3+=${thirdPlusOrder}`);
-  console.error(`  countries with 2nd+ order data: ${countriesWithSecondPlusOrder}`);
-  console.error(`  debian-only entries: ${loaded.debianOnly}, CLDR-only: ${loaded.cldrOnly}`);
+  console.error(
+    `  order breakdown: 1st=${firstOrder}, 2nd=${secondOrder}, 3+=${thirdPlusOrder}`,
+  );
+  console.error(
+    `  countries with 2nd+ order data: ${countriesWithSecondPlusOrder}`,
+  );
+  console.error(
+    `  debian-only entries: ${loaded.debianOnly}, CLDR-only: ${loaded.cldrOnly}`,
+  );
   for (const [field, stats] of Object.entries(fieldCoverage)) {
-    console.error(`  ${field}: ${stats.populated}/${stats.total} (${stats.pct})`);
+    console.error(
+      `  ${field}: ${stats.populated}/${stats.total} (${stats.pct})`,
+    );
   }
 
-  return {
+  const spec: SubdivisionsSpec = {
     $schema: "./subdivisions.schema.json",
     $note:
       "PIPELINE-RAW spec — produced by tools/geo-data-pipeline. Not directly consumed by " +
       "codegen / D2.Shared.Geo.Default. A clean/transform pass to the sibling " +
       "contracts/geo/subdivisions.spec.json (one level up) is a separate step. Sources: " +
-      "debian/iso-codes iso_3166-2.json (LGPL — authoritative ISO 3166-2 hierarchy: " +
-      "code/type/parent/order) joined with CLDR cldr-subdivisions-full (Unicode-3.0 — English " +
-      "displayName authority) + Wikidata SPARQL (CC0 — endonyms + localized names across 89 " +
-      "languages with 93-97% per-language coverage). The catalog ships ALL orders (1st " +
-      "through 3rd+); consumers filter on the `order` field. Country.Subdivisions M:M nav " +
-      "back-fill happens in a separate cross-catalog merge pass by the Tier 2 builder.",
+      "debian/iso-codes iso_3166-2.json (LGPL — authoritative ISO 3166-2 current-codes list + " +
+      "hierarchy: code/type/parent/order) joined with Wikidata SPARQL (CC0 — " +
+      "PRIMARY displayName/officialName authority via the .en label; tracks Wikipedia 1:1 + " +
+      "current ISO reassignments; falls back to debian/iso-codes' `name` field on the ~140 " +
+      "codes Wikidata lacks .en for) + CLDR cldr-subdivisions-full (Unicode-3.0 — secondary " +
+      "seed for the 11 supported locale labels, NOT used for English displayName as it's stale " +
+      "for many post-2020 ISO reassignments). CLDR-only codes filtered as D2GEO011 zombies " +
+      "when debian/iso-codes no longer lists them. The catalog ships ALL orders (1st through " +
+      "3rd+); consumers filter on the `order` field. Country.Subdivisions M:M nav back-fill " +
+      "happens in a separate cross-catalog merge pass by the Tier 2 builder.",
     catalogVersion: "0.0.1",
     generatedAt: new Date().toISOString(),
     sources: loaded.provenance.map((p) => ({
@@ -155,16 +218,58 @@ export async function buildSubdivisionsSpec(): Promise<SubdivisionsSpec> {
       endonymFills: loaded.wikidataEndonymFills,
       localizedNameAdds: loaded.wikidataLocalizedAdds,
     },
+    cldrZombieWarnings: loaded.cldrZombieWarnings,
+    missingWikidataEnCount: loaded.missingWikidataEn.length,
+    perCountryDivergence: loaded.perCountryDivergence,
     entries: loaded.entries,
   };
+
+  return {
+    spec,
+    missingWikidataEnRows: loaded.missingWikidataEn,
+  };
+}
+
+/**
+ * Writes the operator-triage JSON log of Debian-present codes that lack a
+ * Wikidata `en` label (and therefore fell back to Debian's `name` field for
+ * displayName). Lives at `tools/geo-data-pipeline/logs/missing-wikidata-en.json`
+ * — gitignored as a refresh artifact. Operator reviews after each refresh and
+ * decides whether to add an overlay entry.
+ */
+async function writeMissingWikidataEnLog(
+  rows: readonly MissingWikidataEnRow[],
+): Promise<void> {
+  await mkdir(LOGS_DIR, { recursive: true });
+  const payload = {
+    $generated: true,
+    $note:
+      "Operator-triage log: Debian-present subdivision codes that lack a Wikidata 'en' label. " +
+      "The pipeline fell back to debian/iso-codes' `name` field for displayName. Review each " +
+      "entry's `debianFallbackName` — if it's awkward (non-canonical English / odd transliteration), " +
+      "consider adding an overlay entry at " +
+      "contracts/geo/overlays/subdivisions.overlays.spec.json. See " +
+      "contracts/geo/KNOWN_WARNINGS.md for the source-priority rationale.",
+    generatedAt: new Date().toISOString(),
+    rowCount: rows.length,
+    rows,
+  };
+  await writeSpecJson(MISSING_WIKIDATA_EN_LOG_PATH, payload);
 }
 
 if (
   process.argv[1]?.endsWith("write-subdivisions.ts") ||
   process.argv[1]?.endsWith("write-subdivisions.js")
 ) {
-  const spec = await buildSubdivisionsSpec();
+  const result = await buildSubdivisionsSpec();
   await mkdir(dirname(SPEC_OUTPUT_PATH), { recursive: true });
-  await writeSpecJson(SPEC_OUTPUT_PATH, spec);
-  console.error(`[write] ${SPEC_OUTPUT_PATH} (${spec.entries.length} entries)`);
+  await writeSpecJson(SPEC_OUTPUT_PATH, result.spec);
+  console.error(
+    `[write] ${SPEC_OUTPUT_PATH} (${result.spec.entries.length} entries)`,
+  );
+  await writeMissingWikidataEnLog(result.missingWikidataEnRows);
+  console.error(
+    `[write] ${MISSING_WIKIDATA_EN_LOG_PATH} ` +
+      `(${result.missingWikidataEnRows.length} rows — operator triage signal)`,
+  );
 }

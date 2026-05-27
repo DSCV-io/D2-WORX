@@ -8,10 +8,10 @@ Copyright (c) DCSV. All rights reserved.
 
 Host-side configuration plumbing — env-var ↔ wire-format conversion and `.env*` file loading. Used by every service composition root.
 
-| File | Contents |
-|---|---|
-| `ConnectionStringHelper.cs` | URI ↔ wire-format converters for Redis / PostgreSQL / RabbitMQ env vars. |
-| `D2Env.cs` | `.env*` file loader for host-side scenarios (tests, IDE debug, ad-hoc `dotnet run`). No-op inside Docker Compose (Compose handles env injection natively). |
+| File                        | Contents                                                                                                                                                   |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ConnectionStringHelper.cs` | URI ↔ wire-format converters for Redis / PostgreSQL / RabbitMQ env vars.                                                                                   |
+| `D2Env.cs`                  | `.env*` file loader for host-side scenarios (tests, IDE debug, ad-hoc `dotnet run`). No-op inside Docker Compose (Compose handles env injection natively). |
 
 ## `ConnectionStringHelper` — URI ↔ wire-format conversion
 

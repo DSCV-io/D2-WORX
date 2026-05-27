@@ -72,7 +72,9 @@ describe("d2result-envelope parity (.NET ↔ TS, Shape B envelope field names)",
     ): void {
       const allowed = new Set(ALL_D2RESULT_ENVELOPE_FIELD_NAMES);
       for (const key of Object.keys(body))
-        expect(allowed.has(key), `wire field '${key}' is not in catalog`).toBe(true);
+        expect(allowed.has(key), `wire field '${key}' is not in catalog`).toBe(
+          true,
+        );
       for (const k of requiredKeys)
         expect(Object.keys(body), `missing required field '${k}'`).toContain(k);
     }
@@ -126,7 +128,9 @@ describe("d2result-envelope parity (.NET ↔ TS, Shape B envelope field names)",
       assertEnvelopeShape(fixture.data, ALWAYS_PRESENT);
       expect(fixture.data[D2ResultEnvelopeFieldNames.SUCCESS]).toBe(false);
       expect(fixture.data[D2ResultEnvelopeFieldNames.STATUS_CODE]).toBe(404);
-      expect(fixture.data[D2ResultEnvelopeFieldNames.ERROR_CODE]).toBe("NOT_FOUND");
+      expect(fixture.data[D2ResultEnvelopeFieldNames.ERROR_CODE]).toBe(
+        "NOT_FOUND",
+      );
       // messages carries one TKMessage object (key: "common_errors_NOT_FOUND")
       // per contracts/tk-message spec — not a string. Pinning the object
       // shape here keeps the wire contract enforceable by CI.

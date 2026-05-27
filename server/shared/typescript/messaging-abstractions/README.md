@@ -10,14 +10,14 @@ D2 messaging-protocol wire identifiers. Today: the DLQ failure-metadata wire sha
 
 ## Public API
 
-| Export                              | Source                          | Mirror                                                          |
-| ----------------------------------- | ------------------------------- | --------------------------------------------------------------- |
-| `DlqFailureMetadataFields`          | `dlq-failure-metadata.g.ts`     | `D2.Shared.Messaging.DlqFailureMetadataFields`                  |
-| `DlqFailureMetadataField`           | `dlq-failure-metadata.g.ts`     | n/a (TS-only union type)                                        |
-| `ALL_DLQ_FAILURE_METADATA_FIELDS`   | `dlq-failure-metadata.g.ts`     | `DlqFailureMetadataFields.AllFields`                            |
-| `DlqFailureCauses`                  | `dlq-failure-metadata.g.ts`     | `D2.Shared.Messaging.RabbitMq.Subscribing.DlqFailureCauses`     |
-| `DlqFailureCause`                   | `dlq-failure-metadata.g.ts`     | n/a (TS-only union type)                                        |
-| `ALL_DLQ_FAILURE_CAUSES`            | `dlq-failure-metadata.g.ts`     | `DlqFailureCauses.AllCauses`                                    |
+| Export                            | Source                      | Mirror                                                      |
+| --------------------------------- | --------------------------- | ----------------------------------------------------------- |
+| `DlqFailureMetadataFields`        | `dlq-failure-metadata.g.ts` | `D2.Shared.Messaging.DlqFailureMetadataFields`              |
+| `DlqFailureMetadataField`         | `dlq-failure-metadata.g.ts` | n/a (TS-only union type)                                    |
+| `ALL_DLQ_FAILURE_METADATA_FIELDS` | `dlq-failure-metadata.g.ts` | `DlqFailureMetadataFields.AllFields`                        |
+| `DlqFailureCauses`                | `dlq-failure-metadata.g.ts` | `D2.Shared.Messaging.RabbitMq.Subscribing.DlqFailureCauses` |
+| `DlqFailureCause`                 | `dlq-failure-metadata.g.ts` | n/a (TS-only union type)                                    |
+| `ALL_DLQ_FAILURE_CAUSES`          | `dlq-failure-metadata.g.ts` | `DlqFailureCauses.AllCauses`                                |
 
 ## Codegen workflow
 

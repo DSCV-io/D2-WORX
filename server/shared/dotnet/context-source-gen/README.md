@@ -31,28 +31,28 @@ mutable concrete, and the two factory methods (`FromClaims`,
 
 ## Catalog dispatch
 
-| Assembly | Emitted file(s) |
-|---|---|
-| `D2.Shared.AuthContext.Abstractions` | `IAuthContext.g.cs` |
-| `D2.Shared.Context.Abstractions` | `IRequestContext.g.cs` (extends `IAuthContext`) |
-| `D2.Shared.Context.Abstractions` | `MutableRequestContext.g.cs` |
-| `D2.Shared.Context.Abstractions` | `PropagatedContext.g.cs` (cross-hop wire record) |
-| `D2.Shared.Context.Abstractions` | `PropagatedContextExtensions.g.cs` (`MutableRequestContext.ToPropagated()` / `Apply()`) |
-| `D2.Shared.Context.Abstractions` | `PropagatedContextSerializer.g.cs` (`Encode` / `TryDecode` for transport headers) |
-| Anything else | nothing |
+| Assembly                             | Emitted file(s)                                                                         |
+| ------------------------------------ | --------------------------------------------------------------------------------------- |
+| `D2.Shared.AuthContext.Abstractions` | `IAuthContext.g.cs`                                                                     |
+| `D2.Shared.Context.Abstractions`     | `IRequestContext.g.cs` (extends `IAuthContext`)                                         |
+| `D2.Shared.Context.Abstractions`     | `MutableRequestContext.g.cs`                                                            |
+| `D2.Shared.Context.Abstractions`     | `PropagatedContext.g.cs` (cross-hop wire record)                                        |
+| `D2.Shared.Context.Abstractions`     | `PropagatedContextExtensions.g.cs` (`MutableRequestContext.ToPropagated()` / `Apply()`) |
+| `D2.Shared.Context.Abstractions`     | `PropagatedContextSerializer.g.cs` (`Encode` / `TryDecode` for transport headers)       |
+| Anything else                        | nothing                                                                                 |
 
 ---
 
 ## Build-time diagnostics
 
-| ID | Severity | Trigger |
-|---|---|---|
-| `D2CTX001` | Error | Spec file is malformed JSON or violates the schema |
-| `D2CTX002` | Error | Spec property uses a type outside the closed vocabulary |
-| `D2CTX003` | Error | Two properties in the combined spec hierarchy declare the same name |
-| `D2CTX004` | Error | `extends` references an interface not surfaced to the generator |
-| `D2CTX005` | Warning | Property declared `derived` with an unrecognized rule name |
-| `D2CTX006` | Error | No `*.spec.json` found in `AdditionalFiles` for a target assembly |
+| ID         | Severity | Trigger                                                             |
+| ---------- | -------- | ------------------------------------------------------------------- |
+| `D2CTX001` | Error    | Spec file is malformed JSON or violates the schema                  |
+| `D2CTX002` | Error    | Spec property uses a type outside the closed vocabulary             |
+| `D2CTX003` | Error    | Two properties in the combined spec hierarchy declare the same name |
+| `D2CTX004` | Error    | `extends` references an interface not surfaced to the generator     |
+| `D2CTX005` | Warning  | Property declared `derived` with an unrecognized rule name          |
+| `D2CTX006` | Error    | No `*.spec.json` found in `AdditionalFiles` for a target assembly   |
 
 ---
 
@@ -92,8 +92,8 @@ New types require schema (`*.spec.json`'s JSON Schema enum) + `TypeVocabulary` +
 
 Currently only one derived rule is recognized:
 
-| Rule | Effect |
-|---|---|
+| Rule         | Effect                                                                                                                             |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `actorChain` | Emitted as a computed getter that walks `ActorChain` to compute impersonation flavor / impersonator org / service-client-id / etc. |
 
 Adding a rule requires extending `TypeVocabulary.IsValidDerivedRule` plus a per-property emit case in `MutableEmitter.EmitActorChainDerivedGetter` (or a new helper for the new rule).

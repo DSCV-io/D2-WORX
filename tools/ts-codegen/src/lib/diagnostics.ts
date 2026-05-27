@@ -174,6 +174,47 @@ export const DiagnosticIds = {
   DRE_DUPLICATE_FIELD_VALUE: "D2DRE003",
   DRE_INVALID_CONST_NAME: "D2DRE004",
   DRE_EMPTY_VALUE: "D2DRE005",
+
+  // Geo catalogs. Mirror the .NET D2.Shared.Geo.SourceGen DiagnosticIds
+  // values byte-for-byte — same spec source on both sides means same
+  // predicate violation surface so identical IDs are correct.
+  GEO_MALFORMED_SPEC: "D2GEO001",
+  GEO_UNKNOWN_FK: "D2GEO002",
+  GEO_FK_AMBIGUITY: "D2GEO003",
+  GEO_INVALID_IDENTIFIER: "D2GEO004",
+  GEO_VOCABULARY_VIOLATION: "D2GEO005",
+  GEO_MISSING_CATALOG_METADATA: "D2GEO006",
+  GEO_MISSING_SPEC: "D2GEO007",
+  GEO_LOCALE_MESSAGE_MISMATCH: "D2GEO008",
+  GEO_STRUCTURAL_PARITY_MISMATCH: "D2GEO009",
+
+  // Catalog uniqueness — codegen-time assertion enforcing the fail-closed
+  // name-resolver requirement that each catalog has unique normalized
+  // names across its matchable name fields (so exact-match Pass-1 cannot
+  // be ambiguous). Build fails on duplicate normalized names. Allocated
+  // as D2GEO010 — the next slot after the .NET DiagnosticIds catalog
+  // (which currently ends at D2GEO009); .NET will pick up the same ID
+  // when it adds the equivalent uniqueness check.
+  GEO_CATALOG_DUPLICATE_NAME: "D2GEO010",
+
+  // CLDR-zombie subdivision codes — Tier 1 transformer drops codes that
+  // CLDR still ships but debian/iso-codes no longer considers current ISO
+  // 3166-2 codes (post-reassignment retirements that CLDR didn't catch
+  // up to). Surfaces as a warning + per-code log entry so the operator
+  // can confirm what was dropped on each refresh and add an overlay
+  // override only when a Wikidata.en label is also wrong.
+  // TS-only — the data pipeline doesn't exist on the .NET side, so the
+  // .NET DiagnosticIds catalog skips D2GEO011 and resumes the shared
+  // numbering at D2GEO012.
+  GEO_CLDR_ZOMBIE_DROPPED: "D2GEO011",
+
+  // Country references a locale tag absent from locales.spec.json
+  // (via primaryLocaleIETFBCP47Tag or localeIETFBCP47Tags[]). Mirrors the
+  // .NET-side D2GEO012 — same spec source on both sides means same
+  // predicate surface. Build-time gate so the data emitters can use
+  // direct indexer access (fail-loud) instead of defensive lookups that
+  // mask drift between catalogs.
+  GEO_MISSING_LOCALE_REFERENCE: "D2GEO012",
 } as const;
 
 /**

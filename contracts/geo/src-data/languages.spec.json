@@ -2,111 +2,111 @@
   "$schema": "./languages.schema.json",
   "$note": "PIPELINE-RAW spec — produced by tools/geo-data-pipeline. Not directly consumed by codegen / D2.Shared.Geo.Default. A clean/transform pass to the sibling contracts/geo/languages.spec.json (one level up) is a separate step. Sources: datasets/language-codes (PDDL — alpha2 + English name) + Wikidata SPARQL (CC0 — endonyms via P218 in own language) + CLDR cldr-core scriptMetadata + languageData (Unicode-3.0 — writing direction via lang→primary script→rtl chain) + CLDR cldr-localenames-full/{locale}/languages.json (Unicode-3.0 — localized display names across the 11 supported locales). Missing: IsSupported (Tier 2 curated subset = the 11 supported langs), Deprecation. ISO 639-3 codes (3-letter) are deliberately excluded — the catalog ships ISO 639-1 only.",
   "catalogVersion": "0.0.1",
-  "generatedAt": "2026-05-19T18:13:24.961Z",
+  "generatedAt": "2026-05-24T03:19:25.414Z",
   "sources": [
     {
       "name": "datasets-language-codes",
       "url": "https://raw.githubusercontent.com/datasets/language-codes/main/data/language-codes.csv",
       "license": "PDDL-1.0 (Open Knowledge Foundation Public Domain Dedication)",
-      "fetchedAt": "2026-05-19T18:13:21.367Z",
+      "fetchedAt": "2026-05-23T13:54:01.673Z",
       "sha256": "34e9dde2efbb37abd8c24d47a8693063579f706836fbe694557ecdbf1bfc53f2"
     },
     {
       "name": "wikidata",
       "url": "https://query.wikidata.org/sparql",
       "license": "CC0-1.0 (Wikidata)",
-      "fetchedAt": "2026-05-19T18:13:22.126Z",
-      "sha256": "82be42e3971547985d722f67d0feb7ddd7d24b3481247b16289b4bf0c7ec29ca"
+      "fetchedAt": "2026-05-23T13:54:02.606Z",
+      "sha256": "25589bd424ef0ddf1fa6638136fd858a9b82d700023e800d6ea1e4fa26f8bc75"
     },
     {
       "name": "cldr-core",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-core/scriptMetadata.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-19T18:13:22.596Z",
+      "fetchedAt": "2026-05-23T13:54:02.792Z",
       "sha256": "9160c07c87f58495f57076c88231f63c1c062672991822671c9e99697b5e5cda"
     },
     {
       "name": "cldr-core",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-core/supplemental/languageData.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-19T18:13:22.568Z",
+      "fetchedAt": "2026-05-23T13:54:02.854Z",
       "sha256": "249e39c6bc9dff82cdd36348039b23e0f4ba9df0f3cea9a5857f00ed4253f6af"
     },
     {
       "name": "cldr-localenames-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-localenames-full/main/en/languages.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-19T18:13:22.947Z",
+      "fetchedAt": "2026-05-23T13:54:03.020Z",
       "sha256": "a5960d2371bc7d982da7fcfd9a0e237429d3467a5cc76f680bc3af5bcef9fb4e"
     },
     {
       "name": "cldr-localenames-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-localenames-full/main/es/languages.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-19T18:13:23.135Z",
+      "fetchedAt": "2026-05-23T13:54:03.130Z",
       "sha256": "fd5b463e664c4d21c40eb4a8e8cff1b355654057275853c644762104de059a37"
     },
     {
       "name": "cldr-localenames-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-localenames-full/main/fr/languages.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-19T18:13:23.500Z",
+      "fetchedAt": "2026-05-23T13:54:03.238Z",
       "sha256": "49c4f489e321f62ec64e3950045225a6aa2d4accc71584dfde262083679215d9"
     },
     {
       "name": "cldr-localenames-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-localenames-full/main/de/languages.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-19T18:13:23.726Z",
+      "fetchedAt": "2026-05-23T13:54:03.344Z",
       "sha256": "86f24c579d26d91e0a8176f2b2509bb224c97a538097d2cfa197f310c2c2b5b1"
     },
     {
       "name": "cldr-localenames-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-localenames-full/main/it/languages.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-19T18:13:23.908Z",
+      "fetchedAt": "2026-05-23T13:54:03.516Z",
       "sha256": "b7d56e70b5d867b44f5e177919fe1f08019cae2e714eefa7c9805fb2851e32c4"
     },
     {
       "name": "cldr-localenames-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-localenames-full/main/ja/languages.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-19T18:13:24.146Z",
+      "fetchedAt": "2026-05-23T13:54:03.695Z",
       "sha256": "bae312aec4c1c01c8e64d9f89217c753f7a250c7f379b2151854fedd5e06b080"
     },
     {
       "name": "cldr-localenames-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-localenames-full/main/nl/languages.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-19T18:13:24.288Z",
+      "fetchedAt": "2026-05-23T13:54:03.866Z",
       "sha256": "a476582e90ec89b30f6d75e3a8012680be3cf0c3e17e6fcfea850ea9d8b7aeda"
     },
     {
       "name": "cldr-localenames-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-localenames-full/main/ko/languages.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-19T18:13:24.471Z",
+      "fetchedAt": "2026-05-23T13:54:03.986Z",
       "sha256": "0b86d3cd04aa391b126b501a87acdb14f111b65c4b2a5b17e6ed85f0e03030b2"
     },
     {
       "name": "cldr-localenames-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-localenames-full/main/zh/languages.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-19T18:13:24.636Z",
+      "fetchedAt": "2026-05-23T13:54:04.110Z",
       "sha256": "c38a6432f03549aa933674bba9880e3bae890135922231775818ae5cbe7b3ee3"
     },
     {
       "name": "cldr-localenames-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-localenames-full/main/pt/languages.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-19T18:13:24.770Z",
+      "fetchedAt": "2026-05-23T13:54:04.246Z",
       "sha256": "51a16f17d1237bc91ad87ec0c4baed49df119bdcde225dc7dfe315bae6dbd207"
     },
     {
       "name": "cldr-localenames-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-localenames-full/main/pl/languages.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-19T18:13:24.953Z",
+      "fetchedAt": "2026-05-23T13:54:04.372Z",
       "sha256": "4717ff668c5bfcc5dc883d4cd94fa73b21934892ed8f76b4eb55794b600909c0"
     }
   ],
@@ -179,7 +179,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.405Z"
       }
     },
     {
@@ -208,7 +208,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -236,7 +236,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -265,7 +265,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -293,7 +293,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -322,7 +322,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -351,7 +351,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -380,7 +380,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -409,7 +409,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -438,7 +438,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -467,7 +467,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -496,7 +496,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -525,7 +525,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -554,7 +554,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -583,7 +583,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -612,7 +612,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -641,7 +641,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -670,7 +670,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -699,7 +699,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -728,7 +728,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -757,7 +757,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -786,7 +786,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -815,7 +815,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -844,7 +844,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -873,7 +873,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -902,7 +902,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -931,7 +931,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -960,7 +960,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -989,7 +989,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1018,7 +1018,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1047,7 +1047,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1076,7 +1076,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1105,7 +1105,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.954Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1134,7 +1134,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1163,7 +1163,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1192,7 +1192,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1221,7 +1221,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1250,7 +1250,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1279,7 +1279,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1308,7 +1308,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1337,7 +1337,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1366,7 +1366,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1395,7 +1395,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1424,7 +1424,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1453,7 +1453,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1482,7 +1482,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1511,7 +1511,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1540,7 +1540,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1569,7 +1569,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1598,7 +1598,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1627,7 +1627,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1656,7 +1656,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1685,7 +1685,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1714,7 +1714,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1743,7 +1743,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1772,7 +1772,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1801,7 +1801,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1829,7 +1829,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1858,7 +1858,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1887,7 +1887,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1916,7 +1916,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1945,7 +1945,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -1973,7 +1973,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2002,7 +2002,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2031,7 +2031,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2060,7 +2060,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2089,7 +2089,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2117,7 +2117,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2146,7 +2146,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2175,7 +2175,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2204,7 +2204,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2233,7 +2233,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2262,7 +2262,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2291,7 +2291,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2320,7 +2320,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2349,7 +2349,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2378,7 +2378,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2407,7 +2407,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2435,7 +2435,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2464,7 +2464,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2493,7 +2493,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2522,7 +2522,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2551,7 +2551,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2580,7 +2580,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2609,7 +2609,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2638,7 +2638,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2667,7 +2667,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2696,7 +2696,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2725,7 +2725,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2754,7 +2754,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2783,7 +2783,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2812,7 +2812,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2840,7 +2840,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2869,7 +2869,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2898,7 +2898,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2927,7 +2927,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2956,7 +2956,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -2984,7 +2984,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3013,7 +3013,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3042,7 +3042,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3071,7 +3071,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3100,7 +3100,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3129,7 +3129,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3158,7 +3158,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3187,7 +3187,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3216,7 +3216,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3245,7 +3245,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3273,7 +3273,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3302,7 +3302,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3331,7 +3331,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3360,7 +3360,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3388,7 +3388,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3417,7 +3417,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3446,7 +3446,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3475,7 +3475,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3504,7 +3504,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3532,7 +3532,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3561,7 +3561,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3590,7 +3590,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3619,7 +3619,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3648,7 +3648,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3676,7 +3676,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3705,7 +3705,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3734,7 +3734,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3763,7 +3763,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3792,7 +3792,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3821,7 +3821,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3850,7 +3850,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3879,7 +3879,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3908,7 +3908,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3937,7 +3937,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3966,7 +3966,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -3995,7 +3995,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4024,7 +4024,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4053,7 +4053,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4082,7 +4082,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4110,7 +4110,7 @@
           "wikidata-sparql",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4139,7 +4139,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4168,7 +4168,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4197,7 +4197,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4226,7 +4226,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4255,7 +4255,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4284,7 +4284,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4313,7 +4313,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4342,7 +4342,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4371,7 +4371,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4400,7 +4400,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4429,7 +4429,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4458,7 +4458,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4487,7 +4487,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4516,7 +4516,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4545,7 +4545,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4574,7 +4574,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4603,7 +4603,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4632,7 +4632,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4661,7 +4661,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4690,7 +4690,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4719,7 +4719,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4748,7 +4748,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4777,7 +4777,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4805,7 +4805,7 @@
           "wikidata-sparql",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4834,7 +4834,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4863,7 +4863,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4892,7 +4892,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4921,7 +4921,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4950,7 +4950,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -4978,7 +4978,7 @@
           "wikidata-sparql",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -5007,7 +5007,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -5036,7 +5036,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -5065,7 +5065,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -5094,7 +5094,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -5123,7 +5123,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -5152,7 +5152,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -5181,7 +5181,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -5210,7 +5210,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -5239,7 +5239,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -5268,7 +5268,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -5297,7 +5297,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -5326,7 +5326,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -5354,7 +5354,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -5383,7 +5383,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -5412,7 +5412,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     },
     {
@@ -5441,7 +5441,7 @@
           "cldr-script-language-data",
           "cldr-localenames-full"
         ],
-        "extractedAt": "2026-05-19T18:13:24.955Z"
+        "extractedAt": "2026-05-24T03:19:25.406Z"
       }
     }
   ]

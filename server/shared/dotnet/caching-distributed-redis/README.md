@@ -72,6 +72,7 @@ connection pool shared across the app. The connection is built from
 the connection string.
 
 Defaults that matter:
+
 - `AbortOnConnectFail = false` — graceful degradation if Redis isn't up at startup; cache calls
   return `ServiceUnavailable` until it comes back.
 - `CommandTimeout = 2s`, `ConnectTimeout = 5s`, `ConnectRetries = 3` — tuneable per
@@ -90,6 +91,7 @@ pipeline.
 
 `Integration/Caching/Distributed/` (xunit collection `"Redis"`, shared Testcontainers Redis
 fixture):
+
 - `RedisDistributedCacheTests` — full op surface against real Redis. Includes:
   - `SetNxAsync_Concurrent_OnlyOneWinsAcrossCluster` — 32 contenders, exactly one wins (cluster-wide
     atomic SET NX)

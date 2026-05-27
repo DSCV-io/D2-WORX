@@ -115,9 +115,7 @@ export function emitGrpcTrailers(spec: GrpcTrailersSpec): EmitResult {
   sb.appendLine("/* eslint-disable */");
   sb.appendLine();
   sb.appendLine("/**");
-  sb.appendLine(
-    " * Spec-derived gRPC trailer-key constants. Mirrors .NET",
-  );
+  sb.appendLine(" * Spec-derived gRPC trailer-key constants. Mirrors .NET");
   sb.appendLine(
     " * D2.Shared.Auth.Grpc.Status.D2GrpcTrailers (same wire values).",
   );
@@ -169,11 +167,7 @@ function escapeJsDoc(value: string): string {
 }
 
 const SPEC_PATH = contractsPath("grpc-trailers", "grpc-trailers.spec.json");
-const TARGET_PATH = tsPackagePath(
-  "grpc-client",
-  "src",
-  "grpc-trailers.g.ts",
-);
+const TARGET_PATH = tsPackagePath("grpc-client", "src", "grpc-trailers.g.ts");
 
 /**
  * Run the gRPC trailers emitter. Per-spec mtime check skips emit when the

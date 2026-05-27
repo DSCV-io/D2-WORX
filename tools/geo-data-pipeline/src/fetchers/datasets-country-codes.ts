@@ -8,7 +8,8 @@ import { fetchAndCache, type CachedFetch } from "../util/cache.js";
 const SOURCE_NAME = "datasets-country-codes";
 const SOURCE_URL =
   "https://raw.githubusercontent.com/datasets/country-codes/main/data/country-codes.csv";
-const SOURCE_LICENSE = "PDDL-1.0 (Open Knowledge Foundation Public Domain Dedication)";
+const SOURCE_LICENSE =
+  "PDDL-1.0 (Open Knowledge Foundation Public Domain Dedication)";
 const CACHE_KEY = "country-codes.csv";
 
 /**
@@ -19,36 +20,39 @@ export interface CountryCodesRow {
   "ISO3166-1-Alpha-2": string | null;
   "ISO3166-1-Alpha-3": string | null;
   "ISO3166-1-numeric": string | null;
-  "official_name_en": string | null;
-  "official_name_fr": string | null;
-  "official_name_es": string | null;
-  "official_name_ar": string | null;
-  "official_name_ru": string | null;
-  "official_name_zh": string | null;
+  official_name_en: string | null;
+  official_name_fr: string | null;
+  official_name_es: string | null;
+  official_name_ar: string | null;
+  official_name_ru: string | null;
+  official_name_zh: string | null;
   "CLDR display name": string | null;
-  "Capital": string | null;
-  "Continent": string | null;
-  "Dial": string | null;
+  Capital: string | null;
+  Continent: string | null;
+  Dial: string | null;
   "ISO4217-currency_alphabetic_code": string | null;
   "ISO4217-currency_numeric_code": string | null;
   "ISO4217-currency_name": string | null;
   "ISO4217-currency_minor_unit": string | null;
-  "Languages": string | null;
+  Languages: string | null;
   "Region Name": string | null;
   "Region Code": string | null;
   "Sub-region Name": string | null;
   "Sub-region Code": string | null;
   "Intermediate Region Name": string | null;
   "Intermediate Region Code": string | null;
-  "M49": string | null;
-  "TLD": string | null;
+  M49: string | null;
+  TLD: string | null;
   "Geoname ID": string | null;
   "ISO4217-currency_country_name": string | null;
-  "is_independent": string | null;
+  is_independent: string | null;
   [column: string]: string | null;
 }
 
-export interface CountryCodesFetchResult extends Pick<CachedFetch, "provenance" | "fromCache"> {
+export interface CountryCodesFetchResult extends Pick<
+  CachedFetch,
+  "provenance" | "fromCache"
+> {
   rows: CountryCodesRow[];
   columnCount: number;
 }

@@ -10,11 +10,11 @@ Scripts + utilities for developer workflows that aren't part of any service.
 
 ## Tools
 
-| Tool | Purpose |
-|---|---|
-| [`geo-data-pipeline/`](geo-data-pipeline/README.md) | Geo reference-data ingestion pipeline — CLDR / IANA tzdb / libphonenumber / Wikidata → `contracts/geo/` catalogs codegen consumes |
-| [`loggermessage-splitter/`](loggermessage-splitter/README.md) | Splits the deterministic-ordered `LoggerMessage.g.cs` blob into per-class files for stable git diffs |
-| [`ts-codegen/`](ts-codegen/README.md) | Per-topic `.g.ts` emitter scripts — TypeScript sibling of the .NET Roslyn source generators; both consume the same `contracts/` JSON specs |
+| Tool                                                          | Purpose                                                                                                                                    |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`geo-data-pipeline/`](geo-data-pipeline/README.md)           | Geo reference-data ingestion pipeline — CLDR / IANA tzdb / libphonenumber / Wikidata → `contracts/geo/` catalogs codegen consumes          |
+| [`loggermessage-splitter/`](loggermessage-splitter/README.md) | Splits the deterministic-ordered `LoggerMessage.g.cs` blob into per-class files for stable git diffs                                       |
+| [`ts-codegen/`](ts-codegen/README.md)                         | Per-topic `.g.ts` emitter scripts — TypeScript sibling of the .NET Roslyn source generators; both consume the same `contracts/` JSON specs |
 
 `scripts/` holds shell utilities that don't warrant their own subdirectory README — covered inline below.
 

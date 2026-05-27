@@ -42,6 +42,7 @@ public sealed class SubscriberChannelBehaviorIntegrationTests
     // ---------------------------------------------------------------------
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task RepublishChannel_ConcurrentEnsure_CreatesAtMostOneChannel()
     {
         await using var realConn = await BuildRealConnectionAsync();
@@ -75,6 +76,7 @@ public sealed class SubscriberChannelBehaviorIntegrationTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task RepublishChannel_RepeatedSequentialCalls_ReuseSameChannel()
     {
         await using var realConn = await BuildRealConnectionAsync();
@@ -106,6 +108,7 @@ public sealed class SubscriberChannelBehaviorIntegrationTests
     // ---------------------------------------------------------------------
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task AckFailureOnHandlerSuccess_LogsAckFailed_DoesNotRouteToDlq()
     {
         TestCollector.Reset<AuditCapturingHandler>();
@@ -163,6 +166,7 @@ public sealed class SubscriberChannelBehaviorIntegrationTests
     // ---------------------------------------------------------------------
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task RetriesExhausted_RoutesToDlqWithoutInvokingHandler()
     {
         TestCollector.Reset<AuditCapturingHandler>();
@@ -198,6 +202,7 @@ public sealed class SubscriberChannelBehaviorIntegrationTests
     // ---------------------------------------------------------------------
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task DisposeMidHandler_DrainsInflightCallbacksBeforeClose()
     {
         TestCollector.Reset<SlowHandler>();

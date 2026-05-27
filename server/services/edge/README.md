@@ -33,6 +33,7 @@ Edge is intentionally "thick" — middleware, routing, auth, real-time push, Who
 ## Dependencies (.NET shared libs)
 
 All of `D2.Shared.*` per [server/shared/dotnet/README.md](../../shared/dotnet/README.md). Particularly heavy on:
+
 - `D2.Shared.Auth` (Edge implements the auth lib's server-side)
 - `D2.Shared.Encryption` (KeyCustodian generates the keys; Edge self-encrypts as a publisher)
 - `D2.Shared.Messaging` (publishes auth events to `d2.audit.events`)
@@ -60,4 +61,3 @@ Both on the same PG server(one server, many DBs).
 ## Tests
 
 Required CI gate: **`integration-key-rotation`** — KeyCustodian rotation flow (graceful + emergency + race conditions + archive decryption). See [docs/TESTS.md](../../../docs/TESTS.md) "Required CI Gate" section.
-

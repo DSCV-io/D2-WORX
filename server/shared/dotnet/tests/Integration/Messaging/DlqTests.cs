@@ -33,6 +33,7 @@ public sealed class DlqTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task HandlerThrows_MessageGoesToDlq()
     {
         TestCollector.Reset<AlwaysThrowsHandler>();
@@ -64,6 +65,7 @@ public sealed class DlqTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task HandlerReturnsFailure_MessageGoesToDlq()
     {
         TestCollector.Reset<AlwaysFailsHandler>();
@@ -91,6 +93,7 @@ public sealed class DlqTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task DlqMessage_CarriesFailureReasonHeader_WithCauseAndErrorCode()
     {
         // H4 verification: republish-to-DLX with x-d2-failure-reason header
@@ -146,6 +149,7 @@ public sealed class DlqTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task TopologyDeclaration_IsIdempotent()
     {
         var queue = "dlq.idem." + Guid.NewGuid().ToString("N")[..8];

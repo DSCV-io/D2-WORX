@@ -24,9 +24,7 @@ import * as m from "$lib/paraglide/messages.js";
  * presentable string.
  */
 function renderTk(message: TKMessage): string {
-  const fn = (m as Record<string, (params?: Record<string, unknown>) => string>)[
-    message.key
-  ];
+  const fn = (m as Record<string, (params?: Record<string, unknown>) => string>)[message.key];
   return fn === undefined ? message.key : fn(message.params);
 }
 
@@ -41,9 +39,7 @@ function renderTk(message: TKMessage): string {
  * duplicate field entries. Empty field names and zero-error entries are
  * skipped.
  */
-export function mapD2Errors(
-  inputErrors: readonly InputError[],
-): Record<string, string[]> {
+export function mapD2Errors(inputErrors: readonly InputError[]): Record<string, string[]> {
   const result: Record<string, string[]> = {};
   for (const { field, errors } of inputErrors) {
     if (!field || errors.length === 0) continue;

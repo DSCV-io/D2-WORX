@@ -702,6 +702,10 @@ public static partial class TK
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage SOME_FOUND = new("common_errors_SOME_FOUND");
             /// <summary>
+            /// Translation key <c>common_errors_TOO_LONG</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage TOO_LONG = new("common_errors_TOO_LONG");
+            /// <summary>
             /// Translation key <c>common_errors_TOO_MANY_REQUESTS</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage TOO_MANY_REQUESTS = new("common_errors_TOO_MANY_REQUESTS");
@@ -721,6 +725,21 @@ public static partial class TK
             /// Translation key <c>common_errors_VALIDATION_FAILED</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage VALIDATION_FAILED = new("common_errors_VALIDATION_FAILED");
+        }
+
+        /// <summary>
+        /// Time translation keys.
+        /// </summary>
+        public static partial class Time
+        {
+            /// <summary>
+            /// Translation key <c>common_time_INVALID_IANA_IDENTIFIER</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage INVALID_IANA_IDENTIFIER = new("common_time_INVALID_IANA_IDENTIFIER");
+            /// <summary>
+            /// Translation key <c>common_time_INVALID_LOCAL_DATE_TIME</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage INVALID_LOCAL_DATE_TIME = new("common_time_INVALID_LOCAL_DATE_TIME");
         }
 
         /// <summary>
@@ -1074,6 +1093,14 @@ public static partial class TK
             /// Translation key <c>geo_errors_disk_write_failed</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage DISK_WRITE_FAILED = new("geo_errors_disk_write_failed");
+            /// <summary>
+            /// Translation key <c>geo_errors_name_resolution_ambiguous</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage NAME_RESOLUTION_AMBIGUOUS = new("geo_errors_name_resolution_ambiguous");
+            /// <summary>
+            /// Translation key <c>geo_errors_name_resolution_not_found</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage NAME_RESOLUTION_NOT_FOUND = new("geo_errors_name_resolution_not_found");
         }
 
         /// <summary>
@@ -1090,6 +1117,14 @@ public static partial class TK
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage ADDRESS_LINE2_REQUIRED = new("geo_validation_address_line2_required");
             /// <summary>
+            /// Translation key <c>geo_validation_admin_country_subdivision_mismatch</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage ADMIN_COUNTRY_SUBDIVISION_MISMATCH = new("geo_validation_admin_country_subdivision_mismatch");
+            /// <summary>
+            /// Translation key <c>geo_validation_admin_empty_record</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage ADMIN_EMPTY_RECORD = new("geo_validation_admin_empty_record");
+            /// <summary>
             /// Translation key <c>geo_validation_company_name_required</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage COMPANY_NAME_REQUIRED = new("geo_validation_company_name_required");
@@ -1097,6 +1132,18 @@ public static partial class TK
             /// Translation key <c>geo_validation_context_key_required</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage CONTEXT_KEY_REQUIRED = new("geo_validation_context_key_required");
+            /// <summary>
+            /// Translation key <c>geo_validation_coordinates_finite_required</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage COORDINATES_FINITE_REQUIRED = new("geo_validation_coordinates_finite_required");
+            /// <summary>
+            /// Translation key <c>geo_validation_coordinates_geohash_invalid</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage COORDINATES_GEOHASH_INVALID = new("geo_validation_coordinates_geohash_invalid");
+            /// <summary>
+            /// Translation key <c>geo_validation_coordinates_pluscode_invalid</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage COORDINATES_PLUSCODE_INVALID = new("geo_validation_coordinates_pluscode_invalid");
             /// <summary>
             /// Translation key <c>geo_validation_duplicate_ext_keys</c>.
             /// </summary>
@@ -1137,6 +1184,10 @@ public static partial class TK
             /// Translation key <c>geo_validation_phone_required</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage PHONE_REQUIRED = new("geo_validation_phone_required");
+            /// <summary>
+            /// Translation key <c>geo_validation_postal_code_invalid</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage POSTAL_CODE_INVALID = new("geo_validation_postal_code_invalid");
             /// <summary>
             /// Translation key <c>geo_validation_related_entity_id_required</c>.
             /// </summary>

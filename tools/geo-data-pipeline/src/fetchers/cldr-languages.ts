@@ -38,13 +38,19 @@ const SOURCE_LICENSE = "Unicode-3.0 (Unicode License)";
  * We consume the BARE 2-letter ISO 639-1 keys only — region/alt variants are filtered out.
  */
 export interface CldrLanguagesPayload {
-  main: Record<string, {
-    identity: { language: string };
-    localeDisplayNames: { languages: Record<string, string> };
-  }>;
+  main: Record<
+    string,
+    {
+      identity: { language: string };
+      localeDisplayNames: { languages: Record<string, string> };
+    }
+  >;
 }
 
-export interface CldrLanguagesFetchResult extends Pick<CachedFetch, "provenance" | "fromCache"> {
+export interface CldrLanguagesFetchResult extends Pick<
+  CachedFetch,
+  "provenance" | "fromCache"
+> {
   /** Locale this file is FOR (e.g. "en", "ja") — names are IN this language. */
   locale: string;
   /**
@@ -54,9 +60,12 @@ export interface CldrLanguagesFetchResult extends Pick<CachedFetch, "provenance"
   namesByLangCode: Map<string, string>;
 }
 
-export async function fetchCldrLanguages(locale: string, options?: {
-  ttlHours?: number;
-}): Promise<CldrLanguagesFetchResult> {
+export async function fetchCldrLanguages(
+  locale: string,
+  options?: {
+    ttlHours?: number;
+  },
+): Promise<CldrLanguagesFetchResult> {
   // upstream URL — cannot wrap
   const url = `https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-localenames-full/main/${locale}/languages.json`;
   const fetched = await fetchAndCache({
@@ -66,8 +75,11 @@ export async function fetchCldrLanguages(locale: string, options?: {
     cacheKey: `${locale}-languages.json`,
     ttlHours: options?.ttlHours,
   });
-  const payload = JSON.parse(fetched.body.toString("utf8")) as CldrLanguagesPayload;
-  const rawLanguages = payload.main[locale]?.localeDisplayNames?.languages ?? {};
+  const payload = JSON.parse(
+    fetched.body.toString("utf8"),
+  ) as CldrLanguagesPayload;
+  const rawLanguages =
+    payload.main[locale]?.localeDisplayNames?.languages ?? {};
   const namesByLangCode = new Map<string, string>();
   for (const [key, value] of Object.entries(rawLanguages)) {
     // Filter to bare 2-letter codes — drop region-qualified ("ar-001") and -alt-* variants

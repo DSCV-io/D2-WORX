@@ -8,8 +8,8 @@ Copyright (c) DCSV. All rights reserved.
 
 PII-safe rendering primitives consumed by every lib whose `[LoggerMessage]` delegates carry exception-derived strings. Keeps `Exception.Message` (which can interpolate JWT bytes, AMQP URIs with passwords, request URIs, etc.) out of the log pipeline at the type level.
 
-| File | Contents |
-|---|---|
+| File                          | Contents                                                                                                                             |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `SanitizedExceptionRender.cs` | PII-safe exception rendering for log + telemetry + DLQ-header surfaces. `TypeName(ex)` + `FirstFrame(ex)` only — never `ex.Message`. |
 
 ## `SanitizedExceptionRender` — PII-safe exception rendering

@@ -48,22 +48,28 @@ describe("tk-message parity (.NET wire shape ↔ TS wire shape)", () => {
   // produces — ANY drift on KEY / PARAMS / nested params shape fails here.
   describe("round-trip parity (.NET-serialized fixtures ↔ TS interface)", () => {
     it("no-params: .NET wire shape parses to {key: string}", () => {
-      const fixture = loadFixture<TKMessage>("tk-message", "round-trip-no-params");
+      const fixture = loadFixture<TKMessage>(
+        "tk-message",
+        "round-trip-no-params",
+      );
       expect(fixture.data).toEqual({ key: "common_errors_NOT_FOUND" });
       // Symmetric: tk() helper produces the same byte shape.
       expect(tk("common_errors_NOT_FOUND")).toEqual(fixture.data);
     });
 
     it("with-params: .NET wire shape parses to {key, params: Record<string,string>}", () => {
-      const fixture = loadFixture<TKMessage>("tk-message", "round-trip-with-params");
+      const fixture = loadFixture<TKMessage>(
+        "tk-message",
+        "round-trip-with-params",
+      );
       expect(fixture.data).toEqual({
         key: "common_errors_LIMIT_EXCEEDED",
         params: { maxLength: "256" },
       });
       // Symmetric tk() construction matches the fixture byte-for-byte.
-      expect(
-        tk("common_errors_LIMIT_EXCEEDED", { maxLength: "256" }),
-      ).toEqual(fixture.data);
+      expect(tk("common_errors_LIMIT_EXCEEDED", { maxLength: "256" })).toEqual(
+        fixture.data,
+      );
     });
 
     it("with-multiple-params: .NET wire shape preserves all bindings", () => {

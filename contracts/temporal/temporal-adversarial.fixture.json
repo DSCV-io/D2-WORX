@@ -1,0 +1,64 @@
+{
+  "$comment": [
+    "Adversarial temporal fixtures for cross-language parity tests.",
+    "Each entry is a (scheduledLocal, iana) input plus the expected",
+    "ComputeNextFire UTC instant. Both languages must produce IDENTICAL",
+    "expectedUtc under NodaTime's LenientResolver (.NET) and Temporal's",
+    "disambiguation:'compatible' (TS). If the two engines ever diverge on",
+    "any fixture, the divergence must be surfaced + acknowledged — DO NOT",
+    "silently adjust expectedUtc."
+  ],
+  "schemaVersion": 1,
+  "fixtures": [
+    {
+      "id": "us-spring-forward-skipped-2-30",
+      "scheduledLocal": "2026-03-08T02:30:00",
+      "iana": "America/New_York",
+      "expectedUtc": "2026-03-08T07:30:00Z"
+    },
+    {
+      "id": "us-fall-back-ambiguous-1-30-picks-earlier",
+      "scheduledLocal": "2026-11-01T01:30:00",
+      "iana": "America/New_York",
+      "expectedUtc": "2026-11-01T05:30:00Z"
+    },
+    {
+      "id": "european-spring-forward-skipped",
+      "scheduledLocal": "2026-03-29T01:30:00",
+      "iana": "Europe/London",
+      "expectedUtc": "2026-03-29T01:30:00Z"
+    },
+    {
+      "id": "european-fall-back-ambiguous-picks-earlier",
+      "scheduledLocal": "2025-10-26T01:30:00",
+      "iana": "Europe/London",
+      "expectedUtc": "2025-10-26T00:30:00Z"
+    },
+    {
+      "id": "australian-spring-forward-skipped",
+      "scheduledLocal": "2026-10-04T02:30:00",
+      "iana": "Australia/Sydney",
+      "expectedUtc": "2026-10-03T16:30:00Z"
+    },
+    {
+      "id": "unambiguous-utc-noon",
+      "scheduledLocal": "2026-06-15T12:00:00",
+      "iana": "UTC",
+      "expectedUtc": "2026-06-15T12:00:00Z"
+    },
+    {
+      "id": "iana-normalization-us-pacific-alias",
+      "scheduledLocal": "2026-06-15T12:00:00",
+      "iana": "US/Pacific",
+      "expectedUtc": "2026-06-15T19:00:00Z",
+      "expectedCanonicalIana": "America/Los_Angeles"
+    },
+    {
+      "id": "iana-normalization-asia-saigon-renamed",
+      "scheduledLocal": "2026-06-15T12:00:00",
+      "iana": "Asia/Saigon",
+      "expectedUtc": "2026-06-15T05:00:00Z",
+      "expectedCanonicalIana": "Asia/Ho_Chi_Minh"
+    }
+  ]
+}

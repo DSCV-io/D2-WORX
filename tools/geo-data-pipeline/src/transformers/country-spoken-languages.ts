@@ -50,7 +50,8 @@ export interface SpokenLanguagesLoadResult {
  * alpha-2 code (skips UN M49 numeric regions like "001"=World).
  */
 export async function loadCountrySpokenLanguages(): Promise<SpokenLanguagesLoadResult> {
-  const fetched = await fetchCldrSupplemental<TerritoryInfoPayload>("territoryInfo");
+  const fetched =
+    await fetchCldrSupplemental<TerritoryInfoPayload>("territoryInfo");
   const territoryInfo = fetched.payload.supplemental.territoryInfo;
 
   const byCountry = new Map<string, CountrySpokenLanguageEntry[]>();
@@ -68,7 +69,9 @@ export async function loadCountrySpokenLanguages(): Promise<SpokenLanguagesLoadR
         writingPercent: parseFloatStrict(stats._writingPercent),
       });
     }
-    entries.sort((a, b) => (b.populationPercent ?? 0) - (a.populationPercent ?? 0));
+    entries.sort(
+      (a, b) => (b.populationPercent ?? 0) - (a.populationPercent ?? 0),
+    );
     byCountry.set(region, entries);
   }
 

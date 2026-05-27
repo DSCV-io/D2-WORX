@@ -24,14 +24,14 @@ When a tag declares `"valuesFromSpec": "auth-error-codes"` (instead of an inline
 
 ## Build-time diagnostics
 
-| ID | Severity | Trigger |
-|---|---|---|
-| `D2TEL001` | Error | Spec file is malformed JSON or violates the schema |
-| `D2TEL002` | Error | Duplicate `meter` name across the spec |
-| `D2TEL003` | Error | Duplicate `instruments[].name` within a single meter |
-| `D2TEL004` | Error | Unknown `kind` value (must be `counter` / `histogram` / `gauge`) |
-| `D2TEL005` | Error | Duplicate value within a single tag's `values` array |
-| `D2TEL006` | Error | Cross-spec reference (e.g. `valuesFromSpec=auth-error-codes`) cannot be resolved — sibling spec missing from `AdditionalFiles`, malformed, or unknown reference name |
+| ID         | Severity | Trigger                                                                                                                                                              |
+| ---------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `D2TEL001` | Error    | Spec file is malformed JSON or violates the schema                                                                                                                   |
+| `D2TEL002` | Error    | Duplicate `meter` name across the spec                                                                                                                               |
+| `D2TEL003` | Error    | Duplicate `instruments[].name` within a single meter                                                                                                                 |
+| `D2TEL004` | Error    | Unknown `kind` value (must be `counter` / `histogram` / `gauge`)                                                                                                     |
+| `D2TEL005` | Error    | Duplicate value within a single tag's `values` array                                                                                                                 |
+| `D2TEL006` | Error    | Cross-spec reference (e.g. `valuesFromSpec=auth-error-codes`) cannot be resolved — sibling spec missing from `AdditionalFiles`, malformed, or unknown reference name |
 
 ---
 

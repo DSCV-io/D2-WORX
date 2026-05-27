@@ -65,7 +65,10 @@ export interface RawTerritory {
   perTypePossibleLengths: RawPossibleLengths[];
 }
 
-export interface LibphonenumberFetchResult extends Pick<CachedFetch, "provenance" | "fromCache"> {
+export interface LibphonenumberFetchResult extends Pick<
+  CachedFetch,
+  "provenance" | "fromCache"
+> {
   /**
    * Map keyed by territory id (ISO 3166-1 alpha-2 + a few non-ISO like "001" for
    * non-geographic numbers).
@@ -103,7 +106,9 @@ export async function fetchLibphonenumberMetadata(options?: {
 
   const territoriesArray = parsed.phoneNumberMetadata?.territories?.territory;
   if (!Array.isArray(territoriesArray)) {
-    throw new Error("libphonenumber XML structure unexpected — no territories array found");
+    throw new Error(
+      "libphonenumber XML structure unexpected — no territories array found",
+    );
   }
 
   const territoriesById = new Map<string, RawTerritory>();
@@ -146,7 +151,9 @@ function normalizeTerritory(raw: Record<string, unknown>): RawTerritory | null {
         ? raw["@_internationalPrefix"]
         : undefined,
     nationalPrefix:
-      typeof raw["@_nationalPrefix"] === "string" ? raw["@_nationalPrefix"] : undefined,
+      typeof raw["@_nationalPrefix"] === "string"
+        ? raw["@_nationalPrefix"]
+        : undefined,
     mainCountryForCode:
       typeof raw["@_mainCountryForCode"] === "string"
         ? raw["@_mainCountryForCode"]
@@ -160,7 +167,8 @@ function normalizeTerritory(raw: Record<string, unknown>): RawTerritory | null {
   const formats: RawNumberFormat[] = [];
   const availableFormats = raw["availableFormats"];
   if (availableFormats && typeof availableFormats === "object") {
-    const numberFormats = (availableFormats as { numberFormat?: unknown }).numberFormat;
+    const numberFormats = (availableFormats as { numberFormat?: unknown })
+      .numberFormat;
     if (Array.isArray(numberFormats)) {
       for (const nf of numberFormats) {
         if (typeof nf !== "object" || nf === null) continue;
@@ -190,12 +198,15 @@ function normalizeTerritory(raw: Record<string, unknown>): RawTerritory | null {
   for (const section of TYPE_SECTIONS_WITH_LENGTHS) {
     const block = raw[section];
     if (!block || typeof block !== "object") continue;
-    const possibleLengths = (block as { possibleLengths?: unknown }).possibleLengths;
+    const possibleLengths = (block as { possibleLengths?: unknown })
+      .possibleLengths;
     if (!possibleLengths || typeof possibleLengths !== "object") continue;
     const pl = possibleLengths as Record<string, unknown>;
     perTypePossibleLengths.push({
-      national: typeof pl["@_national"] === "string" ? pl["@_national"] : undefined,
-      localOnly: typeof pl["@_localOnly"] === "string" ? pl["@_localOnly"] : undefined,
+      national:
+        typeof pl["@_national"] === "string" ? pl["@_national"] : undefined,
+      localOnly:
+        typeof pl["@_localOnly"] === "string" ? pl["@_localOnly"] : undefined,
     });
   }
 

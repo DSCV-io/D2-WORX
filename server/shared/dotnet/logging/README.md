@@ -38,12 +38,12 @@ app.UseEndpoints(...);
 
 ### Configuration — `D2LoggingOptions`
 
-| Property | Type | Default | Notes |
-|---|---|---|---|
-| `ServiceName` | `string?` | `OTEL_SERVICE_NAME` config → `IHostEnvironment.ApplicationName` | Emitted on every log line via the `service_name` structured property. Validated non-empty / non-whitespace at startup. |
-| `Environment` | `string?` | `IHostEnvironment.EnvironmentName` | Emitted on every log line via the `environment` structured property. Validated non-empty / non-whitespace at startup. |
-| `MinimumLevel` | `LogEventLevel` | `Information` | Default minimum log level. Per-source overrides applied independently — see "Per-source overrides" below. |
-| `InfrastructurePaths` | `IReadOnlyList<string>` | `["/health", "/alive", "/metrics", "/.well-known"]` | Path prefixes whose request-completion events emit at `Verbose` instead of `Information`, so the default level gate filters them out. Validated non-empty (collection) and per-entry non-empty / non-whitespace at startup. |
+| Property              | Type                    | Default                                                         | Notes                                                                                                                                                                                                                       |
+| --------------------- | ----------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ServiceName`         | `string?`               | `OTEL_SERVICE_NAME` config → `IHostEnvironment.ApplicationName` | Emitted on every log line via the `service_name` structured property. Validated non-empty / non-whitespace at startup.                                                                                                      |
+| `Environment`         | `string?`               | `IHostEnvironment.EnvironmentName`                              | Emitted on every log line via the `environment` structured property. Validated non-empty / non-whitespace at startup.                                                                                                       |
+| `MinimumLevel`        | `LogEventLevel`         | `Information`                                                   | Default minimum log level. Per-source overrides applied independently — see "Per-source overrides" below.                                                                                                                   |
+| `InfrastructurePaths` | `IReadOnlyList<string>` | `["/health", "/alive", "/metrics", "/.well-known"]`             | Path prefixes whose request-completion events emit at `Verbose` instead of `Information`, so the default level gate filters them out. Validated non-empty (collection) and per-entry non-empty / non-whitespace at startup. |
 
 ### Constants
 
@@ -53,23 +53,23 @@ app.UseEndpoints(...);
 
 `AddD2Logging` applies these per-source minimum-level overrides on top of the configured `MinimumLevel`:
 
-| Source | Override |
-|---|---|
-| `Microsoft.AspNetCore` | `Warning` |
+| Source                      | Override  |
+| --------------------------- | --------- |
+| `Microsoft.AspNetCore`      | `Warning` |
 | `Microsoft.Extensions.Http` | `Warning` |
-| `System.Net.Http` | `Warning` |
-| `D2` | `Debug` |
+| `System.Net.Http`           | `Warning` |
+| `D2`                        | `Debug`   |
 
 Suppresses the framework / HTTP-client noise that Information-level produces by default while keeping D² code's diagnostic logs visible.
 
 ### Enrichers
 
-| Enricher | What it adds |
-|---|---|
-| `FromLogContext` | Per-scope properties pushed via `LogContext.PushProperty` propagate to nested log calls. |
-| `WithMachineName` | `MachineName` structured property. |
-| `WithProperty("service_name", …)` | The configured `ServiceName`. |
-| `WithProperty("environment", …)` | The configured `Environment`. |
+| Enricher                          | What it adds                                                                             |
+| --------------------------------- | ---------------------------------------------------------------------------------------- |
+| `FromLogContext`                  | Per-scope properties pushed via `LogContext.PushProperty` propagate to nested log calls. |
+| `WithMachineName`                 | `MachineName` structured property.                                                       |
+| `WithProperty("service_name", …)` | The configured `ServiceName`.                                                            |
+| `WithProperty("environment", …)`  | The configured `Environment`.                                                            |
 
 ### Output sink
 
@@ -104,115 +104,115 @@ The two HTTP-path limitations (`RequestId` and `RequestPath`) reflect Serilog's 
 
 #### Tracing (3 fields)
 
-| # | Field | Type | Reason |
-|---|---|---|---|
-| 1 | `TraceId` | `string?` | W3C distributed-trace id propagated across hops. Overrides the middleware's local `TraceId` when populated (see precedence note above). |
-| 2 | `RequestId` | `string?` | Per-request unique id (`HttpContext.TraceIdentifier` for HTTP; AMQP message-id for messaging). Not PII — synthetic identifier. **HTTP-path limitation**: Serilog 9.x emits `RequestId` independently; the enricher's emission is silently dropped on HTTP. See precedence note. |
-| 3 | `RequestPath` | `string?` | Request path / AMQP routing key. Route templates are operational metadata, not PII. **HTTP-path limitation**: Serilog's message template pre-binds `RequestPath`; the enricher's emission is silently dropped on HTTP. See precedence note. |
+| #   | Field         | Type      | Reason                                                                                                                                                                                                                                                                          |
+| --- | ------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `TraceId`     | `string?` | W3C distributed-trace id propagated across hops. Overrides the middleware's local `TraceId` when populated (see precedence note above).                                                                                                                                         |
+| 2   | `RequestId`   | `string?` | Per-request unique id (`HttpContext.TraceIdentifier` for HTTP; AMQP message-id for messaging). Not PII — synthetic identifier. **HTTP-path limitation**: Serilog 9.x emits `RequestId` independently; the enricher's emission is silently dropped on HTTP. See precedence note. |
+| 3   | `RequestPath` | `string?` | Request path / AMQP routing key. Route templates are operational metadata, not PII. **HTTP-path limitation**: Serilog's message template pre-binds `RequestPath`; the enricher's emission is silently dropped on HTTP. See precedence note.                                     |
 
 #### Auth/Identity (8 fields)
 
-| # | Field | Type | Reason |
-|---|---|---|---|
-| 4 | `IsAuthenticated` | `bool?` | Trinary auth state (null=pre-auth, false=anonymous, true=authenticated). Capability metadata; not PII. |
-| 5 | `Subject` | `string?` | Raw JWT `sub` claim — opaque identifier (Guid for users; client_id for service identities). Not PII per OAuth/JWT vocabulary. |
-| 6 | `UserId` | `Guid?` | Parsed `sub` as Guid for user tokens; null for service identities. Opaque audit identifier. |
-| 7 | `Username` | `string?` | Login handle (lowercase, unique). Users CHOOSE their username at signup; the value is the user's deliberate public identifier within the platform. PII consideration: a user MAY choose an email-shaped or name-shaped username (e.g. `alice.smith@example.com`, `alicemarsh`). The platform does not constrain user choice; the cost of capturing username in operational logs (where it's invaluable for "show me Alice's requests" debugging) outweighs the marginal privacy delta from a user CHOOSING to use email-shaped identifiers. The `Subject` raw-`sub` and `UserId` Guid are the canonical identifiers; `Username` is the human-readable supplement. |
-| 8 | `RequestedByClientId` | `string?` | OAuth `client_id` of the client that requested THIS specific token (RFC 8693 §4.3 / RFC 9068 §2.2). Service identifier; not PII. |
-| 9 | `ImmediateCallerClientId` | `string?` | The service that immediately called this handler — outermost Service entry in the act chain. Service identifier; not PII. |
-| 10 | `OriginatingClientId` | `string?` | The service that started the entire call chain — most-deeply-nested Service entry. Primary audit identifier for end-to-end traceability. Service identifier; not PII. |
-| 11 | `IsServiceIdentity` | `bool?` | True when the token represents a service identity (no user). Capability metadata; not PII. |
+| #   | Field                     | Type      | Reason                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| --- | ------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 4   | `IsAuthenticated`         | `bool?`   | Trinary auth state (null=pre-auth, false=anonymous, true=authenticated). Capability metadata; not PII.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 5   | `Subject`                 | `string?` | Raw JWT `sub` claim — opaque identifier (Guid for users; client_id for service identities). Not PII per OAuth/JWT vocabulary.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 6   | `UserId`                  | `Guid?`   | Parsed `sub` as Guid for user tokens; null for service identities. Opaque audit identifier.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 7   | `Username`                | `string?` | Login handle (lowercase, unique). Users CHOOSE their username at signup; the value is the user's deliberate public identifier within the platform. PII consideration: a user MAY choose an email-shaped or name-shaped username (e.g. `alice.smith@example.com`, `alicemarsh`). The platform does not constrain user choice; the cost of capturing username in operational logs (where it's invaluable for "show me Alice's requests" debugging) outweighs the marginal privacy delta from a user CHOOSING to use email-shaped identifiers. The `Subject` raw-`sub` and `UserId` Guid are the canonical identifiers; `Username` is the human-readable supplement. |
+| 8   | `RequestedByClientId`     | `string?` | OAuth `client_id` of the client that requested THIS specific token (RFC 8693 §4.3 / RFC 9068 §2.2). Service identifier; not PII.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 9   | `ImmediateCallerClientId` | `string?` | The service that immediately called this handler — outermost Service entry in the act chain. Service identifier; not PII.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 10  | `OriginatingClientId`     | `string?` | The service that started the entire call chain — most-deeply-nested Service entry. Primary audit identifier for end-to-end traceability. Service identifier; not PII.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 11  | `IsServiceIdentity`       | `bool?`   | True when the token represents a service identity (no user). Capability metadata; not PII.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 #### Auth/Token+Trust (5 fields)
 
-| # | Field | Type | Reason |
-|---|---|---|---|
-| 12 | `Audience` | `IReadOnlyList<string>` | JWT `aud` claim — service identifier(s) the token was minted for. Destructured as JSON array. Empty-collection gate suppresses `[]` emission. |
-| 13 | `SessionId` | `Guid?` | User's own session id in `auth_db`. Opaque audit identifier; not PII. |
-| 14 | `TokenIssuedAt` | `DateTimeOffset?` | JWT `iat` claim. Operational timestamp; not PII. |
-| 15 | `TokenExpiresAt` | `DateTimeOffset?` | JWT `exp` claim. Operational timestamp; not PII. |
-| 16 | `ActorChain` | `IReadOnlyList<ActorEntry>` | RFC 8693 actor chain, flattened. Destructured as JSON array of ActorEntry objects. Every member of `ActorEntry` is a subset of fields already approved as LOG-OK on the top-level axis (Subject, OrgId, OrgName, OrgType, OrgRole, SessionId, ImpersonationKind), so destructure is §3-safe. Empty-collection gate suppresses `[]` emission for end-user-direct tokens. |
+| #   | Field            | Type                        | Reason                                                                                                                                                                                                                                                                                                                                                                  |
+| --- | ---------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 12  | `Audience`       | `IReadOnlyList<string>`     | JWT `aud` claim — service identifier(s) the token was minted for. Destructured as JSON array. Empty-collection gate suppresses `[]` emission.                                                                                                                                                                                                                           |
+| 13  | `SessionId`      | `Guid?`                     | User's own session id in `auth_db`. Opaque audit identifier; not PII.                                                                                                                                                                                                                                                                                                   |
+| 14  | `TokenIssuedAt`  | `DateTimeOffset?`           | JWT `iat` claim. Operational timestamp; not PII.                                                                                                                                                                                                                                                                                                                        |
+| 15  | `TokenExpiresAt` | `DateTimeOffset?`           | JWT `exp` claim. Operational timestamp; not PII.                                                                                                                                                                                                                                                                                                                        |
+| 16  | `ActorChain`     | `IReadOnlyList<ActorEntry>` | RFC 8693 actor chain, flattened. Destructured as JSON array of ActorEntry objects. Every member of `ActorEntry` is a subset of fields already approved as LOG-OK on the top-level axis (Subject, OrgId, OrgName, OrgType, OrgRole, SessionId, ImpersonationKind), so destructure is §3-safe. Empty-collection gate suppresses `[]` emission for end-user-direct tokens. |
 
 #### Auth/Org (4 fields)
 
-| # | Field | Type | Reason |
-|---|---|---|---|
-| 17 | `OrgId` | `Guid?` | Operating organization id. Opaque identifier; not PII. |
-| 18 | `OrgName` | `string?` | Operating organization display name. Internal logs are read by operators who already have tenant access to query org metadata via authenticated APIs; there is no incremental disclosure from emitting org names into logs that those same operators authenticate to access. Same rationale applies to `ImpersonatorOrgName` (the agent's own org during impersonation). |
-| 19 | `OrgType` | `OrgType?` (enum) | Org type (`Admin` / `Support` / `Customer` / `ThirdParty` / `Affiliate`). Capability metadata; not PII. |
-| 20 | `OrgRole` | `Role?` (enum) | User's role in the org (`Auditor` / `Agent` / `Officer` / `Owner`). Capability metadata; not PII. |
+| #   | Field     | Type              | Reason                                                                                                                                                                                                                                                                                                                                                                   |
+| --- | --------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 17  | `OrgId`   | `Guid?`           | Operating organization id. Opaque identifier; not PII.                                                                                                                                                                                                                                                                                                                   |
+| 18  | `OrgName` | `string?`         | Operating organization display name. Internal logs are read by operators who already have tenant access to query org metadata via authenticated APIs; there is no incremental disclosure from emitting org names into logs that those same operators authenticate to access. Same rationale applies to `ImpersonatorOrgName` (the agent's own org during impersonation). |
+| 19  | `OrgType` | `OrgType?` (enum) | Org type (`Admin` / `Support` / `Customer` / `ThirdParty` / `Affiliate`). Capability metadata; not PII.                                                                                                                                                                                                                                                                  |
+| 20  | `OrgRole` | `Role?` (enum)    | User's role in the org (`Auditor` / `Agent` / `Officer` / `Owner`). Capability metadata; not PII.                                                                                                                                                                                                                                                                        |
 
 #### Auth/Impersonation (8 fields)
 
-| # | Field | Type | Reason |
-|---|---|---|---|
-| 21 | `IsImpersonating` | `bool?` | True when the act chain contains any Impersonation entry. Capability metadata; not PII. |
-| 22 | `ImpersonationKind` | `ImpersonationKind?` (enum) | `Consent` (OTP-authorized) vs `Force` (silent, admin-only). Capability metadata. |
-| 23 | `ImpersonatedBy` | `Guid?` | Agent's (impersonator's) user id. Opaque identifier; not PII. |
-| 24 | `ImpersonationSessionId` | `Guid?` | Impersonation session id (separate from user's own `SessionId`). Opaque identifier; not PII. |
-| 25 | `ImpersonatorOrgId` | `Guid?` | Agent's own org id. Opaque identifier; not PII. |
-| 26 | `ImpersonatorOrgName` | `string?` | Agent's own org display name. Same rationale as `OrgName` above. |
-| 27 | `ImpersonatorOrgType` | `OrgType?` (enum) | Agent's own org type. Capability metadata. |
-| 28 | `ImpersonatorOrgRole` | `Role?` (enum) | Agent's own role in their own org. Capability metadata. |
+| #   | Field                    | Type                        | Reason                                                                                       |
+| --- | ------------------------ | --------------------------- | -------------------------------------------------------------------------------------------- |
+| 21  | `IsImpersonating`        | `bool?`                     | True when the act chain contains any Impersonation entry. Capability metadata; not PII.      |
+| 22  | `ImpersonationKind`      | `ImpersonationKind?` (enum) | `Consent` (OTP-authorized) vs `Force` (silent, admin-only). Capability metadata.             |
+| 23  | `ImpersonatedBy`         | `Guid?`                     | Agent's (impersonator's) user id. Opaque identifier; not PII.                                |
+| 24  | `ImpersonationSessionId` | `Guid?`                     | Impersonation session id (separate from user's own `SessionId`). Opaque identifier; not PII. |
+| 25  | `ImpersonatorOrgId`      | `Guid?`                     | Agent's own org id. Opaque identifier; not PII.                                              |
+| 26  | `ImpersonatorOrgName`    | `string?`                   | Agent's own org display name. Same rationale as `OrgName` above.                             |
+| 27  | `ImpersonatorOrgType`    | `OrgType?` (enum)           | Agent's own org type. Capability metadata.                                                   |
+| 28  | `ImpersonatorOrgRole`    | `Role?` (enum)              | Agent's own role in their own org. Capability metadata.                                      |
 
 #### Scopes (1 field)
 
-| # | Field | Type | Reason |
-|---|---|---|---|
-| 29 | `Scopes` | `IReadOnlySet<string>` | OAuth scope set. Destructured as JSON array (preserves field-array semantics for "show me requests with scope X" queries in Loki / Elasticsearch). Empty-collection gate suppresses `[]` emission for unauthenticated requests. |
+| #   | Field    | Type                   | Reason                                                                                                                                                                                                                          |
+| --- | -------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 29  | `Scopes` | `IReadOnlySet<string>` | OAuth scope set. Destructured as JSON array (preserves field-array semantics for "show me requests with scope X" queries in Loki / Elasticsearch). Empty-collection gate suppresses `[]` emission for unauthenticated requests. |
 
 #### Trust/Risk (1 field)
 
-| # | Field | Type | Reason |
-|---|---|---|---|
-| 30 | `RiskScore` | `int?` (0-100) | Edge composite request-risk score. Derived numeric; not PII (zero reverse path to fingerprint inputs). |
+| #   | Field       | Type           | Reason                                                                                                 |
+| --- | ----------- | -------------- | ------------------------------------------------------------------------------------------------------ |
+| 30  | `RiskScore` | `int?` (0-100) | Edge composite request-risk score. Derived numeric; not PII (zero reverse path to fingerprint inputs). |
 
 #### Fingerprints (2 fields)
 
-| # | Field | Type | Reason |
-|---|---|---|---|
-| 31 | `SessionFingerprint` | `string?` | Mint-time-bound fingerprint hash (SHA-256-derived components). Opaque hash. |
-| 32 | `CurrentFingerprint` | `string?` | Per-request recomputed fingerprint hash. Opaque hash. Comparison with `SessionFingerprint` feeds risk scoring. |
+| #   | Field                | Type      | Reason                                                                                                         |
+| --- | -------------------- | --------- | -------------------------------------------------------------------------------------------------------------- |
+| 31  | `SessionFingerprint` | `string?` | Mint-time-bound fingerprint hash (SHA-256-derived components). Opaque hash.                                    |
+| 32  | `CurrentFingerprint` | `string?` | Per-request recomputed fingerprint hash. Opaque hash. Comparison with `SessionFingerprint` feeds risk scoring. |
 
 #### WhoIs/Geo (3 fields)
 
-| # | Field | Type | Reason |
-|---|---|---|---|
-| 33 | `WhoIsHashId` | `string?` | Content-addressable hash of the full WhoIs record. Opaque hash; not PII. Operators with auth can dereference for the full record (including suppressed sub-country geo) when needed. |
-| 34 | `AdminLocationHashId` | `string?` | Content-addressable hash of admin-location component (city + region + country + postal). Opaque hash; not PII. |
-| 35 | `CountryCode` | `string?` (ISO 3166-1 alpha-2) | Country grain only — explicitly above the "city + postal beyond country" PII line. |
+| #   | Field                 | Type                           | Reason                                                                                                                                                                               |
+| --- | --------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 33  | `WhoIsHashId`         | `string?`                      | Content-addressable hash of the full WhoIs record. Opaque hash; not PII. Operators with auth can dereference for the full record (including suppressed sub-country geo) when needed. |
+| 34  | `AdminLocationHashId` | `string?`                      | Content-addressable hash of admin-location component (city + region + country + postal). Opaque hash; not PII.                                                                       |
+| 35  | `CountryCode`         | `string?` (ISO 3166-1 alpha-2) | Country grain only — explicitly above the "city + postal beyond country" PII line.                                                                                                   |
 
 #### WhoIs/Network-Privacy (4 fields)
 
-| # | Field | Type | Reason |
-|---|---|---|---|
-| 36 | `IsVpn` | `bool?` | Derived boolean; not PII. |
-| 37 | `IsProxy` | `bool?` | Derived boolean; not PII. |
-| 38 | `IsTor` | `bool?` | Derived boolean; not PII. High signal for security review. |
-| 39 | `IsHosting` | `bool?` | Derived boolean; not PII. Hosting-source requests behave differently. |
+| #   | Field       | Type    | Reason                                                                |
+| --- | ----------- | ------- | --------------------------------------------------------------------- |
+| 36  | `IsVpn`     | `bool?` | Derived boolean; not PII.                                             |
+| 37  | `IsProxy`   | `bool?` | Derived boolean; not PII.                                             |
+| 38  | `IsTor`     | `bool?` | Derived boolean; not PII. High signal for security review.            |
+| 39  | `IsHosting` | `bool?` | Derived boolean; not PII. Hosting-source requests behave differently. |
 
 #### WhoIs/ASN (3 fields)
 
-| # | Field | Type | Reason |
-|---|---|---|---|
-| 40 | `Asn` | `int?` | Public AS number (published BGP data); not PII. Risk-scoring + abuse-investigation signal. |
-| 41 | `AsnName` | `string?` | Public AS organization name; not PII. |
-| 42 | `AsnType` | `string?` | Coarse classification (`business` / `isp` / `hosting` / `mobile` / `education` / `government`); not PII. |
+| #   | Field     | Type      | Reason                                                                                                   |
+| --- | --------- | --------- | -------------------------------------------------------------------------------------------------------- |
+| 40  | `Asn`     | `int?`    | Public AS number (published BGP data); not PII. Risk-scoring + abuse-investigation signal.               |
+| 41  | `AsnName` | `string?` | Public AS organization name; not PII.                                                                    |
+| 42  | `AsnType` | `string?` | Coarse classification (`business` / `isp` / `hosting` / `mobile` / `education` / `government`); not PII. |
 
 ### NOT-LOGGED fields (suppressed at default)
 
 8 fields. The first 5 are explicitly user-pinned PII; the last 3 (lat/long/geohash) are §3-driven (geographic precision = identification primitive — geohash IS lat/long, just hex-encoded). Sub-country geographic precision escalates only via `WhoIsHashId` lookups against the WhoIs store (operators with auth can dereference when a real investigation needs it).
 
-| Field | §3 cite | Reason |
-|---|---|---|
-| `ClientIp` | §3 "What counts as PII" — IP addresses (v4 + v6) | Raw IP is PII per §3. |
-| `City` | §3 "What counts as PII" — sub-country geographic precision | Locality grain beyond country is PII. |
-| `Region` | §3 "What counts as PII" — sub-country geographic precision | Locality grain beyond country is PII. |
-| `SubdivisionCode` | §3 "What counts as PII" — sub-country geographic precision | ISO 3166-2 subdivision is sub-country precision; PII. |
-| `PostalCode` | §3 "What counts as PII" — postal code | Locality grain beyond country is PII. |
-| `Latitude` | §3 "What counts as PII" — geographic (lat/long) | GPS-exact precision is named in §3 as a PII primitive. |
-| `Longitude` | §3 "What counts as PII" — geographic (lat/long) | GPS-exact precision is named in §3 as a PII primitive. |
-| `Geohash` | §3 "What counts as PII" — geographic (lat/long, hex-encoded) | Street-level precision; same §3 rationale as raw lat/long. |
+| Field             | §3 cite                                                      | Reason                                                     |
+| ----------------- | ------------------------------------------------------------ | ---------------------------------------------------------- |
+| `ClientIp`        | §3 "What counts as PII" — IP addresses (v4 + v6)             | Raw IP is PII per §3.                                      |
+| `City`            | §3 "What counts as PII" — sub-country geographic precision   | Locality grain beyond country is PII.                      |
+| `Region`          | §3 "What counts as PII" — sub-country geographic precision   | Locality grain beyond country is PII.                      |
+| `SubdivisionCode` | §3 "What counts as PII" — sub-country geographic precision   | ISO 3166-2 subdivision is sub-country precision; PII.      |
+| `PostalCode`      | §3 "What counts as PII" — postal code                        | Locality grain beyond country is PII.                      |
+| `Latitude`        | §3 "What counts as PII" — geographic (lat/long)              | GPS-exact precision is named in §3 as a PII primitive.     |
+| `Longitude`       | §3 "What counts as PII" — geographic (lat/long)              | GPS-exact precision is named in §3 as a PII primitive.     |
+| `Geohash`         | §3 "What counts as PII" — geographic (lat/long, hex-encoded) | Street-level precision; same §3 rationale as raw lat/long. |
 
 ### Opting in to additional fields
 
@@ -242,41 +242,41 @@ app.UseD2RequestLogging(opts =>
 
 ### Redaction modes
 
-| Decoration | Effect |
-|---|---|
-| `[RedactData]` on the type | Entire value rendered as `[REDACTED: {Reason}]`. |
-| `[RedactData]` on a property | Only that property is masked; siblings destructure normally. |
+| Decoration                           | Effect                                                              |
+| ------------------------------------ | ------------------------------------------------------------------- |
+| `[RedactData]` on the type           | Entire value rendered as `[REDACTED: {Reason}]`.                    |
+| `[RedactData]` on a property         | Only that property is masked; siblings destructure normally.        |
 | `[RedactData(CustomReason = "...")]` | The custom string replaces the enum-name reason in the placeholder. |
 
 Reason rendering uses the enum name (`PersonalInformation`, `FinancialInformation`, `SecretInformation`, `VerboseContent`, `Other`, `Unspecified`) unless a `CustomReason` overrides it.
 
 ## File layout
 
-| File | Role |
-|---|---|
-| `D2.Shared.Logging.csproj` | csproj — `Microsoft.NET.Sdk.Web` + `OutputType=Library`. ProjectReferences to `utilities/` + `context-abstractions/`. |
-| `D2LoggingOptions.cs` | Sealed record — Options-pattern config. |
-| `D2LoggingConstants.cs` | Public constants (`OTEL_SERVICE_NAME_CONFIG_KEY`). |
-| `LoggingServiceCollectionExtensions.cs` | Public DI extension: `AddD2Logging`. |
-| `WebApplicationLoggingExtensions.cs` | Public AspNetCore extension: `UseD2RequestLogging`. |
-| `Destructuring/RedactDataDestructuringPolicy.cs` | Internal sealed `IDestructuringPolicy` impl. |
-| `Destructuring/TypeRedactionInfo.cs` | Internal sealed record — per-type cache value. |
-| `Internal/D2RequestContextEnricher.cs` | Internal static helper that projects `IRequestContext` LOG-OK fields onto the request-completion log line. |
+| File                                             | Role                                                                                                                  |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| `D2.Shared.Logging.csproj`                       | csproj — `Microsoft.NET.Sdk.Web` + `OutputType=Library`. ProjectReferences to `utilities/` + `context-abstractions/`. |
+| `D2LoggingOptions.cs`                            | Sealed record — Options-pattern config.                                                                               |
+| `D2LoggingConstants.cs`                          | Public constants (`OTEL_SERVICE_NAME_CONFIG_KEY`).                                                                    |
+| `LoggingServiceCollectionExtensions.cs`          | Public DI extension: `AddD2Logging`.                                                                                  |
+| `WebApplicationLoggingExtensions.cs`             | Public AspNetCore extension: `UseD2RequestLogging`.                                                                   |
+| `Destructuring/RedactDataDestructuringPolicy.cs` | Internal sealed `IDestructuringPolicy` impl.                                                                          |
+| `Destructuring/TypeRedactionInfo.cs`             | Internal sealed record — per-type cache value.                                                                        |
+| `Internal/D2RequestContextEnricher.cs`           | Internal static helper that projects `IRequestContext` LOG-OK fields onto the request-completion log line.            |
 
 ## Dependencies
 
-| Package | Why |
-|---|---|
-| `Serilog.AspNetCore` | The umbrella package. Pulls Serilog, Serilog.Extensions.Logging, Serilog.Sinks.Console, Microsoft.Extensions.Logging.Abstractions transitively. `UseSerilogRequestLogging` lives here. |
-| `Serilog.Formatting.Compact` | `CompactJsonFormatter`. Listed explicitly so transitive removal can't silently drop it. |
-| `Serilog.Enrichers.Environment` | `Enrich.WithMachineName()`. |
-| `JetBrains.Annotations` | `[MustDisposeResource]` annotations on disposable factory paths. |
+| Package                         | Why                                                                                                                                                                                    |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Serilog.AspNetCore`            | The umbrella package. Pulls Serilog, Serilog.Extensions.Logging, Serilog.Sinks.Console, Microsoft.Extensions.Logging.Abstractions transitively. `UseSerilogRequestLogging` lives here. |
+| `Serilog.Formatting.Compact`    | `CompactJsonFormatter`. Listed explicitly so transitive removal can't silently drop it.                                                                                                |
+| `Serilog.Enrichers.Environment` | `Enrich.WithMachineName()`.                                                                                                                                                            |
+| `JetBrains.Annotations`         | `[MustDisposeResource]` annotations on disposable factory paths.                                                                                                                       |
 
-| Project reference | Why |
-|---|---|
-| `D2.Shared.Utilities` | `[RedactData]` attribute + `RedactReason` enum + `Falsey()` / `Truthy()` extensions. |
-| `D2.Shared.Context.Abstractions` | `IRequestContext` interface (the strongly-typed enricher dep). |
-| `D2.Shared.AspNetCore` | Canonical `InfrastructurePathMatcher` consumed by `UseD2RequestLogging`'s level callback to demote infrastructure-path request-completion logs to `Verbose`. Single source of truth shared with `D2.Shared.Telemetry`'s AspNetCore-instrumentation `Filter`. |
+| Project reference                | Why                                                                                                                                                                                                                                                          |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `D2.Shared.Utilities`            | `[RedactData]` attribute + `RedactReason` enum + `Falsey()` / `Truthy()` extensions.                                                                                                                                                                         |
+| `D2.Shared.Context.Abstractions` | `IRequestContext` interface (the strongly-typed enricher dep).                                                                                                                                                                                               |
+| `D2.Shared.AspNetCore`           | Canonical `InfrastructurePathMatcher` consumed by `UseD2RequestLogging`'s level callback to demote infrastructure-path request-completion logs to `Verbose`. Single source of truth shared with `D2.Shared.Telemetry`'s AspNetCore-instrumentation `Filter`. |
 
 ## Edge cases / gotchas
 

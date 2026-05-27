@@ -19,20 +19,20 @@ The spec files are the single source of truth — adding a new message or subscr
 
 ## Build-time diagnostics
 
-| ID | Severity | Trigger |
-|---|---|---|
-| `D2MQ001` | Error | Spec file is malformed JSON or violates the schema |
-| `D2MQ002` | Error | Spec entry missing a required field (e.g. messages-entry missing `constant`) |
-| `D2MQ003` | Error | Two messages or subscriptions declare the same constant name |
-| `D2MQ004` | Error | Encryption domain referenced by a messages-entry isn't in `D2.Shared.Encryption.EncryptionDomains` (catches drift between encryption keyring registration and message declarations) |
-| `D2MQ005` | Error | `plaintext`-encryption messages-entry missing the required `encryptionReason` justification |
-| `D2MQ006` | Error | Subscription `pattern` value isn't in `{CompetingConsumer, FanoutExclusiveAutoDelete, DurableShared}` |
-| `D2MQ007` | Error | Messages-entry `messageType` value isn't in the recognized set |
-| `D2MQ008` | Error | Subscription `exchangeType` value isn't in `{fanout, topic, direct}` |
-| `D2MQ009` | Error | No `mq-messages.spec.json` found in `AdditionalFiles` |
-| `D2MQ010` | Error | No `mq-subscriptions.spec.json` found in `AdditionalFiles` |
-| `D2MQ011` | Error | Messages-entry `constant` violates C#-identifier rules (must be `^[A-Z][A-Za-z0-9]*$`) |
-| `D2MQ012` | Error | Subscription `tieredRetry.tiers[*]` value isn't a valid `HH:MM:SS` `TimeSpan` literal |
+| ID        | Severity | Trigger                                                                                                                                                                             |
+| --------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `D2MQ001` | Error    | Spec file is malformed JSON or violates the schema                                                                                                                                  |
+| `D2MQ002` | Error    | Spec entry missing a required field (e.g. messages-entry missing `constant`)                                                                                                        |
+| `D2MQ003` | Error    | Two messages or subscriptions declare the same constant name                                                                                                                        |
+| `D2MQ004` | Error    | Encryption domain referenced by a messages-entry isn't in `D2.Shared.Encryption.EncryptionDomains` (catches drift between encryption keyring registration and message declarations) |
+| `D2MQ005` | Error    | `plaintext`-encryption messages-entry missing the required `encryptionReason` justification                                                                                         |
+| `D2MQ006` | Error    | Subscription `pattern` value isn't in `{CompetingConsumer, FanoutExclusiveAutoDelete, DurableShared}`                                                                               |
+| `D2MQ007` | Error    | Messages-entry `messageType` value isn't in the recognized set                                                                                                                      |
+| `D2MQ008` | Error    | Subscription `exchangeType` value isn't in `{fanout, topic, direct}`                                                                                                                |
+| `D2MQ009` | Error    | No `mq-messages.spec.json` found in `AdditionalFiles`                                                                                                                               |
+| `D2MQ010` | Error    | No `mq-subscriptions.spec.json` found in `AdditionalFiles`                                                                                                                          |
+| `D2MQ011` | Error    | Messages-entry `constant` violates C#-identifier rules (must be `^[A-Z][A-Za-z0-9]*$`)                                                                                              |
+| `D2MQ012` | Error    | Subscription `tieredRetry.tiers[*]` value isn't a valid `HH:MM:SS` `TimeSpan` literal                                                                                               |
 
 ---
 

@@ -5,13 +5,24 @@
   "description": "Tier 2 codegen-ready Country catalog. Matches the CountrySpec record shape consumed by .NET SourceGen + TS emitter. See tools/geo-data-pipeline/src/tier-2/types.ts for the matching TypeScript interface.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["$generated", "$source", "$schema", "$note", "catalogVersion", "generatedAt", "entries"],
+  "required": [
+    "$generated",
+    "$source",
+    "$schema",
+    "$note",
+    "catalogVersion",
+    "generatedAt",
+    "entries"
+  ],
   "properties": {
     "$generated": { "const": true },
     "$source": { "const": "pipeline-derived" },
     "$schema": { "type": "string" },
     "$note": { "type": "string" },
-    "catalogVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$" },
+    "catalogVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$"
+    },
     "generatedAt": { "type": "string", "format": "date-time" },
     "entries": {
       "type": "array",
@@ -21,7 +32,15 @@
   "$defs": {
     "DayOfWeek": {
       "type": "string",
-      "enum": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+      "enum": [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+      ]
     },
     "MeasurementSystem": {
       "type": "string",
@@ -56,16 +75,30 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "iso31661Alpha2Code", "iso31661Alpha3Code", "iso31661NumericCode",
-        "displayName", "officialName", "endonymDisplayName",
-        "phoneNumberPrefix", "phoneNumberNationalFormat",
-        "phoneNumberMinDigits", "phoneNumberMaxDigits",
-        "firstDayOfWeek", "weekendStart", "weekendEnd", "measurementSystem",
-        "primaryLanguageISO6391Code", "primaryCurrencyISO4217AlphaCode",
-        "primaryLocaleIETFBCP47Tag", "sovereignCountryISO31661Alpha2Code",
-        "geopoliticalEntityShortCodes", "subdivisionISO31662Codes",
-        "timezoneIanaIdentifiers", "localeIETFBCP47Tags",
-        "spokenLanguageISO6391Codes", "territoryISO31661Alpha2Codes",
+        "iso31661Alpha2Code",
+        "iso31661Alpha3Code",
+        "iso31661NumericCode",
+        "displayName",
+        "officialName",
+        "endonymDisplayName",
+        "phoneNumberPrefix",
+        "phoneNumberNationalFormat",
+        "phoneNumberMinDigits",
+        "phoneNumberMaxDigits",
+        "firstDayOfWeek",
+        "weekendStart",
+        "weekendEnd",
+        "measurementSystem",
+        "primaryLanguageISO6391Code",
+        "primaryCurrencyISO4217AlphaCode",
+        "primaryLocaleIETFBCP47Tag",
+        "sovereignCountryISO31661Alpha2Code",
+        "geopoliticalEntityShortCodes",
+        "subdivisionISO31662Codes",
+        "timezoneIanaIdentifiers",
+        "localeIETFBCP47Tags",
+        "spokenLanguageISO6391Codes",
+        "territoryISO31661Alpha2Codes",
         "currencies"
       ],
       "properties": {
@@ -77,23 +110,61 @@
         "endonymDisplayName": { "type": ["string", "null"] },
         "phoneNumberPrefix": { "type": ["string", "null"] },
         "phoneNumberNationalFormat": { "type": ["string", "null"] },
-        "phoneNumberMinDigits": { "type": ["integer", "null"], "minimum": 1, "maximum": 17 },
-        "phoneNumberMaxDigits": { "type": ["integer", "null"], "minimum": 1, "maximum": 17 },
+        "phoneNumberMinDigits": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 17
+        },
+        "phoneNumberMaxDigits": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 17
+        },
         "firstDayOfWeek": { "$ref": "#/$defs/DayOfWeek" },
         "weekendStart": { "$ref": "#/$defs/DayOfWeek" },
         "weekendEnd": { "$ref": "#/$defs/DayOfWeek" },
         "measurementSystem": { "$ref": "#/$defs/MeasurementSystem" },
-        "primaryLanguageISO6391Code": { "oneOf": [{ "$ref": "#/$defs/ISO6391Code" }, { "type": "null" }] },
-        "primaryCurrencyISO4217AlphaCode": { "oneOf": [{ "$ref": "#/$defs/ISO4217AlphaCode" }, { "type": "null" }] },
+        "primaryLanguageISO6391Code": {
+          "oneOf": [{ "$ref": "#/$defs/ISO6391Code" }, { "type": "null" }]
+        },
+        "primaryCurrencyISO4217AlphaCode": {
+          "oneOf": [{ "$ref": "#/$defs/ISO4217AlphaCode" }, { "type": "null" }]
+        },
         "primaryLocaleIETFBCP47Tag": { "type": ["string", "null"] },
-        "sovereignCountryISO31661Alpha2Code": { "oneOf": [{ "$ref": "#/$defs/ISO31661Alpha2Code" }, { "type": "null" }] },
-        "geopoliticalEntityShortCodes": { "type": "array", "items": { "type": "string", "minLength": 1 } },
-        "subdivisionISO31662Codes": { "type": "array", "items": { "type": "string", "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$" } },
-        "timezoneIanaIdentifiers": { "type": "array", "items": { "type": "string", "minLength": 1 } },
-        "localeIETFBCP47Tags": { "type": "array", "items": { "type": "string", "minLength": 2 } },
-        "spokenLanguageISO6391Codes": { "type": "array", "items": { "$ref": "#/$defs/ISO6391Code" } },
-        "territoryISO31661Alpha2Codes": { "type": "array", "items": { "$ref": "#/$defs/ISO31661Alpha2Code" } },
-        "currencies": { "type": "array", "items": { "$ref": "#/$defs/CountryCurrencyAcceptance" } }
+        "sovereignCountryISO31661Alpha2Code": {
+          "oneOf": [
+            { "$ref": "#/$defs/ISO31661Alpha2Code" },
+            { "type": "null" }
+          ]
+        },
+        "geopoliticalEntityShortCodes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "subdivisionISO31662Codes": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$" }
+        },
+        "timezoneIanaIdentifiers": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "localeIETFBCP47Tags": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 2 }
+        },
+        "spokenLanguageISO6391Codes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ISO6391Code" }
+        },
+        "territoryISO31661Alpha2Codes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ISO31661Alpha2Code" }
+        },
+        "currencies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CountryCurrencyAcceptance" }
+        }
       }
     }
   }

@@ -4,7 +4,7 @@
   "$schema": "./locales.schema.json",
   "$note": "TIER 2 codegen-ready spec — produced by tools/geo-data-pipeline from contracts/geo/src-data/*.spec.json (Tier 1). Matches the canonical entity record shape; consumed directly by codegen (.NET SourceGen + TS emitter — Tier 3) to produce concrete entity types. Do NOT hand-edit — re-run `pnpm geo:refresh` to regenerate. IsSelectable derived from contracts/messages/{tag}.json file presence (currently 10 selectable). FirstDayOfWeek denormalized from Country[locale.country]; matches via parity test.",
   "catalogVersion": "0.1.0",
-  "generatedAt": "2026-05-19T18:14:37.998Z",
+  "generatedAt": "2026-05-26T13:25:26.656Z",
   "entries": [
     {
       "ietfBcp47Tag": "aa",
@@ -5332,6 +5332,18 @@
       "firstDayOfWeek": "Monday",
       "decimalSeparator": ",",
       "thousandsSeparator": "\u202f",
+      "dateFormatPattern": "DMY"
+    },
+    {
+      "ietfBcp47Tag": "fr-TF",
+      "name": "French (French Southern Territories)",
+      "endonym": "français (Terres australes françaises)",
+      "languageISO6391Code": "fr",
+      "countryISO31661Alpha2Code": "TF",
+      "isSelectable": false,
+      "firstDayOfWeek": "Monday",
+      "decimalSeparator": ",",
+      "thousandsSeparator": " ",
       "dateFormatPattern": "DMY"
     },
     {

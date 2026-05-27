@@ -10,14 +10,14 @@ D2 encryption-domain identifiers + encryption-frame binary layout constants. Mir
 
 ## Public API
 
-| Export                          | Source                       | Mirror                                              |
-| ------------------------------- | ---------------------------- | --------------------------------------------------- |
-| `EncryptionDomains`             | `encryption-domains.g.ts`    | `D2.Shared.Encryption.EncryptionDomains`            |
-| `EncryptionDomain`              | `encryption-domains.g.ts`    | n/a (TS-only union type)                            |
-| `ALL_ENCRYPTION_DOMAINS`        | `encryption-domains.g.ts`    | `D2.Shared.Encryption.EncryptionDomains.AllDomains` |
-| `EncryptionFrame`               | `encryption-frame.g.ts`      | `D2.Shared.Encryption.EncryptionFrame` (offsets)    |
-| `EncryptionFrameField`          | `encryption-frame.g.ts`      | n/a (TS-only union type)                            |
-| `ALL_ENCRYPTION_FRAME_FIELDS`   | `encryption-frame.g.ts`      | n/a (TS-only enumeration)                           |
+| Export                        | Source                    | Mirror                                              |
+| ----------------------------- | ------------------------- | --------------------------------------------------- |
+| `EncryptionDomains`           | `encryption-domains.g.ts` | `D2.Shared.Encryption.EncryptionDomains`            |
+| `EncryptionDomain`            | `encryption-domains.g.ts` | n/a (TS-only union type)                            |
+| `ALL_ENCRYPTION_DOMAINS`      | `encryption-domains.g.ts` | `D2.Shared.Encryption.EncryptionDomains.AllDomains` |
+| `EncryptionFrame`             | `encryption-frame.g.ts`   | `D2.Shared.Encryption.EncryptionFrame` (offsets)    |
+| `EncryptionFrameField`        | `encryption-frame.g.ts`   | n/a (TS-only union type)                            |
+| `ALL_ENCRYPTION_FRAME_FIELDS` | `encryption-frame.g.ts`   | n/a (TS-only enumeration)                           |
 
 ## Codegen workflow
 

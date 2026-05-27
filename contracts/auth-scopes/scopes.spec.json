@@ -39,7 +39,10 @@
       "description": "Initiate consent-based impersonation of another user. Requires OTP authorization from the target user.",
       "actionSensitivity": "Sensitive",
       "impersonationBlocked": true,
-      "grantedTo": { "Support": ["Owner", "Officer"], "Admin": ["Owner", "Officer", "Agent"] }
+      "grantedTo": {
+        "Support": ["Owner", "Officer"],
+        "Admin": ["Owner", "Officer", "Agent"]
+      }
     },
     {
       "name": "auth.user.impersonate.force",

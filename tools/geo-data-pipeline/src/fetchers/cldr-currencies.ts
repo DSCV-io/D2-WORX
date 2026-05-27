@@ -47,18 +47,24 @@ const SOURCE_LICENSE = "Unicode-3.0 (Unicode License)";
  * `symbol-alt-narrow` is the most compact form (e.g., "؋" instead of "AFN").
  */
 export interface CldrCurrenciesPayload {
-  main: Record<string, {
-    identity: { language: string };
-    numbers: {
-      currencies: Record<string, {
-        displayName?: string;
-        "displayName-count-one"?: string;
-        "displayName-count-other"?: string;
-        symbol?: string;
-        "symbol-alt-narrow"?: string;
-      }>;
-    };
-  }>;
+  main: Record<
+    string,
+    {
+      identity: { language: string };
+      numbers: {
+        currencies: Record<
+          string,
+          {
+            displayName?: string;
+            "displayName-count-one"?: string;
+            "displayName-count-other"?: string;
+            symbol?: string;
+            "symbol-alt-narrow"?: string;
+          }
+        >;
+      };
+    }
+  >;
 }
 
 export interface CldrCurrencyEntry {
@@ -67,14 +73,20 @@ export interface CldrCurrencyEntry {
   symbolNarrow: string | null;
 }
 
-export interface CldrCurrenciesFetchResult extends Pick<CachedFetch, "provenance" | "fromCache"> {
+export interface CldrCurrenciesFetchResult extends Pick<
+  CachedFetch,
+  "provenance" | "fromCache"
+> {
   locale: string;
   byCurrencyCode: Map<string, CldrCurrencyEntry>;
 }
 
-export async function fetchCldrCurrencies(locale: string, options?: {
-  ttlHours?: number;
-}): Promise<CldrCurrenciesFetchResult> {
+export async function fetchCldrCurrencies(
+  locale: string,
+  options?: {
+    ttlHours?: number;
+  },
+): Promise<CldrCurrenciesFetchResult> {
   // upstream URL — cannot wrap
   const url = `https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/${locale}/currencies.json`;
   const fetched = await fetchAndCache({
@@ -84,7 +96,9 @@ export async function fetchCldrCurrencies(locale: string, options?: {
     cacheKey: `${locale}-currencies.json`,
     ttlHours: options?.ttlHours,
   });
-  const payload = JSON.parse(fetched.body.toString("utf8")) as CldrCurrenciesPayload;
+  const payload = JSON.parse(
+    fetched.body.toString("utf8"),
+  ) as CldrCurrenciesPayload;
   const raw = payload.main[locale]?.numbers?.currencies ?? {};
   const byCurrencyCode = new Map<string, CldrCurrencyEntry>();
   for (const [code, entry] of Object.entries(raw)) {

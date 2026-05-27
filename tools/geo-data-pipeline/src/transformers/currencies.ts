@@ -9,6 +9,30 @@ import type { CurrencyCodeRow } from "../fetchers/datasets-currency-codes.js";
 const DEFAULT_DECIMAL_PLACES = 2;
 
 /**
+ * Known ISO 4217 alpha-code displayName overrides for currencies that share a
+ * numeric code with a sibling code AND collide on displayName because CLDR
+ * doesn't carry the historical sibling (so we fall back to the datasets/
+ * currency-codes generic name).
+ *
+ * Mirrors CLDR's disambiguation pattern for the codes it does carry (e.g.,
+ * ZWD = "Zimbabwean Dollar (1980-2008)", ZWN = "Zimbabwean Dollar (2006-2008)",
+ * ZWR = "Zimbabwean Dollar (2008)"). When a sibling isn't in CLDR, its only
+ * source is datasets/currency-codes which is generic — datasets lists ZWC as
+ * "Rhodesian Dollar" identical to RHD, so the two collide. The override below
+ * disambiguates ZWC as the Zimbabwe-Rhodesia successor entity (1970-1980)
+ * distinct from RHD (Southern Rhodesia, 1968-1980).
+ *
+ * Only add entries here for codes that:
+ *  (a) share a numeric code with another currency, AND
+ *  (b) lack a CLDR-disambiguated displayName.
+ * If CLDR already disambiguates (e.g., ZWD/ZWN/ZWR), no override needed.
+ */
+export const KNOWN_NUMERIC_REUSE_DISPLAYNAME_OVERRIDES: ReadonlyMap<
+  string,
+  string
+> = new Map([["ZWC", "Zimbabwe Rhodesian Dollar"]]);
+
+/**
  * Mirrors the Currency entity shape. `IsSupported` is a Tier 2 field (derived from the
  * selectable-locale set) and not part of this pipeline-raw shape.
  */
@@ -107,14 +131,19 @@ export interface BuildCurrenciesContext {
  *  5. Lookup per-locale display name across the 11 supported locales.
  *  6. Derive endonym by resolving the most-likely primary issuing country's primary language.
  */
-export function buildCurrencyEntries(ctx: BuildCurrenciesContext): CurrencyPartial[] {
+export function buildCurrencyEntries(
+  ctx: BuildCurrenciesContext,
+): CurrencyPartial[] {
   // -- 1. Dedupe datasets rows by alpha code; preserve first row's metadata + retired flag --
-  const datasetsByCode = new Map<string, {
-    name: string;
-    numericCode: string | null;
-    minorUnit: number | null;
-    anyActiveRow: boolean;
-  }>();
+  const datasetsByCode = new Map<
+    string,
+    {
+      name: string;
+      numericCode: string | null;
+      minorUnit: number | null;
+      anyActiveRow: boolean;
+    }
+  >();
   for (const row of ctx.datasetsRows) {
     if (!row.alphabeticCode) continue; // skip ancient rows missing alpha code
     const existing = datasetsByCode.get(row.alphabeticCode);
@@ -170,26 +199,31 @@ export function buildCurrencyEntries(ctx: BuildCurrenciesContext): CurrencyParti
     const datasets = datasetsByCode.get(code);
     const usage = usageByCurrency.get(code) ?? [];
 
-    // English display name: prefer CLDR > datasets/currency-codes
+    // English display name: prefer hand-curated override (for numeric-reuse
+    // sibling pairs CLDR doesn't disambiguate) > CLDR > datasets/currency-codes
     const cldrEn = ctx.cldrLocaleCurrencies.get("en")?.get(code);
-    const englishName = cldrEn?.displayName ?? datasets?.name;
+    const englishName =
+      KNOWN_NUMERIC_REUSE_DISPLAYNAME_OVERRIDES.get(code) ??
+      cldrEn?.displayName ??
+      datasets?.name;
     if (!englishName) continue; // can't ship a currency with no name in either source
 
     // Symbol: prefer CLDR narrow > CLDR symbol > null
     const symbol = cldrEn?.symbolNarrow ?? cldrEn?.symbol ?? null;
 
     // Decimal places: prefer CLDR fractions._digits > datasets minorUnit > DEFAULT
-    const cldrFraction = ctx.cldrFractions[code] ?? ctx.cldrFractions["DEFAULT"];
-    const decimalPlaces = parseIntStrict(cldrFraction?._digits)
-      ?? datasets?.minorUnit
-      ?? DEFAULT_DECIMAL_PLACES;
+    const cldrFraction =
+      ctx.cldrFractions[code] ?? ctx.cldrFractions["DEFAULT"];
+    const decimalPlaces =
+      parseIntStrict(cldrFraction?._digits) ??
+      datasets?.minorUnit ??
+      DEFAULT_DECIMAL_PLACES;
 
     // IsActive: any current (no _to) usage = active. If no CLDR history, fall back to datasets
     // (treat as active when ANY datasets row had no WithdrawalDate).
     const cldrShowsActive = usage.some((u) => u.toDate === null);
-    const isActive = usage.length > 0
-      ? cldrShowsActive
-      : (datasets?.anyActiveRow ?? false);
+    const isActive =
+      usage.length > 0 ? cldrShowsActive : (datasets?.anyActiveRow ?? false);
 
     // Localized display names
     const localizedDisplayNames: Record<string, string> = {};
@@ -208,7 +242,9 @@ export function buildCurrencyEntries(ctx: BuildCurrenciesContext): CurrencyParti
       const homeCountry = homeUsage.countryISO31661Alpha2Code;
       const homeLang = ctx.countryToPrimaryLang.get(homeCountry);
       if (homeLang) {
-        const homeLocalized = ctx.cldrLocaleCurrencies.get(homeLang)?.get(code)?.displayName;
+        const homeLocalized = ctx.cldrLocaleCurrencies
+          .get(homeLang)
+          ?.get(code)?.displayName;
         if (homeLocalized) {
           endonymDisplayName = homeLocalized;
           endonymSourceCountry = homeCountry;

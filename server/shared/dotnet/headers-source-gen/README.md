@@ -16,12 +16,12 @@ The spec file is the single source of truth for every D2 wire header (HTTP / gRP
 
 ## Catalog dispatch
 
-| Consuming assembly | Filter | Emitted source |
-|---|---|---|
-| `D2.Shared.Headers.Common` | `applicability.Length >= 2` | `CommonHeaders.g.cs` (class `CommonHeaders`) |
-| `D2.Shared.Headers.Http` | `applicability.Contains("http")` | `HttpHeaders.g.cs` (class `HttpHeaders`) |
-| `D2.Shared.Headers.Amqp` | `applicability.Contains("amqp")` | `AmqpHeaders.g.cs` (class `AmqpHeaders`) |
-| `D2.Shared.Headers.Grpc` | `applicability.Contains("grpc")` | `GrpcHeaders.g.cs` (class `GrpcHeaders`) |
+| Consuming assembly         | Filter                           | Emitted source                               |
+| -------------------------- | -------------------------------- | -------------------------------------------- |
+| `D2.Shared.Headers.Common` | `applicability.Length >= 2`      | `CommonHeaders.g.cs` (class `CommonHeaders`) |
+| `D2.Shared.Headers.Http`   | `applicability.Contains("http")` | `HttpHeaders.g.cs` (class `HttpHeaders`)     |
+| `D2.Shared.Headers.Amqp`   | `applicability.Contains("amqp")` | `AmqpHeaders.g.cs` (class `AmqpHeaders`)     |
+| `D2.Shared.Headers.Grpc`   | `applicability.Contains("grpc")` | `GrpcHeaders.g.cs` (class `GrpcHeaders`)     |
 
 Cross-transport entries appear in multiple catalogs at identical wire values, codegen-guaranteed (verified by `HeaderCatalogConsistencyTests`).
 
@@ -29,15 +29,15 @@ Cross-transport entries appear in multiple catalogs at identical wire values, co
 
 ## Build-time diagnostics
 
-| ID | Severity | Trigger |
-|---|---|---|
-| `D2HDR001` | Error | Spec file is malformed JSON or violates the schema |
-| `D2HDR002` | Error | An entry's `applicability` array contains an unknown transport (closed enum: `http` / `grpc` / `amqp`) |
-| `D2HDR003` | Error | An entry's `constName` violates UPPER_SNAKE_CASE pattern |
-| `D2HDR004` | Error | An entry's `constName` collides with another entry within the same catalog |
-| `D2HDR005` | Error | An entry's `applicability` array is empty (every header must belong to at least one transport) |
-| `D2HDR006` | Warning | An entry's `convention` is outside the recognized set (typo guard — emitter still emits, just flags) |
-| `D2HDR007` | Error | `headers.spec.json` is missing from `<AdditionalFiles>` for the consuming csproj |
+| ID         | Severity | Trigger                                                                                                |
+| ---------- | -------- | ------------------------------------------------------------------------------------------------------ |
+| `D2HDR001` | Error    | Spec file is malformed JSON or violates the schema                                                     |
+| `D2HDR002` | Error    | An entry's `applicability` array contains an unknown transport (closed enum: `http` / `grpc` / `amqp`) |
+| `D2HDR003` | Error    | An entry's `constName` violates UPPER_SNAKE_CASE pattern                                               |
+| `D2HDR004` | Error    | An entry's `constName` collides with another entry within the same catalog                             |
+| `D2HDR005` | Error    | An entry's `applicability` array is empty (every header must belong to at least one transport)         |
+| `D2HDR006` | Warning  | An entry's `convention` is outside the recognized set (typo guard — emitter still emits, just flags)   |
+| `D2HDR007` | Error    | `headers.spec.json` is missing from `<AdditionalFiles>` for the consuming csproj                       |
 
 ---
 

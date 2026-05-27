@@ -4,7 +4,7 @@
   "$schema": "./currencies.schema.json",
   "$note": "TIER 2 codegen-ready spec — produced by tools/geo-data-pipeline from contracts/geo/src-data/*.spec.json (Tier 1). Matches the canonical entity record shape; consumed directly by codegen (.NET SourceGen + TS emitter — Tier 3) to produce concrete entity types. Do NOT hand-edit — re-run `pnpm geo:refresh` to regenerate. IsSupported derived from contracts/messages/*.json file presence — selectable locales' primary countries' primary currencies. Active set: 10 selectable locales -> derived 6 supported currencies.",
   "catalogVersion": "0.1.0",
-  "generatedAt": "2026-05-19T18:14:37.998Z",
+  "generatedAt": "2026-05-26T13:25:26.656Z",
   "entries": [
     {
       "iso4217AlphaCode": "ADP",
@@ -2889,7 +2889,7 @@
     {
       "iso4217AlphaCode": "ZWC",
       "iso4217NumericCode": "716",
-      "displayName": "Rhodesian Dollar",
+      "displayName": "Zimbabwe Rhodesian Dollar",
       "decimalPlaces": 2,
       "symbol": null,
       "isActive": false,

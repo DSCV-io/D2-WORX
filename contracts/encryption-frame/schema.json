@@ -40,7 +40,12 @@
         },
         "kind": {
           "type": "string",
-          "enum": ["byte_fixed", "variable_utf8", "variable_remainder", "byte_fixed_trailing"],
+          "enum": [
+            "byte_fixed",
+            "variable_utf8",
+            "variable_remainder",
+            "byte_fixed_trailing"
+          ],
           "description": "How the decoder reads this field. byte_fixed = fixed-size byte span at a fixed offset; variable_utf8 = UTF-8 string at a fixed offset with variable length declared elsewhere; variable_remainder = consumes remainder of frame from offset; byte_fixed_trailing = fixed-size byte span at the END of the frame (parsed from the trailing edge)."
         },
         "doc": {
@@ -52,7 +57,13 @@
     },
     "constraints": {
       "type": "object",
-      "required": ["minKidLength", "maxKidLength", "nonceLength", "tagLength", "minFrameSize"],
+      "required": [
+        "minKidLength",
+        "maxKidLength",
+        "nonceLength",
+        "tagLength",
+        "minFrameSize"
+      ],
       "additionalProperties": false,
       "properties": {
         "minKidLength": { "type": "integer", "minimum": 1 },

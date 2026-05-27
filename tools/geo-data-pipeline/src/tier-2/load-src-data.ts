@@ -4,7 +4,14 @@
 
 import { readFile, readdir, stat } from "node:fs/promises";
 import { resolve } from "node:path";
-import { applyCountriesOverlay, loadCountriesOverlay } from "./load-overlays.js";
+import {
+  applyCountriesOverlay,
+  applyLocalesOverlay,
+  applySubdivisionsOverlay,
+  loadCountriesOverlay,
+  loadLocalesOverlay,
+  loadSubdivisionsOverlay,
+} from "./load-overlays.js";
 import type { OverlaysApplied } from "./load-overlays.js";
 import type { GeopoliticalEntitySpec } from "./types.js";
 import { REPO_ROOT_PATH } from "../util/cache.js";
@@ -34,7 +41,28 @@ export interface SrcDataCountry {
   weekendStart: string | null;
   weekendEnd: string | null;
   measurementSystem: string | null;
-  activeLegalTenderCurrencies: Array<{ isoAlphaCode: string; fromDate: string | null }>;
+  activeLegalTenderCurrencies: Array<{
+    isoAlphaCode: string;
+    fromDate: string | null;
+  }>;
+  /**
+   * Currencies widely accepted at retail/tourism alongside legal tender (de-facto
+   * secondary). Optional — Tier 1 upstream sources (CLDR / datasets-country-codes)
+   * do not populate this; the overlay layer at `contracts/geo/overlays/` adds it
+   * for countries with notable de-facto secondary currency acceptance.
+   */
+  widelyAcceptedCurrencies?: Array<{
+    isoAlphaCode: string;
+    fromDate?: string | null;
+  }>;
+  /**
+   * Currencies accepted in tourist venues but not retail-wide. Optional — populated
+   * exclusively via the overlay layer (no upstream source).
+   */
+  touristCurrencies?: Array<{
+    isoAlphaCode: string;
+    fromDate?: string | null;
+  }>;
   territoryISO31661Alpha2Codes: string[];
   spokenLanguages: Array<{
     languageCode: string;
@@ -124,14 +152,16 @@ export interface LoadedSrcData {
 export async function loadSrcData(): Promise<LoadedSrcData> {
   const [
     tier1Countries,
-    subdivisions,
+    tier1Subdivisions,
     currencies,
     languages,
-    locales,
+    tier1Locales,
     timezones,
     geopoliticalEntities,
     selectableLocaleTags,
     countriesOverlay,
+    subdivisionsOverlay,
+    localesOverlay,
   ] = await Promise.all([
     readSpecEntries<SrcDataCountry>("countries.spec.json"),
     readSpecEntries<SrcDataSubdivision>("subdivisions.spec.json"),
@@ -142,13 +172,21 @@ export async function loadSrcData(): Promise<LoadedSrcData> {
     readManualGeopoliticalEntities(),
     discoverSelectableLocales(),
     loadCountriesOverlay(),
+    loadSubdivisionsOverlay(),
+    loadLocalesOverlay(),
   ]);
 
-  // Apply countries overlay (additions / overrides / removals) before cross-catalog merge.
+  // Apply overlays (additions / overrides / removals) before cross-catalog merge.
   // See contracts/geo/overlays/README.md for the pattern.
   const { countries, applied: countriesApplied } = applyCountriesOverlay(
     tier1Countries,
     countriesOverlay,
+  );
+  const { subdivisions, applied: subdivisionsApplied } =
+    applySubdivisionsOverlay(tier1Subdivisions, subdivisionsOverlay);
+  const { locales, applied: localesApplied } = applyLocalesOverlay(
+    tier1Locales,
+    localesOverlay,
   );
 
   return {
@@ -164,7 +202,11 @@ export async function loadSrcData(): Promise<LoadedSrcData> {
     timezones,
     geopoliticalEntities,
     selectableLocaleTags,
-    overlaysApplied: { countries: countriesApplied },
+    overlaysApplied: {
+      countries: countriesApplied,
+      subdivisions: subdivisionsApplied,
+      locales: localesApplied,
+    },
   };
 }
 
@@ -174,8 +216,13 @@ async function readSpecEntries<T>(filename: string): Promise<T[]> {
   return parsed.entries;
 }
 
-async function readManualGeopoliticalEntities(): Promise<GeopoliticalEntitySpec[]> {
-  const text = await readFile(resolve(GEO_DIR, "geopolitical-entities.spec.json"), "utf8");
+async function readManualGeopoliticalEntities(): Promise<
+  GeopoliticalEntitySpec[]
+> {
+  const text = await readFile(
+    resolve(GEO_DIR, "geopolitical-entities.spec.json"),
+    "utf8",
+  );
   const parsed = JSON.parse(text) as { entries: GeopoliticalEntitySpec[] };
   return parsed.entries;
 }

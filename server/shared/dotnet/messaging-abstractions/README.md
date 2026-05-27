@@ -28,10 +28,10 @@ use the same surface.
    at build time, landing in the tracked `Generated/` directory (committed
    for inspection, IDE navigation, and PR diff review; re-emitted on every
    `dotnet build` from the spec; do not hand-edit):
-    - `MqMessages.g.cs` — `public static partial class MqMessages` with one
-      string `const` per spec entry, plus `MqMessagesRegistry.ByConstant`
-      (`Dictionary<string, MqMessageDescriptor>`).
-    - `MqSubscriptions.g.cs` — same shape for subscriptions.
+   - `MqMessages.g.cs` — `public static partial class MqMessages` with one
+     string `const` per spec entry, plus `MqMessagesRegistry.ByConstant`
+     (`Dictionary<string, MqMessageDescriptor>`).
+   - `MqSubscriptions.g.cs` — same shape for subscriptions.
 3. **Producer side** — the message class carries `[MqPub(MqMessages.X)]`.
    The transport's resolver looks up the descriptor via the attribute → the
    codegen'd registry → exchange + encryption + default routing key.

@@ -37,16 +37,22 @@ const SOURCE_LICENSE = "Unicode-3.0 (Unicode License)";
  * `symbols-numberSystem-{system}` block carries the canonical separators for that locale.
  */
 export interface CldrNumbersPayload {
-  main: Record<string, {
-    identity: { language: string };
-    numbers: {
-      defaultNumberingSystem?: string;
-      [k: string]: unknown;
-    };
-  }>;
+  main: Record<
+    string,
+    {
+      identity: { language: string };
+      numbers: {
+        defaultNumberingSystem?: string;
+        [k: string]: unknown;
+      };
+    }
+  >;
 }
 
-export interface CldrNumbersFetchResult extends Pick<CachedFetch, "provenance" | "fromCache"> {
+export interface CldrNumbersFetchResult extends Pick<
+  CachedFetch,
+  "provenance" | "fromCache"
+> {
   locale: string;
   defaultNumberingSystem: string;
   decimalSeparator: string;
@@ -61,9 +67,12 @@ const FALLBACK_GROUP = ",";
 const FALLBACK_PERCENT = "%";
 const FALLBACK_MINUS = "-";
 
-export async function fetchCldrNumbers(locale: string, options?: {
-  ttlHours?: number;
-}): Promise<CldrNumbersFetchResult> {
+export async function fetchCldrNumbers(
+  locale: string,
+  options?: {
+    ttlHours?: number;
+  },
+): Promise<CldrNumbersFetchResult> {
   // upstream URL — cannot wrap
   const url = `https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/${locale}/numbers.json`;
   const fetched = await fetchAndCache({
@@ -73,17 +82,26 @@ export async function fetchCldrNumbers(locale: string, options?: {
     cacheKey: `${locale}-numbers.json`,
     ttlHours: options?.ttlHours,
   });
-  const payload = JSON.parse(fetched.body.toString("utf8")) as CldrNumbersPayload;
+  const payload = JSON.parse(
+    fetched.body.toString("utf8"),
+  ) as CldrNumbersPayload;
   const numbers = payload.main[locale]?.numbers;
   if (!numbers) {
-    throw new Error(`CLDR numbers.json for ${locale} missing main.${locale}.numbers block`);
+    throw new Error(
+      `CLDR numbers.json for ${locale} missing main.${locale}.numbers block`,
+    );
   }
 
   const system = numbers.defaultNumberingSystem ?? FALLBACK_NUMBERING_SYSTEM;
   const symbolsKey = `symbols-numberSystem-${system}`;
   const fallbackKey = `symbols-numberSystem-${FALLBACK_NUMBERING_SYSTEM}`;
   const symbols = (numbers[symbolsKey] ?? numbers[fallbackKey]) as
-    | { decimal?: string; group?: string; percentSign?: string; minusSign?: string }
+    | {
+        decimal?: string;
+        group?: string;
+        percentSign?: string;
+        minusSign?: string;
+      }
     | undefined;
 
   return {

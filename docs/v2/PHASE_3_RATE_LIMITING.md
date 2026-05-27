@@ -69,12 +69,12 @@ The design's load-bearing decisions:
 
 These look related but they're not the same concept:
 
-|                | **`RateLimitTier`** (this doc)                  | **`ActionSensitivity`** (auth concern, separate)            |
-| -------------- | ----------------------------------------------- | ----------------------------------------------------------- |
-| Captures       | "How costly / abusable is this endpoint?"       | "How dangerous is this action if it succeeds?"              |
-| Lives in       | **Edge endpoint attribute ONLY**                | **Scope spec metadata** (claims-driven; auth concern)       |
-| Drives         | Per-bucket caps + fail-open / fail-closed       | Audit verbosity + step-up triggers + impersonation defaults |
-| Values         | `Standard` / `Elevated` / `Restricted`          | `Routine` / `Sensitive` / `Critical`                        |
+|          | **`RateLimitTier`** (this doc)            | **`ActionSensitivity`** (auth concern, separate)            |
+| -------- | ----------------------------------------- | ----------------------------------------------------------- |
+| Captures | "How costly / abusable is this endpoint?" | "How dangerous is this action if it succeeds?"              |
+| Lives in | **Edge endpoint attribute ONLY**          | **Scope spec metadata** (claims-driven; auth concern)       |
+| Drives   | Per-bucket caps + fail-open / fail-closed | Audit verbosity + step-up triggers + impersonation defaults |
+| Values   | `Standard` / `Elevated` / `Restricted`    | `Routine` / `Sensitive` / `Critical`                        |
 
 **Distinct vocabulary on purpose** — you can't accidentally cross-wire them in
 code. A sign-in endpoint is `Routine` in action sensitivity (just an
@@ -114,14 +114,14 @@ Three orthogonal dimensions × three `RateLimitTier` values × two auth states =
 18 conceptual buckets system-wide. **Each request only touches 3** (the
 dimensions for its current auth state, all at the endpoint's tier).
 
-|                                                  | Standard bucket | Elevated bucket | Restricted bucket |
-| ------------------------------------------------ | --------------- | --------------- | ----------------- |
-| **Anon: Per-FP**                                 | bucket A1       | bucket A2       | bucket A3         |
-| **Anon: Per-City+Region+Country**                | bucket A4       | bucket A5       | bucket A6         |
-| **Anon: Per-Country** (whitelist-skippable)      | bucket A7       | bucket A8       | bucket A9         |
-| **Authed: Per-UserId**                           | bucket B1       | bucket B2       | bucket B3         |
-| **Authed: Per-City+Region+Country**              | bucket B4       | bucket B5       | bucket B6         |
-| **Authed: Per-Country** (whitelist-skippable)    | bucket B7       | bucket B8       | bucket B9         |
+|                                               | Standard bucket | Elevated bucket | Restricted bucket |
+| --------------------------------------------- | --------------- | --------------- | ----------------- |
+| **Anon: Per-FP**                              | bucket A1       | bucket A2       | bucket A3         |
+| **Anon: Per-City+Region+Country**             | bucket A4       | bucket A5       | bucket A6         |
+| **Anon: Per-Country** (whitelist-skippable)   | bucket A7       | bucket A8       | bucket A9         |
+| **Authed: Per-UserId**                        | bucket B1       | bucket B2       | bucket B3         |
+| **Authed: Per-City+Region+Country**           | bucket B4       | bucket B5       | bucket B6         |
+| **Authed: Per-Country** (whitelist-skippable) | bucket B7       | bucket B8       | bucket B9         |
 
 Authed caps are **more generous** than anon caps at every dimension — the user
 has proven they're real. Numerical caps tuned per environment via env vars;
@@ -309,13 +309,13 @@ unexpected legitimate traffic spike).
 
 **Design**: Redis-key-driven kill switches with short-TTL per-replica caching.
 
-| Switch                       | Redis key pattern                  | TTL                  | Use case                                                                       |
-| ---------------------------- | ---------------------------------- | -------------------- | ------------------------------------------------------------------------------ |
-| **Bypass specific FP**       | `ratelimit:bypass:fp:{fp}`         | 30 min default       | Unblock a specific known-good FP that got flagged                              |
-| **Bypass specific IP**       | `ratelimit:bypass:ip:{ip}`         | 30 min default       | Unblock a specific IP (penetration test, internal tooling, demo)               |
-| **Bypass specific sub**      | `ratelimit:bypass:sub:{sub}`       | 30 min default       | Unblock specific user / anon sub (false positive after upgrade — covers both `anon:` and `user:` variants) |
-| **Bypass dimension globally**| `ratelimit:bypass:dimension:fp`    | Until manually deleted | Disable per-FP entirely (emergency — known bug in FP detection)              |
-| **Bypass everything**        | `ratelimit:bypass:all`             | Until manually deleted | Last-resort emergency                                                        |
+| Switch                        | Redis key pattern               | TTL                    | Use case                                                                                                   |
+| ----------------------------- | ------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Bypass specific FP**        | `ratelimit:bypass:fp:{fp}`      | 30 min default         | Unblock a specific known-good FP that got flagged                                                          |
+| **Bypass specific IP**        | `ratelimit:bypass:ip:{ip}`      | 30 min default         | Unblock a specific IP (penetration test, internal tooling, demo)                                           |
+| **Bypass specific sub**       | `ratelimit:bypass:sub:{sub}`    | 30 min default         | Unblock specific user / anon sub (false positive after upgrade — covers both `anon:` and `user:` variants) |
+| **Bypass dimension globally** | `ratelimit:bypass:dimension:fp` | Until manually deleted | Disable per-FP entirely (emergency — known bug in FP detection)                                            |
+| **Bypass everything**         | `ratelimit:bypass:all`          | Until manually deleted | Last-resort emergency                                                                                      |
 
 **Replica caching**: each Edge replica caches kill-switch lookups for ~10
 seconds. Worst-case 10s lag from "set switch" to "switch active." Acceptable
@@ -334,10 +334,10 @@ scanning Redis keys.
 
 When Redis is unavailable, behavior depends on `RateLimitTier`:
 
-| Tier         | Behavior on Redis outage                                                                                                                                                            |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Standard`   | **Fail open** — request passes through. Site usability prioritized over rate-limit precision.                                                                                       |
-| `Elevated`   | **Fail open** — same. The rest of the site is largely unusable without Redis anyway (sessions, caching, etc.); a brief rate-limit gap during Redis recovery is acceptable.          |
+| Tier         | Behavior on Redis outage                                                                                                                                                                     |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Standard`   | **Fail open** — request passes through. Site usability prioritized over rate-limit precision.                                                                                                |
+| `Elevated`   | **Fail open** — same. The rest of the site is largely unusable without Redis anyway (sessions, caching, etc.); a brief rate-limit gap during Redis recovery is acceptable.                   |
 | `Restricted` | **Fail closed** — request rejected with 503. Brute-force surfaces (sign-in, password reset, OTP) MUST stay protected; better to reject all sign-ins for 30s than allow uncapped brute force. |
 
 WhoIs degradation at Edge falls back to `null` country / city / asn upstream of

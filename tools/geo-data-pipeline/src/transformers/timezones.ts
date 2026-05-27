@@ -2,7 +2,10 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import type { IanaTzdbFetchResult, ZoneTabEntry } from "../fetchers/iana-tzdb.js";
+import type {
+  IanaTzdbFetchResult,
+  ZoneTabEntry,
+} from "../fetchers/iana-tzdb.js";
 
 /**
  * Partial Timezone spec entry produced from IANA tzdb tab files + Node's built-in
@@ -70,7 +73,9 @@ export function transformTimezone(
 
   // STD = smaller (more west / less time-shift); DST = larger (one hour east per DST shift).
   // Equal => no DST (or year-round same offset).
-  const sortedByOffset = [sampleA, sampleB].sort((a, b) => a.offsetMinutes - b.offsetMinutes);
+  const sortedByOffset = [sampleA, sampleB].sort(
+    (a, b) => a.offsetMinutes - b.offsetMinutes,
+  );
   const stdSample = sortedByOffset[0];
   const dstSample = sortedByOffset[1];
   // Both samples guaranteed non-null since we early-returned above
@@ -118,7 +123,10 @@ interface OffsetSample {
   abbrev: string;
 }
 
-export function sampleOffset(timeZone: string, when: Date): OffsetSample | null {
+export function sampleOffset(
+  timeZone: string,
+  when: Date,
+): OffsetSample | null {
   try {
     const longOffsetParts = new Intl.DateTimeFormat("en-US", {
       timeZone,
@@ -129,7 +137,9 @@ export function sampleOffset(timeZone: string, when: Date): OffsetSample | null 
       timeZoneName: "short",
     }).formatToParts(when);
 
-    const offsetRaw = longOffsetParts.find((p) => p.type === "timeZoneName")?.value;
+    const offsetRaw = longOffsetParts.find(
+      (p) => p.type === "timeZoneName",
+    )?.value;
     const abbrev = shortNameParts.find((p) => p.type === "timeZoneName")?.value;
     if (!offsetRaw || !abbrev) return null;
 
@@ -178,5 +188,8 @@ export function reconcileIanaWithIcu(ianaResult: IanaTzdbFetchResult): {
   const icuOnlyZones: string[] = [];
   for (const id of icuIds) if (!ianaIds.has(id)) icuOnlyZones.push(id);
 
-  return { ianaOnlyZones: ianaOnlyZones.sort(), icuOnlyZones: icuOnlyZones.sort() };
+  return {
+    ianaOnlyZones: ianaOnlyZones.sort(),
+    icuOnlyZones: icuOnlyZones.sort(),
+  };
 }

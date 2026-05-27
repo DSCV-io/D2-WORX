@@ -42,7 +42,9 @@ export interface CountryPhoneMetadata {
  *   "[7-9],10" → [7, 8, 9, 10]
  *   "[4-8]" (localOnly) — IGNORED; we only use national lengths
  */
-export function transformPhoneMetadata(territory: RawTerritory): CountryPhoneMetadata | null {
+export function transformPhoneMetadata(
+  territory: RawTerritory,
+): CountryPhoneMetadata | null {
   const { attributes, formats, perTypePossibleLengths } = territory;
   if (!attributes.countryCode) return null;
 

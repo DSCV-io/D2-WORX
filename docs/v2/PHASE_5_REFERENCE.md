@@ -39,16 +39,16 @@ Phase 5 implementations should embody all 6.
 
 The contract producers use to send notifications. Phase 5 D2.Courier client must preserve this shape (or document deliberate divergences).
 
-| Field | Type | Required? | Purpose |
-|---|---|---|---|
-| `title` | string (markdown) | Yes | Email subject / SMS subject prefix / notification title |
-| `content` | string (markdown) | Yes | Email body / SMS body / notification body — markdown rendered to HTML for email, plaintext-stripped for SMS |
-| `plaintext` | string | No (auto-derived if absent) | Plain-text fallback for email; auto-generated from `content` via Markdig PlainTextRenderer if not provided |
-| `channels` | array of channel hints (`email`, `sms`, `in_app`) | No | Producer's preferred channel(s); D2.Courier may override based on user preferences + availability |
-| `urgency` | enum (`low`, `normal`, `high`, `critical`) | Yes | Drives retry behavior + channel escalation policy |
-| `correlationId` | UUID | Yes | Unique per delivery request — for cross-service tracking + dedup |
-| `senderService` | string | Yes | Producer service name (`d2-files`, `d2-edge`, etc.) — for audit + observability |
-| `metadata` | JSON object | No | Free-form metadata (e.g., `{eventType: "file_processed"}`) — surfaces in audit + analytics |
+| Field           | Type                                              | Required?                   | Purpose                                                                                                     |
+| --------------- | ------------------------------------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `title`         | string (markdown)                                 | Yes                         | Email subject / SMS subject prefix / notification title                                                     |
+| `content`       | string (markdown)                                 | Yes                         | Email body / SMS body / notification body — markdown rendered to HTML for email, plaintext-stripped for SMS |
+| `plaintext`     | string                                            | No (auto-derived if absent) | Plain-text fallback for email; auto-generated from `content` via Markdig PlainTextRenderer if not provided  |
+| `channels`      | array of channel hints (`email`, `sms`, `in_app`) | No                          | Producer's preferred channel(s); D2.Courier may override based on user preferences + availability           |
+| `urgency`       | enum (`low`, `normal`, `high`, `critical`)        | Yes                         | Drives retry behavior + channel escalation policy                                                           |
+| `correlationId` | UUID                                              | Yes                         | Unique per delivery request — for cross-service tracking + dedup                                            |
+| `senderService` | string                                            | Yes                         | Producer service name (`d2-files`, `d2-edge`, etc.) — for audit + observability                             |
+| `metadata`      | JSON object                                       | No                          | Free-form metadata (e.g., `{eventType: "file_processed"}`) — surfaces in audit + analytics                  |
 
 **Variable substitution**: producers can include `{placeholder}` tokens in `title` + `content` + `plaintext` and pass a `variables` map. D2.Courier substitutes (HTML-escaped on insertion; no escape hatch — sender-supplied content is NEVER trusted to be safe HTML).
 
@@ -88,6 +88,7 @@ The contract producers use to send notifications. Phase 5 D2.Courier client must
 ## When This Doc Gets Deleted
 
 Phase 5 completion criteria includes:
+
 - [ ] D2.Courier client library (`server/services/courier/clients/dotnet/`) ships with the Universal Message Shape preserved
 - [ ] D2.Notifications service ships with the schema + pipeline above
 - [ ] D2.Courier service ships embodying the 6 design principles

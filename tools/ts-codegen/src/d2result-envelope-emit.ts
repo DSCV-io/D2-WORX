@@ -159,8 +159,7 @@ export function emitD2ResultEnvelope(spec: D2ResultEnvelopeSpec): EmitResult {
     "export const ALL_D2RESULT_ENVELOPE_FIELD_NAMES: readonly string[] = [",
   );
   sb.increaseIndent();
-  for (const e of v.fields)
-    sb.appendLine(`"${escapeStringLiteral(e.value)}",`);
+  for (const e of v.fields) sb.appendLine(`"${escapeStringLiteral(e.value)}",`);
   sb.decreaseIndent();
   sb.appendLine("];");
   sb.appendLine();
@@ -180,11 +179,7 @@ const SPEC_PATH = contractsPath(
   "d2result-envelope",
   "d2result-envelope.spec.json",
 );
-const TARGET_PATH = tsPackagePath(
-  "result",
-  "src",
-  "d2result-envelope.g.ts",
-);
+const TARGET_PATH = tsPackagePath("result", "src", "d2result-envelope.g.ts");
 
 /** Run the d2result-envelope emitter. */
 export function runD2ResultEnvelopeEmit(

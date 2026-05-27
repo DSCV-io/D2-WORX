@@ -50,10 +50,14 @@ const STEPS: Array<{ name: string; script: string }> = [
 let stepIndex = 1;
 for (const step of STEPS) {
   console.error(`\n=== [${stepIndex}/${STEPS.length + 1}] ${step.name} ===`);
-  const result = spawnSync("node", ["--import", "tsx", resolve(PIPELINE_ROOT, step.script)], {
-    cwd: PIPELINE_ROOT,
-    stdio: "inherit",
-  });
+  const result = spawnSync(
+    "node",
+    ["--import", "tsx", resolve(PIPELINE_ROOT, step.script)],
+    {
+      cwd: PIPELINE_ROOT,
+      stdio: "inherit",
+    },
+  );
   if (result.status !== 0) {
     console.error(`\n❌ Step failed: ${step.name} (exit ${result.status})`);
     process.exit(result.status ?? 1);

@@ -77,11 +77,7 @@ type _SpecCoversBody = Exclude<_NormalizedBodyKeys, _SpecFieldValues>;
 type _BodyCoversSpec = Exclude<_SpecFieldValues, _NormalizedBodyKeys>;
 // Both must be `never` — bidirectional cover.
 type _ParityCheck = _Assert<
-  [_SpecCoversBody] extends [never]
-    ? [_BodyCoversSpec] extends [never]
-      ? true
-      : false
-    : false
+  [_SpecCoversBody] extends [never] ? ([_BodyCoversSpec] extends [never] ? true : false) : false
 >;
 // Touch the alias so unused-type-checker doesn't flag it.
 const _PARITY_PIN: _ParityCheck = true;
@@ -176,19 +172,11 @@ export async function parseGatewayResponse<TData = void>(
   // signature).
   const bodyMap = body as unknown as Record<string, unknown>;
   return new D2Result<TData>({
-    success:
-      (bodyMap[D2ResultEnvelopeFieldNames.SUCCESS] as boolean | undefined) ??
-      response.ok,
+    success: (bodyMap[D2ResultEnvelopeFieldNames.SUCCESS] as boolean | undefined) ?? response.ok,
     data: bodyMap[D2ResultEnvelopeFieldNames.DATA] as TData | undefined,
-    messages: bodyMap[D2ResultEnvelopeFieldNames.MESSAGES] as
-      | TKMessage[]
-      | undefined,
-    inputErrors: bodyMap[D2ResultEnvelopeFieldNames.INPUT_ERRORS] as
-      | InputError[]
-      | undefined,
-    errorCode: bodyMap[D2ResultEnvelopeFieldNames.ERROR_CODE] as
-      | string
-      | undefined,
+    messages: bodyMap[D2ResultEnvelopeFieldNames.MESSAGES] as TKMessage[] | undefined,
+    inputErrors: bodyMap[D2ResultEnvelopeFieldNames.INPUT_ERRORS] as InputError[] | undefined,
+    errorCode: bodyMap[D2ResultEnvelopeFieldNames.ERROR_CODE] as string | undefined,
     traceId: bodyMap[D2ResultEnvelopeFieldNames.TRACE_ID] as string | undefined,
     statusCode,
   });

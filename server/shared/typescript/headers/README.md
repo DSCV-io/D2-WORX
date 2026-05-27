@@ -73,16 +73,16 @@ The wire-format catalog (`PROBLEM_TYPE_URI_PREFIX`,
 structurally impossible (verified by
 `server/shared/typescript/contract-tests/tests/problem-details.parity.test.ts`).
 
-| Field           | Source                                                                                     |
-| --------------- | ------------------------------------------------------------------------------------------ |
+| Field           | Source                                                                                    |
+| --------------- | ----------------------------------------------------------------------------------------- |
 | `type`          | `https://problems.d2.dcsv.io/{kebab-error-code}` (spec-driven `PROBLEM_TYPE_URI_PREFIX`). |
-| `title`         | Per-status human-readable title from the spec catalog (overridable via opts).              |
-| `status`        | HTTP status from the `D2Result`.                                                           |
-| `detail`        | Optional opts.detail.                                                                      |
-| `instance`      | Request URL pathname (mandatory).                                                          |
-| `d2_error_code` | `failure.errorCode` (e.g. `AUTH_BEARER_MISSING`).                                          |
-| `d2_messages`   | `failure.messages` (TKMessage[] for client-side translation).                              |
-| `traceId`       | `failure.traceId` if present.                                                              |
+| `title`         | Per-status human-readable title from the spec catalog (overridable via opts).             |
+| `status`        | HTTP status from the `D2Result`.                                                          |
+| `detail`        | Optional opts.detail.                                                                     |
+| `instance`      | Request URL pathname (mandatory).                                                         |
+| `d2_error_code` | `failure.errorCode` (e.g. `AUTH_BEARER_MISSING`).                                         |
+| `d2_messages`   | `failure.messages` (TKMessage[] for client-side translation).                             |
+| `traceId`       | `failure.traceId` if present.                                                             |
 
 ## Dependencies
 

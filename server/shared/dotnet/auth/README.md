@@ -33,38 +33,38 @@ The named HTTP client is identified by `AuthServiceCollectionExtensions.OIDC_DIS
 
 ### Configuration — `AuthOptions`
 
-| Property | Type | Default | Notes |
-|---|---|---|---|
-| `Issuer` | `Uri` | required | OIDC issuer URL whose `/.well-known/openid-configuration` publishes `jwks_uri`. HTTPS-only — HTTP rejected at composition time. |
-| `Audience` | `string` | required | Expected `aud` claim. Use a `D2.Shared.Auth.Abstractions.Audiences` codegen constant. |
-| `ClockSkew` | `TimeSpan` | 30s | Tolerance applied to JWT `exp` / `nbf` checks. Matches `Microsoft.IdentityModel` default; accommodates typical NTP drift. |
-| `Jwks` | `JwksProviderOptions` | `new()` | Sub-options for the JWKS provider — see table below. |
-| `Sessions` | `SessionLivenessOptions` | `new()` | Sub-options for the session liveness tracker — see table below. |
-| `Validator` | `JwtValidatorOptions` | `new()` | Sub-options for the JWT validator — see table below. |
+| Property    | Type                     | Default  | Notes                                                                                                                           |
+| ----------- | ------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `Issuer`    | `Uri`                    | required | OIDC issuer URL whose `/.well-known/openid-configuration` publishes `jwks_uri`. HTTPS-only — HTTP rejected at composition time. |
+| `Audience`  | `string`                 | required | Expected `aud` claim. Use a `D2.Shared.Auth.Abstractions.Audiences` codegen constant.                                           |
+| `ClockSkew` | `TimeSpan`               | 30s      | Tolerance applied to JWT `exp` / `nbf` checks. Matches `Microsoft.IdentityModel` default; accommodates typical NTP drift.       |
+| `Jwks`      | `JwksProviderOptions`    | `new()`  | Sub-options for the JWKS provider — see table below.                                                                            |
+| `Sessions`  | `SessionLivenessOptions` | `new()`  | Sub-options for the session liveness tracker — see table below.                                                                 |
+| `Validator` | `JwtValidatorOptions`    | `new()`  | Sub-options for the JWT validator — see table below.                                                                            |
 
 #### `JwksProviderOptions` — JWKS provider sub-options
 
-| Property | Type | Default | Notes |
-|---|---|---|---|
-| `RefreshCooldown` | `TimeSpan` | 30s | Minimum interval between consecutive forced JWKS refreshes — prevents reactive-refresh-on-unknown-kid stampedes. |
-| `HttpRequestTimeout` | `TimeSpan` | 5s | Per-request timeout on the named OIDC discovery `HttpClient`. Without this override, the BCL default of 100s applies — a hung Edge would tie up the calling thread for the full window. |
-| `CircuitBreakerFailureThreshold` | `int` | 5 | Consecutive failures before the JWKS-fetch circuit breaker opens. While open, calls fail fast with `AuthFailures.JwksUnavailable` — avoids per-call HTTP roundtrip during sustained Edge outage. |
-| `CircuitBreakerCooldown` | `TimeSpan` | 30s | Duration the circuit breaker stays open before allowing a half-open probe. |
-| `BackplaneChannelKey` | `string` | `"d2.security.key-rotated:jwks"` | Cache backplane channel pattern for cluster-wide JWKS rotation events. **Cross-service contract** — Edge's `D2.Shared.KeyCustodian` MUST publish on the same string. Empty / whitespace rejected at host build via `ValidateOnStart`. |
+| Property                         | Type       | Default                          | Notes                                                                                                                                                                                                                                 |
+| -------------------------------- | ---------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RefreshCooldown`                | `TimeSpan` | 30s                              | Minimum interval between consecutive forced JWKS refreshes — prevents reactive-refresh-on-unknown-kid stampedes.                                                                                                                      |
+| `HttpRequestTimeout`             | `TimeSpan` | 5s                               | Per-request timeout on the named OIDC discovery `HttpClient`. Without this override, the BCL default of 100s applies — a hung Edge would tie up the calling thread for the full window.                                               |
+| `CircuitBreakerFailureThreshold` | `int`      | 5                                | Consecutive failures before the JWKS-fetch circuit breaker opens. While open, calls fail fast with `AuthFailures.JwksUnavailable` — avoids per-call HTTP roundtrip during sustained Edge outage.                                      |
+| `CircuitBreakerCooldown`         | `TimeSpan` | 30s                              | Duration the circuit breaker stays open before allowing a half-open probe.                                                                                                                                                            |
+| `BackplaneChannelKey`            | `string`   | `"d2.security.key-rotated:jwks"` | Cache backplane channel pattern for cluster-wide JWKS rotation events. **Cross-service contract** — Edge's `D2.Shared.KeyCustodian` MUST publish on the same string. Empty / whitespace rejected at host build via `ValidateOnStart`. |
 
 #### `SessionLivenessOptions` — session liveness sub-options
 
-| Property | Type | Default | Notes |
-|---|---|---|---|
+| Property         | Type     | Default      | Notes                                                                                                                                                                                                    |
+| ---------------- | -------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `CacheKeyPrefix` | `string` | `"session:"` | Cache key prefix used for session-liveness sentinel entries. Edge writes `session:{sessionId:N}` on session creation; backend services check existence under this prefix on every authenticated request. |
 
 #### `JwtValidatorOptions` — JWT validator sub-options
 
-| Property | Type | Default | Notes |
-|---|---|---|---|
-| `RequireSessionIdClaim` | `bool` | `true` | Reject JWTs missing the `d2_session_id` claim. Defense-in-depth: the session liveness check (transport-layer middleware / interceptor) needs the claim to perform its lookup. Set to `false` only for service-identity-only flows (RFC 6749 §4.4 client_credentials) that don't carry a user session. |
-| `RequireExpirationTime` | `bool` | `true` | Reject JWTs missing the standard `exp` claim. Mirrors the Microsoft.IdentityModel default — declared explicitly so the contract is doc-complete and survives library default changes. |
-| `ValidAlgorithms` | `IReadOnlyList<string>` | `["RS256"]` | Allowlist of accepted JWS `alg` header values. Pinning the list defends against `alg=none` and HMAC-with-public-key confusion attacks at the standard validator surface. Empty list / whitespace-only entries rejected at host build via `ValidateOnStart`. |
+| Property                | Type                    | Default     | Notes                                                                                                                                                                                                                                                                                                 |
+| ----------------------- | ----------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RequireSessionIdClaim` | `bool`                  | `true`      | Reject JWTs missing the `d2_session_id` claim. Defense-in-depth: the session liveness check (transport-layer middleware / interceptor) needs the claim to perform its lookup. Set to `false` only for service-identity-only flows (RFC 6749 §4.4 client_credentials) that don't carry a user session. |
+| `RequireExpirationTime` | `bool`                  | `true`      | Reject JWTs missing the standard `exp` claim. Mirrors the Microsoft.IdentityModel default — declared explicitly so the contract is doc-complete and survives library default changes.                                                                                                                 |
+| `ValidAlgorithms`       | `IReadOnlyList<string>` | `["RS256"]` | Allowlist of accepted JWS `alg` header values. Pinning the list defends against `alg=none` and HMAC-with-public-key confusion attacks at the standard validator surface. Empty list / whitespace-only entries rejected at host build via `ValidateOnStart`.                                           |
 
 Validation runs at the first `IOptions<AuthOptions>.Value` resolution (typically during host startup composition) — fail-fast on invalid config.
 
@@ -79,22 +79,22 @@ Pre-built `D2Result` failures. Caller code (middleware, validator, interceptor) 
 
 > **Duplicated from [`contracts/auth-error-codes/auth-error-codes.spec.json`](../../../../contracts/auth-error-codes/auth-error-codes.spec.json) — update both in lockstep.** The 14-row failure surface table below is a per-row at-a-glance projection of the spec. The spec is the single source of truth; the `auth-error-codes-source-gen` analyzer emits the constants + factories. Adding a row here without a corresponding spec entry will fail at codegen time; adding a spec entry without updating this table will drift the docs.
 
-| Helper | HTTP | Error code | TK key |
-|---|---|---|---|
-| `BearerMissing()` | 401 | `AUTH_BEARER_MISSING` | `UNAUTHORIZED` |
-| `BearerMalformed()` | 401 | `AUTH_BEARER_MALFORMED` | `UNAUTHORIZED` |
-| `JwtSignatureInvalid()` | 401 | `AUTH_JWT_SIGNATURE_INVALID` | `UNAUTHORIZED` |
-| `JwtExpired()` | 401 | `AUTH_JWT_EXPIRED` | `UNAUTHORIZED` |
-| `JwtNotYetValid()` | 401 | `AUTH_JWT_NOT_YET_VALID` | `UNAUTHORIZED` |
-| `JwtIssuerMismatch()` | 401 | `AUTH_JWT_ISSUER_MISMATCH` | `UNAUTHORIZED` |
-| `JwtAudienceMismatch()` | 401 | `AUTH_JWT_AUDIENCE_MISMATCH` | `UNAUTHORIZED` |
-| `JwtClaimMissing()` | 401 | `AUTH_JWT_CLAIM_MISSING` | `UNAUTHORIZED` |
-| `JwtActChainMalformed()` | 401 | `AUTH_JWT_ACT_CHAIN_MALFORMED` | `UNAUTHORIZED` |
-| `JwtKidNotFound()` | 401 | `AUTH_JWT_KID_NOT_FOUND` | `UNAUTHORIZED` |
-| `SessionRevoked()` | 401 | `AUTH_SESSION_REVOKED` | `UNAUTHORIZED` |
-| `JwksUnavailable()` | 503 | `AUTH_JWKS_UNAVAILABLE` | `TEMPORARILY_UNAVAILABLE` |
-| `SessionLivenessUnavailable()` | 503 | `AUTH_SESSION_LIVENESS_UNAVAILABLE` | `TEMPORARILY_UNAVAILABLE` |
-| `ScopeInsufficient()` | 401 | `AUTH_SCOPE_INSUFFICIENT` | `UNAUTHORIZED` |
+| Helper                         | HTTP | Error code                          | TK key                    |
+| ------------------------------ | ---- | ----------------------------------- | ------------------------- |
+| `BearerMissing()`              | 401  | `AUTH_BEARER_MISSING`               | `UNAUTHORIZED`            |
+| `BearerMalformed()`            | 401  | `AUTH_BEARER_MALFORMED`             | `UNAUTHORIZED`            |
+| `JwtSignatureInvalid()`        | 401  | `AUTH_JWT_SIGNATURE_INVALID`        | `UNAUTHORIZED`            |
+| `JwtExpired()`                 | 401  | `AUTH_JWT_EXPIRED`                  | `UNAUTHORIZED`            |
+| `JwtNotYetValid()`             | 401  | `AUTH_JWT_NOT_YET_VALID`            | `UNAUTHORIZED`            |
+| `JwtIssuerMismatch()`          | 401  | `AUTH_JWT_ISSUER_MISMATCH`          | `UNAUTHORIZED`            |
+| `JwtAudienceMismatch()`        | 401  | `AUTH_JWT_AUDIENCE_MISMATCH`        | `UNAUTHORIZED`            |
+| `JwtClaimMissing()`            | 401  | `AUTH_JWT_CLAIM_MISSING`            | `UNAUTHORIZED`            |
+| `JwtActChainMalformed()`       | 401  | `AUTH_JWT_ACT_CHAIN_MALFORMED`      | `UNAUTHORIZED`            |
+| `JwtKidNotFound()`             | 401  | `AUTH_JWT_KID_NOT_FOUND`            | `UNAUTHORIZED`            |
+| `SessionRevoked()`             | 401  | `AUTH_SESSION_REVOKED`              | `UNAUTHORIZED`            |
+| `JwksUnavailable()`            | 503  | `AUTH_JWKS_UNAVAILABLE`             | `TEMPORARILY_UNAVAILABLE` |
+| `SessionLivenessUnavailable()` | 503  | `AUTH_SESSION_LIVENESS_UNAVAILABLE` | `TEMPORARILY_UNAVAILABLE` |
+| `ScopeInsufficient()`          | 401  | `AUTH_SCOPE_INSUFFICIENT`           | `UNAUTHORIZED`            |
 
 ### Telemetry
 
@@ -108,18 +108,18 @@ builder.Services.AddOpenTelemetry()
 
 Tag-key + tag-value constants are emitted by [`D2.Shared.Telemetry.Tags.SourceGen`](../telemetry-tags-source-gen/README.md) into `AuthTelemetryTags.g.cs` from [`contracts/telemetry/telemetry.spec.json`](../../../../contracts/telemetry/telemetry.spec.json). Counter call sites reference `AuthTelemetryTags.JwtValidations.Outcome.SUCCESS` / `AuthTelemetryTags.JwksFetches.Trigger.REACTIVE` / etc. instead of bare string literals — drift between the spec and the runtime tag values is impossible.
 
-| Counter | Tags | Description |
-|---|---|---|
-| `d2.auth.jwt.validations` | `outcome` (closed enum; see `AuthTelemetryTags.JwtValidations.Outcome.*`) | Total inbound JWT validations. |
-| `d2.auth.session.liveness.checks` | `outcome` (`AuthTelemetryTags.SessionLivenessChecks.Outcome.*`) | Total session liveness checks (`alive` / `revoked` / `unavailable` / `invalid_input` from `IsAliveAsync`) and revoke-event observations (`backplane_revoked` from `SessionRevokedBackplaneSubscriber`). |
-| `d2.auth.jwks.fetches` | `trigger` × `outcome` (`AuthTelemetryTags.JwksFetches.Trigger.*` / `Outcome.*`) | Total JWKS fetches from the upstream OIDC issuer. `parse_error` distinguishes malformed-JSON discovery docs from generic network failures; `circuit_open` indicates the breaker fast-failed without an upstream call. |
-| `d2.auth.problem.emitted` | `d2_error_code` (one of `AuthErrorCodes.AUTH_*` — cross-spec resolved) | RFC 7807 ProblemDetails / gRPC trailers emitted by the auth-http / auth-grpc transport bindings. |
+| Counter                           | Tags                                                                            | Description                                                                                                                                                                                                           |
+| --------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `d2.auth.jwt.validations`         | `outcome` (closed enum; see `AuthTelemetryTags.JwtValidations.Outcome.*`)       | Total inbound JWT validations.                                                                                                                                                                                        |
+| `d2.auth.session.liveness.checks` | `outcome` (`AuthTelemetryTags.SessionLivenessChecks.Outcome.*`)                 | Total session liveness checks (`alive` / `revoked` / `unavailable` / `invalid_input` from `IsAliveAsync`) and revoke-event observations (`backplane_revoked` from `SessionRevokedBackplaneSubscriber`).               |
+| `d2.auth.jwks.fetches`            | `trigger` × `outcome` (`AuthTelemetryTags.JwksFetches.Trigger.*` / `Outcome.*`) | Total JWKS fetches from the upstream OIDC issuer. `parse_error` distinguishes malformed-JSON discovery docs from generic network failures; `circuit_open` indicates the breaker fast-failed without an upstream call. |
+| `d2.auth.problem.emitted`         | `d2_error_code` (one of `AuthErrorCodes.AUTH_*` — cross-spec resolved)          | RFC 7807 ProblemDetails / gRPC trailers emitted by the auth-http / auth-grpc transport bindings.                                                                                                                      |
 
-| Histogram | Unit | Description |
-|---|---|---|
-| `d2.auth.jwt.validation.duration` | ms | Wall-clock duration of the full JWT validation pipeline (signature verify + standard claim checks + claim → context mapping + session liveness check). |
-| `d2.auth.session.liveness.lookup.duration` | ms | Wall-clock duration of a session liveness lookup (cache check + on-miss backplane reconciliation). |
-| `d2.auth.jwks.fetch.duration` | ms | Wall-clock duration of a JWKS fetch from the upstream OIDC issuer (HTTP round-trip + JSON parse). |
+| Histogram                                  | Unit | Description                                                                                                                                            |
+| ------------------------------------------ | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `d2.auth.jwt.validation.duration`          | ms   | Wall-clock duration of the full JWT validation pipeline (signature verify + standard claim checks + claim → context mapping + session liveness check). |
+| `d2.auth.session.liveness.lookup.duration` | ms   | Wall-clock duration of a session liveness lookup (cache check + on-miss backplane reconciliation).                                                     |
+| `d2.auth.jwks.fetch.duration`              | ms   | Wall-clock duration of a JWKS fetch from the upstream OIDC issuer (HTTP round-trip + JSON parse).                                                      |
 
 `AuthTelemetry.SR_Activity` (the static `ActivitySource`) and `AuthTelemetry.SR_Meter` (the static `Meter`) are exposed for pipeline implementations that need to start spans / record histograms directly.
 
@@ -127,16 +127,16 @@ Tag-key + tag-value constants are emitted by [`D2.Shared.Telemetry.Tags.SourceGe
 
 Canonical bearer-extraction behavior for both transport bindings. HTTP middleware reads from the `Authorization` request header; gRPC interceptor reads from the `authorization` request metadata — identical semantics, only header-name casing differs per transport convention.
 
-| Input | Result |
-|---|---|
-| Header / metadata absent | `BearerMissing` |
-| `Basic foo` (wrong scheme) | `BearerMissing` |
-| `bearer eyJ...` | OK (case-insensitive prefix match) |
-| `BEARER eyJ...` | OK |
-| `Bearer ` (empty after prefix) | `BearerMissing` (semantically nothing to validate) |
-| `Bearer not.a.jwt.too.many.parts` | Validator returns `BearerMalformed` |
-| Multiple `Authorization` / `authorization` entries | First wins (RFC 7230 §3.2.2 / gRPC parity) |
-| Whitespace inside token | NOT trimmed — passed through verbatim; validator rejects. Trimming would mask client bugs. |
+| Input                                              | Result                                                                                     |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Header / metadata absent                           | `BearerMissing`                                                                            |
+| `Basic foo` (wrong scheme)                         | `BearerMissing`                                                                            |
+| `bearer eyJ...`                                    | OK (case-insensitive prefix match)                                                         |
+| `BEARER eyJ...`                                    | OK                                                                                         |
+| `Bearer ` (empty after prefix)                     | `BearerMissing` (semantically nothing to validate)                                         |
+| `Bearer not.a.jwt.too.many.parts`                  | Validator returns `BearerMalformed`                                                        |
+| Multiple `Authorization` / `authorization` entries | First wins (RFC 7230 §3.2.2 / gRPC parity)                                                 |
+| Whitespace inside token                            | NOT trimmed — passed through verbatim; validator rejects. Trimming would mask client bugs. |
 
 Per-transport extension catalogs note any transport-specific variation; the table above is the single source of truth for both bindings.
 
@@ -144,9 +144,9 @@ Per-transport extension catalogs note any transport-specific variation; the tabl
 
 Every `AuthFailures.*` factory carries an HTTP status (see the `AuthFailures` table above). Transport bindings render that status verbatim or map it as follows:
 
-| Binding | Rendering |
-|---|---|
-| HTTP middleware (`auth-http`) | `D2Result.StatusCode` written verbatim to the RFC 7807 ProblemDetails `status` field. |
+| Binding                        | Rendering                                                                                                                                                                                                                                                                 |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| HTTP middleware (`auth-http`)  | `D2Result.StatusCode` written verbatim to the RFC 7807 ProblemDetails `status` field.                                                                                                                                                                                     |
 | gRPC interceptor (`auth-grpc`) | `D2Result.StatusCode` mapped to `Status.StatusCode`: 401 → `Unauthenticated` (16); 503 → `Unavailable` (14); other → `Internal` (13). NEVER `PermissionDenied` (7) — `AUTH_SCOPE_INSUFFICIENT` also maps to `Unauthenticated` so the wire never leaks which check failed. |
 
 The granular `AUTH_*` code (see [Failure helpers — `AuthFailures`](#failure-helpers--authfailures) above) carries the machine-readable taxonomy across both transports via the `d2_error_code` ProblemDetails extension / gRPC trailer.
@@ -165,22 +165,22 @@ The HTTP ProblemDetails `Detail` field and the gRPC `Status.Detail` field are DE
 
 ## Dependencies
 
-| Package | Why |
-|---|---|
-| `D2.Shared.Auth.Abstractions` | `IJwksProvider`, `ISessionLivenessTracker`, `Audiences`, `JwtClaimTypes`, `Scopes`. |
-| `D2.Shared.AuthContext.Abstractions` | `IAuthContext` shape (consumed when claims-to-context mapping lands). |
-| `D2.Shared.Context.Abstractions` | `IRequestContext` extension. |
-| `D2.Shared.Caching.Abstractions` | `ICacheInvalidationBackplane` for cluster-wide rotation / revoke event delivery. |
-| `D2.Shared.Caching.Tiered` | `ITieredCache` for sentinel-only session liveness lookups. |
-| `D2.Shared.Resilience` | `Singleflight` to dedupe concurrent JWKS force-refreshes. |
-| `D2.Shared.Result` | `D2Result` typed factories. |
-| `D2.Shared.I18n.Abstractions` | `TK.Auth.Errors` translation keys. |
-| `D2.Shared.Utilities` | `Falsey()` / `Truthy()` extensions. |
-| `Microsoft.IdentityModel.Tokens` | `SecurityKey` + JWT validation primitives. |
-| `Microsoft.IdentityModel.Protocols.OpenIdConnect` | `ConfigurationManager<OpenIdConnectConfiguration>` for OIDC discovery + JWKS retrieval. |
-| `Microsoft.Extensions.Http` | `IHttpClientFactory` for the named OIDC discovery client. |
-| `Microsoft.Extensions.{DependencyInjection,Hosting,Logging,Options}.Abstractions` | DI / hosted services / logging / options binding. |
-| `JetBrains.Annotations` | `[MustDisposeResource]` for DI-managed singletons / hosted services. |
+| Package                                                                           | Why                                                                                     |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `D2.Shared.Auth.Abstractions`                                                     | `IJwksProvider`, `ISessionLivenessTracker`, `Audiences`, `JwtClaimTypes`, `Scopes`.     |
+| `D2.Shared.AuthContext.Abstractions`                                              | `IAuthContext` shape (consumed when claims-to-context mapping lands).                   |
+| `D2.Shared.Context.Abstractions`                                                  | `IRequestContext` extension.                                                            |
+| `D2.Shared.Caching.Abstractions`                                                  | `ICacheInvalidationBackplane` for cluster-wide rotation / revoke event delivery.        |
+| `D2.Shared.Caching.Tiered`                                                        | `ITieredCache` for sentinel-only session liveness lookups.                              |
+| `D2.Shared.Resilience`                                                            | `Singleflight` to dedupe concurrent JWKS force-refreshes.                               |
+| `D2.Shared.Result`                                                                | `D2Result` typed factories.                                                             |
+| `D2.Shared.I18n.Abstractions`                                                     | `TK.Auth.Errors` translation keys.                                                      |
+| `D2.Shared.Utilities`                                                             | `Falsey()` / `Truthy()` extensions.                                                     |
+| `Microsoft.IdentityModel.Tokens`                                                  | `SecurityKey` + JWT validation primitives.                                              |
+| `Microsoft.IdentityModel.Protocols.OpenIdConnect`                                 | `ConfigurationManager<OpenIdConnectConfiguration>` for OIDC discovery + JWKS retrieval. |
+| `Microsoft.Extensions.Http`                                                       | `IHttpClientFactory` for the named OIDC discovery client.                               |
+| `Microsoft.Extensions.{DependencyInjection,Hosting,Logging,Options}.Abstractions` | DI / hosted services / logging / options binding.                                       |
+| `JetBrains.Annotations`                                                           | `[MustDisposeResource]` for DI-managed singletons / hosted services.                    |
 
 ## Tests
 

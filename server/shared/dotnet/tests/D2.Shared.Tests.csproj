@@ -151,6 +151,7 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\caching-tiered\D2.Shared.Caching.Tiered.csproj" />
     <ProjectReference Include="..\logging\D2.Shared.Logging.csproj" />
     <ProjectReference Include="..\telemetry\D2.Shared.Telemetry.csproj" />
+    <ProjectReference Include="..\time\D2.Shared.Time.csproj" />
     <ProjectReference Include="..\service-defaults\D2.Shared.ServiceDefaults.csproj" />
     <ProjectReference Include="..\messaging-abstractions\D2.Shared.Messaging.Abstractions.csproj" />
     <ProjectReference Include="..\messaging-rabbitmq\D2.Shared.Messaging.RabbitMq.csproj" />
@@ -158,6 +159,42 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\headers-http\D2.Shared.Headers.Http.csproj" />
     <ProjectReference Include="..\headers-amqp\D2.Shared.Headers.Amqp.csproj" />
     <ProjectReference Include="..\headers-grpc\D2.Shared.Headers.Grpc.csproj" />
+    <!--
+      D2.Shared.Geo.Abstractions — the contract-fixtures parity emitters
+      (GeoEnumsFixtureEmitter / GeoWrapperStructsFixtureEmitter /
+      GeoCatalogFixtureEmitter) reflect on the codegen-emitted enums +
+      wrapper structs + GeoCatalog constants to write the canonical JSON
+      fixtures the TS-side parity tests load.
+    -->
+    <ProjectReference Include="..\geo-abstractions\D2.Shared.Geo.Abstractions.csproj" />
+    <!--
+      D2.Shared.Geo.Default — catalog data + DefaultGeoNameResolver +
+      Default-layer record-returning IRequestContext extensions. Tests
+      exercise the resolver cascade, cache-aside discipline, DI
+      composition, and the Default-layer extension boundary contract.
+      Internal helpers (CacheEntry structs, cache field accessors) are
+      reachable from this project via the InternalsVisibleTo declaration
+      on D2.Shared.Geo.Default.
+    -->
+    <ProjectReference Include="..\geo-default\D2.Shared.Geo.Default.csproj" />
+    <!--
+      D2.Shared.Location — Coordinates, StreetAddress, AdminLocation value objects +
+      hash composer + postal-code validator. Tests exercise all three VO
+      smart-constructors, the canonical geohash-10 normalization pipeline, and the
+      GeohashEncoder / PlusCodeEncoder internal helpers (visible via InternalsVisibleTo).
+    -->
+    <ProjectReference Include="..\location\D2.Shared.Location.csproj" />
+    <!--
+      D2.Shared.Geo.SourceGen — Roslyn IIncrementalGenerator that emits the
+      geo-default lookup data + GeoDataInitializer coordinator. Tests cover
+      the per-emitter EmitAll() output shape (snapshot-style assertions over
+      the emitted source string) against synthetic GeoSpecContext inputs.
+      Internal record/method visibility is reached via the
+      InternalsVisibleTo declaration on D2.Shared.Geo.SourceGen.
+      Build-only — analyzer/build assets do NOT propagate to consumers of
+      this csproj (consistent with the other source-gen project references).
+    -->
+    <ProjectReference Include="..\geo-source-gen\D2.Shared.Geo.SourceGen.csproj" />
   </ItemGroup>
 
   <!--

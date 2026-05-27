@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2-WORX Process — phase lifecycle + orchestrator-only main thread + audit-loop mechanics
 
-The single source of truth for HOW work moves through D²-WORX — phase lifecycle (PLAN → EXECUTE → FINAL-REVIEW → SHIP → REVIEW), permission gates (when to pause for the user), sub-agent architecture (orchestrator + worker roles), audit-loop mechanics (K=5 cluster partition + Aggregator), and self-improvement loop (distillation → rules.md additions).
+The single source of truth for HOW work moves through D²-WORX — phase lifecycle (PLAN → EXECUTE → FINAL-REVIEW → SHIP → REVIEW), permission gates (when to pause for the user), sub-agent architecture (orchestrator + worker roles), audit-loop mechanics (K=12 cluster partition + Aggregator), and self-improvement loop (distillation → rules.md additions).
 
 This doc absorbs the previously-separate `workflow.md` (phase protocol) and `audit-framework.md` (architecture + tooling) into one coherent process reference. Predicate-level enforcement lives in [rules.md](rules.md); pattern reference lives in [../PATTERNS.md](../PATTERNS.md); CLAUDE.md is the agent-directive root that condenses this doc + rules.md for fast-access mental-model purposes.
 
@@ -34,14 +34,17 @@ This doc absorbs the previously-separate `workflow.md` (phase protocol) and `aud
    - [Allowed in main-thread context](#allowed-in-main-thread-context)
    - [Forbidden in main-thread context](#forbidden-in-main-thread-context)
    - [Canonical sub-agent roles](#canonical-sub-agent-roles)
+   - [Sub-agent model policy per role](#sub-agent-model-policy-per-role)
    - [Every round = a NEW fresh sub-agent](#every-round--a-new-fresh-sub-agent)
    - [The orchestrator cannot mark CLEAN](#the-orchestrator-cannot-mark-clean)
-   - [Auditor cluster partition (canonical K=5)](#auditor-cluster-partition-canonical-k5)
+   - [Auditor cluster partition (canonical K=12)](#auditor-cluster-partition-canonical-k12)
    - [Aggregator role (post-cluster consolidation)](#aggregator-role-post-cluster-consolidation)
 4. [Audit-loop mechanics](#4-audit-loop-mechanics)
    - [Three-artifact journal model](#three-artifact-journal-model)
    - [Mandatory round sequence](#mandatory-round-sequence)
+   - [Plan currency before dispatch](#plan-currency-before-dispatch)
    - [Per-round dispatch protocol](#per-round-dispatch-protocol)
+   - [Orchestrator verification of Sonnet sub-agent outputs](#orchestrator-verification-of-sonnet-sub-agent-outputs)
    - [Cross-cluster sister-sweep checklist (Aggregator baseline)](#cross-cluster-sister-sweep-checklist-aggregator-baseline)
    - [K=1 carve-out usage policy](#k1-carve-out-usage-policy)
    - [Why the table is sweep-only-replaceable](#why-the-table-is-sweep-only-replaceable)
@@ -60,9 +63,9 @@ This doc absorbs the previously-separate `workflow.md` (phase protocol) and `aud
 > **D²-WORX is being built as an enterprise-level, production-ready, robust SaaS framework.** This process exists to enforce that standard at the process level. The PLAN phase locks design rigor; the EXECUTE phase locks autonomous convergence on quality; the REVIEW phase preserves architectural feedback. Every loop, every audit, every artifact is in service of shipping production-ready code without requiring the user to push the agent through bug-hunting cycles.
 
 > Companion docs:
+>
 > - [rules.md](rules.md) — the central, verbose, authoritative requirements catalog. Read end-to-end during PLAN; walk during EXECUTE audit loop and final-review.
 > - [deliverables/](deliverables/README.md) — surviving root READMEs for shipped deliverables (lessons learned + final report). Committed.
-
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -82,9 +85,8 @@ Three phases: **PLAN → EXECUTE → REVIEW**, with a deliverable-wide **FINAL-R
 - **Self-improvement** — at each step's audit termination AND at deliverable ship, the agent distills the kinds of misses surfaced into proposed additions to `rules.md`. User approves; rules are appended; future deliverables start with a stricter ruleset.
 - **Orchestrator** — the main-thread agent. Decision-making + delegation only. Cannot edit / write / read source code; cannot walk `rules.md`; cannot mark anything CLEAN. Spawns sub-agents for everything domain-level.
 - **Sub-agent** — a fresh-context worker spawned via the `Agent` tool for one specific role (Planner / Implementer / Auditor / Aggregator / Fixer / Final-reviewer). Returns a structured summary; its context dies on return.
-- **Cluster** — one of five thematic groupings of `rules.md` predicates (A: correctness + reliability, B: code style + idiom, C: architecture + security, D: documentation + framing, E: operational outcomes + audit meta). The canonical partition for K=5 parallel Auditor dispatch lives in [§3 Auditor cluster partition](#auditor-cluster-partition-canonical-k5).
-- **Audit round (K=5)** — one full audit pass = 5 parallel cluster Auditors + 1 Aggregator + (if findings) 1 Fixer. The default unit of audit work; sequential K=1 is a carve-out requiring explicit per-round user permission per [§4 K=1 carve-out usage policy](#k1-carve-out-usage-policy) + [rules.md §24.0h](rules.md#24-audit-evidence-discipline-meta--how-to-audit).
-
+- **Cluster** — one of twelve thematic groupings of `rules.md` predicates (A1: tests/coverage, A2: regression/races/disposal/degradation/idempotency, B1: C# conventions, B2: TS conventions + naming, B3: shared-lib + D2Result, C1: PII/logging + operations, C2: architectural layer, C3: security + permissions, D1: KEEP doc parity, D2: i18n + no-phase verbiage, E1: UX/DX/observability/config, E2: audit-meta/temporal/codegen). The canonical partition for K=12 parallel Auditor dispatch lives in [§3 Auditor cluster partition](#auditor-cluster-partition-canonical-k12).
+- **Audit round (K=12)** — one full audit pass = 12 parallel cluster Auditors + 1 Aggregator + (if findings) 1 Fixer. The default unit of audit work; sequential K=1 is a carve-out requiring explicit per-round user permission per [§4 K=1 carve-out usage policy](#k1-carve-out-usage-policy) + [rules.md §24.0h](rules.md#24-audit-evidence-discipline-meta--how-to-audit).
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -114,7 +116,6 @@ docs/
 **Naming convention**: deliverables use a 4-digit index prefix (`0001-`, `0002-`, ...) so they sort naturally in directory listings and the order reflects ship sequence. Both the local workspace folder (`docs/wip/NNNN-<name>/`) and the committed snapshot (`docs/dev/deliverables/NNNN-<name>.md`) share the same index — matching prefixes make it trivial to find the local workspace for a past committed snapshot (if the journals still exist locally). Pick the next free index at PLAN time by `ls docs/dev/deliverables/` + incrementing the highest.
 
 At SHIP, **only the root README is copied** out of `wip/NNNN-<name>/` to `docs/dev/deliverables/NNNN-<name>.md` (committed snapshot — single file). The per-step journals stay where they are in `docs/wip/NNNN-<name>/` — gitignored, local-only artifacts. They are NEVER auto-deleted by the process; the user removes them manually whenever they want. Locally-preserved journals remain available as evidence that future deliverables can spot-check, but they don't cross the commit boundary — only the distilled README does.
-
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -165,7 +166,6 @@ Status: PLAN | EXECUTE step N | FINAL-REVIEW | SHIPPED
 <empty initially; finalized at final-review termination>
 ```
 
-
 <sup>[↑ jump to top](#top)</sup>
 
 ### EXECUTE
@@ -193,6 +193,16 @@ Pre-emptive gate checks (try to nail first-pass):
 
 The Planner returns a summary; its context dies on return. The pre-emptive gate checks exist to push category-A/E/F catches to BEFORE the code is written, not after. This is where the loop count drops from 5 rounds to 1-2.
 
+**1a. Plan-Audit (when required per [rules.md §24.16](rules.md#24-audit-evidence-discipline-meta--how-to-audit)):**
+
+If the step introduces new types / new patterns / has >50-file scope (per §24.16 scope criteria), the orchestrator dispatches a **K=12 Plan-Audit batch + Aggregator** AFTER the Planner returns BUT BEFORE the Implementer is dispatched. Same K=12 cluster partition as code audits (per [§3 Auditor cluster partition](#auditor-cluster-partition-canonical-k12)); Plan-Auditors are scoped to the Plan section content (verifying reality alignment + naming convention compliance + rules.md predicate compliance + cross-language parity + existing pattern consistency + stale assumptions + §26 spec-mirror anti-pattern + §26.5 generated-file-fixes-must-target-generator-not-output). The Plan-Audit Aggregator merges 12 partials → `## Plan-Audit results` section appended to the journal (same three-artifact model as code-audit per [rules.md §24.0](rules.md#24-audit-evidence-discipline-meta--how-to-audit), scoped to the Plan).
+
+When the Plan-Audit Aggregator surfaces FINDING rows, the orchestrator dispatches a fresh **Plan-amender** sub-agent (Fixer-equivalent role, tool access limited to journal Plan-section + Plan-Audit fix log edits only). The Plan-amender addresses each finding by editing the Plan section + appending Plan-Audit fix-log entries. After Plan-amender returns, the orchestrator dispatches a brand-new K=12 Plan-Audit Round 2 to verify closure. Loop terminates on a CLEAN Plan-Audit (zero FINDING rows in the Plan-Audit big table); the orchestrator then proceeds to step 2 (Implementer dispatch) with the AMENDED Plan as input.
+
+**Carve-outs** (Plan-Audit NOT required, per §24.16): trivial single-file edits (<5 net-new files, no new types / patterns / public surface), pure-doc deliverables, Step 0 branch-checkout / scaffolding-only steps, sub-dispatches within a step that already had upfront Plan-Audit. For carve-out steps, the orchestrator log explicitly cites which carve-out applies before dispatching the Implementer directly.
+
+**Empirical justification**: deliverable `n/geo-libs` Step 2 Plan-Audit (the first canonical exercise) returned 35 findings (13 HIGH + 13 MEDIUM + 9 LOW) including naming-convention violations, stale assumptions inherited from a prior journal, wrong tsconfig paths, wrong locale counts, AND ONE security flaw. Without the Plan-Audit, the Implementer would have built directly against those bugs — producing code the subsequent code-Audit would then catch round-by-round, costing multiple Implementer + Fixer cycles plus the risk of the security flaw landing on a commit. A 10-minute Plan-Audit's cost is dramatically dominated by the saved Fixer cycles AND the risk reduction.
+
 **2. Spawn Implementer sub-agent:**
 
 The orchestrator spawns a fresh **Implementer** sub-agent with: the journal Plan section + the applicable rules.md categories + files-to-touch list. The Implementer writes the code + the corresponding tests, then appends:
@@ -215,15 +225,15 @@ The Implementer returns a structured files-touched + tests-added + build status 
 
 **3. Audit loop (the core forcing function):**
 
-For EACH round, the orchestrator dispatches a **K=5 batch of fresh Auditor sub-agents** in parallel (READ-ONLY tools — cannot edit source), then a **fresh Aggregator sub-agent** once all 5 partials return. Each cluster Auditor walks its slice of [rules.md](rules.md) per the canonical 5-cluster partition in [§3 Auditor cluster partition](#auditor-cluster-partition-canonical-k5) and produces evidence per predicate — grep results, file:line lists, "checked X by Y, found Z." Vibes ("looks fine") are not evidence. Each Auditor writes to its own partial file (`r{N}-partial-{LETTER}-{cluster-name}.md`); the **Aggregator** merges the 5 partials into the canonical big table (REPLACES `## Latest sweep results`) and appends a single `### Round N findings` subsection covering all 5 clusters + cross-cluster verification (per [§3 Aggregator role](#aggregator-role-post-cluster-consolidation)).
+For EACH round, the orchestrator dispatches a **K=12 batch of fresh Auditor sub-agents** in parallel (READ-ONLY tools — cannot edit source), then a **fresh Aggregator sub-agent** once all 12 partials return. Each cluster Auditor walks its slice of [rules.md](rules.md) per the canonical 12-cluster partition in [§3 Auditor cluster partition](#auditor-cluster-partition-canonical-k12) and produces evidence per predicate — grep results, file:line lists, "checked X by Y, found Z." Vibes ("looks fine") are not evidence. Each Auditor writes to its own partial file (`r{N}-partial-{CLUSTER}-{cluster-name}.md` where CLUSTER ∈ {A1, A2, B1, B2, B3, C1, C2, C3, D1, D2, E1, E2}); the **Aggregator** merges the 12 partials into the canonical big table (REPLACES `## Latest sweep results`) and appends a single `### Round N findings` subsection covering all 12 clusters + cross-cluster verification (per [§3 Aggregator role](#aggregator-role-post-cluster-consolidation)).
 
 The orchestrator's per-round dispatch workflow lives in [§4 Per-round dispatch protocol](#per-round-dispatch-protocol).
 
-When the Aggregator surfaces FINDING rows, the orchestrator spawns a **fresh Fixer sub-agent** with the consolidated findings list. The Fixer applies fixes + appends fix-log entries — it cannot mark anything CLEAN; closure is proven only by the NEXT round's fresh K=5 Auditor batch + Aggregator walking the predicates again and not surfacing the finding.
+When the Aggregator surfaces FINDING rows, the orchestrator spawns a **fresh Fixer sub-agent** with the consolidated findings list. The Fixer applies fixes + appends fix-log entries — it cannot mark anything CLEAN; closure is proven only by the NEXT round's fresh K=12 Auditor batch + Aggregator walking the predicates again and not surfacing the finding.
 
-A second audit round is a BRAND-NEW K=5 Auditor batch + brand-new Aggregator, not the same ones re-running. The fresh-context property is non-negotiable.
+A second audit round is a BRAND-NEW K=12 Auditor batch + brand-new Aggregator, not the same ones re-running. The fresh-context property is non-negotiable.
 
-**Wall-clock**: a K=5 batch's wall-clock is dominated by the slowest cluster (not the sum of 5). Empirically ~1/4-1/5 of a sequential K=1 walk against the same predicate count, since parallel Auditors stay in their cluster's mental frame instead of context-switching across all 24 categories.
+**Wall-clock**: a K=12 batch's wall-clock is dominated by the slowest cluster (not the sum of 12). Empirically ~1/4-1/5 of a sequential K=1 walk against the same predicate count (K=12 gives ~35-45% wall-clock reduction relative to prior smaller-K splits), since parallel Auditors stay in their cluster's mental frame instead of context-switching across all 24 categories.
 
 **K=1 carve-out**: requires explicit per-round user permission per [§4 K=1 carve-out usage policy](#k1-carve-out-usage-policy) + [rules.md §24.0h](rules.md#24-audit-evidence-discipline-meta--how-to-audit). NEVER self-invoked by the orchestrator.
 
@@ -254,6 +264,7 @@ These candidates surface in the root README's "Kinds-of-misses log" so they're v
 **5. Update root README:**
 
 After the step distillation, the **orchestrator** updates `docs/wip/<deliverable>/README.md` (this is one of the few `Edit` activities the orchestrator may perform itself, since the root README is the orchestrator's tracking artifact):
+
 - Step status: ⏸ → 🔄 → ✅ (with iteration count: "✅ 02-service-identity-stack (3 audit rounds to clean)")
 - Append to "Kinds-of-misses log" with the step's distillation summary
 - If new cross-cutting decisions surfaced, append to that section
@@ -261,7 +272,6 @@ After the step distillation, the **orchestrator** updates `docs/wip/<deliverable
 **6. Move to next step:**
 
 Steps run in prerequisite order. Step N can start when all listed prerequisites are ✅. The orchestrator does NOT spawn a new Planner sub-agent for step N while the previous step has open audit findings.
-
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -275,13 +285,12 @@ Same structure as a step — the orchestrator spawns fresh sub-agents per phase:
 
 1. Spawn fresh **Planner** for cross-step concerns to walk (defines the deliverable-wide cross-cutting focus areas the Aggregator verifies in [§3 Aggregator role](#aggregator-role-post-cluster-consolidation) step 4)
 2. Spawn fresh **Implementer** for any cross-cutting fixes (only if planning surfaces work)
-3. Dispatch fresh **K=5 Final-reviewer batch** per round (READ-ONLY) per the canonical cluster partition in [§3 Auditor cluster partition](#auditor-cluster-partition-canonical-k5) — same `rules.md` ruleset, scope = whole deliverable. After all 5 partials return, dispatch fresh **Aggregator** to merge. Each round = a brand-new K=5 batch + brand-new Aggregator.
+3. Dispatch fresh **K=12 Final-reviewer batch** per round (READ-ONLY) per the canonical cluster partition in [§3 Auditor cluster partition](#auditor-cluster-partition-canonical-k12) — same `rules.md` ruleset, scope = whole deliverable. After all 12 partials return, dispatch fresh **Aggregator** to merge. Each round = a brand-new K=12 batch + brand-new Aggregator.
 4. Spawn fresh **Fixer** when Aggregator surfaces findings
-5. 10-iteration ceiling (where ONE iteration = one K=5 batch + Aggregator + Fixer); escalate if hit
+5. 10-iteration ceiling (where ONE iteration = one K=12 batch + Aggregator + Fixer); escalate if hit
 6. Distillation entry
 
 When the latest Aggregator's big table comes back with zero FINDING rows → deliverable is ready to SHIP.
-
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -305,7 +314,6 @@ Triggered by final-review's clean termination. Agent does:
 
 Each commit needs explicit user permission (no auto-commit).
 
-
 <sup>[↑ jump to top](#top)</sup>
 
 ### REVIEW (user phase)
@@ -318,7 +326,6 @@ User reviews the shipped deliverable. **REVIEW is observe-and-capture, not fix-o
 4. Approved fixes get a fresh deliverable folder (or, for trivial single-item fixes, a small follow-up commit with a regression test).
 
 If REVIEW finds bugs that should have been caught by the agent's audit rounds, the right response isn't just "fix the bug" — it's also "what category was this, and why didn't the predicate catch it?" That gap becomes a new predicate in `rules.md`. Without this feedback loop, the rule catalog stays static and the agent keeps making the same kinds of misses.
-
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -333,7 +340,6 @@ Per-step `journal.md` files are append-only at the **substantive content** level
 
 The reason: the journal IS the evidence of process integrity. If round 3 missed something that round 5 caught, the journal must show that. Hiding the miss prevents the kind from feeding back into `rules.md`, and the agent will re-make the same miss next deliverable. **Honest journals are self-rewarding** — every honest miss becomes a future gate-check.
 
-
 <sup>[↑ jump to top](#top)</sup>
 
 ### Scope of work shape
@@ -346,16 +352,14 @@ This process scales to deliverables of meaningfully different sizes. Two example
 
 There's no "lightweight path" for trivial changes — even a typo fix benefits from "did you check whether this typo appears elsewhere in the same doc?" The cost of running the full ruleset on a small change is minutes; the cost of NOT running it (and missing the parallel typo) is a future audit round. **The orchestrator-only-main-thread + fresh-sub-agent-per-round pattern (see [§3 Sub-agent architecture](#3-sub-agent-architecture)) applies at every scope: a one-line typo fix still spawns a Planner / Implementer / Auditor / (if findings) Fixer chain. Sub-agent invocation cost is small; production regression cost is large.**
 
-
 <sup>[↑ jump to top](#top)</sup>
 
 ### What this process does NOT do
 
-- **Doesn't replace CLAUDE.md.** CLAUDE.md still defines the agent-directive root + conventions catalog references. This process doc defines the *process* that ensures the conventions are actually followed.
+- **Doesn't replace CLAUDE.md.** CLAUDE.md still defines the agent-directive root + conventions catalog references. This process doc defines the _process_ that ensures the conventions are actually followed.
 - **Doesn't replace `docs/v2/`.** Phase / wave tracking continues to live in the `docs/v2/` set. This process is per-deliverable; `docs/v2/` is the long-arc roadmap.
 - **Doesn't replace per-lib READMEs.** Each shared lib still has its own `README.md` documenting its public API. This process doesn't generate or maintain those.
 - **Doesn't run scripts.** No pre-commit hook, no CI gate that fires `rules.md` mechanically. The discipline is the agent walking the rules each round and producing evidence — verifiable by inspecting the journal.
-
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -364,7 +368,6 @@ There's no "lightweight path" for trivial changes — even a typo fix benefits f
 Always, for any work substantial enough to warrant a deliverable folder. The user can override per-task ("just do this small thing, no journal needed" — per [rules.md §13.14](rules.md#13-permission--action-discipline) process-bypass-requires-explicit-naming), but the default is "every meaningful unit of work uses the loop."
 
 The forcing function for the agent: if there's no `docs/wip/<deliverable>/README.md` for the work in flight, the agent should ASK whether to create one before proceeding past PLAN.
-
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -383,7 +386,6 @@ The following actions require explicit user permission **per occurrence**, not i
 - **Architectural decision changes mid-execution** — if implementation surfaces a reason to deviate from the locked PLAN, agent ASKS — does not silently rework. (rules.md §13.5)
 - **Process-bypass naming** — every bypass requires per-occurrence user-quoted authorization NAMING the specific rule / step being skipped. Verbal "go ahead" / "looks good" / implicit consent from prior conversation does NOT qualify. (rules.md §13.14)
 - **K=1 audit-round dispatch** — never self-invoked; requires explicit per-round user permission with quoted authorization in the orchestrator log. (rules.md §24.0h + cross-ref [§4 K=1 carve-out usage policy](#k1-carve-out-usage-policy))
-
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -427,32 +429,90 @@ The main thread's job is decision-making, not implementation, not auditing. It r
 - Walking `rules.md` predicates — always done by Auditor sub-agents
 - Marking anything CLEAN / PASS / converged from main-thread judgment — those verdicts come from Auditor sub-agent output
 
-
 <sup>[↑ jump to top](#top)</sup>
 
 ### Canonical sub-agent roles
 
 Six distinct roles (Final-reviewer added at deliverable end). Each is spawned with a fresh context and a tightly-scoped prompt. **No reuse across roles or across rounds.**
 
-| Role | Spawned when | Tool access | Returns |
-|---|---|---|---|
-| **Planner** | Start of each step | Read, Grep, Glob, Edit (journal Plan section only) | Step Plan section appended to journal + summary |
-| **Implementer** | After Planner | All | Files touched + tests added + build / inspectcode status |
-| **Auditor** (parallel ×K=5, default) | After Implementer | Read, Grep, Glob, Bash (read-only) | Partial big-table chunk for assigned cluster (see [Auditor cluster partition](#auditor-cluster-partition-canonical-k5)) written to a designated partial file |
-| **Aggregator** (one per audit round) | After all 5 Auditors return | Read, Edit (journal + audit artifacts only) | Canonical merged big table embedded in journal + consolidated findings log entry + cross-cluster verification (see [Aggregator role](#aggregator-role-post-cluster-consolidation)) |
-| **Fixer** | When findings exist | All | Files changed + appended fix-log entries |
-| **Final-reviewer** (parallel ×K=5, deliverable-end only) | Before SHIP | Same as Auditor | Cluster-scoped partial big tables; Aggregator merges as above |
+| Role                                                     | Spawned when                                                                                 | Tool access                                        | Returns                                                                                                                                                                            |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Planner**                                              | Start of each step                                                                           | Read, Grep, Glob, Edit (journal Plan section only) | Step Plan section appended to journal + summary                                                                                                                                    |
+| **Plan-Auditor** (parallel ×K=12, default)               | After Planner (when step introduces new types / new patterns / >50-file scope per §24.16)    | Read, Grep, Glob, Bash (read-only)                 | Partial big-table chunk auditing the Plan section against assigned cluster's §-range (same cluster partition as Auditor); written to a designated partial file                     |
+| **Plan-amender**                                         | When Plan-Audit Aggregator surfaces findings                                                 | Read, Grep, Glob, Edit (journal Plan section + Plan-Audit fix log only) | Plan section edits + appended Plan-Audit fix-log entries                                                                                                                          |
+| **Implementer**                                          | After Planner (carve-out steps) OR after Plan-Audit CLEAN (Plan-Audit-required steps)        | All                                                | Files touched + tests added + build / inspectcode status                                                                                                                           |
+| **Auditor** (parallel ×K=12, default)                    | After Implementer                                                                            | Read, Grep, Glob, Bash (read-only)                 | Partial big-table chunk for assigned cluster (see [Auditor cluster partition](#auditor-cluster-partition-canonical-k12)) written to a designated partial file                      |
+| **Aggregator** (one per audit round)                     | After all 12 Auditors return (also: after all 12 Plan-Auditors return for Plan-Audit rounds) | Read, Edit (journal + audit artifacts only)        | Canonical merged big table embedded in journal + consolidated findings log entry + cross-cluster verification (see [Aggregator role](#aggregator-role-post-cluster-consolidation)) |
+| **Fixer**                                                | When findings exist                                                                          | All                                                | Files changed + appended fix-log entries                                                                                                                                           |
+| **Final-reviewer** (parallel ×K=12, deliverable-end only) | Before SHIP                                                                                 | Same as Auditor                                    | Cluster-scoped partial big tables; Aggregator merges as above                                                                                                                      |
 
 **Key design decisions:**
 
 - **Planner is its own role.** Spawned at the start of each step with the step description + applicable rules.md categories + relevant docs to read. It writes the step's Plan section (goal, files to touch, decisions, pre-emptive gate checks) and returns. The Implementer then receives the Plan as input — fresh context, no exposure to whatever the orchestrator was discussing with the user.
 - **Auditors cannot modify source.** Read-only Bash. This makes "audit + fix in same session" structurally impossible — fixes always happen in a separate Fixer invocation, after findings are RECORDED in the journal (no "I fixed it before recording it" sleight-of-hand).
 - **Auditor adversarial framing.** Per [adversarial code review research](https://asdlc.io/patterns/adversarial-code-review/): the Auditor prompt explicitly states it's rewarded for finding issues, not for declaring CLEAN. Its role is hostile critic.
-- **Parallel cluster dispatch is the default.** K=5 Auditors run concurrently per audit round, each scoped to one cluster of `rules.md` predicates (see [Auditor cluster partition](#auditor-cluster-partition-canonical-k5)). The Aggregator (see [Aggregator role](#aggregator-role-post-cluster-consolidation)) merges the 5 partials into the canonical journal artifacts and performs cross-cluster verification. The orchestrator's dispatch workflow lives in [§4 Per-round dispatch protocol](#per-round-dispatch-protocol).
-- **Effort-scaling rules in prompts** (per Anthropic guidance): each sub-agent prompt caps effort proportional to the step's surface area. Small step = "don't write 17 ctor variants for a 1-property record." Cluster scope already constrains per-Auditor effort to ~15-30 predicate rows.
-- **Aggregator is load-bearing, never optional.** Whenever K>1 Auditors run, the Aggregator is what produces the canonical big table + consolidated findings log entry the journal commits to. It cannot change cluster Auditor verdicts unilaterally — only dedupes, merges, and adds cross-cluster sister-sweep findings the per-cluster Auditors couldn't see. If two Auditors disagree on the same row (rare; row ownership is partitioned by §-number), the Aggregator escalates to the orchestrator for a tie-breaker Auditor.
+- **Parallel cluster dispatch is the default.** K=12 Auditors run concurrently per audit round, each scoped to one cluster of `rules.md` predicates (see [Auditor cluster partition](#auditor-cluster-partition-canonical-k12)). The Aggregator (see [Aggregator role](#aggregator-role-post-cluster-consolidation)) merges the 12 partials into the canonical journal artifacts and performs cross-cluster verification. The orchestrator's dispatch workflow lives in [§4 Per-round dispatch protocol](#per-round-dispatch-protocol).
+- **Effort-scaling rules in prompts** (per Anthropic guidance): each sub-agent prompt caps effort proportional to the step's surface area. Small step = "don't write 17 ctor variants for a 1-property record." Cluster scope already constrains per-Auditor effort to ~10-40 predicate rows.
+- **Aggregator is load-bearing, never optional.** Whenever K>1 Auditors run, the Aggregator is what produces the canonical big table + consolidated findings log entry the journal commits to. It cannot change cluster Auditor verdicts unilaterally — only dedupes, merges, and adds cross-cluster sister-sweep findings the per-cluster Auditors couldn't see. If two Auditors disagree on the same row (rare; row ownership is partitioned by §-number), the Aggregator escalates to the orchestrator for a tie-breaker Auditor. **The Aggregator runs on Opus** (per the canonical [Sub-agent model policy per role](#sub-agent-model-policy-per-role) table below; current Opus models default to 1M context on Max plans which the 12-partial merge requires) because merging 12 partials' worth of context — each cluster's full big-table chunk plus partial findings — pushes well past smaller-context budgets, and cross-cluster dedup / sister-sweep reasoning benefits from Opus-class capability.
 - **K=1 carve-out for trivial steps requires explicit user permission.** Per [§4 K=1 carve-out usage policy](#k1-carve-out-usage-policy) + [rules.md §24.0h](rules.md#24-audit-evidence-discipline-meta--how-to-audit). NEVER self-invoked.
+- **Plan-Audit is mandatory before Implementer dispatch for non-trivial steps.** Per [rules.md §24.16](rules.md#24-audit-evidence-discipline-meta--how-to-audit), any step's PLAN that introduces new types / new patterns / >50-file scope gets a K=12 Plan-Audit (same cluster partition as code Auditors) + Aggregator BEFORE the Implementer is dispatched. Plan-Auditors verify reality alignment (Plan claims match actual codebase state), naming conventions, rules.md predicate compliance, cross-language parity (if multi-lang), existing pattern consistency, stale assumptions, and §26 spec-mirror anti-pattern. Plan-amender (Fixer-equivalent role scoped to journal Plan-section + Plan-Audit fix-log only) addresses surfaced findings; Round 2 Plan-Audit verifies closure. Loop terminates on CLEAN Plan-Audit; Implementer then receives the AMENDED Plan as input. Carve-outs (per §24.16): trivial single-file edits (<5 net-new files, no new types/patterns), pure-doc deliverables, Step 0 branch-checkout / scaffolding, sub-dispatches within a step that already had upfront Plan-Audit. Empirical justification: deliverable `n/geo-libs` Step 2 Plan-Audit returned 35 findings (13 HIGH + 13 MEDIUM + 9 LOW) including stale assumptions, wrong tsconfig paths, wrong locale counts, AND one security flaw — without Plan-Audit, the Implementer would have built on those bugs, costing multiple downstream Fixer cycles + the security flaw's commit-time risk.
 
+<sup>[↑ jump to top](#top)</sup>
+
+### Sub-agent model policy per role
+
+This subsection is the SINGLE CANONICAL location for which Claude model each sub-agent role runs on. All other references in process.md, rules.md, CLAUDE.md cross-link here. Predicate-of-record (the enforcement gate walked every audit round): [rules.md §24.0i](rules.md#24-audit-evidence-discipline-meta--how-to-audit).
+
+**Canonical role-to-model table:**
+
+| Role                                    | Default model | Why this model                                                                                                                                                                                                                                                                                          |
+| --------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Orchestrator** (main thread)          | Opus          | Judgment + delegation + trust-but-verify discipline (per [§4 Orchestrator verification of Sonnet sub-agent outputs](#orchestrator-verification-of-sonnet-sub-agent-outputs)). Cannot outsource the spot-check / re-run / adversarial-challenge diligence that catches Sonnet hallucinations or short-circuits. |
+| **Planner**                             | Opus          | Plan section quality drives every downstream sub-agent's output; high-leverage low-volume artifact. A missed gate-check in the Plan cascades into Implementer + Auditor + Fixer cycles post-hoc — Opus reasoning at Plan-authoring time prevents the cascade.                                           |
+| **Plan-amender**                        | Opus          | Writes to the same canonical Plan artifact the Planner authored; same high-leverage low-volume rationale. Mid-execution amendments must be coherent with the original Plan's framing + locked decisions; Sonnet here risks introducing inconsistency the next Implementer builds against.               |
+| **Aggregator** (one per audit round)    | Opus          | Merges 12 cluster Auditor partials + cross-cluster sister-sweep + cross-cutting verification. Current Opus models (4.x) default to 1M context on Max plans, which is sufficient for the 12-partial merge. Cross-cluster reasoning across 12 thematic perspectives benefits from Opus-class capability.    |
+| **Auditor** (per-cluster, K=12)         | Sonnet        | Predicate pattern-matching + grep verification + file:line citations — bounded predicate scope per cluster, structured output format (the partial-file template), no synthesis (the Aggregator owns synthesis). Sonnet-shape work; Opus over-specified.                                                  |
+| **Plan-Auditor** (per-cluster, K=12)    | Sonnet        | Same shape as Auditor; design-phase scope (audits the Plan section, not the code). Same Sonnet-shape rationale.                                                                                                                                                                                          |
+| **Final-reviewer** (per-cluster, K=12)  | Sonnet        | Same shape as Auditor; deliverable-wide scope (audits the full deliverable, not one step). Same Sonnet-shape rationale.                                                                                                                                                                                  |
+| **Implementer**                         | Sonnet        | Bounded code/test authorship per a specific brief; Plan / Aggregator / orchestrator have already done the hard reasoning. Sonnet handles this well. Sweeping carve-out applies (see below) for unusually large briefs.                                                                                  |
+| **Fixer**                               | Sonnet        | Mechanical application of pre-specified fix scope; sister-sweep + tamper-evident discipline executes against a tight contract. Sonnet handles this well. Sweeping carve-out applies for unusually large fix sets.                                                                                       |
+| **Investigator / Research**             | Sonnet        | Bounded-scope investigation tasks returning structured reports (file paths, grep counts, line citations, summaries). Sonnet's bread and butter.                                                                                                                                                          |
+
+**Why this allocation** (cost-quality trade-off + Sonnet-shape vs Opus-shape work):
+
+- **Spend Opus where capability moves outcomes** — synthesis (Aggregator merge + cross-cluster sister-sweep), high-leverage low-volume planning (Planner / Plan-amender), and the trust-but-verify discipline that compensates for Sonnet dispatch (Orchestrator). These roles produce artifacts every downstream sub-agent reads + acts on; Opus-class reasoning at these points prevents cascading errors.
+- **Use Sonnet where capability already saturates** — predicate walking + structured output (Auditor / Plan-Auditor / Final-reviewer), bounded code/test execution per a contract (Implementer / Fixer), bounded investigation with structured deliverables (Investigator). These roles operate against tight contracts that constrain output space; Opus would burn budget without moving outcomes.
+- **Opus availability is finite** — the K=12 Auditor dispatch is the highest-volume sub-agent invocation pattern in the framework (12 parallel × multiple rounds per step × multiple steps per deliverable). Spending Opus on the Sonnet-shape roles depletes Opus availability for the synthesis + planning roles where capability actually matters.
+- **The verification discipline is the structural compensation** — when dispatching to Sonnet, the orchestrator takes on additional spot-check / re-run / adversarial-challenge responsibility (see [§4 Orchestrator verification of Sonnet sub-agent outputs](#orchestrator-verification-of-sonnet-sub-agent-outputs)). Sonnet dispatch + trust-but-verify discipline > Opus dispatch alone for predicate-walking work, because the verification catches the small fraction of Sonnet outputs that misfire while the cost savings free up Opus for synthesis.
+
+**Sweeping carve-out** (Implementer / Fixer Opus escalation — codified bypass requiring no per-occurrence user approval):
+
+An Implementer or Fixer dispatch qualifies for Opus escalation when it meets ≥1 of the following criteria. The orchestrator's dispatch brief MUST cite the triggering criterion + a brief justification; the sub-agent's return self-attestation MUST echo the same citation.
+
+1. **Atomic large-file-set** — the dispatch touches >40 files atomically (cannot be split into smaller dispatches without breaking the build between commits, or without producing intermediate states that fail audit).
+2. **Multi-concern dispatch** — the dispatch spans >3 distinct concerns where splitting would create coordination overhead exceeding the Opus premium (e.g., a single Implementer brief covers a new handler + its DI wiring + its test file + its README + its proto wiring).
+3. **Cross-runtime refactor** — the dispatch requires coordinated changes across .NET + TS runtimes (e.g., naming-convention sweep across both runtimes, cross-language type rename, parity-test alignment after a spec change).
+4. **Cascading pipeline change** — the dispatch changes a code-generation pipeline (or pipeline-input) and requires regenerating downstream consumer assemblies that depend on the pipeline output.
+
+The carve-out applies ONLY to Implementer / Fixer (not to Auditor / Plan-Auditor / Final-reviewer / Investigator); Auditor-shaped work does not exceed Sonnet's comfort zone at any K count or scope. Auditor / Plan-Auditor / Final-reviewer / Investigator escalations to Opus require explicit per-occurrence user approval per [rules.md §13.14](rules.md#13-permission--action-discipline).
+
+**Self-documentation requirement** (every sub-agent return summary):
+
+Every sub-agent's return summary MUST include at the top, before any other content, a model-attestation block:
+
+```
+Model: <claude-model-id — e.g., claude-opus-4-7 or claude-sonnet-4-5>
+Opus carve-out reason (if dispatched to Opus from a Sonnet-default role): <criterion # + justification, verbatim from dispatch brief>
+```
+
+The orchestrator's per-step journal MUST record per dispatch — (a) the dispatched model, (b) the role being filled, (c) if Opus dispatched from a Sonnet-default role: the carve-out criterion invoked + the verbatim justification. This dual-channel attestation (orchestrator dispatch log + sub-agent return self-attestation) gives retroactive auditability for self-learn loops: after N deliverables, a sweep can identify which Sonnet dispatches needed re-do (role-to-task fit was wrong) vs which Opus dispatches could've been Sonnet (carve-out justification was weak). The self-learn loop tunes the policy over time.
+
+**Cross-references:**
+
+- [rules.md §24.0i](rules.md#24-audit-evidence-discipline-meta--how-to-audit) — the predicate-level enforcement of this policy (walked every audit round, including the carve-out and self-documentation sub-blocks).
+- [rules.md §24.0h](rules.md#24-audit-evidence-discipline-meta--how-to-audit) — K=1 discipline (the parallelism gate; composes with §24.0i model gate per the Combined K=1 + Opus authorization clause).
+- [§4 Orchestrator verification of Sonnet sub-agent outputs](#orchestrator-verification-of-sonnet-sub-agent-outputs) — trust-but-verify discipline that compensates for Sonnet dispatch (the structural reason Sonnet dispatch is safe).
+- [CLAUDE.md MANDATORY block 0](../../CLAUDE.md#mandatory-block-0-orchestrator-only-main-thread) — the sub-agent role table in CLAUDE.md cross-links here for the model column.
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -462,47 +522,54 @@ A second audit round is a brand-new Auditor sub-agent, NOT the same Auditor "run
 
 The orchestrator never short-circuits this for "quick" work. A one-line typo fix still spawns a Planner, Implementer, Auditor, and (if findings) Fixer. Sub-agent invocation cost is small; production regression cost is large.
 
-
 <sup>[↑ jump to top](#top)</sup>
 
 ### The orchestrator cannot mark CLEAN
 
 The orchestrator consumes Auditor verdicts; it cannot promote a step to CLEAN by judgment. CLEAN means "the latest Auditor sub-agent's big table contained zero FINDING rows." If the orchestrator wants to confirm closure, it spawns a fresh Auditor — it does not eyeball.
 
-
 <sup>[↑ jump to top](#top)</sup>
 
-### Auditor cluster partition (canonical K=5)
+### Auditor cluster partition (canonical K=12)
 
-The `rules.md` catalog (~24 categories, ~145 numbered subsections) partitions into 5 thematic clusters. Each Auditor sub-agent owns exactly one cluster and walks every numbered subsection inside that cluster against the step's (or deliverable's, at final-review) file scope. The partition is fixed — orchestrator dispatch consistently sends the same §-range to the same cluster name across deliverables so accumulated muscle memory carries forward.
+The `rules.md` catalog (~24 categories, ~145 numbered subsections) partitions into 12 thematic clusters. Each Auditor sub-agent owns exactly one cluster and walks every numbered subsection inside that cluster against the step's (or deliverable's, at final-review) file scope. The partition is fixed — orchestrator dispatch consistently sends the same §-range to the same cluster code across deliverables so accumulated muscle memory carries forward.
 
-| Cluster | Name | rules.md sections | Connecting thread |
-|---|---|---|---|
-| **A** | Correctness + reliability | §1, §2, §4, §15, §18, §22 | "Does the code behave correctly across edge cases + failure modes." Tests, regression-pinning, concurrency / races, object disposal / resource lifetime, graceful degradation, idempotency / exactly-once. |
-| **B** | Code style + idiom + shared-lib hygiene | §5, §6, §7, §16, §17 | "Is the code written per project idiom + leveraging the right tools." C# conventions, TS / SvelteKit conventions, naming / file headers / folder casing, OOTB shared-lib catalog use, D2Result usage + extensions. |
-| **C** | Architecture + security + permission discipline | §3, §8, §9, §10, §13 | "Is the architecture sound + secure + safe to operate." PII / logging safety, build cleanliness, architectural layer hygiene, security (endpoints / auth / secrets / input), permission / action discipline. |
-| **D** | Documentation + framing + i18n | §11, §12, §14 | "Is the project communicable + maintainable + free of conversation pollution." KEEP-doc updates + forward-framing, i18n / Paraglide / TK constants, no-phase-verbiage / no-conversation-scoped-IDs hygiene. |
-| **E** | Operational outcomes + audit meta | §19, §20, §21, §23, §24 | "Is the system operable + the process self-improving." UX, DX, observability completeness, configuration hygiene, audit evidence discipline (incl. self-audit per §24.12). |
+| Cluster  | Name                                                                   | rules.md sections        | ~predicates | Theme                                                                                                |
+| -------- | ---------------------------------------------------------------------- | ------------------------ | ----------- | ---------------------------------------------------------------------------------------------------- |
+| **A1**   | Tests / coverage                                                       | §1                       | ~30         | Tests / coverage                                                                                     |
+| **A2**   | Regression, races, disposal, degradation, idempotency                  | §2, §4, §15, §18, §22    | ~25         | Regression-pinning, concurrency / races, object disposal / resource lifetime, graceful degradation, idempotency / exactly-once |
+| **B1**   | C# conventions                                                         | §5                       | ~25         | C# conventions                                                                                       |
+| **B2**   | TS conventions + naming                                                | §6, §7                   | ~20         | TypeScript / SvelteKit conventions, naming / file headers / folder casing                            |
+| **B3**   | Shared-lib hygiene + D2Result                                          | §16, §17                 | ~15         | OOTB shared-lib catalog use, D2Result usage + extensions                                             |
+| **C1**   | PII/logging + operations                                               | §3, §8                   | ~20         | PII / logging safety, build cleanliness + operational hygiene                                        |
+| **C2**   | Architectural layer                                                    | §9                       | ~30         | Architectural layer hygiene                                                                          |
+| **C3**   | Security + permissions                                                 | §10, §13                 | ~25         | Security (endpoints / auth / secrets / input), permission / action discipline                        |
+| **D1**   | KEEP doc parity                                                        | §11                      | ~40         | KEEP-doc updates + forward-framing + per-lib README parity                                           |
+| **D2**   | i18n + no-phase verbiage                                               | §12, §14                 | ~10         | i18n / Paraglide / TK constants, no-phase-verbiage / no-conversation-scoped-IDs hygiene              |
+| **E1**   | UX + DX + observability + config                                       | §19, §20, §21, §23       | ~25         | UX, DX, observability completeness, configuration hygiene                                            |
+| **E2**   | Audit-meta + temporal + codegen                                        | §24, §25, §26            | ~35         | Audit evidence discipline (incl. self-audit per §24.12), temporal-types discipline, codegen discipline |
 
-**Why this partition:**
+**Why this partition** (K=12):
 
-- **Thematically cohesive**: each cluster's connecting thread is one coherent mental model — Auditor can stay in one frame of mind for the full walk instead of context-switching across orthogonal concerns.
-- **Roughly balanced load**: each cluster carries ~15-30 numbered subsections, so wall-clock-per-Auditor is comparable. No cluster dominates.
-- **Stable §-ownership**: the same §-range maps to the same cluster letter across every deliverable. A repeat finding's history can be threaded through past partials by cluster letter.
-- **Cross-cutting concerns belong to the Aggregator**, not to any one cluster — the Aggregator's cross-cluster sister-sweep responsibility is what catches concerns that span clusters (e.g. a security predicate in §10 whose fix has style implications in §5, or a doc-framing concern in §11 that needs architectural verification in §9).
+- **D split into D1 (§11 alone) and D2 (§12 + §14)**: §11 is the densest section in the catalog (~40 predicates around KEEP-doc parity + per-lib README sweep + framing discipline) — separating it from the lighter §12 / §14 sections lets D1 get dedicated focus instead of crowding the i18n + no-phase-verbiage concerns.
+- **E split into E1 (§19/§20/§21/§23 — operational quality) and E2 (§24/§25/§26 — process integrity)**: E1 covers the "is the system operable" axis (UX, DX, observability, config); E2 covers the "is the process trustworthy" axis (audit meta, temporal, codegen). The two clusters share no predicate overlap and benefit from separate mental frames.
+- **A/B/C clusters split along natural §-boundaries.** A1 (§1 tests) and A2 (§2/§4/§15/§18/§22 — the remainder of correctness/reliability) sit at a natural break inside the correctness/reliability theme. B1 (§5 C#) / B2 (§6+§7 TS+naming) / B3 (§16+§17 shared-libs+D2Result) split along language + concern boundaries (per-language conventions plus shared-lib hygiene as its own cluster). C1 (§3+§8 PII+ops) / C2 (§9 layer) / C3 (§10+§13 security+permissions) keep §9 (the largest of the architectural sections, ~30 predicates) standalone so its predicates don't crowd the surrounding security / PII / permission sections.
+- **Trade-off**: K=12 gives ~35-45% wall-clock reduction relative to prior smaller-K splits (vs ~30-40% for a K=10 alternative) and tighter per-Auditor focus (each Auditor stays in ~10-40 predicates). Cost: slightly higher Aggregator dedup complexity — handled by running the Aggregator on Opus (per [Sub-agent model policy per role](#sub-agent-model-policy-per-role)) so the merge has the context budget to consolidate 12 partials and the capability to do cross-cluster sister-sweep reasoning across them.
+- **Thematically cohesive**: each cluster's theme is one coherent mental model — Auditor can stay in one frame of mind for the full walk instead of context-switching across orthogonal concerns.
+- **Stable §-ownership**: the same §-range maps to the same cluster code (A1, A2, B1, B2, B3, C1, C2, C3, D1, D2, E1, E2) across every deliverable. A repeat finding's history can be threaded through past partials by cluster code.
+- **Cross-cutting concerns belong to the Aggregator**, not to any one cluster — the Aggregator's cross-cluster sister-sweep responsibility (run on Opus per [Sub-agent model policy per role](#sub-agent-model-policy-per-role) for adequate context + reasoning budget) is what catches concerns that span clusters (e.g. a security predicate in §10 whose fix has style implications in §5, or a doc-framing concern in §11 that needs architectural verification in §9).
 
-**When a predicate seems to straddle clusters:** the cluster mapping is `rules.md` §-number → cluster letter, NOT topic → cluster letter. If a predicate's spirit feels like it belongs to two clusters, the §-number wins. The Aggregator's cross-cluster verification step (see [Aggregator role](#aggregator-role-post-cluster-consolidation) step 4) is where straddle concerns get resolved — not in the per-cluster Auditor walk.
-
+**When a predicate seems to straddle clusters:** the cluster mapping is `rules.md` §-number → cluster code, NOT topic → cluster code. If a predicate's spirit feels like it belongs to two clusters, the §-number wins. The Aggregator's cross-cluster verification step (see [Aggregator role](#aggregator-role-post-cluster-consolidation) step 4) is where straddle concerns get resolved — not in the per-cluster Auditor walk.
 
 <sup>[↑ jump to top](#top)</sup>
 
 ### Aggregator role (post-cluster consolidation)
 
-The Aggregator is a single sub-agent spawned per audit round AFTER all K=5 cluster Auditors have returned their partials. It is the journal's authoritative writer for the round — the per-cluster Auditors write to disposable partial files; the Aggregator alone writes to the canonical journal sections.
+The Aggregator is a single sub-agent spawned per audit round AFTER all K=12 cluster Auditors have returned their partials. It is the journal's authoritative writer for the round — the per-cluster Auditors write to disposable partial files; the Aggregator alone writes to the canonical journal sections. **The Aggregator runs on Opus** (per the canonical [Sub-agent model policy per role](#sub-agent-model-policy-per-role) table; current Opus models default to 1M context on Max plans, which is sufficient for the 12-partial merge) so it has the context budget to consume 12 partials' worth of big-table chunks + findings lists and the reasoning capability to perform cross-cluster dedup + sister-sweep verification across them.
 
 **Six responsibilities (in order):**
 
-1. **Mechanical merge.** Read all 5 partial files (`r{N}-partial-{A|B|C|D|E}-{cluster-name}.md` in the round's working dir). Combine the 5 partial big-table chunks into ONE canonical sorted-by-§ big table. Write that table under `## Latest sweep results` in the step / final-review journal, REPLACING the prior sweep's table per the §24 sweep-replacement rule. Anti-laziness preamble appears verbatim above.
+1. **Mechanical merge.** Read all 12 partial files (`r{N}-partial-{A1|A2|B1|B2|B3|C1|C2|C3|D1|D2|E1|E2}-{cluster-name}.md` in the round's working dir). Combine the 12 partial big-table chunks into ONE canonical sorted-by-§ big table. Write that table under `## Latest sweep results` in the step / final-review journal, REPLACING the prior sweep's table per the §24 sweep-replacement rule. Anti-laziness preamble appears verbatim above.
 2. **Dedupe.** Same finding surfaced by multiple Auditors (e.g. a line-length violation Cluster B owns by predicate, but Cluster D also flagged from a doc-citation angle) collapses into a single entry with combined provenance. Dedupe preserves all citation paths in the entry's description.
 3. **Cross-cutting verification.** Walk the deliverable's cross-step focus areas that span multiple clusters — defined per-deliverable in the Plan section of the final-review journal (e.g. "TYPE LIE FIX still verified end-to-end across .NET emitter + TS consumer", "β routing correctness across both consumers", "wire-shape leakage class — does the originating sample class exist anywhere else in scope?", "spec-driven catalog parity — every cross-language wire identifier cataloged + parity-tested"). These are the concerns no per-cluster Auditor could see because they cross §-ranges.
 4. **Cross-cluster sister-sweep.** Per rules.md §24.13.3, cluster Auditors sister-sweep WITHIN their cluster's §-scope. The Aggregator runs sister-sweeps at the CROSS-cluster scope. See [§4 Cross-cluster sister-sweep checklist](#cross-cluster-sister-sweep-checklist-aggregator-baseline) for the concrete baseline commands the Aggregator runs every round regardless of cluster Auditor coverage.
@@ -515,8 +582,7 @@ The Aggregator is a single sub-agent spawned per audit round AFTER all K=5 clust
 - **Cannot touch source / tests / configs.** Write access is journal + audit artifacts only.
 - **Cannot mark the step CLEAN.** It RECOMMENDS clean to the orchestrator; the orchestrator consumes the recommendation along with the big table itself (which must contain zero FINDING rows for CLEAN status to be valid).
 
-**Why the Aggregator is load-bearing:** when K>1 Auditors run in parallel, no single Auditor sees the full picture. Without an Aggregator, the orchestrator would need to either (a) read all 5 partials itself (forbidden per the main-thread restrictions above), or (b) trust each Auditor's slice without cross-validation (defeats the parallelism win). The Aggregator is the structural fix: it consolidates, it cross-checks, and its output IS the journal's canonical record. A K=5 dispatch WITHOUT an Aggregator is incomplete; the round is not done until the Aggregator's `### Round N findings` subsection lands in the findings log.
-
+**Why the Aggregator is load-bearing:** when K>1 Auditors run in parallel, no single Auditor sees the full picture. Without an Aggregator, the orchestrator would need to either (a) read all 12 partials itself (forbidden per the main-thread restrictions above), or (b) trust each Auditor's slice without cross-validation (defeats the parallelism win). The Aggregator is the structural fix: it consolidates, it cross-checks, and its output IS the journal's canonical record. A K=12 dispatch WITHOUT an Aggregator is incomplete; the round is not done until the Aggregator's `### Round N findings` subsection lands in the findings log.
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -542,16 +608,15 @@ The mechanical shape of every audit round. Predicate-of-record for evidence disc
 
 Every step / final-review journal contains THREE artifacts under canonical headings — strictly separated, never collapsed:
 
-| Artifact | Section heading | Behavior | Written by |
-|---|---|---|---|
-| **Big table** (latest sweep snapshot) | `## Latest sweep results` | REPLACED on every sweep — table reflects ONLY the most recent walk's findings against current code. ~85+ rows, one per rules.md subsection. Anti-laziness preamble above it. | Sweep activity ONLY. Fix-applying agents NEVER touch this. Under K=5 dispatch, the **Aggregator** writes the merged canonical table; per-cluster Auditors only write to their disposable partial files. |
-| **Findings log** (per-round audit history) | `## Sweep findings log (append-only)` | APPEND-ONLY. Each sweep appends a `### Round N findings (timestamp)` subsection enumerating every FINDING the sweep surfaced. Never deleted, never re-ordered. | Sweep activity ONLY. Under K=5 dispatch, the **Aggregator** writes the consolidated round subsection covering all 5 clusters + cross-cluster findings. |
-| **Fix log** (chronological fix activity) | `## Fix log (append-only)` | APPEND-ONLY. Each fix appends one entry citing rules.md subsection + finding round + what changed + `file.cs:NN` of the change. Never deleted, never re-ordered. | Fix-applying agent ONLY. |
+| Artifact                                   | Section heading                       | Behavior                                                                                                                                                                     | Written by                                                                                                                                                                                              |
+| ------------------------------------------ | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Big table** (latest sweep snapshot)      | `## Latest sweep results`             | REPLACED on every sweep — table reflects ONLY the most recent walk's findings against current code. ~85+ rows, one per rules.md subsection. Anti-laziness preamble above it. | Sweep activity ONLY. Fix-applying agents NEVER touch this. Under K=12 dispatch, the **Aggregator** (Opus per [Sub-agent model policy per role](#sub-agent-model-policy-per-role)) writes the merged canonical table; per-cluster Auditors only write to their disposable partial files. |
+| **Findings log** (per-round audit history) | `## Sweep findings log (append-only)` | APPEND-ONLY. Each sweep appends a `### Round N findings (timestamp)` subsection enumerating every FINDING the sweep surfaced. Never deleted, never re-ordered.               | Sweep activity ONLY. Under K=12 dispatch, the **Aggregator** (Opus per [Sub-agent model policy per role](#sub-agent-model-policy-per-role)) writes the consolidated round subsection covering all 12 clusters + cross-cluster findings.                                                  |
+| **Fix log** (chronological fix activity)   | `## Fix log (append-only)`            | APPEND-ONLY. Each fix appends one entry citing rules.md subsection + finding round + what changed + `file.cs:NN` of the change. Never deleted, never re-ordered.             | Fix-applying agent ONLY.                                                                                                                                                                                |
 
 The big table is the canonical "what is true RIGHT NOW" snapshot. Every PASS in it is a fresh file:line citation against current code, freshly walked in the latest sweep. There is NO inheritance of PASS from earlier sweeps — every PASS is earned fresh each sweep.
 
 Closure is proven ONLY by the absence of a FINDING from the next sweep's big table. The fix log captures intent + action; it does NOT certify outcome.
-
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -576,12 +641,51 @@ Suspected root cause: <agent's hypothesis>
 Question for user: <specific ask>
 ```
 
+<sup>[↑ jump to top](#top)</sup>
+
+### Plan currency before dispatch
+
+> **Mid-deliverable architectural / scope / approach changes MUST update the deliverable's Plan synchronously — before the next sub-agent is dispatched. Conversation-only ("in MEMORY") decisions are explicitly INVALID as a state to dispatch from.**
+
+The orchestrator carries conversation context across an entire deliverable; sub-agents do not. Every Planner / Implementer / Auditor / Aggregator / Fixer / Plan-amender / Final-reviewer spawns with a fresh context and reads ONLY the artifacts the orchestrator points it at — the journal, the Plan file, rules.md, the shared-context file, and whatever paths the dispatch brief enumerates. The orchestrator's conversation memory is INVISIBLE to every sub-agent. This is the entire point of the fresh-context property (per [§3 Why this is structural, not stylistic](#why-this-is-structural-not-stylistic)) — and it's exactly why architectural pivots that live only in the orchestrator's conversation context will cause the next sub-agent to build against the OLD plan.
+
+**The mandate** — any decision made DURING EXECUTE that contradicts, supersedes, or amends the Plan locked at PLAN exit (or amended in a prior round) MUST be written into the deliverable's Plan artifacts before the orchestrator dispatches the next Planner / Implementer / Auditor / Plan-amender / Fixer / Final-reviewer. This includes:
+
+- Architectural pivots (single-shape vs split-shape, transport vs handler placement, cache topology, sync vs async)
+- Naming changes (Option A vs Option B, lib names, type names, interface names, file paths, conventional vocabulary)
+- Scope additions / removals (a step grows to include a new file-set, a step sheds work to the next deliverable)
+- Ordering changes (step prerequisites shift; sub-steps merge or split)
+- Library shape changes (collection shape, public API surface, dependency layout)
+- Decision reversals (Option A picked at PLAN, swapped to Option C mid-EXECUTE)
+- Cycle-resolution choices (Approach A vs Approach B when a circular-dependency was discovered)
+- Cross-cutting reminders that need to fire at multiple later dispatch points (e.g. "remember cache-aside in three places")
+
+**The mechanism** — Plan currency requires ALL THREE updates in the SAME orchestrator turn that locks the decision (not batched, not deferred to "end of step" cleanup):
+
+1. **Journal amendment** — append a new `## Plan amendment N+1 (<UTC timestamp>)` subsection to `docs/wip/<deliverable>/<NN>-<step>/journal.md` enumerating: (a) what changed, (b) what it supersedes / contradicts in the prior Plan, (c) the rationale, (d) the user-quoted authorization if the decision required user permission per §13.5 / §13.14.
+2. **Plan file update** — edit `docs/wip/<deliverable>/README.md` so the Living State / Status section + the relevant Step section + the Cross-cutting decisions table all reflect the amended state. Stale prose that contradicts the amendment must be removed or struck-through; future sub-agents reading the Plan must see ONE consistent state, not a Plan that says X while the amendment says Y.
+3. **Decisions table row** — append a row to the deliverable's Cross-cutting decisions table (in the root README) citing the amendment number + summarized choice + rejected alternatives + amendment-journal back-reference (`journal.md:NN`). This is the at-a-glance index a future sub-agent uses to find the amendment without re-reading the entire journal.
+
+**The "before next dispatch" gate** — the orchestrator does NOT dispatch the next sub-agent until all three updates above land. Plan-currency verification is a precondition gate that sits ahead of every dispatch protocol step in [Per-round dispatch protocol](#per-round-dispatch-protocol). If the orchestrator is about to write a Planner / Implementer / Auditor / Plan-amender / Fixer / Final-reviewer dispatch brief and the conversation has surfaced decisions that aren't in the Plan yet, the orchestrator STOPS, runs the three-update mechanism, and only then writes the dispatch brief. The brief references the AMENDED Plan as input.
+
+**The failure mode this prevents** — sub-agents have no conversation context; they only see artifacts. When the orchestrator dispatches an Implementer with a brief that points at an out-of-date Plan, the Implementer builds against the OLD architecture — and the Implementer is RIGHT to do so, because the Plan is the contract. The build-the-wrong-thing failure cascades into a downstream Auditor finding ("Implementation doesn't match the architectural pivot we discussed"), a downstream Fixer round, and a downstream re-Implementer round — multiplied across however many sub-agents touched the stale Plan. The cost of the three-update mechanism is one orchestrator turn (~minutes); the cost of skipping it is multiple wall-clock-hour Implementer + Fixer + re-Audit cycles plus the cognitive cost of unwinding partial work that was correct-against-stale-Plan but wrong-against-real-intent.
+
+**Worked example — deliverable 0009-geo-libs Step 3a, Plan amendment 41** (the canonical precedent that codified this rule). During execution, the orchestrator locked six architectural decisions in conversation: single-shape architecture (collapsed split-shape variants), Option B naming convention, Approach A cycle resolution for the IGeoReference cross-package dependency, Option (c) collection shape, two-pass populate pattern, and a cross-cutting cache-aside reminder firing at three later dispatch points. The orchestrator was about to re-dispatch the Implementer when a docs-update pass surfaced that the Plan (`docs/wip/0009-geo-libs/README.md`) still described the pre-amendment architecture. Had the re-dispatch fired against the stale Plan, the Implementer would have rebuilt the prior split-shape architecture with Option A naming — the exact failure mode this rule prevents. The fix was the three-update mechanism above: journal Amendment 41 appended, Plan file's Living State + Step 3a section + Decisions table updated, then the Implementer re-dispatched against the amended Plan. The amendment is referenced as the canonical precedent in [rules.md §24.17](rules.md#24-audit-evidence-discipline-meta--how-to-audit).
+
+**Cross-references:**
+
+- [rules.md §24.17](rules.md#24-audit-evidence-discipline-meta--how-to-audit) — the predicate-level enforcement of this rule (walked every audit round).
+- [rules.md §13.5](rules.md#13-permission--action-discipline) — the ASK gate that precedes mid-execution Plan amendments (when a deviation surfaces, ASK before deciding). §13.5 governs WHETHER to amend; this section governs HOW to record the amendment once decided. Both apply independently.
+- [rules.md §13.13](rules.md#13-permission--action-discipline) — Plan-vs-reality reconciliation when runtime / library behavior diverges from a Plan claim. §13.13 is the Implementer-side reconciliation; this section is the orchestrator-side currency gate that ensures the next dispatch sees the reconciled Plan.
+- [rules.md §24.16](rules.md#24-audit-evidence-discipline-meta--how-to-audit) — Plan-Audit before initial Implementer dispatch. §24.16 audits the Plan ONCE at step entry; this section keeps the Plan honest across the rest of EXECUTE.
 
 <sup>[↑ jump to top](#top)</sup>
 
 ### Per-round dispatch protocol
 
-The orchestrator's workflow for one K=5 + Aggregator audit round. Same shape for per-step rounds and final-review rounds (the difference is scope: per-step = step's touched files; final-review = whole deliverable).
+The orchestrator's workflow for one K=12 + Aggregator audit round. Same shape for per-step rounds, final-review rounds, AND Plan-Audit rounds (the difference is scope: per-step code-audit = step's touched files; final-review = whole deliverable; Plan-Audit = the journal's `## Plan` section content + the codebase reality the Plan claims to align with — see [rules.md §24.16](rules.md#24-audit-evidence-discipline-meta--how-to-audit)).
+
+**Plan-Audit dispatch specifics** (when §24.16 applies): the orchestrator writes a `plan-audit-r{N}-shared-context.md` file (same shape as the code-audit shared-context but mission-scoped to the Plan section + cluster verification questions enumerated in §24.16). Dispatches K=12 Plan-Auditors in parallel (each with `model: "sonnet"` per §24.0i + the [Sub-agent model policy per role](#sub-agent-model-policy-per-role) canonical table), each scoped to its cluster against the Plan section. After all 12 partials return, dispatches the Aggregator (Opus per the same policy table) to merge → `## Plan-Audit results` lands in the journal BEFORE the Implementer is dispatched. If findings: dispatches Plan-amender (Opus per the policy table — same high-leverage Plan-authoring rationale as Planner) to address each finding + append fix-log entries; then dispatches a fresh K=12 Plan-Audit Round 2 to verify closure. Loop terminates on CLEAN; orchestrator then dispatches the Implementer with the AMENDED Plan as input. K=1 Plan-Audit follows the same explicit-per-round-user-approval discipline as §24.0h. Carve-outs (per §24.16) skip Plan-Audit entirely; the orchestrator log cites the applicable carve-out per occurrence.
 
 **Step 1 — Orchestrator writes the per-round shared-context file:**
 
@@ -593,34 +697,34 @@ Contents:
 - Locked decisions (so cluster Auditors do not re-litigate)
 - Deliverable scope (concrete path-set or `git diff --name-only` recipe)
 - Special-emphasis user direction (if any user gave a focus area; e.g. "industry-standard naming alignment", "regression test adequacy for known bug classes")
-- The K=5 cluster partition table (verbatim from [§3 Auditor cluster partition](#auditor-cluster-partition-canonical-k5) so every Auditor sees the canonical mapping)
+- The K=12 cluster partition table (verbatim from [§3 Auditor cluster partition](#auditor-cluster-partition-canonical-k12) so every Auditor sees the canonical mapping)
 - Output format spec (the partial-file template every Auditor writes against — see [Partial-file template](#partial-file-template-per-auditor) below)
 - Aggregator role summary (so cluster Auditors know what their partials feed into and can flag cross-cluster handoffs explicitly)
 - Critical constraints (READ-ONLY tools, no sub-agent spawning, no commits, no touching other auditors' partial files, sister-sweep per rules.md §24.13.3, self-grep per rules.md §24.13.4)
 
-**Step 2 — Orchestrator dispatches 5 parallel Auditors in ONE message:**
+**Step 2 — Orchestrator dispatches 12 parallel Auditors in ONE message:**
 
-All 5 spawned in a single `Agent` tool batch (one tool-call message containing 5 parallel `Agent` invocations). Each Auditor's brief is small:
+All 12 spawned in a single `Agent` tool batch (one tool-call message containing 12 parallel `Agent` invocations). Each Auditor's brief is small:
 
 - Read the shared-context file at the path above
 - Read your cluster's §-range from `rules.md` end-to-end
 - Skim other cluster ranges for cross-references
 - Walk YOUR cluster against the deliverable scope
-- Write to your designated partial file `r{N}-partial-{LETTER}-{cluster-name}.md` at the same directory
+- Write to your designated partial file `r{N}-partial-{CLUSTER}-{cluster-name}.md` (CLUSTER ∈ {A1, A2, B1, B2, B3, C1, C2, C3, D1, D2, E1, E2}) at the same directory
 
 Concurrent writes are safe because each Auditor owns its own file. There is no shared mutable state between cluster Auditors. Run them as background `Agent` invocations (`run_in_background: true`) and let notifications return as each completes.
 
-**Audit dispatch model discipline.** Auditor sub-agents are dispatched with `model: "sonnet"` to preserve Opus context for synthesis + execution roles. Aggregator + Planner + Implementer + Fixer inherit the parent's default model (typically Opus) — no override needed. Why: predicate-walking + grep-verification is Sonnet-shaped work; Opus is over-spec'd for it; the orchestrator's Opus context is best spent on synthesis (Aggregator) and execution (Implementer / Fixer). Every K=N Auditor `Agent` invocation MUST include `model: "sonnet"` explicitly. Canonical predicate-of-record: [rules.md §24.0i](rules.md#24-audit-evidence-discipline-meta--how-to-audit).
+**Audit dispatch model discipline.** Auditor sub-agents are dispatched with `model: "sonnet"` per the canonical [Sub-agent model policy per role](#sub-agent-model-policy-per-role) table (and [rules.md §24.0i](rules.md#24-audit-evidence-discipline-meta--how-to-audit)). **Aggregator runs on Opus** (explicit `model: "opus"` override; current Opus models default to 1M context on Max plans, which the 12-partial merge requires) so it has the context budget to consume 12 partials and the reasoning capability for cross-cluster dedup + sister-sweep. Planner + Plan-amender are also Opus per the policy table (high-leverage low-volume Plan authoring). Implementer + Fixer + Investigator are Sonnet by default; the Sweeping carve-out (see [rules.md §24.0i](rules.md#24-audit-evidence-discipline-meta--how-to-audit) Sweeping carve-out sub-block) permits Opus escalation when ≥1 of four criteria is met (atomic >40-file dispatch / >3-concern dispatch / cross-runtime refactor / cascading pipeline change). Every K=N Auditor / Plan-Auditor / Final-reviewer `Agent` invocation MUST include `model: "sonnet"` explicitly; every Opus dispatch under the Sweeping carve-out MUST cite the triggering criterion in both the dispatch brief and the sub-agent's return self-attestation. Canonical predicate-of-record: [rules.md §24.0i](rules.md#24-audit-evidence-discipline-meta--how-to-audit). Verification discipline that compensates for Sonnet dispatch: [Orchestrator verification of Sonnet sub-agent outputs](#orchestrator-verification-of-sonnet-sub-agent-outputs).
 
-**Step 3 — Orchestrator waits for all 5 partials:**
+**Step 3 — Orchestrator waits for all 12 partials:**
 
-When ALL 5 background notifications return, the orchestrator dispatches the Aggregator. The orchestrator does NOT read partials directly — it dispatches the Aggregator with the list of partial paths and lets the Aggregator do the merge.
+When ALL 12 background notifications return, the orchestrator dispatches the Aggregator. The orchestrator does NOT read partials directly — it dispatches the Aggregator with the list of partial paths and lets the Aggregator do the merge.
 
-**Step 4 — Orchestrator dispatches the Aggregator:**
+**Step 4 — Orchestrator dispatches the Aggregator (Opus per [Sub-agent model policy per role](#sub-agent-model-policy-per-role)):**
 
 A single `Agent` invocation (foreground OK; the Aggregator is not parallelizable). Brief:
 
-- Read the 5 partials at the listed paths
+- Read the 12 partials at the listed paths
 - Read the deliverable's cross-cutting focus areas (named in the shared-context file)
 - Perform the six responsibilities in [§3 Aggregator role](#aggregator-role-post-cluster-consolidation) in order
 - Write the canonical big table + `### Round N findings` subsection to the journal
@@ -629,14 +733,50 @@ A single `Agent` invocation (foreground OK; the Aggregator is not parallelizable
 **Step 5 — Orchestrator routes on the Aggregator's recommendation:**
 
 - **CLEAN (zero FINDING rows + zero new cross-cluster findings)**: advance to next phase (next step, or SHIP for final-review).
-- **FINDINGS present**: dispatch a fresh Fixer sub-agent with the consolidated finding list. After Fixer returns, dispatch the next round (R+1) — a brand-new K=5 batch + brand-new Aggregator, fresh context across the board.
+- **FINDINGS present**: dispatch a fresh Fixer sub-agent with the consolidated finding list. After Fixer returns, dispatch the next round (R+1) — a brand-new K=12 batch + brand-new Aggregator, fresh context across the board.
 
 **Wall-clock expectations:**
 
-- A K=5 batch wall-clock is dominated by the slowest cluster, NOT the sum. Empirically the slowest cluster (typically Cluster B style / D docs depending on scope) determines round duration; clusters with thinner scope finish much sooner.
-- A round = one K=5 dispatch + Aggregator + (if findings) one Fixer = ~1/4-1/5 of a sequential K=1 walk that covered the same predicate count.
-- 10-iteration ceiling per step still applies — where ONE iteration = one full round of K=5 Auditors + Aggregator + (if findings) Fixer.
+- A K=12 batch wall-clock is dominated by the slowest cluster, NOT the sum. Empirically the slowest cluster (typically D1 docs / C2 architectural-layer / E2 audit-meta depending on scope) determines round duration; clusters with thinner scope finish much sooner.
+- A round = one K=12 dispatch + Aggregator + (if findings) one Fixer = ~1/4-1/5 of a sequential K=1 walk that covered the same predicate count (K=12 gives ~35-45% wall-clock reduction relative to prior smaller-K splits thanks to tighter per-Auditor focus).
+- 10-iteration ceiling per step still applies — where ONE iteration = one full round of K=12 Auditors + Aggregator + (if findings) Fixer.
 
+<sup>[↑ jump to top](#top)</sup>
+
+### Orchestrator verification of Sonnet sub-agent outputs
+
+> **Trust-but-verify discipline — the structural compensation for dispatching Sonnet-default roles per the [Sub-agent model policy per role](#sub-agent-model-policy-per-role) canonical table. Predicate-of-record: [rules.md §24.0i](rules.md#24-audit-evidence-discipline-meta--how-to-audit).**
+
+When the orchestrator dispatches Sonnet-default sub-agents (Auditor / Plan-Auditor / Final-reviewer / Implementer / Fixer / Investigator), it takes on additional verification responsibility. Sonnet is the right capability for predicate-walking + grep verification + structured-brief execution, but the orchestrator cannot blindly accept Sonnet outputs as ground truth — the same way it cannot accept Opus outputs as ground truth either. The discipline below IS the structural compensation that makes Sonnet dispatch safe: spot-sampling, re-running gate samples, adversarially challenging "all green" reports, re-reading changed files for high-stakes work.
+
+**The discipline is mandatory.** A Sonnet dispatch without trust-but-verify follow-up is structurally weaker than the same dispatch followed through. The orchestrator's Opus context budget is partly reserved for the verification work — that's part of why the Orchestrator role itself is Opus per the policy table.
+
+**Specific verification actions** (apply per dispatch type):
+
+1. **Spot-sample partial evidence** (per K=12 audit round) — random-sample 1-2 PASS rows from each cluster Auditor's partial; re-read the cited `file:line` to confirm the evidence is real. Sonnet Auditors occasionally cite a file:line that doesn't actually carry the cited evidence (the line may have been edited since the cited grep, OR the Auditor synthesized a citation that's adjacent-but-not-exact). Spot-checking 1-2 rows per partial × 12 clusters = 12-24 sampling reads per round; cheap relative to the cost of a missed FINDING shipping.
+2. **Re-run gate samples** (per Implementer / Fixer return) — occasionally re-run a build / test / grep the sub-agent claimed passed. Particularly: re-run the pre-flight Evidence greps the sub-agent reported zero-hit; re-run `dotnet build server/D2.slnx` if the sub-agent claimed warning-clean; re-run `jb inspectcode` if claimed clean. Sonnet sub-agents occasionally report "build clean" against stale state (the build ran successfully BEFORE their last edit) — re-running locks in the post-edit state.
+3. **Adversarial challenge on "all green" reports** — when a sub-agent reports zero findings or "no real bugs surfaced", probe in the next dispatch: "did you exercise corner cases X / Y / Z?" Name specific failure modes the sub-agent should have considered. "All green" without enumeration of what was checked is the most common short-circuit pattern; the adversarial follow-up either surfaces the missed corners or confirms genuine coverage. This is also a Sonnet-specific tuning aid — Sonnet returns are more prone to optimistic framing than Opus returns.
+4. **Re-read changed files for high-stakes work** — security-touching code (auth flows, JWT validation, secrets handling, IDOR-relevant resolvers), user-visible UI/UX flows (error messages, form validation, redirects), data-touching paths (migrations, dual-writes, rollbacks). For these classes, the orchestrator re-reads the Sonnet sub-agent's changed files directly — don't trust the sub-agent's summary alone. The cost of one Opus context-window pass over a handful of changed files is dwarfed by the cost of a security regression or data-loss bug shipping.
+5. **Re-run verifying grep on Fixer BEFORE/AFTER claims** — Fixer tamper-evident dispatch (per [rules.md §24.14](rules.md#24-audit-evidence-discipline-meta--how-to-audit)) requires the Fixer to paste literal BEFORE-grep + AFTER-grep + BEFORE `git diff --stat` + AFTER `git diff --stat`. The orchestrator occasionally re-runs the verifying grep against current state to confirm the Fixer's AFTER claim matches reality. Sonnet Fixers occasionally claim AFTER-state that's adjacent-but-not-exact (e.g., the grep returned zero hits because of a regex typo, not because the fix landed).
+
+**Dispatch-brief contracts that support trust-but-verify** — the orchestrator's dispatch briefs to Sonnet sub-agents EXPLICITLY DEMAND evidence-trail-over-confidence. Specific requirements the brief MUST include:
+
+- **Every PASS row cites file + line** (not "looks good", not "verified ✓") — per [rules.md §24.2](rules.md#24-audit-evidence-discipline-meta--how-to-audit).
+- **Every FINDING row cites the grep / check** that surfaced it (so the orchestrator can re-run the same grep to confirm) — per [rules.md §24.4](rules.md#24-audit-evidence-discipline-meta--how-to-audit).
+- **Every "no bugs surfaced" return is challenged** in the dispatch brief itself: "if you found zero bugs, enumerate the specific failure modes you considered and ruled out" — adversarial framing per [research on adversarial code review](https://asdlc.io/patterns/adversarial-code-review/).
+- **Every Fixer BEFORE/AFTER claim is tamper-evident** — literal grep output + `git diff --stat`, not paraphrased — per [rules.md §24.14](rules.md#24-audit-evidence-discipline-meta--how-to-audit).
+- **Every sub-agent return self-attests its model** — per the [Sub-agent model policy per role](#sub-agent-model-policy-per-role) Self-documentation requirement.
+
+**When to escalate to full re-dispatch** — if a verification action surfaces that the Sonnet sub-agent's output was substantially wrong (cited evidence doesn't exist, claimed-green gates actually fail, claimed-closed findings are still present), the orchestrator re-dispatches a fresh sub-agent (NEW context, possibly Opus-escalated under the Sweeping carve-out if scope justifies) with the verification findings as input. Do NOT prompt the same Sonnet sub-agent to "fix the discrepancy" — its context is already polluted by the original misfire. Fresh-context restart is the correct response.
+
+**Why this discipline exists structurally** — without trust-but-verify, dispatching Sonnet to predicate-walking work creates an asymmetric risk: cost savings are real (Sonnet is materially cheaper per token + materially more available in the user's weekly budget), but the quality floor depends entirely on Sonnet's first-pass accuracy. Trust-but-verify closes the asymmetry: cost savings are still real (verification reads are dramatically cheaper than full Opus dispatch), AND the quality floor is enforced by orchestrator-side spot-checks. The combined economics dominate Opus-only dispatch for the high-volume Sonnet-shape roles.
+
+**Cross-references:**
+
+- [Sub-agent model policy per role](#sub-agent-model-policy-per-role) — the canonical table specifying which roles are Sonnet-default (and therefore subject to this discipline).
+- [rules.md §24.0i](rules.md#24-audit-evidence-discipline-meta--how-to-audit) — the predicate-level enforcement of the model policy + the trust-but-verify discipline.
+- [rules.md §24.14](rules.md#24-audit-evidence-discipline-meta--how-to-audit) — tamper-evident Fixer dispatch (one specific instance of trust-but-verify, codified as a predicate).
+- [rules.md §24.13.3](rules.md#24-audit-evidence-discipline-meta--how-to-audit) — sister-sweep discipline (the Fixer-side mandate the orchestrator's brief enforces).
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -644,13 +784,13 @@ A single `Agent` invocation (foreground OK; the Aggregator is not parallelizable
 
 The Aggregator MUST run the following baseline sweeps as part of step 4 (cross-cluster sister-sweep) — regardless of what cluster Auditors found in their partials. Cluster Auditors' sister-sweeps under rules.md §24.13.3 run WITHIN their cluster's predicate scope; the Aggregator's sweeps below run against the FULL DELIVERABLE DIFF SCOPE (typically the path-set from `git diff --name-only nova` minus gitignored paths + `docs/dev/deliverables/` immutable snapshots).
 
-| Sweep | Command (literal — substitute scope) | What it catches |
-|---|---|---|
-| **Past-framing** (§11.19 / §11.20) | `grep -rEn 'previously\|formerly\|used to\|was consolidated\|migrated from\|prior versions\|Resolved the CRITICAL\|Fixed a latent' <deliverable diff scope>` | Historical-narration prose that drifted into KEEP docs / source comments across multiple clusters at once |
-| **Forward-framing** (§11.28) | `grep -rEn 'will be\|going to\|upcoming\|planned\|pending\|awaiting\|transitional\|temporary\|eventually\|future-proof\|once X ships' <deliverable diff scope>` | Forward-framing prose describing what DOESN'T exist yet (KEEP docs must describe current reality) |
-| **Falsey/Truthy dogfood** (§5.1) | `grep -rEn 'string\.IsNullOrEmpty\|string\.IsNullOrWhiteSpace' <deliverable diff scope> --include='*.cs' \| grep -v '/Generated/' \| grep -v '/tests/'` | Hand-rolled null/empty checks where `Falsey()` / `Truthy()` applies (Cluster B predicate, but commonly co-occurs with Cluster A correctness fixes) |
-| **Line-length** (§7.14) | `awk 'length > 100' <deliverable diff scope C# / TS files>` | Wide lines introduced anywhere in the deliverable. **Em-dash UTF-8 byte-counting artifact awareness per rules.md §24.13.2** — `awk length` measures BYTES not codepoints; em-dashes (3 bytes) inflate apparent length. Manually re-confirm any borderline hit by visual character count. |
-| **Hand-mirrored cross-language constants** (§11.30) | Manual enumeration: identify wire identifiers (header names, error codes, JSON property names, OTel tag names) appearing as string literals in BOTH .NET and TS source within the diff scope, where a spec catalog should own them | Cross-language wire identifiers hand-duplicated instead of spec-cataloged + emitter-generated. |
+| Sweep                                               | Command (literal — substitute scope)                                                                                                                                                                                               | What it catches                                                                                                                                                                                                                                                                          |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Past-framing** (§11.19 / §11.20)                  | `grep -rEn 'previously\|formerly\|used to\|was consolidated\|migrated from\|prior versions\|Resolved the CRITICAL\|Fixed a latent' <deliverable diff scope>`                                                                       | Historical-narration prose that drifted into KEEP docs / source comments across multiple clusters at once                                                                                                                                                                                |
+| **Forward-framing** (§11.28)                        | `grep -rEn 'will be\|going to\|upcoming\|planned\|pending\|awaiting\|transitional\|temporary\|eventually\|future-proof\|once X ships' <deliverable diff scope>`                                                                    | Forward-framing prose describing what DOESN'T exist yet (KEEP docs must describe current reality)                                                                                                                                                                                        |
+| **Falsey/Truthy dogfood** (§5.1)                    | `grep -rEn 'string\.IsNullOrEmpty\|string\.IsNullOrWhiteSpace' <deliverable diff scope> --include='*.cs' \| grep -v '/Generated/' \| grep -v '/tests/'`                                                                            | Hand-rolled null/empty checks where `Falsey()` / `Truthy()` applies (Cluster B predicate, but commonly co-occurs with Cluster A correctness fixes)                                                                                                                                       |
+| **Line-length** (§7.14)                             | `awk 'length > 100' <deliverable diff scope C# / TS files>`                                                                                                                                                                        | Wide lines introduced anywhere in the deliverable. **Em-dash UTF-8 byte-counting artifact awareness per rules.md §24.13.2** — `awk length` measures BYTES not codepoints; em-dashes (3 bytes) inflate apparent length. Manually re-confirm any borderline hit by visual character count. |
+| **Hand-mirrored cross-language constants** (§11.30) | Manual enumeration: identify wire identifiers (header names, error codes, JSON property names, OTel tag names) appearing as string literals in BOTH .NET and TS source within the diff scope, where a spec catalog should own them | Cross-language wire identifiers hand-duplicated instead of spec-cataloged + emitter-generated.                                                                                                                                                                                           |
 
 **Operating rules:**
 
@@ -658,7 +798,6 @@ The Aggregator MUST run the following baseline sweeps as part of step 4 (cross-c
 - **Paste literal command + literal output into the Aggregator's `### Round N findings` subsection** under a `#### Aggregator cross-cluster baseline sweeps` heading. Zero hits = one line per sweep ("§14.1 past-framing: 0 hits"). Non-zero hits = each surfaced as its own consolidated finding with severity + file:line + description + suggested fix, classified per rules.md §24.13.3a dedup rule (originating-predicate classification + additional-predicate provenance).
 - **Augment, do not replace.** This checklist is the BASELINE — the Aggregator MAY add deliverable-specific sweeps drawn from the per-deliverable cross-step focus areas defined in the Plan section of the final-review journal. The baseline runs every round; deliverable-specific sweeps run when applicable.
 - **New recurring classes feed back into this checklist.** When a cross-cluster sister-sweep class proves valuable across multiple deliverables, propose adding it to the table above in the deliverable's distillation — keeping the checklist a living artifact rather than a static one.
-
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -668,28 +807,29 @@ The K=1 single-Auditor dispatch is documented in [§3 Sub-agent architecture](#3
 
 The "narrow scope" / "tamper-evident proof exists" / "mechanical change" / "I already verified the fix" reasoning patterns are NOT valid self-justifications — they are exactly the cheating failure mode this framework exists to prevent (per [CLAUDE.md MANDATORY block 0](../../CLAUDE.md#mandatory-block-0-orchestrator-only-main-thread): "The ONLY bypass is an explicit user request").
 
-**If you think K=1 is appropriate, ASK the user before dispatching.** Write the proposed K=1 justification in your message to the user (what the scope is, why partitioning offers no parallelism win, what coverage guarantees you're forfeiting) and wait for explicit `K=1 approved` before dispatching. Without that explicit per-round approval, the orchestrator defaults to K=5 per [§3 Auditor cluster partition](#auditor-cluster-partition-canonical-k5) — every audit round, no exceptions.
+**If you think K=1 is appropriate, ASK the user before dispatching.** Write the proposed K=1 justification in your message to the user (what the scope is, why partitioning offers no parallelism win, what coverage guarantees you're forfeiting) and wait for explicit `K=1 approved` before dispatching. Without that explicit per-round approval, the orchestrator defaults to K=12 per [§3 Auditor cluster partition](#auditor-cluster-partition-canonical-k12) — every audit round, no exceptions.
 
-**Empirical justification** (the "why" this policy was codified): deliverable 0008-geo-data-pipeline final audit cycle. After R-final-1 K=5 + Final Fixer, the orchestrator self-invoked K=1 verification reasoning "Fixer changes are narrow and tamper-evident proof exists." That K=1 round surfaced 2 brand-new findings (R-final-V-1 HIGH §14.3 conversation-scoped ID + R-final-V-2 LOW §7.14 line-length residuals — both introduced by Final Fixer 3's new test file) AND a §24.0 process gap (Final Fixer 2 + Final Fixer 3 missing fix-log entries) that the orchestrator had not anticipated. The user then required full K=5 dispatch (R-final-2) per CLAUDE.md MANDATORY, which independently surfaced ONE FURTHER finding the K=1 had missed: R-final-3-D-F-1 MEDIUM (cross-doc Tier 3 contradiction in `tools/geo-data-pipeline/README.md` — sister-sweep gap inherited from R-final-1's D-F-3 fix). A second K=5 round (R-final-3) was then required to certify closure. Net outcome: the self-invoked K=1 cost an additional R-final-V round + R-final-2 K=5 round + R-final-3 K=5 round to fully certify SHIP-readiness, plus a process-integrity breach that the user explicitly called out.
+**Empirical justification** (the "why" this policy was codified): deliverable 0008-geo-data-pipeline final audit cycle (shipped under K=5; today's canonical default is K=12 — the lesson applies identically to any K>1 baseline). After R-final-1 K=5 batch + Final Fixer, the orchestrator self-invoked K=1 verification reasoning "Fixer changes are narrow and tamper-evident proof exists." That K=1 round surfaced 2 brand-new findings (R-final-V-1 HIGH §14.3 conversation-scoped ID + R-final-V-2 LOW §7.14 line-length residuals — both introduced by Final Fixer 3's new test file) AND a §24.0 process gap (Final Fixer 2 + Final Fixer 3 missing fix-log entries) that the orchestrator had not anticipated. The user then required K=5 dispatch (R-final-2) per CLAUDE.md MANDATORY, which independently surfaced ONE FURTHER finding the K=1 had missed: R-final-3-D-F-1 MEDIUM (cross-doc Tier 3 contradiction in `tools/geo-data-pipeline/README.md` — sister-sweep gap inherited from R-final-1's D-F-3 fix). A second K=5 round (R-final-3) was then required to certify closure. Net outcome: the self-invoked K=1 cost an additional R-final-V round + R-final-2 K=5 round + R-final-3 K=5 round to fully certify SHIP-readiness, plus a process-integrity breach that the user explicitly called out.
 
-**Why secondary K=5 passes are load-bearing even when prior closures look complete:** K=5 passes don't just verify prior closures — they also catch issues missed in initial passes because different cluster Auditor angles + different cross-cluster sister-sweeps reveal what single-Auditor walks structurally cannot. A K=1 Auditor sees their own §-range only; the 5 K=5 Auditors collectively walk the full catalog with 5 independent fresh-context perspectives, and the Aggregator's cross-cluster sister-sweep (per [Aggregator role](#aggregator-role-post-cluster-consolidation) step 4) catches drift classes that span clusters. The 5 partials + Aggregator structure IS the coverage guarantee; collapsing to K=1 collapses the guarantee.
+**Why secondary K=12 passes are load-bearing even when prior closures look complete:** K=12 passes don't just verify prior closures — they also catch issues missed in initial passes because different cluster Auditor angles + different cross-cluster sister-sweeps reveal what single-Auditor walks structurally cannot. A K=1 Auditor sees their own §-range only; the 12 K=12 Auditors collectively walk the full catalog with 12 independent fresh-context perspectives, and the Aggregator's cross-cluster sister-sweep (per [Aggregator role](#aggregator-role-post-cluster-consolidation) step 4, run on Opus per [Sub-agent model policy per role](#sub-agent-model-policy-per-role)) catches drift classes that span clusters. The 12 partials + Aggregator structure IS the coverage guarantee; collapsing to K=1 collapses the guarantee.
 
 **How to apply:**
 
-1. **Default**: every audit round per [Per-round dispatch protocol](#per-round-dispatch-protocol) step 2 dispatches K=5. No exceptions, no self-justification.
+1. **Default**: every audit round per [Per-round dispatch protocol](#per-round-dispatch-protocol) step 2 dispatches K=12. No exceptions, no self-justification.
 2. **K=1 candidate identification**: if the orchestrator believes K=1 is appropriate (e.g. step really is a single-line typo fix), the orchestrator writes a proposed-K=1 message to the user enumerating: (a) the exact scope (what's changed), (b) why partitioning offers no parallelism win, (c) what coverage guarantees are forfeited (which cluster perspectives won't be exercised), (d) why the orchestrator believes those forfeitures are acceptable for this scope.
 3. **User approval**: the user responds with explicit `K=1 approved` (or equivalent unambiguous approval) per occurrence. Approvals do NOT carry forward to subsequent rounds — every K=1 round needs fresh per-occurrence approval.
-4. **Without explicit approval**: dispatch K=5. Even if the orchestrator has previously discussed K=1 with the user, even if the prior round was K=1-approved, every NEW round defaults to K=5 unless freshly approved.
-5. **Verification rounds after Fixer**: especially-important target for the policy. The post-Fixer verification round is exactly where the orchestrator is most tempted to rationalize K=1 ("the Fixer's tamper-evident proof shows the change landed; I just need to confirm closure"). That rationalization is the failure mode empirically demonstrated by deliverable 0008 R-final-V. Post-Fixer verification rounds default to K=5 per the standard policy; the Fixer's tamper-evident output (per rules.md §24.14) speeds up each cluster Auditor's verification but does NOT eliminate the need for K=5's independent angles + cross-cluster sister-sweep.
+4. **Without explicit approval**: dispatch K=12. Even if the orchestrator has previously discussed K=1 with the user, even if the prior round was K=1-approved, every NEW round defaults to K=12 unless freshly approved.
+5. **Verification rounds after Fixer**: especially-important target for the policy. The post-Fixer verification round is exactly where the orchestrator is most tempted to rationalize K=1 ("the Fixer's tamper-evident proof shows the change landed; I just need to confirm closure"). That rationalization is the failure mode empirically demonstrated by deliverable 0008 R-final-V (shipped under K=5). Post-Fixer verification rounds default to K=12 per the standard policy; the Fixer's tamper-evident output (per rules.md §24.14) speeds up each cluster Auditor's verification but does NOT eliminate the need for K=12's independent angles + cross-cluster sister-sweep.
 
 ### Partial-file template (per Auditor)
 
-Every cluster Auditor writes to its partial file with this structure (cluster letter / name / §-range substituted from the partition table). The orchestrator includes this template in the shared-context file so all 5 Auditors produce consistent output the Aggregator can mechanically merge.
+Every cluster Auditor writes to its partial file with this structure (cluster code / name / §-range substituted from the partition table). The orchestrator includes this template in the shared-context file so all 12 Auditors produce consistent output the Aggregator can mechanically merge.
 
 ```markdown
-# R{N} Partial — Cluster {LETTER}: {Cluster name}
+# R{N} Partial — Cluster {CLUSTER}: {Cluster name}
 
 **Auditor agent**: <agent ID if known>
+**Cluster code**: one of A1, A2, B1, B2, B3, C1, C2, C3, D1, D2, E1, E2
 **Predicate scope**: §{A}–§{B} ({list cluster sections})
 **Sweep timestamp**: <UTC>
 **Deliverable HEAD**: `git rev-parse HEAD` + any uncommitted changes from prior Fixer round
@@ -702,14 +842,14 @@ Every cluster Auditor writes to its partial file with this structure (cluster le
 > ✅ / ❌ / ⚪ / 🟡 emoji indicator. NO SHORTCUTS. Per rules.md §24.13.2: regex is a TOOL not source
 > of truth — manual reading required. Per rules.md §24.13.3: sister-sweep at full predicate applicability.
 
-| § | Subsection | Status | Evidence |
-|---|---|---|---|
-| <cluster-scoped rows; ~15-30 per cluster> | ... | ... | ... |
+| §                                         | Subsection | Status | Evidence |
+| ----------------------------------------- | ---------- | ------ | -------- |
+| <cluster-scoped rows; ~10-40 per cluster> | ...        | ...    | ...      |
 
 ## Cluster-scoped findings
 
 <list every FINDING surfaced by your cluster sweep with severity + file:line + description + fix,
- OR "(none — clean cluster sweep)">
+OR "(none — clean cluster sweep)">
 
 ## Special-emphasis observations relevant to your cluster
 
@@ -721,13 +861,11 @@ Every cluster Auditor writes to its partial file with this structure (cluster le
 that's not in §X-§Y but seems like §Z's concern — flagging for Aggregator">
 ```
 
-
 <sup>[↑ jump to top](#top)</sup>
 
 ### Why the table is sweep-only-replaceable
 
 If the fix-applying agent could flip a row to PASS, failure mode: fix doesn't actually take (typo, wrong line, partial replacement, cascade) → agent writes PASS anyway → next sweep "trusts" the PASS and skips re-walking the predicate → bug ships. With sweep-only-replacement of the big table, every PASS in every sweep's table is freshly walked against current code. There's no possibility of a stale PASS being inherited.
-
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -736,7 +874,6 @@ If the fix-applying agent could flip a row to PASS, failure mode: fix doesn't ac
 The append-only logs preserve the audit trail that the table-replacement model would otherwise lose. Anyone reading the journal can answer: "What did Round 1 find?" "What was changed in response?" "Did Round 2's sweep confirm closure?" An agent that could delete entries could quietly hide reversals or corrections — append-only forces every change (including reversals) into chronological visible order.
 
 Every audit round produces a STRUCTURED TABLE with one row per numbered subsection in `rules.md`. The table is the gate — a step is not done until a complete-table round shows zero FINDING rows.
-
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -760,7 +897,6 @@ Example big-table row format:
 | 1.3  | DI extensions tested via composition resolution   | ⚪ N/A            | No DI extensions added in this step |
 ```
 
-
 <sup>[↑ jump to top](#top)</sup>
 
 ### Loop count expectations
@@ -769,7 +905,6 @@ Example big-table row format:
 - A POORLY-PLANNED step (or one introducing complex new patterns) may need 5-8 rounds.
 - 10-iteration ceiling per step (per [Mandatory round sequence](#mandatory-round-sequence) above). Iteration 11 = escalate to user — something is structurally wrong.
 - Final-review surfaces 0-2 deliverable-wide consistency findings — typically 1-2 sweep rounds.
-
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -822,7 +957,6 @@ User approves / tweaks / rejects per proposal. Approved proposals get appended t
 
 Rejected proposals (one-off mistakes not worth a permanent rule) get noted in the deliverable's final report so the reasoning survives.
 
-
 <sup>[↑ jump to top](#top)</sup>
 
 ---
@@ -831,25 +965,25 @@ Rejected proposals (one-off mistakes not worth a permanent rule) get noted in th
 
 ### Appendix A: How this addresses each empirical failure mode
 
-| Failure mode (observed in 0002-auth-inbound) | How the framework prevents |
-|---|---|
-| Prose-as-evidence drift | rules.md §24.2 / §24.3 / §24.4 evidence-form predicates + Auditor adversarial framing. |
-| Convergence illusion | Orchestrator never marks CLEAN — Auditor does. Fresh sub-agents have no investment in stopping. |
-| Stale-memory shortcuts | Sub-agents have fresh context — no conversation summary to trust. |
-| Scope-narrowing | rules.md §24.13 pre-flight greps + §24.9 anti-laziness preamble. |
-| Self-review leniency bias | Auditor is separate sub-agent invocation, not main thread. Adversarial prompt framing. |
-| Mid-execution tier audits adding cycles without value | Tier audits removed entirely. Per-step audit sufficient because Auditor scope explicitly includes all files step touched (incl. files from prior steps if modified). Per rules.md §24.7. |
-| Implementer self-marking findings as fixed | Fixer is separate role; cannot mark anything CLEAN; closure proven by next round's verifier (and per rules.md §24.0b, fixes are recorded EXCLUSIVELY in the append-only fix log, never as edits to the big table). |
+| Failure mode (observed in 0002-auth-inbound)          | How the framework prevents                                                                                                                                                                                         |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Prose-as-evidence drift                               | rules.md §24.2 / §24.3 / §24.4 evidence-form predicates + Auditor adversarial framing.                                                                                                                             |
+| Convergence illusion                                  | Orchestrator never marks CLEAN — Auditor does. Fresh sub-agents have no investment in stopping.                                                                                                                    |
+| Stale-memory shortcuts                                | Sub-agents have fresh context — no conversation summary to trust.                                                                                                                                                  |
+| Scope-narrowing                                       | rules.md §24.13 pre-flight greps + §24.9 anti-laziness preamble.                                                                                                                                                   |
+| Self-review leniency bias                             | Auditor is separate sub-agent invocation, not main thread. Adversarial prompt framing.                                                                                                                             |
+| Mid-execution tier audits adding cycles without value | Tier audits removed entirely. Per-step audit sufficient because Auditor scope explicitly includes all files step touched (incl. files from prior steps if modified). Per rules.md §24.7.                           |
+| Implementer self-marking findings as fixed            | Fixer is separate role; cannot mark anything CLEAN; closure proven by next round's verifier (and per rules.md §24.0b, fixes are recorded EXCLUSIVELY in the append-only fix log, never as edits to the big table). |
 
 ### Appendix B: Mapping to Anthropic's five workflow patterns
 
-| Pattern | Use in this framework |
-|---|---|
-| Prompt chaining | Implementer → Auditor → Aggregator → Fixer is a chain |
-| Routing | Orchestrator routes based on Aggregator output (CLEAN vs FINDINGS) |
-| Parallelization | K=5 Auditors in parallel |
-| Orchestrator-workers | Main thread is orchestrator; sub-agents are workers |
-| Evaluator-optimizer | Auditor evaluates, Fixer optimizes — looped until clean |
+| Pattern              | Use in this framework                                              |
+| -------------------- | ------------------------------------------------------------------ |
+| Prompt chaining      | Implementer → Auditor → Aggregator → Fixer is a chain              |
+| Routing              | Orchestrator routes based on Aggregator output (CLEAN vs FINDINGS) |
+| Parallelization      | K=12 Auditors in parallel                                          |
+| Orchestrator-workers | Main thread is orchestrator; sub-agents are workers                |
+| Evaluator-optimizer  | Auditor evaluates, Fixer optimizes — looped until clean            |
 
 All five patterns compose into one framework. This is what Anthropic's research system achieves at scale; this design applies the same pattern to the audit loop specifically.
 
@@ -900,6 +1034,5 @@ All three together = the pattern is fit-for-purpose for D²-WORX's enterprise-re
 - **[Adversarial Code Review pattern — ASDLC](https://asdlc.io/patterns/adversarial-code-review/)** — Critic Agent reviews Builder Agent output. Breaks the self-validation echo chamber.
 - **[Why AI Agent Outputs Need Adversarial Review — DEV Community](https://dev.to/rih0z/why-ai-agent-outputs-need-adversarial-review-and-how-to-add-it-in-one-api-call-1l92)** — quantifies LLM self-review leniency bias. Critical: "Most 'agent reviews agent' implementations are one LLM with a clever prompt pretending to be three reviewers, where the model can rubber-stamp itself" — argues for SEPARATE sub-agent invocations, not roleplay.
 - **[The checklist manifesto — PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC4953332/)** — Gawande's surgical checklist research. 19 items, 2 minutes per checklist, 1/3rd reduction in inpatient complications. Lesson: short hierarchical checklists work; long flat ones get skipped. Applied here as 24 categories with recipe decomposition underneath, not 200 flat predicates.
-
 
 <sup>[↑ jump to top](#top)</sup>

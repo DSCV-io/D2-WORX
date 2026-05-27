@@ -125,7 +125,6 @@ describe("emitErrorCodes — snapshot pin", () => {
     expect(r.diagnostics).toEqual([]);
     expect(r.source).toContain("Has *\\/ inside.");
   });
-
 });
 
 describe("emitErrorCodes — per-VALUE pin for the shipping spec", () => {

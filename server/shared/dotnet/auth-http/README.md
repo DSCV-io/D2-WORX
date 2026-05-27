@@ -49,11 +49,11 @@ Carries the per-endpoint scope requirement (or harmless-endpoint opt-in). Two fl
 
 Attach via the fluent builder extensions:
 
-| Extension | Semantics |
-|---|---|
-| `.RequireD2Scope("scope")` | Endpoint requires this scope. |
-| `.RequireD2Scope("scope", "alt-scope")` | Endpoint requires at least one of these scopes. |
-| `.MarkAsD2HarmlessEndpoint()` | Endpoint bypasses auth entirely (probes / OIDC discovery / harmless intra-cluster info only). |
+| Extension                               | Semantics                                                                                     |
+| --------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `.RequireD2Scope("scope")`              | Endpoint requires this scope.                                                                 |
+| `.RequireD2Scope("scope", "alt-scope")` | Endpoint requires at least one of these scopes.                                               |
+| `.MarkAsD2HarmlessEndpoint()`           | Endpoint bypasses auth entirely (probes / OIDC discovery / harmless intra-cluster info only). |
 
 The deny-by-default state: an endpoint with NO `EndpointScopeMetadata` attached gets the FULL pipeline (validator + liveness; scope check passes against the empty required set). Endpoints that need to bypass auth entirely MUST opt in explicitly via `.MarkAsD2HarmlessEndpoint()` — the codebase deliberately does NOT recognize the BCL `[AllowAnonymous]` attribute (its semantic is tied to the BCL `AuthenticationMiddleware` chain we bypass).
 
@@ -69,17 +69,17 @@ var problem = failure.ToProblemDetails(httpContext);
 
 Populates an RFC 7807 `Microsoft.AspNetCore.Mvc.ProblemDetails`:
 
-| Field | Source |
-|---|---|
-| `Status` | `D2Result.StatusCode` (verbatim — no remapping). |
-| `Title` | Locale-neutral coarse English from the spec-driven closed enumeration (e.g. `"Unauthorized"` for 401, `"Service Unavailable"` for 503, `"Request Failed"` as fallback). Locale-aware translation is the client's job via the `d2_messages` extension. |
-| `Type` | `https://problems.d2.dcsv.io/{kebab-cased-error-code}` (spec-driven `TYPE_URI_PREFIX` value). |
-| `Detail` | DELIBERATELY OMITTED. Telling an attacker which validation step failed (signature vs expired vs claim missing) is an info leak; the granular `d2_error_code` carries the machine-readable taxonomy for legitimate operators. |
-| `Instance` | `"{Method} {Path}"` (no query string — matches the path-B Customizer shape for cross-path consistency). |
-| `Extensions["d2_error_code"]` | `D2Result.ErrorCode` (one of the `AUTH_*` constants from `D2.Shared.Auth.Errors.AuthErrorCodes`). |
-| `Extensions["d2_messages"]` | `D2Result.Messages` array (TK keys + parameter bindings). Client-side Paraglide translates. |
-| `Extensions["d2_input_errors"]` | `D2Result.InputErrors` array — only emitted when non-empty. Field-level form errors keyed by field name; client renders under each input directly. |
-| `Extensions["traceId"]` | `Activity.Current?.TraceId` (W3C lower-hex format). Omitted when no Activity is on the execution context — never surfaced as null. |
+| Field                           | Source                                                                                                                                                                                                                                                |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Status`                        | `D2Result.StatusCode` (verbatim — no remapping).                                                                                                                                                                                                      |
+| `Title`                         | Locale-neutral coarse English from the spec-driven closed enumeration (e.g. `"Unauthorized"` for 401, `"Service Unavailable"` for 503, `"Request Failed"` as fallback). Locale-aware translation is the client's job via the `d2_messages` extension. |
+| `Type`                          | `https://problems.d2.dcsv.io/{kebab-cased-error-code}` (spec-driven `TYPE_URI_PREFIX` value).                                                                                                                                                         |
+| `Detail`                        | DELIBERATELY OMITTED. Telling an attacker which validation step failed (signature vs expired vs claim missing) is an info leak; the granular `d2_error_code` carries the machine-readable taxonomy for legitimate operators.                          |
+| `Instance`                      | `"{Method} {Path}"` (no query string — matches the path-B Customizer shape for cross-path consistency).                                                                                                                                               |
+| `Extensions["d2_error_code"]`   | `D2Result.ErrorCode` (one of the `AUTH_*` constants from `D2.Shared.Auth.Errors.AuthErrorCodes`).                                                                                                                                                     |
+| `Extensions["d2_messages"]`     | `D2Result.Messages` array (TK keys + parameter bindings). Client-side Paraglide translates.                                                                                                                                                           |
+| `Extensions["d2_input_errors"]` | `D2Result.InputErrors` array — only emitted when non-empty. Field-level form errors keyed by field name; client renders under each input directly.                                                                                                    |
+| `Extensions["traceId"]`         | `Activity.Current?.TraceId` (W3C lower-hex format). Omitted when no Activity is on the execution context — never surfaced as null.                                                                                                                    |
 
 **2xx guard**: `ToProblemDetails` throws `InvalidOperationException` when `(int)result.StatusCode < 400`. RFC 7807 frames the wire around 4xx / 5xx; a 2xx partial-success (e.g. `SomeFound` / 206) belongs on the D2Result envelope, not the ProblemDetails body.
 
@@ -114,17 +114,17 @@ Or better, constructor-inject `IRequestContext` directly — the scoped resolver
 
 ## Dependencies
 
-| Package | Why |
-|---|---|
-| `D2.Shared.Auth` | `JwtValidator` (consumed via `InternalsVisibleTo`), `AuthFailures`, `AuthErrorCodes`, `AuthLog`, `AuthTelemetry`. |
-| `D2.Shared.Auth.Abstractions` | `ISessionLivenessTracker` contract + `JwtClaimTypes` + `D2HttpContextItems.REQUEST_CONTEXT` (shared with sibling `D2.Shared.Auth.Grpc`). |
-| `D2.Shared.Context.Abstractions` | `IRequestContext` shape. |
-| `D2.Shared.Result` | `D2Result` typed factories. |
-| `D2.Shared.I18n.Abstractions` | `TKMessage` shape. |
-| `D2.Shared.Utilities` | `Falsey()` / `Truthy()` extensions. |
-| `Microsoft.AspNetCore.App` (framework ref via `Sdk.Web`) | `HttpContext`, `IEndpointConventionBuilder`, `Microsoft.AspNetCore.Mvc.ProblemDetails`, `IApplicationBuilder`. |
-| `Microsoft.Extensions.{DependencyInjection,Logging,Options}.Abstractions` | DI / logging / options. |
-| `JetBrains.Annotations` | Standard annotations. |
+| Package                                                                   | Why                                                                                                                                      |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `D2.Shared.Auth`                                                          | `JwtValidator` (consumed via `InternalsVisibleTo`), `AuthFailures`, `AuthErrorCodes`, `AuthLog`, `AuthTelemetry`.                        |
+| `D2.Shared.Auth.Abstractions`                                             | `ISessionLivenessTracker` contract + `JwtClaimTypes` + `D2HttpContextItems.REQUEST_CONTEXT` (shared with sibling `D2.Shared.Auth.Grpc`). |
+| `D2.Shared.Context.Abstractions`                                          | `IRequestContext` shape.                                                                                                                 |
+| `D2.Shared.Result`                                                        | `D2Result` typed factories.                                                                                                              |
+| `D2.Shared.I18n.Abstractions`                                             | `TKMessage` shape.                                                                                                                       |
+| `D2.Shared.Utilities`                                                     | `Falsey()` / `Truthy()` extensions.                                                                                                      |
+| `Microsoft.AspNetCore.App` (framework ref via `Sdk.Web`)                  | `HttpContext`, `IEndpointConventionBuilder`, `Microsoft.AspNetCore.Mvc.ProblemDetails`, `IApplicationBuilder`.                           |
+| `Microsoft.Extensions.{DependencyInjection,Logging,Options}.Abstractions` | DI / logging / options.                                                                                                                  |
+| `JetBrains.Annotations`                                                   | Standard annotations.                                                                                                                    |
 
 ## Tests
 

@@ -83,11 +83,16 @@ export function deriveWeekEnrichment(
   weekData: WeekDataPayload["supplemental"]["weekData"],
   alpha2: string,
 ): CountryWeekEnrichment | null {
-  const firstDayRaw = weekData.firstDay[alpha2] ?? weekData.firstDay[DEFAULT_REGION];
+  const firstDayRaw =
+    weekData.firstDay[alpha2] ?? weekData.firstDay[DEFAULT_REGION];
   const weekendStartRaw =
-    weekData.weekendStart?.[alpha2] ?? weekData.weekendStart?.[DEFAULT_REGION] ?? "sat";
+    weekData.weekendStart?.[alpha2] ??
+    weekData.weekendStart?.[DEFAULT_REGION] ??
+    "sat";
   const weekendEndRaw =
-    weekData.weekendEnd?.[alpha2] ?? weekData.weekendEnd?.[DEFAULT_REGION] ?? "sun";
+    weekData.weekendEnd?.[alpha2] ??
+    weekData.weekendEnd?.[DEFAULT_REGION] ??
+    "sun";
   const firstDay = firstDayRaw ? CLDR_DAY_TO_TITLE[firstDayRaw] : null;
   const weekendStart = CLDR_DAY_TO_TITLE[weekendStartRaw];
   const weekendEnd = CLDR_DAY_TO_TITLE[weekendEndRaw];

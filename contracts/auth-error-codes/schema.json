@@ -16,7 +16,14 @@
   "definitions": {
     "errorCode": {
       "type": "object",
-      "required": ["code", "httpStatus", "category", "userMessageKey", "factoryName", "doc"],
+      "required": [
+        "code",
+        "httpStatus",
+        "category",
+        "userMessageKey",
+        "factoryName",
+        "doc"
+      ],
       "additionalProperties": false,
       "properties": {
         "code": {
@@ -31,7 +38,11 @@
         },
         "category": {
           "type": "string",
-          "enum": ["validation_failure", "infrastructure_unavailable", "policy_denied"],
+          "enum": [
+            "validation_failure",
+            "infrastructure_unavailable",
+            "policy_denied"
+          ],
           "description": "Closed enum classification. Drives D2Result factory selection (validation_failure / policy_denied -> Unauthorized; infrastructure_unavailable -> ServiceUnavailable) AND telemetry classification."
         },
         "userMessageKey": {

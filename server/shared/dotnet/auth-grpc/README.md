@@ -58,6 +58,7 @@ public sealed class FilesService : Files.FilesBase
 `D2RequireScopeAttribute` and `D2HarmlessEndpointAttribute` apply at method level OR class level. ASP.NET routing auto-pulls them onto endpoint metadata during `MapGrpcService<T>()` — no extra wiring required.
 
 **Precedence** (mirrors BCL `[AllowAnonymous]` over `[Authorize]`):
+
 - Method-level `[D2HarmlessEndpoint]` overrides any class-level `[D2RequireScope]`.
 - Method-level `[D2RequireScope]` overrides any class-level `[D2RequireScope]`.
 - Fluent metadata takes precedence over both attribute paths.
@@ -85,13 +86,13 @@ throw failure.ToRpcException();
 
 Builds an `RpcException(Status, Trailers)`:
 
-| Field | Source |
-|---|---|
-| `Status.StatusCode` | `D2Result.StatusCode` mapped: 401 → `Unauthenticated` (16); 503 → `Unavailable` (14); other → `Internal` (13). |
-| `Status.Detail` | DELIBERATELY EMPTY. Telling an attacker which validation step failed (signature vs expired vs claim missing) is an info leak; the granular `d2_error_code` trailer carries the machine-readable taxonomy for legitimate operators. |
-| `Trailers[D2GrpcTrailers.ERROR_CODE]` (`"d2_error_code"`) | `D2Result.ErrorCode` (one of the `AUTH_*` constants from `D2.Shared.Auth.Errors.AuthErrorCodes`). |
-| `Trailers[D2GrpcTrailers.MESSAGES]` (`"d2_messages"`) | `D2Result.Messages` array serialized as JSON text (TK keys + bounded params). Same wire shape as the HTTP middleware's ProblemDetails `d2_messages` extension. |
-| `Trailers[D2GrpcTrailers.TRACE_ID]` (`"traceId"`) | `Activity.Current?.TraceId` (W3C lower-hex format, 32 chars). camelCase matches the HTTP ProblemDetails extension key `traceId`. Omitted when no Activity is on the execution context — never surfaced as null. |
+| Field                                                     | Source                                                                                                                                                                                                                             |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Status.StatusCode`                                       | `D2Result.StatusCode` mapped: 401 → `Unauthenticated` (16); 503 → `Unavailable` (14); other → `Internal` (13).                                                                                                                     |
+| `Status.Detail`                                           | DELIBERATELY EMPTY. Telling an attacker which validation step failed (signature vs expired vs claim missing) is an info leak; the granular `d2_error_code` trailer carries the machine-readable taxonomy for legitimate operators. |
+| `Trailers[D2GrpcTrailers.ERROR_CODE]` (`"d2_error_code"`) | `D2Result.ErrorCode` (one of the `AUTH_*` constants from `D2.Shared.Auth.Errors.AuthErrorCodes`).                                                                                                                                  |
+| `Trailers[D2GrpcTrailers.MESSAGES]` (`"d2_messages"`)     | `D2Result.Messages` array serialized as JSON text (TK keys + bounded params). Same wire shape as the HTTP middleware's ProblemDetails `d2_messages` extension.                                                                     |
+| `Trailers[D2GrpcTrailers.TRACE_ID]` (`"traceId"`)         | `Activity.Current?.TraceId` (W3C lower-hex format, 32 chars). camelCase matches the HTTP ProblemDetails extension key `traceId`. Omitted when no Activity is on the execution context — never surfaced as null.                    |
 
 The trailer keys are spec-driven via `contracts/grpc-trailers/grpc-trailers.spec.json` — the `D2.Shared.Grpc.Trailers.SourceGen` Roslyn generator emits `D2GrpcTrailers` into this csproj from the spec, and `tools/ts-codegen` emits the cross-language sibling `D2GrpcTrailers` into `@d2/grpc-client`. Both sides reference identical wire values byte-for-byte.
 
@@ -183,18 +184,18 @@ All four server-side handler methods — `UnaryServerHandler`, `ClientStreamingS
 
 ## Dependencies
 
-| Package | Why |
-|---|---|
-| `D2.Shared.Auth` | `JwtValidator` (consumed via `InternalsVisibleTo`), `AuthFailures`, `AuthErrorCodes`, `AuthLog`, `AuthTelemetry`. |
-| `D2.Shared.Auth.Abstractions` | `ISessionLivenessTracker` contract + `JwtClaimTypes`. |
-| `D2.Shared.Context.Abstractions` | `IRequestContext` shape. |
-| `D2.Shared.Result` | `D2Result` typed factories. |
-| `D2.Shared.I18n.Abstractions` | `TKMessage` shape. |
-| `D2.Shared.Utilities` | `Falsey()` / `Truthy()` extensions. |
-| `Grpc.AspNetCore.Server` | Server-side gRPC binding (`Interceptor`, `ServerCallContext`, `Metadata`, `Status`, `RpcException`, `IServerCallContextFeature`). |
-| `Microsoft.AspNetCore.App` (framework ref via `Sdk.Web`) | Hosts gRPC services; provides `HttpContext`, `IEndpointConventionBuilder`, `IApplicationBuilder`. |
-| `Microsoft.Extensions.{DependencyInjection,Logging,Options}.Abstractions` | DI / logging / options. |
-| `JetBrains.Annotations` | Standard annotations. |
+| Package                                                                   | Why                                                                                                                               |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `D2.Shared.Auth`                                                          | `JwtValidator` (consumed via `InternalsVisibleTo`), `AuthFailures`, `AuthErrorCodes`, `AuthLog`, `AuthTelemetry`.                 |
+| `D2.Shared.Auth.Abstractions`                                             | `ISessionLivenessTracker` contract + `JwtClaimTypes`.                                                                             |
+| `D2.Shared.Context.Abstractions`                                          | `IRequestContext` shape.                                                                                                          |
+| `D2.Shared.Result`                                                        | `D2Result` typed factories.                                                                                                       |
+| `D2.Shared.I18n.Abstractions`                                             | `TKMessage` shape.                                                                                                                |
+| `D2.Shared.Utilities`                                                     | `Falsey()` / `Truthy()` extensions.                                                                                               |
+| `Grpc.AspNetCore.Server`                                                  | Server-side gRPC binding (`Interceptor`, `ServerCallContext`, `Metadata`, `Status`, `RpcException`, `IServerCallContextFeature`). |
+| `Microsoft.AspNetCore.App` (framework ref via `Sdk.Web`)                  | Hosts gRPC services; provides `HttpContext`, `IEndpointConventionBuilder`, `IApplicationBuilder`.                                 |
+| `Microsoft.Extensions.{DependencyInjection,Logging,Options}.Abstractions` | DI / logging / options.                                                                                                           |
+| `JetBrains.Annotations`                                                   | Standard annotations.                                                                                                             |
 
 ## Tests
 

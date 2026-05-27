@@ -22,7 +22,8 @@
   "scripts": {
     "prebuild": "pnpm --filter ts-codegen exec tsx src/auth-context-emit.ts",
     "build": "tsc -b",
-    "test": "vitest run"
+    "test": "vitest run",
+    "type-check:test": "tsc -p tsconfig.test.json"
   },
   "devDependencies": {
     "typescript": "5.9.3",

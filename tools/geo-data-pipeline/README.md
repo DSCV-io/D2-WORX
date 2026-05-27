@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`tools/`](../README.md)
 
-TypeScript dev tool that pulls upstream geo reference data (CLDR, IANA tzdb, libphonenumber, datasets/*, Wikidata SPARQL, debian/iso-codes), transforms it, and writes the JSON catalogs at `contracts/geo/` that codegen consumes.
+TypeScript dev tool that pulls upstream geo reference data (CLDR, IANA tzdb, libphonenumber, datasets/\*, Wikidata SPARQL, debian/iso-codes), transforms it, and writes the JSON catalogs at `contracts/geo/` that codegen consumes.
 
 ## Quick start
 
@@ -40,20 +40,42 @@ src/
 
 All upstream fetches go through `util/cache.ts` (HTTP GET with provenance sidecar + SHA-256 + 24h TTL). Re-running `pnpm geo:refresh` after the first pull is fast — only stale entries re-fetch.
 
+### Subdivision source-priority architecture
+
+The subdivisions transformer (`src/transformers/subdivisions.ts`) uses Wikidata.en (P300 SPARQL label) as the PRIMARY source for English displayName / officialName, falling back to debian/iso-codes' `name` field on the ~140 codes Wikidata lacks `.en` for. CLDR is NO LONGER used for English subdivision displayName (stale for many post-2020 ISO 3166-2 reassignments — e.g., the 2020-11-24 Iran reassignment). Debian remains the authority for WHICH codes exist; CLDR-only codes (`D2GEO011` zombies) are filtered automatically.
+
+Norwegian endonyms use a special cascade `nb → nn → no → da → sv` because Wikidata stores Norwegian under multiple Bokmål/Nynorsk variants and lacks a unified `no` locale for many Norwegian subdivisions.
+
+See [`../../contracts/geo/KNOWN_WARNINGS.md`](../../contracts/geo/KNOWN_WARNINGS.md) for the full source-priority rationale + overlay-policy guidance.
+
+### Post-refresh review checklist
+
+After each `pnpm geo:refresh`, walk these signals:
+
+1. **D2GEO011 zombie count** — surfaced in stdout as `[D2GEO011] dropped {N} CLDR-zombie codes`. Compare to the prior count; large swings warrant investigation.
+2. **Missing-Wikidata-en log** — `tools/geo-data-pipeline/logs/missing-wikidata-en.json` (gitignored). Review each row's `debianFallbackName`; if a fallback is awkward, add an overlay entry at `contracts/geo/overlays/subdivisions.overlays.spec.json` with a clear `reason`.
+3. **Per-country divergence summary** — surfaced in stdout as `[divergence] N countries have ≥1 subdivision where Wikidata.en ≠ debian.name` plus top-10 by count. Informational — gauges drift between sources.
+4. **Pinned canonical truths test** — `tests/unit/transformers-subdivisions-pinned-truths.test.ts`. MUST pass; failure indicates wholesale upstream drift (Wikidata or Debian shifted a long-stable name). Escalate per [`KNOWN_WARNINGS.md`](../../contracts/geo/KNOWN_WARNINGS.md).
+5. **D2GEO010 catalog-uniqueness count** — compare to the 10 expected dupes documented in [`KNOWN_WARNINGS.md`](../../contracts/geo/KNOWN_WARNINGS.md). Any new entries warrant investigation.
+
+Add overlay entries (`subdivisions.overlays.spec.json`) ONLY when Wikidata.en is wrong AND the Debian fallback is also unacceptable. Most prior need for overlays (e.g., the Iran 2020-11-24 reassignment) is now handled automatically by the source-priority hierarchy.
+
 ## Operator workflows
 
-| Workflow | Command | When to use |
-|---|---|---|
-| Refresh all catalogs | `pnpm geo:refresh` | Routine pipeline run; idempotent |
-| Force-refresh a specific source | delete `.cache/<source>/<key>` then re-run | When upstream changes within the 24h TTL window |
-| Diff between runs | `pnpm geo:diff` | Review what upstream changed before approving |
-| Approve curated drift | `pnpm geo:approve` | Lock acknowledged upstream drift into per-source `.upstream-rejections.json` |
-| List active overlays | `pnpm geo:overlays` | Audit active manual overlay patches across all overlay files with `addedAt` + `reason`; append `--json` for structured output |
-| Bump catalog version | `pnpm geo:bump-version <semver>` | Cut a new `catalogVersion` value for the next refresh |
-| Per-catalog refresh | `pnpm write:countries` (etc.) | Iterate on a single catalog without running the full pipeline |
-| Tier 2 only | `pnpm tier-2:build` | Regenerate Tier 2 from existing Tier 1 (skip upstream pulls) |
-| Parity tests | `pnpm test` | Verify cross-catalog FK integrity + denormalization + encoding round-trip |
-| TypeScript build | `pnpm run build` | Verify TS compiles before commit (CI mirror) |
+> **Refresh is OPERATOR-INTENTIONAL.** There is no scheduled refresh job. Run `pnpm geo:refresh` deliberately — recommended cadence is **monthly review** OR **before a major release**, whichever comes first. After each refresh, walk the post-refresh checklist (below) to triage drift signals.
+
+| Workflow                        | Command                                    | When to use                                                                                                                   |
+| ------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| Refresh all catalogs            | `pnpm geo:refresh`                         | Routine pipeline run; idempotent                                                                                              |
+| Force-refresh a specific source | delete `.cache/<source>/<key>` then re-run | When upstream changes within the 24h TTL window                                                                               |
+| Diff between runs               | `pnpm geo:diff`                            | Review what upstream changed before approving                                                                                 |
+| Approve curated drift           | `pnpm geo:approve`                         | Lock acknowledged upstream drift into per-source `.upstream-rejections.json`                                                  |
+| List active overlays            | `pnpm geo:overlays`                        | Audit active manual overlay patches across all overlay files with `addedAt` + `reason`; append `--json` for structured output |
+| Bump catalog version            | `pnpm geo:bump-version <semver>`           | Cut a new `catalogVersion` value for the next refresh                                                                         |
+| Per-catalog refresh             | `pnpm write:countries` (etc.)              | Iterate on a single catalog without running the full pipeline                                                                 |
+| Tier 2 only                     | `pnpm tier-2:build`                        | Regenerate Tier 2 from existing Tier 1 (skip upstream pulls)                                                                  |
+| Parity tests                    | `pnpm test`                                | Verify cross-catalog FK integrity + denormalization + encoding round-trip                                                     |
+| TypeScript build                | `pnpm run build`                           | Verify TS compiles before commit (CI mirror)                                                                                  |
 
 ## Cache
 
@@ -95,14 +117,14 @@ CLDR doesn't ship `currencies.json` / `numbers.json` / `ca-gregorian.json` for e
 
 ## Dependencies
 
-| Package | License | Why |
-|---|---|---|
-| `papaparse` | MIT | CSV parsing for datasets/* sources |
-| `fast-xml-parser` | MIT | XML parsing for libphonenumber metadata |
-| `tsx` | MIT | TS execution for CLI scripts (no precompile step) |
-| `typescript` | Apache-2.0 | Build (`tsc -b`) |
-| `vitest` | MIT | Parity + unit tests |
-| `@types/node`, `@types/papaparse` | MIT | TS type declarations |
+| Package                           | License    | Why                                               |
+| --------------------------------- | ---------- | ------------------------------------------------- |
+| `papaparse`                       | MIT        | CSV parsing for datasets/\* sources               |
+| `fast-xml-parser`                 | MIT        | XML parsing for libphonenumber metadata           |
+| `tsx`                             | MIT        | TS execution for CLI scripts (no precompile step) |
+| `typescript`                      | Apache-2.0 | Build (`tsc -b`)                                  |
+| `vitest`                          | MIT        | Parity + unit tests                               |
+| `@types/node`, `@types/papaparse` | MIT        | TS type declarations                              |
 
 Standalone tool — no `@d2/*` workspace dependencies. Build and tests run in isolation.
 

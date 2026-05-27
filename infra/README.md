@@ -51,22 +51,23 @@ docker stack deploy -c infra/compose/compose.yml -c infra/compose/compose.prod.y
 
 ## Observability access
 
-| Service | Port | URL | Credentials |
-|---|---|---|---|
-| Grafana | 3000 | http://localhost:3000 | `OTEL_USERNAME` / `OTEL_PASSWORD` from `.env.secrets` |
-| Portainer | 9443 | https://localhost:9443 | bcrypt hash from `.env.secrets` |
-| pgAdmin | 5533 | http://localhost:5533 | `DBA_EMAIL` / `DBA_PASSWORD` from `.env.secrets` |
-| RedisInsight | 5540 | http://localhost:5540 | (no auth) |
-| Alloy UI | 12345 | http://localhost:12345 | (no auth) |
-| RabbitMQ Mgmt | 15672 | http://localhost:15672 | `MQ_USERNAME` / `MQ_PASSWORD` from `.env.secrets` |
-| MinIO Console | 9001 | http://localhost:9001 | `S3_USERNAME` / `S3_PASSWORD` from `.env.secrets` |
-| Dkron Dashboard | 8888 | http://localhost:8888 | (no auth) |
+| Service         | Port  | URL                    | Credentials                                           |
+| --------------- | ----- | ---------------------- | ----------------------------------------------------- |
+| Grafana         | 3000  | http://localhost:3000  | `OTEL_USERNAME` / `OTEL_PASSWORD` from `.env.secrets` |
+| Portainer       | 9443  | https://localhost:9443 | bcrypt hash from `.env.secrets`                       |
+| pgAdmin         | 5533  | http://localhost:5533  | `DBA_EMAIL` / `DBA_PASSWORD` from `.env.secrets`      |
+| RedisInsight    | 5540  | http://localhost:5540  | (no auth)                                             |
+| Alloy UI        | 12345 | http://localhost:12345 | (no auth)                                             |
+| RabbitMQ Mgmt   | 15672 | http://localhost:15672 | `MQ_USERNAME` / `MQ_PASSWORD` from `.env.secrets`     |
+| MinIO Console   | 9001  | http://localhost:9001  | `S3_USERNAME` / `S3_PASSWORD` from `.env.secrets`     |
+| Dkron Dashboard | 8888  | http://localhost:8888  | (no auth)                                             |
 
 ## Production topology
 
 Pre-launch: Compose on a single VPS. Production: Docker Swarm + Portainer. Full design (cluster shape, overlay networks, secrets/configs management, K8s upgrade path) is documented in [docs/v2/V2.md §5.9](../docs/v2/V2.md#59-production-deployment).
 
 Two overlay networks (Swarm-time):
+
 - `ingress` — Edge instances attach here; faces L7 LB (Cloudflare)
 - `internal` — everyone else (SvelteKit, Files, Courier, Notifications, Audit, infra)
 
@@ -75,6 +76,7 @@ Edge attaches to both. SvelteKit on `internal` only → cannot be reached from o
 ## Migrating between environments
 
 `compose.yml` is the base — same shape between dev and prod. `compose.prod.yml` overlays:
+
 - Pre-built images from `ghcr.io` (instead of `build:` from source)
 - `deploy:` blocks for Swarm (resource limits + restart policies)
 - Dev-only services disabled via `profiles: [dev-tools]` (pgAdmin, RedisInsight, Portainer)

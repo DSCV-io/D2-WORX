@@ -63,9 +63,7 @@ describe("validateD2ResultEnvelopeSpec", () => {
         { constName: "B", value: "x", doc: "second" },
       ],
     });
-    expect(v.diagnostics[0]?.id).toBe(
-      DiagnosticIds.DRE_DUPLICATE_FIELD_VALUE,
-    );
+    expect(v.diagnostics[0]?.id).toBe(DiagnosticIds.DRE_DUPLICATE_FIELD_VALUE);
   });
 
   it("flags empty value via D2DRE005", () => {
@@ -87,8 +85,12 @@ describe("emitD2ResultEnvelope", () => {
   it("emits the envelope catalog with all 7 constants", () => {
     const result = emitD2ResultEnvelope(validSpec);
 
-    expect(result.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
-    expect(result.source).toContain("export const D2ResultEnvelopeFieldNames = {");
+    expect(result.diagnostics.filter((d) => d.severity === "error")).toEqual(
+      [],
+    );
+    expect(result.source).toContain(
+      "export const D2ResultEnvelopeFieldNames = {",
+    );
     expect(result.source).toContain('SUCCESS: "success",');
     expect(result.source).toContain('DATA: "data",');
     expect(result.source).toContain('MESSAGES: "messages",');

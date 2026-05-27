@@ -2,559 +2,559 @@
   "$schema": "./currencies.schema.json",
   "$note": "PIPELINE-RAW spec — produced by tools/geo-data-pipeline. Not directly consumed by codegen / D2.Shared.Geo.Default. A clean/transform pass to the sibling contracts/geo/currencies.spec.json (one level up) is a separate step. Sources: datasets/currency-codes (PDDL — ISO 4217 alpha3/numeric/decimals, active+retired) + CLDR cldr-core/supplemental/currencyData.json (Unicode-3.0 — temporal per-country usage history INVERTED into Currency.usageHistory + fractions/decimal-places) + CLDR cldr-numbers-full/{locale}/currencies.json (Unicode-3.0 — English + ~95 localized display names spanning all supported locales + every primary-language of every country in the catalog, so endonym derivation works for currencies whose home country speaks Arabic/Hindi/Thai/etc + narrow symbol). Catalog includes both active AND retired currencies — better to include and let consumers filter than risk incorrectly excluding something that may need to be active later. usageHistory entries may reference ISO 3166-3 transitional country codes (SU, YU, CS, DD) for dissolved entities — the Tier 2 GeopoliticalEntity layer is where these get mapped. Endonym derivation uses primary issuing country's primary language; multi-issuer currencies like EUR may yield endonym=null when no single home country can be picked.",
   "catalogVersion": "0.0.1",
-  "generatedAt": "2026-05-19T18:14:37.705Z",
+  "generatedAt": "2026-05-26T13:06:09.959Z",
   "sources": [
     {
       "name": "datasets-currency-codes",
       "url": "https://raw.githubusercontent.com/datasets/currency-codes/main/data/codes-all.csv",
       "license": "PDDL-1.0 (Open Knowledge Foundation Public Domain Dedication)",
-      "fetchedAt": "2026-05-18T21:34:16.460Z",
+      "fetchedAt": "2026-05-26T13:05:56.009Z",
       "sha256": "c4b6829a966f0564e77dc6c2d100d268cce61b30f7637bf3d5ec626b0393407f"
     },
     {
       "name": "cldr-core-supplemental",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-core/supplemental/currencyData.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-19T16:30:55.424Z",
+      "fetchedAt": "2026-05-26T11:58:35.803Z",
       "sha256": "e50315091b1f34428480f82970be64159ad207af0bdcebe7faa6260d3e34c8a6"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/aa/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:52.091Z",
+      "fetchedAt": "2026-05-26T13:05:56.192Z",
       "sha256": "540308b68e00740b19b4c9bee15d740ec063480a78dfdb07e62f882888e03288"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/am/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:52.465Z",
+      "fetchedAt": "2026-05-26T13:05:56.411Z",
       "sha256": "85c8a266027da9cf4044e96d68e6f0be58a7a99d49ac65a485fcf4134b0ec939"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/ar/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:52.648Z",
+      "fetchedAt": "2026-05-26T13:05:56.531Z",
       "sha256": "b39cc3d2cc55822e94ef2c4842d759ca60e3f85ae4bf7106268d0d0116168b23"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/az/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:53.060Z",
+      "fetchedAt": "2026-05-26T13:05:56.810Z",
       "sha256": "14f7f58bcb7ba4954411d2921f3f4843ff5297e9a4c5f8a5ac9a9e6e2fdd4de4"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/be/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:53.237Z",
+      "fetchedAt": "2026-05-26T13:05:56.982Z",
       "sha256": "de09a2b28d55ce05bbee2101495122d2fe55b09b1a2cd76d664ae2577cb685df"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/bg/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:53.479Z",
+      "fetchedAt": "2026-05-26T13:05:57.160Z",
       "sha256": "556cb452a2f86d3a56e05e57884dd69d4586727e23606300cd28b189ce79645d"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/bn/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:53.954Z",
+      "fetchedAt": "2026-05-26T13:05:57.386Z",
       "sha256": "79d9c38487457e7c9453b76611cd7e48a7e1667160725eb37d61a950c1bcd94c"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/bs/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:54.201Z",
+      "fetchedAt": "2026-05-26T13:05:57.544Z",
       "sha256": "af918d1dac589a3903f2ede26c31d4ece71d11d3c92dec5b19a4161fd4bb9cfb"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/ca/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:54.462Z",
+      "fetchedAt": "2026-05-26T13:05:57.698Z",
       "sha256": "06df8bd0da87393faf6e1a7e433b38a7628e93694b6feddfe19ab334ccd97361"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/cs/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:54.864Z",
+      "fetchedAt": "2026-05-26T13:05:57.941Z",
       "sha256": "941d2990b3cf64460695e0e6eaf398a48c6ae80b025b96a5e7dd6df4ddd47b5b"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/da/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:55.104Z",
+      "fetchedAt": "2026-05-26T13:05:58.071Z",
       "sha256": "9480cf9ba446e950d8d6ae6637cfe5b9187fac4d6577ec9defcc19521adcf1d8"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/de/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:34:17.303Z",
+      "fetchedAt": "2026-05-26T13:05:58.226Z",
       "sha256": "6ebdb4ee634cabd431adf1df8c9e6e36f442802c149a46f1515a3fe62b37788d"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/dv/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:55.227Z",
+      "fetchedAt": "2026-05-26T13:05:58.372Z",
       "sha256": "16115e0c98e71350bdab4272c6090bf0350a0a2abbce295f488f2a86c03d0bc7"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/dz/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:55.376Z",
+      "fetchedAt": "2026-05-26T13:05:58.561Z",
       "sha256": "de4f83b8bdf2b15c62f9fcc96ca5f030542786e142b20f085ba45c7bd942e422"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/el/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:55.561Z",
+      "fetchedAt": "2026-05-26T13:05:58.689Z",
       "sha256": "260fcb10a02d7b2e2621a88d3ec8eb77876fa1cdef543c700d77c20150abfbf1"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/en/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:34:16.678Z",
+      "fetchedAt": "2026-05-26T13:05:58.896Z",
       "sha256": "a6c41b28f4035f65ae698b53a66866982b4ff49bc0de7e840f91d2c6e6bdc23b"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/es/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:34:16.924Z",
+      "fetchedAt": "2026-05-26T13:05:59.052Z",
       "sha256": "521e4e42144dcacfef3d42fa00ffa6b1161637163671bc4e5d382dfa1bc4d9e1"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/et/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:55.693Z",
+      "fetchedAt": "2026-05-26T13:05:59.181Z",
       "sha256": "72ff08fbfd3a5ed28940fe6fe7bc8f3230c6d119437ddfde72daedc26ea7d7d7"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/fa/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:55.884Z",
+      "fetchedAt": "2026-05-26T13:05:59.395Z",
       "sha256": "88226b69d8d5c22273175806620616cdc70025d89b8ad5f68c93fcbdbe989b84"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/fi/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:56.015Z",
+      "fetchedAt": "2026-05-26T13:05:59.510Z",
       "sha256": "d8a3c9d1eecd4fec3922240ccc7ee072be1b8b35532ae04e0d4577362ddeea36"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/fil/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:56.189Z",
+      "fetchedAt": "2026-05-26T13:05:59.620Z",
       "sha256": "aa06d6ee4adce2d0f90bbd16ba6673b9770eda55d10bf5c9330c606e1675126b"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/fo/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:56.333Z",
+      "fetchedAt": "2026-05-26T13:05:59.850Z",
       "sha256": "63a600aa6dc3e482ca3b8f70d39c69dd05c7dd71177f9927e66fb0a6e1c09ec8"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/fr/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:34:17.172Z",
+      "fetchedAt": "2026-05-26T13:06:00.000Z",
       "sha256": "39fc400b745a6e056bb12d23c58f0753c01eae3cfb2c356a445dac6149760d06"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/he/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:56.547Z",
+      "fetchedAt": "2026-05-26T13:06:00.141Z",
       "sha256": "efc74e6e59508fb2f7c55fca425b9cdfc3afd7dea090c06eb97e92f27ddddce6"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/hi/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:56.702Z",
+      "fetchedAt": "2026-05-26T13:06:00.261Z",
       "sha256": "eb12b25f6625a2e7825ffcb6321d8169f85bb9cc168b37c1a224f9f4ccaac9c9"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/hr/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:56.946Z",
+      "fetchedAt": "2026-05-26T13:06:00.395Z",
       "sha256": "2dfc6b4382ad194f3895c5fc5070923e9b9bd1993d647fade90b571817880a44"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/ht/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:57.077Z",
+      "fetchedAt": "2026-05-26T13:06:00.610Z",
       "sha256": "f0beceddda312ed3a7f96c5e615f3de9bdf993e35e5340dff30621e02c74c6c9"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/hu/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:57.269Z",
+      "fetchedAt": "2026-05-26T13:06:00.863Z",
       "sha256": "ab2be94fbf814ea4346559b3e087cbd239e264f96f74647db9869e74a5af428c"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/hy/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:57.459Z",
+      "fetchedAt": "2026-05-26T13:06:00.999Z",
       "sha256": "8f27bc693159b657084882d464a779e265a234c0b6aafadd5dbbbc3969706885"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/id/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:57.593Z",
+      "fetchedAt": "2026-05-26T13:06:01.111Z",
       "sha256": "0529879eb785c0669f2806d966da47553bea8b7695aeb5fb5058258c766c9d2b"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/is/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:57.740Z",
+      "fetchedAt": "2026-05-26T13:06:01.280Z",
       "sha256": "c9ba6269c0804ba68ee4f38b64b2fd882c29142af4a21f28cf91e94efcf4431f"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/it/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:34:17.498Z",
+      "fetchedAt": "2026-05-26T13:06:01.414Z",
       "sha256": "c5f87901cdfc7130e77d2655cb9464454c99ce6fbf7bb860c62cd9f2f06dc5f5"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/ja/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:34:17.639Z",
+      "fetchedAt": "2026-05-26T13:06:01.552Z",
       "sha256": "409df5aa65a85a65703d907cf55048a10a0fe100101177166d8cfb92ebbed089"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/ka/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:57.889Z",
+      "fetchedAt": "2026-05-26T13:06:01.661Z",
       "sha256": "0a5e1d64cfb4d18dfcbb03fab36d580d99be502ca4f94ff44d0f464a1d48e5c8"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/kk/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:58.073Z",
+      "fetchedAt": "2026-05-26T13:06:01.836Z",
       "sha256": "41c987f1955079bb7fa99906f5dca90092106d8bf8fd9f214ba1c62549ce0152"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/kl/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:58.201Z",
+      "fetchedAt": "2026-05-26T13:06:02.022Z",
       "sha256": "425d549537951e5a5b051aaa498b664700b66c068dbf0fce5ce81c7cf7f707ee"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/km/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:58.346Z",
+      "fetchedAt": "2026-05-26T13:06:02.186Z",
       "sha256": "4bd8e71c8961949b1d828678e9a1ddc09570d7b0f2b58f7fe0aae46715a9c3b0"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/ko/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:34:17.899Z",
+      "fetchedAt": "2026-05-26T13:06:02.335Z",
       "sha256": "3cac00a4739a7d5de5204e658bb807fff7d9f10991fda9c538ff8e7eb5a0d1e7"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/ky/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:58.472Z",
+      "fetchedAt": "2026-05-26T13:06:02.521Z",
       "sha256": "a1354d3f695d724102ecf0e91a890ccc72751012f54778e320fcd6053e83da7c"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/la/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:58.596Z",
+      "fetchedAt": "2026-05-26T13:06:02.691Z",
       "sha256": "9ee70cef44492d3afb3ec5febc4249a9dd5f3b5574de4913143fb2d45698ec37"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/lb/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:58.732Z",
+      "fetchedAt": "2026-05-26T13:06:02.827Z",
       "sha256": "a11e85e893d1fd6d4c601e05241af18b179babdd5e4e7265cac0f71f185ee151"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/lo/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:58.866Z",
+      "fetchedAt": "2026-05-26T13:06:02.996Z",
       "sha256": "f319a513f7ec686cdeb0312c8e500093ebaca198251165abb455bf150bf88f1c"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/lt/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:58.994Z",
+      "fetchedAt": "2026-05-26T13:06:03.137Z",
       "sha256": "1c69b3623477e77845a783b4989be3db59935c09f3bbd32f45098a3ef9319541"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/lv/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:59.120Z",
+      "fetchedAt": "2026-05-26T13:06:03.255Z",
       "sha256": "582fca8064221ee3a625a9596f52430f990c8fdd8268e5bc528e36e59241d006"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/mk/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:59.342Z",
+      "fetchedAt": "2026-05-26T13:06:03.522Z",
       "sha256": "278a1797b6dbc3020ee2746e5604ffb55d41ec768c24105484ba7270152632af"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/mn/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:59.469Z",
+      "fetchedAt": "2026-05-26T13:06:03.682Z",
       "sha256": "f52b5e0de59acaeb936ff3504914c93cc7c268db675a70f407d29072e7f5e3bc"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/ms/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:59.593Z",
+      "fetchedAt": "2026-05-26T13:06:03.868Z",
       "sha256": "8bb9c4e05c19399178447edc161d9f5531a6a8ac9835631e39ed22875448aa87"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/mt/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:59.716Z",
+      "fetchedAt": "2026-05-26T13:06:04.070Z",
       "sha256": "52f00fe4f1ae5fbb1412b52aef3ecd7986720a5c26e5a713f86940318dac2121"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/my/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:36:59.906Z",
+      "fetchedAt": "2026-05-26T13:06:04.247Z",
       "sha256": "eee70993ecfb623315c2947e461ecc544544cb0c7ecbe741b00955e128b9aae7"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/ne/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:00.134Z",
+      "fetchedAt": "2026-05-26T13:06:04.522Z",
       "sha256": "cfee0711b582c4ea444ad3ebaabe97cb1094ec0d40660061b749ff758dd00f81"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/nl/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:34:17.767Z",
+      "fetchedAt": "2026-05-26T13:06:04.869Z",
       "sha256": "1cd456686cc6603be7c70f23bd8c297504bbbb128f3414a6a7a795a7aaf505d8"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/no/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:00.366Z",
+      "fetchedAt": "2026-05-26T13:06:05.034Z",
       "sha256": "267a6201e817eb3cebc23cc7fcb599432c4f662c4d42ebfc9dd0dabb20a682e3"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/ny/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:00.504Z",
+      "fetchedAt": "2026-05-26T13:06:05.175Z",
       "sha256": "2d4c56d763ec3dc3e707d58dca15b812468f8d5dd672f58976641ae2f19d109f"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/pl/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:34:18.494Z",
+      "fetchedAt": "2026-05-26T13:06:05.425Z",
       "sha256": "6c5aebdb2eae22b979e0bc14ec147193269316eb0a6f131bd2133ad130356819"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/pt/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:34:18.298Z",
+      "fetchedAt": "2026-05-26T13:06:05.590Z",
       "sha256": "b4a1524312a1afce2c7781c9db7448ee3ec6266de05a0e19fbd9f02648878405"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/ro/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:00.817Z",
+      "fetchedAt": "2026-05-26T13:06:05.769Z",
       "sha256": "68eb4cc294bf855ed9b37fbbc0d37af3beb15e8eb540d568ee24b2f84e4fbc9e"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/ru/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:00.971Z",
+      "fetchedAt": "2026-05-26T13:06:05.953Z",
       "sha256": "f8e10970ae91f3c2fa7400ab97d5fa58a79d7ab9d4fd95bc33c392bc661640b1"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/rw/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:01.107Z",
+      "fetchedAt": "2026-05-26T13:06:06.134Z",
       "sha256": "2ab869ff82c2e54cb522e0841f0bf9d294230672e2fb98a299692271a0dd110d"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/si/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:01.239Z",
+      "fetchedAt": "2026-05-26T13:06:06.321Z",
       "sha256": "ed5a530337e2166843b63f8103ebd80305ae3541305d1def982ccb7546e036a4"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/sk/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:01.366Z",
+      "fetchedAt": "2026-05-26T13:06:06.458Z",
       "sha256": "5180ad7d341fb9209d930ba533809aec675b13b81cb8d92f6515a2c25a480a2e"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/sl/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:01.503Z",
+      "fetchedAt": "2026-05-26T13:06:06.642Z",
       "sha256": "23b58dd9db621378e85fe7afe00f3ff38b1ba2ee3c6ad795658ac8f5021a528d"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/so/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:01.729Z",
+      "fetchedAt": "2026-05-26T13:06:06.885Z",
       "sha256": "f9ff8053567823e7115fdaf5000fd21e166d92b313fdec17d5fe71dec2b31907"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/sq/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:01.862Z",
+      "fetchedAt": "2026-05-26T13:06:07.068Z",
       "sha256": "9ebac2f95a054db7feffb1bf872428ef6467578bdacf28081abf2ac120e1bbf7"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/sr/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:02.068Z",
+      "fetchedAt": "2026-05-26T13:06:07.195Z",
       "sha256": "ac70eb9deba723d64addc9fc408ee6faf4701cced2015f84c855fffed9e96f7d"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/sv/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:02.195Z",
+      "fetchedAt": "2026-05-26T13:06:07.371Z",
       "sha256": "a1d7639bb9a97ef197c8ecd11d7bdc70b5d3431bcf355d332735dfc40a8c62d8"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/sw/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:02.327Z",
+      "fetchedAt": "2026-05-26T13:06:07.477Z",
       "sha256": "33342bdda853debeeb7ad467d9ef96c0f36efe8012cd07bbea8c97fd7018d06d"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/tg/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:02.601Z",
+      "fetchedAt": "2026-05-26T13:06:07.754Z",
       "sha256": "2c6765a9fdb2c604b2359364043a652dc505b86fead7a35ad067eb1f89f19d04"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/th/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:02.787Z",
+      "fetchedAt": "2026-05-26T13:06:07.948Z",
       "sha256": "ecd8ad7abaf68b1e4a0a6b713b30d5f3c32d680cfeb5edfeab983c13c56e663f"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/tk/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:02.943Z",
+      "fetchedAt": "2026-05-26T13:06:08.187Z",
       "sha256": "fafe899cf40b8203c0e20d40288654ead5b200daceee8db8cf432967c3d9dc66"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/to/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:03.307Z",
+      "fetchedAt": "2026-05-26T13:06:08.618Z",
       "sha256": "3a43d69987fc18474b5c84f918070542b907fc6c275accecada9b2969b7b9b35"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/tr/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:03.425Z",
+      "fetchedAt": "2026-05-26T13:06:08.742Z",
       "sha256": "daa774d3dbdd6f5f33e91c69ace63e2b3f79b670f1a457e3b74cfc159c88a699"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/uk/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:03.653Z",
+      "fetchedAt": "2026-05-26T13:06:09.010Z",
       "sha256": "339d6662e572cac283fefa0d2cc81702ffe29621969624a2b8831e69685edf80"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/ur/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:03.784Z",
+      "fetchedAt": "2026-05-26T13:06:09.117Z",
       "sha256": "a78b5f7ad48e9098e2b329fbb36a498c7237241f9084bf09fa554160a8091aa1"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/uz/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:03.908Z",
+      "fetchedAt": "2026-05-26T13:06:09.322Z",
       "sha256": "d39e79f32044d558dfbfb1ba878f83c6b38c35df0f1a675e95bdc654cd058c7d"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/vi/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:04.038Z",
+      "fetchedAt": "2026-05-26T13:06:09.485Z",
       "sha256": "e52bdf497a55773fa0b7c171bde46c9179e0828550a30349e211a6454af2f01c"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/zh/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:34:18.145Z",
+      "fetchedAt": "2026-05-26T13:06:09.755Z",
       "sha256": "c23b7df1982deae53121f6665e3c27059c1e47640b167c3ce0e3bf5a64d13c8d"
     },
     {
       "name": "cldr-numbers-full",
       "url": "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-numbers-full/main/zu/currencies.json",
       "license": "Unicode-3.0 (Unicode License)",
-      "fetchedAt": "2026-05-18T21:37:04.267Z",
+      "fetchedAt": "2026-05-26T13:06:09.938Z",
       "sha256": "764dee06f023ccb262b5084ef4bfc2a813b19c7db8372476e319dfe72b75b521"
     }
   ],
@@ -685,7 +685,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.953Z"
       }
     },
     {
@@ -782,7 +782,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -854,7 +854,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.953Z"
       }
     },
     {
@@ -951,7 +951,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.698Z"
+        "extractedAt": "2026-05-26T13:06:09.946Z"
       }
     },
     {
@@ -1001,7 +1001,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.953Z"
       }
     },
     {
@@ -1097,7 +1097,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.946Z"
       }
     },
     {
@@ -1193,7 +1193,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.946Z"
       }
     },
     {
@@ -1307,7 +1307,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -1403,7 +1403,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.946Z"
       }
     },
     {
@@ -1472,7 +1472,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.953Z"
       }
     },
     {
@@ -1542,7 +1542,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.953Z"
       }
     },
     {
@@ -1610,7 +1610,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.953Z"
       }
     },
     {
@@ -1680,7 +1680,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.953Z"
       }
     },
     {
@@ -1724,11 +1724,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -1774,11 +1771,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -1853,7 +1847,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.953Z"
       }
     },
     {
@@ -1949,7 +1943,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.946Z"
       }
     },
     {
@@ -1964,10 +1958,8 @@
       "endonymSourceCountryISO31661Alpha2Code": null,
       "usageHistory": [],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "sources": ["datasets/currency-codes"],
+        "extractedAt": "2026-05-26T13:06:09.953Z"
       }
     },
     {
@@ -2041,7 +2033,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -2193,7 +2185,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.946Z"
       }
     },
     {
@@ -2289,7 +2281,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.946Z"
       }
     },
     {
@@ -2304,10 +2296,8 @@
       "endonymSourceCountryISO31661Alpha2Code": null,
       "usageHistory": [],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "sources": ["datasets/currency-codes"],
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -2379,7 +2369,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -2475,7 +2465,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.946Z"
       }
     },
     {
@@ -2548,7 +2538,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -2644,7 +2634,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.947Z"
       }
     },
     {
@@ -2690,11 +2680,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -2790,7 +2777,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.947Z"
       }
     },
     {
@@ -2887,7 +2874,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.947Z"
       }
     },
     {
@@ -2958,7 +2945,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -3033,7 +3020,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -3104,7 +3091,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -3119,10 +3106,8 @@
       "endonymSourceCountryISO31661Alpha2Code": null,
       "usageHistory": [],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "sources": ["datasets/currency-codes"],
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -3137,10 +3122,8 @@
       "endonymSourceCountryISO31661Alpha2Code": null,
       "usageHistory": [],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "sources": ["datasets/currency-codes"],
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -3210,7 +3193,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -3256,11 +3239,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -3356,7 +3336,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -3403,11 +3383,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -3503,7 +3480,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.947Z"
       }
     },
     {
@@ -3599,7 +3576,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -3696,7 +3673,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.947Z"
       }
     },
     {
@@ -3792,7 +3769,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -3888,7 +3865,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.947Z"
       }
     },
     {
@@ -3934,11 +3911,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -4011,7 +3985,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -4079,7 +4053,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.947Z"
       }
     },
     {
@@ -4148,7 +4122,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -4217,7 +4191,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -4286,7 +4260,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -4383,7 +4357,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.947Z"
       }
     },
     {
@@ -4449,7 +4423,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -4517,7 +4491,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -4562,11 +4536,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -4662,7 +4633,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.947Z"
       }
     },
     {
@@ -4759,7 +4730,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.947Z"
       }
     },
     {
@@ -4836,7 +4807,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -4932,7 +4903,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.947Z"
       }
     },
     {
@@ -5003,7 +4974,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -5099,7 +5070,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.947Z"
       }
     },
     {
@@ -5193,7 +5164,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -5289,7 +5260,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.947Z"
       }
     },
     {
@@ -5386,7 +5357,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -5482,7 +5453,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -5497,10 +5468,8 @@
       "endonymSourceCountryISO31661Alpha2Code": null,
       "usageHistory": [],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "sources": ["datasets/currency-codes"],
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -5563,7 +5532,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -5666,7 +5635,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -5729,7 +5698,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -5774,11 +5743,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -5841,7 +5807,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -5938,7 +5904,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -6028,11 +5994,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.705Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -6070,11 +6033,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -6171,7 +6131,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -6268,7 +6228,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -6328,7 +6288,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -6424,7 +6384,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -6502,7 +6462,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -6517,10 +6477,8 @@
       "endonymSourceCountryISO31661Alpha2Code": null,
       "usageHistory": [],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "sources": ["datasets/currency-codes"],
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -6596,7 +6554,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -6692,7 +6650,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -6789,7 +6747,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -6885,7 +6843,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -6961,7 +6919,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -7057,7 +7015,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -7129,7 +7087,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -7219,7 +7177,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -7315,7 +7273,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -7430,7 +7388,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -7526,7 +7484,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -7623,7 +7581,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.946Z"
       }
     },
     {
@@ -7692,7 +7650,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -7753,7 +7711,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -7830,7 +7788,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -7939,7 +7897,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -8035,7 +7993,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -8100,7 +8058,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -8165,7 +8123,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -8252,7 +8210,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.953Z"
       }
     },
     {
@@ -8354,7 +8312,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -8694,7 +8652,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.946Z"
       }
     },
     {
@@ -8768,7 +8726,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.953Z"
       }
     },
     {
@@ -8865,7 +8823,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -8961,7 +8919,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -9104,7 +9062,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.953Z"
       }
     },
     {
@@ -9255,7 +9213,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -9321,7 +9279,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -9417,7 +9375,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -9488,7 +9446,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -9503,10 +9461,8 @@
       "endonymSourceCountryISO31661Alpha2Code": null,
       "usageHistory": [],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "sources": ["datasets/currency-codes"],
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -9602,7 +9558,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -9698,7 +9654,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -9794,7 +9750,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -9809,10 +9765,8 @@
       "endonymSourceCountryISO31661Alpha2Code": null,
       "usageHistory": [],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "sources": ["datasets/currency-codes"],
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -9908,7 +9862,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -9976,7 +9930,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -10042,7 +9996,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -10116,7 +10070,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -10212,7 +10166,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -10281,7 +10235,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -10352,7 +10306,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -10448,7 +10402,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -10545,7 +10499,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -10641,7 +10595,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -10713,7 +10667,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -10809,7 +10763,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -10905,7 +10859,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -11001,7 +10955,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -11110,7 +11064,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -11185,7 +11139,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -11264,7 +11218,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -11314,7 +11268,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -11417,7 +11371,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -11544,7 +11498,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.947Z"
       }
     },
     {
@@ -11641,7 +11595,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -11738,7 +11692,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -11788,7 +11742,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -11885,7 +11839,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -11972,7 +11926,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -12075,7 +12029,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -12184,7 +12138,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -12287,7 +12241,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -12384,7 +12338,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -12480,7 +12434,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -12577,7 +12531,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -12679,7 +12633,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -12776,7 +12730,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -12820,11 +12774,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.705Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -12869,11 +12820,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.705Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -12970,7 +12918,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -13067,7 +13015,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -13163,7 +13111,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -13260,7 +13208,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -13275,10 +13223,8 @@
       "endonymSourceCountryISO31661Alpha2Code": null,
       "usageHistory": [],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "sources": ["datasets/currency-codes"],
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -13375,7 +13321,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -13472,7 +13418,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -13569,7 +13515,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -13666,7 +13612,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -13762,7 +13708,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -13777,10 +13723,8 @@
       "endonymSourceCountryISO31661Alpha2Code": null,
       "usageHistory": [],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "sources": ["datasets/currency-codes"],
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -13871,7 +13815,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -13941,7 +13885,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -14008,7 +13952,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -14082,7 +14026,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -14149,7 +14093,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -14240,7 +14184,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -14314,7 +14258,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -14411,7 +14355,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -14514,7 +14458,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -14583,11 +14527,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.705Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -14632,11 +14573,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.705Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -14681,11 +14619,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.705Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -14781,7 +14716,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -14877,7 +14812,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -14950,7 +14885,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -15046,7 +14981,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -15094,11 +15029,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.705Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.958Z"
       }
     },
     {
@@ -15171,7 +15103,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -15268,7 +15200,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -15365,7 +15297,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -15461,7 +15393,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -15556,7 +15488,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -15652,7 +15584,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -15726,7 +15658,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -15797,7 +15729,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -15893,7 +15825,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -15933,11 +15865,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.705Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.958Z"
       }
     },
     {
@@ -15952,10 +15881,8 @@
       "endonymSourceCountryISO31661Alpha2Code": null,
       "usageHistory": [],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "sources": ["datasets/currency-codes"],
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -16052,7 +15979,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -16148,7 +16075,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -16245,7 +16172,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -16318,7 +16245,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -16381,7 +16308,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -16490,7 +16417,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -16565,7 +16492,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -16637,7 +16564,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -16733,7 +16660,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -16829,7 +16756,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -16925,7 +16852,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -16997,7 +16924,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -17093,7 +17020,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -17179,7 +17106,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -17288,7 +17215,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.947Z"
       }
     },
     {
@@ -17385,7 +17312,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -17507,7 +17434,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -17604,7 +17531,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -17701,7 +17628,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -17716,10 +17643,8 @@
       "endonymSourceCountryISO31661Alpha2Code": null,
       "usageHistory": [],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "sources": ["datasets/currency-codes"],
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -17788,7 +17713,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -17885,7 +17810,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -17955,7 +17880,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -18052,7 +17977,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -18149,7 +18074,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -18252,7 +18177,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -18349,7 +18274,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -18420,7 +18345,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -18499,7 +18424,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -18595,7 +18520,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -18692,7 +18617,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -18763,7 +18688,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -18778,10 +18703,8 @@
       "endonymSourceCountryISO31661Alpha2Code": null,
       "usageHistory": [],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "sources": ["datasets/currency-codes"],
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -18854,7 +18777,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -18950,7 +18873,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -19046,7 +18969,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -19143,7 +19066,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -19264,7 +19187,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -19360,7 +19283,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -19457,7 +19380,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -19554,7 +19477,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -19651,7 +19574,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -19724,7 +19647,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -19826,7 +19749,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -19899,7 +19822,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -20002,7 +19925,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -20099,7 +20022,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -20201,7 +20124,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -20276,7 +20199,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -20351,7 +20274,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -20447,7 +20370,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -20543,7 +20466,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -20639,7 +20562,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -20735,7 +20658,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -20809,7 +20732,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -20905,7 +20828,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -20999,7 +20922,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -21095,7 +21018,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -21230,7 +21153,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -21302,7 +21225,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -21399,7 +21322,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -21495,7 +21418,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -21592,7 +21515,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -21665,7 +21588,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -21762,7 +21685,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -21836,7 +21759,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -21932,7 +21855,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -22028,7 +21951,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -22125,7 +22048,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -22203,7 +22126,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -22279,7 +22202,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -22376,7 +22299,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -22472,7 +22395,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -22569,7 +22492,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -22666,7 +22589,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -22762,7 +22685,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -22831,7 +22754,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -22904,7 +22827,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -22919,10 +22842,8 @@
       "endonymSourceCountryISO31661Alpha2Code": null,
       "usageHistory": [],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "sources": ["datasets/currency-codes"],
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -23019,7 +22940,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -23248,7 +23169,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.946Z"
       }
     },
     {
@@ -23321,7 +23242,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.951Z"
       }
     },
     {
@@ -23394,7 +23315,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.956Z"
       }
     },
     {
@@ -23454,7 +23375,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.952Z"
       }
     },
     {
@@ -23469,10 +23390,8 @@
       "endonymSourceCountryISO31661Alpha2Code": null,
       "usageHistory": [],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "sources": ["datasets/currency-codes"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -23543,7 +23462,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -23640,7 +23559,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.952Z"
       }
     },
     {
@@ -23674,7 +23593,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.952Z"
       }
     },
     {
@@ -23771,7 +23690,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.952Z"
       }
     },
     {
@@ -23848,7 +23767,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -23879,7 +23798,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.952Z"
       }
     },
     {
@@ -23975,7 +23894,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -24072,7 +23991,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.952Z"
       }
     },
     {
@@ -24087,10 +24006,8 @@
       "endonymSourceCountryISO31661Alpha2Code": null,
       "usageHistory": [],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "sources": ["datasets/currency-codes"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -24187,7 +24104,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.952Z"
       }
     },
     {
@@ -24236,11 +24153,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.705Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.958Z"
       }
     },
     {
@@ -24337,7 +24251,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.952Z"
       }
     },
     {
@@ -24434,7 +24348,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -24456,11 +24370,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "sources": ["datasets/currency-codes", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.946Z"
       }
     },
     {
@@ -24586,7 +24497,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -24659,7 +24570,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.953Z"
       }
     },
     {
@@ -24731,7 +24642,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.953Z"
       }
     },
     {
@@ -24798,7 +24709,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.952Z"
       }
     },
     {
@@ -24867,7 +24778,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.952Z"
       }
     },
     {
@@ -24933,7 +24844,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.952Z"
       }
     },
     {
@@ -24999,7 +24910,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.952Z"
       }
     },
     {
@@ -25143,7 +25054,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.946Z"
       }
     },
     {
@@ -25244,7 +25155,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -25314,7 +25225,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -25383,7 +25294,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.954Z"
       }
     },
     {
@@ -25456,7 +25367,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -25525,7 +25436,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -25675,7 +25586,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.699Z"
+        "extractedAt": "2026-05-26T13:06:09.947Z"
       }
     },
     {
@@ -25746,7 +25657,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.953Z"
       }
     },
     {
@@ -25855,7 +25766,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.948Z"
       }
     },
     {
@@ -25927,7 +25838,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.953Z"
       }
     },
     {
@@ -25986,7 +25897,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -26028,7 +25939,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -26097,7 +26008,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.953Z"
       }
     },
     {
@@ -26138,7 +26049,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.950Z"
       }
     },
     {
@@ -26249,7 +26160,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.953Z"
       }
     },
     {
@@ -26322,7 +26233,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -26418,7 +26329,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.701Z"
+        "extractedAt": "2026-05-26T13:06:09.952Z"
       }
     },
     {
@@ -26499,7 +26410,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -26592,7 +26503,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -26674,7 +26585,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -26719,11 +26630,8 @@
         }
       ],
       "_provenance": {
-        "sources": [
-          "cldr-numbers-full",
-          "cldr-currencyData"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "sources": ["cldr-numbers-full", "cldr-currencyData"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -26793,7 +26701,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.703Z"
+        "extractedAt": "2026-05-26T13:06:09.955Z"
       }
     },
     {
@@ -26908,7 +26816,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.700Z"
+        "extractedAt": "2026-05-26T13:06:09.949Z"
       }
     },
     {
@@ -26994,7 +26902,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -27090,7 +26998,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.952Z"
       }
     },
     {
@@ -27166,7 +27074,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -27241,13 +27149,13 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
       "iso4217AlphaCode": "ZWC",
       "iso4217NumericCode": "716",
-      "displayName": "Rhodesian Dollar",
+      "displayName": "Zimbabwe Rhodesian Dollar",
       "symbol": null,
       "decimalPlaces": 2,
       "isActive": false,
@@ -27256,10 +27164,8 @@
       "endonymSourceCountryISO31661Alpha2Code": null,
       "usageHistory": [],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "sources": ["datasets/currency-codes"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -27337,7 +27243,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -27432,7 +27338,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.702Z"
+        "extractedAt": "2026-05-26T13:06:09.952Z"
       }
     },
     {
@@ -27503,7 +27409,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -27518,10 +27424,8 @@
       "endonymSourceCountryISO31661Alpha2Code": null,
       "usageHistory": [],
       "_provenance": {
-        "sources": [
-          "datasets/currency-codes"
-        ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "sources": ["datasets/currency-codes"],
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     },
     {
@@ -27583,7 +27487,7 @@
           "cldr-numbers-full",
           "cldr-currencyData"
         ],
-        "extractedAt": "2026-05-19T18:14:37.704Z"
+        "extractedAt": "2026-05-26T13:06:09.957Z"
       }
     }
   ]

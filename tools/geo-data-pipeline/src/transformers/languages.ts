@@ -62,7 +62,11 @@ export function transformLanguageRow(
   if (iso.length !== 2 || !/^[a-z]{2}$/.test(iso)) return null;
 
   const endonym = ctx.wikidataEndonyms.get(iso) ?? null;
-  const direction = deriveWritingDirection(iso, ctx.scriptMetadata, ctx.languageData);
+  const direction = deriveWritingDirection(
+    iso,
+    ctx.scriptMetadata,
+    ctx.languageData,
+  );
   const primaryScript = ctx.languageData[iso]?._scripts?.[0] ?? null;
 
   const localizedDisplayNames: Record<string, string> = {};
@@ -74,7 +78,8 @@ export function transformLanguageRow(
   const sources: string[] = ["datasets/language-codes"];
   if (endonym) sources.push("wikidata-sparql");
   if (direction) sources.push("cldr-script-language-data");
-  if (Object.keys(localizedDisplayNames).length > 0) sources.push("cldr-localenames-full");
+  if (Object.keys(localizedDisplayNames).length > 0)
+    sources.push("cldr-localenames-full");
 
   return {
     iso6391Code: iso,

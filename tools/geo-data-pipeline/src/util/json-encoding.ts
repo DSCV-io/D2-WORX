@@ -3,7 +3,9 @@
 // -----------------------------------------------------------------------
 
 import { writeFile } from "node:fs/promises";
+import prettier from "prettier";
 
+/* eslint-disable no-irregular-whitespace -- the NBSP in the JSDoc example below is intentional documentation */
 /**
  * Code points that JSON.stringify renders as their literal character but which look
  * invisible (or look identical to ASCII space) in editors — making them invisible footguns
@@ -16,6 +18,7 @@ import { writeFile } from "node:fs/promises";
  * Targets all known invisible/ambiguous space + bidi + zero-width characters used in CLDR
  * data (NBSP for fr/pl/kk thousands separator; bidi marks in ar date patterns; etc.).
  */
+/* eslint-enable no-irregular-whitespace */
 const INVISIBLE_CODE_POINTS: readonly number[] = [
   0x00a0, // NO-BREAK SPACE (CLDR fr/pl/kk thousands separator)
   0x1680, // OGHAM SPACE MARK
@@ -49,9 +52,9 @@ const INVISIBLE_CODE_POINTS: readonly number[] = [
 ];
 
 const INVISIBLE_REGEX: RegExp = (() => {
-  const escaped = INVISIBLE_CODE_POINTS
-    .map((cp) => `\\u${cp.toString(16).padStart(4, "0")}`)
-    .join("");
+  const escaped = INVISIBLE_CODE_POINTS.map(
+    (cp) => `\\u${cp.toString(16).padStart(4, "0")}`,
+  ).join("");
   return new RegExp(`[${escaped}]`, "g");
 })();
 
@@ -68,11 +71,31 @@ export function escapeInvisibles(jsonText: string): string {
 }
 
 /**
- * Writes an object as pretty-printed JSON with invisible code points escaped + a trailing
- * newline. Drop-in replacement for `writeFile(path, JSON.stringify(obj, null, 2) + "\n")`.
+ * Writes an object as pretty-printed JSON, normalized through Prettier so output is
+ * formatting-stable against a later `prettier --check` (eliminates noise diffs from
+ * subsequent format passes — see rules.md §26.5 fix-at-the-pipeline-source mandate).
+ *
+ * Pipeline:
+ *   1. `JSON.stringify(obj, null, 2)` — initial pretty-print.
+ *   2. `escapeInvisibles` — convert NBSP / bidi marks / zero-width chars to `\uXXXX` so
+ *      reviewers see the escape rather than an invisible glyph. Prettier preserves these
+ *      escape sequences as literal source characters (verified — it does not decode +
+ *      re-emit).
+ *   3. `prettier.format(..., { parser: "json", ...resolvedConfig })` — apply workspace
+ *      Prettier rules (defaults at the repo root; per-directory `.prettierrc` resolved
+ *      via `prettier.resolveConfig(path)` so any future override is honored automatically).
+ *   4. `writeFile` — Prettier's output already ends in `\n`; do NOT append another newline.
+ *
+ * Drop-in replacement for `writeFile(path, JSON.stringify(obj, null, 2) + "\n")`.
  */
 export async function writeSpecJson(path: string, obj: unknown): Promise<void> {
   const json = JSON.stringify(obj, null, 2);
   const escaped = escapeInvisibles(json);
-  await writeFile(path, `${escaped}\n`);
+  const config = await prettier.resolveConfig(path);
+  const formatted = await prettier.format(escaped, {
+    ...config,
+    parser: "json",
+    filepath: path,
+  });
+  await writeFile(path, formatted);
 }

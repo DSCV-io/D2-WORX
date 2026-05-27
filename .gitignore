@@ -165,9 +165,6 @@ _NCrunch*
 # Script I made to open all IDEs at once
 open_all.bat
 
-# Ignore georefdata.bin
-georefdata.bin
-
 # Environment files (keep .example files)
 .env.local
 .env.*.local

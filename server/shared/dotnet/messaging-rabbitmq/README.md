@@ -46,9 +46,9 @@ exchange, and default routing key.
 ## Cross-hop propagation
 
 - **Trace correlation** — full W3C `traceparent` (`00-{traceId}-{spanId}-{flags}`)
-  + optional `tracestate` AMQP headers. The consumer parses via
-  `ActivityContext.TryParse` and starts a `Consumer`-kind span whose parent
-  is the publish span — cross-hop trace assembly works in any OTel backend.
+  - optional `tracestate` AMQP headers. The consumer parses via
+    `ActivityContext.TryParse` and starts a `Consumer`-kind span whose parent
+    is the publish span — cross-hop trace assembly works in any OTel backend.
 - **Operational subset** — `RequestId` / `RequestPath` / fingerprints /
   `WhoIsHashId` ride in the `x-d2-context` AMQP header (base64url-of-JSON
   encoded `PropagatedContext`; same shape on every transport).
@@ -250,17 +250,17 @@ Every published message carries the headers below. Headers stay plaintext in
 the broker — they MUST NOT carry user identity, scopes, fingerprints, or any
 other sensitive context.
 
-| Header | Direction | Purpose |
-|---|---|---|
-| `content-type` | producer → consumer | Always `application/octet-stream`. Body is an opaque byte sequence (encrypted or JSON). |
-| `x-proto-type` | producer → consumer | The CLR FQN of the message type — fail-fast inspection without body parsing. |
-| `message-id` | producer → consumer | UUIDv7 (sortable, includes timestamp). Stable across publish retries — the publisher generates ONCE per `PublishAsync` call so a retry of an already-broker-received-but-unconfirmed publish doesn't bypass the consumer's idempotency window. |
-| `timestamp` | producer → consumer | ISO 8601 UTC at publish time. |
-| `traceparent` | producer → consumer | Full W3C trace-context string `00-{traceId}-{spanId}-{flags}`. The consumer parses it via `ActivityContext.TryParse` and starts a `Consumer`-kind span whose parent is the publish span — cross-hop trace assembly works in any OTel backend. |
-| `tracestate` | producer → consumer | Optional W3C vendor-specific trace state, forwarded as-is. |
-| `x-d2-encryption-kid` | producer → consumer | Encryption key id. Set only on encrypted messages. |
-| `x-d2-context` | producer → consumer | Base64url-of-JSON encoded `PropagatedContext` — request id, request path, fingerprints, WhoIs hash. NOT identity (UserId / OrgId / Scopes — those rebuild from the JWT at every hop). |
-| `x-d2-failure-reason` | DLQ-only | JSON-encoded `DlqFailureMetadata` (cause, errorCode, attemptCount, traceId). Attached by the consumer when republishing to the queue's DLX — see the DLQ section below. |
+| Header                | Direction           | Purpose                                                                                                                                                                                                                                        |
+| --------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content-type`        | producer → consumer | Always `application/octet-stream`. Body is an opaque byte sequence (encrypted or JSON).                                                                                                                                                        |
+| `x-proto-type`        | producer → consumer | The CLR FQN of the message type — fail-fast inspection without body parsing.                                                                                                                                                                   |
+| `message-id`          | producer → consumer | UUIDv7 (sortable, includes timestamp). Stable across publish retries — the publisher generates ONCE per `PublishAsync` call so a retry of an already-broker-received-but-unconfirmed publish doesn't bypass the consumer's idempotency window. |
+| `timestamp`           | producer → consumer | ISO 8601 UTC at publish time.                                                                                                                                                                                                                  |
+| `traceparent`         | producer → consumer | Full W3C trace-context string `00-{traceId}-{spanId}-{flags}`. The consumer parses it via `ActivityContext.TryParse` and starts a `Consumer`-kind span whose parent is the publish span — cross-hop trace assembly works in any OTel backend.  |
+| `tracestate`          | producer → consumer | Optional W3C vendor-specific trace state, forwarded as-is.                                                                                                                                                                                     |
+| `x-d2-encryption-kid` | producer → consumer | Encryption key id. Set only on encrypted messages.                                                                                                                                                                                             |
+| `x-d2-context`        | producer → consumer | Base64url-of-JSON encoded `PropagatedContext` — request id, request path, fingerprints, WhoIs hash. NOT identity (UserId / OrgId / Scopes — those rebuild from the JWT at every hop).                                                          |
+| `x-d2-failure-reason` | DLQ-only            | JSON-encoded `DlqFailureMetadata` (cause, errorCode, attemptCount, traceId). Attached by the consumer when republishing to the queue's DLX — see the DLQ section below.                                                                        |
 
 > The runtime header **direction + purpose** semantic catalog lives in this
 > doc (it's the operational reference). The **wire-value constants**
@@ -285,6 +285,7 @@ services.AddD2EncryptionFor(EncryptionDomains.Audit, _ => new PayloadCryptoKeyri
 ```
 
 `AddD2MessagingRabbitMq`:
+
 - Registers `ID2Connection`, `IChannelPool`, `IMessageBus` as **singletons**.
   The bus builds a transient DI scope per `PublishAsync` to resolve the keyed
   `IPayloadCrypto` and the calling scope's `IRequestContext` snapshot —
@@ -338,14 +339,14 @@ For each `PublishAsync<TMessage>`:
 
 ### Telemetry
 
-| Metric | Type | Description |
-|---|---|---|
-| `d2.messaging.rabbitmq.publishes` | Counter | Total publish attempts (including retries). |
-| `d2.messaging.rabbitmq.publish_failures` | Counter | Terminal publish failures (after retries exhausted). |
-| `d2.messaging.rabbitmq.publish_retries` | Counter | Publish retry attempts (transient → backoff → re-attempt). |
-| `d2.messaging.rabbitmq.publish_duration` | Histogram (ms) | Wall-clock duration of a publish operation, end-to-end. |
-| `d2.messaging.rabbitmq.dlq_republish_failures` | Counter | Consumer-side DLQ republish failures — falls back to `BasicNack-no-requeue` so the message still leaves the primary queue. |
-| `d2.messaging.rabbitmq.ack_failures` | Counter | Post-handler-success ack failures (narrow catch around `BasicAckAsync`) — the idempotency mark prevents duplicate work on broker redelivery. |
+| Metric                                         | Type           | Description                                                                                                                                  |
+| ---------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `d2.messaging.rabbitmq.publishes`              | Counter        | Total publish attempts (including retries).                                                                                                  |
+| `d2.messaging.rabbitmq.publish_failures`       | Counter        | Terminal publish failures (after retries exhausted).                                                                                         |
+| `d2.messaging.rabbitmq.publish_retries`        | Counter        | Publish retry attempts (transient → backoff → re-attempt).                                                                                   |
+| `d2.messaging.rabbitmq.publish_duration`       | Histogram (ms) | Wall-clock duration of a publish operation, end-to-end.                                                                                      |
+| `d2.messaging.rabbitmq.dlq_republish_failures` | Counter        | Consumer-side DLQ republish failures — falls back to `BasicNack-no-requeue` so the message still leaves the primary queue.                   |
+| `d2.messaging.rabbitmq.ack_failures`           | Counter        | Post-handler-success ack failures (narrow catch around `BasicAckAsync`) — the idempotency mark prevents duplicate work on broker redelivery. |
 
 A `publish {exchange}/{routingKey}` Producer-kind activity wraps the whole
 call. Its tags are spec-driven via
@@ -406,12 +407,12 @@ with `[MqSub]`; for each match, `SubscriberRegistrar.Register`:
 
 ### Hosted-service ordering
 
-| Order | Hosted service | Responsibility |
-|---|---|---|
-| 1 | `ConnectionStartupHostedService` | Kicks off background reconnect loop. |
-| 2 | `IdempotencyStartupCheck` | Hard-fails startup when any subscription declares `idempotency=true` but no `IDistributedCache` is registered AND no operator-provided `IMessageIdempotencyStore` is registered. |
-| 3 | `TopologyHostedService` | Background-declares the topology once `ID2Connection.ReadyTask` completes. A faulted declaration is logged via `TopologyLog.DeclarationFailed` (no more silent loss on `PRECONDITION_FAILED`). |
-| 4 | `ConsumerHostedService` | Awaits `ReadyTask`, **re-declares topology synchronously** (idempotent), then opens one `SubscriberChannel` per registration. Exposes `ReadyTask` (Task) that completes when every channel has finished `BasicConsume` — integration tests + ordered-startup callers can wait on it before publishing. |
+| Order | Hosted service                   | Responsibility                                                                                                                                                                                                                                                                                         |
+| ----- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1     | `ConnectionStartupHostedService` | Kicks off background reconnect loop.                                                                                                                                                                                                                                                                   |
+| 2     | `IdempotencyStartupCheck`        | Hard-fails startup when any subscription declares `idempotency=true` but no `IDistributedCache` is registered AND no operator-provided `IMessageIdempotencyStore` is registered.                                                                                                                       |
+| 3     | `TopologyHostedService`          | Background-declares the topology once `ID2Connection.ReadyTask` completes. A faulted declaration is logged via `TopologyLog.DeclarationFailed` (no more silent loss on `PRECONDITION_FAILED`).                                                                                                         |
+| 4     | `ConsumerHostedService`          | Awaits `ReadyTask`, **re-declares topology synchronously** (idempotent), then opens one `SubscriberChannel` per registration. Exposes `ReadyTask` (Task) that completes when every channel has finished `BasicConsume` — integration tests + ordered-startup callers can wait on it before publishing. |
 
 ### Per-delivery pipeline
 
@@ -515,10 +516,10 @@ For each delivery on a subscriber channel:
 
 ### Queue patterns
 
-| Pattern | When | Durability |
-|---|---|---|
-| `CompetingConsumer` | commands / requests delivered to one consumer in the fleet | durable, non-exclusive, non-autodelete |
-| `DurableShared` | persistent events (audit, file lifecycle) — survives restart, multiple consumers OK | durable, non-exclusive, non-autodelete |
+| Pattern                     | When                                                                                            | Durability                                                                                                                                                                                  |
+| --------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CompetingConsumer`         | commands / requests delivered to one consumer in the fleet                                      | durable, non-exclusive, non-autodelete                                                                                                                                                      |
+| `DurableShared`             | persistent events (audit, file lifecycle) — survives restart, multiple consumers OK             | durable, non-exclusive, non-autodelete                                                                                                                                                      |
 | `FanoutExclusiveAutoDelete` | per-instance broadcast (cache invalidation, keyring refresh) — every replica gets every message | non-durable, exclusive, auto-delete; consumer host auto-suffixes the queue name with a per-process token to avoid the broker's exclusive-queue lock collision in a multi-replica deployment |
 
 ### DLQ republish-with-failure-header
@@ -667,25 +668,25 @@ cycles via `MaxAttempts`.
 
 ## Architecture
 
-| Concern | Owner |
-|---|---|
-| Connection lifecycle | `Connection/RabbitMqConnection.cs` — singleton wrapper over `IConnection`; opens lazily; `RabbitMQ.Client` automatic recovery handles reconnects. Host stays up while broker is down (publishers return `ServiceUnavailable`; consumers idle). |
-| Connection startup | `Connection/ConnectionStartupHostedService.cs` — non-blocking; kicks off the connection's reconnect loop. |
-| Channel pool | `Channels/BoundedChannelPool.cs` — semaphore-bounded; recycles healthy channels on lease return; discards faulted channels; evicts channels idle longer than `IdleTtl`. |
-| Body composition | `Encryption/EncryptedBodyComposer.cs` — JSON-serializes the typed message; encrypts via `IPayloadCrypto[domain]` when the descriptor's `Encryption` is non-`plaintext`. Validates encryption-frame version byte on decrypt. |
-| Wire resolution | `Encryption/MessageWireResolver.cs` — `Type → MqMessageDescriptor` lookup via `[MqPub]` + `MqMessagesRegistry.ByConstant`. Per-type cached. Hard-fails on missing attribute / unknown constant / FQN mismatch. Test seam (`RegisterForTesting`) lets integration fixtures bypass the FQN check for synthetic types. |
-| Publishing | `Publishing/RabbitMqMessageBus.cs` — IMessageBus impl; integrates body composer + channel pool + retry helper + transient classifier; OTel-instrumented; `WaitForReadyAsync` for startup-time publishers. |
-| Transient classification | `Publishing/TransientPublishClassifier.cs` — what's worth retrying. Includes `PublishException` (when not a return-publish), `BrokerUnavailable`, `BrokerUnreachable`, `OperationInterrupted`, `AlreadyClosed`, `TimeoutException`, plus the standard transients. |
-| Topology | `Topology/DefaultTopologyDeclarer.cs` — idempotent declaration of exchanges + queues + DLX + DLQ + optional retry tiers (driven by `SubscriberRegistry`). |
-| Topology startup | `Topology/TopologyHostedService.cs` — non-blocking; awaits connection ready, then declares once. Logs `TopologyLog.DeclarationFailed` on background-task faults so a `PRECONDITION_FAILED` doesn't vanish into `TaskScheduler.UnobservedTaskException`. |
-| Consumer host | `Subscribing/ConsumerHostedService.cs` — opens one `SubscriberChannel` per registration after declaring topology synchronously. Exposes `ReadyTask` (Task) that completes when every channel has finished `BasicConsume`. |
-| Subscriber channel | `Subscribing/SubscriberChannel.cs` — owns one consume channel + one lazy republish channel per subscription; per-delivery DI scope; trace-context parsing; tiered-retry attempt-count enforcement; idempotency pre-check; narrow-catch around `BasicAck`; in-flight callback drain on disposal. |
-| Handler dispatch | `Subscribing/HandlerDispatcherFactory.cs` — pre-builds typed dispatchers at startup from the registry; one dispatcher per registered queue. |
-| DLQ failure header | `Subscribing/DlqFailureHeaderBuilder.cs` — JSON-encodes `DlqFailureMetadata`; PII-safe (drops `exception.Message`). |
-| Sanitized exception render | Consumes `D2.Shared.Utilities.Diagnostics.SanitizedExceptionRender` (`TypeName` + `FirstFrame` only; never `ex.Message`). Used by every consumer-side log site that surfaces exception-derived strings (handler exceptions, ack failures, DLQ-republish failures, boundary failures). |
-| Idempotency | `Idempotency/CacheIdempotencyStore.cs` — `IMessageIdempotencyStore` impl backed by `IDistributedCache` with 24h TTL. |
-| Idempotency startup check | `Idempotency/IdempotencyStartupCheck.cs` — hard-fails host startup when any subscription has `idempotency: true` but no `IDistributedCache` AND no operator-provided `IMessageIdempotencyStore`. |
-| Telemetry | `Telemetry/MessagingTelemetry.cs` — static `ActivitySource` + `Meter` named `D2.Shared.Messaging.RabbitMq`; six instruments (publishes, failures, retries, ack-failures, dlq-republish-failures counters; publish-duration histogram). |
+| Concern                    | Owner                                                                                                                                                                                                                                                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Connection lifecycle       | `Connection/RabbitMqConnection.cs` — singleton wrapper over `IConnection`; opens lazily; `RabbitMQ.Client` automatic recovery handles reconnects. Host stays up while broker is down (publishers return `ServiceUnavailable`; consumers idle).                                                                      |
+| Connection startup         | `Connection/ConnectionStartupHostedService.cs` — non-blocking; kicks off the connection's reconnect loop.                                                                                                                                                                                                           |
+| Channel pool               | `Channels/BoundedChannelPool.cs` — semaphore-bounded; recycles healthy channels on lease return; discards faulted channels; evicts channels idle longer than `IdleTtl`.                                                                                                                                             |
+| Body composition           | `Encryption/EncryptedBodyComposer.cs` — JSON-serializes the typed message; encrypts via `IPayloadCrypto[domain]` when the descriptor's `Encryption` is non-`plaintext`. Validates encryption-frame version byte on decrypt.                                                                                         |
+| Wire resolution            | `Encryption/MessageWireResolver.cs` — `Type → MqMessageDescriptor` lookup via `[MqPub]` + `MqMessagesRegistry.ByConstant`. Per-type cached. Hard-fails on missing attribute / unknown constant / FQN mismatch. Test seam (`RegisterForTesting`) lets integration fixtures bypass the FQN check for synthetic types. |
+| Publishing                 | `Publishing/RabbitMqMessageBus.cs` — IMessageBus impl; integrates body composer + channel pool + retry helper + transient classifier; OTel-instrumented; `WaitForReadyAsync` for startup-time publishers.                                                                                                           |
+| Transient classification   | `Publishing/TransientPublishClassifier.cs` — what's worth retrying. Includes `PublishException` (when not a return-publish), `BrokerUnavailable`, `BrokerUnreachable`, `OperationInterrupted`, `AlreadyClosed`, `TimeoutException`, plus the standard transients.                                                   |
+| Topology                   | `Topology/DefaultTopologyDeclarer.cs` — idempotent declaration of exchanges + queues + DLX + DLQ + optional retry tiers (driven by `SubscriberRegistry`).                                                                                                                                                           |
+| Topology startup           | `Topology/TopologyHostedService.cs` — non-blocking; awaits connection ready, then declares once. Logs `TopologyLog.DeclarationFailed` on background-task faults so a `PRECONDITION_FAILED` doesn't vanish into `TaskScheduler.UnobservedTaskException`.                                                             |
+| Consumer host              | `Subscribing/ConsumerHostedService.cs` — opens one `SubscriberChannel` per registration after declaring topology synchronously. Exposes `ReadyTask` (Task) that completes when every channel has finished `BasicConsume`.                                                                                           |
+| Subscriber channel         | `Subscribing/SubscriberChannel.cs` — owns one consume channel + one lazy republish channel per subscription; per-delivery DI scope; trace-context parsing; tiered-retry attempt-count enforcement; idempotency pre-check; narrow-catch around `BasicAck`; in-flight callback drain on disposal.                     |
+| Handler dispatch           | `Subscribing/HandlerDispatcherFactory.cs` — pre-builds typed dispatchers at startup from the registry; one dispatcher per registered queue.                                                                                                                                                                         |
+| DLQ failure header         | `Subscribing/DlqFailureHeaderBuilder.cs` — JSON-encodes `DlqFailureMetadata`; PII-safe (drops `exception.Message`).                                                                                                                                                                                                 |
+| Sanitized exception render | Consumes `D2.Shared.Utilities.Diagnostics.SanitizedExceptionRender` (`TypeName` + `FirstFrame` only; never `ex.Message`). Used by every consumer-side log site that surfaces exception-derived strings (handler exceptions, ack failures, DLQ-republish failures, boundary failures).                               |
+| Idempotency                | `Idempotency/CacheIdempotencyStore.cs` — `IMessageIdempotencyStore` impl backed by `IDistributedCache` with 24h TTL.                                                                                                                                                                                                |
+| Idempotency startup check  | `Idempotency/IdempotencyStartupCheck.cs` — hard-fails host startup when any subscription has `idempotency: true` but no `IDistributedCache` AND no operator-provided `IMessageIdempotencyStore`.                                                                                                                    |
+| Telemetry                  | `Telemetry/MessagingTelemetry.cs` — static `ActivitySource` + `Meter` named `D2.Shared.Messaging.RabbitMq`; six instruments (publishes, failures, retries, ack-failures, dlq-republish-failures counters; publish-duration histogram).                                                                              |
 
 ---
 

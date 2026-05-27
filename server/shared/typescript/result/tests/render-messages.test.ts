@@ -43,7 +43,9 @@ describe("renderMessage", () => {
       key: "TK.Z",
       params: { enabled: true, count: 5, missing: null },
     };
-    expect(renderMessage(m, echo)).toBe("TK.Z(enabled=true,count=5,missing=null)");
+    expect(renderMessage(m, echo)).toBe(
+      "TK.Z(enabled=true,count=5,missing=null)",
+    );
   });
 });
 

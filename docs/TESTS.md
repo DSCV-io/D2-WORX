@@ -7,6 +7,7 @@ Copyright (c) DCSV. All rights reserved.
 > **Purpose**: evergreen rules for writing tests in D²-WORX. The single most-reused checklist in the codebase. Without it, tests drift back to happy-path-only.
 >
 > **Frameworks per platform**:
+>
 > - **.NET**: xUnit + FluentAssertions + Moq + Testcontainers
 > - **SvelteKit BFF**: Vitest (browser mode) + Playwright (mocked by default)
 
@@ -115,6 +116,7 @@ Race conditions, double-processing, lock contention.
 Format: `MethodName_Scenario_ExpectedResult`.
 
 Examples:
+
 - `HandleAsync_HappyPath_ReturnsOk`
 - `HandleAsync_EmailMissingAt_ReturnsValidationFailed`
 - `HandleAsync_DownstreamReturnsNotFound_BubblesFailure`
@@ -122,6 +124,7 @@ Examples:
 - `HandleAsync_ConcurrentExecution_OnlyOneAcquiresLock`
 
 Local constants in test methods use `snake_case`:
+
 ```csharp
 const string expected_email = "test@example.com";
 const int expected_count = 5;
@@ -136,6 +139,7 @@ const int expected_count = 5;
 ### Form fields (SvelteKit)
 
 For every form field that accepts user input:
+
 - Unit test (Zod schema): all 8 categories on the schema directly
 - E2E test (Playwright + mocks): blur validation, error display, error clearing on fix, submit rejection while errors present, successful submit after fix
 - Cross-field interaction (if applicable): cleanly transitions between valid + invalid states
@@ -145,6 +149,7 @@ Don't test form fields with only happy-path Playwright. The schema test covers g
 ### REST endpoints
 
 For every endpoint:
+
 - 8 categories on the handler (unit + integration)
 - Auth tests: unauthenticated (401), wrong scope (403), wrong org (403), correct (200)
 - Pagination: max + 1 → 400 ValidationFailed (default 50, max 100 on every list endpoint)
@@ -153,6 +158,7 @@ For every endpoint:
 ### gRPC RPCs
 
 For every RPC:
+
 - 8 categories on the handler
 - Service-key auth tests: missing key (401), wrong key (401, fail-closed), correct key (200)
 - Proto field handling: optional fields default-correctly, `HasField` predicates work
@@ -163,17 +169,18 @@ For every RPC:
 
 For SvelteKit BFF tests against `D2Result` shapes, prefer custom matchers over inline assertion. Equivalent xUnit assertion helpers should exist on the .NET side so both stacks read the same way.
 
-| Matcher | Purpose |
-|---|---|
-| `toBeSuccess()` | Asserts `result.success === true` |
-| `toBeFailure()` | Asserts `result.success === false` |
-| `toHaveData(expected)` | Asserts `result.data` matches `expected` (deep equality) |
-| `toHaveErrorCode(code)` | Asserts `result.errorCode === code` |
-| `toHaveStatusCode(code)` | Asserts `result.statusCode === code` |
-| `toHaveMessages(...messages)` | Asserts `result.messages` contains the expected TK keys |
+| Matcher                        | Purpose                                                      |
+| ------------------------------ | ------------------------------------------------------------ |
+| `toBeSuccess()`                | Asserts `result.success === true`                            |
+| `toBeFailure()`                | Asserts `result.success === false`                           |
+| `toHaveData(expected)`         | Asserts `result.data` matches `expected` (deep equality)     |
+| `toHaveErrorCode(code)`        | Asserts `result.errorCode === code`                          |
+| `toHaveStatusCode(code)`       | Asserts `result.statusCode === code`                         |
+| `toHaveMessages(...messages)`  | Asserts `result.messages` contains the expected TK keys      |
 | `toHaveInputErrors(...fields)` | Asserts `result.inputErrors` covers the expected field names |
 
 Example:
+
 ```typescript
 const result = await handler.handle(input);
 expect(result).toBeSuccess();
@@ -181,6 +188,7 @@ expect(result).toHaveData({ id: expected_id });
 ```
 
 vs. raw:
+
 ```typescript
 expect(result.success).toBe(true);
 expect(result.data).toEqual({ id: expected_id });
@@ -194,14 +202,15 @@ The matcher version produces better failure messages and forces consistency.
 
 CI runs each category in parallel. Don't lump categories together — separation enables faster failure feedback.
 
-| Category | Speed | Spins up | Where |
-|---|---|---|---|
-| **Unit** | ms | Pure functions, mocked deps | `server/services/{svc}/tests/Unit/` and `server/web/src/**/*.test.ts` |
-| **Per-service integration** | seconds–1 min | ONE service + its direct deps (PG, Redis, RabbitMQ) via Testcontainers | `server/services/{svc}/tests/Integration/` |
-| **Web component tests** | ms–seconds | JSDOM-like browser env, mocked fetch | `server/web/src/**/*.test.ts` (Vitest browser mode) |
-| **Web Playwright (mocked)** | seconds–min | Real browser, ALL `fetch()` mocked | `server/web/tests/` |
+| Category                    | Speed         | Spins up                                                               | Where                                                                 |
+| --------------------------- | ------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| **Unit**                    | ms            | Pure functions, mocked deps                                            | `server/services/{svc}/tests/Unit/` and `server/web/src/**/*.test.ts` |
+| **Per-service integration** | seconds–1 min | ONE service + its direct deps (PG, Redis, RabbitMQ) via Testcontainers | `server/services/{svc}/tests/Integration/`                            |
+| **Web component tests**     | ms–seconds    | JSDOM-like browser env, mocked fetch                                   | `server/web/src/**/*.test.ts` (Vitest browser mode)                   |
+| **Web Playwright (mocked)** | seconds–min   | Real browser, ALL `fetch()` mocked                                     | `server/web/tests/`                                                   |
 
 Explicitly **NOT** in scope:
+
 - ~~System spin-up tests~~
 - ~~Cross-service integration tests with multiple services~~
 - ~~Browser E2E with real backend~~
@@ -227,6 +236,7 @@ The workflow job at `.github/workflows/test.yml` is commented out — see [PHASE
 ## What We Accept Losing
 
 By dropping the cross-service tier we lose:
+
 - **Cross-service contract drift detection in CI** — caught by code review + the proto versioning policy + production observability
 - **Full-flow happy-path verification** — caught by manual testing (you click through critical flows after meaningful changes)
 

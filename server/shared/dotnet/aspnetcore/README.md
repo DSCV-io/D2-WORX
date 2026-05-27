@@ -43,15 +43,15 @@ await app.RunD2ServiceAsync("edge");
 
 Installs a middleware that writes a OWASP-aligned default header set on every response via `HttpResponse.OnStarting`:
 
-| Header | Default value | Reason |
-|---|---|---|
-| `X-Content-Type-Options` | `nosniff` | Prevents MIME-sniffing attacks. |
-| `X-Frame-Options` | `DENY` | Prevents clickjacking via framing. |
-| `Referrer-Policy` | `strict-origin-when-cross-origin` | MDN-recommended default; preserves Referer same-origin, only origin cross-origin. |
-| `X-Permitted-Cross-Domain-Policies` | `none` | Blocks legacy Adobe Flash / PDF cross-domain. |
-| `Cross-Origin-Resource-Policy` | `same-origin` | Prevents cross-origin embedding (CORB / CORP). |
-| `Cross-Origin-Opener-Policy` | `same-origin` | Isolates browsing context (Spectre mitigation). |
-| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` (HTTPS only) | 1-year HSTS with subdomain coverage. |
+| Header                              | Default value                                      | Reason                                                                            |
+| ----------------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `X-Content-Type-Options`            | `nosniff`                                          | Prevents MIME-sniffing attacks.                                                   |
+| `X-Frame-Options`                   | `DENY`                                             | Prevents clickjacking via framing.                                                |
+| `Referrer-Policy`                   | `strict-origin-when-cross-origin`                  | MDN-recommended default; preserves Referer same-origin, only origin cross-origin. |
+| `X-Permitted-Cross-Domain-Policies` | `none`                                             | Blocks legacy Adobe Flash / PDF cross-domain.                                     |
+| `Cross-Origin-Resource-Policy`      | `same-origin`                                      | Prevents cross-origin embedding (CORB / CORP).                                    |
+| `Cross-Origin-Opener-Policy`        | `same-origin`                                      | Isolates browsing context (Spectre mitigation).                                   |
+| `Strict-Transport-Security`         | `max-age=31536000; includeSubDomains` (HTTPS only) | 1-year HSTS with subdomain coverage.                                              |
 
 Per-header override semantic on `D2SecurityHeadersOptions`: `null` override → default written; empty / whitespace override → header suppressed; non-empty override → override literal written.
 
@@ -69,13 +69,13 @@ Registers the `D2_DEFAULT` CORS policy reading the canonical indexed env-var con
 
 Default `D2CorsOptions`:
 
-| Property | Default |
-|---|---|
-| `Origins` | `[]` (validated non-empty at startup; fail-closed) |
-| `AllowedHeaders` | `Content-Type`, `Authorization`, `X-Correlation-Id` (from spec-driven `HttpHeaders.CORRELATION_ID`), `Idempotency-Key` (from spec-driven `HttpHeaders.IDEMPOTENCY_KEY`), `X-Forwarded-For`, `X-Real-IP`, `CF-Connecting-IP` |
-| `AllowedMethods` | `GET`, `HEAD`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS` |
-| `AllowCredentials` | `true` (BFF cookies + service-to-service Authorization headers) |
-| `PreflightMaxAgeSeconds` | `600` (10 minutes) |
+| Property                 | Default                                                                                                                                                                                                                     |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Origins`                | `[]` (validated non-empty at startup; fail-closed)                                                                                                                                                                          |
+| `AllowedHeaders`         | `Content-Type`, `Authorization`, `X-Correlation-Id` (from spec-driven `HttpHeaders.CORRELATION_ID`), `Idempotency-Key` (from spec-driven `HttpHeaders.IDEMPOTENCY_KEY`), `X-Forwarded-For`, `X-Real-IP`, `CF-Connecting-IP` |
+| `AllowedMethods`         | `GET`, `HEAD`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`                                                                                                                                                                  |
+| `AllowCredentials`       | `true` (BFF cookies + service-to-service Authorization headers)                                                                                                                                                             |
+| `PreflightMaxAgeSeconds` | `600` (10 minutes)                                                                                                                                                                                                          |
 
 The `AllowCredentials = true` + `Origins = ["*"]` combination is forbidden per CORS spec; the validator rejects it at host build.
 
@@ -139,19 +139,19 @@ Async form captures both synchronously-faulted (host build / hosted-service `Sta
 
 ### Constants — `D2AspNetCoreConstants`
 
-| Constant | Value |
-|---|---|
-| `HEALTH_ENDPOINT_PATH` | `/health` |
-| `ALIVE_ENDPOINT_PATH` | `/alive` |
-| `METRICS_ENDPOINT_PATH` | `/metrics` |
-| `WELL_KNOWN_ENDPOINT_PATH` | `/.well-known` |
-| `LIVE_HEALTH_TAG` | `live` |
-| `SELF_HEALTH_CHECK_NAME` | `self` |
-| `DEFAULT_INFRASTRUCTURE_PATHS` | `[HEALTH_ENDPOINT_PATH, ALIVE_ENDPOINT_PATH, METRICS_ENDPOINT_PATH, WELL_KNOWN_ENDPOINT_PATH]` |
-| `CORS_ORIGINS_CONFIG_KEY` | `D2_CORS_ORIGINS` |
-| `DEFAULT_CORS_POLICY_NAME` | `D2_DEFAULT` |
-| `MAX_CORRELATION_ID_LENGTH` | `128` |
-| `INFRASTRUCTURE_HTTP_CONTEXT_ITEM_KEY` | `D2.IsInfrastructure` |
+| Constant                               | Value                                                                                          |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `HEALTH_ENDPOINT_PATH`                 | `/health`                                                                                      |
+| `ALIVE_ENDPOINT_PATH`                  | `/alive`                                                                                       |
+| `METRICS_ENDPOINT_PATH`                | `/metrics`                                                                                     |
+| `WELL_KNOWN_ENDPOINT_PATH`             | `/.well-known`                                                                                 |
+| `LIVE_HEALTH_TAG`                      | `live`                                                                                         |
+| `SELF_HEALTH_CHECK_NAME`               | `self`                                                                                         |
+| `DEFAULT_INFRASTRUCTURE_PATHS`         | `[HEALTH_ENDPOINT_PATH, ALIVE_ENDPOINT_PATH, METRICS_ENDPOINT_PATH, WELL_KNOWN_ENDPOINT_PATH]` |
+| `CORS_ORIGINS_CONFIG_KEY`              | `D2_CORS_ORIGINS`                                                                              |
+| `DEFAULT_CORS_POLICY_NAME`             | `D2_DEFAULT`                                                                                   |
+| `MAX_CORRELATION_ID_LENGTH`            | `128`                                                                                          |
+| `INFRASTRUCTURE_HTTP_CONTEXT_ITEM_KEY` | `D2.IsInfrastructure`                                                                          |
 
 Note: wire-header values consumed by this lib live in the spec-driven [`HttpHeaders`](../headers-http/README.md) catalog — `HttpHeaders.CORRELATION_ID` (`"X-Correlation-Id"`) and `HttpHeaders.IDEMPOTENCY_KEY` (`"Idempotency-Key"`) are referenced directly. One wire value for one concept across the platform; no intra-.NET drift between the CORS allowlist / ProblemDetails customizer and the headers-http catalog.
 
@@ -159,8 +159,8 @@ Note: wire-header values consumed by this lib live in the spec-driven [`HttpHead
 
 HttpContext.Items slot keys consumed by the path-B Customizer to source the originating `D2Result`:
 
-| Constant | Value | Use |
-|---|---|---|
+| Constant    | Value         | Use                                                                                                                                                                                                                                                                               |
+| ----------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `D2_RESULT` | `__d2_result` | Slot under which middleware / handlers stash the originating `D2Result` so the customizer can populate the full RFC 7807 Shape A body from spec constants. Set via the typed `httpContext.SetD2Result(result)` extension; read by the customizer via `httpContext.GetD2Result()`. |
 
 ### `InfrastructurePathMatcher` (public static)
@@ -175,36 +175,36 @@ Uses the AspNetCore-canonical `PathString.StartsWithSegments(PathString)` overlo
 
 ## File layout
 
-| File | Role |
-|---|---|
-| `D2.Shared.AspNetCore.csproj` | csproj — `Microsoft.NET.Sdk.Web` + `OutputType=Library`. Project reference to `utilities/`. |
-| `D2AspNetCoreConstants.cs` | Public constants (endpoint paths, header names, config keys, default infrastructure-path list). |
-| `InfrastructurePathMatcher.cs` | Public static helper — canonical path-matcher consumed by Logging + Telemetry + this lib's bypass middleware. |
-| `D2SecurityHeadersOptions.cs` | Sealed record — per-header override Options-pattern config. |
-| `D2CorsOptions.cs` | Sealed record — CORS policy Options-pattern config. |
-| `D2InfrastructureBypassOptions.cs` | Sealed record — bypass middleware Options-pattern config. |
-| `D2ProblemDetailsOptions.cs` | Sealed record — ProblemDetails customizer Options-pattern config. |
-| `SecurityHeadersApplicationBuilderExtensions.cs` | Public extension: `UseD2SecurityHeaders`. |
-| `CorsServiceCollectionExtensions.cs` | Public extension: `AddD2Cors`. |
-| `CorsApplicationBuilderExtensions.cs` | Public extension: `UseD2Cors`. |
-| `InfrastructureBypassApplicationBuilderExtensions.cs` | Public extension: `UseD2InfrastructureBypass`. |
-| `ProblemDetailsServiceCollectionExtensions.cs` | Public extension: `AddD2ProblemDetails`. |
-| `HealthEndpointsServiceCollectionExtensions.cs` | Public extension: `AddD2HealthChecks`. |
-| `HealthEndpointsRouteBuilderExtensions.cs` | Public extension: `MapD2HealthEndpoints`. |
-| `RunD2ServiceWebApplicationExtensions.cs` | Public extension: `RunD2ServiceAsync`. |
-| `Internal/SecurityHeadersMiddleware.cs` | Internal sealed middleware impl behind `UseD2SecurityHeaders`. |
-| `Internal/InfrastructureBypassMiddleware.cs` | Internal sealed middleware impl behind `UseD2InfrastructureBypass`. |
-| `Internal/D2ProblemDetailsCustomizer.cs` | Internal helper — the `Action<ProblemDetailsContext>` body. |
+| File                                                  | Role                                                                                                          |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `D2.Shared.AspNetCore.csproj`                         | csproj — `Microsoft.NET.Sdk.Web` + `OutputType=Library`. Project reference to `utilities/`.                   |
+| `D2AspNetCoreConstants.cs`                            | Public constants (endpoint paths, header names, config keys, default infrastructure-path list).               |
+| `InfrastructurePathMatcher.cs`                        | Public static helper — canonical path-matcher consumed by Logging + Telemetry + this lib's bypass middleware. |
+| `D2SecurityHeadersOptions.cs`                         | Sealed record — per-header override Options-pattern config.                                                   |
+| `D2CorsOptions.cs`                                    | Sealed record — CORS policy Options-pattern config.                                                           |
+| `D2InfrastructureBypassOptions.cs`                    | Sealed record — bypass middleware Options-pattern config.                                                     |
+| `D2ProblemDetailsOptions.cs`                          | Sealed record — ProblemDetails customizer Options-pattern config.                                             |
+| `SecurityHeadersApplicationBuilderExtensions.cs`      | Public extension: `UseD2SecurityHeaders`.                                                                     |
+| `CorsServiceCollectionExtensions.cs`                  | Public extension: `AddD2Cors`.                                                                                |
+| `CorsApplicationBuilderExtensions.cs`                 | Public extension: `UseD2Cors`.                                                                                |
+| `InfrastructureBypassApplicationBuilderExtensions.cs` | Public extension: `UseD2InfrastructureBypass`.                                                                |
+| `ProblemDetailsServiceCollectionExtensions.cs`        | Public extension: `AddD2ProblemDetails`.                                                                      |
+| `HealthEndpointsServiceCollectionExtensions.cs`       | Public extension: `AddD2HealthChecks`.                                                                        |
+| `HealthEndpointsRouteBuilderExtensions.cs`            | Public extension: `MapD2HealthEndpoints`.                                                                     |
+| `RunD2ServiceWebApplicationExtensions.cs`             | Public extension: `RunD2ServiceAsync`.                                                                        |
+| `Internal/SecurityHeadersMiddleware.cs`               | Internal sealed middleware impl behind `UseD2SecurityHeaders`.                                                |
+| `Internal/InfrastructureBypassMiddleware.cs`          | Internal sealed middleware impl behind `UseD2InfrastructureBypass`.                                           |
+| `Internal/D2ProblemDetailsCustomizer.cs`              | Internal helper — the `Action<ProblemDetailsContext>` body.                                                   |
 
 ## Dependencies
 
-| Package | Why |
-|---|---|
-| `Serilog.AspNetCore` | Static `Log.*` facade used by `RunD2ServiceAsync`. Already pinned (consumed transitively by `D2.Shared.Logging`). |
-| `JetBrains.Annotations` | `[MustDisposeResource]` annotations on disposable factory paths (none currently; consumed transitively). |
+| Package                 | Why                                                                                                               |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `Serilog.AspNetCore`    | Static `Log.*` facade used by `RunD2ServiceAsync`. Already pinned (consumed transitively by `D2.Shared.Logging`). |
+| `JetBrains.Annotations` | `[MustDisposeResource]` annotations on disposable factory paths (none currently; consumed transitively).          |
 
-| Project reference | Why |
-|---|---|
+| Project reference     | Why                                                                                                                                                                                |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `D2.Shared.Utilities` | `Falsey()` / `Truthy()` / `ToNullIfEmpty()` extensions consumed throughout (options validation, env-var resolution, header-override tri-state, per-entry path / origin filtering). |
 
 The `Microsoft.AspNetCore.App` framework reference (via `Microsoft.NET.Sdk.Web`) provides `IApplicationBuilder`, `IEndpointRouteBuilder`, `WebApplication`, `HttpContext`, `PathString`, `ProblemDetails`, `ProblemDetailsContext`, `IProblemDetailsService`, `HealthCheckResult`, `HealthCheckOptions`, the CORS `CorsPolicyBuilder` + middleware, and the `Microsoft.Extensions.{DependencyInjection,Options,Configuration,Logging,Hosting}.Abstractions` packages.

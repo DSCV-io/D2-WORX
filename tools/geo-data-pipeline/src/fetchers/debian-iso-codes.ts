@@ -39,7 +39,10 @@ export interface DebianSubdivisionEntry {
   parent?: string;
 }
 
-export interface DebianIsoCodesFetchResult extends Pick<CachedFetch, "provenance" | "fromCache"> {
+export interface DebianIsoCodesFetchResult extends Pick<
+  CachedFetch,
+  "provenance" | "fromCache"
+> {
   entries: DebianSubdivisionEntry[];
   /** Indexed by ISO 3166-2 code for fast lookup. */
   byCode: Map<string, DebianSubdivisionEntry>;

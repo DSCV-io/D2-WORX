@@ -4,7 +4,7 @@
   "$schema": "./countries.schema.json",
   "$note": "TIER 2 codegen-ready spec — produced by tools/geo-data-pipeline from contracts/geo/src-data/*.spec.json (Tier 1). Matches the canonical entity record shape; consumed directly by codegen (.NET SourceGen + TS emitter — Tier 3) to produce concrete entity types. Do NOT hand-edit — re-run `pnpm geo:refresh` to regenerate.",
   "catalogVersion": "0.1.0",
-  "generatedAt": "2026-05-19T18:14:37.998Z",
+  "generatedAt": "2026-05-26T13:25:26.656Z",
   "entries": [
     {
       "iso31661Alpha2Code": "AD",
@@ -25,14 +25,7 @@
       "primaryCurrencyISO4217AlphaCode": "EUR",
       "primaryLocaleIETFBCP47Tag": "ca-AD",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "COE",
-        "EU",
-        "EUCU",
-        "EZ",
-        "OIF",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["COE", "EU", "EUCU", "EZ", "OIF", "UN"],
       "subdivisionISO31662Codes": [
         "AD-02",
         "AD-03",
@@ -42,17 +35,9 @@
         "AD-07",
         "AD-08"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Andorra"
-      ],
-      "localeIETFBCP47Tags": [
-        "ca-AD"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ca",
-        "es",
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Andorra"],
+      "localeIETFBCP47Tags": ["ca-AD"],
+      "spokenLanguageISO6391Codes": ["ca", "es", "fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -99,21 +84,9 @@
         "AE-SH",
         "AE-UQ"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Dubai"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-AE",
-        "bgn-AE",
-        "en-AE"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "en",
-        "fa",
-        "ml",
-        "ps"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Dubai"],
+      "localeIETFBCP47Tags": ["ar-AE", "bgn-AE", "en-AE"],
+      "spokenLanguageISO6391Codes": ["ar", "en", "fa", "ml", "ps"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -141,11 +114,7 @@
       "primaryCurrencyISO4217AlphaCode": "AFN",
       "primaryLocaleIETFBCP47Tag": "fa-AF",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "SAARC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "SAARC", "UN"],
       "subdivisionISO31662Codes": [
         "AF-BAL",
         "AF-BAM",
@@ -182,21 +151,9 @@
         "AF-WAR",
         "AF-ZAB"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Kabul"
-      ],
-      "localeIETFBCP47Tags": [
-        "bgn-AF",
-        "fa-AF",
-        "ps-AF",
-        "uz-Arab-AF"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fa",
-        "ps",
-        "tk",
-        "ug"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Kabul"],
+      "localeIETFBCP47Tags": ["bgn-AF", "fa-AF", "ps-AF", "uz-Arab-AF"],
+      "spokenLanguageISO6391Codes": ["fa", "ps", "tk", "ug"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -242,16 +199,9 @@
         "AG-10",
         "AG-11"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-AG"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "pt"
-      ],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["en-AG"],
+      "spokenLanguageISO6391Codes": ["en", "pt"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -279,21 +229,11 @@
       "primaryCurrencyISO4217AlphaCode": "XCD",
       "primaryLocaleIETFBCP47Tag": "en-AI",
       "sovereignCountryISO31661Alpha2Code": "GB",
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "ECCU",
-        "NA"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "ECCU", "NA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-AI"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["en-AI"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -343,17 +283,9 @@
         "AL-11",
         "AL-12"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Tirane"
-      ],
-      "localeIETFBCP47Tags": [
-        "sq-AL"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "el",
-        "mk",
-        "sq"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Tirane"],
+      "localeIETFBCP47Tags": ["sq-AL"],
+      "spokenLanguageISO6391Codes": ["el", "mk", "sq"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -402,18 +334,9 @@
         "AM-TV",
         "AM-VD"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Yerevan"
-      ],
-      "localeIETFBCP47Tags": [
-        "hy-AM"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "az",
-        "hy",
-        "ku",
-        "ru"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Yerevan"],
+      "localeIETFBCP47Tags": ["hy-AM"],
+      "spokenLanguageISO6391Codes": ["az", "hy", "ku", "ru"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -441,13 +364,7 @@
       "primaryCurrencyISO4217AlphaCode": "AOA",
       "primaryLocaleIETFBCP47Tag": "pt-AO",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "OPEC",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "OPEC", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "AO-BGO",
         "AO-BGU",
@@ -468,17 +385,9 @@
         "AO-UIG",
         "AO-ZAI"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Lagos"
-      ],
-      "localeIETFBCP47Tags": [
-        "ln-AO",
-        "pt-AO"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ln",
-        "pt"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Lagos"],
+      "localeIETFBCP47Tags": ["ln-AO", "pt-AO"],
+      "spokenLanguageISO6391Codes": ["ln", "pt"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -506,9 +415,7 @@
       "primaryCurrencyISO4217AlphaCode": null,
       "primaryLocaleIETFBCP47Tag": null,
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AN"
-      ],
+      "geopoliticalEntityShortCodes": ["AN"],
       "subdivisionISO31662Codes": [],
       "timezoneIanaIdentifiers": [
         "Antarctica/Casey",
@@ -547,13 +454,7 @@
       "primaryCurrencyISO4217AlphaCode": "ARS",
       "primaryLocaleIETFBCP47Tag": "es-AR",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "G20",
-        "LATAM",
-        "MERCOSUR",
-        "SA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["G20", "LATAM", "MERCOSUR", "SA", "UN"],
       "subdivisionISO31662Codes": [
         "AR-A",
         "AR-B",
@@ -594,20 +495,17 @@
         "America/Argentina/Tucuman",
         "America/Argentina/Ushuaia"
       ],
-      "localeIETFBCP47Tags": [
-        "es-AR"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "cy",
-        "en",
-        "es",
-        "gn"
-      ],
+      "localeIETFBCP47Tags": ["es-AR"],
+      "spokenLanguageISO6391Codes": ["cy", "en", "es", "gn"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
           "iso4217AlphaCode": "ARS",
           "level": "LegalTender"
+        },
+        {
+          "iso4217AlphaCode": "USD",
+          "level": "WidelyAccepted"
         }
       ]
     },
@@ -630,20 +528,11 @@
       "primaryCurrencyISO4217AlphaCode": "USD",
       "primaryLocaleIETFBCP47Tag": "en-AS",
       "sovereignCountryISO31661Alpha2Code": "US",
-      "geopoliticalEntityShortCodes": [
-        "OC"
-      ],
+      "geopoliticalEntityShortCodes": ["OC"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Pago_Pago"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-AS"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "sm"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Pago_Pago"],
+      "localeIETFBCP47Tags": ["en-AS"],
+      "spokenLanguageISO6391Codes": ["en", "sm"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -692,22 +581,9 @@
         "AT-8",
         "AT-9"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Vienna"
-      ],
-      "localeIETFBCP47Tags": [
-        "de-AT",
-        "en-AT"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "de",
-        "en",
-        "fr",
-        "hr",
-        "hu",
-        "it",
-        "sl"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Vienna"],
+      "localeIETFBCP47Tags": ["de-AT", "en-AT"],
+      "spokenLanguageISO6391Codes": ["de", "en", "fr", "hr", "hu", "it", "sl"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -773,20 +649,9 @@
         "Australia/Perth",
         "Australia/Sydney"
       ],
-      "localeIETFBCP47Tags": [
-        "en-AU",
-        "wbp-AU"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "it"
-      ],
-      "territoryISO31661Alpha2Codes": [
-        "CC",
-        "CX",
-        "HM",
-        "NF"
-      ],
+      "localeIETFBCP47Tags": ["en-AU", "wbp-AU"],
+      "spokenLanguageISO6391Codes": ["en", "it"],
+      "territoryISO31661Alpha2Codes": ["CC", "CX", "HM", "NF"],
       "currencies": [
         {
           "iso4217AlphaCode": "AUD",
@@ -813,22 +678,11 @@
       "primaryCurrencyISO4217AlphaCode": "AWG",
       "primaryLocaleIETFBCP47Tag": "nl-AW",
       "sovereignCountryISO31661Alpha2Code": "NL",
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "NA"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "NA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "nl-AW",
-        "pap-AW"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "nl"
-      ],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["nl-AW", "pap-AW"],
+      "spokenLanguageISO6391Codes": ["en", "nl"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -856,21 +710,11 @@
       "primaryCurrencyISO4217AlphaCode": "EUR",
       "primaryLocaleIETFBCP47Tag": "sv-AX",
       "sovereignCountryISO31661Alpha2Code": "FI",
-      "geopoliticalEntityShortCodes": [
-        "EU",
-        "NC",
-        "NORD"
-      ],
+      "geopoliticalEntityShortCodes": ["EU", "NC", "NORD"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Europe/Helsinki"
-      ],
-      "localeIETFBCP47Tags": [
-        "sv-AX"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "sv"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Helsinki"],
+      "localeIETFBCP47Tags": ["sv-AX"],
+      "spokenLanguageISO6391Codes": ["sv"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -898,11 +742,7 @@
       "primaryCurrencyISO4217AlphaCode": "AZN",
       "primaryLocaleIETFBCP47Tag": "az-AZ",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "COE",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "COE", "UN"],
       "subdivisionISO31662Codes": [
         "AZ-ABS",
         "AZ-AGA",
@@ -983,16 +823,9 @@
         "AZ-ZAQ",
         "AZ-ZAR"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Baku"
-      ],
-      "localeIETFBCP47Tags": [
-        "az-AZ"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "az",
-        "ku"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Baku"],
+      "localeIETFBCP47Tags": ["az-AZ"],
+      "spokenLanguageISO6391Codes": ["az", "ku"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -1020,32 +853,11 @@
       "primaryCurrencyISO4217AlphaCode": "BAM",
       "primaryLocaleIETFBCP47Tag": "bs-BA",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "BALK",
-        "COE",
-        "EU",
-        "UN"
-      ],
-      "subdivisionISO31662Codes": [
-        "BA-BIH",
-        "BA-BRC",
-        "BA-SRP"
-      ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Belgrade"
-      ],
-      "localeIETFBCP47Tags": [
-        "bs-BA",
-        "hr-BA",
-        "sr-Cyrl-BA",
-        "sr-Latn-BA"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "bs",
-        "en",
-        "hr",
-        "sr"
-      ],
+      "geopoliticalEntityShortCodes": ["BALK", "COE", "EU", "UN"],
+      "subdivisionISO31662Codes": ["BA-BIH", "BA-BRC", "BA-SRP"],
+      "timezoneIanaIdentifiers": ["Europe/Belgrade"],
+      "localeIETFBCP47Tags": ["bs-BA", "hr-BA", "sr-Cyrl-BA", "sr-Latn-BA"],
+      "spokenLanguageISO6391Codes": ["bs", "en", "hr", "sr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -1073,13 +885,7 @@
       "primaryCurrencyISO4217AlphaCode": "BBD",
       "primaryLocaleIETFBCP47Tag": "en-BB",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "CARICOM",
-        "CW",
-        "NA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "CARICOM", "CW", "NA", "UN"],
       "subdivisionISO31662Codes": [
         "BB-01",
         "BB-02",
@@ -1093,15 +899,9 @@
         "BB-10",
         "BB-11"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Barbados"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-BB"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["America/Barbados"],
+      "localeIETFBCP47Tags": ["en-BB"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -1129,13 +929,7 @@
       "primaryCurrencyISO4217AlphaCode": "BDT",
       "primaryLocaleIETFBCP47Tag": "bn-BD",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "CW",
-        "INDS",
-        "SAARC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "CW", "INDS", "SAARC", "UN"],
       "subdivisionISO31662Codes": [
         "BD-01",
         "BD-02",
@@ -1210,19 +1004,9 @@
         "BD-G",
         "BD-H"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Dhaka"
-      ],
-      "localeIETFBCP47Tags": [
-        "bn-BD",
-        "ccp-BD",
-        "rhg-Rohg-BD"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "bn",
-        "en",
-        "my"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Dhaka"],
+      "localeIETFBCP47Tags": ["bn-BD", "ccp-BD", "rhg-Rohg-BD"],
+      "spokenLanguageISO6391Codes": ["bn", "en", "my"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -1278,23 +1062,9 @@
         "BE-WLX",
         "BE-WNA"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Brussels"
-      ],
-      "localeIETFBCP47Tags": [
-        "de-BE",
-        "en-BE",
-        "fr-BE",
-        "nl-BE",
-        "wa-BE"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "de",
-        "en",
-        "fr",
-        "nl",
-        "wa"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Brussels"],
+      "localeIETFBCP47Tags": ["de-BE", "en-BE", "fr-BE", "nl-BE", "wa-BE"],
+      "spokenLanguageISO6391Codes": ["de", "en", "fr", "nl", "wa"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -1391,18 +1161,9 @@
         "BF-ZON",
         "BF-ZOU"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Abidjan"
-      ],
-      "localeIETFBCP47Tags": [
-        "ff-Adlm-BF",
-        "ff-Latn-BF",
-        "fr-BF"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ff",
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Abidjan"],
+      "localeIETFBCP47Tags": ["ff-Adlm-BF", "ff-Latn-BF", "fr-BF"],
+      "spokenLanguageISO6391Codes": ["ff", "fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -1471,19 +1232,9 @@
         "BG-27",
         "BG-28"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Sofia"
-      ],
-      "localeIETFBCP47Tags": [
-        "bg-BG"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "bg",
-        "de",
-        "en",
-        "ru",
-        "tr"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Sofia"],
+      "localeIETFBCP47Tags": ["bg-BG"],
+      "spokenLanguageISO6391Codes": ["bg", "de", "en", "ru", "tr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -1511,30 +1262,11 @@
       "primaryCurrencyISO4217AlphaCode": "BHD",
       "primaryLocaleIETFBCP47Tag": "ar-BH",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AL",
-        "ARAB",
-        "AS",
-        "GCC",
-        "MENA",
-        "UN"
-      ],
-      "subdivisionISO31662Codes": [
-        "BH-13",
-        "BH-14",
-        "BH-15",
-        "BH-17"
-      ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Qatar"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-BH"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "ml"
-      ],
+      "geopoliticalEntityShortCodes": ["AL", "ARAB", "AS", "GCC", "MENA", "UN"],
+      "subdivisionISO31662Codes": ["BH-13", "BH-14", "BH-15", "BH-17"],
+      "timezoneIanaIdentifiers": ["Asia/Qatar"],
+      "localeIETFBCP47Tags": ["ar-BH"],
+      "spokenLanguageISO6391Codes": ["ar", "ml"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -1562,13 +1294,7 @@
       "primaryCurrencyISO4217AlphaCode": "BIF",
       "primaryLocaleIETFBCP47Tag": "fr-BI",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "OIF",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "OIF", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "BI-BB",
         "BI-BL",
@@ -1589,20 +1315,9 @@
         "BI-RT",
         "BI-RY"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Maputo"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-BI",
-        "fr-BI",
-        "rn-BI"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "fr",
-        "rn",
-        "sw"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Maputo"],
+      "localeIETFBCP47Tags": ["en-BI", "fr-BI", "rn-BI"],
+      "spokenLanguageISO6391Codes": ["en", "fr", "rn", "sw"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -1630,14 +1345,7 @@
       "primaryCurrencyISO4217AlphaCode": "XOF",
       "primaryLocaleIETFBCP47Tag": "fr-BJ",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "OIF",
-        "SSA",
-        "UN",
-        "WAEMU"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "OIF", "SSA", "UN", "WAEMU"],
       "subdivisionISO31662Codes": [
         "BJ-AK",
         "BJ-AL",
@@ -1652,18 +1360,9 @@
         "BJ-PL",
         "BJ-ZO"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Lagos"
-      ],
-      "localeIETFBCP47Tags": [
-        "blo-BJ",
-        "fr-BJ",
-        "yo-BJ"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr",
-        "yo"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Lagos"],
+      "localeIETFBCP47Tags": ["blo-BJ", "fr-BJ", "yo-BJ"],
+      "spokenLanguageISO6391Codes": ["fr", "yo"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -1691,20 +1390,11 @@
       "primaryCurrencyISO4217AlphaCode": "EUR",
       "primaryLocaleIETFBCP47Tag": "fr-BL",
       "sovereignCountryISO31661Alpha2Code": "FR",
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "NA"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "NA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "fr-BL"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["fr-BL"],
+      "spokenLanguageISO6391Codes": ["fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -1732,19 +1422,11 @@
       "primaryCurrencyISO4217AlphaCode": "BMD",
       "primaryLocaleIETFBCP47Tag": "en-BM",
       "sovereignCountryISO31661Alpha2Code": "GB",
-      "geopoliticalEntityShortCodes": [
-        "NA"
-      ],
+      "geopoliticalEntityShortCodes": ["NA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Atlantic/Bermuda"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-BM"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Atlantic/Bermuda"],
+      "localeIETFBCP47Tags": ["en-BM"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -1782,23 +1464,10 @@
         "SEA",
         "UN"
       ],
-      "subdivisionISO31662Codes": [
-        "BN-BE",
-        "BN-BM",
-        "BN-TE",
-        "BN-TU"
-      ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Kuching"
-      ],
-      "localeIETFBCP47Tags": [
-        "ms-Arab-BN",
-        "ms-BN"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "ms"
-      ],
+      "subdivisionISO31662Codes": ["BN-BE", "BN-BM", "BN-TE", "BN-TU"],
+      "timezoneIanaIdentifiers": ["Asia/Kuching"],
+      "localeIETFBCP47Tags": ["ms-Arab-BN", "ms-BN"],
+      "spokenLanguageISO6391Codes": ["en", "ms"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -1826,12 +1495,7 @@
       "primaryCurrencyISO4217AlphaCode": "BOB",
       "primaryLocaleIETFBCP47Tag": "es-BO",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "LATAM",
-        "MERCOSUR",
-        "SA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["LATAM", "MERCOSUR", "SA", "UN"],
       "subdivisionISO31662Codes": [
         "BO-B",
         "BO-C",
@@ -1843,19 +1507,9 @@
         "BO-S",
         "BO-T"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/La_Paz"
-      ],
-      "localeIETFBCP47Tags": [
-        "es-BO",
-        "qu-BO"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ay",
-        "es",
-        "gn",
-        "qu"
-      ],
+      "timezoneIanaIdentifiers": ["America/La_Paz"],
+      "localeIETFBCP47Tags": ["es-BO", "qu-BO"],
+      "spokenLanguageISO6391Codes": ["ay", "es", "gn", "qu"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -1883,24 +1537,11 @@
       "primaryCurrencyISO4217AlphaCode": "USD",
       "primaryLocaleIETFBCP47Tag": "nl-BQ",
       "sovereignCountryISO31661Alpha2Code": "NL",
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "NA"
-      ],
-      "subdivisionISO31662Codes": [
-        "BQ-BO",
-        "BQ-SA",
-        "BQ-SE"
-      ],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "nl-BQ"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "nl"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "NA"],
+      "subdivisionISO31662Codes": ["BQ-BO", "BQ-SA", "BQ-SE"],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["nl-BQ"],
+      "spokenLanguageISO6391Codes": ["nl"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -1983,21 +1624,8 @@
         "America/Santarem",
         "America/Sao_Paulo"
       ],
-      "localeIETFBCP47Tags": [
-        "es-BR",
-        "kgp-BR",
-        "pt-BR",
-        "yrl-BR"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "de",
-        "en",
-        "es",
-        "it",
-        "ja",
-        "ko",
-        "pt"
-      ],
+      "localeIETFBCP47Tags": ["es-BR", "kgp-BR", "pt-BR", "yrl-BR"],
+      "spokenLanguageISO6391Codes": ["de", "en", "es", "it", "ja", "ko", "pt"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -2025,13 +1653,7 @@
       "primaryCurrencyISO4217AlphaCode": "BSD",
       "primaryLocaleIETFBCP47Tag": "en-BS",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "CARICOM",
-        "CW",
-        "NA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "CARICOM", "CW", "NA", "UN"],
       "subdivisionISO31662Codes": [
         "BS-AK",
         "BS-BI",
@@ -2066,15 +1688,9 @@
         "BS-SW",
         "BS-WG"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Toronto"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-BS"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["America/Toronto"],
+      "localeIETFBCP47Tags": ["en-BS"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -2102,12 +1718,7 @@
       "primaryCurrencyISO4217AlphaCode": "INR",
       "primaryLocaleIETFBCP47Tag": "dz-BT",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "INDS",
-        "SAARC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "INDS", "SAARC", "UN"],
       "subdivisionISO31662Codes": [
         "BT-11",
         "BT-12",
@@ -2130,17 +1741,9 @@
         "BT-GA",
         "BT-TY"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Thimphu"
-      ],
-      "localeIETFBCP47Tags": [
-        "dz-BT"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "dz",
-        "en",
-        "ne"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Thimphu"],
+      "localeIETFBCP47Tags": ["dz-BT"],
+      "spokenLanguageISO6391Codes": ["dz", "en", "ne"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -2172,15 +1775,11 @@
       "primaryCurrencyISO4217AlphaCode": "NOK",
       "primaryLocaleIETFBCP47Tag": null,
       "sovereignCountryISO31661Alpha2Code": "NO",
-      "geopoliticalEntityShortCodes": [
-        "AN"
-      ],
+      "geopoliticalEntityShortCodes": ["AN"],
       "subdivisionISO31662Codes": [],
       "timezoneIanaIdentifiers": [],
       "localeIETFBCP47Tags": [],
-      "spokenLanguageISO6391Codes": [
-        "no"
-      ],
+      "spokenLanguageISO6391Codes": ["no"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -2208,14 +1807,7 @@
       "primaryCurrencyISO4217AlphaCode": "BWP",
       "primaryLocaleIETFBCP47Tag": "en-BW",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "CW",
-        "SACU",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "CW", "SACU", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "BW-CE",
         "BW-CH",
@@ -2234,18 +1826,9 @@
         "BW-SP",
         "BW-ST"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Maputo"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-BW",
-        "tn-BW"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "af",
-        "en",
-        "tn"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Maputo"],
+      "localeIETFBCP47Tags": ["en-BW", "tn-BW"],
+      "spokenLanguageISO6391Codes": ["af", "en", "tn"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -2273,12 +1856,7 @@
       "primaryCurrencyISO4217AlphaCode": "BYN",
       "primaryLocaleIETFBCP47Tag": "be-BY",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CSTO",
-        "EAEU",
-        "EU",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CSTO", "EAEU", "EU", "UN"],
       "subdivisionISO31662Codes": [
         "BY-BR",
         "BY-HM",
@@ -2288,17 +1866,9 @@
         "BY-MI",
         "BY-VI"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Minsk"
-      ],
-      "localeIETFBCP47Tags": [
-        "be-BY",
-        "ru-BY"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "be",
-        "ru"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Minsk"],
+      "localeIETFBCP47Tags": ["be-BY", "ru-BY"],
+      "spokenLanguageISO6391Codes": ["be", "ru"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -2342,17 +1912,9 @@
         "BZ-SC",
         "BZ-TOL"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Belize"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-BZ",
-        "es-BZ"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "es"
-      ],
+      "timezoneIanaIdentifiers": ["America/Belize"],
+      "localeIETFBCP47Tags": ["en-BZ", "es-BZ"],
+      "spokenLanguageISO6391Codes": ["en", "es"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -2501,22 +2063,13 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "ms",
       "primaryCurrencyISO4217AlphaCode": "AUD",
-      "primaryLocaleIETFBCP47Tag": "ms-CC",
+      "primaryLocaleIETFBCP47Tag": "en-CC",
       "sovereignCountryISO31661Alpha2Code": "AU",
-      "geopoliticalEntityShortCodes": [
-        "OC"
-      ],
+      "geopoliticalEntityShortCodes": ["OC"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Asia/Yangon"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-CC"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "ms"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Yangon"],
+      "localeIETFBCP47Tags": ["en-CC"],
+      "spokenLanguageISO6391Codes": ["en", "ms"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -2544,13 +2097,7 @@
       "primaryCurrencyISO4217AlphaCode": "CDF",
       "primaryLocaleIETFBCP47Tag": "fr-CD",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "OIF",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "OIF", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "CD-BC",
         "CD-BU",
@@ -2579,24 +2126,9 @@
         "CD-TO",
         "CD-TU"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Lagos",
-        "Africa/Maputo"
-      ],
-      "localeIETFBCP47Tags": [
-        "fr-CD",
-        "ln-CD",
-        "lu-CD",
-        "sw-CD"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr",
-        "kg",
-        "ln",
-        "lu",
-        "rw",
-        "sw"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Lagos", "Africa/Maputo"],
+      "localeIETFBCP47Tags": ["fr-CD", "ln-CD", "lu-CD", "sw-CD"],
+      "spokenLanguageISO6391Codes": ["fr", "kg", "ln", "lu", "rw", "sw"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -2624,14 +2156,7 @@
       "primaryCurrencyISO4217AlphaCode": "XAF",
       "primaryLocaleIETFBCP47Tag": "fr-CF",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "CEMAC",
-        "OIF",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "CEMAC", "OIF", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "CF-AC",
         "CF-BB",
@@ -2651,19 +2176,9 @@
         "CF-UK",
         "CF-VK"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Lagos"
-      ],
-      "localeIETFBCP47Tags": [
-        "fr-CF",
-        "ln-CF",
-        "sg-CF"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr",
-        "ln",
-        "sg"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Lagos"],
+      "localeIETFBCP47Tags": ["fr-CF", "ln-CF", "sg-CF"],
+      "spokenLanguageISO6391Codes": ["fr", "ln", "sg"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -2714,17 +2229,9 @@
         "CG-9",
         "CG-BZV"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Lagos"
-      ],
-      "localeIETFBCP47Tags": [
-        "fr-CG",
-        "ln-CG"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr",
-        "ln"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Lagos"],
+      "localeIETFBCP47Tags": ["fr-CG", "ln-CG"],
+      "spokenLanguageISO6391Codes": ["fr", "ln"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -2752,13 +2259,7 @@
       "primaryCurrencyISO4217AlphaCode": "CHF",
       "primaryLocaleIETFBCP47Tag": "de-CH",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "COE",
-        "EU",
-        "OECD",
-        "OIF",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["COE", "EU", "OECD", "OIF", "UN"],
       "subdivisionISO31662Codes": [
         "CH-AG",
         "CH-AI",
@@ -2787,9 +2288,7 @@
         "CH-ZG",
         "CH-ZH"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Zurich"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Zurich"],
       "localeIETFBCP47Tags": [
         "de-CH",
         "en-CH",
@@ -2800,19 +2299,16 @@
         "rm-CH",
         "wae-CH"
       ],
-      "spokenLanguageISO6391Codes": [
-        "de",
-        "en",
-        "fr",
-        "it",
-        "pt",
-        "rm"
-      ],
+      "spokenLanguageISO6391Codes": ["de", "en", "fr", "it", "pt", "rm"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
           "iso4217AlphaCode": "CHF",
           "level": "LegalTender"
+        },
+        {
+          "iso4217AlphaCode": "EUR",
+          "level": "WidelyAccepted"
         }
       ]
     },
@@ -2835,14 +2331,7 @@
       "primaryCurrencyISO4217AlphaCode": "XOF",
       "primaryLocaleIETFBCP47Tag": "fr-CI",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "OIF",
-        "SSA",
-        "UN",
-        "WAEMU"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "OIF", "SSA", "UN", "WAEMU"],
       "subdivisionISO31662Codes": [
         "CI-AB",
         "CI-BS",
@@ -2859,15 +2348,9 @@
         "CI-YM",
         "CI-ZZ"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Abidjan"
-      ],
-      "localeIETFBCP47Tags": [
-        "fr-CI"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Abidjan"],
+      "localeIETFBCP47Tags": ["fr-CI"],
+      "spokenLanguageISO6391Codes": ["fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -2895,19 +2378,11 @@
       "primaryCurrencyISO4217AlphaCode": "NZD",
       "primaryLocaleIETFBCP47Tag": "en-CK",
       "sovereignCountryISO31661Alpha2Code": "NZ",
-      "geopoliticalEntityShortCodes": [
-        "OC"
-      ],
+      "geopoliticalEntityShortCodes": ["OC"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Rarotonga"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-CK"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Rarotonga"],
+      "localeIETFBCP47Tags": ["en-CK"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -2967,14 +2442,8 @@
         "America/Santiago",
         "Pacific/Easter"
       ],
-      "localeIETFBCP47Tags": [
-        "arn-CL",
-        "es-CL"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "es"
-      ],
+      "localeIETFBCP47Tags": ["arn-CL", "es-CL"],
+      "spokenLanguageISO6391Codes": ["en", "es"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -3023,9 +2492,7 @@
         "CM-SU",
         "CM-SW"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Lagos"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Lagos"],
       "localeIETFBCP47Tags": [
         "agq-CM",
         "bas-CM",
@@ -3046,12 +2513,7 @@
         "nnh-CM",
         "yav-CM"
       ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "en",
-        "ff",
-        "fr"
-      ],
+      "spokenLanguageISO6391Codes": ["ar", "en", "ff", "fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -3123,10 +2585,7 @@
         "CN-YN",
         "CN-ZJ"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Shanghai",
-        "Asia/Urumqi"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Shanghai", "Asia/Urumqi"],
       "localeIETFBCP47Tags": [
         "bo-CN",
         "ii-CN",
@@ -3150,10 +2609,7 @@
         "za",
         "zh"
       ],
-      "territoryISO31661Alpha2Codes": [
-        "HK",
-        "MO"
-      ],
+      "territoryISO31661Alpha2Codes": ["HK", "MO"],
       "currencies": [
         {
           "iso4217AlphaCode": "CNY",
@@ -3180,13 +2636,7 @@
       "primaryCurrencyISO4217AlphaCode": "COP",
       "primaryLocaleIETFBCP47Tag": "es-CO",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "LATAM",
-        "MERCOSUR",
-        "OECD",
-        "SA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["LATAM", "MERCOSUR", "OECD", "SA", "UN"],
       "subdivisionISO31662Codes": [
         "CO-AMA",
         "CO-ANT",
@@ -3222,16 +2672,9 @@
         "CO-VAU",
         "CO-VID"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Bogota"
-      ],
-      "localeIETFBCP47Tags": [
-        "es-CO",
-        "yrl-CO"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "es"
-      ],
+      "timezoneIanaIdentifiers": ["America/Bogota"],
+      "localeIETFBCP47Tags": ["es-CO", "yrl-CO"],
+      "spokenLanguageISO6391Codes": ["es"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -3259,13 +2702,7 @@
       "primaryCurrencyISO4217AlphaCode": "CRC",
       "primaryLocaleIETFBCP47Tag": "es-CR",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CAM",
-        "LATAM",
-        "NA",
-        "OECD",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CAM", "LATAM", "NA", "OECD", "UN"],
       "subdivisionISO31662Codes": [
         "CR-A",
         "CR-C",
@@ -3275,15 +2712,9 @@
         "CR-P",
         "CR-SJ"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Costa_Rica"
-      ],
-      "localeIETFBCP47Tags": [
-        "es-CR"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "es"
-      ],
+      "timezoneIanaIdentifiers": ["America/Costa_Rica"],
+      "localeIETFBCP47Tags": ["es-CR"],
+      "spokenLanguageISO6391Codes": ["es"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -3311,12 +2742,7 @@
       "primaryCurrencyISO4217AlphaCode": "CUP",
       "primaryLocaleIETFBCP47Tag": "es-CU",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "LATAM",
-        "NA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "LATAM", "NA", "UN"],
       "subdivisionISO31662Codes": [
         "CU-01",
         "CU-03",
@@ -3335,15 +2761,9 @@
         "CU-16",
         "CU-99"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Havana"
-      ],
-      "localeIETFBCP47Tags": [
-        "es-CU"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "es"
-      ],
+      "timezoneIanaIdentifiers": ["America/Havana"],
+      "localeIETFBCP47Tags": ["es-CU"],
+      "spokenLanguageISO6391Codes": ["es"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -3371,13 +2791,7 @@
       "primaryCurrencyISO4217AlphaCode": "CVE",
       "primaryLocaleIETFBCP47Tag": "pt-CV",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "OIF",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "OIF", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "CV-B",
         "CV-BR",
@@ -3404,16 +2818,9 @@
         "CV-TA",
         "CV-TS"
       ],
-      "timezoneIanaIdentifiers": [
-        "Atlantic/Cape_Verde"
-      ],
-      "localeIETFBCP47Tags": [
-        "kea-CV",
-        "pt-CV"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "pt"
-      ],
+      "timezoneIanaIdentifiers": ["Atlantic/Cape_Verde"],
+      "localeIETFBCP47Tags": ["kea-CV", "pt-CV"],
+      "spokenLanguageISO6391Codes": ["pt"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -3441,22 +2848,11 @@
       "primaryCurrencyISO4217AlphaCode": "XCG",
       "primaryLocaleIETFBCP47Tag": "nl-CW",
       "sovereignCountryISO31661Alpha2Code": "NL",
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "NA"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "NA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "nl-CW",
-        "pap-CW"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "es",
-        "nl"
-      ],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["nl-CW", "pap-CW"],
+      "spokenLanguageISO6391Codes": ["es", "nl"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -3484,19 +2880,11 @@
       "primaryCurrencyISO4217AlphaCode": "AUD",
       "primaryLocaleIETFBCP47Tag": "en-CX",
       "sovereignCountryISO31661Alpha2Code": "AU",
-      "geopoliticalEntityShortCodes": [
-        "OC"
-      ],
+      "geopoliticalEntityShortCodes": ["OC"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Asia/Bangkok"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-CX"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Bangkok"],
+      "localeIETFBCP47Tags": ["en-CX"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -3542,23 +2930,9 @@
         "CY-05",
         "CY-06"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Famagusta",
-        "Asia/Nicosia"
-      ],
-      "localeIETFBCP47Tags": [
-        "el-CY",
-        "en-CY",
-        "tr-CY"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "el",
-        "en",
-        "fr",
-        "hy",
-        "tr"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Famagusta", "Asia/Nicosia"],
+      "localeIETFBCP47Tags": ["el-CY", "en-CY", "tr-CY"],
+      "spokenLanguageISO6391Codes": ["ar", "el", "en", "fr", "hy", "tr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -3688,20 +3062,9 @@
         "CZ-805",
         "CZ-806"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Prague"
-      ],
-      "localeIETFBCP47Tags": [
-        "cs-CZ",
-        "en-CZ"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "cs",
-        "de",
-        "en",
-        "pl",
-        "sk"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Prague"],
+      "localeIETFBCP47Tags": ["cs-CZ", "en-CZ"],
+      "spokenLanguageISO6391Codes": ["cs", "de", "en", "pl", "sk"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -3760,10 +3123,7 @@
         "DE-ST",
         "DE-TH"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Berlin",
-        "Europe/Zurich"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Berlin", "Europe/Zurich"],
       "localeIETFBCP47Tags": [
         "de-DE",
         "dsb-DE",
@@ -3815,14 +3175,7 @@
       "primaryCurrencyISO4217AlphaCode": "DJF",
       "primaryLocaleIETFBCP47Tag": "fr-DJ",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AL",
-        "AU",
-        "OIF",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AL", "AU", "OIF", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "DJ-AR",
         "DJ-AS",
@@ -3831,21 +3184,9 @@
         "DJ-OB",
         "DJ-TA"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Nairobi"
-      ],
-      "localeIETFBCP47Tags": [
-        "aa-DJ",
-        "ar-DJ",
-        "fr-DJ",
-        "so-DJ"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "aa",
-        "ar",
-        "fr",
-        "so"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Nairobi"],
+      "localeIETFBCP47Tags": ["aa-DJ", "ar-DJ", "fr-DJ", "so-DJ"],
+      "spokenLanguageISO6391Codes": ["aa", "ar", "fr", "so"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -3886,33 +3227,11 @@
         "SCAN",
         "UN"
       ],
-      "subdivisionISO31662Codes": [
-        "DK-81",
-        "DK-82",
-        "DK-83",
-        "DK-84",
-        "DK-85"
-      ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Berlin"
-      ],
-      "localeIETFBCP47Tags": [
-        "da-DK",
-        "en-DK",
-        "fo-DK"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "da",
-        "de",
-        "en",
-        "fo",
-        "kl",
-        "sv"
-      ],
-      "territoryISO31661Alpha2Codes": [
-        "FO",
-        "GL"
-      ],
+      "subdivisionISO31662Codes": ["DK-81", "DK-82", "DK-83", "DK-84", "DK-85"],
+      "timezoneIanaIdentifiers": ["Europe/Berlin"],
+      "localeIETFBCP47Tags": ["da-DK", "en-DK", "fo-DK"],
+      "spokenLanguageISO6391Codes": ["da", "de", "en", "fo", "kl", "sv"],
+      "territoryISO31661Alpha2Codes": ["FO", "GL"],
       "currencies": [
         {
           "iso4217AlphaCode": "DKK",
@@ -3960,15 +3279,9 @@
         "DM-10",
         "DM-11"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-DM"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["en-DM"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -3996,12 +3309,7 @@
       "primaryCurrencyISO4217AlphaCode": "DOP",
       "primaryLocaleIETFBCP47Tag": "es-DO",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "LATAM",
-        "NA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "LATAM", "NA", "UN"],
       "subdivisionISO31662Codes": [
         "DO-01",
         "DO-02",
@@ -4046,16 +3354,9 @@
         "DO-41",
         "DO-42"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Santo_Domingo"
-      ],
-      "localeIETFBCP47Tags": [
-        "es-DO"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "es"
-      ],
+      "timezoneIanaIdentifiers": ["America/Santo_Domingo"],
+      "localeIETFBCP47Tags": ["es-DO"],
+      "spokenLanguageISO6391Codes": ["en", "es"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -4083,14 +3384,7 @@
       "primaryCurrencyISO4217AlphaCode": "DZD",
       "primaryLocaleIETFBCP47Tag": "ar-DZ",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AL",
-        "AU",
-        "MENA",
-        "OPEC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AL", "AU", "MENA", "OPEC", "UN"],
       "subdivisionISO31662Codes": [
         "DZ-01",
         "DZ-02",
@@ -4151,19 +3445,9 @@
         "DZ-57",
         "DZ-58"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Algiers"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-DZ",
-        "fr-DZ",
-        "kab-DZ"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "en",
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Algiers"],
+      "localeIETFBCP47Tags": ["ar-DZ", "fr-DZ", "kab-DZ"],
+      "spokenLanguageISO6391Codes": ["ar", "en", "fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -4191,12 +3475,7 @@
       "primaryCurrencyISO4217AlphaCode": "USD",
       "primaryLocaleIETFBCP47Tag": "es-EC",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "LATAM",
-        "MERCOSUR",
-        "SA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["LATAM", "MERCOSUR", "SA", "UN"],
       "subdivisionISO31662Codes": [
         "EC-A",
         "EC-B",
@@ -4223,18 +3502,9 @@
         "EC-Y",
         "EC-Z"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Guayaquil",
-        "Pacific/Galapagos"
-      ],
-      "localeIETFBCP47Tags": [
-        "es-EC",
-        "qu-EC"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "es",
-        "qu"
-      ],
+      "timezoneIanaIdentifiers": ["America/Guayaquil", "Pacific/Galapagos"],
+      "localeIETFBCP47Tags": ["es-EC", "qu-EC"],
+      "spokenLanguageISO6391Codes": ["es", "qu"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -4370,21 +3640,9 @@
         "EE-919",
         "EE-928"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Tallinn"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-EE",
-        "et-EE",
-        "ie-EE"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "et",
-        "fi",
-        "ie",
-        "ru"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Tallinn"],
+      "localeIETFBCP47Tags": ["en-EE", "et-EE", "ie-EE"],
+      "spokenLanguageISO6391Codes": ["en", "et", "fi", "ie", "ru"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -4450,18 +3708,9 @@
         "EG-SUZ",
         "EG-WAD"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Cairo"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-EG",
-        "cop-EG"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "el",
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Cairo"],
+      "localeIETFBCP47Tags": ["ar-EG", "cop-EG"],
+      "spokenLanguageISO6391Codes": ["ar", "el", "en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -4489,21 +3738,11 @@
       "primaryCurrencyISO4217AlphaCode": "MAD",
       "primaryLocaleIETFBCP47Tag": "ar-EH",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "MENA"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "MENA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Africa/El_Aaiun"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-EH"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/El_Aaiun"],
+      "localeIETFBCP47Tags": ["ar-EH"],
+      "spokenLanguageISO6391Codes": ["ar"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -4531,13 +3770,7 @@
       "primaryCurrencyISO4217AlphaCode": "ERN",
       "primaryLocaleIETFBCP47Tag": "aa-ER",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "SAHEL",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "SAHEL", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "ER-AN",
         "ER-DK",
@@ -4546,9 +3779,7 @@
         "ER-MA",
         "ER-SK"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Nairobi"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Nairobi"],
       "localeIETFBCP47Tags": [
         "aa-ER",
         "ar-ER",
@@ -4559,12 +3790,7 @@
         "ti-ER",
         "tig-ER"
       ],
-      "spokenLanguageISO6391Codes": [
-        "aa",
-        "ar",
-        "en",
-        "ti"
-      ],
+      "spokenLanguageISO6391Codes": ["aa", "ar", "en", "ti"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -4690,15 +3916,7 @@
         "gl-ES",
         "oc-ES"
       ],
-      "spokenLanguageISO6391Codes": [
-        "an",
-        "ca",
-        "en",
-        "es",
-        "eu",
-        "gl",
-        "oc"
-      ],
+      "spokenLanguageISO6391Codes": ["an", "ca", "en", "es", "eu", "gl", "oc"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -4726,13 +3944,7 @@
       "primaryCurrencyISO4217AlphaCode": "ETB",
       "primaryLocaleIETFBCP47Tag": "am-ET",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "BRICS",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "BRICS", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "ET-AA",
         "ET-AF",
@@ -4748,9 +3960,7 @@
         "ET-SW",
         "ET-TI"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Nairobi"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Nairobi"],
       "localeIETFBCP47Tags": [
         "aa-ET",
         "am-ET",
@@ -4761,14 +3971,7 @@
         "ti-ET",
         "wal-ET"
       ],
-      "spokenLanguageISO6391Codes": [
-        "aa",
-        "am",
-        "en",
-        "om",
-        "so",
-        "ti"
-      ],
+      "spokenLanguageISO6391Codes": ["aa", "am", "en", "om", "so", "ti"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -4830,9 +4033,7 @@
         "FI-18",
         "FI-19"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Helsinki"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Helsinki"],
       "localeIETFBCP47Tags": [
         "en-FI",
         "fi-FI",
@@ -4841,18 +4042,8 @@
         "sms-FI",
         "sv-FI"
       ],
-      "spokenLanguageISO6391Codes": [
-        "de",
-        "en",
-        "et",
-        "fi",
-        "ru",
-        "se",
-        "sv"
-      ],
-      "territoryISO31661Alpha2Codes": [
-        "AX"
-      ],
+      "spokenLanguageISO6391Codes": ["de", "en", "et", "fi", "ru", "se", "sv"],
+      "territoryISO31661Alpha2Codes": ["AX"],
       "currencies": [
         {
           "iso4217AlphaCode": "EUR",
@@ -4879,11 +4070,7 @@
       "primaryCurrencyISO4217AlphaCode": "FJD",
       "primaryLocaleIETFBCP47Tag": "en-FJ",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CW",
-        "OC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CW", "OC", "UN"],
       "subdivisionISO31662Codes": [
         "FJ-01",
         "FJ-02",
@@ -4905,17 +4092,9 @@
         "FJ-R",
         "FJ-W"
       ],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Fiji"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-FJ"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "fj",
-        "hi"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Fiji"],
+      "localeIETFBCP47Tags": ["en-FJ"],
+      "spokenLanguageISO6391Codes": ["en", "fj", "hi"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -4943,19 +4122,11 @@
       "primaryCurrencyISO4217AlphaCode": "FKP",
       "primaryLocaleIETFBCP47Tag": "en-FK",
       "sovereignCountryISO31661Alpha2Code": "GB",
-      "geopoliticalEntityShortCodes": [
-        "SA"
-      ],
+      "geopoliticalEntityShortCodes": ["SA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Atlantic/Stanley"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-FK"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Atlantic/Stanley"],
+      "localeIETFBCP47Tags": ["en-FK"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -4983,27 +4154,15 @@
       "primaryCurrencyISO4217AlphaCode": "USD",
       "primaryLocaleIETFBCP47Tag": "en-FM",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "OC",
-        "UN"
-      ],
-      "subdivisionISO31662Codes": [
-        "FM-KSA",
-        "FM-PNI",
-        "FM-TRK",
-        "FM-YAP"
-      ],
+      "geopoliticalEntityShortCodes": ["OC", "UN"],
+      "subdivisionISO31662Codes": ["FM-KSA", "FM-PNI", "FM-TRK", "FM-YAP"],
       "timezoneIanaIdentifiers": [
         "Pacific/Guadalcanal",
         "Pacific/Kosrae",
         "Pacific/Port_Moresby"
       ],
-      "localeIETFBCP47Tags": [
-        "en-FM"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "localeIETFBCP47Tags": ["en-FM"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -5031,21 +4190,11 @@
       "primaryCurrencyISO4217AlphaCode": "DKK",
       "primaryLocaleIETFBCP47Tag": "fo-FO",
       "sovereignCountryISO31661Alpha2Code": "DK",
-      "geopoliticalEntityShortCodes": [
-        "EU",
-        "NC",
-        "NORD"
-      ],
+      "geopoliticalEntityShortCodes": ["EU", "NC", "NORD"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Atlantic/Faroe"
-      ],
-      "localeIETFBCP47Tags": [
-        "fo-FO"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fo"
-      ],
+      "timezoneIanaIdentifiers": ["Atlantic/Faroe"],
+      "localeIETFBCP47Tags": ["fo-FO"],
+      "spokenLanguageISO6391Codes": ["fo"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -5213,9 +4362,7 @@
         "FR-TF",
         "FR-WF"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Paris"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Paris"],
       "localeIETFBCP47Tags": [
         "br-FR",
         "ca-FR",
@@ -5300,15 +4447,9 @@
         "GA-8",
         "GA-9"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Lagos"
-      ],
-      "localeIETFBCP47Tags": [
-        "fr-GA"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Lagos"],
+      "localeIETFBCP47Tags": ["fr-GA"],
+      "spokenLanguageISO6391Codes": ["fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -5571,9 +4712,7 @@
         "GB-YOR",
         "GB-ZET"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/London"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/London"],
       "localeIETFBCP47Tags": [
         "cy-GB",
         "en-GB",
@@ -5667,15 +4806,9 @@
         "GD-06",
         "GD-10"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-GD"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["en-GD"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -5703,11 +4836,7 @@
       "primaryCurrencyISO4217AlphaCode": "GEL",
       "primaryLocaleIETFBCP47Tag": "ka-GE",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "COE",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "COE", "UN"],
       "subdivisionISO31662Codes": [
         "GE-AB",
         "GE-AJ",
@@ -5722,22 +4851,9 @@
         "GE-SZ",
         "GE-TB"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Tbilisi"
-      ],
-      "localeIETFBCP47Tags": [
-        "ab-GE",
-        "en-GE",
-        "ka-GE",
-        "os-GE"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ab",
-        "hy",
-        "ka",
-        "os",
-        "ru"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Tbilisi"],
+      "localeIETFBCP47Tags": ["ab-GE", "en-GE", "ka-GE", "os-GE"],
+      "spokenLanguageISO6391Codes": ["ab", "hy", "ka", "os", "ru"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -5765,20 +4881,11 @@
       "primaryCurrencyISO4217AlphaCode": "EUR",
       "primaryLocaleIETFBCP47Tag": "fr-GF",
       "sovereignCountryISO31661Alpha2Code": "FR",
-      "geopoliticalEntityShortCodes": [
-        "LATAM",
-        "SA"
-      ],
+      "geopoliticalEntityShortCodes": ["LATAM", "SA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "America/Cayenne"
-      ],
-      "localeIETFBCP47Tags": [
-        "fr-GF"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["America/Cayenne"],
+      "localeIETFBCP47Tags": ["fr-GF"],
+      "spokenLanguageISO6391Codes": ["fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -5806,19 +4913,11 @@
       "primaryCurrencyISO4217AlphaCode": "GBP",
       "primaryLocaleIETFBCP47Tag": "en-GG",
       "sovereignCountryISO31661Alpha2Code": "GB",
-      "geopoliticalEntityShortCodes": [
-        "EU"
-      ],
+      "geopoliticalEntityShortCodes": ["EU"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Europe/London"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-GG"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/London"],
+      "localeIETFBCP47Tags": ["en-GG"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -5846,13 +4945,7 @@
       "primaryCurrencyISO4217AlphaCode": "GHS",
       "primaryLocaleIETFBCP47Tag": "en-GH",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "CW",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "CW", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "GH-AA",
         "GH-AF",
@@ -5871,9 +4964,7 @@
         "GH-WN",
         "GH-WP"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Abidjan"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Abidjan"],
       "localeIETFBCP47Tags": [
         "ak-GH",
         "ee-GH",
@@ -5883,13 +4974,7 @@
         "gaa-GH",
         "ha-GH"
       ],
-      "spokenLanguageISO6391Codes": [
-        "ak",
-        "ee",
-        "en",
-        "ff",
-        "ha"
-      ],
+      "spokenLanguageISO6391Codes": ["ak", "ee", "en", "ff", "ha"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -5917,20 +5002,11 @@
       "primaryCurrencyISO4217AlphaCode": "GIP",
       "primaryLocaleIETFBCP47Tag": "en-GI",
       "sovereignCountryISO31661Alpha2Code": "GB",
-      "geopoliticalEntityShortCodes": [
-        "EU"
-      ],
+      "geopoliticalEntityShortCodes": ["EU"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Europe/Gibraltar"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-GI"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "es"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Gibraltar"],
+      "localeIETFBCP47Tags": ["en-GI"],
+      "spokenLanguageISO6391Codes": ["en", "es"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -5958,32 +5034,16 @@
       "primaryCurrencyISO4217AlphaCode": "DKK",
       "primaryLocaleIETFBCP47Tag": "kl-GL",
       "sovereignCountryISO31661Alpha2Code": "DK",
-      "geopoliticalEntityShortCodes": [
-        "NA",
-        "NC",
-        "NORD"
-      ],
-      "subdivisionISO31662Codes": [
-        "GL-AV",
-        "GL-KU",
-        "GL-QE",
-        "GL-QT",
-        "GL-SM"
-      ],
+      "geopoliticalEntityShortCodes": ["NA", "NC", "NORD"],
+      "subdivisionISO31662Codes": ["GL-AV", "GL-KU", "GL-QE", "GL-QT", "GL-SM"],
       "timezoneIanaIdentifiers": [
         "America/Danmarkshavn",
         "America/Nuuk",
         "America/Scoresbysund",
         "America/Thule"
       ],
-      "localeIETFBCP47Tags": [
-        "da-GL",
-        "kl-GL"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "da",
-        "kl"
-      ],
+      "localeIETFBCP47Tags": ["da-GL", "kl-GL"],
+      "spokenLanguageISO6391Codes": ["da", "kl"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -6011,13 +5071,7 @@
       "primaryCurrencyISO4217AlphaCode": "GMD",
       "primaryLocaleIETFBCP47Tag": "en-GM",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "CW",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "CW", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "GM-B",
         "GM-L",
@@ -6026,18 +5080,9 @@
         "GM-U",
         "GM-W"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Abidjan"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-GM",
-        "ff-Adlm-GM",
-        "ff-Latn-GM"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "ff"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Abidjan"],
+      "localeIETFBCP47Tags": ["en-GM", "ff-Adlm-GM", "ff-Latn-GM"],
+      "spokenLanguageISO6391Codes": ["en", "ff"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -6065,13 +5110,7 @@
       "primaryCurrencyISO4217AlphaCode": "GNF",
       "primaryLocaleIETFBCP47Tag": "fr-GN",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "OIF",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "OIF", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "GN-B",
         "GN-BE",
@@ -6115,9 +5154,7 @@
         "GN-TO",
         "GN-YO"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Abidjan"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Abidjan"],
       "localeIETFBCP47Tags": [
         "ff-Adlm-GN",
         "ff-Latn-GN",
@@ -6125,10 +5162,7 @@
         "kpe-GN",
         "nqo-GN"
       ],
-      "spokenLanguageISO6391Codes": [
-        "ff",
-        "fr"
-      ],
+      "spokenLanguageISO6391Codes": ["ff", "fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -6156,20 +5190,11 @@
       "primaryCurrencyISO4217AlphaCode": "EUR",
       "primaryLocaleIETFBCP47Tag": "fr-GP",
       "sovereignCountryISO31661Alpha2Code": "FR",
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "NA"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "NA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "fr-GP"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["fr-GP"],
+      "spokenLanguageISO6391Codes": ["fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -6218,19 +5243,9 @@
         "GQ-LI",
         "GQ-WN"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Lagos"
-      ],
-      "localeIETFBCP47Tags": [
-        "es-GQ",
-        "fr-GQ",
-        "pt-GQ"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "es",
-        "fr",
-        "pt"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Lagos"],
+      "localeIETFBCP47Tags": ["es-GQ", "fr-GQ", "pt-GQ"],
+      "spokenLanguageISO6391Codes": ["es", "fr", "pt"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -6286,12 +5301,8 @@
         "GR-L",
         "GR-M"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Athens"
-      ],
-      "localeIETFBCP47Tags": [
-        "el-GR"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Athens"],
+      "localeIETFBCP47Tags": ["el-GR"],
       "spokenLanguageISO6391Codes": [
         "bg",
         "de",
@@ -6329,19 +5340,11 @@
       "primaryCurrencyISO4217AlphaCode": "GBP",
       "primaryLocaleIETFBCP47Tag": "en-GS",
       "sovereignCountryISO31661Alpha2Code": "GB",
-      "geopoliticalEntityShortCodes": [
-        "SA"
-      ],
+      "geopoliticalEntityShortCodes": ["SA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Atlantic/South_Georgia"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-GS"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Atlantic/South_Georgia"],
+      "localeIETFBCP47Tags": ["en-GS"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -6369,12 +5372,7 @@
       "primaryCurrencyISO4217AlphaCode": "GTQ",
       "primaryLocaleIETFBCP47Tag": "es-GT",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CAM",
-        "LATAM",
-        "NA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CAM", "LATAM", "NA", "UN"],
       "subdivisionISO31662Codes": [
         "GT-01",
         "GT-02",
@@ -6399,18 +5397,9 @@
         "GT-21",
         "GT-22"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Guatemala"
-      ],
-      "localeIETFBCP47Tags": [
-        "es-GT",
-        "kek-GT",
-        "quc-GT"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "es"
-      ],
+      "timezoneIanaIdentifiers": ["America/Guatemala"],
+      "localeIETFBCP47Tags": ["es-GT", "kek-GT", "quc-GT"],
+      "spokenLanguageISO6391Codes": ["en", "es"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -6438,20 +5427,11 @@
       "primaryCurrencyISO4217AlphaCode": "USD",
       "primaryLocaleIETFBCP47Tag": "en-GU",
       "sovereignCountryISO31661Alpha2Code": "US",
-      "geopoliticalEntityShortCodes": [
-        "OC"
-      ],
+      "geopoliticalEntityShortCodes": ["OC"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Guam"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-GU"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ch",
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Guam"],
+      "localeIETFBCP47Tags": ["en-GU"],
+      "spokenLanguageISO6391Codes": ["ch", "en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -6479,14 +5459,7 @@
       "primaryCurrencyISO4217AlphaCode": "XOF",
       "primaryLocaleIETFBCP47Tag": "pt-GW",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "OIF",
-        "SSA",
-        "UN",
-        "WAEMU"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "OIF", "SSA", "UN", "WAEMU"],
       "subdivisionISO31662Codes": [
         "GW-BA",
         "GW-BL",
@@ -6501,19 +5474,9 @@
         "GW-S",
         "GW-TO"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Bissau"
-      ],
-      "localeIETFBCP47Tags": [
-        "ff-Adlm-GW",
-        "ff-Latn-GW",
-        "pt-GW"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ff",
-        "fr",
-        "pt"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Bissau"],
+      "localeIETFBCP47Tags": ["ff-Adlm-GW", "ff-Latn-GW", "pt-GW"],
+      "spokenLanguageISO6391Codes": ["ff", "fr", "pt"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -6561,15 +5524,9 @@
         "GY-UD",
         "GY-UT"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Guyana"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-GY"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["America/Guyana"],
+      "localeIETFBCP47Tags": ["en-GY"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -6595,31 +5552,22 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "zh",
       "primaryCurrencyISO4217AlphaCode": "HKD",
-      "primaryLocaleIETFBCP47Tag": "zh-HK",
+      "primaryLocaleIETFBCP47Tag": "zh-Hant-HK",
       "sovereignCountryISO31661Alpha2Code": "CN",
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "EAS"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "EAS"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Asia/Hong_Kong"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-HK",
-        "yue-HK",
-        "zh-Hans-HK",
-        "zh-Hant-HK"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "zh"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Hong_Kong"],
+      "localeIETFBCP47Tags": ["en-HK", "yue-HK", "zh-Hans-HK", "zh-Hant-HK"],
+      "spokenLanguageISO6391Codes": ["en", "zh"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
           "iso4217AlphaCode": "HKD",
           "level": "LegalTender"
+        },
+        {
+          "iso4217AlphaCode": "CNY",
+          "level": "WidelyAccepted"
         }
       ]
     },
@@ -6642,9 +5590,7 @@
       "primaryCurrencyISO4217AlphaCode": "AUD",
       "primaryLocaleIETFBCP47Tag": null,
       "sovereignCountryISO31661Alpha2Code": "AU",
-      "geopoliticalEntityShortCodes": [
-        "OC"
-      ],
+      "geopoliticalEntityShortCodes": ["OC"],
       "subdivisionISO31662Codes": [],
       "timezoneIanaIdentifiers": [],
       "localeIETFBCP47Tags": [],
@@ -6676,12 +5622,7 @@
       "primaryCurrencyISO4217AlphaCode": "HNL",
       "primaryLocaleIETFBCP47Tag": "es-HN",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CAM",
-        "LATAM",
-        "NA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CAM", "LATAM", "NA", "UN"],
       "subdivisionISO31662Codes": [
         "HN-AT",
         "HN-CH",
@@ -6702,16 +5643,9 @@
         "HN-VA",
         "HN-YO"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Tegucigalpa"
-      ],
-      "localeIETFBCP47Tags": [
-        "es-HN"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "es"
-      ],
+      "timezoneIanaIdentifiers": ["America/Tegucigalpa"],
+      "localeIETFBCP47Tags": ["es-HN"],
+      "spokenLanguageISO6391Codes": ["en", "es"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -6773,17 +5707,9 @@
         "HR-20",
         "HR-21"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Belgrade"
-      ],
-      "localeIETFBCP47Tags": [
-        "hr-HR"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "hr",
-        "it"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Belgrade"],
+      "localeIETFBCP47Tags": ["hr-HR"],
+      "spokenLanguageISO6391Codes": ["en", "hr", "it"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -6831,17 +5757,9 @@
         "HT-SD",
         "HT-SE"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Port-au-Prince"
-      ],
-      "localeIETFBCP47Tags": [
-        "fr-HT",
-        "ht-HT"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr",
-        "ht"
-      ],
+      "timezoneIanaIdentifiers": ["America/Port-au-Prince"],
+      "localeIETFBCP47Tags": ["fr-HT", "ht-HT"],
+      "spokenLanguageISO6391Codes": ["fr", "ht"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -6928,13 +5846,8 @@
         "HU-ZA",
         "HU-ZE"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Budapest"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-HU",
-        "hu-HU"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Budapest"],
+      "localeIETFBCP47Tags": ["en-HU", "hu-HU"],
       "spokenLanguageISO6391Codes": [
         "de",
         "en",
@@ -7042,12 +5955,7 @@
         "ms-ID",
         "su-ID"
       ],
-      "spokenLanguageISO6391Codes": [
-        "id",
-        "jv",
-        "ms",
-        "su"
-      ],
+      "spokenLanguageISO6391Codes": ["id", "jv", "ms", "su"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -7117,18 +6025,9 @@
         "IE-WW",
         "IE-WX"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Dublin"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-IE",
-        "ga-IE"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "fr",
-        "ga"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Dublin"],
+      "localeIETFBCP47Tags": ["en-IE", "ga-IE"],
+      "spokenLanguageISO6391Codes": ["en", "fr", "ga"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -7156,12 +6055,7 @@
       "primaryCurrencyISO4217AlphaCode": "ILS",
       "primaryLocaleIETFBCP47Tag": "he-IL",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "MENA",
-        "OECD",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "MENA", "OECD", "UN"],
       "subdivisionISO31662Codes": [
         "IL-D",
         "IL-HA",
@@ -7170,14 +6064,8 @@
         "IL-TA",
         "IL-Z"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Jerusalem"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-IL",
-        "en-IL",
-        "he-IL"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Jerusalem"],
+      "localeIETFBCP47Tags": ["ar-IL", "en-IL", "he-IL"],
       "spokenLanguageISO6391Codes": [
         "am",
         "ar",
@@ -7218,21 +6106,11 @@
       "primaryCurrencyISO4217AlphaCode": "GBP",
       "primaryLocaleIETFBCP47Tag": "en-IM",
       "sovereignCountryISO31661Alpha2Code": "GB",
-      "geopoliticalEntityShortCodes": [
-        "EU"
-      ],
+      "geopoliticalEntityShortCodes": ["EU"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Europe/London"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-IM",
-        "gv-IM"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "gv"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/London"],
+      "localeIETFBCP47Tags": ["en-IM", "gv-IM"],
+      "spokenLanguageISO6391Codes": ["en", "gv"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -7308,9 +6186,7 @@
         "IN-UP",
         "IN-WB"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Kolkata"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Kolkata"],
       "localeIETFBCP47Tags": [
         "as-IN",
         "bgc-IN",
@@ -7392,19 +6268,11 @@
       "primaryCurrencyISO4217AlphaCode": "USD",
       "primaryLocaleIETFBCP47Tag": "en-IO",
       "sovereignCountryISO31661Alpha2Code": "GB",
-      "geopoliticalEntityShortCodes": [
-        "AF"
-      ],
+      "geopoliticalEntityShortCodes": ["AF"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Indian/Chagos"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-IO"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Indian/Chagos"],
+      "localeIETFBCP47Tags": ["en-IO"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -7432,13 +6300,7 @@
       "primaryCurrencyISO4217AlphaCode": "IQD",
       "primaryLocaleIETFBCP47Tag": "ar-IQ",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AL",
-        "AS",
-        "MENA",
-        "OPEC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AL", "AS", "MENA", "OPEC", "UN"],
       "subdivisionISO31662Codes": [
         "IQ-AN",
         "IQ-AR",
@@ -7460,9 +6322,7 @@
         "IQ-SU",
         "IQ-WA"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Baghdad"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Baghdad"],
       "localeIETFBCP47Tags": [
         "ar-IQ",
         "az-Arab-IQ",
@@ -7473,11 +6333,7 @@
         "sdh-IQ",
         "syr-IQ"
       ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "en",
-        "fa"
-      ],
+      "spokenLanguageISO6391Codes": ["ar", "en", "fa"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -7505,13 +6361,7 @@
       "primaryCurrencyISO4217AlphaCode": "IRR",
       "primaryLocaleIETFBCP47Tag": "fa-IR",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "BRICS",
-        "MENA",
-        "OPEC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "BRICS", "MENA", "OPEC", "UN"],
       "subdivisionISO31662Codes": [
         "IR-00",
         "IR-01",
@@ -7545,9 +6395,7 @@
         "IR-29",
         "IR-30"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Tehran"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Tehran"],
       "localeIETFBCP47Tags": [
         "az-Arab-IR",
         "bgn-IR",
@@ -7559,14 +6407,7 @@
         "mzn-IR",
         "sdh-IR"
       ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "fa",
-        "hy",
-        "ka",
-        "ps",
-        "tk"
-      ],
+      "spokenLanguageISO6391Codes": ["ar", "fa", "hy", "ka", "ps", "tk"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -7678,16 +6519,9 @@
         "IS-VER",
         "IS-VOP"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Abidjan"
-      ],
-      "localeIETFBCP47Tags": [
-        "is-IS"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "da",
-        "is"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Abidjan"],
+      "localeIETFBCP47Tags": ["is-IS"],
+      "spokenLanguageISO6391Codes": ["da", "is"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -7856,9 +6690,7 @@
         "IT-VT",
         "IT-VV"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Rome"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Rome"],
       "localeIETFBCP47Tags": [
         "ca-IT",
         "de-IT",
@@ -7912,19 +6744,11 @@
       "primaryCurrencyISO4217AlphaCode": "GBP",
       "primaryLocaleIETFBCP47Tag": "en-JE",
       "sovereignCountryISO31661Alpha2Code": "GB",
-      "geopoliticalEntityShortCodes": [
-        "EU"
-      ],
+      "geopoliticalEntityShortCodes": ["EU"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Europe/London"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-JE"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/London"],
+      "localeIETFBCP47Tags": ["en-JE"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -7952,13 +6776,7 @@
       "primaryCurrencyISO4217AlphaCode": "JMD",
       "primaryLocaleIETFBCP47Tag": "en-JM",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "CARICOM",
-        "CW",
-        "NA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "CARICOM", "CW", "NA", "UN"],
       "subdivisionISO31662Codes": [
         "JM-01",
         "JM-02",
@@ -7975,15 +6793,9 @@
         "JM-13",
         "JM-14"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Jamaica"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-JM"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["America/Jamaica"],
+      "localeIETFBCP47Tags": ["en-JM"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -8011,12 +6823,7 @@
       "primaryCurrencyISO4217AlphaCode": "JOD",
       "primaryLocaleIETFBCP47Tag": "ar-JO",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AL",
-        "AS",
-        "MENA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AL", "AS", "MENA", "UN"],
       "subdivisionISO31662Codes": [
         "JO-AJ",
         "JO-AM",
@@ -8031,16 +6838,9 @@
         "JO-MD",
         "JO-MN"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Amman"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-JO"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Amman"],
+      "localeIETFBCP47Tags": ["ar-JO"],
+      "spokenLanguageISO6391Codes": ["ar", "en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -8128,17 +6928,9 @@
         "JP-46",
         "JP-47"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Tokyo"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-JP",
-        "ja-JP"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ja",
-        "ko"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Tokyo"],
+      "localeIETFBCP47Tags": ["en-JP", "ja-JP"],
+      "spokenLanguageISO6391Codes": ["ja", "ko"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -8166,13 +6958,7 @@
       "primaryCurrencyISO4217AlphaCode": "KES",
       "primaryLocaleIETFBCP47Tag": "en-KE",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "CW",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "CW", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "KE-01",
         "KE-02",
@@ -8222,9 +7008,7 @@
         "KE-46",
         "KE-47"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Nairobi"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Nairobi"],
       "localeIETFBCP47Tags": [
         "dav-KE",
         "ebu-KE",
@@ -8280,13 +7064,7 @@
       "primaryCurrencyISO4217AlphaCode": "KGS",
       "primaryLocaleIETFBCP47Tag": "ky-KG",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "CAS",
-        "CSTO",
-        "EAEU",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "CAS", "CSTO", "EAEU", "UN"],
       "subdivisionISO31662Codes": [
         "KG-B",
         "KG-C",
@@ -8298,17 +7076,9 @@
         "KG-T",
         "KG-Y"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Bishkek"
-      ],
-      "localeIETFBCP47Tags": [
-        "ky-KG",
-        "ru-KG"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ky",
-        "ru"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Bishkek"],
+      "localeIETFBCP47Tags": ["ky-KG", "ru-KG"],
+      "spokenLanguageISO6391Codes": ["ky", "ru"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -8371,20 +7141,18 @@
         "KH-8",
         "KH-9"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Bangkok"
-      ],
-      "localeIETFBCP47Tags": [
-        "km-KH"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "km"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Bangkok"],
+      "localeIETFBCP47Tags": ["km-KH"],
+      "spokenLanguageISO6391Codes": ["km"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
           "iso4217AlphaCode": "KHR",
           "level": "LegalTender"
+        },
+        {
+          "iso4217AlphaCode": "USD",
+          "level": "WidelyAccepted"
         }
       ]
     },
@@ -8407,27 +7175,15 @@
       "primaryCurrencyISO4217AlphaCode": "AUD",
       "primaryLocaleIETFBCP47Tag": "en-KI",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CW",
-        "OC",
-        "UN"
-      ],
-      "subdivisionISO31662Codes": [
-        "KI-G",
-        "KI-L",
-        "KI-P"
-      ],
+      "geopoliticalEntityShortCodes": ["CW", "OC", "UN"],
+      "subdivisionISO31662Codes": ["KI-G", "KI-L", "KI-P"],
       "timezoneIanaIdentifiers": [
         "Pacific/Kanton",
         "Pacific/Kiritimati",
         "Pacific/Tarawa"
       ],
-      "localeIETFBCP47Tags": [
-        "en-KI"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "localeIETFBCP47Tags": ["en-KI"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -8455,30 +7211,11 @@
       "primaryCurrencyISO4217AlphaCode": "KMF",
       "primaryLocaleIETFBCP47Tag": "ar-KM",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AL",
-        "AU",
-        "OIF",
-        "SSA",
-        "UN"
-      ],
-      "subdivisionISO31662Codes": [
-        "KM-A",
-        "KM-G",
-        "KM-M"
-      ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Nairobi"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-KM",
-        "fr-KM"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "fr"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AL", "AU", "OIF", "SSA", "UN"],
+      "subdivisionISO31662Codes": ["KM-A", "KM-G", "KM-M"],
+      "timezoneIanaIdentifiers": ["Africa/Nairobi"],
+      "localeIETFBCP47Tags": ["ar-KM", "fr-KM"],
+      "spokenLanguageISO6391Codes": ["ar", "fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -8532,15 +7269,9 @@
         "KN-K",
         "KN-N"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-KN"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["en-KN"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -8568,11 +7299,7 @@
       "primaryCurrencyISO4217AlphaCode": "KPW",
       "primaryLocaleIETFBCP47Tag": "ko-KP",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "EAS",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "EAS", "UN"],
       "subdivisionISO31662Codes": [
         "KP-01",
         "KP-02",
@@ -8588,15 +7315,9 @@
         "KP-14",
         "KP-15"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Pyongyang"
-      ],
-      "localeIETFBCP47Tags": [
-        "ko-KP"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ko"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Pyongyang"],
+      "localeIETFBCP47Tags": ["ko-KP"],
+      "spokenLanguageISO6391Codes": ["ko"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -8651,15 +7372,9 @@
         "KR-49",
         "KR-50"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Seoul"
-      ],
-      "localeIETFBCP47Tags": [
-        "ko-KR"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ko"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Seoul"],
+      "localeIETFBCP47Tags": ["ko-KR"],
+      "spokenLanguageISO6391Codes": ["ko"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -8704,15 +7419,9 @@
         "KW-KU",
         "KW-MU"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Riyadh"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-KW"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Riyadh"],
+      "localeIETFBCP47Tags": ["ar-KW"],
+      "spokenLanguageISO6391Codes": ["ar"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -8740,20 +7449,11 @@
       "primaryCurrencyISO4217AlphaCode": "KYD",
       "primaryLocaleIETFBCP47Tag": "en-KY",
       "sovereignCountryISO31661Alpha2Code": "GB",
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "NA"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "NA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "America/Panama"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-KY"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["America/Panama"],
+      "localeIETFBCP47Tags": ["en-KY"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -8781,13 +7481,7 @@
       "primaryCurrencyISO4217AlphaCode": "KZT",
       "primaryLocaleIETFBCP47Tag": "kk-KZ",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "CAS",
-        "CSTO",
-        "EAEU",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "CAS", "CSTO", "EAEU", "UN"],
       "subdivisionISO31662Codes": [
         "KZ-10",
         "KZ-11",
@@ -8819,16 +7513,8 @@
         "Asia/Qostanay",
         "Asia/Qyzylorda"
       ],
-      "localeIETFBCP47Tags": [
-        "kk-KZ",
-        "ru-KZ"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "de",
-        "en",
-        "kk",
-        "ru"
-      ],
+      "localeIETFBCP47Tags": ["kk-KZ", "ru-KZ"],
+      "spokenLanguageISO6391Codes": ["de", "en", "kk", "ru"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -8884,15 +7570,9 @@
         "LA-XI",
         "LA-XS"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Bangkok"
-      ],
-      "localeIETFBCP47Tags": [
-        "lo-LA"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "lo"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Bangkok"],
+      "localeIETFBCP47Tags": ["lo-LA"],
+      "spokenLanguageISO6391Codes": ["lo"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -8920,13 +7600,7 @@
       "primaryCurrencyISO4217AlphaCode": "LBP",
       "primaryLocaleIETFBCP47Tag": "ar-LB",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AL",
-        "AS",
-        "MENA",
-        "OIF",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AL", "AS", "MENA", "OIF", "UN"],
       "subdivisionISO31662Codes": [
         "LB-AK",
         "LB-AS",
@@ -8937,23 +7611,18 @@
         "LB-JL",
         "LB-NA"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Beirut"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-LB"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "en",
-        "fr",
-        "hy"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Beirut"],
+      "localeIETFBCP47Tags": ["ar-LB"],
+      "spokenLanguageISO6391Codes": ["ar", "en", "fr", "hy"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
           "iso4217AlphaCode": "LBP",
           "level": "LegalTender"
+        },
+        {
+          "iso4217AlphaCode": "USD",
+          "level": "WidelyAccepted"
         }
       ]
     },
@@ -8996,15 +7665,9 @@
         "LC-11",
         "LC-12"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-LC"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["en-LC"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -9032,12 +7695,7 @@
       "primaryCurrencyISO4217AlphaCode": "CHF",
       "primaryLocaleIETFBCP47Tag": "de-LI",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "COE",
-        "EEA",
-        "EU",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["COE", "EEA", "EU", "UN"],
       "subdivisionISO31662Codes": [
         "LI-01",
         "LI-02",
@@ -9051,16 +7709,9 @@
         "LI-10",
         "LI-11"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Zurich"
-      ],
-      "localeIETFBCP47Tags": [
-        "de-LI",
-        "gsw-LI"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "de"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Zurich"],
+      "localeIETFBCP47Tags": ["de-LI", "gsw-LI"],
+      "spokenLanguageISO6391Codes": ["de"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -9088,13 +7739,7 @@
       "primaryCurrencyISO4217AlphaCode": "LKR",
       "primaryLocaleIETFBCP47Tag": "si-LK",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "CW",
-        "INDS",
-        "SAARC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "CW", "INDS", "SAARC", "UN"],
       "subdivisionISO31662Codes": [
         "LK-1",
         "LK-11",
@@ -9131,18 +7776,9 @@
         "LK-91",
         "LK-92"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Colombo"
-      ],
-      "localeIETFBCP47Tags": [
-        "si-LK",
-        "ta-LK"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "si",
-        "ta"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Colombo"],
+      "localeIETFBCP47Tags": ["si-LK", "ta-LK"],
+      "spokenLanguageISO6391Codes": ["en", "si", "ta"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -9170,12 +7806,7 @@
       "primaryCurrencyISO4217AlphaCode": "LRD",
       "primaryLocaleIETFBCP47Tag": "en-LR",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "LR-BG",
         "LR-BM",
@@ -9193,9 +7824,7 @@
         "LR-RI",
         "LR-SI"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Monrovia"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Monrovia"],
       "localeIETFBCP47Tags": [
         "en-LR",
         "ff-Adlm-LR",
@@ -9203,10 +7832,7 @@
         "kpe-LR",
         "vai-LR"
       ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "ff"
-      ],
+      "spokenLanguageISO6391Codes": ["en", "ff"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -9234,14 +7860,7 @@
       "primaryCurrencyISO4217AlphaCode": "LSL",
       "primaryLocaleIETFBCP47Tag": "en-LS",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "CW",
-        "SACU",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "CW", "SACU", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "LS-A",
         "LS-B",
@@ -9254,20 +7873,9 @@
         "LS-J",
         "LS-K"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Johannesburg"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-LS",
-        "st-LS"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "ss",
-        "st",
-        "xh",
-        "zu"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Johannesburg"],
+      "localeIETFBCP47Tags": ["en-LS", "st-LS"],
+      "spokenLanguageISO6391Codes": ["en", "ss", "st", "xh", "zu"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -9383,20 +7991,9 @@
         "LT-UT",
         "LT-VL"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Vilnius"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-LT",
-        "lt-LT",
-        "sgs-LT"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "de",
-        "en",
-        "lt",
-        "ru"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Vilnius"],
+      "localeIETFBCP47Tags": ["en-LT", "lt-LT", "sgs-LT"],
+      "spokenLanguageISO6391Codes": ["de", "en", "lt", "ru"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -9451,22 +8048,9 @@
         "LU-VD",
         "LU-WI"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Brussels"
-      ],
-      "localeIETFBCP47Tags": [
-        "de-LU",
-        "fr-LU",
-        "lb-LU",
-        "pt-LU"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "de",
-        "en",
-        "fr",
-        "lb",
-        "pt"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Brussels"],
+      "localeIETFBCP47Tags": ["de-LU", "fr-LU", "lb-LU", "pt-LU"],
+      "spokenLanguageISO6391Codes": ["de", "en", "fr", "lb", "pt"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -9551,19 +8135,9 @@
         "LV-RIX",
         "LV-VEN"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Riga"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-LV",
-        "ltg-LV",
-        "lv-LV"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "lv",
-        "ru"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Riga"],
+      "localeIETFBCP47Tags": ["en-LV", "ltg-LV", "lv-LV"],
+      "spokenLanguageISO6391Codes": ["en", "lv", "ru"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -9591,14 +8165,7 @@
       "primaryCurrencyISO4217AlphaCode": "LYD",
       "primaryLocaleIETFBCP47Tag": "ar-LY",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AL",
-        "AU",
-        "MENA",
-        "OPEC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AL", "AU", "MENA", "OPEC", "UN"],
       "subdivisionISO31662Codes": [
         "LY-BA",
         "LY-BU",
@@ -9623,15 +8190,9 @@
         "LY-WS",
         "LY-ZA"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Tripoli"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-LY"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Tripoli"],
+      "localeIETFBCP47Tags": ["ar-LY"],
+      "spokenLanguageISO6391Codes": ["ar"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -9659,14 +8220,7 @@
       "primaryCurrencyISO4217AlphaCode": "MAD",
       "primaryLocaleIETFBCP47Tag": "ar-MA",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AL",
-        "AU",
-        "MENA",
-        "OIF",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AL", "AU", "MENA", "OIF", "UN"],
       "subdivisionISO31662Codes": [
         "MA-01",
         "MA-02",
@@ -9756,9 +8310,7 @@
         "MA-YUS",
         "MA-ZAG"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Casablanca"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Casablanca"],
       "localeIETFBCP47Tags": [
         "ar-MA",
         "fr-MA",
@@ -9767,12 +8319,7 @@
         "tzm-MA",
         "zgh-MA"
       ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "en",
-        "es",
-        "fr"
-      ],
+      "spokenLanguageISO6391Codes": ["ar", "en", "es", "fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -9800,14 +8347,7 @@
       "primaryCurrencyISO4217AlphaCode": "EUR",
       "primaryLocaleIETFBCP47Tag": "fr-MC",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "COE",
-        "EU",
-        "EUCU",
-        "EZ",
-        "OIF",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["COE", "EU", "EUCU", "EZ", "OIF", "UN"],
       "subdivisionISO31662Codes": [
         "MC-CL",
         "MC-CO",
@@ -9827,15 +8367,9 @@
         "MC-SR",
         "MC-VR"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Paris"
-      ],
-      "localeIETFBCP47Tags": [
-        "fr-MC"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Paris"],
+      "localeIETFBCP47Tags": ["fr-MC"],
+      "spokenLanguageISO6391Codes": ["fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -9863,11 +8397,7 @@
       "primaryCurrencyISO4217AlphaCode": "MDL",
       "primaryLocaleIETFBCP47Tag": "ro-MD",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "COE",
-        "EU",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["COE", "EU", "UN"],
       "subdivisionISO31662Codes": [
         "MD-AN",
         "MD-BA",
@@ -9907,19 +8437,9 @@
         "MD-TE",
         "MD-UN"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Chisinau"
-      ],
-      "localeIETFBCP47Tags": [
-        "ro-MD",
-        "ru-MD"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "bg",
-        "ro",
-        "ru",
-        "uk"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Chisinau"],
+      "localeIETFBCP47Tags": ["ro-MD", "ru-MD"],
+      "spokenLanguageISO6391Codes": ["bg", "ro", "ru", "uk"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -9945,7 +8465,7 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "sr",
       "primaryCurrencyISO4217AlphaCode": "EUR",
-      "primaryLocaleIETFBCP47Tag": "sr-ME",
+      "primaryLocaleIETFBCP47Tag": "sr-Latn-ME",
       "sovereignCountryISO31661Alpha2Code": null,
       "geopoliticalEntityShortCodes": [
         "BALK",
@@ -9983,17 +8503,9 @@
         "ME-24",
         "ME-25"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Belgrade"
-      ],
-      "localeIETFBCP47Tags": [
-        "sr-Cyrl-ME",
-        "sr-Latn-ME"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "sq",
-        "sr"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Belgrade"],
+      "localeIETFBCP47Tags": ["sr-Cyrl-ME", "sr-Latn-ME"],
+      "spokenLanguageISO6391Codes": ["sq", "sr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -10021,20 +8533,11 @@
       "primaryCurrencyISO4217AlphaCode": "EUR",
       "primaryLocaleIETFBCP47Tag": "fr-MF",
       "sovereignCountryISO31661Alpha2Code": "FR",
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "NA"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "NA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "fr-MF"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["fr-MF"],
+      "spokenLanguageISO6391Codes": ["fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -10062,13 +8565,7 @@
       "primaryCurrencyISO4217AlphaCode": "MGA",
       "primaryLocaleIETFBCP47Tag": "fr-MG",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "OIF",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "OIF", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "MG-A",
         "MG-D",
@@ -10077,19 +8574,9 @@
         "MG-T",
         "MG-U"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Nairobi"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-MG",
-        "fr-MG",
-        "mg-MG"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "fr",
-        "mg"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Nairobi"],
+      "localeIETFBCP47Tags": ["en-MG", "fr-MG", "mg-MG"],
+      "spokenLanguageISO6391Codes": ["en", "fr", "mg"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -10115,12 +8602,9 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "mh",
       "primaryCurrencyISO4217AlphaCode": "USD",
-      "primaryLocaleIETFBCP47Tag": "mh-MH",
+      "primaryLocaleIETFBCP47Tag": "en-MH",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "OC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["OC", "UN"],
       "subdivisionISO31662Codes": [
         "MH-ALK",
         "MH-ALL",
@@ -10149,17 +8633,9 @@
         "MH-WTH",
         "MH-WTJ"
       ],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Kwajalein",
-        "Pacific/Tarawa"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-MH"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "mh"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Kwajalein", "Pacific/Tarawa"],
+      "localeIETFBCP47Tags": ["en-MH"],
+      "spokenLanguageISO6391Codes": ["en", "mh"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -10277,18 +8753,9 @@
         "MK-816",
         "MK-817"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Belgrade"
-      ],
-      "localeIETFBCP47Tags": [
-        "mk-MK",
-        "sq-MK"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "mk",
-        "sq",
-        "tr"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Belgrade"],
+      "localeIETFBCP47Tags": ["mk-MK", "sq-MK"],
+      "spokenLanguageISO6391Codes": ["mk", "sq", "tr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -10338,20 +8805,9 @@
         "ML-9",
         "ML-BKO"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Abidjan"
-      ],
-      "localeIETFBCP47Tags": [
-        "bm-ML",
-        "fr-ML",
-        "khq-ML",
-        "ses-ML"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "bm",
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Abidjan"],
+      "localeIETFBCP47Tags": ["bm-ML", "fr-ML", "khq-ML", "ses-ML"],
+      "spokenLanguageISO6391Codes": ["ar", "bm", "fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -10404,17 +8860,9 @@
         "MM-17",
         "MM-18"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Yangon"
-      ],
-      "localeIETFBCP47Tags": [
-        "my-MM",
-        "rhg-MM",
-        "shn-MM"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "my"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Yangon"],
+      "localeIETFBCP47Tags": ["my-MM", "rhg-MM", "shn-MM"],
+      "spokenLanguageISO6391Codes": ["my"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -10442,11 +8890,7 @@
       "primaryCurrencyISO4217AlphaCode": "MNT",
       "primaryLocaleIETFBCP47Tag": "mn-MN",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "EAS",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "EAS", "UN"],
       "subdivisionISO31662Codes": [
         "MN-035",
         "MN-037",
@@ -10471,19 +8915,9 @@
         "MN-073",
         "MN-1"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Hovd",
-        "Asia/Ulaanbaatar"
-      ],
-      "localeIETFBCP47Tags": [
-        "mn-MN",
-        "mn-Mong-MN"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "mn",
-        "ru",
-        "zh"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Hovd", "Asia/Ulaanbaatar"],
+      "localeIETFBCP47Tags": ["mn-MN", "mn-Mong-MN"],
+      "spokenLanguageISO6391Codes": ["mn", "ru", "zh"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -10509,16 +8943,11 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "zh",
       "primaryCurrencyISO4217AlphaCode": "MOP",
-      "primaryLocaleIETFBCP47Tag": "zh-MO",
+      "primaryLocaleIETFBCP47Tag": "zh-Hant-MO",
       "sovereignCountryISO31661Alpha2Code": "CN",
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "EAS"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "EAS"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Asia/Macau"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Macau"],
       "localeIETFBCP47Tags": [
         "en-MO",
         "pt-MO",
@@ -10526,11 +8955,7 @@
         "zh-Hans-MO",
         "zh-Hant-MO"
       ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "pt",
-        "zh"
-      ],
+      "spokenLanguageISO6391Codes": ["en", "pt", "zh"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -10556,23 +8981,13 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "fil",
       "primaryCurrencyISO4217AlphaCode": "USD",
-      "primaryLocaleIETFBCP47Tag": "fil-MP",
+      "primaryLocaleIETFBCP47Tag": "en-MP",
       "sovereignCountryISO31661Alpha2Code": "US",
-      "geopoliticalEntityShortCodes": [
-        "OC"
-      ],
+      "geopoliticalEntityShortCodes": ["OC"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Guam"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-MP"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ch",
-        "en",
-        "fil"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Guam"],
+      "localeIETFBCP47Tags": ["en-MP"],
+      "spokenLanguageISO6391Codes": ["ch", "en", "fil"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -10600,20 +9015,11 @@
       "primaryCurrencyISO4217AlphaCode": "EUR",
       "primaryLocaleIETFBCP47Tag": "fr-MQ",
       "sovereignCountryISO31661Alpha2Code": "FR",
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "NA"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "NA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "America/Martinique"
-      ],
-      "localeIETFBCP47Tags": [
-        "fr-MQ"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["America/Martinique"],
+      "localeIETFBCP47Tags": ["fr-MQ"],
+      "spokenLanguageISO6391Codes": ["fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -10667,21 +9073,9 @@
         "MR-14",
         "MR-15"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Abidjan"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-MR",
-        "ff-Adlm-MR",
-        "ff-Latn-MR",
-        "fr-MR"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "ff",
-        "fr",
-        "wo"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Abidjan"],
+      "localeIETFBCP47Tags": ["ar-MR", "ff-Adlm-MR", "ff-Latn-MR", "fr-MR"],
+      "spokenLanguageISO6391Codes": ["ar", "ff", "fr", "wo"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -10709,22 +9103,11 @@
       "primaryCurrencyISO4217AlphaCode": "XCD",
       "primaryLocaleIETFBCP47Tag": "en-MS",
       "sovereignCountryISO31661Alpha2Code": "GB",
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "CARICOM",
-        "ECCU",
-        "NA"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "CARICOM", "ECCU", "NA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-MS"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["en-MS"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -10832,19 +9215,9 @@
         "MT-67",
         "MT-68"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Malta"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-MT",
-        "mt-MT"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "fr",
-        "it",
-        "mt"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Malta"],
+      "localeIETFBCP47Tags": ["en-MT", "mt-MT"],
+      "spokenLanguageISO6391Codes": ["en", "fr", "it", "mt"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -10872,14 +9245,7 @@
       "primaryCurrencyISO4217AlphaCode": "MUR",
       "primaryLocaleIETFBCP47Tag": "en-MU",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "CW",
-        "OIF",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "CW", "OIF", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "MU-AG",
         "MU-BL",
@@ -10894,20 +9260,9 @@
         "MU-RR",
         "MU-SA"
       ],
-      "timezoneIanaIdentifiers": [
-        "Indian/Mauritius"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-MU",
-        "fr-MU",
-        "mfe-MU"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "fr",
-        "ta",
-        "ur"
-      ],
+      "timezoneIanaIdentifiers": ["Indian/Mauritius"],
+      "localeIETFBCP47Tags": ["en-MU", "fr-MU", "mfe-MU"],
+      "spokenLanguageISO6391Codes": ["en", "fr", "ta", "ur"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -10935,13 +9290,7 @@
       "primaryCurrencyISO4217AlphaCode": "MVR",
       "primaryLocaleIETFBCP47Tag": "dv-MV",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "CW",
-        "INDS",
-        "SAARC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "CW", "INDS", "SAARC", "UN"],
       "subdivisionISO31662Codes": [
         "MV-00",
         "MV-01",
@@ -10965,17 +9314,9 @@
         "MV-29",
         "MV-MLE"
       ],
-      "timezoneIanaIdentifiers": [
-        "Indian/Maldives"
-      ],
-      "localeIETFBCP47Tags": [
-        "dv-MV",
-        "en-MV"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "dv",
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Indian/Maldives"],
+      "localeIETFBCP47Tags": ["dv-MV", "en-MV"],
+      "spokenLanguageISO6391Codes": ["dv", "en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -11003,13 +9344,7 @@
       "primaryCurrencyISO4217AlphaCode": "MWK",
       "primaryLocaleIETFBCP47Tag": "ny-MW",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "CW",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "CW", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "MW-BA",
         "MW-BL",
@@ -11043,18 +9378,9 @@
         "MW-TH",
         "MW-ZO"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Maputo"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-MW",
-        "ny-MW"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "ny",
-        "zu"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Maputo"],
+      "localeIETFBCP47Tags": ["en-MW", "ny-MW"],
+      "spokenLanguageISO6391Codes": ["en", "ny", "zu"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -11139,13 +9465,8 @@
         "America/Ojinaga",
         "America/Tijuana"
       ],
-      "localeIETFBCP47Tags": [
-        "es-MX"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "es"
-      ],
+      "localeIETFBCP47Tags": ["es-MX"],
+      "spokenLanguageISO6391Codes": ["en", "es"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -11201,10 +9522,7 @@
         "MY-15",
         "MY-16"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Kuching",
-        "Asia/Singapore"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Kuching", "Asia/Singapore"],
       "localeIETFBCP47Tags": [
         "en-MY",
         "ms-MY",
@@ -11212,14 +9530,7 @@
         "zh-Hans-MY",
         "zh-Hant-MY"
       ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "jv",
-        "ml",
-        "ms",
-        "ta",
-        "zh"
-      ],
+      "spokenLanguageISO6391Codes": ["en", "jv", "ml", "ms", "ta", "zh"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -11247,13 +9558,7 @@
       "primaryCurrencyISO4217AlphaCode": "MZN",
       "primaryLocaleIETFBCP47Tag": "pt-MZ",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "CW",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "CW", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "MZ-A",
         "MZ-B",
@@ -11267,22 +9572,9 @@
         "MZ-S",
         "MZ-T"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Maputo"
-      ],
-      "localeIETFBCP47Tags": [
-        "mgh-MZ",
-        "pt-MZ",
-        "seh-MZ",
-        "vmw-MZ"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ny",
-        "pt",
-        "sw",
-        "ts",
-        "zu"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Maputo"],
+      "localeIETFBCP47Tags": ["mgh-MZ", "pt-MZ", "seh-MZ", "vmw-MZ"],
+      "spokenLanguageISO6391Codes": ["ny", "pt", "sw", "ts", "zu"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -11310,14 +9602,7 @@
       "primaryCurrencyISO4217AlphaCode": "NAD",
       "primaryLocaleIETFBCP47Tag": "en-NA",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "CW",
-        "SACU",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "CW", "SACU", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "NA-CA",
         "NA-ER",
@@ -11334,23 +9619,9 @@
         "NA-OT",
         "NA-OW"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Windhoek"
-      ],
-      "localeIETFBCP47Tags": [
-        "af-NA",
-        "en-NA",
-        "naq-NA"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "af",
-        "de",
-        "en",
-        "hz",
-        "kj",
-        "ng",
-        "tn"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Windhoek"],
+      "localeIETFBCP47Tags": ["af-NA", "en-NA", "naq-NA"],
+      "spokenLanguageISO6391Codes": ["af", "de", "en", "hz", "kj", "ng", "tn"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -11382,19 +9653,11 @@
       "primaryCurrencyISO4217AlphaCode": "XPF",
       "primaryLocaleIETFBCP47Tag": "fr-NC",
       "sovereignCountryISO31661Alpha2Code": "FR",
-      "geopoliticalEntityShortCodes": [
-        "OC"
-      ],
+      "geopoliticalEntityShortCodes": ["OC"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Noumea"
-      ],
-      "localeIETFBCP47Tags": [
-        "fr-NC"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Noumea"],
+      "localeIETFBCP47Tags": ["fr-NC"],
+      "spokenLanguageISO6391Codes": ["fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -11441,9 +9704,7 @@
         "NE-7",
         "NE-8"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Lagos"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Lagos"],
       "localeIETFBCP47Tags": [
         "dje-NE",
         "ff-Adlm-NE",
@@ -11452,12 +9713,7 @@
         "ha-NE",
         "twq-NE"
       ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "ff",
-        "fr",
-        "ha"
-      ],
+      "spokenLanguageISO6391Codes": ["ar", "ff", "fr", "ha"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -11485,19 +9741,11 @@
       "primaryCurrencyISO4217AlphaCode": "AUD",
       "primaryLocaleIETFBCP47Tag": "en-NF",
       "sovereignCountryISO31661Alpha2Code": "AU",
-      "geopoliticalEntityShortCodes": [
-        "OC"
-      ],
+      "geopoliticalEntityShortCodes": ["OC"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Norfolk"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-NF"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Norfolk"],
+      "localeIETFBCP47Tags": ["en-NF"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -11525,14 +9773,7 @@
       "primaryCurrencyISO4217AlphaCode": "NGN",
       "primaryLocaleIETFBCP47Tag": "en-NG",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "CW",
-        "OPEC",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "CW", "OPEC", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "NG-AB",
         "NG-AD",
@@ -11572,9 +9813,7 @@
         "NG-YO",
         "NG-ZA"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Lagos"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Lagos"],
       "localeIETFBCP47Tags": [
         "ann-NG",
         "cch-NG",
@@ -11588,14 +9827,7 @@
         "pcm-NG",
         "yo-NG"
       ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "en",
-        "ff",
-        "ha",
-        "ig",
-        "yo"
-      ],
+      "spokenLanguageISO6391Codes": ["ar", "en", "ff", "ha", "ig", "yo"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -11623,12 +9855,7 @@
       "primaryCurrencyISO4217AlphaCode": "NIO",
       "primaryLocaleIETFBCP47Tag": "es-NI",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CAM",
-        "LATAM",
-        "NA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CAM", "LATAM", "NA", "UN"],
       "subdivisionISO31662Codes": [
         "NI-AN",
         "NI-AS",
@@ -11648,15 +9875,9 @@
         "NI-RI",
         "NI-SJ"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Managua"
-      ],
-      "localeIETFBCP47Tags": [
-        "es-NI"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "es"
-      ],
+      "timezoneIanaIdentifiers": ["America/Managua"],
+      "localeIETFBCP47Tags": ["es-NI"],
+      "spokenLanguageISO6391Codes": ["es"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -11716,15 +9937,8 @@
         "NL-ZE",
         "NL-ZH"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Brussels"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-NL",
-        "fy-NL",
-        "nds-NL",
-        "nl-NL"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Brussels"],
+      "localeIETFBCP47Tags": ["en-NL", "fy-NL", "nds-NL", "nl-NL"],
       "spokenLanguageISO6391Codes": [
         "de",
         "en",
@@ -11735,12 +9949,7 @@
         "nl",
         "tr"
       ],
-      "territoryISO31661Alpha2Codes": [
-        "AW",
-        "BQ",
-        "CW",
-        "SX"
-      ],
+      "territoryISO31661Alpha2Codes": ["AW", "BQ", "CW", "SX"],
       "currencies": [
         {
           "iso4217AlphaCode": "EUR",
@@ -11793,9 +10002,7 @@
         "NO-50",
         "NO-54"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Berlin"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Berlin"],
       "localeIETFBCP47Tags": [
         "en-NO",
         "nb-NO",
@@ -11805,16 +10012,8 @@
         "sma-NO",
         "smj-NO"
       ],
-      "spokenLanguageISO6391Codes": [
-        "nb",
-        "nn",
-        "no",
-        "se"
-      ],
-      "territoryISO31661Alpha2Codes": [
-        "BV",
-        "SJ"
-      ],
+      "spokenLanguageISO6391Codes": ["nb", "nn", "no", "se"],
+      "territoryISO31661Alpha2Codes": ["BV", "SJ"],
       "currencies": [
         {
           "iso4217AlphaCode": "NOK",
@@ -11841,12 +10040,7 @@
       "primaryCurrencyISO4217AlphaCode": "NPR",
       "primaryLocaleIETFBCP47Tag": "ne-NP",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "INDS",
-        "SAARC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "INDS", "SAARC", "UN"],
       "subdivisionISO31662Codes": [
         "NP-P1",
         "NP-P2",
@@ -11856,20 +10050,9 @@
         "NP-P6",
         "NP-P7"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Kathmandu"
-      ],
-      "localeIETFBCP47Tags": [
-        "ne-NP",
-        "suz-NP"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "bn",
-        "bo",
-        "en",
-        "hi",
-        "ne"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Kathmandu"],
+      "localeIETFBCP47Tags": ["ne-NP", "suz-NP"],
+      "spokenLanguageISO6391Codes": ["bn", "bo", "en", "hi", "ne"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -11895,13 +10078,9 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "na",
       "primaryCurrencyISO4217AlphaCode": "AUD",
-      "primaryLocaleIETFBCP47Tag": "na-NR",
+      "primaryLocaleIETFBCP47Tag": "en-NR",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CW",
-        "OC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CW", "OC", "UN"],
       "subdivisionISO31662Codes": [
         "NR-01",
         "NR-02",
@@ -11918,16 +10097,9 @@
         "NR-13",
         "NR-14"
       ],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Nauru"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-NR"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "na"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Nauru"],
+      "localeIETFBCP47Tags": ["en-NR"],
+      "spokenLanguageISO6391Codes": ["en", "na"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -11953,22 +10125,13 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "niu",
       "primaryCurrencyISO4217AlphaCode": "NZD",
-      "primaryLocaleIETFBCP47Tag": "niu-NU",
+      "primaryLocaleIETFBCP47Tag": "en-NU",
       "sovereignCountryISO31661Alpha2Code": "NZ",
-      "geopoliticalEntityShortCodes": [
-        "OC"
-      ],
+      "geopoliticalEntityShortCodes": ["OC"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Niue"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-NU"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "niu"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Niue"],
+      "localeIETFBCP47Tags": ["en-NU"],
+      "spokenLanguageISO6391Codes": ["en", "niu"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -12025,23 +10188,10 @@
         "NZ-WKO",
         "NZ-WTC"
       ],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Auckland",
-        "Pacific/Chatham"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-NZ",
-        "mi-NZ"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "mi"
-      ],
-      "territoryISO31661Alpha2Codes": [
-        "CK",
-        "NU",
-        "TK"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Auckland", "Pacific/Chatham"],
+      "localeIETFBCP47Tags": ["en-NZ", "mi-NZ"],
+      "spokenLanguageISO6391Codes": ["en", "mi"],
+      "territoryISO31661Alpha2Codes": ["CK", "NU", "TK"],
       "currencies": [
         {
           "iso4217AlphaCode": "NZD",
@@ -12068,14 +10218,7 @@
       "primaryCurrencyISO4217AlphaCode": "OMR",
       "primaryLocaleIETFBCP47Tag": "ar-OM",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AL",
-        "ARAB",
-        "AS",
-        "GCC",
-        "MENA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AL", "ARAB", "AS", "GCC", "MENA", "UN"],
       "subdivisionISO31662Codes": [
         "OM-BJ",
         "OM-BS",
@@ -12089,17 +10232,9 @@
         "OM-ZA",
         "OM-ZU"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Dubai"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-OM",
-        "bgn-OM"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "fa"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Dubai"],
+      "localeIETFBCP47Tags": ["ar-OM", "bgn-OM"],
+      "spokenLanguageISO6391Codes": ["ar", "fa"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -12127,12 +10262,7 @@
       "primaryCurrencyISO4217AlphaCode": "PAB",
       "primaryLocaleIETFBCP47Tag": "es-PA",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CAM",
-        "LATAM",
-        "NA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CAM", "LATAM", "NA", "UN"],
       "subdivisionISO31662Codes": [
         "PA-1",
         "PA-10",
@@ -12149,16 +10279,9 @@
         "PA-NB",
         "PA-NT"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Panama"
-      ],
-      "localeIETFBCP47Tags": [
-        "es-PA"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "es"
-      ],
+      "timezoneIanaIdentifiers": ["America/Panama"],
+      "localeIETFBCP47Tags": ["es-PA"],
+      "spokenLanguageISO6391Codes": ["en", "es"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -12225,18 +10348,9 @@
         "PE-TUM",
         "PE-UCA"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Lima"
-      ],
-      "localeIETFBCP47Tags": [
-        "es-PE",
-        "qu-PE"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ay",
-        "es",
-        "qu"
-      ],
+      "timezoneIanaIdentifiers": ["America/Lima"],
+      "localeIETFBCP47Tags": ["es-PE", "qu-PE"],
+      "spokenLanguageISO6391Codes": ["ay", "es", "qu"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -12264,22 +10378,15 @@
       "primaryCurrencyISO4217AlphaCode": "XPF",
       "primaryLocaleIETFBCP47Tag": "fr-PF",
       "sovereignCountryISO31661Alpha2Code": "FR",
-      "geopoliticalEntityShortCodes": [
-        "OC"
-      ],
+      "geopoliticalEntityShortCodes": ["OC"],
       "subdivisionISO31662Codes": [],
       "timezoneIanaIdentifiers": [
         "Pacific/Gambier",
         "Pacific/Marquesas",
         "Pacific/Tahiti"
       ],
-      "localeIETFBCP47Tags": [
-        "fr-PF"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr",
-        "ty"
-      ],
+      "localeIETFBCP47Tags": ["fr-PF"],
+      "spokenLanguageISO6391Codes": ["fr", "ty"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -12307,11 +10414,7 @@
       "primaryCurrencyISO4217AlphaCode": "PGK",
       "primaryLocaleIETFBCP47Tag": "en-PG",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CW",
-        "OC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CW", "OC", "UN"],
       "subdivisionISO31662Codes": [
         "PG-CPK",
         "PG-CPM",
@@ -12340,14 +10443,8 @@
         "Pacific/Bougainville",
         "Pacific/Port_Moresby"
       ],
-      "localeIETFBCP47Tags": [
-        "en-PG",
-        "tpi-PG"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "ho"
-      ],
+      "localeIETFBCP47Tags": ["en-PG", "tpi-PG"],
+      "spokenLanguageISO6391Codes": ["en", "ho"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -12373,7 +10470,7 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "tl",
       "primaryCurrencyISO4217AlphaCode": "PHP",
-      "primaryLocaleIETFBCP47Tag": "tl-PH",
+      "primaryLocaleIETFBCP47Tag": "fil-PH",
       "sovereignCountryISO31661Alpha2Code": null,
       "geopoliticalEntityShortCodes": [
         "AFTA",
@@ -12484,20 +10581,9 @@
         "PH-ZMB",
         "PH-ZSI"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Manila"
-      ],
-      "localeIETFBCP47Tags": [
-        "ceb-PH",
-        "en-PH",
-        "es-PH",
-        "fil-PH"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "es",
-        "tl"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Manila"],
+      "localeIETFBCP47Tags": ["ceb-PH", "en-PH", "es-PH", "fil-PH"],
+      "spokenLanguageISO6391Codes": ["en", "es", "tl"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -12525,13 +10611,7 @@
       "primaryCurrencyISO4217AlphaCode": "PKR",
       "primaryLocaleIETFBCP47Tag": "ur-PK",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "CW",
-        "INDS",
-        "SAARC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "CW", "INDS", "SAARC", "UN"],
       "subdivisionISO31662Codes": [
         "PK-BA",
         "PK-GB",
@@ -12541,9 +10621,7 @@
         "PK-PB",
         "PK-SD"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Karachi"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Karachi"],
       "localeIETFBCP47Tags": [
         "bal-PK",
         "bgn-PK",
@@ -12555,14 +10633,7 @@
         "trw-PK",
         "ur-PK"
       ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "fa",
-        "ks",
-        "ps",
-        "sd",
-        "ur"
-      ],
+      "spokenLanguageISO6391Codes": ["en", "fa", "ks", "ps", "sd", "ur"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -12618,24 +10689,9 @@
         "PL-30",
         "PL-32"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Warsaw"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-PL",
-        "pl-PL",
-        "prg-PL",
-        "szl-PL"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "be",
-        "de",
-        "en",
-        "lt",
-        "pl",
-        "ru",
-        "uk"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Warsaw"],
+      "localeIETFBCP47Tags": ["en-PL", "pl-PL", "prg-PL", "szl-PL"],
+      "spokenLanguageISO6391Codes": ["be", "de", "en", "lt", "pl", "ru", "uk"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -12663,20 +10719,11 @@
       "primaryCurrencyISO4217AlphaCode": "EUR",
       "primaryLocaleIETFBCP47Tag": "fr-PM",
       "sovereignCountryISO31661Alpha2Code": "FR",
-      "geopoliticalEntityShortCodes": [
-        "NA"
-      ],
+      "geopoliticalEntityShortCodes": ["NA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "America/Miquelon"
-      ],
-      "localeIETFBCP47Tags": [
-        "fr-PM"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["America/Miquelon"],
+      "localeIETFBCP47Tags": ["fr-PM"],
+      "spokenLanguageISO6391Codes": ["en", "fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -12704,19 +10751,11 @@
       "primaryCurrencyISO4217AlphaCode": "NZD",
       "primaryLocaleIETFBCP47Tag": "en-PN",
       "sovereignCountryISO31661Alpha2Code": "GB",
-      "geopoliticalEntityShortCodes": [
-        "OC"
-      ],
+      "geopoliticalEntityShortCodes": ["OC"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Pitcairn"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-PN"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Pitcairn"],
+      "localeIETFBCP47Tags": ["en-PN"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -12744,23 +10783,11 @@
       "primaryCurrencyISO4217AlphaCode": "USD",
       "primaryLocaleIETFBCP47Tag": "en-PR",
       "sovereignCountryISO31661Alpha2Code": "US",
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "LATAM",
-        "NA"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "LATAM", "NA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-PR",
-        "es-PR"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "es"
-      ],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["en-PR", "es-PR"],
+      "spokenLanguageISO6391Codes": ["en", "es"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -12788,11 +10815,7 @@
       "primaryCurrencyISO4217AlphaCode": "ILS",
       "primaryLocaleIETFBCP47Tag": "ar-PS",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AL",
-        "AS",
-        "MENA"
-      ],
+      "geopoliticalEntityShortCodes": ["AL", "AS", "MENA"],
       "subdivisionISO31662Codes": [
         "PS-BTH",
         "PS-DEB",
@@ -12811,16 +10834,9 @@
         "PS-TBS",
         "PS-TKM"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Gaza",
-        "Asia/Hebron"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-PS"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Gaza", "Asia/Hebron"],
+      "localeIETFBCP47Tags": ["ar-PS"],
+      "spokenLanguageISO6391Codes": ["ar"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -12890,17 +10906,8 @@
         "Atlantic/Madeira",
         "Europe/Lisbon"
       ],
-      "localeIETFBCP47Tags": [
-        "en-PT",
-        "pt-PT"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "es",
-        "fr",
-        "gl",
-        "pt"
-      ],
+      "localeIETFBCP47Tags": ["en-PT", "pt-PT"],
+      "spokenLanguageISO6391Codes": ["en", "es", "fr", "gl", "pt"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -12926,12 +10933,9 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "pau",
       "primaryCurrencyISO4217AlphaCode": "USD",
-      "primaryLocaleIETFBCP47Tag": "pau-PW",
+      "primaryLocaleIETFBCP47Tag": "en-PW",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "OC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["OC", "UN"],
       "subdivisionISO31662Codes": [
         "PW-002",
         "PW-004",
@@ -12950,16 +10954,9 @@
         "PW-350",
         "PW-370"
       ],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Palau"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-PW"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "pau"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Palau"],
+      "localeIETFBCP47Tags": ["en-PW"],
+      "spokenLanguageISO6391Codes": ["en", "pau"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -12987,12 +10984,7 @@
       "primaryCurrencyISO4217AlphaCode": "PYG",
       "primaryLocaleIETFBCP47Tag": "es-PY",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "LATAM",
-        "MERCOSUR",
-        "SA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["LATAM", "MERCOSUR", "SA", "UN"],
       "subdivisionISO31662Codes": [
         "PY-1",
         "PY-10",
@@ -13013,18 +11005,9 @@
         "PY-9",
         "PY-ASU"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Asuncion"
-      ],
-      "localeIETFBCP47Tags": [
-        "es-PY",
-        "gn-PY"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "de",
-        "es",
-        "gn"
-      ],
+      "timezoneIanaIdentifiers": ["America/Asuncion"],
+      "localeIETFBCP47Tags": ["es-PY", "gn-PY"],
+      "spokenLanguageISO6391Codes": ["de", "es", "gn"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -13052,14 +11035,7 @@
       "primaryCurrencyISO4217AlphaCode": "QAR",
       "primaryLocaleIETFBCP47Tag": "ar-QA",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AL",
-        "ARAB",
-        "AS",
-        "GCC",
-        "MENA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AL", "ARAB", "AS", "GCC", "MENA", "UN"],
       "subdivisionISO31662Codes": [
         "QA-DA",
         "QA-KH",
@@ -13070,17 +11046,9 @@
         "QA-WA",
         "QA-ZA"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Qatar"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-QA"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "fa",
-        "ml"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Qatar"],
+      "localeIETFBCP47Tags": ["ar-QA"],
+      "spokenLanguageISO6391Codes": ["ar", "fa", "ml"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -13108,20 +11076,11 @@
       "primaryCurrencyISO4217AlphaCode": "EUR",
       "primaryLocaleIETFBCP47Tag": "fr-RE",
       "sovereignCountryISO31661Alpha2Code": "FR",
-      "geopoliticalEntityShortCodes": [
-        "AF"
-      ],
+      "geopoliticalEntityShortCodes": ["AF"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Asia/Dubai"
-      ],
-      "localeIETFBCP47Tags": [
-        "fr-RE"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr",
-        "ta"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Dubai"],
+      "localeIETFBCP47Tags": ["fr-RE"],
+      "spokenLanguageISO6391Codes": ["fr", "ta"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -13204,13 +11163,8 @@
         "RO-VN",
         "RO-VS"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Bucharest"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-RO",
-        "ro-RO"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Bucharest"],
+      "localeIETFBCP47Tags": ["en-RO", "ro-RO"],
       "spokenLanguageISO6391Codes": [
         "bg",
         "de",
@@ -13250,12 +11204,7 @@
       "primaryCurrencyISO4217AlphaCode": "RSD",
       "primaryLocaleIETFBCP47Tag": "sr-RS",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "BALK",
-        "COE",
-        "EU",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["BALK", "COE", "EU", "UN"],
       "subdivisionISO31662Codes": [
         "RS-00",
         "RS-01",
@@ -13290,21 +11239,9 @@
         "RS-KM",
         "RS-VO"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Belgrade"
-      ],
-      "localeIETFBCP47Tags": [
-        "sr-RS"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "hr",
-        "hu",
-        "ro",
-        "sk",
-        "sq",
-        "sr",
-        "uk"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Belgrade"],
+      "localeIETFBCP47Tags": ["sr-RS"],
+      "spokenLanguageISO6391Codes": ["hr", "hu", "ro", "sk", "sq", "sr", "uk"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -13510,34 +11447,11 @@
       "primaryCurrencyISO4217AlphaCode": "RWF",
       "primaryLocaleIETFBCP47Tag": "rw-RW",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "CW",
-        "OIF",
-        "SSA",
-        "UN"
-      ],
-      "subdivisionISO31662Codes": [
-        "RW-01",
-        "RW-02",
-        "RW-03",
-        "RW-04",
-        "RW-05"
-      ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Maputo"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-RW",
-        "fr-RW",
-        "rw-RW"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "fr",
-        "rw"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "CW", "OIF", "SSA", "UN"],
+      "subdivisionISO31662Codes": ["RW-01", "RW-02", "RW-03", "RW-04", "RW-05"],
+      "timezoneIanaIdentifiers": ["Africa/Maputo"],
+      "localeIETFBCP47Tags": ["en-RW", "fr-RW", "rw-RW"],
+      "spokenLanguageISO6391Codes": ["en", "fr", "rw"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -13591,15 +11505,9 @@
         "SA-12",
         "SA-14"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Riyadh"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-SA"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Riyadh"],
+      "localeIETFBCP47Tags": ["ar-SA"],
+      "spokenLanguageISO6391Codes": ["ar"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -13627,11 +11535,7 @@
       "primaryCurrencyISO4217AlphaCode": "SBD",
       "primaryLocaleIETFBCP47Tag": "en-SB",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CW",
-        "OC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CW", "OC", "UN"],
       "subdivisionISO31662Codes": [
         "SB-CE",
         "SB-CH",
@@ -13644,16 +11548,9 @@
         "SB-TE",
         "SB-WE"
       ],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Guadalcanal"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-SB",
-        "pis-SB"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Guadalcanal"],
+      "localeIETFBCP47Tags": ["en-SB", "pis-SB"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -13681,14 +11578,7 @@
       "primaryCurrencyISO4217AlphaCode": "SCR",
       "primaryLocaleIETFBCP47Tag": "en-SC",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "CW",
-        "OIF",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "CW", "OIF", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "SC-01",
         "SC-02",
@@ -13718,17 +11608,9 @@
         "SC-26",
         "SC-27"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Dubai"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-SC",
-        "fr-SC"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Dubai"],
+      "localeIETFBCP47Tags": ["en-SC", "fr-SC"],
+      "spokenLanguageISO6391Codes": ["en", "fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -13756,13 +11638,7 @@
       "primaryCurrencyISO4217AlphaCode": "SDG",
       "primaryLocaleIETFBCP47Tag": "ar-SD",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AL",
-        "AU",
-        "SAHEL",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AL", "AU", "SAHEL", "UN"],
       "subdivisionISO31662Codes": [
         "SD-DC",
         "SD-DE",
@@ -13783,18 +11659,9 @@
         "SD-RS",
         "SD-SI"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Khartoum"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-SD",
-        "en-SD",
-        "ha-Arab-SD"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Khartoum"],
+      "localeIETFBCP47Tags": ["ar-SD", "en-SD", "ha-Arab-SD"],
+      "spokenLanguageISO6391Codes": ["ar", "en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -13858,24 +11725,9 @@
         "SE-Y",
         "SE-Z"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Berlin"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-SE",
-        "se-SE",
-        "sma-SE",
-        "smj-SE",
-        "sv-SE"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "fi",
-        "ia",
-        "se",
-        "sv",
-        "yi"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Berlin"],
+      "localeIETFBCP47Tags": ["en-SE", "se-SE", "sma-SE", "smj-SE", "sv-SE"],
+      "spokenLanguageISO6391Codes": ["en", "fi", "ia", "se", "sv", "yi"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -13901,7 +11753,7 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "cmn",
       "primaryCurrencyISO4217AlphaCode": "SGD",
-      "primaryLocaleIETFBCP47Tag": "cmn-SG",
+      "primaryLocaleIETFBCP47Tag": "zh-Hans-SG",
       "sovereignCountryISO31661Alpha2Code": null,
       "geopoliticalEntityShortCodes": [
         "AFTA",
@@ -13913,31 +11765,10 @@
         "SEA",
         "UN"
       ],
-      "subdivisionISO31662Codes": [
-        "SG-01",
-        "SG-02",
-        "SG-03",
-        "SG-04",
-        "SG-05"
-      ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Singapore"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-SG",
-        "ms-SG",
-        "ta-SG",
-        "zh-Hans-SG"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "cmn",
-        "en",
-        "ml",
-        "ms",
-        "pa",
-        "ta",
-        "zh"
-      ],
+      "subdivisionISO31662Codes": ["SG-01", "SG-02", "SG-03", "SG-04", "SG-05"],
+      "timezoneIanaIdentifiers": ["Asia/Singapore"],
+      "localeIETFBCP47Tags": ["en-SG", "ms-SG", "ta-SG", "zh-Hans-SG"],
+      "spokenLanguageISO6391Codes": ["cmn", "en", "ml", "ms", "pa", "ta", "zh"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -13965,24 +11796,11 @@
       "primaryCurrencyISO4217AlphaCode": "SHP",
       "primaryLocaleIETFBCP47Tag": "en-SH",
       "sovereignCountryISO31661Alpha2Code": "GB",
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "SSA"
-      ],
-      "subdivisionISO31662Codes": [
-        "SH-AC",
-        "SH-HL",
-        "SH-TA"
-      ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Abidjan"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-SH"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "SSA"],
+      "subdivisionISO31662Codes": ["SH-AC", "SH-HL", "SH-TA"],
+      "timezoneIanaIdentifiers": ["Africa/Abidjan"],
+      "localeIETFBCP47Tags": ["en-SH"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -14236,21 +12054,9 @@
         "SI-212",
         "SI-213"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Belgrade"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-SI",
-        "sl-SI"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "de",
-        "en",
-        "hr",
-        "hu",
-        "it",
-        "sl"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Belgrade"],
+      "localeIETFBCP47Tags": ["en-SI", "sl-SI"],
+      "spokenLanguageISO6391Codes": ["de", "en", "hr", "hu", "it", "sl"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -14276,23 +12082,13 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "no",
       "primaryCurrencyISO4217AlphaCode": "NOK",
-      "primaryLocaleIETFBCP47Tag": "no-SJ",
+      "primaryLocaleIETFBCP47Tag": "nb-SJ",
       "sovereignCountryISO31661Alpha2Code": "NO",
-      "geopoliticalEntityShortCodes": [
-        "EU"
-      ],
+      "geopoliticalEntityShortCodes": ["EU"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Europe/Berlin"
-      ],
-      "localeIETFBCP47Tags": [
-        "nb-SJ"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "nb",
-        "no",
-        "ru"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Berlin"],
+      "localeIETFBCP47Tags": ["nb-SJ"],
+      "spokenLanguageISO6391Codes": ["nb", "no", "ru"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -14341,22 +12137,9 @@
         "SK-TC",
         "SK-ZI"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Prague"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-SK",
-        "sk-SK"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "cs",
-        "de",
-        "en",
-        "hu",
-        "pl",
-        "sk",
-        "uk"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Prague"],
+      "localeIETFBCP47Tags": ["en-SK", "sk-SK"],
+      "spokenLanguageISO6391Codes": ["cs", "de", "en", "hu", "pl", "sk", "uk"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -14384,32 +12167,11 @@
       "primaryCurrencyISO4217AlphaCode": "SLE",
       "primaryLocaleIETFBCP47Tag": "en-SL",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "CW",
-        "SSA",
-        "UN"
-      ],
-      "subdivisionISO31662Codes": [
-        "SL-E",
-        "SL-N",
-        "SL-NW",
-        "SL-S",
-        "SL-W"
-      ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Abidjan"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-SL",
-        "ff-Adlm-SL",
-        "ff-Latn-SL"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "ff"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "CW", "SSA", "UN"],
+      "subdivisionISO31662Codes": ["SL-E", "SL-N", "SL-NW", "SL-S", "SL-W"],
+      "timezoneIanaIdentifiers": ["Africa/Abidjan"],
+      "localeIETFBCP47Tags": ["en-SL", "ff-Adlm-SL", "ff-Latn-SL"],
+      "spokenLanguageISO6391Codes": ["en", "ff"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -14437,13 +12199,7 @@
       "primaryCurrencyISO4217AlphaCode": "EUR",
       "primaryLocaleIETFBCP47Tag": "it-SM",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "COE",
-        "EU",
-        "EUCU",
-        "EZ",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["COE", "EU", "EUCU", "EZ", "UN"],
       "subdivisionISO31662Codes": [
         "SM-01",
         "SM-02",
@@ -14455,16 +12211,9 @@
         "SM-08",
         "SM-09"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Rome"
-      ],
-      "localeIETFBCP47Tags": [
-        "it-SM"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "eo",
-        "it"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Rome"],
+      "localeIETFBCP47Tags": ["it-SM"],
+      "spokenLanguageISO6391Codes": ["eo", "it"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -14517,9 +12266,7 @@
         "SN-TH",
         "SN-ZG"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Abidjan"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Abidjan"],
       "localeIETFBCP47Tags": [
         "dyo-SN",
         "ff-Adlm-SN",
@@ -14527,11 +12274,7 @@
         "fr-SN",
         "wo-SN"
       ],
-      "spokenLanguageISO6391Codes": [
-        "ff",
-        "fr",
-        "wo"
-      ],
+      "spokenLanguageISO6391Codes": ["ff", "fr", "wo"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -14559,13 +12302,7 @@
       "primaryCurrencyISO4217AlphaCode": "SOS",
       "primaryLocaleIETFBCP47Tag": "so-SO",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AL",
-        "AU",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AL", "AU", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "SO-AW",
         "SO-BK",
@@ -14586,19 +12323,9 @@
         "SO-TO",
         "SO-WO"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Nairobi"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-SO",
-        "so-SO"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "om",
-        "so",
-        "sw"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Nairobi"],
+      "localeIETFBCP47Tags": ["ar-SO", "so-SO"],
+      "spokenLanguageISO6391Codes": ["ar", "om", "so", "sw"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -14645,15 +12372,9 @@
         "SR-SI",
         "SR-WA"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Paramaribo"
-      ],
-      "localeIETFBCP47Tags": [
-        "nl-SR"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "nl"
-      ],
+      "timezoneIanaIdentifiers": ["America/Paramaribo"],
+      "localeIETFBCP47Tags": ["nl-SR"],
+      "spokenLanguageISO6391Codes": ["nl"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -14681,12 +12402,7 @@
       "primaryCurrencyISO4217AlphaCode": "SSP",
       "primaryLocaleIETFBCP47Tag": "en-SS",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "SS-BN",
         "SS-BW",
@@ -14699,18 +12415,9 @@
         "SS-UY",
         "SS-WR"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Juba"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-SS",
-        "en-SS",
-        "nus-SS"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Juba"],
+      "localeIETFBCP47Tags": ["ar-SS", "en-SS", "nus-SS"],
+      "spokenLanguageISO6391Codes": ["ar", "en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -14738,13 +12445,7 @@
       "primaryCurrencyISO4217AlphaCode": "STN",
       "primaryLocaleIETFBCP47Tag": "pt-ST",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "OIF",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "OIF", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "ST-01",
         "ST-02",
@@ -14754,16 +12455,9 @@
         "ST-06",
         "ST-P"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Sao_Tome"
-      ],
-      "localeIETFBCP47Tags": [
-        "pt-ST"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr",
-        "pt"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Sao_Tome"],
+      "localeIETFBCP47Tags": ["pt-ST"],
+      "spokenLanguageISO6391Codes": ["fr", "pt"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -14791,12 +12485,7 @@
       "primaryCurrencyISO4217AlphaCode": "USD",
       "primaryLocaleIETFBCP47Tag": "es-SV",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CAM",
-        "LATAM",
-        "NA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CAM", "LATAM", "NA", "UN"],
       "subdivisionISO31662Codes": [
         "SV-AH",
         "SV-CA",
@@ -14813,15 +12502,9 @@
         "SV-UN",
         "SV-US"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/El_Salvador"
-      ],
-      "localeIETFBCP47Tags": [
-        "es-SV"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "es"
-      ],
+      "timezoneIanaIdentifiers": ["America/El_Salvador"],
+      "localeIETFBCP47Tags": ["es-SV"],
+      "spokenLanguageISO6391Codes": ["es"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -14849,23 +12532,11 @@
       "primaryCurrencyISO4217AlphaCode": "XCG",
       "primaryLocaleIETFBCP47Tag": "nl-SX",
       "sovereignCountryISO31661Alpha2Code": "NL",
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "NA"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "NA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-SX",
-        "nl-SX"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "es",
-        "nl"
-      ],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["en-SX", "nl-SX"],
+      "spokenLanguageISO6391Codes": ["en", "es", "nl"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -14893,12 +12564,7 @@
       "primaryCurrencyISO4217AlphaCode": "SYP",
       "primaryLocaleIETFBCP47Tag": "ar-SY",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AL",
-        "AS",
-        "MENA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AL", "AS", "MENA", "UN"],
       "subdivisionISO31662Codes": [
         "SY-DI",
         "SY-DR",
@@ -14915,9 +12581,7 @@
         "SY-SU",
         "SY-TA"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Damascus"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Damascus"],
       "localeIETFBCP47Tags": [
         "apc-SY",
         "ar-SY",
@@ -14925,12 +12589,7 @@
         "ku-Latn-SY",
         "syr-SY"
       ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "fr",
-        "hy",
-        "ku"
-      ],
+      "spokenLanguageISO6391Codes": ["ar", "fr", "hy", "ku"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -14958,33 +12617,11 @@
       "primaryCurrencyISO4217AlphaCode": "SZL",
       "primaryLocaleIETFBCP47Tag": "en-SZ",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "CW",
-        "SACU",
-        "SSA",
-        "UN"
-      ],
-      "subdivisionISO31662Codes": [
-        "SZ-HH",
-        "SZ-LU",
-        "SZ-MA",
-        "SZ-SH"
-      ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Johannesburg"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-SZ",
-        "ss-SZ"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "ss",
-        "ts",
-        "zu"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "CW", "SACU", "SSA", "UN"],
+      "subdivisionISO31662Codes": ["SZ-HH", "SZ-LU", "SZ-MA", "SZ-SH"],
+      "timezoneIanaIdentifiers": ["Africa/Johannesburg"],
+      "localeIETFBCP47Tags": ["en-SZ", "ss-SZ"],
+      "spokenLanguageISO6391Codes": ["en", "ss", "ts", "zu"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -15012,20 +12649,11 @@
       "primaryCurrencyISO4217AlphaCode": "USD",
       "primaryLocaleIETFBCP47Tag": "en-TC",
       "sovereignCountryISO31661Alpha2Code": "GB",
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "NA"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "NA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "America/Grand_Turk"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-TC"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["America/Grand_Turk"],
+      "localeIETFBCP47Tags": ["en-TC"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -15087,17 +12715,9 @@
         "TD-TI",
         "TD-WF"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Ndjamena"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-TD",
-        "fr-TD"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Ndjamena"],
+      "localeIETFBCP47Tags": ["ar-TD", "fr-TD"],
+      "spokenLanguageISO6391Codes": ["ar", "fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -15125,18 +12745,11 @@
       "primaryCurrencyISO4217AlphaCode": "EUR",
       "primaryLocaleIETFBCP47Tag": "fr-TF",
       "sovereignCountryISO31661Alpha2Code": "FR",
-      "geopoliticalEntityShortCodes": [
-        "AN"
-      ],
+      "geopoliticalEntityShortCodes": ["AN"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Asia/Dubai",
-        "Indian/Maldives"
-      ],
-      "localeIETFBCP47Tags": [],
-      "spokenLanguageISO6391Codes": [
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Dubai", "Indian/Maldives"],
+      "localeIETFBCP47Tags": ["fr-TF"],
+      "spokenLanguageISO6391Codes": ["fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -15173,24 +12786,10 @@
         "UN",
         "WAEMU"
       ],
-      "subdivisionISO31662Codes": [
-        "TG-C",
-        "TG-K",
-        "TG-M",
-        "TG-P",
-        "TG-S"
-      ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Abidjan"
-      ],
-      "localeIETFBCP47Tags": [
-        "ee-TG",
-        "fr-TG"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ee",
-        "fr"
-      ],
+      "subdivisionISO31662Codes": ["TG-C", "TG-K", "TG-M", "TG-P", "TG-S"],
+      "timezoneIanaIdentifiers": ["Africa/Abidjan"],
+      "localeIETFBCP47Tags": ["ee-TG", "fr-TG"],
+      "spokenLanguageISO6391Codes": ["ee", "fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -15306,17 +12905,9 @@
         "TH-96",
         "TH-S"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Bangkok"
-      ],
-      "localeIETFBCP47Tags": [
-        "shn-TH",
-        "th-TH"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "th"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Bangkok"],
+      "localeIETFBCP47Tags": ["shn-TH", "th-TH"],
+      "spokenLanguageISO6391Codes": ["en", "th"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -15344,31 +12935,11 @@
       "primaryCurrencyISO4217AlphaCode": "TJS",
       "primaryLocaleIETFBCP47Tag": "tg-TJ",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "CAS",
-        "CSTO",
-        "UN"
-      ],
-      "subdivisionISO31662Codes": [
-        "TJ-DU",
-        "TJ-GB",
-        "TJ-KT",
-        "TJ-RA",
-        "TJ-SU"
-      ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Dushanbe"
-      ],
-      "localeIETFBCP47Tags": [
-        "tg-TJ"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "fa",
-        "ru",
-        "tg"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "CAS", "CSTO", "UN"],
+      "subdivisionISO31662Codes": ["TJ-DU", "TJ-GB", "TJ-KT", "TJ-RA", "TJ-SU"],
+      "timezoneIanaIdentifiers": ["Asia/Dushanbe"],
+      "localeIETFBCP47Tags": ["tg-TJ"],
+      "spokenLanguageISO6391Codes": ["ar", "fa", "ru", "tg"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -15394,23 +12965,13 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "tkl",
       "primaryCurrencyISO4217AlphaCode": "NZD",
-      "primaryLocaleIETFBCP47Tag": "tkl-TK",
+      "primaryLocaleIETFBCP47Tag": "en-TK",
       "sovereignCountryISO31661Alpha2Code": "NZ",
-      "geopoliticalEntityShortCodes": [
-        "OC"
-      ],
+      "geopoliticalEntityShortCodes": ["OC"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Fakaofo"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-TK"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "sm",
-        "tkl"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Fakaofo"],
+      "localeIETFBCP47Tags": ["en-TK"],
+      "spokenLanguageISO6391Codes": ["en", "sm", "tkl"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -15436,13 +12997,9 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "tet",
       "primaryCurrencyISO4217AlphaCode": "USD",
-      "primaryLocaleIETFBCP47Tag": "tet-TL",
+      "primaryLocaleIETFBCP47Tag": "pt-TL",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "SEA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "SEA", "UN"],
       "subdivisionISO31662Codes": [
         "TL-AL",
         "TL-AN",
@@ -15458,16 +13015,9 @@
         "TL-OE",
         "TL-VI"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Dili"
-      ],
-      "localeIETFBCP47Tags": [
-        "pt-TL"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "pt",
-        "tet"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Dili"],
+      "localeIETFBCP47Tags": ["pt-TL"],
+      "spokenLanguageISO6391Codes": ["pt", "tet"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -15495,11 +13045,7 @@
       "primaryCurrencyISO4217AlphaCode": "TMT",
       "primaryLocaleIETFBCP47Tag": "tk-TM",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "CAS",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "CAS", "UN"],
       "subdivisionISO31662Codes": [
         "TM-A",
         "TM-B",
@@ -15508,17 +13054,9 @@
         "TM-M",
         "TM-S"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Ashgabat"
-      ],
-      "localeIETFBCP47Tags": [
-        "tk-TM"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ru",
-        "tk",
-        "uz"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Ashgabat"],
+      "localeIETFBCP47Tags": ["tk-TM"],
+      "spokenLanguageISO6391Codes": ["ru", "tk", "uz"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -15546,14 +13084,7 @@
       "primaryCurrencyISO4217AlphaCode": "TND",
       "primaryLocaleIETFBCP47Tag": "ar-TN",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AL",
-        "AU",
-        "MENA",
-        "OIF",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AL", "AU", "MENA", "OIF", "UN"],
       "subdivisionISO31662Codes": [
         "TN-11",
         "TN-12",
@@ -15580,17 +13111,9 @@
         "TN-82",
         "TN-83"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Tunis"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-TN",
-        "fr-TN"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Tunis"],
+      "localeIETFBCP47Tags": ["ar-TN", "fr-TN"],
+      "spokenLanguageISO6391Codes": ["ar", "fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -15618,29 +13141,11 @@
       "primaryCurrencyISO4217AlphaCode": "TOP",
       "primaryLocaleIETFBCP47Tag": "to-TO",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CW",
-        "OC",
-        "UN"
-      ],
-      "subdivisionISO31662Codes": [
-        "TO-01",
-        "TO-02",
-        "TO-03",
-        "TO-04",
-        "TO-05"
-      ],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Tongatapu"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-TO",
-        "to-TO"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "to"
-      ],
+      "geopoliticalEntityShortCodes": ["CW", "OC", "UN"],
+      "subdivisionISO31662Codes": ["TO-01", "TO-02", "TO-03", "TO-04", "TO-05"],
+      "timezoneIanaIdentifiers": ["Pacific/Tongatapu"],
+      "localeIETFBCP47Tags": ["en-TO", "to-TO"],
+      "spokenLanguageISO6391Codes": ["en", "to"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -15761,15 +13266,8 @@
         "TR-80",
         "TR-81"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Istanbul"
-      ],
-      "localeIETFBCP47Tags": [
-        "az-Arab-TR",
-        "ku-TR",
-        "lzz-TR",
-        "tr-TR"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Istanbul"],
+      "localeIETFBCP47Tags": ["az-Arab-TR", "ku-TR", "lzz-TR", "tr-TR"],
       "spokenLanguageISO6391Codes": [
         "ab",
         "ar",
@@ -15812,13 +13310,7 @@
       "primaryCurrencyISO4217AlphaCode": "TTD",
       "primaryLocaleIETFBCP47Tag": "en-TT",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "CARICOM",
-        "CW",
-        "NA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "CARICOM", "CW", "NA", "UN"],
       "subdivisionISO31662Codes": [
         "TT-ARI",
         "TT-CHA",
@@ -15836,16 +13328,9 @@
         "TT-TOB",
         "TT-TUP"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-TT"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "es"
-      ],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["en-TT"],
+      "spokenLanguageISO6391Codes": ["en", "es"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -15871,13 +13356,9 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "tvl",
       "primaryCurrencyISO4217AlphaCode": "AUD",
-      "primaryLocaleIETFBCP47Tag": "tvl-TV",
+      "primaryLocaleIETFBCP47Tag": "en-TV",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CW",
-        "OC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CW", "OC", "UN"],
       "subdivisionISO31662Codes": [
         "TV-FUN",
         "TV-NIT",
@@ -15888,16 +13369,9 @@
         "TV-NUI",
         "TV-VAI"
       ],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Tarawa"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-TV"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "tvl"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Tarawa"],
+      "localeIETFBCP47Tags": ["en-TV"],
+      "spokenLanguageISO6391Codes": ["en", "tvl"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -15923,12 +13397,9 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "zh",
       "primaryCurrencyISO4217AlphaCode": "TWD",
-      "primaryLocaleIETFBCP47Tag": "zh-TW",
+      "primaryLocaleIETFBCP47Tag": "zh-Hant-TW",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "EAS"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "EAS"],
       "subdivisionISO31662Codes": [
         "TW-CHA",
         "TW-CYI",
@@ -15953,16 +13424,9 @@
         "TW-TXG",
         "TW-YUN"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Taipei"
-      ],
-      "localeIETFBCP47Tags": [
-        "trv-TW",
-        "zh-Hant-TW"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "zh"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Taipei"],
+      "localeIETFBCP47Tags": ["trv-TW", "zh-Hant-TW"],
+      "spokenLanguageISO6391Codes": ["zh"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -15990,13 +13454,7 @@
       "primaryCurrencyISO4217AlphaCode": "TZS",
       "primaryLocaleIETFBCP47Tag": "sw-TZ",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "CW",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "CW", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "TZ-01",
         "TZ-02",
@@ -16030,9 +13488,7 @@
         "TZ-30",
         "TZ-31"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Nairobi"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Nairobi"],
       "localeIETFBCP47Tags": [
         "asa-TZ",
         "bez-TZ",
@@ -16048,10 +13504,7 @@
         "sw-TZ",
         "vun-TZ"
       ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "sw"
-      ],
+      "spokenLanguageISO6391Codes": ["en", "sw"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -16079,11 +13532,7 @@
       "primaryCurrencyISO4217AlphaCode": "UAH",
       "primaryLocaleIETFBCP47Tag": "uk-UA",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "COE",
-        "EU",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["COE", "EU", "UN"],
       "subdivisionISO31662Codes": [
         "UA-05",
         "UA-07",
@@ -16113,16 +13562,8 @@
         "UA-74",
         "UA-77"
       ],
-      "timezoneIanaIdentifiers": [
-        "Europe/Kyiv",
-        "Europe/Simferopol"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-UA",
-        "ru-UA",
-        "uk-UA",
-        "yi-UA"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Kyiv", "Europe/Simferopol"],
+      "localeIETFBCP47Tags": ["en-UA", "ru-UA", "uk-UA", "yi-UA"],
       "spokenLanguageISO6391Codes": [
         "be",
         "bg",
@@ -16162,13 +13603,7 @@
       "primaryCurrencyISO4217AlphaCode": "UGX",
       "primaryLocaleIETFBCP47Tag": "en-UG",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "CW",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "CW", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "UG-101",
         "UG-102",
@@ -16310,9 +13745,7 @@
         "UG-N",
         "UG-W"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Nairobi"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Nairobi"],
       "localeIETFBCP47Tags": [
         "cgg-UG",
         "en-UG",
@@ -16322,13 +13755,7 @@
         "teo-UG",
         "xog-UG"
       ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "hi",
-        "lg",
-        "rw",
-        "sw"
-      ],
+      "spokenLanguageISO6391Codes": ["en", "hi", "lg", "rw", "sw"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -16356,9 +13783,7 @@
       "primaryCurrencyISO4217AlphaCode": "USD",
       "primaryLocaleIETFBCP47Tag": "en-UM",
       "sovereignCountryISO31661Alpha2Code": "US",
-      "geopoliticalEntityShortCodes": [
-        "OC"
-      ],
+      "geopoliticalEntityShortCodes": ["OC"],
       "subdivisionISO31662Codes": [
         "UM-67",
         "UM-71",
@@ -16370,16 +13795,9 @@
         "UM-89",
         "UM-95"
       ],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Pago_Pago",
-        "Pacific/Tarawa"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-UM"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Pago_Pago", "Pacific/Tarawa"],
+      "localeIETFBCP47Tags": ["en-UM"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -16540,14 +13958,7 @@
         "vi",
         "yi"
       ],
-      "territoryISO31661Alpha2Codes": [
-        "AS",
-        "GU",
-        "MP",
-        "PR",
-        "UM",
-        "VI"
-      ],
+      "territoryISO31661Alpha2Codes": ["AS", "GU", "MP", "PR", "UM", "VI"],
       "currencies": [
         {
           "iso4217AlphaCode": "USD",
@@ -16574,12 +13985,7 @@
       "primaryCurrencyISO4217AlphaCode": "UYU",
       "primaryLocaleIETFBCP47Tag": "es-UY",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "LATAM",
-        "MERCOSUR",
-        "SA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["LATAM", "MERCOSUR", "SA", "UN"],
       "subdivisionISO31662Codes": [
         "UY-AR",
         "UY-CA",
@@ -16601,15 +14007,9 @@
         "UY-TA",
         "UY-TT"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Montevideo"
-      ],
-      "localeIETFBCP47Tags": [
-        "es-UY"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "es"
-      ],
+      "timezoneIanaIdentifiers": ["America/Montevideo"],
+      "localeIETFBCP47Tags": ["es-UY"],
+      "spokenLanguageISO6391Codes": ["es"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -16637,11 +14037,7 @@
       "primaryCurrencyISO4217AlphaCode": "UZS",
       "primaryLocaleIETFBCP47Tag": "uz-UZ",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AS",
-        "CAS",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AS", "CAS", "UN"],
       "subdivisionISO31662Codes": [
         "UZ-AN",
         "UZ-BU",
@@ -16658,19 +14054,9 @@
         "UZ-TO",
         "UZ-XO"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Samarkand",
-        "Asia/Tashkent"
-      ],
-      "localeIETFBCP47Tags": [
-        "kaa-UZ",
-        "uz-UZ"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ru",
-        "tr",
-        "uz"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Samarkand", "Asia/Tashkent"],
+      "localeIETFBCP47Tags": ["kaa-UZ", "uz-UZ"],
+      "spokenLanguageISO6391Codes": ["ru", "tr", "uz"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -16698,22 +14084,11 @@
       "primaryCurrencyISO4217AlphaCode": "EUR",
       "primaryLocaleIETFBCP47Tag": "la-VA",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "EU",
-        "EZ"
-      ],
+      "geopoliticalEntityShortCodes": ["EU", "EZ"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Europe/Rome"
-      ],
-      "localeIETFBCP47Tags": [
-        "it-VA",
-        "la-VA"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "it",
-        "la"
-      ],
+      "timezoneIanaIdentifiers": ["Europe/Rome"],
+      "localeIETFBCP47Tags": ["it-VA", "la-VA"],
+      "spokenLanguageISO6391Codes": ["it", "la"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -16757,15 +14132,9 @@
         "VC-05",
         "VC-06"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-VC"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["en-VC"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -16793,12 +14162,7 @@
       "primaryCurrencyISO4217AlphaCode": "VES",
       "primaryLocaleIETFBCP47Tag": "es-VE",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "LATAM",
-        "OPEC",
-        "SA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["LATAM", "OPEC", "SA", "UN"],
       "subdivisionISO31662Codes": [
         "VE-A",
         "VE-B",
@@ -16826,16 +14190,9 @@
         "VE-Y",
         "VE-Z"
       ],
-      "timezoneIanaIdentifiers": [
-        "America/Caracas"
-      ],
-      "localeIETFBCP47Tags": [
-        "es-VE",
-        "yrl-VE"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "es"
-      ],
+      "timezoneIanaIdentifiers": ["America/Caracas"],
+      "localeIETFBCP47Tags": ["es-VE", "yrl-VE"],
+      "spokenLanguageISO6391Codes": ["es"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -16863,20 +14220,11 @@
       "primaryCurrencyISO4217AlphaCode": "USD",
       "primaryLocaleIETFBCP47Tag": "en-VG",
       "sovereignCountryISO31661Alpha2Code": "GB",
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "NA"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "NA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-VG"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["en-VG"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -16904,20 +14252,11 @@
       "primaryCurrencyISO4217AlphaCode": "USD",
       "primaryLocaleIETFBCP47Tag": "en-VI",
       "sovereignCountryISO31661Alpha2Code": "US",
-      "geopoliticalEntityShortCodes": [
-        "CARIB",
-        "NA"
-      ],
+      "geopoliticalEntityShortCodes": ["CARIB", "NA"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "America/Puerto_Rico"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-VI"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["America/Puerto_Rico"],
+      "localeIETFBCP47Tags": ["en-VI"],
+      "spokenLanguageISO6391Codes": ["en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -17020,17 +14359,9 @@
         "VN-HP",
         "VN-SG"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Bangkok",
-        "Asia/Ho_Chi_Minh"
-      ],
-      "localeIETFBCP47Tags": [
-        "blt-VN",
-        "vi-VN"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "vi"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Bangkok", "Asia/Ho_Chi_Minh"],
+      "localeIETFBCP47Tags": ["blt-VN", "vi-VN"],
+      "spokenLanguageISO6391Codes": ["vi"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -17056,14 +14387,9 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "bi",
       "primaryCurrencyISO4217AlphaCode": "VUV",
-      "primaryLocaleIETFBCP47Tag": "bi-VU",
+      "primaryLocaleIETFBCP47Tag": "en-VU",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CW",
-        "OC",
-        "OIF",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CW", "OC", "OIF", "UN"],
       "subdivisionISO31662Codes": [
         "VU-MAP",
         "VU-PAM",
@@ -17072,18 +14398,9 @@
         "VU-TAE",
         "VU-TOB"
       ],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Efate"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-VU",
-        "fr-VU"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "bi",
-        "en",
-        "fr"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Efate"],
+      "localeIETFBCP47Tags": ["en-VU", "fr-VU"],
+      "spokenLanguageISO6391Codes": ["bi", "en", "fr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -17109,26 +14426,13 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "wls",
       "primaryCurrencyISO4217AlphaCode": "XPF",
-      "primaryLocaleIETFBCP47Tag": "wls-WF",
+      "primaryLocaleIETFBCP47Tag": "fr-WF",
       "sovereignCountryISO31661Alpha2Code": "FR",
-      "geopoliticalEntityShortCodes": [
-        "OC"
-      ],
-      "subdivisionISO31662Codes": [
-        "WF-AL",
-        "WF-SG",
-        "WF-UV"
-      ],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Tarawa"
-      ],
-      "localeIETFBCP47Tags": [
-        "fr-WF"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr",
-        "wls"
-      ],
+      "geopoliticalEntityShortCodes": ["OC"],
+      "subdivisionISO31662Codes": ["WF-AL", "WF-SG", "WF-UV"],
+      "timezoneIanaIdentifiers": ["Pacific/Tarawa"],
+      "localeIETFBCP47Tags": ["fr-WF"],
+      "spokenLanguageISO6391Codes": ["fr", "wls"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -17154,13 +14458,9 @@
       "measurementSystem": "Metric",
       "primaryLanguageISO6391Code": "sm",
       "primaryCurrencyISO4217AlphaCode": "WST",
-      "primaryLocaleIETFBCP47Tag": "sm-WS",
+      "primaryLocaleIETFBCP47Tag": "en-WS",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "CW",
-        "OC",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["CW", "OC", "UN"],
       "subdivisionISO31662Codes": [
         "WS-AA",
         "WS-AL",
@@ -17174,16 +14474,9 @@
         "WS-VF",
         "WS-VS"
       ],
-      "timezoneIanaIdentifiers": [
-        "Pacific/Apia"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-WS"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "sm"
-      ],
+      "timezoneIanaIdentifiers": ["Pacific/Apia"],
+      "localeIETFBCP47Tags": ["en-WS"],
+      "spokenLanguageISO6391Codes": ["en", "sm"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -17211,23 +14504,11 @@
       "primaryCurrencyISO4217AlphaCode": "EUR",
       "primaryLocaleIETFBCP47Tag": "sq-XK",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "BALK",
-        "EU"
-      ],
+      "geopoliticalEntityShortCodes": ["BALK", "EU"],
       "subdivisionISO31662Codes": [],
       "timezoneIanaIdentifiers": [],
-      "localeIETFBCP47Tags": [
-        "sq-XK",
-        "sr-Cyrl-XK",
-        "sr-Latn-XK"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "bs",
-        "sq",
-        "sr",
-        "tr"
-      ],
+      "localeIETFBCP47Tags": ["sq-XK", "sr-Cyrl-XK", "sr-Latn-XK"],
+      "spokenLanguageISO6391Codes": ["bs", "sq", "sr", "tr"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -17255,13 +14536,7 @@
       "primaryCurrencyISO4217AlphaCode": "YER",
       "primaryLocaleIETFBCP47Tag": "ar-YE",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AL",
-        "ARAB",
-        "AS",
-        "MENA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AL", "ARAB", "AS", "MENA", "UN"],
       "subdivisionISO31662Codes": [
         "YE-AB",
         "YE-AD",
@@ -17286,16 +14561,9 @@
         "YE-SU",
         "YE-TA"
       ],
-      "timezoneIanaIdentifiers": [
-        "Asia/Riyadh"
-      ],
-      "localeIETFBCP47Tags": [
-        "ar-YE"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "ar",
-        "en"
-      ],
+      "timezoneIanaIdentifiers": ["Asia/Riyadh"],
+      "localeIETFBCP47Tags": ["ar-YE"],
+      "spokenLanguageISO6391Codes": ["ar", "en"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -17323,20 +14591,11 @@
       "primaryCurrencyISO4217AlphaCode": "EUR",
       "primaryLocaleIETFBCP47Tag": "fr-YT",
       "sovereignCountryISO31661Alpha2Code": "FR",
-      "geopoliticalEntityShortCodes": [
-        "AF"
-      ],
+      "geopoliticalEntityShortCodes": ["AF"],
       "subdivisionISO31662Codes": [],
-      "timezoneIanaIdentifiers": [
-        "Africa/Nairobi"
-      ],
-      "localeIETFBCP47Tags": [
-        "fr-YT"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "fr",
-        "sw"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Nairobi"],
+      "localeIETFBCP47Tags": ["fr-YT"],
+      "spokenLanguageISO6391Codes": ["fr", "sw"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -17385,9 +14644,7 @@
         "ZA-NW",
         "ZA-WC"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Johannesburg"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Johannesburg"],
       "localeIETFBCP47Tags": [
         "af-ZA",
         "en-ZA",
@@ -17442,13 +14699,7 @@
       "primaryCurrencyISO4217AlphaCode": "ZMW",
       "primaryLocaleIETFBCP47Tag": "en-ZM",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "CW",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "CW", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "ZM-01",
         "ZM-02",
@@ -17461,17 +14712,9 @@
         "ZM-09",
         "ZM-10"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Maputo"
-      ],
-      "localeIETFBCP47Tags": [
-        "bem-ZM",
-        "en-ZM"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "ny"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Maputo"],
+      "localeIETFBCP47Tags": ["bem-ZM", "en-ZM"],
+      "spokenLanguageISO6391Codes": ["en", "ny"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {
@@ -17499,12 +14742,7 @@
       "primaryCurrencyISO4217AlphaCode": "ZWG",
       "primaryLocaleIETFBCP47Tag": "en-ZW",
       "sovereignCountryISO31661Alpha2Code": null,
-      "geopoliticalEntityShortCodes": [
-        "AF",
-        "AU",
-        "SSA",
-        "UN"
-      ],
+      "geopoliticalEntityShortCodes": ["AF", "AU", "SSA", "UN"],
       "subdivisionISO31662Codes": [
         "ZW-BU",
         "ZW-HA",
@@ -17517,22 +14755,9 @@
         "ZW-MV",
         "ZW-MW"
       ],
-      "timezoneIanaIdentifiers": [
-        "Africa/Maputo"
-      ],
-      "localeIETFBCP47Tags": [
-        "en-ZW",
-        "nd-ZW",
-        "sn-ZW"
-      ],
-      "spokenLanguageISO6391Codes": [
-        "en",
-        "nd",
-        "ny",
-        "sn",
-        "tn",
-        "ve"
-      ],
+      "timezoneIanaIdentifiers": ["Africa/Maputo"],
+      "localeIETFBCP47Tags": ["en-ZW", "nd-ZW", "sn-ZW"],
+      "spokenLanguageISO6391Codes": ["en", "nd", "ny", "sn", "tn", "ve"],
       "territoryISO31661Alpha2Codes": [],
       "currencies": [
         {

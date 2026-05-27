@@ -143,6 +143,15 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/i18n-source-gen/">
     <Project Path="shared/dotnet/i18n-source-gen/D2.Shared.I18n.SourceGen.csproj" />
   </Folder>
+  <Folder Name="/shared/dotnet/geo-abstractions/">
+    <Project Path="shared/dotnet/geo-abstractions/D2.Shared.Geo.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/geo-default/">
+    <Project Path="shared/dotnet/geo-default/D2.Shared.Geo.Default.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/geo-source-gen/">
+    <Project Path="shared/dotnet/geo-source-gen/D2.Shared.Geo.SourceGen.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/logging/">
     <Project Path="shared/dotnet/logging/D2.Shared.Logging.csproj" />
   </Folder>
@@ -163,6 +172,12 @@ Copyright (c) DCSV. All rights reserved.
   </Folder>
   <Folder Name="/shared/dotnet/telemetry/">
     <Project Path="shared/dotnet/telemetry/D2.Shared.Telemetry.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/time/">
+    <Project Path="shared/dotnet/time/D2.Shared.Time.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/location/">
+    <Project Path="shared/dotnet/location/D2.Shared.Location.csproj" />
   </Folder>
   <Folder Name="/shared/dotnet/tests/">
     <Project Path="shared/dotnet/tests/D2.Shared.Tests.csproj" />

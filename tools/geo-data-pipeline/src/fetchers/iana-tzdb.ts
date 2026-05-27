@@ -49,7 +49,10 @@ export interface BackwardAlias {
   alias: string;
 }
 
-export interface IanaTzdbFetchResult extends Pick<CachedFetch, "provenance" | "fromCache"> {
+export interface IanaTzdbFetchResult extends Pick<
+  CachedFetch,
+  "provenance" | "fromCache"
+> {
   /**
    * Parsed entries from zone1970.tab (canonical zones with primary country FK +
    * co-applicable countries).
@@ -113,7 +116,10 @@ export function parseZone1970Tab(text: string): ZoneTabEntry[] {
     const coordsField = fields[1];
     const zoneField = fields[2];
     if (!countryField || !coordsField || !zoneField) continue;
-    const countryCodes = countryField.split(",").map((c) => c.trim().toUpperCase()).filter(Boolean);
+    const countryCodes = countryField
+      .split(",")
+      .map((c) => c.trim().toUpperCase())
+      .filter(Boolean);
     if (countryCodes.length === 0) continue;
     entries.push({
       countryCodes,
@@ -144,7 +150,10 @@ export function parseBackward(text: string): BackwardAlias[] {
   return entries;
 }
 
-if (process.argv[1]?.endsWith("iana-tzdb.ts") || process.argv[1]?.endsWith("iana-tzdb.js")) {
+if (
+  process.argv[1]?.endsWith("iana-tzdb.ts") ||
+  process.argv[1]?.endsWith("iana-tzdb.js")
+) {
   const result = await fetchIanaTzdb();
   const sample = result.zones.slice(0, 3);
   const usEastern = result.aliasesByCanonical.get("America/New_York") ?? [];
@@ -156,7 +165,8 @@ if (process.argv[1]?.endsWith("iana-tzdb.ts") || process.argv[1]?.endsWith("iana
         aliasCount: result.aliases.length,
         sampleZones: sample,
         americaNewYorkAliases: usEastern,
-        europeLondonAliases: result.aliasesByCanonical.get("Europe/London") ?? [],
+        europeLondonAliases:
+          result.aliasesByCanonical.get("Europe/London") ?? [],
       },
       null,
       2,

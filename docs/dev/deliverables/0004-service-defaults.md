@@ -54,20 +54,20 @@ Pattern parity inspiration: `Microsoft.Extensions.ServiceDefaults` from .NET Asp
 
 ## Step record
 
-| #   | Step                                | Csproj path                                  | Rounds |
-|-----|-------------------------------------|----------------------------------------------|--------|
-| 0   | Branch checkout                     | —                                            | —      |
-| 1   | `D2.Shared.Logging` (initial)       | `server/shared/dotnet/logging/`              | 2      |
-| 1A  | IRequestContext spec hygiene (rename + drop + nameof sweep) | spec + cross-cutting cleanup    | 1      |
-| 1B  | Logging LOG-OK enricher expansion (42 LOG-OK / 8 NOT-LOGGED) | `server/shared/dotnet/logging/`  | 1      |
-| 1C  | Early rules.md adoption (5 predicates) + Logging KEEP doc phase-framing sweep | rules.md + logging KEEP docs | 2      |
-| 2   | `D2.Shared.Telemetry`               | `server/shared/dotnet/telemetry/`            | 2      |
-| 3   | `D2.Shared.AspNetCore`              | `server/shared/dotnet/aspnetcore/`           | 2      |
-| 4   | `D2.Shared.ServiceDefaults`         | `server/shared/dotnet/service-defaults/`     | 2      |
-| 5   | Synthetic-host integration tests    | `server/shared/dotnet/tests/`                | 2      |
-| 6   | Doc updates                         | `docs/PATTERNS.md`, `docs/v2/PHASE_0.md`, `docs/v2/V2.md`, `server/shared/dotnet/README.md` | 1      |
-| 7   | Rules adoption (§24.13.1 + tracking-doc allowlist) + SanitizedExceptionRender consolidation | rules.md + cross-deliverable Utilities/Auth/Auth.Outbound/Messaging.RabbitMq/AspNetCore | 1 |
-| F   | Final-review (deliverable-wide)     | —                                            | 3 (R1 + R2 + R3 post-Step-7) |
+| #   | Step                                                                                        | Csproj path                                                                                 | Rounds                       |
+| --- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ---------------------------- |
+| 0   | Branch checkout                                                                             | —                                                                                           | —                            |
+| 1   | `D2.Shared.Logging` (initial)                                                               | `server/shared/dotnet/logging/`                                                             | 2                            |
+| 1A  | IRequestContext spec hygiene (rename + drop + nameof sweep)                                 | spec + cross-cutting cleanup                                                                | 1                            |
+| 1B  | Logging LOG-OK enricher expansion (42 LOG-OK / 8 NOT-LOGGED)                                | `server/shared/dotnet/logging/`                                                             | 1                            |
+| 1C  | Early rules.md adoption (5 predicates) + Logging KEEP doc phase-framing sweep               | rules.md + logging KEEP docs                                                                | 2                            |
+| 2   | `D2.Shared.Telemetry`                                                                       | `server/shared/dotnet/telemetry/`                                                           | 2                            |
+| 3   | `D2.Shared.AspNetCore`                                                                      | `server/shared/dotnet/aspnetcore/`                                                          | 2                            |
+| 4   | `D2.Shared.ServiceDefaults`                                                                 | `server/shared/dotnet/service-defaults/`                                                    | 2                            |
+| 5   | Synthetic-host integration tests                                                            | `server/shared/dotnet/tests/`                                                               | 2                            |
+| 6   | Doc updates                                                                                 | `docs/PATTERNS.md`, `docs/v2/PHASE_0.md`, `docs/v2/V2.md`, `server/shared/dotnet/README.md` | 1                            |
+| 7   | Rules adoption (§24.13.1 + tracking-doc allowlist) + SanitizedExceptionRender consolidation | rules.md + cross-deliverable Utilities/Auth/Auth.Outbound/Messaging.RabbitMq/AspNetCore     | 1                            |
+| F   | Final-review (deliverable-wide)                                                             | —                                                                                           | 3 (R1 + R2 + R3 post-Step-7) |
 
 **18 total audit cycles** across 11 sub-steps + Final-review. Average ~1.6 rounds/step. All 5 LIVE Step-1C predicates + Step 7's §24.13.1 battle-tested across 11 cycles with 4 self-correcting augmentation iterations on §11.28/§14.1.
 
@@ -75,28 +75,29 @@ Convergence map: 1 (2) → 1A (1) → 1B (1) → 1C (2) → 2 (2) → 3 (2) → 
 
 ## Locked architectural decisions
 
-| Decision                                | Final                                                                                                        |
-|-----------------------------------------|--------------------------------------------------------------------------------------------------------------|
-| Logging engine                          | **Serilog** (per rules.md §3.3 PII discipline; `RedactDataDestructuringPolicy` is the safety net)             |
-| Auth wiring in defaults                 | **Auto-wire** `AddD2Auth` + `AddD2AuthHttp` + `AddD2AuthGrpc` (>95% of services need; opt-out via `SkipAuthAutoWiring=true`; THROWS at startup if `AuthConfigure` null + Skip false) |
-| Middleware order                        | **LOCKED** in `UseD2DefaultPipeline` — no insertion points; per RATE-LIMITING.md §4                          |
-| ServiceDefaults shape                   | **Single csproj**; pure aggregator; ZERO logic (verified by convention test)                                   |
-| Encryption                              | Stays **opt-in** (per-domain keying)                                                                         |
-| Opt-ins                                 | Services call owning libs' existing builders directly (`AddD2Postgres`, `AddD2RedisDistributedCache`, `AddD2RabbitMq`, `AddD2EncryptionFor`, `AddD2AuthOutbound`) |
-| Logging vs Telemetry split              | Separate libs — Logging (Serilog + redaction) is independent of Telemetry (OTel SDK); some services may want one without the other |
-| Local cache wiring in defaults          | Auto-wire `AddD2LocalCache()` (zero external deps; near-universal)                                            |
-| Per-step integration tests              | Every step ships its own integration tests with mocked inputs to verify runtime behavior end-to-end (codified as §1.19 in rules.md) |
-| `UseD2InfrastructureBypass` default     | **SHORT-CIRCUITS** by default (`/health`, `/alive`, `/metrics`, `/.well-known/*`); `TagOnly=true` opt-out preserves marker-only mode |
-| `RunD2ServiceAsync` exception logging   | Uses `SanitizedExceptionRender.TypeName(ex)` + `FirstFrame(ex)` separately — never raw `ex.Message` (per §3.1 PII discipline) |
-| HSTS preload                            | NOT in default — one-way-door per-service decision                                                            |
-| CORS default                            | Fail-closed (empty origins = no allowed origins; explicit configuration required)                              |
-| 42 LOG-OK fields / 8 NOT-LOGGED         | Operational data + opaque IDs + capability metadata + hashes are LOG-OK; raw IPs + sub-country geographic precision (City/Region/SubdivisionCode/PostalCode/Lat/Long/Geohash) + plaintext PII (Username) are NOT-LOGGED |
+| Decision                              | Final                                                                                                                                                                                                                   |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Logging engine                        | **Serilog** (per rules.md §3.3 PII discipline; `RedactDataDestructuringPolicy` is the safety net)                                                                                                                       |
+| Auth wiring in defaults               | **Auto-wire** `AddD2Auth` + `AddD2AuthHttp` + `AddD2AuthGrpc` (>95% of services need; opt-out via `SkipAuthAutoWiring=true`; THROWS at startup if `AuthConfigure` null + Skip false)                                    |
+| Middleware order                      | **LOCKED** in `UseD2DefaultPipeline` — no insertion points; per RATE-LIMITING.md §4                                                                                                                                     |
+| ServiceDefaults shape                 | **Single csproj**; pure aggregator; ZERO logic (verified by convention test)                                                                                                                                            |
+| Encryption                            | Stays **opt-in** (per-domain keying)                                                                                                                                                                                    |
+| Opt-ins                               | Services call owning libs' existing builders directly (`AddD2Postgres`, `AddD2RedisDistributedCache`, `AddD2RabbitMq`, `AddD2EncryptionFor`, `AddD2AuthOutbound`)                                                       |
+| Logging vs Telemetry split            | Separate libs — Logging (Serilog + redaction) is independent of Telemetry (OTel SDK); some services may want one without the other                                                                                      |
+| Local cache wiring in defaults        | Auto-wire `AddD2LocalCache()` (zero external deps; near-universal)                                                                                                                                                      |
+| Per-step integration tests            | Every step ships its own integration tests with mocked inputs to verify runtime behavior end-to-end (codified as §1.19 in rules.md)                                                                                     |
+| `UseD2InfrastructureBypass` default   | **SHORT-CIRCUITS** by default (`/health`, `/alive`, `/metrics`, `/.well-known/*`); `TagOnly=true` opt-out preserves marker-only mode                                                                                    |
+| `RunD2ServiceAsync` exception logging | Uses `SanitizedExceptionRender.TypeName(ex)` + `FirstFrame(ex)` separately — never raw `ex.Message` (per §3.1 PII discipline)                                                                                           |
+| HSTS preload                          | NOT in default — one-way-door per-service decision                                                                                                                                                                      |
+| CORS default                          | Fail-closed (empty origins = no allowed origins; explicit configuration required)                                                                                                                                       |
+| 42 LOG-OK fields / 8 NOT-LOGGED       | Operational data + opaque IDs + capability metadata + hashes are LOG-OK; raw IPs + sub-country geographic precision (City/Region/SubdivisionCode/PostalCode/Lat/Long/Geohash) + plaintext PII (Username) are NOT-LOGGED |
 
 ## Kinds-of-misses log (per-step distillation)
 
 ### Step 1 — D2.Shared.Logging (2 rounds)
 
 3 R1 findings, all mechanical-hygiene, closed by Fixer R1, R2 clean:
+
 - §5.1 HIGH + §5.24 MEDIUM (same site) — foundation lib slipped on 1 of 10 sites of `Falsey()` dogfood (`string.IsNullOrWhiteSpace` at `InfrastructurePathMatcher.cs:61`)
 - §7.14 LOW — 4 lines >100 chars (1 production + 3 test)
 
@@ -121,6 +122,7 @@ Zero R1 findings. 42 LOG-OK / 8 NOT-LOGGED contract shipped clean. Implementer H
 ### Step 2 — D2.Shared.Telemetry (2 rounds)
 
 4 R1 findings (2 MEDIUM + 2 LOW), all closed by Fixer R1, R2 clean:
+
 - §14.1 MEDIUM × 3 — `Phase-0` hyphenated form leaked past `'Phase [0-9]'` (spaced) regex
 - §11.28 MEDIUM × 2 — `"will live in"` + `"future X aggregator"` phrasings escaped post-1C-augmented regex
 - §5.1 LOW × 1 — `string.IsNullOrEmpty` in test file
@@ -193,6 +195,7 @@ This deliverable executed under the canonical orchestrator-only main-thread work
 **~25+ §13.13 Plan-vs-reality reconciliations** honestly documented across the deliverable.
 
 **5 orchestrator overrides** on Planner open questions, all ASKED + DOCUMENTED:
+
 - Step 1B: drop SubdivisionCode from LOG-OK (§3 conservative call)
 - Step 4: Override 1-4 around Auth opt-out path threading + RunD2ServiceAsync naming
 - Step 6: Include 5-layer rename safety net in PATTERNS.md scope (vs SHIP-gate defer)

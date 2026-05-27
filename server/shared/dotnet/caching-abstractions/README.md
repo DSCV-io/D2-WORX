@@ -37,7 +37,7 @@ exceptions — see the `*AndBroadcast*` carve-out below.)
 
 Cache keys follow the `EntityName:{id}` shape (`Session:{userId}`, `Jwks:{kid}`,
 `WhoIs:{ip}`, etc.) per `docs/PATTERNS.md`. The `LocalCacheOptions.KeyPrefix` is a
-*namespace* prefix layered on top of that convention (handy when multiple caches share a
+_namespace_ prefix layered on top of that convention (handy when multiple caches share a
 process), not a substitute for it. Keep PII out of keys — keys leak into logs, traces, and
 Redis MONITOR / OBJECT inspection. Hash any user-supplied identifier first.
 
@@ -53,10 +53,11 @@ process can see local cache state). Use for instance-scoped data: per-instance
 fingerprint cache, per-instance counters, hot in-process lookups.
 
 **`IDistributedCache`** — composes `ICacheBasic` + `ICacheAtomic` + `ICacheBroadcast`
-+ `ICacheSet`.
-Cluster scope. Atomic ops cluster-wide. Every read hits the remote store (no L1).
-Use when freshness matters more than read speed: rate-limit counters, distributed
-locks, ephemeral session lookups.
+
+- `ICacheSet`.
+  Cluster scope. Atomic ops cluster-wide. Every read hits the remote store (no L1).
+  Use when freshness matters more than read speed: rate-limit counters, distributed
+  locks, ephemeral session lookups.
 
 **`ITieredCache`** — composes `ICacheBasic` + `ICacheAtomic` + `ICacheBroadcast`.
 Composed L1+L2. Reads check L1 first / fall through to L2 / populate L1. Writes go

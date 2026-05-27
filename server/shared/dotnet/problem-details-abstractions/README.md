@@ -12,11 +12,11 @@ Zero runtime dependencies. Consumers pull the constants via a single `<ProjectRe
 
 ## Consumers
 
-| Consumer csproj | Site | Use |
-|---|---|---|
-| `D2.Shared.Auth.Http` | `ProblemDetails/D2ProblemDetailsExtensions.ToProblemDetails` (auth middleware emit path A) | Builds RFC 7807 body from auth `D2Result` failures; populates `Type`/`Title`/`Status`/`Instance` + 5 extension keys from spec constants. |
-| `D2.Shared.AspNetCore` | `Internal/D2ProblemDetailsCustomizer.Apply` (path B — ASP.NET `IProblemDetailsService` pipeline) | Reads originating `D2Result` from `HttpContext.Items[D2ProblemDetailsContextItems.D2_RESULT]`; sets identical body fields from same spec constants. Plus unconditional `traceId` + `correlationId` extensions for diagnostic correlation even when no D2Result is stashed. |
-| `JwtAuthMiddleware.WriteProblemAsync` (in `D2.Shared.Auth.Http`) | Response Content-Type header | Sets `Response.ContentType = D2ProblemDetailsKeys.CONTENT_TYPE` (the spec-driven `application/problem+json` per RFC 7807 §6.1). |
+| Consumer csproj                                                  | Site                                                                                             | Use                                                                                                                                                                                                                                                                        |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `D2.Shared.Auth.Http`                                            | `ProblemDetails/D2ProblemDetailsExtensions.ToProblemDetails` (auth middleware emit path A)       | Builds RFC 7807 body from auth `D2Result` failures; populates `Type`/`Title`/`Status`/`Instance` + 5 extension keys from spec constants.                                                                                                                                   |
+| `D2.Shared.AspNetCore`                                           | `Internal/D2ProblemDetailsCustomizer.Apply` (path B — ASP.NET `IProblemDetailsService` pipeline) | Reads originating `D2Result` from `HttpContext.Items[D2ProblemDetailsContextItems.D2_RESULT]`; sets identical body fields from same spec constants. Plus unconditional `traceId` + `correlationId` extensions for diagnostic correlation even when no D2Result is stashed. |
+| `JwtAuthMiddleware.WriteProblemAsync` (in `D2.Shared.Auth.Http`) | Response Content-Type header                                                                     | Sets `Response.ContentType = D2ProblemDetailsKeys.CONTENT_TYPE` (the spec-driven `application/problem+json` per RFC 7807 §6.1).                                                                                                                                            |
 
 ## Cross-language parity
 
@@ -26,10 +26,10 @@ Parity test: `server/shared/typescript/contract-tests/tests/problem-details.pari
 
 ## File layout
 
-| Path | Role |
-|---|---|
-| `D2.Shared.ProblemDetails.Abstractions.csproj` | csproj — `net10.0`, `EmitCompilerGeneratedFiles` + analyzer ref + `AdditionalFiles` for the spec |
-| `Generated/D2.Shared.ProblemDetails.SourceGen/D2.Shared.ProblemDetails.SourceGen.ProblemDetailsGenerator/D2ProblemDetailsKeys.g.cs` | Codegen output — committed (visible in PR diffs without local build) |
+| Path                                                                                                                                | Role                                                                                             |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `D2.Shared.ProblemDetails.Abstractions.csproj`                                                                                      | csproj — `net10.0`, `EmitCompilerGeneratedFiles` + analyzer ref + `AdditionalFiles` for the spec |
+| `Generated/D2.Shared.ProblemDetails.SourceGen/D2.Shared.ProblemDetails.SourceGen.ProblemDetailsGenerator/D2ProblemDetailsKeys.g.cs` | Codegen output — committed (visible in PR diffs without local build)                             |
 
 ## Reference
 

@@ -64,7 +64,11 @@ services:
       d2-rabbitmq:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:9000/minio/health/live || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -sf http://localhost:9000/minio/health/live || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -280,7 +284,8 @@ services:
       d2-mimir:
         condition: service_started
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      test:
+        ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5

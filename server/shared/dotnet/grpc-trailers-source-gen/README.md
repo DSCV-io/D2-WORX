@@ -39,10 +39,10 @@ gRPC HTTP/2 trailer names are case-insensitive per the HTTP/2 spec; the project 
 
 ## Diagnostics
 
-| ID | Title | Severity |
-|---|---|---|
-| `D2GT001` | gRPC trailers spec is malformed | Error |
-| `D2GT002` | Duplicate gRPC trailer constName | Error |
-| `D2GT003` | Duplicate gRPC trailer wire value | Error |
-| `D2GT004` | gRPC trailer constName has invalid shape | Error |
-| `D2GT005` | gRPC trailer wire value is empty | Error |
+| ID        | Title                                    | Severity |
+| --------- | ---------------------------------------- | -------- |
+| `D2GT001` | gRPC trailers spec is malformed          | Error    |
+| `D2GT002` | Duplicate gRPC trailer constName         | Error    |
+| `D2GT003` | Duplicate gRPC trailer wire value        | Error    |
+| `D2GT004` | gRPC trailer constName has invalid shape | Error    |
+| `D2GT005` | gRPC trailer wire value is empty         | Error    |

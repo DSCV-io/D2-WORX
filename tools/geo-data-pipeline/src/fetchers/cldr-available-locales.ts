@@ -35,7 +35,10 @@ export interface AvailableLocalesPayload {
   };
 }
 
-export interface AvailableLocalesFetchResult extends Pick<CachedFetch, "provenance" | "fromCache"> {
+export interface AvailableLocalesFetchResult extends Pick<
+  CachedFetch,
+  "provenance" | "fromCache"
+> {
   /** All locale tags from `full` — the comprehensive catalog. */
   fullTags: readonly string[];
   /**
@@ -55,7 +58,9 @@ export async function fetchCldrAvailableLocales(options?: {
     cacheKey: "availableLocales.json",
     ttlHours: options?.ttlHours,
   });
-  const payload = JSON.parse(fetched.body.toString("utf8")) as AvailableLocalesPayload;
+  const payload = JSON.parse(
+    fetched.body.toString("utf8"),
+  ) as AvailableLocalesPayload;
   return {
     fullTags: payload.availableLocales.full,
     modernTags: payload.availableLocales.modern,

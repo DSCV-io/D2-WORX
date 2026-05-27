@@ -20,7 +20,9 @@ export interface CountryEndonyms {
   canonicalCountByLocale: Map<string, number>;
 }
 
-export async function loadCountryEndonyms(locales: readonly string[]): Promise<CountryEndonyms> {
+export async function loadCountryEndonyms(
+  locales: readonly string[],
+): Promise<CountryEndonyms> {
   const byLocale = new Map<string, Map<string, string>>();
   const canonicalCountByLocale = new Map<string, number>();
 

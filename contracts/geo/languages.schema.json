@@ -5,13 +5,24 @@
   "description": "Tier 2 codegen-ready Language catalog. Matches the LanguageSpec record shape consumed by .NET SourceGen + TS emitter.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["$generated", "$source", "$schema", "$note", "catalogVersion", "generatedAt", "entries"],
+  "required": [
+    "$generated",
+    "$source",
+    "$schema",
+    "$note",
+    "catalogVersion",
+    "generatedAt",
+    "entries"
+  ],
   "properties": {
     "$generated": { "const": true },
     "$source": { "const": "pipeline-derived" },
     "$schema": { "type": "string" },
     "$note": { "type": "string" },
-    "catalogVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$" },
+    "catalogVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$"
+    },
     "generatedAt": { "type": "string", "format": "date-time" },
     "entries": {
       "type": "array",
@@ -27,8 +38,12 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "iso6391Code", "name", "endonym", "writingDirection",
-        "isSupported", "spokenInCountryISO31661Alpha2Codes"
+        "iso6391Code",
+        "name",
+        "endonym",
+        "writingDirection",
+        "isSupported",
+        "spokenInCountryISO31661Alpha2Codes"
       ],
       "properties": {
         "iso6391Code": { "type": "string", "pattern": "^[a-z]{2}$" },

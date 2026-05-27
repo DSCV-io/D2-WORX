@@ -42,16 +42,16 @@ Idempotent — safe to run any number of times.
 
 dkron-mgr considers these fields when diffing actual vs desired:
 
-| Field | Notes |
-|---|---|
-| `displayname` | Human-readable label |
-| `schedule` | Cron expression (Dkron format — note: 6-field including seconds) |
-| `timezone` | IANA timezone (e.g., `America/New_York`) |
-| `executor` | Always `http` for D² jobs |
-| `executor_config` | HTTP method, URL, headers (including service-key auth header) |
-| `concurrency` | `allow` or `forbid` (forbid = skip if previous instance still running) |
-| `retries` | Retry count on failure |
-| `disabled` | Whether the job is currently disabled |
+| Field             | Notes                                                                  |
+| ----------------- | ---------------------------------------------------------------------- |
+| `displayname`     | Human-readable label                                                   |
+| `schedule`        | Cron expression (Dkron format — note: 6-field including seconds)       |
+| `timezone`        | IANA timezone (e.g., `America/New_York`)                               |
+| `executor`        | Always `http` for D² jobs                                              |
+| `executor_config` | HTTP method, URL, headers (including service-key auth header)          |
+| `concurrency`     | `allow` or `forbid` (forbid = skip if previous instance still running) |
+| `retries`         | Retry count on failure                                                 |
+| `disabled`        | Whether the job is currently disabled                                  |
 
 Other Dkron fields (last execution time, success/failure counts, etc.) are not considered — those reflect runtime state, not desired config.
 
@@ -108,6 +108,7 @@ Per V2.md §5.4 the service-key auth approach is transitional; eventually replac
 ### `Hangfire`
 
 DB-backed background jobs in .NET. Trade-offs vs Dkron:
+
 - **Pro**: Eliminates the dkron daemon container entirely; jobs live with the service that owns the work
 - **Pro**: Mature, well-supported in .NET ecosystem
 - **Con**: PG-backed (more DB load); Dkron uses its own embedded storage
@@ -116,6 +117,7 @@ DB-backed background jobs in .NET. Trade-offs vs Dkron:
 ### `IHostedService` cron pattern
 
 Built-in `IHostedService` with a cron-like loop in each service.
+
 - **Pro**: No extra infrastructure at all; jobs are part of the service
 - **Pro**: Most code-local (no separate scheduler config)
 - **Con**: Each service has to handle cross-replica deduplication (Redis distributed lock — same pattern as today, see OPERATIONAL-GUARANTEES.md)
@@ -135,6 +137,7 @@ Decision deferred to Phase 8. This doc documents the pattern so any of the three
 ## When This Doc Gets Deleted
 
 Phase 8 completion criteria includes:
+
 - [ ] Phase 8 architecture chosen (port / Hangfire / IHostedService / something else)
 - [ ] Implementation embodies the declarative reconciler pattern (or documented why not)
 - [ ] All scheduled jobs migrated from v1 to v2 with the same `managed_by` metadata semantics

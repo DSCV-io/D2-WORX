@@ -24,14 +24,14 @@ If you can't guarantee the redaction policy is in place (e.g. a one-off tool, an
 
 ## File layout
 
-| Path | Contents |
-|---|---|
-| `D2.Shared.Handler.csproj` | csproj — refs handler-abstractions + context-abstractions + result + DI/Logging.Abstractions |
-| `BaseHandler.cs` | Abstract base. Virtual `HandleAsync` (entry point) + non-virtual `RunCorePipelineAsync` (observability + try/catch) + abstract `ExecuteAsync` (subclass logic) |
-| `BaseHandler.Logging.cs` | Source-generated `LoggerMessage` delegates for the pipeline |
-| `HandlerContext.cs` | `HandlerContext<T>` — typed-logger context. Open-generic registration via `AddD2Handler` |
-| `HandlerTelemetry.cs` | Static OTel primitives — `ActivitySource` + `Meter` + 4 instruments (`d2.handler.invoked` / `succeeded` / `failed` counters + `d2.handler.duration` histogram) |
-| `HandlerServiceCollectionExtensions.cs` | `AddD2Handler(this IServiceCollection)` — registers open-generic `HandlerContext<T>` |
+| Path                                    | Contents                                                                                                                                                       |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `D2.Shared.Handler.csproj`              | csproj — refs handler-abstractions + context-abstractions + result + DI/Logging.Abstractions                                                                   |
+| `BaseHandler.cs`                        | Abstract base. Virtual `HandleAsync` (entry point) + non-virtual `RunCorePipelineAsync` (observability + try/catch) + abstract `ExecuteAsync` (subclass logic) |
+| `BaseHandler.Logging.cs`                | Source-generated `LoggerMessage` delegates for the pipeline                                                                                                    |
+| `HandlerContext.cs`                     | `HandlerContext<T>` — typed-logger context. Open-generic registration via `AddD2Handler`                                                                       |
+| `HandlerTelemetry.cs`                   | Static OTel primitives — `ActivitySource` + `Meter` + 4 instruments (`d2.handler.invoked` / `succeeded` / `failed` counters + `d2.handler.duration` histogram) |
+| `HandlerServiceCollectionExtensions.cs` | `AddD2Handler(this IServiceCollection)` — registers open-generic `HandlerContext<T>`                                                                           |
 
 ---
 
@@ -97,6 +97,7 @@ services.AddTransient<IGetUserById, GetUserById>();
 ```
 
 `AddD2Handler` does NOT register `IRequestContext` — that's transport-specific. Each consuming transport stack is responsible for constructing per-request `IRequestContext` and putting it into the DI scope before any handler resolves:
+
 - HTTP / gRPC.AspNetCore: the consuming service's startup wires HTTP middleware that builds `IRequestContext` from the validated bearer + ambient request data
 - RabbitMQ consumer: the consuming service's consumer pipeline builds `IRequestContext` from the AMQP frame headers + decrypted body
 
@@ -106,12 +107,12 @@ Tests provide a `MutableRequestContext` test fixture builder.
 
 ## Telemetry instruments
 
-| Instrument | Type | Unit | Description |
-|---|---|---|---|
-| `d2.handler.invoked` | Counter (long) | `{calls}` | Handler invocations attempted |
-| `d2.handler.succeeded` | Counter (long) | `{calls}` | Handler invocations that returned `Success == true` |
-| `d2.handler.failed` | Counter (long) | `{calls}` | Handler invocations that returned `Success == false` OR threw |
-| `d2.handler.duration` | Histogram (double) | `ms` | Handler invocation wall-clock duration |
+| Instrument             | Type               | Unit      | Description                                                   |
+| ---------------------- | ------------------ | --------- | ------------------------------------------------------------- |
+| `d2.handler.invoked`   | Counter (long)     | `{calls}` | Handler invocations attempted                                 |
+| `d2.handler.succeeded` | Counter (long)     | `{calls}` | Handler invocations that returned `Success == true`           |
+| `d2.handler.failed`    | Counter (long)     | `{calls}` | Handler invocations that returned `Success == false` OR threw |
+| `d2.handler.duration`  | Histogram (double) | `ms`      | Handler invocation wall-clock duration                        |
 
 All instruments tag with `d2.handler.name = typeof(TSelf).Name`. The `service-defaults` lib registers `MeterProvider` + `TracerProvider` to capture the `D2.Shared.Handler` source.
 

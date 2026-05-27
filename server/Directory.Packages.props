@@ -70,7 +70,17 @@ Copyright (c) DCSV. All rights reserved.
     <!-- EF Core + Npgsql — for D2.Shared.Handler.Repo (PG error code → D2Result mapping) -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
     <PackageVersion Include="Npgsql" Version="10.0.2" />
-    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+    <!-- Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime — NodaTime EF Core value-
+         converter plugin (Instant ↔ timestamptz, LocalDateTime ↔ timestamp, ...).
+         Used by D2.Shared.Time. Same 10.x release train as the Npgsql.EFCore.PG
+         pin above. -->
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime" Version="10.0.1" />
+
+    <!-- NodaTime — canonical date/time library replacing BCL DateTime /
+         DateTimeOffset across the D2 codebase. Used by D2.Shared.Time and
+         every downstream consumer that needs Instant / LocalDateTime / etc. -->
+    <PackageVersion Include="NodaTime" Version="3.2.2" />
 
     <!-- Serilog — for D2.Shared.Logging. The umbrella Serilog.AspNetCore package
          transitively pulls Serilog, Serilog.Extensions.Logging, Serilog.Sinks.Console,

@@ -116,7 +116,8 @@ async function loadRejections(): Promise<RejectionsFile> {
   try {
     const raw = await readFile(REJECTIONS_PATH, "utf8");
     const parsed = JSON.parse(raw) as Partial<RejectionsFile>;
-    if (Array.isArray(parsed.rejections)) return { rejections: parsed.rejections };
+    if (Array.isArray(parsed.rejections))
+      return { rejections: parsed.rejections };
     return { rejections: [] };
   } catch {
     return { rejections: [] };
@@ -127,7 +128,10 @@ async function saveRejections(rejections: RejectionsFile): Promise<void> {
   await writeSpecJson(REJECTIONS_PATH, rejections);
 }
 
-function indexByKey(entries: unknown[], key: string): Map<string, Record<string, unknown>> {
+function indexByKey(
+  entries: unknown[],
+  key: string,
+): Map<string, Record<string, unknown>> {
   const map = new Map<string, Record<string, unknown>>();
   for (const e of entries) {
     if (e === null || typeof e !== "object") continue;
@@ -145,7 +149,9 @@ function canonicalJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
   const obj = value as Record<string, unknown>;
   const keys = Object.keys(obj).sort();
-  const parts = keys.map((k) => `${JSON.stringify(k)}:${canonicalJson(obj[k])}`);
+  const parts = keys.map(
+    (k) => `${JSON.stringify(k)}:${canonicalJson(obj[k])}`,
+  );
   return `{${parts.join(",")}}`;
 }
 
@@ -166,10 +172,18 @@ async function diffCatalog(catalog: CatalogConfig): Promise<CatalogChanges> {
   const committedRaw = readGitHead(relPath);
   const workingRaw = await readWorkingTree(absPath);
 
-  const committedWrapper = committedRaw ? (JSON.parse(committedRaw) as SpecWrapper) : null;
-  const workingWrapper = workingRaw ? (JSON.parse(workingRaw) as SpecWrapper) : null;
-  const committedEntries = Array.isArray(committedWrapper?.entries) ? committedWrapper.entries : [];
-  const workingEntries = Array.isArray(workingWrapper?.entries) ? workingWrapper.entries : [];
+  const committedWrapper = committedRaw
+    ? (JSON.parse(committedRaw) as SpecWrapper)
+    : null;
+  const workingWrapper = workingRaw
+    ? (JSON.parse(workingRaw) as SpecWrapper)
+    : null;
+  const committedEntries = Array.isArray(committedWrapper?.entries)
+    ? committedWrapper.entries
+    : [];
+  const workingEntries = Array.isArray(workingWrapper?.entries)
+    ? workingWrapper.entries
+    : [];
 
   const committed = indexByKey(committedEntries, catalog.key);
   const working = indexByKey(workingEntries, catalog.key);
@@ -191,8 +205,14 @@ async function diffCatalog(catalog: CatalogConfig): Promise<CatalogChanges> {
   modified.sort();
 
   return {
-    catalog, committedRaw, workingRaw, committedWrapper, workingWrapper,
-    added, removed, modified,
+    catalog,
+    committedRaw,
+    workingRaw,
+    committedWrapper,
+    workingWrapper,
+    added,
+    removed,
+    modified,
   };
 }
 
@@ -218,8 +238,11 @@ async function promptOperator(
     console.error(`  WORKING:\n${indent(workingJson, "    ")}`);
   }
   while (true) {
-    const ans = (await rl.question("Keep working-tree value? [Y/n/s(kip)]: ")).trim().toLowerCase();
-    if (ans === "" || ans === "y" || ans === "yes") return { action: "keep", reason: "" };
+    const ans = (await rl.question("Keep working-tree value? [Y/n/s(kip)]: "))
+      .trim()
+      .toLowerCase();
+    if (ans === "" || ans === "y" || ans === "yes")
+      return { action: "keep", reason: "" };
     if (ans === "n" || ans === "no") {
       const reason = (await rl.question("Reason for rejection: ")).trim();
       return { action: "reject", reason: reason || "(no reason given)" };
@@ -230,7 +253,10 @@ async function promptOperator(
 }
 
 function indent(text: string, prefix: string): string {
-  return text.split("\n").map((l) => prefix + l).join("\n");
+  return text
+    .split("\n")
+    .map((l) => prefix + l)
+    .join("\n");
 }
 
 async function applyRejections(
@@ -238,16 +264,25 @@ async function applyRejections(
   rejectedKeys: ReadonlySet<string>,
 ): Promise<void> {
   if (rejectedKeys.size === 0) return;
-  if (!changes.workingWrapper || !Array.isArray(changes.workingWrapper.entries)) return;
-  if (!changes.committedWrapper || !Array.isArray(changes.committedWrapper.entries)) return;
+  if (!changes.workingWrapper || !Array.isArray(changes.workingWrapper.entries))
+    return;
+  if (
+    !changes.committedWrapper ||
+    !Array.isArray(changes.committedWrapper.entries)
+  )
+    return;
 
-  const committed = indexByKey(changes.committedWrapper.entries, changes.catalog.key);
+  const committed = indexByKey(
+    changes.committedWrapper.entries,
+    changes.catalog.key,
+  );
   const updated = changes.workingWrapper.entries
     .filter((e) => {
       if (!e || typeof e !== "object") return true;
       const k = (e as Record<string, unknown>)[changes.catalog.key];
       // Drop any ADDED entry the operator rejected (key not in committed).
-      if (typeof k === "string" && rejectedKeys.has(k) && !committed.has(k)) return false;
+      if (typeof k === "string" && rejectedKeys.has(k) && !committed.has(k))
+        return false;
       return true;
     })
     .map((e) => {
@@ -274,7 +309,9 @@ async function main(): Promise<void> {
 
   if (flags.catalog && targetCatalogs.length === 0) {
     console.error(`Error: unknown catalog '${flags.catalog}'.`);
-    console.error(`Known: ${CATALOGS.map((c) => c.filename.replace(".spec.json", "")).join(", ")}`);
+    console.error(
+      `Known: ${CATALOGS.map((c) => c.filename.replace(".spec.json", "")).join(", ")}`,
+    );
     process.exit(2);
   }
 
@@ -282,17 +319,22 @@ async function main(): Promise<void> {
   try {
     allChanges = await Promise.all(targetCatalogs.map(diffCatalog));
   } catch (err) {
-    console.error(`Error: failed to diff catalogs -- ${err instanceof Error ? err.message : err}`);
+    console.error(
+      `Error: failed to diff catalogs -- ${err instanceof Error ? err.message : err}`,
+    );
     process.exit(2);
   }
 
   const totalAdded = allChanges.reduce((acc, c) => acc + c.added.length, 0);
   const totalRemoved = allChanges.reduce((acc, c) => acc + c.removed.length, 0);
-  const totalModified = allChanges.reduce((acc, c) => acc + c.modified.length, 0);
+  const totalModified = allChanges.reduce(
+    (acc, c) => acc + c.modified.length,
+    0,
+  );
 
   console.error(
     `\ngeo:approve scope: ${targetCatalogs.length} catalog(s); ` +
-    `+${totalAdded} -${totalRemoved} ~${totalModified} pending decisions.\n`,
+      `+${totalAdded} -${totalRemoved} ~${totalModified} pending decisions.\n`,
   );
 
   if (totalAdded === 0 && totalModified === 0) {
@@ -315,7 +357,9 @@ async function main(): Promise<void> {
   }
 
   if (flags.nonInteractive) {
-    console.error("Non-interactive mode: pending diffs detected. Aborting without prompting.");
+    console.error(
+      "Non-interactive mode: pending diffs detected. Aborting without prompting.",
+    );
     for (const c of allChanges) {
       if (c.added.length > 0) {
         const more = c.added.length > 5 ? ", ..." : "";
@@ -345,9 +389,16 @@ async function main(): Promise<void> {
   try {
     for (const change of allChanges) {
       if (change.added.length === 0 && change.modified.length === 0) continue;
-      if (!change.workingWrapper || !Array.isArray(change.workingWrapper.entries)) continue;
+      if (
+        !change.workingWrapper ||
+        !Array.isArray(change.workingWrapper.entries)
+      )
+        continue;
 
-      const working = indexByKey(change.workingWrapper.entries, change.catalog.key);
+      const working = indexByKey(
+        change.workingWrapper.entries,
+        change.catalog.key,
+      );
       const committedEntries = Array.isArray(change.committedWrapper?.entries)
         ? change.committedWrapper.entries
         : [];
@@ -355,7 +406,10 @@ async function main(): Promise<void> {
 
       const rejectedKeysForCatalog = new Set<string>();
 
-      const decide = async (key: string, kind: "added" | "modified"): Promise<void> => {
+      const decide = async (
+        key: string,
+        kind: "added" | "modified",
+      ): Promise<void> => {
         const workingEntry = working.get(key);
         const committedEntry = committed.get(key);
         const workingJson = workingEntry
@@ -405,7 +459,9 @@ async function main(): Promise<void> {
     process.exit(2);
   }
 
-  console.error(`\nDone. kept=${keptCount} rejected=${rejectedCount} skipped=${skippedCount}.`);
+  console.error(
+    `\nDone. kept=${keptCount} rejected=${rejectedCount} skipped=${skippedCount}.`,
+  );
   if (rejectedCount > 0) {
     console.error(`Rejections recorded to: ${REJECTIONS_PATH}`);
   }

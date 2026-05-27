@@ -4,6 +4,8 @@
 
 import { mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { fetchCldrAvailableLocales } from "../fetchers/cldr-available-locales.js";
+import { fetchCldrLikelySubtags } from "../fetchers/cldr-likely-subtags.js";
 import { fetchCldrTerritories } from "../fetchers/cldr-territories.js";
 import { fetchDatasetsCountryCodes } from "../fetchers/datasets-country-codes.js";
 import { fetchLibphonenumberMetadata } from "../fetchers/libphonenumber-metadata.js";
@@ -32,7 +34,15 @@ import {
   transformPhoneMetadata,
   type CountryPhoneMetadata,
 } from "../transformers/country-phone-metadata.js";
-import { transformCountryRow, type CountryPartialFromDatasets } from "../transformers/countries.js";
+import {
+  transformCountryRow,
+  type CountryPartialFromDatasets,
+} from "../transformers/countries.js";
+import {
+  computeLocaleCatalogTags,
+  indexLocaleTagsByRegion,
+} from "../transformers/locale-catalog-tags.js";
+import { derivePrimaryLocaleTag } from "../transformers/primary-locale-tag.js";
 import { REPO_ROOT_PATH } from "../util/cache.js";
 import { writeSpecJson } from "../util/json-encoding.js";
 
@@ -79,8 +89,16 @@ interface CountryMerged extends CountryPartialFromDatasets {
    */
   activeLegalTenderCurrencies: ActiveCurrencyEntry[];
   /**
-   * Derived as `{primaryLanguageISO6391Code}-{iso31661Alpha2Code}`.
-   * Consumers should validate against the CLDR locale catalog when needed.
+   * Derived via `derivePrimaryLocaleTag` (see transformers/primary-locale-tag.ts)
+   * — guaranteed to exist in the locales catalog (CLDR availableLocales OR the
+   * country's own per-region locale list). Algorithm walks CLDR likelySubtags
+   * for script-subtag canonical expansion (`zh-HK` -> `zh-Hant-HK`,
+   * `sr-ME` -> `sr-Latn-ME`), applies a small lang-alias table (`tl` -> `fil`,
+   * `no` -> `nb`, `cmn` -> `zh`), then falls back to `en-{region}` then the
+   * first entry in the region's locale list when the primary language is
+   * 639-3 outside our 639-1 enum. Returns null only when no derivation
+   * succeeds; pipeline-time validateLocaleRefs in Tier 2 surfaces nulls /
+   * orphans as hard errors.
    */
   primaryLocaleIETFBCP47Tag: string | null;
   /**
@@ -120,7 +138,10 @@ interface CountriesSpec {
     fetchedAt: string;
     sha256: string;
   }>;
-  fieldCoverage: Record<string, { populated: number; total: number; pct: string }>;
+  fieldCoverage: Record<
+    string,
+    { populated: number; total: number; pct: string }
+  >;
   entries: CountryMerged[];
 }
 
@@ -160,7 +181,9 @@ export async function buildCountriesSpec(): Promise<CountriesSpec> {
   }
 
   // Layer A.3 — CLDR supplemental enrichments (weekData + measurementData + currencyData)
-  console.error(`[fetch] CLDR supplemental (weekData + measurementData + currencyData)`);
+  console.error(
+    `[fetch] CLDR supplemental (weekData + measurementData + currencyData)`,
+  );
   const enrichments = await loadCountryEnrichments();
   for (const prov of enrichments.provenance) {
     sources.push({
@@ -194,6 +217,44 @@ export async function buildCountriesSpec(): Promise<CountriesSpec> {
     sha256: spokenLanguages.provenance.sha256,
   });
 
+  // Layer A.4c — CLDR availableLocales + likelySubtags. Feeds the principled
+  // `derivePrimaryLocaleTag` algorithm (see transformers/primary-locale-tag.ts)
+  // which replaces the naive `${lang}-${region}` concatenation that previously
+  // produced 19 orphan refs to locales the catalog does not ship. Loaded here
+  // so the derivation is pure (no I/O) and the function is unit-testable.
+  console.error(
+    `[fetch] CLDR availableLocales + likelySubtags (primary-locale derivation)`,
+  );
+  const cldrAvailableLocales = await fetchCldrAvailableLocales();
+  sources.push({
+    name: cldrAvailableLocales.provenance.source,
+    url: cldrAvailableLocales.provenance.url,
+    license: cldrAvailableLocales.provenance.license,
+    fetchedAt: cldrAvailableLocales.provenance.fetchedAt,
+    sha256: cldrAvailableLocales.provenance.sha256,
+  });
+  const cldrLikelySubtags = await fetchCldrLikelySubtags();
+  sources.push({
+    name: cldrLikelySubtags.provenance.source,
+    url: cldrLikelySubtags.provenance.url,
+    license: cldrLikelySubtags.provenance.license,
+    fetchedAt: cldrLikelySubtags.provenance.fetchedAt,
+    sha256: cldrLikelySubtags.provenance.sha256,
+  });
+  // Compute the canonical locale-catalog tags = CLDR availableLocales.full PLUS
+  // derived lang-Region tags via likelySubtags (bare `en` -> `en-US`, lang-Script
+  // `zh-Hant` -> `zh-Hant-TW`). Mirrors `write-locales.ts` derivation so the
+  // primary-locale algorithm sees the SAME tag set the locales catalog will
+  // eventually ship. Extracted to `locale-catalog-tags.ts` to keep the two
+  // writers' views aligned.
+  const cldrAvailableLocaleTags = computeLocaleCatalogTags({
+    cldrAvailableLocaleFullTags: cldrAvailableLocales.fullTags,
+    cldrLikelySubtags: cldrLikelySubtags.bySourceTag,
+  });
+  const candidateLocalesByRegion = indexLocaleTagsByRegion(
+    cldrAvailableLocaleTags,
+  );
+
   // Merge pass — combine partials + endonyms + enrichments into the final entry shape.
   // `displayName` is sourced from CLDR English territories.json (authoritative), NOT from
   // datasets/country-codes' `CLDR display name` column which contains abbreviations
@@ -205,12 +266,25 @@ export async function buildCountriesSpec(): Promise<CountriesSpec> {
       const name = pickLocalizedName(endonyms, p.iso31661Alpha2Code, lang);
       if (name) localizedDisplayNames[lang] = name;
     }
-    const week = deriveWeekEnrichment(enrichments.weekData, p.iso31661Alpha2Code);
-    const meas = deriveMeasurementEnrichment(enrichments.measurementData, p.iso31661Alpha2Code);
-    const activeCurrencies = deriveActiveCurrencies(enrichments.currencyData, p.iso31661Alpha2Code);
+    const week = deriveWeekEnrichment(
+      enrichments.weekData,
+      p.iso31661Alpha2Code,
+    );
+    const meas = deriveMeasurementEnrichment(
+      enrichments.measurementData,
+      p.iso31661Alpha2Code,
+    );
+    const activeCurrencies = deriveActiveCurrencies(
+      enrichments.currencyData,
+      p.iso31661Alpha2Code,
+    );
     // Authoritative displayName: CLDR English territories.json. Fall back to CSV's
     // partial if CLDR has no entry (extremely rare; CLDR covers all ISO 3166-1).
-    const cldrEnglishName = pickLocalizedName(endonyms, p.iso31661Alpha2Code, "en");
+    const cldrEnglishName = pickLocalizedName(
+      endonyms,
+      p.iso31661Alpha2Code,
+      "en",
+    );
     const authoritativeDisplayName = cldrEnglishName ?? p.displayName;
     return {
       ...p,
@@ -226,16 +300,26 @@ export async function buildCountriesSpec(): Promise<CountriesSpec> {
       weekendEnd: week?.weekendEnd ?? null,
       measurementSystem: meas?.measurementSystem ?? null,
       activeLegalTenderCurrencies: activeCurrencies,
-      primaryLocaleIETFBCP47Tag: p.primaryLanguageISO6391Code
-        ? `${p.primaryLanguageISO6391Code}-${p.iso31661Alpha2Code}`
-        : null,
+      primaryLocaleIETFBCP47Tag: derivePrimaryLocaleTag(
+        {
+          regionAlpha2: p.iso31661Alpha2Code,
+          primaryLanguageCode: p.primaryLanguageISO6391Code,
+          candidateLocaleTags:
+            candidateLocalesByRegion.get(p.iso31661Alpha2Code) ?? [],
+        },
+        {
+          cldrAvailableLocaleTags,
+          cldrLikelySubtags: cldrLikelySubtags.bySourceTag,
+        },
+      ),
       territoryISO31661Alpha2Codes: [], // back-filled below from inverse-nav pass
       phoneNumberNationalFormat: null,
       phoneNumberMinDigits: null,
       phoneNumberMaxDigits: null,
       phoneNumberInternationalPrefix: null,
       phoneNumberNationalPrefix: null,
-      spokenLanguages: spokenLanguages.byCountry.get(p.iso31661Alpha2Code) ?? [],
+      spokenLanguages:
+        spokenLanguages.byCountry.get(p.iso31661Alpha2Code) ?? [],
     };
   });
 
@@ -252,7 +336,10 @@ export async function buildCountriesSpec(): Promise<CountriesSpec> {
     m.phoneNumberNationalPrefix = meta.nationalPrefix;
     // Override datasets/country-codes Dial when libphonenumber disagrees
     // (libphonenumber is authoritative)
-    if (meta.phoneNumberPrefix && m.phoneNumberPrefix !== meta.phoneNumberPrefix) {
+    if (
+      meta.phoneNumberPrefix &&
+      m.phoneNumberPrefix !== meta.phoneNumberPrefix
+    ) {
       console.error(
         `  [phone] override ${m.iso31661Alpha2Code}: ` +
           `datasets="${m.phoneNumberPrefix}" -> ` +
@@ -268,7 +355,9 @@ export async function buildCountriesSpec(): Promise<CountriesSpec> {
   // localizedDisplayNames for the same lang code (Wikidata is more comprehensive +
   // community-maintained at the same authoritative tier; both are Unicode/CC0-licensed).
   const endonymLangs = await getEndonymLanguageList();
-  console.error(`[fetch] Wikidata country endonyms (${endonymLangs.length} languages)`);
+  console.error(
+    `[fetch] Wikidata country endonyms (${endonymLangs.length} languages)`,
+  );
   const wikidataCountries = await fetchCountryEndonyms(endonymLangs);
   for (const fetch of wikidataCountries.fetches) {
     sources.push({
@@ -319,7 +408,8 @@ export async function buildCountriesSpec(): Promise<CountriesSpec> {
   //   - Otherwise keep datasets — even when CLDR's first-active disagrees (LS/NA cases where
   //     a CMA secondary currency appears in CLDR alongside the official primary)
   for (const m of merged) {
-    const cldrFirstActive = m.activeLegalTenderCurrencies[0]?.isoAlphaCode ?? null;
+    const cldrFirstActive =
+      m.activeLegalTenderCurrencies[0]?.isoAlphaCode ?? null;
     const datasetsValue = m.primaryCurrencyISO4217AlphaCode;
 
     if (!datasetsValue && cldrFirstActive) {
@@ -330,7 +420,11 @@ export async function buildCountriesSpec(): Promise<CountriesSpec> {
       m.primaryCurrencyISO4217AlphaCode = cldrFirstActive;
     } else if (
       datasetsValue &&
-      isCurrencyRetiredInCldr(enrichments.currencyData, m.iso31661Alpha2Code, datasetsValue)
+      isCurrencyRetiredInCldr(
+        enrichments.currencyData,
+        m.iso31661Alpha2Code,
+        datasetsValue,
+      )
     ) {
       if (cldrFirstActive) {
         console.error(
@@ -353,7 +447,8 @@ export async function buildCountriesSpec(): Promise<CountriesSpec> {
   const territoriesBySovereign = new Map<string, string[]>();
   for (const m of merged) {
     if (m.sovereignCountryISO31661Alpha2Code) {
-      const list = territoriesBySovereign.get(m.sovereignCountryISO31661Alpha2Code) ?? [];
+      const list =
+        territoriesBySovereign.get(m.sovereignCountryISO31661Alpha2Code) ?? [];
       list.push(m.iso31661Alpha2Code);
       territoriesBySovereign.set(m.sovereignCountryISO31661Alpha2Code, list);
     }
@@ -366,7 +461,9 @@ export async function buildCountriesSpec(): Promise<CountriesSpec> {
     }
   }
 
-  merged.sort((a, b) => a.iso31661Alpha2Code.localeCompare(b.iso31661Alpha2Code));
+  merged.sort((a, b) =>
+    a.iso31661Alpha2Code.localeCompare(b.iso31661Alpha2Code),
+  );
 
   // Field coverage report
   const total = merged.length;
@@ -376,14 +473,29 @@ export async function buildCountriesSpec(): Promise<CountriesSpec> {
     iso31661NumericCode: countNonNull(merged, (m) => m.iso31661NumericCode),
     displayName: countNonNull(merged, (m) => m.displayName),
     officialName: countNonNull(merged, (m) => m.officialName),
-    sovereignCountry: countNonNull(merged, (m) => m.sovereignCountryISO31661Alpha2Code),
+    sovereignCountry: countNonNull(
+      merged,
+      (m) => m.sovereignCountryISO31661Alpha2Code,
+    ),
     phoneNumberPrefix: countNonNull(merged, (m) => m.phoneNumberPrefix),
-    primaryCurrency: countNonNull(merged, (m) => m.primaryCurrencyISO4217AlphaCode),
+    primaryCurrency: countNonNull(
+      merged,
+      (m) => m.primaryCurrencyISO4217AlphaCode,
+    ),
     primaryLanguage: countNonNull(merged, (m) => m.primaryLanguageISO6391Code),
     endonymDisplayName: countNonNull(merged, (m) => m.endonymDisplayName),
-    localizedDisplayNames_en: countNonNull(merged, (m) => m.localizedDisplayNames["en"] ?? null),
-    localizedDisplayNames_ja: countNonNull(merged, (m) => m.localizedDisplayNames["ja"] ?? null),
-    localizedDisplayNames_zh: countNonNull(merged, (m) => m.localizedDisplayNames["zh"] ?? null),
+    localizedDisplayNames_en: countNonNull(
+      merged,
+      (m) => m.localizedDisplayNames["en"] ?? null,
+    ),
+    localizedDisplayNames_ja: countNonNull(
+      merged,
+      (m) => m.localizedDisplayNames["ja"] ?? null,
+    ),
+    localizedDisplayNames_zh: countNonNull(
+      merged,
+      (m) => m.localizedDisplayNames["zh"] ?? null,
+    ),
     firstDayOfWeek: countNonNull(merged, (m) => m.firstDayOfWeek),
     weekendStart: countNonNull(merged, (m) => m.weekendStart),
     weekendEnd: countNonNull(merged, (m) => m.weekendEnd),
@@ -391,9 +503,17 @@ export async function buildCountriesSpec(): Promise<CountriesSpec> {
     activeLegalTenderCurrencies: merged.filter(
       (m) => m.activeLegalTenderCurrencies.length > 0,
     ).length,
-    primaryLocaleIETFBCP47Tag: countNonNull(merged, (m) => m.primaryLocaleIETFBCP47Tag),
-    territoriesPopulated: merged.filter((m) => m.territoryISO31661Alpha2Codes.length > 0).length,
-    phoneNumberNationalFormat: countNonNull(merged, (m) => m.phoneNumberNationalFormat),
+    primaryLocaleIETFBCP47Tag: countNonNull(
+      merged,
+      (m) => m.primaryLocaleIETFBCP47Tag,
+    ),
+    territoriesPopulated: merged.filter(
+      (m) => m.territoryISO31661Alpha2Codes.length > 0,
+    ).length,
+    phoneNumberNationalFormat: countNonNull(
+      merged,
+      (m) => m.phoneNumberNationalFormat,
+    ),
     phoneNumberMinDigits: countNonNull(merged, (m) =>
       m.phoneNumberMinDigits === null ? null : String(m.phoneNumberMinDigits),
     ),
@@ -402,7 +522,10 @@ export async function buildCountriesSpec(): Promise<CountriesSpec> {
     ),
     spokenLanguages: merged.filter((m) => m.spokenLanguages.length > 0).length,
   };
-  const fieldCoverage: Record<string, { populated: number; total: number; pct: string }> = {};
+  const fieldCoverage: Record<
+    string,
+    { populated: number; total: number; pct: string }
+  > = {};
   for (const [field, populated] of Object.entries(coverage)) {
     fieldCoverage[field] = {
       populated,
@@ -411,9 +534,13 @@ export async function buildCountriesSpec(): Promise<CountriesSpec> {
     };
   }
 
-  console.error(`[transform] countries: ${merged.length} entries (${skipped} rows skipped)`);
+  console.error(
+    `[transform] countries: ${merged.length} entries (${skipped} rows skipped)`,
+  );
   for (const [field, stats] of Object.entries(fieldCoverage)) {
-    console.error(`  ${field}: ${stats.populated}/${stats.total} (${stats.pct})`);
+    console.error(
+      `  ${field}: ${stats.populated}/${stats.total} (${stats.pct})`,
+    );
   }
 
   return {
@@ -437,7 +564,10 @@ export async function buildCountriesSpec(): Promise<CountriesSpec> {
   };
 }
 
-function countNonNull<T>(items: readonly T[], pick: (item: T) => string | null): number {
+function countNonNull<T>(
+  items: readonly T[],
+  pick: (item: T) => string | null,
+): number {
   let n = 0;
   for (const item of items) if (pick(item) !== null) n++;
   return n;

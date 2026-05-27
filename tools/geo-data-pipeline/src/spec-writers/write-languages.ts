@@ -8,7 +8,10 @@ import { fetchCldrLanguages } from "../fetchers/cldr-languages.js";
 import { fetchScriptAndLanguageData } from "../fetchers/cldr-script-language-data.js";
 import { fetchDatasetsLanguageCodes } from "../fetchers/datasets-language-codes.js";
 import { fetchWikidataLanguageEndonyms } from "../fetchers/wikidata-language-endonyms.js";
-import { transformLanguageRow, type LanguagePartial } from "../transformers/languages.js";
+import {
+  transformLanguageRow,
+  type LanguagePartial,
+} from "../transformers/languages.js";
 import { REPO_ROOT_PATH } from "../util/cache.js";
 import { writeSpecJson } from "../util/json-encoding.js";
 
@@ -47,7 +50,10 @@ interface LanguagesSpec {
     fetchedAt: string;
     sha256: string;
   }>;
-  fieldCoverage: Record<string, { populated: number; total: number; pct: string }>;
+  fieldCoverage: Record<
+    string,
+    { populated: number; total: number; pct: string }
+  >;
   entries: LanguagePartial[];
 }
 
@@ -66,7 +72,9 @@ export async function buildLanguagesSpec(): Promise<LanguagesSpec> {
 
   // Layer A.4 — CLDR cldr-localenames-full/{locale}/languages.json
   //   (one fetch per supported locale)
-  console.error(`[fetch] CLDR per-locale language names (11 supported languages)`);
+  console.error(
+    `[fetch] CLDR per-locale language names (11 supported languages)`,
+  );
   const cldrLanguageNamesByLocale = new Map<string, Map<string, string>>();
   const cldrLanguageNamesProvenances: Array<{
     name: string;
@@ -142,12 +150,27 @@ export async function buildLanguagesSpec(): Promise<LanguagesSpec> {
     displayName: countNonNull(entries, (e) => e.displayName),
     endonymDisplayName: countNonNull(entries, (e) => e.endonymDisplayName),
     writingDirection: countNonNull(entries, (e) => e.writingDirection),
-    primaryScriptISO15924Code: countNonNull(entries, (e) => e.primaryScriptISO15924Code),
-    localizedDisplayNames_en: countNonNull(entries, (e) => e.localizedDisplayNames["en"] ?? null),
-    localizedDisplayNames_ja: countNonNull(entries, (e) => e.localizedDisplayNames["ja"] ?? null),
-    localizedDisplayNames_zh: countNonNull(entries, (e) => e.localizedDisplayNames["zh"] ?? null),
+    primaryScriptISO15924Code: countNonNull(
+      entries,
+      (e) => e.primaryScriptISO15924Code,
+    ),
+    localizedDisplayNames_en: countNonNull(
+      entries,
+      (e) => e.localizedDisplayNames["en"] ?? null,
+    ),
+    localizedDisplayNames_ja: countNonNull(
+      entries,
+      (e) => e.localizedDisplayNames["ja"] ?? null,
+    ),
+    localizedDisplayNames_zh: countNonNull(
+      entries,
+      (e) => e.localizedDisplayNames["zh"] ?? null,
+    ),
   };
-  const fieldCoverage: Record<string, { populated: number; total: number; pct: string }> = {};
+  const fieldCoverage: Record<
+    string,
+    { populated: number; total: number; pct: string }
+  > = {};
   for (const [field, populated] of Object.entries(coverage)) {
     fieldCoverage[field] = {
       populated,
@@ -156,12 +179,18 @@ export async function buildLanguagesSpec(): Promise<LanguagesSpec> {
     };
   }
 
-  console.error(`[transform] languages: ${entries.length} entries (${skipped} rows skipped)`);
+  console.error(
+    `[transform] languages: ${entries.length} entries (${skipped} rows skipped)`,
+  );
   for (const [field, stats] of Object.entries(fieldCoverage)) {
-    console.error(`  ${field}: ${stats.populated}/${stats.total} (${stats.pct})`);
+    console.error(
+      `  ${field}: ${stats.populated}/${stats.total} (${stats.pct})`,
+    );
   }
   const endonymCount = entries.filter((e) => e.endonymDisplayName).length;
-  console.error(`[wikidata] endonyms found for ${endonymCount}/${total} languages`);
+  console.error(
+    `[wikidata] endonyms found for ${endonymCount}/${total} languages`,
+  );
 
   return {
     $schema: "./languages.schema.json",
@@ -184,7 +213,10 @@ export async function buildLanguagesSpec(): Promise<LanguagesSpec> {
   };
 }
 
-function countNonNull<T>(items: readonly T[], pick: (item: T) => string | null): number {
+function countNonNull<T>(
+  items: readonly T[],
+  pick: (item: T) => string | null,
+): number {
   let n = 0;
   for (const item of items) if (pick(item) !== null) n++;
   return n;

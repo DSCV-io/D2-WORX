@@ -7,8 +7,10 @@ import { fetchAndCache, type CachedFetch } from "../util/cache.js";
 
 const SOURCE_NAME = "datasets-currency-codes";
 // upstream URL — cannot wrap
-const SOURCE_URL = "https://raw.githubusercontent.com/datasets/currency-codes/main/data/codes-all.csv";
-const SOURCE_LICENSE = "PDDL-1.0 (Open Knowledge Foundation Public Domain Dedication)";
+const SOURCE_URL =
+  "https://raw.githubusercontent.com/datasets/currency-codes/main/data/codes-all.csv";
+const SOURCE_LICENSE =
+  "PDDL-1.0 (Open Knowledge Foundation Public Domain Dedication)";
 const CACHE_KEY = "codes-all.csv";
 
 /**
@@ -25,15 +27,18 @@ const CACHE_KEY = "codes-all.csv";
  * AlphabeticCode/NumericCode (older currencies whose codes were reused).
  */
 export interface CurrencyCodeRow {
-  entityName: string;       // ISO 4217 country name (uppercase)
-  currencyName: string;     // English currency name (e.g., "Afghani", "Euro")
-  alphabeticCode: string;   // ISO 4217 alpha-3 (may be empty for ancient retired)
-  numericCode: string;      // ISO 4217 numeric (3-digit string)
-  minorUnit: string;        // Number of decimal places ("0", "2", "3"). "N.A." for some.
-  withdrawalDate: string;   // "YYYY-MM" when retired; empty when active
+  entityName: string; // ISO 4217 country name (uppercase)
+  currencyName: string; // English currency name (e.g., "Afghani", "Euro")
+  alphabeticCode: string; // ISO 4217 alpha-3 (may be empty for ancient retired)
+  numericCode: string; // ISO 4217 numeric (3-digit string)
+  minorUnit: string; // Number of decimal places ("0", "2", "3"). "N.A." for some.
+  withdrawalDate: string; // "YYYY-MM" when retired; empty when active
 }
 
-export interface CurrencyCodesFetchResult extends Pick<CachedFetch, "provenance" | "fromCache"> {
+export interface CurrencyCodesFetchResult extends Pick<
+  CachedFetch,
+  "provenance" | "fromCache"
+> {
   rows: CurrencyCodeRow[];
 }
 

@@ -13,22 +13,22 @@ five files into this assembly under the tracked `Generated/` directory
 (committed for inspection, IDE navigation, and PR diff review; re-emitted
 on every `dotnet build`; do not hand-edit):
 
-| File | Kind | Purpose |
-|---|---|---|
-| `IRequestContext.g.cs` | interface | Read-only contract domain code consumes (extends `IAuthContext`). |
-| `MutableRequestContext.g.cs` | sealed class | Settable concrete; per-scope DI registration; HTTP / messaging middleware populates this. Implements `IRequestContext`. Includes `FromClaims` + `FromJwtPayloadNoValidation` factories. |
-| `PropagatedContext.g.cs` | sealed record | Cross-hop subset — every property the spec marks `propagate: true` (`RequestId`, `RequestPath`, `SessionFingerprint`, `CurrentFingerprint`, `RiskScore`, `WhoIsHashId` today). Identity (`UserId` / `OrgId` / `Scopes` / `ActorChain`) is **never** propagated — it rebuilds from the JWT at every sync hop. |
-| `PropagatedContextExtensions.g.cs` | static class | Two projections: `IRequestContext.ToPropagatedContext()` (snapshot) and `MutableRequestContext.ApplyPropagatedContext(PropagatedContext?)` (apply). |
-| `PropagatedContextSerializer.g.cs` | static class | Wire codec — base64url-of-JSON for the `x-d2-context` header (AMQP / gRPC / HTTP). `MAX_HEADER_LENGTH = 2048` global cap; per-field length validation baked from each propagatable field's `maxLength` annotation in the spec. `TryDecode` returns null on any failure — propagation is opportunistic, never required. |
+| File                               | Kind          | Purpose                                                                                                                                                                                                                                                                                                                |
+| ---------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `IRequestContext.g.cs`             | interface     | Read-only contract domain code consumes (extends `IAuthContext`).                                                                                                                                                                                                                                                      |
+| `MutableRequestContext.g.cs`       | sealed class  | Settable concrete; per-scope DI registration; HTTP / messaging middleware populates this. Implements `IRequestContext`. Includes `FromClaims` + `FromJwtPayloadNoValidation` factories.                                                                                                                                |
+| `PropagatedContext.g.cs`           | sealed record | Cross-hop subset — every property the spec marks `propagate: true` (`RequestId`, `RequestPath`, `SessionFingerprint`, `CurrentFingerprint`, `RiskScore`, `WhoIsHashId` today). Identity (`UserId` / `OrgId` / `Scopes` / `ActorChain`) is **never** propagated — it rebuilds from the JWT at every sync hop.           |
+| `PropagatedContextExtensions.g.cs` | static class  | Two projections: `IRequestContext.ToPropagatedContext()` (snapshot) and `MutableRequestContext.ApplyPropagatedContext(PropagatedContext?)` (apply).                                                                                                                                                                    |
+| `PropagatedContextSerializer.g.cs` | static class  | Wire codec — base64url-of-JSON for the `x-d2-context` header (AMQP / gRPC / HTTP). `MAX_HEADER_LENGTH = 2048` global cap; per-field length validation baked from each propagatable field's `maxLength` annotation in the spec. `TryDecode` returns null on any failure — propagation is opportunistic, never required. |
 
 Hand-written RFC-spec'd helpers ship here too (the spec doesn't describe
 JWT-claim parsing semantics — RFCs do — so these stay imperative):
 
-| File | RFC | Purpose |
-|---|---|---|
-| `ActorChainParser.cs` | RFC 8693 §2.1 | Parses `act` claim into `IReadOnlyList<ActorEntry>`, depth-limited strict-mode. Used by `MutableRequestContext.FromClaims` / `FromJwtPayloadNoValidation`. |
-| `ScopeClaimParser.cs` | RFC 6749 §3.3 | Parses `scope` claim — SP-only string OR JSON array — into `IReadOnlySet<string>`. |
-| `MalformedActorChainException.cs` | — | Surface for actor-chain parse failures. |
+| File                              | RFC           | Purpose                                                                                                                                                    |
+| --------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ActorChainParser.cs`             | RFC 8693 §2.1 | Parses `act` claim into `IReadOnlyList<ActorEntry>`, depth-limited strict-mode. Used by `MutableRequestContext.FromClaims` / `FromJwtPayloadNoValidation`. |
+| `ScopeClaimParser.cs`             | RFC 6749 §3.3 | Parses `scope` claim — SP-only string OR JSON array — into `IReadOnlySet<string>`.                                                                         |
+| `MalformedActorChainException.cs` | —             | Surface for actor-chain parse failures.                                                                                                                    |
 
 ---
 
@@ -59,6 +59,7 @@ bug-compatible. One JSON spec → N language-specific abstractions libs.
 ## Spec → IRequestContext shape
 
 6 sections (4 are WhoIs sub-groupings):
+
 - **Tracing**: `TraceId`, `RequestId`, `RequestPath`
 - **Network**: `ClientIp`
 - **Fingerprints**: `SessionFingerprint`, `CurrentFingerprint`, `RiskScore`

@@ -106,7 +106,10 @@ async function readWorkingTree(absPath: string): Promise<string | null> {
   }
 }
 
-function indexByKey(entries: unknown[], key: string): Map<string, Record<string, unknown>> {
+function indexByKey(
+  entries: unknown[],
+  key: string,
+): Map<string, Record<string, unknown>> {
   const map = new Map<string, Record<string, unknown>>();
   for (const e of entries) {
     if (e === null || typeof e !== "object") continue;
@@ -129,7 +132,9 @@ function canonicalJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
   const obj = value as Record<string, unknown>;
   const keys = Object.keys(obj).sort();
-  const parts = keys.map((k) => `${JSON.stringify(k)}:${canonicalJson(obj[k])}`);
+  const parts = keys.map(
+    (k) => `${JSON.stringify(k)}:${canonicalJson(obj[k])}`,
+  );
   return `{${parts.join(",")}}`;
 }
 
@@ -186,7 +191,10 @@ async function diffCatalog(
   const workingRaw = await readWorkingTree(absPath);
 
   if (committedRaw === null && workingRaw === null) {
-    return { error: `Neither HEAD nor working tree has ${relPath}`, catalog: catalog.filename };
+    return {
+      error: `Neither HEAD nor working tree has ${relPath}`,
+      catalog: catalog.filename,
+    };
   }
 
   let committedEntries: unknown[] = [];
@@ -218,13 +226,19 @@ async function diffCatalog(
     }
   }
 
-  return diffEntries(catalog.filename, catalog.key, committedEntries, workingEntries);
+  return diffEntries(
+    catalog.filename,
+    catalog.key,
+    committedEntries,
+    workingEntries,
+  );
 }
 
 function printHumanSummary(report: DiffReport): void {
   console.error("\n=== geo:diff summary ===\n");
   for (const c of report.catalogs) {
-    const hasAny = c.added.length > 0 || c.removed.length > 0 || c.modified.length > 0;
+    const hasAny =
+      c.added.length > 0 || c.removed.length > 0 || c.modified.length > 0;
     if (!hasAny) {
       console.error(`  ${c.catalog.padEnd(34)}  (no changes)`);
       continue;
@@ -274,11 +288,15 @@ async function main(): Promise<void> {
   const summary = {
     totalCatalogs: catalogResults.length,
     catalogsWithDiffs: catalogResults.filter(
-      (c) => c.added.length > 0 || c.removed.length > 0 || c.modified.length > 0,
+      (c) =>
+        c.added.length > 0 || c.removed.length > 0 || c.modified.length > 0,
     ).length,
     totalAdded: catalogResults.reduce((acc, c) => acc + c.added.length, 0),
     totalRemoved: catalogResults.reduce((acc, c) => acc + c.removed.length, 0),
-    totalModified: catalogResults.reduce((acc, c) => acc + c.modified.length, 0),
+    totalModified: catalogResults.reduce(
+      (acc, c) => acc + c.modified.length,
+      0,
+    ),
   };
 
   const report: DiffReport = { summary, catalogs: catalogResults };
@@ -290,7 +308,9 @@ async function main(): Promise<void> {
   if (!flags.jsonOnly) printHumanSummary(report);
 
   const hasDiffs =
-    summary.totalAdded > 0 || summary.totalRemoved > 0 || summary.totalModified > 0;
+    summary.totalAdded > 0 ||
+    summary.totalRemoved > 0 ||
+    summary.totalModified > 0;
   process.exit(hasDiffs ? 1 : 0);
 }
 

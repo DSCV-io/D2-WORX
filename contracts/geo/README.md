@@ -12,9 +12,9 @@ Audience: developers contributing to or consuming the geo data pipeline (Tier 1 
 
 The geo data flows through three tiers from upstream ingestion to consumed code:
 
-- **Tier 1** — `src-data/` — ingestion pipeline tooling output. Verbose; one JSON file per catalog with `_provenance` per entry + `sources[]` + `fieldCoverage` diagnostics. NOT consumed by codegen directly. Source: `tools/geo-data-pipeline/` pulls from CLDR / IANA tzdb / libphonenumber / datasets/* / Wikidata SPARQL / debian/iso-codes.
+- **Tier 1** — `src-data/` — ingestion pipeline tooling output. Verbose; one JSON file per catalog with `_provenance` per entry + `sources[]` + `fieldCoverage` diagnostics. NOT consumed by codegen directly. Source: `tools/geo-data-pipeline/` pulls from CLDR / IANA tzdb / libphonenumber / datasets/\* / Wikidata SPARQL / debian/iso-codes.
 - **Tier 2** — `*.spec.json` at this directory's root — denormalized + reorganized in the platform's preferred style. Match the canonical entity record shapes (`Country` / `Locale` / `Currency` / `Language` / `Subdivision` / `Timezone` / `GeopoliticalEntity`) 1:1. **THESE are the files codegen consumes**.
-- **Tier 3** — generated C# + TS code produced by codegen (`D2.Shared.Geo.Default` / `@d2/geo-default` packages) consuming Tier 2. Lives in the downstream geo libs, not in this directory. Canonical: the geo lib packages are not yet shipped; design at [`docs/v2/PHASE_1.md`](../../docs/v2/PHASE_1.md) (planned for deliverable 0009-geo-libs).
+- **Tier 3** — generated C# + TS code produced by codegen (`D2.Shared.Geo.Default` / `@d2/geo-default` packages) consuming Tier 2. Lives in the downstream geo libs, not in this directory.
 
 ## Layout
 
@@ -46,6 +46,8 @@ contracts/geo/
 - [`src-data/`](src-data/README.md) — Tier 1 pipeline-raw geo specs (verbose, per-catalog ingestion output; NOT consumed by codegen directly)
 - [`overlays/`](overlays/README.md) — Tier 2 manual patches applied at build time (additions / overrides / removals with `reason` + `addedAt`)
 
+See [KNOWN_WARNINGS.md](KNOWN_WARNINGS.md) for documented build-time warnings and design-rationale entries for the geo data pipeline (expected D2GEO010 / D2GEO011 warnings, allow-listed duplicates, and ambiguity-sentinel behavior).
+
 **Overlays** are the trackable extension point for entities upstream sources omit (e.g., Kosovo) or get wrong. Each overlay entry carries a `reason` + `addedAt` so policy decisions are audit-trail visible — run `pnpm geo:overlays` from `tools/geo-data-pipeline/` to list active patches. See [`overlays/README.md`](./overlays/README.md) for when to overlay vs fix upstream vs hand-roll.
 
 Every file at this directory's root carries `"$generated": true | false` + `"$source"` so consumers + tooling can unambiguously identify pipeline-derived vs hand-rolled.
@@ -56,14 +58,14 @@ Every file at this directory's root carries `"$generated": true | false` + `"$so
 
 Produced by `tools/geo-data-pipeline/src/tier-2/build-codegen-specs.ts` from Tier 1 src-data + the hand-rolled GeopoliticalEntity catalog. Strip `_provenance` and pipeline diagnostics; apply cross-catalog M:M backfill + Locale denormalization + `IsSupported` / `IsSelectable` derivation. Carry `"$generated": true, "$source": "pipeline-derived"`.
 
-| File | Entries | Shape |
-|---|---|---|
-| `countries.spec.json` | 249 | `CountrySpec` |
-| `subdivisions.spec.json` | 5,046 | `SubdivisionSpec` |
-| `currencies.spec.json` | 326 (178 active + 148 retired) | `CurrencySpec` |
-| `languages.spec.json` | 183 | `LanguageSpec` |
-| `locales.spec.json` | 1,089 | `LocaleSpec` |
-| `timezones.spec.json` | 312 | `TimezoneSpec` |
+| File                     | Entries                        | Shape             |
+| ------------------------ | ------------------------------ | ----------------- |
+| `countries.spec.json`    | 249                            | `CountrySpec`     |
+| `subdivisions.spec.json` | 5,046                          | `SubdivisionSpec` |
+| `currencies.spec.json`   | 326 (178 active + 148 retired) | `CurrencySpec`    |
+| `languages.spec.json`    | 183                            | `LanguageSpec`    |
+| `locales.spec.json`      | 1,089                          | `LocaleSpec`      |
+| `timezones.spec.json`    | 312                            | `TimezoneSpec`    |
 
 **Do not hand-edit.** Re-run `pnpm geo:refresh` to regenerate from source.
 

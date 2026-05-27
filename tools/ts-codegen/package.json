@@ -19,7 +19,9 @@
     "codegen:otel-messaging-tags": "tsx src/otel-messaging-tags-emit.ts",
     "codegen:encryption-domains": "tsx src/encryption-domains-emit.ts",
     "codegen:dlq-failure-metadata": "tsx src/dlq-failure-metadata-emit.ts",
-    "codegen:encryption-frame": "tsx src/encryption-frame-emit.ts"
+    "codegen:encryption-frame": "tsx src/encryption-frame-emit.ts",
+    "codegen:geo-abstractions": "tsx src/geo-emitter/cli.ts",
+    "type-check:test": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
     "@d2/utilities": "workspace:*"

@@ -38,12 +38,12 @@ Contacts use **UUIDv7 IDs + are immutable post-create**. UUIDs (not content-addr
 
 ## Per-service DB convention
 
-| Consuming service | Contacts DB |
-|---|---|
-| Edge (Auth module) | `auth_contacts_db` |
-| D2.Files | `files_contacts_db` |
-| D2.Courier | `courier_contacts_db` |
-| D2.Notifications | `notifications_contacts_db` |
-| D2.Audit | `audit_contacts_db` |
+| Consuming service  | Contacts DB                 |
+| ------------------ | --------------------------- |
+| Edge (Auth module) | `auth_contacts_db`          |
+| D2.Files           | `files_contacts_db`         |
+| D2.Courier         | `courier_contacts_db`       |
+| D2.Notifications   | `notifications_contacts_db` |
+| D2.Audit           | `audit_contacts_db`         |
 
 All on the same PG server — one server, many DBs.

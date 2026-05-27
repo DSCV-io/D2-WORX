@@ -166,7 +166,10 @@ function escapeJsDoc(value: string): string {
 // the shared emit helper above.
 // ---------------------------------------------------------------------------
 
-const TK_MESSAGE_SPEC_PATH = contractsPath("tk-message", "tk-message.spec.json");
+const TK_MESSAGE_SPEC_PATH = contractsPath(
+  "tk-message",
+  "tk-message.spec.json",
+);
 const TK_MESSAGE_TARGET_PATH = tsPackagePath(
   "result",
   "src",
@@ -188,7 +191,10 @@ const INPUT_ERROR_TARGET_PATH = tsPackagePath(
  * output is newer than the spec; pass `force=true` to bypass.
  */
 export function runTkMessageEmit(force = false): readonly EmitDiagnostic[] {
-  if (!force && isOutputUpToDate(TK_MESSAGE_TARGET_PATH, [TK_MESSAGE_SPEC_PATH]))
+  if (
+    !force &&
+    isOutputUpToDate(TK_MESSAGE_TARGET_PATH, [TK_MESSAGE_SPEC_PATH])
+  )
     return [];
   const loadResult = loadSpec<WireShapeSpec>(
     TK_MESSAGE_SPEC_PATH,

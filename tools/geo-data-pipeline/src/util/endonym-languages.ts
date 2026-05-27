@@ -35,7 +35,18 @@ export const SUPPORTED_LANGUAGE_CODES = [
  * (and would already be in the 88-derived set); listed explicitly so future hand-edits
  * to the country catalog don't accidentally drop them.
  */
-const MAJOR_POPULATION_LANGUAGES = ["hi", "ar", "ru", "tr", "vi", "th", "id", "uk", "fa", "he"];
+const MAJOR_POPULATION_LANGUAGES = [
+  "hi",
+  "ar",
+  "ru",
+  "tr",
+  "vi",
+  "th",
+  "id",
+  "uk",
+  "fa",
+  "he",
+];
 
 /**
  * Returns the union of:
@@ -65,10 +76,15 @@ export async function getEndonymLanguageList(): Promise<string[]> {
  * Used by transformers needing per-country primary-language context (e.g., subdivision
  * endonym selection picks the country's primary-language label).
  */
-export async function loadCountryPrimaryLanguageMap(): Promise<Map<string, string>> {
+export async function loadCountryPrimaryLanguageMap(): Promise<
+  Map<string, string>
+> {
   const text = await readFile(COUNTRIES_SPEC_PATH, "utf8");
   const spec = JSON.parse(text) as {
-    entries: Array<{ iso31661Alpha2Code: string; primaryLanguageISO6391Code: string | null }>;
+    entries: Array<{
+      iso31661Alpha2Code: string;
+      primaryLanguageISO6391Code: string | null;
+    }>;
   };
   const map = new Map<string, string>();
   for (const e of spec.entries) {

@@ -32,6 +32,7 @@ public sealed class RootProviderPublishIntegrationTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task PublishFromRootProvider_NoScopeNeeded_Succeeds()
     {
         var queue = "rootpub." + Guid.NewGuid().ToString("N")[..8];
@@ -46,10 +47,9 @@ public sealed class RootProviderPublishIntegrationTests
                     IntegrationSubscriptionFactory.ForAuditEvent(queue, prefetch: 1));
             });
 
-        // Resolve the bus DIRECTLY from the root provider. Pre-fix this
-        // would have thrown InvalidOperationException ("Cannot resolve
-        // scoped service ... from root provider"). Post-fix it works
-        // because IMessageBus is a Singleton.
+        // Resolve the bus DIRECTLY from the root provider. IMessageBus is a
+        // Singleton that builds its own transient scope per PublishAsync, so
+        // resolving from root does not throw InvalidOperationException.
         var bus = host.Services.GetRequiredService<IMessageBus>();
         var publish = await bus.PublishAsync(
             new IntegrationAuditEvent { Marker = "from-root-sp" });

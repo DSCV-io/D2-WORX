@@ -20,13 +20,15 @@
     "geo:overlays": "tsx src/cli/overlays.ts",
     "geo:diff": "tsx src/cli/diff.ts",
     "geo:approve": "tsx src/cli/approve.ts",
-    "geo:bump-version": "tsx src/cli/bump-version.ts"
+    "geo:bump-version": "tsx src/cli/bump-version.ts",
+    "type-check:test": "tsc -p tsconfig.test.json"
   },
   "devDependencies": {
     "@types/node": "24.10.0",
     "@types/papaparse": "5.3.16",
     "fast-xml-parser": "4.5.1",
     "papaparse": "5.5.3",
+    "prettier": "3.8.1",
     "tsx": "4.20.6",
     "typescript": "5.9.3",
     "vitest": "4.0.18"

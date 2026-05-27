@@ -44,4 +44,3 @@ Every service publishes `AuditEvent` to the `d2.audit.events` exchange (fanout, 
 - D2.Audit — full architectural details (write path, schema, in-transit opacity)
 - KeyCustodian — D2.Audit publishes `incident` rows on emergency rotations
 - [`server/shared/dotnet/messaging-rabbitmq/README.md`](../../shared/dotnet/messaging-rabbitmq/README.md) — at-least-once delivery semantics + idempotent consumer requirement + fanout consumer pattern
-

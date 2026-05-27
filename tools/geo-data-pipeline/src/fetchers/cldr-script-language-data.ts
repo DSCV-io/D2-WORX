@@ -32,12 +32,15 @@ const URL_LANGUAGE_DATA =
  * We consume `rtl` (YES/NO) to derive Language.WritingDirection (RTL/LTR).
  */
 export interface ScriptMetadataPayload {
-  scriptMetadata: Record<string, {
-    rtl?: "YES" | "NO";
-    originCountry?: string;
-    likelyLanguage?: string;
-    [k: string]: unknown;
-  }>;
+  scriptMetadata: Record<
+    string,
+    {
+      rtl?: "YES" | "NO";
+      originCountry?: string;
+      likelyLanguage?: string;
+      [k: string]: unknown;
+    }
+  >;
 }
 
 /**
@@ -60,16 +63,21 @@ export interface ScriptMetadataPayload {
  */
 export interface LanguageDataPayload {
   supplemental: {
-    languageData: Record<string, {
-      _scripts?: string[];
-      _territories?: string[];
-      [k: string]: unknown;
-    }>;
+    languageData: Record<
+      string,
+      {
+        _scripts?: string[];
+        _territories?: string[];
+        [k: string]: unknown;
+      }
+    >;
   };
 }
 
-export interface ScriptLanguageDataFetchResult
-  extends Pick<CachedFetch, "provenance" | "fromCache"> {
+export interface ScriptLanguageDataFetchResult extends Pick<
+  CachedFetch,
+  "provenance" | "fromCache"
+> {
   scriptMetadata: ScriptMetadataPayload["scriptMetadata"];
   languageData: LanguageDataPayload["supplemental"]["languageData"];
   scriptMetadataProvenance: CachedFetch["provenance"];
@@ -95,8 +103,12 @@ export async function fetchScriptAndLanguageData(options?: {
       ttlHours: options?.ttlHours,
     }),
   ]);
-  const smPayload = JSON.parse(scripts.body.toString("utf8")) as ScriptMetadataPayload;
-  const ldPayload = JSON.parse(langs.body.toString("utf8")) as LanguageDataPayload;
+  const smPayload = JSON.parse(
+    scripts.body.toString("utf8"),
+  ) as ScriptMetadataPayload;
+  const ldPayload = JSON.parse(
+    langs.body.toString("utf8"),
+  ) as LanguageDataPayload;
   return {
     scriptMetadata: smPayload.scriptMetadata,
     languageData: ldPayload.supplemental.languageData,

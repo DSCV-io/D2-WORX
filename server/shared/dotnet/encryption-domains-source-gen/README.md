@@ -26,10 +26,10 @@ The SAME spec drives `@d2/encryption-abstractions` via `tools/ts-codegen/src/enc
 
 ## Diagnostics
 
-| ID | Title | Severity |
-|---|---|---|
-| `D2ED001` | Encryption domains spec is malformed | Error |
-| `D2ED002` | Duplicate constName | Error |
-| `D2ED003` | Duplicate wire value | Error |
-| `D2ED004` | constName has invalid shape | Error |
-| `D2ED005` | Empty wire value | Error |
+| ID        | Title                                | Severity |
+| --------- | ------------------------------------ | -------- |
+| `D2ED001` | Encryption domains spec is malformed | Error    |
+| `D2ED002` | Duplicate constName                  | Error    |
+| `D2ED003` | Duplicate wire value                 | Error    |
+| `D2ED004` | constName has invalid shape          | Error    |
+| `D2ED005` | Empty wire value                     | Error    |

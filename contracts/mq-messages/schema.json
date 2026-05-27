@@ -16,7 +16,13 @@
   "definitions": {
     "message": {
       "type": "object",
-      "required": ["constant", "messageType", "exchange", "exchangeType", "encryption"],
+      "required": [
+        "constant",
+        "messageType",
+        "exchange",
+        "exchangeType",
+        "encryption"
+      ],
       "additionalProperties": false,
       "properties": {
         "constant": {

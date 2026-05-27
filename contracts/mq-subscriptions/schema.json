@@ -36,7 +36,11 @@
         },
         "pattern": {
           "type": "string",
-          "enum": ["CompetingConsumer", "FanoutExclusiveAutoDelete", "DurableShared"],
+          "enum": [
+            "CompetingConsumer",
+            "FanoutExclusiveAutoDelete",
+            "DurableShared"
+          ],
           "description": "Queue topology pattern. CompetingConsumer = durable shared, exactly-once across replicas (events processed once). FanoutExclusiveAutoDelete = per-replica unique queue, every replica receives every message (cluster-wide broadcast — handlers MUST be idempotent). DurableShared = long-lived event stream that survives broker restart."
         },
         "routingKeyBinding": {

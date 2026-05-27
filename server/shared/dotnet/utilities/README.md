@@ -22,14 +22,14 @@ Consumed by every other shared lib + service.
 
 The public API is grouped by concern. Each sub-folder ships its own README with the per-helper signatures, examples, and gotchas; this top-level page is the routing table.
 
-| Sub-folder | Covers |
-|---|---|
-| [`Attributes/`](Attributes/README.md) | `[RedactData]` marker attribute consumed by the Serilog destructuring policy. |
-| [`Configuration/`](Configuration/README.md) | `ConnectionStringHelper` (URI ↔ wire-format conversion for Redis / Postgres / RabbitMQ) + `D2Env` (host-side `.env*` file loader). |
-| [`Diagnostics/`](Diagnostics/README.md) | `SanitizedExceptionRender` — PII-safe exception rendering for log + telemetry + DLQ-header surfaces. |
-| [`Enums/`](Enums/README.md) | `IsolationLevel` (SQL transaction isolation taxonomy) + `RedactReason` (closed enum used by `[RedactData]`). |
-| [`Extensions/`](Extensions/README.md) | The most-used surface: `Truthy()` / `Falsey()` / `ToNullIfEmpty()` boundary checks; `TryParseTruthyNull` Guid + enum parsers; `CleanStr` / `CleanDisplayStr` display cleaners; `TryParseEmail` / `TryParsePhoneNumber` `D2Result`-returning validators; `GetNormalizedStrForHashing`; `Clean()` for enumerables. |
-| [`Serialization/`](Serialization/README.md) | `SerializerOptions` — frozen `JsonSerializerOptions` presets (`SR_IgnoreCycles`, `SR_Web`, `SR_WebIgnoreNull`). |
+| Sub-folder                                  | Covers                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`Attributes/`](Attributes/README.md)       | `[RedactData]` marker attribute consumed by the Serilog destructuring policy.                                                                                                                                                                                                                                    |
+| [`Configuration/`](Configuration/README.md) | `ConnectionStringHelper` (URI ↔ wire-format conversion for Redis / Postgres / RabbitMQ) + `D2Env` (host-side `.env*` file loader).                                                                                                                                                                               |
+| [`Diagnostics/`](Diagnostics/README.md)     | `SanitizedExceptionRender` — PII-safe exception rendering for log + telemetry + DLQ-header surfaces.                                                                                                                                                                                                             |
+| [`Enums/`](Enums/README.md)                 | `IsolationLevel` (SQL transaction isolation taxonomy) + `RedactReason` (closed enum used by `[RedactData]`).                                                                                                                                                                                                     |
+| [`Extensions/`](Extensions/README.md)       | The most-used surface: `Truthy()` / `Falsey()` / `ToNullIfEmpty()` boundary checks; `TryParseTruthyNull` Guid + enum parsers; `CleanStr` / `CleanDisplayStr` display cleaners; `TryParseEmail` / `TryParsePhoneNumber` `D2Result`-returning validators; `GetNormalizedStrForHashing`; `Clean()` for enumerables. |
+| [`Serialization/`](Serialization/README.md) | `SerializerOptions` — frozen `JsonSerializerOptions` presets (`SR_IgnoreCycles`, `SR_Web`, `SR_WebIgnoreNull`).                                                                                                                                                                                                  |
 
 ---
 

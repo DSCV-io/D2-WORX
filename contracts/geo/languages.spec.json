@@ -4,7 +4,7 @@
   "$schema": "./languages.schema.json",
   "$note": "TIER 2 codegen-ready spec — produced by tools/geo-data-pipeline from contracts/geo/src-data/*.spec.json (Tier 1). Matches the canonical entity record shape; consumed directly by codegen (.NET SourceGen + TS emitter — Tier 3) to produce concrete entity types. Do NOT hand-edit — re-run `pnpm geo:refresh` to regenerate. IsSupported derived from contracts/messages/*.json file presence — languages of selectable locales.",
   "catalogVersion": "0.1.0",
-  "generatedAt": "2026-05-19T18:14:37.998Z",
+  "generatedAt": "2026-05-26T13:25:26.656Z",
   "entries": [
     {
       "iso6391Code": "aa",
@@ -12,11 +12,7 @@
       "endonym": "Qafár af",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "DJ",
-        "ER",
-        "ET"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["DJ", "ER", "ET"]
     },
     {
       "iso6391Code": "ab",
@@ -24,10 +20,7 @@
       "endonym": "Аԥсуа бызшәа",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "GE",
-        "TR"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["GE", "TR"]
     },
     {
       "iso6391Code": "ae",
@@ -43,11 +36,7 @@
       "endonym": "Afrikaans",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "BW",
-        "NA",
-        "ZA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["BW", "NA", "ZA"]
     },
     {
       "iso6391Code": "ak",
@@ -55,9 +44,7 @@
       "endonym": null,
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "GH"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["GH"]
     },
     {
       "iso6391Code": "am",
@@ -65,10 +52,7 @@
       "endonym": "አማርኛ",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "ET",
-        "IL"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["ET", "IL"]
     },
     {
       "iso6391Code": "an",
@@ -76,9 +60,7 @@
       "endonym": "idioma aragonés",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "ES"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["ES"]
     },
     {
       "iso6391Code": "ar",
@@ -133,9 +115,7 @@
       "endonym": "অসমীয়া ভাষা",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "IN"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["IN"]
     },
     {
       "iso6391Code": "av",
@@ -143,9 +123,7 @@
       "endonym": "авар мацӀ",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "RU"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["RU"]
     },
     {
       "iso6391Code": "ay",
@@ -153,10 +131,7 @@
       "endonym": "Aymar aru",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "BO",
-        "PE"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["BO", "PE"]
     },
     {
       "iso6391Code": "az",
@@ -164,11 +139,7 @@
       "endonym": "Azərbaycan dili",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "AM",
-        "AZ",
-        "TR"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["AM", "AZ", "TR"]
     },
     {
       "iso6391Code": "ba",
@@ -176,9 +147,7 @@
       "endonym": "башҡорт теле",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "RU"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["RU"]
     },
     {
       "iso6391Code": "be",
@@ -186,11 +155,7 @@
       "endonym": "беларуская мова",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "BY",
-        "PL",
-        "UA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["BY", "PL", "UA"]
     },
     {
       "iso6391Code": "bg",
@@ -198,14 +163,7 @@
       "endonym": "български език",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "BG",
-        "GR",
-        "MD",
-        "RO",
-        "TR",
-        "UA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["BG", "GR", "MD", "RO", "TR", "UA"]
     },
     {
       "iso6391Code": "bi",
@@ -213,9 +171,7 @@
       "endonym": "Bislama",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "VU"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["VU"]
     },
     {
       "iso6391Code": "bm",
@@ -223,9 +179,7 @@
       "endonym": "Bamanankan",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "ML"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["ML"]
     },
     {
       "iso6391Code": "bn",
@@ -233,13 +187,7 @@
       "endonym": "বাংলা",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "BD",
-        "CA",
-        "GB",
-        "IN",
-        "NP"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["BD", "CA", "GB", "IN", "NP"]
     },
     {
       "iso6391Code": "bo",
@@ -247,11 +195,7 @@
       "endonym": "བོད་སྐད།",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CN",
-        "IN",
-        "NP"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CN", "IN", "NP"]
     },
     {
       "iso6391Code": "br",
@@ -259,9 +203,7 @@
       "endonym": "brezhoneg",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "FR"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["FR"]
     },
     {
       "iso6391Code": "bs",
@@ -269,10 +211,7 @@
       "endonym": "bosanski jezik",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "BA",
-        "XK"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["BA", "XK"]
     },
     {
       "iso6391Code": "ca",
@@ -280,12 +219,7 @@
       "endonym": "català",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "AD",
-        "ES",
-        "FR",
-        "IT"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["AD", "ES", "FR", "IT"]
     },
     {
       "iso6391Code": "ce",
@@ -293,9 +227,7 @@
       "endonym": "нохчийн мотт",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "RU"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["RU"]
     },
     {
       "iso6391Code": "ch",
@@ -303,10 +235,7 @@
       "endonym": "Fino' Chamoru",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "GU",
-        "MP"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["GU", "MP"]
     },
     {
       "iso6391Code": "co",
@@ -314,9 +243,7 @@
       "endonym": "corsu",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "FR"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["FR"]
     },
     {
       "iso6391Code": "cr",
@@ -324,9 +251,7 @@
       "endonym": "ᐃᔨᔫ ᐊᔨᒧᐎᓐ",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CA"]
     },
     {
       "iso6391Code": "cs",
@@ -334,10 +259,7 @@
       "endonym": "čeština",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CZ",
-        "SK"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CZ", "SK"]
     },
     {
       "iso6391Code": "cu",
@@ -345,9 +267,7 @@
       "endonym": "словѣньскъ ѩꙁꙑкъ",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "RU"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["RU"]
     },
     {
       "iso6391Code": "cv",
@@ -355,9 +275,7 @@
       "endonym": "чăваш чĕлхи",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "RU"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["RU"]
     },
     {
       "iso6391Code": "cy",
@@ -365,10 +283,7 @@
       "endonym": "Cymraeg",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "AR",
-        "GB"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["AR", "GB"]
     },
     {
       "iso6391Code": "da",
@@ -376,12 +291,7 @@
       "endonym": "dansk",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "DE",
-        "DK",
-        "GL",
-        "IS"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["DE", "DK", "GL", "IS"]
     },
     {
       "iso6391Code": "de",
@@ -425,10 +335,7 @@
       "endonym": "ދިވެހި",
       "writingDirection": "RTL",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "IN",
-        "MV"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["IN", "MV"]
     },
     {
       "iso6391Code": "dz",
@@ -436,10 +343,7 @@
       "endonym": "རྫོང་ཁ་",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "BT",
-        "IN"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["BT", "IN"]
     },
     {
       "iso6391Code": "ee",
@@ -447,10 +351,7 @@
       "endonym": "Eʋegbe",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "GH",
-        "TG"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["GH", "TG"]
     },
     {
       "iso6391Code": "el",
@@ -634,9 +535,7 @@
       "endonym": "Esperanto",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "SM"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["SM"]
     },
     {
       "iso6391Code": "es",
@@ -690,10 +589,7 @@
       "endonym": "eesti keel",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "EE",
-        "FI"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["EE", "FI"]
     },
     {
       "iso6391Code": "eu",
@@ -701,10 +597,7 @@
       "endonym": "euskara",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "ES",
-        "FR"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["ES", "FR"]
     },
     {
       "iso6391Code": "fa",
@@ -751,12 +644,7 @@
       "endonym": "suomi",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "EE",
-        "FI",
-        "RU",
-        "SE"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["EE", "FI", "RU", "SE"]
     },
     {
       "iso6391Code": "fj",
@@ -764,9 +652,7 @@
       "endonym": "Na vosa vaka-Viti",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "FJ"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["FJ"]
     },
     {
       "iso6391Code": "fo",
@@ -774,10 +660,7 @@
       "endonym": "Føroyskt mál",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "DK",
-        "FO"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["DK", "FO"]
     },
     {
       "iso6391Code": "fr",
@@ -858,9 +741,7 @@
       "endonym": "West-Frysk",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "NL"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["NL"]
     },
     {
       "iso6391Code": "ga",
@@ -868,10 +749,7 @@
       "endonym": "an Ghaeilge",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "GB",
-        "IE"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["GB", "IE"]
     },
     {
       "iso6391Code": "gd",
@@ -879,9 +757,7 @@
       "endonym": "Gàidhlig",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "GB"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["GB"]
     },
     {
       "iso6391Code": "gl",
@@ -889,10 +765,7 @@
       "endonym": "lingua galega",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "ES",
-        "PT"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["ES", "PT"]
     },
     {
       "iso6391Code": "gn",
@@ -900,11 +773,7 @@
       "endonym": "avañe'ẽ",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "AR",
-        "BO",
-        "PY"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["AR", "BO", "PY"]
     },
     {
       "iso6391Code": "gu",
@@ -912,12 +781,7 @@
       "endonym": "ગુજરાતી ભાષા",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CA",
-        "GB",
-        "IN",
-        "KE"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CA", "GB", "IN", "KE"]
     },
     {
       "iso6391Code": "gv",
@@ -925,9 +789,7 @@
       "endonym": "Gaelg",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "IM"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["IM"]
     },
     {
       "iso6391Code": "ha",
@@ -935,11 +797,7 @@
       "endonym": "Hausa",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "GH",
-        "NE",
-        "NG"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["GH", "NE", "NG"]
     },
     {
       "iso6391Code": "he",
@@ -947,9 +805,7 @@
       "endonym": "עברית",
       "writingDirection": "RTL",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "IL"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["IL"]
     },
     {
       "iso6391Code": "hi",
@@ -957,14 +813,7 @@
       "endonym": "हिन्दी",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CA",
-        "FJ",
-        "IN",
-        "NP",
-        "UG",
-        "ZA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CA", "FJ", "IN", "NP", "UG", "ZA"]
     },
     {
       "iso6391Code": "ho",
@@ -972,9 +821,7 @@
       "endonym": null,
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "PG"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["PG"]
     },
     {
       "iso6391Code": "hr",
@@ -1000,9 +847,7 @@
       "endonym": "kreyòl ayisyen",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "HT"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["HT"]
     },
     {
       "iso6391Code": "hu",
@@ -1045,9 +890,7 @@
       "endonym": null,
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "NA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["NA"]
     },
     {
       "iso6391Code": "ia",
@@ -1055,10 +898,7 @@
       "endonym": "interlingua",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "FR",
-        "SE"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["FR", "SE"]
     },
     {
       "iso6391Code": "id",
@@ -1066,10 +906,7 @@
       "endonym": "bahasa Indonesia",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "ID",
-        "NL"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["ID", "NL"]
     },
     {
       "iso6391Code": "ie",
@@ -1077,9 +914,7 @@
       "endonym": "Interlingue",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "EE"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["EE"]
     },
     {
       "iso6391Code": "ig",
@@ -1087,9 +922,7 @@
       "endonym": "Asụ̀sụ̀ Ìgbò",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "NG"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["NG"]
     },
     {
       "iso6391Code": "ii",
@@ -1097,9 +930,7 @@
       "endonym": null,
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CN"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CN"]
     },
     {
       "iso6391Code": "ik",
@@ -1107,9 +938,7 @@
       "endonym": "Iñupiatun",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "US"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["US"]
     },
     {
       "iso6391Code": "io",
@@ -1117,9 +946,7 @@
       "endonym": "Ido",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "US"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["US"]
     },
     {
       "iso6391Code": "is",
@@ -1127,9 +954,7 @@
       "endonym": "íslenska",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "IS"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["IS"]
     },
     {
       "iso6391Code": "it",
@@ -1161,9 +986,7 @@
       "endonym": "ᐃᓄᒃᑎᑐᑦ",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CA"]
     },
     {
       "iso6391Code": "ja",
@@ -1171,11 +994,7 @@
       "endonym": "日本語",
       "writingDirection": "LTR",
       "isSupported": true,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "BR",
-        "CA",
-        "JP"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["BR", "CA", "JP"]
     },
     {
       "iso6391Code": "jv",
@@ -1183,10 +1002,7 @@
       "endonym": "Jawa",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "ID",
-        "MY"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["ID", "MY"]
     },
     {
       "iso6391Code": "ka",
@@ -1194,11 +1010,7 @@
       "endonym": "ქართული ენა",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "GE",
-        "IR",
-        "TR"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["GE", "IR", "TR"]
     },
     {
       "iso6391Code": "kg",
@@ -1206,9 +1018,7 @@
       "endonym": "Kisikôngo",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CD"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CD"]
     },
     {
       "iso6391Code": "ki",
@@ -1216,9 +1026,7 @@
       "endonym": "Gĩgĩkũyũ",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "KE"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["KE"]
     },
     {
       "iso6391Code": "kj",
@@ -1226,9 +1034,7 @@
       "endonym": null,
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "NA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["NA"]
     },
     {
       "iso6391Code": "kk",
@@ -1236,10 +1042,7 @@
       "endonym": "қазақ тілі",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "KZ",
-        "TR"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["KZ", "TR"]
     },
     {
       "iso6391Code": "kl",
@@ -1247,10 +1050,7 @@
       "endonym": "Kalaallisut",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "DK",
-        "GL"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["DK", "GL"]
     },
     {
       "iso6391Code": "km",
@@ -1258,9 +1058,7 @@
       "endonym": "ភាសាខ្មែរ",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "KH"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["KH"]
     },
     {
       "iso6391Code": "kn",
@@ -1268,9 +1066,7 @@
       "endonym": "ಕನ್ನಡ",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "IN"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["IN"]
     },
     {
       "iso6391Code": "ko",
@@ -1302,10 +1098,7 @@
       "endonym": "کٲشِر زَبان",
       "writingDirection": "RTL",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "IN",
-        "PK"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["IN", "PK"]
     },
     {
       "iso6391Code": "ku",
@@ -1313,13 +1106,7 @@
       "endonym": "zimanê kurdî",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "AM",
-        "AZ",
-        "DE",
-        "SY",
-        "TR"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["AM", "AZ", "DE", "SY", "TR"]
     },
     {
       "iso6391Code": "kv",
@@ -1327,9 +1114,7 @@
       "endonym": "Коми кыв",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "RU"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["RU"]
     },
     {
       "iso6391Code": "kw",
@@ -1337,9 +1122,7 @@
       "endonym": "Kernowek",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "GB"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["GB"]
     },
     {
       "iso6391Code": "ky",
@@ -1347,9 +1130,7 @@
       "endonym": "кыргыз тили",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "KG"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["KG"]
     },
     {
       "iso6391Code": "la",
@@ -1357,9 +1138,7 @@
       "endonym": "lingua Latīna",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "VA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["VA"]
     },
     {
       "iso6391Code": "lb",
@@ -1367,9 +1146,7 @@
       "endonym": "Lëtzebuergesch",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "LU"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["LU"]
     },
     {
       "iso6391Code": "lg",
@@ -1377,9 +1154,7 @@
       "endonym": null,
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "UG"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["UG"]
     },
     {
       "iso6391Code": "li",
@@ -1387,9 +1162,7 @@
       "endonym": "Limburgs",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "NL"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["NL"]
     },
     {
       "iso6391Code": "ln",
@@ -1397,12 +1170,7 @@
       "endonym": "Lingála",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "AO",
-        "CD",
-        "CF",
-        "CG"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["AO", "CD", "CF", "CG"]
     },
     {
       "iso6391Code": "lo",
@@ -1410,9 +1178,7 @@
       "endonym": "ພາສາລາວ",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "LA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["LA"]
     },
     {
       "iso6391Code": "lt",
@@ -1420,11 +1186,7 @@
       "endonym": "lietuvių kalba",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "GB",
-        "LT",
-        "PL"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["GB", "LT", "PL"]
     },
     {
       "iso6391Code": "lu",
@@ -1432,9 +1194,7 @@
       "endonym": null,
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CD"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CD"]
     },
     {
       "iso6391Code": "lv",
@@ -1442,9 +1202,7 @@
       "endonym": "latviešu valoda",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "LV"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["LV"]
     },
     {
       "iso6391Code": "mg",
@@ -1452,9 +1210,7 @@
       "endonym": "Fiteny malagasy",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "MG"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["MG"]
     },
     {
       "iso6391Code": "mh",
@@ -1462,9 +1218,7 @@
       "endonym": "Kajin M̧ajeļ",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "MH"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["MH"]
     },
     {
       "iso6391Code": "mi",
@@ -1472,9 +1226,7 @@
       "endonym": "reo Māori",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "NZ"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["NZ"]
     },
     {
       "iso6391Code": "mk",
@@ -1482,11 +1234,7 @@
       "endonym": "македонски јазик",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "AL",
-        "GR",
-        "MK"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["AL", "GR", "MK"]
     },
     {
       "iso6391Code": "ml",
@@ -1510,10 +1258,7 @@
       "endonym": "монгол хэл",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "MN",
-        "RU"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["MN", "RU"]
     },
     {
       "iso6391Code": "mr",
@@ -1521,9 +1266,7 @@
       "endonym": "मराठी",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "IN"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["IN"]
     },
     {
       "iso6391Code": "ms",
@@ -1531,13 +1274,7 @@
       "endonym": "bahasa Melayu",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "BN",
-        "CC",
-        "ID",
-        "MY",
-        "SG"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["BN", "CC", "ID", "MY", "SG"]
     },
     {
       "iso6391Code": "mt",
@@ -1545,9 +1282,7 @@
       "endonym": null,
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "MT"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["MT"]
     },
     {
       "iso6391Code": "my",
@@ -1555,10 +1290,7 @@
       "endonym": "မြန်မာဘာသာ",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "BD",
-        "MM"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["BD", "MM"]
     },
     {
       "iso6391Code": "na",
@@ -1566,9 +1298,7 @@
       "endonym": "Dorerin Naoero",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "NR"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["NR"]
     },
     {
       "iso6391Code": "nb",
@@ -1576,10 +1306,7 @@
       "endonym": "bokmål",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "NO",
-        "SJ"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["NO", "SJ"]
     },
     {
       "iso6391Code": "nd",
@@ -1587,9 +1314,7 @@
       "endonym": null,
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "ZW"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["ZW"]
     },
     {
       "iso6391Code": "ne",
@@ -1597,11 +1322,7 @@
       "endonym": "नेपाली भाषा",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "BT",
-        "IN",
-        "NP"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["BT", "IN", "NP"]
     },
     {
       "iso6391Code": "ng",
@@ -1609,9 +1330,7 @@
       "endonym": "Ndonga",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "NA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["NA"]
     },
     {
       "iso6391Code": "nl",
@@ -1638,9 +1357,7 @@
       "endonym": "nynorsk",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "NO"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["NO"]
     },
     {
       "iso6391Code": "no",
@@ -1648,11 +1365,7 @@
       "endonym": null,
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "BV",
-        "NO",
-        "SJ"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["BV", "NO", "SJ"]
     },
     {
       "iso6391Code": "nr",
@@ -1660,9 +1373,7 @@
       "endonym": "Isindebele",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "ZA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["ZA"]
     },
     {
       "iso6391Code": "nv",
@@ -1670,9 +1381,7 @@
       "endonym": "Diné bizaad",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "US"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["US"]
     },
     {
       "iso6391Code": "ny",
@@ -1680,12 +1389,7 @@
       "endonym": "Chilankhulo cha Chichewa",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "MW",
-        "MZ",
-        "ZM",
-        "ZW"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["MW", "MZ", "ZM", "ZW"]
     },
     {
       "iso6391Code": "oc",
@@ -1693,10 +1397,7 @@
       "endonym": "occitan",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "ES",
-        "FR"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["ES", "FR"]
     },
     {
       "iso6391Code": "oj",
@@ -1704,9 +1405,7 @@
       "endonym": null,
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CA"]
     },
     {
       "iso6391Code": "om",
@@ -1714,11 +1413,7 @@
       "endonym": "Afaan Oromoo",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "ET",
-        "KE",
-        "SO"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["ET", "KE", "SO"]
     },
     {
       "iso6391Code": "or",
@@ -1726,9 +1421,7 @@
       "endonym": "ଓଡ଼ିଆ",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "IN"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["IN"]
     },
     {
       "iso6391Code": "os",
@@ -1736,10 +1429,7 @@
       "endonym": "Ирон диалект",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "GE",
-        "RU"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["GE", "RU"]
     },
     {
       "iso6391Code": "pa",
@@ -1747,13 +1437,7 @@
       "endonym": "ਪੰਜਾਬੀ",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CA",
-        "GB",
-        "IN",
-        "KE",
-        "SG"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CA", "GB", "IN", "KE", "SG"]
     },
     {
       "iso6391Code": "pi",
@@ -1761,9 +1445,7 @@
       "endonym": "𑀧𑀸𑀮𑀺",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "GB"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["GB"]
     },
     {
       "iso6391Code": "pl",
@@ -1789,12 +1471,7 @@
       "endonym": "پښتو",
       "writingDirection": "RTL",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "AE",
-        "AF",
-        "IR",
-        "PK"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["AE", "AF", "IR", "PK"]
     },
     {
       "iso6391Code": "pt",
@@ -1827,11 +1504,7 @@
       "endonym": "Qhichwa",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "BO",
-        "EC",
-        "PE"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["BO", "EC", "PE"]
     },
     {
       "iso6391Code": "rm",
@@ -1839,9 +1512,7 @@
       "endonym": "Rumantsch dal Grischun",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CH"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CH"]
     },
     {
       "iso6391Code": "rn",
@@ -1849,9 +1520,7 @@
       "endonym": "Ikirundi",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "BI"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["BI"]
     },
     {
       "iso6391Code": "ro",
@@ -1909,11 +1578,7 @@
       "endonym": "Ikinyarwanda",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CD",
-        "RW",
-        "UG"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CD", "RW", "UG"]
     },
     {
       "iso6391Code": "sa",
@@ -1921,9 +1586,7 @@
       "endonym": "संस्कृतम्",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "IN"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["IN"]
     },
     {
       "iso6391Code": "sc",
@@ -1931,9 +1594,7 @@
       "endonym": "sardu",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "IT"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["IT"]
     },
     {
       "iso6391Code": "sd",
@@ -1941,10 +1602,7 @@
       "endonym": "سنڌي",
       "writingDirection": "RTL",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "IN",
-        "PK"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["IN", "PK"]
     },
     {
       "iso6391Code": "se",
@@ -1952,11 +1610,7 @@
       "endonym": "davvisámegiella",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "FI",
-        "NO",
-        "SE"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["FI", "NO", "SE"]
     },
     {
       "iso6391Code": "sg",
@@ -1964,9 +1618,7 @@
       "endonym": "Sängö",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CF"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CF"]
     },
     {
       "iso6391Code": "si",
@@ -1974,9 +1626,7 @@
       "endonym": "සිංහල",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "LK"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["LK"]
     },
     {
       "iso6391Code": "sk",
@@ -1984,12 +1634,7 @@
       "endonym": "slovenčina",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CZ",
-        "HU",
-        "RS",
-        "SK"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CZ", "HU", "RS", "SK"]
     },
     {
       "iso6391Code": "sl",
@@ -1997,12 +1642,7 @@
       "endonym": "slovenščina",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "AT",
-        "HU",
-        "IT",
-        "SI"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["AT", "HU", "IT", "SI"]
     },
     {
       "iso6391Code": "sm",
@@ -2010,11 +1650,7 @@
       "endonym": "Gagana fa'a Sāmoa",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "AS",
-        "TK",
-        "WS"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["AS", "TK", "WS"]
     },
     {
       "iso6391Code": "sn",
@@ -2022,9 +1658,7 @@
       "endonym": "ChiShona",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "ZW"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["ZW"]
     },
     {
       "iso6391Code": "so",
@@ -2032,14 +1666,7 @@
       "endonym": "Af-Soomaali",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CA",
-        "DJ",
-        "ET",
-        "GB",
-        "KE",
-        "SO"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CA", "DJ", "ET", "GB", "KE", "SO"]
     },
     {
       "iso6391Code": "sq",
@@ -2063,14 +1690,7 @@
       "endonym": "српски језик",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "BA",
-        "CA",
-        "ME",
-        "RS",
-        "RU",
-        "XK"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["BA", "CA", "ME", "RS", "RU", "XK"]
     },
     {
       "iso6391Code": "ss",
@@ -2078,11 +1698,7 @@
       "endonym": "SiSwati",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "LS",
-        "SZ",
-        "ZA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["LS", "SZ", "ZA"]
     },
     {
       "iso6391Code": "st",
@@ -2090,10 +1706,7 @@
       "endonym": "Sesotho",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "LS",
-        "ZA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["LS", "ZA"]
     },
     {
       "iso6391Code": "su",
@@ -2101,9 +1714,7 @@
       "endonym": "Sunda",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "ID"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["ID"]
     },
     {
       "iso6391Code": "sv",
@@ -2111,12 +1722,7 @@
       "endonym": "svenska",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "AX",
-        "DK",
-        "FI",
-        "SE"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["AX", "DK", "FI", "SE"]
     },
     {
       "iso6391Code": "sw",
@@ -2159,9 +1765,7 @@
       "endonym": "తెలుగు",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "IN"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["IN"]
     },
     {
       "iso6391Code": "tg",
@@ -2169,9 +1773,7 @@
       "endonym": "забони тоҷикӣ",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "TJ"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["TJ"]
     },
     {
       "iso6391Code": "th",
@@ -2179,9 +1781,7 @@
       "endonym": "ภาษาไทย",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "TH"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["TH"]
     },
     {
       "iso6391Code": "ti",
@@ -2189,11 +1789,7 @@
       "endonym": "ቋንቋ ትግርኛ",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "ER",
-        "ET",
-        "IL"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["ER", "ET", "IL"]
     },
     {
       "iso6391Code": "tk",
@@ -2201,11 +1797,7 @@
       "endonym": "Türkmen dili",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "AF",
-        "IR",
-        "TM"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["AF", "IR", "TM"]
     },
     {
       "iso6391Code": "tl",
@@ -2213,9 +1805,7 @@
       "endonym": "Tagalog",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "PH"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["PH"]
     },
     {
       "iso6391Code": "tn",
@@ -2223,12 +1813,7 @@
       "endonym": "Setswana",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "BW",
-        "NA",
-        "ZA",
-        "ZW"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["BW", "NA", "ZA", "ZW"]
     },
     {
       "iso6391Code": "to",
@@ -2236,9 +1821,7 @@
       "endonym": "Lea fakatonga",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "TO"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["TO"]
     },
     {
       "iso6391Code": "tr",
@@ -2268,11 +1851,7 @@
       "endonym": "Xitsonga",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "MZ",
-        "SZ",
-        "ZA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["MZ", "SZ", "ZA"]
     },
     {
       "iso6391Code": "tt",
@@ -2280,9 +1859,7 @@
       "endonym": "татар теле",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "RU"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["RU"]
     },
     {
       "iso6391Code": "tw",
@@ -2298,9 +1875,7 @@
       "endonym": "reo Tahiti",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "PF"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["PF"]
     },
     {
       "iso6391Code": "ug",
@@ -2308,10 +1883,7 @@
       "endonym": "ئۇيغۇر تىلى",
       "writingDirection": "RTL",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "AF",
-        "CN"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["AF", "CN"]
     },
     {
       "iso6391Code": "uk",
@@ -2319,14 +1891,7 @@
       "endonym": "українська мова",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CA",
-        "MD",
-        "PL",
-        "RS",
-        "SK",
-        "UA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CA", "MD", "PL", "RS", "SK", "UA"]
     },
     {
       "iso6391Code": "ur",
@@ -2334,13 +1899,7 @@
       "endonym": "اردو",
       "writingDirection": "RTL",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CA",
-        "GB",
-        "IN",
-        "MU",
-        "PK"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CA", "GB", "IN", "MU", "PK"]
     },
     {
       "iso6391Code": "uz",
@@ -2348,11 +1907,7 @@
       "endonym": "Oʻzbek tili",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "TM",
-        "TR",
-        "UZ"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["TM", "TR", "UZ"]
     },
     {
       "iso6391Code": "ve",
@@ -2360,10 +1915,7 @@
       "endonym": "TshiVenḓa",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "ZA",
-        "ZW"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["ZA", "ZW"]
     },
     {
       "iso6391Code": "vi",
@@ -2371,12 +1923,7 @@
       "endonym": "tiếng Việt",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CA",
-        "CN",
-        "US",
-        "VN"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CA", "CN", "US", "VN"]
     },
     {
       "iso6391Code": "vo",
@@ -2392,9 +1939,7 @@
       "endonym": "walon",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "BE"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["BE"]
     },
     {
       "iso6391Code": "wo",
@@ -2402,10 +1947,7 @@
       "endonym": "Wolof",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "MR",
-        "SN"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["MR", "SN"]
     },
     {
       "iso6391Code": "xh",
@@ -2413,10 +1955,7 @@
       "endonym": "IsiXhosa",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "LS",
-        "ZA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["LS", "ZA"]
     },
     {
       "iso6391Code": "yi",
@@ -2424,12 +1963,7 @@
       "endonym": "יידיש",
       "writingDirection": "RTL",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "IL",
-        "SE",
-        "UA",
-        "US"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["IL", "SE", "UA", "US"]
     },
     {
       "iso6391Code": "yo",
@@ -2437,10 +1971,7 @@
       "endonym": null,
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "BJ",
-        "NG"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["BJ", "NG"]
     },
     {
       "iso6391Code": "za",
@@ -2448,9 +1979,7 @@
       "endonym": "Vahcuengh",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "CN"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["CN"]
     },
     {
       "iso6391Code": "zh",
@@ -2475,13 +2004,7 @@
       "endonym": "IsiZulu",
       "writingDirection": "LTR",
       "isSupported": false,
-      "spokenInCountryISO31661Alpha2Codes": [
-        "LS",
-        "MW",
-        "MZ",
-        "SZ",
-        "ZA"
-      ]
+      "spokenInCountryISO31661Alpha2Codes": ["LS", "MW", "MZ", "SZ", "ZA"]
     }
   ]
 }

@@ -27,6 +27,7 @@ public sealed class PublishConsumeRoundTripTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task EncryptedMessage_RoundTrips_HandlerSeesPayload()
     {
         TestCollector.Reset<AuditCapturingHandler>();
@@ -60,6 +61,7 @@ public sealed class PublishConsumeRoundTripTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task PlaintextMessage_RoundTrips_HandlerSeesPayload()
     {
         TestCollector.Reset<PlaintextCapturingHandler>();
@@ -94,6 +96,7 @@ public sealed class PublishConsumeRoundTripTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task MultipleSubscribers_NoCrossTalk()
     {
         TestCollector.Reset<MultiSubA>();
@@ -136,6 +139,7 @@ public sealed class PublishConsumeRoundTripTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task ConcurrentPublishes_AllDelivered()
     {
         TestCollector.Reset<AuditCapturingHandler>();
@@ -174,6 +178,7 @@ public sealed class PublishConsumeRoundTripTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task Traceparent_PropagatesToConsumerSpan_ParentChildLinkage()
     {
         // H5 verification: producer-side publish span sets traceparent on
@@ -245,6 +250,7 @@ public sealed class PublishConsumeRoundTripTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task MessagingOperationType_PublisherEmitsPublishValue_ConsumerEmitsReceiveValue()
     {
         // §21.10 runtime-emission pin: the OTel canonical

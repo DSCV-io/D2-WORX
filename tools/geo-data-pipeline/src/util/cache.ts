@@ -40,7 +40,9 @@ interface FetchAndCacheOptions {
  * Skips the fetch if a fresh cached copy exists (default TTL: 24h; pass 0 to always refetch).
  * Always writes a sibling .provenance.json with URL + license + sha256 + timestamp.
  */
-export async function fetchAndCache(options: FetchAndCacheOptions): Promise<CachedFetch> {
+export async function fetchAndCache(
+  options: FetchAndCacheOptions,
+): Promise<CachedFetch> {
   const ttlHours = options.ttlHours ?? 24;
   const cacheSubdir = join(CACHE_DIR, options.source);
   const cachedBodyPath = join(cacheSubdir, options.cacheKey);
@@ -59,15 +61,19 @@ export async function fetchAndCache(options: FetchAndCacheOptions): Promise<Cach
   console.error(`[fetch] ${options.source} <- ${options.url}`);
   let response: Response;
   try {
-    response = await fetch(options.url, { signal: AbortSignal.timeout(60_000) });
+    response = await fetch(options.url, {
+      signal: AbortSignal.timeout(60_000),
+    });
   } catch (err) {
     if (err instanceof Error && err.name === "TimeoutError") {
-      throw new Error(`Fetch timeout (60s): ${options.url}`);
+      throw new Error(`Fetch timeout (60s): ${options.url}`, { cause: err });
     }
     throw err;
   }
   if (!response.ok) {
-    throw new Error(`Fetch failed: ${options.url} -> ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Fetch failed: ${options.url} -> ${response.status} ${response.statusText}`,
+    );
   }
   const arrayBuffer = await response.arrayBuffer();
   const body = Buffer.from(arrayBuffer);
@@ -84,7 +90,10 @@ export async function fetchAndCache(options: FetchAndCacheOptions): Promise<Cach
 
   await mkdir(cacheSubdir, { recursive: true });
   await writeFile(cachedBodyPath, body);
-  await writeFile(cachedProvenancePath, `${JSON.stringify(provenance, null, 2)}\n`);
+  await writeFile(
+    cachedProvenancePath,
+    `${JSON.stringify(provenance, null, 2)}\n`,
+  );
 
   return { body, cachedPath: cachedBodyPath, provenance, fromCache: false };
 }

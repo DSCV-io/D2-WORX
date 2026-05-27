@@ -5785,7 +5785,9 @@
                   "id": "byNames",
                   "options": {
                     "mode": "exclude",
-                    "names": ["email-backups-email-backups-dovecot-lubi-uni-bremen-de-1"],
+                    "names": [
+                      "email-backups-email-backups-dovecot-lubi-uni-bremen-de-1"
+                    ],
                     "prefix": "All except:",
                     "readOnly": true
                   }

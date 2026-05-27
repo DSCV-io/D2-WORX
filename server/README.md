@@ -10,18 +10,18 @@ All code that runs inside the trust boundary — .NET services, shared .NET + Ty
 
 ## Layout
 
-| Path | What |
-|---|---|
-| [`shared/`](shared/README.md) | Shared libraries consumed by services — `dotnet/` for backend, `typescript/` for the SvelteKit BFF (most cross-language catalogs are spec-driven) |
-| [`services/`](services/README.md) | .NET service implementations (Edge gateway, audit, courier, notifications, files) |
-| [`web/`](web/README.md) | SvelteKit Backend-for-Frontend (browser-side UI + SSR) |
-| [`d2-version/`](d2-version/) <!-- §11.36 carve-out: csproj-only directory; no README. --> | Version anchor csproj — drives `dotnet versionize` releases |
-| [`D2.slnx`](D2.slnx) | .NET solution file — references every shared lib + service csproj |
-| [`Directory.Build.props`](Directory.Build.props) | Solution-wide MSBuild defaults (target framework, lang version, StyleCop, treat-warnings-as-errors) |
-| [`Directory.Packages.props`](Directory.Packages.props) | Centrally-managed NuGet package versions |
-| [`stylecop.json`](stylecop.json) | StyleCop analyzer config (file-header format, naming) |
-| [`global.json`](global.json) | Pinned .NET SDK version |
-| [`NuGet.config`](NuGet.config) | NuGet feed config |
+| Path                                                                                      | What                                                                                                                                              |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`shared/`](shared/README.md)                                                             | Shared libraries consumed by services — `dotnet/` for backend, `typescript/` for the SvelteKit BFF (most cross-language catalogs are spec-driven) |
+| [`services/`](services/README.md)                                                         | .NET service implementations (Edge gateway, audit, courier, notifications, files)                                                                 |
+| [`web/`](web/README.md)                                                                   | SvelteKit Backend-for-Frontend (browser-side UI + SSR)                                                                                            |
+| [`d2-version/`](d2-version/) <!-- §11.36 carve-out: csproj-only directory; no README. --> | Version anchor csproj — drives `dotnet versionize` releases                                                                                       |
+| [`D2.slnx`](D2.slnx)                                                                      | .NET solution file — references every shared lib + service csproj                                                                                 |
+| [`Directory.Build.props`](Directory.Build.props)                                          | Solution-wide MSBuild defaults (target framework, lang version, StyleCop, treat-warnings-as-errors)                                               |
+| [`Directory.Packages.props`](Directory.Packages.props)                                    | Centrally-managed NuGet package versions                                                                                                          |
+| [`stylecop.json`](stylecop.json)                                                          | StyleCop analyzer config (file-header format, naming)                                                                                             |
+| [`global.json`](global.json)                                                              | Pinned .NET SDK version                                                                                                                           |
+| [`NuGet.config`](NuGet.config)                                                            | NuGet feed config                                                                                                                                 |
 
 ## Build + test
 

@@ -5,13 +5,24 @@
   "description": "Tier 2 codegen-ready Locale catalog. Matches the LocaleSpec record shape consumed by .NET SourceGen + TS emitter. Region-derived fields (firstDayOfWeek) are denormalized from Country at clean-pass time.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["$generated", "$source", "$schema", "$note", "catalogVersion", "generatedAt", "entries"],
+  "required": [
+    "$generated",
+    "$source",
+    "$schema",
+    "$note",
+    "catalogVersion",
+    "generatedAt",
+    "entries"
+  ],
   "properties": {
     "$generated": { "const": true },
     "$source": { "const": "pipeline-derived" },
     "$schema": { "type": "string" },
     "$note": { "type": "string" },
-    "catalogVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$" },
+    "catalogVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$"
+    },
     "generatedAt": { "type": "string", "format": "date-time" },
     "entries": {
       "type": "array",
@@ -21,7 +32,15 @@
   "$defs": {
     "DayOfWeek": {
       "type": "string",
-      "enum": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+      "enum": [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+      ]
     },
     "DateFormatPattern": {
       "type": "string",
@@ -31,10 +50,16 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "ietfBcp47Tag", "name", "endonym",
-        "languageISO6391Code", "countryISO31661Alpha2Code",
-        "isSelectable", "firstDayOfWeek",
-        "decimalSeparator", "thousandsSeparator", "dateFormatPattern"
+        "ietfBcp47Tag",
+        "name",
+        "endonym",
+        "languageISO6391Code",
+        "countryISO31661Alpha2Code",
+        "isSelectable",
+        "firstDayOfWeek",
+        "decimalSeparator",
+        "thousandsSeparator",
+        "dateFormatPattern"
       ],
       "properties": {
         "ietfBcp47Tag": {
@@ -45,10 +70,17 @@
         "name": { "type": "string", "minLength": 1 },
         "endonym": { "type": ["string", "null"] },
         "languageISO6391Code": { "type": "string", "pattern": "^[a-z]{2,3}$" },
-        "countryISO31661Alpha2Code": { "type": ["string", "null"], "pattern": "^[A-Z]{2}|\\d{3}$" },
+        "countryISO31661Alpha2Code": {
+          "type": ["string", "null"],
+          "pattern": "^[A-Z]{2}|\\d{3}$"
+        },
         "isSelectable": { "type": "boolean" },
         "firstDayOfWeek": { "$ref": "#/$defs/DayOfWeek" },
-        "decimalSeparator": { "type": "string", "minLength": 1, "maxLength": 1 },
+        "decimalSeparator": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1
+        },
         "thousandsSeparator": { "type": "string", "maxLength": 1 },
         "dateFormatPattern": { "$ref": "#/$defs/DateFormatPattern" }
       }

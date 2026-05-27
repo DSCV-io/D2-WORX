@@ -47,25 +47,31 @@ const SOURCE_LICENSE = "Unicode-3.0 (Unicode License)";
 type CldrShortDatePattern = string | { _value?: string };
 
 export interface CldrCaGregorianPayload {
-  main: Record<string, {
-    dates: {
-      calendars: {
-        gregorian: {
-          dateFormats: {
-            full?: string;
-            long?: string;
-            medium?: string;
-            short?: CldrShortDatePattern;
+  main: Record<
+    string,
+    {
+      dates: {
+        calendars: {
+          gregorian: {
+            dateFormats: {
+              full?: string;
+              long?: string;
+              medium?: string;
+              short?: CldrShortDatePattern;
+            };
           };
         };
       };
-    };
-  }>;
+    }
+  >;
 }
 
 export type DateFormatPattern = "DMY" | "MDY" | "YMD";
 
-export interface CldrDatesFetchResult extends Pick<CachedFetch, "provenance" | "fromCache"> {
+export interface CldrDatesFetchResult extends Pick<
+  CachedFetch,
+  "provenance" | "fromCache"
+> {
   locale: string;
   /** Raw CLDR short date pattern (e.g., "M/d/yy"). */
   shortPattern: string;
@@ -73,9 +79,12 @@ export interface CldrDatesFetchResult extends Pick<CachedFetch, "provenance" | "
   dateFormatPattern: DateFormatPattern;
 }
 
-export async function fetchCldrDates(locale: string, options?: {
-  ttlHours?: number;
-}): Promise<CldrDatesFetchResult> {
+export async function fetchCldrDates(
+  locale: string,
+  options?: {
+    ttlHours?: number;
+  },
+): Promise<CldrDatesFetchResult> {
   // upstream URL — cannot wrap
   const url = `https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-dates-full/main/${locale}/ca-gregorian.json`;
   const fetched = await fetchAndCache({
@@ -85,11 +94,16 @@ export async function fetchCldrDates(locale: string, options?: {
     cacheKey: `${locale}-ca-gregorian.json`,
     ttlHours: options?.ttlHours,
   });
-  const payload = JSON.parse(fetched.body.toString("utf8")) as CldrCaGregorianPayload;
-  const raw = payload.main[locale]?.dates?.calendars?.gregorian?.dateFormats?.short;
+  const payload = JSON.parse(
+    fetched.body.toString("utf8"),
+  ) as CldrCaGregorianPayload;
+  const raw =
+    payload.main[locale]?.dates?.calendars?.gregorian?.dateFormats?.short;
   const shortPattern = extractShortPattern(raw);
   if (!shortPattern) {
-    throw new Error(`CLDR ca-gregorian.json for ${locale} missing dateFormats.short`);
+    throw new Error(
+      `CLDR ca-gregorian.json for ${locale} missing dateFormats.short`,
+    );
   }
 
   return {
@@ -101,9 +115,12 @@ export async function fetchCldrDates(locale: string, options?: {
   };
 }
 
-export function extractShortPattern(raw: CldrShortDatePattern | undefined): string | null {
+export function extractShortPattern(
+  raw: CldrShortDatePattern | undefined,
+): string | null {
   if (typeof raw === "string") return raw;
-  if (raw && typeof raw === "object" && typeof raw._value === "string") return raw._value;
+  if (raw && typeof raw === "object" && typeof raw._value === "string")
+    return raw._value;
   return null;
 }
 
@@ -121,22 +138,35 @@ export function deriveDateFormatPattern(pattern: string): DateFormatPattern {
   const mIdx = pattern.indexOf("M");
   const dIdx = pattern.indexOf("d");
   if (yIdx < 0 || mIdx < 0 || dIdx < 0) {
-    throw new Error(`Cannot derive DateFormatPattern from pattern "${pattern}" — missing y/M/d`);
+    throw new Error(
+      `Cannot derive DateFormatPattern from pattern "${pattern}" — missing y/M/d`,
+    );
   }
   const order = [
     { letter: "y" as const, idx: yIdx },
     { letter: "M" as const, idx: mIdx },
     { letter: "d" as const, idx: dIdx },
-  ].sort((a, b) => a.idx - b.idx).map((x) => x.letter).join("");
+  ]
+    .sort((a, b) => a.idx - b.idx)
+    .map((x) => x.letter)
+    .join("");
   switch (order) {
-    case "Mdy": return "MDY";
-    case "dMy": return "DMY";
-    case "yMd": return "YMD";
-    case "ydM": return "YMD"; // edge case: y first, then d, then M (rare; treat as Y-first)
-    case "Myd": return "MDY"; // edge case: M, y, d
-    case "dyM": return "DMY"; // edge case: d, y, M
+    case "Mdy":
+      return "MDY";
+    case "dMy":
+      return "DMY";
+    case "yMd":
+      return "YMD";
+    case "ydM":
+      return "YMD"; // edge case: y first, then d, then M (rare; treat as Y-first)
+    case "Myd":
+      return "MDY"; // edge case: M, y, d
+    case "dyM":
+      return "DMY"; // edge case: d, y, M
     default:
       // All 6 permutations covered above; this is unreachable for well-formed input.
-      throw new Error(`Unexpected date-letter order "${order}" from pattern "${pattern}"`);
+      throw new Error(
+        `Unexpected date-letter order "${order}" from pattern "${pattern}"`,
+      );
   }
 }

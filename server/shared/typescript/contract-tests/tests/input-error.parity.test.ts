@@ -48,7 +48,10 @@ describe("input-error parity (.NET wire shape ↔ TS wire shape)", () => {
   // nested TKMessage shape fails here.
   describe("round-trip parity (.NET-serialized fixtures ↔ TS interface)", () => {
     it("single-error: .NET wire shape parses to {field, errors: [{key}]}", () => {
-      const fixture = loadFixture<InputError>("input-error", "round-trip-single-error");
+      const fixture = loadFixture<InputError>(
+        "input-error",
+        "round-trip-single-error",
+      );
       expect(fixture.data).toEqual({
         field: "email",
         errors: [{ key: "common_validation_EMAIL_INVALID" }],

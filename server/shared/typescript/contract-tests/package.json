@@ -6,18 +6,22 @@
   "scripts": {
     "build": "tsc -b",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "type-check:test": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
     "@d2/auth-abstractions": "workspace:*",
     "@d2/auth-context-abstractions": "workspace:*",
     "@d2/encryption-abstractions": "workspace:*",
+    "@d2/geo-abstractions": "workspace:*",
+    "@d2/geo-default": "workspace:*",
     "@d2/grpc-client": "workspace:*",
     "@d2/headers": "workspace:*",
     "@d2/headers-amqp": "workspace:*",
     "@d2/headers-common": "workspace:*",
     "@d2/headers-grpc": "workspace:*",
     "@d2/headers-http": "workspace:*",
+    "@d2/location": "workspace:*",
     "@d2/messaging-abstractions": "workspace:*",
     "@d2/request-context-abstractions": "workspace:*",
     "@d2/result": "workspace:*",

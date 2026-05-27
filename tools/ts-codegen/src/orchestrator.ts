@@ -11,6 +11,7 @@ import { runDlqFailureMetadataEmit } from "./dlq-failure-metadata-emit.js";
 import { runEncryptionDomainsEmit } from "./encryption-domains-emit.js";
 import { runEncryptionFrameEmit } from "./encryption-frame-emit.js";
 import { runErrorCodesEmit } from "./error-codes-emit.js";
+import { runGeoEmit } from "./geo-emitter/index.js";
 import { runGrpcTrailersEmit } from "./grpc-trailers-emit.js";
 import { runHeadersEmit } from "./headers-emit.js";
 import { runJwtClaimsEmit } from "./jwt-claims-emit.js";
@@ -73,6 +74,11 @@ function main(): void {
     // as field-offset constants + byte-length constants. Consumed by ops
     // tooling and any TS reader of the on-wire encryption frame.
     ...runEncryptionFrameEmit(force),
+    // Geo catalogs — emits TS record shapes + branded code types + Zod
+    // schemas + closed-set validation tables into @d2/geo-abstractions from
+    // the seven contracts/geo/*.spec.json Tier-2 files. Catalog DATA
+    // emission populates @d2/geo-default's catalog index.
+    ...runGeoEmit(force),
   ];
   for (const d of allDiagnostics) console.error(formatDiagnostic(d));
   if (allDiagnostics.some((d) => d.severity === "error")) {

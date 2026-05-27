@@ -8,57 +8,73 @@ import {
   subdivisionsForCountry,
   buildCountriesWithSubdivisions,
 } from "../geo-ref-data.js";
-import type { CountryDTO, SubdivisionDTO } from "@d2/protos";
+import type { Country, Subdivision, SubdivisionCode } from "@d2/geo-abstractions";
+import { DayOfWeek, MeasurementSystem } from "@d2/geo-abstractions";
 
-function makeCountry(overrides: Partial<CountryDTO> = {}): CountryDTO {
+function makeCountry(overrides: Partial<Country> = {}): Country {
   return {
-    iso31661Alpha2Code: "US",
+    iso31661Alpha2Code: "US" as Country["iso31661Alpha2Code"],
     iso31661Alpha3Code: "USA",
     iso31661NumericCode: "840",
     displayName: "United States",
     officialName: "United States of America",
+    endonymDisplayName: "United States",
+    endonymOfficialName: "United States of America",
     phoneNumberPrefix: "1",
-    phoneNumberFormat: "(XXX) XXX-XXXX",
-    sovereignIso31661Alpha2Code: "",
-    primaryCurrencyIso4217AlphaCode: "USD",
-    primaryLocaleIetfBcp47Tag: "en-US",
-    territoryIso31661Alpha2Codes: [],
-    subdivisionIso31662Codes: ["US-CA", "US-NY"],
-    currencyIso4217AlphaCodes: ["USD"],
-    localeIetfBcp47Tags: ["en-US"],
-    geopoliticalEntityShortCodes: [],
+    phoneNumberNationalFormat: "(XXX) XXX-XXXX",
+    phoneNumberMaxDigits: 10,
+    firstDayOfWeek: DayOfWeek.Sunday,
+    weekendStart: DayOfWeek.Saturday,
+    weekendEnd: DayOfWeek.Sunday,
+    measurementSystem: MeasurementSystem.Imperial,
+    territoryIso31661Alpha2Codes: new Set() as ReadonlySet<Country["iso31661Alpha2Code"]>,
+    territories: [],
+    subdivisionIso31662Codes: new Set(["US-CA", "US-NY"] as SubdivisionCode[]) as
+      ReadonlySet<SubdivisionCode>,
+    subdivisions: [],
+    localeIetfBcp47Tags: new Set() as ReadonlySet<Country["primaryLocaleIetfBcp47Tag"] & string>,
+    locales: [],
+    geopoliticalEntityShortCodes: new Set() as ReadonlySet<never>,
+    geopoliticalEntities: [],
+    currencyIso4217AlphaCodes: new Set() as
+      ReadonlySet<Country["primaryCurrencyIso4217AlphaCode"] & string>,
+    currencies: [],
     ...overrides,
-  };
+  } as Country;
 }
 
-function makeSubdivision(overrides: Partial<SubdivisionDTO> = {}): SubdivisionDTO {
+function makeSubdivision(overrides: Partial<Subdivision> = {}): Subdivision {
   return {
-    iso31662Code: "US-CA",
+    iso31662Code: "US-CA" as SubdivisionCode,
     shortCode: "CA",
     displayName: "California",
     officialName: "State of California",
-    countryIso31661Alpha2Code: "US",
+    endonymDisplayName: "California",
+    endonymOfficialName: "State of California",
+    countryIso31661Alpha2Code: "US" as Subdivision["countryIso31661Alpha2Code"],
+    type: "State",
     ...overrides,
-  };
+  } as Subdivision;
 }
 
 describe("countriesToOptions", () => {
   it("puts popular countries first, then alphabetical", () => {
-    const countries: Record<string, CountryDTO> = {
-      US: makeCountry(),
-      CA: makeCountry({
-        iso31661Alpha2Code: "CA",
+    const countries: Country[] = [
+      makeCountry(),
+      makeCountry({
+        iso31661Alpha2Code: "CA" as Country["iso31661Alpha2Code"],
         displayName: "Canada",
         phoneNumberPrefix: "1",
-        subdivisionIso31662Codes: ["CA-ON"],
+        subdivisionIso31662Codes: new Set(["CA-ON"] as SubdivisionCode[]) as
+          ReadonlySet<SubdivisionCode>,
       }),
-      AF: makeCountry({
-        iso31661Alpha2Code: "AF",
+      makeCountry({
+        iso31661Alpha2Code: "AF" as Country["iso31661Alpha2Code"],
         displayName: "Afghanistan",
         phoneNumberPrefix: "93",
-        subdivisionIso31662Codes: [],
+        subdivisionIso31662Codes: new Set() as ReadonlySet<SubdivisionCode>,
       }),
-    };
+    ];
 
     const options = countriesToOptions(countries);
 
@@ -71,47 +87,46 @@ describe("countriesToOptions", () => {
   });
 
   it("includes flag path", () => {
-    const options = countriesToOptions({ US: makeCountry() });
+    const options = countriesToOptions([makeCountry()]);
     expect(options[0].flag).toBe("/flags/4x3/us.svg");
   });
 
-  it("includes phone prefix from proto data", () => {
-    const options = countriesToOptions({ US: makeCountry() });
+  it("includes phone prefix from catalog data", () => {
+    const options = countriesToOptions([makeCountry()]);
     expect(options[0].phonePrefix).toBe("+1");
   });
 
-  it("falls back to libphonenumber-js for prefix when proto is empty", () => {
-    const options = countriesToOptions({
-      US: makeCountry({ phoneNumberPrefix: "" }),
-    });
+  it("falls back to libphonenumber-js for prefix when catalog value is empty", () => {
+    const options = countriesToOptions([makeCountry({ phoneNumberPrefix: "" })]);
     // Should use getCountryCallingCode fallback
     expect(options[0].phonePrefix).toBe("+1");
   });
 
   it("includes subdivision codes", () => {
-    const options = countriesToOptions({ US: makeCountry() });
-    expect(options[0].subdivisionCodes).toEqual(["US-CA", "US-NY"]);
+    const options = countriesToOptions([makeCountry()]);
+    expect(options[0].subdivisionCodes).toEqual(expect.arrayContaining(["US-CA", "US-NY"]));
+    expect(options[0].subdivisionCodes).toHaveLength(2);
   });
 
-  it("handles empty map", () => {
-    expect(countriesToOptions({})).toEqual([]);
+  it("handles empty array", () => {
+    expect(countriesToOptions([])).toEqual([]);
   });
 });
 
 describe("subdivisionsForCountry", () => {
-  const subdivisions: Record<string, SubdivisionDTO> = {
-    "US-CA": makeSubdivision(),
-    "US-NY": makeSubdivision({
-      iso31662Code: "US-NY",
+  const subdivisions: Subdivision[] = [
+    makeSubdivision(),
+    makeSubdivision({
+      iso31662Code: "US-NY" as SubdivisionCode,
       displayName: "New York",
-      countryIso31661Alpha2Code: "US",
+      countryIso31661Alpha2Code: "US" as Subdivision["countryIso31661Alpha2Code"],
     }),
-    "CA-ON": makeSubdivision({
-      iso31662Code: "CA-ON",
+    makeSubdivision({
+      iso31662Code: "CA-ON" as SubdivisionCode,
       displayName: "Ontario",
-      countryIso31661Alpha2Code: "CA",
+      countryIso31661Alpha2Code: "CA" as Subdivision["countryIso31661Alpha2Code"],
     }),
-  };
+  ];
 
   it("filters subdivisions for US", () => {
     const options = subdivisionsForCountry(subdivisions, "US");
@@ -137,8 +152,8 @@ describe("subdivisionsForCountry", () => {
     expect(options[1].label).toBe("New York");
   });
 
-  it("handles empty map", () => {
-    expect(subdivisionsForCountry({}, "US")).toEqual([]);
+  it("handles empty array", () => {
+    expect(subdivisionsForCountry([], "US")).toEqual([]);
   });
 });
 

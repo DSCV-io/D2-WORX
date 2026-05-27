@@ -84,7 +84,10 @@ describe("parseIntStrict", () => {
 });
 
 describe("pickHomeCountryUsage", () => {
-  const active = (country: string, fromDate: string | null = "2000-01-01"): CurrencyUsageEntry => ({
+  const active = (
+    country: string,
+    fromDate: string | null = "2000-01-01",
+  ): CurrencyUsageEntry => ({
     countryISO31661Alpha2Code: country,
     fromDate,
     toDate: null,

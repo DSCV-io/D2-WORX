@@ -16,10 +16,10 @@ The spec file is the single source of truth for cross-binding in-process slot ke
 
 ## Catalog dispatch
 
-| Consuming assembly | Filter | Visibility | Emitted source |
-|---|---|---|---|
-| `D2.Shared.Auth.Abstractions` | `bindings.Contains("http")` | `public` | `D2HttpContextItems.g.cs` (class `D2HttpContextItems` in `D2.Shared.Auth.Abstractions.Http`) |
-| `D2.Shared.Auth.Grpc` | `bindings.Contains("grpc")` | `internal` | `D2GrpcUserStateKeys.g.cs` (class `D2GrpcUserStateKeys` in `D2.Shared.Auth.Grpc.Interceptors`) |
+| Consuming assembly            | Filter                      | Visibility | Emitted source                                                                                 |
+| ----------------------------- | --------------------------- | ---------- | ---------------------------------------------------------------------------------------------- |
+| `D2.Shared.Auth.Abstractions` | `bindings.Contains("http")` | `public`   | `D2HttpContextItems.g.cs` (class `D2HttpContextItems` in `D2.Shared.Auth.Abstractions.Http`)   |
+| `D2.Shared.Auth.Grpc`         | `bindings.Contains("grpc")` | `internal` | `D2GrpcUserStateKeys.g.cs` (class `D2GrpcUserStateKeys` in `D2.Shared.Auth.Grpc.Interceptors`) |
 
 The visibility difference (public vs internal) reflects the consumption pattern of each binding — HTTP downstream code reads `HttpContext.Items[D2HttpContextItems.REQUEST_CONTEXT]` directly, whereas gRPC consumers go through typed accessor extensions and the raw key class stays internal.
 
@@ -27,12 +27,12 @@ The visibility difference (public vs internal) reflects the consumption pattern 
 
 ## Build-time diagnostics
 
-| ID | Severity | Trigger |
-|---|---|---|
-| `D2IPK001` | Error | Spec file is malformed JSON or violates the schema |
-| `D2IPK002` | Error | An entry's `bindings` array contains an unknown binding (closed enum: `http` / `grpc`) |
-| `D2IPK003` | Error | An entry's `constName` violates UPPER_SNAKE_CASE pattern |
-| `D2IPK004` | Error | `keys.spec.json` is missing from `<AdditionalFiles>` for the consuming csproj |
+| ID         | Severity | Trigger                                                                                |
+| ---------- | -------- | -------------------------------------------------------------------------------------- |
+| `D2IPK001` | Error    | Spec file is malformed JSON or violates the schema                                     |
+| `D2IPK002` | Error    | An entry's `bindings` array contains an unknown binding (closed enum: `http` / `grpc`) |
+| `D2IPK003` | Error    | An entry's `constName` violates UPPER_SNAKE_CASE pattern                               |
+| `D2IPK004` | Error    | `keys.spec.json` is missing from `<AdditionalFiles>` for the consuming csproj          |
 
 ---
 

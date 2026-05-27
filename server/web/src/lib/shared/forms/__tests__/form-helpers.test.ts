@@ -28,9 +28,7 @@ const { mapD2Errors } = await import("../form-helpers.js");
 
 describe("mapD2Errors (object-shape InputError)", () => {
   it("converts single-field single-error", () => {
-    const errors: InputError[] = [
-      { field: "email", errors: [{ key: "TK.email.INVALID" }] },
-    ];
+    const errors: InputError[] = [{ field: "email", errors: [{ key: "TK.email.INVALID" }] }];
     expect(mapD2Errors(errors)).toEqual({ email: ["TK.email.INVALID"] });
   });
 
@@ -81,9 +79,7 @@ describe("mapD2Errors (object-shape InputError)", () => {
   });
 
   it("skips entries with empty field name", () => {
-    const errors: InputError[] = [
-      { field: "", errors: [{ key: "TK.email.INVALID" }] },
-    ];
+    const errors: InputError[] = [{ field: "", errors: [{ key: "TK.email.INVALID" }] }];
     expect(mapD2Errors(errors)).toEqual({});
   });
 
@@ -130,9 +126,7 @@ describe("mapD2Errors (object-shape InputError)", () => {
     // try to pull index 0 (field) and index 1+ (errors) out of an
     // object, returning undefined for both → entire result becomes {}.
     const wireShapedFromDotNet = JSON.parse(
-      JSON.stringify([
-        { field: "email", errors: [{ key: "TK.email.INVALID" }] },
-      ]),
+      JSON.stringify([{ field: "email", errors: [{ key: "TK.email.INVALID" }] }]),
     ) as InputError[];
 
     const result = mapD2Errors(wireShapedFromDotNet);

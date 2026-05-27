@@ -4,7 +4,7 @@
   "$schema": "./timezones.schema.json",
   "$note": "TIER 2 codegen-ready spec — produced by tools/geo-data-pipeline from contracts/geo/src-data/*.spec.json (Tier 1). Matches the canonical entity record shape; consumed directly by codegen (.NET SourceGen + TS emitter — Tier 3) to produce concrete entity types. Do NOT hand-edit — re-run `pnpm geo:refresh` to regenerate.",
   "catalogVersion": "0.1.0",
-  "generatedAt": "2026-05-19T18:14:37.998Z",
+  "generatedAt": "2026-05-26T13:25:26.656Z",
   "entries": [
     {
       "ianaIdentifier": "Africa/Abidjan",
@@ -74,9 +74,7 @@
       "currentDstAbbrev": "GMT+3",
       "countryISO31661Alpha2Code": "EG",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Egypt"
-      ]
+      "aliases": ["Egypt"]
     },
     {
       "ianaIdentifier": "Africa/Casablanca",
@@ -119,14 +117,8 @@
       "currentStdAbbrev": "GMT+2",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "ZA",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "LS",
-        "SZ"
-      ],
-      "aliases": [
-        "Africa/Maseru",
-        "Africa/Mbabane"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["LS", "SZ"],
+      "aliases": ["Africa/Maseru", "Africa/Mbabane"]
     },
     {
       "ianaIdentifier": "Africa/Juba",
@@ -282,9 +274,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "LY",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Libya"
-      ]
+      "aliases": ["Libya"]
     },
     {
       "ianaIdentifier": "Africa/Tunis",
@@ -317,10 +307,7 @@
       "currentDstAbbrev": "HADT",
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Atka",
-        "US/Aleutian"
-      ]
+      "aliases": ["America/Atka", "US/Aleutian"]
     },
     {
       "ianaIdentifier": "America/Anchorage",
@@ -331,9 +318,7 @@
       "currentDstAbbrev": "AKDT",
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "US/Alaska"
-      ]
+      "aliases": ["US/Alaska"]
     },
     {
       "ianaIdentifier": "America/Araguaina",
@@ -355,9 +340,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Buenos_Aires"
-      ]
+      "aliases": ["America/Buenos_Aires"]
     },
     {
       "ianaIdentifier": "America/Argentina/Catamarca",
@@ -368,10 +351,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Argentina/ComodRivadavia",
-        "America/Catamarca"
-      ]
+      "aliases": ["America/Argentina/ComodRivadavia", "America/Catamarca"]
     },
     {
       "ianaIdentifier": "America/Argentina/Cordoba",
@@ -382,10 +362,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Cordoba",
-        "America/Rosario"
-      ]
+      "aliases": ["America/Cordoba", "America/Rosario"]
     },
     {
       "ianaIdentifier": "America/Argentina/Jujuy",
@@ -396,9 +373,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Jujuy"
-      ]
+      "aliases": ["America/Jujuy"]
     },
     {
       "ianaIdentifier": "America/Argentina/La_Rioja",
@@ -420,9 +395,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Mendoza"
-      ]
+      "aliases": ["America/Mendoza"]
     },
     {
       "ianaIdentifier": "America/Argentina/Rio_Gallegos",
@@ -653,10 +626,7 @@
       "currentDstAbbrev": "CDT",
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "CST6CDT",
-        "US/Central"
-      ]
+      "aliases": ["CST6CDT", "US/Central"]
     },
     {
       "ianaIdentifier": "America/Chihuahua",
@@ -755,12 +725,7 @@
       "currentDstAbbrev": "MDT",
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Shiprock",
-        "MST7MDT",
-        "Navajo",
-        "US/Mountain"
-      ]
+      "aliases": ["America/Shiprock", "MST7MDT", "Navajo", "US/Mountain"]
     },
     {
       "ianaIdentifier": "America/Detroit",
@@ -771,9 +736,7 @@
       "currentDstAbbrev": "EDT",
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "US/Michigan"
-      ]
+      "aliases": ["US/Michigan"]
     },
     {
       "ianaIdentifier": "America/Edmonton",
@@ -784,10 +747,7 @@
       "currentDstAbbrev": "MDT",
       "countryISO31661Alpha2Code": "CA",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Yellowknife",
-        "Canada/Mountain"
-      ]
+      "aliases": ["America/Yellowknife", "Canada/Mountain"]
     },
     {
       "ianaIdentifier": "America/Eirunepe",
@@ -908,9 +868,7 @@
       "currentDstAbbrev": "ADT",
       "countryISO31661Alpha2Code": "CA",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Canada/Atlantic"
-      ]
+      "aliases": ["Canada/Atlantic"]
     },
     {
       "ianaIdentifier": "America/Havana",
@@ -921,9 +879,7 @@
       "currentDstAbbrev": "GMT-4",
       "countryISO31661Alpha2Code": "CU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Cuba"
-      ]
+      "aliases": ["Cuba"]
     },
     {
       "ianaIdentifier": "America/Hermosillo",
@@ -960,10 +916,7 @@
       "currentDstAbbrev": "CDT",
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Knox_IN",
-        "US/Indiana-Starke"
-      ]
+      "aliases": ["America/Knox_IN", "US/Indiana-Starke"]
     },
     {
       "ianaIdentifier": "America/Indiana/Marengo",
@@ -1051,9 +1004,7 @@
       "currentDstAbbrev": "EDT",
       "countryISO31661Alpha2Code": "CA",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Pangnirtung"
-      ]
+      "aliases": ["America/Pangnirtung"]
     },
     {
       "ianaIdentifier": "America/Jamaica",
@@ -1064,9 +1015,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "JM",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Jamaica"
-      ]
+      "aliases": ["Jamaica"]
     },
     {
       "ianaIdentifier": "America/Juneau",
@@ -1088,9 +1037,7 @@
       "currentDstAbbrev": "EDT",
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Louisville"
-      ]
+      "aliases": ["America/Louisville"]
     },
     {
       "ianaIdentifier": "America/Kentucky/Monticello",
@@ -1134,10 +1081,7 @@
       "currentDstAbbrev": "PDT",
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "PST8PDT",
-        "US/Pacific"
-      ]
+      "aliases": ["PST8PDT", "US/Pacific"]
     },
     {
       "ianaIdentifier": "America/Maceio",
@@ -1170,9 +1114,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "BR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Brazil/West"
-      ]
+      "aliases": ["Brazil/West"]
     },
     {
       "ianaIdentifier": "America/Martinique",
@@ -1205,9 +1147,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "MX",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Mexico/BajaSur"
-      ]
+      "aliases": ["Mexico/BajaSur"]
     },
     {
       "ianaIdentifier": "America/Menominee",
@@ -1251,9 +1191,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "MX",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Mexico/General"
-      ]
+      "aliases": ["Mexico/General"]
     },
     {
       "ianaIdentifier": "America/Miquelon",
@@ -1308,10 +1246,7 @@
       "currentDstAbbrev": "EDT",
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "EST5EDT",
-        "US/Eastern"
-      ]
+      "aliases": ["EST5EDT", "US/Eastern"]
     },
     {
       "ianaIdentifier": "America/Nome",
@@ -1333,9 +1268,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "BR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Brazil/DeNoronha"
-      ]
+      "aliases": ["Brazil/DeNoronha"]
     },
     {
       "ianaIdentifier": "America/North_Dakota/Beulah",
@@ -1379,9 +1312,7 @@
       "currentDstAbbrev": "GMT-1",
       "countryISO31661Alpha2Code": "GL",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Godthab"
-      ]
+      "aliases": ["America/Godthab"]
     },
     {
       "ianaIdentifier": "America/Ojinaga",
@@ -1402,10 +1333,7 @@
       "currentStdAbbrev": "EST",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "PA",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "CA",
-        "KY"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["CA", "KY"],
       "aliases": [
         "America/Atikokan",
         "America/Cayman",
@@ -1432,14 +1360,8 @@
       "currentStdAbbrev": "MST",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "US",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "CA"
-      ],
-      "aliases": [
-        "America/Creston",
-        "MST",
-        "US/Arizona"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["CA"],
+      "aliases": ["America/Creston", "MST", "US/Arizona"]
     },
     {
       "ianaIdentifier": "America/Port-au-Prince",
@@ -1557,9 +1479,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "CA",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Canada/Saskatchewan"
-      ]
+      "aliases": ["Canada/Saskatchewan"]
     },
     {
       "ianaIdentifier": "America/Resolute",
@@ -1581,10 +1501,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "BR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Porto_Acre",
-        "Brazil/Acre"
-      ]
+      "aliases": ["America/Porto_Acre", "Brazil/Acre"]
     },
     {
       "ianaIdentifier": "America/Santarem",
@@ -1606,9 +1523,7 @@
       "currentDstAbbrev": "GMT-3",
       "countryISO31661Alpha2Code": "CL",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Chile/Continental"
-      ]
+      "aliases": ["Chile/Continental"]
     },
     {
       "ianaIdentifier": "America/Santo_Domingo",
@@ -1630,9 +1545,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "BR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Brazil/East"
-      ]
+      "aliases": ["Brazil/East"]
     },
     {
       "ianaIdentifier": "America/Scoresbysund",
@@ -1665,9 +1578,7 @@
       "currentDstAbbrev": "GMT-2:30",
       "countryISO31661Alpha2Code": "CA",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Canada/Newfoundland"
-      ]
+      "aliases": ["Canada/Newfoundland"]
     },
     {
       "ianaIdentifier": "America/Swift_Current",
@@ -1725,9 +1636,7 @@
       "currentStdAbbrev": "EST",
       "currentDstAbbrev": "EDT",
       "countryISO31661Alpha2Code": "CA",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "BS"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["BS"],
       "aliases": [
         "America/Montreal",
         "America/Nassau",
@@ -1745,9 +1654,7 @@
       "currentDstAbbrev": "PDT",
       "countryISO31661Alpha2Code": "CA",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Canada/Pacific"
-      ]
+      "aliases": ["Canada/Pacific"]
     },
     {
       "ianaIdentifier": "America/Whitehorse",
@@ -1758,9 +1665,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "CA",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Canada/Yukon"
-      ]
+      "aliases": ["Canada/Yukon"]
     },
     {
       "ianaIdentifier": "America/Winnipeg",
@@ -1771,10 +1676,7 @@
       "currentDstAbbrev": "CDT",
       "countryISO31661Alpha2Code": "CA",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "America/Rainy_River",
-        "Canada/Central"
-      ]
+      "aliases": ["America/Rainy_River", "Canada/Central"]
     },
     {
       "ianaIdentifier": "America/Yakutat",
@@ -1939,9 +1841,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "TM",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Ashkhabad"
-      ]
+      "aliases": ["Asia/Ashkhabad"]
     },
     {
       "ianaIdentifier": "Asia/Atyrau",
@@ -1984,17 +1884,8 @@
       "currentStdAbbrev": "GMT+7",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "TH",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "CX",
-        "KH",
-        "LA",
-        "VN"
-      ],
-      "aliases": [
-        "Asia/Phnom_Penh",
-        "Asia/Vientiane",
-        "Indian/Christmas"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["CX", "KH", "LA", "VN"],
+      "aliases": ["Asia/Phnom_Penh", "Asia/Vientiane", "Indian/Christmas"]
     },
     {
       "ianaIdentifier": "Asia/Barnaul",
@@ -2071,9 +1962,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "BD",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Dacca"
-      ]
+      "aliases": ["Asia/Dacca"]
     },
     {
       "ianaIdentifier": "Asia/Dili",
@@ -2094,17 +1983,8 @@
       "currentStdAbbrev": "GMT+4",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AE",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "OM",
-        "RE",
-        "SC",
-        "TF"
-      ],
-      "aliases": [
-        "Asia/Muscat",
-        "Indian/Mahe",
-        "Indian/Reunion"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["OM", "RE", "SC", "TF"],
+      "aliases": ["Asia/Muscat", "Indian/Mahe", "Indian/Reunion"]
     },
     {
       "ianaIdentifier": "Asia/Dushanbe",
@@ -2159,9 +2039,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "VN",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Saigon"
-      ]
+      "aliases": ["Asia/Saigon"]
     },
     {
       "ianaIdentifier": "Asia/Hong_Kong",
@@ -2172,9 +2050,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "HK",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Hongkong"
-      ]
+      "aliases": ["Hongkong"]
     },
     {
       "ianaIdentifier": "Asia/Hovd",
@@ -2229,10 +2105,7 @@
       "currentDstAbbrev": "GMT+3",
       "countryISO31661Alpha2Code": "IL",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Tel_Aviv",
-        "Israel"
-      ]
+      "aliases": ["Asia/Tel_Aviv", "Israel"]
     },
     {
       "ianaIdentifier": "Asia/Kabul",
@@ -2276,9 +2149,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "NP",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Katmandu"
-      ]
+      "aliases": ["Asia/Katmandu"]
     },
     {
       "ianaIdentifier": "Asia/Khandyga",
@@ -2300,9 +2171,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "IN",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Calcutta"
-      ]
+      "aliases": ["Asia/Calcutta"]
     },
     {
       "ianaIdentifier": "Asia/Krasnoyarsk",
@@ -2323,12 +2192,8 @@
       "currentStdAbbrev": "GMT+8",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "MY",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "BN"
-      ],
-      "aliases": [
-        "Asia/Brunei"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["BN"],
+      "aliases": ["Asia/Brunei"]
     },
     {
       "ianaIdentifier": "Asia/Macau",
@@ -2339,9 +2204,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "MO",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Macao"
-      ]
+      "aliases": ["Asia/Macao"]
     },
     {
       "ianaIdentifier": "Asia/Magadan",
@@ -2363,9 +2226,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "ID",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Ujung_Pandang"
-      ]
+      "aliases": ["Asia/Ujung_Pandang"]
     },
     {
       "ianaIdentifier": "Asia/Manila",
@@ -2387,9 +2248,7 @@
       "currentDstAbbrev": "GMT+3",
       "countryISO31661Alpha2Code": "CY",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Europe/Nicosia"
-      ]
+      "aliases": ["Europe/Nicosia"]
     },
     {
       "ianaIdentifier": "Asia/Novokuznetsk",
@@ -2465,12 +2324,8 @@
       "currentStdAbbrev": "GMT+3",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "QA",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "BH"
-      ],
-      "aliases": [
-        "Asia/Bahrain"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["BH"],
+      "aliases": ["Asia/Bahrain"]
     },
     {
       "ianaIdentifier": "Asia/Qostanay",
@@ -2502,16 +2357,8 @@
       "currentStdAbbrev": "GMT+3",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "SA",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "AQ",
-        "KW",
-        "YE"
-      ],
-      "aliases": [
-        "Antarctica/Syowa",
-        "Asia/Aden",
-        "Asia/Kuwait"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["AQ", "KW", "YE"],
+      "aliases": ["Antarctica/Syowa", "Asia/Aden", "Asia/Kuwait"]
     },
     {
       "ianaIdentifier": "Asia/Sakhalin",
@@ -2544,9 +2391,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "KR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "ROK"
-      ]
+      "aliases": ["ROK"]
     },
     {
       "ianaIdentifier": "Asia/Shanghai",
@@ -2557,12 +2402,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "CN",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Chongqing",
-        "Asia/Chungking",
-        "Asia/Harbin",
-        "PRC"
-      ]
+      "aliases": ["Asia/Chongqing", "Asia/Chungking", "Asia/Harbin", "PRC"]
     },
     {
       "ianaIdentifier": "Asia/Singapore",
@@ -2572,14 +2412,8 @@
       "currentStdAbbrev": "GMT+8",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "SG",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "AQ",
-        "MY"
-      ],
-      "aliases": [
-        "Asia/Kuala_Lumpur",
-        "Singapore"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["AQ", "MY"],
+      "aliases": ["Asia/Kuala_Lumpur", "Singapore"]
     },
     {
       "ianaIdentifier": "Asia/Srednekolymsk",
@@ -2601,9 +2435,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "TW",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "ROC"
-      ]
+      "aliases": ["ROC"]
     },
     {
       "ianaIdentifier": "Asia/Tashkent",
@@ -2636,9 +2468,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "IR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Iran"
-      ]
+      "aliases": ["Iran"]
     },
     {
       "ianaIdentifier": "Asia/Thimphu",
@@ -2649,9 +2479,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "BT",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Thimbu"
-      ]
+      "aliases": ["Asia/Thimbu"]
     },
     {
       "ianaIdentifier": "Asia/Tokyo",
@@ -2661,12 +2489,8 @@
       "currentStdAbbrev": "GMT+9",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "JP",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "AU"
-      ],
-      "aliases": [
-        "Japan"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["AU"],
+      "aliases": ["Japan"]
     },
     {
       "ianaIdentifier": "Asia/Tomsk",
@@ -2688,10 +2512,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "MN",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Choibalsan",
-        "Asia/Ulan_Bator"
-      ]
+      "aliases": ["Asia/Choibalsan", "Asia/Ulan_Bator"]
     },
     {
       "ianaIdentifier": "Asia/Urumqi",
@@ -2702,9 +2523,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "CN",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Kashgar"
-      ]
+      "aliases": ["Asia/Kashgar"]
     },
     {
       "ianaIdentifier": "Asia/Ust-Nera",
@@ -2747,13 +2566,8 @@
       "currentStdAbbrev": "GMT+6:30",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "MM",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "CC"
-      ],
-      "aliases": [
-        "Asia/Rangoon",
-        "Indian/Cocos"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["CC"],
+      "aliases": ["Asia/Rangoon", "Indian/Cocos"]
     },
     {
       "ianaIdentifier": "Asia/Yekaterinburg",
@@ -2830,9 +2644,7 @@
       "currentDstAbbrev": "GMT+1",
       "countryISO31661Alpha2Code": "FO",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Atlantic/Faeroe"
-      ]
+      "aliases": ["Atlantic/Faeroe"]
     },
     {
       "ianaIdentifier": "Atlantic/Madeira",
@@ -2876,9 +2688,7 @@
       "currentDstAbbrev": "GMT+10:30",
       "countryISO31661Alpha2Code": "AU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Australia/South"
-      ]
+      "aliases": ["Australia/South"]
     },
     {
       "ianaIdentifier": "Australia/Brisbane",
@@ -2889,9 +2699,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Australia/Queensland"
-      ]
+      "aliases": ["Australia/Queensland"]
     },
     {
       "ianaIdentifier": "Australia/Broken_Hill",
@@ -2902,9 +2710,7 @@
       "currentDstAbbrev": "GMT+10:30",
       "countryISO31661Alpha2Code": "AU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Australia/Yancowinna"
-      ]
+      "aliases": ["Australia/Yancowinna"]
     },
     {
       "ianaIdentifier": "Australia/Darwin",
@@ -2915,9 +2721,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Australia/North"
-      ]
+      "aliases": ["Australia/North"]
     },
     {
       "ianaIdentifier": "Australia/Eucla",
@@ -2939,10 +2743,7 @@
       "currentDstAbbrev": "GMT+11",
       "countryISO31661Alpha2Code": "AU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Australia/Currie",
-        "Australia/Tasmania"
-      ]
+      "aliases": ["Australia/Currie", "Australia/Tasmania"]
     },
     {
       "ianaIdentifier": "Australia/Lindeman",
@@ -2964,9 +2765,7 @@
       "currentDstAbbrev": "GMT+11",
       "countryISO31661Alpha2Code": "AU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Australia/LHI"
-      ]
+      "aliases": ["Australia/LHI"]
     },
     {
       "ianaIdentifier": "Australia/Melbourne",
@@ -2977,9 +2776,7 @@
       "currentDstAbbrev": "GMT+11",
       "countryISO31661Alpha2Code": "AU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Australia/Victoria"
-      ]
+      "aliases": ["Australia/Victoria"]
     },
     {
       "ianaIdentifier": "Australia/Perth",
@@ -2990,9 +2787,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Australia/West"
-      ]
+      "aliases": ["Australia/West"]
     },
     {
       "ianaIdentifier": "Australia/Sydney",
@@ -3003,11 +2798,7 @@
       "currentDstAbbrev": "GMT+11",
       "countryISO31661Alpha2Code": "AU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Australia/ACT",
-        "Australia/Canberra",
-        "Australia/NSW"
-      ]
+      "aliases": ["Australia/ACT", "Australia/Canberra", "Australia/NSW"]
     },
     {
       "ianaIdentifier": "Europe/Andorra",
@@ -3040,9 +2831,7 @@
       "currentDstAbbrev": "GMT+3",
       "countryISO31661Alpha2Code": "GR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "EET"
-      ]
+      "aliases": ["EET"]
     },
     {
       "ianaIdentifier": "Europe/Belgrade",
@@ -3052,13 +2841,7 @@
       "currentStdAbbrev": "GMT+1",
       "currentDstAbbrev": "GMT+2",
       "countryISO31661Alpha2Code": "RS",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "BA",
-        "HR",
-        "ME",
-        "MK",
-        "SI"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["BA", "HR", "ME", "MK", "SI"],
       "aliases": [
         "Europe/Ljubljana",
         "Europe/Podgorica",
@@ -3075,12 +2858,7 @@
       "currentStdAbbrev": "GMT+1",
       "currentDstAbbrev": "GMT+2",
       "countryISO31661Alpha2Code": "DE",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "DK",
-        "NO",
-        "SE",
-        "SJ"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["DK", "NO", "SE", "SJ"],
       "aliases": [
         "Arctic/Longyearbyen",
         "Atlantic/Jan_Mayen",
@@ -3097,16 +2875,8 @@
       "currentStdAbbrev": "GMT+1",
       "currentDstAbbrev": "GMT+2",
       "countryISO31661Alpha2Code": "BE",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "LU",
-        "NL"
-      ],
-      "aliases": [
-        "CET",
-        "Europe/Amsterdam",
-        "Europe/Luxembourg",
-        "MET"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["LU", "NL"],
+      "aliases": ["CET", "Europe/Amsterdam", "Europe/Luxembourg", "MET"]
     },
     {
       "ianaIdentifier": "Europe/Bucharest",
@@ -3139,9 +2909,7 @@
       "currentDstAbbrev": "GMT+3",
       "countryISO31661Alpha2Code": "MD",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Europe/Tiraspol"
-      ]
+      "aliases": ["Europe/Tiraspol"]
     },
     {
       "ianaIdentifier": "Europe/Dublin",
@@ -3152,9 +2920,7 @@
       "currentDstAbbrev": "GMT+1",
       "countryISO31661Alpha2Code": "IE",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Eire"
-      ]
+      "aliases": ["Eire"]
     },
     {
       "ianaIdentifier": "Europe/Gibraltar",
@@ -3175,12 +2941,8 @@
       "currentStdAbbrev": "GMT+2",
       "currentDstAbbrev": "GMT+3",
       "countryISO31661Alpha2Code": "FI",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "AX"
-      ],
-      "aliases": [
-        "Europe/Mariehamn"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["AX"],
+      "aliases": ["Europe/Mariehamn"]
     },
     {
       "ianaIdentifier": "Europe/Istanbul",
@@ -3191,10 +2953,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "TR",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Asia/Istanbul",
-        "Turkey"
-      ]
+      "aliases": ["Asia/Istanbul", "Turkey"]
     },
     {
       "ianaIdentifier": "Europe/Kaliningrad",
@@ -3227,11 +2986,7 @@
       "currentDstAbbrev": "GMT+3",
       "countryISO31661Alpha2Code": "UA",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Europe/Kiev",
-        "Europe/Uzhgorod",
-        "Europe/Zaporozhye"
-      ]
+      "aliases": ["Europe/Kiev", "Europe/Uzhgorod", "Europe/Zaporozhye"]
     },
     {
       "ianaIdentifier": "Europe/Lisbon",
@@ -3242,10 +2997,7 @@
       "currentDstAbbrev": "GMT+1",
       "countryISO31661Alpha2Code": "PT",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Portugal",
-        "WET"
-      ]
+      "aliases": ["Portugal", "WET"]
     },
     {
       "ianaIdentifier": "Europe/London",
@@ -3255,11 +3007,7 @@
       "currentStdAbbrev": "GMT",
       "currentDstAbbrev": "GMT+1",
       "countryISO31661Alpha2Code": "GB",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "GG",
-        "IM",
-        "JE"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["GG", "IM", "JE"],
       "aliases": [
         "Europe/Belfast",
         "Europe/Guernsey",
@@ -3311,9 +3059,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "RU",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "W-SU"
-      ]
+      "aliases": ["W-SU"]
     },
     {
       "ianaIdentifier": "Europe/Paris",
@@ -3323,12 +3069,8 @@
       "currentStdAbbrev": "GMT+1",
       "currentDstAbbrev": "GMT+2",
       "countryISO31661Alpha2Code": "FR",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "MC"
-      ],
-      "aliases": [
-        "Europe/Monaco"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["MC"],
+      "aliases": ["Europe/Monaco"]
     },
     {
       "ianaIdentifier": "Europe/Prague",
@@ -3338,12 +3080,8 @@
       "currentStdAbbrev": "GMT+1",
       "currentDstAbbrev": "GMT+2",
       "countryISO31661Alpha2Code": "CZ",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "SK"
-      ],
-      "aliases": [
-        "Europe/Bratislava"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["SK"],
+      "aliases": ["Europe/Bratislava"]
     },
     {
       "ianaIdentifier": "Europe/Riga",
@@ -3364,14 +3102,8 @@
       "currentStdAbbrev": "GMT+1",
       "currentDstAbbrev": "GMT+2",
       "countryISO31661Alpha2Code": "IT",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "SM",
-        "VA"
-      ],
-      "aliases": [
-        "Europe/San_Marino",
-        "Europe/Vatican"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["SM", "VA"],
+      "aliases": ["Europe/San_Marino", "Europe/Vatican"]
     },
     {
       "ianaIdentifier": "Europe/Samara",
@@ -3403,9 +3135,7 @@
       "currentStdAbbrev": "GMT+3",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "RU",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "UA"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["UA"],
       "aliases": []
     },
     {
@@ -3494,9 +3224,7 @@
       "currentDstAbbrev": "GMT+2",
       "countryISO31661Alpha2Code": "PL",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Poland"
-      ]
+      "aliases": ["Poland"]
     },
     {
       "ianaIdentifier": "Europe/Zurich",
@@ -3506,14 +3234,8 @@
       "currentStdAbbrev": "GMT+1",
       "currentDstAbbrev": "GMT+2",
       "countryISO31661Alpha2Code": "CH",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "DE",
-        "LI"
-      ],
-      "aliases": [
-        "Europe/Busingen",
-        "Europe/Vaduz"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["DE", "LI"],
+      "aliases": ["Europe/Busingen", "Europe/Vaduz"]
     },
     {
       "ianaIdentifier": "Indian/Chagos",
@@ -3534,12 +3256,8 @@
       "currentStdAbbrev": "GMT+5",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "MV",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "TF"
-      ],
-      "aliases": [
-        "Indian/Kerguelen"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["TF"],
+      "aliases": ["Indian/Kerguelen"]
     },
     {
       "ianaIdentifier": "Indian/Mauritius",
@@ -3571,14 +3289,8 @@
       "currentStdAbbrev": "GMT+12",
       "currentDstAbbrev": "GMT+13",
       "countryISO31661Alpha2Code": "NZ",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "AQ"
-      ],
-      "aliases": [
-        "Antarctica/McMurdo",
-        "Antarctica/South_Pole",
-        "NZ"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["AQ"],
+      "aliases": ["Antarctica/McMurdo", "Antarctica/South_Pole", "NZ"]
     },
     {
       "ianaIdentifier": "Pacific/Bougainville",
@@ -3600,9 +3312,7 @@
       "currentDstAbbrev": "GMT+13:45",
       "countryISO31661Alpha2Code": "NZ",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "NZ-CHAT"
-      ]
+      "aliases": ["NZ-CHAT"]
     },
     {
       "ianaIdentifier": "Pacific/Easter",
@@ -3613,9 +3323,7 @@
       "currentDstAbbrev": "GMT-5",
       "countryISO31661Alpha2Code": "CL",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Chile/EasterIsland"
-      ]
+      "aliases": ["Chile/EasterIsland"]
     },
     {
       "ianaIdentifier": "Pacific/Efate",
@@ -3680,13 +3388,8 @@
       "currentStdAbbrev": "GMT+11",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "SB",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "FM"
-      ],
-      "aliases": [
-        "Pacific/Pohnpei",
-        "Pacific/Ponape"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["FM"],
+      "aliases": ["Pacific/Pohnpei", "Pacific/Ponape"]
     },
     {
       "ianaIdentifier": "Pacific/Guam",
@@ -3696,12 +3399,8 @@
       "currentStdAbbrev": "GMT+10",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "GU",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "MP"
-      ],
-      "aliases": [
-        "Pacific/Saipan"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["MP"],
+      "aliases": ["Pacific/Saipan"]
     },
     {
       "ianaIdentifier": "Pacific/Honolulu",
@@ -3712,11 +3411,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "US",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "HST",
-        "Pacific/Johnston",
-        "US/Hawaii"
-      ]
+      "aliases": ["HST", "Pacific/Johnston", "US/Hawaii"]
     },
     {
       "ianaIdentifier": "Pacific/Kanton",
@@ -3727,9 +3422,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "KI",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Pacific/Enderbury"
-      ]
+      "aliases": ["Pacific/Enderbury"]
     },
     {
       "ianaIdentifier": "Pacific/Kiritimati",
@@ -3762,9 +3455,7 @@
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "MH",
       "coApplicableCountryISO31661Alpha2Codes": [],
-      "aliases": [
-        "Kwajalein"
-      ]
+      "aliases": ["Kwajalein"]
     },
     {
       "ianaIdentifier": "Pacific/Marquesas",
@@ -3829,14 +3520,8 @@
       "currentStdAbbrev": "GMT-11",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "AS",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "UM"
-      ],
-      "aliases": [
-        "Pacific/Midway",
-        "Pacific/Samoa",
-        "US/Samoa"
-      ]
+      "coApplicableCountryISO31661Alpha2Codes": ["UM"],
+      "aliases": ["Pacific/Midway", "Pacific/Samoa", "US/Samoa"]
     },
     {
       "ianaIdentifier": "Pacific/Palau",
@@ -3868,10 +3553,7 @@
       "currentStdAbbrev": "GMT+10",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "PG",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "AQ",
-        "FM"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["AQ", "FM"],
       "aliases": [
         "Antarctica/DumontDUrville",
         "Pacific/Chuuk",
@@ -3909,12 +3591,7 @@
       "currentStdAbbrev": "GMT+12",
       "currentDstAbbrev": null,
       "countryISO31661Alpha2Code": "KI",
-      "coApplicableCountryISO31661Alpha2Codes": [
-        "MH",
-        "TV",
-        "UM",
-        "WF"
-      ],
+      "coApplicableCountryISO31661Alpha2Codes": ["MH", "TV", "UM", "WF"],
       "aliases": [
         "Pacific/Funafuti",
         "Pacific/Majuro",

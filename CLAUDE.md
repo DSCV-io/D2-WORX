@@ -61,26 +61,33 @@ Copyright (c) DCSV. All rights reserved.
 >
 > **The main thread is an ORCHESTRATOR. It does NOT plan, implement, audit, or fix domain work itself. EVERY round of planning, implementation, auditing, and fixing is performed by a FRESH sub-agent spawned via the `Agent` tool. Reusing one sub-agent across roles, or letting the main thread do the domain work, defeats the entire pattern. This is the canonical workflow — not aspirational, not optional, not a "trial."**
 >
-> **Canonical sub-agent roles** (mirroring Anthropic's orchestrator-worker architecture; full spec lives in [process.md §3 Sub-agent architecture](docs/dev/process.md#3-sub-agent-architecture)):
+> **Canonical sub-agent roles** (mirroring Anthropic's orchestrator-worker architecture; full spec lives in [process.md §3 Sub-agent architecture](docs/dev/process.md#3-sub-agent-architecture); canonical model policy table lives in [process.md §3 Sub-agent model policy per role](docs/dev/process.md#sub-agent-model-policy-per-role)):
 >
-> | Role | When spawned | Returns |
-> |---|---|---|
-> | **Planner** | Start of each step | Step Plan section appended to journal; rationale + decisions + pre-emptive gate checks |
-> | **Implementer** | After Planner approval | Files-touched list + tests-added count + build/inspectcode status |
-> | **Auditor** (parallel ×K=5, default) | After Implementer | Cluster-scoped partial big-table chunk written to designated partial file (READ-ONLY tools — cannot edit source). Canonical 5-cluster partition by `rules.md` §-number lives in [process.md §3 Auditor cluster partition](docs/dev/process.md#auditor-cluster-partition-canonical-k5). |
-> | **Aggregator** (one per round) | After all 5 Auditors return | Merges 5 partials → canonical big table embedded in journal (REPLACES per §24 sweep-replacement rule) + consolidated `### Round N findings` subsection appended to findings log + cross-cluster sister-sweep + cross-cutting verification. Spec lives in [process.md §3 Aggregator role](docs/dev/process.md#aggregator-role-post-cluster-consolidation). |
-> | **Fixer** | When Auditor surfaces FINDING rows | Files-changed list + appended fix-log entries |
-> | **Final-reviewer** (parallel ×K=5) | Before SHIP | Same K=5 cluster partition as Auditor; Aggregator merges deliverable-wide partials |
+> | Role                                  | Model  | When spawned                       | Returns                                                                                                                                                                                                                                                                                                                                                   |
+> | ------------------------------------- | ------ | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | **Planner**                           | Opus   | Start of each step                 | Step Plan section appended to journal; rationale + decisions + pre-emptive gate checks                                                                                                                                                                                                                                                                    |
+> | **Plan-amender**                      | Opus   | When Plan-Audit surfaces findings  | Plan section edits + appended Plan-Audit fix-log entries                                                                                                                                                                                                                                                                                                  |
+> | **Implementer**                       | Sonnet | After Planner approval             | Files-touched list + tests-added count + build/inspectcode status. Opus escalation under Sweeping carve-out (per §24.0i criteria 1-4).                                                                                                                                                                                                                    |
+> | **Auditor** (parallel ×K=12, default) | Sonnet | After Implementer                  | Cluster-scoped partial big-table chunk written to designated partial file (READ-ONLY tools — cannot edit source). Canonical 12-cluster partition by `rules.md` §-number lives in [process.md §3 Auditor cluster partition](docs/dev/process.md#auditor-cluster-partition-canonical-k12).                                                                  |
+> | **Plan-Auditor** (parallel ×K=12)     | Sonnet | After Planner (non-trivial steps)  | Cluster-scoped partial big-table chunk auditing the Plan section (same cluster partition as Auditor).                                                                                                                                                                                                                                                     |
+> | **Aggregator** (one per round)        | Opus   | After all 12 Auditors return       | Merges 12 partials → canonical big table embedded in journal (REPLACES per §24 sweep-replacement rule) + consolidated `### Round N findings` subsection appended to findings log + cross-cluster sister-sweep + cross-cutting verification. Spec lives in [process.md §3 Aggregator role](docs/dev/process.md#aggregator-role-post-cluster-consolidation). |
+> | **Fixer**                             | Sonnet | When Auditor surfaces FINDING rows | Files-changed list + appended fix-log entries. Opus escalation under Sweeping carve-out (per §24.0i criteria 1-4).                                                                                                                                                                                                                                        |
+> | **Final-reviewer** (parallel ×K=12)   | Sonnet | Before SHIP                        | Same K=12 cluster partition as Auditor; Aggregator merges deliverable-wide partials                                                                                                                                                                                                                                                                       |
+> | **Investigator / Research**           | Sonnet | Bounded research / exploration     | Structured report (file paths, grep counts, line citations, summaries) returned to orchestrator                                                                                                                                                                                                                                                           |
 >
-> **K=5 parallel-cluster dispatch is the default per audit round** (per-step AND final-review). Orchestrator's dispatch protocol — shared-context file, parallel `Agent` batch in one tool-call message, Aggregator after all 5 partials return — lives in [process.md §4 Per-round dispatch protocol](docs/dev/process.md#per-round-dispatch-protocol). K=1 (single Auditor doubles as Aggregator) requires **explicit per-round user permission** per [rules.md §24.0h](docs/dev/rules.md#24-audit-evidence-discipline) — never self-invoked by the orchestrator, regardless of scope size or self-justification.
+> **Model policy rationale**: Sonnet handles predicate-walking + grep verification + bounded code/test execution; Opus handles synthesis (Aggregator), high-leverage low-volume planning (Planner / Plan-amender), and orchestrator-side trust-but-verify diligence. Sweeping carve-out (Implementer / Fixer Opus escalation, no per-occurrence approval needed) triggers when: (1) atomic >40-file dispatch, (2) >3-concern dispatch, (3) cross-runtime refactor, (4) cascading pipeline change. Every Opus dispatch under the carve-out cites the criterion in the dispatch brief + the sub-agent's return self-attestation. Auditor / Plan-Auditor / Final-reviewer / Investigator escalation to Opus requires explicit per-occurrence user approval per [rules.md §13.14](docs/dev/rules.md#13-permission--action-discipline). Canonical table + WHY per role + self-documentation requirement: [process.md §3 Sub-agent model policy per role](docs/dev/process.md#sub-agent-model-policy-per-role). Predicate-of-record: [rules.md §24.0i](docs/dev/rules.md#24-audit-evidence-discipline). Trust-but-verify discipline (orchestrator verification of Sonnet outputs): [process.md §4 Orchestrator verification of Sonnet sub-agent outputs](docs/dev/process.md#orchestrator-verification-of-sonnet-sub-agent-outputs).
 >
-> **EVERY ROUND of planning, implementation, auditing, and fixing requires a NEW fresh sub-agent.** A second audit round = a brand-new K=5 Auditor batch + brand-new Aggregator, NOT the same Auditors "running again." A fix follow-up after a Fixer's first attempt = a brand-new Fixer. The fresh-context property is the entire point — it's what prevents the leniency / motivated-stopping / stale-memory failure modes.
+> **K=12 parallel-cluster dispatch is the default per audit round** (per-step AND final-review). Orchestrator's dispatch protocol — shared-context file, parallel `Agent` batch in one tool-call message, Aggregator after all 12 partials return — lives in [process.md §4 Per-round dispatch protocol](docs/dev/process.md#per-round-dispatch-protocol). K=1 (single Auditor doubles as Aggregator) requires **explicit per-round user permission** per [rules.md §24.0h](docs/dev/rules.md#24-audit-evidence-discipline) — never self-invoked by the orchestrator, regardless of scope size or self-justification.
+>
+> **EVERY ROUND of planning, implementation, auditing, and fixing requires a NEW fresh sub-agent.** A second audit round = a brand-new K=12 Auditor batch + brand-new Aggregator, NOT the same Auditors "running again." A fix follow-up after a Fixer's first attempt = a brand-new Fixer. The fresh-context property is the entire point — it's what prevents the leniency / motivated-stopping / stale-memory failure modes.
 >
 > **The orchestrator NEVER short-circuits this for "quick" work.** A one-line typo fix still spawns a Planner, Implementer, Auditor, and (if findings) Fixer. The cost asymmetry is in your favor: sub-agent invocation is cheap, production regressions are expensive. The ONLY bypass is an explicit user request naming the specific rule / step being skipped (per [rules.md §13.14](docs/dev/rules.md#13-permission--action-discipline)).
 >
 > **Detailed protocol → [docs/dev/process.md §3 Sub-agent architecture](docs/dev/process.md#3-sub-agent-architecture) (allowed / forbidden main-thread tools, empirical justification, research citations) + [process.md §4 Audit-loop mechanics](docs/dev/process.md#4-audit-loop-mechanics) (cluster partition, dispatch protocol, K=1 carve-out usage policy).**
 >
 > **If you find yourself about to `Edit` a source file from the main thread, STOP. Spawn an Implementer sub-agent with the change spec. If you find yourself about to walk `rules.md` from the main thread, STOP. Spawn an Auditor. If you find yourself about to read a journal file to "check progress," STOP. Spawn a sub-agent to summarize state and report back. The discipline is structural, not optional.**
+>
+> **Plan currency before dispatch**: any architectural / scope / approach decision locked during EXECUTE that contradicts or amends the deliverable's Plan MUST be written into the Plan artifacts (journal amendment + Plan file Living State + Cross-cutting decisions table row) in the SAME orchestrator turn — BEFORE the next sub-agent is dispatched. Sub-agents have no conversation context; conversation-only ("in MEMORY") decisions never cross the dispatch boundary, and dispatching against a stale Plan causes the sub-agent to build the WRONG thing. Detailed mechanism + worked example → [process.md §4 Plan currency before dispatch](docs/dev/process.md#plan-currency-before-dispatch). Predicate enforcement → [rules.md §24.17](docs/dev/rules.md#24-audit-evidence-discipline).
 
 ---
 
@@ -110,11 +117,11 @@ Copyright (c) DCSV. All rights reserved.
 >
 > Every step / final-review journal contains exactly THREE artifacts (per [rules.md §24.0](docs/dev/rules.md#24-audit-evidence-discipline)):
 >
-> | Artifact | Section | Lifecycle |
-> |---|---|---|
-> | **Big table** | `## Latest sweep results` | REPLACED every sweep — one row per rules.md numbered subsection (~85+ rows), each row uses canonical status prefixed by emoji indicator (per §24.10): `✅ PASS` / `⚪ N/A` / `❌ FINDING-HIGH/MEDIUM/LOW` / `🟡 <anything-else>` (e.g. `🟡 DEFERRED` / `🟡 PASS-borderline` / `🟡 PARTIAL`). PASS rows carry `file.ext:NN` citation; N/A rows carry step-scope-specific REASON; FINDING rows carry severity + file:line + description + suggested fix (all four). |
-> | **Findings log** | `## Sweep findings log (append-only)` | APPEND-ONLY per-round `### Round N findings (timestamp)` subsections — every FINDING ever surfaced, never deleted / re-ordered / reclassified. |
-> | **Fix log** | `## Fix log (append-only)` | APPEND-ONLY chronological entries, 5-field minimum per [rules.md §24.0g](docs/dev/rules.md#24-audit-evidence-discipline): (a) rules.md subsection, (b) finding round, (c) what changed, (d) `file.ext:NN` of change, (e) timestamp / commit reference. **NEVER touches the big table.** |
+> | Artifact         | Section                               | Lifecycle                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+> | ---------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | **Big table**    | `## Latest sweep results`             | REPLACED every sweep — one row per rules.md numbered subsection (~85+ rows), each row uses canonical status prefixed by emoji indicator (per §24.10): `✅ PASS` / `⚪ N/A` / `❌ FINDING-HIGH/MEDIUM/LOW` / `🟡 <anything-else>` (e.g. `🟡 DEFERRED` / `🟡 PASS-borderline` / `🟡 PARTIAL`). PASS rows carry `file.ext:NN` citation; N/A rows carry step-scope-specific REASON; FINDING rows carry severity + file:line + description + suggested fix (all four). |
+> | **Findings log** | `## Sweep findings log (append-only)` | APPEND-ONLY per-round `### Round N findings (timestamp)` subsections — every FINDING ever surfaced, never deleted / re-ordered / reclassified.                                                                                                                                                                                                                                                                                                                    |
+> | **Fix log**      | `## Fix log (append-only)`            | APPEND-ONLY chronological entries, 5-field minimum per [rules.md §24.0g](docs/dev/rules.md#24-audit-evidence-discipline): (a) rules.md subsection, (b) finding round, (c) what changed, (d) `file.ext:NN` of change, (e) timestamp / commit reference. **NEVER touches the big table.**                                                                                                                                                                           |
 >
 > Closure is proven by ABSENCE of a finding from the next sweep's big table — not by a fix-log entry claiming "fixed."
 >
@@ -122,8 +129,8 @@ Copyright (c) DCSV. All rights reserved.
 >
 > 1. **Sweep**: walk every rules.md subsection against the current state of the code. REPLACE the big table with the sweep's output. APPEND a `### Round N findings` subsection to the findings log with every FINDING the sweep surfaced.
 > 2. **Fix work**: for each FINDING in the new big table, apply the fix. After each fix, APPEND one entry to the fix log citing **(a)** the rules.md subsection, **(b)** the finding round, **(c)** what changed, **(d)** the `file.ext:NN` of the change, **(e)** the timestamp / commit reference (per [rules.md §24.0g](docs/dev/rules.md#24-audit-evidence-discipline) 5-field minimum). **The big table is NOT touched.**
-> 2a. **Sister-sweep**: for every cross-cutting fix (links / framing / convention spanning multiple files), the Fixer runs a sister-sweep over the FULL applicable file scope and pastes the literal stdout into the fix-log entry (per [rules.md §24.13.3 + §24.13.3d](docs/dev/rules.md#24-audit-evidence-discipline) — sister-sweep enumeration mandate).
-> 2b. **Tamper-evident BEFORE / AFTER**: for any finding the user flagged with #1 / special-emphasis, OR any previously-claimed-CLOSED finding that a later Auditor surfaces as STILL_PRESENT, the Fixer pastes literal BEFORE + literal AFTER + `git diff --stat` BEFORE + `git diff --stat` AFTER (per [rules.md §24.14](docs/dev/rules.md#24-audit-evidence-discipline) tamper-evident dispatch).
+>    2a. **Sister-sweep**: for every cross-cutting fix (links / framing / convention spanning multiple files), the Fixer runs a sister-sweep over the FULL applicable file scope and pastes the literal stdout into the fix-log entry (per [rules.md §24.13.3 + §24.13.3d](docs/dev/rules.md#24-audit-evidence-discipline) — sister-sweep enumeration mandate).
+>    2b. **Tamper-evident BEFORE / AFTER**: for any finding the user flagged with #1 / special-emphasis, OR any previously-claimed-CLOSED finding that a later Auditor surfaces as STILL_PRESENT, the Fixer pastes literal BEFORE + literal AFTER + `git diff --stat` BEFORE + `git diff --stat` AFTER (per [rules.md §24.14](docs/dev/rules.md#24-audit-evidence-discipline) tamper-evident dispatch).
 > 3. **EVERY finding gets fixed**. No silent carryover. If a finding genuinely can't be resolved in this round, get EXPLICIT user permission to defer (per [rules.md §13.4 + §13.14](docs/dev/rules.md#13-permission--action-discipline)) and append a deferral entry to the fix log.
 > 4. **Next sweep**: when all current-round findings have fix-log entries, run the NEXT sweep with a brand-new Auditor sub-agent. Walk the full rules.md catalog again from scratch. REPLACE the big table with the new sweep's output. Append `### Round N+1 findings` to the findings log. A row that was a FINDING in Round N and is now PASS in Round N+1's table = closed. A row STILL FINDING in Round N+1 = fix didn't take; append more fix entries, run Round N+2.
 > 5. **Loop terminates**: when ONE sweep produces a big table with zero FINDING rows. Until that happens, the step is not done. No "convergence claimed" without a clean big table from a real sweep.
@@ -147,7 +154,6 @@ Copyright (c) DCSV. All rights reserved.
 > **Final attestation**: before presenting for user REVIEW, write the attestation block from the checklist into the deliverable's root README (verbatim wording in rules.md). The attestation is YOUR signed claim that every box is honest YES — invalidating it is a process-integrity breach.
 >
 > **You MUST walk this checklist immediately before declaring any deliverable ready for user review. No exceptions, no "I'll skip it just this once," no "the steps were clean so the whole deliverable must be clean." Walk every box, write the attestation, then present.**
-
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -189,7 +195,6 @@ Per [process.md §2 Permission gates](docs/dev/process.md#2-permission-gates-whe
 Every deliverable's distillation surfaces classes of miss. Approved misses become permanent predicates in `rules.md`. Future deliverables start with a stricter ruleset → audit loops converge in fewer rounds → deliverables ship faster → user spends less time pushing the agent through audit cycles.
 
 The journal IS the evidence of process integrity. Honest journals are self-rewarding: every honest miss becomes a future gate-check.
-
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -259,7 +264,6 @@ git push --follow-tags
 
 **Important:** When editing shared `.NET` libs in `server/shared/dotnet/`, run `dotnet build server/D2.slnx` to verify all consumers still compile. SvelteKit changes are isolated — `cd server/web && pnpm exec svelte-check`.
 
-
 <sup>[↑ jump to top](#top)</sup>
 
 ---
@@ -268,23 +272,22 @@ git push --follow-tags
 
 Read these docs BEFORE working in the relevant area. Each doc is the authority for its domain.
 
-| Document | Summary | When to Read |
-|---|---|---|
-| [docs/dev/process.md](docs/dev/process.md) | Phase lifecycle (PLAN / EXECUTE / FINAL-REVIEW / SHIP / REVIEW) + permission gates + sub-agent architecture (orchestrator + K=5 cluster partition + Aggregator) + audit-loop mechanics + self-improvement loop. | Before starting ANY deliverable |
-| [docs/dev/rules.md](docs/dev/rules.md) | The CENTRAL, VERBOSE, AUTHORITATIVE requirements catalog for any code change — security, race conditions, naming, object disposal, D2Result, OOTB shared libs, logging, PII, graceful degradation, UX, DX, observability, idempotency, configuration, conventions, audit-evidence discipline, more. Read end-to-end during PLAN; walk during every audit round. | Read end-to-end at PLAN; walked each audit round |
-| [docs/dev/deliverables/](docs/dev/deliverables/README.md) | Surviving root READMEs from shipped deliverables — final reports + lessons learned + origin trace for new rules.md predicates. | When researching a past deliverable's outcome |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Branch naming, conventional commits, PR process, license notice | PR preparation |
-| [CHANGELOG.md](CHANGELOG.md) | Conventional-commits-driven (versionize). Don't hand-edit. | Reference only |
-| [docs/PATTERNS.md](docs/PATTERNS.md) | TLC/2LC/3LC convention, handler, D2Result, middleware, repo, cache, RedactionSpec, i18n, configuration. The single biggest pattern reference. | Any handler / DI / repo / cache / middleware work |
-| [docs/TESTS.md](docs/TESTS.md) | 8-category adversarial Case Coverage Checklist, test categories, custom matchers | Adding or modifying tests |
-| [docs/PARITY.md](docs/PARITY.md) | Cross-language parity tracking + "Why exclusive?" framework | Adding cross-language components |
-| [docs/SRC_GEN.md](docs/SRC_GEN.md) | Spec-driven codegen reference — .NET Roslyn `IIncrementalGenerator` + TypeScript `tools/ts-codegen` emitter pattern + JSON spec wiring. | Any source-gen / spec-driven codegen work |
-| [ADRs](docs/adrs/README.md) | Architectural Decision Records (Nygard format + Deliverable cross-link extra field). | When researching an architectural decision or proposing a new one |
-| **Active project tracking doc** (see header) | Current scope, status, open questions, deferred work, resolved decisions. | Before starting any task |
-| `/old/v1/D2-WORX/` | Frozen v1 snapshot. Historical reference for any v1 patterns / decisions / docs that don't have v2 equivalents yet. **Read-only — never modify.** | When researching how v1 did something or hunting for tribal knowledge not yet extracted |
+| Document                                                  | Summary                                                                                                                                                                                                                                                                                                                                                         | When to Read                                                                            |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| [docs/dev/process.md](docs/dev/process.md)                | Phase lifecycle (PLAN / EXECUTE / FINAL-REVIEW / SHIP / REVIEW) + permission gates + sub-agent architecture (orchestrator + K=12 cluster partition + Aggregator) + audit-loop mechanics + self-improvement loop.                                                                                                                                                 | Before starting ANY deliverable                                                         |
+| [docs/dev/rules.md](docs/dev/rules.md)                    | The CENTRAL, VERBOSE, AUTHORITATIVE requirements catalog for any code change — security, race conditions, naming, object disposal, D2Result, OOTB shared libs, logging, PII, graceful degradation, UX, DX, observability, idempotency, configuration, conventions, audit-evidence discipline, more. Read end-to-end during PLAN; walk during every audit round. | Read end-to-end at PLAN; walked each audit round                                        |
+| [docs/dev/deliverables/](docs/dev/deliverables/README.md) | Surviving root READMEs from shipped deliverables — final reports + lessons learned + origin trace for new rules.md predicates.                                                                                                                                                                                                                                  | When researching a past deliverable's outcome                                           |
+| [CONTRIBUTING.md](CONTRIBUTING.md)                        | Branch naming, conventional commits, PR process, license notice                                                                                                                                                                                                                                                                                                 | PR preparation                                                                          |
+| [CHANGELOG.md](CHANGELOG.md)                              | Conventional-commits-driven (versionize). Don't hand-edit.                                                                                                                                                                                                                                                                                                      | Reference only                                                                          |
+| [docs/PATTERNS.md](docs/PATTERNS.md)                      | TLC/2LC/3LC convention, handler, D2Result, middleware, repo, cache, RedactionSpec, i18n, configuration. The single biggest pattern reference.                                                                                                                                                                                                                   | Any handler / DI / repo / cache / middleware work                                       |
+| [docs/TESTS.md](docs/TESTS.md)                            | 8-category adversarial Case Coverage Checklist, test categories, custom matchers                                                                                                                                                                                                                                                                                | Adding or modifying tests                                                               |
+| [docs/PARITY.md](docs/PARITY.md)                          | Cross-language parity tracking + "Why exclusive?" framework                                                                                                                                                                                                                                                                                                     | Adding cross-language components                                                        |
+| [docs/SRC_GEN.md](docs/SRC_GEN.md)                        | Spec-driven codegen reference — .NET Roslyn `IIncrementalGenerator` + TypeScript `tools/ts-codegen` emitter pattern + JSON spec wiring.                                                                                                                                                                                                                         | Any source-gen / spec-driven codegen work                                               |
+| [ADRs](docs/adrs/README.md)                               | Architectural Decision Records (Nygard format + Deliverable cross-link extra field).                                                                                                                                                                                                                                                                            | When researching an architectural decision or proposing a new one                       |
+| **Active project tracking doc** (see header)              | Current scope, status, open questions, deferred work, resolved decisions.                                                                                                                                                                                                                                                                                       | Before starting any task                                                                |
+| `/old/v1/D2-WORX/`                                        | Frozen v1 snapshot. Historical reference for any v1 patterns / decisions / docs that don't have v2 equivalents yet. **Read-only — never modify.**                                                                                                                                                                                                               | When researching how v1 did something or hunting for tribal knowledge not yet extracted |
 
 Per-service / per-library `README.md` files appear in `server/services/{service}/` and `server/shared/dotnet/{lib}/` as those are built/lib.
-
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -292,27 +295,27 @@ Per-service / per-library `README.md` files appear in `server/services/{service}
 
 ## §3.5. Doc Update Map
 
-**KEEP docs describe current reality, not the journey from v1.** Don't add v1-retrospective framing to PATTERNS / TESTS / MESSAGING / etc. — the v1→v2 journey lives in `docs/v2/` (V2.md, PHASE_*.md), and those tracking docs get archived once their phase ships.
+**KEEP docs describe current reality, not the journey from v1.** Don't add v1-retrospective framing to PATTERNS / TESTS / MESSAGING / etc. — the v1→v2 journey lives in `docs/v2/` (V2.md, PHASE\_\*.md), and those tracking docs get archived once their phase ships.
 
 When you change something, update the right doc. The map below is the routing table:
 
-| If you change... | Update... |
-|---|---|
-| A handler / TLC pattern / DI registration / `D2Result` factory usage / RedactionSpec / mapper / repo pattern | [docs/PATTERNS.md](docs/PATTERNS.md) |
-| Async messaging — wire format, exchange / queue topology, AMQP headers, encryption frame, DLQ behavior | [server/shared/dotnet/messaging-rabbitmq/README.md](server/shared/dotnet/messaging-rabbitmq/README.md) |
-| Test category, custom matcher, adversarial-coverage rule, fixture pattern | [docs/TESTS.md](docs/TESTS.md) |
-| Edge service operational guarantees — HTTP idempotency, request enrichment, session 3-tier, scheduled-jobs receiver, multi-instance scaling | [docs/v2/PHASE_3_EDGE.md](docs/v2/PHASE_3_EDGE.md) |
-| Rate-limit middleware design / bucket math / kill-switch / FP-too-common detection / cookie shortcut | [docs/v2/PHASE_3_RATE_LIMITING.md](docs/v2/PHASE_3_RATE_LIMITING.md) |
-| Anything cross-language (.NET ↔ SvelteKit ↔ future) | [docs/PARITY.md](docs/PARITY.md) |
-| KeyCustodian, key rotation, secret handling, compromise runbook | [docs/v2/PHASE_0_AUTH.md](docs/v2/PHASE_0_AUTH.md) |
-| Spec-driven codegen — adding a new generator, modifying spec format, new emitter | [docs/SRC_GEN.md](docs/SRC_GEN.md) |
-| Workflow / process / sub-agent architecture / audit-loop mechanics | [docs/dev/process.md](docs/dev/process.md) |
-| Add/modify a public API on a lib or service | the relevant `README.md` (`server/services/{svc}/README.md` or `server/shared/dotnet/{lib}/README.md`) |
-| Phase progression / wipe state / open phase questions / new tracked issue | [docs/v2/V2.md](docs/v2/V2.md) |
-| Architectural decision that overrides prior v2 plan | [docs/v2/V2.md](docs/v2/V2.md) (and add a new [ADRs](docs/adrs/README.md) entry per ADR convention) |
+| If you change...                                                                                                                            | Update...                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| A handler / TLC pattern / DI registration / `D2Result` factory usage / RedactionSpec / mapper / repo pattern                                | [docs/PATTERNS.md](docs/PATTERNS.md)                                                                   |
+| Async messaging — wire format, exchange / queue topology, AMQP headers, encryption frame, DLQ behavior                                      | [server/shared/dotnet/messaging-rabbitmq/README.md](server/shared/dotnet/messaging-rabbitmq/README.md) |
+| Test category, custom matcher, adversarial-coverage rule, fixture pattern                                                                   | [docs/TESTS.md](docs/TESTS.md)                                                                         |
+| Edge service operational guarantees — HTTP idempotency, request enrichment, session 3-tier, scheduled-jobs receiver, multi-instance scaling | [docs/v2/PHASE_3_EDGE.md](docs/v2/PHASE_3_EDGE.md)                                                     |
+| Rate-limit middleware design / bucket math / kill-switch / FP-too-common detection / cookie shortcut                                        | [docs/v2/PHASE_3_RATE_LIMITING.md](docs/v2/PHASE_3_RATE_LIMITING.md)                                   |
+| Anything cross-language (.NET ↔ SvelteKit ↔ future)                                                                                         | [docs/PARITY.md](docs/PARITY.md)                                                                       |
+| KeyCustodian, key rotation, secret handling, compromise runbook                                                                             | [docs/v2/PHASE_0_AUTH.md](docs/v2/PHASE_0_AUTH.md)                                                     |
+| Spec-driven codegen — adding a new generator, modifying spec format, new emitter                                                            | [docs/SRC_GEN.md](docs/SRC_GEN.md)                                                                     |
+| Codegen discipline (destination-assembly spec-mirror ban, source-gen internal DTO carve-out under no-leak + parity-test conditions, cross-language parity test requirement, autogen tooling choice)    | [docs/dev/rules.md §26](docs/dev/rules.md#26-codegen-discipline-spec--proto--schema-derived-types) (and [docs/dev/process.md](docs/dev/process.md) if workflow changes) |
+| Workflow / process / sub-agent architecture / audit-loop mechanics / Plan-Audit                                                             | [docs/dev/process.md](docs/dev/process.md) (and [docs/dev/rules.md §24](docs/dev/rules.md#24-audit-evidence-discipline-meta--how-to-audit) if predicate changes) |
+| Add/modify a public API on a lib or service                                                                                                 | the relevant `README.md` (`server/services/{svc}/README.md` or `server/shared/dotnet/{lib}/README.md`) |
+| Phase progression / wipe state / open phase questions / new tracked issue                                                                   | [docs/v2/V2.md](docs/v2/V2.md)                                                                         |
+| Architectural decision that overrides prior v2 plan                                                                                         | [docs/v2/V2.md](docs/v2/V2.md) (and add a new [ADRs](docs/adrs/README.md) entry per ADR convention)    |
 
 If your change spans multiple categories, update each. If no entry fits, the change probably needs a new doc — ASK before creating one.
-
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -328,22 +331,22 @@ If your change spans multiple categories, update each. If no entry fits, the cha
 
 Three-tier folder hierarchy for all backend code. TLC = architectural concern, 2LC = implementation type, 3LC = operation type. **3LC verbiage varies by layer:**
 
-| TLC | 3LC Verbiage | Meaning |
-|---|---|---|
-| **CQRS** | `C/` Commands, `Q/` Queries, `U/` Utilities, `X/` Complex | Business operation intent |
-| **Messaging** | `Pub/` Publishers, `Sub/` Subscribers | Message direction |
-| **Repository** | `C/` Create, `R/` Read, `U/` Update, `D/` Delete | CRUD operation |
-| **Caching** | `C/` Create, `R/` Read, `U/` Update, `D/` Delete | CRUD operation |
+| TLC            | 3LC Verbiage                                              | Meaning                   |
+| -------------- | --------------------------------------------------------- | ------------------------- |
+| **CQRS**       | `C/` Commands, `Q/` Queries, `U/` Utilities, `X/` Complex | Business operation intent |
+| **Messaging**  | `Pub/` Publishers, `Sub/` Subscribers                     | Message direction         |
+| **Repository** | `C/` Create, `R/` Read, `U/` Update, `D/` Delete          | CRUD operation            |
+| **Caching**    | `C/` Create, `R/` Read, `U/` Update, `D/` Delete          | CRUD operation            |
 
 Interfaces live in `Interfaces/{TLC}/Handlers/{3LC}/`. Implementations live in `Implementations/{TLC}/Handlers/{3LC}/` (app layer) or `{TLC}/Handlers/{3LC}/` (infra layer).
 
 ### CQRS Handler Categories
 
-| Type | Distributed Cache | DB Write | External API | Message Publish | Key Test |
-|---|---|---|---|---|---|
-| **Query** | No | No | No | No | "If the process dies after, would state persist?" → **No** |
-| **Command** | Yes | Yes | Yes | Yes | Primary intent = mutation of persistent/shared state |
-| **Complex** | Yes | Yes | Yes | Yes | Primary intent = retrieval, but may mutate as side effect |
+| Type        | Distributed Cache | DB Write | External API | Message Publish | Key Test                                                   |
+| ----------- | ----------------- | -------- | ------------ | --------------- | ---------------------------------------------------------- |
+| **Query**   | No                | No       | No           | No              | "If the process dies after, would state persist?" → **No** |
+| **Command** | Yes               | Yes      | Yes          | Yes             | Primary intent = mutation of persistent/shared state       |
+| **Complex** | Yes               | Yes      | Yes          | Yes             | Primary intent = retrieval, but may mutate as side effect  |
 
 Local/in-memory caching is always OK (instance-scoped, ephemeral — doesn't affect other instances).
 
@@ -392,7 +395,6 @@ One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consume
 - **Object storage**: SeaweedFS for user files. MinIO retained as backend for LGTM block storage.
 - **Production deployment**: eventually Docker Swarm + Portainer; pre-launch is Compose on a VPS.
 
-
 <sup>[↑ jump to top](#top)</sup>
 
 ---
@@ -417,6 +419,10 @@ One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consume
 - **NEVER defer / skip planned work** without asking the user first. [rules.md §13.4]
 - **NEVER start services manually** (`dotnet run`, `pnpm dev`, etc.) — Docker Compose manages services. [rules.md §8.1]
 - **NEVER `Grep` `secrets/` or `.env.secrets` by name.** [rules.md §3.11]
+
+### Sub-agent dispatch discipline
+
+- **Sub-agent model policy (per [rules.md §24.0i](docs/dev/rules.md#24-audit-evidence-discipline))**: Auditor / Plan-Auditor / Final-reviewer / Implementer / Fixer / Investigator → Sonnet; Planner / Plan-amender / Aggregator → Opus; Orchestrator (main thread) → Opus. Sweeping Implementer / Fixer Opus carve-out per the four criteria in §24.0i (atomic >40-file / >3-concern / cross-runtime / cascading pipeline) — cite the criterion in the dispatch brief + sub-agent self-attestation. Auditor-shape role escalation to Opus requires explicit per-occurrence user approval per [§13.14](docs/dev/rules.md#13-permission--action-discipline). Canonical table + WHY per role + self-documentation requirement: [process.md §3 Sub-agent model policy per role](docs/dev/process.md#sub-agent-model-policy-per-role). Trust-but-verify discipline (orchestrator verification of Sonnet outputs): [process.md §4 Orchestrator verification of Sonnet sub-agent outputs](docs/dev/process.md#orchestrator-verification-of-sonnet-sub-agent-outputs).
 
 ### Ask when uncertain (the #1 rule)
 
@@ -479,6 +485,12 @@ One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consume
 
 - **Inject one of `ILocalCache` / `IDistributedCache` / `ITieredCache`** from `D2.Shared.Caching.Abstractions`. Use `*AndBroadcast*` write variants when other instances cache the same key. Every op returns `D2Result<T>`. [rules.md §16.3]
 
+### Codegen discipline (generated files are reproducible — keep them that way)
+
+- **NEVER hand-edit generated files.** Fix the GENERATOR, the INPUT, or EXTEND the pipeline — never the output. "Generated" includes `*.g.<ext>` files, anything under `Generated/`, anything produced by a documented pipeline (Roslyn source-gen output, `tools/ts-codegen` output, proto-derived files, Drizzle migration artifacts, Paraglide-compiled locales, **Tier-2 spec files like `contracts/geo/*.spec.json`** built by the 0008 geo data pipeline), and anything carrying a `GENERATED` / `do not edit` banner. Hand-edits get silently overwritten on the next pipeline run — the "fix" never existed from the pipeline's perspective. [rules.md §26.5]
+- **Spec-mirror DTO types FORBIDDEN in destination assemblies** — autogen from the schema instead, OR move the DTO into source-gen internals under §26.2's no-leak + parity-test conditions. [rules.md §26.1]
+- **Hand-write a DTO that mirrors a `.proto` / `.spec.json` / `.openapi.yaml` / `.graphql` shape in a published package = process-integrity failure.** [rules.md §26.1]
+
 > **All language-specific predicates (C# Falsey/Truthy, sealed-by-default, extension members, regex bucket discipline, options records pattern, brace rules, namespace ordering, field prefixes, MustDisposeResource, ValueTask discipline, Random.Shared, etc.) live in [docs/dev/rules.md §5 (C#)](docs/dev/rules.md#5-c-code-conventions) and [§6 (TypeScript/SvelteKit)](docs/dev/rules.md#6-typescript--sveltekit-code-conventions).**
 > **Architecture predicates (transport-vs-handler layer, IDOR, ValidateAudience placement, smart-constructor input validation, EF migration safety, etc.) live in [docs/dev/rules.md §9](docs/dev/rules.md#9-architectural-layer-hygiene) and [§10 Security](docs/dev/rules.md#10-security-endpoints--auth--secrets--input).**
 > **Concurrency / race-condition predicates live in [docs/dev/rules.md §4](docs/dev/rules.md#4-concurrency--race-conditions).**
@@ -491,7 +503,7 @@ One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consume
 > **Observability completeness predicates live in [docs/dev/rules.md §21](docs/dev/rules.md#21-observability-completeness).**
 > **Idempotency / exactly-once predicates live in [docs/dev/rules.md §22](docs/dev/rules.md#22-idempotency--exactly-once-semantics).**
 > **Configuration hygiene predicates live in [docs/dev/rules.md §23](docs/dev/rules.md#23-configuration-hygiene).**
-
+> **Codegen-discipline predicates (no hand-coded spec-mirror DTOs in destination assemblies, source-gen internal-DTO carve-out, cross-language parity tests, established codegen tools, **no hand-edits of generated output**) live in [docs/dev/rules.md §26](docs/dev/rules.md#26-codegen-discipline-spec--proto--schema-derived-types).**
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -501,25 +513,26 @@ One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consume
 
 ### C# Naming
 
-| Element | Convention | Example |
-|---|---|---|
-| Classes/Records/Interfaces | `PascalCase` | `GetReferenceData` |
-| Methods/Properties | `PascalCase` | `HandleAsync` |
-| Private instance fields | `_camelCase` | `_memoryCache` |
-| Private readonly instance fields | `r_camelCase` | `r_getFromMem` |
-| Private static fields | `s_camelCase` | `s_instance` |
-| Private static readonly fields | `sr_camelCase` | `sr_activitySource` |
-| Static readonly (non-private) | `SR_PascalCase` | `SR_ActivitySource` |
-| Private constants | `_UPPER_CASE` | `_BATCH_SIZE` |
-| Public/Internal constants | `UPPER_CASE` | `MAX_ATTEMPTS` |
-| Local constants (tests) | `snake_case` | `expected_count` |
-| Local variables | `camelCase` | `result` |
+| Element                          | Convention      | Example             |
+| -------------------------------- | --------------- | ------------------- |
+| Classes/Records/Interfaces       | `PascalCase`    | `GetReferenceData`  |
+| Methods/Properties               | `PascalCase`    | `HandleAsync`       |
+| Private instance fields          | `_camelCase`    | `_memoryCache`      |
+| Private readonly instance fields | `r_camelCase`   | `r_getFromMem`      |
+| Private static fields            | `s_camelCase`   | `s_instance`        |
+| Private static readonly fields   | `sr_camelCase`  | `sr_activitySource` |
+| Static readonly (non-private)    | `SR_PascalCase` | `SR_ActivitySource` |
+| Private constants                | `_UPPER_CASE`   | `_BATCH_SIZE`       |
+| Public/Internal constants        | `UPPER_CASE`    | `MAX_ATTEMPTS`      |
+| Local constants (tests)          | `snake_case`    | `expected_count`    |
+| Local variables                  | `camelCase`     | `result`            |
 
 **Primary-constructor handlers**: Constructor parameters do NOT take the `r_` prefix — they're parameters, not fields, even though they're accessed like fields inside the class body. The carve-out applies ONLY to handler primary-constructor parameters; regular fields keep their prefixes.
 
 > **The above C# Naming table is duplicated here from [docs/dev/rules.md §7.1](docs/dev/rules.md#7-naming-file-headers-folder-casing) for at-a-glance reference — update both in lockstep when either changes. Annotation per [rules.md §11.32](docs/dev/rules.md#11-documentation-parity--best-practices).**
 >
 > **All other convention details live in [docs/dev/rules.md §7](docs/dev/rules.md#7-naming-file-headers-folder-casing)**:
+>
 > - **TypeScript naming** (camelCase / PascalCase / kebab-case)
 > - **Folder casing** (outside-project = lowercase, inside-project = PascalCase)
 > - **File headers** (per-language full code blocks for `.cs`, `.ts`, `.css`, shebang-bearing files, markdown, XML/csproj/slnx, SQL, etc.)
@@ -527,7 +540,6 @@ One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consume
 > - **Scope vs Permission terminology** (use "scope" — JWT-canonical, OAuth-standard)
 > - **Observability fields** (`traceId`, `correlationId`, `userId`, `orgId`, `service` — universal)
 > - **Git conventions** (branch prefixes, conventional commits, no `Co-Authored-By`)
-
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -577,7 +589,6 @@ Key roots in the tree:
 - `secrets/` — gitignored + Claude-deny-ruled key material (root key, encryption keys, dev TLS certs). Populated by `tools/scripts/gen-dev-keys.sh`.
 - `.claude/` — project-level Claude Code settings (`settings.json` with deny rules)
 
-
 <sup>[↑ jump to top](#top)</sup>
 
 ---
@@ -586,13 +597,13 @@ Key roots in the tree:
 
 Environment configuration is split:
 
-| File | Contents | Committed? | Claude can read? | Claude can edit? |
-|---|---|---|---|---|
-| `.env.local` | Non-secret config — service URLs, ports, log levels, feature flags, CORS origins | No (gitignored) | **Yes** | **Yes** |
-| `.env.local.example` | Template with safe defaults | **Yes** | Yes | Yes |
-| `.env.secrets` | Real third-party creds — Twilio, Resend, IPinfo, OAuth client secrets, prod-like DB passwords | No (gitignored) | **No (deny-ruled)** | **No (deny-ruled)** |
-| `.env.secrets.example` | Template with placeholder values like `TWILIO_AUTH_TOKEN=replace_with_real_value` | **Yes** | Yes | Yes |
-| `secrets/` | Key material — root key, dev encryption keys, dev TLS certs | No (gitignored, populated by `tools/scripts/gen-dev-keys.sh`) | **No (deny-ruled)** | **No (deny-ruled)** |
+| File                   | Contents                                                                                      | Committed?                                                    | Claude can read?    | Claude can edit?    |
+| ---------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ------------------- | ------------------- |
+| `.env.local`           | Non-secret config — service URLs, ports, log levels, feature flags, CORS origins              | No (gitignored)                                               | **Yes**             | **Yes**             |
+| `.env.local.example`   | Template with safe defaults                                                                   | **Yes**                                                       | Yes                 | Yes                 |
+| `.env.secrets`         | Real third-party creds — Twilio, Resend, IPinfo, OAuth client secrets, prod-like DB passwords | No (gitignored)                                               | **No (deny-ruled)** | **No (deny-ruled)** |
+| `.env.secrets.example` | Template with placeholder values like `TWILIO_AUTH_TOKEN=replace_with_real_value`             | **Yes**                                                       | Yes                 | Yes                 |
+| `secrets/`             | Key material — root key, dev encryption keys, dev TLS certs                                   | No (gitignored, populated by `tools/scripts/gen-dev-keys.sh`) | **No (deny-ruled)** | **No (deny-ruled)** |
 
 Compose loads both env files (`.env.local` first, `.env.secrets` second so secrets override placeholders if any collision):
 
@@ -605,6 +616,7 @@ services:
 ```
 
 **Workflow when adding a new secret**:
+
 1. Edit `.env.secrets.example` adding `NEW_THING_API_KEY=replace_with_real_value`
 2. Update `infra/compose/compose.yml` to load it into the right service
 3. Tell the operator: "Added `NEW_THING_API_KEY` — copy into `.env.secrets`, set the real value, restart the service"

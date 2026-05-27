@@ -46,23 +46,27 @@ Transitions managed by a single `transitionFileStatus()` method (transactional, 
 Modern smartphones produce media in formats that older MIME lists miss. Phase 6 must include:
 
 **Images**:
+
 - HEIC / HEIF (iOS default since iOS 11; Android adopted)
 - AVIF (next-gen, increasing browser support)
 - WebP (Android default)
 - JPEG, PNG, GIF (legacy)
 
 **Audio**:
+
 - AAC / M4A (iOS voice memos, podcasts)
 - 3GPP (Android voice recordings)
 - MP3, OGG, WAV (legacy)
 
 **Video**:
+
 - MOV / QuickTime (iOS camera default)
 - 3GPP / 3GP (older Android)
 - MP4 (cross-platform default)
 - WebM (newer Android)
 
 **Documents**:
+
 - PDF, DOCX, XLSX, PPTX, ODT (office)
 - HEIC live photos (treat as image)
 
@@ -90,6 +94,7 @@ public sealed partial class GetFilesByIds : BaseHandler<GetFilesByIds, Input, Ou
 ```
 
 Rules:
+
 - Document **why** in a class-level XML comment (e.g., "Output contains presigned URLs which embed PII")
 - Apply at the handler level, NOT at every call site (call sites would have to know the suppression rule — bad)
 - For domain types we own, use `[RedactData]` instead — it's recursive, type-cached, applies to all logging
@@ -129,6 +134,7 @@ FILES_CK__0__VARIANT__0__MAX_DIM=64
 Phase 6 rebuild should preserve this convention so existing `.env.local` configs migrate cleanly.
 
 Resolution types:
+
 - `jwt_owner` — JWT `sub` must match the file's owner (e.g., user uploading their own avatar)
 - `jwt_org` — JWT `org` must match the file's org (e.g., org logo)
 - `callback` — Files calls owning service to confirm permission (e.g., thread attachment — Comms confirms membership)
@@ -139,6 +145,7 @@ Resolution types:
 ## When This Doc Gets Deleted
 
 Phase 6 completion criteria includes:
+
 - [ ] D2.Files (.NET) ships with the 6 design principles preserved
 - [ ] Status state machine implemented + tested
 - [ ] Smartphone MIME list seeded

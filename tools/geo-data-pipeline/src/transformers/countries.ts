@@ -42,13 +42,17 @@ const SOVEREIGNTY_PATTERNS: Array<[RegExp, "code-tail" | "literal"]> = [
  * Maps a datasets-country-codes row to a partial Country spec entry.
  * Returns null when the row lacks the minimum required identity (ISO 3166-1 Alpha-2).
  */
-export function transformCountryRow(row: CountryCodesRow): CountryPartialFromDatasets | null {
+export function transformCountryRow(
+  row: CountryCodesRow,
+): CountryPartialFromDatasets | null {
   const alpha2 = row["ISO3166-1-Alpha-2"]?.trim();
   if (!alpha2 || alpha2.length !== COUNTRY_CODE_LENGTH) {
     return null;
   }
-  const displayName = row["CLDR display name"]?.trim() ?? row["official_name_en"]?.trim();
-  const officialName = row["official_name_en"]?.trim() ?? row["CLDR display name"]?.trim();
+  const displayName =
+    row["CLDR display name"]?.trim() ?? row["official_name_en"]?.trim();
+  const officialName =
+    row["official_name_en"]?.trim() ?? row["CLDR display name"]?.trim();
   if (!displayName || !officialName) {
     return null;
   }
@@ -56,13 +60,21 @@ export function transformCountryRow(row: CountryCodesRow): CountryPartialFromDat
   return {
     iso31661Alpha2Code: alpha2.toUpperCase(),
     iso31661Alpha3Code: row["ISO3166-1-Alpha-3"]?.trim().toUpperCase() ?? null,
-    iso31661NumericCode: padNumericCode(row["ISO3166-1-numeric"]?.trim() ?? null),
+    iso31661NumericCode: padNumericCode(
+      row["ISO3166-1-numeric"]?.trim() ?? null,
+    ),
     displayName,
     officialName,
-    sovereignCountryISO31661Alpha2Code: deriveSovereign(row["is_independent"]?.trim() ?? null),
+    sovereignCountryISO31661Alpha2Code: deriveSovereign(
+      row["is_independent"]?.trim() ?? null,
+    ),
     phoneNumberPrefix: cleanPhonePrefix(row["Dial"]?.trim() ?? null),
-    primaryCurrencyISO4217AlphaCode: cleanCurrencyCode(row["ISO4217-currency_alphabetic_code"]),
-    primaryLanguageISO6391Code: derivePrimaryLanguage(row["Languages"]?.trim() ?? null),
+    primaryCurrencyISO4217AlphaCode: cleanCurrencyCode(
+      row["ISO4217-currency_alphabetic_code"],
+    ),
+    primaryLanguageISO6391Code: derivePrimaryLanguage(
+      row["Languages"]?.trim() ?? null,
+    ),
     _provenance: {
       source: "datasets-country-codes",
       extractedAt: new Date().toISOString(),
@@ -118,7 +130,9 @@ export function cleanPhonePrefix(raw: string | null): string | null {
  * The PRIMARY currency is the first listed; the variant is secondary. Take the first
  * 3-letter code matching ISO 4217 alpha format.
  */
-export function cleanCurrencyCode(raw: string | null | undefined): string | null {
+export function cleanCurrencyCode(
+  raw: string | null | undefined,
+): string | null {
   if (!raw) return null;
   const first = raw.split(",")[0]?.trim().toUpperCase();
   if (!first) return null;

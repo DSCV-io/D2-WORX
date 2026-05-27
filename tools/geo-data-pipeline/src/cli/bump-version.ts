@@ -111,10 +111,13 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  console.error(`\n=== Bumping catalogVersion -> ${newVersion} across contracts/geo/ ===\n`);
+  console.error(
+    `\n=== Bumping catalogVersion -> ${newVersion} across contracts/geo/ ===\n`,
+  );
 
   try {
-    for (const f of PIPELINE_DERIVED_FILES) await bumpFile(f, newVersion, false);
+    for (const f of PIPELINE_DERIVED_FILES)
+      await bumpFile(f, newVersion, false);
     for (const f of HAND_ROLLED_FILES) await bumpFile(f, newVersion, true);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -123,7 +126,9 @@ async function main(): Promise<void> {
   }
 
   const total = PIPELINE_DERIVED_FILES.length + HAND_ROLLED_FILES.length;
-  console.error(`\nDone. ${total} spec file(s) updated to catalogVersion=${newVersion}.`);
+  console.error(
+    `\nDone. ${total} spec file(s) updated to catalogVersion=${newVersion}.`,
+  );
 }
 
 await main();

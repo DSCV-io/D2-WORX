@@ -16,10 +16,10 @@ OIDC discovery is canonical: a single `D2_AUTH_ISSUER` env var drives `<issuer>/
 
 ### Outbound clients
 
-| Type | Role |
-|---|---|
-| `IServiceIdentityClient.GetCurrentTokenAsync(ct)` | Returns the current service-identity JWT for outbound calls (cached in-process; refreshed proactively by the background hosted service). |
-| `ITokenExchangeClient.ExchangeAsync(subjectToken, targetAudience, narrowedScopes?, ct)` | Exchanges an inbound user JWT for a downstream-audience JWT (RFC 8693). Cached per `(sessionId, audience, scope-set)` in `ILocalCache`. |
+| Type                                                                                    | Role                                                                                                                                     |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `IServiceIdentityClient.GetCurrentTokenAsync(ct)`                                       | Returns the current service-identity JWT for outbound calls (cached in-process; refreshed proactively by the background hosted service). |
+| `ITokenExchangeClient.ExchangeAsync(subjectToken, targetAudience, narrowedScopes?, ct)` | Exchanges an inbound user JWT for a downstream-audience JWT (RFC 8693). Cached per `(sessionId, audience, scope-set)` in `ILocalCache`.  |
 
 ### Composition root
 
@@ -33,6 +33,7 @@ services.AddD2AuthOutbound(opts =>
 ```
 
 Registers:
+
 - `AuthOutboundOptions` (configured)
 - `IConfigurationManager<OpenIdConnectConfiguration>` (single per-process, auto-refreshes discovery doc; uses our `IHttpClientFactory`-managed client so the configured timeout / TLS / connection-pool settings apply)
 - `ServiceIdentityCache` + `IServiceIdentityClient` + `HttpServiceIdentityClient`
@@ -109,15 +110,15 @@ The backplane subscription is OPTIONAL. If `ICacheInvalidationBackplane` isn't r
 
 ## Configuration
 
-| Option | Env var | Default | Purpose |
-|---|---|---|---|
-| `Issuer` | `D2_AUTH_ISSUER` | (required) | OIDC issuer URL — drives discovery doc fetch. |
-| `ClientId` | `D2_AUTH_CLIENT_ID` | (required) | This service's OAuth client id. |
-| `ClientSecret` | `D2_AUTH_CLIENT_SECRET` | (required, NEVER logged) | This service's OAuth client secret. |
-| `ServiceIdentityRefreshLeadTime` | — | 60 s | How early before expiry to proactively refresh the cached service-identity token. |
-| `HttpRequestTimeout` | — | 5 s | Per-request timeout on outbound HTTP calls to Edge. |
-| `TokenExchangeCacheKeyPrefix` | — | `tokenexchange:` | Prefix for token-exchange cache entries in the shared `ILocalCache`. |
-| `TokenExchangeCacheFallbackTtl` | — | 5 min | Fallback TTL when the OAuth response's `expires_in` is missing or unparseable. |
+| Option                           | Env var                 | Default                  | Purpose                                                                           |
+| -------------------------------- | ----------------------- | ------------------------ | --------------------------------------------------------------------------------- |
+| `Issuer`                         | `D2_AUTH_ISSUER`        | (required)               | OIDC issuer URL — drives discovery doc fetch.                                     |
+| `ClientId`                       | `D2_AUTH_CLIENT_ID`     | (required)               | This service's OAuth client id.                                                   |
+| `ClientSecret`                   | `D2_AUTH_CLIENT_SECRET` | (required, NEVER logged) | This service's OAuth client secret.                                               |
+| `ServiceIdentityRefreshLeadTime` | —                       | 60 s                     | How early before expiry to proactively refresh the cached service-identity token. |
+| `HttpRequestTimeout`             | —                       | 5 s                      | Per-request timeout on outbound HTTP calls to Edge.                               |
+| `TokenExchangeCacheKeyPrefix`    | —                       | `tokenexchange:`         | Prefix for token-exchange cache entries in the shared `ILocalCache`.              |
+| `TokenExchangeCacheFallbackTtl`  | —                       | 5 min                    | Fallback TTL when the OAuth response's `expires_in` is missing or unparseable.    |
 
 ---
 
@@ -125,11 +126,11 @@ The backplane subscription is OPTIONAL. If `ICacheInvalidationBackplane` isn't r
 
 Tag-key + tag-value constants are emitted by [`D2.Shared.Telemetry.Tags.SourceGen`](../telemetry-tags-source-gen/README.md) into `OutboundTelemetryTags.g.cs` from [`contracts/telemetry/telemetry.spec.json`](../../../../contracts/telemetry/telemetry.spec.json). Counter call sites reference `OutboundTelemetryTags.ServiceIdentityFetches.Outcome.CACHE_HIT` / etc. instead of bare string literals. The emitted file lands in the tracked `Generated/` directory (committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build`; do not hand-edit).
 
-| Counter | Tags | Purpose |
-|---|---|---|
-| `d2.auth.outbound.service_identity.fetches` | `outcome` (`OutboundTelemetryTags.ServiceIdentityFetches.Outcome.*`: `cache_hit` / `cache_hit_after_singleflight` / `fetch_success` / `fetch_failure` / `http_failure` / `discovery_failure`) | Service-identity token resolutions. One increment per `GetCurrentTokenAsync` / `ForceRefreshAsync` call. |
-| `d2.auth.outbound.token_exchange.requests` | `outcome` (`OutboundTelemetryTags.TokenExchangeRequests.Outcome.*`; same six values) | Token-exchange requests. One increment per `ExchangeAsync` call (input-validation failures aren't counted — caller bug, not auth-runtime traffic). |
-| `d2.auth.outbound.token_exchange.revoked_purges` | — | Cache entries purged by session-revoked backplane events; one increment per purged key. Useful for verifying cluster-wide invalidation propagation. |
+| Counter                                          | Tags                                                                                                                                                                                          | Purpose                                                                                                                                             |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `d2.auth.outbound.service_identity.fetches`      | `outcome` (`OutboundTelemetryTags.ServiceIdentityFetches.Outcome.*`: `cache_hit` / `cache_hit_after_singleflight` / `fetch_success` / `fetch_failure` / `http_failure` / `discovery_failure`) | Service-identity token resolutions. One increment per `GetCurrentTokenAsync` / `ForceRefreshAsync` call.                                            |
+| `d2.auth.outbound.token_exchange.requests`       | `outcome` (`OutboundTelemetryTags.TokenExchangeRequests.Outcome.*`; same six values)                                                                                                          | Token-exchange requests. One increment per `ExchangeAsync` call (input-validation failures aren't counted — caller bug, not auth-runtime traffic).  |
+| `d2.auth.outbound.token_exchange.revoked_purges` | —                                                                                                                                                                                             | Cache entries purged by session-revoked backplane events; one increment per purged key. Useful for verifying cluster-wide invalidation propagation. |
 
 `ActivitySource` and `Meter` both named `D2.Shared.Auth.Outbound`. Hosts wire via `.AddSource(OutboundTelemetry.ACTIVITY_SOURCE_NAME)` / `.AddMeter(OutboundTelemetry.METER_NAME)`.
 

@@ -5,11 +5,22 @@
   "description": "Tier 1 (pipeline-raw) country catalog produced by tools/geo-data-pipeline. Verbose with per-entry _provenance + top-level sources / fieldCoverage diagnostics. NOT directly consumed by codegen — see ../countries.schema.json for the Tier 2 codegen-ready shape.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["$schema", "$note", "catalogVersion", "generatedAt", "sources", "fieldCoverage", "entries"],
+  "required": [
+    "$schema",
+    "$note",
+    "catalogVersion",
+    "generatedAt",
+    "sources",
+    "fieldCoverage",
+    "entries"
+  ],
   "properties": {
     "$schema": { "type": "string" },
     "$note": { "type": "string" },
-    "catalogVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$" },
+    "catalogVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$"
+    },
     "generatedAt": { "type": "string", "format": "date-time" },
     "sources": { "$ref": "#/$defs/Sources" },
     "fieldCoverage": { "$ref": "#/$defs/FieldCoverage" },
@@ -22,6 +33,30 @@
         "properties": {
           "iso31661Alpha2Code": { "type": "string", "pattern": "^[A-Z]{2}$" },
           "displayName": { "type": "string", "minLength": 1 },
+          "widelyAcceptedCurrencies": {
+            "type": "array",
+            "description": "Optional — currencies widely accepted alongside legal tender at retail/tourism. Populated exclusively via the overlay layer at contracts/geo/overlays/; upstream Tier 1 sources (CLDR / datasets-country-codes) do not provide this.",
+            "items": {
+              "type": "object",
+              "required": ["isoAlphaCode"],
+              "properties": {
+                "isoAlphaCode": { "type": "string", "pattern": "^[A-Z]{3}$" },
+                "fromDate": { "type": ["string", "null"] }
+              }
+            }
+          },
+          "touristCurrencies": {
+            "type": "array",
+            "description": "Optional — currencies accepted in tourist venues but not retail-wide. Populated exclusively via the overlay layer; no upstream Tier 1 source.",
+            "items": {
+              "type": "object",
+              "required": ["isoAlphaCode"],
+              "properties": {
+                "isoAlphaCode": { "type": "string", "pattern": "^[A-Z]{3}$" },
+                "fromDate": { "type": ["string", "null"] }
+              }
+            }
+          },
           "_provenance": { "$ref": "#/$defs/Provenance" }
         }
       }

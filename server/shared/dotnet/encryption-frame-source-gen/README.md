@@ -24,10 +24,10 @@ The SAME spec drives `@d2/encryption-abstractions` via `tools/ts-codegen/src/enc
 
 ## Diagnostics
 
-| ID | Title | Severity |
-|---|---|---|
-| `D2EF001` | Encryption-frame spec is malformed | Error |
-| `D2EF002` | Duplicate field constName | Error |
-| `D2EF003` | Fixed-offset fields overlap | Error |
-| `D2EF004` | Field has invalid length | Error |
-| `D2EF005` | Spec version is invalid | Error |
+| ID        | Title                              | Severity |
+| --------- | ---------------------------------- | -------- |
+| `D2EF001` | Encryption-frame spec is malformed | Error    |
+| `D2EF002` | Duplicate field constName          | Error    |
+| `D2EF003` | Fixed-offset fields overlap        | Error    |
+| `D2EF004` | Field has invalid length           | Error    |
+| `D2EF005` | Spec version is invalid            | Error    |

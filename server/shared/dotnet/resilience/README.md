@@ -16,20 +16,20 @@ Depends only on `D2.Shared.Result` (for the `D2Result`-aware retry overload).
 
 ## File layout
 
-| Path | Contents |
-|---|---|
-| `Retry/RetryHelper.cs` | Static `RetryAsync<T>` (generic) and `RetryD2ResultAsync<TData>` (D2Result-aware overload). Internal `IsTransientException` classifier and `CalculateDelay` math. |
-| `Retry/RetryOptions.cs` + `Retry/RetryDefaults.cs` | `RetryOptions<T>` record — `MaxAttempts`, `BaseDelayMs`, `BackoffMultiplier`, `MaxDelayMs`, `Jitter`, `ShouldRetry`, `IsTransient`, `DelayFunc`. Defaults centralized in the non-generic `RetryDefaults` peer (single SoT, no per-T duplication). |
-| `CircuitBreaker/CircuitBreaker.cs` | `CircuitBreaker<T>` — three-state Closed / Open / Half-Open with lock-free state transitions. |
-| `CircuitBreaker/CircuitBreakerOptions.cs` | `CircuitBreakerOptions` — `FailureThreshold`, `CooldownDuration`, `NowFunc` (test clock). Owns the single source of truth for breaker defaults; the breaker reads from a parameterless Options instance when nothing is supplied. |
-| `CircuitBreaker/CircuitState.cs` | `CircuitState` enum — `Closed`, `Open`, `HalfOpen`. |
-| `CircuitBreaker/CircuitOpenException.cs` | Thrown by `ExecuteAsync` when the circuit is open and no fallback is supplied. |
-| `Singleflight/Singleflight.cs` | `Singleflight<TKey, TValue>` — deduplicates concurrent in-flight async operations by key. NOT a cache: keys are removed once the operation completes. |
-| `Pipeline/IResilientLayer.cs` | The decorator interface — one `WrapAsync(key, next, ct)` method. |
-| `Pipeline/{Singleflight,CircuitBreaker,Retry}Layer.cs` | The three concrete layer wrappers around the primitives above. |
-| `Pipeline/ResilientPipeline.cs` | Composes layers in outer-first order; one `ExecuteAsync(key, op, ct)` returning `D2Result<TValue>` (never throws — every exception is mapped to a result). |
-| `Pipeline/IResilientPipelineBuilder.cs` + `ResilientPipelineBuilder.cs` | Fluent registration DSL — `.UseSingleflight().UseCircuitBreaker().UseRetries(opts)` etc. |
-| `Pipeline/ResilientPipelineServiceCollectionExtensions.cs` | `AddResilientPipeline<TKey, TValue>(p => ...)` extension on `IServiceCollection`. |
+| Path                                                                    | Contents                                                                                                                                                                                                                                          |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Retry/RetryHelper.cs`                                                  | Static `RetryAsync<T>` (generic) and `RetryD2ResultAsync<TData>` (D2Result-aware overload). Internal `IsTransientException` classifier and `CalculateDelay` math.                                                                                 |
+| `Retry/RetryOptions.cs` + `Retry/RetryDefaults.cs`                      | `RetryOptions<T>` record — `MaxAttempts`, `BaseDelayMs`, `BackoffMultiplier`, `MaxDelayMs`, `Jitter`, `ShouldRetry`, `IsTransient`, `DelayFunc`. Defaults centralized in the non-generic `RetryDefaults` peer (single SoT, no per-T duplication). |
+| `CircuitBreaker/CircuitBreaker.cs`                                      | `CircuitBreaker<T>` — three-state Closed / Open / Half-Open with lock-free state transitions.                                                                                                                                                     |
+| `CircuitBreaker/CircuitBreakerOptions.cs`                               | `CircuitBreakerOptions` — `FailureThreshold`, `CooldownDuration`, `NowFunc` (test clock). Owns the single source of truth for breaker defaults; the breaker reads from a parameterless Options instance when nothing is supplied.                 |
+| `CircuitBreaker/CircuitState.cs`                                        | `CircuitState` enum — `Closed`, `Open`, `HalfOpen`.                                                                                                                                                                                               |
+| `CircuitBreaker/CircuitOpenException.cs`                                | Thrown by `ExecuteAsync` when the circuit is open and no fallback is supplied.                                                                                                                                                                    |
+| `Singleflight/Singleflight.cs`                                          | `Singleflight<TKey, TValue>` — deduplicates concurrent in-flight async operations by key. NOT a cache: keys are removed once the operation completes.                                                                                             |
+| `Pipeline/IResilientLayer.cs`                                           | The decorator interface — one `WrapAsync(key, next, ct)` method.                                                                                                                                                                                  |
+| `Pipeline/{Singleflight,CircuitBreaker,Retry}Layer.cs`                  | The three concrete layer wrappers around the primitives above.                                                                                                                                                                                    |
+| `Pipeline/ResilientPipeline.cs`                                         | Composes layers in outer-first order; one `ExecuteAsync(key, op, ct)` returning `D2Result<TValue>` (never throws — every exception is mapped to a result).                                                                                        |
+| `Pipeline/IResilientPipelineBuilder.cs` + `ResilientPipelineBuilder.cs` | Fluent registration DSL — `.UseSingleflight().UseCircuitBreaker().UseRetries(opts)` etc.                                                                                                                                                          |
+| `Pipeline/ResilientPipelineServiceCollectionExtensions.cs`              | `AddResilientPipeline<TKey, TValue>(p => ...)` extension on `IServiceCollection`.                                                                                                                                                                 |
 
 ---
 
@@ -143,11 +143,11 @@ public Task<WhoIsRecord> ResolveAsync(string ip, CancellationToken ct) =>
 
 #### When to use Singleflight — and when NOT
 
-| Use SF when… | Don't use SF when… |
-|---|---|
-| Multiple concurrent callers ask for the **same logical thing** by key | Each call is a **distinct intent** that should produce a distinct effect |
+| Use SF when…                                                                                         | Don't use SF when…                                                                                      |
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Multiple concurrent callers ask for the **same logical thing** by key                                | Each call is a **distinct intent** that should produce a distinct effect                                |
 | Operation is **idempotent** — running it once and sharing the result is correct for everyone waiting | Operation has a **per-call side effect** (publish a message, send an email, write a row, charge a card) |
-| You're preventing a **thundering-herd / cache-miss stampede** on a hot key | Two callers happen to share a transport but represent different business events |
+| You're preventing a **thundering-herd / cache-miss stampede** on a hot key                           | Two callers happen to share a transport but represent different business events                         |
 
 Concrete:
 
@@ -160,7 +160,7 @@ Concrete:
 - ❌ **gRPC / HTTP writes** (`Create*`, `Update*`, `Delete*`) — SF in front deletes work.
 - ❌ **Outbox / queue drain publishers** — dedup belongs upstream (in the outbox itself), not in the publisher.
 
-Heuristic: if the answer to *"if two callers ask, is one shared answer correct for both?"* is **yes**, SF fits. If the answer is *"two callers means two side effects we want"*, SF is a bug.
+Heuristic: if the answer to _"if two callers ask, is one shared answer correct for both?"_ is **yes**, SF fits. If the answer is _"two callers means two side effects we want"_, SF is a bug.
 
 Behavioral guarantees:
 
@@ -174,13 +174,13 @@ Behavioral guarantees:
 
 ## When to reach for which
 
-| Need | Tool |
-|---|---|
-| Backoff-and-retry around a flaky external call | `RetryHelper.RetryAsync` |
-| Backoff-and-retry around a `D2Result`-returning handler chain | `RetryHelper.RetryD2ResultAsync` |
-| Avoid hammering a confirmed-down upstream while it recovers | `CircuitBreaker<T>` |
-| Avoid the "five concurrent first requests trigger five identical expensive lookups" stampede | `Singleflight<TKey, TValue>` |
-| Compose two or three of the above behind a single call site that returns a `D2Result` | `ResilientPipeline<TKey, TValue>` (see Pipeline section below) |
+| Need                                                                                         | Tool                                                           |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Backoff-and-retry around a flaky external call                                               | `RetryHelper.RetryAsync`                                       |
+| Backoff-and-retry around a `D2Result`-returning handler chain                                | `RetryHelper.RetryD2ResultAsync`                               |
+| Avoid hammering a confirmed-down upstream while it recovers                                  | `CircuitBreaker<T>`                                            |
+| Avoid the "five concurrent first requests trigger five identical expensive lookups" stampede | `Singleflight<TKey, TValue>`                                   |
+| Compose two or three of the above behind a single call site that returns a `D2Result`        | `ResilientPipeline<TKey, TValue>` (see Pipeline section below) |
 
 The three primitives compose naturally. The `Pipeline` namespace is the canonical way to do this composition; reach for the raw primitives only when you need direct control or have an unusual layering requirement.
 

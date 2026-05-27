@@ -73,7 +73,11 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
-        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
         "textMode": "value_and_name",
         "wideLayout": true
       },
@@ -115,7 +119,11 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
-        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
         "textMode": "value_and_name",
         "wideLayout": true
       },
@@ -157,7 +165,11 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
-        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
         "textMode": "value_and_name",
         "wideLayout": true
       },
@@ -206,7 +218,11 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
-        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
         "textMode": "value_and_name",
         "wideLayout": true
       },
@@ -248,7 +264,11 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
-        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
         "textMode": "value_and_name",
         "wideLayout": true
       },

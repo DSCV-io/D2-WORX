@@ -34,6 +34,7 @@ public sealed class ChannelPoolIdleTtlIntegrationTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task IdleBeyondTtl_EvictsAndCreatesFresh()
     {
         await using var realConn = await BuildRealConnectionAsync();
@@ -62,6 +63,7 @@ public sealed class ChannelPoolIdleTtlIntegrationTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task IdleWithinTtl_ReusesChannel()
     {
         await using var realConn = await BuildRealConnectionAsync();

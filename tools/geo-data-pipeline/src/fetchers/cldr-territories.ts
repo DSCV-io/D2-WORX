@@ -55,7 +55,10 @@ export interface CldrTerritoriesPayload {
   >;
 }
 
-export interface CldrTerritoriesFetchResult extends Pick<CachedFetch, "provenance" | "fromCache"> {
+export interface CldrTerritoriesFetchResult extends Pick<
+  CachedFetch,
+  "provenance" | "fromCache"
+> {
   locale: string;
   territories: Record<string, string>;
   identity: { language: string; cldrVersion: string | null };
@@ -83,14 +86,20 @@ export async function fetchCldrTerritories(
     ttlHours: options?.ttlHours,
   });
 
-  const payload = JSON.parse(fetched.body.toString("utf8")) as CldrTerritoriesPayload;
+  const payload = JSON.parse(
+    fetched.body.toString("utf8"),
+  ) as CldrTerritoriesPayload;
   const mainKeys = Object.keys(payload.main);
   if (mainKeys.length === 0 || !mainKeys[0]) {
-    throw new Error(`CLDR territories payload for ${locale} has empty 'main' object`);
+    throw new Error(
+      `CLDR territories payload for ${locale} has empty 'main' object`,
+    );
   }
   const inner = payload.main[mainKeys[0]];
   if (!inner) {
-    throw new Error(`CLDR territories payload for ${locale} missing inner locale block`);
+    throw new Error(
+      `CLDR territories payload for ${locale} missing inner locale block`,
+    );
   }
   const territories = inner.localeDisplayNames.territories;
 

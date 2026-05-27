@@ -10,13 +10,13 @@ Copyright (c) DCSV. All rights reserved.
 
 ## Services
 
-| Service | Purpose |
-|---|---|
-| [`edge/`](edge/README.md) | The unified gateway. YARP routing + self-rolled Auth module (RFC 8693 + client_credentials + KeyCustodian) + SignalR hubs + in-process WhoIs (IPinfo) + all cross-cutting middleware. Single public ingress. |
-| [`audit/`](audit/README.md) | Append-only audit store. Consumes `d2.audit.events` from RabbitMQ (encrypted); writes to `audit_db` with INSERT-only role. Different retention + access control from operational data. |
-| [`courier/`](courier/README.md) | Pure outbound delivery — email + SMS. Markdown content rendered to HTML via Markdig; brand chrome via Razor. |
-| [`notifications/`](notifications/README.md) | In-app activity feed. Persistent feed entries with read/unread, pagination, aggregation. Consumes `d2.notifications.requests` events; calls Edge's SignalR push API for live delivery. |
-| [`files/`](files/README.md) | File management + processing + variants. SeaweedFS for storage. ClamAV virus scanning (fail-closed). Per-context-key config. |
+| Service                                     | Purpose                                                                                                                                                                                                      |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`edge/`](edge/README.md)                   | The unified gateway. YARP routing + self-rolled Auth module (RFC 8693 + client_credentials + KeyCustodian) + SignalR hubs + in-process WhoIs (IPinfo) + all cross-cutting middleware. Single public ingress. |
+| [`audit/`](audit/README.md)                 | Append-only audit store. Consumes `d2.audit.events` from RabbitMQ (encrypted); writes to `audit_db` with INSERT-only role. Different retention + access control from operational data.                       |
+| [`courier/`](courier/README.md)             | Pure outbound delivery — email + SMS. Markdown content rendered to HTML via Markdig; brand chrome via Razor.                                                                                                 |
+| [`notifications/`](notifications/README.md) | In-app activity feed. Persistent feed entries with read/unread, pagination, aggregation. Consumes `d2.notifications.requests` events; calls Edge's SignalR push API for live delivery.                       |
+| [`files/`](files/README.md)                 | File management + processing + variants. SeaweedFS for storage. ClamAV virus scanning (fail-closed). Per-context-key config.                                                                                 |
 
 ## Standard service shape
 

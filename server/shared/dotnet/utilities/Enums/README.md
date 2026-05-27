@@ -8,21 +8,21 @@ Copyright (c) DCSV. All rights reserved.
 
 Standard enum vocabulary shared across the framework. Lives here (rather than per-consumer) so reasons / isolation taxonomies stay aligned across every lib that surfaces them.
 
-| File | Contents |
-|---|---|
-| `IsolationLevel.cs` | DB isolation level enum with phenomena-matrix doc, mirroring the standard SQL isolation taxonomy. |
-| `RedactReason.cs` | Standard reasons for redaction (`PersonalInformation`, `FinancialInformation`, `SecretInformation`, etc.) used by `[RedactData]`. |
+| File                | Contents                                                                                                                          |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `IsolationLevel.cs` | DB isolation level enum with phenomena-matrix doc, mirroring the standard SQL isolation taxonomy.                                 |
+| `RedactReason.cs`   | Standard reasons for redaction (`PersonalInformation`, `FinancialInformation`, `SecretInformation`, etc.) used by `[RedactData]`. |
 
 ## `IsolationLevel`
 
 Standard SQL isolation level enum with phenomena matrix. Values: `ReadUncommitted`, `ReadCommitted` (default), `RepeatableRead`, `Serializable`. Use to parametrize EF Core / Npgsql transaction scopes.
 
-| Level | Dirty reads | Non-repeatable reads | Phantom reads | Serialization anomaly |
-|---|---|---|---|---|
-| `ReadUncommitted` | yes | yes | yes | yes |
-| `ReadCommitted` | no | yes | yes | yes |
-| `RepeatableRead` | no | no | yes (not in PG) | yes |
-| `Serializable` | no | no | no | no |
+| Level             | Dirty reads | Non-repeatable reads | Phantom reads   | Serialization anomaly |
+| ----------------- | ----------- | -------------------- | --------------- | --------------------- |
+| `ReadUncommitted` | yes         | yes                  | yes             | yes                   |
+| `ReadCommitted`   | no          | yes                  | yes             | yes                   |
+| `RepeatableRead`  | no          | no                   | yes (not in PG) | yes                   |
+| `Serializable`    | no          | no                   | no              | no                    |
 
 > PostgreSQL note: `ReadUncommitted` behaves identically to `ReadCommitted`; `RepeatableRead` does not allow phantom reads.
 

@@ -16,11 +16,19 @@
  *   pnpm geo:overlays --json              structured JSON to stdout (for tooling)
  */
 
-import { loadCountriesOverlay } from "../tier-2/load-overlays.js";
+import {
+  loadCountriesOverlay,
+  loadLocalesOverlay,
+  loadSubdivisionsOverlay,
+} from "../tier-2/load-overlays.js";
 
 const wantsJson = process.argv.includes("--json");
 
-const countries = await loadCountriesOverlay();
+const [countries, subdivisions, locales] = await Promise.all([
+  loadCountriesOverlay(),
+  loadSubdivisionsOverlay(),
+  loadLocalesOverlay(),
+]);
 
 interface Entry {
   catalog: string;
@@ -68,20 +76,94 @@ if (countries) {
   }
 }
 
+if (subdivisions) {
+  for (const a of subdivisions.additions) {
+    entries.push({
+      catalog: "subdivisions",
+      operation: "addition",
+      id: a.id,
+      addedAt: a.addedAt,
+      reason: a.reason,
+      addedBy: a.addedBy,
+    });
+  }
+  for (const o of subdivisions.overrides) {
+    entries.push({
+      catalog: "subdivisions",
+      operation: "override",
+      id: o.id,
+      addedAt: o.addedAt,
+      reason: o.reason,
+      addedBy: o.addedBy,
+      fieldsTouched: Object.keys(o.fields),
+    });
+  }
+  for (const r of subdivisions.removals) {
+    entries.push({
+      catalog: "subdivisions",
+      operation: "removal",
+      id: r.id,
+      addedAt: r.addedAt,
+      reason: r.reason,
+      addedBy: r.addedBy,
+    });
+  }
+}
+
+if (locales) {
+  for (const a of locales.additions) {
+    entries.push({
+      catalog: "locales",
+      operation: "addition",
+      id: a.id,
+      addedAt: a.addedAt,
+      reason: a.reason,
+      addedBy: a.addedBy,
+    });
+  }
+  for (const o of locales.overrides) {
+    entries.push({
+      catalog: "locales",
+      operation: "override",
+      id: o.id,
+      addedAt: o.addedAt,
+      reason: o.reason,
+      addedBy: o.addedBy,
+      fieldsTouched: Object.keys(o.fields),
+    });
+  }
+  for (const r of locales.removals) {
+    entries.push({
+      catalog: "locales",
+      operation: "removal",
+      id: r.id,
+      addedAt: r.addedAt,
+      reason: r.reason,
+      addedBy: r.addedBy,
+    });
+  }
+}
+
 if (wantsJson) {
-  console.log(JSON.stringify({ totalEntries: entries.length, entries }, null, 2));
+  console.log(
+    JSON.stringify({ totalEntries: entries.length, entries }, null, 2),
+  );
   process.exit(0);
 }
 
 if (entries.length === 0) {
   console.log(
-    "No active overlays. (Looked at: contracts/geo/overlays/countries.overlays.spec.json)",
+    "No active overlays. (Looked at: contracts/geo/overlays/countries.overlays.spec.json, contracts/geo/overlays/subdivisions.overlays.spec.json, contracts/geo/overlays/locales.overlays.spec.json)",
   );
-  console.log("See contracts/geo/overlays/README.md for when to add an overlay vs fix upstream.");
+  console.log(
+    "See contracts/geo/overlays/README.md for when to add an overlay vs fix upstream.",
+  );
   process.exit(0);
 }
 
-console.log(`Active overlays — ${entries.length} total across all overlay files.\n`);
+console.log(
+  `Active overlays — ${entries.length} total across all overlay files.\n`,
+);
 
 const byCatalog = new Map<string, Entry[]>();
 for (const e of entries) {
@@ -92,11 +174,15 @@ for (const e of entries) {
 
 for (const [catalog, list] of byCatalog.entries()) {
   console.log(`━━━ ${catalog.toUpperCase()} ━━━`);
-  list.sort((a, b) => a.addedAt.localeCompare(b.addedAt) || a.id.localeCompare(b.id));
+  list.sort(
+    (a, b) => a.addedAt.localeCompare(b.addedAt) || a.id.localeCompare(b.id),
+  );
   for (const e of list) {
     const op = e.operation.padEnd(8);
     const id = e.id.padEnd(6);
-    const fields = e.fieldsTouched ? ` fields=[${e.fieldsTouched.join(", ")}]` : "";
+    const fields = e.fieldsTouched
+      ? ` fields=[${e.fieldsTouched.join(", ")}]`
+      : "";
     const by = e.addedBy ? ` (added by ${e.addedBy})` : "";
     console.log(`  ${op}  ${id}  ${e.addedAt}${fields}${by}`);
     console.log(`            reason: ${e.reason}`);

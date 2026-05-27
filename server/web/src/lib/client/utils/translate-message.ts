@@ -43,8 +43,7 @@ export function translateMessage(
   args?: Record<string, unknown>,
   fallback?: string,
 ): string {
-  if (message === undefined || message === null || message === "")
-    return fallback ?? "";
+  if (message === undefined || message === null || message === "") return fallback ?? "";
 
   const key = typeof message === "string" ? message : message.key;
   const tkParams = typeof message === "string" ? undefined : message.params;

@@ -2,7 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import { fetchSparql, fetchSparqlBatch, type SparqlFetchResult } from "./wikidata-sparql.js";
+import { fetchSparqlBatch, type SparqlFetchResult } from "./wikidata-sparql.js";
 
 /**
  * Wikidata properties:
@@ -101,7 +101,10 @@ async function fetchEndonymsForProperty(
   return { byCode, fetches };
 }
 
-function chunkLanguages(languageCodes: readonly string[], chunkSize: number): string[][] {
+function chunkLanguages(
+  languageCodes: readonly string[],
+  chunkSize: number,
+): string[][] {
   const chunks: string[][] = [];
   for (let i = 0; i < languageCodes.length; i += chunkSize) {
     chunks.push([...languageCodes.slice(i, i + chunkSize)]);
@@ -128,7 +131,10 @@ function stripLeadingBom(value: string): string {
  * route into `labelsByLang[lang]`. Filtering by language IN-list keeps the result
  * size bounded.
  */
-function buildEndonymsQuery(property: string, languageCodes: readonly string[]): string {
+function buildEndonymsQuery(
+  property: string,
+  languageCodes: readonly string[],
+): string {
   const langListSparql = languageCodes.map((l) => `"${l}"`).join(", ");
   return `SELECT ?isoCode ?label WHERE {
   ?entity wdt:${property} ?isoCode .
@@ -143,7 +149,17 @@ if (
 ) {
   // Smoke test — pull country endonyms for the 11 supported langs
   const r = await fetchCountryEndonyms([
-    "en", "es", "fr", "de", "it", "ja", "nl", "ko", "zh", "pt", "pl",
+    "en",
+    "es",
+    "fr",
+    "de",
+    "it",
+    "ja",
+    "nl",
+    "ko",
+    "zh",
+    "pt",
+    "pl",
   ]);
   console.log("=== Country smoke test ===");
   console.log("countries with labels:", r.byCode.size);

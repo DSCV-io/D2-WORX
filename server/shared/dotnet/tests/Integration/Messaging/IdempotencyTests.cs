@@ -31,6 +31,7 @@ public sealed class IdempotencyTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task DuplicateMessageId_HandlerInvokedOnce()
     {
         TestCollector.Reset<AuditCapturingHandler>();
@@ -80,6 +81,7 @@ public sealed class IdempotencyTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task MarkSeenFails_MessageRoutesToDlq_HandlerNotReplayed()
     {
         // A failing MarkSeenAsync

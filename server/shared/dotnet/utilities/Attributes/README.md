@@ -8,8 +8,8 @@ Copyright (c) DCSV. All rights reserved.
 
 Marker attributes consumed reflectively elsewhere in the stack. Zero behavior on their own — they exist to label types/members so other infrastructure (Serilog destructuring, codegen, contract tests) can pick them up.
 
-| File | Contents |
-|---|---|
+| File                     | Contents                                                                                                                                                                                                                   |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `RedactDataAttribute.cs` | `[RedactData(Reason = ..., CustomReason = "...")]` — marker attribute consumed by the Serilog destructuring policy in `D2.Shared.ServiceDefaults`. Targets `AttributeTargets.All` (types, properties, fields, parameters). |
 
 ## `[RedactData]` attribute

@@ -104,7 +104,10 @@ describe("toProblemDetails — per-failure-shape titles", () => {
     // here. Cross-language parity locked: .NET emits the same fallback.
     [499, "Request Failed"],
   ])("status %i defaults to title %s", (status, title) => {
-    const failure = fail({ statusCode: status });
+    // Cast: the test deliberately includes 499 (not in the HttpStatusCode union)
+    // to exercise the "Request Failed" fallback path. fail() accepts the narrow
+    // HttpStatusCode union; widen via `as never` to allow the out-of-union numeric.
+    const failure = fail({ statusCode: status as never });
     const body = toProblemDetails(failure, { instance: "/x" });
     expect(body.title).toBe(title);
   });

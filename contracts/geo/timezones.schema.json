@@ -5,13 +5,24 @@
   "description": "Tier 2 codegen-ready Timezone catalog. Matches the TimezoneSpec record shape consumed by .NET SourceGen + TS emitter. Offsets sourced from Node's built-in ICU Intl.DateTimeFormat sampled at January 15 (STD) and July 15 (DST) per UTC year.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["$generated", "$source", "$schema", "$note", "catalogVersion", "generatedAt", "entries"],
+  "required": [
+    "$generated",
+    "$source",
+    "$schema",
+    "$note",
+    "catalogVersion",
+    "generatedAt",
+    "entries"
+  ],
   "properties": {
     "$generated": { "const": true },
     "$source": { "const": "pipeline-derived" },
     "$schema": { "type": "string" },
     "$note": { "type": "string" },
-    "catalogVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$" },
+    "catalogVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[A-Za-z0-9.]+)?$"
+    },
     "generatedAt": { "type": "string", "format": "date-time" },
     "entries": {
       "type": "array",
@@ -23,10 +34,14 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "ianaIdentifier", "displayName",
-        "currentStdOffsetMinutes", "currentDstOffsetMinutes",
-        "currentStdAbbrev", "currentDstAbbrev",
-        "countryISO31661Alpha2Code", "coApplicableCountryISO31661Alpha2Codes",
+        "ianaIdentifier",
+        "displayName",
+        "currentStdOffsetMinutes",
+        "currentDstOffsetMinutes",
+        "currentStdAbbrev",
+        "currentDstAbbrev",
+        "countryISO31661Alpha2Code",
+        "coApplicableCountryISO31661Alpha2Codes",
         "aliases"
       ],
       "properties": {
@@ -49,7 +64,10 @@
         },
         "currentStdAbbrev": { "type": "string" },
         "currentDstAbbrev": { "type": ["string", "null"] },
-        "countryISO31661Alpha2Code": { "type": ["string", "null"], "pattern": "^[A-Z]{2}$" },
+        "countryISO31661Alpha2Code": {
+          "type": ["string", "null"],
+          "pattern": "^[A-Z]{2}$"
+        },
         "coApplicableCountryISO31661Alpha2Codes": {
           "type": "array",
           "items": { "type": "string", "pattern": "^[A-Z]{2}$" }

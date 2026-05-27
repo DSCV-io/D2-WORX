@@ -6,26 +6,27 @@ Copyright (c) DCSV. All rights reserved.
 
 ## What's here
 
-JSON specs produced end-to-end by `tools/geo-data-pipeline` from upstream sources (CLDR / IANA tzdb / libphonenumber / datasets/* / Wikidata SPARQL / debian iso-codes). Every entry traces to real upstream data — zero hand-written or AI-generated content. Per-source provenance (URL + sha256 + license + fetchedAt) is recorded at the top of each spec file.
+JSON specs produced end-to-end by `tools/geo-data-pipeline` from upstream sources (CLDR / IANA tzdb / libphonenumber / datasets/\* / Wikidata SPARQL / debian iso-codes). Every entry traces to real upstream data — zero hand-written or AI-generated content. Per-source provenance (URL + sha256 + license + fetchedAt) is recorded at the top of each spec file.
 
-| File | Source pipeline | Entries |
-|---|---|---|
-| `countries.spec.json` | datasets/country-codes + CLDR localenames-full + CLDR supplemental (week / measurement / currency / territoryInfo) + libphonenumber + Wikidata SPARQL | 249 |
-| `subdivisions.spec.json` | debian/iso-codes iso_3166-2 + CLDR cldr-subdivisions-full + Wikidata SPARQL | 5,046 |
-| `timezones.spec.json` | IANA zone1970.tab + IANA backward + Node ICU `Intl.DateTimeFormat` | 312 |
-| `languages.spec.json` | datasets/language-codes + Wikidata SPARQL P218 + CLDR scriptMetadata/languageData + CLDR cldr-localenames-full | 183 |
-| `locales.spec.json` | CLDR availableLocales + CLDR likelySubtags + Node ICU Intl.Locale/DisplayNames + CLDR cldr-numbers-full + CLDR cldr-dates-full | 1,089 |
-| `currencies.spec.json` | datasets/currency-codes + CLDR currencyData + CLDR cldr-numbers-full | 326 (178 active + 148 retired) |
+| File                     | Source pipeline                                                                                                                                       | Entries                        |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `countries.spec.json`    | datasets/country-codes + CLDR localenames-full + CLDR supplemental (week / measurement / currency / territoryInfo) + libphonenumber + Wikidata SPARQL | 249                            |
+| `subdivisions.spec.json` | debian/iso-codes iso_3166-2 + CLDR cldr-subdivisions-full + Wikidata SPARQL                                                                           | 5,046                          |
+| `timezones.spec.json`    | IANA zone1970.tab + IANA backward + Node ICU `Intl.DateTimeFormat`                                                                                    | 312                            |
+| `languages.spec.json`    | datasets/language-codes + Wikidata SPARQL P218 + CLDR scriptMetadata/languageData + CLDR cldr-localenames-full                                        | 183                            |
+| `locales.spec.json`      | CLDR availableLocales + CLDR likelySubtags + Node ICU Intl.Locale/DisplayNames + CLDR cldr-numbers-full + CLDR cldr-dates-full                        | 1,089                          |
+| `currencies.spec.json`   | datasets/currency-codes + CLDR currencyData + CLDR cldr-numbers-full                                                                                  | 326 (178 active + 148 retired) |
 
 ## NOT directly consumed by codegen
 
 These files are **pipeline-raw** — they include:
+
 - Per-entry `_provenance` fields (which source contributed which fields)
 - Top-level `sources[]` array (full provenance per upstream pull)
 - Top-level `fieldCoverage`, `orderBreakdown`, `wikidataFills`, `tagShape` and other build-time diagnostics
 - `$note` flagging build-version + remaining gaps
 
-The codegen-ready specs that `D2.Shared.Geo.Default` / `@d2/geo-default` will consume live **one level up** at `contracts/geo/*.spec.json`, produced by the Tier 2 clean-pass (`tools/geo-data-pipeline/src/tier-2/`) which strips diagnostics + applies cross-catalog M:M backfill + Locale denormalization + `IsSelectable`/`IsSupported` derivation. Canonical: the geo lib packages are not yet shipped; design at [`docs/v2/PHASE_1.md`](../../../docs/v2/PHASE_1.md) (planned for deliverable 0009-geo-libs).
+The codegen-ready specs that `D2.Shared.Geo.Default` / `@d2/geo-default` consume live **one level up** at `contracts/geo/*.spec.json`, produced by the Tier 2 clean-pass (`tools/geo-data-pipeline/src/tier-2/`) which strips diagnostics + applies cross-catalog M:M backfill + Locale denormalization + `IsSelectable`/`IsSupported` derivation.
 
 See [`../README.md`](../README.md) for the full three-tier layout (src-data → Tier 2 → hand-rolled GeopoliticalEntity).
 

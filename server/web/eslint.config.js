@@ -73,11 +73,7 @@ export default defineConfig(
 
   // Test files — relaxed rules
   {
-    files: [
-      "**/*.test.{ts,js}",
-      "**/*.spec.{ts,js}",
-      "**/tests/**/*.{ts,js}",
-    ],
+    files: ["**/*.test.{ts,js}", "**/*.spec.{ts,js}", "**/tests/**/*.{ts,js}"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": "off",

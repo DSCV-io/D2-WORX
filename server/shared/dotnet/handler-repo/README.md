@@ -14,26 +14,26 @@ Provider-agnostic by design: catches the BCL-typed `DbUpdateConcurrencyException
 
 ## File layout
 
-| Path | Contents |
-|---|---|
-| `D2.Shared.Handler.Repo.csproj` | csproj — refs `handler` + `handler-abstractions` + `handler-repo-abstractions` + `result` + `Microsoft.EntityFrameworkCore`. Zero provider deps. |
-| `BaseRepoHandler.cs` | Abstract `BaseRepoHandler<TSelf, TInput, TOutput> : BaseHandler<TSelf, TInput, TOutput>`. Constructor takes an injected `IDbExceptionClassifier`. Override `HandleAsync` calls `RunCorePipelineAsync` then dispatches the captured exception through the classifier to a typed `D2Result` factory. |
+| Path                            | Contents                                                                                                                                                                                                                                                                                           |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `D2.Shared.Handler.Repo.csproj` | csproj — refs `handler` + `handler-abstractions` + `handler-repo-abstractions` + `result` + `Microsoft.EntityFrameworkCore`. Zero provider deps.                                                                                                                                                   |
+| `BaseRepoHandler.cs`            | Abstract `BaseRepoHandler<TSelf, TInput, TOutput> : BaseHandler<TSelf, TInput, TOutput>`. Constructor takes an injected `IDbExceptionClassifier`. Override `HandleAsync` calls `RunCorePipelineAsync` then dispatches the captured exception through the classifier to a typed `D2Result` factory. |
 
 ---
 
 ## Mapping
 
-| Captured exception | Classified as | Default `D2Result` |
-|---|---|---|
-| `DbUpdateConcurrencyException` | `ConcurrencyConflict` (BCL — handled directly) | `D2Result.ConcurrencyConflict()` |
-| `IDbExceptionClassifier.Classify(ex)` returns `UniqueViolation` | `UniqueViolation` | `D2Result.UniqueViolation()` |
-| Returns `ForeignKeyViolation` | `ForeignKeyViolation` | `D2Result.ForeignKeyViolation()` |
-| Returns `NotNullViolation` | `NotNullViolation` | `D2Result.NotNullViolation()` |
-| Returns `CheckViolation` | `CheckViolation` | `D2Result.CheckViolation()` |
-| Returns `Timeout` | `Timeout` | `D2Result.DbTimeout()` |
-| Returns `Deadlock` | `Deadlock` | `D2Result.DbDeadlock()` |
-| Returns `ConnectionFailure` | `ConnectionFailure` | `D2Result.DbConnectionFailure()` |
-| Classifier returns `null` | unknown | Falls through — `BaseHandler`'s `UnhandledException` preserved |
+| Captured exception                                              | Classified as                                  | Default `D2Result`                                             |
+| --------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------- |
+| `DbUpdateConcurrencyException`                                  | `ConcurrencyConflict` (BCL — handled directly) | `D2Result.ConcurrencyConflict()`                               |
+| `IDbExceptionClassifier.Classify(ex)` returns `UniqueViolation` | `UniqueViolation`                              | `D2Result.UniqueViolation()`                                   |
+| Returns `ForeignKeyViolation`                                   | `ForeignKeyViolation`                          | `D2Result.ForeignKeyViolation()`                               |
+| Returns `NotNullViolation`                                      | `NotNullViolation`                             | `D2Result.NotNullViolation()`                                  |
+| Returns `CheckViolation`                                        | `CheckViolation`                               | `D2Result.CheckViolation()`                                    |
+| Returns `Timeout`                                               | `Timeout`                                      | `D2Result.DbTimeout()`                                         |
+| Returns `Deadlock`                                              | `Deadlock`                                     | `D2Result.DbDeadlock()`                                        |
+| Returns `ConnectionFailure`                                     | `ConnectionFailure`                            | `D2Result.DbConnectionFailure()`                               |
+| Classifier returns `null`                                       | unknown                                        | Falls through — `BaseHandler`'s `UnhandledException` preserved |
 
 `OperationCanceledException` is intentionally NOT remapped here — `BaseHandler.RunCorePipelineAsync` already handles it (returns `D2Result.Canceled` for caller-initiated cancellation, `D2Result.ServiceUnavailable` for downstream timeouts not tied to the request token).
 
@@ -117,12 +117,14 @@ Without a registered classifier, resolving any `BaseRepoHandler` subclass fails 
 ## Dependencies
 
 Project references:
+
 - `D2.Shared.Handler` — base + `HandlerContext<T>`
 - `D2.Shared.Handler.Abstractions` — `IHandler`, `HandlerOptions`
 - `D2.Shared.Handler.Repo.Abstractions` — `IDbExceptionClassifier`, `DbFailureKind`, `D2Result.X` extension factories
 - `D2.Shared.Result` — base `D2Result`
 
 Package references:
+
 - `Microsoft.EntityFrameworkCore` — `DbUpdateConcurrencyException`
 
 No `Npgsql`, no provider-specific deps.

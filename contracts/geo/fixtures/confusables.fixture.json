@@ -1,0 +1,351 @@
+{
+  "$schema": "./confusables.schema.json",
+  "$comment": "Synthetic adversarial fixture for the geo name resolver. Pinned outcomes that both .NET and TS resolvers MUST produce identically. Append-only — new rows added on regression discovery; rows are never removed.",
+  "version": "0002",
+  "countryCases": [
+    {
+      "input": "United States",
+      "expectedIso31661Alpha2Code": "US",
+      "comment": "exact display name"
+    },
+    {
+      "input": "United States of America",
+      "expectedIso31661Alpha2Code": "US",
+      "comment": "exact official name"
+    },
+    {
+      "input": "USA",
+      "expectedIso31661Alpha2Code": "US",
+      "comment": "alpha-3 code"
+    },
+    {
+      "input": "UNITED STATES",
+      "expectedIso31661Alpha2Code": "US",
+      "comment": "case-insensitive after invariant casefold"
+    },
+    {
+      "input": "united states",
+      "expectedIso31661Alpha2Code": "US",
+      "comment": "lowercase free-form name resolves via invariant casefold"
+    },
+    {
+      "input": "United states",
+      "expectedIso31661Alpha2Code": "US",
+      "comment": "mixed-case free-form name resolves via invariant casefold"
+    },
+    {
+      "input": "Niger",
+      "expectedIso31661Alpha2Code": "NE",
+      "comment": "confusable pair member: Niger vs Nigeria"
+    },
+    {
+      "input": "Nigeria",
+      "expectedIso31661Alpha2Code": "NG",
+      "comment": "confusable pair member: Niger vs Nigeria"
+    },
+    {
+      "input": "Iran",
+      "expectedIso31661Alpha2Code": "IR",
+      "comment": "confusable pair member: Iran vs Iraq"
+    },
+    {
+      "input": "Iraq",
+      "expectedIso31661Alpha2Code": "IQ",
+      "comment": "confusable pair member: Iran vs Iraq"
+    },
+    {
+      "input": "Slovakia",
+      "expectedIso31661Alpha2Code": "SK",
+      "comment": "confusable pair member: Slovakia vs Slovenia"
+    },
+    {
+      "input": "Slovenia",
+      "expectedIso31661Alpha2Code": "SI",
+      "comment": "confusable pair member: Slovakia vs Slovenia"
+    },
+    {
+      "input": "Austria",
+      "expectedIso31661Alpha2Code": "AT",
+      "comment": "confusable pair member: Austria vs Australia"
+    },
+    {
+      "input": "Australia",
+      "expectedIso31661Alpha2Code": "AU",
+      "comment": "confusable pair member: Austria vs Australia"
+    },
+    {
+      "input": "Chad",
+      "expectedIso31661Alpha2Code": "TD",
+      "comment": "confusable pair member: Chad vs Chile"
+    },
+    {
+      "input": "Chile",
+      "expectedIso31661Alpha2Code": "CL",
+      "comment": "confusable pair member: Chad vs Chile"
+    },
+    {
+      "input": "Mali",
+      "expectedIso31661Alpha2Code": "ML",
+      "comment": "confusable pair member: Mali vs Malawi"
+    },
+    {
+      "input": "Malawi",
+      "expectedIso31661Alpha2Code": "MW",
+      "comment": "confusable pair member: Mali vs Malawi"
+    },
+    {
+      "input": "Guinea",
+      "expectedIso31661Alpha2Code": "GN",
+      "comment": "confusable pair member: Guinea vs Guyana"
+    },
+    {
+      "input": "Guyana",
+      "expectedIso31661Alpha2Code": "GY",
+      "comment": "confusable pair member: Guinea vs Guyana"
+    },
+    {
+      "input": "Sudan",
+      "expectedIso31661Alpha2Code": "SD",
+      "comment": "confusable pair member: Sudan vs South Sudan (Pass-1 exact display name)"
+    },
+    {
+      "input": "South Sudan",
+      "expectedIso31661Alpha2Code": "SS",
+      "comment": "confusable pair member: Sudan vs South Sudan (Pass-1 exact display name)"
+    },
+    {
+      "input": "",
+      "expectedIso31661Alpha2Code": null,
+      "comment": "empty input — boundary validation"
+    },
+    {
+      "input": "   ",
+      "expectedIso31661Alpha2Code": null,
+      "comment": "whitespace-only input — boundary validation"
+    },
+    {
+      "input": "X",
+      "expectedIso31661Alpha2Code": null,
+      "comment": "one character — too short for any pass that would hit"
+    },
+    {
+      "input": "SomeRandomCountryNameThatDoesNotExist",
+      "expectedIso31661Alpha2Code": null,
+      "comment": "cascade exhausted with no match"
+    },
+    {
+      "input": "840",
+      "expectedIso31661Alpha2Code": "US",
+      "comment": "Pass-1 exact: ISO 3166-1 numeric code 840 maps to US"
+    },
+    {
+      "input": "Ivory Coast",
+      "expectedIso31661Alpha2Code": "CI",
+      "comment": "Pass-1 exact via official-name field (historical English alias)"
+    },
+    {
+      "input": "Trinidad & Tobago",
+      "expectedIso31661Alpha2Code": "TT",
+      "comment": "Pass-1 exact: ampersand-token expansion (' & ' to ' and ')"
+    },
+    {
+      "input": "Trinidad and Tobago",
+      "expectedIso31661Alpha2Code": "TT",
+      "comment": "Pass-1 exact: 'and' form matches official-name field directly"
+    },
+    {
+      "input": "Holy See",
+      "expectedIso31661Alpha2Code": "VA",
+      "comment": "Pass-1 exact via official-name field"
+    },
+    {
+      "input": "Türkiye",
+      "expectedIso31661Alpha2Code": "TR",
+      "comment": "Pass-1 exact display name with diacritic (ü)"
+    },
+    {
+      "input": "Turkiye",
+      "expectedIso31661Alpha2Code": "TR",
+      "comment": "locale-edge: NFD-strip turns ü into u so input without diacritic resolves identically"
+    },
+    {
+      "input": "TÜRKİYE",
+      "expectedIso31661Alpha2Code": "TR",
+      "comment": "locale-edge: invariant casefold + NFD-strip handles Turkish dotted İ correctly (becomes 'i', not the tr-TR 'ı')"
+    },
+    {
+      "input": "Deutschland",
+      "expectedIso31661Alpha2Code": "DE",
+      "comment": "Pass-1 exact endonym for Germany"
+    },
+    {
+      "input": "Burma",
+      "expectedIso31661Alpha2Code": "MM",
+      "comment": "Pass-3 contains: 'burma' substring uniquely resolves to MM via DisplayName 'Myanmar (Burma)'"
+    },
+    {
+      "input": "Vatican",
+      "expectedIso31661Alpha2Code": "VA",
+      "comment": "Pass-3 contains: 'vatican' substring resolves to VA (only VA's name fields contain 'vatican')"
+    },
+    {
+      "input": "Macedonia",
+      "expectedIso31661Alpha2Code": "MK",
+      "comment": "Pass-3 contains: 'macedonia' substring uniquely resolves to MK"
+    },
+    {
+      "input": "Korea",
+      "expectedIso31661Alpha2Code": null,
+      "comment": "Pass-3 ambiguity: 'korea' matches both KP (North Korea) and KR (South Korea) — fail-closed NotFound"
+    },
+    {
+      "input": "Republic",
+      "expectedIso31661Alpha2Code": null,
+      "comment": "Pass-3 ambiguity: 'republic' substring matches many official-name fields — fail-closed NotFound"
+    },
+    {
+      "input": "Unit",
+      "expectedIso31661Alpha2Code": null,
+      "comment": "Pass-2 ambiguity: startsWith 'unit' matches United States / United Kingdom / United Arab Emirates — fail-closed NotFound"
+    },
+    {
+      "input": "United",
+      "expectedIso31661Alpha2Code": null,
+      "comment": "Pass-2 ambiguity: startsWith 'united' matches multiple distinct countries — fail-closed NotFound"
+    },
+    {
+      "input": "ZZZZ",
+      "expectedIso31661Alpha2Code": null,
+      "comment": "4-char input that misses Pass-1 / Pass-2; Pass-3 + Pass-4 are length-gated (require >=5 chars)"
+    },
+    {
+      "input": "Iram",
+      "expectedIso31661Alpha2Code": null,
+      "comment": "Pass-4 short-circuit pin: 4 chars, Pass-4 fuzzy would resolve to Iran but Pass-4 requires >=5 chars — fail-closed NotFound"
+    },
+    {
+      "input": "Astralia",
+      "expectedIso31661Alpha2Code": "AU",
+      "comment": "Pass-4 Levenshtein distance-1 fuzzy: 'astralia' is one deletion from 'australia' (len 8, maxDistance = floor(8/5) = 1)"
+    },
+    {
+      "input": "日本",
+      "expectedIso31661Alpha2Code": "JP",
+      "comment": "Pass-1 exact endonym (CJK Japanese kanji for Japan)"
+    },
+    {
+      "input": "中华人民共和国",
+      "expectedIso31661Alpha2Code": "CN",
+      "comment": "Pass-1 exact endonym (CJK simplified Chinese for People's Republic of China)"
+    },
+    {
+      "input": "السعودية",
+      "expectedIso31661Alpha2Code": "SA",
+      "comment": "Pass-1 exact endonym (RTL Arabic for Saudi Arabia)"
+    }
+  ],
+  "subdivisionCases": [
+    {
+      "input": "California",
+      "parentCountryIso31661Alpha2Code": "US",
+      "expectedIso31662Code": "US-CA",
+      "comment": "exact display name within parent country"
+    },
+    {
+      "input": "Texas",
+      "parentCountryIso31661Alpha2Code": "US",
+      "expectedIso31662Code": "US-TX",
+      "comment": "exact display name within parent country"
+    },
+    {
+      "input": "Georgia",
+      "parentCountryIso31661Alpha2Code": "US",
+      "expectedIso31662Code": "US-GA",
+      "comment": "parent-context discipline: Georgia is also a country (GE) but within US scope resolves to GA"
+    },
+    {
+      "input": "Georgia",
+      "parentCountryIso31661Alpha2Code": "CA",
+      "expectedIso31662Code": null,
+      "comment": "parent-context discipline: no Georgia subdivision in Canada"
+    },
+    {
+      "input": "Ottawa",
+      "parentCountryIso31661Alpha2Code": "US",
+      "expectedIso31662Code": null,
+      "comment": "no match in parent — Ottawa is a Canadian city, not a US subdivision"
+    },
+    {
+      "input": "",
+      "parentCountryIso31661Alpha2Code": "US",
+      "expectedIso31662Code": null,
+      "comment": "empty input — boundary validation"
+    },
+    {
+      "input": "Washington",
+      "parentCountryIso31661Alpha2Code": "US",
+      "expectedIso31662Code": "US-WA",
+      "comment": "parent-context: 'Washington' matches state WA via DisplayName; DC carries 'District of Columbia' so no ambiguity"
+    },
+    {
+      "input": "Carolina",
+      "parentCountryIso31661Alpha2Code": "US",
+      "expectedIso31662Code": null,
+      "comment": "Pass-3 ambiguity: 'carolina' matches both North Carolina (US-NC) and South Carolina (US-SC) — fail-closed NotFound"
+    },
+    {
+      "input": "North Carolina",
+      "parentCountryIso31661Alpha2Code": "US",
+      "expectedIso31662Code": "US-NC",
+      "comment": "exact-match short-circuits Pass-3: full DisplayName beats the 'Carolina'-only ambiguity"
+    },
+    {
+      "input": "South Carolina",
+      "parentCountryIso31661Alpha2Code": "US",
+      "expectedIso31662Code": "US-SC",
+      "comment": "exact-match short-circuits Pass-3: full DisplayName beats the 'Carolina'-only ambiguity"
+    },
+    {
+      "input": "Califrnia",
+      "parentCountryIso31661Alpha2Code": "US",
+      "expectedIso31662Code": "US-CA",
+      "comment": "Pass-4 Levenshtein distance-1: one insertion away from 'california' (len 9, maxDistance = floor(9/5) = 1)"
+    },
+    {
+      "input": "Texxas",
+      "parentCountryIso31661Alpha2Code": "US",
+      "expectedIso31662Code": "US-TX",
+      "comment": "Pass-4 Levenshtein distance-1: one deletion away from 'texas' (len 6, maxDistance = floor(6/5) = 1)"
+    },
+    {
+      "input": "Texs",
+      "parentCountryIso31661Alpha2Code": "US",
+      "expectedIso31662Code": null,
+      "comment": "Pass-4 short-circuit pin: 4 chars — Pass-3 + Pass-4 require >=5 chars and Pass-2 startsWith 'texs' has no match — fail-closed NotFound"
+    },
+    {
+      "input": "São Paulo",
+      "parentCountryIso31661Alpha2Code": "BR",
+      "expectedIso31662Code": "BR-SP",
+      "comment": "Pass-1 exact via DisplayName with diacritic (ã)"
+    },
+    {
+      "input": "Sao Paulo",
+      "parentCountryIso31661Alpha2Code": "BR",
+      "expectedIso31662Code": "BR-SP",
+      "comment": "NFD normalization: input without diacritic resolves identically to São Paulo"
+    },
+    {
+      "input": "Île-de-France",
+      "parentCountryIso31661Alpha2Code": "FR",
+      "expectedIso31662Code": "FR-IDF",
+      "comment": "Pass-1 exact via DisplayName with diacritic (Î)"
+    },
+    {
+      "input": "Ile-de-France",
+      "parentCountryIso31661Alpha2Code": "FR",
+      "expectedIso31662Code": "FR-IDF",
+      "comment": "NFD normalization: input without diacritic resolves identically to Île-de-France"
+    }
+  ]
+}

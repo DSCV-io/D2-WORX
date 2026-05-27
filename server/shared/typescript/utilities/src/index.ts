@@ -4,6 +4,7 @@
 
 export { falsey } from "./falsey.js";
 export { truthy } from "./truthy.js";
+export { truthyOrUndefined } from "./truthy-or-undefined.js";
 export { toNullIfEmpty, cleanStr, cleanDisplayStr } from "./strings.js";
 export {
   tryParseTruthyNullUuid,

@@ -40,7 +40,10 @@ export interface LikelySubtagsPayload {
   };
 }
 
-export interface LikelySubtagsFetchResult extends Pick<CachedFetch, "provenance" | "fromCache"> {
+export interface LikelySubtagsFetchResult extends Pick<
+  CachedFetch,
+  "provenance" | "fromCache"
+> {
   /** Map from source tag → expanded `<lang>-<Script>-<REGION>` tag. */
   bySourceTag: Map<string, string>;
 }
@@ -55,9 +58,13 @@ export async function fetchCldrLikelySubtags(options?: {
     cacheKey: "likelySubtags.json",
     ttlHours: options?.ttlHours,
   });
-  const payload = JSON.parse(fetched.body.toString("utf8")) as LikelySubtagsPayload;
+  const payload = JSON.parse(
+    fetched.body.toString("utf8"),
+  ) as LikelySubtagsPayload;
   const bySourceTag = new Map<string, string>();
-  for (const [src, expanded] of Object.entries(payload.supplemental.likelySubtags)) {
+  for (const [src, expanded] of Object.entries(
+    payload.supplemental.likelySubtags,
+  )) {
     bySourceTag.set(src, expanded);
   }
   return {
@@ -77,7 +84,7 @@ export async function fetchCldrLikelySubtags(options?: {
  */
 export function deriveDefaultRegionTag(
   source: string,
-  bySourceTag: Map<string, string>,
+  bySourceTag: ReadonlyMap<string, string>,
 ): string | null {
   const expanded = bySourceTag.get(source);
   if (!expanded) return null;

@@ -22,8 +22,10 @@ export type CldrSupplementalFile =
   | "languageData"
   | "telephoneCodeData";
 
-export interface CldrSupplementalFetchResult<TPayload = unknown>
-  extends Pick<CachedFetch, "provenance" | "fromCache"> {
+export interface CldrSupplementalFetchResult<TPayload = unknown> extends Pick<
+  CachedFetch,
+  "provenance" | "fromCache"
+> {
   file: CldrSupplementalFile;
   payload: TPayload;
 }
@@ -153,15 +155,20 @@ export interface CurrencyDataPayload {
        * `_cashDigits` / `_cashRounding` exist for cash-vs-accounting differences (CHF, etc.).
        * "DEFAULT" entry applies to currencies not explicitly listed.
        */
-      fractions?: Record<string, {
-        _rounding?: string;
-        _digits?: string;
-        _cashRounding?: string;
-        _cashDigits?: string;
-      }>;
+      fractions?: Record<
+        string,
+        {
+          _rounding?: string;
+          _digits?: string;
+          _cashRounding?: string;
+          _cashDigits?: string;
+        }
+      >;
       region: Record<
         string,
-        Array<Record<string, { _from?: string; _to?: string; _tender?: string }>>
+        Array<
+          Record<string, { _from?: string; _to?: string; _tender?: string }>
+        >
       >;
     };
   };
@@ -211,7 +218,11 @@ export interface TerritoryInfoPayload {
         _population?: string;
         languagePopulation?: Record<
           string,
-          { _populationPercent?: string; _officialStatus?: string; _writingPercent?: string }
+          {
+            _populationPercent?: string;
+            _officialStatus?: string;
+            _writingPercent?: string;
+          }
         >;
       }
     >;

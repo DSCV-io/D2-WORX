@@ -15,28 +15,29 @@ Directory of the load-bearing patterns + cross-cutting conventions every D²-WOR
 3. [Handler](#handler)
 4. [D2Result](#d2result)
 5. [Utilities](#utilities)
-6. [Resilience](#resilience)
-7. [Repository](#repository)
-8. [Cache](#cache)
-9. [Composition root](#composition-root)
-10. [Logging](#logging)
-11. [Telemetry](#telemetry)
-12. [AspNetCore](#aspnetcore)
-13. [JWT inbound auth](#jwt-inbound-auth)
-14. [Translation — none on HTTP path (intentionally)](#translation--none-on-http-path-intentionally)
-15. [Configuration](#configuration)
-16. [i18n](#i18n)
-17. [Messaging](#messaging)
-18. [SAGA — cross-service synchronous compensation](#saga--cross-service-synchronous-compensation)
-19. [Multi-instance scaling](#multi-instance-scaling)
-20. [Mappers](#mappers)
-21. [Batch operations](#batch-operations)
-22. [Content-addressable entities](#content-addressable-entities)
-23. [Health checks](#health-checks)
-24. [PII redaction — `[RedactData]`](#pii-redaction--redactdata)
-25. [Spec-driven codegen — the cross-cutting pattern](#spec-driven-codegen--the-cross-cutting-pattern)
-26. [Domain validation — smart-constructor pattern](#domain-validation--smart-constructor-pattern)
-27. [Anti-patterns to actively avoid](#anti-patterns-to-actively-avoid)
+6. [Time / Temporal](#time--temporal)
+7. [Resilience](#resilience)
+8. [Repository](#repository)
+9. [Cache](#cache)
+10. [Composition root](#composition-root)
+11. [Logging](#logging)
+12. [Telemetry](#telemetry)
+13. [AspNetCore](#aspnetcore)
+14. [JWT inbound auth](#jwt-inbound-auth)
+15. [Translation — none on HTTP path (intentionally)](#translation--none-on-http-path-intentionally)
+16. [Configuration](#configuration)
+17. [i18n](#i18n)
+18. [Messaging](#messaging)
+19. [SAGA — cross-service synchronous compensation](#saga--cross-service-synchronous-compensation)
+20. [Multi-instance scaling](#multi-instance-scaling)
+21. [Mappers](#mappers)
+22. [Batch operations](#batch-operations)
+23. [Content-addressable entities](#content-addressable-entities)
+24. [Health checks](#health-checks)
+25. [PII redaction — `[RedactData]`](#pii-redaction--redactdata)
+26. [Spec-driven codegen — the cross-cutting pattern](#spec-driven-codegen--the-cross-cutting-pattern)
+27. [Domain validation — smart-constructor pattern](#domain-validation--smart-constructor-pattern)
+28. [Anti-patterns to actively avoid](#anti-patterns-to-actively-avoid)
 
 ---
 
@@ -69,15 +70,15 @@ Three-tier folder hierarchy for all backend code. **TLC** = architectural concer
 
 ### Canonical TLCs (with their 3LC alphabets)
 
-| TLC | 3LC verbiage | Meaning |
-|---|---|---|
-| **CQRS** | `C/` Commands, `Q/` Queries, `U/` Utilities, `X/` Complex | Business operation intent |
-| **Messaging** | `Pub/` Publishers, `Sub/` Subscribers | Message direction |
-| **Repository** | `C/` Create, `R/` Read, `U/` Update, `D/` Delete | CRUD operation |
-| **Caching** | `C/` Create, `R/` Read, `U/` Update, `D/` Delete | CRUD operation |
-| **Outbound** | (per-protocol — `Grpc/`, `Http/`, `S3/`, etc.) | Outbound integrations |
-| **Realtime** | `Push/` | Real-time push (SignalR) |
-| **Storage** | `C/` Create, `R/` Read, `U/` Update, `D/` Delete | Object / file storage |
+| TLC            | 3LC verbiage                                              | Meaning                   |
+| -------------- | --------------------------------------------------------- | ------------------------- |
+| **CQRS**       | `C/` Commands, `Q/` Queries, `U/` Utilities, `X/` Complex | Business operation intent |
+| **Messaging**  | `Pub/` Publishers, `Sub/` Subscribers                     | Message direction         |
+| **Repository** | `C/` Create, `R/` Read, `U/` Update, `D/` Delete          | CRUD operation            |
+| **Caching**    | `C/` Create, `R/` Read, `U/` Update, `D/` Delete          | CRUD operation            |
+| **Outbound**   | (per-protocol — `Grpc/`, `Http/`, `S3/`, etc.)            | Outbound integrations     |
+| **Realtime**   | `Push/`                                                   | Real-time push (SignalR)  |
+| **Storage**    | `C/` Create, `R/` Read, `U/` Update, `D/` Delete          | Object / file storage     |
 
 - **Interfaces** live in `Interfaces/{TLC}/Handlers/{3LC}/`
 - **Implementations** live in `Implementations/{TLC}/Handlers/{3LC}/` (app layer) or `{TLC}/Handlers/{3LC}/` (infra layer)
@@ -89,12 +90,12 @@ A handler's TLC reflects **what it does** (capability), not **what it uses** (de
 
 ### CQRS Q vs C distinction
 
-| Type | Distributed cache | DB write | External API | Message publish | Test |
-|---|---|---|---|---|---|
-| **Query** | No | No | No | No | "If the process dies after, would state persist?" → **No** |
-| **Command** | Yes | Yes | Yes | Yes | Primary intent = mutation of persistent / shared state |
-| **Complex** | Yes | Yes | Yes | Yes | Primary intent = retrieval, but may mutate as side effect |
-| **Utility** | Varies | Varies | Varies | Varies | Shared logic invoked by other handlers as a building block |
+| Type        | Distributed cache | DB write | External API | Message publish | Test                                                       |
+| ----------- | ----------------- | -------- | ------------ | --------------- | ---------------------------------------------------------- |
+| **Query**   | No                | No       | No           | No              | "If the process dies after, would state persist?" → **No** |
+| **Command** | Yes               | Yes      | Yes          | Yes             | Primary intent = mutation of persistent / shared state     |
+| **Complex** | Yes               | Yes      | Yes          | Yes             | Primary intent = retrieval, but may mutate as side effect  |
+| **Utility** | Varies            | Varies   | Varies       | Varies          | Shared logic invoked by other handlers as a building block |
 
 Local / in-memory caching is permitted as an invisible optimization — instance-scoped, ephemeral, doesn't affect other instances. A query that warms a local memory cache is still a query.
 
@@ -167,6 +168,36 @@ Canonical: [`server/shared/dotnet/utilities/README.md`](../server/shared/dotnet/
 
 ---
 
+## Time / Temporal
+
+`D2.Shared.Time` (.NET) and `@d2/time` (TypeScript) wrap NodaTime (.NET) and the TC39 `Temporal` API (TS, polyfilled via `temporal-polyfill`) to give every service the same temporal vocabulary. BCL `DateTime` / `DateTimeOffset` are forbidden in new code: they silently apply current DST rules to historical wall-clock values (wrong for invoicing / audit), have no DI-friendly clock abstraction, and the Windows-vs-Linux `TimeZoneInfo` name fragility surprises ops migrations. NodaTime + IANA tzdb fix all three; the `Temporal` API mirrors NodaTime's vocabulary on the JS side.
+
+The `IClock` injection seam is the universal mockability primitive — a single-method interface (`Instant GetCurrentInstant()` in .NET, `Temporal.Instant getInstant()` in TS). `SystemClock` is bound to `IClock` in each service's composition root; `TestClock` (mutable, thread-safe, `Advance(Duration)` + `SetTo(Instant)`) is constructed directly in tests for deterministic time. Production code NEVER reads `DateTime.UtcNow` / `Temporal.Now.instant()` directly — it always goes through `IClock`.
+
+Every timestamp in the codebase is categorized at design time into one of three buckets, and the xmldoc / TSdoc summary on the field declares which:
+
+- **Category 1 — Past instant with original wall-clock context** (`ZonedInstant`): UTC `Instant` + IANA tz id, for events whose displayed local time must remain reconstructable across server tz / DST drift (audit log entries, login events, signed-at timestamps). Storage: `event_at TIMESTAMPTZ` + `event_at_zone TEXT NULL`. Sort / compare on the `Instant` — zone-agnostic.
+- **Category 2 — Future fixed instant** (bare `Instant`): UTC moment with no zone context (JWT exp, idempotency-key TTL, session expiry). Storage: `expires_at TIMESTAMPTZ`. No custom type — `Instant` is correct.
+- **Category 3 — Future local-anchored event** (`LocalAnchoredEvent`): `LocalDateTime` + IANA tz id + denormalized `Instant? NextFireUtc` cache, for cron-like wall-clock-locked schedules ("every Tuesday at 9 AM Edmonton"). DST ambiguity resolves through `Resolvers.LenientResolver` (deterministic, never throws). Recompute `NextFireUtc` when the tzdb updates or scheduling changes. Sort on `NextFireUtc`.
+
+EF Core wiring is one line inside the Npgsql config lambda — `UseNpgsql(conn, npg => npg.AddD2NodaTime())` — which delegates to the `Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime` plugin's `UseNodaTime()` for the full Instant ↔ `timestamptz` / LocalDateTime ↔ `timestamp` / LocalDate ↔ `date` mapping suite. Idempotent — safe to call from multiple composition roots.
+
+```csharp
+public sealed class SignInHandler(IClock clock, IUserRepo users) : ...
+{
+    protected override async ValueTask<D2Result<SessionDto>> ExecuteAsync(...)
+    {
+        var now = clock.GetCurrentInstant();          // never DateTime.UtcNow
+        var session = new Session { CreatedAt = now, ... };
+        // ...
+    }
+}
+```
+
+Canonical: [`server/shared/dotnet/time/README.md`](../server/shared/dotnet/time/README.md) (.NET) and [`server/shared/typescript/time/README.md`](../server/shared/typescript/time/README.md) (TS). Cross-language parity tracked in [PARITY.md](PARITY.md).
+
+---
+
 ## Resilience
 
 `D2.Shared.Resilience` ships `CircuitBreaker<T>` (three-state lock-free), `Singleflight<TKey, TValue>` (concurrent-call deduplication; first caller runs the operation, siblings share its `Task<TValue>`), `RetryHelper.RetryAsync<T>` + the `D2Result`-aware `RetryD2ResultAsync<TData>` overload (exponential backoff + jitter + transient classifier), and the `ResilientPipeline<TKey, TValue>` composition surface. Compose via the fluent DSL at the composition root; handlers inject `ResilientPipeline<TKey, TValue>` and call `pipeline.ExecuteAsync(key, op, ct)`. The pipeline returns `D2Result<TValue>` (never throws) and converts CircuitOpen / cancellation / transient / unknown exceptions to the appropriate result code.
@@ -197,11 +228,11 @@ EF Core for all relational data. Repo handlers inherit `BaseRepoHandler` (see [H
 
 Three marker interfaces composed from four building blocks (`ICacheBasic` + `ICacheAtomic` + `ICacheBroadcast` + `ICacheSet`):
 
-| Marker | Composes | Scope | Use for |
-|---|---|---|---|
-| `ILocalCache` | Basic + Atomic | Per-process (in-process atomics) | Instance-scoped: per-instance fingerprint cache, hot in-process lookups, single-writer counters |
-| `IDistributedCache` | Basic + Atomic + Broadcast + Set | Cluster (every read hits remote) | Rate-limit counters, distributed locks, FP-too-common detection (the one `ICacheSet` consumer) |
-| `ITieredCache` | Basic + Atomic + Broadcast | L1 + L2 composed (with backplane) | Read-heavy entity data where freshness within a few seconds is acceptable |
+| Marker              | Composes                         | Scope                             | Use for                                                                                         |
+| ------------------- | -------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `ILocalCache`       | Basic + Atomic                   | Per-process (in-process atomics)  | Instance-scoped: per-instance fingerprint cache, hot in-process lookups, single-writer counters |
+| `IDistributedCache` | Basic + Atomic + Broadcast + Set | Cluster (every read hits remote)  | Rate-limit counters, distributed locks, FP-too-common detection (the one `ICacheSet` consumer)  |
+| `ITieredCache`      | Basic + Atomic + Broadcast       | L1 + L2 composed (with backplane) | Read-heavy entity data where freshness within a few seconds is acceptable                       |
 
 All ops return `D2Result<T>` / `D2Result`. Null / empty inputs return `D2Result.ValidationFailed` (with an `InputError` naming the offending param) — implementations never throw `ArgumentException` for caller mistakes. Cluster-wide L1 coherency uses `ICacheInvalidationBackplane` (Redis pub/sub) — the `*AndBroadcast*` write variants publish on every send.
 
@@ -416,15 +447,31 @@ Batch lookups / updates chunk inputs via `input.HashIds.Chunk(_BATCH_SIZE)` with
 
 ## Content-addressable entities
 
-Entities whose identity is structurally derivable from their contents (e.g., `Location`, `WhoIs`) use SHA-256 hash IDs (64-char hex). The factory method computes the hash; persistence is dedup-by-key. Enables idempotent re-ingestion + cross-service cache sharing without coordination — two services that independently observe the same `WhoIs` payload arrive at the same hash ID and cross-reference via cache without a central registry.
+Entities whose identity is structurally derivable from their contents use SHA-256 hash IDs (`"v1." + 64-char lowercase hex` — versioned so the hashing scheme can evolve without breaking existing IDs). The factory method computes the hash from canonically-normalized inputs; persistence is dedup-by-key. Enables idempotent re-ingestion + cross-service cache sharing without coordination — two services that independently observe the same payload arrive at the same hash ID and cross-reference via cache without a central registry.
+
+Location is the canonical case. Rather than a single aggregate `Location` record, the shipped design uses three independent value objects (each content-addressable in its own right) plus a free-function composer:
 
 ```csharp
-public sealed record Location
-{
-    public string Id { get; }   // SHA-256(normalized payload), hex-lowercased
-    public static D2Result<Location> Create(string country, string city, string postal) { ... }
-}
+// 1. Construct any subset of the three value objects.
+var coords = Coordinates.Create(40.7128, -74.0060).Data;
+var street = StreetAddress.Create(line1: "350 Fifth Ave", line2: "Floor 86").Data;
+var admin  = AdminLocation.Create(
+    countryIso31661Alpha2Code: CountryCode.US,
+    subdivisionIso31662Code: SubdivisionCode.US_NY,
+    city: "New York",
+    postalCode: "10118").Data;
+
+// 2. Each VO carries its own `"v1." + SHA-256(...)` HashId.
+//    coords.HashId   == "v1.<hex>"  — content-addressable for the cell.
+//    street.HashId   == "v1.<hex>"  — content-addressable for the address.
+//    admin.HashId    == "v1.<hex>"  — content-addressable for the admin tuple.
+
+// 3. Compose the per-component HashIds into a single location identity.
+string? locationHash = ComposeLocationHash.Compose(coords, street, admin);
+// `locationHash` is null only when all three inputs are null (location is absent).
 ```
+
+`WhoIs` follows the same content-addressable pattern with a single aggregate factory. See the per-lib READMEs for the full surface ([D2.Shared.Location](../server/shared/dotnet/location/README.md), [@d2/location](../server/shared/typescript/location/README.md), [WhoIs lib README](../server/shared/dotnet/whois-abstractions/README.md) when introduced).
 
 ---
 
@@ -495,17 +542,75 @@ Validation is single-layered: smart-constructor factories on domain types are th
 
 ### When to throw vs return
 
-| Case | Mechanism |
-|---|---|
-| User input fails validation | `D2Result<T>.ValidationFailed` with `TK.*` keys |
-| External lookup misses | `D2Result<T>.NotFound` |
-| Downstream service errors | `BubbleFail` from the result |
-| Programmer-bug invariant (null param marked non-null, internal corrupted state) | Throw `ArgumentNullException` / `InvalidOperationException` |
-| Cancellation | Re-throw `OperationCanceledException` (or let it propagate); `BaseHandler` maps it to `D2Result.Canceled` |
+| Case                                                                            | Mechanism                                                                                                 |
+| ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| User input fails validation                                                     | `D2Result<T>.ValidationFailed` with `TK.*` keys                                                           |
+| External lookup misses                                                          | `D2Result<T>.NotFound`                                                                                    |
+| Downstream service errors                                                       | `BubbleFail` from the result                                                                              |
+| Programmer-bug invariant (null param marked non-null, internal corrupted state) | Throw `ArgumentNullException` / `InvalidOperationException`                                               |
+| Cancellation                                                                    | Re-throw `OperationCanceledException` (or let it propagate); `BaseHandler` maps it to `D2Result.Canceled` |
 
 The rule: **anything caused by data the caller controls is a result, not an exception. Anything caused by code that should be impossible is an exception.**
 
 ---
+
+## Module-scoped cache-aside (build-once immutable static data)
+
+For services that consume a build-once, never-invalidated, in-process static catalog (e.g. the geo name resolver over the codegen-emitted Country / Subdivision catalogs), the cache-aside pattern lives in a module-scoped `Lazy<FrozenDictionary>` (or `ConcurrentDictionary<TKey, Lazy<...>>` for per-key caches), NOT in `ILocalCache` / `IDistributedCache` / `ITieredCache`.
+
+Rationale (per call-site choice):
+
+- **Build-once-then-read-many** — the underlying data is immutable post-module-init, so TTL / eviction / cross-instance coherency are unnecessary work.
+- **Avoiding `D2Result` envelope cost** — `ILocalCache.GetAsync` returns `D2Result<T>` per call; for an O(1) dictionary read the envelope allocation dominates the lookup.
+- **Idiomatic .NET** — `static readonly Lazy<FrozenDictionary>` with `LazyThreadSafetyMode.ExecutionAndPublication` is the language-canonical shape for this category.
+
+**Atomic-publish mandate**: each cache target gets ONE `Lazy<T>` whose dictionary value type encodes BOTH the record reference AND any sentinel flags (e.g. ambiguity). Two separate `Lazy<>` fields (record map + companion `FrozenSet<string>` of sentinels) would not publish atomically under a narrow race window. The single-struct value type guarantees that both fields publish in one assignment.
+
+```csharp
+internal readonly record struct CountryCacheEntry(Country? Record, bool IsAmbiguous);
+
+internal static readonly Lazy<FrozenDictionary<string, CountryCacheEntry>>
+    SR_CountryByName = new(
+        BuildCountryByNameMap,
+        LazyThreadSafetyMode.ExecutionAndPublication);
+```
+
+**Per-key cache-aside**: when each key (e.g. parent country) needs its own build factory and shouldn't trigger work for other keys, wrap each per-key map in its own `Lazy<>` inside a `ConcurrentDictionary<TKey, Lazy<...>>`. Construct the `Lazy<>` in the `GetOrAdd` factory but trigger `.Value` AFTER `GetOrAdd` returns — calling `.Value` inside the factory defeats the per-key build-once guarantee.
+
+**Deterministic iteration order during build**: when sentinel decisions depend on the iteration order of multiple records that normalize to the same key, sort the input by a stable key (e.g. `OrderBy(c => c.Iso31661Alpha2Code, StringComparer.Ordinal)`) so two processes building the cache independently agree byte-for-byte.
+
+Canonical implementation: `DefaultGeoNameResolver` in `server/shared/dotnet/geo-default/NameResolution/`. TS mirror: `server/shared/typescript/geo-default/src/name-resolution/default-geo-name-resolver.ts` (TS uses a module-scoped `Map | undefined` plus a build-count interlocked counter for thundering-herd safety under JS's single-thread execution).
+
+## Namespace-disambiguated extensions over a shared receiver
+
+When an Abstractions-layer extension and a Default-layer extension target the same receiver type (e.g. `IRequestContext`) and want to share a method name (e.g. `Country()`) but return different types (boundary parser → typed code vs catalog lookup → full record), place each extension in its OWN namespace and require consumers to pick exactly one via `using`. The C# compiler resolves the call site by the namespace import; importing both produces CS0121 (ambiguous reference) at compile time — a clear footgun the IDE surfaces immediately.
+
+```csharp
+// Boundary parser — no catalog dependency.
+namespace D2.Shared.Geo.Abstractions.Extensions;
+public static class IRequestContextGeoExtensions
+{
+    extension(IRequestContext context)
+    {
+        public CountryCode? Country() { /* parse raw → typed code */ }
+    }
+}
+
+// Record-returning wrapper — catalog dependency lives in the same assembly
+// as the implementation.
+namespace D2.Shared.Geo.Default.Extensions;
+public static class IRequestContextGeoExtensions
+{
+    extension(IRequestContext context)
+    {
+        public Country? Country() { /* code → catalog lookup */ }
+    }
+}
+```
+
+This idiom works only when the two extensions return DIFFERENT types (so the disambiguation has semantic meaning). If both extensions returned the same type, the choice would be invisible at the call site and consumers couldn't reason about it.
+
+TypeScript has no equivalent of extension-method namespace shadowing, so the TS mirror in `@d2/geo-default/extensions/` uses distinct free-function names (`countryFor(context)` / `subdivisionFor(context)`) for clarity. Document the parity asymmetry in the affected per-lib READMEs.
 
 ## Anti-patterns to actively avoid
 

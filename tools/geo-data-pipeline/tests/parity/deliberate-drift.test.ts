@@ -47,7 +47,10 @@ function findOrphanTimezoneCountryRefs(
   const validCountryCodes = new Set(countries.map((c) => c.iso31661Alpha2Code));
   const orphans: string[] = [];
   for (const tz of timezones) {
-    if (tz.countryISO31661Alpha2Code && !validCountryCodes.has(tz.countryISO31661Alpha2Code)) {
+    if (
+      tz.countryISO31661Alpha2Code &&
+      !validCountryCodes.has(tz.countryISO31661Alpha2Code)
+    ) {
       orphans.push(`${tz.ianaIdentifier} -> ${tz.countryISO31661Alpha2Code}`);
     }
   }
@@ -59,7 +62,10 @@ describe("Deliberate-drift validation (parity-test infrastructure proof)", () =>
     const countriesSpec = await readSpec<Country>("countries.spec.json");
     const timezonesSpec = await readSpec<Timezone>("timezones.spec.json");
 
-    const orphans = findOrphanTimezoneCountryRefs(countriesSpec.entries, timezonesSpec.entries);
+    const orphans = findOrphanTimezoneCountryRefs(
+      countriesSpec.entries,
+      timezonesSpec.entries,
+    );
     // We expect zero orphans in the shipped data (the parity tests guard this).
     expect(orphans).toEqual([]);
   });
@@ -79,7 +85,10 @@ describe("Deliberate-drift validation (parity-test infrastructure proof)", () =>
       },
     ];
 
-    const orphans = findOrphanTimezoneCountryRefs(countriesSpec.entries, corruptedTimezones);
+    const orphans = findOrphanTimezoneCountryRefs(
+      countriesSpec.entries,
+      corruptedTimezones,
+    );
 
     // The drift MUST be detected.
     expect(orphans).toHaveLength(1);
@@ -97,7 +106,10 @@ describe("Deliberate-drift validation (parity-test infrastructure proof)", () =>
       { ianaIdentifier: "Test/Legit", countryISO31661Alpha2Code: "US" },
     ];
 
-    const orphans = findOrphanTimezoneCountryRefs(countriesSpec.entries, corruptedTimezones);
+    const orphans = findOrphanTimezoneCountryRefs(
+      countriesSpec.entries,
+      corruptedTimezones,
+    );
 
     expect(orphans).toHaveLength(2);
     expect(orphans).toContain("Test/Phantom1 -> ZZ");

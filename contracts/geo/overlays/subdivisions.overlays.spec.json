@@ -1,0 +1,11 @@
+{
+  "$generated": false,
+  "$source": "manual-overlay",
+  "$schema": "./subdivisions.overlays.schema.json",
+  "$note": "Trackable manual patches to the Tier 1 subdivisions catalog. Applied at Tier 2 build time AFTER loading Tier 1 src-data and BEFORE cross-catalog M:M backfill. Each entry carries a `reason` + `addedAt` so the policy decision is audit-trail visible. As of 2026-05-23 the pipeline uses Wikidata.en as primary displayName + Debian as authority for which codes exist — most prior need for subdivision overlays (e.g., the Iran 2020-11-24 ISO reassignment) is handled automatically. Add entries here ONLY when Wikidata.en is wrong AND Debian fallback is unacceptable. See contracts/geo/KNOWN_WARNINGS.md.",
+  "catalogVersion": "0.1.0",
+  "lastEditedAt": "2026-05-23",
+  "additions": [],
+  "overrides": [],
+  "removals": []
+}

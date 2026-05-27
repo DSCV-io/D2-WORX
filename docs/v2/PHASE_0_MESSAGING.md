@@ -18,6 +18,7 @@ Copyright (c) DCSV. All rights reserved.
 > pass (incl. Testcontainers RabbitMQ integration).
 >
 > **Authoritative docs going forward**:
+>
 > - [server/shared/dotnet/messaging-abstractions/README.md](../../server/shared/dotnet/messaging-abstractions/README.md) — public API surface
 > - [server/shared/dotnet/messaging-rabbitmq/README.md](../../server/shared/dotnet/messaging-rabbitmq/README.md) — wire format, headers, queue topology, encryption posture, delivery semantics, idempotency contract, DLQ, startup ordering, RabbitMQ-specific impl details (absorbed from prior cross-cutting framework docs)
 >
@@ -209,15 +210,15 @@ Citations in-line where helpful.
 
 ### 3.2 Plaintext AMQP headers (broker needs them for routing + observability)
 
-| Header | Purpose | Example |
-|---|---|---|
-| `content-type` | Always `application/octet-stream` (body is encrypted) | (as above) |
-| `x-proto-type` | Fully-qualified proto type name | `d2.events.files.v1.FileUploadedEvent` |
-| `message-id` | UUIDv7 (sortable, includes timestamp) | `01ARZ3NDEKTSV4RRFFQ69G5FAV` |
-| `timestamp` | Producer's send time, ISO 8601 UTC | `2026-05-07T14:23:00Z` |
-| `x-d2-trace-id` | W3C traceparent | `00-trace-id-span-id-01` |
-| `x-d2-correlation-id` | Idempotency-Key when applicable | `01J3...` |
-| `x-d2-encryption-kid` | Key ID (also in encrypted frame) | `audit-2026q3` |
+| Header                | Purpose                                               | Example                                |
+| --------------------- | ----------------------------------------------------- | -------------------------------------- |
+| `content-type`        | Always `application/octet-stream` (body is encrypted) | (as above)                             |
+| `x-proto-type`        | Fully-qualified proto type name                       | `d2.events.files.v1.FileUploadedEvent` |
+| `message-id`          | UUIDv7 (sortable, includes timestamp)                 | `01ARZ3NDEKTSV4RRFFQ69G5FAV`           |
+| `timestamp`           | Producer's send time, ISO 8601 UTC                    | `2026-05-07T14:23:00Z`                 |
+| `x-d2-trace-id`       | W3C traceparent                                       | `00-trace-id-span-id-01`               |
+| `x-d2-correlation-id` | Idempotency-Key when applicable                       | `01J3...`                              |
+| `x-d2-encryption-kid` | Key ID (also in encrypted frame)                      | `audit-2026q3`                         |
 
 The kid is duplicated (frame + header) deliberately — the header lets ops decide whether
 archive keys are needed for a stuck message **without decrypting**.
@@ -227,6 +228,7 @@ archive keys are needed for a stuck message **without decrypting**.
 `d2.{producer}.{purpose}` — service-namespaced, producer owns the exchange schema.
 
 Examples:
+
 - `d2.audit.events` (D2.Audit consumes; everyone publishes)
 - `d2.notifications.requests` (D2.Notifications consumes)
 - `d2.courier.deliver` (D2.Courier consumes)
@@ -264,6 +266,7 @@ keyrings). Messaging-abstractions doesn't need to know the canonical names — `
 just takes any string and looks up the registered `IPayloadCrypto`.
 
 **Default-deny on encryption.** Every message type MUST carry exactly one of:
+
 - `[Encrypted(EncryptionDomains.X)]` — the message body is encrypted under domain `X`.
 - `[Plaintext("<reason>")]` — the message is deliberately published unencrypted; the reason
   string is mandatory and shows up in audit logs / code review.
@@ -420,6 +423,7 @@ flowchart LR
 ```
 
 Key invariants:
+
 - **`ContextEnvelope` always rides inside the body**, never in headers — broker stores
   headers plaintext at rest, so sensitive context (userId, fingerprint) goes in the
   encrypted body even when the message is in an "unencrypted" domain. (For unencrypted
@@ -445,6 +449,7 @@ flowchart LR
 ```
 
 Failure paths:
+
 - `kid` not in keyring → `KidNotInKeyringException` → NACK no-requeue → DLQ
 - AEAD tag mismatch → `AuthenticationTagMismatchException` → NACK no-requeue → DLQ
 - JSON parse failure → `MessagingFailures.MalformedBody` → NACK no-requeue → DLQ
@@ -501,6 +506,7 @@ sequenceDiagram
 ```
 
 Notes:
+
 - Steps 2-5 are pure CPU (~tens of µs).
 - Step 6 (encrypt) is single-threaded AES-GCM; ~10-50 µs for typical payloads.
 - The retry wrapper covers channel acquire + publish — the body composition / encryption
@@ -563,6 +569,7 @@ sequenceDiagram
 ```
 
 Key design points:
+
 - **One channel per subscriber.** Each channel has its own prefetch state + ack tracking.
   Sharing across subscribers means one slow handler stalls another's ack window.
 - **`prefetchCount`** is per-subscriber (`SubscriberOptions.PrefetchCount`, default 10). The
@@ -595,6 +602,7 @@ flowchart LR
 ```
 
 Queue arguments:
+
 - `x-dead-letter-exchange = audit.events.dlx`
 - `x-dead-letter-routing-key = ""` (route to DLQ via fanout binding)
 
@@ -662,6 +670,7 @@ flowchart TB
 ```
 
 Sizing rules of thumb:
+
 - Most services: 4 publish channels handles 1000-5000 msg/sec
 - High-throughput publishers (audit collector, future telemetry sink): 8-16
 - Each subscriber: exactly 1 channel (don't share)
@@ -670,6 +679,7 @@ Sizing rules of thumb:
   default per connection leaves enormous headroom.
 
 Publisher pool semantics:
+
 - `AcquireAsync()` semaphore-backed; FIFO fairness
 - Lease pinned for the publish duration (caller holds via `using`); broker confirms come
   back on the same channel
@@ -863,6 +873,7 @@ lost-on-broker-crash is acceptable. Confirm timeout default 5s.
   `ServiceUnavailable`
 
 **Transient classifier** (`TransientPublishClassifier.IsTransient`):
+
 - `BrokerUnavailableException` (connection wrapper says it's down)
 - `AlreadyClosedException` (channel went down mid-call)
 - `OperationInterruptedException` (RabbitMQ.Client wraps various AMQP failures here)
@@ -875,6 +886,7 @@ NOT retried (caller-side bugs / terminal): `ArgumentException`, `JsonException`,
 `KidNotInKeyringException` (encryption), `OperationCanceledException` (caller canceled).
 
 **Per-call override**:
+
 - `PublisherOptions.MaxAttempts = 1` → fire-and-forget; one shot, no retry.
 - Higher `MaxAttempts` → more aggressive retry for critical publishes (audit events from
   Edge during a deploy window, etc.).
@@ -903,6 +915,7 @@ Per-message DI scope opens fresh for each delivery.
 **Decided**: 2026-05-07.
 
 **Rationale**: two retry layers serve different purposes.
+
 - Broker-level (TTL+DLX): infrastructure resilience for handler crashes / message
   redelivery. Lib ships a default tiered-retry topology helper
   (`opts.EnableTieredRetry(maxAttempts: 10, tiers: [5s, 10s, 30s, 60s, 300s])`).
@@ -918,6 +931,7 @@ degradation after pushback that fail-loud cascades a 10-second broker blip into
 host-crashes across every replica.
 
 **Rationale**:
+
 - RabbitMQ has the same operational profile as Redis (deploys, restarts, network blips
   happen). Crashing the host during a 10s outage takes down HTTP / gRPC traffic alongside
   messaging — far worse than briefly returning `ServiceUnavailable` from publishes.
@@ -928,6 +942,7 @@ host-crashes across every replica.
   and fix without losing entire replicas in the meantime.
 
 **Mechanics**:
+
 - `ConnectionStartupHostedService.StartAsync` kicks off `ID2Connection.StartReconnectLoop()`
   and returns immediately (non-blocking).
 - Background loop retries forever with exponential backoff (initial 1s, doubling, capped
@@ -1087,7 +1102,7 @@ Each step buildable + testable + zero warnings before moving on.
 ### Step 3 — `D2.Shared.Messaging.RabbitMq`
 
 1. csproj skeleton (depends on Abstractions + Encryption + Caching + Handler + Resilience
-   + RabbitMQ.Client 7.2.1)
+   - RabbitMQ.Client 7.2.1)
 2. Connection: `ID2Connection` + `RabbitMqConnection` + `ConnectionStartupHostedService` +
    `ConnectionOptions` + tests
 3. Channels: `IChannelPool` + `BoundedChannelPool` + `ChannelPoolOptions` + tests (with

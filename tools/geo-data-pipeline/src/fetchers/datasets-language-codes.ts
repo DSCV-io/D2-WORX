@@ -7,8 +7,10 @@ import { fetchAndCache, type CachedFetch } from "../util/cache.js";
 
 const SOURCE_NAME = "datasets-language-codes";
 // upstream URL — cannot wrap
-const SOURCE_URL = "https://raw.githubusercontent.com/datasets/language-codes/main/data/language-codes.csv";
-const SOURCE_LICENSE = "PDDL-1.0 (Open Knowledge Foundation Public Domain Dedication)";
+const SOURCE_URL =
+  "https://raw.githubusercontent.com/datasets/language-codes/main/data/language-codes.csv";
+const SOURCE_LICENSE =
+  "PDDL-1.0 (Open Knowledge Foundation Public Domain Dedication)";
 const CACHE_KEY = "language-codes.csv";
 
 /**
@@ -25,7 +27,10 @@ export interface LanguageCodeRow {
   english: string;
 }
 
-export interface LanguageCodesFetchResult extends Pick<CachedFetch, "provenance" | "fromCache"> {
+export interface LanguageCodesFetchResult extends Pick<
+  CachedFetch,
+  "provenance" | "fromCache"
+> {
   rows: LanguageCodeRow[];
 }
 
@@ -44,10 +49,12 @@ export async function fetchDatasetsLanguageCodes(options?: {
     header: true,
     skipEmptyLines: true,
   });
-  const rows: LanguageCodeRow[] = parsed.data.map((r) => ({
-    alpha2: (r["alpha2"] ?? "").trim().toLowerCase(),
-    english: (r["English"] ?? "").trim(),
-  })).filter((r) => r.alpha2.length === 2 && r.english);
+  const rows: LanguageCodeRow[] = parsed.data
+    .map((r) => ({
+      alpha2: (r["alpha2"] ?? "").trim().toLowerCase(),
+      english: (r["English"] ?? "").trim(),
+    }))
+    .filter((r) => r.alpha2.length === 2 && r.english);
   return {
     rows,
     provenance: fetched.provenance,

@@ -30,7 +30,10 @@ export type DayOfWeek =
 export type MeasurementSystem = "Metric" | "Imperial" | "Mixed";
 export type WritingDirection = "LTR" | "RTL";
 export type DateFormatPattern = "DMY" | "MDY" | "YMD";
-export type CurrencyAcceptanceLevel = "LegalTender" | "WidelyAccepted" | "Tourist";
+export type CurrencyAcceptanceLevel =
+  | "LegalTender"
+  | "WidelyAccepted"
+  | "Tourist";
 
 /** Country record — codegen-ready shape. */
 export interface CountrySpec {

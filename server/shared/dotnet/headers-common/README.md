@@ -14,12 +14,12 @@ Cross-transport D2 wire-protocol headers — entries with applicability count >=
 
 ## Public API
 
-| Member | Type | Purpose |
-|---|---|---|
-| `CommonHeaders.PROPAGATED_CONTEXT` | `const string "x-d2-context"` | Base64url-of-JSON propagated context envelope (HTTP + gRPC + AMQP) |
-| `CommonHeaders.TRACEPARENT` | `const string "traceparent"` | W3C Trace Context (HTTP + gRPC + AMQP) |
-| `CommonHeaders.TRACESTATE` | `const string "tracestate"` | W3C tracestate (HTTP + gRPC + AMQP) |
-| `CommonHeaders.AllCommonHeaders` | `IReadOnlyList<string>` | All wire values in `constName` order — useful for cross-spec consistency tests |
+| Member                             | Type                          | Purpose                                                                        |
+| ---------------------------------- | ----------------------------- | ------------------------------------------------------------------------------ |
+| `CommonHeaders.PROPAGATED_CONTEXT` | `const string "x-d2-context"` | Base64url-of-JSON propagated context envelope (HTTP + gRPC + AMQP)             |
+| `CommonHeaders.TRACEPARENT`        | `const string "traceparent"`  | W3C Trace Context (HTTP + gRPC + AMQP)                                         |
+| `CommonHeaders.TRACESTATE`         | `const string "tracestate"`   | W3C tracestate (HTTP + gRPC + AMQP)                                            |
+| `CommonHeaders.AllCommonHeaders`   | `IReadOnlyList<string>`       | All wire values in `constName` order — useful for cross-spec consistency tests |
 
 (Catalog is codegen-emitted; the table above lists today's three cross-transport entries. New cross-transport entries appear here automatically when added to the spec.)
 

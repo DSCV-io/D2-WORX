@@ -102,7 +102,6 @@ let localesByTag: Map<string, Locale>;
 let timezones: Timezone[];
 let timezonesById: Map<string, Timezone>;
 let ges: GeopoliticalEntity[];
-let gesByCode: Map<string, GeopoliticalEntity>;
 
 beforeAll(async () => {
   const [
@@ -114,14 +113,14 @@ beforeAll(async () => {
     timezonesFile,
     gesFile,
   ] = await Promise.all([
-      readJson<SpecFile<Country>>("countries.spec.json"),
-      readJson<SpecFile<Subdivision>>("subdivisions.spec.json"),
-      readJson<SpecFile<Currency>>("currencies.spec.json"),
-      readJson<SpecFile<Language>>("languages.spec.json"),
-      readJson<SpecFile<Locale>>("locales.spec.json"),
-      readJson<SpecFile<Timezone>>("timezones.spec.json"),
-      readJson<SpecFile<GeopoliticalEntity>>("geopolitical-entities.spec.json"),
-    ]);
+    readJson<SpecFile<Country>>("countries.spec.json"),
+    readJson<SpecFile<Subdivision>>("subdivisions.spec.json"),
+    readJson<SpecFile<Currency>>("currencies.spec.json"),
+    readJson<SpecFile<Language>>("languages.spec.json"),
+    readJson<SpecFile<Locale>>("locales.spec.json"),
+    readJson<SpecFile<Timezone>>("timezones.spec.json"),
+    readJson<SpecFile<GeopoliticalEntity>>("geopolitical-entities.spec.json"),
+  ]);
   countries = countriesFile.entries;
   countriesByCode = new Map(countries.map((c) => [c.iso31661Alpha2Code, c]));
   subdivisions = subdivisionsFile.entries;
@@ -133,7 +132,6 @@ beforeAll(async () => {
   timezones = timezonesFile.entries;
   timezonesById = new Map(timezones.map((t) => [t.ianaIdentifier, t]));
   ges = gesFile.entries;
-  gesByCode = new Map(ges.map((g) => [g.shortCode, g]));
 });
 
 async function readJson<T>(filename: string): Promise<T> {
@@ -146,9 +144,18 @@ async function readJson<T>(filename: string): Promise<T> {
 
 describe("Tier 2 file shape", () => {
   it("all 6 generated catalogs have $generated=true + $source=pipeline-derived", async () => {
-    const files = ["countries", "subdivisions", "currencies", "languages", "locales", "timezones"];
+    const files = [
+      "countries",
+      "subdivisions",
+      "currencies",
+      "languages",
+      "locales",
+      "timezones",
+    ];
     for (const f of files) {
-      const data = await readJson<{ $generated: boolean; $source: string }>(`${f}.spec.json`);
+      const data = await readJson<{ $generated: boolean; $source: string }>(
+        `${f}.spec.json`,
+      );
       expect(data.$generated).toBe(true);
       expect(data.$source).toBe("pipeline-derived");
     }
@@ -169,7 +176,9 @@ describe("Tier 2 file shape", () => {
 
 describe("Cross-catalog FK integrity", () => {
   it("Subdivision.countryISO31661Alpha2Code references a real country", () => {
-    const orphans = subdivisions.filter((s) => !countriesByCode.has(s.countryISO31661Alpha2Code));
+    const orphans = subdivisions.filter(
+      (s) => !countriesByCode.has(s.countryISO31661Alpha2Code),
+    );
     expect(orphans, JSON.stringify(orphans.slice(0, 5))).toEqual([]);
   });
 
@@ -178,7 +187,8 @@ describe("Cross-catalog FK integrity", () => {
     const orphans: string[] = [];
     for (const c of countries) {
       for (const code of c.subdivisionISO31662Codes) {
-        if (!validSubdivisions.has(code)) orphans.push(`${c.iso31661Alpha2Code}->${code}`);
+        if (!validSubdivisions.has(code))
+          orphans.push(`${c.iso31661Alpha2Code}->${code}`);
       }
     }
     expect(orphans).toEqual([]);
@@ -188,7 +198,8 @@ describe("Cross-catalog FK integrity", () => {
     const orphans: string[] = [];
     for (const c of countries) {
       for (const id of c.timezoneIanaIdentifiers) {
-        if (!timezonesById.has(id)) orphans.push(`${c.iso31661Alpha2Code}->${id}`);
+        if (!timezonesById.has(id))
+          orphans.push(`${c.iso31661Alpha2Code}->${id}`);
       }
     }
     expect(orphans).toEqual([]);
@@ -198,7 +209,8 @@ describe("Cross-catalog FK integrity", () => {
     const orphans: string[] = [];
     for (const c of countries) {
       for (const tag of c.localeIETFBCP47Tags) {
-        if (!localesByTag.has(tag)) orphans.push(`${c.iso31661Alpha2Code}->${tag}`);
+        if (!localesByTag.has(tag))
+          orphans.push(`${c.iso31661Alpha2Code}->${tag}`);
       }
     }
     expect(orphans).toEqual([]);
@@ -209,13 +221,16 @@ describe("Cross-catalog FK integrity", () => {
     // tvl, wls) for small-population countries whose primary language has no ISO 639-1
     // assignment. Our Language catalog ships ISO 639-1 only, so 639-3 entries here are
     // expected orphans — Tier 2 / consumers can decide how to handle them.
-    const orphans = countries.filter((c) =>
-      c.primaryLanguageISO6391Code !== null &&
-      /^[a-z]{2}$/.test(c.primaryLanguageISO6391Code) &&
-      !languagesByCode.has(c.primaryLanguageISO6391Code),
+    const orphans = countries.filter(
+      (c) =>
+        c.primaryLanguageISO6391Code !== null &&
+        /^[a-z]{2}$/.test(c.primaryLanguageISO6391Code) &&
+        !languagesByCode.has(c.primaryLanguageISO6391Code),
     );
     expect(
-      orphans.map((c) => `${c.iso31661Alpha2Code}->${c.primaryLanguageISO6391Code}`),
+      orphans.map(
+        (c) => `${c.iso31661Alpha2Code}->${c.primaryLanguageISO6391Code}`,
+      ),
     ).toEqual([]);
   });
 
@@ -223,33 +238,46 @@ describe("Cross-catalog FK integrity", () => {
     const orphans: string[] = [];
     for (const c of countries) {
       for (const code of c.territoryISO31661Alpha2Codes) {
-        if (!countriesByCode.has(code)) orphans.push(`${c.iso31661Alpha2Code}->${code}`);
+        if (!countriesByCode.has(code))
+          orphans.push(`${c.iso31661Alpha2Code}->${code}`);
       }
     }
     expect(orphans).toEqual([]);
   });
 
   it("Locale.countryISO31661Alpha2Code (when set) references a real country", () => {
-    const orphans = locales.filter((l) =>
-      l.countryISO31661Alpha2Code !== null && !countriesByCode.has(l.countryISO31661Alpha2Code),
+    const orphans = locales.filter(
+      (l) =>
+        l.countryISO31661Alpha2Code !== null &&
+        !countriesByCode.has(l.countryISO31661Alpha2Code),
     );
-    expect(orphans.map((l) => `${l.ietfBcp47Tag}->${l.countryISO31661Alpha2Code}`)).toEqual([]);
+    expect(
+      orphans.map((l) => `${l.ietfBcp47Tag}->${l.countryISO31661Alpha2Code}`),
+    ).toEqual([]);
   });
 
   it("Locale.languageISO6391Code references a real language (when 2-letter)", () => {
     // Locales can carry ISO 639-3 lang subtags ("yue", "fil", "fur", etc.) that aren't in our
     // ISO 639-1-only Language catalog; only check 2-letter subtags.
-    const orphans = locales.filter((l) =>
-      /^[a-z]{2}$/.test(l.languageISO6391Code) && !languagesByCode.has(l.languageISO6391Code),
+    const orphans = locales.filter(
+      (l) =>
+        /^[a-z]{2}$/.test(l.languageISO6391Code) &&
+        !languagesByCode.has(l.languageISO6391Code),
     );
-    expect(orphans.map((l) => `${l.ietfBcp47Tag}->${l.languageISO6391Code}`)).toEqual([]);
+    expect(
+      orphans.map((l) => `${l.ietfBcp47Tag}->${l.languageISO6391Code}`),
+    ).toEqual([]);
   });
 
   it("Timezone.countryISO31661Alpha2Code (when set) references a real country", () => {
-    const orphans = timezones.filter((t) =>
-      t.countryISO31661Alpha2Code !== null && !countriesByCode.has(t.countryISO31661Alpha2Code),
+    const orphans = timezones.filter(
+      (t) =>
+        t.countryISO31661Alpha2Code !== null &&
+        !countriesByCode.has(t.countryISO31661Alpha2Code),
     );
-    expect(orphans.map((t) => `${t.ianaIdentifier}->${t.countryISO31661Alpha2Code}`)).toEqual([]);
+    expect(
+      orphans.map((t) => `${t.ianaIdentifier}->${t.countryISO31661Alpha2Code}`),
+    ).toEqual([]);
   });
 
   it("Currency in Country.currencies references a real currency", () => {
@@ -277,7 +305,9 @@ describe("M:M inverse-nav symmetry", () => {
     for (const s of subdivisions) {
       const c = countriesByCode.get(s.countryISO31661Alpha2Code);
       if (!c?.subdivisionISO31662Codes.includes(s.iso31662Code)) {
-        missingInverse.push(`${s.countryISO31661Alpha2Code} missing ${s.iso31662Code}`);
+        missingInverse.push(
+          `${s.countryISO31661Alpha2Code} missing ${s.iso31662Code}`,
+        );
       }
     }
     expect(missingInverse).toEqual([]);
@@ -290,13 +320,17 @@ describe("M:M inverse-nav symmetry", () => {
       if (t.countryISO31661Alpha2Code) {
         const c = countriesByCode.get(t.countryISO31661Alpha2Code);
         if (!c?.timezoneIanaIdentifiers.includes(t.ianaIdentifier)) {
-          missingInverse.push(`${t.countryISO31661Alpha2Code} missing ${t.ianaIdentifier}`);
+          missingInverse.push(
+            `${t.countryISO31661Alpha2Code} missing ${t.ianaIdentifier}`,
+          );
         }
       }
       for (const co of t.coApplicableCountryISO31661Alpha2Codes) {
         const c = countriesByCode.get(co);
         if (!c?.timezoneIanaIdentifiers.includes(t.ianaIdentifier)) {
-          missingInverse.push(`${co} missing co-applicable ${t.ianaIdentifier}`);
+          missingInverse.push(
+            `${co} missing co-applicable ${t.ianaIdentifier}`,
+          );
         }
       }
     }
@@ -325,7 +359,9 @@ describe("M:M inverse-nav symmetry", () => {
       for (const lang of c.spokenLanguageISO6391Codes) {
         const l = languagesByCode.get(lang);
         if (!l) continue; // ISO 639-3 lang code without a 2-letter entry — skip
-        if (!l.spokenInCountryISO31661Alpha2Codes.includes(c.iso31661Alpha2Code)) {
+        if (
+          !l.spokenInCountryISO31661Alpha2Codes.includes(c.iso31661Alpha2Code)
+        ) {
           missingInverse.push(`${lang} missing ${c.iso31661Alpha2Code}`);
         }
       }
@@ -339,7 +375,9 @@ describe("M:M inverse-nav symmetry", () => {
       if (!l.countryISO31661Alpha2Code) continue;
       const c = countriesByCode.get(l.countryISO31661Alpha2Code);
       if (!c?.localeIETFBCP47Tags.includes(l.ietfBcp47Tag)) {
-        missingInverse.push(`${l.countryISO31661Alpha2Code} missing ${l.ietfBcp47Tag}`);
+        missingInverse.push(
+          `${l.countryISO31661Alpha2Code} missing ${l.ietfBcp47Tag}`,
+        );
       }
     }
     expect(missingInverse).toEqual([]);
@@ -358,7 +396,9 @@ describe("Locale denormalization integrity", () => {
       const c = countriesByCode.get(l.countryISO31661Alpha2Code);
       if (!c) continue;
       if (l.firstDayOfWeek !== c.firstDayOfWeek) {
-        drifts.push(`${l.ietfBcp47Tag}: locale=${l.firstDayOfWeek} country=${c.firstDayOfWeek}`);
+        drifts.push(
+          `${l.ietfBcp47Tag}: locale=${l.firstDayOfWeek} country=${c.firstDayOfWeek}`,
+        );
       }
     }
     expect(drifts, JSON.stringify(drifts.slice(0, 5))).toEqual([]);
@@ -381,7 +421,9 @@ describe("Derived flag consistency", () => {
       if (!sl.countryISO31661Alpha2Code) continue;
       const country = countriesByCode.get(sl.countryISO31661Alpha2Code);
       if (country?.primaryCurrencyISO4217AlphaCode) {
-        expectedSupportedCurrencies.add(country.primaryCurrencyISO4217AlphaCode);
+        expectedSupportedCurrencies.add(
+          country.primaryCurrencyISO4217AlphaCode,
+        );
       }
     }
     for (const c of currencies) {

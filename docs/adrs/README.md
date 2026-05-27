@@ -63,8 +63,8 @@ across the catalog — never re-used, never re-ordered.
 
 ## Index
 
-| # | Title | Status | Date | Deliverable |
-|---|---|---|---|---|
+| #   | Title | Status | Date | Deliverable |
+| --- | ----- | ------ | ---- | ----------- |
 
 > No ADRs yet — backfill from existing shipped deliverables is queued as a
 > separate task. This index gets populated as ADRs land.

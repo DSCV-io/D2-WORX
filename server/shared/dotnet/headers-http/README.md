@@ -14,16 +14,16 @@ D2 wire-protocol headers applicable to the HTTP transport. Includes HTTP-only en
 
 ## Public API
 
-| Member | Type | Purpose |
-|---|---|---|
-| `HttpHeaders.AUTHORIZATION` | `const string "Authorization"` | RFC 6750 bearer token header |
-| `HttpHeaders.CLIENT_FINGERPRINT` | `const string "X-D2-Client-Fingerprint"` | Client-computed device fingerprint |
-| `HttpHeaders.IDEMPOTENCY_KEY` | `const string "Idempotency-Key"` | Stripe-style request-deduplication key |
-| `HttpHeaders.INTERNAL_TOKEN` | `const string "X-D2-Internal-Token"` | BFF↔Edge service-identity JWT |
-| `HttpHeaders.PROPAGATED_CONTEXT` | `const string "x-d2-context"` | Base64url-of-JSON propagated context envelope (cross-transport) |
-| `HttpHeaders.TRACEPARENT` | `const string "traceparent"` | W3C Trace Context (cross-transport) |
-| `HttpHeaders.TRACESTATE` | `const string "tracestate"` | W3C tracestate (cross-transport) |
-| `HttpHeaders.AllHttpHeaders` | `IReadOnlyList<string>` | All wire values in `constName` order |
+| Member                           | Type                                     | Purpose                                                         |
+| -------------------------------- | ---------------------------------------- | --------------------------------------------------------------- |
+| `HttpHeaders.AUTHORIZATION`      | `const string "Authorization"`           | RFC 6750 bearer token header                                    |
+| `HttpHeaders.CLIENT_FINGERPRINT` | `const string "X-D2-Client-Fingerprint"` | Client-computed device fingerprint                              |
+| `HttpHeaders.IDEMPOTENCY_KEY`    | `const string "Idempotency-Key"`         | Stripe-style request-deduplication key                          |
+| `HttpHeaders.INTERNAL_TOKEN`     | `const string "X-D2-Internal-Token"`     | BFF↔Edge service-identity JWT                                   |
+| `HttpHeaders.PROPAGATED_CONTEXT` | `const string "x-d2-context"`            | Base64url-of-JSON propagated context envelope (cross-transport) |
+| `HttpHeaders.TRACEPARENT`        | `const string "traceparent"`             | W3C Trace Context (cross-transport)                             |
+| `HttpHeaders.TRACESTATE`         | `const string "tracestate"`              | W3C tracestate (cross-transport)                                |
+| `HttpHeaders.AllHttpHeaders`     | `IReadOnlyList<string>`                  | All wire values in `constName` order                            |
 
 ---
 

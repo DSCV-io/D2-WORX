@@ -16,13 +16,13 @@ The spec file is the single source of truth for the platform's auth-error taxono
 
 ## Build-time diagnostics
 
-| ID | Severity | Trigger |
-|---|---|---|
-| `D2AEC001` | Error | Spec file is malformed JSON or violates the schema |
-| `D2AEC002` | Error | Entry's `category` is not one of `validation_failure` / `infrastructure_unavailable` / `policy_denied` |
-| `D2AEC003` | Error | Two entries share the same `code` |
-| `D2AEC004` | Error | Two entries share the same `factoryName` |
-| `D2AEC005` | Error | Entry's `httpStatus` is not in the supported set (`401` / `503`) — expanding the matrix requires updating the codegen mapping |
+| ID         | Severity | Trigger                                                                                                                       |
+| ---------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `D2AEC001` | Error    | Spec file is malformed JSON or violates the schema                                                                            |
+| `D2AEC002` | Error    | Entry's `category` is not one of `validation_failure` / `infrastructure_unavailable` / `policy_denied`                        |
+| `D2AEC003` | Error    | Two entries share the same `code`                                                                                             |
+| `D2AEC004` | Error    | Two entries share the same `factoryName`                                                                                      |
+| `D2AEC005` | Error    | Entry's `httpStatus` is not in the supported set (`401` / `503`) — expanding the matrix requires updating the codegen mapping |
 
 ---
 

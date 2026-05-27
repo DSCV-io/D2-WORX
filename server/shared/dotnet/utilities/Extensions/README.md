@@ -8,13 +8,13 @@ Copyright (c) DCSV. All rights reserved.
 
 The most-used surface in the lib. Boundary-check helpers (`Truthy`/`Falsey`/`ToNullIfEmpty`), optional-string parsers (`TryParseTruthyNull`), display cleaners, and `D2Result`-returning validators that compose into smart-constructor patterns.
 
-| File | Contents |
-|---|---|
-| `StringExtensions.cs` | `Truthy()` / `Falsey()` / `ToNullIfEmpty()` / `CleanStr()` / `CleanDisplayStr()` / `TryParseEmail()` / `TryParsePhoneNumber()` / `GetNormalizedStrForHashing()`. |
-| `EnumerableExtensions.cs` | `Truthy()` / `Falsey()` for `IEnumerable<T>?` + the `Clean()` helper with configurable empty/null behavior. |
-| `CleanEnumEmptyBehavior.cs`, `CleanValueNullBehavior.cs` | Behavior enums for `EnumerableExtensions.Clean()`. |
-| `GuidExtensions.cs` | `Truthy()` / `Falsey()` for `Guid` and `Guid?` (treats `Guid.Empty` as falsey) PLUS `string?.TryParseTruthyNull(out Guid?)` — the canonical "parse a Guid from optional string input, collapse missing/unparseable/empty to null" helper. |
-| `EnumExtensions.cs` | `string?.TryParseTruthyNull<TEnum>(out TEnum?)` — case-insensitive `Enum.TryParse` wrapper that collapses missing/unparseable/empty to `null`; pass-through on numeric strings (matches BCL behavior — does NOT call `Enum.IsDefined`); supports comma-separated `[Flags]` syntax. |
+| File                                                     | Contents                                                                                                                                                                                                                                                                           |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `StringExtensions.cs`                                    | `Truthy()` / `Falsey()` / `ToNullIfEmpty()` / `CleanStr()` / `CleanDisplayStr()` / `TryParseEmail()` / `TryParsePhoneNumber()` / `GetNormalizedStrForHashing()`.                                                                                                                   |
+| `EnumerableExtensions.cs`                                | `Truthy()` / `Falsey()` for `IEnumerable<T>?` + the `Clean()` helper with configurable empty/null behavior.                                                                                                                                                                        |
+| `CleanEnumEmptyBehavior.cs`, `CleanValueNullBehavior.cs` | Behavior enums for `EnumerableExtensions.Clean()`.                                                                                                                                                                                                                                 |
+| `GuidExtensions.cs`                                      | `Truthy()` / `Falsey()` for `Guid` and `Guid?` (treats `Guid.Empty` as falsey) PLUS `string?.TryParseTruthyNull(out Guid?)` — the canonical "parse a Guid from optional string input, collapse missing/unparseable/empty to null" helper.                                          |
+| `EnumExtensions.cs`                                      | `string?.TryParseTruthyNull<TEnum>(out TEnum?)` — case-insensitive `Enum.TryParse` wrapper that collapses missing/unparseable/empty to `null`; pass-through on numeric strings (matches BCL behavior — does NOT call `Enum.IsDefined`); supports comma-separated `[Flags]` syntax. |
 
 ## Boundary checks — `Truthy()` / `Falsey()` / `ToNullIfEmpty()`
 
@@ -78,7 +78,7 @@ The **canonical** way to parse a `Guid` or enum from optional string input. Use 
 "   ".CleanStr()                          // null
 ```
 
-`CleanDisplayStr()` strips characters not allowed in display names (HTML tags, markdown syntax, brackets, quotes, backticks, `<>(){}[]"\`+=|\\` etc.) and then runs `CleanStr()`. Allowed: any Unicode-letter script, digits, spaces, hyphens, apostrophes, periods, commas.
+`CleanDisplayStr()` strips characters not allowed in display names (HTML tags, markdown syntax, brackets, quotes, backticks, `<>(){}[]"\`+=|\\`etc.) and then runs`CleanStr()`. Allowed: any Unicode-letter script, digits, spaces, hyphens, apostrophes, periods, commas.
 
 ```csharp
 "<script>alert('x')</script>John Doe".CleanDisplayStr()

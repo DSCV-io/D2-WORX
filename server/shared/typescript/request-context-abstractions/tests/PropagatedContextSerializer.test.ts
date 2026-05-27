@@ -19,8 +19,10 @@ describe("PropagatedContextSerializer", () => {
     const enc = PropagatedContextSerializer.serialize(ctx);
     const dec = PropagatedContextSerializer.tryDecode(enc);
     expect(dec).toBeDefined();
-    expect((dec as Record<string, unknown>)["requestId"]).toBe("abc");
-    expect((dec as Record<string, unknown>)["riskScore"]).toBe(17);
+    expect((dec as unknown as Record<string, unknown>)["requestId"]).toBe(
+      "abc",
+    );
+    expect((dec as unknown as Record<string, unknown>)["riskScore"]).toBe(17);
   });
 
   it("returns undefined on null/empty input", () => {
@@ -65,7 +67,7 @@ describe("PropagatedContextSerializer", () => {
       typeof PropagatedContextSerializer.serialize
     >[0]);
     const dec = PropagatedContextSerializer.tryDecode(enc);
-    expect((dec as Record<string, unknown>)["requestId"]).toBeNull();
+    expect((dec as unknown as Record<string, unknown>)["requestId"]).toBeNull();
   });
 });
 

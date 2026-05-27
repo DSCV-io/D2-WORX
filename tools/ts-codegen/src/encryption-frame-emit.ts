@@ -44,9 +44,10 @@ export interface EncryptionFrameSpec {
 }
 
 /** Validate the spec — invalid version, duplicate constName, overlap, invalid length. */
-export function validateEncryptionFrameSpec(
-  spec: EncryptionFrameSpec,
-): { fields: EncryptionFrameFieldEntry[]; diagnostics: EmitDiagnostic[] } {
+export function validateEncryptionFrameSpec(spec: EncryptionFrameSpec): {
+  fields: EncryptionFrameFieldEntry[];
+  diagnostics: EmitDiagnostic[];
+} {
   const diagnostics: EmitDiagnostic[] = [];
   const valid: EncryptionFrameFieldEntry[] = [];
   const seenConstNames = new Set<string>();
@@ -87,7 +88,8 @@ export function validateEncryptionFrameSpec(
     for (let j = i + 1; j < valid.length; j++) {
       const a = valid[i]!;
       const b = valid[j]!;
-      if (a.offset < 0 || a.length < 1 || b.offset < 0 || b.length < 1) continue;
+      if (a.offset < 0 || a.length < 1 || b.offset < 0 || b.length < 1)
+        continue;
       const aEnd = a.offset + a.length;
       const bEnd = b.offset + b.length;
       if (a.offset < bEnd && b.offset < aEnd) {

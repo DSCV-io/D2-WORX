@@ -18,13 +18,13 @@ The auth-specific taxonomy (`AUTH_*` codes) lives in a separate spec at `contrac
 
 ## Build-time diagnostics
 
-| ID | Severity | Trigger |
-|---|---|---|
-| `D2EC001` | Error | Spec file is malformed JSON or violates the schema |
-| `D2EC002` | Error | Two entries share the same `code` |
-| `D2EC003` | Error | Entry's `httpStatus` is not in the supported set (`200` / `206` / `207` / `400` / `401` / `403` / `404` / `409` / `413` / `429` / `500` / `503`) — expanding the matrix requires updating the codegen mapping |
-| `D2EC004` | Error | Entry's `code` is empty or does not match `^[A-Z][A-Z0-9_]*$` |
-| `D2EC005` | Error | Entry's `doc` summary text is missing or whitespace-only |
+| ID        | Severity | Trigger                                                                                                                                                                                                       |
+| --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `D2EC001` | Error    | Spec file is malformed JSON or violates the schema                                                                                                                                                            |
+| `D2EC002` | Error    | Two entries share the same `code`                                                                                                                                                                             |
+| `D2EC003` | Error    | Entry's `httpStatus` is not in the supported set (`200` / `206` / `207` / `400` / `401` / `403` / `404` / `409` / `413` / `429` / `500` / `503`) — expanding the matrix requires updating the codegen mapping |
+| `D2EC004` | Error    | Entry's `code` is empty or does not match `^[A-Z][A-Z0-9_]*$`                                                                                                                                                 |
+| `D2EC005` | Error    | Entry's `doc` summary text is missing or whitespace-only                                                                                                                                                      |
 
 ---
 
