@@ -20,9 +20,9 @@ Copyright (c) DCSV. All rights reserved.
 
 > # ⚠️⚠️⚠️ MANDATORY — ORCHESTRATOR-ONLY MAIN THREAD ⚠️⚠️⚠️
 >
-> _Duplicate of [docs/dev/process.md §3](docs/dev/process.md#3-sub-agent-architecture) — keep in lockstep per §11.32._
->
 > **The main thread ORCHESTRATES — it does NOT plan, implement, audit, or fix. EVERY round of plan / impl / audit / fix is a FRESH sub-agent spawned via `Agent`. A second audit round = brand-new K=12 Auditor batch + brand-new Aggregator. A follow-up fix = brand-new Fixer. The fresh-context property is the entire point.**
+>
+> **Why fresh context matters**: sub-agents that re-audit their own prior work develop leniency (they're motivated to declare convergence) and carry stale assumptions forward; a brand-new Auditor walks the catalog from zero with no investment in prior conclusions. Empirically validated in the 0002-auth-inbound trial — fresh-Auditor rounds caught two production bugs that the same-context loop missed.
 >
 > **Roles (model per [rules.md §24.0i](docs/dev/rules.md#24-audit-evidence-discipline-meta--how-to-audit))**: Planner / Plan-amender / Aggregator / Orchestrator → **Opus**. Implementer / Auditor / Plan-Auditor / Fixer / Final-reviewer / Investigator → **Sonnet**. Sweeping Implementer / Fixer Opus carve-out (atomic >40-file, >3-concern, cross-runtime, cascading pipeline) — cite criterion in dispatch brief. Auditor-shape Opus escalation requires explicit per-occurrence user approval.
 >
@@ -33,14 +33,14 @@ Copyright (c) DCSV. All rights reserved.
 > **If you find yourself about to `Edit` a source file from the main thread, STOP. Spawn an Implementer with the change spec. About to walk `rules.md`, STOP — spawn an Auditor. About to read a journal to "check progress," STOP — spawn a sub-agent to summarize and report. The discipline is structural, not optional.** A one-line typo fix still spawns Planner → Implementer → Auditor → (Fixer if findings). The ONLY bypass is an explicit user request naming the specific rule / step being skipped (per [rules.md §13.14](docs/dev/rules.md#13-permission--action-discipline)).
 >
 > Full role table + tool-access lists + empirical justification + cluster partition + Aggregator spec → [process.md §3](docs/dev/process.md#3-sub-agent-architecture) + [§4 Audit-loop mechanics](docs/dev/process.md#4-audit-loop-mechanics).
+>
+> _Canonical form (with empirical justification + full role table): [process.md §3 Sub-agent architecture](docs/dev/process.md#3-sub-agent-architecture). Update both in lockstep when either changes (per §11.32 KEEP-doc duplication discipline)._
 
 ---
 
 <a name="mandatory-block-1-every-code-change"></a>
 
 > # ⚠️⚠️⚠️ MANDATORY — APPLIES TO EVERY CODE CHANGE ⚠️⚠️⚠️
->
-> _Duplicate of [docs/dev/rules.md §13](docs/dev/rules.md#13-permission--action-discipline) / process.md — keep in lockstep per §11.32._
 >
 > **EVERY code change — including "just change this one line", "rename this var", "fix this typo", "add this property", "tweak this config" — follows the Development Workflow (§1, detailed in [docs/dev/process.md](docs/dev/process.md)) AND adheres to every applicable predicate in [docs/dev/rules.md](docs/dev/rules.md).**
 >
@@ -49,14 +49,14 @@ Copyright (c) DCSV. All rights reserved.
 > **The ONLY way to bypass any part of this process is an explicit user request like "skip the journal for this", "no audit needed for this typo fix", "just commit it directly", or "don't write a test for this." Without that explicit bypass instruction, the process applies in full.**
 >
 > If a request seems too small to deserve the full process, ask the user: "this is a one-line change — should I do the full process or do you want to bypass [specific step]?" Default = full process.
+>
+> _Canonical form (full permission-discipline predicate catalog): [rules.md §13 Permission / Action Discipline](docs/dev/rules.md#13-permission--action-discipline) + [process.md](docs/dev/process.md). Update both in lockstep when either changes (per §11.32 KEEP-doc duplication discipline)._
 
 ---
 
 <a name="mandatory-block-2-audit-evidence--proof-discipline"></a>
 
 > # ⚠️⚠️⚠️ MANDATORY — AUDIT EVIDENCE & PROOF DISCIPLINE ⚠️⚠️⚠️
->
-> _Duplicate of [docs/dev/rules.md §24](docs/dev/rules.md#24-audit-evidence-discipline-meta--how-to-audit) — keep in lockstep per §11.32._
 >
 > **EVERY audit round MUST embed a complete markdown evidence table in the journal (`docs/wip/<deliverable>/<NN>-<step>/journal.md`).** Prose-only journals = audit INCOMPLETE = step NOT done. The whole framework exists so the user can OPEN A JOURNAL FILE and SEE the evidence directly.
 >
@@ -67,6 +67,8 @@ Copyright (c) DCSV. All rights reserved.
 > 3. **Fix log** (`## Fix log (append-only)`) — APPEND-ONLY 5-field entries (rules.md §, finding round, what changed, file:line, timestamp/commit). **NEVER touches the big table.**
 >
 > **Closure is proven by ABSENCE of a finding from the next sweep's big table — not by a fix-log entry claiming "fixed."**
+>
+> **Why this shape**: the artifacts are tamper-evident BY DESIGN. The Fixer can't "fix" a finding by editing the big table (their claim has to survive a fresh Auditor walking the catalog from zero); the append-only logs prevent silent reclassification of past findings; closure-by-absence prevents motivated "fixed" claims that the next sweep would surface as STILL_PRESENT.
 >
 > ## ⚠️ ROUND SEQUENCE (per [rules.md §24.0a-f](docs/dev/rules.md#24-audit-evidence-discipline-meta--how-to-audit))
 >
@@ -79,6 +81,8 @@ Copyright (c) DCSV. All rights reserved.
 > **Detailed protocol → [process.md §4](docs/dev/process.md#4-audit-loop-mechanics). Predicates → [rules.md §24](docs/dev/rules.md#24-audit-evidence-discipline-meta--how-to-audit) (§24.0 artifacts, §24.0a-h lifecycle, §24.10 status, §24.12 self-audit, §24.13 sister-sweep, §24.14 tamper-evident). Visual flow → [Deliverable workflow chart](docs/dev/rules.md#deliverable-workflow-chart--order-of-operations-with-loops).**
 >
 > **If you find yourself about to claim "audit complete" without the 3-artifact model satisfied, STOP. Walk the model. Embed the artifacts. Then claim convergence.**
+>
+> _Canonical form (full §24 predicate catalog with Evidence + Why + How blocks per predicate): [rules.md §24 Audit Evidence Discipline](docs/dev/rules.md#24-audit-evidence-discipline-meta--how-to-audit). Update both in lockstep when either changes (per §11.32 KEEP-doc duplication discipline)._
 
 ---
 
@@ -86,13 +90,15 @@ Copyright (c) DCSV. All rights reserved.
 
 > # ⚠️⚠️⚠️ DELIVERABLE COMPLETENESS CHECKLIST — THE GATE BEFORE USER REVIEW ⚠️⚠️⚠️
 >
-> _Duplicate of [docs/dev/rules.md Deliverable completeness checklist](docs/dev/rules.md#deliverable-completeness-checklist-the-gate-before-user-review) — keep in lockstep per §11.32._
->
 > **Before declaring ANY deliverable "ready for REVIEW," walk the [Deliverable completeness checklist in rules.md](docs/dev/rules.md#deliverable-completeness-checklist-the-gate-before-user-review). Every box must be a YES with a citation. If any box is NO, the deliverable is NOT ready — go finish the gap and re-walk the checklist.**
 >
 > **Final attestation**: before presenting for user REVIEW, write the attestation block from the checklist into the deliverable's root README (verbatim wording in rules.md). The attestation is YOUR signed claim that every box is honest YES — invalidating it is a process-integrity breach.
 >
+> **What the checklist covers**: per-step audit-loop convergence, cross-cutting verification (parity tests, doc parity, generated-file regeneration, observability completeness), and final-review sweep convergence. Walked once per deliverable immediately before declaring REVIEW-ready. A signed YES that turns out to be NO is a process-integrity breach under §24.0 tamper-evidence — the attestation isn't ceremonial, it's the gate.
+>
 > **You MUST walk this checklist immediately before declaring any deliverable ready for user review. No exceptions, no "I'll skip it just this once," no "the steps were clean so the whole deliverable must be clean." Walk every box, write the attestation, then present.**
+>
+> _Canonical form (full checklist with per-step / final-review / cross-cutting / process-integrity gates + verbatim attestation wording): [rules.md Deliverable completeness checklist](docs/dev/rules.md#deliverable-completeness-checklist-the-gate-before-user-review). Update both in lockstep when either changes (per §11.32 KEEP-doc duplication discipline)._
 
 ---
 
@@ -111,7 +117,7 @@ The agent reaches alignment with the user during PLAN, then **the main-thread or
 - **EXECUTE** — Per step, in prerequisite order, the **main-thread orchestrator** spawns fresh sub-agents for each phase (per the orchestrator-only main-thread block above):
   1. **Spawn Planner sub-agent** — given step description + applicable rules.md categories + relevant docs to read; appends Plan section to `docs/wip/<deliverable>/<NN>-<step>/journal.md` including pre-emptive gate checks (test coverage plan, convention check, PII check, layer check) to push catches BEFORE writing code, not after.
   2. **Spawn Implementer sub-agent** — given the journal Plan + applicable rules.md categories; writes code + tests; returns files-touched + build/inspectcode status.
-  3. **Audit loop**: fresh K=12 Auditor batch + Aggregator each round → fresh Fixer per finding → next round = brand-new sub-agents. Terminate on zero-FINDING sweep. 10-iter ceiling. Mechanics → [process.md §4](docs/dev/process.md#4-audit-loop-mechanics) / [rules.md §24](docs/dev/rules.md#24-audit-evidence-discipline-meta--how-to-audit). Anti-laziness preamble enforced inside Auditor dispatch briefs.
+  3. **Audit loop**: fresh K=12 Auditor batch + Aggregator each round → fresh Fixer per finding → next round = brand-new sub-agents. Terminate on zero-FINDING sweep. 10-iter ceiling. Each Auditor produces the 3-artifact journal — **big table** (one row per rules.md subsection, status `✅ PASS` / `⚪ N/A` / `❌ FINDING-{H/M/L}` with file:line citation + reason/description+fix), **findings log** (append-only per-round subsection), **fix log** (5-field per fix). PASS rows require file:line; N/A rows require step-scope-specific reason; FINDING rows require severity + file:line + description + fix. Mechanics → [process.md §4](docs/dev/process.md#4-audit-loop-mechanics) / [rules.md §24](docs/dev/rules.md#24-audit-evidence-discipline-meta--how-to-audit). Anti-laziness preamble enforced inside Auditor dispatch briefs.
   4. Per-step distillation → root README's kinds-of-misses log + candidate predicate additions for `rules.md` (orchestrator may delegate distillation to a sub-agent if the journal is large).
 - **FINAL-REVIEW** — Same orchestrator-driven audit loop, scope = whole deliverable. Fresh Final-reviewer sub-agent(s) per round. Catches integration / cross-step / consistency bugs.
 - **SHIP** — Aggregate proposed rule additions FROM the per-step + final-review journals (they MUST still be readable at this point — they're the evidence behind every proposed rule). Present root README to user. Apply approved rules to `rules.md`. **Copy the root README as a snapshot** from `docs/wip/NNNN-<name>/README.md` to `docs/dev/deliverables/NNNN-<name>.md` (committed — single file; 4-digit index prefix so deliverables sort naturally in ship order). The per-step journals stay where they are in the gitignored `docs/wip/NNNN-<name>/` workspace — local-only artifacts that the workflow NEVER auto-deletes. User removes them manually whenever they want.
@@ -140,114 +146,42 @@ The journal IS the evidence of process integrity. Honest journals are self-rewar
 > ⚠️ **DO NOT START SERVICES MANUALLY** — Never run `dotnet run`, `pnpm dev`, `pnpm preview`, or any long-running server directly. Services are managed by Docker Compose.
 > E2E tests that self-manage their infrastructure (Testcontainers, child processes with cleanup) ARE allowed — they start and stop their own services.
 
-**Docker Compose (service lifecycle):**
+**Most-cited commands** (full catalog — Docker Compose lifecycle, single-project builds, test filters, lint, versioning — in [docs/COMMANDS.md](docs/COMMANDS.md)):
 
-```bash
-make up                                                                    # Start all services (detached)
-make down                                                                  # Stop all services
-docker compose -f infra/compose/compose.yml --env-file .env.local --env-file .env.secrets up -d      # Direct invocation
-```
-
-**Build:**
-
-```bash
-dotnet build server/D2.slnx                                                # Full .NET solution
-dotnet build server/services/{service}/api/{service}.API.csproj            # Single project
-cd server/web && pnpm install && pnpm exec svelte-check                    # SvelteKit type check
-```
-
-**Rider/ReSharper Inspections (.NET):**
-
-```bash
-# Full solution (WARNING+ severity, text output, no build — run after dotnet build)
-jb inspectcode server/D2.slnx --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log
-
-# Single project (faster — use during focused work)
-jb inspectcode server/D2.slnx --project="Edge.App" --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log
-```
-
-These catch warnings that `dotnet build` does NOT surface: `[MustDisposeResource]` misuse, captured variable/closure issues, object initialization suggestions, and other JetBrains-specific inspections. Must be zero warnings.
-
-**Test:**
-
-```bash
-# .NET (xUnit)
-dotnet test server/D2.slnx                                                 # Full solution
-dotnet test server/D2.slnx --filter Category=Unit                          # Unit only
-dotnet test server/services/edge/tests                                      # Specific service
-
-# SvelteKit
-cd server/web && pnpm exec vitest run                                       # Unit tests (browser mode)
-cd server/web && pnpm exec playwright test                                  # Playwright (mocked by default)
-```
-
-**Lint/Style:**
-
-```bash
-cd server/web && pnpm exec eslint .                                         # ESLint
-cd server/web && pnpm exec prettier --check .                               # Prettier check
-```
-
-**Versioning:**
-
-```bash
-dotnet tool restore                                                        # First-time setup
-dotnet versionize --dry-run                                                # Preview bump (always do this first)
-dotnet versionize                                                          # Bump version + update CHANGELOG + tag
-git push --follow-tags
-```
-
-**Important:** When editing shared `.NET` libs in `server/shared/dotnet/`, run `dotnet build server/D2.slnx` to verify all consumers still compile. SvelteKit changes are isolated — `cd server/web && pnpm exec svelte-check`.
+- **Build full .NET solution**: `dotnet build server/D2.slnx` — must be zero warnings (StyleCop / CS / null-ref).
+- **JetBrains inspections**: `jb inspectcode server/D2.slnx --severity=WARNING --format=Text --no-build --output=inspectcode.log && cat inspectcode.log` — must be zero warnings. Catches issues `dotnet build` does NOT (e.g. `[MustDisposeResource]`, captured-closure issues).
+- **Run .NET tests**: `dotnet test server/D2.slnx` (full) or `dotnet test server/D2.slnx --filter Category=Unit` (unit only).
+- **SvelteKit type check**: `cd server/web && pnpm exec svelte-check`.
 
 ---
 
-## §3. Reference Documents
+<a name="3-reference-documents"></a><a name="35-doc-update-map"></a>
 
-Read these docs BEFORE working in the relevant area. Each doc is the authority for its domain.
+## §3. Reference Documents + Doc Update Map
 
-| Document                                                  | Summary                                                                                                                                                                                                                                                                                                                                                         | When to Read                                                                            |
-| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| [docs/dev/process.md](docs/dev/process.md)                | Phase lifecycle (PLAN / EXECUTE / FINAL-REVIEW / SHIP / REVIEW) + permission gates + sub-agent architecture (orchestrator + K=12 cluster partition + Aggregator) + audit-loop mechanics + self-improvement loop.                                                                                                                                                 | Before starting ANY deliverable                                                         |
-| [docs/dev/rules.md](docs/dev/rules.md)                    | The CENTRAL, VERBOSE, AUTHORITATIVE requirements catalog for any code change — security, race conditions, naming, object disposal, D2Result, OOTB shared libs, logging, PII, graceful degradation, UX, DX, observability, idempotency, configuration, conventions, audit-evidence discipline, more. Read end-to-end during PLAN; walk during every audit round. | Read end-to-end at PLAN; walked each audit round                                        |
-| [docs/dev/deliverables/](docs/dev/deliverables/README.md) | Surviving root READMEs from shipped deliverables — final reports + lessons learned + origin trace for new rules.md predicates.                                                                                                                                                                                                                                  | When researching a past deliverable's outcome                                           |
-| [CONTRIBUTING.md](CONTRIBUTING.md)                        | Branch naming, conventional commits, PR process, license notice                                                                                                                                                                                                                                                                                                 | PR preparation                                                                          |
-| [CHANGELOG.md](CHANGELOG.md)                              | Conventional-commits-driven (versionize). Don't hand-edit.                                                                                                                                                                                                                                                                                                      | Reference only                                                                          |
-| [docs/PATTERNS.md](docs/PATTERNS.md)                      | TLC/2LC/3LC convention, handler, D2Result, middleware, repo, cache, RedactionSpec, i18n, configuration. The single biggest pattern reference.                                                                                                                                                                                                                   | Any handler / DI / repo / cache / middleware work                                       |
-| [docs/TESTS.md](docs/TESTS.md)                            | 8-category adversarial Case Coverage Checklist, test categories, custom matchers                                                                                                                                                                                                                                                                                | Adding or modifying tests                                                               |
-| [docs/PARITY.md](docs/PARITY.md)                          | Cross-language parity tracking + "Why exclusive?" framework                                                                                                                                                                                                                                                                                                     | Adding cross-language components                                                        |
-| [docs/SRC_GEN.md](docs/SRC_GEN.md)                        | Spec-driven codegen reference — .NET Roslyn `IIncrementalGenerator` + TypeScript `tools/ts-codegen` emitter pattern + JSON spec wiring.                                                                                                                                                                                                                         | Any source-gen / spec-driven codegen work                                               |
-| [ADRs](docs/adrs/README.md)                               | Architectural Decision Records (Nygard format + Deliverable cross-link extra field).                                                                                                                                                                                                                                                                            | When researching an architectural decision or proposing a new one                       |
-| **Active project tracking doc** (see header)              | Current scope, status, open questions, deferred work, resolved decisions.                                                                                                                                                                                                                                                                                       | Before starting any task                                                                |
-| `/old/v1/D2-WORX/`                                        | Frozen v1 snapshot. Historical reference for any v1 patterns / decisions / docs that don't have v2 equivalents yet. **Read-only — never modify.**                                                                                                                                                                                                               | When researching how v1 did something or hunting for tribal knowledge not yet extracted |
+One table, two axes: **When to read** before touching the area, and **When to update** after touching the area. If your change spans multiple rows, update each. If no row fits, the change probably needs a new doc — ASK before creating one.
 
-Per-service / per-library `README.md` files appear in `server/services/{service}/` and `server/shared/dotnet/{lib}/` as those are built/lib.
+| Document                                                  | When to read                                                      | When to update (what triggers an edit)                                                                                                                                                                                                                |
+| --------------------------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [docs/dev/process.md](docs/dev/process.md)                | Before starting ANY deliverable                                   | Workflow / sub-agent architecture / audit-loop mechanics / Plan-Audit changes (paired with [rules.md §24](docs/dev/rules.md#24-audit-evidence-discipline-meta--how-to-audit) if predicate changes)                                                    |
+| [docs/dev/rules.md](docs/dev/rules.md)                    | Read end-to-end at PLAN; walked each audit round                  | New predicate or category change (and codegen-discipline row also touches [§26](docs/dev/rules.md#26-codegen-discipline-spec--proto--schema-derived-types))                                                                                            |
+| [docs/dev/deliverables/](docs/dev/deliverables/README.md) | When researching a past deliverable's outcome                     | At SHIP — the deliverable's root README snapshot lands here                                                                                                                                                                                           |
+| [docs/COMMANDS.md](docs/COMMANDS.md)                      | When you need the build / test / lint / versioning commands       | When a command, flag, or service-lifecycle invocation changes                                                                                                                                                                                         |
+| [CONTRIBUTING.md](CONTRIBUTING.md)                        | PR preparation                                                    | Branch / commit / PR convention changes                                                                                                                                                                                                              |
+| [docs/PATTERNS.md](docs/PATTERNS.md)                      | Any handler / DI / repo / cache / middleware work                 | A handler / TLC pattern / DI registration / `D2Result` factory usage / RedactionSpec / mapper / repo pattern changes                                                                                                                                  |
+| [docs/TESTS.md](docs/TESTS.md)                            | Adding or modifying tests                                         | Test category, custom matcher, adversarial-coverage rule, fixture pattern changes                                                                                                                                                                     |
+| [docs/PARITY.md](docs/PARITY.md)                          | Adding cross-language components                                  | Anything cross-language (.NET ↔ SvelteKit ↔ future)                                                                                                                                                                                                   |
+| [docs/SRC_GEN.md](docs/SRC_GEN.md)                        | Any source-gen / spec-driven codegen work                         | Adding a new generator, modifying spec format, new emitter                                                                                                                                                                                            |
+| [docs/TIMESTAMPS.md](docs/TIMESTAMPS.md)                  | Any timestamp / temporal handling work                            | Timestamp categories, NodaTime type selection, DST rules, PostgreSQL column mapping, wire `DateTimeOffset?` conversion changes                                                                                                                       |
+| [ADRs](docs/adrs/README.md)                               | When researching an architectural decision or proposing a new one | An architectural decision overrides a prior v2 plan (paired with V2.md tracking entry)                                                                                                                                                                |
+| [server/shared/dotnet/messaging-rabbitmq/README.md](server/shared/dotnet/messaging-rabbitmq/README.md) | Any async messaging work                                          | Async messaging — wire format, exchange / queue topology, AMQP headers, encryption frame, DLQ behavior changes                                                                                                                                       |
+| [docs/v2/PHASE_3_EDGE.md](docs/v2/PHASE_3_EDGE.md)        | Any Edge service operational-guarantee work                       | Edge service operational guarantees — HTTP idempotency, request enrichment, session 3-tier, scheduled-jobs receiver, multi-instance scaling changes                                                                                                  |
+| [docs/v2/PHASE_3_RATE_LIMITING.md](docs/v2/PHASE_3_RATE_LIMITING.md) | Any rate-limit middleware work                                    | Rate-limit middleware design / bucket math / kill-switch / FP-too-common detection / cookie shortcut changes                                                                                                                                          |
+| [docs/v2/PHASE_0_AUTH.md](docs/v2/PHASE_0_AUTH.md)        | Any KeyCustodian / key rotation / secret handling work            | KeyCustodian, key rotation, secret handling, compromise runbook changes                                                                                                                                                                              |
+| **Active project tracking doc** (see header — currently [docs/v2/V2.md](docs/v2/V2.md)) | Before starting any task                                          | Phase progression / wipe state / open phase questions / new tracked issue; architectural decisions that override prior v2 plan (also add an ADR entry)                                                                                               |
+| Per-lib / per-service `README.md`                         | When working in that lib / service                                | Add/modify a public API on a lib or service                                                                                                                                                                                                          |
 
----
-
-## §3.5. Doc Update Map
-
-**KEEP docs describe current reality, not the journey from v1.** Don't add v1-retrospective framing to PATTERNS / TESTS / MESSAGING / etc. — the v1→v2 journey lives in `docs/v2/` (V2.md, PHASE\_\*.md), and those tracking docs get archived once their phase ships.
-
-When you change something, update the right doc. The map below is the routing table:
-
-| If you change...                                                                                                                            | Update...                                                                                              |
-| ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| A handler / TLC pattern / DI registration / `D2Result` factory usage / RedactionSpec / mapper / repo pattern                                | [docs/PATTERNS.md](docs/PATTERNS.md)                                                                   |
-| Async messaging — wire format, exchange / queue topology, AMQP headers, encryption frame, DLQ behavior                                      | [server/shared/dotnet/messaging-rabbitmq/README.md](server/shared/dotnet/messaging-rabbitmq/README.md) |
-| Test category, custom matcher, adversarial-coverage rule, fixture pattern                                                                   | [docs/TESTS.md](docs/TESTS.md)                                                                         |
-| Edge service operational guarantees — HTTP idempotency, request enrichment, session 3-tier, scheduled-jobs receiver, multi-instance scaling | [docs/v2/PHASE_3_EDGE.md](docs/v2/PHASE_3_EDGE.md)                                                     |
-| Rate-limit middleware design / bucket math / kill-switch / FP-too-common detection / cookie shortcut                                        | [docs/v2/PHASE_3_RATE_LIMITING.md](docs/v2/PHASE_3_RATE_LIMITING.md)                                   |
-| Anything cross-language (.NET ↔ SvelteKit ↔ future)                                                                                         | [docs/PARITY.md](docs/PARITY.md)                                                                       |
-| KeyCustodian, key rotation, secret handling, compromise runbook                                                                             | [docs/v2/PHASE_0_AUTH.md](docs/v2/PHASE_0_AUTH.md)                                                     |
-| Spec-driven codegen — adding a new generator, modifying spec format, new emitter                                                            | [docs/SRC_GEN.md](docs/SRC_GEN.md)                                                                     |
-| Timestamp / temporal handling — timestamp categories, NodaTime type selection, DST rules, PostgreSQL column mapping, wire DateTimeOffset? conversion | [docs/TIMESTAMPS.md](docs/TIMESTAMPS.md)                                                          |
-| Codegen discipline (destination-assembly spec-mirror ban, source-gen internal DTO carve-out under no-leak + parity-test conditions, cross-language parity test requirement, autogen tooling choice)    | [docs/dev/rules.md §26](docs/dev/rules.md#26-codegen-discipline-spec--proto--schema-derived-types) (and [docs/dev/process.md](docs/dev/process.md) if workflow changes) |
-| Workflow / process / sub-agent architecture / audit-loop mechanics / Plan-Audit                                                             | [docs/dev/process.md](docs/dev/process.md) (and [docs/dev/rules.md §24](docs/dev/rules.md#24-audit-evidence-discipline-meta--how-to-audit) if predicate changes) |
-| Add/modify a public API on a lib or service                                                                                                 | the relevant `README.md` (`server/services/{svc}/README.md` or `server/shared/dotnet/{lib}/README.md`) |
-| Phase progression / wipe state / open phase questions / new tracked issue                                                                   | [docs/v2/V2.md](docs/v2/V2.md)                                                                         |
-| Architectural decision that overrides prior v2 plan                                                                                         | [docs/v2/V2.md](docs/v2/V2.md) (and add a new [ADRs](docs/adrs/README.md) entry per ADR convention)    |
-
-If your change spans multiple categories, update each. If no entry fits, the change probably needs a new doc — ASK before creating one.
+Per-service / per-library `README.md` files appear in `server/services/{service}/` and `server/shared/dotnet/{lib}/`.
 
 ---
 
@@ -311,11 +245,11 @@ Options pattern, Caching marker interfaces (`ILocalCache` / `IDistributedCache` 
 
 Auth (self-rolled .NET module within Edge, RFC 8693 + 6749 §4.4, JWKS at OIDC-canonical path), JWT (RS256, 15min expiry, `d2_`-prefixed snake_case custom claims), KeyCustodian (lifecycle of all long-lived secrets, state machine + overlap rotation), SvelteKit BFF (pure SSR, browser → Edge direct for auth mutations, `@d2/headers` route guards), sync gRPC / async RabbitMQ split (sensitive payloads encrypted via `D2.Shared.Encryption`), notifications via D2.Courier only, sessions 3-tier (cookie cache 5min → Redis → PostgreSQL dual-write), DB topology (one PG server, per-domain DBs, PG advisory-lock migration safety), object storage (SeaweedFS for user files, MinIO for LGTM blocks), production deployment (eventually Swarm + Portainer; pre-launch Compose on VPS) — see [docs/PATTERNS.md](docs/PATTERNS.md) + [docs/v2/V2.md](docs/v2/V2.md).
 
+**Why these specifics** (constraints, not preferences): **RS256** (not HS256 — no shared secrets across service boundaries; not EdDSA — JWKS interop); **15min JWT expiry** (refresh-token rotation forces re-anchoring); **snake_case custom claims with `d2_` prefix** (the `:` punctuation in OAuth scope strings collides with camelCase JSON-path conventions); **3-tier sessions** (cookie cache eliminates Redis hop for short bursts; Redis is hot path; PG is durable backstop).
+
 ---
 
 ## §5. Critical Reminders (top-of-mind for every change)
-
-_Duplicate of [docs/dev/rules.md §1-§24 predicate catalog](docs/dev/rules.md) — keep in lockstep per §11.32._
 
 **The complete, verbose, authoritative rule catalog lives in [docs/dev/rules.md](docs/dev/rules.md) — security, race conditions, naming, object disposal, D2Result, OOTB shared libs, logging, PII redaction, graceful degradation, UX, DX, observability, idempotency, configuration, conventions, audit-evidence discipline, and more (~200 evidence-required predicates across 24 categories). READ IT END-TO-END DURING THE PLAN PHASE OF EVERY DELIVERABLE.**
 
@@ -364,10 +298,7 @@ _Duplicate of [docs/dev/rules.md §1-§24 predicate catalog](docs/dev/rules.md) 
 
 ### Code quality (zero tolerance)
 
-- **`dotnet build server/D2.slnx` zero StyleCop / CS / null-ref warnings.** Never suppress. [rules.md §5.21]
-- **`jb inspectcode server/D2.slnx --severity=WARNING` zero JetBrains warnings.** [rules.md §5.22]
-- **Fix ALL warnings/errors anywhere in the project** — never dismiss as "pre-existing." [rules.md §5.23]
-- **i18n everywhere** — no hardcoded user-visible strings (UI, handler messages, input errors, notifications). All locale files in sync. [rules.md §12]
+- **Zero warnings, BOTH tools** (they catch different issues — not interchangeable; running only one = real coverage gap). `dotnet build server/D2.slnx` (StyleCop / CS / null-ref / Roslyn analyzers) AND `jb inspectcode server/D2.slnx --severity=WARNING` (JetBrains-only: `[MustDisposeResource]`, captured-closure issues, object-init suggestions). Never suppress; fix ALL warnings/errors anywhere in the project — never dismiss as "pre-existing" (branch hygiene: if you touched the area, you own its cleanliness). [rules.md §5.21, §5.22, §5.23]
 
 ### Documentation parity
 
@@ -376,17 +307,9 @@ _Duplicate of [docs/dev/rules.md §1-§24 predicate catalog](docs/dev/rules.md) 
 
 ### Convention slippage (memory of these = first-pass clean)
 
-- **`string.Empty` not `""`** in C#. [rules.md §5.5]
-- **`namespace` BEFORE `using` directives** in C#. [rules.md §5.10]
-- **No `this.` qualifier** in C#. [rules.md §5.9]
-- **Single-line `if` no braces; multi-line `if` WITH braces.** [rules.md §5.8]
-- **C# 14 extension members syntax (`extension(T t) { ... }`)** — not old `this T` parameter style. [rules.md §5.6]
-- **Sealed by default** on concrete classes / records / exceptions / attributes. [rules.md §5.7]
 - **Field prefixes**: `_` (mutable), `r_` (readonly), `s_` (static), `sr_` (static readonly), `_UPPER` (private const), `UPPER` (public const). Primary-constructor params on handlers carry NO `r_` prefix. [rules.md §7.1]
-- **American English only** — `behavior`/`color`/`analyze`/`honor`/`canceled`/`favorite`. [rules.md §7.15]
-- **Lines ≤ 100 chars** in C# / TS source.
-- **No phase / sweep / audit verbiage** in source or KEEP docs. [rules.md §14]
-- **Tests live next to the feature they cover** — no `Phase*Tests.cs` / `*Audit*Tests.cs` / `*Sweep*Tests.cs`. Behavior-descriptive method names. [rules.md §1.8, §1.9]
+- **`namespace` BEFORE `using` directives** in C#. [rules.md §5.10]
+- Other convention predicates (string.Empty, no this., brace rules, C# 14 extension members, sealed default, American English, line length, no phase verbiage, tests next to feature) → [rules.md §5/§7](docs/dev/rules.md#5-c-code-conventions) (also covered by MEMORY.md feedback entries).
 
 ### Architectural layer hygiene
 
@@ -405,7 +328,9 @@ _Duplicate of [docs/dev/rules.md §1-§24 predicate catalog](docs/dev/rules.md) 
 - **Spec-mirror DTO types FORBIDDEN in destination assemblies** — autogen from the schema instead, OR move the DTO into source-gen internals under §26.2's no-leak + parity-test conditions. [rules.md §26.1]
 - **Hand-write a DTO that mirrors a `.proto` / `.spec.json` / `.openapi.yaml` / `.graphql` shape in a published package = process-integrity failure.** [rules.md §26.1]
 
-> Topic-by-topic predicate routing → [rules.md table of contents](docs/dev/rules.md#table-of-contents).
+> Need a specific category (security / concurrency / disposal / D2Result / OOTB libs / logging / PII / graceful degradation / UX / DX / observability / idempotency / configuration / codegen) → [rules.md table of contents](docs/dev/rules.md#table-of-contents) routes by §-number.
+
+_Canonical form (full §1-§24 predicate catalog with Evidence + Why + How blocks per predicate): [rules.md](docs/dev/rules.md). This §5 is the impossible-to-miss short list; rules.md is the authoritative source. Update both in lockstep when either changes (per §11.32 KEEP-doc duplication discipline)._
 
 ---
 
@@ -429,9 +354,9 @@ _Duplicate of [docs/dev/rules.md §1-§24 predicate catalog](docs/dev/rules.md) 
 
 **Primary-constructor handlers**: Constructor parameters do NOT take the `r_` prefix — they're parameters, not fields, even though they're accessed like fields inside the class body. The carve-out applies ONLY to handler primary-constructor parameters; regular fields keep their prefixes.
 
-_Above C# Naming table duplicates [docs/dev/rules.md §7.1](docs/dev/rules.md#7-naming-file-headers-folder-casing) — keep in lockstep per §11.32._
+> Common gotchas: folder casing inside-project = PascalCase, outside-project = lowercase; observability tags = camelCase (`traceId`, `correlationId`, `userId`, `orgId`, `service`); TS naming = camelCase methods / PascalCase types / kebab-case files; translation keys carry domain prefix (`auth_*`, `webclient_*`, `common_*`). Full reference → [rules.md §7](docs/dev/rules.md#7-naming-file-headers-folder-casing).
 
-> Other naming / file-header / folder / TS / git / observability conventions → [rules.md §7](docs/dev/rules.md#7-naming-file-headers-folder-casing).
+_Canonical form (C# Naming table + TS naming + folder casing + file headers + observability fields + git conventions): [rules.md §7.1 Naming](docs/dev/rules.md#7-naming-file-headers-folder-casing). The table above is duplicated here for at-a-glance reference. Update both in lockstep when either changes (per §11.32 KEEP-doc duplication discipline)._
 
 ---
 
@@ -451,21 +376,9 @@ _Above C# Naming table duplicates [docs/dev/rules.md §7.1](docs/dev/rules.md#7-
 
 > **Predicates** (zero-tolerance for warnings, write tests, regression-pin every fix, never commit without permission, never defer without permission, etc.) live in [docs/dev/rules.md §13 Permission / Action Discipline](docs/dev/rules.md#13-permission--action-discipline) and elsewhere in rules.md. They're walked each audit round.
 
-### Code Intelligence Tools
+### Code Intelligence + Windows LSP workaround
 
-**TypeScript**: Use `mcp__cclsp__*` tools (`get_hover`, `find_definition`, `find_references`, `find_workspace_symbols`, `get_diagnostics`). The built-in `LSP` tool's `workspaceSymbol` works but `hover`/`documentSymbol` return empty results.
-
-**C#**: `csharp-ls` via built-in `LSP` tool — `workspaceSymbol` works, diagnostics flow automatically, but `hover`/`documentSymbol` time out (30s limit on large solution). Fall back to Grep/Glob/Read.
-
-Before renaming or changing a function signature, use `find_references` to find all call sites first. Use Grep/Glob for text/pattern searches (comments, strings, config values) where LSP doesn't help.
-
-After writing or editing TS code, check `mcp__cclsp__get_diagnostics` before moving on. Fix type errors and missing imports immediately.
-
-After writing or editing .NET code, run `dotnet build server/D2.slnx` (zero warnings) AND `jb inspectcode server/D2.slnx --severity=WARNING` (zero warnings). The two tools catch different issues — Roslyn analyzers vs JetBrains inspections. Both must be clean.
-
-### Windows LSP Workaround
-
-Edit `~/.claude/plugins/marketplaces/claude-plugins-official/.claude-plugin/marketplace.json`: Change `"command"` to `"cmd"` with `"args": ["/c", "<binary>", ...originalArgs]` for `typescript-language-server`, `csharp-ls`, `gopls`. **Must reapply after `claude plugin marketplace update`** — the update overwrites the file.
+Code Intelligence (TypeScript via `mcp__cclsp__*` tools — `get_hover`, `find_definition`, `find_references`, `find_workspace_symbols`, `get_diagnostics`; C# via `csharp-ls` for `workspaceSymbol` + diagnostics with Grep / Glob / Read fallback because `hover` / `documentSymbol` time out on the large solution) + Windows cmd-wrap fix for `marketplace.json` (must be reapplied after every `claude plugin marketplace update` — the update overwrites the file) → MEMORY.md "Code Intelligence (LSP)" + "Manual LSP Fix" sections.
 
 ### Project Structure
 
