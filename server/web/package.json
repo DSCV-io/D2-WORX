@@ -57,7 +57,6 @@
     "@d2/auth-bff-client": "workspace:*",
     "@d2/cache-memory": "workspace:*",
     "@d2/cache-redis": "workspace:*",
-    "@d2/di": "workspace:*",
     "@d2/geo-abstractions": "workspace:*",
     "@d2/geo-client": "workspace:*",
     "@d2/geo-default": "workspace:*",
