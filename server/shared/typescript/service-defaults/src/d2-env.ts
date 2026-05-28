@@ -41,7 +41,7 @@ export const D2Env = {
     for (let i = fileNames.length - 1; i >= 0; i--) {
       const fileName = fileNames[i]!;
       const path = D2Env.discoverFile(startDir, fileName);
-      if (path === null) continue;
+      if (path === undefined) continue;
       const fileEntries = D2Env.parseEnvFile(readFileSync(path, "utf8"));
       for (const [k, v] of Object.entries(fileEntries)) merged[k] = v;
     }
@@ -54,13 +54,13 @@ export const D2Env = {
     return merged;
   },
 
-  discoverFile(startDir: string, fileName: string): string | null {
+  discoverFile(startDir: string, fileName: string): string | undefined {
     let cur = resolve(startDir);
     while (true) {
       const candidate = resolve(cur, fileName);
       if (existsSync(candidate)) return candidate;
       const parent = dirname(cur);
-      if (parent === cur) return null;
+      if (parent === cur) return undefined;
       cur = parent;
     }
   },

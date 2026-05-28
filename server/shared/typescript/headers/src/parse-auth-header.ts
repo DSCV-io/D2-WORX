@@ -48,6 +48,13 @@ export interface ParseAuthHeaderOptions {
  *
  * Returns `D2Result<JwtPayload>` — no throwing on bad input. Callers do not
  * need a try/catch.
+ *
+ * Wire-boundary carve-out per rules.md §6.15: the `authHeader` parameter
+ * is typed `string | null | undefined` because the primary caller passes
+ * `Headers.get(...)` directly, and the Web `Headers` API contract returns
+ * `string | null` (`null` for absent headers). The parser normalizes to
+ * the `bearerMissing` failure envelope at this boundary — no `null`
+ * propagates inward.
  */
 export function parseAuthHeader(
   authHeader: string | null | undefined,
@@ -123,45 +130,45 @@ export function parseAuthHeader(
   }
 
   const payload: JwtPayload = {
-    sub: _stringOrNull(subClaim),
+    sub: _stringOrUndef(subClaim),
     aud,
-    iat: _numberOrNull(claims[JwtClaimTypes.IAT]),
-    exp: _numberOrNull(claims[JwtClaimTypes.EXP]),
-    azp: _stringOrNull(claims[JwtClaimTypes.AZP]),
-    scope: _stringOrNull(claims[JwtClaimTypes.SCOPE]),
-    act: _objectOrNull(claims[JwtClaimTypes.ACT]),
-    client_id: _stringOrNull(claims[JwtClaimTypes.CLIENT_ID]),
-    d2_session_id: _stringOrNull(claims[JwtClaimTypes.SESSION_ID]),
-    d2_username: _stringOrNull(claims[JwtClaimTypes.USERNAME]),
-    d2_fp: _stringOrNull(claims[JwtClaimTypes.FINGERPRINT]),
-    d2_org_id: _stringOrNull(claims[JwtClaimTypes.ORG_ID]),
-    d2_org_name: _stringOrNull(claims[JwtClaimTypes.ORG_NAME]),
-    d2_org_type: _stringOrNull(claims[JwtClaimTypes.ORG_TYPE]),
-    d2_org_role: _stringOrNull(claims[JwtClaimTypes.ORG_ROLE]),
-    amr: _stringOrNull(claims[JwtClaimTypes.AMR]),
-    d2_step_up_at: _stringOrNull(claims[JwtClaimTypes.STEP_UP_AT]),
+    iat: _numberOrUndef(claims[JwtClaimTypes.IAT]),
+    exp: _numberOrUndef(claims[JwtClaimTypes.EXP]),
+    azp: _stringOrUndef(claims[JwtClaimTypes.AZP]),
+    scope: _stringOrUndef(claims[JwtClaimTypes.SCOPE]),
+    act: _objectOrUndef(claims[JwtClaimTypes.ACT]),
+    client_id: _stringOrUndef(claims[JwtClaimTypes.CLIENT_ID]),
+    d2_session_id: _stringOrUndef(claims[JwtClaimTypes.SESSION_ID]),
+    d2_username: _stringOrUndef(claims[JwtClaimTypes.USERNAME]),
+    d2_fp: _stringOrUndef(claims[JwtClaimTypes.FINGERPRINT]),
+    d2_org_id: _stringOrUndef(claims[JwtClaimTypes.ORG_ID]),
+    d2_org_name: _stringOrUndef(claims[JwtClaimTypes.ORG_NAME]),
+    d2_org_type: _stringOrUndef(claims[JwtClaimTypes.ORG_TYPE]),
+    d2_org_role: _stringOrUndef(claims[JwtClaimTypes.ORG_ROLE]),
+    amr: _stringOrUndef(claims[JwtClaimTypes.AMR]),
+    d2_step_up_at: _stringOrUndef(claims[JwtClaimTypes.STEP_UP_AT]),
     raw: claims,
   };
 
   return ok(payload, opts.traceId);
 }
 
-function _stringOrNull(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  if (value.length === 0) return null;
+function _stringOrUndef(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  if (value.length === 0) return undefined;
   return value;
 }
 
-function _numberOrNull(value: unknown): number | null {
-  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+function _numberOrUndef(value: unknown): number | undefined {
+  if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
   return value;
 }
 
-function _objectOrNull(
+function _objectOrUndef(
   value: unknown,
-): Readonly<Record<string, unknown>> | null {
+): Readonly<Record<string, unknown>> | undefined {
   if (value === null || typeof value !== "object" || Array.isArray(value))
-    return null;
+    return undefined;
   return value as Readonly<Record<string, unknown>>;
 }
 

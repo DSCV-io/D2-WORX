@@ -47,12 +47,15 @@ const spec: ContextSpec = {
 };
 
 describe("emitPropagatedContextInterface", () => {
-  it("emits only propagate=true fields", () => {
+  it("emits only propagate=true fields with `?:` shorthand (rules.md §6.15)", () => {
     const src = emitPropagatedContextInterface(spec);
-    expect(src).toContain("readonly requestId: string | null;");
-    expect(src).toContain("readonly riskScore: number | null;");
-    expect(src).toContain("readonly isVpn: boolean | null;");
+    expect(src).toContain("readonly requestId?: string;");
+    expect(src).toContain("readonly riskScore?: number;");
+    expect(src).toContain("readonly isVpn?: boolean;");
     expect(src).not.toContain("notPropagated");
+    // Negative pin: never emits `| null` or `| undefined` on field declarations.
+    expect(src).not.toContain("readonly requestId:");
+    expect(src).not.toContain("| null");
   });
 });
 

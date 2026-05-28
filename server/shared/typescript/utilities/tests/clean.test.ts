@@ -108,7 +108,10 @@ describe("clean — ThrowOnNull behavior", () => {
 describe("clean — mixed input shapes", () => {
   it("nulls inside the input are still passed to the cleaner", () => {
     // The cleaner OWNS null handling for elements; clean() only handles
-    // null INPUTS to the function as a whole.
+    // null INPUTS to the function as a whole. Cross-language-parity
+    // carve-out per rules.md §6.15: this test models a .NET nullable
+    // value-type element sequence (`int?[]`) where `null` is the wire
+    // sentinel; the `clean()` parity contract preserves the .NET shape.
     type N = number | null;
     const items: N[] = [1, null, 2];
     expect(clean<N>(items, (n) => (n === null ? null : n * 10))).toEqual<N[]>([

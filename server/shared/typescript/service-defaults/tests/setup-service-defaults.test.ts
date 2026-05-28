@@ -8,11 +8,11 @@ import {
   type ServiceDefaultsHandle,
 } from "../src/setup-service-defaults.js";
 
-let handle: ServiceDefaultsHandle | null = null;
+let handle: ServiceDefaultsHandle | undefined;
 
 afterEach(async () => {
-  if (handle !== null) await handle.shutdown();
-  handle = null;
+  if (handle !== undefined) await handle.shutdown();
+  handle = undefined;
 });
 
 describe("setupServiceDefaults", () => {

@@ -12,8 +12,8 @@
 export interface SanitizedErrorRender {
   /** Constructor name (e.g. `"TypeError"`, `"AmqpConnectError"`). */
   readonly name: string;
-  /** First stack-trace frame (file + line) when available, else `null`. */
-  readonly firstFrame: string | null;
+  /** First stack-trace frame (file + line) when available, else absent. */
+  readonly firstFrame?: string;
 }
 
 /**
@@ -29,8 +29,8 @@ export function sanitizedErrorRender(err: unknown): SanitizedErrorRender {
       .map((l) => l.trim())
       .filter(Boolean);
     // Skip the leading "Error: ..." line that Node prepends.
-    const frame = lines.find((l) => l.startsWith("at ")) ?? null;
+    const frame = lines.find((l) => l.startsWith("at "));
     return { name, firstFrame: frame };
   }
-  return { name: typeof err, firstFrame: null };
+  return { name: typeof err };
 }

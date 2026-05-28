@@ -25,9 +25,21 @@ export interface ExtensionKeyEntry {
   readonly doc: string;
 }
 
-/** One title entry parsed from the spec. */
+/**
+ * One title entry parsed from the spec.
+ *
+ * Wire-shape carve-out per rules.md §6.15: `httpStatus` is `number | null`
+ * because the spec's JSON literal uses `null` to denote the singular
+ * fallback entry (only ONE entry per spec may carry `httpStatus: null`).
+ * Three-state semantics: per-status number (e.g. 400), explicit-null
+ * (fallback), or absent (validation error). The literal `null` is the
+ * spec contract; this interface mirrors that wire shape. Domain consumers
+ * branch on `=== null` to detect the fallback entry — `=== undefined`
+ * would mean "malformed spec entry" (which we reject earlier).
+ */
 export interface TitleEntry {
   readonly constName: string;
+  /** `null` is the fallback-entry sentinel; see interface JSDoc. */
   readonly httpStatus: number | null;
   readonly value: string;
   readonly doc: string;
@@ -293,7 +305,7 @@ function emitDefaultTitleForStatus(
   sb.appendLine("switch (status) {");
   sb.increaseIndent();
 
-  let fallback: TitleEntry | null = null;
+  let fallback: TitleEntry | undefined;
   for (const e of titles) {
     if (e.httpStatus === null) {
       fallback = e;
@@ -307,7 +319,7 @@ function emitDefaultTitleForStatus(
 
   sb.appendLine("default:");
   sb.increaseIndent();
-  if (fallback === null) sb.appendLine('return "";');
+  if (fallback === undefined) sb.appendLine('return "";');
   else sb.appendLine(`return ProblemDetailsTitles.${fallback.constName};`);
   sb.decreaseIndent();
 

@@ -61,8 +61,8 @@ describe("D2Env.discoverFile", () => {
     expect(D2Env.discoverFile(dir, "found.env")).toBe(join(dir, "found.env"));
   });
 
-  it("returns null when no match anywhere", () => {
-    expect(D2Env.discoverFile(dir, "totally-missing-1234.env")).toBeNull();
+  it("returns undefined when no match anywhere", () => {
+    expect(D2Env.discoverFile(dir, "totally-missing-1234.env")).toBeUndefined();
   });
 });
 

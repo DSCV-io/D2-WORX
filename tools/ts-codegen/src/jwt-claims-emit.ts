@@ -99,24 +99,41 @@ export function validateJwtClaimsSpec(spec: JwtClaimsSpec): ValidatedJwtClaims {
 /**
  * TS type for each `standard` JWT claim's emitted `JwtPayload` field.
  * Closed switch keyed on the spec's `value` (wire claim name) — covers
- * the 8 RFC-defined standard claims with their canonical types. A
- * `d2-custom` entry NOT listed here defaults to `string | null`; this
- * is checked at emit time so a future non-string `d2-*` claim surfaces
- * as a build-time decision rather than a silent default.
+ * the 8 RFC-defined standard claims with their canonical types.
+ *
+ * Optional claims use the `?:` shorthand form per rules.md §6.15 (TS
+ * `undefined` over `null`). The trailing `?` is appended to the field
+ * name (not the type) at emit time; types here name the BASE shape only
+ * (sans optionality marker). `aud` is the singleton non-optional claim:
+ * RFC 7519 §4.1.3 permits a single string OR array, but our parser
+ * always normalizes to `readonly string[]` (empty array when absent), so
+ * the field is always present.
+ *
+ * A `d2-custom` entry NOT listed here defaults to `string` (emitted as
+ * `field?: string`); this is checked at emit time so a future non-string
+ * `d2-*` claim surfaces as a build-time decision rather than a silent
+ * default.
  */
 const STANDARD_CLAIM_TS_TYPES: Readonly<Record<string, string>> = {
-  sub: "string | null",
+  sub: "string",
   aud: "readonly string[]",
-  iat: "number | null",
-  exp: "number | null",
-  azp: "string | null",
-  scope: "string | null",
-  act: "Readonly<Record<string, unknown>> | null",
-  client_id: "string | null",
+  iat: "number",
+  exp: "number",
+  azp: "string",
+  scope: "string",
+  act: "Readonly<Record<string, unknown>>",
+  client_id: "string",
 };
 
-/** Default TS type for `d2-custom` claims with no override. */
-const D2_CUSTOM_DEFAULT_TS_TYPE = "string | null";
+/**
+ * Claims that emit as required (non-optional) on the JwtPayload interface.
+ * Everything not in this set emits as `field?: T`. `aud` is required
+ * because our parser always populates it (empty array when absent).
+ */
+const REQUIRED_CLAIM_VALUES: ReadonlySet<string> = new Set(["aud"]);
+
+/** Default TS BASE type for `d2-custom` claims with no override. */
+const D2_CUSTOM_DEFAULT_TS_TYPE = "string";
 
 /**
  * Emit the `jwt-claim-types.g.ts` source. Stateless and unit-testable.
@@ -176,10 +193,16 @@ export function emitJwtClaims(spec: JwtClaimsSpec): EmitResult {
  * interface derived from the spec's `standard` + `d2-custom` claim
  * entries. `inside-act` claims are NOT top-level fields (they live
  * nested inside `act`); the `act` field itself is loosely typed as
- * `Readonly<Record<string, unknown>> | null` until a future deliverable
- * elevates it to a typed `ActorChainEntry` interface. A trailing `raw`
- * escape-hatch field gives downstream consumers access to non-spec'd
- * claims.
+ * `Readonly<Record<string, unknown>>` (optional via `?:`) until a
+ * future deliverable elevates it to a typed `ActorChainEntry` interface.
+ * A trailing `raw` escape-hatch field gives downstream consumers access
+ * to non-spec'd claims.
+ *
+ * Per rules.md §6.15 (TS `undefined`-over-`null`): optional fields emit
+ * with the `?:` shorthand; `null` is never used. Parsers that consume
+ * JWT wire payloads (where absent claims arrive as JSON `undefined` after
+ * decode) populate the field with `undefined`; the parser maps any
+ * shape-rejected claim to `undefined` (not `null`).
  */
 export function emitJwtPayload(spec: JwtClaimsSpec): EmitResult {
   const v = validateJwtClaimsSpec(spec);
@@ -214,12 +237,17 @@ export function emitJwtPayload(spec: JwtClaimsSpec): EmitResult {
   for (const e of v.entries) {
     if (e.kind === "inside-act") continue;
     const tsType = tsTypeForClaim(e);
+    const isRequired = REQUIRED_CLAIM_VALUES.has(e.value);
     sb.appendLine("/**");
     for (const line of e.description.split("\n"))
       sb.appendLine(` * ${escapeJsDoc(line)}`);
     sb.appendLine(` * Claim wire name: ${e.value} (kind: ${e.kind}).`);
     sb.appendLine(" */");
-    sb.appendLine(`readonly ${e.value}: ${tsType};`);
+    // Per rules.md §6.15: optional claims use the `?:` shorthand (not
+    // `T | undefined` and never `T | null`). Required claims keep the
+    // bare `: T` form.
+    const optionalMarker = isRequired ? "" : "?";
+    sb.appendLine(`readonly ${e.value}${optionalMarker}: ${tsType};`);
   }
 
   sb.appendLine("/**");
@@ -237,15 +265,18 @@ export function emitJwtPayload(spec: JwtClaimsSpec): EmitResult {
 }
 
 /**
- * TS type for one claim entry on the emitted JwtPayload interface.
- * `standard` entries look up their type in the closed `STANDARD_CLAIM_TS_TYPES`
- * table; `d2-custom` entries default to `string | null` (every existing
- * `d2-*` claim is string-shaped); `inside-act` entries are never emitted
- * top-level so the caller filters them out before this is invoked.
+ * TS BASE type for one claim entry on the emitted JwtPayload interface.
+ * Returns the type WITHOUT the optionality marker — the caller decides
+ * whether to emit `field: T` (required) or `field?: T` (optional) based
+ * on the `REQUIRED_CLAIM_VALUES` set. `standard` entries look up their
+ * base type in the closed `STANDARD_CLAIM_TS_TYPES` table; `d2-custom`
+ * entries default to `string` (every existing `d2-*` claim is
+ * string-shaped); `inside-act` entries are never emitted top-level so
+ * the caller filters them out before this is invoked.
  */
 function tsTypeForClaim(entry: JwtClaimEntry): string {
   if (entry.kind === "standard") {
-    return STANDARD_CLAIM_TS_TYPES[entry.value] ?? "string | null";
+    return STANDARD_CLAIM_TS_TYPES[entry.value] ?? "string";
   }
   return D2_CUSTOM_DEFAULT_TS_TYPE;
 }

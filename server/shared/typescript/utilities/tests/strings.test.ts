@@ -3,18 +3,18 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { cleanDisplayStr, cleanStr, toNullIfEmpty } from "../src/strings.js";
+import { cleanDisplayStr, cleanStr, toUndefIfEmpty } from "../src/strings.js";
 
-describe("toNullIfEmpty", () => {
+describe("toUndefIfEmpty", () => {
   it.each([
-    [null, null],
-    [undefined, null],
-    ["", null],
-    ["   ", null],
+    [null, undefined],
+    [undefined, undefined],
+    ["", undefined],
+    ["   ", undefined],
     ["  hello  ", "hello"],
     ["hello", "hello"],
   ])("input %j → %j", (input, expected) => {
-    expect(toNullIfEmpty(input)).toBe(expected);
+    expect(toUndefIfEmpty(input)).toBe(expected);
   });
 });
 
@@ -23,11 +23,11 @@ describe("cleanStr", () => {
     expect(cleanStr("  hello   \tworld\n  ")).toBe("hello world");
   });
 
-  it("returns null on null/empty/whitespace", () => {
-    expect(cleanStr(null)).toBe(null);
-    expect(cleanStr(undefined)).toBe(null);
-    expect(cleanStr("")).toBe(null);
-    expect(cleanStr("   ")).toBe(null);
+  it("returns undefined on null/empty/whitespace", () => {
+    expect(cleanStr(null)).toBeUndefined();
+    expect(cleanStr(undefined)).toBeUndefined();
+    expect(cleanStr("")).toBeUndefined();
+    expect(cleanStr("   ")).toBeUndefined();
   });
 
   it("preserves non-whitespace chars", () => {
@@ -45,10 +45,10 @@ describe("cleanDisplayStr", () => {
     expect(cleanDisplayStr("<b>Hello</b> World")).toBe("bHellob World");
   });
 
-  it("returns null on null/empty", () => {
-    expect(cleanDisplayStr(null)).toBe(null);
-    expect(cleanDisplayStr("")).toBe(null);
-    expect(cleanDisplayStr("   ")).toBe(null);
+  it("returns undefined on null/empty", () => {
+    expect(cleanDisplayStr(null)).toBeUndefined();
+    expect(cleanDisplayStr("")).toBeUndefined();
+    expect(cleanDisplayStr("   ")).toBeUndefined();
   });
 
   it("preserves Unicode letters from any script", () => {

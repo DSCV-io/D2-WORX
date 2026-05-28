@@ -8,11 +8,11 @@ import {
   type TelemetryHandle,
 } from "../src/setup-telemetry.js";
 
-let handle: TelemetryHandle | null = null;
+let handle: TelemetryHandle | undefined;
 
 afterEach(async () => {
-  if (handle !== null) await handle.shutdown();
-  handle = null;
+  if (handle !== undefined) await handle.shutdown();
+  handle = undefined;
 });
 
 describe("setupTelemetry", () => {

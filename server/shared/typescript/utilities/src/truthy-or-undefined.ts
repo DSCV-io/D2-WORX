@@ -16,6 +16,11 @@ import { falsey } from "./falsey.js";
  * null / undefined / empty / whitespace-only strings. Returns the trimmed
  * form so callers can use it directly without a second `.trim()` call.
  *
+ * Wire-boundary carve-out per rules.md §6.15: the `input` parameter is
+ * `string | null | undefined` because this helper EXISTS to absorb wire
+ * `null` (cookies / headers / DB columns / JSON values) and normalize to
+ * `undefined`. Domain code consumes the `string | undefined` return.
+ *
  * @param input - the raw string to normalize.
  * @returns the trimmed string when truthy; `undefined` otherwise.
  */

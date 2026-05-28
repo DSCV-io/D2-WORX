@@ -5,11 +5,11 @@
 export { falsey } from "./falsey.js";
 export { truthy } from "./truthy.js";
 export { truthyOrUndefined } from "./truthy-or-undefined.js";
-export { toNullIfEmpty, cleanStr, cleanDisplayStr } from "./strings.js";
+export { toUndefIfEmpty, cleanStr, cleanDisplayStr } from "./strings.js";
 export {
-  tryParseTruthyNullUuid,
-  tryParseTruthyNullInt,
-  tryParseTruthyNullEnum,
+  tryParseTruthyUndefUuid,
+  tryParseTruthyUndefInt,
+  tryParseTruthyUndefEnum,
 } from "./parse.js";
 export { chunk } from "./chunk.js";
 export {

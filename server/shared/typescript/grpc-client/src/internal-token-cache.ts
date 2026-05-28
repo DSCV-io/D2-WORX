@@ -20,7 +20,7 @@ const _DEFAULT_EXPIRY_SKEW_MS = 5_000;
  * statement IS atomic from JS's perspective.
  */
 export class InternalTokenCache {
-  private current: InternalTokenSnapshot | null = null;
+  private current: InternalTokenSnapshot | undefined;
   private readonly skewMs: number;
   private readonly clock: () => number;
 
@@ -29,11 +29,11 @@ export class InternalTokenCache {
     this.clock = opts.clock ?? Date.now;
   }
 
-  /** Returns the cached snapshot when fresh; null when empty or expired. */
-  tryGet(): InternalTokenSnapshot | null {
+  /** Returns the cached snapshot when fresh; undefined when empty or expired. */
+  tryGet(): InternalTokenSnapshot | undefined {
     const snapshot = this.current;
-    if (snapshot === null) return null;
-    if (snapshot.expiresAtMs - this.skewMs <= this.clock()) return null;
+    if (snapshot === undefined) return undefined;
+    if (snapshot.expiresAtMs - this.skewMs <= this.clock()) return undefined;
     return snapshot;
   }
 
@@ -44,6 +44,6 @@ export class InternalTokenCache {
 
   /** Drops the cache (test seam + invalidate-on-401 path). */
   clear(): void {
-    this.current = null;
+    this.current = undefined;
   }
 }

@@ -22,7 +22,7 @@ export const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 /**
  * Matches a canonical UUID v1-v8 (or nil). Used by
- * {@link tryParseTruthyNullUuid}. No backtracking — fixed-length anchors.
+ * {@link tryParseTruthyUndefUuid}. No backtracking — fixed-length anchors.
  */
 export const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

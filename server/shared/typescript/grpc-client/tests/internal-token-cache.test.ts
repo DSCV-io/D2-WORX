@@ -13,9 +13,9 @@ const SNAP: InternalTokenSnapshot = {
 };
 
 describe("InternalTokenCache", () => {
-  it("returns null when empty", () => {
+  it("returns undefined when empty", () => {
     const cache = new InternalTokenCache();
-    expect(cache.tryGet()).toBeNull();
+    expect(cache.tryGet()).toBeUndefined();
   });
 
   it("returns the snapshot after set when fresh", () => {
@@ -24,7 +24,7 @@ describe("InternalTokenCache", () => {
     expect(cache.tryGet()).toEqual(SNAP);
   });
 
-  it("returns null when snapshot is expired (with skew applied)", () => {
+  it("returns undefined when snapshot is expired (with skew applied)", () => {
     let now = 1_000_000;
     const cache = new InternalTokenCache({ clock: () => now });
     cache.set({
@@ -32,9 +32,9 @@ describe("InternalTokenCache", () => {
       expiresAtMs: 1_010_000,
       audience: "d2.edge",
     });
-    expect(cache.tryGet()).not.toBeNull();
+    expect(cache.tryGet()).not.toBeUndefined();
     now = 1_005_001; // skew 5_000 — token effectively expired now
-    expect(cache.tryGet()).toBeNull();
+    expect(cache.tryGet()).toBeUndefined();
   });
 
   it("respects custom skew", () => {
@@ -46,17 +46,17 @@ describe("InternalTokenCache", () => {
       audience: "d2.edge",
     });
     now = 800;
-    expect(cache.tryGet()).not.toBeNull();
+    expect(cache.tryGet()).not.toBeUndefined();
     now = 901; // expiresAt - skew = 900 — past now
-    expect(cache.tryGet()).toBeNull();
+    expect(cache.tryGet()).toBeUndefined();
   });
 
   it("clear() drops the cache", () => {
     const cache = new InternalTokenCache();
     cache.set(SNAP);
-    expect(cache.tryGet()).not.toBeNull();
+    expect(cache.tryGet()).not.toBeUndefined();
     cache.clear();
-    expect(cache.tryGet()).toBeNull();
+    expect(cache.tryGet()).toBeUndefined();
   });
 
   it("set() replaces a prior entry", () => {
@@ -80,8 +80,8 @@ describe("InternalTokenCache", () => {
       audience: "d2.edge",
     });
     now = 4_999; // expiresAt(10000) - skew(5000) = 5000 > now(4999) → fresh
-    expect(cache.tryGet()).not.toBeNull();
+    expect(cache.tryGet()).not.toBeUndefined();
     now = 5_001;
-    expect(cache.tryGet()).toBeNull();
+    expect(cache.tryGet()).toBeUndefined();
   });
 });

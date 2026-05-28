@@ -31,8 +31,8 @@ const DEFAULT_CHANNEL_OPTIONS: Record<string, number | string> = {
   "grpc.keepalive_timeout_ms": 5_000,
 };
 
-let _channel: Channel | null = null;
-let _channelInit: Promise<Channel> | null = null;
+let _channel: Channel | undefined;
+let _channelInit: Promise<Channel> | undefined;
 
 /**
  * Singleton-per-process gRPC channel accessor. Mirrors .NET
@@ -45,11 +45,11 @@ let _channelInit: Promise<Channel> | null = null;
  */
 export function getChannel(opts: GetChannelOptions = {}): Promise<Channel> {
   // Cached channel after first successful init.
-  if (_channel !== null) return Promise.resolve(_channel);
+  if (_channel !== undefined) return Promise.resolve(_channel);
   // Pending init promise — second + Nth concurrent caller share the
   // same Promise rather than racing to create separate channels.
   const inflight = _channelInit;
-  if (inflight !== null) return inflight;
+  if (inflight !== undefined) return inflight;
   const promise = _initChannel(opts);
   _channelInit = promise;
   return promise;
@@ -61,7 +61,7 @@ async function _initChannel(opts: GetChannelOptions): Promise<Channel> {
   await Promise.resolve();
   const endpoint = opts.endpoint ?? process.env["D2_EDGE_GRPC_ENDPOINT"];
   if (falsey(endpoint)) {
-    _channelInit = null;
+    _channelInit = undefined;
     throw new Error(
       "@d2/grpc-client: D2_EDGE_GRPC_ENDPOINT env var (or opts.endpoint) required",
     );
@@ -90,7 +90,7 @@ async function _initChannel(opts: GetChannelOptions): Promise<Channel> {
  */
 export async function closeChannel(): Promise<void> {
   const c = _channel;
-  _channel = null;
-  _channelInit = null;
-  if (c !== null) c.close();
+  _channel = undefined;
+  _channelInit = undefined;
+  if (c !== undefined) c.close();
 }

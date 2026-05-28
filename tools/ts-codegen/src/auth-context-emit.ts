@@ -22,11 +22,19 @@ import { StringBuilder } from "./lib/string-builder.js";
  * Spec shape for context interfaces (`IAuthContext.spec.json` /
  * `IRequestContext.spec.json`). Only fields the TS emitter needs are
  * declared.
+ *
+ * `extends` is a WIRE-SHAPE field: the spec JSON literally permits `null`
+ * (omitted/explicit-null both mean "no parent interface"), so the parser
+ * must accept `null` from the wire. Domain consumers see the resolved
+ * import target via `resolveExtendsFqn` and never touch the raw value.
+ * Per rules.md §6.15 wire-boundary carve-out — the spec literal forces
+ * `| null` here; downstream code normalizes at the parse boundary.
  */
 export interface ContextSpec {
   readonly name: string;
   readonly namespace: string;
   readonly description?: string;
+  /** Wire-shape `null` permitted: see interface JSDoc. */
   readonly extends?: string | null;
   readonly sections: readonly Section[];
 }
@@ -392,19 +400,25 @@ function emitActorEntryFile(): string {
   sb.appendLine(
     " * One link in the RFC 8693 actor chain. Mirrors .NET ActorEntry record.",
   );
+  sb.appendLine(
+    " * Per rules.md §6.15 (TS `undefined`-over-`null`): optional fields use",
+  );
+  sb.appendLine(
+    " * the `?:` shorthand; absent links arrive as `undefined`, never `null`.",
+  );
   sb.appendLine(" */");
   sb.appendLine("export interface ActorEntry {");
   sb.increaseIndent();
   sb.appendLine("readonly kind: ActorKind;");
   sb.appendLine("readonly subject: string;");
-  sb.appendLine("readonly clientId?: string | null;");
-  sb.appendLine("readonly impersonationKind?: ImpersonationKind | null;");
-  sb.appendLine("readonly sessionId?: string | null;");
-  sb.appendLine("readonly orgId?: string | null;");
-  sb.appendLine("readonly orgName?: string | null;");
-  sb.appendLine("readonly orgType?: OrgType | null;");
-  sb.appendLine("readonly orgRole?: Role | null;");
-  sb.appendLine("readonly act?: ActorEntry | null;");
+  sb.appendLine("readonly clientId?: string;");
+  sb.appendLine("readonly impersonationKind?: ImpersonationKind;");
+  sb.appendLine("readonly sessionId?: string;");
+  sb.appendLine("readonly orgId?: string;");
+  sb.appendLine("readonly orgName?: string;");
+  sb.appendLine("readonly orgType?: OrgType;");
+  sb.appendLine("readonly orgRole?: Role;");
+  sb.appendLine("readonly act?: ActorEntry;");
   sb.decreaseIndent();
   sb.appendLine("}");
   sb.appendLine();

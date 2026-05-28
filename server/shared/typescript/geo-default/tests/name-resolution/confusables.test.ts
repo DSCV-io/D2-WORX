@@ -15,8 +15,17 @@ import {
   tryResolveSubdivisionByName,
 } from "../../src/name-resolution/default-geo-name-resolver.js";
 
+/**
+ * Wire-shape carve-out per rules.md §6.15: these interfaces mirror the
+ * literal JSON shape of `contracts/geo/fixtures/confusables.fixture.json`.
+ * The fixture file uses JSON `null` as the "expected NOT FOUND" sentinel
+ * (the .NET parity test on the same fixture branches on the same `null`).
+ * The `| null` here mirrors the literal wire encoding to keep cross-
+ * language fixture-consumer parity.
+ */
 interface CountryCase {
   readonly input: string;
+  /** Wire-shape: `null` denotes "expected NOT FOUND"; see interface JSDoc. */
   readonly expectedIso31661Alpha2Code: string | null;
   readonly comment: string;
 }
@@ -24,6 +33,7 @@ interface CountryCase {
 interface SubdivisionCase {
   readonly input: string;
   readonly parentCountryIso31661Alpha2Code: string;
+  /** Wire-shape: `null` denotes "expected NOT FOUND"; see interface JSDoc. */
   readonly expectedIso31662Code: string | null;
   readonly comment: string;
 }

@@ -58,6 +58,11 @@ export function renderMessage(
  * normalized to an empty array — defensive on input from untrusted
  * gateway responses where the field MAY be omitted.
  *
+ * Wire-boundary carve-out per rules.md §6.15: the parameter accepts
+ * `null` because gateway response envelopes (deserialized from JSON over
+ * the wire) may carry `null` for missing message arrays; this boundary
+ * absorbs both `null` and `undefined` and emits the empty-array sentinel.
+ *
  * @param messages Array of `TKMessage` to render. `undefined` / `null`
  *  treated as empty.
  * @param translate Locale-aware translator function.
@@ -80,6 +85,8 @@ export function renderMessages(
  * Empty / undefined / null input returns an empty object. Duplicate
  * fields are merged (subsequent errors append to the existing array).
  * Entries with empty field name or zero errors are skipped.
+ *
+ * Wire-boundary carve-out per rules.md §6.15: see {@link renderMessages}.
  *
  * @param inputErrors Array of `InputError` to render. `undefined` /
  *  `null` treated as empty.

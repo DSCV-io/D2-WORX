@@ -33,12 +33,12 @@ const minSpec: ContextSpec = {
 };
 
 describe("emitAuthContext", () => {
-  it("emits a TS interface with property names camelCased", () => {
+  it("emits a TS interface with property names camelCased + `?:` shorthand (rules.md §6.15)", () => {
     const r = emitAuthContext(minSpec);
     expect(r.diagnostics).toEqual([]);
     expect(r.source).toContain("export interface IFakeContext {");
-    expect(r.source).toContain("readonly userId: string | null;");
-    expect(r.source).toContain("readonly subject: string | null;");
+    expect(r.source).toContain("readonly userId?: string;");
+    expect(r.source).toContain("readonly subject?: string;");
   });
 
   it("emits IFakeContextRedactPaths covering only redact-marked fields", () => {

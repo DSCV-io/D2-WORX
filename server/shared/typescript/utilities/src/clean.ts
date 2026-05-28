@@ -22,6 +22,13 @@ export type CleanValueNullBehavior = "RemoveNulls" | "ThrowOnNull";
 /**
  * Per-element cleaner. Returning `null` or `undefined` is a "drop" signal —
  * what happens then is governed by {@link CleanValueNullBehavior}.
+ *
+ * Cross-language-parity carve-out per rules.md §6.15: this type mirrors
+ * the .NET `Cleaner<T>` delegate (which returns `T?`), accepting BOTH
+ * `null` (intentional sentinel from .NET interop call sites) and
+ * `undefined` (TS-native "absent"). The dual acceptance is the .NET-parity
+ * contract — narrowing to only `undefined` would break .NET-bridged
+ * call sites that pass `null`-returning lambdas.
  */
 export type Cleaner<T> = (item: T) => T | null | undefined;
 
@@ -49,6 +56,12 @@ export interface CleanOptions {
  *
  * Accepts any iterable (arrays, sets, map values, generators) — matches
  * `IEnumerable<T>` parity on the .NET side.
+ *
+ * Cross-language-parity carve-out per rules.md §6.15: parameter accepts
+ * `null` and return type emits `null` because the .NET parity contract
+ * (named-behavior `ReturnNull`) makes `null` the explicit sentinel; the
+ * `ReturnEmpty` behavior is available for callers wanting `undefined`-
+ * style "absent" semantics.
  *
  * @throws RangeError when `valueNullBehavior` is `"ThrowOnNull"` and a
  *   cleaner returns null/undefined.
@@ -85,6 +98,8 @@ export function clean<T>(
   return out;
 }
 
+// Internal helper for the `clean()` API — return-type `T[] | null` is the
+// .NET-parity contract (see `clean()` JSDoc).
 function handleEmpty<T>(behavior: CleanEnumEmptyBehavior): T[] | null {
   switch (behavior) {
     case "ReturnEmpty":

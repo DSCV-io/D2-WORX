@@ -4,17 +4,17 @@
 
 import { describe, expect, it } from "vitest";
 import {
-  tryParseTruthyNullEnum,
-  tryParseTruthyNullInt,
-  tryParseTruthyNullUuid,
+  tryParseTruthyUndefEnum,
+  tryParseTruthyUndefInt,
+  tryParseTruthyUndefUuid,
 } from "../src/parse.js";
 import { EMPTY_UUID } from "../src/regex.js";
 
-describe("tryParseTruthyNullUuid", () => {
+describe("tryParseTruthyUndefUuid", () => {
   it("returns canonical lowercase UUID on success", () => {
-    expect(tryParseTruthyNullUuid("550E8400-E29B-41D4-A716-446655440000")).toBe(
-      "550e8400-e29b-41d4-a716-446655440000",
-    );
+    expect(
+      tryParseTruthyUndefUuid("550E8400-E29B-41D4-A716-446655440000"),
+    ).toBe("550e8400-e29b-41d4-a716-446655440000");
   });
 
   it.each([
@@ -26,19 +26,19 @@ describe("tryParseTruthyNullUuid", () => {
     ["malformed", "not-a-uuid"],
     ["wrong shape", "550e8400-e29b-41d4-a716"],
     ["wrong type chars", "550e8400-e29b-41d4-a716-44665544000Z"],
-  ])("%s → null", (_label, input) => {
-    expect(tryParseTruthyNullUuid(input)).toBe(null);
+  ])("%s → undefined", (_label, input) => {
+    expect(tryParseTruthyUndefUuid(input)).toBeUndefined();
   });
 });
 
-describe("tryParseTruthyNullInt", () => {
+describe("tryParseTruthyUndefInt", () => {
   it.each([
     ["happy positive", "42", 42],
     ["happy negative", "-7", -7],
     ["zero", "0", 0],
     ["padded", "  42  ", 42],
   ])("%s → %s", (_label, input, expected) => {
-    expect(tryParseTruthyNullInt(input)).toBe(expected);
+    expect(tryParseTruthyUndefInt(input)).toBe(expected);
   });
 
   it.each([
@@ -51,12 +51,12 @@ describe("tryParseTruthyNullInt", () => {
     ["alpha", "abc"],
     ["mixed", "42a"],
     ["sign-only", "-"],
-  ])("%s → null", (_label, input) => {
-    expect(tryParseTruthyNullInt(input)).toBe(null);
+  ])("%s → undefined", (_label, input) => {
+    expect(tryParseTruthyUndefInt(input)).toBeUndefined();
   });
 });
 
-describe("tryParseTruthyNullEnum", () => {
+describe("tryParseTruthyUndefEnum", () => {
   const Color = { Red: "red", Green: "green", Blue: "blue" } as const;
 
   it.each([
@@ -65,7 +65,7 @@ describe("tryParseTruthyNullEnum", () => {
     ["uppercase", "BLUE", "Blue"],
     ["padded", "  Green  ", "Green"],
   ])("%s → %s", (_label, input, expected) => {
-    expect(tryParseTruthyNullEnum(Color, input)).toBe(expected);
+    expect(tryParseTruthyUndefEnum(Color, input)).toBe(expected);
   });
 
   it.each([
@@ -74,7 +74,7 @@ describe("tryParseTruthyNullEnum", () => {
     ["empty", ""],
     ["whitespace", "   "],
     ["unknown", "Yellow"],
-  ])("%s → null", (_label, input) => {
-    expect(tryParseTruthyNullEnum(Color, input)).toBe(null);
+  ])("%s → undefined", (_label, input) => {
+    expect(tryParseTruthyUndefEnum(Color, input)).toBeUndefined();
   });
 });

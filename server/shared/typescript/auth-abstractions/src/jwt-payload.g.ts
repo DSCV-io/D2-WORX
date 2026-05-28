@@ -21,7 +21,7 @@ export interface JwtPayload {
    * Subject — the user's identifier (Guid string for user tokens) or service client_id for pure service-identity tokens (RFC 6749 §4.4).
    * Claim wire name: sub (kind: standard).
    */
-  readonly sub: string | null;
+  readonly sub?: string;
   /**
    * Audience — the intended recipient service identifier(s). Per RFC 7519 §4.1.3 may be a single string OR a JSON array; both wire shapes accepted.
    * Claim wire name: aud (kind: standard).
@@ -31,77 +31,77 @@ export interface JwtPayload {
    * Issued-at — Unix timestamp seconds when the token was minted.
    * Claim wire name: iat (kind: standard).
    */
-  readonly iat: number | null;
+  readonly iat?: number;
   /**
    * Expiry — Unix timestamp seconds after which the token is invalid.
    * Claim wire name: exp (kind: standard).
    */
-  readonly exp: number | null;
+  readonly exp?: number;
   /**
    * Authorized party (RFC 7519 §4.1.7) — the OAuth client the token was issued for.
    * Claim wire name: azp (kind: standard).
    */
-  readonly azp: string | null;
+  readonly azp?: string;
   /**
    * Space-separated string of granted permissions per RFC 6749 §3.3. Some authorization servers send this as a JSON array; the runtime parser accepts both shapes.
    * Claim wire name: scope (kind: standard).
    */
-  readonly scope: string | null;
+  readonly scope?: string;
   /**
    * Actor chain — RFC 8693 §2.1 nested-object structure identifying the chain of services / impersonators that minted the token. Empty / absent when the token is an end-user-direct token.
    * Claim wire name: act (kind: standard).
    */
-  readonly act: Readonly<Record<string, unknown>> | null;
+  readonly act?: Readonly<Record<string, unknown>>;
   /**
    * OAuth client identifier of the client that requested THIS specific token from the authorization server (RFC 8693 §4.3 / RFC 9068 §2.2). Updates on every token exchange — for a multi-hop chain, this is the immediate requesting client, not the originating one.
    * Claim wire name: client_id (kind: standard).
    */
-  readonly client_id: string | null;
+  readonly client_id?: string;
   /**
    * User session identifier — links the token to a session record in auth_db.
    * Claim wire name: d2_session_id (kind: d2-custom).
    */
-  readonly d2_session_id: string | null;
+  readonly d2_session_id?: string;
   /**
    * Login handle — unique, lowercase username.
    * Claim wire name: d2_username (kind: d2-custom).
    */
-  readonly d2_username: string | null;
+  readonly d2_username?: string;
   /**
    * JWT fingerprint — SHA-256 of canonical request signal (User-Agent + Accept). Used for token-binding adversarial checks.
    * Claim wire name: d2_fp (kind: d2-custom).
    */
-  readonly d2_fp: string | null;
+  readonly d2_fp?: string;
   /**
    * Operating organization identifier. During impersonation: the impersonated user's org.
    * Claim wire name: d2_org_id (kind: d2-custom).
    */
-  readonly d2_org_id: string | null;
+  readonly d2_org_id?: string;
   /**
    * Operating organization display name.
    * Claim wire name: d2_org_name (kind: d2-custom).
    */
-  readonly d2_org_name: string | null;
+  readonly d2_org_name?: string;
   /**
    * Operating organization type — string form of the OrgType enum.
    * Claim wire name: d2_org_type (kind: d2-custom).
    */
-  readonly d2_org_type: string | null;
+  readonly d2_org_type?: string;
   /**
    * User's role in the operating organization — string form of the Role enum.
    * Claim wire name: d2_org_role (kind: d2-custom).
    */
-  readonly d2_org_role: string | null;
+  readonly d2_org_role?: string;
   /**
    * Authentication Methods Reference (RFC 8176). Array of strings identifying the authentication methods used. Input to risk-scoring and audit — 'password-only vs MFA vs OAuth2-with-WebAuthn' matters for sensitive-action gating.
    * Claim wire name: amr (kind: standard).
    */
-  readonly amr: string | null;
+  readonly amr?: string;
   /**
    * Unix-seconds timestamp of last step-up authentication completion. Handlers gating sensitive actions enforce 'step-up within last N minutes'. Edge auth populates from session record at JWT mint.
    * Claim wire name: d2_step_up_at (kind: d2-custom).
    */
-  readonly d2_step_up_at: string | null;
+  readonly d2_step_up_at?: string;
   /**
    * Raw decoded claims object — escape hatch for downstream consumers
    * that need access to non-spec'd claims.

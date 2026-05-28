@@ -15,16 +15,18 @@ import type { Role } from "../enums/role.g.js";
 
 /**
  * One link in the RFC 8693 actor chain. Mirrors .NET ActorEntry record.
+ * Per rules.md §6.15 (TS `undefined`-over-`null`): optional fields use
+ * the `?:` shorthand; absent links arrive as `undefined`, never `null`.
  */
 export interface ActorEntry {
   readonly kind: ActorKind;
   readonly subject: string;
-  readonly clientId?: string | null;
-  readonly impersonationKind?: ImpersonationKind | null;
-  readonly sessionId?: string | null;
-  readonly orgId?: string | null;
-  readonly orgName?: string | null;
-  readonly orgType?: OrgType | null;
-  readonly orgRole?: Role | null;
-  readonly act?: ActorEntry | null;
+  readonly clientId?: string;
+  readonly impersonationKind?: ImpersonationKind;
+  readonly sessionId?: string;
+  readonly orgId?: string;
+  readonly orgName?: string;
+  readonly orgType?: OrgType;
+  readonly orgRole?: Role;
+  readonly act?: ActorEntry;
 }

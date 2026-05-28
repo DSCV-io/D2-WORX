@@ -198,37 +198,40 @@ describe("emitJwtPayload", () => {
 
   it("emits each standard claim with its canonical TS type (per-VALUE pin)", () => {
     const r = emitJwtPayload(productionLikeSpec);
-    expect(r.source).toContain("readonly sub: string | null;");
+    // Per rules.md §6.15: optional claims use `?:` shorthand (no `| null`).
+    // `aud` is the lone required claim (always populated as readonly string[]).
+    expect(r.source).toContain("readonly sub?: string;");
     expect(r.source).toContain("readonly aud: readonly string[];");
-    expect(r.source).toContain("readonly iat: number | null;");
-    expect(r.source).toContain("readonly exp: number | null;");
-    expect(r.source).toContain("readonly azp: string | null;");
-    expect(r.source).toContain("readonly scope: string | null;");
+    expect(r.source).toContain("readonly iat?: number;");
+    expect(r.source).toContain("readonly exp?: number;");
+    expect(r.source).toContain("readonly azp?: string;");
+    expect(r.source).toContain("readonly scope?: string;");
     expect(r.source).toContain(
-      "readonly act: Readonly<Record<string, unknown>> | null;",
+      "readonly act?: Readonly<Record<string, unknown>>;",
     );
-    expect(r.source).toContain("readonly client_id: string | null;");
+    expect(r.source).toContain("readonly client_id?: string;");
   });
 
-  it("emits each d2-custom claim with the default string | null type (per-VALUE pin)", () => {
+  it("emits each d2-custom claim with the default optional string type (per-VALUE pin)", () => {
     const r = emitJwtPayload(productionLikeSpec);
-    expect(r.source).toContain("readonly d2_session_id: string | null;");
-    expect(r.source).toContain("readonly d2_username: string | null;");
-    expect(r.source).toContain("readonly d2_fp: string | null;");
-    expect(r.source).toContain("readonly d2_org_id: string | null;");
-    expect(r.source).toContain("readonly d2_org_name: string | null;");
-    expect(r.source).toContain("readonly d2_org_type: string | null;");
-    expect(r.source).toContain("readonly d2_org_role: string | null;");
+    expect(r.source).toContain("readonly d2_session_id?: string;");
+    expect(r.source).toContain("readonly d2_username?: string;");
+    expect(r.source).toContain("readonly d2_fp?: string;");
+    expect(r.source).toContain("readonly d2_org_id?: string;");
+    expect(r.source).toContain("readonly d2_org_name?: string;");
+    expect(r.source).toContain("readonly d2_org_type?: string;");
+    expect(r.source).toContain("readonly d2_org_role?: string;");
   });
 
   it("does NOT emit inside-act claims as top-level fields", () => {
     const r = emitJwtPayload(productionLikeSpec);
     // ACT_KIND has wire value "d2_kind" — must NOT appear as a top-level field.
-    expect(r.source).not.toContain("readonly d2_kind:");
+    expect(r.source).not.toContain("readonly d2_kind");
     // ACT_SESSION_ID's wire value "d2_session_id" collides with the
     // d2-custom SESSION_ID; the d2-custom emits, but the inside-act entry
-    // must NOT cause a duplicate emission.
-    const sessionIdCount = (r.source.match(/readonly d2_session_id:/g) ?? [])
+    // must NOT cause a duplicate emission. Regex tolerates the `?:`
+    // shorthand form (rules.md §6.15).
+    const sessionIdCount = (r.source.match(/readonly d2_session_id\??:/g) ?? [])
       .length;
     expect(sessionIdCount).toBe(1);
   });
@@ -275,7 +278,7 @@ describe("emitJwtPayload", () => {
     expect(r.source).not.toContain("readonly d2_kind:");
   });
 
-  it("d2-custom claim NOT in standard table defaults to string | null", () => {
+  it("d2-custom claim NOT in standard table defaults to optional string", () => {
     const r = emitJwtPayload({
       claims: [
         {
@@ -287,6 +290,6 @@ describe("emitJwtPayload", () => {
       ],
     });
     expect(r.diagnostics).toEqual([]);
-    expect(r.source).toContain("readonly d2_new_custom: string | null;");
+    expect(r.source).toContain("readonly d2_new_custom?: string;");
   });
 });

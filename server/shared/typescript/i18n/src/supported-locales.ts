@@ -72,8 +72,8 @@ export class SupportedLocales {
     this.languageOnly = languageOnly;
 
     const defaultRaw = config.default ?? canonical[0]!;
-    const resolvedDefault = this.resolveOrNull(defaultRaw);
-    if (resolvedDefault === null)
+    const resolvedDefault = this.resolveOrUndef(defaultRaw);
+    if (resolvedDefault === undefined)
       throw new RangeError(
         `SupportedLocales: default '${defaultRaw}' not in enabled list`,
       );
@@ -84,19 +84,26 @@ export class SupportedLocales {
    * Resolve a requested locale tag against the enabled list. Returns the
    * canonical-cased exact match if present, then the language-only
    * fallback, then the default locale. NEVER returns a non-enabled tag.
+   *
+   * Wire-boundary carve-out per rules.md §6.15: accepts `string | null`
+   * because the primary caller passes a cookie / header value from
+   * `Headers.get(...)` directly (Web `Headers` API returns `string | null`).
+   * The boundary normalizes `null` to "absent" internally.
    */
   resolve(requested: string | null | undefined): string {
-    return this.resolveOrNull(requested) ?? this.default;
+    return this.resolveOrUndef(requested) ?? this.default;
   }
 
-  private resolveOrNull(requested: string | null | undefined): string | null {
-    if (falsey(requested)) return null;
+  private resolveOrUndef(
+    requested: string | null | undefined,
+  ): string | undefined {
+    if (falsey(requested)) return undefined;
     const c = SupportedLocales.canonicalize(requested as string);
     const lower = c.toLowerCase();
     const idx = this.enabledLower.indexOf(lower);
     if (idx >= 0) return this.enabled[idx]!;
     const lang = lower.split("-")[0]!;
-    return this.languageOnly.get(lang) ?? null;
+    return this.languageOnly.get(lang);
   }
 
   /**

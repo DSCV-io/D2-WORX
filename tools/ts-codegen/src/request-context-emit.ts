@@ -146,6 +146,24 @@ function emitSerializeMethod(sb: StringBuilder, spec: ContextSpec): void {
 }
 
 function emitTryDecodeMethod(sb: StringBuilder, spec: ContextSpec): void {
+  sb.appendLine("/**");
+  sb.appendLine(
+    " * Decode an envelope from a wire string. Wire-boundary carve-out per",
+  );
+  sb.appendLine(
+    " * rules.md §6.15: the input is `string | null | undefined` because the",
+  );
+  sb.appendLine(
+    " * primary caller passes `Headers.get(...)` directly, and the Web `Headers`",
+  );
+  sb.appendLine(
+    " * API contract returns `string | null` (`null` for absent headers). The",
+  );
+  sb.appendLine(
+    " * tryDecode boundary normalizes to `undefined` immediately — no `null`",
+  );
+  sb.appendLine(" * propagates inward.");
+  sb.appendLine(" */");
   sb.appendLine(
     "static tryDecode(input: string | null | undefined): IPropagatedContext | undefined {",
   );

@@ -119,7 +119,7 @@ export class HttpKeyCustodianClient implements KeyCustodianClient {
         return AuthFailures.jwksUnavailable() as D2Result<InternalTokenSnapshot>;
       }
       const snapshot = _validateTokenResponse(parsed, this.opts.audience);
-      if (snapshot === null) {
+      if (snapshot === undefined) {
         this.opts.logger?.warn("internal-token response shape invalid", {
           endpoint: this.opts.tokenEndpoint,
         });
@@ -143,21 +143,22 @@ const _MAX_TOKEN_LENGTH = 8 * 1024;
 function _validateTokenResponse(
   parsed: unknown,
   expectedAudience: string,
-): InternalTokenSnapshot | null {
+): InternalTokenSnapshot | undefined {
   if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-    return null;
+    return undefined;
   }
   const obj = parsed as Record<string, unknown>;
   const accessToken = obj["access_token"];
-  if (typeof accessToken !== "string" || accessToken.length === 0) return null;
-  if (accessToken.length > _MAX_TOKEN_LENGTH) return null;
+  if (typeof accessToken !== "string" || accessToken.length === 0)
+    return undefined;
+  if (accessToken.length > _MAX_TOKEN_LENGTH) return undefined;
   const expiresIn = obj["expires_in"];
   if (
     typeof expiresIn !== "number" ||
     !Number.isFinite(expiresIn) ||
     expiresIn <= 0
   ) {
-    return null;
+    return undefined;
   }
   return {
     accessToken,

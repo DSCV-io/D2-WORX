@@ -132,7 +132,7 @@ describe("createInternalTokenInterceptor — happy path", () => {
     });
     await new Promise((r) => setImmediate(r));
     expect(receivedStatus?.code).toBe(GrpcStatus.UNAUTHENTICATED);
-    expect(cache.tryGet()).toBeNull();
+    expect(cache.tryGet()).toBeUndefined();
   });
 
   it("non-UNAUTHENTICATED status passes through without clearing cache", async () => {
@@ -157,7 +157,7 @@ describe("createInternalTokenInterceptor — happy path", () => {
       onReceiveStatus: () => {},
     });
     await new Promise((r) => setImmediate(r));
-    expect(cache.tryGet()).not.toBeNull();
+    expect(cache.tryGet()).not.toBeUndefined();
   });
 });
 
@@ -273,7 +273,7 @@ describe("createInternalTokenInterceptor — Singleflight stress", () => {
     });
     // Drain microtasks so the lazy KeyCustodian call completes.
     await new Promise((r) => setTimeout(r, 10));
-    expect(cache.tryGet()).not.toBeNull();
+    expect(cache.tryGet()).not.toBeUndefined();
     expect(count).toBeGreaterThanOrEqual(1);
   });
 });

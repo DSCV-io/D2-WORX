@@ -33,15 +33,15 @@ export function createInternalTokenInterceptor(opts: {
 }): Interceptor {
   const { cache, keyCustodian, logger } = opts;
 
-  async function getToken(): Promise<string | null> {
+  async function getToken(): Promise<string | undefined> {
     const cached = cache.tryGet();
-    if (cached !== null) return cached.accessToken;
+    if (cached !== undefined) return cached.accessToken;
     const result = await keyCustodian.acquireToken();
     if (!result.success || result.data === undefined) {
       logger?.warn("internal-token interceptor: KeyCustodian acquire failed", {
         errorCode: result.errorCode,
       });
-      return null;
+      return undefined;
     }
     cache.set(result.data);
     return result.data.accessToken;
@@ -50,8 +50,8 @@ export function createInternalTokenInterceptor(opts: {
   return (options, nextCall) => {
     return new InterceptingCall(nextCall(options), {
       start(metadata, listener, next) {
-        const sendWithToken = (token: string | null): void => {
-          if (token !== null) {
+        const sendWithToken = (token: string | undefined): void => {
+          if (token !== undefined) {
             metadata.set(HttpHeaders.AUTHORIZATION, `Bearer ${token}`);
           }
           // Wrap the listener so we can detect UNAUTHENTICATED + clear
@@ -75,7 +75,7 @@ export function createInternalTokenInterceptor(opts: {
           };
           next(metadata, wrappedListener);
         };
-        getToken().then(sendWithToken, () => sendWithToken(null));
+        getToken().then(sendWithToken, () => sendWithToken(undefined));
       },
     });
   };

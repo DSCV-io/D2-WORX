@@ -27,16 +27,16 @@ describe("sanitizedErrorRender", () => {
     expect(sanitizedErrorRender(e).name).toBe("Error");
   });
 
-  it("returns null firstFrame when no stack available", () => {
+  it("returns undefined firstFrame when no stack available", () => {
     const e = new Error("x");
     e.stack = undefined;
-    expect(sanitizedErrorRender(e).firstFrame).toBeNull();
+    expect(sanitizedErrorRender(e).firstFrame).toBeUndefined();
   });
 
-  it("returns null firstFrame when stack has no 'at' lines", () => {
+  it("returns undefined firstFrame when stack has no 'at' lines", () => {
     const e = new Error("x");
     e.stack = "Error: x\n  not-a-frame\n  another-non-frame";
-    expect(sanitizedErrorRender(e).firstFrame).toBeNull();
+    expect(sanitizedErrorRender(e).firstFrame).toBeUndefined();
   });
 
   it.each([
@@ -48,6 +48,6 @@ describe("sanitizedErrorRender", () => {
   ])("non-Error %s → typeof name", (_label, val, expectedName) => {
     const r = sanitizedErrorRender(val);
     expect(r.name).toBe(expectedName);
-    expect(r.firstFrame).toBeNull();
+    expect(r.firstFrame).toBeUndefined();
   });
 });

@@ -96,4 +96,4 @@ Mirrors `D2.Shared.Logging`:
   (no overhead).
 - Re-registering the same symbol replaces the prior paths (idempotent).
 - `sanitizedErrorRender` accepts non-`Error` inputs (`null`, `undefined`,
-  primitives) and returns `{ name: typeof, firstFrame: null }`.
+  primitives) and returns `{ name: typeof }` (`firstFrame` omitted).

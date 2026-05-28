@@ -49,14 +49,16 @@ export interface ParseRequestContextOptions {
  * Returns `D2Result<IRequestContext>`. On rejected Authorization with
  * `requireAuth=true`, returns the underlying `AuthFailures.bearer*`
  * envelope unchanged. On rejected `x-d2-context` envelope, the
- * propagated fields silently fall through to `null` (return-empty over
- * wrong-data per fail-soft posture); the JWT-derived identity fields
+ * propagated fields silently fall through to `undefined` (return-empty
+ * over wrong-data per fail-soft posture); the JWT-derived identity fields
  * are still surfaced.
  */
 export function parseRequestContextFromHeaders(
   headers: Headers,
   opts: ParseRequestContextOptions = {},
 ): D2Result<IRequestContext> {
+  // `Headers.get(...)` returns `string | null` (Web API contract). The
+  // parser absorbs the wire `null` immediately — no `null` propagates inward.
   const authHeader = headers.get(CommonHeaders.AUTHORIZATION);
   const requireAuth = opts.requireAuth ?? false;
 
@@ -71,8 +73,10 @@ export function parseRequestContextFromHeaders(
     }
   } else if (requireAuth) {
     // Same shape as parseAuthHeader's "missing" branch; lazy-import via
-    // the parser so we keep the AuthFailures coupling in one place.
-    return parseAuthHeader(null, {
+    // the parser so we keep the AuthFailures coupling in one place. Pass
+    // `undefined` (not `null`) inward to honor the §6.15 "no `null` past
+    // the wire boundary" rule.
+    return parseAuthHeader(undefined, {
       traceId: opts.traceId,
     }) as unknown as D2Result<IRequestContext>;
   }
@@ -106,10 +110,10 @@ function _composeRequestContext(
   propagated: ReturnType<typeof PropagatedContextSerializer.tryDecode>,
 ): IRequestContext {
   const isAuthenticated = payload !== undefined ? true : false;
-  const orgType = _toOrgType(payload?.d2_org_type ?? null);
-  const orgRole = _toRole(payload?.d2_org_role ?? null);
-  const actorChain = _flattenActorChain(payload?.act ?? null);
-  const scopes = _parseScopes(payload?.scope ?? null);
+  const orgType = _toOrgType(payload?.d2_org_type);
+  const orgRole = _toRole(payload?.d2_org_role);
+  const actorChain = _flattenActorChain(payload?.act);
+  const scopes = _parseScopes(payload?.scope);
 
   const ctx: IRequestContext = {
     // Tracing — sourced from propagated envelope; traceId itself comes from
@@ -155,29 +159,23 @@ function _composeRequestContext(
     // Auth identity — JWT-sourced.
     isAuthenticated,
     audience: payload?.aud ?? [],
-    sessionId: payload?.d2_session_id ?? undefined,
-    tokenIssuedAt:
-      payload?.iat !== null && payload?.iat !== undefined
-        ? String(payload.iat)
-        : undefined,
+    sessionId: payload?.d2_session_id,
+    tokenIssuedAt: payload?.iat !== undefined ? String(payload.iat) : undefined,
     tokenExpiresAt:
-      payload?.exp !== null && payload?.exp !== undefined
-        ? String(payload.exp)
-        : undefined,
+      payload?.exp !== undefined ? String(payload.exp) : undefined,
     actorChain,
-    authMethod: payload?.amr ?? undefined,
-    lastStepUpAt: payload?.d2_step_up_at ?? undefined,
-    subject: payload?.sub ?? undefined,
-    userId: _guidOrNull(payload?.sub ?? null) ?? undefined,
-    username: payload?.d2_username ?? undefined,
-    requestedByClientId: payload?.client_id ?? undefined,
-    immediateCallerClientId: _immediateCallerClientId(actorChain) ?? undefined,
-    originatingClientId:
-      _originatingClientId(actorChain, payload?.sub ?? null) ?? undefined,
+    authMethod: payload?.amr,
+    lastStepUpAt: payload?.d2_step_up_at,
+    subject: payload?.sub,
+    userId: _guidOrUndef(payload?.sub),
+    username: payload?.d2_username,
+    requestedByClientId: payload?.client_id,
+    immediateCallerClientId: _immediateCallerClientId(actorChain),
+    originatingClientId: _originatingClientId(actorChain, payload?.sub),
     isServiceIdentity:
       payload === undefined ? undefined : _isServiceIdentity(payload),
-    orgId: payload?.d2_org_id ?? undefined,
-    orgName: payload?.d2_org_name ?? undefined,
+    orgId: payload?.d2_org_id,
+    orgName: payload?.d2_org_name,
     orgType,
     orgRole,
     isImpersonating:
@@ -196,8 +194,8 @@ function _composeRequestContext(
   return ctx;
 }
 
-function _toOrgType(value: string | null): OrgType | undefined {
-  if (value === null || value.length === 0) return undefined;
+function _toOrgType(value: string | undefined): OrgType | undefined {
+  if (value === undefined || value.length === 0) return undefined;
   // Compile-time check that the runtime values match OrgType.
   for (const candidate of Object.values(OrgType)) {
     if (candidate === value) return candidate;
@@ -205,28 +203,28 @@ function _toOrgType(value: string | null): OrgType | undefined {
   return undefined;
 }
 
-function _toRole(value: string | null): Role | undefined {
-  if (value === null || value.length === 0) return undefined;
+function _toRole(value: string | undefined): Role | undefined {
+  if (value === undefined || value.length === 0) return undefined;
   for (const candidate of Object.values(Role)) {
     if (candidate === value) return candidate;
   }
   return undefined;
 }
 
-function _guidOrNull(value: string | null): string | null {
-  if (value === null) return null;
-  return UUID_RE.test(value) ? value : null;
+function _guidOrUndef(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  return UUID_RE.test(value) ? value : undefined;
 }
 
 function _flattenActorChain(
-  act: Record<string, unknown> | null,
+  act: Readonly<Record<string, unknown>> | undefined,
 ): readonly ActorEntry[] {
-  if (act === null) return [];
+  if (act === undefined) return [];
   // Flatten outermost-first per RFC 8693 §4.1.
   const out: ActorEntry[] = [];
-  let current: Record<string, unknown> | null = act;
+  let current: Readonly<Record<string, unknown>> | undefined = act;
   let guard = 0;
-  while (current !== null && guard < 32) {
+  while (current !== undefined && guard < 32) {
     const sub = current["sub"];
     if (typeof sub !== "string" || sub.length === 0) break;
     const kindRaw = current["d2_kind"];
@@ -238,31 +236,33 @@ function _flattenActorChain(
         ? kindRaw === "consent"
           ? ImpersonationKind.Consent
           : ImpersonationKind.Force
-        : null,
+        : undefined,
     };
     out.push(entry);
     const nextAct: unknown = current["act"];
     current =
       nextAct !== null && typeof nextAct === "object" && !Array.isArray(nextAct)
-        ? (nextAct as Record<string, unknown>)
-        : null;
+        ? (nextAct as Readonly<Record<string, unknown>>)
+        : undefined;
     guard++;
   }
   return out;
 }
 
-function _immediateCallerClientId(chain: readonly ActorEntry[]): string | null {
+function _immediateCallerClientId(
+  chain: readonly ActorEntry[],
+): string | undefined {
   for (const entry of chain) {
     if (entry.kind === ActorKind.Service) return entry.subject;
   }
-  return null;
+  return undefined;
 }
 
 function _originatingClientId(
   chain: readonly ActorEntry[],
-  subject: string | null,
-): string | null {
-  let last: string | null = null;
+  subject: string | undefined,
+): string | undefined {
+  let last: string | undefined;
   for (const entry of chain) {
     if (entry.kind === ActorKind.Service) last = entry.subject;
   }
@@ -272,13 +272,13 @@ function _originatingClientId(
 function _isServiceIdentity(payload: JwtPayload): boolean {
   // Pure service-identity = subject is non-Guid AND no Impersonation in chain.
   const subject = payload.sub;
-  if (subject === null) return false;
+  if (subject === undefined) return false;
   if (UUID_RE.test(subject)) return false;
-  if (payload.act !== null) {
+  if (payload.act !== undefined) {
     // Walk; any Impersonation flips it.
-    let current: Record<string, unknown> | null = payload.act;
+    let current: Readonly<Record<string, unknown>> | undefined = payload.act;
     let guard = 0;
-    while (current !== null && guard < 32) {
+    while (current !== undefined && guard < 32) {
       const kind = current["d2_kind"];
       if (kind === "consent" || kind === "force") return false;
       const nextAct: unknown = current["act"];
@@ -286,16 +286,16 @@ function _isServiceIdentity(payload: JwtPayload): boolean {
         nextAct !== null &&
         typeof nextAct === "object" &&
         !Array.isArray(nextAct)
-          ? (nextAct as Record<string, unknown>)
-          : null;
+          ? (nextAct as Readonly<Record<string, unknown>>)
+          : undefined;
       guard++;
     }
   }
   return true;
 }
 
-function _parseScopes(value: string | null): ReadonlySet<string> {
-  if (value === null || value.length === 0) return new Set<string>();
+function _parseScopes(value: string | undefined): ReadonlySet<string> {
+  if (value === undefined || value.length === 0) return new Set<string>();
   const out = new Set<string>();
   for (const entry of value.split(/\s+/)) {
     if (entry.length === 0) continue;

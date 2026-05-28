@@ -36,6 +36,14 @@ export class PropagatedContextSerializer {
     return JSON.stringify(o);
   }
 
+  /**
+   * Decode an envelope from a wire string. Wire-boundary carve-out per
+   * rules.md §6.15: the input is `string | null | undefined` because the
+   * primary caller passes `Headers.get(...)` directly, and the Web `Headers`
+   * API contract returns `string | null` (`null` for absent headers). The
+   * tryDecode boundary normalizes to `undefined` immediately — no `null`
+   * propagates inward.
+   */
   static tryDecode(input: string | null | undefined): IPropagatedContext | undefined {
     if (input === null || input === undefined || input === "") return undefined;
     let parsed: Record<string, unknown>;

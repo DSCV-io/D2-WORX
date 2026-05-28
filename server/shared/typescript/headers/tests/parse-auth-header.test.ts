@@ -77,18 +77,18 @@ describe("parseAuthHeader — happy path", () => {
     expect(result.data!.raw["custom_claim"]).toBe("custom-value");
   });
 
-  it("absent claims surface as null", () => {
+  it("absent claims surface as undefined", () => {
     const minimal = { sub: VALID_CLAIMS.sub, aud: "d2.edge" };
     const header = `Bearer ${buildJwt(minimal)}`;
     const result = parseAuthHeader(header);
     expect(result.success).toBe(true);
     const payload = result.data as JwtPayload;
-    expect(payload.iat).toBeNull();
-    expect(payload.exp).toBeNull();
-    expect(payload.azp).toBeNull();
-    expect(payload.scope).toBeNull();
-    expect(payload.act).toBeNull();
-    expect(payload.d2_username).toBeNull();
+    expect(payload.iat).toBeUndefined();
+    expect(payload.exp).toBeUndefined();
+    expect(payload.azp).toBeUndefined();
+    expect(payload.scope).toBeUndefined();
+    expect(payload.act).toBeUndefined();
+    expect(payload.d2_username).toBeUndefined();
   });
 
   it("propagates traceId on success", () => {
@@ -239,40 +239,40 @@ describe("parseAuthHeader — adversarial / null + empty + whitespace", () => {
     expect(result.data!.aud).toEqual([]);
   });
 
-  it("non-finite iat/exp surface as null", () => {
+  it("non-finite iat/exp surface as undefined", () => {
     const header = `Bearer ${buildJwt({ ...VALID_CLAIMS, iat: NaN, exp: Infinity })}`;
     const result = parseAuthHeader(header);
     expect(result.success).toBe(true);
-    expect(result.data!.iat).toBeNull();
-    expect(result.data!.exp).toBeNull();
+    expect(result.data!.iat).toBeUndefined();
+    expect(result.data!.exp).toBeUndefined();
   });
 
-  it("non-string non-numeric claim values surface as null", () => {
+  it("non-string non-numeric claim values surface as undefined", () => {
     const header = `Bearer ${buildJwt({ ...VALID_CLAIMS, d2_username: 99 })}`;
     const result = parseAuthHeader(header);
     expect(result.success).toBe(true);
-    expect(result.data!.d2_username).toBeNull();
+    expect(result.data!.d2_username).toBeUndefined();
   });
 
-  it("empty-string claim values surface as null (not '')", () => {
+  it("empty-string claim values surface as undefined (not '')", () => {
     const header = `Bearer ${buildJwt({ ...VALID_CLAIMS, d2_username: "" })}`;
     const result = parseAuthHeader(header);
     expect(result.success).toBe(true);
-    expect(result.data!.d2_username).toBeNull();
+    expect(result.data!.d2_username).toBeUndefined();
   });
 
-  it("act claim with non-object value surfaces as null", () => {
+  it("act claim with non-object value surfaces as undefined", () => {
     const header = `Bearer ${buildJwt({ ...VALID_CLAIMS, act: "not-an-object" })}`;
     const result = parseAuthHeader(header);
     expect(result.success).toBe(true);
-    expect(result.data!.act).toBeNull();
+    expect(result.data!.act).toBeUndefined();
   });
 
-  it("act claim as array surfaces as null (RFC 8693 says nested object)", () => {
+  it("act claim as array surfaces as undefined (RFC 8693 says nested object)", () => {
     const header = `Bearer ${buildJwt({ ...VALID_CLAIMS, act: [{ sub: "x" }] })}`;
     const result = parseAuthHeader(header);
     expect(result.success).toBe(true);
-    expect(result.data!.act).toBeNull();
+    expect(result.data!.act).toBeUndefined();
   });
 });
 

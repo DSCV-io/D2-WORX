@@ -29,7 +29,7 @@ describe("falsey", () => {
 
   it("treats empty UUID string as a regular non-empty string", () => {
     // EMPTY_UUID is non-empty AS A STRING — falsey only checks string-emptiness.
-    // tryParseTruthyNullUuid is the helper that collapses empty UUID → null.
+    // tryParseTruthyUndefUuid is the helper that collapses empty UUID → undefined.
     expect(falsey(EMPTY_UUID)).toBe(false);
   });
 });
