@@ -105,9 +105,6 @@ importers:
       '@d2/headers-http':
         specifier: workspace:*
         version: link:../headers-http
-      '@d2/location':
-        specifier: workspace:*
-        version: link:../location
       '@d2/messaging-abstractions':
         specifier: workspace:*
         version: link:../messaging-abstractions
@@ -314,28 +311,6 @@ importers:
 
   server/shared/typescript/i18n:
     dependencies:
-      '@d2/result':
-        specifier: workspace:*
-        version: link:../result
-      '@d2/utilities':
-        specifier: workspace:*
-        version: link:../utilities
-    devDependencies:
-      '@vitest/coverage-v8':
-        specifier: 4.0.18
-        version: 4.0.18(vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0))
-      typescript:
-        specifier: 5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: 4.0.18
-        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0)
-
-  server/shared/typescript/location:
-    dependencies:
-      '@d2/geo-abstractions':
-        specifier: workspace:*
-        version: link:../geo-abstractions
       '@d2/result':
         specifier: workspace:*
         version: link:../result
