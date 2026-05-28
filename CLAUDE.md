@@ -2,8 +2,6 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-<a name="top"></a>
-
 # CLAUDE.md — D²-WORX Development Guide
 
 **D²-WORX** — Microservices SaaS framework. C# 14 / .NET 10 backend, SvelteKit BFF (TypeScript 5.9 / Svelte 5). Pre-Alpha. PolyForm Strict license (reference implementation, non-commercial).
@@ -13,41 +11,6 @@ Copyright (c) DCSV. All rights reserved.
 > **Before planning, implementing, or auditing ANYTHING — read [docs/dev/rules.md](docs/dev/rules.md) + [docs/dev/process.md](docs/dev/process.md) first.** If your work conflicts with them, you're making a mistake **UNLESS the user explicitly acknowledges in writing the SPECIFIC rules / steps being bypassed** (per [rules.md §13.14](docs/dev/rules.md#13-permission--action-discipline) — Process-bypass requires explicit written naming).
 >
 > rules.md is the canonical predicate catalog. process.md is the canonical workflow + sub-agent architecture + audit-loop protocol. CLAUDE.md condenses both for fast-access mental-model purposes per [rules.md §11.32](docs/dev/rules.md#11-documentation-parity--best-practices) — update CLAUDE.md + rules.md + process.md in lockstep when either canonical doc changes.
-
-## Table of contents
-
-**Top-of-file mandatory blocks** (read these every session):
-
-- [📍 Project state pointer](#claudemd--dworx-development-guide)
-- [⚠️ MANDATORY — orchestrator-only main thread](#mandatory-block-0-orchestrator-only-main-thread)
-- [⚠️ MANDATORY — applies to every code change](#mandatory-block-1-every-code-change)
-- [⚠️ MANDATORY — audit evidence & proof discipline](#mandatory-block-2-audit-evidence--proof-discipline)
-- [⚠️ Deliverable completeness checklist — gate before user review](#mandatory-block-3-deliverable-completeness-checklist)
-
-**Sections:**
-
-1. [§1. Development Workflow](#1-development-workflow)
-   - [Phase summary](#phase-summary)
-   - [Permission gates (must block — no inferred permission)](#permission-gates-must-block--no-inferred-permission)
-   - [Self-improvement (the key insight)](#self-improvement-the-key-insight)
-2. [§2. Commands](#2-commands)
-3. [§3. Reference Documents](#3-reference-documents)
-4. [§3.5. Doc Update Map](#35-doc-update-map)
-5. [§4. Patterns & Architecture](#4-patterns--architecture)
-   - [TLC/2LC/3LC Folder Convention](#tlc2lc3lc-folder-convention)
-   - [CQRS Handler Categories](#cqrs-handler-categories)
-   - [Verb Semantics](#verb-semantics)
-   - [Handler Pattern](#handler-pattern)
-   - [D2Result Pattern](#d2result-pattern)
-   - [Other Established Patterns](#other-established-patterns)
-   - [Key Architecture Decisions](#key-architecture-decisions)
-6. [§5. Critical Reminders (top-of-mind for every change)](#5-critical-reminders-top-of-mind-for-every-change)
-7. [§6. Code Conventions](#6-code-conventions)
-8. [§7. Behavioral Guidelines (how to approach work)](#7-behavioral-guidelines-dispositional--how-to-approach-work)
-   - [Code Intelligence Tools](#code-intelligence-tools)
-   - [Windows LSP Workaround](#windows-lsp-workaround)
-   - [Project Structure](#project-structure)
-9. [§8. Local Secrets & Claude Deny Rules](#8-local-secrets--claude-deny-rules)
 
 > This doc covers process, patterns, and code rules. Architectural decisions live distributed across the docs in `docs/` (PATTERNS.md, TESTS.md, PARITY.md, SRC_GEN.md, etc.) and the per-lib / per-service `README.md` files.
 
@@ -131,8 +94,6 @@ Copyright (c) DCSV. All rights reserved.
 >
 > **You MUST walk this checklist immediately before declaring any deliverable ready for user review. No exceptions, no "I'll skip it just this once," no "the steps were clean so the whole deliverable must be clean." Walk every box, write the attestation, then present.**
 
-<sup>[↑ jump to top](#top)</sup>
-
 ---
 
 ## §1. Development Workflow
@@ -171,8 +132,6 @@ Per [process.md §2 Permission gates](docs/dev/process.md#2-permission-gates-whe
 Every deliverable's distillation surfaces classes of miss. Approved misses become permanent predicates in `rules.md`. Future deliverables start with a stricter ruleset → audit loops converge in fewer rounds → deliverables ship faster → user spends less time pushing the agent through audit cycles.
 
 The journal IS the evidence of process integrity. Honest journals are self-rewarding: every honest miss becomes a future gate-check.
-
-<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -240,8 +199,6 @@ git push --follow-tags
 
 **Important:** When editing shared `.NET` libs in `server/shared/dotnet/`, run `dotnet build server/D2.slnx` to verify all consumers still compile. SvelteKit changes are isolated — `cd server/web && pnpm exec svelte-check`.
 
-<sup>[↑ jump to top](#top)</sup>
-
 ---
 
 ## §3. Reference Documents
@@ -264,8 +221,6 @@ Read these docs BEFORE working in the relevant area. Each doc is the authority f
 | `/old/v1/D2-WORX/`                                        | Frozen v1 snapshot. Historical reference for any v1 patterns / decisions / docs that don't have v2 equivalents yet. **Read-only — never modify.**                                                                                                                                                                                                               | When researching how v1 did something or hunting for tribal knowledge not yet extracted |
 
 Per-service / per-library `README.md` files appear in `server/services/{service}/` and `server/shared/dotnet/{lib}/` as those are built/lib.
-
-<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -293,8 +248,6 @@ When you change something, update the right doc. The map below is the routing ta
 | Architectural decision that overrides prior v2 plan                                                                                         | [docs/v2/V2.md](docs/v2/V2.md) (and add a new [ADRs](docs/adrs/README.md) entry per ADR convention)    |
 
 If your change spans multiple categories, update each. If no entry fits, the change probably needs a new doc — ASK before creating one.
-
-<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -352,27 +305,11 @@ One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consume
 
 ### Other Established Patterns
 
-- **Options pattern**: `IOptions<T>` with defaults. Config section
-- **Caching**: inject one of three marker interfaces from `D2.Shared.Caching.Abstractions` — `ILocalCache` (per-process; basic + atomic), `IDistributedCache` (cluster-wide; basic + atomic + broadcast + set), or `ITieredCache` (composed L1+L2; reads check L1 → fall through to L2 → populate L1; writes go L2-first; atomic ops route through L2). Cluster-wide L1 coherency uses the `ICacheInvalidationBackplane` (Redis pub/sub) — the `*AndBroadcast*` write variants publish on every send. Every op returns `D2Result<T>`; null/empty inputs return `ValidationFailed` (impls never throw). Key convention: `EntityName:{id}`. Full reference: [PATTERNS.md](docs/PATTERNS.md) cache section.
-- **Content-addressable entities**: `Location` and `WhoIs` use SHA-256 hash IDs (64-char hex). Factory method computes hash. Enables dedup.
-- **Mappers**: C# 14 extension members: `extension(Entity e) { public DTO ToDTO() { ... } }`. Live in `{Service}.App/Mappers/`.
-- **Batch operations**: `input.HashIds.Chunk(_BATCH_SIZE)` via Options pattern (default 500).
-- **Health checks must use the same code path as production** — DB health checks go through EF Core, not raw `pool.query()`. A check that bypasses the ORM won't detect ORM-layer issues.
+Options pattern, Caching marker interfaces (`ILocalCache` / `IDistributedCache` / `ITieredCache`), content-addressable entities (SHA-256 hash IDs), C# 14 extension-member mappers, batch operations, health-checks-must-use-production-code-path — see [docs/PATTERNS.md](docs/PATTERNS.md).
 
 ### Key Architecture Decisions
 
-- **Auth**: self-rolled .NET auth as a module within Edge. RFC 8693 token exchange + RFC 6749 §4.4 client_credentials for service identity. JWKS at the OIDC-canonical `/.well-known/jwks.json`.
-- **JWT**: RS256 only. 15min expiry. Custom claims namespaced with `d2_` prefix (snake_case — avoids spec-collision with `:` punctuation used in scope strings).
-- **KeyCustodian**: module within Auth — owns lifecycle of ALL long-lived secrets (JWKS, message payload encryption keys, cookie signing, service-identity client_secrets). State machine + JWKS-style overlap rotation.
-- **SvelteKit BFF**: pure SSR. Browser → Edge directly for auth state mutations. Server-side route guards (`requireAuth`, `requireOrg`, etc.) live in the `@d2/headers` package (re-usable across any Node frontend); the SvelteKit BFF imports them and wires them through `hooks.server.ts` + per-route loaders. Browser-side `authClient` lives at `server/web/src/lib/client/auth/` (SvelteKit-internal module — not a separate package).
-- **Sync**: gRPC between services (HTTP/2). **Async**: RabbitMQ for side effects (emails, events). Sensitive RMQ payloads encrypted via `D2.Shared.Encryption`.
-- **Notifications**: ALL deliveries through D2.Courier → contact resolution. No direct emails/texts.
-- **Sessions**: 3-tier (cookie cache 5min → Redis → PostgreSQL `auth_db` dual-write).
-- **Database topology**: one PG server, many DBs (auth_db, files_db, courier_db, notifications_db, audit_db, seaweedfs_filer_db, plus per-service contacts DBs). Multi-replica migration safety via PG advisory locks.
-- **Object storage**: SeaweedFS for user files. MinIO retained as backend for LGTM block storage.
-- **Production deployment**: eventually Docker Swarm + Portainer; pre-launch is Compose on a VPS.
-
-<sup>[↑ jump to top](#top)</sup>
+Auth (self-rolled .NET module within Edge, RFC 8693 + 6749 §4.4, JWKS at OIDC-canonical path), JWT (RS256, 15min expiry, `d2_`-prefixed snake_case custom claims), KeyCustodian (lifecycle of all long-lived secrets, state machine + overlap rotation), SvelteKit BFF (pure SSR, browser → Edge direct for auth mutations, `@d2/headers` route guards), sync gRPC / async RabbitMQ split (sensitive payloads encrypted via `D2.Shared.Encryption`), notifications via D2.Courier only, sessions 3-tier (cookie cache 5min → Redis → PostgreSQL dual-write), DB topology (one PG server, per-domain DBs, PG advisory-lock migration safety), object storage (SeaweedFS for user files, MinIO for LGTM blocks), production deployment (eventually Swarm + Portainer; pre-launch Compose on VPS) — see [docs/PATTERNS.md](docs/PATTERNS.md) + [docs/v2/V2.md](docs/v2/V2.md).
 
 ---
 
@@ -470,8 +407,6 @@ _Duplicate of [docs/dev/rules.md §1-§24 predicate catalog](docs/dev/rules.md) 
 
 > Topic-by-topic predicate routing → [rules.md table of contents](docs/dev/rules.md#table-of-contents).
 
-<sup>[↑ jump to top](#top)</sup>
-
 ---
 
 ## §6. Code Conventions
@@ -497,8 +432,6 @@ _Duplicate of [docs/dev/rules.md §1-§24 predicate catalog](docs/dev/rules.md) 
 _Above C# Naming table duplicates [docs/dev/rules.md §7.1](docs/dev/rules.md#7-naming-file-headers-folder-casing) — keep in lockstep per §11.32._
 
 > Other naming / file-header / folder / TS / git / observability conventions → [rules.md §7](docs/dev/rules.md#7-naming-file-headers-folder-casing).
-
-<sup>[↑ jump to top](#top)</sup>
 
 ---
 
@@ -545,8 +478,6 @@ Key roots in the tree:
 - `docs/` — project documentation (PATTERNS, TESTS, PARITY, SRC_GEN, dev/process, dev/rules, adrs/, v2/, etc.)
 - `secrets/` — gitignored + Claude-deny-ruled key material (root key, encryption keys, dev TLS certs). Populated by `tools/scripts/gen-dev-keys.sh`.
 - `.claude/` — project-level Claude Code settings (`settings.json` with deny rules)
-
-<sup>[↑ jump to top](#top)</sup>
 
 ---
 
