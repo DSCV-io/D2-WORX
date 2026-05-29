@@ -16,7 +16,7 @@ using D2.Shared.Handler;
 
 /// <summary>
 /// Captures every measurement on every instrument on the
-/// <see cref="HandlerTelemetry.Meter"/> for the lifetime of the collector.
+/// <see cref="HandlerTelemetry.SR_Meter"/> for the lifetime of the collector.
 /// Disposes the listener on <see cref="Dispose"/>. Uses a
 /// <see cref="ConcurrentQueue{T}"/> internally so concurrent measurement
 /// callbacks (10-way handler invocations etc.) don't race on collection

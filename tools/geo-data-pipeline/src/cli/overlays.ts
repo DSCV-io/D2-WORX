@@ -153,7 +153,9 @@ if (wantsJson) {
 
 if (entries.length === 0) {
   console.log(
-    "No active overlays. (Looked at: contracts/geo/overlays/countries.overlays.spec.json, contracts/geo/overlays/subdivisions.overlays.spec.json, contracts/geo/overlays/locales.overlays.spec.json)",
+    "No active overlays. (Looked at: contracts/geo/overlays/countries.overlays.spec.json, " +
+      "contracts/geo/overlays/subdivisions.overlays.spec.json, " +
+      "contracts/geo/overlays/locales.overlays.spec.json)",
   );
   console.log(
     "See contracts/geo/overlays/README.md for when to add an overlay vs fix upstream.",

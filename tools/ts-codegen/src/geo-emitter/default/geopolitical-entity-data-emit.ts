@@ -50,7 +50,8 @@ export function emitGeopoliticalEntityData(context: GeoSpecContext): {
     'import type { Country, GeopoliticalEntity } from "@d2/geo-abstractions";',
   );
   sb.appendLine(
-    'import { CountryCode, GeopoliticalEntityCode, GeopoliticalEntityType } from "@d2/geo-abstractions";',
+    'import { CountryCode, GeopoliticalEntityCode, GeopoliticalEntityType }' +
+      ' from "@d2/geo-abstractions";',
   );
   sb.appendLine();
   sb.appendLine('import { CountryLookup } from "./countries.g.js";');
@@ -136,7 +137,8 @@ export function emitGeopoliticalEntityData(context: GeoSpecContext): {
   for (const entry of emitted) {
     const code = entry.shortCode;
     sb.appendLine(
-      `get ${code}(): GeopoliticalEntity { return GeopoliticalEntityLookup.byCode[GeopoliticalEntityCode.${code}]!; },`,
+      `get ${code}(): GeopoliticalEntity { return GeopoliticalEntityLookup.byCode` +
+        `[GeopoliticalEntityCode.${code}]!; },`,
     );
   }
   sb.decreaseIndent();

@@ -470,7 +470,8 @@ export async function loadSubdivisions(
     );
     for (const r of topRows) {
       console.error(
-        `    ${r.countryISO31661Alpha2Code}: ${r.divergentCount}/${r.totalCount} subdivisions diverge`,
+        `    ${r.countryISO31661Alpha2Code}: ` +
+          `${r.divergentCount}/${r.totalCount} subdivisions diverge`,
       );
     }
   }

@@ -14,7 +14,7 @@ using Xunit;
 
 /// <summary>
 /// Adversarial test coverage for <see cref="AdminLocation"/> per §7.1 matrix:
-/// all 6 country/subdivision coherence cases (Amendment 50), all-null
+/// all 6 country/subdivision coherence cases, all-null
 /// rejection, postal-code validator integration, city / postal cleaning,
 /// CRLF / NUL injection in city + postal, HashId invariants.
 /// </summary>
@@ -36,7 +36,7 @@ public sealed class AdminLocationTests
     }
 
     // -----------------------------------------------------------------------
-    // Amendment 50 — Case 1: all-null rejects
+    // Case 1: all-null rejects
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -58,7 +58,7 @@ public sealed class AdminLocationTests
     }
 
     // -----------------------------------------------------------------------
-    // Amendment 50 — Case 2: country-only valid
+    // Case 2: country-only valid
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -71,7 +71,7 @@ public sealed class AdminLocationTests
     }
 
     // -----------------------------------------------------------------------
-    // Amendment 50 — Case 3: subdivision-only auto-populates country
+    // Case 3: subdivision-only auto-populates country
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -86,7 +86,7 @@ public sealed class AdminLocationTests
     }
 
     // -----------------------------------------------------------------------
-    // Amendment 50 — Case 5: mismatch fails
+    // Case 5: mismatch fails
     // -----------------------------------------------------------------------
 
     [Fact]

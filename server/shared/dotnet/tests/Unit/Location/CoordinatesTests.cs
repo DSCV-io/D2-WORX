@@ -256,7 +256,8 @@ public sealed class CoordinatesTests
 
         fromPlusCode.Success.Should().BeTrue();
         Math.Abs(fromPlusCode.Data!.Latitude - fromLatLon.Data.Latitude).Should().BeLessThan(0.001);
-        Math.Abs(fromPlusCode.Data!.Longitude - fromLatLon.Data.Longitude).Should().BeLessThan(0.001);
+        Math.Abs(fromPlusCode.Data!.Longitude - fromLatLon.Data.Longitude)
+            .Should().BeLessThan(0.001);
     }
 
     [Fact]

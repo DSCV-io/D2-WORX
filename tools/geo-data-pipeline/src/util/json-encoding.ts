@@ -5,7 +5,7 @@
 import { writeFile } from "node:fs/promises";
 import prettier from "prettier";
 
-/* eslint-disable no-irregular-whitespace -- the NBSP in the JSDoc example below is intentional documentation */
+/* eslint-disable no-irregular-whitespace -- NBSP in the JSDoc example below is intentional */
 /**
  * Code points that JSON.stringify renders as their literal character but which look
  * invisible (or look identical to ASCII space) in editors — making them invisible footguns

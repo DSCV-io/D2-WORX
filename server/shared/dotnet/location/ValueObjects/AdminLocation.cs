@@ -49,7 +49,8 @@ public sealed record AdminLocation
 
     /// <summary>
     /// Gets the stable hash identifier:
-    /// <c>"v1." + SHA-256(NormalizeForHash(City) | NormalizeForHash(PostalCode) | SubdivisionIso31662Code | CountryIso31661Alpha2Code)</c>
+    /// <c>"v1." + SHA-256(NormalizeForHash(City) | NormalizeForHash(PostalCode)
+    /// | SubdivisionIso31662Code | CountryIso31661Alpha2Code)</c>
     /// as lowercase hex. Missing slots contribute <c>""</c>.
     /// </summary>
     public required string HashId { get; init; }

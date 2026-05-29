@@ -27,12 +27,12 @@ Copyright (c) DCSV. All rights reserved.
       D2.Shared.Geo.Abstractions — typed CountryCode enum + SubdivisionCode wrapper
       struct (including SubdivisionCode.ParentCountry) that AdminLocation references.
     -->
-    <ProjectReference Include="..\geo-abstractions\D2.Shared.Geo.Abstractions.csproj" />
+    <ProjectReference Include="..\geo\abstractions\D2.Shared.Geo.Abstractions.csproj" />
     <!--
       D2.Shared.Result — D2Result<T> semantic factories (Ok, ValidationFailed, etc.)
       used by all three VO smart-constructors and IPostalCodeValidator.
     -->
-    <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
+    <ProjectReference Include="..\result\core\D2.Shared.Result.csproj" />
     <!--
       D2.Shared.Utilities — Falsey()/Truthy() guards + CleanStr() string helpers
       used in VO validation and normalization pipelines.

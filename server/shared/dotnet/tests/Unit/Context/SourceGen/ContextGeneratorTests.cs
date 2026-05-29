@@ -81,8 +81,9 @@ public sealed class ContextGeneratorTests
         var trees = driver.GetRunResult().GeneratedTrees;
         var iRequest = trees.Single(
             t => Path.GetFileName(t.FilePath) == "IRequestContext.g.cs");
-        iRequest.ToString().Should()
-            .Contain("public interface IRequestContext : global::D2.Shared.AuthContext.Abstractions.IAuthContext");
+        iRequest.ToString().Should().Contain(
+            "public interface IRequestContext : " +
+            "global::D2.Shared.AuthContext.Abstractions.IAuthContext");
     }
 
     [Fact]
@@ -185,7 +186,10 @@ public sealed class ContextGeneratorTests
         if (authSpec is not null)
             additionalTexts.Add(new InMemoryAdditionalText("IAuthContext.spec.json", authSpec));
         if (requestSpec is not null)
-            additionalTexts.Add(new InMemoryAdditionalText("IRequestContext.spec.json", requestSpec));
+        {
+            additionalTexts.Add(
+                new InMemoryAdditionalText("IRequestContext.spec.json", requestSpec));
+        }
 
         var driver = CSharpGeneratorDriver.Create(
             generators: [generator],
@@ -212,6 +216,7 @@ public sealed class ContextGeneratorTests
 
         public override string Path { get; }
 
-        public override SourceText GetText(System.Threading.CancellationToken cancellationToken = default) => r_text;
+        public override SourceText GetText(
+            System.Threading.CancellationToken cancellationToken = default) => r_text;
     }
 }

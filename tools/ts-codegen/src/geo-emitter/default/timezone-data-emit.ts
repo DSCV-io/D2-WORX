@@ -114,7 +114,8 @@ export function emitTimezoneData(context: GeoSpecContext): {
       validCountries.has(entry.countryISO31661Alpha2Code)
     ) {
       sb.appendLine(
-        `primaryCountryIso31661Alpha2Code: CountryCode.${entry.countryISO31661Alpha2Code} as CountryCode,`,
+        `primaryCountryIso31661Alpha2Code: CountryCode.${entry.countryISO31661Alpha2Code}` +
+          ` as CountryCode,`,
       );
     }
 
@@ -273,7 +274,8 @@ function emitTrieNode(sb: StringBuilder, node: TrieNode): void {
   const seg = node.segment ?? "";
   if (node.children.size === 0 && node.leafIana !== undefined) {
     sb.appendLine(
-      `${safeKey(seg)}: "${escapeStringLiteral(node.leafIana)}" as import("@d2/geo-abstractions").TimezoneCode,`,
+      `${safeKey(seg)}: "${escapeStringLiteral(node.leafIana)}"` +
+        ` as import("@d2/geo-abstractions").TimezoneCode,`,
     );
     return;
   }

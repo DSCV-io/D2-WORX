@@ -2,8 +2,10 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
+import { existsSync } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
-import { resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it, beforeAll } from "vitest";
 
 /**
@@ -25,8 +27,24 @@ import { describe, expect, it, beforeAll } from "vitest";
  * change introduces drift between catalogs, these tests fail loudly.
  */
 
-const REPO_ROOT = resolve(import.meta.dirname, "..", "..", "..", "..");
-const GEO_DIR = resolve(REPO_ROOT, "contracts", "geo");
+function locateGeoDir(): string {
+  let dir = dirname(fileURLToPath(import.meta.url));
+  for (let i = 0; i < 12; i++) {
+    const candidate = join(dir, "contracts", "geo");
+    if (existsSync(candidate)) return candidate;
+    const parent = resolve(dir, "..");
+    if (parent === dir) break;
+    dir = parent;
+  }
+  throw new Error(
+    "could not locate contracts/geo from " +
+      dirname(fileURLToPath(import.meta.url)),
+  );
+}
+
+const GEO_DIR = locateGeoDir();
+// REPO_ROOT is two levels up from contracts/geo
+const REPO_ROOT = resolve(GEO_DIR, "..", "..");
 
 interface SpecFile<T> {
   $generated: boolean;

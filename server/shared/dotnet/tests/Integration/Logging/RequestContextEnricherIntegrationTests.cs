@@ -91,7 +91,8 @@ public sealed class RequestContextEnricherIntegrationTests
         // WhoIs/Geo
         requestEvent.Properties.Keys.Should().Contain(nameof(IRequestContext.WhoIsHashId));
         requestEvent.Properties.Keys.Should().Contain(nameof(IRequestContext.AdminLocationHashId));
-        requestEvent.Properties.Keys.Should().Contain(nameof(IRequestContext.CountryIso31661Alpha2Code));
+        requestEvent.Properties.Keys.Should().Contain(
+            nameof(IRequestContext.CountryIso31661Alpha2Code));
 
         // WhoIs/Network-Privacy
         requestEvent.Properties.Keys.Should().Contain(nameof(IRequestContext.IsVpn));
@@ -181,7 +182,8 @@ public sealed class RequestContextEnricherIntegrationTests
         requestEvent.Properties.Keys.Should().NotContain(nameof(IRequestContext.WhoIsHashId));
         requestEvent.Properties.Keys.Should().NotContain(
             nameof(IRequestContext.AdminLocationHashId));
-        requestEvent.Properties.Keys.Should().NotContain(nameof(IRequestContext.CountryIso31661Alpha2Code));
+        requestEvent.Properties.Keys.Should().NotContain(
+            nameof(IRequestContext.CountryIso31661Alpha2Code));
         requestEvent.Properties.Keys.Should().NotContain(nameof(IRequestContext.IsVpn));
         requestEvent.Properties.Keys.Should().NotContain(nameof(IRequestContext.IsProxy));
         requestEvent.Properties.Keys.Should().NotContain(nameof(IRequestContext.IsTor));

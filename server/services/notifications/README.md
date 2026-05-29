@@ -51,5 +51,5 @@ Aggregation rules live in Notifications (it owns the feed shape). Producers don'
 
 ## References
 
-- [`server/shared/dotnet/messaging-rabbitmq/README.md`](../../shared/dotnet/messaging-rabbitmq/README.md) — RabbitMQ patterns + at-least-once delivery semantics
+- [`server/shared/dotnet/messaging/rabbitmq/README.md`](../../shared/dotnet/messaging/rabbitmq/README.md) — RabbitMQ patterns + at-least-once delivery semantics
 - [docs/PATTERNS.md](../../../docs/PATTERNS.md) — handler / D2Result / RedactionSpec patterns

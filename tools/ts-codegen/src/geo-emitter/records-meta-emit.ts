@@ -58,7 +58,8 @@ export function emitRecordsMeta(): {
   lines.push("");
 
   const path = tsPackagePath(
-    "geo-default",
+    "geo",
+    "default",
     "src",
     "generated",
     "_records-meta.g.ts",

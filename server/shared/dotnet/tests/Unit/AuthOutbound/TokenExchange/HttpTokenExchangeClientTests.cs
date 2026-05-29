@@ -144,9 +144,12 @@ public sealed class HttpTokenExchangeClientTests
 
         await harness.Client.ExchangeAsync(subject, TARGET_AUDIENCE);
 
-        capturedBody.Value.Should().Contain("grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange");
-        capturedBody.Value.Should().Contain("subject_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Ajwt");
-        capturedBody.Value.Should().Contain("requested_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Ajwt");
+        capturedBody.Value.Should().Contain(
+            "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange");
+        capturedBody.Value.Should().Contain(
+            "subject_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Ajwt");
+        capturedBody.Value.Should().Contain(
+            "requested_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Ajwt");
         capturedBody.Value.Should().Contain("audience=https%3A%2F%2Ffiles.internal");
     }
 
@@ -523,7 +526,8 @@ public sealed class HttpTokenExchangeClientTests
         return Task.FromResult(holder);
     }
 
-    private static HttpResponseMessage OkResponse(string accessToken, int expiresInSeconds) => new(HttpStatusCode.OK)
+    private static HttpResponseMessage OkResponse(string accessToken, int expiresInSeconds)
+        => new(HttpStatusCode.OK)
     {
         Content = new StringContent(
             $$"""{ "access_token": "{{accessToken}}", "expires_in": {{expiresInSeconds}} }""",
@@ -544,7 +548,9 @@ public sealed class HttpTokenExchangeClientTests
 
     private sealed class Harness : IAsyncDisposable
     {
-        private readonly Queue<Func<HttpRequestMessage, Task<HttpResponseMessage>>> r_responses = new();
+        private readonly Queue<Func<HttpRequestMessage, Task<HttpResponseMessage>>>
+            r_responses = new();
+
         private readonly HttpClient r_httpClient;
         private readonly DefaultLocalCache r_localCache;
         private readonly TokenExchangeCache r_cache;
@@ -590,8 +596,8 @@ public sealed class HttpTokenExchangeClientTests
 
         public TokenExchangeCache Cache => r_cache;
 
-        public void QueueOk(string accessToken, int expiresInSeconds) =>
-            QueueRaw($$"""{ "access_token": "{{accessToken}}", "expires_in": {{expiresInSeconds}} }""");
+        public void QueueOk(string accessToken, int expiresInSeconds) => QueueRaw(
+            $$"""{ "access_token": "{{accessToken}}", "expires_in": {{expiresInSeconds}} }""");
 
         public void QueueRaw(string body) =>
             r_responses.Enqueue(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)

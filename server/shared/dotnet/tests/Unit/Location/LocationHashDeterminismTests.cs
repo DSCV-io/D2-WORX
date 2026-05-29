@@ -84,7 +84,8 @@ public sealed class LocationHashDeterminismTests
             "create" => Coordinates.Create(
                 inputs.GetProperty("latitude").GetDouble(),
                 inputs.GetProperty("longitude").GetDouble(),
-                inputs.TryGetProperty("accuracyMeters", out var acc) && acc.ValueKind == JsonValueKind.Number
+                inputs.TryGetProperty("accuracyMeters", out var acc)
+                    && acc.ValueKind == JsonValueKind.Number
                     ? acc.GetDouble()
                     : null),
             "fromGeohash" => Coordinates.FromGeohash(inputs.GetProperty("geohash").GetString()!),
@@ -124,18 +125,21 @@ public sealed class LocationHashDeterminismTests
 
         if (c.ExpectedNormalizedForHash is not null)
         {
-            StreetAddress.NormalizeForHash(line1).Should()
-                .Be(c.ExpectedNormalizedForHash, $"case '{c.Name}' NormalizeForHash output mismatch");
+            StreetAddress.NormalizeForHash(line1).Should().Be(
+                c.ExpectedNormalizedForHash,
+                $"case '{c.Name}' NormalizeForHash output mismatch");
         }
     }
 
     private static void AssertAdminLocationCase(LocationHashFixtureCase c)
     {
         var inputs = c.Inputs;
-        CountryCode? country = inputs.TryGetProperty("countryCode", out var cc) && cc.ValueKind == JsonValueKind.String
+        CountryCode? country = inputs.TryGetProperty("countryCode", out var cc)
+            && cc.ValueKind == JsonValueKind.String
             ? Enum.Parse<CountryCode>(cc.GetString()!)
             : null;
-        SubdivisionCode? sub = inputs.TryGetProperty("subdivisionCode", out var sc) && sc.ValueKind == JsonValueKind.String
+        SubdivisionCode? sub = inputs.TryGetProperty("subdivisionCode", out var sc)
+            && sc.ValueKind == JsonValueKind.String
             ? SubdivisionCode.FromString(sc.GetString()!)
             : null;
         var city = inputs.TryGetProperty("city", out var ct) ? ct.GetString() : null;
@@ -163,7 +167,8 @@ public sealed class LocationHashDeterminismTests
         var inputs = c.Inputs;
 
         Coordinates? coord = null;
-        if (inputs.TryGetProperty("coordinates", out var coordEl) && coordEl.ValueKind == JsonValueKind.Object)
+        if (inputs.TryGetProperty("coordinates", out var coordEl)
+            && coordEl.ValueKind == JsonValueKind.Object)
         {
             var factory = coordEl.GetProperty("factory").GetString();
             var args = coordEl.GetProperty("args");
@@ -177,7 +182,8 @@ public sealed class LocationHashDeterminismTests
         }
 
         StreetAddress? street = null;
-        if (inputs.TryGetProperty("streetAddress", out var streetEl) && streetEl.ValueKind == JsonValueKind.Object)
+        if (inputs.TryGetProperty("streetAddress", out var streetEl)
+            && streetEl.ValueKind == JsonValueKind.Object)
         {
             var line1 = streetEl.GetProperty("line1").GetString();
             var r = StreetAddress.Create(line1);
@@ -185,9 +191,11 @@ public sealed class LocationHashDeterminismTests
         }
 
         AdminLocation? admin = null;
-        if (inputs.TryGetProperty("adminLocation", out var adminEl) && adminEl.ValueKind == JsonValueKind.Object)
+        if (inputs.TryGetProperty("adminLocation", out var adminEl)
+            && adminEl.ValueKind == JsonValueKind.Object)
         {
-            CountryCode? country = adminEl.TryGetProperty("countryCode", out var cc) && cc.ValueKind == JsonValueKind.String
+            CountryCode? country = adminEl.TryGetProperty("countryCode", out var cc)
+                && cc.ValueKind == JsonValueKind.String
                 ? Enum.Parse<CountryCode>(cc.GetString()!)
                 : null;
             var city = adminEl.TryGetProperty("city", out var ct) ? ct.GetString() : null;
@@ -235,7 +243,8 @@ public sealed class LocationHashDeterminismTests
         {
             throw new FileNotFoundException(
                 $"Location hash fixture not found at expected path '{candidate}' " +
-                $"(derived from [CallerFilePath]; should resolve to contracts/location/parity-fixtures.json " +
+                "(derived from [CallerFilePath]; should resolve to " +
+                "contracts/location/parity-fixtures.json " +
                 $"relative to this test source file).");
         }
 
@@ -251,8 +260,10 @@ public sealed class LocationHashDeterminismTests
     /// </summary>
     private static string ResolveFixturePath([CallerFilePath] string thisSourcePath = "")
     {
-        // thisSourcePath: <repo>/server/shared/dotnet/tests/Unit/Location/LocationHashDeterminismTests.cs
-        // walk up 6 levels (Location -> Unit -> tests -> dotnet -> shared -> server) to reach <repo>.
+        // thisSourcePath: <repo>/server/shared/dotnet/tests/Unit/Location/
+        //   LocationHashDeterminismTests.cs
+        // walk up 6 levels (Location -> Unit -> tests -> dotnet -> shared -> server)
+        // to reach <repo>.
         var dir = Path.GetDirectoryName(thisSourcePath) ?? string.Empty;
         for (var i = 0; i < 6; i++)
             dir = Path.GetDirectoryName(dir) ?? string.Empty;
@@ -282,14 +293,16 @@ public sealed class LocationHashDeterminismTests
                 Kind = caseEl.GetProperty("kind").GetString() ?? string.Empty,
                 Factory = caseEl.TryGetProperty("factory", out var fEl) ? fEl.GetString() : null,
                 Inputs = caseEl.TryGetProperty("inputs", out var iEl) ? iEl.Clone() : default,
-                ExpectedHashId = caseEl.TryGetProperty("expectedHashId", out var hEl) ? hEl.GetString() : null,
+                ExpectedHashId = caseEl.TryGetProperty("expectedHashId", out var hEl)
+                    ? hEl.GetString() : null,
                 ExpectedComposeHash = caseEl.TryGetProperty("expectedComposeHash", out var chEl)
                     ? (chEl.ValueKind == JsonValueKind.Null ? null : chEl.GetString())
                     : null,
-                ExpectedOutcome = caseEl.TryGetProperty("expectedOutcome", out var oEl) ? oEl.GetString() : null,
-                ExpectedNormalizedForHash = caseEl.TryGetProperty("expectedNormalizedForHash", out var nEl)
-                    ? nEl.GetString()
-                    : null,
+                ExpectedOutcome = caseEl.TryGetProperty("expectedOutcome", out var oEl)
+                    ? oEl.GetString() : null,
+                ExpectedNormalizedForHash = caseEl.TryGetProperty(
+                    "expectedNormalizedForHash", out var nEl)
+                    ? nEl.GetString() : null,
                 ExpectedCountryCode = caseEl.TryGetProperty("expectedCountryCode", out var ccEl)
                     ? ccEl.GetString()
                     : null,
@@ -305,7 +318,8 @@ public sealed class LocationHashDeterminismTests
             // Diagnostic: dump the first 200 chars of JSON so the error surfaces in the runner.
             var preview = json.Length > 200 ? json[..200] + "..." : json;
             throw new InvalidOperationException(
-                $"Deserialized fixture has zero cases. version='{manual.Version}'. JSON preview: {preview}");
+                $"Deserialized fixture has zero cases. version='{manual.Version}'. " +
+                $"JSON preview: {preview}");
         }
 
         return manual;

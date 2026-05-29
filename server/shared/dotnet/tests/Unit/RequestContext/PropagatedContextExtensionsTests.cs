@@ -100,29 +100,29 @@ public sealed class PropagatedContextExtensionsTests
     }
 
     // ------------------------------------------------------------------
-    // Step-5 new propagated fields — ToPropagatedContext + ApplyPropagatedContext
-    // Verifies all 8 new fields introduced in Step 5 are projected and applied.
+    // Full propagated-field set — ToPropagatedContext + ApplyPropagatedContext
+    // Verifies the original 6 plus the 8 additional fields are projected and applied.
     // ------------------------------------------------------------------
 
     [Fact]
-    public void ToPropagatedContext_IncludesAllStep5PropagatedFields()
+    public void ToPropagatedContext_IncludesAllPropagatedFields()
     {
-        // All 8 new propagated fields must appear in the projected result.
+        // All propagated fields must appear in the projected result.
         var startedAt = new DateTimeOffset(2026, 5, 27, 10, 0, 0, TimeSpan.Zero);
         var ctx = new MutableRequestContext
         {
             // Original 6
-            RequestId = "req-step5",
-            RequestPath = "/step5",
-            CurrentFingerprint = "fp-current-s5",
-            SessionFingerprint = "fp-session-s5",
+            RequestId = "req-proj",
+            RequestPath = "/proj",
+            CurrentFingerprint = "fp-current-proj",
+            SessionFingerprint = "fp-session-proj",
             RiskScore = 77,
-            WhoIsHashId = "whois-s5",
+            WhoIsHashId = "whois-proj",
 
-            // 8 new Step-5 fields
+            // 8 additional fields
             RequestStartedAt = startedAt,
-            IdempotencyKey = "idem-s5-key",
-            EdgeNodeId = "edge-node-s5",
+            IdempotencyKey = "idem-proj-key",
+            EdgeNodeId = "edge-node-proj",
             LocaleIetfBcp47Tag = "fr-CA",
             TimezoneIanaName = "America/Toronto",
             CurrencyIso4217Code = "CAD",
@@ -132,15 +132,15 @@ public sealed class PropagatedContextExtensionsTests
 
         var propagated = ctx.ToPropagatedContext();
 
-        propagated.RequestId.Should().Be("req-step5");
-        propagated.RequestPath.Should().Be("/step5");
-        propagated.CurrentFingerprint.Should().Be("fp-current-s5");
-        propagated.SessionFingerprint.Should().Be("fp-session-s5");
+        propagated.RequestId.Should().Be("req-proj");
+        propagated.RequestPath.Should().Be("/proj");
+        propagated.CurrentFingerprint.Should().Be("fp-current-proj");
+        propagated.SessionFingerprint.Should().Be("fp-session-proj");
         propagated.RiskScore.Should().Be(77);
-        propagated.WhoIsHashId.Should().Be("whois-s5");
+        propagated.WhoIsHashId.Should().Be("whois-proj");
         propagated.RequestStartedAt.Should().Be(startedAt);
-        propagated.IdempotencyKey.Should().Be("idem-s5-key");
-        propagated.EdgeNodeId.Should().Be("edge-node-s5");
+        propagated.IdempotencyKey.Should().Be("idem-proj-key");
+        propagated.EdgeNodeId.Should().Be("edge-node-proj");
         propagated.LocaleIetfBcp47Tag.Should().Be("fr-CA");
         propagated.TimezoneIanaName.Should().Be("America/Toronto");
         propagated.CurrencyIso4217Code.Should().Be("CAD");
@@ -149,9 +149,9 @@ public sealed class PropagatedContextExtensionsTests
     }
 
     [Fact]
-    public void ApplyPropagatedContext_PopulatesAllStep5PropagatedFields()
+    public void ApplyPropagatedContext_PopulatesAllPropagatedFields()
     {
-        // All 8 new Step-5 propagated fields must land on MutableRequestContext
+        // All 8 additional propagated fields must land on MutableRequestContext
         // when ApplyPropagatedContext is called.
         var startedAt = new DateTimeOffset(2026, 5, 27, 11, 0, 0, TimeSpan.Zero);
         var propagated = new PropagatedContext
@@ -164,7 +164,7 @@ public sealed class PropagatedContextExtensionsTests
             RiskScore = 55,
             WhoIsHashId = "w5",
 
-            // 8 new Step-5 fields
+            // 8 additional fields
             RequestStartedAt = startedAt,
             IdempotencyKey = "idem-apply-key",
             EdgeNodeId = "edge-apply-node",

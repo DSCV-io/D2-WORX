@@ -15,7 +15,7 @@
 #   docker compose -f infra/compose/compose.yml --env-file .env.local --env-file .env.secrets up -d
 #
 # Application service blocks (d2-edge, d2-files, d2-courier, d2-notifications,
-# d2-audit, d2-web) are added per V2.md §4 phases as services come online.
+# d2-audit, d2-web) are added as services come online.
 # This file currently declares only the infrastructure layer.
 
 name: d2-worx
@@ -43,7 +43,7 @@ volumes:
 services:
   # ==========================================================================
   # Object Storage (MinIO — backs LGTM block storage; user-file storage
-  # migrates to SeaweedFS per V2.md §5.6 in a later phase)
+  # migrates to SeaweedFS when the files service comes online)
   # ==========================================================================
 
   d2-minio:
@@ -209,7 +209,7 @@ services:
       MINIO_ROOT_PASSWORD: ${S3_PASSWORD}
       # Container names + endpoints for config.alloy env() references.
       CADVISOR_NAME: ${CADVISOR_NAME}
-      # TODO: set EDGE_METRICS_ENDPOINT when d2-edge is added per V2.md Phase 3.
+      # Set EDGE_METRICS_ENDPOINT when d2-edge is added to the stack.
       EDGE_METRICS_ENDPOINT: "${EDGE_SERVICE_NAME:-d2-edge}:${EDGE_PORT:-5000}"
       PG_EXPORTER_NAME: ${PG_EXPORTER_NAME}
       REDIS_EXPORTER_NAME: ${REDIS_EXPORTER_NAME}
@@ -393,7 +393,7 @@ services:
     restart: unless-stopped
 
   # ==========================================================================
-  # Malware Scanning (fail-closed for all uploads per V2.md §5.4)
+  # Malware Scanning (fail-closed for all uploads)
   # ==========================================================================
 
   d2-clamav:
@@ -413,7 +413,7 @@ services:
     restart: unless-stopped
 
   # ==========================================================================
-  # Messaging (RabbitMQ — payload encryption applied at app layer per V2.md §5.7)
+  # Messaging (RabbitMQ — payload encryption applied at app layer)
   # ==========================================================================
 
   d2-rabbitmq:
@@ -438,7 +438,7 @@ services:
     restart: unless-stopped
 
   # ==========================================================================
-  # Scheduled Jobs (Dkron daemon; dkron-mgr companion deferred to V2.md Phase 8)
+  # Scheduled Jobs (Dkron daemon; dkron-mgr companion not yet added)
   # ==========================================================================
 
   d2-dkron:
@@ -477,14 +477,14 @@ services:
     restart: unless-stopped
 
   # ==========================================================================
-  # Application Services — added per V2.md §4 phases
+  # Application Services — added as services come online
   #
-  # Phase 3: d2-edge        (.NET — Edge unified gateway: routing + auth + signalr + middleware)
-  # Phase 4: d2-audit       (.NET — append-only audit store, encrypted RMQ payloads)
-  # Phase 5: d2-courier     (.NET — outbound email + SMS delivery)
-  # Phase 5: d2-notifications (.NET — in-app feed)
-  # Phase 6: d2-files       (.NET — file management + processing + variants; SeaweedFS storage)
-  # Phase 6: d2-seaweedfs   (storage backend for user files)
-  # Phase 7: d2-web         (SvelteKit BFF using develop.watch + dotnet watch pattern per V2.md §9)
-  # Phase 8: d2-dkron-mgr   (.NET — Dkron job sync; pending replacement decision per V2.md §4 Phase 8)
+  # d2-edge          (.NET — Edge unified gateway: routing + auth + signalr + middleware)
+  # d2-audit         (.NET — append-only audit store, encrypted RMQ payloads)
+  # d2-courier       (.NET — outbound email + SMS delivery)
+  # d2-notifications (.NET — in-app feed)
+  # d2-files         (.NET — file management + processing + variants; SeaweedFS storage)
+  # d2-seaweedfs     (storage backend for user files)
+  # d2-web           (SvelteKit BFF using develop.watch + dotnet watch pattern)
+  # d2-dkron-mgr     (.NET — Dkron job sync; pending replacement decision)
   # ==========================================================================

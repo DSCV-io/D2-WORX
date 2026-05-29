@@ -291,12 +291,14 @@ function escapeJsDoc(value: string): string {
 
 const SPEC_PATH = contractsPath("jwt-claims", "jwt-claims.spec.json");
 const CLAIM_TYPES_TARGET = tsPackagePath(
-  "auth-abstractions",
+  "auth",
+  "abstractions",
   "src",
   "jwt-claim-types.g.ts",
 );
 const PAYLOAD_TARGET = tsPackagePath(
-  "auth-abstractions",
+  "auth",
+  "abstractions",
   "src",
   "jwt-payload.g.ts",
 );

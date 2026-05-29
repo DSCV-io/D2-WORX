@@ -228,7 +228,8 @@ public sealed class HttpServiceIdentityClientTests
     }
 
     [Fact]
-    public async Task GetCurrentTokenAsync_DiscoveryDocMissingTokenEndpoint_ReturnsServiceUnavailable()
+    public async Task
+    GetCurrentTokenAsync_DiscoveryDocMissingTokenEndpoint_ReturnsServiceUnavailable()
     {
         await using var harness = new Harness(tokenEndpoint: string.Empty);
         harness.QueueOk("never-called", 300);
@@ -409,7 +410,8 @@ public sealed class HttpServiceIdentityClientTests
     // Helpers
     // ----------------------------------------------------------------------
 
-    private static HttpResponseMessage Ok(string accessToken, int expiresInSeconds) => new(HttpStatusCode.OK)
+    private static HttpResponseMessage Ok(string accessToken, int expiresInSeconds)
+        => new(HttpStatusCode.OK)
     {
         Content = new StringContent(
             $$"""{ "access_token": "{{accessToken}}", "expires_in": {{expiresInSeconds}} }""",
@@ -417,10 +419,14 @@ public sealed class HttpServiceIdentityClientTests
             "application/json"),
     };
 
-    /// <summary>Fixture wiring — instantiates the real client against stub HTTP + OIDC + clock.</summary>
+    /// <summary>
+    /// Fixture wiring — instantiates the real client against stub HTTP + OIDC + clock.
+    /// </summary>
     private sealed class Harness : IAsyncDisposable
     {
-        private readonly Queue<Func<HttpRequestMessage, Task<HttpResponseMessage>>> r_responses = new();
+        private readonly Queue<Func<HttpRequestMessage, Task<HttpResponseMessage>>>
+            r_responses = new();
+
         private readonly HttpClient r_httpClient;
 
         public Harness(string tokenEndpoint = TOKEN_ENDPOINT)

@@ -148,7 +148,8 @@ export function emitLocaleData(context: GeoSpecContext): {
     sb.decreaseIndent();
     sb.appendLine("};");
     sb.appendLine(
-      `byTag["${escapeStringLiteral(entry.ietfBcp47Tag)}"] = byCode["${escapeStringLiteral(entry.ietfBcp47Tag)}"]!;`,
+      `byTag["${escapeStringLiteral(entry.ietfBcp47Tag)}"] = byCode` +
+        `["${escapeStringLiteral(entry.ietfBcp47Tag)}"]!;`,
     );
   }
   sb.appendLine();
@@ -279,7 +280,8 @@ function emitTrieNode(sb: StringBuilder, node: TrieNode): void {
   const seg = node.segment ?? "";
   if (node.children.size === 0 && node.leafTag !== undefined) {
     sb.appendLine(
-      `${safeKey(seg)}: "${escapeStringLiteral(node.leafTag)}" as import("@d2/geo-abstractions").LocaleCode,`,
+      `${safeKey(seg)}: "${escapeStringLiteral(node.leafTag)}"` +
+        ` as import("@d2/geo-abstractions").LocaleCode,`,
     );
     return;
   }

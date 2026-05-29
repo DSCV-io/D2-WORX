@@ -426,7 +426,7 @@ function emitActorEntryFile(): string {
 }
 
 const SPEC_PATH = contractsPath("auth-context", "IAuthContext.spec.json");
-const TARGET_DIR = tsPackagePath("auth-context-abstractions", "src");
+const TARGET_DIR = tsPackagePath("auth", "context-abstractions", "src");
 const INTERFACE_TARGET = `${TARGET_DIR}/IAuthContext.g.ts`;
 const ENUM_TARGETS: Record<string, string> = {
   "org-type": `${TARGET_DIR}/enums/org-type.g.ts`,

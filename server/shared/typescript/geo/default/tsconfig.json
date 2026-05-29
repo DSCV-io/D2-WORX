@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules", "tests"],
+  "references": [
+    { "path": "../abstractions" },
+    { "path": "../../request-context-abstractions" },
+    { "path": "../../result" },
+    { "path": "../../utilities" }
+  ]
+}

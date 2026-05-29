@@ -19,8 +19,8 @@ public sealed class DlqFailureHeaderBuilderTests
     [Fact]
     public void FromException_BuildsHandlerExceptionMetadata()
     {
-        // Per H7 (PII guard): exception.Message is NOT propagated into the
-        // DLQ header — handler-built strings can interpolate user input.
+        // PII guard: exception.Message is NOT propagated into the DLQ header —
+        // handler-built strings can interpolate user input.
         // ErrorCode carries the exception type (developer-controlled);
         // Detail stays null.
         var ex = new InvalidOperationException("boom");
@@ -39,7 +39,7 @@ public sealed class DlqFailureHeaderBuilderTests
     [Fact]
     public void FromException_LongMessage_DetailRemainsNull()
     {
-        // H7: even arbitrarily long ex.Message is dropped, not truncated.
+        // PII guard: even arbitrarily long ex.Message is dropped, not truncated.
         var longMsg = new string('x', 1_000);
         var ex = new InvalidOperationException(longMsg);
         var bytes = DlqFailureHeaderBuilder.FromException(ex);
@@ -79,7 +79,7 @@ public sealed class DlqFailureHeaderBuilderTests
     [Fact]
     public void FromBoundary_DecryptCause_Works()
     {
-        // H7: same PII guard for boundary failures — type only, no message.
+        // PII guard: same protection for boundary failures — type only, no message.
         var ex = new InvalidOperationException("bad frame");
         var bytes = DlqFailureHeaderBuilder.FromBoundary(
             DlqFailureCauses.DECRYPT_FAILURE, ex, traceId: "trc");

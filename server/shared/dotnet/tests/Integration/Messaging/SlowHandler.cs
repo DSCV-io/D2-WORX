@@ -10,7 +10,7 @@ using D2.Shared.Handler;
 using D2.Shared.Result;
 
 /// <summary>Slow handler that signals when it starts then sleeps for a
-/// configurable duration — exercises H6's in-flight callback drain.
+/// configurable duration — exercises the in-flight callback drain behavior.
 /// Static configuration is fine because the integration suite runs
 /// serially under <c>[Collection("RabbitMq")]</c>.</summary>
 public sealed class SlowHandler : BaseHandler<SlowHandler, IntegrationAuditEvent, Unit>

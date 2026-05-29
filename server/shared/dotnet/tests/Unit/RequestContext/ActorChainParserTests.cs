@@ -135,7 +135,8 @@ public sealed class ActorChainParserTests
 
         var result = ActorChainParser.ParseFromJsonString(input);
 
-        result[0].ImpersonationKind.Should().Be(D2.Shared.Auth.Abstractions.ImpersonationKind.Force);
+        result[0].ImpersonationKind.Should().Be(
+            D2.Shared.Auth.Abstractions.ImpersonationKind.Force);
     }
 
     // ------------------------------------------------------------------
@@ -581,7 +582,8 @@ public sealed class ActorChainParserTests
         return sb.ToString();
     }
 
-    private static string BuildJsonObject(System.Collections.Generic.IReadOnlyDictionary<string, string> fields)
+    private static string BuildJsonObject(
+        System.Collections.Generic.IReadOnlyDictionary<string, string> fields)
     {
         var sb = new StringBuilder();
         sb.Append('{');

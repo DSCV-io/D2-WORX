@@ -21,7 +21,9 @@ internal sealed class TaggedCounterListener : IDisposable
     private readonly List<(string Outcome, long Value)> r_measurements = [];
 
     /// <summary>Initializes the listener for a named counter on the outbound meter.</summary>
-    /// <param name="instrumentName">The instrument name (e.g. <c>d2.auth.outbound.service_identity.fetches</c>).</param>
+    /// <param name="instrumentName">
+    /// The instrument name (e.g. <c>d2.auth.outbound.service_identity.fetches</c>).
+    /// </param>
     public TaggedCounterListener(string instrumentName)
     {
         r_listener.InstrumentPublished = (instrument, listener) =>

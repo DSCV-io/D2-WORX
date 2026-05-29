@@ -157,7 +157,7 @@ function emitAllScopesArray(
 }
 
 const SPEC_PATH = contractsPath("auth-scopes", "scopes.spec.json");
-const TARGET = tsPackagePath("auth-abstractions", "src", "scopes.g.ts");
+const TARGET = tsPackagePath("auth", "abstractions", "src", "scopes.g.ts");
 
 export function runAuthScopesEmit(force = false): readonly EmitDiagnostic[] {
   if (!force && isOutputUpToDate(TARGET, [SPEC_PATH])) return [];

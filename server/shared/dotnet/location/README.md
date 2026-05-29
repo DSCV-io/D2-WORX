@@ -126,5 +126,5 @@ Hash-algorithm stability is enforced by the [`contracts/location/parity-fixtures
 ## References
 
 - [`docs/PATTERNS.md`](../../../docs/PATTERNS.md) — content-addressable entities + hash composition.
-- [`../geo-abstractions/README.md`](../geo-abstractions/README.md) — the typed `CountryCode` + `SubdivisionCode` surface this lib consumes.
+- [`../geo/abstractions/README.md`](../geo/abstractions/README.md) — the typed `CountryCode` + `SubdivisionCode` surface this lib consumes.
 - [`contracts/location/parity-fixtures.json`](../../../contracts/location/parity-fixtures.json) — hash-determinism fixture file.

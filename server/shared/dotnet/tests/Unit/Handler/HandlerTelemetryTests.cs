@@ -24,13 +24,13 @@ public sealed class HandlerTelemetryTests
     [Fact]
     public void ActivitySource_HasMatchingName()
     {
-        HandlerTelemetry.ActivitySource.Name.Should().Be(HandlerTelemetry.SourceName);
+        HandlerTelemetry.SR_ActivitySource.Name.Should().Be(HandlerTelemetry.SourceName);
     }
 
     [Fact]
     public void Meter_HasMatchingName()
     {
-        HandlerTelemetry.Meter.Name.Should().Be(HandlerTelemetry.SourceName);
+        HandlerTelemetry.SR_Meter.Name.Should().Be(HandlerTelemetry.SourceName);
     }
 
     // ----------------------------------------------------------------------
@@ -42,35 +42,35 @@ public sealed class HandlerTelemetryTests
     [Fact]
     public void Invoked_NameAndUnitAndDescription_Match()
     {
-        HandlerTelemetry.Invoked.Name.Should().Be("d2.handler.invoked");
-        HandlerTelemetry.Invoked.Unit.Should().Be("{calls}");
-        HandlerTelemetry.Invoked.Description.Should().Be("Handler invocations attempted.");
+        HandlerTelemetry.SR_Invoked.Name.Should().Be("d2.handler.invoked");
+        HandlerTelemetry.SR_Invoked.Unit.Should().Be("{calls}");
+        HandlerTelemetry.SR_Invoked.Description.Should().Be("Handler invocations attempted.");
     }
 
     [Fact]
     public void Succeeded_NameAndUnitAndDescription_Match()
     {
-        HandlerTelemetry.Succeeded.Name.Should().Be("d2.handler.succeeded");
-        HandlerTelemetry.Succeeded.Unit.Should().Be("{calls}");
-        HandlerTelemetry.Succeeded.Description.Should()
+        HandlerTelemetry.SR_Succeeded.Name.Should().Be("d2.handler.succeeded");
+        HandlerTelemetry.SR_Succeeded.Unit.Should().Be("{calls}");
+        HandlerTelemetry.SR_Succeeded.Description.Should()
             .Be("Handler invocations that returned a successful D2Result.");
     }
 
     [Fact]
     public void Failed_NameAndUnitAndDescription_Match()
     {
-        HandlerTelemetry.Failed.Name.Should().Be("d2.handler.failed");
-        HandlerTelemetry.Failed.Unit.Should().Be("{calls}");
-        HandlerTelemetry.Failed.Description.Should()
+        HandlerTelemetry.SR_Failed.Name.Should().Be("d2.handler.failed");
+        HandlerTelemetry.SR_Failed.Unit.Should().Be("{calls}");
+        HandlerTelemetry.SR_Failed.Description.Should()
             .Be("Handler invocations that returned a failed D2Result or threw.");
     }
 
     [Fact]
     public void Duration_NameAndUnitAndDescription_Match()
     {
-        HandlerTelemetry.Duration.Name.Should().Be("d2.handler.duration");
-        HandlerTelemetry.Duration.Unit.Should().Be("ms");
-        HandlerTelemetry.Duration.Description.Should()
+        HandlerTelemetry.SR_Duration.Name.Should().Be("d2.handler.duration");
+        HandlerTelemetry.SR_Duration.Unit.Should().Be("ms");
+        HandlerTelemetry.SR_Duration.Description.Should()
             .Be("Handler invocation wall-clock duration in milliseconds.");
     }
 
@@ -85,7 +85,7 @@ public sealed class HandlerTelemetryTests
         using var collector = new TestActivityCollector();
 
         // ReSharper disable once ExplicitCallerInfoArgument — explicit name is the test contract
-        using (var activity = HandlerTelemetry.ActivitySource.StartActivity("TestActivity"))
+        using (var activity = HandlerTelemetry.SR_ActivitySource.StartActivity("TestActivity"))
         {
             activity.Should().NotBeNull();
         }
@@ -99,7 +99,7 @@ public sealed class HandlerTelemetryTests
     {
         using var collector = new TestMetricCollector();
 
-        HandlerTelemetry.Invoked.Add(1);
+        HandlerTelemetry.SR_Invoked.Add(1);
 
         collector.CountFor("d2.handler.invoked").Should().BeGreaterThanOrEqualTo(1);
     }
@@ -109,7 +109,7 @@ public sealed class HandlerTelemetryTests
     {
         using var collector = new TestMetricCollector();
 
-        HandlerTelemetry.Duration.Record(42.0);
+        HandlerTelemetry.SR_Duration.Record(42.0);
 
         collector.ValuesFor("d2.handler.duration").Should().Contain(42.0);
     }
@@ -121,14 +121,14 @@ public sealed class HandlerTelemetryTests
         // instance reused for the lifetime of the process — re-creating
         // counters at runtime breaks any subscribed MeterListener. Verify
         // identity (not just equality) of each instrument.
-        var a = HandlerTelemetry.Invoked;
-        var b = HandlerTelemetry.Invoked;
+        var a = HandlerTelemetry.SR_Invoked;
+        var b = HandlerTelemetry.SR_Invoked;
 
         a.Should().BeSameAs(b);
-        HandlerTelemetry.Succeeded.Should().BeSameAs(HandlerTelemetry.Succeeded);
-        HandlerTelemetry.Failed.Should().BeSameAs(HandlerTelemetry.Failed);
-        HandlerTelemetry.Duration.Should().BeSameAs(HandlerTelemetry.Duration);
-        HandlerTelemetry.ActivitySource.Should().BeSameAs(HandlerTelemetry.ActivitySource);
-        HandlerTelemetry.Meter.Should().BeSameAs(HandlerTelemetry.Meter);
+        HandlerTelemetry.SR_Succeeded.Should().BeSameAs(HandlerTelemetry.SR_Succeeded);
+        HandlerTelemetry.SR_Failed.Should().BeSameAs(HandlerTelemetry.SR_Failed);
+        HandlerTelemetry.SR_Duration.Should().BeSameAs(HandlerTelemetry.SR_Duration);
+        HandlerTelemetry.SR_ActivitySource.Should().BeSameAs(HandlerTelemetry.SR_ActivitySource);
+        HandlerTelemetry.SR_Meter.Should().BeSameAs(HandlerTelemetry.SR_Meter);
     }
 }

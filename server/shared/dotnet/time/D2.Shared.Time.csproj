@@ -38,11 +38,11 @@ Copyright (c) DCSV. All rights reserved.
     <!-- D2.Shared.Result — ZonedInstant.Create and LocalAnchoredEvent.Create
          use the smart-constructor pattern returning D2Result<T> with
          InputError-based validation failures. -->
-    <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
+    <ProjectReference Include="..\result\core\D2.Shared.Result.csproj" />
     <!-- D2.Shared.I18n.Abstractions — TK.Common.Time.* / TK.Common.Errors.*
          translation key constants referenced by the smart-constructor
          validation paths. Zero-runtime-dep abstractions slice. -->
-    <ProjectReference Include="..\i18n-abstractions\D2.Shared.I18n.Abstractions.csproj" />
+    <ProjectReference Include="..\i18n\abstractions\D2.Shared.I18n.Abstractions.csproj" />
     <!-- D2.Shared.Utilities — Falsey()/Truthy() extension methods on string
          used in the IANA null/empty/whitespace guard in Create factories. -->
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />

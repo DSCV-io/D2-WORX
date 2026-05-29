@@ -21,8 +21,8 @@ using Xunit;
 /// through the COMPOSED pipeline (Logging + Telemetry + AspNetCore +
 /// ServiceDefaults aggregator) and asserts the cross-cutting observability
 /// surfaces (span / log / metric) all capture coherently for a single
-/// request flow. Higher-fidelity end-of-deliverable simulation that pins
-/// emergent behaviors no per-step Plan could anticipate.
+/// request flow. Exercises the fully integrated stack end-to-end so emergent
+/// behaviors that only surface when all layers run together are pinned by tests.
 /// </summary>
 [Collection("LogLoggerStaticState")]
 public sealed class RealisticServiceSimulationTests

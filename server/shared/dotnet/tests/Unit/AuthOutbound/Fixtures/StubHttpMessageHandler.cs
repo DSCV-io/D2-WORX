@@ -14,7 +14,8 @@ namespace D2.Shared.Tests.Unit.AuthOutbound.Fixtures;
 /// </summary>
 internal sealed class StubHttpMessageHandler : HttpMessageHandler
 {
-    private readonly Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> r_handler;
+    private readonly Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>>
+        r_handler;
 
     /// <summary>Initializes the handler with a per-request callback.</summary>
     /// <param name="handler">Async callback invoked for each outbound request.</param>

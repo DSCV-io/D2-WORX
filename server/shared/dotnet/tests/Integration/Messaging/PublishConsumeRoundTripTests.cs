@@ -181,21 +181,21 @@ public sealed class PublishConsumeRoundTripTests
     [Trait("Category", "Integration")]
     public async Task Traceparent_PropagatesToConsumerSpan_ParentChildLinkage()
     {
-        // H5 verification: producer-side publish span sets traceparent on
-        // the AMQP message, consumer-side OnReceivedAsync starts a Consumer
+        // traceparent propagation: producer-side publish span sets traceparent
+        // on the AMQP message, consumer-side OnReceivedAsync starts a Consumer
         // span whose parent is the publish span (same TraceId, SpanId == publish
-        // SpanId). Without H5 the consume span would either not exist or
-        // start a fresh trace.
+        // SpanId). Without trace propagation the consume span would either not
+        // exist or start a fresh trace.
         TestCollector.Reset<AuditCapturingHandler>();
         var queue = "rt.trace." + Guid.NewGuid().ToString("N")[..8];
 
-        // Listen on BOTH the messaging-rabbitmq source (publish + consume
+        // Listen on BOTH the messaging/rabbitmq source (publish + consume
         // spans) and the test source (the producer-side root span we start
         // explicitly below).
         var collected = new List<Activity>();
         using var listener = new ActivityListener();
         listener.ShouldListenTo = src =>
-            src.Name is "D2.Shared.Messaging.RabbitMq" or "D2.Tests.H5";
+            src.Name is "D2.Shared.Messaging.RabbitMq" or "D2.Tests.TraceParentPropagation";
         listener.Sample = (ref _) => ActivitySamplingResult.AllDataAndRecorded;
         listener.ActivityStopped = a =>
         {
@@ -210,9 +210,9 @@ public sealed class PublishConsumeRoundTripTests
                 IntegrationSubscriptionFactory.ForAuditEvent(queue, prefetch: 5));
         });
 
-        using var rootSource = new ActivitySource("D2.Tests.H5");
+        using var rootSource = new ActivitySource("D2.Tests.TraceParentPropagation");
         ActivityTraceId publishTraceId;
-        var rootSpanName = "h5-root";
+        var rootSpanName = "traceparent-propagation-root";
         await using (var scope = host.Services.CreateAsyncScope())
         using (var rootSpan = rootSource.StartActivity(rootSpanName))
         {

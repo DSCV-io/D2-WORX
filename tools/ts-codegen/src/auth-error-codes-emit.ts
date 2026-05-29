@@ -172,7 +172,8 @@ const SPEC_PATH = contractsPath(
   "auth-error-codes.spec.json",
 );
 const TARGET = tsPackagePath(
-  "auth-abstractions",
+  "auth",
+  "abstractions",
   "src",
   "auth-error-codes.g.ts",
 );

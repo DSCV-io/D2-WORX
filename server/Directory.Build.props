@@ -22,6 +22,18 @@ Copyright (c) DCSV. All rights reserved.
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
+  <!-- Solution-relative path properties. csprojs reference these instead of dot-counted relative paths
+       so folder nesting depth can change without breaking manifest path references.
+       MSBuildThisFileDirectory resolves to <repo>\server\ from this file's location; .. +
+       NormalizeDirectory yields the repo root with trailing separator. -->
+  <PropertyGroup>
+    <D2RepoRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)..'))</D2RepoRoot>
+    <D2ContractsRoot>$(D2RepoRoot)contracts\</D2ContractsRoot>
+    <D2SharedDotnetRoot>$(D2RepoRoot)server\shared\dotnet\</D2SharedDotnetRoot>
+    <D2SourceGenSharedRoot>$(D2SharedDotnetRoot)source-gen-shared\core\</D2SourceGenSharedRoot>
+    <D2ToolsRoot>$(D2RepoRoot)tools\</D2ToolsRoot>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="StyleCop.Analyzers">
       <PrivateAssets>all</PrivateAssets>

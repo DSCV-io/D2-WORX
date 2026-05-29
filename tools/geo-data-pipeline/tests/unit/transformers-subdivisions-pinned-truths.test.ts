@@ -258,7 +258,8 @@ describe("subdivisions.spec.json pinned canonical truths", () => {
       const entry = byCode.get(truth.code);
       if (!entry) {
         failures.push(
-          `${truth.code}: entry MISSING from subdivisions.spec.json (rationale: ${truth.rationale})`,
+          `${truth.code}: entry MISSING from subdivisions.spec.json ` +
+            `(rationale: ${truth.rationale})`,
         );
         continue;
       }
@@ -287,7 +288,8 @@ describe("subdivisions.spec.json pinned canonical truths", () => {
       if (!entry) continue;
       if (entry.displayName !== entry.officialName) {
         failures.push(
-          `${truth.code}: displayName="${entry.displayName}" but officialName="${entry.officialName}" — current architecture requires equality`,
+          `${truth.code}: displayName="${entry.displayName}" ` +
+            `but officialName="${entry.officialName}" — current architecture requires equality`,
         );
       }
     }

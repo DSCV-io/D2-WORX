@@ -87,7 +87,7 @@ mechanism:
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\i18n-source-gen\D2.Shared.I18n.SourceGen.csproj"
+    <ProjectReference Include="..\source-gen\D2.Shared.I18n.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
     <AdditionalFiles Include="..\..\..\..\contracts\messages\*.json" />
@@ -112,28 +112,28 @@ Three load-bearing properties of this wiring:
 Each source-gen owns a `D2<TOPIC>NNN` diagnostic ID prefix (3-5 char topic
 abbreviation, 3-digit number). Examples currently in use:
 
-| Topic                | Prefix   | Owning source-gen                 |
-| -------------------- | -------- | --------------------------------- |
-| i18n                 | `D2I18N` | `i18n-source-gen`                 |
-| Auth scopes          | `D2SCP`  | `auth-scopes-source-gen`          |
-| Auth audiences       | `D2AUD`  | `auth-audiences-source-gen`       |
-| Auth error codes     | `D2AEC`  | `auth-error-codes-source-gen`     |
-| Generic error codes  | `D2EC`   | `error-codes-source-gen`          |
-| D2Result envelope    | `D2RES`  | `d2result-envelope-source-gen`    |
-| Headers              | `D2HDR`  | `headers-source-gen`              |
-| JWT claims           | `D2JWT`  | `jwt-claims-source-gen`           |
-| Messaging registry   | `D2MQ`   | `messaging-source-gen`            |
-| DLQ failure metadata | `D2DLQ`  | `dlq-failure-metadata-source-gen` |
-| OTel messaging tags  | `D2OTM`  | `otel-messaging-tags-source-gen`  |
-| Telemetry tags       | `D2TT`   | `telemetry-tags-source-gen`       |
-| Encryption domains   | `D2ENCD` | `encryption-domains-source-gen`   |
-| Encryption frame     | `D2ENCF` | `encryption-frame-source-gen`     |
-| ProblemDetails       | `D2PD`   | `problem-details-source-gen`      |
-| Wire shapes          | `D2WS`   | `wire-shapes-source-gen`          |
-| Context              | `D2CTX`  | `context-source-gen`              |
-| gRPC trailers        | `D2GT`   | `grpc-trailers-source-gen`        |
-| In-process keys      | `D2IPK`  | `in-process-keys-source-gen`      |
-| Geo catalogs         | `D2GEO`  | `geo-source-gen`                  |
+| Topic                | Prefix   | Owning source-gen                            |
+| -------------------- | -------- | -------------------------------------------- |
+| i18n                 | `D2I18N` | `i18n/source-gen`                            |
+| Auth scopes          | `D2SCP`  | `auth/scopes-source-gen`                     |
+| Auth audiences       | `D2AUD`  | `auth/audiences-source-gen`                  |
+| Auth error codes     | `D2AEC`  | `auth/error-codes-source-gen`                |
+| Generic error codes  | `D2EC`   | `source-gen-shared/error-codes-source-gen`   |
+| D2Result envelope    | `D2RES`  | `result/envelope-source-gen`                 |
+| Headers              | `D2HDR`  | `headers/source-gen`                         |
+| JWT claims           | `D2JWT`  | `auth/jwt-claims-source-gen`                 |
+| Messaging registry   | `D2MQ`   | `messaging/source-gen`                       |
+| DLQ failure metadata | `D2DLQ`  | `messaging/dlq-failure-metadata-source-gen`  |
+| OTel messaging tags  | `D2OTM`  | `messaging/otel-messaging-tags-source-gen`   |
+| Telemetry tags       | `D2TT`   | `telemetry/tags-source-gen`                  |
+| Encryption domains   | `D2ENCD` | `encryption/domains-source-gen`              |
+| Encryption frame     | `D2ENCF` | `encryption/frame-source-gen`                |
+| ProblemDetails       | `D2PD`   | `problem-details/source-gen`                 |
+| Wire shapes          | `D2WS`   | `source-gen-shared/wire-shapes-source-gen`   |
+| Context              | `D2CTX`  | `context/source-gen`                         |
+| gRPC trailers        | `D2GT`   | `result/grpc-trailers-source-gen`            |
+| In-process keys      | `D2IPK`  | `encryption/in-process-keys-source-gen`      |
+| Geo catalogs         | `D2GEO`  | `geo/source-gen`                             |
 
 Diagnostic IDs are declared in two parallel files:
 
@@ -198,8 +198,8 @@ Five load-bearing decisions:
 3. **Single-target dispatch by consuming-assembly name.** A source-gen may be
    referenced as Analyzer by multiple consumers, but its emission gates on the
    single assembly that owns the catalog. Other consumers get the analyzer dll
-   but no emitted source. Multi-target dispatch (e.g. `dlq-failure-metadata-source-gen`
-   emitting different classes into messaging-abstractions AND messaging-rabbitmq)
+   but no emitted source. Multi-target dispatch (e.g. `messaging/dlq-failure-metadata-source-gen`
+   emitting different classes into messaging/abstractions AND messaging/rabbitmq)
    uses one source-gen with two assembly-name branches.
 4. **Loader / Emitter / Generator separation.** The Generator is the Roslyn
    host wrapper; the Loader (`<X>Loader.cs`) parses JSON → typed record; the
@@ -213,7 +213,7 @@ Message, Location?)` carries everything the host needs but doesn't take a
 
 ### §1.4. Example walkthrough — i18n
 
-`i18n-source-gen` is the canonical pattern this codebase reaches for. It emits
+`i18n/source-gen` is the canonical pattern this codebase reaches for. It emits
 the `TK` static class — a hierarchical catalog of `TKMessage` constants — into
 `D2.Shared.I18n.Abstractions` by reading `contracts/messages/*.json`
 translation catalogs.
@@ -287,7 +287,7 @@ The `TKMessage` type's `internal`-ctor design makes
 every consumer is forced through `TK.*`.
 
 **Per-source-gen details + diagnostic catalog**: see
-[`server/shared/dotnet/i18n-source-gen/README.md`](../server/shared/dotnet/i18n-source-gen/README.md).
+[`server/shared/dotnet/i18n/source-gen/README.md`](../server/shared/dotnet/i18n/source-gen/README.md).
 
 ---
 
@@ -453,7 +453,7 @@ from one spec.
 
 **2. Both halves emit from the same spec.**
 
-The .NET `auth-error-codes-source-gen` emits `AuthErrorCodes.g.cs` (constants
+The .NET `auth/error-codes-source-gen` emits `AuthErrorCodes.g.cs` (constants
 
 - `AllCodes` set + `GetHttpStatus` switch + `KebabCase` helper) plus
   `AuthFailures.g.cs` (semantic `D2Result` factories) into
@@ -512,7 +512,7 @@ produced by the `contracts/geo/` build pipeline from canonical ISO source data +
 
 ### .NET emitters (`D2.Shared.Geo.SourceGen`)
 
-`D2.Shared.Geo.SourceGen` (`server/shared/dotnet/geo-source-gen/`) inspects
+`D2.Shared.Geo.SourceGen` (`server/shared/dotnet/geo/source-gen/`) inspects
 `compilation.AssemblyName` and dispatches per target:
 
 | Target assembly | What is emitted |
@@ -524,12 +524,12 @@ Internal emitters (one per concern):
 
 | Emitter | Output |
 |---|---|
-| `RecordShapeEmitter` | Seven record `.g.cs` files emitted into `geo-abstractions/Generated/` |
+| `RecordShapeEmitter` | Seven record `.g.cs` files emitted into `geo/abstractions/Generated/` |
 | `GeoEnumsEmitter` | `*Code` enums + fixed-vocabulary enums (e.g. `WritingDirection`) |
 | `GeoWrapperStructEmitter` | `SubdivisionCode` / `LocaleCode` / `TimezoneCode` wrapper structs + lenient `TryParse` |
 | `GeoJsonConverterEmitter` | `System.Text.Json` `JsonConverter<T>` per catalog type |
 | `GeoCatalogEmitter` | `GeoCatalog` static class — `CatalogVersion` + `CatalogPublishedAt` (`DateTimeOffset`) |
-| `CountryDataEmitter` / `CurrencyDataEmitter` / `LanguageDataEmitter` / `SubdivisionDataEmitter` / `LocaleDataEmitter` / `TimezoneDataEmitter` / `GeopoliticalEntityDataEmitter` | Per-entity static data files emitted into `geo-default/Generated/` |
+| `CountryDataEmitter` / `CurrencyDataEmitter` / `LanguageDataEmitter` / `SubdivisionDataEmitter` / `LocaleDataEmitter` / `TimezoneDataEmitter` / `GeopoliticalEntityDataEmitter` | Per-entity static data files emitted into `geo/default/Generated/` |
 | `GeoDataInitializerEmitter` | `GeoDataInitializer.g.cs` — `[ModuleInitializer]`-driven second-pass FK-nav wiring coordinator |
 
 ### Diagnostic IDs (`D2GEO`)
@@ -578,12 +578,17 @@ When introducing a brand-new spec-driven catalog, follow this checklist:
 
 1. **Author the spec.** Create `contracts/<topic>/<topic>.spec.json` + a sibling
    `schema.json` describing the shape.
-2. **Author the .NET source-gen** under `server/shared/dotnet/<topic>-source-gen/`:
+2. **Author the .NET source-gen** under the owning cluster folder, e.g.
+   `server/shared/dotnet/<cluster>/<topic>-source-gen/` (or
+   `server/shared/dotnet/<cluster>/source-gen/` when the cluster owns a single
+   source-gen):
    - csproj is `netstandard2.0`, `IsRoslynComponent`, `PrivateAssets="all"`
      on Roslyn deps + bundled `System.Text.Json`.
-   - References `source-gen-shared/` files via `<Compile Include="..\source-gen-shared\**\*.cs">`
-     for the netstandard2.0 polyfills + cross-source-gen records
-     (`SpecFile`, `LoadResult<TSpec>`, `EmitDiagnostic`).
+   - References `source-gen-shared/core/` files via
+     `<Compile Include="$(D2SourceGenSharedRoot)**\*.cs">` (the
+     `D2SourceGenSharedRoot` property is defined in `server/Directory.Build.props`,
+     so the include is nesting-agnostic) for the netstandard2.0 polyfills +
+     cross-source-gen records (`SpecFile`, `LoadResult<TSpec>`, `EmitDiagnostic`).
    - Allocates a `D2<TOPIC>NNN` diagnostic ID prefix (3-5 chars).
    - Loader (`<X>Loader.cs`) parses JSON → typed record; Emitter
      (`<X>Emitter.cs`) takes typed record → emit-result; Generator
@@ -629,7 +634,7 @@ plumbing is a ~200-line copy-paste from any existing sibling source-gen.
 - [`server/shared/dotnet/source-gen-shared/`](../server/shared/dotnet/source-gen-shared/)
   — shared netstandard2.0 polyfills + cross-source-gen records (`SpecFile`,
   `LoadResult`, `EmitDiagnostic`) referenced by every `*-source-gen/` csproj.
-- [`server/shared/dotnet/i18n-source-gen/README.md`](../server/shared/dotnet/i18n-source-gen/README.md)
+- [`server/shared/dotnet/i18n/source-gen/README.md`](../server/shared/dotnet/i18n/source-gen/README.md)
   — the original SrcGen pattern this codebase mirrors elsewhere.
 - [PATTERNS.md](PATTERNS.md) — high-level entry for the spec-driven codegen
   philosophy.

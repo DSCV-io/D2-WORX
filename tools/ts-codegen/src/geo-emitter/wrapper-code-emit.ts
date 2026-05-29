@@ -38,7 +38,7 @@ const SPEC_REF_LOCALES = "contracts/geo/locales.spec.json";
 const SPEC_REF_TIMEZONES = "contracts/geo/timezones.spec.json";
 
 const GEN_DIR = (...parts: string[]): string =>
-  tsPackagePath("geo-abstractions", "src", "generated", ...parts);
+  tsPackagePath("geo", "abstractions", "src", "generated", ...parts);
 
 /** Emit `SubdivisionCode` branded type + Zod schema + validation set. */
 export function emitSubdivisionCode(entries: readonly SubdivisionSpec[]): {
@@ -145,7 +145,8 @@ function emitWrapperCode(
   sb.increaseIndent();
   sb.appendLine(".string()");
   sb.appendLine(
-    `.refine((s): s is ${typeName} => ${safeSetName}.has(s), { message: "value is not a known ${typeName}" });`,
+    `.refine((s): s is ${typeName} => ${safeSetName}.has(s),` +
+      ` { message: "value is not a known ${typeName}" });`,
   );
   sb.decreaseIndent();
   sb.appendLine();

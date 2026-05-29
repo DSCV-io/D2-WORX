@@ -78,7 +78,7 @@ internal static class PlusCodeEncoder
         // Clip latitude to avoid overflow at exact +90.
         var lat = Math.Min(latitude, _LAT_MAX - 1e-9);
 
-        // Normalise longitude to [−180, +180).
+        // Normalize longitude to [−180, +180).
         var lon = longitude;
         while (lon < -_LON_MAX)
             lon += 360.0;
@@ -233,7 +233,8 @@ internal static class PlusCodeEncoder
     /// Validates whether <paramref name="plusCode"/> is a syntactically valid OLC plus-code.
     /// </summary>
     /// <param name="plusCode">The string to validate.</param>
-    /// <returns><c>true</c> if the string is a valid OLC plus-code; otherwise <c>false</c>.</returns>
+    /// <returns><c>true</c> if the string is a valid OLC plus-code; otherwise <c>false</c>.
+    /// </returns>
     public static bool IsValid(string? plusCode)
     {
         if (plusCode.Falsey())

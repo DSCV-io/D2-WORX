@@ -62,7 +62,8 @@ import { emitTimezoneData } from "./default/timezone-data-emit.js";
 export function runGeoEmit(force: boolean): readonly EmitDiagnostic[] {
   const specPaths = getGeoSpecPaths();
   const targetSummaryPath = tsPackagePath(
-    "geo-abstractions",
+    "geo",
+    "abstractions",
     "src",
     "generated",
     "geo-catalog.g.ts",

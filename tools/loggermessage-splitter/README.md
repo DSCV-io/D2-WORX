@@ -26,7 +26,7 @@ The simple fix would be to gitignore the combined file, but that defeats the PR-
 1. `EnsureLoggerMessageSplitterBuilt` — invokes `<MSBuild>` on this tool's csproj (incremental, fast on no-op, cached by the `<MSBuild>` task across consumer csprojs within one build session).
 2. `SplitLoggerMessageGcs` — `AfterTargets="Compile"`, conditional on `Exists($(_LoggerMessageGcsPath))`. Runs `dotnet exec` against this tool's DLL with `--input` and `--output-dir`.
 
-Result: every csproj under `server/shared/dotnet/` that emits a `LoggerMessage.g.cs` file (currently messaging-rabbitmq, auth, auth-outbound, encryption) automatically gets its combined file split into per-class files on every `dotnet build`.
+Result: every csproj under `server/shared/dotnet/` that emits a `LoggerMessage.g.cs` file (currently `messaging/rabbitmq/`, `auth/core/`, `auth/outbound/`, `encryption/core/`) automatically gets its combined file split into per-class files on every `dotnet build`.
 
 ## CLI
 
@@ -44,7 +44,7 @@ Both args required. The tool exits 0 on success or when the input file does not 
 LoggerMessage.{NamespaceLastSegment}.{ClassName}.g.cs
 ```
 
-Examples (from messaging-rabbitmq):
+Examples (from messaging/rabbitmq):
 
 ```
 LoggerMessage.Channels.ChannelPoolLog.g.cs        D2.Shared.Messaging.RabbitMq.Channels.ChannelPoolLog

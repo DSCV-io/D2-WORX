@@ -14,7 +14,7 @@ import { runGeoEmit } from "./index.js";
  * Reads the seven Tier-2 geo spec files under `contracts/geo/`, validates
  * them (catalog uniqueness + vocabulary discipline), and emits the type
  * + closed-set-validation files into
- * `server/shared/typescript/geo-abstractions/src/generated/`.
+ * `server/shared/typescript/geo/abstractions/src/generated/`.
  *
  * `--force` bypasses the per-output mtime check and re-emits unconditionally.
  */

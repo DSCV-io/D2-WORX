@@ -224,7 +224,7 @@ public sealed class StreetAddressTests
     }
 
     // -----------------------------------------------------------------------
-    // Non-Latin scripts — preserved (Amendment 56)
+    // Non-Latin scripts — preserved by design
     // -----------------------------------------------------------------------
 
     [Fact]

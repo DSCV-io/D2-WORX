@@ -53,7 +53,7 @@ const SPEC_REF_GEOPOLITICAL = "contracts/geo/geopolitical-entities.spec.json";
 const SPEC_REF_LOCALES = "contracts/geo/locales.spec.json";
 
 const GEN_DIR = (...parts: string[]): string =>
-  tsPackagePath("geo-abstractions", "src", "generated", ...parts);
+  tsPackagePath("geo", "abstractions", "src", "generated", ...parts);
 
 /** Emit `CountryCode` real-enum + branded type + Zod schema + lookup set. */
 export function emitCountryEnum(entries: readonly CountrySpec[]): {
@@ -251,7 +251,8 @@ export function emitFixedEnums(): {
   sb.appendLine("} as const;");
   sb.appendLine();
   sb.appendLine(
-    "export type GeopoliticalEntityType = (typeof GeopoliticalEntityType)[keyof typeof GeopoliticalEntityType];",
+    "export type GeopoliticalEntityType = " +
+      "(typeof GeopoliticalEntityType)[keyof typeof GeopoliticalEntityType];",
   );
   sb.appendLine();
   sb.appendLine("export const GeopoliticalEntityTypeSchema = z.union([");
@@ -381,7 +382,8 @@ function emitConstObjectEnum(
   sb.appendLine("} as const;");
   sb.appendLine();
   sb.appendLine(
-    `export type ${typeName} = (typeof ${typeName})[keyof typeof ${typeName}] & { readonly __brand: "${typeName}" };`,
+    `export type ${typeName} = ` +
+      `(typeof ${typeName})[keyof typeof ${typeName}] & { readonly __brand: "${typeName}" };`,
   );
   sb.appendLine();
   const setName = `ALL_${camelToScreaming(typeName)}_SET`;
@@ -395,7 +397,8 @@ function emitConstObjectEnum(
   sb.increaseIndent();
   sb.appendLine(".string()");
   sb.appendLine(
-    `.refine((s): s is ${typeName} => ${setName}.has(s), { message: "value is not a known ${typeName} code" });`,
+    `.refine((s): s is ${typeName} => ${setName}.has(s),` +
+      ` { message: "value is not a known ${typeName} code" });`,
   );
   sb.decreaseIndent();
   sb.appendLine();

@@ -77,7 +77,7 @@ Mirrors `D2.Shared.Context.Abstractions`:
 
 ## Nullability convention
 
-> See [`../auth-context-abstractions/README.md` § Nullability convention](../auth-context-abstractions/README.md#nullability-convention) for the canonical rule. `IRequestContext` extends `IAuthContext` and inherits the same spec-driven `T | null` emission for spec-emitted property types (the spec's `?` suffix on a type entry — e.g. `"string?"` in `IRequestContext.spec.json` — triggers the `| null` emission).
+> See [`../auth/context-abstractions/README.md` § Nullability convention](../auth/context-abstractions/README.md#nullability-convention) for the canonical rule. `IRequestContext` extends `IAuthContext` and inherits the same spec-driven `T | null` emission for spec-emitted property types (the spec's `?` suffix on a type entry — e.g. `"string?"` in `IRequestContext.spec.json` — triggers the `| null` emission).
 
 ## Edge cases
 

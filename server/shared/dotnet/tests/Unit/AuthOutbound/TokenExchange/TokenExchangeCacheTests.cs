@@ -311,7 +311,8 @@ public sealed class TokenExchangeCacheTests
     [Fact]
     public async Task SessionRevokedEvent_IncrementsRevokedPurgesCounter()
     {
-        using var listener = new SimpleCounterListener("d2.auth.outbound.token_exchange.revoked_purges");
+        using var listener = new SimpleCounterListener(
+            "d2.auth.outbound.token_exchange.revoked_purges");
         var backplane = new StubBackplane();
         var cache = NewCache(backplane: backplane);
         var sessionId = Guid.NewGuid();

@@ -73,10 +73,10 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
     <!--
-      context-abstractions — IRequestContext interface (the strongly-typed
+      context\abstractions — IRequestContext interface (the strongly-typed
       enricher dep). Foundation-tier; trivial transitive surface.
     -->
-    <ProjectReference Include="..\context-abstractions\D2.Shared.Context.Abstractions.csproj" />
+    <ProjectReference Include="..\context\abstractions\D2.Shared.Context.Abstractions.csproj" />
     <!--
       aspnetcore — canonical InfrastructurePathMatcher (consumed by
       UseD2RequestLogging's level callback to demote infrastructure-path

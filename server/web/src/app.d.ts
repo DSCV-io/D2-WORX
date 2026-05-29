@@ -17,9 +17,9 @@ declare global {
     interface Locals {
       /** Populated by request enrichment middleware. */
       requestContext?: IRequestContext;
-      /** Populated by auth hook (Step 5) — session from Auth service */
+      /** Populated by the auth hook — session from the Auth service */
       session?: AuthSession | null;
-      /** Populated by auth hook (Step 5) — user from Auth service */
+      /** Populated by the auth hook — user from the Auth service */
       user?: AuthUser | null;
     }
 

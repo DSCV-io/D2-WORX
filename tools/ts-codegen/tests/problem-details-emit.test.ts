@@ -262,7 +262,7 @@ describe("emitProblemDetails — per-VALUE pin", () => {
   });
 
   // Per-VALUE pins for every title row the production spec carries (matrix
-  // = superset locked by Risk #2 = nine titles + fallback).
+  // superset covers all nine HTTP error titles + the fallback title).
   it.each([
     ["BAD_REQUEST", 400, "Bad Request"],
     ["UNAUTHORIZED", 401, "Unauthorized"],

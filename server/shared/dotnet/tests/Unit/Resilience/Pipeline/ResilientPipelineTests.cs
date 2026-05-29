@@ -159,7 +159,8 @@ public sealed class ResilientPipelineTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_TaskCanceledExceptionWithoutCanceledToken_MapsToServiceUnavailable()
+    public async Task
+    ExecuteAsync_TaskCanceledExceptionWithoutCanceledToken_MapsToServiceUnavailable()
     {
         // Pin the DIVERGENT classification: `TaskCanceledException` IS in
         // `IsTransientException`'s switch arms (line 73 of RetryHelper.cs),

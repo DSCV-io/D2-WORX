@@ -126,7 +126,7 @@ const TS_REQUEST_CONTEXT_OWN_PROPERTIES: readonly string[] = [
   "asnType",
 ];
 
-describe("request-context parity (.NET IRequestContext surface ↔ TS IRequestContext shape)", () => {
+describe("request-context parity (.NET IRequestContext ↔ TS IRequestContext shape)", () => {
   const scenarios = [
     "minimal",
     "full-with-fingerprints",

@@ -75,9 +75,10 @@ public sealed class GeoWrapperStructsFixtureEmitter
             fieldName,
             BindingFlags.Static | BindingFlags.NonPublic)
             ?? throw new InvalidOperationException(
-                $"Could not find private static field '{fieldName}' on {converterType.FullName} — "
-                + "the geo source-gen emitter may have renamed the field; "
-                + "update GeoWrapperStructsFixtureEmitter to match.");
+                $"Could not find private static field '{fieldName}' " +
+                $"on {converterType.FullName} — " +
+                "the geo source-gen emitter may have renamed the field; " +
+                "update GeoWrapperStructsFixtureEmitter to match.");
 
         var raw = field.GetValue(null)
             ?? throw new InvalidOperationException(

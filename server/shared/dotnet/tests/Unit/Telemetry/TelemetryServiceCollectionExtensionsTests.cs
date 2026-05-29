@@ -20,7 +20,7 @@ using Xunit;
 /// OTel SDK builds singleton <c>MeterProvider</c> / <c>TracerProvider</c>
 /// per process, and the OTEL_SDK_DISABLED env var influences what
 /// AddD2Telemetry registers — pin into a dedicated collection that
-/// serialises against integration tests touching the same surface.
+/// serializes against integration tests touching the same surface.
 /// </summary>
 [Collection("OtelStaticState")]
 public sealed class TelemetryServiceCollectionExtensionsTests

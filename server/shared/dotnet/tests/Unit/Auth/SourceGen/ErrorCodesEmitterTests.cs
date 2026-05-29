@@ -36,8 +36,10 @@ public sealed class ErrorCodesEmitterTests
         result.GeneratedSource.Should().Contain("public const string AUTH_X = \"AUTH_X\";");
         result.GeneratedSource.Should().Contain("namespace D2.Shared.Auth.Errors;");
         result.GeneratedSource.Should().Contain("public static class AuthErrorCodes");
-        result.GeneratedSource.Should().Contain("public static int GetHttpStatus(string errorCode)");
-        result.GeneratedSource.Should().Contain("public static string KebabCase(string upperUnderscore)");
+        result.GeneratedSource.Should().Contain(
+            "public static int GetHttpStatus(string errorCode)");
+        result.GeneratedSource.Should().Contain(
+            "public static string KebabCase(string upperUnderscore)");
         result.GeneratedSource.Should().Contain("\"AUTH_X\" => 401,");
         result.GeneratedSource.Should().Contain(
             "public static IReadOnlyList<string> AllCodes => sr_allCodes;");
@@ -127,7 +129,8 @@ public sealed class ErrorCodesEmitterTests
     }
 
     [Fact]
-    public void Emit_FailureFactoriesInfrastructureUnavailableCategory_EmitsServiceUnavailableAndTypedOverload()
+    public void
+    Emit_FailureFactoriesInfrastructureUnavailableCategory_EmitsServiceUnavailableAndTypedOverload()
     {
         var spec = MakeSpec(
             new ErrorCodeEntry(

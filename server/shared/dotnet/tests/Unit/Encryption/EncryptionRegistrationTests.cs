@@ -57,7 +57,8 @@ public sealed class EncryptionRegistrationTests
     {
         var services = new ServiceCollection();
         services.AddD2EncryptionFor("audit", _ => TestKeyrings.SingleKey("audit-2026q2", "audit"));
-        services.AddD2EncryptionFor("courier", _ => TestKeyrings.SingleKey("courier-2026q2", "courier"));
+        services.AddD2EncryptionFor(
+            "courier", _ => TestKeyrings.SingleKey("courier-2026q2", "courier"));
 
         using var sp = services.BuildServiceProvider();
         var auditCrypto = sp.GetRequiredKeyedService<IPayloadCrypto>("audit");
@@ -111,7 +112,8 @@ public sealed class EncryptionRegistrationTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddD2EncryptionFor("audit", _ => TestKeyrings.SingleKey("audit-2026q2", "audit"));
-        services.AddD2EncryptionFor("courier", _ => TestKeyrings.SingleKey("courier-2026q2", "courier"));
+        services.AddD2EncryptionFor(
+            "courier", _ => TestKeyrings.SingleKey("courier-2026q2", "courier"));
         services.AddD2EncryptionStartupCheck();
 
         using var sp = services.BuildServiceProvider();

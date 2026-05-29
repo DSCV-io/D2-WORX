@@ -97,7 +97,7 @@ const SPEC_PATH = contractsPath(
   "auth-error-codes",
   "auth-error-codes.spec.json",
 );
-const TARGET = tsPackagePath("auth-abstractions", "src", "auth-failures.g.ts");
+const TARGET = tsPackagePath("auth", "abstractions", "src", "auth-failures.g.ts");
 
 export function runAuthFailuresEmit(force = false): readonly EmitDiagnostic[] {
   if (!force && isOutputUpToDate(TARGET, [SPEC_PATH])) return [];

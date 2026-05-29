@@ -70,7 +70,8 @@ export async function buildCurrenciesSpec(): Promise<CurrenciesSpec> {
     (err: unknown) => {
       throw new Error(
         `currencies spec needs countries.spec.json on disk for country→primary-language map; ` +
-          `run \`pnpm write:countries\` first, then \`pnpm write:currencies\`. Cause: ${String(err)}`,
+          `run \`pnpm write:countries\` first, then \`pnpm write:currencies\`. ` +
+          `Cause: ${String(err)}`,
       );
     },
   );

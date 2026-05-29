@@ -96,10 +96,10 @@ public sealed class DlqTests
     [Trait("Category", "Integration")]
     public async Task DlqMessage_CarriesFailureReasonHeader_WithCauseAndErrorCode()
     {
-        // H4 verification: republish-to-DLX with x-d2-failure-reason header
-        // attached. Without H4 the DLQ message would arrive header-less
-        // (BasicNack-no-requeue → broker x-dead-letter-exchange routes a
-        // copy without our diagnostic header).
+        // DLX republish verification: the nacked message is republished to
+        // the DLX with an x-d2-failure-reason header attached. Without this
+        // behavior the DLQ message would arrive header-less (BasicNack-no-requeue
+        // → broker x-dead-letter-exchange routes a copy without our diagnostic header).
         TestCollector.Reset<AlwaysThrowsHandler>();
         var queue = "dlq.hdr." + Guid.NewGuid().ToString("N")[..8];
 

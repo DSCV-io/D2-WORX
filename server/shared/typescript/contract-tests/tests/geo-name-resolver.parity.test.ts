@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------
 
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import type { CountryCode } from "@d2/geo-abstractions";
@@ -64,18 +64,30 @@ interface ConfusablesFixture {
 }
 
 function loadConfusablesFixture(): ConfusablesFixture {
-  const here = dirname(fileURLToPath(import.meta.url));
-  // From server/shared/typescript/contract-tests/tests/ up to repo root = 5 levels.
-  const repoRoot = join(here, "..", "..", "..", "..", "..");
-  const path = join(
-    repoRoot,
-    "contracts",
-    "geo",
-    "fixtures",
-    "confusables.fixture.json",
+  // Walk up from this test file looking for the repo root marker
+  // (a directory containing contracts/geo/).
+  let dir = dirname(fileURLToPath(import.meta.url));
+  for (let i = 0; i < 12; i++) {
+    const candidate = join(
+      dir,
+      "contracts",
+      "geo",
+      "fixtures",
+      "confusables.fixture.json",
+    );
+    try {
+      const raw = readFileSync(candidate, "utf8");
+      return JSON.parse(raw) as ConfusablesFixture;
+    } catch {
+      // not here; walk up
+    }
+    const parent = resolve(dir, "..");
+    if (parent === dir) break;
+    dir = parent;
+  }
+  throw new Error(
+    "could not locate contracts/geo/fixtures/confusables.fixture.json",
   );
-  const raw = readFileSync(path, "utf8");
-  return JSON.parse(raw) as ConfusablesFixture;
 }
 
 const fixture = loadConfusablesFixture();
@@ -83,7 +95,10 @@ const fixture = loadConfusablesFixture();
 describe("geo name-resolver outcome parity (TS ↔ .NET confusables fixture)", () => {
   describe("country cases", () => {
     for (const row of fixture.countryCases) {
-      it(`${row.comment}: '${row.input}' → ${row.expectedIso31661Alpha2Code ?? "notFound"}`, () => {
+      const label =
+        `${row.comment}: '${row.input}'` +
+        ` → ${row.expectedIso31661Alpha2Code ?? "notFound"}`;
+      it(label, () => {
         const result = tryResolveCountryByName(row.input);
         if (row.expectedIso31661Alpha2Code === null) {
           expect(result.success).toBe(false);
@@ -99,7 +114,10 @@ describe("geo name-resolver outcome parity (TS ↔ .NET confusables fixture)", (
 
   describe("subdivision cases", () => {
     for (const row of fixture.subdivisionCases) {
-      it(`${row.comment}: '${row.input}' in ${row.parentCountryIso31661Alpha2Code} → ${row.expectedIso31662Code ?? "notFound"}`, () => {
+      const label =
+        `${row.comment}: '${row.input}' in ${row.parentCountryIso31661Alpha2Code}` +
+        ` → ${row.expectedIso31662Code ?? "notFound"}`;
+      it(label, () => {
         const parentCode = row.parentCountryIso31661Alpha2Code as CountryCode;
         const parent = CountryLookup.byCode[parentCode];
         const result = tryResolveSubdivisionByName(row.input, parent!);
@@ -147,7 +165,7 @@ describe("geo name-resolver outcome parity — deliberate-drift negative validat
     }).toThrow();
   });
 
-  it("drift-2: a fixture row expecting a specific alpha-2 but TS returns a different code is detected", () => {
+  it("drift-2: alpha-2 mismatch — fixture expectation vs TS resolver output is detected", () => {
     // Niger → NE, Nigeria → NG. A mutated row swapping their expectations
     // would produce a mismatch on the alpha-2 assertion.
     const nigerResult = tryResolveCountryByName("Niger");
@@ -162,7 +180,7 @@ describe("geo name-resolver outcome parity — deliberate-drift negative validat
     expect(nigeriaResult.data?.iso31661Alpha2Code).not.toBe("NE");
   });
 
-  it("drift-3: a fixture row expecting NOT_FOUND for an ambiguous input is verified fail-closed", () => {
+  it("drift-3: ambiguous input expected NOT_FOUND — fail-closed behavior is verified", () => {
     // 'Korea' matches KP + KR — ambiguous, fail-closed per fixture.
     // A mutated row expecting KR would drift; the resolver returns NotFound.
     const result = tryResolveCountryByName("Korea");

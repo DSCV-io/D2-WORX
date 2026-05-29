@@ -88,4 +88,4 @@ Smartphone MIME types (HEIC / HEIF, 3GPP, AAC / M4A, etc.) ship in `D2.Files.Dom
 ## References
 
 - [docs/PATTERNS.md](../../../docs/PATTERNS.md) — handler / D2Result / RedactionSpec / cache patterns
-- [`server/shared/dotnet/messaging-rabbitmq/README.md`](../../shared/dotnet/messaging-rabbitmq/README.md) — `d2.files.events` exchange contract + RabbitMQ wire format
+- [`server/shared/dotnet/messaging/rabbitmq/README.md`](../../shared/dotnet/messaging/rabbitmq/README.md) — `d2.files.events` exchange contract + RabbitMQ wire format

@@ -163,6 +163,7 @@ public sealed class AudiencesGeneratorTests
 
         public override string Path { get; }
 
-        public override SourceText GetText(System.Threading.CancellationToken cancellationToken = default) => r_text;
+        public override SourceText GetText(
+            System.Threading.CancellationToken cancellationToken = default) => r_text;
     }
 }

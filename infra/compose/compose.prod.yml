@@ -9,7 +9,7 @@
 #   docker compose -f infra/compose/compose.yml -f infra/compose/compose.prod.yml \
 #     --env-file .env.local --env-file .env.secrets up -d
 #
-# Usage (Swarm — eventual production deployment per V2.md §5.9):
+# Usage (Swarm — production deployment):
 #   docker stack deploy -c infra/compose/compose.yml -c infra/compose/compose.prod.yml d2-worx
 #
 # Key differences from dev:
@@ -17,8 +17,8 @@
 #   - deploy: blocks with restart_policy + resource limits (Swarm-native)
 #   - Dev-only services disabled via profiles (pgAdmin, RedisInsight, Portainer)
 #
-# Application service overrides (d2-edge, d2-files, etc.) are added per
-# V2.md §4 phases as services come online.
+# Application service overrides (d2-edge, d2-files, etc.) are added
+# as services come online.
 
 services:
   # ==========================================================================

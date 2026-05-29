@@ -14,7 +14,7 @@ using D2.Shared.Handler;
 
 /// <summary>
 /// Captures every <see cref="Activity"/> emitted by the
-/// <see cref="HandlerTelemetry.ActivitySource"/> during the lifetime of the
+/// <see cref="HandlerTelemetry.SR_ActivitySource"/> during the lifetime of the
 /// collector. Disposes the listener on <see cref="Dispose"/>.
 /// </summary>
 internal sealed class TestActivityCollector : IDisposable

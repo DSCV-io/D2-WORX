@@ -32,7 +32,8 @@ public sealed class AuthErrorCodesGeneratedTests
     [InlineData(nameof(AuthErrorCodes.AUTH_JWT_ISSUER_MISMATCH), "AUTH_JWT_ISSUER_MISMATCH")]
     [InlineData(nameof(AuthErrorCodes.AUTH_JWT_AUDIENCE_MISMATCH), "AUTH_JWT_AUDIENCE_MISMATCH")]
     [InlineData(nameof(AuthErrorCodes.AUTH_JWT_CLAIM_MISSING), "AUTH_JWT_CLAIM_MISSING")]
-    [InlineData(nameof(AuthErrorCodes.AUTH_JWT_ACT_CHAIN_MALFORMED), "AUTH_JWT_ACT_CHAIN_MALFORMED")]
+    [InlineData(
+        nameof(AuthErrorCodes.AUTH_JWT_ACT_CHAIN_MALFORMED), "AUTH_JWT_ACT_CHAIN_MALFORMED")]
     [InlineData(nameof(AuthErrorCodes.AUTH_JWT_KID_NOT_FOUND), "AUTH_JWT_KID_NOT_FOUND")]
     [InlineData(nameof(AuthErrorCodes.AUTH_JWKS_UNAVAILABLE), "AUTH_JWKS_UNAVAILABLE")]
     [InlineData(nameof(AuthErrorCodes.AUTH_SESSION_REVOKED), "AUTH_SESSION_REVOKED")]

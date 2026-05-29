@@ -260,10 +260,10 @@ function escapeJsDoc(value: string): string {
 const SPEC_PATH = contractsPath("headers", "headers.spec.json");
 
 const PACKAGE_DIR_FOR_CATALOG: Record<CatalogFilter, string> = {
-  common: "headers-common",
-  http: "headers-http",
-  amqp: "headers-amqp",
-  grpc: "headers-grpc",
+  common: "headers/common",
+  http: "headers/http",
+  amqp: "headers/amqp",
+  grpc: "headers/grpc",
 };
 
 const FILE_BASENAME_FOR_CATALOG: Record<CatalogFilter, string> = {

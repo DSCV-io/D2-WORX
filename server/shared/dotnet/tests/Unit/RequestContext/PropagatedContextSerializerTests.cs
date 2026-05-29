@@ -567,7 +567,8 @@ public sealed class PropagatedContextSerializerTests
         // field present" so a downstream caller can skip encode when the
         // context is truly empty. Catches a future codegen slip where a new
         // field is added to PropagatedContext but forgotten in HasAnyField.
-        new PropagatedContext { RequestStartedAt = DateTimeOffset.UtcNow }.HasAnyField.Should().BeTrue();
+        new PropagatedContext { RequestStartedAt = DateTimeOffset.UtcNow }
+            .HasAnyField.Should().BeTrue();
         new PropagatedContext { IdempotencyKey = "key" }.HasAnyField.Should().BeTrue();
         new PropagatedContext { EdgeNodeId = "node-1" }.HasAnyField.Should().BeTrue();
         new PropagatedContext { LocaleIetfBcp47Tag = "en-US" }.HasAnyField.Should().BeTrue();
@@ -657,7 +658,8 @@ public sealed class PropagatedContextSerializerTests
         // that is not a parseable DateTimeOffset. The decoder must survive
         // this without throwing, returning a PropagatedContext with a null
         // RequestStartedAt (the field is ignored / left null when parse fails).
-        var json = $"{{\"requestStartedAt\":\"{malformedDate.Replace("\\", "\\\\").Replace("\"", "\\\"")}\"}}";
+        var escaped = malformedDate.Replace("\\", "\\\\").Replace("\"", "\\\"");
+        var json = $"{{\"requestStartedAt\":\"{escaped}\"}}";
         var padded = Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
             .TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
@@ -730,7 +732,8 @@ public sealed class PropagatedContextSerializerTests
         var json = Encoding.UTF8.GetString(Convert.FromBase64String(padded));
 
         using var doc = JsonDocument.Parse(json);
-        var wireKeys = doc.RootElement.EnumerateObject().Select(p => p.Name).ToHashSet(StringComparer.Ordinal);
+        var wireKeys = doc.RootElement
+            .EnumerateObject().Select(p => p.Name).ToHashSet(StringComparer.Ordinal);
 
         var leaked = wireKeys.Except(catalog).ToList();
         leaked.Should().BeEmpty(

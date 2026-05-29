@@ -93,10 +93,12 @@ function emitCountries(
   appendEslintDisable(sb);
   sb.appendLine();
   sb.appendLine(
-    'import type { Country, CountryCurrencyAcceptance, GeopoliticalEntity, Locale, LocaleCode, Subdivision, SubdivisionCode } from "@d2/geo-abstractions";',
+    'import type { Country, CountryCurrencyAcceptance, GeopoliticalEntity, Locale, LocaleCode,' +
+      ' Subdivision, SubdivisionCode } from "@d2/geo-abstractions";',
   );
   sb.appendLine(
-    'import { CountryCode, CurrencyCode, GeopoliticalEntityCode, LanguageCode } from "@d2/geo-abstractions";',
+    'import { CountryCode, CurrencyCode, GeopoliticalEntityCode, LanguageCode }' +
+      ' from "@d2/geo-abstractions";',
   );
   sb.appendLine();
   sb.appendLine(
@@ -258,7 +260,8 @@ function emitCountryRecordConstruction(
     `endonymDisplayName: "${escapeStringLiteral(entry.endonymDisplayName ?? entry.displayName)}",`,
   );
   sb.appendLine(
-    `endonymOfficialName: "${escapeStringLiteral(entry.endonymDisplayName ?? entry.officialName)}",`,
+    `endonymOfficialName: "` +
+      `${escapeStringLiteral(entry.endonymDisplayName ?? entry.officialName)}",`,
   );
   sb.appendLine(
     `phoneNumberPrefix: "${escapeStringLiteral(entry.phoneNumberPrefix ?? "")}",`,
@@ -551,7 +554,10 @@ function emitCountryNavWire(
   }
 
   sb.appendLine(
-    `{ const subs = SubdivisionLookup.byCountry["${c}"]; if (subs !== undefined) { mut.subdivisions = subs; const codeSet = new Set<SubdivisionCode>(); for (const s of subs) codeSet.add(s.iso31662Code); mut.subdivisionIso31662Codes = codeSet; } }`,
+    `{ const subs = SubdivisionLookup.byCountry["${c}"]; if (subs !== undefined)` +
+      ` { mut.subdivisions = subs; const codeSet = new Set<SubdivisionCode>();` +
+      ` for (const s of subs) codeSet.add(s.iso31662Code);` +
+      ` mut.subdivisionIso31662Codes = codeSet; } }`,
   );
 
   // Wire nested Currency nav on each acceptance entry.
@@ -559,7 +565,8 @@ function emitCountryNavWire(
     sb.appendLine("for (const cc of mut.currencies) {");
     sb.increaseIndent();
     sb.appendLine(
-      "(cc as { -readonly [K in keyof CountryCurrencyAcceptance]: CountryCurrencyAcceptance[K] }).currency = CurrencyLookup.byCode[cc.iso4217AlphaCode];",
+      "(cc as { -readonly [K in keyof CountryCurrencyAcceptance]: CountryCurrencyAcceptance[K] })" +
+        ".currency = CurrencyLookup.byCode[cc.iso4217AlphaCode];",
     );
     sb.decreaseIndent();
     sb.appendLine("}");

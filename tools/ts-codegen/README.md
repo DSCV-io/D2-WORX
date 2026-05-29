@@ -8,7 +8,7 @@ Copyright (c) DCSV. All rights reserved.
 
 Per-topic TypeScript codegen scripts that emit `.g.ts` abstractions from
 the spec catalogs under `contracts/`. Sibling to the .NET Roslyn source
-generators (`server/shared/dotnet/*-source-gen/`) — both consume the same
+generators (`server/shared/dotnet/<cluster>/<name>/`) — both consume the same
 JSON spec files so cross-language parity is structural, not aspirational.
 
 ## Purpose

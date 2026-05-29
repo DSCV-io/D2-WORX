@@ -25,7 +25,9 @@ public interface IPostalCodeValidator
     /// country-specific validation.
     /// </summary>
     /// <param name="postalCode">The postal code to validate (may be null / whitespace).</param>
-    /// <param name="countryCode">Optional ISO 3166-1 alpha-2 country code for country-aware validation.</param>
+    /// <param name="countryCode">
+    /// Optional ISO 3166-1 alpha-2 country code for country-aware validation.
+    /// </param>
     /// <returns>
     /// <c>Ok</c> wrapping the normalized postal code on success;
     /// <see cref="D2Result{TData}.ValidationFailed"/> for null / empty /

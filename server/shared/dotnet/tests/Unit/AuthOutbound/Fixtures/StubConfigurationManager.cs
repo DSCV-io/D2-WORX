@@ -19,8 +19,12 @@ internal sealed class StubConfigurationManager : IConfigurationManager<OpenIdCon
 {
     private readonly OpenIdConnectConfiguration r_config;
 
-    /// <summary>Initializes the stub with a baseline OIDC config containing only the token endpoint.</summary>
-    /// <param name="tokenEndpoint">The token endpoint URL to surface (e.g. <c>https://edge.internal/oauth/token</c>).</param>
+    /// <summary>
+    /// Initializes the stub with a baseline OIDC config containing only the token endpoint.
+    /// </summary>
+    /// <param name="tokenEndpoint">
+    /// The token endpoint URL to surface (e.g. <c>https://edge.internal/oauth/token</c>).
+    /// </param>
     public StubConfigurationManager(string tokenEndpoint)
     {
         r_config = new OpenIdConnectConfiguration { TokenEndpoint = tokenEndpoint };

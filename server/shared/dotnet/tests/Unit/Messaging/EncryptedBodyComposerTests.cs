@@ -38,8 +38,8 @@ public sealed class EncryptedBodyComposerTests
         asJson.Should().StartWith("{");
 
         // Body must be the message JSON DIRECTLY — no envelope wrapper.
-        // C1/C2 invariant: a plaintext wire shape cannot carry any
-        // identity / context fields by construction.
+        // Plaintext wire shape invariant: a plaintext descriptor cannot carry
+        // any identity / context fields by construction.
         asJson.Should().NotContain("\"envelope\":");
         asJson.Should().NotContain("\"userId\":");
     }

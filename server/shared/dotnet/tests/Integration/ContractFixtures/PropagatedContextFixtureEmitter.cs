@@ -111,7 +111,8 @@ public sealed class PropagatedContextFixtureEmitter
         var d = new Dictionary<string, object?>();
         if (ctx.RequestId is not null) d["requestId"] = ctx.RequestId;
         if (ctx.RequestPath is not null) d["requestPath"] = ctx.RequestPath;
-        if (ctx.RequestStartedAt is not null) d["requestStartedAt"] = ctx.RequestStartedAt.Value.ToString("O");
+        if (ctx.RequestStartedAt is not null)
+            d["requestStartedAt"] = ctx.RequestStartedAt.Value.ToString("O");
         if (ctx.IdempotencyKey is not null) d["idempotencyKey"] = ctx.IdempotencyKey;
         if (ctx.SessionFingerprint is not null) d["sessionFingerprint"] = ctx.SessionFingerprint;
         if (ctx.CurrentFingerprint is not null) d["currentFingerprint"] = ctx.CurrentFingerprint;

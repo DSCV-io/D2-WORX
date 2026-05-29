@@ -136,7 +136,7 @@ public sealed class CreateUser(HandlerContext<CreateUser> ctx, IDbExceptionClass
 }
 ```
 
-> Duplicated from [`server/shared/dotnet/handler/README.md`](../server/shared/dotnet/handler/README.md) for at-a-glance directory access. Canonical full reference (pipeline shape, `MapDbException` override, typed booleans, observability surface) lives in the lib READMEs — update both in lockstep. See also: [`handler-repo/README.md`](../server/shared/dotnet/handler-repo/README.md), [`handler-repo-postgres/README.md`](../server/shared/dotnet/handler-repo-postgres/README.md).
+> Duplicated from [`server/shared/dotnet/handler/core/README.md`](../server/shared/dotnet/handler/core/README.md) for at-a-glance directory access. Canonical full reference (pipeline shape, `MapDbException` override, typed booleans, observability surface) lives in the lib READMEs — update both in lockstep. See also: [`handler/repo/README.md`](../server/shared/dotnet/handler/repo/README.md), [`handler/repo-postgres/README.md`](../server/shared/dotnet/handler/repo-postgres/README.md).
 
 ---
 
@@ -155,7 +155,7 @@ return D2Result<OutputDto>.Ok(order.ToDto());
 
 Partial-success ladder: `NotFound` (none resolved, Success=false) → `SomeFound` (partial, data attached, Success=false) → `Ok` (all resolved, Success=true). Callers use `IsPartialOrMissing` (`IsNotFound || IsSomeFound`) for cache-fallback. `Forbidden` is returned when an authenticated caller lacks the required scope.
 
-> Duplicated from [`server/shared/dotnet/result/README.md`](../server/shared/dotnet/result/README.md) for at-a-glance directory access. Full factory catalog, `BubbleFail` / `Bubble`, per-code booleans (`IsTransientRetryable` / `IsTransientDbFailure`), monadic `Bind` / `Map` / `ThenAsync` / `Match`, and auto-injected `traceId` semantics live in the lib README — update both in lockstep.
+> Duplicated from [`server/shared/dotnet/result/core/README.md`](../server/shared/dotnet/result/core/README.md) for at-a-glance directory access. Full factory catalog, `BubbleFail` / `Bubble`, per-code booleans (`IsTransientRetryable` / `IsTransientDbFailure`), monadic `Bind` / `Map` / `ThenAsync` / `Match`, and auto-injected `traceId` semantics live in the lib README — update both in lockstep.
 
 ---
 
@@ -255,7 +255,7 @@ public sealed class GetEntityByIdHandler(ITieredCache cache, IEntityRepo repo) :
 }
 ```
 
-Canonical: [`server/shared/dotnet/caching-abstractions/README.md`](../server/shared/dotnet/caching-abstractions/README.md). Default impls: [`caching-local-default/`](../server/shared/dotnet/caching-local-default/README.md), [`caching-distributed-redis/`](../server/shared/dotnet/caching-distributed-redis/README.md), [`caching-tiered/`](../server/shared/dotnet/caching-tiered/README.md).
+Canonical: [`server/shared/dotnet/caching/abstractions/README.md`](../server/shared/dotnet/caching/abstractions/README.md). Default impls: [`caching/local-default/`](../server/shared/dotnet/caching/local-default/README.md), [`caching/distributed-redis/`](../server/shared/dotnet/caching/distributed-redis/README.md), [`caching/tiered/`](../server/shared/dotnet/caching/tiered/README.md).
 
 ---
 
@@ -316,7 +316,7 @@ Canonical (full 42 LOG-OK / 8 NOT-LOGGED enumeration + per-source overrides + pr
 
 `D2.Shared.Telemetry` ships OpenTelemetry SDK setup (traces + metrics + logs) + per-signal OTLP exporters (env-var-gated truthy) + an IP-restricted Prometheus scraping endpoint (`MapD2PrometheusEndpoint` — 403 for non-loopback / non-RFC-1918) + cross-lib `ActivitySource` / `Meter` aggregation (4 ActivitySources + 6 Meters via `public const string` symbol references). `OTEL_SDK_DISABLED=true` symmetrically short-circuits BOTH `AddD2Telemetry` AND `MapD2PrometheusEndpoint`. Auto-instrumentations: AspNetCore inbound, HttpClient outbound, GrpcNetClient outbound, Process + Runtime metrics. AspNetCore `Filter` excludes infrastructure paths via the canonical `InfrastructurePathMatcher` from `D2.Shared.AspNetCore`.
 
-Canonical: [`server/shared/dotnet/telemetry/README.md`](../server/shared/dotnet/telemetry/README.md).
+Canonical: [`server/shared/dotnet/telemetry/core/README.md`](../server/shared/dotnet/telemetry/core/README.md).
 
 ---
 
@@ -341,7 +341,7 @@ app.MapGet("/files/{id}", H).RequireD2Scope("files.read");
 
 Per-validation pipeline: bearer extraction (transport layer) → signature + standard-claim validation (RS256 pinned, issuer / audience / lifetime with 30s clock skew, reactive-refresh-on-unknown-`kid`) → session liveness (`TieredCacheSessionLivenessTracker`; fail-closed on liveness store outage) → per-endpoint scope check (transport layer; metadata enumerates required scopes, middleware verifies superset). JWKS at the OIDC-canonical `/.well-known/jwks.json`; cluster-wide JWKS rotation via `ICacheInvalidationBackplane` (Redis pub/sub on `d2.security.key-rotated:jwks`). Uniform **401** at the auth boundary regardless of "JWT bad" vs "scope insufficient" — granularity surfaces only on `d2_error_code`. `MarkAsD2HarmlessEndpoint()` / `[D2HarmlessEndpoint]` opts out of the full pipeline (reserved for k8s probes + OIDC discovery). Both transports register a scoped `IRequestContext` reading from a shared `HttpContext.Items` slot (`D2HttpContextItems.REQUEST_CONTEXT`); gRPC interceptor dual-writes to `ServerCallContext.UserState` for hot-path access.
 
-Canonical: [`server/shared/dotnet/auth/README.md`](../server/shared/dotnet/auth/README.md), [`auth-http/README.md`](../server/shared/dotnet/auth-http/README.md), [`auth-grpc/README.md`](../server/shared/dotnet/auth-grpc/README.md).
+Canonical: [`server/shared/dotnet/auth/core/README.md`](../server/shared/dotnet/auth/core/README.md), [`auth/http/README.md`](../server/shared/dotnet/auth/http/README.md), [`auth/grpc/README.md`](../server/shared/dotnet/auth/grpc/README.md).
 
 ---
 
@@ -377,7 +377,7 @@ D2Result<T>.ValidationFailed(inputErrors: [
 
 `TKMessage`'s constructor is **internal** — producers can ONLY construct via the SrcGen-emitted `TK.*` constants. "Untranslated literal in `D2Result.Messages`" is structurally unrepresentable. Translation key conventions: `auth_{feature}_{purpose}`, `webclient_{section}_{purpose}`, `common_ui_*` / `common_errors_*`. When adding new keys, add to ALL locale files in `contracts/messages/` simultaneously — the SrcGen surfaces gaps via `D2I18N002` at build time. The 10-locale list is driven by env vars `PUBLIC_ENABLED_LOCALES__*` + `PUBLIC_DEFAULT_LOCALE`.
 
-Canonical: [`i18n-abstractions/README.md`](../server/shared/dotnet/i18n-abstractions/README.md), [`i18n/README.md`](../server/shared/dotnet/i18n/README.md), [`i18n-source-gen/README.md`](../server/shared/dotnet/i18n-source-gen/README.md).
+Canonical: [`i18n/abstractions/README.md`](../server/shared/dotnet/i18n/abstractions/README.md), [`i18n/core/README.md`](../server/shared/dotnet/i18n/core/README.md), [`i18n/source-gen/README.md`](../server/shared/dotnet/i18n/source-gen/README.md).
 
 ---
 
@@ -397,7 +397,7 @@ services
 
 Publishers inject `IMessageBus` and call `PublishAsync(message)`. Consumers inherit `BaseHandler<TSelf, TMessage, Unit>` and override `ExecuteAsync`. Failures route to `{queue}.dlx` with a JSON-encoded `DlqFailureMetadata` header; optional tiered-retry exchanges declared per-subscription when `tieredRetry` is set.
 
-Canonical (full wire format + topology + publisher path + consumer path + DLX / DLQ + tiered retry + encryption posture + operational anti-patterns): [`server/shared/dotnet/messaging-rabbitmq/README.md`](../server/shared/dotnet/messaging-rabbitmq/README.md). Spec authoring + codegen diagnostics → [`messaging-source-gen/README.md`](../server/shared/dotnet/messaging-source-gen/README.md). Transport-agnostic abstractions → [`messaging-abstractions/README.md`](../server/shared/dotnet/messaging-abstractions/README.md).
+Canonical (full wire format + topology + publisher path + consumer path + DLX / DLQ + tiered retry + encryption posture + operational anti-patterns): [`server/shared/dotnet/messaging/rabbitmq/README.md`](../server/shared/dotnet/messaging/rabbitmq/README.md). Spec authoring + codegen diagnostics → [`messaging/source-gen/README.md`](../server/shared/dotnet/messaging/source-gen/README.md). Transport-agnostic abstractions → [`messaging/abstractions/README.md`](../server/shared/dotnet/messaging/abstractions/README.md).
 
 ---
 
@@ -586,7 +586,7 @@ internal static readonly Lazy<FrozenDictionary<string, CountryCacheEntry>>
 
 **Deterministic iteration order during build**: when sentinel decisions depend on the iteration order of multiple records that normalize to the same key, sort the input by a stable key (e.g. `OrderBy(c => c.Iso31661Alpha2Code, StringComparer.Ordinal)`) so two processes building the cache independently agree byte-for-byte.
 
-Canonical implementation: `DefaultGeoNameResolver` in `server/shared/dotnet/geo-default/NameResolution/`. TS mirror: `server/shared/typescript/geo-default/src/name-resolution/default-geo-name-resolver.ts` (TS uses a module-scoped `Map | undefined` plus a build-count interlocked counter for thundering-herd safety under JS's single-thread execution).
+Canonical implementation: `DefaultGeoNameResolver` in `server/shared/dotnet/geo/default/NameResolution/`. TS mirror: `server/shared/typescript/geo/default/src/name-resolution/default-geo-name-resolver.ts` (TS uses a module-scoped `Map | undefined` plus a build-count interlocked counter for thundering-herd safety under JS's single-thread execution).
 
 ## Namespace-disambiguated extensions over a shared receiver
 
@@ -655,7 +655,7 @@ CountryCode? code = "US".TryParseTruthyNull<CountryCode>(ignoreCase: true, out v
     ? c : (CountryCode?)null;
 ```
 
-Canonical lib references: [D2.Shared.Geo.Abstractions](../server/shared/dotnet/geo-abstractions/README.md) · [@d2/geo-abstractions](../server/shared/typescript/geo-abstractions/README.md) · [D2.Shared.Geo.Default](../server/shared/dotnet/geo-default/README.md) · [@d2/geo-default](../server/shared/typescript/geo-default/README.md).
+Canonical lib references: [D2.Shared.Geo.Abstractions](../server/shared/dotnet/geo/abstractions/README.md) · [@d2/geo-abstractions](../server/shared/typescript/geo/abstractions/README.md) · [D2.Shared.Geo.Default](../server/shared/dotnet/geo/default/README.md) · [@d2/geo-default](../server/shared/typescript/geo/default/README.md).
 
 ### Typed access on IRequestContext
 

@@ -41,7 +41,10 @@ using D2.Shared.Utilities.Extensions;
 /// </remarks>
 public sealed record StreetAddress
 {
-    /// <summary>Gets the required first address line (post-normalization, case preserved, decorative punctuation stripped).</summary>
+    /// <summary>
+    /// Gets the required first address line
+    /// (post-normalization, case preserved, decorative punctuation stripped).
+    /// </summary>
     public required string Line1 { get; init; }
 
     /// <summary>Gets the optional second address line.</summary>
@@ -127,8 +130,12 @@ public sealed record StreetAddress
     /// <c>D2.Shared.Tests</c> via <c>InternalsVisibleTo</c> for direct
     /// adversarial coverage.
     /// </summary>
-    /// <param name="cleaned">A line value already passed through <c>CleanStored</c> (or null).</param>
-    /// <returns>The hash-form canonical string; empty when <paramref name="cleaned"/> is null/empty.</returns>
+    /// <param name="cleaned">
+    /// A line value already passed through <c>CleanStored</c> (or null).
+    /// </param>
+    /// <returns>
+    /// The hash-form canonical string; empty when <paramref name="cleaned"/> is null/empty.
+    /// </returns>
     internal static string NormalizeForHash(string? cleaned)
     {
         if (cleaned.Falsey())

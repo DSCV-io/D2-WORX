@@ -207,7 +207,7 @@ describe("derivePrimaryLocaleTag — 639-3 fallback to en-{region}", () => {
   }
 });
 
-describe("derivePrimaryLocaleTag — Pass 6 fallback to first locale when en-{region} absent", () => {
+describe("derivePrimaryLocaleTag — Pass 6: fallback to first locale (no en-{region})", () => {
   it("TL: tet + TL -> pt-TL (no en-TL in candidates; pt-TL is first)", () => {
     const tag = derivePrimaryLocaleTag(
       {
@@ -355,7 +355,7 @@ describe("derivePrimaryLocaleTag — edge cases", () => {
     expect(tag).toBe("ab-ZZ");
   });
 
-  it("returns the plain lang-region tag when it exists in candidateLocaleTags (catalog-miss path)", () => {
+  it("returns plain lang-region tag when it exists in candidateLocaleTags", () => {
     // Simulates catalog where the EXPANDED form isn't shipped but the PLAIN
     // tag is in the country's locales list — still resolvable.
     const tag = derivePrimaryLocaleTag(

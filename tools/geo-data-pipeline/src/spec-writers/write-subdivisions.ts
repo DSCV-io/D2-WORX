@@ -246,7 +246,8 @@ async function writeMissingWikidataEnLog(
     $note:
       "Operator-triage log: Debian-present subdivision codes that lack a Wikidata 'en' label. " +
       "The pipeline fell back to debian/iso-codes' `name` field for displayName. Review each " +
-      "entry's `debianFallbackName` — if it's awkward (non-canonical English / odd transliteration), " +
+      "entry's `debianFallbackName` — if it's awkward " +
+      "(non-canonical English / odd transliteration), " +
       "consider adding an overlay entry at " +
       "contracts/geo/overlays/subdivisions.overlays.spec.json. See " +
       "contracts/geo/KNOWN_WARNINGS.md for the source-priority rationale.",

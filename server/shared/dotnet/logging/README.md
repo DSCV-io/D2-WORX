@@ -254,7 +254,7 @@ Reason rendering uses the enum name (`PersonalInformation`, `FinancialInformatio
 
 | File                                             | Role                                                                                                                  |
 | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| `D2.Shared.Logging.csproj`                       | csproj — `Microsoft.NET.Sdk.Web` + `OutputType=Library`. ProjectReferences to `utilities/` + `context-abstractions/`. |
+| `D2.Shared.Logging.csproj`                       | csproj — `Microsoft.NET.Sdk.Web` + `OutputType=Library`. ProjectReferences to `utilities/` + `context/abstractions/`. |
 | `D2LoggingOptions.cs`                            | Sealed record — Options-pattern config.                                                                               |
 | `D2LoggingConstants.cs`                          | Public constants (`OTEL_SERVICE_NAME_CONFIG_KEY`).                                                                    |
 | `LoggingServiceCollectionExtensions.cs`          | Public DI extension: `AddD2Logging`.                                                                                  |

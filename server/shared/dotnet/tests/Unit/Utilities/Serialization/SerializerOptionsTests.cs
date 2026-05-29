@@ -31,7 +31,7 @@ public sealed class SerializerOptionsTests
         var node = new CycleNode();
         node.Self = node;
 
-        // Read the back-reference before serialising so R# sees the getter
+        // Read the back-reference before serializing so R# sees the getter
         // as used (the JsonSerializer's reflection-based read is invisible
         // to static analysis).
         node.Self.Should().BeSameAs(node);

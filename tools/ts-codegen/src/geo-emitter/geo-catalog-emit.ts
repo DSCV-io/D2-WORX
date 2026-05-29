@@ -80,7 +80,8 @@ export function emitGeoCatalog(context: GeoSpecContext): {
   sb.appendLine();
   return {
     path: tsPackagePath(
-      "geo-abstractions",
+      "geo",
+      "abstractions",
       "src",
       "generated",
       "geo-catalog.g.ts",

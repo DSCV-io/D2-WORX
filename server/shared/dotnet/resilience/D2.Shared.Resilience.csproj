@@ -11,7 +11,7 @@ Copyright (c) DCSV. All rights reserved.
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
+    <ProjectReference Include="..\result\core\D2.Shared.Result.csproj" />
   </ItemGroup>
 
   <ItemGroup>

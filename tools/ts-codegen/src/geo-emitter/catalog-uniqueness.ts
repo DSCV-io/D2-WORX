@@ -15,7 +15,7 @@ import type { GeoSpecContext } from "./spec-types.js";
 
 /**
  * In-tree mirror of the runtime `normalize()` pipeline (see
- * `server/shared/typescript/geo-abstractions/src/name-resolution/name-normalizer.ts`).
+ * `server/shared/typescript/geo/abstractions/src/name-resolution/name-normalizer.ts`).
  * Re-implemented here because the ts-codegen package's `rootDir` constraint
  * forbids reaching into another package via a relative path, and a shared
  * helper package isn't justified yet — the runtime impl is 7 lines of pure

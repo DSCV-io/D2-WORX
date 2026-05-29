@@ -79,21 +79,21 @@ Copyright (c) DCSV. All rights reserved.
       (Instance, traceId, and correlationId are populated unconditionally
       regardless of whether a D2Result is stashed.)
     -->
-    <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
+    <ProjectReference Include="..\result\core\D2.Shared.Result.csproj" />
     <!--
-      problem-details-abstractions — codegen-emitted D2ProblemDetailsKeys
+      problem-details/abstractions — codegen-emitted D2ProblemDetailsKeys
       (TYPE_URI_PREFIX, CONTENT_TYPE, EXTENSION_*, TITLE_*, TitleFor switch)
       consumed by D2ProblemDetailsCustomizer. Cross-language parity with the
       TS-side @d2/headers catalog is structurally guaranteed (single spec).
     -->
-    <ProjectReference Include="..\problem-details-abstractions\D2.Shared.ProblemDetails.Abstractions.csproj" />
+    <ProjectReference Include="..\problem-details\abstractions\D2.Shared.ProblemDetails.Abstractions.csproj" />
     <!--
       headers-http — HttpHeaders.IDEMPOTENCY_KEY consumed by D2CorsOptions
       to populate the default allowed-headers set with the single spec-driven
       constant (Stripe-style "Idempotency-Key", per the headers spec). Single
       wire value for one concept.
     -->
-    <ProjectReference Include="..\headers-http\D2.Shared.Headers.Http.csproj" />
+    <ProjectReference Include="..\headers\http\D2.Shared.Headers.Http.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -69,14 +69,16 @@ public sealed class PayloadCryptoKeyringTests
     [Fact]
     public void Ctor_NullActiveKid_Throws()
     {
-        var act = () => new PayloadCryptoKeyring(null!, new Dictionary<string, byte[]>(), TestKeyrings.AadFor("audit"));
+        var act = () => new PayloadCryptoKeyring(
+            null!, new Dictionary<string, byte[]>(), TestKeyrings.AadFor("audit"));
         act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
     public void Ctor_EmptyActiveKid_Throws()
     {
-        var act = () => new PayloadCryptoKeyring(string.Empty, new Dictionary<string, byte[]>(), TestKeyrings.AadFor("audit"));
+        var act = () => new PayloadCryptoKeyring(
+            string.Empty, new Dictionary<string, byte[]>(), TestKeyrings.AadFor("audit"));
         act.Should().Throw<ArgumentException>();
     }
 
@@ -104,7 +106,8 @@ public sealed class PayloadCryptoKeyringTests
     [Fact]
     public void Ctor_NullKeys_Throws()
     {
-        var act = () => new PayloadCryptoKeyring("audit-2026q2", null!, TestKeyrings.AadFor("audit"));
+        var act = () => new PayloadCryptoKeyring(
+            "audit-2026q2", null!, TestKeyrings.AadFor("audit"));
         act.Should().Throw<ArgumentNullException>();
     }
 
@@ -183,7 +186,8 @@ public sealed class PayloadCryptoKeyringTests
         // Snapshot the keyring's internal copy (different object than `key`).
         ring.TryGetKey("audit-2026q2", out var live).Should().BeTrue();
         var liveSnapshotBeforeDispose = live.ToArray();
-        liveSnapshotBeforeDispose.Should().NotBeEquivalentTo(new byte[PayloadCryptoKeyring.KEY_SIZE_BYTES]);
+        liveSnapshotBeforeDispose.Should().NotBeEquivalentTo(
+            new byte[PayloadCryptoKeyring.KEY_SIZE_BYTES]);
 
         ring.Dispose();
 

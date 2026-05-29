@@ -65,7 +65,7 @@ When a new dev tool / script is needed:
 
 ## `ts-codegen/`
 
-Per-topic `tsx` emitter scripts that read JSON specs from `contracts/` and emit `*.g.ts` catalogs into the consuming `@d2/*` package's `src/` directory. Sibling to the .NET Roslyn source generators (`server/shared/dotnet/*-source-gen/`) — both consume the same spec files so cross-language drift is structural, not aspirational.
+Per-topic `tsx` emitter scripts that read JSON specs from `contracts/` and emit `*.g.ts` catalogs into the consuming `@d2/*` package's `src/` directory. Sibling to the .NET Roslyn source generators (`server/shared/dotnet/<cluster>/<name>/`) — both consume the same spec files so cross-language drift is structural, not aspirational.
 
 ```bash
 pnpm codegen                       # runs every emitter via the orchestrator

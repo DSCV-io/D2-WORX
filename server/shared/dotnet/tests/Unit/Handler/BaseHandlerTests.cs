@@ -20,8 +20,8 @@ using D2.Shared.Handler.Abstractions;
 using D2.Shared.Result;
 using Xunit;
 
-// Telemetry tests subscribe to the STATIC HandlerTelemetry.Meter +
-// ActivitySource — concurrent test execution would race measurements
+// Telemetry tests subscribe to the STATIC HandlerTelemetry.SR_Meter +
+// SR_ActivitySource — concurrent test execution would race measurements
 // across tests. Serialize within this collection so every metric / span
 // captured by a TestMetricCollector / TestActivityCollector is unambiguously
 // from THIS test, not bleed-over from a parallel one.

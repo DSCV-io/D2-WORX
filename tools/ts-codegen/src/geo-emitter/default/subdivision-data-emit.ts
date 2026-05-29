@@ -137,10 +137,12 @@ export function emitSubdivisionData(context: GeoSpecContext): {
       `officialName: "${escapeStringLiteral(entry.officialName ?? "")}",`,
     );
     sb.appendLine(
-      `endonymDisplayName: "${escapeStringLiteral(entry.endonymDisplayName ?? entry.displayName ?? "")}",`,
+      `endonymDisplayName: "` +
+        `${escapeStringLiteral(entry.endonymDisplayName ?? entry.displayName ?? "")}",`,
     );
     sb.appendLine(
-      `endonymOfficialName: "${escapeStringLiteral(entry.endonymDisplayName ?? entry.officialName ?? "")}",`,
+      `endonymOfficialName: "` +
+        `${escapeStringLiteral(entry.endonymDisplayName ?? entry.officialName ?? "")}",`,
     );
     sb.appendLine(
       `countryIso31661Alpha2Code: CountryCode.${entry.countryISO31661Alpha2Code} as CountryCode,`,
@@ -150,7 +152,8 @@ export function emitSubdivisionData(context: GeoSpecContext): {
       validSubdivisionCodes.has(entry.parentISO31662Code)
     ) {
       sb.appendLine(
-        `parentSubdivisionIso31662Code: "${escapeStringLiteral(entry.parentISO31662Code)}" as SubdivisionCode,`,
+        `parentSubdivisionIso31662Code: "${escapeStringLiteral(entry.parentISO31662Code)}"` +
+          ` as SubdivisionCode,`,
       );
     }
     sb.appendLine(`type: "${escapeStringLiteral(entry.type ?? "")}",`);
@@ -198,7 +201,8 @@ export function emitSubdivisionData(context: GeoSpecContext): {
     sb.increaseIndent();
     for (const entry of grouped.get(country)!) {
       sb.appendLine(
-        `${safeKey(entry.shortCode)}: "${escapeStringLiteral(entry.iso31662Code)}" as SubdivisionCode,`,
+        `${safeKey(entry.shortCode)}: "${escapeStringLiteral(entry.iso31662Code)}"` +
+          ` as SubdivisionCode,`,
       );
     }
     sb.decreaseIndent();

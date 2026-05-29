@@ -284,7 +284,8 @@ public sealed class MutableRequestContextFromJwtPayloadNoValidationTests
         // FromJwtPayloadNoValidation does NOT catch — auth middleware will.
         using var doc = JsonDocument.Parse("""{"sub":"x","act":"not-an-object"}""");
 
-        // ReSharper disable once AccessToDisposedClosure — lambda invoked by Throw() before doc disposes
+        // ReSharper disable once AccessToDisposedClosure
+        // — lambda invoked by Throw() before doc disposes
         var act = () => MutableRequestContext.FromJwtPayloadNoValidation(doc.RootElement);
 
         act.Should().Throw<MalformedActorChainException>();
@@ -295,7 +296,8 @@ public sealed class MutableRequestContextFromJwtPayloadNoValidationTests
     {
         // Adversarial: bogus org_type / org_role string must not throw —
         // factory sets the property to null and moves on.
-        using var doc = JsonDocument.Parse("""{"sub":"x","d2_org_type":"Bogus","d2_org_role":"Wizard"}""");
+        using var doc = JsonDocument.Parse(
+            """{"sub":"x","d2_org_type":"Bogus","d2_org_role":"Wizard"}""");
 
         var ctx = MutableRequestContext.FromJwtPayloadNoValidation(doc.RootElement);
 

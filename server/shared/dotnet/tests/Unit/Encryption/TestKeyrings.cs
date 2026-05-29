@@ -16,7 +16,8 @@ using D2.Shared.Encryption;
 /// </summary>
 internal static class TestKeyrings
 {
-    internal static byte[] RandomKey() => RandomNumberGenerator.GetBytes(PayloadCryptoKeyring.KEY_SIZE_BYTES);
+    internal static byte[] RandomKey()
+        => RandomNumberGenerator.GetBytes(PayloadCryptoKeyring.KEY_SIZE_BYTES);
 
     internal static ReadOnlyMemory<byte> AadFor(string label) => Encoding.UTF8.GetBytes(label);
 

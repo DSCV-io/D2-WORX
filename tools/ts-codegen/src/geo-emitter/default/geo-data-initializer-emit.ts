@@ -27,7 +27,8 @@ import { defaultGenPath } from "./paths.js";
  *      - CountryLookup.wireCountryNav          (consumes Subdivision/Currency/Locale/Language)
  *      - LocaleLookup.wireLocaleNav            (depends on Country + Language first pass)
  *      - CurrencyLookup.wireCurrencyNav        (depends on Country.currencies)
- *      - LanguageLookup.wireLanguageNav        (depends on Country.primaryLanguage + Locale.language)
+ *      - LanguageLookup.wireLanguageNav        (depends on Country.primaryLanguage +
+ *        Locale.language)
  *      - TimezoneLookup.wireTimezoneNav        (depends on Country)
  *      - GeopoliticalEntityLookup.wireGeopoliticalEntityNav  (depends on Country)
  *

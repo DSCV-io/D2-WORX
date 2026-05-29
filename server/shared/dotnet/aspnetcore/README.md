@@ -95,7 +95,7 @@ Pipeline placement: install AFTER `app.UseRouting()` (which resolves the matched
 
 Registers ASP.NET Core's `IProblemDetailsService` with the D² customizer applied as the `CustomizeProblemDetails` callback. The customizer is FULL D2Result-aware (path B of the RFC 7807 emit stack — sibling to `D2.Shared.Auth.Http`'s path A `D2ProblemDetailsExtensions.ToProblemDetails`).
 
-When the request pipeline has stashed a `D2Result` on `HttpContext.Items[D2ProblemDetailsContextItems.D2_RESULT]` (via the `SetD2Result` typed extension), the customizer populates the RFC 7807 Shape A body from spec-driven constants in `D2ProblemDetailsKeys` ([`problem-details-abstractions/`](../problem-details-abstractions/README.md)):
+When the request pipeline has stashed a `D2Result` on `HttpContext.Items[D2ProblemDetailsContextItems.D2_RESULT]` (via the `SetD2Result` typed extension), the customizer populates the RFC 7807 Shape A body from spec-driven constants in `D2ProblemDetailsKeys` ([`problem-details/abstractions/`](../problem-details/abstractions/README.md)):
 
 1. `Type` ← `TYPE_URI_PREFIX + KebabCase(D2Result.ErrorCode)` (fallback `"unhandled-exception"` on empty error code).
 2. `Title` ← `TitleFor(D2Result.StatusCode)`.
@@ -153,7 +153,7 @@ Async form captures both synchronously-faulted (host build / hosted-service `Sta
 | `MAX_CORRELATION_ID_LENGTH`            | `128`                                                                                          |
 | `INFRASTRUCTURE_HTTP_CONTEXT_ITEM_KEY` | `D2.IsInfrastructure`                                                                          |
 
-Note: wire-header values consumed by this lib live in the spec-driven [`HttpHeaders`](../headers-http/README.md) catalog — `HttpHeaders.CORRELATION_ID` (`"X-Correlation-Id"`) and `HttpHeaders.IDEMPOTENCY_KEY` (`"Idempotency-Key"`) are referenced directly. One wire value for one concept across the platform; no intra-.NET drift between the CORS allowlist / ProblemDetails customizer and the headers-http catalog.
+Note: wire-header values consumed by this lib live in the spec-driven [`HttpHeaders`](../headers/http/README.md) catalog — `HttpHeaders.CORRELATION_ID` (`"X-Correlation-Id"`) and `HttpHeaders.IDEMPOTENCY_KEY` (`"Idempotency-Key"`) are referenced directly. One wire value for one concept across the platform; no intra-.NET drift between the CORS allowlist / ProblemDetails customizer and the headers/http catalog.
 
 ### Constants — `D2ProblemDetailsContextItems`
 

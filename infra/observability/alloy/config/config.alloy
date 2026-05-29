@@ -33,7 +33,7 @@ prometheus.scrape "infrastructure" {
     // Application services (running in Docker Compose).
     // All v2 services are .NET — expose /metrics for Prometheus scrape.
     // SvelteKit BFF (d2-web) uses Pino → stdout, no /metrics endpoint.
-    // TODO: add scrape blocks for d2-edge / d2-files / d2-courier / d2-notifications / d2-audit as services come online per V2.md §4 phases.
+    // Add scrape blocks for d2-edge / d2-files / d2-courier / d2-notifications / d2-audit as each service comes online.
     {
       __address__      = env("EDGE_METRICS_ENDPOINT"),
       job              = "edge",

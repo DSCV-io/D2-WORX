@@ -38,7 +38,7 @@ import { appendEslintDisable, appendJsDoc } from "./emit-helpers.js";
  */
 
 const GEN_DIR = (...parts: string[]): string =>
-  tsPackagePath("geo-abstractions", "src", "generated", ...parts);
+  tsPackagePath("geo", "abstractions", "src", "generated", ...parts);
 
 const SPEC_REFS: Readonly<Record<string, string>> = {
   countries: "contracts/geo/countries.spec.json",

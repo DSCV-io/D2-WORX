@@ -29,10 +29,10 @@ public sealed class ContextEmitterDogfoodTests
     {
         var sourceDir = LocateSourceGenDirectory();
         sourceDir.Should().NotBeNull(
-            "the context-source-gen directory should be discoverable from the test bin path");
+            "the context/source-gen directory should be discoverable from the test bin path");
 
         var sources = Directory.GetFiles(sourceDir, "*.cs", SearchOption.AllDirectories);
-        sources.Should().NotBeEmpty("context-source-gen has source files");
+        sources.Should().NotBeEmpty("context/source-gen has source files");
 
         var offenders = sources
             .Select(path => new
@@ -47,7 +47,7 @@ public sealed class ContextEmitterDogfoodTests
             .ToArray();
 
         offenders.Should().BeEmpty(
-            "context-source-gen production code must dogfood the shared "
+            "context/source-gen production code must dogfood the shared "
             + "StringExt.Falsey / StringExt.Truthy polyfill from source-gen-shared/. "
             + "Direct calls to string.IsNullOrEmpty / string.IsNullOrWhiteSpace are "
             + "forbidden — the polyfill exists, so use it. Offending files: "
@@ -57,12 +57,12 @@ public sealed class ContextEmitterDogfoodTests
     private static string? LocateSourceGenDirectory()
     {
         // tests bin path: server/shared/dotnet/tests/bin/Debug/net10.0/D2.Shared.Tests.dll
-        // walk up to repo root, then back down to context-source-gen.
+        // walk up to repo root, then back down to context/source-gen.
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
             var candidate = Path.Combine(
-                dir.FullName, "server", "shared", "dotnet", "context-source-gen");
+                dir.FullName, "server", "shared", "dotnet", "context", "source-gen");
             if (Directory.Exists(candidate))
                 return candidate;
 

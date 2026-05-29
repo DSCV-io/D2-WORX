@@ -98,7 +98,7 @@ Duplicate submissions must produce duplicate-safe outcomes.
 
 - Run the same operation twice with the same input + same `Idempotency-Key` → second call returns the cached response (per `Idempotency.Default`)
 - Run the same content-addressable creation twice (e.g., `CreateLocation` with same address) → second call returns the existing entity, no duplicate row
-- Run a fanout consumer with the same payload twice → second call is a no-op (the at-least-once fanout contract requires consumer idempotency; see [`server/shared/dotnet/messaging-rabbitmq/README.md`](../server/shared/dotnet/messaging-rabbitmq/README.md))
+- Run a fanout consumer with the same payload twice → second call is a no-op (the at-least-once fanout contract requires consumer idempotency; see [`server/shared/dotnet/messaging/rabbitmq/README.md`](../server/shared/dotnet/messaging/rabbitmq/README.md))
 
 ### 8. Concurrency
 
@@ -229,7 +229,7 @@ These tiers added wall-clock time without commensurate value at our scale.
 - Race conditions (rotation while N replicas publishing concurrently)
 - Archive decryption (ops CLI fetches retired/compromised kids on demand)
 
-The workflow job at `.github/workflows/test.yml` is commented out — see [PHASE_0_AUTH.md §14a](v2/PHASE_0_AUTH.md#14a-future-phase-3-work--keycustodian-compromise-runbook-scaffolding) for KeyCustodian status.
+The workflow job at `.github/workflows/test.yml` is commented out — see [`docs/v2/PHASE_0_AUTH.md` §14a](v2/PHASE_0_AUTH.md#14a-future-phase-3-work--keycustodian-compromise-runbook-scaffolding) for KeyCustodian status (Canonical: not yet shipped; design at the cited path. Will migrate to the KeyCustodian lib README when KeyCustodian ships).
 
 ---
 

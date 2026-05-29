@@ -18,8 +18,8 @@ Copyright (c) DCSV. All rights reserved.
       domain layers can chain into smart-constructor factories. Both deps are
       zero-runtime-dep / domain-safe — Utilities stays so too.
     -->
-    <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
-    <ProjectReference Include="..\i18n-abstractions\D2.Shared.I18n.Abstractions.csproj" />
+    <ProjectReference Include="..\result\core\D2.Shared.Result.csproj" />
+    <ProjectReference Include="..\i18n\abstractions\D2.Shared.I18n.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

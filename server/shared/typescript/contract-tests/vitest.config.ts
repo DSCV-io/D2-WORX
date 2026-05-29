@@ -17,7 +17,7 @@ export default defineConfig({
       // tests run independently of the symlink state. The alias is a no-op
       // when the symlink IS present — Vitest prefers the explicit alias.
       "@d2/geo-abstractions": fileURLToPath(
-        new URL("../geo-abstractions/dist/index.js", import.meta.url),
+        new URL("../geo/abstractions/dist/index.js", import.meta.url),
       ),
       // Records-meta sub-export of @d2/geo-default — same rationale as
       // the @d2/geo-abstractions alias above (package.json sub-export
@@ -25,7 +25,7 @@ export default defineConfig({
       // alias gives Vitest a deterministic path).
       "@d2/geo-default/_records-meta.g": fileURLToPath(
         new URL(
-          "../geo-default/dist/generated/_records-meta.g.js",
+          "../geo/default/dist/generated/_records-meta.g.js",
           import.meta.url,
         ),
       ),

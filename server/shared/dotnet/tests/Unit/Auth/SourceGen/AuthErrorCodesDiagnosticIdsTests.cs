@@ -49,7 +49,8 @@ public sealed class AuthErrorCodesDiagnosticIdsTests
     public void IdConstants_HaveStableValues(string expectedId, string constantName)
     {
         var actual = typeof(DiagnosticIds)
-            .GetField(constantName, BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic)
+            .GetField(
+                constantName, BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic)
             !.GetRawConstantValue();
 
         actual.Should().Be(expectedId);

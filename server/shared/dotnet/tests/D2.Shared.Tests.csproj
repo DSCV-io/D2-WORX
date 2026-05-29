@@ -101,64 +101,64 @@ Copyright (c) DCSV. All rights reserved.
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\i18n-abstractions\D2.Shared.I18n.Abstractions.csproj" />
-    <ProjectReference Include="..\i18n\D2.Shared.I18n.csproj" />
+    <ProjectReference Include="..\i18n\abstractions\D2.Shared.I18n.Abstractions.csproj" />
+    <ProjectReference Include="..\i18n\core\D2.Shared.I18n.csproj" />
     <!--
       SrcGens (i18n / context / scopes) are referenced as NORMAL libraries
       (not as Analyzers) so the loader / emitter / EmitDiagnostic logic can
       be unit-tested directly. The Tests project does NOT run the generators
       (no AdditionalFiles for messages JSON / spec JSON wired here).
     -->
-    <ProjectReference Include="..\i18n-source-gen\D2.Shared.I18n.SourceGen.csproj" />
-    <ProjectReference Include="..\auth-scopes-source-gen\D2.Shared.Auth.Scopes.SourceGen.csproj" />
-    <ProjectReference Include="..\auth-audiences-source-gen\D2.Shared.Auth.Audiences.SourceGen.csproj" />
-    <ProjectReference Include="..\auth-error-codes-source-gen\D2.Shared.Auth.ErrorCodes.SourceGen.csproj" />
-    <ProjectReference Include="..\error-codes-source-gen\D2.Shared.Result.ErrorCodes.SourceGen.csproj" />
-    <ProjectReference Include="..\d2result-envelope-source-gen\D2.Shared.Result.Envelope.SourceGen.csproj" />
-    <ProjectReference Include="..\problem-details-source-gen\D2.Shared.ProblemDetails.SourceGen.csproj" />
-    <ProjectReference Include="..\problem-details-abstractions\D2.Shared.ProblemDetails.Abstractions.csproj" />
-    <ProjectReference Include="..\wire-shapes-source-gen\D2.Shared.WireShapes.SourceGen.csproj" />
-    <ProjectReference Include="..\telemetry-tags-source-gen\D2.Shared.Telemetry.Tags.SourceGen.csproj" Aliases="global,TelemetryTagsSourceGen" />
-    <ProjectReference Include="..\context-source-gen\D2.Shared.Context.SourceGen.csproj" />
-    <ProjectReference Include="..\headers-source-gen\D2.Shared.Headers.SourceGen.csproj" Aliases="global,HeadersSourceGen" />
-    <ProjectReference Include="..\in-process-keys-source-gen\D2.Shared.InProcessKeys.SourceGen.csproj" Aliases="global,InProcessKeysSourceGen" />
-    <ProjectReference Include="..\jwt-claims-source-gen\D2.Shared.Auth.JwtClaims.SourceGen.csproj" />
-    <ProjectReference Include="..\grpc-trailers-source-gen\D2.Shared.Grpc.Trailers.SourceGen.csproj" />
-    <ProjectReference Include="..\otel-messaging-tags-source-gen\D2.Shared.OtelMessagingTags.SourceGen.csproj" />
-    <ProjectReference Include="..\encryption-domains-source-gen\D2.Shared.EncryptionDomains.SourceGen.csproj" />
-    <ProjectReference Include="..\encryption-frame-source-gen\D2.Shared.EncryptionFrame.SourceGen.csproj" />
-    <ProjectReference Include="..\dlq-failure-metadata-source-gen\D2.Shared.Messaging.DlqMetadata.SourceGen.csproj" />
+    <ProjectReference Include="..\i18n\source-gen\D2.Shared.I18n.SourceGen.csproj" />
+    <ProjectReference Include="..\auth\scopes-source-gen\D2.Shared.Auth.Scopes.SourceGen.csproj" />
+    <ProjectReference Include="..\auth\audiences-source-gen\D2.Shared.Auth.Audiences.SourceGen.csproj" />
+    <ProjectReference Include="..\auth\error-codes-source-gen\D2.Shared.Auth.ErrorCodes.SourceGen.csproj" />
+    <ProjectReference Include="..\source-gen-shared\error-codes-source-gen\D2.Shared.Result.ErrorCodes.SourceGen.csproj" />
+    <ProjectReference Include="..\result\envelope-source-gen\D2.Shared.Result.Envelope.SourceGen.csproj" />
+    <ProjectReference Include="..\problem-details\source-gen\D2.Shared.ProblemDetails.SourceGen.csproj" />
+    <ProjectReference Include="..\problem-details\abstractions\D2.Shared.ProblemDetails.Abstractions.csproj" />
+    <ProjectReference Include="..\source-gen-shared\wire-shapes-source-gen\D2.Shared.WireShapes.SourceGen.csproj" />
+    <ProjectReference Include="..\telemetry\tags-source-gen\D2.Shared.Telemetry.Tags.SourceGen.csproj" Aliases="global,TelemetryTagsSourceGen" />
+    <ProjectReference Include="..\context\source-gen\D2.Shared.Context.SourceGen.csproj" />
+    <ProjectReference Include="..\headers\source-gen\D2.Shared.Headers.SourceGen.csproj" Aliases="global,HeadersSourceGen" />
+    <ProjectReference Include="..\encryption\in-process-keys-source-gen\D2.Shared.InProcessKeys.SourceGen.csproj" Aliases="global,InProcessKeysSourceGen" />
+    <ProjectReference Include="..\auth\jwt-claims-source-gen\D2.Shared.Auth.JwtClaims.SourceGen.csproj" />
+    <ProjectReference Include="..\result\grpc-trailers-source-gen\D2.Shared.Grpc.Trailers.SourceGen.csproj" />
+    <ProjectReference Include="..\messaging\otel-messaging-tags-source-gen\D2.Shared.OtelMessagingTags.SourceGen.csproj" />
+    <ProjectReference Include="..\encryption\domains-source-gen\D2.Shared.EncryptionDomains.SourceGen.csproj" />
+    <ProjectReference Include="..\encryption\frame-source-gen\D2.Shared.EncryptionFrame.SourceGen.csproj" />
+    <ProjectReference Include="..\messaging\dlq-failure-metadata-source-gen\D2.Shared.Messaging.DlqMetadata.SourceGen.csproj" />
     <ProjectReference Include="..\resilience\D2.Shared.Resilience.csproj" />
-    <ProjectReference Include="..\result\D2.Shared.Result.csproj" />
+    <ProjectReference Include="..\result\core\D2.Shared.Result.csproj" />
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
     <ProjectReference Include="..\aspnetcore\D2.Shared.AspNetCore.csproj" />
-    <ProjectReference Include="..\auth\D2.Shared.Auth.csproj" />
-    <ProjectReference Include="..\auth-abstractions\D2.Shared.Auth.Abstractions.csproj" />
-    <ProjectReference Include="..\auth-http\D2.Shared.Auth.Http.csproj" />
-    <ProjectReference Include="..\auth-grpc\D2.Shared.Auth.Grpc.csproj" />
-    <ProjectReference Include="..\auth-context-abstractions\D2.Shared.AuthContext.Abstractions.csproj" />
-    <ProjectReference Include="..\auth-outbound\D2.Shared.Auth.Outbound.csproj" />
-    <ProjectReference Include="..\context-abstractions\D2.Shared.Context.Abstractions.csproj" />
-    <ProjectReference Include="..\handler-abstractions\D2.Shared.Handler.Abstractions.csproj" />
-    <ProjectReference Include="..\handler\D2.Shared.Handler.csproj" />
-    <ProjectReference Include="..\handler-repo-abstractions\D2.Shared.Handler.Repo.Abstractions.csproj" />
-    <ProjectReference Include="..\handler-repo\D2.Shared.Handler.Repo.csproj" />
-    <ProjectReference Include="..\handler-repo-postgres\D2.Shared.Handler.Repo.Postgres.csproj" />
-    <ProjectReference Include="..\encryption\D2.Shared.Encryption.csproj" />
-    <ProjectReference Include="..\caching-abstractions\D2.Shared.Caching.Abstractions.csproj" />
-    <ProjectReference Include="..\caching-local-default\D2.Shared.Caching.Local.Default.csproj" />
-    <ProjectReference Include="..\caching-distributed-redis\D2.Shared.Caching.Distributed.Redis.csproj" />
-    <ProjectReference Include="..\caching-tiered\D2.Shared.Caching.Tiered.csproj" />
+    <ProjectReference Include="..\auth\core\D2.Shared.Auth.csproj" />
+    <ProjectReference Include="..\auth\abstractions\D2.Shared.Auth.Abstractions.csproj" />
+    <ProjectReference Include="..\auth\http\D2.Shared.Auth.Http.csproj" />
+    <ProjectReference Include="..\auth\grpc\D2.Shared.Auth.Grpc.csproj" />
+    <ProjectReference Include="..\auth\context-abstractions\D2.Shared.AuthContext.Abstractions.csproj" />
+    <ProjectReference Include="..\auth\outbound\D2.Shared.Auth.Outbound.csproj" />
+    <ProjectReference Include="..\context\abstractions\D2.Shared.Context.Abstractions.csproj" />
+    <ProjectReference Include="..\handler\abstractions\D2.Shared.Handler.Abstractions.csproj" />
+    <ProjectReference Include="..\handler\core\D2.Shared.Handler.csproj" />
+    <ProjectReference Include="..\handler\repo-abstractions\D2.Shared.Handler.Repo.Abstractions.csproj" />
+    <ProjectReference Include="..\handler\repo\D2.Shared.Handler.Repo.csproj" />
+    <ProjectReference Include="..\handler\repo-postgres\D2.Shared.Handler.Repo.Postgres.csproj" />
+    <ProjectReference Include="..\encryption\core\D2.Shared.Encryption.csproj" />
+    <ProjectReference Include="..\caching\abstractions\D2.Shared.Caching.Abstractions.csproj" />
+    <ProjectReference Include="..\caching\local-default\D2.Shared.Caching.Local.Default.csproj" />
+    <ProjectReference Include="..\caching\distributed-redis\D2.Shared.Caching.Distributed.Redis.csproj" />
+    <ProjectReference Include="..\caching\tiered\D2.Shared.Caching.Tiered.csproj" />
     <ProjectReference Include="..\logging\D2.Shared.Logging.csproj" />
-    <ProjectReference Include="..\telemetry\D2.Shared.Telemetry.csproj" />
+    <ProjectReference Include="..\telemetry\core\D2.Shared.Telemetry.csproj" />
     <ProjectReference Include="..\time\D2.Shared.Time.csproj" />
     <ProjectReference Include="..\service-defaults\D2.Shared.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\messaging-abstractions\D2.Shared.Messaging.Abstractions.csproj" />
-    <ProjectReference Include="..\messaging-rabbitmq\D2.Shared.Messaging.RabbitMq.csproj" />
-    <ProjectReference Include="..\headers-common\D2.Shared.Headers.Common.csproj" />
-    <ProjectReference Include="..\headers-http\D2.Shared.Headers.Http.csproj" />
-    <ProjectReference Include="..\headers-amqp\D2.Shared.Headers.Amqp.csproj" />
-    <ProjectReference Include="..\headers-grpc\D2.Shared.Headers.Grpc.csproj" />
+    <ProjectReference Include="..\messaging\abstractions\D2.Shared.Messaging.Abstractions.csproj" />
+    <ProjectReference Include="..\messaging\rabbitmq\D2.Shared.Messaging.RabbitMq.csproj" />
+    <ProjectReference Include="..\headers\common\D2.Shared.Headers.Common.csproj" />
+    <ProjectReference Include="..\headers\http\D2.Shared.Headers.Http.csproj" />
+    <ProjectReference Include="..\headers\amqp\D2.Shared.Headers.Amqp.csproj" />
+    <ProjectReference Include="..\headers\grpc\D2.Shared.Headers.Grpc.csproj" />
     <!--
       D2.Shared.Geo.Abstractions — the contract-fixtures parity emitters
       (GeoEnumsFixtureEmitter / GeoWrapperStructsFixtureEmitter /
@@ -166,7 +166,7 @@ Copyright (c) DCSV. All rights reserved.
       wrapper structs + GeoCatalog constants to write the canonical JSON
       fixtures the TS-side parity tests load.
     -->
-    <ProjectReference Include="..\geo-abstractions\D2.Shared.Geo.Abstractions.csproj" />
+    <ProjectReference Include="..\geo\abstractions\D2.Shared.Geo.Abstractions.csproj" />
     <!--
       D2.Shared.Geo.Default — catalog data + DefaultGeoNameResolver +
       Default-layer record-returning IRequestContext extensions. Tests
@@ -176,7 +176,7 @@ Copyright (c) DCSV. All rights reserved.
       reachable from this project via the InternalsVisibleTo declaration
       on D2.Shared.Geo.Default.
     -->
-    <ProjectReference Include="..\geo-default\D2.Shared.Geo.Default.csproj" />
+    <ProjectReference Include="..\geo\default\D2.Shared.Geo.Default.csproj" />
     <!--
       D2.Shared.Location — Coordinates, StreetAddress, AdminLocation value objects +
       hash composer + postal-code validator. Tests exercise all three VO
@@ -194,7 +194,7 @@ Copyright (c) DCSV. All rights reserved.
       Build-only — analyzer/build assets do NOT propagate to consumers of
       this csproj (consistent with the other source-gen project references).
     -->
-    <ProjectReference Include="..\geo-source-gen\D2.Shared.Geo.SourceGen.csproj" />
+    <ProjectReference Include="..\geo\source-gen\D2.Shared.Geo.SourceGen.csproj" />
   </ItemGroup>
 
   <!--

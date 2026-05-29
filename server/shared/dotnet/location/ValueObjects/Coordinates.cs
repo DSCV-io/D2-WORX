@@ -38,7 +38,10 @@ using D2.Shared.Utilities.Extensions;
 /// </remarks>
 public sealed record Coordinates
 {
-    /// <summary>Gets latitude in decimal degrees, normalized to F6 (~10 cm precision, matches geohash-10 cell-center).</summary>
+    /// <summary>
+    /// Gets latitude in decimal degrees, normalized to F6
+    /// (~10 cm precision, matches geohash-10 cell-center).
+    /// </summary>
     public required double Latitude { get; init; }
 
     /// <summary>Gets longitude in decimal degrees, normalized to F6.</summary>
@@ -50,10 +53,14 @@ public sealed record Coordinates
     /// </summary>
     public required string Geohash { get; init; }
 
-    /// <summary>Gets OLC plus-code, 12 characters (8 pair digits + '+' + 3 grid digits), ~1m precision.</summary>
+    /// <summary>
+    /// Gets OLC plus-code, 12 characters (8 pair digits + '+' + 3 grid digits), ~1m precision.
+    /// </summary>
     public required string PlusCode { get; init; }
 
-    /// <summary>Gets optional accuracy metadata in meters; NOT included in <see cref="HashId"/>.</summary>
+    /// <summary>
+    /// Gets optional accuracy metadata in meters; NOT included in <see cref="HashId"/>.
+    /// </summary>
     public double? AccuracyMeters { get; init; }
 
     /// <summary>
@@ -67,7 +74,9 @@ public sealed record Coordinates
     /// </summary>
     /// <param name="latitude">Latitude (must be finite, in [−90, +90]).</param>
     /// <param name="longitude">Longitude (must be finite, in [−180, +180]).</param>
-    /// <param name="accuracyMeters">Optional accuracy metadata (must be finite and non-negative when supplied).</param>
+    /// <param name="accuracyMeters">
+    /// Optional accuracy metadata (must be finite and non-negative when supplied).
+    /// </param>
     /// <returns>
     /// <c>Ok</c> on success;
     /// <see cref="D2Result{TData}.ValidationFailed"/> on range / finite violations.

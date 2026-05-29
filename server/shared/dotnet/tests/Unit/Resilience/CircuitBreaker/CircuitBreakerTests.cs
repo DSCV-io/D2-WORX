@@ -467,7 +467,7 @@ public sealed class CircuitBreakerTests
         try
         {
             // ReSharper disable AccessToDisposedClosure -- await Task.WhenAll
-            // synchronises all closures before the finally Dispose, which R#
+            // synchronizes all closures before the finally Dispose, which R#
             // can't prove statically.
             await Task.WhenAll(Enumerable.Range(0, concurrent_threads)
                 .Select(i => Task.Run(async () =>

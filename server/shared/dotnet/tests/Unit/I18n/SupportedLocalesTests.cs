@@ -15,7 +15,7 @@ using Xunit;
 public sealed class SupportedLocalesTests
 {
     // ----------------------------------------------------------------------
-    // ToBcp47 — pure normaliser
+    // ToBcp47 — pure normalizer
     // ----------------------------------------------------------------------
 
     [Theory]
@@ -27,7 +27,7 @@ public sealed class SupportedLocalesTests
     [InlineData("fr-ca", "fr-CA")]
     [InlineData("en", "en")]
     [InlineData("EN", "en")]
-    public void ToBcp47_NormalisesToCanonicalCasing(string input, string expected)
+    public void ToBcp47_NormalizesToCanonicalCasing(string input, string expected)
     {
         SupportedLocales.ToBcp47(input).Should().Be(expected);
     }
@@ -94,7 +94,7 @@ public sealed class SupportedLocalesTests
     }
 
     [Fact]
-    public void Ctor_DefaultLocaleHasMixedCase_NormalisedToCanonical()
+    public void Ctor_DefaultLocaleHasMixedCase_NormalizedToCanonical()
     {
         var sl = new SupportedLocales(ConfigWith(("PUBLIC_DEFAULT_LOCALE", "EN-us")));
 
@@ -133,7 +133,7 @@ public sealed class SupportedLocalesTests
     }
 
     [Fact]
-    public void Ctor_EnabledLocalesMixedCase_AllNormalised()
+    public void Ctor_EnabledLocalesMixedCase_AllNormalized()
     {
         var sl = new SupportedLocales(ConfigWith(
             ("PUBLIC_ENABLED_LOCALES:0", "EN-us"),
@@ -155,7 +155,7 @@ public sealed class SupportedLocalesTests
     }
 
     [Fact]
-    public void Ctor_DuplicateLocalesAfterNormalisation_KeepsBoth()
+    public void Ctor_DuplicateLocalesAfterNormalization_KeepsBoth()
     {
         // Pin behavior: two entries that normalize to the same canonical
         // string are NOT deduped at config time. Callers / ops are expected
@@ -211,7 +211,7 @@ public sealed class SupportedLocalesTests
     }
 
     [Fact]
-    public void IsValid_CaseInsensitive_NormalisesBeforeChecking()
+    public void IsValid_CaseInsensitive_NormalizesBeforeChecking()
     {
         var sl = new SupportedLocales(ConfigWith(("PUBLIC_ENABLED_LOCALES:0", "en-US")));
 
@@ -265,7 +265,7 @@ public sealed class SupportedLocalesTests
     }
 
     [Fact]
-    public void Resolve_KnownButMixedCase_NormalisedAndReturned()
+    public void Resolve_KnownButMixedCase_NormalizedAndReturned()
     {
         var sl = new SupportedLocales(ConfigWith(
             ("PUBLIC_ENABLED_LOCALES:0", "fr-FR")));

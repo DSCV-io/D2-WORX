@@ -65,7 +65,7 @@ export async function uploadFile(
   const token = await getToken();
   if (!token) throw new Error(m.common_errors_NOT_AUTHENTICATED());
 
-  // Step 1: Request presigned URL from Files API
+  // 1. Request presigned URL from Files API
   const baseUrl = getFilesBaseUrl();
   const response = await fetch(`${baseUrl}/api/v1/${contextKey}`, {
     method: "POST",
@@ -92,7 +92,7 @@ export async function uploadFile(
     throw new Error(m.files_errors_UPLOAD_INVALID_RESPONSE());
   }
 
-  // Step 2: PUT blob directly to MinIO via presigned URL
+  // 2. PUT blob directly to MinIO via presigned URL
   const putResponse = await fetch(data.presignedUrl, {
     method: "PUT",
     headers: { "Content-Type": blob.type || "image/webp" },

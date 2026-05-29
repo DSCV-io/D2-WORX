@@ -24,7 +24,9 @@ internal sealed class StubBackplane : ICacheInvalidationBackplane
     /// <summary>Gets the count of every key the backplane has been asked to publish.</summary>
     public int PublishCount { get; private set; }
 
-    /// <summary>Gets a value indicating whether <see cref="DisposeAsync"/> has been called.</summary>
+    /// <summary>
+    /// Gets a value indicating whether <see cref="DisposeAsync"/> has been called.
+    /// </summary>
     public bool IsDisposed => _disposed;
 
     /// <inheritdoc/>

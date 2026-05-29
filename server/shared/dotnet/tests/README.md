@@ -18,28 +18,28 @@ Per-service tests (Edge, Audit, Courier, Notifications, Files) live separately a
 server/shared/dotnet/tests/
 ├─ D2.Shared.Tests.csproj
 ├─ Unit/                                                # in-process unit + behavior tests
-│  ├─ Auth/                                             # → auth-abstractions enums + records + JwtClaimTypes
-│  │  └─ SourceGen/                                     # → auth-scopes-source-gen + auth-audiences-source-gen
-│  ├─ AuthContext/                                      # → auth-context-abstractions
-│  ├─ AuthOutbound/                                     # → auth-outbound (ServiceIdentity / TokenExchange / Grpc / Telemetry)
+│  ├─ Auth/                                             # → auth/abstractions enums + records + JwtClaimTypes
+│  │  └─ SourceGen/                                     # → auth/scopes-source-gen + auth/audiences-source-gen
+│  ├─ AuthContext/                                      # → auth/context-abstractions
+│  ├─ AuthOutbound/                                     # → auth/outbound (ServiceIdentity / TokenExchange / Grpc / Telemetry)
 │  │  └─ Fixtures/                                      # stubs + jwt builder + counter listeners
-│  ├─ Caching/                                          # → caching-abstractions + caching-local-default
+│  ├─ Caching/                                          # → caching/abstractions + caching/local-default
 │  │  ├─ Abstractions/                                  # InputFailures + LocalCacheOptions
 │  │  ├─ Distributed/                                   # JsonCacheSerializer
 │  │  └─ Local/                                         # DefaultLocalCache (unit + behavior with real IMemoryCache)
-│  ├─ Context/                                          # → context-abstractions (request-context interfaces + propagation)
-│  │  └─ SourceGen/                                     # → context-source-gen
+│  ├─ Context/                                          # → context/abstractions (request-context interfaces + propagation)
+│  │  └─ SourceGen/                                     # → context/source-gen
 │  ├─ Encryption/                                       # → encryption (PayloadCrypto + keyring + frame)
 │  ├─ Handler/                                          # → handler (BaseHandler + telemetry + DI)
-│  ├─ HandlerRepo/                                      # → handler-repo (BaseRepoHandler)
-│  │  ├─ Abstractions/                                  # → handler-repo-abstractions (D2ResultDb* + DbErrorCodes + IDbExceptionClassifier)
-│  │  └─ Postgres/                                      # → handler-repo-postgres (PgErrorCodes + PostgresDbExceptionClassifier)
-│  ├─ I18n/                                             # → i18n + i18n-abstractions
-│  │  └─ SourceGen/                                     # → i18n-source-gen
-│  ├─ Messaging/                                        # → messaging-abstractions + messaging-rabbitmq
+│  ├─ HandlerRepo/                                      # → handler/repo (BaseRepoHandler)
+│  │  ├─ Abstractions/                                  # → handler/repo-abstractions (D2ResultDb* + DbErrorCodes + IDbExceptionClassifier)
+│  │  └─ Postgres/                                      # → handler/repo-postgres (PgErrorCodes + PostgresDbExceptionClassifier)
+│  ├─ I18n/                                             # → i18n/core + i18n/abstractions
+│  │  └─ SourceGen/                                     # → i18n/source-gen
+│  ├─ Messaging/                                        # → messaging/abstractions + messaging/rabbitmq
 │  │  ├─ Channels/, Connection/, Encryption/, Idempotency/, Publishing/, Subscribing/, Telemetry/, Topology/
-│  │  └─ SourceGen/                                     # → messaging-source-gen
-│  ├─ RequestContext/, RequestContextAbstractions/      # → context-abstractions
+│  │  └─ SourceGen/                                     # → messaging/source-gen
+│  ├─ RequestContext/, RequestContextAbstractions/      # → context/abstractions
 │  ├─ Resilience/                                       # → resilience (CircuitBreaker / Retry / Singleflight / Pipeline)
 │  ├─ Result/                                           # → result (D2Result + factories + monadic + guard + Combine + Unit + ErrorCodes)
 │  └─ Utilities/                                        # → utilities (Falsey/Truthy + TryParseTruthyNull + RedactDataAttribute + D2Env + ConnectionStringHelper)
@@ -53,7 +53,7 @@ server/shared/dotnet/tests/
 
 The tree mostly mirrors the source layout (`Unit/{LibName}/{LibSourceFile}Tests.cs` per lib). Two structural notes:
 
-- `Unit/RequestContext/` and `Unit/RequestContextAbstractions/` cover code that lives under `context-abstractions/`. The two test folders preserve the historical split between request-context entities and request-context abstractions for reviewer navigation; both subtrees compile against the same csproj.
+- `Unit/RequestContext/` and `Unit/RequestContextAbstractions/` cover code that lives under `context/abstractions/`. The two test folders preserve the historical split between request-context entities and request-context abstractions for reviewer navigation; both subtrees compile against the same csproj.
 - `Unit/AuthOutbound/Fixtures/` is the only sub-folder under `Unit/` that explicitly groups fixtures into a `Fixtures/` directory; everywhere else, fixture types live next to the tests that use them. Consistent with the prevailing codebase pattern.
 
 Integration tests use xUnit collection fixtures (`[Collection("Redis")]`, `[Collection("RabbitMq")]`) so the heavyweight container fixtures spin up exactly once per test run.
@@ -70,7 +70,7 @@ Integration tests use xUnit collection fixtures (`[Collection("Redis")]`, `[Coll
 | `AwesomeAssertions`                                | per CPM     | Fluent assertion API (`result.Should().BeOk()`). MIT-licensed fork of FluentAssertions; v8+ of FA went commercial, AwesomeAssertions preserves the Apache 2.0 lineage. |
 | `JetBrains.Annotations`                            | per CPM     | `[MustDisposeResource]`, `[Pure]`, etc. on test fixtures.                                                                                                              |
 | `Testcontainers.Redis` / `Testcontainers.RabbitMq` | per CPM     | Integration test containers (real Redis + real RabbitMQ via Docker). Skipped when Docker isn't reachable.                                                              |
-| `Microsoft.Data.Sqlite`                            | per CPM     | EF / DbException test fakes (e.g. PgExceptionFactory shaping for handler-repo-postgres tests).                                                                         |
+| `Microsoft.Data.Sqlite`                            | per CPM     | EF / DbException test fakes (e.g. PgExceptionFactory shaping for handler/repo-postgres tests).                                                                         |
 | `FakeItEasy`                                       | per CPM     | Lightweight fake / stub framework where hand-rolled stubs would be too verbose.                                                                                        |
 | MTP (Microsoft Testing Platform)                   | SDK-bundled | Modern test runner — `<UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>` in csproj. Replaces VSTest.                                         |
 
@@ -148,7 +148,7 @@ Both success and failure paths exercised.
 
 ### `[LoggerMessage]` PII contract
 
-Every `[LoggerMessage]` partial method whose source-side call sites observe potentially PII-bearing exceptions (broker URIs, connection strings, OAuth tokens, raw user input) is reflection-pinned by `Unit/Messaging/Telemetry/LoggerMessageDelegateContractTests.cs` to forbid `Exception` parameters. The pattern is the standard guard for `docs/dev/rules.md §3.1` across the messaging, caching-redis, caching-tiered, handler, and auth-outbound libs. Sibling libs follow the same rule even where a contract test isn't (yet) in place.
+Every `[LoggerMessage]` partial method whose source-side call sites observe potentially PII-bearing exceptions (broker URIs, connection strings, OAuth tokens, raw user input) is reflection-pinned by `Unit/Messaging/Telemetry/LoggerMessageDelegateContractTests.cs` to forbid `Exception` parameters. The pattern is the standard guard for `docs/dev/rules.md §3.1` across the messaging, caching/distributed-redis, caching/tiered, handler, and auth/outbound libs. Sibling libs follow the same rule even where a contract test isn't (yet) in place.
 
 ---
 

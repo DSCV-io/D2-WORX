@@ -29,7 +29,8 @@ public sealed class AuthTelemetryTagsGeneratedTests
         AuthTelemetryTags.JwtValidations.Outcome.ISSUER_MISMATCH.Should().Be("issuer_mismatch");
         AuthTelemetryTags.JwtValidations.Outcome.AUDIENCE_MISMATCH.Should().Be("audience_mismatch");
         AuthTelemetryTags.JwtValidations.Outcome.CLAIM_MISSING.Should().Be("claim_missing");
-        AuthTelemetryTags.JwtValidations.Outcome.ACT_CHAIN_MALFORMED.Should().Be("act_chain_malformed");
+        AuthTelemetryTags.JwtValidations.Outcome.ACT_CHAIN_MALFORMED
+            .Should().Be("act_chain_malformed");
         AuthTelemetryTags.JwtValidations.Outcome.KID_NOT_FOUND.Should().Be("kid_not_found");
         AuthTelemetryTags.JwtValidations.Outcome.JWKS_UNAVAILABLE.Should().Be("jwks_unavailable");
     }

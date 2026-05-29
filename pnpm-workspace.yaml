@@ -3,8 +3,7 @@
 # -----------------------------------------------------------------------
 
 packages:
-  - "server/shared/typescript/*"
-  - "server/shared/typescript/contract-tests"
+  - "server/shared/typescript/**"
   - "tools/ts-codegen"
   - "tools/geo-data-pipeline"
 

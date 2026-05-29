@@ -200,8 +200,8 @@ public sealed class IdempotencyTests
 
     /// <summary>Store whose <c>HasSeenAsync</c> always returns false (so the
     /// handler runs) but whose <c>MarkSeenAsync</c> always fails with
-    /// ServiceUnavailable — proves the F2 fix routes to DLQ instead of
-    /// silently acking without a written mark.</summary>
+    /// ServiceUnavailable — proves the MarkSeenAsync failure path routes to
+    /// DLQ instead of silently acking without a written mark.</summary>
     private sealed class FailingMarkStore : IMessageIdempotencyStore
     {
         public ValueTask<D2Result<bool>> HasSeenAsync(

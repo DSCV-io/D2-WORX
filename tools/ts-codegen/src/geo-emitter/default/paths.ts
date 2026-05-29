@@ -9,5 +9,5 @@ import { tsPackagePath } from "../../lib/paths.js";
  * the `geo-abstractions` GEN_DIR pattern used by the type emitters next door.
  */
 export function defaultGenPath(...parts: string[]): string {
-  return tsPackagePath("geo-default", "src", "generated", ...parts);
+  return tsPackagePath("geo", "default", "src", "generated", ...parts);
 }
