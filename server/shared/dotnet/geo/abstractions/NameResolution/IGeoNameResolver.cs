@@ -63,8 +63,8 @@ public interface IGeoNameResolver
     /// </summary>
     /// <param name="name">
     /// The free-form country name. May be null / empty / whitespace —
-    /// implementations MUST handle those cases by returning
-    /// <c>D2Result.ValidationFailed</c> (input validation per rules.md §9.4)
+    /// implementations MUST validate input before performing any lookup and
+    /// return <c>D2Result.ValidationFailed</c> for null / empty / whitespace,
     /// or <c>D2Result.NotFound</c> at implementer's discretion; either way
     /// the caller never sees a wrong-Country answer for bad input.
     /// </param>

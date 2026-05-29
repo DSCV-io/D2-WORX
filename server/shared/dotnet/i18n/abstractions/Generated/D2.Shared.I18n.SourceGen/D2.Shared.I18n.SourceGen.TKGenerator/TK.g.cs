@@ -2269,6 +2269,26 @@ public static partial class TK
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage BACK_TO_DESIGN = new("webclient_design_back_to_design");
             /// <summary>
+            /// Translation key <c>webclient_design_card_from_last_month</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage CARD_FROM_LAST_MONTH = new("webclient_design_card_from_last_month");
+            /// <summary>
+            /// Translation key <c>webclient_design_card_message</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage CARD_MESSAGE = new("webclient_design_card_message");
+            /// <summary>
+            /// Translation key <c>webclient_design_card_monthly_revenue</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage CARD_MONTHLY_REVENUE = new("webclient_design_card_monthly_revenue");
+            /// <summary>
+            /// Translation key <c>webclient_design_card_notifications</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage CARD_NOTIFICATIONS = new("webclient_design_card_notifications");
+            /// <summary>
+            /// Translation key <c>webclient_design_card_view_profile</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage CARD_VIEW_PROFILE = new("webclient_design_card_view_profile");
+            /// <summary>
             /// Translation key <c>webclient_design_contact_cache_description</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage CONTACT_CACHE_DESCRIPTION = new("webclient_design_contact_cache_description");
@@ -2284,6 +2304,10 @@ public static partial class TK
             /// Translation key <c>webclient_design_contact_form_heading</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage CONTACT_FORM_HEADING = new("webclient_design_contact_form_heading");
+            /// <summary>
+            /// Translation key <c>webclient_design_contact_form_success</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage CONTACT_FORM_SUCCESS = new("webclient_design_contact_form_success");
             /// <summary>
             /// Translation key <c>webclient_design_contact_form_title</c>.
             /// </summary>
@@ -2316,6 +2340,234 @@ public static partial class TK
             /// Translation key <c>webclient_design_description</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage DESCRIPTION = new("webclient_design_description");
+            /// <summary>
+            /// Translation key <c>webclient_design_export_dialog_copied</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage EXPORT_DIALOG_COPIED = new("webclient_design_export_dialog_copied");
+            /// <summary>
+            /// Translation key <c>webclient_design_export_dialog_copy</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage EXPORT_DIALOG_COPY = new("webclient_design_export_dialog_copy");
+            /// <summary>
+            /// Translation key <c>webclient_design_export_dialog_description_part1</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage EXPORT_DIALOG_DESCRIPTION_PART1 = new("webclient_design_export_dialog_description_part1");
+            /// <summary>
+            /// Translation key <c>webclient_design_export_dialog_description_part2</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage EXPORT_DIALOG_DESCRIPTION_PART2 = new("webclient_design_export_dialog_description_part2");
+            /// <summary>
+            /// Translation key <c>webclient_design_export_dialog_description_part3</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage EXPORT_DIALOG_DESCRIPTION_PART3 = new("webclient_design_export_dialog_description_part3");
+            /// <summary>
+            /// Translation key <c>webclient_design_export_dialog_description_part4</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage EXPORT_DIALOG_DESCRIPTION_PART4 = new("webclient_design_export_dialog_description_part4");
+            /// <summary>
+            /// Translation key <c>webclient_design_export_dialog_title</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage EXPORT_DIALOG_TITLE = new("webclient_design_export_dialog_title");
+            /// <summary>
+            /// Translation key <c>webclient_design_export_dialog_toast_error</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage EXPORT_DIALOG_TOAST_ERROR = new("webclient_design_export_dialog_toast_error");
+            /// <summary>
+            /// Translation key <c>webclient_design_export_dialog_toast_success</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage EXPORT_DIALOG_TOAST_SUCCESS = new("webclient_design_export_dialog_toast_success");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_clear_filters</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_CLEAR_FILTERS = new("webclient_design_feedback_clear_filters");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_empty_state</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_EMPTY_STATE = new("webclient_design_feedback_empty_state");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_event_created</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_EVENT_CREATED = new("webclient_design_feedback_event_created");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_event_date</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_EVENT_DATE = new("webclient_design_feedback_event_date");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_event_with_desc</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_EVENT_WITH_DESC = new("webclient_design_feedback_event_with_desc");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_new_version</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_NEW_VERSION = new("webclient_design_feedback_new_version");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_no_results</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_NO_RESULTS = new("webclient_design_feedback_no_results");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_no_results_hint</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_NO_RESULTS_HINT = new("webclient_design_feedback_no_results_hint");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_progress_bars</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_PROGRESS_BARS = new("webclient_design_feedback_progress_bars");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_review_before_continuing</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_REVIEW_BEFORE_CONTINUING = new("webclient_design_feedback_review_before_continuing");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_saved</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_SAVED = new("webclient_design_feedback_saved");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_skeleton_loaders</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_SKELETON_LOADERS = new("webclient_design_feedback_skeleton_loaders");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_spinners</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_SPINNERS = new("webclient_design_feedback_spinners");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_toast_default</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_TOAST_DEFAULT = new("webclient_design_feedback_toast_default");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_toast_error</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_TOAST_ERROR = new("webclient_design_feedback_toast_error");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_toast_info</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_TOAST_INFO = new("webclient_design_feedback_toast_info");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_toast_notifications</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_TOAST_NOTIFICATIONS = new("webclient_design_feedback_toast_notifications");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_toast_success</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_TOAST_SUCCESS = new("webclient_design_feedback_toast_success");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_toast_warning</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_TOAST_WARNING = new("webclient_design_feedback_toast_warning");
+            /// <summary>
+            /// Translation key <c>webclient_design_feedback_toast_with_description</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FEEDBACK_TOAST_WITH_DESCRIPTION = new("webclient_design_feedback_toast_with_description");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_accept_terms</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_ACCEPT_TERMS = new("webclient_design_form_accept_terms");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_bio</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_BIO = new("webclient_design_form_bio");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_bio_placeholder</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_BIO_PLACEHOLDER = new("webclient_design_form_bio_placeholder");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_calendar</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_CALENDAR = new("webclient_design_form_calendar");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_combined_example</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_COMBINED_EXAMPLE = new("webclient_design_form_combined_example");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_combobox</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_COMBOBOX = new("webclient_design_form_combobox");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_disabled</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_DISABLED = new("webclient_design_form_disabled");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_disabled_placeholder</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_DISABLED_PLACEHOLDER = new("webclient_design_form_disabled_placeholder");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_display</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_DISPLAY = new("webclient_design_form_display");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_email_placeholder</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_EMAIL_PLACEHOLDER = new("webclient_design_form_email_placeholder");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_message_placeholder</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_MESSAGE_PLACEHOLDER = new("webclient_design_form_message_placeholder");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_notifications_off</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_NOTIFICATIONS_OFF = new("webclient_design_form_notifications_off");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_notifications_on</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_NOTIFICATIONS_ON = new("webclient_design_form_notifications_on");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_no_framework</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_NO_FRAMEWORK = new("webclient_design_form_no_framework");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_password_placeholder</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_PASSWORD_PLACEHOLDER = new("webclient_design_form_password_placeholder");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_preferred_contact</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_PREFERRED_CONTACT = new("webclient_design_form_preferred_contact");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_save_changes</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_SAVE_CHANGES = new("webclient_design_form_save_changes");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_search_framework</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_SEARCH_FRAMEWORK = new("webclient_design_form_search_framework");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_select</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_SELECT = new("webclient_design_form_select");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_selection_controls</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_SELECTION_CONTROLS = new("webclient_design_form_selection_controls");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_select_date</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_SELECT_DATE = new("webclient_design_form_select_date");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_select_framework</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_SELECT_FRAMEWORK = new("webclient_design_form_select_framework");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_select_fruit</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_SELECT_FRUIT = new("webclient_design_form_select_fruit");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_text_inputs</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_TEXT_INPUTS = new("webclient_design_form_text_inputs");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_toggle_multi</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_TOGGLE_MULTI = new("webclient_design_form_toggle_multi");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_toggle_single</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_TOGGLE_SINGLE = new("webclient_design_form_toggle_single");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_volume</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_VOLUME = new("webclient_design_form_volume");
+            /// <summary>
+            /// Translation key <c>webclient_design_form_wifi</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FORM_WIFI = new("webclient_design_form_wifi");
             /// <summary>
             /// Translation key <c>webclient_design_kitchen_sink</c>.
             /// </summary>
@@ -2381,6 +2633,10 @@ public static partial class TK
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage SIGNUP_FORM_HEADING = new("webclient_design_signup_form_heading");
             /// <summary>
+            /// Translation key <c>webclient_design_signup_form_success</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage SIGNUP_FORM_SUCCESS = new("webclient_design_signup_form_success");
+            /// <summary>
             /// Translation key <c>webclient_design_signup_form_title</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage SIGNUP_FORM_TITLE = new("webclient_design_signup_form_title");
@@ -2399,6 +2655,10 @@ public static partial class TK
             /// Translation key <c>webclient_error_go_home</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage GO_HOME = new("webclient_error_go_home");
+            /// <summary>
+            /// Translation key <c>webclient_error_page_title</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage PAGE_TITLE = new("webclient_error_page_title");
             /// <summary>
             /// Translation key <c>webclient_error_reference</c>.
             /// </summary>

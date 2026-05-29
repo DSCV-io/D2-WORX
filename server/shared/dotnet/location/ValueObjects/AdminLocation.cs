@@ -11,6 +11,8 @@ using System.Text;
 using D2.Shared.Geo.Abstractions;
 using D2.Shared.I18n;
 using D2.Shared.Result;
+using D2.Shared.Utilities.Attributes;
+using D2.Shared.Utilities.Enums;
 using D2.Shared.Utilities.Extensions;
 
 /// <summary>
@@ -24,26 +26,35 @@ using D2.Shared.Utilities.Extensions;
 /// as a degenerate empty record.
 /// </summary>
 /// <remarks>
-/// <b>PII.</b> <see cref="City"/> + <see cref="PostalCode"/> are PII when
-/// combined with other identifying fields (per GDPR; city + postal beyond
-/// country level). Consumers MUST apply <c>[RedactData]</c> on any field
-/// of this type before it reaches a logger / serializer sink.
+/// <b>Self-redacting PII.</b> <see cref="City"/>, <see cref="PostalCode"/>,
+/// and <see cref="SubdivisionIso31662Code"/> are marked
+/// <c>[RedactData(PersonalInformation)]</c> and are masked automatically by the
+/// Serilog destructuring policy. <see cref="CountryIso31661Alpha2Code"/> is left
+/// visible — a country code is coarse-grained and not individually identifying
+/// on its own. <see cref="HashId"/> is left visible because it is a one-way
+/// SHA-256 digest of the normalized field values: opaque, non-reversible, and safe
+/// for correlation in logs and traces without leaking address data.
 /// </remarks>
 public sealed record AdminLocation
 {
     /// <summary>Gets the optional city (post-normalization).</summary>
+    [RedactData(Reason = RedactReason.PersonalInformation)]
     public string? City { get; init; }
 
     /// <summary>Gets the optional postal code (post-validation).</summary>
+    [RedactData(Reason = RedactReason.PersonalInformation)]
     public string? PostalCode { get; init; }
 
     /// <summary>Gets the optional ISO 3166-2 subdivision code.</summary>
+    [RedactData(Reason = RedactReason.PersonalInformation)]
     public SubdivisionCode? SubdivisionIso31662Code { get; init; }
 
     /// <summary>
     /// Gets the optional ISO 3166-1 alpha-2 country code. Auto-populated
     /// from <see cref="SubdivisionIso31662Code"/> when the caller supplies a
     /// subdivision but no explicit country.
+    /// Emitted unredacted in logs — a country code is coarse-grained and not
+    /// individually identifying on its own.
     /// </summary>
     public CountryCode? CountryIso31661Alpha2Code { get; init; }
 
@@ -52,6 +63,9 @@ public sealed record AdminLocation
     /// <c>"v1." + SHA-256(NormalizeForHash(City) | NormalizeForHash(PostalCode)
     /// | SubdivisionIso31662Code | CountryIso31661Alpha2Code)</c>
     /// as lowercase hex. Missing slots contribute <c>""</c>.
+    /// Emitted unredacted in logs — it is a one-way SHA-256 digest (opaque,
+    /// non-reversible) and is safe for correlation in logs and traces without
+    /// leaking address data.
     /// </summary>
     public required string HashId { get; init; }
 
@@ -113,7 +127,7 @@ public sealed record AdminLocation
         {
             var validation = postalCodeValidator.Validate(cleanedPostal, effectiveCountry);
             if (!validation.Success)
-                return D2Result<AdminLocation>.ValidationFailed(messages: validation.Messages);
+                return D2Result<AdminLocation>.BubbleFail(validation);
 
             validatedPostal = validation.Data;
         }
@@ -128,7 +142,7 @@ public sealed record AdminLocation
             (subdivisionIso31662Code?.Value ?? string.Empty) + "|" +
             (effectiveCountry?.ToString() ?? string.Empty);
 
-        // BCL static one-shot per §15.8 — no IDisposable instance to manage.
+        // BCL static one-shot — no IDisposable instance to manage.
         var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(hashInput));
         var hashId = "v1." + Convert.ToHexStringLower(hashBytes);
 

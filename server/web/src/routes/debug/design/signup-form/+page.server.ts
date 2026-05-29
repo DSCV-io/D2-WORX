@@ -5,6 +5,7 @@
 import { superValidate, message } from "sveltekit-superforms";
 import { zod4 as zod } from "sveltekit-superforms/adapters";
 import { fail } from "@sveltejs/kit";
+import * as m from "$lib/paraglide/messages.js";
 import { createSignUpSchema as createSignupSchema } from "$lib/shared/forms/sign-up-schema.js";
 import type { Actions, PageServerLoad } from "./$types.js";
 
@@ -24,6 +25,6 @@ export const actions: Actions = {
     }
 
     // Demo: no actual submission — return success message
-    return message(form, "Signup form validated successfully!");
+    return message(form, m.webclient_design_signup_form_success());
   },
 };

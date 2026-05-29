@@ -8,8 +8,10 @@ namespace D2.Shared.Tests.Unit.Location;
 
 using AwesomeAssertions;
 using D2.Shared.Geo.Abstractions;
+using D2.Shared.I18n;
 using D2.Shared.Location;
 using D2.Shared.Location.ValueObjects;
+using D2.Shared.Result;
 using Xunit;
 
 /// <summary>
@@ -248,5 +250,52 @@ public sealed class AdminLocationTests
             postalCodeValidator: new DefaultPostalCodeValidator());
 
         result.Success.Should().BeFalse();
+    }
+
+    // -----------------------------------------------------------------------
+    // Regression — F-B3-1: BubbleFail propagates full upstream failure metadata
+    //
+    // Before the fix, AdminLocation used ValidationFailed(messages: ...) which
+    // dropped InputErrors (and StatusCode/ErrorCode/TraceId) from the upstream
+    // postal-validator result. After the fix, BubbleFail is used and ALL
+    // upstream failure metadata is preserved.
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Create_PostalValidatorFailureWithInputErrors_InputErrorsPropagated()
+    {
+        // Arrange — a stub validator that returns ValidationFailed with InputErrors.
+        var validator = new StubPostalCodeValidatorWithInputErrors();
+
+        // Act — before the BubbleFail fix, InputErrors would have been dropped.
+        var result = AdminLocation.Create(
+            CountryCode.US,
+            postalCode: "INVALID",
+            postalCodeValidator: validator);
+
+        // Assert — failure AND InputErrors must be present.
+        result.Success.Should().BeFalse();
+        result.InputErrors.Should().NotBeNullOrEmpty();
+        result.InputErrors.Should().ContainSingle()
+            .Which.Field.Should().Be("postalCode");
+    }
+
+    // -----------------------------------------------------------------------
+    // Stub helpers
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Stub validator that fails with a <see cref="D2Result{TData}.ValidationFailed"/>
+    /// carrying per-field <see cref="InputError"/> entries — used to verify that
+    /// <see cref="AdminLocation.Create"/> propagates the full upstream failure via
+    /// <see cref="D2Result{TData}.BubbleFail"/> rather than reconstructing a partial
+    /// failure that drops <c>InputErrors</c>.
+    /// </summary>
+    private sealed class StubPostalCodeValidatorWithInputErrors : IPostalCodeValidator
+    {
+        public D2Result<string> Validate(string? postalCode, CountryCode? countryCode = null)
+            => D2Result<string>.ValidationFailed(
+                messages: [TK.Geo.Validation.POSTAL_CODE_INVALID],
+                inputErrors: [new InputError("postalCode", [TK.Geo.Validation.POSTAL_CODE_INVALID])]);
     }
 }

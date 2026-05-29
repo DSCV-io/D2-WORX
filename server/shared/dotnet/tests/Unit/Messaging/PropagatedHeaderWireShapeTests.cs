@@ -88,6 +88,11 @@ public sealed class PropagatedHeaderWireShapeTests
         json.Should().NotContain("\"asn\"");
         json.Should().NotContain("\"isAuthenticated\"");
 
+        // [JsonIgnore] on HasAnyField — the computed helper must NEVER reach the wire.
+        // If [JsonIgnore] is ever removed from the emitted PropagatedContext record,
+        // this assertion is the first line of defense.
+        json.Should().NotContain("\"hasAnyField\"");
+
         // And the literal sensitive values shouldn't appear anywhere either.
         json.Should().NotContain("user@example.com");
         json.Should().NotContain("203.0.113.42");

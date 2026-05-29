@@ -121,7 +121,7 @@ Locations are **immutable**. "Updates" are modeled as create-new + repoint-refer
 
 Hash-algorithm stability is enforced by the [`contracts/location/parity-fixtures.json`](../../../contracts/location/parity-fixtures.json) fixture — every `HashId` / `expectedOutcome` row is asserted by `LocationHashDeterminismTests` in `D2.Shared.Tests`. A byte divergence means the hash algorithm changed and would silently produce duplicate records for previously-identical content-addressable entities.
 
-`ComposeLocationHash.Compose` returns `string?` (NOT `D2Result<string>`) — the operation cannot fail (inputs are already-validated VOs or null); `null` means location is absent, not an error. Documented §17 carve-out.
+`ComposeLocationHash.Compose` returns `string?` (NOT `D2Result<string>`) — the operation cannot fail (inputs are already-validated VOs or null); `null` means location is absent, not an error. Returning a plain value rather than a `D2Result` is appropriate here because the method has no failure mode — it is a pure composition of already-validated inputs.
 
 ## References
 

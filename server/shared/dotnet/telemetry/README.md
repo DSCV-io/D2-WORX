@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
-The OpenTelemetry composition root for every backend service — the runtime SDK setup (traces + metrics + logs, OTLP exporters, Prometheus endpoint, auto-instrumentations) plus the source generator that emits the per-meter telemetry-tag constants from `contracts/telemetry/telemetry.spec.json`. The runtime aggregates each owning lib's `ActivitySource` and `Meter` through compile-time symbol references so a rename in any owning lib surfaces here as a build break.
+The OpenTelemetry composition root for D²-WORX services — the runtime SDK setup (traces + metrics + logs, OTLP exporters, Prometheus endpoint, auto-instrumentations) plus the source generator that emits the per-meter telemetry-tag constants from `contracts/telemetry/telemetry.spec.json`. The runtime aggregates each owning lib's `ActivitySource` and `Meter` through compile-time symbol references so a rename in any owning lib surfaces here as a build break.
 
 OTel-messaging tags codegen → [`messaging/otel-messaging-tags-source-gen/`](../messaging/otel-messaging-tags-source-gen/README.md).
 

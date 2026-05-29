@@ -75,7 +75,7 @@ across the catalog — never re-used, never re-ordered.
 
 - [Michael Nygard's original ADR essay](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions)
   — the canonical Nygard format spec this catalog adapts.
-- [`docs/dev/deliverables/`](../dev/deliverables/) — per-deliverable shipped
+- [`docs/dev/deliverables/`](../dev/deliverables/README.md) — per-deliverable shipped
   snapshots. Past architectural decisions are also captured there in
   deliverable form; ADRs distill the single decision out of the broader
   deliverable narrative.

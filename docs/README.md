@@ -20,6 +20,7 @@ Project documentation that doesn't belong at the repo root.
 
 | Doc                              | Purpose                                                                                                                                                                                                                                                 |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [COMMANDS.md](COMMANDS.md)       | Build / test / lint / versioning command catalog — full Docker Compose lifecycle, single-project builds, test filters, inspection commands.                                                                                                              |
 | [TESTS.md](TESTS.md)             | Adversarial test discipline — 8-category Case Coverage Checklist, naming conventions, Vitest custom matchers. The canonical reference for what "tested" means in this codebase.                                                                         |
 | [SRC_GEN.md](SRC_GEN.md)         | Spec-driven codegen reference — .NET Roslyn `IIncrementalGenerator` + TypeScript `tools/ts-codegen` emitter patterns.                                                                                                                                   |
 | [dev/process.md](dev/process.md) | Workflow + audit-loop architecture — phase lifecycle (PLAN / EXECUTE / FINAL-REVIEW / SHIP / REVIEW), permission gates, sub-agent orchestrator-worker model, K=12 audit-cluster dispatch protocol, self-improvement loop.                               |
@@ -44,6 +45,6 @@ Project documentation that doesn't belong at the repo root.
 | [v2/PHASE_6_REFERENCE.md](v2/PHASE_6_REFERENCE.md) | D2.Files (.NET) rebuild reference — 6 design principles, status state machine, smartphone MIME list, GEO_CLIENT log-suppression pattern. |
 | [v2/PHASE_8_REFERENCE.md](v2/PHASE_8_REFERENCE.md) | dkron-mgr (.NET) rewrite reference — Reconciler pattern, change-detection field list.                                                    |
 
-### Out of scope (until consumers exist)
+### Not yet written
 
-`JWT-CLAIMS.md` — full custom-claim catalog. Out of scope until the first `d2_`-namespaced claim has a real consumer; until then the spec lives in `contracts/jwt-claims/jwt-claims.spec.json` and the generated `JwtClaimTypes` constants are the canonical reference.
+`JWT-CLAIMS.md` — full custom-claim catalog. Not yet written; the spec lives in `contracts/jwt-claims/jwt-claims.spec.json` and the generated `JwtClaimTypes` constants are the canonical reference.

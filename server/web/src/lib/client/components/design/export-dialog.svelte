@@ -16,6 +16,7 @@ Copyright (c) DCSV. All rights reserved.
   import { toast } from "svelte-sonner";
   import CopyIcon from "@lucide/svelte/icons/copy";
   import CheckIcon from "@lucide/svelte/icons/check";
+  import * as m from "$lib/paraglide/messages.js";
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
   let copied = $state(false);
@@ -24,10 +25,10 @@ Copyright (c) DCSV. All rights reserved.
     try {
       await navigator.clipboard.writeText(getThemeCSS());
       copied = true;
-      toast.success("Theme CSS copied to clipboard");
+      toast.success(m.webclient_design_export_dialog_toast_success());
       setTimeout(() => (copied = false), 2000);
     } catch {
-      toast.error("Failed to copy — try selecting and copying manually");
+      toast.error(m.webclient_design_export_dialog_toast_error());
     }
   }
 </script>
@@ -35,11 +36,9 @@ Copyright (c) DCSV. All rights reserved.
 <Dialog bind:open>
   <DialogContent class="max-w-2xl">
     <DialogHeader>
-      <DialogTitle>Generated Theme CSS</DialogTitle>
+      <DialogTitle>{m.webclient_design_export_dialog_title()}</DialogTitle>
       <DialogDescription>
-        Copy this CSS and replace the <code class="text-xs">@theme inline</code> and
-        <code class="text-xs">.dark</code> blocks in
-        <code class="text-xs">src/app.css</code>.
+        {m.webclient_design_export_dialog_description_part1()}<code>@theme inline</code>{m.webclient_design_export_dialog_description_part2()}<code>.dark</code>{m.webclient_design_export_dialog_description_part3()}<code>src/app.css</code>{m.webclient_design_export_dialog_description_part4()}
       </DialogDescription>
     </DialogHeader>
 
@@ -51,10 +50,10 @@ Copyright (c) DCSV. All rights reserved.
       <Button onclick={copyToClipboard}>
         {#if copied}
           <CheckIcon class="size-4" />
-          Copied
+          {m.webclient_design_export_dialog_copied()}
         {:else}
           <CopyIcon class="size-4" />
-          Copy to Clipboard
+          {m.webclient_design_export_dialog_copy()}
         {/if}
       </Button>
     </div>

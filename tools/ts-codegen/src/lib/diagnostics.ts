@@ -215,6 +215,13 @@ export const DiagnosticIds = {
   // direct indexer access (fail-loud) instead of defensive lookups that
   // mask drift between catalogs.
   GEO_MISSING_LOCALE_REFERENCE: "D2GEO012",
+
+  // i18n TK keys catalog. Mirrors the .NET
+  // D2.Shared.I18n.SourceGen.KeyDecomposer diagnostic IDs byte-for-byte —
+  // same en-US.json source on both sides means same predicate violation
+  // surface so identical IDs are correct.
+  TK_MALFORMED_SOURCE: "D2TK001",
+  TK_INVALID_KEY: "D2TK002",
 } as const;
 
 /**

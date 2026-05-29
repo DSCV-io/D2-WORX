@@ -45,6 +45,7 @@ public static class AuthTelemetry
     public static readonly Counter<long> SR_JwtValidations =
         SR_Meter.CreateCounter<long>(
             name: "d2.auth.jwt.validations",
+            unit: "{validation}",
             description: "Total inbound JWT validations.");
 
     /// <summary>
@@ -59,6 +60,7 @@ public static class AuthTelemetry
     public static readonly Counter<long> SR_SessionLivenessChecks =
         SR_Meter.CreateCounter<long>(
             name: "d2.auth.session.liveness.checks",
+            unit: "{check}",
             description: "Total session liveness checks.");
 
     /// <summary>
@@ -78,6 +80,7 @@ public static class AuthTelemetry
     public static readonly Counter<long> SR_JwksFetches =
         SR_Meter.CreateCounter<long>(
             name: "d2.auth.jwks.fetches",
+            unit: "{fetch}",
             description: "Total JWKS fetches from the upstream OIDC issuer.");
 
     /// <summary>
@@ -96,6 +99,7 @@ public static class AuthTelemetry
     public static readonly Counter<long> SR_ProblemEmitted =
         SR_Meter.CreateCounter<long>(
             name: "d2.auth.problem.emitted",
+            unit: "{response}",
             description:
                 "Total auth-failure responses emitted by the transport-binding libraries "
                 + "(HTTP ProblemDetails + gRPC RpcException trailers).");

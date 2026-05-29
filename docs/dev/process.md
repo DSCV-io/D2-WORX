@@ -8,7 +8,7 @@ Copyright (c) DCSV. All rights reserved.
 
 The single source of truth for HOW work moves through D²-WORX — phase lifecycle (PLAN → EXECUTE → FINAL-REVIEW → SHIP → REVIEW), permission gates (when to pause for the user), sub-agent architecture (orchestrator + worker roles), audit-loop mechanics (K=12 cluster partition + Aggregator), and self-improvement loop (distillation → rules.md additions).
 
-This doc absorbs the previously-separate `workflow.md` (phase protocol) and `audit-framework.md` (architecture + tooling) into one coherent process reference. Predicate-level enforcement lives in [rules.md](rules.md); pattern reference lives in [../PATTERNS.md](../PATTERNS.md); CLAUDE.md is the agent-directive root that condenses this doc + rules.md for fast-access mental-model purposes.
+Predicate-level enforcement lives in [rules.md](rules.md); pattern reference lives in [../PATTERNS.md](../PATTERNS.md); CLAUDE.md is the agent-directive root that condenses this doc + rules.md for fast-access mental-model purposes.
 
 > **Read [rules.md](rules.md) end-to-end at the start of every deliverable's PLAN phase.** It is the central requirements catalog — security, race conditions, naming, object disposal, D2Result usage, OOTB shared-lib tooling, logging, PII redaction, graceful degradation, UX, DX, observability, idempotency, configuration, and more. Knowing the rules upfront is what lets you write code that passes audit round 1 instead of round 5.
 

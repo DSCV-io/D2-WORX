@@ -2,6 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
+import { falsey } from "@d2/utilities";
 import type { InputError } from "./input-error.js";
 import type { TKMessage } from "./tk-message.js";
 
@@ -72,9 +73,8 @@ export function renderMessages(
   messages: readonly TKMessage[] | undefined | null,
   translate: TranslateFn,
 ): string[] {
-  if (messages === undefined || messages === null || messages.length === 0)
-    return [];
-  return messages.map((m) => renderMessage(m, translate));
+  if (falsey(messages)) return [];
+  return messages!.map((m) => renderMessage(m, translate));
 }
 
 /**
@@ -99,14 +99,9 @@ export function renderInputErrors(
   translate: TranslateFn,
 ): Record<string, string[]> {
   const result: Record<string, string[]> = {};
-  if (
-    inputErrors === undefined ||
-    inputErrors === null ||
-    inputErrors.length === 0
-  )
-    return result;
+  if (falsey(inputErrors)) return result;
 
-  for (const ie of inputErrors) {
+  for (const ie of inputErrors!) {
     if (!ie.field || ie.errors.length === 0) continue;
     const rendered = ie.errors.map((m) => renderMessage(m, translate));
     const existing = result[ie.field];

@@ -11,6 +11,8 @@ using System.Text;
 using D2.Shared.I18n;
 using D2.Shared.Location.Encoding;
 using D2.Shared.Result;
+using D2.Shared.Utilities.Attributes;
+using D2.Shared.Utilities.Enums;
 using D2.Shared.Utilities.Extensions;
 
 /// <summary>
@@ -35,6 +37,19 @@ using D2.Shared.Utilities.Extensions;
 /// instances with the same lat/lon but different accuracy values produce the
 /// same hash — accuracy is descriptive, not identity-bearing.
 /// </para>
+/// <para>
+/// <b>Self-redacting PII.</b> <see cref="Latitude"/>, <see cref="Longitude"/>,
+/// <see cref="Geohash"/>, <see cref="PlusCode"/>, and <see cref="AccuracyMeters"/>
+/// are marked <c>[RedactData(PersonalInformation)]</c> and are masked automatically
+/// by the Serilog destructuring policy. <see cref="Geohash"/> is redacted because it
+/// is a reversible spatial encoding — decoding a geohash-10 string recovers the
+/// original lat/lon to within ~1 m, making it as precise as the raw coordinates.
+/// <see cref="AccuracyMeters"/> is redacted because a tight accuracy radius combined
+/// with any other logged context can narrow a subject's position precisely enough to
+/// re-identify them. <see cref="HashId"/> is left visible because it is a one-way
+/// SHA-256 digest of the geohash: opaque, non-reversible, and safe for correlation
+/// in logs and traces without leaking position.
+/// </para>
 /// </remarks>
 public sealed record Coordinates
 {
@@ -42,30 +57,42 @@ public sealed record Coordinates
     /// Gets latitude in decimal degrees, normalized to F6
     /// (~10 cm precision, matches geohash-10 cell-center).
     /// </summary>
+    [RedactData(Reason = RedactReason.PersonalInformation)]
     public required double Latitude { get; init; }
 
     /// <summary>Gets longitude in decimal degrees, normalized to F6.</summary>
+    [RedactData(Reason = RedactReason.PersonalInformation)]
     public required double Longitude { get; init; }
 
     /// <summary>
     /// Gets geohash-10 string (~1.2m × 0.6m at equator) — the canonical hash input.
     /// Base-32 alphabet <c>0123456789bcdefghjkmnpqrstuvwxyz</c>.
+    /// Redacted in logs — a geohash is reversible: decoding it recovers the original
+    /// lat/lon to within ~1 m, making it equivalent in precision to the raw coordinates.
     /// </summary>
+    [RedactData(Reason = RedactReason.PersonalInformation)]
     public required string Geohash { get; init; }
 
     /// <summary>
     /// Gets OLC plus-code, 12 characters (8 pair digits + '+' + 3 grid digits), ~1m precision.
     /// </summary>
+    [RedactData(Reason = RedactReason.PersonalInformation)]
     public required string PlusCode { get; init; }
 
     /// <summary>
     /// Gets optional accuracy metadata in meters; NOT included in <see cref="HashId"/>.
+    /// Redacted in logs — a tight accuracy radius combined with other logged context
+    /// can narrow a subject's position precisely enough to re-identify them.
     /// </summary>
+    [RedactData(Reason = RedactReason.PersonalInformation)]
     public double? AccuracyMeters { get; init; }
 
     /// <summary>
     /// Gets stable hash identifier: <c>"v1." + SHA-256(Geohash)</c> as lowercase hex.
     /// Identical across all three input factories for the same canonical cell.
+    /// Emitted unredacted in logs — it is a one-way SHA-256 digest (opaque,
+    /// non-reversible) and is safe for correlation in logs and traces without
+    /// leaking position.
     /// </summary>
     public required string HashId { get; init; }
 

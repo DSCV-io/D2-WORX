@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
-Authentication and authorization building blocks for every backend service that issues, validates, or acts on D² bearer tokens. The cluster spans the domain-safe vocabulary slice (enums, scope / audience / claim catalogs, the read-only JWKS and session-liveness contracts), the inbound runtime that validates tokens and projects claims into the request context, the per-transport bindings (HTTP middleware, gRPC interceptor), the outbound token-acquisition complement (RFC 8693 token exchange + RFC 6749 §4.4 client credentials), and the spec-driven source generators that emit the scope / audience / claim / error-code catalogs from `contracts/`. Domain code references the abstractions; hosts wire the runtime plus the transport bindings they need.
+Authentication and authorization building blocks for D²-WORX services that issue, validate, or act on D² bearer tokens. The cluster spans the domain-safe vocabulary slice (enums, scope / audience / claim catalogs, the read-only JWKS and session-liveness contracts), the inbound runtime that validates tokens and projects claims into the request context, the per-transport bindings (HTTP middleware, gRPC interceptor), the outbound token-acquisition complement (RFC 8693 token exchange + RFC 6749 §4.4 client credentials), and the spec-driven source generators that emit the scope / audience / claim / error-code catalogs from `contracts/`. Domain code references the abstractions; hosts wire the runtime plus the transport bindings they need.
 
 ## Packages
 

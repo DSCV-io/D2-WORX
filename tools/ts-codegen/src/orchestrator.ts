@@ -19,6 +19,7 @@ import { formatDiagnostic } from "./lib/diagnostics.js";
 import { runOtelMessagingTagsEmit } from "./otel-messaging-tags-emit.js";
 import { runProblemDetailsEmit } from "./problem-details-emit.js";
 import { runRequestContextEmit } from "./request-context-emit.js";
+import { runTkKeysEmit } from "./tk-keys-emit.js";
 import { runInputErrorEmit, runTkMessageEmit } from "./wire-shape-emit.js";
 
 /**
@@ -44,6 +45,12 @@ function main(): void {
     ...runHeadersEmit(force),
     ...runJwtClaimsEmit(force),
     ...runProblemDetailsEmit(force),
+    // i18n TK keys catalog — emits into @d2/i18n. Decomposes every key in
+    // contracts/messages/en-US.json into a nested const object
+    // (TK.<domain>.<category>.<CONSTANT>) mirroring the .NET KeyDecomposer
+    // output. Independent of all other emitters — order within this block
+    // does not matter.
+    ...runTkKeysEmit(force),
     // Wire shapes (TKMessage + InputError) emit independent property-name
     // catalogs from their own specs; consumed by @d2/result.
     ...runTkMessageEmit(force),

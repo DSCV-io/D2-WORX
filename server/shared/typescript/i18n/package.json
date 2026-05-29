@@ -9,6 +9,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./keys": {
+      "types": "./dist/generated/tk-keys.g.d.ts",
+      "import": "./dist/generated/tk-keys.g.js"
     }
   },
   "scripts": {

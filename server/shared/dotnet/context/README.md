@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
-The per-request context primitives every backend service carries across hops — the spec-driven `IRequestContext` surface plus the source generator that emits it. Domain code references the abstractions to read caller identity, scopes, impersonation, and propagated operational state without pulling DI / AspNetCore / Configuration. The propagated subset travels the `x-d2-context` header between services; full identity rebuilds from the JWT on each hop.
+The per-request context primitives D²-WORX services carry across hops — the spec-driven `IRequestContext` surface plus the source generator that emits it. Domain code references the abstractions to read caller identity, scopes, impersonation, and propagated operational state without pulling DI / AspNetCore / Configuration. The propagated subset travels the `x-d2-context` header between services; full identity rebuilds from the JWT on each hop.
 
 ## Packages
 

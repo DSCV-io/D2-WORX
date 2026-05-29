@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
-Internationalization primitives for every backend service that produces user-facing messages — the domain-safe vocabulary slice, the runtime translator, and the source generator that emits the translation-key catalog. User-facing messages travel as `TKMessage` translation keys (not literal strings) so the wire stays language-neutral and the client resolves the final copy; drift between the translation JSON and the generated `TK` constants is structurally impossible because a constant only exists if its key exists in the spec.
+Internationalization primitives for D²-WORX services that produce user-facing messages — the domain-safe vocabulary slice, the runtime translator, and the source generator that emits the translation-key catalog. User-facing messages travel as `TKMessage` translation keys (not literal strings) so the wire stays language-neutral and the client resolves the final copy; drift between the translation JSON and the generated `TK` constants is structurally impossible because a constant only exists if its key exists in the spec.
 
 ## Packages
 

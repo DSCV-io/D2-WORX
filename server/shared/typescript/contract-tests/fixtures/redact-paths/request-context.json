@@ -5,6 +5,7 @@
       "city",
       "clientIp",
       "geohash",
+      "idempotencyKey",
       "latitude",
       "longitude",
       "postalCode",

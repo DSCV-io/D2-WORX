@@ -162,6 +162,7 @@ export const IRequestContextRedactPaths: readonly string[] = [
   "city",
   "clientIp",
   "geohash",
+  "idempotencyKey",
   "latitude",
   "longitude",
   "postalCode",

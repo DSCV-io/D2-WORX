@@ -49,7 +49,7 @@ Copyright (c) DCSV. All rights reserved.
     async checker(email) {
       const res = await fetch(`/debug/design/api/check-email?email=${encodeURIComponent(email)}`);
       const { available } = await res.json();
-      return { valid: available, errorMessage: "This email is already taken" };
+      return { valid: available, errorMessage: m.auth_errors_EMAIL_ALREADY_TAKEN() };
     },
   });
 </script>

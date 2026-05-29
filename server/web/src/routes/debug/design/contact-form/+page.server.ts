@@ -5,6 +5,7 @@
 import { superValidate, message } from "sveltekit-superforms";
 import { zod4 as zod } from "sveltekit-superforms/adapters";
 import { error, fail } from "@sveltejs/kit";
+import * as m from "$lib/paraglide/messages.js";
 import {
   countriesToOptions,
   subdivisionsForCountry,
@@ -67,6 +68,6 @@ export const actions: Actions = {
     }
 
     // Demo: no actual submission — return success message
-    return message(form, "Contact form validated successfully!");
+    return message(form, m.webclient_design_contact_form_success());
   },
 };

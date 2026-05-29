@@ -9,6 +9,10 @@ Copyright (c) DCSV. All rights reserved.
   import { translateMessage } from "$lib/client/utils/translate-message.js";
 </script>
 
+<svelte:head>
+  <title>{m.webclient_error_page_title()} — {m.webclient_nav_brand()}</title>
+</svelte:head>
+
 <div class="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
   <h1 class="text-6xl font-bold tracking-tight">
     {page.status}

@@ -39,23 +39,25 @@ public static class LocalCacheTelemetry
 
     /// <summary>Counter incremented on every cache hit.</summary>
     internal static readonly Counter<long> SR_Hits =
-        SR_Meter.CreateCounter<long>("d2.cache.local.hits", description: "Local cache hits.");
+        SR_Meter.CreateCounter<long>("d2.cache.local.hits", unit: "{hit}", description: "Local cache hits.");
 
     /// <summary>Counter incremented on every cache miss.</summary>
     internal static readonly Counter<long> SR_Misses =
-        SR_Meter.CreateCounter<long>("d2.cache.local.misses", description: "Local cache misses.");
+        SR_Meter.CreateCounter<long>("d2.cache.local.misses", unit: "{miss}", description: "Local cache misses.");
 
     /// <summary>Counter incremented on every cache write.</summary>
     internal static readonly Counter<long> SR_Sets =
-        SR_Meter.CreateCounter<long>("d2.cache.local.sets", description: "Local cache writes.");
+        SR_Meter.CreateCounter<long>("d2.cache.local.sets", unit: "{write}", description: "Local cache writes.");
 
     /// <summary>Counter incremented on every explicit removal.</summary>
     internal static readonly Counter<long> SR_Removes = SR_Meter.CreateCounter<long>(
         "d2.cache.local.removes",
+        unit: "{removal}",
         description: "Local cache removals (explicit).");
 
     /// <summary>Counter incremented on every implicit eviction (capacity / TTL).</summary>
     internal static readonly Counter<long> SR_Evictions = SR_Meter.CreateCounter<long>(
         "d2.cache.local.evictions",
+        unit: "{eviction}",
         description: "Entries evicted by capacity / expiration.");
 }

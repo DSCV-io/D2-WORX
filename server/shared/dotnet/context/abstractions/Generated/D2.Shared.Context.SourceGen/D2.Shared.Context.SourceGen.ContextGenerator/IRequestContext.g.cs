@@ -51,6 +51,7 @@ public interface IRequestContext : global::D2.Shared.AuthContext.Abstractions.IA
     /// <summary>
     /// Parsed value of the Idempotency-Key request header. Propagates so downstream consumers correlate idempotent retries across the call chain. Max 255 chars; values exceeding cap are rejected by Edge middleware with 400 Bad Request. Treat as opaque — do NOT log the raw value; structured logs may emit a SHA-256 prefix for correlation but never the literal value.
     /// </summary>
+    [RedactData(Reason = RedactReason.PersonalInformation)]
     string? IdempotencyKey { get; }
 
     #endregion

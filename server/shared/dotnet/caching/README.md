@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
-The cache stack for every backend service — shared abstractions plus the concrete local, distributed, and tiered implementations. Consumers inject one of the marker interfaces (`ILocalCache` / `IDistributedCache` / `ITieredCache`) from the abstractions package; the marker name carries the behavioral intent (process scope vs cluster scope vs L1+L2 composition) at the dependency site. Every operation returns `D2Result<T>` / `D2Result`.
+The cache stack for D²-WORX services that need local, distributed, or tiered caching — shared abstractions plus the concrete implementations. Consumers inject one of the marker interfaces (`ILocalCache` / `IDistributedCache` / `ITieredCache`) from the abstractions package; the marker name carries the behavioral intent (process scope vs cluster scope vs L1+L2 composition) at the dependency site. Every operation returns `D2Result<T>` / `D2Result`.
 
 ## Packages
 

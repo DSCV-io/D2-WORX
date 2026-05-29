@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
-Spec-driven geographic reference data and lookup contracts for every backend service that resolves, validates, or stores geographic identifiers. The cluster holds the minimal hand-written API surface (lookup contracts, name resolver, typed request-context accessors), the codegen-emitted in-memory catalogs plus the default name-resolver implementation, and the multi-target source generator that emits both the geo TYPES and the geo DATA from the spec files under `contracts/geo/`. Domain code references the abstractions without dragging in catalog data.
+Spec-driven geographic reference data and lookup contracts for D²-WORX services that resolve, validate, or store geographic identifiers. The cluster holds the minimal hand-written API surface (lookup contracts, name resolver, typed request-context accessors), the codegen-emitted in-memory catalogs plus the default name-resolver implementation, and the multi-target source generator that emits both the geo TYPES and the geo DATA from the spec files under `contracts/geo/`. Domain code references the abstractions without dragging in catalog data.
 
 ## Packages
 

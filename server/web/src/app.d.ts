@@ -18,9 +18,9 @@ declare global {
       /** Populated by request enrichment middleware. */
       requestContext?: IRequestContext;
       /** Populated by the auth hook — session from the Auth service */
-      session?: AuthSession | null;
+      session?: AuthSession;
       /** Populated by the auth hook — user from the Auth service */
-      user?: AuthUser | null;
+      user?: AuthUser;
     }
 
     // interface PageData {}

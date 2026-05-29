@@ -421,7 +421,7 @@ if (!authR.IsOk)
 return D2Result<ContactDto>.Ok(authR.Data!);
 ```
 
-Irreversible flows (e.g., user-deletion anonymize) are NOT SAGAs — they're fire-and-forget fanouts; downstream services own their idempotent consumers rather than coordinating rollback. Canonical: not yet shipped; design at [`docs/v2/PHASE_3_EDGE.md §6`](v2/PHASE_3_EDGE.md#6-cross-service-saga-pattern). Will migrate to the Edge lib README when the service ships.
+Irreversible flows (e.g., user-deletion anonymize) are NOT SAGAs — they're fire-and-forget fanouts; downstream services own their idempotent consumers rather than coordinating rollback. Full design spec: [`docs/v2/PHASE_3_EDGE.md §6`](v2/PHASE_3_EDGE.md#6-cross-service-saga-pattern).
 
 ---
 
@@ -429,7 +429,7 @@ Irreversible flows (e.g., user-deletion anonymize) are NOT SAGAs — they're fir
 
 Every D² service is designed to run with N replicas behind a load balancer. Correctness must not depend on instance affinity — sessions live in Redis (3-tier with PG dual-write), JWT validation reads from shared JWKS, rate-limit counters in Redis (cluster scope, never per-process), HTTP idempotency in Redis (`SET NX` + 24h TTL). Local in-memory caches are per-instance with cluster-wide L1 coherence via `ICacheInvalidationBackplane` (Redis pub/sub) for `*AndBroadcast*` write variants. Background jobs use Redis distributed locks (`SET NX`) — return early if held. Cache-invalidation events use fanout exchanges with exclusive auto-delete queues (not competing consumers) for cluster-wide propagation.
 
-Full service-onboarding checklist (rate limiting / HTTP idempotency / session+auth / local caches / background jobs / cache invalidation / connection strings / DB constraints / migrations / cross-service mutations / encryption): Canonical not yet shipped; design at [`docs/v2/PHASE_3_EDGE.md §5`](v2/PHASE_3_EDGE.md#5-multi-instance-scaling--service-onboarding-checklist). Will migrate to the Edge lib README when the service ships.
+Full service-onboarding checklist (rate limiting / HTTP idempotency / session+auth / local caches / background jobs / cache invalidation / connection strings / DB constraints / migrations / cross-service mutations / encryption): design spec at [`docs/v2/PHASE_3_EDGE.md §5`](v2/PHASE_3_EDGE.md#5-multi-instance-scaling--service-onboarding-checklist).
 
 ---
 
@@ -478,7 +478,7 @@ string? locationHash = ComposeLocationHash.Compose(coords, street, admin);
 // `locationHash` is null only when all three inputs are null (location is absent).
 ```
 
-`WhoIs` follows the same content-addressable pattern with a single aggregate factory. See the per-lib READMEs for the full surface ([D2.Shared.Location](../server/shared/dotnet/location/README.md), [@d2/location](../server/shared/typescript/location/README.md), [WhoIs lib README](../server/shared/dotnet/whois-abstractions/README.md) when introduced).
+`WhoIs` follows the same content-addressable pattern with a single aggregate factory. See the per-lib READMEs for the full surface ([D2.Shared.Location](../server/shared/dotnet/location/README.md)).
 
 ---
 

@@ -45,6 +45,7 @@ public static class OutboundTelemetry
     public static readonly Counter<long> SR_ServiceIdentityFetches =
         SR_Meter.CreateCounter<long>(
             name: "d2.auth.outbound.service_identity.fetches",
+            unit: "{fetch}",
             description: "Total service-identity token resolutions.");
 
     /// <summary>
@@ -55,6 +56,7 @@ public static class OutboundTelemetry
     public static readonly Counter<long> SR_TokenExchangeRequests =
         SR_Meter.CreateCounter<long>(
             name: "d2.auth.outbound.token_exchange.requests",
+            unit: "{request}",
             description: "Total token-exchange requests.");
 
     /// <summary>
@@ -65,5 +67,6 @@ public static class OutboundTelemetry
     public static readonly Counter<long> SR_TokenExchangeRevokedPurges =
         SR_Meter.CreateCounter<long>(
             name: "d2.auth.outbound.token_exchange.revoked_purges",
+            unit: "{purge}",
             description: "Total token-exchange cache entries purged on session-revoked.");
 }

@@ -11,7 +11,7 @@ import type {
 import { compare as levenshteinCompare, normalize } from "@d2/geo-abstractions";
 import type { D2Result } from "@d2/result";
 import { notFound, ok, tk, validationFailed } from "@d2/result";
-import { truthyOrUndefined } from "@d2/utilities";
+import { falsey, truthyOrUndefined } from "@d2/utilities";
 
 import { CountryLookup } from "../countries.js";
 import { SubdivisionLookup } from "../subdivisions.js";
@@ -288,9 +288,9 @@ function buildSubdivisionByName(
 ): Map<string, SubdivisionCacheEntry> {
   const map = new Map<string, SubdivisionCacheEntry>();
   const subdivisions = SubdivisionLookup.byCountry[parent];
-  if (subdivisions === undefined || subdivisions.length === 0) return map;
+  if (falsey(subdivisions)) return map;
 
-  const ordered = [...subdivisions].sort((a, b) =>
+  const ordered = [...subdivisions!].sort((a, b) =>
     a.iso31662Code < b.iso31662Code
       ? -1
       : a.iso31662Code > b.iso31662Code

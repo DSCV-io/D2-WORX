@@ -28,6 +28,7 @@ Copyright (c) DCSV. All rights reserved.
   import WifiIcon from "@lucide/svelte/icons/wifi";
   import BluetoothIcon from "@lucide/svelte/icons/bluetooth";
   import MonitorIcon from "@lucide/svelte/icons/monitor";
+  import * as m from "$lib/paraglide/messages.js";
 
   let switchChecked = $state(false);
   let checkboxChecked = $state(false);
@@ -48,67 +49,67 @@ Copyright (c) DCSV. All rights reserved.
   ];
 
   const selectedFrameworkLabel = $derived(
-    frameworks.find((f) => f.value === comboValue)?.label ?? "Select framework...",
+    frameworks.find((f) => f.value === comboValue)?.label ?? m.webclient_design_form_select_framework(),
   );
 </script>
 
 <Section
   id="forms"
-  title="Form Controls"
+  title={m.webclient_design_section_forms()}
 >
   <div class="grid gap-6 md:grid-cols-2">
     <!-- Text inputs -->
     <div class="flex flex-col gap-4 rounded-lg border p-6">
-      <h3 class="text-muted-foreground text-sm font-medium">Text Inputs</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_form_text_inputs()}</h3>
 
       <div class="flex flex-col gap-2">
-        <Label for="email">Email</Label>
+        <Label for="email">{m.webclient_forms_email_label()}</Label>
         <Input
           id="email"
           type="email"
-          placeholder="you@example.com"
+          placeholder={m.webclient_design_form_email_placeholder()}
         />
       </div>
 
       <div class="flex flex-col gap-2">
-        <Label for="password">Password</Label>
+        <Label for="password">{m.webclient_forms_password_label()}</Label>
         <Input
           id="password"
           type="password"
-          placeholder="Enter password"
+          placeholder={m.webclient_design_form_password_placeholder()}
         />
       </div>
 
       <div class="flex flex-col gap-2">
-        <Label for="disabled-input">Disabled</Label>
+        <Label for="disabled-input">{m.webclient_design_form_disabled()}</Label>
         <Input
           id="disabled-input"
-          placeholder="Can't touch this"
+          placeholder={m.webclient_design_form_disabled_placeholder()}
           disabled
         />
       </div>
 
       <div class="flex flex-col gap-2">
-        <Label for="message">Message</Label>
+        <Label for="message">{m.webclient_design_card_message()}</Label>
         <Textarea
           id="message"
-          placeholder="Type your message here..."
+          placeholder={m.webclient_design_form_message_placeholder()}
         />
       </div>
     </div>
 
     <!-- Selection controls -->
     <div class="flex flex-col gap-4 rounded-lg border p-6">
-      <h3 class="text-muted-foreground text-sm font-medium">Selection Controls</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_form_selection_controls()}</h3>
 
       <div class="flex flex-col gap-3">
-        <Label>Select</Label>
+        <Label>{m.webclient_design_form_select()}</Label>
         <Select.Root
           type="single"
           bind:value={selectValue}
         >
           <Select.Trigger class="w-full">
-            <span class="truncate">{selectValue || "Select a fruit..."}</span>
+            <span class="truncate">{selectValue || m.webclient_design_form_select_fruit()}</span>
           </Select.Trigger>
           <Select.Content>
             <Select.Item value="apple">Apple</Select.Item>
@@ -126,7 +127,7 @@ Copyright (c) DCSV. All rights reserved.
         />
         <Label
           for="terms"
-          class="text-sm">Accept terms and conditions</Label
+          class="text-sm">{m.webclient_design_form_accept_terms()}</Label
         >
       </div>
 
@@ -139,12 +140,12 @@ Copyright (c) DCSV. All rights reserved.
           for="notifications"
           class="text-sm"
         >
-          Enable notifications {switchChecked ? "(on)" : "(off)"}
+          {switchChecked ? m.webclient_design_form_notifications_on() : m.webclient_design_form_notifications_off()}
         </Label>
       </div>
 
       <div class="flex flex-col gap-3">
-        <Label>Preferred contact</Label>
+        <Label>{m.webclient_design_form_preferred_contact()}</Label>
         <RadioGroup value="email">
           <div class="flex items-center gap-2">
             <RadioGroupItem
@@ -153,7 +154,7 @@ Copyright (c) DCSV. All rights reserved.
             />
             <Label
               for="r-email"
-              class="text-sm font-normal">Email</Label
+              class="text-sm font-normal">{m.webclient_forms_email_label()}</Label
             >
           </div>
           <div class="flex items-center gap-2">
@@ -163,7 +164,7 @@ Copyright (c) DCSV. All rights reserved.
             />
             <Label
               for="r-phone"
-              class="text-sm font-normal">Phone</Label
+              class="text-sm font-normal">{m.webclient_forms_phone_label()}</Label
             >
           </div>
           <div class="flex items-center gap-2">
@@ -180,7 +181,7 @@ Copyright (c) DCSV. All rights reserved.
       </div>
 
       <div class="flex flex-col gap-2">
-        <Label>Volume ({sliderValue}%)</Label>
+        <Label>{m.webclient_design_form_volume({ value: String(sliderValue) })}</Label>
         <Slider
           type="single"
           bind:value={sliderValue}
@@ -193,7 +194,7 @@ Copyright (c) DCSV. All rights reserved.
 
     <!-- Calendar -->
     <div class="flex flex-col gap-4 rounded-lg border p-6">
-      <h3 class="text-muted-foreground text-sm font-medium">Calendar</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_form_calendar()}</h3>
       <div class="flex flex-col items-center gap-3">
         <Calendar
           type="single"
@@ -201,7 +202,7 @@ Copyright (c) DCSV. All rights reserved.
           class="rounded-md border"
         />
         <p class="text-muted-foreground text-sm">
-          Selected: {calendarValue ? calendarValue.toString() : "none"}
+          {m.webclient_design_form_select_date({ date: calendarValue ? calendarValue.toString() : "none" })}
         </p>
       </div>
     </div>
@@ -210,7 +211,7 @@ Copyright (c) DCSV. All rights reserved.
     <div class="flex flex-col gap-6 rounded-lg border p-6">
       <!-- Combobox (Command + Popover) -->
       <div class="flex flex-col gap-3">
-        <h3 class="text-muted-foreground text-sm font-medium">Combobox</h3>
+        <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_form_combobox()}</h3>
         <Popover.Root bind:open={comboOpen}>
           <Popover.Trigger>
             <Button
@@ -227,9 +228,9 @@ Copyright (c) DCSV. All rights reserved.
             align="start"
           >
             <Command.Root>
-              <Command.Input placeholder="Search framework..." />
+              <Command.Input placeholder={m.webclient_design_form_search_framework()} />
               <Command.List>
-                <Command.Empty>No framework found.</Command.Empty>
+                <Command.Empty>{m.webclient_design_form_no_framework()}</Command.Empty>
                 <Command.Group>
                   {#each frameworks as framework (framework.value)}
                     <Command.Item
@@ -257,7 +258,7 @@ Copyright (c) DCSV. All rights reserved.
 
       <!-- Toggle Group -->
       <div class="flex flex-col gap-3">
-        <h3 class="text-muted-foreground text-sm font-medium">Toggle Group (Single)</h3>
+        <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_form_toggle_single()}</h3>
         <ToggleGroup.Root
           type="single"
           bind:value={alignValue}
@@ -290,7 +291,7 @@ Copyright (c) DCSV. All rights reserved.
       </div>
 
       <div class="flex flex-col gap-3">
-        <h3 class="text-muted-foreground text-sm font-medium">Toggle Group (Multi)</h3>
+        <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_form_toggle_multi()}</h3>
         <ToggleGroup.Root
           type="multiple"
           bind:value={connectivityValues}
@@ -300,7 +301,7 @@ Copyright (c) DCSV. All rights reserved.
             aria-label="Wi-Fi"
           >
             <WifiIcon class="mr-1 size-4" />
-            Wi-Fi
+            {m.webclient_design_form_wifi()}
           </ToggleGroup.Item>
           <ToggleGroup.Item
             value="bluetooth"
@@ -314,7 +315,7 @@ Copyright (c) DCSV. All rights reserved.
             aria-label="Display"
           >
             <MonitorIcon class="mr-1 size-4" />
-            Display
+            {m.webclient_design_form_display()}
           </ToggleGroup.Item>
         </ToggleGroup.Root>
       </div>
@@ -322,17 +323,17 @@ Copyright (c) DCSV. All rights reserved.
 
     <!-- Full form example -->
     <div class="flex flex-col gap-4 rounded-lg border p-6 md:col-span-2">
-      <h3 class="text-muted-foreground text-sm font-medium">Combined Form Example</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_form_combined_example()}</h3>
       <div class="grid gap-4 sm:grid-cols-2">
         <div class="flex flex-col gap-2">
-          <Label for="first-name">First name</Label>
+          <Label for="first-name">{m.webclient_forms_first_name_label()}</Label>
           <Input
             id="first-name"
             placeholder="Jane"
           />
         </div>
         <div class="flex flex-col gap-2">
-          <Label for="last-name">Last name</Label>
+          <Label for="last-name">{m.webclient_forms_last_name_label()}</Label>
           <Input
             id="last-name"
             placeholder="Doe"
@@ -340,15 +341,15 @@ Copyright (c) DCSV. All rights reserved.
         </div>
       </div>
       <div class="flex flex-col gap-2">
-        <Label for="bio">Bio</Label>
+        <Label for="bio">{m.webclient_design_form_bio()}</Label>
         <Textarea
           id="bio"
-          placeholder="Tell us about yourself..."
+          placeholder={m.webclient_design_form_bio_placeholder()}
         />
       </div>
       <div class="flex justify-end gap-2">
-        <Button variant="outline">Cancel</Button>
-        <Button>Save Changes</Button>
+        <Button variant="outline">{m.common_ui_cancel()}</Button>
+        <Button>{m.webclient_design_form_save_changes()}</Button>
       </div>
     </div>
   </div>

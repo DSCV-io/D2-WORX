@@ -11,6 +11,8 @@ using System.Security.Cryptography;
 using System.Text;
 using D2.Shared.I18n;
 using D2.Shared.Result;
+using D2.Shared.Utilities.Attributes;
+using D2.Shared.Utilities.Enums;
 using D2.Shared.Utilities.Extensions;
 
 /// <summary>
@@ -25,9 +27,13 @@ using D2.Shared.Utilities.Extensions;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>PII.</b> StreetAddress lines are postal-address PII (GDPR-sensitive).
-/// Consumers MUST apply <c>[RedactData]</c> on any field of this type
-/// before it reaches a logger / serializer sink.
+/// <b>Self-redacting PII.</b> <see cref="Line1"/>, <see cref="Line2"/>,
+/// <see cref="Line3"/>, <see cref="Line4"/>, and <see cref="Line5"/> are marked
+/// <c>[RedactData(PersonalInformation)]</c> and are masked automatically by the
+/// Serilog destructuring policy — street-address lines are postal-address PII
+/// (GDPR-sensitive). <see cref="HashId"/> is left visible because it is a one-way
+/// SHA-256 digest of the normalized address lines: opaque, non-reversible, and safe
+/// for correlation in logs and traces without leaking address content.
 /// </para>
 /// <para>
 /// <b>Normalization.</b> The hash form preserves all
@@ -45,18 +51,23 @@ public sealed record StreetAddress
     /// Gets the required first address line
     /// (post-normalization, case preserved, decorative punctuation stripped).
     /// </summary>
+    [RedactData(Reason = RedactReason.PersonalInformation)]
     public required string Line1 { get; init; }
 
     /// <summary>Gets the optional second address line.</summary>
+    [RedactData(Reason = RedactReason.PersonalInformation)]
     public string? Line2 { get; init; }
 
     /// <summary>Gets the optional third address line.</summary>
+    [RedactData(Reason = RedactReason.PersonalInformation)]
     public string? Line3 { get; init; }
 
     /// <summary>Gets the optional fourth address line.</summary>
+    [RedactData(Reason = RedactReason.PersonalInformation)]
     public string? Line4 { get; init; }
 
     /// <summary>Gets the optional fifth address line.</summary>
+    [RedactData(Reason = RedactReason.PersonalInformation)]
     public string? Line5 { get; init; }
 
     /// <summary>
@@ -64,6 +75,9 @@ public sealed record StreetAddress
     /// <c>"v1." + SHA-256(NormalizeForHash(Line1) | ... | NormalizeForHash(Line5))</c>
     /// as lowercase hex. All 5 slots always participate (deterministic
     /// positional shape; missing lines contribute <c>""</c>).
+    /// Emitted unredacted in logs — it is a one-way SHA-256 digest (opaque,
+    /// non-reversible) and is safe for correlation in logs and traces without
+    /// leaking address content.
     /// </summary>
     public required string HashId { get; init; }
 

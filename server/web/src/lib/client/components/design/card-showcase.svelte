@@ -11,11 +11,12 @@ Copyright (c) DCSV. All rights reserved.
   import { Progress } from "$lib/client/components/ui/progress/index.js";
   import BellIcon from "@lucide/svelte/icons/bell";
   import TrendingUpIcon from "@lucide/svelte/icons/trending-up";
+  import * as m from "$lib/paraglide/messages.js";
 </script>
 
 <Section
   id="cards"
-  title="Cards"
+  title={m.webclient_design_section_cards()}
 >
   <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
     <!-- Profile card -->
@@ -37,10 +38,10 @@ Copyright (c) DCSV. All rights reserved.
         </p>
       </Card.Content>
       <Card.Footer class="flex gap-2">
-        <Button size="sm">View Profile</Button>
+        <Button size="sm">{m.webclient_design_card_view_profile()}</Button>
         <Button
           size="sm"
-          variant="outline">Message</Button
+          variant="outline">{m.webclient_design_card_message()}</Button
         >
       </Card.Footer>
     </Card.Root>
@@ -48,14 +49,14 @@ Copyright (c) DCSV. All rights reserved.
     <!-- Stats card -->
     <Card.Root>
       <Card.Header>
-        <Card.Description>Monthly Revenue</Card.Description>
+        <Card.Description>{m.webclient_design_card_monthly_revenue()}</Card.Description>
         <Card.Title class="text-3xl tabular-nums">$45,231</Card.Title>
       </Card.Header>
       <Card.Content>
         <div class="flex items-center gap-2 text-sm">
           <TrendingUpIcon class="size-4 text-green-600 dark:text-green-400" />
           <span class="font-medium text-green-600 dark:text-green-400">+20.1%</span>
-          <span class="text-muted-foreground">from last month</span>
+          <span class="text-muted-foreground">{m.webclient_design_card_from_last_month()}</span>
         </div>
       </Card.Content>
       <Card.Footer>
@@ -70,7 +71,7 @@ Copyright (c) DCSV. All rights reserved.
     <Card.Root>
       <Card.Header>
         <div class="flex items-center justify-between">
-          <Card.Title class="text-base">Notifications</Card.Title>
+          <Card.Title class="text-base">{m.webclient_design_card_notifications()}</Card.Title>
           <Badge variant="secondary">3 new</Badge>
         </div>
       </Card.Header>

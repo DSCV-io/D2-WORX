@@ -53,7 +53,7 @@ public static class IRequestContextGeoExtensions
             if (raw.Falsey())
                 return null;
 
-            if (raw.TryParseTruthyNull<CountryCode>(out var parsed) && parsed.HasValue)
+            if (raw.TryParseTruthyNull<CountryCode>(out var parsed))
                 return parsed;
 
             return null;

@@ -3,6 +3,7 @@
 // -----------------------------------------------------------------------
 
 import { InterceptingCall, type Interceptor } from "@grpc/grpc-js";
+import { truthy } from "@d2/utilities";
 import { CommonHeaders } from "@d2/headers-common";
 import type { ILogger } from "@d2/logging";
 import {
@@ -51,18 +52,18 @@ export function createContextPropagationInterceptor(opts: {
           metadata.set(CommonHeaders.PROPAGATED_CONTEXT, encoded);
         }
         const tp = getCurrentTraceparent?.();
-        if (tp !== undefined && tp.length > 0) {
-          metadata.set(CommonHeaders.TRACEPARENT, tp);
+        if (truthy(tp)) {
+          metadata.set(CommonHeaders.TRACEPARENT, tp!);
         }
         const ts = getCurrentTracestate?.();
-        if (ts !== undefined && ts.length > 0) {
-          metadata.set(CommonHeaders.TRACESTATE, ts);
+        if (truthy(ts)) {
+          metadata.set(CommonHeaders.TRACESTATE, ts!);
         }
         logger?.debug("context-propagation interceptor attached metadata", {
           method: options.method_definition.path,
           hasContext: ctx !== undefined,
-          hasTraceparent: tp !== undefined && tp.length > 0,
-          hasTracestate: ts !== undefined && ts.length > 0,
+          hasTraceparent: truthy(tp),
+          hasTracestate: truthy(ts),
         });
         next(metadata, listener);
       },

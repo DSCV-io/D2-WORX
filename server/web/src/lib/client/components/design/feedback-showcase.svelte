@@ -10,16 +10,17 @@ Copyright (c) DCSV. All rights reserved.
   import { toast } from "svelte-sonner";
   import LoaderCircleIcon from "@lucide/svelte/icons/loader-circle";
   import InboxIcon from "@lucide/svelte/icons/inbox";
+  import * as m from "$lib/paraglide/messages.js";
 </script>
 
 <Section
   id="feedback"
-  title="Feedback"
+  title={m.webclient_design_section_feedback()}
 >
   <div class="grid gap-6 md:grid-cols-2">
     <!-- Progress -->
     <div class="flex flex-col gap-4 rounded-lg border p-6">
-      <h3 class="text-muted-foreground text-sm font-medium">Progress Bars</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_feedback_progress_bars()}</h3>
       <div class="flex flex-col gap-3">
         <div class="flex flex-col gap-1.5">
           <span class="text-muted-foreground text-xs">25%</span>
@@ -42,7 +43,7 @@ Copyright (c) DCSV. All rights reserved.
 
     <!-- Skeleton -->
     <div class="flex flex-col gap-4 rounded-lg border p-6">
-      <h3 class="text-muted-foreground text-sm font-medium">Skeleton Loaders</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_feedback_skeleton_loaders()}</h3>
       <div class="flex flex-col gap-4">
         <!-- Card skeleton -->
         <div class="flex items-center gap-4">
@@ -68,7 +69,7 @@ Copyright (c) DCSV. All rights reserved.
 
     <!-- Spinner -->
     <div class="flex flex-col gap-4 rounded-lg border p-6">
-      <h3 class="text-muted-foreground text-sm font-medium">Spinners</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_feedback_spinners()}</h3>
       <div class="flex items-center gap-8">
         <div class="flex flex-col items-center gap-2">
           <LoaderCircleIcon class="text-muted-foreground size-4 animate-spin" />
@@ -91,63 +92,66 @@ Copyright (c) DCSV. All rights reserved.
 
     <!-- Empty State -->
     <div class="flex flex-col gap-4 rounded-lg border p-6">
-      <h3 class="text-muted-foreground text-sm font-medium">Empty State</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_feedback_empty_state()}</h3>
       <div class="flex flex-col items-center justify-center gap-3 py-8">
         <div class="bg-muted rounded-full p-3">
           <InboxIcon class="text-muted-foreground size-8" />
         </div>
         <div class="text-center">
-          <h4 class="text-sm font-medium">No results found</h4>
+          <h4 class="text-sm font-medium">{m.webclient_design_feedback_no_results()}</h4>
           <p class="text-muted-foreground mt-1 text-xs">
-            Try adjusting your search or filter to find what you're looking for.
+            {m.webclient_design_feedback_no_results_hint()}
           </p>
         </div>
         <Button
           variant="outline"
-          size="sm">Clear Filters</Button
+          size="sm">{m.webclient_design_feedback_clear_filters()}</Button
         >
       </div>
     </div>
 
     <!-- Toasts -->
     <div class="flex flex-col gap-4 rounded-lg border p-6 md:col-span-2">
-      <h3 class="text-muted-foreground text-sm font-medium">Toast Notifications</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">{m.webclient_design_feedback_toast_notifications()}</h3>
       <div class="flex flex-wrap gap-3">
         <Button
           variant="outline"
-          onclick={() => toast("Event has been created")}
+          onclick={() => toast(m.webclient_design_feedback_event_created())}
         >
-          Default Toast
+          {m.webclient_design_feedback_toast_default()}
         </Button>
         <Button
           variant="outline"
-          onclick={() => toast.success("Successfully saved!")}
+          onclick={() => toast.success(m.webclient_design_feedback_saved())}
         >
-          Success Toast
+          {m.webclient_design_feedback_toast_success()}
         </Button>
         <Button
           variant="outline"
-          onclick={() => toast.error("Something went wrong")}
+          onclick={() => toast.error(m.webclient_error_something_went_wrong())}
         >
-          Error Toast
+          {m.webclient_design_feedback_toast_error()}
         </Button>
         <Button
           variant="outline"
-          onclick={() => toast.warning("Please review before continuing")}
+          onclick={() => toast.warning(m.webclient_design_feedback_review_before_continuing())}
         >
-          Warning Toast
+          {m.webclient_design_feedback_toast_warning()}
         </Button>
         <Button
           variant="outline"
-          onclick={() => toast.info("New version available")}
+          onclick={() => toast.info(m.webclient_design_feedback_new_version())}
         >
-          Info Toast
+          {m.webclient_design_feedback_toast_info()}
         </Button>
         <Button
           variant="outline"
-          onclick={() => toast("Event created", { description: "Monday, January 3rd at 6:00pm" })}
+          onclick={() =>
+            toast(m.webclient_design_feedback_event_with_desc(), {
+              description: m.webclient_design_feedback_event_date(),
+            })}
         >
-          With Description
+          {m.webclient_design_feedback_toast_with_description()}
         </Button>
       </div>
     </div>

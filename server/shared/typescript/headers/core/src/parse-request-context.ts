@@ -2,7 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import { UUID_RE } from "@d2/utilities";
+import { falsey, UUID_RE } from "@d2/utilities";
 import type {
   IRequestContext,
   ActorEntry,
@@ -195,7 +195,7 @@ function _composeRequestContext(
 }
 
 function _toOrgType(value: string | undefined): OrgType | undefined {
-  if (value === undefined || value.length === 0) return undefined;
+  if (falsey(value)) return undefined;
   // Compile-time check that the runtime values match OrgType.
   for (const candidate of Object.values(OrgType)) {
     if (candidate === value) return candidate;
@@ -204,7 +204,7 @@ function _toOrgType(value: string | undefined): OrgType | undefined {
 }
 
 function _toRole(value: string | undefined): Role | undefined {
-  if (value === undefined || value.length === 0) return undefined;
+  if (falsey(value)) return undefined;
   for (const candidate of Object.values(Role)) {
     if (candidate === value) return candidate;
   }
@@ -295,9 +295,9 @@ function _isServiceIdentity(payload: JwtPayload): boolean {
 }
 
 function _parseScopes(value: string | undefined): ReadonlySet<string> {
-  if (value === undefined || value.length === 0) return new Set<string>();
+  if (falsey(value)) return new Set<string>();
   const out = new Set<string>();
-  for (const entry of value.split(/\s+/)) {
+  for (const entry of value!.split(/\s+/)) {
     if (entry.length === 0) continue;
     out.add(entry);
   }
