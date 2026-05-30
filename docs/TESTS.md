@@ -198,6 +198,21 @@ The matcher version produces better failure messages and forces consistency.
 
 ---
 
+## Asserting translation keys
+
+When a test asserts a translation/message key (e.g. `result.messages[0].key`, `error.Key`), reference the generated catalog constant — `TK.common.errors.NOT_FOUND` (TS) / `TK.Common.Errors.NOT_FOUND.Key` (.NET) — never a bare `"common_errors_NOT_FOUND"` literal. The constant gives compile-time safety + rename support: a key rename then fails the test at compile time instead of silently asserting a stale string.
+
+Carve-outs — keep the bare literal, because there the literal IS the test:
+
+- **Catalog self-tests** that pin `constant === "the_string"` (converting → `expect(c).toBe(c)`, which tests nothing).
+- **Cross-language wire-contract / parity tests** — the literal is a drift tripwire independent of the catalog; a coordinated key rename must FAIL the test, so the assertion cannot reference the catalog.
+- **Simulated-wire input fixtures** — a raw external (e.g. .NET) payload literal fed into a parser/transform; it represents external data, not our code referencing our catalog.
+- **Orphan keys** with no catalog entry (test-only placeholders — no constant exists to reference).
+
+(`rules.md` carries the full predicate + the evidence grep.)
+
+---
+
 ## Test Categories
 
 CI runs each category in parallel. Don't lump categories together — separation enables faster failure feedback.

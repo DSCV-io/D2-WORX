@@ -2,6 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
+import { TK } from "@d2/i18n/keys";
 import { describe, it, expect } from "vitest";
 import { normalizeKeys, parseGatewayResponse, networkErrorResult } from "./gateway-response";
 
@@ -122,7 +123,7 @@ describe("parseGatewayResponse — PascalCase responses", () => {
     const result = await parseGatewayResponse(response);
 
     expect(result.success).toBe(false);
-    expect(result.messages).toEqual([{ key: "common_errors_NOT_FOUND" }]);
+    expect(result.messages).toEqual([{ key: TK.common.errors.NOT_FOUND }]);
     expect(result.errorCode).toBe("NOT_FOUND");
     expect(result.statusCode).toBe(404);
   });
@@ -150,7 +151,7 @@ describe("parseGatewayResponse — camelCase responses", () => {
     const result = await parseGatewayResponse(response);
 
     expect(result.success).toBe(false);
-    expect(result.messages).toEqual([{ key: "common_errors_TOO_MANY_REQUESTS" }]);
+    expect(result.messages).toEqual([{ key: TK.common.errors.TOO_MANY_REQUESTS }]);
     expect(result.errorCode).toBe("RATE_LIMITED");
     expect(result.statusCode).toBe(429);
   });
@@ -221,7 +222,7 @@ describe("parseGatewayResponse — edge cases", () => {
     // Non-JSON bodies wrap in a synthetic REQUEST_FAILED TKMessage rather
     // than smuggling the raw text into the i18n envelope — see §11.30 wire
     // shape spec at contracts/tk-message.
-    expect(result.messages).toEqual([{ key: "common_errors_REQUEST_FAILED" }]);
+    expect(result.messages).toEqual([{ key: TK.common.errors.REQUEST_FAILED }]);
   });
 
   it("handles whitespace-only body as empty", async () => {
@@ -275,7 +276,7 @@ describe("parseGatewayResponse — edge cases", () => {
         field: "email",
         errors: [
           { key: "common_validation_EMAIL_REQUIRED" },
-          { key: "common_validation_EMAIL_INVALID" },
+          { key: TK.common.validation.EMAIL_INVALID },
         ],
       },
     ]);
@@ -325,7 +326,7 @@ describe("networkErrorResult", () => {
 
     expect(result.success).toBe(false);
     expect(result.statusCode).toBe(500);
-    expect(result.messages).toEqual([{ key: "common_errors_REQUEST_FAILED" }]);
+    expect(result.messages).toEqual([{ key: TK.common.errors.REQUEST_FAILED }]);
   });
 
   it("creates a REQUEST_FAILED TKMessage for non-Error string values", () => {
@@ -333,13 +334,13 @@ describe("networkErrorResult", () => {
 
     expect(result.success).toBe(false);
     expect(result.statusCode).toBe(500);
-    expect(result.messages).toEqual([{ key: "common_errors_REQUEST_FAILED" }]);
+    expect(result.messages).toEqual([{ key: TK.common.errors.REQUEST_FAILED }]);
   });
 
   it("creates a REQUEST_FAILED TKMessage for null", () => {
     const result = networkErrorResult(null);
 
     expect(result.success).toBe(false);
-    expect(result.messages).toEqual([{ key: "common_errors_REQUEST_FAILED" }]);
+    expect(result.messages).toEqual([{ key: TK.common.errors.REQUEST_FAILED }]);
   });
 });

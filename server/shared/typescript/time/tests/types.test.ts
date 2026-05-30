@@ -2,6 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
+import { TK } from "@d2/i18n/keys";
 import { describe, expect, it } from "vitest";
 import { Temporal } from "temporal-polyfill";
 import { LocalAnchoredEvent, ZonedInstant } from "../src/types.js";
@@ -60,7 +61,7 @@ describe("ZonedInstant", () => {
     expect(result.inputErrors).toHaveLength(1);
     expect(result.inputErrors[0]!.field).toBe("ianaIdentifier");
     expect(result.inputErrors[0]!.errors[0]!.key).toBe(
-      "common_errors_NOT_NULL_VIOLATION",
+      TK.common.errors.NOT_NULL_VIOLATION,
     );
   });
 
@@ -72,7 +73,7 @@ describe("ZonedInstant", () => {
 
     expect(result.success).toBe(false);
     expect(result.inputErrors[0]!.errors[0]!.key).toBe(
-      "common_errors_NOT_NULL_VIOLATION",
+      TK.common.errors.NOT_NULL_VIOLATION,
     );
   });
 
@@ -86,7 +87,7 @@ describe("ZonedInstant", () => {
 
       expect(result.success).toBe(false);
       expect(result.inputErrors[0]!.errors[0]!.key).toBe(
-        "common_errors_NOT_NULL_VIOLATION",
+        TK.common.errors.NOT_NULL_VIOLATION,
       );
     },
   );
@@ -99,7 +100,7 @@ describe("ZonedInstant", () => {
 
     expect(result.success).toBe(false);
     expect(result.inputErrors[0]!.errors[0]!.key).toBe(
-      "common_time_INVALID_IANA_IDENTIFIER",
+      TK.common.time.INVALID_IANA_IDENTIFIER,
     );
   });
 
@@ -113,7 +114,7 @@ describe("ZonedInstant", () => {
 
       expect(result.success).toBe(false);
       expect(result.inputErrors[0]!.errors[0]!.key).toBe(
-        "common_time_INVALID_IANA_IDENTIFIER",
+        TK.common.time.INVALID_IANA_IDENTIFIER,
       );
     },
   );
@@ -128,7 +129,7 @@ describe("ZonedInstant", () => {
 
       expect(result.success).toBe(false);
       expect(result.inputErrors[0]!.errors[0]!.key).toBe(
-        "common_time_INVALID_IANA_IDENTIFIER",
+        TK.common.time.INVALID_IANA_IDENTIFIER,
       );
     },
   );
@@ -310,7 +311,7 @@ describe("LocalAnchoredEvent", () => {
 
     expect(result.success).toBe(false);
     expect(result.inputErrors[0]!.errors[0]!.key).toBe(
-      "common_errors_NOT_NULL_VIOLATION",
+      TK.common.errors.NOT_NULL_VIOLATION,
     );
   });
 
@@ -322,7 +323,7 @@ describe("LocalAnchoredEvent", () => {
 
     expect(result.success).toBe(false);
     expect(result.inputErrors[0]!.errors[0]!.key).toBe(
-      "common_errors_NOT_NULL_VIOLATION",
+      TK.common.errors.NOT_NULL_VIOLATION,
     );
   });
 
@@ -334,7 +335,7 @@ describe("LocalAnchoredEvent", () => {
 
     expect(result.success).toBe(false);
     expect(result.inputErrors[0]!.errors[0]!.key).toBe(
-      "common_time_INVALID_IANA_IDENTIFIER",
+      TK.common.time.INVALID_IANA_IDENTIFIER,
     );
   });
 
@@ -348,7 +349,7 @@ describe("LocalAnchoredEvent", () => {
 
       expect(result.success).toBe(false);
       expect(result.inputErrors[0]!.errors[0]!.key).toBe(
-        "common_time_INVALID_IANA_IDENTIFIER",
+        TK.common.time.INVALID_IANA_IDENTIFIER,
       );
     },
   );

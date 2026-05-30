@@ -9,6 +9,7 @@ namespace D2.Shared.Tests.Unit.Validation;
 using System.Diagnostics;
 using AwesomeAssertions;
 using D2.Shared.Geo.Abstractions;
+using D2.Shared.I18n;
 using D2.Shared.Validation;
 using Xunit;
 
@@ -31,7 +32,7 @@ public sealed class PhoneValidatorTests
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be("VALIDATION_FAILED");
         result.InputErrors[0].Field.Should().Be("phone");
-        result.InputErrors[0].Errors[0].Key.Should().Be("common_validation_PHONE_INVALID");
+        result.InputErrors[0].Errors[0].Key.Should().Be(TK.Common.Validation.PHONE_INVALID.Key);
     }
 
     [Fact]

@@ -8,6 +8,7 @@ namespace D2.Shared.Tests.Unit.Validation;
 
 using System.Diagnostics;
 using AwesomeAssertions;
+using D2.Shared.I18n;
 using D2.Shared.Validation;
 using Xunit;
 
@@ -30,7 +31,7 @@ public sealed class EmailValidatorTests
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be("VALIDATION_FAILED");
         result.InputErrors[0].Field.Should().Be("email");
-        result.InputErrors[0].Errors[0].Key.Should().Be("common_validation_EMAIL_INVALID");
+        result.InputErrors[0].Errors[0].Key.Should().Be(TK.Common.Validation.EMAIL_INVALID.Key);
     }
 
     [Fact]

@@ -13,14 +13,35 @@ import {
 } from "@d2/result";
 import { falsey } from "@d2/utilities";
 import type { IPostalCodeValidator } from "@d2/validation-abstractions";
-import { postcodeValidator } from "postcode-validator";
+
+import postalCodeRegexes from "../../../../../../contracts/validation/postal-code-regexes.json" with { type: "json" };
+
+/**
+ * Per-country postal-code regex map, compiled once at module load. Keys are
+ * ISO 3166-1 alpha-2 country codes; each value is the anchored pattern from
+ * the shared dataset, compiled with the `"i"` flag to mirror the .NET side's
+ * `RegexOptions.IgnoreCase`. The `$comment` metadata key in the JSON is
+ * skipped — it is documentation, not a country entry.
+ *
+ * Sourced from `contracts/validation/postal-code-regexes.json`, the SINGLE
+ * cross-runtime source of truth (the .NET `D2.Shared.Validation` embeds the
+ * same file). Building a `RegExp` per entry up front avoids recompiling on
+ * every `validate` call.
+ */
+const COUNTRY_REGEXES: ReadonlyMap<string, RegExp> = new Map(
+  Object.entries(postalCodeRegexes as Record<string, string>)
+    .filter(([key]) => !key.startsWith("$"))
+    .map(([key, pattern]) => [key, new RegExp(pattern, "i")] as const),
+);
 
 /**
  * Default `IPostalCodeValidator` implementation. Mirrors the .NET
- * `D2.Shared.Validation.DefaultPostalCodeValidator` — both run a
- * country-aware structural check and normalize to trimmed + uppercased form.
- * An unknown country fails closed (ValidationFailed, never a throw) on both
- * runtimes, so cross-language behavior on unsupported countries is identical.
+ * `D2.Shared.Validation.DefaultPostalCodeValidator` — both compile the SAME
+ * per-country patterns from `contracts/validation/postal-code-regexes.json`,
+ * run a country-aware structural check, and normalize to trimmed + uppercased
+ * form. An unknown / absent country fails closed (ValidationFailed, never a
+ * throw) on both runtimes, so cross-language behavior on unsupported countries
+ * is identical.
  */
 export class DefaultPostalCodeValidator implements IPostalCodeValidator {
   /**
@@ -52,25 +73,17 @@ export class DefaultPostalCodeValidator implements IPostalCodeValidator {
 
     // `falsey` already excluded undefined / empty / whitespace.
     // Normalize (trim + uppercase) before validating so the regex sees the
-    // same form the .NET side matches against. `postcode-validator` applies
-    // the per-country regex verbatim, so the uppercase normalization here is
-    // what keeps case-insensitive inputs (e.g. "k1a 0b1") matching.
+    // same form the .NET side matches against.
     const normalized = postalCode!.trim().toUpperCase();
 
     // The `CountryCode` brand erases to its underlying alpha-2 string at
-    // runtime, the form `postcode-validator` keys its per-country regexes on.
-    const country = countryCode as string;
+    // runtime, the form the dataset keys its per-country regexes on.
+    const regex = COUNTRY_REGEXES.get(countryCode as string);
 
-    // Fail closed: `postcodeValidator` throws for an unknown country code.
-    // Treat any throw as a validation failure rather than letting it escape.
-    let isValid: boolean;
-    try {
-      isValid = postcodeValidator(normalized, country);
-    } catch {
-      return DefaultPostalCodeValidator.invalid();
-    }
+    // Fail closed: an unknown / unsupported country has no compiled pattern.
+    if (regex === undefined) return DefaultPostalCodeValidator.invalid();
 
-    if (!isValid) return DefaultPostalCodeValidator.invalid();
+    if (!regex.test(normalized)) return DefaultPostalCodeValidator.invalid();
 
     return ok<string>(normalized);
   }

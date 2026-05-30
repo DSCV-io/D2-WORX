@@ -23,8 +23,7 @@
     "@d2/result": "workspace:*",
     "@d2/utilities": "workspace:*",
     "@d2/validation-abstractions": "workspace:*",
-    "libphonenumber-js": "1.12.38",
-    "postcode-validator": "3.10.9"
+    "libphonenumber-js": "1.12.38"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "4.0.18",

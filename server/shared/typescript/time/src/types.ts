@@ -2,6 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
+import { TK } from "@d2/i18n/keys";
 import type { Temporal } from "temporal-polyfill";
 import {
   type D2Result,
@@ -16,13 +17,13 @@ import {
  * `TK.Common.Time.INVALID_IANA_IDENTIFIER` from the .NET TK SrcGen catalog
  * (driven by `contracts/messages/en-US.json`).
  */
-const TK_INVALID_IANA = tk("common_time_INVALID_IANA_IDENTIFIER");
+const TK_INVALID_IANA = tk(TK.common.time.INVALID_IANA_IDENTIFIER);
 
 /**
  * Translation key for missing required parameters. Mirrors
  * `TK.Common.Errors.NOT_NULL_VIOLATION` from the .NET TK SrcGen catalog.
  */
-const TK_NOT_NULL = tk("common_errors_NOT_NULL_VIOLATION");
+const TK_NOT_NULL = tk(TK.common.errors.NOT_NULL_VIOLATION);
 
 /**
  * Cross-language canonical-name override map. Node.js's `Intl.DateTimeFormat`

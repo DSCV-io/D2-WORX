@@ -2,6 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
+import { TK } from "@d2/i18n/keys";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { D2Result } from "@d2/result";
 
@@ -216,7 +217,7 @@ describe("authApiCall", () => {
 
     it("returns the D2Result from executeFetch on failure", async () => {
       const expected = D2Result.fail({
-        messages: [{ key: "common_errors_NOT_FOUND" }],
+        messages: [{ key: TK.common.errors.NOT_FOUND }],
         statusCode: 404,
       });
       mockExecuteFetch.mockResolvedValue(expected);
@@ -226,7 +227,7 @@ describe("authApiCall", () => {
       expect(result).toBe(expected);
       expect(result.success).toBe(false);
       expect(result.statusCode).toBe(404);
-      expect(result.messages[0]).toEqual({ key: "common_errors_NOT_FOUND" });
+      expect(result.messages[0]).toEqual({ key: TK.common.errors.NOT_FOUND });
     });
 
     it("propagates rejections from executeFetch", async () => {

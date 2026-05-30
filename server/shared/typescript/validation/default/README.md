@@ -16,7 +16,7 @@ Default implementations of the three validator contracts declared in [`@d2/valid
 | ---------------------------- | ---------------------- | ---------------------------------------- | -------------------------------- | -------------------------------------- |
 | `DefaultEmailValidator`      | `IEmailValidator`      | `EMAIL_PATTERN` regex (case-insensitive) | trimmed + lowercased address     | `EMAIL_INVALID`                        |
 | `DefaultPhoneValidator`      | `IPhoneValidator`      | `libphonenumber-js`                      | E.164-formatted number           | `PHONE_INVALID`                        |
-| `DefaultPostalCodeValidator` | `IPostalCodeValidator` | `postcode-validator`                     | trimmed + uppercased postal code | `POSTAL_CODE_INVALID`                  |
+| `DefaultPostalCodeValidator` | `IPostalCodeValidator` | shared `contracts/validation/postal-code-regexes.json` per-country regex map | trimmed + uppercased postal code | `POSTAL_CODE_INVALID`                  |
 
 Each `validate(...)` returns `D2Result<string>`:
 
@@ -51,12 +51,14 @@ const postal = postalCodeValidator.validate("sw1a 1aa", CountryCode.GB);
 
 - **Email** — `EMAIL_PATTERN` is the shared source of truth. The exported constant is asserted byte-identical against the .NET `DefaultEmailValidator.EMAIL_PATTERN` const by a parity test. Change one side and the test fails until both match. ASCII-only by construction; total length 1-254; local part 1-64; at least one dot in the domain.
 - **Phone** — both runtimes delegate to a libphonenumber port (libphonenumber-js here, libphonenumber-csharp on .NET) and normalize to E.164, so the accept/reject decision and the normalized output match.
-- **Postal code** — country-aware structural check; an **unknown _or absent_ country fails closed** (`POSTAL_CODE_INVALID`, never a throw) on both runtimes — there is no permissive country-agnostic fallback. Both runtimes normalize (trim + uppercase) before matching.
-- **Country mapping** — `CountryCode` from `@d2/geo-abstractions` is a branded alpha-2 string whose runtime value IS the 2-letter region identifier `libphonenumber-js` / `postcode-validator` expect, so the bridge is a compile-time cast only.
+- **Postal code** — both runtimes compile the SAME per-country regex map from the single shared dataset [`contracts/validation/postal-code-regexes.json`](../../../../../contracts/validation/postal-code-regexes.json) (this package imports the JSON directly; the .NET side embeds it). Country-aware structural check; an **unknown _or absent_ country fails closed** (`POSTAL_CODE_INVALID`, never a throw) on both runtimes — there is no permissive country-agnostic fallback. Both runtimes normalize (trim + uppercase) before matching, and compile each pattern case-insensitively (TS `"i"` flag / .NET `RegexOptions.IgnoreCase`). The dataset is ported from `postcode-validator@3.10.9` with one deliberate correction (`[A-z]` → `[A-Za-z]` in the `UK`/`GB` patterns, an upstream bug).
+- **Country mapping** — `CountryCode` from `@d2/geo-abstractions` is a branded alpha-2 string whose runtime value IS the 2-letter region identifier `libphonenumber-js` expects and the dataset keys its per-country regexes on, so the bridge is a compile-time cast only.
 
 ## Version pins
 
-`libphonenumber-js` and `postcode-validator` are pinned to **exact** versions (no `^` / `~`). The pins match `server/web`'s versions so the SvelteKit form layer and this shared library validate identically. Metadata-bearing libraries shift their accept/reject boundary between minor releases — an exact pin keeps that boundary stable across both consumers and across the .NET parity fixtures.
+`libphonenumber-js` is pinned to an **exact** version (no `^` / `~`). The pin matches `server/web`'s version so the SvelteKit form layer and this shared library validate identically. Metadata-bearing libraries shift their accept/reject boundary between minor releases — an exact pin keeps that boundary stable across both consumers and across the .NET parity fixtures.
+
+Postal-code validation no longer depends on the `postcode-validator` npm — it reads the shared `contracts/validation/postal-code-regexes.json` dataset directly. The provenance/version stamp (ported from `postcode-validator@3.10.9`, with the `[A-z]` → `[A-Za-z]` UK/GB correction) lives in that file's `$comment`.
 
 ## Dependencies
 
@@ -66,4 +68,5 @@ const postal = postalCodeValidator.validate("sw1a 1aa", CountryCode.GB);
 - `@d2/i18n` — the `TK` key catalog (`@d2/i18n/keys`) supplying the `*_INVALID` translation keys.
 - `@d2/utilities` — `falsey` boundary helper for null / empty / whitespace input guards.
 - `libphonenumber-js` — phone-number parsing + E.164 normalization (exact pin).
-- `postcode-validator` — per-country postal-code structural validation (exact pin).
+
+Postal-code validation has no runtime npm dependency — it imports the shared `contracts/validation/postal-code-regexes.json` dataset directly (`resolveJsonModule`).

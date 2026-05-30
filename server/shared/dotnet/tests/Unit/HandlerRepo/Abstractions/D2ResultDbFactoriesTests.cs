@@ -37,7 +37,7 @@ public sealed class D2ResultDbFactoriesTests
         result.StatusCode.Should().Be(HttpStatusCode.Conflict);
         result.ErrorCode.Should().Be(DbErrorCodes.CONCURRENCY_CONFLICT);
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("common_errors_CONCURRENCY_CONFLICT");
+            .Which.Key.Should().Be(TK.Common.Errors.CONCURRENCY_CONFLICT.Key);
         result.InputErrors.Should().BeEmpty();
     }
 
@@ -49,7 +49,7 @@ public sealed class D2ResultDbFactoriesTests
         var result = D2Result.ConcurrencyConflict(messages: custom_messages);
 
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("common_errors_CONFLICT");
+            .Which.Key.Should().Be(TK.Common.Errors.CONFLICT.Key);
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public sealed class D2ResultDbFactoriesTests
         result.StatusCode.Should().Be(HttpStatusCode.Conflict);
         result.ErrorCode.Should().Be(DbErrorCodes.UNIQUE_VIOLATION);
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("common_errors_UNIQUE_VIOLATION");
+            .Which.Key.Should().Be(TK.Common.Errors.UNIQUE_VIOLATION.Key);
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public sealed class D2ResultDbFactoriesTests
         var result = D2Result.UniqueViolation(messages: custom_messages);
 
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("common_errors_CONFLICT");
+            .Which.Key.Should().Be(TK.Common.Errors.CONFLICT.Key);
     }
 
     [Fact]
@@ -121,7 +121,7 @@ public sealed class D2ResultDbFactoriesTests
         result.StatusCode.Should().Be(HttpStatusCode.Conflict);
         result.ErrorCode.Should().Be(DbErrorCodes.FOREIGN_KEY_VIOLATION);
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("common_errors_FOREIGN_KEY_VIOLATION");
+            .Which.Key.Should().Be(TK.Common.Errors.FOREIGN_KEY_VIOLATION.Key);
     }
 
     [Fact]
@@ -152,7 +152,7 @@ public sealed class D2ResultDbFactoriesTests
         result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         result.ErrorCode.Should().Be(DbErrorCodes.NOT_NULL_VIOLATION);
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("common_errors_NOT_NULL_VIOLATION");
+            .Which.Key.Should().Be(TK.Common.Errors.NOT_NULL_VIOLATION.Key);
     }
 
     [Fact]
@@ -181,7 +181,7 @@ public sealed class D2ResultDbFactoriesTests
         result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         result.ErrorCode.Should().Be(DbErrorCodes.CHECK_VIOLATION);
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("common_errors_CHECK_VIOLATION");
+            .Which.Key.Should().Be(TK.Common.Errors.CHECK_VIOLATION.Key);
     }
 
     [Fact]
@@ -210,7 +210,7 @@ public sealed class D2ResultDbFactoriesTests
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
         result.ErrorCode.Should().Be(DbErrorCodes.DB_TIMEOUT);
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("common_errors_DB_TIMEOUT");
+            .Which.Key.Should().Be(TK.Common.Errors.DB_TIMEOUT.Key);
         result.InputErrors.Should().BeEmpty();
     }
 
@@ -237,7 +237,7 @@ public sealed class D2ResultDbFactoriesTests
         result.StatusCode.Should().Be(HttpStatusCode.Conflict);
         result.ErrorCode.Should().Be(DbErrorCodes.DB_DEADLOCK);
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("common_errors_DB_DEADLOCK");
+            .Which.Key.Should().Be(TK.Common.Errors.DB_DEADLOCK.Key);
     }
 
     [Fact]
@@ -260,7 +260,7 @@ public sealed class D2ResultDbFactoriesTests
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
         result.ErrorCode.Should().Be(DbErrorCodes.DB_CONNECTION_FAILURE);
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("common_errors_DB_CONNECTION_FAILURE");
+            .Which.Key.Should().Be(TK.Common.Errors.DB_CONNECTION_FAILURE.Key);
     }
 
     [Fact]

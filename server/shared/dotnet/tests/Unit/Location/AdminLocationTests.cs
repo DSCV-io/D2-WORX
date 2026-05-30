@@ -47,7 +47,7 @@ public sealed class AdminLocationTests
         var result = AdminLocation.Create();
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_admin_empty_record");
+            .Which.Key.Should().Be(TK.Geo.Validation.ADMIN_EMPTY_RECORD.Key);
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public sealed class AdminLocationTests
         var result = AdminLocation.Create(city: "   ", postalCode: "   ");
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_admin_empty_record");
+            .Which.Key.Should().Be(TK.Geo.Validation.ADMIN_EMPTY_RECORD.Key);
     }
 
     // -----------------------------------------------------------------------
@@ -99,7 +99,7 @@ public sealed class AdminLocationTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_admin_country_subdivision_mismatch");
+            .Which.Key.Should().Be(TK.Geo.Validation.ADMIN_COUNTRY_SUBDIVISION_MISMATCH.Key);
     }
 
     // -----------------------------------------------------------------------
@@ -156,7 +156,7 @@ public sealed class AdminLocationTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_postal_code_invalid");
+            .Which.Key.Should().Be(TK.Geo.Validation.POSTAL_CODE_INVALID.Key);
     }
 
     [Fact]
@@ -296,6 +296,8 @@ public sealed class AdminLocationTests
         public D2Result<string> Validate(string? postalCode, CountryCode? countryCode = null)
             => D2Result<string>.ValidationFailed(
                 messages: [TK.Geo.Validation.POSTAL_CODE_INVALID],
-                inputErrors: [new InputError("postalCode", [TK.Geo.Validation.POSTAL_CODE_INVALID])]);
+                inputErrors: [new InputError(
+                    "postalCode",
+                    [TK.Geo.Validation.POSTAL_CODE_INVALID])]);
     }
 }

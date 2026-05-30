@@ -1,7 +1,7 @@
 {
-  "$comment": "Ported from postcode-validator@3.10.9; keep in sync with the @d2/validation TS package's npm version. Patterns that lacked both ^ and $ anchors in the source were wrapped as ^(?:...)$ (marked with a trailing comment in the key name is not possible in JSON — see README for the list of wrapped entries: GI, BT, AL, CU, UM, AI, AF, SD, VC, TA, NA, EH, BL, TZ, AC, VG, MZ, MF, MM, SV, IR).",
-  "UK": "^([A-Z]){1}([0-9][0-9]|[0-9]|[A-Z][0-9][A-Z]|[A-Z][0-9][0-9]|[A-Z][0-9]|[0-9][A-Z]){1}([ ])?([0-9][A-z][A-z]){1}$",
-  "GB": "^([A-Z]){1}([0-9][0-9]|[0-9]|[A-Z][0-9][A-Z]|[A-Z][0-9][0-9]|[A-Z][0-9]|[0-9][A-Z]){1}([ ])?([0-9][A-z][A-z]){1}$",
+  "$comment": "SINGLE SOURCE OF TRUTH for the per-country postal-code regex map. BOTH runtimes read THIS file: the .NET D2.Shared.Validation embeds it (MSBuild EmbeddedResource Link'd to PostalCodeRegexData.json) and the TypeScript @d2/validation package imports it directly (resolveJsonModule). Keys are ISO 3166-1 alpha-2 country codes; values are anchored regex patterns applied case-insensitively (.NET RegexOptions.IgnoreCase / TS 'i' flag). Ported from postcode-validator@3.10.9 with ONE deliberate correction: the UK and GB patterns used '[A-z]' (ASCII 65-122, which wrongly includes the six punctuation chars [ \\ ] ^ _ ` between 'Z' and 'a') — an upstream bug — replaced here with '[A-Za-z]' (4 occurrences total, two per pattern). The 21 '[A-Z]' ranges elsewhere are correct and left as-is. Patterns that lacked both '^' and '$' anchors in the source were wrapped as '^(?:...)$': GI, BT, AL, CU, UM, AI, AF, SD, VC, TA, NA, EH, BL, TZ, AC, VG, MZ, MF, MM, SV, IR. The cross-language parity corpus at contracts/validation/fixtures/postcode.json asserts both runtimes agree per country.",
+  "UK": "^([A-Z]){1}([0-9][0-9]|[0-9]|[A-Z][0-9][A-Z]|[A-Z][0-9][0-9]|[A-Z][0-9]|[0-9][A-Z]){1}([ ])?([0-9][A-Za-z][A-Za-z]){1}$",
+  "GB": "^([A-Z]){1}([0-9][0-9]|[0-9]|[A-Z][0-9][A-Z]|[A-Z][0-9][0-9]|[A-Z][0-9]|[0-9][A-Z]){1}([ ])?([0-9][A-Za-z][A-Za-z]){1}$",
   "JE": "^JE\\d[\\dA-Z]?[ ]?\\d[ABD-HJLN-UW-Z]{2}$",
   "GG": "^GY\\d[\\dA-Z]?[ ]?\\d[ABD-HJLN-UW-Z]{2}$",
   "IM": "^IM\\d[\\dA-Z]?[ ]?\\d[ABD-HJLN-UW-Z]{2}$",

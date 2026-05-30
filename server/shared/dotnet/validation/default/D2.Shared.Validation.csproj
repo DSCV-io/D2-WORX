@@ -59,11 +59,17 @@ Copyright (c) DCSV. All rights reserved.
 
   <ItemGroup>
     <!--
-      Postal-code regex map — sourced from postcode-validator@3.10.9 (npm).
-      Embedded so the data travels with the assembly without a file-system
-      dependency at runtime.
+      Postal-code regex map — the single cross-runtime source of truth at
+      contracts/validation/postal-code-regexes.json (also read by the TS
+      @d2/validation package). Embedded so the data travels with the assembly
+      without a file-system dependency at runtime. The <Link> keeps the logical
+      manifest-resource name PostalCodeRegexData.json, so the
+      D2.Shared.Validation.PostalCodeRegexData.json lookup in PostalCodeRegexData.cs
+      resolves unchanged regardless of the on-disk source path.
     -->
-    <EmbeddedResource Include="PostalCodeRegexData.json" />
+    <EmbeddedResource Include="$(D2ContractsRoot)validation\postal-code-regexes.json">
+      <Link>PostalCodeRegexData.json</Link>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

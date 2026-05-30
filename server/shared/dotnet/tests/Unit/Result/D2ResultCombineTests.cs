@@ -51,7 +51,7 @@ public sealed class D2ResultCombineTests
         combined.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         combined.ErrorCode.Should().Be(ErrorCodes.VALIDATION_FAILED);
         combined.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("common_errors_NOT_FOUND");
+            .Which.Key.Should().Be(TK.Common.Errors.NOT_FOUND.Key);
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public sealed class D2ResultCombineTests
 
         combined.IsValidationFailed.Should().BeTrue();
         combined.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("common_errors_CONFLICT");
+            .Which.Key.Should().Be(TK.Common.Errors.CONFLICT.Key);
     }
 
     // ----------------------------------------------------------------------
@@ -129,7 +129,7 @@ public sealed class D2ResultCombineTests
 
         combined.IsValidationFailed.Should().BeTrue();
         combined.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("common_errors_FORBIDDEN");
+            .Which.Key.Should().Be(TK.Common.Errors.FORBIDDEN.Key);
     }
 
     // ----------------------------------------------------------------------
@@ -181,11 +181,11 @@ public sealed class D2ResultCombineTests
 
         // Messages from ALL 5 failures aggregated, in input order.
         combined.Messages.Select(m => m.Key).Should().Equal(
-            "common_errors_UNIQUE_VIOLATION",
-            "common_errors_NOT_FOUND",
-            "common_errors_FORBIDDEN",
-            "common_errors_CONFLICT",
-            "common_errors_SERVICE_UNAVAILABLE");
+            TK.Common.Errors.UNIQUE_VIOLATION.Key,
+            TK.Common.Errors.NOT_FOUND.Key,
+            TK.Common.Errors.FORBIDDEN.Key,
+            TK.Common.Errors.CONFLICT.Key,
+            TK.Common.Errors.SERVICE_UNAVAILABLE.Key);
     }
 
     [Fact]
@@ -204,9 +204,10 @@ public sealed class D2ResultCombineTests
 
         combined.IsValidationFailed.Should().BeTrue();
         combined.Messages.Select(m => m.Key).Should().Equal(
-            "common_errors_FORBIDDEN",
-            "common_errors_CONFLICT");
-        combined.Messages.Select(m => m.Key).Should().NotContain("common_errors_NOT_AUTHENTICATED");
+            TK.Common.Errors.FORBIDDEN.Key,
+            TK.Common.Errors.CONFLICT.Key);
+        combined.Messages.Select(m => m.Key).Should()
+            .NotContain(TK.Common.Errors.NOT_AUTHENTICATED.Key);
 
         // Combined.Data is the tuple type, default(...) on the failure path.
         combined.Data.Should().Be(default((int, int, int, int, int)));
@@ -365,7 +366,7 @@ public sealed class D2ResultCombineTests
 
         combined.IsValidationFailed.Should().BeTrue();
         combined.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("common_errors_NOT_FOUND");
+            .Which.Key.Should().Be(TK.Common.Errors.NOT_FOUND.Key);
     }
 
     [Fact]
@@ -388,8 +389,8 @@ public sealed class D2ResultCombineTests
 
         combined.IsValidationFailed.Should().BeTrue();
         combined.Messages.Select(m => m.Key).Should().Equal(
-            "common_errors_NOT_FOUND",
-            "common_errors_FORBIDDEN");
+            TK.Common.Errors.NOT_FOUND.Key,
+            TK.Common.Errors.FORBIDDEN.Key);
         combined.InputErrors.Should().HaveCount(2);
         combined.InputErrors.Select(e => e.Field).Should().Equal("emailAddr", "phone");
     }
@@ -440,7 +441,7 @@ public sealed class D2ResultCombineTests
         var combined = D2Result.Combine(input);
 
         combined.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("common_errors_VALIDATION_FAILED");
+            .Which.Key.Should().Be(TK.Common.Errors.VALIDATION_FAILED.Key);
     }
 
     // ----------------------------------------------------------------------
@@ -522,7 +523,7 @@ public sealed class D2ResultCombineTests
 
         // Only r2's NOT_FOUND message contributes; r1's empty list is dropped.
         combined.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("common_errors_NOT_FOUND");
+            .Which.Key.Should().Be(TK.Common.Errors.NOT_FOUND.Key);
     }
 
     [Fact]
@@ -537,7 +538,7 @@ public sealed class D2ResultCombineTests
 
         combined.IsValidationFailed.Should().BeTrue();
         combined.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("common_errors_VALIDATION_FAILED");
+            .Which.Key.Should().Be(TK.Common.Errors.VALIDATION_FAILED.Key);
     }
 
     // ----------------------------------------------------------------------

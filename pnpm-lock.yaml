@@ -517,6 +517,9 @@ importers:
 
   server/shared/typescript/time:
     dependencies:
+      '@d2/i18n':
+        specifier: workspace:*
+        version: link:../i18n
       '@d2/result':
         specifier: workspace:*
         version: link:../result
@@ -588,9 +591,6 @@ importers:
       libphonenumber-js:
         specifier: 1.12.38
         version: 1.12.38
-      postcode-validator:
-        specifier: 3.10.9
-        version: 3.10.9
     devDependencies:
       '@vitest/coverage-v8':
         specifier: 4.0.18
@@ -2417,9 +2417,6 @@ packages:
   pino@10.3.1:
     resolution: {integrity: sha512-r34yH/GlQpKZbU1BvFFqOjhISRo1MNx1tWYsYvmj6KIRHSPMT2+yHOEb1SG6NMvRoHRF0a07kCOox/9yakl1vg==}
     hasBin: true
-
-  postcode-validator@3.10.9:
-    resolution: {integrity: sha512-1gDRLSV/ChHRRjgqlM9Mz7chR02wkgoyX+7d1S1OCnskTG8WpGdFasKLmtZYhQVW6Ykq+eASrP+Ph8hG7CtwQA==}
 
   postcss@8.5.14:
     resolution: {integrity: sha512-SoSL4+OSEtR99LHFZQiJLkT59C5B1amGO1NzTwj7TT1qCUgUO6hxOvzkOYxD+vMrXBM3XJIKzokoERdqQq/Zmg==}
@@ -4660,8 +4657,6 @@ snapshots:
       safe-stable-stringify: 2.5.0
       sonic-boom: 4.2.1
       thread-stream: 4.1.0
-
-  postcode-validator@3.10.9: {}
 
   postcss@8.5.14:
     dependencies:

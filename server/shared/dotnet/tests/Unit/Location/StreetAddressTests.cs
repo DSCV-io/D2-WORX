@@ -7,6 +7,7 @@
 namespace D2.Shared.Tests.Unit.Location;
 
 using AwesomeAssertions;
+using D2.Shared.I18n;
 using D2.Shared.Location.ValueObjects;
 using Xunit;
 
@@ -81,7 +82,7 @@ public sealed class StreetAddressTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_address_line1_required");
+            .Which.Key.Should().Be(TK.Geo.Validation.ADDRESS_LINE1_REQUIRED.Key);
     }
 
     [Fact]

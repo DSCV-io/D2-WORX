@@ -18,7 +18,7 @@ Default implementations of the three validator contracts from `D2.Shared.Validat
 | --------- | --------- | ------- |
 | `DefaultEmailValidator` | `IEmailValidator` | ASCII-only regex (anchored, bounded — total length 1–254, local part 1–64) |
 | `DefaultPhoneValidator` | `IPhoneValidator` | libphonenumber-csharp 9.0.31 (Apache-2.0) — parse + E.164 format |
-| `DefaultPostalCodeValidator` | `IPostalCodeValidator` | Per-country regex map embedded as `PostalCodeRegexData.json`, ported from postcode-validator@3.10.9 |
+| `DefaultPostalCodeValidator` | `IPostalCodeValidator` | Per-country regex map embedded from the shared `contracts/validation/postal-code-regexes.json` dataset (ported from postcode-validator@3.10.9, with a UK/GB correction) |
 
 ## Contract
 
@@ -33,17 +33,26 @@ Empty or whitespace input produces the same `*_INVALID` key as structurally inva
 
 ## Postal-code dataset
 
-The `PostalCodeRegexData.json` embedded resource is ported verbatim from
-`postcode-validator@3.10.9`. Patterns that lacked both `^` and `$` anchors in
-the source were wrapped as `^(?:...)$`; the wrapped entries are: `GI`, `BT`,
-`AL`, `CU`, `UM`, `AI`, `AF`, `SD`, `VC`, `TA`, `NA`, `EH`, `BL`, `TZ`,
-`AC`, `VG`, `MZ`, `MF`, `MM`, `SV`, `IR`.
+The per-country regex map lives in **`contracts/validation/postal-code-regexes.json`**
+— the single cross-runtime source of truth, read by BOTH runtimes. This project
+embeds it as a build-time `EmbeddedResource` (`Link`'d to the logical name
+`PostalCodeRegexData.json`, so the manifest-resource lookup in
+`PostalCodeRegexData.cs` resolves unchanged); the TypeScript `@d2/validation`
+package imports the same file directly. Neither runtime keeps its own copy.
+
+The dataset is ported from `postcode-validator@3.10.9` with **one deliberate
+correction**: the `UK` and `GB` patterns used `[A-z]` (ASCII 65–122, which
+wrongly includes the six punctuation chars `` [ \ ] ^ _ ` `` between `Z` and
+`a`) — an upstream bug — replaced with `[A-Za-z]`. Patterns that lacked both
+`^` and `$` anchors in the source were wrapped as `^(?:...)$`; the wrapped
+entries are: `GI`, `BT`, `AL`, `CU`, `UM`, `AI`, `AF`, `SD`, `VC`, `TA`, `NA`,
+`EH`, `BL`, `TZ`, `AC`, `VG`, `MZ`, `MF`, `MM`, `SV`, `IR`.
 
 **Fail-closed**: an unknown or null country code always returns `ValidationFailed`
 — there is no fallback to a permissive global-range pattern.
 
-When `postcode-validator` is updated on the TS side, update this JSON file and
-the `$comment` version stamp to match.
+To update the dataset, edit `contracts/validation/postal-code-regexes.json` and
+its `$comment` version stamp — both runtimes pick up the change on their next build.
 
 ## DI Registration
 

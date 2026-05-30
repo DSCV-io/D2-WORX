@@ -173,6 +173,8 @@ graph LR
     Resilience --> Logging
     I18n --> Result
     I18n --> Utilities
+    Time --> Result
+    Time --> I18n
     Logging --> Result
     Logging --> Utilities
     Telemetry --> Logging

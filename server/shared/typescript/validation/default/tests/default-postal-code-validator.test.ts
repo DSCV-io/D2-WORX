@@ -3,6 +3,7 @@
 // -----------------------------------------------------------------------
 
 import type { CountryCode } from "@d2/geo-abstractions";
+import { TK } from "@d2/i18n/keys";
 import { describe, expect, it } from "vitest";
 
 import { DefaultPostalCodeValidator } from "../src/default-postal-code-validator.js";
@@ -18,7 +19,7 @@ describe("DefaultPostalCodeValidator — adversarial + property + fail-closed", 
     expect(result.errorCode).toBe("VALIDATION_FAILED");
     expect(result.inputErrors[0]?.field).toBe("postalCode");
     expect(result.inputErrors[0]?.errors[0]?.key).toBe(
-      "common_validation_POSTAL_CODE_INVALID",
+      TK.common.validation.POSTAL_CODE_INVALID,
     );
   });
 

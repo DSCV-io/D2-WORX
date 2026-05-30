@@ -1473,8 +1473,13 @@ ALL user-visible strings — UI, backend handler messages (`D2Result.messages`),
 - **12.4** When adding translation keys, are they added to ALL present locale files in `contracts/messages/*.json` (kept in sync)?
   - Evidence: `ls contracts/messages/*.json | xargs jq 'keys' | sort | uniq -c` → key sets identical across locales. Run Paraglide compile from `server/web/` for frontend keys.
 
-- **12.5** Are translation keys referenced via `TK.*` constants from `@d2/i18n` / `D2.Shared.I18n` (instead of bare TK key strings)? Outside `D2Result` factories, where bare strings are the API.
-  - Evidence: `grep -rEn '"common_errors_\|"webclient_\|"auth_' <scope>` → per hit, justify or convert.
+- **12.5** Are translation keys referenced via `TK.*` constants from `@d2/i18n` / `D2.Shared.I18n` (instead of bare TK key strings)? **Applies to TEST assertions as well as production source.** Carve-outs where the bare literal IS the API or the test (keep bare; audit treats as `⚪ N/A`, not a finding):
+  - **(a) `D2Result` factory defaults** — bare strings are the API (`@d2/result` is zero-dependency).
+  - **(b) i18n generation-verification tests** that pin the constant→string mapping — converting → tautology (`expect(c).toBe(c)`), testing nothing.
+  - **(c) cross-language wire-contract / parity tests** — the bare literal is a drift tripwire independent of the catalog: a coordinated key rename must FAIL the test, so the assertion cannot reference the catalog (which would move in lockstep and hide the rename).
+  - **(d) simulated-wire INPUT fixtures** — a raw external (e.g. .NET) payload literal entering a transform/parser; it represents external data, not our own code referencing our catalog.
+  - **(e) orphan keys with no catalog entry** — test-only mock keys where no constant exists to reference.
+  - Evidence: `grep -rEn '"(common|webclient|auth|geo|comms)_' <scope>` → per hit, convert OR confirm it matches carve-out (a)–(e).
 
 - **12.6** Do new SvelteKit pages include `<svelte:head>` with translated `<title>`, `<meta name="description">`, OG tags (`og:title`, `og:description`, `og:type="website"`), `noindex` if not indexable?
   - Evidence: per new page → svelte:head block.

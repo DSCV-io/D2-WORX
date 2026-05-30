@@ -7,6 +7,7 @@
 namespace D2.Shared.Tests.Unit.Location;
 
 using AwesomeAssertions;
+using D2.Shared.I18n;
 using D2.Shared.Location.ValueObjects;
 using Xunit;
 
@@ -63,7 +64,7 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_latitude_range");
+            .Which.Key.Should().Be(TK.Geo.Validation.LATITUDE_RANGE.Key);
     }
 
     // -----------------------------------------------------------------------
@@ -81,7 +82,7 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_longitude_range");
+            .Which.Key.Should().Be(TK.Geo.Validation.LONGITUDE_RANGE.Key);
     }
 
     // -----------------------------------------------------------------------
@@ -95,7 +96,7 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_coordinates_finite_required");
+            .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_FINITE_REQUIRED.Key);
     }
 
     [Fact]
@@ -105,7 +106,7 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_coordinates_finite_required");
+            .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_FINITE_REQUIRED.Key);
     }
 
     [Fact]
@@ -115,7 +116,7 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_coordinates_finite_required");
+            .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_FINITE_REQUIRED.Key);
     }
 
     [Fact]
@@ -125,7 +126,7 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_coordinates_finite_required");
+            .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_FINITE_REQUIRED.Key);
     }
 
     [Fact]
@@ -135,7 +136,7 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_coordinates_finite_required");
+            .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_FINITE_REQUIRED.Key);
     }
 
     [Fact]
@@ -145,7 +146,7 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_coordinates_finite_required");
+            .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_FINITE_REQUIRED.Key);
     }
 
     // -----------------------------------------------------------------------
@@ -331,7 +332,7 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_coordinates_geohash_invalid");
+            .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_GEOHASH_INVALID.Key);
     }
 
     [Fact]
@@ -341,7 +342,7 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_coordinates_geohash_invalid");
+            .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_GEOHASH_INVALID.Key);
     }
 
     [Fact]
@@ -351,7 +352,7 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_coordinates_geohash_invalid");
+            .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_GEOHASH_INVALID.Key);
     }
 
     [Theory]
@@ -365,7 +366,7 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_coordinates_geohash_invalid");
+            .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_GEOHASH_INVALID.Key);
     }
 
     // -----------------------------------------------------------------------
@@ -393,7 +394,7 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_coordinates_pluscode_invalid");
+            .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_PLUSCODE_INVALID.Key);
     }
 
     [Fact]
@@ -403,7 +404,7 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_coordinates_pluscode_invalid");
+            .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_PLUSCODE_INVALID.Key);
     }
 
     [Theory]
@@ -418,7 +419,7 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_coordinates_pluscode_invalid");
+            .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_PLUSCODE_INVALID.Key);
     }
 
     // -----------------------------------------------------------------------
@@ -487,7 +488,7 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_coordinates_geohash_invalid");
+            .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_GEOHASH_INVALID.Key);
     }
 
     [Fact]
@@ -497,7 +498,7 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_coordinates_geohash_invalid");
+            .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_GEOHASH_INVALID.Key);
     }
 
     [Fact]
@@ -507,7 +508,7 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_coordinates_pluscode_invalid");
+            .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_PLUSCODE_INVALID.Key);
     }
 
     [Fact]
@@ -517,6 +518,6 @@ public sealed class CoordinatesTests
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_coordinates_pluscode_invalid");
+            .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_PLUSCODE_INVALID.Key);
     }
 }

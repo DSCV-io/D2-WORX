@@ -8,6 +8,7 @@ namespace D2.Shared.Tests.Unit.Location;
 
 using AwesomeAssertions;
 using D2.Shared.Geo.Abstractions;
+using D2.Shared.I18n;
 using D2.Shared.Location;
 using Xunit;
 
@@ -56,7 +57,7 @@ public sealed class DefaultPostalCodeValidatorTests
         var result = sr_Validator.Validate(code);
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be("geo_validation_postal_code_invalid");
+            .Which.Key.Should().Be(TK.Geo.Validation.POSTAL_CODE_INVALID.Key);
     }
 
     [Fact]
