@@ -220,6 +220,7 @@
   "common_validation_IP_INVALID": "El valor debe ser una dirección IPv4 o IPv6 válida.",
   "common_validation_NON_EMPTY_LIST": "La lista debe contener al menos un elemento.",
   "common_validation_PHONE_INVALID": "El valor debe ser un número de teléfono válido (7-15 dígitos).",
+  "common_validation_POSTAL_CODE_INVALID": "Ingresa un código postal válido para el país seleccionado.",
   "comms_errors_DELIVERY_RETRY_SCHEDULED": "La entrega falló en algunos canales. Se ha programado un reintento.",
   "comms_errors_NO_DELIVERABLE_CHANNELS": "No hay canales de entrega disponibles para el destinatario.",
   "comms_errors_PROVIDER_UNKNOWN": "Se produjo un error desconocido del proveedor.",

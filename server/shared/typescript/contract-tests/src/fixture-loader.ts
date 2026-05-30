@@ -2,7 +2,8 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
@@ -40,4 +41,55 @@ export function loadFixture<T>(
   const path = fileURLToPath(url);
   const raw = readFileSync(path, "utf8");
   return JSON.parse(raw) as FixtureEnvelope<T>;
+}
+
+/**
+ * Walk up from `startDir` until a directory containing `pnpm-workspace.yaml`
+ * is found (the repo root). Throws if the filesystem root is reached without
+ * finding the marker.
+ */
+function findRepoRoot(startDir: string): string {
+  let dir = startDir;
+  for (;;) {
+    if (existsSync(join(dir, "pnpm-workspace.yaml"))) return dir;
+    const parent = dirname(dir);
+    if (parent === dir)
+      throw new Error(
+        `Could not locate the repo root (no 'pnpm-workspace.yaml' found) ` +
+          `walking up from '${startDir}'.`,
+      );
+    dir = parent;
+  }
+}
+
+/**
+ * Resolve a fixture file path rooted at the repository's top-level
+ * `contracts/` directory (NOT the contract-tests package's own
+ * `fixtures/` tree). Used for hand-authored cross-language corpora that
+ * BOTH runtimes read as the source of truth — e.g.
+ * `contracts/validation/fixtures/email.json`.
+ *
+ * The repo root is located by walking UP from this file's directory until
+ * a directory containing `pnpm-workspace.yaml` is found — making the
+ * resolution robust against any future folder rearrangement.
+ */
+export function contractFixtureUrl(area: string, name: string): URL {
+  const thisDir = dirname(fileURLToPath(import.meta.url));
+  const repoRoot = findRepoRoot(thisDir);
+  const absPath = join(repoRoot, "contracts", area, "fixtures", `${name}.json`);
+  return new URL(`file:///${absPath.replaceAll("\\", "/")}`);
+}
+
+/**
+ * Read and parse a repo-`contracts/`-rooted fixture file. Unlike
+ * {@link loadFixture}, the returned value is the RAW parsed JSON — these
+ * hand-authored corpora define their own envelope (e.g. `version`,
+ * `validator`, `rows[]`) rather than the package's `{ scenario, data }`
+ * shape. Throws (naming the path) if the file is absent.
+ */
+export function loadContractFixture<T>(area: string, name: string): T {
+  const url = contractFixtureUrl(area, name);
+  const path = fileURLToPath(url);
+  const raw = readFileSync(path, "utf8");
+  return JSON.parse(raw) as T;
 }

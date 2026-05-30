@@ -264,7 +264,8 @@ export const TK = {
       ID_INVALID: "common_validation_ID_INVALID",
       IP_INVALID: "common_validation_IP_INVALID",
       NON_EMPTY_LIST: "common_validation_NON_EMPTY_LIST",
-      PHONE_INVALID: "common_validation_PHONE_INVALID"
+      PHONE_INVALID: "common_validation_PHONE_INVALID",
+      POSTAL_CODE_INVALID: "common_validation_POSTAL_CODE_INVALID"
     }
   },
   comms: {

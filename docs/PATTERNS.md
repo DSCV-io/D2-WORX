@@ -37,14 +37,15 @@ Directory of the load-bearing patterns + cross-cutting conventions every D²-WOR
 25. [PII redaction — `[RedactData]`](#pii-redaction--redactdata)
 26. [Spec-driven codegen — the cross-cutting pattern](#spec-driven-codegen--the-cross-cutting-pattern)
 27. [Domain validation — smart-constructor pattern](#domain-validation--smart-constructor-pattern)
-28. [Reference data](#reference-data)
+28. [Input validation](#input-validation)
+29. [Reference data](#reference-data)
     - [Endonym discipline](#endonym-discipline)
     - [Typed geo catalogs](#typed-geo-catalogs)
     - [Typed access on IRequestContext](#typed-access-on-irequestcontext)
     - [Geo name resolution at the integration boundary](#geo-name-resolution-at-the-integration-boundary)
     - [Reference data — user-preference cascades](#reference-data--user-preference-cascades)
-29. [Hash composition](#hash-composition)
-30. [Anti-patterns to actively avoid](#anti-patterns-to-actively-avoid)
+30. [Hash composition](#hash-composition)
+31. [Anti-patterns to actively avoid](#anti-patterns-to-actively-avoid)
 
 ---
 
@@ -558,6 +559,31 @@ Validation is single-layered: smart-constructor factories on domain types are th
 | Cancellation                                                                    | Re-throw `OperationCanceledException` (or let it propagate); `BaseHandler` maps it to `D2Result.Canceled` |
 
 The rule: **anything caused by data the caller controls is a result, not an exception. Anything caused by code that should be impossible is an exception.**
+
+---
+
+## Input validation
+
+Three cross-language validators cover the three most common user-input fields. Both .NET and TypeScript ship the same two-package split: an abstractions package (contracts only, zero impl dependencies) and a default package (concrete implementations + DI registration).
+
+| Validator | .NET | TypeScript | Backing |
+| --------- | ---- | ---------- | ------- |
+| Email | `IEmailValidator` / `DefaultEmailValidator` | `IEmailValidator` / `DefaultEmailValidator` | Shared ASCII structural regex, trim + lowercase |
+| Phone | `IPhoneValidator` / `DefaultPhoneValidator` | `IPhoneValidator` / `DefaultPhoneValidator` | libphonenumber port — parse + E.164 normalize |
+| Postal code | `IPostalCodeValidator` / `DefaultPostalCodeValidator` | `IPostalCodeValidator` / `DefaultPostalCodeValidator` | Per-country regex ported from postcode-validator |
+
+Every validator exposes a single `Validate(...)` / `validate(...)` method returning `D2Result<string>`:
+
+- **Success** — the normalized value (trimmed + lowercased email; E.164 phone; trimmed + uppercased postal code).
+- **Failure** — `ValidationFailed` with a single per-field `InputError` keyed with `TK.Common.Validation.*_INVALID`. Field keys are `"email"`, `"phone"`, `"postalCode"`. Empty, whitespace-only, and structurally invalid input all collapse to the same `*_INVALID` failure.
+
+Cross-language behavior is pinned against `contracts/validation/fixtures/{email,phone,postcode}.json` parity fixtures — a value accepted on one runtime is accepted on the other. Postal-code validation fails closed: an unknown or absent country code always returns `ValidationFailed`; there is no permissive global-range fallback on either runtime.
+
+Canonical per-lib READMEs:
+[D2.Shared.Validation.Abstractions](../server/shared/dotnet/validation/abstractions/README.md) ·
+[D2.Shared.Validation](../server/shared/dotnet/validation/default/README.md) ·
+[@d2/validation-abstractions](../server/shared/typescript/validation/abstractions/README.md) ·
+[@d2/validation](../server/shared/typescript/validation/default/README.md).
 
 ---
 

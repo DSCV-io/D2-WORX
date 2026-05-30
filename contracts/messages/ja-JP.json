@@ -220,6 +220,7 @@
   "common_validation_IP_INVALID": "値は有効なIPv4またはIPv6アドレスである必要があります。",
   "common_validation_NON_EMPTY_LIST": "リストには少なくとも1つの項目が含まれている必要があります。",
   "common_validation_PHONE_INVALID": "値は有効な電話番号(7〜15桁)である必要があります。",
+  "common_validation_POSTAL_CODE_INVALID": "選択した国に対して有効な郵便番号を入力してください。",
   "comms_errors_DELIVERY_RETRY_SCHEDULED": "一部のチャネルで配信に失敗しました。再試行がスケジュールされました。",
   "comms_errors_NO_DELIVERABLE_CHANNELS": "受信者に利用可能な配信チャネルがありません。",
   "comms_errors_PROVIDER_UNKNOWN": "不明なプロバイダーエラーが発生しました。",

@@ -16,6 +16,7 @@
     { "path": "../headers/grpc" },
     { "path": "../headers/http" },
     { "path": "../request-context-abstractions" },
-    { "path": "../result" }
+    { "path": "../result" },
+    { "path": "../validation/default" }
   ]
 }

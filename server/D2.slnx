@@ -179,6 +179,12 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/location/">
     <Project Path="shared/dotnet/location/D2.Shared.Location.csproj" />
   </Folder>
+  <Folder Name="/shared/dotnet/validation/abstractions/">
+    <Project Path="shared/dotnet/validation/abstractions/D2.Shared.Validation.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/validation/default/">
+    <Project Path="shared/dotnet/validation/default/D2.Shared.Validation.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/tests/">
     <Project Path="shared/dotnet/tests/D2.Shared.Tests.csproj" />
   </Folder>

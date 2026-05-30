@@ -1,0 +1,34 @@
+{
+  "name": "@d2/validation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "type-check:test": "tsc -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@d2/geo-abstractions": "workspace:*",
+    "@d2/i18n": "workspace:*",
+    "@d2/result": "workspace:*",
+    "@d2/utilities": "workspace:*",
+    "@d2/validation-abstractions": "workspace:*",
+    "libphonenumber-js": "1.12.38",
+    "postcode-validator": "3.10.9"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "4.0.18",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
+  }
+}

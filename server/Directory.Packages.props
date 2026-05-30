@@ -117,6 +117,11 @@ Copyright (c) DCSV. All rights reserved.
     <PackageVersion Include="OpenTelemetry.Instrumentation.Process" Version="1.15.0-beta.1" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.0" />
 
+    <!-- libphonenumber-csharp — Apache-2.0. Phone-number parsing, validation, and
+         E.164 formatting for D2.Shared.Validation's DefaultPhoneValidator.
+         Backed by the same Google libphonenumber data as libphonenumber-js on the TS side. -->
+    <PackageVersion Include="libphonenumber-csharp" Version="9.0.31" />
+
     <!-- Roslyn — for D2.Shared.I18n.SourceGen (TK constants generator). -->
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.3.0" />

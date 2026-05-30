@@ -14,8 +14,13 @@ export default defineConfig({
       // node_modules symlink can lag the package.json edit until the next
       // `pnpm install` rotation. This alias gives Vitest a deterministic
       // path to the package's source-of-truth dist/index.js so the parity
-      // tests run independently of the symlink state. The alias is a no-op
-      // when the symlink IS present — Vitest prefers the explicit alias.
+      // tests run independently of the symlink state.
+      //
+      // NOTE: a Vite `resolve.alias` ALWAYS wins over node_modules — even
+      // when the workspace symlink is present, this path is what Vitest
+      // loads. So the aliased package MUST be freshly built before running
+      // the parity suite (`pnpm --filter @d2/geo-abstractions build`); a
+      // stale dist/ would be served silently and could mask a regression.
       "@d2/geo-abstractions": fileURLToPath(
         new URL("../geo/abstractions/dist/index.js", import.meta.url),
       ),
@@ -28,6 +33,21 @@ export default defineConfig({
           "../geo/default/dist/generated/_records-meta.g.js",
           import.meta.url,
         ),
+      ),
+      // `@d2/validation` is wired into the contract-tests workspace
+      // package.json + tsconfig references, but the pnpm-managed
+      // node_modules symlink can lag the package.json edit until the next
+      // `pnpm install` rotation. This alias gives Vitest a deterministic
+      // path to the package's dist/index.js so the validation parity tests
+      // run independently of symlink state — consistent with the geo
+      // aliases above.
+      //
+      // NOTE: same caveat as the geo aliases — a Vite `resolve.alias`
+      // ALWAYS wins over the node_modules symlink, so the validation parity
+      // suite REQUIRES a fresh `pnpm --filter @d2/validation build` first; a
+      // stale dist/ would be served silently and could mask a regression.
+      "@d2/validation": fileURLToPath(
+        new URL("../validation/default/dist/index.js", import.meta.url),
       ),
     },
   },

@@ -990,6 +990,10 @@ public static partial class TK
             /// Translation key <c>common_validation_PHONE_INVALID</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage PHONE_INVALID = new("common_validation_PHONE_INVALID");
+            /// <summary>
+            /// Translation key <c>common_validation_POSTAL_CODE_INVALID</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage POSTAL_CODE_INVALID = new("common_validation_POSTAL_CODE_INVALID");
         }
     }
 

@@ -195,6 +195,19 @@ Copyright (c) DCSV. All rights reserved.
       this csproj (consistent with the other source-gen project references).
     -->
     <ProjectReference Include="..\geo\source-gen\D2.Shared.Geo.SourceGen.csproj" />
+    <!--
+      D2.Shared.Validation.Abstractions — the three validator contracts
+      (IEmailValidator, IPhoneValidator, IPostalCodeValidator). Required by
+      parity / adversarial tests that reference the interfaces.
+    -->
+    <ProjectReference Include="..\validation\abstractions\D2.Shared.Validation.Abstractions.csproj" />
+    <!--
+      D2.Shared.Validation — default implementations (DefaultEmailValidator,
+      DefaultPhoneValidator, DefaultPostalCodeValidator) + DI extension.
+      Internal helpers (PostalCodeRegexData.SR_Map) are reachable via
+      InternalsVisibleTo declared in D2.Shared.Validation.csproj.
+    -->
+    <ProjectReference Include="..\validation\default\D2.Shared.Validation.csproj" />
   </ItemGroup>
 
   <!--
