@@ -65,9 +65,10 @@ across the catalog — never re-used, never re-ordered.
 
 | #   | Title | Status | Date | Deliverable |
 | --- | ----- | ------ | ---- | ----------- |
+| [0001](0001-contacts-folded-owned-component.md) | Contacts are a folded owned-component library, not a standalone contacts service/DB | Accepted | 2026-05-30 | TBD — contacts (Phase 2) |
 
-> No ADRs yet — backfill from existing shipped deliverables is queued as a
-> separate task. This index gets populated as ADRs land.
+> Backfill of ADRs from earlier shipped deliverables is queued as a separate
+> task. This index grows as ADRs land.
 
 ---
 

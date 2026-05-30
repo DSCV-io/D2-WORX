@@ -99,7 +99,7 @@ Reference data lived in EF Core seed migrations (`Geo.Infra/Repository/Seeding/{
 
 **V2** decomposes into shared libs — no Geo service exists. Per V2.md §3 "What's gone vs v1":
 
-> ❌ `d2-geo` (.NET Geo service) — reference data → embedded library, WhoIs → Edge module, Contacts → distributed-per-service library
+> ❌ `d2-geo` (.NET Geo service) — reference data → embedded library, WhoIs → Edge module, Contacts → folded owned-component library (see ADR-0001)
 
 This Phase ships the "reference data → embedded library" + "Location value objects → shared library" parts. WhoIs absorbs into Edge as an internal module in Phase 3.
 
@@ -199,7 +199,7 @@ Data ingestion carries unique risks (CLDR JSON structure complexity, IANA tzdb p
 | v1 capability                                                                            | v2 fate                                                                                                                                                             | Revisit trigger                                                   |
 | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
 | WhoIs entity (v1 lived as `Geo.Domain/Entities/WhoIs.cs`)                                | NOT in Phase 1 geo libs — Edge module in Phase 3 (per V2.md §3)                                                                                                     | Phase 3 Edge module build                                         |
-| Contact entity (v1 was a Geo entity)                                                     | NOT in Phase 1 — `D2.Shared.Contacts` distributed-per-service library in Phase 2 (per V2.md §3)                                                                     | Phase 2 Contacts                                                  |
+| Contact entity (v1 was a Geo entity)                                                     | NOT in Phase 1 — `D2.Shared.Contacts` folded owned-component library in Phase 2 (see ADR-0001)                                                                     | Phase 2 Contacts                                                  |
 | Geo handlers (FindWhoIs, GetWhoIsByIds, etc. — v1 had `Geo.App/CQRS/`)                   | NOT in Phase 1 — replaced by in-process lookup methods on the `I*Lookup` interfaces (no more gRPC calls for reference data); WhoIs-specific handlers belong in Edge | Phase 3 Edge (WhoIs); never (lookups replace handlers)            |
 | `ASType` free-form string classification (v1 stored on WhoIs as `string?`, NOT enum)     | NOT in Phase 1 — Phase 3 WhoIs; flagged for revisit whether to formalize as enum                                                                                    | Phase 3 WhoIs design                                              |
 | GeopoliticalEntity membership history (join/leave dates per Country-GE pair)             | NOT in Phase 1 — v1 also had no temporal tracking; carried forward as static M:M                                                                                    | Audit/analytics use case demands "when did Country X join EU?"    |
@@ -323,7 +323,7 @@ For **every decision below**:
 | Consumer access | gRPC call to Geo service via `Geo.Client` | Direct in-process import of `D2.Shared.Geo.Abstractions` / `.Default` / `.Location` |
 | Reference-data hosting | EF Core seed migrations in `Geo.Infra/Repository/Seeding/*Seeding.cs` | Codegen'd in-memory catalogs from JSON specs |
 | WhoIs | Geo domain entity (`Geo.Domain/Entities/WhoIs.cs`) | Edge internal module (Phase 3) |
-| Contacts | Geo entity | Per-consuming-service library (`D2.Shared.Contacts` — Phase 2) |
+| Contacts | Geo entity | Folded owned-component library (`D2.Shared.Contacts` — Phase 2; see ADR-0001) |
 | Latency | gRPC round-trip per lookup (cached via `Geo.Client` multi-tier cache) | Zero (direct in-memory access) |
 
 ---
@@ -3183,6 +3183,12 @@ public static class GeoCatalog
 ---
 
 ## Phase 2 (D2.Shared.Contacts) — v1 carry-forward inventory
+
+> ⚠️⚠️ **PARTIALLY SUPERSEDED 2026-05-30 — reconcile against the folded model, not this table verbatim.** Contacts were redesigned on 2026-05-30 from a standalone per-service-DB library to a **folded owned-component library** ([ADR-0001](../adrs/0001-contacts-folded-owned-component.md) + [V2.md §5.6 Revised](V2.md#56-revised-2026-05-30--contacts-as-a-folded-owned-component-library)). What that means for the inventory below:
+>
+> - ✅ **STILL carries forward** — the value-object building blocks: `ContactMethods`, `EmailAddress`, `PhoneNumber`, `Personal`, `Professional`, and the `BiologicalSex` / `GenerationalSuffix` / `NameTitle` enums. In the new model the library ships these and *folds* them into host entities; `EmailAddress` / `PhoneNumber` wrap `D2.Shared.Validation`; the address composes `D2.Shared.Location`.
+> - ❌ **SUPERSEDED** — the standalone `Contact` entity (the `ContextKey` / `RelatedEntityId` ext-key tuple, the `LocationHashId` FK into a shared `locations` table, the immutable-update-by-repoint pattern); the repository handlers (`CreateContacts` / `DeleteContacts*` / `GetContacts*ByExtKeys` / `UpdateContactsByExtKeys`); the `GeoAppOptions.ApiKeyMappings` control; and the per-consuming-service DB. The host owns its table + migration — there is no contacts DB, no ext-key, no cross-service lookup.
+> - The Phase 2 PLAN doc MUST reconcile against ADR-0001, **not** implement the table below verbatim.
 
 This inventory (item 8a) anticipates Phase 2 — its purpose is so that when the Phase 2 PLAN doc is written, the Planner sub-agent inherits an already-audited list of every v1 capability that MUST be in scope (per §1.31). Phase 2 PLAN doc, when written, MUST inventory this list and confirm every item is in scope or explicitly user-approved as deferred per §13.6.
 

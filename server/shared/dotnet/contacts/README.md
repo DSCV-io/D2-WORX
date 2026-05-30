@@ -8,6 +8,8 @@ Copyright (c) DCSV. All rights reserved.
 
 > **Status**: NOT IMPLEMENTED — tracked at [docs/v2/PHASE_1.md](../../../../docs/v2/PHASE_1.md).
 
+> ⚠️ **DESIGN SUPERSEDED 2026-05-30 — the body below is HISTORICAL.** The "Public API surface" and per-consuming-service-DB model described here reflect the **earlier standalone-library design**. The current design is a **folded owned-component library**: `D2.Shared.Contacts` ships value-object building blocks + reusable EF `EntityTypeBuilder` extensions that fold into each consuming service's **own** entities/`DbContext` — **no contacts DB, no repository handlers, no `AddD2Contacts(connectionString)`, library ships zero migrations**. See **[ADR-0001](../../../../docs/adrs/0001-contacts-folded-owned-component.md)** + [V2.md §5.6 (Revised)](../../../../docs/v2/V2.md). Do **not** implement from the body below; it will be rewritten when the contacts deliverable starts.
+
 ## Purpose
 
 Per-consuming-service contacts library. Each consuming service owns its own contacts DB; this library provides the entity + repository handlers + EF Core migrations. Consuming services call `services.AddD2Contacts(connectionString)` to wire it up.
