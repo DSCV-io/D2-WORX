@@ -66,6 +66,11 @@ across the catalog — never re-used, never re-ordered.
 | #   | Title | Status | Date | Deliverable |
 | --- | ----- | ------ | ---- | ----------- |
 | [0001](0001-contacts-folded-owned-component.md) | Contacts are a folded owned-component library, not a standalone contacts service/DB | Accepted | 2026-05-30 | TBD — contacts (Phase 2) |
+| [0002](0002-spec-driven-codegen.md) | Spec-driven codegen as the cross-language source of truth | Accepted | 2026-05-30 | Phase 0 — shared libraries |
+| [0003](0003-d2result-errors-as-values.md) | `D2Result` — errors-as-values, not exceptions for control flow | Accepted | 2026-05-30 | Phase 0 — shared libraries |
+| [0004](0004-i18n-tkmessage.md) | i18n — `TKMessage` (translation-key-as-type) + source-generated `TK` constants | Accepted | 2026-05-30 | Phase 0 — shared libraries |
+| [0005](0005-handler-pipeline.md) | Universal handler pipeline — `BaseHandler` + provider-pluggable repo handlers | Accepted | 2026-05-30 | Phase 0 — shared libraries |
+| [0006](0006-abstractions-implementation-split.md) | Domain-safe abstractions slices + provider-pluggable implementations | Accepted | 2026-05-30 | Phase 0 — shared libraries |
 
 > Backfill of ADRs from earlier shipped deliverables is queued as a separate
 > task. This index grows as ADRs land.
