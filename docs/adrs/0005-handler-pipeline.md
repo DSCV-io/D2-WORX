@@ -26,14 +26,14 @@ These two concerns — universal pipeline and provider-specific exception mappin
 
 `BaseHandler<TSelf, TInput, TOutput>` is the abstract base every handler inherits. The CRTP `TSelf` parameter drives the typed logger category (`HandlerContext<TSelf>` resolves `ILogger<TSelf>` via DI) and the OTel tag value `d2.handler.name`.
 
-`RunCorePipelineAsync` is sealed and non-overridable. Per invocation it:
+`RunCorePipelineAsync` is non-virtual (non-overridable). Per invocation it:
 
 1. Evaluates `RequiredScopes` and returns `D2Result.Forbidden` at entry if any required scope is absent — before any work runs.
 2. Starts an `ActivitySource` span (source name `D2.Shared.Handler`) tagged with `d2.handler.name`, user/org/role, and full impersonation context when present.
 3. Opens a structured log scope carrying the same correlation fields so every log line emitted inside `ExecuteAsync` automatically carries `d2.trace_id`, `d2.user_id`, `d2.org_id`, and handler name.
 4. Increments `d2.handler.invoked` and starts a `Stopwatch`.
 5. Calls `ExecuteAsync` inside a universal try/catch:
-   - **Success**: records `d2.handler.duration` (histogram, ms), increments `d2.handler.succeeded`, checks slow/critical thresholds, auto-injects `traceId` on results that don't already carry one, returns `(result, null)`.
+   - **No exception thrown**: records `d2.handler.duration` (histogram, ms); increments `d2.handler.succeeded` **if the result is successful, else `d2.handler.failed`** (a handler that returns a typed failure result without throwing counts as failed); checks slow/critical thresholds; auto-injects `traceId` on results that don't already carry one; returns `(result, null)`.
    - **`OperationCanceledException`, caller token canceled**: returns `(D2Result.Canceled, oce)` — intentional cancellation.
    - **`OperationCanceledException`, caller token NOT canceled**: returns `(D2Result.ServiceUnavailable, oce)` — a downstream timeout (HttpClient/SQL command timeout, internal watchdog).
    - **Any other exception**: logs only `ex.GetType().Name` (never `ex.Message`, which can carry bearer tokens, connection strings, or raw user input per `rules.md §3.1`), sets span status to Error, returns `(D2Result.UnhandledException, ex)`.
@@ -62,7 +62,7 @@ The four OTel instruments (`invoked` / `succeeded` / `failed` / `duration`) live
 
 ### What deliberately does NOT use `BaseHandler`
 
-`DefaultLocalCache` (`D2.Shared.Caching.Local.Default`) bypasses `BaseHandler` entirely: its xmldoc states the work itself is tens of nanoseconds and a handler pipeline would be ~100× overhead. The per-call cost (Activity creation, log-scope dictionary allocation, Stopwatch, counter increments) would dwarf work measured in ~60 ns. This is the recognized carve-out: the pipeline serves long-lived, I/O-bound operations; latency-critical in-process primitives opt out by design.
+`DefaultLocalCache` (`D2.Shared.Caching.Local.Default`) bypasses `BaseHandler` entirely: its xmldoc states the work itself is tens of nanoseconds and a handler pipeline would be ~100× overhead. The per-call cost (Activity creation, log-scope dictionary allocation, Stopwatch, counter increments) would dwarf the tens-of-nanoseconds cache work. This is the recognized carve-out: the pipeline serves long-lived, I/O-bound operations; latency-critical in-process primitives opt out by design.
 
 ### CQRS and naming conventions
 
@@ -82,7 +82,7 @@ The TLC/2LC/3LC folder convention (`CQRS/{C,Q,U,X}/`, `Repository/{C,R,U,D}/`, `
 
 **Negative / risks.**
 
-- **Base-class coupling.** Every handler is coupled to `BaseHandler`'s pipeline shape; pipeline changes affect every handler at once. Mitigated by the sealed/non-virtual `RunCorePipelineAsync` (subclasses cannot tamper) — changes are at one site.
+- **Base-class coupling.** Every handler is coupled to `BaseHandler`'s pipeline shape; pipeline changes affect every handler at once. Mitigated by the non-virtual `RunCorePipelineAsync` (subclasses cannot tamper) — changes are at one site.
 - **CRTP ceremony.** `TSelf` forces every handler to repeat its own type name (`class Foo(...) : BaseHandler<Foo, ...>`) — a visible ergonomic cost with no runtime behavior, existing solely for the typed logger category and OTel tag.
 - **Per-call pipeline overhead.** An Activity start/stop, a log-scope dictionary allocation, a Stopwatch, and four counter increments run on every invocation, including fast ones — explicitly acceptable for I/O-bound handlers but the stated reason `DefaultLocalCache` opts out.
 - **`DispatchDefault` exhaustiveness gap.** The `DbFailureKind` switch uses a wildcard throw arm, not a compile-time exhaustive switch; adding an enum value without updating the dispatch produces a runtime `ArgumentOutOfRangeException` rather than a compile error (acknowledged in the code).

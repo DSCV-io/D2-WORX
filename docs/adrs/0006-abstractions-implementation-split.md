@@ -25,7 +25,7 @@ The split appears across the clusters (evidence: the `server/shared/dotnet/READM
 | geo | `geo/abstractions` — `IGeoReference`, `IGeoNameResolver`, codegen geo types | `geo/default` — catalogs, `DefaultGeoNameResolver`, `AddD2GeoDefault` |
 | messaging | `messaging/abstractions` — `IMessageBus`, `[MqPub]`/`[MqSub]`, codegen registries | `messaging/rabbitmq` — RabbitMQ.Client 7.x impl |
 | problem-details | `problem-details/abstractions` — codegen `D2ProblemDetailsKeys`; "Zero runtime deps" | (consumed by `auth/http` + `aspnetcore/`) |
-| validation | `validation/abstractions` — `IEmailValidator`/`IPhoneValidator`/`IPostalCodeValidator` | `validation/default` — defaults + libphonenumber-csharp |
+| validation _(a multi-package concern area that follows the same split; not in the README's formal 13-cluster index)_ | `validation/abstractions` — `IEmailValidator`/`IPhoneValidator`/`IPostalCodeValidator` | `validation/default` — defaults + libphonenumber-csharp |
 
 The i18n split's stated purpose — "exactly mirrors `Microsoft.Extensions.Logging.Abstractions` vs `Microsoft.Extensions.Logging`" — is the canonical articulation (`i18n/abstractions/README.md`). The handler/repo triple is the most explicit provider-pluggability statement: `repo-abstractions` defines the `IDbExceptionClassifier` seam; `repo` consumes it with EF but zero provider deps; `repo-postgres` provides the PostgreSQL SQLSTATE matrix via DI (`AddD2Postgres()`), making database-engine selection a composition-root decision (ADR-0005).
 

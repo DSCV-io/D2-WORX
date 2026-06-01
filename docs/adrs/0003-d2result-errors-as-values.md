@@ -20,7 +20,7 @@ The codebase also has a hard constraint on user-visible messages: every message 
 
 All expected operation outcomes are modeled as `D2Result` / `D2Result<TData>` value objects returned from every handler and service method. Exceptions are reserved exclusively for programmer-bug invariants.
 
-**The core type** (`server/shared/dotnet/result/core/D2Result.cs` and its partials) carries six wire fields: `Success`, `Messages`, `InputErrors`, `StatusCode`, `ErrorCode`, and `TraceId`. Every property name is bound to a codegen-emitted constant from `D2ResultEnvelopeFieldNames.g.cs` (generated from `contracts/d2result-envelope/d2result-envelope.spec.json` — see ADR-0002) via `[JsonPropertyName]`, so the camelCase wire shape is correct under any `JsonSerializerOptions` and cross-language drift on the envelope field names is structurally impossible.
+**The core type** (`server/shared/dotnet/result/core/D2Result.cs` and its partials) carries seven wire fields: `Success`, `Data`, `Messages`, `InputErrors`, `StatusCode`, `ErrorCode`, and `TraceId`. Every property name is bound to a codegen-emitted constant from `D2ResultEnvelopeFieldNames.g.cs` (generated from `contracts/d2result-envelope/d2result-envelope.spec.json` — see ADR-0002) via `[JsonPropertyName]`, so the camelCase wire shape is correct under any `JsonSerializerOptions` and cross-language drift on the envelope field names is structurally impossible.
 
 **Semantic factories** (`D2Result.Factories.cs`, `D2Result.Generic.Factories.cs`) are the only authorized construction path for failure states: `Ok`, `Created`, `NotFound`, `Unauthorized`, `Forbidden`, `ValidationFailed`, `Conflict`, `ServiceUnavailable`, `UnhandledException`, `PayloadTooLarge`, `TooManyRequests`, `Canceled`, `SomeFound`, `PartialSuccess`. Each factory bundles the canonical HTTP status code, the catalog `ErrorCode`, and a sensible default `TKMessage`. Raw `Fail()` is reserved for re-mapping arbitrary upstream codes where no semantic factory matches (`docs/PATTERNS.md` D2Result; `docs/dev/rules.md §5.3`).
 
@@ -36,7 +36,7 @@ All expected operation outcomes are modeled as `D2Result` / `D2Result<TData>` va
 
 **Per-code boolean discriminators** (`D2Result.Booleans.cs`) carry `[JsonIgnore]` and never appear on the wire. `IsTransientRetryable` explicitly excludes `IsUnhandledException` — unknown system state is never auto-retried.
 
-**TypeScript mirror** (`server/shared/typescript/result/`, package `@d2/result`): `D2Result<T>` class (`src/d2-result.ts`), factory functions mirroring every .NET factory (`src/factories.ts`), `bubbleFail` / `bubble` propagation (`src/bubble.ts`), and the `TKMessage` interface (`src/tk-message.ts`) — same envelope, same `ErrorCodes` catalog (generated from the same spec). Wire round-trips are byte-identical and parity-tested.
+**TypeScript mirror** (`server/shared/typescript/result/`, package `@d2/result`): `D2Result<T>` class (`src/d2-result.ts`), factory functions mirroring the .NET factory surface (`src/factories.ts`), `bubbleFail` / `bubble` propagation (`src/bubble.ts`), and the `TKMessage` interface (`src/tk-message.ts`) — same envelope, same `ErrorCodes` catalog (generated from the same spec). Wire round-trips are byte-identical and parity-tested.
 
 ## Consequences
 

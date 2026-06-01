@@ -14,7 +14,7 @@ Copyright (c) DCSV. All rights reserved.
 
 **v1 (frozen snapshot at `/old/v1/D2-WORX/`).** `Contact` was a standalone aggregate living **inside the Geo service**: its own `contacts` table, a UUIDv7 primary key, and an external-key tuple `(ContextKey, RelatedEntityId)` (a `UNIQUE` index, hardened in a later migration) that let any other service address a contact it did not store. Contact PII was centralized in Geo. Two cross-service consumption patterns drove that centralization:
 
-- **Auth ran a blocking SAGA against Geo on every profile mutation** (email / phone / name / locale / timezone change) — Geo was the system of record for contact PII; Auth held none. Compensating rollback on failure; hard-fail if Geo was down.
+- **Auth ran a blocking SAGA against Geo on every profile mutation** (email / phone / name / locale / timezone change) — Geo was the system of record for contact PII; Auth held none of it locally (it mirrored only the display name into BetterAuth's own `user.name`). Compensating rollback on failure; hard-fail if Geo was down.
 - **Comms resolved the contact at delivery time** (`GetContactsByIds`) to fetch the email/phone, and keyed channel-preferences by the Geo `contact_id`. A `ContactEviction` RabbitMQ broadcast invalidated every service's contact cache after each delete-and-recreate "update".
 
 Auth also kept a separate `org_contact` junction (label + `isPrimary` + a pointer to a Geo contact) — it stored zero contact PII itself. No invoice/billing/shipping service ever existed; `billing_contact` was test/doc scaffolding only.
