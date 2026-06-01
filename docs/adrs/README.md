@@ -71,6 +71,14 @@ across the catalog — never re-used, never re-ordered.
 | [0004](0004-i18n-tkmessage.md) | i18n — `TKMessage` (translation-key-as-type) + source-generated `TK` constants | Accepted | 2026-05-30 | Phase 0 — shared libraries |
 | [0005](0005-handler-pipeline.md) | Universal handler pipeline — `BaseHandler` + provider-pluggable repo handlers | Accepted | 2026-05-30 | Phase 0 — shared libraries |
 | [0006](0006-abstractions-implementation-split.md) | Domain-safe abstractions slices + provider-pluggable implementations | Accepted | 2026-05-30 | Phase 0 — shared libraries |
+| [0007](0007-request-context-propagation.md) | Request/auth context — spec-driven interfaces, rebuild-from-JWT each hop, `x-d2-context` | Accepted | 2026-05-30 | Phase 0 — shared libraries |
+| [0008](0008-caching-marker-interfaces.md) | Caching — marker-interface model (`ILocalCache`/`IDistributedCache`/`ITieredCache`) + broadcast | Accepted | 2026-05-30 | Phase 0 — shared libraries |
+| [0009](0009-async-messaging-encrypted-payloads.md) | Async messaging — transport-agnostic bus, default-deny pub/sub, encrypted frames, DLQ + idempotency | Accepted | 2026-05-30 | Phase 0 — shared libraries |
+| [0010](0010-observability-dual-enrichment.md) | Observability — OTel aggregation + dual span-tag and log-scope enrichment | Accepted | 2026-05-30 | Phase 0 — shared libraries |
+| [0011](0011-pii-redaction-logging-safety.md) | PII redaction + logging safety — `[RedactData]`, `SanitizedExceptionRender`, LOG-OK/NOT-LOGGED split | Accepted | 2026-05-30 | Phase 0 — shared libraries |
+| [0012](0012-self-rolled-dotnet-auth.md) | Self-rolled .NET auth — shared vocabulary, token primitives, per-transport bindings | Accepted | 2026-05-30 | Phase 0 — shared libraries |
+| [0013](0013-service-defaults-composition-root.md) | ServiceDefaults — thin-aggregator composition root with a locked middleware order | Accepted | 2026-05-30 | Phase 0 — shared libraries |
+| [0014](0014-resilience-primitives.md) | Resilience — bespoke `D2Result`-aware primitives (retry/circuit-breaker/singleflight/pipeline) | Accepted | 2026-05-30 | Phase 0 — shared libraries |
 
 > Backfill of ADRs from earlier shipped deliverables is queued as a separate
 > task. This index grows as ADRs land.
