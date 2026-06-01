@@ -8,6 +8,7 @@ namespace D2.Shared.Tests.Unit.ServiceDefaults;
 
 using AwesomeAssertions;
 using D2.Shared.AspNetCore;
+using D2.Shared.Auth.Startup;
 using D2.Shared.Auth.Validation;
 using D2.Shared.Caching;
 using D2.Shared.Caching.Local.Default;
@@ -15,6 +16,7 @@ using D2.Shared.Handler;
 using D2.Shared.Logging;
 using D2.Shared.ServiceDefaults;
 using D2.Shared.Telemetry;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -258,5 +260,73 @@ public sealed class ServiceDefaultsServiceCollectionExtensionsTests
             });
 
         invocations.Should().Be(1);
+    }
+
+    // ── Auth endpoint guard wiring ────────────────────────────────────────
+
+    [Fact]
+    public void AddD2ServiceDefaults_AuthWired_GuardRegisteredByDefault()
+    {
+        // When auth is wired (SkipAuthAutoWiring=false, default) and
+        // SkipAuthEndpointGuard is false (default), the guard IStartupFilter
+        // must be present in the collection.
+        var services = new ServiceCollection();
+        var configuration = new ConfigurationBuilder().Build();
+
+        services.AddD2ServiceDefaults(
+            configuration,
+            opts => opts.AuthConfigure = auth =>
+            {
+                auth.Issuer = new Uri("https://edge.internal");
+                auth.Audience = "files";
+            });
+
+        services.Any(d =>
+            d.ServiceType == typeof(IStartupFilter) &&
+            d.ImplementationType == typeof(AuthEndpointGuardStartupFilter))
+            .Should().BeTrue("guard is ON by default when auth is wired");
+    }
+
+    [Fact]
+    public void AddD2ServiceDefaults_AuthWired_SkipGuardTrue_GuardNotRegistered()
+    {
+        // Explicit opt-out: SkipAuthEndpointGuard=true must suppress the guard.
+        var services = new ServiceCollection();
+        var configuration = new ConfigurationBuilder().Build();
+
+        services.AddD2ServiceDefaults(
+            configuration,
+            opts =>
+            {
+                opts.SkipAuthEndpointGuard = true;
+                opts.AuthConfigure = auth =>
+                {
+                    auth.Issuer = new Uri("https://edge.internal");
+                    auth.Audience = "files";
+                };
+            });
+
+        services.Any(d =>
+            d.ServiceType == typeof(IStartupFilter) &&
+            d.ImplementationType == typeof(AuthEndpointGuardStartupFilter))
+            .Should().BeFalse("SkipAuthEndpointGuard=true must suppress guard registration");
+    }
+
+    [Fact]
+    public void AddD2ServiceDefaults_AuthSkipped_GuardNotRegistered()
+    {
+        // SkipAuthAutoWiring=true implies the guard is not wired —
+        // anonymous-only services don't declare scopes.
+        var services = new ServiceCollection();
+        var configuration = new ConfigurationBuilder().Build();
+
+        services.AddD2ServiceDefaults(
+            configuration,
+            opts => opts.SkipAuthAutoWiring = true);
+
+        services.Any(d =>
+            d.ServiceType == typeof(IStartupFilter) &&
+            d.ImplementationType == typeof(AuthEndpointGuardStartupFilter))
+            .Should().BeFalse("guard must not register when SkipAuthAutoWiring=true");
     }
 }

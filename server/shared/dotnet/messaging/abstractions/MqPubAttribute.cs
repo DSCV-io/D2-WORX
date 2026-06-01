@@ -7,6 +7,7 @@
 namespace D2.Shared.Messaging;
 
 using System;
+using D2.Shared.Utilities.Extensions;
 
 /// <summary>
 /// Marks a message type as publishable through <see cref="IMessageBus"/>.
@@ -37,7 +38,7 @@ public sealed class MqPubAttribute : Attribute
     /// Used as the lookup key into <c>MqMessagesRegistry</c>.</param>
     public MqPubAttribute(string constant)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(constant);
+        constant.ThrowIfFalsey();
         Constant = constant;
     }
 

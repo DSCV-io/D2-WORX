@@ -15,6 +15,45 @@ The most-used surface in the lib. Boundary-check helpers (`Truthy`/`Falsey`/`ToN
 | `CleanEnumEmptyBehavior.cs`, `CleanValueNullBehavior.cs` | Behavior enums for `EnumerableExtensions.Clean()`.                                                                                                                                                                                                                                 |
 | `GuidExtensions.cs`                                      | `Truthy()` / `Falsey()` for `Guid` and `Guid?` (treats `Guid.Empty` as falsey) PLUS `string?.TryParseTruthyNull(out Guid?)` — the canonical "parse a Guid from optional string input, collapse missing/unparseable/empty to null" helper.                                          |
 | `EnumExtensions.cs`                                      | `string?.TryParseTruthyNull<TEnum>(out TEnum?)` — case-insensitive `Enum.TryParse` wrapper that collapses missing/unparseable/empty to `null`; pass-through on numeric strings (matches BCL behavior — does NOT call `Enum.IsDefined`); supports comma-separated `[Flags]` syntax. |
+| `GuardExtensions.cs`                                     | `ThrowIfFalsey()` for `string?` / `IEnumerable<T>?` / `Guid?` / `Guid` — required-argument guards with BCL-split exceptions (`ArgumentNullException` for literal null, `ArgumentException` for present-but-falsey). `[CallerArgumentExpression]` auto-captures the parameter name. |
+
+## Required-argument guards — `ThrowIfFalsey()`
+
+The canonical way to guard required string / collection / Guid parameters. Extends the `Falsey()` / `Truthy()` convention to guard clauses — one call covers null + empty/whitespace + empty-collection + `Guid.Empty`, throwing the idiomatic BCL exception for each case.
+
+```csharp
+void Register(string? email, IEnumerable<string>? roles, Guid? orgId)
+{
+    email.ThrowIfFalsey();    // ArgumentNullException if null; ArgumentException if ""/"   "
+    roles.ThrowIfFalsey();    // ArgumentNullException if null; ArgumentException if empty
+    orgId.ThrowIfFalsey();    // ArgumentNullException if null; ArgumentException if Guid.Empty
+    // ...
+}
+```
+
+**BCL exception split** — mirrors what the BCL itself would throw for the two distinct "bad argument" cases:
+
+| Input | Exception thrown |
+| ----- | ---------------- |
+| literal `null` | `ArgumentNullException` |
+| `""` / whitespace-only string | `ArgumentException` ("required") |
+| empty collection | `ArgumentException` ("required") |
+| `Guid.Empty` | `ArgumentException` ("required") |
+
+**Parameter name capture** — `[CallerArgumentExpression]` auto-infers the parameter name at call sites. Pass an explicit `paramName` only for indexed or computed sites:
+
+```csharp
+for (int i = 0; i < additionalScopes.Length; i++)
+    additionalScopes[i].ThrowIfFalsey(paramName: $"additionalScopes[{i}]");
+```
+
+**Carve-outs** — use BCL `ThrowIfNull` (not `ThrowIfFalsey`) for:
+
+- Plain reference-type null-guards: DI services / loggers / options that have no present-but-falsey concept.
+- Projects that do not reference `D2.Shared.Utilities` (e.g. avoid adding a reference that would introduce a dependency cycle).
+- Guards requiring a bespoke `ArgumentException` message (`ThrowIfFalsey` has no custom-message overload).
+
+At each carve-out site, add a one-line comment citing `// §5.1a carve-out: <reason>`.
 
 ## Boundary checks — `Truthy()` / `Falsey()` / `ToNullIfEmpty()`
 

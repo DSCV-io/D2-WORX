@@ -7,7 +7,6 @@
 namespace D2.Shared.Handler.Abstractions;
 
 using System;
-using System.Collections.Generic;
 
 /// <summary>
 /// Per-call handler options — observability toggles, slow/critical time
@@ -19,7 +18,7 @@ using System.Collections.Generic;
 /// JWT signature / expiry / audience / fingerprint-binding validation are
 /// transport-level concerns handled by auth middleware (HTTP / gRPC / AMQP)
 /// BEFORE the handler runs — not per-handler. Per-handler scope requirements
-/// vary by operation and live here.
+/// vary by operation and live here as defense-in-depth.
 /// </remarks>
 public sealed record HandlerOptions
 {
@@ -55,10 +54,25 @@ public sealed record HandlerOptions
     public TimeSpan? CriticalThreshold { get; init; } = TimeSpan.FromMilliseconds(500);
 
     /// <summary>
-    /// Gets the scopes the caller must have to invoke this handler. The
-    /// handler returns <c>D2Result.Forbidden</c> at entry if any required
-    /// scope is missing. Null / empty disables the check (the handler is
-    /// responsible for its own scope assertions).
+    /// Gets the per-handler scope requirement evaluated by the handler
+    /// pipeline before <c>ExecuteAsync</c> runs. The pipeline returns
+    /// <c>D2Result.Forbidden</c> when the caller's <c>IRequestContext.Scopes</c>
+    /// does not satisfy the requirement. <see langword="null"/> (the default)
+    /// disables the per-handler check — any authenticated caller that passed
+    /// the transport-layer auth middleware / interceptor may invoke the handler.
     /// </summary>
-    public IReadOnlySet<string>? RequiredScopes { get; init; }
+    /// <remarks>
+    /// The <see cref="ScopeRequirement.Match"/> field controls whether the
+    /// caller must hold any one of the declared scopes
+    /// (<see cref="HandlerScopeMatch.Any"/>) or every declared scope
+    /// (<see cref="HandlerScopeMatch.All"/>). An empty
+    /// <see cref="ScopeRequirement.Scopes"/> set is rejected at construction
+    /// time — the <see cref="ScopeRequirement"/> constructor throws
+    /// <see cref="ArgumentException"/> if <c>Scopes</c> is empty. Pass a
+    /// <see langword="null"/> <see cref="ScopeRequirement"/> to disable the
+    /// per-handler check. The pipeline guard
+    /// (<c>is { Scopes.Count: &gt; 0 }</c>) remains as defense-in-depth for a
+    /// now-unreachable branch.
+    /// </remarks>
+    public ScopeRequirement? ScopeRequirement { get; init; }
 }

@@ -6,6 +6,8 @@
 
 namespace D2.Shared.Encryption;
 
+using D2.Shared.Utilities.Extensions;
+
 /// <summary>
 /// Marker registered once per call to
 /// <see cref="EncryptionServiceCollectionExtensions.AddD2EncryptionFor"/>.
@@ -19,7 +21,7 @@ public sealed class EncryptionRegistration
     /// <param name="serviceKey">The keyed-services discriminator.</param>
     public EncryptionRegistration(string serviceKey)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(serviceKey);
+        serviceKey.ThrowIfFalsey();
         ServiceKey = serviceKey;
     }
 

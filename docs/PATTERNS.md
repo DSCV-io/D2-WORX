@@ -24,28 +24,29 @@ Directory of the load-bearing patterns + cross-cutting conventions every D²-WOR
 12. [Telemetry](#telemetry)
 13. [AspNetCore](#aspnetcore)
 14. [JWT inbound auth](#jwt-inbound-auth)
-15. [Translation — none on HTTP path (intentionally)](#translation--none-on-http-path-intentionally)
-16. [Configuration](#configuration)
-17. [i18n](#i18n)
-18. [Messaging](#messaging)
-19. [SAGA — cross-service synchronous compensation](#saga--cross-service-synchronous-compensation)
-20. [Multi-instance scaling](#multi-instance-scaling)
-21. [Mappers](#mappers)
-22. [Batch operations](#batch-operations)
-23. [Content-addressable entities](#content-addressable-entities)
-24. [Health checks](#health-checks)
-25. [PII redaction — `[RedactData]`](#pii-redaction--redactdata)
-26. [Spec-driven codegen — the cross-cutting pattern](#spec-driven-codegen--the-cross-cutting-pattern)
-27. [Domain validation — smart-constructor pattern](#domain-validation--smart-constructor-pattern)
-28. [Input validation](#input-validation)
-29. [Reference data](#reference-data)
+15. [Deny-by-default endpoint boot guard](#deny-by-default-endpoint-boot-guard)
+16. [Translation — none on HTTP path (intentionally)](#translation--none-on-http-path-intentionally)
+17. [Configuration](#configuration)
+18. [i18n](#i18n)
+19. [Messaging](#messaging)
+20. [SAGA — cross-service synchronous compensation](#saga--cross-service-synchronous-compensation)
+21. [Multi-instance scaling](#multi-instance-scaling)
+22. [Mappers](#mappers)
+23. [Batch operations](#batch-operations)
+24. [Content-addressable entities](#content-addressable-entities)
+25. [Health checks](#health-checks)
+26. [PII redaction — `[RedactData]`](#pii-redaction--redactdata)
+27. [Spec-driven codegen — the cross-cutting pattern](#spec-driven-codegen--the-cross-cutting-pattern)
+28. [Domain validation — smart-constructor pattern](#domain-validation--smart-constructor-pattern)
+29. [Input validation](#input-validation)
+30. [Reference data](#reference-data)
     - [Endonym discipline](#endonym-discipline)
     - [Typed geo catalogs](#typed-geo-catalogs)
     - [Typed access on IRequestContext](#typed-access-on-irequestcontext)
     - [Geo name resolution at the integration boundary](#geo-name-resolution-at-the-integration-boundary)
     - [Reference data — user-preference cascades](#reference-data--user-preference-cascades)
-30. [Hash composition](#hash-composition)
-31. [Anti-patterns to actively avoid](#anti-patterns-to-actively-avoid)
+31. [Hash composition](#hash-composition)
+32. [Anti-patterns to actively avoid](#anti-patterns-to-actively-avoid)
 
 ---
 
@@ -331,18 +332,76 @@ The public static `InfrastructurePathMatcher` is the **single source of truth** 
 
 ## JWT inbound auth
 
-RS256 + JWKS-based inbound auth, transport-binding split across three sibling csprojs: **`D2.Shared.Auth`** (runtime — `JwtValidator`, `HttpJwksProvider`, `TieredCacheSessionLivenessTracker`, `AuthFailures`), **`D2.Shared.Auth.Http`** (HTTP middleware — `JwtAuthMiddleware`, RFC 7807 ProblemDetails, `RequireD2Scope("…")` fluent metadata + `[D2RequireScope("…")]` attribute), **`D2.Shared.Auth.Grpc`** (gRPC interceptor — `JwtAuthInterceptor`, `RpcException(Status, Trailers)` shape with `d2_error_code` / `d2_messages` / `traceid` trailers).
+RS256 + JWKS-based inbound auth, transport-binding split across three sibling csprojs: **`D2.Shared.Auth`** (runtime — `JwtValidator`, `HttpJwksProvider`, `TieredCacheSessionLivenessTracker`, `AuthFailures`), **`D2.Shared.Auth.Http`** (HTTP middleware — `JwtAuthMiddleware`, RFC 7807 ProblemDetails, `RequireAnyScope` / `RequireAllScopes` fluent metadata + `MarkAsD2HarmlessEndpoint`), **`D2.Shared.Auth.Grpc`** (gRPC interceptor — `JwtAuthInterceptor`, `RpcException(Status, Trailers)` shape with `d2_error_code` / `d2_messages` / `traceid` trailers + `[D2RequireAnyScope]` / `[D2RequireAllScopes]` / `[D2HarmlessEndpoint]` attributes).
 
 ```csharp
 services.AddD2Auth(opts => { opts.Issuer = ...; opts.Audience = ...; });
 services.AddD2AuthHttp();      // and/or AddD2AuthGrpc();
 app.UseD2Auth();
-app.MapGet("/files/{id}", H).RequireD2Scope("files.read");
+app.MapGet("/files/{id}", H).RequireAnyScope(Scopes.Files.Read);
+app.MapGet("/files/{id}/lock", H).RequireAllScopes(Scopes.Files.Read, Scopes.Files.Write);
+app.MapGet("/healthz", () => "ok").MarkAsD2HarmlessEndpoint();
 ```
 
-Per-validation pipeline: bearer extraction (transport layer) → signature + standard-claim validation (RS256 pinned, issuer / audience / lifetime with 30s clock skew, reactive-refresh-on-unknown-`kid`) → session liveness (`TieredCacheSessionLivenessTracker`; fail-closed on liveness store outage) → per-endpoint scope check (transport layer; metadata enumerates required scopes, middleware verifies superset). JWKS at the OIDC-canonical `/.well-known/jwks.json`; cluster-wide JWKS rotation via `ICacheInvalidationBackplane` (Redis pub/sub on `d2.security.key-rotated:jwks`). Uniform **401** at the auth boundary regardless of "JWT bad" vs "scope insufficient" — granularity surfaces only on `d2_error_code`. `MarkAsD2HarmlessEndpoint()` / `[D2HarmlessEndpoint]` opts out of the full pipeline (reserved for k8s probes + OIDC discovery). Both transports register a scoped `IRequestContext` reading from a shared `HttpContext.Items` slot (`D2HttpContextItems.REQUEST_CONTEXT`); gRPC interceptor dual-writes to `ServerCallContext.UserState` for hot-path access.
+Per-validation pipeline: bearer extraction (transport layer) → signature + standard-claim validation (RS256 pinned, issuer / audience / lifetime with 30s clock skew, reactive-refresh-on-unknown-`kid`) → session liveness (`TieredCacheSessionLivenessTracker`; fail-closed on liveness store outage) → per-endpoint scope check with explicit match mode (any-of via `RequireAnyScope` / `[D2RequireAnyScope]`; all-of via `RequireAllScopes` / `[D2RequireAllScopes]`). JWKS at the OIDC-canonical `/.well-known/jwks.json`; cluster-wide JWKS rotation via `ICacheInvalidationBackplane` (Redis pub/sub on `d2.security.key-rotated:jwks`). Uniform **401** at the auth boundary regardless of "JWT bad" vs "scope insufficient" — granularity surfaces only on `d2_error_code`. `MarkAsD2HarmlessEndpoint()` / `[D2HarmlessEndpoint]` opts out of the full pipeline (reserved for k8s probes + OIDC discovery); `[AllowAnonymous]` is deliberately NOT recognized. Both transports register a scoped `IRequestContext` reading from a shared `HttpContext.Items` slot (`D2HttpContextItems.REQUEST_CONTEXT`); gRPC interceptor dual-writes to `ServerCallContext.UserState` for hot-path access. Every mapped endpoint must carry a declared auth intent or the host fails to start — see [Deny-by-default endpoint boot guard](#deny-by-default-endpoint-boot-guard).
 
 Canonical: [`server/shared/dotnet/auth/core/README.md`](../server/shared/dotnet/auth/core/README.md), [`auth/http/README.md`](../server/shared/dotnet/auth/http/README.md), [`auth/grpc/README.md`](../server/shared/dotnet/auth/grpc/README.md).
+
+---
+
+## Deny-by-default endpoint boot guard
+
+Every mapped `RouteEndpoint` must declare its auth intent before the service may serve traffic. An endpoint with no declaration silently admits any authenticated caller at runtime — a class of misconfiguration that is impossible to observe from a passing test run. The `AuthEndpointGuardStartupFilter` (in `D2.Shared.Auth.Startup`, wired automatically by `AddD2ServiceDefaults`) converts this silent failure into a fast, deterministic startup failure.
+
+### What the guard checks
+
+At host startup — after middleware pipeline construction (including `UseRouting`, which merges all endpoint data sources into the DI composite) and before Kestrel accepts connections — the guard walks every endpoint in `EndpointDataSource.Endpoints`. For each `RouteEndpoint` it verifies that one of the following is present in the endpoint's metadata collection:
+
+| Intent | How to attach |
+| ------ | ------------- |
+| HTTP any-of scope | `.RequireAnyScope("scope1", "scope2")` on `IEndpointConventionBuilder` |
+| HTTP all-of scope | `.RequireAllScopes("scope1", "scope2")` on `IEndpointConventionBuilder` |
+| gRPC fluent any-of scope | `.RequireAnyScope("scope1")` on the gRPC service builder |
+| gRPC fluent all-of scope | `.RequireAllScopes("scope1", "scope2")` on the gRPC service builder |
+| gRPC attribute any-of scope | `[D2RequireAnyScope("scope1")]` on the service class or method |
+| gRPC attribute all-of scope | `[D2RequireAllScopes("scope1", "scope2")]` on the service class or method |
+| Harmless bypass | `.MarkAsD2HarmlessEndpoint()` (fluent) or `[D2HarmlessEndpoint]` (attribute) |
+
+An endpoint that satisfies none of these causes the host to throw `InvalidOperationException` naming the offending route patterns and abort before serving.
+
+### Exempt endpoints
+
+Three categories are exempt from the check:
+
+1. **Infrastructure paths** — endpoints whose route pattern matches `/health`, `/alive`, `/metrics`, or `/.well-known` (via `D2AspNetCoreConstants.DEFAULT_INFRASTRUCTURE_PATHS` + `InfrastructurePathMatcher`). These are typically registered by `MapD2HealthEndpoints` and `MapD2PrometheusEndpoint`, which attach `MarkAsD2HarmlessEndpoint` automatically; they are also exempt by path so that third-party health-probe registrations without the D² fluent extension don't trip the guard.
+2. **Non-`RouteEndpoint` entries** — base `Endpoint` instances with no route pattern carry no route identity and cannot be guarded by convention.
+3. **gRPC infrastructure catch-all endpoints** — `MapGrpcService<T>()` registers catch-all slots (e.g. `{pkg}.{Svc}/{unimplementedMethod:grpcunimplemented}`) to return `UNIMPLEMENTED` for unknown routes. The guard identifies these by the `grpcunimplemented` route constraint, which gRPC AspNetCore adds exclusively to its catch-all parameters and no other endpoint type carries.
+
+### Opt-out
+
+Set `D2ServiceDefaultsOptions.SkipAuthEndpointGuard = true` when wiring via `AddD2ServiceDefaults`. Appropriate for test hosts that register synthetic endpoints without auth declarations and for anonymous-only admin tools. When opting out, per-endpoint auth intent is the developer's responsibility.
+
+### Implementation mechanism
+
+The guard is an `IStartupFilter` rather than an `IHostedService`. In the `WebApplication` model, `app.MapXxx()` calls write into `WebApplication.DataSources` before `StartAsync`; these sources are merged into the DI-resolved `EndpointDataSource` composite during pipeline construction (the `next(app)` call inside `IStartupFilter.Configure`). The `IStartupFilter` post-`next` window is therefore the earliest point at which the full endpoint set is visible. An `IHostedService` would capture the `EndpointDataSource` singleton at DI-resolve time — before the `WebApplication` data sources are merged — and would see an empty collection. The `IStartupFilter` path guarantees the guard walks the complete, production-faithful endpoint set before any request byte arrives.
+
+```csharp
+// Standard service setup — guard is ON by default.
+builder.Services.AddD2ServiceDefaults(builder.Configuration, opts =>
+{
+    opts.AuthConfigure = auth => { auth.Issuer = ...; auth.Audience = ...; };
+});
+
+// Every endpoint must declare intent:
+app.MapGet("/files/{id}", H).RequireAnyScope(Scopes.Files.Read);
+app.MapGet("/files/{id}/lock", H).RequireAllScopes(Scopes.Files.Read, Scopes.Files.Write);
+app.MapGet("/healthz", () => "ok").MarkAsD2HarmlessEndpoint();
+
+// Opt out for test hosts:
+opts.SkipAuthEndpointGuard = true;
+```
+
+> Detailed implementation: `server/shared/dotnet/auth/startup/AuthEndpointGuardStartupFilter.cs` + `AuthEndpointGuardServiceCollectionExtensions.cs`. Opt-out surface: `server/shared/dotnet/service-defaults/D2ServiceDefaultsOptions.cs`. Architectural rationale: [ADR-0012](adrs/0012-self-rolled-dotnet-auth.md) §5.
 
 ---
 

@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="D2RequireScopeAttributeTests.cs" company="DCSV">
+// <copyright file="D2RequireAnyScopeAttributeTests.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -10,12 +10,12 @@ using AwesomeAssertions;
 using D2.Shared.Auth.Grpc.Endpoints;
 using Xunit;
 
-public sealed class D2RequireScopeAttributeTests
+public sealed class D2RequireAnyScopeAttributeTests
 {
     [Fact]
     public void Construct_SingleScope_ScopesContainsOne()
     {
-        var attr = new D2RequireScopeAttribute("files.read");
+        var attr = new D2RequireAnyScopeAttribute("files.read");
 
         attr.Scopes.Should().BeEquivalentTo(new[] { "files.read" });
     }
@@ -23,7 +23,8 @@ public sealed class D2RequireScopeAttributeTests
     [Fact]
     public void Construct_MultipleScopes_ScopesContainsAll()
     {
-        var attr = new D2RequireScopeAttribute("files.read", "files.admin", "files.write");
+        var attr = new D2RequireAnyScopeAttribute(
+            "files.read", "files.admin", "files.write");
 
         attr.Scopes.Should().BeEquivalentTo(
             new[] { "files.read", "files.admin", "files.write" });
@@ -32,15 +33,15 @@ public sealed class D2RequireScopeAttributeTests
     [Fact]
     public void Construct_NullPrimaryScope_Throws()
     {
-        var act = () => new D2RequireScopeAttribute(null!);
+        var act = () => new D2RequireAnyScopeAttribute(null!);
 
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
     public void Construct_EmptyPrimaryScope_Throws()
     {
-        var act = () => new D2RequireScopeAttribute(string.Empty);
+        var act = () => new D2RequireAnyScopeAttribute(string.Empty);
 
         act.Should().Throw<ArgumentException>();
     }
@@ -48,7 +49,7 @@ public sealed class D2RequireScopeAttributeTests
     [Fact]
     public void Construct_WhitespacePrimaryScope_Throws()
     {
-        var act = () => new D2RequireScopeAttribute("   ");
+        var act = () => new D2RequireAnyScopeAttribute("   ");
 
         act.Should().Throw<ArgumentException>();
     }
@@ -56,7 +57,7 @@ public sealed class D2RequireScopeAttributeTests
     [Fact]
     public void Construct_AdditionalScopeWhitespace_Throws()
     {
-        var act = () => new D2RequireScopeAttribute("files.read", "  ");
+        var act = () => new D2RequireAnyScopeAttribute("files.read", "  ");
 
         act.Should().Throw<ArgumentException>();
     }
@@ -64,9 +65,9 @@ public sealed class D2RequireScopeAttributeTests
     [Fact]
     public void Construct_AdditionalScopeNull_Throws()
     {
-        var act = () => new D2RequireScopeAttribute("files.read", null!);
+        var act = () => new D2RequireAnyScopeAttribute("files.read", null!);
 
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
@@ -76,7 +77,7 @@ public sealed class D2RequireScopeAttributeTests
         // or Inherited=true doesn't slip through silently — the auth model
         // depends on the precedence rules these flags enforce.
         var usage = (AttributeUsageAttribute?)Attribute.GetCustomAttribute(
-            typeof(D2RequireScopeAttribute), typeof(AttributeUsageAttribute));
+            typeof(D2RequireAnyScopeAttribute), typeof(AttributeUsageAttribute));
 
         usage.Should().NotBeNull();
         usage.ValidOn.Should().HaveFlag(AttributeTargets.Method);
@@ -86,12 +87,24 @@ public sealed class D2RequireScopeAttributeTests
     }
 
     [Fact]
+    public void Attribute_TypeName_PinnedForFutureAnalyzer()
+    {
+        // A future Roslyn analyzer pins against the type-name string. A silent
+        // rename without updating the analyzer would break the contract — this
+        // test surfaces the breakage at test-run time instead.
+        typeof(D2RequireAnyScopeAttribute).Name
+            .Should().Be("D2RequireAnyScopeAttribute");
+        typeof(D2RequireAnyScopeAttribute).FullName
+            .Should().Be("D2.Shared.Auth.Grpc.Endpoints.D2RequireAnyScopeAttribute");
+    }
+
+    [Fact]
     public void Attribute_AppliedToServiceClass_AffectsAllItsMethods()
     {
-        // Reflection-driven proof: a class-level [D2RequireScope] is read off
+        // Reflection-driven proof: a class-level [D2RequireAnyScope] is read off
         // the type itself; method-level override is a separate read.
-        var classAttr = (D2RequireScopeAttribute?)Attribute.GetCustomAttribute(
-            typeof(SampleProtectedService), typeof(D2RequireScopeAttribute));
+        var classAttr = (D2RequireAnyScopeAttribute?)Attribute.GetCustomAttribute(
+            typeof(SampleAnyProtectedService), typeof(D2RequireAnyScopeAttribute));
 
         classAttr.Should().NotBeNull();
         classAttr.Scopes.Should().BeEquivalentTo(new[] { "svc.scope" });
@@ -100,19 +113,19 @@ public sealed class D2RequireScopeAttributeTests
     [Fact]
     public void Attribute_MethodLevelOverridesClassLevel()
     {
-        var methodInfo = typeof(SampleProtectedService).GetMethod(
-            nameof(SampleProtectedService.MethodWithOwnScope))!;
-        var methodAttr = (D2RequireScopeAttribute?)Attribute.GetCustomAttribute(
-            methodInfo, typeof(D2RequireScopeAttribute));
+        var methodInfo = typeof(SampleAnyProtectedService).GetMethod(
+            nameof(SampleAnyProtectedService.MethodWithOwnScope))!;
+        var methodAttr = (D2RequireAnyScopeAttribute?)Attribute.GetCustomAttribute(
+            methodInfo, typeof(D2RequireAnyScopeAttribute));
 
         methodAttr.Should().NotBeNull();
         methodAttr.Scopes.Should().BeEquivalentTo(new[] { "method.specific" });
     }
 
-    [D2RequireScope("svc.scope")]
-    private sealed class SampleProtectedService
+    [D2RequireAnyScope("svc.scope")]
+    private sealed class SampleAnyProtectedService
     {
-        [D2RequireScope("method.specific")]
+        [D2RequireAnyScope("method.specific")]
         public static void MethodWithOwnScope()
         {
         }

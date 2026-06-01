@@ -12,6 +12,7 @@ using D2.Shared.Auth;
 using D2.Shared.Auth.Errors;
 using D2.Shared.Auth.Grpc;
 using D2.Shared.Auth.Grpc.Endpoints;
+using D2.Shared.Auth.Grpc.Status;
 using D2.Shared.Auth.Validation;
 using D2.Shared.Caching;
 using D2.Shared.Caching.Local.Default;
@@ -43,12 +44,10 @@ using GrpcStatusCode = global::Grpc.Core.StatusCode;
 /// </summary>
 /// <remarks>
 /// Method-level metadata is supplied via the fluent
-/// <c>RequireD2Scope</c> / <c>MarkAsD2HarmlessEndpoint</c> extensions on
-/// <see cref="GrpcServiceEndpointConventionBuilder"/> — the most reliable
-/// production wiring (the attribute path is covered by separate unit tests
-/// over hand-built endpoint metadata; gRPC AspNetCore does not auto-pull
-/// arbitrary user attributes onto endpoint metadata, so the fluent path is
-/// what end-to-end production hosts use today).
+/// <c>RequireAnyScope</c> / <c>RequireAllScopes</c> / <c>MarkAsD2HarmlessEndpoint</c>
+/// extensions on <see cref="GrpcServiceEndpointConventionBuilder"/>. The attribute
+/// path (<c>[D2RequireAnyScope]</c> etc. on the service class or method) is proven
+/// separately in <c>GrpcEndpointMetadataProjectionTests</c>.
 /// </remarks>
 [System.Diagnostics.CodeAnalysis.SuppressMessage(
     "Performance",
@@ -59,6 +58,8 @@ public sealed class GrpcAuthIntegrationTests
     private const string _ISSUER = "https://edge.internal";
     private const string _AUDIENCE = "files";
     private const string _SCOPE = "test.scope";
+    private const string _SCOPE_READ = "files.read";
+    private const string _SCOPE_WRITE = "files.write";
 
     [Fact]
     public async Task HarmlessEndpointService_NoBearer_Succeeds()
@@ -76,9 +77,9 @@ public sealed class GrpcAuthIntegrationTests
     }
 
     [Fact]
-    public async Task ScopeProtectedService_NoBearer_RejectedAsUnauthenticated()
+    public async Task ScopeProtectedService_AnyScope_NoBearer_RejectedAsUnauthenticated()
     {
-        // TestEcho is wired with .RequireD2Scope("test.scope"); missing bearer
+        // TestEcho is wired with .RequireAnyScope("test.scope"); missing bearer
         // must surface AUTH_BEARER_MISSING with Status.Unauthenticated.
         using var jwt = new TestJwtBuilder();
         using var host = await BuildHostAsync(jwt);
@@ -89,7 +90,7 @@ public sealed class GrpcAuthIntegrationTests
 
         var ex = await act.Should().ThrowAsync<RpcException>();
         ex.Which.StatusCode.Should().Be(GrpcStatusCode.Unauthenticated);
-        ReadTrailer(ex.Which.Trailers, "d2_error_code")
+        ReadTrailer(ex.Which.Trailers, D2GrpcTrailers.ERROR_CODE)
             .Should().Be(AuthErrorCodes.AUTH_BEARER_MISSING);
 
         // Status.Detail is intentionally empty (info-leak avoidance).
@@ -97,10 +98,9 @@ public sealed class GrpcAuthIntegrationTests
     }
 
     [Fact]
-    public async Task ScopeProtectedService_BearerWithRequiredScope_Succeeds()
+    public async Task ScopeProtectedService_AnyScope_BearerWithRequiredScope_Succeeds()
     {
-        // Echo requires "test.scope"; mint a token carrying it via the
-        // standard `scope` claim (RFC 6749 §3.3 — space-delimited string).
+        // Echo requires "test.scope" (any-of); mint a token carrying it.
         using var jwt = new TestJwtBuilder();
         using var host = await BuildHostAsync(jwt);
         using var channel = CreateChannel(host);
@@ -121,7 +121,7 @@ public sealed class GrpcAuthIntegrationTests
     }
 
     [Fact]
-    public async Task ScopeProtectedService_BearerWithoutRequiredScope_Rejected()
+    public async Task ScopeProtectedService_AnyScope_BearerWithoutRequiredScope_Rejected()
     {
         // Bearer is valid (signature + claims pass) but carries a different
         // scope set — must surface AUTH_SCOPE_INSUFFICIENT and
@@ -145,8 +145,82 @@ public sealed class GrpcAuthIntegrationTests
 
         var ex = await act.Should().ThrowAsync<RpcException>();
         ex.Which.StatusCode.Should().Be(GrpcStatusCode.Unauthenticated);
-        ReadTrailer(ex.Which.Trailers, "d2_error_code")
+        ReadTrailer(ex.Which.Trailers, D2GrpcTrailers.ERROR_CODE)
             .Should().Be(AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT);
+    }
+
+    [Fact]
+    public async Task ScopeProtectedService_AllScopes_BearerWithExactScopeSet_Succeeds()
+    {
+        // Host wired with .RequireAllScopes(files.read, files.write). Token
+        // carries exactly those scopes — all-of check passes.
+        using var jwt = new TestJwtBuilder();
+        using var host = await BuildHostWithAllScopesAsync(jwt);
+        using var channel = CreateChannel(host);
+        var client = new TestEcho.TestEchoClient(channel);
+        var token = jwt.MintToken(
+            _ISSUER,
+            _AUDIENCE,
+            extraClaims: new Dictionary<string, object>
+            {
+                ["scope"] = $"{_SCOPE_READ} {_SCOPE_WRITE}",
+            });
+        var headers = new Metadata { { "authorization", "Bearer " + token } };
+
+        var reply = await client.EchoAsync(new EchoRequest { Payload = "allscopes" }, headers);
+
+        reply.Echoed.Should().Be("allscopes");
+    }
+
+    [Fact]
+    public async Task ScopeProtectedService_AllScopes_BearerMissingOne_Rejected()
+    {
+        // TestAllScopesEcho requires BOTH files.read AND files.write.
+        // Token only has files.read → all-of check fails.
+        using var jwt = new TestJwtBuilder();
+        using var host = await BuildHostWithAllScopesAsync(jwt);
+        using var channel = CreateChannel(host);
+        var client = new TestEcho.TestEchoClient(channel);
+        var token = jwt.MintToken(
+            _ISSUER,
+            _AUDIENCE,
+            extraClaims: new Dictionary<string, object>
+            {
+                ["scope"] = _SCOPE_READ,
+            });
+        var headers = new Metadata { { "authorization", "Bearer " + token } };
+
+        var act = async () => await client.EchoAsync(
+            new EchoRequest { Payload = "shouldfail" }, headers);
+
+        var ex = await act.Should().ThrowAsync<RpcException>();
+        ex.Which.StatusCode.Should().Be(GrpcStatusCode.Unauthenticated);
+        ReadTrailer(ex.Which.Trailers, D2GrpcTrailers.ERROR_CODE)
+            .Should().Be(AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT);
+    }
+
+    [Fact]
+    public async Task ScopeProtectedService_AllScopes_BearerWithBothScopes_Succeeds()
+    {
+        // TestAllScopesEcho requires BOTH files.read AND files.write.
+        // Token carries both → should succeed.
+        using var jwt = new TestJwtBuilder();
+        using var host = await BuildHostWithAllScopesAsync(jwt);
+        using var channel = CreateChannel(host);
+        var client = new TestEcho.TestEchoClient(channel);
+        var token = jwt.MintToken(
+            _ISSUER,
+            _AUDIENCE,
+            extraClaims: new Dictionary<string, object>
+            {
+                ["scope"] = $"{_SCOPE_READ} {_SCOPE_WRITE}",
+            });
+        var headers = new Metadata { { "authorization", "Bearer " + token } };
+
+        var reply = await client.EchoAsync(
+            new EchoRequest { Payload = "ok" }, headers);
+
+        reply.Echoed.Should().Be("ok");
     }
 
     [Fact]
@@ -217,7 +291,64 @@ public sealed class GrpcAuthIntegrationTests
                         app.UseEndpoints(endpoints =>
                         {
                             endpoints.MapGrpcService<TestEchoService>()
-                                .RequireD2Scope(_SCOPE);
+                                .RequireAnyScope(_SCOPE);
+                            endpoints.MapGrpcService<TestHealthService>()
+                                .MarkAsD2HarmlessEndpoint();
+                        });
+                    });
+            });
+
+        var host = await hostBuilder.StartAsync();
+        return host;
+    }
+
+    /// <summary>
+    /// Host variant that wires <c>TestEchoService</c> with
+    /// <c>.RequireAllScopes(_SCOPE_READ, _SCOPE_WRITE)</c> for the all-of
+    /// end-to-end tests.
+    /// </summary>
+    private static async Task<IHost> BuildHostWithAllScopesAsync(TestJwtBuilder jwtBuilder)
+    {
+        var hostBuilder = new HostBuilder()
+            .ConfigureWebHost(webHost =>
+            {
+                webHost
+                    .UseTestServer()
+                    .ConfigureServices(services =>
+                    {
+                        services.AddLogging();
+                        services.AddRouting();
+                        services.AddD2LocalCache();
+                        services.AddSingleton<ITieredCache, FakeTieredCacheStub>();
+                        services.AddD2Auth(opts =>
+                        {
+                            opts.Issuer = new Uri(_ISSUER);
+                            opts.Audience = _AUDIENCE;
+                        });
+
+                        services.RemoveAll<D2.Shared.Auth.Abstractions.Jwks.IJwksProvider>();
+                        services.RemoveAll<D2.Shared.Auth.Jwks.HttpJwksProvider>();
+                        services.AddSingleton<D2.Shared.Auth.Abstractions.Jwks.IJwksProvider>(
+                            new FakeJwksProvider(jwtBuilder.PublicKey));
+                        services.RemoveAll<JwtValidator>();
+                        services.AddSingleton(sp => new JwtValidator(
+                            sp.GetRequiredService<
+                                D2.Shared.Auth.Abstractions.Jwks.IJwksProvider>(),
+                            sp.GetRequiredService<IOptions<AuthOptions>>(),
+                            sp.GetRequiredService<ClaimsToContextMapper>(),
+                            Microsoft.Extensions.Logging.Abstractions
+                                .NullLogger<JwtValidator>.Instance));
+
+                        services.AddGrpc();
+                        services.AddD2AuthGrpc();
+                    })
+                    .Configure(app =>
+                    {
+                        app.UseRouting();
+                        app.UseEndpoints(endpoints =>
+                        {
+                            endpoints.MapGrpcService<TestEchoService>()
+                                .RequireAllScopes(_SCOPE_READ, _SCOPE_WRITE);
                             endpoints.MapGrpcService<TestHealthService>()
                                 .MarkAsD2HarmlessEndpoint();
                         });
@@ -256,7 +387,8 @@ public sealed class GrpcAuthIntegrationTests
 
     /// <summary>
     /// Test-only gRPC service. Exposes <c>Echo</c>; wired with
-    /// <c>.RequireD2Scope("test.scope")</c> at <c>MapGrpcService</c> time.
+    /// <c>.RequireAnyScope("test.scope")</c> (or <c>.RequireAllScopes(...)</c>
+    /// depending on the host builder variant) at <c>MapGrpcService</c> time.
     /// </summary>
     private sealed class TestEchoService : TestEcho.TestEchoBase
     {

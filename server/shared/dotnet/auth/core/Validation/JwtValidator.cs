@@ -74,8 +74,8 @@ using JwtOutcome = D2.Shared.Auth.Telemetry.AuthTelemetryTags.JwtValidations.Out
 internal sealed class JwtValidator
 {
     // Reusable + thread-safe per Microsoft.IdentityModel docs — single static
-    // instance avoids per-call allocation across the entire process.
-    private static readonly JsonWebTokenHandler SR_Handler = new();
+    // readonly instance avoids per-call allocation across the entire process.
+    private static readonly JsonWebTokenHandler sr_handler = new();
 
     private readonly IJwksProvider r_jwksProvider;
     private readonly ClaimsToContextMapper r_mapper;
@@ -153,7 +153,7 @@ internal sealed class JwtValidator
         var snapshot = snapshotResult.Data;
         var validationParameters = BuildValidationParameters(snapshot);
 
-        var first = await SR_Handler
+        var first = await sr_handler
             .ValidateTokenAsync(bearerToken, validationParameters)
             .ConfigureAwait(false);
 
@@ -179,7 +179,7 @@ internal sealed class JwtValidator
             }
 
             var retryParameters = BuildValidationParameters(refreshedSnapshot.Data);
-            var second = await SR_Handler
+            var second = await sr_handler
                 .ValidateTokenAsync(bearerToken, retryParameters)
                 .ConfigureAwait(false);
             return Finalize(second, sw, kidPathRetried: true);

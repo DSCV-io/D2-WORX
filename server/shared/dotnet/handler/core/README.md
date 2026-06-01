@@ -63,7 +63,7 @@ public abstract class BaseHandler<TSelf, TInput, TOutput> : IHandler<TInput, TOu
 ## HandleAsync flow
 
 1. **Resolve options**: per-call → `DefaultOptions` → platform defaults
-2. **Scope pre-check**: every `RequiredScope` must be in `Context.Request.Scopes`; missing → `D2Result.Forbidden`
+2. **Scope pre-check**: if `ScopeRequirement` is non-null with a non-empty `Scopes` set, checks `Context.Request.Scopes` using the declared `HandlerScopeMatch` — `Any` (at least one overlap) or `All` (every scope present); skip when `ScopeRequirement` is null or `Scopes` is empty; mismatch → increments `HandlerTelemetry.SR_Invoked` + `SR_Failed`, skips activity span and duration recording, returns `D2Result.Forbidden`
 3. **Activity start**: `HandlerTelemetry.SR_ActivitySource.StartActivity(handlerName)`. Tags emitted (when present):
    - Always: `d2.handler.name`
    - When user identity present: `d2.user_id`, `d2.org_id`, `d2.org_type`, `d2.org_role`
@@ -126,7 +126,7 @@ public sealed class GetUserById(HandlerContext<GetUserById> context, IUserRepo r
 {
     protected override HandlerOptions DefaultOptions => new()
     {
-        RequiredScopes = new HashSet<string>(StringComparer.Ordinal) { Scopes.Self.Read },
+        ScopeRequirement = new ScopeRequirement(HandlerScopeMatch.Any, new HashSet<string>(StringComparer.Ordinal) { Scopes.Self.Read }),
         SlowThreshold = TimeSpan.FromMilliseconds(50),
     };
 

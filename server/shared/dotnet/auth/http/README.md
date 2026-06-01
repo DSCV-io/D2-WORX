@@ -28,7 +28,7 @@ services
 // ... later, in the request pipeline:
 app.UseRouting();
 app.UseD2Auth();              // BETWEEN UseRouting() and the endpoint dispatcher
-app.MapGet("/files/{id}", H).RequireD2Scope("files.read");
+app.MapGet("/files/{id}", H).RequireAnyScope("files.read");
 app.MapGet("/healthz", () => "ok").MarkAsD2HarmlessEndpoint();
 ```
 
@@ -44,18 +44,23 @@ app.MapGet("/healthz", () => "ok").MarkAsD2HarmlessEndpoint();
 
 Carries the per-endpoint scope requirement (or harmless-endpoint opt-in). Two flavors:
 
-- `EndpointScopeMetadata.ForScopes(["files.read", "files.admin"])` — at-least-one-of semantics. Mirrors `IAuthContextExtensions.HasAnyScope` and `BaseHandler.RequiredScopes` enforcement.
+- `EndpointScopeMetadata.ForScopes(IEnumerable<string> scopes, ScopeMatch match)` — creates a metadata instance with an explicit match mode: `ScopeMatch.Any` (at-least-one-of) or `ScopeMatch.All` (every-scope). The match mode is always stated explicitly at declaration time. The per-handler `BaseHandler.ScopeRequirement` enforces the same dual-mode (any-of OR all-of) via `HandlerScopeMatch`, so transport and handler layers are consistent.
 - `EndpointScopeMetadata.HarmlessEndpoint` — singleton; middleware short-circuits the validator + liveness pipeline.
 
 Attach via the fluent builder extensions:
 
-| Extension                               | Semantics                                                                                     |
-| --------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `.RequireD2Scope("scope")`              | Endpoint requires this scope.                                                                 |
-| `.RequireD2Scope("scope", "alt-scope")` | Endpoint requires at least one of these scopes.                                               |
-| `.MarkAsD2HarmlessEndpoint()`           | Endpoint bypasses auth entirely (probes / OIDC discovery / harmless intra-cluster info only). |
+| Extension                                        | Semantics                                                                                     |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `.RequireAnyScope("scope")`                      | Endpoint requires the caller to hold at least one of the listed scopes (any-of).             |
+| `.RequireAnyScope("scope", "alt-scope")`         | Endpoint requires at least one of these scopes (any-of).                                     |
+| `.RequireAllScopes("scope", "other-scope")`      | Endpoint requires the caller to hold every listed scope (all-of).                            |
+| `.MarkAsD2HarmlessEndpoint()`                    | Endpoint bypasses auth entirely (probes / OIDC discovery / harmless intra-cluster info only). |
 
 The deny-by-default state: an endpoint with NO `EndpointScopeMetadata` attached gets the FULL pipeline (validator + liveness; scope check passes against the empty required set). Endpoints that need to bypass auth entirely MUST opt in explicitly via `.MarkAsD2HarmlessEndpoint()` — the codebase deliberately does NOT recognize the BCL `[AllowAnonymous]` attribute (its semantic is tied to the BCL `AuthenticationMiddleware` chain we bypass).
+
+#### Deny-by-default boot guard
+
+`D2.Shared.Auth.Startup` (see [`../startup/README.md`](../startup/README.md)) registers an `IStartupFilter` that requires **every** mapped `RouteEndpoint` to carry a declared auth intent before the host accepts any traffic. Infrastructure paths (`/health`, `/alive`, `/metrics`, `/.well-known`) are auto-exempt. If any endpoint lacks a declaration, the host fails to start with an `InvalidOperationException` that lists the undeclared routes — never silently. Set `D2ServiceDefaultsOptions.SkipAuthEndpointGuard = true` to opt out (test hosts, anonymous-only admin tools).
 
 ### ProblemDetails — `D2ProblemDetailsExtensions`
 
@@ -151,6 +156,7 @@ Run: `dotnet test server/shared/dotnet/tests`.
 
 - [`../core/README.md`](../core/README.md) — JWT validator + JWKS + liveness internals
 - [`../grpc/README.md`](../grpc/README.md) — gRPC-transport sibling
+- [`../startup/README.md`](../startup/README.md) — deny-by-default boot guard
 - [`../abstractions/README.md`](../abstractions/README.md) — `ISessionLivenessTracker`, `JwtClaimTypes`, `Audiences`, `Scopes`, `D2HttpContextItems`
 - [RFC 6750](https://datatracker.ietf.org/doc/html/rfc6750) — Bearer Token Usage
 - [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807) — Problem Details for HTTP APIs

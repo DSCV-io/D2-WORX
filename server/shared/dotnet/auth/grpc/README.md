@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
-gRPC-transport binding for [`D2.Shared.Auth`](../core/README.md) — server-side `Grpc.Core.Interceptors.Interceptor` subclass that runs the JWT validation pipeline + session liveness check on inbound gRPC calls, emits `RpcException(Status, Trailers)` on failure with the `d2_error_code` / `d2_messages` / `traceid` trailer triple, and supports per-method scope requirements via attribute-on-method declarations OR fluent endpoint metadata.
+gRPC-transport binding for [`D2.Shared.Auth`](../core/README.md) — server-side `Grpc.Core.Interceptors.Interceptor` subclass that runs the JWT validation pipeline + session liveness check on inbound gRPC calls, emits `RpcException(Status, Trailers)` on failure with the `d2_error_code` / `d2_messages` / `traceid` trailer triple, and enforces per-method scope requirements via attribute declarations OR fluent endpoint metadata.
 
 Lives in its own csproj (separate from `D2.Shared.Auth`) so the `Grpc.AspNetCore.Server` framework reference is opt-in: HTTP-only services / worker processes / console hosts that consume `D2.Shared.Auth` for JWT validation in non-gRPC paths don't need to drag in the gRPC server framework. Sibling [`D2.Shared.Auth.Http`](../http/README.md) holds the HTTP-transport binding under the same logic. The two transport-binding csprojs are siblings (no inter-csproj dep): each registers an identical scoped `IRequestContext` resolver lambda that reads from a shared `HttpContext.Items` slot, so a single dual-transport host wires both extensions and resolves `IRequestContext` correctly under either transport.
 
@@ -25,7 +25,7 @@ services
     })
     .AddD2AuthGrpc();
 
-// ... later, alongside the host's own gRPC config:
+// ... alongside the host's own gRPC config:
 services.AddGrpc(opts =>
 {
     opts.MaxReceiveMessageSize = 16 * 1024 * 1024;
@@ -40,41 +40,81 @@ services.AddGrpc(opts =>
 
 > See [`../core/README.md` § Composing with siblings](../core/README.md#composing-with-siblings) for the canonical dual-transport composition pattern (fluent chain, identical `IRequestContext` resolver across both transports, HTTP-only / gRPC-only carve-outs).
 
-### Per-method scope metadata
+### Per-method scope declaration
 
-#### Attribute path (recommended)
+Two surfaces declare scope requirements on a gRPC method: the **attribute path** (on the service class or method) and the **fluent path** (on the `IEndpointConventionBuilder` returned by `MapGrpcService<T>()`). Both project onto endpoint metadata and are enforced at runtime by the `JwtAuthInterceptor`.
+
+#### Attribute path (recommended for gRPC)
+
+The recommended surface because gRPC service implementations are concrete classes overriding generated `*ServiceBase` types — declaring scope requirements at the class or method declaration is the most ergonomic.
 
 ```csharp
-[D2RequireScope("files.read")]
+[D2RequireAnyScope("files.read")]
 public sealed class FilesService : Files.FilesBase
 {
+    // Inherits class-level any-scope requirement.
     public override Task<GetFileReply> GetFile(GetFileRequest req, ServerCallContext ctx) { ... }
 
+    // Method-level all-scopes overrides class-level any-scope.
+    [D2RequireAllScopes("files.read", "files.write")]
+    public override Task<DeleteFileReply> DeleteFile(DeleteFileRequest req, ServerCallContext ctx) { ... }
+
+    // Method-level harmless overrides class-level any-scope.
     [D2HarmlessEndpoint]
     public override Task<HealthReply> Health(Empty req, ServerCallContext ctx) { ... }
 }
 ```
 
-`D2RequireScopeAttribute` and `D2HarmlessEndpointAttribute` apply at method level OR class level. ASP.NET routing auto-pulls them onto endpoint metadata during `MapGrpcService<T>()` — no extra wiring required.
+ASP.NET routing auto-pulls class-level and method-level attribute declarations onto endpoint metadata during `MapGrpcService<T>()` — no extra wiring required.
 
-**Precedence** (mirrors BCL `[AllowAnonymous]` over `[Authorize]`):
-
-- Method-level `[D2HarmlessEndpoint]` overrides any class-level `[D2RequireScope]`.
-- Method-level `[D2RequireScope]` overrides any class-level `[D2RequireScope]`.
-- Fluent metadata takes precedence over both attribute paths.
+| Attribute | Semantics |
+| --- | --- |
+| `[D2RequireAnyScope("a", "b")]` | Caller must hold **at least one** of the listed scopes (`ScopeMatch.Any`). |
+| `[D2RequireAllScopes("a", "b")]` | Caller must hold **every** listed scope (`ScopeMatch.All`). |
+| `[D2HarmlessEndpoint]` | Method bypasses auth entirely (probes / OIDC discovery / harmless intra-cluster info only). SECURITY-CRITICAL — see [Harmless endpoints](#harmless-endpoints). |
 
 #### Fluent path
 
 ```csharp
-app.MapGrpcService<FilesService>().RequireD2Scope("files.read");
+app.MapGrpcService<FilesService>().RequireAnyScope("files.read");
+app.MapGrpcService<AdminService>().RequireAllScopes("admin.read", "admin.write");
 app.MapGrpcService<HealthProbeService>().MarkAsD2HarmlessEndpoint();
 ```
 
-Useful for tests that need to inject metadata without modifying production code, conditional registration based on feature flags, and endpoint-builder composition pipelines.
+The fluent path covers cases where attribute attachment is unwanted: tests that need to inject metadata without modifying production code, conditional registration based on feature flags, endpoint-builder composition pipelines. It attaches `MethodScopeMetadata` directly onto the endpoint builder.
 
-#### Deny-by-default
+| Extension | Semantics |
+| --- | --- |
+| `.RequireAnyScope("scope")` | Any-of — caller holds at least one of the listed scopes. |
+| `.RequireAllScopes("scope", "other")` | All-of — caller holds every listed scope. |
+| `.MarkAsD2HarmlessEndpoint()` | Bypasses auth entirely. SECURITY-CRITICAL — see [Harmless endpoints](#harmless-endpoints). |
 
-A gRPC method with NO `MethodScopeMetadata` / `[D2RequireScope]` / `[D2HarmlessEndpoint]` gets the FULL pipeline (validator + liveness; scope check passes against the empty required set). Methods that need to bypass auth entirely MUST opt in explicitly via `[D2HarmlessEndpoint]` — the codebase deliberately does NOT recognize the BCL `[AllowAnonymous]` attribute (its semantic is tied to the BCL `AuthorizationMiddleware` chain we bypass).
+#### Precedence
+
+The interceptor resolves the effective scope declaration from the endpoint's metadata collection using this priority order (highest first):
+
+1. **Fluent `MethodScopeMetadata`** — wins over all attribute paths. Added via `RequireAnyScope` / `RequireAllScopes` / `MarkAsD2HarmlessEndpoint` on the builder.
+2. **Attribute path (last-declared wins)** — ASP.NET routing appends class-level attributes before method-level ones, so a method-level attribute is always last in collection order. Among the three attribute types (`[D2RequireAnyScope]`, `[D2RequireAllScopes]`, `[D2HarmlessEndpoint]`), the one with the highest metadata-collection index is the effective declaration. This means:
+   - Class-level `[D2RequireAnyScope]` + method-level `[D2HarmlessEndpoint]` → harmless wins (method-level is last).
+   - Class-level `[D2HarmlessEndpoint]` + method-level `[D2RequireAllScopes]` → all-scopes wins (method-level is last).
+   - Class-level `[D2RequireAnyScope]` + method-level `[D2RequireAllScopes]` → all-scopes wins (method-level is last).
+3. **No declaration** — deny-by-default: the interceptor runs the full pipeline (validator + liveness); the scope check passes for any authenticated caller (empty required set). See [Deny-by-default boot guard](#deny-by-default-boot-guard).
+
+#### Deny-by-default boot guard
+
+The `AuthEndpointGuardStartupFilter` (wired by `D2.Shared.Auth.Startup` — see [`../startup/README.md`](../startup/README.md)) requires **every** mapped `RouteEndpoint` to carry a declared auth intent (fluent or attribute). If any gRPC method lacks a declaration, the host fails to start with an `InvalidOperationException` listing the undeclared routes — before serving any traffic. Declare intent on every method or the host won't start.
+
+#### Harmless endpoints
+
+`[D2HarmlessEndpoint]` / `MarkAsD2HarmlessEndpoint()` cause the interceptor to skip the entire JWT validation pipeline (signature + claims + session liveness + scope check). Legitimate use cases only — exhaustive enumeration:
+
+- Kubernetes / Docker liveness and readiness probes returning a fixed-shape healthy/unhealthy response with no request-derived data.
+- Intra-cluster health or info endpoints returning only closed-enumeration constants (status strings, version identifiers, build metadata) — never user data or any field an operator would consider sensitive.
+- OIDC discovery endpoints (Edge service only) — `/.well-known/openid-configuration` and `/.well-known/jwks.json`.
+
+**Any other data exposure via this surface is a security bug.** For endpoints reachable without an existing user session (sign-in / password-reset / public lookups), declare an anon-scope-required endpoint instead — that path still flows through the full validator + scope check.
+
+The deliberately unusual name forces code reviewers to pause and ask "is this endpoint actually harmless?" — the friction is intentional.
 
 ### `RpcException` shape — `D2RpcStatusExtensions`
 
@@ -86,13 +126,13 @@ throw failure.ToRpcException();
 
 Builds an `RpcException(Status, Trailers)`:
 
-| Field                                                     | Source                                                                                                                                                                                                                             |
-| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Status.StatusCode`                                       | `D2Result.StatusCode` mapped: 401 → `Unauthenticated` (16); 503 → `Unavailable` (14); other → `Internal` (13).                                                                                                                     |
-| `Status.Detail`                                           | DELIBERATELY EMPTY. Telling an attacker which validation step failed (signature vs expired vs claim missing) is an info leak; the granular `d2_error_code` trailer carries the machine-readable taxonomy for legitimate operators. |
-| `Trailers[D2GrpcTrailers.ERROR_CODE]` (`"d2_error_code"`) | `D2Result.ErrorCode` (one of the `AUTH_*` constants from `D2.Shared.Auth.Errors.AuthErrorCodes`).                                                                                                                                  |
-| `Trailers[D2GrpcTrailers.MESSAGES]` (`"d2_messages"`)     | `D2Result.Messages` array serialized as JSON text (TK keys + bounded params). Same wire shape as the HTTP middleware's ProblemDetails `d2_messages` extension.                                                                     |
-| `Trailers[D2GrpcTrailers.TRACE_ID]` (`"traceId"`)         | `Activity.Current?.TraceId` (W3C lower-hex format, 32 chars). camelCase matches the HTTP ProblemDetails extension key `traceId`. Omitted when no Activity is on the execution context — never surfaced as null.                    |
+| Field | Source |
+| --- | --- |
+| `Status.StatusCode` | `D2Result.StatusCode` mapped: 401 → `Unauthenticated` (16); 503 → `Unavailable` (14); other → `Internal` (13). |
+| `Status.Detail` | DELIBERATELY EMPTY. Telling an attacker which validation step failed (signature vs expired vs claim missing) is an info leak; the granular `d2_error_code` trailer carries the machine-readable taxonomy for legitimate operators. |
+| `Trailers[D2GrpcTrailers.ERROR_CODE]` (`"d2_error_code"`) | `D2Result.ErrorCode` (one of the `AUTH_*` constants from `D2.Shared.Auth.Errors.AuthErrorCodes`). |
+| `Trailers[D2GrpcTrailers.MESSAGES]` (`"d2_messages"`) | `D2Result.Messages` array serialized as JSON text (TK keys + bounded params). Same wire shape as the HTTP middleware's ProblemDetails `d2_messages` extension. |
+| `Trailers[D2GrpcTrailers.TRACE_ID]` (`"traceId"`) | `Activity.Current?.TraceId` (W3C lower-hex format, 32 chars). camelCase matches the HTTP ProblemDetails extension key `traceId`. Omitted when no Activity is on the execution context — never surfaced as null. |
 
 The trailer keys are spec-driven via `contracts/grpc-trailers/grpc-trailers.spec.json` — the `D2.Shared.Grpc.Trailers.SourceGen` Roslyn generator emits `D2GrpcTrailers` into this csproj from the spec, and `tools/ts-codegen` emits the cross-language sibling `D2GrpcTrailers` into `@d2/grpc-client`. Both sides reference identical wire values byte-for-byte.
 
@@ -160,11 +200,11 @@ The interceptor deliberately ignores `Microsoft.AspNetCore.Authorization.AllowAn
 
 ### Fluent metadata silently overrides attributes
 
-`MapGrpcService<T>().RequireD2Scope("scope")` and `.MarkAsD2HarmlessEndpoint()` take precedence over BOTH method-level and class-level attribute declarations — by design (lets tests inject metadata + lets feature flags conditionally adjust scope without modifying production code). If a method appears auth-failing under unexpected scopes, audit the fluent-metadata wiring at the `MapGrpcService` site BEFORE assuming the attribute is correct.
+`MapGrpcService<T>().RequireAnyScope("scope")` and `.MarkAsD2HarmlessEndpoint()` take precedence over BOTH method-level and class-level attribute declarations — by design (lets tests inject metadata + lets feature flags conditionally adjust scope without modifying production code). If a method appears auth-failing under unexpected scopes, audit the fluent-metadata wiring at the `MapGrpcService` site BEFORE assuming the attribute is correct.
 
 ### Streaming methods can't bypass auth — but they CAN bypass scope checks via wrong endpoint metadata
 
-Every streaming method dispatches through the same auth pipeline as unary, but per-method metadata is matched on the gRPC method shape. A new streaming method added without explicit `[D2RequireScope]` falls back to the class-level attribute (or to deny-by-default with no scope check). Spot-check with the gRPC reflection service in development to confirm method-level metadata is wired correctly.
+Every streaming method dispatches through the same auth pipeline as unary, but per-method metadata is matched on the gRPC method shape. A new streaming method added without explicit scope declaration falls back to the class-level attribute (or to deny-by-default with no scope check). Spot-check with the gRPC reflection service in development to confirm method-level metadata is wired correctly.
 
 ## Failure surface
 
@@ -184,18 +224,18 @@ All four server-side handler methods — `UnaryServerHandler`, `ClientStreamingS
 
 ## Dependencies
 
-| Package                                                                   | Why                                                                                                                               |
-| ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `D2.Shared.Auth`                                                          | `JwtValidator` (consumed via `InternalsVisibleTo`), `AuthFailures`, `AuthErrorCodes`, `AuthLog`, `AuthTelemetry`.                 |
-| `D2.Shared.Auth.Abstractions`                                             | `ISessionLivenessTracker` contract + `JwtClaimTypes`.                                                                             |
-| `D2.Shared.Context.Abstractions`                                          | `IRequestContext` shape.                                                                                                          |
-| `D2.Shared.Result`                                                        | `D2Result` typed factories.                                                                                                       |
-| `D2.Shared.I18n.Abstractions`                                             | `TKMessage` shape.                                                                                                                |
-| `D2.Shared.Utilities`                                                     | `Falsey()` / `Truthy()` extensions.                                                                                               |
-| `Grpc.AspNetCore.Server`                                                  | Server-side gRPC binding (`Interceptor`, `ServerCallContext`, `Metadata`, `Status`, `RpcException`, `IServerCallContextFeature`). |
-| `Microsoft.AspNetCore.App` (framework ref via `Sdk.Web`)                  | Hosts gRPC services; provides `HttpContext`, `IEndpointConventionBuilder`, `IApplicationBuilder`.                                 |
-| `Microsoft.Extensions.{DependencyInjection,Logging,Options}.Abstractions` | DI / logging / options.                                                                                                           |
-| `JetBrains.Annotations`                                                   | Standard annotations.                                                                                                             |
+| Package | Why |
+| --- | --- |
+| `D2.Shared.Auth` | `JwtValidator` (consumed via `InternalsVisibleTo`), `AuthFailures`, `AuthErrorCodes`, `AuthLog`, `AuthTelemetry`. |
+| `D2.Shared.Auth.Abstractions` | `ISessionLivenessTracker` contract + `JwtClaimTypes`. |
+| `D2.Shared.Context.Abstractions` | `IRequestContext` shape. |
+| `D2.Shared.Result` | `D2Result` typed factories. |
+| `D2.Shared.I18n.Abstractions` | `TKMessage` shape. |
+| `D2.Shared.Utilities` | `Falsey()` / `Truthy()` extensions. |
+| `Grpc.AspNetCore.Server` | Server-side gRPC binding (`Interceptor`, `ServerCallContext`, `Metadata`, `Status`, `RpcException`, `IServerCallContextFeature`). |
+| `Microsoft.AspNetCore.App` (framework ref via `Sdk.Web`) | Hosts gRPC services; provides `HttpContext`, `IEndpointConventionBuilder`, `IApplicationBuilder`. |
+| `Microsoft.Extensions.{DependencyInjection,Logging,Options}.Abstractions` | DI / logging / options. |
+| `JetBrains.Annotations` | Standard annotations. |
 
 ## Tests
 
@@ -205,9 +245,10 @@ All four server-side handler methods — `UnaryServerHandler`, `ClientStreamingS
 - `Interceptors/D2GrpcUserStateKeysTests.cs` — slot-key constant value pinned (`"D2.RequestContext"`).
 - `Interceptors/ServerCallContextRequestContextExtensionsTests.cs` — typed accessor returns null pre-interceptor / non-`IRequestContext` slot; populated value post-interceptor.
 - `Endpoints/MethodScopeMetadataTests.cs` — `HarmlessEndpoint` singleton invariants; `ForScopes` deduping + frozen; record equality; zero-scope throws; **`HarmlessEndpoint` factory + `IsHarmlessEndpoint` property names pinned via reflection (literal-string lookup) to guard against type / property renames that downstream analyzers depend on.**
-- `Endpoints/D2RequireScopeAttributeTests.cs` — construction (single + multiple scopes); null/whitespace argument throws; class-level vs method-level precedence.
-- `Endpoints/D2HarmlessEndpointAttributeTests.cs` — construction; class-level vs method-level precedence; overrides sibling `[D2RequireScope]`; **type name `"D2HarmlessEndpointAttribute"` + full-namespace pinned via literal-string assertion to guard against renames that downstream analyzers depend on.**
-- `Endpoints/RequireD2GrpcScopeExtensionsTests.cs` — fluent extensions correctly attach metadata; null/whitespace throws.
+- `Endpoints/D2RequireAnyScopeAttributeTests.cs` — construction (single + multiple scopes); null/whitespace argument throws; class-level vs method-level precedence; any-of semantics.
+- `Endpoints/D2RequireAllScopesAttributeTests.cs` — construction (single + multiple scopes); null/whitespace argument throws; all-of semantics; class-level vs method-level precedence.
+- `Endpoints/D2HarmlessEndpointAttributeTests.cs` — construction; class-level vs method-level precedence; overrides sibling scope attributes; **type name `"D2HarmlessEndpointAttribute"` + full-namespace pinned via literal-string assertion to guard against renames that downstream analyzers depend on.**
+- `Endpoints/RequireD2GrpcScopeExtensionsTests.cs` — fluent extensions correctly attach `MethodScopeMetadata`; any-of vs all-of mode; null/whitespace throws.
 - `Status/D2RpcStatusExtensionsTests.cs` — every `AuthFailures` surface → expected `Status.StatusCode` + trailer set; `Status.Detail` empty; `traceid` presence/absence per `Activity.Current`; counter increment.
 - `AuthGrpcServiceCollectionExtensionsTests.cs` — DI registration; `AddD2Auth` precondition fail-fast; idempotent re-call; interceptor type registered as singleton; appears in `GrpcServiceOptions.Interceptors` exactly once; scoped `IRequestContext` adapter resolution.
 
@@ -228,7 +269,7 @@ catch (RpcException ex)
 
 From `grpcurl`, `-v` surfaces trailer metadata at the bottom of verbose output (`Code: Unauthenticated`, `Trailers received: ...`). `d2_messages` is the same JSON-array-of-TKMessage shape as the HTTP middleware's ProblemDetails extension (`[{"key":"UNAUTHORIZED","params":{}}]`); `key` is a TK constant translated client-side; `params` carries bounded scalar substitutions only (no PII). The `traceid` trailer is the lower-hex 32-char W3C trace-id of `Activity.Current` at failure time — correlate with the server-side span in your OTel backend; the `JwtAuthInterceptor` runs inside the gRPC server-call activity so its `AuthLog` delegates and `AuthTelemetry.SR_ProblemEmitted` counter sit on the same span.
 
-For full per-code reference + remediation, see [`../core/README.md` § Debugging](../core/README.md#debugging) — the same `AUTH_*` taxonomy applies across HTTP and gRPC transports (single sink at `AuthTelemetry.SR_ProblemEmitted`). Two codes specific to gRPC bearer extraction: `AUTH_BEARER_MISSING` (no `authorization` metadata, wrong scheme, or empty after `Bearer ` — check `Metadata.Add("authorization", "Bearer " + token)` or `Grpc.Net.ClientFactory.ConfigureChannel` + `CallCredentials`); `AUTH_SCOPE_INSUFFICIENT` (bearer valid but `Scopes` set didn't overlap method's required set; `traceid` finds the matching span whose enriched logs show required-vs-presented).
+For full per-code reference + remediation, see [`../core/README.md` § Debugging](../core/README.md#debugging) — the same `AUTH_*` taxonomy applies across HTTP and gRPC transports (single sink at `AuthTelemetry.SR_ProblemEmitted`). Two codes specific to gRPC bearer extraction: `AUTH_BEARER_MISSING` (no `authorization` metadata, wrong scheme, or empty after `Bearer ` — check `Metadata.Add("authorization", "Bearer " + token)` or `Grpc.Net.ClientFactory.ConfigureChannel` + `CallCredentials`); `AUTH_SCOPE_INSUFFICIENT` (bearer valid but `Scopes` set didn't satisfy method's scope requirement; `traceid` finds the matching span whose enriched logs show required-vs-presented).
 
 ### `IRequestContext` resolution failures
 
@@ -243,6 +284,7 @@ The cross-transport scoped `IRequestContext` resolver registered by `AddD2AuthGr
 
 - [`../core/README.md`](../core/README.md) — JWT validator + JWKS + liveness internals
 - [`../http/README.md`](../http/README.md) — HTTP-transport sibling
+- [`../startup/README.md`](../startup/README.md) — deny-by-default boot guard
 - [`../abstractions/README.md`](../abstractions/README.md) — `ISessionLivenessTracker`, `JwtClaimTypes`, `Audiences`, `Scopes`
 - [`../outbound/README.md`](../outbound/README.md) — outbound service-identity bearer attachment (the gRPC counterpart on the client side)
 - [RFC 6750](https://datatracker.ietf.org/doc/html/rfc6750) — Bearer Token Usage

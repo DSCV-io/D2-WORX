@@ -10,6 +10,7 @@ using D2.Shared.AspNetCore;
 using D2.Shared.Auth;
 using D2.Shared.Auth.Grpc;
 using D2.Shared.Auth.Http;
+using D2.Shared.Auth.Startup;
 using D2.Shared.Caching.Local.Default;
 using D2.Shared.Handler;
 using D2.Shared.I18n;
@@ -164,6 +165,15 @@ public static class ServiceDefaultsServiceCollectionExtensions
                 services.AddD2Auth(options.AuthConfigure!)
                     .AddD2AuthHttp()
                     .AddD2AuthGrpc();
+
+                // Deny-by-default boot guard: fail startup when any
+                // RouteEndpoint lacks a declared auth intent. Gated on
+                // SkipAuthAutoWiring (auth opt-out implies endpoint-guard
+                // opt-out — anonymous-only tools don't declare scopes) AND
+                // on SkipAuthEndpointGuard for the explicit opt-out case
+                // (test hosts that register synthetic unannotated endpoints).
+                if (options.SkipAuthEndpointGuard is false)
+                    services.AddD2AuthEndpointGuard();
             }
 
             if (options.SkipLocalCacheAutoWiring is false)

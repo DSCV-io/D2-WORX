@@ -24,7 +24,7 @@ public sealed class MqAttributeTests
     public void MqPubAttribute_NullConstant_Throws()
     {
         var act = () => new MqPubAttribute(null!);
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public sealed class MqAttributeTests
     public void MqSubAttribute_NullConstant_Throws()
     {
         var act = () => new MqSubAttribute(null!);
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]

@@ -76,7 +76,7 @@ The complete, verbose, authoritative requirements for ANY code change in this re
 
 24. [Audit Evidence Discipline (meta — how to audit)](#24-audit-evidence-discipline-meta--how-to-audit)
     - [Three-artifact journal model](#three-artifact-journal-model-one-big-table--append-only-findings-log--append-only-fix-log)
-    - [Predicates §24.0 – §24.18 (incl. §24.0h K=1 carve-out, §24.0i Sonnet-for-Auditors, §24.16 Plan-Audit-required)](#predicates--24-audit-evidence-discipline)
+    - [Predicates §24.0 – §24.19 (incl. §24.0h K=1 carve-out, §24.0i Sonnet-for-Auditors, §24.16 Plan-Audit-required, §24.19 uncommitted-deliverable working-tree)](#predicates--24-audit-evidence-discipline)
     - [Deliverable workflow chart — order of operations with loops](#deliverable-workflow-chart--order-of-operations-with-loops)
     - [Deliverable completeness checklist (the gate before user review)](#deliverable-completeness-checklist-the-gate-before-user-review)
     - [Loop count expectations](#loop-count-expectations)
@@ -441,6 +441,18 @@ The set of in-language rules that show up everywhere. Memory of these is the dif
   - Evidence: `grep -rEn 'IsNullOrEmpty\|IsNullOrWhiteSpace\|== Guid\.Empty' <scope>` → expect zero (or justify each).
   - **Where defined**: `D2.Shared.Utilities.Extensions` — `StringExtensions.cs`, `GuidExtensions.cs`, `EnumerableExtensions.cs`.
 
+- **5.1a** Do required-argument guards on string / collection / Guid values use `x.ThrowIfFalsey()` instead of raw BCL guards or hand-rolled throws?
+  - **Forbidden** (for string / collection / Guid args): `ArgumentException.ThrowIfNullOrWhiteSpace(s)`; `ArgumentNullException.ThrowIfNull(coll)` paired with a manual empty-check; hand-rolled `if (s.Falsey()) throw new ArgumentException(...)`.
+  - **Required**: `s.ThrowIfFalsey()` / `coll.ThrowIfFalsey()` / `guid.ThrowIfFalsey()` — BCL-split (`ArgumentNullException` for literal null; `ArgumentException` for present-but-falsey: empty/whitespace string, empty collection, `Guid.Empty`); `[CallerArgumentExpression]` auto-captures the parameter name (pass an explicit `paramName` only for indexed or computed sites such as `additionalScopes[i]`).
+  - **Carve-outs** — at each carve-out site, add a one-line comment citing this predicate:
+    - **Plain reference-type null-guards**: DI services / loggers / options where there is no present-but-falsey concept — use BCL `ThrowIfNull`.
+    - **Generated files + codegen emitter-output strings** (§26): never hand-edit generated output.
+    - **Projects that do not reference `D2.Shared.Utilities`**: e.g. the `I18n.Abstractions ← Utilities` dependency cycle — adding the reference would introduce a cycle.
+    - **Bespoke-message guards**: `ThrowIfFalsey` has no custom-message overload; when the exception message must carry domain-specific guidance (e.g. the `ForScopes` "use `HarmlessEndpoint`" hint), keep the explicit `throw new ArgumentException(...)` and comment the carve-out.
+  - **Where defined**: `D2.Shared.Utilities.Extensions.GuardExtensions`.
+  - **Why**: extends §5.1's Falsey/Truthy unification to guard clauses — one call covers null + empty + whitespace + empty-collection + `Guid.Empty` with the idiomatic BCL exception split, eliminating fragmented two-step guards.
+  - Evidence: `grep -rEn 'ArgumentException\.ThrowIfNullOrWhiteSpace\|ArgumentNullException\.ThrowIfNull' <scope>` → per hit, confirm carve-out applies or convert.
+
 - **5.2** Are all `TryParse` patterns using `D2.Shared.Utilities.Extensions` (`str.TryParseTruthyNull(out Guid? r)` / `str.TryParseTruthyNull<TEnum>(out var r)`)?
   - **Forbidden**: hand-rolled `if (str is not null && Guid.TryParse(...))` / `Enum.TryParse<T>(...)`.
   - **Required**: the extension that collapses null/empty/whitespace/Guid.Empty/unparseable → `null` in one call.
@@ -558,6 +570,11 @@ The set of in-language rules that show up everywhere. Memory of these is the dif
   - Evidence: `grep -rEn 'diagnosticContext\.Set\("|Activity\.SetTag\("|AddTag\("|new TagList \{ \{ "' <production scope>` returns zero raw-literal hits where a `nameof(IInterface.Member)` form would compile. Test files that intentionally pin literal wire values are exempted in the per-row N/A reason.
   - **Why**: raw literals defeat compile-time rename safety. When the source-of-truth member is renamed (e.g. `IRequestContext.SessionId` → `IRequestContext.UserSessionId`), every raw literal `"SessionId"` in production emission code silently drifts to the WRONG wire value while still compiling. Loki / Tempo / Elasticsearch queries that filtered on `SessionId` continue to work for old log lines; new log lines emit the new name; operators see a partial-data outage with no compile-time signal. `nameof(IRequestContext.UserSessionId)` makes the rename surface as a build break in every emission site, forcing an explicit migration decision.
   - **How**: when emitting a structured-log property, span tag, metric tag, JSON field, or any other wire-format key that mirrors a domain interface member, use `nameof(IInterface.Member)` not the raw string literal. Spec-pinning tests that assert "the literal `\"SessionId\"` appears in the rendered output" stay literal (the pin is the entire point). When in doubt, the rename test is: "if I rename the source-of-truth member tomorrow, do I want this site to break the build?" If yes → `nameof`. If no → literal is correct.
+
+- **5.25a** After a `.Should().NotBeNull()` assertion (AwesomeAssertions), is the null-forgiving operator `!` absent from any immediately following member access on the same variable?
+  - **Required**: use `x.Member` — NOT `x!.Member`. After `.Should().NotBeNull()`, AwesomeAssertions flows a non-null post-condition that the C# compiler AND `jb inspectcode` both recognize. The `!` operator is therefore redundant, and `jb inspectcode` flags it as unnecessary.
+  - **Why**: matches the §5.21 / §5.22 zero-warnings-both-tools mandate. Redundant `!` operators specifically appear in sub-agent-written test code after `NotBeNull()` assertions; this predicate makes the violation explicitly auditable.
+  - Evidence: `grep -rEn '\.Should\(\)\.NotBeNull\(\)' <test scope>` → per hit, confirm the following access on the same variable does NOT carry `!`.
 
 <sup>[↑ jump to top](#top)</sup>
 
@@ -2189,6 +2206,7 @@ Closure is proven ONLY by the absence of a FINDING from the next sweep's big tab
     - §3.6 (no `ex.Message` logging) — `grep -rEn 'ex\.Message\|exception\.Message' <scope>` → per hit, classify safe/unsafe
     - §4.7 (Random.Shared) — `grep -rEn 'new Random\(' <scope>` → expect zero
     - §5.1 (Falsey/Truthy) — `grep -rEn 'IsNullOrEmpty\|IsNullOrWhiteSpace\|== Guid\.Empty' <scope>` → expect zero (or justify each)
+    - §5.1a (ThrowIfFalsey guards) — `grep -rEn 'ArgumentException\.ThrowIfNullOrWhiteSpace\|ArgumentNullException\.ThrowIfNull' <scope>` → per hit, confirm carve-out applies or convert
     - §5.2 (TryParseTruthyNull) — `grep -rEn 'Guid\.TryParse\|Enum\.TryParse' <scope>` → for each, justify or convert
     - §5.3 (D2Result semantic factories) — `grep -rEn '\.Fail\(' <scope>` → per hit, justify or convert
     - §5.5 (`string.Empty` vs `""`) — covered MECHANICALLY by `dotnet build` zero-StyleCop predicate (§5.21); not a separate pre-flight grep, but the Implementer should call this out as "covered by build, not pre-flight grep" in the checklist run
@@ -2233,6 +2251,7 @@ Closure is proven ONLY by the absence of a FINDING from the next sweep's big tab
     - §14.1 / §14.3 (no phase / conversation-scoped IDs in KEEP source) — applies to ALL KEEP files (`.cs`, `.ts`, `.md` across `server/`, `docs/`, `contracts/`, `tools/`); the originating finding being in a `tests/` file does NOT scope the sweep to `tests/`.
     - §11.28 (forward-framing in KEEP docs) — applies to ALL KEEP-doc READMEs: `server/shared/*/README.md` + `server/services/*/README.md` + `docs/**/*.md` (excl. gitignored `docs/wip/` + immutable `docs/dev/deliverables/` snapshots).
     - §5.1 (Falsey/Truthy dogfood) — applies to ALL production .NET code in scope: `server/shared/dotnet/**/*.cs` + `server/services/**/*.cs` (test scope per per-step convention).
+    - §5.1a (ThrowIfFalsey guards) — applies to ALL production .NET code in scope: `server/shared/dotnet/**/*.cs` + `server/services/**/*.cs`.
     - §5.24 (foundational lib dogfood; no helper re-declaration) — applies cross-language: a `UUID_RE` re-declaration surfaced in a TS file triggers a sweep across all `@d2/*` source AND parallel C# helpers for similar drift, since the predicate governs convention-defining libs in BOTH languages.
     - §11.29 (cross-doc dep parity on `<ProjectReference>` / `package.json` dep changes) — applies to ALL parent-overview READMEs in the dep graph of every edited `.csproj` / `package.json`; sister-sweep enumerates dep-graph parents, not just the immediately-edited package's own README.
     - §11.3 / §11.5 deletion-aware README sweep — applies to FULL dep graph of READMEs (per §24.13.1 entry): `server/shared/*/README.md` + `docs/*.md` + `docs/v2/*.md`; the immediately-affected packages alone are insufficient scope.
@@ -2287,7 +2306,7 @@ Closure is proven ONLY by the absence of a FINDING from the next sweep's big tab
   - **What the K=12 Plan-Auditors verify** (per cluster, same partition as code audits — clusters A1 / A2 / B1 / B2 / B3 / C1 / C2 / C3 / D1 / D2 / E1 / E2):
     - **Cluster A1 (tests / coverage)**: does the Plan honor §1 test-discipline predicates (every public path tested first-pass, §1.2 adversarial coverage planned)?
     - **Cluster A2 (regression / races / disposal / degradation / idempotency)**: does the Plan honor §2 regression-pin discipline for any cited bug class? Does the Plan acknowledge concurrency / disposal / graceful-degradation / idempotency concerns where relevant (§4 / §15 / §18 / §22)?
-    - **Cluster B1 (C# conventions)**: does the Plan honor §5 (C# 14 extension members per §5.6, Falsey/Truthy per §5.1, D2Result semantic factories per §5.3)?
+    - **Cluster B1 (C# conventions)**: does the Plan honor §5 (C# 14 extension members per §5.6, Falsey/Truthy per §5.1, ThrowIfFalsey guards per §5.1a, D2Result semantic factories per §5.3)?
     - **Cluster B2 (TS conventions + naming)**: does the Plan honor §6 (REST clients per §6.10) and §7 naming + folder casing?
     - **Cluster B3 (shared-lib hygiene + D2Result)**: does the Plan name OOTB shared-lib primitives (§16) instead of hand-rolled equivalents? Does the Plan honor §17 D2Result usage + extensions?
     - **Cluster C1 (PII/logging + operations)**: does the Plan honor §3 PII / logging safety (no `[LoggerMessage]` with Exception, `[RedactData]` on PII types)? Does the Plan honor §8 build/operations cleanliness?
@@ -2333,6 +2352,12 @@ Closure is proven ONLY by the absence of a FINDING from the next sweep's big tab
   - **Why**: build-green ≠ commit-safe when the index lags the working tree. `git mv old new` stages the rename atomically, but the engineer then edits `new` (or its consumers' `<ProjectReference>` paths) in the working tree — those edits are unstaged until a fresh `git add`. If the commit is taken at that moment (or a sub-agent stages only a subset), the rename ships without the fixes; consumers fail to resolve the moved project at the NEXT clean checkout even though the authoring machine's working tree built fine. Validated during the 0010 shared-folder reorg: the index-vs-worktree divergence is invisible to every build gate and only surfaces at a clean-checkout build or a reviewer's `git show :<path>`.
   - **How**: at each move-step close + final review, diff the index against the working tree (`git status --short` + `git diff --cached --stat` + `git diff --stat`), confirm the moved files + their path-fix edits are BOTH staged, and stage the verified content before declaring the step done. The audit big-table §24.18 row cites the `git status --short` output + the representative `git show :<path>` excerpt.
   - **When**: applies to every move / relocation step and to the final review of any deliverable that moves files. No scope-based exception — a single-file move still gets the index check, because a single unstaged consumer-path fix breaks the clean checkout exactly the same way.
+
+- **24.19 (Audit dispatch briefs for uncommitted deliverables MUST instruct sub-agents to read the on-disk working tree)** When auditing a deliverable whose latest work is UNCOMMITTED — i.e., the deliverable's changes exist only on disk and have NOT been committed to git HEAD — does every Auditor / Fixer dispatch brief explicitly instruct sub-agents to read the on-disk working tree, NOT git HEAD or `git diff` against HEAD?
+  - **Required**: dispatch briefs for uncommitted-deliverable audit rounds MUST include an explicit instruction such as: "Read files from the on-disk working tree (the actual source files on disk). Do NOT rely on `git diff HEAD`, `git show HEAD:…`, or any git operation that reads committed content — the deliverable's latest changes are uncommitted and are not present in HEAD."
+  - **Why**: a fresh Auditor sub-agent that defaults to reading committed HEAD will observe a stale pre-change snapshot and report findings that the Implementer already addressed — producing false FINDING rows for work already done (and potentially missing genuine findings in the uncommitted state). Empirically surfaced during deliverable 0013: a fresh auditor reading committed HEAD reported stale findings that the uncommitted working tree had already fixed; this predicate was added as a result.
+  - **How**: in the shared-context file written by the orchestrator (per process.md §4 Per-round dispatch protocol step 1), add a prominent "Working-tree note" paragraph: "All files in this deliverable's scope should be read from the on-disk working tree. The latest Implementer / Fixer output is uncommitted. Do NOT use `git diff HEAD` or `git show HEAD:path` to inspect deliverable files — read them directly via file-read tools." Include the same note in every individual Auditor + Fixer dispatch brief. After the deliverable is committed, this note may be omitted (committed HEAD and working tree agree).
+  - **When**: applies to every per-step AND final-review audit round for a deliverable whose latest step output has not yet been committed. A deliverable is "committed" for the purpose of this predicate when every Implementer + Fixer output for the current step is reflected in `git show HEAD` output. The orchestrator is responsible for tracking commit state and including / excluding the working-tree note accordingly.
 
 <sup>[↑ jump to top](#top)</sup>
 

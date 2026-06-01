@@ -6,6 +6,7 @@
 
 namespace D2.Shared.Encryption;
 
+using D2.Shared.Utilities.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -41,7 +42,7 @@ public static class EncryptionServiceCollectionExtensions
             Func<IServiceProvider, PayloadCryptoKeyring> keyringFactory)
         {
             ArgumentNullException.ThrowIfNull(services);
-            ArgumentException.ThrowIfNullOrWhiteSpace(serviceKey);
+            serviceKey.ThrowIfFalsey();
             ArgumentNullException.ThrowIfNull(keyringFactory);
 
             services.AddKeyedSingleton<PayloadCryptoKeyring>(

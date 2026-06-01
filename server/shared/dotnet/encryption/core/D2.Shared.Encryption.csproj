@@ -59,6 +59,10 @@ Copyright (c) DCSV. All rights reserved.
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\utilities\D2.Shared.Utilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="D2.Shared.Tests" />
   </ItemGroup>
 </Project>

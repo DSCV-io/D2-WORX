@@ -56,7 +56,7 @@ Wires the canonical D² service-defaults stack in this exact order:
 3. `AddD2Telemetry(configuration, opts.TelemetryConfigure)` — OTel SDK (traces + metrics + logs) + OTLP exporters (when canonical env vars set) + AspNetCore + HttpClient + GrpcNetClient + Process + Runtime auto-instrumentations + Prometheus exporter (when enabled). Honors `OTEL_SDK_DISABLED`.
 4. `AddD2I18n(configuration)` — `SupportedLocales` + `ITranslator` singletons. Idempotent. Reads `PUBLIC_DEFAULT_LOCALE` + indexed `PUBLIC_ENABLED_LOCALES__*`. The lib has no `Action<T>` config callback, so `D2ServiceDefaultsOptions` does NOT carry an `I18nConfigure` field.
 5. `AddD2Handler()` — open-generic `HandlerContext<>` Transient registration. Idempotent.
-6. `AddD2Auth(opts.AuthConfigure).AddD2AuthHttp().AddD2AuthGrpc()` — JWKS provider, session liveness tracker, JWT validator, named OIDC discovery `HttpClient`, backplane subscribers, HTTP middleware, gRPC interceptor, scoped `IRequestContext` resolver. Skipped when `SkipAuthAutoWiring = true`.
+6. `AddD2Auth(opts.AuthConfigure).AddD2AuthHttp().AddD2AuthGrpc()` — JWKS provider, session liveness tracker, JWT validator, named OIDC discovery `HttpClient`, backplane subscribers, HTTP middleware, gRPC interceptor, scoped `IRequestContext` resolver. Skipped when `SkipAuthAutoWiring = true`. Also registers `AddD2AuthEndpointGuard()` (deny-by-default boot guard — see [`../auth/startup/README.md`](../auth/startup/README.md)) unless `SkipAuthEndpointGuard = true`.
 7. `AddD2LocalCache(opts.LocalCacheConfigure)` — `DefaultLocalCache` as `ILocalCache` singleton. Idempotent. Skipped when `SkipLocalCacheAutoWiring = true`.
 8. `AddD2HealthChecks()` — baseline `"self"` check tagged `"live"`. Idempotent.
 9. `AddD2ProblemDetails(opts.ProblemDetailsConfigure)` — RFC 7807 customizer (`traceId` + `correlationId` + `instance` enrichment).
@@ -107,7 +107,8 @@ Re-exports `D2.Shared.AspNetCore.RunD2ServiceWebApplicationExtensions.RunD2Servi
 
 | `D2ServiceDefaultsOptions` flag    | When `true`, the aggregator does NOT call...                               |
 | ---------------------------------- | -------------------------------------------------------------------------- |
-| `SkipAuthAutoWiring`               | `AddD2Auth` / `AddD2AuthHttp` / `AddD2AuthGrpc`                            |
+| `SkipAuthAutoWiring`               | `AddD2Auth` / `AddD2AuthHttp` / `AddD2AuthGrpc` / `AddD2AuthEndpointGuard` |
+| `SkipAuthEndpointGuard`            | `AddD2AuthEndpointGuard` (only effective when `SkipAuthAutoWiring = false`) |
 | `SkipLocalCacheAutoWiring`         | `AddD2LocalCache`                                                          |
 | `SkipHttpClientResilienceDefaults` | `ConfigureHttpClientDefaults(http => http.AddStandardResilienceHandler())` |
 
@@ -124,7 +125,7 @@ Defaults are all `false` — every component is auto-wired by default. The opt-o
 | `SecurityHeadersConfigure`      | `UseD2SecurityHeaders`'s `Action<D2SecurityHeadersOptions>?` (applied at pipeline-installation time)                                               |
 | `InfrastructureBypassConfigure` | `UseD2InfrastructureBypass`'s `Action<D2InfrastructureBypassOptions>?` (applied at pipeline-installation time)                                     |
 | `LocalCacheConfigure`           | `AddD2LocalCache`'s `Action<LocalCacheOptions>?`                                                                                                   |
-| `AuthConfigure`                 | `AddD2Auth`'s required `Action<AuthOptions>` (the underlying lib has no parameterless overload — every caller MUST populate `Issuer` + `Audience`) |
+| `AuthConfigure`                 | `AddD2Auth`'s required `Action<AuthOptions>` (the underlying lib has no parameterless overload — every caller MUST populate `Issuer` + `Audience`). |
 
 The aggregator owns ZERO field-level configuration knowledge. New options on any owning lib show up at the aggregator's call site automatically — no aggregator-side maintenance required.
 
@@ -150,6 +151,7 @@ The aggregator owns ZERO field-level configuration knowledge. New options on any
 | `D2.Shared.Auth`                  | `AddD2Auth`                                                                                                                                                                   |
 | `D2.Shared.Auth.Http`             | `AddD2AuthHttp` + `UseD2Auth`                                                                                                                                                 |
 | `D2.Shared.Auth.Grpc`             | `AddD2AuthGrpc`                                                                                                                                                               |
+| `D2.Shared.Auth.Startup`          | `AddD2AuthEndpointGuard` — deny-by-default boot guard                                                                                                                         |
 | `D2.Shared.Caching.Local.Default` | `AddD2LocalCache`                                                                                                                                                             |
 | `D2.Shared.Utilities`             | `D2Env.Load`                                                                                                                                                                  |
 

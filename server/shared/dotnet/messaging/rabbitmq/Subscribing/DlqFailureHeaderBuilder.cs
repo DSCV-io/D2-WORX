@@ -9,6 +9,7 @@ namespace D2.Shared.Messaging.RabbitMq.Subscribing;
 using System.Text;
 using System.Text.Json;
 using D2.Shared.Result;
+using D2.Shared.Utilities.Extensions;
 
 /// <summary>
 /// Builds the <c>x-d2-failure-reason</c> header value (JSON-encoded
@@ -117,7 +118,7 @@ internal static class DlqFailureHeaderBuilder
         string? traceId = null,
         string? nackedBy = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(cause);
+        cause.ThrowIfFalsey();
         ArgumentNullException.ThrowIfNull(exception);
         var meta = new DlqFailureMetadata
         {

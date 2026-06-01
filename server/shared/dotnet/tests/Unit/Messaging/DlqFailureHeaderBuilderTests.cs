@@ -103,14 +103,21 @@ public sealed class DlqFailureHeaderBuilderTests
         meta.Cause.Should().Be(DlqFailureCauses.DESERIALIZE_FAILURE);
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData(null)]
-    [InlineData("  ")]
-    public void FromBoundary_BadCause_Throws(string? cause)
+    [Fact]
+    public void FromBoundary_NullCause_Throws()
     {
         var act = () => DlqFailureHeaderBuilder.FromBoundary(
-            cause!, new InvalidOperationException());
+            null!, new InvalidOperationException());
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("  ")]
+    public void FromBoundary_EmptyOrWhitespaceCause_Throws(string cause)
+    {
+        var act = () => DlqFailureHeaderBuilder.FromBoundary(
+            cause, new InvalidOperationException());
         act.Should().Throw<ArgumentException>();
     }
 

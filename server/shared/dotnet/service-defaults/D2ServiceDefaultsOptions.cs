@@ -76,6 +76,24 @@ public sealed class D2ServiceDefaultsOptions
     /// </summary>
     public bool SkipHttpClientResilienceDefaults { get; set; }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether the aggregator should skip
+    /// the deny-by-default auth endpoint guard
+    /// (<c>AddD2AuthEndpointGuard</c>). Default <c>false</c> — guard ON,
+    /// because the overwhelming majority of D² services are authenticated
+    /// and every endpoint must carry a declared auth intent.
+    /// </summary>
+    /// <remarks>
+    /// The guard fails host startup when any mapped
+    /// <see cref="Microsoft.AspNetCore.Routing.RouteEndpoint"/> lacks a
+    /// declared auth intent (<c>RequireAnyScope</c> /
+    /// <c>RequireAllScopes</c> / <c>MarkAsD2HarmlessEndpoint</c> fluent
+    /// call, or the corresponding gRPC attribute). Set this flag to
+    /// <c>true</c> to opt out (test hosts that register synthetic endpoints
+    /// without auth declarations, anonymous-only admin tools).
+    /// </remarks>
+    public bool SkipAuthEndpointGuard { get; set; }
+
     // === Per-component options pass-through (each typed Action<TFromOwningLib>?) ===
 
     /// <summary>

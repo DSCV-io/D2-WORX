@@ -38,13 +38,19 @@ public sealed class TranslatorTests
         act.Should().Throw<ArgumentNullException>();
     }
 
+    [Fact]
+    public void Ctor_NullMessagesDirectory_Throws()
+    {
+        var act = () => new Translator(NewSupportedLocales(), null!);
+        act.Should().Throw<ArgumentNullException>();
+    }
+
     [Theory]
-    [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Ctor_NullEmptyOrWhitespaceMessagesDirectory_Throws(string? path)
+    public void Ctor_EmptyOrWhitespaceMessagesDirectory_Throws(string path)
     {
-        var act = () => new Translator(NewSupportedLocales(), path!);
+        var act = () => new Translator(NewSupportedLocales(), path);
         act.Should().Throw<ArgumentException>();
     }
 
@@ -152,18 +158,30 @@ public sealed class TranslatorTests
         translator.T("zh-CN", TK.Common.Errors.NOT_FOUND).Should().Be("Not found.");
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void T_NullEmptyOrWhitespaceLocale_Throws(string? locale)
+    [Fact]
+    public void T_NullLocale_Throws()
     {
         using var dir = new TempCatalog();
         dir.Write("en-US.json", new() { ["common_errors_NOT_FOUND"] = "Not found." });
 
         var translator = new Translator(NewSupportedLocales(), dir.Path);
 
-        var act = () => translator.T(locale!, TK.Common.Errors.NOT_FOUND);
+        var act = () => translator.T(null!, TK.Common.Errors.NOT_FOUND);
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void T_EmptyOrWhitespaceLocale_Throws(string locale)
+    {
+        using var dir = new TempCatalog();
+        dir.Write("en-US.json", new() { ["common_errors_NOT_FOUND"] = "Not found." });
+
+        var translator = new Translator(NewSupportedLocales(), dir.Path);
+
+        var act = () => translator.T(locale, TK.Common.Errors.NOT_FOUND);
 
         act.Should().Throw<ArgumentException>();
     }
@@ -320,16 +338,26 @@ public sealed class TranslatorTests
         translator.HasKey("does_not_exist").Should().BeFalse();
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void HasKey_NullEmptyOrWhitespace_Throws(string? key)
+    [Fact]
+    public void HasKey_Null_Throws()
     {
         using var dir = new TempCatalog();
         var translator = new Translator(NewSupportedLocales(), dir.Path);
 
-        var act = () => translator.HasKey(key!);
+        var act = () => translator.HasKey(null!);
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void HasKey_EmptyOrWhitespace_Throws(string key)
+    {
+        using var dir = new TempCatalog();
+        var translator = new Translator(NewSupportedLocales(), dir.Path);
+
+        var act = () => translator.HasKey(key);
 
         act.Should().Throw<ArgumentException>();
     }

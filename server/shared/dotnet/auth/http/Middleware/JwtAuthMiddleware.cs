@@ -8,6 +8,7 @@ namespace D2.Shared.Auth.Http.Middleware;
 
 using System.Net;
 using System.Text.Json;
+using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Abstractions.Http;
 using D2.Shared.Auth.Abstractions.Sessions;
 using D2.Shared.Auth.Errors;
@@ -47,7 +48,8 @@ using Microsoft.Extensions.Primitives;
 ///   <item>If the validated context carries a session id, check liveness via
 ///     <see cref="ISessionLivenessTracker.IsAliveAsync"/>. Revoked → 401.
 ///     ServiceUnavailable → 503 (fail-closed).</item>
-///   <item>Enforce per-endpoint scope set (any-of). Mismatch →
+///   <item>Enforce per-endpoint scope set (any-of or all-of, per
+///     <see cref="EndpointScopeMetadata.Match"/>). Mismatch →
 ///     <see cref="AuthFailures.ScopeInsufficient"/> 401 (NOT 403; see
 ///     <see cref="AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT"/> remarks).</item>
 ///   <item>Set the populated <see cref="IRequestContext"/> on
@@ -191,13 +193,16 @@ internal sealed class JwtAuthMiddleware
             }
         }
 
-        // Per-endpoint scope enforcement (any-of). Empty / null required set
-        // = "any authenticated caller passes."
-        if (endpointMetadata is { RequiredScopes.Count: > 0 } meta)
+        // Per-endpoint scope enforcement (any-of or all-of, per meta.Match).
+        // Empty / null required set = "any authenticated caller passes."
+        if (endpointMetadata is { Scopes.Count: > 0 } meta)
         {
-            if (!RequestContextHasAnyScope(requestContext, meta.RequiredScopes))
+            var passes = meta.Match == ScopeMatch.All
+                ? RequestContextHasAllScopes(requestContext, meta.Scopes)
+                : RequestContextHasAnyScope(requestContext, meta.Scopes);
+            if (!passes)
             {
-                r_logger.ScopeRequirementUnmet(SummarizeScopes(meta.RequiredScopes));
+                r_logger.ScopeRequirementUnmet(SummarizeScopes(meta.Scopes));
                 await WriteProblemAsync(
                     context, AuthFailures.ScopeInsufficient(), ct).ConfigureAwait(false);
                 return;
@@ -223,12 +228,26 @@ internal sealed class JwtAuthMiddleware
         return false;
     }
 
+    private static bool RequestContextHasAllScopes(
+        IRequestContext requestContext,
+        IReadOnlySet<string> required)
+    {
+        var granted = requestContext.Scopes;
+        foreach (var scope in required)
+        {
+            if (!granted.Contains(scope))
+                return false;
+        }
+
+        return true;
+    }
+
     private static string SummarizeScopes(IReadOnlySet<string> required)
     {
         // Closed-enumeration-derived summary — count + first (sorted) scope
         // name. Avoids logging full scope sets verbatim (they can be large
         // and bloat log volume).
-        if (required.Count == 0)
+        if (required.Falsey())
             return "0 scopes required";
 
         string? first = null;
@@ -243,6 +262,8 @@ internal sealed class JwtAuthMiddleware
 
     private static D2Result<string> TryExtractBearer(HttpContext context)
     {
+        // StringValues.Count is zero-alloc; .Falsey() would box an enumerator
+        // on the request hot path — direct Count check is the correct pattern here.
         if (!context.Request.Headers.TryGetValue(HttpHeaders.AUTHORIZATION, out StringValues raw)
             || raw.Count == 0)
         {

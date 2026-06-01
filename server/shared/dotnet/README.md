@@ -103,6 +103,7 @@ Each multi-package cluster has its own index README that lists and briefly descr
 | [`auth/http/`](auth/http/README.md)                                                                     | **Built**   | HTTP-transport binding for `auth/` — convention-based `JwtAuthMiddleware` that runs the validator + session liveness on inbound HTTP requests, emits RFC 7807 ProblemDetails on failure (single emit point via `D2ProblemDetailsExtensions`), and supports per-endpoint scope requirements via `EndpointScopeMetadata` + `RequireD2Scope` / `MarkAsD2HarmlessEndpoint` fluent extensions. `AddD2AuthHttp()` registers `IHttpContextAccessor` + a scoped `IRequestContext` resolver reading from the cross-transport `HttpContext.Items` slot. AspNetCore framework reference is opt-in via this csproj.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | [auth/http](auth/http/README.md)                   |
 | [`auth/grpc/`](auth/grpc/README.md)                                                                     | **Built**   | gRPC-transport binding for `auth/` — server-side `JwtAuthInterceptor` (covers all four RPC kinds via a shared pipeline) that runs the validator + session liveness on inbound gRPC calls, emits `RpcException(Status, Trailers)` with the `d2_error_code` / `d2_messages` / `traceid` trailer triple via `D2RpcStatusExtensions`, supports per-method scope metadata via attribute (`[D2RequireScope]` / `[D2HarmlessEndpoint]`) OR fluent (`RequireD2Scope` / `MarkAsD2HarmlessEndpoint` on `MapGrpcService<T>()`). `AddD2AuthGrpc()` registers the interceptor + a scoped `IRequestContext` resolver reading from the cross-transport `HttpContext.Items` slot (interceptor dual-writes to `ServerCallContext.UserState` for the gRPC hot-path accessor). `Grpc.AspNetCore.Server` framework reference is opt-in via this csproj.                                                                                                                                                                                                                                                                                                                                                                                                    | [auth/grpc](auth/grpc/README.md)                   |
 | [`auth/outbound/`](auth/outbound/README.md)                                                             | **Built**   | Outbound auth runtime — `IServiceIdentityClient` (`client_credentials`) + `ITokenExchangeClient` (RFC 8693) + `.AddD2ServiceIdentity()` per-channel gRPC opt-in. OIDC discovery via `D2_AUTH_ISSUER`. ServiceIdentity caches in-process with proactive refresh; TokenExchange caches in `ILocalCache` with sessionId reverse-index for backplane-driven invalidation.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | [auth/outbound](auth/outbound/README.md)                   |
+| [`auth/startup/`](auth/startup/README.md)                                                               | **Built**   | Deny-by-default boot guard — `AuthEndpointGuardStartupFilter` (`IStartupFilter`) that fails host startup when any mapped `RouteEndpoint` lacks a declared auth intent (`EndpointScopeMetadata`, `MethodScopeMetadata`, or `[D2RequireAnyScope]` / `[D2RequireAllScopes]` / `[D2HarmlessEndpoint]` attribute). Runs during HTTP-pipeline construction (after `UseRouting()` merges all endpoint sources) so it reliably sees the full endpoint set in both the generic-host and `WebApplication` production models. Skips infrastructure paths (`/health`, `/alive`, `/metrics`, `/.well-known`) and non-`RouteEndpoint` entries. `AddD2AuthEndpointGuard()` registers it idempotently as transient. Wired by `service-defaults` in the `SkipAuthAutoWiring=false` path when `SkipAuthEndpointGuard=false` (the default). References `auth/http` + `auth/grpc` + `aspnetcore`; no circular deps.                                                                                                                                                                                                                                                                                                                                   | [auth/startup](auth/startup/README.md)                     |
 
 ## Source generators (registry)
 
@@ -223,6 +224,7 @@ graph LR
         Auth[auth/core]
         AuthHttp[auth/http]
         AuthGrpc[auth/grpc]
+        AuthStartup[auth/startup]
         AuthOutbound[auth/outbound]
 
         AuthErrorCodesSG -.->|analyzer| Auth
@@ -240,6 +242,9 @@ graph LR
         AuthGrpc --> Auth
         AuthGrpc --> AuthAbs
         AuthGrpc --> CtxAbs
+        AuthStartup --> AuthHttp
+        AuthStartup --> AuthGrpc
+        AuthStartup --> AspNetCore
         AuthOutbound --> AuthAbs
         AuthOutbound --> CtxAbs
     end
@@ -417,6 +422,7 @@ graph LR
     MsgAbs --> Handler
     MsgAbs --> Encryption
     MsgRabbit --> Encryption
+    Encryption --> Utilities
     MsgRabbit --> CacheAbs
     MsgRabbit --> Resilience
     AspNetCore --> Utilities
@@ -434,13 +440,14 @@ graph LR
     ServiceDefaults --> Auth
     ServiceDefaults --> AuthHttp
     ServiceDefaults --> AuthGrpc
+    ServiceDefaults --> AuthStartup
     ServiceDefaults --> CacheLocal
     ServiceDefaults --> Utilities
     Time --> Result
     Time --> I18nAbs
     Time --> Utilities
 
-    class I18nAbs,I18n,Result,Utilities,Resilience,AuthAbs,AuthCtxAbs,CtxAbs,HandlerAbs,Handler,RepoAbs,Repo,RepoPg,Encryption,Time,CacheAbs,CacheLocal,CacheRedis,CacheTiered,Auth,AuthHttp,AuthGrpc,AuthOutbound,MsgAbs,MsgRabbit,MsgSrcGen,AspNetCore,Logging,Telemetry,ServiceDefaults,AuthErrorCodesSG,ErrorCodesSG,D2ResultEnvelopeSG,WireShapesSG,ProblemDetailsAbs,TelemetryTagsSG,HeadersSG,HeadersCommon,HeadersHttp,HeadersAmqp,HeadersGrpc,JwtClaimsSG,InProcessKeysSG,GeoAbs,GeoDefault,Location,ValidationAbs,ValidationDefault built
+    class I18nAbs,I18n,Result,Utilities,Resilience,AuthAbs,AuthCtxAbs,CtxAbs,HandlerAbs,Handler,RepoAbs,Repo,RepoPg,Encryption,Time,CacheAbs,CacheLocal,CacheRedis,CacheTiered,Auth,AuthHttp,AuthGrpc,AuthStartup,AuthOutbound,MsgAbs,MsgRabbit,MsgSrcGen,AspNetCore,Logging,Telemetry,ServiceDefaults,AuthErrorCodesSG,ErrorCodesSG,D2ResultEnvelopeSG,WireShapesSG,ProblemDetailsAbs,TelemetryTagsSG,HeadersSG,HeadersCommon,HeadersHttp,HeadersAmqp,HeadersGrpc,JwtClaimsSG,InProcessKeysSG,GeoAbs,GeoDefault,Location,ValidationAbs,ValidationDefault built
 ```
 
 **Reading the chart:**
@@ -485,6 +492,7 @@ The cross-subgraph arrows that ARE drawn capture every load-bearing inter-cluste
 - `caching/distributed-redis → utilities` — `Falsey()` / extension methods for input validation
 - `auth/outbound → caching/abstractions` — `ILocalCache` backs the service-identity cache; `IDistributedCache` backs the token-exchange cache
 - `auth/outbound → resilience` — `Singleflight` collapses concurrent token-fetch attempts; `RetryHelper` drives transient-failure retries
+- `encryption/core → utilities` — `ThrowIfFalsey()` guards on `serviceKey` arguments in `EncryptionRegistration` + `AddD2EncryptionFor`
 - `messaging/rabbitmq → encryption/core` — `IPayloadCrypto` per encryption domain is keyed-DI-resolved when composing message bodies
 - `messaging/rabbitmq → caching/abstractions` — `CacheIdempotencyStore` backs `IMessageIdempotencyStore` onto `IDistributedCache`
 - `messaging/rabbitmq → resilience` — `RetryHelper.RetryAsync` drives the publisher's transient-retry loop
@@ -493,7 +501,10 @@ The cross-subgraph arrows that ARE drawn capture every load-bearing inter-cluste
 - `logging → context/abstractions` — `D2RequestContextEnricher` projects 42 LOG-OK fields off the spec-driven `IRequestContext` onto the request-completion log line; the strongly-typed dep makes a spec-driven field rename surface as a build break in the enricher
 - `telemetry → aspnetcore` — AspNetCore-instrumentation `Filter` callback consumes the same public `InfrastructurePathMatcher` that `logging` uses; aligned path set without per-lib literal duplication
 - `telemetry → handler/core / auth/core / auth/outbound / messaging/rabbitmq / caching/distributed-redis / caching/local-default` — `AddD2Telemetry` aggregates each owning lib's `public const string` `ActivitySource` / `Meter` name through these refs (compile-time symbol references, not literal strings) so a rename in any owning lib surfaces as a build break here
-- `service-defaults → logging / telemetry / aspnetcore / i18n/core / handler/core / auth/core / auth/http / auth/grpc / caching/local-default / utilities` — pure thin-aggregator composition root; each ref is one of the 10 owning-lib `AddD2X` / `UseD2X` extensions the aggregator chains in the LOCKED middleware order
+- `service-defaults → logging / telemetry / aspnetcore / i18n/core / handler/core / auth/core / auth/http / auth/grpc / auth/startup / caching/local-default / utilities` — pure thin-aggregator composition root; each ref is one of the 11 owning-lib `AddD2X` / `UseD2X` extensions the aggregator chains in the LOCKED middleware order
+- `auth/startup → auth/http` — `EndpointScopeMetadata` (HTTP declared-intent record); guard reads it from each `RouteEndpoint`'s metadata collection
+- `auth/startup → auth/grpc` — `MethodScopeMetadata` + `D2RequireAnyScopeAttribute` + `D2RequireAllScopesAttribute` + `D2HarmlessEndpointAttribute`; guard reads all four from endpoint metadata
+- `auth/startup → aspnetcore` — `InfrastructurePathMatcher.IsInfrastructurePath` + `D2AspNetCoreConstants.DEFAULT_INFRASTRUCTURE_PATHS`; guard uses these to skip infra endpoints from the declared-intent walk (these are NOT transitively available from `auth/http` or `auth/grpc`)
 - `auth/http → headers/http` — `HttpHeaders.IDEMPOTENCY_KEY`, `.CLIENT_FINGERPRINT`, `.AUTHORIZATION`, `.INTERNAL_TOKEN` are spec-driven constants emitted into the `headers/http/` catalog
 - `auth/http → problem-details/abstractions` — `D2ProblemDetailsKeys.TYPE_URI_PREFIX` / `.CONTENT_TYPE` / `.EXTENSION_*` / `.TITLE_*` / `.TitleFor(...)` constants consumed by `D2ProblemDetailsExtensions.ToProblemDetails` (path A) + `JwtAuthMiddleware.WriteProblemAsync` (Content-Type write)
 - `aspnetcore → problem-details/abstractions` — same constants consumed by `D2ProblemDetailsCustomizer.Apply` (path B over ASP.NET `IProblemDetailsService`); single emitted catalog shared with `auth/http` for byte-identical Shape A bodies across both emit paths

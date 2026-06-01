@@ -53,14 +53,15 @@ public sealed class HandlerOptionsTests
     }
 
     [Fact]
-    public void DefaultCtor_RequiredScopes_IsNull()
+    public void DefaultCtor_ScopeRequirement_IsNull()
     {
-        // Adversarial: a non-null empty set vs null mean different things —
-        // null disables the check entirely; empty set runs the loop with
-        // zero iterations (still no rejection but explicit "checked").
+        // Adversarial: null disables the per-handler scope pre-check entirely
+        // (the pipeline guard is `is { Scopes.Count: > 0 }`); a non-null
+        // ScopeRequirement with an empty Scopes set is treated equivalently
+        // but null is the idiomatic "no check" declaration.
         var options = new HandlerOptions();
 
-        options.RequiredScopes.Should().BeNull();
+        options.ScopeRequirement.Should().BeNull();
     }
 
     // ----------------------------------------------------------------------
@@ -80,7 +81,7 @@ public sealed class HandlerOptionsTests
         overridden.LogOutput.Should().BeTrue();
         overridden.SlowThreshold.Should().Be(defaults.SlowThreshold);
         overridden.CriticalThreshold.Should().Be(defaults.CriticalThreshold);
-        overridden.RequiredScopes.Should().BeNull();
+        overridden.ScopeRequirement.Should().BeNull();
     }
 
     [Fact]
@@ -142,45 +143,94 @@ public sealed class HandlerOptionsTests
     }
 
     // ----------------------------------------------------------------------
-    // RequiredScopes — null vs empty distinction is semantic
+    // ScopeRequirement — null disables check; populated exposes Match + Scopes
     // ----------------------------------------------------------------------
 
     [Fact]
-    public void With_RequiredScopesNull_DefaultRemains()
+    public void With_ScopeRequirementNull_DisablesCheck()
     {
         var defaults = new HandlerOptions();
 
-        var overridden = defaults with { RequiredScopes = null };
+        var overridden = defaults with { ScopeRequirement = null };
 
-        overridden.RequiredScopes.Should().BeNull();
+        overridden.ScopeRequirement.Should().BeNull();
     }
 
     [Fact]
-    public void With_RequiredScopesEmptySet_AcceptedAsDistinctFromNull()
+    public void With_ScopeRequirementAnyMatch_ExposesMatchAndScopes()
     {
-        // Adversarial: empty set is semantically different from null —
-        // null disables the foreach entirely, empty runs zero iterations.
-        // Both result in "no rejection" today, but the handler pipeline
-        // checks `is { Count: > 0 }` so it MUST treat empty as "skip" too.
-        // Verify the option-record itself preserves the distinction.
+        IReadOnlySet<string> scopes = new HashSet<string>(["a", "b"]);
+        var req = new ScopeRequirement(HandlerScopeMatch.Any, scopes);
+
+        var options = new HandlerOptions { ScopeRequirement = req };
+
+        options.ScopeRequirement.Should().NotBeNull();
+        options.ScopeRequirement!.Match.Should().Be(HandlerScopeMatch.Any);
+        options.ScopeRequirement.Scopes.Should().BeEquivalentTo(["a", "b"]);
+    }
+
+    [Fact]
+    public void With_ScopeRequirementAllMatch_ExposesMatchAndScopes()
+    {
+        IReadOnlySet<string> scopes = new HashSet<string>(["read", "write"]);
+        var req = new ScopeRequirement(HandlerScopeMatch.All, scopes);
+
+        var options = new HandlerOptions { ScopeRequirement = req };
+
+        options.ScopeRequirement!.Match.Should().Be(HandlerScopeMatch.All);
+        options.ScopeRequirement.Scopes.Should().BeEquivalentTo(["read", "write"]);
+    }
+
+    [Fact]
+    public void With_ScopeRequirementNullDisablesCheck()
+    {
+        // A null ScopeRequirement is the documented way to disable the per-
+        // handler check. The HandlerOptions record accepts null; the pipeline
+        // guard short-circuits when ScopeRequirement is null.
+        var options = new HandlerOptions { ScopeRequirement = null };
+
+        options.ScopeRequirement.Should().BeNull();
+    }
+
+    [Fact]
+    public void With_ScopeRequirementEmptyScopes_ThrowsAtConstruction()
+    {
+        // Adversarial: empty Scopes is now illegal at construction (F5 guard).
+        // The pipeline guard `is { Scopes.Count: > 0 }` remains as defense-in-depth,
+        // but the constructor guard surfaces the misconfiguration at compose time.
         IReadOnlySet<string> empty_set = new HashSet<string>();
 
-        var overridden = new HandlerOptions { RequiredScopes = empty_set };
+        var act = () => new ScopeRequirement(HandlerScopeMatch.Any, empty_set);
 
-        overridden.RequiredScopes.Should().NotBeNull();
-        overridden.RequiredScopes.Should().BeEmpty();
-        overridden.RequiredScopes.Should().BeSameAs(empty_set);
+        act.Should().Throw<ArgumentException>();
+    }
+
+    // ----------------------------------------------------------------------
+    // Reflection name-pins for HandlerOptions.ScopeRequirement — the property
+    // name is load-bearing: BaseHandler pattern-matches against it and
+    // test/doc code references it symbolically. Pin via reflection so a rename
+    // trips an obvious test failure. Also pin that the OLD name (RequiredScopes)
+    // is absent — guards against accidental reintroduction.
+    // ----------------------------------------------------------------------
+
+    [Fact]
+    public void HandlerOptions_ScopeRequirementPropertyName_IsPinned()
+    {
+        var prop = typeof(HandlerOptions).GetProperty(nameof(HandlerOptions.ScopeRequirement));
+
+        prop.Should().NotBeNull();
+        prop.Name.Should().Be("ScopeRequirement");
     }
 
     [Fact]
-    public void With_RequiredScopesPopulated_ExposesEntries()
+    public void HandlerOptions_RequiredScopes_DoesNotExist()
     {
-        IReadOnlySet<string> scopes = new HashSet<string>(["a", "b", "c"]);
+        // The old property name was "RequiredScopes"; it was replaced by
+        // "ScopeRequirement" when explicit match-mode support was added. Pin
+        // its absence so it cannot be silently reintroduced.
+        var prop = typeof(HandlerOptions).GetProperty("RequiredScopes");
 
-        var options = new HandlerOptions { RequiredScopes = scopes };
-
-        options.RequiredScopes.Should().NotBeNull();
-        options.RequiredScopes.Should().BeEquivalentTo(["a", "b", "c"]);
+        prop.Should().BeNull();
     }
 
     // ----------------------------------------------------------------------

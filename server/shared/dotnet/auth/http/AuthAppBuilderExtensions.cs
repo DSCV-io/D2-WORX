@@ -32,7 +32,7 @@ public static class AuthAppBuilderExtensions
         /// <code>
         /// app.UseRouting();
         /// app.UseD2Auth();
-        /// app.MapGet("/files/{id}", ...).RequireD2Scope("files.read");
+        /// app.MapGet("/files/{id}", ...).RequireAnyScope("files.read");
         /// </code>
         /// </remarks>
         /// <returns>The same <paramref name="app"/> for fluent chaining.</returns>

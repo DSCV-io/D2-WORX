@@ -20,7 +20,22 @@ These two concerns — universal pipeline and provider-specific exception mappin
 
 ### Layer 1 — Abstractions (`D2.Shared.Handler.Abstractions`)
 
-`IHandler<TInput, TOutput>` and `IHandlerContext` are published in a zero-heavy-dependency package. Domain-layer code and application interfaces reference these contracts without pulling DI, OTel, or AspNetCore transitively. `HandlerOptions` (a `sealed record`) carries per-call toggles (`LogInput`/`LogOutput`, slow/critical thresholds defaulting to 100 ms/500 ms, `RequiredScopes`) and lives here so callers can adjust behavior without referencing the core package. The abstractions/core split follows the general pattern of ADR-0006.
+`IHandler<TInput, TOutput>` and `IHandlerContext` are published in a zero-heavy-dependency package. Domain-layer code and application interfaces reference these contracts without pulling DI, OTel, or AspNetCore transitively. `HandlerOptions` (a `sealed record`) carries per-call toggles (`LogInput`/`LogOutput`, slow/critical thresholds defaulting to 100 ms/500 ms, `ScopeRequirement`) and lives here so callers can adjust behavior without referencing the core package. The abstractions/core split follows the general pattern of ADR-0006.
+
+`ScopeRequirement` is a positional `sealed record(HandlerScopeMatch Match, IReadOnlySet<string> Scopes)` that combines the scope set with an explicit match-mode enum so the any-of vs all-of semantic is always stated at declaration time:
+
+```csharp
+protected override HandlerOptions DefaultOptions => new()
+{
+    ScopeRequirement = new ScopeRequirement(
+        HandlerScopeMatch.All,
+        new HashSet<string> { Scopes.Files.Read, Scopes.Files.Write })
+};
+```
+
+`HandlerScopeMatch` mirrors the transport-layer `ScopeMatch` enum but lives in the handler abstractions package so handler assemblies carry no compile-time dependency on the auth layer (layer-hygiene invariant: `D2.Shared.Handler.Abstractions` references neither `D2.Shared.Auth.Abstractions` nor any ASP.NET Core package).
+
+A `null` `HandlerOptions.ScopeRequirement` (the default) disables the per-handler check entirely — any authenticated caller that passed the transport-layer auth middleware or interceptor may invoke the handler. An empty `Scopes` set is rejected at construction time: the `ScopeRequirement` constructor throws `ArgumentException` if `Scopes` is empty. Pass a `null` `ScopeRequirement` to disable the per-handler check. The pipeline guard (`is { Scopes.Count: > 0 }`) remains as defense-in-depth for a now-unreachable branch.
 
 ### Layer 2 — Core pipeline (`D2.Shared.Handler`)
 
@@ -28,7 +43,7 @@ These two concerns — universal pipeline and provider-specific exception mappin
 
 `RunCorePipelineAsync` is non-virtual (non-overridable). Per invocation it:
 
-1. Evaluates `RequiredScopes` and returns `D2Result.Forbidden` at entry if any required scope is absent — before any work runs.
+1. Evaluates `ScopeRequirement` (any-of or all-of, per `HandlerScopeMatch`) and returns `D2Result.Forbidden` at entry if the caller's `IRequestContext.Scopes` does not satisfy it — before any work runs. A `null` `ScopeRequirement` skips the check entirely (the `is { Scopes.Count: > 0 }` guard remains as defense-in-depth, but an empty set is now unconstructible).
 2. Starts an `ActivitySource` span (source name `D2.Shared.Handler`) tagged with `d2.handler.name`, user/org/role, and full impersonation context when present.
 3. Opens a structured log scope carrying the same correlation fields so every log line emitted inside `ExecuteAsync` automatically carries `d2.trace_id`, `d2.user_id`, `d2.org_id`, and handler name.
 4. Increments `d2.handler.invoked` and starts a `Stopwatch`.
@@ -97,7 +112,7 @@ The TLC/2LC/3LC folder convention (`CQRS/{C,Q,U,X}/`, `Repository/{C,R,U,D}/`, `
 
 ## References
 
-- `server/shared/dotnet/handler/abstractions/` — `IHandler.cs`, `IHandlerContext.cs`, `HandlerOptions.cs`.
+- `server/shared/dotnet/handler/abstractions/` — `IHandler.cs`, `IHandlerContext.cs`, `HandlerOptions.cs`, `ScopeRequirement.cs`, `HandlerScopeMatch.cs`.
 - `server/shared/dotnet/handler/core/` — `BaseHandler.cs` (sealed `RunCorePipelineAsync`), `BaseHandler.Logging.cs` (exception-type-name-only contract), `HandlerTelemetry.cs` (static `ActivitySource` + `Meter`), `HandlerContext.cs`, `HandlerServiceCollectionExtensions.cs` (`AddD2Handler`).
 - `server/shared/dotnet/handler/repo/BaseRepoHandler.cs` — EF/DB exception remapping; `MapDbException` hook; exhaustive dispatch.
 - `server/shared/dotnet/handler/repo-abstractions/` — `IDbExceptionClassifier.cs`, `DbFailureKind.cs`, `D2ResultDbFactories.cs`.

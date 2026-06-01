@@ -80,7 +80,7 @@ public sealed partial class Translator : ITranslator
     public Translator(SupportedLocales supportedLocales, string messagesDirectory)
     {
         ArgumentNullException.ThrowIfNull(supportedLocales);
-        ArgumentException.ThrowIfNullOrWhiteSpace(messagesDirectory);
+        messagesDirectory.ThrowIfFalsey();
 
         if (!Directory.Exists(messagesDirectory))
         {
@@ -95,7 +95,7 @@ public sealed partial class Translator : ITranslator
     /// <inheritdoc/>
     public string T(string locale, TKMessage message)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(locale);
+        locale.ThrowIfFalsey();
         ArgumentNullException.ThrowIfNull(message);
 
         var resolvedLocale = r_supportedLocales.Resolve(locale);
@@ -122,7 +122,7 @@ public sealed partial class Translator : ITranslator
     /// <inheritdoc/>
     public bool HasKey(string key)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+        key.ThrowIfFalsey();
         return r_allKnownKeys.Contains(key);
     }
 

@@ -701,6 +701,7 @@ Contents:
 - Output format spec (the partial-file template every Auditor writes against — see [Partial-file template](#partial-file-template-per-auditor) below)
 - Aggregator role summary (so cluster Auditors know what their partials feed into and can flag cross-cluster handoffs explicitly)
 - Critical constraints (READ-ONLY tools, no sub-agent spawning, no commits, no touching other auditors' partial files, sister-sweep per rules.md §24.13.3, self-grep per rules.md §24.13.4)
+- **Working-tree note** (include when the deliverable's latest Implementer / Fixer output is uncommitted): "Read all files in this deliverable's scope from the on-disk working tree — the actual source files on disk. Do NOT rely on `git diff HEAD`, `git show HEAD:path`, or any git operation that reads committed content. The deliverable's latest changes are uncommitted and are not present at HEAD. A sub-agent that reads HEAD reports stale pre-change findings and misses genuine post-change issues." Omit this note once every step's Implementer + Fixer output has been committed (working tree and HEAD agree). Predicate-of-record: [rules.md §24.19](rules.md#24-audit-evidence-discipline-meta--how-to-audit).
 
 **Step 2 — Orchestrator dispatches 12 parallel Auditors in ONE message:**
 

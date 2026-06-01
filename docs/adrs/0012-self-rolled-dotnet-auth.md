@@ -5,7 +5,7 @@ Copyright (c) DCSV. All rights reserved.
 # ADR-0012: Self-rolled .NET auth — shared vocabulary, token primitives, and per-transport bindings
 
 - **Status**: Accepted
-- **Date**: 2026-05-30
+- **Date**: 2026-05-30 (amended 2026-06-01)
 - **Deliverable**: Phase 0 — shared libraries (backfilled)
 
 > **Scope:** this ADR covers the BUILT shared-library auth surface (`server/shared/dotnet/auth/`). The **Edge auth module** — login flows, session three-tier storage, OAuth client registry, KeyCustodian — is not built yet and will receive its own ADR.
@@ -35,11 +35,51 @@ D²-specific claims use a `d2_` prefix in lowercase snake_case (e.g. `d2_session
 
 ### 4. Abstractions/runtime split with per-transport bindings
 
-Five independently referenceable assemblies: `Auth.Abstractions` (vocabulary + codegen catalogs + `IJwksProvider`/`ISessionLivenessTracker`, zero runtime deps), `AuthContext.Abstractions` (`IAuthContext` extensions), `Auth` core (`JwtValidator`, `HttpJwksProvider`, session-liveness tracker, claims→context mapper), `Auth.Http` (`JwtAuthMiddleware` + RFC 7807 helpers + `RequireD2Scope`), `Auth.Grpc` (`JwtAuthInterceptor` + trailer helpers + `D2RequireScopeAttribute`), `Auth.Outbound` (token-exchange + service-identity clients + gRPC call credentials). Domain handlers reference only the two abstractions slices; the `IRequestContext` that arrives is populated by the transport layer and injected via a scoped resolver.
+Five independently referenceable assemblies: `Auth.Abstractions` (vocabulary + codegen catalogs + `IJwksProvider`/`ISessionLivenessTracker`, zero runtime deps), `AuthContext.Abstractions` (`IAuthContext` extensions), `Auth` core (`JwtValidator`, `HttpJwksProvider`, session-liveness tracker, claims→context mapper), `Auth.Http` (`JwtAuthMiddleware` + RFC 7807 helpers + `RequireAnyScope` / `RequireAllScopes` / `MarkAsD2HarmlessEndpoint` fluent extensions), `Auth.Grpc` (`JwtAuthInterceptor` + trailer helpers + `D2RequireAnyScopeAttribute` / `D2RequireAllScopesAttribute` / `D2HarmlessEndpointAttribute` attributes + `RequireAnyScope` / `RequireAllScopes` gRPC fluent extensions), `Auth.Outbound` (token-exchange + service-identity clients + gRPC call credentials). Domain handlers reference only the two abstractions slices; the `IRequestContext` that arrives is populated by the transport layer and injected via a scoped resolver.
 
-### 5. Per-layer validation: transport enforces signature/expiry/audience/liveness; per-handler enforces scopes
+### 5. Per-layer validation: transport enforces signature/expiry/audience/liveness + scope match-mode; per-handler enforces scopes as defense-in-depth; deny-by-default boot guard
 
-`JwtAuthMiddleware` and `JwtAuthInterceptor` run an identical five-step pipeline: harmless-endpoint short-circuit → bearer extraction → JWT validation (RS256 pin, issuer, audience, lifetime with clock skew, reactive-refresh-on-unknown-`kid` + single retry) → session liveness (fail-closed) → per-endpoint any-of scope enforcement. **Audience validation is a transport-layer invariant** configured once on `AuthOptions` and applied uniformly — not per-handler, because a handler accepting the wrong audience would accept tokens minted for a different service. **`RequiredScopes` varies by operation** and is declared at the endpoint/method site (`.RequireD2Scope("self.read")` / `[D2RequireScope]`). The gRPC interceptor covers all four server handler kinds via one `RunAuthAsync` (streaming methods cannot bypass auth by omission) and dual-writes `IRequestContext` to both `ServerCallContext.UserState` and `HttpContext.Items`. All failures surface a uniform 401; granularity is communicated only via a `d2_error_code` trailer/ProblemDetails field, not distinct status codes (no structural information leaked to an unauthenticated caller).
+#### Transport-layer pipeline
+
+`JwtAuthMiddleware` and `JwtAuthInterceptor` run an identical five-step pipeline: harmless-endpoint short-circuit → bearer extraction → JWT validation (RS256 pin, issuer, audience, lifetime with clock skew, reactive-refresh-on-unknown-`kid` + single retry) → session liveness (fail-closed) → per-endpoint scope enforcement with explicit match mode.
+
+**Audience validation is a transport-layer invariant** configured once on `AuthOptions` and applied uniformly — not per-handler, because a handler accepting the wrong audience would accept tokens minted for a different service.
+
+**Scope declaration is now explicit about match semantics.** The original design had a single `RequireD2Scope("…")` / `[D2RequireScope("…")]` surface that used an implicit any-of semantic — the footgun was that a handler needing all-of silently got any-of and the error was invisible at the declaration site. The shipped design removes the ambiguity: every endpoint declares its match mode at the call site:
+
+- **HTTP fluent**: `.RequireAnyScope("scope1", "scope2")` (any-of) or `.RequireAllScopes("scope1", "scope2")` (all-of) on `IEndpointConventionBuilder`. Metadata type: `EndpointScopeMetadata` with `Match = ScopeMatch.Any` or `ScopeMatch.All`.
+- **gRPC attribute**: `[D2RequireAnyScope("scope1")]` or `[D2RequireAllScopes("scope1", "scope2")]` on the service class or method (method-level overrides class-level: last-declared-wins over the metadata collection). Metadata type resolved from attributes: `MethodScopeMetadata`.
+- **gRPC fluent**: `.RequireAnyScope("…")` / `.RequireAllScopes("…")` on the gRPC service builder. Produces `MethodScopeMetadata` directly (fluent takes precedence over attribute path).
+- **Harmless bypass**: `.MarkAsD2HarmlessEndpoint()` / `[D2HarmlessEndpoint]` opts out of the full pipeline (k8s probes, OIDC discovery endpoints). `[AllowAnonymous]` is deliberately NOT recognized — its semantic ties to the BCL `AuthorizationMiddleware` chain that this stack bypasses.
+
+`ScopeMatch.Any` and `ScopeMatch.All` live in `D2.Shared.Auth.Abstractions`; `MethodScopeMetadata` mirrors `EndpointScopeMetadata` by type (namespace-distinct so per-transport options can grow independently).
+
+The gRPC interceptor covers all four server handler kinds via a single `RunAuthAsync` entry point (streaming methods cannot bypass auth by omission) and dual-writes `IRequestContext` to both `ServerCallContext.UserState` and `HttpContext.Items`. All failures surface a uniform 401 / `StatusCode.Unauthenticated`; granularity is communicated only via a `d2_error_code` trailer/ProblemDetails field, never via distinct HTTP/gRPC status codes (no structural information leaked to an unauthenticated caller).
+
+#### Per-handler scope check (defense-in-depth)
+
+`BaseHandler.RunCorePipelineAsync` can perform a redundant scope check before `ExecuteAsync` runs, declared via `HandlerOptions.ScopeRequirement`. The type is `ScopeRequirement(HandlerScopeMatch Match, IReadOnlySet<string> Scopes)`:
+
+- `HandlerScopeMatch.Any` / `HandlerScopeMatch.All` mirror the transport enum but live in `D2.Shared.Handler.Abstractions` so handler assemblies carry no compile-time dependency on the auth layer (layer-hygiene invariant).
+- A `null` `ScopeRequirement` (the default) disables the per-handler check entirely — any authenticated caller that passed the transport layer invokes the handler.
+- An empty `Scopes` set is rejected at construction time — the `ScopeRequirement` constructor throws `ArgumentException` if `Scopes` is empty. Pass a `null` `ScopeRequirement` to disable the per-handler check. The `is { Scopes.Count: > 0 }` pipeline guard remains as defense-in-depth for a now-unreachable branch.
+
+The per-handler check returns `D2Result.Forbidden` on mismatch. Its role is defense-in-depth: if a handler is wired to a new endpoint that accidentally omits the transport-layer declaration, the per-handler check still rejects under-scoped callers. It is NOT a substitute for the transport declaration — both layers should declare.
+
+#### Deny-by-default boot guard
+
+A misconfigured endpoint — one whose declaration was omitted — silently admits any authenticated caller at runtime. To surface this class of error before any traffic is served, `D2.Shared.Auth.Startup` ships `AuthEndpointGuardStartupFilter`, an `IStartupFilter` that walks the fully-populated `EndpointDataSource` **at host startup** (inside `GenericWebHostService.StartAsync`, after middleware pipeline construction and before Kestrel accepts connections) and fails the host with `InvalidOperationException` when any `RouteEndpoint` lacks a declared auth intent.
+
+"Declared auth intent" is any of: `EndpointScopeMetadata` (HTTP fluent path), `MethodScopeMetadata` (gRPC fluent path), `[D2RequireAnyScopeAttribute]`, `[D2RequireAllScopesAttribute]`, or `[D2HarmlessEndpointAttribute]` on the endpoint's metadata collection.
+
+Exempt from the guard:
+- Endpoints whose route pattern matches the canonical infrastructure path set (`/health`, `/alive`, `/metrics`, `/.well-known` — via `D2AspNetCoreConstants.DEFAULT_INFRASTRUCTURE_PATHS` + `InfrastructurePathMatcher`).
+- Non-`RouteEndpoint` entries (no route pattern, can't be guarded by convention).
+- gRPC infrastructure catch-all endpoints registered by `MapGrpcService<T>()` for unknown-method / unknown-service routing, identified by the `grpcunimplemented` route constraint in the route pattern parameters.
+
+The guard is wired by `ServiceDefaults` via `AddD2AuthEndpointGuard` (registered as a transient `IStartupFilter`, idempotent via `TryAddEnumerable`). Opt-out is `D2ServiceDefaultsOptions.SkipAuthEndpointGuard = true` — intended for test hosts that register synthetic endpoints without auth declarations or anonymous-only admin tools.
+
+The `IStartupFilter` lifecycle was chosen over `IHostedService` because, in the `WebApplication` model, `app.MapXxx()` calls happen before `StartAsync` and write into `WebApplication.DataSources` — sources that are merged into the DI-resolved `EndpointDataSource` composite during pipeline construction (the `next` chain in `IStartupFilter.Configure`). An `IHostedService` captures the `EndpointDataSource` singleton at DI-resolve time, which is before that merge, so it sees an empty collection.
 
 ## Consequences
 
@@ -50,6 +90,8 @@ Five independently referenceable assemblies: `Auth.Abstractions` (vocabulary + c
 - Domain handlers are fully decoupled from the transport auth stack — `IRequestContext.Scopes` / `HasScope(...)` compile and test without any reference to the validator or middleware.
 - Token exchange propagates user identity downstream without re-issuing credentials; the `d2_session_id`-keyed cache enables per-session revocation across cached exchange tokens.
 - The per-transport split means HTTP-only services do not pay the gRPC dependency and vice versa.
+- Scope match-mode is stated explicitly at the declaration site (`RequireAnyScope` / `RequireAllScopes`); the footgun of an implicit any-of semantic on multi-scope declarations is structurally eliminated — `RequireAllScopes("a","b")` and `RequireAnyScope("a","b")` are different call sites with different names.
+- The boot guard converts a class of silent runtime misconfiguration (undeclared endpoint silently admitting any authenticated caller) into a fast, deterministic startup failure before traffic is ever served.
 
 **Negative / risks.**
 
@@ -57,6 +99,7 @@ Five independently referenceable assemblies: `Auth.Abstractions` (vocabulary + c
 - Two transport bindings implement structurally identical pipelines (ASP.NET cannot share one base across middleware + interceptor); any future validation step must be added to both.
 - Self-rolling RFC 8693 means the Edge auth module (future ADR) must implement the server side correctly; deviation breaks the exchange client at runtime, not compile time.
 - `d2_` snake_case claims are non-standard: a future non-.NET service must implement its own parser for the `d2_` set rather than relying on an off-the-shelf OIDC library's standard mapping.
+- The boot guard exempts infrastructure paths and gRPC catch-alls by convention; if a future framework version introduces a new class of infrastructure endpoint with a non-matching route pattern, it will trip the guard until the exemption list is updated.
 
 ## Alternatives considered
 
@@ -68,11 +111,17 @@ Five independently referenceable assemblies: `Auth.Abstractions` (vocabulary + c
 
 **Standard camelCase claim names.** Conventional in some ecosystems, but D²'s dot-separated scope format and mixed-stack log/dashboard disambiguation favor `d2_`-prefixed snake_case (consistent with the scope segment style; avoids camelCase-to-JSON-key mapping confusion).
 
-**Validate the JWT per-handler.** Considered to let handlers override `ValidAudience`/`ValidAlgorithms`. Rejected: audience validation is a service-identity invariant, not a per-operation concern; pushing it per-handler creates a footgun where a handler that omits the check silently accepts cross-service tokens. `RequiredScopes` is the per-handler concern; audience/signature/expiry/liveness are transport-layer invariants.
+**Validate the JWT per-handler.** Considered to let handlers override `ValidAudience`/`ValidAlgorithms`. Rejected: audience validation is a service-identity invariant, not a per-operation concern; pushing it per-handler creates a footgun where a handler that omits the check silently accepts cross-service tokens. `ScopeRequirement` (per-handler defense-in-depth) is the per-handler concern; audience/signature/expiry/liveness are transport-layer invariants.
+
+**Single `RequireD2Scope` with implicit any-of (original design).** The original surface had one declaration verb for all scope endpoints — any multi-scope declaration silently used any-of semantics. The problem: a caller needing `files.read` AND `files.write` simultaneously could pass with only one, and the author had no call-site signal that the check was any-of rather than all-of. The shipped split into `RequireAnyScope` / `RequireAllScopes` with distinct method names makes the match mode visible at every declaration site — the any-of / all-of distinction is impossible to express incorrectly by omission.
+
+**`IHostedService` for the boot guard.** An `IHostedService` starts after pipeline construction and would need a `BackgroundService.ExecuteAsync` that inspects the `EndpointDataSource` and calls `IHostApplicationLifetime.StopApplication()` on violation. The `IStartupFilter` approach is more direct: it runs inside `GenericWebHostService.StartAsync` (the same call that returns the host), throws `InvalidOperationException` to abort startup before Kestrel binds, and does not require the secondary `IHostApplicationLifetime` dance. The `IStartupFilter` path also guarantees the guard runs before the first request byte is processed in both the `WebApplication` and generic-host models.
 
 ## References
 
-- `server/shared/dotnet/auth/abstractions/` (vocabulary + codegen catalogs + `IJwksProvider`/`ISessionLivenessTracker`); `auth/core/Validation/JwtValidator.cs` + `JwtValidatorOptions.cs` (RS256 pin); `auth/http/Middleware/JwtAuthMiddleware.cs`; `auth/grpc/Interceptors/JwtAuthInterceptor.cs`; `auth/outbound/TokenExchange/HttpTokenExchangeClient.cs` + `ServiceIdentity/HttpServiceIdentityClient.cs`.
+- `server/shared/dotnet/auth/abstractions/ScopeMatch.cs` (transport-layer `ScopeMatch` enum); `auth/http/Endpoints/EndpointScopeMetadata.cs` + `RequireD2ScopeExtensions.cs` (`RequireAnyScope` / `RequireAllScopes` / `MarkAsD2HarmlessEndpoint` fluent); `auth/http/Middleware/JwtAuthMiddleware.cs`; `auth/grpc/Endpoints/MethodScopeMetadata.cs` + `D2RequireAnyScopeAttribute.cs` + `D2RequireAllScopesAttribute.cs` + `RequireD2GrpcScopeExtensions.cs`; `auth/grpc/Interceptors/JwtAuthInterceptor.cs`; `auth/startup/AuthEndpointGuardStartupFilter.cs` + `AuthEndpointGuardServiceCollectionExtensions.cs` (boot guard); `service-defaults/D2ServiceDefaultsOptions.cs` (`SkipAuthEndpointGuard` opt-out).
+- `server/shared/dotnet/handler/abstractions/HandlerScopeMatch.cs` + `ScopeRequirement.cs` + `HandlerOptions.cs` (per-handler defense-in-depth); `handler/core/BaseHandler.cs` (`RunCorePipelineAsync` scope pre-check).
+- `server/shared/dotnet/auth/abstractions/` (vocabulary + codegen catalogs + `IJwksProvider`/`ISessionLivenessTracker`); `auth/core/Validation/JwtValidator.cs` + `JwtValidatorOptions.cs` (RS256 pin); `auth/outbound/TokenExchange/HttpTokenExchangeClient.cs` + `ServiceIdentity/HttpServiceIdentityClient.cs`.
 - `contracts/jwt-claims/`, `contracts/auth-scopes/`, `contracts/auth-audiences/`, `contracts/in-process-keys/`.
-- `docs/PATTERNS.md` (JWT inbound auth); RFC 6749, 6750, 7519, 7517, 8693.
-- [ADR-0002](0002-spec-driven-codegen.md) (the codegen pattern governing `Scopes`/`Audiences`/`JwtClaimTypes`), [ADR-0006](0006-abstractions-implementation-split.md) (vocabulary in `Abstractions`, validation in `core`), [ADR-0003](0003-d2result-errors-as-values.md) (`D2Result` throughout the auth stack), [ADR-0004](0004-i18n-tkmessage.md) (`TKMessage` referenced by `AuthFailures`), [ADR-0007](0007-request-context-propagation.md) (`IRequestContext` populated by the transport layer).
+- `docs/PATTERNS.md` (JWT inbound auth + deny-by-default boot guard); RFC 6749, 6750, 7519, 7517, 8693.
+- [ADR-0002](0002-spec-driven-codegen.md) (the codegen pattern governing `Scopes`/`Audiences`/`JwtClaimTypes`), [ADR-0005](0005-handler-pipeline.md) (per-handler `ScopeRequirement` defense-in-depth), [ADR-0006](0006-abstractions-implementation-split.md) (vocabulary in `Abstractions`, validation in `core`), [ADR-0003](0003-d2result-errors-as-values.md) (`D2Result` throughout the auth stack), [ADR-0004](0004-i18n-tkmessage.md) (`TKMessage` referenced by `AuthFailures`), [ADR-0007](0007-request-context-propagation.md) (`IRequestContext` populated by the transport layer).

@@ -87,7 +87,7 @@ public sealed class EncryptionRegistrationTests
     {
         var services = new ServiceCollection();
         var act = () => services.AddD2EncryptionFor(null!, _ => TestKeyrings.AuditSingleKey());
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
@@ -175,7 +175,7 @@ public sealed class EncryptionRegistrationTests
     public void EncryptionRegistration_NullServiceKey_Throws()
     {
         var act = () => new EncryptionRegistration(null!);
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]

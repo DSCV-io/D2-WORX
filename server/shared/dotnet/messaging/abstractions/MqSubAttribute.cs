@@ -7,6 +7,7 @@
 namespace D2.Shared.Messaging;
 
 using System;
+using D2.Shared.Utilities.Extensions;
 
 /// <summary>
 /// Marks a handler class as a messaging subscriber. Carries one
@@ -40,7 +41,7 @@ public sealed class MqSubAttribute : Attribute
     /// <c>MqSubscriptionsRegistry</c>.</param>
     public MqSubAttribute(string constant)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(constant);
+        constant.ThrowIfFalsey();
         Constant = constant;
     }
 

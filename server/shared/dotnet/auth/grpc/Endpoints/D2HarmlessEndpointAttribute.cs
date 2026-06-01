@@ -52,10 +52,10 @@ namespace D2.Shared.Auth.Grpc.Endpoints;
 /// <para>
 /// <strong>Precedence</strong> (matches BCL <c>[AllowAnonymous]</c> over
 /// <c>[Authorize]</c>): a method-level <see cref="D2HarmlessEndpointAttribute"/>
-/// overrides any class-level <see cref="D2RequireScopeAttribute"/> on the
-/// same service. Fluent metadata
-/// (<c>MethodScopeMetadata.HarmlessEndpoint</c> attached via the builder
-/// extensions) takes precedence over both attribute paths.
+/// overrides any class-level <see cref="D2RequireAnyScopeAttribute"/> or
+/// <see cref="D2RequireAllScopesAttribute"/> on the same service. Fluent
+/// metadata (<c>MethodScopeMetadata.HarmlessEndpoint</c> attached via the
+/// builder extensions) takes precedence over all attribute paths.
 /// </para>
 /// <para>
 /// Deliberately NOT named <c>[AllowAnonymous]</c> — the codebase does not

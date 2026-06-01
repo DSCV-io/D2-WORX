@@ -6,24 +6,36 @@
 
 namespace D2.Shared.Auth.Grpc.Endpoints;
 
+using D2.Shared.Auth.Abstractions;
+using D2.Shared.Utilities.Extensions;
 using Microsoft.AspNetCore.Builder;
 
 /// <summary>
-/// Fluent <see cref="IEndpointConventionBuilder"/> extensions for declaring
-/// the scope requirements (or harmless-endpoint opt-in) of a gRPC method on
-/// the builder returned by <c>MapGrpcService&lt;T&gt;()</c>. Read by the auth
-/// interceptor via the matched endpoint's metadata collection.
+/// Fluent <see cref="GrpcServiceEndpointConventionBuilder"/> extensions for
+/// declaring the scope requirements (or harmless-endpoint opt-in) of a gRPC
+/// method on the builder returned by <c>MapGrpcService&lt;T&gt;()</c>. Read
+/// by the auth interceptor via the matched endpoint's metadata collection.
 /// </summary>
 /// <remarks>
+/// <para>
+/// <strong>gRPC-builder-only constraint</strong>: these extension methods are
+/// constrained to <see cref="GrpcServiceEndpointConventionBuilder"/> — the
+/// concrete type returned by <c>MapGrpcService&lt;T&gt;()</c>. Calling them
+/// on an HTTP builder (e.g. <c>MapGet(...)</c>) is a compile error, preventing
+/// the cross-transport misuse footgun where <see cref="MethodScopeMetadata"/>
+/// is attached to an HTTP endpoint whose middleware never enforces it.
+/// </para>
 /// <para>
 /// Idiomatic gRPC fluent style:
 /// </para>
 /// <code>
-/// app.MapGrpcService&lt;FilesService&gt;().RequireD2Scope("files.read");
+/// app.MapGrpcService&lt;FilesService&gt;().RequireAnyScope("files.read");
+/// app.MapGrpcService&lt;FilesService&gt;().RequireAllScopes("files.read", "files.write");
 /// app.MapGrpcService&lt;HealthProbeService&gt;().MarkAsD2HarmlessEndpoint();
 /// </code>
 /// <para>
-/// The attribute path (<see cref="D2RequireScopeAttribute"/> /
+/// The attribute path (<see cref="D2RequireAnyScopeAttribute"/> /
+/// <see cref="D2RequireAllScopesAttribute"/> /
 /// <see cref="D2HarmlessEndpointAttribute"/>) is the recommended primary
 /// surface for gRPC services because gRPC service implementations are
 /// concrete classes overriding generated <c>*ServiceBase</c> types; declaring
@@ -42,18 +54,17 @@ using Microsoft.AspNetCore.Builder;
 /// </remarks>
 public static class RequireD2GrpcScopeExtensions
 {
-    extension<TBuilder>(TBuilder builder)
-        where TBuilder : IEndpointConventionBuilder
+    extension(GrpcServiceEndpointConventionBuilder builder)
     {
         /// <summary>
         /// Declares that the gRPC method (or every method on the service this
         /// builder represents) requires the caller's <c>IRequestContext.Scopes</c>
-        /// set to overlap with at least one of the listed scopes. Defense-in-depth
-        /// at the transport boundary — <c>BaseHandler.RequiredScopes</c> still
-        /// re-checks per-handler.
+        /// set to overlap with <b>at least one</b> of the listed scopes
+        /// (<see cref="ScopeMatch.Any"/>). Defense-in-depth at the transport
+        /// boundary — <c>BaseHandler.ScopeRequirement</c> still re-checks per-handler.
         /// </summary>
-        /// <param name="scope">The first required scope (at-least-one).</param>
-        /// <param name="additionalScopes">Additional scopes (at-least-one).</param>
+        /// <param name="scope">The first required scope (any-of).</param>
+        /// <param name="additionalScopes">Additional scopes (any-of).</param>
         /// <returns>The same <paramref name="builder"/> for fluent chaining.</returns>
         /// <exception cref="ArgumentNullException">
         /// Thrown when <paramref name="builder"/>, <paramref name="scope"/>, or
@@ -63,25 +74,58 @@ public static class RequireD2GrpcScopeExtensions
         /// Thrown when <paramref name="scope"/> is empty / whitespace, or any
         /// entry in <paramref name="additionalScopes"/> is empty / whitespace.
         /// </exception>
-        public TBuilder RequireD2Scope(
+        public GrpcServiceEndpointConventionBuilder RequireAnyScope(
             string scope,
             params string[] additionalScopes)
         {
             ArgumentNullException.ThrowIfNull(builder);
-            ArgumentException.ThrowIfNullOrWhiteSpace(scope);
+            scope.ThrowIfFalsey();
             ArgumentNullException.ThrowIfNull(additionalScopes);
 
             for (var i = 0; i < additionalScopes.Length; i++)
-            {
-                ArgumentException.ThrowIfNullOrWhiteSpace(
-                    additionalScopes[i],
-                    $"{nameof(additionalScopes)}[{i}]");
-            }
+                additionalScopes[i].ThrowIfFalsey($"{nameof(additionalScopes)}[{i}]");
 
             var all = new string[additionalScopes.Length + 1];
             all[0] = scope;
             additionalScopes.CopyTo(all, 1);
-            var metadata = MethodScopeMetadata.ForScopes(all);
+            var metadata = MethodScopeMetadata.ForScopes(all, ScopeMatch.Any);
+            builder.Add(b => b.Metadata.Add(metadata));
+            return builder;
+        }
+
+        /// <summary>
+        /// Declares that the gRPC method (or every method on the service this
+        /// builder represents) requires the caller's <c>IRequestContext.Scopes</c>
+        /// set to contain <b>every</b> listed scope (<see cref="ScopeMatch.All"/>).
+        /// Defense-in-depth at the transport boundary — <c>BaseHandler.ScopeRequirement</c>
+        /// still re-checks per-handler.
+        /// </summary>
+        /// <param name="scope">The first required scope (all-of).</param>
+        /// <param name="additionalScopes">Additional scopes (all-of).</param>
+        /// <returns>The same <paramref name="builder"/> for fluent chaining.</returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="builder"/>, <paramref name="scope"/>, or
+        /// <paramref name="additionalScopes"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// Thrown when <paramref name="scope"/> is empty / whitespace, or any
+        /// entry in <paramref name="additionalScopes"/> is empty / whitespace.
+        /// </exception>
+        public GrpcServiceEndpointConventionBuilder RequireAllScopes(
+            string scope,
+            params string[] additionalScopes)
+        {
+            ArgumentNullException.ThrowIfNull(builder);
+            scope.ThrowIfFalsey();
+            ArgumentNullException.ThrowIfNull(additionalScopes);
+
+            for (var i = 0; i < additionalScopes.Length; i++)
+                additionalScopes[i].ThrowIfFalsey($"{nameof(additionalScopes)}[{i}]");
+
+            var all = new string[additionalScopes.Length + 1];
+            all[0] = scope;
+            additionalScopes.CopyTo(all, 1);
+            var metadata = MethodScopeMetadata.ForScopes(all, ScopeMatch.All);
             builder.Add(b => b.Metadata.Add(metadata));
             return builder;
         }
@@ -114,7 +158,7 @@ public static class RequireD2GrpcScopeExtensions
         /// <exception cref="ArgumentNullException">
         /// Thrown when <paramref name="builder"/> is <see langword="null"/>.
         /// </exception>
-        public TBuilder MarkAsD2HarmlessEndpoint()
+        public GrpcServiceEndpointConventionBuilder MarkAsD2HarmlessEndpoint()
         {
             ArgumentNullException.ThrowIfNull(builder);
 

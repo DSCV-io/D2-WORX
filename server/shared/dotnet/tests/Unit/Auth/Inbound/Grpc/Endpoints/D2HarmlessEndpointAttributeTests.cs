@@ -34,17 +34,33 @@ public sealed class D2HarmlessEndpointAttributeTests
     }
 
     [Fact]
-    public void MethodLevel_MarksHarmlessOnAClassWithRequireScope()
+    public void MethodLevel_MarksHarmlessOnAClassWithRequireAnyScope()
     {
         // Mirrors the BCL [AllowAnonymous]-over-[Authorize] precedence: a
         // method-level [D2HarmlessEndpoint] on a class with class-level
-        // [D2RequireScope] resolves to harmless-endpoint at the method.
-        var method = typeof(SampleClassRequireScopeServ).GetMethod(
-            nameof(SampleClassRequireScopeServ.HarmlessMethod))!;
+        // [D2RequireAnyScope] resolves to harmless-endpoint at the method.
+        var method = typeof(SampleClassRequireAnyScopeServ).GetMethod(
+            nameof(SampleClassRequireAnyScopeServ.HarmlessMethod))!;
         var harmless = (D2HarmlessEndpointAttribute?)Attribute.GetCustomAttribute(
             method, typeof(D2HarmlessEndpointAttribute));
-        var classScope = (D2RequireScopeAttribute?)Attribute.GetCustomAttribute(
-            typeof(SampleClassRequireScopeServ), typeof(D2RequireScopeAttribute));
+        var classScope = (D2RequireAnyScopeAttribute?)Attribute.GetCustomAttribute(
+            typeof(SampleClassRequireAnyScopeServ), typeof(D2RequireAnyScopeAttribute));
+
+        harmless.Should().NotBeNull();
+        classScope.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void MethodLevel_MarksHarmlessOnAClassWithRequireAllScopes()
+    {
+        // Same semantics with [D2RequireAllScopes]: a method-level
+        // [D2HarmlessEndpoint] overrides a class-level all-scopes requirement.
+        var method = typeof(SampleClassRequireAllScopesServ).GetMethod(
+            nameof(SampleClassRequireAllScopesServ.HarmlessMethod))!;
+        var harmless = (D2HarmlessEndpointAttribute?)Attribute.GetCustomAttribute(
+            method, typeof(D2HarmlessEndpointAttribute));
+        var classScope = (D2RequireAllScopesAttribute?)Attribute.GetCustomAttribute(
+            typeof(SampleClassRequireAllScopesServ), typeof(D2RequireAllScopesAttribute));
 
         harmless.Should().NotBeNull();
         classScope.Should().NotBeNull();
@@ -64,8 +80,17 @@ public sealed class D2HarmlessEndpointAttributeTests
             "D2.Shared.Auth.Grpc.Endpoints.D2HarmlessEndpointAttribute");
     }
 
-    [D2RequireScope("svc.scope")]
-    private sealed class SampleClassRequireScopeServ
+    [D2RequireAnyScope("svc.scope")]
+    private sealed class SampleClassRequireAnyScopeServ
+    {
+        [D2HarmlessEndpoint]
+        public static void HarmlessMethod()
+        {
+        }
+    }
+
+    [D2RequireAllScopes("svc.read", "svc.write")]
+    private sealed class SampleClassRequireAllScopesServ
     {
         [D2HarmlessEndpoint]
         public static void HarmlessMethod()

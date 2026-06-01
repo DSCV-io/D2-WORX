@@ -95,16 +95,16 @@ public abstract class BaseHandler<TSelf, TInput, TOutput> : IHandler<TInput, TOu
         var handlerName = typeof(TSelf).Name;
         var handlerTag = new KeyValuePair<string, object?>("d2.handler.name", handlerName);
 
-        if (resolved.RequiredScopes is { Count: > 0 } required)
+        if (resolved.ScopeRequirement is { Scopes.Count: > 0 } req)
         {
-            foreach (var scope in required)
+            var ok = req.Match == HandlerScopeMatch.All
+                ? HandlerHasAllScopes(Context.Request.Scopes, req.Scopes)
+                : HandlerHasAnyScope(Context.Request.Scopes, req.Scopes);
+            if (!ok)
             {
-                if (!Context.Request.Scopes.Contains(scope))
-                {
-                    HandlerTelemetry.SR_Invoked.Add(1, handlerTag);
-                    HandlerTelemetry.SR_Failed.Add(1, handlerTag);
-                    return (D2Result<TOutput?>.Forbidden(traceId: traceId), null);
-                }
+                HandlerTelemetry.SR_Invoked.Add(1, handlerTag);
+                HandlerTelemetry.SR_Failed.Add(1, handlerTag);
+                return (D2Result<TOutput?>.Forbidden(traceId: traceId), null);
             }
         }
 
@@ -279,6 +279,32 @@ public abstract class BaseHandler<TSelf, TInput, TOutput> : IHandler<TInput, TOu
     protected abstract ValueTask<D2Result<TOutput?>> ExecuteAsync(
         TInput input,
         CancellationToken ct);
+
+    private static bool HandlerHasAnyScope(
+        IReadOnlySet<string> granted,
+        IReadOnlySet<string> required)
+    {
+        foreach (var scope in required)
+        {
+            if (granted.Contains(scope))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool HandlerHasAllScopes(
+        IReadOnlySet<string> granted,
+        IReadOnlySet<string> required)
+    {
+        foreach (var scope in required)
+        {
+            if (!granted.Contains(scope))
+                return false;
+        }
+
+        return true;
+    }
 
     private void LogThresholdBreaches(HandlerOptions options, TimeSpan elapsed, string handlerName)
     {

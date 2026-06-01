@@ -187,8 +187,9 @@ public sealed class BaseHandlerTests
     // ----------------------------------------------------------------------
 
     [Fact]
-    public async Task HandleAsync_RequiredScopeMissing_ReturnsForbiddenWithoutInvokingExecute()
+    public async Task HandleAsync_AllMatch_OneMissing_ReturnsForbiddenWithoutInvokingExecute()
     {
+        // All-of check: caller holds read:foo but not write:foo — must be Forbidden.
         var request = new TestRequestContext
         {
             Scopes = new HashSet<string>(["read:foo"]),
@@ -198,7 +199,9 @@ public sealed class BaseHandlerTests
             (_, _) => throw new InvalidOperationException("must not be called"),
             defaults: new HandlerOptions
             {
-                RequiredScopes = new HashSet<string>(["write:foo"]),
+                ScopeRequirement = new ScopeRequirement(
+                    HandlerScopeMatch.All,
+                    new HashSet<string>(["write:foo"])),
             },
             request: request);
 
@@ -210,11 +213,11 @@ public sealed class BaseHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_RequiredScopesNull_NoCheck_ExecuteRuns()
+    public async Task HandleAsync_ScopeRequirementNull_NoCheck_ExecuteRuns()
     {
         var (handler, _) = BuildHandler(
             (_, _) => new ValueTask<D2Result<TestOutput?>>(D2Result<TestOutput?>.Ok()),
-            defaults: new HandlerOptions { RequiredScopes = null });
+            defaults: new HandlerOptions { ScopeRequirement = null });
 
         var result = await handler.HandleAsync(new TestInput());
 
@@ -223,22 +226,22 @@ public sealed class BaseHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_RequiredScopesEmpty_NoCheck_ExecuteRuns()
+    public void HandleAsync_ScopeRequirementEmptyScopes_ThrowsAtConstruction()
     {
-        // Adversarial: empty set is treated identically to null per the
-        // pipeline guard `is { Count: > 0 }`. Document the equivalence.
-        var (handler, _) = BuildHandler(
-            (_, _) => new ValueTask<D2Result<TestOutput?>>(D2Result<TestOutput?>.Ok()),
-            defaults: new HandlerOptions { RequiredScopes = new HashSet<string>() });
+        // Adversarial: empty Scopes set is now unconstructible (F5 guard).
+        // The pipeline guard `is { Scopes.Count: > 0 }` remains as
+        // defense-in-depth, but the constructor guard surfaces the
+        // misconfiguration at compose time (before any handler call).
+        // Regression-pins the F5 fix: fails without the constructor guard,
+        // passes with it.
+        var act = () => new ScopeRequirement(HandlerScopeMatch.All, new HashSet<string>());
 
-        var result = await handler.HandleAsync(new TestInput());
-
-        result.Success.Should().BeTrue();
-        handler.ExecuteCallCount.Should().Be(1);
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*ScopeRequirement.Scopes must contain at least one entry*");
     }
 
     [Fact]
-    public async Task HandleAsync_AllRequiredScopesPresent_ExecuteRuns()
+    public async Task HandleAsync_AllMatch_AllScopesPresent_ExecuteRuns()
     {
         var request = new TestRequestContext
         {
@@ -248,7 +251,9 @@ public sealed class BaseHandlerTests
             (_, _) => new ValueTask<D2Result<TestOutput?>>(D2Result<TestOutput?>.Ok()),
             defaults: new HandlerOptions
             {
-                RequiredScopes = new HashSet<string>(["a", "b", "c"]),
+                ScopeRequirement = new ScopeRequirement(
+                    HandlerScopeMatch.All,
+                    new HashSet<string>(["a", "b", "c"])),
             },
             request: request);
 
@@ -259,11 +264,34 @@ public sealed class BaseHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_PartiallyMatchingScopes_ReturnsForbidden()
+    public async Task HandleAsync_AllMatch_SingleScopePresent_ExecuteRuns()
     {
-        // Adversarial: holding 2 of 3 required scopes is NOT enough; the
-        // foreach loop demands every scope. Verify this via a partial
-        // overlap.
+        // All-of with exactly one required scope: caller has it — must pass.
+        var request = new TestRequestContext
+        {
+            Scopes = new HashSet<string>(["admin"]),
+        };
+        var (handler, _) = BuildHandler(
+            (_, _) => new ValueTask<D2Result<TestOutput?>>(D2Result<TestOutput?>.Ok()),
+            defaults: new HandlerOptions
+            {
+                ScopeRequirement = new ScopeRequirement(
+                    HandlerScopeMatch.All,
+                    new HashSet<string>(["admin"])),
+            },
+            request: request);
+
+        var result = await handler.HandleAsync(new TestInput());
+
+        result.Success.Should().BeTrue();
+        handler.ExecuteCallCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task HandleAsync_AllMatch_PartialOverlap_ReturnsForbidden()
+    {
+        // Adversarial: holding 2 of 3 required scopes is NOT enough for All-of;
+        // every declared scope must be present simultaneously.
         var request = new TestRequestContext
         {
             Scopes = new HashSet<string>(["a", "b"]), // missing "c"
@@ -272,7 +300,110 @@ public sealed class BaseHandlerTests
             (_, _) => new ValueTask<D2Result<TestOutput?>>(D2Result<TestOutput?>.Ok()),
             defaults: new HandlerOptions
             {
-                RequiredScopes = new HashSet<string>(["a", "b", "c"]),
+                ScopeRequirement = new ScopeRequirement(
+                    HandlerScopeMatch.All,
+                    new HashSet<string>(["a", "b", "c"])),
+            },
+            request: request);
+
+        var result = await handler.HandleAsync(new TestInput());
+
+        result.IsForbidden.Should().BeTrue();
+        handler.ExecuteCallCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task HandleAsync_AllMatch_NonePresent_ReturnsForbidden()
+    {
+        // Adversarial: empty granted set with a non-empty All-of requirement
+        // must return Forbidden immediately.
+        var request = new TestRequestContext
+        {
+            Scopes = new HashSet<string>(),
+        };
+        var (handler, _) = BuildHandler(
+            (_, _) => throw new InvalidOperationException("must not be called"),
+            defaults: new HandlerOptions
+            {
+                ScopeRequirement = new ScopeRequirement(
+                    HandlerScopeMatch.All,
+                    new HashSet<string>(["x", "y"])),
+            },
+            request: request);
+
+        var result = await handler.HandleAsync(new TestInput());
+
+        result.IsForbidden.Should().BeTrue();
+        handler.ExecuteCallCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task HandleAsync_AnyMatch_OneOfManyPresent_ExecuteRuns()
+    {
+        // Any-of: caller holds one of the declared scopes — must pass even
+        // though the other declared scopes are absent.
+        var request = new TestRequestContext
+        {
+            Scopes = new HashSet<string>(["read"]),
+        };
+        var (handler, _) = BuildHandler(
+            (_, _) => new ValueTask<D2Result<TestOutput?>>(D2Result<TestOutput?>.Ok()),
+            defaults: new HandlerOptions
+            {
+                ScopeRequirement = new ScopeRequirement(
+                    HandlerScopeMatch.Any,
+                    new HashSet<string>(["read", "admin"])),
+            },
+            request: request);
+
+        var result = await handler.HandleAsync(new TestInput());
+
+        result.Success.Should().BeTrue();
+        handler.ExecuteCallCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task HandleAsync_AnyMatch_NonePresent_ReturnsForbidden()
+    {
+        // Adversarial: caller holds no overlap with the any-of set — must reject.
+        var request = new TestRequestContext
+        {
+            Scopes = new HashSet<string>(["other"]),
+        };
+        var (handler, _) = BuildHandler(
+            (_, _) => throw new InvalidOperationException("must not be called"),
+            defaults: new HandlerOptions
+            {
+                ScopeRequirement = new ScopeRequirement(
+                    HandlerScopeMatch.Any,
+                    new HashSet<string>(["read", "admin"])),
+            },
+            request: request);
+
+        var result = await handler.HandleAsync(new TestInput());
+
+        result.IsForbidden.Should().BeTrue();
+        handler.ExecuteCallCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task HandleAsync_AnyMatch_EmptyGrantedSet_ReturnsForbidden()
+    {
+        // Adversarial: Any-mode ScopeRequirement (e.g. ["read","admin"]) with a
+        // caller whose Scopes is the EMPTY set must return Forbidden and must NOT
+        // invoke ExecuteAsync — empty intersection of {} and {read,admin} is {}
+        // which is zero overlap, so any-of fails.
+        var request = new TestRequestContext
+        {
+            Scopes = new HashSet<string>(),
+        };
+        var (handler, _) = BuildHandler(
+            (_, _) => throw new InvalidOperationException("must not be called"),
+            defaults: new HandlerOptions
+            {
+                ScopeRequirement = new ScopeRequirement(
+                    HandlerScopeMatch.Any,
+                    new HashSet<string>(["read", "admin"])),
             },
             request: request);
 
@@ -656,7 +787,9 @@ public sealed class BaseHandlerTests
             (_, _) => new ValueTask<D2Result<TestOutput?>>(D2Result<TestOutput?>.Ok()),
             defaults: new HandlerOptions
             {
-                RequiredScopes = new HashSet<string>(["nope"]),
+                ScopeRequirement = new ScopeRequirement(
+                    HandlerScopeMatch.All,
+                    new HashSet<string>(["nope"])),
             },
             request: new TestRequestContext { Scopes = new HashSet<string>() });
 

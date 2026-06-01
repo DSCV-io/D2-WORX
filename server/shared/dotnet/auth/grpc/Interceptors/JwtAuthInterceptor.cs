@@ -7,6 +7,7 @@
 namespace D2.Shared.Auth.Grpc.Interceptors;
 
 using System.Net;
+using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Abstractions.Http;
 using D2.Shared.Auth.Abstractions.Sessions;
 using D2.Shared.Auth.Errors;
@@ -27,7 +28,8 @@ using Microsoft.Extensions.Logging;
 /// pipeline (signature + standard claims via <see cref="JwtValidator"/>) +
 /// session liveness check (via <see cref="ISessionLivenessTracker"/>) on
 /// inbound gRPC calls, enforces per-method scope requirements declared via
-/// <see cref="MethodScopeMetadata"/> / <see cref="D2RequireScopeAttribute"/>
+/// <see cref="MethodScopeMetadata"/> / <see cref="D2RequireAnyScopeAttribute"/>
+/// / <see cref="D2RequireAllScopesAttribute"/>
 /// / <see cref="D2HarmlessEndpointAttribute"/>, and emits
 /// <see cref="RpcException"/> with translated <see cref="Status"/> +
 /// <c>d2_error_code</c> / <c>d2_messages</c> / <c>traceid</c> trailers on
@@ -53,7 +55,8 @@ using Microsoft.Extensions.Logging;
 ///     <see cref="ISessionLivenessTracker.IsAliveAsync"/>. Revoked →
 ///     <see cref="StatusCode.Unauthenticated"/>. ServiceUnavailable →
 ///     <see cref="StatusCode.Unavailable"/> (fail-closed).</item>
-///   <item>Enforce per-method scope set (any-of). Mismatch →
+///   <item>Enforce per-method scope set (any-of or all-of, per
+///     <see cref="MethodScopeMetadata.Match"/>). Mismatch →
 ///     <see cref="AuthFailures.ScopeInsufficient"/> →
 ///     <see cref="StatusCode.Unauthenticated"/> (NOT
 ///     <see cref="StatusCode.PermissionDenied"/>; uniform 401-shape policy
@@ -245,58 +248,69 @@ internal sealed class JwtAuthInterceptor : Interceptor
             return fluent;
 
         // Attribute precedence (matches BCL [Authorize] / [AllowAnonymous]
-        // semantics): a method-level [D2HarmlessEndpoint] overrides any
-        // class-level [D2RequireScope]. ASP.NET routing pickup orders
-        // metadata: class-level first, then method-level — so we walk the
-        // collection in order and let the LAST matching entry win for the
-        // harmless-endpoint case, while also surfacing a method-level
-        // [D2HarmlessEndpoint] over any [D2RequireScope].
-        var harmlessEndpoint = endpoint.Metadata.GetMetadata<D2HarmlessEndpointAttribute>();
-        var require = endpoint.Metadata.GetMetadata<D2RequireScopeAttribute>();
-
-        // [D2HarmlessEndpoint] wins regardless of source level (ASP.NET
-        // metadata order ensures GetMetadata<T>() returns the LAST entry,
-        // so a method-level attribute supersedes a class-level one for the
-        // SAME attribute type). When both [D2HarmlessEndpoint] AND
-        // [D2RequireScope] are present, harmless-endpoint wins to mirror the
-        // BCL [AllowAnonymous]-over-[Authorize] precedence; the typical case
-        // is a class-level [D2RequireScope] with a method-level
-        // [D2HarmlessEndpoint] opting one method out.
-        if (harmlessEndpoint is not null && IsHarmlessEndpointLastDeclaration(endpoint, require))
-            return MethodScopeMetadata.HarmlessEndpoint;
-
-        if (require is not null)
-            return MethodScopeMetadata.ForScopes(require.Scopes);
-
-        return harmlessEndpoint is not null ? MethodScopeMetadata.HarmlessEndpoint : null;
+        // semantics): a method-level attribute overrides any class-level
+        // attribute. ASP.NET routing pickup orders metadata: class-level
+        // first, then method-level — so the LAST among all three attribute
+        // types in collection order wins. This handles:
+        //   - class-level [D2RequireAnyScope] + method-level [D2HarmlessEndpoint]
+        //     → harmless wins (method-level is last)
+        //   - class-level [D2HarmlessEndpoint] + method-level [D2RequireAllScopes]
+        //     → all-scopes wins (method-level is last)
+        //   - class-level [D2RequireAnyScope] + method-level [D2RequireAllScopes]
+        //     → all-scopes wins (method-level is last)
+        // When only one attribute type is present, it wins unconditionally.
+        return ResolveFromAttributes(endpoint);
     }
 
-    private static bool IsHarmlessEndpointLastDeclaration(
-        Microsoft.AspNetCore.Http.Endpoint endpoint,
-        D2RequireScopeAttribute? require)
+    private static MethodScopeMetadata? ResolveFromAttributes(
+        Microsoft.AspNetCore.Http.Endpoint endpoint)
     {
-        // When BOTH attributes are present, ASP.NET metadata walking order
-        // (class-level then method-level) lets the LAST one win. This mirrors
-        // BCL [AllowAnonymous]-over-[Authorize] precedence — a method-level
-        // [D2HarmlessEndpoint] on a class with [D2RequireScope] resolves to
-        // harmless; a class-level [D2HarmlessEndpoint] with a method-level
-        // [D2RequireScope] resolves to scope-required.
-        if (require is null)
-            return true;
+        // Walk the full metadata collection once, tracking the last index at
+        // which each of the three attribute types appears. The one with the
+        // highest index is the effective declaration (last-declared-wins, which
+        // ASP.NET metadata ordering turns into method-level-over-class-level).
+        var lastHarmlessIdx = -1;
+        var lastAnyIdx = -1;
+        var lastAllIdx = -1;
+        D2RequireAnyScopeAttribute? lastAnyAttr = null;
+        D2RequireAllScopesAttribute? lastAllAttr = null;
 
-        var lastHarmless = -1;
-        var lastRequire = -1;
         var index = 0;
         foreach (var item in endpoint.Metadata)
         {
             if (item is D2HarmlessEndpointAttribute)
-                lastHarmless = index;
-            else if (item is D2RequireScopeAttribute)
-                lastRequire = index;
+            {
+                lastHarmlessIdx = index;
+            }
+            else if (item is D2RequireAnyScopeAttribute anyAttr)
+            {
+                lastAnyIdx = index;
+                lastAnyAttr = anyAttr;
+            }
+            else if (item is D2RequireAllScopesAttribute allAttr)
+            {
+                lastAllIdx = index;
+                lastAllAttr = allAttr;
+            }
+
             index++;
         }
 
-        return lastHarmless > lastRequire;
+        // Nothing declared — fall through to deny-by-default (no metadata).
+        if (lastHarmlessIdx < 0 && lastAnyIdx < 0 && lastAllIdx < 0)
+            return null;
+
+        // Find the highest (last-declared) index among the three types.
+        var maxIdx = Math.Max(lastHarmlessIdx, Math.Max(lastAnyIdx, lastAllIdx));
+
+        if (maxIdx == lastHarmlessIdx)
+            return MethodScopeMetadata.HarmlessEndpoint;
+
+        if (maxIdx == lastAllIdx)
+            return MethodScopeMetadata.ForScopes(lastAllAttr!.Scopes, ScopeMatch.All);
+
+        // maxIdx == lastAnyIdx
+        return MethodScopeMetadata.ForScopes(lastAnyAttr!.Scopes, ScopeMatch.Any);
     }
 
     private static bool RequestContextHasAnyScope(
@@ -313,13 +327,27 @@ internal sealed class JwtAuthInterceptor : Interceptor
         return false;
     }
 
+    private static bool RequestContextHasAllScopes(
+        IRequestContext requestContext,
+        IReadOnlySet<string> required)
+    {
+        var granted = requestContext.Scopes;
+        foreach (var scope in required)
+        {
+            if (!granted.Contains(scope))
+                return false;
+        }
+
+        return true;
+    }
+
     private static string SummarizeScopes(IReadOnlySet<string> required)
     {
         // Closed-enumeration-derived summary — count + first (sorted) scope
         // name. Avoids logging full scope sets verbatim (they can be large
         // and bloat log volume; mirrors the HTTP middleware's
         // ScopeRequirementUnmet log shape).
-        if (required.Count == 0)
+        if (required.Falsey())
             return "0 scopes required";
 
         string? first = null;
@@ -442,13 +470,16 @@ internal sealed class JwtAuthInterceptor : Interceptor
             }
         }
 
-        // Per-method scope enforcement (any-of). Empty / null required set
-        // = "any authenticated caller passes."
-        if (metadata is { RequiredScopes.Count: > 0 } meta)
+        // Per-method scope enforcement (any-of or all-of, per meta.Match).
+        // Empty / null required set = "any authenticated caller passes."
+        if (metadata is { Scopes.Count: > 0 } meta)
         {
-            if (!RequestContextHasAnyScope(requestContext, meta.RequiredScopes))
+            var passes = meta.Match == ScopeMatch.All
+                ? RequestContextHasAllScopes(requestContext, meta.Scopes)
+                : RequestContextHasAnyScope(requestContext, meta.Scopes);
+            if (!passes)
             {
-                r_logger.ScopeRequirementUnmet(SummarizeScopes(meta.RequiredScopes));
+                r_logger.ScopeRequirementUnmet(SummarizeScopes(meta.Scopes));
                 throw AuthFailures.ScopeInsufficient().ToRpcException();
             }
         }

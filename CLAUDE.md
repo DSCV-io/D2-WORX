@@ -285,6 +285,7 @@ Auth (self-rolled .NET module within Edge, RFC 8693 + 6749 §4.4, JWKS at OIDC-c
 ### Use OOTB shared libs (don't hand-roll)
 
 - **Falsey() / Truthy() instead of `string.IsNullOrEmpty` / `coll == null || coll.Count == 0` / `guid == Guid.Empty`.** [rules.md §5.1]
+- **ThrowIfFalsey() for required-argument guards on string / collection / Guid** — one call covers null + empty/whitespace + `Guid.Empty` with BCL-split exceptions; carve-outs: plain reference-type null-guards (use BCL `ThrowIfNull`), generated files, projects without a Utilities reference, guards needing a bespoke message. [rules.md §5.1a]
 - **D2.Shared.Utilities extensions instead of hand-rolled `TryParse` + null check** (`str.TryParseTruthyNull(out Guid? r)` / `str.TryParseTruthyNull<TEnum>(out var r)`). [rules.md §5.2]
 - **D2Result semantic factories** (`Ok` / `NotFound` / `ValidationFailed` / `Conflict` / `ServiceUnavailable` / etc.) — never raw `Fail()` with manual statusCode when a factory exists. [rules.md §5.3]
 - **Catalog of shared libs** to reach for first: [rules.md §16](docs/dev/rules.md#16-ootb-shared-lib-tooling--use-whats-there).

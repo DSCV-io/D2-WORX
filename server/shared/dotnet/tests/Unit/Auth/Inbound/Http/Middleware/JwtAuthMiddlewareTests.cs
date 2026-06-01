@@ -10,6 +10,7 @@ using System.IO;
 using System.Text.Json;
 using AwesomeAssertions;
 using D2.Shared.Auth;
+using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Abstractions.Http;
 using D2.Shared.Auth.Errors;
 using D2.Shared.Auth.Http.Endpoints;
@@ -281,15 +282,18 @@ public sealed class JwtAuthMiddlewareTests
         nextCalled().Should().BeTrue();
     }
 
+    // ── ScopeMatch.Any tests ───────────────────────────────────────────────
+
     [Fact]
-    public async Task InvokeAsync_ScopeRequiredButCallerHasNone_Emits401ScopeInsufficient()
+    public async Task InvokeAsync_AnyScope_RequiredButCallerHasNone_Emits401ScopeInsufficient()
     {
         using var builder = new TestJwtBuilder();
         var token = builder.MintToken(_ISSUER, _AUDIENCE);
         var (mw, nextCalled) = MakeMiddleware(builder);
         var ctx = MakeContext(
             authorization: $"{_BEARER_PREFIX}{token}",
-            metadata: EndpointScopeMetadata.ForScopes(new[] { "files.read" }));
+            metadata: EndpointScopeMetadata.ForScopes(
+                new[] { "files.read" }, ScopeMatch.Any));
 
         await mw.InvokeAsync(ctx);
 
@@ -301,7 +305,7 @@ public sealed class JwtAuthMiddlewareTests
     }
 
     [Fact]
-    public async Task InvokeAsync_ScopeRequiredAndCallerHasMatch_PassesThrough()
+    public async Task InvokeAsync_AnyScope_CallerHasOneOfRequired_PassesThrough()
     {
         using var builder = new TestJwtBuilder();
         var token = builder.MintToken(
@@ -315,7 +319,7 @@ public sealed class JwtAuthMiddlewareTests
         var ctx = MakeContext(
             authorization: $"{_BEARER_PREFIX}{token}",
             metadata: EndpointScopeMetadata.ForScopes(
-                new[] { "files.read", "files.admin" }));
+                new[] { "files.read", "files.admin" }, ScopeMatch.Any));
 
         await mw.InvokeAsync(ctx);
 
@@ -323,7 +327,32 @@ public sealed class JwtAuthMiddlewareTests
     }
 
     [Fact]
-    public async Task InvokeAsync_ScopeRequiredAndCallerHasOnlyDifferentScope_Emits401()
+    public async Task InvokeAsync_AnyScope_CallerHasAllRequired_PassesThrough()
+    {
+        // any-of semantics: a caller holding a SUPERSET of the required scopes
+        // (i.e. all of them and more) must still pass — the predicate is
+        // "at least one overlap", not "exactly one match".
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(
+            issuer: _ISSUER,
+            audience: _AUDIENCE,
+            extraClaims: new Dictionary<string, object>
+            {
+                ["scope"] = "files.read files.admin extra.scope",
+            });
+        var (mw, nextCalled) = MakeMiddleware(builder);
+        var ctx = MakeContext(
+            authorization: $"{_BEARER_PREFIX}{token}",
+            metadata: EndpointScopeMetadata.ForScopes(
+                new[] { "files.read", "files.admin" }, ScopeMatch.Any));
+
+        await mw.InvokeAsync(ctx);
+
+        nextCalled().Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task InvokeAsync_AnyScope_CallerHasOnlyDifferentScope_Emits401()
     {
         using var builder = new TestJwtBuilder();
         var token = builder.MintToken(
@@ -336,7 +365,8 @@ public sealed class JwtAuthMiddlewareTests
         var (mw, _) = MakeMiddleware(builder);
         var ctx = MakeContext(
             authorization: $"{_BEARER_PREFIX}{token}",
-            metadata: EndpointScopeMetadata.ForScopes(new[] { "files.read" }));
+            metadata: EndpointScopeMetadata.ForScopes(
+                new[] { "files.read" }, ScopeMatch.Any));
 
         await mw.InvokeAsync(ctx);
 
@@ -345,6 +375,102 @@ public sealed class JwtAuthMiddlewareTests
         problem.GetProperty("d2_error_code").GetString()
             .Should().Be(AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT);
     }
+
+    // ── ScopeMatch.All tests ───────────────────────────────────────────────
+
+    [Fact]
+    public async Task InvokeAsync_AllScopes_CallerHasAllRequired_PassesThrough()
+    {
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(
+            issuer: _ISSUER,
+            audience: _AUDIENCE,
+            extraClaims: new Dictionary<string, object>
+            {
+                ["scope"] = "files.read files.write other.scope",
+            });
+        var (mw, nextCalled) = MakeMiddleware(builder);
+        var ctx = MakeContext(
+            authorization: $"{_BEARER_PREFIX}{token}",
+            metadata: EndpointScopeMetadata.ForScopes(
+                new[] { "files.read", "files.write" }, ScopeMatch.All));
+
+        await mw.InvokeAsync(ctx);
+
+        nextCalled().Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task InvokeAsync_AllScopes_CallerMissingOneRequired_Emits401ScopeInsufficient()
+    {
+        // Caller has "files.read" but NOT "files.write" — all-of fails.
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(
+            issuer: _ISSUER,
+            audience: _AUDIENCE,
+            extraClaims: new Dictionary<string, object>
+            {
+                ["scope"] = "files.read",
+            });
+        var (mw, nextCalled) = MakeMiddleware(builder);
+        var ctx = MakeContext(
+            authorization: $"{_BEARER_PREFIX}{token}",
+            metadata: EndpointScopeMetadata.ForScopes(
+                new[] { "files.read", "files.write" }, ScopeMatch.All));
+
+        await mw.InvokeAsync(ctx);
+
+        nextCalled().Should().BeFalse();
+        ctx.Response.StatusCode.Should().Be(401);
+        var problem = await ReadProblemAsync(ctx);
+        problem.GetProperty("d2_error_code").GetString()
+            .Should().Be(AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_AllScopes_CallerHasNone_Emits401ScopeInsufficient()
+    {
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(_ISSUER, _AUDIENCE);
+        var (mw, nextCalled) = MakeMiddleware(builder);
+        var ctx = MakeContext(
+            authorization: $"{_BEARER_PREFIX}{token}",
+            metadata: EndpointScopeMetadata.ForScopes(
+                new[] { "files.read", "files.write" }, ScopeMatch.All));
+
+        await mw.InvokeAsync(ctx);
+
+        nextCalled().Should().BeFalse();
+        ctx.Response.StatusCode.Should().Be(401);
+        var problem = await ReadProblemAsync(ctx);
+        problem.GetProperty("d2_error_code").GetString()
+            .Should().Be(AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_AllScopes_SingleRequiredScopePresent_PassesThrough()
+    {
+        // all-of with a single required scope is equivalent to any-of with one.
+        using var builder = new TestJwtBuilder();
+        var token = builder.MintToken(
+            issuer: _ISSUER,
+            audience: _AUDIENCE,
+            extraClaims: new Dictionary<string, object>
+            {
+                ["scope"] = "files.admin extra.scope",
+            });
+        var (mw, nextCalled) = MakeMiddleware(builder);
+        var ctx = MakeContext(
+            authorization: $"{_BEARER_PREFIX}{token}",
+            metadata: EndpointScopeMetadata.ForScopes(
+                new[] { "files.admin" }, ScopeMatch.All));
+
+        await mw.InvokeAsync(ctx);
+
+        nextCalled().Should().BeTrue();
+    }
+
+    // ── Middleware construction + miscellaneous ───────────────────────────
 
     [Fact]
     public async Task InvokeAsync_NextCalledExactlyOnceOnSuccess()

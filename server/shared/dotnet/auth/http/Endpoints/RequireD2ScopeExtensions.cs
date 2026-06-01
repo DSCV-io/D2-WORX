@@ -6,6 +6,8 @@
 
 namespace D2.Shared.Auth.Http.Endpoints;
 
+using D2.Shared.Auth.Abstractions;
+using D2.Shared.Utilities.Extensions;
 using Microsoft.AspNetCore.Builder;
 
 /// <summary>
@@ -14,14 +16,30 @@ using Microsoft.AspNetCore.Builder;
 /// by the auth middleware via the matched endpoint's metadata collection.
 /// </summary>
 /// <remarks>
+/// <para>
 /// Idiomatic Minimal-API style:
 /// <code>
-/// app.MapGet("/files/{id}", H).RequireD2Scope("files.read");
+/// app.MapGet("/files/{id}", H).RequireAnyScope("files.read");
+/// app.MapGet("/files/{id}/lock", H).RequireAllScopes("files.read", "files.write");
 /// app.MapGet("/healthz", () => "ok").MarkAsD2HarmlessEndpoint();
 /// </code>
 /// Controller-action endpoints attach the same metadata via the auto
 /// <c>WithMetadata</c> pickup performed by ASP.NET routing — fluent
 /// extensions cover both surfaces.
+/// </para>
+/// <para>
+/// <strong>Intentional asymmetry with the gRPC fluent extensions</strong>:
+/// this class is generic on <see cref="IEndpointConventionBuilder"/> (any
+/// HTTP builder is valid) while the gRPC sibling
+/// (<c>RequireD2GrpcScopeExtensions</c> in <c>D2.Shared.Auth.Grpc</c>) is
+/// constrained to <c>GrpcServiceEndpointConventionBuilder</c>.
+/// The asymmetry is by design: <see cref="EndpointScopeMetadata"/> is
+/// consumed by <c>JwtAuthMiddleware</c>, which runs on every HTTP endpoint
+/// regardless of how it was registered — so any <see cref="IEndpointConventionBuilder"/>
+/// is a valid receiver. The gRPC fluent is constrained because
+/// <c>MethodScopeMetadata</c> on a non-gRPC endpoint would not be enforced
+/// by any middleware (silent under-enforcement).
+/// </para>
 /// </remarks>
 public static class RequireD2ScopeExtensions
 {
@@ -30,12 +48,13 @@ public static class RequireD2ScopeExtensions
     {
         /// <summary>
         /// Declares that the endpoint requires the caller's
-        /// <c>IRequestContext.Scopes</c> set to overlap with at least one of the
-        /// listed scopes. Defense-in-depth at the transport boundary —
-        /// <c>BaseHandler.RequiredScopes</c> still re-checks per-handler.
+        /// <c>IRequestContext.Scopes</c> set to overlap with <b>at least one</b>
+        /// of the listed scopes (<see cref="ScopeMatch.Any"/>). Defense-in-depth
+        /// at the transport boundary — <c>BaseHandler.ScopeRequirement</c> still
+        /// re-checks per-handler.
         /// </summary>
-        /// <param name="scope">The first required scope (at-least-one).</param>
-        /// <param name="additionalScopes">Additional scopes (at-least-one).</param>
+        /// <param name="scope">The first required scope (any-of).</param>
+        /// <param name="additionalScopes">Additional scopes (any-of).</param>
         /// <returns>The same <paramref name="builder"/> for fluent chaining.</returns>
         /// <exception cref="ArgumentNullException">
         /// Thrown when <paramref name="builder"/>, <paramref name="scope"/>, or
@@ -45,25 +64,58 @@ public static class RequireD2ScopeExtensions
         /// Thrown when <paramref name="scope"/> is empty / whitespace, or any
         /// entry in <paramref name="additionalScopes"/> is empty / whitespace.
         /// </exception>
-        public TBuilder RequireD2Scope(
+        public TBuilder RequireAnyScope(
             string scope,
             params string[] additionalScopes)
         {
             ArgumentNullException.ThrowIfNull(builder);
-            ArgumentException.ThrowIfNullOrWhiteSpace(scope);
+            scope.ThrowIfFalsey();
             ArgumentNullException.ThrowIfNull(additionalScopes);
 
             for (var i = 0; i < additionalScopes.Length; i++)
-            {
-                ArgumentException.ThrowIfNullOrWhiteSpace(
-                    additionalScopes[i],
-                    $"{nameof(additionalScopes)}[{i}]");
-            }
+                additionalScopes[i].ThrowIfFalsey($"{nameof(additionalScopes)}[{i}]");
 
             var all = new string[additionalScopes.Length + 1];
             all[0] = scope;
             additionalScopes.CopyTo(all, 1);
-            var metadata = EndpointScopeMetadata.ForScopes(all);
+            var metadata = EndpointScopeMetadata.ForScopes(all, ScopeMatch.Any);
+            builder.Add(b => b.Metadata.Add(metadata));
+            return builder;
+        }
+
+        /// <summary>
+        /// Declares that the endpoint requires the caller's
+        /// <c>IRequestContext.Scopes</c> set to contain <b>every</b> listed
+        /// scope (<see cref="ScopeMatch.All"/>). Defense-in-depth at the
+        /// transport boundary — <c>BaseHandler.ScopeRequirement</c> still
+        /// re-checks per-handler.
+        /// </summary>
+        /// <param name="scope">The first required scope (all-of).</param>
+        /// <param name="additionalScopes">Additional scopes (all-of).</param>
+        /// <returns>The same <paramref name="builder"/> for fluent chaining.</returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="builder"/>, <paramref name="scope"/>, or
+        /// <paramref name="additionalScopes"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// Thrown when <paramref name="scope"/> is empty / whitespace, or any
+        /// entry in <paramref name="additionalScopes"/> is empty / whitespace.
+        /// </exception>
+        public TBuilder RequireAllScopes(
+            string scope,
+            params string[] additionalScopes)
+        {
+            ArgumentNullException.ThrowIfNull(builder);
+            scope.ThrowIfFalsey();
+            ArgumentNullException.ThrowIfNull(additionalScopes);
+
+            for (var i = 0; i < additionalScopes.Length; i++)
+                additionalScopes[i].ThrowIfFalsey($"{nameof(additionalScopes)}[{i}]");
+
+            var all = new string[additionalScopes.Length + 1];
+            all[0] = scope;
+            additionalScopes.CopyTo(all, 1);
+            var metadata = EndpointScopeMetadata.ForScopes(all, ScopeMatch.All);
             builder.Add(b => b.Metadata.Add(metadata));
             return builder;
         }

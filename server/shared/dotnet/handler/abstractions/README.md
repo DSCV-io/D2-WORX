@@ -33,11 +33,18 @@ public sealed record HandlerOptions
     public bool LogOutput { get; init; } = true;
     public TimeSpan? SlowThreshold { get; init; } = TimeSpan.FromMilliseconds(100);
     public TimeSpan? CriticalThreshold { get; init; } = TimeSpan.FromMilliseconds(500);
-    public IReadOnlySet<string>? RequiredScopes { get; init; }
+    public ScopeRequirement? ScopeRequirement { get; init; }
 }
+
+/// <summary>Declares the per-handler scope requirement.</summary>
+public sealed record ScopeRequirement(HandlerScopeMatch Match, IReadOnlySet<string> Scopes);
+
+public enum HandlerScopeMatch { Any, All }
 ```
 
-> **JWT signature / expiry / audience / fingerprint-binding validation are NOT per-handler.** They're transport-level concerns handled by auth middleware (HTTP / gRPC / AMQP) BEFORE the handler runs. Per-handler scope requirements (`RequiredScopes`) ARE here because they vary by operation; audience / signature / etc. are per-service constants and putting them on `HandlerOptions` would be a footgun. See `HandlerOptions.cs` `<remarks>` for the fuller rationale.
+`ScopeRequirement` combines an explicit match mode with the scope set: `Match` is `HandlerScopeMatch.Any` (caller must hold at least one of the scopes) or `HandlerScopeMatch.All` (caller must hold every scope). `null` or an empty `Scopes` set disables the per-handler pre-check entirely (pipeline guard `is { Scopes.Count: > 0 }` skips). `HandlerScopeMatch` lives in this assembly — handlers never take a compile-time dependency on `D2.Shared.Auth.Abstractions` (layer-hygiene invariant).
+
+> **JWT signature / expiry / audience / fingerprint-binding validation are NOT per-handler.** They're transport-level concerns handled by auth middleware (HTTP / gRPC / AMQP) BEFORE the handler runs. Per-handler scope requirements (`ScopeRequirement`) ARE here because they vary by operation; audience / signature / etc. are per-service constants and putting them on `HandlerOptions` would be a footgun. See `HandlerOptions.cs` `<remarks>` for the fuller rationale.
 
 ---
 

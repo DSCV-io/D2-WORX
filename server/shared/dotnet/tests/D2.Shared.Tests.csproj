@@ -136,6 +136,7 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\auth\abstractions\D2.Shared.Auth.Abstractions.csproj" />
     <ProjectReference Include="..\auth\http\D2.Shared.Auth.Http.csproj" />
     <ProjectReference Include="..\auth\grpc\D2.Shared.Auth.Grpc.csproj" />
+    <ProjectReference Include="..\auth\startup\D2.Shared.Auth.Startup.csproj" />
     <ProjectReference Include="..\auth\context-abstractions\D2.Shared.AuthContext.Abstractions.csproj" />
     <ProjectReference Include="..\auth\outbound\D2.Shared.Auth.Outbound.csproj" />
     <ProjectReference Include="..\context\abstractions\D2.Shared.Context.Abstractions.csproj" />

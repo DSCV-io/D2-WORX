@@ -70,6 +70,14 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\auth\core\D2.Shared.Auth.csproj" />
     <ProjectReference Include="..\auth\grpc\D2.Shared.Auth.Grpc.csproj" />
     <ProjectReference Include="..\auth\http\D2.Shared.Auth.Http.csproj" />
+    <!--
+      auth/startup — deny-by-default boot guard (AuthEndpointGuardStartupCheck +
+      AddD2AuthEndpointGuard). Wired via AddD2AuthEndpointGuard() in the
+      SkipAuthAutoWiring=false path when SkipAuthEndpointGuard=false (the default).
+      Not included in the original 10-lib aggregator list — added as the 11th ref
+      for the guard; all behavior still lives in auth/startup, not here.
+    -->
+    <ProjectReference Include="..\auth\startup\D2.Shared.Auth.Startup.csproj" />
     <ProjectReference Include="..\caching\local-default\D2.Shared.Caching.Local.Default.csproj" />
     <ProjectReference Include="..\handler\core\D2.Shared.Handler.csproj" />
     <ProjectReference Include="..\i18n\core\D2.Shared.I18n.csproj" />

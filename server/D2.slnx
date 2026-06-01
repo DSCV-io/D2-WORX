@@ -26,6 +26,9 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/auth/grpc/">
     <Project Path="shared/dotnet/auth/grpc/D2.Shared.Auth.Grpc.csproj" />
   </Folder>
+  <Folder Name="/shared/dotnet/auth/startup/">
+    <Project Path="shared/dotnet/auth/startup/D2.Shared.Auth.Startup.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/auth/scopes-source-gen/">
     <Project Path="shared/dotnet/auth/scopes-source-gen/D2.Shared.Auth.Scopes.SourceGen.csproj" />
   </Folder>
