@@ -66,9 +66,24 @@ Copyright (c) DCSV. All rights reserved.
          v6; don't downgrade. -->
     <PackageVersion Include="RabbitMQ.Client" Version="7.2.1" />
     <PackageVersion Include="Testcontainers.RabbitMq" Version="4.0.0" />
+    <!-- Testcontainers.PostgreSql — for Integration/DataGovernance adversarial integration
+         tests (AnonymizationEngine end-to-end: real PG container, EnsureCreated schema,
+         Tier-A ExecuteUpdate + Tier-B materialize-mutate-SaveChanges paths). Same
+         Testcontainers 4.x release train as the Redis + RabbitMq pins above. -->
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.0.0" />
 
     <!-- EF Core + Npgsql — for D2.Shared.Handler.Repo (PG error code → D2Result mapping) -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
+    <!-- Microsoft.EntityFrameworkCore.Relational 10.0.7 — required by
+         D2.Shared.DataGovernance.EntityFrameworkCore for IProperty.GetColumnName(),
+         IReadOnlyEntityType.IsMappedToJson(), and GetTableName() (RelationalPropertyExtensions
+         / RelationalEntityTypeExtensions — these APIs live in the Relational assembly, not
+         the base EF Core package). Same release train (10.0.7). -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.7" />
+    <!-- Microsoft.EntityFrameworkCore.InMemory — provider-free in-memory database used
+         in D2.Shared.DataGovernance.EntityFrameworkCore unit tests (model-build-only
+         assertions against IProperty annotations; no real DB provider needed). -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.7" />
     <PackageVersion Include="Npgsql" Version="10.0.2" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
     <!-- Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime — NodaTime EF Core value-

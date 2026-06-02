@@ -285,7 +285,7 @@ Auth (self-rolled .NET module within Edge, RFC 8693 + 6749 §4.4, JWKS at OIDC-c
 ### Use OOTB shared libs (don't hand-roll)
 
 - **Falsey() / Truthy() instead of `string.IsNullOrEmpty` / `coll == null || coll.Count == 0` / `guid == Guid.Empty`.** [rules.md §5.1]
-- **ThrowIfFalsey() for required-argument guards on string / collection / Guid** — one call covers null + empty/whitespace + `Guid.Empty` with BCL-split exceptions; carve-outs: plain reference-type null-guards (use BCL `ThrowIfNull`), generated files, projects without a Utilities reference, guards needing a bespoke message. [rules.md §5.1a]
+- **ThrowIfFalsey() for required-argument guards on string / collection / Guid** — one call covers null + empty/whitespace + `Guid.Empty` with BCL-split exceptions; carve-outs: plain reference-type null-guards (use BCL `ThrowIfNull`), generated files, genuine-cycle projects (e.g. `I18n.Abstractions ← Utilities`), guards needing a bespoke message. The no-Utilities carve-out is for GENUINE CYCLES ONLY — do NOT skip a `D2.Shared.Utilities` reference for "purity" when no cycle exists. [rules.md §5.1a]
 - **D2.Shared.Utilities extensions instead of hand-rolled `TryParse` + null check** (`str.TryParseTruthyNull(out Guid? r)` / `str.TryParseTruthyNull<TEnum>(out var r)`). [rules.md §5.2]
 - **D2Result semantic factories** (`Ok` / `NotFound` / `ValidationFailed` / `Conflict` / `ServiceUnavailable` / etc.) — never raw `Fail()` with manual statusCode when a factory exists. [rules.md §5.3]
 - **Catalog of shared libs** to reach for first: [rules.md §16](docs/dev/rules.md#16-ootb-shared-lib-tooling--use-whats-there).
@@ -294,6 +294,7 @@ Auth (self-rolled .NET module within Edge, RFC 8693 + 6749 §4.4, JWKS at OIDC-c
 
 - **`[LoggerMessage]` MUST NOT accept `Exception`** — `ex.Message` leaks broker URI passwords, user input. Use `SanitizedExceptionRender.TypeName(ex)` + `FirstFrame(ex)` separately. [rules.md §3.1]
 - **`[RedactData]` on PII types** — emails, phones, IPs, addresses, names, message content, filenames, presigned URLs, AMQP URIs. [rules.md §3.3]
+- **At-rest PII anonymization via `D2.Shared.DataGovernance`** — GDPR right-to-erasure uses `[Anonymizable]` / fluent `.Anonymize*` + `IAnonymizationEngine`; faux/tombstone values are non-i18n literals; STRICTLY SEPARATE from `[RedactData]` (log-masking); engine logs omit the subject id. [rules.md §3.15]
 - **Sensitive context in encrypted RMQ payload, NOT plaintext headers.** [rules.md §3.4]
 - **Constant-time comparisons for API keys / tokens / secrets** (`CryptographicOperations.FixedTimeEquals`). [rules.md §3.9]
 

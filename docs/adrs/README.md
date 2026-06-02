@@ -79,6 +79,7 @@ across the catalog — never re-used, never re-ordered.
 | [0012](0012-self-rolled-dotnet-auth.md) | Self-rolled .NET auth — shared vocabulary, token primitives, per-transport bindings | Accepted | 2026-05-30 | Phase 0 — shared libraries |
 | [0013](0013-service-defaults-composition-root.md) | ServiceDefaults — thin-aggregator composition root with a locked middleware order | Accepted | 2026-05-30 | Phase 0 — shared libraries |
 | [0014](0014-resilience-primitives.md) | Resilience — bespoke `D2Result`-aware primitives (retry/circuit-breaker/singleflight/pipeline) | Accepted | 2026-05-30 | Phase 0 — shared libraries |
+| [0015](0015-anonymization-data-governance.md) | Anonymization / data-governance architecture — `D2.Shared.DataGovernance` | Accepted | 2026-06-01 | `D2.Shared.DataGovernance` libraries |
 
 > Backfill of ADRs from earlier shipped deliverables is queued as a separate
 > task. This index grows as ADRs land.

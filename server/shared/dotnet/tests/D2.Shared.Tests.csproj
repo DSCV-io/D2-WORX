@@ -70,10 +70,24 @@ Copyright (c) DCSV. All rights reserved.
       explicit reference.
     -->
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <!-- Microsoft.EntityFrameworkCore.InMemory — provider-free in-memory provider used by
+         Unit/DataGovernance/EntityFrameworkCore/ model-build-only tests. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <!-- Npgsql.EntityFrameworkCore.PostgreSQL — relational provider used by the
+         AnonymizationTierClassifier model-build-only tests (UseNpgsql with a dummy
+         connection string; no live DB connection is ever opened). Required because
+         InMemory is a non-relational provider and cannot model column names, JSON
+         mappings, or table-splitting — all of which the classifier reads via
+         GetColumnName() / IsMappedToJson() / GetTableName(). -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <!-- Testcontainers.Redis — for Integration/Caching/Distributed tests against a real Redis container -->
     <PackageReference Include="Testcontainers.Redis" />
     <!-- Testcontainers.RabbitMq — for Integration/Messaging tests against a real RabbitMQ container -->
     <PackageReference Include="Testcontainers.RabbitMq" />
+    <!-- Testcontainers.PostgreSql — for Integration/DataGovernance/AnonymizationEngine
+         end-to-end tests: a real PostgreSQL container, EnsureCreated synthetic schema,
+         and adversarial Tier-A/B anonymization assertions. -->
+    <PackageReference Include="Testcontainers.PostgreSql" />
     <!-- RabbitMQ.Client — for unit tests that need to construct AMQP exception types directly -->
     <PackageReference Include="RabbitMQ.Client" />
     <!-- Microsoft.AspNetCore.TestHost — in-memory web host for end-to-end
@@ -196,6 +210,19 @@ Copyright (c) DCSV. All rights reserved.
       this csproj (consistent with the other source-gen project references).
     -->
     <ProjectReference Include="..\geo\source-gen\D2.Shared.Geo.SourceGen.csproj" />
+    <!--
+      D2.Shared.DataGovernance.Abstractions — marker interfaces, [Anonymizable]
+      attribute, AnonymizeKind, AnonymizationRule, AnonymizationOutcome, and the
+      IAnonymizationEngine seam. Unit tests live in Unit/DataGovernance/Abstractions/.
+    -->
+    <ProjectReference Include="..\data-governance\abstractions\D2.Shared.DataGovernance.Abstractions.csproj" />
+    <!--
+      D2.Shared.DataGovernance.EntityFrameworkCore — the D2:Anonymize annotation key,
+      fluent Anonymize* extensions, AnonymizableAttributeConvention, and
+      ApplyAnonymizationConventions(). Unit tests live in
+      Unit/DataGovernance/EntityFrameworkCore/.
+    -->
+    <ProjectReference Include="..\data-governance\entity-framework-core\D2.Shared.DataGovernance.EntityFrameworkCore.csproj" />
     <!--
       D2.Shared.Validation.Abstractions — the three validator contracts
       (IEmailValidator, IPhoneValidator, IPostalCodeValidator). Required by

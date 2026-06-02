@@ -36,17 +36,18 @@ Directory of the load-bearing patterns + cross-cutting conventions every D²-WOR
 24. [Content-addressable entities](#content-addressable-entities)
 25. [Health checks](#health-checks)
 26. [PII redaction — `[RedactData]`](#pii-redaction--redactdata)
-27. [Spec-driven codegen — the cross-cutting pattern](#spec-driven-codegen--the-cross-cutting-pattern)
-28. [Domain validation — smart-constructor pattern](#domain-validation--smart-constructor-pattern)
-29. [Input validation](#input-validation)
-30. [Reference data](#reference-data)
+27. [Anonymization — `[Anonymizable]` decoration + tiered reflection engine](#anonymization--anonymizable-decoration--tiered-reflection-engine)
+28. [Spec-driven codegen — the cross-cutting pattern](#spec-driven-codegen--the-cross-cutting-pattern)
+29. [Domain validation — smart-constructor pattern](#domain-validation--smart-constructor-pattern)
+30. [Input validation](#input-validation)
+31. [Reference data](#reference-data)
     - [Endonym discipline](#endonym-discipline)
     - [Typed geo catalogs](#typed-geo-catalogs)
     - [Typed access on IRequestContext](#typed-access-on-irequestcontext)
     - [Geo name resolution at the integration boundary](#geo-name-resolution-at-the-integration-boundary)
     - [Reference data — user-preference cascades](#reference-data--user-preference-cascades)
-31. [Hash composition](#hash-composition)
-32. [Anti-patterns to actively avoid](#anti-patterns-to-actively-avoid)
+32. [Hash composition](#hash-composition)
+33. [Anti-patterns to actively avoid](#anti-patterns-to-actively-avoid)
 
 ---
 
@@ -558,6 +559,76 @@ public sealed record Contact(string Email, string PhoneE164);
 ```
 
 When `[RedactData]` can't be applied (proto-generated DTOs that ts-proto / protoc-gen-csharp emit without our attribute), use `DefaultOptions.LogInput=false` / `LogOutput=false` on the handler and document the suppressing proto type in the handler's class comment. The capture-mode footgun is documented in [Logging](#logging).
+
+---
+
+## Anonymization — `[Anonymizable]` decoration + tiered reflection engine
+
+At-rest subject-keyed PII overwrite (GDPR right-to-erasure): on user/org deletion the engine overwrites that subject's PII **in place** with faux or tombstone values — never NULL by default, never hard-delete. Faux values are non-i18n developer-supplied literals (tombstone strings, template-computed addresses). This concern is **strictly separate from `[RedactData]`** (Serilog log-masking): the two systems are independently decorated, independently enforced, and do not cross-check each other. Lives in `D2.Shared.DataGovernance` — a pure Abstractions seam library plus an EF Core engine implementation.
+
+### Decoration — one annotation, two front-ends
+
+**Markers** — three interfaces every decorated entity type interacts with:
+
+| Interface | Role |
+|---|---|
+| `IUserOwned` / `IOrgOwned` | Engine `WHERE` clause subject key. `Guid?` — rows with a `null` id are skipped. |
+| `IExemptFromAnonymization` | Opt-out: engine skips the entity type entirely, even if it carries decorated fields. |
+| `IAnonymizationTrackable` | Mandatory on every ownership-marked entity that has decorated fields. `bool IsAnonymized` — set by the engine; excludes already-anonymized rows on re-run for idempotency. Guard-enforced at startup. |
+
+**`[Anonymizable]` attribute** — for consumer-owned types (entity scalars + owned/complex sub-properties of VOs the consuming service authors). Activated by calling `builder.ApplyAnonymizationConventions()` in `ConfigureConventions`. Four call-site forms:
+
+| Form | Strategy |
+|---|---|
+| `[Anonymizable(AnonymizeKind.SetNull)]` | `SetNull` — column must be nullable |
+| `[Anonymizable(AnonymizeKind.SetEmpty)]` | `SetEmpty` — column must be a string |
+| `[Anonymizable("tombstone")]` | `Constant("tombstone")` — fixed developer string |
+| `[Anonymizable(template: "deletedUser{UserId}@deleted.user.dcsv.io")]` | `Template` — `{FieldName}` sibling interpolation; `Guid` values rendered without dashes |
+
+**Fluent path** — `Anonymize*` block-form extensions on `PropertyBuilder<T>`, `OwnedNavigationBuilder<TOwner, TDependent>`, and `ComplexPropertyBuilder<T>`. This is the **universal** path and the **only** path for foreign VOs — types the consuming service does not own and cannot annotate (e.g., `D2.Shared.Location` types, Contacts VOs).
+
+```csharp
+model.Entity<User>()
+     .OwnsOne(u => u.Address, nav =>
+     {
+         nav.AnonymizeNull<string?>(a => a.Street);
+         nav.AnonymizeEmpty<string?>(a => a.PostalCode);
+     });
+```
+
+Both paths converge on the **same `D2:Anonymize` EF model annotation** (`AnonymizationAnnotations.ANONYMIZE`). The engine reads only the annotation at runtime — origin-agnostic. Precedence: fluent > attribute (EF Explicit > DataAnnotation). Decoration is **purely opt-in per field**; no `[RedactData]` completeness cross-check exists or is intended — a missed PII field is the consumer's responsibility, not a boot failure.
+
+A `[NotMapped]` property is invisible to the attribute convention and is rejected outright by the fluent sub-selectors (`InvalidOperationException` at model-build time) — anonymization decorates already-persisted columns, not unmapped members.
+
+### Tiered reflection-driven engine
+
+Per-entity-type classification is cached at startup (analogous to `RedactDataDestructuringPolicy`'s per-type `ConcurrentDictionary`). Three tiers:
+
+| Tier | Applies when | Strategy |
+|---|---|---|
+| A | Scalar / table-split owned / complex (incl. JSON column) | `ExecuteUpdateAsync` — no rows materialized; one filtered round-trip per entity type |
+| B | Any entity with a `Template` rule | Materialize → mutate in CLR → `SaveChangesAsync` (chunked by `BatchSize`, concurrency-aware reload-retry up to `MaxConcurrencyRetries`) |
+| C | Owned-JSON or `OwnsMany` child table | Fail-fast at startup — blocked by the startup guard (never silent) |
+
+The engine is provider-agnostic across any relational EF Core provider. Column names are resolved via `IProperty.GetColumnName()` — never guessed from CLR names.
+
+`IAnonymizationEngine` exposes `AnonymizeUserAsync(Guid userId, ct) → Task<D2Result<AnonymizationOutcome>>` and `AnonymizeOrgAsync`. Semantics: `Guid.Empty → ValidationFailed`; idempotent (filters `IsAnonymized == false`); **fail-closed** (any single entity-type failure returns a non-Ok result — never silent partial success); re-run safe. PII-safe logging omits the subject id entirely — each sweep gets a fresh `sweepId` plus counts and model-metadata names only.
+
+**Deny-by-default startup guard** — `AnonymizationModelValidator` (`IHostedService`) validates the host `DbContext` model before traffic flows, collecting all findings before throwing a PII-safe `InvalidOperationException`. The seven guard rules enforce declared-rule integrity:
+
+- Every decorated entity implements an ownership marker or `IExemptFromAnonymization` (V1)
+- Every decorated non-exempt entity implements `IAnonymizationTrackable` (V2)
+- No decorated entity is Tier-C (V3)
+- Every `Template` token names an existing scalar sibling (V4)
+- Every `[Anonymizable]`-decorated property has a `D2:Anonymize` annotation — detects missing `ApplyAnonymizationConventions()` (V5)
+- No divergent attribute + fluent double-declaration on the same property (V6)
+- No `SetNull` rule targets a non-nullable column (V7)
+
+Opt out for test hosts only: `DATA_GOVERNANCE__SKIPMODELVALIDATION=true`.
+
+**DI**: `services.AddD2DataGovernance(configuration)` — one call registers `IAnonymizationEngine`, `AnonymizationEngineOptions` (section `DATA_GOVERNANCE`), and the validator hosted service.
+
+Canonical references: [`data-governance/abstractions/README.md`](../server/shared/dotnet/data-governance/abstractions/README.md) (markers, attribute, rule, engine seam) · [`data-governance/entity-framework-core/README.md`](../server/shared/dotnet/data-governance/entity-framework-core/README.md) (full fluent API, options, DI, guard rules) · [ADR-0015](adrs/0015-anonymization-data-governance.md).
 
 ---
 

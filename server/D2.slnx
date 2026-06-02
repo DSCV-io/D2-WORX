@@ -182,6 +182,12 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/location/">
     <Project Path="shared/dotnet/location/D2.Shared.Location.csproj" />
   </Folder>
+  <Folder Name="/shared/dotnet/data-governance/abstractions/">
+    <Project Path="shared/dotnet/data-governance/abstractions/D2.Shared.DataGovernance.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/data-governance/entity-framework-core/">
+    <Project Path="shared/dotnet/data-governance/entity-framework-core/D2.Shared.DataGovernance.EntityFrameworkCore.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/validation/abstractions/">
     <Project Path="shared/dotnet/validation/abstractions/D2.Shared.Validation.Abstractions.csproj" />
   </Folder>
