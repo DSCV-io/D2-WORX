@@ -130,6 +130,18 @@ public sealed class CoordinatesTests
     }
 
     [Fact]
+    public void Create_PositiveInfinityLongitude_ReturnsValidationFailed_FiniteRequired()
+    {
+        // Exercises the double.IsFinite(longitude) guard on the positive-infinity path
+        // (the negative-infinity path is covered separately above).
+        var result = Coordinates.Create(0.0, double.PositiveInfinity);
+
+        result.Success.Should().BeFalse();
+        result.Messages.Should().ContainSingle()
+            .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_FINITE_REQUIRED.Key);
+    }
+
+    [Fact]
     public void Create_NegativeAccuracy_ReturnsValidationFailed_FiniteRequired()
     {
         var result = Coordinates.Create(40.7128, -74.006, accuracyMeters: -1.0);
@@ -464,6 +476,16 @@ public sealed class CoordinatesTests
         plusCode.IndexOf('+').Should().Be(8);
     }
 
+    [Fact]
+    public void Create_StoredPlusCode_Is13Chars_PinsProductionCodeLength()
+    {
+        // Production codeLength = 12 → 8 pair digits + '+' + 4 grid digits = 13 chars.
+        const int expected_pluscode_length = 13;
+        var coord = Coordinates.Create(40.7128, -74.006).Data!;
+
+        coord.PlusCode.Length.Should().Be(expected_pluscode_length);
+    }
+
     // -----------------------------------------------------------------------
     // §1.2 Zero accuracy is valid (non-negative boundary)
     // -----------------------------------------------------------------------
@@ -477,8 +499,7 @@ public sealed class CoordinatesTests
     }
 
     // -----------------------------------------------------------------------
-    // §1.2 category 8 (security-adversarial) — CRLF / NUL byte injection
-    // Plan matrix §7.1 (journal.md:506-507). F-A1-01 closure.
+    // Security-adversarial: CRLF / NUL byte injection rejected by FromGeohash
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -519,5 +540,23 @@ public sealed class CoordinatesTests
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
             .Which.Key.Should().Be(TK.Geo.Validation.COORDINATES_PLUSCODE_INVALID.Key);
+    }
+
+    // -----------------------------------------------------------------------
+    // Hash-stability regression — golden-value pin (T9)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Create_HashId_KnownInput_MatchesGoldenValue()
+    {
+        // Pin: Coordinates.Create(40.7128, -74.006) →
+        //   geohash-10 cell center "dr5regw3pp"
+        //   → SHA-256(UTF-8("dr5regw3pp")) → v1.<64-hex>.
+        // Golden value sourced from parity-fixtures.json case "coords-only-nyc-create".
+        // A hash algorithm change causes this to fail and prevents silent drift.
+        const string expected_hash =
+            "v1.3c5339b07059d200d45867d4478967a34592818af0445a2aea3c2bd3ff54ef95";
+        var result = Coordinates.Create(40.7128, -74.006);
+        result.Data!.HashId.Should().Be(expected_hash);
     }
 }

@@ -142,6 +142,7 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\encryption\domains-source-gen\D2.Shared.EncryptionDomains.SourceGen.csproj" />
     <ProjectReference Include="..\encryption\frame-source-gen\D2.Shared.EncryptionFrame.SourceGen.csproj" />
     <ProjectReference Include="..\messaging\dlq-failure-metadata-source-gen\D2.Shared.Messaging.DlqMetadata.SourceGen.csproj" />
+    <ProjectReference Include="..\validation\source-gen\D2.Shared.Validation.SourceGen.csproj" />
     <ProjectReference Include="..\resilience\D2.Shared.Resilience.csproj" />
     <ProjectReference Include="..\result\core\D2.Shared.Result.csproj" />
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
@@ -198,7 +199,39 @@ Copyright (c) DCSV. All rights reserved.
       smart-constructors, the canonical geohash-10 normalization pipeline, and the
       GeohashEncoder / PlusCodeEncoder internal helpers (visible via InternalsVisibleTo).
     -->
-    <ProjectReference Include="..\location\D2.Shared.Location.csproj" />
+    <ProjectReference Include="..\location\core\D2.Shared.Location.csproj" />
+    <!--
+      D2.Shared.Contacts — the six composable PII value objects (Personal,
+      NameAffixes, Demographics, Professional, EmailAddress, PhoneNumber). Tests
+      exercise every Create smart-constructor floor + the Email/Phone validator
+      seam + the Personal HashId invariants + per-VO redaction policy.
+    -->
+    <ProjectReference Include="..\contacts\core\D2.Shared.Contacts.csproj" />
+    <!--
+      D2.Shared.EntityFrameworkCore — generic, VO-agnostic EF Core migration helpers.
+      Currently ships CreateD2Index<TEntity> (MigrationBuilder extension for indexing
+      ComplexProperty member columns — EF Core 10 complex-member-index workaround).
+      Unit tests live in Unit/SharedEntityFrameworkCore/ and exercise DeriveColumnName
+      plus CreateD2Index emission + all adversarial null/empty/invalid-expression guards.
+    -->
+    <ProjectReference Include="..\entity-framework-core\D2.Shared.EntityFrameworkCore.csproj" />
+    <!--
+      D2.Shared.Contacts.EntityFrameworkCore — per-VO complex-type and value-converter
+      mapping helpers (MapPersonal / MapNameAffixes / MapDemographics / MapProfessional /
+      MapStreetAddress / MapAdminLocation complex-type helpers; MapEmailAddress /
+      MapPhoneNumber value-converter helpers with the .Unique(template) coupling). Unit
+      tests live in Unit/Contacts/EntityFrameworkCore/ and exercise every public helper
+      via ModelBuilder + built-IModel introspection (model-build-only, no live DB).
+    -->
+    <ProjectReference Include="..\contacts\entity-framework-core\D2.Shared.Contacts.EntityFrameworkCore.csproj" />
+    <!--
+      D2.Shared.Location.EntityFrameworkCore — per-VO complex-type and value-converter
+      mapping helpers for the Location VOs (MapStreetAddress / MapAdminLocation /
+      MapCoordinates). Unit tests live in Unit/Location/EntityFrameworkCore/ and exercise
+      every public helper via ModelBuilder + built-IModel introspection (model-build-only,
+      no live DB).
+    -->
+    <ProjectReference Include="..\location\entity-framework-core\D2.Shared.Location.EntityFrameworkCore.csproj" />
     <!--
       D2.Shared.Geo.SourceGen — Roslyn IIncrementalGenerator that emits the
       geo-default lookup data + GeoDataInitializer coordinator. Tests cover

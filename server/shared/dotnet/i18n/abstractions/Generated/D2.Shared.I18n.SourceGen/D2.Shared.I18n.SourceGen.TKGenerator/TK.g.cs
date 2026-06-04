@@ -1023,6 +1023,107 @@ public static partial class TK
     }
 
     /// <summary>
+    /// Contacts translation keys.
+    /// </summary>
+    public static partial class Contacts
+    {
+        /// <summary>
+        /// Validation translation keys.
+        /// </summary>
+        public static partial class Validation
+        {
+            /// <summary>
+            /// Translation key <c>contacts_validation_AFFIXES_EMPTY_RECORD</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage AFFIXES_EMPTY_RECORD = new("contacts_validation_AFFIXES_EMPTY_RECORD");
+            /// <summary>
+            /// Translation key <c>contacts_validation_COMPANY_NAME_REQUIRED</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage COMPANY_NAME_REQUIRED = new("contacts_validation_COMPANY_NAME_REQUIRED");
+            /// <summary>
+            /// Translation key <c>contacts_validation_COMPANY_NAME_TOO_LONG</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage COMPANY_NAME_TOO_LONG = new("contacts_validation_COMPANY_NAME_TOO_LONG");
+            /// <summary>
+            /// Translation key <c>contacts_validation_DEMOGRAPHICS_EMPTY_RECORD</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage DEMOGRAPHICS_EMPTY_RECORD = new("contacts_validation_DEMOGRAPHICS_EMPTY_RECORD");
+            /// <summary>
+            /// Translation key <c>contacts_validation_DEPARTMENT_TOO_LONG</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage DEPARTMENT_TOO_LONG = new("contacts_validation_DEPARTMENT_TOO_LONG");
+            /// <summary>
+            /// Translation key <c>contacts_validation_DOB_FUTURE</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage DOB_FUTURE = new("contacts_validation_DOB_FUTURE");
+            /// <summary>
+            /// Translation key <c>contacts_validation_DOB_TOO_OLD</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage DOB_TOO_OLD = new("contacts_validation_DOB_TOO_OLD");
+            /// <summary>
+            /// Translation key <c>contacts_validation_EMAIL_TOO_LONG</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage EMAIL_TOO_LONG = new("contacts_validation_EMAIL_TOO_LONG");
+            /// <summary>
+            /// Translation key <c>contacts_validation_FIRST_NAME_REQUIRED</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FIRST_NAME_REQUIRED = new("contacts_validation_FIRST_NAME_REQUIRED");
+            /// <summary>
+            /// Translation key <c>contacts_validation_FIRST_NAME_TOO_LONG</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage FIRST_NAME_TOO_LONG = new("contacts_validation_FIRST_NAME_TOO_LONG");
+            /// <summary>
+            /// Translation key <c>contacts_validation_JOB_TITLE_TOO_LONG</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage JOB_TITLE_TOO_LONG = new("contacts_validation_JOB_TITLE_TOO_LONG");
+            /// <summary>
+            /// Translation key <c>contacts_validation_LAST_NAME_TOO_LONG</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage LAST_NAME_TOO_LONG = new("contacts_validation_LAST_NAME_TOO_LONG");
+            /// <summary>
+            /// Translation key <c>contacts_validation_MIDDLE_NAME_TOO_LONG</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage MIDDLE_NAME_TOO_LONG = new("contacts_validation_MIDDLE_NAME_TOO_LONG");
+            /// <summary>
+            /// Translation key <c>contacts_validation_PHONE_TOO_LONG</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage PHONE_TOO_LONG = new("contacts_validation_PHONE_TOO_LONG");
+            /// <summary>
+            /// Translation key <c>contacts_validation_PREFERRED_NAME_TOO_LONG</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage PREFERRED_NAME_TOO_LONG = new("contacts_validation_PREFERRED_NAME_TOO_LONG");
+            /// <summary>
+            /// Translation key <c>contacts_validation_PREFIX_CUSTOM_NOT_ALLOWED</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage PREFIX_CUSTOM_NOT_ALLOWED = new("contacts_validation_PREFIX_CUSTOM_NOT_ALLOWED");
+            /// <summary>
+            /// Translation key <c>contacts_validation_PREFIX_CUSTOM_REQUIRED</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage PREFIX_CUSTOM_REQUIRED = new("contacts_validation_PREFIX_CUSTOM_REQUIRED");
+            /// <summary>
+            /// Translation key <c>contacts_validation_PREFIX_CUSTOM_TOO_LONG</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage PREFIX_CUSTOM_TOO_LONG = new("contacts_validation_PREFIX_CUSTOM_TOO_LONG");
+            /// <summary>
+            /// Translation key <c>contacts_validation_SUFFIX_CUSTOM_NOT_ALLOWED</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage SUFFIX_CUSTOM_NOT_ALLOWED = new("contacts_validation_SUFFIX_CUSTOM_NOT_ALLOWED");
+            /// <summary>
+            /// Translation key <c>contacts_validation_SUFFIX_CUSTOM_REQUIRED</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage SUFFIX_CUSTOM_REQUIRED = new("contacts_validation_SUFFIX_CUSTOM_REQUIRED");
+            /// <summary>
+            /// Translation key <c>contacts_validation_SUFFIX_CUSTOM_TOO_LONG</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage SUFFIX_CUSTOM_TOO_LONG = new("contacts_validation_SUFFIX_CUSTOM_TOO_LONG");
+            /// <summary>
+            /// Translation key <c>contacts_validation_WEBSITE_INVALID</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage WEBSITE_INVALID = new("contacts_validation_WEBSITE_INVALID");
+        }
+    }
+
+    /// <summary>
     /// Files translation keys.
     /// </summary>
     public static partial class Files
@@ -1117,10 +1218,6 @@ public static partial class TK
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage ADDRESS_LINE1_REQUIRED = new("geo_validation_address_line1_required");
             /// <summary>
-            /// Translation key <c>geo_validation_address_line2_required</c>.
-            /// </summary>
-            public static readonly global::D2.Shared.I18n.TKMessage ADDRESS_LINE2_REQUIRED = new("geo_validation_address_line2_required");
-            /// <summary>
             /// Translation key <c>geo_validation_admin_country_subdivision_mismatch</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage ADMIN_COUNTRY_SUBDIVISION_MISMATCH = new("geo_validation_admin_country_subdivision_mismatch");
@@ -1129,13 +1226,9 @@ public static partial class TK
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage ADMIN_EMPTY_RECORD = new("geo_validation_admin_empty_record");
             /// <summary>
-            /// Translation key <c>geo_validation_company_name_required</c>.
+            /// Translation key <c>geo_validation_city_too_long</c>.
             /// </summary>
-            public static readonly global::D2.Shared.I18n.TKMessage COMPANY_NAME_REQUIRED = new("geo_validation_company_name_required");
-            /// <summary>
-            /// Translation key <c>geo_validation_context_key_required</c>.
-            /// </summary>
-            public static readonly global::D2.Shared.I18n.TKMessage CONTEXT_KEY_REQUIRED = new("geo_validation_context_key_required");
+            public static readonly global::D2.Shared.I18n.TKMessage CITY_TOO_LONG = new("geo_validation_city_too_long");
             /// <summary>
             /// Translation key <c>geo_validation_coordinates_finite_required</c>.
             /// </summary>
@@ -1149,26 +1242,6 @@ public static partial class TK
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage COORDINATES_PLUSCODE_INVALID = new("geo_validation_coordinates_pluscode_invalid");
             /// <summary>
-            /// Translation key <c>geo_validation_duplicate_ext_keys</c>.
-            /// </summary>
-            public static readonly global::D2.Shared.I18n.TKMessage DUPLICATE_EXT_KEYS = new("geo_validation_duplicate_ext_keys");
-            /// <summary>
-            /// Translation key <c>geo_validation_email_required</c>.
-            /// </summary>
-            public static readonly global::D2.Shared.I18n.TKMessage EMAIL_REQUIRED = new("geo_validation_email_required");
-            /// <summary>
-            /// Translation key <c>geo_validation_first_name_required</c>.
-            /// </summary>
-            public static readonly global::D2.Shared.I18n.TKMessage FIRST_NAME_REQUIRED = new("geo_validation_first_name_required");
-            /// <summary>
-            /// Translation key <c>geo_validation_id_invalid</c>.
-            /// </summary>
-            public static readonly global::D2.Shared.I18n.TKMessage ID_INVALID = new("geo_validation_id_invalid");
-            /// <summary>
-            /// Translation key <c>geo_validation_ip_invalid</c>.
-            /// </summary>
-            public static readonly global::D2.Shared.I18n.TKMessage IP_INVALID = new("geo_validation_ip_invalid");
-            /// <summary>
             /// Translation key <c>geo_validation_ip_required</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage IP_REQUIRED = new("geo_validation_ip_required");
@@ -1181,25 +1254,17 @@ public static partial class TK
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage LONGITUDE_RANGE = new("geo_validation_longitude_range");
             /// <summary>
-            /// Translation key <c>geo_validation_month_range</c>.
-            /// </summary>
-            public static readonly global::D2.Shared.I18n.TKMessage MONTH_RANGE = new("geo_validation_month_range");
-            /// <summary>
-            /// Translation key <c>geo_validation_phone_required</c>.
-            /// </summary>
-            public static readonly global::D2.Shared.I18n.TKMessage PHONE_REQUIRED = new("geo_validation_phone_required");
-            /// <summary>
             /// Translation key <c>geo_validation_postal_code_invalid</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage POSTAL_CODE_INVALID = new("geo_validation_postal_code_invalid");
             /// <summary>
-            /// Translation key <c>geo_validation_related_entity_id_required</c>.
+            /// Translation key <c>geo_validation_postal_code_too_long</c>.
             /// </summary>
-            public static readonly global::D2.Shared.I18n.TKMessage RELATED_ENTITY_ID_REQUIRED = new("geo_validation_related_entity_id_required");
+            public static readonly global::D2.Shared.I18n.TKMessage POSTAL_CODE_TOO_LONG = new("geo_validation_postal_code_too_long");
             /// <summary>
-            /// Translation key <c>geo_validation_year_range</c>.
+            /// Translation key <c>geo_validation_street_line_too_long</c>.
             /// </summary>
-            public static readonly global::D2.Shared.I18n.TKMessage YEAR_RANGE = new("geo_validation_year_range");
+            public static readonly global::D2.Shared.I18n.TKMessage STREET_LINE_TOO_LONG = new("geo_validation_street_line_too_long");
         }
     }
 

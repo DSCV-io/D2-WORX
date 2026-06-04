@@ -47,3 +47,4 @@ Three reasons:
 | [0012-tk-constants-in-tests.md](0012-tk-constants-in-tests.md) | TK constants in tests | — |
 | [0013-auth-hardening.md](0013-auth-hardening.md) | Auth endpoint-declaration hardening | §5.1a (ThrowIfFalsey), §5.25a (no redundant `!`), §24.19 (uncommitted working-tree) |
 | [0014-data-governance.md](0014-data-governance.md) | `D2.Shared.DataGovernance` anonymization foundation | §3.15 (anonymization), §5.1a (cycle-only carve-out), §24.20 (tool-invisible lenses), §24.21 (full-solution gate-verify), §24.22 (source xmldoc scan) |
+| [0015-contacts.md](0015-contacts.md) | `D2.Shared.Contacts` PII value-object toolkit + EF mapping + Location / Coordinates EF + codegen field-constraints catalog | §1.25 (aggregate counts ≠ test executed), §1.26 (live-DB integration for EF-mapping), §9.35 (parallel write-path converter symmetry), §11.40 (doc code-example + registry completeness + integrated gate), §24.23 (Fixer no workspace-IDs in own additions) |

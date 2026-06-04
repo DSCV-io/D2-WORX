@@ -4,13 +4,35 @@ Copyright (c) DCSV. All rights reserved.
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>D2.Shared.Validation.Abstractions</RootNamespace>
+
+    <!--
+      Emit the SrcGen-emitted FieldConstraints.g.cs + Taxonomy.g.cs (driven by the
+      validation/source-gen analyzer wired below) to <project-dir>/Generated/.
+      The directory is tracked in git so PR reviewers see codegen diffs without
+      a local build.
+    -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111). See:
+      https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props#compilergeneratedfilesoutputpath
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
+
   <!--
-    DI-free interface library. Domain code anywhere in the backend can
-    take a ProjectReference here without pulling in a DI container,
-    phone-number library, or geo catalog data. The surface is
-    intentionally minimal — three validator contracts and nothing else.
+    DI-free interface + shared-catalog library. Domain code anywhere in the
+    backend can take a ProjectReference here without pulling in a DI container,
+    phone-number library, or geo catalog data. The surface is the three
+    validator contracts plus the shared field-constraints catalog (the emitted
+    FieldConstraints constants + NamePrefix / NameSuffix / BiologicalSex taxonomy
+    enums) — the lowest shared vocabulary layer every consumer depends on.
 
     NO Microsoft.Extensions.DependencyInjection reference.
     NO implementation code — implementations live in D2.Shared.Validation.
@@ -28,6 +50,19 @@ Copyright (c) DCSV. All rights reserved.
       national-format interpretation and country-specific format rules.
     -->
     <ProjectReference Include="..\..\geo\abstractions\D2.Shared.Geo.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Source generator driving the codegen-emitted FieldConstraints + taxonomy
+      enums. The spec file is surfaced via AdditionalFiles so the SrcGen can
+      read it at codegen time. Single-target dispatch on
+      D2.Shared.Validation.Abstractions.
+    -->
+    <ProjectReference Include="..\source-gen\D2.Shared.Validation.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <AdditionalFiles Include="$(D2ContractsRoot)validation\field-constraints.spec.json" />
   </ItemGroup>
 
   <ItemGroup>

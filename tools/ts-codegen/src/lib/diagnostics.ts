@@ -51,6 +51,7 @@ export interface EmitResult {
  * - `D2DLQ001-006`: dlq-failure-metadata spec.
  * - `D2EF001-005`: encryption-frame spec.
  * - `D2DRE001-005`: d2result-envelope spec.
+ * - `D2FC001-009`: field-constraints spec (field-length bounds + taxonomy enums).
  */
 export const DiagnosticIds = {
   // Context (auth-context + request-context).
@@ -222,6 +223,20 @@ export const DiagnosticIds = {
   // surface so identical IDs are correct.
   TK_MALFORMED_SOURCE: "D2TK001",
   TK_INVALID_KEY: "D2TK002",
+
+  // Field-constraints catalog (field-length bounds + taxonomy enums). Mirror
+  // the .NET D2.Shared.Validation.SourceGen DiagnosticIds values byte-for-byte
+  // — same spec source on both sides means same predicate violation surface so
+  // identical IDs are correct.
+  FC_MALFORMED_SPEC: "D2FC001",
+  FC_DUPLICATE_CONST_NAME: "D2FC002",
+  FC_INVALID_CONST_NAME: "D2FC003",
+  FC_NON_POSITIVE_VALUE: "D2FC004",
+  FC_DUPLICATE_ENUM_NAME: "D2FC005",
+  FC_INVALID_ENUM_NAME: "D2FC006",
+  FC_EMPTY_ENUM_MEMBER_LIST: "D2FC007",
+  FC_DUPLICATE_ENUM_MEMBER: "D2FC008",
+  FC_INVALID_ENUM_MEMBER_NAME: "D2FC009",
 } as const;
 
 /**

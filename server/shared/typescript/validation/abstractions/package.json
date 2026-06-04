@@ -19,7 +19,8 @@
   },
   "dependencies": {
     "@d2/result": "workspace:*",
-    "@d2/geo-abstractions": "workspace:*"
+    "@d2/geo-abstractions": "workspace:*",
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "@d2/utilities": "workspace:*",

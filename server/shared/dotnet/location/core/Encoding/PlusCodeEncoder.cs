@@ -14,11 +14,18 @@ using D2.Shared.Utilities.Extensions;
 /// <remarks>
 /// Reference: Google Open Location Code specification.
 /// <para>
-/// OLC encodes a rectangular bounding box. The default length of 10 significant
-/// digits produces a cell of approximately 1 m × 1 m at the equator.
-/// Format: exactly 8 pair-phase digits (4 lon+lat pairs, base-20 per axis)
-/// + '+' separator + grid-refinement digits (each encodes a 5-row × 4-col sub-cell).
-/// A 10-significant-digit code is an 11-character string: 8 pair digits + '+' + 2 grid digits.
+/// OLC encodes a rectangular bounding box. Format: exactly 8 pair-phase digits
+/// (4 lon+lat pairs, base-20 per axis) + '+' separator + grid-refinement digits
+/// (each encodes a 5-row × 4-col sub-cell). Selected cell sizes at the equator:
+/// <list type="bullet">
+/// <item><c>codeLength=10</c> — 2 grid digits → 11-char string → ~14 m lat × ~14 m lon
+/// </item>
+/// <item><c>codeLength=12</c> — 4 grid digits → 13-char string → ~0.2 m lat × ~1 m lon
+/// </item>
+/// </list>
+/// The pair phase alone (8 chars before '+') covers ~125 m lat × ~250 m lon.
+/// Each grid digit subdivides by 5 lat × 4 lon, so two grid digits give ÷25 lat × ÷16 lon
+/// and four grid digits give ÷625 lat × ÷256 lon.
 /// </para>
 /// </remarks>
 internal static class PlusCodeEncoder
@@ -68,8 +75,9 @@ internal static class PlusCodeEncoder
     /// <param name="longitude">Longitude (−180 to +180).</param>
     /// <param name="codeLength">
     /// Number of significant code digits (excluding '+' separator and padding '0').
-    /// Default 10 produces a ~1 m × 1 m cell at the equator (11-character string
-    /// including '+' separator: 8 pair digits + '+' + 2 grid digits).
+    /// The default of 10 produces an 11-character string (8 pair digits + '+' + 2 grid digits),
+    /// giving a cell of ~14 m × 14 m at the equator. For ~1 m precision use 12, which produces
+    /// a 13-character string (8 pair digits + '+' + 4 grid digits).
     /// Valid range is 2–15.
     /// </param>
     /// <returns>OLC plus-code string (e.g., <c>"87G7MQ8V+RG"</c>).</returns>

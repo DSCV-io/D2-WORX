@@ -23,9 +23,10 @@ Two decoration paths produce the same annotation on a mapped property:
   and complex sub-property at model-finalization time, reads the attribute, and writes the
   `D2:Anonymize` annotation with DataAnnotation configuration source.
 - **Fluent path** — `Anonymize*` extension methods called in `OnModelCreating` on
-  `PropertyBuilder<T>`, `OwnedNavigationBuilder<TOwner, TDependent>`, or
-  `ComplexPropertyBuilder<T>`. Each method writes the annotation directly via the public
-  `HasAnnotation` API (Explicit configuration source).
+  `PropertyBuilder<T>`, `OwnedNavigationBuilder<TOwner, TDependent>`,
+  `ComplexPropertyBuilder<T>`, or `ComplexTypePropertyBuilder<TProperty>`. Each method
+  writes the annotation directly via the public `HasAnnotation` API (Explicit
+  configuration source).
 
 When both paths target the same property, the fluent declaration wins. EF Core's
 config-source precedence (Explicit > DataAnnotation) enforces this automatically.
@@ -51,6 +52,30 @@ All overloads are C# 14 block-form extensions. Each writes an `AnonymizationRule
 | `.AnonymizeNull()` | `Create(SetNull)` |
 | `.AnonymizeEmpty()` | `Create(SetEmpty)` |
 | `.AnonymizeTemplate(string template)` | `Create(Template, template: template)` |
+
+#### On `ComplexTypePropertyBuilder<TProperty>` — complex-type member columns
+
+Use this overload when you already hold the member builder from `cp.Property(lambda)`.
+Typical usage: inside a `ComplexProperty(…, cp => { … })` block after `cp.Property(…)`.
+
+| Method | Resulting rule |
+|---|---|
+| `.Anonymize(string constant)` | `Create(Constant, constantValue: constant)` |
+| `.AnonymizeNull()` | `Create(SetNull)` |
+| `.AnonymizeEmpty()` | `Create(SetEmpty)` |
+| `.AnonymizeTemplate(string template)` | `Create(Template, template: template)` |
+
+This overload is structurally identical to `PropertyBuilder<TProperty>` (same four methods,
+same BCL guards, same `HasAnnotation` write with Explicit configuration source). The receiver
+type differs: EF Core returns `ComplexTypePropertyBuilder<TProperty>` from
+`cp.Property(lambda)`, which is a distinct CLR type from `PropertyBuilder<TProperty>`, so C# 14
+extension-member inference requires a separate overload block.
+
+A `[NotMapped]` guard is not needed on this block: `cp.Property(x => x.Member)` itself throws
+upstream in EF before this overload is ever reached for an unmapped member, so a
+`[NotMapped]` member cannot reach this code. Contrast with the
+`ComplexPropertyBuilder<TComplex>` selector-based block below, which DOES check `[NotMapped]`
+because it accepts a member-selector lambda and calls `builder.Property(sub)` internally.
 
 #### On `OwnedNavigationBuilder<TOwner, TDependent>` — `OwnsOne`/`OwnsMany` foreign-VO sub-properties
 
@@ -114,11 +139,21 @@ protected override void OnModelCreating(ModelBuilder model)
              nav.AnonymizeEmpty<string?>(a => a.PostalCode);
          });
 
-    // Sub-property on a complex property
+    // Sub-property on a complex property (selector-based — holds ComplexPropertyBuilder<T>)
     model.Entity<Profile>()
          .ComplexProperty(p => p.DisplayName, cp =>
          {
              cp.Anonymize<string>(d => d.Value, "[deleted]");
+         });
+
+    // Sub-property on a complex property (receiver-based — holds ComplexTypePropertyBuilder<T>)
+    // clearedSentinel is a caller-defined tombstone, e.g. "v1." + new string('0', 64)
+    model.Entity<Address>()
+         .ComplexProperty(a => a.Location, cp =>
+         {
+             cp.Property(l => l.City).HasMaxLength(100).AnonymizeNull();
+             cp.Property(l => l.PostalCode).HasMaxLength(20).AnonymizeEmpty();
+             cp.Property(l => l.HashId).HasMaxLength(67).Anonymize("v1." + new string('0', 64));
          });
 }
 ```
@@ -234,10 +269,13 @@ services.AddScoped<DbContext>(sp => sp.GetRequiredService<MyContext>());
 ## Tests
 
 Unit tests live in `server/shared/dotnet/tests/Unit/DataGovernance/EntityFrameworkCore/`
-and `server/shared/dotnet/tests/Unit/DataGovernance/`. All contexts use the Npgsql provider
-with a dummy connection string (model-build-only — the connection is never opened). Integration
-tests live in `server/shared/dotnet/tests/Integration/DataGovernance/` and use
-Testcontainers-PostgreSQL for end-to-end Tier-A/B anonymization assertions.
+and `server/shared/dotnet/tests/Unit/DataGovernance/`. Unit-test contexts are
+model-build-only — no database connection is ever opened. Most use `UseNpgsql` with a
+dummy connection string to exercise Npgsql-specific relational metadata (column types,
+JSON mapping) that the in-memory provider does not model; a few use the EF Core in-memory
+provider (`UseInMemoryDatabase`) where only generic annotation/model-build logic is under
+test. Integration tests live in `server/shared/dotnet/tests/Integration/DataGovernance/`
+and use Testcontainers-PostgreSQL for end-to-end Tier-A/B anonymization assertions.
 
 ## References
 

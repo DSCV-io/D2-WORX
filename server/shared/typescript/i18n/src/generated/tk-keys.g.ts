@@ -275,6 +275,32 @@ export const TK = {
       PROVIDER_UNKNOWN: "comms_errors_PROVIDER_UNKNOWN"
     }
   },
+  contacts: {
+    validation: {
+      AFFIXES_EMPTY_RECORD: "contacts_validation_AFFIXES_EMPTY_RECORD",
+      COMPANY_NAME_REQUIRED: "contacts_validation_COMPANY_NAME_REQUIRED",
+      COMPANY_NAME_TOO_LONG: "contacts_validation_COMPANY_NAME_TOO_LONG",
+      DEMOGRAPHICS_EMPTY_RECORD: "contacts_validation_DEMOGRAPHICS_EMPTY_RECORD",
+      DEPARTMENT_TOO_LONG: "contacts_validation_DEPARTMENT_TOO_LONG",
+      DOB_FUTURE: "contacts_validation_DOB_FUTURE",
+      DOB_TOO_OLD: "contacts_validation_DOB_TOO_OLD",
+      EMAIL_TOO_LONG: "contacts_validation_EMAIL_TOO_LONG",
+      FIRST_NAME_REQUIRED: "contacts_validation_FIRST_NAME_REQUIRED",
+      FIRST_NAME_TOO_LONG: "contacts_validation_FIRST_NAME_TOO_LONG",
+      JOB_TITLE_TOO_LONG: "contacts_validation_JOB_TITLE_TOO_LONG",
+      LAST_NAME_TOO_LONG: "contacts_validation_LAST_NAME_TOO_LONG",
+      MIDDLE_NAME_TOO_LONG: "contacts_validation_MIDDLE_NAME_TOO_LONG",
+      PHONE_TOO_LONG: "contacts_validation_PHONE_TOO_LONG",
+      PREFERRED_NAME_TOO_LONG: "contacts_validation_PREFERRED_NAME_TOO_LONG",
+      PREFIX_CUSTOM_NOT_ALLOWED: "contacts_validation_PREFIX_CUSTOM_NOT_ALLOWED",
+      PREFIX_CUSTOM_REQUIRED: "contacts_validation_PREFIX_CUSTOM_REQUIRED",
+      PREFIX_CUSTOM_TOO_LONG: "contacts_validation_PREFIX_CUSTOM_TOO_LONG",
+      SUFFIX_CUSTOM_NOT_ALLOWED: "contacts_validation_SUFFIX_CUSTOM_NOT_ALLOWED",
+      SUFFIX_CUSTOM_REQUIRED: "contacts_validation_SUFFIX_CUSTOM_REQUIRED",
+      SUFFIX_CUSTOM_TOO_LONG: "contacts_validation_SUFFIX_CUSTOM_TOO_LONG",
+      WEBSITE_INVALID: "contacts_validation_WEBSITE_INVALID"
+    }
+  },
   files: {
     errors: {
       INVALID_JSON_BODY: "files_errors_INVALID_JSON_BODY",
@@ -299,27 +325,18 @@ export const TK = {
     },
     validation: {
       ADDRESS_LINE1_REQUIRED: "geo_validation_address_line1_required",
-      ADDRESS_LINE2_REQUIRED: "geo_validation_address_line2_required",
       ADMIN_COUNTRY_SUBDIVISION_MISMATCH: "geo_validation_admin_country_subdivision_mismatch",
       ADMIN_EMPTY_RECORD: "geo_validation_admin_empty_record",
-      COMPANY_NAME_REQUIRED: "geo_validation_company_name_required",
-      CONTEXT_KEY_REQUIRED: "geo_validation_context_key_required",
+      CITY_TOO_LONG: "geo_validation_city_too_long",
       COORDINATES_FINITE_REQUIRED: "geo_validation_coordinates_finite_required",
       COORDINATES_GEOHASH_INVALID: "geo_validation_coordinates_geohash_invalid",
       COORDINATES_PLUSCODE_INVALID: "geo_validation_coordinates_pluscode_invalid",
-      DUPLICATE_EXT_KEYS: "geo_validation_duplicate_ext_keys",
-      EMAIL_REQUIRED: "geo_validation_email_required",
-      FIRST_NAME_REQUIRED: "geo_validation_first_name_required",
-      ID_INVALID: "geo_validation_id_invalid",
-      IP_INVALID: "geo_validation_ip_invalid",
       IP_REQUIRED: "geo_validation_ip_required",
       LATITUDE_RANGE: "geo_validation_latitude_range",
       LONGITUDE_RANGE: "geo_validation_longitude_range",
-      MONTH_RANGE: "geo_validation_month_range",
-      PHONE_REQUIRED: "geo_validation_phone_required",
       POSTAL_CODE_INVALID: "geo_validation_postal_code_invalid",
-      RELATED_ENTITY_ID_REQUIRED: "geo_validation_related_entity_id_required",
-      YEAR_RANGE: "geo_validation_year_range"
+      POSTAL_CODE_TOO_LONG: "geo_validation_postal_code_too_long",
+      STREET_LINE_TOO_LONG: "geo_validation_street_line_too_long"
     }
   },
   middleware: {

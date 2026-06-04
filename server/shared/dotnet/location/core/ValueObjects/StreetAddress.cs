@@ -14,6 +14,7 @@ using D2.Shared.Result;
 using D2.Shared.Utilities.Attributes;
 using D2.Shared.Utilities.Enums;
 using D2.Shared.Utilities.Extensions;
+using D2.Shared.Validation.Abstractions;
 
 /// <summary>
 /// Immutable 5-line postal address value object. Line1 is required;
@@ -109,10 +110,39 @@ public sealed record StreetAddress
                 messages: [TK.Geo.Validation.ADDRESS_LINE1_REQUIRED]);
         }
 
+        if (cleanedLine1!.Length > FieldConstraints.STREET_LINE_MAX)
+        {
+            return D2Result<StreetAddress>.ValidationFailed(
+                messages: [TK.Geo.Validation.STREET_LINE_TOO_LONG]);
+        }
+
         var cleanedLine2 = CleanStored(line2);
+        if (cleanedLine2.Truthy() && cleanedLine2!.Length > FieldConstraints.STREET_LINE_MAX)
+        {
+            return D2Result<StreetAddress>.ValidationFailed(
+                messages: [TK.Geo.Validation.STREET_LINE_TOO_LONG]);
+        }
+
         var cleanedLine3 = CleanStored(line3);
+        if (cleanedLine3.Truthy() && cleanedLine3!.Length > FieldConstraints.STREET_LINE_MAX)
+        {
+            return D2Result<StreetAddress>.ValidationFailed(
+                messages: [TK.Geo.Validation.STREET_LINE_TOO_LONG]);
+        }
+
         var cleanedLine4 = CleanStored(line4);
+        if (cleanedLine4.Truthy() && cleanedLine4!.Length > FieldConstraints.STREET_LINE_MAX)
+        {
+            return D2Result<StreetAddress>.ValidationFailed(
+                messages: [TK.Geo.Validation.STREET_LINE_TOO_LONG]);
+        }
+
         var cleanedLine5 = CleanStored(line5);
+        if (cleanedLine5.Truthy() && cleanedLine5!.Length > FieldConstraints.STREET_LINE_MAX)
+        {
+            return D2Result<StreetAddress>.ValidationFailed(
+                messages: [TK.Geo.Validation.STREET_LINE_TOO_LONG]);
+        }
 
         var hashInput =
             NormalizeForHash(cleanedLine1) + "|" +
@@ -127,7 +157,7 @@ public sealed record StreetAddress
 
         return D2Result<StreetAddress>.Ok(new StreetAddress
         {
-            Line1 = cleanedLine1!,
+            Line1 = cleanedLine1,
             Line2 = cleanedLine2,
             Line3 = cleanedLine3,
             Line4 = cleanedLine4,
@@ -137,12 +167,13 @@ public sealed record StreetAddress
     }
 
     /// <summary>
-    /// Two-stage normalization stage 2 — produces the hash-input form
-    /// (UPPERCASE + NFD-stripped combining marks + Unicode-category
-    /// filter keeping only Letter / Decimal-digit / ASCII space).
-    /// Internal — only <see cref="Create"/> invokes; exposed to
-    /// <c>D2.Shared.Tests</c> via <c>InternalsVisibleTo</c> for direct
-    /// adversarial coverage.
+    /// Two-stage normalization stage 2 — thin forwarder to the shared
+    /// <see cref="D2.Shared.Utilities.Extensions.StringExtensions.NormalizeForHash(string?)"/>
+    /// extension in <c>D2.Shared.Utilities</c>. The algorithm is byte-identical
+    /// to the original inline implementation (UPPERCASE + NFD-strip combining
+    /// marks + Unicode-category filter: Letter / Decimal-digit / ASCII space).
+    /// Kept as an internal method so existing test call-sites and
+    /// <c>AdminLocation</c> call-sites continue to compile without churn.
     /// </summary>
     /// <param name="cleaned">
     /// A line value already passed through <c>CleanStored</c> (or null).
@@ -150,37 +181,7 @@ public sealed record StreetAddress
     /// <returns>
     /// The hash-form canonical string; empty when <paramref name="cleaned"/> is null/empty.
     /// </returns>
-    internal static string NormalizeForHash(string? cleaned)
-    {
-        if (cleaned.Falsey())
-            return string.Empty;
-
-        // Stage 2a — case-fold (no-op on caseless scripts).
-        var upper = cleaned!.ToUpperInvariant();
-
-        // Stage 2b — NFD decompose so Latin-derived diacritics split into
-        // base + combining mark; combining marks are then dropped by the
-        // category filter below.
-        var nfd = upper.Normalize(NormalizationForm.FormD);
-
-        // Stage 2c — Unicode-category-aware filter: keep only Letter +
-        // Decimal-digit + single ASCII space. Iterate by Rune so surrogate
-        // pairs are handled correctly (char.IsLetter is surrogate-unsafe).
-        var sb = new StringBuilder(nfd.Length);
-        foreach (var rune in nfd.EnumerateRunes())
-        {
-            if (rune.Value == ' ')
-            {
-                sb.Append(' ');
-                continue;
-            }
-
-            if (Rune.IsLetter(rune) || Rune.IsDigit(rune))
-                sb.Append(rune.ToString());
-        }
-
-        return sb.ToString();
-    }
+    internal static string NormalizeForHash(string? cleaned) => cleaned.NormalizeForHash();
 
     /// <summary>
     /// Two-stage normalization stage 1 — produces the stored form

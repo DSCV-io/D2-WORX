@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 - **Status**: Accepted
 - **Date**: 2026-05-30
-- **Deliverable**: TBD — contacts (Phase 2; design locked at PLAN 2026-05-30, not yet built)
+- **Deliverable**: `D2.Shared.Contacts` library (composable PII value-object toolkit + reusable EF mapping)
 
 ## Context
 
@@ -21,20 +21,33 @@ Auth also kept a separate `org_contact` junction (label + `isPrimary` + a pointe
 
 **Prior v2 plan (~2026-05-23, V2.md §5.6).** The Geo service was dissolved and `D2.Shared.Contacts` became a library — but still a **standalone** one: each consuming service stood up its **own contacts database** (`auth_contacts_db`, etc.), the library owned its `DbContext` + migrations + repository handlers, the `RelatedService*` external-key triple was **required** on every row, "updates" were modeled as delete-and-recreate-and-repoint, and Courier still resolved contacts at delivery time.
 
-**Today (2026-05-30).** Re-examining usage surfaced that (a) a contact is almost always a *subset of a host entity*, and (b) the cross-service machinery in both prior models existed only to support a contact-PII centralization the project no longer wants — so the prior plan's apparatus (its own per-service DB, the `RelatedService*` ext-key, repository handlers, Courier-side resolution) falls away once contacts fold into their host entities. Research inputs: EF Core 10 owned-vs-complex-type capabilities + reusable-mapping patterns; DDD value-object-vs-entity-vs-owned modeling (snapshot-vs-reference for invoice addresses); GDPR data-minimization + right-to-erasure for per-host PII; and the v1 source itself.
+**Today (2026-06-04).** Re-examining usage surfaced that (a) a contact is almost always a *subset of a host entity*, and (b) the cross-service machinery in both prior models existed only to support a contact-PII centralization the project no longer wants — so the prior plan's apparatus (its own per-service DB, the `RelatedService*` ext-key, repository handlers, Courier-side resolution) falls away once contacts fold into their host entities. During implementation, the initial design's EF wrapper-selector API was itself refined: empirical spikes confirmed that a pure VO-as-property model mapped via infra `IEntityTypeConfiguration<T>` — using EF complex types for multi-field VOs and value converters for single-value VOs — outperforms wrapper selectors on domain purity, SQL cleanliness, and engine compatibility. The implementation shipped this refined mechanism (see revision note in Decision). Research inputs: EF Core 10 complex-type + value-converter capabilities + reusable-mapping patterns; DDD value-object-vs-entity modeling (snapshot-vs-reference for invoice addresses); GDPR data-minimization + right-to-erasure for per-host PII; and the v1 source itself.
 
 ## Decision
 
-`D2.Shared.Contacts` is a **.NET-only library of value-object building blocks + reusable EF Core mapping**. It is **not a service, not a database, and exposes no cross-service contact lookup**. Contacts are **folded into each consuming service's own aggregates, tables, and `DbContext`**.
+> **Revision (2026-06-04):** The core decision — folded owned-component, no service, no DB — is unchanged. The _implementation mechanism_ was refined during build: the initial wrapper-selector EF API (`EmbedContact`/`OwnContactInTable`/`OwnsContactBook`) was replaced by a pure **VO-as-property + infra `IEntityTypeConfiguration<T>`** model using EF complex types and value converters. Details below.
 
-- **The library ships** (and owns zero migrations / zero `DbContext` / zero DB):
-  - value-object building blocks with `Create(...) → D2Result<T>` smart constructors — `EmailAddress` / `PhoneNumber` (wrapping `D2.Shared.Validation`'s `IEmailValidator` / `IPhoneValidator`), `Personal`, `Professional`, and an address composed from `D2.Shared.Location` value objects (+ `IPostalCodeValidator`);
-  - reusable `EntityTypeBuilder<TOwner>` extension methods — `EmbedContact` (inline snapshot), `OwnContactInTable` (1:1), `OwnsContactBook` (collection);
-  - a generic, reflection-driven **redaction/correlation sweeper** over the host's EF model.
-- **Three usage shapes → three EF mechanisms**: invoice billing/shipping = immutable **snapshot** (`ComplexProperty` / `OwnsOne`); user/org 1:1 = **owned component** (`OwnsOne`, optionally `+ ToTable`); org address book = **owned collection** (`OwnsMany` + `ToTable`). (Inline complex-type collections are not in EF Core 10 — deferred to EF 11 — so the collection shape uses `OwnsMany`.)
-- **Identity:** UUIDv7 where a contact has its own row (address book), embedded otherwise — **not** content-addressed (contacts are PII; Location's hash-dedup trait deliberately does not extend to them). The required `RelatedService*` triple is **dropped**; the host's own FK/aggregate is the ownership.
-- **Correlation + erasure keys:** every contact carries optional `Guid? UserId` / `Guid? OrgId`; guests/externals fall back to the channel address. Erasure is a subject-id fan-out (the library sweeper makes it uniform); legal-hold rows are field-redacted / crypto-shredded in place, not deleted.
-- **Delivery preferences + consent are a separate concern**, owned centrally by **Courier** (suppression keyed by channel address; routing prefs keyed by subject id) — not by contacts. The caller passes resolved delivery info + a message category; Courier gates `WHETHER` / `WHICH` channel / `HOW`-`WHEN`. The detailed prefs/category-lane schema is **deferred** (mostly carried from v1).
+`D2.Shared.Contacts` is a **.NET-only composable PII value-object toolkit + reusable EF Core mapping**. It is **not a service, not a database, and exposes no cross-service contact lookup**. Contacts are **folded into each consuming service's own aggregates, tables, and `DbContext`**.
+
+**Six composable PII value objects** (`Personal`, `NameAffixes`, `Demographics`, `Professional`, `EmailAddress`, `PhoneNumber`) in `D2.Shared.Contacts`, each `Create(...) → D2Result<T>`, pure-domain, `[RedactData]` on PII, zero EF references. A separate **reusable EF mapping** library (`D2.Shared.Contacts.EntityFrameworkCore`) ships per-VO helpers; no contacts DB, no contacts `DbContext`, no migrations.
+
+**VO-as-property model.** Host aggregates hold plain VO-typed CLR properties — zero EF references, no EF attributes on domain types. All EF mapping (columns, converters, lengths, indexes, anonymization) lives in the host's infra `IEntityTypeConfiguration<T>`. Two CLR-shape concessions (not EF deps): VOs use `required init` properties (EF 10 materializes them via `GetUninitializedObject` + property setters — no parameterless ctor needed) and every mapped member is EF-settable via `init`.
+
+**EF mechanism split.** Multi-field VOs (`Personal`, `NameAffixes`, `Demographics`, `Professional`) → EF **complex types** (`ComplexProperty`) — first-class queryable member columns, clean JOIN-free SQL, value semantics. Single-value VOs (`EmailAddress`, `PhoneNumber`) → EF **value converters** — one column, native unique index, root-scoped anonymize templates. `OwnsOne` / `OwnsMany` are not used: the anonymization engine's bulk `ExecuteUpdate` erasure cannot reach owned child-table rows or `.ToJson()` blobs — a principled boundary. Unbounded erasable collections with contact fields become first-class root entities (their own FK and metadata, with contact VOs mapped once).
+
+**Personal correlation `HashId`.** `"v1." + SHA-256` over the normalized First|Middle|Last, **excluding** PreferredName — so a display-name change leaves the digest stable. This is **correlation, not dedup** — contacts are PII; Location's hash-dedup trait deliberately does not extend to them. `Professional` has no `HashId`.
+
+**NameAffixes / Demographics split.** Honorific affixes (`Prefix`/`Suffix`, closed taxonomy + `Other` escape hatch) and demographics (`DateOfBirth` / `BiologicalSex`) are separate optional VOs from the core `Personal` name, so a host composes only what it needs.
+
+**Field-constraints catalog.** A spec-driven codegen catalog (`contracts/validation/field-constraints.spec.json`) emits shared field-length `FieldConstraints` constants + three taxonomy enums (`NamePrefix` / `NameSuffix` / `BiologicalSex`) to .NET (`D2.Shared.Validation.Abstractions`) and TypeScript (`@d2/validation-abstractions`). The VO `Create` gates, Location, and frontend Zod schemas consume them — one source of truth for field-length caps.
+
+**Consumes `D2.Shared.DataGovernance`** (the standalone anonymization engine — ADR-0015). The library ships no sweeper; host entities are marked `IUserOwned` / `IOrgOwned` / `IAnonymizationTrackable` and VO columns are decorated via the fluent `.Anonymize*` API from `D2.Shared.DataGovernance.EntityFrameworkCore`.
+
+**The restructure outcome.** EF mapping is split per-area into independent siblings: `D2.Shared.Contacts.EntityFrameworkCore` (contact-VO helpers) and `D2.Shared.Location.EntityFrameworkCore` (`MapStreetAddress` / `MapAdminLocation` / `MapCoordinates` + `LocationVoDecorator`) with no dependency between them. A shared generic `D2.Shared.EntityFrameworkCore` owns the VO-agnostic `CreateD2Index<TEntity>` typed migration helper (the EF-10 complex-member-index workaround — see Consequences). `D2.Shared.Location` lives at `location/core/` mirroring `contacts/core/`. A native `ComplexTypePropertyBuilder<T>` `.Anonymize*` overload added to `D2.Shared.DataGovernance.EntityFrameworkCore` enables both EF libs to use the fluent path uniformly.
+
+**Correlation + erasure keys** (unchanged). Every contact-bearing host entity carries optional `Guid? UserId` / `Guid? OrgId`; guests/externals fall back to the channel address. Erasure is a subject-id fan-out via `D2.Shared.DataGovernance`; legal-hold rows are field-overwritten with tombstone values in place.
+
+**Delivery preferences + consent** remain a separate concern owned centrally by Courier (suppression keyed by channel address; routing prefs keyed by subject id).
 
 ## Consequences
 
@@ -42,14 +55,16 @@ Auth also kept a separate `org_contact` junction (label + `isPrimary` + a pointe
 
 - No contacts service, no contacts DB, no cross-service lookup / SAGA / cache-eviction apparatus — large reduction in moving parts vs. both v1 and the prior plan.
 - PII is purpose-limited per host (GDPR-aligned data-minimization); no central PII honeypot or cross-service PII store.
-- **Inherently searchable even when embedded** — a `Contact` is a fixed, well-known shape carrying optional `UserId` / `OrgId`, so the reflection-driven sweeper discovers every contact-bearing entity directly from the host's EF model. "All of John's contact data", subject-keyed correlation, and redaction are therefore fully achievable across services *without* a central store: searchability is a property of the type's shape, not of where it is stored.
-- Direct reuse of the just-built `D2.Shared.Validation` + `D2.Shared.Location` libraries; one-line EF folding for consumers.
+- **Subject-keyed erasure and correlation** are achieved by marking host entities with the `D2.Shared.DataGovernance` markers and decorating VO columns via the fluent `.Anonymize*` API; the engine sweeps the host model. No bespoke sweeper ships.
+- Direct reuse of `D2.Shared.Validation` + `D2.Shared.Location` libraries; one-line EF folding for consumers.
+- Complex-type VOs are first-class queryable columns (`WHERE personal_first_name = 'John'`, `ORDER BY professional_company_name`) — no JOIN overhead, no shadow-key columns.
 
 **Negative / risks (with mitigations).**
 
-- **Migration cascade** — a contact-shape change can require a migration in every adopting service (migrations live in the host context). Mitigated by **semver + additive-only-within-a-major**, per-service adoption cadence, and keeping the library pure (no business behavior); `D2.Shared.Validation` + `D2.Shared.Location` pinned transitively so validation can't skew independently of shape.
+- **Migration cascade** — a contact-shape change can require a migration in every adopting service (migrations live in the host context). Mitigated by **semver + additive-only-within-a-major**, per-service adoption cadence, and keeping the library pure (no business behavior); `D2.Shared.Validation` + `D2.Shared.Location` pin transitively so validation cannot skew independently of shape.
 - **Validation version skew** across services on different library versions — bounded by additive-only discipline + transitive pinning.
-- **Shared-kernel coupling** — contained by shipping only pure data + mapping + validation.
+- **EF Core 10 complex-member-index limitation** — model-aware indexes on `ComplexProperty` member columns are not expressible in EF 10 (fluent `HasIndex(u => u.Vo.Member)` throws; metadata-path indexes are silently discarded at finalization). The ONLY EF-10 path is a raw `migrationBuilder.CreateIndex(...)` line in the host migration. The toolkit ships `CreateD2Index<TEntity>(u => u.Vo.Member)` (`D2.Shared.EntityFrameworkCore`) to keep that line typed and clean. EF 11 makes `HasIndex(u => u.Vo.Member)` native; migrating to it when EF 11 ships is a tracked follow-up. Value-converter indexes and complex-member _queries_ have no such limitation.
+- **Shared-kernel coupling** — contained by shipping only pure data + mapping + validation, no business behavior.
 
 ## Alternatives considered
 
@@ -59,7 +74,10 @@ _Not alternatives (recorded to pre-empt the question):_ the v1 **central Geo-ser
 
 ## References
 
-- V2.md §5.6 — superseded design (struck through, preserved) + §5.6 (Revised 2026-05-30).
+- V2.md §5.6 — superseded planning design (struck through, preserved) + §5.6 (Revised 2026-05-30, built-note 2026-06-04).
+- Per-lib READMEs for the shipped surface: [`contacts/core/`](../../server/shared/dotnet/contacts/core/README.md) · [`contacts/entity-framework-core/`](../../server/shared/dotnet/contacts/entity-framework-core/README.md) · [`location/entity-framework-core/`](../../server/shared/dotnet/location/entity-framework-core/README.md) · [`entity-framework-core/`](../../server/shared/dotnet/entity-framework-core/README.md).
+- [PATTERNS.md](../PATTERNS.md) — contact-VO pattern, EF VO-mapping pattern, `CreateD2Index` callout, field-constraints catalog pattern.
+- ADR-0015 ([`0015-anonymization-data-governance.md`](0015-anonymization-data-governance.md)) — the standalone anonymization engine this library consumes.
 - v1 snapshot: `/old/v1/D2-WORX/backends/dotnet/services/Geo/` (`Geo.Domain/Entities/Contact.cs`, `Geo.Infra/Repository/Entities/ContactConfig.cs`, the `*Contact*` migrations, `ContactEvictionPublisher.cs`); `/old/v1/D2-WORX/backends/node/services/{auth,comms}/` (the `org_contact` junction; Comms delivery + `channel_preference`).
-- EF Core 10 owned/complex types + reusable mapping; DDD snapshot-vs-reference; GDPR data-minimization + right-to-erasure for per-host PII — research captured in the 2026-05-30 PLAN discussion.
+- EF Core 10 complex types + value converters + reusable mapping; DDD snapshot-vs-reference; GDPR data-minimization + right-to-erasure — research captured in the 2026-05-30 and 2026-06-03 PLAN discussions.
 - [Michael Nygard's ADR essay](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions) — the format this record follows.

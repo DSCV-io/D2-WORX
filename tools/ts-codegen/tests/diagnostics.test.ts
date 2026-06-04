@@ -69,6 +69,15 @@ describe("DiagnosticIds", () => {
     ["AEC_UNKNOWN_CATEGORY", "D2AEC003"],
     ["AEC_INVALID_HTTP_STATUS", "D2AEC004"],
     ["AEC_MALFORMED_SPEC", "D2AEC005"],
+    ["FC_MALFORMED_SPEC", "D2FC001"],
+    ["FC_DUPLICATE_CONST_NAME", "D2FC002"],
+    ["FC_INVALID_CONST_NAME", "D2FC003"],
+    ["FC_NON_POSITIVE_VALUE", "D2FC004"],
+    ["FC_DUPLICATE_ENUM_NAME", "D2FC005"],
+    ["FC_INVALID_ENUM_NAME", "D2FC006"],
+    ["FC_EMPTY_ENUM_MEMBER_LIST", "D2FC007"],
+    ["FC_DUPLICATE_ENUM_MEMBER", "D2FC008"],
+    ["FC_INVALID_ENUM_MEMBER_NAME", "D2FC009"],
   ])("DiagnosticIds.%s = %s", (key, value) => {
     expect(DiagnosticIds[key as keyof typeof DiagnosticIds]).toBe(value);
   });

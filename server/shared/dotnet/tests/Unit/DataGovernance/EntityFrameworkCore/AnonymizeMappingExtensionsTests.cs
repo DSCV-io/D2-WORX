@@ -14,13 +14,17 @@ using D2.Shared.DataGovernance.EntityFrameworkCore;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Xunit;
 
 /// <summary>
 /// Tests for the <see cref="AnonymizeMappingExtensions"/> fluent API overloads on
-/// <c>PropertyBuilder&lt;T&gt;</c>, <c>OwnedNavigationBuilder&lt;,&gt;</c>, and
-/// <c>ComplexPropertyBuilder&lt;T&gt;</c>. Exercises every overload across each builder type,
-/// round-trip annotation reads, precedence over the attribute, and adversarial null arguments.
+/// <c>PropertyBuilder&lt;T&gt;</c>, <c>OwnedNavigationBuilder&lt;,&gt;</c>,
+/// <c>ComplexPropertyBuilder&lt;T&gt;</c>, and
+/// <c>ComplexTypePropertyBuilder&lt;T&gt;</c>. Exercises every overload across each builder
+/// type, round-trip annotation reads, precedence over the attribute, adversarial null
+/// arguments, and the chain-shape compile proof for the
+/// <c>cp.Property(lambda).HasMaxLength(n).Anonymize*(…)</c> pattern.
 /// </summary>
 [Trait("Category", "Unit")]
 public sealed class AnonymizeMappingExtensionsTests
@@ -304,6 +308,179 @@ public sealed class AnonymizeMappingExtensionsTests
     }
 
     // =========================================================================
+    // ComplexTypePropertyBuilder<T> — no-selector overloads (cp.Property(lambda))
+    // =========================================================================
+
+    [Fact]
+    public void ComplexTypePropertyBuilder_Anonymize_constant_writes_correct_annotation()
+    {
+        using ComplexTypePropertyBuilderTestContext ctx =
+            ComplexTypePropertyBuilderTestContext.Build();
+        IComplexType complexType = ctx.Model
+            .FindEntityType(typeof(ComplexTypePropOwner))!
+            .FindComplexProperty(nameof(ComplexTypePropOwner.Info))!
+            .ComplexType;
+        IProperty prop = complexType.FindProperty(nameof(ComplexTypePropInfo.Code))!;
+
+        var rule =
+            prop.FindAnnotation(AnonymizationAnnotations.ANONYMIZE)?.Value as AnonymizationRule;
+
+        rule.Should().NotBeNull();
+        rule.Kind.Should().Be(AnonymizeKind.Constant);
+        rule.ConstantValue.Should().Be("cleared");
+        rule.Template.Should().BeNull();
+    }
+
+    [Fact]
+    public void ComplexTypePropertyBuilder_AnonymizeNull_writes_SetNull_annotation()
+    {
+        using ComplexTypePropertyBuilderTestContext ctx =
+            ComplexTypePropertyBuilderTestContext.Build();
+        IComplexType complexType = ctx.Model
+            .FindEntityType(typeof(ComplexTypePropOwner))!
+            .FindComplexProperty(nameof(ComplexTypePropOwner.Info))!
+            .ComplexType;
+        IProperty prop = complexType.FindProperty(nameof(ComplexTypePropInfo.Optional))!;
+
+        var rule =
+            prop.FindAnnotation(AnonymizationAnnotations.ANONYMIZE)?.Value as AnonymizationRule;
+
+        rule.Should().NotBeNull();
+        rule.Kind.Should().Be(AnonymizeKind.SetNull);
+        rule.ConstantValue.Should().BeNull();
+        rule.Template.Should().BeNull();
+    }
+
+    [Fact]
+    public void ComplexTypePropertyBuilder_AnonymizeEmpty_writes_SetEmpty_annotation()
+    {
+        using ComplexTypePropertyBuilderTestContext ctx =
+            ComplexTypePropertyBuilderTestContext.Build();
+        IComplexType complexType = ctx.Model
+            .FindEntityType(typeof(ComplexTypePropOwner))!
+            .FindComplexProperty(nameof(ComplexTypePropOwner.Info))!
+            .ComplexType;
+        IProperty prop = complexType.FindProperty(nameof(ComplexTypePropInfo.Slug))!;
+
+        var rule =
+            prop.FindAnnotation(AnonymizationAnnotations.ANONYMIZE)?.Value as AnonymizationRule;
+
+        rule.Should().NotBeNull();
+        rule.Kind.Should().Be(AnonymizeKind.SetEmpty);
+        rule.ConstantValue.Should().BeNull();
+        rule.Template.Should().BeNull();
+    }
+
+    [Fact]
+    public void ComplexTypePropertyBuilder_AnonymizeTemplate_writes_Template_annotation()
+    {
+        using ComplexTypePropertyBuilderTestContext ctx =
+            ComplexTypePropertyBuilderTestContext.Build();
+        IComplexType complexType = ctx.Model
+            .FindEntityType(typeof(ComplexTypePropOwner))!
+            .FindComplexProperty(nameof(ComplexTypePropOwner.Info))!
+            .ComplexType;
+        IProperty prop = complexType.FindProperty(nameof(ComplexTypePropInfo.Alias))!;
+
+        var rule =
+            prop.FindAnnotation(AnonymizationAnnotations.ANONYMIZE)?.Value as AnonymizationRule;
+
+        rule.Should().NotBeNull();
+        rule.Kind.Should().Be(AnonymizeKind.Template);
+        rule.Template.Should().Be("a{B}");
+        rule.ConstantValue.Should().BeNull();
+    }
+
+    /// <summary>
+    /// Proves that the overload resolves on the exact
+    /// <c>cp.Property(lambda).HasMaxLength(n).Anonymize(constant)</c> and
+    /// <c>cp.Property(lambda).HasMaxLength(n).AnonymizeNull()</c> chain shapes that
+    /// consuming EF libs use. Compilation of this test is the chain-shape compile proof:
+    /// if this test does not compile, the overload shape is wrong and is a finding against
+    /// this overload set.
+    /// </summary>
+    [Fact]
+    public void ComplexTypePropertyBuilder_chain_shape_compiles_and_annotation_lands()
+    {
+        using ComplexTypePropertyChainContext ctx =
+            ComplexTypePropertyChainContext.Build();
+        IComplexType complexType = ctx.Model
+            .FindEntityType(typeof(ChainOwnerEntity))!
+            .FindComplexProperty(nameof(ChainOwnerEntity.Details))!
+            .ComplexType;
+
+        var codeRule = complexType.FindProperty(nameof(ChainDetails.Code))!
+            .FindAnnotation(AnonymizationAnnotations.ANONYMIZE)?.Value as AnonymizationRule;
+        var noteRule = complexType.FindProperty(nameof(ChainDetails.Note))!
+            .FindAnnotation(AnonymizationAnnotations.ANONYMIZE)?.Value as AnonymizationRule;
+        var tagRule = complexType.FindProperty(nameof(ChainDetails.Tag))!
+            .FindAnnotation(AnonymizationAnnotations.ANONYMIZE)?.Value as AnonymizationRule;
+        var labelRule = complexType.FindProperty(nameof(ChainDetails.Label))!
+            .FindAnnotation(AnonymizationAnnotations.ANONYMIZE)?.Value as AnonymizationRule;
+
+        codeRule.Should().NotBeNull();
+        codeRule.Kind.Should().Be(AnonymizeKind.Constant);
+        codeRule.ConstantValue.Should().Be("cleared");
+
+        noteRule.Should().NotBeNull();
+        noteRule.Kind.Should().Be(AnonymizeKind.SetNull);
+
+        tagRule.Should().NotBeNull();
+        tagRule.Kind.Should().Be(AnonymizeKind.SetEmpty);
+
+        labelRule.Should().NotBeNull();
+        labelRule.Kind.Should().Be(AnonymizeKind.Template);
+        labelRule.Template.Should().Be("a{B}");
+    }
+
+    /// <summary>
+    /// Proves that the fluent annotation is byte-identical to the direct
+    /// <see cref="AnonymizationRule.Create"/> factory call — same kind, same constant value.
+    /// </summary>
+    [Fact]
+    public void ComplexTypePropertyBuilder_Anonymize_annotation_byte_identical_to_direct_Create()
+    {
+        using ComplexTypePropertyBuilderTestContext ctx =
+            ComplexTypePropertyBuilderTestContext.Build();
+        IComplexType complexType = ctx.Model
+            .FindEntityType(typeof(ComplexTypePropOwner))!
+            .FindComplexProperty(nameof(ComplexTypePropOwner.Info))!
+            .ComplexType;
+
+        var actual = complexType.FindProperty(nameof(ComplexTypePropInfo.Code))!
+            .FindAnnotation(AnonymizationAnnotations.ANONYMIZE)?.Value as AnonymizationRule;
+        var expected =
+            AnonymizationRule.Create(AnonymizeKind.Constant, constantValue: "cleared");
+
+        actual.Should().Be(expected);
+    }
+
+    [Fact]
+    public void ComplexTypePropertyBuilder_Anonymize_null_constant_throws_ArgumentNullException()
+    {
+        var act = () =>
+        {
+            using DbContext ctx = new NullConstantComplexTypePropContext();
+            _ = ctx.Model;
+        };
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    // long identifier — cannot wrap
+    [Fact]
+    public void ComplexTypePropertyBuilder_AnonymizeTemplate_null_template_throws_ArgumentNullException()
+    {
+        var act = () =>
+        {
+            using DbContext ctx = new NullTemplateComplexTypePropContext();
+            _ = ctx.Model;
+        };
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    // =========================================================================
     // Adversarial — invalid payloads propagated from AnonymizationRule.Create
     // =========================================================================
 
@@ -385,6 +562,32 @@ public sealed class AnonymizeMappingExtensionsTests
         };
 
         act.Should().Throw<ArgumentNullException>();
+    }
+
+    // =========================================================================
+    // T10 — ComplexTypePropertyBuilder<T> null-builder guard
+    // =========================================================================
+
+    /// <summary>
+    /// Proves that passing <see langword="null!"/> as the implicit receiver (builder) to
+    /// the <c>ComplexTypePropertyBuilder&lt;T&gt;</c> overloads throws
+    /// <see cref="ArgumentNullException"/>. All four overloads share the same guard via
+    /// <c>ArgumentNullException.ThrowIfNull(builder)</c> — one call exercises all paths.
+    /// </summary>
+    [Fact]
+    public void ComplexTypePropertyBuilder_null_receiver_throws_ArgumentNullException()
+    {
+        ComplexTypePropertyBuilder<string> nullBuilder = null!;
+
+        var act1 = () => nullBuilder.Anonymize("x");
+        var act2 = () => nullBuilder.AnonymizeNull();
+        var act3 = () => nullBuilder.AnonymizeEmpty();
+        var act4 = () => nullBuilder.AnonymizeTemplate("t");
+
+        act1.Should().Throw<ArgumentNullException>();
+        act2.Should().Throw<ArgumentNullException>();
+        act3.Should().Throw<ArgumentNullException>();
+        act4.Should().Throw<ArgumentNullException>();
     }
 
     // =========================================================================
@@ -684,8 +887,191 @@ public sealed class AnonymizeMappingExtensionsTests
     }
 
     // =========================================================================
-    // L-1 — extension's own null-guard on real builders
+    // ComplexTypePropertyBuilder<T> — entity + complex types for new overload tests
     // =========================================================================
+
+    private sealed class ComplexTypePropOwner
+    {
+        public int Id { get; set; }
+
+        public ComplexTypePropInfo Info { get; set; } = new();
+    }
+
+    private sealed class ComplexTypePropInfo
+    {
+        // Required string — Anonymize("cleared") test
+        public string Code { get; set; } = string.Empty;
+
+        // Nullable string — AnonymizeNull() test
+        public string? Optional { get; set; }
+
+        // Required string — AnonymizeEmpty() test
+        public string Slug { get; set; } = string.Empty;
+
+        // Required string — AnonymizeTemplate("a{B}") test
+        public string Alias { get; set; } = string.Empty;
+    }
+
+    // Chain-shape compile-proof entities — cp.Property(lambda).HasMaxLength(n).Anonymize*()
+    private sealed class ChainOwnerEntity
+    {
+        public int Id { get; set; }
+
+        public ChainDetails Details { get; set; } = new();
+    }
+
+    private sealed class ChainDetails
+    {
+        public string Code { get; set; } = string.Empty;
+
+        public string? Note { get; set; }
+
+        public string Tag { get; set; } = string.Empty;
+
+        public string Label { get; set; } = string.Empty;
+    }
+
+    private sealed class NullConstantComplexTypePropOwner
+    {
+        public int Id { get; set; }
+
+        public NullConstantComplexTypePropInfo Info { get; set; } = new();
+    }
+
+    private sealed class NullConstantComplexTypePropInfo
+    {
+        public string Value { get; set; } = string.Empty;
+    }
+
+    private sealed class NullTemplateComplexTypePropOwner
+    {
+        public int Id { get; set; }
+
+        public NullTemplateComplexTypePropInfo Info { get; set; } = new();
+    }
+
+    private sealed class NullTemplateComplexTypePropInfo
+    {
+        public string Value { get; set; } = string.Empty;
+    }
+
+    // =========================================================================
+    // ComplexTypePropertyBuilder<T> — DbContext types
+    // =========================================================================
+
+    private sealed class ComplexTypePropertyBuilderTestContext : DbContext
+    {
+        private ComplexTypePropertyBuilderTestContext(
+            DbContextOptions<ComplexTypePropertyBuilderTestContext> options)
+            : base(options)
+        {
+        }
+
+        public static ComplexTypePropertyBuilderTestContext Build()
+        {
+            var options =
+                new DbContextOptionsBuilder<ComplexTypePropertyBuilderTestContext>()
+                    .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                    .Options;
+            return new ComplexTypePropertyBuilderTestContext(options);
+        }
+
+        protected override void OnModelCreating(ModelBuilder model)
+        {
+            model.Entity<ComplexTypePropOwner>(e =>
+            {
+                e.HasKey(x => x.Id);
+                e.ComplexProperty(x => x.Info, cp =>
+                {
+                    // Direct cp.Property(lambda).Anonymize*() — no intermediate HasMaxLength.
+                    cp.Property(p => p.Code).Anonymize("cleared");
+                    cp.Property(p => p.Optional).AnonymizeNull();
+                    cp.Property(p => p.Slug).AnonymizeEmpty();
+                    cp.Property(p => p.Alias).AnonymizeTemplate("a{B}");
+                });
+            });
+        }
+    }
+
+    private sealed class ComplexTypePropertyChainContext : DbContext
+    {
+        private ComplexTypePropertyChainContext(
+            DbContextOptions<ComplexTypePropertyChainContext> options)
+            : base(options)
+        {
+        }
+
+        public static ComplexTypePropertyChainContext Build()
+        {
+            var options =
+                new DbContextOptionsBuilder<ComplexTypePropertyChainContext>()
+                    .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                    .Options;
+            return new ComplexTypePropertyChainContext(options);
+        }
+
+        protected override void OnModelCreating(ModelBuilder model)
+        {
+            // Chain-shape compile proof: the EXACT fluent chain
+            // cp.Property(lambda).HasMaxLength(n).Anonymize*(…) that consuming EF libs
+            // will use. If this does not compile, the ComplexTypePropertyBuilder<T>
+            // overload shape is wrong.
+            const int max = 50;
+            model.Entity<ChainOwnerEntity>(e =>
+            {
+                e.HasKey(x => x.Id);
+                e.ComplexProperty(x => x.Details, cp =>
+                {
+                    cp.Property(p => p.Code).HasMaxLength(max).Anonymize("cleared");
+                    cp.Property(p => p.Note).HasMaxLength(max).AnonymizeNull();
+                    cp.Property(p => p.Tag).HasMaxLength(max).AnonymizeEmpty();
+                    cp.Property(p => p.Label).HasMaxLength(max).AnonymizeTemplate("a{B}");
+                });
+            });
+        }
+    }
+
+    private sealed class NullConstantComplexTypePropContext : DbContext
+    {
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseInMemoryDatabase(Guid.NewGuid().ToString());
+        }
+
+        protected override void OnModelCreating(ModelBuilder model)
+        {
+            model.Entity<NullConstantComplexTypePropOwner>(e =>
+            {
+                e.HasKey(x => x.Id);
+                e.ComplexProperty(x => x.Info, cp =>
+                {
+                    // null! forces the null-guard on the constant parameter.
+                    cp.Property(p => p.Value).Anonymize(null!);
+                });
+            });
+        }
+    }
+
+    private sealed class NullTemplateComplexTypePropContext : DbContext
+    {
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseInMemoryDatabase(Guid.NewGuid().ToString());
+        }
+
+        protected override void OnModelCreating(ModelBuilder model)
+        {
+            model.Entity<NullTemplateComplexTypePropOwner>(e =>
+            {
+                e.HasKey(x => x.Id);
+                e.ComplexProperty(x => x.Info, cp =>
+                {
+                    // null! forces the null-guard on the template parameter.
+                    cp.Property(p => p.Value).AnonymizeTemplate(null!);
+                });
+            });
+        }
+    }
 
     private sealed class NullGuardEntity
     {

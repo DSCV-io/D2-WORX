@@ -25,7 +25,8 @@
     "@d2/request-context-abstractions": "workspace:*",
     "@d2/result": "workspace:*",
     "@d2/telemetry": "workspace:*",
-    "@d2/validation": "workspace:*"
+    "@d2/validation": "workspace:*",
+    "@d2/validation-abstractions": "workspace:*"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "4.0.18",

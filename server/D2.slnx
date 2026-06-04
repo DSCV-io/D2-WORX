@@ -179,8 +179,11 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/time/">
     <Project Path="shared/dotnet/time/D2.Shared.Time.csproj" />
   </Folder>
-  <Folder Name="/shared/dotnet/location/">
-    <Project Path="shared/dotnet/location/D2.Shared.Location.csproj" />
+  <Folder Name="/shared/dotnet/location/core/">
+    <Project Path="shared/dotnet/location/core/D2.Shared.Location.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/location/entity-framework-core/">
+    <Project Path="shared/dotnet/location/entity-framework-core/D2.Shared.Location.EntityFrameworkCore.csproj" />
   </Folder>
   <Folder Name="/shared/dotnet/data-governance/abstractions/">
     <Project Path="shared/dotnet/data-governance/abstractions/D2.Shared.DataGovernance.Abstractions.csproj" />
@@ -188,11 +191,23 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/data-governance/entity-framework-core/">
     <Project Path="shared/dotnet/data-governance/entity-framework-core/D2.Shared.DataGovernance.EntityFrameworkCore.csproj" />
   </Folder>
+  <Folder Name="/shared/dotnet/entity-framework-core/">
+    <Project Path="shared/dotnet/entity-framework-core/D2.Shared.EntityFrameworkCore.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/validation/abstractions/">
     <Project Path="shared/dotnet/validation/abstractions/D2.Shared.Validation.Abstractions.csproj" />
   </Folder>
+  <Folder Name="/shared/dotnet/validation/source-gen/">
+    <Project Path="shared/dotnet/validation/source-gen/D2.Shared.Validation.SourceGen.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/validation/default/">
     <Project Path="shared/dotnet/validation/default/D2.Shared.Validation.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/contacts/core/">
+    <Project Path="shared/dotnet/contacts/core/D2.Shared.Contacts.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/contacts/entity-framework-core/">
+    <Project Path="shared/dotnet/contacts/entity-framework-core/D2.Shared.Contacts.EntityFrameworkCore.csproj" />
   </Folder>
   <Folder Name="/shared/dotnet/tests/">
     <Project Path="shared/dotnet/tests/D2.Shared.Tests.csproj" />

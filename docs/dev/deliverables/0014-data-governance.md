@@ -54,6 +54,30 @@ A `.NET`-only, cross-cutting GDPR data-governance foundation that ships as a pre
 
 I attest that every box in the Deliverable Completeness Checklist above is an honest YES (the cross-language-parity box is a justified N/A — data-governance is .NET-only, like `D2.Shared.Location`). The per-step targeted audit loops and the full K=12 final-review loop converged; all findings — including the Tier-B `Guid.Empty` retry bug, the owned-entity exempt-propagation gap, the V5/V6-complex-recursion gap, the fail-closed-runtime + concurrency-exhaustion test gaps, and the 43 full-solution `jb inspectcode` test-file findings — were fixed and (where behavioral) regression-pinned. The final certification gates (`dotnet build server/D2.slnx` 0 warnings, `jb inspectcode server/D2.slnx` 0 findings, `dotnet test` 4925 passing) are green on the current working tree. Round-2 closure was 9/12 lenses clean with 3 trivial style/doc/test-hygiene L's fixed; proportionate convergence was accepted by the user (§13.14).
 
+## Follow-on amendments (post-SHIP)
+
+Two additive changes landed on `n/contacts` after this deliverable shipped.
+
+### (a) Native `ComplexTypePropertyBuilder<T>` `.Anonymize*` overload set
+
+The fluent `.Anonymize*` family (documented above as covering `PropertyBuilder<T>` / `OwnedNavigationBuilder<,>` / `ComplexPropertyBuilder<T>`) gained a **fourth receiver overload set** targeting `ComplexTypePropertyBuilder<T>` — the type returned by `cp.Property(lambda)` inside a `b.ComplexProperty(…, cp => …)` callback (the "no selector, receiver-is-the-property" form used when you already hold the member builder).
+
+This was added by the contacts deliverable (`0015-contacts`, commit `3aeb56a5`) to close a C# 14 extension-member inference gap: without the overload, consuming EF mapping code that held a `ComplexTypePropertyBuilder<T>` had to write the `D2:Anonymize` annotation directly via `HasAnnotation(...)`, bypassing the typed fluent API. The native overload retires that workaround for all consumers.
+
+The change is additive — the existing 0014 EF/convention/classifier/validator/engine tests remained green throughout.
+
+### (b) Model-aware `AnonymizationEngine` — `BuildNavigationChain` + Tier-B value-converter coercion
+
+The `AnonymizationEngine` was made **model-aware** via a `BuildNavigationChain` walk over the EF complex/owned navigation chain. Before this fix, an entity that mapped the same complex-type VO twice (e.g., billing `AdminLocation` + shipping `AdminLocation`) would resolve both columns through the **first** CLR-type-by-name match, producing a duplicate `SET column = ...` in the same `ExecuteUpdate` call and a SQL error.
+
+The fix navigates each annotated property through its own EF navigation chain, so billing columns are erased through `BillingLocation.*` and shipping columns through `ShippingLocation.*` independently.
+
+The same change fixed a Tier-B value-converter coercion defect: the anonymize template's `string` result is now run through the EF value converter before `Convert.ChangeType`, so value-converted `EmailAddress?` / `PhoneNumber?` columns erase correctly without a type-mismatch exception.
+
+Both issues surfaced during the contacts deliverable's live-DB integration tests. The fix shipped on `n/contacts` (commit `e7cc3586`) and is covered by a dual-VO (Tier-A + Tier-B) regression test in the `D2.Shared.Tests` integration suite.
+
+---
+
 ## Rules added at SHIP
 
 Five rules added to `docs/dev/rules.md` + lockstep updates to `CLAUDE.md §5` and `docs/dev/process.md §4`:

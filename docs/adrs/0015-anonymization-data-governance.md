@@ -12,7 +12,7 @@ Copyright (c) DCSV. All rights reserved.
 
 GDPR's right to erasure requires that, when a subject (`UserId` or `OrgId`) is erased, every host service overwrites that subject's PII **in place** with faux/tombstone values — keeping rows, foreign keys, audit trails, and legally-retained records intact — rather than nulling fields or hard-deleting. Nulling forces UIs to special-case absent values for data that conceptually always exists; hard-deleting loses audit trails and breaks foreign-key integrity.
 
-ADR-0001 committed the Contacts library to a "generic, reflection-driven sweeper over the host's EF model" for anonymization. This ADR extracts and generalizes that sweeper into a standalone, cross-cutting foundation that ships as a prerequisite to (and before) the Contacts library. Any D² service storing user or org PII can adopt it without depending on Contacts.
+ADR-0001 committed the Contacts library to an "annotation-driven sweep over the host's EF model — anonymize rules declared on the model at build time" for anonymization. This ADR extracts and generalizes that engine into a standalone, cross-cutting foundation that ships as a prerequisite to (and before) the Contacts library. Any D² service storing user or org PII can adopt it without depending on Contacts.
 
 **Anonymization vs. log-masking.** These are separate concerns and must not be conflated. **Anonymization** (this ADR) is an at-rest overwrite operation on database rows — the subject's PII fields are replaced with faux tombstone values. **Log-masking** (`[RedactData]` + `RedactDataDestructuringPolicy`, ADR-0011) is a telemetry concern — PII is structurally scrubbed from log sinks at the Serilog destructuring layer. The vocabulary is deliberately distinct: `[Anonymizable]` for at-rest governance; `[RedactData]` for logging safety. Decoration is independent in both directions — an `[Anonymizable]` field need not carry `[RedactData]`, and vice versa.
 
@@ -133,7 +133,7 @@ No crypto-shred: per-subject encryption-at-rest is deferred to its own future wo
 
 ## References
 
-- [ADR-0001](0001-contacts-folded-owned-component.md) — the Contacts library's "generic, reflection-driven sweeper over the host EF model"; this ADR extracts and generalizes that sweeper into a standalone foundation.
+- [ADR-0001](0001-contacts-folded-owned-component.md) — the Contacts library's "annotation-driven sweep over the host EF model — anonymize rules declared on the model at build time"; this ADR extracts and generalizes that engine into a standalone foundation.
 - [ADR-0006](0006-abstractions-implementation-split.md) — the abstractions/implementation split applied here (`Abstractions` + `EntityFrameworkCore`).
 - [ADR-0011](0011-pii-redaction-logging-safety.md) — `[RedactData]` + `SanitizedExceptionRender` + LOG-OK/NOT-LOGGED split; the separate log-masking concern that anonymization deliberately does not replace or cross-check.
 - [Michael Nygard's ADR essay](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions) — the format this record follows.

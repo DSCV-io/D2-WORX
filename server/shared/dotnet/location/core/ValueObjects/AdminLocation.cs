@@ -14,6 +14,7 @@ using D2.Shared.Result;
 using D2.Shared.Utilities.Attributes;
 using D2.Shared.Utilities.Enums;
 using D2.Shared.Utilities.Extensions;
+using FieldConstraints = D2.Shared.Validation.Abstractions.FieldConstraints;
 
 /// <summary>
 /// Immutable administrative-hierarchy location value object: country,
@@ -99,6 +100,20 @@ public sealed record AdminLocation
         var cleanedCity = city.CleanStr();
         var cleanedPostal = postalCode.CleanStr();
 
+        // Length caps — structural floor on the post-clean stored form,
+        // matching the EF HasMaxLength guards (defense-in-depth per §9.4).
+        if (cleanedCity.Truthy() && cleanedCity!.Length > FieldConstraints.CITY_MAX)
+        {
+            return D2Result<AdminLocation>.ValidationFailed(
+                messages: [TK.Geo.Validation.CITY_TOO_LONG]);
+        }
+
+        if (cleanedPostal.Truthy() && cleanedPostal!.Length > FieldConstraints.POSTAL_CODE_MAX)
+        {
+            return D2Result<AdminLocation>.ValidationFailed(
+                messages: [TK.Geo.Validation.POSTAL_CODE_TOO_LONG]);
+        }
+
         // Coherence + auto-populate.
         var effectiveCountry = countryIso31661Alpha2Code;
         if (subdivisionIso31662Code is { } sub)
@@ -122,6 +137,8 @@ public sealed record AdminLocation
         }
 
         // Postal-code validation (only when both validator + value supplied).
+        // The length cap above is the unconditional floor; the format validator
+        // is the optional smart layer and is never invoked on an over-max value.
         var validatedPostal = cleanedPostal;
         if (cleanedPostal.Truthy() && postalCodeValidator is not null)
         {
@@ -137,8 +154,8 @@ public sealed record AdminLocation
         //   subdivision  — code-form (e.g. "US-NY").
         //   country      — code-form (alpha-2 enum name, e.g. "US").
         var hashInput =
-            StreetAddress.NormalizeForHash(cleanedCity) + "|" +
-            StreetAddress.NormalizeForHash(validatedPostal) + "|" +
+            cleanedCity.NormalizeForHash() + "|" +
+            validatedPostal.NormalizeForHash() + "|" +
             (subdivisionIso31662Code?.Value ?? string.Empty) + "|" +
             (effectiveCountry?.ToString() ?? string.Empty);
 

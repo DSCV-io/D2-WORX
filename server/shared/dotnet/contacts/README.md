@@ -2,50 +2,11 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# D2.Shared.Contacts
+# Contacts
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
-> **Status**: NOT IMPLEMENTED — tracked at [docs/v2/PHASE_1.md](../../../../docs/v2/PHASE_1.md).
+A folded owned-component contacts toolkit. The library provides composable value-object building blocks plus reusable Entity Framework Core mapping that fold into each host service's own entities and `DbContext` — it owns no database and ships no migrations.
 
-> ⚠️ **DESIGN SUPERSEDED 2026-05-30 — the body below is HISTORICAL.** The "Public API surface" and per-consuming-service-DB model described here reflect the **earlier standalone-library design**. The current design is a **folded owned-component library**: `D2.Shared.Contacts` ships value-object building blocks + reusable EF `EntityTypeBuilder` extensions that fold into each consuming service's **own** entities/`DbContext` — **no contacts DB, no repository handlers, no `AddD2Contacts(connectionString)`, library ships zero migrations**. See **[ADR-0001](../../../../docs/adrs/0001-contacts-folded-owned-component.md)** + [V2.md §5.6 (Revised)](../../../../docs/v2/V2.md). Do **not** implement from the body below; it will be rewritten when the contacts deliverable starts.
-
-## Purpose
-
-Per-consuming-service contacts library. Each consuming service owns its own contacts DB; this library provides the entity + repository handlers + EF Core migrations. Consuming services call `services.AddD2Contacts(connectionString)` to wire it up.
-
-Contacts use **UUIDv7 IDs + are immutable post-create**. UUIDs (not content-addressable) because two distinct contacts can legitimately share content (two people with the same email at different times). Immutability for caching ergonomics — "updates" are modeled as create-new + repoint-owner-reference + delete-old, so cached references stay valid forever without invalidation logic.
-
-## Public API surface
-
-- `Contact` — entity record (immutable post-create; updates = create-new + repoint + delete-old)
-- Repository handlers under `Repository/Handlers/{C,R,U,D}/`:
-  - `Create` — insert new contact (returns ID)
-  - `GetById` / `GetByIds` (batch)
-  - `Delete` (cleanup after repoint)
-- `DbContext` + EF Core migrations shipped with the library (apply on consuming service startup via `IHostedService` migrator + PG advisory lock)
-- DI registration: `services.AddD2Contacts(connectionString)` — consuming service decides where its contacts DB lives
-
-## Dependencies
-
-- `D2.Shared.Handler` (handlers inherit BaseHandler)
-- `D2.Shared.Result`
-- `D2.Shared.Utilities`
-- `Microsoft.EntityFrameworkCore` + `Npgsql.EntityFrameworkCore.PostgreSQL`
-
-## References
-
-- [`docs/dev/rules.md §9`](../../../../docs/dev/rules.md#9-architectural-layer-hygiene) — multi-replica migration safety predicate (PG advisory lock at startup) + EF migration discipline
-- [docs/PATTERNS.md](../../../../docs/PATTERNS.md) — per-consuming-service DB pattern, repository handler convention
-
-## Per-service DB convention
-
-| Consuming service  | Contacts DB                 |
-| ------------------ | --------------------------- |
-| Edge (Auth module) | `auth_contacts_db`          |
-| D2.Files           | `files_contacts_db`         |
-| D2.Courier         | `courier_contacts_db`       |
-| D2.Notifications   | `notifications_contacts_db` |
-| D2.Audit           | `audit_contacts_db`         |
-
-All on the same PG server — one server, many DBs.
+- [`core/`](core/README.md) — **`D2.Shared.Contacts`**: the six composable, self-redacting PII value objects (`Personal`, `NameAffixes`, `Demographics`, `Professional`, `EmailAddress`, `PhoneNumber`), each constructed through a `Create(...) → D2Result<T>` smart constructor.
+- [`entity-framework-core/`](entity-framework-core/README.md) — **`D2.Shared.Contacts.EntityFrameworkCore`**: per-VO complex-type and value-converter mapping helpers (`MapPersonal`, `MapProfessional`, `MapEmailAddress`, etc.) called from the host's `IEntityTypeConfiguration<T>`; wires max-length, converters, and anonymize defaults. Ships separately from `core/`.

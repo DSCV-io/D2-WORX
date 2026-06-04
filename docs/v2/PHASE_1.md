@@ -433,7 +433,7 @@ Source: CLDR + ISO 639-1 (full ~180 language catalog) + libphonenumber metadata 
 - `Longitude` (double, required, -180..+180, quantized to 5 decimals)
 - `AccuracyMeters` (double?, optional, **does NOT participate in hash** — accuracy is metadata, not identity)
 - `Geohash` (string, lazy-computed — Niemeyer base32 standard, default 11 chars ≈ 1.1m, Redis-compatible)
-- `PlusCode` (string, lazy-computed — Open Location Code, free/open Google standard, ~14m at 10 chars)
+- `PlusCode` (string, lazy-computed — Open Location Code, free/open Google standard, ~1m at 13 chars (codeLength:12))
 - Coordinate reference system: **WGS 84 / EPSG:4326** (documented in xmldoc; matches GPS, browser geolocation, PostGIS `geography(Point, 4326)`)
 - Own `HashId = "v1." + sha256(geohash)` — uses geohash as the canonical content-addressable representation (quantization + format-fixed = deterministic across .NET ↔ TS)
 

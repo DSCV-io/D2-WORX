@@ -202,11 +202,11 @@ internal sealed class AnonymizationEngine : IAnonymizationEngine
         if (isAnonymizedProp?.PropertyInfo is null)
             return (null, false, null);
 
-        var isAnonymizedResult = BuildOneSetterCall<TSource>(
+        var isAnonymizedResult = BuildOneSetterCall(
             builderParam,
             entityParam,
             setPropertyMethod,
-            isAnonymizedProp.PropertyInfo,
+            isAnonymizedProp,
             typeof(bool),
             true);
 
@@ -228,11 +228,11 @@ internal sealed class AnonymizationEngine : IAnonymizationEngine
                 _ => null,
             };
 
-            var colResult = BuildOneSetterCall<TSource>(
+            var colResult = BuildOneSetterCall(
                 builderParam,
                 entityParam,
                 setPropertyMethod,
-                col.Property.PropertyInfo,
+                col.Property,
                 col.Property.ClrType,
                 fauxValue);
 
@@ -255,15 +255,18 @@ internal sealed class AnonymizationEngine : IAnonymizationEngine
             null);
     }
 
-    private static SetterCallResult BuildOneSetterCall<TSource>(
+    private static SetterCallResult BuildOneSetterCall(
         ParameterExpression builderParam,
         ParameterExpression entityParam,
         MethodInfo setPropertyOpenMethod,
-        PropertyInfo propertyInfo,
+        IProperty efProperty,
         Type propertyClrType,
         object? value)
-        where TSource : class
     {
+        var propertyInfo = efProperty.PropertyInfo;
+        if (propertyInfo is null)
+            return SetterCallResult.Skip();
+
         // M-1: SetNull on a non-nullable value type is a misconfiguration — fail-closed.
         if (value is null
             && propertyClrType.IsValueType
@@ -278,31 +281,21 @@ internal sealed class AnonymizationEngine : IAnonymizationEngine
 
         try
         {
-            MemberExpression memberAccess;
-            if (propertyInfo.DeclaringType == typeof(TSource) ||
-                (propertyInfo.DeclaringType?.IsAssignableFrom(typeof(TSource)) == true))
-            {
-                memberAccess = Expression.Property(entityParam, propertyInfo);
-            }
-            else
-            {
-                var nav = FindNavigationToDeclaringType(
-                    typeof(TSource),
-                    propertyInfo.DeclaringType!);
-                if (nav is null)
-                    return SetterCallResult.Skip();
+            var chain = BuildNavigationChain(efProperty);
 
-                memberAccess = Expression.Property(
-                    Expression.Property(entityParam, nav),
-                    propertyInfo);
-            }
+            // Build the member-access expression by walking the navigation chain from the
+            // entity root (e.g. e.ShippingAddress.City for a two-element chain).
+            Expression current = entityParam;
+            foreach (var nav in chain)
+                current = Expression.Property(current, nav);
+            var memberAccess = Expression.Property(current, propertyInfo);
 
             var selectorLambda = Expression.Lambda(memberAccess, entityParam);
 
             var valueConst = value is null
                 ? Expression.Constant(null, propertyClrType)
                 : Expression.Constant(
-                    Convert.ChangeType(value, propertyClrType, CultureInfo.InvariantCulture),
+                    ConvertValue(value, propertyClrType, efProperty),
                     propertyClrType);
 
             var closedSetProperty = setPropertyOpenMethod.MakeGenericMethod(propertyClrType);
@@ -316,15 +309,74 @@ internal sealed class AnonymizationEngine : IAnonymizationEngine
         }
     }
 
-    private static PropertyInfo? FindNavigationToDeclaringType(Type ownerType, Type targetType)
+    /// <summary>
+    /// Builds the ordered list of CLR navigation <see cref="PropertyInfo"/> values from the
+    /// entity root down to the container that directly declares <paramref name="property"/>.
+    /// Returns an empty list when the property is declared directly on the root entity type.
+    /// Handles two nesting shapes:
+    /// <list type="bullet">
+    ///   <item>
+    ///     <strong>Complex properties</strong> (e.g. <c>Invoice.BillingAddress.City</c>):
+    ///     walks up via <c>IProperty.DeclaringType → IComplexType.ComplexProperty →
+    ///     IComplexProperty.DeclaringType</c>. Because each step follows the EF model
+    ///     navigation (not the CLR type), two navigations to the SAME complex-VO CLR type
+    ///     (e.g. <c>BillingAddress</c> and <c>ShippingAddress</c>) resolve to their correct,
+    ///     distinct <see cref="PropertyInfo"/> values.
+    ///   </item>
+    ///   <item>
+    ///     <strong>Owned entities (table-split OwnsOne)</strong>: when
+    ///     <c>IProperty.DeclaringType</c> is an <see cref="IEntityType"/> that has an
+    ///     ownership FK, walks up via the ownership
+    ///     <c>IForeignKey.DependentToPrincipal.PropertyInfo</c> chain.
+    ///   </item>
+    /// </list>
+    /// </summary>
+    private static IReadOnlyList<PropertyInfo> BuildNavigationChain(IProperty property)
     {
-        foreach (var prop in ownerType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        var reversed = new List<PropertyInfo>();
+        ITypeBase current = property.DeclaringType;
+
+        while (true)
         {
-            if (prop.PropertyType == targetType || targetType.IsAssignableFrom(prop.PropertyType))
-                return prop;
+            if (current is IComplexType complexType)
+            {
+                // Complex-property nesting: follow the owning IComplexProperty upward.
+                var nav = complexType.ComplexProperty;
+                if (nav.PropertyInfo is null)
+                    break;
+
+                reversed.Add(nav.PropertyInfo);
+                current = nav.DeclaringType;
+            }
+            else if (current is IEntityType ownedEntityType)
+            {
+                // Owned-entity nesting: follow the ownership FK upward from the dependent
+                // (owned) type to the principal (owner) type.
+                var ownership = ownedEntityType.FindOwnership();
+                if (ownership is null)
+                    break; // root entity — stop
+
+                // PrincipalToDependent is the navigation from the owner to the owned type
+                // (e.g. TierAUser.Address), which is the PropertyInfo we need to build the
+                // member-access expression (e.g. e.Address.Line1).
+                var nav = ownership.PrincipalToDependent;
+                if (nav?.PropertyInfo is null)
+                    break;
+
+                reversed.Add(nav.PropertyInfo);
+                current = ownership.PrincipalEntityType;
+            }
+            else
+            {
+                break;
+            }
         }
 
-        return null;
+        if (reversed.Count == 0)
+            return [];
+
+        reversed.Reverse();
+        return reversed;
     }
 
     private static Expression<Func<TSource, bool>> BuildOwnershipPredicate<TSource>(
@@ -418,48 +470,70 @@ internal sealed class AnonymizationEngine : IAnonymizationEngine
             return;
 
         var propInfo = property.PropertyInfo;
+        var chain = BuildNavigationChain(property);
 
-        if (propInfo.DeclaringType is not null
-            && !propInfo.DeclaringType.IsAssignableFrom(instance.GetType()))
+        // Walk down the navigation chain to reach the complex-type sub-instance that
+        // directly contains the target property. Using the EF model chain avoids the
+        // CLR-reflection-by-type heuristic that incorrectly returns the first matching
+        // navigation when an entity maps the same complex VO type more than once.
+        var subInstance = instance;
+        foreach (var nav in chain)
         {
-            var nav = FindNavigationToDeclaringType(instance.GetType(), propInfo.DeclaringType);
-            if (nav is null)
-                return;
-
-            var subInstance = nav.GetValue(instance);
+            subInstance = nav.GetValue(subInstance);
             if (subInstance is null)
                 return;
-
-            try
-            {
-                propInfo.SetValue(subInstance, ConvertValue(value, propInfo.PropertyType));
-            }
-            catch (Exception)
-            {
-                // Defensive: skip field on any CLR error
-                // (type mismatch, null on non-nullable, etc.).
-            }
-
-            return;
         }
 
         try
         {
-            propInfo.SetValue(instance, ConvertValue(value, propInfo.PropertyType));
+            propInfo.SetValue(
+                subInstance,
+                ConvertValue(value, propInfo.PropertyType, property));
         }
         catch (Exception)
         {
-            // Defensive: skip field on any CLR error.
+            // Defensive: skip field on any CLR error
+            // (type mismatch, null on non-nullable, etc.).
         }
     }
 
-    private static object? ConvertValue(object? value, Type targetType)
+    private static object? ConvertValue(
+        object? value,
+        Type targetType,
+        IProperty? property = null)
     {
         if (value is null)
             return null;
 
+        // Fast-path: value already matches the CLR property type (most columns).
         if (targetType == value.GetType() || targetType.IsAssignableFrom(value.GetType()))
             return value;
+
+        // Value-converter path: for value-converted properties (e.g. EmailAddress ↔ string)
+        // the template resolver returns the provider-side type (string). Use the EF Core
+        // type mapping's ConvertFromProviderExpression to convert back to the CLR type
+        // (e.g. EmailAddress?). This is the correct inverse of the store→CLR direction
+        // that EF applies on materialization, and avoids Convert.ChangeType which has no
+        // knowledge of custom value converters.
+        if (property is not null)
+        {
+            var converter = property.GetTypeMapping().Converter;
+            if (converter is not null)
+            {
+                try
+                {
+                    var converted = converter.ConvertFromProvider(value);
+                    if (converted is null
+                        || targetType == converted.GetType()
+                        || targetType.IsAssignableFrom(converted.GetType()))
+                        return converted;
+                }
+                catch (Exception)
+                {
+                    // Converter threw — fall through to Convert.ChangeType.
+                }
+            }
+        }
 
         return Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);
     }

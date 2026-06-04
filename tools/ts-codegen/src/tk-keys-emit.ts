@@ -56,13 +56,14 @@ function decomposeKey(
     diagnostics.push(
       diagWarning(
         DiagnosticIds.TK_INVALID_KEY,
-        `TK key '${key}' has fewer than 3 non-empty segments — skipped (mirrors .NET KeyDecomposer behavior)`,
+        `TK key '${key}' has fewer than 3 non-empty segments — skipped ` +
+          `(mirrors .NET KeyDecomposer behavior)`,
       ),
     );
     return undefined;
   }
-  const domain = segments[0];
-  const category = segments[1];
+  const domain = segments[0]!;
+  const category = segments[1]!;
   const constant = segments.slice(2).join("_").toUpperCase();
   return { domain, category, constant, key };
 }
@@ -162,21 +163,21 @@ export function emitTkKeys(catalog: MessageCatalog): EmitResult {
 
   const domainEntries = [...nested.entries()];
   for (let di = 0; di < domainEntries.length; di++) {
-    const [domain, domainMap] = domainEntries[di];
+    const [domain, domainMap] = domainEntries[di]!;
     const isLastDomain = di === domainEntries.length - 1;
     sb.appendLine(`${domain}: {`);
     sb.increaseIndent();
 
     const categoryEntries = [...domainMap.entries()];
     for (let ci = 0; ci < categoryEntries.length; ci++) {
-      const [category, categoryMap] = categoryEntries[ci];
+      const [category, categoryMap] = categoryEntries[ci]!;
       const isLastCategory = ci === categoryEntries.length - 1;
       sb.appendLine(`${category}: {`);
       sb.increaseIndent();
 
       const constantEntries = [...categoryMap.entries()];
       for (let ki = 0; ki < constantEntries.length; ki++) {
-        const [constant, key] = constantEntries[ki];
+        const [constant, key] = constantEntries[ki]!;
         const isLastConstant = ki === constantEntries.length - 1;
         sb.appendLine(
           `${constant}: "${escapeStringLiteral(key)}"${isLastConstant ? "" : ","}`,
@@ -195,7 +196,8 @@ export function emitTkKeys(catalog: MessageCatalog): EmitResult {
   sb.appendLine("} as const;");
   sb.appendLine();
   sb.appendLine(
-    "/** Convenience alias for a TK key string. Plain `string` — use `TK.*` constants for type-safe access. */",
+    "/** Convenience alias for a TK key string. Plain `string` — use `TK.*` constants" +
+      " for type-safe access. */",
   );
   sb.appendLine("export type TKKey = string;");
   sb.appendLine();

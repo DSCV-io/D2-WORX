@@ -9,6 +9,7 @@ namespace D2.Shared.Tests.Unit.Location;
 using AwesomeAssertions;
 using D2.Shared.I18n;
 using D2.Shared.Location.ValueObjects;
+using D2.Shared.Validation.Abstractions;
 using Xunit;
 
 /// <summary>
@@ -366,13 +367,210 @@ public sealed class StreetAddressTests
         result.Data!.Line1.Should().Be("A");
     }
 
+    // -----------------------------------------------------------------------
+    // Length caps — Line1 (required)
+    // -----------------------------------------------------------------------
+
     [Fact]
-    public void Create_1000CharInput_Ok_NoTimeout()
+    public void Create_Line1_ExactlyMax_ReturnsOk()
     {
-        var huge = new string('A', 1000);
-        var result = StreetAddress.Create(huge);
+        var line1 = new string('a', FieldConstraints.STREET_LINE_MAX);
+        var result = StreetAddress.Create(line1);
         result.Success.Should().BeTrue();
-        result.Data!.Line1.Length.Should().Be(1000);
+        result.Data!.Line1.Length.Should().Be(FieldConstraints.STREET_LINE_MAX);
+    }
+
+    [Fact]
+    public void Create_Line1_OverMax_ReturnsTooLong()
+    {
+        var line1 = new string('a', FieldConstraints.STREET_LINE_MAX + 1);
+        var result = StreetAddress.Create(line1);
+        result.Success.Should().BeFalse();
+        result.Messages.Should().ContainSingle()
+            .Which.Key.Should().Be(TK.Geo.Validation.STREET_LINE_TOO_LONG.Key);
+    }
+
+    // -----------------------------------------------------------------------
+    // Length caps — Line2 (optional)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Create_Line2_ExactlyMax_ReturnsOk()
+    {
+        var result = StreetAddress.Create(
+            "Valid Line 1",
+            new string('a', FieldConstraints.STREET_LINE_MAX));
+        result.Success.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Create_Line2_OverMax_ReturnsTooLong()
+    {
+        var result = StreetAddress.Create(
+            "Valid Line 1",
+            new string('a', FieldConstraints.STREET_LINE_MAX + 1));
+        result.Success.Should().BeFalse();
+        result.Messages.Should().ContainSingle()
+            .Which.Key.Should().Be(TK.Geo.Validation.STREET_LINE_TOO_LONG.Key);
+    }
+
+    // -----------------------------------------------------------------------
+    // Length caps — Line3 (optional)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Create_Line3_ExactlyMax_ReturnsOk()
+    {
+        var result = StreetAddress.Create(
+            "Valid Line 1",
+            null,
+            new string('a', FieldConstraints.STREET_LINE_MAX));
+        result.Success.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Create_Line3_OverMax_ReturnsTooLong()
+    {
+        var result = StreetAddress.Create(
+            "Valid Line 1",
+            null,
+            new string('a', FieldConstraints.STREET_LINE_MAX + 1));
+        result.Success.Should().BeFalse();
+        result.Messages.Should().ContainSingle()
+            .Which.Key.Should().Be(TK.Geo.Validation.STREET_LINE_TOO_LONG.Key);
+    }
+
+    // -----------------------------------------------------------------------
+    // Length caps — Line4 (optional)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Create_Line4_ExactlyMax_ReturnsOk()
+    {
+        var result = StreetAddress.Create(
+            "Valid Line 1",
+            null,
+            null,
+            new string('a', FieldConstraints.STREET_LINE_MAX));
+        result.Success.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Create_Line4_OverMax_ReturnsTooLong()
+    {
+        var result = StreetAddress.Create(
+            "Valid Line 1",
+            null,
+            null,
+            new string('a', FieldConstraints.STREET_LINE_MAX + 1));
+        result.Success.Should().BeFalse();
+        result.Messages.Should().ContainSingle()
+            .Which.Key.Should().Be(TK.Geo.Validation.STREET_LINE_TOO_LONG.Key);
+    }
+
+    // -----------------------------------------------------------------------
+    // Length caps — Line5 (optional)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Create_Line5_ExactlyMax_ReturnsOk()
+    {
+        var result = StreetAddress.Create(
+            "Valid Line 1",
+            null,
+            null,
+            null,
+            new string('a', FieldConstraints.STREET_LINE_MAX));
+        result.Success.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Create_Line5_OverMax_ReturnsTooLong()
+    {
+        var result = StreetAddress.Create(
+            "Valid Line 1",
+            null,
+            null,
+            null,
+            new string('a', FieldConstraints.STREET_LINE_MAX + 1));
+        result.Success.Should().BeFalse();
+        result.Messages.Should().ContainSingle()
+            .Which.Key.Should().Be(TK.Geo.Validation.STREET_LINE_TOO_LONG.Key);
+    }
+
+    // -----------------------------------------------------------------------
+    // Cap is measured on the post-clean value
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Create_Line1_RawOver_CollapsesBelowMax_ReturnsOk()
+    {
+        // Raw input > MAX but decorative punctuation strips → post-clean ≤ MAX.
+        // Build a value that's exactly STREET_LINE_MAX chars of 'a' followed by
+        // a stripped punctuation char '.' → post-clean length == STREET_LINE_MAX.
+        var line1 = new string('a', FieldConstraints.STREET_LINE_MAX) + ".";
+        var result = StreetAddress.Create(line1);
+        result.Success.Should().BeTrue();
+        result.Data!.Line1.Length.Should().Be(FieldConstraints.STREET_LINE_MAX);
+    }
+
+    // -----------------------------------------------------------------------
+    // Cap is measured on the post-clean value — Lines 2-5 (T7)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Create_Line2_RawOver_CollapsesBelowMax_ReturnsOk()
+    {
+        // Raw input > MAX but a stripped decorative punctuation char '.' appended
+        // → post-clean length == STREET_LINE_MAX → accepted.
+        var line2 = new string('a', FieldConstraints.STREET_LINE_MAX) + ".";
+        var result = StreetAddress.Create("Valid Line 1", line2);
+        result.Success.Should().BeTrue();
+        result.Data!.Line2!.Length.Should().Be(FieldConstraints.STREET_LINE_MAX);
+    }
+
+    [Fact]
+    public void Create_Line3_RawOver_CollapsesBelowMax_ReturnsOk()
+    {
+        var line3 = new string('a', FieldConstraints.STREET_LINE_MAX) + ".";
+        var result = StreetAddress.Create("Valid Line 1", null, line3);
+        result.Success.Should().BeTrue();
+        result.Data!.Line3!.Length.Should().Be(FieldConstraints.STREET_LINE_MAX);
+    }
+
+    [Fact]
+    public void Create_Line4_RawOver_CollapsesBelowMax_ReturnsOk()
+    {
+        var line4 = new string('a', FieldConstraints.STREET_LINE_MAX) + ".";
+        var result = StreetAddress.Create("Valid Line 1", null, null, line4);
+        result.Success.Should().BeTrue();
+        result.Data!.Line4!.Length.Should().Be(FieldConstraints.STREET_LINE_MAX);
+    }
+
+    [Fact]
+    public void Create_Line5_RawOver_CollapsesBelowMax_ReturnsOk()
+    {
+        var line5 = new string('a', FieldConstraints.STREET_LINE_MAX) + ".";
+        var result = StreetAddress.Create("Valid Line 1", null, null, null, line5);
+        result.Success.Should().BeTrue();
+        result.Data!.Line5!.Length.Should().Be(FieldConstraints.STREET_LINE_MAX);
+    }
+
+    // -----------------------------------------------------------------------
+    // Hash-stability regression — golden-value pin
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Create_HashId_KnownInput_MatchesGoldenValue()
+    {
+        // Pin: StreetAddress.Create("123 Main St") → hash input "123 MAIN ST||||"
+        // → SHA-256 (UTF-8) → v1.<64-hex>.
+        // If NormalizeForHash algorithm changes (either side of the forward),
+        // this test fails and prevents a silent hash-drift regression.
+        const string expected_hash =
+            "v1.e7a9181fea764351c88f38fd0bfe3644a368ce058e3f75fa0e85cc27b06bab78";
+        var result = StreetAddress.Create("123 Main St");
+        result.Data!.HashId.Should().Be(expected_hash);
     }
 
     // -----------------------------------------------------------------------

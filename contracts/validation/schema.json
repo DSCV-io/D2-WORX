@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "D2 field-constraints spec",
+  "description": "Schema for contracts/validation/field-constraints.spec.json — the source-of-truth catalog that D2.Shared.Validation.SourceGen reads to emit FieldConstraints.g.cs + Taxonomy.g.cs into D2.Shared.Validation.Abstractions, and that tools/ts-codegen/src/field-constraints-emit.ts reads to emit field-constraints.g.ts + taxonomy.g.ts into @d2/validation-abstractions. One spec carries both the shared field-constraint integer bounds (char-length caps and phone digit-count bounds) and the closed-list taxonomy enums consumed by the domain value objects (contacts + Location), the FE/BFF Zod schemas, and arbitrary backend modules.",
+  "type": "object",
+  "required": ["constraints", "enums"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "constraints": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/constraint" }
+    },
+    "enums": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/enum" }
+    }
+  },
+  "definitions": {
+    "constraint": {
+      "type": "object",
+      "required": ["name", "value", "doc"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "description": "SCREAMING_SNAKE constant name. Must be unique across constraints. Becomes the emitted public const int name on both .NET and TS."
+        },
+        "value": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The positive integer bound. Must be greater than zero."
+        },
+        "doc": {
+          "type": "string",
+          "description": "XML <summary> text rendered on the emitted .NET constant + JSDoc on the emitted TS constant."
+        }
+      }
+    },
+    "enum": {
+      "type": "object",
+      "required": ["name", "backing", "doc", "members"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$",
+          "description": "PascalCase enum type name. Must be unique across enums. Becomes the emitted enum type name (.NET) / const-object + branded type name (TS)."
+        },
+        "backing": {
+          "type": "string",
+          "enum": ["byte"],
+          "description": "Underlying numeric backing type of the .NET enum. Only byte is supported (closed lists are small)."
+        },
+        "doc": {
+          "type": "string",
+          "description": "XML <summary> text rendered on the emitted .NET enum + JSDoc on the emitted TS const-object."
+        },
+        "members": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/enumMember" }
+        }
+      }
+    },
+    "enumMember": {
+      "type": "object",
+      "required": ["name", "doc"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "description": "C# / TS identifier-safe member name. Must be unique within the enum. The wire form is the member name itself (string-wire via JsonStringEnumConverter on .NET; string-valued const-object on TS)."
+        },
+        "doc": {
+          "type": "string",
+          "description": "XML <summary> text rendered on the emitted .NET enum member + JSDoc on the emitted TS member."
+        }
+      }
+    }
+  }
+}

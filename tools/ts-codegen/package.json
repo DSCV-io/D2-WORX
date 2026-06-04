@@ -21,6 +21,7 @@
     "codegen:dlq-failure-metadata": "tsx src/dlq-failure-metadata-emit.ts",
     "codegen:encryption-frame": "tsx src/encryption-frame-emit.ts",
     "codegen:geo-abstractions": "tsx src/geo-emitter/cli.ts",
+    "codegen:field-constraints": "tsx src/field-constraints-emit.ts",
     "type-check:test": "tsc -p tsconfig.test.json"
   },
   "dependencies": {

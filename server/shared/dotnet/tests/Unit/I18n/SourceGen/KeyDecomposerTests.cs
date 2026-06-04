@@ -267,7 +267,6 @@ public sealed class KeyDecomposerTests
     [InlineData("common_validation_PHONE_INVALID")]
     [InlineData("common_validation_NON_EMPTY_LIST")]
     [InlineData("geo_validation_ip_required")]
-    [InlineData("geo_validation_month_range")]
     [InlineData("geo_validation_latitude_range")]
     [InlineData("geo_validation_address_line1_required")]
     [InlineData("auth_errors_EMAIL_ALREADY_TAKEN")]

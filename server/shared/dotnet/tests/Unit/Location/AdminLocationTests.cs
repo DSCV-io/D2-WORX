@@ -12,7 +12,9 @@ using D2.Shared.I18n;
 using D2.Shared.Location;
 using D2.Shared.Location.ValueObjects;
 using D2.Shared.Result;
+using D2.Shared.Validation.Abstractions;
 using Xunit;
+using LocationPostalCodeValidator = D2.Shared.Location.IPostalCodeValidator;
 
 /// <summary>
 /// Adversarial test coverage for <see cref="AdminLocation"/> per §7.1 matrix:
@@ -253,7 +255,7 @@ public sealed class AdminLocationTests
     }
 
     // -----------------------------------------------------------------------
-    // Regression — F-B3-1: BubbleFail propagates full upstream failure metadata
+    // Regression: BubbleFail propagates full upstream failure metadata
     //
     // Before the fix, AdminLocation used ValidationFailed(messages: ...) which
     // dropped InputErrors (and StatusCode/ErrorCode/TraceId) from the upstream
@@ -281,6 +283,114 @@ public sealed class AdminLocationTests
     }
 
     // -----------------------------------------------------------------------
+    // Length caps — City
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Create_City_ExactlyMax_ReturnsOk()
+    {
+        var result = AdminLocation.Create(city: new string('a', FieldConstraints.CITY_MAX));
+        result.Success.Should().BeTrue();
+        result.Data!.City!.Length.Should().Be(FieldConstraints.CITY_MAX);
+    }
+
+    [Fact]
+    public void Create_City_OverMax_ReturnsTooLong()
+    {
+        var result = AdminLocation.Create(city: new string('a', FieldConstraints.CITY_MAX + 1));
+        result.Success.Should().BeFalse();
+        result.Messages.Should().ContainSingle()
+            .Which.Key.Should().Be(TK.Geo.Validation.CITY_TOO_LONG.Key);
+    }
+
+    // -----------------------------------------------------------------------
+    // Cap is measured on the post-clean value — City (T8)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Create_City_RawOver_CollapsesBelowMax_ReturnsOk()
+    {
+        // Raw input is CITY_MAX chars of 'a' followed by a trailing space.
+        // CleanStr() trims trailing whitespace → post-clean length == CITY_MAX → accepted.
+        var city = new string('a', FieldConstraints.CITY_MAX) + " ";
+        var result = AdminLocation.Create(city: city);
+        result.Success.Should().BeTrue();
+        result.Data!.City!.Length.Should().Be(FieldConstraints.CITY_MAX);
+    }
+
+    // -----------------------------------------------------------------------
+    // Hash-stability regression — golden-value pin (T9)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Create_HashId_KnownInput_MatchesGoldenValue()
+    {
+        // Pin: AdminLocation.Create(CountryCode.US) →
+        //   hash input "|||US" → SHA-256(UTF-8) → v1.<64-hex>.
+        // Golden value sourced from parity-fixtures.json cases
+        // "admin-only-us-country" and "admin-country-only-us".
+        // A hash algorithm change causes this to fail and prevents silent drift.
+        const string expected_hash =
+            "v1.3e2a439dd69d750bc122573cfa99710970cdb7d95342a4aa731a0245cd946981";
+        var result = AdminLocation.Create(CountryCode.US);
+        result.Data!.HashId.Should().Be(expected_hash);
+    }
+
+    // -----------------------------------------------------------------------
+    // Length caps — PostalCode
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Create_PostalCode_ExactlyMax_ReturnsOk()
+    {
+        // POSTAL_CODE_MAX=16 — use a 16-char alphanumeric string (no validator).
+        var result = AdminLocation.Create(
+            postalCode: new string('9', FieldConstraints.POSTAL_CODE_MAX));
+        result.Success.Should().BeTrue();
+        result.Data!.PostalCode!.Length.Should().Be(FieldConstraints.POSTAL_CODE_MAX);
+    }
+
+    [Fact]
+    public void Create_PostalCode_OverMax_ReturnsTooLong()
+    {
+        var result = AdminLocation.Create(
+            postalCode: new string('9', FieldConstraints.POSTAL_CODE_MAX + 1));
+        result.Success.Should().BeFalse();
+        result.Messages.Should().ContainSingle()
+            .Which.Key.Should().Be(TK.Geo.Validation.POSTAL_CODE_TOO_LONG.Key);
+    }
+
+    // -----------------------------------------------------------------------
+    // Floor-before-validator composition
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Create_PostalCode_OverMax_WithValidator_CapFailsBeforeValidator()
+    {
+        // An over-max postal must fail with POSTAL_CODE_TOO_LONG and the
+        // validator must never be invoked — the cap is the unconditional floor.
+        var spy = new SpyPostalCodeValidator();
+        var result = AdminLocation.Create(
+            postalCode: new string('9', FieldConstraints.POSTAL_CODE_MAX + 1),
+            postalCodeValidator: spy);
+
+        result.Success.Should().BeFalse();
+        result.Messages.Should().ContainSingle()
+            .Which.Key.Should().Be(TK.Geo.Validation.POSTAL_CODE_TOO_LONG.Key);
+        spy.WasInvoked.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Create_PostalCode_ExactlyMax_WithoutValidator_ReturnsOk()
+    {
+        // A 16-char postal with no validator passes the floor and is accepted.
+        var result = AdminLocation.Create(
+            postalCode: new string('9', FieldConstraints.POSTAL_CODE_MAX));
+        result.Success.Should().BeTrue();
+        result.Data!.PostalCode!.Length.Should().Be(FieldConstraints.POSTAL_CODE_MAX);
+    }
+
+    // -----------------------------------------------------------------------
     // Stub helpers
     // -----------------------------------------------------------------------
 
@@ -291,7 +401,7 @@ public sealed class AdminLocationTests
     /// <see cref="D2Result{TData}.BubbleFail"/> rather than reconstructing a partial
     /// failure that drops <c>InputErrors</c>.
     /// </summary>
-    private sealed class StubPostalCodeValidatorWithInputErrors : IPostalCodeValidator
+    private sealed class StubPostalCodeValidatorWithInputErrors : LocationPostalCodeValidator
     {
         public D2Result<string> Validate(string? postalCode, CountryCode? countryCode = null)
             => D2Result<string>.ValidationFailed(
@@ -299,5 +409,20 @@ public sealed class AdminLocationTests
                 inputErrors: [new InputError(
                     "postalCode",
                     [TK.Geo.Validation.POSTAL_CODE_INVALID])]);
+    }
+
+    /// <summary>
+    /// Spy validator that records whether it was invoked — used to prove
+    /// that the length-cap floor fires BEFORE the validator is called.
+    /// </summary>
+    private sealed class SpyPostalCodeValidator : LocationPostalCodeValidator
+    {
+        public bool WasInvoked { get; private set; }
+
+        public D2Result<string> Validate(string? postalCode, CountryCode? countryCode = null)
+        {
+            WasInvoked = true;
+            return D2Result<string>.Ok(postalCode ?? string.Empty);
+        }
     }
 }

@@ -7,12 +7,16 @@ Copyright (c) DCSV. All rights reserved.
 > Parent: [`server/shared/dotnet/`](../../README.md)
 >
 > **Audience**: backend .NET service engineers and any consumer that depends on
-> email, phone, or postal-code validation without committing to a specific implementation.
+> email, phone, or postal-code validation, the shared field-length bounds, or the
+> name/sex taxonomy enums — without committing to a specific implementation.
 
-Interface contracts for the D² validator family. Domain code anywhere in the backend
-can take a `ProjectReference` here without pulling in a phone-number library, regex
-catalog, or DI container. The surface is intentionally minimal — three validator
-interfaces and nothing else.
+Interface contracts for the D² validator family **plus the shared field-constraints
+catalog** (codegen-emitted field-length constants + closed-list taxonomy enums). Domain
+code anywhere in the backend can take a `ProjectReference` here without pulling in a
+phone-number library, regex catalog, or DI container. This is the lowest shared
+vocabulary layer every consumer depends on — the validator interfaces, the
+`FieldConstraints` bounds that gate value-object `Create(...)` calls, and the
+`NamePrefix` / `NameSuffix` / `BiologicalSex` taxonomy enums.
 
 ## Interfaces
 
@@ -26,12 +30,52 @@ All three interfaces share the same return contract: `D2Result<string>` — norm
 value on success, `ValidationFailed` carrying structured `InputError` field diagnostics
 on failure.
 
+## Field-constraints catalog (codegen-emitted)
+
+Spec-driven from `contracts/validation/field-constraints.spec.json` via
+`D2.Shared.Validation.SourceGen` — emitted at build time into `Generated/` (committed,
+`linguist-generated`). The same spec drives the TS-side `@d2/validation-abstractions`
+catalog, so cross-language drift is structurally impossible.
+
+### `FieldConstraints` (static class of `public const int`)
+
+Field-length / digit-count bounds — generous-but-bounded; they reject garbage, never real
+human data. The value objects (contacts + Location) and the FE/BFF Zod schemas read these
+to gate `Create(...)`.
+
+| Constant | Value | Applies to |
+| --- | --- | --- |
+| `FIRST_NAME_MAX` / `MIDDLE_NAME_MAX` / `LAST_NAME_MAX` / `PREFERRED_NAME_MAX` | 255 | person name fields |
+| `COMPANY_NAME_MAX` / `JOB_TITLE_MAX` / `DEPARTMENT_MAX` | 255 | professional fields |
+| `STREET_LINE_MAX` / `CITY_MAX` | 255 | address fields |
+| `COMPANY_WEBSITE_MAX` | 2048 | raw company-website URL |
+| `AFFIX_CUSTOM_MAX` | 64 | custom name prefix / suffix |
+| `POSTAL_CODE_MAX` | 16 | postal / ZIP code |
+| `EMAIL_MAX` | 254 | email address |
+| `PHONE_E164_MAX` | 32 | raw phone-number string |
+| `PHONE_MIN_DIGITS` / `PHONE_MAX_DIGITS` | 7 / 15 | phone digit-count floor / ceiling |
+
+### Taxonomy enums (`byte`-backed, `[JsonConverter(typeof(JsonStringEnumConverter))]`)
+
+Closed-list string-wire vocabularies. The member name IS the wire form; unknown wire codes
+throw `JsonException` at the deserialization boundary (strict policy).
+
+| Enum | Members |
+| --- | --- |
+| `NamePrefix` (17) | `Mr`, `Ms`, `Miss`, `Mrs`, `Mx`, `Dr`, `Prof`, `Sir`, `Lady`, `Lord`, `RtHon`, `Rev`, `Fr`, `Pr`, `Sr`, `Elder`, `Other` |
+| `NameSuffix` (13) | `Jr`, `Sr`, `I`–`X` (ordinals), `Other` |
+| `BiologicalSex` (4) | `Male`, `Female`, `Intersex`, `Unspecified` (absence sentinel; no `Other`) |
+
+The catalog carries no localized display strings (member names are display-adequate);
+FE labels route through i18n `TK.*` keys if a picker needs them.
+
 ## Consumers
 
 - **.NET services** — inject via DI; implementations live in `D2.Shared.Validation`.
 - **Frontend parity** — the TypeScript mirror package `@d2/validation-abstractions`
-  defines the equivalent interfaces so client-side validation stays structurally
-  in sync with the server.
+  defines the equivalent interfaces AND the same codegen-emitted `FieldConstraints` + taxonomy
+  enums (with Zod schemas) so client-side validation stays structurally in sync with the
+  server.
 
 ## The postal-code twin
 
@@ -48,6 +92,9 @@ one with a `using` directive.
 - `D2.Shared.Result` — `D2Result<string>` return type for all three interfaces.
 - `D2.Shared.Geo.Abstractions` — `CountryCode` parameter on `IPhoneValidator` and
   `IPostalCodeValidator`.
+- `D2.Shared.Validation.SourceGen` (analyzer; `ReferenceOutputAssembly="false"`,
+  `PrivateAssets="all"`) — emits the `FieldConstraints` + taxonomy catalog at build time;
+  no runtime closure impact.
 
 Zero DI / implementation / IO dependencies. This is the vocabulary slice every
 consumer depends on.

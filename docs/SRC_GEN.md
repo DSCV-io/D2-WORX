@@ -25,6 +25,7 @@ both .NET (Roslyn `IIncrementalGenerator`) and TypeScript (`tools/ts-codegen`).
   - [§2.3. Output shape](#23-output-shape)
   - [§2.4. Example walkthrough — auth-error-codes](#24-example-walkthrough--auth-error-codes)
 - [§2.5. Geo source-gen — multi-target dispatch across two assemblies and two TS packages](#25-geo-source-gen--multi-target-dispatch-across-two-assemblies-and-two-ts-packages)
+- [§2.6. Field-constraints source-gen — cross-language length caps + taxonomy enums](#26-field-constraints-source-gen--cross-language-length-caps--taxonomy-enums)
 - [§3. Adding a new spec-driven catalog](#3-adding-a-new-spec-driven-catalog)
 - [References](#references)
 
@@ -134,6 +135,7 @@ abbreviation, 3-digit number). Examples currently in use:
 | gRPC trailers        | `D2GT`   | `result/grpc-trailers-source-gen`            |
 | In-process keys      | `D2IPK`  | `encryption/in-process-keys-source-gen`      |
 | Geo catalogs         | `D2GEO`  | `geo/source-gen`                             |
+| Field constraints    | `D2FC`   | `validation/source-gen`                      |
 
 Diagnostic IDs are declared in two parallel files:
 
@@ -569,6 +571,59 @@ The TS side mirrors the .NET emitter structure under `tools/ts-codegen/src/geo-e
 | `geo-wrapper-structs.parity.test.ts` | Fixture from `GeoWrapperStructsFixtureEmitter` — known codes for the three wrapper struct types |
 | `geo-catalog.parity.test.ts` | Fixture from `GeoCatalogFixtureEmitter` — `CatalogVersion` + `CatalogPublishedAt` byte shape |
 | `geo-name-resolver.parity.test.ts` | `contracts/geo/fixtures/confusables.fixture.json` — name-resolver four-pass output across a shared confusables corpus |
+
+---
+
+## §2.6. Field-constraints source-gen — cross-language length caps + taxonomy enums
+
+The field-constraints catalog is the shared source of truth for all field-length and digit-count bounds plus three contact-domain taxonomy enumerations. It is the smallest cross-language codegen pipeline in the codebase — one spec, two target languages, one .NET target assembly, one TS package.
+
+### Spec input
+
+`contracts/validation/field-constraints.spec.json` — two arrays:
+
+| Array | Contains |
+|---|---|
+| `constraints` | `{ name, value, doc }` entries for char-length caps (`FIRST_NAME_MAX`, `EMAIL_MAX`, `PHONE_E164_MAX`, `POSTAL_CODE_MAX`, …) and digit-count bounds (`PHONE_MIN_DIGITS`, `PHONE_MAX_DIGITS`) |
+| `enums` | `{ name, backing, doc, members[] }` entries for the three closed-list taxonomy enums (`NamePrefix`, `NameSuffix`, `BiologicalSex`); each member is `{ name, doc }` |
+
+### .NET emitter (`D2.Shared.Validation.SourceGen`)
+
+`server/shared/dotnet/validation/source-gen/` — Roslyn `IIncrementalGenerator`, `netstandard2.0`, `D2FC` diagnostic prefix, single-target dispatch (`AssemblyName == "D2.Shared.Validation.Abstractions"`).
+
+Emits two files into `validation/abstractions/Generated/`:
+
+| Output file | Contents |
+|---|---|
+| `FieldConstraints.g.cs` | `public static class FieldConstraints` — one `public const int` per `constraints` entry |
+| `Taxonomy.g.cs` | Three `byte`-backed `enum` types with `[JsonConverter(typeof(JsonStringEnumConverter))]` — one per `enums` entry; member names are the wire values |
+
+### TypeScript emitter
+
+`tools/ts-codegen/src/field-constraints-emit.ts` — mirrors the .NET pattern (mtime short-circuit, byte-equal atomic write, `--force` flag). Emits into `server/shared/typescript/validation/abstractions/src/generated/`:
+
+| Output file | Contents |
+|---|---|
+| `field-constraints.g.ts` | `export const FieldConstraints = { ... } as const` — one entry per `constraints` item |
+| `taxonomy.g.ts` | Three `as const` enum objects + branded types + Zod `z.enum([...])` schemas — one per `enums` item |
+
+### Diagnostic IDs (`D2FC`)
+
+| ID | Trigger |
+|---|---|
+| `D2FC001` | Malformed JSON or schema violation |
+| `D2FC002` | Duplicate constraint name |
+| `D2FC003` | Constraint name is empty / whitespace / not SCREAMING_SNAKE |
+| `D2FC004` | Constraint value is not a positive integer |
+| `D2FC005` | Duplicate enum name |
+| `D2FC006` | Enum name is empty or not a valid PascalCase C# identifier |
+| `D2FC007` | Enum declares an empty members list |
+| `D2FC008` | Two members of the same enum share the same name |
+| `D2FC009` | Enum member name is empty or not a valid C# identifier |
+
+### Consumers
+
+`D2.Shared.Contacts` VO `Create` factories + `D2.Shared.Location` VO `Create` factories consume `FieldConstraints.*` for length-cap enforcement. `@d2/validation-abstractions` Zod schemas + frontend form validators consume the TS equivalents. Taxonomy enums are used by `D2.Shared.Contacts.ValueObjects.NameAffixes` and `Demographics`.
 
 ---
 

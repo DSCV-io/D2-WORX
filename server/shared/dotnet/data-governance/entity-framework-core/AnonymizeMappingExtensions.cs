@@ -16,16 +16,17 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 /// <summary>
 /// C# 14 fluent extension methods that write the <c>D2:Anonymize</c> EF Core
 /// model annotation onto entity scalar properties, owned-navigation sub-properties,
-/// and complex-type sub-properties.
+/// complex-type sub-properties, and complex-type member columns reached via
+/// <c>cp.Property(lambda)</c>.
 /// </summary>
 /// <remarks>
 /// <para>
 /// Each method writes an <see cref="AnonymizationRule"/> produced by
-/// <see cref="AnonymizationRule.Create"/> via the public
-/// <see cref="Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder.HasAnnotation"/>
-/// API (Explicit configuration source). Explicit source means a fluent call overrides any
-/// <see cref="AnonymizableAttribute"/>-derived annotation on the same property, because the
-/// EF Core config-source precedence is Convention &lt; DataAnnotation &lt; Explicit.
+/// <see cref="AnonymizationRule.Create"/> via each builder's public
+/// <c>HasAnnotation</c> API (Explicit configuration source). Explicit source means a
+/// fluent call overrides any <see cref="AnonymizableAttribute"/>-derived annotation on the
+/// same property, because the EF Core config-source precedence is
+/// Convention &lt; DataAnnotation &lt; Explicit.
 /// </para>
 /// <para>
 /// <strong>Guard contract:</strong> null builder or selector arguments produce
@@ -132,6 +133,142 @@ public static class AnonymizeMappingExtensions
         /// <paramref name="template"/> is empty or whitespace-only.
         /// </exception>
         public PropertyBuilder<TProperty> AnonymizeTemplate(string template)
+        {
+            // Guards use BCL exceptions — fluent API rejects null at model-build time.
+            ArgumentNullException.ThrowIfNull(builder);
+            ArgumentNullException.ThrowIfNull(template);
+            return builder.HasAnnotation(
+                AnonymizationAnnotations.ANONYMIZE,
+                AnonymizationRule.Create(AnonymizeKind.Template, template: template));
+        }
+    }
+
+    // =========================================================================
+    // ComplexTypePropertyBuilder<TProperty> — complex-type member columns
+    // (no-selector; caller already holds the member builder from cp.Property(lambda))
+    // =========================================================================
+    extension<TProperty>(ComplexTypePropertyBuilder<TProperty> builder)
+    {
+        /// <summary>
+        /// Declares that this complex-type member column is overwritten with a fixed tombstone
+        /// string on subject erasure. Writes a <c>D2:Anonymize</c> annotation carrying
+        /// <see cref="AnonymizeKind.Constant"/> with <paramref name="constant"/> as the value.
+        /// </summary>
+        /// <param name="constant">
+        /// The fixed tombstone string (e.g. <c>"[deleted]"</c>). An empty string is accepted
+        /// and stored as <c>Constant("")</c> — the engine treats it identically to
+        /// <see cref="AnonymizeKind.SetEmpty"/> at apply-time, but they remain distinct rules
+        /// for divergence detection.
+        /// </param>
+        /// <returns>The same <paramref name="builder"/> for fluent chaining.</returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="builder"/> or <paramref name="constant"/> is
+        /// <see langword="null"/>.
+        /// </exception>
+        /// <remarks>
+        /// This overload targets <see cref="ComplexTypePropertyBuilder{TProperty}"/>, which EF
+        /// Core returns from <c>cp.Property(lambda)</c> after the member has already been mapped.
+        /// Because EF Core only hands you a <c>ComplexTypePropertyBuilder&lt;T&gt;</c> for an
+        /// already-mapped member, a <c>[NotMapped]</c> guard is not needed here — calling
+        /// <c>cp.Property(x =&gt; x.NotMappedMember)</c> itself throws upstream in EF before
+        /// this overload is ever reached. Use the
+        /// <see cref="ComplexPropertyBuilder{TComplex}"/>-receiver overload when you hold the
+        /// complex builder and want to pass a member-selector lambda directly.
+        /// </remarks>
+        public ComplexTypePropertyBuilder<TProperty> Anonymize(string constant)
+        {
+            // Guards use BCL exceptions — fluent API rejects null at model-build time.
+            ArgumentNullException.ThrowIfNull(builder);
+            ArgumentNullException.ThrowIfNull(constant);
+            return builder.HasAnnotation(
+                AnonymizationAnnotations.ANONYMIZE,
+                AnonymizationRule.Create(AnonymizeKind.Constant, constantValue: constant));
+        }
+
+        /// <summary>
+        /// Declares that this complex-type member column is overwritten with
+        /// <see langword="null"/> on subject erasure. Writes a <c>D2:Anonymize</c> annotation
+        /// carrying <see cref="AnonymizeKind.SetNull"/>.
+        /// </summary>
+        /// <returns>The same <paramref name="builder"/> for fluent chaining.</returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="builder"/> is <see langword="null"/>.
+        /// </exception>
+        /// <remarks>
+        /// <para>
+        /// The target column must be nullable; decorating a non-nullable column with this method
+        /// is a misuse that the anonymization engine will reject at runtime (validator rule V7).
+        /// </para>
+        /// <para>
+        /// This overload targets <see cref="ComplexTypePropertyBuilder{TProperty}"/> (returned
+        /// by <c>cp.Property(lambda)</c>). A <c>[NotMapped]</c> guard is not needed — EF Core
+        /// throws upstream before an unmapped member reaches this overload.
+        /// </para>
+        /// </remarks>
+        public ComplexTypePropertyBuilder<TProperty> AnonymizeNull()
+        {
+            // Guards use BCL exceptions — fluent API rejects null at model-build time.
+            ArgumentNullException.ThrowIfNull(builder);
+            return builder.HasAnnotation(
+                AnonymizationAnnotations.ANONYMIZE,
+                AnonymizationRule.Create(AnonymizeKind.SetNull));
+        }
+
+        /// <summary>
+        /// Declares that this complex-type member column is overwritten with an empty string on
+        /// subject erasure. Writes a <c>D2:Anonymize</c> annotation carrying
+        /// <see cref="AnonymizeKind.SetEmpty"/>.
+        /// </summary>
+        /// <returns>The same <paramref name="builder"/> for fluent chaining.</returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="builder"/> is <see langword="null"/>.
+        /// </exception>
+        /// <remarks>
+        /// <para>
+        /// The target column must be string-typed; decorating a non-string column with this
+        /// method is a misuse that the anonymization engine will reject at runtime.
+        /// </para>
+        /// <para>
+        /// This overload targets <see cref="ComplexTypePropertyBuilder{TProperty}"/> (returned
+        /// by <c>cp.Property(lambda)</c>). A <c>[NotMapped]</c> guard is not needed — EF Core
+        /// throws upstream before an unmapped member reaches this overload.
+        /// </para>
+        /// </remarks>
+        public ComplexTypePropertyBuilder<TProperty> AnonymizeEmpty()
+        {
+            // Guards use BCL exceptions — fluent API rejects null at model-build time.
+            ArgumentNullException.ThrowIfNull(builder);
+            return builder.HasAnnotation(
+                AnonymizationAnnotations.ANONYMIZE,
+                AnonymizationRule.Create(AnonymizeKind.SetEmpty));
+        }
+
+        /// <summary>
+        /// Declares that this complex-type member column is overwritten with a computed tombstone
+        /// on subject erasure. Writes a <c>D2:Anonymize</c> annotation carrying
+        /// <see cref="AnonymizeKind.Template"/> with <paramref name="template"/> as the
+        /// interpolation pattern.
+        /// </summary>
+        /// <param name="template">
+        /// The interpolation template. Tokens of the form <c>{FieldName}</c> are resolved against
+        /// sibling properties on the same entity at erasure time. Must be non-null and
+        /// non-whitespace.
+        /// </param>
+        /// <returns>The same <paramref name="builder"/> for fluent chaining.</returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="builder"/> or <paramref name="template"/> is
+        /// <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// Propagated from <see cref="AnonymizationRule.Create"/> when
+        /// <paramref name="template"/> is empty or whitespace-only.
+        /// </exception>
+        /// <remarks>
+        /// This overload targets <see cref="ComplexTypePropertyBuilder{TProperty}"/> (returned
+        /// by <c>cp.Property(lambda)</c>). A <c>[NotMapped]</c> guard is not needed — EF Core
+        /// throws upstream before an unmapped member reaches this overload.
+        /// </remarks>
+        public ComplexTypePropertyBuilder<TProperty> AnonymizeTemplate(string template)
         {
             // Guards use BCL exceptions — fluent API rejects null at model-build time.
             ArgumentNullException.ThrowIfNull(builder);

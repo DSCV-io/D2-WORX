@@ -37,17 +37,23 @@ Directory of the load-bearing patterns + cross-cutting conventions every D²-WOR
 25. [Health checks](#health-checks)
 26. [PII redaction — `[RedactData]`](#pii-redaction--redactdata)
 27. [Anonymization — `[Anonymizable]` decoration + tiered reflection engine](#anonymization--anonymizable-decoration--tiered-reflection-engine)
-28. [Spec-driven codegen — the cross-cutting pattern](#spec-driven-codegen--the-cross-cutting-pattern)
-29. [Domain validation — smart-constructor pattern](#domain-validation--smart-constructor-pattern)
-30. [Input validation](#input-validation)
-31. [Reference data](#reference-data)
+28. [Contact value objects](#contact-value-objects)
+29. [EF VO mapping — complex types + value converters](#ef-vo-mapping--complex-types--value-converters)
+30. [EF Core 10 complex-member-index limitation + `CreateD2Index`](#ef-core-10-complex-member-index-limitation--created2index)
+31. [Field-constraints codegen catalog](#field-constraints-codegen-catalog)
+32. [Spec-driven codegen — the cross-cutting pattern](#spec-driven-codegen--the-cross-cutting-pattern)
+33. [Domain validation — smart-constructor pattern](#domain-validation--smart-constructor-pattern)
+34. [Input validation](#input-validation)
+35. [Module-scoped cache-aside (build-once immutable static data)](#module-scoped-cache-aside-build-once-immutable-static-data)
+36. [Namespace-disambiguated extensions over a shared receiver](#namespace-disambiguated-extensions-over-a-shared-receiver)
+37. [Reference data](#reference-data)
     - [Endonym discipline](#endonym-discipline)
     - [Typed geo catalogs](#typed-geo-catalogs)
     - [Typed access on IRequestContext](#typed-access-on-irequestcontext)
     - [Geo name resolution at the integration boundary](#geo-name-resolution-at-the-integration-boundary)
     - [Reference data — user-preference cascades](#reference-data--user-preference-cascades)
-32. [Hash composition](#hash-composition)
-33. [Anti-patterns to actively avoid](#anti-patterns-to-actively-avoid)
+38. [Hash composition](#hash-composition)
+39. [Anti-patterns to actively avoid](#anti-patterns-to-actively-avoid)
 
 ---
 
@@ -539,7 +545,7 @@ string? locationHash = ComposeLocationHash.Compose(coords, street, admin);
 // `locationHash` is null only when all three inputs are null (location is absent).
 ```
 
-`WhoIs` follows the same content-addressable pattern with a single aggregate factory. See the per-lib READMEs for the full surface ([D2.Shared.Location](../server/shared/dotnet/location/README.md)).
+`WhoIs` follows the same content-addressable pattern with a single aggregate factory. See the per-lib READMEs for the full surface ([D2.Shared.Location](../server/shared/dotnet/location/core/README.md)).
 
 ---
 
@@ -585,7 +591,7 @@ At-rest subject-keyed PII overwrite (GDPR right-to-erasure): on user/org deletio
 | `[Anonymizable("tombstone")]` | `Constant("tombstone")` — fixed developer string |
 | `[Anonymizable(template: "deletedUser{UserId}@deleted.user.dcsv.io")]` | `Template` — `{FieldName}` sibling interpolation; `Guid` values rendered without dashes |
 
-**Fluent path** — `Anonymize*` block-form extensions on `PropertyBuilder<T>`, `OwnedNavigationBuilder<TOwner, TDependent>`, and `ComplexPropertyBuilder<T>`. This is the **universal** path and the **only** path for foreign VOs — types the consuming service does not own and cannot annotate (e.g., `D2.Shared.Location` types, Contacts VOs).
+**Fluent path** — `Anonymize*` block-form extensions on `PropertyBuilder<T>`, `OwnedNavigationBuilder<TOwner, TDependent>`, `ComplexPropertyBuilder<T>`, and `ComplexTypePropertyBuilder<T>` (the type returned by `cp.Property(lambda)` inside a `ComplexProperty` callback — the "receiver-is-the-property" form used when you already hold the member builder). This is the **universal** path and the **only** path for foreign VOs — types the consuming service does not own and cannot annotate (e.g., `D2.Shared.Location` types, Contacts VOs).
 
 ```csharp
 model.Entity<User>()
@@ -629,6 +635,108 @@ Opt out for test hosts only: `DATA_GOVERNANCE__SKIPMODELVALIDATION=true`.
 **DI**: `services.AddD2DataGovernance(configuration)` — one call registers `IAnonymizationEngine`, `AnonymizationEngineOptions` (section `DATA_GOVERNANCE`), and the validator hosted service.
 
 Canonical references: [`data-governance/abstractions/README.md`](../server/shared/dotnet/data-governance/abstractions/README.md) (markers, attribute, rule, engine seam) · [`data-governance/entity-framework-core/README.md`](../server/shared/dotnet/data-governance/entity-framework-core/README.md) (full fluent API, options, DI, guard rules) · [ADR-0015](adrs/0015-anonymization-data-governance.md).
+
+---
+
+## Contact value objects
+
+`D2.Shared.Contacts` ships six composable, self-redacting PII value objects. Each is constructed through a `Create(...) → D2Result<T>` smart constructor that applies a dumb structural floor (length caps from the `FieldConstraints` catalog, shape / coherence rules) before constructing the record. Email and phone additionally accept an optional caller-injected smart validator (`IEmailValidator` / `IPhoneValidator`); when omitted, the structural floor applies.
+
+| VO | Key fields | Notes |
+|---|---|---|
+| `Personal` | `FirstName` (req), `MiddleName?`, `LastName?`, `PreferredName?`, `HashId` | `HashId` = `"v1." + SHA-256` over First/Middle/Last — correlation, NOT dedup; PreferredName excluded for digest stability |
+| `NameAffixes` | `Prefix?` (`NamePrefix`), `PrefixCustom?`, `Suffix?` (`NameSuffix`), `SuffixCustom?` | Custom required iff enum is `Other`; all-null rejected |
+| `Demographics` | `DateOfBirth?` (`DateOnly`), `BiologicalSex?` | All-null rejected; DOB not in future, not > 150 years past |
+| `Professional` | `CompanyName` (req), `JobTitle?`, `Department?`, `CompanyWebsite?` (`Uri`) | No `HashId` |
+| `EmailAddress` | `Value` | Floor: trim + lowercase + shape check + length cap; validator: bubbled verbatim |
+| `PhoneNumber` | `Value` | Floor: digits only, 7–15 digits, raw-length cap; validator: bubbled (typically E.164) |
+
+All PII properties carry `[RedactData(Reason = RedactReason.PersonalInformation)]` — self-redacting in Serilog logs. `Personal.HashId` is visible (one-way digest, correlation-safe). Address fields reuse the `D2.Shared.Location` VOs directly — no new address VO.
+
+Canonical reference: [`contacts/core/README.md`](../server/shared/dotnet/contacts/core/README.md).
+
+---
+
+## EF VO mapping — complex types + value converters
+
+The folded owned-component model (ADR-0001) maps contact and location VOs into their host entities with zero EF references on the domain types. The mechanism splits by VO shape:
+
+- **Multi-field VOs → EF complex types** (`ComplexProperty`). Members become first-class queryable columns with clean JOIN-free SQL. The host calls a per-VO helper inside a `b.ComplexProperty(p => p.Name, cp => …)` callback:
+
+  ```csharp
+  // Host infra IEntityTypeConfiguration<Person> — illustrative.
+  b.ComplexProperty(p => p.Name, cp => cp.MapPersonal());
+  b.ComplexProperty(p => p.Location, cp => cp.MapAdminLocation());
+  ```
+
+  Each helper wires member value converters, applies `HasMaxLength` from `FieldConstraints`, and writes per-field anonymize defaults via the `D2.Shared.DataGovernance.EntityFrameworkCore` fluent API in one call.
+
+- **Single-value VOs → EF value converters**. One column, native unique index, root-scoped anonymize templates. The helper returns a coupling object:
+
+  ```csharp
+  b.MapEmailAddress(p => p.Email)
+   .Unique("deletedUser{UserId}@deleted.user.dcsv.io");  // unique index + template
+  ```
+
+  **"Unique-without-a-template" is unrepresentable.** There is no parameterless `.Unique()` — the type system removes the footgun. A static tombstone would collide on a unique column; requiring a `{Token}` ensures per-row-distinct values on erasure.
+
+- **Same-VO-type-twice** (e.g., legal name + maiden name `Personal`, billing + shipping `AdminLocation`) works natively: call the helper twice via two distinct host-property selectors. EF Core 10 prefixes columns by the owning-property path (`LegalName_FirstName` vs `MaidenName_FirstName`). The helpers never call `HasColumnName`, which preserves this automatic uniquification.
+
+Available helpers — **Contacts** (`D2.Shared.Contacts.EntityFrameworkCore`): `MapPersonal`, `MapNameAffixes`, `MapDemographics`, `MapProfessional` (complex), `MapEmailAddress`, `MapPhoneNumber` (value converter). **Location** (`D2.Shared.Location.EntityFrameworkCore`): `MapStreetAddress`, `MapAdminLocation`, `MapCoordinates` (complex; `SubdivisionCode`/`CountryCode` converters encapsulated in `MapAdminLocation`; Coordinates tombstones on erasure).
+
+Canonical references: [`contacts/entity-framework-core/README.md`](../server/shared/dotnet/contacts/entity-framework-core/README.md) · [`location/entity-framework-core/README.md`](../server/shared/dotnet/location/entity-framework-core/README.md).
+
+---
+
+## EF Core 10 complex-member-index limitation + `CreateD2Index`
+
+> **User-flagged footgun.** This is not a gap in the toolkit — it is a documented EF Core 10 limitation. Consumers who need an index on a `ComplexProperty` member column must use the recipe below.
+
+**The limitation.** In EF Core 10, model-aware indexes on `ComplexProperty` member columns are not expressible via the fluent API:
+
+- `HasIndex(u => u.Vo.Member)` — throws "not a valid member-access expression" at model-build time.
+- `HasIndex("Vo_Member")` — throws (shadow property needs a declared type; EF won't accept it for a complex-type member column).
+- Metadata `AddIndex([complexMemberProp])` + a finalizing convention — **silently discarded** at finalization (`"index properties … not declared on the entity type"`); `IMigrationsModelDiffer` emits **zero** `CreateIndexOperation`.
+
+The only EF-10 path is a raw `migrationBuilder.CreateIndex(name, table, "Vo_Member")` line in the host migration — **model-unaware** (the host owns the index lifecycle; EF 10 does not know about it).
+
+**The toolkit workaround — `CreateD2Index`.** `D2.Shared.EntityFrameworkCore` ships a typed `MigrationBuilder` extension:
+
+```csharp
+// In the host's Up() migration method.
+migrationBuilder.CreateD2Index<Person>(
+    table: "persons",
+    member: u => u.Name.FirstName,
+    unique: false);
+// Derives column name "Name_FirstName" from the expression — no magic string.
+```
+
+`CreateD2Index<TEntity>(table, member, name?, unique?)` derives the `{ComplexProp}_{Member}` column name from the typed selector expression, emits a `CreateIndexOperation`, and keeps the migration line type-safe.
+
+**EF 11 makes `HasIndex(u => u.Vo.Member)` native** (issue [#31246](https://github.com/dotnet/efcore/issues/31246), milestone 11.0.0 — merged 2026-05-19, shipping ~Nov 2026). When EF 11 is adopted, the `CreateD2Index` migration lines can be replaced with fluent `HasIndex` plus a one-time reconciliation migration. This is a tracked follow-up.
+
+Value-converter indexes and complex-member _queries_ have **no such limitation**.
+
+Canonical reference: [`entity-framework-core/README.md`](../server/shared/dotnet/entity-framework-core/README.md).
+
+---
+
+## Field-constraints codegen catalog
+
+A spec-driven catalog (`contracts/validation/field-constraints.spec.json`) emits shared field-length constants and three taxonomy enums to both .NET and TypeScript — one source of truth for field-size caps and closed-list enumerations.
+
+**What it emits:**
+
+- `FieldConstraints` — `public const int` caps consumed by VO `Create` gates, Location VOs, and frontend Zod schemas (e.g., `FIRST_NAME_MAX`, `EMAIL_MAX`, `POSTAL_CODE_MAX`, `PHONE_MIN_DIGITS`).
+- `NamePrefix` / `NameSuffix` / `BiologicalSex` — `byte`-backed, string-wire taxonomy enums with `[JsonConverter(typeof(JsonStringEnumConverter))]`.
+
+**.NET target** — emitted into `D2.Shared.Validation.Abstractions` by `validation/source-gen/` (Roslyn `IIncrementalGenerator`, `D2FC` diagnostic prefix, single-target dispatch gated on `AssemblyName == "D2.Shared.Validation.Abstractions"`). Files land in `validation/abstractions/Generated/`.
+
+**TypeScript target** — emitted into `@d2/validation-abstractions` by `tools/ts-codegen/src/field-constraints-emit.ts`. Files land in `server/shared/typescript/validation/abstractions/src/generated/`.
+
+**Consumers:** `D2.Shared.Contacts` VO `Create` factories; `D2.Shared.Location` VO `Create` factories; `@d2/validation-abstractions` Zod schemas; frontend form validators.
+
+Canonical references: [SRC_GEN.md](SRC_GEN.md) · [`validation/abstractions/README.md`](../server/shared/dotnet/validation/abstractions/README.md).
 
 ---
 

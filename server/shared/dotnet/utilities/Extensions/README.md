@@ -10,7 +10,7 @@ The most-used surface in the lib. Boundary-check helpers (`Truthy`/`Falsey`/`ToN
 
 | File                                                     | Contents                                                                                                                                                                                                                                                                           |
 | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `StringExtensions.cs`                                    | `Truthy()` / `Falsey()` / `ToNullIfEmpty()` / `CleanStr()` / `CleanDisplayStr()` / `TryParseEmail()` / `TryParsePhoneNumber()` / `GetNormalizedStrForHashing()`.                                                                                                                   |
+| `StringExtensions.cs`                                    | `Truthy()` / `Falsey()` / `ToNullIfEmpty()` / `CleanStr()` / `CleanDisplayStr()` / `TryParseEmail()` / `TryParsePhoneNumber()` / `GetNormalizedStrForHashing()` / `NormalizeForHash()`.                                                                                             |
 | `EnumerableExtensions.cs`                                | `Truthy()` / `Falsey()` for `IEnumerable<T>?` + the `Clean()` helper with configurable empty/null behavior.                                                                                                                                                                        |
 | `CleanEnumEmptyBehavior.cs`, `CleanValueNullBehavior.cs` | Behavior enums for `EnumerableExtensions.Clean()`.                                                                                                                                                                                                                                 |
 | `GuidExtensions.cs`                                      | `Truthy()` / `Falsey()` for `Guid` and `Guid?` (treats `Guid.Empty` as falsey) PLUS `string?.TryParseTruthyNull(out Guid?)` — the canonical "parse a Guid from optional string input, collapse missing/unparseable/empty to null" helper.                                          |
@@ -188,6 +188,27 @@ new string?[] { " Test One ", "   ", "TEST3" }.GetNormalizedStrForHashing()
 new string?[] { null, "", "  " }.GetNormalizedStrForHashing()
 // "||"
 ```
+
+## Hash-input normalization — `NormalizeForHash()`
+
+Produces the canonical single-string hash-input form used for cross-script correlation digests: case-fold to uppercase → NFD-decompose → keep only Unicode Letter + Decimal-digit code points (any script) + single ASCII spaces. Diacritic-/case-/punctuation-equivalent inputs collapse to byte-identical output, so a SHA-256 of the result is a stable cross-script correlation key.
+
+```csharp
+"Café".NormalizeForHash()          // "CAFE"
+"café".NormalizeForHash()          // "CAFE"  — same as above
+"JOSÉ".NormalizeForHash()          // "JOSE"
+"O'Neil-Jr.".NormalizeForHash()    // "ONEILJR"  — punct/symbols dropped
+"Иван".NormalizeForHash()          // "ИВАН"  — Cyrillic kept
+"日本語".NormalizeForHash()         // "日本語"  — CJK kept (caseless)
+"💥".NormalizeForHash()            // ""  — Symbol → dropped
+((string?)null).NormalizeForHash() // ""  — falsey → empty
+```
+
+**Stage-2-only contract.** This method does NOT trim or collapse internal whitespace. Leading, trailing, and multi-space runs survive unchanged. Callers that need whitespace normalization should apply `CleanStr()` (or equivalent stage-1 cleaning) before calling `NormalizeForHash()`. The stage-2-only shape is intentional: it keeps this helper byte-identical to the stage-2 normalizer used in Location's address hashing, so downstream callers that pre-clean their own way can forward to this single implementation without divergence.
+
+**Purpose** — the canonical cross-script hash-input form for domain value objects that compute correlation `HashId` values (address-line and personal-name normalizers). Each caller applies its own stage-1 cleaning before calling this. Whitespace-only input is caught by the internal `Falsey()` guard and returns `string.Empty`.
+
+**Relationship to `GetNormalizedStrForHashing()`** — these are two distinct algorithms with different purposes. `GetNormalizedStrForHashing(string?[])` joins multiple parts with `|` after lowercasing + whitespace-collapse (a composite-key lowercaser). `NormalizeForHash(string?)` operates on a single value with diacritic stripping + Unicode-category filter (a cross-script dedup canonicalizer). They are not interchangeable.
 
 ## Enumerable cleaning — `Clean()`
 

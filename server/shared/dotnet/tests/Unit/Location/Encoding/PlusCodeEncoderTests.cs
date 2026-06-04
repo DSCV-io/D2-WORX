@@ -145,8 +145,8 @@ public sealed class PlusCodeEncoderTests
     }
 
     // -----------------------------------------------------------------------
-    // §2.1 Regression tests — F-A2-1 closure.
-    // Pins the FULL_PAIRS = 4 invariant + Decode pair-count derivation.
+    // Regression tests: pins the FULL_PAIRS = 4 invariant + Decode pair-count
+    // derivation.
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -184,5 +184,40 @@ public sealed class PlusCodeEncoderTests
         // Re-encode the center and confirm idempotency (proves pair-count invariant on both sides).
         var reEncoded = PlusCodeEncoder.Encode(decodedLat, decodedLon, codeLength: 10);
         reEncoded.Should().Be(code);
+    }
+
+    // -----------------------------------------------------------------------
+    // §1.1 Production codeLength:12 — direct coverage (pins 13-char output + round-trip)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Encode_CodeLength12_ProducesTotalLength13_WithSuffix4()
+    {
+        // codeLength=12 is the production setting in Coordinates.BuildFromLatLon.
+        // 8 pair digits + '+' + 4 grid digits = 13 chars total; suffix (after '+') = 4.
+        const int expected_total_length = 13;
+        const int expected_suffix_length = 4;
+        const double lat = 40.7128;
+        const double lon = -74.006;
+
+        var code = PlusCodeEncoder.Encode(lat, lon, codeLength: 12);
+
+        code.Length.Should().Be(expected_total_length);
+        var plusIdx = code.IndexOf('+');
+        code[(plusIdx + 1)..].Length.Should().Be(expected_suffix_length);
+    }
+
+    [Fact]
+    public void Encode_ThenDecode_CodeLength12_ReturnsCoordinatesWithinError()
+    {
+        // Round-trip at the production codeLength=12 — mirrors the codeLength:10 test above.
+        const double lat = 40.7128;
+        const double lon = -74.006;
+
+        var code = PlusCodeEncoder.Encode(lat, lon, codeLength: 12);
+        var (decodedLat, decodedLon, latErr, lonErr) = PlusCodeEncoder.Decode(code);
+
+        Math.Abs(decodedLat - lat).Should().BeLessThanOrEqualTo(latErr * 4);
+        Math.Abs(decodedLon - lon).Should().BeLessThanOrEqualTo(lonErr * 4);
     }
 }

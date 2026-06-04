@@ -32,6 +32,10 @@ internal sealed class GovDbContext : DbContext
 
     public DbSet<ExemptLedger> ExemptLedgers => Set<ExemptLedger>();
 
+    public DbSet<DualVoHost> DualVoHosts => Set<DualVoHost>();
+
+    public DbSet<TierBDualVoHost> TierBDualVoHosts => Set<TierBDualVoHost>();
+
     /// <summary>
     /// Builds and returns a <see cref="GovDbContext"/> for the given connection string.
     /// </summary>
@@ -94,6 +98,45 @@ internal sealed class GovDbContext : DbContext
         modelBuilder.Entity<ExemptLedger>(e =>
         {
             e.HasKey(x => x.Id);
+        });
+
+        modelBuilder.Entity<DualVoHost>(e =>
+        {
+            e.HasKey(x => x.Id);
+
+            // Same complex-VO type (SimpleAddress) mapped TWICE via distinct navigations.
+            // This is the dual-VO regression scenario: both complex properties share the
+            // same CLR type, so the old CLR-by-type heuristic always resolved both to
+            // the first navigation (PrimaryAddress), causing duplicate SET columns in SQL
+            // and cross-instance leaks in the Tier-B path.
+            e.ComplexProperty(x => x.PrimaryAddress, cp =>
+            {
+                cp.Anonymize(a => a.City, "[deleted]");
+                cp.AnonymizeNull(a => a.ZipCode);
+            });
+            e.ComplexProperty(x => x.SecondaryAddress, cp =>
+            {
+                cp.Anonymize(a => a.City, "[deleted-secondary]");
+                cp.AnonymizeNull(a => a.ZipCode);
+            });
+        });
+
+        modelBuilder.Entity<TierBDualVoHost>(e =>
+        {
+            e.HasKey(x => x.Id);
+
+            // Same complex-VO type mapped twice — dual-VO regression, Tier-B path.
+            // Email carries a Template rule to force Tier-B materialize-mutate.
+            e.ComplexProperty(x => x.PrimaryAddress, cp =>
+            {
+                cp.Anonymize(a => a.City, "[deleted]");
+                cp.AnonymizeNull(a => a.ZipCode);
+            });
+            e.ComplexProperty(x => x.SecondaryAddress, cp =>
+            {
+                cp.Anonymize(a => a.City, "[deleted-secondary]");
+                cp.AnonymizeNull(a => a.ZipCode);
+            });
         });
     }
 
@@ -231,6 +274,69 @@ internal sealed class GovDbContext : DbContext
 
         /// <summary>Gets or sets the ledger amount.</summary>
         public decimal Amount { get; set; }
+
+        /// <inheritdoc />
+        public bool IsAnonymized { get; set; }
+    }
+
+    /// <summary>
+    /// Host entity that maps the same complex-VO type (<see cref="SimpleAddress"/>) twice
+    /// via two DISTINCT navigations (PrimaryAddress + SecondaryAddress). This is the
+    /// minimal reproduction of the dual-VO navigation bug: when both navigations share the
+    /// same CLR type, the old CLR-reflection heuristic always resolved both to PrimaryAddress,
+    /// producing duplicate SET clauses in SQL (Tier-A) and cross-instance writes (Tier-B).
+    /// Self-contained — no dependency on the Location lib.
+    /// </summary>
+    internal sealed class DualVoHost : IUserOwned, IAnonymizationTrackable
+    {
+        public Guid Id { get; set; }
+
+        public Guid? UserId { get; set; }
+
+        /// <summary>Gets or sets the primary address. Decorated via fluent.</summary>
+        public SimpleAddress PrimaryAddress { get; set; } = new();
+
+        /// <summary>Gets or sets the secondary address. Decorated via fluent.</summary>
+        public SimpleAddress SecondaryAddress { get; set; } = new();
+
+        /// <inheritdoc />
+        public bool IsAnonymized { get; set; }
+    }
+
+    /// <summary>
+    /// Minimal synthetic complex VO used by <see cref="DualVoHost"/> and
+    /// <see cref="TierBDualVoHost"/>. Shared CLR type mapped TWICE on the same entity —
+    /// the dual-VO navigation regression scenario.
+    /// </summary>
+    internal sealed class SimpleAddress
+    {
+        /// <summary>Gets or sets the city. Decorated via fluent in GovDbContext.</summary>
+        public string City { get; set; } = string.Empty;
+
+        /// <summary>Gets or sets the zip code. Nullable — decorated via fluent.</summary>
+        public string? ZipCode { get; set; }
+    }
+
+    /// <summary>
+    /// Tier-B variant of <see cref="DualVoHost"/>. Adds an Email Template field to force
+    /// the Tier-B materialize-mutate path, so <see cref="AnonymizationEngine"/> exercises
+    /// <c>SetPropertyValue</c> on both complex-property navigations (dual-VO Tier-B regression).
+    /// </summary>
+    internal sealed class TierBDualVoHost : IUserOwned, IAnonymizationTrackable
+    {
+        public Guid Id { get; set; }
+
+        public Guid? UserId { get; set; }
+
+        /// <summary>Gets or sets the email. Template field — forces Tier B.</summary>
+        [Anonymizable(template: "deletedUser{UserId}@deleted.user.dcsv.io")]
+        public string Email { get; set; } = string.Empty;
+
+        /// <summary>Gets or sets the primary address. Decorated via fluent.</summary>
+        public SimpleAddress PrimaryAddress { get; set; } = new();
+
+        /// <summary>Gets or sets the secondary address. Decorated via fluent.</summary>
+        public SimpleAddress SecondaryAddress { get; set; } = new();
 
         /// <inheritdoc />
         public bool IsAnonymized { get; set; }

@@ -6,6 +6,7 @@
 
 namespace D2.Shared.Utilities.Extensions;
 
+using System.Text;
 using System.Text.RegularExpressions;
 using D2.Shared.I18n;
 using D2.Shared.Result;
@@ -14,8 +15,9 @@ using D2.Shared.Result;
 /// Extension methods for <see cref="string"/> covering boundary checks
 /// (<c>Truthy</c> / <c>Falsey</c> / <c>ToNullIfEmpty</c>), display-friendly
 /// cleaning (<c>CleanStr</c> / <c>CleanDisplayStr</c>), <see cref="D2Result"/>-returning
-/// validation helpers for emails and phone numbers, and a hash-friendly
-/// <c>GetNormalizedStrForHashing</c> helper for string-array inputs.
+/// validation helpers for emails and phone numbers, a hash-friendly
+/// <c>GetNormalizedStrForHashing</c> helper for string-array inputs, and
+/// <c>NormalizeForHash</c> for single-value cross-script hash canonicalization.
 /// </summary>
 /// <remarks>
 /// The validation helpers (<c>TryParseEmail</c>, <c>TryParsePhoneNumber</c>)
@@ -85,6 +87,68 @@ public static partial class StringExtensions
 
             var stripped = DisplayNameInvalidRegex().Replace(str!, string.Empty);
             return stripped.CleanStr();
+        }
+
+        /// <summary>
+        /// Produces the canonical hash-input form of a single string:
+        /// case-fold to uppercase, NFD-decompose, then keep only Unicode
+        /// Letter + Decimal-digit code points (any script) plus single
+        /// ASCII spaces. Diacritic-/case-/punctuation-equivalent inputs
+        /// collapse to byte-identical output, so a SHA-256 of the result
+        /// is a stable cross-script correlation digest.
+        /// Returns <see cref="string.Empty"/> when the input is
+        /// null, empty, or whitespace-only.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>Stage-2-only contract.</b> This method does NOT trim or
+        /// collapse internal whitespace — it case-folds, NFD-decomposes,
+        /// and keeps only Letter / Decimal-digit / ASCII-space code points.
+        /// Leading, trailing, and internal spaces survive as-is. Callers
+        /// that require whitespace normalization should apply a stage-1
+        /// cleaner (e.g. <see cref="CleanStr"/>) before calling this
+        /// method. Note: whitespace-only input (spaces, tabs, newlines)
+        /// returns <see cref="string.Empty"/> — caught by the
+        /// <c>Falsey()</c> guard before any processing occurs.
+        /// </para>
+        /// <para>
+        /// Punctuation, symbols, emoji, control characters, and Unicode
+        /// format characters (BiDi overrides, zero-width joiners) are
+        /// stripped. Multi-space runs are preserved unchanged (not
+        /// collapsed to a single space).
+        /// </para>
+        /// </remarks>
+        public string NormalizeForHash()
+        {
+            if (str.Falsey())
+                return string.Empty;
+
+            // Stage 2a — case-fold (no-op on caseless scripts).
+            var upper = str!.ToUpperInvariant();
+
+            // Stage 2b — NFD decompose so Latin-derived diacritics split
+            // into base + combining mark; combining marks are then dropped
+            // by the category filter below.
+            var nfd = upper.Normalize(NormalizationForm.FormD);
+
+            // Stage 2c — Unicode-category-aware filter: keep only Letter +
+            // Decimal-digit + single ASCII space. Iterate by Rune so
+            // surrogate pairs are handled correctly (char.IsLetter is
+            // surrogate-unsafe).
+            var sb = new StringBuilder(nfd.Length);
+            foreach (var rune in nfd.EnumerateRunes())
+            {
+                if (rune.Value == ' ')
+                {
+                    sb.Append(' ');
+                    continue;
+                }
+
+                if (Rune.IsLetter(rune) || Rune.IsDigit(rune))
+                    sb.Append(rune.ToString());
+            }
+
+            return sb.ToString();
         }
     }
 

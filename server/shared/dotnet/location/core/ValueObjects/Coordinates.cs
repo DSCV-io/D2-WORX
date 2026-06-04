@@ -17,7 +17,7 @@ using D2.Shared.Utilities.Extensions;
 
 /// <summary>
 /// Immutable geographic point with three universal representations
-/// (lat/lon decimal degrees, geohash-10, OLC plus-code-12) and optional
+/// (lat/lon decimal degrees, geohash-10, OLC plus-code-13) and optional
 /// accuracy metadata. Every factory normalizes input to the canonical
 /// bounding-box center of the geohash-10 cell so inputs in different forms
 /// that represent the same physical ~1m grid cell produce byte-identical
@@ -74,7 +74,7 @@ public sealed record Coordinates
     public required string Geohash { get; init; }
 
     /// <summary>
-    /// Gets OLC plus-code, 12 characters (8 pair digits + '+' + 3 grid digits), ~1m precision.
+    /// Gets OLC plus-code, 13 characters (8 pair digits + '+' + 4 grid digits), ~1m precision.
     /// </summary>
     [RedactData(Reason = RedactReason.PersonalInformation)]
     public required string PlusCode { get; init; }
@@ -254,8 +254,8 @@ public sealed record Coordinates
         centerLat = Math.Round(centerLat, 6, MidpointRounding.AwayFromZero);
         centerLon = Math.Round(centerLon, 6, MidpointRounding.AwayFromZero);
 
-        // Encode plus-code at 10 significant digits (→ 12-char string with '+').
-        var plusCode = PlusCodeEncoder.Encode(centerLat, centerLon, codeLength: 10);
+        // Encode plus-code at 12 significant digits (→ 13-char string with '+').
+        var plusCode = PlusCodeEncoder.Encode(centerLat, centerLon, codeLength: 12);
 
         // HashId: "v1." + SHA-256(Geohash) — BCL static one-shot per §15.8.
         var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(geohash));

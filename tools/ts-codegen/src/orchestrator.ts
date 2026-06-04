@@ -11,6 +11,7 @@ import { runDlqFailureMetadataEmit } from "./dlq-failure-metadata-emit.js";
 import { runEncryptionDomainsEmit } from "./encryption-domains-emit.js";
 import { runEncryptionFrameEmit } from "./encryption-frame-emit.js";
 import { runErrorCodesEmit } from "./error-codes-emit.js";
+import { runFieldConstraintsEmit } from "./field-constraints-emit.js";
 import { runGeoEmit } from "./geo-emitter/index.js";
 import { runGrpcTrailersEmit } from "./grpc-trailers-emit.js";
 import { runHeadersEmit } from "./headers-emit.js";
@@ -86,6 +87,13 @@ function main(): void {
     // the seven contracts/geo/*.spec.json Tier-2 files. Catalog DATA
     // emission populates @d2/geo-default's catalog index.
     ...runGeoEmit(force),
+    // Field-constraints catalog — emits FieldConstraints const-object +
+    // NamePrefix / NameSuffix / BiologicalSex taxonomy enums (branded types +
+    // Zod schemas + membership sets) into @d2/validation-abstractions from
+    // contracts/validation/field-constraints.spec.json. Mirrors .NET
+    // D2.Shared.Validation.Abstractions byte-for-byte. Independent catalog —
+    // order within this block does not matter.
+    ...runFieldConstraintsEmit(force),
   ];
   for (const d of allDiagnostics) console.error(formatDiagnostic(d));
   if (allDiagnostics.some((d) => d.severity === "error")) {

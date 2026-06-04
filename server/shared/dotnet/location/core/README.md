@@ -4,7 +4,7 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.Location
 
-> Parent: [`server/shared/dotnet/`](../README.md)
+> Parent: [`server/shared/dotnet/`](../../README.md)
 
 > **Audience**: Backend .NET service engineers attaching location or postal-address data to domain entities.
 
@@ -12,20 +12,22 @@ Copyright (c) DCSV. All rights reserved.
 
 ## Purpose
 
-Three immutable, content-addressable value objects + one free hash composer + one boundary validator. Every factory returns `D2Result<T>` (smart-constructor pattern); same content produces the same `HashId` (`"v1." + SHA-256 hex`), so duplicate insertions across services or repeated submissions naturally collapse to the same row. Pure-domain layer policy: depends only on `D2.Shared.Geo.Abstractions` (typed code enums), `D2.Shared.Result` (D2Result factories), and `D2.Shared.Utilities` (Falsey/Truthy/CleanStr boundary helpers) — no infrastructure deps, no NodaTime, no observability surface.
+Three immutable, content-addressable value objects + one free hash composer + one boundary validator. Every factory returns `D2Result<T>` (smart-constructor pattern); same content produces the same `HashId` (`"v1." + SHA-256 hex`), so duplicate insertions across services or repeated submissions naturally collapse to the same row. Pure-domain layer policy: depends on `D2.Shared.Geo.Abstractions` (typed code enums), `D2.Shared.Result` (D2Result factories), `D2.Shared.Utilities` (Falsey/Truthy/CleanStr boundary helpers and the canonical `NormalizeForHash` extension), and `D2.Shared.Validation.Abstractions` (FieldConstraints length caps) — no infrastructure deps, no NodaTime, no observability surface.
 
 ## Public API surface
 
-- [`ValueObjects/Coordinates.cs`](ValueObjects/Coordinates.cs) — `sealed record` with three universal representations (lat/lon decimal degrees, geohash-10, OLC plus-code-12) + optional accuracy metadata. Three factories:
+- [`ValueObjects/Coordinates.cs`](ValueObjects/Coordinates.cs) — `sealed record` with three universal representations (lat/lon decimal degrees, geohash-10, OLC plus-code-13) + optional accuracy metadata. Three factories:
   - `Coordinates.Create(latitude, longitude, accuracyMeters?)` — from decimal degrees.
   - `Coordinates.FromGeohash(geohash, accuracyMeters?)` — from a 1-12 char geohash (truncated / re-encoded to canonical 10).
   - `Coordinates.FromPlusCode(plusCode, accuracyMeters?)` — from a valid OLC plus-code.
 
   All three converge on the canonical geohash-10 cell-center so inputs in different forms representing the same physical ~1m cell produce byte-identical `HashId` values. Accuracy is metadata — NOT included in the hash.
-- [`ValueObjects/StreetAddress.cs`](ValueObjects/StreetAddress.cs) — `sealed record` with 5 free-text lines (`Line1` required, `Line2..Line5` optional, no gap rule). Two-stage normalization: stored form preserves case + strips decorative punctuation; hash form upper-cases + NFD-strips combining marks + applies a Unicode-category filter (keeps Letter / Decimal-digit / ASCII space).
+- [`ValueObjects/StreetAddress.cs`](ValueObjects/StreetAddress.cs) — `sealed record` with 5 free-text lines (`Line1` required, `Line2..Line5` optional, no gap rule). Two-stage normalization: stored form preserves case + strips decorative punctuation; hash form forwards to `D2.Shared.Utilities` `NormalizeForHash` extension (upper-case + NFD-strip combining marks + Unicode-category filter: Letter / Decimal-digit / ASCII space). Each line is capped at `FieldConstraints.STREET_LINE_MAX` (255 chars, measured on the post-clean stored value).
   - `StreetAddress.Create(line1, line2?, line3?, line4?, line5?)` returns `D2Result<StreetAddress>`.
-- [`ValueObjects/AdminLocation.cs`](ValueObjects/AdminLocation.cs) — `sealed record` with administrative hierarchy: country, subdivision, city, postal code (any subset). Cross-field coherence is enforced when both country + subdivision are supplied; subdivision-only callers have country auto-populated from `SubdivisionCode.ParentCountry`.
+  - Failure keys: `TK.Geo.Validation.ADDRESS_LINE1_REQUIRED` (line1 empty after clean), `TK.Geo.Validation.STREET_LINE_TOO_LONG` (any line exceeds `STREET_LINE_MAX` after clean).
+- [`ValueObjects/AdminLocation.cs`](ValueObjects/AdminLocation.cs) — `sealed record` with administrative hierarchy: country, subdivision, city, postal code (any subset). Cross-field coherence is enforced when both country + subdivision are supplied; subdivision-only callers have country auto-populated from `SubdivisionCode.ParentCountry`. City is capped at `FieldConstraints.CITY_MAX` (255 chars) and postal code at `FieldConstraints.POSTAL_CODE_MAX` (16 chars), both measured on the post-clean value. The length cap is an unconditional structural floor that fires before the optional `IPostalCodeValidator`.
   - `AdminLocation.Create(countryIso31661Alpha2Code?, subdivisionIso31662Code?, city?, postalCode?, postalCodeValidator?)` returns `D2Result<AdminLocation>`.
+  - Failure keys: `TK.Geo.Validation.ADMIN_EMPTY_RECORD` (all fields null/empty), `TK.Geo.Validation.ADMIN_COUNTRY_SUBDIVISION_MISMATCH` (country/subdivision mismatch), `TK.Geo.Validation.CITY_TOO_LONG` (city exceeds `CITY_MAX`), `TK.Geo.Validation.POSTAL_CODE_TOO_LONG` (postal exceeds `POSTAL_CODE_MAX`), `TK.Geo.Validation.POSTAL_CODE_INVALID` (validator failure).
 - [`ComposeLocationHash.cs`](ComposeLocationHash.cs) — `static class` with `Compose(Coordinates?, StreetAddress?, AdminLocation?): string?` — joins the three component `HashId`s into a single `"v1."`-prefixed hash. All-null input returns `null` (location absent; not an error).
 - [`IPostalCodeValidator.cs`](IPostalCodeValidator.cs) — boundary contract `D2Result<string> Validate(string?, CountryCode?)`. Lives in `D2.Shared.Location` (not Abstractions) so the DI seam stays out of pure-vocabulary projects.
 - [`DefaultPostalCodeValidator.cs`](DefaultPostalCodeValidator.cs) — `sealed class` implementing the global-range shape check (3-10 alphanumeric characters; internal spaces and hyphens allowed; alphanumeric at both ends). Country-blind by design; consumers override for strict per-country validation.
@@ -35,7 +37,8 @@ Three immutable, content-addressable value objects + one free hash composer + on
 
 - `D2.Shared.Geo.Abstractions` — typed `CountryCode` enum + `SubdivisionCode` wrapper struct (including `SubdivisionCode.ParentCountry` for `AdminLocation` coherence).
 - `D2.Shared.Result` — `D2Result<T>` semantic factories (`Ok`, `ValidationFailed`).
-- `D2.Shared.Utilities` — `Falsey()` / `Truthy()` / `CleanStr()` extension methods.
+- `D2.Shared.Utilities` — `Falsey()` / `Truthy()` / `CleanStr()` / `NormalizeForHash()` extension methods. The `NormalizeForHash` extension is the canonical implementation for hash canonicalization; `StreetAddress.NormalizeForHash` is a thin internal forwarder to it.
+- `D2.Shared.Validation.Abstractions` — `FieldConstraints` length cap constants (`STREET_LINE_MAX`, `CITY_MAX`, `POSTAL_CODE_MAX`) consumed by the VO `Create` gates.
 - `Microsoft.Extensions.DependencyInjection.Abstractions` (NuGet) — `IServiceCollection` receiver for the `AddD2Location` registration extension.
 
 **NO `D2.Shared.Geo.Default`, NO NodaTime, NO logging, NO observability — pure-domain by design.**
@@ -125,6 +128,7 @@ Hash-algorithm stability is enforced by the [`contracts/location/parity-fixtures
 
 ## References
 
+- [`../entity-framework-core/README.md`](../entity-framework-core/README.md) — the sibling `D2.Shared.Location.EntityFrameworkCore` lib that maps these VOs onto a host's EF Core model (`MapStreetAddress` / `MapAdminLocation` / `MapCoordinates` + per-field anonymize defaults).
 - [`docs/PATTERNS.md`](../../../docs/PATTERNS.md) — content-addressable entities + hash composition.
-- [`../geo/abstractions/README.md`](../geo/abstractions/README.md) — the typed `CountryCode` + `SubdivisionCode` surface this lib consumes.
+- [`../geo/abstractions/README.md`](../../geo/abstractions/README.md) — the typed `CountryCode` + `SubdivisionCode` surface this lib consumes.
 - [`contracts/location/parity-fixtures.json`](../../../contracts/location/parity-fixtures.json) — hash-determinism fixture file.
