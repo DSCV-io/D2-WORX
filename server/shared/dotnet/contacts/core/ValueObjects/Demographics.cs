@@ -8,9 +8,15 @@ namespace D2.Shared.Contacts.ValueObjects;
 
 using D2.Shared.I18n;
 using D2.Shared.Result;
+using D2.Shared.Time;
 using D2.Shared.Utilities.Attributes;
 using D2.Shared.Utilities.Enums;
 using D2.Shared.Validation.Abstractions;
+using NodaTime;
+
+// NodaTime also exposes IClock and SystemClock; alias the D2 seams to prevent CS0104.
+using IClock = D2.Shared.Time.IClock;
+using SystemClock = D2.Shared.Time.SystemClock;
 
 /// <summary>
 /// Immutable demographic value object: an optional date of birth and an optional
@@ -28,7 +34,7 @@ public sealed record Demographics
 {
     /// <summary>Gets the optional date of birth.</summary>
     [RedactData(Reason = RedactReason.PersonalInformation)]
-    public DateOnly? DateOfBirth { get; init; }
+    public LocalDate? DateOfBirth { get; init; }
 
     /// <summary>Gets the optional biological-sex classification.</summary>
     [RedactData(Reason = RedactReason.PersonalInformation)]
@@ -37,17 +43,18 @@ public sealed record Demographics
     /// <summary>
     /// Creates a <see cref="Demographics"/> from an optional date of birth and
     /// optional biological sex. The date of birth is bounded against the current
-    /// date resolved from <paramref name="timeProvider"/>.
+    /// date resolved from <paramref name="clock"/>.
     /// </summary>
     /// <param name="dateOfBirth">
     /// Optional date of birth; must not be in the future and must not be more
     /// than 150 years in the past.
     /// </param>
     /// <param name="biologicalSex">Optional biological-sex classification.</param>
-    /// <param name="timeProvider">
+    /// <param name="clock">
     /// Optional clock used to resolve the current date for the date-of-birth
-    /// bounds. Defaults to <see cref="TimeProvider.System"/>; tests inject a
-    /// fixed provider for deterministic boundary coverage.
+    /// bounds. Defaults to <see cref="SystemClock"/>; tests inject a
+    /// <see cref="TestClock"/> fixed to a deterministic instant for boundary
+    /// coverage.
     /// </param>
     /// <returns>
     /// <c>Ok</c> on success;
@@ -55,9 +62,9 @@ public sealed record Demographics
     /// future date of birth, or a date of birth more than 150 years in the past.
     /// </returns>
     public static D2Result<Demographics> Create(
-        DateOnly? dateOfBirth = null,
+        LocalDate? dateOfBirth = null,
         BiologicalSex? biologicalSex = null,
-        TimeProvider? timeProvider = null)
+        IClock? clock = null)
     {
         // Degenerate empty record — both fields absent.
         if (dateOfBirth is null && biologicalSex is null)
@@ -68,8 +75,7 @@ public sealed record Demographics
 
         if (dateOfBirth is { } dob)
         {
-            var clock = timeProvider ?? TimeProvider.System;
-            var today = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
+            var today = (clock ?? new SystemClock()).GetCurrentInstant().InUtc().Date;
 
             // Future — strictly greater than today (born-today is valid).
             if (dob > today)
@@ -80,7 +86,7 @@ public sealed record Demographics
 
             // Too old — older than 150 years. The exactly-150-years boundary is
             // valid (floor is inclusive; comparison is strictly less-than).
-            var floor = today.AddYears(-150);
+            var floor = today.PlusYears(-150);
             if (dob < floor)
             {
                 return D2Result<Demographics>.ValidationFailed(

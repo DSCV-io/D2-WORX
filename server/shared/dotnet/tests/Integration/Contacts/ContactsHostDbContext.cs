@@ -12,6 +12,7 @@ using D2.Shared.DataGovernance.Abstractions;
 using D2.Shared.DataGovernance.EntityFrameworkCore;
 using D2.Shared.Location.EntityFrameworkCore;
 using D2.Shared.Location.ValueObjects;
+using D2.Shared.Time.EfCore;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -50,7 +51,7 @@ internal sealed class ContactsHostDbContext : DbContext
     internal static ContactsHostDbContext Build(string connectionString)
     {
         var options = new DbContextOptionsBuilder<ContactsHostDbContext>()
-            .UseNpgsql(connectionString)
+            .UseNpgsql(connectionString, o => o.AddD2NodaTime())
             .Options;
         return new ContactsHostDbContext(options);
     }

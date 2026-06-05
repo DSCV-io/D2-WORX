@@ -5,6 +5,8 @@ Copyright (c) DCSV. All rights reserved.
 # D2.Shared.DataGovernance.EntityFrameworkCore
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
+>
+> **Audience**: backend .NET service engineers decorating EF Core entity models for GDPR anonymization — wiring the fluent `.Anonymize*` API, registering the engine, and configuring the startup model guard.
 
 EF Core metadata layer for GDPR anonymization. Converges the attribute and fluent
 decoration front-ends onto one `AnonymizationRule` stored as the `D2:Anonymize` EF Core
@@ -276,6 +278,26 @@ JSON mapping) that the in-memory provider does not model; a few use the EF Core 
 provider (`UseInMemoryDatabase`) where only generic annotation/model-build logic is under
 test. Integration tests live in `server/shared/dotnet/tests/Integration/DataGovernance/`
 and use Testcontainers-PostgreSQL for end-to-end Tier-A/B anonymization assertions.
+
+## Telemetry
+
+No telemetry surface — the engine emits no spans or metrics. The `AnonymizationModelValidator` logs a PII-safe `InvalidOperationException` message on boot-guard failure; all other log events are at Debug level. Consumers instrument the anonymization call sites in their own OTel setup.
+
+## Edge cases / gotchas
+
+- **Tier-C entities blocked at boot** — any owned-JSON (`ToJson()`) or `OwnsMany` child-table entity decorated with `[Anonymizable]` causes `AnonymizationModelValidator` to abort host startup. Tier-C shapes require full materialization before overwrite; bulk `ExecuteUpdateAsync` cannot reach them. Restructure as first-class root entities or mark `[ExemptFromAnonymization]`.
+- **Fluent wins over attribute** — when both an `[Anonymizable]` attribute and a fluent `.Anonymize*` call target the same property, the fluent declaration wins (EF Core Explicit > DataAnnotation configuration source). Divergent double-declarations are detected by the startup guard (V6 check).
+- **`SetNull` on non-nullable column blocked at boot** — V7 check in `AnonymizationModelValidator` detects `SetNull` rules targeting non-nullable columns and aborts startup. Use a `Constant` or `Template` rule instead.
+
+## Configuration
+
+`AnonymizationEngineOptions` (configuration section `DATA_GOVERNANCE`):
+
+| Env var | Default | Description |
+|---------|---------|-------------|
+| `DATA_GOVERNANCE__BATCHSIZE` | 500 | Maximum rows per Tier-B chunk |
+| `DATA_GOVERNANCE__MAXCONCURRENCYRETRIES` | 3 | Reload-retry ceiling on `DbUpdateConcurrencyException` |
+| `DATA_GOVERNANCE__SKIPMODELVALIDATION` | false | Disables the startup model guard — test hosts only |
 
 ## References
 

@@ -6,6 +6,7 @@
 
 namespace D2.Shared.Validation;
 
+using System.Text.RegularExpressions;
 using D2.Shared.Geo.Abstractions;
 using D2.Shared.I18n;
 using D2.Shared.Result;
@@ -68,7 +69,17 @@ public sealed class DefaultPostalCodeValidator : IPostalCodeValidator
         if (!PostalCodeRegexData.SR_Map.TryGetValue(key, out var regex))
             return Invalid();
 
-        if (!regex.IsMatch(normalized))
+        bool isMatch;
+        try
+        {
+            isMatch = regex.IsMatch(normalized);
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            return Invalid();
+        }
+
+        if (!isMatch)
             return Invalid();
 
         return D2Result<string>.Ok(normalized);

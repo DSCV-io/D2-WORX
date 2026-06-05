@@ -58,8 +58,8 @@ public sealed class EmailValidatorTests
     {
         // A long local-part run with a lone '@' and no valid domain — the
         // shape a backtracking-vulnerable regex would hang on. The anchored,
-        // bounded pattern + 50 ms matchTimeout must short-circuit. The timeout
-        // surfaces as a non-match (validation failure), not a hang.
+        // bounded pattern + 50 ms matchTimeout must short-circuit. A timeout
+        // is caught and mapped to a validation failure (Invalid()), not a hang.
         var pathological = new string('a', 50_000) + "@";
         var sw = Stopwatch.StartNew();
         var result = sr_Validator.Validate(pathological);

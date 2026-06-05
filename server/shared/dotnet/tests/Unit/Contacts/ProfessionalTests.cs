@@ -73,8 +73,8 @@ public sealed class ProfessionalTests
     [Fact]
     public void Create_CompanyNameExactlyMax_ReturnsOk()
     {
-        var at_max = new string('a', FieldConstraints.COMPANY_NAME_MAX);
-        var result = Professional.Create(at_max);
+        var atMax = new string('a', FieldConstraints.COMPANY_NAME_MAX);
+        var result = Professional.Create(atMax);
 
         result.Success.Should().BeTrue();
     }
@@ -82,8 +82,8 @@ public sealed class ProfessionalTests
     [Fact]
     public void Create_CompanyNameOverMax_ReturnsCompanyNameTooLong()
     {
-        var over_max = new string('a', FieldConstraints.COMPANY_NAME_MAX + 1);
-        var result = Professional.Create(over_max);
+        var overMax = new string('a', FieldConstraints.COMPANY_NAME_MAX + 1);
+        var result = Professional.Create(overMax);
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
@@ -93,8 +93,8 @@ public sealed class ProfessionalTests
     [Fact]
     public void Create_JobTitleExactlyMax_ReturnsOk()
     {
-        var at_max = new string('j', FieldConstraints.JOB_TITLE_MAX);
-        var result = Professional.Create("DCSV", at_max);
+        var atMax = new string('j', FieldConstraints.JOB_TITLE_MAX);
+        var result = Professional.Create("DCSV", atMax);
 
         result.Success.Should().BeTrue();
         result.Data!.JobTitle.Should().HaveLength(FieldConstraints.JOB_TITLE_MAX);
@@ -103,8 +103,8 @@ public sealed class ProfessionalTests
     [Fact]
     public void Create_JobTitleOverMax_ReturnsJobTitleTooLong()
     {
-        var over_max = new string('b', FieldConstraints.JOB_TITLE_MAX + 1);
-        var result = Professional.Create("DCSV", over_max);
+        var overMax = new string('b', FieldConstraints.JOB_TITLE_MAX + 1);
+        var result = Professional.Create("DCSV", overMax);
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
@@ -114,8 +114,8 @@ public sealed class ProfessionalTests
     [Fact]
     public void Create_DepartmentExactlyMax_ReturnsOk()
     {
-        var at_max = new string('d', FieldConstraints.DEPARTMENT_MAX);
-        var result = Professional.Create("DCSV", department: at_max);
+        var atMax = new string('d', FieldConstraints.DEPARTMENT_MAX);
+        var result = Professional.Create("DCSV", department: atMax);
 
         result.Success.Should().BeTrue();
         result.Data!.Department.Should().HaveLength(FieldConstraints.DEPARTMENT_MAX);
@@ -124,8 +124,8 @@ public sealed class ProfessionalTests
     [Fact]
     public void Create_DepartmentOverMax_ReturnsDepartmentTooLong()
     {
-        var over_max = new string('c', FieldConstraints.DEPARTMENT_MAX + 1);
-        var result = Professional.Create("DCSV", department: over_max);
+        var overMax = new string('c', FieldConstraints.DEPARTMENT_MAX + 1);
+        var result = Professional.Create("DCSV", department: overMax);
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
@@ -197,9 +197,9 @@ public sealed class ProfessionalTests
     [Fact]
     public void Create_WebsiteOverMaxRawLength_ReturnsWebsiteInvalid()
     {
-        var long_path = new string('a', FieldConstraints.COMPANY_WEBSITE_MAX);
-        var over_max = "https://example.com/" + long_path;
-        var result = Professional.Create("DCSV", companyWebsite: over_max);
+        var longPath = new string('a', FieldConstraints.COMPANY_WEBSITE_MAX);
+        var overMax = "https://example.com/" + longPath;
+        var result = Professional.Create("DCSV", companyWebsite: overMax);
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()

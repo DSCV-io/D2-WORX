@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 - **Status**: Accepted
 - **Date**: 2026-05-30
-- **Deliverable**: Phase 0 — shared libraries (backfilled)
+- **Deliverable**: D2 shared libraries (backfilled)
 
 ## Context
 
@@ -20,7 +20,7 @@ Several prior patterns were in flight or considered before the current architect
 - A proto-based approach would have covered gRPC message schemas but left non-RPC catalogs (error codes, OTel tags, translation keys, binary-frame layouts) unaddressed.
 - Runtime reflection or config-driven registration was rejected because it defers validation to runtime and adds dependency on external infra at startup.
 
-The architecture described here was implemented during Phase 0, before any service shipped, to close this class of drift permanently. It is the single decision with the widest structural surface in the codebase — most other shared-lib decisions (the D2Result envelope of ADR-0003, the TK constants of ADR-0004) are concrete instances of it.
+The architecture described here was implemented as part of the shared-library foundation, before any service shipped, to close this class of drift permanently. It is the single decision with the widest structural surface in the codebase — most other shared-lib decisions (the D2Result envelope of ADR-0003, the TK constants of ADR-0004) are concrete instances of it.
 
 ## Decision
 

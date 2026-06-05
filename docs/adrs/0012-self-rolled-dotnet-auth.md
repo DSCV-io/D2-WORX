@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 - **Status**: Accepted
 - **Date**: 2026-05-30 (amended 2026-06-01)
-- **Deliverable**: Phase 0 — shared libraries (backfilled)
+- **Deliverable**: D2 shared libraries (backfilled)
 
 > **Scope:** this ADR covers the BUILT shared-library auth surface (`server/shared/dotnet/auth/`). The **Edge auth module** — login flows, session three-tier storage, OAuth client registry, KeyCustodian — is not built yet and will receive its own ADR.
 
@@ -27,7 +27,7 @@ Auth vocabulary is defined in JSON contracts and emitted by dedicated Roslyn sou
 
 ### 2. RS256 + JWKS
 
-`JwtValidatorOptions.SR_DefaultValidAlgorithms = ["RS256"]`, pinned in `TokenValidationParameters.ValidAlgorithms` (defends `alg=none` and HMAC-with-public-key confusion). **Not HS256**: a shared HMAC secret known to every backend service is not a secret — RS256 keeps the private signing key only at Edge; services hold only public verify keys from JWKS. **Not EdDSA**: `Microsoft.IdentityModel` JWKS/`JsonWebTokenHandler` support for `kty=OKP`/`crv=Ed25519` is incomplete in .NET 10 as of Phase 0, and OIDC/JWKS interop for Ed25519 is inconsistent across tooling; RS256 has universal interop including future non-.NET services. JWKS is fetched from Edge's OIDC discovery via `HttpJwksProvider` (wrapping `IConfigurationManager<OpenIdConnectConfiguration>` with a `Singleflight` + cooldown on forced refresh and a `CircuitBreaker` on sustained outage); cluster-wide rotation coherency rides the backplane (`JwksBackplaneSubscriber` refreshes on key-rotated events). `IJwksProvider`/`JwksKeySetSnapshot` live in the abstractions slice so implementations swap without touching consumers.
+`JwtValidatorOptions.SR_DefaultValidAlgorithms = ["RS256"]`, pinned in `TokenValidationParameters.ValidAlgorithms` (defends `alg=none` and HMAC-with-public-key confusion). **Not HS256**: a shared HMAC secret known to every backend service is not a secret — RS256 keeps the private signing key only at Edge; services hold only public verify keys from JWKS. **Not EdDSA**: `Microsoft.IdentityModel` JWKS/`JsonWebTokenHandler` support for `kty=OKP`/`crv=Ed25519` is incomplete in .NET 10 as of the foundational shared-library build, and OIDC/JWKS interop for Ed25519 is inconsistent across tooling; RS256 has universal interop including future non-.NET services. JWKS is fetched from Edge's OIDC discovery via `HttpJwksProvider` (wrapping `IConfigurationManager<OpenIdConnectConfiguration>` with a `Singleflight` + cooldown on forced refresh and a `CircuitBreaker` on sustained outage); cluster-wide rotation coherency rides the backplane (`JwksBackplaneSubscriber` refreshes on key-rotated events). `IJwksProvider`/`JwksKeySetSnapshot` live in the abstractions slice so implementations swap without touching consumers.
 
 ### 3. `d2_`-prefixed snake_case custom JWT claims
 
@@ -107,7 +107,7 @@ The `IStartupFilter` lifecycle was chosen over `IHostedService` because, in the 
 
 **HS256 shared secret.** Every validating service holds the same key; a compromise of any service exposes signing material for the whole cluster. Rejected unconditionally.
 
-**EdDSA (Ed25519).** Shorter/faster signatures, but incomplete `Microsoft.IdentityModel` + JWKS ecosystem interop for `OKP` keys in Phase 0. Revisitable when support matures.
+**EdDSA (Ed25519).** Shorter/faster signatures, but incomplete `Microsoft.IdentityModel` + JWKS ecosystem interop for `OKP` keys at the time the shared-library auth surface was built. Revisitable when support matures.
 
 **Standard camelCase claim names.** Conventional in some ecosystems, but D²'s dot-separated scope format and mixed-stack log/dashboard disambiguation favor `d2_`-prefixed snake_case (consistent with the scope segment style; avoids camelCase-to-JSON-key mapping confusion).
 

@@ -166,8 +166,8 @@ public sealed class AnonymizationRuleTests
     [Fact]
     public void Create_undefined_kind_throws_ArgumentOutOfRangeException()
     {
-        const int undefined_kind = 999;
-        var act = () => AnonymizationRule.Create((AnonymizeKind)undefined_kind);
+        const int undefinedKind = 999;
+        var act = () => AnonymizationRule.Create((AnonymizeKind)undefinedKind);
         act.Should().Throw<ArgumentOutOfRangeException>();
     }
 
@@ -196,14 +196,14 @@ public sealed class AnonymizationRuleTests
     public void Constant_empty_string_and_SetEmpty_are_NOT_equal()
     {
         // Pins the deliberate non-equality: Kind differs even though the engine
-        // treats them identically at apply-time. The Step-5 divergence guard
-        // depends on record equality to detect conflicting double-declarations.
-        var constant_empty = AnonymizationRule.Create(
+        // treats them identically at apply-time. The record equality contract
+        // depends on Kind to detect conflicting double-declarations.
+        var constantEmpty = AnonymizationRule.Create(
             AnonymizeKind.Constant,
             constantValue: string.Empty);
-        var set_empty = AnonymizationRule.Create(AnonymizeKind.SetEmpty);
+        var setEmpty = AnonymizationRule.Create(AnonymizeKind.SetEmpty);
 
-        constant_empty.Should().NotBe(set_empty);
+        constantEmpty.Should().NotBe(setEmpty);
     }
 
     [Fact]

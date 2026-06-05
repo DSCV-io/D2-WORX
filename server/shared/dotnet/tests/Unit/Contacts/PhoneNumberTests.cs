@@ -82,8 +82,8 @@ public sealed class PhoneNumberTests
     {
         // 33 chars of digits — exceeds the raw E.164 ceiling before the digit
         // envelope is even consulted.
-        var over_max = new string('1', FieldConstraints.PHONE_E164_MAX + 1);
-        var result = PhoneNumber.Create(over_max);
+        var overMax = new string('1', FieldConstraints.PHONE_E164_MAX + 1);
+        var result = PhoneNumber.Create(overMax);
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
@@ -189,26 +189,26 @@ public sealed class PhoneNumberTests
         // (TK.Geo.Validation.ADMIN_EMPTY_RECORD is outside {PHONE_INVALID, PHONE_TOO_LONG}).
         // This proves the validator's exact result was bubbled verbatim, not re-raised
         // with a key from Contacts' own validation vocabulary.
-        var distinguishing_key = TK.Geo.Validation.ADMIN_EMPTY_RECORD;
-        var failure = D2Result<string>.ValidationFailed(messages: [distinguishing_key]);
+        var distinguishingKey = TK.Geo.Validation.ADMIN_EMPTY_RECORD;
+        var failure = D2Result<string>.ValidationFailed(messages: [distinguishingKey]);
         var validator = new FakePhoneValidator(failure);
 
         var result = PhoneNumber.Create("anything", validator);
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be(distinguishing_key.Key);
+            .Which.Key.Should().Be(distinguishingKey.Key);
     }
 
     [Fact]
     public void Create_FloorMode_IgnoresRegion()
     {
         // No validator — region must have no effect on the floor outcome.
-        var with_region = PhoneNumber.Create("+1 212 555 1234", region: CountryCode.GB);
-        var without_region = PhoneNumber.Create("+1 212 555 1234");
+        var withRegion = PhoneNumber.Create("+1 212 555 1234", region: CountryCode.GB);
+        var withoutRegion = PhoneNumber.Create("+1 212 555 1234");
 
-        with_region.Success.Should().BeTrue();
-        with_region.Data!.Value.Should().Be(without_region.Data!.Value);
+        withRegion.Success.Should().BeTrue();
+        withRegion.Data!.Value.Should().Be(withoutRegion.Data!.Value);
     }
 
     // -----------------------------------------------------------------------

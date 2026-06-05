@@ -174,10 +174,10 @@ internal sealed class GovDbContext : DbContext
         public string Status { get; set; } = "active";
 
         /// <summary>
-        /// Gets or sets the creation timestamp. Not decorated — must remain unchanged after
-        /// sweep.
+        /// Gets or sets the creation epoch-ms timestamp. Not decorated — must remain unchanged
+        /// after sweep.
         /// </summary>
-        public DateTimeOffset CreatedAt { get; set; }
+        public long CreatedAt { get; set; }
 
         /// <summary>Gets or sets the owned address. Decorated via fluent in GovDbContext.</summary>
         public TierAAddress? Address { get; set; }

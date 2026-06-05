@@ -24,9 +24,9 @@ public sealed class MarkerInterfaceTests
     [Fact]
     public void IUserOwned_UserId_returns_set_value()
     {
-        var expected_id = Guid.NewGuid();
-        IUserOwned sut = new FakeUserOwned(expected_id);
-        sut.UserId.Should().Be(expected_id);
+        var expectedId = Guid.NewGuid();
+        IUserOwned sut = new FakeUserOwned(expectedId);
+        sut.UserId.Should().Be(expectedId);
     }
 
     [Fact]
@@ -47,9 +47,9 @@ public sealed class MarkerInterfaceTests
     [Fact]
     public void IOrgOwned_OrgId_returns_set_value()
     {
-        var expected_id = Guid.NewGuid();
-        IOrgOwned sut = new FakeOrgOwned(expected_id);
-        sut.OrgId.Should().Be(expected_id);
+        var expectedId = Guid.NewGuid();
+        IOrgOwned sut = new FakeOrgOwned(expectedId);
+        sut.OrgId.Should().Be(expectedId);
     }
 
     [Fact]

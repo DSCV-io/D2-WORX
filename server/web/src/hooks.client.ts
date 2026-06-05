@@ -20,7 +20,7 @@ export const handleError: HandleClientError = async ({ error, status, message })
   } else {
     // Fallback when Faro is unavailable
     console.error(
-      `[Client Error] ${status}: ${error instanceof Error ? error.message : String(error)}`,
+      `[Client Error] ${status}: ${error instanceof Error ? error.constructor.name : String(error)}`,
       { traceId },
     );
   }

@@ -2,6 +2,9 @@
 // <copyright file="StringExt.cs" company="DCSV">
 // Copyright (c) DCSV. All rights reserved.
 // </copyright>
+// §5.6 carve-out: instance-style `this string?` extension is required because
+// source generators target netstandard2.0 and cannot reference D2.Shared.Utilities
+// (net10). This polyfill reproduces Falsey/Truthy semantics locally.
 // -----------------------------------------------------------------------
 
 namespace D2.Shared.SourceGen.Polyfills;

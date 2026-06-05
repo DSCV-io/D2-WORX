@@ -147,7 +147,7 @@ internal static class ValidationFixture
         // any depth rearrangement of the tests folder — no fixed iteration
         // count, no silent wrong-root on partial matches.
         var dir = Path.GetDirectoryName(thisSourcePath) ?? string.Empty;
-        while (!string.IsNullOrEmpty(dir))
+        while (dir.Truthy())
         {
             if (Directory.Exists(Path.Combine(dir, ".git")))
                 return Path.Combine(dir, "contracts", "validation", "fixtures", $"{name}.json");

@@ -5,6 +5,8 @@ Copyright (c) DCSV. All rights reserved.
 # D2.Shared.EntityFrameworkCore
 
 > Parent: [`server/shared/dotnet/`](../README.md)
+>
+> **Audience**: backend .NET service engineers writing EF Core migrations that need to declare indexes on `ComplexProperty` member columns.
 
 Generic, VO-agnostic EF Core migration helpers. Currently ships one public helper:
 `CreateD2Index<TEntity>` — a `MigrationBuilder` extension for declaring indexes on
@@ -94,6 +96,19 @@ configuration (no workaround). Complex-member **queries**
 model-aware **index declaration** on a complex member is limited.
 
 ---
+
+## Telemetry
+
+No telemetry surface — migration helpers run at migration-apply time with no runtime span or metric emission.
+
+## Edge cases / gotchas
+
+- **Model-unaware column name derivation** — `CreateD2Index` derives the column name purely from the expression member chain under EF Core 10 default complex column naming (`{ComplexProp}_{Member}`, joined with `_`). If the host overrides complex column prefixes via `HasColumnName` in entity configuration, the host must supply the correct `name:` override argument; the toolkit mapping helpers (`MapPersonal`, `MapStreetAddress`, etc.) never call `HasColumnName`, so the default derivation is always correct when using those helpers.
+- **EF 11 supersedes this workaround** — EF Core 11 (issue [#31246](https://github.com/dotnet/efcore/issues/31246), milestone 11.0.0) makes `HasIndex(u => u.Vo.Member)` native. When the host upgrades, move the index declaration to the entity configuration class and remove the `CreateD2Index` migration call. See the README section above.
+
+## Configuration
+
+No configuration — the helper carries no tunable behavior.
 
 ## Dependencies
 

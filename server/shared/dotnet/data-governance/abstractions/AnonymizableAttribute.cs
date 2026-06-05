@@ -6,6 +6,7 @@
 
 namespace D2.Shared.DataGovernance.Abstractions;
 
+using D2.Shared.Utilities.Extensions;
 using JetBrains.Annotations;
 
 /// <summary>
@@ -157,9 +158,8 @@ public sealed class AnonymizableAttribute : Attribute
     // ---- Private funnel ctor (enforces the Kind ↔ payload invariant) ----------
     private AnonymizableAttribute(AnonymizeKind kind, string? constantValue, string? template)
     {
-        // This pure abstractions lib intentionally does not reference D2.Shared.Utilities
-        // (purity mandate — Result-only), so BCL guards are used instead of ThrowIfFalsey.
-        // Plain BCL ArgumentException matches the "developer error at model-build time" intent.
+        // Plain BCL ArgumentException matches the "developer error at model-build time"
+        // intent. D2.Shared.Utilities is referenced for Falsey() (§5.1).
         switch (kind)
         {
             case AnonymizeKind.SetNull:
@@ -202,7 +202,7 @@ public sealed class AnonymizableAttribute : Attribute
                         nameof(template));
                 }
 
-                if (string.IsNullOrWhiteSpace(template))
+                if (template.Falsey())
                 {
                     throw new ArgumentException(
                         "AnonymizeKind.Template requires a non-empty, non-whitespace "

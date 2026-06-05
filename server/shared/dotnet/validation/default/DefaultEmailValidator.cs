@@ -73,7 +73,18 @@ public sealed class DefaultEmailValidator : IEmailValidator
             return Invalid();
 
         var trimmed = email!.Trim();
-        if (!sr_Email.IsMatch(trimmed))
+
+        bool isMatch;
+        try
+        {
+            isMatch = sr_Email.IsMatch(trimmed);
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            return Invalid();
+        }
+
+        if (!isMatch)
             return Invalid();
 
         return D2Result<string>.Ok(trimmed.ToLowerInvariant());

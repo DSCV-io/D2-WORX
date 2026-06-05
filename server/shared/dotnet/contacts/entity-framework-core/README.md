@@ -5,6 +5,8 @@ Copyright (c) DCSV. All rights reserved.
 # D2.Shared.Contacts.EntityFrameworkCore
 
 > Parent: [`contacts/`](../README.md) · [`server/shared/dotnet/`](../../README.md)
+>
+> **Audience**: backend .NET service engineers mapping `D2.Shared.Contacts` value objects into EF Core entity models via infra `IEntityTypeConfiguration<T>`.
 
 Per-VO complex-type and value-converter mapping helpers for the D2.Shared.Contacts value objects.
 The helpers are called from the host's `IEntityTypeConfiguration<T>` implementation — the domain
@@ -166,6 +168,20 @@ Tombstone values are non-i18n literals — deliberately stable across locales.
    siblings.
 
 ---
+
+## Telemetry
+
+No telemetry surface — mapping helpers are pure model-build-time calls with no runtime span or metric emission.
+
+## Edge cases / gotchas
+
+- **`NameAffixes` / `Demographics` all-nullable constraint** — EF Core requires a complex type to be REQUIRED (non-nullable) unless it has at least one required property. Declare the host entity's `NameAffixes` / `Demographics` member as non-nullable, or EF throws at model build.
+- **Same-VO-type-twice** (e.g. two `Personal` properties for legal name + maiden name) works natively. EF Core 10 prefixes columns by the owning-property path automatically (`LegalName_FirstName` vs `MaidenName_FirstName`). The helpers never call `HasColumnName`, which preserves this default uniquification.
+- **Unique email/phone requires a template token** — `.Unique(template)` is the only path to a unique index on a single-value VO column. Passing a template without a `{Token}` throws `ArgumentException` at map time.
+
+## Configuration
+
+No configuration — the helpers carry no tunable behavior. All caps come from the shared `FieldConstraints` codegen catalog.
 
 ## Dependencies
 

@@ -84,6 +84,9 @@ public sealed class D2ProblemDetailsExtensionsTests
         nameof(AuthFailures.JwtAudienceMismatch),
         AuthErrorCodes.AUTH_JWT_AUDIENCE_MISMATCH)]
     [InlineData(nameof(AuthFailures.JwtClaimMissing), AuthErrorCodes.AUTH_JWT_CLAIM_MISSING)]
+    [InlineData(
+        nameof(AuthFailures.JwtActChainMalformed),
+        AuthErrorCodes.AUTH_JWT_ACT_CHAIN_MALFORMED)]
     [InlineData(nameof(AuthFailures.JwtKidNotFound), AuthErrorCodes.AUTH_JWT_KID_NOT_FOUND)]
     [InlineData(nameof(AuthFailures.SessionRevoked), AuthErrorCodes.AUTH_SESSION_REVOKED)]
     [InlineData(nameof(AuthFailures.ScopeInsufficient), AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT)]
@@ -209,8 +212,32 @@ public sealed class D2ProblemDetailsExtensionsTests
             .Should().NotContainKey(D2ProblemDetailsKeys.EXTENSION_TRACE_ID);
     }
 
-    [Fact]
-    public void ToProblemDetails_IncrementsProblemEmittedCounter()
+    [Theory]
+    [InlineData(nameof(AuthFailures.BearerMissing), AuthErrorCodes.AUTH_BEARER_MISSING)]
+    [InlineData(nameof(AuthFailures.BearerMalformed), AuthErrorCodes.AUTH_BEARER_MALFORMED)]
+    [InlineData(
+        nameof(AuthFailures.JwtSignatureInvalid),
+        AuthErrorCodes.AUTH_JWT_SIGNATURE_INVALID)]
+    [InlineData(nameof(AuthFailures.JwtExpired), AuthErrorCodes.AUTH_JWT_EXPIRED)]
+    [InlineData(nameof(AuthFailures.JwtNotYetValid), AuthErrorCodes.AUTH_JWT_NOT_YET_VALID)]
+    [InlineData(nameof(AuthFailures.JwtIssuerMismatch), AuthErrorCodes.AUTH_JWT_ISSUER_MISMATCH)]
+    [InlineData(
+        nameof(AuthFailures.JwtAudienceMismatch),
+        AuthErrorCodes.AUTH_JWT_AUDIENCE_MISMATCH)]
+    [InlineData(nameof(AuthFailures.JwtClaimMissing), AuthErrorCodes.AUTH_JWT_CLAIM_MISSING)]
+    [InlineData(
+        nameof(AuthFailures.JwtActChainMalformed),
+        AuthErrorCodes.AUTH_JWT_ACT_CHAIN_MALFORMED)]
+    [InlineData(nameof(AuthFailures.JwtKidNotFound), AuthErrorCodes.AUTH_JWT_KID_NOT_FOUND)]
+    [InlineData(nameof(AuthFailures.JwksUnavailable), AuthErrorCodes.AUTH_JWKS_UNAVAILABLE)]
+    [InlineData(nameof(AuthFailures.SessionRevoked), AuthErrorCodes.AUTH_SESSION_REVOKED)]
+    [InlineData(
+        nameof(AuthFailures.SessionLivenessUnavailable),
+        AuthErrorCodes.AUTH_SESSION_LIVENESS_UNAVAILABLE)]
+    [InlineData(nameof(AuthFailures.ScopeInsufficient), AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT)]
+    public void ToProblemDetails_IncrementsProblemEmittedCounter(
+        string methodName,
+        string expectedCode)
     {
         var emitted = new List<KeyValuePair<string, object?>>();
         using var listener = new MeterListener();
@@ -230,12 +257,16 @@ public sealed class D2ProblemDetailsExtensionsTests
             });
         listener.Start();
         var ctx = MakeContext("/api/x");
+        var factory = typeof(AuthFailures)
+            .GetMethods()
+            .First(m => m.Name == methodName && !m.IsGenericMethod);
+        var failure = (D2Result)factory.Invoke(null, null)!;
 
-        AuthFailures.BearerMissing().ToProblemDetails(ctx);
+        failure.ToProblemDetails(ctx);
 
         emitted.Should().Contain(kv =>
             kv.Key == "d2_error_code"
-                && (string?)kv.Value == AuthErrorCodes.AUTH_BEARER_MISSING);
+                && (string?)kv.Value == expectedCode);
     }
 
     [Fact]

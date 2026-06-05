@@ -14,6 +14,7 @@ using D2.Shared.Contacts.EntityFrameworkCore;
 using D2.Shared.Contacts.ValueObjects;
 using D2.Shared.DataGovernance.Abstractions;
 using D2.Shared.DataGovernance.EntityFrameworkCore;
+using D2.Shared.Time.EfCore;
 using D2.Shared.Validation.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -850,7 +851,7 @@ public sealed class ContactMappingExtensionsTests
 
         internal static DemoContext Build() =>
             new(new DbContextOptionsBuilder()
-                .UseNpgsql("Host=localhost")
+                .UseNpgsql("Host=localhost", o => o.AddD2NodaTime())
                 .Options);
 
         protected override void OnModelCreating(ModelBuilder mb)
@@ -929,7 +930,7 @@ public sealed class ContactMappingExtensionsTests
 
         internal static OptionalDemoContext Build() =>
             new(new DbContextOptionsBuilder()
-                .UseNpgsql("Host=localhost")
+                .UseNpgsql("Host=localhost", o => o.AddD2NodaTime())
                 .Options);
 
         protected override void OnModelCreating(ModelBuilder mb)

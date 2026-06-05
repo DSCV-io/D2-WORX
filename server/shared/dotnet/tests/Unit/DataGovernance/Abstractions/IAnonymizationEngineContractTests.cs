@@ -34,9 +34,9 @@ public sealed class IAnonymizationEngineContractTests
     public async Task AnonymizeUserAsync_dispatches_and_returns_D2Result_AnonymizationOutcome()
     {
         IAnonymizationEngine sut = new FakeEngine();
-        var user_id = Guid.NewGuid();
+        var userId = Guid.NewGuid();
 
-        var result = await sut.AnonymizeUserAsync(user_id);
+        var result = await sut.AnonymizeUserAsync(userId);
 
         result.Success.Should().BeTrue();
         result.Data.Should().Be(sr_cannedOutcome);
@@ -47,10 +47,10 @@ public sealed class IAnonymizationEngineContractTests
     {
         // Pins the default ct = default parameter.
         IAnonymizationEngine sut = new FakeEngine();
-        var user_id = Guid.NewGuid();
+        var userId = Guid.NewGuid();
 
         // Must compile without passing a CancellationToken.
-        var result = await sut.AnonymizeUserAsync(user_id);
+        var result = await sut.AnonymizeUserAsync(userId);
 
         result.Success.Should().BeTrue();
     }
@@ -59,9 +59,9 @@ public sealed class IAnonymizationEngineContractTests
     public async Task AnonymizeOrgAsync_dispatches_and_returns_D2Result_AnonymizationOutcome()
     {
         IAnonymizationEngine sut = new FakeEngine();
-        var org_id = Guid.NewGuid();
+        var orgId = Guid.NewGuid();
 
-        var result = await sut.AnonymizeOrgAsync(org_id);
+        var result = await sut.AnonymizeOrgAsync(orgId);
 
         result.Success.Should().BeTrue();
         result.Data.Should().Be(sr_cannedOutcome);
@@ -71,9 +71,9 @@ public sealed class IAnonymizationEngineContractTests
     public async Task AnonymizeOrgAsync_accepts_call_without_explicit_CancellationToken()
     {
         IAnonymizationEngine sut = new FakeEngine();
-        var org_id = Guid.NewGuid();
+        var orgId = Guid.NewGuid();
 
-        var result = await sut.AnonymizeOrgAsync(org_id);
+        var result = await sut.AnonymizeOrgAsync(orgId);
 
         result.Success.Should().BeTrue();
     }
@@ -150,9 +150,9 @@ public sealed class IAnonymizationEngineContractTests
     public async Task AnonymizeUserAsync_fake_ValidationFailed_compiles_and_returns_failure()
     {
         IAnonymizationEngine sut = new FakeEngineValidationFailed();
-        var user_id = Guid.Empty;
+        var userId = Guid.Empty;
 
-        var result = await sut.AnonymizeUserAsync(user_id);
+        var result = await sut.AnonymizeUserAsync(userId);
 
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(ErrorCodes.VALIDATION_FAILED);

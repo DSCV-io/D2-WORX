@@ -6,6 +6,7 @@
 
 namespace D2.Shared.DataGovernance.Abstractions;
 
+using D2.Shared.Utilities.Extensions;
 using JetBrains.Annotations;
 
 /// <summary>
@@ -100,9 +101,8 @@ public sealed record AnonymizationRule
         string? constantValue = null,
         string? template = null)
     {
-        // This pure abstractions lib intentionally does not reference D2.Shared.Utilities
-        // (purity mandate — Result-only). Plain BCL ArgumentException matches the
-        // "developer error at model-build time" contract.
+        // Plain BCL ArgumentException matches the "developer error at model-build time"
+        // contract. D2.Shared.Utilities is referenced for Falsey() (§5.1).
         switch (kind)
         {
             case AnonymizeKind.SetNull:
@@ -141,7 +141,7 @@ public sealed record AnonymizationRule
                         nameof(template));
                 }
 
-                if (string.IsNullOrWhiteSpace(template))
+                if (template.Falsey())
                 {
                     throw new ArgumentException(
                         "AnonymizeKind.Template requires a non-empty, non-whitespace "

@@ -26,6 +26,9 @@ using Microsoft.Extensions.Logging;
 /// tests in the test project.
 /// </para>
 /// </remarks>
+// §5.6 carve-out: [LoggerMessage] partial methods cannot be declared inside a
+// C# 14 extension(...) block (compiler-syntactic restriction), so the block form
+// is categorically inapplicable here; instance-extension style is correct.
 internal static partial class AuthLog
 {
     [LoggerMessage(

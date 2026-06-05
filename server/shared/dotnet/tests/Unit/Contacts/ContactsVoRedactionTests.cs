@@ -95,7 +95,7 @@ public sealed class ContactsVoRedactionTests
     public void Demographics_Properties_AreRedactedByPolicy(string propertyName)
     {
         var demographics = Demographics.Create(
-            new DateOnly(1990, 3, 15), BiologicalSex.Female).Data!;
+            new NodaTime.LocalDate(1990, 3, 15), BiologicalSex.Female).Data!;
         var structure = Destructure(demographics);
 
         structure.Properties.Should().Contain(p =>

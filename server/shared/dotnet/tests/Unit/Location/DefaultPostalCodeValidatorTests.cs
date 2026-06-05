@@ -176,8 +176,9 @@ public sealed class DefaultPostalCodeValidatorTests
     {
         var huge = new string('A', 10_000);
 
-        // Should fail fast (regex rejects on length); 50ms matchTimeout would
-        // throw RegexMatchTimeoutException if we hit super-linear backtracking.
+        // Should fail fast (regex rejects on length); if super-linear backtracking
+        // were reached, RegexMatchTimeoutException would be caught and mapped to
+        // a validation failure — never an unhandled exception.
         var result = sr_Validator.Validate(huge);
         result.Success.Should().BeFalse();
     }

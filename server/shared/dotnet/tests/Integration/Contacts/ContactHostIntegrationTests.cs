@@ -236,6 +236,52 @@ public sealed class ContactHostIntegrationTests : IAsyncLifetime
     }
 
     // =========================================================================
+    // LocalDate DOB round-trip (NodaTime LocalDate? → DATE Postgres column)
+    // =========================================================================
+
+    [Fact]
+    public async Task Demographics_DateOfBirth_LocalDate_round_trips_through_date_column()
+    {
+        // Verifies that a non-null LocalDate? DateOfBirth seeded on Demographics
+        // survives the LocalDate? → DATE Postgres column → LocalDate? EF round-trip.
+        // This exercises the o.AddD2NodaTime() NodaTime value converter wired in
+        // ContactsHostDbContext.Build().
+        var userId = Guid.NewGuid();
+        var dob = new NodaTime.LocalDate(1990, 3, 15);
+        var demo = Demographics.Create(
+            dateOfBirth: dob,
+            biologicalSex: BiologicalSex.Female).Data!;
+
+        var host = new ContactsHostDbContext.ContactHost
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Name = Personal.Create("Lee").Data!,
+            Affixes = NameAffixes.Create(prefix: NamePrefix.Dr).Data!,
+            Demo = demo,
+            Work = Professional.Create("Test Corp").Data!,
+            Street = StreetAddress.Create("1 Test St").Data!,
+            Admin = AdminLocation.Create(countryIso31661Alpha2Code: CountryCode.US).Data!,
+            Geo = Coordinates.Create(0.0, 0.0).Data!,
+            AccountTier = "standard",
+        };
+
+        await using var writeCtx = ContactsHostDbContext.Build(r_fixture.ConnectionString);
+        writeCtx.ContactHosts.Add(host);
+        await writeCtx.SaveChangesAsync();
+
+        await using var readCtx = ContactsHostDbContext.Build(r_fixture.ConnectionString);
+        var row = await readCtx.ContactHosts.FirstAsync(h => h.UserId == userId);
+
+        row.Demo.DateOfBirth.Should().Be(
+            new NodaTime.LocalDate(1990, 3, 15),
+            "LocalDate? DateOfBirth must round-trip through the DATE Postgres column via AddD2NodaTime()");
+        row.Demo.BiologicalSex.Should().Be(
+            BiologicalSex.Female,
+            "BiologicalSex must also survive the round-trip");
+    }
+
+    // =========================================================================
     // Anonymization round-trip (Tier B — ContactHost has Email Template)
     // =========================================================================
 
@@ -296,9 +342,9 @@ public sealed class ContactHostIntegrationTests : IAsyncLifetime
         row.Admin.HashId.Should().Be(LocationVoDecorator.HashIdCleared);
 
         // Email — Template rule, Tier B renders per-row
-        var expected_email = $"deletedUser{userId:N}@deleted.user.dcsv.io";
+        var expectedEmail = $"deletedUser{userId:N}@deleted.user.dcsv.io";
         row.Email.Should().NotBeNull();
-        row.Email!.Value.Should().Be(expected_email);
+        row.Email!.Value.Should().Be(expectedEmail);
 
         // Phone — Constant rule
         row.Phone.Should().NotBeNull();
@@ -367,12 +413,12 @@ public sealed class ContactHostIntegrationTests : IAsyncLifetime
 
         // Raw SQL read — confirms the DB column itself holds 0, not a CLR artifact.
         var id = seeded.Id;
-        var raw_lat = await readCtx.Database
+        var rawLat = await readCtx.Database
             .SqlQuery<double>(
                 $"SELECT \"Geo_Latitude\" AS \"Value\" FROM \"ContactHosts\" WHERE \"Id\" = {id}")
             .FirstAsync();
 
-        raw_lat.Should().Be(
+        rawLat.Should().Be(
             0.0,
             "raw Postgres column must hold 0.0 — the live proof that Convert.ChangeType"
             + "(\"0\", typeof(double)) lands correctly on the Tier-B SetPropertyValue path");
@@ -425,12 +471,12 @@ public sealed class ContactHostIntegrationTests : IAsyncLifetime
 
         // Raw SQL read — belt-and-braces: confirms the DB column itself holds 0.
         var id = host.Id;
-        var raw_lat = await readCtx.Database
+        var rawLat = await readCtx.Database
             .SqlQuery<double>(
                 $"SELECT \"Geo_Latitude\" AS \"Value\" FROM \"GeoOnlyHosts\" WHERE \"Id\" = {id}")
             .FirstAsync();
 
-        raw_lat.Should().Be(
+        rawLat.Should().Be(
             0.0,
             "raw Postgres column must hold 0.0 — DB-level proof of the Tier-A coercion");
     }
@@ -446,15 +492,15 @@ public sealed class ContactHostIntegrationTests : IAsyncLifetime
         var seeded = BuildContactHost(userId, includeOptionals: false);
 
         // Capture pre-erasure HashIds (all non-sentinel values).
-        var pre_name_hash_id = seeded.Name.HashId;
-        var pre_street_hash_id = seeded.Street.HashId;
-        var pre_admin_hash_id = seeded.Admin.HashId;
-        var pre_geo_hash_id = seeded.Geo.HashId;
+        var preNameHashId = seeded.Name.HashId;
+        var preStreetHashId = seeded.Street.HashId;
+        var preAdminHashId = seeded.Admin.HashId;
+        var preGeoHashId = seeded.Geo.HashId;
 
-        pre_name_hash_id.Should().NotBe(ContactVoDecorator.HashIdCleared);
-        pre_street_hash_id.Should().NotBe(LocationVoDecorator.HashIdCleared);
-        pre_admin_hash_id.Should().NotBe(LocationVoDecorator.HashIdCleared);
-        pre_geo_hash_id.Should().NotBe(LocationVoDecorator.HashIdCleared);
+        preNameHashId.Should().NotBe(ContactVoDecorator.HashIdCleared);
+        preStreetHashId.Should().NotBe(LocationVoDecorator.HashIdCleared);
+        preAdminHashId.Should().NotBe(LocationVoDecorator.HashIdCleared);
+        preGeoHashId.Should().NotBe(LocationVoDecorator.HashIdCleared);
 
         await using var writeCtx = ContactsHostDbContext.Build(r_fixture.ConnectionString);
         writeCtx.ContactHosts.Add(seeded);

@@ -45,6 +45,6 @@ Project documentation that doesn't belong at the repo root.
 | [v2/PHASE_6_REFERENCE.md](v2/PHASE_6_REFERENCE.md) | D2.Files (.NET) rebuild reference — 6 design principles, status state machine, smartphone MIME list, GEO_CLIENT log-suppression pattern. |
 | [v2/PHASE_8_REFERENCE.md](v2/PHASE_8_REFERENCE.md) | dkron-mgr (.NET) rewrite reference — Reconciler pattern, change-detection field list.                                                    |
 
-### Not yet written
+### Claim catalog
 
-`JWT-CLAIMS.md` — full custom-claim catalog. Not yet written; the spec lives in `contracts/jwt-claims/jwt-claims.spec.json` and the generated `JwtClaimTypes` constants are the canonical reference.
+`JWT-CLAIMS.md` — full custom-claim catalog. The spec lives in `contracts/jwt-claims/jwt-claims.spec.json` and the generated `JwtClaimTypes` constants in `auth/abstractions/` are the canonical reference; a standalone prose catalog may be added alongside them as the claim set stabilizes.

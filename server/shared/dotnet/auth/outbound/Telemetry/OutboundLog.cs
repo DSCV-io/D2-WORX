@@ -13,6 +13,9 @@ using Microsoft.Extensions.Logging;
 /// runtime. Compiled once at type-load (no allocations / format-string parsing
 /// at the call site) per CA1848.
 /// </summary>
+// §5.6 carve-out: [LoggerMessage] partial methods cannot be declared inside a
+// C# 14 extension(...) block (compiler-syntactic restriction), so the block form
+// is categorically inapplicable here; instance-extension style is correct.
 internal static partial class OutboundLog
 {
     [LoggerMessage(

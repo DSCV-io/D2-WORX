@@ -56,6 +56,7 @@ public sealed record EmailAddress
         if (validator is not null)
         {
             var validation = validator.Validate(value);
+
             if (!validation.Success)
                 return D2Result<EmailAddress>.BubbleFail(validation);
 
@@ -66,6 +67,7 @@ public sealed record EmailAddress
             // Floor — reuse the shared TryParseEmail helper (trim + collapse +
             // lowercase + local@domain.tld shape; bubbles common_validation_EMAIL_INVALID).
             var parse = value.TryParseEmail();
+
             if (!parse.Success)
                 return D2Result<EmailAddress>.BubbleFail(parse);
 

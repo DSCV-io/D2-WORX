@@ -76,8 +76,8 @@ public sealed class PersonalTests
     [Fact]
     public void Create_FirstNameExactlyMax_ReturnsOk()
     {
-        var at_max = new string('a', FieldConstraints.FIRST_NAME_MAX);
-        var result = Personal.Create(at_max);
+        var atMax = new string('a', FieldConstraints.FIRST_NAME_MAX);
+        var result = Personal.Create(atMax);
 
         result.Success.Should().BeTrue();
         result.Data!.FirstName.Should().HaveLength(FieldConstraints.FIRST_NAME_MAX);
@@ -86,8 +86,8 @@ public sealed class PersonalTests
     [Fact]
     public void Create_FirstNameOverMax_ReturnsFirstNameTooLong()
     {
-        var over_max = new string('a', FieldConstraints.FIRST_NAME_MAX + 1);
-        var result = Personal.Create(over_max);
+        var overMax = new string('a', FieldConstraints.FIRST_NAME_MAX + 1);
+        var result = Personal.Create(overMax);
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
@@ -97,8 +97,8 @@ public sealed class PersonalTests
     [Fact]
     public void Create_MiddleNameOverMax_ReturnsMiddleNameTooLong()
     {
-        var over_max = new string('b', FieldConstraints.MIDDLE_NAME_MAX + 1);
-        var result = Personal.Create("John", over_max);
+        var overMax = new string('b', FieldConstraints.MIDDLE_NAME_MAX + 1);
+        var result = Personal.Create("John", overMax);
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
@@ -108,8 +108,8 @@ public sealed class PersonalTests
     [Fact]
     public void Create_LastNameOverMax_ReturnsLastNameTooLong()
     {
-        var over_max = new string('c', FieldConstraints.LAST_NAME_MAX + 1);
-        var result = Personal.Create("John", lastName: over_max);
+        var overMax = new string('c', FieldConstraints.LAST_NAME_MAX + 1);
+        var result = Personal.Create("John", lastName: overMax);
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
@@ -119,8 +119,8 @@ public sealed class PersonalTests
     [Fact]
     public void Create_PreferredNameOverMax_ReturnsPreferredNameTooLong()
     {
-        var over_max = new string('d', FieldConstraints.PREFERRED_NAME_MAX + 1);
-        var result = Personal.Create("John", preferredName: over_max);
+        var overMax = new string('d', FieldConstraints.PREFERRED_NAME_MAX + 1);
+        var result = Personal.Create("John", preferredName: overMax);
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
@@ -130,8 +130,8 @@ public sealed class PersonalTests
     [Fact]
     public void Create_MiddleNameExactlyMax_ReturnsOk()
     {
-        var at_max = new string('e', FieldConstraints.MIDDLE_NAME_MAX);
-        var result = Personal.Create("John", at_max);
+        var atMax = new string('e', FieldConstraints.MIDDLE_NAME_MAX);
+        var result = Personal.Create("John", atMax);
 
         result.Success.Should().BeTrue();
         result.Data!.MiddleName.Should().HaveLength(FieldConstraints.MIDDLE_NAME_MAX);
@@ -140,8 +140,8 @@ public sealed class PersonalTests
     [Fact]
     public void Create_LastNameExactlyMax_ReturnsOk()
     {
-        var at_max = new string('e', FieldConstraints.LAST_NAME_MAX);
-        var result = Personal.Create("John", lastName: at_max);
+        var atMax = new string('e', FieldConstraints.LAST_NAME_MAX);
+        var result = Personal.Create("John", lastName: atMax);
 
         result.Success.Should().BeTrue();
         result.Data!.LastName.Should().HaveLength(FieldConstraints.LAST_NAME_MAX);
@@ -150,8 +150,8 @@ public sealed class PersonalTests
     [Fact]
     public void Create_PreferredNameExactlyMax_ReturnsOk()
     {
-        var at_max = new string('e', FieldConstraints.PREFERRED_NAME_MAX);
-        var result = Personal.Create("John", preferredName: at_max);
+        var atMax = new string('e', FieldConstraints.PREFERRED_NAME_MAX);
+        var result = Personal.Create("John", preferredName: atMax);
 
         result.Success.Should().BeTrue();
         result.Data!.PreferredName.Should().HaveLength(FieldConstraints.PREFERRED_NAME_MAX);

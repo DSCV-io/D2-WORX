@@ -28,6 +28,14 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <ProjectReference Include="..\..\result\core\D2.Shared.Result.csproj" />
     <!--
+      D2.Shared.Time — IClock / SystemClock / TestClock injection seam + NodaTime
+      types. Demographics.DateOfBirth uses NodaTime.LocalDate (→ DATE column via
+      UseNodaTime()) and IClock for deterministic-boundary clock injection.
+      No cycle: D2.Shared.Time depends on Result / I18n.Abstractions / Utilities,
+      not on Contacts.
+    -->
+    <ProjectReference Include="..\..\time\D2.Shared.Time.csproj" />
+    <!--
       D2.Shared.Validation.Abstractions — FieldConstraints length/digit caps,
       the NamePrefix / NameSuffix / BiologicalSex taxonomy enums, and the
       IEmailValidator / IPhoneValidator smart-validator contracts.

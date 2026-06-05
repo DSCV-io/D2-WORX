@@ -126,8 +126,8 @@ public sealed class NameAffixesTests
     [Fact]
     public void Create_PrefixCustomExactlyMax_ReturnsOk()
     {
-        var at_max = new string('x', FieldConstraints.AFFIX_CUSTOM_MAX);
-        var result = NameAffixes.Create(NamePrefix.Other, at_max);
+        var atMax = new string('x', FieldConstraints.AFFIX_CUSTOM_MAX);
+        var result = NameAffixes.Create(NamePrefix.Other, atMax);
 
         result.Success.Should().BeTrue();
         result.Data!.PrefixCustom.Should().HaveLength(FieldConstraints.AFFIX_CUSTOM_MAX);
@@ -136,8 +136,8 @@ public sealed class NameAffixesTests
     [Fact]
     public void Create_PrefixCustomOverMax_ReturnsPrefixCustomTooLong()
     {
-        var over_max = new string('x', FieldConstraints.AFFIX_CUSTOM_MAX + 1);
-        var result = NameAffixes.Create(NamePrefix.Other, over_max);
+        var overMax = new string('x', FieldConstraints.AFFIX_CUSTOM_MAX + 1);
+        var result = NameAffixes.Create(NamePrefix.Other, overMax);
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
@@ -191,8 +191,8 @@ public sealed class NameAffixesTests
     [Fact]
     public void Create_SuffixCustomExactlyMax_ReturnsOk()
     {
-        var at_max = new string('y', FieldConstraints.AFFIX_CUSTOM_MAX);
-        var result = NameAffixes.Create(suffix: NameSuffix.Other, suffixCustom: at_max);
+        var atMax = new string('y', FieldConstraints.AFFIX_CUSTOM_MAX);
+        var result = NameAffixes.Create(suffix: NameSuffix.Other, suffixCustom: atMax);
 
         result.Success.Should().BeTrue();
     }
@@ -200,8 +200,8 @@ public sealed class NameAffixesTests
     [Fact]
     public void Create_SuffixCustomOverMax_ReturnsSuffixCustomTooLong()
     {
-        var over_max = new string('y', FieldConstraints.AFFIX_CUSTOM_MAX + 1);
-        var result = NameAffixes.Create(suffix: NameSuffix.Other, suffixCustom: over_max);
+        var overMax = new string('y', FieldConstraints.AFFIX_CUSTOM_MAX + 1);
+        var result = NameAffixes.Create(suffix: NameSuffix.Other, suffixCustom: overMax);
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()

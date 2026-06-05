@@ -25,12 +25,15 @@ Each multi-package cluster has its own index README that lists and briefly descr
 
 - [`auth/`](auth/README.md) — auth vocabulary, inbound/outbound runtime, per-transport bindings, auth-spec source generators
 - [`caching/`](caching/README.md) — `ILocalCache` / `IDistributedCache` / `ITieredCache` abstractions plus local-memory and Redis implementations
+- [`contacts/`](contacts/README.md) — composable PII value objects (`Personal`, `NameAffixes`, `Demographics`, `Professional`, `EmailAddress`, `PhoneNumber`) plus reusable EF Core mapping
 - [`context/`](context/README.md) — spec-driven request and auth context interfaces, codegen-driven `PropagatedContext` serialization
+- [`data-governance/`](data-governance/README.md) — GDPR anonymization markers, engine seam, and EF Core anonymization engine + startup model guard
 - [`encryption/`](encryption/README.md) — AES-256-GCM payload crypto, keyrings, binary frame layout, spec-driven domain and frame-layout source generators
 - [`geo/`](geo/README.md) — spec-driven geographic reference catalogs, name-resolver contracts, in-memory lookup tables
 - [`handler/`](handler/README.md) — `BaseHandler<TSelf, TInput, TOutput>`, handler contracts, repo-handler variants, DB-exception classifiers
 - [`headers/`](headers/README.md) — per-transport wire-protocol header constant catalogs, codegen-emitted from the headers spec
 - [`i18n/`](i18n/README.md) — `TKMessage` primitives, source-gen-emitted `TK.*` constants, runtime translator
+- [`location/`](location/README.md) — immutable location value objects (`Coordinates`, `StreetAddress`, `AdminLocation`) plus reusable EF Core mapping
 - [`messaging/`](messaging/README.md) — transport-agnostic message bus, default RabbitMQ implementation, spec-driven message / subscription / DLQ / OTel-tag source generators
 - [`problem-details/`](problem-details/README.md) — RFC 7807 wire-shape constant catalog, spec-driven source generator
 - [`result/`](result/README.md) — `D2Result<T>` core, wire-envelope and error-code source generators, gRPC-trailers source generator

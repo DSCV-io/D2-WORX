@@ -165,15 +165,15 @@ public sealed class EmailAddressTests
         // (TK.Geo.Validation.ADMIN_EMPTY_RECORD is outside {EMAIL_INVALID, EMAIL_TOO_LONG}).
         // This proves the validator's exact result was bubbled verbatim, not re-raised
         // with a key from Contacts' own validation vocabulary.
-        var distinguishing_key = TK.Geo.Validation.ADMIN_EMPTY_RECORD;
-        var failure = D2Result<string>.ValidationFailed(messages: [distinguishing_key]);
+        var distinguishingKey = TK.Geo.Validation.ADMIN_EMPTY_RECORD;
+        var failure = D2Result<string>.ValidationFailed(messages: [distinguishingKey]);
         var validator = new FakeEmailValidator(failure);
 
         var result = EmailAddress.Create("anything", validator);
 
         result.Success.Should().BeFalse();
         result.Messages.Should().ContainSingle()
-            .Which.Key.Should().Be(distinguishing_key.Key);
+            .Which.Key.Should().Be(distinguishingKey.Key);
     }
 
     [Fact]
@@ -181,13 +181,13 @@ public sealed class EmailAddressTests
     {
         // A validator may legitimately emit a longer normalized form — Contacts
         // does NOT second-guess it with the floor's length cap.
-        var long_email = new string('a', FieldConstraints.EMAIL_MAX + 50) + "@x.com";
-        var validator = new FakeEmailValidator(D2Result<string>.Ok(long_email));
+        var longEmail = new string('a', FieldConstraints.EMAIL_MAX + 50) + "@x.com";
+        var validator = new FakeEmailValidator(D2Result<string>.Ok(longEmail));
 
         var result = EmailAddress.Create("short@x.com", validator);
 
         result.Success.Should().BeTrue();
-        result.Data!.Value.Should().Be(long_email);
+        result.Data!.Value.Should().Be(longEmail);
     }
 
     // -----------------------------------------------------------------------

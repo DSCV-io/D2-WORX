@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 - **Status**: Accepted
 - **Date**: 2026-05-30
-- **Deliverable**: Phase 0 — shared libraries (backfilled)
+- **Deliverable**: D2 shared libraries (backfilled)
 
 ## Context
 

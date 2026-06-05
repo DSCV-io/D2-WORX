@@ -7,23 +7,28 @@ Copyright (c) DCSV. All rights reserved.
   </PropertyGroup>
 
   <!--
-    PURE marker / attribute / seam library. Zero EF, zero DI, zero Utilities.
+    PURE marker / attribute / seam library. Zero EF, zero DI.
     Domain and host code reference the engine seam (IAnonymizationEngine) and
     the ownership / trackable markers (IUserOwned, IOrgOwned,
     IExemptFromAnonymization, IAnonymizationTrackable) without pulling EF Core.
     Implementations — attribute-mapping convention, fluent API, anonymization
     engine, startup guard, and DI registration — live in
     D2.Shared.DataGovernance.EntityFrameworkCore.
+    D2.Shared.Utilities is referenced for Falsey() on template validation (§5.1);
+    no cycle exists: Utilities → Result + I18n.Abstractions; this lib → Result only.
   -->
 
   <ItemGroup>
     <!--
       D2.Shared.Result — IAnonymizationEngine returns
-      Task<D2Result<AnonymizationOutcome>>. This is the only dependency;
-      the purity mandate prohibits references to EF Core, DI, Utilities,
-      Geo, or any other infrastructure lib.
+      Task<D2Result<AnonymizationOutcome>>.
+      D2.Shared.Utilities — referenced for Falsey() on template validation
+      (§5.1); no cycle exists (Utilities → Result + I18n.Abstractions).
+      The purity mandate prohibits references to EF Core, DI, Geo, or any
+      other infrastructure lib.
     -->
     <ProjectReference Include="..\..\result\core\D2.Shared.Result.csproj" />
+    <ProjectReference Include="..\..\utilities\D2.Shared.Utilities.csproj" />
   </ItemGroup>
 
   <ItemGroup>

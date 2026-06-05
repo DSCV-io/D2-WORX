@@ -189,10 +189,10 @@ public sealed class InvoiceAnonymizationIntegrationTests : IAsyncLifetime
         var storeObj = Microsoft.EntityFrameworkCore.Metadata.StoreObjectIdentifier.Table(
             entityType.GetTableName()!);
 
-        var billing_col = billingCityProp.GetColumnName(storeObj);
-        var shipping_col = shippingCityProp.GetColumnName(storeObj);
-        billing_col.Should().NotBe(
-            shipping_col,
+        var billingCol = billingCityProp.GetColumnName(storeObj);
+        var shippingCol = shippingCityProp.GetColumnName(storeObj);
+        billingCol.Should().NotBe(
+            shippingCol,
             "billing and shipping city must map to distinct DB columns");
     }
 
@@ -204,35 +204,35 @@ public sealed class InvoiceAnonymizationIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task AnonymizeUserAsync_UniqueContactRow_distinct_owners_no_unique_constraint_violation()
     {
-        var user_a = Guid.NewGuid();
-        var user_b = Guid.NewGuid();
+        var userA = Guid.NewGuid();
+        var userB = Guid.NewGuid();
 
-        await SeedUniqueRow(user_a, "a@example.test");
-        await SeedUniqueRow(user_b, "b@example.test");
+        await SeedUniqueRow(userA, "a@example.test");
+        await SeedUniqueRow(userB, "b@example.test");
 
         var engine = BuildEngine();
-        var result_a = await engine.AnonymizeUserAsync(user_a);
-        var result_b = await engine.AnonymizeUserAsync(user_b);
+        var resultA = await engine.AnonymizeUserAsync(userA);
+        var resultB = await engine.AnonymizeUserAsync(userB);
 
         // Neither call must throw DbUpdateException (unique-constraint violation).
-        result_a.Success.Should().BeTrue();
-        result_b.Success.Should().BeTrue();
+        resultA.Success.Should().BeTrue();
+        resultB.Success.Should().BeTrue();
 
         await using var readCtx = ContactsHostDbContext.Build(r_fixture.ConnectionString);
-        var row_a = await readCtx.UniqueContactRows.FirstAsync(r => r.UserId == user_a);
-        var row_b = await readCtx.UniqueContactRows.FirstAsync(r => r.UserId == user_b);
+        var rowA = await readCtx.UniqueContactRows.FirstAsync(r => r.UserId == userA);
+        var rowB = await readCtx.UniqueContactRows.FirstAsync(r => r.UserId == userB);
 
-        var expected_a = $"deletedUser{user_a:N}@deleted.user.dcsv.io";
-        var expected_b = $"deletedUser{user_b:N}@deleted.user.dcsv.io";
+        var expectedA = $"deletedUser{userA:N}@deleted.user.dcsv.io";
+        var expectedB = $"deletedUser{userB:N}@deleted.user.dcsv.io";
 
-        row_a.Email!.Value.Should().Be(expected_a, "per-row UserId template rendered for A");
-        row_b.Email!.Value.Should().Be(expected_b, "per-row UserId template rendered for B");
-        row_a.Email.Value.Should().NotBe(
-            row_b.Email.Value,
+        rowA.Email!.Value.Should().Be(expectedA, "per-row UserId template rendered for A");
+        rowB.Email!.Value.Should().Be(expectedB, "per-row UserId template rendered for B");
+        rowA.Email.Value.Should().NotBe(
+            rowB.Email.Value,
             "two distinct owners produce two distinct tombstones");
 
-        row_a.IsAnonymized.Should().BeTrue();
-        row_b.IsAnonymized.Should().BeTrue();
+        rowA.IsAnonymized.Should().BeTrue();
+        rowB.IsAnonymized.Should().BeTrue();
     }
 
     [Fact]
@@ -243,12 +243,12 @@ public sealed class InvoiceAnonymizationIntegrationTests : IAsyncLifetime
         // violation on the second SaveChanges (Tier-B materialize-mutate path). This
         // pins the documented caller-responsibility boundary: the template author
         // must include a per-ROW token if multiple rows can share an owner.
-        var shared_user = Guid.NewGuid();
-        await SeedUniqueRow(shared_user, "first@example.test");
-        await SeedUniqueRow(shared_user, "second@example.test");
+        var sharedUser = Guid.NewGuid();
+        await SeedUniqueRow(sharedUser, "first@example.test");
+        await SeedUniqueRow(sharedUser, "second@example.test");
 
         var engine = BuildEngine();
-        var result = await engine.AnonymizeUserAsync(shared_user);
+        var result = await engine.AnonymizeUserAsync(sharedUser);
 
         // The engine returns a failure (not a silent half-erase) — boundary pinned.
         result.Success.Should().BeFalse(

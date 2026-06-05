@@ -101,10 +101,10 @@ public sealed class AnonymizationOutcomeTests
         foreach (var prop in typeof(AnonymizationOutcome).GetProperties())
         {
             if (prop.SetMethod is null) continue;
-            var modifier_names = prop.SetMethod.ReturnParameter
+            var modifierNames = prop.SetMethod.ReturnParameter
                 .GetRequiredCustomModifiers()
                 .Select(t => t.FullName);
-            modifier_names.Should().Contain(
+            modifierNames.Should().Contain(
                 is_external_init_name,
                 because: $"{prop.Name} must use init, not a regular setter.");
         }

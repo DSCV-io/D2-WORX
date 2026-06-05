@@ -7,6 +7,7 @@
 namespace D2.Shared.Tests.Unit.Time;
 
 using AwesomeAssertions;
+using D2.Shared.I18n;
 using D2.Shared.Time;
 using NodaTime;
 using Xunit;
@@ -96,7 +97,7 @@ public sealed class ZonedInstantTests
         result.InputErrors.Should().ContainSingle();
         result.InputErrors[0].Field.Should().Be("ianaIdentifier");
         result.InputErrors[0].Errors.Should().ContainSingle(
-            m => m.Key == "common_errors_NOT_NULL_VIOLATION");
+            m => m.Key == TK.Common.Errors.NOT_NULL_VIOLATION.Key);
     }
 
     [Fact]
@@ -106,7 +107,7 @@ public sealed class ZonedInstantTests
 
         result.Success.Should().BeFalse();
         result.InputErrors[0].Errors.Should().ContainSingle(
-            m => m.Key == "common_errors_NOT_NULL_VIOLATION");
+            m => m.Key == TK.Common.Errors.NOT_NULL_VIOLATION.Key);
     }
 
     [Theory]
@@ -121,7 +122,7 @@ public sealed class ZonedInstantTests
 
         result.Success.Should().BeFalse();
         result.InputErrors[0].Errors.Should().ContainSingle(
-            m => m.Key == "common_errors_NOT_NULL_VIOLATION");
+            m => m.Key == TK.Common.Errors.NOT_NULL_VIOLATION.Key);
     }
 
     [Fact]
@@ -132,7 +133,7 @@ public sealed class ZonedInstantTests
         result.Success.Should().BeFalse();
         result.InputErrors[0].Field.Should().Be("ianaIdentifier");
         result.InputErrors[0].Errors.Should().ContainSingle(
-            m => m.Key == "common_time_INVALID_IANA_IDENTIFIER");
+            m => m.Key == TK.Common.Time.INVALID_IANA_IDENTIFIER.Key);
     }
 
     [Theory]
@@ -147,7 +148,7 @@ public sealed class ZonedInstantTests
 
         result.Success.Should().BeFalse();
         result.InputErrors[0].Errors.Should().ContainSingle(
-            m => m.Key == "common_time_INVALID_IANA_IDENTIFIER");
+            m => m.Key == TK.Common.Time.INVALID_IANA_IDENTIFIER.Key);
     }
 
     [Fact]
@@ -173,7 +174,7 @@ public sealed class ZonedInstantTests
 
         result.Success.Should().BeFalse();
         result.InputErrors[0].Errors.Should().ContainSingle(
-            m => m.Key == "common_time_INVALID_IANA_IDENTIFIER");
+            m => m.Key == TK.Common.Time.INVALID_IANA_IDENTIFIER.Key);
     }
 
     [Theory]
@@ -190,7 +191,7 @@ public sealed class ZonedInstantTests
 
         result.Success.Should().BeFalse();
         result.InputErrors[0].Errors.Should().ContainSingle(
-            m => m.Key == "common_time_INVALID_IANA_IDENTIFIER");
+            m => m.Key == TK.Common.Time.INVALID_IANA_IDENTIFIER.Key);
     }
 
     [Fact]
@@ -205,7 +206,7 @@ public sealed class ZonedInstantTests
 
         result.Success.Should().BeFalse();
         result.InputErrors[0].Errors.Should().ContainSingle(
-            m => m.Key == "common_time_INVALID_IANA_IDENTIFIER");
+            m => m.Key == TK.Common.Time.INVALID_IANA_IDENTIFIER.Key);
     }
 
     // --- IANA normalization: acceptance + canonicalization ---

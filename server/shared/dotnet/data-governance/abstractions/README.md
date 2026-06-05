@@ -5,6 +5,8 @@ Copyright (c) DCSV. All rights reserved.
 # D2.Shared.DataGovernance.Abstractions
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
+>
+> **Audience**: backend .NET service engineers decorating entity models with GDPR anonymization markers and referencing the engine seam — without pulling in EF Core or DI.
 
 PURE GDPR-anonymization markers, the `[Anonymizable]` attribute, and the engine
 seam. Zero EF Core, zero DI, zero Utilities. The EF Core engine implementation
@@ -145,8 +147,16 @@ Kind/payload combinations), `AnonymizationRule.Create` invariant enforcement,
 implementations, and `IAnonymizationEngine` contract shape (return type, parameter
 names, default `CancellationToken`).
 
+## Telemetry
+
+No telemetry surface — foundation lib emits no spans or metrics. Consumers instrument the anonymization call sites in their own OTel setup.
+
+## Configuration
+
+No configuration — zero-config; the contracts and markers carry no tunable behavior.
+
 ## References
 
 - Sibling implementation library: [`data-governance/entity-framework-core/`](../entity-framework-core/README.md)
 - Analogous pattern: [`caching/abstractions/`](../caching/abstractions/README.md) — same marker-interface + seam structure
-- [ADR-0015](../../../../docs/adrs/0015-anonymization-data-governance.md) — anonymization / data-governance architecture
+- [ADR-0015](../../../../../docs/adrs/0015-anonymization-data-governance.md) — anonymization / data-governance architecture

@@ -71,6 +71,7 @@ public sealed record PhoneNumber
         if (validator is not null)
         {
             var validation = validator.Validate(value, region);
+
             if (!validation.Success)
                 return D2Result<PhoneNumber>.BubbleFail(validation);
 
@@ -92,6 +93,7 @@ public sealed record PhoneNumber
             // Use trimmed (same string the length guard ran against) so guard + parse
             // operate on one value, not two.
             var parse = (trimmed ?? value).TryParsePhoneNumber();
+
             if (!parse.Success)
                 return D2Result<PhoneNumber>.BubbleFail(parse);
 

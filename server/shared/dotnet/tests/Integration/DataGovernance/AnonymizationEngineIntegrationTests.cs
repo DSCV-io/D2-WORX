@@ -412,6 +412,36 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
     }
 
     // =========================================================================
+    // Test 13 — Pre-cancelled token: engine aborts with OperationCanceledException
+    //           (no silent partial success)
+    // =========================================================================
+
+    [Fact]
+    public async Task AnonymizeUserAsync_pre_cancelled_token_aborts_and_does_not_silently_succeed()
+    {
+        var userId = Guid.NewGuid();
+        await SeedTierAUser(userId, "Carol", "bio", "notes", "active", "St", null, "F", null);
+
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var engine = BuildEngine();
+
+        // A pre-cancelled token must cause the engine to abort — it must NOT return a
+        // successful D2Result with rows anonymized (silent partial success). The engine
+        // propagates OperationCanceledException, which is the contract: the operation was
+        // cleanly aborted, not committed in an indeterminate state.
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => engine.AnonymizeUserAsync(userId, cts.Token));
+
+        // Verify no writes occurred: the row must be unchanged.
+        await using var readCtx = GovDbContext.Build(r_fixture.ConnectionString);
+        var row = await readCtx.TierAUsers.FirstAsync(u => u.UserId == userId);
+        row.IsAnonymized.Should().BeFalse("pre-cancellation must not partially commit writes");
+        row.DisplayName.Should().Be("Carol", "PII fields must be unchanged after abort");
+    }
+
+    // =========================================================================
     // Seed helpers
     // =========================================================================
 
@@ -437,7 +467,7 @@ public sealed class AnonymizationEngineIntegrationTests : IAsyncLifetime
             Status = status,
             Address = new GovDbContext.TierAAddress { Line1 = addressLine1, Line2 = addressLine2 },
             Name = new GovDbContext.TierAName { First = nameFirst, Last = nameLast },
-            CreatedAt = DateTimeOffset.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
         });
         await ctx.SaveChangesAsync();
     }

@@ -227,8 +227,8 @@ public sealed class AnonymizationEngineDualVoRegressionTests : IAsyncLifetime
         row.SecondaryAddress.ZipCode.Should().BeNull("secondary zip nulled");
 
         // Email was template-resolved.
-        var expected_email = $"deletedUser{userId:N}@deleted.user.dcsv.io";
-        row.Email.Should().Be(expected_email);
+        var expectedEmail = $"deletedUser{userId:N}@deleted.user.dcsv.io";
+        row.Email.Should().Be(expectedEmail);
 
         // (c) IsAnonymized flagged.
         row.IsAnonymized.Should().BeTrue();

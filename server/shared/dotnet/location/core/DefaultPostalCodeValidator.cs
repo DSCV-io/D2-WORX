@@ -57,7 +57,19 @@ public sealed class DefaultPostalCodeValidator : IPostalCodeValidator
         }
 
         var trimmed = postalCode!.Trim();
-        if (!sr_GlobalShape.IsMatch(trimmed))
+
+        bool isMatch;
+        try
+        {
+            isMatch = sr_GlobalShape.IsMatch(trimmed);
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            return D2Result<string>.ValidationFailed(
+                messages: [TK.Geo.Validation.POSTAL_CODE_INVALID]);
+        }
+
+        if (!isMatch)
         {
             return D2Result<string>.ValidationFailed(
                 messages: [TK.Geo.Validation.POSTAL_CODE_INVALID]);

@@ -63,7 +63,7 @@ Auth also kept a separate `org_contact` junction (label + `isPrimary` + a pointe
 
 - **Migration cascade** — a contact-shape change can require a migration in every adopting service (migrations live in the host context). Mitigated by **semver + additive-only-within-a-major**, per-service adoption cadence, and keeping the library pure (no business behavior); `D2.Shared.Validation` + `D2.Shared.Location` pin transitively so validation cannot skew independently of shape.
 - **Validation version skew** across services on different library versions — bounded by additive-only discipline + transitive pinning.
-- **EF Core 10 complex-member-index limitation** — model-aware indexes on `ComplexProperty` member columns are not expressible in EF 10 (fluent `HasIndex(u => u.Vo.Member)` throws; metadata-path indexes are silently discarded at finalization). The ONLY EF-10 path is a raw `migrationBuilder.CreateIndex(...)` line in the host migration. The toolkit ships `CreateD2Index<TEntity>(u => u.Vo.Member)` (`D2.Shared.EntityFrameworkCore`) to keep that line typed and clean. EF 11 makes `HasIndex(u => u.Vo.Member)` native; migrating to it when EF 11 ships is a tracked follow-up. Value-converter indexes and complex-member _queries_ have no such limitation.
+- **EF Core 10 complex-member-index limitation** — model-aware indexes on `ComplexProperty` member columns are not expressible in EF 10 (fluent `HasIndex(u => u.Vo.Member)` throws; metadata-path indexes are silently discarded at finalization). The ONLY EF-10 path is a raw `migrationBuilder.CreateIndex(...)` line in the host migration. The toolkit ships `CreateD2Index<TEntity>(u => u.Vo.Member)` (`D2.Shared.EntityFrameworkCore`) to keep that line typed and clean. EF 11 (issue [#31246](https://github.com/dotnet/efcore/issues/31246), merged 2026-05-19, shipping ~Nov 2026) makes `HasIndex(u => u.Vo.Member)` native; migrating existing `CreateD2Index` calls to fluent `HasIndex` once the host adopts EF 11 is a tracked follow-up. Value-converter indexes and complex-member _queries_ have no such limitation.
 - **Shared-kernel coupling** — contained by shipping only pure data + mapping + validation, no business behavior.
 
 ## Alternatives considered
@@ -74,7 +74,7 @@ _Not alternatives (recorded to pre-empt the question):_ the v1 **central Geo-ser
 
 ## References
 
-- V2.md §5.6 — superseded planning design (struck through, preserved) + §5.6 (Revised 2026-05-30, built-note 2026-06-04).
+- [`V2.md §5.6`](../v2/V2.md) — superseded planning design (struck through, preserved) + §5.6 (Revised 2026-05-30, built-note 2026-06-04).
 - Per-lib READMEs for the shipped surface: [`contacts/core/`](../../server/shared/dotnet/contacts/core/README.md) · [`contacts/entity-framework-core/`](../../server/shared/dotnet/contacts/entity-framework-core/README.md) · [`location/entity-framework-core/`](../../server/shared/dotnet/location/entity-framework-core/README.md) · [`entity-framework-core/`](../../server/shared/dotnet/entity-framework-core/README.md).
 - [PATTERNS.md](../PATTERNS.md) — contact-VO pattern, EF VO-mapping pattern, `CreateD2Index` callout, field-constraints catalog pattern.
 - ADR-0015 ([`0015-anonymization-data-governance.md`](0015-anonymization-data-governance.md)) — the standalone anonymization engine this library consumes.

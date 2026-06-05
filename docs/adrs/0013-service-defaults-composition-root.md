@@ -6,17 +6,17 @@ Copyright (c) DCSV. All rights reserved.
 
 - **Status**: Accepted
 - **Date**: 2026-05-30
-- **Deliverable**: Phase 0 — shared libraries (backfilled)
+- **Deliverable**: D2 shared libraries (backfilled)
 
 ## Context
 
-Every service requires the same Phase-0 cross-cutting stack: structured PII-safe logging, OpenTelemetry, i18n, the handler pipeline, RS256/JWKS inbound auth (HTTP and gRPC), in-process L1 caching, health endpoints, RFC 7807 problem details, CORS, and BCL HttpClient resilience. Without a shared wiring point each service hand-rolls `Program.cs`, creating three failure modes: (1) middleware installed in the wrong order (auth before CORS, infra-bypass before routing) produces silent security/correctness regressions; (2) new defaults added to a shared lib silently miss every existing service until someone propagates them; (3) per-service configuration for owning-lib options (issuer URIs, CORS origins, log levels) duplicates and drifts.
+Every service requires the same foundational cross-cutting stack: structured PII-safe logging, OpenTelemetry, i18n, the handler pipeline, RS256/JWKS inbound auth (HTTP and gRPC), in-process L1 caching, health endpoints, RFC 7807 problem details, CORS, and BCL HttpClient resilience. Without a shared wiring point each service hand-rolls `Program.cs`, creating three failure modes: (1) middleware installed in the wrong order (auth before CORS, infra-bypass before routing) produces silent security/correctness regressions; (2) new defaults added to a shared lib silently miss every existing service until someone propagates them; (3) per-service configuration for owning-lib options (issuer URIs, CORS origins, log levels) duplicates and drifts.
 
 The abstractions/implementation split (ADR-0006), observability (ADR-0010), and inbound auth (ADR-0012) each defined the `AddD2X` / `UseD2X` extension shape; the only remaining question is how those extensions are assembled at the service boundary. The .NET Aspire `Microsoft.Extensions.ServiceDefaults` pattern — a dedicated aggregator csproj that delegates entirely to owning libraries — is the direct inspiration.
 
 ## Decision
 
-A single thin-aggregator csproj (`D2.Shared.ServiceDefaults`) owns the composition of all Phase-0 shared libs. **The aggregator owns zero logic and zero configuration knowledge. Middleware ordering is locked and exposes no insertion points.**
+A single thin-aggregator csproj (`D2.Shared.ServiceDefaults`) owns the composition of all foundational shared libs. **The aggregator owns zero logic and zero configuration knowledge. Middleware ordering is locked and exposes no insertion points.**
 
 ### 1. Thin aggregator with zero logic and pass-through delegates
 

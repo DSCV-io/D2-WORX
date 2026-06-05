@@ -4,7 +4,9 @@ Copyright (c) DCSV. All rights reserved.
 
 # D2.Shared.Location.EntityFrameworkCore
 
-> Parent: [`location/`](../core/README.md) · [`server/shared/dotnet/`](../../README.md)
+> Parent: [`location/`](../README.md) · [`server/shared/dotnet/`](../../README.md)
+>
+> **Audience**: backend .NET service engineers mapping `D2.Shared.Location` value objects into EF Core entity models via infra `IEntityTypeConfiguration<T>`.
 
 Per-VO complex-type and value-converter mapping helpers for the D2.Shared.Location value
 objects (`StreetAddress`, `AdminLocation`, `Coordinates`). The helpers are called from the
@@ -122,6 +124,20 @@ For the EF Core 10 limitation on indexing `ComplexProperty` member columns (e.g.
 [`D2.Shared.EntityFrameworkCore`](../../entity-framework-core/README.md).
 
 ---
+
+## Telemetry
+
+No telemetry surface — mapping helpers are pure model-build-time calls with no runtime span or metric emission.
+
+## Edge cases / gotchas
+
+- **`SetNull` on required numeric columns blocked** — `Coordinates.Latitude` / `Longitude` are non-nullable `double` columns. The V7 startup guard in `D2.Shared.DataGovernance` blocks `SetNull` on non-nullable columns. Both fields take a constant `"0"` anonymization rule; the engine coerces `"0"` to `0.0` through the column's type mapping at erasure time.
+- **Country field intentionally kept** — `AdminLocation.CountryIso31661Alpha2Code` carries no anonymization annotation. Country is coarse-grained and deliberately retained for analytics post-erasure.
+- **Same-VO-type-twice** (e.g. home + work `AdminLocation`) works natively. EF Core 10 prefixes columns by the owning-property path automatically. The helpers never call `HasColumnName`.
+
+## Configuration
+
+No configuration — the helpers carry no tunable behavior. All caps come from the shared `FieldConstraints` codegen catalog.
 
 ## Dependencies
 

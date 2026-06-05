@@ -646,7 +646,7 @@ Canonical references: [`data-governance/abstractions/README.md`](../server/share
 |---|---|---|
 | `Personal` | `FirstName` (req), `MiddleName?`, `LastName?`, `PreferredName?`, `HashId` | `HashId` = `"v1." + SHA-256` over First/Middle/Last — correlation, NOT dedup; PreferredName excluded for digest stability |
 | `NameAffixes` | `Prefix?` (`NamePrefix`), `PrefixCustom?`, `Suffix?` (`NameSuffix`), `SuffixCustom?` | Custom required iff enum is `Other`; all-null rejected |
-| `Demographics` | `DateOfBirth?` (`DateOnly`), `BiologicalSex?` | All-null rejected; DOB not in future, not > 150 years past |
+| `Demographics` | `DateOfBirth?` (`LocalDate`), `BiologicalSex?` | All-null rejected; DOB not in future, not > 150 years past |
 | `Professional` | `CompanyName` (req), `JobTitle?`, `Department?`, `CompanyWebsite?` (`Uri`) | No `HashId` |
 | `EmailAddress` | `Value` | Floor: trim + lowercase + shape check + length cap; validator: bubbled verbatim |
 | `PhoneNumber` | `Value` | Floor: digits only, 7–15 digits, raw-length cap; validator: bubbled (typically E.164) |
@@ -713,7 +713,7 @@ migrationBuilder.CreateD2Index<Person>(
 
 `CreateD2Index<TEntity>(table, member, name?, unique?)` derives the `{ComplexProp}_{Member}` column name from the typed selector expression, emits a `CreateIndexOperation`, and keeps the migration line type-safe.
 
-**EF 11 makes `HasIndex(u => u.Vo.Member)` native** (issue [#31246](https://github.com/dotnet/efcore/issues/31246), milestone 11.0.0 — merged 2026-05-19, shipping ~Nov 2026). When EF 11 is adopted, the `CreateD2Index` migration lines can be replaced with fluent `HasIndex` plus a one-time reconciliation migration. This is a tracked follow-up.
+**Current limitation**: EF Core 10 cannot declare model-aware indexes on `ComplexProperty` member columns — fluent `HasIndex(u => u.Vo.Member)` throws and metadata-path indexes are silently discarded at finalization. `CreateD2Index` is the current workaround. EF Core 11 (issue [#31246](https://github.com/dotnet/efcore/issues/31246), merged 2026-05-19) makes `HasIndex(u => u.Vo.Member)` native; migrating existing `CreateD2Index` calls to fluent `HasIndex` when EF 11 is adopted is a tracked follow-up.
 
 Value-converter indexes and complex-member _queries_ have **no such limitation**.
 
