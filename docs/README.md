@@ -38,7 +38,7 @@ Project documentation that doesn't belong at the repo root.
 | Doc                                                | Purpose                                                                                                                                  |
 | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | [v2/V2.md](v2/V2.md)                               | Architecture & build plan — internal tracking doc.                                                                                       |
-| [v2/PHASE_1.md](v2/PHASE_1.md)                     | Geo-library execution tracking.                                                                                                          |
+| [archive/PHASE_1_GEO_LIBS.md](archive/PHASE_1_GEO_LIBS.md) | Geo-library execution tracking (archived — 0009-geo-libs shipped).                                                             |
 | [v2/PHASE_0_AUTH.md](v2/PHASE_0_AUTH.md)           | Authentication architecture reference — JWT shape, session model, key-rotation flow.                                                     |
 | [v2/PHASE_0_MESSAGING.md](v2/PHASE_0_MESSAGING.md) | Async-messaging architecture reference — exchange/queue topology, encryption framing, DLQ flow.                                          |
 | [v2/PHASE_5_REFERENCE.md](v2/PHASE_5_REFERENCE.md) | D2.Courier + D2.Notifications rebuild reference — Universal Message Shape, Comms 6 design principles.                                    |

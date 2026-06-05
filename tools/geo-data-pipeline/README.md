@@ -22,7 +22,7 @@ Three-tier output layout at `contracts/geo/`:
 
 - **Tier 1 — `src-data/*.spec.json`** — pipeline-raw output (faithful capture of each upstream source with diagnostics + per-entry `_provenance`)
 - **Tier 2 — `*.spec.json` (root)** — codegen-ready entity-shaped specs (6 pipeline-derived + 1 hand-rolled peer: `geopolitical-entities.spec.json`)
-- **Tier 3** — generated C# + TS code in the downstream geo libs (`D2.Shared.Geo.Default` / `@d2/geo-default`); produced from Tier 2; lives OUTSIDE this directory. Canonical: the geo lib packages are not yet shipped; design at [`docs/v2/PHASE_1.md`](../../docs/v2/PHASE_1.md) (planned for deliverable 0009-geo-libs).
+- **Tier 3** — generated C# + TS code in the downstream geo libs (`D2.Shared.Geo.Default` / `@d2/geo-default`); produced from Tier 2; lives OUTSIDE this directory. Canonical: the geo libs shipped as deliverable 0009-geo-libs — see [`docs/dev/deliverables/0009-geo-libs.md`](../../docs/dev/deliverables/0009-geo-libs.md) and the archived design at [`docs/archive/PHASE_1_GEO_LIBS.md`](../../docs/archive/PHASE_1_GEO_LIBS.md).
 
 See [`../../contracts/geo/README.md`](../../contracts/geo/README.md) for the tier details.
 

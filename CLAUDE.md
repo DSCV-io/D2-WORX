@@ -14,7 +14,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > This doc covers process, patterns, and code rules. Architectural decisions live distributed across the docs in `docs/` (PATTERNS.md, TESTS.md, PARITY.md, SRC_GEN.md, etc.) and the per-lib / per-service `README.md` files.
 
-> **📍 PROJECT STATE — READ FIRST**: The active project tracking doc is **[docs/v2/V2.md](docs/v2/V2.md)** (current scope + per-phase tracking docs). This pointer is the single source for "what's the project doing right now" — when this doc archives, the pointer here gets updated to its successor. Archived: [docs/archive/PHASE_0_WIPE.md](docs/archive/PHASE_0_WIPE.md). A frozen v1 snapshot lives at `/old/v1/D2-WORX/` (read-only, reference for historical patterns not yet captured in current docs).
+> **📍 PROJECT STATE — READ FIRST**: The active project tracking doc is **[docs/v2/V2.md](docs/v2/V2.md)** (current scope + per-phase tracking docs). This pointer is the single source for "what's the project doing right now" — when this doc archives, the pointer here gets updated to its successor. Archived: [docs/archive/PHASE_0_WIPE.md](docs/archive/PHASE_0_WIPE.md), [docs/archive/PHASE_1_GEO_LIBS.md](docs/archive/PHASE_1_GEO_LIBS.md). A frozen v1 snapshot lives at `/old/v1/D2-WORX/` (read-only, reference for historical patterns not yet captured in current docs).
 
 <a name="mandatory-block-0-orchestrator-only-main-thread"></a>
 
