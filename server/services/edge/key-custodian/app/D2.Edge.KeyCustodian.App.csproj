@@ -1,0 +1,66 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Edge.KeyCustodian.App</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Application layer (EF-as-DDD) — IKeyCustodianDbContext, the CQRS command
+    handlers (BaseRepoHandler, DbContext-direct delete+insert transitions) +
+    query handlers (BaseHandler, AsNoTracking), JwksAssembler, RotationPlanner,
+    the 3 IKeyGenerator strategies, IRootKeyProvider. References EF Core directly
+    (EF-as-DDD: the DbContext interface lives here); Domain stays EF-free.
+  -->
+
+  <ItemGroup>
+    <!--
+      D2.Edge.KeyCustodian.Domain — the aggregates + state-machine transitions
+      that App orchestrates via command/query handlers.
+    -->
+    <ProjectReference Include="..\domain\D2.Edge.KeyCustodian.Domain.csproj" />
+    <!--
+      D2.Shared.Handler — BaseHandler (query handlers' cross-cutting: telemetry /
+      metrics / D2Result / cancellation / scope).
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\handler\core\D2.Shared.Handler.csproj" />
+    <!--
+      D2.Shared.Handler.Repo — BaseRepoHandler (command handlers; DB-exception →
+      D2Result via injected IDbExceptionClassifier). Also brings
+      Microsoft.EntityFrameworkCore + D2.Shared.Handler + D2.Shared.Result
+      transitively, but each is listed explicitly ("declare what you use").
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\handler\repo\D2.Shared.Handler.Repo.csproj" />
+    <!--
+      D2.Shared.Result — D2Result<T> semantic factories used directly by command /
+      query handlers even though Handler.Repo carries it transitively.
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\result\core\D2.Shared.Result.csproj" />
+    <!--
+      D2.Shared.Encryption — IPayloadCrypto (root-wrap of KeyMaterialEncrypted
+      happens in command handlers); PayloadCryptoKeyring resolution.
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\encryption\core\D2.Shared.Encryption.csproj" />
+    <!--
+      D2.Shared.Time — IClock for RotationPlanner due-key math + transition
+      timestamps inside command handlers.
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\time\D2.Shared.Time.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Microsoft.EntityFrameworkCore — EF-as-DDD: IKeyCustodianDbContext exposes
+      DbSet<…> + SaveChangesAsync as public API. App owns the DbContext interface;
+      Infra provides the concrete implementation. Listed explicitly because App
+      genuinely uses EF types ("declare what you use" — mirrors DataGovernance.EFC
+      and D2.Shared.Handler.Repo conventions).
+    -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D2.Edge.Tests" />
+  </ItemGroup>
+</Project>

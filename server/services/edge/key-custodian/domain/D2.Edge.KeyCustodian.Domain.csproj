@@ -1,0 +1,49 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Edge.KeyCustodian.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Pure domain — the sum-type EncryptionKey state machine (abstract base + sealed
+    per-state types), Kid strong-typed id, KeyStatus / KeyType enums, KeyDomain
+    catalog, EncryptionKeyAudit, RotationPolicy VOs. EF-free by design — zero
+    Microsoft.EntityFrameworkCore reference.
+
+    net10.0 / CPM / Nullable / ImplicitUsings / StyleCop / TreatWarningsAsErrors /
+    GenerateDocumentationFile inherited from server/Directory.Build.props.
+  -->
+
+  <ItemGroup>
+    <!--
+      D2.Shared.Result — D2Result<T> semantic factories (Ok, ValidationFailed,
+      BubbleFail) returned by VO smart constructors and state-machine transition
+      methods.
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\result\core\D2.Shared.Result.csproj" />
+    <!--
+      D2.Shared.Utilities — Falsey()/Truthy()/ThrowIfFalsey()/TryParseTruthyNull
+      guards, [RedactData] attribute + RedactReason enum for PII-safe logging of
+      key identifiers.
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\utilities\D2.Shared.Utilities.csproj" />
+    <!--
+      D2.Shared.Time — NodaTime Instant/Duration + IClock seam for CreatedAt /
+      transition timestamps / RotationPolicy durations. EF-free — only the
+      domain types and clock abstraction.
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\time\D2.Shared.Time.csproj" />
+    <!--
+      D2.Shared.Encryption — EncryptionDomains catalog; the KeyDomain catalog
+      unions EncryptionDomains.AllDomains. Pulls D2.Shared.Utilities transitively
+      but listed explicitly because Domain uses Utilities guards directly.
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\encryption\core\D2.Shared.Encryption.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D2.Edge.Tests" />
+  </ItemGroup>
+</Project>

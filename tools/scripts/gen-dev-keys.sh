@@ -10,6 +10,7 @@
 #   - secrets/auth/root.key            Root key (encrypts all other keys at rest in auth_db)
 #   - secrets/auth/{domain}-{kid}.key  Per-domain message-payload encryption keys
 #                                      (per V2.md §5.7 — JWKS-style keyring)
+#   - secrets/keycustodian/root.key    Root key for the Edge KeyCustodian module
 #
 # All output goes into ./secrets/ which is gitignored AND Claude-deny-ruled
 # (Read/Write/Edit blocked at the system level — see .claude/settings.json
@@ -32,6 +33,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SECRETS_DIR="${REPO_ROOT}/secrets"
 AUTH_KEYS_DIR="${SECRETS_DIR}/auth"
+KEYCUSTODIAN_KEYS_DIR="${SECRETS_DIR}/keycustodian"
 
 # Encryption domains per V2.md §5.7 — add new domains here as services adopt them.
 DOMAINS=("audit" "notifications" "courier")
@@ -49,8 +51,8 @@ gen_key() {
   openssl rand -hex 32
 }
 
-mkdir -p "${AUTH_KEYS_DIR}"
-chmod 700 "${SECRETS_DIR}" "${AUTH_KEYS_DIR}"
+mkdir -p "${AUTH_KEYS_DIR}" "${KEYCUSTODIAN_KEYS_DIR}"
+chmod 700 "${SECRETS_DIR}" "${AUTH_KEYS_DIR}" "${KEYCUSTODIAN_KEYS_DIR}"
 
 # ---------- Root key --------------------------------------------------------
 if [[ "${1:-}" == "--force" ]] || [[ ! -f "${AUTH_KEYS_DIR}/root.key" ]]; then
@@ -59,6 +61,15 @@ if [[ "${1:-}" == "--force" ]] || [[ ! -f "${AUTH_KEYS_DIR}/root.key" ]]; then
   echo "✓ Generated root key: secrets/auth/root.key"
 else
   echo "  Skipped root key (already exists)"
+fi
+
+# ---------- KeyCustodian root key ------------------------------------------
+if [[ "${1:-}" == "--force" ]] || [[ ! -f "${KEYCUSTODIAN_KEYS_DIR}/root.key" ]]; then
+  gen_key > "${KEYCUSTODIAN_KEYS_DIR}/root.key"
+  chmod 600 "${KEYCUSTODIAN_KEYS_DIR}/root.key"
+  echo "✓ Generated KeyCustodian root key: secrets/keycustodian/root.key"
+else
+  echo "  Skipped KeyCustodian root key (already exists)"
 fi
 
 # ---------- Per-domain message-payload keys --------------------------------

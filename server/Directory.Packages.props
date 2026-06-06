@@ -84,6 +84,12 @@ Copyright (c) DCSV. All rights reserved.
          in D2.Shared.DataGovernance.EntityFrameworkCore unit tests (model-build-only
          assertions against IProperty annotations; no real DB provider needed). -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.7" />
+    <!-- Microsoft.EntityFrameworkCore.Design — design-time services for
+         `dotnet ef migrations add` (the first KeyCustodian migration in
+         D2.Edge.KeyCustodian.Infra). Referenced PrivateAssets="all" so the
+         design-time assets never flow to runtime consumers. Same 10.0.7
+         release train as the EF Core base + Relational pins above. -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7" />
     <PackageVersion Include="Npgsql" Version="10.0.2" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
     <!-- Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime — NodaTime EF Core value-
@@ -137,8 +143,9 @@ Copyright (c) DCSV. All rights reserved.
          Backed by the same Google libphonenumber data as libphonenumber-js on the TS side. -->
     <PackageVersion Include="libphonenumber-csharp" Version="9.0.31" />
 
-    <!-- Roslyn — for D2.Shared.I18n.SourceGen (TK constants generator). -->
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
+    <!-- Roslyn — for D2.Shared.I18n.SourceGen (TK constants generator) and
+         Microsoft.EntityFrameworkCore.Design 10.0.7 (requires >= 5.0.0). -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.3.0" />
     <!-- System.Text.Json — for the SrcGen's catalog parsing (netstandard2.0
          doesn't ship S.T.Json in-box; pinned version avoids host conflicts). -->
