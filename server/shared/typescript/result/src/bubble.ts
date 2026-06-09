@@ -22,6 +22,7 @@ export function bubbleFail<TOut>(source: D2Result<unknown>): D2Result<TOut> {
     statusCode: source.statusCode,
     errorCode: source.errorCode,
     traceId: source.traceId,
+    category: source.category,
   });
 }
 
@@ -44,5 +45,6 @@ export function bubble<TIn, TOut>(
     statusCode: source.statusCode,
     errorCode: source.errorCode,
     traceId: source.traceId,
+    category: source.category,
   });
 }

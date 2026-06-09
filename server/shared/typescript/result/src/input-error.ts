@@ -2,7 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import type { TKMessage } from "./tk-message.js";
+import type { TKMessage } from "@d2/i18n-abstractions";
 
 /**
  * A field-level validation error: the offending field name plus one or more

@@ -83,6 +83,7 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\..\resilience\D2.Shared.Resilience.csproj" />
     <ProjectReference Include="..\..\result\core\D2.Shared.Result.csproj" />
     <ProjectReference Include="..\..\i18n\abstractions\D2.Shared.I18n.Abstractions.csproj" />
+    <ProjectReference Include="..\..\i18n\keys\D2.Shared.I18n.Keys.csproj" />
     <ProjectReference Include="..\..\utilities\D2.Shared.Utilities.csproj" />
   </ItemGroup>
 
@@ -105,6 +106,13 @@ Copyright (c) DCSV. All rights reserved.
                       ReferenceOutputAssembly="false" />
     <AdditionalFiles Include="$(D2ContractsRoot)auth-error-codes\auth-error-codes.spec.json" />
     <AdditionalFiles Include="$(D2ContractsRoot)telemetry\telemetry.spec.json" />
+    <!--
+      en-US.json (the translation-key source of truth) surfaced so the
+      error-codes SrcGen can cross-check every userMessageKey resolves to a
+      real key (D2ERC002). The generator reduces it to just its key SET at
+      the pipeline boundary so a translation-VALUE edit does not re-run codegen.
+    -->
+    <AdditionalFiles Include="$(D2ContractsRoot)messages\en-US.json" />
   </ItemGroup>
 
   <ItemGroup>

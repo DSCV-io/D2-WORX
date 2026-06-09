@@ -143,6 +143,9 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/i18n/abstractions/">
     <Project Path="shared/dotnet/i18n/abstractions/D2.Shared.I18n.Abstractions.csproj" />
   </Folder>
+  <Folder Name="/shared/dotnet/i18n/keys/">
+    <Project Path="shared/dotnet/i18n/keys/D2.Shared.I18n.Keys.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/i18n/source-gen/">
     <Project Path="shared/dotnet/i18n/source-gen/D2.Shared.I18n.SourceGen.csproj" />
   </Folder>
@@ -154,6 +157,18 @@ Copyright (c) DCSV. All rights reserved.
   </Folder>
   <Folder Name="/shared/dotnet/geo/source-gen/">
     <Project Path="shared/dotnet/geo/source-gen/D2.Shared.Geo.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/error-codes/category/">
+    <Project Path="shared/dotnet/error-codes/category/D2.Shared.ErrorCodes.Category.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/error-codes/category-source-gen/">
+    <Project Path="shared/dotnet/error-codes/category-source-gen/D2.Shared.ErrorCodes.Category.SourceGen.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/error-codes/registry/">
+    <Project Path="shared/dotnet/error-codes/registry/D2.Shared.ErrorCodes.Registry.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/error-codes/registry-source-gen/">
+    <Project Path="shared/dotnet/error-codes/registry-source-gen/D2.Shared.ErrorCodes.Registry.SourceGen.csproj" />
   </Folder>
   <Folder Name="/shared/dotnet/logging/">
     <Project Path="shared/dotnet/logging/D2.Shared.Logging.csproj" />
@@ -169,6 +184,9 @@ Copyright (c) DCSV. All rights reserved.
   </Folder>
   <Folder Name="/shared/dotnet/result/core/">
     <Project Path="shared/dotnet/result/core/D2.Shared.Result.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/result/grpc/">
+    <Project Path="shared/dotnet/result/grpc/D2.Shared.Result.Grpc.csproj" />
   </Folder>
   <Folder Name="/shared/dotnet/service-defaults/">
     <Project Path="shared/dotnet/service-defaults/D2.Shared.ServiceDefaults.csproj" />

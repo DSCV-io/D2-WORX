@@ -103,12 +103,13 @@ When the request pipeline has stashed a `D2Result` on `HttpContext.Items[D2Probl
 4. `Extensions[d2_error_code]` ← `D2Result.ErrorCode`.
 5. `Extensions[d2_messages]` ← `D2Result.Messages`.
 6. `Extensions[d2_input_errors]` ← `D2Result.InputErrors` (only when non-empty).
+7. `Extensions[d2_category]` ← `D2Result.Category?.ToWire()` (only when non-null). Carries the closed-enum semantic `ErrorCategory` wire string — mirrors the gRPC envelope's `category` field for cross-transport parity.
 
 Whether or not a `D2Result` is stashed, the customizer always populates:
 
-7. `Extensions[traceId]` ← `Activity.Current?.TraceId.ToString()` falling back to `HttpContext.TraceIdentifier`.
-8. `Extensions[correlationId]` ← inbound `X-Correlation-Id` request header (capped at 128 chars). When absent / over-cap, generates `Guid.NewGuid().ToString("N")` and (when `EchoCorrelationIdInResponse` is true) writes it to the response header.
-9. `Instance` ← `"{Method} {Path}"` when `IncludeRequestPath` is true (matches the path-A emit shape exactly — cross-path wire-shape consistency by construction).
+8. `Extensions[traceId]` ← `Activity.Current?.TraceId.ToString()` falling back to `HttpContext.TraceIdentifier`.
+9. `Extensions[correlationId]` ← inbound `X-Correlation-Id` request header (capped at 128 chars). When absent / over-cap, generates `Guid.NewGuid().ToString("N")` and (when `EchoCorrelationIdInResponse` is true) writes it to the response header.
+10. `Instance` ← `"{Method} {Path}"` when `IncludeRequestPath` is true (matches the path-A emit shape exactly — cross-path wire-shape consistency by construction).
 
 Cross-language parity: the .NET path-A + path-B body shapes are byte-identical, AND match the TS-side BFF `toProblemDetails` output for the same `D2Result` inputs. All three emit sites consume the same spec-derived constants.
 

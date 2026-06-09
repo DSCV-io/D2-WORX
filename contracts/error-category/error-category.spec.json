@@ -1,0 +1,41 @@
+{
+  "$schema": "./schema.json",
+  "categories": [
+    {
+      "wire": "validation_failure",
+      "doc": "Input failed validation (bad shape, missing required field, cross-field constraint). Maps to the 400 / VALIDATION_FAILED transport surface; also classifies the auth-boundary codes whose user-facing shape stays uniform regardless of which check failed."
+    },
+    {
+      "wire": "not_found",
+      "doc": "The requested resource does not exist. Maps to the 404 / NOT_FOUND transport surface."
+    },
+    {
+      "wire": "conflict",
+      "doc": "The operation conflicts with current state (resource already exists, idempotent request in flight). Maps to the 409 / CONFLICT transport surface."
+    },
+    {
+      "wire": "policy_denied",
+      "doc": "The caller is authenticated but the action is denied by policy (insufficient scope, forbidden, session revoked). Consumers treat this class as non-retryable."
+    },
+    {
+      "wire": "rate_limited",
+      "doc": "The request was throttled. Maps to the 429 / RATE_LIMITED transport surface; consumers may back off and retry."
+    },
+    {
+      "wire": "payload_too_large",
+      "doc": "The request payload exceeds the maximum allowed size. Maps to the 413 / PAYLOAD_TOO_LARGE transport surface."
+    },
+    {
+      "wire": "infrastructure_unavailable",
+      "doc": "A downstream dependency is unreachable (JWKS, session store, a service the operation depends on). Maps to the 503 transport surface; consumers may retry any code in this class generically."
+    },
+    {
+      "wire": "internal_error",
+      "doc": "An unexpected internal failure (unhandled exception, serialization failure). Maps to the 500 transport surface; not safe to retry without operator insight."
+    },
+    {
+      "wire": "partial_success",
+      "doc": "A multi-target operation succeeded against some targets but not all — the read-partial SOME_FOUND (206) and write-partial PARTIAL_SUCCESS (207) codes. Not a failure; data is carried alongside the result."
+    }
+  ]
+}

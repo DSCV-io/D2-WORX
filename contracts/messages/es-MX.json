@@ -144,6 +144,7 @@
   "common_errors_FORBIDDEN": "Acceso denegado.",
   "common_errors_FOREIGN_KEY_VIOLATION": "No se pudo encontrar un elemento referenciado o aún está en uso.",
   "common_errors_GEO_REF_UNAVAILABLE": "Los datos de referencia geográficos no están disponibles temporalmente. Inténtalo de nuevo en unos momentos.",
+  "common_errors_IDEMPOTENCY_IN_FLIGHT": "Esta solicitud ya se está procesando. Espera un momento e inténtalo de nuevo.",
   "common_errors_NOT_AUTHENTICATED": "No has iniciado sesión. Inicia sesión e inténtalo de nuevo.",
   "common_errors_NOT_FOUND": "El recurso solicitado no fue encontrado.",
   "common_errors_NOT_NULL_VIOLATION": "Falta un campo obligatorio.",

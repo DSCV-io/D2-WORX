@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "D2 error category spec",
+  "description": "Schema for contracts/error-category/error-category.spec.json — the source-of-truth catalog of the closed ErrorCategory classification. Each category corresponds to one snake_case wire string carried on the result envelope (gRPC + JSON) so consumers can do generic class-based handling (e.g. retry any infrastructure_unavailable) without importing the producer's error-code catalog. The PascalCase enum member is derived from the wire string (validation_failure -> ValidationFailure). This catalog is the single source for the nine category wire strings — the same closed set the canonical error-codes schema enumerates for each error code's 'category' field. D2.Shared.ErrorCodes.Category.SourceGen reads it to emit the ErrorCategory enum + ErrorCategoryWire mapping + ErrorCategoryJsonConverter into D2.Shared.ErrorCodes.Category; tools/ts-codegen/src/error-category-emit.ts reads it to emit error-category.g.ts into @d2/error-category.",
+  "type": "object",
+  "required": ["categories"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "categories": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/category" }
+    }
+  },
+  "definitions": {
+    "category": {
+      "type": "object",
+      "required": ["wire", "doc"],
+      "additionalProperties": false,
+      "properties": {
+        "wire": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Snake_case wire-format category string carried on the result envelope. Must be unique across the spec. The PascalCase enum member / TS union value is derived from this string. The closed set MUST match the 'category' enum in contracts/error-codes/error-codes.canonical.schema.json byte-for-byte."
+        },
+        "doc": {
+          "type": "string",
+          "minLength": 1,
+          "description": "XML <summary> / JSDoc text rendered on the emitted enum member (.NET) and union member comment (TS)."
+        }
+      }
+    }
+  }
+}

@@ -10,10 +10,15 @@ using System.Net;
 using System.Text.Json.Serialization;
 
 /// <summary>
-/// Per-error-code boolean discriminators on <see cref="D2Result"/> + concept-named
-/// combined helpers. Prefer these over manual <c>ErrorCode == ErrorCodes.X</c>
-/// comparisons or <c>StatusCode == HttpStatusCode.X</c> checks — they read better
-/// at the call site and make the intent explicit.
+/// Hand-rolled boolean discriminators on <see cref="D2Result"/> that are NOT
+/// derived from a single error code — the success / status-based
+/// (<see cref="IsOk"/> / <see cref="IsCreated"/>) and the concept-named
+/// composite (<see cref="IsPartialOrMissing"/> / <see cref="IsTransientRetryable"/>)
+/// helpers. The 1:1 per-error-code discriminators (<c>IsNotFound</c> /
+/// <c>IsConflict</c> / …) are generated onto the same partial class from the
+/// error-code spec — see <c>D2Result.Booleans.g.cs</c>. Prefer these over manual
+/// <c>ErrorCode == ErrorCodes.X</c> comparisons or <c>StatusCode ==
+/// HttpStatusCode.X</c> checks — they read better at the call site.
 /// </summary>
 /// <remarks>
 /// All discriminators are derived from <see cref="Success"/> / <see cref="StatusCode"/>
@@ -37,99 +42,6 @@ public partial class D2Result
     /// </summary>
     [JsonIgnore]
     public bool IsCreated => StatusCode == HttpStatusCode.Created;
-
-    /// <summary>
-    /// Gets a value indicating whether this result is a not-found failure
-    /// (<see cref="ErrorCodes.NOT_FOUND"/>).
-    /// </summary>
-    [JsonIgnore]
-    public bool IsNotFound => ErrorCode == ErrorCodes.NOT_FOUND;
-
-    /// <summary>
-    /// Gets a value indicating whether this result is a partial-found read
-    /// (<see cref="ErrorCodes.SOME_FOUND"/>).
-    /// </summary>
-    [JsonIgnore]
-    public bool IsSomeFound => ErrorCode == ErrorCodes.SOME_FOUND;
-
-    /// <summary>
-    /// Gets a value indicating whether this result is a partial-success
-    /// write (<see cref="ErrorCodes.PARTIAL_SUCCESS"/>) — multi-target
-    /// operation where some targets succeeded and others failed.
-    /// <see cref="Success"/> is <c>true</c> here, unlike <see cref="IsSomeFound"/>.
-    /// </summary>
-    [JsonIgnore]
-    public bool IsPartialSuccess => ErrorCode == ErrorCodes.PARTIAL_SUCCESS;
-
-    /// <summary>
-    /// Gets a value indicating whether this result is a conflict failure
-    /// (<see cref="ErrorCodes.CONFLICT"/>).
-    /// </summary>
-    [JsonIgnore]
-    public bool IsConflict => ErrorCode == ErrorCodes.CONFLICT;
-
-    /// <summary>
-    /// Gets a value indicating whether this result is a forbidden failure
-    /// (<see cref="ErrorCodes.FORBIDDEN"/>).
-    /// </summary>
-    [JsonIgnore]
-    public bool IsForbidden => ErrorCode == ErrorCodes.FORBIDDEN;
-
-    /// <summary>
-    /// Gets a value indicating whether this result is an unauthorized failure
-    /// (<see cref="ErrorCodes.UNAUTHORIZED"/>).
-    /// </summary>
-    [JsonIgnore]
-    public bool IsUnauthorized => ErrorCode == ErrorCodes.UNAUTHORIZED;
-
-    /// <summary>
-    /// Gets a value indicating whether this result is a validation failure
-    /// (<see cref="ErrorCodes.VALIDATION_FAILED"/>).
-    /// </summary>
-    [JsonIgnore]
-    public bool IsValidationFailed => ErrorCode == ErrorCodes.VALIDATION_FAILED;
-
-    /// <summary>
-    /// Gets a value indicating whether this result is a service-unavailable failure
-    /// (<see cref="ErrorCodes.SERVICE_UNAVAILABLE"/>).
-    /// </summary>
-    [JsonIgnore]
-    public bool IsServiceUnavailable => ErrorCode == ErrorCodes.SERVICE_UNAVAILABLE;
-
-    /// <summary>
-    /// Gets a value indicating whether this result is a rate-limited failure
-    /// (<see cref="ErrorCodes.RATE_LIMITED"/>).
-    /// </summary>
-    [JsonIgnore]
-    public bool IsRateLimited => ErrorCode == ErrorCodes.RATE_LIMITED;
-
-    /// <summary>
-    /// Gets a value indicating whether this result is an unhandled-exception failure
-    /// (<see cref="ErrorCodes.UNHANDLED_EXCEPTION"/>).
-    /// </summary>
-    [JsonIgnore]
-    public bool IsUnhandledException => ErrorCode == ErrorCodes.UNHANDLED_EXCEPTION;
-
-    /// <summary>
-    /// Gets a value indicating whether this result is a payload-too-large failure
-    /// (<see cref="ErrorCodes.PAYLOAD_TOO_LARGE"/>).
-    /// </summary>
-    [JsonIgnore]
-    public bool IsPayloadTooLarge => ErrorCode == ErrorCodes.PAYLOAD_TOO_LARGE;
-
-    /// <summary>
-    /// Gets a value indicating whether this result is a canceled failure
-    /// (<see cref="ErrorCodes.CANCELED"/>).
-    /// </summary>
-    [JsonIgnore]
-    public bool IsCanceled => ErrorCode == ErrorCodes.CANCELED;
-
-    /// <summary>
-    /// Gets a value indicating whether this result is an idempotency-in-flight failure
-    /// (<see cref="ErrorCodes.IDEMPOTENCY_IN_FLIGHT"/>).
-    /// </summary>
-    [JsonIgnore]
-    public bool IsIdempotencyInFlight => ErrorCode == ErrorCodes.IDEMPOTENCY_IN_FLIGHT;
 
     /// <summary>
     /// Gets a value indicating whether this result is a partial / missing query

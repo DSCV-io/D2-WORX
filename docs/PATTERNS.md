@@ -14,46 +14,47 @@ Directory of the load-bearing patterns + cross-cutting conventions every D²-WOR
 2. [TLC / 2LC / 3LC folder convention](#tlc--2lc--3lc-folder-convention)
 3. [Handler](#handler)
 4. [D2Result](#d2result)
-5. [Utilities](#utilities)
-6. [Time / Temporal](#time--temporal)
-7. [Resilience](#resilience)
-8. [Repository](#repository)
-9. [Cache](#cache)
-10. [Composition root](#composition-root)
-11. [Logging](#logging)
-12. [Telemetry](#telemetry)
-13. [AspNetCore](#aspnetcore)
-14. [JWT inbound auth](#jwt-inbound-auth)
-15. [Deny-by-default endpoint boot guard](#deny-by-default-endpoint-boot-guard)
-16. [Translation — none on HTTP path (intentionally)](#translation--none-on-http-path-intentionally)
-17. [Configuration](#configuration)
-18. [i18n](#i18n)
-19. [Messaging](#messaging)
-20. [SAGA — cross-service synchronous compensation](#saga--cross-service-synchronous-compensation)
-21. [Multi-instance scaling](#multi-instance-scaling)
-22. [Mappers](#mappers)
-23. [Batch operations](#batch-operations)
-24. [Content-addressable entities](#content-addressable-entities)
-25. [Health checks](#health-checks)
-26. [PII redaction — `[RedactData]`](#pii-redaction--redactdata)
-27. [Anonymization — `[Anonymizable]` decoration + tiered reflection engine](#anonymization--anonymizable-decoration--tiered-reflection-engine)
-28. [Contact value objects](#contact-value-objects)
-29. [EF VO mapping — complex types + value converters](#ef-vo-mapping--complex-types--value-converters)
-30. [EF Core 10 complex-member-index limitation + `CreateD2Index`](#ef-core-10-complex-member-index-limitation--created2index)
-31. [Field-constraints codegen catalog](#field-constraints-codegen-catalog)
-32. [Spec-driven codegen — the cross-cutting pattern](#spec-driven-codegen--the-cross-cutting-pattern)
-33. [Domain validation — smart-constructor pattern](#domain-validation--smart-constructor-pattern)
-34. [Input validation](#input-validation)
-35. [Module-scoped cache-aside (build-once immutable static data)](#module-scoped-cache-aside-build-once-immutable-static-data)
-36. [Namespace-disambiguated extensions over a shared receiver](#namespace-disambiguated-extensions-over-a-shared-receiver)
-37. [Reference data](#reference-data)
+5. [Spec-driven error codes](#spec-driven-error-codes)
+6. [Utilities](#utilities)
+7. [Time / Temporal](#time--temporal)
+8. [Resilience](#resilience)
+9. [Repository](#repository)
+10. [Cache](#cache)
+11. [Composition root](#composition-root)
+12. [Logging](#logging)
+13. [Telemetry](#telemetry)
+14. [AspNetCore](#aspnetcore)
+15. [JWT inbound auth](#jwt-inbound-auth)
+16. [Deny-by-default endpoint boot guard](#deny-by-default-endpoint-boot-guard)
+17. [Translation — none on HTTP path (intentionally)](#translation--none-on-http-path-intentionally)
+18. [Configuration](#configuration)
+19. [i18n](#i18n)
+20. [Messaging](#messaging)
+21. [SAGA — cross-service synchronous compensation](#saga--cross-service-synchronous-compensation)
+22. [Multi-instance scaling](#multi-instance-scaling)
+23. [Mappers](#mappers)
+24. [Batch operations](#batch-operations)
+25. [Content-addressable entities](#content-addressable-entities)
+26. [Health checks](#health-checks)
+27. [PII redaction — `[RedactData]`](#pii-redaction--redactdata)
+28. [Anonymization — `[Anonymizable]` decoration + tiered reflection engine](#anonymization--anonymizable-decoration--tiered-reflection-engine)
+29. [Contact value objects](#contact-value-objects)
+30. [EF VO mapping — complex types + value converters](#ef-vo-mapping--complex-types--value-converters)
+31. [EF Core 10 complex-member-index limitation + `CreateD2Index`](#ef-core-10-complex-member-index-limitation--created2index)
+32. [Field-constraints codegen catalog](#field-constraints-codegen-catalog)
+33. [Spec-driven codegen — the cross-cutting pattern](#spec-driven-codegen--the-cross-cutting-pattern)
+34. [Domain validation — smart-constructor pattern](#domain-validation--smart-constructor-pattern)
+35. [Input validation](#input-validation)
+36. [Module-scoped cache-aside (build-once immutable static data)](#module-scoped-cache-aside-build-once-immutable-static-data)
+37. [Namespace-disambiguated extensions over a shared receiver](#namespace-disambiguated-extensions-over-a-shared-receiver)
+38. [Reference data](#reference-data)
     - [Endonym discipline](#endonym-discipline)
     - [Typed geo catalogs](#typed-geo-catalogs)
     - [Typed access on IRequestContext](#typed-access-on-irequestcontext)
     - [Geo name resolution at the integration boundary](#geo-name-resolution-at-the-integration-boundary)
     - [Reference data — user-preference cascades](#reference-data--user-preference-cascades)
-38. [Hash composition](#hash-composition)
-39. [Anti-patterns to actively avoid](#anti-patterns-to-actively-avoid)
+39. [Hash composition](#hash-composition)
+40. [Anti-patterns to actively avoid](#anti-patterns-to-actively-avoid)
 
 ---
 
@@ -165,6 +166,32 @@ return D2Result<OutputDto>.Ok(order.ToDto());
 Partial-success ladder: `NotFound` (none resolved, Success=false) → `SomeFound` (partial, data attached, Success=false) → `Ok` (all resolved, Success=true). Callers use `IsPartialOrMissing` (`IsNotFound || IsSomeFound`) for cache-fallback. `Forbidden` is returned when an authenticated caller lacks the required scope.
 
 > Duplicated from [`server/shared/dotnet/result/core/README.md`](../server/shared/dotnet/result/core/README.md) for at-a-glance directory access. Full factory catalog, `BubbleFail` / `Bubble`, per-code booleans (`IsTransientRetryable` / `IsTransientDbFailure`), monadic `Bind` / `Map` / `ThenAsync` / `Match`, and auto-injected `traceId` semantics live in the lib README — update both in lockstep.
+
+---
+
+## Spec-driven error codes
+
+Every error code is declared in a `*-error-codes.spec.json` catalog — one entry per code carrying its `httpStatus`, semantic `category`, and `userMessageKey`. The .NET + TS code constants, the typed `D2Result` failure factories, and the merged cross-service registry are all CODEGEN-emitted from that spec; nothing about a code is hand-written. There are two catalog kinds:
+
+- **Generic catalog** — `contracts/error-codes/` owns the reserved unprefixed namespace (`NOT_FOUND`, `CONFLICT`, `VALIDATION_FAILED`, `SERVICE_UNAVAILABLE`, …). These drive the framework-level `D2Result` factories.
+- **Per-domain catalog** — `contracts/<domain>-error-codes/` (e.g. `contracts/auth-error-codes/`) owns codes carrying the enforced `<DOMAIN>_` prefix. These drive a generated `<Domain>Failures` factory class.
+
+The call site NAMES the scope it's drawing from — the factory's receiver tells the reader which catalog owns the code:
+
+```csharp
+// framework / generic catalog — the semantic D2Result factories
+return D2Result<UserDto>.NotFound();
+return D2Result<TokenDto>.ValidationFailed(inputErrors: errors);
+
+// per-domain catalog — the generated <Domain>Failures factory
+return AuthFailures<TokenDto>.InvalidGrant();
+```
+
+Each factory stamps the spec-declared `(code, httpStatus, category, userMessageKey)` tuple, so the wire payload carries the code + its `category` + a `TKMessage` whose key resolves to localized text on the client. A new code is added by editing the spec + re-running the generator — never by hand-mapping a status + message into a raw `Fail(statusCode, message)` call (per [`docs/dev/rules.md §26.6`](dev/rules.md#26-codegen-discipline-spec--proto--schema-derived-types) + [§5.3](dev/rules.md#5-c-code-conventions)).
+
+**Merged-registry resolution boundary** — the codegen also emits a merged cross-service registry (`ErrorCodeRegistry` in .NET, `errorCodeRegistry` in TS) that aggregates EVERY `*-error-codes.spec.json` catalog into one `code → ErrorCodeInfo` lookup. This is what lets a consuming service branch on a wire code it didn't produce: given a code string from any producer, `TryResolve(code, out info)` returns the `httpStatus`, `category`, `userMessageKey`, and originating `domain` WITHOUT the consumer importing the producer's catalog. The registry is the resolution surface; the per-catalog factories are the production surface — produce with `D2Result.X()` / `<Domain>Failures.X()`, resolve a foreign code with the registry.
+
+> Duplicated from [`server/shared/dotnet/error-codes/registry/README.md`](../server/shared/dotnet/error-codes/registry/README.md) for at-a-glance directory access — the full per-catalog spec format, the `ErrorCodeInfo` field set, and the build-time cross-catalog collision diagnostics live in the lib README — update both in lockstep.
 
 ---
 

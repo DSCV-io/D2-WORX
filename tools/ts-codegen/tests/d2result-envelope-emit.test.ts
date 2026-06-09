@@ -2,6 +2,10 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import { DiagnosticIds } from "../src/lib/diagnostics.js";
@@ -172,5 +176,43 @@ describe("emitD2ResultEnvelope", () => {
     expect(successPos).toBeGreaterThan(0);
     expect(dataPos).toBeGreaterThan(successPos);
     expect(statusPos).toBeGreaterThan(dataPos);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Byte-parity golden test: regenerate d2result-envelope.g.ts IN-MEMORY from
+// the real spec and assert it equals the committed file byte-for-byte
+// (LF-normalized). Turns the byte-parity invariant into a CI test.
+// ---------------------------------------------------------------------------
+
+const _here = dirname(fileURLToPath(import.meta.url));
+const _repoRoot = resolve(_here, "..", "..", "..");
+
+function _readJson<T>(...parts: string[]): T {
+  return JSON.parse(readFileSync(resolve(_repoRoot, ...parts), "utf8")) as T;
+}
+
+function _readGenerated(...parts: string[]): string {
+  return readFileSync(resolve(_repoRoot, ...parts), "utf8").replace(/\r\n/g, "\n");
+}
+
+describe("d2result-envelope byte-parity (in-memory regen == committed .g.ts)", () => {
+  it("d2result-envelope.g.ts is byte-identical to committed", () => {
+    const spec = _readJson<D2ResultEnvelopeSpec>(
+      "contracts",
+      "d2result-envelope",
+      "d2result-envelope.spec.json",
+    );
+    const r = emitD2ResultEnvelope(spec);
+    expect(r.diagnostics).toEqual([]);
+    const committed = _readGenerated(
+      "server",
+      "shared",
+      "typescript",
+      "result",
+      "src",
+      "d2result-envelope.g.ts",
+    );
+    expect(r.source).toBe(committed);
   });
 });

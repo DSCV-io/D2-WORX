@@ -19,7 +19,7 @@ Roslyn incremental source generator that emits the `D2ResultEnvelopeFieldNames` 
 
 ## What the catalog contains
 
-7 field-name constants:
+8 field-name constants:
 
 | `constName`    | wire value    | role                                       |
 | -------------- | ------------- | ------------------------------------------ |
@@ -30,6 +30,7 @@ Roslyn incremental source generator that emits the `D2ResultEnvelopeFieldNames` 
 | `ERROR_CODE`   | `errorCode`   | standardized error code string             |
 | `TRACE_ID`     | `traceId`     | W3C trace id for log correlation           |
 | `STATUS_CODE`  | `statusCode`  | HTTP status code integer                   |
+| `CATEGORY`     | `category`    | closed `ErrorCategory` classification (absent when null) |
 
 ## How D2Result consumes the catalog
 
@@ -39,7 +40,7 @@ This pattern (codegen emits CONSTANTS; hand-applied attributes on the type) mirr
 
 ## Cross-language parity
 
-The SAME spec drives the TS-side `@d2/result` catalog via `tools/ts-codegen/src/d2result-envelope-emit.ts`. Both sides emit the same property names byte-for-byte; the BFF gateway parser (`server/web/src/lib/shared/rest/gateway-response.ts`) reads via the codegen-emitted constants. Cross-language wire drift on the 7 field names is structurally impossible.
+The SAME spec drives the TS-side `@d2/result` catalog via `tools/ts-codegen/src/d2result-envelope-emit.ts`. Both sides emit the same property names byte-for-byte; the BFF gateway parser (`server/web/src/lib/shared/rest/gateway-response.ts`) reads via the codegen-emitted constants. Cross-language wire drift on the 8 field names is structurally impossible.
 
 ## Diagnostics
 

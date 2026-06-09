@@ -2,7 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import type { TKMessage } from "@d2/result";
+import type { TKMessage } from "@d2/i18n-abstractions";
 import { falsey } from "@d2/utilities";
 
 import type { ITranslator } from "./i-translator.js";

@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import {
   ALL_AUTH_ERROR_CODES,
   AuthErrorCodes,
+  AuthFailures,
   getAuthErrorHttpStatus,
 } from "@d2/auth-abstractions";
 
@@ -70,5 +71,65 @@ describe("auth-error-codes parity (.NET catalog ↔ TS catalog)", () => {
         expect(tsStatus).toBe(fixtureStatus);
       });
     }
+  });
+
+  describe("AuthFailures factory names ↔ auth-error-codes/factory-names.json", () => {
+    const fixture = loadFixture<ConstMap>("auth-error-codes", "factory-names");
+    const fixtureMap = fixture.data;
+    const fixtureCodes = Object.keys(fixtureMap).sort();
+    const failures = AuthFailures as unknown as Record<
+      string,
+      (traceId?: string) => { errorCode?: string }
+    >;
+
+    // Per-VALUE pin: the .NET fixture maps code → camelCase factory name; the
+    // TS-emitted AuthFailures must expose that exact camelCase method, and
+    // calling it must stamp that same code.
+    for (const code of fixtureCodes) {
+      it(`code ${code} has TS factory '${fixtureMap[code]}' producing the same code`, () => {
+        const fnName = fixtureMap[code]!;
+        const fn = failures[fnName];
+        expect(typeof fn).toBe("function");
+        expect(fn!().errorCode).toBe(code);
+      });
+    }
+  });
+
+  describe("AuthFailures wire userMessageKey ↔ auth-error-codes/user-message-keys.json", () => {
+    const fixture = loadFixture<ConstMap>(
+      "auth-error-codes",
+      "user-message-keys",
+    );
+    const fixtureMap = fixture.data;
+    const fixtureCodes = Object.keys(fixtureMap).sort();
+    const factoryNames = loadFixture<ConstMap>(
+      "auth-error-codes",
+      "factory-names",
+    ).data;
+    const failures = AuthFailures as unknown as Record<
+      string,
+      (traceId?: string) => { messages: readonly { key: string }[] }
+    >;
+
+    // Cross-runtime wire-key parity guard: the .NET fixture pins the ACTUAL
+    // .NET wire key (the snake key, e.g. auth_errors_UNAUTHORIZED). The TS
+    // factory's wire key (messages[0].key) MUST equal it — directly surfacing
+    // any symbol-vs-snake drift between the runtimes.
+    for (const code of fixtureCodes) {
+      it(`code ${code} TS wire key matches the .NET snake key`, () => {
+        const fnName = factoryNames[code]!;
+        const result = failures[fnName]!();
+        expect(result.messages[0]?.key).toBe(fixtureMap[code]);
+      });
+    }
+
+    it("canonical maps are byte-equal", () => {
+      const tsWireKeys: Record<string, string> = {};
+      for (const code of fixtureCodes) {
+        const fnName = factoryNames[code]!;
+        tsWireKeys[code] = failures[fnName]!().messages[0]!.key;
+      }
+      expect(canonicalize(tsWireKeys)).toEqual(canonicalize(fixtureMap));
+    });
   });
 });

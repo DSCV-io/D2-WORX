@@ -19,6 +19,18 @@ first build. Each `contracts/protos/{namespace}/v1/*.proto` file
 auto-generates into `src/generated/{namespace}/v1/{name}.ts` via the
 build's `generate` step.
 
+Current re-exports from `src/index.ts`:
+
+| Export              | Source file                             | Purpose                                                                   |
+| ------------------- | --------------------------------------- | ------------------------------------------------------------------------- |
+| `D2ResultProto`     | `generated/common/v1/d2_result.ts`      | Full `D2Result` wire envelope (success, status, errorCode, category, …).  |
+| `TKMessageProto`    | `generated/common/v1/d2_result.ts`      | Translation-key message with `map<string,string> params`.                 |
+| `InputErrorProto`   | `generated/common/v1/d2_result.ts`      | Field-level validation error: field name + `TKMessageProto[]` errors.     |
+
+The codec (`d2ResultToProto` / `d2ResultFromProto` / `handleGrpcCall`) that
+converts between `D2Result` and `D2ResultProto` lives in `@d2/grpc-client`,
+not here — this package is the generated-stub layer only.
+
 ## Dependencies
 
 - `@bufbuild/protobuf` — runtime types for proto-generated code.

@@ -39,10 +39,13 @@ Copyright (c) DCSV. All rights reserved.
          use the smart-constructor pattern returning D2Result<T> with
          InputError-based validation failures. -->
     <ProjectReference Include="..\result\core\D2.Shared.Result.csproj" />
-    <!-- D2.Shared.I18n.Abstractions — TK.Common.Time.* / TK.Common.Errors.*
-         translation key constants referenced by the smart-constructor
-         validation paths. Zero-runtime-dep abstractions slice. -->
+    <!-- D2.Shared.I18n.Abstractions — the TKMessage type the TK.* constants
+         are instances of. Zero-runtime-dep abstractions slice. -->
     <ProjectReference Include="..\i18n\abstractions\D2.Shared.I18n.Abstractions.csproj" />
+    <!-- D2.Shared.I18n.Keys — TK.Common.Time.* / TK.Common.Errors.*
+         translation key constants referenced by the smart-constructor
+         validation paths. -->
+    <ProjectReference Include="..\i18n\keys\D2.Shared.I18n.Keys.csproj" />
     <!-- D2.Shared.Utilities — Falsey()/Truthy() extension methods on string
          used in the IANA null/empty/whitespace guard in Create factories. -->
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />

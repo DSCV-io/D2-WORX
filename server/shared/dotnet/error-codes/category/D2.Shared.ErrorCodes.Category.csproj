@@ -1,0 +1,49 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Shared.ErrorCodes.Category</RootNamespace>
+
+    <!-- Emit the generator's output (ErrorCategory.g.cs) to
+         <project-dir>/Generated/. The directory is tracked in git so PR
+         reviewers see codegen diffs without a local build. -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same
+      content that lands on disk under Generated/. Without this Remove, the
+      SDK-default <Compile Include="**/*.cs" /> glob picks up the on-disk
+      copy and the build fails with duplicate-definition errors (CS0101 /
+      CS0111).
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      ErrorCategory SourceGen — emits ErrorCategory.g.cs (the ErrorCategory
+      enum + ErrorCategoryWire mapping + ErrorCategoryJsonConverter) from
+      contracts/error-category/error-category.spec.json. This is a foundational
+      zero-dep (BCL-only) leaf so result-core and the error-codes registry can
+      reference ErrorCategory downward without pulling the merged-catalog
+      generator. Referenced as a Roslyn analyzer (no runtime dll dependency).
+    -->
+    <ProjectReference
+      Include="..\category-source-gen\D2.Shared.ErrorCodes.Category.SourceGen.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Surface the error-category spec to the generator. The closed catalog of
+      nine category wire strings is the single cross-runtime source of truth;
+      the .NET enum + the TS @d2/error-category union both derive from it.
+    -->
+    <AdditionalFiles Include="$(D2ContractsRoot)error-category\error-category.spec.json" />
+  </ItemGroup>
+</Project>

@@ -16,8 +16,7 @@ Copyright (c) DCSV. All rights reserved.
     type ActiveSessionDTO,
   } from "$lib/client/rest/account-client.js";
   import { D2Result } from "@d2/result";
-  import { TK } from "@d2/i18n/keys";
-  import { tk } from "@d2/i18n";
+  import { TK } from "@d2/i18n-keys";
   import { parseUserAgent } from "$lib/shared/utils/user-agent.js";
   import {
     formatLocation,
@@ -75,7 +74,7 @@ Copyright (c) DCSV. All rights reserved.
   async function doRevoke(password: string) {
     if (!revokeTarget) {
       return D2Result.validationFailed({
-        messages: [tk(TK.webclient.app.ACCOUNT_SESSIONS_NO_SESSION_SELECTED)],
+        messages: [TK.webclient.app.ACCOUNT_SESSIONS_NO_SESSION_SELECTED],
       });
     }
     return revokeSession(revokeTarget.session.token, password);

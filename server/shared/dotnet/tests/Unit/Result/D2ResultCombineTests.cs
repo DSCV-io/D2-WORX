@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using AwesomeAssertions;
+using D2.Shared.ErrorCodes.Category;
 using D2.Shared.I18n;
 using D2.Shared.Result;
 using Xunit;
@@ -503,6 +504,53 @@ public sealed class D2ResultCombineTests
         Action act = () => D2Result.Combine(ThrowingGenerator());
 
         act.Should().Throw<InvalidOperationException>().WithMessage("boom");
+    }
+
+    // ----------------------------------------------------------------------
+    // Category always ValidationFailure (cross-runtime parity)
+    // ----------------------------------------------------------------------
+
+    [Fact]
+    public void Combine_NotFound_Forbidden_CollapsesCategoryToValidationFailure()
+    {
+        // AggregateFailure always calls ValidationFailed(…),
+        // so Category on the aggregated result is ALWAYS ValidationFailure
+        // regardless of the input failure categories (not_found, policy_denied, …).
+        // Mirrors TS combineMany([notFound(), forbidden()]) → validation_failure.
+        var combined = D2Result.Combine(
+            D2Result<int>.NotFound(),
+            D2Result<int>.Forbidden());
+
+        combined.IsValidationFailed.Should().BeTrue();
+        combined.Category.Should().Be(ErrorCategory.ValidationFailure);
+    }
+
+    [Fact]
+    public void Combine_SingleNotFound_CategoryIsValidationFailure()
+    {
+        // A single non-validation failure still collapses to ValidationFailure.
+        var combined = D2Result.Combine(
+            D2Result<int>.Ok(1),
+            D2Result<int>.NotFound());
+
+        combined.IsValidationFailed.Should().BeTrue();
+        combined.Category.Should().Be(ErrorCategory.ValidationFailure);
+    }
+
+    [Fact]
+    public void CombineEnumerable_HeterogeneousFailures_CategoryAlwaysValidationFailure()
+    {
+        // Enumerable overload: NotFound + ServiceUnavailable → ValidationFailure category.
+        var input = new[]
+        {
+            D2Result<int>.NotFound(),
+            D2Result<int>.ServiceUnavailable(),
+        };
+
+        var combined = D2Result.Combine(input);
+
+        combined.IsValidationFailed.Should().BeTrue();
+        combined.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     // ----------------------------------------------------------------------

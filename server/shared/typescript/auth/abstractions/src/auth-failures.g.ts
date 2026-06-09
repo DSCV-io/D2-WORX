@@ -8,7 +8,9 @@
 
 /* eslint-disable */
 
-import { D2Result, serviceUnavailable, unauthorized, tk } from "@d2/result";
+import { D2Result, serviceUnavailable, unauthorized } from "@d2/result";
+import { ErrorCategoryWire } from "@d2/error-category";
+import { TK } from "@d2/i18n-keys";
 import { AuthErrorCodes } from "./auth-error-codes.g.js";
 
 /**
@@ -18,114 +20,128 @@ import { AuthErrorCodes } from "./auth-error-codes.g.js";
  */
 export const AuthFailures = {
   /** The Authorization header was present but not a parseable Bearer JWT. */
-  bearerMalformed(traceId?: string): D2Result {
-    return unauthorized({
-      messages: [tk("TK.Auth.Errors.UNAUTHORIZED")],
+  bearerMalformed<T = void>(traceId?: string): D2Result<T> {
+    return unauthorized<T>({
+      messages: [TK.auth.errors.UNAUTHORIZED],
       errorCode: AuthErrorCodes.AUTH_BEARER_MALFORMED,
+      category: ErrorCategoryWire.ValidationFailure,
       traceId,
     });
   },
   /** The Authorization header was missing on a protected endpoint. */
-  bearerMissing(traceId?: string): D2Result {
-    return unauthorized({
-      messages: [tk("TK.Auth.Errors.UNAUTHORIZED")],
+  bearerMissing<T = void>(traceId?: string): D2Result<T> {
+    return unauthorized<T>({
+      messages: [TK.auth.errors.UNAUTHORIZED],
       errorCode: AuthErrorCodes.AUTH_BEARER_MISSING,
+      category: ErrorCategoryWire.ValidationFailure,
       traceId,
     });
   },
   /** JWKS upstream is unavailable; no cached snapshot to fall back on. */
-  jwksUnavailable(traceId?: string): D2Result {
-    return serviceUnavailable({
-      messages: [tk("TK.Auth.Errors.TEMPORARILY_UNAVAILABLE")],
+  jwksUnavailable<T = void>(traceId?: string): D2Result<T> {
+    return serviceUnavailable<T>({
+      messages: [TK.auth.errors.TEMPORARILY_UNAVAILABLE],
       errorCode: AuthErrorCodes.AUTH_JWKS_UNAVAILABLE,
+      category: ErrorCategoryWire.InfrastructureUnavailable,
       traceId,
     });
   },
   /** JWT act chain is malformed (RFC 8693 section 2.1 violation). */
-  jwtActChainMalformed(traceId?: string): D2Result {
-    return unauthorized({
-      messages: [tk("TK.Auth.Errors.UNAUTHORIZED")],
+  jwtActChainMalformed<T = void>(traceId?: string): D2Result<T> {
+    return unauthorized<T>({
+      messages: [TK.auth.errors.UNAUTHORIZED],
       errorCode: AuthErrorCodes.AUTH_JWT_ACT_CHAIN_MALFORMED,
+      category: ErrorCategoryWire.ValidationFailure,
       traceId,
     });
   },
   /** JWT aud claim does not match this service's configured audience. */
-  jwtAudienceMismatch(traceId?: string): D2Result {
-    return unauthorized({
-      messages: [tk("TK.Auth.Errors.UNAUTHORIZED")],
+  jwtAudienceMismatch<T = void>(traceId?: string): D2Result<T> {
+    return unauthorized<T>({
+      messages: [TK.auth.errors.UNAUTHORIZED],
       errorCode: AuthErrorCodes.AUTH_JWT_AUDIENCE_MISMATCH,
+      category: ErrorCategoryWire.ValidationFailure,
       traceId,
     });
   },
   /** JWT is missing a required claim that this service depends on. */
-  jwtClaimMissing(traceId?: string): D2Result {
-    return unauthorized({
-      messages: [tk("TK.Auth.Errors.UNAUTHORIZED")],
+  jwtClaimMissing<T = void>(traceId?: string): D2Result<T> {
+    return unauthorized<T>({
+      messages: [TK.auth.errors.UNAUTHORIZED],
       errorCode: AuthErrorCodes.AUTH_JWT_CLAIM_MISSING,
+      category: ErrorCategoryWire.ValidationFailure,
       traceId,
     });
   },
   /** JWT is expired (exp in the past, beyond clock skew). */
-  jwtExpired(traceId?: string): D2Result {
-    return unauthorized({
-      messages: [tk("TK.Auth.Errors.UNAUTHORIZED")],
+  jwtExpired<T = void>(traceId?: string): D2Result<T> {
+    return unauthorized<T>({
+      messages: [TK.auth.errors.UNAUTHORIZED],
       errorCode: AuthErrorCodes.AUTH_JWT_EXPIRED,
+      category: ErrorCategoryWire.ValidationFailure,
       traceId,
     });
   },
   /** JWT iss claim does not match the configured issuer. */
-  jwtIssuerMismatch(traceId?: string): D2Result {
-    return unauthorized({
-      messages: [tk("TK.Auth.Errors.UNAUTHORIZED")],
+  jwtIssuerMismatch<T = void>(traceId?: string): D2Result<T> {
+    return unauthorized<T>({
+      messages: [TK.auth.errors.UNAUTHORIZED],
       errorCode: AuthErrorCodes.AUTH_JWT_ISSUER_MISMATCH,
+      category: ErrorCategoryWire.ValidationFailure,
       traceId,
     });
   },
   /** JWT signed by an unknown kid; reactive JWKS refresh did not surface it. */
-  jwtKidNotFound(traceId?: string): D2Result {
-    return unauthorized({
-      messages: [tk("TK.Auth.Errors.UNAUTHORIZED")],
+  jwtKidNotFound<T = void>(traceId?: string): D2Result<T> {
+    return unauthorized<T>({
+      messages: [TK.auth.errors.UNAUTHORIZED],
       errorCode: AuthErrorCodes.AUTH_JWT_KID_NOT_FOUND,
+      category: ErrorCategoryWire.ValidationFailure,
       traceId,
     });
   },
   /** JWT not yet valid (nbf in the future, beyond clock skew). */
-  jwtNotYetValid(traceId?: string): D2Result {
-    return unauthorized({
-      messages: [tk("TK.Auth.Errors.UNAUTHORIZED")],
+  jwtNotYetValid<T = void>(traceId?: string): D2Result<T> {
+    return unauthorized<T>({
+      messages: [TK.auth.errors.UNAUTHORIZED],
       errorCode: AuthErrorCodes.AUTH_JWT_NOT_YET_VALID,
+      category: ErrorCategoryWire.ValidationFailure,
       traceId,
     });
   },
   /** JWT signature verification failed against the JWKS. */
-  jwtSignatureInvalid(traceId?: string): D2Result {
-    return unauthorized({
-      messages: [tk("TK.Auth.Errors.UNAUTHORIZED")],
+  jwtSignatureInvalid<T = void>(traceId?: string): D2Result<T> {
+    return unauthorized<T>({
+      messages: [TK.auth.errors.UNAUTHORIZED],
       errorCode: AuthErrorCodes.AUTH_JWT_SIGNATURE_INVALID,
+      category: ErrorCategoryWire.ValidationFailure,
       traceId,
     });
   },
   /** Caller is authenticated but the per-endpoint scope requirement is not satisfied. Surfaces as 401 (not 403) - the auth boundary keeps a uniform shape regardless of whether the JWT was bad or scopes were insufficient, so attackers cannot deduce which check failed. */
-  scopeInsufficient(traceId?: string): D2Result {
-    return unauthorized({
-      messages: [tk("TK.Auth.Errors.UNAUTHORIZED")],
+  scopeInsufficient<T = void>(traceId?: string): D2Result<T> {
+    return unauthorized<T>({
+      messages: [TK.auth.errors.UNAUTHORIZED],
       errorCode: AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT,
+      category: ErrorCategoryWire.PolicyDenied,
       traceId,
     });
   },
   /** Session liveness store unreachable. Caller fails closed: receives a 503-equivalent and may retry; the attempt is NOT treated as authenticated. Treating an unknown liveness state as alive would let revoked sessions ride through outages. */
-  sessionLivenessUnavailable(traceId?: string): D2Result {
-    return serviceUnavailable({
-      messages: [tk("TK.Auth.Errors.TEMPORARILY_UNAVAILABLE")],
+  sessionLivenessUnavailable<T = void>(traceId?: string): D2Result<T> {
+    return serviceUnavailable<T>({
+      messages: [TK.auth.errors.TEMPORARILY_UNAVAILABLE],
       errorCode: AuthErrorCodes.AUTH_SESSION_LIVENESS_UNAVAILABLE,
+      category: ErrorCategoryWire.InfrastructureUnavailable,
       traceId,
     });
   },
   /** The bearer's d2_session_id is no longer alive (revoked). */
-  sessionRevoked(traceId?: string): D2Result {
-    return unauthorized({
-      messages: [tk("TK.Auth.Errors.UNAUTHORIZED")],
+  sessionRevoked<T = void>(traceId?: string): D2Result<T> {
+    return unauthorized<T>({
+      messages: [TK.auth.errors.UNAUTHORIZED],
       errorCode: AuthErrorCodes.AUTH_SESSION_REVOKED,
+      category: ErrorCategoryWire.PolicyDenied,
       traceId,
     });
   },

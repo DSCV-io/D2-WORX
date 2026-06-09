@@ -12,8 +12,8 @@ export {
 } from "./error-codes.g.js";
 export { type InputError, inputError } from "./input-error.js";
 export { InputErrorWireShape } from "./input-error.g.js";
-export { type TKMessage, tk } from "./tk-message.js";
-export { TkMessageWireShape } from "./tk-message.g.js";
+export { type TKMessage, tk } from "@d2/i18n-abstractions";
+export { TkMessageWireShape } from "@d2/i18n-abstractions";
 export {
   D2ResultEnvelopeFieldNames,
   type D2ResultEnvelopeFieldName,
@@ -28,9 +28,6 @@ export {
 export { bubble, bubbleFail } from "./bubble.js";
 export { combine, combineMany } from "./combine.js";
 export {
-  ok,
-  created,
-  fail,
   notFound,
   unauthorized,
   forbidden,
@@ -41,5 +38,5 @@ export {
   payloadTooLarge,
   tooManyRequests,
   canceled,
-  someFound,
-} from "./factories.js";
+} from "./factories.g.js";
+export { ok, created, fail, someFound } from "./factories.js";

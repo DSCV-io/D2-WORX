@@ -13,6 +13,7 @@ using AwesomeAssertions;
 using D2.Shared.Auth.Errors;
 using D2.Shared.Auth.Http.ProblemDetails;
 using D2.Shared.Auth.Telemetry;
+using D2.Shared.ErrorCodes.Category;
 using D2.Shared.I18n;
 using D2.Shared.ProblemDetails;
 using D2.Shared.Result;
@@ -180,6 +181,50 @@ public sealed class D2ProblemDetailsExtensionsTests
         ((IReadOnlyList<InputError>)emitted)
             .Should().ContainSingle()
             .Which.Field.Should().Be("email");
+    }
+
+    [Fact]
+    public void ToProblemDetails_CategoryExtensionCarriesWireString()
+    {
+        // BearerMissing carries ErrorCategory.ValidationFailure → the HTTP
+        // body must surface the snake_case wire string under d2_category,
+        // mirroring the D2Result envelope + gRPC envelope (cross-transport
+        // parity).
+        var ctx = MakeContext("/api/x");
+
+        var problem = AuthFailures.BearerMissing().ToProblemDetails(ctx);
+
+        problem.Extensions[D2ProblemDetailsKeys.EXTENSION_CATEGORY]
+            .Should().Be(ErrorCategory.ValidationFailure.ToWire());
+    }
+
+    [Fact]
+    public void ToProblemDetails_InfrastructureCategory_EmitsInfrastructureUnavailableWire()
+    {
+        var ctx = MakeContext("/api/x");
+
+        var problem = AuthFailures.JwksUnavailable().ToProblemDetails(ctx);
+
+        problem.Extensions[D2ProblemDetailsKeys.EXTENSION_CATEGORY]
+            .Should().Be(ErrorCategory.InfrastructureUnavailable.ToWire());
+    }
+
+    [Fact]
+    public void ToProblemDetails_NullCategory_OmitsCategoryExtension()
+    {
+        // A manually-built failure with no category → the extension is
+        // omitted (never surfaced as null), matching the inputErrors /
+        // traceId omit-when-absent discipline.
+        var ctx = MakeContext("/api/x");
+        var failure = D2Result.Fail(
+            messages: [TK.Auth.Errors.UNAUTHORIZED],
+            errorCode: "NO_CATEGORY",
+            statusCode: HttpStatusCode.BadRequest);
+
+        var problem = failure.ToProblemDetails(ctx);
+
+        problem.Extensions
+            .Should().NotContainKey(D2ProblemDetailsKeys.EXTENSION_CATEGORY);
     }
 
     [Fact]

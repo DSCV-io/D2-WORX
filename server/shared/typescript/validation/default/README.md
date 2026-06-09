@@ -65,7 +65,7 @@ Postal-code validation no longer depends on the `postcode-validator` npm — it 
 - `@d2/validation-abstractions` — the `IEmailValidator` / `IPhoneValidator` / `IPostalCodeValidator` contracts this package implements.
 - `@d2/geo-abstractions` — the branded `CountryCode` type accepted by the phone + postal validators.
 - `@d2/result` — `D2Result` envelope + `ok` / `validationFailed` / `inputError` / `tk` factories returned by every validator.
-- `@d2/i18n` — the `TK` key catalog (`@d2/i18n/keys`) supplying the `*_INVALID` translation keys.
+- `@d2/i18n-keys` — the `TK` key catalog supplying the `*_INVALID` translation keys.
 - `@d2/utilities` — `falsey` boundary helper for null / empty / whitespace input guards.
 - `libphonenumber-js` — phone-number parsing + E.164 normalization (exact pin).
 

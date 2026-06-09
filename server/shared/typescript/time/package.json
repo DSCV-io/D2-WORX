@@ -18,7 +18,7 @@
     "type-check:test": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
-    "@d2/i18n": "workspace:*",
+    "@d2/i18n-keys": "workspace:*",
     "@d2/result": "workspace:*",
     "temporal-polyfill": "0.3.2"
   },

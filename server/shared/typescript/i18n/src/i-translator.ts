@@ -2,7 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import type { TKMessage } from "@d2/result";
+import type { TKMessage } from "@d2/i18n-abstractions";
 
 /**
  * Locale-aware translator. Mirrors the .NET `D2.Shared.I18n.ITranslator`

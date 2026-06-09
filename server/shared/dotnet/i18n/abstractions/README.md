@@ -6,9 +6,9 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
-Domain-safe slice of the i18n stack: the `TKMessage` primitive, the `TK` constants (Source-Generated from `contracts/messages/en-US.json`), and the `ITranslator` interface. **Zero external deps** (no NuGet packages, no other shared-lib references — only what the .NET runtime ships) so domain layers can reference this without dragging in DI containers, configuration loading, or file IO.
+Domain-safe slice of the i18n stack: the `TKMessage` primitive and the `ITranslator` interface. **Zero external deps** (no NuGet packages, no other shared-lib references — only what the .NET runtime ships) so domain layers can reference this without dragging in DI containers, configuration loading, or file IO.
 
-The runtime piece (`Translator`, `SupportedLocales`, `AddD2I18n` DI extension) lives in the sibling [`D2.Shared.I18n`](../core/README.md) project. Domain code never references that one.
+The `TK` constants (one `TKMessage` instance per translation key, Source-Generated from `contracts/messages/en-US.json`) live in the sibling [`D2.Shared.I18n.Keys`](../keys/README.md) project, which references this one for the `TKMessage` type. The runtime piece (`Translator`, `SupportedLocales`, `AddD2I18n` DI extension) lives in the sibling [`D2.Shared.I18n`](../core/README.md) project. Domain code never references that one.
 
 ---
 
@@ -24,10 +24,9 @@ The pattern matches `Microsoft.Extensions.Logging.Abstractions` vs `Microsoft.Ex
 
 | Path                                  | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TKMessage.cs`                        | `TKMessage` sealed record — translation key + optional parameter bindings. Internal ctor; can only be constructed via the SrcGen-emitted `TK.*` constants.                                                                                                                                                                                                                                                                                                                                                                                |
+| `TKMessage.cs`                        | `TKMessage` sealed record — translation key + optional parameter bindings. Internal ctor; can only be constructed via the SrcGen-emitted `TK.*` constants in the sibling [`D2.Shared.I18n.Keys`](../keys/README.md) (granted access via `[InternalsVisibleTo]`).                                                                                                                                                                                                                                                                            |
 | `TKMessageJsonConverter.cs`           | `JsonConverter<TKMessage>` — wire format `{ "key": "..." }` or `{ "key": "...", "params": { ... } }`. Applied to `TKMessage` via `[JsonConverter]`. JSON property names come from the spec-derived `TkMessageWireShape.KEY` / `.PARAMS` constants — single source of truth shared with the TS-side parser via `contracts/tk-message/tk-message.spec.json`.                                                                                                                                                                                |
 | `ITranslator.cs`                      | The translation interface. `string T(string locale, TKMessage message)` and `bool HasKey(string key)`. Implementation lives in the runtime lib.                                                                                                                                                                                                                                                                                                                                                                                           |
-| `(generated) TK.g.cs`                 | Emitted by the sibling **`D2.Shared.I18n.SourceGen`** project at [`../source-gen/`](../source-gen/README.md) — a Roslyn `IIncrementalGenerator` (netstandard2.0; referenced as Analyzer, not a runtime dll). Output lands at `Generated/D2.Shared.I18n.SourceGen/D2.Shared.I18n.SourceGen.TKGenerator/TK.g.cs` (tracked in git) at every build. Contains nested `static partial class` chains (`TK.Common.Errors.NOT_FOUND` etc.), one `TKMessage` constant per JSON key.                                                       |
 | `(generated) TkMessageWireShape.g.cs` | Emitted by the **`D2.Shared.WireShapes.SourceGen`** project at [`../../source-gen-shared/wire-shapes-source-gen/`](../../source-gen-shared/wire-shapes-source-gen/README.md) — a Roslyn `IIncrementalGenerator` with multi-target dispatch. Output lands at `Generated/D2.Shared.WireShapes.SourceGen/D2.Shared.WireShapes.SourceGen.WireShapesGenerator/TkMessageWireShape.g.cs` (tracked in git) at every build. Carries the `KEY` and `PARAMS` JSON property-name constants. Cross-language parity-tested against the TS-side `@d2/result` `TkMessageWireShape` catalog. |
 
 ---
@@ -51,7 +50,7 @@ D2Result<T>.ValidationFailed(
 
 Key facts:
 
-- **Internal constructor.** Producers can ONLY construct a `TKMessage` via the SrcGen-emitted `TK.*` constants. There is no public ctor and no escape hatch — "untranslated literal in `D2Result.Messages`" is structurally unrepresentable.
+- **Internal constructor.** Producers can ONLY construct a `TKMessage` via the SrcGen-emitted `TK.*` constants in the sibling [`D2.Shared.I18n.Keys`](../keys/README.md). There is no public ctor and no escape hatch — "untranslated literal in `D2Result.Messages`" is structurally unrepresentable.
 - **Immutable.** `With(name, value)` and `With(IReadOnlyDictionary<string, string>)` return _new_ instances; the original is never mutated. The static-readonly TK constants stay pinned.
 - **Record equality with order-independent params.** Two `TKMessage` instances with the same key and same param bindings (regardless of the order `With()` was called in) compare equal.
 - **Wire format = code shape.** Same JSON shape in code and on the wire — no separate "in-memory" vs "wire" representation.
@@ -92,58 +91,9 @@ The server-side `Translator` (in the runtime lib) is used only for **outbound no
 
 ---
 
-## TK Source Generator
+## TK constants
 
-`D2.Shared.I18n.SourceGen.TKGenerator` is a Roslyn `[Generator]` that:
-
-1. Reads `contracts/messages/*.json` via `<AdditionalFiles>` declared in this csproj.
-2. Treats `en-US.json` as the source of truth.
-3. Decomposes each key (`{domain}_{category}_{IDENTIFIER}`) into a TK path (`TK.Domain.Category.IDENTIFIER`).
-4. Emits a `TK.g.cs` file containing nested `static partial class` chains with one `static readonly TKMessage` per key.
-5. Cross-checks every other locale against en-US to surface translation gaps at build time.
-
-### Decomposition rules
-
-JSON keys follow `{domain}_{category}_{IDENTIFIER}` where:
-
-- Segment 0 → top-level nested class (PascalCase: `common` → `Common`)
-- Segment 1 → second-level nested class (PascalCase: `errors` → `Errors`)
-- Segments 2..N joined by `_` and uppercased → constant name
-- Field value = original JSON key string
-
-| JSON key                                | Generated path                             | Field value                               |
-| --------------------------------------- | ------------------------------------------ | ----------------------------------------- |
-| `common_errors_NOT_FOUND`               | `TK.Common.Errors.NOT_FOUND`               | `"common_errors_NOT_FOUND"`               |
-| `geo_validation_ip_required`            | `TK.Geo.Validation.IP_REQUIRED`            | `"geo_validation_ip_required"`            |
-| `auth_email_signup_subject`             | `TK.Auth.Email.SIGNUP_SUBJECT`             | `"auth_email_signup_subject"`             |
-| `geo_validation_address_line1_required` | `TK.Geo.Validation.ADDRESS_LINE1_REQUIRED` | `"geo_validation_address_line1_required"` |
-
-### Build-time diagnostics
-
-| ID          | Severity | Trigger                                                                                                             |
-| ----------- | -------- | ------------------------------------------------------------------------------------------------------------------- |
-| `D2I18N001` | Warning  | A JSON key cannot be decomposed (fewer than 3 segments, invalid C# identifier, etc.). The offending key is skipped. |
-| `D2I18N002` | Warning  | A key in en-US is missing from another locale catalog. The key is still emitted in TK.                              |
-| `D2I18N003` | Error    | Two distinct JSON keys decompose to the same TK path. Build-failing.                                                |
-| `D2I18N004` | Warning  | A key exists in a non-en-US locale but has no matching entry in en-US. NOT included in TK.                          |
-| `D2I18N005` | Error    | The generator can't find `en-US.json` among AdditionalFiles. TK class is empty.                                     |
-| `D2I18N006` | Error    | A JSON catalog file is malformed (parse failure). The offending file is skipped.                                    |
-
-All diagnostics include the offending key/locale in the message — they appear directly in the build output and IDE error list.
-
-### Why codegen, not hand-maintained constants
-
-**Drift is structurally impossible**: the constant doesn't exist if the JSON key doesn't. Adding a new translation key is a single edit (the JSON file); the TK constant appears at next build, no manual update step.
-
-The SrcGen also surfaces:
-
-- Per-locale coverage gaps (D2I18N002)
-- Orphan keys in non-en-US locales (D2I18N004)
-- Decomposition rule violations (D2I18N001) — caught at build time rather than as runtime mysteries
-
-### Inspecting generated TK
-
-The emitted file is at `Generated/D2.Shared.I18n.SourceGen/D2.Shared.I18n.SourceGen.TKGenerator/TK.g.cs`. The consuming csproj declares `<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>` so the output lands in the tracked `Generated/` directory — committed for inspection, IDE navigation, and PR diff review; re-emitted on every `dotnet build` from the spec; do not hand-edit. Rider also surfaces it under `Dependencies → Analyzers → D2.Shared.I18n.SourceGen → TKGenerator`.
+The `TK.*` constants every producer references (e.g. `TK.Common.Errors.NOT_FOUND`) are Source-Generated `TKMessage` instances. They live in the sibling [`D2.Shared.I18n.Keys`](../keys/README.md) project, which hosts the `D2.Shared.I18n.SourceGen.TKGenerator` and references this project for the `TKMessage` type. The decomposition rules, build-time diagnostics, and codegen rationale are documented there.
 
 ---
 
@@ -171,7 +121,7 @@ Implementation in `D2.Shared.I18n.Translator`. Domain code references this inter
 <!-- Zero external deps. -->
 ```
 
-The csproj has no `<PackageReference>`s and no `<ProjectReference>`s. The Source Generator is referenced as an Analyzer (its dll doesn't propagate to consumers).
+The csproj has no `<PackageReference>`s and no runtime `<ProjectReference>`s. The `D2.Shared.WireShapes.SourceGen` generator (which emits `TkMessageWireShape.g.cs`) is referenced as an Analyzer, so its dll doesn't propagate to consumers.
 
 ---
 

@@ -2,14 +2,8 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import { TK } from "@d2/i18n/keys";
-import {
-  inputError,
-  ok,
-  tk,
-  validationFailed,
-  type D2Result,
-} from "@d2/result";
+import { TK } from "@d2/i18n-keys";
+import { inputError, ok, validationFailed, type D2Result } from "@d2/result";
 import { falsey } from "@d2/utilities";
 import type { IEmailValidator } from "@d2/validation-abstractions";
 
@@ -60,9 +54,7 @@ export class DefaultEmailValidator implements IEmailValidator {
 
   private static invalid(): D2Result<string> {
     return validationFailed<string>({
-      inputErrors: [
-        inputError("email", [tk(TK.common.validation.EMAIL_INVALID)]),
-      ],
+      inputErrors: [inputError("email", [TK.common.validation.EMAIL_INVALID])],
     });
   }
 }

@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, it, expect } from "vitest";
-import { TK } from "../src/generated/tk-keys.g.js";
+import { TK } from "@d2/i18n-keys";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const EN_US_PATH = resolve(
@@ -21,8 +21,8 @@ function decompose(
   const segments = key.split("_").filter((s) => s.length > 0);
   if (segments.length < 3) return undefined;
   return {
-    domain: segments[0],
-    category: segments[1],
+    domain: segments[0]!,
+    category: segments[1]!,
     constant: segments.slice(2).join("_").toUpperCase(),
   };
 }
@@ -33,28 +33,28 @@ describe("TK catalog", () => {
   // -------------------------------------------------------------------------
 
   it("TK.common.errors.REQUEST_FAILED resolves to the correct key string", () => {
-    expect(TK.common.errors.REQUEST_FAILED).toBe(
+    expect(TK.common.errors.REQUEST_FAILED.key).toBe(
       "common_errors_REQUEST_FAILED",
     );
   });
 
   it("TK.common.errors.CANCELED resolves to the correct key string", () => {
-    expect(TK.common.errors.CANCELED).toBe("common_errors_CANCELED");
+    expect(TK.common.errors.CANCELED.key).toBe("common_errors_CANCELED");
   });
 
   it("TK.webclient.app.ACCOUNT_SESSIONS_NO_SESSION_SELECTED resolves to the correct key string", () => {
-    expect(TK.webclient.app.ACCOUNT_SESSIONS_NO_SESSION_SELECTED).toBe(
+    expect(TK.webclient.app.ACCOUNT_SESSIONS_NO_SESSION_SELECTED.key).toBe(
       "webclient_app_account_sessions_no_session_selected",
     );
   });
 
-  it("TK leaf values are string literals matching the original key (as const)", () => {
-    // Type-level assertion: the value is narrowed to a literal type, not just string.
-    // At runtime, verify a sample set of known-shape leaves.
-    expect(typeof TK.common.errors.NOT_FOUND).toBe("string");
-    expect(TK.common.errors.NOT_FOUND).toBe("common_errors_NOT_FOUND");
-    expect(TK.auth.errors.UNAUTHORIZED).toBe("auth_errors_UNAUTHORIZED");
-    expect(TK.webclient.forms.VALIDATION_FAILED).toBe(
+  it("TK leaf values are TKMessage instances whose key matches the original key", () => {
+    // Each leaf is a TKMessage instance (`{ key }`) — the constant IS the
+    // message, droppable straight into D2Result.messages.
+    expect(typeof TK.common.errors.NOT_FOUND).toBe("object");
+    expect(TK.common.errors.NOT_FOUND.key).toBe("common_errors_NOT_FOUND");
+    expect(TK.auth.errors.UNAUTHORIZED.key).toBe("auth_errors_UNAUTHORIZED");
+    expect(TK.webclient.forms.VALIDATION_FAILED.key).toBe(
       "webclient_forms_validation_failed",
     );
   });
@@ -69,7 +69,10 @@ describe("TK catalog", () => {
       string,
       string
     >;
-    const tkAny = TK as Record<string, Record<string, Record<string, string>>>;
+    const tkAny = TK as Record<
+      string,
+      Record<string, Record<string, { key: string }>>
+    >;
 
     for (const key of Object.keys(catalog)) {
       const entry = decompose(key);
@@ -94,8 +97,8 @@ describe("TK catalog", () => {
         `TK.${domain}.${category}.${constant} must exist (key: ${key})`,
       ).toBeDefined();
       expect(
-        leaf,
-        `TK.${domain}.${category}.${constant} must equal the original key string`,
+        leaf?.key,
+        `TK.${domain}.${category}.${constant}.key must equal the original key string`,
       ).toBe(key);
     }
   });
@@ -123,14 +126,19 @@ describe("TK catalog", () => {
     expect(categories).toContain("validation");
   });
 
-  it("every leaf value is a non-empty string", () => {
-    const tkAny = TK as Record<string, Record<string, Record<string, string>>>;
+  it("every leaf value is a TKMessage with a non-empty key", () => {
+    const tkAny = TK as Record<
+      string,
+      Record<string, Record<string, { key: string }>>
+    >;
     for (const [domain, domainObj] of Object.entries(tkAny))
       for (const [category, categoryObj] of Object.entries(domainObj))
         for (const [constant, leaf] of Object.entries(categoryObj)) {
           expect(
-            typeof leaf === "string" && leaf.length > 0,
-            `TK.${domain}.${category}.${constant} must be a non-empty string`,
+            typeof leaf === "object" &&
+              typeof leaf.key === "string" &&
+              leaf.key.length > 0,
+            `TK.${domain}.${category}.${constant} must be a TKMessage with a non-empty key`,
           ).toBe(true);
         }
   });

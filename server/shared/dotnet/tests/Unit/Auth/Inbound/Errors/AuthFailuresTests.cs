@@ -11,6 +11,7 @@ using System.Net;
 using System.Reflection;
 using AwesomeAssertions;
 using D2.Shared.Auth.Errors;
+using D2.Shared.ErrorCodes.Category;
 using D2.Shared.I18n;
 using Xunit;
 
@@ -84,5 +85,41 @@ public sealed class AuthFailuresTests
 
         result.Messages.Should().ContainSingle()
             .Which.Should().Be(TK.Auth.Errors.TEMPORARILY_UNAVAILABLE);
+    }
+
+    [Theory]
+    [InlineData(nameof(AuthFailures.BearerMissing), ErrorCategory.ValidationFailure)]
+    [InlineData(nameof(AuthFailures.BearerMalformed), ErrorCategory.ValidationFailure)]
+    [InlineData(nameof(AuthFailures.JwtSignatureInvalid), ErrorCategory.ValidationFailure)]
+    [InlineData(nameof(AuthFailures.JwtExpired), ErrorCategory.ValidationFailure)]
+    [InlineData(nameof(AuthFailures.JwtNotYetValid), ErrorCategory.ValidationFailure)]
+    [InlineData(nameof(AuthFailures.JwtIssuerMismatch), ErrorCategory.ValidationFailure)]
+    [InlineData(nameof(AuthFailures.JwtAudienceMismatch), ErrorCategory.ValidationFailure)]
+    [InlineData(nameof(AuthFailures.JwtClaimMissing), ErrorCategory.ValidationFailure)]
+    [InlineData(nameof(AuthFailures.JwtActChainMalformed), ErrorCategory.ValidationFailure)]
+    [InlineData(nameof(AuthFailures.JwtKidNotFound), ErrorCategory.ValidationFailure)]
+    [InlineData(nameof(AuthFailures.SessionRevoked), ErrorCategory.PolicyDenied)]
+    [InlineData(nameof(AuthFailures.ScopeInsufficient), ErrorCategory.PolicyDenied)]
+    [InlineData(nameof(AuthFailures.JwksUnavailable), ErrorCategory.InfrastructureUnavailable)]
+    [InlineData(
+        nameof(AuthFailures.SessionLivenessUnavailable),
+        ErrorCategory.InfrastructureUnavailable)]
+    public void AuthHelpers_StampTheirOwnCodeCategory_NotTheBaseFactoryDefault(
+        string methodName,
+        ErrorCategory expectedCategory)
+    {
+        // The auth code's category OVERRIDES the base factory's default — e.g.
+        // BearerMissing delegates to Unauthorized (whose own UNAUTHORIZED code
+        // is policy_denied) but stamps validation_failure (its own category).
+        // Covers all 14 factories: 10 validation_failure, 2 policy_denied,
+        // 2 infrastructure_unavailable.
+        var method = typeof(AuthFailures)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Single(m => m.Name == methodName
+                && !m.IsGenericMethodDefinition
+                && m.GetParameters().Length == 0);
+        var result = (D2.Shared.Result.D2Result)method.Invoke(null, null)!;
+
+        result.Category.Should().Be(expectedCategory);
     }
 }

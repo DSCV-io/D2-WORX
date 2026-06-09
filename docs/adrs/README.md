@@ -84,6 +84,8 @@ across the catalog — never re-used, never re-ordered.
 | [0015](0015-anonymization-data-governance.md) | Anonymization / data-governance architecture — `D2.Shared.DataGovernance` | Accepted | 2026-06-01 | `D2.Shared.DataGovernance` libraries |
 | [0016](0016-keycustodian-lifecycle-store.md) | KeyCustodian — key lifecycle state machine + dedicated leaderless store | Accepted | 2026-06-06 | `0016-keycustodian` |
 | [0017](0017-ef-as-ddd-persistence.md) | EF-as-DDD persistence — retire the per-op Repository TLC; CQRS handlers use DbContext + aggregates + LINQ directly | Accepted | 2026-06-06 | `0016-keycustodian` |
+| [0018](0018-spec-driven-error-codes.md) | Spec-driven cross-service error codes + a closed `ErrorCategory` semantic set | Accepted | 2026-06-09 | `0017-error-codes` |
+| [0019](0019-wrapped-result-wire-model.md) | Wrapped-result wire model — a `D2Result` crosses any transport faithfully, zero caller try-catch | Accepted | 2026-06-09 | `0017-error-codes` |
 
 > This index grows as new ADRs are recorded. Backfilled ADRs (0002–0014) carry `D2 shared libraries (backfilled)` in their Deliverable field.
 

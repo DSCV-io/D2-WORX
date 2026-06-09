@@ -8,6 +8,7 @@
 
 #nullable enable
 
+using D2.Shared.ErrorCodes.Category;
 using D2.Shared.I18n;
 using D2.Shared.Result;
 
@@ -31,77 +32,88 @@ public static class AuthFailures
     public static D2Result BearerMissing() =>
         D2Result.Unauthorized(
             messages: [TK.Auth.Errors.UNAUTHORIZED],
-            errorCode: AuthErrorCodes.AUTH_BEARER_MISSING);
+            errorCode: AuthErrorCodes.AUTH_BEARER_MISSING,
+            category: ErrorCategory.ValidationFailure);
 
     /// <summary>The Authorization header was present but not a parseable Bearer JWT.</summary>
     /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
     public static D2Result BearerMalformed() =>
         D2Result.Unauthorized(
             messages: [TK.Auth.Errors.UNAUTHORIZED],
-            errorCode: AuthErrorCodes.AUTH_BEARER_MALFORMED);
+            errorCode: AuthErrorCodes.AUTH_BEARER_MALFORMED,
+            category: ErrorCategory.ValidationFailure);
 
     /// <summary>JWT signature verification failed against the JWKS.</summary>
     /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
     public static D2Result JwtSignatureInvalid() =>
         D2Result.Unauthorized(
             messages: [TK.Auth.Errors.UNAUTHORIZED],
-            errorCode: AuthErrorCodes.AUTH_JWT_SIGNATURE_INVALID);
+            errorCode: AuthErrorCodes.AUTH_JWT_SIGNATURE_INVALID,
+            category: ErrorCategory.ValidationFailure);
 
     /// <summary>JWT is expired (exp in the past, beyond clock skew).</summary>
     /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
     public static D2Result JwtExpired() =>
         D2Result.Unauthorized(
             messages: [TK.Auth.Errors.UNAUTHORIZED],
-            errorCode: AuthErrorCodes.AUTH_JWT_EXPIRED);
+            errorCode: AuthErrorCodes.AUTH_JWT_EXPIRED,
+            category: ErrorCategory.ValidationFailure);
 
     /// <summary>JWT not yet valid (nbf in the future, beyond clock skew).</summary>
     /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
     public static D2Result JwtNotYetValid() =>
         D2Result.Unauthorized(
             messages: [TK.Auth.Errors.UNAUTHORIZED],
-            errorCode: AuthErrorCodes.AUTH_JWT_NOT_YET_VALID);
+            errorCode: AuthErrorCodes.AUTH_JWT_NOT_YET_VALID,
+            category: ErrorCategory.ValidationFailure);
 
     /// <summary>JWT iss claim does not match the configured issuer.</summary>
     /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
     public static D2Result JwtIssuerMismatch() =>
         D2Result.Unauthorized(
             messages: [TK.Auth.Errors.UNAUTHORIZED],
-            errorCode: AuthErrorCodes.AUTH_JWT_ISSUER_MISMATCH);
+            errorCode: AuthErrorCodes.AUTH_JWT_ISSUER_MISMATCH,
+            category: ErrorCategory.ValidationFailure);
 
     /// <summary>JWT aud claim does not match this service's configured audience.</summary>
     /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
     public static D2Result JwtAudienceMismatch() =>
         D2Result.Unauthorized(
             messages: [TK.Auth.Errors.UNAUTHORIZED],
-            errorCode: AuthErrorCodes.AUTH_JWT_AUDIENCE_MISMATCH);
+            errorCode: AuthErrorCodes.AUTH_JWT_AUDIENCE_MISMATCH,
+            category: ErrorCategory.ValidationFailure);
 
     /// <summary>JWT is missing a required claim that this service depends on.</summary>
     /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
     public static D2Result JwtClaimMissing() =>
         D2Result.Unauthorized(
             messages: [TK.Auth.Errors.UNAUTHORIZED],
-            errorCode: AuthErrorCodes.AUTH_JWT_CLAIM_MISSING);
+            errorCode: AuthErrorCodes.AUTH_JWT_CLAIM_MISSING,
+            category: ErrorCategory.ValidationFailure);
 
     /// <summary>JWT act chain is malformed (RFC 8693 section 2.1 violation).</summary>
     /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
     public static D2Result JwtActChainMalformed() =>
         D2Result.Unauthorized(
             messages: [TK.Auth.Errors.UNAUTHORIZED],
-            errorCode: AuthErrorCodes.AUTH_JWT_ACT_CHAIN_MALFORMED);
+            errorCode: AuthErrorCodes.AUTH_JWT_ACT_CHAIN_MALFORMED,
+            category: ErrorCategory.ValidationFailure);
 
     /// <summary>JWT signed by an unknown kid; reactive JWKS refresh did not surface it.</summary>
     /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
     public static D2Result JwtKidNotFound() =>
         D2Result.Unauthorized(
             messages: [TK.Auth.Errors.UNAUTHORIZED],
-            errorCode: AuthErrorCodes.AUTH_JWT_KID_NOT_FOUND);
+            errorCode: AuthErrorCodes.AUTH_JWT_KID_NOT_FOUND,
+            category: ErrorCategory.ValidationFailure);
 
     /// <summary>JWKS upstream is unavailable; no cached snapshot to fall back on.</summary>
     /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
     public static D2Result JwksUnavailable() =>
         D2Result.ServiceUnavailable(
             messages: [TK.Auth.Errors.TEMPORARILY_UNAVAILABLE],
-            errorCode: AuthErrorCodes.AUTH_JWKS_UNAVAILABLE);
+            errorCode: AuthErrorCodes.AUTH_JWKS_UNAVAILABLE,
+            category: ErrorCategory.InfrastructureUnavailable);
 
     /// <summary>JWKS upstream is unavailable; no cached snapshot to fall back on. Typed overload.</summary>
     /// <typeparam name="T">The payload type the caller would have returned on success.</typeparam>
@@ -109,21 +121,24 @@ public static class AuthFailures
     public static D2Result<T> JwksUnavailable<T>() =>
         D2Result<T>.ServiceUnavailable(
             messages: [TK.Auth.Errors.TEMPORARILY_UNAVAILABLE],
-            errorCode: AuthErrorCodes.AUTH_JWKS_UNAVAILABLE);
+            errorCode: AuthErrorCodes.AUTH_JWKS_UNAVAILABLE,
+            category: ErrorCategory.InfrastructureUnavailable);
 
     /// <summary>The bearer's d2_session_id is no longer alive (revoked).</summary>
     /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
     public static D2Result SessionRevoked() =>
         D2Result.Unauthorized(
             messages: [TK.Auth.Errors.UNAUTHORIZED],
-            errorCode: AuthErrorCodes.AUTH_SESSION_REVOKED);
+            errorCode: AuthErrorCodes.AUTH_SESSION_REVOKED,
+            category: ErrorCategory.PolicyDenied);
 
     /// <summary>Session liveness store unreachable. Caller fails closed: receives a 503-equivalent and may retry; the attempt is NOT treated as authenticated. Treating an unknown liveness state as alive would let revoked sessions ride through outages.</summary>
     /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
     public static D2Result SessionLivenessUnavailable() =>
         D2Result.ServiceUnavailable(
             messages: [TK.Auth.Errors.TEMPORARILY_UNAVAILABLE],
-            errorCode: AuthErrorCodes.AUTH_SESSION_LIVENESS_UNAVAILABLE);
+            errorCode: AuthErrorCodes.AUTH_SESSION_LIVENESS_UNAVAILABLE,
+            category: ErrorCategory.InfrastructureUnavailable);
 
     /// <summary>Session liveness store unreachable. Caller fails closed: receives a 503-equivalent and may retry; the attempt is NOT treated as authenticated. Treating an unknown liveness state as alive would let revoked sessions ride through outages. Typed overload.</summary>
     /// <typeparam name="T">The payload type the caller would have returned on success.</typeparam>
@@ -131,13 +146,15 @@ public static class AuthFailures
     public static D2Result<T> SessionLivenessUnavailable<T>() =>
         D2Result<T>.ServiceUnavailable(
             messages: [TK.Auth.Errors.TEMPORARILY_UNAVAILABLE],
-            errorCode: AuthErrorCodes.AUTH_SESSION_LIVENESS_UNAVAILABLE);
+            errorCode: AuthErrorCodes.AUTH_SESSION_LIVENESS_UNAVAILABLE,
+            category: ErrorCategory.InfrastructureUnavailable);
 
     /// <summary>Caller is authenticated but the per-endpoint scope requirement is not satisfied. Surfaces as 401 (not 403) - the auth boundary keeps a uniform shape regardless of whether the JWT was bad or scopes were insufficient, so attackers cannot deduce which check failed.</summary>
     /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
     public static D2Result ScopeInsufficient() =>
         D2Result.Unauthorized(
             messages: [TK.Auth.Errors.UNAUTHORIZED],
-            errorCode: AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT);
+            errorCode: AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT,
+            category: ErrorCategory.PolicyDenied);
 
 }

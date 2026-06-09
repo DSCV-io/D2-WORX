@@ -8,6 +8,7 @@ namespace D2.Shared.Result;
 
 using System.Net;
 using System.Text.Json.Serialization;
+using D2.Shared.ErrorCodes.Category;
 using D2.Shared.I18n;
 
 /// <summary>
@@ -40,6 +41,9 @@ public sealed partial class D2Result<TData> : D2Result
     /// </param>
     /// <param name="errorCode">A standardized error code. Optional.</param>
     /// <param name="traceId">Trace identifier for correlating logs. Optional.</param>
+    /// <param name="category">
+    /// The closed semantic/telemetry classification of the failure. Optional.
+    /// </param>
     public D2Result(
         bool success,
         TData? data = default,
@@ -47,8 +51,9 @@ public sealed partial class D2Result<TData> : D2Result
         IReadOnlyList<InputError>? inputErrors = null,
         HttpStatusCode? statusCode = null,
         string? errorCode = null,
-        string? traceId = null)
-        : base(success, messages, inputErrors, statusCode, errorCode, traceId)
+        string? traceId = null,
+        ErrorCategory? category = null)
+        : base(success, messages, inputErrors, statusCode, errorCode, traceId, category)
     {
         Data = data;
     }
@@ -96,5 +101,5 @@ public sealed partial class D2Result<TData> : D2Result
     /// A new <see cref="D2Result{TData}"/> with <paramref name="traceId"/> applied.
     /// </returns>
     public new D2Result<TData> WithTraceId(string? traceId)
-        => new(Success, Data, Messages, InputErrors, StatusCode, ErrorCode, traceId);
+        => new(Success, Data, Messages, InputErrors, StatusCode, ErrorCode, traceId, Category);
 }

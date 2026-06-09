@@ -144,6 +144,7 @@
   "common_errors_FORBIDDEN": "Accès refusé.",
   "common_errors_FOREIGN_KEY_VIOLATION": "Un élément référencé est introuvable ou est encore utilisé.",
   "common_errors_GEO_REF_UNAVAILABLE": "Les données de référence géographiques sont temporairement indisponibles. Veuillez réessayer dans un instant.",
+  "common_errors_IDEMPOTENCY_IN_FLIGHT": "Cette requête est déjà en cours de traitement. Veuillez patienter un instant et réessayer.",
   "common_errors_NOT_AUTHENTICATED": "Vous n'êtes pas connecté. Veuillez vous connecter et réessayer.",
   "common_errors_NOT_FOUND": "La ressource demandée est introuvable.",
   "common_errors_NOT_NULL_VIOLATION": "Un champ obligatoire est manquant.",

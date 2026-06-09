@@ -10,6 +10,7 @@ using System.Net;
 using AwesomeAssertions;
 using D2.Shared.AspNetCore;
 using D2.Shared.AspNetCore.Internal;
+using D2.Shared.ErrorCodes.Category;
 using D2.Shared.I18n;
 using D2.Shared.ProblemDetails;
 using D2.Shared.Result;
@@ -101,6 +102,40 @@ public sealed class D2ProblemDetailsCustomizerD2ResultAwareTests
     }
 
     [Fact]
+    public void Apply_WithStashedD2Result_EmitsCategoryExtensionWhenPresent()
+    {
+        var ctx = MakeContext("/api/x");
+        var failure = new D2Result(
+            success: false,
+            messages: [TK.Auth.Errors.UNAUTHORIZED],
+            errorCode: "VALIDATION_FAILED",
+            statusCode: HttpStatusCode.BadRequest,
+            category: ErrorCategory.ValidationFailure);
+        ctx.HttpContext.SetD2Result(failure);
+
+        D2ProblemDetailsCustomizer.Apply(ctx, new D2ProblemDetailsOptions());
+
+        ctx.ProblemDetails.Extensions[D2ProblemDetailsKeys.EXTENSION_CATEGORY]
+            .Should().Be(ErrorCategory.ValidationFailure.ToWire());
+    }
+
+    [Fact]
+    public void Apply_WithStashedD2Result_OmitsCategoryExtensionWhenNull()
+    {
+        var ctx = MakeContext("/api/x");
+        var failure = D2Result.Fail(
+            messages: [TK.Auth.Errors.UNAUTHORIZED],
+            errorCode: "OOPS",
+            statusCode: HttpStatusCode.InternalServerError);
+        ctx.HttpContext.SetD2Result(failure);
+
+        D2ProblemDetailsCustomizer.Apply(ctx, new D2ProblemDetailsOptions());
+
+        ctx.ProblemDetails.Extensions
+            .Should().NotContainKey(D2ProblemDetailsKeys.EXTENSION_CATEGORY);
+    }
+
+    [Fact]
     public void Apply_WithStashedD2ResultEmptyErrorCode_TypeFallsBackToUnhandledException()
     {
         var ctx = MakeContext("/api/x");
@@ -144,13 +179,17 @@ public sealed class D2ProblemDetailsCustomizerD2ResultAwareTests
     }
 
     [Fact]
-    public void Apply_AllFiveExtensionKeysReferencedAreSpecDriven()
+    public void Apply_AllUnconditionalExtensionKeysReferencedAreSpecDriven()
     {
         // Reflection regression: assert the Customizer reads constants from
         // D2ProblemDetailsKeys (not string literals) — written + read via the
         // codegen-emitted catalog. Cross-check by asserting the keys appear
         // in the ProblemDetails.Extensions dictionary at their exact wire
         // values (the spec literals).
+        // NOTE: d2_category is intentionally absent here — this D2Result
+        // carries no Category, so the conditional-emit path omits it. The
+        // omission is pinned explicitly via NotContainKey to prevent future
+        // regressions where a null category is emitted as a null extension.
         var ctx = MakeContext("/api/x");
         var inputErrors = new[]
         {
@@ -170,7 +209,8 @@ public sealed class D2ProblemDetailsCustomizerD2ResultAwareTests
             .And.Contain("d2_messages")
             .And.Contain("d2_input_errors")
             .And.Contain("traceId")
-            .And.Contain("correlationId");
+            .And.Contain("correlationId")
+            .And.NotContain("d2_category");
     }
 
     [Fact]

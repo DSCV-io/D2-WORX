@@ -20,6 +20,7 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <ProjectReference Include="..\result\core\D2.Shared.Result.csproj" />
     <ProjectReference Include="..\i18n\abstractions\D2.Shared.I18n.Abstractions.csproj" />
+    <ProjectReference Include="..\i18n\keys\D2.Shared.I18n.Keys.csproj" />
   </ItemGroup>
 
   <ItemGroup>

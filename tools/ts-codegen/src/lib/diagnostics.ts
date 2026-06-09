@@ -42,6 +42,12 @@ export interface EmitResult {
  * - `D2SCP001-009`: auth-scopes spec.
  * - `D2AEC001-005`: auth-error-codes spec.
  * - `D2EC001-005`: error-codes spec (generic D2Result error-code catalog).
+ * - `D2ERC001-007`: shared error-codes engine (catalog-neutral): domain-prefix
+ *   enforcement (D2ERC001), TK-key existence (D2ERC002), factoryShape support
+ *   (D2ERC003), cross-catalog duplicate-code (D2ERC004), reserved-namespace
+ *   violation (D2ERC005), malformed registry spec (D2ERC006), unknown category
+ *   (D2ERC007). Mirrors the .NET shared `D2ERC*` family from
+ *   D2.Shared.ErrorCodes.SourceGen.
  * - `D2HDR001-007`: headers spec.
  * - `D2JWT001-006`: jwt-claims spec.
  * - `D2PRB001-006`: problem-details spec.
@@ -84,6 +90,28 @@ export const DiagnosticIds = {
   EC_INVALID_HTTP_STATUS: "D2EC003",
   EC_INVALID_CODE: "D2EC004",
   EC_MISSING_DOC: "D2EC005",
+
+  // Shared error-codes engine (catalog-neutral). These fire for ANY
+  // *-error-codes catalog the unified emitter processes, so they use a
+  // catalog-neutral family rather than D2EC*/D2AEC*. Mirror the .NET shared
+  // D2.Shared.ErrorCodes.SourceGen D2ERC* ids byte-for-byte — same spec source
+  // on both sides means same predicate violation surface so identical IDs are
+  // correct. A CI grep for `D2ERC` catches both runtimes.
+  ERC_DOMAIN_PREFIX_VIOLATION: "D2ERC001",
+  ERC_TK_KEY_NOT_FOUND: "D2ERC002",
+  ERC_UNSUPPORTED_FACTORY_SHAPE: "D2ERC003",
+  // Registry-level cross-catalog collision checks (D7 from design decisions).
+  // D2ERC004 — same `code` declared in two or more catalogs (cross-catalog).
+  // D2ERC005 — reserved-namespace violation: unprefixed code in a per-domain
+  //             spec, or a domain-prefixed code in the generic spec.
+  // D2ERC006 — malformed registry spec: a catalog spec file could not be
+  //             parsed as JSON (mirrors the .NET RegistryGenerator D2ERC006).
+  // D2ERC007 — unknown category: an entry's category is not in the closed set
+  //             from error-category.spec.json (mirrors the .NET D2ERC007).
+  ERC_CROSS_CATALOG_DUPLICATE_CODE: "D2ERC004",
+  ERC_RESERVED_NAMESPACE_VIOLATION: "D2ERC005",
+  ERC_MALFORMED_REGISTRY_SPEC: "D2ERC006",
+  ERC_UNKNOWN_CATEGORY: "D2ERC007",
 
   // Headers.
   HDR_MALFORMED_SPEC: "D2HDR001",
@@ -237,6 +265,14 @@ export const DiagnosticIds = {
   FC_EMPTY_ENUM_MEMBER_LIST: "D2FC007",
   FC_DUPLICATE_ENUM_MEMBER: "D2FC008",
   FC_INVALID_ENUM_MEMBER_NAME: "D2FC009",
+
+  // Error category catalog (the nine closed ErrorCategory wire strings).
+  // Mirror the .NET D2.Shared.ErrorCodes.Category.SourceGen DiagnosticIds
+  // values byte-for-byte — same spec source on both sides.
+  ECAT_MALFORMED_SPEC: "D2ECAT001",
+  ECAT_DUPLICATE_WIRE: "D2ECAT002",
+  ECAT_INVALID_WIRE: "D2ECAT003",
+  ECAT_EMPTY_DOC: "D2ECAT004",
 } as const;
 
 /**

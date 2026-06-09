@@ -144,6 +144,7 @@
   "common_errors_FORBIDDEN": "アクセスが拒否されました。",
   "common_errors_FOREIGN_KEY_VIOLATION": "参照されている項目が見つからないか、まだ使用中です。",
   "common_errors_GEO_REF_UNAVAILABLE": "地理参照データは一時的に利用できません。しばらくしてからもう一度お試しください。",
+  "common_errors_IDEMPOTENCY_IN_FLIGHT": "このリクエストはすでに処理中です。しばらくしてからもう一度お試しください。",
   "common_errors_NOT_AUTHENTICATED": "サインインしていません。サインインしてからもう一度お試しください。",
   "common_errors_NOT_FOUND": "リクエストされたリソースが見つかりませんでした。",
   "common_errors_NOT_NULL_VIOLATION": "必須項目が入力されていません。",

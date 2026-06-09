@@ -144,6 +144,7 @@
   "common_errors_FORBIDDEN": "Access denied.",
   "common_errors_FOREIGN_KEY_VIOLATION": "A referenced item could not be found or is still in use.",
   "common_errors_GEO_REF_UNAVAILABLE": "Geographic reference data is temporarily unavailable. Please try again shortly.",
+  "common_errors_IDEMPOTENCY_IN_FLIGHT": "This request is already being processed. Please wait a moment and try again.",
   "common_errors_NOT_AUTHENTICATED": "You are not signed in. Please sign in and try again.",
   "common_errors_NOT_FOUND": "The requested resource was not found.",
   "common_errors_NOT_NULL_VIOLATION": "A required field is missing.",

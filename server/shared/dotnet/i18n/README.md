@@ -12,6 +12,7 @@ Internationalization primitives for D²-WORX services that produce user-facing m
 
 | Package                                   | Description                                                                                                                          |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| [`abstractions/`](abstractions/README.md) | Domain-safe slice — the `TKMessage` primitive, the SrcGen-emitted `TK` constants, and the `ITranslator` interface. Zero external deps. |
+| [`abstractions/`](abstractions/README.md) | Domain-safe slice — the `TKMessage` primitive and the `ITranslator` interface. Zero external deps.                                  |
+| [`keys/`](keys/README.md)                 | The SrcGen-emitted `TK.*` translation-key constants (one `TKMessage` instance per key). References `abstractions/` for the `TKMessage` type. |
 | [`core/`](core/README.md)                 | Runtime `Translator` + `SupportedLocales` + `AddD2I18n` DI extension.                                                               |
-| [`source-gen/`](source-gen/README.md)     | Roslyn generator emitting the `TK.*` constants consumed by `abstractions/` from the `contracts/messages/*.json` catalogs.            |
+| [`source-gen/`](source-gen/README.md)     | Roslyn generator emitting the `TK.*` constants consumed by `keys/` from the `contracts/messages/*.json` catalogs.                    |

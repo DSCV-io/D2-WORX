@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AwesomeAssertions;
+using D2.Shared.ErrorCodes.Category;
 using D2.Shared.I18n;
 using D2.Shared.Result;
 using Xunit;
@@ -174,6 +175,66 @@ public sealed class D2ResultJsonShapeTests
 
         obj.Should().ContainKey(D2ResultEnvelopeFieldNames.SUCCESS);
         obj.Should().NotContainKey("Success", "PascalCase regression");
+    }
+
+    [Fact]
+    public void Serialize_NotFound_EmitsCategoryAsSnakeWireString()
+    {
+        // The NotFound factory stamps ErrorCategory.NotFound; it serializes via
+        // ErrorCategoryJsonConverter as the snake_case wire string.
+        var result = D2Result.NotFound();
+
+        var json = JsonSerializer.Serialize<object>(result);
+        var obj = JsonNode.Parse(json)!.AsObject();
+
+        obj.Should().ContainKey(D2ResultEnvelopeFieldNames.CATEGORY);
+        obj[D2ResultEnvelopeFieldNames.CATEGORY]!.GetValue<string>()
+            .Should().Be("not_found");
+    }
+
+    [Fact]
+    public void Serialize_Ok_OmitsCategoryWhenNull()
+    {
+        // [JsonIgnore(WhenWritingNull)] on Category → the key is ABSENT (not
+        // null / not "") for a result with no category.
+        var result = D2Result.Ok();
+
+        var json = JsonSerializer.Serialize<object>(result);
+        var obj = JsonNode.Parse(json)!.AsObject();
+
+        obj.Should().NotContainKey(
+            D2ResultEnvelopeFieldNames.CATEGORY,
+            "a success result carries no category and the field is null-omitted");
+    }
+
+    [Fact]
+    public void Serialize_Fail_WithoutCategory_OmitsCategory()
+    {
+        // A hand-rolled Fail() with no category supplied → omitted, no crash.
+        var result = D2Result.Fail();
+
+        var json = JsonSerializer.Serialize<object>(result);
+        var obj = JsonNode.Parse(json)!.AsObject();
+
+        obj.Should().NotContainKey(D2ResultEnvelopeFieldNames.CATEGORY);
+    }
+
+    [Fact]
+    public void Category_WireString_RehydratesViaConverter()
+    {
+        // The .NET D2Result envelope is serialize-only (the TS @d2/result parser
+        // owns deserialization — see the cross-runtime fixtures). The wire→typed
+        // direction for the category field itself is the ErrorCategoryJsonConverter
+        // round-trip: the snake string parses back to the typed ErrorCategory,
+        // which is what the consumer-side reconstruction relies on.
+        ErrorCategoryWire.TryFromWire("validation_failure", out var category)
+            .Should().BeTrue();
+        category.Should().Be(ErrorCategory.ValidationFailure);
+
+        var json = JsonSerializer.Serialize(ErrorCategory.NotFound);
+        json.Should().Be("\"not_found\"");
+        JsonSerializer.Deserialize<ErrorCategory>(json)
+            .Should().Be(ErrorCategory.NotFound);
     }
 
     [Fact]

@@ -6,7 +6,7 @@ import { AuthErrorCodes } from "@d2/auth-abstractions";
 import type { OrgType } from "@d2/auth-context-abstractions";
 import { forbidden, HttpStatusCode } from "@d2/result";
 import { falsey } from "@d2/utilities";
-import { PROBLEM_DETAILS_CONTENT_TYPE } from "../problem-details.g.js";
+import { PROBLEM_DETAILS_CONTENT_TYPE } from "@d2/problem-details-abstractions";
 import { toProblemDetails } from "../problem-details.js";
 import type {
   AuthenticatedRequestContext,

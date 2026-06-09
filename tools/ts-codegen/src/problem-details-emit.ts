@@ -28,14 +28,13 @@ export interface ExtensionKeyEntry {
 /**
  * One title entry parsed from the spec.
  *
- * Wire-shape carve-out per rules.md §6.15: `httpStatus` is `number | null`
- * because the spec's JSON literal uses `null` to denote the singular
- * fallback entry (only ONE entry per spec may carry `httpStatus: null`).
- * Three-state semantics: per-status number (e.g. 400), explicit-null
- * (fallback), or absent (validation error). The literal `null` is the
- * spec contract; this interface mirrors that wire shape. Domain consumers
- * branch on `=== null` to detect the fallback entry — `=== undefined`
- * would mean "malformed spec entry" (which we reject earlier).
+ * The fallback title entry has no HTTP status — the spec encodes it as a
+ * literal JSON `null`, mirrored on this internal parse type. Three-state
+ * semantics: per-status number (e.g. 400), explicit-null (fallback), or
+ * absent (validation error). The literal `null` is the spec contract;
+ * this interface mirrors that wire shape. Domain consumers branch on
+ * `=== null` to detect the fallback entry — `=== undefined` would mean
+ * "malformed spec entry" (which we reject earlier).
  */
 export interface TitleEntry {
   readonly constName: string;
@@ -340,7 +339,7 @@ function escapeJsDoc(value: string): string {
 
 const SPEC_PATH = contractsPath("problem-details", "problem-details.spec.json");
 
-const TARGET_PATH = tsPackagePath("headers", "core", "src", "problem-details.g.ts");
+const TARGET_PATH = tsPackagePath("problem-details-abstractions", "src", "generated", "problem-details.g.ts");
 
 /**
  * Run the problem-details emitter. Per-spec mtime check skips emit when

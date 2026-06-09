@@ -11,7 +11,7 @@ import {
   renderMessages,
   type TranslateFn,
 } from "../src/render-messages.js";
-import type { TKMessage } from "../src/tk-message.js";
+import type { TKMessage } from "@d2/i18n-abstractions";
 
 /** Synthetic translator — echoes "<key>(p1=v1,p2=v2)" so tests can assert on rendered output. */
 const echo: TranslateFn = (key, params) => {

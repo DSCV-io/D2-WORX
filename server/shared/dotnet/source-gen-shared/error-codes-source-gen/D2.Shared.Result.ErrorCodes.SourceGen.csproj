@@ -35,6 +35,16 @@ Copyright (c) DCSV. All rights reserved.
     <Compile Include="$(D2SourceGenSharedRoot)**\*.cs">
       <Link>Shared\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Compile>
+    <!--
+      Pull in the unified error-codes generation engine (entry model + loader
+      + constants/failures emitters + CatalogConfig + the D2ERC* engine
+      diagnostics). The same engine compiles into BOTH error-codes generator
+      shells (auth + generic); each shell supplies only its CatalogConfig +
+      its analyzer identity. One engine, zero duplicated logic.
+    -->
+    <Compile Include="$(D2ErrorCodesEmitRoot)**\*.cs">
+      <Link>ErrorCodesEmit\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>

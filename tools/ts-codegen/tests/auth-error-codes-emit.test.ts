@@ -4,10 +4,11 @@
 
 import { describe, expect, it } from "vitest";
 import {
-  emitAuthErrorCodes,
+  AUTH_CONFIG,
+  emitErrorCodesCatalog,
   type ErrorCodesSpec,
   validateErrorCodesSpec,
-} from "../src/auth-error-codes-emit.js";
+} from "../src/error-codes-emit.js";
 
 const validSpec: ErrorCodesSpec = {
   errorCodes: [
@@ -17,6 +18,7 @@ const validSpec: ErrorCodesSpec = {
       category: "validation_failure",
       userMessageKey: "TK.X",
       factoryName: "BearerMissing",
+      factoryShape: "with_error_code",
       doc: "Bearer missing",
     },
     {
@@ -25,52 +27,61 @@ const validSpec: ErrorCodesSpec = {
       category: "infrastructure_unavailable",
       userMessageKey: "TK.Y",
       factoryName: "JwksUnavailable",
+      factoryShape: "with_error_code",
     },
   ],
 };
 
-describe("validateErrorCodesSpec", () => {
+describe("validateErrorCodesSpec (auth catalog)", () => {
   it("happy path returns all entries with no diagnostics", () => {
-    const v = validateErrorCodesSpec(validSpec);
+    // No en-US key set supplied → the TK-existence check is skipped, so the
+    // synthetic TK.X/TK.Y keys do not trip D2ERC002 here.
+    const v = validateErrorCodesSpec(validSpec, AUTH_CONFIG);
     expect(v.entries).toHaveLength(2);
     expect(v.diagnostics).toEqual([]);
   });
 
   it("flags duplicate codes", () => {
-    const v = validateErrorCodesSpec({
-      errorCodes: [validSpec.errorCodes[0]!, validSpec.errorCodes[0]!],
-    });
+    const v = validateErrorCodesSpec(
+      { errorCodes: [validSpec.errorCodes[0]!, validSpec.errorCodes[0]!] },
+      AUTH_CONFIG,
+    );
     expect(v.diagnostics[0]?.id).toBe("D2AEC001");
   });
 
   it("flags duplicate factory names", () => {
-    const v = validateErrorCodesSpec({
-      errorCodes: [
-        validSpec.errorCodes[0]!,
-        { ...validSpec.errorCodes[0]!, code: "AUTH_OTHER" },
-      ],
-    });
+    const v = validateErrorCodesSpec(
+      {
+        errorCodes: [
+          validSpec.errorCodes[0]!,
+          { ...validSpec.errorCodes[0]!, code: "AUTH_OTHER" },
+        ],
+      },
+      AUTH_CONFIG,
+    );
     expect(v.diagnostics[0]?.id).toBe("D2AEC002");
   });
 
   it("flags unknown category", () => {
-    const v = validateErrorCodesSpec({
-      errorCodes: [{ ...validSpec.errorCodes[0]!, category: "weird" }],
-    });
+    const v = validateErrorCodesSpec(
+      { errorCodes: [{ ...validSpec.errorCodes[0]!, category: "weird" }] },
+      AUTH_CONFIG,
+    );
     expect(v.diagnostics[0]?.id).toBe("D2AEC003");
   });
 
   it("flags unsupported httpStatus", () => {
-    const v = validateErrorCodesSpec({
-      errorCodes: [{ ...validSpec.errorCodes[0]!, httpStatus: 418 }],
-    });
+    const v = validateErrorCodesSpec(
+      { errorCodes: [{ ...validSpec.errorCodes[0]!, httpStatus: 418 }] },
+      AUTH_CONFIG,
+    );
     expect(v.diagnostics[0]?.id).toBe("D2AEC004");
   });
 });
 
-describe("emitAuthErrorCodes — snapshot pin", () => {
+describe("emitErrorCodesCatalog (auth) — snapshot pin", () => {
   it("emits sorted constants + http-status switch", () => {
-    const r = emitAuthErrorCodes(validSpec);
+    const r = emitErrorCodesCatalog(validSpec, AUTH_CONFIG);
     expect(r.diagnostics).toEqual([]);
     expect(r.source).toContain('AUTH_BEARER_MISSING: "AUTH_BEARER_MISSING"');
     expect(r.source).toContain(
@@ -88,10 +99,19 @@ describe("emitAuthErrorCodes — snapshot pin", () => {
     ).toBe(true);
   });
 
+  it("emits NO per-code JSDoc on the auth constants (unlike generic)", () => {
+    const r = emitErrorCodesCatalog(validSpec, AUTH_CONFIG);
+    const constBlockStart = r.source.indexOf("export const AuthErrorCodes = {");
+    const constBlockEnd = r.source.indexOf("} as const;", constBlockStart);
+    const constBlock = r.source.slice(constBlockStart, constBlockEnd);
+    expect(constBlock).not.toContain("/**");
+  });
+
   it("blocks emit on validation diagnostics", () => {
-    const r = emitAuthErrorCodes({
-      errorCodes: [{ ...validSpec.errorCodes[0]!, httpStatus: 999 }],
-    });
+    const r = emitErrorCodesCatalog(
+      { errorCodes: [{ ...validSpec.errorCodes[0]!, httpStatus: 999 }] },
+      AUTH_CONFIG,
+    );
     expect(r.source).toBe("");
     expect(r.diagnostics).not.toEqual([]);
   });

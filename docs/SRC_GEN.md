@@ -113,29 +113,31 @@ Three load-bearing properties of this wiring:
 Each source-gen owns a `D2<TOPIC>NNN` diagnostic ID prefix (3-5 char topic
 abbreviation, 3-digit number). Examples currently in use:
 
-| Topic                | Prefix   | Owning source-gen                            |
-| -------------------- | -------- | -------------------------------------------- |
-| i18n                 | `D2I18N` | `i18n/source-gen`                            |
-| Auth scopes          | `D2SCP`  | `auth/scopes-source-gen`                     |
-| Auth audiences       | `D2AUD`  | `auth/audiences-source-gen`                  |
-| Auth error codes     | `D2AEC`  | `auth/error-codes-source-gen`                |
-| Generic error codes  | `D2EC`   | `source-gen-shared/error-codes-source-gen`   |
-| D2Result envelope    | `D2RES`  | `result/envelope-source-gen`                 |
-| Headers              | `D2HDR`  | `headers/source-gen`                         |
-| JWT claims           | `D2JWT`  | `auth/jwt-claims-source-gen`                 |
-| Messaging registry   | `D2MQ`   | `messaging/source-gen`                       |
-| DLQ failure metadata | `D2DLQ`  | `messaging/dlq-failure-metadata-source-gen`  |
-| OTel messaging tags  | `D2OTM`  | `messaging/otel-messaging-tags-source-gen`   |
-| Telemetry tags       | `D2TT`   | `telemetry/tags-source-gen`                  |
-| Encryption domains   | `D2ENCD` | `encryption/domains-source-gen`              |
-| Encryption frame     | `D2ENCF` | `encryption/frame-source-gen`                |
-| ProblemDetails       | `D2PD`   | `problem-details/source-gen`                 |
-| Wire shapes          | `D2WS`   | `source-gen-shared/wire-shapes-source-gen`   |
-| Context              | `D2CTX`  | `context/source-gen`                         |
-| gRPC trailers        | `D2GT`   | `result/grpc-trailers-source-gen`            |
-| In-process keys      | `D2IPK`  | `encryption/in-process-keys-source-gen`      |
-| Geo catalogs         | `D2GEO`  | `geo/source-gen`                             |
-| Field constraints    | `D2FC`   | `validation/source-gen`                      |
+| Topic                | Prefix   | Owning source-gen                                                      |
+| -------------------- | -------- | ---------------------------------------------------------------------- |
+| i18n                 | `D2I18N` | `i18n/source-gen`                                                      |
+| Auth scopes          | `D2SCP`  | `auth/scopes-source-gen`                                               |
+| Auth audiences       | `D2AUD`  | `auth/audiences-source-gen`                                            |
+| Auth error codes     | `D2AEC`  | `auth/error-codes-source-gen` (shell)                                  |
+| Generic error codes  | `D2EC`   | `source-gen-shared/error-codes-source-gen` (shell)                     |
+| Error-codes engine   | `D2ERC`  | `source-gen-shared/error-codes-emit` (shared engine — catalog-neutral; `D2ERC006`/`D2ERC007` owned by `error-codes/registry-source-gen`) |
+| Error category       | `D2ECAT` | `error-codes/category-source-gen`                                      |
+| D2Result envelope    | `D2RES`  | `result/envelope-source-gen`                                           |
+| Headers              | `D2HDR`  | `headers/source-gen`                                                   |
+| JWT claims           | `D2JWT`  | `auth/jwt-claims-source-gen`                                           |
+| Messaging registry   | `D2MQ`   | `messaging/source-gen`                                                 |
+| DLQ failure metadata | `D2DLQ`  | `messaging/dlq-failure-metadata-source-gen`                            |
+| OTel messaging tags  | `D2OTM`  | `messaging/otel-messaging-tags-source-gen`                             |
+| Telemetry tags       | `D2TT`   | `telemetry/tags-source-gen`                                            |
+| Encryption domains   | `D2ENCD` | `encryption/domains-source-gen`                                        |
+| Encryption frame     | `D2ENCF` | `encryption/frame-source-gen`                                          |
+| ProblemDetails       | `D2PD`   | `problem-details/source-gen`                                           |
+| Wire shapes          | `D2WS`   | `source-gen-shared/wire-shapes-source-gen`                             |
+| Context              | `D2CTX`  | `context/source-gen`                                                   |
+| gRPC trailers        | `D2GT`   | `result/grpc-trailers-source-gen`                                      |
+| In-process keys      | `D2IPK`  | `encryption/in-process-keys-source-gen`                                |
+| Geo catalogs         | `D2GEO`  | `geo/source-gen`                                                       |
+| Field constraints    | `D2FC`   | `validation/source-gen`                                                |
 
 Diagnostic IDs are declared in two parallel files:
 
@@ -307,14 +309,14 @@ tools/ts-codegen/
 ├── src/
 │   ├── orchestrator.ts             ← entry point; runs every emitter in dep order
 │   ├── auth-context-emit.ts
-│   ├── auth-error-codes-emit.ts
-│   ├── auth-failures-emit.ts
 │   ├── auth-scopes-emit.ts
 │   ├── d2result-envelope-emit.ts
 │   ├── dlq-failure-metadata-emit.ts
 │   ├── encryption-domains-emit.ts
 │   ├── encryption-frame-emit.ts
-│   ├── error-codes-emit.ts
+│   ├── error-category-emit.ts       ← emits @d2/error-category (ErrorCategory union + ErrorCategoryWire + ALL_ERROR_CATEGORIES)
+│   ├── error-codes-emit.ts          ← unified error-code engine (generic + auth catalogs + AuthFailures + base factories)
+│   ├── error-codes-registry-emit.ts ← emits @d2/error-codes-registry (merged code → ErrorCodeInfo registry)
 │   ├── grpc-trailers-emit.ts
 │   ├── headers-emit.ts
 │   ├── jwt-claims-emit.ts
@@ -327,6 +329,7 @@ tools/ts-codegen/
 │       ├── diagnostics.ts          ← shared diagnostic shape + formatter
 │       ├── spec-loader.ts          ← JSON parse + diagnostic on failure
 │       ├── file-emit.ts            ← atomic write + byte-equal short-circuit
+│       ├── tk-key-transform.ts     ← inverse KeyDecomposer (TK symbol → snake key + TS const path)
 │       └── paths.ts                ← repo-root helpers
 └── tests/
 ```
@@ -434,20 +437,24 @@ from one spec.
 ```json
 // contracts/auth-error-codes/auth-error-codes.spec.json
 {
-  "codes": [
+  "errorCodes": [
     {
-      "constant": "AUTH_TOKEN_INVALID",
+      "code": "AUTH_BEARER_MISSING",
       "httpStatus": 401,
-      "factoryName": "JwtInvalidToken",
-      "userMessageKey": "auth_errors_TOKEN_INVALID",
-      "category": "JWT"
+      "category": "validation_failure",
+      "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
+      "factoryName": "BearerMissing",
+      "factoryShape": "with_error_code",
+      "doc": "The Authorization header was missing on a protected endpoint."
     },
     {
-      "constant": "AUTH_SCOPE_INSUFFICIENT",
-      "httpStatus": 401,
-      "factoryName": "ScopeInsufficient",
-      "userMessageKey": "auth_errors_SCOPE_INSUFFICIENT",
-      "category": "Authorization"
+      "code": "AUTH_JWKS_UNAVAILABLE",
+      "httpStatus": 503,
+      "category": "infrastructure_unavailable",
+      "userMessageKey": "TK.Auth.Errors.TEMPORARILY_UNAVAILABLE",
+      "factoryName": "JwksUnavailable",
+      "factoryShape": "with_error_code",
+      "doc": "JWKS upstream is unavailable; no cached snapshot to fall back on."
     }
   ]
 }
@@ -455,22 +462,47 @@ from one spec.
 
 **2. Both halves emit from the same spec.**
 
-The .NET `auth/error-codes-source-gen` emits `AuthErrorCodes.g.cs` (constants
+The .NET `auth/error-codes-source-gen` shell drives the shared unified engine
+(`source-gen-shared/error-codes-emit`) to emit `AuthErrorCodes.g.cs`
+(constants + `AllCodes` set + `GetHttpStatus` switch + `KebabCase` helper) plus
+`AuthFailures.g.cs` + `AuthFailures.Generic.g.cs` (the delegating semantic
+`D2Result` / `D2Result<T>` factories, selected by `httpStatus` and shaped by
+`factoryShape`) into `server/shared/dotnet/auth/core/Generated/`. The SAME engine
+drives the generic catalog from its own shell — but in `FactoryHost.Base` mode:
+the generic factories CONSTRUCT a `D2Result` directly and land ONTO the
+`D2Result` / `D2Result<TData>` partials (plus the per-code booleans), rather
+than a separate `<Domain>Failures` class. One engine, per-catalog config; the
+`FactoryHost` axis selects construct-vs-delegate.
 
-- `AllCodes` set + `GetHttpStatus` switch + `KebabCase` helper) plus
-  `AuthFailures.g.cs` (semantic `D2Result` factories) into
-  `server/shared/dotnet/auth/Generated/`.
-
-The TypeScript `auth-error-codes-emit.ts` emits
-`@d2/auth-abstractions/src/generated/AuthErrorCodes.g.ts`. A sibling
-`auth-failures-emit.ts` emits `AuthFailures.g.ts` with factories returning
-`D2Result.fail(...)`.
+The TypeScript side mirrors this: the unified `error-codes-emit.ts` engine
+(one shared `emitErrorCodesCatalog` / `emitFailuresCatalog` /
+`emitBaseFactoriesCatalog` helper + per-catalog `CatalogConfig`) exports four
+runners — `runErrorCodesEmit` (generic `error-codes.g.ts` constants →
+`@d2/result`), `runErrorCodesFactoriesEmit` (generic base/constructing
+factories `factories.g.ts` → `@d2/result`), `runAuthErrorCodesEmit`
+(`auth-error-codes.g.ts` constants → `@d2/auth-abstractions`), and
+`runAuthFailuresEmit` (`auth-failures.g.ts` factories → `@d2/auth-abstractions`,
+base factory selected by `httpStatus`, branch by `factoryShape`). The TS base
+factories are standalone module FUNCTIONS (not class members — `D2Result<T = void>`
+is one class), each generic with a `void` default (`notFound<T = void>()`), so
+one function spans the untyped + typed cases; this is the TS equivalent of the
+.NET base factories on the `D2Result` / `D2Result<TData>` partials. The auth
+delegating factories carry the same `<T = void>` shape, so `AuthFailures.x()`
+yields `D2Result<void>` and `AuthFailures.x<User>()` yields `D2Result<User>` —
+the single-method equivalent of the .NET `AuthFailures` + `AuthFailures<T>`
+two-class split. The failure + base factories reference each `userMessageKey`
+as a `TK.*` constant from `@d2/i18n-keys` — each `TK.*` constant IS a `TKMessage`
+instance, so it is used directly with no `tk()` wrapper at the call site —
+never a key/path string literal, which would silently bypass the TK catalog and
+ride the wire un-renderable. Both runtimes' engines emit the same wire key (the
+snake en-US.json key) for any `userMessageKey`, guarded by the cross-runtime
+TK-validity render test.
 
 **3. Consumer references the constants identically across languages.**
 
 ```csharp
-// .NET — D2Result extension
-return D2Result.AuthFailures.JwtInvalidToken();
+// .NET — domain-failures class (D2.Shared.Auth.Errors namespace)
+return AuthFailures.JwtSignatureInvalid();
 ```
 
 ```typescript
@@ -499,15 +531,15 @@ the same seven spec files on both the .NET and TypeScript sides.
 
 Seven spec files under `contracts/geo/`:
 
-| Spec | Source |
-|---|---|
-| `countries.spec.json` | Pipeline-derived |
-| `subdivisions.spec.json` | Pipeline-derived |
-| `currencies.spec.json` | Pipeline-derived |
-| `languages.spec.json` | Pipeline-derived |
-| `locales.spec.json` | Pipeline-derived |
-| `timezones.spec.json` | Pipeline-derived |
-| `geopolitical-entities.spec.json` | Hand-rolled |
+| Spec                              | Source           |
+| --------------------------------- | ---------------- |
+| `countries.spec.json`             | Pipeline-derived |
+| `subdivisions.spec.json`          | Pipeline-derived |
+| `currencies.spec.json`            | Pipeline-derived |
+| `languages.spec.json`             | Pipeline-derived |
+| `locales.spec.json`               | Pipeline-derived |
+| `timezones.spec.json`             | Pipeline-derived |
+| `geopolitical-entities.spec.json` | Hand-rolled      |
 
 Each spec carries `{ catalogVersion, generatedAt, entries: [...] }`. The pipeline-derived specs are
 produced by the `contracts/geo/` build pipeline from canonical ISO source data + overlays.
@@ -517,35 +549,35 @@ produced by the `contracts/geo/` build pipeline from canonical ISO source data +
 `D2.Shared.Geo.SourceGen` (`server/shared/dotnet/geo/source-gen/`) inspects
 `compilation.AssemblyName` and dispatches per target:
 
-| Target assembly | What is emitted |
-|---|---|
-| `D2.Shared.Geo.Abstractions` | **TYPES** — record shapes (`Country.g.cs` / `Subdivision.g.cs` / etc.) + `*Code` enums + wrapper structs + `JsonConverter`s + `GeoCatalog.g.cs` constants |
-| `D2.Shared.Geo.Default` | **DATA** — per-catalog `*Lookup` static instances + `FrozenDictionary` lookup tables + nested static-class hierarchies (`Subdivisions.US.NY` / `Locales.en.US` / `Timezones.America.New_York`) + `GeoDataInitializer.g.cs` coordinator |
+| Target assembly              | What is emitted                                                                                                                                                                                                                        |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `D2.Shared.Geo.Abstractions` | **TYPES** — record shapes (`Country.g.cs` / `Subdivision.g.cs` / etc.) + `*Code` enums + wrapper structs + `JsonConverter`s + `GeoCatalog.g.cs` constants                                                                              |
+| `D2.Shared.Geo.Default`      | **DATA** — per-catalog `*Lookup` static instances + `FrozenDictionary` lookup tables + nested static-class hierarchies (`Subdivisions.US.NY` / `Locales.en.US` / `Timezones.America.New_York`) + `GeoDataInitializer.g.cs` coordinator |
 
 Internal emitters (one per concern):
 
-| Emitter | Output |
-|---|---|
-| `RecordShapeEmitter` | Seven record `.g.cs` files emitted into `geo/abstractions/Generated/` |
-| `GeoEnumsEmitter` | `*Code` enums + fixed-vocabulary enums (e.g. `WritingDirection`) |
-| `GeoWrapperStructEmitter` | `SubdivisionCode` / `LocaleCode` / `TimezoneCode` wrapper structs + lenient `TryParse` |
-| `GeoJsonConverterEmitter` | `System.Text.Json` `JsonConverter<T>` per catalog type |
-| `GeoCatalogEmitter` | `GeoCatalog` static class — `CatalogVersion` + `CatalogPublishedAt` (`DateTimeOffset`) |
-| `CountryDataEmitter` / `CurrencyDataEmitter` / `LanguageDataEmitter` / `SubdivisionDataEmitter` / `LocaleDataEmitter` / `TimezoneDataEmitter` / `GeopoliticalEntityDataEmitter` | Per-entity static data files emitted into `geo/default/Generated/` |
-| `GeoDataInitializerEmitter` | `GeoDataInitializer.g.cs` — `[ModuleInitializer]`-driven second-pass FK-nav wiring coordinator |
+| Emitter                                                                                                                                                                         | Output                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `RecordShapeEmitter`                                                                                                                                                            | Seven record `.g.cs` files emitted into `geo/abstractions/Generated/`                          |
+| `GeoEnumsEmitter`                                                                                                                                                               | `*Code` enums + fixed-vocabulary enums (e.g. `WritingDirection`)                               |
+| `GeoWrapperStructEmitter`                                                                                                                                                       | `SubdivisionCode` / `LocaleCode` / `TimezoneCode` wrapper structs + lenient `TryParse`         |
+| `GeoJsonConverterEmitter`                                                                                                                                                       | `System.Text.Json` `JsonConverter<T>` per catalog type                                         |
+| `GeoCatalogEmitter`                                                                                                                                                             | `GeoCatalog` static class — `CatalogVersion` + `CatalogPublishedAt` (`DateTimeOffset`)         |
+| `CountryDataEmitter` / `CurrencyDataEmitter` / `LanguageDataEmitter` / `SubdivisionDataEmitter` / `LocaleDataEmitter` / `TimezoneDataEmitter` / `GeopoliticalEntityDataEmitter` | Per-entity static data files emitted into `geo/default/Generated/`                             |
+| `GeoDataInitializerEmitter`                                                                                                                                                     | `GeoDataInitializer.g.cs` — `[ModuleInitializer]`-driven second-pass FK-nav wiring coordinator |
 
 ### Diagnostic IDs (`D2GEO`)
 
-| ID | Trigger |
-|---|---|
-| `D2GEO001` | Malformed JSON / parse failure of a spec file |
-| `D2GEO002` | FK code refers to entity not present in target catalog |
-| `D2GEO003` | FK detection ambiguity — field name unmatched by naming convention and no `fkTo` annotation |
-| `D2GEO004` | Geo code cannot form a valid C# identifier |
+| ID         | Trigger                                                                                            |
+| ---------- | -------------------------------------------------------------------------------------------------- |
+| `D2GEO001` | Malformed JSON / parse failure of a spec file                                                      |
+| `D2GEO002` | FK code refers to entity not present in target catalog                                             |
+| `D2GEO003` | FK detection ambiguity — field name unmatched by naming convention and no `fkTo` annotation        |
+| `D2GEO004` | Geo code cannot form a valid C# identifier                                                         |
 | `D2GEO005` | Vocabulary discipline violation — forbidden `region` / `state` / `province` at identifier position |
-| `D2GEO006` | Missing or invalid `catalogVersion` / `generatedAt` in a spec |
-| `D2GEO007` | Required spec file missing from `AdditionalFiles` |
-| `D2GEO009` | Structural-parity mismatch — spec field exists but no matching emitted record property |
+| `D2GEO006` | Missing or invalid `catalogVersion` / `generatedAt` in a spec                                      |
+| `D2GEO007` | Required spec file missing from `AdditionalFiles`                                                  |
+| `D2GEO009` | Structural-parity mismatch — spec field exists but no matching emitted record property             |
 
 (`D2GEO008` is reserved — not currently in use.)
 
@@ -553,24 +585,24 @@ Internal emitters (one per concern):
 
 The TS side mirrors the .NET emitter structure under `tools/ts-codegen/src/geo-emitter/`:
 
-| Emitter | Output package | Output artifact |
-|---|---|---|
-| `record-shape-emit.ts` | `@d2/geo-abstractions` | Seven record interface `.g.ts` files in `src/generated/` |
-| `enum-emit.ts` | `@d2/geo-abstractions` | `*Code` `as const` objects + branded types + Zod schemas |
-| `wrapper-code-emit.ts` | `@d2/geo-abstractions` | `SubdivisionCode` / `LocaleCode` / `TimezoneCode` branded types + Zod refinements + set helpers |
-| `geo-catalog-emit.ts` | `@d2/geo-abstractions` | `GeoCatalog` `as const` — `catalogVersion` + `catalogPublishedAt` |
-| `default/country-data-emit.ts` / `currency-data-emit.ts` / `language-data-emit.ts` / `subdivision-data-emit.ts` / `locale-data-emit.ts` / `timezone-data-emit.ts` / `geopolitical-entity-data-emit.ts` | `@d2/geo-default` | Per-entity catalog data files |
-| `default/geo-data-initializer-emit.ts` | `@d2/geo-default` | `geoDataInitializer.g.ts` — FK-nav wiring coordinator (module-init on first import) |
+| Emitter                                                                                                                                                                                                | Output package         | Output artifact                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- | ----------------------------------------------------------------------------------------------- |
+| `record-shape-emit.ts`                                                                                                                                                                                 | `@d2/geo-abstractions` | Seven record interface `.g.ts` files in `src/generated/`                                        |
+| `enum-emit.ts`                                                                                                                                                                                         | `@d2/geo-abstractions` | `*Code` `as const` objects + branded types + Zod schemas                                        |
+| `wrapper-code-emit.ts`                                                                                                                                                                                 | `@d2/geo-abstractions` | `SubdivisionCode` / `LocaleCode` / `TimezoneCode` branded types + Zod refinements + set helpers |
+| `geo-catalog-emit.ts`                                                                                                                                                                                  | `@d2/geo-abstractions` | `GeoCatalog` `as const` — `catalogVersion` + `catalogPublishedAt`                               |
+| `default/country-data-emit.ts` / `currency-data-emit.ts` / `language-data-emit.ts` / `subdivision-data-emit.ts` / `locale-data-emit.ts` / `timezone-data-emit.ts` / `geopolitical-entity-data-emit.ts` | `@d2/geo-default`      | Per-entity catalog data files                                                                   |
+| `default/geo-data-initializer-emit.ts`                                                                                                                                                                 | `@d2/geo-default`      | `geoDataInitializer.g.ts` — FK-nav wiring coordinator (module-init on first import)             |
 
 ### Cross-language parity
 
-| Parity test | What it pins |
-|---|---|
-| `geo-records.parity.test.ts` | Fixture from `GeoRecordsFixtureEmitter` — field names + FK structure of all seven record types |
-| `geo-enums.parity.test.ts` | Fixture from `GeoEnumsFixtureEmitter` — per-VALUE wire form for every enum member |
-| `geo-wrapper-structs.parity.test.ts` | Fixture from `GeoWrapperStructsFixtureEmitter` — known codes for the three wrapper struct types |
-| `geo-catalog.parity.test.ts` | Fixture from `GeoCatalogFixtureEmitter` — `CatalogVersion` + `CatalogPublishedAt` byte shape |
-| `geo-name-resolver.parity.test.ts` | `contracts/geo/fixtures/confusables.fixture.json` — name-resolver four-pass output across a shared confusables corpus |
+| Parity test                          | What it pins                                                                                                          |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| `geo-records.parity.test.ts`         | Fixture from `GeoRecordsFixtureEmitter` — field names + FK structure of all seven record types                        |
+| `geo-enums.parity.test.ts`           | Fixture from `GeoEnumsFixtureEmitter` — per-VALUE wire form for every enum member                                     |
+| `geo-wrapper-structs.parity.test.ts` | Fixture from `GeoWrapperStructsFixtureEmitter` — known codes for the three wrapper struct types                       |
+| `geo-catalog.parity.test.ts`         | Fixture from `GeoCatalogFixtureEmitter` — `CatalogVersion` + `CatalogPublishedAt` byte shape                          |
+| `geo-name-resolver.parity.test.ts`   | `contracts/geo/fixtures/confusables.fixture.json` — name-resolver four-pass output across a shared confusables corpus |
 
 ---
 
@@ -582,10 +614,10 @@ The field-constraints catalog is the shared source of truth for all field-length
 
 `contracts/validation/field-constraints.spec.json` — two arrays:
 
-| Array | Contains |
-|---|---|
+| Array         | Contains                                                                                                                                                                                    |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `constraints` | `{ name, value, doc }` entries for char-length caps (`FIRST_NAME_MAX`, `EMAIL_MAX`, `PHONE_E164_MAX`, `POSTAL_CODE_MAX`, …) and digit-count bounds (`PHONE_MIN_DIGITS`, `PHONE_MAX_DIGITS`) |
-| `enums` | `{ name, backing, doc, members[] }` entries for the three closed-list taxonomy enums (`NamePrefix`, `NameSuffix`, `BiologicalSex`); each member is `{ name, doc }` |
+| `enums`       | `{ name, backing, doc, members[] }` entries for the three closed-list taxonomy enums (`NamePrefix`, `NameSuffix`, `BiologicalSex`); each member is `{ name, doc }`                          |
 
 ### .NET emitter (`D2.Shared.Validation.SourceGen`)
 
@@ -593,33 +625,33 @@ The field-constraints catalog is the shared source of truth for all field-length
 
 Emits two files into `validation/abstractions/Generated/`:
 
-| Output file | Contents |
-|---|---|
-| `FieldConstraints.g.cs` | `public static class FieldConstraints` — one `public const int` per `constraints` entry |
-| `Taxonomy.g.cs` | Three `byte`-backed `enum` types with `[JsonConverter(typeof(JsonStringEnumConverter))]` — one per `enums` entry; member names are the wire values |
+| Output file             | Contents                                                                                                                                           |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FieldConstraints.g.cs` | `public static class FieldConstraints` — one `public const int` per `constraints` entry                                                            |
+| `Taxonomy.g.cs`         | Three `byte`-backed `enum` types with `[JsonConverter(typeof(JsonStringEnumConverter))]` — one per `enums` entry; member names are the wire values |
 
 ### TypeScript emitter
 
 `tools/ts-codegen/src/field-constraints-emit.ts` — mirrors the .NET pattern (mtime short-circuit, byte-equal atomic write, `--force` flag). Emits into `server/shared/typescript/validation/abstractions/src/generated/`:
 
-| Output file | Contents |
-|---|---|
-| `field-constraints.g.ts` | `export const FieldConstraints = { ... } as const` — one entry per `constraints` item |
-| `taxonomy.g.ts` | Three `as const` enum objects + branded types + Zod `z.enum([...])` schemas — one per `enums` item |
+| Output file              | Contents                                                                                           |
+| ------------------------ | -------------------------------------------------------------------------------------------------- |
+| `field-constraints.g.ts` | `export const FieldConstraints = { ... } as const` — one entry per `constraints` item              |
+| `taxonomy.g.ts`          | Three `as const` enum objects + branded types + Zod `z.enum([...])` schemas — one per `enums` item |
 
 ### Diagnostic IDs (`D2FC`)
 
-| ID | Trigger |
-|---|---|
-| `D2FC001` | Malformed JSON or schema violation |
-| `D2FC002` | Duplicate constraint name |
+| ID        | Trigger                                                     |
+| --------- | ----------------------------------------------------------- |
+| `D2FC001` | Malformed JSON or schema violation                          |
+| `D2FC002` | Duplicate constraint name                                   |
 | `D2FC003` | Constraint name is empty / whitespace / not SCREAMING_SNAKE |
-| `D2FC004` | Constraint value is not a positive integer |
-| `D2FC005` | Duplicate enum name |
-| `D2FC006` | Enum name is empty or not a valid PascalCase C# identifier |
-| `D2FC007` | Enum declares an empty members list |
-| `D2FC008` | Two members of the same enum share the same name |
-| `D2FC009` | Enum member name is empty or not a valid C# identifier |
+| `D2FC004` | Constraint value is not a positive integer                  |
+| `D2FC005` | Duplicate enum name                                         |
+| `D2FC006` | Enum name is empty or not a valid PascalCase C# identifier  |
+| `D2FC007` | Enum declares an empty members list                         |
+| `D2FC008` | Two members of the same enum share the same name            |
+| `D2FC009` | Enum member name is empty or not a valid C# identifier      |
 
 ### Consumers
 
@@ -644,6 +676,14 @@ When introducing a brand-new spec-driven catalog, follow this checklist:
      `D2SourceGenSharedRoot` property is defined in `server/Directory.Build.props`,
      so the include is nesting-agnostic) for the netstandard2.0 polyfills +
      cross-source-gen records (`SpecFile`, `LoadResult<TSpec>`, `EmitDiagnostic`).
+   - **Error-codes catalogs** add a second glob:
+     `<Compile Include="$(D2ErrorCodesEmitRoot)**\*.cs">` (also defined in
+     `server/Directory.Build.props`). This pulls in the shared
+     `source-gen-shared/error-codes-emit/` engine — entry model, loader,
+     `ConstantsEmitter`, `FailuresEmitter`, engine diagnostics (`D2ERC*`), and
+     `TkKeyTransform`. See the
+     [error-codes-emit README](../server/shared/dotnet/source-gen-shared/error-codes-emit/README.md)
+     for the full add-a-catalog recipe.
    - Allocates a `D2<TOPIC>NNN` diagnostic ID prefix (3-5 chars).
    - Loader (`<X>Loader.cs`) parses JSON → typed record; Emitter
      (`<X>Emitter.cs`) takes typed record → emit-result; Generator

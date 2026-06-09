@@ -11,6 +11,7 @@
     { "path": "../../auth/abstractions" },
     { "path": "../../auth/context-abstractions" },
     { "path": "../common" },
+    { "path": "../../problem-details-abstractions" },
     { "path": "../../request-context-abstractions" },
     { "path": "../../result" },
     { "path": "../../utilities" }

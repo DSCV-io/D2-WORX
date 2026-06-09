@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using D2.Shared.Auth.Errors;
+using D2.Shared.Result;
 using Xunit;
 
 /// <summary>
@@ -47,6 +48,62 @@ public sealed class AuthErrorCodesFixtureEmitter
 
         FixturePathHelpers.WriteFixture(_CATALOG, "http-statuses", data);
     }
+
+    [Fact]
+    [Trait("Category", "ContractFixtures")]
+    public void Emit_FactoryNames()
+    {
+        // code → camelCase factory name (the TS-emitted AuthFailures method
+        // key). The .NET AuthFailures methods are PascalCase (BearerMissing);
+        // the TS emitter lowercases the first char (bearerMissing). The TS
+        // parity test asserts each AuthFailures camelCase method matches.
+        var data = new SortedDictionary<string, object?>(StringComparer.Ordinal);
+        foreach (var (code, _, methodName) in EnumerateFailures())
+            data[code] = CamelCase(methodName);
+
+        FixturePathHelpers.WriteFixture(_CATALOG, "factory-names", data);
+    }
+
+    [Fact]
+    [Trait("Category", "ContractFixtures")]
+    public void Emit_UserMessageKeys()
+    {
+        // code → the ACTUAL wire TKMessage key the .NET AuthFailures factory
+        // stamps (the snake key, e.g. auth_errors_UNAUTHORIZED). This is the
+        // load-bearing parity fixture: the TS parity test asserts the TS
+        // factory's wire key EQUALS it — directly surfacing any symbol-vs-snake
+        // drift between the runtimes.
+        var data = new SortedDictionary<string, object?>(StringComparer.Ordinal);
+        foreach (var (code, result, _) in EnumerateFailures())
+            data[code] = result.Messages[0].Key;
+
+        FixturePathHelpers.WriteFixture(_CATALOG, "user-message-keys", data);
+    }
+
+    /// <summary>
+    /// Reflect every zero-parameter non-generic <see cref="AuthFailures"/>
+    /// factory method, invoke it, and yield the (code, result, methodName)
+    /// triple. The two 503 factories also expose a generic
+    /// <c>&lt;T&gt;</c> overload of the same name + arity — filtered out by the
+    /// non-generic predicate so each factory is yielded once.
+    /// </summary>
+    private static IEnumerable<(string Code, D2Result Result, string MethodName)> EnumerateFailures()
+    {
+        var methods = typeof(AuthFailures)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Where(m => !m.IsGenericMethodDefinition && m.GetParameters().Length == 0)
+            .OrderBy(m => m.Name, StringComparer.Ordinal);
+        foreach (var method in methods)
+        {
+            var result = (D2Result)method.Invoke(null, null)!;
+            yield return (result.ErrorCode!, result, method.Name);
+        }
+    }
+
+    private static string CamelCase(string pascal) =>
+        pascal.Length == 0
+            ? pascal
+            : char.ToLowerInvariant(pascal[0]) + pascal[1..];
 
     /// <summary>
     /// Reflect every <c>public const string</c> on the catalog type;

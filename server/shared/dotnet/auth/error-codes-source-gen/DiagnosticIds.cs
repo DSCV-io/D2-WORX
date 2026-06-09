@@ -7,12 +7,14 @@
 namespace D2.Shared.Auth.ErrorCodes.SourceGen;
 
 /// <summary>
-/// String identifiers for the diagnostics emitted by <see cref="ErrorCodesGenerator"/>.
-/// Kept in a separate class from <see cref="DiagnosticDescriptors"/> so
-/// non-Roslyn-host consumers (e.g. unit tests of the pure-logic
-/// <see cref="ErrorCodesEmitter"/> / <see cref="ErrorCodeSpecLoader"/>) can
-/// reference the IDs without dragging in <c>Microsoft.CodeAnalysis</c> (which
-/// the SrcGen csproj marks <c>PrivateAssets="all"</c>).
+/// String identifiers for the auth catalog's per-catalog validation
+/// diagnostics (<c>D2AEC*</c>). Kept in a separate class from
+/// <see cref="DiagnosticDescriptors"/> so non-Roslyn-host consumers (e.g.
+/// unit tests of the shared engine emitters) can reference the IDs without
+/// dragging in <c>Microsoft.CodeAnalysis</c> (which the SrcGen csproj marks
+/// <c>PrivateAssets="all"</c>). The shell maps these ids to descriptors and
+/// supplies them to the shared engine via its <c>CatalogConfig</c>; the
+/// catalog-neutral engine diagnostics (<c>D2ERC*</c>) live in the engine.
 /// </summary>
 internal static class DiagnosticIds
 {

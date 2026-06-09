@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------
 
 import type { CountryCode } from "@d2/geo-abstractions";
-import { TK } from "@d2/i18n/keys";
+import { TK } from "@d2/i18n-keys";
 import { describe, expect, it } from "vitest";
 
 import { DefaultPhoneValidator } from "../src/default-phone-validator.js";
@@ -18,7 +18,7 @@ describe("DefaultPhoneValidator — adversarial + property", () => {
     expect(result.errorCode).toBe("VALIDATION_FAILED");
     expect(result.inputErrors[0]?.field).toBe("phone");
     expect(result.inputErrors[0]?.errors[0]?.key).toBe(
-      TK.common.validation.PHONE_INVALID,
+      TK.common.validation.PHONE_INVALID.key,
     );
   });
 

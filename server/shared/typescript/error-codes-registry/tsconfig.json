@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules", "tests"],
+  "references": [
+    { "path": "../error-category" },
+    { "path": "../i18n-abstractions" },
+    { "path": "../i18n-keys" }
+  ]
+}

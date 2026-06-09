@@ -9,6 +9,7 @@ namespace D2.Shared.Auth.Http.ProblemDetails;
 using System.Diagnostics;
 using D2.Shared.Auth.Errors;
 using D2.Shared.Auth.Telemetry;
+using D2.Shared.ErrorCodes.Category;
 using D2.Shared.I18n;
 using D2.Shared.ProblemDetails;
 using D2.Shared.Result;
@@ -28,7 +29,7 @@ using MvcProblemDetails = Microsoft.AspNetCore.Mvc.ProblemDetails;
 /// switch) lives in <see cref="D2ProblemDetailsKeys"/> (codegen-emitted into
 /// <c>D2.Shared.ProblemDetails.Abstractions</c> from
 /// <c>contracts/problem-details/problem-details.spec.json</c>). The same spec
-/// drives the TS-side <c>@d2/headers</c> ProblemDetails catalog AND the path-B
+/// drives the TS-side <c>@d2/problem-details-abstractions</c> catalog (re-exported from <c>@d2/headers</c>) AND the path-B
 /// emitter (<c>D2ProblemDetailsCustomizer</c> in <c>D2.Shared.AspNetCore</c>),
 /// so the three emitters produce byte-identical Shape A bodies for identical
 /// inputs.
@@ -136,6 +137,15 @@ public static class D2ProblemDetailsExtensions
                 problem.Extensions[D2ProblemDetailsKeys.EXTENSION_INPUT_ERRORS] =
                     result.InputErrors;
             }
+
+            // Category: the closed-enum semantic class, emitted as its
+            // snake_case wire string so the HTTP body carries `category`
+            // exactly like the D2Result envelope + the gRPC envelope
+            // (cross-transport parity). Omitted when null — matching the
+            // omit-when-absent discipline of the inputErrors / traceId
+            // extensions.
+            if (result.Category is { } category)
+                problem.Extensions[D2ProblemDetailsKeys.EXTENSION_CATEGORY] = category.ToWire();
 
             var traceId = Activity.Current?.TraceId.ToString();
             if (traceId is not null)

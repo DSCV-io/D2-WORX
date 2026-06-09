@@ -21,6 +21,7 @@
     "@d2/auth-abstractions": "workspace:*",
     "@d2/auth-context-abstractions": "workspace:*",
     "@d2/headers-common": "workspace:*",
+    "@d2/problem-details-abstractions": "workspace:*",
     "@d2/request-context-abstractions": "workspace:*",
     "@d2/result": "workspace:*",
     "@d2/utilities": "workspace:*"

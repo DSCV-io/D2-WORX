@@ -138,6 +138,8 @@ export function emitTkKeys(catalog: MessageCatalog): EmitResult {
   sb.appendLine(buildHeader("contracts/messages/en-US.json"));
   sb.appendLine("/* eslint-disable */");
   sb.appendLine();
+  sb.appendLine('import { tk } from "@d2/i18n-abstractions";');
+  sb.appendLine();
   sb.appendLine("/**");
   sb.appendLine(
     " * Type-safe i18n key catalog. Mirrors the .NET `TK` class emitted by",
@@ -151,12 +153,14 @@ export function emitTkKeys(catalog: MessageCatalog): EmitResult {
   sb.appendLine(" * impossible.");
   sb.appendLine(" *");
   sb.appendLine(
-    " * Usage: `TK.common.errors.REQUEST_FAILED` resolves to the literal string",
+    " * Usage: `TK.common.errors.REQUEST_FAILED` is a `TKMessage` instance",
   );
   sb.appendLine(
-    ' * `"common_errors_REQUEST_FAILED"` which can be passed directly to `tk()`',
+    ' * (`{ key: "common_errors_REQUEST_FAILED" }`) ready to drop into',
   );
-  sb.appendLine(" * from `@d2/result`.");
+  sb.appendLine(
+    " * `D2Result.messages` — no `tk()` wrapper needed at the call site.",
+  );
   sb.appendLine(" */");
   sb.appendLine("export const TK = {");
   sb.increaseIndent();
@@ -180,7 +184,7 @@ export function emitTkKeys(catalog: MessageCatalog): EmitResult {
         const [constant, key] = constantEntries[ki]!;
         const isLastConstant = ki === constantEntries.length - 1;
         sb.appendLine(
-          `${constant}: "${escapeStringLiteral(key)}"${isLastConstant ? "" : ","}`,
+          `${constant}: tk("${escapeStringLiteral(key)}")${isLastConstant ? "" : ","}`,
         );
       }
 
@@ -196,8 +200,8 @@ export function emitTkKeys(catalog: MessageCatalog): EmitResult {
   sb.appendLine("} as const;");
   sb.appendLine();
   sb.appendLine(
-    "/** Convenience alias for a TK key string. Plain `string` — use `TK.*` constants" +
-      " for type-safe access. */",
+    "/** Convenience alias for a raw TK key string (e.g. `common_errors_NOT_FOUND`)." +
+      " The `TK.*` constants are `TKMessage` instances; read `.key` for the raw string. */",
   );
   sb.appendLine("export type TKKey = string;");
   sb.appendLine();
@@ -209,7 +213,12 @@ function escapeStringLiteral(value: string): string {
 }
 
 const SOURCE_PATH = contractsPath("messages", "en-US.json");
-const TARGET_PATH = tsPackagePath("i18n", "src", "generated", "tk-keys.g.ts");
+const TARGET_PATH = tsPackagePath(
+  "i18n-keys",
+  "src",
+  "generated",
+  "tk-keys.g.ts",
+);
 
 /**
  * Run the TK keys emitter. Per-source mtime check skips emit when the

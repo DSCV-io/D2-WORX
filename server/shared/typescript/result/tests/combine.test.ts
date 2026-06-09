@@ -5,8 +5,10 @@
 import { describe, expect, it } from "vitest";
 import { combine, combineMany } from "../src/combine.js";
 import { ErrorCodes } from "../src/error-codes.g.js";
-import { fail, notFound, ok, validationFailed } from "../src/factories.js";
+import { notFound, validationFailed, forbidden } from "../src/factories.g.js";
+import { fail, ok } from "../src/factories.js";
 import { HttpStatusCode } from "../src/http-status-codes.js";
+import { ErrorCategoryWire } from "@d2/error-category";
 
 describe("combine() — fixed-arity tuple form", () => {
   it("all-success → tuple of payloads", () => {
@@ -38,6 +40,34 @@ describe("combine() — fixed-arity tuple form", () => {
     const r = combine(ok(1), ok(2), ok(3), ok(4), ok(5));
     expect(r.success).toBe(true);
     expect(r.data).toEqual([1, 2, 3, 4, 5]);
+  });
+});
+
+describe("combine() / combineMany() — category always validation_failure", () => {
+  // .NET AggregateFailure always calls ValidationFailed(…) regardless of input categories.
+  // TS must match: any heterogeneous mix collapses to validation_failure.
+  it("combineMany([notFound(), forbidden()]) → category validation_failure", () => {
+    const r = combineMany([notFound(), forbidden()]);
+    expect(r.failed).toBe(true);
+    expect(r.category).toBe(ErrorCategoryWire.ValidationFailure);
+  });
+
+  it("combineMany([notFound()]) single not_found failure → category validation_failure", () => {
+    const r = combineMany([notFound()]);
+    expect(r.failed).toBe(true);
+    expect(r.category).toBe(ErrorCategoryWire.ValidationFailure);
+  });
+
+  it("combine(notFound(), forbidden()) fixed-arity → category validation_failure", () => {
+    const r = combine(notFound(), forbidden());
+    expect(r.failed).toBe(true);
+    expect(r.category).toBe(ErrorCategoryWire.ValidationFailure);
+  });
+
+  it("combineMany([validationFailed()]) → category still validation_failure", () => {
+    const r = combineMany([validationFailed()]);
+    expect(r.failed).toBe(true);
+    expect(r.category).toBe(ErrorCategoryWire.ValidationFailure);
   });
 });
 

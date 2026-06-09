@@ -144,6 +144,7 @@
   "common_errors_FORBIDDEN": "Zugriff verweigert.",
   "common_errors_FOREIGN_KEY_VIOLATION": "Ein referenziertes Element konnte nicht gefunden werden oder wird noch verwendet.",
   "common_errors_GEO_REF_UNAVAILABLE": "Geografische Referenzdaten sind vorübergehend nicht verfügbar. Bitte versuchen Sie es in Kürze erneut.",
+  "common_errors_IDEMPOTENCY_IN_FLIGHT": "Diese Anfrage wird bereits verarbeitet. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
   "common_errors_NOT_AUTHENTICATED": "Sie sind nicht angemeldet. Bitte melden Sie sich an und versuchen Sie es erneut.",
   "common_errors_NOT_FOUND": "Die angeforderte Ressource wurde nicht gefunden.",
   "common_errors_NOT_NULL_VIOLATION": "Ein erforderliches Feld fehlt.",
