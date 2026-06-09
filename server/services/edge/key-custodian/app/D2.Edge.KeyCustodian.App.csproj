@@ -8,7 +8,9 @@ Copyright (c) DCSV. All rights reserved.
 
   <!--
     Application layer (EF-as-DDD) — IKeyCustodianDbContext, the CQRS command
-    handlers (BaseRepoHandler, DbContext-direct delete+insert transitions) +
+    handlers (BaseRepoHandler: load the tracked KeyRecord, invoke the domain
+    transition on the rehydrated aggregate, ProjectOnto the Record, one
+    SaveChangesAsync — an ordinary UPDATE plus the audit INSERT) +
     query handlers (BaseHandler, AsNoTracking), JwksAssembler, RotationPlanner,
     the 3 IKeyGenerator strategies, IRootKeyProvider. References EF Core directly
     (EF-as-DDD: the DbContext interface lives here); Domain stays EF-free.

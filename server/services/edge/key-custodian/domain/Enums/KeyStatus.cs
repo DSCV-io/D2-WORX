@@ -7,15 +7,16 @@
 namespace D2.Edge.KeyCustodian.Domain.Enums;
 
 /// <summary>
-/// Derived lifecycle discriminator for an encryption key.
+/// Derived, state-machine-driven discriminator for an encryption key.
 /// Each value is the fixed, never-directly-settable status of a particular sealed
 /// state type in the <c>EncryptionKey</c> sum-type hierarchy.
 /// </summary>
 /// <remarks>
-/// This enum serves as the Step-3 EF TPH discriminator. It is always derived from
-/// the concrete sealed type (each sealed state overrides
-/// <c>EncryptionKey.Status</c> with a constant), so it is NEVER assigned directly
-/// from business logic — only from the type system.
+/// This enum is persisted as the flat <c>KeyRecord</c>'s <c>status</c> value
+/// column (not a TPH type discriminator). It is always derived from the concrete
+/// sealed type (each sealed state overrides <c>EncryptionKey.Status</c> with a
+/// constant), so it is NEVER assigned directly from business logic — only from the
+/// type system.
 /// </remarks>
 public enum KeyStatus
 {

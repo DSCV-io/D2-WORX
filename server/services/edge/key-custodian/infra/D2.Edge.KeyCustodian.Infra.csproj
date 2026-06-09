@@ -7,9 +7,10 @@ Copyright (c) DCSV. All rights reserved.
   </PropertyGroup>
 
   <!--
-    Infrastructure — KeyCustodianDbContext : IKeyCustodianDbContext + the
-    first-in-codebase EF Core TPH IEntityTypeConfiguration (strong-typed Kid
-    converter, HasDiscriminator(e => e.Status)…IsComplete(false), audit config) +
+    Infrastructure — KeyCustodianDbContext : IKeyCustodianDbContext + a flat
+    IEntityTypeConfiguration<KeyRecord> (strong-typed Kid value converter, a
+    settable Status value column, nullable per-state columns, an xmin
+    optimistic-concurrency token, audit config) +
     the first migration; FileRootKeyProvider (reads secrets/keycustodian/root.key);
     the rotation-event publisher; AdvisoryLockMigrator + KeyRotationService
     (IHostedService); KeyCustodianLog; AddD2KeyCustodian(...) DI (+
