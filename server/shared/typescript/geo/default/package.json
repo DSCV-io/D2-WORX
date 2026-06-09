@@ -59,6 +59,7 @@
   },
   "dependencies": {
     "@d2/geo-abstractions": "workspace:*",
+    "@d2/i18n-keys": "workspace:*",
     "@d2/request-context-abstractions": "workspace:*",
     "@d2/result": "workspace:*",
     "@d2/utilities": "workspace:*"
