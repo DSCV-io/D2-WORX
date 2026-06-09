@@ -79,7 +79,7 @@ public sealed class RequestLoggingMiddlewareTests
     {
         // Negative regression — pins the design decision that we do NOT log
         // any form of the connection-remote IP. Internal services see the
-        // upstream Edge IP (footgun); Edge sees PII (rules.md §3).
+        // upstream Edge IP (footgun); Edge sees PII (a PII-handling path).
         var (host, sink) = await LoggingTestHostBuilder.BuildAsync();
         using var hostScope = host;
         var client = host.GetTestClient();

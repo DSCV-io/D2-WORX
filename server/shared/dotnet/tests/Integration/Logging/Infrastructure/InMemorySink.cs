@@ -40,11 +40,10 @@ internal sealed class InMemorySink : ILogEventSink
     /// </summary>
     public void Reset()
     {
-#pragma warning disable IDE0058 // discard return for parity with ConcurrentBag.TryTake API
+        // Drain all pending events; TryTake return is consumed by the loop condition.
         while (_events.TryTake(out _))
         {
         }
-#pragma warning restore IDE0058
     }
 
     /// <summary>

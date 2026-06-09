@@ -140,10 +140,10 @@ internal static class RedactionFixtures
     /// </summary>
     internal sealed class MixedAccessClass
     {
-#pragma warning disable SA1306, IDE0044, CS0414, IDE0051
-        // Private field exists only to verify the policy SKIPS it.
-        private string _privateValue = "private";
-#pragma warning restore SA1306, IDE0044, CS0414, IDE0051
+#pragma warning disable CS0414, IDE0051
+        // Private readonly field exists only to verify the policy SKIPS private fields.
+        private readonly string _privateValue = "private";
+#pragma warning restore CS0414, IDE0051
 
         // Static + private members exist only to verify the policy SKIPS them.
         public static string StaticValue { get; set; } = "static";

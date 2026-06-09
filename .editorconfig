@@ -47,8 +47,8 @@ dotnet_diagnostic.IDE0001.severity = warning
 
 # IDE0065: project convention is `namespace` FIRST, then `using` directives.
 # For file-scoped namespaces, "inside_namespace" means usings come AFTER the
-# namespace declaration. Keep this in sync with CLAUDE.md §6 + the team-wide
-# rule about namespace/using ordering.
+# namespace declaration. This enforces the project convention that namespace
+# comes first, then using directives — never the other way around.
 csharp_using_directive_placement = inside_namespace
 
 # IDE0036 / R# "Modifiers Order": match StyleCop SA1206 ordering — access keyword
@@ -118,7 +118,7 @@ dotnet_diagnostic.SA1503.severity = none
 
 # SA1642: Constructor summary should begin with rigid "Initializes a new
 # instance of the X class." text. Project preference: ctor docs read as
-# natural prose explaining intent / behaviour / parameter semantics rather
+# natural prose explaining intent / behavior / parameter semantics rather
 # than echoing the boilerplate template.
 dotnet_diagnostic.SA1642.severity = none
 
@@ -153,7 +153,7 @@ resharper_unused_auto_property_accessor_global_highlighting = none
 resharper_arrange_modifiers_order_highlighting = none
 
 # ReSharper: Inconsistent naming — R#'s default rule wants PascalCase for non-private
-# constants ("NotFound"), but project convention per CLAUDE.md §6 is UPPER_CASE
+# constants ("NotFound"), but project convention is UPPER_CASE
 # ("NOT_FOUND"). The dotnet_naming_rule above ("public_constants_must_be_upper_case")
 # enforces UPPER_CASE at the Roslyn analyzer level (build-enforced); suppress R#'s
 # parallel inspection that uses its own naming rules.
