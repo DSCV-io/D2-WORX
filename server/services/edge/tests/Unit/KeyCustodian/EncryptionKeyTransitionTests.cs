@@ -8,8 +8,10 @@ namespace D2.Edge.Tests.Unit.KeyCustodian;
 
 using AwesomeAssertions;
 using D2.Edge.KeyCustodian.Domain.Enums;
+using D2.Edge.KeyCustodian.Domain.Errors;
 using D2.Edge.KeyCustodian.Domain.Keys;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
+using D2.Shared.ErrorCodes.Category;
 using D2.Shared.Time;
 using NodaTime;
 using Xunit;
@@ -89,7 +91,9 @@ public sealed class EncryptionKeyTransitionTests
         var result = pending.Activate(proof, sr_policy, clock);
 
         result.Success.Should().BeFalse();
-        result.Messages.Should().Contain(m => m.Key == "key_custodian_validation_SOAK_NOT_ELAPSED");
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_SOAK_NOT_ELAPSED);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
+        result.Messages.Should().Contain(m => m.Key == "keycustodian_validation_SOAK_NOT_ELAPSED");
     }
 
     [Fact]
@@ -123,7 +127,9 @@ public sealed class EncryptionKeyTransitionTests
         var result = pending.Activate(rsaProof, sr_policy, clock);
 
         result.Success.Should().BeFalse();
-        result.Messages.Should().Contain(m => m.Key == "key_custodian_validation_SMOKE_PROOF_TYPE_MISMATCH");
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
+        result.Messages.Should().Contain(m => m.Key == "keycustodian_validation_SMOKE_PROOF_TYPE_MISMATCH");
     }
 
     // -----------------------------------------------------------------------
@@ -144,7 +150,9 @@ public sealed class EncryptionKeyTransitionTests
 
         // Negative elapsed < soak → SOAK_NOT_ELAPSED (no underflow/throw)
         result.Success.Should().BeFalse();
-        result.Messages.Should().Contain(m => m.Key == "key_custodian_validation_SOAK_NOT_ELAPSED");
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_SOAK_NOT_ELAPSED);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
+        result.Messages.Should().Contain(m => m.Key == "keycustodian_validation_SOAK_NOT_ELAPSED");
     }
 
     [Fact]
@@ -159,6 +167,8 @@ public sealed class EncryptionKeyTransitionTests
         var result = pending.Activate(proof, sr_policy, clock);
 
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_SOAK_NOT_ELAPSED);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     // -----------------------------------------------------------------------
@@ -332,7 +342,9 @@ public sealed class EncryptionKeyTransitionTests
         var result = retiring.Retire(sr_policy, clock);
 
         result.Success.Should().BeFalse();
-        result.Messages.Should().Contain(m => m.Key == "key_custodian_validation_GRACE_NOT_ELAPSED");
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_GRACE_NOT_ELAPSED);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
+        result.Messages.Should().Contain(m => m.Key == "keycustodian_validation_GRACE_NOT_ELAPSED");
     }
 
     [Fact]
@@ -357,6 +369,8 @@ public sealed class EncryptionKeyTransitionTests
         var result = retiring.Retire(sr_policy, clock);
 
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_GRACE_NOT_ELAPSED);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     // -----------------------------------------------------------------------

@@ -7,11 +7,11 @@
 namespace D2.Edge.KeyCustodian.Domain.Keys;
 
 using D2.Edge.KeyCustodian.Domain.Enums;
+using D2.Edge.KeyCustodian.Domain.Errors;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
 using D2.Shared.Result;
 using NodaTime;
 using IClock = D2.Shared.Time.IClock;
-using TK = D2.Shared.I18n.TK;
 
 /// <summary>
 /// A managed encryption key that has been generated but not yet smoke-tested
@@ -92,10 +92,10 @@ public sealed record PendingKey : EncryptionKey
     /// <param name="clock">The current-time source. Must be non-null.</param>
     /// <returns>
     /// <c>Ok(<see cref="ActiveKey"/>)</c> when both guards pass;
-    /// <c>ValidationFailed([SOAK_NOT_ELAPSED])</c> when the soak window has not
-    /// yet elapsed;
-    /// <c>ValidationFailed([SMOKE_PROOF_TYPE_MISMATCH])</c> when the proof was
-    /// issued for a different key type.
+    /// <c>ValidationFailed</c> carrying <c>KEYCUSTODIAN_SOAK_NOT_ELAPSED</c> when
+    /// the soak window has not yet elapsed;
+    /// <c>ValidationFailed</c> carrying <c>KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH</c>
+    /// when the proof was issued for a different key type.
     /// </returns>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="proof"/>, <paramref name="policy"/>, or
@@ -111,16 +111,10 @@ public sealed record PendingKey : EncryptionKey
         var elapsed = now - CreatedAt;
 
         if (elapsed < policy.SmokeSoak)
-        {
-            return D2Result<ActiveKey>.ValidationFailed(
-                messages: [TK.Key.Custodian.VALIDATION_SOAK_NOT_ELAPSED]);
-        }
+            return KeyCustodianFailures<ActiveKey>.SoakNotElapsed();
 
         if (proof.VerifiedType != KeyType)
-        {
-            return D2Result<ActiveKey>.ValidationFailed(
-                messages: [TK.Key.Custodian.VALIDATION_SMOKE_PROOF_TYPE_MISMATCH]);
-        }
+            return KeyCustodianFailures<ActiveKey>.SmokeProofTypeMismatch();
 
         return D2Result<ActiveKey>.Ok(new ActiveKey
         {

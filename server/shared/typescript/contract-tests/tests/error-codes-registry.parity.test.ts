@@ -34,7 +34,7 @@ import { canonicalize, loadFixture } from "../src/index.js";
 //     TK.*.* constant path, so the snake forms must be byte-identical)
 //
 // ADVERSARIAL ASSERTIONS (registry-level):
-//   - Total count pinned at 29 (15 generic + 14 auth).
+//   - Total count pinned at 36 (15 generic + 14 auth + 7 keycustodian).
 //   - Code sets are identical: no code present in one runtime only.
 //   - No duplicate codes within either side.
 //   - Every category value is one of the 9 canonical wire strings.
@@ -44,7 +44,7 @@ import { canonicalize, loadFixture } from "../src/index.js";
 //   - Case sensitivity: lowercase code does NOT resolve.
 // ---------------------------------------------------------------------------
 
-const _EXPECTED_COUNT = 29;
+const _EXPECTED_COUNT = 36;
 
 const _VALID_CATEGORIES = new Set<string>([
   "validation_failure",
@@ -245,13 +245,15 @@ describe("error-codes-registry parity (.NET registry ↔ TS registry)", () => {
     });
 
     it("all common codes resolve with domain = 'common'", () => {
-      // Every code that is NOT AUTH_* must have domain === 'common'.
-      // The previous filter (`!includes("_") || startsWith("AUTH_")` then
-      // `!startsWith("AUTH_")`) reduced the set to only underscore-free codes
-      // (just CANCELED), covering 1 of 15 generic codes. Correct predicate:
-      // exclude only AUTH_* codes, then assert the remainder are all 'common'.
+      // Every code that is NOT a per-domain code (AUTH_* / KEYCUSTODIAN_*) must
+      // have domain === 'common'. Exclude the per-domain prefixes, then assert
+      // the remainder are all 'common'.
       const nonCommon = tsAll
-        .filter((e) => !e.code.startsWith("AUTH_"))
+        .filter(
+          (e) =>
+            !e.code.startsWith("AUTH_") &&
+            !e.code.startsWith("KEYCUSTODIAN_"),
+        )
         .filter((e) => e.domain !== "common")
         .map((e) => e.code);
       expect(nonCommon).toEqual([]);
@@ -261,6 +263,14 @@ describe("error-codes-registry parity (.NET registry ↔ TS registry)", () => {
       const wrongDomain = tsAll
         .filter((e) => e.code.startsWith("AUTH_"))
         .filter((e) => e.domain !== "auth")
+        .map((e) => e.code);
+      expect(wrongDomain).toEqual([]);
+    });
+
+    it("all KEYCUSTODIAN_* codes resolve with domain = 'keycustodian'", () => {
+      const wrongDomain = tsAll
+        .filter((e) => e.code.startsWith("KEYCUSTODIAN_"))
+        .filter((e) => e.domain !== "keycustodian")
         .map((e) => e.code);
       expect(wrongDomain).toEqual([]);
     });

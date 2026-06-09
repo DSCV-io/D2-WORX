@@ -6,10 +6,10 @@
 
 namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
 
+using D2.Edge.KeyCustodian.Domain.Errors;
 using D2.Shared.Encryption;
 using D2.Shared.Result;
 using D2.Shared.Utilities.Extensions;
-using TK = D2.Shared.I18n.TK;
 
 /// <summary>
 /// Strong-typed value object identifying which independently-rotated keyring
@@ -80,26 +80,20 @@ public sealed record KeyDomain
     /// <param name="value">Raw domain string (may be null or whitespace).</param>
     /// <returns>
     /// <c>Ok</c> with the normalized <see cref="KeyDomain"/> on success;
-    /// <c>ValidationFailed</c> with
-    /// <c>key_custodian_validation_UNKNOWN_KEY_DOMAIN</c> on failure.
+    /// <c>ValidationFailed</c> carrying
+    /// <c>KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN</c> on failure.
     /// </returns>
     public static D2Result<KeyDomain> Create(string? value)
     {
         var normalized = value.ToNullIfEmpty()?.ToLowerInvariant();
         if (normalized is null)
-        {
-            return D2Result<KeyDomain>.ValidationFailed(
-                messages: [TK.Key.Custodian.VALIDATION_UNKNOWN_KEY_DOMAIN]);
-        }
+            return KeyCustodianFailures<KeyDomain>.UnknownKeyDomain();
 
         var domain = All.FirstOrDefault(d =>
             string.Equals(d.Value, normalized, StringComparison.Ordinal));
 
         if (domain is null)
-        {
-            return D2Result<KeyDomain>.ValidationFailed(
-                messages: [TK.Key.Custodian.VALIDATION_UNKNOWN_KEY_DOMAIN]);
-        }
+            return KeyCustodianFailures<KeyDomain>.UnknownKeyDomain();
 
         return D2Result<KeyDomain>.Ok(domain);
     }

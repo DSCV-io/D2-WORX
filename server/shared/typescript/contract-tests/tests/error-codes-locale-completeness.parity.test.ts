@@ -62,7 +62,7 @@ const EXPECTED_LOCALE_COUNT = 10;
 // that the new catalog's keys are being exercised. If you added a new spec and
 // this assertion fires, just increment the number.
 // ---------------------------------------------------------------------------
-const EXPECTED_SPEC_COUNT = 2;
+const EXPECTED_SPEC_COUNT = 3;
 
 function findRepoRoot(startDir: string): string {
   let dir = startDir;

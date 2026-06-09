@@ -7,11 +7,11 @@
 namespace D2.Edge.KeyCustodian.Domain.Keys;
 
 using D2.Edge.KeyCustodian.Domain.Enums;
+using D2.Edge.KeyCustodian.Domain.Errors;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
 using D2.Shared.Result;
 using NodaTime;
 using IClock = D2.Shared.Time.IClock;
-using TK = D2.Shared.I18n.TK;
 
 /// <summary>
 /// A managed encryption key in the retirement overlap window. It continues to
@@ -50,7 +50,8 @@ public sealed record RetiringKey : EncryptionKey
     /// <param name="clock">The current-time source. Must be non-null.</param>
     /// <returns>
     /// <c>Ok(<see cref="RetiredKey"/>)</c> when the grace window has elapsed;
-    /// <c>ValidationFailed([GRACE_NOT_ELAPSED])</c> when the window is still open.
+    /// <c>ValidationFailed</c> carrying <c>KEYCUSTODIAN_GRACE_NOT_ELAPSED</c> when
+    /// the window is still open.
     /// </returns>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="policy"/> or <paramref name="clock"/> is
@@ -65,10 +66,7 @@ public sealed record RetiringKey : EncryptionKey
         var elapsed = now - RetiringAt;
 
         if (elapsed < policy.Grace)
-        {
-            return D2Result<RetiredKey>.ValidationFailed(
-                messages: [TK.Key.Custodian.VALIDATION_GRACE_NOT_ELAPSED]);
-        }
+            return KeyCustodianFailures<RetiredKey>.GraceNotElapsed();
 
         return D2Result<RetiredKey>.Ok(new RetiredKey
         {

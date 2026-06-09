@@ -6,9 +6,9 @@
 
 namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
 
+using D2.Edge.KeyCustodian.Domain.Errors;
 using D2.Shared.Result;
 using NodaTime;
-using TK = D2.Shared.I18n.TK;
 
 /// <summary>
 /// Immutable value object specifying the timing windows that govern a key's
@@ -44,24 +44,18 @@ public sealed record RotationPolicy
     /// <param name="smokeSoak">Pending-to-active soak window.</param>
     /// <returns>
     /// <c>Ok</c> with the constructed <see cref="RotationPolicy"/> on success;
-    /// <c>ValidationFailed</c> with
-    /// <c>key_custodian_validation_INVALID_ROTATION_POLICY</c> if any duration
-    /// is non-positive or if <paramref name="cadence"/> is shorter than
+    /// <c>ValidationFailed</c> carrying
+    /// <c>KEYCUSTODIAN_INVALID_ROTATION_POLICY</c> if any duration is
+    /// non-positive or if <paramref name="cadence"/> is shorter than
     /// <c>Grace + SmokeSoak</c>.
     /// </returns>
     public static D2Result<RotationPolicy> Create(Duration cadence, Duration grace, Duration smokeSoak)
     {
         if (cadence <= Duration.Zero || grace <= Duration.Zero || smokeSoak <= Duration.Zero)
-        {
-            return D2Result<RotationPolicy>.ValidationFailed(
-                messages: [TK.Key.Custodian.VALIDATION_INVALID_ROTATION_POLICY]);
-        }
+            return KeyCustodianFailures<RotationPolicy>.InvalidRotationPolicy();
 
         if (cadence < grace + smokeSoak)
-        {
-            return D2Result<RotationPolicy>.ValidationFailed(
-                messages: [TK.Key.Custodian.VALIDATION_INVALID_ROTATION_POLICY]);
-        }
+            return KeyCustodianFailures<RotationPolicy>.InvalidRotationPolicy();
 
         return D2Result<RotationPolicy>.Ok(new RotationPolicy
         {

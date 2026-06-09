@@ -55,11 +55,30 @@ Copyright (c) DCSV. All rights reserved.
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <!--
+      Microsoft.CodeAnalysis.CSharp — needed by the keycustodian-error-codes
+      SrcGen integration tests (Unit/KeyCustodian/SourceGen +
+      Unit/KeyCustodian/SpecsConsistency) which drive CSharpGeneratorDriver
+      against synthetic compilations + byte-compare the committed .g.cs. The
+      SrcGen csproj marks this PrivateAssets="all" so it doesn't propagate;
+      tests need an explicit reference.
+    -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\key-custodian\domain\D2.Edge.KeyCustodian.Domain.csproj" />
     <ProjectReference Include="..\key-custodian\app\D2.Edge.KeyCustodian.App.csproj" />
     <ProjectReference Include="..\key-custodian\infra\D2.Edge.KeyCustodian.Infra.csproj" />
+    <!--
+      The keycustodian-error-codes SrcGen referenced as a NORMAL library (not an
+      Analyzer) so the generator/diagnostic + byte-parity tests can drive
+      ErrorCodesGenerator + read ErrorCodesGenerator.Config directly. The Domain
+      consumes the SAME project as an Analyzer; here it is a plain reference for
+      test-time introspection. The unified engine namespace
+      (D2.Shared.ErrorCodes.SourceGen) is unique in this test assembly's closure
+      (only the KC shell is referenced) so there is no CS0433 ambiguity.
+    -->
+    <ProjectReference Include="..\key-custodian\error-codes-source-gen\D2.Edge.KeyCustodian.ErrorCodes.SourceGen.csproj" />
   </ItemGroup>
 </Project>

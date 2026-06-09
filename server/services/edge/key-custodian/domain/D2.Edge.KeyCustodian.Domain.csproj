@@ -4,7 +4,25 @@ Copyright (c) DCSV. All rights reserved.
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>D2.Edge.KeyCustodian.Domain</RootNamespace>
+    <!--
+      Emit the SrcGen-emitted KeyCustodianErrorCodes.g.cs + KeyCustodianFailures.g.cs
+      + KeyCustodianFailures.Generic.g.cs (driven by the keycustodian-error-codes
+      analyzer wired below) to <project-dir>/Generated/. The directory is tracked
+      in git so PR reviewers see codegen diffs without a local build.
+    -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111).
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
 
   <!--
     Pure domain — the sum-type EncryptionKey state machine (abstract base + sealed
@@ -41,6 +59,26 @@ Copyright (c) DCSV. All rights reserved.
       but listed explicitly because Domain uses Utilities guards directly.
     -->
     <ProjectReference Include="..\..\..\..\shared\dotnet\encryption\core\D2.Shared.Encryption.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Source generator driving the codegen-emitted KeyCustodianErrorCodes /
+      KeyCustodianFailures classes. The spec file is surfaced via AdditionalFiles
+      so the SrcGen can read it at codegen time; the analyzer single-targets on
+      D2.Edge.KeyCustodian.Domain.
+    -->
+    <ProjectReference Include="..\error-codes-source-gen\D2.Edge.KeyCustodian.ErrorCodes.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <AdditionalFiles Include="$(D2ContractsRoot)keycustodian-error-codes\keycustodian-error-codes.spec.json" />
+    <!--
+      en-US.json (the translation-key source of truth) surfaced so the
+      error-codes SrcGen can cross-check every userMessageKey resolves to a
+      real key (D2ERC002). The generator reduces it to just its key SET at
+      the pipeline boundary so a translation-VALUE edit does not re-run codegen.
+    -->
+    <AdditionalFiles Include="$(D2ContractsRoot)messages\en-US.json" />
   </ItemGroup>
 
   <ItemGroup>

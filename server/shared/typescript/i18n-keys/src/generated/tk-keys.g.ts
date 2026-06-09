@@ -342,13 +342,13 @@ export const TK = {
       STREET_LINE_TOO_LONG: tk("geo_validation_street_line_too_long")
     }
   },
-  key: {
-    custodian: {
-      VALIDATION_GRACE_NOT_ELAPSED: tk("key_custodian_validation_GRACE_NOT_ELAPSED"),
-      VALIDATION_INVALID_ROTATION_POLICY: tk("key_custodian_validation_INVALID_ROTATION_POLICY"),
-      VALIDATION_SMOKE_PROOF_TYPE_MISMATCH: tk("key_custodian_validation_SMOKE_PROOF_TYPE_MISMATCH"),
-      VALIDATION_SOAK_NOT_ELAPSED: tk("key_custodian_validation_SOAK_NOT_ELAPSED"),
-      VALIDATION_UNKNOWN_KEY_DOMAIN: tk("key_custodian_validation_UNKNOWN_KEY_DOMAIN")
+  keycustodian: {
+    validation: {
+      GRACE_NOT_ELAPSED: tk("keycustodian_validation_GRACE_NOT_ELAPSED"),
+      INVALID_ROTATION_POLICY: tk("keycustodian_validation_INVALID_ROTATION_POLICY"),
+      SMOKE_PROOF_TYPE_MISMATCH: tk("keycustodian_validation_SMOKE_PROOF_TYPE_MISMATCH"),
+      SOAK_NOT_ELAPSED: tk("keycustodian_validation_SOAK_NOT_ELAPSED"),
+      UNKNOWN_KEY_DOMAIN: tk("keycustodian_validation_UNKNOWN_KEY_DOMAIN")
     }
   },
   middleware: {

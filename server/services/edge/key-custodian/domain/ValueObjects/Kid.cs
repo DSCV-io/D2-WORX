@@ -7,9 +7,9 @@
 namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
 
 using System.Text.RegularExpressions;
+using D2.Edge.KeyCustodian.Domain.Errors;
 using D2.Shared.Result;
 using D2.Shared.Utilities.Extensions;
-using TK = D2.Shared.I18n.TK;
 
 /// <summary>
 /// Strong-typed key identifier used as the JWKS <c>kid</c> claim and the
@@ -46,20 +46,20 @@ public sealed partial record Kid
     /// <param name="value">Raw <c>kid</c> string (may be null or whitespace).</param>
     /// <returns>
     /// <c>Ok</c> with the validated <see cref="Kid"/> on success;
-    /// <c>ValidationFailed</c> carrying a <c>common_validation_ID_INVALID</c> or
-    /// <c>common_errors_TOO_LONG</c> message on failure.
+    /// <c>ValidationFailed</c> carrying <c>KEYCUSTODIAN_KID_INVALID</c> or
+    /// <c>KEYCUSTODIAN_KID_TOO_LONG</c> on failure.
     /// </returns>
     public static D2Result<Kid> Create(string? value)
     {
         var normalized = value.ToNullIfEmpty();
         if (normalized is null)
-            return D2Result<Kid>.ValidationFailed(messages: [TK.Common.Validation.ID_INVALID]);
+            return KeyCustodianFailures<Kid>.KidInvalid();
 
         if (normalized.Length > _KID_MAX)
-            return D2Result<Kid>.ValidationFailed(messages: [TK.Common.Errors.TOO_LONG]);
+            return KeyCustodianFailures<Kid>.KidTooLong();
 
         if (!sr_kidCharset.IsMatch(normalized))
-            return D2Result<Kid>.ValidationFailed(messages: [TK.Common.Validation.ID_INVALID]);
+            return KeyCustodianFailures<Kid>.KidInvalid();
 
         return D2Result<Kid>.Ok(new Kid { Value = normalized });
     }

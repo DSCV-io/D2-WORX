@@ -1273,35 +1273,35 @@ public static partial class TK
     }
 
     /// <summary>
-    /// Key translation keys.
+    /// Keycustodian translation keys.
     /// </summary>
-    public static partial class Key
+    public static partial class Keycustodian
     {
         /// <summary>
-        /// Custodian translation keys.
+        /// Validation translation keys.
         /// </summary>
-        public static partial class Custodian
+        public static partial class Validation
         {
             /// <summary>
-            /// Translation key <c>key_custodian_validation_GRACE_NOT_ELAPSED</c>.
+            /// Translation key <c>keycustodian_validation_GRACE_NOT_ELAPSED</c>.
             /// </summary>
-            public static readonly global::D2.Shared.I18n.TKMessage VALIDATION_GRACE_NOT_ELAPSED = new("key_custodian_validation_GRACE_NOT_ELAPSED");
+            public static readonly global::D2.Shared.I18n.TKMessage GRACE_NOT_ELAPSED = new("keycustodian_validation_GRACE_NOT_ELAPSED");
             /// <summary>
-            /// Translation key <c>key_custodian_validation_INVALID_ROTATION_POLICY</c>.
+            /// Translation key <c>keycustodian_validation_INVALID_ROTATION_POLICY</c>.
             /// </summary>
-            public static readonly global::D2.Shared.I18n.TKMessage VALIDATION_INVALID_ROTATION_POLICY = new("key_custodian_validation_INVALID_ROTATION_POLICY");
+            public static readonly global::D2.Shared.I18n.TKMessage INVALID_ROTATION_POLICY = new("keycustodian_validation_INVALID_ROTATION_POLICY");
             /// <summary>
-            /// Translation key <c>key_custodian_validation_SMOKE_PROOF_TYPE_MISMATCH</c>.
+            /// Translation key <c>keycustodian_validation_SMOKE_PROOF_TYPE_MISMATCH</c>.
             /// </summary>
-            public static readonly global::D2.Shared.I18n.TKMessage VALIDATION_SMOKE_PROOF_TYPE_MISMATCH = new("key_custodian_validation_SMOKE_PROOF_TYPE_MISMATCH");
+            public static readonly global::D2.Shared.I18n.TKMessage SMOKE_PROOF_TYPE_MISMATCH = new("keycustodian_validation_SMOKE_PROOF_TYPE_MISMATCH");
             /// <summary>
-            /// Translation key <c>key_custodian_validation_SOAK_NOT_ELAPSED</c>.
+            /// Translation key <c>keycustodian_validation_SOAK_NOT_ELAPSED</c>.
             /// </summary>
-            public static readonly global::D2.Shared.I18n.TKMessage VALIDATION_SOAK_NOT_ELAPSED = new("key_custodian_validation_SOAK_NOT_ELAPSED");
+            public static readonly global::D2.Shared.I18n.TKMessage SOAK_NOT_ELAPSED = new("keycustodian_validation_SOAK_NOT_ELAPSED");
             /// <summary>
-            /// Translation key <c>key_custodian_validation_UNKNOWN_KEY_DOMAIN</c>.
+            /// Translation key <c>keycustodian_validation_UNKNOWN_KEY_DOMAIN</c>.
             /// </summary>
-            public static readonly global::D2.Shared.I18n.TKMessage VALIDATION_UNKNOWN_KEY_DOMAIN = new("key_custodian_validation_UNKNOWN_KEY_DOMAIN");
+            public static readonly global::D2.Shared.I18n.TKMessage UNKNOWN_KEY_DOMAIN = new("keycustodian_validation_UNKNOWN_KEY_DOMAIN");
         }
     }
 

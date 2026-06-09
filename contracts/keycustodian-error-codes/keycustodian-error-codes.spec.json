@@ -1,0 +1,68 @@
+{
+  "$schema": "./schema.json",
+  "errorCodes": [
+    {
+      "code": "KEYCUSTODIAN_KID_INVALID",
+      "httpStatus": 400,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Common.Validation.ID_INVALID",
+      "factoryName": "KidInvalid",
+      "factoryShape": "with_error_code",
+      "doc": "The key identifier is null, empty, whitespace, or contains characters outside the JWKS-safe charset [A-Za-z0-9_-]."
+    },
+    {
+      "code": "KEYCUSTODIAN_KID_TOO_LONG",
+      "httpStatus": 400,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Common.Errors.TOO_LONG",
+      "factoryName": "KidTooLong",
+      "factoryShape": "with_error_code",
+      "doc": "The key identifier exceeds the maximum length of 64 characters."
+    },
+    {
+      "code": "KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN",
+      "httpStatus": 400,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Keycustodian.Validation.UNKNOWN_KEY_DOMAIN",
+      "factoryName": "UnknownKeyDomain",
+      "factoryShape": "with_error_code",
+      "doc": "The specified key domain is not a member of the recognized key-domain catalog."
+    },
+    {
+      "code": "KEYCUSTODIAN_INVALID_ROTATION_POLICY",
+      "httpStatus": 400,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Keycustodian.Validation.INVALID_ROTATION_POLICY",
+      "factoryName": "InvalidRotationPolicy",
+      "factoryShape": "with_error_code",
+      "doc": "A rotation-policy duration is non-positive, or the cadence is shorter than grace plus smoke-soak."
+    },
+    {
+      "code": "KEYCUSTODIAN_SOAK_NOT_ELAPSED",
+      "httpStatus": 400,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Keycustodian.Validation.SOAK_NOT_ELAPSED",
+      "factoryName": "SoakNotElapsed",
+      "factoryShape": "with_error_code",
+      "doc": "The smoke-soak window has not yet elapsed; the pending key may not be activated."
+    },
+    {
+      "code": "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH",
+      "httpStatus": 400,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Keycustodian.Validation.SMOKE_PROOF_TYPE_MISMATCH",
+      "factoryName": "SmokeProofTypeMismatch",
+      "factoryShape": "with_error_code",
+      "doc": "The supplied smoke proof was issued for a different key type than this key."
+    },
+    {
+      "code": "KEYCUSTODIAN_GRACE_NOT_ELAPSED",
+      "httpStatus": 400,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Keycustodian.Validation.GRACE_NOT_ELAPSED",
+      "factoryName": "GraceNotElapsed",
+      "factoryShape": "with_error_code",
+      "doc": "The retirement grace window has not yet elapsed; the retiring key may not be retired."
+    }
+  ]
+}

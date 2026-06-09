@@ -7,7 +7,9 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian;
 
 using AwesomeAssertions;
+using D2.Edge.KeyCustodian.Domain.Errors;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
+using D2.Shared.ErrorCodes.Category;
 using Xunit;
 
 /// <summary>
@@ -75,6 +77,8 @@ public sealed class KeyDomainTests
         // Explicit pin: "plaintext" is NOT a valid KC key domain.
         var result = KeyDomain.Create("plaintext");
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     // -----------------------------------------------------------------------
@@ -86,6 +90,8 @@ public sealed class KeyDomainTests
     {
         var result = KeyDomain.Create("unknown-domain");
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     // -----------------------------------------------------------------------
@@ -97,6 +103,8 @@ public sealed class KeyDomainTests
     {
         var result = KeyDomain.Create(null);
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     [Fact]
@@ -104,6 +112,8 @@ public sealed class KeyDomainTests
     {
         var result = KeyDomain.Create(string.Empty);
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     [Fact]
@@ -111,6 +121,8 @@ public sealed class KeyDomainTests
     {
         var result = KeyDomain.Create("   ");
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     // -----------------------------------------------------------------------

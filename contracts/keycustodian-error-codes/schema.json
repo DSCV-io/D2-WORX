@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "D2 keycustodian error codes spec",
+  "description": "Domain-specialized copy of contracts/error-codes/error-codes.canonical.schema.json, narrowed to the keycustodian catalog: the KEYCUSTODIAN_* code-prefix regex, the [400] httpStatus subset, and the single validation_failure category. Conforms to the canonical 7-field set (including factoryShape) but tightens the value constraints so editors catch a non-KEYCUSTODIAN_ code, a non-400 status, or a non-validation category at edit time. This is the source-of-truth catalog that D2.Edge.KeyCustodian.ErrorCodes.SourceGen reads to emit KeyCustodianErrorCodes.g.cs + KeyCustodianFailures.g.cs into D2.Edge.KeyCustodian.Domain. A drift-guard test asserts this copy stays field-aligned with the canonical schema.",
+  "type": "object",
+  "required": ["errorCodes"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "errorCodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/errorCode" }
+    }
+  },
+  "definitions": {
+    "errorCode": {
+      "type": "object",
+      "required": [
+        "code",
+        "httpStatus",
+        "category",
+        "userMessageKey",
+        "factoryName",
+        "factoryShape",
+        "doc"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^KEYCUSTODIAN_[A-Z][A-Z0-9_]*$",
+          "description": "Wire-format error code (SCREAMING_SNAKE, KEYCUSTODIAN_*-prefixed). Must be unique across the spec."
+        },
+        "httpStatus": {
+          "type": "integer",
+          "enum": [400],
+          "description": "HTTP status mapping. Drives both transport-side response shape AND gRPC StatusCode mapping at the transport binding (400 -> InvalidArgument). In the unified generator it selects the base D2Result delegation factory (400 -> ValidationFailed). Expanding the matrix requires updating the codegen mapping (D2KEC005 fires on unknown values)."
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "validation_failure"
+          ],
+          "description": "Closed semantic/telemetry classification. NOT the factory selector — httpStatus drives factory selection. Added to the wire (gRPC trailers + JSON envelope) so consumers can do generic class-based handling without importing the producer's catalog."
+        },
+        "userMessageKey": {
+          "type": "string",
+          "pattern": "^TK(\\.[A-Za-z][A-Za-z0-9]*){2}\\.[A-Z][A-Z0-9_]*$",
+          "description": "Translation key reference rendered as the messages argument on the emitted D2Result factory (e.g. TK.Keycustodian.Validation.SOAK_NOT_ELAPSED). The generator enforces existence by inverse-transforming the symbol path to the snake_case key (TK.Keycustodian.Validation.SOAK_NOT_ELAPSED -> keycustodian_validation_SOAK_NOT_ELAPSED) and asserting membership in contracts/messages/en-US.json (D2ERC002). Coarse on purpose - one key per status bucket so the user-facing surface does not leak which validation step failed."
+        },
+        "factoryName": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$",
+          "description": "PascalCase symbol for the emitted factory method (e.g. KidInvalid, SoakNotElapsed). Must be unique across the spec."
+        },
+        "factoryShape": {
+          "type": "string",
+          "enum": [
+            "standard",
+            "with_error_code",
+            "validation",
+            "none"
+          ],
+          "description": "Closed enum that drives the generated factory's signature variant — must cover every current D2Result factory variant so regeneration is byte-identical. standard: (messages?, traceId?). with_error_code: (messages?, errorCode?, traceId?) — used by ValidationFailed on the delegating per-domain path; the errorCode override is how domain factories stamp a specific code on a base status. validation: (messages?, inputErrors?, errorCode?, traceId?). none: no factory generated for this code. Every keycustodian entry is with_error_code (the delegating emitter implements with_error_code + none; a 400 with_error_code entry delegates to D2Result.ValidationFailed)."
+        },
+        "doc": {
+          "type": "string",
+          "minLength": 1,
+          "description": "XML <summary> text rendered on the emitted constant + factory."
+        }
+      }
+    }
+  }
+}

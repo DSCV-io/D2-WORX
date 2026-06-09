@@ -238,6 +238,9 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/services/edge/key-custodian/domain/">
     <Project Path="services/edge/key-custodian/domain/D2.Edge.KeyCustodian.Domain.csproj" />
   </Folder>
+  <Folder Name="/services/edge/key-custodian/error-codes-source-gen/">
+    <Project Path="services/edge/key-custodian/error-codes-source-gen/D2.Edge.KeyCustodian.ErrorCodes.SourceGen.csproj" />
+  </Folder>
   <Folder Name="/services/edge/key-custodian/app/">
     <Project Path="services/edge/key-custodian/app/D2.Edge.KeyCustodian.App.csproj" />
   </Folder>

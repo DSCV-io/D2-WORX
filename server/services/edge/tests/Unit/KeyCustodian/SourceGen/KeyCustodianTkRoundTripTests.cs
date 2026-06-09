@@ -1,0 +1,56 @@
+// -----------------------------------------------------------------------
+// <copyright file="KeyCustodianTkRoundTripTests.cs" company="DCSV">
+// Copyright (c) DCSV. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace D2.Edge.Tests.Unit.KeyCustodian.SourceGen;
+
+using AwesomeAssertions;
+using D2.Shared.ErrorCodes.SourceGen;
+using Xunit;
+
+/// <summary>
+/// Regression pin for the keycustodian TK-key rename
+/// (<c>key_custodian_validation_*</c> → <c>keycustodian_validation_*</c>). The
+/// two-word domain <c>key_custodian</c> decomposed non-bijectively (domain=Key,
+/// category=Custodian) so the inverse <see cref="TkKeyTransform.ToSnakeKey"/>
+/// would NOT round-trip — which would fail the engine's <c>D2ERC002</c>
+/// TK-existence cross-check on a spec referencing those keys. The one-word
+/// domain <c>keycustodian</c> round-trips bijectively; these assertions prove it
+/// for every renamed key.
+/// </summary>
+public sealed class KeyCustodianTkRoundTripTests
+{
+    [Theory]
+    [InlineData(
+        "TK.Keycustodian.Validation.UNKNOWN_KEY_DOMAIN",
+        "keycustodian_validation_UNKNOWN_KEY_DOMAIN")]
+    [InlineData(
+        "TK.Keycustodian.Validation.INVALID_ROTATION_POLICY",
+        "keycustodian_validation_INVALID_ROTATION_POLICY")]
+    [InlineData(
+        "TK.Keycustodian.Validation.SOAK_NOT_ELAPSED",
+        "keycustodian_validation_SOAK_NOT_ELAPSED")]
+    [InlineData(
+        "TK.Keycustodian.Validation.SMOKE_PROOF_TYPE_MISMATCH",
+        "keycustodian_validation_SMOKE_PROOF_TYPE_MISMATCH")]
+    [InlineData(
+        "TK.Keycustodian.Validation.GRACE_NOT_ELAPSED",
+        "keycustodian_validation_GRACE_NOT_ELAPSED")]
+    public void ToSnakeKey_KeyCustodianTkPath_RoundTripsToRenamedSnakeKey(
+        string tkPath, string expectedSnake)
+    {
+        TkKeyTransform.ToSnakeKey(tkPath).Should().Be(expectedSnake);
+    }
+
+    [Fact]
+    public void ToSnakeKey_OneWordDomain_LowercasesOnlyFirstChar()
+    {
+        // "Keycustodian" is a single PascalCase segment → only the leading 'K'
+        // lowercases; the rest is preserved verbatim. This is exactly why the
+        // one-word rename round-trips where the two-word "Key.Custodian" did not.
+        TkKeyTransform.ToSnakeKey("TK.Keycustodian.Validation.SOAK_NOT_ELAPSED")
+            .Should().Be("keycustodian_validation_SOAK_NOT_ELAPSED");
+    }
+}

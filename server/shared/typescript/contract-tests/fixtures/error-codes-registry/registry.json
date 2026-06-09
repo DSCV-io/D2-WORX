@@ -221,6 +221,83 @@
       "userMessageKeyPath": "TK.Common.Errors.IDEMPOTENCY_IN_FLIGHT",
       "userMessageKeySnake": "common_errors_IDEMPOTENCY_IN_FLIGHT"
     },
+    "KEYCUSTODIAN_GRACE_NOT_ELAPSED": {
+      "category": "validation_failure",
+      "code": "KEYCUSTODIAN_GRACE_NOT_ELAPSED",
+      "doc": "The retirement grace window has not yet elapsed; the retiring key may not be retired.",
+      "domain": "keycustodian",
+      "factoryName": "GraceNotElapsed",
+      "factoryShape": "with_error_code",
+      "httpStatus": 400,
+      "userMessageKeyPath": "TK.Keycustodian.Validation.GRACE_NOT_ELAPSED",
+      "userMessageKeySnake": "keycustodian_validation_GRACE_NOT_ELAPSED"
+    },
+    "KEYCUSTODIAN_INVALID_ROTATION_POLICY": {
+      "category": "validation_failure",
+      "code": "KEYCUSTODIAN_INVALID_ROTATION_POLICY",
+      "doc": "A rotation-policy duration is non-positive, or the cadence is shorter than grace plus smoke-soak.",
+      "domain": "keycustodian",
+      "factoryName": "InvalidRotationPolicy",
+      "factoryShape": "with_error_code",
+      "httpStatus": 400,
+      "userMessageKeyPath": "TK.Keycustodian.Validation.INVALID_ROTATION_POLICY",
+      "userMessageKeySnake": "keycustodian_validation_INVALID_ROTATION_POLICY"
+    },
+    "KEYCUSTODIAN_KID_INVALID": {
+      "category": "validation_failure",
+      "code": "KEYCUSTODIAN_KID_INVALID",
+      "doc": "The key identifier is null, empty, whitespace, or contains characters outside the JWKS-safe charset [A-Za-z0-9_-].",
+      "domain": "keycustodian",
+      "factoryName": "KidInvalid",
+      "factoryShape": "with_error_code",
+      "httpStatus": 400,
+      "userMessageKeyPath": "TK.Common.Validation.ID_INVALID",
+      "userMessageKeySnake": "common_validation_ID_INVALID"
+    },
+    "KEYCUSTODIAN_KID_TOO_LONG": {
+      "category": "validation_failure",
+      "code": "KEYCUSTODIAN_KID_TOO_LONG",
+      "doc": "The key identifier exceeds the maximum length of 64 characters.",
+      "domain": "keycustodian",
+      "factoryName": "KidTooLong",
+      "factoryShape": "with_error_code",
+      "httpStatus": 400,
+      "userMessageKeyPath": "TK.Common.Errors.TOO_LONG",
+      "userMessageKeySnake": "common_errors_TOO_LONG"
+    },
+    "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH": {
+      "category": "validation_failure",
+      "code": "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH",
+      "doc": "The supplied smoke proof was issued for a different key type than this key.",
+      "domain": "keycustodian",
+      "factoryName": "SmokeProofTypeMismatch",
+      "factoryShape": "with_error_code",
+      "httpStatus": 400,
+      "userMessageKeyPath": "TK.Keycustodian.Validation.SMOKE_PROOF_TYPE_MISMATCH",
+      "userMessageKeySnake": "keycustodian_validation_SMOKE_PROOF_TYPE_MISMATCH"
+    },
+    "KEYCUSTODIAN_SOAK_NOT_ELAPSED": {
+      "category": "validation_failure",
+      "code": "KEYCUSTODIAN_SOAK_NOT_ELAPSED",
+      "doc": "The smoke-soak window has not yet elapsed; the pending key may not be activated.",
+      "domain": "keycustodian",
+      "factoryName": "SoakNotElapsed",
+      "factoryShape": "with_error_code",
+      "httpStatus": 400,
+      "userMessageKeyPath": "TK.Keycustodian.Validation.SOAK_NOT_ELAPSED",
+      "userMessageKeySnake": "keycustodian_validation_SOAK_NOT_ELAPSED"
+    },
+    "KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN": {
+      "category": "validation_failure",
+      "code": "KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN",
+      "doc": "The specified key domain is not a member of the recognized key-domain catalog.",
+      "domain": "keycustodian",
+      "factoryName": "UnknownKeyDomain",
+      "factoryShape": "with_error_code",
+      "httpStatus": 400,
+      "userMessageKeyPath": "TK.Keycustodian.Validation.UNKNOWN_KEY_DOMAIN",
+      "userMessageKeySnake": "keycustodian_validation_UNKNOWN_KEY_DOMAIN"
+    },
     "NOT_FOUND": {
       "category": "not_found",
       "code": "NOT_FOUND",

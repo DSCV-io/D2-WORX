@@ -7,7 +7,9 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian;
 
 using AwesomeAssertions;
+using D2.Edge.KeyCustodian.Domain.Errors;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
+using D2.Shared.ErrorCodes.Category;
 using NodaTime;
 using Xunit;
 
@@ -56,6 +58,8 @@ public sealed class RotationPolicyTests
     {
         var result = RotationPolicy.Create(Duration.Zero, r_grace, r_soak);
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_ROTATION_POLICY);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     [Fact]
@@ -63,6 +67,8 @@ public sealed class RotationPolicyTests
     {
         var result = RotationPolicy.Create(r_cadence, Duration.Zero, r_soak);
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_ROTATION_POLICY);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     [Fact]
@@ -70,6 +76,8 @@ public sealed class RotationPolicyTests
     {
         var result = RotationPolicy.Create(r_cadence, r_grace, Duration.Zero);
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_ROTATION_POLICY);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     [Fact]
@@ -77,6 +85,8 @@ public sealed class RotationPolicyTests
     {
         var result = RotationPolicy.Create(Duration.FromSeconds(-1), r_grace, r_soak);
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_ROTATION_POLICY);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     [Fact]
@@ -84,6 +94,8 @@ public sealed class RotationPolicyTests
     {
         var result = RotationPolicy.Create(r_cadence, Duration.FromSeconds(-1), r_soak);
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_ROTATION_POLICY);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     [Fact]
@@ -91,6 +103,8 @@ public sealed class RotationPolicyTests
     {
         var result = RotationPolicy.Create(r_cadence, r_grace, Duration.FromSeconds(-1));
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_ROTATION_POLICY);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     // -----------------------------------------------------------------------
@@ -106,6 +120,8 @@ public sealed class RotationPolicyTests
 
         var result = RotationPolicy.Create(cadence, grace, soak);
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_ROTATION_POLICY);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     // -----------------------------------------------------------------------

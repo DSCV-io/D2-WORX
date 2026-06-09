@@ -7,7 +7,9 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian;
 
 using AwesomeAssertions;
+using D2.Edge.KeyCustodian.Domain.Errors;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
+using D2.Shared.ErrorCodes.Category;
 using Xunit;
 
 /// <summary>
@@ -51,6 +53,8 @@ public sealed class KidTests
     {
         var result = Kid.Create(null);
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_KID_INVALID);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     [Fact]
@@ -58,6 +62,8 @@ public sealed class KidTests
     {
         var result = Kid.Create(string.Empty);
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_KID_INVALID);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     [Fact]
@@ -65,6 +71,8 @@ public sealed class KidTests
     {
         var result = Kid.Create("   ");
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_KID_INVALID);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     // -----------------------------------------------------------------------
@@ -77,6 +85,8 @@ public sealed class KidTests
         var kid = new string('a', 65);
         var result = Kid.Create(kid);
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_KID_TOO_LONG);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     // -----------------------------------------------------------------------
@@ -94,6 +104,8 @@ public sealed class KidTests
     {
         var result = Kid.Create(value);
         result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_KID_INVALID);
+        result.Category.Should().Be(ErrorCategory.ValidationFailure);
     }
 
     // -----------------------------------------------------------------------
