@@ -34,13 +34,17 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH, "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH")]
     [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_GRACE_NOT_ELAPSED, "KEYCUSTODIAN_GRACE_NOT_ELAPSED")]
     [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_PRECONDITION_VIOLATED, "KEYCUSTODIAN_PRECONDITION_VIOLATED")]
+    [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_NOT_FOUND, "KEYCUSTODIAN_KEY_NOT_FOUND")]
+    [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_STATE_CONFLICT, "KEYCUSTODIAN_KEY_STATE_CONFLICT")]
+    [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS, "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS")]
+    [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_SMOKE_TEST_FAILED, "KEYCUSTODIAN_SMOKE_TEST_FAILED")]
     public void Constant_ValueEqualsWireLiteral(string constant, string expected_wire_literal)
     {
         constant.Should().Be(expected_wire_literal);
     }
 
     // -----------------------------------------------------------------------
-    // AllCodes membership (F2) — set equals the 7 spec codes in spec order
+    // AllCodes membership (F2) — set equals the 12 spec codes in spec order
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -56,6 +60,10 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
             "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH",
             "KEYCUSTODIAN_GRACE_NOT_ELAPSED",
             "KEYCUSTODIAN_PRECONDITION_VIOLATED",
+            "KEYCUSTODIAN_KEY_NOT_FOUND",
+            "KEYCUSTODIAN_KEY_STATE_CONFLICT",
+            "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS",
+            "KEYCUSTODIAN_SMOKE_TEST_FAILED",
         };
 
         KeyCustodianErrorCodes.AllCodes.Should().BeEquivalentTo(
@@ -64,9 +72,9 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     }
 
     [Fact]
-    public void AllCodes_CountIsEightCodes()
+    public void AllCodes_CountIsTwelveCodes()
     {
-        KeyCustodianErrorCodes.AllCodes.Should().HaveCount(8);
+        KeyCustodianErrorCodes.AllCodes.Should().HaveCount(12);
     }
 
     // -----------------------------------------------------------------------
@@ -80,6 +88,10 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     [InlineData("KEYCUSTODIAN_GRACE_NOT_ELAPSED", 400)]
     [InlineData("KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN", 400)]
     [InlineData("KEYCUSTODIAN_PRECONDITION_VIOLATED", 500)]
+    [InlineData("KEYCUSTODIAN_KEY_NOT_FOUND", 404)]
+    [InlineData("KEYCUSTODIAN_KEY_STATE_CONFLICT", 409)]
+    [InlineData("KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS", 409)]
+    [InlineData("KEYCUSTODIAN_SMOKE_TEST_FAILED", 500)]
     public void GetHttpStatus_KnownCode_ReturnsDeclaredStatus(string code, int expected_status)
     {
         KeyCustodianErrorCodes.GetHttpStatus(code).Should().Be(expected_status);
@@ -104,12 +116,31 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     public void GetHttpStatus_AllSpecCodes_ReturnDeclaredStatus()
     {
         // Regression pin: every code returns its declared status — the 400 input
-        // validation codes return 400, the 500 precondition-violation code returns
-        // 500. A generator regression that drops a code from the switch or maps it
-        // to the wrong status fails here.
+        // validation codes return 400, the 404 not-found code returns 404, the 409
+        // conflict codes return 409, and the 500 internal-error codes (precondition
+        // violation + smoke-test failure) return 500. A generator regression that
+        // drops a code from the switch or maps it to the wrong status fails here.
+        var expected_statuses = new Dictionary<string, int>(System.StringComparer.Ordinal)
+        {
+            ["KEYCUSTODIAN_KID_INVALID"] = 400,
+            ["KEYCUSTODIAN_KID_TOO_LONG"] = 400,
+            ["KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN"] = 400,
+            ["KEYCUSTODIAN_INVALID_ROTATION_POLICY"] = 400,
+            ["KEYCUSTODIAN_SOAK_NOT_ELAPSED"] = 400,
+            ["KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH"] = 400,
+            ["KEYCUSTODIAN_GRACE_NOT_ELAPSED"] = 400,
+            ["KEYCUSTODIAN_PRECONDITION_VIOLATED"] = 500,
+            ["KEYCUSTODIAN_KEY_NOT_FOUND"] = 404,
+            ["KEYCUSTODIAN_KEY_STATE_CONFLICT"] = 409,
+            ["KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS"] = 409,
+            ["KEYCUSTODIAN_SMOKE_TEST_FAILED"] = 500,
+        };
+
         foreach (var code in KeyCustodianErrorCodes.AllCodes)
         {
-            var expected = code == "KEYCUSTODIAN_PRECONDITION_VIOLATED" ? 500 : 400;
+            expected_statuses.Should().ContainKey(
+                code, because: $"the test's expected-status map must cover spec code {code}");
+            var expected = expected_statuses[code];
             KeyCustodianErrorCodes.GetHttpStatus(code)
                 .Should().Be(expected, because: $"spec code {code} declares status {expected}");
         }
@@ -187,6 +218,83 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_GRACE_NOT_ELAPSED);
         result.Category.Should().Be(ErrorCategory.ValidationFailure);
+    }
+
+    // -----------------------------------------------------------------------
+    // Lifecycle 404 / 409 + smoke-test 500 factories (non-generic + generic) —
+    // these delegate to the NotFound / Conflict / UnhandledException base
+    // factories per the spec's httpStatus, stamping the KC code + category.
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void KeyNotFound_NonGeneric_ReturnsNotFoundFailure()
+    {
+        var result = KeyCustodianFailures.KeyNotFound();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_NOT_FOUND);
+        result.Category.Should().Be(ErrorCategory.NotFound);
+        result.Messages.Should().Contain(m => m.Key == "keycustodian_lifecycle_KEY_NOT_FOUND");
+    }
+
+    [Fact]
+    public void KeyNotFound_Generic_ReturnsTypedNotFoundFailure()
+    {
+        var result = KeyCustodianFailures<int>.KeyNotFound();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_NOT_FOUND);
+        result.Category.Should().Be(ErrorCategory.NotFound);
+    }
+
+    [Fact]
+    public void KeyStateConflict_NonGeneric_ReturnsConflictFailure()
+    {
+        var result = KeyCustodianFailures.KeyStateConflict();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.Conflict);
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_STATE_CONFLICT);
+        result.Category.Should().Be(ErrorCategory.Conflict);
+        result.Messages.Should().Contain(m => m.Key == "keycustodian_lifecycle_KEY_STATE_CONFLICT");
+    }
+
+    [Fact]
+    public void PendingKeyAlreadyExists_NonGeneric_ReturnsConflictFailure()
+    {
+        var result = KeyCustodianFailures.PendingKeyAlreadyExists();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.Conflict);
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS);
+        result.Category.Should().Be(ErrorCategory.Conflict);
+        result.Messages.Should().Contain(
+            m => m.Key == "keycustodian_lifecycle_PENDING_KEY_ALREADY_EXISTS");
+    }
+
+    [Fact]
+    public void SmokeTestFailed_NonGeneric_ReturnsInternalErrorFailure()
+    {
+        var result = KeyCustodianFailures.SmokeTestFailed();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.InternalServerError);
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_SMOKE_TEST_FAILED);
+        result.Category.Should().Be(ErrorCategory.InternalError);
+        result.Messages.Should().Contain(m => m.Key == "keycustodian_internal_SMOKE_TEST_FAILED");
+    }
+
+    [Fact]
+    public void SmokeTestFailed_Generic_ReturnsTypedInternalErrorFailure()
+    {
+        var result = KeyCustodianFailures<int>.SmokeTestFailed();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.InternalServerError);
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_SMOKE_TEST_FAILED);
+        result.Category.Should().Be(ErrorCategory.InternalError);
     }
 
     // -----------------------------------------------------------------------

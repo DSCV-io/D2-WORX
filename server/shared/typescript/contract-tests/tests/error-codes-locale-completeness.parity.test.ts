@@ -211,6 +211,7 @@ describe("locale catalog: derived locale list is expected size", () => {
 // was added and its keys are now being exercised" acknowledgment. Bump it.
 // ---------------------------------------------------------------------------
 describe("error-code spec catalog: discovered spec count is expected size", () => {
+  // long test description — cannot wrap
   it(`contracts/ contains exactly ${EXPECTED_SPEC_COUNT} error-code spec(s) with userMessageKey entries`, () => {
     expect(discoveredSpecs.length).toBe(EXPECTED_SPEC_COUNT);
   });

@@ -9,7 +9,6 @@ namespace D2.Edge.KeyCustodian.Domain.Keys;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Edge.KeyCustodian.Domain.Errors;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
-using D2.Shared.I18n;
 using D2.Shared.Result;
 using D2.Shared.Utilities.Extensions;
 using NodaTime;
@@ -87,16 +86,10 @@ public abstract record EncryptionKey
     private protected static D2Result EnsureMaterialShape(KeyType type, PublicKeyMaterial? pub)
     {
         if (type == KeyType.RsaSigning && pub is null)
-        {
-            return KeyCustodianFailures.PreconditionViolated(
-                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "publicMaterial")]);
-        }
+            return KeyCustodianFailures.PreconditionViolated();
 
         if (type != KeyType.RsaSigning && pub is not null)
-        {
-            return KeyCustodianFailures.PreconditionViolated(
-                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "publicMaterial")]);
-        }
+            return KeyCustodianFailures.PreconditionViolated();
 
         return D2Result.Ok();
     }
@@ -118,10 +111,7 @@ public abstract record EncryptionKey
     private protected D2Result<CompromisedKey> ToCompromised(string reason, Instant at)
     {
         if (reason.Falsey())
-        {
-            return KeyCustodianFailures<CompromisedKey>.PreconditionViolated(
-                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "reason")]);
-        }
+            return KeyCustodianFailures<CompromisedKey>.PreconditionViolated();
 
         if (reason.Length > CompromisedKey.REASON_MAX)
             reason = reason[..CompromisedKey.REASON_MAX];

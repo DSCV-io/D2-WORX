@@ -20,7 +20,8 @@ import { truthyOrUndefined } from "@d2/utilities";
  * - `category` — proto string → `ErrorCategory` union; unknown/absent wire string → undefined
  *   (guard: never throws on a bad wire value).
  * - `messages` — `TKMessageProto[]` → `TKMessage[]` via `tk(key, params)`;
- *   `params: {[k:string]:string}` widened to `Record<string,unknown>` (safe — string ⊆ unknown).
+ *   `params: {[k:string]:string}` widened to `Record<string,unknown>`
+ *   (safe — string ⊆ unknown).
  * - `inputErrors` — `InputErrorProto[]` → `InputError[]` (field + TKMessage[]).
  * - `data` — threaded as-is from the caller's data selector.
  */

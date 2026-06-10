@@ -8,7 +8,6 @@ namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
 
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Edge.KeyCustodian.Domain.Errors;
-using D2.Shared.I18n;
 using D2.Shared.Result;
 using NodaTime;
 using IClock = D2.Shared.Time.IClock;
@@ -62,10 +61,7 @@ public sealed record SmokeProof
     public static D2Result<SmokeProof> ForPassedSmokeTest(KeyType verifiedType, IClock? clock)
     {
         if (clock is null)
-        {
-            return KeyCustodianFailures<SmokeProof>.PreconditionViolated(
-                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "clock")]);
-        }
+            return KeyCustodianFailures<SmokeProof>.PreconditionViolated();
 
         return D2Result<SmokeProof>.Ok(new SmokeProof
         {

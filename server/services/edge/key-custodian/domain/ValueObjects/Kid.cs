@@ -71,12 +71,13 @@ public sealed partial record Kid
     /// </summary>
     /// <param name="value">The stored <c>kid</c> string.</param>
     /// <returns>A <see cref="Kid"/> whose <see cref="Value"/> is set verbatim.</returns>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="value"/> is <see langword="null"/>.
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="value"/> is <see langword="null"/>, empty, or whitespace.
+    /// A corrupt DB row with an empty <c>kid</c> is a data-corruption error, not valid input.
     /// </exception>
     public static Kid FromTrusted(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        ArgumentException.ThrowIfNullOrWhiteSpace(value);
         return new() { Value = value };
     }
 

@@ -243,6 +243,28 @@
       "userMessageKeyPath": "TK.Keycustodian.Validation.INVALID_ROTATION_POLICY",
       "userMessageKeySnake": "keycustodian_validation_INVALID_ROTATION_POLICY"
     },
+    "KEYCUSTODIAN_KEY_NOT_FOUND": {
+      "category": "not_found",
+      "code": "KEYCUSTODIAN_KEY_NOT_FOUND",
+      "doc": "No managed key matching the supplied identifier (or the requested live key for a domain) exists in the store.",
+      "domain": "keycustodian",
+      "factoryName": "KeyNotFound",
+      "factoryShape": "standard",
+      "httpStatus": 404,
+      "userMessageKeyPath": "TK.Keycustodian.Lifecycle.KEY_NOT_FOUND",
+      "userMessageKeySnake": "keycustodian_lifecycle_KEY_NOT_FOUND"
+    },
+    "KEYCUSTODIAN_KEY_STATE_CONFLICT": {
+      "category": "conflict",
+      "code": "KEYCUSTODIAN_KEY_STATE_CONFLICT",
+      "doc": "The requested lifecycle operation is not legal for the key\u0027s current state (e.g. activating a key that is not pending, or retiring a key that is not retiring).",
+      "domain": "keycustodian",
+      "factoryName": "KeyStateConflict",
+      "factoryShape": "standard",
+      "httpStatus": 409,
+      "userMessageKeyPath": "TK.Keycustodian.Lifecycle.KEY_STATE_CONFLICT",
+      "userMessageKeySnake": "keycustodian_lifecycle_KEY_STATE_CONFLICT"
+    },
     "KEYCUSTODIAN_KID_INVALID": {
       "category": "validation_failure",
       "code": "KEYCUSTODIAN_KID_INVALID",
@@ -265,6 +287,17 @@
       "userMessageKeyPath": "TK.Common.Errors.TOO_LONG",
       "userMessageKeySnake": "common_errors_TOO_LONG"
     },
+    "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS": {
+      "category": "conflict",
+      "code": "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS",
+      "doc": "A live pending key already exists for the domain; a second pending key may not be generated until the existing one is activated or compromised.",
+      "domain": "keycustodian",
+      "factoryName": "PendingKeyAlreadyExists",
+      "factoryShape": "standard",
+      "httpStatus": 409,
+      "userMessageKeyPath": "TK.Keycustodian.Lifecycle.PENDING_KEY_ALREADY_EXISTS",
+      "userMessageKeySnake": "keycustodian_lifecycle_PENDING_KEY_ALREADY_EXISTS"
+    },
     "KEYCUSTODIAN_PRECONDITION_VIOLATED": {
       "category": "internal_error",
       "code": "KEYCUSTODIAN_PRECONDITION_VIOLATED",
@@ -286,6 +319,17 @@
       "httpStatus": 400,
       "userMessageKeyPath": "TK.Keycustodian.Validation.SMOKE_PROOF_TYPE_MISMATCH",
       "userMessageKeySnake": "keycustodian_validation_SMOKE_PROOF_TYPE_MISMATCH"
+    },
+    "KEYCUSTODIAN_SMOKE_TEST_FAILED": {
+      "category": "internal_error",
+      "code": "KEYCUSTODIAN_SMOKE_TEST_FAILED",
+      "doc": "The cryptographic smoke test for the key material did not pass; the key cannot be activated. Surfaced as a flagged internal-error result so the failed material never enters service.",
+      "domain": "keycustodian",
+      "factoryName": "SmokeTestFailed",
+      "factoryShape": "standard",
+      "httpStatus": 500,
+      "userMessageKeyPath": "TK.Keycustodian.Internal.SMOKE_TEST_FAILED",
+      "userMessageKeySnake": "keycustodian_internal_SMOKE_TEST_FAILED"
     },
     "KEYCUSTODIAN_SOAK_NOT_ELAPSED": {
       "category": "validation_failure",

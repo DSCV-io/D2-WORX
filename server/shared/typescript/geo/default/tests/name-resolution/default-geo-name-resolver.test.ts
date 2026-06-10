@@ -471,8 +471,12 @@ describe("DefaultGeoNameResolver", () => {
     it("TK constants match expected catalog keys (render-guard: key ≠ dot-path)", () => {
       expect(TK.common.errors.NOT_NULL_VIOLATION.key).toBe("common_errors_NOT_NULL_VIOLATION");
       expect(TK.common.errors.TOO_LONG.key).toBe("common_errors_TOO_LONG");
-      expect(TK.geo.errors.NAME_RESOLUTION_NOT_FOUND.key).toBe("geo_errors_name_resolution_not_found");
-      expect(TK.geo.errors.NAME_RESOLUTION_AMBIGUOUS.key).toBe("geo_errors_name_resolution_ambiguous");
+      expect(TK.geo.errors.NAME_RESOLUTION_NOT_FOUND.key).toBe(
+        "geo_errors_name_resolution_not_found",
+      );
+      expect(TK.geo.errors.NAME_RESOLUTION_AMBIGUOUS.key).toBe(
+        "geo_errors_name_resolution_ambiguous",
+      );
     });
   });
 });

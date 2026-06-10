@@ -412,6 +412,42 @@ public static class ErrorCodeRegistry
                 FactoryShape: "standard",
                 Doc: "A required argument supplied to a key-lifecycle transition was null, empty, or otherwise violated a documented precondition. This is a programmer/precondition error surfaced as a flagged 500 result (carrying telemetry) rather than a thrown exception.",
                 Domain: "keycustodian"),
+            ["KEYCUSTODIAN_KEY_NOT_FOUND"] = new ErrorCodeInfo(
+                Code: "KEYCUSTODIAN_KEY_NOT_FOUND",
+                HttpStatus: 404,
+                Category: ErrorCategory.NotFound,
+                UserMessageKey: TK.Keycustodian.Lifecycle.KEY_NOT_FOUND,
+                FactoryName: "KeyNotFound",
+                FactoryShape: "standard",
+                Doc: "No managed key matching the supplied identifier (or the requested live key for a domain) exists in the store.",
+                Domain: "keycustodian"),
+            ["KEYCUSTODIAN_KEY_STATE_CONFLICT"] = new ErrorCodeInfo(
+                Code: "KEYCUSTODIAN_KEY_STATE_CONFLICT",
+                HttpStatus: 409,
+                Category: ErrorCategory.Conflict,
+                UserMessageKey: TK.Keycustodian.Lifecycle.KEY_STATE_CONFLICT,
+                FactoryName: "KeyStateConflict",
+                FactoryShape: "standard",
+                Doc: "The requested lifecycle operation is not legal for the key's current state (e.g. activating a key that is not pending, or retiring a key that is not retiring).",
+                Domain: "keycustodian"),
+            ["KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS"] = new ErrorCodeInfo(
+                Code: "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS",
+                HttpStatus: 409,
+                Category: ErrorCategory.Conflict,
+                UserMessageKey: TK.Keycustodian.Lifecycle.PENDING_KEY_ALREADY_EXISTS,
+                FactoryName: "PendingKeyAlreadyExists",
+                FactoryShape: "standard",
+                Doc: "A live pending key already exists for the domain; a second pending key may not be generated until the existing one is activated or compromised.",
+                Domain: "keycustodian"),
+            ["KEYCUSTODIAN_SMOKE_TEST_FAILED"] = new ErrorCodeInfo(
+                Code: "KEYCUSTODIAN_SMOKE_TEST_FAILED",
+                HttpStatus: 500,
+                Category: ErrorCategory.InternalError,
+                UserMessageKey: TK.Keycustodian.Internal.SMOKE_TEST_FAILED,
+                FactoryName: "SmokeTestFailed",
+                FactoryShape: "standard",
+                Doc: "The cryptographic smoke test for the key material did not pass; the key cannot be activated. Surfaced as a flagged internal-error result so the failed material never enters service.",
+                Domain: "keycustodian"),
         }.ToFrozenDictionary(StringComparer.Ordinal);
 
     /// <summary>
@@ -458,6 +494,10 @@ public static class ErrorCodeRegistry
                 sr_lookup["KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH"],
                 sr_lookup["KEYCUSTODIAN_GRACE_NOT_ELAPSED"],
                 sr_lookup["KEYCUSTODIAN_PRECONDITION_VIOLATED"],
+                sr_lookup["KEYCUSTODIAN_KEY_NOT_FOUND"],
+                sr_lookup["KEYCUSTODIAN_KEY_STATE_CONFLICT"],
+                sr_lookup["KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS"],
+                sr_lookup["KEYCUSTODIAN_SMOKE_TEST_FAILED"],
             ]);
 
     /// <summary>

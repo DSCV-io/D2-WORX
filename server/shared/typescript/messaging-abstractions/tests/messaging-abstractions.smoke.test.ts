@@ -33,6 +33,7 @@ const EXPECTED_CAUSES = [
 ] as const;
 
 describe("@d2/messaging-abstractions — DlqFailureMetadataFields", () => {
+  // long test description — cannot wrap
   it("ALL_DLQ_FAILURE_METADATA_FIELDS contains exactly the six spec-declared JSON property names", () => {
     expect([...ALL_DLQ_FAILURE_METADATA_FIELDS].sort()).toEqual(
       [...EXPECTED_METADATA_FIELDS].sort(),

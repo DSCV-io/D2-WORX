@@ -124,4 +124,52 @@ public static class KeyCustodianFailures
             category: ErrorCategory.InternalError);
     }
 
+    /// <summary>No managed key matching the supplied identifier (or the requested live key for a domain) exists in the store.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Lifecycle.KEY_NOT_FOUND]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
+    public static D2Result KeyNotFound(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Lifecycle.KEY_NOT_FOUND];
+        return D2Result.NotFound(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_NOT_FOUND,
+            category: ErrorCategory.NotFound);
+    }
+
+    /// <summary>The requested lifecycle operation is not legal for the key's current state (e.g. activating a key that is not pending, or retiring a key that is not retiring).</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Lifecycle.KEY_STATE_CONFLICT]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
+    public static D2Result KeyStateConflict(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Lifecycle.KEY_STATE_CONFLICT];
+        return D2Result.Conflict(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_STATE_CONFLICT,
+            category: ErrorCategory.Conflict);
+    }
+
+    /// <summary>A live pending key already exists for the domain; a second pending key may not be generated until the existing one is activated or compromised.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Lifecycle.PENDING_KEY_ALREADY_EXISTS]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
+    public static D2Result PendingKeyAlreadyExists(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Lifecycle.PENDING_KEY_ALREADY_EXISTS];
+        return D2Result.Conflict(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS,
+            category: ErrorCategory.Conflict);
+    }
+
+    /// <summary>The cryptographic smoke test for the key material did not pass; the key cannot be activated. Surfaced as a flagged internal-error result so the failed material never enters service.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Internal.SMOKE_TEST_FAILED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built <see cref="D2Result"/> failure.</returns>
+    public static D2Result SmokeTestFailed(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Internal.SMOKE_TEST_FAILED];
+        return D2Result.UnhandledException(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_SMOKE_TEST_FAILED,
+            category: ErrorCategory.InternalError);
+    }
+
 }

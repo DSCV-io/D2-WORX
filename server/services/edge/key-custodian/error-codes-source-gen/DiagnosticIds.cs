@@ -23,7 +23,8 @@ internal static class DiagnosticIds
 
     /// <summary>
     /// Entry's <c>category</c> is not one of the closed enum values
-    /// (<c>validation_failure</c>).
+    /// (<c>validation_failure</c>, <c>not_found</c>, <c>conflict</c>,
+    /// <c>internal_error</c>).
     /// </summary>
     public const string UnknownCategoryEnum = "D2KEC002";
 
@@ -34,8 +35,9 @@ internal static class DiagnosticIds
     public const string DuplicateFactoryName = "D2KEC004";
 
     /// <summary>
-    /// Entry's <c>httpStatus</c> is not in the supported set (<c>400</c>);
-    /// expanding the matrix requires updating the codegen mapping.
+    /// Entry's <c>httpStatus</c> is not in the supported set
+    /// (<c>400</c>, <c>404</c>, <c>409</c>, <c>500</c>); expanding the matrix
+    /// requires updating the codegen mapping.
     /// </summary>
     public const string InvalidHttpStatus = "D2KEC005";
 }

@@ -106,7 +106,7 @@ export async function handleGrpcCall<TResponse, TData>(
  * - `14 UNAVAILABLE` — service down / restart; retry
  *
  * Non-transient (not safe to retry without intervention):
- * - `1  CANCELLED` — caller cancelled
+ * - `1  CANCELLED` — caller canceled
  * - `3  INVALID_ARGUMENT` — bad request; fix the input
  * - `5  NOT_FOUND` — resource missing
  * - `7  PERMISSION_DENIED` — auth policy failure

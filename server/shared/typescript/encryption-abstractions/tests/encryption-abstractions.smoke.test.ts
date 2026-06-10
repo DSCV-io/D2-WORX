@@ -47,6 +47,7 @@ describe("@d2/encryption-abstractions — EncryptionDomains", () => {
     );
   });
 
+  // long test description — cannot wrap
   it("PLAINTEXT sentinel is present so callers can distinguish no-encryption from a real domain", () => {
     expect(EncryptionDomains.PLAINTEXT).toBe("plaintext");
     expect(ALL_ENCRYPTION_DOMAINS).toContain("plaintext");

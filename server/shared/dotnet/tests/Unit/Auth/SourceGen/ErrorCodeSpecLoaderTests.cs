@@ -47,7 +47,7 @@ public sealed class ErrorCodeSpecLoaderTests
 
         result.Diagnostic.Should().BeNull();
         result.Spec.Should().NotBeNull();
-        result.Spec!.ErrorCodes.Should().HaveCount(1);
+        result.Spec.ErrorCodes.Should().HaveCount(1);
         var entry = result.Spec.ErrorCodes[0];
         entry.Code.Should().Be("AUTH_TEST");
         entry.HttpStatus.Should().Be(401);
@@ -65,7 +65,7 @@ public sealed class ErrorCodeSpecLoaderTests
 
         result.Spec.Should().BeNull();
         result.Diagnostic.Should().NotBeNull();
-        result.Diagnostic!.DescriptorId.Should().Be(DiagnosticIds.MalformedSpec);
+        result.Diagnostic.DescriptorId.Should().Be(DiagnosticIds.MalformedSpec);
     }
 
     [Fact]

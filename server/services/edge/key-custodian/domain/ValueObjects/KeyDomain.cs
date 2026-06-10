@@ -106,12 +106,13 @@ public sealed record KeyDomain
     /// </summary>
     /// <param name="value">The stored domain string.</param>
     /// <returns>A <see cref="KeyDomain"/> whose <see cref="Value"/> is set verbatim.</returns>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="value"/> is <see langword="null"/>.
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="value"/> is <see langword="null"/>, empty, or whitespace.
+    /// A corrupt DB row with an empty key domain is a data-corruption error, not valid input.
     /// </exception>
     public static KeyDomain FromTrusted(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        ArgumentException.ThrowIfNullOrWhiteSpace(value);
         return new() { Value = value };
     }
 

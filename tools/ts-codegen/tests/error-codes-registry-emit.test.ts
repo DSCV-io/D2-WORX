@@ -132,6 +132,7 @@ describe("aggregateAndCheck — D2ERC004 cross-catalog duplicate code", () => {
     expect(diagnostics[0]?.message).toContain("D2ERC004");
   });
 
+  // long test description — cannot wrap
   it("fires D2ERC004 when the same generic code appears in the generic spec twice (via two catalog entries)", () => {
     // This models someone adding a duplicate in the same domain catalog list.
     const dupGenericCatalog1: CatalogEntry = {
@@ -224,6 +225,7 @@ describe("aggregateAndCheck — D2ERC005 reserved-namespace violation", () => {
     expect(diagnostics[0]?.message).toContain("D2ERC005");
   });
 
+  // long test description — cannot wrap
   it("fires D2ERC005 (a) when a per-domain spec declares a code without the required domain prefix", () => {
     const badAuthCatalog: CatalogEntry = {
       specPath: "contracts/auth-error-codes/auth-error-codes.spec.json",
@@ -385,6 +387,7 @@ describe("emitErrorCodeRegistry — source output", () => {
     expect(result.source).not.toBe("");
   });
 
+  // long test description — cannot wrap
   it("emits empty strings for optional fields (category, factoryName, factoryShape, doc) when undefined", () => {
     // Exercises the ?? "" fallback branches for optional ErrorCodeEntry fields.
     const catalogWithPartialEntry: CatalogEntry = {
@@ -632,6 +635,7 @@ describe("discoverCatalogs — malformed spec files fire D2ERC006 (not silently 
     }
   });
 
+  // long test description — cannot wrap
   it("skips a .spec.json file that is valid JSON but not an error-code spec (no errorCodes array)", () => {
     // Exercises the isErrorCodeSpec false branch for non-spec JSON files —
     // these are legitimately ignored (schema specs, fixture specs, etc.) and

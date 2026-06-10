@@ -148,6 +148,7 @@ describe("factory capability parity (.NET base factories ↔ TS base factories)"
 
     const fnName = camelCase(entry.factoryName);
 
+    // long test description — cannot wrap
     it(`${entry.code}: TS ${fnName}() stamps the spec code + status + snake wire key + category`, () => {
       const fn = genericFactories[fnName];
       expect(typeof fn).toBe("function");
@@ -167,6 +168,7 @@ describe("factory capability parity (.NET base factories ↔ TS base factories)"
   }
 });
 
+// long describe label — cannot wrap
 describe("auth domain-failure capability parity (.NET AuthFailures + AuthFailures<T> ↔ TS generic method)", () => {
   const authSpec = loadSpec(
     "contracts",
@@ -184,6 +186,7 @@ describe("auth domain-failure capability parity (.NET AuthFailures + AuthFailure
 
     const fnName = camelCase(entry.factoryName);
 
+    // long test description — cannot wrap
     it(`${entry.code}: untyped x() AND typed x<T>() both stamp the code + the same wire key`, () => {
       const fn = failures[fnName];
       expect(typeof fn).toBe("function");

@@ -6,6 +6,8 @@
 
 namespace D2.Edge.KeyCustodian.Domain.Keys;
 
+using System.Globalization;
+using System.Text;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Shared.Utilities.Attributes;
 using D2.Shared.Utilities.Enums;
@@ -57,4 +59,25 @@ public sealed record CompromisedKey : EncryptionKey
     /// </remarks>
     [RedactData(Reason = RedactReason.PersonalInformation)]
     public required string Reason { get; init; }
+
+    /// <inheritdoc/>
+    public override string ToString() =>
+        string.Create(
+            CultureInfo.InvariantCulture,
+            $"CompromisedKey {{ Kid = {Kid}, KeyDomain = {KeyDomain}, KeyType = {KeyType}, CompromisedAt = {CompromisedAt}, Reason = [REDACTED:PersonalInformation] }}");
+
+    /// <summary>
+    /// Overrides auto-generated <c>PrintMembers</c> to prevent the operator-supplied
+    /// compromise reason from appearing in record equality or debug output.
+    /// </summary>
+    /// <param name="builder">The builder the record <c>ToString</c> machinery appends member text to.</param>
+    /// <returns><see langword="true"/> — at least one member was appended.</returns>
+    protected override bool PrintMembers(StringBuilder builder)
+    {
+        builder.Append(
+            string.Create(
+                CultureInfo.InvariantCulture,
+                $"Kid = {Kid}, KeyDomain = {KeyDomain}, KeyType = {KeyType}, CompromisedAt = {CompromisedAt}, Reason = [REDACTED:PersonalInformation]"));
+        return true;
+    }
 }

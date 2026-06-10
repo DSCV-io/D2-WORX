@@ -339,7 +339,12 @@ function escapeJsDoc(value: string): string {
 
 const SPEC_PATH = contractsPath("problem-details", "problem-details.spec.json");
 
-const TARGET_PATH = tsPackagePath("problem-details-abstractions", "src", "generated", "problem-details.g.ts");
+const TARGET_PATH = tsPackagePath(
+  "problem-details-abstractions",
+  "src",
+  "generated",
+  "problem-details.g.ts",
+);
 
 /**
  * Run the problem-details emitter. Per-spec mtime check skips emit when

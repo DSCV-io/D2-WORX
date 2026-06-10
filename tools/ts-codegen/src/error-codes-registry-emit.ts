@@ -126,7 +126,8 @@ export function discoverCatalogs(contractsDir: string): DiscoverResult {
       diagnostics.push(
         diagError(
           DiagnosticIds.ERC_MALFORMED_REGISTRY_SPEC,
-          `D2ERC006: catalog spec '${specPath}' could not be parsed as JSON — fix or remove the malformed file`,
+          `D2ERC006: catalog spec '${specPath}' could not be parsed as JSON` +
+            ` — fix or remove the malformed file`,
           specPath,
         ),
       );
@@ -194,8 +195,10 @@ export function aggregateAndCheck(catalogs: readonly CatalogEntry[]): {
             diagnostics.push(
               diagError(
                 DiagnosticIds.ERC_RESERVED_NAMESPACE_VIOLATION,
-                `D2ERC005: generic spec '${catalog.specPath}' declares domain-prefixed code '${entry.code}' ` +
-                  `(starts with '${prefix}') — the generic catalog owns only the unprefixed reserved namespace`,
+                `D2ERC005: generic spec '${catalog.specPath}' declares` +
+                  ` domain-prefixed code '${entry.code}'` +
+                  ` (starts with '${prefix}') — the generic catalog owns` +
+                  ` only the unprefixed reserved namespace`,
                 catalog.specPath,
               ),
             );

@@ -8,7 +8,6 @@ namespace D2.Edge.KeyCustodian.Domain.Keys;
 
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Edge.KeyCustodian.Domain.Errors;
-using D2.Shared.I18n;
 using D2.Shared.Result;
 using NodaTime;
 using IClock = D2.Shared.Time.IClock;
@@ -57,22 +56,13 @@ public sealed record ActiveKey : EncryptionKey
     public D2Result<(RetiringKey Retiring, PendingKey Successor)> Rotate(PendingKey? successor, IClock? clock)
     {
         if (successor is null)
-        {
-            return KeyCustodianFailures<(RetiringKey, PendingKey)>.PreconditionViolated(
-                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "successor")]);
-        }
+            return KeyCustodianFailures<(RetiringKey, PendingKey)>.PreconditionViolated();
 
         if (clock is null)
-        {
-            return KeyCustodianFailures<(RetiringKey, PendingKey)>.PreconditionViolated(
-                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "clock")]);
-        }
+            return KeyCustodianFailures<(RetiringKey, PendingKey)>.PreconditionViolated();
 
         if (!Equals(successor.KeyDomain, KeyDomain) || successor.KeyType != KeyType)
-        {
-            return KeyCustodianFailures<(RetiringKey, PendingKey)>.PreconditionViolated(
-                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "successor")]);
-        }
+            return KeyCustodianFailures<(RetiringKey, PendingKey)>.PreconditionViolated();
 
         var now = clock.GetCurrentInstant();
         var retiring = new RetiringKey
@@ -108,10 +98,7 @@ public sealed record ActiveKey : EncryptionKey
     public D2Result<CompromisedKey> Compromise(string reason, IClock? clock)
     {
         if (clock is null)
-        {
-            return KeyCustodianFailures<CompromisedKey>.PreconditionViolated(
-                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "clock")]);
-        }
+            return KeyCustodianFailures<CompromisedKey>.PreconditionViolated();
 
         return ToCompromised(reason, clock.GetCurrentInstant());
     }

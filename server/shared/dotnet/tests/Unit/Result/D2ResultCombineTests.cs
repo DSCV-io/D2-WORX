@@ -278,7 +278,7 @@ public sealed class D2ResultCombineTests
         combined.Success.Should().BeTrue();
         combined.IsOk.Should().BeTrue();
         combined.Data.Should().NotBeNull();
-        combined.Data!.Count.Should().Be(0);
+        combined.Data.Count.Should().Be(0);
     }
 
     [Fact]

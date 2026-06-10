@@ -276,8 +276,8 @@ public sealed class ErrorCodeRegistryTests
         // The merged registry globs every *-error-codes.spec.json surfaced to the
         // D2.Shared.ErrorCodes.Registry build (its csproj AdditionalFiles pattern
         // is contracts/**/*-error-codes.spec.json): 15 generic + 14 auth +
-        // 8 keycustodian = 37 total. Update if new spec entries are added.
-        const int expected_count = 37;
+        // 12 keycustodian = 41 total. Update if new spec entries are added.
+        const int expected_count = 41;
         ErrorCodeRegistry.All.Count.Should().Be(expected_count);
     }
 
@@ -334,6 +334,10 @@ public sealed class ErrorCodeRegistryTests
         codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH");
         codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_GRACE_NOT_ELAPSED");
         codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_PRECONDITION_VIOLATED");
+        codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_KEY_NOT_FOUND");
+        codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_KEY_STATE_CONFLICT");
+        codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS");
+        codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_SMOKE_TEST_FAILED");
     }
 
     [Fact]
@@ -349,6 +353,38 @@ public sealed class ErrorCodeRegistryTests
         info.FactoryName.Should().Be("PreconditionViolated");
         info.FactoryShape.Should().Be("standard");
         info.UserMessageKey.Key.Should().Be("keycustodian_internal_PRECONDITION_VIOLATED");
+        info.Domain.Should().Be("keycustodian");
+    }
+
+    [Fact]
+    public void TryResolve_KeyCustodianKeyNotFound_ReturnsNotFound()
+    {
+        var found = ErrorCodeRegistry.TryResolve("KEYCUSTODIAN_KEY_NOT_FOUND", out var info);
+
+        found.Should().BeTrue();
+        info.Code.Should().Be("KEYCUSTODIAN_KEY_NOT_FOUND");
+        info.HttpStatus.Should().Be(404);
+        info.Category.Should().Be(ErrorCategory.NotFound);
+        info.Category.ToWire().Should().Be("not_found");
+        info.FactoryName.Should().Be("KeyNotFound");
+        info.FactoryShape.Should().Be("standard");
+        info.UserMessageKey.Key.Should().Be("keycustodian_lifecycle_KEY_NOT_FOUND");
+        info.Domain.Should().Be("keycustodian");
+    }
+
+    [Fact]
+    public void TryResolve_KeyCustodianKeyStateConflict_ReturnsConflict()
+    {
+        var found = ErrorCodeRegistry.TryResolve("KEYCUSTODIAN_KEY_STATE_CONFLICT", out var info);
+
+        found.Should().BeTrue();
+        info.Code.Should().Be("KEYCUSTODIAN_KEY_STATE_CONFLICT");
+        info.HttpStatus.Should().Be(409);
+        info.Category.Should().Be(ErrorCategory.Conflict);
+        info.Category.ToWire().Should().Be("conflict");
+        info.FactoryName.Should().Be("KeyStateConflict");
+        info.FactoryShape.Should().Be("standard");
+        info.UserMessageKey.Key.Should().Be("keycustodian_lifecycle_KEY_STATE_CONFLICT");
         info.Domain.Should().Be("keycustodian");
     }
 

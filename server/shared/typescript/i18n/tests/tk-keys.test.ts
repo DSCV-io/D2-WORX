@@ -42,6 +42,7 @@ describe("TK catalog", () => {
     expect(TK.common.errors.CANCELED.key).toBe("common_errors_CANCELED");
   });
 
+  // long test description — cannot wrap
   it("TK.webclient.app.ACCOUNT_SESSIONS_NO_SESSION_SELECTED resolves to the correct key string", () => {
     expect(TK.webclient.app.ACCOUNT_SESSIONS_NO_SESSION_SELECTED.key).toBe(
       "webclient_app_account_sessions_no_session_selected",

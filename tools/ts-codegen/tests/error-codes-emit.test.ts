@@ -433,6 +433,7 @@ describe("emitFailuresCatalog — factoryShape branch (D2ERC003 fail-loud)", () 
     expect(r.source).toContain("return unhandledException<T>");
     expect(r.source).not.toContain("return unauthorized<T>");
     expect(r.source).not.toContain("return serviceUnavailable<T>");
+    // long emitter-output string literal — cannot wrap (byte-identity)
     expect(r.source).toContain(
       "preconditionViolated<T = void>(opts: { messages?: readonly TKMessage[]; traceId?: string } = {})",
     );
@@ -545,6 +546,7 @@ describe("emitFailuresCatalog — factoryShape branch (D2ERC003 fail-loud)", () 
     expect(r.source).toContain("jwksUnavailable");
   });
 
+  // long test description — cannot wrap
   it("entry with non-conforming userMessageKey (parseTkKey → undefined) is silently skipped", () => {
     // parseTkKey returns undefined for anything that doesn't match TK.<Domain>.<Category>.<CONST>
     const r = emitFailuresCatalog(
@@ -806,6 +808,7 @@ describe("emitBaseFactoriesCatalog (generic base factories) — shapes", () => {
     expect(r.source).not.toContain("export function someFound");
   });
 
+  // long test description — cannot wrap
   it("factory bodies reference the TK constant directly, never a tk() wrapper or key/path literal", () => {
     const r = emit();
     // The TK constant IS the default TKMessage now — the factory inlines it
@@ -886,6 +889,7 @@ describe("emitBaseFactoriesCatalog — name-mismatch quirks + status map", () =>
     );
   });
 
+  // long test description — cannot wrap
   it("UNHANDLED_EXCEPTION standard emits ErrorOpts + errorCode override (500 delegating path)", () => {
     // The real generic spec declares UNHANDLED_EXCEPTION as the universal standard
     // shape so a delegating per-domain 500 factory can stamp its own code on the
@@ -921,6 +925,7 @@ describe("emitBaseFactoriesCatalog — name-mismatch quirks + status map", () =>
     expect(r.source).toContain("statusCode: HttpStatusCode.InternalServerError,");
   });
 
+  // long test description — cannot wrap
   it("RATE_LIMITED → factory tooManyRequests + default-TK TOO_MANY_REQUESTS (three-way mismatch)", () => {
     const r = emitBaseFactoriesCatalog(
       {

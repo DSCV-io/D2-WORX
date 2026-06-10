@@ -33,6 +33,7 @@ const minSpec: ContextSpec = {
 };
 
 describe("emitAuthContext", () => {
+  // long test description — cannot wrap
   it("emits a TS interface with property names camelCased + `?:` shorthand (rules.md §6.15)", () => {
     const r = emitAuthContext(minSpec);
     expect(r.diagnostics).toEqual([]);

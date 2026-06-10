@@ -114,6 +114,7 @@ describe("error-codes byte-parity (in-memory regen == committed .g.ts)", () => {
     expect(r.source).toBe(committed);
   });
 
+  // long test description — cannot wrap
   it("generic factories.g.ts is byte-identical to committed (the base/constructing factories)", () => {
     const r = emitBaseFactoriesCatalog(
       genericSpec,

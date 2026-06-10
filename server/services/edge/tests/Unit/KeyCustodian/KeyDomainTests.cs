@@ -163,6 +163,22 @@ public sealed class KeyDomainTests
         act.Should().Throw<ArgumentNullException>();
     }
 
+    [Fact]
+    public void FromTrusted_Empty_ThrowsArgumentException()
+    {
+        // A corrupt DB row with an empty domain value must not silently create a
+        // KeyDomain with a blank Value — data-corruption, not a valid input path.
+        var act = () => KeyDomain.FromTrusted(string.Empty);
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void FromTrusted_Whitespace_ThrowsArgumentException()
+    {
+        var act = () => KeyDomain.FromTrusted("   ");
+        act.Should().Throw<ArgumentException>();
+    }
+
     // -----------------------------------------------------------------------
     // Static accessors
     // -----------------------------------------------------------------------

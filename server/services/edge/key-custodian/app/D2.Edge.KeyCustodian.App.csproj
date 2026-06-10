@@ -49,6 +49,17 @@ Copyright (c) DCSV. All rights reserved.
       timestamps inside command handlers.
     -->
     <ProjectReference Include="..\..\..\..\shared\dotnet\time\D2.Shared.Time.csproj" />
+    <!--
+      D2.Shared.Utilities — [RedactData] on CompromiseKeyInput.Reason + Falsey()
+      input guards. Brought transitively via Domain but listed explicitly
+      ("declare what you use").
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\utilities\D2.Shared.Utilities.csproj" />
+    <!--
+      D2.Shared.I18n.Keys — the generated TK.* translation-key constants the App
+      passes to D2Result factories (e.g. the precondition arg-naming messages).
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\i18n\keys\D2.Shared.I18n.Keys.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -60,6 +71,17 @@ Copyright (c) DCSV. All rights reserved.
       and D2.Shared.Handler.Repo conventions).
     -->
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <!--
+      Microsoft.Extensions.Options — IOptions<KeyCustodianOptions> consumed by the
+      key generators + the rotation-policy provider.
+    -->
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <!--
+      Microsoft.Extensions.DependencyInjection.Abstractions — the AddKeyCustodianApp
+      DI extension + the [FromKeyedServices] root-crypto injection attribute.
+      Brought transitively via D2.Shared.Handler but listed explicitly.
+    -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
   </ItemGroup>
 
   <ItemGroup>

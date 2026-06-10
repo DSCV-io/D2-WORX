@@ -126,6 +126,22 @@ public sealed class KidTests
         act.Should().Throw<ArgumentNullException>();
     }
 
+    [Fact]
+    public void FromTrusted_Empty_ThrowsArgumentException()
+    {
+        // A corrupt DB row with an empty kid bypasses the charset guard — data-corruption error.
+        var act = () => Kid.FromTrusted(string.Empty);
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void FromTrusted_Whitespace_ThrowsArgumentException()
+    {
+        // A whitespace-only kid from the store is equally corrupt — must not bypass rehydration.
+        var act = () => Kid.FromTrusted("   ");
+        act.Should().Throw<ArgumentException>();
+    }
+
     // Gate-intact pin: FromTrusted bypasses charset validation, Create still rejects
     [Fact]
     public void FromTrusted_AcceptsInvalidCharset_CreateRejectsIt()

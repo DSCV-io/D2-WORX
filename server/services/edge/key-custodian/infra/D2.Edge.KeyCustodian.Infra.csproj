@@ -62,8 +62,7 @@ Copyright (c) DCSV. All rights reserved.
   <ItemGroup>
     <!--
       Microsoft.EntityFrameworkCore.Design — design-time services for
-      `dotnet ef migrations add` (the first KeyCustodian migration, added
-      in Step 3). PrivateAssets="all" so the design-time assets never flow
+      `dotnet ef migrations add` (the first KeyCustodian migration). PrivateAssets="all" so the design-time assets never flow
       to runtime consumers. CPM-pinned in Directory.Packages.props at 10.0.7
       (same release train as the EF Core base + Relational pins).
     -->

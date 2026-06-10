@@ -81,4 +81,42 @@ public sealed class KeyMaterialEncryptedTests
         var str = mat.ToString();
         str.Should().Contain("4"); // 4 bytes
     }
+
+    // -----------------------------------------------------------------------
+    // Value equality — content-based, not backing-array identity
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Equals_SameContentDifferentBackingArrays_AreEqual()
+    {
+        // Two independent copies of the same bytes — different backing arrays.
+        var a = KeyMaterialEncrypted.FromTrusted(new byte[] { 0x01, 0x02, 0x03, 0x04 });
+        var b = KeyMaterialEncrypted.FromTrusted(new byte[] { 0x01, 0x02, 0x03, 0x04 });
+
+        a.Should().Be(b);
+        a.GetHashCode().Should().Be(b.GetHashCode());
+    }
+
+    [Fact]
+    public void Equals_DifferentContent_AreNotEqual()
+    {
+        var a = KeyMaterialEncrypted.FromTrusted(new byte[] { 0x01, 0x02, 0x03, 0x04 });
+        var b = KeyMaterialEncrypted.FromTrusted(new byte[] { 0x01, 0x02, 0x03, 0xFF });
+
+        a.Should().NotBe(b);
+    }
+
+    [Fact]
+    public void Equals_Null_ReturnsFalse()
+    {
+        var a = KeyMaterialEncrypted.FromTrusted(s_validBytes);
+        a.Equals(null).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Equals_ReferenceEqual_ReturnsTrue()
+    {
+        var a = KeyMaterialEncrypted.FromTrusted(s_validBytes);
+        a.Equals(a).Should().BeTrue();
+    }
 }

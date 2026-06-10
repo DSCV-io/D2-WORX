@@ -23,6 +23,7 @@ Per project convention, every library has its own `README.md`. The list below po
 
 Each multi-package cluster has its own index README that lists and briefly describes its constituent packages. The cluster index is the entry point for navigating a concern area; the per-package READMEs carry the full API + codegen + dependency detail.
 
+- [`error-codes/`](error-codes/README.md) — closed `ErrorCategory` enum leaf, merged cross-catalog `ErrorCodeRegistry`, and their source generators
 - [`auth/`](auth/README.md) — auth vocabulary, inbound/outbound runtime, per-transport bindings, auth-spec source generators
 - [`caching/`](caching/README.md) — `ILocalCache` / `IDistributedCache` / `ITieredCache` abstractions plus local-memory and Redis implementations
 - [`contacts/`](contacts/README.md) — composable PII value objects (`Personal`, `NameAffixes`, `Demographics`, `Professional`, `EmailAddress`, `PhoneNumber`) plus reusable EF Core mapping
@@ -171,28 +172,36 @@ graph LR
     classDef built fill:#d4edda,stroke:#28a745,color:#000
     classDef analyzer fill:#fff3cd,stroke:#856404,color:#000
 
-    subgraph FOUNDATION["Foundation (result + i18n + utilities + resilience)"]
+    subgraph FOUNDATION["Foundation (result + i18n + utilities + resilience + error-codes)"]
         direction TB
         I18nSG[i18n/source-gen]:::analyzer
         ErrorCodesSG[source-gen-shared/error-codes-source-gen]:::analyzer
         D2ResultEnvelopeSG[result/envelope-source-gen]:::analyzer
         WireShapesSG[source-gen-shared/wire-shapes-source-gen]:::analyzer
+        ErrorCategorySG[error-codes/category-source-gen]:::analyzer
+        ErrorRegistrySG[error-codes/registry-source-gen]:::analyzer
         I18nAbs[i18n/abstractions]
         I18n[i18n/core]
         Result[result/core]
         Utilities[utilities]
         Resilience[resilience]
+        ErrorCategory[error-codes/category]
+        ErrorRegistry[error-codes/registry]
 
         I18nSG -.->|analyzer| I18nAbs
         ErrorCodesSG -.->|analyzer| Result
         D2ResultEnvelopeSG -.->|analyzer| Result
         WireShapesSG -.->|analyzer| I18nAbs
         WireShapesSG -.->|analyzer| Result
+        ErrorCategorySG -.->|analyzer| ErrorCategory
+        ErrorRegistrySG -.->|analyzer| ErrorRegistry
         I18n --> I18nAbs
         I18n --> Utilities
         Result --> I18nAbs
+        Result --> ErrorCategory
         Utilities --> Result
         Resilience --> Result
+        ErrorRegistry --> ErrorCategory
     end
 
     subgraph AUTHCTX["Auth + per-request context (codegen-driven)"]
@@ -521,7 +530,7 @@ graph LR
     Time --> I18nAbs
     Time --> Utilities
 
-    class I18nAbs,I18n,Result,Utilities,Resilience,AuthAbs,AuthCtxAbs,CtxAbs,HandlerAbs,Handler,RepoAbs,Repo,RepoPg,Encryption,Time,CacheAbs,CacheLocal,CacheRedis,CacheTiered,Auth,AuthHttp,AuthGrpc,AuthStartup,AuthOutbound,MsgAbs,MsgRabbit,MsgSrcGen,AspNetCore,Logging,Telemetry,ServiceDefaults,AuthErrorCodesSG,ErrorCodesSG,D2ResultEnvelopeSG,WireShapesSG,ProblemDetailsAbs,TelemetryTagsSG,HeadersSG,HeadersCommon,HeadersHttp,HeadersAmqp,HeadersGrpc,JwtClaimsSG,InProcessKeysSG,GeoAbs,GeoDefault,Location,LocationEf,ValidationSG,ValidationAbs,ValidationDefault,DataGovAbs,DataGovEf,Contacts,ContactsEf,SharedEf built
+    class I18nAbs,I18n,Result,Utilities,Resilience,ErrorCategory,ErrorRegistry,AuthAbs,AuthCtxAbs,CtxAbs,HandlerAbs,Handler,RepoAbs,Repo,RepoPg,Encryption,Time,CacheAbs,CacheLocal,CacheRedis,CacheTiered,Auth,AuthHttp,AuthGrpc,AuthStartup,AuthOutbound,MsgAbs,MsgRabbit,MsgSrcGen,AspNetCore,Logging,Telemetry,ServiceDefaults,AuthErrorCodesSG,ErrorCodesSG,D2ResultEnvelopeSG,WireShapesSG,ErrorCategorySG,ErrorRegistrySG,ProblemDetailsAbs,TelemetryTagsSG,HeadersSG,HeadersCommon,HeadersHttp,HeadersAmqp,HeadersGrpc,JwtClaimsSG,InProcessKeysSG,GeoAbs,GeoDefault,Location,LocationEf,ValidationSG,ValidationAbs,ValidationDefault,DataGovAbs,DataGovEf,Contacts,ContactsEf,SharedEf built
 ```
 
 **Reading the chart:**

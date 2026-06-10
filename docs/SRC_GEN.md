@@ -138,6 +138,7 @@ abbreviation, 3-digit number). Examples currently in use:
 | In-process keys      | `D2IPK`  | `encryption/in-process-keys-source-gen`                                |
 | Geo catalogs         | `D2GEO`  | `geo/source-gen`                                                       |
 | Field constraints    | `D2FC`   | `validation/source-gen`                                                |
+| KC error codes       | `D2KEC`  | `server/services/edge/key-custodian/error-codes-source-gen` (shell)    |
 
 Diagnostic IDs are declared in two parallel files:
 

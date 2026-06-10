@@ -36,6 +36,10 @@ internal static class ConstantsEmitter
     public static readonly ImmutableArray<int> SR_SupportedHttpStatuses =
         ImmutableArray.Create(200, 206, 207, 400, 401, 403, 404, 409, 413, 429, 500, 503);
 
+    /// <summary>
+    /// SCREAMING_SNAKE code-shape validator. Bucket 1 (no backtracking) — anchored
+    /// character-class match; no timeout needed.
+    /// </summary>
     private static readonly Regex sr_codePattern =
         new("^[A-Z][A-Z0-9_]*$", RegexOptions.CultureInvariant);
 

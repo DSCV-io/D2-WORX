@@ -10,7 +10,7 @@ Copyright (c) DCSV. All rights reserved.
 
 ## Context
 
-Phase 3 requires a key authority that is distinct from the auth service: auth consumes managed keys to sign JWTs and verify them; it cannot be the authority responsible for those keys' lifecycle without creating a circular dependency. The forces shaping the design are:
+The Edge service requires a key authority that is distinct from the auth service: auth consumes managed keys to sign JWTs and verify them; it cannot be the authority responsible for those keys' lifecycle without creating a circular dependency. The forces shaping the design are:
 
 - **JWKS signing-key rotation**: the JWKS endpoint must continue serving the *retiring* key's public material during the grace window so in-flight tokens remain valid after rotation.
 - **Payload-encryption key overlap**: `AesPayload` keys used to encrypt RabbitMQ payloads must still decrypt historical messages after a new key activates.
@@ -51,7 +51,7 @@ Rotation coordination uses **PostgreSQL advisory locks** (`pg_try_advisory_lock`
 
 ### 4. Crypto reuses `D2.Shared.Encryption`
 
-Key material is wrapped by the root key using `D2.Shared.Encryption`'s `IPayloadCrypto.Encrypt`. The root key is a 32-byte AES key managed by KeyCustodian itself (bootstrapped once, stored in the `keycustodian_db`). The Domain receives and holds already-encrypted bytes in `KeyMaterialEncrypted` — it never touches plaintext key bytes.
+Key material is wrapped by the root key using `D2.Shared.Encryption`'s `IPayloadCrypto.Encrypt`. The root key is a 32-byte AES key managed by KeyCustodian itself (bootstrapped once, stored at `secrets/keycustodian/root.key` (file-backed, loaded at startup via `FileRootKeyProvider`)). The Domain receives and holds already-encrypted bytes in `KeyMaterialEncrypted` — it never touches plaintext key bytes.
 
 ### 5. Material retention through all states
 
@@ -67,7 +67,7 @@ Dropping material on retire or compromise would break overlap decryption, grace-
 
 Every lifecycle transition appends an `EncryptionKeyAudit` record carrying the `Kid`, action, resulting status, and timestamp. The audit record deliberately carries NO key material and NO free-text compromise reason — forensics via lifecycle sequence, not by replaying bytes.
 
-The audit row is written in the **SAME `SaveChangesAsync` / transaction** as the state change, so a transition + its audit entry are atomic. EF orders the principal (`KeyRecord` UPDATE) before the dependent (audit INSERT); the audit FK uses `OnDelete(Restrict)` so audit rows can never be cascade-deleted out from under the lifecycle history.
+The `EncryptionKeyAudit` record is written in the **SAME `SaveChangesAsync` / transaction** as the state change, so a transition + its audit entry are atomic. EF orders the principal (`KeyRecord` UPDATE) before the dependent (audit INSERT); the audit FK uses `OnDelete(Restrict)` so audit rows can never be cascade-deleted out from under the lifecycle history.
 
 ### 7. Persistence — flat `KeyRecord` + pure mapper, NOT TPH (per ADR-0017)
 
@@ -114,7 +114,7 @@ Because the `KeyRecord` CLR type never changes, every transition is an ordinary 
 ## Alternatives considered
 
 - **Anemic enum + nullable timestamps as the DOMAIN model** (V2.md §5.4 sketch): rejected because nullable timestamps in the *domain* make illegal states representable (an "Active" key with null `ActivatedAt`), and the only enforcement is tests — not the type system. Drift between the enum and the lifecycle invariants is inevitable. (Note: the flat `KeyRecord` *persistence* row in §7 deliberately uses a `status` value column + nullable per-state columns — but it is NOT the domain; the pure mapper rehydrates the sealed state and the domain types remain the single source of lifecycle truth. The anti-pattern is an anemic *domain*, not a flat *row*.)
-- **Aggregate-as-TPH-entity with delete+insert transitions** (the original Step-3 store plan): rejected as unsound on EF Core 10 — the morph wall makes a same-PK delete+insert silently merge into a stale-column UPDATE, and a get-only-`Status` discriminator fails model-build. Falsified by the persistence-strategy spike; superseded by the flat `KeyRecord` + pure mapper in §7. Full rejection rationale + EF issue citations in [ADR-0017](0017-ef-as-ddd-persistence.md).
+- **Aggregate-as-TPH-entity with delete+insert transitions** (the original TPH-entity plan): rejected as unsound on EF Core 10 — the morph wall makes a same-PK delete+insert silently merge into a stale-column UPDATE, and a get-only-`Status` discriminator fails model-build. Falsified by the persistence-strategy spike; superseded by the flat `KeyRecord` + pure mapper in §7. Full rejection rationale + EF issue citations in [ADR-0017](0017-ef-as-ddd-persistence.md).
 - **Redis-coordinated rotation**: rejected because Redis is a hot-path dependency and advisory locks are already available in the PostgreSQL database owned by this service. Redis locking adds operational coupling for a rare operation.
 - **Storing key material outside the key record / external KMS**: out of scope. `D2.Shared.Encryption` root-wrap is the established mechanism for all service encryption.
 - **Dropping material on retire/compromise**: rejected — breaks overlap decryption, grace-window JWKS, and forensics. See §5 above.

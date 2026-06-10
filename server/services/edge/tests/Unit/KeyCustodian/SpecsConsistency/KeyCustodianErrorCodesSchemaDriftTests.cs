@@ -72,24 +72,36 @@ public sealed class KeyCustodianErrorCodesSchemaDriftTests
             .Should().Be("^KEYCUSTODIAN_[A-Z][A-Z0-9_]*$");
 
         // KC narrows the canonical status set to the {400 input-validation,
-        // 500 precondition-violation} subset.
+        // 404 key-not-found, 409 lifecycle-conflict, 500 precondition /
+        // smoke-test} subset.
         var statuses = props.GetProperty("httpStatus").GetProperty("enum")
             .EnumerateArray().Select(e => e.GetInt32()).ToList();
-        statuses.Should().BeEquivalentTo(new[] { 400, 500 });
+        statuses.Should().BeEquivalentTo(new[] { 400, 404, 409, 500 });
 
         // KC narrows the canonical category set to the {validation_failure,
-        // internal_error} subset.
+        // not_found, conflict, internal_error} subset.
         var categories = props.GetProperty("category").GetProperty("enum")
             .EnumerateArray().Select(e => e.GetString()).ToList();
-        categories.Should().BeEquivalentTo(new[] { "validation_failure", "internal_error" });
+        categories.Should().BeEquivalentTo(
+            new[] { "validation_failure", "not_found", "conflict", "internal_error" });
     }
 
     [Fact]
     public void KcSpec_EveryEntry_IsStandardAndDeclaredStatusCategoryPair()
     {
-        // Every KC entry is the universal standard shape; each is one of two legal
-        // (status, category) pairs: 400/validation_failure (input validation) or
-        // 500/internal_error (precondition violation).
+        // Every KC entry is the universal standard shape; each is one of four legal
+        // (status, category) pairs: 400/validation_failure (input validation),
+        // 404/not_found (key lookup), 409/conflict (illegal transition / duplicate
+        // pending), or 500/internal_error (precondition violation / smoke-test
+        // failure).
+        var legalPairs = new Dictionary<int, string>
+        {
+            [400] = "validation_failure",
+            [404] = "not_found",
+            [409] = "conflict",
+            [500] = "internal_error",
+        };
+
         var entries = KcSpecEntries();
 
         entries.Should().NotBeEmpty();
@@ -101,20 +113,12 @@ public sealed class KeyCustodianErrorCodesSchemaDriftTests
             var category = entry.GetProperty("category").GetString();
             var code = entry.GetProperty("code").GetString();
 
-            if (status == 500)
-            {
-                category.Should().Be(
-                    "internal_error",
-                    because: $"the 500 KC code '{code}' is the precondition-violation alert class");
-            }
-            else
-            {
-                status.Should().Be(
-                    400, because: $"KC code '{code}' must be a 400 input-validation or 500 precondition code");
-                category.Should().Be(
-                    "validation_failure",
-                    because: $"the 400 KC code '{code}' carries a user-facing validation rejection");
-            }
+            legalPairs.Should().ContainKey(
+                status,
+                because: $"KC code '{code}' must declare one of the four legal KC statuses");
+            category.Should().Be(
+                legalPairs[status],
+                because: $"the {status} KC code '{code}' must carry its paired category");
         }
     }
 

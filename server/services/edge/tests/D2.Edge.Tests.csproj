@@ -31,10 +31,9 @@ Copyright (c) DCSV. All rights reserved.
   </PropertyGroup>
 
   <!--
-    Edge-service test project. Step 0: empty shell registered in the solution.
-    Step 4 adds the integration-key-rotation Testcontainers gate (own
+    Edge-service test project. The integration-key-rotation Testcontainers gate (own
     PostgresFixture + [Collection("Postgres")]) + temporal/adversarial unit
-    tests. Mirrors D2.Shared.Tests csproj settings (MTP runner, the standard
+    tests are housed here. Mirrors D2.Shared.Tests csproj settings (MTP runner, the standard
     test-only NoWarn set).
   -->
 
@@ -64,6 +63,19 @@ Copyright (c) DCSV. All rights reserved.
       tests need an explicit reference.
     -->
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <!--
+      Microsoft.EntityFrameworkCore + .InMemory — the App-layer mapper / query-
+      extension / handler unit tests drive a test-owned KeyCustodianTestDbContext
+      on the provider-free in-memory database. Relational specifics (xmin token,
+      Instant value-converters, real SQL translation) are Infra + Testcontainers concerns; the InMemory provider exercises behavior here.
+    -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <!--
+      Microsoft.Extensions.DependencyInjection — the App-DI registration test
+      constructs a concrete ServiceCollection() + inspects descriptors.
+    -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
   </ItemGroup>
 
   <ItemGroup>

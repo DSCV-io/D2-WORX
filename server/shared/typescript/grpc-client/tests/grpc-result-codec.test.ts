@@ -325,8 +325,10 @@ describe("d2ResultFromProto — adversarial", () => {
 // ---------------------------------------------------------------------------
 
 describe("isTransientGrpcError", () => {
-  const transient_codes = [4, 8, 10, 13, 14]; // DEADLINE_EXCEEDED, RESOURCE_EXHAUSTED, ABORTED, INTERNAL, UNAVAILABLE
-  const non_transient_codes = [1, 3, 5, 7, 16]; // CANCELLED, INVALID_ARGUMENT, NOT_FOUND, PERMISSION_DENIED, UNAUTHENTICATED
+  // DEADLINE_EXCEEDED, RESOURCE_EXHAUSTED, ABORTED, INTERNAL, UNAVAILABLE
+  const transient_codes = [4, 8, 10, 13, 14];
+  // CANCELLED, INVALID_ARGUMENT, NOT_FOUND, PERMISSION_DENIED, UNAUTHENTICATED
+  const non_transient_codes = [1, 3, 5, 7, 16];
 
   for (const code of transient_codes) {
     it(`gRPC status ${code} → isTransientGrpcError true`, () => {
@@ -385,6 +387,7 @@ describe("handleGrpcCall", () => {
     expect(result.statusCode).toBe(HttpStatusCode.PartialContent);
   });
 
+  // long test description — cannot wrap
   it("ServiceError (UNAVAILABLE) → serviceUnavailable, message is TK constant (NOT err.message)", async () => {
     const sentinel = "SECRET_BROKER_URI://user:password@host/vhost";
     const err = makeServiceError(14, sentinel, sentinel); // UNAVAILABLE
@@ -423,6 +426,7 @@ describe("handleGrpcCall", () => {
     expect(keys).not.toContain("secret");
   });
 
+  // long test description — cannot wrap
   it("ServiceError (CANCELLED = 1) → canceled result with TK constant, sentinel absent", async () => {
     const sentinel = "SECRET_INTERNAL_HOST://user:password@broker:5672/vhost";
     const err = makeServiceError(1, sentinel, sentinel);
@@ -484,6 +488,7 @@ describe("handleGrpcCall", () => {
 
   // Transport-fault results must carry the caller-supplied traceId.
   // Mirrors .NET HandleAsyncTests.RpcException_TraceId_AppearsInFailResult.
+  // long test description — cannot wrap
   it("transport fault (UNAVAILABLE) with passed traceId → result.traceId equals the passed value", async () => {
     const trace = "abc123";
     const err = makeServiceError(14, "unavailable", "unavailable"); // UNAVAILABLE
@@ -497,6 +502,7 @@ describe("handleGrpcCall", () => {
     expect(result.traceId).toBe(trace);
   });
 
+  // long test description — cannot wrap
   it("transport fault (CANCELLED) with passed traceId → result.traceId equals the passed value", async () => {
     const trace = "cancel-trace-42";
     const err = makeServiceError(1, "canceled", "canceled"); // CANCELLED
@@ -510,6 +516,7 @@ describe("handleGrpcCall", () => {
     expect(result.traceId).toBe(trace);
   });
 
+  // long test description — cannot wrap
   it("transport fault (UNAUTHENTICATED) with passed traceId → result.traceId equals the passed value", async () => {
     const trace = "unauth-trace-7";
     const err = makeServiceError(16, "unauthenticated", "unauthenticated"); // UNAUTHENTICATED
@@ -523,6 +530,7 @@ describe("handleGrpcCall", () => {
     expect(result.traceId).toBe(trace);
   });
 
+  // long test description — cannot wrap
   it("non-ServiceError with passed traceId → result.traceId equals the passed value", async () => {
     const trace = "unhandled-trace-99";
     const plainError = new Error("unexpected failure");

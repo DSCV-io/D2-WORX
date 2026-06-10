@@ -48,6 +48,18 @@ public static class KeyCustodianErrorCodes
     /// <summary>A required argument supplied to a key-lifecycle transition was null, empty, or otherwise violated a documented precondition. This is a programmer/precondition error surfaced as a flagged 500 result (carrying telemetry) rather than a thrown exception.</summary>
     public const string KEYCUSTODIAN_PRECONDITION_VIOLATED = "KEYCUSTODIAN_PRECONDITION_VIOLATED";
 
+    /// <summary>No managed key matching the supplied identifier (or the requested live key for a domain) exists in the store.</summary>
+    public const string KEYCUSTODIAN_KEY_NOT_FOUND = "KEYCUSTODIAN_KEY_NOT_FOUND";
+
+    /// <summary>The requested lifecycle operation is not legal for the key's current state (e.g. activating a key that is not pending, or retiring a key that is not retiring).</summary>
+    public const string KEYCUSTODIAN_KEY_STATE_CONFLICT = "KEYCUSTODIAN_KEY_STATE_CONFLICT";
+
+    /// <summary>A live pending key already exists for the domain; a second pending key may not be generated until the existing one is activated or compromised.</summary>
+    public const string KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS = "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS";
+
+    /// <summary>The cryptographic smoke test for the key material did not pass; the key cannot be activated. Surfaced as a flagged internal-error result so the failed material never enters service.</summary>
+    public const string KEYCUSTODIAN_SMOKE_TEST_FAILED = "KEYCUSTODIAN_SMOKE_TEST_FAILED";
+
     /// <summary>
     /// All declared <c>KEYCUSTODIAN_*</c> codes in spec order. Useful for
     /// registry membership checks and cross-spec consistency tests.
@@ -64,6 +76,10 @@ public static class KeyCustodianErrorCodes
         "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH",
         "KEYCUSTODIAN_GRACE_NOT_ELAPSED",
         "KEYCUSTODIAN_PRECONDITION_VIOLATED",
+        "KEYCUSTODIAN_KEY_NOT_FOUND",
+        "KEYCUSTODIAN_KEY_STATE_CONFLICT",
+        "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS",
+        "KEYCUSTODIAN_SMOKE_TEST_FAILED",
     };
 
     /// <summary>
@@ -84,6 +100,10 @@ public static class KeyCustodianErrorCodes
         "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH" => 400,
         "KEYCUSTODIAN_GRACE_NOT_ELAPSED" => 400,
         "KEYCUSTODIAN_PRECONDITION_VIOLATED" => 500,
+        "KEYCUSTODIAN_KEY_NOT_FOUND" => 404,
+        "KEYCUSTODIAN_KEY_STATE_CONFLICT" => 409,
+        "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS" => 409,
+        "KEYCUSTODIAN_SMOKE_TEST_FAILED" => 500,
         _ => 500,
     };
 }

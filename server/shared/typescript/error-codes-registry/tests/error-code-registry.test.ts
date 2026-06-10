@@ -162,8 +162,8 @@ describe("ErrorCodeFactoryShape type — 2 schema values", () => {
 // ---------------------------------------------------------------------------
 
 describe("errorCodeRegistry — generated merged registry", () => {
-  it("all: contains the expected total count (14 auth + 15 generic + 8 keycustodian = 37)", () => {
-    expect(errorCodeRegistry.all).toHaveLength(37);
+  it("all: contains the expected total count (14 auth + 15 generic + 12 keycustodian = 41)", () => {
+    expect(errorCodeRegistry.all).toHaveLength(41);
   });
 
   it("resolve: every generic code resolves with domain 'common'", () => {
@@ -225,6 +225,10 @@ describe("errorCodeRegistry — generated merged registry", () => {
       "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH",
       "KEYCUSTODIAN_GRACE_NOT_ELAPSED",
       "KEYCUSTODIAN_PRECONDITION_VIOLATED",
+      "KEYCUSTODIAN_KEY_NOT_FOUND",
+      "KEYCUSTODIAN_KEY_STATE_CONFLICT",
+      "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS",
+      "KEYCUSTODIAN_SMOKE_TEST_FAILED",
     ];
     for (const code of keycustodianCodes) {
       const info = errorCodeRegistry.resolve(code);
@@ -297,6 +301,30 @@ describe("errorCodeRegistry — generated merged registry", () => {
     expect(info?.category).toBe("internal_error");
     expect(info?.userMessageKey).toBe(TK.keycustodian.internal.PRECONDITION_VIOLATED);
     expect(info?.factoryName).toBe("PreconditionViolated");
+    expect(info?.factoryShape).toBe("standard");
+    expect(info?.domain).toBe("keycustodian");
+  });
+
+  it("resolve KEYCUSTODIAN_KEY_NOT_FOUND: full 8-field correctness", () => {
+    const info = errorCodeRegistry.resolve("KEYCUSTODIAN_KEY_NOT_FOUND");
+    expect(info).toBeDefined();
+    expect(info?.code).toBe("KEYCUSTODIAN_KEY_NOT_FOUND");
+    expect(info?.httpStatus).toBe(404);
+    expect(info?.category).toBe("not_found");
+    expect(info?.userMessageKey).toBe(TK.keycustodian.lifecycle.KEY_NOT_FOUND);
+    expect(info?.factoryName).toBe("KeyNotFound");
+    expect(info?.factoryShape).toBe("standard");
+    expect(info?.domain).toBe("keycustodian");
+  });
+
+  it("resolve KEYCUSTODIAN_KEY_STATE_CONFLICT: full 8-field correctness", () => {
+    const info = errorCodeRegistry.resolve("KEYCUSTODIAN_KEY_STATE_CONFLICT");
+    expect(info).toBeDefined();
+    expect(info?.code).toBe("KEYCUSTODIAN_KEY_STATE_CONFLICT");
+    expect(info?.httpStatus).toBe(409);
+    expect(info?.category).toBe("conflict");
+    expect(info?.userMessageKey).toBe(TK.keycustodian.lifecycle.KEY_STATE_CONFLICT);
+    expect(info?.factoryName).toBe("KeyStateConflict");
     expect(info?.factoryShape).toBe("standard");
     expect(info?.domain).toBe("keycustodian");
   });

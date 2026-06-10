@@ -131,7 +131,10 @@ export interface FailuresConfig {
   readonly failuresObjectName: string;
   /** Verbatim class-doc summary lines for the failures object. */
   readonly classDocLines: readonly string[];
-  /** The constants-file basename imported for the `errorCode:` references (e.g. `auth-error-codes.g.js`). */
+  /**
+   * The constants-file basename imported for the `errorCode:` references
+   * (e.g. `auth-error-codes.g.js`).
+   */
   readonly constantsImportPath: string;
   /** The constants-object name imported from {@link constantsImportPath}. */
   readonly constObjectName: string;
@@ -192,7 +195,8 @@ export function validateErrorCodesSpec(
       diagnostics.push(
         diagError(
           DiagnosticIds.ERC_DOMAIN_PREFIX_VIOLATION,
-          `error code '${entry.code}' must start with the enforced domain prefix '${config.domainPrefix}'`,
+          `error code '${entry.code}' must start with the enforced` +
+            ` domain prefix '${config.domainPrefix}'`,
         ),
       );
       continue;
@@ -487,6 +491,7 @@ export function emitFailuresCatalog(
     // when omitted it defaults to the spec's TK constant; when supplied it
     // replaces it, so a caller can bind the offending argument via
     // `TKMessage.With(...)`.
+    // long emitter-output string literal — cannot wrap (byte-identity)
     sb.appendLine(
       `${fnName}<T = void>(opts: { messages?: readonly TKMessage[]; traceId?: string } = {}): D2Result<T> {`,
     );

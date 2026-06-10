@@ -74,9 +74,12 @@ public sealed class SmokeProofTests
 
         var message = result.Messages.Single(
             m => m.Key == "keycustodian_internal_PRECONDITION_VIOLATED");
-        message.Parameters.Should().NotBeNull(
-            because: "the converted guard binds the offending arg name");
-        message.Parameters!["arg"].Should().Be("clock");
+
+        // PRECONDITION_VIOLATED is an opaque 500 code — internal argument names
+        // must not leak onto the wire.
+        var hasArgLeak = message.Parameters?.ContainsKey("arg") ?? false;
+        hasArgLeak.Should().BeFalse(
+            because: "internal C# parameter names must not be serialized onto the wire");
     }
 
     // -----------------------------------------------------------------------

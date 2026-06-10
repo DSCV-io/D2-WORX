@@ -185,7 +185,7 @@ public sealed class EncryptionKeyTransitionTests
 
         var result = pending.Activate(null, sr_policy, clock);
 
-        AssertPreconditionViolated(result, "proof");
+        AssertPreconditionViolated(result);
     }
 
     [Fact]
@@ -197,7 +197,7 @@ public sealed class EncryptionKeyTransitionTests
 
         var result = pending.Activate(proof, null, clock);
 
-        AssertPreconditionViolated(result, "policy");
+        AssertPreconditionViolated(result);
     }
 
     [Fact]
@@ -209,7 +209,7 @@ public sealed class EncryptionKeyTransitionTests
 
         var result = pending.Activate(proof, sr_policy, null);
 
-        AssertPreconditionViolated(result, "clock");
+        AssertPreconditionViolated(result);
     }
 
     // -----------------------------------------------------------------------
@@ -293,7 +293,7 @@ public sealed class EncryptionKeyTransitionTests
 
         var result = active.Rotate(successor, clock);
 
-        AssertPreconditionViolated(result, "successor");
+        AssertPreconditionViolated(result);
     }
 
     [Fact]
@@ -309,7 +309,7 @@ public sealed class EncryptionKeyTransitionTests
 
         var result = active.Rotate(successor, clock);
 
-        AssertPreconditionViolated(result, "successor");
+        AssertPreconditionViolated(result);
     }
 
     [Fact]
@@ -321,7 +321,7 @@ public sealed class EncryptionKeyTransitionTests
 
         var result = active.Rotate(null, clock);
 
-        AssertPreconditionViolated(result, "successor");
+        AssertPreconditionViolated(result);
     }
 
     [Fact]
@@ -333,7 +333,7 @@ public sealed class EncryptionKeyTransitionTests
 
         var result = active.Rotate(successor, null);
 
-        AssertPreconditionViolated(result, "clock");
+        AssertPreconditionViolated(result);
     }
 
     // -----------------------------------------------------------------------
@@ -407,7 +407,7 @@ public sealed class EncryptionKeyTransitionTests
 
         var result = retiring.Retire(null, clock);
 
-        AssertPreconditionViolated(result, "policy");
+        AssertPreconditionViolated(result);
     }
 
     [Fact]
@@ -417,7 +417,7 @@ public sealed class EncryptionKeyTransitionTests
 
         var result = retiring.Retire(sr_policy, null);
 
-        AssertPreconditionViolated(result, "clock");
+        AssertPreconditionViolated(result);
     }
 
     // -----------------------------------------------------------------------
@@ -479,7 +479,7 @@ public sealed class EncryptionKeyTransitionTests
 
         var result = active.Compromise("key exposed in breach", null);
 
-        AssertPreconditionViolated(result, "clock");
+        AssertPreconditionViolated(result);
     }
 
     [Fact]
@@ -501,7 +501,7 @@ public sealed class EncryptionKeyTransitionTests
 
         var result = retiring.Compromise("hardware fault", null);
 
-        AssertPreconditionViolated(result, "clock");
+        AssertPreconditionViolated(result);
     }
 
     [Fact]
@@ -512,7 +512,7 @@ public sealed class EncryptionKeyTransitionTests
 
         var result = pending.Compromise(string.Empty, clock);
 
-        AssertPreconditionViolated(result, "reason");
+        AssertPreconditionViolated(result);
     }
 
     [Fact]
@@ -523,7 +523,7 @@ public sealed class EncryptionKeyTransitionTests
 
         var result = pending.Compromise("   ", clock);
 
-        AssertPreconditionViolated(result, "reason");
+        AssertPreconditionViolated(result);
     }
 
     [Fact]
@@ -533,7 +533,7 @@ public sealed class EncryptionKeyTransitionTests
 
         var result = pending.Compromise("security incident", null);
 
-        AssertPreconditionViolated(result, "clock");
+        AssertPreconditionViolated(result);
     }
 
     [Fact]
@@ -566,20 +566,21 @@ public sealed class EncryptionKeyTransitionTests
     // -----------------------------------------------------------------------
 
     private static void AssertPreconditionViolated<T>(
-        D2.Shared.Result.D2Result<T> result, string expectedArg)
+        D2.Shared.Result.D2Result<T> result)
     {
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_PRECONDITION_VIOLATED);
         result.Category.Should().Be(ErrorCategory.InternalError);
         result.StatusCode.Should().Be(System.Net.HttpStatusCode.InternalServerError);
 
-        // The split per-arg guards name the SPECIFIC offending argument via the
-        // runtime `messages` override (TKMessage.With("arg", "<name>")).
+        // PRECONDITION_VIOLATED is a 500/internal_error opaque code — the internal
+        // argument name must NOT leak onto the wire. Assert the message key is
+        // present but carries no "arg" parameter.
         var message = result.Messages.Single(
             m => m.Key == "keycustodian_internal_PRECONDITION_VIOLATED");
-        message.Parameters.Should().NotBeNull(
-            because: "the converted guard binds the offending arg name");
-        message.Parameters!["arg"].Should().Be(expectedArg);
+        var hasArgLeak = message.Parameters?.ContainsKey("arg") ?? false;
+        hasArgLeak.Should().BeFalse(
+            because: "internal C# parameter names must not be serialized onto the wire");
     }
 
     private static PendingKey MakePending(Instant createdAt) =>

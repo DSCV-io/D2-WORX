@@ -28,6 +28,10 @@ internal static class ErrorCategoryEmitter
     /// <summary>The namespace the emitted types live in.</summary>
     public const string ROOT_NAMESPACE = "D2.Shared.ErrorCodes.Category";
 
+    /// <summary>
+    /// snake_case wire-string validator. Bucket 1 (no backtracking) — anchored
+    /// character-class match; no timeout needed.
+    /// </summary>
     private static readonly Regex sr_wireRegex = new(
         "^[a-z][a-z0-9_]*$",
         RegexOptions.Compiled);

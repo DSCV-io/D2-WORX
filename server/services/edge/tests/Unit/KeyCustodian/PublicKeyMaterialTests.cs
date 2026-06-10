@@ -69,4 +69,42 @@ public sealed class PublicKeyMaterialTests
         str.Should().NotContain("222"); // decimal 0xDE
         str.Should().NotContain("173"); // decimal 0xAD
     }
+
+    // -----------------------------------------------------------------------
+    // Value equality — content-based, not backing-array identity
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Equals_SameContentDifferentBackingArrays_AreEqual()
+    {
+        // Two independent copies of the same bytes — different backing arrays.
+        var a = PublicKeyMaterial.FromTrusted(new byte[] { 0xAA, 0xBB, 0xCC, 0xDD });
+        var b = PublicKeyMaterial.FromTrusted(new byte[] { 0xAA, 0xBB, 0xCC, 0xDD });
+
+        a.Should().Be(b);
+        a.GetHashCode().Should().Be(b.GetHashCode());
+    }
+
+    [Fact]
+    public void Equals_DifferentContent_AreNotEqual()
+    {
+        var a = PublicKeyMaterial.FromTrusted(new byte[] { 0xAA, 0xBB, 0xCC, 0xDD });
+        var b = PublicKeyMaterial.FromTrusted(new byte[] { 0xAA, 0xBB, 0xCC, 0xFF });
+
+        a.Should().NotBe(b);
+    }
+
+    [Fact]
+    public void Equals_Null_ReturnsFalse()
+    {
+        var a = PublicKeyMaterial.FromTrusted(s_validBytes);
+        a.Equals(null).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Equals_ReferenceEqual_ReturnsTrue()
+    {
+        var a = PublicKeyMaterial.FromTrusted(s_validBytes);
+        a.Equals(a).Should().BeTrue();
+    }
 }

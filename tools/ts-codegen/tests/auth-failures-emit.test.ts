@@ -106,6 +106,7 @@ describe("emitFailuresCatalog (auth) — snapshot pin", () => {
     );
   });
 
+  // long test description — cannot wrap
   it("selects the base factory by httpStatus (401 -> unauthorized, 503 -> serviceUnavailable)", () => {
     const r = emitFailuresCatalog(
       spec,

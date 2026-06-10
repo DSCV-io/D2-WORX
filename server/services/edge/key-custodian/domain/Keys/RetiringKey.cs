@@ -9,7 +9,6 @@ namespace D2.Edge.KeyCustodian.Domain.Keys;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Edge.KeyCustodian.Domain.Errors;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
-using D2.Shared.I18n;
 using D2.Shared.Result;
 using NodaTime;
 using IClock = D2.Shared.Time.IClock;
@@ -64,16 +63,10 @@ public sealed record RetiringKey : EncryptionKey
     public D2Result<RetiredKey> Retire(RotationPolicy? policy, IClock? clock)
     {
         if (policy is null)
-        {
-            return KeyCustodianFailures<RetiredKey>.PreconditionViolated(
-                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "policy")]);
-        }
+            return KeyCustodianFailures<RetiredKey>.PreconditionViolated();
 
         if (clock is null)
-        {
-            return KeyCustodianFailures<RetiredKey>.PreconditionViolated(
-                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "clock")]);
-        }
+            return KeyCustodianFailures<RetiredKey>.PreconditionViolated();
 
         var now = clock.GetCurrentInstant();
         var elapsed = now - RetiringAt;
@@ -113,10 +106,7 @@ public sealed record RetiringKey : EncryptionKey
     public D2Result<CompromisedKey> Compromise(string reason, IClock? clock)
     {
         if (clock is null)
-        {
-            return KeyCustodianFailures<CompromisedKey>.PreconditionViolated(
-                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "clock")]);
-        }
+            return KeyCustodianFailures<CompromisedKey>.PreconditionViolated();
 
         return ToCompromised(reason, clock.GetCurrentInstant());
     }

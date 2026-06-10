@@ -8,6 +8,7 @@ import { inputError, ok, validationFailed, type D2Result } from "@d2/result";
 import { falsey } from "@d2/utilities";
 import type { IPostalCodeValidator } from "@d2/validation-abstractions";
 
+// long import path — cannot wrap
 import postalCodeRegexes from "../../../../../../contracts/validation/postal-code-regexes.json" with { type: "json" };
 
 /**

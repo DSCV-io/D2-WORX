@@ -1286,6 +1286,29 @@ public static partial class TK
             /// Translation key <c>keycustodian_internal_PRECONDITION_VIOLATED</c>.
             /// </summary>
             public static readonly global::D2.Shared.I18n.TKMessage PRECONDITION_VIOLATED = new("keycustodian_internal_PRECONDITION_VIOLATED");
+            /// <summary>
+            /// Translation key <c>keycustodian_internal_SMOKE_TEST_FAILED</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage SMOKE_TEST_FAILED = new("keycustodian_internal_SMOKE_TEST_FAILED");
+        }
+
+        /// <summary>
+        /// Lifecycle translation keys.
+        /// </summary>
+        public static partial class Lifecycle
+        {
+            /// <summary>
+            /// Translation key <c>keycustodian_lifecycle_KEY_NOT_FOUND</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage KEY_NOT_FOUND = new("keycustodian_lifecycle_KEY_NOT_FOUND");
+            /// <summary>
+            /// Translation key <c>keycustodian_lifecycle_KEY_STATE_CONFLICT</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage KEY_STATE_CONFLICT = new("keycustodian_lifecycle_KEY_STATE_CONFLICT");
+            /// <summary>
+            /// Translation key <c>keycustodian_lifecycle_PENDING_KEY_ALREADY_EXISTS</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage PENDING_KEY_ALREADY_EXISTS = new("keycustodian_lifecycle_PENDING_KEY_ALREADY_EXISTS");
         }
 
         /// <summary>

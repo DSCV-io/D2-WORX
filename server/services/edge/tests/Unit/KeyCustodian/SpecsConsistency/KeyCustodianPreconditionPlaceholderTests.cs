@@ -15,12 +15,10 @@ using Xunit;
 
 /// <summary>
 /// Drift guard for the <c>keycustodian_internal_PRECONDITION_VIOLATED</c>
-/// message template. The converted KC domain guards bind the offending argument
-/// via <c>TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "&lt;name&gt;")</c>,
-/// so EVERY locale's message value MUST carry the <c>{arg}</c> placeholder for
-/// the binding to render. A locale that drops the token would silently render
-/// the bound arg nowhere — this test fails loudly if any of the ten locales
-/// loses the placeholder.
+/// message template. The template is an opaque 500/internal_error message —
+/// it MUST NOT carry an <c>{arg}</c> placeholder because that would re-introduce
+/// the wire leak that S-1 closed. This test fails loudly if any of the ten
+/// locales accidentally re-adds the placeholder.
 /// </summary>
 public sealed class KeyCustodianPreconditionPlaceholderTests
 {
@@ -44,17 +42,17 @@ public sealed class KeyCustodianPreconditionPlaceholderTests
     [InlineData("fr-FR")]
     [InlineData("it-IT")]
     [InlineData("ja-JP")]
-    public void EveryLocale_PreconditionMessage_CarriesArgPlaceholder(string locale)
+    public void EveryLocale_PreconditionMessage_DoesNotContainArgPlaceholder(string locale)
     {
         var catalog = LoadLocale(locale);
 
         catalog.Should().ContainKey(
             _KEY, because: $"the {locale} catalog must declare the KC precondition key");
-        catalog[_KEY].Should().Contain(
+        catalog[_KEY].Should().NotContain(
             _PLACEHOLDER,
             because:
-                $"the {locale} '{_KEY}' value must keep the {{arg}} token so the runtime "
-                + "TKMessage.With(\"arg\", ...) binding renders the offending argument");
+                $"the {locale} '{_KEY}' message is opaque — the {{arg}} placeholder "
+                + "must not appear or internal C# parameter names would leak onto the wire");
     }
 
     [Fact]

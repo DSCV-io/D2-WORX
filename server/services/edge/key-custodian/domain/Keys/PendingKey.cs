@@ -9,7 +9,6 @@ namespace D2.Edge.KeyCustodian.Domain.Keys;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Edge.KeyCustodian.Domain.Errors;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
-using D2.Shared.I18n;
 using D2.Shared.Result;
 using NodaTime;
 using IClock = D2.Shared.Time.IClock;
@@ -64,25 +63,16 @@ public sealed record PendingKey : EncryptionKey
         Instant createdAt)
     {
         if (kid is null)
-        {
-            return KeyCustodianFailures<PendingKey>.PreconditionViolated(
-                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "kid")]);
-        }
+            return KeyCustodianFailures<PendingKey>.PreconditionViolated();
 
         if (keyDomain is null)
-        {
-            return KeyCustodianFailures<PendingKey>.PreconditionViolated(
-                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "keyDomain")]);
-        }
+            return KeyCustodianFailures<PendingKey>.PreconditionViolated();
 
         if (encryptedMaterial is null)
-        {
-            return KeyCustodianFailures<PendingKey>.PreconditionViolated(
-                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "encryptedMaterial")]);
-        }
+            return KeyCustodianFailures<PendingKey>.PreconditionViolated();
 
-        // Enforce RSA⇒pub non-null; symmetric⇒pub null. EnsureMaterialShape
-        // already names the offending publicMaterial argument; propagate it.
+        // Enforce RSA⇒pub non-null; symmetric⇒pub null. Propagate the
+        // PreconditionViolated result from EnsureMaterialShape directly.
         var shape = EnsureMaterialShape(keyType, publicMaterial);
         if (!shape.Success)
             return KeyCustodianFailures<PendingKey>.PreconditionViolated(messages: shape.Messages);
@@ -122,22 +112,13 @@ public sealed record PendingKey : EncryptionKey
     public D2Result<ActiveKey> Activate(SmokeProof? proof, RotationPolicy? policy, IClock? clock)
     {
         if (proof is null)
-        {
-            return KeyCustodianFailures<ActiveKey>.PreconditionViolated(
-                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "proof")]);
-        }
+            return KeyCustodianFailures<ActiveKey>.PreconditionViolated();
 
         if (policy is null)
-        {
-            return KeyCustodianFailures<ActiveKey>.PreconditionViolated(
-                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "policy")]);
-        }
+            return KeyCustodianFailures<ActiveKey>.PreconditionViolated();
 
         if (clock is null)
-        {
-            return KeyCustodianFailures<ActiveKey>.PreconditionViolated(
-                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "clock")]);
-        }
+            return KeyCustodianFailures<ActiveKey>.PreconditionViolated();
 
         var now = clock.GetCurrentInstant();
         var elapsed = now - CreatedAt;
@@ -178,10 +159,7 @@ public sealed record PendingKey : EncryptionKey
     public D2Result<CompromisedKey> Compromise(string reason, IClock? clock)
     {
         if (clock is null)
-        {
-            return KeyCustodianFailures<CompromisedKey>.PreconditionViolated(
-                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "clock")]);
-        }
+            return KeyCustodianFailures<CompromisedKey>.PreconditionViolated();
 
         return ToCompromised(reason, clock.GetCurrentInstant());
     }

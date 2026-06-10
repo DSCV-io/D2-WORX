@@ -50,7 +50,7 @@ public sealed class EncryptionKeyMaterialShapeTests
     {
         var result = PendingKey.Create(sr_kid, sr_domain, KeyType.RsaSigning, sr_mat, null, sr_created);
 
-        AssertPreconditionViolated(result, "publicMaterial");
+        AssertPreconditionViolated(result);
     }
 
     // -----------------------------------------------------------------------
@@ -62,7 +62,7 @@ public sealed class EncryptionKeyMaterialShapeTests
     {
         var result = PendingKey.Create(sr_kid, sr_domain, KeyType.AesPayload, sr_mat, sr_pub, sr_created);
 
-        AssertPreconditionViolated(result, "publicMaterial");
+        AssertPreconditionViolated(result);
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public sealed class EncryptionKeyMaterialShapeTests
     {
         var result = PendingKey.Create(sr_kid, sr_domain, KeyType.Secret, sr_mat, sr_pub, sr_created);
 
-        AssertPreconditionViolated(result, "publicMaterial");
+        AssertPreconditionViolated(result);
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public sealed class EncryptionKeyMaterialShapeTests
     {
         var result = PendingKey.Create(null, sr_domain, KeyType.AesPayload, sr_mat, null, sr_created);
 
-        AssertPreconditionViolated(result, "kid");
+        AssertPreconditionViolated(result);
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public sealed class EncryptionKeyMaterialShapeTests
     {
         var result = PendingKey.Create(sr_kid, null, KeyType.AesPayload, sr_mat, null, sr_created);
 
-        AssertPreconditionViolated(result, "keyDomain");
+        AssertPreconditionViolated(result);
     }
 
     [Fact]
@@ -116,24 +116,24 @@ public sealed class EncryptionKeyMaterialShapeTests
     {
         var result = PendingKey.Create(sr_kid, sr_domain, KeyType.AesPayload, null, null, sr_created);
 
-        AssertPreconditionViolated(result, "encryptedMaterial");
+        AssertPreconditionViolated(result);
     }
 
     private static void AssertPreconditionViolated(
-        D2.Shared.Result.D2Result<PendingKey> result, string expectedArg)
+        D2.Shared.Result.D2Result<PendingKey> result)
     {
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_PRECONDITION_VIOLATED);
         result.Category.Should().Be(ErrorCategory.InternalError);
         result.StatusCode.Should().Be(System.Net.HttpStatusCode.InternalServerError);
 
-        // Each split guard names the SPECIFIC offending argument via the runtime
-        // `messages` override (TKMessage.With("arg", "<name>")); the material-shape
-        // guards propagate EnsureMaterialShape's "publicMaterial" binding.
+        // PRECONDITION_VIOLATED is a 500/internal_error opaque code — the internal
+        // argument name must NOT leak onto the wire. Assert the message key is
+        // present but carries no "arg" parameter.
         var message = result.Messages.Single(
             m => m.Key == "keycustodian_internal_PRECONDITION_VIOLATED");
-        message.Parameters.Should().NotBeNull(
-            because: "the converted guard binds the offending arg name");
-        message.Parameters!["arg"].Should().Be(expectedArg);
+        var hasArgLeak = message.Parameters?.ContainsKey("arg") ?? false;
+        hasArgLeak.Should().BeFalse(
+            because: "internal C# parameter names must not be serialized onto the wire");
     }
 }

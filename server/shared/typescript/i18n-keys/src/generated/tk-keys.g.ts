@@ -344,7 +344,13 @@ export const TK = {
   },
   keycustodian: {
     internal: {
-      PRECONDITION_VIOLATED: tk("keycustodian_internal_PRECONDITION_VIOLATED")
+      PRECONDITION_VIOLATED: tk("keycustodian_internal_PRECONDITION_VIOLATED"),
+      SMOKE_TEST_FAILED: tk("keycustodian_internal_SMOKE_TEST_FAILED")
+    },
+    lifecycle: {
+      KEY_NOT_FOUND: tk("keycustodian_lifecycle_KEY_NOT_FOUND"),
+      KEY_STATE_CONFLICT: tk("keycustodian_lifecycle_KEY_STATE_CONFLICT"),
+      PENDING_KEY_ALREADY_EXISTS: tk("keycustodian_lifecycle_PENDING_KEY_ALREADY_EXISTS")
     },
     validation: {
       GRACE_NOT_ELAPSED: tk("keycustodian_validation_GRACE_NOT_ELAPSED"),
