@@ -42,6 +42,7 @@ public sealed class ErrorCodesOutputParityTests
     private const string _AUTH_SPEC_NAME = "auth-error-codes.spec.json";
     private const string _RESULT_ASSEMBLY = "D2.Shared.Result";
     private const string _RESULT_SPEC_NAME = "error-codes.spec.json";
+    private const string _CATEGORY_SPEC_NAME = "error-category.spec.json";
 
     private static readonly string sr_generatedAuthBase =
         Path.Combine(
@@ -155,10 +156,18 @@ public sealed class ErrorCodesOutputParityTests
             TestPaths.RepoRoot(), "contracts", "auth-error-codes", "auth-error-codes.spec.json");
         var enUsPath = Path.Combine(
             TestPaths.RepoRoot(), "contracts", "messages", "en-US.json");
+        var categoryPath = Path.Combine(
+            TestPaths.RepoRoot(), "contracts", "error-category", "error-category.spec.json");
 
         var specJson = File.ReadAllText(specPath);
         var enUsJson = File.ReadAllText(enUsPath);
+        var categoryJson = File.ReadAllText(categoryPath);
 
+        // error-category.spec.json drives the engine's spec-derived
+        // category-membership check — mirror the real build's AdditionalFiles so
+        // the byte-parity regeneration EXERCISES the FIX-B category path (an
+        // unknown category would fail the run) rather than running with the
+        // check degraded to a no-op.
         return RunGenerator(
             _AUTH_ASSEMBLY,
             new ErrorCodesGenerator().AsSourceGenerator(),
@@ -166,6 +175,7 @@ public sealed class ErrorCodesOutputParityTests
             [
                 new FileBackedAdditionalText(_AUTH_SPEC_NAME, specJson),
                 new FileBackedAdditionalText("messages/en-US.json", enUsJson),
+                new FileBackedAdditionalText(_CATEGORY_SPEC_NAME, categoryJson),
             ]);
     }
 

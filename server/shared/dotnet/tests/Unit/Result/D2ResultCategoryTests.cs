@@ -99,8 +99,9 @@ public sealed class D2ResultCategoryTests
     [Fact]
     public void Forbidden_CategoryOverrideWins()
     {
-        // The with_error_code shape exposes a category override so a delegating
-        // domain factory can stamp its own code's category onto the base factory.
+        // Every error factory (the universal standard shape) exposes a category
+        // override so a delegating domain factory can stamp its own code's
+        // category onto the base factory.
         var result = D2Result.Forbidden(category: ErrorCategory.ValidationFailure);
 
         result.Category.Should().Be(ErrorCategory.ValidationFailure);

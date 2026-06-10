@@ -107,6 +107,13 @@ Copyright (c) DCSV. All rights reserved.
     <AdditionalFiles Include="$(D2ContractsRoot)auth-error-codes\auth-error-codes.spec.json" />
     <AdditionalFiles Include="$(D2ContractsRoot)telemetry\telemetry.spec.json" />
     <!--
+      error-category.spec.json — the closed ErrorCategory wire set surfaced so the
+      error-codes SrcGen's category-membership check (D2AEC002) validates against
+      the spec-derived set rather than a hand-maintained subset. Absent / malformed
+      degrades the check to a no-op (no false positives).
+    -->
+    <AdditionalFiles Include="$(D2ContractsRoot)error-category\error-category.spec.json" />
+    <!--
       en-US.json (the translation-key source of truth) surfaced so the
       error-codes SrcGen can cross-check every userMessageKey resolves to a
       real key (D2ERC002). The generator reduces it to just its key SET at

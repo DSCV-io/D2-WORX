@@ -18,7 +18,7 @@ const validSpec: ErrorCodesSpec = {
       category: "validation_failure",
       userMessageKey: "TK.X",
       factoryName: "BearerMissing",
-      factoryShape: "with_error_code",
+      factoryShape: "standard",
       doc: "Bearer missing",
     },
     {
@@ -27,7 +27,7 @@ const validSpec: ErrorCodesSpec = {
       category: "infrastructure_unavailable",
       userMessageKey: "TK.Y",
       factoryName: "JwksUnavailable",
-      factoryShape: "with_error_code",
+      factoryShape: "standard",
     },
   ],
 };

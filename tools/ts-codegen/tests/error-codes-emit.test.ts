@@ -2,6 +2,9 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { describe, expect, it } from "vitest";
 import {
   AUTH_CONFIG,
@@ -11,10 +14,12 @@ import {
   emitFailuresCatalog,
   GENERIC_CONFIG,
   GENERIC_FACTORIES_CONFIG,
+  loadCategoryWireSet,
   type CatalogConfig,
   type ErrorCodesSpec,
   validateErrorCodesSpec,
 } from "../src/error-codes-emit.js";
+import { contractsPath } from "../src/lib/paths.js";
 
 const validSpec: ErrorCodesSpec = {
   errorCodes: [
@@ -195,7 +200,7 @@ const authFactorySpec: ErrorCodesSpec = {
       category: "validation_failure",
       userMessageKey: "TK.Auth.Errors.UNAUTHORIZED",
       factoryName: "BearerMissing",
-      factoryShape: "with_error_code",
+      factoryShape: "standard",
       doc: "Bearer missing.",
     },
     {
@@ -204,7 +209,7 @@ const authFactorySpec: ErrorCodesSpec = {
       category: "infrastructure_unavailable",
       userMessageKey: "TK.Auth.Errors.TEMPORARILY_UNAVAILABLE",
       factoryName: "JwksUnavailable",
-      factoryShape: "with_error_code",
+      factoryShape: "standard",
       doc: "JWKS upstream unavailable.",
     },
   ],
@@ -227,7 +232,7 @@ describe("D2ERC001 — domain-prefix enforcement", () => {
             category: "validation_failure",
             userMessageKey: "TK.Auth.Errors.UNAUTHORIZED",
             factoryName: "FooBar",
-            factoryShape: "with_error_code",
+            factoryShape: "standard",
           },
         ],
       },
@@ -263,7 +268,7 @@ describe("D2ERC002 — TK-key existence", () => {
             category: "validation_failure",
             userMessageKey: "TK.Auth.Errors.DOES_NOT_EXIST",
             factoryName: "BearerMissing",
-            factoryShape: "with_error_code",
+            factoryShape: "standard",
           },
         ],
       },
@@ -288,8 +293,69 @@ describe("D2ERC002 — TK-key existence", () => {
   });
 });
 
+describe("loadCategoryWireSet — spec-derived category validation (FIX B)", () => {
+  it("derives exactly the 9 wire values declared in error-category.spec.json", () => {
+    const wires = loadCategoryWireSet();
+    const specPath = contractsPath(
+      "error-category",
+      "error-category.spec.json",
+    );
+    const declared = (
+      JSON.parse(readFileSync(specPath, "utf8")) as {
+        categories: { wire: string }[];
+      }
+    ).categories.map((c) => c.wire);
+
+    expect([...wires].sort()).toEqual([...declared].sort());
+    expect(wires.size).toBe(9);
+  });
+
+  it("accepts a previously-rejected-but-declared category (not_found)", () => {
+    // not_found is one of the 9 declared categories but was NOT in the old
+    // hard-coded 4-value subset — the spec-derived set accepts it.
+    const v = validateErrorCodesSpec(
+      {
+        errorCodes: [
+          {
+            code: "AUTH_X",
+            httpStatus: 401,
+            category: "not_found",
+            userMessageKey: "TK.Auth.Errors.UNAUTHORIZED",
+            factoryName: "X",
+            factoryShape: "standard",
+          },
+        ],
+      },
+      AUTH_CONFIG,
+      AUTH_EN_US_KEYS,
+    );
+    expect(v.diagnostics.some((d) => d.id === "D2AEC003")).toBe(false);
+  });
+
+  it("still rejects a genuinely-unknown category", () => {
+    // The set widens to EXACTLY the 9 declared values, no more.
+    const v = validateErrorCodesSpec(
+      {
+        errorCodes: [
+          {
+            code: "AUTH_X",
+            httpStatus: 401,
+            category: "nonsense",
+            userMessageKey: "TK.Auth.Errors.UNAUTHORIZED",
+            factoryName: "X",
+            factoryShape: "standard",
+          },
+        ],
+      },
+      AUTH_CONFIG,
+      AUTH_EN_US_KEYS,
+    );
+    expect(v.diagnostics.some((d) => d.id === "D2AEC003")).toBe(true);
+  });
+});
+
 describe("emitFailuresCatalog — factoryShape branch (D2ERC003 fail-loud)", () => {
-  it("with_error_code emits the factory referencing the TK constant", () => {
+  it("standard emits the factory referencing the TK constant", () => {
     const r = emitFailuresCatalog(
       authFactorySpec,
       AUTH_CONFIG,
@@ -299,19 +365,33 @@ describe("emitFailuresCatalog — factoryShape branch (D2ERC003 fail-loud)", () 
     expect(r.diagnostics).toEqual([]);
     expect(r.source).toContain('import { TK } from "@d2/i18n-keys";');
     // Generic methods (`<T = void>`) so one method spans the untyped + typed
-    // domain-failure cases (the TS equivalent of .NET's two-class split).
-    expect(r.source).toContain("bearerMissing<T = void>(traceId?: string)");
+    // domain-failure cases (the TS equivalent of .NET's two-class split). The
+    // opts object carries the optional `messages` override (the TS twin of
+    // .NET's `IReadOnlyList<TKMessage>? messages = null`).
+    expect(r.source).toContain(
+      "bearerMissing<T = void>(opts: { messages?: readonly TKMessage[]; traceId?: string } = {})",
+    );
     expect(r.source).toContain("return unauthorized<T>");
-    expect(r.source).toContain("jwksUnavailable<T = void>(traceId?: string)");
+    expect(r.source).toContain(
+      "jwksUnavailable<T = void>(opts: { messages?: readonly TKMessage[]; traceId?: string } = {})",
+    );
     expect(r.source).toContain("return serviceUnavailable<T>");
+    expect(r.source).toContain(
+      'import { type TKMessage } from "@d2/i18n-abstractions";',
+    );
+    expect(r.source).toContain(
+      "messages: opts.messages ?? [TK.auth.errors.UNAUTHORIZED],",
+    );
     // TK constant-reference rule: the emitted message must reference the
     // generated TS TK constant (`TK.*`) — itself a TKMessage instance — never a
     // raw PascalCase string literal (which silently bypasses the catalog and
     // won't render) and never a redundant `tk()` wrapper (the constant IS the
     // message now).
-    expect(r.source).toContain("messages: [TK.auth.errors.UNAUTHORIZED]");
     expect(r.source).toContain(
-      "messages: [TK.auth.errors.TEMPORARILY_UNAVAILABLE]",
+      "messages: opts.messages ?? [TK.auth.errors.UNAUTHORIZED],",
+    );
+    expect(r.source).toContain(
+      "messages: opts.messages ?? [TK.auth.errors.TEMPORARILY_UNAVAILABLE],",
     );
     expect(r.source).not.toContain("tk(TK.auth.errors.UNAUTHORIZED)");
     expect(r.source).not.toContain('tk("TK.Auth.Errors.UNAUTHORIZED")');
@@ -324,6 +404,37 @@ describe("emitFailuresCatalog — factoryShape branch (D2ERC003 fail-loud)", () 
     expect(r.source).toContain("category: ErrorCategoryWire.ValidationFailure");
     expect(r.source).toContain(
       "category: ErrorCategoryWire.InfrastructureUnavailable",
+    );
+  });
+
+  it("500/internal_error standard entry delegates to unhandledException", () => {
+    // Regression pin: 500+internal_error support. The factory selector must route
+    // httpStatus 500 → unhandledException, not unauthorized.
+    const internalErrorSpec: ErrorCodesSpec = {
+      errorCodes: [
+        {
+          code: "AUTH_PRECONDITION_VIOLATED",
+          httpStatus: 500,
+          category: "internal_error",
+          userMessageKey: "TK.Auth.Errors.UNAUTHORIZED",
+          factoryName: "PreconditionViolated",
+          factoryShape: "standard",
+          doc: "Internal precondition violated.",
+        },
+      ],
+    };
+    const r = emitFailuresCatalog(
+      internalErrorSpec,
+      { ...AUTH_CONFIG, supportedHttpStatuses: new Set([401, 500, 503]) },
+      AUTH_FAILURES_CONFIG,
+      AUTH_EN_US_KEYS,
+    );
+    expect(r.diagnostics).toEqual([]);
+    expect(r.source).toContain("return unhandledException<T>");
+    expect(r.source).not.toContain("return unauthorized<T>");
+    expect(r.source).not.toContain("return serviceUnavailable<T>");
+    expect(r.source).toContain(
+      "preconditionViolated<T = void>(opts: { messages?: readonly TKMessage[]; traceId?: string } = {})",
     );
   });
 
@@ -344,11 +455,16 @@ describe("emitFailuresCatalog — factoryShape branch (D2ERC003 fail-loud)", () 
     expect(r.source).toContain("jwksUnavailable");
   });
 
-  it("standard fails loud with D2ERC003 and blocks emit", () => {
+  it("removed with_error_code shape fails loud with D2ERC003 and blocks emit", () => {
+    // The schema constrains factoryShape to {standard, none}; a hand-malformed
+    // spec carrying the retired "with_error_code" value must fail loudly.
     const r = emitFailuresCatalog(
       {
         errorCodes: [
-          { ...authFactorySpec.errorCodes[0]!, factoryShape: "standard" },
+          {
+            ...authFactorySpec.errorCodes[0]!,
+            factoryShape: "with_error_code",
+          },
         ],
       },
       AUTH_CONFIG,
@@ -359,7 +475,7 @@ describe("emitFailuresCatalog — factoryShape branch (D2ERC003 fail-loud)", () 
     expect(r.diagnostics.some((d) => d.id === "D2ERC003")).toBe(true);
   });
 
-  it("validation fails loud with D2ERC003 and blocks emit", () => {
+  it("removed validation shape fails loud with D2ERC003 and blocks emit", () => {
     const r = emitFailuresCatalog(
       {
         errorCodes: [
@@ -376,7 +492,7 @@ describe("emitFailuresCatalog — factoryShape branch (D2ERC003 fail-loud)", () 
 
   // ----- silent-skip branches: no diagnostic, but entry absent from output -----
 
-  it("absent factoryShape is treated as with_error_code and emits the factory", () => {
+  it("absent factoryShape is treated as the standard shape and emits the factory", () => {
     // The canonical spec schema requires factoryShape, so a conforming spec
     // always has it. For defense-in-depth this behavior (emit rather than skip)
     // is pinned here — if the policy changes to fail-loud, update this test.
@@ -398,8 +514,10 @@ describe("emitFailuresCatalog — factoryShape branch (D2ERC003 fail-loud)", () 
       AUTH_EN_US_KEYS,
     );
     expect(r.diagnostics).toEqual([]);
-    // Entry emitted (no factoryShape → treated as with_error_code)
-    expect(r.source).toContain("bearerMissing<T = void>(traceId?: string)");
+    // Entry emitted (no factoryShape → treated as the standard shape)
+    expect(r.source).toContain(
+      "bearerMissing<T = void>(opts: { messages?: readonly TKMessage[]; traceId?: string } = {})",
+    );
   });
 
   it("entry missing userMessageKey is silently skipped with no diagnostic", () => {
@@ -412,7 +530,7 @@ describe("emitFailuresCatalog — factoryShape branch (D2ERC003 fail-loud)", () 
             category: "validation_failure" as const,
             // userMessageKey intentionally absent
             factoryName: "BearerMissing",
-            factoryShape: "with_error_code" as const,
+            factoryShape: "standard" as const,
           },
           authFactorySpec.errorCodes[1]!, // valid second entry
         ],
@@ -438,7 +556,7 @@ describe("emitFailuresCatalog — factoryShape branch (D2ERC003 fail-loud)", () 
             category: "validation_failure" as const,
             userMessageKey: "not_a_tk_path", // non-conforming — parseTkKey returns undefined
             factoryName: "BearerMissing",
-            factoryShape: "with_error_code" as const,
+            factoryShape: "standard" as const,
           },
           authFactorySpec.errorCodes[1]!, // valid second entry
         ],
@@ -455,8 +573,103 @@ describe("emitFailuresCatalog — factoryShape branch (D2ERC003 fail-loud)", () 
 });
 
 // ---------------------------------------------------------------------------
+// emitFailuresCatalog — the full httpStatus → base-factory delegation map.
+// The TS factoryFor now mirrors the .NET FailuresEmitter.BaseFactory for every
+// per-domain status (the non-restrictive payoff of the unified standard shape),
+// not just 401/500/503.
+// ---------------------------------------------------------------------------
+
+describe("emitFailuresCatalog — full httpStatus → base-factory delegation map", () => {
+  function emitFor(httpStatus: number) {
+    const domainPrefixedSpec: ErrorCodesSpec = {
+      errorCodes: [
+        {
+          code: "AUTH_X",
+          httpStatus,
+          category: "validation_failure",
+          userMessageKey: "TK.Auth.Errors.UNAUTHORIZED",
+          factoryName: "X",
+          factoryShape: "standard",
+          doc: "X.",
+        },
+      ],
+    };
+    return emitFailuresCatalog(
+      domainPrefixedSpec,
+      {
+        ...AUTH_CONFIG,
+        supportedHttpStatuses: new Set([
+          400, 401, 403, 404, 409, 413, 429, 500, 503,
+        ]),
+      },
+      AUTH_FAILURES_CONFIG,
+      AUTH_EN_US_KEYS,
+    );
+  }
+
+  it.each([
+    [400, "validationFailed"],
+    [401, "unauthorized"],
+    [403, "forbidden"],
+    [404, "notFound"],
+    [409, "conflict"],
+    [413, "payloadTooLarge"],
+    [429, "tooManyRequests"],
+    [500, "unhandledException"],
+    [503, "serviceUnavailable"],
+  ])("httpStatus %s delegates to %s", (httpStatus, baseFactory) => {
+    const r = emitFor(httpStatus);
+    expect(r.diagnostics).toEqual([]);
+    expect(r.source).toContain(`return ${baseFactory}<T>`);
+    // The selected base factory is imported by the emitted module.
+    expect(r.source).toContain(baseFactory);
+  });
+
+  it("imports exactly the base factories the catalog's statuses select", () => {
+    // The import line is computed from the used factories — a 404 + 409 catalog
+    // imports notFound + conflict, not the whole map.
+    const multiStatusSpec: ErrorCodesSpec = {
+      errorCodes: [
+        {
+          code: "AUTH_A",
+          httpStatus: 404,
+          category: "not_found",
+          userMessageKey: "TK.Auth.Errors.UNAUTHORIZED",
+          factoryName: "A",
+          factoryShape: "standard",
+          doc: "A.",
+        },
+        {
+          code: "AUTH_B",
+          httpStatus: 409,
+          category: "conflict",
+          userMessageKey: "TK.Auth.Errors.UNAUTHORIZED",
+          factoryName: "B",
+          factoryShape: "standard",
+          doc: "B.",
+        },
+      ],
+    };
+    const r = emitFailuresCatalog(
+      multiStatusSpec,
+      {
+        ...AUTH_CONFIG,
+        supportedHttpStatuses: new Set([404, 409]),
+        validCategories: new Set(["not_found", "conflict"]),
+      },
+      AUTH_FAILURES_CONFIG,
+      AUTH_EN_US_KEYS,
+    );
+    expect(r.diagnostics).toEqual([]);
+    expect(r.source).toContain(
+      'import { D2Result, conflict, notFound } from "@d2/result";',
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // emitBaseFactoriesCatalog — the generic base/constructing factories (the
-// D2Result semantic factories). Verifies the three factoryShape signatures,
+// D2Result semantic factories). Verifies the universal standard signature,
 // the constant-reference DEFAULTS (never key/path literals), the two
 // name-mismatch quirks, the httpStatus → HttpStatusCode map, the none-skip,
 // and idempotency.
@@ -489,7 +702,7 @@ const baseFactorySpec: ErrorCodesSpec = {
       category: "policy_denied",
       userMessageKey: "TK.Common.Errors.FORBIDDEN",
       factoryName: "Forbidden",
-      factoryShape: "with_error_code",
+      factoryShape: "standard",
       doc: "Forbidden.",
     },
     {
@@ -498,7 +711,7 @@ const baseFactorySpec: ErrorCodesSpec = {
       category: "validation_failure",
       userMessageKey: "TK.Common.Errors.VALIDATION_FAILED",
       factoryName: "ValidationFailed",
-      factoryShape: "validation",
+      factoryShape: "standard",
       doc: "Validation failed.",
     },
     {
@@ -545,21 +758,28 @@ describe("emitBaseFactoriesCatalog (generic base factories) — shapes", () => {
     expect(r.source).not.toContain('from "./tk-message.js"');
   });
 
-  it("standard shape: BasicOpts param, no errorCode override, bakes own category", () => {
+  it("standard shape (NOT_FOUND): ErrorOpts param + errorCode + category override", () => {
     const r = emit();
+    // Every error factory is the one universal standard shape — even the
+    // previously-restricted NOT_FOUND now takes the full ErrorOpts surface and
+    // exposes the errorCode + category overrides + inputErrors.
     expect(r.source).toContain(
-      "export function notFound<T = void>(opts: BasicOpts = {}): D2Result<T> {",
+      "export function notFound<T = void>(opts: ErrorOpts = {}): D2Result<T> {",
     );
     expect(r.source).toContain("statusCode: HttpStatusCode.NotFound,");
-    expect(r.source).toContain("errorCode: ErrorCodes.NOT_FOUND,");
-    // standard shape bakes its own category with no caller override.
-    expect(r.source).toContain("category: ErrorCategoryWire.NotFound,");
+    expect(r.source).toContain(
+      "errorCode: opts.errorCode ?? ErrorCodes.NOT_FOUND,",
+    );
+    expect(r.source).toContain(
+      "category: opts.category ?? ErrorCategoryWire.NotFound,",
+    );
+    expect(r.source).toContain("inputErrors: opts.inputErrors,");
   });
 
-  it("with_error_code shape: CodedOpts param + errorCode + category override", () => {
+  it("standard shape (FORBIDDEN): ErrorOpts param + errorCode + category override", () => {
     const r = emit();
     expect(r.source).toContain(
-      "export function forbidden<T = void>(opts: CodedOpts = {}): D2Result<T> {",
+      "export function forbidden<T = void>(opts: ErrorOpts = {}): D2Result<T> {",
     );
     expect(r.source).toContain(
       "errorCode: opts.errorCode ?? ErrorCodes.FORBIDDEN,",
@@ -569,10 +789,10 @@ describe("emitBaseFactoriesCatalog (generic base factories) — shapes", () => {
     );
   });
 
-  it("validation shape: ValidationFailedOpts param + inputErrors pass-through", () => {
+  it("standard shape (VALIDATION_FAILED): ErrorOpts param + inputErrors pass-through", () => {
     const r = emit();
     expect(r.source).toContain(
-      "export function validationFailed<T = void>(opts: ValidationFailedOpts = {}): D2Result<T> {",
+      "export function validationFailed<T = void>(opts: ErrorOpts = {}): D2Result<T> {",
     );
     expect(r.source).toContain("inputErrors: opts.inputErrors,");
     expect(r.source).toContain("statusCode: HttpStatusCode.BadRequest,");
@@ -605,21 +825,26 @@ describe("emitBaseFactoriesCatalog (generic base factories) — shapes", () => {
     expect(r.source).not.toContain('"TK.Common.Errors');
   });
 
-  it("emits the BasicOpts / CodedOpts / ValidationFailedOpts interfaces", () => {
+  it("emits the single universal ErrorOpts interface", () => {
     const r = emit();
-    expect(r.source).toContain("export interface BasicOpts {");
-    expect(r.source).toContain(
-      "export interface CodedOpts extends BasicOpts {",
-    );
-    expect(r.source).toContain(
-      "export interface ValidationFailedOpts extends CodedOpts {",
-    );
-    // CodedOpts carries the optional category override (mirroring errorCode),
-    // imported from the zero-dep @d2/error-category leaf.
+    // The three opts interfaces (BasicOpts / CodedOpts / ValidationFailedOpts)
+    // collapsed into one universal ErrorOpts carrying every optional field.
+    expect(r.source).toContain("export interface ErrorOpts {");
+    expect(r.source).not.toContain("export interface BasicOpts");
+    expect(r.source).not.toContain("export interface CodedOpts");
+    expect(r.source).not.toContain("export interface ValidationFailedOpts");
+    expect(r.source).toContain("messages?: readonly TKMessage[];");
+    expect(r.source).toContain("inputErrors?: readonly InputError[];");
+    expect(r.source).toContain("errorCode?: string;");
+    expect(r.source).toContain("category?: ErrorCategory;");
+    expect(r.source).toContain("traceId?: string;");
+    // ErrorCategory + the InputError type are imported from the zero-dep leaves.
     expect(r.source).toContain(
       'import { type ErrorCategory, ErrorCategoryWire } from "@d2/error-category";',
     );
-    expect(r.source).toContain("category?: ErrorCategory;");
+    expect(r.source).toContain(
+      'import type { InputError } from "./input-error.js";',
+    );
   });
 
   it("produces identical source across two runs (idempotency)", () => {
@@ -653,10 +878,47 @@ describe("emitBaseFactoriesCatalog — name-mismatch quirks + status map", () =>
     expect(r.source).toContain(
       "messages: opts.messages ?? [TK.common.errors.UNKNOWN],",
     );
-    expect(r.source).toContain("errorCode: ErrorCodes.UNHANDLED_EXCEPTION,");
+    expect(r.source).toContain(
+      "errorCode: opts.errorCode ?? ErrorCodes.UNHANDLED_EXCEPTION,",
+    );
     expect(r.source).toContain(
       "statusCode: HttpStatusCode.InternalServerError,",
     );
+  });
+
+  it("UNHANDLED_EXCEPTION standard emits ErrorOpts + errorCode override (500 delegating path)", () => {
+    // The real generic spec declares UNHANDLED_EXCEPTION as the universal standard
+    // shape so a delegating per-domain 500 factory can stamp its own code on the
+    // base status.
+    const r = emitBaseFactoriesCatalog(
+      {
+        errorCodes: [
+          {
+            code: "UNHANDLED_EXCEPTION",
+            httpStatus: 500,
+            category: "internal_error",
+            userMessageKey: "TK.Common.Errors.UNKNOWN",
+            factoryName: "UnhandledException",
+            factoryShape: "standard",
+            doc: "Unhandled.",
+          },
+        ],
+      },
+      GENERIC_CONFIG,
+      GENERIC_FACTORIES_CONFIG,
+      GENERIC_EN_US_KEYS,
+    );
+    expect(r.diagnostics).toEqual([]);
+    expect(r.source).toContain(
+      "export function unhandledException<T = void>(opts: ErrorOpts = {}): D2Result<T> {",
+    );
+    expect(r.source).toContain(
+      "errorCode: opts.errorCode ?? ErrorCodes.UNHANDLED_EXCEPTION,",
+    );
+    expect(r.source).toContain(
+      "category: opts.category ?? ErrorCategoryWire.InternalError,",
+    );
+    expect(r.source).toContain("statusCode: HttpStatusCode.InternalServerError,");
   });
 
   it("RATE_LIMITED → factory tooManyRequests + default-TK TOO_MANY_REQUESTS (three-way mismatch)", () => {
@@ -669,7 +931,7 @@ describe("emitBaseFactoriesCatalog — name-mismatch quirks + status map", () =>
             category: "rate_limited",
             userMessageKey: "TK.Common.Errors.TOO_MANY_REQUESTS",
             factoryName: "TooManyRequests",
-            factoryShape: "with_error_code",
+            factoryShape: "standard",
             doc: "Rate limited.",
           },
         ],
@@ -680,7 +942,7 @@ describe("emitBaseFactoriesCatalog — name-mismatch quirks + status map", () =>
     );
     expect(r.diagnostics).toEqual([]);
     expect(r.source).toContain(
-      "export function tooManyRequests<T = void>(opts: CodedOpts = {}): D2Result<T> {",
+      "export function tooManyRequests<T = void>(opts: ErrorOpts = {}): D2Result<T> {",
     );
     expect(r.source).toContain(
       "messages: opts.messages ?? [TK.common.errors.TOO_MANY_REQUESTS],",

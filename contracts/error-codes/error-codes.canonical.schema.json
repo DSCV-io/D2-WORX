@@ -66,11 +66,9 @@
           "type": "string",
           "enum": [
             "standard",
-            "with_error_code",
-            "validation",
             "none"
           ],
-          "description": "Closed enum that drives the generated factory's signature variant — must cover every current D2Result factory variant so regeneration is byte-identical. standard: (messages?, traceId?) — used by NotFound, Conflict, UnhandledException, PayloadTooLarge, Canceled. with_error_code: (messages?, errorCode?, traceId?) — used by Forbidden, Unauthorized, ServiceUnavailable, TooManyRequests; the errorCode override is how domain factories stamp a specific code on a base status. validation: (messages?, inputErrors?, errorCode?, traceId?) — used by ValidationFailed. none: no factory generated for this code; only the constant + boolean are emitted — used by codes with no current factory (e.g. SOME_FOUND/PARTIAL_SUCCESS whose data-carrying factories stay hand-rolled, IDEMPOTENCY_IN_FLIGHT/serialization codes)."
+          "description": "Closed enum that drives the generated factory's signature variant. standard: the one universal error-factory shape (messages?, inputErrors?, errorCode?, category?, traceId?) — ALL optional. Every error factory at any status can stamp a domain code + category and optionally carry inputErrors; the errorCode / category overrides are how a delegating domain factory stamps a specific code + category on a base status. none: no factory generated for this code; only the constant + boolean are emitted — used by codes with no current factory (e.g. SOME_FOUND/PARTIAL_SUCCESS whose data-carrying 206/207 factories stay hand-rolled, IDEMPOTENCY_IN_FLIGHT/serialization codes)."
         },
         "doc": {
           "type": "string",

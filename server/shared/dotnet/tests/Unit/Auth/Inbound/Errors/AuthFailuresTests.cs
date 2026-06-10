@@ -48,8 +48,15 @@ public sealed class AuthFailuresTests
         string methodName,
         string expectedErrorCode)
     {
-        var method = typeof(AuthFailures).GetMethod(methodName)!;
-        var result = (D2.Shared.Result.D2Result)method.Invoke(null, null)!;
+        // Each delegating factory carries a single optional
+        // `IReadOnlyList<TKMessage>? messages = null` parameter; passing an
+        // explicit null exercises the default-omitted (spec-TK) path.
+        var method = typeof(AuthFailures)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Single(m => m.Name == methodName
+                && !m.IsGenericMethodDefinition
+                && m.GetParameters().Length == 1);
+        var result = (D2.Shared.Result.D2Result)method.Invoke(null, [null])!;
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -69,15 +76,16 @@ public sealed class AuthFailuresTests
         string expectedErrorCode)
     {
         // Both helpers have a generic overload (e.g. JwksUnavailable<T>())
-        // with the same arity (zero params), so GetMethod(name) and
-        // GetMethod(name, EmptyTypes) are both ambiguous. Filter for the
-        // non-generic-definition overload explicitly.
+        // with the same single-optional-param arity, so GetMethod(name) is
+        // ambiguous. Filter for the non-generic-definition overload explicitly;
+        // its lone optional param is the `messages` override (passed null here
+        // to exercise the default-omitted path).
         var method = typeof(AuthFailures)
             .GetMethods(BindingFlags.Public | BindingFlags.Static)
             .Single(m => m.Name == methodName
                 && !m.IsGenericMethodDefinition
-                && m.GetParameters().Length == 0);
-        var result = (D2.Shared.Result.D2Result)method.Invoke(null, null)!;
+                && m.GetParameters().Length == 1);
+        var result = (D2.Shared.Result.D2Result)method.Invoke(null, [null])!;
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -117,8 +125,8 @@ public sealed class AuthFailuresTests
             .GetMethods(BindingFlags.Public | BindingFlags.Static)
             .Single(m => m.Name == methodName
                 && !m.IsGenericMethodDefinition
-                && m.GetParameters().Length == 0);
-        var result = (D2.Shared.Result.D2Result)method.Invoke(null, null)!;
+                && m.GetParameters().Length == 1);
+        var result = (D2.Shared.Result.D2Result)method.Invoke(null, [null])!;
 
         result.Category.Should().Be(expectedCategory);
     }

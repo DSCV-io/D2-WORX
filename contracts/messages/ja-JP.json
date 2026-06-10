@@ -247,6 +247,7 @@
   "contacts_validation_SUFFIX_CUSTOM_REQUIRED": "接尾辞が「その他」に設定されている場合、カスタム接尾辞は必須です。",
   "contacts_validation_SUFFIX_CUSTOM_TOO_LONG": "カスタム接尾辞が長すぎます。",
   "contacts_validation_WEBSITE_INVALID": "有効なウェブサイトのURLを入力してください（http:// または https:// で始まる必要があります）。",
+  "keycustodian_internal_PRECONDITION_VIOLATED": "キーの更新中に内部の前提条件が満たされませんでした（引数: {arg}）。この事象は調査のため記録されました。",
   "keycustodian_validation_GRACE_NOT_ELAPSED": "猶予期間がまだ経過していません。猶予期間終了後にキーを廃止してください。",
   "keycustodian_validation_INVALID_ROTATION_POLICY": "ローテーションポリシーの値は正の値でなければならず、周期は猶予期間とソーク期間の合計以上でなければなりません。",
   "keycustodian_validation_SMOKE_PROOF_TYPE_MISMATCH": "スモークテストの証明は、別のキータイプに対して発行されました。",

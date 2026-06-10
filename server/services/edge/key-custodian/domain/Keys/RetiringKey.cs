@@ -9,6 +9,7 @@ namespace D2.Edge.KeyCustodian.Domain.Keys;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Edge.KeyCustodian.Domain.Errors;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
+using D2.Shared.I18n;
 using D2.Shared.Result;
 using NodaTime;
 using IClock = D2.Shared.Time.IClock;
@@ -31,13 +32,17 @@ public sealed record RetiringKey : EncryptionKey
     /// <summary>
     /// Gets the UTC instant at which this key was originally activated.
     /// </summary>
-    /// <remarks>Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp; no wall-clock context to preserve.</remarks>
+    /// <remarks>
+    /// Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp; no wall-clock context to preserve.
+    /// </remarks>
     public required Instant ActivatedAt { get; init; }
 
     /// <summary>
     /// Gets the UTC instant at which rotation began (the key entered the retiring state).
     /// </summary>
-    /// <remarks>Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp; no wall-clock context to preserve.</remarks>
+    /// <remarks>
+    /// Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp; no wall-clock context to preserve.
+    /// </remarks>
     public required Instant RetiringAt { get; init; }
 
     /// <summary>
@@ -51,16 +56,24 @@ public sealed record RetiringKey : EncryptionKey
     /// <returns>
     /// <c>Ok(<see cref="RetiredKey"/>)</c> when the grace window has elapsed;
     /// <c>ValidationFailed</c> carrying <c>KEYCUSTODIAN_GRACE_NOT_ELAPSED</c> when
-    /// the window is still open.
-    /// </returns>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="policy"/> or <paramref name="clock"/> is
+    /// the window is still open;
+    /// a flagged <c>KEYCUSTODIAN_PRECONDITION_VIOLATED</c> failure when
+    /// <paramref name="policy"/> or <paramref name="clock"/> is
     /// <see langword="null"/>.
-    /// </exception>
-    public D2Result<RetiredKey> Retire(RotationPolicy policy, IClock clock)
+    /// </returns>
+    public D2Result<RetiredKey> Retire(RotationPolicy? policy, IClock? clock)
     {
-        ArgumentNullException.ThrowIfNull(policy);
-        ArgumentNullException.ThrowIfNull(clock);
+        if (policy is null)
+        {
+            return KeyCustodianFailures<RetiredKey>.PreconditionViolated(
+                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "policy")]);
+        }
+
+        if (clock is null)
+        {
+            return KeyCustodianFailures<RetiredKey>.PreconditionViolated(
+                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "clock")]);
+        }
 
         var now = clock.GetCurrentInstant();
         var elapsed = now - RetiringAt;
@@ -91,16 +104,20 @@ public sealed record RetiringKey : EncryptionKey
     /// <see cref="CompromisedKey.REASON_MAX"/> characters at construction.
     /// </param>
     /// <param name="clock">The current-time source. Must be non-null.</param>
-    /// <returns>A <see cref="CompromisedKey"/> recording this key's identity.</returns>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="clock"/> is <see langword="null"/>.
-    /// </exception>
-    /// <exception cref="ArgumentException">
-    /// Thrown when <paramref name="reason"/> is null, empty, or whitespace.
-    /// </exception>
-    public CompromisedKey Compromise(string reason, IClock clock)
+    /// <returns>
+    /// <c>Ok(<see cref="CompromisedKey"/>)</c> recording this key's identity; a
+    /// flagged <c>KEYCUSTODIAN_PRECONDITION_VIOLATED</c> failure when
+    /// <paramref name="clock"/> is <see langword="null"/> or
+    /// <paramref name="reason"/> is null, empty, or whitespace.
+    /// </returns>
+    public D2Result<CompromisedKey> Compromise(string reason, IClock? clock)
     {
-        ArgumentNullException.ThrowIfNull(clock);
+        if (clock is null)
+        {
+            return KeyCustodianFailures<CompromisedKey>.PreconditionViolated(
+                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "clock")]);
+        }
+
         return ToCompromised(reason, clock.GetCurrentInstant());
     }
 }

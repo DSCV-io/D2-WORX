@@ -34,7 +34,7 @@ public sealed class ErrorCodesEmitterTests
     {
         var spec = MakeSpec(new ErrorCodeEntry("X_THING", 404, "X thing doc."));
 
-        var result = ConstantsEmitter.Emit(spec, Config);
+        var result = ConstantsEmitter.Emit(spec, Config, ImmutableHashSet<string>.Empty);
 
         result.Diagnostics.Should().BeEmpty();
         result.GeneratedSource.Should().Contain("public const string X_THING = \"X_THING\";");
@@ -57,7 +57,7 @@ public sealed class ErrorCodesEmitterTests
             new ErrorCodeEntry("DUPE", 400, "X"),
             new ErrorCodeEntry("DUPE", 400, "Y"));
 
-        var result = ConstantsEmitter.Emit(spec, Config);
+        var result = ConstantsEmitter.Emit(spec, Config, ImmutableHashSet<string>.Empty);
 
         result.Diagnostics.Should()
             .ContainSingle(d => d.DescriptorId == DiagnosticIds.DuplicateCode);
@@ -68,7 +68,7 @@ public sealed class ErrorCodesEmitterTests
     {
         var spec = MakeSpec(new ErrorCodeEntry("X", 418, "X"));
 
-        var result = ConstantsEmitter.Emit(spec, Config);
+        var result = ConstantsEmitter.Emit(spec, Config, ImmutableHashSet<string>.Empty);
 
         result.Diagnostics.Should()
             .ContainSingle(d => d.DescriptorId == DiagnosticIds.InvalidHttpStatus);
@@ -79,7 +79,7 @@ public sealed class ErrorCodesEmitterTests
     {
         var spec = MakeSpec(new ErrorCodeEntry("lowercase", 400, "X"));
 
-        var result = ConstantsEmitter.Emit(spec, Config);
+        var result = ConstantsEmitter.Emit(spec, Config, ImmutableHashSet<string>.Empty);
 
         result.Diagnostics.Should()
             .ContainSingle(d => d.DescriptorId == DiagnosticIds.InvalidCode);
@@ -90,7 +90,7 @@ public sealed class ErrorCodesEmitterTests
     {
         var spec = MakeSpec(new ErrorCodeEntry(string.Empty, 400, "X"));
 
-        var result = ConstantsEmitter.Emit(spec, Config);
+        var result = ConstantsEmitter.Emit(spec, Config, ImmutableHashSet<string>.Empty);
 
         result.Diagnostics.Should()
             .ContainSingle(d => d.DescriptorId == DiagnosticIds.InvalidCode);
@@ -101,7 +101,7 @@ public sealed class ErrorCodesEmitterTests
     {
         var spec = MakeSpec(new ErrorCodeEntry("   ", 400, "X"));
 
-        var result = ConstantsEmitter.Emit(spec, Config);
+        var result = ConstantsEmitter.Emit(spec, Config, ImmutableHashSet<string>.Empty);
 
         result.Diagnostics.Should()
             .ContainSingle(d => d.DescriptorId == DiagnosticIds.InvalidCode);
@@ -112,7 +112,7 @@ public sealed class ErrorCodesEmitterTests
     {
         var spec = MakeSpec(new ErrorCodeEntry("9NOPE", 400, "X"));
 
-        var result = ConstantsEmitter.Emit(spec, Config);
+        var result = ConstantsEmitter.Emit(spec, Config, ImmutableHashSet<string>.Empty);
 
         result.Diagnostics.Should()
             .ContainSingle(d => d.DescriptorId == DiagnosticIds.InvalidCode);
@@ -123,7 +123,7 @@ public sealed class ErrorCodesEmitterTests
     {
         var spec = MakeSpec(new ErrorCodeEntry("X", 400, string.Empty));
 
-        var result = ConstantsEmitter.Emit(spec, Config);
+        var result = ConstantsEmitter.Emit(spec, Config, ImmutableHashSet<string>.Empty);
 
         result.Diagnostics.Should()
             .ContainSingle(d => d.DescriptorId == DiagnosticIds.MissingDoc);
@@ -134,7 +134,7 @@ public sealed class ErrorCodesEmitterTests
     {
         var spec = MakeSpec(new ErrorCodeEntry("X", 400, "   "));
 
-        var result = ConstantsEmitter.Emit(spec, Config);
+        var result = ConstantsEmitter.Emit(spec, Config, ImmutableHashSet<string>.Empty);
 
         result.Diagnostics.Should()
             .ContainSingle(d => d.DescriptorId == DiagnosticIds.MissingDoc);
@@ -147,7 +147,7 @@ public sealed class ErrorCodesEmitterTests
             new ErrorCodeEntry("ZEBRA", 400, "Z"),
             new ErrorCodeEntry("ALPHA", 400, "A"));
 
-        var result = ConstantsEmitter.Emit(spec, Config);
+        var result = ConstantsEmitter.Emit(spec, Config, ImmutableHashSet<string>.Empty);
 
         result.Diagnostics.Should().BeEmpty();
 
@@ -165,7 +165,7 @@ public sealed class ErrorCodesEmitterTests
         // unprefixed code must NOT fire the domain-prefix diagnostic.
         var spec = MakeSpec(new ErrorCodeEntry("NOT_FOUND", 404, "X"));
 
-        var result = ConstantsEmitter.Emit(spec, Config);
+        var result = ConstantsEmitter.Emit(spec, Config, ImmutableHashSet<string>.Empty);
 
         result.Diagnostics.Should().BeEmpty();
     }
@@ -175,8 +175,8 @@ public sealed class ErrorCodesEmitterTests
     {
         var spec = MakeSpec(new ErrorCodeEntry("X", 400, "X doc."));
 
-        var first = ConstantsEmitter.Emit(spec, Config);
-        var second = ConstantsEmitter.Emit(spec, Config);
+        var first = ConstantsEmitter.Emit(spec, Config, ImmutableHashSet<string>.Empty);
+        var second = ConstantsEmitter.Emit(spec, Config, ImmutableHashSet<string>.Empty);
 
         second.GeneratedSource.Should().Be(first.GeneratedSource);
     }
@@ -210,7 +210,7 @@ public sealed class ErrorCodesEmitterTests
     {
         var spec = MakeSpec(new ErrorCodeEntry(code, httpStatus, $"{code} doc."));
 
-        var result = ConstantsEmitter.Emit(spec, Config);
+        var result = ConstantsEmitter.Emit(spec, Config, ImmutableHashSet<string>.Empty);
 
         result.Diagnostics.Should().BeEmpty();
         result.GeneratedSource.Should().Contain($"public const string {code} = \"{code}\";");
@@ -222,7 +222,7 @@ public sealed class ErrorCodesEmitterTests
     {
         var spec = MakeSpec(new ErrorCodeEntry("X", 400, "Has <angle> & ampersand."));
 
-        var result = ConstantsEmitter.Emit(spec, Config);
+        var result = ConstantsEmitter.Emit(spec, Config, ImmutableHashSet<string>.Empty);
 
         result.Diagnostics.Should().BeEmpty();
         result.GeneratedSource.Should().Contain("&lt;angle&gt; &amp; ampersand.");
@@ -233,7 +233,7 @@ public sealed class ErrorCodesEmitterTests
     {
         var spec = MakeSpec(new ErrorCodeEntry("X", 400, "Short doc."));
 
-        var result = ConstantsEmitter.Emit(spec, Config);
+        var result = ConstantsEmitter.Emit(spec, Config, ImmutableHashSet<string>.Empty);
 
         result.Diagnostics.Should().BeEmpty();
         result.GeneratedSource.Should().Contain("    /// <summary>Short doc.</summary>");

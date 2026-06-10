@@ -3,6 +3,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
+import { tk } from "@d2/i18n-abstractions";
 import {
   ALL_AUTH_ERROR_CODES,
   AuthErrorCodes,
@@ -82,7 +83,24 @@ describe("AuthFailures — factory shape (mirrors .NET 1:1)", () => {
   });
 
   it("traceId pass-through", () => {
-    expect(AuthFailures.bearerMissing("trace-1").traceId).toBe("trace-1");
+    expect(AuthFailures.bearerMissing({ traceId: "trace-1" }).traceId).toBe(
+      "trace-1",
+    );
+  });
+
+  it("messages override is honored; omitted defaults to the spec TK", () => {
+    // The delegating factory's opts object carries an optional `messages`
+    // override (the TS twin of .NET's `IReadOnlyList<TKMessage>? messages`).
+    // Omitted → the spec's default TK; supplied → the override rides the wire.
+    const def = AuthFailures.bearerMissing();
+    expect(def.messages[0]?.key).toBe("auth_errors_UNAUTHORIZED");
+    expect(def.messages[0]?.params).toBeUndefined();
+
+    const overridden = AuthFailures.bearerMissing({
+      messages: [tk("auth_errors_UNAUTHORIZED", { arg: "token" })],
+    });
+    expect(overridden.messages[0]?.key).toBe("auth_errors_UNAUTHORIZED");
+    expect(overridden.messages[0]?.params).toEqual({ arg: "token" });
   });
 });
 

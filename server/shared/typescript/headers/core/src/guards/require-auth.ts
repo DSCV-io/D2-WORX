@@ -36,7 +36,7 @@ export function requireAuth(
     ctx.isAuthenticated !== true
   ) {
     const traceId = ctx?.traceId ?? undefined;
-    const failure = AuthFailures.bearerMissing(traceId);
+    const failure = AuthFailures.bearerMissing({ traceId });
     const body = toProblemDetails(failure, { instance: event.url.pathname });
     throwers.throwError(
       HttpStatusCode.Unauthorized,

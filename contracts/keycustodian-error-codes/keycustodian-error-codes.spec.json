@@ -7,7 +7,7 @@
       "category": "validation_failure",
       "userMessageKey": "TK.Common.Validation.ID_INVALID",
       "factoryName": "KidInvalid",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "The key identifier is null, empty, whitespace, or contains characters outside the JWKS-safe charset [A-Za-z0-9_-]."
     },
     {
@@ -16,7 +16,7 @@
       "category": "validation_failure",
       "userMessageKey": "TK.Common.Errors.TOO_LONG",
       "factoryName": "KidTooLong",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "The key identifier exceeds the maximum length of 64 characters."
     },
     {
@@ -25,7 +25,7 @@
       "category": "validation_failure",
       "userMessageKey": "TK.Keycustodian.Validation.UNKNOWN_KEY_DOMAIN",
       "factoryName": "UnknownKeyDomain",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "The specified key domain is not a member of the recognized key-domain catalog."
     },
     {
@@ -34,7 +34,7 @@
       "category": "validation_failure",
       "userMessageKey": "TK.Keycustodian.Validation.INVALID_ROTATION_POLICY",
       "factoryName": "InvalidRotationPolicy",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "A rotation-policy duration is non-positive, or the cadence is shorter than grace plus smoke-soak."
     },
     {
@@ -43,7 +43,7 @@
       "category": "validation_failure",
       "userMessageKey": "TK.Keycustodian.Validation.SOAK_NOT_ELAPSED",
       "factoryName": "SoakNotElapsed",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "The smoke-soak window has not yet elapsed; the pending key may not be activated."
     },
     {
@@ -52,7 +52,7 @@
       "category": "validation_failure",
       "userMessageKey": "TK.Keycustodian.Validation.SMOKE_PROOF_TYPE_MISMATCH",
       "factoryName": "SmokeProofTypeMismatch",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "The supplied smoke proof was issued for a different key type than this key."
     },
     {
@@ -61,8 +61,17 @@
       "category": "validation_failure",
       "userMessageKey": "TK.Keycustodian.Validation.GRACE_NOT_ELAPSED",
       "factoryName": "GraceNotElapsed",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "The retirement grace window has not yet elapsed; the retiring key may not be retired."
+    },
+    {
+      "code": "KEYCUSTODIAN_PRECONDITION_VIOLATED",
+      "httpStatus": 500,
+      "category": "internal_error",
+      "userMessageKey": "TK.Keycustodian.Internal.PRECONDITION_VIOLATED",
+      "factoryName": "PreconditionViolated",
+      "factoryShape": "standard",
+      "doc": "A required argument supplied to a key-lifecycle transition was null, empty, or otherwise violated a documented precondition. This is a programmer/precondition error surfaced as a flagged 500 result (carrying telemetry) rather than a thrown exception."
     }
   ]
 }

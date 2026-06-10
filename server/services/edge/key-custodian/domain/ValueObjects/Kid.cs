@@ -35,7 +35,7 @@ public sealed partial record Kid
     // Bucket 1 — no-backtracking pattern: single anchored character class with no
     // alternation or repetition that could backtrack. Input is length-capped to
     // _KID_MAX before the match so no timeout is required (§5.20).
-    private static readonly Regex sr_kidCharset = Sr_KidCharsetRegex();
+    private static readonly Regex sr_kidCharset = KidCharsetRegex();
 
     /// <summary>Gets the raw <c>kid</c> string value.</summary>
     public required string Value { get; init; }
@@ -82,5 +82,5 @@ public sealed partial record Kid
 
     /// <summary>JWKS-safe charset: letters, digits, hyphens, underscores only.</summary>
     [GeneratedRegex(@"^[A-Za-z0-9_-]+$", RegexOptions.None)]
-    private static partial Regex Sr_KidCharsetRegex();
+    private static partial Regex KidCharsetRegex();
 }

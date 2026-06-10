@@ -39,8 +39,8 @@ using D2.Shared.I18n;
 /// </param>
 /// <param name="FactoryName">PascalCase factory name (e.g. <c>BearerMissing</c>).</param>
 /// <param name="FactoryShape">
-/// Factory signature variant: <c>standard</c>, <c>with_error_code</c>,
-/// <c>validation</c>, or <c>none</c>.
+/// Factory signature variant: <c>standard</c> (the universal
+/// error-factory shape) or <c>none</c>.
 /// </param>
 /// <param name="Doc">XML summary / JSDoc documentation text for this code.</param>
 /// <param name="Domain">
@@ -85,7 +85,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.ValidationFailure,
                 UserMessageKey: TK.Auth.Errors.UNAUTHORIZED,
                 FactoryName: "BearerMissing",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "The Authorization header was missing on a protected endpoint.",
                 Domain: "auth"),
             ["AUTH_BEARER_MALFORMED"] = new ErrorCodeInfo(
@@ -94,7 +94,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.ValidationFailure,
                 UserMessageKey: TK.Auth.Errors.UNAUTHORIZED,
                 FactoryName: "BearerMalformed",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "The Authorization header was present but not a parseable Bearer JWT.",
                 Domain: "auth"),
             ["AUTH_JWT_SIGNATURE_INVALID"] = new ErrorCodeInfo(
@@ -103,7 +103,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.ValidationFailure,
                 UserMessageKey: TK.Auth.Errors.UNAUTHORIZED,
                 FactoryName: "JwtSignatureInvalid",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "JWT signature verification failed against the JWKS.",
                 Domain: "auth"),
             ["AUTH_JWT_EXPIRED"] = new ErrorCodeInfo(
@@ -112,7 +112,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.ValidationFailure,
                 UserMessageKey: TK.Auth.Errors.UNAUTHORIZED,
                 FactoryName: "JwtExpired",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "JWT is expired (exp in the past, beyond clock skew).",
                 Domain: "auth"),
             ["AUTH_JWT_NOT_YET_VALID"] = new ErrorCodeInfo(
@@ -121,7 +121,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.ValidationFailure,
                 UserMessageKey: TK.Auth.Errors.UNAUTHORIZED,
                 FactoryName: "JwtNotYetValid",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "JWT not yet valid (nbf in the future, beyond clock skew).",
                 Domain: "auth"),
             ["AUTH_JWT_ISSUER_MISMATCH"] = new ErrorCodeInfo(
@@ -130,7 +130,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.ValidationFailure,
                 UserMessageKey: TK.Auth.Errors.UNAUTHORIZED,
                 FactoryName: "JwtIssuerMismatch",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "JWT iss claim does not match the configured issuer.",
                 Domain: "auth"),
             ["AUTH_JWT_AUDIENCE_MISMATCH"] = new ErrorCodeInfo(
@@ -139,7 +139,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.ValidationFailure,
                 UserMessageKey: TK.Auth.Errors.UNAUTHORIZED,
                 FactoryName: "JwtAudienceMismatch",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "JWT aud claim does not match this service's configured audience.",
                 Domain: "auth"),
             ["AUTH_JWT_CLAIM_MISSING"] = new ErrorCodeInfo(
@@ -148,7 +148,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.ValidationFailure,
                 UserMessageKey: TK.Auth.Errors.UNAUTHORIZED,
                 FactoryName: "JwtClaimMissing",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "JWT is missing a required claim that this service depends on.",
                 Domain: "auth"),
             ["AUTH_JWT_ACT_CHAIN_MALFORMED"] = new ErrorCodeInfo(
@@ -157,7 +157,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.ValidationFailure,
                 UserMessageKey: TK.Auth.Errors.UNAUTHORIZED,
                 FactoryName: "JwtActChainMalformed",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "JWT act chain is malformed (RFC 8693 section 2.1 violation).",
                 Domain: "auth"),
             ["AUTH_JWT_KID_NOT_FOUND"] = new ErrorCodeInfo(
@@ -166,7 +166,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.ValidationFailure,
                 UserMessageKey: TK.Auth.Errors.UNAUTHORIZED,
                 FactoryName: "JwtKidNotFound",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "JWT signed by an unknown kid; reactive JWKS refresh did not surface it.",
                 Domain: "auth"),
             ["AUTH_JWKS_UNAVAILABLE"] = new ErrorCodeInfo(
@@ -175,7 +175,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.InfrastructureUnavailable,
                 UserMessageKey: TK.Auth.Errors.TEMPORARILY_UNAVAILABLE,
                 FactoryName: "JwksUnavailable",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "JWKS upstream is unavailable; no cached snapshot to fall back on.",
                 Domain: "auth"),
             ["AUTH_SESSION_REVOKED"] = new ErrorCodeInfo(
@@ -184,7 +184,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.PolicyDenied,
                 UserMessageKey: TK.Auth.Errors.UNAUTHORIZED,
                 FactoryName: "SessionRevoked",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "The bearer's d2_session_id is no longer alive (revoked).",
                 Domain: "auth"),
             ["AUTH_SESSION_LIVENESS_UNAVAILABLE"] = new ErrorCodeInfo(
@@ -193,7 +193,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.InfrastructureUnavailable,
                 UserMessageKey: TK.Auth.Errors.TEMPORARILY_UNAVAILABLE,
                 FactoryName: "SessionLivenessUnavailable",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "Session liveness store unreachable. Caller fails closed: receives a 503-equivalent and may retry; the attempt is NOT treated as authenticated. Treating an unknown liveness state as alive would let revoked sessions ride through outages.",
                 Domain: "auth"),
             ["AUTH_SCOPE_INSUFFICIENT"] = new ErrorCodeInfo(
@@ -202,7 +202,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.PolicyDenied,
                 UserMessageKey: TK.Auth.Errors.UNAUTHORIZED,
                 FactoryName: "ScopeInsufficient",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "Caller is authenticated but the per-endpoint scope requirement is not satisfied. Surfaces as 401 (not 403) - the auth boundary keeps a uniform shape regardless of whether the JWT was bad or scopes were insufficient, so attackers cannot deduce which check failed.",
                 Domain: "auth"),
             ["NOT_FOUND"] = new ErrorCodeInfo(
@@ -220,7 +220,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.PolicyDenied,
                 UserMessageKey: TK.Common.Errors.FORBIDDEN,
                 FactoryName: "Forbidden",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "Indicates that the action is forbidden due to insufficient permissions.",
                 Domain: "common"),
             ["UNAUTHORIZED"] = new ErrorCodeInfo(
@@ -229,7 +229,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.PolicyDenied,
                 UserMessageKey: TK.Common.Errors.UNAUTHORIZED,
                 FactoryName: "Unauthorized",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "Indicates that the user is unauthorized to perform the action (e.g., not authenticated).",
                 Domain: "common"),
             ["VALIDATION_FAILED"] = new ErrorCodeInfo(
@@ -238,7 +238,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.ValidationFailure,
                 UserMessageKey: TK.Common.Errors.VALIDATION_FAILED,
                 FactoryName: "ValidationFailed",
-                FactoryShape: "validation",
+                FactoryShape: "standard",
                 Doc: "Indicates that the input validation has failed.",
                 Domain: "common"),
             ["CONFLICT"] = new ErrorCodeInfo(
@@ -283,7 +283,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.InfrastructureUnavailable,
                 UserMessageKey: TK.Common.Errors.SERVICE_UNAVAILABLE,
                 FactoryName: "ServiceUnavailable",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "Indicates that the service is currently unavailable.",
                 Domain: "common"),
             ["SOME_FOUND"] = new ErrorCodeInfo(
@@ -310,7 +310,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.RateLimited,
                 UserMessageKey: TK.Common.Errors.TOO_MANY_REQUESTS,
                 FactoryName: "TooManyRequests",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "Indicates that the request has been rate limited.",
                 Domain: "common"),
             ["IDEMPOTENCY_IN_FLIGHT"] = new ErrorCodeInfo(
@@ -346,7 +346,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.ValidationFailure,
                 UserMessageKey: TK.Common.Validation.ID_INVALID,
                 FactoryName: "KidInvalid",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "The key identifier is null, empty, whitespace, or contains characters outside the JWKS-safe charset [A-Za-z0-9_-].",
                 Domain: "keycustodian"),
             ["KEYCUSTODIAN_KID_TOO_LONG"] = new ErrorCodeInfo(
@@ -355,7 +355,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.ValidationFailure,
                 UserMessageKey: TK.Common.Errors.TOO_LONG,
                 FactoryName: "KidTooLong",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "The key identifier exceeds the maximum length of 64 characters.",
                 Domain: "keycustodian"),
             ["KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN"] = new ErrorCodeInfo(
@@ -364,7 +364,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.ValidationFailure,
                 UserMessageKey: TK.Keycustodian.Validation.UNKNOWN_KEY_DOMAIN,
                 FactoryName: "UnknownKeyDomain",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "The specified key domain is not a member of the recognized key-domain catalog.",
                 Domain: "keycustodian"),
             ["KEYCUSTODIAN_INVALID_ROTATION_POLICY"] = new ErrorCodeInfo(
@@ -373,7 +373,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.ValidationFailure,
                 UserMessageKey: TK.Keycustodian.Validation.INVALID_ROTATION_POLICY,
                 FactoryName: "InvalidRotationPolicy",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "A rotation-policy duration is non-positive, or the cadence is shorter than grace plus smoke-soak.",
                 Domain: "keycustodian"),
             ["KEYCUSTODIAN_SOAK_NOT_ELAPSED"] = new ErrorCodeInfo(
@@ -382,7 +382,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.ValidationFailure,
                 UserMessageKey: TK.Keycustodian.Validation.SOAK_NOT_ELAPSED,
                 FactoryName: "SoakNotElapsed",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "The smoke-soak window has not yet elapsed; the pending key may not be activated.",
                 Domain: "keycustodian"),
             ["KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH"] = new ErrorCodeInfo(
@@ -391,7 +391,7 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.ValidationFailure,
                 UserMessageKey: TK.Keycustodian.Validation.SMOKE_PROOF_TYPE_MISMATCH,
                 FactoryName: "SmokeProofTypeMismatch",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "The supplied smoke proof was issued for a different key type than this key.",
                 Domain: "keycustodian"),
             ["KEYCUSTODIAN_GRACE_NOT_ELAPSED"] = new ErrorCodeInfo(
@@ -400,8 +400,17 @@ public static class ErrorCodeRegistry
                 Category: ErrorCategory.ValidationFailure,
                 UserMessageKey: TK.Keycustodian.Validation.GRACE_NOT_ELAPSED,
                 FactoryName: "GraceNotElapsed",
-                FactoryShape: "with_error_code",
+                FactoryShape: "standard",
                 Doc: "The retirement grace window has not yet elapsed; the retiring key may not be retired.",
+                Domain: "keycustodian"),
+            ["KEYCUSTODIAN_PRECONDITION_VIOLATED"] = new ErrorCodeInfo(
+                Code: "KEYCUSTODIAN_PRECONDITION_VIOLATED",
+                HttpStatus: 500,
+                Category: ErrorCategory.InternalError,
+                UserMessageKey: TK.Keycustodian.Internal.PRECONDITION_VIOLATED,
+                FactoryName: "PreconditionViolated",
+                FactoryShape: "standard",
+                Doc: "A required argument supplied to a key-lifecycle transition was null, empty, or otherwise violated a documented precondition. This is a programmer/precondition error surfaced as a flagged 500 result (carrying telemetry) rather than a thrown exception.",
                 Domain: "keycustodian"),
         }.ToFrozenDictionary(StringComparer.Ordinal);
 
@@ -448,6 +457,7 @@ public static class ErrorCodeRegistry
                 sr_lookup["KEYCUSTODIAN_SOAK_NOT_ELAPSED"],
                 sr_lookup["KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH"],
                 sr_lookup["KEYCUSTODIAN_GRACE_NOT_ELAPSED"],
+                sr_lookup["KEYCUSTODIAN_PRECONDITION_VIOLATED"],
             ]);
 
     /// <summary>

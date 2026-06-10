@@ -31,7 +31,7 @@ using Xunit;
 ///   "userMessageKeySnake": "auth_errors_UNAUTHORIZED",
 ///   "userMessageKeyPath": "TK.Auth.Errors.UNAUTHORIZED",
 ///   "factoryName": "BearerMissing",
-///   "factoryShape": "with_error_code",
+///   "factoryShape": "standard",
 ///   "doc": "...",
 ///   "domain": "auth"
 /// }

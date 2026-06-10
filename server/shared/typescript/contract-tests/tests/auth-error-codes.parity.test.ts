@@ -79,7 +79,7 @@ describe("auth-error-codes parity (.NET catalog ↔ TS catalog)", () => {
     const fixtureCodes = Object.keys(fixtureMap).sort();
     const failures = AuthFailures as unknown as Record<
       string,
-      (traceId?: string) => { errorCode?: string }
+      (opts?: { traceId?: string }) => { errorCode?: string }
     >;
 
     // Per-VALUE pin: the .NET fixture maps code → camelCase factory name; the

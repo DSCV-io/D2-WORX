@@ -36,6 +36,7 @@ public sealed class KeyCustodianErrorCodesOutputParityTests
 {
     private const string _ASSEMBLY = "D2.Edge.KeyCustodian.Domain";
     private const string _SPEC_NAME = "keycustodian-error-codes.spec.json";
+    private const string _CATEGORY_SPEC_NAME = "error-category.spec.json";
 
     [Theory]
     [InlineData("KeyCustodianErrorCodes.g.cs")]
@@ -58,10 +59,13 @@ public sealed class KeyCustodianErrorCodesOutputParityTests
     {
         var specJson = File.ReadAllText(TestPaths.KeyCustodianErrorCodesSpec());
         var enUsJson = File.ReadAllText(TestPaths.EnUsMessages());
+        var categoryJson = File.ReadAllText(TestPaths.ErrorCategorySpec());
 
-        // en-US.json drives the engine's D2ERC002 TK-existence cross-check —
-        // mirror the real build's AdditionalFiles so an unresolved
-        // userMessageKey would fail the run.
+        // en-US.json drives the engine's D2ERC002 TK-existence cross-check;
+        // error-category.spec.json drives the spec-derived category-membership
+        // check — mirror the real build's AdditionalFiles so an unresolved
+        // userMessageKey OR an unknown category would fail the run (the
+        // byte-parity regeneration thus EXERCISES the FIX-B category path).
         return RunGenerator(
             _ASSEMBLY,
             new ErrorCodesGenerator().AsSourceGenerator(),
@@ -69,6 +73,7 @@ public sealed class KeyCustodianErrorCodesOutputParityTests
             [
                 new FileBackedAdditionalText(_SPEC_NAME, specJson),
                 new FileBackedAdditionalText("messages/en-US.json", enUsJson),
+                new FileBackedAdditionalText(_CATEGORY_SPEC_NAME, categoryJson),
             ]);
     }
 

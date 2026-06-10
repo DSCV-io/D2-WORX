@@ -21,7 +21,7 @@ export { type ErrorCategory } from "@d2/error-category";
 //   category        → ErrorCategory (9-value string-union from @d2/error-category)
 //   userMessageKey  → TKMessage (typed TK constant from @d2/i18n-keys)
 //   factoryName     → string (PascalCase factory symbol)
-//   factoryShape    → ErrorCodeFactoryShape (4-value string-union)
+//   factoryShape    → ErrorCodeFactoryShape (2-value string-union: standard / none)
 //   doc             → string (developer / JSDoc documentation text)
 //   domain          → string (derived from spec filename; "common" for generic)
 // ---------------------------------------------------------------------------
@@ -32,15 +32,12 @@ export { type ErrorCategory } from "@d2/error-category";
 // package's barrel for backward compatibility.
 
 /**
- * Closed factory-shape classification. Mirrors the .NET `ErrorCodeFactoryShape`
- * enum wire-string values byte-for-byte — the four values come directly from
- * the canonical schema enum.
+ * Closed factory-shape classification. Mirrors the canonical schema enum
+ * byte-for-byte: `standard` is the one universal error-factory shape
+ * (messages?, inputErrors?, errorCode?, category?, traceId? — all optional);
+ * `none` emits the constant + boolean only (no factory).
  */
-export type ErrorCodeFactoryShape =
-  | "standard"
-  | "with_error_code"
-  | "validation"
-  | "none";
+export type ErrorCodeFactoryShape = "standard" | "none";
 
 /**
  * Full metadata record for one error code in the merged registry. Generated

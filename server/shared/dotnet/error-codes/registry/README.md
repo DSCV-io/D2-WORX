@@ -30,7 +30,7 @@ if (ErrorCodeRegistry.TryResolve("AUTH_JWT_EXPIRED", out var info))
     info.Category.ToWire(); // "validation_failure"
     info.UserMessageKey; // TK.Auth.Errors.UNAUTHORIZED
     info.FactoryName;    // "JwtExpired"
-    info.FactoryShape;   // "with_error_code"
+    info.FactoryShape;   // "standard"
     info.Domain;         // "auth"
 }
 
@@ -46,7 +46,7 @@ var allCodes = ErrorCodeRegistry.All;
 | `Category`       | `ErrorCategory` | Closed nine-value enum from `D2.Shared.ErrorCodes.Category`; serializes as snake_case wire string via `ErrorCategoryJsonConverter` |
 | `UserMessageKey` | `TKMessage`     | Typed TK constant; callers needing the wire key read `.Key`                     |
 | `FactoryName`    | `string`        | PascalCase factory symbol (e.g. `BearerMissing`)                                |
-| `FactoryShape`   | `string`        | One of `standard` / `with_error_code` / `validation` / `none`                  |
+| `FactoryShape`   | `string`        | One of `standard` (the universal error-factory shape) / `none`                 |
 | `Doc`            | `string`        | Developer documentation text from the spec                                      |
 | `Domain`         | `string`        | Derived from spec filename: `common` (generic catalog), `auth`, etc.            |
 

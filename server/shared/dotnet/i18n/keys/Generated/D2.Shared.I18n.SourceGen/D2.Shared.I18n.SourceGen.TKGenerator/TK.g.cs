@@ -1278,6 +1278,17 @@ public static partial class TK
     public static partial class Keycustodian
     {
         /// <summary>
+        /// Internal translation keys.
+        /// </summary>
+        public static partial class Internal
+        {
+            /// <summary>
+            /// Translation key <c>keycustodian_internal_PRECONDITION_VIOLATED</c>.
+            /// </summary>
+            public static readonly global::D2.Shared.I18n.TKMessage PRECONDITION_VIOLATED = new("keycustodian_internal_PRECONDITION_VIOLATED");
+        }
+
+        /// <summary>
         /// Validation translation keys.
         /// </summary>
         public static partial class Validation

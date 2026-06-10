@@ -82,9 +82,10 @@ public sealed class ErrorCodesEngineTests
     }
 
     [Fact]
-    public void FactoryShapeWithErrorCode_EmitsMessagesAndErrorCodeNamedArguments()
+    public void FactoryShapeStandard_EmitsMessagesAndErrorCodeNamedArguments()
     {
-        // factoryShape = with_error_code → (messages:, errorCode:) call shape.
+        // The universal standard shape → optional messages override defaulting to
+        // the spec TK, threaded as (messages: messages, errorCode:).
         var spec = MakeSpec(new ErrorCodeEntry(
             Code: "AUTH_X",
             HttpStatus: 401,
@@ -92,11 +93,12 @@ public sealed class ErrorCodesEngineTests
             Category: "validation_failure",
             UserMessageKey: "TK.Auth.Errors.UNAUTHORIZED",
             FactoryName: "X",
-            FactoryShape: "with_error_code"));
+            FactoryShape: "standard"));
 
         var result = FailuresEmitter.Emit(spec, ErrorCodesGenerator.Config);
 
-        result.GeneratedSource.Should().Contain("messages: [TK.Auth.Errors.UNAUTHORIZED]");
+        result.GeneratedSource.Should().Contain("messages ??= [TK.Auth.Errors.UNAUTHORIZED];");
+        result.GeneratedSource.Should().Contain("messages: messages");
         result.GeneratedSource.Should().Contain("errorCode: AuthErrorCodes.AUTH_X");
     }
 
@@ -112,7 +114,7 @@ public sealed class ErrorCodesEngineTests
               "category": "validation_failure",
               "userMessageKey": "TK.Auth.Errors.DOES_NOT_EXIST",
               "factoryName": "X",
-              "factoryShape": "with_error_code",
+              "factoryShape": "standard",
               "doc": "X."
             }
           ]
@@ -138,7 +140,7 @@ public sealed class ErrorCodesEngineTests
               "category": "validation_failure",
               "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
               "factoryName": "X",
-              "factoryShape": "with_error_code",
+              "factoryShape": "standard",
               "doc": "X."
             }
           ]
@@ -164,7 +166,7 @@ public sealed class ErrorCodesEngineTests
               "category": "validation_failure",
               "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
               "factoryName": "X",
-              "factoryShape": "with_error_code",
+              "factoryShape": "standard",
               "doc": "X."
             }
           ]
@@ -179,9 +181,11 @@ public sealed class ErrorCodesEngineTests
     }
 
     [Fact]
-    public void Generator_UnsupportedFactoryShapeStandard_FiresUnsupportedFactoryShape()
+    public void Generator_UnsupportedFactoryShape_FiresUnsupportedFactoryShape()
     {
-        // factoryShape "standard" is not yet implemented — must fail loudly (D2ERC003).
+        // The schema constrains factoryShape to {standard, none}; a hand-malformed
+        // spec carrying a removed / unknown value (here the retired "validation")
+        // must fail loudly on the delegating path (D2ERC003).
         const string spec = """
         {
           "errorCodes": [
@@ -191,7 +195,7 @@ public sealed class ErrorCodesEngineTests
               "category": "validation_failure",
               "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
               "factoryName": "X",
-              "factoryShape": "standard",
+              "factoryShape": "validation",
               "doc": "X."
             }
           ]
@@ -218,7 +222,8 @@ public sealed class ErrorCodesEngineTests
             FactoryName: "X",
             FactoryShape: "none"));
 
-        var constantsResult = ConstantsEmitter.Emit(spec, ErrorCodesGenerator.Config);
+        var constantsResult = ConstantsEmitter.Emit(
+            spec, ErrorCodesGenerator.Config, ImmutableHashSet<string>.Empty);
         var failuresResult = FailuresEmitter.Emit(spec, ErrorCodesGenerator.Config);
 
         // The constant is emitted on the constants side.
@@ -229,7 +234,8 @@ public sealed class ErrorCodesEngineTests
             .NotContain(d => d.DescriptorId == EngineDiagnosticIds.UnsupportedFactoryShape);
 
         // No factory body is emitted (no method declaration for AUTH_X).
-        failuresResult.GeneratedSource.Should().NotContain("public static D2Result X()");
+        failuresResult.GeneratedSource.Should().NotContain(
+            "public static D2Result X(IReadOnlyList<TKMessage>? messages = null)");
     }
 
     [Fact]
@@ -274,7 +280,7 @@ public sealed class ErrorCodesEngineTests
               "category": "validation_failure",
               "userMessageKey": "TK.Auth.Errors.DOES_NOT_EXIST",
               "factoryName": "X",
-              "factoryShape": "with_error_code",
+              "factoryShape": "standard",
               "doc": "X."
             }
           ]
@@ -320,7 +326,7 @@ public sealed class ErrorCodesEngineTests
               "category": "validation_failure",
               "userMessageKey": "TK.Auth.Errors.DOES_NOT_EXIST",
               "factoryName": "X",
-              "factoryShape": "with_error_code",
+              "factoryShape": "standard",
               "doc": "X."
             }
           ]

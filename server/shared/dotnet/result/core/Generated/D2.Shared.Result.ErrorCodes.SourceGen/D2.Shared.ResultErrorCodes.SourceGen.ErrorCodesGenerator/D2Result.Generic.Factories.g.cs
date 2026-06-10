@@ -26,34 +26,40 @@ public sealed partial class D2Result<TData>
 {
     /// <summary>Indicates that the requested resource was not found.</summary>
     /// <param name="messages">Optional translation messages; defaults to <c>[TK.Common.Errors.NOT_FOUND]</c>.</param>
+    /// <param name="inputErrors">Optional per-field input errors.</param>
+    /// <param name="errorCode">Optional override for the default error code so callers can attach a more specific code.</param>
+    /// <param name="category">Optional override for the default error category so a delegating factory can stamp its own code's category.</param>
     /// <param name="traceId">Optional trace identifier.</param>
     /// <returns>A pre-built typed <see cref="D2Result{TData}"/> failure.</returns>
-    public static new D2Result<TData> NotFound(IReadOnlyList<TKMessage>? messages = null, string? traceId = null)
+    public static new D2Result<TData> NotFound(IReadOnlyList<TKMessage>? messages = null, IReadOnlyList<InputError>? inputErrors = null, string? errorCode = null, ErrorCategory? category = null, string? traceId = null)
     {
         messages ??= [TK.Common.Errors.NOT_FOUND];
         return new(
             false,
             default,
             messages,
+            inputErrors,
             statusCode: HttpStatusCode.NotFound,
-            errorCode: ErrorCodes.NOT_FOUND,
+            errorCode: errorCode ?? ErrorCodes.NOT_FOUND,
             traceId: traceId,
-            category: ErrorCategory.NotFound);
+            category: category ?? ErrorCategory.NotFound);
     }
 
     /// <summary>Indicates that the action is forbidden due to insufficient permissions.</summary>
     /// <param name="messages">Optional translation messages; defaults to <c>[TK.Common.Errors.FORBIDDEN]</c>.</param>
+    /// <param name="inputErrors">Optional per-field input errors.</param>
     /// <param name="errorCode">Optional override for the default error code so callers can attach a more specific code.</param>
     /// <param name="category">Optional override for the default error category so a delegating factory can stamp its own code's category.</param>
     /// <param name="traceId">Optional trace identifier.</param>
     /// <returns>A pre-built typed <see cref="D2Result{TData}"/> failure.</returns>
-    public static new D2Result<TData> Forbidden(IReadOnlyList<TKMessage>? messages = null, string? errorCode = null, ErrorCategory? category = null, string? traceId = null)
+    public static new D2Result<TData> Forbidden(IReadOnlyList<TKMessage>? messages = null, IReadOnlyList<InputError>? inputErrors = null, string? errorCode = null, ErrorCategory? category = null, string? traceId = null)
     {
         messages ??= [TK.Common.Errors.FORBIDDEN];
         return new(
             false,
             default,
             messages,
+            inputErrors,
             statusCode: HttpStatusCode.Forbidden,
             errorCode: errorCode ?? ErrorCodes.FORBIDDEN,
             traceId: traceId,
@@ -62,17 +68,19 @@ public sealed partial class D2Result<TData>
 
     /// <summary>Indicates that the user is unauthorized to perform the action (e.g., not authenticated).</summary>
     /// <param name="messages">Optional translation messages; defaults to <c>[TK.Common.Errors.UNAUTHORIZED]</c>.</param>
+    /// <param name="inputErrors">Optional per-field input errors.</param>
     /// <param name="errorCode">Optional override for the default error code so callers can attach a more specific code.</param>
     /// <param name="category">Optional override for the default error category so a delegating factory can stamp its own code's category.</param>
     /// <param name="traceId">Optional trace identifier.</param>
     /// <returns>A pre-built typed <see cref="D2Result{TData}"/> failure.</returns>
-    public static new D2Result<TData> Unauthorized(IReadOnlyList<TKMessage>? messages = null, string? errorCode = null, ErrorCategory? category = null, string? traceId = null)
+    public static new D2Result<TData> Unauthorized(IReadOnlyList<TKMessage>? messages = null, IReadOnlyList<InputError>? inputErrors = null, string? errorCode = null, ErrorCategory? category = null, string? traceId = null)
     {
         messages ??= [TK.Common.Errors.UNAUTHORIZED];
         return new(
             false,
             default,
             messages,
+            inputErrors,
             statusCode: HttpStatusCode.Unauthorized,
             errorCode: errorCode ?? ErrorCodes.UNAUTHORIZED,
             traceId: traceId,
@@ -102,51 +110,61 @@ public sealed partial class D2Result<TData>
 
     /// <summary>Indicates that a conflict occurred, such as a resource already existing.</summary>
     /// <param name="messages">Optional translation messages; defaults to <c>[TK.Common.Errors.CONFLICT]</c>.</param>
+    /// <param name="inputErrors">Optional per-field input errors.</param>
+    /// <param name="errorCode">Optional override for the default error code so callers can attach a more specific code.</param>
+    /// <param name="category">Optional override for the default error category so a delegating factory can stamp its own code's category.</param>
     /// <param name="traceId">Optional trace identifier.</param>
     /// <returns>A pre-built typed <see cref="D2Result{TData}"/> failure.</returns>
-    public static new D2Result<TData> Conflict(IReadOnlyList<TKMessage>? messages = null, string? traceId = null)
+    public static new D2Result<TData> Conflict(IReadOnlyList<TKMessage>? messages = null, IReadOnlyList<InputError>? inputErrors = null, string? errorCode = null, ErrorCategory? category = null, string? traceId = null)
     {
         messages ??= [TK.Common.Errors.CONFLICT];
         return new(
             false,
             default,
             messages,
+            inputErrors,
             statusCode: HttpStatusCode.Conflict,
-            errorCode: ErrorCodes.CONFLICT,
+            errorCode: errorCode ?? ErrorCodes.CONFLICT,
             traceId: traceId,
-            category: ErrorCategory.Conflict);
+            category: category ?? ErrorCategory.Conflict);
     }
 
     /// <summary>Indicates that an unhandled exception has occurred.</summary>
     /// <param name="messages">Optional translation messages; defaults to <c>[TK.Common.Errors.UNKNOWN]</c>.</param>
+    /// <param name="inputErrors">Optional per-field input errors.</param>
+    /// <param name="errorCode">Optional override for the default error code so callers can attach a more specific code.</param>
+    /// <param name="category">Optional override for the default error category so a delegating factory can stamp its own code's category.</param>
     /// <param name="traceId">Optional trace identifier.</param>
     /// <returns>A pre-built typed <see cref="D2Result{TData}"/> failure.</returns>
-    public static new D2Result<TData> UnhandledException(IReadOnlyList<TKMessage>? messages = null, string? traceId = null)
+    public static new D2Result<TData> UnhandledException(IReadOnlyList<TKMessage>? messages = null, IReadOnlyList<InputError>? inputErrors = null, string? errorCode = null, ErrorCategory? category = null, string? traceId = null)
     {
         messages ??= [TK.Common.Errors.UNKNOWN];
         return new(
             false,
             default,
             messages,
+            inputErrors,
             statusCode: HttpStatusCode.InternalServerError,
-            errorCode: ErrorCodes.UNHANDLED_EXCEPTION,
+            errorCode: errorCode ?? ErrorCodes.UNHANDLED_EXCEPTION,
             traceId: traceId,
-            category: ErrorCategory.InternalError);
+            category: category ?? ErrorCategory.InternalError);
     }
 
     /// <summary>Indicates that the service is currently unavailable.</summary>
     /// <param name="messages">Optional translation messages; defaults to <c>[TK.Common.Errors.SERVICE_UNAVAILABLE]</c>.</param>
+    /// <param name="inputErrors">Optional per-field input errors.</param>
     /// <param name="errorCode">Optional override for the default error code so callers can attach a more specific code.</param>
     /// <param name="category">Optional override for the default error category so a delegating factory can stamp its own code's category.</param>
     /// <param name="traceId">Optional trace identifier.</param>
     /// <returns>A pre-built typed <see cref="D2Result{TData}"/> failure.</returns>
-    public static new D2Result<TData> ServiceUnavailable(IReadOnlyList<TKMessage>? messages = null, string? errorCode = null, ErrorCategory? category = null, string? traceId = null)
+    public static new D2Result<TData> ServiceUnavailable(IReadOnlyList<TKMessage>? messages = null, IReadOnlyList<InputError>? inputErrors = null, string? errorCode = null, ErrorCategory? category = null, string? traceId = null)
     {
         messages ??= [TK.Common.Errors.SERVICE_UNAVAILABLE];
         return new(
             false,
             default,
             messages,
+            inputErrors,
             statusCode: HttpStatusCode.ServiceUnavailable,
             errorCode: errorCode ?? ErrorCodes.SERVICE_UNAVAILABLE,
             traceId: traceId,
@@ -155,17 +173,19 @@ public sealed partial class D2Result<TData>
 
     /// <summary>Indicates that the request has been rate limited.</summary>
     /// <param name="messages">Optional translation messages; defaults to <c>[TK.Common.Errors.TOO_MANY_REQUESTS]</c>.</param>
+    /// <param name="inputErrors">Optional per-field input errors.</param>
     /// <param name="errorCode">Optional override for the default error code so callers can attach a more specific code.</param>
     /// <param name="category">Optional override for the default error category so a delegating factory can stamp its own code's category.</param>
     /// <param name="traceId">Optional trace identifier.</param>
     /// <returns>A pre-built typed <see cref="D2Result{TData}"/> failure.</returns>
-    public static new D2Result<TData> TooManyRequests(IReadOnlyList<TKMessage>? messages = null, string? errorCode = null, ErrorCategory? category = null, string? traceId = null)
+    public static new D2Result<TData> TooManyRequests(IReadOnlyList<TKMessage>? messages = null, IReadOnlyList<InputError>? inputErrors = null, string? errorCode = null, ErrorCategory? category = null, string? traceId = null)
     {
         messages ??= [TK.Common.Errors.TOO_MANY_REQUESTS];
         return new(
             false,
             default,
             messages,
+            inputErrors,
             statusCode: HttpStatusCode.TooManyRequests,
             errorCode: errorCode ?? ErrorCodes.RATE_LIMITED,
             traceId: traceId,
@@ -174,35 +194,43 @@ public sealed partial class D2Result<TData>
 
     /// <summary>Indicates that the request payload exceeds the maximum allowed size.</summary>
     /// <param name="messages">Optional translation messages; defaults to <c>[TK.Common.Errors.PAYLOAD_TOO_LARGE]</c>.</param>
+    /// <param name="inputErrors">Optional per-field input errors.</param>
+    /// <param name="errorCode">Optional override for the default error code so callers can attach a more specific code.</param>
+    /// <param name="category">Optional override for the default error category so a delegating factory can stamp its own code's category.</param>
     /// <param name="traceId">Optional trace identifier.</param>
     /// <returns>A pre-built typed <see cref="D2Result{TData}"/> failure.</returns>
-    public static new D2Result<TData> PayloadTooLarge(IReadOnlyList<TKMessage>? messages = null, string? traceId = null)
+    public static new D2Result<TData> PayloadTooLarge(IReadOnlyList<TKMessage>? messages = null, IReadOnlyList<InputError>? inputErrors = null, string? errorCode = null, ErrorCategory? category = null, string? traceId = null)
     {
         messages ??= [TK.Common.Errors.PAYLOAD_TOO_LARGE];
         return new(
             false,
             default,
             messages,
+            inputErrors,
             statusCode: HttpStatusCode.RequestEntityTooLarge,
-            errorCode: ErrorCodes.PAYLOAD_TOO_LARGE,
+            errorCode: errorCode ?? ErrorCodes.PAYLOAD_TOO_LARGE,
             traceId: traceId,
-            category: ErrorCategory.PayloadTooLarge);
+            category: category ?? ErrorCategory.PayloadTooLarge);
     }
 
     /// <summary>Indicates that the operation was canceled (client or server cancellation).</summary>
     /// <param name="messages">Optional translation messages; defaults to <c>[TK.Common.Errors.CANCELED]</c>.</param>
+    /// <param name="inputErrors">Optional per-field input errors.</param>
+    /// <param name="errorCode">Optional override for the default error code so callers can attach a more specific code.</param>
+    /// <param name="category">Optional override for the default error category so a delegating factory can stamp its own code's category.</param>
     /// <param name="traceId">Optional trace identifier.</param>
     /// <returns>A pre-built typed <see cref="D2Result{TData}"/> failure.</returns>
-    public static new D2Result<TData> Canceled(IReadOnlyList<TKMessage>? messages = null, string? traceId = null)
+    public static new D2Result<TData> Canceled(IReadOnlyList<TKMessage>? messages = null, IReadOnlyList<InputError>? inputErrors = null, string? errorCode = null, ErrorCategory? category = null, string? traceId = null)
     {
         messages ??= [TK.Common.Errors.CANCELED];
         return new(
             false,
             default,
             messages,
+            inputErrors,
             statusCode: HttpStatusCode.BadRequest,
-            errorCode: ErrorCodes.CANCELED,
+            errorCode: errorCode ?? ErrorCodes.CANCELED,
             traceId: traceId,
-            category: ErrorCategory.ValidationFailure);
+            category: category ?? ErrorCategory.ValidationFailure);
     }
 }

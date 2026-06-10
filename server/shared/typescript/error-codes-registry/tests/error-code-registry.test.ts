@@ -34,7 +34,7 @@ describe("buildRegistry — resolution API", () => {
       category: "validation_failure",
       userMessageKey: TK.auth.errors.UNAUTHORIZED,
       factoryName: "BearerMissing",
-      factoryShape: "with_error_code",
+      factoryShape: "standard",
       doc: "Bearer missing.",
       domain: "auth",
     },
@@ -111,7 +111,7 @@ describe("buildRegistry — resolution API", () => {
     expect(info?.category).toBe("validation_failure");
     expect(info?.userMessageKey).toBe(TK.auth.errors.UNAUTHORIZED);
     expect(info?.factoryName).toBe("BearerMissing");
-    expect(info?.factoryShape).toBe("with_error_code");
+    expect(info?.factoryShape).toBe("standard");
     expect(info?.doc).toBe("Bearer missing.");
     expect(info?.domain).toBe("auth");
   });
@@ -147,18 +147,13 @@ describe("ErrorCategory type — 9 schema values", () => {
 });
 
 // ---------------------------------------------------------------------------
-// ErrorCodeFactoryShape type — all 4 schema values are valid
+// ErrorCodeFactoryShape type — the 2 schema values are valid
 // ---------------------------------------------------------------------------
 
-describe("ErrorCodeFactoryShape type — 4 schema values", () => {
-  it("covers all 4 canonical factoryShape values", () => {
-    const shapes: ErrorCodeFactoryShape[] = [
-      "standard",
-      "with_error_code",
-      "validation",
-      "none",
-    ];
-    expect(shapes).toHaveLength(4);
+describe("ErrorCodeFactoryShape type — 2 schema values", () => {
+  it("covers both canonical factoryShape values", () => {
+    const shapes: ErrorCodeFactoryShape[] = ["standard", "none"];
+    expect(shapes).toHaveLength(2);
   });
 });
 
@@ -167,8 +162,8 @@ describe("ErrorCodeFactoryShape type — 4 schema values", () => {
 // ---------------------------------------------------------------------------
 
 describe("errorCodeRegistry — generated merged registry", () => {
-  it("all: contains the expected total count (14 auth + 15 generic = 29)", () => {
-    expect(errorCodeRegistry.all).toHaveLength(29);
+  it("all: contains the expected total count (14 auth + 15 generic + 8 keycustodian = 37)", () => {
+    expect(errorCodeRegistry.all).toHaveLength(37);
   });
 
   it("resolve: every generic code resolves with domain 'common'", () => {
@@ -217,6 +212,24 @@ describe("errorCodeRegistry — generated merged registry", () => {
       const info = errorCodeRegistry.resolve(code);
       expect(info, `${code} should resolve`).toBeDefined();
       expect(info?.domain, `${code} domain should be 'auth'`).toBe("auth");
+    }
+  });
+
+  it("resolve: every keycustodian code resolves with domain 'keycustodian'", () => {
+    const keycustodianCodes = [
+      "KEYCUSTODIAN_KID_INVALID",
+      "KEYCUSTODIAN_KID_TOO_LONG",
+      "KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN",
+      "KEYCUSTODIAN_INVALID_ROTATION_POLICY",
+      "KEYCUSTODIAN_SOAK_NOT_ELAPSED",
+      "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH",
+      "KEYCUSTODIAN_GRACE_NOT_ELAPSED",
+      "KEYCUSTODIAN_PRECONDITION_VIOLATED",
+    ];
+    for (const code of keycustodianCodes) {
+      const info = errorCodeRegistry.resolve(code);
+      expect(info, `${code} should resolve`).toBeDefined();
+      expect(info?.domain, `${code} domain should be 'keycustodian'`).toBe("keycustodian");
     }
   });
 
@@ -272,8 +285,20 @@ describe("errorCodeRegistry — generated merged registry", () => {
     expect(info?.category).toBe("infrastructure_unavailable");
     expect(info?.userMessageKey).toBe(TK.auth.errors.TEMPORARILY_UNAVAILABLE);
     expect(info?.factoryName).toBe("JwksUnavailable");
-    expect(info?.factoryShape).toBe("with_error_code");
+    expect(info?.factoryShape).toBe("standard");
     expect(info?.domain).toBe("auth");
+  });
+
+  it("resolve KEYCUSTODIAN_PRECONDITION_VIOLATED: full 8-field correctness", () => {
+    const info = errorCodeRegistry.resolve("KEYCUSTODIAN_PRECONDITION_VIOLATED");
+    expect(info).toBeDefined();
+    expect(info?.code).toBe("KEYCUSTODIAN_PRECONDITION_VIOLATED");
+    expect(info?.httpStatus).toBe(500);
+    expect(info?.category).toBe("internal_error");
+    expect(info?.userMessageKey).toBe(TK.keycustodian.internal.PRECONDITION_VIOLATED);
+    expect(info?.factoryName).toBe("PreconditionViolated");
+    expect(info?.factoryShape).toBe("standard");
+    expect(info?.domain).toBe("keycustodian");
   });
 
   it("every userMessageKey is a TKMessage with a non-empty key string", () => {
@@ -306,13 +331,8 @@ describe("errorCodeRegistry — generated merged registry", () => {
     }
   });
 
-  it("every factoryShape value is one of the 4 canonical values", () => {
-    const valid = new Set<string>([
-      "standard",
-      "with_error_code",
-      "validation",
-      "none",
-    ]);
+  it("every factoryShape value is one of the 2 canonical values", () => {
+    const valid = new Set<string>(["standard", "none"]);
     for (const info of errorCodeRegistry.all) {
       expect(
         valid.has(info.factoryShape),

@@ -35,17 +35,14 @@ import { parseTkKey } from "./lib/tk-key-transform.js";
 
 const CODE_NAME_RE = /^[A-Z][A-Z0-9_]*$/;
 
-/** factoryShape values understood by the unified failures emitter. */
-const SHAPE_WITH_ERROR_CODE = "with_error_code";
-const SHAPE_NONE = "none";
-
 /**
- * factoryShape values understood by the base/constructing factory emitter
- * (the generic `D2Result` factories). `standard` / `validation` add their own
- * signature beyond `with_error_code`; `none` emits no factory.
+ * factoryShape values. `standard` is the one universal error-factory shape
+ * (messages?, inputErrors?, errorCode?, category?, traceId? — all optional) the
+ * base/constructing factory emitter AND the delegating failures emitter both
+ * understand; `none` emits no factory (constant + boolean only).
  */
 const SHAPE_STANDARD = "standard";
-const SHAPE_VALIDATION = "validation";
+const SHAPE_NONE = "none";
 
 /** Top-level shape of an `*-error-codes.spec.json`. */
 export interface ErrorCodesSpec {
@@ -363,9 +360,16 @@ export function emitErrorCodesCatalog(
 /**
  * Emit the `<Domain>Failures` companion `.g.ts` — one static factory per
  * factory-bearing entry. Mirrors the .NET FailuresEmitter: the base D2Result
- * factory is selected by `httpStatus` (401 -> `unauthorized`, 503 ->
- * `serviceUnavailable`); `factoryShape` drives the branch (`with_error_code`
- * -> emit, `none` -> skip, `standard`/`validation` -> fail loud via D2ERC003).
+ * factory is selected by `httpStatus` (404 -> `notFound`, 401 ->
+ * `unauthorized`, 503 -> `serviceUnavailable`, …); `factoryShape` drives the
+ * branch (the universal `standard` shape -> emit, `none` -> skip, any other
+ * value -> fail loud via D2ERC003).
+ *
+ * Each emitted factory takes an opts object `{ messages?, traceId? }` (the TS
+ * twin of the .NET delegating factory's `IReadOnlyList<TKMessage>? messages`
+ * override): when `messages` is omitted it defaults to the spec's TK constant;
+ * when supplied it replaces the default, so a caller can bind the offending
+ * argument via `TKMessage.With(...)`.
  *
  * The `userMessageKey` is emitted as a REFERENCE to the generated TS TK
  * constant (`TK.auth.errors.UNAUTHORIZED`) — itself a `TKMessage` instance,
@@ -391,14 +395,14 @@ export function emitFailuresCatalog(
     const shape = e.factoryShape;
     if (
       shape !== undefined &&
-      shape !== SHAPE_WITH_ERROR_CODE &&
+      shape !== SHAPE_STANDARD &&
       shape !== SHAPE_NONE
     ) {
       diagnostics.push(
         diagError(
           DiagnosticIds.ERC_UNSUPPORTED_FACTORY_SHAPE,
           `error code '${e.code}' declares unsupported factoryShape '${shape}' ` +
-            `for failure-factory emission (supported: ${SHAPE_WITH_ERROR_CODE}, ${SHAPE_NONE})`,
+            `for failure-factory emission (supported: ${SHAPE_STANDARD}, ${SHAPE_NONE})`,
         ),
       );
       continue;
@@ -413,14 +417,49 @@ export function emitFailuresCatalog(
   if (diagnostics.some((d) => d.severity === "error"))
     return { source: "", diagnostics };
 
+  // The canonical httpStatus → base D2Result factory delegation map (mirrors
+  // the .NET FailuresEmitter.BaseFactory). Covers the full per-domain set so a
+  // 404 / 409 / 413 domain code delegates to the right base factory; every base
+  // factory is the universal `standard` shape, so the delegating body always
+  // safely passes errorCode + category.
+  const factoryFor = (status: number): string => {
+    switch (status) {
+      case 400:
+        return "validationFailed";
+      case 401:
+        return "unauthorized";
+      case 403:
+        return "forbidden";
+      case 404:
+        return "notFound";
+      case 409:
+        return "conflict";
+      case 413:
+        return "payloadTooLarge";
+      case 429:
+        return "tooManyRequests";
+      case 500:
+        return "unhandledException";
+      case 503:
+        return "serviceUnavailable";
+      default:
+        return "unhandledException";
+    }
+  };
+
+  const usedFactories = [
+    ...new Set(factoryEntries.map((fe) => factoryFor(fe.entry.httpStatus))),
+  ].sort();
+
   const sb = new StringBuilder();
   sb.appendLine(buildHeader(failures.specRelativePath));
   sb.appendLine("/* eslint-disable */");
   sb.appendLine();
   sb.appendLine(
-    'import { D2Result, serviceUnavailable, unauthorized } from "@d2/result";',
+    `import { D2Result, ${usedFactories.join(", ")} } from "@d2/result";`,
   );
   sb.appendLine('import { ErrorCategoryWire } from "@d2/error-category";');
+  sb.appendLine('import { type TKMessage } from "@d2/i18n-abstractions";');
   sb.appendLine('import { TK } from "@d2/i18n-keys";');
   sb.appendLine(
     `import { ${failures.constObjectName} } from "${failures.constantsImportPath}";`,
@@ -432,8 +471,7 @@ export function emitFailuresCatalog(
   sb.appendLine(`export const ${failures.failuresObjectName} = {`);
   sb.increaseIndent();
   for (const { entry, tkConstantPath } of factoryEntries) {
-    const factory =
-      entry.httpStatus === 503 ? "serviceUnavailable" : "unauthorized";
+    const factory = factoryFor(entry.httpStatus);
     const fnName = camelCase(entry.factoryName!);
     const categoryMember = categoryMemberName(entry.category!);
     sb.appendLine(`/** ${escapeJsDoc(entry.doc ?? "")} */`);
@@ -443,14 +481,22 @@ export function emitFailuresCatalog(
     // factories. This is the TS equivalent of the .NET `<Domain>Failures` +
     // `<Domain>Failures<T>` two-class split. The category is the auth code's
     // OWN category, overriding the base factory's default (mirrors .NET).
-    sb.appendLine(`${fnName}<T = void>(traceId?: string): D2Result<T> {`);
+    //
+    // The opts object carries an optional `messages` override (mirroring the
+    // .NET delegating factory's `IReadOnlyList<TKMessage>? messages = null`):
+    // when omitted it defaults to the spec's TK constant; when supplied it
+    // replaces it, so a caller can bind the offending argument via
+    // `TKMessage.With(...)`.
+    sb.appendLine(
+      `${fnName}<T = void>(opts: { messages?: readonly TKMessage[]; traceId?: string } = {}): D2Result<T> {`,
+    );
     sb.increaseIndent();
     sb.appendLine(`return ${factory}<T>({`);
     sb.increaseIndent();
-    sb.appendLine(`messages: [${tkConstantPath}],`);
+    sb.appendLine(`messages: opts.messages ?? [${tkConstantPath}],`);
     sb.appendLine(`errorCode: ${failures.constObjectName}.${entry.code},`);
     sb.appendLine(`category: ErrorCategoryWire.${categoryMember},`);
-    sb.appendLine(`traceId,`);
+    sb.appendLine(`traceId: opts.traceId,`);
     sb.decreaseIndent();
     sb.appendLine(`});`);
     sb.decreaseIndent();
@@ -466,13 +512,13 @@ export function emitFailuresCatalog(
  * Emit the base/constructing factories `.g.ts` — one standalone semantic
  * factory FUNCTION per factory-bearing entry, constructing a `D2Result<T>`
  * directly (the generic base factories). The TS twin of the .NET
- * `BaseFactoriesEmitter`: `factoryShape` drives the opts type + body
- * (`standard` = `BasicOpts`; `with_error_code` = `CodedOpts` + `errorCode`
- * override; `validation` = `ValidationFailedOpts` + `inputErrors`); `none`
- * emits nothing. Each function is generic with a `void` default
- * (`notFound<T = void>(opts?): D2Result<T>`), so one function spans the
- * untyped (`D2Result<void>`) AND typed (`D2Result<User>`) cases — the same
- * collapse the .NET two-overload set delivers.
+ * `BaseFactoriesEmitter`: every error factory is the one universal `standard`
+ * shape — a single `ErrorOpts` (messages?, inputErrors?, errorCode?, category?,
+ * traceId? — all optional) so any factory can stamp a domain code + category
+ * and optionally carry inputErrors; `none` emits nothing. Each function is
+ * generic with a `void` default (`notFound<T = void>(opts?): D2Result<T>`), so
+ * one function spans the untyped (`D2Result<void>`) AND typed (`D2Result<User>`)
+ * cases — the same collapse the .NET two-overload set delivers.
  *
  * The `userMessageKey` is emitted as a REFERENCE to the generated TS TK
  * constant (`TK.common.errors.NOT_FOUND` from `@d2/i18n-keys`) — itself a
@@ -516,28 +562,17 @@ export function emitBaseFactoriesCatalog(
   sb.appendLine('import { TK } from "@d2/i18n-keys";');
   sb.appendLine();
 
-  // The opts interfaces (the factoryShape analogs). `BasicOpts` = standard,
-  // `CodedOpts` = with_error_code, `ValidationFailedOpts` = validation. The
-  // PRESERVE `someFound` / `fail` factories in factories.ts import these.
-  // `CodedOpts` carries the optional `category` override (mirroring `errorCode`)
-  // so a delegating domain factory can stamp its own code's category.
-  sb.appendLine("export interface BasicOpts {");
+  // The one universal error-factory opts interface (the `standard` shape).
+  // Every field is optional so any factory can stamp a domain code + category
+  // and optionally carry inputErrors. The PRESERVE `created` / `someFound` /
+  // `fail` factories in factories.ts import it.
+  sb.appendLine("export interface ErrorOpts {");
   sb.increaseIndent();
   sb.appendLine("messages?: readonly TKMessage[];");
-  sb.appendLine("traceId?: string;");
-  sb.decreaseIndent();
-  sb.appendLine("}");
-  sb.appendLine();
-  sb.appendLine("export interface CodedOpts extends BasicOpts {");
-  sb.increaseIndent();
+  sb.appendLine("inputErrors?: readonly InputError[];");
   sb.appendLine("errorCode?: string;");
   sb.appendLine("category?: ErrorCategory;");
-  sb.decreaseIndent();
-  sb.appendLine("}");
-  sb.appendLine();
-  sb.appendLine("export interface ValidationFailedOpts extends CodedOpts {");
-  sb.increaseIndent();
-  sb.appendLine("inputErrors?: readonly InputError[];");
+  sb.appendLine("traceId?: string;");
   sb.decreaseIndent();
   sb.appendLine("}");
   sb.appendLine();
@@ -552,56 +587,38 @@ export function emitBaseFactoriesCatalog(
 
 /**
  * Whether an entry's `factoryShape` emits a constructing factory in base mode.
- * `none` emits no factory; the three implemented shapes do.
+ * The universal `standard` shape emits a factory; `none` emits no factory.
  */
 function emitsBaseFactory(shape: string | undefined): boolean {
-  return (
-    shape === SHAPE_STANDARD ||
-    shape === SHAPE_WITH_ERROR_CODE ||
-    shape === SHAPE_VALIDATION
-  );
+  return shape === SHAPE_STANDARD;
 }
 
-/** Emit one base/constructing factory function. */
+/** Emit one base/constructing factory function (the universal `standard` shape). */
 function emitBaseFactory(
   sb: StringBuilder,
   entry: ErrorCodeEntry,
   tkConstantPath: string,
 ): void {
-  const shape = entry.factoryShape;
-  const hasCodeOverride =
-    shape === SHAPE_WITH_ERROR_CODE || shape === SHAPE_VALIDATION;
   const fnName = camelCase(entry.factoryName!);
   const status = statusName(entry.httpStatus);
   const categoryMember = categoryMemberName(entry.category!);
-  const optsType =
-    shape === SHAPE_VALIDATION
-      ? "ValidationFailedOpts"
-      : shape === SHAPE_WITH_ERROR_CODE
-        ? "CodedOpts"
-        : "BasicOpts";
-  const errorCodeExpr = hasCodeOverride
-    ? `opts.errorCode ?? ErrorCodes.${entry.code}`
-    : `ErrorCodes.${entry.code}`;
-  // The category is baked from the entry's declared category; with_error_code /
-  // validation shapes accept a caller override (mirroring errorCode) so a
-  // delegating domain factory can stamp its own code's category.
-  const categoryExpr = hasCodeOverride
-    ? `opts.category ?? ErrorCategoryWire.${categoryMember}`
-    : `ErrorCategoryWire.${categoryMember}`;
+  // The one universal error-factory shape: the category is baked from the
+  // entry's declared category but the errorCode / category overrides let a
+  // delegating domain factory stamp its own code + category on this base
+  // status, and every factory can carry inputErrors.
+  const errorCodeExpr = `opts.errorCode ?? ErrorCodes.${entry.code}`;
+  const categoryExpr = `opts.category ?? ErrorCategoryWire.${categoryMember}`;
 
   sb.appendLine(`/** ${escapeJsDoc(entry.doc ?? "")} */`);
   sb.appendLine(
-    `export function ${fnName}<T = void>(opts: ${optsType} = {}): D2Result<T> {`,
+    `export function ${fnName}<T = void>(opts: ErrorOpts = {}): D2Result<T> {`,
   );
   sb.increaseIndent();
   sb.appendLine("return new D2Result<T>({");
   sb.increaseIndent();
   sb.appendLine("success: false,");
   sb.appendLine(`messages: opts.messages ?? [${tkConstantPath}],`);
-  if (shape === SHAPE_VALIDATION)
-    sb.appendLine("inputErrors: opts.inputErrors,");
-
+  sb.appendLine("inputErrors: opts.inputErrors,");
   sb.appendLine(`statusCode: HttpStatusCode.${status},`);
   sb.appendLine(`errorCode: ${errorCodeExpr},`);
   sb.appendLine("traceId: opts.traceId,");
@@ -697,6 +714,35 @@ function loadEnUsKeys(): ReadonlySet<string> {
   return keys;
 }
 
+/**
+ * Parse `contracts/error-category/error-category.spec.json` into its closed set
+ * of category `wire` strings — the spec-derived authority for the
+ * category-membership validation (mirrors the .NET `CategoryWireSetLoader`).
+ * Replaces the previously hard-coded subset so the accepted categories are
+ * exactly the ones declared in the category spec. A malformed / shapeless spec
+ * yields an empty set, which the validation treats as "no closed set" and skips
+ * — the same degradation the .NET side uses.
+ */
+export function loadCategoryWireSet(): ReadonlySet<string> {
+  const path = contractsPath("error-category", "error-category.spec.json");
+  const wires = new Set<string>();
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readFileSync(path, "utf8"));
+  } catch {
+    return wires;
+  }
+  if (typeof parsed !== "object" || parsed === null) return wires;
+  const categories = (parsed as Record<string, unknown>)["categories"];
+  if (!Array.isArray(categories)) return wires;
+  for (const entry of categories) {
+    if (typeof entry !== "object" || entry === null) continue;
+    const wire = (entry as Record<string, unknown>)["wire"];
+    if (typeof wire === "string") wires.add(wire);
+  }
+  return wires;
+}
+
 // ---------------------------------------------------------------------------
 // Per-catalog configs.
 // ---------------------------------------------------------------------------
@@ -758,11 +804,10 @@ export const AUTH_CONFIG: CatalogConfig = {
   },
   validateCodeRegex: false,
   requireDoc: false,
-  validCategories: new Set([
-    "validation_failure",
-    "infrastructure_unavailable",
-    "policy_denied",
-  ]),
+  // Spec-derived from contracts/error-category/error-category.spec.json (the
+  // closed ErrorCategory set) rather than a hand-maintained subset — mirrors
+  // the .NET engine threading the category wire set into ConstantsEmitter.
+  validCategories: loadCategoryWireSet(),
   validateDuplicateFactory: true,
   domainPrefix: "AUTH_",
 };
@@ -813,6 +858,10 @@ const AUTH_FAILURES_TARGET = tsPackagePath(
   "auth-failures.g.ts",
 );
 const EN_US_PATH = contractsPath("messages", "en-US.json");
+const CATEGORY_SPEC_PATH = contractsPath(
+  "error-category",
+  "error-category.spec.json",
+);
 
 /**
  * Run the generic error-codes emitter (constants only). Per-spec mtime check
@@ -879,7 +928,11 @@ export function runAuthErrorCodesEmit(
 ): readonly EmitDiagnostic[] {
   if (
     !force &&
-    isOutputUpToDate(AUTH_CONSTANTS_TARGET, [AUTH_SPEC_PATH, EN_US_PATH])
+    isOutputUpToDate(AUTH_CONSTANTS_TARGET, [
+      AUTH_SPEC_PATH,
+      EN_US_PATH,
+      CATEGORY_SPEC_PATH,
+    ])
   )
     return [];
   const loadResult = loadSpec<ErrorCodesSpec>(
@@ -908,7 +961,11 @@ export function runAuthErrorCodesEmit(
 export function runAuthFailuresEmit(force = false): readonly EmitDiagnostic[] {
   if (
     !force &&
-    isOutputUpToDate(AUTH_FAILURES_TARGET, [AUTH_SPEC_PATH, EN_US_PATH])
+    isOutputUpToDate(AUTH_FAILURES_TARGET, [
+      AUTH_SPEC_PATH,
+      EN_US_PATH,
+      CATEGORY_SPEC_PATH,
+    ])
   )
     return [];
   const loadResult = loadSpec<ErrorCodesSpec>(

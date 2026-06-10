@@ -7,7 +7,7 @@ import { ErrorCategoryWire } from "@d2/error-category";
 
 import { D2Result } from "./d2-result.js";
 import { ErrorCodes } from "./error-codes.g.js";
-import type { BasicOpts, ValidationFailedOpts } from "./factories.g.js";
+import type { ErrorOpts } from "./factories.g.js";
 import { HttpStatusCode } from "./http-status-codes.js";
 
 // The 10 spec-derived semantic FAILURE factories (notFound / unauthorized /
@@ -21,7 +21,7 @@ import { HttpStatusCode } from "./http-status-codes.js";
 // data-carrying) — they stay hand-rolled and re-exported alongside the
 // generated set from `./index.ts`.
 
-interface FailOpts extends ValidationFailedOpts {
+interface FailOpts extends ErrorOpts {
   statusCode?: HttpStatusCode;
 }
 
@@ -35,7 +35,7 @@ export function ok<T = void>(data?: T, traceId?: string): D2Result<T> {
 }
 
 /** HTTP 201. Use for new-resource creation. */
-export function created(opts: BasicOpts = {}): D2Result<void> {
+export function created(opts: ErrorOpts = {}): D2Result<void> {
   return new D2Result<void>({
     success: true,
     messages: opts.messages,
@@ -64,7 +64,7 @@ export function fail<T = void>(opts: FailOpts = {}): D2Result<T> {
  * query did not return all requested items.
  */
 export function someFound<T = void>(
-  opts: BasicOpts & { data?: T } = {},
+  opts: ErrorOpts & { data?: T } = {},
 ): D2Result<T> {
   return new D2Result<T>({
     success: false,

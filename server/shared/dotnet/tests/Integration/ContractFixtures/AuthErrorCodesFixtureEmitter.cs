@@ -81,9 +81,12 @@ public sealed class AuthErrorCodesFixtureEmitter
     }
 
     /// <summary>
-    /// Reflect every zero-parameter non-generic <see cref="AuthFailures"/>
-    /// factory method, invoke it, and yield the (code, result, methodName)
-    /// triple. The two 503 factories also expose a generic
+    /// Reflect every non-generic <see cref="AuthFailures"/> factory method,
+    /// invoke it with no override, and yield the (code, result, methodName)
+    /// triple. Each delegating factory carries a single optional
+    /// <c>IReadOnlyList&lt;TKMessage&gt;? messages = null</c> parameter; passing
+    /// null exercises the default-omitted (spec-TK) path so the fixture pins the
+    /// default wire key. The two 503 factories also expose a generic
     /// <c>&lt;T&gt;</c> overload of the same name + arity — filtered out by the
     /// non-generic predicate so each factory is yielded once.
     /// </summary>
@@ -91,11 +94,11 @@ public sealed class AuthErrorCodesFixtureEmitter
     {
         var methods = typeof(AuthFailures)
             .GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .Where(m => !m.IsGenericMethodDefinition && m.GetParameters().Length == 0)
+            .Where(m => !m.IsGenericMethodDefinition && m.GetParameters().Length == 1)
             .OrderBy(m => m.Name, StringComparer.Ordinal);
         foreach (var method in methods)
         {
-            var result = (D2Result)method.Invoke(null, null)!;
+            var result = (D2Result)method.Invoke(null, [null])!;
             yield return (result.ErrorCode!, result, method.Name);
         }
     }

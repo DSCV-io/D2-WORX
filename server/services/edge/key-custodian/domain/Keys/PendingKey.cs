@@ -9,6 +9,7 @@ namespace D2.Edge.KeyCustodian.Domain.Keys;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Edge.KeyCustodian.Domain.Errors;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
+using D2.Shared.I18n;
 using D2.Shared.Result;
 using NodaTime;
 using IClock = D2.Shared.Time.IClock;
@@ -44,31 +45,49 @@ public sealed record PendingKey : EncryptionKey
     /// Public key bytes for <c>RsaSigning</c> keys; <see langword="null"/> for symmetric keys.
     /// </param>
     /// <param name="createdAt">The UTC instant of key generation.</param>
-    /// <returns>A new <see cref="PendingKey"/>.</returns>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="kid"/>, <paramref name="keyDomain"/>, or
-    /// <paramref name="encryptedMaterial"/> is <see langword="null"/>.
-    /// </exception>
-    /// <exception cref="ArgumentException">
-    /// Thrown when the <paramref name="publicMaterial"/> shape is inconsistent
-    /// with <paramref name="keyType"/> (RSA must have public; symmetric must not).
-    /// </exception>
-    public static PendingKey Create(
-        Kid kid,
-        KeyDomain keyDomain,
+    /// <returns>
+    /// <c>Ok(<see cref="PendingKey"/>)</c> on success; a flagged
+    /// <c>KEYCUSTODIAN_PRECONDITION_VIOLATED</c> failure when <paramref name="kid"/>,
+    /// <paramref name="keyDomain"/>, or <paramref name="encryptedMaterial"/> is
+    /// <see langword="null"/>, or when the <paramref name="publicMaterial"/> shape
+    /// is inconsistent with <paramref name="keyType"/> (RSA must have public,
+    /// symmetric must not). Null arguments and shape mismatches are
+    /// programmer/precondition errors surfaced as telemetry-flagged internal-error
+    /// results rather than thrown exceptions.
+    /// </returns>
+    public static D2Result<PendingKey> Create(
+        Kid? kid,
+        KeyDomain? keyDomain,
         KeyType keyType,
-        KeyMaterialEncrypted encryptedMaterial,
+        KeyMaterialEncrypted? encryptedMaterial,
         PublicKeyMaterial? publicMaterial,
         Instant createdAt)
     {
-        ArgumentNullException.ThrowIfNull(kid);
-        ArgumentNullException.ThrowIfNull(keyDomain);
-        ArgumentNullException.ThrowIfNull(encryptedMaterial);
+        if (kid is null)
+        {
+            return KeyCustodianFailures<PendingKey>.PreconditionViolated(
+                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "kid")]);
+        }
 
-        // Enforce RSA⇒pub non-null; symmetric⇒pub null. Throws on mismatch.
-        EnsureMaterialShape(keyType, publicMaterial);
+        if (keyDomain is null)
+        {
+            return KeyCustodianFailures<PendingKey>.PreconditionViolated(
+                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "keyDomain")]);
+        }
 
-        return new PendingKey
+        if (encryptedMaterial is null)
+        {
+            return KeyCustodianFailures<PendingKey>.PreconditionViolated(
+                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "encryptedMaterial")]);
+        }
+
+        // Enforce RSA⇒pub non-null; symmetric⇒pub null. EnsureMaterialShape
+        // already names the offending publicMaterial argument; propagate it.
+        var shape = EnsureMaterialShape(keyType, publicMaterial);
+        if (!shape.Success)
+            return KeyCustodianFailures<PendingKey>.PreconditionViolated(messages: shape.Messages);
+
+        return D2Result<PendingKey>.Ok(new PendingKey
         {
             Kid = kid,
             KeyDomain = keyDomain,
@@ -76,7 +95,7 @@ public sealed record PendingKey : EncryptionKey
             KeyMaterialEncrypted = encryptedMaterial,
             PublicKeyMaterial = publicMaterial,
             CreatedAt = createdAt,
-        };
+        });
     }
 
     /// <summary>
@@ -95,17 +114,30 @@ public sealed record PendingKey : EncryptionKey
     /// <c>ValidationFailed</c> carrying <c>KEYCUSTODIAN_SOAK_NOT_ELAPSED</c> when
     /// the soak window has not yet elapsed;
     /// <c>ValidationFailed</c> carrying <c>KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH</c>
-    /// when the proof was issued for a different key type.
-    /// </returns>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="proof"/>, <paramref name="policy"/>, or
+    /// when the proof was issued for a different key type;
+    /// a flagged <c>KEYCUSTODIAN_PRECONDITION_VIOLATED</c> failure when
+    /// <paramref name="proof"/>, <paramref name="policy"/>, or
     /// <paramref name="clock"/> is <see langword="null"/>.
-    /// </exception>
-    public D2Result<ActiveKey> Activate(SmokeProof proof, RotationPolicy policy, IClock clock)
+    /// </returns>
+    public D2Result<ActiveKey> Activate(SmokeProof? proof, RotationPolicy? policy, IClock? clock)
     {
-        ArgumentNullException.ThrowIfNull(proof);
-        ArgumentNullException.ThrowIfNull(policy);
-        ArgumentNullException.ThrowIfNull(clock);
+        if (proof is null)
+        {
+            return KeyCustodianFailures<ActiveKey>.PreconditionViolated(
+                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "proof")]);
+        }
+
+        if (policy is null)
+        {
+            return KeyCustodianFailures<ActiveKey>.PreconditionViolated(
+                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "policy")]);
+        }
+
+        if (clock is null)
+        {
+            return KeyCustodianFailures<ActiveKey>.PreconditionViolated(
+                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "clock")]);
+        }
 
         var now = clock.GetCurrentInstant();
         var elapsed = now - CreatedAt;
@@ -137,16 +169,20 @@ public sealed record PendingKey : EncryptionKey
     /// <see cref="CompromisedKey.REASON_MAX"/> characters at construction.
     /// </param>
     /// <param name="clock">The current-time source. Must be non-null.</param>
-    /// <returns>A <see cref="CompromisedKey"/> recording this key's identity.</returns>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="clock"/> is <see langword="null"/>.
-    /// </exception>
-    /// <exception cref="ArgumentException">
-    /// Thrown when <paramref name="reason"/> is null, empty, or whitespace.
-    /// </exception>
-    public CompromisedKey Compromise(string reason, IClock clock)
+    /// <returns>
+    /// <c>Ok(<see cref="CompromisedKey"/>)</c> recording this key's identity; a
+    /// flagged <c>KEYCUSTODIAN_PRECONDITION_VIOLATED</c> failure when
+    /// <paramref name="clock"/> is <see langword="null"/> or
+    /// <paramref name="reason"/> is null, empty, or whitespace.
+    /// </returns>
+    public D2Result<CompromisedKey> Compromise(string reason, IClock? clock)
     {
-        ArgumentNullException.ThrowIfNull(clock);
+        if (clock is null)
+        {
+            return KeyCustodianFailures<CompromisedKey>.PreconditionViolated(
+                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "clock")]);
+        }
+
         return ToCompromised(reason, clock.GetCurrentInstant());
     }
 }

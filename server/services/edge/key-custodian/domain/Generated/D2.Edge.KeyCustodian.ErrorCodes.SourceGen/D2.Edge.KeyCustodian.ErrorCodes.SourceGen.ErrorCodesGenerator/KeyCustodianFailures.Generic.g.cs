@@ -31,59 +31,99 @@ namespace D2.Edge.KeyCustodian.Domain.Errors;
 public static class KeyCustodianFailures<T>
 {
     /// <summary>The key identifier is null, empty, whitespace, or contains characters outside the JWKS-safe charset [A-Za-z0-9_-]. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Common.Validation.ID_INVALID]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> KidInvalid() =>
-        D2Result<T>.ValidationFailed(
-            messages: [TK.Common.Validation.ID_INVALID],
+    public static D2Result<T> KidInvalid(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Common.Validation.ID_INVALID];
+        return D2Result<T>.ValidationFailed(
+            messages: messages,
             errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_KID_INVALID,
             category: ErrorCategory.ValidationFailure);
+    }
 
     /// <summary>The key identifier exceeds the maximum length of 64 characters. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Common.Errors.TOO_LONG]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> KidTooLong() =>
-        D2Result<T>.ValidationFailed(
-            messages: [TK.Common.Errors.TOO_LONG],
+    public static D2Result<T> KidTooLong(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Common.Errors.TOO_LONG];
+        return D2Result<T>.ValidationFailed(
+            messages: messages,
             errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_KID_TOO_LONG,
             category: ErrorCategory.ValidationFailure);
+    }
 
     /// <summary>The specified key domain is not a member of the recognized key-domain catalog. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Validation.UNKNOWN_KEY_DOMAIN]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> UnknownKeyDomain() =>
-        D2Result<T>.ValidationFailed(
-            messages: [TK.Keycustodian.Validation.UNKNOWN_KEY_DOMAIN],
+    public static D2Result<T> UnknownKeyDomain(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Validation.UNKNOWN_KEY_DOMAIN];
+        return D2Result<T>.ValidationFailed(
+            messages: messages,
             errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN,
             category: ErrorCategory.ValidationFailure);
+    }
 
     /// <summary>A rotation-policy duration is non-positive, or the cadence is shorter than grace plus smoke-soak. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Validation.INVALID_ROTATION_POLICY]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> InvalidRotationPolicy() =>
-        D2Result<T>.ValidationFailed(
-            messages: [TK.Keycustodian.Validation.INVALID_ROTATION_POLICY],
+    public static D2Result<T> InvalidRotationPolicy(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Validation.INVALID_ROTATION_POLICY];
+        return D2Result<T>.ValidationFailed(
+            messages: messages,
             errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_ROTATION_POLICY,
             category: ErrorCategory.ValidationFailure);
+    }
 
     /// <summary>The smoke-soak window has not yet elapsed; the pending key may not be activated. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Validation.SOAK_NOT_ELAPSED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> SoakNotElapsed() =>
-        D2Result<T>.ValidationFailed(
-            messages: [TK.Keycustodian.Validation.SOAK_NOT_ELAPSED],
+    public static D2Result<T> SoakNotElapsed(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Validation.SOAK_NOT_ELAPSED];
+        return D2Result<T>.ValidationFailed(
+            messages: messages,
             errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_SOAK_NOT_ELAPSED,
             category: ErrorCategory.ValidationFailure);
+    }
 
     /// <summary>The supplied smoke proof was issued for a different key type than this key. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Validation.SMOKE_PROOF_TYPE_MISMATCH]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> SmokeProofTypeMismatch() =>
-        D2Result<T>.ValidationFailed(
-            messages: [TK.Keycustodian.Validation.SMOKE_PROOF_TYPE_MISMATCH],
+    public static D2Result<T> SmokeProofTypeMismatch(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Validation.SMOKE_PROOF_TYPE_MISMATCH];
+        return D2Result<T>.ValidationFailed(
+            messages: messages,
             errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH,
             category: ErrorCategory.ValidationFailure);
+    }
 
     /// <summary>The retirement grace window has not yet elapsed; the retiring key may not be retired. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Validation.GRACE_NOT_ELAPSED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> GraceNotElapsed() =>
-        D2Result<T>.ValidationFailed(
-            messages: [TK.Keycustodian.Validation.GRACE_NOT_ELAPSED],
+    public static D2Result<T> GraceNotElapsed(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Validation.GRACE_NOT_ELAPSED];
+        return D2Result<T>.ValidationFailed(
+            messages: messages,
             errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_GRACE_NOT_ELAPSED,
             category: ErrorCategory.ValidationFailure);
+    }
+
+    /// <summary>A required argument supplied to a key-lifecycle transition was null, empty, or otherwise violated a documented precondition. This is a programmer/precondition error surfaced as a flagged 500 result (carrying telemetry) rather than a thrown exception. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Keycustodian.Internal.PRECONDITION_VIOLATED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
+    /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
+    public static D2Result<T> PreconditionViolated(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Keycustodian.Internal.PRECONDITION_VIOLATED];
+        return D2Result<T>.UnhandledException(
+            messages: messages,
+            errorCode: KeyCustodianErrorCodes.KEYCUSTODIAN_PRECONDITION_VIOLATED,
+            category: ErrorCategory.InternalError);
+    }
 
 }

@@ -64,4 +64,11 @@ internal static class TestPaths
 
     public static string MessagesDirectory() =>
         Path.Combine(RepoRoot(), "contracts", "messages");
+
+    public static string ErrorCategorySpec() =>
+        Path.Combine(
+            RepoRoot(),
+            "contracts",
+            "error-category",
+            "error-category.spec.json");
 }

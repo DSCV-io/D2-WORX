@@ -7,6 +7,9 @@
 namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
 
 using D2.Edge.KeyCustodian.Domain.Enums;
+using D2.Edge.KeyCustodian.Domain.Errors;
+using D2.Shared.I18n;
+using D2.Shared.Result;
 using NodaTime;
 using IClock = D2.Shared.Time.IClock;
 
@@ -50,18 +53,24 @@ public sealed record SmokeProof
     /// Call this ONLY after a real smoke test has succeeded.
     /// </summary>
     /// <param name="verifiedType">The key type that was exercised.</param>
-    /// <param name="clock">Clock used to stamp the verification instant.</param>
-    /// <returns>A <see cref="SmokeProof"/> recording <paramref name="verifiedType"/> and the current instant.</returns>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="clock"/> is <see langword="null"/>.
-    /// </exception>
-    public static SmokeProof ForPassedSmokeTest(KeyType verifiedType, IClock clock)
+    /// <param name="clock">Clock used to stamp the verification instant. Must be non-null.</param>
+    /// <returns>
+    /// <c>Ok(<see cref="SmokeProof"/>)</c> recording <paramref name="verifiedType"/> and the current instant;
+    /// a flagged <c>KEYCUSTODIAN_PRECONDITION_VIOLATED</c> failure when
+    /// <paramref name="clock"/> is <see langword="null"/>.
+    /// </returns>
+    public static D2Result<SmokeProof> ForPassedSmokeTest(KeyType verifiedType, IClock? clock)
     {
-        ArgumentNullException.ThrowIfNull(clock);
-        return new SmokeProof
+        if (clock is null)
+        {
+            return KeyCustodianFailures<SmokeProof>.PreconditionViolated(
+                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "clock")]);
+        }
+
+        return D2Result<SmokeProof>.Ok(new SmokeProof
         {
             VerifiedType = verifiedType,
             VerifiedAt = clock.GetCurrentInstant(),
-        };
+        });
     }
 }

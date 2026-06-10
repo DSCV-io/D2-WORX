@@ -39,24 +39,28 @@ internal static class ConstantsEmitter
     private static readonly Regex sr_codePattern =
         new("^[A-Z][A-Z0-9_]*$", RegexOptions.CultureInvariant);
 
-    private static readonly ImmutableHashSet<string> sr_validCategories =
-        ImmutableHashSet.Create(
-            StringComparer.Ordinal,
-            "validation_failure",
-            "infrastructure_unavailable",
-            "policy_denied");
-
     /// <summary>
     /// Emits the constants class source plus diagnostics for the supplied
     /// spec + catalog config.
     /// </summary>
     /// <param name="spec">Parsed error-codes spec.</param>
     /// <param name="config">The catalog configuration.</param>
+    /// <param name="categoryWireSet">
+    /// The spec-derived closed set of valid <c>category</c> wire strings (from
+    /// <c>error-category.spec.json</c>). When empty (spec absent / malformed)
+    /// the category-membership check degrades to a no-op. Non-engine callers
+    /// (the base/domain failures emitters) pass
+    /// <see cref="ImmutableHashSet{T}.Empty"/> — category validation already
+    /// ran in the constants pass for the same entry set.
+    /// </param>
     /// <returns>Generated source + diagnostics.</returns>
-    public static EmitResult Emit(ErrorCodesSpec spec, CatalogConfig config)
+    public static EmitResult Emit(
+        ErrorCodesSpec spec,
+        CatalogConfig config,
+        ImmutableHashSet<string> categoryWireSet)
     {
         var diagnostics = ImmutableArray.CreateBuilder<EmitDiagnostic>();
-        var validEntries = Validate(spec, config, diagnostics);
+        var validEntries = Validate(spec, config, categoryWireSet, diagnostics);
         var source = EmitSource(validEntries, config);
         return new EmitResult(source, diagnostics.ToImmutable());
     }
@@ -69,11 +73,20 @@ internal static class ConstantsEmitter
     /// </summary>
     /// <param name="spec">Parsed error-codes spec.</param>
     /// <param name="config">The catalog configuration.</param>
+    /// <param name="categoryWireSet">
+    /// The spec-derived closed set of valid <c>category</c> wire strings (from
+    /// <c>error-category.spec.json</c>). When non-empty it is the membership
+    /// authority for the category check; when empty (spec absent / malformed)
+    /// the check is skipped — mirroring the en-US.json TK cross-check's
+    /// empty-degrades-to-no-op behavior so a missing AdditionalFile never
+    /// fires a false unknown-category diagnostic.
+    /// </param>
     /// <param name="diagnostics">Accumulates diagnostics for invalid entries.</param>
     /// <returns>The valid entries in spec order.</returns>
     public static List<ErrorCodeEntry> Validate(
         ErrorCodesSpec spec,
         CatalogConfig config,
+        ImmutableHashSet<string> categoryWireSet,
         ImmutableArray<EmitDiagnostic>.Builder diagnostics)
     {
         var supportedStatuses = string.Join(
@@ -122,9 +135,14 @@ internal static class ConstantsEmitter
                 continue;
             }
 
-            // Auth-only: category enum membership.
+            // Auth-only: category enum membership against the spec-derived
+            // closed set. An empty set means error-category.spec.json was not
+            // surfaced / was unparseable — skip the check (the same degradation
+            // the en-US.json TK cross-check uses) rather than fire false
+            // positives.
             if (config.ValidateCategory && config.UnknownCategoryId is { } unknownCatId &&
-                !sr_validCategories.Contains(entry.Category ?? string.Empty))
+                !categoryWireSet.IsEmpty &&
+                !categoryWireSet.Contains(entry.Category ?? string.Empty))
             {
                 diagnostics.Add(new EmitDiagnostic(
                     unknownCatId,
@@ -133,7 +151,7 @@ internal static class ConstantsEmitter
                         entry.Category ?? string.Empty,
                         string.Join(
                             ", ",
-                            sr_validCategories.OrderBy(c => c, StringComparer.Ordinal)),
+                            categoryWireSet.OrderBy(c => c, StringComparer.Ordinal)),
                     ]));
                 continue;
             }

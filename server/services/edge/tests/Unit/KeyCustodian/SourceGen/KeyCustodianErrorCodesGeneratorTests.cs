@@ -39,7 +39,7 @@ public sealed class KeyCustodianErrorCodesGeneratorTests
           "category": "validation_failure",
           "userMessageKey": "TK.Keycustodian.Validation.SOAK_NOT_ELAPSED",
           "factoryName": "Test",
-          "factoryShape": "with_error_code",
+          "factoryShape": "standard",
           "doc": "Test entry."
         }
       ]
@@ -120,7 +120,7 @@ public sealed class KeyCustodianErrorCodesGeneratorTests
               "category": "validation_failure",
               "userMessageKey": "TK.Keycustodian.Validation.SOAK_NOT_ELAPSED",
               "factoryName": "X",
-              "factoryShape": "with_error_code",
+              "factoryShape": "standard",
               "doc": "X."
             }
           ]
@@ -145,7 +145,7 @@ public sealed class KeyCustodianErrorCodesGeneratorTests
               "category": "validation_failure",
               "userMessageKey": "TK.Keycustodian.Validation.SOAK_NOT_ELAPSED",
               "factoryName": "DupA",
-              "factoryShape": "with_error_code",
+              "factoryShape": "standard",
               "doc": "A."
             },
             {
@@ -154,7 +154,7 @@ public sealed class KeyCustodianErrorCodesGeneratorTests
               "category": "validation_failure",
               "userMessageKey": "TK.Keycustodian.Validation.SOAK_NOT_ELAPSED",
               "factoryName": "DupB",
-              "factoryShape": "with_error_code",
+              "factoryShape": "standard",
               "doc": "B."
             }
           ]
@@ -179,7 +179,7 @@ public sealed class KeyCustodianErrorCodesGeneratorTests
               "category": "validation_failure",
               "userMessageKey": "TK.Keycustodian.Validation.SOAK_NOT_ELAPSED",
               "factoryName": "SameName",
-              "factoryShape": "with_error_code",
+              "factoryShape": "standard",
               "doc": "A."
             },
             {
@@ -188,7 +188,7 @@ public sealed class KeyCustodianErrorCodesGeneratorTests
               "category": "validation_failure",
               "userMessageKey": "TK.Keycustodian.Validation.SOAK_NOT_ELAPSED",
               "factoryName": "SameName",
-              "factoryShape": "with_error_code",
+              "factoryShape": "standard",
               "doc": "B."
             }
           ]
@@ -214,7 +214,7 @@ public sealed class KeyCustodianErrorCodesGeneratorTests
               "category": "validation_failure",
               "userMessageKey": "TK.Keycustodian.Validation.SOAK_NOT_ELAPSED",
               "factoryName": "X",
-              "factoryShape": "with_error_code",
+              "factoryShape": "standard",
               "doc": "X."
             }
           ]
@@ -239,7 +239,7 @@ public sealed class KeyCustodianErrorCodesGeneratorTests
               "category": "not_a_real_category",
               "userMessageKey": "TK.Keycustodian.Validation.SOAK_NOT_ELAPSED",
               "factoryName": "X",
-              "factoryShape": "with_error_code",
+              "factoryShape": "standard",
               "doc": "X."
             }
           ]
@@ -264,7 +264,7 @@ public sealed class KeyCustodianErrorCodesGeneratorTests
               "category": "validation_failure",
               "userMessageKey": "TK.Keycustodian.Validation.DOES_NOT_EXIST",
               "factoryName": "X",
-              "factoryShape": "with_error_code",
+              "factoryShape": "standard",
               "doc": "X."
             }
           ]
@@ -278,11 +278,12 @@ public sealed class KeyCustodianErrorCodesGeneratorTests
     }
 
     [Fact]
-    public void Generator_ValidationFactoryShape_FiresUnsupportedFactoryShape()
+    public void Generator_RemovedFactoryShape_FiresUnsupportedFactoryShape()
     {
-        // The delegating per-domain emitter implements only with_error_code + none.
-        // A "validation" shape must fail loudly (D2ERC003) — this is the non-vacuous
-        // proof that with_error_code (not validation) is the correct KC shape.
+        // The delegating per-domain emitter implements only the universal standard
+        // shape + none. The retired "validation" value must fail loudly (D2ERC003)
+        // — the non-vacuous proof that standard (not the removed shapes) is the
+        // correct KC shape.
         const string spec = """
         {
           "errorCodes": [
@@ -344,6 +345,14 @@ public sealed class KeyCustodianErrorCodesGeneratorTests
 
         if (enUsJson is not null)
             additionalTexts.Add(new InMemoryAdditionalText("messages/en-US.json", enUsJson));
+
+        // The real error-category spec surfaces the closed category set so the
+        // spec-derived category-membership check (D2KEC002) is exercised (mirrors
+        // the build's AdditionalFiles); an unknown category fires loudly rather
+        // than degrading to a no-op.
+        additionalTexts.Add(new InMemoryAdditionalText(
+            "error-category.spec.json",
+            File.ReadAllText(TestPaths.ErrorCategorySpec())));
 
         var driver = CSharpGeneratorDriver.Create(
             generators: [generator],

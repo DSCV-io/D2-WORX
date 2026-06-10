@@ -8,6 +8,7 @@ namespace D2.Shared.ErrorCodes.SourceGen;
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using D2.Shared.SourceGen;
@@ -29,6 +30,7 @@ internal static class ErrorCodesEngine
 {
     private const string _MESSAGES_DIRECTORY_NAME = "messages";
     private const string _EN_US_FILE_NAME = "en-US.json";
+    private const string _CATEGORY_SPEC_FILE_NAME = "error-category.spec.json";
 
     /// <summary>
     /// Registers the engine's incremental pipeline for one catalog. Surfaces
@@ -67,11 +69,23 @@ internal static class ErrorCodesEngine
                 file.GetText(ct)?.ToString() ?? string.Empty))
             .Collect();
 
-        var combined = specs.Combine(context.CompilationProvider).Combine(messageKeys);
+        // 3. Surface error-category.spec.json so the category-membership check
+        //    validates against the spec-derived closed set rather than a
+        //    hand-maintained subset. Absent / malformed → empty set → the check
+        //    degrades to a no-op (same as the en-US.json TK cross-check).
+        var categorySpecs = context.AdditionalTextsProvider
+            .Where(static file => IsCategorySpec(file.Path))
+            .Select(static (file, ct) => file.GetText(ct)?.ToString() ?? string.Empty)
+            .Collect();
+
+        var combined = specs
+            .Combine(context.CompilationProvider)
+            .Combine(messageKeys)
+            .Combine(categorySpecs);
 
         context.RegisterSourceOutput(combined, (spc, tuple) =>
         {
-            var ((specFiles, compilation), keySets) = tuple;
+            var (((specFiles, compilation), keySets), categorySpecContents) = tuple;
 
             if (!string.Equals(
                 compilation.AssemblyName,
@@ -98,7 +112,15 @@ internal static class ErrorCodesEngine
 
             var parsedSpec = loadResult.Spec!;
 
-            var codesResult = ConstantsEmitter.Emit(parsedSpec, config);
+            // The spec-derived closed category set the membership check
+            // validates against. Empty when error-category.spec.json was not
+            // surfaced / was unparseable — the check then degrades to a no-op.
+            var categoryWireSet = categorySpecContents.IsDefaultOrEmpty
+                ? ImmutableHashSet<string>.Empty.WithComparer(StringComparer.Ordinal)
+                : CategoryWireSetLoader.LoadWireSet(
+                    categorySpecContents.OrderBy(c => c, StringComparer.Ordinal).First());
+
+            var codesResult = ConstantsEmitter.Emit(parsedSpec, config, categoryWireSet);
             foreach (var d in codesResult.Diagnostics)
                 spc.ReportDiagnostic(ToRoslynDiagnostic(d, Resolve));
 
@@ -189,6 +211,12 @@ internal static class ErrorCodesEngine
         string.Equals(
             Path.GetFileName(path),
             specFileName,
+            StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsCategorySpec(string path) =>
+        string.Equals(
+            Path.GetFileName(path),
+            _CATEGORY_SPEC_FILE_NAME,
             StringComparison.OrdinalIgnoreCase);
 
     private static bool IsEnUsMessages(string path)

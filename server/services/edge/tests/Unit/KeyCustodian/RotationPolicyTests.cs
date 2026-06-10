@@ -19,9 +19,9 @@ using Xunit;
 /// </summary>
 public sealed class RotationPolicyTests
 {
-    private static readonly Duration r_soak = Duration.FromHours(1);
-    private static readonly Duration r_grace = Duration.FromHours(2);
-    private static readonly Duration r_cadence = Duration.FromHours(4); // >= grace + soak = 3h
+    private static readonly Duration sr_soak = Duration.FromHours(1);
+    private static readonly Duration sr_grace = Duration.FromHours(2);
+    private static readonly Duration sr_cadence = Duration.FromHours(4); // >= grace + soak = 3h
 
     // -----------------------------------------------------------------------
     // Create — valid
@@ -30,11 +30,11 @@ public sealed class RotationPolicyTests
     [Fact]
     public void Create_ValidPolicy_ReturnsOk()
     {
-        var result = RotationPolicy.Create(r_cadence, r_grace, r_soak);
+        var result = RotationPolicy.Create(sr_cadence, sr_grace, sr_soak);
         result.Success.Should().BeTrue();
-        result.Data!.Cadence.Should().Be(r_cadence);
-        result.Data!.Grace.Should().Be(r_grace);
-        result.Data!.SmokeSoak.Should().Be(r_soak);
+        result.Data!.Cadence.Should().Be(sr_cadence);
+        result.Data!.Grace.Should().Be(sr_grace);
+        result.Data!.SmokeSoak.Should().Be(sr_soak);
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public sealed class RotationPolicyTests
     [Fact]
     public void Create_ZeroCadence_ReturnsValidationFailed()
     {
-        var result = RotationPolicy.Create(Duration.Zero, r_grace, r_soak);
+        var result = RotationPolicy.Create(Duration.Zero, sr_grace, sr_soak);
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_ROTATION_POLICY);
         result.Category.Should().Be(ErrorCategory.ValidationFailure);
@@ -65,7 +65,7 @@ public sealed class RotationPolicyTests
     [Fact]
     public void Create_ZeroGrace_ReturnsValidationFailed()
     {
-        var result = RotationPolicy.Create(r_cadence, Duration.Zero, r_soak);
+        var result = RotationPolicy.Create(sr_cadence, Duration.Zero, sr_soak);
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_ROTATION_POLICY);
         result.Category.Should().Be(ErrorCategory.ValidationFailure);
@@ -74,7 +74,7 @@ public sealed class RotationPolicyTests
     [Fact]
     public void Create_ZeroSmokeSoak_ReturnsValidationFailed()
     {
-        var result = RotationPolicy.Create(r_cadence, r_grace, Duration.Zero);
+        var result = RotationPolicy.Create(sr_cadence, sr_grace, Duration.Zero);
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_ROTATION_POLICY);
         result.Category.Should().Be(ErrorCategory.ValidationFailure);
@@ -83,7 +83,7 @@ public sealed class RotationPolicyTests
     [Fact]
     public void Create_NegativeCadence_ReturnsValidationFailed()
     {
-        var result = RotationPolicy.Create(Duration.FromSeconds(-1), r_grace, r_soak);
+        var result = RotationPolicy.Create(Duration.FromSeconds(-1), sr_grace, sr_soak);
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_ROTATION_POLICY);
         result.Category.Should().Be(ErrorCategory.ValidationFailure);
@@ -92,7 +92,7 @@ public sealed class RotationPolicyTests
     [Fact]
     public void Create_NegativeGrace_ReturnsValidationFailed()
     {
-        var result = RotationPolicy.Create(r_cadence, Duration.FromSeconds(-1), r_soak);
+        var result = RotationPolicy.Create(sr_cadence, Duration.FromSeconds(-1), sr_soak);
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_ROTATION_POLICY);
         result.Category.Should().Be(ErrorCategory.ValidationFailure);
@@ -101,7 +101,7 @@ public sealed class RotationPolicyTests
     [Fact]
     public void Create_NegativeSmokeSoak_ReturnsValidationFailed()
     {
-        var result = RotationPolicy.Create(r_cadence, r_grace, Duration.FromSeconds(-1));
+        var result = RotationPolicy.Create(sr_cadence, sr_grace, Duration.FromSeconds(-1));
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_ROTATION_POLICY);
         result.Category.Should().Be(ErrorCategory.ValidationFailure);

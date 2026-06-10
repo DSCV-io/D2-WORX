@@ -7,6 +7,9 @@
 namespace D2.Edge.KeyCustodian.Domain.Keys;
 
 using D2.Edge.KeyCustodian.Domain.Enums;
+using D2.Edge.KeyCustodian.Domain.Errors;
+using D2.Shared.I18n;
+using D2.Shared.Result;
 using NodaTime;
 using IClock = D2.Shared.Time.IClock;
 
@@ -41,33 +44,34 @@ public sealed record ActiveKey : EncryptionKey
     /// </param>
     /// <param name="clock">The current-time source. Must be non-null.</param>
     /// <returns>
-    /// A tuple of the transitioning key (now <see cref="RetiringKey"/>) and
-    /// the unmodified <paramref name="successor"/>.
-    /// </returns>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="successor"/> or <paramref name="clock"/> is
-    /// <see langword="null"/>.
-    /// — §5.1a plain reference-type null-guard; BCL ThrowIfNull used.
-    /// </exception>
-    /// <exception cref="ArgumentException">
-    /// Thrown when <paramref name="successor"/> has a different
+    /// <c>Ok</c> with a tuple of the transitioning key (now
+    /// <see cref="RetiringKey"/>) and the unmodified <paramref name="successor"/>;
+    /// a flagged <c>KEYCUSTODIAN_PRECONDITION_VIOLATED</c> failure when
+    /// <paramref name="successor"/> or <paramref name="clock"/> is
+    /// <see langword="null"/>, or when <paramref name="successor"/> has a different
     /// <see cref="EncryptionKey.KeyDomain"/> or <see cref="EncryptionKey.KeyType"/>
-    /// than this key. This is a programmer error (the App built the wrong
-    /// successor) — a throw is correct here.
-    /// — §5.1a bespoke-message carve-out.
-    /// </exception>
-    public (RetiringKey Retiring, PendingKey Successor) Rotate(PendingKey successor, IClock clock)
+    /// than this key. The mismatch is a programmer/precondition error (the App
+    /// built the wrong successor) surfaced as a telemetry-flagged internal-error
+    /// result rather than a thrown exception.
+    /// </returns>
+    public D2Result<(RetiringKey Retiring, PendingKey Successor)> Rotate(PendingKey? successor, IClock? clock)
     {
-        ArgumentNullException.ThrowIfNull(successor);
-        ArgumentNullException.ThrowIfNull(clock);
+        if (successor is null)
+        {
+            return KeyCustodianFailures<(RetiringKey, PendingKey)>.PreconditionViolated(
+                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "successor")]);
+        }
+
+        if (clock is null)
+        {
+            return KeyCustodianFailures<(RetiringKey, PendingKey)>.PreconditionViolated(
+                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "clock")]);
+        }
 
         if (!Equals(successor.KeyDomain, KeyDomain) || successor.KeyType != KeyType)
         {
-            // §5.1a bespoke-message carve-out: domain/type mismatch is a programmer error.
-            throw new ArgumentException(
-                $"Successor must belong to the same KeyDomain ('{KeyDomain.Value}') and KeyType ('{KeyType}') " +
-                $"as the key being rotated. Got domain='{successor.KeyDomain.Value}', type='{successor.KeyType}'.",
-                nameof(successor));
+            return KeyCustodianFailures<(RetiringKey, PendingKey)>.PreconditionViolated(
+                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "successor")]);
         }
 
         var now = clock.GetCurrentInstant();
@@ -83,7 +87,7 @@ public sealed record ActiveKey : EncryptionKey
             RetiringAt = now,
         };
 
-        return (retiring, successor);
+        return D2Result<(RetiringKey, PendingKey)>.Ok((retiring, successor));
     }
 
     /// <summary>
@@ -95,16 +99,20 @@ public sealed record ActiveKey : EncryptionKey
     /// <see cref="CompromisedKey.REASON_MAX"/> characters at construction.
     /// </param>
     /// <param name="clock">The current-time source. Must be non-null.</param>
-    /// <returns>A <see cref="CompromisedKey"/> recording this key's identity.</returns>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="clock"/> is <see langword="null"/>.
-    /// </exception>
-    /// <exception cref="ArgumentException">
-    /// Thrown when <paramref name="reason"/> is null, empty, or whitespace.
-    /// </exception>
-    public CompromisedKey Compromise(string reason, IClock clock)
+    /// <returns>
+    /// <c>Ok(<see cref="CompromisedKey"/>)</c> recording this key's identity; a
+    /// flagged <c>KEYCUSTODIAN_PRECONDITION_VIOLATED</c> failure when
+    /// <paramref name="clock"/> is <see langword="null"/> or
+    /// <paramref name="reason"/> is null, empty, or whitespace.
+    /// </returns>
+    public D2Result<CompromisedKey> Compromise(string reason, IClock? clock)
     {
-        ArgumentNullException.ThrowIfNull(clock);
+        if (clock is null)
+        {
+            return KeyCustodianFailures<CompromisedKey>.PreconditionViolated(
+                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "clock")]);
+        }
+
         return ToCompromised(reason, clock.GetCurrentInstant());
     }
 }

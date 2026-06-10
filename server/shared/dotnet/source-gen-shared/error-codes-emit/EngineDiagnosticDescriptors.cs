@@ -45,8 +45,7 @@ internal static class EngineDiagnosticDescriptors
         title: "factoryShape value is not emitted on the delegating per-domain path",
         messageFormat:
             "factoryShape '{0}' is not emitted on the delegating per-domain path; only "
-            + "'with_error_code' and 'none' are supported there (the generic constructing "
-            + "catalog implements all four shapes)",
+            + "'standard' and 'none' are supported there",
         category: _CATEGORY,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);

@@ -124,8 +124,8 @@ internal static class RegistryEmitter
         sb.AppendLine("/// </param>");
         sb.AppendLine("/// <param name=\"FactoryName\">PascalCase factory name (e.g. <c>BearerMissing</c>).</param>");
         sb.AppendLine("/// <param name=\"FactoryShape\">");
-        sb.AppendLine("/// Factory signature variant: <c>standard</c>, <c>with_error_code</c>,");
-        sb.AppendLine("/// <c>validation</c>, or <c>none</c>.");
+        sb.AppendLine("/// Factory signature variant: <c>standard</c> (the universal");
+        sb.AppendLine("/// error-factory shape) or <c>none</c>.");
         sb.AppendLine("/// </param>");
         sb.AppendLine("/// <param name=\"Doc\">XML summary / JSDoc documentation text for this code.</param>");
         sb.AppendLine("/// <param name=\"Domain\">");

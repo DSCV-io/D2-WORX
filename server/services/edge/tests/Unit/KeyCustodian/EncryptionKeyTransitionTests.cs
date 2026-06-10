@@ -6,6 +6,7 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian;
 
+using System.Linq;
 using AwesomeAssertions;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Edge.KeyCustodian.Domain.Errors;
@@ -26,10 +27,12 @@ using Xunit;
 /// calendar/boundary edges, clock skew/non-monotonicity, duration edge values,
 /// and TestClock boundary behavior.
 ///
-/// Illegal transitions (e.g. Activate/Retire/Compromise on RetiredKey,
-/// Compromise on CompromisedKey) are proven unrepresentable at compile time.
-/// They cannot be expressed as runtime tests — the compiler rejects them.
-/// A comment block below documents each rejected call site:
+/// Precondition note: every runtime programmer/precondition violation (null
+/// argument, successor domain/type mismatch, empty compromise reason) surfaces as
+/// a flagged <c>KEYCUSTODIAN_PRECONDITION_VIOLATED</c> internal-error result, NOT a
+/// thrown exception. Illegal LIFECYCLE transitions (e.g. Activate/Retire/Compromise
+/// on RetiredKey, Compromise on CompromisedKey) remain unrepresentable at compile
+/// time — they cannot be expressed as runtime tests.
 /// <code>
 /// // Does-not-compile examples:
 /// // var retired = ...; retired.Activate(...)    — no such method on RetiredKey
@@ -46,16 +49,15 @@ public sealed class EncryptionKeyTransitionTests
     // Shared test helpers
     // -----------------------------------------------------------------------
 
-    private static readonly Kid s_kid = Kid.FromTrusted("test-key-abc");
-    private static readonly KeyDomain s_domain = KeyDomain.FromTrusted("audit");
-    private static readonly KeyMaterialEncrypted s_mat = KeyMaterialEncrypted.FromTrusted(new byte[] { 1, 2, 3, 4 });
-    private static readonly Duration s_soak = Duration.FromHours(1);
-    private static readonly Duration s_grace = Duration.FromHours(2);
-    private static readonly Duration s_cadence = s_soak + s_grace;
+    private static readonly Kid sr_kid = Kid.FromTrusted("test-key-abc");
+    private static readonly KeyDomain sr_domain = KeyDomain.FromTrusted("audit");
+    private static readonly KeyMaterialEncrypted sr_mat = KeyMaterialEncrypted.FromTrusted(new byte[] { 1, 2, 3, 4 });
+    private static readonly Duration sr_soak = Duration.FromHours(1);
+    private static readonly Duration sr_grace = Duration.FromHours(2);
+    private static readonly Duration sr_cadence = sr_soak + sr_grace;
 
-    // sr_ prefix: static readonly field, initialized after the duration fields.
     private static readonly RotationPolicy sr_policy =
-        RotationPolicy.Create(s_cadence, s_grace, s_soak).Data!;
+        RotationPolicy.Create(sr_cadence, sr_grace, sr_soak).Data!;
 
     // -----------------------------------------------------------------------
     // PendingKey.Activate — soak boundary
@@ -66,10 +68,10 @@ public sealed class EncryptionKeyTransitionTests
     {
         // Boundary: now - CreatedAt == SmokeSoak should PASS (>=)
         var created = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
-        var now = created + s_soak; // exact boundary
+        var now = created + sr_soak; // exact boundary
         var clock = new TestClock(now);
         var pending = MakePending(created);
-        var proof = SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, new TestClock(now));
+        var proof = SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, new TestClock(now)).Data!;
 
         var result = pending.Activate(proof, sr_policy, clock);
 
@@ -83,10 +85,10 @@ public sealed class EncryptionKeyTransitionTests
     {
         // One nanosecond before the boundary should FAIL
         var created = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
-        var now = created + s_soak - Duration.FromNanoseconds(1);
+        var now = created + sr_soak - Duration.FromNanoseconds(1);
         var clock = new TestClock(now);
         var pending = MakePending(created);
-        var proof = SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock);
+        var proof = SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock).Data!;
 
         var result = pending.Activate(proof, sr_policy, clock);
 
@@ -100,10 +102,10 @@ public sealed class EncryptionKeyTransitionTests
     public void Activate_SoakOneNsAfterElapsed_Succeeds()
     {
         var created = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
-        var now = created + s_soak + Duration.FromNanoseconds(1);
+        var now = created + sr_soak + Duration.FromNanoseconds(1);
         var clock = new TestClock(now);
         var pending = MakePending(created);
-        var proof = SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock);
+        var proof = SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock).Data!;
 
         var result = pending.Activate(proof, sr_policy, clock);
 
@@ -118,12 +120,12 @@ public sealed class EncryptionKeyTransitionTests
     public void Activate_ProofTypeMismatch_Fails()
     {
         var created = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
-        var now = created + s_soak; // soak elapsed
+        var now = created + sr_soak; // soak elapsed
         var clock = new TestClock(now);
         var pending = MakePending(created); // AesPayload key
 
         // Proof issued for RsaSigning — mismatch
-        var rsaProof = SmokeProof.ForPassedSmokeTest(KeyType.RsaSigning, clock);
+        var rsaProof = SmokeProof.ForPassedSmokeTest(KeyType.RsaSigning, clock).Data!;
         var result = pending.Activate(rsaProof, sr_policy, clock);
 
         result.Success.Should().BeFalse();
@@ -144,7 +146,7 @@ public sealed class EncryptionKeyTransitionTests
         var now = created - Duration.FromSeconds(1); // before creation
         var clock = new TestClock(now);
         var pending = MakePending(created);
-        var proof = SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock);
+        var proof = SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock).Data!;
 
         var result = pending.Activate(proof, sr_policy, clock);
 
@@ -162,7 +164,7 @@ public sealed class EncryptionKeyTransitionTests
         var created = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
         var clock = new TestClock(created); // now == createdAt
         var pending = MakePending(created);
-        var proof = SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock);
+        var proof = SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock).Data!;
 
         var result = pending.Activate(proof, sr_policy, clock);
 
@@ -172,35 +174,42 @@ public sealed class EncryptionKeyTransitionTests
     }
 
     // -----------------------------------------------------------------------
-    // PendingKey.Activate — null guards
+    // PendingKey.Activate — null guards (flagged precondition results)
     // -----------------------------------------------------------------------
 
     [Fact]
-    public void Activate_NullProof_ThrowsArgumentNullException()
+    public void Activate_NullProof_FailsPreconditionViolated()
     {
         var clock = new TestClock(Instant.FromUtc(2026, 1, 1, 12, 0, 0));
         var pending = MakePending(Instant.FromUtc(2026, 1, 1, 0, 0, 0));
-        var act = () => pending.Activate(null!, sr_policy, clock);
-        act.Should().Throw<ArgumentNullException>();
+
+        var result = pending.Activate(null, sr_policy, clock);
+
+        AssertPreconditionViolated(result, "proof");
     }
 
     [Fact]
-    public void Activate_NullPolicy_ThrowsArgumentNullException()
+    public void Activate_NullPolicy_FailsPreconditionViolated()
     {
         var clock = new TestClock(Instant.FromUtc(2026, 1, 1, 12, 0, 0));
         var pending = MakePending(Instant.FromUtc(2026, 1, 1, 0, 0, 0));
-        var proof = SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock);
-        var act = () => pending.Activate(proof, null!, clock);
-        act.Should().Throw<ArgumentNullException>();
+        var proof = SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock).Data!;
+
+        var result = pending.Activate(proof, null, clock);
+
+        AssertPreconditionViolated(result, "policy");
     }
 
     [Fact]
-    public void Activate_NullClock_ThrowsArgumentNullException()
+    public void Activate_NullClock_FailsPreconditionViolated()
     {
         var pending = MakePending(Instant.FromUtc(2026, 1, 1, 0, 0, 0));
-        var proof = SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, new TestClock(Instant.FromUtc(2026, 1, 1, 12, 0, 0)));
-        var act = () => pending.Activate(proof, sr_policy, null!);
-        act.Should().Throw<ArgumentNullException>();
+        var proof = SmokeProof.ForPassedSmokeTest(
+            KeyType.AesPayload, new TestClock(Instant.FromUtc(2026, 1, 1, 12, 0, 0))).Data!;
+
+        var result = pending.Activate(proof, sr_policy, null);
+
+        AssertPreconditionViolated(result, "clock");
     }
 
     // -----------------------------------------------------------------------
@@ -211,15 +220,15 @@ public sealed class EncryptionKeyTransitionTests
     public void Activate_Success_CarriesCoreFields()
     {
         var created = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
-        var now = created + s_soak;
+        var now = created + sr_soak;
         var clock = new TestClock(now);
         var pending = MakePending(created);
-        var proof = SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock);
+        var proof = SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock).Data!;
 
         var active = pending.Activate(proof, sr_policy, clock).Data!;
 
-        active.Kid.Should().Be(s_kid);
-        active.KeyDomain.Should().Be(s_domain);
+        active.Kid.Should().Be(sr_kid);
+        active.KeyDomain.Should().Be(sr_domain);
         active.KeyType.Should().Be(KeyType.AesPayload);
         active.CreatedAt.Should().Be(created);
         active.ActivatedAt.Should().Be(now);
@@ -234,18 +243,17 @@ public sealed class EncryptionKeyTransitionTests
     public void Rotate_ValidSuccessor_ReturnsRetiringAndSuccessor()
     {
         var created = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
-        var activatedAt = created + s_soak;
+        var activatedAt = created + sr_soak;
         var rotateAt = activatedAt + Duration.FromDays(30);
         var clock = new TestClock(rotateAt);
 
-        var active = MakePending(created).Activate(
-            SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, new TestClock(activatedAt)),
-            sr_policy,
-            new TestClock(activatedAt)).Data!;
+        var active = MakeActive(created, activatedAt);
 
         var successorPending = MakePending(rotateAt);
-        var (retiring, successor) = active.Rotate(successorPending, clock);
+        var result = active.Rotate(successorPending, clock);
 
+        result.Success.Should().BeTrue();
+        var (retiring, successor) = result.Data;
         retiring.Status.Should().Be(KeyStatus.Retiring);
         retiring.RetiringAt.Should().Be(rotateAt);
         retiring.ActivatedAt.Should().Be(activatedAt);
@@ -257,61 +265,75 @@ public sealed class EncryptionKeyTransitionTests
     {
         // Rotate immediately after activate — RetiringAt == ActivatedAt is valid
         var instant = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
-        var clock = new TestClock(instant + s_soak);
-        var active = MakePending(instant)
-            .Activate(SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock), sr_policy, clock).Data!;
+        var clock = new TestClock(instant + sr_soak);
+        var active = MakeActive(instant, instant + sr_soak);
 
-        var successor = MakePending(instant + s_soak);
-        var (retiring, _) = active.Rotate(successor, clock);
+        var successor = MakePending(instant + sr_soak);
+        var result = active.Rotate(successor, clock);
 
-        retiring.RetiringAt.Should().Be(active.ActivatedAt);
+        result.Success.Should().BeTrue();
+        result.Data.Retiring.RetiringAt.Should().Be(active.ActivatedAt);
     }
 
     // -----------------------------------------------------------------------
-    // ActiveKey.Rotate — domain/type mismatch guard
+    // ActiveKey.Rotate — domain/type mismatch (flagged precondition result)
     // -----------------------------------------------------------------------
 
     [Fact]
-    public void Rotate_MismatchedDomain_ThrowsArgumentException()
+    public void Rotate_MismatchedDomain_FailsPreconditionViolated()
     {
         var instant = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
-        var clock = new TestClock(instant + s_soak);
-        var active = MakePending(instant)
-            .Activate(SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock), sr_policy, clock).Data!;
+        var clock = new TestClock(instant + sr_soak);
+        var active = MakeActive(instant, instant + sr_soak);
 
         // Successor in a different domain
         var wrongDomain = KeyDomain.FromTrusted("courier");
-        var successor = PendingKey.Create(s_kid, wrongDomain, KeyType.AesPayload, s_mat, null, instant + s_soak);
+        var successor = PendingKey.Create(
+            sr_kid, wrongDomain, KeyType.AesPayload, sr_mat, null, instant + sr_soak).Data!;
 
-        var act = () => active.Rotate(successor, clock);
-        act.Should().Throw<ArgumentException>();
+        var result = active.Rotate(successor, clock);
+
+        AssertPreconditionViolated(result, "successor");
     }
 
     [Fact]
-    public void Rotate_MismatchedType_ThrowsArgumentException()
+    public void Rotate_MismatchedType_FailsPreconditionViolated()
     {
         var instant = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
-        var clock = new TestClock(instant + s_soak);
-        var active = MakePending(instant)
-            .Activate(SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock), sr_policy, clock).Data!;
+        var clock = new TestClock(instant + sr_soak);
+        var active = MakeActive(instant, instant + sr_soak);
 
         // Successor is Secret type, but key is AesPayload
-        var successor = PendingKey.Create(s_kid, s_domain, KeyType.Secret, s_mat, null, instant + s_soak);
+        var successor = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.Secret, sr_mat, null, instant + sr_soak).Data!;
 
-        var act = () => active.Rotate(successor, clock);
-        act.Should().Throw<ArgumentException>();
+        var result = active.Rotate(successor, clock);
+
+        AssertPreconditionViolated(result, "successor");
     }
 
     [Fact]
-    public void Rotate_NullSuccessor_ThrowsArgumentNullException()
+    public void Rotate_NullSuccessor_FailsPreconditionViolated()
     {
         var instant = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
-        var clock = new TestClock(instant + s_soak);
-        var active = MakePending(instant)
-            .Activate(SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock), sr_policy, clock).Data!;
+        var clock = new TestClock(instant + sr_soak);
+        var active = MakeActive(instant, instant + sr_soak);
 
-        var act = () => active.Rotate(null!, clock);
-        act.Should().Throw<ArgumentNullException>();
+        var result = active.Rotate(null, clock);
+
+        AssertPreconditionViolated(result, "successor");
+    }
+
+    [Fact]
+    public void Rotate_NullClock_FailsPreconditionViolated()
+    {
+        var instant = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
+        var active = MakeActive(instant, instant + sr_soak);
+        var successor = MakePending(instant + sr_soak);
+
+        var result = active.Rotate(successor, null);
+
+        AssertPreconditionViolated(result, "clock");
     }
 
     // -----------------------------------------------------------------------
@@ -322,7 +344,7 @@ public sealed class EncryptionKeyTransitionTests
     public void Retire_GraceExactlyElapsed_Succeeds()
     {
         var retiring = MakeRetiringKey(out var retiringAt);
-        var now = retiringAt + s_grace; // exactly at boundary
+        var now = retiringAt + sr_grace; // exactly at boundary
         var clock = new TestClock(now);
 
         var result = retiring.Retire(sr_policy, clock);
@@ -336,7 +358,7 @@ public sealed class EncryptionKeyTransitionTests
     public void Retire_GraceOneNsBeforeElapsed_Fails()
     {
         var retiring = MakeRetiringKey(out var retiringAt);
-        var now = retiringAt + s_grace - Duration.FromNanoseconds(1);
+        var now = retiringAt + sr_grace - Duration.FromNanoseconds(1);
         var clock = new TestClock(now);
 
         var result = retiring.Retire(sr_policy, clock);
@@ -351,7 +373,7 @@ public sealed class EncryptionKeyTransitionTests
     public void Retire_GraceOneNsAfterElapsed_Succeeds()
     {
         var retiring = MakeRetiringKey(out var retiringAt);
-        var now = retiringAt + s_grace + Duration.FromNanoseconds(1);
+        var now = retiringAt + sr_grace + Duration.FromNanoseconds(1);
         var clock = new TestClock(now);
 
         var result = retiring.Retire(sr_policy, clock);
@@ -374,6 +396,31 @@ public sealed class EncryptionKeyTransitionTests
     }
 
     // -----------------------------------------------------------------------
+    // RetiringKey.Retire — null guards (flagged precondition results)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void Retire_NullPolicy_FailsPreconditionViolated()
+    {
+        var retiring = MakeRetiringKey(out var retiringAt);
+        var clock = new TestClock(retiringAt + sr_grace);
+
+        var result = retiring.Retire(null, clock);
+
+        AssertPreconditionViolated(result, "policy");
+    }
+
+    [Fact]
+    public void Retire_NullClock_FailsPreconditionViolated()
+    {
+        var retiring = MakeRetiringKey(out _);
+
+        var result = retiring.Retire(sr_policy, null);
+
+        AssertPreconditionViolated(result, "clock");
+    }
+
+    // -----------------------------------------------------------------------
     // RetiringKey.Retire — carries all fields
     // -----------------------------------------------------------------------
 
@@ -381,7 +428,7 @@ public sealed class EncryptionKeyTransitionTests
     public void Retire_Success_CarriesAllTimestamps()
     {
         var retiring = MakeRetiringKey(out var retiringAt);
-        var now = retiringAt + s_grace;
+        var now = retiringAt + sr_grace;
         var clock = new TestClock(now);
 
         var retired = retiring.Retire(sr_policy, clock).Data!;
@@ -402,26 +449,37 @@ public sealed class EncryptionKeyTransitionTests
         var now = Instant.FromUtc(2026, 1, 2, 0, 0, 0);
         var clock = new TestClock(now);
 
-        var compromised = pending.Compromise("security incident", clock);
+        var result = pending.Compromise("security incident", clock);
 
-        compromised.Status.Should().Be(KeyStatus.Compromised);
-        compromised.CompromisedAt.Should().Be(now);
-        compromised.Reason.Should().Be("security incident");
+        result.Success.Should().BeTrue();
+        result.Data!.Status.Should().Be(KeyStatus.Compromised);
+        result.Data!.CompromisedAt.Should().Be(now);
+        result.Data!.Reason.Should().Be("security incident");
     }
 
     [Fact]
     public void Compromise_FromActive_ReturnsCompromisedKey()
     {
         var instant = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
-        var activeClock = new TestClock(instant + s_soak);
-        var active = MakePending(instant)
-            .Activate(SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, activeClock), sr_policy, activeClock).Data!;
+        var active = MakeActive(instant, instant + sr_soak);
 
-        var now = instant + s_soak + Duration.FromDays(1);
-        var compromised = active.Compromise("key exposed in breach", new TestClock(now));
+        var now = instant + sr_soak + Duration.FromDays(1);
+        var result = active.Compromise("key exposed in breach", new TestClock(now));
 
-        compromised.Status.Should().Be(KeyStatus.Compromised);
-        compromised.CompromisedAt.Should().Be(now);
+        result.Success.Should().BeTrue();
+        result.Data!.Status.Should().Be(KeyStatus.Compromised);
+        result.Data!.CompromisedAt.Should().Be(now);
+    }
+
+    [Fact]
+    public void Compromise_ActiveNullClock_FailsPreconditionViolated()
+    {
+        var instant = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
+        var active = MakeActive(instant, instant + sr_soak);
+
+        var result = active.Compromise("key exposed in breach", null);
+
+        AssertPreconditionViolated(result, "clock");
     }
 
     [Fact]
@@ -430,19 +488,52 @@ public sealed class EncryptionKeyTransitionTests
         var retiring = MakeRetiringKey(out _);
         var now = Instant.FromUtc(2026, 2, 1, 0, 0, 0);
 
-        var compromised = retiring.Compromise("hardware fault", new TestClock(now));
+        var result = retiring.Compromise("hardware fault", new TestClock(now));
 
-        compromised.Status.Should().Be(KeyStatus.Compromised);
+        result.Success.Should().BeTrue();
+        result.Data!.Status.Should().Be(KeyStatus.Compromised);
     }
 
     [Fact]
-    public void Compromise_EmptyReason_ThrowsArgumentException()
+    public void Compromise_RetiringNullClock_FailsPreconditionViolated()
+    {
+        var retiring = MakeRetiringKey(out _);
+
+        var result = retiring.Compromise("hardware fault", null);
+
+        AssertPreconditionViolated(result, "clock");
+    }
+
+    [Fact]
+    public void Compromise_EmptyReason_FailsPreconditionViolated()
     {
         var pending = MakePending(Instant.FromUtc(2026, 1, 1, 0, 0, 0));
         var clock = new TestClock(Instant.FromUtc(2026, 1, 2, 0, 0, 0));
 
-        var act = () => pending.Compromise(string.Empty, clock);
-        act.Should().Throw<ArgumentException>();
+        var result = pending.Compromise(string.Empty, clock);
+
+        AssertPreconditionViolated(result, "reason");
+    }
+
+    [Fact]
+    public void Compromise_WhitespaceReason_FailsPreconditionViolated()
+    {
+        var pending = MakePending(Instant.FromUtc(2026, 1, 1, 0, 0, 0));
+        var clock = new TestClock(Instant.FromUtc(2026, 1, 2, 0, 0, 0));
+
+        var result = pending.Compromise("   ", clock);
+
+        AssertPreconditionViolated(result, "reason");
+    }
+
+    [Fact]
+    public void Compromise_NullClock_FailsPreconditionViolated()
+    {
+        var pending = MakePending(Instant.FromUtc(2026, 1, 1, 0, 0, 0));
+
+        var result = pending.Compromise("security incident", null);
+
+        AssertPreconditionViolated(result, "clock");
     }
 
     [Fact]
@@ -452,9 +543,10 @@ public sealed class EncryptionKeyTransitionTests
         var clock = new TestClock(Instant.FromUtc(2026, 1, 2, 0, 0, 0));
         var longReason = new string('x', CompromisedKey.REASON_MAX + 100);
 
-        var compromised = pending.Compromise(longReason, clock);
+        var result = pending.Compromise(longReason, clock);
 
-        compromised.Reason.Length.Should().Be(CompromisedKey.REASON_MAX);
+        result.Success.Should().BeTrue();
+        result.Data!.Reason.Length.Should().Be(CompromisedKey.REASON_MAX);
     }
 
     // -----------------------------------------------------------------------
@@ -473,20 +565,41 @@ public sealed class EncryptionKeyTransitionTests
     // Helpers
     // -----------------------------------------------------------------------
 
+    private static void AssertPreconditionViolated<T>(
+        D2.Shared.Result.D2Result<T> result, string expectedArg)
+    {
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_PRECONDITION_VIOLATED);
+        result.Category.Should().Be(ErrorCategory.InternalError);
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.InternalServerError);
+
+        // The split per-arg guards name the SPECIFIC offending argument via the
+        // runtime `messages` override (TKMessage.With("arg", "<name>")).
+        var message = result.Messages.Single(
+            m => m.Key == "keycustodian_internal_PRECONDITION_VIOLATED");
+        message.Parameters.Should().NotBeNull(
+            because: "the converted guard binds the offending arg name");
+        message.Parameters!["arg"].Should().Be(expectedArg);
+    }
+
     private static PendingKey MakePending(Instant createdAt) =>
-        PendingKey.Create(s_kid, s_domain, KeyType.AesPayload, s_mat, null, createdAt);
+        PendingKey.Create(sr_kid, sr_domain, KeyType.AesPayload, sr_mat, null, createdAt).Data!;
+
+    private static ActiveKey MakeActive(Instant createdAt, Instant activatedAt)
+    {
+        var clock = new TestClock(activatedAt);
+        return MakePending(createdAt)
+            .Activate(SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock).Data!, sr_policy, clock)
+            .Data!;
+    }
 
     private static RetiringKey MakeRetiringKey(out Instant retiringAt)
     {
         var created = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
-        var activatedAt = created + s_soak;
+        var activatedAt = created + sr_soak;
         retiringAt = activatedAt + Duration.FromDays(30);
 
-        var activeClock = new TestClock(activatedAt);
-        var active = MakePending(created)
-            .Activate(SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, activeClock), sr_policy, activeClock).Data!;
-
-        var (retiring, _) = active.Rotate(MakePending(retiringAt), new TestClock(retiringAt));
-        return retiring;
+        var active = MakeActive(created, activatedAt);
+        return active.Rotate(MakePending(retiringAt), new TestClock(retiringAt)).Data.Retiring;
     }
 }

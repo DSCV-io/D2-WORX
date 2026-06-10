@@ -7,7 +7,7 @@
       "doc": "The Authorization header was present but not a parseable Bearer JWT.",
       "domain": "auth",
       "factoryName": "BearerMalformed",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 401,
       "userMessageKeyPath": "TK.Auth.Errors.UNAUTHORIZED",
       "userMessageKeySnake": "auth_errors_UNAUTHORIZED"
@@ -18,7 +18,7 @@
       "doc": "The Authorization header was missing on a protected endpoint.",
       "domain": "auth",
       "factoryName": "BearerMissing",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 401,
       "userMessageKeyPath": "TK.Auth.Errors.UNAUTHORIZED",
       "userMessageKeySnake": "auth_errors_UNAUTHORIZED"
@@ -29,7 +29,7 @@
       "doc": "JWKS upstream is unavailable; no cached snapshot to fall back on.",
       "domain": "auth",
       "factoryName": "JwksUnavailable",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 503,
       "userMessageKeyPath": "TK.Auth.Errors.TEMPORARILY_UNAVAILABLE",
       "userMessageKeySnake": "auth_errors_TEMPORARILY_UNAVAILABLE"
@@ -40,7 +40,7 @@
       "doc": "JWT act chain is malformed (RFC 8693 section 2.1 violation).",
       "domain": "auth",
       "factoryName": "JwtActChainMalformed",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 401,
       "userMessageKeyPath": "TK.Auth.Errors.UNAUTHORIZED",
       "userMessageKeySnake": "auth_errors_UNAUTHORIZED"
@@ -51,7 +51,7 @@
       "doc": "JWT aud claim does not match this service\u0027s configured audience.",
       "domain": "auth",
       "factoryName": "JwtAudienceMismatch",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 401,
       "userMessageKeyPath": "TK.Auth.Errors.UNAUTHORIZED",
       "userMessageKeySnake": "auth_errors_UNAUTHORIZED"
@@ -62,7 +62,7 @@
       "doc": "JWT is missing a required claim that this service depends on.",
       "domain": "auth",
       "factoryName": "JwtClaimMissing",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 401,
       "userMessageKeyPath": "TK.Auth.Errors.UNAUTHORIZED",
       "userMessageKeySnake": "auth_errors_UNAUTHORIZED"
@@ -73,7 +73,7 @@
       "doc": "JWT is expired (exp in the past, beyond clock skew).",
       "domain": "auth",
       "factoryName": "JwtExpired",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 401,
       "userMessageKeyPath": "TK.Auth.Errors.UNAUTHORIZED",
       "userMessageKeySnake": "auth_errors_UNAUTHORIZED"
@@ -84,7 +84,7 @@
       "doc": "JWT iss claim does not match the configured issuer.",
       "domain": "auth",
       "factoryName": "JwtIssuerMismatch",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 401,
       "userMessageKeyPath": "TK.Auth.Errors.UNAUTHORIZED",
       "userMessageKeySnake": "auth_errors_UNAUTHORIZED"
@@ -95,7 +95,7 @@
       "doc": "JWT signed by an unknown kid; reactive JWKS refresh did not surface it.",
       "domain": "auth",
       "factoryName": "JwtKidNotFound",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 401,
       "userMessageKeyPath": "TK.Auth.Errors.UNAUTHORIZED",
       "userMessageKeySnake": "auth_errors_UNAUTHORIZED"
@@ -106,7 +106,7 @@
       "doc": "JWT not yet valid (nbf in the future, beyond clock skew).",
       "domain": "auth",
       "factoryName": "JwtNotYetValid",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 401,
       "userMessageKeyPath": "TK.Auth.Errors.UNAUTHORIZED",
       "userMessageKeySnake": "auth_errors_UNAUTHORIZED"
@@ -117,7 +117,7 @@
       "doc": "JWT signature verification failed against the JWKS.",
       "domain": "auth",
       "factoryName": "JwtSignatureInvalid",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 401,
       "userMessageKeyPath": "TK.Auth.Errors.UNAUTHORIZED",
       "userMessageKeySnake": "auth_errors_UNAUTHORIZED"
@@ -128,7 +128,7 @@
       "doc": "Caller is authenticated but the per-endpoint scope requirement is not satisfied. Surfaces as 401 (not 403) - the auth boundary keeps a uniform shape regardless of whether the JWT was bad or scopes were insufficient, so attackers cannot deduce which check failed.",
       "domain": "auth",
       "factoryName": "ScopeInsufficient",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 401,
       "userMessageKeyPath": "TK.Auth.Errors.UNAUTHORIZED",
       "userMessageKeySnake": "auth_errors_UNAUTHORIZED"
@@ -139,7 +139,7 @@
       "doc": "Session liveness store unreachable. Caller fails closed: receives a 503-equivalent and may retry; the attempt is NOT treated as authenticated. Treating an unknown liveness state as alive would let revoked sessions ride through outages.",
       "domain": "auth",
       "factoryName": "SessionLivenessUnavailable",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 503,
       "userMessageKeyPath": "TK.Auth.Errors.TEMPORARILY_UNAVAILABLE",
       "userMessageKeySnake": "auth_errors_TEMPORARILY_UNAVAILABLE"
@@ -150,7 +150,7 @@
       "doc": "The bearer\u0027s d2_session_id is no longer alive (revoked).",
       "domain": "auth",
       "factoryName": "SessionRevoked",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 401,
       "userMessageKeyPath": "TK.Auth.Errors.UNAUTHORIZED",
       "userMessageKeySnake": "auth_errors_UNAUTHORIZED"
@@ -205,7 +205,7 @@
       "doc": "Indicates that the action is forbidden due to insufficient permissions.",
       "domain": "common",
       "factoryName": "Forbidden",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 403,
       "userMessageKeyPath": "TK.Common.Errors.FORBIDDEN",
       "userMessageKeySnake": "common_errors_FORBIDDEN"
@@ -227,7 +227,7 @@
       "doc": "The retirement grace window has not yet elapsed; the retiring key may not be retired.",
       "domain": "keycustodian",
       "factoryName": "GraceNotElapsed",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 400,
       "userMessageKeyPath": "TK.Keycustodian.Validation.GRACE_NOT_ELAPSED",
       "userMessageKeySnake": "keycustodian_validation_GRACE_NOT_ELAPSED"
@@ -238,7 +238,7 @@
       "doc": "A rotation-policy duration is non-positive, or the cadence is shorter than grace plus smoke-soak.",
       "domain": "keycustodian",
       "factoryName": "InvalidRotationPolicy",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 400,
       "userMessageKeyPath": "TK.Keycustodian.Validation.INVALID_ROTATION_POLICY",
       "userMessageKeySnake": "keycustodian_validation_INVALID_ROTATION_POLICY"
@@ -249,7 +249,7 @@
       "doc": "The key identifier is null, empty, whitespace, or contains characters outside the JWKS-safe charset [A-Za-z0-9_-].",
       "domain": "keycustodian",
       "factoryName": "KidInvalid",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 400,
       "userMessageKeyPath": "TK.Common.Validation.ID_INVALID",
       "userMessageKeySnake": "common_validation_ID_INVALID"
@@ -260,10 +260,21 @@
       "doc": "The key identifier exceeds the maximum length of 64 characters.",
       "domain": "keycustodian",
       "factoryName": "KidTooLong",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 400,
       "userMessageKeyPath": "TK.Common.Errors.TOO_LONG",
       "userMessageKeySnake": "common_errors_TOO_LONG"
+    },
+    "KEYCUSTODIAN_PRECONDITION_VIOLATED": {
+      "category": "internal_error",
+      "code": "KEYCUSTODIAN_PRECONDITION_VIOLATED",
+      "doc": "A required argument supplied to a key-lifecycle transition was null, empty, or otherwise violated a documented precondition. This is a programmer/precondition error surfaced as a flagged 500 result (carrying telemetry) rather than a thrown exception.",
+      "domain": "keycustodian",
+      "factoryName": "PreconditionViolated",
+      "factoryShape": "standard",
+      "httpStatus": 500,
+      "userMessageKeyPath": "TK.Keycustodian.Internal.PRECONDITION_VIOLATED",
+      "userMessageKeySnake": "keycustodian_internal_PRECONDITION_VIOLATED"
     },
     "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH": {
       "category": "validation_failure",
@@ -271,7 +282,7 @@
       "doc": "The supplied smoke proof was issued for a different key type than this key.",
       "domain": "keycustodian",
       "factoryName": "SmokeProofTypeMismatch",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 400,
       "userMessageKeyPath": "TK.Keycustodian.Validation.SMOKE_PROOF_TYPE_MISMATCH",
       "userMessageKeySnake": "keycustodian_validation_SMOKE_PROOF_TYPE_MISMATCH"
@@ -282,7 +293,7 @@
       "doc": "The smoke-soak window has not yet elapsed; the pending key may not be activated.",
       "domain": "keycustodian",
       "factoryName": "SoakNotElapsed",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 400,
       "userMessageKeyPath": "TK.Keycustodian.Validation.SOAK_NOT_ELAPSED",
       "userMessageKeySnake": "keycustodian_validation_SOAK_NOT_ELAPSED"
@@ -293,7 +304,7 @@
       "doc": "The specified key domain is not a member of the recognized key-domain catalog.",
       "domain": "keycustodian",
       "factoryName": "UnknownKeyDomain",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 400,
       "userMessageKeyPath": "TK.Keycustodian.Validation.UNKNOWN_KEY_DOMAIN",
       "userMessageKeySnake": "keycustodian_validation_UNKNOWN_KEY_DOMAIN"
@@ -337,7 +348,7 @@
       "doc": "Indicates that the request has been rate limited.",
       "domain": "common",
       "factoryName": "TooManyRequests",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 429,
       "userMessageKeyPath": "TK.Common.Errors.TOO_MANY_REQUESTS",
       "userMessageKeySnake": "common_errors_TOO_MANY_REQUESTS"
@@ -348,7 +359,7 @@
       "doc": "Indicates that the service is currently unavailable.",
       "domain": "common",
       "factoryName": "ServiceUnavailable",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 503,
       "userMessageKeyPath": "TK.Common.Errors.SERVICE_UNAVAILABLE",
       "userMessageKeySnake": "common_errors_SERVICE_UNAVAILABLE"
@@ -370,7 +381,7 @@
       "doc": "Indicates that the user is unauthorized to perform the action (e.g., not authenticated).",
       "domain": "common",
       "factoryName": "Unauthorized",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "httpStatus": 401,
       "userMessageKeyPath": "TK.Common.Errors.UNAUTHORIZED",
       "userMessageKeySnake": "common_errors_UNAUTHORIZED"
@@ -392,7 +403,7 @@
       "doc": "Indicates that the input validation has failed.",
       "domain": "common",
       "factoryName": "ValidationFailed",
-      "factoryShape": "validation",
+      "factoryShape": "standard",
       "httpStatus": 400,
       "userMessageKeyPath": "TK.Common.Errors.VALIDATION_FAILED",
       "userMessageKeySnake": "common_errors_VALIDATION_FAILED"

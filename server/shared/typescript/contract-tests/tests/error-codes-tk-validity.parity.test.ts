@@ -96,7 +96,7 @@ function camelCase(pascal: string): string {
 
 const failures = AuthFailures as unknown as Record<
   string,
-  (traceId?: string) => { messages: readonly { key: string }[] }
+  (opts?: { traceId?: string }) => { messages: readonly { key: string }[] }
 >;
 
 describe("error-codes TK-validity (TS: every auth factory's wire message renders)", () => {

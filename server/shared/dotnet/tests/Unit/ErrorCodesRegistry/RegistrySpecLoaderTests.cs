@@ -75,7 +75,7 @@ public sealed class RegistrySpecLoaderTests
               "category": "validation_failure",
               "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
               "factoryName": "BearerMissing",
-              "factoryShape": "with_error_code",
+              "factoryShape": "standard",
               "doc": "Missing."
             }
           ]

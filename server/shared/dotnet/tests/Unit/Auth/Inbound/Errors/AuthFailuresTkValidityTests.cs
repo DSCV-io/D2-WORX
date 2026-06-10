@@ -78,12 +78,15 @@ public sealed class AuthFailuresTkValidityTests
 
     private static D2Result InvokeFactory(string factoryName)
     {
+        // The delegating factory carries a single optional `messages` override
+        // param; passing null exercises the default-omitted (spec-TK) path so
+        // the render assertion drives off the spec's default message.
         var method = typeof(AuthFailures)
             .GetMethods(BindingFlags.Public | BindingFlags.Static)
             .Single(m => m.Name == factoryName
                 && !m.IsGenericMethodDefinition
-                && m.GetParameters().Length == 0);
-        return (D2Result)method.Invoke(null, null)!;
+                && m.GetParameters().Length == 1);
+        return (D2Result)method.Invoke(null, [null])!;
     }
 
     private static string ExpectedText(string key)

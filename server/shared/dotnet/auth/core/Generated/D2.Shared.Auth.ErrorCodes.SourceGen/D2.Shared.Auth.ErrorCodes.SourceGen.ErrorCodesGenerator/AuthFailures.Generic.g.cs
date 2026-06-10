@@ -31,115 +31,171 @@ namespace D2.Shared.Auth.Errors;
 public static class AuthFailures<T>
 {
     /// <summary>The Authorization header was missing on a protected endpoint. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Auth.Errors.UNAUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> BearerMissing() =>
-        D2Result<T>.Unauthorized(
-            messages: [TK.Auth.Errors.UNAUTHORIZED],
+    public static D2Result<T> BearerMissing(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Auth.Errors.UNAUTHORIZED];
+        return D2Result<T>.Unauthorized(
+            messages: messages,
             errorCode: AuthErrorCodes.AUTH_BEARER_MISSING,
             category: ErrorCategory.ValidationFailure);
+    }
 
     /// <summary>The Authorization header was present but not a parseable Bearer JWT. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Auth.Errors.UNAUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> BearerMalformed() =>
-        D2Result<T>.Unauthorized(
-            messages: [TK.Auth.Errors.UNAUTHORIZED],
+    public static D2Result<T> BearerMalformed(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Auth.Errors.UNAUTHORIZED];
+        return D2Result<T>.Unauthorized(
+            messages: messages,
             errorCode: AuthErrorCodes.AUTH_BEARER_MALFORMED,
             category: ErrorCategory.ValidationFailure);
+    }
 
     /// <summary>JWT signature verification failed against the JWKS. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Auth.Errors.UNAUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> JwtSignatureInvalid() =>
-        D2Result<T>.Unauthorized(
-            messages: [TK.Auth.Errors.UNAUTHORIZED],
+    public static D2Result<T> JwtSignatureInvalid(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Auth.Errors.UNAUTHORIZED];
+        return D2Result<T>.Unauthorized(
+            messages: messages,
             errorCode: AuthErrorCodes.AUTH_JWT_SIGNATURE_INVALID,
             category: ErrorCategory.ValidationFailure);
+    }
 
     /// <summary>JWT is expired (exp in the past, beyond clock skew). Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Auth.Errors.UNAUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> JwtExpired() =>
-        D2Result<T>.Unauthorized(
-            messages: [TK.Auth.Errors.UNAUTHORIZED],
+    public static D2Result<T> JwtExpired(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Auth.Errors.UNAUTHORIZED];
+        return D2Result<T>.Unauthorized(
+            messages: messages,
             errorCode: AuthErrorCodes.AUTH_JWT_EXPIRED,
             category: ErrorCategory.ValidationFailure);
+    }
 
     /// <summary>JWT not yet valid (nbf in the future, beyond clock skew). Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Auth.Errors.UNAUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> JwtNotYetValid() =>
-        D2Result<T>.Unauthorized(
-            messages: [TK.Auth.Errors.UNAUTHORIZED],
+    public static D2Result<T> JwtNotYetValid(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Auth.Errors.UNAUTHORIZED];
+        return D2Result<T>.Unauthorized(
+            messages: messages,
             errorCode: AuthErrorCodes.AUTH_JWT_NOT_YET_VALID,
             category: ErrorCategory.ValidationFailure);
+    }
 
     /// <summary>JWT iss claim does not match the configured issuer. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Auth.Errors.UNAUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> JwtIssuerMismatch() =>
-        D2Result<T>.Unauthorized(
-            messages: [TK.Auth.Errors.UNAUTHORIZED],
+    public static D2Result<T> JwtIssuerMismatch(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Auth.Errors.UNAUTHORIZED];
+        return D2Result<T>.Unauthorized(
+            messages: messages,
             errorCode: AuthErrorCodes.AUTH_JWT_ISSUER_MISMATCH,
             category: ErrorCategory.ValidationFailure);
+    }
 
     /// <summary>JWT aud claim does not match this service's configured audience. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Auth.Errors.UNAUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> JwtAudienceMismatch() =>
-        D2Result<T>.Unauthorized(
-            messages: [TK.Auth.Errors.UNAUTHORIZED],
+    public static D2Result<T> JwtAudienceMismatch(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Auth.Errors.UNAUTHORIZED];
+        return D2Result<T>.Unauthorized(
+            messages: messages,
             errorCode: AuthErrorCodes.AUTH_JWT_AUDIENCE_MISMATCH,
             category: ErrorCategory.ValidationFailure);
+    }
 
     /// <summary>JWT is missing a required claim that this service depends on. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Auth.Errors.UNAUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> JwtClaimMissing() =>
-        D2Result<T>.Unauthorized(
-            messages: [TK.Auth.Errors.UNAUTHORIZED],
+    public static D2Result<T> JwtClaimMissing(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Auth.Errors.UNAUTHORIZED];
+        return D2Result<T>.Unauthorized(
+            messages: messages,
             errorCode: AuthErrorCodes.AUTH_JWT_CLAIM_MISSING,
             category: ErrorCategory.ValidationFailure);
+    }
 
     /// <summary>JWT act chain is malformed (RFC 8693 section 2.1 violation). Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Auth.Errors.UNAUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> JwtActChainMalformed() =>
-        D2Result<T>.Unauthorized(
-            messages: [TK.Auth.Errors.UNAUTHORIZED],
+    public static D2Result<T> JwtActChainMalformed(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Auth.Errors.UNAUTHORIZED];
+        return D2Result<T>.Unauthorized(
+            messages: messages,
             errorCode: AuthErrorCodes.AUTH_JWT_ACT_CHAIN_MALFORMED,
             category: ErrorCategory.ValidationFailure);
+    }
 
     /// <summary>JWT signed by an unknown kid; reactive JWKS refresh did not surface it. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Auth.Errors.UNAUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> JwtKidNotFound() =>
-        D2Result<T>.Unauthorized(
-            messages: [TK.Auth.Errors.UNAUTHORIZED],
+    public static D2Result<T> JwtKidNotFound(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Auth.Errors.UNAUTHORIZED];
+        return D2Result<T>.Unauthorized(
+            messages: messages,
             errorCode: AuthErrorCodes.AUTH_JWT_KID_NOT_FOUND,
             category: ErrorCategory.ValidationFailure);
+    }
 
     /// <summary>JWKS upstream is unavailable; no cached snapshot to fall back on. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Auth.Errors.TEMPORARILY_UNAVAILABLE]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> JwksUnavailable() =>
-        D2Result<T>.ServiceUnavailable(
-            messages: [TK.Auth.Errors.TEMPORARILY_UNAVAILABLE],
+    public static D2Result<T> JwksUnavailable(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Auth.Errors.TEMPORARILY_UNAVAILABLE];
+        return D2Result<T>.ServiceUnavailable(
+            messages: messages,
             errorCode: AuthErrorCodes.AUTH_JWKS_UNAVAILABLE,
             category: ErrorCategory.InfrastructureUnavailable);
+    }
 
     /// <summary>The bearer's d2_session_id is no longer alive (revoked). Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Auth.Errors.UNAUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> SessionRevoked() =>
-        D2Result<T>.Unauthorized(
-            messages: [TK.Auth.Errors.UNAUTHORIZED],
+    public static D2Result<T> SessionRevoked(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Auth.Errors.UNAUTHORIZED];
+        return D2Result<T>.Unauthorized(
+            messages: messages,
             errorCode: AuthErrorCodes.AUTH_SESSION_REVOKED,
             category: ErrorCategory.PolicyDenied);
+    }
 
     /// <summary>Session liveness store unreachable. Caller fails closed: receives a 503-equivalent and may retry; the attempt is NOT treated as authenticated. Treating an unknown liveness state as alive would let revoked sessions ride through outages. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Auth.Errors.TEMPORARILY_UNAVAILABLE]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> SessionLivenessUnavailable() =>
-        D2Result<T>.ServiceUnavailable(
-            messages: [TK.Auth.Errors.TEMPORARILY_UNAVAILABLE],
+    public static D2Result<T> SessionLivenessUnavailable(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Auth.Errors.TEMPORARILY_UNAVAILABLE];
+        return D2Result<T>.ServiceUnavailable(
+            messages: messages,
             errorCode: AuthErrorCodes.AUTH_SESSION_LIVENESS_UNAVAILABLE,
             category: ErrorCategory.InfrastructureUnavailable);
+    }
 
     /// <summary>Caller is authenticated but the per-endpoint scope requirement is not satisfied. Surfaces as 401 (not 403) - the auth boundary keeps a uniform shape regardless of whether the JWT was bad or scopes were insufficient, so attackers cannot deduce which check failed. Typed result.</summary>
+    /// <param name="messages">Optional translation messages; defaults to <c>[TK.Auth.Errors.UNAUTHORIZED]</c>. Pass a message bound via <c>TKMessage.With(...)</c> to name the offending argument.</param>
     /// <returns>A pre-built typed <see cref="D2Result{T}"/> failure.</returns>
-    public static D2Result<T> ScopeInsufficient() =>
-        D2Result<T>.Unauthorized(
-            messages: [TK.Auth.Errors.UNAUTHORIZED],
+    public static D2Result<T> ScopeInsufficient(IReadOnlyList<TKMessage>? messages = null)
+    {
+        messages ??= [TK.Auth.Errors.UNAUTHORIZED];
+        return D2Result<T>.Unauthorized(
+            messages: messages,
             errorCode: AuthErrorCodes.AUTH_SCOPE_INSUFFICIENT,
             category: ErrorCategory.PolicyDenied);
+    }
 
 }

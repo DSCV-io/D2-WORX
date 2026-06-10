@@ -31,11 +31,11 @@ internal static class EngineDiagnosticIds
 
     /// <summary>
     /// A <c>factoryShape</c> value is not emitted on the DELEGATING per-domain
-    /// path. The delegating <c>&lt;Domain&gt;Failures</c> emitter implements
-    /// only <c>with_error_code</c> (auth's entire set) + <c>none</c> (skip);
-    /// <c>standard</c> and <c>validation</c> delegating bodies are not emitted.
-    /// The generic CONSTRUCTING catalog (<c>FactoryHost.Base</c>) implements all
-    /// four shapes — this diagnostic does not fire there.
+    /// path. The delegating <c>&lt;Domain&gt;Failures</c> emitter implements the
+    /// universal <c>standard</c> shape (every domain catalog's entire set) +
+    /// <c>none</c> (skip); any other (hand-malformed) value fires this
+    /// diagnostic. The schema constrains <c>factoryShape</c> to those two
+    /// values, so a conforming spec never triggers it.
     /// </summary>
     public const string UnsupportedFactoryShape = "D2ERC003";
 }

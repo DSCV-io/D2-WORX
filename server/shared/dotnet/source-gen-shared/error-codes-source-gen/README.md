@@ -26,7 +26,7 @@ The generic catalog owns the reserved unprefixed namespace (`NOT_FOUND`, `CONFLI
 | `D2EC004` | Error    | Entry's `code` is empty or does not match `^[A-Z][A-Z0-9_]*$`                                                                                                                                                 |
 | `D2EC005` | Error    | Entry's `doc` summary text is missing or whitespace-only                                                                                                                                                      |
 
-The shared engine's `D2ERC001` (domain-prefix) does NOT apply — the generic catalog owns the reserved unprefixed namespace (no domain prefix to enforce). `D2ERC002` (TK-existence) DOES apply now that the catalog is factory-bearing — every `userMessageKey` is inverse-transformed (e.g. `TK.Common.Errors.NOT_FOUND` → `common_errors_NOT_FOUND`) and cross-checked against `contracts/messages/en-US.json` (surfaced via `<AdditionalFiles>`). `D2ERC003` (unsupported delegating `factoryShape`) never fires here — `FactoryHost.Base` implements all four shapes.
+The shared engine's `D2ERC001` (domain-prefix) does NOT apply — the generic catalog owns the reserved unprefixed namespace (no domain prefix to enforce). `D2ERC002` (TK-existence) DOES apply now that the catalog is factory-bearing — every `userMessageKey` is inverse-transformed (e.g. `TK.Common.Errors.NOT_FOUND` → `common_errors_NOT_FOUND`) and cross-checked against `contracts/messages/en-US.json` (surfaced via `<AdditionalFiles>`). `D2ERC003` (unsupported delegating `factoryShape`) never fires here — `FactoryHost.Base` implements the universal `standard` shape (and `none`).
 
 ---
 
@@ -51,7 +51,7 @@ The shared engine's `D2ERC001` (domain-prefix) does NOT apply — the generic ca
       "category": "infrastructure_unavailable",
       "userMessageKey": "TK.Common.Errors.SERVICE_UNAVAILABLE",
       "factoryName": "ServiceUnavailable",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "Indicates that the service is currently unavailable."
     }
   ]
@@ -65,7 +65,7 @@ The shared engine's `D2ERC001` (domain-prefix) does NOT apply — the generic ca
 - **`category`** — closed semantic/telemetry classification (9 values incl. `partial_success` for the 206/207 codes). A wire field for generic class-based consumer handling.
 - **`userMessageKey`** — TK symbol-path reference (e.g. `TK.Common.Errors.NOT_FOUND`) used as the factory's default message. Cross-checked against `en-US.json` by `D2ERC002`. The `code` and `userMessageKey` constant may legitimately differ (e.g. `UNHANDLED_EXCEPTION` → `TK.Common.Errors.UNKNOWN`; `RATE_LIMITED` → `TK.Common.Errors.TOO_MANY_REQUESTS`).
 - **`factoryName`** — PascalCase factory method name (e.g. `NotFound`, `TooManyRequests`). May differ from `code`.
-- **`factoryShape`** — `standard` / `with_error_code` / `validation` / `none`. Drives the factory signature; `none` emits the constant + boolean only (no factory).
+- **`factoryShape`** — `standard` (the one universal error-factory shape: `messages?, inputErrors?, errorCode?, category?, traceId?` — all optional) or `none` (constant + boolean only, no factory). Drives the factory signature.
 - **`doc`** — XML `<summary>` text rendered on the emitted constant + factory + JSDoc on the TS-side emitted constant.
 
 ---

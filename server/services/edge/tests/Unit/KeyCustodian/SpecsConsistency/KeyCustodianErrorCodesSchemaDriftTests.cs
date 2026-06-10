@@ -25,7 +25,7 @@ using Xunit;
 /// canonical (same <c>errorCode</c> field-set + required-list +
 /// <c>factoryShape</c> enum) so a canonical field addition the keycustodian copy
 /// misses surfaces as a red test, and that every keycustodian spec entry carries
-/// the with_error_code / 400 / validation_failure shape.
+/// the universal standard shape on one of its two legal (status, category) pairs.
 /// </summary>
 public sealed class KeyCustodianErrorCodesSchemaDriftTests
 {
@@ -59,7 +59,7 @@ public sealed class KeyCustodianErrorCodesSchemaDriftTests
 
         kcEnum.Should().BeEquivalentTo(
             canonicalEnum,
-            because: "factoryShape carries the canonical 4-value enum verbatim");
+            because: "factoryShape carries the canonical 2-value enum verbatim");
     }
 
     [Fact]
@@ -71,26 +71,50 @@ public sealed class KeyCustodianErrorCodesSchemaDriftTests
         props.GetProperty("code").GetProperty("pattern").GetString()
             .Should().Be("^KEYCUSTODIAN_[A-Z][A-Z0-9_]*$");
 
+        // KC narrows the canonical status set to the {400 input-validation,
+        // 500 precondition-violation} subset.
         var statuses = props.GetProperty("httpStatus").GetProperty("enum")
             .EnumerateArray().Select(e => e.GetInt32()).ToList();
-        statuses.Should().BeEquivalentTo(new[] { 400 });
+        statuses.Should().BeEquivalentTo(new[] { 400, 500 });
 
+        // KC narrows the canonical category set to the {validation_failure,
+        // internal_error} subset.
         var categories = props.GetProperty("category").GetProperty("enum")
             .EnumerateArray().Select(e => e.GetString()).ToList();
-        categories.Should().BeEquivalentTo(new[] { "validation_failure" });
+        categories.Should().BeEquivalentTo(new[] { "validation_failure", "internal_error" });
     }
 
     [Fact]
-    public void KcSpec_EveryEntry_IsWithErrorCode400ValidationFailure()
+    public void KcSpec_EveryEntry_IsStandardAndDeclaredStatusCategoryPair()
     {
+        // Every KC entry is the universal standard shape; each is one of two legal
+        // (status, category) pairs: 400/validation_failure (input validation) or
+        // 500/internal_error (precondition violation).
         var entries = KcSpecEntries();
 
         entries.Should().NotBeEmpty();
         foreach (var entry in entries)
         {
-            entry.GetProperty("factoryShape").GetString().Should().Be("with_error_code");
-            entry.GetProperty("httpStatus").GetInt32().Should().Be(400);
-            entry.GetProperty("category").GetString().Should().Be("validation_failure");
+            entry.GetProperty("factoryShape").GetString().Should().Be("standard");
+
+            var status = entry.GetProperty("httpStatus").GetInt32();
+            var category = entry.GetProperty("category").GetString();
+            var code = entry.GetProperty("code").GetString();
+
+            if (status == 500)
+            {
+                category.Should().Be(
+                    "internal_error",
+                    because: $"the 500 KC code '{code}' is the precondition-violation alert class");
+            }
+            else
+            {
+                status.Should().Be(
+                    400, because: $"KC code '{code}' must be a 400 input-validation or 500 precondition code");
+                category.Should().Be(
+                    "validation_failure",
+                    because: $"the 400 KC code '{code}' carries a user-facing validation rejection");
+            }
         }
     }
 

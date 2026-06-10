@@ -25,15 +25,15 @@ using D2.Shared.SourceGen;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The body shape is fully determined by the spec fields: <c>factoryShape</c>
-/// drives the SIGNATURE (<c>standard</c> = <c>(messages?, traceId?)</c>;
-/// <c>with_error_code</c> = <c>(messages?, errorCode?, traceId?)</c>;
-/// <c>validation</c> = <c>(messages?, inputErrors?, errorCode?, traceId?)</c>);
-/// <c>httpStatus</c> maps to the BCL <c>HttpStatusCode</c> member; <c>code</c>
-/// maps to the <c>ErrorCodes.&lt;Code&gt;</c> default; <c>userMessageKey</c>
-/// is the default-message constant. Entries with shape <c>none</c> emit a
-/// boolean (when the code keys one) but no factory — their data-carrying or
-/// factory-less semantics stay hand-rolled / call-site-emitted.
+/// The body shape is fully determined by the spec fields. <c>factoryShape</c>
+/// is the universal <c>standard</c> shape for every error factory:
+/// <c>(messages?, inputErrors?, errorCode?, category?, traceId?)</c> — ALL
+/// optional, so any factory can stamp a domain code + category and optionally
+/// carry inputErrors. <c>httpStatus</c> maps to the BCL <c>HttpStatusCode</c>
+/// member; <c>code</c> maps to the <c>ErrorCodes.&lt;Code&gt;</c> default;
+/// <c>userMessageKey</c> is the default-message constant. Entries with shape
+/// <c>none</c> emit a boolean (when the code keys one) but no factory — their
+/// data-carrying or factory-less semantics stay hand-rolled / call-site-emitted.
 /// </para>
 /// <para>
 /// The per-code booleans are emitted for every code whose shape is NOT
@@ -48,8 +48,6 @@ using D2.Shared.SourceGen;
 internal static class BaseFactoriesEmitter
 {
     private const string _SHAPE_STANDARD = "standard";
-    private const string _SHAPE_WITH_ERROR_CODE = "with_error_code";
-    private const string _SHAPE_VALIDATION = "validation";
     private const string _SHAPE_NONE = "none";
 
     // The none-shape codes that nonetheless key a per-code boolean (matching
@@ -72,7 +70,8 @@ internal static class BaseFactoriesEmitter
     public static EmitResult EmitFactories(ErrorCodesSpec spec, CatalogConfig config)
     {
         var discard = ImmutableArray.CreateBuilder<EmitDiagnostic>();
-        var validEntries = ConstantsEmitter.Validate(spec, config, discard);
+        var validEntries = ConstantsEmitter.Validate(
+            spec, config, ImmutableHashSet<string>.Empty, discard);
         var source = EmitFactoriesSource(validEntries, config, generic: false);
         return new EmitResult(source, ImmutableArray<EmitDiagnostic>.Empty);
     }
@@ -87,7 +86,8 @@ internal static class BaseFactoriesEmitter
     public static EmitResult EmitGenericFactories(ErrorCodesSpec spec, CatalogConfig config)
     {
         var discard = ImmutableArray.CreateBuilder<EmitDiagnostic>();
-        var validEntries = ConstantsEmitter.Validate(spec, config, discard);
+        var validEntries = ConstantsEmitter.Validate(
+            spec, config, ImmutableHashSet<string>.Empty, discard);
         var source = EmitFactoriesSource(validEntries, config, generic: true);
         return new EmitResult(source, ImmutableArray<EmitDiagnostic>.Empty);
     }
@@ -102,22 +102,21 @@ internal static class BaseFactoriesEmitter
     public static EmitResult EmitBooleans(ErrorCodesSpec spec, CatalogConfig config)
     {
         var discard = ImmutableArray.CreateBuilder<EmitDiagnostic>();
-        var validEntries = ConstantsEmitter.Validate(spec, config, discard);
+        var validEntries = ConstantsEmitter.Validate(
+            spec, config, ImmutableHashSet<string>.Empty, discard);
         var source = EmitBooleansSource(validEntries, config);
         return new EmitResult(source, ImmutableArray<EmitDiagnostic>.Empty);
     }
 
     /// <summary>
     /// Whether an entry's <c>factoryShape</c> emits a constructing factory body
-    /// in base mode. <c>none</c> emits no factory; the three implemented shapes
-    /// do.
+    /// in base mode. The universal <c>standard</c> shape emits a factory;
+    /// <c>none</c> emits no factory.
     /// </summary>
     /// <param name="shape">The entry's <c>factoryShape</c>.</param>
     /// <returns><c>true</c> when a factory body is emitted.</returns>
     internal static bool EmitsFactory(string? shape) =>
-        shape == _SHAPE_STANDARD
-        || shape == _SHAPE_WITH_ERROR_CODE
-        || shape == _SHAPE_VALIDATION;
+        shape == _SHAPE_STANDARD;
 
     /// <summary>
     /// Whether a code keys a per-code boolean discriminator. Every non-<c>none</c>
@@ -257,43 +256,34 @@ internal static class BaseFactoriesEmitter
         bool generic,
         string returnType)
     {
-        var shape = entry.FactoryShape;
         var statusName = StatusName(entry.HttpStatus);
         var newKeyword = generic ? "new " : string.Empty;
 
-        EmitFactoryDoc(sb, entry, shape, generic);
+        EmitFactoryDoc(sb, entry, generic);
 
-        var hasCodeOverride = shape == _SHAPE_WITH_ERROR_CODE || shape == _SHAPE_VALIDATION;
         var categoryMember = CategoryMemberName(entry.Category!);
 
-        // Signature.
+        // Signature — the one universal error-factory shape: every parameter is
+        // optional so any factory can stamp a domain code + category and
+        // optionally carry inputErrors.
         var sig = new StringBuilder();
         sig.Append("    public static ").Append(newKeyword).Append(returnType)
             .Append(' ').Append(entry.FactoryName).Append('(');
         sig.Append("IReadOnlyList<TKMessage>? messages = null");
-        if (shape == _SHAPE_VALIDATION)
-            sig.Append(", IReadOnlyList<InputError>? inputErrors = null");
-
-        if (hasCodeOverride)
-            sig.Append(", string? errorCode = null, ErrorCategory? category = null");
-
+        sig.Append(", IReadOnlyList<InputError>? inputErrors = null");
+        sig.Append(", string? errorCode = null, ErrorCategory? category = null");
         sig.Append(", string? traceId = null)");
         sb.AppendLine(sig.ToString());
         sb.AppendLine("    {");
         sb.AppendLine($"        messages ??= [{entry.UserMessageKey}];");
 
         // Constructing body. Generic twins pass `default` data as the 2nd ctor
-        // arg; validation passes inputErrors positionally before statusCode.
-        // The category is baked from the entry's declared category at generation
-        // time; the with_error_code / validation shapes additionally accept a
-        // caller override so a delegating domain factory can stamp its own code's
-        // category (mirrors the errorCode override).
-        var errorCodeArg = hasCodeOverride
-            ? $"errorCode ?? {config.ConstantsClassName}.{entry.Code}"
-            : $"{config.ConstantsClassName}.{entry.Code}";
-        var categoryArg = hasCodeOverride
-            ? $"category ?? ErrorCategory.{categoryMember}"
-            : $"ErrorCategory.{categoryMember}";
+        // arg; inputErrors is passed positionally before statusCode. The
+        // category is baked from the entry's declared category at generation
+        // time; the errorCode / category overrides let a delegating domain
+        // factory stamp its own code + category on this base status.
+        var errorCodeArg = $"errorCode ?? {config.ConstantsClassName}.{entry.Code}";
+        var categoryArg = $"category ?? ErrorCategory.{categoryMember}";
 
         sb.AppendLine("        return new(");
         sb.AppendLine("            false,");
@@ -301,9 +291,7 @@ internal static class BaseFactoriesEmitter
             sb.AppendLine("            default,");
 
         sb.AppendLine("            messages,");
-        if (shape == _SHAPE_VALIDATION)
-            sb.AppendLine("            inputErrors,");
-
+        sb.AppendLine("            inputErrors,");
         sb.AppendLine($"            statusCode: HttpStatusCode.{statusName},");
         sb.AppendLine($"            errorCode: {errorCodeArg},");
         sb.AppendLine("            traceId: traceId,");
@@ -312,25 +300,19 @@ internal static class BaseFactoriesEmitter
     }
 
     private static void EmitFactoryDoc(
-        StringBuilder sb, ErrorCodeEntry entry, string? shape, bool generic)
+        StringBuilder sb, ErrorCodeEntry entry, bool generic)
     {
         sb.AppendLine($"    /// <summary>{EscapeXmlDoc(entry.Doc)}</summary>");
         sb.AppendLine(
             "    /// <param name=\"messages\">Optional translation messages; defaults to "
             + $"<c>[{EscapeXmlDoc(entry.UserMessageKey ?? string.Empty)}]</c>.</param>");
-        if (shape == _SHAPE_VALIDATION)
-            sb.AppendLine("    /// <param name=\"inputErrors\">Optional per-field input errors.</param>");
-
-        if (shape == _SHAPE_WITH_ERROR_CODE || shape == _SHAPE_VALIDATION)
-        {
-            sb.AppendLine(
-                "    /// <param name=\"errorCode\">Optional override for the default error "
-                + "code so callers can attach a more specific code.</param>");
-            sb.AppendLine(
-                "    /// <param name=\"category\">Optional override for the default error "
-                + "category so a delegating factory can stamp its own code's category.</param>");
-        }
-
+        sb.AppendLine("    /// <param name=\"inputErrors\">Optional per-field input errors.</param>");
+        sb.AppendLine(
+            "    /// <param name=\"errorCode\">Optional override for the default error "
+            + "code so callers can attach a more specific code.</param>");
+        sb.AppendLine(
+            "    /// <param name=\"category\">Optional override for the default error "
+            + "category so a delegating factory can stamp its own code's category.</param>");
         sb.AppendLine("    /// <param name=\"traceId\">Optional trace identifier.</param>");
         var returnsRef = generic
             ? "A pre-built typed <see cref=\"D2Result{TData}\"/> failure."

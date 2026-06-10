@@ -27,8 +27,12 @@ using D2.Shared.SourceGen;
 /// The base <c>D2Result</c> factory is selected by <c>httpStatus</c>
 /// (401 → <c>Unauthorized</c>, 503 → <c>ServiceUnavailable</c>, …) per the
 /// canonical status→factory delegation map. The call SIGNATURE is driven by
-/// <c>factoryShape</c> (<c>with_error_code</c> → <c>(messages:, errorCode:)</c>;
-/// <c>none</c> → constant + boolean only, no factory emitted).
+/// <c>factoryShape</c> (<c>standard</c> → an optional
+/// <c>IReadOnlyList&lt;TKMessage&gt;? messages = null</c> override that, when
+/// omitted, defaults to the spec's <c>userMessageKey</c>; when supplied,
+/// replaces it — so a caller can bind the offending argument via
+/// <c>TKMessage.With(...)</c>; <c>none</c> → constant + boolean only, no
+/// factory emitted).
 /// </para>
 /// <para>
 /// Both the non-generic <c>&lt;Domain&gt;Failures</c> method and its generic
@@ -40,26 +44,26 @@ using D2.Shared.SourceGen;
 /// exactly as <c>D2Result</c> / <c>D2Result&lt;TData&gt;</c> coexist.
 /// </para>
 /// <para>
-/// The delegating path emits only the <c>with_error_code</c> shape (auth's
-/// entire set). <c>standard</c> and <c>validation</c> delegating bodies are not
-/// yet emitted; an entry with those shapes produces a
-/// <see cref="EngineDiagnosticIds.UnsupportedFactoryShape"/> error. The generic
-/// constructing catalog (<see cref="FactoryHost.Base"/>) implements all four
-/// shapes; this guard is the delegating-path equivalent.
+/// The delegating path emits the universal <c>standard</c> shape (every domain
+/// catalog's entire set) and skips <c>none</c>. Any other (malformed /
+/// unknown) <c>factoryShape</c> value produces a
+/// <see cref="EngineDiagnosticIds.UnsupportedFactoryShape"/> error — the schema
+/// constrains <c>factoryShape</c> to <c>standard</c> / <c>none</c>, so this
+/// guard only fires on a hand-malformed spec.
 /// </para>
 /// </remarks>
 internal static class FailuresEmitter
 {
     private const int _HTTP_SERVICE_UNAVAILABLE = 503;
-    private const string _SHAPE_WITH_ERROR_CODE = "with_error_code";
+    private const string _SHAPE_STANDARD = "standard";
     private const string _SHAPE_NONE = "none";
 
     /// <summary>
     /// Emits the non-generic <c>&lt;Domain&gt;Failures</c> class source.
     /// Reports <see cref="EngineDiagnosticIds.UnsupportedFactoryShape"/> for any
-    /// entry whose <c>factoryShape</c> is not yet emitted on the delegating path
-    /// (<c>standard</c> or <c>validation</c>). Entries with shape <c>none</c>
-    /// are silently skipped.
+    /// entry whose <c>factoryShape</c> is neither the universal <c>standard</c>
+    /// shape nor <c>none</c> (a hand-malformed spec). Entries with shape
+    /// <c>none</c> are silently skipped.
     /// </summary>
     /// <param name="spec">Parsed error-codes spec.</param>
     /// <param name="config">The catalog configuration.</param>
@@ -67,7 +71,8 @@ internal static class FailuresEmitter
     public static EmitResult Emit(ErrorCodesSpec spec, CatalogConfig config)
     {
         var discard = ImmutableArray.CreateBuilder<EmitDiagnostic>();
-        var validEntries = ConstantsEmitter.Validate(spec, config, discard);
+        var validEntries = ConstantsEmitter.Validate(
+            spec, config, ImmutableHashSet<string>.Empty, discard);
 
         var diagnostics = CollectUnsupportedShapeDiagnostics(validEntries);
         var source = EmitSource(validEntries, config, generic: false);
@@ -88,7 +93,8 @@ internal static class FailuresEmitter
     public static EmitResult EmitGeneric(ErrorCodesSpec spec, CatalogConfig config)
     {
         var discard = ImmutableArray.CreateBuilder<EmitDiagnostic>();
-        var validEntries = ConstantsEmitter.Validate(spec, config, discard);
+        var validEntries = ConstantsEmitter.Validate(
+            spec, config, ImmutableHashSet<string>.Empty, discard);
         var source = EmitSource(validEntries, config, generic: true);
         return new EmitResult(source, ImmutableArray<EmitDiagnostic>.Empty);
     }
@@ -122,7 +128,7 @@ internal static class FailuresEmitter
         {
             var shape = entry.FactoryShape;
             if (shape is not null
-                && shape != _SHAPE_WITH_ERROR_CODE
+                && shape != _SHAPE_STANDARD
                 && shape != _SHAPE_NONE)
                 diagnostics.Add(EngineDiagnostics.UnsupportedFactoryShape(shape));
         }
@@ -156,9 +162,9 @@ internal static class FailuresEmitter
         foreach (var entry in entries)
         {
             // factoryShape "none" → constant + boolean only; no factory emitted.
-            // factoryShape "standard"/"validation" → unsupported on the delegating
-            // path (D2ERC003 reported in Emit); skip to avoid malformed source.
-            if (entry.FactoryShape != _SHAPE_WITH_ERROR_CODE)
+            // Any other (malformed) value → unsupported on the delegating path
+            // (D2ERC003 reported in Emit); skip to avoid emitting malformed source.
+            if (entry.FactoryShape != _SHAPE_STANDARD)
                 continue;
 
             if (generic)
@@ -190,14 +196,22 @@ internal static class FailuresEmitter
         var categoryMember = BaseFactoriesEmitter.CategoryMemberName(entry.Category!);
         sb.AppendLine($"    /// <summary>{EscapeXmlDoc(entry.Doc)}</summary>");
         sb.AppendLine(
+            $"    /// <param name=\"messages\">Optional translation messages; defaults to "
+            + $"<c>[{entry.UserMessageKey}]</c>. Pass a message bound via "
+            + "<c>TKMessage.With(...)</c> to name the offending argument.</param>");
+        sb.AppendLine(
             "    /// <returns>A pre-built <see cref=\"D2Result\"/> failure.</returns>");
-        sb.AppendLine($"    public static D2Result {entry.FactoryName}() =>");
-        sb.AppendLine($"        D2Result.{baseFactory}(");
-        sb.AppendLine($"            messages: [{entry.UserMessageKey}],");
+        sb.AppendLine(
+            $"    public static D2Result {entry.FactoryName}(IReadOnlyList<TKMessage>? messages = null)");
+        sb.AppendLine("    {");
+        sb.AppendLine($"        messages ??= [{entry.UserMessageKey}];");
+        sb.AppendLine($"        return D2Result.{baseFactory}(");
+        sb.AppendLine("            messages: messages,");
         sb.AppendLine(
             $"            errorCode: {config.ConstantsClassName}.{entry.Code},");
         sb.AppendLine(
             $"            category: ErrorCategory.{categoryMember});");
+        sb.AppendLine("    }");
     }
 
     private static void EmitGenericFactory(
@@ -207,14 +221,22 @@ internal static class FailuresEmitter
         var categoryMember = BaseFactoriesEmitter.CategoryMemberName(entry.Category!);
         sb.AppendLine($"    /// <summary>{EscapeXmlDoc(entry.Doc)} Typed result.</summary>");
         sb.AppendLine(
+            $"    /// <param name=\"messages\">Optional translation messages; defaults to "
+            + $"<c>[{entry.UserMessageKey}]</c>. Pass a message bound via "
+            + "<c>TKMessage.With(...)</c> to name the offending argument.</param>");
+        sb.AppendLine(
             "    /// <returns>A pre-built typed <see cref=\"D2Result{T}\"/> failure.</returns>");
-        sb.AppendLine($"    public static D2Result<T> {entry.FactoryName}() =>");
-        sb.AppendLine($"        D2Result<T>.{baseFactory}(");
-        sb.AppendLine($"            messages: [{entry.UserMessageKey}],");
+        sb.AppendLine(
+            $"    public static D2Result<T> {entry.FactoryName}(IReadOnlyList<TKMessage>? messages = null)");
+        sb.AppendLine("    {");
+        sb.AppendLine($"        messages ??= [{entry.UserMessageKey}];");
+        sb.AppendLine($"        return D2Result<T>.{baseFactory}(");
+        sb.AppendLine("            messages: messages,");
         sb.AppendLine(
             $"            errorCode: {config.ConstantsClassName}.{entry.Code},");
         sb.AppendLine(
             $"            category: ErrorCategory.{categoryMember});");
+        sb.AppendLine("    }");
     }
 
     private static void EmitTypedFactory(
@@ -227,14 +249,22 @@ internal static class FailuresEmitter
             "    /// <typeparam name=\"T\">The payload type the caller would have returned on "
             + "success.</typeparam>");
         sb.AppendLine(
+            $"    /// <param name=\"messages\">Optional translation messages; defaults to "
+            + $"<c>[{entry.UserMessageKey}]</c>. Pass a message bound via "
+            + "<c>TKMessage.With(...)</c> to name the offending argument.</param>");
+        sb.AppendLine(
             "    /// <returns>A pre-built typed <see cref=\"D2Result{T}\"/> failure.</returns>");
-        sb.AppendLine($"    public static D2Result<T> {entry.FactoryName}<T>() =>");
-        sb.AppendLine($"        D2Result<T>.{baseFactory}(");
-        sb.AppendLine($"            messages: [{entry.UserMessageKey}],");
+        sb.AppendLine(
+            $"    public static D2Result<T> {entry.FactoryName}<T>(IReadOnlyList<TKMessage>? messages = null)");
+        sb.AppendLine("    {");
+        sb.AppendLine($"        messages ??= [{entry.UserMessageKey}];");
+        sb.AppendLine($"        return D2Result<T>.{baseFactory}(");
+        sb.AppendLine("            messages: messages,");
         sb.AppendLine(
             $"            errorCode: {config.ConstantsClassName}.{entry.Code},");
         sb.AppendLine(
             $"            category: ErrorCategory.{categoryMember});");
+        sb.AppendLine("    }");
     }
 
     /// <summary>

@@ -16,7 +16,7 @@
       "category": "policy_denied",
       "userMessageKey": "TK.Common.Errors.FORBIDDEN",
       "factoryName": "Forbidden",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "Indicates that the action is forbidden due to insufficient permissions."
     },
     {
@@ -25,7 +25,7 @@
       "category": "policy_denied",
       "userMessageKey": "TK.Common.Errors.UNAUTHORIZED",
       "factoryName": "Unauthorized",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "Indicates that the user is unauthorized to perform the action (e.g., not authenticated)."
     },
     {
@@ -34,7 +34,7 @@
       "category": "validation_failure",
       "userMessageKey": "TK.Common.Errors.VALIDATION_FAILED",
       "factoryName": "ValidationFailed",
-      "factoryShape": "validation",
+      "factoryShape": "standard",
       "doc": "Indicates that the input validation has failed."
     },
     {
@@ -79,7 +79,7 @@
       "category": "infrastructure_unavailable",
       "userMessageKey": "TK.Common.Errors.SERVICE_UNAVAILABLE",
       "factoryName": "ServiceUnavailable",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "Indicates that the service is currently unavailable."
     },
     {
@@ -106,7 +106,7 @@
       "category": "rate_limited",
       "userMessageKey": "TK.Common.Errors.TOO_MANY_REQUESTS",
       "factoryName": "TooManyRequests",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "Indicates that the request has been rate limited."
     },
     {

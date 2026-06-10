@@ -7,7 +7,9 @@
 namespace D2.Edge.KeyCustodian.Domain.Keys;
 
 using D2.Edge.KeyCustodian.Domain.Enums;
+using D2.Edge.KeyCustodian.Domain.Errors;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
+using D2.Shared.I18n;
 using D2.Shared.Result;
 using D2.Shared.Utilities.Extensions;
 using NodaTime;
@@ -77,25 +79,23 @@ public abstract record EncryptionKey
     /// <param name="type">The key type being validated.</param>
     /// <param name="pub">The public key material (may be null).</param>
     /// <returns>
-    /// <c>Ok</c> when the shape is consistent;
-    /// failure with a bespoke message when it is not.
+    /// <c>Ok</c> when the shape is consistent; a flagged
+    /// <c>KEYCUSTODIAN_PRECONDITION_VIOLATED</c> failure when it is not. A
+    /// mismatched material shape is a programmer/precondition error surfaced as a
+    /// telemetry-flagged internal-error result rather than a thrown exception.
     /// </returns>
     private protected static D2Result EnsureMaterialShape(KeyType type, PublicKeyMaterial? pub)
     {
         if (type == KeyType.RsaSigning && pub is null)
         {
-            // §5.1a bespoke-message carve-out: RSA key missing public material is a programmer error.
-            throw new ArgumentException(
-                "RsaSigning keys require a non-null PublicKeyMaterial.",
-                nameof(pub));
+            return KeyCustodianFailures.PreconditionViolated(
+                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "publicMaterial")]);
         }
 
         if (type != KeyType.RsaSigning && pub is not null)
         {
-            // §5.1a bespoke-message carve-out: symmetric key with public material is a programmer error.
-            throw new ArgumentException(
-                "Symmetric keys (AesPayload, Secret) must have a null PublicKeyMaterial.",
-                nameof(pub));
+            return KeyCustodianFailures.PreconditionViolated(
+                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "publicMaterial")]);
         }
 
         return D2Result.Ok();
@@ -110,17 +110,23 @@ public abstract record EncryptionKey
     /// Non-empty, length-capped operator reason string. MUST be non-null/non-whitespace.
     /// </param>
     /// <param name="at">The instant at which the compromise was recorded.</param>
-    /// <returns>A <see cref="CompromisedKey"/> carrying the current key's identity.</returns>
-    private protected CompromisedKey ToCompromised(string reason, Instant at)
+    /// <returns>
+    /// <c>Ok(<see cref="CompromisedKey"/>)</c> carrying the current key's
+    /// identity; a flagged <c>KEYCUSTODIAN_PRECONDITION_VIOLATED</c> failure when
+    /// <paramref name="reason"/> is null, empty, or whitespace.
+    /// </returns>
+    private protected D2Result<CompromisedKey> ToCompromised(string reason, Instant at)
     {
-        reason.ThrowIfFalsey();
-
-        if (reason.Length > CompromisedKey.REASON_MAX)
+        if (reason.Falsey())
         {
-            reason = reason[..CompromisedKey.REASON_MAX];
+            return KeyCustodianFailures<CompromisedKey>.PreconditionViolated(
+                messages: [TK.Keycustodian.Internal.PRECONDITION_VIOLATED.With("arg", "reason")]);
         }
 
-        return new CompromisedKey
+        if (reason.Length > CompromisedKey.REASON_MAX)
+            reason = reason[..CompromisedKey.REASON_MAX];
+
+        return D2Result<CompromisedKey>.Ok(new CompromisedKey
         {
             Kid = Kid,
             KeyDomain = KeyDomain,
@@ -130,6 +136,6 @@ public abstract record EncryptionKey
             CreatedAt = CreatedAt,
             CompromisedAt = at,
             Reason = reason,
-        };
+        });
     }
 }

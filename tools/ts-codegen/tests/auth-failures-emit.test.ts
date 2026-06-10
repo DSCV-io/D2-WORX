@@ -18,7 +18,7 @@ const spec: ErrorCodesSpec = {
       category: "validation_failure",
       userMessageKey: "TK.Auth.Errors.UNAUTHORIZED",
       factoryName: "BearerMissing",
-      factoryShape: "with_error_code",
+      factoryShape: "standard",
       doc: "Bearer missing.",
     },
     {
@@ -27,7 +27,7 @@ const spec: ErrorCodesSpec = {
       category: "infrastructure_unavailable",
       userMessageKey: "TK.Auth.Errors.TEMPORARILY_UNAVAILABLE",
       factoryName: "JwksUnavailable",
-      factoryShape: "with_error_code",
+      factoryShape: "standard",
       doc: "JWKS upstream unavailable.",
     },
   ],
@@ -52,10 +52,23 @@ describe("emitFailuresCatalog (auth) — snapshot pin", () => {
     // (`AuthFailures.bearerMissing()` → `D2Result<void>`) and the typed call
     // (`AuthFailures.bearerMissing<User>()` → `D2Result<User>`) share one
     // method — the TS equivalent of the .NET two-class domain-failures split.
-    expect(r.source).toContain("bearerMissing<T = void>(traceId?: string)");
+    expect(r.source).toContain(
+      "bearerMissing<T = void>(opts: { messages?: readonly TKMessage[]; traceId?: string } = {})",
+    );
     expect(r.source).toContain("return unauthorized<T>");
-    expect(r.source).toContain("jwksUnavailable<T = void>(traceId?: string)");
+    expect(r.source).toContain(
+      "jwksUnavailable<T = void>(opts: { messages?: readonly TKMessage[]; traceId?: string } = {})",
+    );
     expect(r.source).toContain("return serviceUnavailable<T>");
+    // The optional messages override defaults to the spec TK; the override
+    // rides through when supplied (the TS twin of .NET's `messages ??= [...]`).
+    expect(r.source).toContain(
+      "messages: opts.messages ?? [TK.auth.errors.UNAUTHORIZED],",
+    );
+    expect(r.source).toContain("traceId: opts.traceId,");
+    expect(r.source).toContain(
+      'import { type TKMessage } from "@d2/i18n-abstractions";',
+    );
     expect(r.source).toContain(
       "errorCode: AuthErrorCodes.AUTH_BEARER_MISSING,",
     );
@@ -78,9 +91,11 @@ describe("emitFailuresCatalog (auth) — snapshot pin", () => {
     // the TS Translator resolves; a string literal silently bypasses the
     // catalog and rides the wire un-renderable.
     expect(r.source).toContain('import { TK } from "@d2/i18n-keys";');
-    expect(r.source).toContain("messages: [TK.auth.errors.UNAUTHORIZED],");
     expect(r.source).toContain(
-      "messages: [TK.auth.errors.TEMPORARILY_UNAVAILABLE],",
+      "messages: opts.messages ?? [TK.auth.errors.UNAUTHORIZED],",
+    );
+    expect(r.source).toContain(
+      "messages: opts.messages ?? [TK.auth.errors.TEMPORARILY_UNAVAILABLE],",
     );
     // The constant IS the message — no tk() wrapper is emitted, and the raw
     // PascalCase symbol-path string literal must never appear.

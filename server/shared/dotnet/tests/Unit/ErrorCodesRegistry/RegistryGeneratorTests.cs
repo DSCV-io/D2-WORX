@@ -68,7 +68,7 @@ public sealed class RegistryGeneratorTests
           "category": "validation_failure",
           "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
           "factoryName": "BearerMissing",
-          "factoryShape": "with_error_code",
+          "factoryShape": "standard",
           "doc": "Bearer missing."
         }
       ]
@@ -85,7 +85,7 @@ public sealed class RegistryGeneratorTests
           "category": "validation_failure",
           "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
           "factoryName": "NotFound",
-          "factoryShape": "with_error_code",
+          "factoryShape": "standard",
           "doc": "Collision."
         }
       ]
@@ -102,7 +102,7 @@ public sealed class RegistryGeneratorTests
           "category": "validation_failure",
           "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
           "factoryName": "UnprefixedCode",
-          "factoryShape": "with_error_code",
+          "factoryShape": "standard",
           "doc": "Missing prefix."
         }
       ]

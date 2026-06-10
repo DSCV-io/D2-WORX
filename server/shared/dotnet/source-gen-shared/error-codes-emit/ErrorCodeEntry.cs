@@ -38,8 +38,8 @@ namespace D2.Shared.ErrorCodes.SourceGen;
 /// </param>
 /// <param name="FactoryShape">
 /// Closed enum driving the generated factory's signature variant
-/// (<c>standard</c> / <c>with_error_code</c> / <c>validation</c> /
-/// <c>none</c>); <c>null</c> for the generic constants-only catalog.
+/// (<c>standard</c> — the universal error-factory shape — or <c>none</c>);
+/// <c>null</c> for the generic constants-only catalog.
 /// </param>
 internal sealed record ErrorCodeEntry(
     string Code,

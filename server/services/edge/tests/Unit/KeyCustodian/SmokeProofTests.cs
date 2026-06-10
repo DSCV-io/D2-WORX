@@ -6,9 +6,12 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian;
 
+using System.Linq;
 using AwesomeAssertions;
 using D2.Edge.KeyCustodian.Domain.Enums;
+using D2.Edge.KeyCustodian.Domain.Errors;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
+using D2.Shared.ErrorCodes.Category;
 using D2.Shared.Time;
 using NodaTime;
 using Xunit;
@@ -28,7 +31,7 @@ public sealed class SmokeProofTests
         var instant = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
         var clock = new TestClock(instant);
 
-        var proof = SmokeProof.ForPassedSmokeTest(KeyType.RsaSigning, clock);
+        var proof = SmokeProof.ForPassedSmokeTest(KeyType.RsaSigning, clock).Data!;
 
         proof.VerifiedAt.Should().Be(instant);
         proof.VerifiedType.Should().Be(KeyType.RsaSigning);
@@ -38,7 +41,7 @@ public sealed class SmokeProofTests
     public void ForPassedSmokeTest_Aes_StampsCorrectType()
     {
         var clock = new TestClock(Instant.FromUtc(2026, 1, 1, 0, 0, 0));
-        var proof = SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock);
+        var proof = SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock).Data!;
         proof.VerifiedType.Should().Be(KeyType.AesPayload);
     }
 
@@ -48,23 +51,49 @@ public sealed class SmokeProofTests
         var start = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
         var clock = new TestClock(start);
 
-        var proof1 = SmokeProof.ForPassedSmokeTest(KeyType.Secret, clock);
+        var proof1 = SmokeProof.ForPassedSmokeTest(KeyType.Secret, clock).Data!;
         clock.Advance(Duration.FromSeconds(30));
-        var proof2 = SmokeProof.ForPassedSmokeTest(KeyType.Secret, clock);
+        var proof2 = SmokeProof.ForPassedSmokeTest(KeyType.Secret, clock).Data!;
 
         proof1.VerifiedAt.Should().NotBe(proof2.VerifiedAt);
         proof2.VerifiedAt.Should().Be(start + Duration.FromSeconds(30));
     }
 
     // -----------------------------------------------------------------------
-    // ForPassedSmokeTest — null clock guard
+    // ForPassedSmokeTest — null clock guard (A3-F1 regression pin)
     // -----------------------------------------------------------------------
 
     [Fact]
-    public void ForPassedSmokeTest_NullClock_ThrowsArgumentNullException()
+    public void ForPassedSmokeTest_NullClock_FailsPreconditionViolated()
     {
-        var act = () => SmokeProof.ForPassedSmokeTest(KeyType.RsaSigning, null!);
-        act.Should().Throw<ArgumentNullException>();
+        var result = SmokeProof.ForPassedSmokeTest(KeyType.RsaSigning, null);
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_PRECONDITION_VIOLATED);
+        result.Category.Should().Be(ErrorCategory.InternalError);
+
+        var message = result.Messages.Single(
+            m => m.Key == "keycustodian_internal_PRECONDITION_VIOLATED");
+        message.Parameters.Should().NotBeNull(
+            because: "the converted guard binds the offending arg name");
+        message.Parameters!["arg"].Should().Be("clock");
+    }
+
+    // -----------------------------------------------------------------------
+    // ForPassedSmokeTest — success result carries correct data
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void ForPassedSmokeTest_ValidClock_ReturnsSuccessWithCorrectVerifiedType()
+    {
+        var instant = Instant.FromUtc(2026, 3, 15, 10, 30, 0);
+        var clock = new TestClock(instant);
+
+        var result = SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock);
+
+        result.Success.Should().BeTrue();
+        result.Data!.VerifiedType.Should().Be(KeyType.AesPayload);
+        result.Data!.VerifiedAt.Should().Be(instant);
     }
 
     // -----------------------------------------------------------------------

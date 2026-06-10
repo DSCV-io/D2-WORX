@@ -7,7 +7,7 @@
       "category": "validation_failure",
       "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
       "factoryName": "BearerMissing",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "The Authorization header was missing on a protected endpoint."
     },
     {
@@ -16,7 +16,7 @@
       "category": "validation_failure",
       "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
       "factoryName": "BearerMalformed",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "The Authorization header was present but not a parseable Bearer JWT."
     },
     {
@@ -25,7 +25,7 @@
       "category": "validation_failure",
       "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
       "factoryName": "JwtSignatureInvalid",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "JWT signature verification failed against the JWKS."
     },
     {
@@ -34,7 +34,7 @@
       "category": "validation_failure",
       "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
       "factoryName": "JwtExpired",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "JWT is expired (exp in the past, beyond clock skew)."
     },
     {
@@ -43,7 +43,7 @@
       "category": "validation_failure",
       "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
       "factoryName": "JwtNotYetValid",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "JWT not yet valid (nbf in the future, beyond clock skew)."
     },
     {
@@ -52,7 +52,7 @@
       "category": "validation_failure",
       "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
       "factoryName": "JwtIssuerMismatch",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "JWT iss claim does not match the configured issuer."
     },
     {
@@ -61,7 +61,7 @@
       "category": "validation_failure",
       "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
       "factoryName": "JwtAudienceMismatch",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "JWT aud claim does not match this service's configured audience."
     },
     {
@@ -70,7 +70,7 @@
       "category": "validation_failure",
       "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
       "factoryName": "JwtClaimMissing",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "JWT is missing a required claim that this service depends on."
     },
     {
@@ -79,7 +79,7 @@
       "category": "validation_failure",
       "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
       "factoryName": "JwtActChainMalformed",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "JWT act chain is malformed (RFC 8693 section 2.1 violation)."
     },
     {
@@ -88,7 +88,7 @@
       "category": "validation_failure",
       "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
       "factoryName": "JwtKidNotFound",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "JWT signed by an unknown kid; reactive JWKS refresh did not surface it."
     },
     {
@@ -97,7 +97,7 @@
       "category": "infrastructure_unavailable",
       "userMessageKey": "TK.Auth.Errors.TEMPORARILY_UNAVAILABLE",
       "factoryName": "JwksUnavailable",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "JWKS upstream is unavailable; no cached snapshot to fall back on."
     },
     {
@@ -106,7 +106,7 @@
       "category": "policy_denied",
       "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
       "factoryName": "SessionRevoked",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "The bearer's d2_session_id is no longer alive (revoked)."
     },
     {
@@ -115,7 +115,7 @@
       "category": "infrastructure_unavailable",
       "userMessageKey": "TK.Auth.Errors.TEMPORARILY_UNAVAILABLE",
       "factoryName": "SessionLivenessUnavailable",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "Session liveness store unreachable. Caller fails closed: receives a 503-equivalent and may retry; the attempt is NOT treated as authenticated. Treating an unknown liveness state as alive would let revoked sessions ride through outages."
     },
     {
@@ -124,7 +124,7 @@
       "category": "policy_denied",
       "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
       "factoryName": "ScopeInsufficient",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "Caller is authenticated but the per-endpoint scope requirement is not satisfied. Surfaces as 401 (not 403) - the auth boundary keeps a uniform shape regardless of whether the JWT was bad or scopes were insufficient, so attackers cannot deduce which check failed."
     }
   ]

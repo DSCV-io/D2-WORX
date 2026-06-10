@@ -444,7 +444,7 @@ from one spec.
       "category": "validation_failure",
       "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
       "factoryName": "BearerMissing",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "The Authorization header was missing on a protected endpoint."
     },
     {
@@ -453,7 +453,7 @@ from one spec.
       "category": "infrastructure_unavailable",
       "userMessageKey": "TK.Auth.Errors.TEMPORARILY_UNAVAILABLE",
       "factoryName": "JwksUnavailable",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "JWKS upstream is unavailable; no cached snapshot to fall back on."
     }
   ]

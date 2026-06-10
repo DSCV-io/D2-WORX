@@ -38,6 +38,9 @@ public sealed class KeyCustodianTkRoundTripTests
     [InlineData(
         "TK.Keycustodian.Validation.GRACE_NOT_ELAPSED",
         "keycustodian_validation_GRACE_NOT_ELAPSED")]
+    [InlineData(
+        "TK.Keycustodian.Internal.PRECONDITION_VIOLATED",
+        "keycustodian_internal_PRECONDITION_VIOLATED")]
     public void ToSnakeKey_KeyCustodianTkPath_RoundTripsToRenamedSnakeKey(
         string tkPath, string expectedSnake)
     {

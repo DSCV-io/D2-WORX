@@ -6,23 +6,30 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian;
 
+using System.Linq;
 using AwesomeAssertions;
 using D2.Edge.KeyCustodian.Domain.Enums;
+using D2.Edge.KeyCustodian.Domain.Errors;
 using D2.Edge.KeyCustodian.Domain.Keys;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
+using D2.Shared.ErrorCodes.Category;
 using NodaTime;
 using Xunit;
 
 /// <summary>
-/// Tests that enforce the RSA↔public-key material shape invariant.
+/// Tests that enforce the RSA↔public-key material shape invariant and the
+/// <see cref="PendingKey.Create"/> null-argument preconditions. Precondition
+/// violations (null arguments, inconsistent material shape) surface as flagged
+/// <c>KEYCUSTODIAN_PRECONDITION_VIOLATED</c> internal-error results rather than
+/// thrown exceptions.
 /// </summary>
 public sealed class EncryptionKeyMaterialShapeTests
 {
-    private static readonly Kid s_kid = Kid.FromTrusted("shape-test");
-    private static readonly KeyDomain s_domain = KeyDomain.FromTrusted("audit");
-    private static readonly KeyMaterialEncrypted s_mat = KeyMaterialEncrypted.FromTrusted(new byte[] { 1, 2, 3 });
-    private static readonly PublicKeyMaterial s_pub = PublicKeyMaterial.FromTrusted(new byte[] { 4, 5, 6 });
-    private static readonly Instant s_created = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
+    private static readonly Kid sr_kid = Kid.FromTrusted("shape-test");
+    private static readonly KeyDomain sr_domain = KeyDomain.FromTrusted("audit");
+    private static readonly KeyMaterialEncrypted sr_mat = KeyMaterialEncrypted.FromTrusted(new byte[] { 1, 2, 3 });
+    private static readonly PublicKeyMaterial sr_pub = PublicKeyMaterial.FromTrusted(new byte[] { 4, 5, 6 });
+    private static readonly Instant sr_created = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
 
     // -----------------------------------------------------------------------
     // RSA key — public material required
@@ -31,16 +38,19 @@ public sealed class EncryptionKeyMaterialShapeTests
     [Fact]
     public void Create_RsaWithPublicMaterial_Succeeds()
     {
-        var act = () => PendingKey.Create(s_kid, s_domain, KeyType.RsaSigning, s_mat, s_pub, s_created);
-        act.Should().NotThrow();
+        var result = PendingKey.Create(sr_kid, sr_domain, KeyType.RsaSigning, sr_mat, sr_pub, sr_created);
+
+        result.Success.Should().BeTrue();
+        result.Data!.KeyType.Should().Be(KeyType.RsaSigning);
+        result.Data!.PublicKeyMaterial.Should().Be(sr_pub);
     }
 
     [Fact]
-    public void Create_RsaWithoutPublicMaterial_ThrowsArgumentException()
+    public void Create_RsaWithoutPublicMaterial_FailsPreconditionViolated()
     {
-        var act = () => PendingKey.Create(s_kid, s_domain, KeyType.RsaSigning, s_mat, null, s_created);
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*RsaSigning*");
+        var result = PendingKey.Create(sr_kid, sr_domain, KeyType.RsaSigning, sr_mat, null, sr_created);
+
+        AssertPreconditionViolated(result, "publicMaterial");
     }
 
     // -----------------------------------------------------------------------
@@ -48,57 +58,82 @@ public sealed class EncryptionKeyMaterialShapeTests
     // -----------------------------------------------------------------------
 
     [Fact]
-    public void Create_AesWithPublicMaterial_ThrowsArgumentException()
+    public void Create_AesWithPublicMaterial_FailsPreconditionViolated()
     {
-        var act = () => PendingKey.Create(s_kid, s_domain, KeyType.AesPayload, s_mat, s_pub, s_created);
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*Symmetric*");
+        var result = PendingKey.Create(sr_kid, sr_domain, KeyType.AesPayload, sr_mat, sr_pub, sr_created);
+
+        AssertPreconditionViolated(result, "publicMaterial");
     }
 
     [Fact]
-    public void Create_SecretWithPublicMaterial_ThrowsArgumentException()
+    public void Create_SecretWithPublicMaterial_FailsPreconditionViolated()
     {
-        var act = () => PendingKey.Create(s_kid, s_domain, KeyType.Secret, s_mat, s_pub, s_created);
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*Symmetric*");
+        var result = PendingKey.Create(sr_kid, sr_domain, KeyType.Secret, sr_mat, sr_pub, sr_created);
+
+        AssertPreconditionViolated(result, "publicMaterial");
     }
 
     [Fact]
     public void Create_AesWithoutPublicMaterial_Succeeds()
     {
-        var act = () => PendingKey.Create(s_kid, s_domain, KeyType.AesPayload, s_mat, null, s_created);
-        act.Should().NotThrow();
+        var result = PendingKey.Create(sr_kid, sr_domain, KeyType.AesPayload, sr_mat, null, sr_created);
+
+        result.Success.Should().BeTrue();
+        result.Data!.PublicKeyMaterial.Should().BeNull();
     }
 
     [Fact]
     public void Create_SecretWithoutPublicMaterial_Succeeds()
     {
-        var act = () => PendingKey.Create(s_kid, s_domain, KeyType.Secret, s_mat, null, s_created);
-        act.Should().NotThrow();
+        var result = PendingKey.Create(sr_kid, sr_domain, KeyType.Secret, sr_mat, null, sr_created);
+
+        result.Success.Should().BeTrue();
+        result.Data!.PublicKeyMaterial.Should().BeNull();
     }
 
     // -----------------------------------------------------------------------
-    // Null guards on PendingKey.Create
+    // Null guards on PendingKey.Create — each surfaces a flagged result
     // -----------------------------------------------------------------------
 
     [Fact]
-    public void Create_NullKid_ThrowsArgumentNullException()
+    public void Create_NullKid_FailsPreconditionViolated()
     {
-        var act = () => PendingKey.Create(null!, s_domain, KeyType.AesPayload, s_mat, null, s_created);
-        act.Should().Throw<ArgumentNullException>();
+        var result = PendingKey.Create(null, sr_domain, KeyType.AesPayload, sr_mat, null, sr_created);
+
+        AssertPreconditionViolated(result, "kid");
     }
 
     [Fact]
-    public void Create_NullDomain_ThrowsArgumentNullException()
+    public void Create_NullDomain_FailsPreconditionViolated()
     {
-        var act = () => PendingKey.Create(s_kid, null!, KeyType.AesPayload, s_mat, null, s_created);
-        act.Should().Throw<ArgumentNullException>();
+        var result = PendingKey.Create(sr_kid, null, KeyType.AesPayload, sr_mat, null, sr_created);
+
+        AssertPreconditionViolated(result, "keyDomain");
     }
 
     [Fact]
-    public void Create_NullEncryptedMaterial_ThrowsArgumentNullException()
+    public void Create_NullEncryptedMaterial_FailsPreconditionViolated()
     {
-        var act = () => PendingKey.Create(s_kid, s_domain, KeyType.AesPayload, null!, null, s_created);
-        act.Should().Throw<ArgumentNullException>();
+        var result = PendingKey.Create(sr_kid, sr_domain, KeyType.AesPayload, null, null, sr_created);
+
+        AssertPreconditionViolated(result, "encryptedMaterial");
+    }
+
+    private static void AssertPreconditionViolated(
+        D2.Shared.Result.D2Result<PendingKey> result, string expectedArg)
+    {
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_PRECONDITION_VIOLATED);
+        result.Category.Should().Be(ErrorCategory.InternalError);
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.InternalServerError);
+
+        // Each split guard names the SPECIFIC offending argument via the runtime
+        // `messages` override (TKMessage.With("arg", "<name>")); the material-shape
+        // guards propagate EnsureMaterialShape's "publicMaterial" binding.
+        var message = result.Messages.Single(
+            m => m.Key == "keycustodian_internal_PRECONDITION_VIOLATED");
+        message.Parameters.Should().NotBeNull(
+            because: "the converted guard binds the offending arg name");
+        message.Parameters!["arg"].Should().Be(expectedArg);
     }
 }

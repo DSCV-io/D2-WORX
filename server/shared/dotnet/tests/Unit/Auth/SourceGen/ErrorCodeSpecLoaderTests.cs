@@ -36,7 +36,7 @@ public sealed class ErrorCodeSpecLoaderTests
               "category": "validation_failure",
               "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
               "factoryName": "TestFactory",
-              "factoryShape": "with_error_code",
+              "factoryShape": "standard",
               "doc": "Test entry."
             }
           ]
@@ -54,7 +54,7 @@ public sealed class ErrorCodeSpecLoaderTests
         entry.Category.Should().Be("validation_failure");
         entry.UserMessageKey.Should().Be("TK.Auth.Errors.UNAUTHORIZED");
         entry.FactoryName.Should().Be("TestFactory");
-        entry.FactoryShape.Should().Be("with_error_code");
+        entry.FactoryShape.Should().Be("standard");
         entry.Doc.Should().Be("Test entry.");
     }
 
@@ -186,7 +186,7 @@ public sealed class ErrorCodeSpecLoaderTests
               "category": "validation_failure",
               "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
               "factoryName": "X",
-              "factoryShape": "with_error_code",
+              "factoryShape": "standard",
               "doc": "X"
             }
           ]
@@ -226,7 +226,7 @@ public sealed class ErrorCodeSpecLoaderTests
               "category": "validation_failure",
               "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
               "factoryName": "X",
-              "factoryShape": "with_error_code",
+              "factoryShape": "standard",
               "doc": "X"
             },
             {
@@ -235,7 +235,7 @@ public sealed class ErrorCodeSpecLoaderTests
               "category": "validation_failure",
               "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
               "factoryName": "Y",
-              "factoryShape": "with_error_code",
+              "factoryShape": "standard",
               "doc": "Y"
             }
           ]

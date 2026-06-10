@@ -343,6 +343,9 @@ export const TK = {
     }
   },
   keycustodian: {
+    internal: {
+      PRECONDITION_VIOLATED: tk("keycustodian_internal_PRECONDITION_VIOLATED")
+    },
     validation: {
       GRACE_NOT_ELAPSED: tk("keycustodian_validation_GRACE_NOT_ELAPSED"),
       INVALID_ROTATION_POLICY: tk("keycustodian_validation_INVALID_ROTATION_POLICY"),

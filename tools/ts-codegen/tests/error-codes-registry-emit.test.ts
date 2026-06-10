@@ -39,7 +39,7 @@ const authEntry = {
   category: "validation_failure" as const,
   userMessageKey: "TK.Auth.Errors.UNAUTHORIZED",
   factoryName: "BearerMissing",
-  factoryShape: "with_error_code" as const,
+  factoryShape: "standard" as const,
   doc: "Bearer missing.",
 };
 
@@ -100,7 +100,7 @@ describe("aggregateAndCheck — D2ERC004 cross-catalog duplicate code", () => {
           category: "validation_failure" as const,
           userMessageKey: "TK.Auth.Errors.UNAUTHORIZED",
           factoryName: "Dupe",
-          factoryShape: "with_error_code" as const,
+          factoryShape: "standard" as const,
           doc: "Dupe.",
         },
       ],
@@ -115,7 +115,7 @@ describe("aggregateAndCheck — D2ERC004 cross-catalog duplicate code", () => {
           category: "policy_denied" as const,
           userMessageKey: "TK.Auth.Errors.UNAUTHORIZED",
           factoryName: "Dupe2",
-          factoryShape: "with_error_code" as const,
+          factoryShape: "standard" as const,
           doc: "Dupe again.",
         },
       ],
@@ -209,7 +209,7 @@ describe("aggregateAndCheck — D2ERC005 reserved-namespace violation", () => {
           category: "policy_denied" as const,
           userMessageKey: "TK.Common.Errors.UNAUTHORIZED",
           factoryName: "AuthSneaky",
-          factoryShape: "with_error_code" as const,
+          factoryShape: "standard" as const,
           doc: "Sneaky auth code in the generic catalog.",
         },
       ],
@@ -235,7 +235,7 @@ describe("aggregateAndCheck — D2ERC005 reserved-namespace violation", () => {
           category: "policy_denied" as const,
           userMessageKey: "TK.Auth.Errors.UNAUTHORIZED",
           factoryName: "NotPrefixed",
-          factoryShape: "with_error_code" as const,
+          factoryShape: "standard" as const,
           doc: "Missing prefix.",
         },
       ],
@@ -260,7 +260,7 @@ describe("aggregateAndCheck — D2ERC005 reserved-namespace violation", () => {
           category: "validation_failure" as const,
           userMessageKey: "TK.Auth.Errors.UNAUTHORIZED",
           factoryName: "Unprefixed",
-          factoryShape: "with_error_code" as const,
+          factoryShape: "standard" as const,
           doc: "No prefix.",
         },
       ],
@@ -289,7 +289,7 @@ describe("aggregateAndCheck — D2ERC005 reserved-namespace violation", () => {
             category: "infrastructure_unavailable" as const,
             userMessageKey: "TK.Common.Errors.SERVICE_UNAVAILABLE",
             factoryName: "ServiceUnavailable",
-            factoryShape: "with_error_code" as const,
+            factoryShape: "standard" as const,
             doc: "Service unavailable.",
           },
           {
@@ -298,7 +298,7 @@ describe("aggregateAndCheck — D2ERC005 reserved-namespace violation", () => {
             category: "validation_failure" as const,
             userMessageKey: "TK.Common.Errors.VALIDATION_FAILED",
             factoryName: "ValidationFailed",
-            factoryShape: "validation" as const,
+            factoryShape: "standard" as const,
             doc: "Validation failed.",
           },
         ],
@@ -359,7 +359,7 @@ describe("emitErrorCodeRegistry — source output", () => {
       "userMessageKey: TK.auth.errors.UNAUTHORIZED",
     );
     expect(result.source).toContain('factoryName: "BearerMissing"');
-    expect(result.source).toContain('factoryShape: "with_error_code"');
+    expect(result.source).toContain('factoryShape: "standard"');
     expect(result.source).toContain('domain: "auth"');
   });
 
@@ -704,9 +704,9 @@ describe("discoverCatalogs — malformed spec files fire D2ERC006 (not silently 
 // ---------------------------------------------------------------------------
 
 describe("discoverCatalogs — real contracts directory", () => {
-  it("discovers exactly 2 error-code specs (generic + auth)", () => {
+  it("discovers exactly 3 error-code specs (generic + auth + keycustodian)", () => {
     const { catalogs } = discoverCatalogs(contractsPath());
-    expect(catalogs).toHaveLength(2);
+    expect(catalogs).toHaveLength(3);
   });
 
   it("includes the generic catalog with domain 'common'", () => {
@@ -721,6 +721,13 @@ describe("discoverCatalogs — real contracts directory", () => {
     const auth = catalogs.find((c) => c.domain === "auth");
     expect(auth).toBeDefined();
     expect(auth?.entries.length).toBeGreaterThan(0);
+  });
+
+  it("includes the keycustodian catalog with domain 'keycustodian'", () => {
+    const { catalogs } = discoverCatalogs(contractsPath());
+    const kc = catalogs.find((c) => c.domain === "keycustodian");
+    expect(kc).toBeDefined();
+    expect(kc?.entries.length).toBeGreaterThan(0);
   });
 
   it("returns catalogs sorted by spec path for deterministic ordering", () => {

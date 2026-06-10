@@ -30,7 +30,7 @@ namespace D2.Shared.ErrorCodes.Registry.SourceGen;
 /// </param>
 /// <param name="FactoryShape">
 /// Closed factory-shape value from the spec
-/// (<c>standard</c> / <c>with_error_code</c> / <c>validation</c> / <c>none</c>).
+/// (<c>standard</c> — the universal error-factory shape — or <c>none</c>).
 /// </param>
 /// <param name="Doc">XML summary / JSDoc text for this code.</param>
 /// <param name="Domain">

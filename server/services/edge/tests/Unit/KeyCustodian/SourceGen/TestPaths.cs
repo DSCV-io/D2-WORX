@@ -63,6 +63,14 @@ internal static class TestPaths
     public static string EnUsMessages() =>
         Path.Combine(RepoRoot(), "contracts", "messages", "en-US.json");
 
+    /// <summary>Returns the absolute path to the error-category spec file.</summary>
+    public static string ErrorCategorySpec() =>
+        Path.Combine(
+            RepoRoot(),
+            "contracts",
+            "error-category",
+            "error-category.spec.json");
+
     /// <summary>
     /// Returns the absolute path to the directory holding the committed
     /// keycustodian-error-codes generated files.

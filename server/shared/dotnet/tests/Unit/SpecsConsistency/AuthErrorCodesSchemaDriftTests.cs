@@ -59,7 +59,7 @@ public sealed class AuthErrorCodesSchemaDriftTests
 
         authEnum.Should().BeEquivalentTo(
             canonicalEnum,
-            because: "factoryShape carries the canonical 4-value enum verbatim");
+            because: "factoryShape carries the canonical 2-value enum verbatim");
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public sealed class AuthErrorCodesSchemaDriftTests
     }
 
     [Fact]
-    public void AuthSpec_EveryEntryHasWithErrorCodeFactoryShape()
+    public void AuthSpec_EveryEntryHasStandardFactoryShape()
     {
         var shapes = AuthSpecEntries()
             .Select(e => e.GetProperty("factoryShape").GetString())
@@ -91,9 +91,9 @@ public sealed class AuthErrorCodesSchemaDriftTests
 
         shapes.Should().NotBeEmpty();
         shapes.Should().AllBe(
-            "with_error_code",
+            "standard",
             "every auth factory (401 Unauthorized + 503 ServiceUnavailable) shares the "
-            + "with_error_code signature; the typed <T> overload on 503 is httpStatus-driven");
+            + "universal standard signature; the typed <T> overload on 503 is httpStatus-driven");
     }
 
     /// <summary>

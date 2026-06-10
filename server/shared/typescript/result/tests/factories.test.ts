@@ -89,6 +89,25 @@ describe("notFound()", () => {
     const r = notFound({ messages: [{ key: "TK.X" }] });
     expect(r.messages).toEqual([{ key: "TK.X" }]);
   });
+
+  it("accepts the universal ErrorOpts: inputErrors + errorCode + category override", () => {
+    // Unified-shape regression pin: notFound was the restricted shape before the
+    // fold (messages?/traceId? only). Now every error factory takes the one
+    // universal ErrorOpts, so a 404 can carry inputErrors and stamp a domain
+    // errorCode + category override.
+    const r = notFound({
+      inputErrors: [{ field: "id", errors: [{ key: "TK.X" }] }],
+      errorCode: "GEO_SUBDIVISION_NOT_FOUND",
+      category: "conflict",
+      traceId: "t-9",
+    });
+    expect(r.statusCode).toBe(HttpStatusCode.NotFound);
+    expect(r.errorCode).toBe("GEO_SUBDIVISION_NOT_FOUND");
+    expect(r.category).toBe("conflict");
+    expect(r.traceId).toBe("t-9");
+    expect(r.inputErrors).toHaveLength(1);
+    expect(r.messages[0]?.key).toBe("common_errors_NOT_FOUND");
+  });
 });
 
 describe("unauthorized()", () => {
@@ -165,6 +184,15 @@ describe("unhandledException()", () => {
     // Quirk: default TK key is UNKNOWN, NOT UNHANDLED_EXCEPTION (no such TK key exists).
     // The error CODE and the user-message KEY deliberately differ.
     expect(r.messages[0]?.key).toBe("common_errors_UNKNOWN");
+    expect(r.category).toBe("internal_error");
+  });
+  it("errorCode override (e.g. KEYCUSTODIAN_PRECONDITION_VIOLATED)", () => {
+    // The 500 base factory accepts an errorCode override so a delegating
+    // per-domain 500 factory can stamp a specific code on the base status.
+    expect(
+      unhandledException({ errorCode: "KEYCUSTODIAN_PRECONDITION_VIOLATED" })
+        .errorCode,
+    ).toBe("KEYCUSTODIAN_PRECONDITION_VIOLATED");
   });
 });
 
@@ -230,13 +258,15 @@ describe("generated factories stamp the spec category", () => {
     expect(result.category).toBe(expectedCategory);
   });
 
-  it("with_error_code factory honors a caller category override", () => {
+  it("every error factory honors a caller category override (universal standard shape)", () => {
     // The override exists so a delegating domain factory can stamp its own
-    // code's category onto the base factory it delegates to.
+    // code's category onto the base factory it delegates to. After the fold even
+    // the previously-restricted factories (e.g. notFound) honor it.
     expect(forbidden({ category: "validation_failure" }).category).toBe(
       "validation_failure",
     );
     expect(unauthorized({ category: "not_found" }).category).toBe("not_found");
+    expect(notFound({ category: "conflict" }).category).toBe("conflict");
   });
 
   it("hand-rolled ok/created/fail carry no category", () => {

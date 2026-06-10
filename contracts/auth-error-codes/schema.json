@@ -60,11 +60,9 @@
           "type": "string",
           "enum": [
             "standard",
-            "with_error_code",
-            "validation",
             "none"
           ],
-          "description": "Closed enum that drives the generated factory's signature variant — must cover every current D2Result factory variant so regeneration is byte-identical. standard: (messages?, traceId?). with_error_code: (messages?, errorCode?, traceId?) — used by Unauthorized / ServiceUnavailable; the errorCode override is how domain factories stamp a specific code on a base status. validation: (messages?, inputErrors?, errorCode?, traceId?). none: no factory generated for this code. Every auth entry is with_error_code (both 401 Unauthorized and 503 ServiceUnavailable share that signature); the typed <T> overload on the 503 factories is an httpStatus-driven emitter rule, not a factoryShape value."
+          "description": "Closed enum that drives the generated factory's signature variant. standard: the one universal error-factory shape (messages?, inputErrors?, errorCode?, category?, traceId?) — ALL optional; the errorCode / category overrides are how a delegating domain factory stamps a specific code + category on its base status. none: no factory generated for this code. Every auth entry is standard (both 401 Unauthorized and 503 ServiceUnavailable delegate through it); the typed <T> overload on the 503 factories is an httpStatus-driven emitter rule, not a factoryShape value."
         },
         "doc": {
           "type": "string",

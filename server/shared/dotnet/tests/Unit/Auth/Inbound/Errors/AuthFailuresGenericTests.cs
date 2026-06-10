@@ -110,11 +110,13 @@ public sealed class AuthFailuresGenericTests
         bool expectTemporarilyUnavailableTk)
     {
         // Invoke via reflection on the closed generic type AuthFailures<string>.
+        // Each factory carries one optional `messages` override param; passing
+        // null exercises the default-omitted (spec-TK) path.
         var genericType = typeof(AuthFailures<string>);
         var method = genericType
             .GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .Single(m => m.Name == methodName && m.GetParameters().Length == 0);
-        var typed = (D2Result<string>)method.Invoke(null, null)!;
+            .Single(m => m.Name == methodName && m.GetParameters().Length == 1);
+        var typed = (D2Result<string>)method.Invoke(null, [null])!;
 
         // Non-generic sibling — filter out any generic-definition overloads
         // (JwksUnavailable / SessionLivenessUnavailable have a non-generic AND
@@ -123,8 +125,8 @@ public sealed class AuthFailuresGenericTests
             .GetMethods(BindingFlags.Public | BindingFlags.Static)
             .Single(m => m.Name == methodName
                 && !m.IsGenericMethodDefinition
-                && m.GetParameters().Length == 0);
-        var nonGeneric = (D2Result)nonGenericMethod.Invoke(null, null)!;
+                && m.GetParameters().Length == 1);
+        var nonGeneric = (D2Result)nonGenericMethod.Invoke(null, [null])!;
 
         // (StatusCode, ErrorCode, Messages[0]) triple.
         typed.Success.Should().BeFalse();
@@ -250,12 +252,13 @@ public sealed class AuthFailuresGenericTests
         ErrorCategory expectedCategory)
     {
         // The typed twin must stamp the IDENTICAL category as the non-generic
-        // sibling — both are generated from the same spec entry.
+        // sibling — both are generated from the same spec entry. The lone param
+        // is the optional `messages` override (passed null for the default path).
         var genericType = typeof(AuthFailures<string>);
         var method = genericType
             .GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .Single(m => m.Name == methodName && m.GetParameters().Length == 0);
-        var typed = (D2Result<string>)method.Invoke(null, null)!;
+            .Single(m => m.Name == methodName && m.GetParameters().Length == 1);
+        var typed = (D2Result<string>)method.Invoke(null, [null])!;
 
         typed.Category.Should().Be(expectedCategory);
     }

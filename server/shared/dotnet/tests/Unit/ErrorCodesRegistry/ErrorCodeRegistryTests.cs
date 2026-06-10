@@ -96,6 +96,10 @@ public sealed class ErrorCodeRegistryTests
         info.Domain.Should().Be("common");
     }
 
+    // The unified factory-shape rename: every non-`none` registry entry now
+    // carries the universal `standard` shape value (the `with_error_code` +
+    // `validation` shapes folded in).
+
     [Fact]
     public void TryResolve_Forbidden_ReturnsTrue_WithCorrectFields()
     {
@@ -106,18 +110,18 @@ public sealed class ErrorCodeRegistryTests
         info.HttpStatus.Should().Be(403);
         info.Category.Should().Be(ErrorCategory.PolicyDenied);
         info.Category.ToWire().Should().Be("policy_denied");
-        info.FactoryShape.Should().Be("with_error_code");
+        info.FactoryShape.Should().Be("standard");
         info.Domain.Should().Be("common");
     }
 
     [Fact]
-    public void TryResolve_ValidationFailed_ReturnsTrue_WithValidationShape()
+    public void TryResolve_ValidationFailed_ReturnsTrue_WithStandardShape()
     {
         var found = ErrorCodeRegistry.TryResolve("VALIDATION_FAILED", out var info);
 
         found.Should().BeTrue();
         info.Category.Should().Be(ErrorCategory.ValidationFailure);
-        info.FactoryShape.Should().Be("validation");
+        info.FactoryShape.Should().Be("standard");
         info.Domain.Should().Be("common");
     }
 
@@ -193,7 +197,7 @@ public sealed class ErrorCodeRegistryTests
         info.Category.ToWire().Should().Be("validation_failure");
         info.UserMessageKey.Key.Should().Be("auth_errors_UNAUTHORIZED");
         info.FactoryName.Should().Be("BearerMissing");
-        info.FactoryShape.Should().Be("with_error_code");
+        info.FactoryShape.Should().Be("standard");
         info.Domain.Should().Be("auth");
     }
 
@@ -269,9 +273,11 @@ public sealed class ErrorCodeRegistryTests
     [Fact]
     public void All_Count_EqualsExpectedTotalSpecCodes()
     {
-        // 15 generic (error-codes.spec.json) + 14 auth (auth-error-codes.spec.json)
-        // = 29 total. Update if new spec entries are added.
-        const int expected_count = 29;
+        // The merged registry globs every *-error-codes.spec.json surfaced to the
+        // D2.Shared.ErrorCodes.Registry build (its csproj AdditionalFiles pattern
+        // is contracts/**/*-error-codes.spec.json): 15 generic + 14 auth +
+        // 8 keycustodian = 37 total. Update if new spec entries are added.
+        const int expected_count = 37;
         ErrorCodeRegistry.All.Count.Should().Be(expected_count);
     }
 
@@ -314,6 +320,36 @@ public sealed class ErrorCodeRegistryTests
         codes.Should().Contain(i => i.Code == "AUTH_SESSION_REVOKED");
         codes.Should().Contain(i => i.Code == "AUTH_SESSION_LIVENESS_UNAVAILABLE");
         codes.Should().Contain(i => i.Code == "AUTH_SCOPE_INSUFFICIENT");
+    }
+
+    [Fact]
+    public void All_ContainsEveryKeyCustodianCode()
+    {
+        var codes = ErrorCodeRegistry.All;
+        codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_KID_INVALID");
+        codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_KID_TOO_LONG");
+        codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN");
+        codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_INVALID_ROTATION_POLICY");
+        codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_SOAK_NOT_ELAPSED");
+        codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH");
+        codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_GRACE_NOT_ELAPSED");
+        codes.Should().Contain(i => i.Code == "KEYCUSTODIAN_PRECONDITION_VIOLATED");
+    }
+
+    [Fact]
+    public void TryResolve_KeyCustodianPreconditionViolated_ReturnsInternalError()
+    {
+        var found = ErrorCodeRegistry.TryResolve("KEYCUSTODIAN_PRECONDITION_VIOLATED", out var info);
+
+        found.Should().BeTrue();
+        info.Code.Should().Be("KEYCUSTODIAN_PRECONDITION_VIOLATED");
+        info.HttpStatus.Should().Be(500);
+        info.Category.Should().Be(ErrorCategory.InternalError);
+        info.Category.ToWire().Should().Be("internal_error");
+        info.FactoryName.Should().Be("PreconditionViolated");
+        info.FactoryShape.Should().Be("standard");
+        info.UserMessageKey.Key.Should().Be("keycustodian_internal_PRECONDITION_VIOLATED");
+        info.Domain.Should().Be("keycustodian");
     }
 
     [Fact]

@@ -41,7 +41,7 @@ if (info !== undefined) {
   info.category; // "validation_failure"
   info.userMessageKey; // TK.auth.errors.UNAUTHORIZED (TKMessage)
   info.factoryName; // "JwtExpired"
-  info.factoryShape; // "with_error_code"
+  info.factoryShape; // "standard"
   info.doc; // "JWT is expired..."
   info.domain; // "auth"
 }
@@ -64,7 +64,7 @@ for (const entry of errorCodeRegistry.all) {
 | `category`       | `ErrorCategory`         | 9-value string-union (schema `category`)     |
 | `userMessageKey` | `TKMessage`             | Typed TK constant from `@d2/i18n-keys`       |
 | `factoryName`    | `string`                | PascalCase factory symbol                    |
-| `factoryShape`   | `ErrorCodeFactoryShape` | 4-value string-union                         |
+| `factoryShape`   | `ErrorCodeFactoryShape` | 2-value string-union (`standard` / `none`)   |
 | `doc`            | `string`                | Developer documentation text                 |
 | `domain`         | `string`                | Derived from spec filename (`common`/`auth`) |
 

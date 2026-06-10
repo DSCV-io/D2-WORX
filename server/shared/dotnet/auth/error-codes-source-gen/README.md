@@ -42,7 +42,7 @@ The `D2ERC*` rows are the shared engine's catalog-neutral diagnostics (they fire
       "category": "validation_failure",
       "userMessageKey": "TK.Auth.Errors.UNAUTHORIZED",
       "factoryName": "BearerMissing",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "The Authorization header was missing on a protected endpoint."
     },
     {
@@ -51,7 +51,7 @@ The `D2ERC*` rows are the shared engine's catalog-neutral diagnostics (they fire
       "category": "infrastructure_unavailable",
       "userMessageKey": "TK.Auth.Errors.TEMPORARILY_UNAVAILABLE",
       "factoryName": "JwksUnavailable",
-      "factoryShape": "with_error_code",
+      "factoryShape": "standard",
       "doc": "JWKS upstream is unavailable; no cached snapshot to fall back on."
     }
   ]
@@ -65,7 +65,7 @@ The `D2ERC*` rows are the shared engine's catalog-neutral diagnostics (they fire
 - **`category`** — closed enum `validation_failure` / `infrastructure_unavailable` / `policy_denied`. Semantic/telemetry classification (NOT the factory selector — `httpStatus` selects the factory). Validated via `D2AEC002`.
 - **`userMessageKey`** — TK key reference (e.g. `TK.Auth.Errors.UNAUTHORIZED`). Emitted as the `messages` argument on the factory. The engine cross-checks existence against `contracts/messages/en-US.json` via `D2ERC002`.
 - **`factoryName`** — PascalCase symbol for the emitted factory method. Unique.
-- **`factoryShape`** — closed enum (`standard` / `with_error_code` / `validation` / `none`) driving the generated factory's signature variant. Every auth entry is `with_error_code` — both `401 → Unauthorized` and `503 → ServiceUnavailable` share the `(messages?, errorCode?, traceId?)` signature; the typed `<T>` overload on the `503` factories is an `httpStatus`-driven emitter rule, not a `factoryShape` value.
+- **`factoryShape`** — closed enum (`standard` / `none`) driving the generated factory's signature variant. Every auth entry is the universal `standard` shape — both `401 → Unauthorized` and `503 → ServiceUnavailable` delegate through it; the typed `<T>` overload on the `503` factories is an `httpStatus`-driven emitter rule, not a `factoryShape` value.
 - **`doc`** — XML `<summary>` text rendered on the constant + factory.
 
 ---

@@ -79,6 +79,13 @@ Copyright (c) DCSV. All rights reserved.
       the pipeline boundary so a translation-VALUE edit does not re-run codegen.
     -->
     <AdditionalFiles Include="$(D2ContractsRoot)messages\en-US.json" />
+    <!--
+      error-category.spec.json — the closed ErrorCategory wire set surfaced so the
+      error-codes SrcGen's category-membership check (D2KEC002) validates against
+      the spec-derived set rather than a hand-maintained subset. Absent / malformed
+      degrades the check to a no-op (no false positives).
+    -->
+    <AdditionalFiles Include="$(D2ContractsRoot)error-category\error-category.spec.json" />
   </ItemGroup>
 
   <ItemGroup>

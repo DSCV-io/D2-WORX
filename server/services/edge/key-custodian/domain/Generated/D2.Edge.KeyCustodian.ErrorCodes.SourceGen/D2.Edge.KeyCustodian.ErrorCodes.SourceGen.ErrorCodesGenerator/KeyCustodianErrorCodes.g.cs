@@ -45,6 +45,9 @@ public static class KeyCustodianErrorCodes
     /// <summary>The retirement grace window has not yet elapsed; the retiring key may not be retired.</summary>
     public const string KEYCUSTODIAN_GRACE_NOT_ELAPSED = "KEYCUSTODIAN_GRACE_NOT_ELAPSED";
 
+    /// <summary>A required argument supplied to a key-lifecycle transition was null, empty, or otherwise violated a documented precondition. This is a programmer/precondition error surfaced as a flagged 500 result (carrying telemetry) rather than a thrown exception.</summary>
+    public const string KEYCUSTODIAN_PRECONDITION_VIOLATED = "KEYCUSTODIAN_PRECONDITION_VIOLATED";
+
     /// <summary>
     /// All declared <c>KEYCUSTODIAN_*</c> codes in spec order. Useful for
     /// registry membership checks and cross-spec consistency tests.
@@ -60,6 +63,7 @@ public static class KeyCustodianErrorCodes
         "KEYCUSTODIAN_SOAK_NOT_ELAPSED",
         "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH",
         "KEYCUSTODIAN_GRACE_NOT_ELAPSED",
+        "KEYCUSTODIAN_PRECONDITION_VIOLATED",
     };
 
     /// <summary>
@@ -79,6 +83,7 @@ public static class KeyCustodianErrorCodes
         "KEYCUSTODIAN_SOAK_NOT_ELAPSED" => 400,
         "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH" => 400,
         "KEYCUSTODIAN_GRACE_NOT_ELAPSED" => 400,
+        "KEYCUSTODIAN_PRECONDITION_VIOLATED" => 500,
         _ => 500,
     };
 }

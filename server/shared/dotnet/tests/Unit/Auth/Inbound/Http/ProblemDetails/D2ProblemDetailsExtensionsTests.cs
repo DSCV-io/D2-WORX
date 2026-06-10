@@ -95,9 +95,11 @@ public sealed class D2ProblemDetailsExtensionsTests
         string methodName,
         string expectedErrorCode)
     {
+        // The delegating factory carries a single optional `messages` override;
+        // pass null to exercise the default-omitted (spec-TK) path.
         var failure = (D2Result)typeof(AuthFailures)
             .GetMethod(methodName)!
-            .Invoke(null, null)!;
+            .Invoke(null, [null])!;
         var ctx = MakeContext("/api/x");
 
         var problem = failure.ToProblemDetails(ctx);
@@ -305,7 +307,7 @@ public sealed class D2ProblemDetailsExtensionsTests
         var factory = typeof(AuthFailures)
             .GetMethods()
             .First(m => m.Name == methodName && !m.IsGenericMethod);
-        var failure = (D2Result)factory.Invoke(null, null)!;
+        var failure = (D2Result)factory.Invoke(null, [null])!;
 
         failure.ToProblemDetails(ctx);
 

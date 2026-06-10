@@ -21,7 +21,7 @@ import {
 
 describe("toProblemDetails — happy path", () => {
   it("renders an unauthorized failure as RFC 7807 body", () => {
-    const failure = AuthFailures.bearerMissing("trace-1");
+    const failure = AuthFailures.bearerMissing({ traceId: "trace-1" });
     const body = toProblemDetails(failure, { instance: "/dashboard" });
     expect(body.type).toBe(`${PROBLEM_TYPE_URI_PREFIX}auth-bearer-missing`);
     expect(body.status).toBe(401);
@@ -37,7 +37,7 @@ describe("toProblemDetails — happy path", () => {
   });
 
   it("uses opts.title override when provided", () => {
-    const failure = AuthFailures.scopeInsufficient("trace-2");
+    const failure = AuthFailures.scopeInsufficient({ traceId: "trace-2" });
     const body = toProblemDetails(failure, {
       instance: "/admin",
       title: "Custom title",
@@ -148,7 +148,7 @@ describe("toProblemDetails — every AuthFailures.* survives the round-trip", ()
     AuthFailures.sessionLivenessUnavailable,
     AuthFailures.sessionRevoked,
   ])("AuthFailures.%s", (factory) => {
-    const failure = factory("trace-x");
+    const failure = factory({ traceId: "trace-x" });
     const body = toProblemDetails(failure, { instance: "/x" });
     expect(body[ProblemDetailsExtensionKeys.ERROR_CODE]).toBe(
       failure.errorCode,

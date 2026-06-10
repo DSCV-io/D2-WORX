@@ -247,6 +247,7 @@
   "contacts_validation_SUFFIX_CUSTOM_REQUIRED": "Se requiere un sufijo personalizado cuando el sufijo está establecido en Otro.",
   "contacts_validation_SUFFIX_CUSTOM_TOO_LONG": "El sufijo personalizado es demasiado largo.",
   "contacts_validation_WEBSITE_INVALID": "Introduzca una URL de sitio web válida (debe empezar por http:// o https://).",
+  "keycustodian_internal_PRECONDITION_VIOLATED": "No se cumplió una condición previa interna al actualizar una clave (argumento: {arg}). Esto se ha registrado para su investigación.",
   "keycustodian_validation_GRACE_NOT_ELAPSED": "El periodo de gracia aún no ha transcurrido. Retire la clave tras la expiración del periodo de gracia.",
   "keycustodian_validation_INVALID_ROTATION_POLICY": "Los valores de la política de rotación deben ser positivos y la cadencia debe ser al menos igual a la suma de los periodos de gracia y de consolidación.",
   "keycustodian_validation_SMOKE_PROOF_TYPE_MISMATCH": "La prueba de humo se emitió para un tipo de clave diferente.",

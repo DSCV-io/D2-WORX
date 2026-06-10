@@ -67,9 +67,11 @@ public sealed class D2RpcStatusExtensionsTests
         string methodName,
         string expectedErrorCode)
     {
+        // The delegating factory carries a single optional `messages` override;
+        // pass null to exercise the default-omitted (spec-TK) path.
         var failure = (D2Result)typeof(AuthFailures)
             .GetMethod(methodName)!
-            .Invoke(null, null)!;
+            .Invoke(null, [null])!;
 
         var rpc = failure.ToRpcException();
 
@@ -218,7 +220,7 @@ public sealed class D2RpcStatusExtensionsTests
         var factory = typeof(AuthFailures)
             .GetMethods()
             .First(m => m.Name == methodName && !m.IsGenericMethod);
-        var failure = (D2Result)factory.Invoke(null, null)!;
+        var failure = (D2Result)factory.Invoke(null, [null])!;
 
         failure.ToRpcException();
 

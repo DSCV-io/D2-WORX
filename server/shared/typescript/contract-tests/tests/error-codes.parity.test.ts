@@ -176,7 +176,7 @@ describe("auth domain-failure capability parity (.NET AuthFailures + AuthFailure
 
   const failures = AuthFailures as unknown as Record<
     string,
-    <T = void>(traceId?: string) => D2Result<T>
+    <T = void>(opts?: { traceId?: string }) => D2Result<T>
   >;
 
   for (const entry of authSpec) {
