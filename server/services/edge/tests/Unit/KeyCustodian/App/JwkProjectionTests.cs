@@ -78,13 +78,15 @@ public sealed class JwkProjectionTests
         };
 
         var jwkProperties = typeof(D2.Edge.KeyCustodian.Domain.ValueObjects.Jwk)
-            .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            .GetProperties(
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
 
         foreach (var paramName in privateParamNames)
         {
             jwkProperties.Should().NotContain(
                 p => string.Equals(p.Name, paramName, System.StringComparison.OrdinalIgnoreCase),
-                because: $"RSA private parameter {paramName} must never appear on the public Jwk record");
+                because: $"RSA private parameter {paramName} must never appear on the "
+                + "public Jwk record");
         }
     }
 }

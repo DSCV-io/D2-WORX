@@ -42,7 +42,8 @@ internal static class KcAppTestKit
     /// <returns>A real payload crypto bound to a fresh test keyring.</returns>
     public static IPayloadCrypto BuildTestRootCrypto()
     {
-        var key = System.Security.Cryptography.RandomNumberGenerator.GetBytes(PayloadCryptoKeyring.KEY_SIZE_BYTES);
+        var key = System.Security.Cryptography.RandomNumberGenerator.GetBytes(
+            PayloadCryptoKeyring.KEY_SIZE_BYTES);
         var keyring = new PayloadCryptoKeyring(
             activeKid: "test-root",
             keys: new Dictionary<string, byte[]> { ["test-root"] = key },
@@ -72,7 +73,9 @@ internal static class KcAppTestKit
         return options;
     }
 
-    /// <summary>Builds an <see cref="IOptions{T}"/> accessor over the default test options.</summary>
+    /// <summary>
+    /// Builds an <see cref="IOptions{T}"/> accessor over the default test options.
+    /// </summary>
     /// <returns>The options accessor.</returns>
     public static IOptions<KeyCustodianOptions> BuildOptionsAccessor() =>
         Options.Create(BuildOptions());
@@ -83,13 +86,17 @@ internal static class KcAppTestKit
     public static IRotationPolicyProvider BuildPolicyProvider(KeyCustodianOptions options) =>
         new OptionsRotationPolicyProvider(Options.Create(options));
 
-    /// <summary>Builds a handler context for the given handler type with an empty request.</summary>
+    /// <summary>
+    /// Builds a handler context for the given handler type with an empty request.
+    /// </summary>
     /// <typeparam name="THandler">The handler type.</typeparam>
     /// <returns>A handler context with a null logger + empty request context.</returns>
     public static HandlerContext<THandler> Context<THandler>() =>
         new(new MutableRequestContext(), NullLogger<THandler>.Instance);
 
-    /// <summary>Builds a null DB-exception classifier (no provider mapping in unit tests).</summary>
+    /// <summary>
+    /// Builds a null DB-exception classifier (no provider mapping in unit tests).
+    /// </summary>
     /// <returns>The classifier.</returns>
     public static IDbExceptionClassifier NullClassifier() => new NullDbExceptionClassifier();
 
@@ -172,7 +179,9 @@ internal static class KcAppTestKit
     /// <param name="keyType">The key type.</param>
     /// <param name="status">The lifecycle status to seed.</param>
     /// <param name="createdAt">The creation instant.</param>
-    /// <param name="corruptPlaintext">The corrupt plaintext bytes to wrap as the stored material.</param>
+    /// <param name="corruptPlaintext">
+    /// The corrupt plaintext bytes to wrap as the stored material.
+    /// </param>
     /// <param name="publicSpki">Optional SPKI public material (RSA only).</param>
     /// <param name="activatedAt">The activation instant (for Active/Retiring/Retired).</param>
     /// <returns>The seeded kid.</returns>
@@ -216,7 +225,9 @@ internal static class KcAppTestKit
     {
         private readonly D2Result r_result;
 
-        /// <summary>Initializes a recording announcer that returns <paramref name="result"/>.</summary>
+        /// <summary>
+        /// Initializes a recording announcer that returns <paramref name="result"/>.
+        /// </summary>
         /// <param name="result">The result every announce returns; defaults to Ok.</param>
         public RecordingAnnouncer(D2Result? result = null)
         {
@@ -228,7 +239,11 @@ internal static class KcAppTestKit
 
         /// <inheritdoc/>
         public ValueTask<D2Result> AnnounceAsync(
-            KeyDomain domain, Kid kid, KeyStatus newStatus, bool urgent, CancellationToken cancellationToken = default)
+            KeyDomain domain,
+            Kid kid,
+            KeyStatus newStatus,
+            bool urgent,
+            CancellationToken cancellationToken = default)
         {
             Calls.Add(new AnnounceCall(domain.Value, kid.Value, newStatus, urgent));
             return ValueTask.FromResult(r_result);
@@ -239,7 +254,8 @@ internal static class KcAppTestKit
         /// <param name="Kid">The announced kid value.</param>
         /// <param name="NewStatus">The announced status.</param>
         /// <param name="Urgent">Whether the announce was urgent.</param>
-        public sealed record AnnounceCall(string Domain, string Kid, KeyStatus NewStatus, bool Urgent);
+        public sealed record AnnounceCall(
+            string Domain, string Kid, KeyStatus NewStatus, bool Urgent);
     }
 
     private sealed class NullDbExceptionClassifier : IDbExceptionClassifier

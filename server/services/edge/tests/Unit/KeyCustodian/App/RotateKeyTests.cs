@@ -37,7 +37,8 @@ public sealed class RotateKeyTests
         // Now is past soak (1h) for the pending successor.
         var clock = new TestClock(created + Duration.FromHours(2));
         var announcer = new KcAppTestKit.RecordingAnnouncer();
-        var result = await Build(db, clock, announcer).HandleAsync(new RotateKeyInput("jwks-signing"));
+        var result = await Build(db, clock, announcer)
+            .HandleAsync(new RotateKeyInput("jwks-signing"));
 
         result.Success.Should().BeTrue();
         result.Data!.RetiringKid.Should().Be(activeKid);
@@ -91,10 +92,18 @@ public sealed class RotateKeyTests
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var created = KcAppTestKit.BaseInstant;
         await KcAppTestKit.SeedKeyAsync(
-            db, r_crypto, r_options, "jwks-signing", KeyType.RsaSigning, KeyStatus.Pending, created);
+            db,
+            r_crypto,
+            r_options,
+            "jwks-signing",
+            KeyType.RsaSigning,
+            KeyStatus.Pending,
+            created);
 
         var result = await Build(
-                db, new TestClock(created + Duration.FromHours(2)), new KcAppTestKit.RecordingAnnouncer())
+                db,
+                new TestClock(created + Duration.FromHours(2)),
+                new KcAppTestKit.RecordingAnnouncer())
             .HandleAsync(new RotateKeyInput("jwks-signing"));
 
         result.ErrorCode.Should().Be("KEYCUSTODIAN_KEY_NOT_FOUND");
@@ -116,7 +125,9 @@ public sealed class RotateKeyTests
             activatedAt: created);
 
         var result = await Build(
-                db, new TestClock(created + Duration.FromHours(2)), new KcAppTestKit.RecordingAnnouncer())
+                db,
+                new TestClock(created + Duration.FromHours(2)),
+                new KcAppTestKit.RecordingAnnouncer())
             .HandleAsync(new RotateKeyInput("jwks-signing"));
 
         result.ErrorCode.Should().Be("KEYCUSTODIAN_KEY_NOT_FOUND");
@@ -247,7 +258,13 @@ public sealed class RotateKeyTests
             created,
             activatedAt: created);
         var pending = await KcAppTestKit.SeedKeyAsync(
-            db, r_crypto, r_options, "jwks-signing", KeyType.RsaSigning, KeyStatus.Pending, created);
+            db,
+            r_crypto,
+            r_options,
+            "jwks-signing",
+            KeyType.RsaSigning,
+            KeyStatus.Pending,
+            created);
         return (active, pending);
     }
 }

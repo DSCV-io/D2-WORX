@@ -44,7 +44,8 @@ public sealed class ActivateKeyHandler(
     IRotationPolicyProvider policyProvider,
     [FromKeyedServices(KeyCustodianRootKey.ROOT_SERVICE_KEY)] IPayloadCrypto rootCrypto,
     IClock clock)
-    : BaseRepoHandler<ActivateKeyHandler, ActivateKeyInput, KeySummary>(ctx, classifier), IActivateKeyHandler
+    : BaseRepoHandler<ActivateKeyHandler, ActivateKeyInput, KeySummary>(ctx, classifier),
+      IActivateKeyHandler
 {
     /// <inheritdoc/>
     protected override async ValueTask<D2Result<KeySummary?>> ExecuteAsync(
@@ -91,16 +92,19 @@ public sealed class ActivateKeyHandler(
             return proofBubble;
 
         var policyResult = policyProvider.ForDomain(pending.KeyDomain);
-        if (policyResult.BubbleOnFailure<RotationPolicy, KeySummary>(out var policyBubble, out var policy))
+        if (policyResult.BubbleOnFailure<RotationPolicy, KeySummary>(
+            out var policyBubble, out var policy))
             return policyBubble;
 
         var activateResult = pending.Activate(proof, policy, clock);
-        if (activateResult.BubbleOnFailure<ActiveKey, KeySummary>(out var activateBubble, out var active))
+        if (activateResult.BubbleOnFailure<ActiveKey, KeySummary>(
+            out var activateBubble, out var active))
             return activateBubble;
 
         active!.ProjectOnto(record);
         db.Audit.Add(
-            EncryptionKeyAudit.Record(kid!, KeyAuditAction.Activated, KeyStatus.Active, clock).ToRecord());
+            EncryptionKeyAudit.Record(kid!, KeyAuditAction.Activated, KeyStatus.Active, clock)
+            .ToRecord());
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
 

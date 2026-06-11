@@ -49,7 +49,9 @@ public sealed class EncryptionKeyTransitionTests
 
     private static readonly Kid sr_kid = Kid.FromTrusted("test-key-abc");
     private static readonly KeyDomain sr_domain = KeyDomain.FromTrusted("audit");
-    private static readonly KeyMaterialEncrypted sr_mat = KeyMaterialEncrypted.FromTrusted(new byte[] { 1, 2, 3, 4 });
+    private static readonly KeyMaterialEncrypted sr_mat =
+        KeyMaterialEncrypted.FromTrusted(new byte[] { 1, 2, 3, 4 });
+
     private static readonly Duration sr_soak = Duration.FromHours(1);
     private static readonly Duration sr_grace = Duration.FromHours(2);
     private static readonly Duration sr_cadence = sr_soak + sr_grace;
@@ -129,7 +131,8 @@ public sealed class EncryptionKeyTransitionTests
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH);
         result.Category.Should().Be(ErrorCategory.ValidationFailure);
-        result.Messages.Should().Contain(m => m.Key == "keycustodian_validation_SMOKE_PROOF_TYPE_MISMATCH");
+        result.Messages.Should().Contain(
+            m => m.Key == "keycustodian_validation_SMOKE_PROOF_TYPE_MISMATCH");
     }
 
     // -----------------------------------------------------------------------
@@ -588,7 +591,8 @@ public sealed class EncryptionKeyTransitionTests
     {
         var clock = new TestClock(activatedAt);
         return MakePending(createdAt)
-            .Activate(SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock).Data!, sr_policy, clock)
+            .Activate(
+                SmokeProof.ForPassedSmokeTest(KeyType.AesPayload, clock).Data!, sr_policy, clock)
             .Data!;
     }
 

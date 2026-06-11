@@ -30,7 +30,10 @@ public sealed class KeyAuditRecord
     /// <summary>Gets or sets the identity primary key. Database-generated.</summary>
     public long Id { get; set; }
 
-    /// <summary>Gets or sets the key identifier this entry records. Foreign key to <see cref="KeyRecord.Kid"/>.</summary>
+    /// <summary>
+    /// Gets or sets the key identifier this entry records.
+    /// Foreign key to <see cref="KeyRecord.Kid"/>.
+    /// </summary>
     public required string Kid { get; set; }
 
     /// <summary>Gets or sets the lifecycle action that produced this entry.</summary>
@@ -42,7 +45,10 @@ public sealed class KeyAuditRecord
     /// <summary>
     /// Gets or sets the UTC instant at which the transition occurred.
     /// </summary>
-    /// <remarks>Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp; no wall-clock context to preserve.</remarks>
+    /// <remarks>
+    /// Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp;
+    /// no wall-clock context to preserve.
+    /// </remarks>
     public required Instant OccurredAt { get; set; }
 
     /// <summary>

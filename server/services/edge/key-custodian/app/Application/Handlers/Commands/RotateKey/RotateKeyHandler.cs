@@ -47,14 +47,16 @@ public sealed class RotateKeyHandler(
     IKeyRotationAnnouncer announcer,
     [FromKeyedServices(KeyCustodianRootKey.ROOT_SERVICE_KEY)] IPayloadCrypto rootCrypto,
     IClock clock)
-    : BaseRepoHandler<RotateKeyHandler, RotateKeyInput, RotateKeyOutput>(ctx, classifier), IRotateKeyHandler
+    : BaseRepoHandler<RotateKeyHandler, RotateKeyInput, RotateKeyOutput>(ctx, classifier),
+      IRotateKeyHandler
 {
     /// <inheritdoc/>
     protected override async ValueTask<D2Result<RotateKeyOutput?>> ExecuteAsync(
         RotateKeyInput input, CancellationToken ct)
     {
         var domainResult = KeyDomain.Create(input.Domain);
-        if (domainResult.BubbleOnFailure<KeyDomain, RotateKeyOutput>(out var bubbled, out var domain))
+        if (domainResult.BubbleOnFailure<KeyDomain, RotateKeyOutput>(
+            out var bubbled, out var domain))
             return bubbled;
 
         var incumbentRecord = await db.Keys
@@ -98,21 +100,26 @@ public sealed class RotateKeyHandler(
         }
 
         var proofResult = SmokeProof.ForPassedSmokeTest(successor.KeyType, clock);
-        if (proofResult.BubbleOnFailure<SmokeProof, RotateKeyOutput>(out var proofBubble, out var proof))
+        if (proofResult.BubbleOnFailure<SmokeProof, RotateKeyOutput>(
+            out var proofBubble, out var proof))
             return proofBubble;
 
         var policyResult = policyProvider.ForDomain(domain);
-        if (policyResult.BubbleOnFailure<RotationPolicy, RotateKeyOutput>(out var policyBubble, out var policy))
+        if (policyResult.BubbleOnFailure<RotationPolicy, RotateKeyOutput>(
+            out var policyBubble, out var policy))
             return policyBubble;
 
         // 1) incumbent → retiring.
         var rotateResult = incumbent.Rotate(successor, clock);
-        if (rotateResult.BubbleOnFailure<(RetiringKey Retiring, PendingKey Successor), RotateKeyOutput>(out var rotateBubble, out var rotated))
+        if (rotateResult
+            .BubbleOnFailure<(RetiringKey Retiring, PendingKey Successor), RotateKeyOutput>(
+                out var rotateBubble, out var rotated))
             return rotateBubble;
 
         // 2) successor → active (soak already elapsed for a rotation candidate).
         var activateResult = successor.Activate(proof, policy, clock);
-        if (activateResult.BubbleOnFailure<ActiveKey, RotateKeyOutput>(out var activateBubble, out var activated))
+        if (activateResult.BubbleOnFailure<ActiveKey, RotateKeyOutput>(
+            out var activateBubble, out var activated))
             return activateBubble;
 
         var retiring = rotated.Retiring;

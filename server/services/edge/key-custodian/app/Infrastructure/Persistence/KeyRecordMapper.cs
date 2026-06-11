@@ -44,7 +44,9 @@ public static class KeyRecordMapper
         /// <summary>
         /// Rehydrates the immutable domain aggregate from this flat row.
         /// </summary>
-        /// <returns>The sealed <see cref="EncryptionKey"/> state matching <see cref="KeyRecord.Status"/>.</returns>
+        /// <returns>
+        /// The sealed <see cref="EncryptionKey"/> state matching <see cref="KeyRecord.Status"/>.
+        /// </returns>
         /// <exception cref="InvalidOperationException">
         /// The row is structurally corrupt — a status whose required timestamp
         /// column is null, or an unrecognized <see cref="KeyStatus"/> value
@@ -78,7 +80,8 @@ public static class KeyRecordMapper
                     KeyMaterialEncrypted = material,
                     PublicKeyMaterial = publicMaterial,
                     CreatedAt = record.CreatedAt,
-                    ActivatedAt = record.RequireInstant(record.ActivatedAt, nameof(KeyRecord.ActivatedAt)),
+                    ActivatedAt = record.RequireInstant(
+                        record.ActivatedAt, nameof(KeyRecord.ActivatedAt)),
                 },
                 KeyStatus.Retiring => new RetiringKey
                 {
@@ -88,8 +91,10 @@ public static class KeyRecordMapper
                     KeyMaterialEncrypted = material,
                     PublicKeyMaterial = publicMaterial,
                     CreatedAt = record.CreatedAt,
-                    ActivatedAt = record.RequireInstant(record.ActivatedAt, nameof(KeyRecord.ActivatedAt)),
-                    RetiringAt = record.RequireInstant(record.RetiringAt, nameof(KeyRecord.RetiringAt)),
+                    ActivatedAt = record.RequireInstant(
+                        record.ActivatedAt, nameof(KeyRecord.ActivatedAt)),
+                    RetiringAt = record.RequireInstant(
+                        record.RetiringAt, nameof(KeyRecord.RetiringAt)),
                 },
                 KeyStatus.Retired => new RetiredKey
                 {
@@ -99,9 +104,12 @@ public static class KeyRecordMapper
                     KeyMaterialEncrypted = material,
                     PublicKeyMaterial = publicMaterial,
                     CreatedAt = record.CreatedAt,
-                    ActivatedAt = record.RequireInstant(record.ActivatedAt, nameof(KeyRecord.ActivatedAt)),
-                    RetiringAt = record.RequireInstant(record.RetiringAt, nameof(KeyRecord.RetiringAt)),
-                    RetiredAt = record.RequireInstant(record.RetiredAt, nameof(KeyRecord.RetiredAt)),
+                    ActivatedAt = record.RequireInstant(
+                        record.ActivatedAt, nameof(KeyRecord.ActivatedAt)),
+                    RetiringAt = record.RequireInstant(
+                        record.RetiringAt, nameof(KeyRecord.RetiringAt)),
+                    RetiredAt = record.RequireInstant(
+                        record.RetiredAt, nameof(KeyRecord.RetiredAt)),
                 },
                 KeyStatus.Compromised => new CompromisedKey
                 {
@@ -111,7 +119,8 @@ public static class KeyRecordMapper
                     KeyMaterialEncrypted = material,
                     PublicKeyMaterial = publicMaterial,
                     CreatedAt = record.CreatedAt,
-                    CompromisedAt = record.RequireInstant(record.CompromisedAt, nameof(KeyRecord.CompromisedAt)),
+                    CompromisedAt = record.RequireInstant(
+                        record.CompromisedAt, nameof(KeyRecord.CompromisedAt)),
                     Reason = record.CompromiseReason
                         ?? throw record.Corrupt(nameof(KeyRecord.CompromiseReason)),
                 },
@@ -131,7 +140,8 @@ public static class KeyRecordMapper
         /// </summary>
         private InvalidOperationException Corrupt(string detail) =>
             new(
-                $"KeyRecord '{record.Kid}' (status {record.Status}) is structurally corrupt: {detail}. "
+                $"KeyRecord '{record.Kid}' (status {record.Status}) is structurally corrupt: "
+                + $"{detail}. "
                 + "The persistence store violated an invariant the domain guarantees on write.");
     }
 

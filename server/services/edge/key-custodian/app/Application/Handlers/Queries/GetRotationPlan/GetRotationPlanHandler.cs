@@ -32,7 +32,8 @@ public sealed class GetRotationPlanHandler(
     IKeyCustodianDbContext db,
     IRotationPolicyProvider policyProvider,
     IClock clock)
-    : BaseHandler<GetRotationPlanHandler, GetRotationPlanInput, GetRotationPlanOutput>(ctx), IGetRotationPlanHandler
+    : BaseHandler<GetRotationPlanHandler, GetRotationPlanInput, GetRotationPlanOutput>(ctx),
+      IGetRotationPlanHandler
 {
     /// <inheritdoc/>
     protected override async ValueTask<D2Result<GetRotationPlanOutput?>> ExecuteAsync(
@@ -41,7 +42,8 @@ public sealed class GetRotationPlanHandler(
         var liveKeys = await db.Keys
             .AsNoTracking()
             .Live()
-            .Select(k => new LiveKeyView(k.KeyDomain, k.Status, k.CreatedAt, k.ActivatedAt, k.RetiringAt))
+            .Select(k => new LiveKeyView(
+                k.KeyDomain, k.Status, k.CreatedAt, k.ActivatedAt, k.RetiringAt))
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
@@ -59,7 +61,8 @@ public sealed class GetRotationPlanHandler(
             var keys = byDomain[domain.Value].ToList();
 
             var policyResult = policyProvider.ForDomain(domain);
-            if (policyResult.BubbleOnFailure<RotationPolicy, GetRotationPlanOutput>(out var bubbled, out var policy))
+            if (policyResult.BubbleOnFailure<RotationPolicy, GetRotationPlanOutput>(
+                out var bubbled, out var policy))
                 return bubbled;
 
             if (keys.Count == 0)
@@ -96,7 +99,8 @@ public sealed class GetRotationPlanHandler(
         }
 
         return D2Result<GetRotationPlanOutput?>.Ok(
-            new GetRotationPlanOutput(bootstrap, dueToActivate, dueToRotate, dueToGenerateSuccessor, dueToRetire));
+            new GetRotationPlanOutput(
+                bootstrap, dueToActivate, dueToRotate, dueToGenerateSuccessor, dueToRetire));
     }
 
     /// <summary>Projected read view of a live key — only the fields the plan needs.</summary>

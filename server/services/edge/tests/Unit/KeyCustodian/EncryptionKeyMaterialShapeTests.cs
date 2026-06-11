@@ -25,8 +25,12 @@ public sealed class EncryptionKeyMaterialShapeTests
 {
     private static readonly Kid sr_kid = Kid.FromTrusted("shape-test");
     private static readonly KeyDomain sr_domain = KeyDomain.FromTrusted("audit");
-    private static readonly KeyMaterialEncrypted sr_mat = KeyMaterialEncrypted.FromTrusted(new byte[] { 1, 2, 3 });
-    private static readonly PublicKeyMaterial sr_pub = PublicKeyMaterial.FromTrusted(new byte[] { 4, 5, 6 });
+    private static readonly KeyMaterialEncrypted sr_mat =
+        KeyMaterialEncrypted.FromTrusted(new byte[] { 1, 2, 3 });
+
+    private static readonly PublicKeyMaterial sr_pub =
+        PublicKeyMaterial.FromTrusted(new byte[] { 4, 5, 6 });
+
     private static readonly Instant sr_created = Instant.FromUtc(2026, 1, 1, 0, 0, 0);
 
     // -----------------------------------------------------------------------
@@ -36,7 +40,8 @@ public sealed class EncryptionKeyMaterialShapeTests
     [Fact]
     public void Create_RsaWithPublicMaterial_Succeeds()
     {
-        var result = PendingKey.Create(sr_kid, sr_domain, KeyType.RsaSigning, sr_mat, sr_pub, sr_created);
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.RsaSigning, sr_mat, sr_pub, sr_created);
 
         result.Success.Should().BeTrue();
         result.Data!.KeyType.Should().Be(KeyType.RsaSigning);
@@ -46,7 +51,8 @@ public sealed class EncryptionKeyMaterialShapeTests
     [Fact]
     public void Create_RsaWithoutPublicMaterial_FailsPreconditionViolated()
     {
-        var result = PendingKey.Create(sr_kid, sr_domain, KeyType.RsaSigning, sr_mat, null, sr_created);
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.RsaSigning, sr_mat, null, sr_created);
 
         AssertPreconditionViolated(result);
     }
@@ -58,7 +64,8 @@ public sealed class EncryptionKeyMaterialShapeTests
     [Fact]
     public void Create_AesWithPublicMaterial_FailsPreconditionViolated()
     {
-        var result = PendingKey.Create(sr_kid, sr_domain, KeyType.AesPayload, sr_mat, sr_pub, sr_created);
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.AesPayload, sr_mat, sr_pub, sr_created);
 
         AssertPreconditionViolated(result);
     }
@@ -66,7 +73,8 @@ public sealed class EncryptionKeyMaterialShapeTests
     [Fact]
     public void Create_SecretWithPublicMaterial_FailsPreconditionViolated()
     {
-        var result = PendingKey.Create(sr_kid, sr_domain, KeyType.Secret, sr_mat, sr_pub, sr_created);
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.Secret, sr_mat, sr_pub, sr_created);
 
         AssertPreconditionViolated(result);
     }
@@ -74,7 +82,8 @@ public sealed class EncryptionKeyMaterialShapeTests
     [Fact]
     public void Create_AesWithoutPublicMaterial_Succeeds()
     {
-        var result = PendingKey.Create(sr_kid, sr_domain, KeyType.AesPayload, sr_mat, null, sr_created);
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.AesPayload, sr_mat, null, sr_created);
 
         result.Success.Should().BeTrue();
         result.Data!.PublicKeyMaterial.Should().BeNull();
@@ -83,7 +92,8 @@ public sealed class EncryptionKeyMaterialShapeTests
     [Fact]
     public void Create_SecretWithoutPublicMaterial_Succeeds()
     {
-        var result = PendingKey.Create(sr_kid, sr_domain, KeyType.Secret, sr_mat, null, sr_created);
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.Secret, sr_mat, null, sr_created);
 
         result.Success.Should().BeTrue();
         result.Data!.PublicKeyMaterial.Should().BeNull();
@@ -96,7 +106,8 @@ public sealed class EncryptionKeyMaterialShapeTests
     [Fact]
     public void Create_NullKid_FailsPreconditionViolated()
     {
-        var result = PendingKey.Create(null, sr_domain, KeyType.AesPayload, sr_mat, null, sr_created);
+        var result = PendingKey.Create(
+            null, sr_domain, KeyType.AesPayload, sr_mat, null, sr_created);
 
         AssertPreconditionViolated(result);
     }
@@ -112,7 +123,8 @@ public sealed class EncryptionKeyMaterialShapeTests
     [Fact]
     public void Create_NullEncryptedMaterial_FailsPreconditionViolated()
     {
-        var result = PendingKey.Create(sr_kid, sr_domain, KeyType.AesPayload, null, null, sr_created);
+        var result = PendingKey.Create(
+            sr_kid, sr_domain, KeyType.AesPayload, null, null, sr_created);
 
         AssertPreconditionViolated(result);
     }

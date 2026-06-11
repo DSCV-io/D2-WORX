@@ -34,7 +34,8 @@ public sealed class RetireKeyHandler(
     IKeyCustodianDbContext db,
     IRotationPolicyProvider policyProvider,
     IClock clock)
-    : BaseRepoHandler<RetireKeyHandler, RetireKeyInput, KeySummary>(ctx, classifier), IRetireKeyHandler
+    : BaseRepoHandler<RetireKeyHandler, RetireKeyInput, KeySummary>(ctx, classifier),
+      IRetireKeyHandler
 {
     /// <inheritdoc/>
     protected override async ValueTask<D2Result<KeySummary?>> ExecuteAsync(
@@ -57,16 +58,19 @@ public sealed class RetireKeyHandler(
             return KeyCustodianFailures<KeySummary?>.KeyStateConflict();
 
         var policyResult = policyProvider.ForDomain(retiring.KeyDomain);
-        if (policyResult.BubbleOnFailure<RotationPolicy, KeySummary>(out var policyBubble, out var policy))
+        if (policyResult.BubbleOnFailure<RotationPolicy, KeySummary>(
+            out var policyBubble, out var policy))
             return policyBubble;
 
         var retireResult = retiring.Retire(policy, clock);
-        if (retireResult.BubbleOnFailure<RetiredKey, KeySummary>(out var retireBubble, out var retired))
+        if (retireResult.BubbleOnFailure<RetiredKey, KeySummary>(
+            out var retireBubble, out var retired))
             return retireBubble;
 
         retired!.ProjectOnto(record);
         db.Audit.Add(
-            EncryptionKeyAudit.Record(kid!, KeyAuditAction.Retired, KeyStatus.Retired, clock).ToRecord());
+            EncryptionKeyAudit.Record(kid!, KeyAuditAction.Retired, KeyStatus.Retired, clock)
+            .ToRecord());
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
 

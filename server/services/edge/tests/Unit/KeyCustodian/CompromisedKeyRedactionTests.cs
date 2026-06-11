@@ -24,7 +24,9 @@ public sealed class CompromisedKeyRedactionTests
 {
     private static readonly Kid sr_kid = Kid.FromTrusted("test-key-abc");
     private static readonly KeyDomain sr_domain = KeyDomain.FromTrusted("audit");
-    private static readonly KeyMaterialEncrypted sr_mat = KeyMaterialEncrypted.FromTrusted(new byte[] { 1, 2, 3, 4 });
+    private static readonly KeyMaterialEncrypted sr_mat =
+        KeyMaterialEncrypted.FromTrusted(new byte[] { 1, 2, 3, 4 });
+
     private static readonly Instant sr_now = Instant.FromUtc(2026, 1, 2, 0, 0, 0);
 
     // -----------------------------------------------------------------------
@@ -42,7 +44,8 @@ public sealed class CompromisedKeyRedactionTests
 
         str.Should().NotContain(
             sentinel_reason,
-            because: "the operator-supplied compromise reason is PII and must not be emitted by ToString");
+            because: "the operator-supplied compromise reason is PII and must not be emitted "
+            + "by ToString");
     }
 
     [Fact]
@@ -54,7 +57,8 @@ public sealed class CompromisedKeyRedactionTests
 
         str.Should().Contain(
             "REDACTED:PersonalInformation",
-            because: "the overridden ToString must emit the redaction marker in place of the raw reason");
+            because: "the overridden ToString must emit the redaction marker in place of the "
+            + "raw reason");
     }
 
     // -----------------------------------------------------------------------

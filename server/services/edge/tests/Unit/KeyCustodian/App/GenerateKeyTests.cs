@@ -28,7 +28,8 @@ public sealed class GenerateKeyTests
         var clock = new TestClock(KcAppTestKit.BaseInstant);
         var handler = Build(db, clock);
 
-        var result = await handler.HandleAsync(new GenerateKeyInput(KeyDomain.COOKIE, KeyType.Secret));
+        var result = await handler.HandleAsync(
+            new GenerateKeyInput(KeyDomain.COOKIE, KeyType.Secret));
 
         result.Success.Should().BeTrue();
         result.IsCreated.Should().BeTrue(because: "generating a new key returns HTTP 201");
@@ -82,7 +83,8 @@ public sealed class GenerateKeyTests
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var handler = Build(db, new TestClock(KcAppTestKit.BaseInstant));
 
-        var result = await handler.HandleAsync(new GenerateKeyInput(KeyDomain.COOKIE, KeyType.Secret));
+        var result = await handler.HandleAsync(
+            new GenerateKeyInput(KeyDomain.COOKIE, KeyType.Secret));
 
         Kid.Create(result.Data!.Kid).Success.Should().BeTrue();
     }
@@ -120,10 +122,12 @@ public sealed class GenerateKeyTests
         var clock = new TestClock(KcAppTestKit.BaseInstant);
         var handler = Build(db, clock);
 
-        var first = await handler.HandleAsync(new GenerateKeyInput(KeyDomain.COOKIE, KeyType.Secret));
+        var first = await handler.HandleAsync(
+            new GenerateKeyInput(KeyDomain.COOKIE, KeyType.Secret));
         first.Success.Should().BeTrue();
 
-        var second = await handler.HandleAsync(new GenerateKeyInput(KeyDomain.COOKIE, KeyType.Secret));
+        var second = await handler.HandleAsync(
+            new GenerateKeyInput(KeyDomain.COOKIE, KeyType.Secret));
 
         second.Success.Should().BeFalse();
         second.ErrorCode.Should().Be("KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS");

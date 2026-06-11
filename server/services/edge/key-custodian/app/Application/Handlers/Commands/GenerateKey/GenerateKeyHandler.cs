@@ -42,7 +42,8 @@ public sealed class GenerateKeyHandler(
     IOptions<KeyCustodianOptions> options,
     [FromKeyedServices(KeyCustodianRootKey.ROOT_SERVICE_KEY)] IPayloadCrypto rootCrypto,
     IClock clock)
-    : BaseRepoHandler<GenerateKeyHandler, GenerateKeyInput, KeySummary>(ctx, classifier), IGenerateKeyHandler
+    : BaseRepoHandler<GenerateKeyHandler, GenerateKeyInput, KeySummary>(ctx, classifier),
+      IGenerateKeyHandler
 {
     /// <inheritdoc/>
     protected override async ValueTask<D2Result<KeySummary?>> ExecuteAsync(
@@ -64,7 +65,8 @@ public sealed class GenerateKeyHandler(
 
         var genResult = KeyGeneration.Generate(
             input.KeyType, options.Value.RsaKeySizeBits, options.Value.SecretLengthBytes);
-        if (genResult.BubbleOnFailure<GeneratedKeyMaterial, KeySummary>(out var genBubble, out var generated))
+        if (genResult.BubbleOnFailure<GeneratedKeyMaterial, KeySummary>(
+            out var genBubble, out var generated))
             return genBubble;
 
         byte[] wrapped;
@@ -85,13 +87,20 @@ public sealed class GenerateKeyHandler(
 
         var kid = Kid.FromTrusted(KidMinting.Mint());
         var pendingResult = PendingKey.Create(
-            kid, domain, input.KeyType, encryptedMaterial, publicMaterial, clock.GetCurrentInstant());
-        if (pendingResult.BubbleOnFailure<PendingKey, KeySummary>(out var pendingBubble, out var pending))
+            kid,
+            domain,
+            input.KeyType,
+            encryptedMaterial,
+            publicMaterial,
+            clock.GetCurrentInstant());
+        if (pendingResult.BubbleOnFailure<PendingKey, KeySummary>(
+            out var pendingBubble, out var pending))
             return pendingBubble;
 
         db.Keys.Add(pending!.ToNewRecord());
         db.Audit.Add(
-            EncryptionKeyAudit.Record(kid, KeyAuditAction.Generated, KeyStatus.Pending, clock).ToRecord());
+            EncryptionKeyAudit.Record(kid, KeyAuditAction.Generated, KeyStatus.Pending, clock)
+            .ToRecord());
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
 

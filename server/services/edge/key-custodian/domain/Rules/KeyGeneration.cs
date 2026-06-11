@@ -29,8 +29,12 @@ public static class KeyGeneration
     /// caller root-wraps it then zeroes it.
     /// </summary>
     /// <param name="keyType">The cryptographic algorithm category to generate.</param>
-    /// <param name="rsaModulusBits">The RSA modulus size in bits (used only for <c>RsaSigning</c>).</param>
-    /// <param name="secretLengthBytes">The opaque-secret length in bytes (used only for <c>Secret</c>).</param>
+    /// <param name="rsaModulusBits">
+    /// The RSA modulus size in bits (used only for <c>RsaSigning</c>).
+    /// </param>
+    /// <param name="secretLengthBytes">
+    /// The opaque-secret length in bytes (used only for <c>Secret</c>).
+    /// </param>
     /// <returns>
     /// <c>Ok(<see cref="GeneratedKeyMaterial"/>)</c> on success; a flagged
     /// <c>KEYCUSTODIAN_PRECONDITION_VIOLATED</c> failure when <paramref name="keyType"/>
@@ -38,10 +42,14 @@ public static class KeyGeneration
     /// unreachable from valid call sites; an unknown type is a precondition violation
     /// surfaced as a flagged 500 result (carrying telemetry) rather than a thrown exception.
     /// </returns>
-    public static D2Result<GeneratedKeyMaterial> Generate(KeyType keyType, int rsaModulusBits, int secretLengthBytes) =>
+    public static D2Result<GeneratedKeyMaterial> Generate(
+        KeyType keyType,
+        int rsaModulusBits,
+        int secretLengthBytes) =>
         keyType switch
         {
-            KeyType.RsaSigning => D2Result<GeneratedKeyMaterial>.Ok(GenerateRsaSigning(rsaModulusBits)),
+            KeyType.RsaSigning => D2Result<GeneratedKeyMaterial>.Ok(
+                GenerateRsaSigning(rsaModulusBits)),
             KeyType.AesPayload => D2Result<GeneratedKeyMaterial>.Ok(GenerateAesPayload()),
             KeyType.Secret => D2Result<GeneratedKeyMaterial>.Ok(GenerateSecret(secretLengthBytes)),
             _ => KeyCustodianFailures<GeneratedKeyMaterial>.PreconditionViolated(

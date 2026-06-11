@@ -37,7 +37,10 @@ public sealed record SmokeProof
     }
 
     /// <summary>Gets the instant at which the smoke test passed.</summary>
-    /// <remarks>Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp; no wall-clock context to preserve.</remarks>
+    /// <remarks>
+    /// Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp;
+    /// no wall-clock context to preserve.
+    /// </remarks>
     public Instant VerifiedAt { get; private init; }
 
     /// <summary>Gets the key type that was exercised in the smoke test.</summary>
@@ -50,7 +53,8 @@ public sealed record SmokeProof
     /// <param name="verifiedType">The key type that was exercised.</param>
     /// <param name="clock">Clock used to stamp the verification instant. Must be non-null.</param>
     /// <returns>
-    /// <c>Ok(<see cref="SmokeProof"/>)</c> recording <paramref name="verifiedType"/> and the current instant;
+    /// <c>Ok(<see cref="SmokeProof"/>)</c> recording <paramref name="verifiedType"/>
+    /// and the current instant;
     /// a flagged <c>KEYCUSTODIAN_PRECONDITION_VIOLATED</c> failure when
     /// <paramref name="clock"/> is <see langword="null"/>.
     /// </returns>

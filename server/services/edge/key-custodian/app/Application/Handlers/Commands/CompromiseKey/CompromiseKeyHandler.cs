@@ -50,7 +50,8 @@ public sealed class CompromiseKeyHandler(
     IKeyRotationAnnouncer announcer,
     [FromKeyedServices(KeyCustodianRootKey.ROOT_SERVICE_KEY)] IPayloadCrypto rootCrypto,
     IClock clock)
-    : BaseRepoHandler<CompromiseKeyHandler, CompromiseKeyInput, CompromiseKeyOutput>(ctx, classifier),
+    : BaseRepoHandler<CompromiseKeyHandler, CompromiseKeyInput, CompromiseKeyOutput>(
+        ctx, classifier),
       ICompromiseKeyHandler
 {
     private const string _AUDIT_DETAIL = "operator-initiated";
@@ -92,7 +93,8 @@ public sealed class CompromiseKeyHandler(
             return KeyCustodianFailures<CompromiseKeyOutput?>.KeyNotFound();
 
         var compromiseResult = CompromiseLiveKey(record.ToDomain(), input.Reason!);
-        if (compromiseResult.BubbleOnFailure<CompromisedKey, CompromiseKeyOutput>(out var compBubble, out var compromised))
+        if (compromiseResult.BubbleOnFailure<CompromisedKey, CompromiseKeyOutput>(
+            out var compBubble, out var compromised))
             return compBubble;
 
         compromised!.ProjectOnto(record);
@@ -105,13 +107,15 @@ public sealed class CompromiseKeyHandler(
         if (input.GenerateReplacement)
         {
             var replacementResult = TryBuildReplacement(compromised!, clock.GetCurrentInstant());
-            if (replacementResult.BubbleOnFailure<PendingKey, CompromiseKeyOutput>(out var replBubble, out var replacement))
+            if (replacementResult.BubbleOnFailure<PendingKey, CompromiseKeyOutput>(
+                out var replBubble, out var replacement))
                 return replBubble;
 
             db.Keys.Add(replacement!.ToNewRecord());
             db.Audit.Add(
                 EncryptionKeyAudit.Record(
-                    replacement!.Kid, KeyAuditAction.Generated, KeyStatus.Pending, clock).ToRecord());
+                    replacement!.Kid, KeyAuditAction.Generated, KeyStatus.Pending, clock)
+                .ToRecord());
             replacementKid = replacement.Kid.Value;
         }
 
@@ -133,7 +137,10 @@ public sealed class CompromiseKeyHandler(
         if (!announceResult.Success)
         {
             KeyCustodianLog.AnnounceFailed(
-                Context.Logger, compromised.KeyDomain.Value, compromised.Kid.Value, announceResult.ErrorCode);
+                Context.Logger,
+                compromised.KeyDomain.Value,
+                compromised.Kid.Value,
+                announceResult.ErrorCode);
             KeyCustodianMetrics.SR_AnnounceFailuresTotal.Add(
                 1, new KeyValuePair<string, object?>("urgent", "true"));
         }
@@ -154,7 +161,8 @@ public sealed class CompromiseKeyHandler(
             _ => KeyCustodianFailures<CompromisedKey>.KeyStateConflict(),
         };
 
-    private D2Result<PendingKey> TryBuildReplacement(CompromisedKey compromised, NodaTime.Instant now)
+    private D2Result<PendingKey> TryBuildReplacement(
+        CompromisedKey compromised, NodaTime.Instant now)
     {
         var genResult = KeyGeneration.Generate(
             compromised.KeyType, options.Value.RsaKeySizeBits, options.Value.SecretLengthBytes);
@@ -180,6 +188,11 @@ public sealed class CompromiseKeyHandler(
 
         var kid = Kid.FromTrusted(KidMinting.Mint());
         return PendingKey.Create(
-            kid, compromised.KeyDomain, compromised.KeyType, encryptedMaterial, publicMaterial, now);
+            kid,
+            compromised.KeyDomain,
+            compromised.KeyType,
+            encryptedMaterial,
+            publicMaterial,
+            now);
     }
 }

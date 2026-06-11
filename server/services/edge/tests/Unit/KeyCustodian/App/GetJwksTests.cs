@@ -109,7 +109,13 @@ public sealed class GetJwksTests
 
         // A pending signing key — excluded (only active + retiring serve JWKS).
         await KcAppTestKit.SeedKeyAsync(
-            db, r_crypto, r_options, "jwks-signing", KeyType.RsaSigning, KeyStatus.Pending, created);
+            db,
+            r_crypto,
+            r_options,
+            "jwks-signing",
+            KeyType.RsaSigning,
+            KeyStatus.Pending,
+            created);
 
         // A symmetric active key in another domain — excluded (not signing).
         await KcAppTestKit.SeedKeyAsync(
@@ -185,7 +191,8 @@ public sealed class GetJwksTests
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(
             System.Net.HttpStatusCode.ServiceUnavailable,
-            because: "skipping the null-public-material row leaves zero usable keys, which is a 503 condition");
+            because: "skipping the null-public-material row leaves zero usable keys, "
+            + "which is a 503 condition");
     }
 
     private static GetJwksHandler Build(KeyCustodianTestDbContext db) =>

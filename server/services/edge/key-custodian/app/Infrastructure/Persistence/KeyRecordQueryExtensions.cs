@@ -57,7 +57,8 @@ public static class KeyRecordQueryExtensions
         public IQueryable<KeyRecord> ForDomain(string domain) =>
             source.Where(k => k.KeyDomain == domain);
 
-        /// <summary>Filters to asymmetric signing keys (<see cref="KeyType.RsaSigning"/>).</summary>
+        /// <summary>Filters to asymmetric signing keys (<see cref="KeyType.RsaSigning"/>).
+        /// </summary>
         /// <returns>The filtered query.</returns>
         public IQueryable<KeyRecord> Signing() =>
             source.Where(k => k.KeyType == KeyType.RsaSigning);

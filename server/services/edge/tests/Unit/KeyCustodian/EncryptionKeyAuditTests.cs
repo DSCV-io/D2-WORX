@@ -60,7 +60,8 @@ public sealed class EncryptionKeyAuditTests
     public void Record_NullDetail_IsAllowed()
     {
         var clock = new TestClock(Instant.FromUtc(2026, 6, 1, 0, 0, 0));
-        var audit = EncryptionKeyAudit.Record(s_kid, KeyAuditAction.Retired, KeyStatus.Retired, clock);
+        var audit = EncryptionKeyAudit.Record(
+            s_kid, KeyAuditAction.Retired, KeyStatus.Retired, clock);
         audit.Detail.Should().BeNull();
     }
 
@@ -72,14 +73,16 @@ public sealed class EncryptionKeyAuditTests
     public void Record_NullKid_ThrowsArgumentNullException()
     {
         var clock = new TestClock(Instant.FromUtc(2026, 6, 1, 0, 0, 0));
-        var act = () => EncryptionKeyAudit.Record(null!, KeyAuditAction.Generated, KeyStatus.Pending, clock);
+        var act = () => EncryptionKeyAudit.Record(
+            null!, KeyAuditAction.Generated, KeyStatus.Pending, clock);
         act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
     public void Record_NullClock_ThrowsArgumentNullException()
     {
-        var act = () => EncryptionKeyAudit.Record(s_kid, KeyAuditAction.Generated, KeyStatus.Pending, null!);
+        var act = () => EncryptionKeyAudit.Record(
+            s_kid, KeyAuditAction.Generated, KeyStatus.Pending, null!);
         act.Should().Throw<ArgumentNullException>();
     }
 
@@ -99,6 +102,7 @@ public sealed class EncryptionKeyAuditTests
             .ToList();
 
         matProps.Should().BeEmpty(
-            "EncryptionKeyAudit must not carry key material — forensics via audit lifecycle, not key bytes.");
+            "EncryptionKeyAudit must not carry key material — forensics via audit lifecycle, "
+            + "not key bytes.");
     }
 }

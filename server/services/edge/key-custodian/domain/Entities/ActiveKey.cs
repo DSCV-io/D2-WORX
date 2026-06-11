@@ -25,7 +25,10 @@ public sealed record ActiveKey : EncryptionKey
     /// <summary>
     /// Gets the UTC instant at which this key was activated.
     /// </summary>
-    /// <remarks>Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp; no wall-clock context to preserve.</remarks>
+    /// <remarks>
+    /// Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp;
+    /// no wall-clock context to preserve.
+    /// </remarks>
     public required Instant ActivatedAt { get; init; }
 
     /// <summary>
@@ -49,7 +52,9 @@ public sealed record ActiveKey : EncryptionKey
     /// built the wrong successor) surfaced as a telemetry-flagged internal-error
     /// result rather than a thrown exception.
     /// </returns>
-    public D2Result<(RetiringKey Retiring, PendingKey Successor)> Rotate(PendingKey? successor, IClock? clock)
+    public D2Result<(RetiringKey Retiring, PendingKey Successor)> Rotate(
+        PendingKey? successor,
+        IClock? clock)
     {
         if (successor is null)
             return KeyCustodianFailures<(RetiringKey, PendingKey)>.PreconditionViolated();

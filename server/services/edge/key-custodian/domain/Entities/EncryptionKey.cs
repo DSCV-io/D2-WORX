@@ -53,7 +53,10 @@ public abstract record EncryptionKey
     /// <summary>
     /// Gets the UTC instant at which this key was generated.
     /// </summary>
-    /// <remarks>Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp; no wall-clock context to preserve.</remarks>
+    /// <remarks>
+    /// Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp;
+    /// no wall-clock context to preserve.
+    /// </remarks>
     public required Instant CreatedAt { get; init; }
 
     /// <summary>

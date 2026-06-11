@@ -60,7 +60,14 @@ public sealed class GetRotationPlanTests
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var created = KcAppTestKit.BaseInstant;
         await KcAppTestKit.SeedKeyAsync(
-            db, r_crypto, r_options, "cookie", KeyType.Secret, KeyStatus.Active, created, activatedAt: created);
+            db,
+            r_crypto,
+            r_options,
+            "cookie",
+            KeyType.Secret,
+            KeyStatus.Active,
+            created,
+            activatedAt: created);
         await KcAppTestKit.SeedKeyAsync(
             db, r_crypto, r_options, "cookie", KeyType.Secret, KeyStatus.Pending, created);
 
@@ -77,7 +84,14 @@ public sealed class GetRotationPlanTests
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var created = KcAppTestKit.BaseInstant;
         await KcAppTestKit.SeedKeyAsync(
-            db, r_crypto, r_options, "cookie", KeyType.Secret, KeyStatus.Active, created, activatedAt: created);
+            db,
+            r_crypto,
+            r_options,
+            "cookie",
+            KeyType.Secret,
+            KeyStatus.Active,
+            created,
+            activatedAt: created);
 
         var result = await Build(db, new TestClock(created + Duration.FromHours(5)))
             .HandleAsync(new GetRotationPlanInput());
@@ -120,7 +134,14 @@ public sealed class GetRotationPlanTests
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var created = KcAppTestKit.BaseInstant;
         await KcAppTestKit.SeedKeyAsync(
-            db, r_crypto, r_options, "cookie", KeyType.Secret, KeyStatus.Active, created, activatedAt: created);
+            db,
+            r_crypto,
+            r_options,
+            "cookie",
+            KeyType.Secret,
+            KeyStatus.Active,
+            created,
+            activatedAt: created);
 
         // One nanosecond short of the 4h cadence.
         var clock = new TestClock(created + Duration.FromHours(4) - Duration.FromNanoseconds(1));
@@ -136,7 +157,14 @@ public sealed class GetRotationPlanTests
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var created = KcAppTestKit.BaseInstant;
         await KcAppTestKit.SeedKeyAsync(
-            db, r_crypto, r_options, "cookie", KeyType.Secret, KeyStatus.Active, created, activatedAt: created);
+            db,
+            r_crypto,
+            r_options,
+            "cookie",
+            KeyType.Secret,
+            KeyStatus.Active,
+            created,
+            activatedAt: created);
 
         // Exactly at the 4h cadence (>= boundary).
         var result = await Build(db, new TestClock(created + Duration.FromHours(4)))
@@ -151,7 +179,14 @@ public sealed class GetRotationPlanTests
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var created = KcAppTestKit.BaseInstant;
         await KcAppTestKit.SeedKeyAsync(
-            db, r_crypto, r_options, "cookie", KeyType.Secret, KeyStatus.Active, created, activatedAt: created);
+            db,
+            r_crypto,
+            r_options,
+            "cookie",
+            KeyType.Secret,
+            KeyStatus.Active,
+            created,
+            activatedAt: created);
 
         var result = await Build(db, new TestClock(created - Duration.FromDays(1)))
             .HandleAsync(new GetRotationPlanInput());

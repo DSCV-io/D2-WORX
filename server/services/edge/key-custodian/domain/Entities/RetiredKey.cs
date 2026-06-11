@@ -28,18 +28,27 @@ public sealed record RetiredKey : EncryptionKey
     /// <summary>
     /// Gets the UTC instant at which this key was originally activated.
     /// </summary>
-    /// <remarks>Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp; no wall-clock context to preserve.</remarks>
+    /// <remarks>
+    /// Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp;
+    /// no wall-clock context to preserve.
+    /// </remarks>
     public required Instant ActivatedAt { get; init; }
 
     /// <summary>
     /// Gets the UTC instant at which rotation began (the key entered the retiring state).
     /// </summary>
-    /// <remarks>Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp; no wall-clock context to preserve.</remarks>
+    /// <remarks>
+    /// Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp;
+    /// no wall-clock context to preserve.
+    /// </remarks>
     public required Instant RetiringAt { get; init; }
 
     /// <summary>
     /// Gets the UTC instant at which this key was fully retired.
     /// </summary>
-    /// <remarks>Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp; no wall-clock context to preserve.</remarks>
+    /// <remarks>
+    /// Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp;
+    /// no wall-clock context to preserve.
+    /// </remarks>
     public required Instant RetiredAt { get; init; }
 }

@@ -37,7 +37,8 @@ using NodaTime;
 /// </remarks>
 public sealed class KeyRecord
 {
-    /// <summary>Gets or sets the unique key identifier (JWKS <c>kid</c> claim). Primary key.</summary>
+    /// <summary>Gets or sets the unique key identifier (JWKS <c>kid</c> claim). Primary key.
+    /// </summary>
     public required string Kid { get; set; }
 
     /// <summary>Gets or sets the logical keyring this key belongs to.</summary>
@@ -59,7 +60,10 @@ public sealed class KeyRecord
     /// <summary>
     /// Gets or sets the UTC instant at which this key was generated.
     /// </summary>
-    /// <remarks>Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp; no wall-clock context to preserve.</remarks>
+    /// <remarks>
+    /// Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp;
+    /// no wall-clock context to preserve.
+    /// </remarks>
     public required Instant CreatedAt { get; set; }
 
     /// <summary>
@@ -73,28 +77,40 @@ public sealed class KeyRecord
     /// Gets or sets the UTC instant at which this key was activated; <see langword="null"/>
     /// while the key is still pending (or was compromised before activation).
     /// </summary>
-    /// <remarks>Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp; no wall-clock context to preserve.</remarks>
+    /// <remarks>
+    /// Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp;
+    /// no wall-clock context to preserve.
+    /// </remarks>
     public Instant? ActivatedAt { get; set; }
 
     /// <summary>
     /// Gets or sets the UTC instant at which rotation began (the key entered the
     /// retiring state); <see langword="null"/> outside the retiring/retired states.
     /// </summary>
-    /// <remarks>Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp; no wall-clock context to preserve.</remarks>
+    /// <remarks>
+    /// Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp;
+    /// no wall-clock context to preserve.
+    /// </remarks>
     public Instant? RetiringAt { get; set; }
 
     /// <summary>
     /// Gets or sets the UTC instant at which this key was fully retired;
     /// <see langword="null"/> outside the retired state.
     /// </summary>
-    /// <remarks>Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp; no wall-clock context to preserve.</remarks>
+    /// <remarks>
+    /// Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp;
+    /// no wall-clock context to preserve.
+    /// </remarks>
     public Instant? RetiredAt { get; set; }
 
     /// <summary>
     /// Gets or sets the UTC instant at which this key was marked compromised;
     /// <see langword="null"/> outside the compromised state.
     /// </summary>
-    /// <remarks>Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp; no wall-clock context to preserve.</remarks>
+    /// <remarks>
+    /// Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp;
+    /// no wall-clock context to preserve.
+    /// </remarks>
     public Instant? CompromisedAt { get; set; }
 
     /// <summary>

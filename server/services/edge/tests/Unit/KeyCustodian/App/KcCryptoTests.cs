@@ -62,7 +62,8 @@ public sealed class KcCryptoTests
     [Fact]
     public void SecretGenerator_RespectsConfiguredLength()
     {
-        KeyGeneration.Generate(KeyType.Secret, _RSA_BITS, 48).Data!.Plaintext.Length.Should().Be(48);
+        KeyGeneration.Generate(KeyType.Secret, _RSA_BITS, 48)
+            .Data!.Plaintext.Length.Should().Be(48);
     }
 
     [Fact]
@@ -77,7 +78,8 @@ public sealed class KcCryptoTests
     [Fact]
     public void GeneratedKeyMaterial_ToString_RedactsPlaintext()
     {
-        var material = new GeneratedKeyMaterial(RandomNumberGenerator.GetBytes(8), publicSpki: null);
+        var material = new GeneratedKeyMaterial(
+            RandomNumberGenerator.GetBytes(8), publicSpki: null);
         material.ToString().Should().Contain("REDACTED").And.NotContain(
             Convert.ToHexString(material.Plaintext));
     }

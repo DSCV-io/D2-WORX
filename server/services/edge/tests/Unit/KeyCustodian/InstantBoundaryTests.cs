@@ -105,7 +105,8 @@ public sealed class InstantBoundaryTests
     [Fact]
     public void Activate_NowNearMaxValue_SoakNotElapsed_FailsCleanly()
     {
-        // Created 30 minutes before now (which is near MaxValue) — only half the soak has elapsed.
+        // Created 30 minutes before now (which is near MaxValue) — only half the soak has
+        // elapsed.
         var now = Instant.MaxValue - Duration.FromHours(1);
         var created = now - Duration.FromMinutes(30);
         var clock = new TestClock(now);
@@ -129,7 +130,9 @@ public sealed class InstantBoundaryTests
         // RetiringAt = MinValue + grace; now = retiringAt + grace — exactly elapsed.
         var created = Instant.MinValue + sr_soak;
         var activatedAt = created + sr_soak;
-        var retiringAt = Instant.MinValue + sr_grace; // use grace as offset so retiringAt + grace fits
+
+        // use grace as offset so retiringAt + grace fits within Instant range
+        var retiringAt = Instant.MinValue + sr_grace;
         var retiring = MakeRetiring(created, activatedAt, retiringAt);
 
         var now = retiringAt + sr_grace; // exactly elapsed
@@ -243,7 +246,8 @@ public sealed class InstantBoundaryTests
         return MakePending(createdAt).Activate(proof, sr_policy, clock).Data!;
     }
 
-    private static RetiringKey MakeRetiring(Instant createdAt, Instant activatedAt, Instant retiringAt)
+    private static RetiringKey MakeRetiring(
+        Instant createdAt, Instant activatedAt, Instant retiringAt)
     {
         var active = MakeActive(createdAt, activatedAt);
         var successor = MakePending(retiringAt);

@@ -21,7 +21,9 @@ public enum KeyAuditAction
     /// <summary>An active key was rotated; it entered the <c>Retiring</c> state.</summary>
     Rotated,
 
-    /// <summary>A retiring key's grace window elapsed; it entered the <c>Retired</c> state.</summary>
+    /// <summary>
+    /// A retiring key's grace window elapsed; it entered the <c>Retired</c> state.
+    /// </summary>
     Retired,
 
     /// <summary>A live key was marked compromised and immediately removed from service.</summary>

@@ -25,7 +25,9 @@ public sealed record RotationPolicy
     /// <summary>Gets how often a key is rotated (the activation-to-rotation window).</summary>
     public required Duration Cadence { get; init; }
 
-    /// <summary>Gets how long a retiring key remains in service after a new key activates.</summary>
+    /// <summary>
+    /// Gets how long a retiring key remains in service after a new key activates.
+    /// </summary>
     public required Duration Grace { get; init; }
 
     /// <summary>Gets how long a generated key must soak before it may be activated.</summary>
@@ -45,7 +47,10 @@ public sealed record RotationPolicy
     /// non-positive or if <paramref name="cadence"/> is shorter than
     /// <c>Grace + SmokeSoak</c>.
     /// </returns>
-    public static D2Result<RotationPolicy> Create(Duration cadence, Duration grace, Duration smokeSoak)
+    public static D2Result<RotationPolicy> Create(
+        Duration cadence,
+        Duration grace,
+        Duration smokeSoak)
     {
         if (cadence <= Duration.Zero || grace <= Duration.Zero || smokeSoak <= Duration.Zero)
             return KeyCustodianFailures<RotationPolicy>.InvalidRotationPolicy();

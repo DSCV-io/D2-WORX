@@ -74,7 +74,9 @@ internal static partial class KeyCustodianLog
     [LoggerMessage(
         EventId = 9503,
         Level = LogLevel.Information,
-        Message = "Rotation completed for domain {domain}: {retiringKid} retiring, {activatedKid} activated.")]
+        Message =
+            "Rotation completed for domain {domain}: {retiringKid} retiring, "
+            + "{activatedKid} activated.")]
     public static partial void RotationCompleted(
         ILogger logger, string domain, string retiringKid, string activatedKid);
 }

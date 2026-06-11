@@ -39,7 +39,11 @@ public sealed class GeneratedKeyMaterial
     {
         ArgumentNullException.ThrowIfNull(plaintext);
         if (plaintext.Length == 0)
-            throw new ArgumentException("Generated plaintext key material must not be empty.", nameof(plaintext));
+        {
+            throw new ArgumentException(
+                "Generated plaintext key material must not be empty.",
+                nameof(plaintext));
+        }
 
         Plaintext = plaintext;
         PublicSpki = publicSpki;
@@ -60,10 +64,14 @@ public sealed class GeneratedKeyMaterial
     public void Zero() => CryptographicOperations.ZeroMemory(Plaintext);
 
     /// <inheritdoc/>
-    public override string ToString() =>
-        string.Create(
+    public override string ToString()
+    {
+        var len = Plaintext.Length;
+        var spki = Describe(PublicSpki);
+        return string.Create(
             CultureInfo.InvariantCulture,
-            $"GeneratedKeyMaterial {{ Plaintext = [REDACTED, {Plaintext.Length} bytes], PublicSpki = {Describe(PublicSpki)} }}");
+            $"GeneratedKeyMaterial {{ Plaintext = [REDACTED, {len} bytes], PublicSpki = {spki} }}");
+    }
 
     private static string Describe(byte[]? bytes) =>
         bytes is null

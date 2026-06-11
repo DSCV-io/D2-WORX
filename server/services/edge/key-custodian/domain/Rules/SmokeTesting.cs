@@ -80,7 +80,9 @@ public static class SmokeTesting
         }
     }
 
-    private static D2Result VerifyRsa(ReadOnlySpan<byte> pkcs8Private, ReadOnlyMemory<byte>? publicSpki)
+    private static D2Result VerifyRsa(
+        ReadOnlySpan<byte> pkcs8Private,
+        ReadOnlyMemory<byte>? publicSpki)
     {
         if (publicSpki is not { } spki)
             return KeyCustodianFailures.SmokeTestFailed();

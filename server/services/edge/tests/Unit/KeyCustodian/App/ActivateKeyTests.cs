@@ -76,7 +76,8 @@ public sealed class ActivateKeyTests
 
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be("KEYCUSTODIAN_SOAK_NOT_ELAPSED");
-        db.Keys.Single().Status.Should().Be(KeyStatus.Pending, because: "the activation was rejected");
+        db.Keys.Single().Status.Should().Be(
+            KeyStatus.Pending, because: "the activation was rejected");
     }
 
     [Fact]

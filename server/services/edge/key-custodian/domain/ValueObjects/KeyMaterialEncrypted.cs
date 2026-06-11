@@ -97,8 +97,13 @@ public sealed record KeyMaterialEncrypted
     }
 
     /// <inheritdoc/>
-    public override string ToString() =>
-        string.Create(CultureInfo.InvariantCulture, $"KeyMaterialEncrypted {{ Bytes = [REDACTED:SecretInformation, {Bytes.Length} bytes] }}");
+    public override string ToString()
+    {
+        var len = Bytes.Length;
+        return string.Create(
+            CultureInfo.InvariantCulture,
+            $"KeyMaterialEncrypted {{ Bytes = [REDACTED:SecretInformation, {len} bytes] }}");
+    }
 
     /// <summary>
     /// Overrides auto-generated <c>PrintMembers</c> to prevent raw bytes from
@@ -106,8 +111,11 @@ public sealed record KeyMaterialEncrypted
     /// </summary>
     private bool PrintMembers(StringBuilder builder)
     {
+        var len = Bytes.Length;
         builder.Append(
-            string.Create(CultureInfo.InvariantCulture, $"Bytes = [REDACTED:SecretInformation, {Bytes.Length} bytes]"));
+            string.Create(
+                CultureInfo.InvariantCulture,
+                $"Bytes = [REDACTED:SecretInformation, {len} bytes]"));
         return true;
     }
 }

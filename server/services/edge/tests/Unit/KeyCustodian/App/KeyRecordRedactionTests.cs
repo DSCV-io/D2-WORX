@@ -50,7 +50,8 @@ public sealed class KeyRecordRedactionTests
 
         var attr = prop.GetCustomAttribute<RedactDataAttribute>();
         attr.Should().NotBeNull(
-            "CompromiseReason is operator-supplied context and can carry names or references to individuals");
+            "CompromiseReason is operator-supplied context and can carry names or references "
+            + "to individuals");
         attr.Reason.Should().Be(
             RedactReason.PersonalInformation,
             "the compromise reason is classified as PersonalInformation, not SecretInformation");
@@ -69,7 +70,8 @@ public sealed class KeyRecordRedactionTests
 
         prop.Should().NotBeNull();
         prop.GetCustomAttribute<RedactDataAttribute>().Should().BeNull(
-            "PublicKeyMaterial is the SPKI public key published via JWKS — intentionally not redacted");
+            "PublicKeyMaterial is the SPKI public key published via JWKS — intentionally "
+            + "not redacted");
     }
 
     // -----------------------------------------------------------------------

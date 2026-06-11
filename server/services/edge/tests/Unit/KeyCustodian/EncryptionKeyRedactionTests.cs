@@ -69,7 +69,9 @@ public sealed class EncryptionKeyRedactionTests
         prop.Should().NotBeNull();
 
         var attr = prop.GetCustomAttribute<RedactDataAttribute>();
-        attr.Should().NotBeNull("Reason must be marked [RedactData] because it can carry operator-entered sensitive context");
+        attr.Should().NotBeNull(
+            "Reason must be marked [RedactData] because it can carry operator-entered "
+            + "sensitive context");
         attr.Should().Match<RedactDataAttribute>(a => a.Reason == RedactReason.PersonalInformation);
     }
 

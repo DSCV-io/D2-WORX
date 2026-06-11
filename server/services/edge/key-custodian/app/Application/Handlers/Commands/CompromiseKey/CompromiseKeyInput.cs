@@ -24,7 +24,8 @@ public sealed record CompromiseKeyInput
     /// <summary>Gets the live key's identifier.</summary>
     public string? Kid { get; init; }
 
-    /// <summary>Gets the operator-supplied reason for compromising the key. Redacted from logs.</summary>
+    /// <summary>Gets the operator-supplied reason for compromising the key. Redacted from logs.
+    /// </summary>
     [RedactData(Reason = RedactReason.PersonalInformation)]
     public string? Reason { get; init; }
 
@@ -35,10 +36,13 @@ public sealed record CompromiseKeyInput
     public bool GenerateReplacement { get; init; } = true;
 
     /// <inheritdoc/>
-    public override string ToString() =>
-        string.Create(
+    public override string ToString()
+    {
+        // long format string — cannot wrap
+        return string.Create(
             CultureInfo.InvariantCulture,
             $"CompromiseKeyInput {{ Kid = {Kid}, Reason = [REDACTED:PersonalInformation], GenerateReplacement = {GenerateReplacement} }}");
+    }
 
     /// <summary>
     /// Overrides auto-generated <c>PrintMembers</c> so the reason never appears in
@@ -48,10 +52,10 @@ public sealed record CompromiseKeyInput
     /// <returns><see langword="true"/> per the record-printer contract.</returns>
     private bool PrintMembers(System.Text.StringBuilder builder)
     {
-        builder.Append(
-            string.Create(
-                CultureInfo.InvariantCulture,
-                $"Kid = {Kid}, Reason = [REDACTED:PersonalInformation], GenerateReplacement = {GenerateReplacement}"));
+        // long format string — cannot wrap
+        builder.Append(string.Create(
+            CultureInfo.InvariantCulture,
+            $"Kid = {Kid}, Reason = [REDACTED:PersonalInformation], GenerateReplacement = {GenerateReplacement}"));
         return true;
     }
 }

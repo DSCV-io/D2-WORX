@@ -43,7 +43,10 @@ public sealed record EncryptionKeyAudit
     /// <summary>
     /// Gets the UTC instant at which the transition occurred.
     /// </summary>
-    /// <remarks>Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp; no wall-clock context to preserve.</remarks>
+    /// <remarks>
+    /// Cat 2 bare <see cref="Instant"/> (§25.3) — generic UTC timestamp;
+    /// no wall-clock context to preserve.
+    /// </remarks>
     public required Instant OccurredAt { get; init; }
 
     /// <summary>

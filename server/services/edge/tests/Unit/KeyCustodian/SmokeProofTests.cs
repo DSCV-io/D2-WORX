@@ -107,7 +107,8 @@ public sealed class SmokeProofTests
     public void SmokeProof_NoPublicConstructor_OnlyFactoryConstruction()
     {
         var constructors = typeof(SmokeProof)
-            .GetConstructors(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            .GetConstructors(
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
 
         // The only construction path is ForPassedSmokeTest — no public ctor.
         constructors.Should().BeEmpty();

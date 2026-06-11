@@ -25,16 +25,34 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     [Theory]
     [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_KID_INVALID, "KEYCUSTODIAN_KID_INVALID")]
     [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_KID_TOO_LONG, "KEYCUSTODIAN_KID_TOO_LONG")]
-    [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN, "KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN")]
-    [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_ROTATION_POLICY, "KEYCUSTODIAN_INVALID_ROTATION_POLICY")]
-    [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_SOAK_NOT_ELAPSED, "KEYCUSTODIAN_SOAK_NOT_ELAPSED")]
-    [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH, "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH")]
-    [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_GRACE_NOT_ELAPSED, "KEYCUSTODIAN_GRACE_NOT_ELAPSED")]
-    [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_PRECONDITION_VIOLATED, "KEYCUSTODIAN_PRECONDITION_VIOLATED")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN,
+        "KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_ROTATION_POLICY,
+        "KEYCUSTODIAN_INVALID_ROTATION_POLICY")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_SOAK_NOT_ELAPSED,
+        "KEYCUSTODIAN_SOAK_NOT_ELAPSED")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH,
+        "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_GRACE_NOT_ELAPSED,
+        "KEYCUSTODIAN_GRACE_NOT_ELAPSED")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_PRECONDITION_VIOLATED,
+        "KEYCUSTODIAN_PRECONDITION_VIOLATED")]
     [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_NOT_FOUND, "KEYCUSTODIAN_KEY_NOT_FOUND")]
-    [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_STATE_CONFLICT, "KEYCUSTODIAN_KEY_STATE_CONFLICT")]
-    [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS, "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS")]
-    [InlineData(KeyCustodianErrorCodes.KEYCUSTODIAN_SMOKE_TEST_FAILED, "KEYCUSTODIAN_SMOKE_TEST_FAILED")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_KEY_STATE_CONFLICT,
+        "KEYCUSTODIAN_KEY_STATE_CONFLICT")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS,
+        "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS")]
+    [InlineData(
+        KeyCustodianErrorCodes.KEYCUSTODIAN_SMOKE_TEST_FAILED,
+        "KEYCUSTODIAN_SMOKE_TEST_FAILED")]
     public void Constant_ValueEqualsWireLiteral(string constant, string expected_wire_literal)
     {
         constant.Should().Be(expected_wire_literal);
@@ -265,7 +283,8 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(System.Net.HttpStatusCode.Conflict);
-        result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS);
+        result.ErrorCode.Should().Be(
+            KeyCustodianErrorCodes.KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS);
         result.Category.Should().Be(ErrorCategory.Conflict);
         result.Messages.Should().Contain(
             m => m.Key == "keycustodian_lifecycle_PENDING_KEY_ALREADY_EXISTS");
