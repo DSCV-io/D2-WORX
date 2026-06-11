@@ -15,22 +15,25 @@ using System.ComponentModel.DataAnnotations;
 /// policy, optional per-domain overrides, and the key-generator sizing defaults.
 /// </summary>
 /// <remarks>
-/// Binds from the <c>KeyCustodian</c> configuration section. The
-/// startup-binding / validation wiring lives in the Infra layer; this
-/// type is the App-owned options shape.
+/// Binds from the <c>KEYCUSTODIAN_APP</c> configuration section (environment
+/// variable prefix <c>KEYCUSTODIAN_APP__</c>). The startup-binding / validation
+/// wiring lives in the Infra layer; this type is the App-owned options shape.
 /// </remarks>
 public sealed class KeyCustodianOptions
 {
     /// <summary>The configuration section name this options type binds from.</summary>
-    public const string SECTION = "KeyCustodian";
+    public const string SECTION = "KEYCUSTODIAN_APP";
 
-    /// <summary>Default RSA modulus size in bits when none is configured (RS256 industry standard).</summary>
+    /// <summary>Default RSA modulus size in bits when none is configured (RS256 industry standard).
+    /// </summary>
     public const int DEFAULT_RSA_KEY_SIZE_BITS = 2048;
 
     /// <summary>Default opaque-secret length in bytes when none is configured.</summary>
     public const int DEFAULT_SECRET_LENGTH_BYTES = 64;
 
-    /// <summary>Gets or sets the default rotation policy applied to any domain without an override.</summary>
+    /// <summary>
+    /// Gets or sets the default rotation policy applied to any domain without an override.
+    /// </summary>
     public RotationPolicyOptions Default { get; set; } = new();
 
     /// <summary>

@@ -28,7 +28,8 @@ using NodaTime;
 ///   <item>S-3: <see cref="CompromiseKeyHandler.DefaultOptions"/> sets <c>LogInput = false</c>
 ///     (fail-secure PII-in-logs defense-in-depth).</item>
 ///   <item>O-1 metrics counter increments per handler branch.</item>
-///   <item>O-1 fail-secure: <see cref="GetJwksHandler"/> returns 503 on empty signing-key store.</item>
+///   <item>O-1 fail-secure: <see cref="GetJwksHandler"/> returns 503 on empty
+///     signing-key store.</item>
 ///   <item>Option-validation: <see cref="KeyCustodianOptions"/> and
 ///     <see cref="RotationPolicyOptions"/> carry DataAnnotations markers.</item>
 /// </list>
@@ -66,7 +67,8 @@ public sealed class KeyCustodianMetricsTests
         var opts = (HandlerOptions)prop.GetValue(handler)!;
         opts.LogInput.Should().BeFalse(
             "CompromiseKeyInput carries a sensitive operator reason; logging it — even with "
-            + "[RedactData] — depends on the Serilog policy being wired; the safest default is off");
+            + "[RedactData] — depends on the Serilog policy being wired; "
+            + "the safest default is off");
     }
 
     // -----------------------------------------------------------------------
@@ -79,7 +81,8 @@ public sealed class KeyCustodianMetricsTests
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var result = await BuildGetJwks(db).HandleAsync(new GetJwksInput());
 
-        result.Success.Should().BeFalse("an empty signing-key store is a total-auth-failure condition");
+        result.Success.Should().BeFalse(
+            "an empty signing-key store is a total-auth-failure condition");
         result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
         result.IsServiceUnavailable.Should().BeTrue();
     }
@@ -123,7 +126,8 @@ public sealed class KeyCustodianMetricsTests
             r_crypto,
             new TestClock(KcAppTestKit.BaseInstant));
 
-        var result = await handler.HandleAsync(new GenerateKeyInput(KeyDomain.COOKIE, KeyType.Secret));
+        var result = await handler.HandleAsync(
+            new GenerateKeyInput(KeyDomain.COOKIE, KeyType.Secret));
 
         result.IsCreated.Should().BeTrue(
             "GenerateKey increments key_generations_total only after a successful commit");
@@ -142,7 +146,14 @@ public sealed class KeyCustodianMetricsTests
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var created = KcAppTestKit.BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
-            db, r_crypto, r_options, "cookie", KeyType.Secret, KeyStatus.Active, created, activatedAt: created);
+            db,
+            r_crypto,
+            r_options,
+            "cookie",
+            KeyType.Secret,
+            KeyStatus.Active,
+            created,
+            activatedAt: created);
 
         var result = await new CompromiseKeyHandler(
             KcAppTestKit.Context<CompromiseKeyHandler>(),
@@ -167,10 +178,14 @@ public sealed class KeyCustodianMetricsTests
         // Counter names are part of the operational contract; renames here = breaking changes
         // to any dashboard, SLO definition, or alert rule keyed on these strings.
         KeyCustodianMetrics.SR_CompromisesTotal.Name.Should().Be("d2.keycustodian.compromises");
-        KeyCustodianMetrics.SR_AnnounceFailuresTotal.Name.Should().Be("d2.keycustodian.announce_failures");
-        KeyCustodianMetrics.SR_KeyGenerationsTotal.Name.Should().Be("d2.keycustodian.key_generations");
-        KeyCustodianMetrics.SR_SmokeTestFailuresTotal.Name.Should().Be("d2.keycustodian.smoke_test_failures");
-        KeyCustodianMetrics.SR_EmptyJwksServed.Name.Should().Be("d2.keycustodian.empty_jwks_served");
+        KeyCustodianMetrics.SR_AnnounceFailuresTotal.Name
+            .Should().Be("d2.keycustodian.announce_failures");
+        KeyCustodianMetrics.SR_KeyGenerationsTotal.Name
+            .Should().Be("d2.keycustodian.key_generations");
+        KeyCustodianMetrics.SR_SmokeTestFailuresTotal.Name
+            .Should().Be("d2.keycustodian.smoke_test_failures");
+        KeyCustodianMetrics.SR_EmptyJwksServed.Name
+            .Should().Be("d2.keycustodian.empty_jwks_served");
     }
 
     [Fact]
@@ -193,7 +208,9 @@ public sealed class KeyCustodianMetricsTests
         prop.Should().NotBeNull();
 
         var attr = prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.RangeAttribute>();
-        attr.Should().NotBeNull("RsaKeySizeBits must carry [Range] so ValidateDataAnnotations catches sub-2048 values at startup");
+        attr.Should().NotBeNull(
+            "RsaKeySizeBits must carry [Range] so ValidateDataAnnotations catches "
+            + "sub-2048 values at startup");
         ((int)attr.Minimum).Should().Be(2048, "RS256 minimum safe key size is 2048 bits");
     }
 
@@ -206,7 +223,9 @@ public sealed class KeyCustodianMetricsTests
         prop.Should().NotBeNull();
 
         var attr = prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.RangeAttribute>();
-        attr.Should().NotBeNull("SecretLengthBytes must carry [Range] so ValidateDataAnnotations catches dangerously short secrets at startup");
+        attr.Should().NotBeNull(
+            "SecretLengthBytes must carry [Range] so ValidateDataAnnotations catches "
+            + "dangerously short secrets at startup");
         ((int)attr.Minimum).Should().Be(16, "minimum safe secret length is 16 bytes (128 bits)");
     }
 
@@ -215,11 +234,14 @@ public sealed class KeyCustodianMetricsTests
     {
         var opts = new KeyCustodianOptions { RsaKeySizeBits = 1024, SecretLengthBytes = 64 };
         var ctx = new System.ComponentModel.DataAnnotations.ValidationContext(opts);
-        var results = new System.Collections.Generic.List<System.ComponentModel.DataAnnotations.ValidationResult>();
-        var valid = System.ComponentModel.DataAnnotations.Validator.TryValidateObject(opts, ctx, results, validateAllProperties: true);
+        var results = new System.Collections.Generic.List<
+            System.ComponentModel.DataAnnotations.ValidationResult>();
+        var valid = System.ComponentModel.DataAnnotations.Validator.TryValidateObject(
+            opts, ctx, results, validateAllProperties: true);
 
         valid.Should().BeFalse("1024-bit RSA is below the [Range(2048, ...)] minimum");
-        results.Should().Contain(r => r.MemberNames.Contains(nameof(KeyCustodianOptions.RsaKeySizeBits)));
+        results.Should().Contain(
+            r => r.MemberNames.Contains(nameof(KeyCustodianOptions.RsaKeySizeBits)));
     }
 
     [Fact]
@@ -227,48 +249,66 @@ public sealed class KeyCustodianMetricsTests
     {
         var opts = new KeyCustodianOptions { RsaKeySizeBits = 2048, SecretLengthBytes = 8 };
         var ctx = new System.ComponentModel.DataAnnotations.ValidationContext(opts);
-        var results = new System.Collections.Generic.List<System.ComponentModel.DataAnnotations.ValidationResult>();
-        var valid = System.ComponentModel.DataAnnotations.Validator.TryValidateObject(opts, ctx, results, validateAllProperties: true);
+        var results = new System.Collections.Generic.List<
+            System.ComponentModel.DataAnnotations.ValidationResult>();
+        var valid = System.ComponentModel.DataAnnotations.Validator.TryValidateObject(
+            opts, ctx, results, validateAllProperties: true);
 
         valid.Should().BeFalse("8-byte secret is below the [Range(16, ...)] minimum");
-        results.Should().Contain(r => r.MemberNames.Contains(nameof(KeyCustodianOptions.SecretLengthBytes)));
+        results.Should().Contain(
+            r => r.MemberNames.Contains(nameof(KeyCustodianOptions.SecretLengthBytes)));
     }
 
     // -----------------------------------------------------------------------
-    // Option-validation — [Required] attributes on RotationPolicyOptions
+    // Option-validation — [Range(typeof(TimeSpan), ...)] attributes on RotationPolicyOptions
     // -----------------------------------------------------------------------
 
     [Fact]
-    public void RotationPolicyOptions_Cadence_HasRequiredAttribute()
+    public void RotationPolicyOptions_Cadence_HasTimeSpanRangeAttribute()
     {
         var prop = typeof(RotationPolicyOptions)
             .GetProperty(nameof(RotationPolicyOptions.Cadence));
 
         prop.Should().NotBeNull();
-        prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.RequiredAttribute>()
-            .Should().NotBeNull("Cadence must be [Required] to surface a missing-config error at startup");
+        var attr = prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.RangeAttribute>();
+        attr.Should().NotBeNull(
+            "Cadence must carry [Range(typeof(TimeSpan), ...)] — [Required] is a no-op on a "
+            + "non-nullable struct and can never reject TimeSpan.Zero");
+        attr.OperandType.Should().Be<TimeSpan>("the range must be typed to TimeSpan");
+        attr.Minimum.Should().Be(
+            "00:00:01", "the minimum must be 1 second to reject zero/negative durations");
     }
 
     [Fact]
-    public void RotationPolicyOptions_Grace_HasRequiredAttribute()
+    public void RotationPolicyOptions_Grace_HasTimeSpanRangeAttribute()
     {
         var prop = typeof(RotationPolicyOptions)
             .GetProperty(nameof(RotationPolicyOptions.Grace));
 
         prop.Should().NotBeNull();
-        prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.RequiredAttribute>()
-            .Should().NotBeNull("Grace must be [Required] to surface a missing-config error at startup");
+        var attr = prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.RangeAttribute>();
+        attr.Should().NotBeNull(
+            "Grace must carry [Range(typeof(TimeSpan), ...)] — [Required] is a no-op on a "
+            + "non-nullable struct and can never reject TimeSpan.Zero");
+        attr.OperandType.Should().Be<TimeSpan>("the range must be typed to TimeSpan");
+        attr.Minimum.Should().Be(
+            "00:00:01", "the minimum must be 1 second to reject zero/negative durations");
     }
 
     [Fact]
-    public void RotationPolicyOptions_SmokeSoak_HasRequiredAttribute()
+    public void RotationPolicyOptions_SmokeSoak_HasTimeSpanRangeAttribute()
     {
         var prop = typeof(RotationPolicyOptions)
             .GetProperty(nameof(RotationPolicyOptions.SmokeSoak));
 
         prop.Should().NotBeNull();
-        prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.RequiredAttribute>()
-            .Should().NotBeNull("SmokeSoak must be [Required] to surface a missing-config error at startup");
+        var attr = prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.RangeAttribute>();
+        attr.Should().NotBeNull(
+            "SmokeSoak must carry [Range(typeof(TimeSpan), ...)] — [Required] is a no-op on a "
+            + "non-nullable struct and can never reject TimeSpan.Zero");
+        attr.OperandType.Should().Be<TimeSpan>("the range must be typed to TimeSpan");
+        attr.Minimum.Should().Be(
+            "00:00:01", "the minimum must be 1 second to reject zero/negative durations");
     }
 
     // -----------------------------------------------------------------------

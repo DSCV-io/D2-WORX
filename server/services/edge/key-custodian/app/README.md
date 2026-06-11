@@ -105,7 +105,7 @@ The pure crypto-over-domain logic lives in `domain/Rules/` and is called directl
 
 ## Configuration
 
-`KeyCustodianOptions` binds from the `KeyCustodian` configuration section (`KeyCustodianOptions.SECTION = "KeyCustodian"`).
+`KeyCustodianOptions` binds from the `KEYCUSTODIAN_APP` configuration section (`KeyCustodianOptions.SECTION = "KEYCUSTODIAN_APP"`). Environment variables use the `KEYCUSTODIAN_APP__` prefix with `__` as the IConfiguration hierarchy separator.
 
 ### Key-generator sizing
 
@@ -122,33 +122,25 @@ Rotation policies use `TimeSpan` fields so they bind cleanly from `IConfiguratio
 
 | Property    | Type       | Notes                                                        |
 | ----------- | ---------- | ------------------------------------------------------------ |
-| `Cadence`   | `TimeSpan` | How often a key is rotated (activation-to-rotation window). Must be > Grace + SmokeSoak. |
-| `Grace`     | `TimeSpan` | How long a retiring key remains in service after a new key activates. |
-| `SmokeSoak` | `TimeSpan` | How long a generated key must soak before it may be activated. |
+| `Cadence`   | `TimeSpan` | How often a key is rotated (activation-to-rotation window). Must be ≥ 1 second and > Grace + SmokeSoak (validated by `RotationPolicy.Create`). |
+| `Grace`     | `TimeSpan` | How long a retiring key remains in service after a new key activates. Must be ≥ 1 second. |
+| `SmokeSoak` | `TimeSpan` | How long a generated key must soak before it may be activated. Must be ≥ 1 second. |
 
 #### `Policies` — per-domain overrides
 
 A `Dictionary<string, RotationPolicyOptions>` keyed by the normalized domain string (e.g. `"jwks-signing"`, `"cookie"`, `"client-secret"`). A domain absent from this map uses `Default`.
 
-Example `appsettings.json` section:
+Example environment variables (`__` maps to IConfiguration hierarchy):
 
-```json
-"KeyCustodian": {
-  "RsaKeySizeBits": 2048,
-  "SecretLengthBytes": 64,
-  "Default": {
-    "Cadence":   "30.00:00:00",
-    "Grace":     "2.00:00:00",
-    "SmokeSoak": "1.00:00:00"
-  },
-  "Policies": {
-    "jwks-signing": {
-      "Cadence":   "7.00:00:00",
-      "Grace":     "4.00:00:00",
-      "SmokeSoak": "0.02:00:00"
-    }
-  }
-}
+```bash
+KEYCUSTODIAN_APP__RSAKEYSIZEBITS=2048
+KEYCUSTODIAN_APP__SECRETLENGTHBYTES=64
+KEYCUSTODIAN_APP__DEFAULT__CADENCE=30.00:00:00
+KEYCUSTODIAN_APP__DEFAULT__GRACE=2.00:00:00
+KEYCUSTODIAN_APP__DEFAULT__SMOKESOAK=1.00:00:00
+KEYCUSTODIAN_APP__POLICIES__JWKS-SIGNING__CADENCE=7.00:00:00
+KEYCUSTODIAN_APP__POLICIES__JWKS-SIGNING__GRACE=4.00:00:00
+KEYCUSTODIAN_APP__POLICIES__JWKS-SIGNING__SMOKESOAK=0.02:00:00
 ```
 
 ---

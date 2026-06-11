@@ -18,15 +18,24 @@ using System.ComponentModel.DataAnnotations;
 /// </summary>
 public sealed class RotationPolicyOptions
 {
-    /// <summary>Gets or sets how often a key is rotated (the activation-to-rotation window). Must be positive.</summary>
-    [Required]
+    /// <summary>
+    /// Gets or sets how often a key is rotated (the activation-to-rotation window).
+    /// Must be ≥ 1 second.
+    /// </summary>
+    [Range(typeof(TimeSpan), "00:00:01", "10675199.02:48:05.4775807")]
     public TimeSpan Cadence { get; set; }
 
-    /// <summary>Gets or sets how long a retiring key remains in service after a new key activates. Must be positive.</summary>
-    [Required]
+    /// <summary>
+    /// Gets or sets how long a retiring key remains in service after a new key activates.
+    /// Must be ≥ 1 second.
+    /// </summary>
+    [Range(typeof(TimeSpan), "00:00:01", "10675199.02:48:05.4775807")]
     public TimeSpan Grace { get; set; }
 
-    /// <summary>Gets or sets how long a generated key must soak before it may be activated. Must be non-negative.</summary>
-    [Required]
+    /// <summary>
+    /// Gets or sets how long a generated key must soak before it may be activated.
+    /// Must be ≥ 1 second.
+    /// </summary>
+    [Range(typeof(TimeSpan), "00:00:01", "10675199.02:48:05.4775807")]
     public TimeSpan SmokeSoak { get; set; }
 }

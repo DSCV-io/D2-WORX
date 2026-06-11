@@ -76,6 +76,15 @@ Copyright (c) DCSV. All rights reserved.
       constructs a concrete ServiceCollection() + inspects descriptors.
     -->
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <!--
+      Microsoft.Extensions.Configuration + .EnvironmentVariables + .Binder —
+      the KeyCustodianOptions env-binding round-trip test builds a real
+      ConfigurationBuilder over Environment.SetEnvironmentVariable to prove
+      KEYCUSTODIAN_APP__ binds correctly including the dashed dictionary key.
+    -->
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
   </ItemGroup>
 
   <ItemGroup>
