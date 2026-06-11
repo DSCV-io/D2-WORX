@@ -81,7 +81,7 @@ The four OTel instruments (`invoked` / `succeeded` / `failed` / `duration`) live
 
 ### CQRS and naming conventions
 
-The TLC/2LC/3LC folder convention (`CQRS/{C,Q,U,X}/`, `Repository/{C,R,U,D}/`, `Messaging/{Pub,Sub}/`) and the primary-constructor handler idiom are the codebase-wide structural encoding of these decisions (`docs/PATTERNS.md` Handler/Repository; `docs/dev/rules.md §9`).
+Handler structure follows [ADR-0020](0020-service-project-structure.md): operations are organized under two full-word categories — `Application/Handlers/Commands/` and `Application/Handlers/Queries/` — with one per-operation folder per op (`I<Op>Handler` / `<Op>Handler` / `<Op>Input` / `<Op>Output`, all co-located). The primary-constructor handler idiom is the codebase-wide structural encoding of these decisions (`docs/PATTERNS.md` Handler/service structure; `docs/dev/rules.md §9`).
 
 ## Consequences
 
@@ -118,5 +118,5 @@ The TLC/2LC/3LC folder convention (`CQRS/{C,Q,U,X}/`, `Repository/{C,R,U,D}/`, `
 - `server/shared/dotnet/handler/repo-abstractions/` — `IDbExceptionClassifier.cs`, `DbFailureKind.cs`, `D2ResultDbFactories.cs`.
 - `server/shared/dotnet/handler/repo-postgres/` — `PostgresDbExceptionClassifier.cs`, `PgErrorCodes.cs`, `PostgresServiceCollectionExtensions.cs` (`AddD2Postgres`).
 - `server/shared/dotnet/caching/local-default/DefaultLocalCache.cs` — documented `BaseHandler` carve-out.
-- `docs/PATTERNS.md` (Handler / Repository / TLC convention); `docs/dev/rules.md §9` (handler predicates) + §3.1 (PII-safe exception logging).
+- `docs/PATTERNS.md` (Handler / service structure); `docs/dev/rules.md §9` (handler predicates) + §3.1 (PII-safe exception logging).
 - [ADR-0003](0003-d2result-errors-as-values.md) — the typed failure envelope every handler returns. [ADR-0006](0006-abstractions-implementation-split.md) — the abstractions/implementation split applied here (and the provider-pluggable `IDbExceptionClassifier` triple).

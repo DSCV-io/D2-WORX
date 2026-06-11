@@ -641,7 +641,7 @@ that cross the project's own tree boundary. Use the properties.
 
 - **Folder naming**: lowercase outer (`handler/`, `caching/`, `problem-details/`)
 - **Project naming**: PascalCase dot-separated (`D2.Shared.Handler.csproj` lives in `handler/`)
-- **One handler per file** under `Handlers/{TLC}/{3LC}/` per [PATTERNS.md](../../../docs/PATTERNS.md) TLC convention
+- **One handler per file**; service projects use per-op folders `Application/Handlers/{Commands,Queries}/<Op>/` per [ADR-0020](../../../docs/adrs/0020-service-project-structure.md); shared libs keep their own flat `Handlers/` layouts
 - **Every project has a `README.md`**
 - **Update the dep graph above** when adding / removing a shared lib or changing its `<ProjectReference>` set
 - **Abstractions slices stay zero-external-dep** so domain code can reference them freely. Runtime concretes (DI, OTel, EF, ASP.NET Core) live in sibling non-`-abstractions` packages.

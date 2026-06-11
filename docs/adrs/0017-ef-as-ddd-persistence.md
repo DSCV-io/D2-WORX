@@ -2,7 +2,7 @@
 Copyright (c) DCSV. All rights reserved.
 -->
 
-# ADR-0017: EF-as-DDD persistence — retire the per-op Repository TLC; persist sum-type aggregates as a flat non-polymorphic Record + pure mapper (Strategy A), NOT TPH
+# ADR-0017: EF-as-DDD persistence — retire the per-op Repository TLC; persist sum-type aggregates as a flat non-polymorphic Record + pure mapper (Shape B), NOT TPH
 
 - **Status**: Accepted (draft — finalized at SHIP of deliverable 0016; CLAUDE.md/rules.md/PATTERNS.md edits require explicit user approval at SHIP)
 - **Date**: 2026-06-06 (persistence-mechanism revision: 2026-06-09)
@@ -50,7 +50,7 @@ The persistence-separation literature backs this directly — Vladimir Khorikov,
 
 For a non-state-machine aggregate (a single CLR type with VO members, no sealed per-state hierarchy), the aggregate IS the EF entity, mapped directly via an `IEntityTypeConfiguration<T>` (value converters / complex types per the EF VO mapping pattern). State changes, when any, are ordinary tracked-property `UPDATE`s. This is unchanged from prior EF-as-DDD work.
 
-### Shape B (state-machine / sum-type aggregates) — flat non-polymorphic Record + pure mapper ("Strategy A")
+### Shape B (state-machine / sum-type aggregates) — flat non-polymorphic Record + pure mapper
 
 For an immutable sum-type state machine (sealed base + per-state types + total transitions returning new instances — ADR-0016's `EncryptionKey`), **the aggregate is NOT the EF entity.** Instead:
 

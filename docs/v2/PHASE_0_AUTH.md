@@ -1556,11 +1556,11 @@ translation. Lives in `D2.Shared.Auth` initially; can be extracted to a shared
   missed-event handling needs care. Pattern A delegates all of this to the tiered cache
   abstraction we already trust.
 
-### Q15 — Cookie cache shape → **(b) Rich `SessionSnapshot` in `ITieredCache`**
+### Q15 — Cookie cache shape → ~~(b) Rich `SessionSnapshot`~~ **(a) Sentinel-only — REVERSED 2026-05-10**
 
-**Decided**: 2026-05-06.
+**Originally decided**: 2026-05-06 as (b) Rich `SessionSnapshot`. **Reversed 2026-05-10 to (a) sentinel-only** (see top-of-doc banner — `SessionSnapshot` is an Edge-internal concern deferred to Phase 3; this lib no longer ships the record or `GetSnapshotAsync`).
 
-**Rationale**:
+**Original (b) rationale** (historical record):
 
 - A liveness-flag-only cache (option a) doesn't say _anything_ about the session beyond "it
   exists." Edge would still need a separate snapshot store (extra cache + extra invalidation

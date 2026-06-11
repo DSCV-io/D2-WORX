@@ -39,5 +39,5 @@ cd server/web && pnpm exec svelte-check
 ## Conventions
 
 - **Folder naming**: lowercase outer (`shared/`, `services/`, `dotnet/`, `web/`). PascalCase inside .NET projects (where Rider auto-creates folders from namespace operations).
-- **One handler per file** under `Implementations/{TLC}/Handlers/{3LC}/` per the TLC convention in [`docs/PATTERNS.md`](../docs/PATTERNS.md).
+- **One per-op folder** under `Application/Handlers/{Commands,Queries}/<Op>/` containing `I<Op>Handler.cs`, `<Op>Handler.cs`, `<Op>Input.cs`, `<Op>Output.cs` per [ADR-0020](../docs/adrs/0020-service-project-structure.md).
 - **Every project has a `README.md`** describing its own domain. Parent READMEs link down to children; child READMEs link back up.

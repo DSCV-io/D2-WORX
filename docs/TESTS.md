@@ -8,7 +8,7 @@ Copyright (c) DCSV. All rights reserved.
 >
 > **Frameworks per platform**:
 >
-> - **.NET**: xUnit + FluentAssertions + Moq + Testcontainers
+> - **.NET**: xUnit + AwesomeAssertions + Testcontainers
 > - **SvelteKit BFF**: Vitest (browser mode) + Playwright (mocked by default)
 
 This doc covers HOW to write each test well. CI lane shape (which jobs run when) lives in `.github/workflows/test.yml`.

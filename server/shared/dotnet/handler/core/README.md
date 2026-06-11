@@ -152,4 +152,5 @@ Handler primary-constructor parameters do NOT take the `r_` prefix (carve-out fr
 
 - [`D2.Shared.Handler.Abstractions`](../abstractions/README.md) — `IHandler` + `HandlerOptions` + `IHandlerContext`
 - [`D2.Shared.Handler.Repo`](../repo/README.md) — EF/PG exception remapping subclass
-- [`docs/PATTERNS.md`](../../../../../docs/PATTERNS.md) "Handler" section — TLC/2LC/3LC convention, primary-constructor carve-out
+- [`docs/PATTERNS.md`](../../../../../docs/PATTERNS.md) "Handler" section — handler pattern, primary-constructor carve-out
+- [ADR-0020](../../../../../docs/adrs/0020-service-project-structure.md) — per-op handler folder structure (`Application/Handlers/{Commands,Queries}/<Op>/`)

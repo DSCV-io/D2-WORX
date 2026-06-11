@@ -4,7 +4,7 @@ Copyright (c) DCSV. All rights reserved.
 
 # PATTERNS.md — D²-WORX Code Patterns
 
-Directory of the load-bearing patterns + cross-cutting conventions every D²-WORX shared library and service embodies. Engineers implementing new handlers, libs, or services find here the high-level shape + jump-links to the canonical per-lib READMEs that own the full reference. Three sections stay at depth here because they are codebase-wide conventions with no per-lib canonical home (TLC folder convention, spec-driven codegen philosophy, smart-constructor domain validation); every other entry is a thin description + small example + link.
+Directory of the load-bearing patterns + cross-cutting conventions every D²-WORX shared library and service embodies. Engineers implementing new handlers, libs, or services find here the high-level shape + jump-links to the canonical per-lib READMEs that own the full reference. Three sections stay at depth here because they are codebase-wide conventions with no per-lib canonical home (service project structure, spec-driven codegen philosophy, smart-constructor domain validation); every other entry is a thin description + small example + link.
 
 > This doc INTENTIONALLY summarizes content canonical at the cited per-lib READMEs. Updates to behavior land in the per-lib README FIRST, then propagate to the PATTERNS.md summary only if the at-a-glance description itself changes. Per `docs/dev/rules.md` §11.32 condensed-view discipline.
 
@@ -75,7 +75,7 @@ Universal build properties (`TargetFramework`, `LangVersion`, `Nullable`, `Impli
 
 **SDKs**: shared libs + services use `Microsoft.NET.Sdk`; HTTP/gRPC service entry projects use `Microsoft.NET.Sdk.Web`; test projects add `<IsPackable>false</IsPackable>` + `<IsTestProject>true</IsTestProject>` + `<UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>` + `<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>` (xUnit v3 + MTP).
 
-**`RootNamespace`** is always declared explicitly and follows the **namespace structure**, not the directory path (e.g., `DistributedCache.Redis.csproj` under `Implementations/Caching/Distributed/` has `RootNamespace=D2.Shared.DistributedCache.Redis` — path noise dropped). **Central Package Management** pins every version in `server/Directory.Packages.props`; csproj `<PackageReference>` items reference by ID only (CPM rejects `Version="..."`). **`dotnet build` enforces zero warnings** via `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` — fix or `.editorconfig`-override with rationale; never suppress.
+**`RootNamespace`** is always declared explicitly and follows the **namespace structure**, not the directory path (e.g., `D2.Shared.Caching.Distributed.Redis.csproj` under `caching/distributed-redis/` has `RootNamespace=D2.Shared.Caching.Distributed.Redis` — path noise dropped). **Central Package Management** pins every version in `server/Directory.Packages.props`; csproj `<PackageReference>` items reference by ID only (CPM rejects `Version="..."`). **`dotnet build` enforces zero warnings** via `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` — fix or `.editorconfig`-override with rationale; never suppress.
 
 Lib inventory + per-csproj READMEs → [`server/shared/dotnet/README.md`](../server/shared/dotnet/README.md).
 
@@ -184,7 +184,7 @@ Options flow: env `SECTION__PROP` (arrays `SECTION__N`) → `D2Env.Load()` → `
 
 ## Handler
 
-`.NET`: `BaseHandler<TSelf, TInput, TOutput>` with using aliases (`H`, `I`, `O`), `IHandlerContext`, `DefaultOptions` override. `RunCorePipelineAsync` (sealed) hosts the observability pipeline (activity, span tags, log scope, stopwatch, 4 OTel metrics, universal try/catch); `HandleAsync` is virtual and one-line-pass-through by default. Repo handlers inherit `BaseRepoHandler<TSelf, TInput, TOutput>` which adds typed DB-failure mapping via an injected `IDbExceptionClassifier`.
+`.NET`: `BaseHandler<TSelf, TInput, TOutput>` with using aliases (`H`, `I`, `O`), `IHandlerContext`, `DefaultOptions` override. `RunCorePipelineAsync` (sealed) hosts the observability pipeline (activity, span tags, log scope, stopwatch, 4 OTel metrics, universal try/catch); `HandleAsync` is virtual and one-line-pass-through by default. Repo handlers inherit `BaseRepoHandler<TSelf, TInput, TOutput>` which adds typed DB-failure mapping via an injected `IDbExceptionClassifier`. EF-using command and query handlers inherit `BaseRepoHandler` for this DB-failure mapping; the per-operation Repository handler pattern is retired — handlers use the module `DbContext` contract + aggregates + LINQ directly (see [Repository](#repository)).
 
 ```csharp
 public sealed class CreateUser(HandlerContext<CreateUser> ctx, IDbExceptionClassifier cls, IAppDbContext db)
