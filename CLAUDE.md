@@ -168,12 +168,13 @@ One table, two axes: **When to read** before touching the area, and **When to up
 | [docs/dev/deliverables/](docs/dev/deliverables/README.md) | When researching a past deliverable's outcome                     | At SHIP — the deliverable's root README snapshot lands here                                                                                                                                                                                           |
 | [docs/COMMANDS.md](docs/COMMANDS.md)                      | When you need the build / test / lint / versioning commands       | When a command, flag, or service-lifecycle invocation changes                                                                                                                                                                                         |
 | [CONTRIBUTING.md](CONTRIBUTING.md)                        | PR preparation                                                    | Branch / commit / PR convention changes                                                                                                                                                                                                              |
-| [docs/PATTERNS.md](docs/PATTERNS.md)                      | Any handler / DI / repo / cache / middleware work                 | A handler / TLC pattern / DI registration / `D2Result` factory usage / RedactionSpec / mapper / repo pattern changes                                                                                                                                  |
+| [docs/PATTERNS.md](docs/PATTERNS.md)                      | Any handler / DI / repo / cache / middleware / service-structure work | A handler / service-structure / DI registration / `D2Result` factory usage / RedactionSpec / mapper / repo pattern changes                                                                                                                          |
 | [docs/TESTS.md](docs/TESTS.md)                            | Adding or modifying tests                                         | Test category, custom matcher, adversarial-coverage rule, fixture pattern changes                                                                                                                                                                     |
 | [docs/PARITY.md](docs/PARITY.md)                          | Adding cross-language components                                  | Anything cross-language (.NET ↔ SvelteKit ↔ future)                                                                                                                                                                                                   |
 | [docs/SRC_GEN.md](docs/SRC_GEN.md)                        | Any source-gen / spec-driven codegen work                         | Adding a new generator, modifying spec format, new emitter                                                                                                                                                                                            |
 | [docs/TIMESTAMPS.md](docs/TIMESTAMPS.md)                  | Any timestamp / temporal handling work                            | Timestamp categories, NodaTime type selection, DST rules, PostgreSQL column mapping, wire `DateTimeOffset?` conversion changes                                                                                                                       |
 | [ADRs](docs/adrs/README.md)                               | When researching an architectural decision or proposing a new one | An architectural decision overrides a prior v2 plan (paired with V2.md tracking entry)                                                                                                                                                                |
+| [ADR-0020 (service-project structure)](docs/adrs/0020-service-project-structure.md) | Any service-project layout work — where domain/app/infra/api/tests live, handler folders, mappers, concern folders, the dependency law | Service-structure convention changes — layer set, the two-section app split, per-op folders, the Commands/Queries rule, the five-surface mapper rule, concern vocabulary, global-usings policy (paired with PATTERNS.md + rules.md §5/§7/§9 + this §4) |
 | [server/shared/dotnet/messaging/rabbitmq/README.md](server/shared/dotnet/messaging/rabbitmq/README.md) | Any async messaging work                                          | Async messaging — wire format, exchange / queue topology, AMQP headers, encryption frame, DLQ behavior changes                                                                                                                                       |
 | [docs/v2/PHASE_3_EDGE.md](docs/v2/PHASE_3_EDGE.md)        | Any Edge service operational-guarantee work                       | Edge service operational guarantees — HTTP idempotency, request enrichment, session 3-tier, scheduled-jobs receiver, multi-instance scaling changes                                                                                                  |
 | [docs/v2/PHASE_3_RATE_LIMITING.md](docs/v2/PHASE_3_RATE_LIMITING.md) | Any rate-limit middleware work                                    | Rate-limit middleware design / bucket math / kill-switch / FP-too-common detection / cookie shortcut changes                                                                                                                                          |
@@ -191,28 +192,33 @@ Per-service / per-library `README.md` files appear in `server/services/{service}
 
 **Patterns are documented in detail in [docs/PATTERNS.md](docs/PATTERNS.md). This section summarizes the operational rules every D² engineer needs daily.**
 
-### TLC/2LC/3LC Folder Convention
+### Service project structure
 
-Three-tier folder hierarchy for all backend code. TLC = architectural concern, 2LC = implementation type, 3LC = operation type. **3LC verbiage varies by layer:**
+Every service under `server/services/` takes one fixed layered shape — canonical: [docs/adrs/0020-service-project-structure.md](docs/adrs/0020-service-project-structure.md); daily-driver: [docs/PATTERNS.md "Service project structure"](docs/PATTERNS.md#service-project-structure).
 
-| TLC            | 3LC Verbiage                                              | Meaning                   |
-| -------------- | --------------------------------------------------------- | ------------------------- |
-| **CQRS**       | `C/` Commands, `Q/` Queries, `U/` Utilities, `X/` Complex | Business operation intent |
-| **Messaging**  | `Pub/` Publishers, `Sub/` Subscribers                     | Message direction         |
-| **Repository** | `C/` Create, `R/` Read, `U/` Update, `D/` Delete          | CRUD operation            |
-| **Caching**    | `C/` Create, `R/` Read, `U/` Update, `D/` Delete          | CRUD operation            |
+**Five projects + the dependency law.** A standalone service is `domain/` + `app/` + `infra/` + `api/` + `tests/` (+ consumer-facing `clients/` + a `netstandard2.0` source-gen shell when it owns error codes). Layers depend in one direction:
 
-Interfaces live in `Interfaces/{TLC}/Handlers/{3LC}/`. Implementations live in `Implementations/{TLC}/Handlers/{3LC}/` (app layer) or `{TLC}/Handlers/{3LC}/` (infra layer).
+```
+Domain  ←  App  ←  Infra  ←  Api      (Tests reference what they test; Clients reference contracts + shared libs only)
+```
 
-### CQRS Handler Categories
+Domain references shared primitives only (NO EF / Options / DI / logging / vendor SDK). App declares ports + shapes, is transport-agnostic. Infra is the only vendor-SDK-touching layer. **Api is the only project allowed to reference Infra.** A **module-within-host** (KeyCustodian, the auth module — both inside Edge) takes `domain`/`app`/`infra` but OMITS `api/` and its own `tests/` (the host's api is its composition root + transport mapper; its tests live in the host's test project under a `<Module>/` subtree).
 
-| Type        | Distributed Cache | DB Write | External API | Message Publish | Key Test                                                   |
-| ----------- | ----------------- | -------- | ------------ | --------------- | ---------------------------------------------------------- |
-| **Query**   | No                | No       | No           | No              | "If the process dies after, would state persist?" → **No** |
-| **Command** | Yes               | Yes      | Yes          | Yes             | Primary intent = mutation of persistent/shared state       |
-| **Complex** | Yes               | Yes      | Yes          | Yes             | Primary intent = retrieval, but may mutate as side effect  |
+**Domain** = `Entities/` + `ValueObjects/` + `Enums/` + `Rules/` (pure no-port no-IO logic — generators, verifiers, projections; a tunable is a method param, not `IOptions<>`). Pure logic lives in domain `Rules/`, NOT in app handlers.
 
-Local/in-memory caching is always OK (instance-scoped, ephemeral — doesn't affect other instances).
+**App = two sections.** `app/Application/` (per-op handlers + `Observability/` + `AddD2<Service>App()`) and `app/Infrastructure/` (ports + shapes by concern + `Configuration/`). The `infra/` project mirrors `app/Infrastructure/`'s concern folders with the adapters.
+
+**Per-operation handler folders.** One folder per op under its category: `Application/Handlers/{Commands,Queries}/<Op>/{I<Op>Handler.cs, <Op>Handler.cs, <Op>Input.cs, <Op>Output.cs}`. File name = type name; input always `<Op>Input`, output always `<Op>Output`. NO `Models/` bucket — a DTO co-locates with its op or promotes to a domain VO. NO `Interfaces/`/`Implementations/` mirror — co-locate the interface with its impl.
+
+**Commands vs Queries — the binary side-effect rule.** Category is determined SOLELY by whether the op mutates persistent/shared state (DB write / distributed-cache write / external write / message publish). Side effect → `Commands/`; none → `Queries/`. **The verb is irrelevant** — a `Find…`/`Get…` op that writes is a `Command`. No "Complex" tier. Local/in-memory caching does NOT make a Query a Command.
+
+**Concern folders + mandatory vendor subfolders.** Capability-noun concern folders (`Persistence`, `Messaging`, `Email`, `Secrets`, …); every `infra/` concern carries a tech/vendor/protocol subfolder EVEN for a sole impl (`infra/Persistence/Postgres/`, `infra/Email/Resend/`). The generic `Providers/` wrapper is dead. Namespaces keep the `.App`/`.Infra` layer segment verbatim.
+
+**Mappers — the uppermost-node rule (one home per surface).** Transport (proto/REST ↔ `<Op>Input`/`<Op>Output`) → `api/Mappers/`; persistence (record ↔ aggregate) → `app/Infrastructure/Persistence/`; provider-SDK ↔ domain → `infra/<Concern>/<Vendor>/`; messaging-wire ↔ domain → `infra/Messaging/<Broker>/`; primitives → domain VO `Create` factories. All pure C# 14 extension members.
+
+### Multi-provider — keyed resolver
+
+App stays vendor-blind (ONE capability port per concern); infra registers keyed adapters (.NET keyed DI, one per vendor subfolder); a runtime-selected vendor uses `I<Capability>Resolver.Get(key) → D2Result<T>` (typed unknown-key failure, not a thrown exception). For messaging the resolver layers on top of `[MqPub]`.
 
 ### Verb Semantics
 
@@ -231,7 +237,7 @@ Partial success: `NOT_FOUND` (none found) → `SOME_FOUND` (partial, data return
 
 ### Interface organization
 
-One handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consumers `using` the namespaces directly — no `partial` interface aggregation, no grouping aliases. The folder structure IS the discoverability mechanism.
+One handler interface per file, co-located with its implementation in the per-operation folder (`Application/Handlers/{Commands,Queries}/<Op>/I<Op>Handler.cs`). Consumers `using` the folder namespace directly — no `partial` interface aggregation, no grouping aliases. The per-op folder IS the discoverability mechanism.
 
 ### DI Registration
 
@@ -358,7 +364,7 @@ _Canonical form (full §1-§24 predicate catalog with Evidence + Why + How block
 
 **Primary-constructor handlers**: Constructor parameters do NOT take the `r_` prefix — they're parameters, not fields, even though they're accessed like fields inside the class body. The carve-out applies ONLY to handler primary-constructor parameters; regular fields keep their prefixes.
 
-> Common gotchas: folder casing inside-project = PascalCase, outside-project = lowercase; observability tags = camelCase (`traceId`, `correlationId`, `userId`, `orgId`, `service`); TS naming = camelCase methods / PascalCase types / kebab-case files; translation keys carry domain prefix (`auth_*`, `webclient_*`, `common_*`). Full reference → [rules.md §7](docs/dev/rules.md#7-naming-file-headers-folder-casing).
+> Common gotchas: folder casing inside-project = PascalCase, outside-project = lowercase; observability tags = camelCase (`traceId`, `correlationId`, `userId`, `orgId`, `service`); TS naming = camelCase methods / PascalCase types / kebab-case files; translation keys carry domain prefix (`auth_*`, `webclient_*`, `common_*`); per-operation handler naming (services) = `I<Op>Handler` / `<Op>Handler` / `<Op>Input` / `<Op>Output`, file name = type name, co-located in the op folder (see §4 + [rules.md §9.24](docs/dev/rules.md#9-architectural-layer-hygiene)). Full reference → [rules.md §7](docs/dev/rules.md#7-naming-file-headers-folder-casing).
 
 _Canonical form (C# Naming table + TS naming + folder casing + file headers + observability fields + git conventions): [rules.md §7.1 Naming](docs/dev/rules.md#7-naming-file-headers-folder-casing). The table above is duplicated here for at-a-glance reference. Update both in lockstep when either changes (per §11.32 KEEP-doc duplication discipline)._
 
