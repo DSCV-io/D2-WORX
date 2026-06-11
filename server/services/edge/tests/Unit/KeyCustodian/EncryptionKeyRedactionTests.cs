@@ -7,12 +7,8 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian;
 
 using System.Reflection;
-using AwesomeAssertions;
-using D2.Edge.KeyCustodian.Domain.Keys;
+using D2.Edge.KeyCustodian.Domain.Entities;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
-using D2.Shared.Utilities.Attributes;
-using D2.Shared.Utilities.Enums;
-using Xunit;
 
 /// <summary>
 /// Verifies that the PII/secret traps in the KeyCustodian domain are properly

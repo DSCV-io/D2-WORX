@@ -6,7 +6,28 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/services/edge/key-custodian/`](../README.md)
 
-The application layer of the KeyCustodian — the EF-as-DDD CQRS handlers that orchestrate the key lifecycle (generate / activate / rotate / retire / compromise), the JWKS + rotation-plan queries, the crypto services (3 generators + smoke tester + kid minter), the rotation-policy provider, and the persistence seam (`IKeyCustodianDbContext` + flat records + pure mapper). The immutable sum-type domain stays EF-free; the concrete `DbContext`, the keyed root crypto, the file-backed root-key provider, the rotation publisher, and the DI host wiring live in the Infra layer.
+The application layer of the KeyCustodian — the EF-as-DDD command/query handlers that orchestrate the key lifecycle (generate / activate / rotate / retire / compromise), the JWKS + rotation-plan queries, the rotation-policy provider, and the App-owned ports + shapes (`IKeyCustodianDbContext` + flat records + pure mapper, the announcer + root-key-provider ports, the options). The pure crypto (generation, smoke testing, kid minting, JWK projection) lives in the domain `Rules/`; the immutable sum-type domain stays EF-free; the concrete `DbContext`, the keyed root crypto, the file-backed root-key provider, the rotation publisher, and the DI host wiring live in the Infra layer.
+
+---
+
+## Folder layout — two sections
+
+```
+app/
+  Application/
+    Handlers/
+      Commands/<Operation>/   per-op folder: I<Op>Handler.cs, <Op>Handler.cs, <Op>Input.cs[, <Op>Output.cs]
+      Queries/<Operation>/     same shape for the read operations
+    Observability/             KeyCustodianLog (+ metrics)
+    KeyCustodianAppServiceCollectionExtensions.cs   AddD2KeyCustodianApp()
+  Infrastructure/
+    Persistence/               IKeyCustodianDbContext + flat records + mapper + query extensions
+    Messaging/                 IKeyRotationAnnouncer (port)
+    Vault/                     IRootKeyProvider (port) + KeyCustodianRootKey (keyed-DI discriminator)
+    Configuration/             KeyCustodianOptions + RotationPolicyOptions + IRotationPolicyProvider (+ options impl)
+```
+
+`Application/` is what the service *does*; `Infrastructure/` is what it *needs from the outside* (ports + the shapes those ports speak). The `infra/` project mirrors the `Infrastructure/` concern folders with the concrete adapters.
 
 ---
 
@@ -24,19 +45,21 @@ A command handler loads a tracked `KeyRecord`, rehydrates the aggregate through 
 
 ---
 
-## Handlers (TLC `CQRS`)
+## Handlers
 
-| Handler          | 3LC | Base              | Input → Output                          | Intent |
-| ---------------- | --- | ----------------- | --------------------------------------- | ------ |
-| `GenerateKey`    | `C/` | `BaseRepoHandler` | `GenerateKeyInput` → `KeySummary`       | Generate + root-wrap + persist a new pending key (rejects a second live pending key). |
-| `ActivateKey`    | `C/` | `BaseRepoHandler` | `ActivateKeyInput` → `KeySummary`       | Smoke-test + activate a soaked pending key (bootstrap / post-compromise). |
-| `RotateKey`      | `C/` | `BaseRepoHandler` | `RotateKeyInput` → `RotationOutcome`    | Atomic swap: incumbent → retiring AND successor → active in one transaction, then announce. |
-| `RetireKey`      | `C/` | `BaseRepoHandler` | `RetireKeyInput` → `KeySummary`         | Retire a retiring key whose grace window elapsed. |
-| `CompromiseKey`  | `C/` | `BaseRepoHandler` | `CompromiseKeyInput` → `CompromiseOutcome` | Mark compromised + auto-generate a replacement pending + urgent announce. |
-| `GetJwks`        | `Q/` | `BaseHandler`     | `GetJwksInput` → `JwksDocument`         | Assemble the RFC 7517 JWKS from active + retiring signing keys (active first). |
-| `GetRotationPlan`| `Q/` | `BaseHandler`     | `GetRotationPlanInput` → `RotationPlan` | Report the lifecycle actions due across all domains (pure read). |
+Each operation lives in its own folder under `Application/Handlers/{Commands,Queries}/<Operation>/`, co-locating the interface (`I<Op>Handler`), the implementation (`<Op>Handler`), the input, and (where the output is operation-specific) the output. A handler's category is determined solely by whether it mutates persistent/shared state.
 
-Every command handler validates input at the top via the domain `Create` / transition smart constructors (`Kid.Create`, `KeyDomain.Create`), surfaces failures only via the generated `KeyCustodianFailures.*` factories + the domain's results, and checks every nested result. Outputs are hand-authored meta-records that carry NO key material.
+| Handler                | Category   | Base              | Input → Output                          | Intent |
+| ---------------------- | ---------- | ----------------- | --------------------------------------- | ------ |
+| `GenerateKeyHandler`   | `Commands` | `BaseRepoHandler` | `GenerateKeyInput` → `KeySummary`       | Generate + root-wrap + persist a new pending key (rejects a second live pending key). |
+| `ActivateKeyHandler`   | `Commands` | `BaseRepoHandler` | `ActivateKeyInput` → `KeySummary`       | Smoke-test + activate a soaked pending key (bootstrap / post-compromise). |
+| `RotateKeyHandler`     | `Commands` | `BaseRepoHandler` | `RotateKeyInput` → `RotateKeyOutput`    | Atomic swap: incumbent → retiring AND successor → active in one transaction, then announce. |
+| `RetireKeyHandler`     | `Commands` | `BaseRepoHandler` | `RetireKeyInput` → `KeySummary`         | Retire a retiring key whose grace window elapsed. |
+| `CompromiseKeyHandler` | `Commands` | `BaseRepoHandler` | `CompromiseKeyInput` → `CompromiseKeyOutput` | Mark compromised + auto-generate a replacement pending + urgent announce. |
+| `GetJwksHandler`       | `Queries`  | `BaseHandler`     | `GetJwksInput` → `GetJwksOutput`        | Assemble the RFC 7517 JWKS from active + retiring signing keys (active first). |
+| `GetRotationPlanHandler`| `Queries` | `BaseHandler`     | `GetRotationPlanInput` → `GetRotationPlanOutput` | Report the lifecycle actions due across all domains (pure read). |
+
+`KeySummary` is a shared domain projection (`domain/Rules/KeySummary.cs`) returned by the generate / activate / retire commands; the other operations declare an operation-specific `<Op>Output`. Every command handler validates input at the top via the domain `Create` / transition smart constructors (`Kid.Create`, `KeyDomain.Create`), surfaces failures only via the generated `KeyCustodianFailures.*` factories + the domain's results, and checks every nested result. Outputs carry NO key material.
 
 ---
 
@@ -48,15 +71,21 @@ Every command handler validates input at the top via the domain `Create` / trans
 
 ---
 
-## Crypto, options, ports
+## Domain rules the handlers call
 
-- **`IKeyGenerator`** (`RsaSigningKeyGenerator` / `AesPayloadKeyGenerator` / `SecretKeyGenerator`) — one strategy per `KeyType`; RSA size + secret length come from options (RSA 2048 / 64-byte secret defaults, configurable). `GeneratedKeyMaterial.Zero()` wipes the plaintext after wrapping.
-- **`ISmokeTester`** (`SmokeTester`) — RSA sign/verify, AES-GCM round-trip, HMAC usability; returns a `D2Result` (never throws on bad material).
-- **`IRootKeyProvider`** — port for the root keyring; the file-backed implementation is Infra's.
-- **`KeyCustodianCrypto`** — `ROOT_SERVICE_KEY` (the keyed-services discriminator handlers inject the root `IPayloadCrypto` under) + `MintKid()` (16 random bytes → unpadded base64url, JWKS-safe).
-- **`KeyCustodianOptions` / `RotationPolicyOptions`** — the default + per-domain rotation policies (`TimeSpan` for config binding) + generator sizing.
-- **`IRotationPolicyProvider`** (`OptionsRotationPolicyProvider`) — converts `TimeSpan` → `Duration` and validates through `RotationPolicy.Create`; an invalid configured policy surfaces `KEYCUSTODIAN_INVALID_ROTATION_POLICY`.
-- **`IKeyRotationAnnouncer`** (`Interfaces/Messaging/Pub/`) — the domain-shaped publisher port; App references no messaging library. Infra implements it over the message bus.
+The pure crypto-over-domain logic lives in `domain/Rules/` and is called directly by the handlers (no port, no DI):
+
+- **`KeyGeneration.Generate(KeyType, rsaModulusBits, secretLengthBytes)`** — one static dispatcher per `KeyType`; returns `D2Result<GeneratedKeyMaterial>` (unknown `KeyType` → `KEYCUSTODIAN_PRECONDITION_VIOLATED`, never a throw). The handler reads RSA size + secret length from `IOptions<KeyCustodianOptions>` and passes them in. `GeneratedKeyMaterial.Zero()` wipes the plaintext after wrapping.
+- **`SmokeTesting.Verify(...)`** — RSA sign/verify, AES-GCM round-trip, HMAC usability; returns a `D2Result` (never throws on bad material).
+- **`KidMinting.Mint()`** — 16 random bytes → unpadded base64url, JWKS-safe.
+- **`JwkProjection.ToJwk(...)`** — SPKI bytes → RFC 7517 `Jwk`.
+
+## App-owned ports + shapes (`Infrastructure/`)
+
+- **`IRootKeyProvider`** (`Infrastructure/Vault/`) — port for the root keyring; the file-backed implementation is Infra's. **`KeyCustodianRootKey.ROOT_SERVICE_KEY`** is the keyed-services discriminator handlers inject the root `IPayloadCrypto` under.
+- **`KeyCustodianOptions` / `RotationPolicyOptions`** (`Infrastructure/Configuration/`) — the default + per-domain rotation policies (`TimeSpan` for config binding) + generator sizing.
+- **`IRotationPolicyProvider`** (`OptionsRotationPolicyProvider`, `Infrastructure/Configuration/`) — converts `TimeSpan` → `Duration` and validates through `RotationPolicy.Create`; an invalid configured policy surfaces `KEYCUSTODIAN_INVALID_ROTATION_POLICY`. The one defensible "impl lives in App" case — it reads `IOptions`, touches no vendor SDK or IO.
+- **`IKeyRotationAnnouncer`** (`Infrastructure/Messaging/`) — the domain-shaped publisher port; App references no messaging library. Infra implements it over the message bus.
 
 ---
 
@@ -64,13 +93,13 @@ Every command handler validates input at the top via the domain `Create` / trans
 
 - Key material lives only in `KeyMaterialEncrypted` (root-wrapped) — never in inputs, outputs, audit rows, or logs. Freshly-generated plaintext is zeroed immediately after wrapping; unwrapped material is zeroed after smoke-testing.
 - `CompromiseKeyInput.Reason` is `[RedactData(PersonalInformation)]` and its `ToString` / `PrintMembers` are overridden so the reason never appears in logs or handler I/O traces. The compromise audit row carries a non-sensitive breadcrumb (`"operator-initiated"`), never the raw reason.
-- `KeyCustodianAppLog` (`[LoggerMessage]`, EventIds 9500–9529) accepts no `Exception` parameter; kid + domain are loggable by design.
+- `KeyCustodianLog` (`Application/Observability/`, `[LoggerMessage]`, EventIds 9500–9529) accepts no `Exception` parameter; kid + domain are loggable by design.
 
 ---
 
 ## DI
 
-`services.AddKeyCustodianApp()` registers the 7 handlers (transient), the 3 generators, the smoke tester, and the policy provider. The seams App depends on but does not own — the concrete `IKeyCustodianDbContext`, the keyed root `IPayloadCrypto`, `IRootKeyProvider`, and `IKeyRotationAnnouncer` — are registered by the Infra layer, along with the options binding + startup validation.
+`services.AddD2KeyCustodianApp()` registers the 7 handlers (transient) and the policy provider. Key generation + smoke testing are pure domain rules with no DI, so there are no generator / smoke-tester registrations. The seams App depends on but does not own — the concrete `IKeyCustodianDbContext`, the keyed root `IPayloadCrypto`, `IRootKeyProvider`, and `IKeyRotationAnnouncer` — are registered by the Infra layer, along with the options binding + startup validation.
 
 ---
 
@@ -132,6 +161,6 @@ Example `appsettings.json` section:
 
 **Compromise recovery**: `CompromiseKey` marks the incumbent compromised, optionally auto-generates a replacement pending key for the same domain, and announces urgently (the announce signal triggers session invalidation for tokens signed by the compromised key). The replacement soaks normally — there is no emergency no-soak path. After the soak window elapses, `ActivateKey` the replacement.
 
-**Key material never appears in logs**: `KeyCustodianAppLog` (`[LoggerMessage]`, EventIds 9500–9529) accepts no `Exception` parameter. `kid` and `domain` are loggable. All other material-carrying fields (`KeyMaterialEncrypted`, `CompromiseKeyInput.Reason`) are `[RedactData]`-protected and their types override `ToString`/`PrintMembers` to emit redaction sentinels.
+**Key material never appears in logs**: `KeyCustodianLog` (`[LoggerMessage]`, EventIds 9500–9529) accepts no `Exception` parameter. `kid` and `domain` are loggable. All other material-carrying fields (`KeyMaterialEncrypted`, `CompromiseKeyInput.Reason`) are `[RedactData]`-protected and their types override `ToString`/`PrintMembers` to emit redaction sentinels.
 
 **Announce failures are non-fatal**: if the RabbitMQ announce fails after a durable commit, the handler logs (sanitized, no raw exception) and returns success. Consumers self-heal via keyring TTL refresh. Persistent announce failures indicate a messaging infrastructure problem, not a KC domain problem.

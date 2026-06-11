@@ -155,7 +155,7 @@ There is no third category. An operation that *looks* like a query by name (`Fin
 
 ### Concern folders + mandatory vendor/tech/protocol subfolders
 
-`app/Infrastructure/` groups ports + shapes by **capability concern** — a PascalCase singular capability noun (`Persistence`, `Messaging`, `Email`, `Sms`, `Realtime`, `Storage`, `Outbound`, `Secrets`, `Scheduling`, `Configuration`, …). The `infra/` project mirrors those concern folders with adapters, and **every concern folder in `infra/` carries a tech/vendor/protocol subfolder — even when only one impl exists today**:
+`app/Infrastructure/` groups ports + shapes by **capability concern** — a PascalCase singular capability noun (`Persistence`, `Messaging`, `Email`, `Sms`, `Realtime`, `Storage`, `Outbound`, `Vault`, `Scheduling`, `Configuration`, …). `Vault/` not `Secrets/` — a `Secrets/` folder collides with the universal `secrets/` key-material convention on case-insensitive filesystems. The `infra/` project mirrors those concern folders with adapters, and **every concern folder in `infra/` carries a tech/vendor/protocol subfolder — even when only one impl exists today**:
 
 ```
 infra/Persistence/Postgres/...      not  infra/Persistence/...

@@ -8,20 +8,16 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Linq;
 using System.Threading.Tasks;
-using AwesomeAssertions;
-using D2.Edge.KeyCustodian.App.Implementations.CQRS.Handlers.C;
-using D2.Edge.KeyCustodian.App.Models;
-using D2.Edge.KeyCustodian.App.Options;
-using D2.Edge.KeyCustodian.Domain.Audit;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
+using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Shared.Encryption;
-using D2.Shared.Result;
 using D2.Shared.Time;
+using Microsoft.Extensions.Options;
 using NodaTime;
-using Xunit;
 
 /// <summary>
-/// Tests for <see cref="CompromiseKey"/> (gate D-3): compromise a live key,
+/// Tests for <see cref="CompromiseKeyHandler"/> (gate D-3): compromise a live key,
 /// auto-generate a replacement pending, announce urgently, and NEVER persist or
 /// log the raw operator reason. A missing reason is a 400 input error; a missing
 /// kid among live keys is a 404. A post-commit announce failure does not fail the
@@ -257,13 +253,13 @@ public sealed class CompromiseKeyTests
             k => k.Status == KeyStatus.Pending, because: "a replacement was generated");
     }
 
-    private CompromiseKey Build(
+    private CompromiseKeyHandler Build(
         KeyCustodianTestDbContext db, TestClock clock, KcAppTestKit.RecordingAnnouncer announcer) =>
         new(
-            KcAppTestKit.Context<CompromiseKey>(),
+            KcAppTestKit.Context<CompromiseKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
-            KcAppTestKit.BuildGenerators(r_options),
+            Options.Create(r_options),
             announcer,
             r_crypto,
             clock);

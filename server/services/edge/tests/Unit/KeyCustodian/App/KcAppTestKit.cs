@@ -8,33 +8,26 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using D2.Edge.KeyCustodian.App.Crypto;
-using D2.Edge.KeyCustodian.App.Implementations.Crypto;
-using D2.Edge.KeyCustodian.App.Interfaces.Crypto;
-using D2.Edge.KeyCustodian.App.Interfaces.Messaging.Pub;
-using D2.Edge.KeyCustodian.App.Interfaces.Policy;
-using D2.Edge.KeyCustodian.App.Options;
-using D2.Edge.KeyCustodian.App.Persistence;
+using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
+using D2.Edge.KeyCustodian.App.Infrastructure.Messaging;
+using D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
 using D2.Edge.KeyCustodian.Domain.Enums;
-using D2.Edge.KeyCustodian.Domain.Errors;
+using D2.Edge.KeyCustodian.Domain.Rules;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.Encryption;
 using D2.Shared.Handler;
 using D2.Shared.Handler.Repo.Abstractions;
-using D2.Shared.Result;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NodaTime;
 
 /// <summary>
 /// Shared test helpers for the KeyCustodian App-layer unit tests: a real
-/// <see cref="PayloadCrypto"/> over a throwaway keyring, the standard generator
-/// set, a recording announcer fake, a null DB-exception classifier, and a
+/// <see cref="PayloadCrypto"/> over a throwaway keyring, the pure key-generation
+/// rule, a recording announcer fake, a null DB-exception classifier, and a
 /// handler-context builder.
 /// </summary>
 internal static class KcAppTestKit
@@ -49,31 +42,13 @@ internal static class KcAppTestKit
     /// <returns>A real payload crypto bound to a fresh test keyring.</returns>
     public static IPayloadCrypto BuildTestRootCrypto()
     {
-        var key = RandomNumberGenerator.GetBytes(PayloadCryptoKeyring.KEY_SIZE_BYTES);
+        var key = System.Security.Cryptography.RandomNumberGenerator.GetBytes(PayloadCryptoKeyring.KEY_SIZE_BYTES);
         var keyring = new PayloadCryptoKeyring(
             activeKid: "test-root",
             keys: new Dictionary<string, byte[]> { ["test-root"] = key },
             aadContext: "keycustodian-test"u8.ToArray());
         return new PayloadCrypto(keyring);
     }
-
-    /// <summary>Builds the standard three-generator set with the supplied options.</summary>
-    /// <param name="options">The KeyCustodian options driving generator sizing.</param>
-    /// <returns>The three key generators.</returns>
-    public static IReadOnlyList<IKeyGenerator> BuildGenerators(KeyCustodianOptions options)
-    {
-        var opts = Options.Create(options);
-        return
-        [
-            new RsaSigningKeyGenerator(opts),
-            new AesPayloadKeyGenerator(),
-            new SecretKeyGenerator(opts),
-        ];
-    }
-
-    /// <summary>Builds a real smoke tester (genuine BCL crypto, fast + deterministic).</summary>
-    /// <returns>The smoke tester.</returns>
-    public static ISmokeTester BuildSmokeTester() => new SmokeTester();
 
     /// <summary>
     /// Builds default options with a short, valid policy for every domain (cadence
@@ -106,8 +81,7 @@ internal static class KcAppTestKit
     /// <param name="options">The options.</param>
     /// <returns>The provider.</returns>
     public static IRotationPolicyProvider BuildPolicyProvider(KeyCustodianOptions options) =>
-        new D2.Edge.KeyCustodian.App.Implementations.Policy.OptionsRotationPolicyProvider(
-            Options.Create(options));
+        new OptionsRotationPolicyProvider(Options.Create(options));
 
     /// <summary>Builds a handler context for the given handler type with an empty request.</summary>
     /// <typeparam name="THandler">The handler type.</typeparam>
@@ -146,8 +120,8 @@ internal static class KcAppTestKit
         Instant? activatedAt = null,
         Instant? retiringAt = null)
     {
-        var generator = BuildGenerators(options).First(g => g.Handles == keyType);
-        var material = generator.Generate();
+        var material = KeyGeneration.Generate(
+            keyType, options.RsaKeySizeBits, options.SecretLengthBytes).Data!;
         byte[] wrapped;
         try
         {
@@ -158,7 +132,7 @@ internal static class KcAppTestKit
             material.Zero();
         }
 
-        var kid = KeyCustodianCrypto.MintKid();
+        var kid = KidMinting.Mint();
         var record = new KeyRecord
         {
             Kid = kid,
@@ -185,19 +159,53 @@ internal static class KcAppTestKit
     }
 
     /// <summary>
-    /// <see cref="ISmokeTester"/> fake that always returns
-    /// <c>KEYCUSTODIAN_SMOKE_TEST_FAILED</c> — used to exercise the handler paths
-    /// where smoke-test failure must leave the key in its current state and produce
-    /// no audit entries.
+    /// Seeds a persisted key whose stored material is real-wrapped but
+    /// cryptographically CORRUPT, so the handler's unwrap-then-smoke-test path
+    /// produces a genuine <c>KEYCUSTODIAN_SMOKE_TEST_FAILED</c> (no injected fake).
+    /// The supplied <paramref name="corruptPlaintext"/> is wrapped via
+    /// <paramref name="rootCrypto"/> exactly like real material, so it unwraps
+    /// cleanly and then fails the per-type smoke probe.
     /// </summary>
-    public sealed class FailingSmokeTester : ISmokeTester
+    /// <param name="db">The test context to seed.</param>
+    /// <param name="rootCrypto">The root crypto used to wrap the corrupt material.</param>
+    /// <param name="domain">The key domain wire value.</param>
+    /// <param name="keyType">The key type.</param>
+    /// <param name="status">The lifecycle status to seed.</param>
+    /// <param name="createdAt">The creation instant.</param>
+    /// <param name="corruptPlaintext">The corrupt plaintext bytes to wrap as the stored material.</param>
+    /// <param name="publicSpki">Optional SPKI public material (RSA only).</param>
+    /// <param name="activatedAt">The activation instant (for Active/Retiring/Retired).</param>
+    /// <returns>The seeded kid.</returns>
+    public static async Task<string> SeedKeyWithCorruptMaterialAsync(
+        IKeyCustodianDbContext db,
+        IPayloadCrypto rootCrypto,
+        string domain,
+        KeyType keyType,
+        KeyStatus status,
+        Instant createdAt,
+        byte[] corruptPlaintext,
+        byte[]? publicSpki = null,
+        Instant? activatedAt = null)
     {
-        /// <inheritdoc/>
-        public D2Result Verify(
-            KeyType type,
-            ReadOnlyMemory<byte> plaintextMaterial,
-            ReadOnlyMemory<byte>? publicSpki) =>
-            KeyCustodianFailures.SmokeTestFailed();
+        var wrapped = rootCrypto.Encrypt(corruptPlaintext);
+        var kid = KidMinting.Mint();
+        var record = new KeyRecord
+        {
+            Kid = kid,
+            KeyDomain = domain,
+            KeyType = keyType,
+            KeyMaterialEncrypted = wrapped,
+            PublicKeyMaterial = publicSpki,
+            CreatedAt = createdAt,
+            Status = status,
+            ActivatedAt = status is KeyStatus.Active or KeyStatus.Retiring or KeyStatus.Retired
+                ? activatedAt ?? createdAt
+                : null,
+        };
+
+        db.Keys.Add(record);
+        await db.SaveChangesAsync(CancellationToken.None).ConfigureAwait(false);
+        return kid;
     }
 
     /// <summary>

@@ -7,11 +7,8 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian;
 
 using System.Linq;
-using AwesomeAssertions;
 using D2.Edge.KeyCustodian.Domain.Errors;
 using D2.Shared.ErrorCodes.Category;
-using D2.Shared.I18n;
-using Xunit;
 
 /// <summary>
 /// First-pass coverage for the generated <see cref="KeyCustodianErrorCodes"/>

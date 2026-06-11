@@ -7,9 +7,6 @@
 namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
 
 using System.Text.RegularExpressions;
-using D2.Edge.KeyCustodian.Domain.Errors;
-using D2.Shared.Result;
-using D2.Shared.Utilities.Extensions;
 
 /// <summary>
 /// Strong-typed key identifier used as the JWKS <c>kid</c> claim and the

@@ -158,3 +158,10 @@ resharper_arrange_modifiers_order_highlighting = none
 # enforces UPPER_CASE at the Roslyn analyzer level (build-enforced); suppress R#'s
 # parallel inspection that uses its own naming rules.
 resharper_inconsistent_naming_highlighting = none
+
+# Global usings are top-level by C# language rule (they cannot be nested inside a
+# namespace), so the inside-namespace placement convention cannot apply to them.
+# Hand-written GlobalUsings.cs files are therefore exempt from SA1200 / IDE0065.
+[**/GlobalUsings.cs]
+csharp_using_directive_placement = outside_namespace
+dotnet_diagnostic.SA1200.severity = none

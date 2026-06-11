@@ -7,14 +7,12 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian;
 
 using System.Linq;
-using AwesomeAssertions;
+using D2.Edge.KeyCustodian.Domain.Entities;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Edge.KeyCustodian.Domain.Errors;
-using D2.Edge.KeyCustodian.Domain.Keys;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
 using D2.Shared.ErrorCodes.Category;
 using NodaTime;
-using Xunit;
 
 /// <summary>
 /// Tests that enforce the RSA↔public-key material shape invariant and the

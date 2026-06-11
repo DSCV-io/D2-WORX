@@ -6,9 +6,7 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian;
 
-using AwesomeAssertions;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
-using Xunit;
 
 /// <summary>
 /// Adversarial unit tests for <see cref="PublicKeyMaterial"/>.

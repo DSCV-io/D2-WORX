@@ -6,9 +6,7 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.SourceGen;
 
-using AwesomeAssertions;
 using D2.Shared.ErrorCodes.SourceGen;
-using Xunit;
 
 /// <summary>
 /// Regression pin for the keycustodian TK-key rename

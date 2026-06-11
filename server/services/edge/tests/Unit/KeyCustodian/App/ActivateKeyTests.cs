@@ -7,21 +7,17 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
-using AwesomeAssertions;
-using D2.Edge.KeyCustodian.App.Implementations.CQRS.Handlers.C;
-using D2.Edge.KeyCustodian.App.Interfaces.Crypto;
-using D2.Edge.KeyCustodian.App.Models;
-using D2.Edge.KeyCustodian.App.Options;
-using D2.Edge.KeyCustodian.Domain.Audit;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
+using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Shared.Encryption;
 using D2.Shared.Time;
 using NodaTime;
-using Xunit;
 
 /// <summary>
-/// Tests for <see cref="ActivateKey"/> — happy path, not-found / wrong-state
+/// Tests for <see cref="ActivateKeyHandler"/> — happy path, not-found / wrong-state
 /// conflicts, smoke-failure (no persisted change), and the TEMPORAL-ADVERSARIAL
 /// soak boundary (§25 mandate). Every KC timestamp is a Cat-2 bare
 /// <see cref="Instant"/> (zone-free) — DST / IANA cases are N/A.
@@ -163,15 +159,33 @@ public sealed class ActivateKeyTests
     [Fact]
     public async Task Activate_SmokeFailure_LeavesKeyPendingAndNoAudit()
     {
+        // Smoke fails via a key/SPKI mismatch: the stored private key is valid but
+        // the stored SPKI belongs to a DIFFERENT RSA key, so the smoke sign-then-
+        // verify-against-SPKI step deterministically returns false → SMOKE_TEST_FAILED.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var created = KcAppTestKit.BaseInstant;
-        var kid = await KcAppTestKit.SeedKeyAsync(
-            db, r_crypto, r_options, "cookie", KeyType.Secret, KeyStatus.Pending, created);
 
-        // Soak elapsed but the smoke tester always returns failure.
+        using var rsa = RSA.Create(2048);
+        using var mismatchedRsa = RSA.Create(2048);
+        var validPkcs8 = rsa.ExportPkcs8PrivateKey();
+
+        // Well-formed private key, but the STORED SPKI is from a DIFFERENT key — the
+        // smoke sign-then-verify-against-SPKI fails deterministically → SMOKE_TEST_FAILED.
+        var spki = mismatchedRsa.ExportSubjectPublicKeyInfo();
+
+        var kid = await KcAppTestKit.SeedKeyWithCorruptMaterialAsync(
+            db,
+            r_crypto,
+            "jwks-signing",
+            KeyType.RsaSigning,
+            KeyStatus.Pending,
+            created,
+            validPkcs8,
+            spki);
+
+        // Soak elapsed but the real material fails its smoke probe.
         var clock = new TestClock(created + Duration.FromHours(1));
-        var result = await Build(db, clock, new KcAppTestKit.FailingSmokeTester())
-            .HandleAsync(new ActivateKeyInput(kid));
+        var result = await Build(db, clock).HandleAsync(new ActivateKeyInput(kid));
 
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be("KEYCUSTODIAN_SMOKE_TEST_FAILED");
@@ -179,15 +193,11 @@ public sealed class ActivateKeyTests
         db.Audit.Should().BeEmpty(because: "no state transition occurred");
     }
 
-    private ActivateKey Build(KeyCustodianTestDbContext db, TestClock clock) =>
-        Build(db, clock, KcAppTestKit.BuildSmokeTester());
-
-    private ActivateKey Build(KeyCustodianTestDbContext db, TestClock clock, ISmokeTester smokeTester) =>
+    private ActivateKeyHandler Build(KeyCustodianTestDbContext db, TestClock clock) =>
         new(
-            KcAppTestKit.Context<ActivateKey>(),
+            KcAppTestKit.Context<ActivateKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
-            smokeTester,
             KcAppTestKit.BuildPolicyProvider(r_options),
             r_crypto,
             clock);

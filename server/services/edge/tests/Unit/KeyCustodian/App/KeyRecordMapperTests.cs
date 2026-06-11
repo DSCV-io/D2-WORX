@@ -7,13 +7,11 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using System;
-using AwesomeAssertions;
-using D2.Edge.KeyCustodian.App.Persistence;
+using D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
+using D2.Edge.KeyCustodian.Domain.Entities;
 using D2.Edge.KeyCustodian.Domain.Enums;
-using D2.Edge.KeyCustodian.Domain.Keys;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
 using NodaTime;
-using Xunit;
 
 /// <summary>
 /// Round-trip + anti-stale-column + corrupt-row tests for
@@ -233,9 +231,9 @@ public sealed class KeyRecordMapperTests
     [Fact]
     public void AuditToRecord_FlattensKidAndCopiesFields()
     {
-        var audit = D2.Edge.KeyCustodian.Domain.Audit.EncryptionKeyAudit.Record(
+        var audit = EncryptionKeyAudit.Record(
             Kid.FromTrusted("kid-1"),
-            D2.Edge.KeyCustodian.Domain.Audit.KeyAuditAction.Generated,
+            KeyAuditAction.Generated,
             KeyStatus.Pending,
             new D2.Shared.Time.TestClock(sr_created),
             detail: "note");
@@ -243,7 +241,7 @@ public sealed class KeyRecordMapperTests
         var record = audit.ToRecord();
 
         record.Kid.Should().Be("kid-1");
-        record.Action.Should().Be(D2.Edge.KeyCustodian.Domain.Audit.KeyAuditAction.Generated);
+        record.Action.Should().Be(KeyAuditAction.Generated);
         record.ResultingStatus.Should().Be(KeyStatus.Pending);
         record.OccurredAt.Should().Be(sr_created);
         record.Detail.Should().Be("note");

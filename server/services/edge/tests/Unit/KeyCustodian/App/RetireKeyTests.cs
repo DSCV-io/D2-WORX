@@ -8,19 +8,15 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Linq;
 using System.Threading.Tasks;
-using AwesomeAssertions;
-using D2.Edge.KeyCustodian.App.Implementations.CQRS.Handlers.C;
-using D2.Edge.KeyCustodian.App.Models;
-using D2.Edge.KeyCustodian.App.Options;
-using D2.Edge.KeyCustodian.Domain.Audit;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
+using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Shared.Encryption;
 using D2.Shared.Time;
 using NodaTime;
-using Xunit;
 
 /// <summary>
-/// Tests for <see cref="RetireKey"/> — happy path, not-found / wrong-state
+/// Tests for <see cref="RetireKeyHandler"/> — happy path, not-found / wrong-state
 /// conflicts, and the TEMPORAL-ADVERSARIAL grace boundary (§25 mandate). KC
 /// timestamps are Cat-2 bare <see cref="Instant"/> (zone-free); DST / IANA N/A.
 /// </summary>
@@ -139,9 +135,9 @@ public sealed class RetireKeyTests
         result.ErrorCode.Should().Be("KEYCUSTODIAN_KID_INVALID");
     }
 
-    private RetireKey Build(KeyCustodianTestDbContext db, TestClock clock) =>
+    private RetireKeyHandler Build(KeyCustodianTestDbContext db, TestClock clock) =>
         new(
-            KcAppTestKit.Context<RetireKey>(),
+            KcAppTestKit.Context<RetireKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
             KcAppTestKit.BuildPolicyProvider(r_options),

@@ -8,8 +8,6 @@ namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
 
 using System.Globalization;
 using System.Text;
-using D2.Shared.Utilities.Attributes;
-using D2.Shared.Utilities.Enums;
 
 /// <summary>
 /// Value object wrapping the root-key-encrypted frame bytes of a managed key's

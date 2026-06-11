@@ -9,17 +9,13 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using AwesomeAssertions;
-using D2.Edge.KeyCustodian.App.Implementations.CQRS.Handlers.C;
-using D2.Edge.KeyCustodian.App.Models;
-using D2.Edge.KeyCustodian.Domain.Audit;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
 using D2.Shared.Time;
-using Xunit;
 
 /// <summary>
-/// Tests for <see cref="GenerateKey"/> — happy path, adversarial domain inputs,
+/// Tests for <see cref="GenerateKeyHandler"/> — happy path, adversarial domain inputs,
 /// the duplicate-pending conflict, and the persisted audit + zero-material
 /// guarantees.
 /// </summary>
@@ -148,12 +144,12 @@ public sealed class GenerateKeyTests
         db.Keys.Should().HaveCount(2);
     }
 
-    private static GenerateKey Build(KeyCustodianTestDbContext db, TestClock clock) =>
+    private static GenerateKeyHandler Build(KeyCustodianTestDbContext db, TestClock clock) =>
         new(
-            KcAppTestKit.Context<GenerateKey>(),
+            KcAppTestKit.Context<GenerateKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
-            KcAppTestKit.BuildGenerators(KcAppTestKit.BuildOptions()),
+            KcAppTestKit.BuildOptionsAccessor(),
             KcAppTestKit.BuildTestRootCrypto(),
             clock);
 }

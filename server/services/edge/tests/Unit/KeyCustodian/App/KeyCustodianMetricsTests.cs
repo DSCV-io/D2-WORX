@@ -9,27 +9,26 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
-using AwesomeAssertions;
-using D2.Edge.KeyCustodian.App.Implementations.CQRS.Handlers.C;
-using D2.Edge.KeyCustodian.App.Implementations.CQRS.Handlers.Q;
-using D2.Edge.KeyCustodian.App.Logging;
-using D2.Edge.KeyCustodian.App.Models;
-using D2.Edge.KeyCustodian.App.Options;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
+using D2.Edge.KeyCustodian.App.Application.Observability;
+using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
 using D2.Shared.Encryption;
 using D2.Shared.Handler.Abstractions;
 using D2.Shared.Time;
+using Microsoft.Extensions.Options;
 using NodaTime;
-using Xunit;
 
 /// <summary>
 /// Tests covering domain-level observability and option-validation markers:
 /// <list type="bullet">
-///   <item>S-3: <see cref="CompromiseKey.DefaultOptions"/> sets <c>LogInput = false</c>
+///   <item>S-3: <see cref="CompromiseKeyHandler.DefaultOptions"/> sets <c>LogInput = false</c>
 ///     (fail-secure PII-in-logs defense-in-depth).</item>
 ///   <item>O-1 metrics counter increments per handler branch.</item>
-///   <item>O-1 fail-secure: <see cref="GetJwks"/> returns 503 on empty signing-key store.</item>
+///   <item>O-1 fail-secure: <see cref="GetJwksHandler"/> returns 503 on empty signing-key store.</item>
 ///   <item>Option-validation: <see cref="KeyCustodianOptions"/> and
 ///     <see cref="RotationPolicyOptions"/> carry DataAnnotations markers.</item>
 /// </list>
@@ -48,21 +47,21 @@ public sealed class KeyCustodianMetricsTests
     {
         // Build an instance (dependency values don't matter for reading DefaultOptions).
         using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var handler = new CompromiseKey(
-            KcAppTestKit.Context<CompromiseKey>(),
+        var handler = new CompromiseKeyHandler(
+            KcAppTestKit.Context<CompromiseKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
-            KcAppTestKit.BuildGenerators(r_options),
+            Options.Create(r_options),
             new KcAppTestKit.RecordingAnnouncer(),
             r_crypto,
             new TestClock(KcAppTestKit.BaseInstant));
 
         // Access DefaultOptions via the protected property through reflection.
-        var prop = typeof(CompromiseKey).GetProperty(
+        var prop = typeof(CompromiseKeyHandler).GetProperty(
             "DefaultOptions",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
-        prop.Should().NotBeNull("DefaultOptions must be declared on CompromiseKey");
+        prop.Should().NotBeNull("DefaultOptions must be declared on CompromiseKeyHandler");
 
         var opts = (HandlerOptions)prop.GetValue(handler)!;
         opts.LogInput.Should().BeFalse(
@@ -116,11 +115,11 @@ public sealed class KeyCustodianMetricsTests
     {
         // Verify the counter is wired — smoke test: a successful generate returns Created.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var handler = new GenerateKey(
-            KcAppTestKit.Context<GenerateKey>(),
+        var handler = new GenerateKeyHandler(
+            KcAppTestKit.Context<GenerateKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
-            KcAppTestKit.BuildGenerators(r_options),
+            KcAppTestKit.BuildOptionsAccessor(),
             r_crypto,
             new TestClock(KcAppTestKit.BaseInstant));
 
@@ -145,11 +144,11 @@ public sealed class KeyCustodianMetricsTests
         var kid = await KcAppTestKit.SeedKeyAsync(
             db, r_crypto, r_options, "cookie", KeyType.Secret, KeyStatus.Active, created, activatedAt: created);
 
-        var result = await new CompromiseKey(
-            KcAppTestKit.Context<CompromiseKey>(),
+        var result = await new CompromiseKeyHandler(
+            KcAppTestKit.Context<CompromiseKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
-            KcAppTestKit.BuildGenerators(r_options),
+            Options.Create(r_options),
             new KcAppTestKit.RecordingAnnouncer(),
             r_crypto,
             new TestClock(created + Duration.FromHours(1)))
@@ -276,6 +275,6 @@ public sealed class KeyCustodianMetricsTests
     // Helper builders
     // -----------------------------------------------------------------------
 
-    private static GetJwks BuildGetJwks(KeyCustodianTestDbContext db) =>
-        new(KcAppTestKit.Context<GetJwks>(), db);
+    private static GetJwksHandler BuildGetJwks(KeyCustodianTestDbContext db) =>
+        new(KcAppTestKit.Context<GetJwksHandler>(), db);
 }

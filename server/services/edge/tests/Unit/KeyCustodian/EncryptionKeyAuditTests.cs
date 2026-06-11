@@ -6,13 +6,11 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian;
 
-using AwesomeAssertions;
-using D2.Edge.KeyCustodian.Domain.Audit;
+using D2.Edge.KeyCustodian.Domain.Entities;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
 using D2.Shared.Time;
 using NodaTime;
-using Xunit;
 
 /// <summary>
 /// Adversarial unit tests for <see cref="EncryptionKeyAudit"/>.

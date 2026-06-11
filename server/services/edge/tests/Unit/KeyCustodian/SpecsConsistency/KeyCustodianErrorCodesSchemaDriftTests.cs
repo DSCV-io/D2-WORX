@@ -11,9 +11,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using AwesomeAssertions;
 using D2.Edge.Tests.Unit.KeyCustodian.SourceGen;
-using Xunit;
 
 /// <summary>
 /// Drift guard for the keycustodian error-codes schema. The keycustodian

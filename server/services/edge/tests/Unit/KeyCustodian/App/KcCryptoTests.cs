@@ -9,22 +9,18 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
-using AwesomeAssertions;
-using D2.Edge.KeyCustodian.App.Crypto;
-using D2.Edge.KeyCustodian.App.Implementations.Crypto;
-using D2.Edge.KeyCustodian.App.Interfaces.Crypto;
 using D2.Edge.KeyCustodian.Domain.Enums;
+using D2.Edge.KeyCustodian.Domain.Rules;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
-using Microsoft.Extensions.Options;
-using Xunit;
 
 /// <summary>
-/// Tests for the key generators, the smoke tester, and the kid minter — real
+/// Tests for the pure key-generation, smoke-testing, and kid-minting rules — real
 /// BCL crypto, fast + deterministic.
 /// </summary>
 public sealed class KcCryptoTests
 {
-    private static readonly ISmokeTester sr_smoke = new SmokeTester();
+    private const int _RSA_BITS = 2048;
+    private const int _SECRET_BYTES = 64;
 
     // -----------------------------------------------------------------------
     // Generators
@@ -33,10 +29,7 @@ public sealed class KcCryptoTests
     [Fact]
     public void RsaSigningGenerator_ProducesImportablePkcs8AndMatchingSpki()
     {
-        var generator = new RsaSigningKeyGenerator(KcAppTestKit.BuildOptionsAccessor());
-        generator.Handles.Should().Be(KeyType.RsaSigning);
-
-        var material = generator.Generate();
+        var material = KeyGeneration.Generate(KeyType.RsaSigning, _RSA_BITS, _SECRET_BYTES).Data!;
         material.PublicSpki.Should().NotBeNull();
 
         using var fromPrivate = RSA.Create();
@@ -53,7 +46,7 @@ public sealed class KcCryptoTests
     [Fact]
     public void AesPayloadGenerator_Produces32BytesNoPublic()
     {
-        var material = new AesPayloadKeyGenerator().Generate();
+        var material = KeyGeneration.Generate(KeyType.AesPayload, _RSA_BITS, _SECRET_BYTES).Data!;
         material.Plaintext.Length.Should().Be(32);
         material.PublicSpki.Should().BeNull();
     }
@@ -61,8 +54,7 @@ public sealed class KcCryptoTests
     [Fact]
     public void SecretGenerator_ProducesConfiguredLengthNoPublic()
     {
-        var generator = new SecretKeyGenerator(KcAppTestKit.BuildOptionsAccessor());
-        var material = generator.Generate();
+        var material = KeyGeneration.Generate(KeyType.Secret, _RSA_BITS, _SECRET_BYTES).Data!;
         material.Plaintext.Length.Should().Be(64);
         material.PublicSpki.Should().BeNull();
     }
@@ -70,10 +62,7 @@ public sealed class KcCryptoTests
     [Fact]
     public void SecretGenerator_RespectsConfiguredLength()
     {
-        var options = KcAppTestKit.BuildOptions();
-        options.SecretLengthBytes = 48;
-        var generator = new SecretKeyGenerator(Options.Create(options));
-        generator.Generate().Plaintext.Length.Should().Be(48);
+        KeyGeneration.Generate(KeyType.Secret, _RSA_BITS, 48).Data!.Plaintext.Length.Should().Be(48);
     }
 
     [Fact]
@@ -100,6 +89,18 @@ public sealed class KcCryptoTests
         act.Should().Throw<ArgumentException>();
     }
 
+    [Fact]
+    public void Generate_UnknownKeyType_FailsPreconditionViolated()
+    {
+        // The closed KeyType enum makes the default arm unreachable from valid
+        // call sites; an out-of-range value surfaces as a flagged
+        // KEYCUSTODIAN_PRECONDITION_VIOLATED result rather than a thrown exception
+        // (zero-throw domain rule — D2Result carries the telemetry instead).
+        var result = KeyGeneration.Generate((KeyType)999, _RSA_BITS, _SECRET_BYTES);
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be("KEYCUSTODIAN_PRECONDITION_VIOLATED");
+    }
+
     // -----------------------------------------------------------------------
     // Smoke tester — per type, round-trip pass
     // -----------------------------------------------------------------------
@@ -107,24 +108,24 @@ public sealed class KcCryptoTests
     [Fact]
     public void Smoke_Rsa_FreshKey_Passes()
     {
-        var material = new RsaSigningKeyGenerator(KcAppTestKit.BuildOptionsAccessor()).Generate();
-        sr_smoke.Verify(KeyType.RsaSigning, material.Plaintext, material.PublicSpki)
+        var material = KeyGeneration.Generate(KeyType.RsaSigning, _RSA_BITS, _SECRET_BYTES).Data!;
+        SmokeTesting.Verify(KeyType.RsaSigning, material.Plaintext, material.PublicSpki)
             .Success.Should().BeTrue();
     }
 
     [Fact]
     public void Smoke_Aes_FreshKey_Passes()
     {
-        var material = new AesPayloadKeyGenerator().Generate();
-        sr_smoke.Verify(KeyType.AesPayload, material.Plaintext, publicSpki: null)
+        var material = KeyGeneration.Generate(KeyType.AesPayload, _RSA_BITS, _SECRET_BYTES).Data!;
+        SmokeTesting.Verify(KeyType.AesPayload, material.Plaintext, publicSpki: null)
             .Success.Should().BeTrue();
     }
 
     [Fact]
     public void Smoke_Secret_FreshKey_Passes()
     {
-        var material = new SecretKeyGenerator(KcAppTestKit.BuildOptionsAccessor()).Generate();
-        sr_smoke.Verify(KeyType.Secret, material.Plaintext, publicSpki: null)
+        var material = KeyGeneration.Generate(KeyType.Secret, _RSA_BITS, _SECRET_BYTES).Data!;
+        SmokeTesting.Verify(KeyType.Secret, material.Plaintext, publicSpki: null)
             .Success.Should().BeTrue();
     }
 
@@ -135,19 +136,19 @@ public sealed class KcCryptoTests
     [Fact]
     public void Smoke_Rsa_MissingPublic_FailsWithoutThrow()
     {
-        var material = new RsaSigningKeyGenerator(KcAppTestKit.BuildOptionsAccessor()).Generate();
-        sr_smoke.Verify(KeyType.RsaSigning, material.Plaintext, publicSpki: null)
+        var material = KeyGeneration.Generate(KeyType.RsaSigning, _RSA_BITS, _SECRET_BYTES).Data!;
+        SmokeTesting.Verify(KeyType.RsaSigning, material.Plaintext, publicSpki: null)
             .Success.Should().BeFalse();
     }
 
     [Fact]
     public void Smoke_Rsa_BitFlippedPrivate_FailsWithoutThrow()
     {
-        var material = new RsaSigningKeyGenerator(KcAppTestKit.BuildOptionsAccessor()).Generate();
+        var material = KeyGeneration.Generate(KeyType.RsaSigning, _RSA_BITS, _SECRET_BYTES).Data!;
         var corrupted = (byte[])material.Plaintext.Clone();
         corrupted[10] ^= 0xFF;
 
-        var result = sr_smoke.Verify(KeyType.RsaSigning, corrupted, material.PublicSpki);
+        var result = SmokeTesting.Verify(KeyType.RsaSigning, corrupted, material.PublicSpki);
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be("KEYCUSTODIAN_SMOKE_TEST_FAILED");
     }
@@ -155,11 +156,11 @@ public sealed class KcCryptoTests
     [Fact]
     public void Smoke_Rsa_MismatchedPublic_FailsWithoutThrow()
     {
-        var a = new RsaSigningKeyGenerator(KcAppTestKit.BuildOptionsAccessor()).Generate();
-        var b = new RsaSigningKeyGenerator(KcAppTestKit.BuildOptionsAccessor()).Generate();
+        var a = KeyGeneration.Generate(KeyType.RsaSigning, _RSA_BITS, _SECRET_BYTES).Data!;
+        var b = KeyGeneration.Generate(KeyType.RsaSigning, _RSA_BITS, _SECRET_BYTES).Data!;
 
         // a's private with b's public — signature won't verify.
-        sr_smoke.Verify(KeyType.RsaSigning, a.Plaintext, b.PublicSpki)
+        SmokeTesting.Verify(KeyType.RsaSigning, a.Plaintext, b.PublicSpki)
             .Success.Should().BeFalse();
     }
 
@@ -167,14 +168,14 @@ public sealed class KcCryptoTests
     public void Smoke_Aes_WrongSizeKey_FailsWithoutThrow()
     {
         // 17 bytes is not a valid AES key length.
-        var result = sr_smoke.Verify(KeyType.AesPayload, new byte[17], publicSpki: null);
+        var result = SmokeTesting.Verify(KeyType.AesPayload, new byte[17], publicSpki: null);
         result.Success.Should().BeFalse();
     }
 
     [Fact]
     public void Smoke_Secret_EmptyKey_FailsWithoutThrow()
     {
-        sr_smoke.Verify(KeyType.Secret, ReadOnlyMemory<byte>.Empty, publicSpki: null)
+        SmokeTesting.Verify(KeyType.Secret, ReadOnlyMemory<byte>.Empty, publicSpki: null)
             .Success.Should().BeFalse();
     }
 
@@ -182,7 +183,7 @@ public sealed class KcCryptoTests
     public void Smoke_GarbagePkcs8_FailsWithoutThrow()
     {
         var garbage = RandomNumberGenerator.GetBytes(64);
-        var result = sr_smoke.Verify(
+        var result = SmokeTesting.Verify(
             KeyType.RsaSigning, garbage, RandomNumberGenerator.GetBytes(64));
         result.Success.Should().BeFalse();
     }
@@ -210,14 +211,14 @@ public sealed class KcCryptoTests
     [Fact]
     public void MintKid_PassesKidCreate()
     {
-        var kid = KeyCustodianCrypto.MintKid();
+        var kid = KidMinting.Mint();
         Kid.Create(kid).Success.Should().BeTrue();
     }
 
     [Fact]
     public void MintKid_ProducesUnpaddedBase64UrlCharset()
     {
-        var kid = KeyCustodianCrypto.MintKid();
+        var kid = KidMinting.Mint();
         kid.Should().MatchRegex("^[A-Za-z0-9_-]+$");
         kid.Should().NotContain("=");
     }
@@ -227,7 +228,7 @@ public sealed class KcCryptoTests
     {
         var seen = new HashSet<string>(StringComparer.Ordinal);
         for (var i = 0; i < 1000; i++)
-            seen.Add(KeyCustodianCrypto.MintKid()).Should().BeTrue();
+            seen.Add(KidMinting.Mint()).Should().BeTrue();
 
         seen.Should().HaveCount(1000);
     }

@@ -7,11 +7,7 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Reflection;
-using AwesomeAssertions;
-using D2.Edge.KeyCustodian.App.Persistence;
-using D2.Shared.Utilities.Attributes;
-using D2.Shared.Utilities.Enums;
-using Xunit;
+using D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
 
 /// <summary>
 /// Reflection-pins the <c>[RedactData]</c> attributes on <see cref="KeyRecord"/>

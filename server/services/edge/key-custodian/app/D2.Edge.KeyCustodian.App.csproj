@@ -7,13 +7,15 @@ Copyright (c) DCSV. All rights reserved.
   </PropertyGroup>
 
   <!--
-    Application layer (EF-as-DDD) — IKeyCustodianDbContext, the CQRS command
-    handlers (BaseRepoHandler: load the tracked KeyRecord, invoke the domain
-    transition on the rehydrated aggregate, ProjectOnto the Record, one
-    SaveChangesAsync — an ordinary UPDATE plus the audit INSERT) +
-    query handlers (BaseHandler, AsNoTracking), JwksAssembler, RotationPlanner,
-    the 3 IKeyGenerator strategies, IRootKeyProvider. References EF Core directly
-    (EF-as-DDD: the DbContext interface lives here); Domain stays EF-free.
+    Application layer (EF-as-DDD) — two sections. Application/ holds the per-op
+    command handlers (BaseRepoHandler: load the tracked KeyRecord, invoke the
+    domain transition on the rehydrated aggregate, ProjectOnto the Record, one
+    SaveChangesAsync — an ordinary UPDATE plus the audit INSERT) + the query
+    handlers (BaseHandler, AsNoTracking) + Observability + the DI extension.
+    Infrastructure/ holds the App-owned ports + shapes (the IKeyCustodianDbContext
+    seam + flat records + mapper, the announcer + root-key-provider ports, and the
+    options + rotation-policy-provider). References EF Core directly (EF-as-DDD:
+    the DbContext interface lives here); Domain stays EF-free.
   -->
 
   <ItemGroup>
@@ -73,11 +75,11 @@ Copyright (c) DCSV. All rights reserved.
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <!--
       Microsoft.Extensions.Options — IOptions<KeyCustodianOptions> consumed by the
-      key generators + the rotation-policy provider.
+      generate / compromise command handlers (key sizing) + the rotation-policy provider.
     -->
     <PackageReference Include="Microsoft.Extensions.Options" />
     <!--
-      Microsoft.Extensions.DependencyInjection.Abstractions — the AddKeyCustodianApp
+      Microsoft.Extensions.DependencyInjection.Abstractions — the AddD2KeyCustodianApp
       DI extension + the [FromKeyedServices] root-crypto injection attribute.
       Brought transitively via D2.Shared.Handler but listed explicitly.
     -->

@@ -7,22 +7,17 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
-using AwesomeAssertions;
-using D2.Edge.KeyCustodian.App.Implementations.CQRS.Handlers.C;
-using D2.Edge.KeyCustodian.App.Interfaces.Crypto;
-using D2.Edge.KeyCustodian.App.Models;
-using D2.Edge.KeyCustodian.App.Options;
-using D2.Edge.KeyCustodian.Domain.Audit;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
+using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Shared.Encryption;
-using D2.Shared.Result;
 using D2.Shared.Time;
 using NodaTime;
-using Xunit;
 
 /// <summary>
-/// Tests for the atomic-swap <see cref="RotateKey"/> (gate D-2): both the
+/// Tests for the atomic-swap <see cref="RotateKeyHandler"/> (gate D-2): both the
 /// incumbent → retiring and successor → active transitions land in ONE save, the
 /// announce fires non-urgently, and a post-commit announce failure does NOT fail
 /// the handler (D-4). Missing incumbent / successor → 404.
@@ -181,13 +176,42 @@ public sealed class RotateKeyTests
     [Fact]
     public async Task Rotate_SuccessorSmokeFailure_LeavesNoPersistentChange()
     {
+        // The successor's private key is valid but its STORED SPKI belongs to a
+        // DIFFERENT RSA key — the smoke sign-then-verify-against-SPKI step
+        // deterministically returns false → SMOKE_TEST_FAILED. The incumbent's
+        // material stays valid and its state must not change.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var created = KcAppTestKit.BaseInstant;
-        var (activeKid, pendingKid) = await SeedActiveAndSoakedPending(db, created);
+
+        var activeKid = await KcAppTestKit.SeedKeyAsync(
+            db,
+            r_crypto,
+            r_options,
+            "jwks-signing",
+            KeyType.RsaSigning,
+            KeyStatus.Active,
+            created,
+            activatedAt: created);
+
+        using var rsa = RSA.Create(2048);
+        using var mismatchedRsa = RSA.Create(2048);
+        var validPkcs8 = rsa.ExportPkcs8PrivateKey();
+
+        // Well-formed private key, but the STORED SPKI is from a DIFFERENT key — the
+        // smoke sign-then-verify-against-SPKI fails deterministically → SMOKE_TEST_FAILED.
+        var spki = mismatchedRsa.ExportSubjectPublicKeyInfo();
+        var pendingKid = await KcAppTestKit.SeedKeyWithCorruptMaterialAsync(
+            db,
+            r_crypto,
+            "jwks-signing",
+            KeyType.RsaSigning,
+            KeyStatus.Pending,
+            created,
+            validPkcs8,
+            spki);
 
         var clock = new TestClock(created + Duration.FromHours(2));
-        var result = await Build(
-                db, clock, new KcAppTestKit.RecordingAnnouncer(), new KcAppTestKit.FailingSmokeTester())
+        var result = await Build(db, clock, new KcAppTestKit.RecordingAnnouncer())
             .HandleAsync(new RotateKeyInput("jwks-signing"));
 
         result.Success.Should().BeFalse();
@@ -199,20 +223,12 @@ public sealed class RotateKeyTests
         db.Audit.Should().BeEmpty(because: "no state transition occurred");
     }
 
-    private RotateKey Build(
+    private RotateKeyHandler Build(
         KeyCustodianTestDbContext db, TestClock clock, KcAppTestKit.RecordingAnnouncer announcer) =>
-        Build(db, clock, announcer, KcAppTestKit.BuildSmokeTester());
-
-    private RotateKey Build(
-        KeyCustodianTestDbContext db,
-        TestClock clock,
-        KcAppTestKit.RecordingAnnouncer announcer,
-        ISmokeTester smokeTester) =>
         new(
-            KcAppTestKit.Context<RotateKey>(),
+            KcAppTestKit.Context<RotateKeyHandler>(),
             KcAppTestKit.NullClassifier(),
             db,
-            smokeTester,
             KcAppTestKit.BuildPolicyProvider(r_options),
             announcer,
             r_crypto,

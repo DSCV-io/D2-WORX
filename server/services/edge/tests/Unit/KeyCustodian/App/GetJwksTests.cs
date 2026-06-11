@@ -10,19 +10,16 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using AwesomeAssertions;
-using D2.Edge.KeyCustodian.App.Crypto;
-using D2.Edge.KeyCustodian.App.Implementations.CQRS.Handlers.Q;
-using D2.Edge.KeyCustodian.App.Models;
-using D2.Edge.KeyCustodian.App.Options;
-using D2.Edge.KeyCustodian.App.Persistence;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
+using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
+using D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
 using D2.Edge.KeyCustodian.Domain.Enums;
+using D2.Edge.KeyCustodian.Domain.Rules;
 using D2.Shared.Encryption;
 using NodaTime;
-using Xunit;
 
 /// <summary>
-/// Tests for <see cref="GetJwks"/>: includes active + retiring signing keys
+/// Tests for <see cref="GetJwksHandler"/>: includes active + retiring signing keys
 /// (active first), excludes symmetric / non-signing-domain / terminal keys, and
 /// returns an empty set on an empty store.
 /// </summary>
@@ -170,7 +167,7 @@ public sealed class GetJwksTests
 
         var corruptRow = new KeyRecord
         {
-            Kid = KeyCustodianCrypto.MintKid(),
+            Kid = KidMinting.Mint(),
             KeyDomain = "jwks-signing",
             KeyType = KeyType.RsaSigning,
             KeyMaterialEncrypted = new byte[] { 0x01 },
@@ -191,6 +188,6 @@ public sealed class GetJwksTests
             because: "skipping the null-public-material row leaves zero usable keys, which is a 503 condition");
     }
 
-    private static GetJwks Build(KeyCustodianTestDbContext db) =>
-        new(KcAppTestKit.Context<GetJwks>(), db);
+    private static GetJwksHandler Build(KeyCustodianTestDbContext db) =>
+        new(KcAppTestKit.Context<GetJwksHandler>(), db);
 }

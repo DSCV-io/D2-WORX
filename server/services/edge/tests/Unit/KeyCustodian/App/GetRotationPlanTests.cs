@@ -8,19 +8,16 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Linq;
 using System.Threading.Tasks;
-using AwesomeAssertions;
-using D2.Edge.KeyCustodian.App.Implementations.CQRS.Handlers.Q;
-using D2.Edge.KeyCustodian.App.Models;
-using D2.Edge.KeyCustodian.App.Options;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
+using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
 using D2.Shared.Encryption;
 using D2.Shared.Time;
 using NodaTime;
-using Xunit;
 
 /// <summary>
-/// Tests for <see cref="GetRotationPlan"/>: domain classification (bootstrap /
+/// Tests for <see cref="GetRotationPlanHandler"/>: domain classification (bootstrap /
 /// activate / rotate / generate-successor / retire) and the TEMPORAL-ADVERSARIAL
 /// cadence boundary (§25 mandate). KC timestamps are Cat-2 bare
 /// <see cref="Instant"/> (zone-free); DST / IANA N/A.
@@ -164,9 +161,9 @@ public sealed class GetRotationPlanTests
         result.Data!.DueToGenerateSuccessor.Should().NotContain("cookie");
     }
 
-    private GetRotationPlan Build(KeyCustodianTestDbContext db, TestClock clock) =>
+    private GetRotationPlanHandler Build(KeyCustodianTestDbContext db, TestClock clock) =>
         new(
-            KcAppTestKit.Context<GetRotationPlan>(),
+            KcAppTestKit.Context<GetRotationPlanHandler>(),
             db,
             KcAppTestKit.BuildPolicyProvider(r_options),
             clock);

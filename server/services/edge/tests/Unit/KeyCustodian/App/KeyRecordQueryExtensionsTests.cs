@@ -7,11 +7,9 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Linq;
-using AwesomeAssertions;
-using D2.Edge.KeyCustodian.App.Persistence;
+using D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using NodaTime;
-using Xunit;
 
 /// <summary>
 /// Behavior tests for <see cref="KeyRecordQueryExtensions"/> over a mixed-status,

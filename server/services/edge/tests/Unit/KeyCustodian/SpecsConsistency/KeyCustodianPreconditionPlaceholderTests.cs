@@ -9,9 +9,7 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.SpecsConsistency;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using AwesomeAssertions;
 using D2.Edge.Tests.Unit.KeyCustodian.SourceGen;
-using Xunit;
 
 /// <summary>
 /// Drift guard for the <c>keycustodian_internal_PRECONDITION_VIOLATED</c>

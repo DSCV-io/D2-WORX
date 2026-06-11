@@ -7,13 +7,10 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using System;
-using AwesomeAssertions;
-using D2.Edge.KeyCustodian.App.Implementations.Policy;
-using D2.Edge.KeyCustodian.App.Options;
+using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
 using Microsoft.Extensions.Options;
 using NodaTime;
-using Xunit;
 
 /// <summary>
 /// Tests for <see cref="OptionsRotationPolicyProvider"/>: default policy, per-
