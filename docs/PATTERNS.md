@@ -60,7 +60,7 @@ Directory of the load-bearing patterns + cross-cutting conventions every D²-WOR
 
 ## .NET project layout (`.csproj`)
 
-Universal build properties (`TargetFramework`, `LangVersion`, `Nullable`, `ImplicitUsings`, `TreatWarningsAsErrors`, `GenerateDocumentationFile`, `StyleCop.Analyzers`, `stylecop.json` link, four global usings) live in `server/Directory.Build.props` and apply to every csproj automatically. Per-project files only declare what's project-specific.
+Universal build properties (`TargetFramework`, `LangVersion`, `Nullable`, `ImplicitUsings`, `TreatWarningsAsErrors`, `GenerateDocumentationFile`, `StyleCop.Analyzers`, `stylecop.json` link) live in `server/Directory.Build.props` and apply to every csproj automatically. Per-project files only declare what's project-specific. Tier-1 global usings (`D2.Shared.Result`, `D2.Shared.Utilities.Extensions`/`.Attributes`/`.Enums`, `D2.Shared.I18n`) are scoped to **service projects** via `server/services/Directory.Build.targets` — shared libs keep explicit usings (see [ADR-0020](adrs/0020-service-project-structure.md) for the rationale).
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
