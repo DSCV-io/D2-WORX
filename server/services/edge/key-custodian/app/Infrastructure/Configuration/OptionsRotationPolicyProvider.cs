@@ -6,9 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 
-using D2.Edge.KeyCustodian.Domain.ValueObjects;
-using NodaTime;
-
 /// <summary>
 /// Resolves a domain's <see cref="RotationPolicy"/> from
 /// <see cref="KeyCustodianOptions"/>: a per-domain override when present, else

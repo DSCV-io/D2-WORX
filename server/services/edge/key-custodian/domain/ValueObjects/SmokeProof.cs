@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
 
-using IClock = D2.Shared.Time.IClock;
-
 /// <summary>
 /// Opaque evidence value object that a smoke test passed for a specific
 /// <see cref="KeyType"/> at a specific instant.

@@ -7,8 +7,6 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Buffers.Text;
-using System.Security.Cryptography;
-using D2.Edge.KeyCustodian.Domain.Rules;
 
 /// <summary>
 /// Tests for the pure <see cref="JwkProjection"/>: n/e base64url correctness

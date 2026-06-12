@@ -6,9 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
 
-using System.Linq;
-using D2.Edge.KeyCustodian.Domain.Enums;
-
 /// <summary>
 /// Server-side composable LINQ filters over <see cref="KeyRecord"/> value
 /// columns. Each returns an <see cref="IQueryable{T}"/> so they compose into a

@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
 
-using Microsoft.EntityFrameworkCore;
-
 /// <summary>
 /// The persistence seam the App layer's command and query handlers depend on.
 /// Exposes the two flat record sets plus <see cref="SaveChangesAsync"/>; the

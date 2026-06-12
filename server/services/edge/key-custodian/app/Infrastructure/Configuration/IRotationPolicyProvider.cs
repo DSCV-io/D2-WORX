@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 
-using D2.Edge.KeyCustodian.Domain.ValueObjects;
-
 /// <summary>
 /// Resolves the <see cref="RotationPolicy"/> governing a key domain's lifecycle
 /// timing windows (cadence / grace / smoke-soak).

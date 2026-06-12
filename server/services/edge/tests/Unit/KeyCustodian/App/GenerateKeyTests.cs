@@ -6,14 +6,6 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
-using D2.Edge.KeyCustodian.Domain.Enums;
-using D2.Edge.KeyCustodian.Domain.ValueObjects;
-using D2.Shared.Time;
-
 /// <summary>
 /// Tests for <see cref="GenerateKeyHandler"/> — happy path, adversarial domain inputs,
 /// the duplicate-pending conflict, and the persisted audit + zero-material

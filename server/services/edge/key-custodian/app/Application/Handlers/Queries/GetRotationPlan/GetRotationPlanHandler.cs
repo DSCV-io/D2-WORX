@@ -6,18 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
-using D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
-using D2.Edge.KeyCustodian.Domain.Enums;
-using D2.Edge.KeyCustodian.Domain.ValueObjects;
-using Microsoft.EntityFrameworkCore;
-using NodaTime;
-using IClock = D2.Shared.Time.IClock;
-
 /// <summary>
 /// Computes the read-only plan of lifecycle actions due across all key domains.
 /// </summary>

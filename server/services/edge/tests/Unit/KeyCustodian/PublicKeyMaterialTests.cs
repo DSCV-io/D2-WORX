@@ -6,8 +6,6 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian;
 
-using D2.Edge.KeyCustodian.Domain.ValueObjects;
-
 /// <summary>
 /// Adversarial unit tests for <see cref="PublicKeyMaterial"/>.
 /// Public key bytes are not secret, but the raw bytes should not appear in

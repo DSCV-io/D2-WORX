@@ -6,11 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Infrastructure.Messaging;
 
-using System.Threading;
-using System.Threading.Tasks;
-using D2.Edge.KeyCustodian.Domain.Enums;
-using D2.Edge.KeyCustodian.Domain.ValueObjects;
-
 /// <summary>
 /// Domain-shaped publisher port that announces a key-lifecycle change to other
 /// services (so they refresh their keyrings). The same port serves routine

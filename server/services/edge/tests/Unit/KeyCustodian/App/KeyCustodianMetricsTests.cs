@@ -7,23 +7,8 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Diagnostics.Metrics;
-using System.Net;
-using System.Reflection;
-using System.Threading.Tasks;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
 using D2.Edge.KeyCustodian.App.Application.Observability;
-using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
-using D2.Edge.KeyCustodian.Domain.Enums;
-using D2.Edge.KeyCustodian.Domain.ValueObjects;
-using D2.Edge.Tests.Unit.KeyCustodian.App.Fixtures;
-using D2.Shared.Encryption;
 using D2.Shared.Handler.Abstractions;
-using D2.Shared.Time;
-using Microsoft.Extensions.Options;
-using NodaTime;
 
 /// <summary>
 /// Tests covering domain-level observability and option-validation markers:

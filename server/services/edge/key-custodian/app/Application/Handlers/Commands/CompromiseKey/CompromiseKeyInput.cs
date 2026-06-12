@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
 
-using System.Globalization;
-
 /// <summary>
 /// Input to <c>CompromiseKey</c>: the kid of the live key to mark compromised,
 /// the operator reason, and whether to auto-generate a replacement pending key.

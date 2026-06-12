@@ -6,20 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 
-using System.Threading;
-using System.Threading.Tasks;
-using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
-using D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
-using D2.Edge.KeyCustodian.Domain.Entities;
-using D2.Edge.KeyCustodian.Domain.Enums;
-using D2.Edge.KeyCustodian.Domain.Errors;
-using D2.Edge.KeyCustodian.Domain.Rules;
-using D2.Edge.KeyCustodian.Domain.ValueObjects;
-using D2.Shared.Handler.Repo;
-using D2.Shared.Handler.Repo.Abstractions;
-using Microsoft.EntityFrameworkCore;
-using IClock = D2.Shared.Time.IClock;
-
 /// <summary>
 /// Retires a retiring key once its grace window has elapsed.
 /// </summary>

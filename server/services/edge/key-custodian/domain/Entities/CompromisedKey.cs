@@ -6,9 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.Domain.Entities;
 
-using System.Globalization;
-using System.Text;
-
 /// <summary>
 /// A managed encryption key that has been marked compromised. This is a terminal
 /// state — no further lifecycle transitions are permitted.

@@ -319,6 +319,7 @@ _Canonical form (full service-structure standard with rationale + carve-outs): [
 
 - **Field prefixes**: `_` (mutable), `r_` (readonly), `s_` (static), `sr_` (static readonly), `_UPPER` (private const), `UPPER` (public const). Primary-constructor params on handlers carry NO `r_` prefix. [rules.md §7.1]
 - **`namespace` BEFORE `using` directives** in C#. [rules.md §5.10]
+- **Global-usings policy** (frequency-driven per project): globalize ANY namespace repeated across ≥3 files in that project — including EF Core, DI, Options, `System.Security.Cryptography`, vendor SDKs. The dependency law is enforced by `<ProjectReference>` edges, not using-directive visibility; a global using is per-project and cannot leak across the layer boundary. Per-file usings stay for low-frequency (1–2 file) namespaces. Use `global using IClock = D2.Shared.Time.IClock;` in every project that uses both NodaTime and `D2.Shared.Time`. Never duplicate SDK ImplicitUsings or Tier-1 entries. [rules.md §5.26]
 - Other convention predicates (string.Empty, no this., brace rules, C# 14 extension members, sealed default, American English, line length, no phase verbiage, tests next to feature) → [rules.md §5/§7](docs/dev/rules.md#5-c-code-conventions) (also covered by MEMORY.md feedback entries).
 
 ### Architectural layer hygiene

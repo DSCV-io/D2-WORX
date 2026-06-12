@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.Domain.Entities;
 
-using IClock = D2.Shared.Time.IClock;
-
 /// <summary>
 /// Append-only audit record that captures each lifecycle transition of a
 /// managed encryption key.

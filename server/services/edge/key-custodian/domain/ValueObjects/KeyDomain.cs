@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.Domain.ValueObjects;
 
-using D2.Shared.Encryption;
-
 /// <summary>
 /// Strong-typed value object identifying which independently-rotated keyring
 /// a managed key belongs to.

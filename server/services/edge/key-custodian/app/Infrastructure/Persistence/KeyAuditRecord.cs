@@ -6,9 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
 
-using D2.Edge.KeyCustodian.Domain.Enums;
-using NodaTime;
-
 /// <summary>
 /// Flat, append-only EF persistence row for a single key-lifecycle transition.
 /// </summary>

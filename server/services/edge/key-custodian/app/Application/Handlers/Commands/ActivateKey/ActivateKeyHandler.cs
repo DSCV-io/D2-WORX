@@ -6,25 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 
-using System.Security.Cryptography;
-using System.Threading;
-using System.Threading.Tasks;
-using D2.Edge.KeyCustodian.App.Application.Observability;
-using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
-using D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
-using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
-using D2.Edge.KeyCustodian.Domain.Entities;
-using D2.Edge.KeyCustodian.Domain.Enums;
-using D2.Edge.KeyCustodian.Domain.Errors;
-using D2.Edge.KeyCustodian.Domain.Rules;
-using D2.Edge.KeyCustodian.Domain.ValueObjects;
-using D2.Shared.Encryption;
-using D2.Shared.Handler.Repo;
-using D2.Shared.Handler.Repo.Abstractions;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using IClock = D2.Shared.Time.IClock;
-
 /// <summary>
 /// Smoke-tests and activates a pending key.
 /// </summary>

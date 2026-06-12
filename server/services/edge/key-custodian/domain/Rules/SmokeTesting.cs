@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.Domain.Rules;
 
-using System.Security.Cryptography;
-
 /// <summary>
 /// Pure rule that exercises freshly-generated (or freshly-unwrapped) key material
 /// to prove it is cryptographically usable before the key is activated.

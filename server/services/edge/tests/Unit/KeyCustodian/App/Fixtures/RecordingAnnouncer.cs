@@ -6,12 +6,7 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.App.Fixtures;
 
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using D2.Edge.KeyCustodian.App.Infrastructure.Messaging;
-using D2.Edge.KeyCustodian.Domain.Enums;
-using D2.Edge.KeyCustodian.Domain.ValueObjects;
 
 /// <summary>
 /// Recording <see cref="IKeyRotationAnnouncer"/> fake — captures every call and

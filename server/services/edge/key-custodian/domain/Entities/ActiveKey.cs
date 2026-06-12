@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.Domain.Entities;
 
-using IClock = D2.Shared.Time.IClock;
-
 /// <summary>
 /// A managed encryption key that has been smoke-tested and is in active use
 /// for encryption and/or signing. The legal forward transitions are

@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.Domain.Rules;
 
-using System.Security.Cryptography;
-
 /// <summary>
 /// Pure rule that generates fresh key material for a <see cref="KeyType"/>.
 /// </summary>

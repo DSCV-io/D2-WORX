@@ -6,8 +6,6 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
-using System;
-using D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>

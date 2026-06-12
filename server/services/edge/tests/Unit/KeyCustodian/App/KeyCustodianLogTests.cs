@@ -6,9 +6,6 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
-using System;
-using System.Linq;
-using System.Reflection;
 using D2.Edge.KeyCustodian.App.Application.Observability;
 using Microsoft.Extensions.Logging;
 

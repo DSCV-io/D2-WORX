@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Infrastructure.Vault;
 
-using D2.Shared.Encryption;
-
 /// <summary>
 /// App-layer port that resolves the root keyring used to wrap every managed
 /// key's material at rest.

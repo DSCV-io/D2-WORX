@@ -13,8 +13,6 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
-using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// DI registration for the KeyCustodian App layer: the 7 lifecycle handlers and

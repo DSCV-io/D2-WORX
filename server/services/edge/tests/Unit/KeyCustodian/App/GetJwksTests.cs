@@ -6,18 +6,6 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
-using System.Linq;
-using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
-using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
-using D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
-using D2.Edge.KeyCustodian.Domain.Enums;
-using D2.Edge.KeyCustodian.Domain.Rules;
-using D2.Shared.Encryption;
-using NodaTime;
-
 /// <summary>
 /// Tests for <see cref="GetJwksHandler"/>: includes active + retiring signing keys
 /// (active first), excludes symmetric / non-signing-domain / terminal keys, and

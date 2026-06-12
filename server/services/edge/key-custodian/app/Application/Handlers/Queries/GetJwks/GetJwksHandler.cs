@@ -6,16 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
 
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using D2.Edge.KeyCustodian.App.Application.Observability;
-using D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
-using D2.Edge.KeyCustodian.Domain.Enums;
-using D2.Edge.KeyCustodian.Domain.Rules;
-using D2.Edge.KeyCustodian.Domain.ValueObjects;
-using Microsoft.EntityFrameworkCore;
-
 /// <summary>
 /// Assembles the RFC 7517 JWKS document from the currently-serving signing keys.
 /// </summary>

@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.Domain.Entities;
 
-using IClock = D2.Shared.Time.IClock;
-
 /// <summary>
 /// A managed encryption key in the retirement overlap window. It continues to
 /// serve in-flight decryptions and JWKS responses while the new active key

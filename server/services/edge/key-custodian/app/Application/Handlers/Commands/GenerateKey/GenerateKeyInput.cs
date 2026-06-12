@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
 
-using D2.Edge.KeyCustodian.Domain.Enums;
-
 /// <summary>
 /// Input to <c>GenerateKey</c>: which domain + key type to generate a new
 /// pending key for.

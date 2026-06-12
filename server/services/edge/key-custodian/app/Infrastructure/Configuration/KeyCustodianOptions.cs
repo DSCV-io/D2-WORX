@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 /// <summary>

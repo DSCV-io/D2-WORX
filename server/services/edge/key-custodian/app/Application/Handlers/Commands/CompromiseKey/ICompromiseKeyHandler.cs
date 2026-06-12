@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
 
-using D2.Shared.Handler.Abstractions;
-
 /// <summary>
 /// Marks a live key compromised and (by default) auto-generates a replacement
 /// pending key for its domain, then announces the compromise urgently (carrying

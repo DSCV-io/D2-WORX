@@ -6,9 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 
-using D2.Edge.KeyCustodian.Domain.Rules;
-using D2.Shared.Handler.Abstractions;
-
 /// <summary>
 /// Smoke-tests and activates a pending key once its soak window has elapsed.
 /// Used for bootstrap and post-compromise activation (routine rotation uses

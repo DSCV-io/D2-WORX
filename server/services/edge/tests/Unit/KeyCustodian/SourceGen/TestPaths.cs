@@ -6,9 +6,6 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.SourceGen;
 
-using System;
-using System.IO;
-
 /// <summary>
 /// Locates spec JSON files (contracts/) + committed generated output at runtime
 /// by walking up from the test bin directory until <c>server/D2.slnx</c> is

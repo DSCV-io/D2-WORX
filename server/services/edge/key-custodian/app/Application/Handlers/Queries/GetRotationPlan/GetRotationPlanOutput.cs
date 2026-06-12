@@ -6,8 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 
-using System.Collections.Generic;
-
 /// <summary>
 /// A read-only snapshot of the lifecycle actions due across all key domains,
 /// as computed by <c>GetRotationPlan</c>. Pure analysis — the actual execution

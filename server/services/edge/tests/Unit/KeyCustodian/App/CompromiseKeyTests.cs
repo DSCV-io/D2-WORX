@@ -6,17 +6,6 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
-using System.Linq;
-using System.Threading.Tasks;
-using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
-using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
-using D2.Edge.KeyCustodian.Domain.Enums;
-using D2.Edge.Tests.Unit.KeyCustodian.App.Fixtures;
-using D2.Shared.Encryption;
-using D2.Shared.Time;
-using Microsoft.Extensions.Options;
-using NodaTime;
-
 /// <summary>
 /// Tests for <see cref="CompromiseKeyHandler"/>: compromise a live key,
 /// auto-generate a replacement pending, announce urgently, and NEVER persist or

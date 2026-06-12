@@ -6,12 +6,7 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.SpecsConsistency;
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text.Json;
-using D2.Edge.Tests.Unit.KeyCustodian.SourceGen;
 
 /// <summary>
 /// Drift guard for the keycustodian error-codes schema. The keycustodian

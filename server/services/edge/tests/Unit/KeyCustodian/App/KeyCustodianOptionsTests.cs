@@ -6,10 +6,7 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 using Microsoft.Extensions.Configuration;
 
 /// <summary>

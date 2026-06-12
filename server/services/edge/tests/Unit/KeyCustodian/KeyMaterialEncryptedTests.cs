@@ -6,8 +6,6 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian;
 
-using D2.Edge.KeyCustodian.Domain.ValueObjects;
-
 /// <summary>
 /// Adversarial unit tests for <see cref="KeyMaterialEncrypted"/>.
 /// Validates construction guards and the <c>ToString</c>/<c>PrintMembers</c>

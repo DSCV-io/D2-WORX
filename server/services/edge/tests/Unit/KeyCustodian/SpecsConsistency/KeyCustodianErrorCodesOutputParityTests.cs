@@ -6,12 +6,8 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.SpecsConsistency;
 
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.IO;
-using System.Linq;
 using D2.Edge.KeyCustodian.ErrorCodes.SourceGen;
-using D2.Edge.Tests.Unit.KeyCustodian.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;

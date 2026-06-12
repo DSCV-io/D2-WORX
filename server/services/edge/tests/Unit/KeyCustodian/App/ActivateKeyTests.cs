@@ -6,15 +6,7 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
-using System.Linq;
-using System.Security.Cryptography;
-using System.Threading.Tasks;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
-using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
-using D2.Edge.KeyCustodian.Domain.Enums;
-using D2.Shared.Encryption;
-using D2.Shared.Time;
-using NodaTime;
 
 /// <summary>
 /// Tests for <see cref="ActivateKeyHandler"/> — happy path, not-found / wrong-state

@@ -6,9 +6,6 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
-using System.Reflection;
-using D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
-
 /// <summary>
 /// Reflection-pins the <c>[RedactData]</c> attributes on <see cref="KeyRecord"/>
 /// properties that carry sensitive material. Mirrors the pattern established in

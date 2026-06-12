@@ -6,9 +6,6 @@
 
 namespace D2.Edge.KeyCustodian.Domain.Rules;
 
-using System.Buffers.Text;
-using System.Security.Cryptography;
-
 /// <summary>
 /// Pure rule that converts an RSA public key (SPKI bytes) to its RFC 7517
 /// JWK representation: <c>{ kty:"RSA", use:"sig", alg:"RS256", kid, n, e }</c>
