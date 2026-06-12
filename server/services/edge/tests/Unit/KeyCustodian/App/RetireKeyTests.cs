@@ -29,7 +29,7 @@ public sealed class RetireKeyTests
     public async Task Retire_GraceElapsed_RetiresAndAudits()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var retiringAt = created + Duration.FromHours(5);
         var kid = await KcAppTestKit.SeedKeyAsync(
             db,
@@ -55,7 +55,7 @@ public sealed class RetireKeyTests
     public async Task Retire_ExactlyAtGraceBoundary_Succeeds()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var retiringAt = created + Duration.FromHours(5);
         var kid = await KcAppTestKit.SeedKeyAsync(
             db,
@@ -76,7 +76,7 @@ public sealed class RetireKeyTests
     public async Task Retire_OneTickBeforeGraceBoundary_ReturnsGraceNotElapsed()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var retiringAt = created + Duration.FromHours(5);
         var kid = await KcAppTestKit.SeedKeyAsync(
             db,
@@ -101,7 +101,7 @@ public sealed class RetireKeyTests
     public async Task Retire_PendingKey_ReturnsKeyStateConflict()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
             db, r_crypto, r_options, "cookie", KeyType.Secret, KeyStatus.Pending, created);
 
@@ -116,7 +116,7 @@ public sealed class RetireKeyTests
     public async Task Retire_UnknownKid_ReturnsKeyNotFound()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var result = await Build(db, new TestClock(KcAppTestKit.BaseInstant))
+        var result = await Build(db, new TestClock(KcAppTestKit.SR_BaseInstant))
             .HandleAsync(new RetireKeyInput("nopeKid"));
 
         result.ErrorCode.Should().Be("KEYCUSTODIAN_KEY_NOT_FOUND");
@@ -129,7 +129,7 @@ public sealed class RetireKeyTests
     public async Task Retire_BadKid_ReturnsKidInvalid(string? kid)
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var result = await Build(db, new TestClock(KcAppTestKit.BaseInstant))
+        var result = await Build(db, new TestClock(KcAppTestKit.SR_BaseInstant))
             .HandleAsync(new RetireKeyInput(kid));
 
         result.ErrorCode.Should().Be("KEYCUSTODIAN_KID_INVALID");

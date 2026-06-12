@@ -15,7 +15,8 @@ using D2.Edge.Tests.Unit.KeyCustodian.SourceGen;
 /// Drift guard for the <c>keycustodian_internal_PRECONDITION_VIOLATED</c>
 /// message template. The template is an opaque 500/internal_error message —
 /// it MUST NOT carry an <c>{arg}</c> placeholder because that would re-introduce
-/// the wire leak that S-1 closed. This test fails loudly if any of the ten
+/// a prior wire leak — internal C# parameter name appearing on the wire via the
+/// <c>{arg}</c> placeholder. This test fails loudly if any of the ten
 /// locales accidentally re-adds the placeholder.
 /// </summary>
 public sealed class KeyCustodianPreconditionPlaceholderTests

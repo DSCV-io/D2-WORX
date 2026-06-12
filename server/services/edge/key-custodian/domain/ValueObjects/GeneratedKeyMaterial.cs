@@ -37,6 +37,7 @@ public sealed class GeneratedKeyMaterial
     /// <exception cref="ArgumentException"><paramref name="plaintext"/> is empty.</exception>
     public GeneratedKeyMaterial(byte[] plaintext, byte[]? publicSpki)
     {
+        // §5.1a carve-out: reference-type null-guard (byte[]) — no present-but-falsey concept.
         ArgumentNullException.ThrowIfNull(plaintext);
         if (plaintext.Length == 0)
         {

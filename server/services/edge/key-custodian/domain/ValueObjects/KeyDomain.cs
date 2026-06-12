@@ -45,10 +45,6 @@ public sealed record KeyDomain
     /// <summary>Gets the normalized domain string (lowercase, trimmed).</summary>
     public required string Value { get; init; }
 
-    // -----------------------------------------------------------------------
-    // Named static accessors for KC-only domains
-    // -----------------------------------------------------------------------
-
     /// <summary>Gets the JWKS-signing domain (<c>"jwks-signing"</c>).</summary>
     public static KeyDomain JwksSigning { get; } = new() { Value = JWKS_SIGNING };
 
@@ -109,7 +105,7 @@ public sealed record KeyDomain
     /// </exception>
     public static KeyDomain FromTrusted(string value)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        value.ThrowIfFalsey();
         return new() { Value = value };
     }
 

@@ -40,6 +40,8 @@ public static class KeyCustodianAppServiceCollectionExtensions
         /// <returns>The same <paramref name="services"/> instance for chaining.</returns>
         public IServiceCollection AddD2KeyCustodianApp()
         {
+            // §5.1a carve-out: plain reference-type null-guard (IServiceCollection DI service)
+            // — no present-but-falsey concept.
             ArgumentNullException.ThrowIfNull(services);
 
             // Lifecycle command handlers.

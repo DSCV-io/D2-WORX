@@ -74,11 +74,15 @@ public sealed partial record Kid
     /// </exception>
     public static Kid FromTrusted(string value)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        value.ThrowIfFalsey();
         return new() { Value = value };
     }
 
-    /// <summary>JWKS-safe charset: letters, digits, hyphens, underscores only.</summary>
+    /// <summary>
+    /// JWKS-safe charset: letters, digits, hyphens, underscores only.
+    /// Bucket 1 (§5.20) — no-backtracking: single anchored character class, no
+    /// alternation/repetition that could backtrack; no timeout required.
+    /// </summary>
     [GeneratedRegex(@"^[A-Za-z0-9_-]+$", RegexOptions.None)]
     private static partial Regex KidCharsetRegex();
 }

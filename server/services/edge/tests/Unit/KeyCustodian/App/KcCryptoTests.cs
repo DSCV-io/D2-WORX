@@ -36,11 +36,11 @@ public sealed class KcCryptoTests
         fromPrivate.ImportPkcs8PrivateKey(material.Plaintext, out _);
 
         using var fromPublic = RSA.Create();
-        fromPublic.ImportSubjectPublicKeyInfo(material.PublicSpki!, out _);
+        fromPublic.ImportSubjectPublicKeyInfo(material.PublicSpki, out _);
 
         // The SPKI must be the public half of the generated private key.
         var privateSpki = fromPrivate.ExportSubjectPublicKeyInfo();
-        privateSpki.Should().Equal(material.PublicSpki!);
+        privateSpki.Should().Equal(material.PublicSpki);
     }
 
     [Fact]

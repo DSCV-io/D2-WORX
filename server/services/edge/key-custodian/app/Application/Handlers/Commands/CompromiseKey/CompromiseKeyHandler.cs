@@ -30,7 +30,7 @@ using IClock = D2.Shared.Time.IClock;
 
 /// <summary>
 /// Marks a live key compromised and (by default) auto-generates a replacement
-/// pending key (gate D-3).
+/// pending key.
 /// </summary>
 /// <remarks>
 /// Validates the operator <c>Reason</c> at the top as a 400 input error (operator
@@ -39,7 +39,7 @@ using IClock = D2.Shared.Time.IClock;
 /// <c>Compromise</c> method, projects the result, appends a <c>Compromised</c>
 /// audit entry carrying a NON-SENSITIVE breadcrumb (NEVER the raw reason), and —
 /// when requested — generates a replacement pending key for the same domain.
-/// Announces the compromise urgently (D-4 failure semantics); a post-commit
+/// Announces the compromise urgently after the durable commit; a post-commit
 /// announce failure is logged, not fatal.
 /// </remarks>
 public sealed class CompromiseKeyHandler(
@@ -129,7 +129,7 @@ public sealed class CompromiseKeyHandler(
                 Context.Logger, compromised!.KeyDomain.Value, replacementKid);
         }
 
-        // D-4: urgent announce after the durable commit; a failure is logged, not fatal.
+        // Post-commit announce: urgent after the durable commit; a failure is logged, not fatal.
         var announceResult = await announcer
             .AnnounceAsync(
                 compromised!.KeyDomain, compromised.Kid, KeyStatus.Compromised, urgent: true, ct)

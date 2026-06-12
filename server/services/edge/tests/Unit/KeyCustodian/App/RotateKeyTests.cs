@@ -12,15 +12,16 @@ using System.Threading.Tasks;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
 using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 using D2.Edge.KeyCustodian.Domain.Enums;
+using D2.Edge.Tests.Unit.KeyCustodian.App.Fixtures;
 using D2.Shared.Encryption;
 using D2.Shared.Time;
 using NodaTime;
 
 /// <summary>
-/// Tests for the atomic-swap <see cref="RotateKeyHandler"/> (gate D-2): both the
+/// Tests for the atomic-swap <see cref="RotateKeyHandler"/>: both the
 /// incumbent → retiring and successor → active transitions land in ONE save, the
 /// announce fires non-urgently, and a post-commit announce failure does NOT fail
-/// the handler (D-4). Missing incumbent / successor → 404.
+/// the handler. Missing incumbent / successor → 404.
 /// </summary>
 public sealed class RotateKeyTests
 {
@@ -31,12 +32,12 @@ public sealed class RotateKeyTests
     public async Task Rotate_AtomicSwap_RetiresIncumbentAndActivatesSuccessor()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var (activeKid, pendingKid) = await SeedActiveAndSoakedPending(db, created);
 
         // Now is past soak (1h) for the pending successor.
         var clock = new TestClock(created + Duration.FromHours(2));
-        var announcer = new KcAppTestKit.RecordingAnnouncer();
+        var announcer = new RecordingAnnouncer();
         var result = await Build(db, clock, announcer)
             .HandleAsync(new RotateKeyInput("jwks-signing"));
 
@@ -55,10 +56,10 @@ public sealed class RotateKeyTests
     public async Task Rotate_AnnouncesNonUrgentlyForActivatedKey()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var (_, pendingKid) = await SeedActiveAndSoakedPending(db, created);
 
-        var announcer = new KcAppTestKit.RecordingAnnouncer();
+        var announcer = new RecordingAnnouncer();
         await Build(db, new TestClock(created + Duration.FromHours(2)), announcer)
             .HandleAsync(new RotateKeyInput("jwks-signing"));
 
@@ -72,12 +73,12 @@ public sealed class RotateKeyTests
     [Fact]
     public async Task Rotate_AnnounceFails_HandlerStillReturnsOk_StateCommitted()
     {
-        // D-4: a post-commit announce failure must NOT fail the handler.
+        // Post-commit announce: a failure must NOT fail the handler.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var (activeKid, pendingKid) = await SeedActiveAndSoakedPending(db, created);
 
-        var failing = new KcAppTestKit.RecordingAnnouncer(D2Result.ServiceUnavailable());
+        var failing = new RecordingAnnouncer(D2Result.ServiceUnavailable());
         var result = await Build(db, new TestClock(created + Duration.FromHours(2)), failing)
             .HandleAsync(new RotateKeyInput("jwks-signing"));
 
@@ -90,7 +91,7 @@ public sealed class RotateKeyTests
     public async Task Rotate_NoActiveIncumbent_ReturnsKeyNotFound()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -103,7 +104,7 @@ public sealed class RotateKeyTests
         var result = await Build(
                 db,
                 new TestClock(created + Duration.FromHours(2)),
-                new KcAppTestKit.RecordingAnnouncer())
+                new RecordingAnnouncer())
             .HandleAsync(new RotateKeyInput("jwks-signing"));
 
         result.ErrorCode.Should().Be("KEYCUSTODIAN_KEY_NOT_FOUND");
@@ -113,7 +114,7 @@ public sealed class RotateKeyTests
     public async Task Rotate_NoPendingSuccessor_ReturnsKeyNotFound()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -127,7 +128,7 @@ public sealed class RotateKeyTests
         var result = await Build(
                 db,
                 new TestClock(created + Duration.FromHours(2)),
-                new KcAppTestKit.RecordingAnnouncer())
+                new RecordingAnnouncer())
             .HandleAsync(new RotateKeyInput("jwks-signing"));
 
         result.ErrorCode.Should().Be("KEYCUSTODIAN_KEY_NOT_FOUND");
@@ -141,7 +142,7 @@ public sealed class RotateKeyTests
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var result = await Build(
-                db, new TestClock(KcAppTestKit.BaseInstant), new KcAppTestKit.RecordingAnnouncer())
+                db, new TestClock(KcAppTestKit.SR_BaseInstant), new RecordingAnnouncer())
             .HandleAsync(new RotateKeyInput(domain));
 
         result.ErrorCode.Should().Be("KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN");
@@ -153,7 +154,7 @@ public sealed class RotateKeyTests
         // Successor created at now-(soak−1ns) — one nanosecond short of soak.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
         var soakDuration = Duration.FromHours(1);
-        var now = KcAppTestKit.BaseInstant + Duration.FromHours(3);
+        var now = KcAppTestKit.SR_BaseInstant + Duration.FromHours(3);
         var successorCreated = now - soakDuration + Duration.FromNanoseconds(1);
 
         var activeKid = await KcAppTestKit.SeedKeyAsync(
@@ -163,8 +164,8 @@ public sealed class RotateKeyTests
             "jwks-signing",
             KeyType.RsaSigning,
             KeyStatus.Active,
-            KcAppTestKit.BaseInstant,
-            activatedAt: KcAppTestKit.BaseInstant);
+            KcAppTestKit.SR_BaseInstant,
+            activatedAt: KcAppTestKit.SR_BaseInstant);
         await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -175,7 +176,7 @@ public sealed class RotateKeyTests
             successorCreated);
 
         var clock = new TestClock(now);
-        var result = await Build(db, clock, new KcAppTestKit.RecordingAnnouncer())
+        var result = await Build(db, clock, new RecordingAnnouncer())
             .HandleAsync(new RotateKeyInput("jwks-signing"));
 
         result.Success.Should().BeFalse();
@@ -192,7 +193,7 @@ public sealed class RotateKeyTests
         // deterministically returns false → SMOKE_TEST_FAILED. The incumbent's
         // material stays valid and its state must not change.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
 
         var activeKid = await KcAppTestKit.SeedKeyAsync(
             db,
@@ -222,7 +223,7 @@ public sealed class RotateKeyTests
             spki);
 
         var clock = new TestClock(created + Duration.FromHours(2));
-        var result = await Build(db, clock, new KcAppTestKit.RecordingAnnouncer())
+        var result = await Build(db, clock, new RecordingAnnouncer())
             .HandleAsync(new RotateKeyInput("jwks-signing"));
 
         result.Success.Should().BeFalse();
@@ -235,7 +236,7 @@ public sealed class RotateKeyTests
     }
 
     private RotateKeyHandler Build(
-        KeyCustodianTestDbContext db, TestClock clock, KcAppTestKit.RecordingAnnouncer announcer) =>
+        KeyCustodianTestDbContext db, TestClock clock, RecordingAnnouncer announcer) =>
         new(
             KcAppTestKit.Context<RotateKeyHandler>(),
             KcAppTestKit.NullClassifier(),

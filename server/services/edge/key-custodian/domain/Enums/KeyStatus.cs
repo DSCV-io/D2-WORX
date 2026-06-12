@@ -29,9 +29,13 @@ public enum KeyStatus
     /// <summary>Being phased out; still serves in-flight decryptions and JWKS responses.</summary>
     Retiring,
 
-    /// <summary>Fully retired; retained for forensics and overlap decryption of historical payloads.</summary>
+    /// <summary>
+    /// Fully retired; retained for forensics and overlap decryption of historical payloads.
+    /// </summary>
     Retired,
 
-    /// <summary>Marked compromised; removed from active use. Material retained for forensics.</summary>
+    /// <summary>
+    /// Marked compromised; removed from active use. Material retained for forensics.
+    /// </summary>
     Compromised,
 }

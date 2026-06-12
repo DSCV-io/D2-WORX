@@ -11,17 +11,18 @@ using System.Threading.Tasks;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
 using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 using D2.Edge.KeyCustodian.Domain.Enums;
+using D2.Edge.Tests.Unit.KeyCustodian.App.Fixtures;
 using D2.Shared.Encryption;
 using D2.Shared.Time;
 using Microsoft.Extensions.Options;
 using NodaTime;
 
 /// <summary>
-/// Tests for <see cref="CompromiseKeyHandler"/> (gate D-3): compromise a live key,
+/// Tests for <see cref="CompromiseKeyHandler"/>: compromise a live key,
 /// auto-generate a replacement pending, announce urgently, and NEVER persist or
 /// log the raw operator reason. A missing reason is a 400 input error; a missing
 /// kid among live keys is a 404. A post-commit announce failure does not fail the
-/// handler (D-4).
+/// handler.
 /// </summary>
 public sealed class CompromiseKeyTests
 {
@@ -34,7 +35,7 @@ public sealed class CompromiseKeyTests
     public async Task Compromise_ActiveKey_MarksCompromisedAndGeneratesReplacement()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -45,7 +46,7 @@ public sealed class CompromiseKeyTests
             created,
             activatedAt: created);
 
-        var announcer = new KcAppTestKit.RecordingAnnouncer();
+        var announcer = new RecordingAnnouncer();
         var input = new CompromiseKeyInput { Kid = kid, Reason = _SENSITIVE_REASON };
         var result = await Build(db, new TestClock(created + Duration.FromHours(3)), announcer)
             .HandleAsync(input);
@@ -63,7 +64,7 @@ public sealed class CompromiseKeyTests
     public async Task Compromise_AnnouncesUrgently()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -74,7 +75,7 @@ public sealed class CompromiseKeyTests
             created,
             activatedAt: created);
 
-        var announcer = new KcAppTestKit.RecordingAnnouncer();
+        var announcer = new RecordingAnnouncer();
         await Build(db, new TestClock(created + Duration.FromHours(3)), announcer)
             .HandleAsync(new CompromiseKeyInput { Kid = kid, Reason = "compromised" });
 
@@ -88,7 +89,7 @@ public sealed class CompromiseKeyTests
     public async Task Compromise_NoReplacement_WhenFlagFalse()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -102,7 +103,7 @@ public sealed class CompromiseKeyTests
         var result = await Build(
                 db,
                 new TestClock(created + Duration.FromHours(3)),
-                new KcAppTestKit.RecordingAnnouncer())
+                new RecordingAnnouncer())
             .HandleAsync(new CompromiseKeyInput
             {
                 Kid = kid,
@@ -122,7 +123,7 @@ public sealed class CompromiseKeyTests
     public async Task Compromise_RawReason_NeverPersistedInAuditOrRow()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -136,7 +137,7 @@ public sealed class CompromiseKeyTests
         await Build(
                 db,
                 new TestClock(created + Duration.FromHours(3)),
-                new KcAppTestKit.RecordingAnnouncer())
+                new RecordingAnnouncer())
             .HandleAsync(new CompromiseKeyInput { Kid = kid, Reason = _SENSITIVE_REASON });
 
         // The compromise REASON column carries the operator reason (capped), but the
@@ -163,7 +164,7 @@ public sealed class CompromiseKeyTests
     public async Task Compromise_MissingReason_ReturnsValidationFailedWithInputError(string? reason)
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -177,7 +178,7 @@ public sealed class CompromiseKeyTests
         var result = await Build(
                 db,
                 new TestClock(created + Duration.FromHours(3)),
-                new KcAppTestKit.RecordingAnnouncer())
+                new RecordingAnnouncer())
             .HandleAsync(new CompromiseKeyInput { Kid = kid, Reason = reason });
 
         result.Success.Should().BeFalse();
@@ -191,7 +192,7 @@ public sealed class CompromiseKeyTests
     public async Task Compromise_RetiredKey_NotAmongLive_ReturnsKeyNotFound()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -206,7 +207,7 @@ public sealed class CompromiseKeyTests
         var result = await Build(
                 db,
                 new TestClock(created + Duration.FromHours(3)),
-                new KcAppTestKit.RecordingAnnouncer())
+                new RecordingAnnouncer())
             .HandleAsync(new CompromiseKeyInput { Kid = kid, Reason = "compromised" });
 
         result.ErrorCode.Should().Be("KEYCUSTODIAN_KEY_NOT_FOUND");
@@ -216,7 +217,7 @@ public sealed class CompromiseKeyTests
     public async Task Compromise_DoubleSubmit_SecondReturnsKeyNotFound()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -228,7 +229,7 @@ public sealed class CompromiseKeyTests
             activatedAt: created);
 
         var clock = new TestClock(created + Duration.FromHours(3));
-        var first = await Build(db, clock, new KcAppTestKit.RecordingAnnouncer())
+        var first = await Build(db, clock, new RecordingAnnouncer())
             .HandleAsync(new CompromiseKeyInput
             {
                 Kid = kid,
@@ -237,7 +238,7 @@ public sealed class CompromiseKeyTests
             });
         first.Success.Should().BeTrue();
 
-        var second = await Build(db, clock, new KcAppTestKit.RecordingAnnouncer())
+        var second = await Build(db, clock, new RecordingAnnouncer())
             .HandleAsync(new CompromiseKeyInput
             {
                 Kid = kid,
@@ -251,7 +252,7 @@ public sealed class CompromiseKeyTests
     public async Task Compromise_AnnounceFails_HandlerStillReturnsOk()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -262,7 +263,7 @@ public sealed class CompromiseKeyTests
             created,
             activatedAt: created);
 
-        var failing = new KcAppTestKit.RecordingAnnouncer(D2Result.ServiceUnavailable());
+        var failing = new RecordingAnnouncer(D2Result.ServiceUnavailable());
         var result = await Build(db, new TestClock(created + Duration.FromHours(3)), failing)
             .HandleAsync(new CompromiseKeyInput { Kid = kid, Reason = "compromised" });
 
@@ -274,14 +275,14 @@ public sealed class CompromiseKeyTests
     public async Task Compromise_PendingKey_IsLive_CanBeCompromised()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
             db, r_crypto, r_options, "cookie", KeyType.Secret, KeyStatus.Pending, created);
 
         var result = await Build(
                 db,
                 new TestClock(created + Duration.FromHours(1)),
-                new KcAppTestKit.RecordingAnnouncer())
+                new RecordingAnnouncer())
             .HandleAsync(new CompromiseKeyInput
             {
                 Kid = kid,
@@ -297,7 +298,7 @@ public sealed class CompromiseKeyTests
     public async Task Compromise_RetiringKey_MarksCompromisedAndGeneratesReplacement()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -309,7 +310,7 @@ public sealed class CompromiseKeyTests
             activatedAt: created,
             retiringAt: created + Duration.FromHours(1));
 
-        var announcer = new KcAppTestKit.RecordingAnnouncer();
+        var announcer = new RecordingAnnouncer();
         var result = await Build(db, new TestClock(created + Duration.FromHours(2)), announcer)
             .HandleAsync(new CompromiseKeyInput { Kid = kid, Reason = _SENSITIVE_REASON });
 
@@ -323,7 +324,7 @@ public sealed class CompromiseKeyTests
     }
 
     private CompromiseKeyHandler Build(
-        KeyCustodianTestDbContext db, TestClock clock, KcAppTestKit.RecordingAnnouncer announcer) =>
+        KeyCustodianTestDbContext db, TestClock clock, RecordingAnnouncer announcer) =>
         new(
             KcAppTestKit.Context<CompromiseKeyHandler>(),
             KcAppTestKit.NullClassifier(),

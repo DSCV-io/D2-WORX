@@ -63,13 +63,13 @@ public sealed class KeyCustodianErrorCodesGeneratorTests
             .Select(t => Path.GetFileName(t.FilePath))
             .OrderBy(n => n)
             .ToList();
-        fileNames.Should().BeEquivalentTo(
-            new[]
-            {
-                "KeyCustodianErrorCodes.g.cs",
-                "KeyCustodianFailures.Generic.g.cs",
-                "KeyCustodianFailures.g.cs",
-            });
+        string[] expectedFileNames =
+        [
+            "KeyCustodianErrorCodes.g.cs",
+            "KeyCustodianFailures.Generic.g.cs",
+            "KeyCustodianFailures.g.cs",
+        ];
+        fileNames.Should().BeEquivalentTo(expectedFileNames);
     }
 
     [Fact]

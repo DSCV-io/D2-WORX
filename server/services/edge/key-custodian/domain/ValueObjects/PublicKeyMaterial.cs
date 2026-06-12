@@ -89,7 +89,9 @@ public sealed record PublicKeyMaterial
 
     /// <inheritdoc/>
     public override string ToString() =>
-        string.Create(CultureInfo.InvariantCulture, $"PublicKeyMaterial {{ Bytes = [{Bytes.Length} bytes] }}");
+        string.Create(
+            CultureInfo.InvariantCulture,
+            $"PublicKeyMaterial {{ Bytes = [{Bytes.Length} bytes] }}");
 
     /// <summary>
     /// Overrides auto-generated <c>PrintMembers</c> to emit a byte-count instead

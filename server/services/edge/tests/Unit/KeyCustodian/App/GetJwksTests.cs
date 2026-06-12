@@ -44,7 +44,7 @@ public sealed class GetJwksTests
     public async Task GetJwks_IncludesActiveAndRetiringSigningKeys()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var activeKid = await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -74,7 +74,7 @@ public sealed class GetJwksTests
     public async Task GetJwks_ActiveKeyOrderedFirst()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var retiringKid = await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -105,7 +105,7 @@ public sealed class GetJwksTests
     public async Task GetJwks_ExcludesPendingRetiredCompromisedAndSymmetric()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
 
         // A pending signing key — excluded (only active + retiring serve JWKS).
         await KcAppTestKit.SeedKeyAsync(
@@ -141,7 +141,7 @@ public sealed class GetJwksTests
     public async Task GetJwks_ExcludesSigningKeyFromNonJwksDomain()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
 
         // An RSA signing key but in the wrong domain — must not appear.
         await KcAppTestKit.SeedKeyAsync(
@@ -169,14 +169,14 @@ public sealed class GetJwksTests
         // A corrupt row where PublicKeyMaterial is null — must not emit a broken JWK
         // and must not throw; the handler silently skips the row and returns Ok.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
 
         var corruptRow = new KeyRecord
         {
             Kid = KidMinting.Mint(),
             KeyDomain = "jwks-signing",
             KeyType = KeyType.RsaSigning,
-            KeyMaterialEncrypted = new byte[] { 0x01 },
+            KeyMaterialEncrypted = [0x01],
             PublicKeyMaterial = null,
             CreatedAt = created,
             Status = KeyStatus.Active,

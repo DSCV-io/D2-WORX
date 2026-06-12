@@ -13,9 +13,9 @@ using NodaTime;
 /// Flat, append-only EF persistence row for a single key-lifecycle transition.
 /// </summary>
 /// <remarks>
-/// <b>Why a flat record.</b> Like <see cref="KeyRecord"/>, the audit row carries
+/// <b>Why a flat record.</b> Like <see cref="KeyRecord"/>, the audit record carries
 /// only primitive / closed-enum columns so the EF model needs no value
-/// converters and the row is uniformly InMemory-testable. The domain audit
+/// converters and the record is uniformly InMemory-testable. The domain audit
 /// shape (<c>EncryptionKeyAudit</c>) carries a strong-typed <c>Kid</c>;
 /// the mapper flattens it to the <see cref="Kid"/> string column.
 ///

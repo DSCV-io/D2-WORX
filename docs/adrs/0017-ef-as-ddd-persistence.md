@@ -4,7 +4,7 @@ Copyright (c) DCSV. All rights reserved.
 
 # ADR-0017: EF-as-DDD persistence — retire the per-op Repository TLC; persist sum-type aggregates as a flat non-polymorphic Record + pure mapper (Shape B), NOT TPH
 
-- **Status**: Accepted (draft — finalized at SHIP of deliverable 0016; CLAUDE.md/rules.md/PATTERNS.md edits require explicit user approval at SHIP)
+- **Status**: Accepted
 - **Date**: 2026-06-06 (persistence-mechanism revision: 2026-06-09)
 - **Deliverable**: `0016-keycustodian`
 

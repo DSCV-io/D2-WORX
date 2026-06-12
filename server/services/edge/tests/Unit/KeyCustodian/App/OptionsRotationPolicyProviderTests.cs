@@ -83,6 +83,7 @@ public sealed class OptionsRotationPolicyProviderTests
         result.ErrorCode.Should().Be("KEYCUSTODIAN_INVALID_ROTATION_POLICY");
     }
 
+    // long test name — cannot shorten without losing meaning
     [Fact]
     public void ForDomain_InvalidPolicy_CadenceShorterThanGracePlusSoak_ReturnsInvalidRotationPolicy()
     {

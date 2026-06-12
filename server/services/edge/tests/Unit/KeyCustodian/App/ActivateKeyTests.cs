@@ -31,7 +31,7 @@ public sealed class ActivateKeyTests
     public async Task Activate_SoakElapsed_ActivatesAndAudits()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
             db, r_crypto, r_options, "cookie", KeyType.Secret, KeyStatus.Pending, created);
 
@@ -53,7 +53,7 @@ public sealed class ActivateKeyTests
     public async Task Activate_ExactlyAtSoakBoundary_Succeeds()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
             db, r_crypto, r_options, "cookie", KeyType.Secret, KeyStatus.Pending, created);
 
@@ -66,7 +66,7 @@ public sealed class ActivateKeyTests
     public async Task Activate_OneTickBeforeSoakBoundary_ReturnsSoakNotElapsed()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
             db, r_crypto, r_options, "cookie", KeyType.Secret, KeyStatus.Pending, created);
 
@@ -84,7 +84,7 @@ public sealed class ActivateKeyTests
     public async Task Activate_ClockBehindCreatedAt_NegativeElapsed_ReturnsSoakNotElapsed()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
             db, r_crypto, r_options, "cookie", KeyType.Secret, KeyStatus.Pending, created);
 
@@ -108,7 +108,7 @@ public sealed class ActivateKeyTests
     public async Task Activate_BadKid_ReturnsKidInvalid(string? kid)
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var result = await Build(db, new TestClock(KcAppTestKit.BaseInstant))
+        var result = await Build(db, new TestClock(KcAppTestKit.SR_BaseInstant))
             .HandleAsync(new ActivateKeyInput(kid));
 
         result.Success.Should().BeFalse();
@@ -119,7 +119,7 @@ public sealed class ActivateKeyTests
     public async Task Activate_UnknownKid_ReturnsKeyNotFound()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var result = await Build(db, new TestClock(KcAppTestKit.BaseInstant))
+        var result = await Build(db, new TestClock(KcAppTestKit.SR_BaseInstant))
             .HandleAsync(new ActivateKeyInput("nonexistentKid123"));
 
         result.Success.Should().BeFalse();
@@ -130,7 +130,7 @@ public sealed class ActivateKeyTests
     public async Task Activate_AlreadyActiveKey_ReturnsKeyStateConflict()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
             db, r_crypto, r_options, "cookie", KeyType.Secret, KeyStatus.Active, created);
 
@@ -145,7 +145,7 @@ public sealed class ActivateKeyTests
     public async Task Activate_DoubleSubmit_SecondReturnsConflict()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
             db, r_crypto, r_options, "cookie", KeyType.Secret, KeyStatus.Pending, created);
 
@@ -164,7 +164,7 @@ public sealed class ActivateKeyTests
         // the stored SPKI belongs to a DIFFERENT RSA key, so the smoke sign-then-
         // verify-against-SPKI step deterministically returns false → SMOKE_TEST_FAILED.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
 
         using var rsa = RSA.Create(2048);
         using var mismatchedRsa = RSA.Create(2048);

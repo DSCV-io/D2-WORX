@@ -11,11 +11,9 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
-using D2.Edge.KeyCustodian.App.Infrastructure.Messaging;
 using D2.Edge.KeyCustodian.App.Infrastructure.Persistence;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Edge.KeyCustodian.Domain.Rules;
-using D2.Edge.KeyCustodian.Domain.ValueObjects;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.Encryption;
 using D2.Shared.Handler;
@@ -27,13 +25,14 @@ using NodaTime;
 /// <summary>
 /// Shared test helpers for the KeyCustodian App-layer unit tests: a real
 /// <see cref="PayloadCrypto"/> over a throwaway keyring, the pure key-generation
-/// rule, a recording announcer fake, a null DB-exception classifier, and a
-/// handler-context builder.
+/// rule, a null DB-exception classifier, and a handler-context builder. The
+/// recording announcer fake lives in
+/// <see cref="D2.Edge.Tests.Unit.KeyCustodian.App.Fixtures.RecordingAnnouncer"/>.
 /// </summary>
 internal static class KcAppTestKit
 {
     /// <summary>An arbitrary, deterministic baseline instant for tests.</summary>
-    public static readonly Instant BaseInstant = Instant.FromUtc(2026, 1, 1, 0, 0);
+    public static readonly Instant SR_BaseInstant = Instant.FromUtc(2026, 1, 1, 0, 0);
 
     /// <summary>
     /// Builds a real <see cref="IPayloadCrypto"/> over a throwaway random 32-byte
@@ -215,47 +214,6 @@ internal static class KcAppTestKit
         db.Keys.Add(record);
         await db.SaveChangesAsync(CancellationToken.None).ConfigureAwait(false);
         return kid;
-    }
-
-    /// <summary>
-    /// Recording <see cref="IKeyRotationAnnouncer"/> fake — captures every call and
-    /// returns a configurable result.
-    /// </summary>
-    public sealed class RecordingAnnouncer : IKeyRotationAnnouncer
-    {
-        private readonly D2Result r_result;
-
-        /// <summary>
-        /// Initializes a recording announcer that returns <paramref name="result"/>.
-        /// </summary>
-        /// <param name="result">The result every announce returns; defaults to Ok.</param>
-        public RecordingAnnouncer(D2Result? result = null)
-        {
-            r_result = result ?? D2Result.Ok();
-        }
-
-        /// <summary>Gets the recorded announce calls in order.</summary>
-        public List<AnnounceCall> Calls { get; } = [];
-
-        /// <inheritdoc/>
-        public ValueTask<D2Result> AnnounceAsync(
-            KeyDomain domain,
-            Kid kid,
-            KeyStatus newStatus,
-            bool urgent,
-            CancellationToken cancellationToken = default)
-        {
-            Calls.Add(new AnnounceCall(domain.Value, kid.Value, newStatus, urgent));
-            return ValueTask.FromResult(r_result);
-        }
-
-        /// <summary>A single recorded announce call.</summary>
-        /// <param name="Domain">The announced domain value.</param>
-        /// <param name="Kid">The announced kid value.</param>
-        /// <param name="NewStatus">The announced status.</param>
-        /// <param name="Urgent">Whether the announce was urgent.</param>
-        public sealed record AnnounceCall(
-            string Domain, string Kid, KeyStatus NewStatus, bool Urgent);
     }
 
     private sealed class NullDbExceptionClassifier : IDbExceptionClassifier

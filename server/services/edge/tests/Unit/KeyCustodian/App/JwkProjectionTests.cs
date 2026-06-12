@@ -67,15 +67,15 @@ public sealed class JwkProjectionTests
         jwk.Kid.Should().Be("kid-priv-check", "ToJwk must preserve the supplied kid");
         jwk.Kty.Should().Be("RSA", "RSA keys must carry kty=RSA");
 
-        var privateParamNames = new[]
-        {
+        string[] privateParamNames =
+        [
             nameof(System.Security.Cryptography.RSAParameters.D),
             nameof(System.Security.Cryptography.RSAParameters.P),
             nameof(System.Security.Cryptography.RSAParameters.Q),
             nameof(System.Security.Cryptography.RSAParameters.DP),
             nameof(System.Security.Cryptography.RSAParameters.DQ),
             nameof(System.Security.Cryptography.RSAParameters.InverseQ),
-        };
+        ];
 
         var jwkProperties = typeof(D2.Edge.KeyCustodian.Domain.ValueObjects.Jwk)
             .GetProperties(

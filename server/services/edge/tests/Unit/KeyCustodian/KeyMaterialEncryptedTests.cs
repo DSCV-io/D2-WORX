@@ -15,7 +15,7 @@ using D2.Edge.KeyCustodian.Domain.ValueObjects;
 /// </summary>
 public sealed class KeyMaterialEncryptedTests
 {
-    private static readonly byte[] s_validBytes = [0x01, 0x02, 0x03, 0x04];
+    private static readonly byte[] sr_validBytes = [0x01, 0x02, 0x03, 0x04];
 
     // -----------------------------------------------------------------------
     // FromTrusted — valid
@@ -24,8 +24,8 @@ public sealed class KeyMaterialEncryptedTests
     [Fact]
     public void FromTrusted_NonEmptyBytes_RoundTrips()
     {
-        var mat = KeyMaterialEncrypted.FromTrusted(s_validBytes);
-        mat.Bytes.ToArray().Should().BeEquivalentTo(s_validBytes);
+        var mat = KeyMaterialEncrypted.FromTrusted(sr_validBytes);
+        mat.Bytes.ToArray().Should().BeEquivalentTo(sr_validBytes);
     }
 
     // -----------------------------------------------------------------------
@@ -67,7 +67,7 @@ public sealed class KeyMaterialEncryptedTests
     [Fact]
     public void ToString_ContainsRedactionSentinel()
     {
-        var mat = KeyMaterialEncrypted.FromTrusted(s_validBytes);
+        var mat = KeyMaterialEncrypted.FromTrusted(sr_validBytes);
         var str = mat.ToString();
         str.Should().Contain("REDACTED");
     }
@@ -75,7 +75,7 @@ public sealed class KeyMaterialEncryptedTests
     [Fact]
     public void ToString_ContainsByteCount()
     {
-        var mat = KeyMaterialEncrypted.FromTrusted(s_validBytes);
+        var mat = KeyMaterialEncrypted.FromTrusted(sr_validBytes);
         var str = mat.ToString();
         str.Should().Contain("4"); // 4 bytes
     }
@@ -107,14 +107,14 @@ public sealed class KeyMaterialEncryptedTests
     [Fact]
     public void Equals_Null_ReturnsFalse()
     {
-        var a = KeyMaterialEncrypted.FromTrusted(s_validBytes);
+        var a = KeyMaterialEncrypted.FromTrusted(sr_validBytes);
         a.Equals(null).Should().BeFalse();
     }
 
     [Fact]
     public void Equals_ReferenceEqual_ReturnsTrue()
     {
-        var a = KeyMaterialEncrypted.FromTrusted(s_validBytes);
+        var a = KeyMaterialEncrypted.FromTrusted(sr_validBytes);
         a.Equals(a).Should().BeTrue();
     }
 }

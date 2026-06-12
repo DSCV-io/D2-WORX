@@ -74,14 +74,18 @@ public sealed class KeyCustodianErrorCodesSchemaDriftTests
         // smoke-test} subset.
         var statuses = props.GetProperty("httpStatus").GetProperty("enum")
             .EnumerateArray().Select(e => e.GetInt32()).ToList();
-        statuses.Should().BeEquivalentTo(new[] { 400, 404, 409, 500 });
+        int[] expectedStatuses = [400, 404, 409, 500];
+        statuses.Should().BeEquivalentTo(expectedStatuses);
 
         // KC narrows the canonical category set to the {validation_failure,
         // not_found, conflict, internal_error} subset.
         var categories = props.GetProperty("category").GetProperty("enum")
             .EnumerateArray().Select(e => e.GetString()).ToList();
-        categories.Should().BeEquivalentTo(
-            new[] { "validation_failure", "not_found", "conflict", "internal_error" });
+        string[] expectedCategories =
+        [
+            "validation_failure", "not_found", "conflict", "internal_error",
+        ];
+        categories.Should().BeEquivalentTo(expectedCategories);
     }
 
     [Fact]

@@ -58,7 +58,7 @@ public sealed class SmokeProofTests
     }
 
     // -----------------------------------------------------------------------
-    // ForPassedSmokeTest — null clock guard (A3-F1 regression pin)
+    // ForPassedSmokeTest — null clock guard returns PreconditionViolated
     // -----------------------------------------------------------------------
 
     [Fact]

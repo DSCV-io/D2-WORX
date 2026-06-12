@@ -14,7 +14,7 @@ using NodaTime;
 
 /// <summary>
 /// Regression tests for the <see cref="CompromisedKey"/> <c>ToString</c> /
-/// <c>PrintMembers</c> PII trap (S-2). The compiler-generated <c>ToString</c>
+/// <c>PrintMembers</c> PII trap. The compiler-generated <c>ToString</c>
 /// on a <c>sealed record</c> emits all property values; without an override the
 /// operator-supplied <see cref="CompromisedKey.Reason"/> — which is marked
 /// <c>[RedactData(PersonalInformation)]</c> — would appear raw in any string

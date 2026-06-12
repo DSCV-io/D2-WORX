@@ -4,7 +4,7 @@ Copyright (c) DCSV. All rights reserved.
 
 # ADR-0016: KeyCustodian — key lifecycle state machine + dedicated leaderless store
 
-- **Status**: Accepted (draft — finalized at SHIP of deliverable 0016)
+- **Status**: Accepted
 - **Date**: 2026-06-06 (store-mechanism revision: 2026-06-09)
 - **Deliverable**: `0016-keycustodian`
 
@@ -67,7 +67,7 @@ Dropping material on retire or compromise would break overlap decryption, grace-
 
 Every lifecycle transition appends an `EncryptionKeyAudit` record carrying the `Kid`, action, resulting status, and timestamp. The audit record deliberately carries NO key material and NO free-text compromise reason — forensics via lifecycle sequence, not by replaying bytes.
 
-The `EncryptionKeyAudit` record is written in the **SAME `SaveChangesAsync` / transaction** as the state change, so a transition + its audit entry are atomic. EF orders the principal (`KeyRecord` UPDATE) before the dependent (audit INSERT); the audit FK uses `OnDelete(Restrict)` so audit rows can never be cascade-deleted out from under the lifecycle history.
+The `EncryptionKeyAudit` record is written in the **SAME `SaveChangesAsync` / transaction** as the state change, so a transition + its audit entry are atomic. EF orders the principal (`KeyRecord` UPDATE) before the dependent (audit INSERT); the audit FK uses `OnDelete(Restrict)` so audit records can never be cascade-deleted out from under the lifecycle history.
 
 ### 7. Persistence — flat `KeyRecord` + pure mapper, NOT TPH (per ADR-0017)
 

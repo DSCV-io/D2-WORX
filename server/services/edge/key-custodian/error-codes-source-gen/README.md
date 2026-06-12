@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/services/edge/key-custodian/`](../README.md)
 
-A thin `[Generator]` shell over the shared unified error-codes engine ([`source-gen-shared/error-codes-emit`](../../../../shared/dotnet/source-gen-shared/error-codes-emit/README.md)). It emits the `KeyCustodianErrorCodes` const-string catalog + the `KeyCustodianFailures` semantic-factory class + the typed `KeyCustodianFailures<T>` twin into `D2.Edge.KeyCustodian.Domain` by reading `contracts/keycustodian-error-codes/keycustodian-error-codes.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `D2.Edge.KeyCustodian.Domain`. The shell owns only the keycustodian catalog's identity (assembly name + the `ErrorCodesGenerator` type FQN, both load-bearing for the on-disk generated path) + its `CatalogConfig`; all generation logic lives in the shared engine.
+For engineers adding or modifying KeyCustodian error codes, or extending the shared source-gen engine. A thin `[Generator]` shell over the shared unified error-codes engine ([`source-gen-shared/error-codes-emit`](../../../../shared/dotnet/source-gen-shared/error-codes-emit/README.md)). It emits the `KeyCustodianErrorCodes` const-string catalog + the `KeyCustodianFailures` semantic-factory class + the typed `KeyCustodianFailures<T>` twin into `D2.Edge.KeyCustodian.Domain` by reading `contracts/keycustodian-error-codes/keycustodian-error-codes.spec.json` via `<AdditionalFiles>`. Single-target — emits ONLY when the consuming assembly is `D2.Edge.KeyCustodian.Domain`. The shell owns only the keycustodian catalog's identity (assembly name + the `ErrorCodesGenerator` type FQN, both load-bearing for the on-disk generated path) + its `CatalogConfig`; all generation logic lives in the shared engine.
 
 The spec file is the single source of truth for the platform's keycustodian error taxonomy. Every `d2_error_code` constant surfaced on a `D2Result` failure, every `KeyCustodianFailures<T>.*` factory the domain calls, and the cross-spec merged registry (`ErrorCodeRegistry`) all derive from one JSON file — no hand-written parallel constants, no per-domain drift.
 
@@ -80,6 +80,35 @@ All three files emit into the consuming assembly (`D2.Edge.KeyCustodian.Domain`)
 3. **`KeyCustodianFailures.Generic.g.cs`** — `D2.Edge.KeyCustodian.Domain.Errors.KeyCustodianFailures<T>`, the typed twin: identical method names, each delegating to the typed `D2Result<T>` base factory so callers can produce a typed domain failure (e.g. `KeyCustodianFailures<Kid>.KidInvalid()`). A distinct sibling file (distinct `AddSource` hint name) so `KeyCustodianFailures.g.cs` stays byte-identical. `KeyCustodianFailures` (non-generic) and `KeyCustodianFailures<T>` (generic) are distinct types — arity differs — exactly as `D2Result` / `D2Result<T>` coexist.
 
 The multi-emitter split lives in one sourcegen because all outputs derive from the same spec rows — keeping them co-located ensures any spec edit re-emits every file together and prevents the constants catalog from drifting from the factory surface.
+
+---
+
+## Telemetry
+
+N/A — compile-time-only Roslyn generator; emits no OTel instruments and runs no runtime code.
+
+## Configuration
+
+N/A — all inputs are spec-file entries and `<AdditionalFiles>` wiring in the consuming `.csproj`; there is no runtime configuration.
+
+## Operations
+
+N/A — the generator produces output at build time; there is no standalone service to run or health-check.
+
+---
+
+## Dependencies
+
+Package references (all `PrivateAssets="all"` — analyzer-only, not propagated to consumers):
+
+- `Microsoft.CodeAnalysis.CSharp` (5.0.0) — Roslyn compilation model (`IIncrementalGenerator`, `SyntaxNode`, `ISymbol`) used by both the shared engine and this shell.
+- `Microsoft.CodeAnalysis.Analyzers` (5.3.0) — analyzer-correctness rules (`EnforceExtendedAnalyzerRules`); catches generator API misuse at build time.
+- `System.Text.Json` (10.0.7) — spec-file JSON parsing; bundled into the analyzer output via `GeneratePathProperty` so Roslyn's host can load it (`netstandard2.0` does not ship S.T.Json in-box).
+
+Shared source (via `<Compile Include>` — compiled into this shell, not referenced as a project):
+
+- `source-gen-shared/core/**` (`$(D2SourceGenSharedRoot)`) — polyfills + `EmitDiagnostic` record + `LoadResult<TSpec>` + `SpecFile`; the common scaffolding shared across all D² Roslyn generators.
+- `source-gen-shared/error-codes-emit/**` (`$(D2ErrorCodesEmitRoot)`) — the unified error-codes engine: entry model, spec loader, constants/failures/generic-twin emitters, `CatalogConfig`, and the `D2ERC*` engine diagnostics. One engine compiled into every error-codes generator shell; this shell supplies only its `CatalogConfig` + analyzer identity.
 
 ---
 

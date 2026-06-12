@@ -78,6 +78,8 @@ public sealed record EncryptionKeyAudit
         IClock clock,
         string? detail = null)
     {
+        // §5.1a carve-out: reference-type null-guards (domain VO + DI interface).
+        // No present-but-falsey concept for these types.
         ArgumentNullException.ThrowIfNull(kid);
         ArgumentNullException.ThrowIfNull(clock);
 

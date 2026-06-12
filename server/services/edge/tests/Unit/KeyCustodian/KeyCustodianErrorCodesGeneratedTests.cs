@@ -19,7 +19,7 @@ using D2.Shared.ErrorCodes.Category;
 public sealed class KeyCustodianErrorCodesGeneratedTests
 {
     // -----------------------------------------------------------------------
-    // Constant value pins (F2) — each constant equals its exact wire literal
+    // Constant value pins — each constant equals its exact wire literal
     // -----------------------------------------------------------------------
 
     [Theory]
@@ -59,14 +59,14 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     }
 
     // -----------------------------------------------------------------------
-    // AllCodes membership (F2) — set equals the 12 spec codes in spec order
+    // AllCodes membership — set equals the 12 spec codes in spec order
     // -----------------------------------------------------------------------
 
     [Fact]
     public void AllCodes_SetEqualToSpecCodeList()
     {
-        var expected_codes = new[]
-        {
+        string[] expectedCodes =
+        [
             "KEYCUSTODIAN_KID_INVALID",
             "KEYCUSTODIAN_KID_TOO_LONG",
             "KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN",
@@ -79,10 +79,10 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
             "KEYCUSTODIAN_KEY_STATE_CONFLICT",
             "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS",
             "KEYCUSTODIAN_SMOKE_TEST_FAILED",
-        };
+        ];
 
         KeyCustodianErrorCodes.AllCodes.Should().BeEquivalentTo(
-            expected_codes,
+            expectedCodes,
             options => options.WithStrictOrdering());
     }
 
@@ -93,7 +93,7 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
     }
 
     // -----------------------------------------------------------------------
-    // GetHttpStatus (F2) — known codes return 400; unknown code returns 500
+    // GetHttpStatus — known codes return 400; unknown code returns 500
     // -----------------------------------------------------------------------
 
     [Theory]
@@ -135,7 +135,7 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
         // conflict codes return 409, and the 500 internal-error codes (precondition
         // violation + smoke-test failure) return 500. A generator regression that
         // drops a code from the switch or maps it to the wrong status fails here.
-        var expected_statuses = new Dictionary<string, int>(System.StringComparer.Ordinal)
+        var expectedStatuses = new Dictionary<string, int>(System.StringComparer.Ordinal)
         {
             ["KEYCUSTODIAN_KID_INVALID"] = 400,
             ["KEYCUSTODIAN_KID_TOO_LONG"] = 400,
@@ -153,16 +153,16 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
 
         foreach (var code in KeyCustodianErrorCodes.AllCodes)
         {
-            expected_statuses.Should().ContainKey(
+            expectedStatuses.Should().ContainKey(
                 code, because: $"the test's expected-status map must cover spec code {code}");
-            var expected = expected_statuses[code];
+            var expected = expectedStatuses[code];
             KeyCustodianErrorCodes.GetHttpStatus(code)
                 .Should().Be(expected, because: $"spec code {code} declares status {expected}");
         }
     }
 
     // -----------------------------------------------------------------------
-    // Non-generic KeyCustodianFailures factories (F3)
+    // Non-generic KeyCustodianFailures factories
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -370,7 +370,7 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
         var message = result.Messages.Single(
             m => m.Key == "keycustodian_internal_PRECONDITION_VIOLATED");
         message.Parameters.Should().NotBeNull();
-        message.Parameters!["arg"].Should().Be("clock");
+        message.Parameters["arg"].Should().Be("clock");
 
         // The stamped code + category are unchanged by the override.
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_PRECONDITION_VIOLATED);
@@ -386,7 +386,7 @@ public sealed class KeyCustodianErrorCodesGeneratedTests
         var message = result.Messages.Single(
             m => m.Key == "keycustodian_internal_PRECONDITION_VIOLATED");
         message.Parameters.Should().NotBeNull();
-        message.Parameters!["arg"].Should().Be("proof");
+        message.Parameters["arg"].Should().Be("proof");
         result.ErrorCode.Should().Be(KeyCustodianErrorCodes.KEYCUSTODIAN_PRECONDITION_VIOLATED);
         result.Category.Should().Be(ErrorCategory.InternalError);
     }

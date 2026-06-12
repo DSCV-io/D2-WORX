@@ -29,8 +29,8 @@ public sealed class KeyCustodianOptionsTests
     public void Bind_EnvironmentVariables_BindsAllPropertiesIncludingDashedPolicyKey()
     {
         // Arrange — set every documented env var.
-        var vars = new[]
-        {
+        string[] vars =
+        [
             "KEYCUSTODIAN_APP__RSAKEYSIZEBITS",
             "KEYCUSTODIAN_APP__SECRETLENGTHBYTES",
             "KEYCUSTODIAN_APP__DEFAULT__CADENCE",
@@ -39,7 +39,7 @@ public sealed class KeyCustodianOptionsTests
             "KEYCUSTODIAN_APP__POLICIES__JWKS-SIGNING__CADENCE",
             "KEYCUSTODIAN_APP__POLICIES__JWKS-SIGNING__GRACE",
             "KEYCUSTODIAN_APP__POLICIES__JWKS-SIGNING__SMOKESOAK",
-        };
+        ];
 
         Environment.SetEnvironmentVariable("KEYCUSTODIAN_APP__RSAKEYSIZEBITS", "2048");
         Environment.SetEnvironmentVariable("KEYCUSTODIAN_APP__SECRETLENGTHBYTES", "64");
@@ -78,15 +78,15 @@ public sealed class KeyCustodianOptionsTests
             // convention so the produced dictionary key is "JWKS-SIGNING".
             // The Policies dictionary uses StringComparer.Ordinal, so we look up
             // case-insensitively against the actual keys to discover the produced casing.
-            var policy_key = options.Policies.Keys
+            var policyKey = options.Policies.Keys
                 .FirstOrDefault(k => k.Equals("JWKS-SIGNING", StringComparison.OrdinalIgnoreCase));
-            policy_key.Should().NotBeNull(
+            policyKey.Should().NotBeNull(
                 "env-variable segment JWKS-SIGNING must bind as a Policies dictionary entry");
 
-            var signing_policy = options.Policies[policy_key];
-            signing_policy.Cadence.Should().Be(TimeSpan.FromDays(7));
-            signing_policy.Grace.Should().Be(TimeSpan.FromDays(4));
-            signing_policy.SmokeSoak.Should().Be(TimeSpan.FromHours(2));
+            var signingPolicy = options.Policies[policyKey];
+            signingPolicy.Cadence.Should().Be(TimeSpan.FromDays(7));
+            signingPolicy.Grace.Should().Be(TimeSpan.FromDays(4));
+            signingPolicy.SmokeSoak.Should().Be(TimeSpan.FromHours(2));
         }
         finally
         {

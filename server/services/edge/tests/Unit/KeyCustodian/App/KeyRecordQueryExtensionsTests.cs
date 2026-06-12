@@ -71,16 +71,20 @@ public sealed class KeyRecordQueryExtensionsTests
         Seed().Pending().ForDomain("jwks-signing").Should().BeEmpty();
     }
 
-    private static IQueryable<KeyRecord> Seed() => new[]
+    private static IQueryable<KeyRecord> Seed()
     {
-        Row("p-cookie", "cookie", KeyType.Secret, KeyStatus.Pending),
-        Row("a-cookie", "cookie", KeyType.Secret, KeyStatus.Active),
-        Row("r-cookie", "cookie", KeyType.Secret, KeyStatus.Retiring),
-        Row("retired-cookie", "cookie", KeyType.Secret, KeyStatus.Retired),
-        Row("comp-cookie", "cookie", KeyType.Secret, KeyStatus.Compromised),
-        Row("a-jwks", "jwks-signing", KeyType.RsaSigning, KeyStatus.Active),
-        Row("r-jwks", "jwks-signing", KeyType.RsaSigning, KeyStatus.Retiring),
-    }.AsQueryable();
+        KeyRecord[] rows =
+        [
+            Row("p-cookie", "cookie", KeyType.Secret, KeyStatus.Pending),
+            Row("a-cookie", "cookie", KeyType.Secret, KeyStatus.Active),
+            Row("r-cookie", "cookie", KeyType.Secret, KeyStatus.Retiring),
+            Row("retired-cookie", "cookie", KeyType.Secret, KeyStatus.Retired),
+            Row("comp-cookie", "cookie", KeyType.Secret, KeyStatus.Compromised),
+            Row("a-jwks", "jwks-signing", KeyType.RsaSigning, KeyStatus.Active),
+            Row("r-jwks", "jwks-signing", KeyType.RsaSigning, KeyStatus.Retiring),
+        ];
+        return rows.AsQueryable();
+    }
 
     private static KeyRecord Row(string kid, string domain, KeyType type, KeyStatus status) =>
         new()

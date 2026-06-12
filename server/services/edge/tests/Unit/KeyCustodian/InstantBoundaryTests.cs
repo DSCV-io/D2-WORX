@@ -64,6 +64,7 @@ public sealed class InstantBoundaryTests
             because: "soak is exactly elapsed at MinValue + 2*soak");
     }
 
+    // long test name — cannot shorten without losing meaning
     [Fact]
     public void Activate_CreatedAtMinValuePlusSoakMinus1Ns_NowAtMinValuePlusSoak_FailsSoakNotElapsed()
     {

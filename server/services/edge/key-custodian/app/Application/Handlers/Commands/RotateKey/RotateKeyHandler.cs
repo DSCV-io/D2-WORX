@@ -29,7 +29,7 @@ using IClock = D2.Shared.Time.IClock;
 
 /// <summary>
 /// Atomically rotates a domain's active incumbent to its soaked pending
-/// successor (gate D-2).
+/// successor.
 /// </summary>
 /// <remarks>
 /// Validates the domain at the top, loads the tracked active incumbent + the
@@ -37,7 +37,7 @@ using IClock = D2.Shared.Time.IClock;
 /// rotates the incumbent to retiring AND activates the successor in ONE
 /// <see cref="IKeyCustodianDbContext.SaveChangesAsync"/> (no gap with no active
 /// signing key), then announces the rotation. A post-commit announce failure is
-/// logged but does not fail the handler (D-4).
+/// logged but does not fail the handler.
 /// </remarks>
 public sealed class RotateKeyHandler(
     HandlerContext<RotateKeyHandler> ctx,
@@ -137,7 +137,7 @@ public sealed class RotateKeyHandler(
         KeyCustodianLog.RotationCompleted(
             Context.Logger, domain.Value, incumbent.Kid.Value, activated.Kid.Value);
 
-        // D-4: announce after the durable commit; a failure is logged, not fatal.
+        // Post-commit announce: after the durable commit; a failure is logged, not fatal.
         var announceResult = await announcer
             .AnnounceAsync(domain, activated.Kid, KeyStatus.Active, urgent: false, ct)
             .ConfigureAwait(false);

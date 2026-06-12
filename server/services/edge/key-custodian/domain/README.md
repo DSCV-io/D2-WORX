@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/services/edge/key-custodian/`](../README.md)
 
-The pure domain layer of the KeyCustodian. Models the lifecycle of a managed encryption key as an immutable sum-type state machine, plus the pure no-IO rules over it (key generation, smoke testing, kid minting, JWK projection) — no EF Core, no DI, no I/O. BCL crypto primitives (`System.Security.Cryptography`) are used inside the `Rules/` generators and verifiers; key material is root-wrapped before it ever leaves the App layer.
+For engineers working inside the KeyCustodian module or any layer that calls into domain entities and rules. The pure domain layer of the KeyCustodian. Models the lifecycle of a managed encryption key as an immutable sum-type state machine, plus the pure no-IO rules over it (key generation, smoke testing, kid minting, JWK projection) — no EF Core, no DI, no I/O. BCL crypto primitives (`System.Security.Cryptography`) are used inside the `Rules/` generators and verifiers; key material is root-wrapped before it ever leaves the App layer.
 
 ---
 
@@ -24,13 +24,13 @@ Each sealed type overrides `KeyStatus Status { get; }` with a compile-time const
 
 | Type              | Transition methods                                                              | Notes                                                      |
 | ----------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `PendingKey`      | `Activate(SmokeProof, RotationPolicy, IClock) → D2Result<ActiveKey>`           | Guarded — soak window + proof type; `Compromise(...)`.     |
-| `ActiveKey`       | `Rotate(PendingKey successor, IClock) → (RetiringKey, PendingKey)`             | Unguarded — any active key may be rotated; `Compromise(...)`. |
-| `RetiringKey`     | `Retire(RotationPolicy, IClock) → D2Result<RetiredKey>`                        | Guarded — grace window elapsed; `Compromise(...)`.          |
+| `PendingKey`      | `Activate(SmokeProof?, RotationPolicy?, IClock?) → D2Result<ActiveKey>`       | Guarded — soak window + proof type; null args → `KEYCUSTODIAN_PRECONDITION_VIOLATED`; `Compromise(...)`. |
+| `ActiveKey`       | `Rotate(PendingKey? successor, IClock?) → D2Result<(RetiringKey, PendingKey)>`| Guarded — null args or domain/type mismatch → `KEYCUSTODIAN_PRECONDITION_VIOLATED`; `Compromise(...)`. |
+| `RetiringKey`     | `Retire(RotationPolicy?, IClock?) → D2Result<RetiredKey>`                     | Guarded — grace window elapsed; null args → `KEYCUSTODIAN_PRECONDITION_VIOLATED`; `Compromise(...)`. |
 | `RetiredKey`      | _(none)_                                                                        | Terminal.                                                  |
 | `CompromisedKey`  | _(none)_                                                                        | Terminal.                                                  |
 
-Guarded transitions return `D2Result<TNext>` with a `KeyCustodianFailures<T>.*` factory on rejection. Unguarded transitions return the next state directly.
+All transition methods return `D2Result<TNext>`; null-argument guards return `KEYCUSTODIAN_PRECONDITION_VIOLATED`, and lifecycle guards return a specific validation-failure code on rejection.
 
 ---
 
@@ -73,28 +73,28 @@ domain/
 
 ## Value objects
 
-| VO                     | Smart constructor                                      | Notes                                                                                                  |
-| ---------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| `Kid`                  | `Create(string?) → D2Result<Kid>`                      | JWKS-safe charset `[A-Za-z0-9_-]`, max 64 chars. `FromTrusted(string)` for rehydration.               |
-| `KeyDomain`            | `Create(string?) → D2Result<KeyDomain>`                | Must be a member of the static catalog (EncryptionDomains minus `plaintext` + 3 KC-only domains).     |
-| `KeyMaterialEncrypted` | `FromTrusted(ReadOnlyMemory<byte>)`                    | Non-empty root-wrapped ciphertext. `ToString` / `PrintMembers` emit a redaction sentinel.             |
-| `PublicKeyMaterial`    | `FromTrusted(ReadOnlyMemory<byte>)`                    | Non-empty unencrypted public-key bytes (RSA SPKI). Not secret — may appear in logs.                   |
-| `RotationPolicy`       | `Create(Duration, Duration, Duration) → D2Result<RotationPolicy>` | Validates cadence > grace + smoke-soak; all durations positive.                         |
-| `SmokeProof`           | `ForPassedSmokeTest(KeyType, IClock) → SmokeProof`     | Construction gated: existence IS the evidence the smoke test passed. Carries `VerifiedType`.           |
-| `GeneratedKeyMaterial` | `new(byte[] plaintext, byte[]? publicSpki)`            | Short-lived carrier for freshly-generated material; `Zero()` wipes the plaintext after root-wrapping.  |
-| `Jwk`                  | `new(string kid, string n, string e)`                  | RFC 7517 public JWK (`kty`/`use`/`alg` fixed to RSA/sig/RS256). The return shape of `JwkProjection`.   |
+| VO                     | Smart constructor                                                   | Notes                                                                                                  |
+| ---------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `Kid`                  | `Create(string?) → D2Result<Kid>`                                   | JWKS-safe charset `[A-Za-z0-9_-]`, max 64 chars. `FromTrusted(string)` for rehydration.               |
+| `KeyDomain`            | `Create(string?) → D2Result<KeyDomain>`                             | Must be a member of the static catalog (EncryptionDomains minus `plaintext` + 3 KC-only domains).     |
+| `KeyMaterialEncrypted` | `FromTrusted(ReadOnlyMemory<byte>)`                                 | Non-empty root-wrapped ciphertext. `ToString` / `PrintMembers` emit a redaction sentinel.             |
+| `PublicKeyMaterial`    | `FromTrusted(ReadOnlyMemory<byte>)`                                 | Non-empty unencrypted public-key bytes (RSA SPKI). Not secret — may appear in logs.                   |
+| `RotationPolicy`       | `Create(Duration, Duration, Duration) → D2Result<RotationPolicy>`   | Validates cadence ≥ grace + smoke-soak; all durations positive.                         |
+| `SmokeProof`           | `ForPassedSmokeTest(KeyType, IClock?) → D2Result<SmokeProof>`       | Construction gated: existence IS the evidence the smoke test passed. Carries `VerifiedType`.           |
+| `GeneratedKeyMaterial` | `new(byte[] plaintext, byte[]? publicSpki)`                         | Short-lived carrier for freshly-generated material; `Zero()` wipes the plaintext after root-wrapping.  |
+| `Jwk`                  | `new(string kid, string n, string e)`                               | RFC 7517 public JWK (`kty`/`use`/`alg` fixed to RSA/sig/RS256). The return shape of `JwkProjection`.   |
 
 ---
 
 ## Rules (pure, no-IO behavior over the model)
 
-| Rule              | Signature                                                              | Notes                                                                                          |
-| ----------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `KeyGeneration`   | `Generate(KeyType, int rsaModulusBits, int secretLengthBytes) → GeneratedKeyMaterial` | One static dispatcher over `KeyType`; sizing tunables are method parameters (no `IOptions`). The unreachable `default` arm throws to preserve the unknown-type precondition. |
-| `SmokeTesting`    | `Verify(KeyType, ReadOnlyMemory<byte>, ReadOnlyMemory<byte>?) → D2Result` | Per-type round-trip probe (RSA sign/verify, AES-GCM, HMAC). Never throws — corrupt material maps to `KEYCUSTODIAN_SMOKE_TEST_FAILED`. |
-| `KidMinting`      | `Mint() → string`                                                     | 16 random bytes → unpadded base64url; guaranteed to pass `Kid.Create`.                          |
-| `JwkProjection`   | `ToJwk(string kid, ReadOnlySpan<byte> publicSpki) → Jwk`              | Imports the SPKI to recover modulus/exponent and base64url-encodes them per RFC 7518.          |
-| `KeySummary`      | `From(EncryptionKey) → KeySummary`                                    | Non-sensitive projection (kid/domain/type/status/createdAt). The shared output of the generate / activate / retire commands. |
+| Rule              | Signature                                                                                         | Notes                                                                                          |
+| ----------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `KeyGeneration`   | `Generate(KeyType, int rsaModulusBits, int secretLengthBytes) → D2Result<GeneratedKeyMaterial>`   | One static dispatcher over `KeyType`; sizing tunables are method parameters (no `IOptions`). An unrecognized `KeyType` returns a flagged `KEYCUSTODIAN_PRECONDITION_VIOLATED` (never throws). |
+| `SmokeTesting`    | `Verify(KeyType, ReadOnlyMemory<byte>, ReadOnlyMemory<byte>?) → D2Result`                         | Per-type round-trip probe (RSA sign/verify, AES-GCM, HMAC). Never throws — corrupt material maps to `KEYCUSTODIAN_SMOKE_TEST_FAILED`. |
+| `KidMinting`      | `Mint() → string`                                                                                 | 16 random bytes → unpadded base64url; guaranteed to pass `Kid.Create`.                          |
+| `JwkProjection`   | `ToJwk(string kid, ReadOnlySpan<byte> publicSpki) → Jwk`                                          | Imports the SPKI to recover modulus/exponent and base64url-encodes them per RFC 7518.          |
+| `KeySummary`      | `From(EncryptionKey) → KeySummary`                                                                | Non-sensitive projection (kid/domain/type/status/createdAt). The shared output of the generate / activate / retire commands. |
 
 Rules hold no DI, no `IOptions`, no logger, and no clock-as-dependency (`IClock` is a permitted method parameter). A tunable is a parameter the App handler passes in, not configuration the rule reads.
 
@@ -106,8 +106,8 @@ The `error-codes-source-gen/` sibling project emits three files into `Generated/
 
 | File                              | Content                                                                     |
 | --------------------------------- | --------------------------------------------------------------------------- |
-| `KeyCustodianErrorCodes.g.cs`     | 7 `const string` error-code constants + `AllCodes` + `GetHttpStatus`        |
-| `KeyCustodianFailures.g.cs`       | 7 `static D2Result FactoryName(...)` semantic factory methods                |
+| `KeyCustodianErrorCodes.g.cs`     | 12 `const string` error-code constants + `AllCodes` + `GetHttpStatus`        |
+| `KeyCustodianFailures.g.cs`       | 12 `static D2Result FactoryName(...)` semantic factory methods                |
 | `KeyCustodianFailures.Generic.g.cs` | The `KeyCustodianFailures<T>` typed twin                                  |
 
 All transition methods and VO smart constructors use the generated `KeyCustodianFailures<T>.*` factories — never raw `D2Result.ValidationFailed(...)` with hand-written codes. See [`error-codes-source-gen/README.md`](../error-codes-source-gen/README.md).
@@ -116,6 +116,20 @@ All transition methods and VO smart constructors use the generated `KeyCustodian
 
 ## Dependencies
 
-`D2.Shared.Result`, `D2.Shared.Utilities`, `D2.Shared.Time` (NodaTime `IClock` + `Instant`), `D2.Shared.Encryption` (the `EncryptionDomains` catalog consumed by `KeyDomain`'s static catalog builder), `D2.Shared.I18n` (the generated `TK.*` keys), and the BCL `System.Security.Cryptography` (used by the `Rules/` generators + verifiers).
+`D2.Shared.Result`, `D2.Shared.Utilities`, `D2.Shared.Time` (NodaTime `IClock` + `Instant`), `D2.Shared.Encryption` (the `EncryptionDomains` catalog consumed by `KeyDomain`'s static catalog builder), `D2.Shared.I18n` (the generated `TK.*` keys — injected via the Tier-1 global using in `server/services/Directory.Build.targets`; not a direct `<ProjectReference>`), and the BCL `System.Security.Cryptography` (used by the `Rules/` generators + verifiers).
 
 Zero EF Core, zero DI, zero I/O.
+
+---
+
+## Telemetry
+
+N/A — pure-domain library; no OTel instruments, no DI, no meters or tracers.
+
+## Configuration
+
+N/A — pure-domain library; sizing tunables are method parameters passed by the App layer, not bound configuration.
+
+## Usage
+
+N/A — domain entities and rules are consumed directly by the App layer handlers; there is no standalone usage entry point.

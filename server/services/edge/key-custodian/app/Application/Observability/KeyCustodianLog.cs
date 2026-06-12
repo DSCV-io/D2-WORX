@@ -29,6 +29,7 @@ internal static partial class KeyCustodianLog
     /// <param name="domain">The key domain whose announcement failed.</param>
     /// <param name="kid">The kid that was announced.</param>
     /// <param name="errorCode">The error code carried by the failed announce result.</param>
+    // long log template — cannot wrap
     [LoggerMessage(
         EventId = 9500,
         Level = LogLevel.Error,

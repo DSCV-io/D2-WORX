@@ -17,7 +17,7 @@ using NodaTime;
 /// </summary>
 public sealed class EncryptionKeyAuditTests
 {
-    private static readonly Kid s_kid = Kid.FromTrusted("test-kid-001");
+    private static readonly Kid sr_kid = Kid.FromTrusted("test-kid-001");
 
     // -----------------------------------------------------------------------
     // Record — happy path
@@ -30,7 +30,7 @@ public sealed class EncryptionKeyAuditTests
         var clock = new TestClock(instant);
 
         var audit = EncryptionKeyAudit.Record(
-            s_kid,
+            sr_kid,
             KeyAuditAction.Generated,
             KeyStatus.Pending,
             clock);
@@ -44,13 +44,13 @@ public sealed class EncryptionKeyAuditTests
         var clock = new TestClock(Instant.FromUtc(2026, 6, 1, 0, 0, 0));
 
         var audit = EncryptionKeyAudit.Record(
-            s_kid,
+            sr_kid,
             KeyAuditAction.Activated,
             KeyStatus.Active,
             clock,
             "operator-initiated");
 
-        audit.Kid.Should().Be(s_kid);
+        audit.Kid.Should().Be(sr_kid);
         audit.Action.Should().Be(KeyAuditAction.Activated);
         audit.ResultingStatus.Should().Be(KeyStatus.Active);
         audit.Detail.Should().Be("operator-initiated");
@@ -61,7 +61,7 @@ public sealed class EncryptionKeyAuditTests
     {
         var clock = new TestClock(Instant.FromUtc(2026, 6, 1, 0, 0, 0));
         var audit = EncryptionKeyAudit.Record(
-            s_kid, KeyAuditAction.Retired, KeyStatus.Retired, clock);
+            sr_kid, KeyAuditAction.Retired, KeyStatus.Retired, clock);
         audit.Detail.Should().BeNull();
     }
 
@@ -82,7 +82,7 @@ public sealed class EncryptionKeyAuditTests
     public void Record_NullClock_ThrowsArgumentNullException()
     {
         var act = () => EncryptionKeyAudit.Record(
-            s_kid, KeyAuditAction.Generated, KeyStatus.Pending, null!);
+            sr_kid, KeyAuditAction.Generated, KeyStatus.Pending, null!);
         act.Should().Throw<ArgumentNullException>();
     }
 

@@ -212,7 +212,7 @@ Domain references shared primitives only (NO EF / Options / DI / logging / vendo
 
 **Commands vs Queries — the binary side-effect rule.** Category is determined SOLELY by whether the op mutates persistent/shared state (DB write / distributed-cache write / external write / message publish). Side effect → `Commands/`; none → `Queries/`. **The verb is irrelevant** — a `Find…`/`Get…` op that writes is a `Command`. No "Complex" tier. Local/in-memory caching does NOT make a Query a Command.
 
-**Concern folders + mandatory vendor subfolders.** Capability-noun concern folders (`Persistence`, `Messaging`, `Email`, `Secrets`, …); every `infra/` concern carries a tech/vendor/protocol subfolder EVEN for a sole impl (`infra/Persistence/Postgres/`, `infra/Email/Resend/`). The generic `Providers/` wrapper is dead. Namespaces keep the `.App`/`.Infra` layer segment verbatim.
+**Concern folders + mandatory vendor subfolders.** Capability-noun concern folders (`Persistence`, `Messaging`, `Email`, `Vault`, …); every `infra/` concern carries a tech/vendor/protocol subfolder EVEN for a sole impl (`infra/Persistence/Postgres/`, `infra/Email/Resend/`). The generic `Providers/` wrapper is dead. Namespaces keep the `.App`/`.Infra` layer segment verbatim.
 
 **Mappers — the uppermost-node rule (one home per surface).** Transport (proto/REST ↔ `<Op>Input`/`<Op>Output`) → `api/Mappers/`; persistence (record ↔ aggregate) → `app/Infrastructure/Persistence/`; provider-SDK ↔ domain → `infra/<Concern>/<Vendor>/`; messaging-wire ↔ domain → `infra/Messaging/<Broker>/`; primitives → domain VO `Create` factories. All pure C# 14 extension members.
 
@@ -252,6 +252,8 @@ Options pattern, Caching marker interfaces (`ILocalCache` / `IDistributedCache` 
 Auth (self-rolled .NET module within Edge, RFC 8693 + 6749 §4.4, JWKS at OIDC-canonical path), JWT (RS256, 15min expiry, `d2_`-prefixed snake_case custom claims), KeyCustodian (lifecycle of all long-lived secrets, state machine + overlap rotation), SvelteKit BFF (pure SSR, browser → Edge direct for auth mutations, `@d2/headers` route guards), sync gRPC / async RabbitMQ split (sensitive payloads encrypted via `D2.Shared.Encryption`), notifications via D2.Courier only, sessions 3-tier (cookie cache 5min → Redis → PostgreSQL dual-write), DB topology (one PG server, per-domain DBs, PG advisory-lock migration safety), object storage (SeaweedFS for user files, MinIO for LGTM blocks), production deployment (eventually Swarm + Portainer; pre-launch Compose on VPS) — see [docs/PATTERNS.md](docs/PATTERNS.md) + [docs/v2/V2.md](docs/v2/V2.md).
 
 **Why these specifics** (constraints, not preferences): **RS256** (not HS256 — no shared secrets across service boundaries; not EdDSA — JWKS interop); **15min JWT expiry** (refresh-token rotation forces re-anchoring); **snake_case custom claims with `d2_` prefix** (the `:` punctuation in OAuth scope strings collides with camelCase JSON-path conventions); **3-tier sessions** (cookie cache eliminates Redis hop for short bursts; Redis is hot path; PG is durable backstop).
+
+_Canonical form (full service-structure standard with rationale + carve-outs): [ADR-0020](docs/adrs/0020-service-project-structure.md) + [PATTERNS.md §service-project-structure](docs/PATTERNS.md#service-project-structure). Update all three in lockstep when any changes (per §11.32 KEEP-doc duplication discipline)._
 
 ---
 

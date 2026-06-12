@@ -25,7 +25,7 @@ public sealed class GenerateKeyTests
     public async Task Generate_Secret_Cookie_CreatesPendingRowAndAudit()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var clock = new TestClock(KcAppTestKit.BaseInstant);
+        var clock = new TestClock(KcAppTestKit.SR_BaseInstant);
         var handler = Build(db, clock);
 
         var result = await handler.HandleAsync(
@@ -50,7 +50,7 @@ public sealed class GenerateKeyTests
     public async Task Generate_RsaSigning_PersistsPublicMaterial()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var handler = Build(db, new TestClock(KcAppTestKit.BaseInstant));
+        var handler = Build(db, new TestClock(KcAppTestKit.SR_BaseInstant));
 
         var result = await handler.HandleAsync(
             new GenerateKeyInput(KeyDomain.JWKS_SIGNING, KeyType.RsaSigning));
@@ -64,7 +64,7 @@ public sealed class GenerateKeyTests
     {
         // AES-256-GCM is symmetric — no public key component should be persisted.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var handler = Build(db, new TestClock(KcAppTestKit.BaseInstant));
+        var handler = Build(db, new TestClock(KcAppTestKit.SR_BaseInstant));
 
         var result = await handler.HandleAsync(
             new GenerateKeyInput("audit", KeyType.AesPayload));
@@ -81,7 +81,7 @@ public sealed class GenerateKeyTests
     public async Task Generate_MintedKid_PassesKidCreate()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var handler = Build(db, new TestClock(KcAppTestKit.BaseInstant));
+        var handler = Build(db, new TestClock(KcAppTestKit.SR_BaseInstant));
 
         var result = await handler.HandleAsync(
             new GenerateKeyInput(KeyDomain.COOKIE, KeyType.Secret));
@@ -101,7 +101,7 @@ public sealed class GenerateKeyTests
     public async Task Generate_BadDomain_ReturnsUnknownKeyDomain_PersistsNothing(string? domain)
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var handler = Build(db, new TestClock(KcAppTestKit.BaseInstant));
+        var handler = Build(db, new TestClock(KcAppTestKit.SR_BaseInstant));
 
         var result = await handler.HandleAsync(new GenerateKeyInput(domain, KeyType.Secret));
 
@@ -119,7 +119,7 @@ public sealed class GenerateKeyTests
     public async Task Generate_SecondPendingForSameDomain_ReturnsPendingKeyAlreadyExists()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var clock = new TestClock(KcAppTestKit.BaseInstant);
+        var clock = new TestClock(KcAppTestKit.SR_BaseInstant);
         var handler = Build(db, clock);
 
         var first = await handler.HandleAsync(
@@ -138,7 +138,7 @@ public sealed class GenerateKeyTests
     public async Task Generate_PendingInDifferentDomain_DoesNotBlock()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var handler = Build(db, new TestClock(KcAppTestKit.BaseInstant));
+        var handler = Build(db, new TestClock(KcAppTestKit.SR_BaseInstant));
 
         await handler.HandleAsync(new GenerateKeyInput(KeyDomain.COOKIE, KeyType.Secret));
         var other = await handler.HandleAsync(

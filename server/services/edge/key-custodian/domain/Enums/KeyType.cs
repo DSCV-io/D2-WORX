@@ -18,12 +18,18 @@ namespace D2.Edge.KeyCustodian.Domain.Enums;
 /// </remarks>
 public enum KeyType
 {
-    /// <summary>RS256 asymmetric signing key — private material encrypted, public material stored plaintext for JWKS.</summary>
+    /// <summary>
+    /// RS256 asymmetric signing key — private material encrypted, public material stored
+    /// plaintext for JWKS.
+    /// </summary>
     RsaSigning,
 
     /// <summary>AES-256 payload encryption key — symmetric, no public component.</summary>
     AesPayload,
 
-    /// <summary>Opaque symmetric secret key (e.g. cookie-signing HMAC, client-secret material) — no public component.</summary>
+    /// <summary>
+    /// Opaque symmetric secret key (e.g. cookie-signing HMAC, client-secret material)
+    /// — no public component.
+    /// </summary>
     Secret,
 }

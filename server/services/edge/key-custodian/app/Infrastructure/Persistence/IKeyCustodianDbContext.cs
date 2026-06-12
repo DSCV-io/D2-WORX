@@ -28,7 +28,7 @@ public interface IKeyCustodianDbContext
     /// <summary>Gets the managed-key rows.</summary>
     DbSet<KeyRecord> Keys { get; }
 
-    /// <summary>Gets the append-only audit rows.</summary>
+    /// <summary>Gets the append-only audit records.</summary>
     DbSet<KeyAuditRecord> Audit { get; }
 
     /// <summary>

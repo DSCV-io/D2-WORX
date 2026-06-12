@@ -31,7 +31,7 @@ public sealed class GetRotationPlanTests
     public async Task Plan_EmptyStore_AllDomainsNeedBootstrap()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var result = await Build(db, new TestClock(KcAppTestKit.BaseInstant))
+        var result = await Build(db, new TestClock(KcAppTestKit.SR_BaseInstant))
             .HandleAsync(new GetRotationPlanInput());
 
         result.Success.Should().BeTrue();
@@ -42,7 +42,7 @@ public sealed class GetRotationPlanTests
     public async Task Plan_SoakedPendingNoIncumbent_DueToActivate()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         await KcAppTestKit.SeedKeyAsync(
             db, r_crypto, r_options, "cookie", KeyType.Secret, KeyStatus.Pending, created);
 
@@ -58,7 +58,7 @@ public sealed class GetRotationPlanTests
     public async Task Plan_ActiveCadenceElapsedWithSoakedPending_DueToRotate()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -82,7 +82,7 @@ public sealed class GetRotationPlanTests
     public async Task Plan_ActiveCadenceElapsedNoSuccessor_DueToGenerateSuccessor()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -104,7 +104,7 @@ public sealed class GetRotationPlanTests
     public async Task Plan_RetiringGraceElapsed_DueToRetire()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var retiringAt = created + Duration.FromHours(1);
         await KcAppTestKit.SeedKeyAsync(
             db,
@@ -132,7 +132,7 @@ public sealed class GetRotationPlanTests
     public async Task Plan_ActiveOneTickBeforeCadence_NotDueToRotateOrGenerate()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -155,7 +155,7 @@ public sealed class GetRotationPlanTests
     public async Task Plan_ActiveExactlyAtCadenceNoSuccessor_DueToGenerateSuccessor()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -177,7 +177,7 @@ public sealed class GetRotationPlanTests
     public async Task Plan_ClockBeforeCreatedAt_NoOverflowNoDueActions()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,

@@ -14,8 +14,8 @@ using D2.Edge.KeyCustodian.Domain.ValueObjects;
 /// Verifies that the PII/secret traps in the KeyCustodian domain are properly
 /// sealed.
 ///
-/// <b>Approach note (R3).</b> The test project references Domain, App, and
-/// Infra via project references, but none of those transitively pull in
+/// The test project references Domain, App, and Infra via project references,
+/// but none of those transitively pull in
 /// <c>D2.Shared.Logging.Destructuring</c> (which lives in a logging lib not
 /// referenced by the key-custodian stack). The policy-based redaction test
 /// is therefore not possible here without adding an out-of-scope reference.

@@ -15,7 +15,7 @@ using D2.Edge.KeyCustodian.Domain.ValueObjects;
 /// </summary>
 public sealed class PublicKeyMaterialTests
 {
-    private static readonly byte[] s_validBytes = [0xAA, 0xBB, 0xCC, 0xDD];
+    private static readonly byte[] sr_validBytes = [0xAA, 0xBB, 0xCC, 0xDD];
 
     // -----------------------------------------------------------------------
     // FromTrusted — valid
@@ -24,8 +24,8 @@ public sealed class PublicKeyMaterialTests
     [Fact]
     public void FromTrusted_NonEmptyBytes_RoundTrips()
     {
-        var pub = PublicKeyMaterial.FromTrusted(s_validBytes);
-        pub.Bytes.ToArray().Should().BeEquivalentTo(s_validBytes);
+        var pub = PublicKeyMaterial.FromTrusted(sr_validBytes);
+        pub.Bytes.ToArray().Should().BeEquivalentTo(sr_validBytes);
     }
 
     // -----------------------------------------------------------------------
@@ -53,7 +53,7 @@ public sealed class PublicKeyMaterialTests
     [Fact]
     public void ToString_ContainsByteCount()
     {
-        var pub = PublicKeyMaterial.FromTrusted(s_validBytes);
+        var pub = PublicKeyMaterial.FromTrusted(sr_validBytes);
         var str = pub.ToString();
         str.Should().Contain("4");
     }
@@ -95,14 +95,14 @@ public sealed class PublicKeyMaterialTests
     [Fact]
     public void Equals_Null_ReturnsFalse()
     {
-        var a = PublicKeyMaterial.FromTrusted(s_validBytes);
+        var a = PublicKeyMaterial.FromTrusted(sr_validBytes);
         a.Equals(null).Should().BeFalse();
     }
 
     [Fact]
     public void Equals_ReferenceEqual_ReturnsTrue()
     {
-        var a = PublicKeyMaterial.FromTrusted(s_validBytes);
+        var a = PublicKeyMaterial.FromTrusted(sr_validBytes);
         a.Equals(a).Should().BeTrue();
     }
 }

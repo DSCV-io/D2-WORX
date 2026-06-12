@@ -6,16 +6,19 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
+using System.Diagnostics.Metrics;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
 using D2.Edge.KeyCustodian.App.Application.Observability;
 using D2.Edge.KeyCustodian.App.Infrastructure.Configuration;
 using D2.Edge.KeyCustodian.Domain.Enums;
 using D2.Edge.KeyCustodian.Domain.ValueObjects;
+using D2.Edge.Tests.Unit.KeyCustodian.App.Fixtures;
 using D2.Shared.Encryption;
 using D2.Shared.Handler.Abstractions;
 using D2.Shared.Time;
@@ -25,10 +28,10 @@ using NodaTime;
 /// <summary>
 /// Tests covering domain-level observability and option-validation markers:
 /// <list type="bullet">
-///   <item>S-3: <see cref="CompromiseKeyHandler.DefaultOptions"/> sets <c>LogInput = false</c>
+///   <item><see cref="CompromiseKeyHandler.DefaultOptions"/> sets <c>LogInput = false</c>
 ///     (fail-secure PII-in-logs defense-in-depth).</item>
-///   <item>O-1 metrics counter increments per handler branch.</item>
-///   <item>O-1 fail-secure: <see cref="GetJwksHandler"/> returns 503 on empty
+///   <item>Metrics counter increments per handler branch.</item>
+///   <item>Fail-secure: <see cref="GetJwksHandler"/> returns 503 on empty
 ///     signing-key store.</item>
 ///   <item>Option-validation: <see cref="KeyCustodianOptions"/> and
 ///     <see cref="RotationPolicyOptions"/> carry DataAnnotations markers.</item>
@@ -40,7 +43,7 @@ public sealed class KeyCustodianMetricsTests
     private readonly IPayloadCrypto r_crypto = KcAppTestKit.BuildTestRootCrypto();
 
     // -----------------------------------------------------------------------
-    // S-3 — CompromiseKey.DefaultOptions has LogInput = false
+    // CompromiseKey.DefaultOptions has LogInput = false
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -53,9 +56,9 @@ public sealed class KeyCustodianMetricsTests
             KcAppTestKit.NullClassifier(),
             db,
             Options.Create(r_options),
-            new KcAppTestKit.RecordingAnnouncer(),
+            new RecordingAnnouncer(),
             r_crypto,
-            new TestClock(KcAppTestKit.BaseInstant));
+            new TestClock(KcAppTestKit.SR_BaseInstant));
 
         // Access DefaultOptions via the protected property through reflection.
         var prop = typeof(CompromiseKeyHandler).GetProperty(
@@ -72,7 +75,7 @@ public sealed class KeyCustodianMetricsTests
     }
 
     // -----------------------------------------------------------------------
-    // O-1 — GetJwks empty store → 503 ServiceUnavailable (fail-secure)
+    // GetJwks empty store → 503 ServiceUnavailable (fail-secure)
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -91,7 +94,7 @@ public sealed class KeyCustodianMetricsTests
     public async Task GetJwks_NonEmptySigningKeyStore_ReturnsOk()
     {
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -110,7 +113,7 @@ public sealed class KeyCustodianMetricsTests
     }
 
     // -----------------------------------------------------------------------
-    // O-1 — GenerateKey increments key_generations_total after commit
+    // GenerateKey increments key_generations_total after commit
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -124,7 +127,7 @@ public sealed class KeyCustodianMetricsTests
             db,
             KcAppTestKit.BuildOptionsAccessor(),
             r_crypto,
-            new TestClock(KcAppTestKit.BaseInstant));
+            new TestClock(KcAppTestKit.SR_BaseInstant));
 
         var result = await handler.HandleAsync(
             new GenerateKeyInput(KeyDomain.COOKIE, KeyType.Secret));
@@ -134,7 +137,7 @@ public sealed class KeyCustodianMetricsTests
     }
 
     // -----------------------------------------------------------------------
-    // O-1 — CompromiseKey increments compromises_total after commit
+    // CompromiseKey increments compromises_total after commit
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -144,7 +147,7 @@ public sealed class KeyCustodianMetricsTests
         // Counter-increment correctness is validated by the existing behavior tests in
         // CompromiseKeyTests; this test confirms the metric code path doesn't throw.
         await using var db = KeyCustodianTestDbContext.CreateEmpty();
-        var created = KcAppTestKit.BaseInstant;
+        var created = KcAppTestKit.SR_BaseInstant;
         var kid = await KcAppTestKit.SeedKeyAsync(
             db,
             r_crypto,
@@ -160,7 +163,7 @@ public sealed class KeyCustodianMetricsTests
             KcAppTestKit.NullClassifier(),
             db,
             Options.Create(r_options),
-            new KcAppTestKit.RecordingAnnouncer(),
+            new RecordingAnnouncer(),
             r_crypto,
             new TestClock(created + Duration.FromHours(1)))
             .HandleAsync(new CompromiseKeyInput { Kid = kid, Reason = "audit-test" });
@@ -169,7 +172,7 @@ public sealed class KeyCustodianMetricsTests
     }
 
     // -----------------------------------------------------------------------
-    // O-1 — Counter names pin the operational contract (dashboards / alert rules)
+    // Counter names pin the operational contract (dashboards / alert rules)
     // -----------------------------------------------------------------------
 
     [Fact]
@@ -312,9 +315,170 @@ public sealed class KeyCustodianMetricsTests
     }
 
     // -----------------------------------------------------------------------
+    // announce_failures_total — MeterListener emission pin (urgent tag)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task CompromiseKey_AnnounceFails_EmitsAnnounceFailureWithUrgentTrue()
+    {
+        // Pin: SR_AnnounceFailuresTotal.Add(1, ("urgent","true")) fires on the
+        // CompromiseKey announce-fail path (urgent compromise announce).
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var created = KcAppTestKit.SR_BaseInstant;
+        var kid = await KcAppTestKit.SeedKeyAsync(
+            db,
+            r_crypto,
+            r_options,
+            "cookie",
+            KeyType.Secret,
+            KeyStatus.Active,
+            created,
+            activatedAt: created);
+
+        var measurements = new System.Collections.Generic.List<(long Value, string? UrgentTag)>();
+        var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, meterListener) =>
+        {
+            if (instrument.Meter.Name == KeyCustodianMetrics.METER_NAME
+                && instrument.Name == "d2.keycustodian.announce_failures")
+                meterListener.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<long>((_, value, tags, _) =>
+        {
+            string? urgentTag = null;
+            foreach (var tag in tags)
+            {
+                if (tag.Key == "urgent")
+                    urgentTag = tag.Value?.ToString();
+            }
+
+            measurements.Add((value, urgentTag));
+        });
+        listener.Start();
+
+        var failing = new RecordingAnnouncer(D2Result.ServiceUnavailable());
+        D2Result<CompromiseKeyOutput?> result;
+        try
+        {
+            result = await new CompromiseKeyHandler(
+                KcAppTestKit.Context<CompromiseKeyHandler>(),
+                KcAppTestKit.NullClassifier(),
+                db,
+                Options.Create(r_options),
+                failing,
+                r_crypto,
+                new TestClock(created + Duration.FromHours(1)))
+                .HandleAsync(new CompromiseKeyInput { Kid = kid, Reason = "test-compromise" });
+        }
+        finally
+        {
+            // Stop collecting before assertions so measurements is stable.
+            listener.Dispose();
+        }
+
+        result.Success.Should().BeTrue(
+            "the announce failure is non-fatal; the durable commit already succeeded");
+
+        // Counters are global; parallel tests may add measurements with other tags.
+        // Pin that at least one measurement with urgent="true" was emitted.
+        measurements.Should().Contain(
+            m => m.Value == 1 && m.UrgentTag == "true",
+            because:
+                "CompromiseKey must emit announce_failures_total with urgent=true "
+                + "on the compromise announce-fail path (session-invalidation SLO)");
+    }
+
+    [Fact]
+    public async Task RotateKey_AnnounceFails_EmitsAnnounceFailureWithUrgentFalse()
+    {
+        // Pin: SR_AnnounceFailuresTotal.Add(1, ("urgent","false")) fires on the
+        // RotateKey announce-fail path (routine non-urgent rotation announce).
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var created = KcAppTestKit.SR_BaseInstant;
+        var activeKid = await KcAppTestKit.SeedKeyAsync(
+            db,
+            r_crypto,
+            r_options,
+            "jwks-signing",
+            KeyType.RsaSigning,
+            KeyStatus.Active,
+            created,
+            activatedAt: created);
+        await KcAppTestKit.SeedKeyAsync(
+            db,
+            r_crypto,
+            r_options,
+            "jwks-signing",
+            KeyType.RsaSigning,
+            KeyStatus.Pending,
+            created);
+
+        var measurements = new System.Collections.Generic.List<(long Value, string? UrgentTag)>();
+        var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, meterListener) =>
+        {
+            if (instrument.Meter.Name == KeyCustodianMetrics.METER_NAME
+                && instrument.Name == "d2.keycustodian.announce_failures")
+                meterListener.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<long>((_, value, tags, _) =>
+        {
+            string? urgentTag = null;
+            foreach (var tag in tags)
+            {
+                if (tag.Key == "urgent")
+                    urgentTag = tag.Value?.ToString();
+            }
+
+            measurements.Add((value, urgentTag));
+        });
+        listener.Start();
+
+        // Soak = 1h; now is 2h after creation → soak elapsed.
+        var clock = new TestClock(created + Duration.FromHours(2));
+        var failing = new RecordingAnnouncer(D2Result.ServiceUnavailable());
+        D2Result<RotateKeyOutput?> result;
+        try
+        {
+            result = await BuildRotateKey(db, clock, failing)
+                .HandleAsync(new RotateKeyInput("jwks-signing"));
+        }
+        finally
+        {
+            // Stop collecting before assertions so measurements is stable.
+            listener.Dispose();
+        }
+
+        result.Success.Should().BeTrue(
+            "the announce failure is non-fatal; the rotation commit already succeeded");
+
+        // Counters are global; parallel tests may add measurements with other tags.
+        // Pin that at least one measurement with urgent="false" was emitted.
+        measurements.Should().Contain(
+            m => m.Value == 1 && m.UrgentTag == "false",
+            because: "RotateKey must emit announce_failures_total with urgent=false "
+            + "on the rotation announce-fail path (routine non-urgent rotation)");
+
+        _ = activeKid; // used indirectly: the seeded active key is the rotation incumbent
+    }
+
+    // -----------------------------------------------------------------------
     // Helper builders
     // -----------------------------------------------------------------------
 
     private static GetJwksHandler BuildGetJwks(KeyCustodianTestDbContext db) =>
         new(KcAppTestKit.Context<GetJwksHandler>(), db);
+
+    private RotateKeyHandler BuildRotateKey(
+        KeyCustodianTestDbContext db,
+        TestClock clock,
+        RecordingAnnouncer announcer) =>
+        new(
+            KcAppTestKit.Context<RotateKeyHandler>(),
+            KcAppTestKit.NullClassifier(),
+            db,
+            KcAppTestKit.BuildPolicyProvider(r_options),
+            announcer,
+            r_crypto,
+            clock);
 }
