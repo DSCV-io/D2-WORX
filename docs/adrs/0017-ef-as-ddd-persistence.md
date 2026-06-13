@@ -96,7 +96,7 @@ The Record + mapper + EF config + query extensions for a state-machine aggregate
 
 ### Convention shift (at SHIP, user-approved)
 
-The CLAUDE.md / rules.md / PATTERNS.md TLC table currently lists Repository as a first-class TLC. At SHIP:
+The rules.md / PATTERNS.md TLC table currently lists Repository as a first-class TLC. At SHIP:
 - Repository TLC is retired from new code; the table is updated to reflect that CQRS handlers use DbContext directly.
 - A new state-machine-persistence predicate (flat non-polymorphic Record + pure mapper + query extensions + no-repo + `xmin`; event-sourcing deviation; source-gen amortization) is added alongside §9.31/§9.32.
 - This change requires explicit user approval at SHIP because it affects a convention documented across multiple files.

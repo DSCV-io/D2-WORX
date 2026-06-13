@@ -7,6 +7,7 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
 using System.Diagnostics.Metrics;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 using D2.Edge.KeyCustodian.App.Application.Observability;
 using D2.Shared.Handler.Abstractions;
 
@@ -448,11 +449,200 @@ public sealed class KeyCustodianMetricsTests
     }
 
     // -----------------------------------------------------------------------
+    // empty_jwks_served — MeterListener emission-value pin
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task GetJwks_EmptySigningKeyStore_EmitsEmptyJwksServedCounterIncrement()
+    {
+        // Pin: SR_EmptyJwksServed.Add(1) fires on the empty-store path.
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+
+        var measurements = new System.Collections.Generic.List<long>();
+        var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, meterListener) =>
+        {
+            if (instrument.Meter.Name == KeyCustodianMetrics.METER_NAME
+                && instrument.Name == "d2.keycustodian.empty_jwks_served")
+                meterListener.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<long>((_, value, _, _) =>
+            measurements.Add(value));
+        listener.Start();
+
+        D2Result<GetJwksOutput?> result;
+        try
+        {
+            result = await BuildGetJwks(db).HandleAsync(new GetJwksInput());
+        }
+        finally
+        {
+            listener.Dispose();
+        }
+
+        result.IsServiceUnavailable.Should().BeTrue(
+            "an empty signing-key store triggers the fail-secure 503 path");
+
+        // Counters are global; parallel tests may contribute. Pin that at least
+        // one measurement of value 1 was emitted on this instrument.
+        measurements.Should().Contain(
+            1L,
+            because:
+                "GetJwks must emit empty_jwks_served with value 1 on the "
+                + "empty-store path (fail-secure counter for dashboards / SLO)");
+    }
+
+    // -----------------------------------------------------------------------
+    // smoke_test_failures — MeterListener emission-value pin (Activate + Rotate)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task ActivateKey_SmokeFailure_EmitsSmokeTestFailuresCounterIncrement()
+    {
+        // Pin: SR_SmokeTestFailuresTotal.Add(1) fires on the ActivateKey smoke-fail
+        // path. Setup mirrors ActivateKeyTests.Activate_SmokeFailure_LeavesKeyPending:
+        // valid private key + mismatched SPKI → smoke sign-then-verify-against-SPKI
+        // fails deterministically.
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var created = KcAppTestKit.SR_BaseInstant;
+
+        using var rsa = RSA.Create(2048);
+        using var mismatchedRsa = RSA.Create(2048);
+        var validPkcs8 = rsa.ExportPkcs8PrivateKey();
+        var spki = mismatchedRsa.ExportSubjectPublicKeyInfo();
+
+        var kid = await KcAppTestKit.SeedKeyWithCorruptMaterialAsync(
+            db,
+            r_crypto,
+            "jwks-signing",
+            KeyType.RsaSigning,
+            KeyStatus.Pending,
+            created,
+            validPkcs8,
+            spki);
+
+        var measurements = new System.Collections.Generic.List<long>();
+        var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, meterListener) =>
+        {
+            if (instrument.Meter.Name == KeyCustodianMetrics.METER_NAME
+                && instrument.Name == "d2.keycustodian.smoke_test_failures")
+                meterListener.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<long>((_, value, _, _) =>
+            measurements.Add(value));
+        listener.Start();
+
+        var clock = new TestClock(created + Duration.FromHours(1));
+        D2Result<KeySummary?> result;
+        try
+        {
+            result = await BuildActivateKey(db, clock)
+                .HandleAsync(new ActivateKeyInput(kid));
+        }
+        finally
+        {
+            listener.Dispose();
+        }
+
+        result.ErrorCode.Should().Be(
+            "KEYCUSTODIAN_SMOKE_TEST_FAILED",
+            "the mismatched SPKI deterministically fails the smoke probe");
+
+        measurements.Should().Contain(
+            1L,
+            because:
+                "ActivateKey must emit smoke_test_failures with value 1 when the "
+                + "smoke probe fails (operational signal for key-material corruption)");
+    }
+
+    [Fact]
+    public async Task RotateKey_SuccessorSmokeFailure_EmitsSmokeTestFailuresCounterIncrement()
+    {
+        // Pin: SR_SmokeTestFailuresTotal.Add(1) fires on the RotateKey successor
+        // smoke-fail path. Setup mirrors RotateKeyTests
+        // .Rotate_SuccessorSmokeFailure_LeavesNoPersistentChange: valid private key
+        // + mismatched SPKI → smoke probe fails deterministically.
+        await using var db = KeyCustodianTestDbContext.CreateEmpty();
+        var created = KcAppTestKit.SR_BaseInstant;
+
+        await KcAppTestKit.SeedKeyAsync(
+            db,
+            r_crypto,
+            r_options,
+            "jwks-signing",
+            KeyType.RsaSigning,
+            KeyStatus.Active,
+            created,
+            activatedAt: created);
+
+        using var rsa = RSA.Create(2048);
+        using var mismatchedRsa = RSA.Create(2048);
+        var validPkcs8 = rsa.ExportPkcs8PrivateKey();
+        var spki = mismatchedRsa.ExportSubjectPublicKeyInfo();
+
+        await KcAppTestKit.SeedKeyWithCorruptMaterialAsync(
+            db,
+            r_crypto,
+            "jwks-signing",
+            KeyType.RsaSigning,
+            KeyStatus.Pending,
+            created,
+            validPkcs8,
+            spki);
+
+        var measurements = new System.Collections.Generic.List<long>();
+        var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, meterListener) =>
+        {
+            if (instrument.Meter.Name == KeyCustodianMetrics.METER_NAME
+                && instrument.Name == "d2.keycustodian.smoke_test_failures")
+                meterListener.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<long>((_, value, _, _) =>
+            measurements.Add(value));
+        listener.Start();
+
+        // Soak = 1h; now is 2h after creation → soak elapsed.
+        var clock = new TestClock(created + Duration.FromHours(2));
+        D2Result<RotateKeyOutput?> result;
+        try
+        {
+            result = await BuildRotateKey(db, clock, new RecordingAnnouncer())
+                .HandleAsync(new RotateKeyInput("jwks-signing"));
+        }
+        finally
+        {
+            listener.Dispose();
+        }
+
+        result.ErrorCode.Should().Be(
+            "KEYCUSTODIAN_SMOKE_TEST_FAILED",
+            "the mismatched SPKI deterministically fails the smoke probe");
+
+        measurements.Should().Contain(
+            1L,
+            because:
+                "RotateKey must emit smoke_test_failures with value 1 when the "
+                + "successor smoke probe fails (operational signal for key-material "
+                + "corruption)");
+    }
+
+    // -----------------------------------------------------------------------
     // Helper builders
     // -----------------------------------------------------------------------
 
     private static GetJwksHandler BuildGetJwks(KeyCustodianTestDbContext db) =>
         new(KcAppTestKit.Context<GetJwksHandler>(), db);
+
+    private ActivateKeyHandler BuildActivateKey(KeyCustodianTestDbContext db, TestClock clock) =>
+        new(
+            KcAppTestKit.Context<ActivateKeyHandler>(),
+            KcAppTestKit.NullClassifier(),
+            db,
+            KcAppTestKit.BuildPolicyProvider(r_options),
+            r_crypto,
+            clock);
 
     private RotateKeyHandler BuildRotateKey(
         KeyCustodianTestDbContext db,
