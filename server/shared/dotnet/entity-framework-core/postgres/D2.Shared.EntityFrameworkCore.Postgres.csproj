@@ -1,0 +1,92 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Shared.EntityFrameworkCore.Postgres</RootNamespace>
+
+    <!-- Emit the SourceGen output (AdvisoryLocks.g.cs) to <project-dir>/Generated/.
+         The directory is tracked in git so PR reviewers see codegen diffs without a
+         local build. -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The SourceGen pipeline feeds the in-memory compiler with the same content
+      that lands on disk under Generated/. Without this Remove, the SDK-default
+      <Compile Include="**/*.cs" /> glob picks up the on-disk copy and the build
+      fails with duplicate-definition errors (CS0101 / CS0111).
+    -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)\**\*.cs" />
+  </ItemGroup>
+
+  <!--
+    PostgreSQL-specific EF Core startup machinery shared across every D2 service.
+    Ships: PgAdvisoryLock (session-scoped pg_advisory_lock / pg_try_advisory_lock
+    helper on a dedicated NpgsqlConnection, [MustDisposeResource]),
+    AdvisoryLockMigrator<TContext> (IHostedService: ensure-db + blocking lock +
+    MigrateAsync), DesignTimeDbContextFactoryBase<TContext> (design-time factory
+    base for module-within-host services that have no Sdk.Web startup project),
+    and NpgsqlContextDefaults (the canonical UseNpgsql defaults applier:
+    AddD2NodaTime + CommandTimeout + MigrationsAssembly, deliberately NO
+    EnableRetryOnFailure).
+
+    The AdvisoryLocks static class (the spec-driven lock-key registry) is emitted
+    into THIS assembly by D2.Shared.AdvisoryLocks.SourceGen when the assembly name
+    matches D2.Shared.EntityFrameworkCore.Postgres. Consumers reach lock keys as
+    AdvisoryLocks.KeycustodianDb.MIGRATOR etc. and pass them to PgAdvisoryLock.
+  -->
+
+  <ItemGroup>
+    <!-- Advisory-lock key registry — spec-driven source-gen. Emits AdvisoryLocks.g.cs
+         into this assembly only (single-target dispatch on assembly name). -->
+    <ProjectReference
+      Include="..\locks-source-gen\D2.Shared.AdvisoryLocks.SourceGen.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false" />
+    <!-- AdditionalFiles wiring: the spec is loaded by the generator above.
+         $(D2ContractsRoot) is set in server/Directory.Build.props so the path
+         never uses ../ walking. -->
+    <AdditionalFiles
+      Include="$(D2ContractsRoot)advisory-locks\advisory-locks.spec.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- D2.Shared.Time — AddD2NodaTime() lives in D2.Shared.Time.EfCore and is
+         folded into the NpgsqlContextDefaults applier. -->
+    <ProjectReference Include="..\..\time\D2.Shared.Time.csproj" />
+    <!-- D2.Shared.Utilities — ThrowIfFalsey / Falsey guards. -->
+    <ProjectReference Include="..\..\utilities\D2.Shared.Utilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Microsoft.EntityFrameworkCore — DbContext / Database.MigrateAsync /
+         IDesignTimeDbContextFactory design-time base. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <!-- Npgsql.EntityFrameworkCore.PostgreSQL — UseNpgsql + NpgsqlDbContextOptionsBuilder.
+         Pulls Npgsql transitively; listed explicitly per "declare what you use". -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <!-- Npgsql — raw NpgsqlConnection for the advisory lock + ensure-db
+         maintenance-connection logic. -->
+    <PackageReference Include="Npgsql" />
+    <!-- Microsoft.Extensions.DependencyInjection.Abstractions — IServiceProvider
+         scope creation in AdvisoryLockMigrator + DI helper extension. -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <!-- Microsoft.Extensions.Hosting.Abstractions — IHostedService on
+         AdvisoryLockMigrator. -->
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <!-- Microsoft.Extensions.Options — optional IOptions<> if callers use it;
+         CommandTimeout binding. -->
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <!-- Microsoft.Extensions.Logging.Abstractions — ILogger<> in migrator. -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <!-- JetBrains.Annotations — [MustDisposeResource] on PgAdvisoryLock. -->
+    <PackageReference Include="JetBrains.Annotations" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D2.Shared.Tests" />
+  </ItemGroup>
+</Project>

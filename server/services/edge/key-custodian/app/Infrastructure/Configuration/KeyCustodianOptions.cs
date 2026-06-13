@@ -36,11 +36,15 @@ public sealed class KeyCustodianOptions
 
     /// <summary>
     /// Gets the per-domain rotation-policy overrides, keyed by the domain's
-    /// normalized value (e.g. <c>"jwks-signing"</c>). A domain absent from this
-    /// map uses <see cref="Default"/>.
+    /// value (e.g. <c>"jwks-signing"</c>). A domain absent from this map uses
+    /// <see cref="Default"/>. The comparer is <c>OrdinalIgnoreCase</c> because
+    /// <c>IConfiguration</c>'s environment-variable provider uppercases keys on
+    /// Windows (<c>JWKS-SIGNING</c>) while domain values are lowercase
+    /// (<c>jwks-signing</c>). A case-sensitive comparer silently falls through to
+    /// <see cref="Default"/> on any Windows deployment.
     /// </summary>
     public Dictionary<string, RotationPolicyOptions> Policies { get; } =
-        new(StringComparer.Ordinal);
+        new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Gets or sets the RSA modulus size in bits for generated signing keys.

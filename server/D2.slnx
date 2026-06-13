@@ -38,6 +38,9 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/auth/error-codes-source-gen/">
     <Project Path="shared/dotnet/auth/error-codes-source-gen/D2.Shared.Auth.ErrorCodes.SourceGen.csproj" />
   </Folder>
+  <Folder Name="/shared/dotnet/auth/events/">
+    <Project Path="shared/dotnet/auth/events/D2.Shared.Auth.Events.csproj" />
+  </Folder>
   <Folder Name="/shared/dotnet/result/grpc-trailers-source-gen/">
     <Project Path="shared/dotnet/result/grpc-trailers-source-gen/D2.Shared.Grpc.Trailers.SourceGen.csproj" />
   </Folder>
@@ -209,8 +212,14 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/data-governance/entity-framework-core/">
     <Project Path="shared/dotnet/data-governance/entity-framework-core/D2.Shared.DataGovernance.EntityFrameworkCore.csproj" />
   </Folder>
-  <Folder Name="/shared/dotnet/entity-framework-core/">
-    <Project Path="shared/dotnet/entity-framework-core/D2.Shared.EntityFrameworkCore.csproj" />
+  <Folder Name="/shared/dotnet/entity-framework-core/core/">
+    <Project Path="shared/dotnet/entity-framework-core/core/D2.Shared.EntityFrameworkCore.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/entity-framework-core/postgres/">
+    <Project Path="shared/dotnet/entity-framework-core/postgres/D2.Shared.EntityFrameworkCore.Postgres.csproj" />
+  </Folder>
+  <Folder Name="/shared/dotnet/entity-framework-core/locks-source-gen/">
+    <Project Path="shared/dotnet/entity-framework-core/locks-source-gen/D2.Shared.AdvisoryLocks.SourceGen.csproj" />
   </Folder>
   <Folder Name="/shared/dotnet/validation/abstractions/">
     <Project Path="shared/dotnet/validation/abstractions/D2.Shared.Validation.Abstractions.csproj" />

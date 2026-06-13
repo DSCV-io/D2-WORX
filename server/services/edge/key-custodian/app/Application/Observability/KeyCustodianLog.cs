@@ -80,4 +80,57 @@ internal static partial class KeyCustodianLog
             + "{activatedKid} activated.")]
     public static partial void RotationCompleted(
         ILogger logger, string domain, string retiringKid, string activatedKid);
+
+    /// <summary>
+    /// Logs that a domain needed bootstrap but its key type was absent from the
+    /// <c>RunDueRotations</c> input's <c>BootstrapKeyTypes</c> map. The domain is
+    /// skipped without error.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="domain">The domain that could not be bootstrapped.</param>
+    [LoggerMessage(
+        EventId = 9504,
+        Level = LogLevel.Warning,
+        Message =
+            "Domain {domain} needs bootstrap but has no entry in BootstrapKeyTypes; skipping.")]
+    public static partial void BootstrapKeyTypeMissing(ILogger logger, string domain);
+
+    /// <summary>
+    /// Logs that a per-domain rotation action failed during a <c>RunDueRotations</c>
+    /// run. The error is non-fatal to the overall run; other domains continue to be
+    /// serviced.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="action">The lifecycle action that failed (e.g. "bootstrap", "rotate").</param>
+    /// <param name="domain">The domain for which the action failed.</param>
+    /// <param name="errorCode">The error code carried by the failed result.</param>
+    // long log template — cannot wrap
+    [LoggerMessage(
+        EventId = 9505,
+        Level = LogLevel.Error,
+        Message =
+            "RunDueRotations: {action} failed for domain {domain} (errorCode {errorCode}); "
+            + "continuing with remaining domains.")]
+    public static partial void RotationActionFailed(
+        ILogger logger, string action, string domain, string? errorCode);
+
+    /// <summary>
+    /// Logs that a record classified by the rotation plan was gone from the store by
+    /// the time the handler re-queried it (TOCTOU gap). The domain is counted in
+    /// <c>Errors</c> and excluded from the relevant success list.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="action">
+    /// The lifecycle action being attempted (e.g. "activate", "generate-successor",
+    /// "retire").
+    /// </param>
+    /// <param name="domain">The domain whose record was not found.</param>
+    [LoggerMessage(
+        EventId = 9506,
+        Level = LogLevel.Warning,
+        Message =
+            "RunDueRotations: {action} for domain {domain} — record gone from store "
+            + "between plan classification and re-query (TOCTOU); counting as error.")]
+    public static partial void RecordGoneFromPlan(
+        ILogger logger, string action, string domain);
 }

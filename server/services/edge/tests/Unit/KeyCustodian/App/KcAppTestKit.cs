@@ -9,6 +9,7 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 using D2.Shared.Context.Abstractions;
 using D2.Shared.Handler;
 using D2.Shared.Handler.Repo.Abstractions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 /// <summary>
@@ -81,6 +82,17 @@ internal static class KcAppTestKit
     /// <returns>A handler context with a null logger + empty request context.</returns>
     public static HandlerContext<THandler> Context<THandler>() =>
         new(new MutableRequestContext(), NullLogger<THandler>.Instance);
+
+    /// <summary>
+    /// Builds a handler context with a caller-supplied logger (used by tests that
+    /// assert log output).
+    /// </summary>
+    /// <typeparam name="THandler">The handler type.</typeparam>
+    /// <param name="logger">The logger to inject into the context.</param>
+    /// <returns>A handler context bound to the supplied logger.</returns>
+    public static HandlerContext<THandler> ContextWithLogger<THandler>(
+        ILogger<THandler> logger) =>
+        new(new MutableRequestContext(), logger);
 
     /// <summary>
     /// Builds a null DB-exception classifier (no provider mapping in unit tests).

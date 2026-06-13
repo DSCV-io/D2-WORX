@@ -24,8 +24,9 @@ using D2.Shared.Utilities.Extensions;
 /// configuration drift).
 /// </para>
 /// <para>
-/// Apply on the COMPANION partial class of a proto-generated message type;
-/// the proto-generated source does not carry it.
+/// Apply directly on the message type — for proto-generated messages, on the
+/// companion partial class (the generated source does not carry it); for
+/// hand-written message records, on the record itself.
 /// </para>
 /// </remarks>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]

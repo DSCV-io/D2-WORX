@@ -166,6 +166,7 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\aspnetcore\D2.Shared.AspNetCore.csproj" />
     <ProjectReference Include="..\auth\core\D2.Shared.Auth.csproj" />
     <ProjectReference Include="..\auth\abstractions\D2.Shared.Auth.Abstractions.csproj" />
+    <ProjectReference Include="..\auth\events\D2.Shared.Auth.Events.csproj" />
     <ProjectReference Include="..\auth\http\D2.Shared.Auth.Http.csproj" />
     <ProjectReference Include="..\auth\grpc\D2.Shared.Auth.Grpc.csproj" />
     <ProjectReference Include="..\auth\startup\D2.Shared.Auth.Startup.csproj" />
@@ -231,7 +232,21 @@ Copyright (c) DCSV. All rights reserved.
       Unit tests live in Unit/SharedEntityFrameworkCore/ and exercise DeriveColumnName
       plus CreateD2Index emission + all adversarial null/empty/invalid-expression guards.
     -->
-    <ProjectReference Include="..\entity-framework-core\D2.Shared.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\entity-framework-core\core\D2.Shared.EntityFrameworkCore.csproj" />
+    <!--
+      D2.Shared.EntityFrameworkCore.Postgres — PostgreSQL-specific EF Core startup
+      machinery: PgAdvisoryLock, AdvisoryLockMigrator<TContext>,
+      DesignTimeDbContextFactoryBase<TContext>, NpgsqlContextDefaults. Also hosts
+      the spec-generated AdvisoryLocks key registry (emitted by locks-source-gen).
+      Integration tests live in Integration/SharedEntityFrameworkCorePostgres/.
+    -->
+    <ProjectReference Include="..\entity-framework-core\postgres\D2.Shared.EntityFrameworkCore.Postgres.csproj" />
+    <!--
+      D2.Shared.AdvisoryLocks.SourceGen — referenced as a normal library (not an
+      Analyzer) so the emitter / loader / generator pure-logic can be unit-tested
+      directly. Tests live in Unit/AdvisoryLocks/SourceGen/.
+    -->
+    <ProjectReference Include="..\entity-framework-core\locks-source-gen\D2.Shared.AdvisoryLocks.SourceGen.csproj" />
     <!--
       D2.Shared.Contacts.EntityFrameworkCore — per-VO complex-type and value-converter
       mapping helpers (MapPersonal / MapNameAffixes / MapDemographics / MapProfessional /

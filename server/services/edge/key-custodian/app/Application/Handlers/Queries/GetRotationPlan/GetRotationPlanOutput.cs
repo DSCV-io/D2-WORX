@@ -15,7 +15,7 @@ namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 /// Domains with no live key at all — a first key must be generated.
 /// </param>
 /// <param name="DueToActivate">
-/// Kids of soaked pending keys with no active incumbent — ready to activate.
+/// Domains whose soaked pending key has no active incumbent — ready to activate.
 /// </param>
 /// <param name="DueToRotate">
 /// Domains whose active incumbent's cadence has elapsed and a soaked pending
@@ -27,7 +27,7 @@ namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 /// exists yet — a successor must be generated.
 /// </param>
 /// <param name="DueToRetire">
-/// Kids of retiring keys whose grace window has elapsed — ready to retire.
+/// Domains whose retiring key's grace window has elapsed — ready to retire.
 /// </param>
 public sealed record GetRotationPlanOutput(
     IReadOnlyList<string> DomainsToBootstrap,

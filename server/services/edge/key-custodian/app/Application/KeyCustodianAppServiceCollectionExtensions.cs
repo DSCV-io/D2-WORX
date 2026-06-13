@@ -11,11 +11,12 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 
 /// <summary>
-/// DI registration for the KeyCustodian App layer: the 7 lifecycle handlers and
+/// DI registration for the KeyCustodian App layer: the 8 lifecycle handlers and
 /// the options-backed rotation-policy provider.
 /// </summary>
 /// <remarks>
@@ -48,6 +49,7 @@ public static class KeyCustodianAppServiceCollectionExtensions
             services.AddTransient<IRotateKeyHandler, RotateKeyHandler>();
             services.AddTransient<IRetireKeyHandler, RetireKeyHandler>();
             services.AddTransient<ICompromiseKeyHandler, CompromiseKeyHandler>();
+            services.AddTransient<IRunDueRotationsHandler, RunDueRotationsHandler>();
 
             // Query handlers.
             services.AddTransient<IGetJwksHandler, GetJwksHandler>();

@@ -39,7 +39,7 @@ Copyright (c) DCSV. All rights reserved.
       D2.Shared.Utilities — uses ThrowIfFalsey for a combined null/empty/whitespace guard
       on required string parameters. Cycle-free: Utilities does not reference EF or this lib.
     -->
-    <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
+    <ProjectReference Include="..\..\utilities\D2.Shared.Utilities.csproj" />
   </ItemGroup>
 
   <ItemGroup>

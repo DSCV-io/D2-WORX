@@ -12,9 +12,11 @@ using Microsoft.Extensions.Configuration;
 /// <summary>
 /// Tests for <see cref="KeyCustodianOptions"/> and <see cref="RotationPolicyOptions"/>:
 /// environment-variable binding round-trip (proves the KEYCUSTODIAN_APP__ section name
-/// and IConfiguration hierarchy separator convention work end-to-end) and
+/// and IConfiguration hierarchy separator convention work end-to-end),
 /// <see cref="RangeAttribute"/> regression tests for the three <see cref="TimeSpan"/>
-/// properties (pinning the fix for the <c>[Required]</c>-on-struct no-op).
+/// properties (pinning the fix for the <c>[Required]</c>-on-struct no-op), and
+/// <c>Policies</c> dictionary <c>OrdinalIgnoreCase</c> regression (pinning the fix
+/// for env-var uppercase keys silently falling through to the default policy).
 /// </summary>
 public sealed class KeyCustodianOptionsTests
 {
@@ -73,7 +75,7 @@ public sealed class KeyCustodianOptionsTests
             // IConfiguration's env-var provider preserves the segment as-is from
             // the environment variable name; on Windows env vars are upper-cased by
             // convention so the produced dictionary key is "JWKS-SIGNING".
-            // The Policies dictionary uses StringComparer.Ordinal, so we look up
+            // The Policies dictionary uses StringComparer.OrdinalIgnoreCase, so we look up
             // case-insensitively against the actual keys to discover the produced casing.
             var policyKey = options.Policies.Keys
                 .FirstOrDefault(k => k.Equals("JWKS-SIGNING", StringComparison.OrdinalIgnoreCase));
@@ -210,5 +212,63 @@ public sealed class KeyCustodianOptionsTests
 
         valid.Should().BeTrue();
         results.Should().BeEmpty();
+    }
+
+    // -----------------------------------------------------------------------
+    // Policies dictionary OrdinalIgnoreCase regression
+    // (pins the fix: env-var uppercase keys like "JWKS-SIGNING" must resolve
+    // the same policy as the lowercase domain value "jwks-signing")
+    // -----------------------------------------------------------------------
+
+    [Theory]
+    [InlineData("jwks-signing")]
+    [InlineData("JWKS-SIGNING")]
+    [InlineData("Jwks-Signing")]
+    public void Policies_OrdinalIgnoreCase_SamePolicyForAllCasings(string key)
+    {
+        // Regression for the StringComparer.Ordinal bug: env vars inject uppercase
+        // keys; domain lookups use lowercase; an Ordinal comparer silently falls
+        // through to Default on any Windows deployment.
+        var expected = new RotationPolicyOptions
+        {
+            Cadence = TimeSpan.FromDays(7),
+            Grace = TimeSpan.FromDays(4),
+            SmokeSoak = TimeSpan.FromHours(2),
+        };
+
+        var options = new KeyCustodianOptions();
+        options.Policies[key] = expected;
+
+        // Lookup with the lowercase domain value — must find the entry.
+        options.Policies.TryGetValue("jwks-signing", out var found).Should().BeTrue(
+            because: "OrdinalIgnoreCase comparer must resolve any casing to the same entry");
+        found!.Cadence.Should().Be(expected.Cadence);
+    }
+
+    [Fact]
+    public void Policies_OrdinalIgnoreCase_UppercaseKeyAndLowercaseLookupAreSameSlot()
+    {
+        // Adding the same key in two different casings must NOT create two entries
+        // (would happen with Ordinal); with OrdinalIgnoreCase the second write overwrites.
+        var options = new KeyCustodianOptions();
+        options.Policies["JWKS-SIGNING"] = new RotationPolicyOptions
+        {
+            Cadence = TimeSpan.FromDays(7),
+            Grace = TimeSpan.FromDays(4),
+            SmokeSoak = TimeSpan.FromHours(2),
+        };
+        options.Policies["jwks-signing"] = new RotationPolicyOptions
+        {
+            Cadence = TimeSpan.FromDays(14),
+            Grace = TimeSpan.FromDays(4),
+            SmokeSoak = TimeSpan.FromHours(2),
+        };
+
+        options.Policies.Count.Should().Be(
+            1,
+            because: "OrdinalIgnoreCase treats both casings as the same key slot");
+        options.Policies["JWKS-SIGNING"].Cadence.Should().Be(
+            TimeSpan.FromDays(14),
+            because: "the lowercase write should overwrite the uppercase entry");
     }
 }

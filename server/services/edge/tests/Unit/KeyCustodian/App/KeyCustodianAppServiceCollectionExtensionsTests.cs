@@ -9,6 +9,7 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 using D2.Edge.KeyCustodian.App.Application;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 using D2.Edge.KeyCustodian.App.Infrastructure.Messaging;
 using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
@@ -18,7 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Registration tests for <see cref="KeyCustodianAppServiceCollectionExtensions"/>:
-/// the 7 handlers and the policy provider are all registered with the right
+/// the 8 handlers and the policy provider are all registered with the right
 /// service type and lifetime. Key generation + smoke testing are pure domain
 /// rules with no DI, so there are no generator / smoke-tester registrations.
 /// </summary>
@@ -35,6 +36,7 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
         services.Should().Contain(d => d.ServiceType == typeof(IRotateKeyHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IRetireKeyHandler));
         services.Should().Contain(d => d.ServiceType == typeof(ICompromiseKeyHandler));
+        services.Should().Contain(d => d.ServiceType == typeof(IRunDueRotationsHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IGetJwksHandler));
         services.Should().Contain(d => d.ServiceType == typeof(IGetRotationPlanHandler));
     }
@@ -107,6 +109,8 @@ public sealed class KeyCustodianAppServiceCollectionExtensionsTests
             .Should().BeOfType<RetireKeyHandler>();
         sp.GetRequiredService<ICompromiseKeyHandler>()
             .Should().BeOfType<CompromiseKeyHandler>();
+        sp.GetRequiredService<IRunDueRotationsHandler>()
+            .Should().BeOfType<RunDueRotationsHandler>();
         sp.GetRequiredService<IGetJwksHandler>()
             .Should().BeOfType<GetJwksHandler>();
         sp.GetRequiredService<IGetRotationPlanHandler>()
