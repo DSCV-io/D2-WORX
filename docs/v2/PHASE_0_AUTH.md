@@ -47,10 +47,10 @@ operationalization layer that turns the auth vocabulary already shipped (`Scopes
 
 ### Critical framing — this lib is purely a client
 
-**Edge owns ALL issuance.** Edge's Auth module signs JWTs, publishes JWKS, runs KeyCustodian's state
-machine, owns session storage, decides what scopes a (role, org_type) tuple expands to, and exposes
-the `/oauth/token` endpoint. This lib never holds a signing key, never mints a token, never
-authoritatively decides whether a session is alive.
+**Edge owns ALL issuance.** Edge signs JWTs, publishes JWKS (the KeyCustodian module runs the
+key-lifecycle state machine), owns session storage, decides what scopes a (role, org_type) tuple
+expands to, and exposes the `/oauth/token` endpoint. This lib never holds a signing key, never mints
+a token, never authoritatively decides whether a session is alive.
 
 What this lib does is **mirror Edge state into local caches with backplane-driven invalidation**,
 and **authenticate outbound calls by requesting tokens from Edge**. Every "fetch" / "request" verb
@@ -62,7 +62,8 @@ issuer.
 
 - **Issue tokens.** Edge mints; this lib requests + caches.
 - **Run KeyCustodian.** KeyCustodian (state machine, rotation orchestration,
-  `auth_db.encryption_key` storage) lives inside Edge's Auth module — Phase 3.
+  `keycustodian_db.key_record` storage) lives inside Edge as a peer module to
+  Auth — Phase 3.
 - **Serve `/oauth/token`** or `/.well-known/jwks.json` endpoints — Edge / Phase 3.
 - **Own session storage.** Sessions live in `auth_db.session` + Redis on Edge; this lib only
   _tracks_ revocations and _checks_ liveness against cached state.
@@ -174,11 +175,11 @@ Citations inline.
 
 ### 3.5 KeyCustodian (Edge-side; this lib's KeyringClient consumes)
 
-- **Module within Edge's Auth** — not a separate service. Extractable later via the
-  `IKeyCustodianClient` interface.
+- **Module within Edge** (peer to Auth) — not a separate service. Extractable later
+  via the `IKeyCustodianClient` interface.
 - **Owns**: JWKS (RS256), per-domain payload-encryption keys (audit, notifications, courier, …),
   cookie signing secret, service-identity client_secrets, root key.
-- **State machine** per `kid` in `auth_db.encryption_key`: `pending → active → retiring → retired`
+- **State machine** per `kid` in `keycustodian_db.key_record`: `pending → active → retiring → retired`
   (+ terminal `compromised`).
 - **Distribution**: pull-based via gRPC `internal/keys/{domain}` endpoint, hourly TTL refresh,
   `d2.security.key-rotated` event-driven invalidation.
@@ -1939,7 +1940,7 @@ of scenarios to cover:
 - **Cookie signing secret compromise**
 - **Service-identity OAuth `client_secret` compromise**
 - **Root key compromise** (worst case — encrypts all keys at rest in
-  `auth_db`)
+  `keycustodian_db`)
 - **Third-party API key compromise** (Twilio, Resend, IPinfo — provider-side
   rotation steps)
 

@@ -32,6 +32,14 @@ Copyright (c) DCSV. All rights reserved.
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.7" />
+    <!-- Microsoft.Extensions.Diagnostics.HealthChecks{,.Abstractions,.EntityFrameworkCore}
+         — IHealthCheck + AddHealthChecks/AddCheck + AddDbContextCheck<TContext> for the
+         KeyCustodian readiness probes (DB connectivity via the framework CanConnectAsync
+         path + the active-key-per-domain semantic check). The module-within-host infra is
+         a plain Sdk lib (no Sdk.Web framework reference), so these are explicit refs. -->
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.7" />
     <!-- Microsoft.Extensions.Http.Resilience — AddStandardResilienceHandler()
          (retry + circuit-break + timeout) for ConfigureHttpClientDefaults wiring
@@ -41,6 +49,13 @@ Copyright (c) DCSV. All rights reserved.
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.7" />
+    <!-- Microsoft.Extensions.Options.ConfigurationExtensions — OptionsBuilder<T>.Bind(section)
+         for the KeyCustodian options-binding pipeline. Microsoft.Extensions.Options.DataAnnotations
+         — OptionsBuilder<T>.ValidateDataAnnotations() for the [Range]/[Required] start-validation.
+         Plain-Sdk module-within-host infra has no Sdk.Web framework reference that would supply
+         these transitively. -->
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.7" />
 
     <!-- Microsoft.IdentityModel — OIDC discovery doc handling for D2.Shared.Auth.Outbound
          (ConfigurationManager<OpenIdConnectConfiguration> auto-fetches /.well-known/openid-configuration

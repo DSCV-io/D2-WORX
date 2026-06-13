@@ -165,3 +165,8 @@ resharper_inconsistent_naming_highlighting = none
 [**/GlobalUsings.cs]
 csharp_using_directive_placement = outside_namespace
 dotnet_diagnostic.SA1200.severity = none
+
+# EF Core migrations are reproducible generated output (`dotnet ef migrations add`),
+# never hand-authored — exclude them from style analysis. Real compile errors still surface.
+[**/Migrations/*.cs]
+generated_code = true

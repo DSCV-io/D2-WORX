@@ -17,13 +17,13 @@ Key operations are persisted to a dedicated `keycustodian_db` (independent of `a
 | [`domain/`](domain/README.md)                                            | Pure C# sum-type domain — the five-state `EncryptionKey` hierarchy, value objects, enums, and audit record. Zero EF/DI.     |
 | [`app/`](app/README.md)                                                  | CQRS handlers (generate / activate / rotate / retire / compromise / JWKS / rotation-plan), the flat `KeyRecord` + pure mapper, crypto ports, options, and the `AddD2KeyCustodianApp()` DI registration. |
 | [`error-codes-source-gen/`](error-codes-source-gen/README.md)            | Roslyn generator shell that emits `KeyCustodianErrorCodes` constants + `KeyCustodianFailures` semantic factories into the domain from `contracts/keycustodian-error-codes/keycustodian-error-codes.spec.json`. Diagnostic prefix: `D2KEC`. |
-| [`infra/`](infra/README.md)                                              | Concrete adapters for the App-owned ports: `IKeyCustodianDbContext` (EF Core), persistence configuration, `FileRootKeyProvider`, RabbitMQ-backed `IKeyRotationAnnouncer`, options binding + `ValidateOnStart` guards, and EF Core migrations. See [`infra/README.md`](infra/README.md) for current status. |
+| [`infra/`](infra/README.md)                                              | Concrete adapters for the App-owned ports: `KeyCustodianDbContext` (EF Core) + persistence configuration, the multi-key `FileRootKeyProvider`, the message-bus `IKeyRotationAnnouncer`, the in-process `KeyRotationService`, the readiness health check, options binding + `ValidateOnStart`, and the `AddD2KeyCustodian()` composition seam. The startup migrator + advisory lock come from the shared `D2.Shared.EntityFrameworkCore.Postgres` library. |
 
 ## Key design decisions
 
 - **Sum-type state machine**: the domain models key lifecycle as an `abstract record EncryptionKey` base + five sealed per-state records (`PendingKey` / `ActiveKey` / `RetiringKey` / `RetiredKey` / `CompromisedKey`). Illegal transitions are uncompilable. See [ADR-0016](../../../../docs/adrs/0016-keycustodian-lifecycle-store.md).
 - **Flat record + pure mapper (EF-as-DDD Shape B)**: the immutable sum type is persisted as a single non-polymorphic `KeyRecord`; a pure static mapper bridges domain ↔ record. See [ADR-0017](../../../../docs/adrs/0017-ef-as-ddd-persistence.md).
-- **File-backed root key**: the 32-byte AES root key is stored at `secrets/keycustodian/root.key`, loaded at startup, and never persisted to the database.
+- **File-backed root key (multi-key)**: the 32-byte root key lives at `secrets/keycustodian/root.key`, loaded once at startup and never persisted to the database. An optional `root-next.key` in the same directory loads as a decrypt-only kid for zero-downtime root rotation.
 - **PG advisory lock rotation coordination**: leaderless; no Redis dependency for key rotation.
 
 ## Database
@@ -32,7 +32,7 @@ Key operations are persisted to a dedicated `keycustodian_db` (independent of `a
 
 ## Operations
 
-> **Status: NOT IMPLEMENTED — tracked at [docs/v2/PHASE_0_AUTH.md](../../../../docs/v2/PHASE_0_AUTH.md)**
+KeyCustodian is a module within Edge — it is composed into the Edge host via `AddD2KeyCustodian(...)` and has no standalone process. The JWKS HTTP / gRPC transport surface is owned by the Edge transport layer; this module ships the key-lifecycle engine (persistence, rotation, vault, health), not the endpoints that expose it.
 
 ### Run locally
 
@@ -40,7 +40,7 @@ KeyCustodian runs as part of Edge via Docker Compose. Start the full stack with 
 
 ### Health check / debugging
 
-A startup health check reporting whether each configured domain has an active signing key is an Infra-layer concern — NOT IMPLEMENTED (see [`infra/README.md`](infra/README.md)). Use the `GetRotationPlan` query handler to inspect the lifecycle actions due across all domains. See [`app/README.md`](app/README.md) for handler details.
+The Infra layer registers a readiness health check (`keycustodian`) reporting whether each configured domain has an active key — Healthy when all do, Degraded during the first-boot soak window, Unhealthy when the database is unreachable or the root key cannot load. The `GetRotationPlan` query handler inspects the lifecycle actions due across all domains. See [`infra/README.md`](infra/README.md) for the composition + configuration details and [`app/README.md`](app/README.md) for handler details.
 
 ---
 

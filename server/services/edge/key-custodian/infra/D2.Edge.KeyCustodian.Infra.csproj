@@ -7,14 +7,18 @@ Copyright (c) DCSV. All rights reserved.
   </PropertyGroup>
 
   <!--
-    Infrastructure — KeyCustodianDbContext : IKeyCustodianDbContext + a flat
-    IEntityTypeConfiguration<KeyRecord> (strong-typed Kid value converter, a
-    settable Status value column, nullable per-state columns, an xmin
-    optimistic-concurrency token, audit config) +
-    the first migration; FileRootKeyProvider (reads secrets/keycustodian/root.key);
-    the rotation-event publisher; AdvisoryLockMigrator + KeyRotationService
-    (IHostedService); KeyCustodianLog; AddD2KeyCustodian(...) DI (+
-    EF Core OTel instrumentation).
+    Infrastructure — the concrete adapters for the App-owned ports.
+    Persistence/Postgres: KeyCustodianDbContext : IKeyCustodianDbContext + the two
+    flat IEntityTypeConfiguration<>s (settable Status value column, nullable
+    per-state columns, the xmin optimistic-concurrency token, append-only audit FK)
+    + the design-time factory + the generated Initial migration. Vault/File:
+    FileRootKeyProvider (multi-key root directory — root.key + optional
+    root-next.key). Messaging/RabbitMq: the rotation-event announcer + the
+    KeyRotatedEvent wire mapper. Scheduling/Hosted: KeyRotationService.
+    Observability: KeyCustodianInfraLog + KeyCustodianHealthCheck. Configuration:
+    KeyCustodianInfraOptions + the AddD2KeyCustodian(...) composition seam. The
+    shared startup migrator + advisory lock come from
+    D2.Shared.EntityFrameworkCore.Postgres.
   -->
 
   <ItemGroup>
@@ -57,6 +61,26 @@ Copyright (c) DCSV. All rights reserved.
       layer and is allowed to reference the concrete transport lib.
     -->
     <ProjectReference Include="..\..\..\..\shared\dotnet\messaging\rabbitmq\D2.Shared.Messaging.RabbitMq.csproj" />
+    <!--
+      D2.Shared.Messaging.Abstractions — IMessageBus (the publish port the
+      announcer calls) + PublisherOptions. Brought transitively via the RabbitMq
+      lib but listed explicitly ("declare what you use").
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\messaging\abstractions\D2.Shared.Messaging.Abstractions.csproj" />
+    <!--
+      D2.Shared.Auth.Events — the KeyRotatedEvent wire DTO (carries
+      [MqPub(MqMessages.AuthKeyRotated)]) the KeyRotatedEventMapper builds.
+      Deliberately excluded from the App csproj — App is event-blind; the mapper
+      that needs the DTO is an infra file.
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\auth\events\D2.Shared.Auth.Events.csproj" />
+    <!--
+      D2.Shared.EntityFrameworkCore.Postgres — the shared PG/EF startup machinery:
+      PgAdvisoryLock + AdvisoryLockMigrator<TContext> + DesignTimeDbContextFactoryBase
+      + the NpgsqlContextDefaults applier + the generated AdvisoryLocks.KeycustodianDb.*
+      lock-key registry. KC consumes these; it implements none of them.
+    -->
+    <ProjectReference Include="..\..\..\..\shared\dotnet\entity-framework-core\postgres\D2.Shared.EntityFrameworkCore.Postgres.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -77,6 +101,28 @@ Copyright (c) DCSV. All rights reserved.
       precedent).
     -->
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <!--
+      Health-check stack for the KeyCustodian readiness probes. The
+      module-within-host infra is a plain Sdk lib (NOT Sdk.Web), so the
+      health-check assemblies are explicit package refs rather than coming from a
+      framework reference. .HealthChecks ships AddHealthChecks/AddCheck;
+      .Abstractions ships IHealthCheck (KeyCustodianHealthCheck implements it);
+      .EntityFrameworkCore ships AddDbContextCheck<TContext>.
+    -->
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+    <!--
+      Options + Configuration binding for the AddD2KeyCustodian seam.
+      Microsoft.Extensions.Options — AddOptions<T> + IOptions<T>.
+      Microsoft.Extensions.Options.ConfigurationExtensions — OptionsBuilder<T>.Bind(section).
+      Microsoft.Extensions.Options.DataAnnotations — OptionsBuilder<T>.ValidateDataAnnotations().
+      Microsoft.Extensions.Configuration.Abstractions — IConfiguration on the seam signature.
+    -->
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
   </ItemGroup>
 
   <ItemGroup>
