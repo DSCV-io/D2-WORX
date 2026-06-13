@@ -7,6 +7,7 @@
 namespace D2.Edge.KeyCustodian.Infra.Vault.File;
 
 using System.IO;
+using System.Security.Cryptography;
 using D2.Edge.KeyCustodian.Infra.Configuration;
 using D2.Edge.KeyCustodian.Infra.Observability;
 using Microsoft.Extensions.Logging;
@@ -44,6 +45,10 @@ using Microsoft.Extensions.Options;
 /// </remarks>
 public sealed class FileRootKeyProvider : IRootKeyProvider
 {
+    // A 32-byte key is 64 hex chars. Cap at 256 to reject clearly-invalid oversized
+    // files before stackalloc and to keep the stackalloc bounded.
+    private const int _HEX_CAP = 256;
+
     private readonly string r_rootKeyDirectory;
     private readonly ILogger<FileRootKeyProvider> r_logger;
     private readonly Lock r_gate = new();
@@ -80,6 +85,23 @@ public sealed class FileRootKeyProvider : IRootKeyProvider
         }
     }
 
+    private static ReadOnlySpan<byte> TrimAsciiWhitespace(byte[] bytes)
+    {
+        var span = bytes.AsSpan();
+        var start = 0;
+        while (start < span.Length && IsAsciiWhitespace(span[start]))
+            start++;
+
+        var end = span.Length - 1;
+        while (end >= start && IsAsciiWhitespace(span[end]))
+            end--;
+
+        return span[start..(end + 1)];
+    }
+
+    private static bool IsAsciiWhitespace(byte b) =>
+        b is 0x09 or 0x0A or 0x0D or 0x20;
+
     private PayloadCryptoKeyring BuildKeyring()
     {
         var primaryPath = Path.Combine(r_rootKeyDirectory, RootKeyKids.PRIMARY_FILE_NAME);
@@ -108,10 +130,25 @@ public sealed class FileRootKeyProvider : IRootKeyProvider
     }
 
     /// <summary>
-    /// Reads a hex-encoded key file, trims trailing whitespace/newline, hex-decodes,
-    /// and verifies the decoded length. Fail-fast on any error — a present root-key
-    /// file MUST be valid.
+    /// Reads a hex-encoded key file without materializing the hex text as a managed
+    /// <see cref="string"/>. The raw file bytes are read, leading/trailing ASCII
+    /// whitespace bytes are trimmed, the ASCII hex chars are copied into a
+    /// <c>stackalloc</c> <see cref="Span{T}"/>, and
+    /// <see cref="Convert.FromHexString(ReadOnlySpan{char})"/> validates and decodes
+    /// to the key <c>byte[]</c>. Both intermediate buffers are zeroed in a
+    /// <c>finally</c> block; only the returned key bytes remain. Fail-fast on any
+    /// error — a present root-key file MUST be valid.
     /// </summary>
+    /// <remarks>
+    /// A 32-byte key is 64 hex chars. The method rejects any trimmed content longer
+    /// than <see cref="_HEX_CAP"/> bytes; this caps the stackalloc and also catches
+    /// files that are clearly not a valid key before the hex-decode attempt.
+    /// <see cref="Convert.FromHexString(ReadOnlySpan{char})"/> throws
+    /// <see cref="FormatException"/> on non-hex chars and odd-length input; both are
+    /// caught and re-thrown as <see cref="InvalidOperationException"/> without
+    /// surfacing any hex snippet.
+    /// Key bytes are NEVER logged.
+    /// </remarks>
     private byte[] ReadKeyFile(string path, string kid)
     {
         if (!System.IO.File.Exists(path))
@@ -122,36 +159,69 @@ public sealed class FileRootKeyProvider : IRootKeyProvider
                 + "The host cannot start without the primary root key.");
         }
 
-        var raw = System.IO.File.ReadAllText(path).Trim();
-        if (raw.Falsey())
-        {
-            KeyCustodianInfraLog.RootKeyFileEmpty(r_logger, kid, path);
-            throw new InvalidOperationException(
-                $"KeyCustodian root key file for kid '{kid}' at '{path}' is empty.");
-        }
-
-        byte[] decoded;
+        var fileBytes = System.IO.File.ReadAllBytes(path);
         try
         {
-            decoded = Convert.FromHexString(raw);
-        }
-        catch (FormatException)
-        {
-            KeyCustodianInfraLog.RootKeyFileNotHex(r_logger, kid, path);
-            throw new InvalidOperationException(
-                $"KeyCustodian root key file for kid '{kid}' at '{path}' is not valid hex.");
-        }
+            // Trim leading/trailing ASCII whitespace bytes (space, tab, LF, CR).
+            var hexSpan = TrimAsciiWhitespace(fileBytes);
 
-        if (decoded.Length != PayloadCryptoKeyring.KEY_SIZE_BYTES)
-        {
-            KeyCustodianInfraLog.RootKeyFileWrongLength(
-                r_logger, kid, path, decoded.Length, PayloadCryptoKeyring.KEY_SIZE_BYTES);
-            throw new InvalidOperationException(
-                $"KeyCustodian root key file for kid '{kid}' at '{path}' decoded to "
-                + $"{decoded.Length} bytes; expected exactly "
-                + $"{PayloadCryptoKeyring.KEY_SIZE_BYTES}.");
-        }
+            if (hexSpan.IsEmpty)
+            {
+                KeyCustodianInfraLog.RootKeyFileEmpty(r_logger, kid, path);
+                throw new InvalidOperationException(
+                    $"KeyCustodian root key file for kid '{kid}' at '{path}' is empty.");
+            }
 
-        return decoded;
+            // Reject oversized content before stackalloc (valid key = 64 hex chars).
+            if (hexSpan.Length > _HEX_CAP)
+            {
+                KeyCustodianInfraLog.RootKeyFileNotHex(r_logger, kid, path);
+                throw new InvalidOperationException(
+                    $"KeyCustodian root key file for kid '{kid}' at '{path}' is not valid hex.");
+            }
+
+            // Copy ASCII hex bytes to a stack-allocated char buffer — no managed string.
+            Span<char> charSpan = stackalloc char[hexSpan.Length];
+            try
+            {
+                for (var i = 0; i < hexSpan.Length; i++)
+                    charSpan[i] = (char)hexSpan[i];
+
+                byte[] decoded;
+                try
+                {
+                    decoded = Convert.FromHexString(charSpan);
+                }
+                catch (FormatException)
+                {
+                    KeyCustodianInfraLog.RootKeyFileNotHex(r_logger, kid, path);
+                    throw new InvalidOperationException(
+                        $"KeyCustodian root key file for kid '{kid}' at '{path}' "
+                        + "is not valid hex.");
+                }
+
+                if (decoded.Length != PayloadCryptoKeyring.KEY_SIZE_BYTES)
+                {
+                    KeyCustodianInfraLog.RootKeyFileWrongLength(
+                        r_logger, kid, path, decoded.Length, PayloadCryptoKeyring.KEY_SIZE_BYTES);
+                    throw new InvalidOperationException(
+                        $"KeyCustodian root key file for kid '{kid}' at '{path}' decoded to "
+                        + $"{decoded.Length} bytes; expected exactly "
+                        + $"{PayloadCryptoKeyring.KEY_SIZE_BYTES}.");
+                }
+
+                return decoded;
+            }
+            finally
+            {
+                // Zero the char buffer before the stack frame unwinds.
+                charSpan.Clear();
+            }
+        }
+        finally
+        {
+            // Zero the raw file bytes regardless of success or failure path.
+            CryptographicOperations.ZeroMemory(fileBytes);
+        }
     }
 }
