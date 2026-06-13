@@ -244,7 +244,7 @@ These tiers added wall-clock time without commensurate value at our scale.
 - Race conditions (rotation while N replicas publishing concurrently)
 - Archive decryption (ops CLI fetches retired/compromised kids on demand)
 
-The workflow job at `.github/workflows/test.yml` is commented out — see [`docs/v2/PHASE_0_AUTH.md` §14a](v2/PHASE_0_AUTH.md#14a-future-phase-3-work--keycustodian-compromise-runbook-scaffolding) for KeyCustodian status (Canonical: not yet shipped; design at the cited path. Will migrate to the KeyCustodian lib README when KeyCustodian ships).
+The workflow job at `.github/workflows/test.yml` is commented out — the KeyCustodian state machine and key lifecycle are shipped (see [KeyCustodian README](../server/services/edge/key-custodian/README.md)), but the compromise-response runbook (executable CLI invocations, detection criteria, recovery procedures) is a tracked future deliverable. See [`docs/v2/PHASE_0_AUTH.md` §14a](v2/PHASE_0_AUTH.md#14a-keycustodian-compromise-runbook-future-deliverable) for the scenario checklist this future deliverable must cover.
 
 ---
 

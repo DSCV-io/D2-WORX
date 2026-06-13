@@ -321,6 +321,76 @@ EF Core for all relational data, accessed **directly through the module `DbConte
 - **Partial-success → D2Result mapping** — all resolved → `Ok`; some → `SomeFound`; none → `NotFound`. Never return `Ok` with empty data.
 - **UPDATE / DELETE row-count** — `SaveChangesAsync()` returns affected rows. Zero where you expected ≥1 → `NotFound`. Per `rules.md §9.32`.
 - **Migrations — generator only.** `dotnet ef migrations add <Name>` is the only path. NEVER hand-edit `*.cs` migration files, `*ModelSnapshot.cs`, or `__EFMigrationsHistory` rows. Multi-replica safety: startup migrator acquires a PG advisory lock. Per `rules.md §9.10`.
+- **EF migration `.editorconfig` exclusion** — add `[**/Migrations/*.cs] generated_code = true` to the service's `.editorconfig` when the first migration lands, so EF-emitted files are excluded from StyleCop (SA1200/SA1413/SA1633). Never suppress per-rule or hand-edit the generated output. Per `rules.md §26.9`.
+
+### Rich sum-type state-machine aggregates + flat-record persistence
+
+Stateful domain aggregates whose states differ in the operations they support are modeled as an **abstract base + sealed per-state subtype hierarchy** so illegal transitions are uncompilable. The `Status` enum is a derived persistence discriminator computed from the type at persistence time — never the authority on which transitions exist.
+
+```csharp
+// Domain — EF-free, sealed per state
+public abstract record EncryptionKey(Guid Id, ...);
+public sealed record PendingKey(Guid Id, ...) : EncryptionKey(Id, ...);
+public sealed record ActiveKey(Guid Id, ...) : EncryptionKey(Id, ...);
+public sealed record RetiredKey(Guid Id, ...) : EncryptionKey(Id, ...);
+
+// Enum — derived discriminator only (for DB lookups / LINQ filters)
+public enum KeyStatus { Pending, Active, Retired }
+```
+
+**Persistence shape — flat `<Entity>Record`, never TPH.** EF Core 10 confirmed that TPH with an abstract base produces `DELETE` + re-`INSERT` for state transitions (gap between delete and insert, loss of `xmin` token, foreign-key risks). The flat record keeps the transition as an atomic `UPDATE`:
+
+| Artifact | Home | Role |
+| -------- | ---- | ---- |
+| `KeyRecord` (flat EF record with all columns + `Status` + `xmin`) | `app/Infrastructure/Persistence/` | EF entity; `xmin` = concurrency token |
+| `KeyRecordMapper` (pure C# 14 extension members) | `app/Infrastructure/Persistence/` | `ToDomain()`: switch Status → sealed subtype; `ProjectOnto(key)`: overwrite mutable columns |
+| `KeyRecordQueryExtensions` | `app/Infrastructure/Persistence/` | `IQueryable<KeyRecord>` convenience filters |
+| `KeyCustodianDbContext` : `IKeyCustodianDbContext` | `infra/Persistence/Postgres/` | Concrete EF context |
+| `KeyRecordConfiguration` : `IEntityTypeConfiguration<KeyRecord>` | `infra/Persistence/Postgres/` | `HasKey`, `UseXminAsConcurrencyToken`, value-converters |
+| `Migrations/` | `infra/Persistence/Postgres/` | EF-generated only; excluded from StyleCop via `.editorconfig` |
+
+```csharp
+extension(KeyRecord record)
+{
+    public EncryptionKey ToDomain() => record.Status switch
+    {
+        KeyStatus.Pending  => new PendingKey(record.Id, ...),
+        KeyStatus.Active   => new ActiveKey(record.Id, ...),
+        KeyStatus.Retired  => new RetiredKey(record.Id, ...),
+        _ => throw new InvalidOperationException($"Unknown KeyStatus {record.Status}")
+    };
+
+    public KeyRecord ProjectOnto(EncryptionKey key) => record with
+    {
+        Status     = key.ToStatus(),   // derived from type
+        UpdatedAt  = key.UpdatedAt,
+        // ... other mutable columns
+    };
+}
+```
+
+**State transition pattern in handlers** (single `SaveChangesAsync` = atomic UPDATE + audit):
+
+```csharp
+// Load the flat record
+var record = await ctx.Keys.SingleOrDefaultAsync(r => r.Id == id, ct);
+if (record is null) return D2Result.NotFound();
+
+// Reconstruct the domain sum-type
+var key = record.ToDomain();
+
+// Apply the domain transition (compile-time safe — method only exists on PendingKey)
+if (key is not PendingKey pending) return D2Result.Conflict();
+var activated = pending.Activate(clock.GetCurrentInstant());
+
+// Write audit entry + updated record in the SAME transaction
+ctx.KeyAuditLog.Add(new KeyAuditEntry(...));
+record.ProjectOnto(activated);
+var rows = await ctx.SaveChangesAsync(ct);
+if (rows == 0) return D2Result.Conflict();   // xmin mismatch
+```
+
+Canonical: [ADR-0016](adrs/0016-keycustodian-lifecycle-store.md) + [ADR-0017](adrs/0017-ef-as-ddd-persistence.md). Predicate enforcement: `rules.md §9.31` (sum-type shape) + `§9.38` (flat-record persistence) + `§9.37` (EF-as-DDD handler shape).
 
 ---
 

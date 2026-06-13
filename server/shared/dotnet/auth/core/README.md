@@ -244,6 +244,6 @@ For HTTP-only hosts, omit `.AddD2AuthGrpc()`. For gRPC-only hosts, omit `.AddD2A
 - [`../http/README.md`](../http/README.md) — HTTP-transport binding (middleware + ProblemDetails + endpoint scope metadata)
 - [`../grpc/README.md`](../grpc/README.md) — gRPC-transport binding (interceptor + RpcException trailers + method scope attributes)
 - [`../outbound/README.md`](../outbound/README.md) — token-acquisition complement
-- [`../../../../docs/v2/PHASE_0_AUTH.md`](../../../../../docs/v2/PHASE_0_AUTH.md) §14a — KeyCustodian compromise runbook scaffolding (Canonical: not yet shipped; design at the cited path. Will migrate to a shipped lib README when the KeyCustodian implementation ships.)
+- [KeyCustodian README](../../../../services/edge/key-custodian/README.md) — KeyCustodian lifecycle authority (key generation, rotation, and compromise). Compromise-response runbook authoring is a tracked future deliverable — see [`docs/v2/PHASE_0_AUTH.md` §14a](../../../../../docs/v2/PHASE_0_AUTH.md#14a-keycustodian-compromise-runbook-future-deliverable) for the scenario checklist.
 - [RFC 7519](https://datatracker.ietf.org/doc/html/rfc7519) — JSON Web Token
 - [RFC 8414](https://datatracker.ietf.org/doc/html/rfc8414) — OAuth 2.0 Authorization Server Metadata (OIDC discovery)

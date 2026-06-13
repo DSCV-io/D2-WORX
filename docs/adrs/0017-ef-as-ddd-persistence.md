@@ -94,12 +94,9 @@ The Record + mapper + EF config + query extensions for a state-machine aggregate
 - The handler pipeline, DI registration pattern, and `D2Result` semantic factories are unchanged.
 - The EF VO mapping pattern (complex types + value converters, ADR-0001) is unchanged — it applies to the Record's VO-typed columns.
 
-### Convention shift (at SHIP, user-approved)
+### Convention shift (ratified at 0016-keycustodian SHIP)
 
-The rules.md / PATTERNS.md TLC table currently lists Repository as a first-class TLC. At SHIP:
-- Repository TLC is retired from new code; the table is updated to reflect that CQRS handlers use DbContext directly.
-- A new state-machine-persistence predicate (flat non-polymorphic Record + pure mapper + query extensions + no-repo + `xmin`; event-sourcing deviation; source-gen amortization) is added alongside §9.31/§9.32.
-- This change requires explicit user approval at SHIP because it affects a convention documented across multiple files.
+The Repository TLC has been retired from new code; `PATTERNS.md` and `rules.md` have been updated to reflect that CQRS handlers use `DbContext` directly. A state-machine-persistence predicate (flat non-polymorphic Record + pure mapper + query extensions + no-repo + `xmin`; event-sourcing deviation; source-gen amortization) is codified alongside §9.31/§9.32.
 
 ## Consequences
 
@@ -115,7 +112,7 @@ The rules.md / PATTERNS.md TLC table currently lists Repository as a first-class
 - Two representations of the same aggregate (the sealed domain shape and the flat Record), bridged by the mapper. The mapper's `ProjectOnto` null-all-then-set discipline is load-bearing — a missed null leaves a stale column. This is the cost of keeping the domain pure; it is mechanical and (once proven) source-gen-able, but until the generator exists it is hand-written and must be tested per-state (round-trip every state + assert no stale columns survive a transition).
 - A new representation to learn: teams familiar with aggregate-as-EF-entity must learn the Record + mapper split for state-machine aggregates (Shape B); simple aggregates (Shape A) are unchanged.
 - The DB-exception → `D2Result` translation must be explicitly invoked via `BaseRepoHandler` — a handler that forgets to inherit it loses the translation. `BaseHandler` API guidance mitigates this.
-- §9.24 TLC table and related docs require updates at SHIP.
+- §9.24 TLC table and related docs have been updated at 0016-keycustodian SHIP.
 
 ### Deviation (per-aggregate, NOT the default): event-sourcing via Marten
 
@@ -136,4 +133,4 @@ For an aggregate that is BOTH **audit-defining** (the history IS the product, no
 - [ADR-0016](0016-keycustodian-lifecycle-store.md) — the KeyCustodian sum-type lifecycle + the concrete `KeyRecord` schema this convention persists; the `pg_try_advisory_lock` rotation coordination the `xmin` token complements.
 - [ADR-0001](0001-contacts-folded-owned-component.md) — the EF VO mapping pattern (complex types + value converters) the Record's VO columns reuse.
 - [ADR-0018](0018-spec-driven-error-codes.md) / [ADR-0019](0019-wrapped-result-wire-model.md) — the error-code + wrapped-result conventions KeyCustodian's handlers surface failures through.
-- Persistence-strategy spike (EF Core 10.0.7 / Npgsql.EFC 10.0.1 / Postgres 17, 6/6 validated) — the throwaway Testcontainers evidence behind the Shape B decision; recorded in `docs/wip/0016-keycustodian/README.md` Living State.
+- Persistence-strategy spike (EF Core 10.0.7 / Npgsql.EFC 10.0.1 / Postgres 17) — 6/6 validated; the throwaway Testcontainers spike falsified TPH delete+insert (morph-wall, stale-column UPDATE, get-only discriminator) and confirmed flat-record Shape B as the decision rationale for this ADR.

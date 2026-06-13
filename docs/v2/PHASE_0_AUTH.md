@@ -1927,13 +1927,9 @@ Each step buildable + testable + zero warnings before moving on.
 
 ---
 
-## §14a. Future Phase 3 work — KeyCustodian compromise runbook scaffolding
+## §14a. KeyCustodian compromise runbook — future deliverable
 
-When KeyCustodian ships in Phase 3 (its CLI + state machine + audit
-forensics), the following compromise-response runbooks need concrete
-detection criteria, executable CLI invocations, and recovery procedures
-authored. Headers are preserved here so the Phase 3 work item has a checklist
-of scenarios to cover:
+The KeyCustodian state machine, key lifecycle, and `keycustodian_db` are shipped (see [KeyCustodian README](../../server/services/edge/key-custodian/README.md)). The following compromise-response runbooks — concrete detection criteria, executable CLI invocations, and recovery procedures — are tracked as a future deliverable. The scenario checklist this deliverable must cover:
 
 - **Message-payload key compromise** (audit / notifications / courier domain)
 - **JWT signing key compromise**
@@ -1951,8 +1947,8 @@ of scenarios to cover:
 - [V2.md §5.4](V2.md) — auth model, JWT shape, KeyCustodian, sessions, scopes, impersonation,
   fingerprints
 - [CLAUDE.md §4](../../CLAUDE.md) — Key Architecture Decisions (Auth, JWT, KeyCustodian)
-- [§14a above](#14a-future-phase-3-work--keycustodian-compromise-runbook-scaffolding) —
-  KeyCustodian compromise runbook scaffolding (expanded as Phase 3 ships)
+- [§14a above](#14a-keycustodian-compromise-runbook--future-deliverable) —
+  KeyCustodian compromise runbook (future deliverable — scenario checklist at §14a)
 - [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) — auth-related fields + session
   invalidation backplane
 - [PATTERNS.md](../PATTERNS.md) — handler / cache / middleware patterns this lib must fit

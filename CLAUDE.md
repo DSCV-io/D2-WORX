@@ -243,6 +243,14 @@ One handler interface per file, co-located with its implementation in the per-op
 
 `.NET`: `services.AddTransient<IXxx, Xxx>()` via `Microsoft.Extensions.DependencyInjection`. Each layer exports `AddXxx(services)` extension method.
 
+### EF-as-DDD + rich sum-type domains
+
+CQRS handlers access relational data by composing queries against `I<Service>DbContext` + domain aggregates + LINQ directly — the per-op Repository handler is retired ([ADR-0017](docs/adrs/0017-ef-as-ddd-persistence.md)). `BaseHandler`/`BaseRepoHandler` retain all cross-cutting.
+
+New stateful domain aggregates use **abstract base + sealed per-state types** so illegal transitions are uncompilable. The `Status` enum is a persistence discriminator derived from the type, not the authority on transitions. EF persistence uses a **flat `<Entity>Record`** (never TPH) + pure `ToDomain()`/`ProjectOnto()` mappers + `xmin` concurrency token + same-transaction audit writes. All three components live in `app/Infrastructure/Persistence/`; the concrete `DbContext`, EF config, and `Migrations/` live in `infra/Persistence/Postgres/`.
+
+Canonical decision records: [ADR-0017](docs/adrs/0017-ef-as-ddd-persistence.md) + [ADR-0016](docs/adrs/0016-keycustodian-lifecycle-store.md). Operational form: [docs/PATTERNS.md §Repository](docs/PATTERNS.md#repository).
+
 ### Other Established Patterns
 
 Options pattern, Caching marker interfaces (`ILocalCache` / `IDistributedCache` / `ITieredCache`), content-addressable entities (SHA-256 hash IDs), C# 14 extension-member mappers, batch operations, health-checks-must-use-production-code-path — see [docs/PATTERNS.md](docs/PATTERNS.md).
@@ -289,6 +297,7 @@ _Canonical form (full service-structure standard with rationale + carve-outs): [
 - **Test every public path on first pass** — every `public` method (including DI extensions, gRPC plumbing, factory wrappers, "thin glue") gets ≥1 test BEFORE the feature is done. [rules.md §1.1]
 - **Every bug fix lands with a regression test in the same change** — fails-without-fix, passes-with-fix. Behavior-descriptive name. **No fix without a test, no exceptions.** [rules.md §2]
 - **Tests are adversarial** — happy path + garbage / null / empty / whitespace / oversized / malformed / wrong-type / cross-field deps / error propagation / idempotency / concurrency. [rules.md §1.2]
+- **Composition/DI resolution tests must `GetRequiredService<>()` EVERY registered seam** — descriptor-presence ≠ resolvability. A test that resolves 3 of 8 handlers leaves 5 unverified. [rules.md §1.3]
 
 ### Use OOTB shared libs (don't hand-roll)
 
@@ -326,7 +335,11 @@ _Canonical form (full service-structure standard with rationale + carve-outs): [
 
 - **JWT validations at TRANSPORT layer (auth middleware), NOT per-handler `HandlerOptions`.** `RequiredScopes` IS per-handler; `ValidateAudience` is NOT. [rules.md §9.2]
 - **Handlers validate input via `Domain.Create(input) → D2Result<Domain>` at the TOP of `ExecuteAsync`** — never let Redis / DB be the first to reject invalid data. [rules.md §9.4]
+- **EF-as-DDD — CQRS handlers use `I<Service>DbContext` + aggregates + LINQ directly; the per-op Repository handler layer is retired.** `BaseHandler`/`BaseRepoHandler` retain all cross-cutting. No `I<Op>Repository` wrapper between handler and EF. [rules.md §9.37]
+- **Stateful domain aggregates use abstract base + sealed per-state types — illegal transitions are uncompilable.** The `Status` enum is a derived persistence discriminator only; domain logic branches on type, not enum value. For entities not yet migrated to sum-type shape, an explicit valid-transitions table is mandatory. [rules.md §9.31]
+- **Flat `<Entity>Record` + pure mapper for EF persistence of sum-type aggregates** — no TPH. Persist via a flat non-polymorphic record, `ToDomain()` mapper (switch on `Status`), `ProjectOnto()` UPDATE helper, `xmin` concurrency token, same-transaction audit. [rules.md §9.38]
 - **NEVER hand-write DB migrations** — use `dotnet ef migrations add <Name>`. [rules.md §9.10]
+- **EF migration `.cs` files MUST be excluded from StyleCop via `.editorconfig` `[**/Migrations/*.cs] generated_code = true`** — never suppress SA\* per-rule or hand-edit the generated output. [rules.md §26.9]
 - **Never return `Ok()` after a branching operation unconditionally** — if a nested handler / provider can fail, check its result. [rules.md §9.20]
 
 ### Caching
