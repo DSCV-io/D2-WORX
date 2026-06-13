@@ -4,7 +4,8 @@
 
 import { describe, expect, it } from "vitest";
 import { bubble, bubbleFail } from "../src/bubble.js";
-import { fail, notFound, ok } from "../src/factories.js";
+import { notFound } from "../src/factories.g.js";
+import { fail, ok, someFound } from "../src/factories.js";
 
 describe("bubbleFail", () => {
   it("transfers fail-shape into a fresh typed result", () => {
@@ -46,5 +47,42 @@ describe("bubble", () => {
     expect(r.failed).toBe(true);
     expect(r.errorCode).toBe(upstream.errorCode);
     expect(r.data).toBeUndefined();
+  });
+
+  it("preserves category from upstream failure", () => {
+    const upstream = notFound();
+    const r = bubble<unknown, string>(upstream);
+    expect(r.category).toBe("not_found");
+  });
+
+  it("preserves category on success passthrough", () => {
+    // success results have no category; preserved as undefined
+    const upstream = ok<number>(1);
+    const r = bubble<number, string>(upstream, "x");
+    expect(r.category).toBeUndefined();
+  });
+});
+
+describe("bubbleFail category preservation", () => {
+  it("preserves category from upstream notFound", () => {
+    const upstream = notFound();
+    const r = bubbleFail<string>(upstream);
+    expect(r.category).toBe("not_found");
+  });
+
+  it("preserves undefined category when upstream has none", () => {
+    const upstream = fail({ messages: [{ key: "TK.X" }] });
+    const r = bubbleFail<number>(upstream);
+    expect(r.category).toBeUndefined();
+  });
+});
+
+describe("someFound category", () => {
+  it("carries partial_success category", () => {
+    expect(someFound().category).toBe("partial_success");
+  });
+
+  it("carries partial_success category with data", () => {
+    expect(someFound<number>({ data: 42 }).category).toBe("partial_success");
   });
 });

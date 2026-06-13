@@ -212,3 +212,11 @@ nul
 # per-class deterministic LoggerMessage.{Ns}.{Class}.g.cs files — those ARE
 # tracked so PR reviewers still see codegen diffs.
 **/Generated/Microsoft.Extensions.Logging.Generators/Microsoft.Extensions.Logging.Generators.LoggerMessageGenerator/LoggerMessage.g.cs
+
+# System.Text.RegularExpressions source-generator output. A [GeneratedRegex]
+# partial method's emitted engine is a build artifact, not a reviewable spec —
+# no committed RegexGenerator.g.cs exists in the tree. A project that combines
+# [GeneratedRegex] with EmitCompilerGeneratedFiles=true (to commit OTHER
+# generators' output, e.g. the error-codes SrcGen) would otherwise emit this
+# file to disk; keep it untracked.
+**/Generated/System.Text.RegularExpressions.Generator/**

@@ -17,3 +17,12 @@ export {
   type D2GrpcTrailer,
   ALL_D2_GRPC_TRAILERS,
 } from "./grpc-trailers.g.js";
+// gRPC result codec — D2Result ↔ D2ResultProto wire round-trip
+export { d2ResultToProto } from "./d2-result-to-proto.js";
+export { d2ResultFromProto } from "./d2-result-from-proto.js";
+export {
+  handleGrpcCall,
+  isTransientGrpcError,
+  unaryCall,
+  type UnaryCallOptions,
+} from "./handle-grpc-call.js";

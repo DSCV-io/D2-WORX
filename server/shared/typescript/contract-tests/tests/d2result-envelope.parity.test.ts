@@ -137,6 +137,38 @@ describe("d2result-envelope parity (.NET ↔ TS, Shape B envelope field names)",
       expect(fixture.data[D2ResultEnvelopeFieldNames.MESSAGES]).toEqual([
         { key: "common_errors_NOT_FOUND" },
       ]);
+      // The NotFound factory stamps ErrorCategory.NotFound; it rides the wire
+      // as the snake string via ErrorCategoryJsonConverter.
+      expect(fixture.data[D2ResultEnvelopeFieldNames.CATEGORY]).toBe(
+        "not_found",
+      );
+    });
+
+    it("round-trip-with-category: NotFound carries category=not_found", () => {
+      const fixture = loadFixture<Record<string, unknown>>(
+        "d2result-envelope",
+        "round-trip-with-category",
+      );
+      assertEnvelopeShape(fixture.data, [
+        ...ALWAYS_PRESENT,
+        D2ResultEnvelopeFieldNames.CATEGORY,
+      ]);
+      expect(fixture.data[D2ResultEnvelopeFieldNames.CATEGORY]).toBe(
+        "not_found",
+      );
+    });
+
+    it("round-trip-ok: category is omitted (success carries no category)", () => {
+      const fixture = loadFixture<Record<string, unknown>>(
+        "d2result-envelope",
+        "round-trip-ok",
+      );
+      // [JsonIgnore(WhenWritingNull)] on Category → the key is ABSENT (not
+      // null / not "") when there is no category.
+      expect(
+        Object.keys(fixture.data),
+        "success result must omit the category key",
+      ).not.toContain(D2ResultEnvelopeFieldNames.CATEGORY);
     });
 
     it("round-trip-validation-failed: VALIDATION_FAILED + inputErrors carries InputError[]", () => {
@@ -159,6 +191,10 @@ describe("d2result-envelope parity (.NET ↔ TS, Shape B envelope field names)",
           errors: [{ key: "common_validation_EMAIL_INVALID" }],
         },
       ]);
+      // ValidationFailed stamps ErrorCategory.ValidationFailure.
+      expect(fixture.data[D2ResultEnvelopeFieldNames.CATEGORY]).toBe(
+        "validation_failure",
+      );
     });
 
     it("round-trip-with-trace-id: traceId carries the W3C lower-hex 32-char id", () => {
@@ -188,6 +224,7 @@ describe("d2result-envelope parity (.NET ↔ TS, Shape B envelope field names)",
         "round-trip-not-found",
         "round-trip-validation-failed",
         "round-trip-with-trace-id",
+        "round-trip-with-category",
       ] as const;
       const allowed = new Set(ALL_D2RESULT_ENVELOPE_FIELD_NAMES);
       for (const scenario of scenarios) {

@@ -12,12 +12,16 @@
     }
   },
   "scripts": {
+    "prebuild": "pnpm --filter ts-codegen exec tsx src/error-codes-emit.ts",
     "build": "tsc -b",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "type-check:test": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
+    "@d2/error-category": "workspace:*",
+    "@d2/i18n-abstractions": "workspace:*",
+    "@d2/i18n-keys": "workspace:*",
     "@d2/utilities": "workspace:*"
   },
   "devDependencies": {

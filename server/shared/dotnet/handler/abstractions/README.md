@@ -71,4 +71,5 @@ Package references:
 
 - [`D2.Shared.Handler`](../core/README.md) — the concrete `BaseHandler` + `HandlerContext` + DI extension
 - [`D2.Shared.Handler.Repo`](../repo/README.md) — EF-flavored handler that maps PG/EF exceptions to `D2Result` failure codes
-- [`docs/PATTERNS.md`](../../../../../docs/PATTERNS.md) "Handler" section — full mechanics, TLC/2LC/3LC convention
+- [`docs/PATTERNS.md`](../../../../../docs/PATTERNS.md) "Handler" section — full mechanics, handler pattern
+- [ADR-0020](../../../../../docs/adrs/0020-service-project-structure.md) — per-op handler folder structure (`Application/Handlers/{Commands,Queries}/<Op>/`)

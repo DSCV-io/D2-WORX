@@ -7,19 +7,16 @@ import { ErrorCodes } from "../src/error-codes.g.js";
 import {
   canceled,
   conflict,
-  created,
-  fail,
   forbidden,
   notFound,
-  ok,
   payloadTooLarge,
   serviceUnavailable,
-  someFound,
   tooManyRequests,
   unauthorized,
   unhandledException,
   validationFailed,
-} from "../src/factories.js";
+} from "../src/factories.g.js";
+import { created, fail, ok, someFound } from "../src/factories.js";
 import { HttpStatusCode } from "../src/http-status-codes.js";
 
 describe("ok()", () => {
@@ -81,11 +78,35 @@ describe("notFound()", () => {
     const r = notFound();
     expect(r.statusCode).toBe(HttpStatusCode.NotFound);
     expect(r.errorCode).toBe(ErrorCodes.NOT_FOUND);
-    expect(r.messages[0]?.key).toBe("TK.Common.Errors.NOT_FOUND");
+    // The default TK message must ride the wire as the snake en-US.json key
+    // (which resolves in the Translator/Paraglide catalog), NOT the raw
+    // PascalCase symbol path (which would fall through un-renderable). The
+    // factory references the `TK.common.errors.NOT_FOUND` constant whose value
+    // is this snake key, matching the .NET wire key for the same factory.
+    expect(r.messages[0]?.key).toBe("common_errors_NOT_FOUND");
   });
   it("override messages preserved", () => {
     const r = notFound({ messages: [{ key: "TK.X" }] });
     expect(r.messages).toEqual([{ key: "TK.X" }]);
+  });
+
+  it("accepts the universal ErrorOpts: inputErrors + errorCode + category override", () => {
+    // Unified-shape regression pin: notFound was the restricted shape before the
+    // fold (messages?/traceId? only). Now every error factory takes the one
+    // universal ErrorOpts, so a 404 can carry inputErrors and stamp a domain
+    // errorCode + category override.
+    const r = notFound({
+      inputErrors: [{ field: "id", errors: [{ key: "TK.X" }] }],
+      errorCode: "GEO_SUBDIVISION_NOT_FOUND",
+      category: "conflict",
+      traceId: "t-9",
+    });
+    expect(r.statusCode).toBe(HttpStatusCode.NotFound);
+    expect(r.errorCode).toBe("GEO_SUBDIVISION_NOT_FOUND");
+    expect(r.category).toBe("conflict");
+    expect(r.traceId).toBe("t-9");
+    expect(r.inputErrors).toHaveLength(1);
+    expect(r.messages[0]?.key).toBe("common_errors_NOT_FOUND");
   });
 });
 
@@ -94,6 +115,7 @@ describe("unauthorized()", () => {
     const r = unauthorized();
     expect(r.statusCode).toBe(HttpStatusCode.Unauthorized);
     expect(r.errorCode).toBe(ErrorCodes.UNAUTHORIZED);
+    expect(r.messages[0]?.key).toBe("common_errors_UNAUTHORIZED");
   });
   it("errorCode override (e.g. AUTH_JWT_EXPIRED)", () => {
     expect(unauthorized({ errorCode: "AUTH_JWT_EXPIRED" }).errorCode).toBe(
@@ -107,6 +129,7 @@ describe("forbidden()", () => {
     const r = forbidden();
     expect(r.statusCode).toBe(HttpStatusCode.Forbidden);
     expect(r.errorCode).toBe(ErrorCodes.FORBIDDEN);
+    expect(r.messages[0]?.key).toBe("common_errors_FORBIDDEN");
   });
   it("errorCode override", () => {
     expect(forbidden({ errorCode: "X" }).errorCode).toBe("X");
@@ -121,6 +144,7 @@ describe("validationFailed()", () => {
     expect(r.statusCode).toBe(HttpStatusCode.BadRequest);
     expect(r.errorCode).toBe(ErrorCodes.VALIDATION_FAILED);
     expect(r.inputErrors).toHaveLength(1);
+    expect(r.messages[0]?.key).toBe("common_errors_VALIDATION_FAILED");
   });
   it("errorCode override (e.g. FILES_INVALID_CONTENT_TYPE)", () => {
     expect(
@@ -134,6 +158,7 @@ describe("conflict()", () => {
     const r = conflict();
     expect(r.statusCode).toBe(HttpStatusCode.Conflict);
     expect(r.errorCode).toBe(ErrorCodes.CONFLICT);
+    expect(r.messages[0]?.key).toBe("common_errors_CONFLICT");
   });
 });
 
@@ -142,6 +167,7 @@ describe("serviceUnavailable()", () => {
     const r = serviceUnavailable();
     expect(r.statusCode).toBe(HttpStatusCode.ServiceUnavailable);
     expect(r.errorCode).toBe(ErrorCodes.SERVICE_UNAVAILABLE);
+    expect(r.messages[0]?.key).toBe("common_errors_SERVICE_UNAVAILABLE");
   });
   it("errorCode override (e.g. AUTH_JWKS_UNAVAILABLE)", () => {
     expect(
@@ -155,6 +181,18 @@ describe("unhandledException()", () => {
     const r = unhandledException();
     expect(r.statusCode).toBe(HttpStatusCode.InternalServerError);
     expect(r.errorCode).toBe(ErrorCodes.UNHANDLED_EXCEPTION);
+    // Quirk: default TK key is UNKNOWN, NOT UNHANDLED_EXCEPTION (no such TK key exists).
+    // The error CODE and the user-message KEY deliberately differ.
+    expect(r.messages[0]?.key).toBe("common_errors_UNKNOWN");
+    expect(r.category).toBe("internal_error");
+  });
+  it("errorCode override (e.g. KEYCUSTODIAN_PRECONDITION_VIOLATED)", () => {
+    // The 500 base factory accepts an errorCode override so a delegating
+    // per-domain 500 factory can stamp a specific code on the base status.
+    expect(
+      unhandledException({ errorCode: "KEYCUSTODIAN_PRECONDITION_VIOLATED" })
+        .errorCode,
+    ).toBe("KEYCUSTODIAN_PRECONDITION_VIOLATED");
   });
 });
 
@@ -163,6 +201,7 @@ describe("payloadTooLarge()", () => {
     const r = payloadTooLarge();
     expect(r.statusCode).toBe(HttpStatusCode.RequestEntityTooLarge);
     expect(r.errorCode).toBe(ErrorCodes.PAYLOAD_TOO_LARGE);
+    expect(r.messages[0]?.key).toBe("common_errors_PAYLOAD_TOO_LARGE");
   });
 });
 
@@ -171,6 +210,9 @@ describe("tooManyRequests()", () => {
     const r = tooManyRequests();
     expect(r.statusCode).toBe(HttpStatusCode.TooManyRequests);
     expect(r.errorCode).toBe(ErrorCodes.RATE_LIMITED);
+    // Quirk: factory name is tooManyRequests, error code is RATE_LIMITED, but
+    // the default TK key is TOO_MANY_REQUESTS (three-way name divergence by design).
+    expect(r.messages[0]?.key).toBe("common_errors_TOO_MANY_REQUESTS");
     expect(tooManyRequests({ errorCode: "OTP_RATE_LIMITED" }).errorCode).toBe(
       "OTP_RATE_LIMITED",
     );
@@ -182,6 +224,7 @@ describe("canceled()", () => {
     const r = canceled();
     expect(r.statusCode).toBe(HttpStatusCode.BadRequest);
     expect(r.errorCode).toBe(ErrorCodes.CANCELED);
+    expect(r.messages[0]?.key).toBe("common_errors_CANCELED");
   });
 });
 
@@ -193,5 +236,49 @@ describe("someFound()", () => {
     expect(r.success).toBe(false);
     expect(r.isPartialSuccess).toBe(true);
     expect(r.data).toEqual({ ids: ["a"] });
+  });
+});
+
+describe("generated factories stamp the spec category", () => {
+  // Per-factory pin: each generated base factory sets the snake-wire category
+  // declared in contracts/error-codes/error-codes.spec.json. Producer-set at
+  // generation time (no runtime registry lookup).
+  it.each([
+    [notFound(), "not_found"],
+    [forbidden(), "policy_denied"],
+    [unauthorized(), "policy_denied"],
+    [validationFailed(), "validation_failure"],
+    [conflict(), "conflict"],
+    [unhandledException(), "internal_error"],
+    [serviceUnavailable(), "infrastructure_unavailable"],
+    [tooManyRequests(), "rate_limited"],
+    [payloadTooLarge(), "payload_too_large"],
+    [canceled(), "validation_failure"],
+  ] as const)("factory carries category %#", (result, expectedCategory) => {
+    expect(result.category).toBe(expectedCategory);
+  });
+
+  it("every error factory honors a caller category override (universal standard shape)", () => {
+    // The override exists so a delegating domain factory can stamp its own
+    // code's category onto the base factory it delegates to. After the fold even
+    // the previously-restricted factories (e.g. notFound) honor it.
+    expect(forbidden({ category: "validation_failure" }).category).toBe(
+      "validation_failure",
+    );
+    expect(unauthorized({ category: "not_found" }).category).toBe("not_found");
+    expect(notFound({ category: "conflict" }).category).toBe("conflict");
+  });
+
+  it("hand-rolled ok/created/fail carry no category", () => {
+    expect(ok().category).toBeUndefined();
+    expect(created().category).toBeUndefined();
+    expect(fail().category).toBeUndefined();
+  });
+
+  it("someFound carries partial_success category", () => {
+    expect(someFound().category).toBe("partial_success");
+    expect(someFound<{ id: string }>({ data: { id: "x" } }).category).toBe(
+      "partial_success",
+    );
   });
 });

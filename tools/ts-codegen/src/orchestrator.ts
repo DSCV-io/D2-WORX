@@ -3,14 +3,19 @@
 // -----------------------------------------------------------------------
 
 import { runAuthContextEmit } from "./auth-context-emit.js";
-import { runAuthErrorCodesEmit } from "./auth-error-codes-emit.js";
-import { runAuthFailuresEmit } from "./auth-failures-emit.js";
 import { runAuthScopesEmit } from "./auth-scopes-emit.js";
 import { runD2ResultEnvelopeEmit } from "./d2result-envelope-emit.js";
 import { runDlqFailureMetadataEmit } from "./dlq-failure-metadata-emit.js";
 import { runEncryptionDomainsEmit } from "./encryption-domains-emit.js";
 import { runEncryptionFrameEmit } from "./encryption-frame-emit.js";
-import { runErrorCodesEmit } from "./error-codes-emit.js";
+import { runErrorCategoryEmit } from "./error-category-emit.js";
+import {
+  runAuthErrorCodesEmit,
+  runAuthFailuresEmit,
+  runErrorCodesEmit,
+  runErrorCodesFactoriesEmit,
+} from "./error-codes-emit.js";
+import { runErrorCodesRegistryEmit } from "./error-codes-registry-emit.js";
 import { runFieldConstraintsEmit } from "./field-constraints-emit.js";
 import { runGeoEmit } from "./geo-emitter/index.js";
 import { runGrpcTrailersEmit } from "./grpc-trailers-emit.js";
@@ -35,12 +40,28 @@ function main(): void {
     // request-context extends auth-context — emit auth-context first.
     ...runRequestContextEmit(force),
     ...runAuthScopesEmit(force),
+    // Error category — emits the closed ErrorCategory string-union into
+    // @d2/error-category from contracts/error-category/error-category.spec.json.
+    // @d2/error-codes-registry imports ErrorCategory from this leaf; a future
+    // step wires @d2/result to import it too. Emit before the error-codes
+    // blocks that consume the category wire strings.
+    ...runErrorCategoryEmit(force),
     ...runAuthErrorCodesEmit(force),
     // auth-failures depends on auth-error-codes constants — emit after.
     ...runAuthFailuresEmit(force),
     // generic error-codes catalog (D2Result error-code constants) — emits
     // independently into @d2/result.
     ...runErrorCodesEmit(force),
+    // generic base factories (the D2Result semantic factories — notFound /
+    // unauthorized / ...) — depends on the generic constants; emit after.
+    ...runErrorCodesFactoriesEmit(force),
+    // merged error-code registry — globs all *-error-codes.spec.json, runs
+    // cross-catalog collision check (D2ERC004 / D2ERC005), emits one
+    // error-code-registry.g.ts into @d2/error-codes-registry. Depends on
+    // the per-catalog emits having run first (so the per-catalog committed
+    // .g.ts files reflect the current spec) but reads the specs directly
+    // for its own output — no circular import dependency.
+    ...runErrorCodesRegistryEmit(force),
     // headers + jwt-claims + problem-details emit independent catalogs from
     // their own specs.
     ...runHeadersEmit(force),

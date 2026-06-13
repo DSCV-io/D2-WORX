@@ -16,9 +16,9 @@ Copyright (c) DCSV. All rights reserved.
     <!-- Build gates: every warning is a build-failure. -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 
-    <!-- Emit XML doc files; combined with TreatWarningsAsErrors this enforces
-         CS1591 (missing XML doc on public API) per CLAUDE.md "XML docs: Required
-         for public APIs". -->
+    <!-- Emit XML doc files; combined with TreatWarningsAsErrors this turns CS1591
+         (missing XML doc on a public API) into a build failure — every public API
+         in the solution must carry an XML doc comment. -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
@@ -31,6 +31,7 @@ Copyright (c) DCSV. All rights reserved.
     <D2ContractsRoot>$(D2RepoRoot)contracts\</D2ContractsRoot>
     <D2SharedDotnetRoot>$(D2RepoRoot)server\shared\dotnet\</D2SharedDotnetRoot>
     <D2SourceGenSharedRoot>$(D2SharedDotnetRoot)source-gen-shared\core\</D2SourceGenSharedRoot>
+    <D2ErrorCodesEmitRoot>$(D2SharedDotnetRoot)source-gen-shared\error-codes-emit\</D2ErrorCodesEmitRoot>
     <D2ToolsRoot>$(D2RepoRoot)tools\</D2ToolsRoot>
   </PropertyGroup>
 
@@ -45,11 +46,5 @@ Copyright (c) DCSV. All rights reserved.
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)stylecop.json" Link="stylecop.json" />
   </ItemGroup>
 
-  <!-- Global usings for all projects -->
-  <ItemGroup>
-    <Using Include="System" />
-    <Using Include="System.Collections.Generic" />
-    <Using Include="System.Threading" />
-    <Using Include="System.Threading.Tasks" />
-  </ItemGroup>
+
 </Project>

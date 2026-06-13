@@ -2,7 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import { TK } from "@d2/i18n/keys";
+import { TK } from "@d2/i18n-keys";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -19,7 +19,7 @@ describe("DefaultEmailValidator — adversarial + property", () => {
     expect(result.errorCode).toBe("VALIDATION_FAILED");
     expect(result.inputErrors[0]?.field).toBe("email");
     expect(result.inputErrors[0]?.errors[0]?.key).toBe(
-      TK.common.validation.EMAIL_INVALID,
+      TK.common.validation.EMAIL_INVALID.key,
     );
   });
 

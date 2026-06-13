@@ -4,8 +4,9 @@
 
 import { D2Result } from "./d2-result.js";
 import { ErrorCodes } from "./error-codes.g.js";
+import { ErrorCategoryWire } from "@d2/error-category";
 import type { InputError } from "./input-error.js";
-import type { TKMessage } from "./tk-message.js";
+import type { TKMessage } from "@d2/i18n-abstractions";
 
 type ResultData<R> = R extends D2Result<infer T> ? T : never;
 
@@ -53,11 +54,15 @@ export function combineMany<T>(
   const firstFail = failures[0]!;
   // statusCode is always defaulted in the D2Result constructor; errorCode may
   // be undefined when the upstream used raw `fail()` without one.
+  // category is always ValidationFailure — mirrors .NET AggregateFailure which
+  // calls ValidationFailed(…) unconditionally, collapsing any heterogeneous
+  // input categories (not_found, policy_denied, …) to validation_failure.
   return new D2Result<readonly T[]>({
     success: false,
     messages,
     inputErrors,
     statusCode: firstFail.statusCode,
     errorCode: firstFail.errorCode ?? ErrorCodes.VALIDATION_FAILED,
+    category: ErrorCategoryWire.ValidationFailure,
   });
 }

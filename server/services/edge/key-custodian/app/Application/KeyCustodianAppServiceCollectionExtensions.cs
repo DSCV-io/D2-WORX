@@ -1,0 +1,64 @@
+// -----------------------------------------------------------------------
+// <copyright file="KeyCustodianAppServiceCollectionExtensions.cs" company="DCSV">
+// Copyright (c) DCSV. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace D2.Edge.KeyCustodian.App.Application;
+
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.ActivateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CompromiseKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.GenerateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RetireKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RotateKey;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Commands.RunDueRotations;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
+using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
+
+/// <summary>
+/// DI registration for the KeyCustodian App layer: the 8 lifecycle handlers and
+/// the options-backed rotation-policy provider.
+/// </summary>
+/// <remarks>
+/// This extension registers ONLY what the App layer owns. The seams the handlers
+/// depend on but that App does NOT own — the concrete
+/// <c>IKeyCustodianDbContext</c>, the keyed root <c>IPayloadCrypto</c>, the
+/// <c>IRootKeyProvider</c>, and the <c>IKeyRotationAnnouncer</c> implementation —
+/// are registered by the Infra layer. The options binding +
+/// startup validation also live in Infra.
+/// </remarks>
+public static class KeyCustodianAppServiceCollectionExtensions
+{
+    /// <param name="services">The DI container.</param>
+    extension(IServiceCollection services)
+    {
+        /// <summary>
+        /// Registers the KeyCustodian App-layer services: handlers (transient) and
+        /// the rotation-policy provider.
+        /// </summary>
+        /// <returns>The same <paramref name="services"/> instance for chaining.</returns>
+        public IServiceCollection AddD2KeyCustodianApp()
+        {
+            // §5.1a carve-out: plain reference-type null-guard (IServiceCollection DI service)
+            // — no present-but-falsey concept.
+            ArgumentNullException.ThrowIfNull(services);
+
+            // Lifecycle command handlers.
+            services.AddTransient<IGenerateKeyHandler, GenerateKeyHandler>();
+            services.AddTransient<IActivateKeyHandler, ActivateKeyHandler>();
+            services.AddTransient<IRotateKeyHandler, RotateKeyHandler>();
+            services.AddTransient<IRetireKeyHandler, RetireKeyHandler>();
+            services.AddTransient<ICompromiseKeyHandler, CompromiseKeyHandler>();
+            services.AddTransient<IRunDueRotationsHandler, RunDueRotationsHandler>();
+
+            // Query handlers.
+            services.AddTransient<IGetJwksHandler, GetJwksHandler>();
+            services.AddTransient<IGetRotationPlanHandler, GetRotationPlanHandler>();
+
+            // Policy provider.
+            services.AddSingleton<IRotationPolicyProvider, OptionsRotationPolicyProvider>();
+
+            return services;
+        }
+    }
+}

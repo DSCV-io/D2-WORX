@@ -121,5 +121,5 @@ No configuration — zero-config; consumers register `IClock → SystemClock` th
 ## Dependencies
 
 - `temporal-polyfill` (npm)
-- `@d2/i18n` (workspace) — generated TK constant catalog; `TK.common.errors.*` and `TK.common.time.*` keys used by the `create` factories.
+- `@d2/i18n-keys` (workspace) — generated TK constant catalog; `TK.common.errors.*` and `TK.common.time.*` keys used by the `create` factories.
 - `@d2/result` (workspace) — `D2Result<T>`, `InputError`, and TK helpers returned by the `create` factories.

@@ -8,6 +8,7 @@ namespace D2.Shared.Result;
 
 using System.Net;
 using System.Text.Json.Serialization;
+using D2.Shared.ErrorCodes.Category;
 using D2.Shared.I18n;
 
 /// <summary>
@@ -35,7 +36,7 @@ using D2.Shared.I18n;
 /// envelope ships unchanged under ANY <c>JsonSerializerOptions</c> — callers
 /// do not need to set <c>PropertyNamingPolicy = JsonNamingPolicy.CamelCase</c>
 /// for the envelope keys to render correctly. The TS-side <c>@d2/result</c>
-/// catalog consumes the same spec; cross-language wire drift on these 7
+/// catalog consumes the same spec; cross-language wire drift on these 8
 /// field names is structurally impossible.
 /// </para>
 /// </remarks>
@@ -64,13 +65,20 @@ public partial class D2Result
     /// <param name="traceId">
     /// Trace identifier for correlating logs and diagnostics. Optional.
     /// </param>
+    /// <param name="category">
+    /// The closed semantic/telemetry classification of the failure. Optional;
+    /// the spec-derived semantic factories stamp it from each code's declared
+    /// category at generation time. Left <c>null</c> on success and on
+    /// free-form failures with no category.
+    /// </param>
     public D2Result(
         bool success,
         IReadOnlyList<TKMessage>? messages = null,
         IReadOnlyList<InputError>? inputErrors = null,
         HttpStatusCode? statusCode = null,
         string? errorCode = null,
-        string? traceId = null)
+        string? traceId = null,
+        ErrorCategory? category = null)
     {
         Success = success;
         Messages = messages ?? [];
@@ -78,6 +86,7 @@ public partial class D2Result
         StatusCode = statusCode ?? (success ? HttpStatusCode.OK : HttpStatusCode.BadRequest);
         ErrorCode = errorCode;
         TraceId = traceId;
+        Category = category;
     }
 
     /// <summary>
@@ -126,9 +135,19 @@ public partial class D2Result
     public string? TraceId { get; }
 
     /// <summary>
+    /// Gets the closed semantic/telemetry classification of the failure, if any.
+    /// Serializes as the snake_case wire string via
+    /// <see cref="ErrorCategoryJsonConverter"/>; omitted from the wire when
+    /// <c>null</c> (success / free-form failure with no category).
+    /// </summary>
+    [JsonPropertyName(D2ResultEnvelopeFieldNames.CATEGORY)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ErrorCategory? Category { get; }
+
+    /// <summary>
     /// Returns a new <see cref="D2Result"/> with the same shape (Success,
-    /// Messages, InputErrors, StatusCode, ErrorCode) but with the supplied
-    /// <paramref name="traceId"/> in place of the original. Used by
+    /// Messages, InputErrors, StatusCode, ErrorCode, Category) but with the
+    /// supplied <paramref name="traceId"/> in place of the original. Used by
     /// <c>BaseHandler.RunCorePipelineAsync</c> to auto-inject the request
     /// trace id on every result that crosses the handler boundary, so
     /// handlers don't have to thread it through every <c>D2Result.Ok(...)</c>
@@ -137,5 +156,5 @@ public partial class D2Result
     /// <param name="traceId">The trace id to attach.</param>
     /// <returns>A new <see cref="D2Result"/> with <paramref name="traceId"/> applied.</returns>
     public D2Result WithTraceId(string? traceId)
-        => new(Success, Messages, InputErrors, StatusCode, ErrorCode, traceId);
+        => new(Success, Messages, InputErrors, StatusCode, ErrorCode, traceId, Category);
 }

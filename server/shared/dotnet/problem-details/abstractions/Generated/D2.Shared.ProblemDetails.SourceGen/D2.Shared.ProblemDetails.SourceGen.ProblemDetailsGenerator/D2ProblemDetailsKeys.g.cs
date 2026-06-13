@@ -21,7 +21,7 @@ namespace D2.Shared.ProblemDetails;
 /// <remarks>
 /// Single source for both .NET emit paths (auth-http
 /// <c>D2ProblemDetailsExtensions.ToProblemDetails</c> and aspnetcore
-/// <c>D2ProblemDetailsCustomizer</c>) and the TS-side <c>@d2/headers</c>
+/// <c>D2ProblemDetailsCustomizer</c>) and the TS-side <c>@d2/problem-details-abstractions</c> (re-exported from <c>@d2/headers</c>)
 /// catalog. Cross-language drift on the URI prefix, content type,
 /// extension keys, and per-status titles is structurally impossible.
 /// </remarks>
@@ -41,6 +41,9 @@ public static class D2ProblemDetailsKeys
 
     /// <summary>The extension key carrying the array of per-field InputError objects (field name + TKMessage[] errors) for client-side form-level error rendering. Mirrors the inputErrors field on the native D2Result envelope. Emitted only when the source D2Result carries non-empty InputErrors; absent otherwise.</summary>
     public const string EXTENSION_INPUT_ERRORS = "d2_input_errors";
+
+    /// <summary>The extension key carrying the closed-enum semantic ErrorCategory wire string (conflict / infrastructure_unavailable / internal_error / not_found / partial_success / payload_too_large / policy_denied / rate_limited / validation_failure). Mirrors the category field on the native D2Result envelope + the gRPC envelope's category — cross-transport parity. Lets a consumer branch on failure class without resolving the error code through the registry. Emitted only when the source D2Result carries a non-null Category; absent otherwise.</summary>
+    public const string EXTENSION_CATEGORY = "d2_category";
 
     /// <summary>The extension key carrying the W3C trace id for diagnostic correlation. Unprefixed (W3C-OTel naming alignment) — distinct from the d2_-namespaced D2-private keys.</summary>
     public const string EXTENSION_TRACE_ID = "traceId";

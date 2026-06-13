@@ -44,7 +44,8 @@ Copyright (c) DCSV. All rights reserved.
   let removePhoneOpen = $state(false);
 
   // Mirrors profile page pattern — skeleton until SSR-derived user data is in
-  // hand. Avoids checking `!user` (which is never null with SSR per CLAUDE.md).
+  // hand. With SSR the layout server-load always populates user, so `!user` is
+  // never true at render time; the effect flips `loaded` on the first reactive tick.
   let loaded = $state(false);
   $effect(() => {
     if (user) loaded = true;

@@ -9,7 +9,7 @@ import { requireAuth } from "../../src/guards/require-auth.js";
 import { requireOrg } from "../../src/guards/require-org.js";
 import { requireRole } from "../../src/guards/require-role.js";
 import { requireScope } from "../../src/guards/require-scope.js";
-import { PROBLEM_DETAILS_CONTENT_TYPE } from "../../src/problem-details.g.js";
+import { PROBLEM_DETAILS_CONTENT_TYPE } from "@d2/problem-details-abstractions";
 import { authenticatedCtx, makeEvent, makeThrowers } from "./helpers.js";
 
 /**
@@ -21,10 +21,9 @@ import { authenticatedCtx, makeEvent, makeThrowers } from "./helpers.js";
  * that each guard threads it through the `GuardThrowers.throwError`
  * `contentType` parameter on every rejection branch.
  *
- * Closure on the §11.30 / §13.4 dual-binding gap: the spec emits the
- * constant and EVERY consuming site references it. A future regression
- * (guard call forgetting the third arg, or passing a stale literal)
- * fires here.
+ * Every consuming site references the spec-driven constant (not an inline
+ * literal), so a regression — a guard forgetting the content-type arg or
+ * passing a stale literal — fails here.
  */
 describe("guards set Content-Type: application/problem+json on rejections", () => {
   it("requireAuth — unauthenticated request", () => {

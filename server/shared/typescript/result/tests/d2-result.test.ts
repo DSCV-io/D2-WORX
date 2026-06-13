@@ -83,4 +83,27 @@ describe("D2Result", () => {
     expect(r2.statusCode).toBe(HttpStatusCode.Conflict);
     expect(r2.errorCode).toBe("MY_CODE");
   });
+
+  it("category defaults to undefined when not supplied", () => {
+    expect(new D2Result({ success: true }).category).toBeUndefined();
+    expect(new D2Result({ success: false }).category).toBeUndefined();
+  });
+
+  it("category round-trips through the constructor", () => {
+    const r = new D2Result({ success: false, category: "not_found" });
+    expect(r.category).toBe("not_found");
+  });
+
+  it("withTraceId preserves category", () => {
+    const r = new D2Result<number>({
+      success: false,
+      data: 7,
+      errorCode: "MY_CODE",
+      category: "validation_failure",
+      traceId: "old",
+    });
+    const r2 = r.withTraceId("new");
+    expect(r2.category).toBe("validation_failure");
+    expect(r2.traceId).toBe("new");
+  });
 });

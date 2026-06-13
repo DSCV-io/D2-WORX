@@ -4,14 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+extern alias ResultErrorCodesSourceGen;
+
 namespace D2.Shared.Tests.Unit.Result.SourceGen;
 
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using AwesomeAssertions;
-using D2.Shared.ResultErrorCodes.SourceGen;
 using Xunit;
+using DiagnosticIds = ResultErrorCodesSourceGen::D2.Shared.ResultErrorCodes.SourceGen.DiagnosticIds;
 
 /// <summary>
 /// Pins every <see cref="DiagnosticIds"/> constant in the generic

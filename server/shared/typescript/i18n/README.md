@@ -22,12 +22,12 @@ consumer (Paraglide-backed or hand-rolled) implements against.
 | `loadSupportedLocalesConfig(prefix, env)` | Reads indexed env-var array (`PREFIX__0=en-US, PREFIX__1=fr-FR`).                         |
 | `Translator` (class)                      | Default `ITranslator` impl with locale fallback + `{name}` parameter substitution.        |
 | `LocaleCatalogs`                          | Map of `locale → key → template-string` consumed by `Translator`.                         |
-| `TKMessage` / `tk()`                      | Re-exported from `@d2/result` for caller convenience.                                     |
+| `TKMessage` / `tk()`                      | Re-exported from `@d2/i18n-abstractions` for caller convenience.                          |
 
 ## Dependencies
 
 - `@d2/utilities` (boundary helpers, env parsing)
-- `@d2/result` (TKMessage type)
+- `@d2/i18n-abstractions` (TKMessage type + tk() factory)
 
 ## Usage example
 

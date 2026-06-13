@@ -2,6 +2,10 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -28,6 +32,11 @@ const validSpec: ProblemDetailsSpec = {
       constName: "INPUT_ERRORS",
       value: "d2_input_errors",
       doc: "Per-field input errors.",
+    },
+    {
+      constName: "CATEGORY",
+      value: "d2_category",
+      doc: "Closed-enum semantic ErrorCategory.",
     },
     {
       constName: "TRACE_ID",
@@ -251,6 +260,7 @@ describe("emitProblemDetails — per-VALUE pin", () => {
     ["ERROR_CODE", "d2_error_code"],
     ["MESSAGES", "d2_messages"],
     ["INPUT_ERRORS", "d2_input_errors"],
+    ["CATEGORY", "d2_category"],
     ["TRACE_ID", "traceId"],
     ["CORRELATION_ID", "correlationId"],
   ])("extension key %s pins wire value %s", (constName, wireValue) => {
@@ -291,4 +301,43 @@ describe("emitProblemDetails — per-VALUE pin", () => {
       expect(r.source).toContain(`case ${httpStatus}:`);
     },
   );
+});
+
+// ---------------------------------------------------------------------------
+// Byte-parity golden test: regenerate problem-details.g.ts IN-MEMORY from
+// the real spec and assert it equals the committed file byte-for-byte
+// (LF-normalized). Turns the byte-parity invariant into a CI test.
+// ---------------------------------------------------------------------------
+
+const _here = dirname(fileURLToPath(import.meta.url));
+const _repoRoot = resolve(_here, "..", "..", "..");
+
+function _readJson<T>(...parts: string[]): T {
+  return JSON.parse(readFileSync(resolve(_repoRoot, ...parts), "utf8")) as T;
+}
+
+function _readGenerated(...parts: string[]): string {
+  return readFileSync(resolve(_repoRoot, ...parts), "utf8").replace(/\r\n/g, "\n");
+}
+
+describe("problem-details byte-parity (in-memory regen == committed .g.ts)", () => {
+  it("problem-details.g.ts is byte-identical to committed", () => {
+    const spec = _readJson<ProblemDetailsSpec>(
+      "contracts",
+      "problem-details",
+      "problem-details.spec.json",
+    );
+    const r = emitProblemDetails(spec);
+    expect(r.diagnostics).toEqual([]);
+    const committed = _readGenerated(
+      "server",
+      "shared",
+      "typescript",
+      "problem-details-abstractions",
+      "src",
+      "generated",
+      "problem-details.g.ts",
+    );
+    expect(r.source).toBe(committed);
+  });
 });

@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
-import { tk } from "@d2/result";
+import { tk } from "@d2/i18n-abstractions";
 import { SupportedLocales } from "../src/supported-locales.js";
 import { Translator } from "../src/translator.js";
 

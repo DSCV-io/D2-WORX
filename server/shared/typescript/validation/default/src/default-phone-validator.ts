@@ -3,14 +3,8 @@
 // -----------------------------------------------------------------------
 
 import type { CountryCode } from "@d2/geo-abstractions";
-import { TK } from "@d2/i18n/keys";
-import {
-  inputError,
-  ok,
-  tk,
-  validationFailed,
-  type D2Result,
-} from "@d2/result";
+import { TK } from "@d2/i18n-keys";
+import { inputError, ok, validationFailed, type D2Result } from "@d2/result";
 import { falsey } from "@d2/utilities";
 import type { IPhoneValidator } from "@d2/validation-abstractions";
 import {
@@ -59,9 +53,7 @@ export class DefaultPhoneValidator implements IPhoneValidator {
 
   private static invalid(): D2Result<string> {
     return validationFailed<string>({
-      inputErrors: [
-        inputError("phone", [tk(TK.common.validation.PHONE_INVALID)]),
-      ],
+      inputErrors: [inputError("phone", [TK.common.validation.PHONE_INVALID])],
     });
   }
 }

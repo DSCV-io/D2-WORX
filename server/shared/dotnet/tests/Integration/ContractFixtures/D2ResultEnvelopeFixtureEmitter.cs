@@ -110,6 +110,17 @@ public sealed class D2ResultEnvelopeFixtureEmitter
         WriteRoundTripFixture("round-trip-with-trace-id", result);
     }
 
+    [Fact]
+    [Trait("Category", "ContractFixtures")]
+    public void Emit_RoundTripWithCategory()
+    {
+        // A spec-derived failure factory stamps its code's category — pins the
+        // {category: "not_found"} snake-wire field. NotFound() carries
+        // ErrorCategory.NotFound, serialized via ErrorCategoryJsonConverter.
+        var result = D2Result.NotFound(messages: [new TKMessage("common_errors_NOT_FOUND")]);
+        WriteRoundTripFixture("round-trip-with-category", result);
+    }
+
     private static void WriteRoundTripFixture(string scenario, D2Result result)
     {
         // Serialize via the production System.Text.Json pipeline. The

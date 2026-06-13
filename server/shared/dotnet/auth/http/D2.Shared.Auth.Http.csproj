@@ -82,9 +82,10 @@ Copyright (c) DCSV. All rights reserved.
       catalog (D2ProblemDetailsKeys.TYPE_URI_PREFIX, .CONTENT_TYPE,
       .EXTENSION_*, .TITLE_*, + TitleFor switch). Consumed by
       D2ProblemDetailsExtensions.ToProblemDetails + JwtAuthMiddleware
-      response-write. Cross-language parity with the TS-side @d2/headers
-      ProblemDetails catalog is structurally guaranteed (single spec source
-      emits both sides).
+      response-write. Cross-language parity with the TS-side
+      @d2/problem-details-abstractions ProblemDetails catalog (re-exported
+      from @d2/headers for compat) is structurally guaranteed (single spec
+      source emits both sides).
     -->
     <ProjectReference Include="..\..\problem-details\abstractions\D2.Shared.ProblemDetails.Abstractions.csproj" />
   </ItemGroup>

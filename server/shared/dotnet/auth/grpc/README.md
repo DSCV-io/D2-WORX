@@ -287,5 +287,6 @@ The cross-transport scoped `IRequestContext` resolver registered by `AddD2AuthGr
 - [`../startup/README.md`](../startup/README.md) — deny-by-default boot guard
 - [`../abstractions/README.md`](../abstractions/README.md) — `ISessionLivenessTracker`, `JwtClaimTypes`, `Audiences`, `Scopes`
 - [`../outbound/README.md`](../outbound/README.md) — outbound service-identity bearer attachment (the gRPC counterpart on the client side)
+- [`../../result/grpc/README.md`](../../result/grpc/README.md) — business-result `D2ResultProto` envelope codec (`ToProto` / `HandleAsync`). This lib (`D2.Shared.Auth.Grpc`) handles the auth/transport-reject path (`RpcException` + `D2GrpcTrailers`); `D2.Shared.Result.Grpc` handles the business-result path. The two are structurally separate — a `401` from the JWT interceptor never becomes a `D2ResultProto` envelope, and a `404` from a handler never becomes an `RpcException`.
 - [RFC 6750](https://datatracker.ietf.org/doc/html/rfc6750) — Bearer Token Usage
 - [gRPC status codes](https://grpc.io/docs/guides/status-codes/) — canonical status code semantics

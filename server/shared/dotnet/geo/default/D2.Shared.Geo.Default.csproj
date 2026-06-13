@@ -69,6 +69,11 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <ProjectReference Include="..\..\i18n\abstractions\D2.Shared.I18n.Abstractions.csproj" />
     <!--
+      D2.Shared.I18n.Keys — the TK.* translation-key constants used by
+      DefaultGeoNameResolver.
+    -->
+    <ProjectReference Include="..\..\i18n\keys\D2.Shared.I18n.Keys.csproj" />
+    <!--
       D2.Shared.Context.Abstractions — IRequestContext receiver for the
       Default-layer record-returning extensions.
     -->

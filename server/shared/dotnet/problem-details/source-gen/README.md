@@ -13,7 +13,7 @@ The spec file is the single source of truth for the RFC 7807 wire shape emitted 
 - `D2.Shared.Auth.Http.ProblemDetails.D2ProblemDetailsExtensions.ToProblemDetails` (auth-middleware emit path A)
 - `D2.Shared.AspNetCore.Internal.D2ProblemDetailsCustomizer.Apply` (ASP.NET Core `IProblemDetailsService` pipeline emit path B)
 
-The same spec drives the TS-side `@d2/headers` catalog (via `tools/ts-codegen/src/problem-details-emit.ts`) so cross-language drift on the URI prefix, content type, extension keys, and per-status titles is structurally impossible.
+The same spec drives the TS-side `@d2/problem-details-abstractions` catalog (re-exported from `@d2/headers` for compatibility) via `tools/ts-codegen/src/problem-details-emit.ts`, so cross-language drift on the URI prefix, content type, extension keys, and per-status titles is structurally impossible.
 
 **Convention**: spec-driven Roslyn IIncrementalGenerator pattern. See [`docs/SRC_GEN.md`](../../../../../docs/SRC_GEN.md) for the framework-wide convention (file layout, diagnostic ID convention, generator anatomy, `<AdditionalFiles>` wiring).
 

@@ -3,6 +3,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it } from "vitest";
+import { tk } from "@d2/i18n-abstractions";
 import {
   ALL_AUTH_ERROR_CODES,
   AuthErrorCodes,
@@ -55,7 +56,11 @@ describe("AuthFailures — factory shape (mirrors .NET 1:1)", () => {
     expect(r.failed).toBe(true);
     expect(r.statusCode).toBe(401);
     expect(r.errorCode).toBe("AUTH_BEARER_MISSING");
-    expect(r.messages[0]?.key).toBe("TK.Auth.Errors.UNAUTHORIZED");
+    // The emitted factory references the TS TK constant (TK.auth.errors.*),
+    // which resolves to the snake wire key — NOT the PascalCase symbol path
+    // (a literal string of which would silently bypass the TK catalog and ride
+    // the wire un-renderable). Mirrors the .NET wire key.
+    expect(r.messages[0]?.key).toBe("auth_errors_UNAUTHORIZED");
   });
 
   it("jwksUnavailable returns ServiceUnavailable", () => {
@@ -64,8 +69,38 @@ describe("AuthFailures — factory shape (mirrors .NET 1:1)", () => {
     expect(r.errorCode).toBe("AUTH_JWKS_UNAVAILABLE");
   });
 
+  it("stamps the auth code's OWN category, overriding the base factory's", () => {
+    // AUTH_BEARER_MISSING is validation_failure even though it delegates to
+    // unauthorized (whose own UNAUTHORIZED code is policy_denied) — the auth
+    // code's category wins. Mirrors .NET AuthFailures.BearerMissing().Category.
+    expect(AuthFailures.bearerMissing().category).toBe("validation_failure");
+    // AUTH_JWKS_UNAVAILABLE is infrastructure_unavailable (matches its 503 base).
+    expect(AuthFailures.jwksUnavailable().category).toBe(
+      "infrastructure_unavailable",
+    );
+    // AUTH_SESSION_REVOKED is policy_denied.
+    expect(AuthFailures.sessionRevoked().category).toBe("policy_denied");
+  });
+
   it("traceId pass-through", () => {
-    expect(AuthFailures.bearerMissing("trace-1").traceId).toBe("trace-1");
+    expect(AuthFailures.bearerMissing({ traceId: "trace-1" }).traceId).toBe(
+      "trace-1",
+    );
+  });
+
+  it("messages override is honored; omitted defaults to the spec TK", () => {
+    // The delegating factory's opts object carries an optional `messages`
+    // override (the TS twin of .NET's `IReadOnlyList<TKMessage>? messages`).
+    // Omitted → the spec's default TK; supplied → the override rides the wire.
+    const def = AuthFailures.bearerMissing();
+    expect(def.messages[0]?.key).toBe("auth_errors_UNAUTHORIZED");
+    expect(def.messages[0]?.params).toBeUndefined();
+
+    const overridden = AuthFailures.bearerMissing({
+      messages: [tk("auth_errors_UNAUTHORIZED", { arg: "token" })],
+    });
+    expect(overridden.messages[0]?.key).toBe("auth_errors_UNAUTHORIZED");
+    expect(overridden.messages[0]?.params).toEqual({ arg: "token" });
   });
 });
 

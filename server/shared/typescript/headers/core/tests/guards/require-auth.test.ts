@@ -11,7 +11,7 @@ import type {
   GuardThrowers,
 } from "../../src/guards/guard-types.js";
 import type { ProblemDetailsBody } from "../../src/problem-details.js";
-import { ProblemDetailsExtensionKeys } from "../../src/problem-details.g.js";
+import { ProblemDetailsExtensionKeys } from "@d2/problem-details-abstractions";
 
 interface ThrownError {
   status: number;

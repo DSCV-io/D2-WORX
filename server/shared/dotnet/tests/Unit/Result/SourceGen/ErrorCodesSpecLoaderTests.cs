@@ -4,20 +4,27 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+extern alias ResultErrorCodesSourceGen;
+
 namespace D2.Shared.Tests.Unit.Result.SourceGen;
 
 using AwesomeAssertions;
-using D2.Shared.ResultErrorCodes.SourceGen;
 using Xunit;
+using DiagnosticIds = ResultErrorCodesSourceGen::D2.Shared.ResultErrorCodes.SourceGen.DiagnosticIds;
+using ErrorCodeSpecLoader =
+    ResultErrorCodesSourceGen::D2.Shared.ErrorCodes.SourceGen.ErrorCodeSpecLoader;
 
 /// <summary>
-/// Pure-logic tests for the generic ErrorCodes spec loader's JSON-shape
-/// validation. Drives the loader directly (no Roslyn host) and asserts the
-/// <c>EmitDiagnostic</c> records surfaced for malformed input.
+/// Pure-logic tests for the shared error-codes spec loader's JSON-shape
+/// validation driven with the generic catalog's diagnostic id. Drives the
+/// loader directly (no Roslyn host) and asserts the <c>EmitDiagnostic</c>
+/// records surfaced for malformed input.
 /// </summary>
 public sealed class ErrorCodesSpecLoaderTests
 {
     private const string _PATH = "spec.json";
+
+    private static string MalformedSpecId => DiagnosticIds.MalformedSpec;
 
     [Fact]
     public void Load_ValidSpec_ReturnsPopulatedSpec()
@@ -34,31 +41,35 @@ public sealed class ErrorCodesSpecLoaderTests
         }
         """;
 
-        var result = ErrorCodesSpecLoader.Load(_PATH, json);
+        var result = ErrorCodeSpecLoader.Load(_PATH, json, MalformedSpecId);
 
         result.Diagnostic.Should().BeNull();
         result.Spec.Should().NotBeNull();
-        result.Spec!.ErrorCodes.Should().HaveCount(1);
+        result.Spec.ErrorCodes.Should().HaveCount(1);
         var entry = result.Spec.ErrorCodes[0];
         entry.Code.Should().Be("NOT_FOUND");
         entry.HttpStatus.Should().Be(404);
         entry.Doc.Should().Be("Indicates that the requested resource was not found.");
+
+        // The generic catalog omits the factory fields entirely.
+        entry.Category.Should().BeNull();
+        entry.FactoryShape.Should().BeNull();
     }
 
     [Fact]
     public void Load_MalformedJson_ReturnsMalformedSpecDiagnostic()
     {
-        var result = ErrorCodesSpecLoader.Load(_PATH, "{not valid json");
+        var result = ErrorCodeSpecLoader.Load(_PATH, "{not valid json", MalformedSpecId);
 
         result.Spec.Should().BeNull();
         result.Diagnostic.Should().NotBeNull();
-        result.Diagnostic!.DescriptorId.Should().Be(DiagnosticIds.MalformedSpec);
+        result.Diagnostic.DescriptorId.Should().Be(DiagnosticIds.MalformedSpec);
     }
 
     [Fact]
     public void Load_RootNotObject_ReturnsMalformedSpecDiagnostic()
     {
-        var result = ErrorCodesSpecLoader.Load(_PATH, "[]");
+        var result = ErrorCodeSpecLoader.Load(_PATH, "[]", MalformedSpecId);
 
         result.Spec.Should().BeNull();
         result.Diagnostic!.DescriptorId.Should().Be(DiagnosticIds.MalformedSpec);
@@ -67,7 +78,7 @@ public sealed class ErrorCodesSpecLoaderTests
     [Fact]
     public void Load_MissingErrorCodesArray_ReturnsMalformedSpecDiagnostic()
     {
-        var result = ErrorCodesSpecLoader.Load(_PATH, "{}");
+        var result = ErrorCodeSpecLoader.Load(_PATH, "{}", MalformedSpecId);
 
         result.Spec.Should().BeNull();
         result.Diagnostic!.DescriptorId.Should().Be(DiagnosticIds.MalformedSpec);
@@ -87,7 +98,7 @@ public sealed class ErrorCodesSpecLoaderTests
         }
         """;
 
-        var result = ErrorCodesSpecLoader.Load(_PATH, json);
+        var result = ErrorCodeSpecLoader.Load(_PATH, json, MalformedSpecId);
 
         result.Spec.Should().BeNull();
         result.Diagnostic!.DescriptorId.Should().Be(DiagnosticIds.MalformedSpec);
@@ -108,7 +119,7 @@ public sealed class ErrorCodesSpecLoaderTests
         }
         """;
 
-        var result = ErrorCodesSpecLoader.Load(_PATH, json);
+        var result = ErrorCodeSpecLoader.Load(_PATH, json, MalformedSpecId);
 
         result.Spec.Should().BeNull();
         result.Diagnostic!.DescriptorId.Should().Be(DiagnosticIds.MalformedSpec);
@@ -128,7 +139,7 @@ public sealed class ErrorCodesSpecLoaderTests
         }
         """;
 
-        var result = ErrorCodesSpecLoader.Load(_PATH, json);
+        var result = ErrorCodeSpecLoader.Load(_PATH, json, MalformedSpecId);
 
         result.Spec.Should().BeNull();
         result.Diagnostic!.DescriptorId.Should().Be(DiagnosticIds.MalformedSpec);
@@ -141,7 +152,7 @@ public sealed class ErrorCodesSpecLoaderTests
         { "errorCodes": ["NOT_AN_OBJECT"] }
         """;
 
-        var result = ErrorCodesSpecLoader.Load(_PATH, json);
+        var result = ErrorCodeSpecLoader.Load(_PATH, json, MalformedSpecId);
 
         result.Spec.Should().BeNull();
         result.Diagnostic!.DescriptorId.Should().Be(DiagnosticIds.MalformedSpec);
@@ -151,7 +162,8 @@ public sealed class ErrorCodesSpecLoaderTests
     public void Load_EmptyErrorCodesArray_ReturnsEmptySpec()
     {
         // Loader does not enforce minItems - that's a higher-level concern.
-        var result = ErrorCodesSpecLoader.Load(_PATH, """{ "errorCodes": [] }""");
+        var result = ErrorCodeSpecLoader.Load(
+            _PATH, """{ "errorCodes": [] }""", MalformedSpecId);
 
         result.Diagnostic.Should().BeNull();
         result.Spec!.ErrorCodes.Should().BeEmpty();

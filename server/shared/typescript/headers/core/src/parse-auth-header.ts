@@ -61,36 +61,48 @@ export function parseAuthHeader(
   opts: ParseAuthHeaderOptions = {},
 ): D2Result<JwtPayload> {
   if (falsey(authHeader)) {
-    return AuthFailures.bearerMissing(opts.traceId) as D2Result<JwtPayload>;
+    return AuthFailures.bearerMissing({
+      traceId: opts.traceId,
+    }) as D2Result<JwtPayload>;
   }
   const trimmed = (authHeader as string).trim();
   if (trimmed.length > _MAX_AUTHORIZATION_LENGTH) {
-    return AuthFailures.bearerMalformed(opts.traceId) as D2Result<JwtPayload>;
+    return AuthFailures.bearerMalformed({
+      traceId: opts.traceId,
+    }) as D2Result<JwtPayload>;
   }
   // Reject obvious header-injection attempts before any further work.
   if (/[\r\n]/.test(trimmed)) {
-    return AuthFailures.bearerMalformed(opts.traceId) as D2Result<JwtPayload>;
+    return AuthFailures.bearerMalformed({
+      traceId: opts.traceId,
+    }) as D2Result<JwtPayload>;
   }
   // Case-insensitive Bearer prefix per RFC 6750 §2.1. The regex requires
   // at least one whitespace character separating the scheme from the
   // token; "Bearer" (no token at all) fails this check.
   const SCHEME_RE = /^Bearer\s+/i;
   if (!SCHEME_RE.test(trimmed)) {
-    return AuthFailures.bearerMalformed(opts.traceId) as D2Result<JwtPayload>;
+    return AuthFailures.bearerMalformed({
+      traceId: opts.traceId,
+    }) as D2Result<JwtPayload>;
   }
   const token = trimmed.replace(SCHEME_RE, "").trim();
 
   // JWT compact serialization: header.payload.signature (RFC 7519 §3).
   const segments = token.split(".");
   if (segments.length !== 3) {
-    return AuthFailures.bearerMalformed(opts.traceId) as D2Result<JwtPayload>;
+    return AuthFailures.bearerMalformed({
+      traceId: opts.traceId,
+    }) as D2Result<JwtPayload>;
   }
 
   // segments.length === 3 guarantees segments[1] is defined; the bang is
   // safe because of the gate two lines up.
   const payloadSegment = segments[1]!;
   if (falsey(payloadSegment)) {
-    return AuthFailures.bearerMalformed(opts.traceId) as D2Result<JwtPayload>;
+    return AuthFailures.bearerMalformed({
+      traceId: opts.traceId,
+    }) as D2Result<JwtPayload>;
   }
 
   // Buffer.from with "base64url" never throws on garbage input — it
@@ -98,17 +110,23 @@ export function parseAuthHeader(
   // buffer). The size cap below is the real adversarial gate.
   const decoded = Buffer.from(payloadSegment, "base64url");
   if (decoded.length > _MAX_SEGMENT_BYTES) {
-    return AuthFailures.bearerMalformed(opts.traceId) as D2Result<JwtPayload>;
+    return AuthFailures.bearerMalformed({
+      traceId: opts.traceId,
+    }) as D2Result<JwtPayload>;
   }
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(decoded.toString("utf8"));
   } catch {
-    return AuthFailures.bearerMalformed(opts.traceId) as D2Result<JwtPayload>;
+    return AuthFailures.bearerMalformed({
+      traceId: opts.traceId,
+    }) as D2Result<JwtPayload>;
   }
   if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-    return AuthFailures.bearerMalformed(opts.traceId) as D2Result<JwtPayload>;
+    return AuthFailures.bearerMalformed({
+      traceId: opts.traceId,
+    }) as D2Result<JwtPayload>;
   }
 
   const claims = parsed as Record<string, unknown>;
@@ -121,12 +139,16 @@ export function parseAuthHeader(
     subClaim !== null &&
     typeof subClaim !== "string"
   ) {
-    return AuthFailures.bearerMalformed(opts.traceId) as D2Result<JwtPayload>;
+    return AuthFailures.bearerMalformed({
+      traceId: opts.traceId,
+    }) as D2Result<JwtPayload>;
   }
 
   const aud = _normalizeAudience(claims[JwtClaimTypes.AUD]);
   if (aud === undefined) {
-    return AuthFailures.bearerMalformed(opts.traceId) as D2Result<JwtPayload>;
+    return AuthFailures.bearerMalformed({
+      traceId: opts.traceId,
+    }) as D2Result<JwtPayload>;
   }
 
   const payload: JwtPayload = {

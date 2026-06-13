@@ -7,6 +7,7 @@
 namespace D2.Shared.Encryption;
 
 using System.Security.Cryptography;
+using System.Text;
 
 /// <summary>
 /// Immutable JWKS-style keyring holding the active key plus any retiring
@@ -31,9 +32,11 @@ public sealed class PayloadCryptoKeyring : IDisposable
     public const int MIN_KID_LENGTH = 1;
 
     /// <summary>
-    /// Maximum kid length (capped by the one-byte length prefix in the frame format).
+    /// Maximum kid length in UTF-8 bytes. Mirrors
+    /// <see cref="EncryptionFrameLayout.CONSTRAINT_MAX_KID_LENGTH"/> — the spec
+    /// is the source of truth; this constant delegates to keep them in sync.
     /// </summary>
-    public const int MAX_KID_LENGTH = byte.MaxValue;
+    public const int MAX_KID_LENGTH = EncryptionFrameLayout.CONSTRAINT_MAX_KID_LENGTH;
 
     private readonly Dictionary<string, byte[]> r_keys;
     private readonly byte[] r_aadContext;
@@ -62,10 +65,11 @@ public sealed class PayloadCryptoKeyring : IDisposable
         ArgumentNullException.ThrowIfNull(activeKid);
         ArgumentNullException.ThrowIfNull(keys);
 
-        if (activeKid.Length is < MIN_KID_LENGTH or > MAX_KID_LENGTH)
+        var activeKidUtf8Length = Encoding.UTF8.GetByteCount(activeKid);
+        if (activeKidUtf8Length is < MIN_KID_LENGTH or > MAX_KID_LENGTH)
         {
             throw new ArgumentException(
-                $"activeKid length must be in [{MIN_KID_LENGTH}, {MAX_KID_LENGTH}].",
+                $"activeKid UTF-8 byte length must be in [{MIN_KID_LENGTH}, {MAX_KID_LENGTH}].",
                 nameof(activeKid));
         }
 
@@ -87,10 +91,11 @@ public sealed class PayloadCryptoKeyring : IDisposable
             ArgumentNullException.ThrowIfNull(kid);
             ArgumentNullException.ThrowIfNull(key);
 
-            if (kid.Length is < MIN_KID_LENGTH or > MAX_KID_LENGTH)
+            var kidUtf8Length = Encoding.UTF8.GetByteCount(kid);
+            if (kidUtf8Length is < MIN_KID_LENGTH or > MAX_KID_LENGTH)
             {
                 throw new ArgumentException(
-                    $"kid '{kid}' length must be in [{MIN_KID_LENGTH}, {MAX_KID_LENGTH}].",
+                    $"kid '{kid}' UTF-8 byte length must be in [{MIN_KID_LENGTH}, {MAX_KID_LENGTH}].",
                     nameof(keys));
             }
 

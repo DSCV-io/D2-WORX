@@ -9,8 +9,9 @@ import type {
   Subdivision,
 } from "@d2/geo-abstractions";
 import { compare as levenshteinCompare, normalize } from "@d2/geo-abstractions";
+import { TK } from "@d2/i18n-keys";
 import type { D2Result } from "@d2/result";
-import { notFound, ok, tk, validationFailed } from "@d2/result";
+import { notFound, ok, validationFailed } from "@d2/result";
 import { falsey, truthyOrUndefined } from "@d2/utilities";
 
 import { CountryLookup } from "../countries.js";
@@ -75,18 +76,14 @@ const MIN_LENGTH_PASS_4 = 5;
 const PASS_4_MAX_DISTANCE = 2;
 const PASS_4_DISTANCE_SCALE = 5;
 
-// TK constants — mirror `TK.Common.Errors.*` + `TK.Geo.Errors.*` from
-// the .NET TK SrcGen. On the TS side the canonical TK source-of-truth is
-// Paraglide; these literal-keyed constants exist so cross-language
-// wire-aligned defaults stay consistent.
-const TK_NOT_NULL_VIOLATION = tk("TK.Common.Errors.NOT_NULL_VIOLATION");
-const TK_TOO_LONG = tk("TK.Common.Errors.TOO_LONG");
-const TK_NAME_RESOLUTION_NOT_FOUND = tk(
-  "TK.Geo.Errors.NAME_RESOLUTION_NOT_FOUND",
-);
-const TK_NAME_RESOLUTION_AMBIGUOUS = tk(
-  "TK.Geo.Errors.NAME_RESOLUTION_AMBIGUOUS",
-);
+// TK constants — sourced from the generated `@d2/i18n-keys` catalog,
+// matching the .NET TK SrcGen output from the same spec. Using the
+// typed constant (not a raw string) prevents §G render-bug class:
+// catalog keys are snake_case, not dot-path.
+const TK_NOT_NULL_VIOLATION = TK.common.errors.NOT_NULL_VIOLATION;
+const TK_TOO_LONG = TK.common.errors.TOO_LONG;
+const TK_NAME_RESOLUTION_NOT_FOUND = TK.geo.errors.NAME_RESOLUTION_NOT_FOUND;
+const TK_NAME_RESOLUTION_AMBIGUOUS = TK.geo.errors.NAME_RESOLUTION_AMBIGUOUS;
 
 type CountryCacheEntry =
   | { readonly kind: "record"; readonly record: Country }

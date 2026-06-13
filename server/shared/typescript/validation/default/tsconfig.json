@@ -10,7 +10,7 @@
   "references": [
     { "path": "../abstractions" },
     { "path": "../../geo/abstractions" },
-    { "path": "../../i18n" },
+    { "path": "../../i18n-keys" },
     { "path": "../../result" },
     { "path": "../../utilities" }
   ]

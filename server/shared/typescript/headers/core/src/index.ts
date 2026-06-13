@@ -21,7 +21,7 @@ export {
   PROBLEM_TYPE_URI_PREFIX,
   ProblemDetailsExtensionKeys,
   ProblemDetailsTitles,
-} from "./problem-details.g.js";
+} from "@d2/problem-details-abstractions";
 export type {
   AuthenticatedRequestContext,
   GuardRequestEvent,

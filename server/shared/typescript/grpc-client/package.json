@@ -19,8 +19,11 @@
   },
   "dependencies": {
     "@d2/auth-abstractions": "workspace:*",
+    "@d2/error-category": "workspace:*",
     "@d2/headers-common": "workspace:*",
     "@d2/headers-http": "workspace:*",
+    "@d2/i18n-abstractions": "workspace:*",
+    "@d2/i18n-keys": "workspace:*",
     "@d2/logging": "workspace:*",
     "@d2/protos": "workspace:*",
     "@d2/request-context-abstractions": "workspace:*",

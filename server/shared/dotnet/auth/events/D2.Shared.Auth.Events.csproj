@@ -1,0 +1,39 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Shared.Auth.Events</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Cross-service auth-lifecycle event vocabulary — the published message DTOs
+    (e.g. KeyRotatedEvent) that one service emits and others consume to refresh
+    in-process state. A standalone leaf lib (NOT folded into auth/abstractions)
+    because each event carries an [MqPub(MqMessages.*)] attribute, which forces a
+    reference to D2.Shared.Messaging.Abstractions. auth/abstractions CANNOT take
+    that reference: Messaging.Abstractions -> Handler -> Context.Abstractions ->
+    AuthContext.Abstractions -> Auth.Abstractions is a real dependency chain, so
+    auth/abstractions referencing messaging would close a cycle. This leaf is the
+    cycle-break — nothing in the messaging chain references it, so it can depend on
+    Messaging.Abstractions freely. Publishers and consumers (KC infra, auth
+    middleware) reference THIS lib for the event types, never each other's
+    internals (a cross-service event must not couple consumers to a producer's
+    service-internal assemblies).
+  -->
+
+  <ItemGroup>
+    <!--
+      D2.Shared.Messaging.Abstractions — the [MqPub(MqMessages.X)] attribute +
+      the generated MqMessages constants each event type carries. The publisher's
+      MessageWireResolver reads [MqPub] off the runtime CLR type via reflection, so
+      the attribute MUST live on the same single sealed record that is instantiated
+      and published (a cross-assembly partial does NOT merge).
+    -->
+    <ProjectReference Include="..\..\messaging\abstractions\D2.Shared.Messaging.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D2.Shared.Tests" />
+  </ItemGroup>
+</Project>

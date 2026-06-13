@@ -1,0 +1,17 @@
+{
+  "$schema": "./schema.json",
+  "locks": [
+    {
+      "constName": "MIGRATOR",
+      "database": "keycustodian_db",
+      "key": 1001001001,
+      "doc": "Blocking startup-migration lock for keycustodian_db. Held by AdvisoryLockMigrator during ensure-db + MigrateAsync. Separate key from ROTATION so the migrator and the rotation timer never block each other."
+    },
+    {
+      "constName": "ROTATION",
+      "database": "keycustodian_db",
+      "key": 2002002002,
+      "doc": "Try-lock guarding unattended rotation ticks for keycustodian_db. Held by KeyRotationService for the duration of one RunDueRotations invocation. Skip-if-held semantics prevent two instances from running simultaneous rotations."
+    }
+  ]
+}

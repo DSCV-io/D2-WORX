@@ -1,0 +1,113 @@
+{
+  "$schema": "./schema.json",
+  "errorCodes": [
+    {
+      "code": "KEYCUSTODIAN_KID_INVALID",
+      "httpStatus": 400,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Common.Validation.ID_INVALID",
+      "factoryName": "KidInvalid",
+      "factoryShape": "standard",
+      "doc": "The key identifier is null, empty, whitespace, or contains characters outside the JWKS-safe charset [A-Za-z0-9_-]."
+    },
+    {
+      "code": "KEYCUSTODIAN_KID_TOO_LONG",
+      "httpStatus": 400,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Common.Errors.TOO_LONG",
+      "factoryName": "KidTooLong",
+      "factoryShape": "standard",
+      "doc": "The key identifier exceeds the maximum length of 64 characters."
+    },
+    {
+      "code": "KEYCUSTODIAN_UNKNOWN_KEY_DOMAIN",
+      "httpStatus": 400,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Keycustodian.Validation.UNKNOWN_KEY_DOMAIN",
+      "factoryName": "UnknownKeyDomain",
+      "factoryShape": "standard",
+      "doc": "The specified key domain is not a member of the recognized key-domain catalog."
+    },
+    {
+      "code": "KEYCUSTODIAN_INVALID_ROTATION_POLICY",
+      "httpStatus": 400,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Keycustodian.Validation.INVALID_ROTATION_POLICY",
+      "factoryName": "InvalidRotationPolicy",
+      "factoryShape": "standard",
+      "doc": "A rotation-policy duration is non-positive, or the cadence is shorter than grace plus smoke-soak."
+    },
+    {
+      "code": "KEYCUSTODIAN_SOAK_NOT_ELAPSED",
+      "httpStatus": 400,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Keycustodian.Validation.SOAK_NOT_ELAPSED",
+      "factoryName": "SoakNotElapsed",
+      "factoryShape": "standard",
+      "doc": "The smoke-soak window has not yet elapsed; the pending key may not be activated."
+    },
+    {
+      "code": "KEYCUSTODIAN_SMOKE_PROOF_TYPE_MISMATCH",
+      "httpStatus": 400,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Keycustodian.Validation.SMOKE_PROOF_TYPE_MISMATCH",
+      "factoryName": "SmokeProofTypeMismatch",
+      "factoryShape": "standard",
+      "doc": "The supplied smoke proof was issued for a different key type than this key."
+    },
+    {
+      "code": "KEYCUSTODIAN_GRACE_NOT_ELAPSED",
+      "httpStatus": 400,
+      "category": "validation_failure",
+      "userMessageKey": "TK.Keycustodian.Validation.GRACE_NOT_ELAPSED",
+      "factoryName": "GraceNotElapsed",
+      "factoryShape": "standard",
+      "doc": "The retirement grace window has not yet elapsed; the retiring key may not be retired."
+    },
+    {
+      "code": "KEYCUSTODIAN_PRECONDITION_VIOLATED",
+      "httpStatus": 500,
+      "category": "internal_error",
+      "userMessageKey": "TK.Keycustodian.Internal.PRECONDITION_VIOLATED",
+      "factoryName": "PreconditionViolated",
+      "factoryShape": "standard",
+      "doc": "A required argument supplied to a key-lifecycle transition was null, empty, or otherwise violated a documented precondition. This is a programmer/precondition error surfaced as a flagged 500 result (carrying telemetry) rather than a thrown exception."
+    },
+    {
+      "code": "KEYCUSTODIAN_KEY_NOT_FOUND",
+      "httpStatus": 404,
+      "category": "not_found",
+      "userMessageKey": "TK.Keycustodian.Lifecycle.KEY_NOT_FOUND",
+      "factoryName": "KeyNotFound",
+      "factoryShape": "standard",
+      "doc": "No managed key matching the supplied identifier (or the requested live key for a domain) exists in the store."
+    },
+    {
+      "code": "KEYCUSTODIAN_KEY_STATE_CONFLICT",
+      "httpStatus": 409,
+      "category": "conflict",
+      "userMessageKey": "TK.Keycustodian.Lifecycle.KEY_STATE_CONFLICT",
+      "factoryName": "KeyStateConflict",
+      "factoryShape": "standard",
+      "doc": "The requested lifecycle operation is not legal for the key's current state (e.g. activating a key that is not pending, or retiring a key that is not retiring)."
+    },
+    {
+      "code": "KEYCUSTODIAN_PENDING_KEY_ALREADY_EXISTS",
+      "httpStatus": 409,
+      "category": "conflict",
+      "userMessageKey": "TK.Keycustodian.Lifecycle.PENDING_KEY_ALREADY_EXISTS",
+      "factoryName": "PendingKeyAlreadyExists",
+      "factoryShape": "standard",
+      "doc": "A live pending key already exists for the domain; a second pending key may not be generated until the existing one is activated or compromised."
+    },
+    {
+      "code": "KEYCUSTODIAN_SMOKE_TEST_FAILED",
+      "httpStatus": 500,
+      "category": "internal_error",
+      "userMessageKey": "TK.Keycustodian.Internal.SMOKE_TEST_FAILED",
+      "factoryName": "SmokeTestFailed",
+      "factoryShape": "standard",
+      "doc": "The cryptographic smoke test for the key material did not pass; the key cannot be activated. Surfaced as a flagged internal-error result so the failed material never enters service."
+    }
+  ]
+}

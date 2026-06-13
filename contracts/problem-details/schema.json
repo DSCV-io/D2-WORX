@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "D2 ProblemDetails spec",
-  "description": "Schema for contracts/problem-details/problem-details.spec.json — the source-of-truth catalog that D2.Shared.ProblemDetails.SourceGen reads to emit the D2ProblemDetailsKeys static class into D2.Shared.ProblemDetails.Abstractions (consumed by D2.Shared.Auth.Http and D2.Shared.AspNetCore), and tools/ts-codegen/src/problem-details-emit.ts reads to emit problem-details.g.ts into @d2/headers.",
+  "description": "Schema for contracts/problem-details/problem-details.spec.json — the source-of-truth catalog that D2.Shared.ProblemDetails.SourceGen reads to emit the D2ProblemDetailsKeys static class into D2.Shared.ProblemDetails.Abstractions (consumed by D2.Shared.Auth.Http and D2.Shared.AspNetCore), and tools/ts-codegen/src/problem-details-emit.ts reads to emit problem-details.g.ts into @d2/problem-details-abstractions (re-exported from @d2/headers).",
   "type": "object",
   "required": ["typeUriPrefix", "contentType", "extensionKeys", "titles"],
   "additionalProperties": false,

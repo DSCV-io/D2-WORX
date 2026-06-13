@@ -82,6 +82,11 @@ across the catalog — never re-used, never re-ordered.
 | [0013](0013-service-defaults-composition-root.md) | ServiceDefaults — thin-aggregator composition root with a locked middleware order | Accepted | 2026-05-30 | `D2 shared libraries (backfilled)` |
 | [0014](0014-resilience-primitives.md) | Resilience — bespoke `D2Result`-aware primitives (retry/circuit-breaker/singleflight/pipeline) | Accepted | 2026-05-30 | `D2 shared libraries (backfilled)` |
 | [0015](0015-anonymization-data-governance.md) | Anonymization / data-governance architecture — `D2.Shared.DataGovernance` | Accepted | 2026-06-01 | `D2.Shared.DataGovernance` libraries |
+| [0016](0016-keycustodian-lifecycle-store.md) | KeyCustodian — key lifecycle state machine + dedicated leaderless store | Accepted | 2026-06-06 | `0016-keycustodian` |
+| [0017](0017-ef-as-ddd-persistence.md) | EF-as-DDD persistence — retire the per-op Repository TLC; persist sum-type aggregates as a flat non-polymorphic Record + pure mapper (Strategy A), not TPH | Accepted | 2026-06-06 | `0016-keycustodian` |
+| [0018](0018-spec-driven-error-codes.md) | Spec-driven cross-service error codes + a closed `ErrorCategory` semantic set | Accepted | 2026-06-09 | `0017-error-codes` |
+| [0019](0019-wrapped-result-wire-model.md) | Wrapped-result wire model — a `D2Result` crosses any transport faithfully, zero caller try-catch | Accepted | 2026-06-09 | `0017-error-codes` |
+| [0020](0020-service-project-structure.md) | Service-project structure standard — five-project shape, two-section app split, per-operation handler folders, uppermost-node mapper rule | Accepted | 2026-06-10 | `0016-keycustodian` |
 
 > This index grows as new ADRs are recorded. Backfilled ADRs (0002–0014) carry `D2 shared libraries (backfilled)` in their Deliverable field.
 

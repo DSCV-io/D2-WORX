@@ -3,6 +3,7 @@
 // -----------------------------------------------------------------------
 
 import { CountryCode } from "@d2/geo-abstractions";
+import { TK } from "@d2/i18n-keys";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { CountryLookup } from "../../src/countries.js";
@@ -440,22 +441,41 @@ describe("DefaultGeoNameResolver", () => {
   });
 
   // §1.2 category: Domain-specific — TK key wiring on every NotFound branch
+  // Regression guard for §G render-bug class: keys must be snake_case catalog
+  // keys, NOT dot-path strings (dot-paths render verbatim instead of resolving).
   describe("country: TK message keys", () => {
-    it("Pass-3 ambiguity carries NAME_RESOLUTION_AMBIGUOUS", () => {
+    it("Pass-3 ambiguity carries NAME_RESOLUTION_AMBIGUOUS (snake key, not dot-path)", () => {
       const result = tryResolveCountryByName("Korea");
       expect(result.messages).toHaveLength(1);
       expect(result.messages![0]!.key).toBe(
-        "TK.Geo.Errors.NAME_RESOLUTION_AMBIGUOUS",
+        "geo_errors_name_resolution_ambiguous",
       );
     });
 
-    it("cascade-exhausted carries NAME_RESOLUTION_NOT_FOUND", () => {
+    it("cascade-exhausted carries NAME_RESOLUTION_NOT_FOUND (snake key, not dot-path)", () => {
       const result = tryResolveCountryByName(
         "ZzzzNoSuchCountryNameAnywhereZzzz",
       );
       expect(result.messages).toHaveLength(1);
       expect(result.messages![0]!.key).toBe(
-        "TK.Geo.Errors.NAME_RESOLUTION_NOT_FOUND",
+        "geo_errors_name_resolution_not_found",
+      );
+    });
+
+    // Render guard — keys match the TK catalog constants, confirming no dot-path regression.
+    // A full Paraglide-rendered string check would require a translator fixture not
+    // available in this test context; asserting key === TK.*.key is the structural guard:
+    // if the source is reverted to a raw "TK.Geo.Errors.…" string the TK constant
+    // comparison fails because TK.geo.errors.NAME_RESOLUTION_AMBIGUOUS.key ===
+    // "geo_errors_name_resolution_ambiguous", not the dot-path.
+    it("TK constants match expected catalog keys (render-guard: key ≠ dot-path)", () => {
+      expect(TK.common.errors.NOT_NULL_VIOLATION.key).toBe("common_errors_NOT_NULL_VIOLATION");
+      expect(TK.common.errors.TOO_LONG.key).toBe("common_errors_TOO_LONG");
+      expect(TK.geo.errors.NAME_RESOLUTION_NOT_FOUND.key).toBe(
+        "geo_errors_name_resolution_not_found",
+      );
+      expect(TK.geo.errors.NAME_RESOLUTION_AMBIGUOUS.key).toBe(
+        "geo_errors_name_resolution_ambiguous",
       );
     });
   });

@@ -24,8 +24,8 @@ Per project convention:
 
 ```
 server/services/{service}/
-  api/             # HTTP + gRPC entry point — ASP.NET Core minimal API + grpc-dotnet
-  app/             # Application layer — CQRS handlers, mappers
+  api/             # HTTP + gRPC entry point — ASP.NET Core minimal API + grpc-dotnet + transport mappers
+  app/             # Application layer — CQRS handlers, persistence mappers
   domain/          # Domain layer — entities, value objects, enums, business rules
   infra/           # Infrastructure layer — DbContext, repositories, integrations
   tests/           # Per-service tests (unit + integration via Testcontainers)
@@ -36,7 +36,7 @@ server/services/{service}/
 
 - **Folder naming**: lowercase outer (`edge/`, `api/`, `app/`)
 - **Project naming**: PascalCase dot-separated (`D2.Edge.API.csproj` lives in `edge/api/`)
-- **One handler per file** under `Implementations/{TLC}/Handlers/{3LC}/` per [PATTERNS.md](../../docs/PATTERNS.md) TLC convention
+- **One per-op folder** under `Application/Handlers/{Commands,Queries}/<Op>/` per [ADR-0020](../../docs/adrs/0020-service-project-structure.md)
 - **Every service + project has a `README.md`**
 
 ## Build

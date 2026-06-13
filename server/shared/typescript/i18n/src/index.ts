@@ -9,5 +9,6 @@ export {
   loadSupportedLocalesConfig,
 } from "./supported-locales.js";
 export { Translator, type LocaleCatalogs } from "./translator.js";
-// Re-export TKMessage from @d2/result so consumers don't need both packages.
-export { type TKMessage, tk } from "@d2/result";
+// Re-export the TKMessage primitives from @d2/i18n-abstractions so consumers
+// of @d2/i18n get the message shape + factory without a second import.
+export { type TKMessage, tk } from "@d2/i18n-abstractions";

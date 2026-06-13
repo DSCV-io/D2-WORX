@@ -9,8 +9,11 @@
   "exclude": ["dist", "node_modules", "tests"],
   "references": [
     { "path": "../auth/abstractions" },
+    { "path": "../error-category" },
     { "path": "../headers/common" },
     { "path": "../headers/http" },
+    { "path": "../i18n-abstractions" },
+    { "path": "../i18n-keys" },
     { "path": "../logging" },
     { "path": "../protos" },
     { "path": "../request-context-abstractions" },

@@ -4,17 +4,21 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+extern alias ResultErrorCodesSourceGen;
+
 namespace D2.Shared.Tests.Unit.Result.SourceGen;
 
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AwesomeAssertions;
-using D2.Shared.ResultErrorCodes.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using Xunit;
+using DiagnosticIds = ResultErrorCodesSourceGen::D2.Shared.ResultErrorCodes.SourceGen.DiagnosticIds;
+using ErrorCodesGenerator =
+    ResultErrorCodesSourceGen::D2.Shared.ResultErrorCodes.SourceGen.ErrorCodesGenerator;
 
 /// <summary>
 /// IIncrementalGenerator integration tests for the generic ErrorCodes SrcGen
@@ -36,16 +40,30 @@ public sealed class ErrorCodesGeneratorTests
     """;
 
     [Fact]
-    public void Generator_TargetAssemblyWithSpec_EmitsErrorCodesGeneratedSource()
+    public void Generator_TargetAssemblyWithSpec_EmitsConstantsAndConstructingFactoriesAndBooleans()
     {
         var driver = RunGenerator(
             assemblyName: "D2.Shared.Result",
             specJson: _SAMPLE_SPEC);
 
         var result = driver.GetRunResult();
-        result.GeneratedTrees.Should().HaveCount(1);
-        var fileName = Path.GetFileName(result.GeneratedTrees[0].FilePath);
-        fileName.Should().Be("ErrorCodes.g.cs");
+
+        // The generic catalog (FactoryHost.Base) emits the constants file plus
+        // the constructing failure factories onto the D2Result / D2Result<TData>
+        // partials AND the per-code booleans.
+        result.GeneratedTrees.Should().HaveCount(4);
+        var fileNames = result.GeneratedTrees
+            .Select(t => Path.GetFileName(t.FilePath))
+            .OrderBy(n => n)
+            .ToList();
+        fileNames.Should().BeEquivalentTo(
+            new[]
+            {
+                "D2Result.Booleans.g.cs",
+                "D2Result.Factories.g.cs",
+                "D2Result.Generic.Factories.g.cs",
+                "ErrorCodes.g.cs",
+            });
     }
 
     [Fact]

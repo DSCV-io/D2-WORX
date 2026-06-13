@@ -47,6 +47,15 @@ importers:
 
   server/shared/typescript/auth/abstractions:
     dependencies:
+      '@d2/error-category':
+        specifier: workspace:*
+        version: link:../../error-category
+      '@d2/i18n-abstractions':
+        specifier: workspace:*
+        version: link:../../i18n-abstractions
+      '@d2/i18n-keys':
+        specifier: workspace:*
+        version: link:../../i18n-keys
       '@d2/result':
         specifier: workspace:*
         version: link:../../result
@@ -81,6 +90,12 @@ importers:
       '@d2/encryption-abstractions':
         specifier: workspace:*
         version: link:../encryption-abstractions
+      '@d2/error-category':
+        specifier: workspace:*
+        version: link:../error-category
+      '@d2/error-codes-registry':
+        specifier: workspace:*
+        version: link:../error-codes-registry
       '@d2/geo-abstractions':
         specifier: workspace:*
         version: link:../geo/abstractions
@@ -105,9 +120,15 @@ importers:
       '@d2/headers-http':
         specifier: workspace:*
         version: link:../headers/http
+      '@d2/i18n':
+        specifier: workspace:*
+        version: link:../i18n
       '@d2/messaging-abstractions':
         specifier: workspace:*
         version: link:../messaging-abstractions
+      '@d2/protos':
+        specifier: workspace:*
+        version: link:../protos
       '@d2/request-context-abstractions':
         specifier: workspace:*
         version: link:../request-context-abstractions
@@ -146,6 +167,40 @@ importers:
         specifier: 4.0.18
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0)
 
+  server/shared/typescript/error-category:
+    devDependencies:
+      '@vitest/coverage-v8':
+        specifier: 4.0.18
+        version: 4.0.18(vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0))
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.0.18
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0)
+
+  server/shared/typescript/error-codes-registry:
+    dependencies:
+      '@d2/error-category':
+        specifier: workspace:*
+        version: link:../error-category
+      '@d2/i18n-abstractions':
+        specifier: workspace:*
+        version: link:../i18n-abstractions
+      '@d2/i18n-keys':
+        specifier: workspace:*
+        version: link:../i18n-keys
+    devDependencies:
+      '@vitest/coverage-v8':
+        specifier: 4.0.18
+        version: 4.0.18(vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0))
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.0.18
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0)
+
   server/shared/typescript/geo/abstractions:
     dependencies:
       '@d2/result':
@@ -173,6 +228,9 @@ importers:
       '@d2/geo-abstractions':
         specifier: workspace:*
         version: link:../abstractions
+      '@d2/i18n-keys':
+        specifier: workspace:*
+        version: link:../../i18n-keys
       '@d2/request-context-abstractions':
         specifier: workspace:*
         version: link:../../request-context-abstractions
@@ -198,12 +256,21 @@ importers:
       '@d2/auth-abstractions':
         specifier: workspace:*
         version: link:../auth/abstractions
+      '@d2/error-category':
+        specifier: workspace:*
+        version: link:../error-category
       '@d2/headers-common':
         specifier: workspace:*
         version: link:../headers/common
       '@d2/headers-http':
         specifier: workspace:*
         version: link:../headers/http
+      '@d2/i18n-abstractions':
+        specifier: workspace:*
+        version: link:../i18n-abstractions
+      '@d2/i18n-keys':
+        specifier: workspace:*
+        version: link:../i18n-keys
       '@d2/logging':
         specifier: workspace:*
         version: link:../logging
@@ -271,6 +338,9 @@ importers:
       '@d2/headers-common':
         specifier: workspace:*
         version: link:../common
+      '@d2/problem-details-abstractions':
+        specifier: workspace:*
+        version: link:../../problem-details-abstractions
       '@d2/request-context-abstractions':
         specifier: workspace:*
         version: link:../../request-context-abstractions
@@ -317,12 +387,43 @@ importers:
 
   server/shared/typescript/i18n:
     dependencies:
-      '@d2/result':
+      '@d2/i18n-abstractions':
         specifier: workspace:*
-        version: link:../result
+        version: link:../i18n-abstractions
+      '@d2/i18n-keys':
+        specifier: workspace:*
+        version: link:../i18n-keys
       '@d2/utilities':
         specifier: workspace:*
         version: link:../utilities
+    devDependencies:
+      '@vitest/coverage-v8':
+        specifier: 4.0.18
+        version: 4.0.18(vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0))
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.0.18
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0)
+
+  server/shared/typescript/i18n-abstractions:
+    devDependencies:
+      '@vitest/coverage-v8':
+        specifier: 4.0.18
+        version: 4.0.18(vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0))
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.0.18
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0)
+
+  server/shared/typescript/i18n-keys:
+    dependencies:
+      '@d2/i18n-abstractions':
+        specifier: workspace:*
+        version: link:../i18n-abstractions
     devDependencies:
       '@vitest/coverage-v8':
         specifier: 4.0.18
@@ -360,6 +461,18 @@ importers:
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0)
 
   server/shared/typescript/messaging-abstractions:
+    devDependencies:
+      '@vitest/coverage-v8':
+        specifier: 4.0.18
+        version: 4.0.18(vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0))
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.0.18
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0)
+
+  server/shared/typescript/problem-details-abstractions:
     devDependencies:
       '@vitest/coverage-v8':
         specifier: 4.0.18
@@ -430,6 +543,15 @@ importers:
 
   server/shared/typescript/result:
     dependencies:
+      '@d2/error-category':
+        specifier: workspace:*
+        version: link:../error-category
+      '@d2/i18n-abstractions':
+        specifier: workspace:*
+        version: link:../i18n-abstractions
+      '@d2/i18n-keys':
+        specifier: workspace:*
+        version: link:../i18n-keys
       '@d2/utilities':
         specifier: workspace:*
         version: link:../utilities
@@ -520,9 +642,9 @@ importers:
 
   server/shared/typescript/time:
     dependencies:
-      '@d2/i18n':
+      '@d2/i18n-keys':
         specifier: workspace:*
-        version: link:../i18n
+        version: link:../i18n-keys
       '@d2/result':
         specifier: workspace:*
         version: link:../result
@@ -582,9 +704,9 @@ importers:
       '@d2/geo-abstractions':
         specifier: workspace:*
         version: link:../../geo/abstractions
-      '@d2/i18n':
+      '@d2/i18n-keys':
         specifier: workspace:*
-        version: link:../../i18n
+        version: link:../../i18n-keys
       '@d2/result':
         specifier: workspace:*
         version: link:../../result
@@ -641,6 +763,9 @@ importers:
         specifier: workspace:*
         version: link:../../server/shared/typescript/utilities
     devDependencies:
+      '@d2/i18n-keys':
+        specifier: workspace:*
+        version: link:../../server/shared/typescript/i18n-keys
       '@types/node':
         specifier: 24.10.0
         version: 24.10.0
@@ -4108,14 +4233,6 @@ snapshots:
     optionalDependencies:
       vite: 7.3.3(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.9.0)
 
-  '@vitest/mocker@4.0.18(vite@7.3.3(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0))':
-    dependencies:
-      '@vitest/spy': 4.0.18
-      estree-walker: 3.0.3
-      magic-string: 0.30.21
-    optionalDependencies:
-      vite: 7.3.3(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0)
-
   '@vitest/pretty-format@4.0.18':
     dependencies:
       tinyrainbow: 3.1.0
@@ -4997,7 +5114,7 @@ snapshots:
   vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0):
     dependencies:
       '@vitest/expect': 4.0.18
-      '@vitest/mocker': 4.0.18(vite@7.3.3(@types/node@25.7.0)(tsx@4.20.6)(yaml@2.9.0))
+      '@vitest/mocker': 4.0.18(vite@7.3.3(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.9.0))
       '@vitest/pretty-format': 4.0.18
       '@vitest/runner': 4.0.18
       '@vitest/snapshot': 4.0.18

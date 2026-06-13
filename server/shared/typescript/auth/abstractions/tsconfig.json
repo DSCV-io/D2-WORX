@@ -7,5 +7,9 @@
   },
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules", "tests"],
-  "references": [{ "path": "../../result" }]
+  "references": [
+    { "path": "../../i18n-abstractions" },
+    { "path": "../../i18n-keys" },
+    { "path": "../../result" }
+  ]
 }

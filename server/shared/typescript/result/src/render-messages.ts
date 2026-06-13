@@ -4,7 +4,7 @@
 
 import { falsey } from "@d2/utilities";
 import type { InputError } from "./input-error.js";
-import type { TKMessage } from "./tk-message.js";
+import type { TKMessage } from "@d2/i18n-abstractions";
 
 /**
  * Locale-aware translator function. Implementations bind `key + params`

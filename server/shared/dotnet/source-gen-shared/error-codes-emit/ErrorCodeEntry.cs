@@ -1,0 +1,51 @@
+// -----------------------------------------------------------------------
+// <copyright file="ErrorCodeEntry.cs" company="DCSV">
+// Copyright (c) DCSV. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace D2.Shared.ErrorCodes.SourceGen;
+
+/// <summary>
+/// One error-code entry parsed from a <c>*-error-codes.spec.json</c> catalog.
+/// The superset shape across every catalog: the three constants-only fields
+/// (<see cref="Code"/> / <see cref="HttpStatus"/> / <see cref="Doc"/>) are
+/// always present; the four factory fields (<see cref="Category"/> /
+/// <see cref="UserMessageKey"/> / <see cref="FactoryName"/> /
+/// <see cref="FactoryShape"/>) are nullable — populated only for
+/// factory-bearing catalogs (e.g. auth) and left <c>null</c> for the generic
+/// constants-only catalog.
+/// </summary>
+/// <param name="Code">
+/// Wire-format error code (SCREAMING_SNAKE; per-domain catalogs are
+/// domain-prefix-enforced, e.g. <c>AUTH_*</c>). Becomes the emitted
+/// constant value AND the <c>d2_error_code</c> tag value seen on the wire.
+/// </param>
+/// <param name="HttpStatus">HTTP status the failure surfaces with.</param>
+/// <param name="Doc">XML <c>summary</c> text rendered on the emitted constant + factory.</param>
+/// <param name="Category">
+/// Closed semantic/telemetry classification (e.g. <c>validation_failure</c>);
+/// <c>null</c> for the generic constants-only catalog.
+/// </param>
+/// <param name="UserMessageKey">
+/// TK key reference (e.g. <c>TK.Auth.Errors.UNAUTHORIZED</c>) emitted as the
+/// <c>messages</c> argument on the generated factory; <c>null</c> for the
+/// generic constants-only catalog.
+/// </param>
+/// <param name="FactoryName">
+/// PascalCase symbol for the generated factory method (e.g.
+/// <c>BearerMissing</c>); <c>null</c> for the generic constants-only catalog.
+/// </param>
+/// <param name="FactoryShape">
+/// Closed enum driving the generated factory's signature variant
+/// (<c>standard</c> — the universal error-factory shape — or <c>none</c>);
+/// <c>null</c> for the generic constants-only catalog.
+/// </param>
+internal sealed record ErrorCodeEntry(
+    string Code,
+    int HttpStatus,
+    string Doc,
+    string? Category = null,
+    string? UserMessageKey = null,
+    string? FactoryName = null,
+    string? FactoryShape = null);

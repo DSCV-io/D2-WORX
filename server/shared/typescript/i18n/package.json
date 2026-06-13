@@ -11,8 +11,8 @@
       "import": "./dist/index.js"
     },
     "./keys": {
-      "types": "./dist/generated/tk-keys.g.d.ts",
-      "import": "./dist/generated/tk-keys.g.js"
+      "types": "./dist/keys.d.ts",
+      "import": "./dist/keys.js"
     }
   },
   "scripts": {
@@ -22,7 +22,8 @@
     "type-check:test": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
-    "@d2/result": "workspace:*",
+    "@d2/i18n-abstractions": "workspace:*",
+    "@d2/i18n-keys": "workspace:*",
     "@d2/utilities": "workspace:*"
   },
   "devDependencies": {

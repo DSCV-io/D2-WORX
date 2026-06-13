@@ -54,4 +54,21 @@ internal static class TestPaths
 
     public static string JwtClaimsSpec() =>
         Path.Combine(RepoRoot(), "contracts", "jwt-claims", "jwt-claims.spec.json");
+
+    public static string AuthErrorCodesSpec() =>
+        Path.Combine(
+            RepoRoot(),
+            "contracts",
+            "auth-error-codes",
+            "auth-error-codes.spec.json");
+
+    public static string MessagesDirectory() =>
+        Path.Combine(RepoRoot(), "contracts", "messages");
+
+    public static string ErrorCategorySpec() =>
+        Path.Combine(
+            RepoRoot(),
+            "contracts",
+            "error-category",
+            "error-category.spec.json");
 }

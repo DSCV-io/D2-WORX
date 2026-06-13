@@ -14,16 +14,14 @@ import {
   validationFailed,
 } from "@d2/result";
 import {
-  PROBLEM_DETAILS_CONTENT_TYPE,
   PROBLEM_TYPE_URI_PREFIX,
   ProblemDetailsExtensionKeys,
-  ProblemDetailsTitles,
   toProblemDetails,
 } from "../src/index.js";
 
 describe("toProblemDetails — happy path", () => {
   it("renders an unauthorized failure as RFC 7807 body", () => {
-    const failure = AuthFailures.bearerMissing("trace-1");
+    const failure = AuthFailures.bearerMissing({ traceId: "trace-1" });
     const body = toProblemDetails(failure, { instance: "/dashboard" });
     expect(body.type).toBe(`${PROBLEM_TYPE_URI_PREFIX}auth-bearer-missing`);
     expect(body.status).toBe(401);
@@ -39,7 +37,7 @@ describe("toProblemDetails — happy path", () => {
   });
 
   it("uses opts.title override when provided", () => {
-    const failure = AuthFailures.scopeInsufficient("trace-2");
+    const failure = AuthFailures.scopeInsufficient({ traceId: "trace-2" });
     const body = toProblemDetails(failure, {
       instance: "/admin",
       title: "Custom title",
@@ -150,7 +148,7 @@ describe("toProblemDetails — every AuthFailures.* survives the round-trip", ()
     AuthFailures.sessionLivenessUnavailable,
     AuthFailures.sessionRevoked,
   ])("AuthFailures.%s", (factory) => {
-    const failure = factory("trace-x");
+    const failure = factory({ traceId: "trace-x" });
     const body = toProblemDetails(failure, { instance: "/x" });
     expect(body[ProblemDetailsExtensionKeys.ERROR_CODE]).toBe(
       failure.errorCode,
@@ -160,33 +158,25 @@ describe("toProblemDetails — every AuthFailures.* survives the round-trip", ()
   });
 });
 
-describe("PROBLEM_TYPE_URI_PREFIX wire pin", () => {
-  it("matches the .NET D2ProblemDetailsExtensions PROBLEM_TYPE_URI_PREFIX value", () => {
-    expect(PROBLEM_TYPE_URI_PREFIX).toBe("https://problems.d2.dcsv.io/");
+describe("toProblemDetails — category extension (omit-when-absent)", () => {
+  it("emits d2_category extension when failure carries a category", () => {
+    // validationFailed() stamps category: "validation_failure"
+    const failure = validationFailed();
+    const body = toProblemDetails(failure, { instance: "/x" });
+    expect(body[ProblemDetailsExtensionKeys.CATEGORY]).toBe("validation_failure");
   });
-});
 
-describe("ProblemDetailsExtensionKeys wire pin", () => {
-  it("ERROR_CODE matches d2_error_code", () => {
-    expect(ProblemDetailsExtensionKeys.ERROR_CODE).toBe("d2_error_code");
+  it("emits d2_category for notFound (category: not_found)", () => {
+    const failure = notFound();
+    const body = toProblemDetails(failure, { instance: "/x" });
+    expect(body[ProblemDetailsExtensionKeys.CATEGORY]).toBe("not_found");
   });
-  it("MESSAGES matches d2_messages", () => {
-    expect(ProblemDetailsExtensionKeys.MESSAGES).toBe("d2_messages");
-  });
-  it("INPUT_ERRORS matches d2_input_errors", () => {
-    expect(ProblemDetailsExtensionKeys.INPUT_ERRORS).toBe("d2_input_errors");
-  });
-  it("TRACE_ID matches traceId", () => {
-    expect(ProblemDetailsExtensionKeys.TRACE_ID).toBe("traceId");
-  });
-  it("CORRELATION_ID matches correlationId", () => {
-    expect(ProblemDetailsExtensionKeys.CORRELATION_ID).toBe("correlationId");
-  });
-});
 
-describe("PROBLEM_DETAILS_CONTENT_TYPE wire pin", () => {
-  it("matches application/problem+json (RFC 7807 §6.1)", () => {
-    expect(PROBLEM_DETAILS_CONTENT_TYPE).toBe("application/problem+json");
+  it("omits d2_category extension when failure has no category", () => {
+    // fail() with no category → category is undefined
+    const failure = fail({ statusCode: 500, errorCode: "X" });
+    const body = toProblemDetails(failure, { instance: "/x" });
+    expect(ProblemDetailsExtensionKeys.CATEGORY in body).toBe(false);
   });
 });
 
@@ -208,24 +198,3 @@ describe("toProblemDetails — input errors surfacing", () => {
   });
 });
 
-describe("ProblemDetailsTitles wire pin", () => {
-  // Per-VALUE pins for the codegen-emitted ProblemDetailsTitles catalog.
-  // Cross-language parity with the .NET side is structurally guaranteed
-  // (same spec source); these pins protect against accidental .g.ts
-  // tampering AND against accidental spec edits.
-  it.each([
-    ["BAD_REQUEST", "Bad Request"],
-    ["UNAUTHORIZED", "Unauthorized"],
-    ["FORBIDDEN", "Forbidden"],
-    ["NOT_FOUND", "Not Found"],
-    ["CONFLICT", "Conflict"],
-    ["PAYLOAD_TOO_LARGE", "Payload Too Large"],
-    ["TOO_MANY_REQUESTS", "Too Many Requests"],
-    ["INTERNAL_SERVER_ERROR", "Internal Server Error"],
-    ["SERVICE_UNAVAILABLE", "Service Unavailable"],
-    ["REQUEST_FAILED", "Request Failed"],
-  ])("%s matches %s", (constName, expected) => {
-    const map = ProblemDetailsTitles as unknown as Record<string, string>;
-    expect(map[constName]).toBe(expected);
-  });
-});

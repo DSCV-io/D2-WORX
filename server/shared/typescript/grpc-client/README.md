@@ -21,15 +21,75 @@ Mirrors the .NET `services.AddGrpcClient<T>()` registration shape +
 
 ## Public API
 
-| Export                                      | Purpose                                                                                       |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `getChannel(opts?)`                         | Singleton-per-process channel accessor; lazy-init; concurrent dedup.                          |
-| `closeChannel()`                            | Idempotent shutdown; safe to call from any number of process-shutdown hooks.                  |
-| `createInternalTokenInterceptor(opts)`      | Returns a gRPC `Interceptor` that attaches `Authorization: Bearer <jwt>` on every call.       |
+### Channel + interceptors
+
+| Export                                      | Purpose                                                                                        |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `getChannel(opts?)`                         | Singleton-per-process channel accessor; lazy-init; concurrent dedup.                           |
+| `closeChannel()`                            | Idempotent shutdown; safe to call from any number of process-shutdown hooks.                   |
+| `createInternalTokenInterceptor(opts)`      | Returns a gRPC `Interceptor` that attaches `Authorization: Bearer <jwt>` on every call.        |
 | `createContextPropagationInterceptor(opts)` | Returns an `Interceptor` that injects `x-d2-context` + forwards `traceparent` / `tracestate`. |
-| `InternalTokenCache`                        | Single-slot atomic-style cache for the BFF's internal token.                                  |
-| `KeyCustodianClient` (interface)            | Pluggable contract for token-acquire backends. Production wires `HttpKeyCustodianClient`.     |
-| `HttpKeyCustodianClient`                    | Node-native `fetch()`-based KeyCustodian client; Singleflight-deduped.                        |
+| `InternalTokenCache`                        | Single-slot atomic-style cache for the BFF's internal token.                                   |
+| `KeyCustodianClient` (interface)            | Pluggable contract for token-acquire backends. Production wires `HttpKeyCustodianClient`.      |
+| `HttpKeyCustodianClient`                    | Node-native `fetch()`-based KeyCustodian client; Singleflight-deduped.                         |
+
+### gRPC result codec — `D2Result` ↔ `D2ResultProto` wire round-trip
+
+Mirrors .NET `D2.Shared.Result.Grpc.ProtoExtensions`. Every gRPC response
+message carries a `D2ResultProto result = N` envelope field; the typed
+payload rides in sibling fields. Business failures return a normal response
+(`success=false` in the envelope) — `RpcException` is reserved for
+transport/auth-layer faults only.
+
+| Export                                                              | Purpose                                                                                                                                              |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `d2ResultToProto(result)`                                           | Serialize a `D2Result` to its `D2ResultProto` wire form (server-side WRAP).                                                                          |
+| `d2ResultFromProto<TData>(proto, data?)`                            | Reconstruct a `D2Result<TData>` from proto + optional separately-selected payload (client-side RE-MATERIALIZE).                                      |
+| `handleGrpcCall(callFn, resultSelector, dataSelector)`              | Execute a unary call, re-materialize the result, and fail-open on transport faults — `ServiceError(CANCELLED)` → `canceled`; `ServiceError(UNAUTHENTICATED)` → `unauthorized`; other `ServiceError` → `serviceUnavailable`; non-`ServiceError` → `unhandledException`. |
+| `unaryCall(method, request, opts?)`                                 | Promise-wrapper for `@grpc/grpc-js` callback-style unary methods. Accepts optional `{ deadlineMs }`.                                                 |
+| `isTransientGrpcError(err)`                                         | `true` for retry-safe gRPC status codes (DEADLINE_EXCEEDED / RESOURCE_EXHAUSTED / ABORTED / INTERNAL / UNAVAILABLE).                                 |
+| `UnaryCallOptions` (interface)                                      | `{ deadlineMs?: number }` — options for `unaryCall`.                                                                                                 |
+
+#### Wire boundary: envelope vs. transport-reject
+
+Two mechanisms coexist — each has a distinct role:
+
+| Mechanism | When | Transport | Reads by |
+| --- | --- | --- | --- |
+| `D2ResultProto` envelope | Business results (success AND failure) | gRPC `OK` status + response body | `handleGrpcCall` / `d2ResultFromProto` |
+| `RpcException` + `D2GrpcTrailers` | Transport/auth rejects (JWT validation failed) | Non-OK gRPC status + trailers | Auth middleware (server-side only) |
+
+A `401` from the JWT middleware is a genuine transport fault → `RpcException(Unauthenticated)`.
+A `404` from a handler is a business result → `D2ResultProto{ success=false, status_code=404 }`.
+
+#### Call-site pattern
+
+```ts
+import { getChannel, createInternalTokenInterceptor, handleGrpcCall, unaryCall } from "@d2/grpc-client";
+
+// One-time setup at composition root (unchanged from before).
+const channel = await getChannel();
+const client = new EdgeServiceClient(channel.getTarget(), undefined, {
+  channelOverride: channel,
+  interceptors: [ /* … */ ],
+});
+
+// Per-call — selectors are compiler-checked against the generated response type.
+const result = await handleGrpcCall(
+  () => unaryCall(client.doThing.bind(client), req, { deadlineMs: 5_000 }),
+  r => r.result,  // D2ResultProto envelope field
+  r => r.data,    // typed payload field (undefined on failure shapes)
+);
+if (result.category === "not_found") { /* … */ }
+```
+
+#### Transport fault message safety
+
+Transport faults produce TK-constant-messaged failures; raw transport strings
+(`err.details`, `err.message` — broker URIs, host detail, untranslated transport
+context) never reach the client. The user-facing `messages[]` array is always
+a TK constant (`TK.common.errors.SERVICE_UNAVAILABLE` / `CANCELED` /
+`UNAUTHORIZED` / `UNKNOWN`).
 
 ## Trust + token model
 
@@ -83,6 +143,8 @@ log binding.
 
 - `@d2/auth-abstractions` — `AuthFailures.jwksUnavailable` factory for
   KeyCustodian-unreachable failures.
+- `@d2/error-category` — `ErrorCategory` union + `ALL_ERROR_CATEGORIES` for
+  safe category parse on `d2ResultFromProto`.
 - `@d2/headers-common` — `PROPAGATED_CONTEXT` / `TRACEPARENT` /
   `TRACESTATE` metadata keys (gRPC-applicable wire constants live in
   `@d2/headers-common` and `@d2/headers-http`; the dedicated
@@ -90,14 +152,20 @@ log binding.
   inline and is not needed at this layer).
 - `@d2/headers-http` — `AUTHORIZATION` constant for the internal-token
   attach.
+- `@d2/i18n-abstractions` — `tk(key, params?)` factory used in
+  `d2ResultFromProto` to reconstruct `TKMessage` from proto fields.
+- `@d2/i18n-keys` — `TK.*` constants for transport-fault messages in
+  `handleGrpcCall` (no raw error strings ever enter user-facing messages).
 - `@d2/logging` — `ILogger` interface for redaction-respecting diagnostic
   logs.
-- `@d2/protos` — gRPC stubs (transitively pulls `@grpc/grpc-js@1.14.3`).
+- `@d2/protos` — `D2ResultProto` / `TKMessageProto` / `InputErrorProto`
+  generated stubs (transitively pulls `@grpc/grpc-js@1.14.3`).
 - `@d2/request-context-abstractions` — `IPropagatedContext` shape +
   `PropagatedContextSerializer.serialize()`.
 - `@d2/resilience` — `Singleflight` for concurrent token-refresh dedup.
-- `@d2/result` — `D2Result` envelope.
-- `@d2/utilities` — `falsey()` for input shape checks.
+- `@d2/result` — `D2Result` + semantic factory functions.
+- `@d2/utilities` — `falsey()` for input shape checks; `truthyOrUndefined()`
+  for proto optional-string rehydration.
 - `@grpc/grpc-js@1.14.3` — runtime gRPC implementation; pinned.
 
 ## Usage

@@ -26,13 +26,27 @@ Copyright (c) DCSV. All rights reserved.
 
   <ItemGroup>
     <!--
-      D2.Shared.I18n.Abstractions provides TKMessage + the SrcGen-emitted TK
-      constants. D2Result.Messages and InputError.Errors are typed as
-      IReadOnlyList<TKMessage> so the type system enforces "all user-facing
-      messages are translation keys." Abstractions is zero-runtime-dep so
-      D2.Shared.Result stays domain-safe.
+      D2.Shared.I18n.Abstractions provides the TKMessage type. D2Result.Messages
+      and InputError.Errors are typed as IReadOnlyList<TKMessage> so the type
+      system enforces "all user-facing messages are translation keys."
+      Abstractions is zero-runtime-dep so D2.Shared.Result stays domain-safe.
     -->
     <ProjectReference Include="..\..\i18n\abstractions\D2.Shared.I18n.Abstractions.csproj" />
+    <!--
+      D2.Shared.I18n.Keys provides the SrcGen-emitted TK.* constants the
+      factory messages reference (e.g. TK.Common.Errors.NOT_FOUND). Keys
+      references Abstractions for the TKMessage type, so it transitively
+      re-exposes Abstractions to D2.Shared.Result consumers.
+    -->
+    <ProjectReference Include="..\..\i18n\keys\D2.Shared.I18n.Keys.csproj" />
+    <!--
+      D2.Shared.ErrorCodes.Category is the foundational zero-dep (BCL-only) leaf
+      carrying the ErrorCategory enum + ErrorCategoryJsonConverter. D2Result.Category
+      is typed as ErrorCategory? and the generated factories stamp each code's
+      category at generation time, so result-core references this sink downward.
+      The leaf depends on nothing back, so the reference stays acyclic.
+    -->
+    <ProjectReference Include="..\..\error-codes\category\D2.Shared.ErrorCodes.Category.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -45,6 +59,14 @@ Copyright (c) DCSV. All rights reserved.
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
     <AdditionalFiles Include="$(D2ContractsRoot)error-codes\error-codes.spec.json" />
+    <!--
+      en-US.json surfaces the message-key set the generic catalog now backfills
+      userMessageKey references against. The engine inverse-transforms each
+      userMessageKey (TK.Common.Errors.NOT_FOUND -> common_errors_NOT_FOUND) and
+      asserts membership in en-US.json (D2ERC002) — the same TK-existence
+      cross-check the auth catalog runs.
+    -->
+    <AdditionalFiles Include="$(D2ContractsRoot)messages\en-US.json" />
   </ItemGroup>
 
   <ItemGroup>

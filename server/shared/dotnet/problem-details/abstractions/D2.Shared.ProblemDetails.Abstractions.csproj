@@ -39,9 +39,9 @@ Copyright (c) DCSV. All rights reserved.
     SourceGen analyzer is wired with PrivateAssets="all" so consuming csprojs
     pull the constants via ProjectReference WITHOUT also pulling the generator.
 
-    Cross-language parity: the SAME spec drives the TS-side @d2/headers
-    catalog via tools/ts-codegen/src/problem-details-emit.ts, so .NET and TS
-    consumers share byte-equal wire values for the URI prefix, MIME type,
+    Cross-language parity: the SAME spec drives the TS-side @d2/problem-details-abstractions
+    catalog (re-exported from @d2/headers for compat) via tools/ts-codegen/src/problem-details-emit.ts,
+    so .NET and TS consumers share byte-equal wire values for the URI prefix, MIME type,
     extension keys, and per-status titles.
   -->
 

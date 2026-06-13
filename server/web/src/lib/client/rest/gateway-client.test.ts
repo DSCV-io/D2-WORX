@@ -2,7 +2,7 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import { TK } from "@d2/i18n/keys";
+import { TK } from "@d2/i18n-keys";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Mock $env/dynamic/public

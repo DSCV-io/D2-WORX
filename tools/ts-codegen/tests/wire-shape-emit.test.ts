@@ -2,6 +2,10 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import { DiagnosticIds } from "../src/lib/diagnostics.js";
@@ -172,5 +176,71 @@ describe("emitWireShape", () => {
       catalogDescription: "X",
     });
     expect(result.source).toContain('X: "a\\"b\\\\c",');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Byte-parity golden tests: regenerate each wire-shape .g.ts IN-MEMORY from
+// the real spec and assert it equals the committed file byte-for-byte
+// (LF-normalized). Turns the byte-parity invariant into a CI test.
+// ---------------------------------------------------------------------------
+
+const _here = dirname(fileURLToPath(import.meta.url));
+const _repoRoot = resolve(_here, "..", "..", "..");
+
+function _readJson<T>(...parts: string[]): T {
+  return JSON.parse(readFileSync(resolve(_repoRoot, ...parts), "utf8")) as T;
+}
+
+function _readGenerated(...parts: string[]): string {
+  return readFileSync(resolve(_repoRoot, ...parts), "utf8").replace(/\r\n/g, "\n");
+}
+
+describe("wire-shape byte-parity (in-memory regen == committed .g.ts)", () => {
+  it("tk-message.g.ts (TkMessageWireShape) is byte-identical to committed", () => {
+    const spec = _readJson<WireShapeSpec>(
+      "contracts",
+      "tk-message",
+      "tk-message.spec.json",
+    );
+    const r = emitWireShape(spec, {
+      specRelativePath: "contracts/tk-message/tk-message.spec.json",
+      catalogName: "TkMessageWireShape",
+      catalogDescription: "TKMessage",
+    });
+    expect(r.diagnostics).toEqual([]);
+    const committed = _readGenerated(
+      "server",
+      "shared",
+      "typescript",
+      "i18n-abstractions",
+      "src",
+      "generated",
+      "tk-message.g.ts",
+    );
+    expect(r.source).toBe(committed);
+  });
+
+  it("input-error.g.ts (InputErrorWireShape) is byte-identical to committed", () => {
+    const spec = _readJson<WireShapeSpec>(
+      "contracts",
+      "input-error",
+      "input-error.spec.json",
+    );
+    const r = emitWireShape(spec, {
+      specRelativePath: "contracts/input-error/input-error.spec.json",
+      catalogName: "InputErrorWireShape",
+      catalogDescription: "InputError",
+    });
+    expect(r.diagnostics).toEqual([]);
+    const committed = _readGenerated(
+      "server",
+      "shared",
+      "typescript",
+      "result",
+      "src",
+      "input-error.g.ts",
+    );
+    expect(r.source).toBe(committed);
   });
 });

@@ -39,19 +39,30 @@ public sealed class ErrorCodesGeneratorTests
     """;
 
     [Fact]
-    public void Generator_TargetAssemblyWithSpec_EmitsBothErrorCodesAndFailuresGeneratedSource()
+    public void Generator_TargetAssemblyWithSpec_EmitsConstantsAndBothFailuresClasses()
     {
         var driver = RunGenerator(
             assemblyName: "D2.Shared.Auth",
             specJson: _SAMPLE_SPEC);
 
         var result = driver.GetRunResult();
-        result.GeneratedTrees.Should().HaveCount(2);
+
+        // The auth catalog (FactoryHost.Domain) emits the constants file plus
+        // BOTH the non-generic AuthFailures class AND the generic
+        // AuthFailures<T> twin (in a distinct sibling file so the existing
+        // AuthFailures.g.cs stays byte-identical).
+        result.GeneratedTrees.Should().HaveCount(3);
         var fileNames = result.GeneratedTrees
             .Select(t => Path.GetFileName(t.FilePath))
             .OrderBy(n => n)
             .ToList();
-        fileNames.Should().BeEquivalentTo(new[] { "AuthErrorCodes.g.cs", "AuthFailures.g.cs" });
+        fileNames.Should().BeEquivalentTo(
+            new[]
+            {
+                "AuthErrorCodes.g.cs",
+                "AuthFailures.Generic.g.cs",
+                "AuthFailures.g.cs",
+            });
     }
 
     [Fact]

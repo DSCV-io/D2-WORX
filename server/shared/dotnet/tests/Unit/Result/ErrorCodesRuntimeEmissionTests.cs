@@ -174,7 +174,7 @@ public sealed class ErrorCodesRuntimeEmissionTests
     [InlineData("CANCELED")]
     public void EveryCatalogValue_RoundTripsThroughEnvelopeUnchanged(string catalogValue)
     {
-        // §21.10 catalog completeness: every value enumerated in
+        // Catalog completeness: every value enumerated in
         // contracts/error-codes/error-codes.spec.json round-trips through
         // D2Result.Fail → JsonSerializer.Serialize → JSON parse → wire
         // value, byte-for-byte. Drift here would break BFF client switch

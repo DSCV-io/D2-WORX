@@ -47,10 +47,10 @@ operationalization layer that turns the auth vocabulary already shipped (`Scopes
 
 ### Critical framing — this lib is purely a client
 
-**Edge owns ALL issuance.** Edge's Auth module signs JWTs, publishes JWKS, runs KeyCustodian's state
-machine, owns session storage, decides what scopes a (role, org_type) tuple expands to, and exposes
-the `/oauth/token` endpoint. This lib never holds a signing key, never mints a token, never
-authoritatively decides whether a session is alive.
+**Edge owns ALL issuance.** Edge signs JWTs, publishes JWKS (the KeyCustodian module runs the
+key-lifecycle state machine), owns session storage, decides what scopes a (role, org_type) tuple
+expands to, and exposes the `/oauth/token` endpoint. This lib never holds a signing key, never mints
+a token, never authoritatively decides whether a session is alive.
 
 What this lib does is **mirror Edge state into local caches with backplane-driven invalidation**,
 and **authenticate outbound calls by requesting tokens from Edge**. Every "fetch" / "request" verb
@@ -62,7 +62,8 @@ issuer.
 
 - **Issue tokens.** Edge mints; this lib requests + caches.
 - **Run KeyCustodian.** KeyCustodian (state machine, rotation orchestration,
-  `auth_db.encryption_key` storage) lives inside Edge's Auth module — Phase 3.
+  `keycustodian_db.key_record` storage) lives inside Edge as a peer module to
+  Auth — Phase 3.
 - **Serve `/oauth/token`** or `/.well-known/jwks.json` endpoints — Edge / Phase 3.
 - **Own session storage.** Sessions live in `auth_db.session` + Redis on Edge; this lib only
   _tracks_ revocations and _checks_ liveness against cached state.
@@ -174,11 +175,11 @@ Citations inline.
 
 ### 3.5 KeyCustodian (Edge-side; this lib's KeyringClient consumes)
 
-- **Module within Edge's Auth** — not a separate service. Extractable later via the
-  `IKeyCustodianClient` interface.
+- **Module within Edge** (peer to Auth) — not a separate service. Extractable later
+  via the `IKeyCustodianClient` interface.
 - **Owns**: JWKS (RS256), per-domain payload-encryption keys (audit, notifications, courier, …),
   cookie signing secret, service-identity client_secrets, root key.
-- **State machine** per `kid` in `auth_db.encryption_key`: `pending → active → retiring → retired`
+- **State machine** per `kid` in `keycustodian_db.key_record`: `pending → active → retiring → retired`
   (+ terminal `compromised`).
 - **Distribution**: pull-based via gRPC `internal/keys/{domain}` endpoint, hourly TTL refresh,
   `d2.security.key-rotated` event-driven invalidation.
@@ -1556,11 +1557,11 @@ translation. Lives in `D2.Shared.Auth` initially; can be extracted to a shared
   missed-event handling needs care. Pattern A delegates all of this to the tiered cache
   abstraction we already trust.
 
-### Q15 — Cookie cache shape → **(b) Rich `SessionSnapshot` in `ITieredCache`**
+### Q15 — Cookie cache shape → ~~(b) Rich `SessionSnapshot`~~ **(a) Sentinel-only — REVERSED 2026-05-10**
 
-**Decided**: 2026-05-06.
+**Originally decided**: 2026-05-06 as (b) Rich `SessionSnapshot`. **Reversed 2026-05-10 to (a) sentinel-only** (see top-of-doc banner — `SessionSnapshot` is an Edge-internal concern deferred to Phase 3; this lib no longer ships the record or `GetSnapshotAsync`).
 
-**Rationale**:
+**Original (b) rationale** (historical record):
 
 - A liveness-flag-only cache (option a) doesn't say _anything_ about the session beyond "it
   exists." Edge would still need a separate snapshot store (extra cache + extra invalidation
@@ -1926,20 +1927,16 @@ Each step buildable + testable + zero warnings before moving on.
 
 ---
 
-## §14a. Future Phase 3 work — KeyCustodian compromise runbook scaffolding
+## §14a. KeyCustodian compromise runbook — future deliverable
 
-When KeyCustodian ships in Phase 3 (its CLI + state machine + audit
-forensics), the following compromise-response runbooks need concrete
-detection criteria, executable CLI invocations, and recovery procedures
-authored. Headers are preserved here so the Phase 3 work item has a checklist
-of scenarios to cover:
+The KeyCustodian state machine, key lifecycle, and `keycustodian_db` are shipped (see [KeyCustodian README](../../server/services/edge/key-custodian/README.md)). The following compromise-response runbooks — concrete detection criteria, executable CLI invocations, and recovery procedures — are tracked as a future deliverable. The scenario checklist this deliverable must cover:
 
 - **Message-payload key compromise** (audit / notifications / courier domain)
 - **JWT signing key compromise**
 - **Cookie signing secret compromise**
 - **Service-identity OAuth `client_secret` compromise**
 - **Root key compromise** (worst case — encrypts all keys at rest in
-  `auth_db`)
+  `keycustodian_db`)
 - **Third-party API key compromise** (Twilio, Resend, IPinfo — provider-side
   rotation steps)
 
@@ -1950,8 +1947,8 @@ of scenarios to cover:
 - [V2.md §5.4](V2.md) — auth model, JWT shape, KeyCustodian, sessions, scopes, impersonation,
   fingerprints
 - [CLAUDE.md §4](../../CLAUDE.md) — Key Architecture Decisions (Auth, JWT, KeyCustodian)
-- [§14a above](#14a-future-phase-3-work--keycustodian-compromise-runbook-scaffolding) —
-  KeyCustodian compromise runbook scaffolding (expanded as Phase 3 ships)
+- [§14a above](#14a-keycustodian-compromise-runbook--future-deliverable) —
+  KeyCustodian compromise runbook (future deliverable — scenario checklist at §14a)
 - [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) — auth-related fields + session
   invalidation backplane
 - [PATTERNS.md](../PATTERNS.md) — handler / cache / middleware patterns this lib must fit

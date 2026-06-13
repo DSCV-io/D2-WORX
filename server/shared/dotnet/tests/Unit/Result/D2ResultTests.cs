@@ -8,6 +8,7 @@ namespace D2.Shared.Tests.Unit.Result;
 
 using System.Net;
 using AwesomeAssertions;
+using D2.Shared.ErrorCodes.Category;
 using D2.Shared.I18n;
 using D2.Shared.Result;
 using Xunit;
@@ -259,6 +260,33 @@ public sealed class D2ResultTests
     }
 
     [Fact]
+    public void NotFound_AcceptsUnifiedOpts_InputErrorsErrorCodeAndCategory()
+    {
+        // Unified-shape regression pin: NotFound was previously the restricted
+        // shape (messages?, traceId? only). After the fold every error factory is
+        // the one universal standard shape, so a 404 can carry inputErrors and
+        // stamp a domain errorCode + category override.
+        IReadOnlyList<InputError> errors =
+        [
+            new InputError("id", [TK.Common.Validation.ID_INVALID]),
+        ];
+
+        var result = D2Result.NotFound(
+            inputErrors: errors,
+            errorCode: "GEO_SUBDIVISION_NOT_FOUND",
+            category: ErrorCategory.Conflict,
+            traceId: "trace-9");
+
+        result.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        result.ErrorCode.Should().Be("GEO_SUBDIVISION_NOT_FOUND");
+        result.Category.Should().Be(ErrorCategory.Conflict);
+        result.TraceId.Should().Be("trace-9");
+        result.InputErrors.Should().HaveCount(1);
+        result.InputErrors[0].Field.Should().Be("id");
+        result.Messages.Should().Equal(TK.Common.Errors.NOT_FOUND);
+    }
+
+    [Fact]
     public void Forbidden_DefaultsToTkMessage()
     {
         var result = D2Result.Forbidden();
@@ -353,7 +381,33 @@ public sealed class D2ResultTests
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
         result.ErrorCode.Should().Be(ErrorCodes.UNHANDLED_EXCEPTION);
+        result.Category.Should().Be(ErrorCategory.InternalError);
         result.Messages.Should().Equal(TK.Common.Errors.UNKNOWN);
+    }
+
+    [Fact]
+    public void UnhandledException_WithCustomErrorCode_OverridesDefault()
+    {
+        // The 500 base factory accepts an errorCode override so a delegating
+        // per-domain 500 factory can stamp a specific code on the base status
+        // (the mechanism KeyCustodianFailures.PreconditionViolated uses).
+        var result = D2Result.UnhandledException(errorCode: "DOMAIN_PRECONDITION_VIOLATED");
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        result.ErrorCode.Should().Be("DOMAIN_PRECONDITION_VIOLATED");
+        result.Category.Should().Be(ErrorCategory.InternalError);
+    }
+
+    [Fact]
+    public void UnhandledException_WithCustomCategory_OverridesDefault()
+    {
+        var result = D2Result.UnhandledException(
+            errorCode: "DOMAIN_PRECONDITION_VIOLATED",
+            category: ErrorCategory.InternalError);
+
+        result.ErrorCode.Should().Be("DOMAIN_PRECONDITION_VIOLATED");
+        result.Category.Should().Be(ErrorCategory.InternalError);
     }
 
     [Fact]

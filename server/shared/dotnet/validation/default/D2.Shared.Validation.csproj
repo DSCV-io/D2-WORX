@@ -51,10 +51,16 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <ProjectReference Include="..\..\utilities\D2.Shared.Utilities.csproj" />
     <!--
-      D2.Shared.I18n — TK.Common.Validation.* translation-key constants
-      carried in the per-field InputError.Errors lists on validation failures.
+      D2.Shared.I18n.Abstractions — the TKMessage type the TK.* constants are
+      instances of, carried in the per-field InputError.Errors lists on
+      validation failures.
     -->
     <ProjectReference Include="..\..\i18n\abstractions\D2.Shared.I18n.Abstractions.csproj" />
+    <!--
+      D2.Shared.I18n.Keys — the TK.Common.Validation.* translation-key
+      constants the three validators emit on failure.
+    -->
+    <ProjectReference Include="..\..\i18n\keys\D2.Shared.I18n.Keys.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -7,6 +7,7 @@
 namespace D2.Shared.AspNetCore.Internal;
 
 using System.Diagnostics;
+using D2.Shared.ErrorCodes.Category;
 using D2.Shared.ProblemDetails;
 using D2.Shared.Result;
 using D2.Shared.Utilities.Extensions;
@@ -40,6 +41,8 @@ using Microsoft.AspNetCore.Http;
 ///   <item><c>Extensions[EXTENSION_MESSAGES]</c> ← result.Messages.</item>
 ///   <item><c>Extensions[EXTENSION_INPUT_ERRORS]</c> ← result.InputErrors
 ///     (conditional — only when non-empty).</item>
+///   <item><c>Extensions[EXTENSION_CATEGORY]</c> ← result.Category wire
+///     string (conditional — only when non-null).</item>
 /// </list>
 /// <para>
 /// The following fields are populated UNCONDITIONALLY (regardless of whether
@@ -170,6 +173,14 @@ internal static class D2ProblemDetailsCustomizer
         problem.Extensions[D2ProblemDetailsKeys.EXTENSION_MESSAGES] = result.Messages;
         if (result.InputErrors.Count > 0)
             problem.Extensions[D2ProblemDetailsKeys.EXTENSION_INPUT_ERRORS] = result.InputErrors;
+
+        // Category: the closed-enum semantic class as its snake_case wire
+        // string, so the HTTP body carries `category` exactly like the
+        // D2Result envelope + the gRPC envelope (cross-transport parity).
+        // Omitted when null — matches the path-A conditional-emit + the
+        // inputErrors omit-when-absent discipline.
+        if (result.Category is { } category)
+            problem.Extensions[D2ProblemDetailsKeys.EXTENSION_CATEGORY] = category.ToWire();
     }
 
     /// <summary>

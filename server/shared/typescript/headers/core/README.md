@@ -24,11 +24,11 @@ hook reads `Authorization` and `x-d2-context` directly via
 | `parseAuthHeader(authHeader, opts?)`             | Decode `Authorization: Bearer <jwt>` into a `JwtPayload` (re-exported from `@d2/auth-abstractions`). SHAPE-only validation; signature/expiry are Edge's job. |
 | `parseRequestContextFromHeaders(headers, opts?)` | Decode Authorization + `x-d2-context` into an `IRequestContext` ready to assign to `event.locals.requestContext`.                                            |
 | `toProblemDetails(failure, opts)`                | RFC 7807 ProblemDetails builder; mirrors the .NET `D2ProblemDetailsExtensions` shape.                                                                        |
-| `PROBLEM_TYPE_URI_PREFIX`                        | Base URI for the RFC 7807 `type` field. Codegen-emitted from `contracts/problem-details/problem-details.spec.json` into `./problem-details.g.ts`.            |
-| `ProblemDetailsExtensionKeys`                    | `as const` map of extension-key wire values (`ERROR_CODE`, `MESSAGES`, `TRACE_ID`). Codegen-emitted from the same spec.                                      |
-| `ProblemDetailsTitles`                           | `as const` map of per-status human-readable titles (`UNAUTHORIZED`, `SERVICE_UNAVAILABLE`, etc.). Codegen-emitted from the same spec.                        |
-| `defaultTitleForStatus(status)`                  | Returns the spec-declared title for the given HTTP status code, or `REQUEST_FAILED` as fallback. Codegen-emitted from the same spec.                         |
-| `PROBLEM_DETAILS_CONTENT_TYPE`                   | RFC 7807 §6.1 content-type wire value (`application/problem+json`). Codegen-emitted from the same spec; consumed by guards on every rejection branch.        |
+| `PROBLEM_TYPE_URI_PREFIX`                        | Base URI for the RFC 7807 `type` field. Codegen-emitted into `@d2/problem-details-abstractions` from `contracts/problem-details/problem-details.spec.json`; re-exported from `@d2/headers` for compat. |
+| `ProblemDetailsExtensionKeys`                    | `as const` map of extension-key wire values (`ERROR_CODE`, `MESSAGES`, `INPUT_ERRORS`, `CATEGORY`, `TRACE_ID`, `CORRELATION_ID`). Codegen-emitted into `@d2/problem-details-abstractions` from the same spec; re-exported.   |
+| `ProblemDetailsTitles`                           | `as const` map of per-status human-readable titles (`UNAUTHORIZED`, `SERVICE_UNAVAILABLE`, etc.). Codegen-emitted into `@d2/problem-details-abstractions` from the same spec; re-exported.                |
+| `defaultTitleForStatus(status)`                  | Returns the spec-declared title for the given HTTP status code, or `REQUEST_FAILED` as fallback. Codegen-emitted into `@d2/problem-details-abstractions` from the same spec; re-exported.                 |
+| `PROBLEM_DETAILS_CONTENT_TYPE`                   | RFC 7807 §6.1 content-type wire value (`application/problem+json`). Codegen-emitted into `@d2/problem-details-abstractions` from the same spec; re-exported; consumed by guards on every rejection branch. |
 | `requireAuth(event, throwers)`                   | Asserts authentication. Throws 401 ProblemDetails on failure.                                                                                                |
 | `requireOrg(event, throwers, ...types?)`         | Asserts auth + org context (optionally constrained to specific `OrgType`s). Throws 403.                                                                      |
 | `requireRole(event, throwers, ...roles?)`        | Asserts auth + non-empty role (optionally constrained). Throws 403.                                                                                          |
@@ -68,7 +68,8 @@ The wire-format catalog (`PROBLEM_TYPE_URI_PREFIX`,
 `ProblemDetailsExtensionKeys`, `ProblemDetailsTitles`,
 `defaultTitleForStatus`) is codegen-emitted from
 `contracts/problem-details/problem-details.spec.json` into
-`./problem-details.g.ts`. The SAME spec drives the .NET-side
+`@d2/problem-details-abstractions` and re-exported from `@d2/headers`
+for backward-compat. The SAME spec drives the .NET-side
 `D2ProblemDetailsExtensions` partial class, so cross-language drift is
 structurally impossible (verified by
 `server/shared/typescript/contract-tests/tests/problem-details.parity.test.ts`).
@@ -82,6 +83,7 @@ structurally impossible (verified by
 | `instance`      | Request URL pathname (mandatory).                                                         |
 | `d2_error_code` | `failure.errorCode` (e.g. `AUTH_BEARER_MISSING`).                                         |
 | `d2_messages`   | `failure.messages` (TKMessage[] for client-side translation).                             |
+| `d2_category`   | `failure.category` wire string (e.g. `validation_failure`, `not_found`) if present.      |
 | `traceId`       | `failure.traceId` if present.                                                             |
 
 ## Dependencies
@@ -92,6 +94,10 @@ structurally impossible (verified by
 - `@d2/auth-context-abstractions` — `OrgType` / `Role` enums.
 - `@d2/headers-common` — `AUTHORIZATION` / `PROPAGATED_CONTEXT` /
   `TRACEPARENT` / `TRACESTATE` wire-protocol names.
+- `@d2/problem-details-abstractions` — RFC 7807 ProblemDetails wire-format
+  catalog (`PROBLEM_TYPE_URI_PREFIX`, `PROBLEM_DETAILS_CONTENT_TYPE`,
+  `ProblemDetailsExtensionKeys`, `ProblemDetailsTitles`,
+  `defaultTitleForStatus`). Zero-dep leaf; re-exported from this package.
 - `@d2/request-context-abstractions` — `IRequestContext` (extends
   `IAuthContext`, so all auth properties are present transitively) +
   `PropagatedContextSerializer.tryDecode()` + `ActorEntry` +

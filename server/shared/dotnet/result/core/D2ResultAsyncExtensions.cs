@@ -6,16 +6,16 @@
 
 namespace D2.Shared.Result;
 
-// rules.md §5.6 CARVE-OUT: this file uses the old `this T target` extension-method parameter
-// style instead of the C# 14 `extension(T target) { ... }` block form. The block form fails for
-// these methods due to two real C# 14 compiler limitations:
+// This file uses the classic `this T target` extension-method parameter style instead of the
+// C# 14 `extension(T target) { ... }` block form. The block form fails for these methods due
+// to two real C# 14 compiler limitations:
 //   - CS1061 extension-resolution failure on nested generic receivers like
 //     `ValueTask<D2Result<TData>>` — the new block form does not currently resolve the
 //     extension when the receiver type itself is a closed generic wrapping another generic.
 //   - CA2012 "ValueTask awaited multiple times" false-positives on fluent chains
 //     `seed.BindAsync(...).BindAsync(...)` when expressed via the block form.
 // Migration is deferred until C# 15+ resolves the underlying compiler limitations OR until the
-// fluent async extension pattern is refactored away. See docs/dev/rules.md §5.6 carve-out bullet.
+// fluent async extension pattern is refactored away.
 
 /// <summary>
 /// Async extension methods on <see cref="Task{T}"/> and <see cref="ValueTask{T}"/>

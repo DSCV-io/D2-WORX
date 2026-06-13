@@ -116,6 +116,7 @@ Copyright (c) DCSV. All rights reserved.
 
   <ItemGroup>
     <ProjectReference Include="..\i18n\abstractions\D2.Shared.I18n.Abstractions.csproj" />
+    <ProjectReference Include="..\i18n\keys\D2.Shared.I18n.Keys.csproj" />
     <ProjectReference Include="..\i18n\core\D2.Shared.I18n.csproj" />
     <!--
       SrcGens (i18n / context / scopes) are referenced as NORMAL libraries
@@ -127,7 +128,16 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\auth\scopes-source-gen\D2.Shared.Auth.Scopes.SourceGen.csproj" />
     <ProjectReference Include="..\auth\audiences-source-gen\D2.Shared.Auth.Audiences.SourceGen.csproj" />
     <ProjectReference Include="..\auth\error-codes-source-gen\D2.Shared.Auth.ErrorCodes.SourceGen.csproj" />
-    <ProjectReference Include="..\source-gen-shared\error-codes-source-gen\D2.Shared.Result.ErrorCodes.SourceGen.csproj" />
+    <!--
+      The unified error-codes engine (namespace D2.Shared.ErrorCodes.SourceGen)
+      compiles into BOTH error-codes generator assemblies. To let the tests
+      name the engine's internal types without a CS0433 ambiguity, the result
+      shell's copy is aliased out of the global namespace; the auth shell's copy
+      stays in global, so `using D2.Shared.ErrorCodes.SourceGen;` resolves
+      unambiguously to the auth assembly's copy (the engine types are
+      catalog-agnostic — either copy is equivalent for pure-logic tests).
+    -->
+    <ProjectReference Include="..\source-gen-shared\error-codes-source-gen\D2.Shared.Result.ErrorCodes.SourceGen.csproj" Aliases="ResultErrorCodesSourceGen" />
     <ProjectReference Include="..\result\envelope-source-gen\D2.Shared.Result.Envelope.SourceGen.csproj" />
     <ProjectReference Include="..\problem-details\source-gen\D2.Shared.ProblemDetails.SourceGen.csproj" />
     <ProjectReference Include="..\problem-details\abstractions\D2.Shared.ProblemDetails.Abstractions.csproj" />
@@ -145,10 +155,18 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\validation\source-gen\D2.Shared.Validation.SourceGen.csproj" />
     <ProjectReference Include="..\resilience\D2.Shared.Resilience.csproj" />
     <ProjectReference Include="..\result\core\D2.Shared.Result.csproj" />
+    <!--
+      D2.Shared.Result.Grpc — the gRPC envelope codec (ToProto / ToD2Result /
+      HandleAsync / IsTransientGrpcException). Tests cover full round-trip
+      fidelity + the v1-bug-fix regression (no ex.Message leak) + transient
+      predicate classification.
+    -->
+    <ProjectReference Include="..\result\grpc\D2.Shared.Result.Grpc.csproj" />
     <ProjectReference Include="..\utilities\D2.Shared.Utilities.csproj" />
     <ProjectReference Include="..\aspnetcore\D2.Shared.AspNetCore.csproj" />
     <ProjectReference Include="..\auth\core\D2.Shared.Auth.csproj" />
     <ProjectReference Include="..\auth\abstractions\D2.Shared.Auth.Abstractions.csproj" />
+    <ProjectReference Include="..\auth\events\D2.Shared.Auth.Events.csproj" />
     <ProjectReference Include="..\auth\http\D2.Shared.Auth.Http.csproj" />
     <ProjectReference Include="..\auth\grpc\D2.Shared.Auth.Grpc.csproj" />
     <ProjectReference Include="..\auth\startup\D2.Shared.Auth.Startup.csproj" />
@@ -214,7 +232,21 @@ Copyright (c) DCSV. All rights reserved.
       Unit tests live in Unit/SharedEntityFrameworkCore/ and exercise DeriveColumnName
       plus CreateD2Index emission + all adversarial null/empty/invalid-expression guards.
     -->
-    <ProjectReference Include="..\entity-framework-core\D2.Shared.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\entity-framework-core\core\D2.Shared.EntityFrameworkCore.csproj" />
+    <!--
+      D2.Shared.EntityFrameworkCore.Postgres — PostgreSQL-specific EF Core startup
+      machinery: PgAdvisoryLock, AdvisoryLockMigrator<TContext>,
+      DesignTimeDbContextFactoryBase<TContext>, NpgsqlContextDefaults. Also hosts
+      the spec-generated AdvisoryLocks key registry (emitted by locks-source-gen).
+      Integration tests live in Integration/SharedEntityFrameworkCorePostgres/.
+    -->
+    <ProjectReference Include="..\entity-framework-core\postgres\D2.Shared.EntityFrameworkCore.Postgres.csproj" />
+    <!--
+      D2.Shared.AdvisoryLocks.SourceGen — referenced as a normal library (not an
+      Analyzer) so the emitter / loader / generator pure-logic can be unit-tested
+      directly. Tests live in Unit/AdvisoryLocks/SourceGen/.
+    -->
+    <ProjectReference Include="..\entity-framework-core\locks-source-gen\D2.Shared.AdvisoryLocks.SourceGen.csproj" />
     <!--
       D2.Shared.Contacts.EntityFrameworkCore — per-VO complex-type and value-converter
       mapping helpers (MapPersonal / MapNameAffixes / MapDemographics / MapProfessional /
@@ -243,6 +275,51 @@ Copyright (c) DCSV. All rights reserved.
       this csproj (consistent with the other source-gen project references).
     -->
     <ProjectReference Include="..\geo\source-gen\D2.Shared.Geo.SourceGen.csproj" />
+    <!--
+      D2.Shared.ErrorCodes.Category — the foundational zero-dep leaf hosting the
+      relocated ErrorCategory enum + ErrorCategoryWire mapping +
+      ErrorCategoryJsonConverter (generated from error-category.spec.json).
+      Tests cover enum↔wire round-trip, the strict JSON converter, and the
+      cross-runtime fixture. Referenced as a normal library so tests reflect the
+      generated API directly.
+    -->
+    <ProjectReference Include="..\error-codes\category\D2.Shared.ErrorCodes.Category.csproj" />
+    <!--
+      D2.Shared.ErrorCodes.Category.SourceGen — referenced as a normal library
+      (not an Analyzer) so the category emitter's pure logic
+      (ErrorCategoryEmitter.WireToMemberName / ErrorCategorySpecLoader) can be
+      unit-tested directly without the full Roslyn build pipeline, and so the
+      byte-parity test can drive the generator. Aliased out of the global
+      namespace to avoid CS0433 ambiguity with the shared source-gen scaffolding
+      (EmitDiagnostic / SpecFile / LoadResult) that compiles into multiple
+      source-gen assemblies.
+    -->
+    <ProjectReference Include="..\error-codes\category-source-gen\D2.Shared.ErrorCodes.Category.SourceGen.csproj" Aliases="CategorySourceGen" />
+    <!--
+      D2.Shared.ErrorCodes.Registry — the generated merged cross-catalog registry
+      (ErrorCodeRegistry static class + ErrorCodeInfo record struct). The
+      ErrorCategory enum is the relocated D2.Shared.ErrorCodes.Category leaf
+      (referenced above). Tests cover TryResolve / Resolve / All + adversarial
+      inputs + the fixture emitter. Referenced as a normal library (same as the
+      geo default pattern above) so tests can reflect the generated API directly.
+    -->
+    <ProjectReference Include="..\error-codes\registry\D2.Shared.ErrorCodes.Registry.csproj" />
+    <!--
+      D2.Shared.ErrorCodes.Registry.SourceGen — referenced as a normal library
+      (not as an Analyzer) so the registry generator's internal logic
+      (RegistrySpecLoader, RegistryCollisionChecker, RegistryEmitter,
+      RegistryDiagnosticIds) can be unit-tested directly without the full
+      Roslyn build pipeline, consistent with the pattern used for other SrcGen
+      tests (auth / context / scopes / i18n).
+    -->
+    <!--
+      Aliased out of the global namespace to avoid CS0433 ambiguity with the
+      shared engine types (CatalogConfig, ErrorCodeEntry, ErrorCodesSpec) that
+      compile into both D2.Shared.Auth.ErrorCodes.SourceGen and
+      D2.Shared.ErrorCodes.Registry.SourceGen. The registry-source-gen tests
+      import the alias explicitly via `extern alias`.
+    -->
+    <ProjectReference Include="..\error-codes\registry-source-gen\D2.Shared.ErrorCodes.Registry.SourceGen.csproj" Aliases="RegistrySourceGen" />
     <!--
       D2.Shared.DataGovernance.Abstractions — marker interfaces, [Anonymizable]
       attribute, AnonymizeKind, AnonymizationRule, AnonymizationOutcome, and the

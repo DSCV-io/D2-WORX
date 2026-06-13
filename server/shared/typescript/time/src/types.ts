@@ -2,28 +2,22 @@
 // Copyright (c) DCSV. All rights reserved.
 // -----------------------------------------------------------------------
 
-import { TK } from "@d2/i18n/keys";
+import { TK } from "@d2/i18n-keys";
 import type { Temporal } from "temporal-polyfill";
-import {
-  type D2Result,
-  inputError,
-  ok,
-  tk,
-  validationFailed,
-} from "@d2/result";
+import { type D2Result, inputError, ok, validationFailed } from "@d2/result";
 
 /**
  * Translation key for IANA validation failures. Mirrors
  * `TK.Common.Time.INVALID_IANA_IDENTIFIER` from the .NET TK SrcGen catalog
  * (driven by `contracts/messages/en-US.json`).
  */
-const TK_INVALID_IANA = tk(TK.common.time.INVALID_IANA_IDENTIFIER);
+const TK_INVALID_IANA = TK.common.time.INVALID_IANA_IDENTIFIER;
 
 /**
  * Translation key for missing required parameters. Mirrors
  * `TK.Common.Errors.NOT_NULL_VIOLATION` from the .NET TK SrcGen catalog.
  */
-const TK_NOT_NULL = tk(TK.common.errors.NOT_NULL_VIOLATION);
+const TK_NOT_NULL = TK.common.errors.NOT_NULL_VIOLATION;
 
 /**
  * Cross-language canonical-name override map. Node.js's `Intl.DateTimeFormat`

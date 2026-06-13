@@ -171,8 +171,9 @@ const TK_MESSAGE_SPEC_PATH = contractsPath(
   "tk-message.spec.json",
 );
 const TK_MESSAGE_TARGET_PATH = tsPackagePath(
-  "result",
+  "i18n-abstractions",
   "src",
+  "generated",
   "tk-message.g.ts",
 );
 

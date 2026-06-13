@@ -84,7 +84,8 @@ Copyright (c) DCSV. All rights reserved.
       problem-details/abstractions — codegen-emitted D2ProblemDetailsKeys
       (TYPE_URI_PREFIX, CONTENT_TYPE, EXTENSION_*, TITLE_*, TitleFor switch)
       consumed by D2ProblemDetailsCustomizer. Cross-language parity with the
-      TS-side @d2/headers catalog is structurally guaranteed (single spec).
+      TS-side @d2/problem-details-abstractions catalog (re-exported from
+      @d2/headers for compat) is structurally guaranteed (single spec).
     -->
     <ProjectReference Include="..\problem-details\abstractions\D2.Shared.ProblemDetails.Abstractions.csproj" />
     <!--

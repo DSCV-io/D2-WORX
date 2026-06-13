@@ -10,11 +10,13 @@
   "references": [
     { "path": "../auth/abstractions" },
     { "path": "../auth/context-abstractions" },
+    { "path": "../error-category" },
     { "path": "../geo/abstractions" },
     { "path": "../headers/amqp" },
     { "path": "../headers/common" },
     { "path": "../headers/grpc" },
     { "path": "../headers/http" },
+    { "path": "../i18n" },
     { "path": "../request-context-abstractions" },
     { "path": "../result" },
     { "path": "../validation/default" }

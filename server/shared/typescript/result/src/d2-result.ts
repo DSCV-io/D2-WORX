@@ -4,7 +4,8 @@
 
 import { HttpStatusCode } from "./http-status-codes.js";
 import type { InputError } from "./input-error.js";
-import type { TKMessage } from "./tk-message.js";
+import type { ErrorCategory } from "@d2/error-category";
+import type { TKMessage } from "@d2/i18n-abstractions";
 
 /**
  * Constructor input for `D2Result`. All optional except `success`.
@@ -17,6 +18,7 @@ export interface D2ResultInit<T = void> {
   readonly statusCode?: HttpStatusCode;
   readonly errorCode?: string;
   readonly traceId?: string;
+  readonly category?: ErrorCategory;
 }
 
 /**
@@ -36,6 +38,7 @@ export class D2Result<T = void> {
   readonly statusCode: HttpStatusCode;
   readonly errorCode: string | undefined;
   readonly traceId: string | undefined;
+  readonly category: ErrorCategory | undefined;
 
   constructor(init: D2ResultInit<T>) {
     this.success = init.success;
@@ -47,6 +50,7 @@ export class D2Result<T = void> {
       (init.success ? HttpStatusCode.OK : HttpStatusCode.BadRequest);
     this.errorCode = init.errorCode;
     this.traceId = init.traceId;
+    this.category = init.category;
   }
 
   /** True when the operation failed. */
@@ -73,6 +77,7 @@ export class D2Result<T = void> {
       statusCode: this.statusCode,
       errorCode: this.errorCode,
       traceId,
+      category: this.category,
     });
   }
 }

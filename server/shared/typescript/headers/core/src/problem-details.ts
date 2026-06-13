@@ -8,13 +8,13 @@ import {
   defaultTitleForStatus,
   PROBLEM_TYPE_URI_PREFIX,
   ProblemDetailsExtensionKeys,
-} from "./problem-details.g.js";
+} from "@d2/problem-details-abstractions";
 
 /**
  * RFC 7807 ProblemDetails body shape as emitted by the BFF on guard
  * rejections. Hand-written — RFC 7807 is an external standard, not a
  * D²-defined catalog. Extension key NAMES are spec-driven (see
- * `./problem-details.g.ts` for the codegen-emitted
+ * `@d2/problem-details-abstractions` for the codegen-emitted
  * `ProblemDetailsExtensionKeys`).
  */
 export interface ProblemDetailsBody {
@@ -75,6 +75,9 @@ export function toProblemDetails(
   }
   if (failure.traceId !== undefined) {
     body[ProblemDetailsExtensionKeys.TRACE_ID] = failure.traceId;
+  }
+  if (failure.category !== undefined) {
+    body[ProblemDetailsExtensionKeys.CATEGORY] = failure.category;
   }
   return body as ProblemDetailsBody;
 }

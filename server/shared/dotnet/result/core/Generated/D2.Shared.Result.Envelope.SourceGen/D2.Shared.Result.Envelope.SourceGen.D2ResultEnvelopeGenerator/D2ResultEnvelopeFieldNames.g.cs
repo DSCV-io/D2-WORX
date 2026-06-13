@@ -37,6 +37,9 @@ public static class D2ResultEnvelopeFieldNames
     /// <summary>JSON property carrying the HTTP status code as an integer (e.g. 200, 404, 206). Always emitted by the .NET serializer; the TS-side parser TREATS THIS AS INFORMATIONAL ONLY — the authoritative status comes from the HTTP response.status header. Carrying it in the body preserves diagnostic value when wire bytes are inspected (test fixtures, dev tools, DLQ entries with cached responses).</summary>
     public const string STATUS_CODE = "statusCode";
 
+    /// <summary>JSON property carrying the closed semantic/telemetry classification of a failure as its snake_case wire string (per contracts/error-category: not_found, validation_failure, policy_denied, etc.). Producer-set from each error code's category at factory-generation time (no runtime registry lookup). Absent (omitted) on success and on free-form failures with no category; never serialized as empty string. Lets consumers branch on the broad failure class without resolving the specific error code against the catalog.</summary>
+    public const string CATEGORY = "category";
+
     /// <summary>All declared D2Result envelope field wire-names in spec order.</summary>
     public static IReadOnlyList<string> AllFields => sr_allFields;
 
@@ -49,5 +52,6 @@ public static class D2ResultEnvelopeFieldNames
         "errorCode",
         "traceId",
         "statusCode",
+        "category",
     };
 }

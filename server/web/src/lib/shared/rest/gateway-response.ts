@@ -27,14 +27,20 @@
  *
  * Isomorphic — works in both server (Node.js) and browser environments.
  */
-import { TK } from "@d2/i18n/keys";
+import { ALL_ERROR_CATEGORIES, type ErrorCategory } from "@d2/error-category";
+import { TK } from "@d2/i18n-keys";
+import {
+  PROBLEM_DETAILS_CONTENT_TYPE,
+  ProblemDetailsExtensionKeys,
+} from "@d2/problem-details-abstractions";
 import {
   D2Result,
   D2ResultEnvelopeFieldNames,
+  fail,
+  unhandledException,
   type HttpStatusCode,
   type InputError,
   type TKMessage,
-  tk,
 } from "@d2/result";
 
 /**
@@ -63,6 +69,7 @@ interface NormalizedBody {
   traceId?: string;
   // statusCode from body is ignored — we use HTTP status instead.
   statusCode?: number;
+  category?: ErrorCategory;
 }
 
 // Compile-time pin: the NormalizedBody key set MUST be exactly the wire
@@ -138,7 +145,7 @@ export async function parseGatewayResponse<TData = void>(
     return new D2Result<TData>({
       success: response.ok,
       statusCode,
-      messages: [tk(TK.common.errors.REQUEST_FAILED)],
+      messages: [TK.common.errors.REQUEST_FAILED],
     });
   }
 
@@ -147,6 +154,20 @@ export async function parseGatewayResponse<TData = void>(
       success: response.ok,
       statusCode,
     });
+  }
+
+  // Content-type discrimination: an RFC 7807 application/problem+json body
+  // (emitted by the .NET auth middleware / ASP.NET Core ProblemDetails
+  // customizer on 4xx/5xx) carries the D2Result fields under the
+  // d2_-namespaced extension keys — a DIFFERENT key set from the Shape-B
+  // envelope. Route it to the dedicated parse-back so the extensions are
+  // re-materialized faithfully (running them through the envelope path +
+  // normalizeKeys() would corrupt the deliberately-cased extension keys
+  // and silently drop every extension). The `.includes` match tolerates a
+  // `; charset=utf-8` suffix.
+  const contentType = response.headers.get("content-type");
+  if (contentType?.toLowerCase().includes(PROBLEM_DETAILS_CONTENT_TYPE)) {
+    return parseProblemDetailsResponse<TData>(text, statusCode);
   }
 
   let body: NormalizedBody;
@@ -161,7 +182,7 @@ export async function parseGatewayResponse<TData = void>(
     return new D2Result<TData>({
       success: false,
       statusCode,
-      messages: [tk(TK.common.errors.REQUEST_FAILED)],
+      messages: [TK.common.errors.REQUEST_FAILED],
     });
   }
 
@@ -178,8 +199,100 @@ export async function parseGatewayResponse<TData = void>(
     inputErrors: bodyMap[D2ResultEnvelopeFieldNames.INPUT_ERRORS] as InputError[] | undefined,
     errorCode: bodyMap[D2ResultEnvelopeFieldNames.ERROR_CODE] as string | undefined,
     traceId: bodyMap[D2ResultEnvelopeFieldNames.TRACE_ID] as string | undefined,
+    category: bodyMap[D2ResultEnvelopeFieldNames.CATEGORY] as ErrorCategory | undefined,
     statusCode,
   });
+}
+
+/**
+ * Re-materialize a faithful `D2Result` from an RFC 7807
+ * `application/problem+json` body.
+ *
+ * The .NET producers (auth-middleware path A
+ * `D2ProblemDetailsExtensions.ToProblemDetails` + ASP.NET Core path B
+ * `D2ProblemDetailsCustomizer`) emit the D2Result fields under the
+ * spec-driven, deliberately-cased extension keys
+ * (`d2_error_code` / `d2_messages` / `d2_input_errors` / `d2_category` /
+ * `traceId`). This reads them VERBATIM via the generated
+ * `ProblemDetailsExtensionKeys.*` constants (NOT raw string literals, NOT
+ * `normalizeKeys()` — normalization would mangle `d2_error_code` →
+ * `d2ErrorCode` and drop the extension). A spec rename surfaces here as a
+ * TS error because the index keys are the generated constants.
+ *
+ * Field mapping:
+ * - `errorCode`   ← `d2_error_code`
+ * - `messages`    ← `d2_messages` (already `{key, params?}` TKMessage[] from
+ *                    the .NET `TKMessageJsonConverter`; lowercase wire shape
+ *                    so NO normalization needed)
+ * - `inputErrors` ← `d2_input_errors` (absent on most auth failures)
+ * - `category`    ← `d2_category`, safe-parsed against the closed
+ *                    `ErrorCategory` union — an absent / unknown wire string
+ *                    yields `undefined` (never throws)
+ * - `statusCode`  ← the HTTP status (authoritative — same as the envelope
+ *                    path; ignores any `status` in the body)
+ * - `traceId`     ← the `traceId` extension
+ * - `success`     ← always `false` (problem+json is failure-only by RFC 7807;
+ *                    the .NET producers throw on a 2xx)
+ *
+ * Leak guard: the raw `title` / `detail` / `instance` strings (operator
+ * English, not translation keys) are NEVER copied into `messages`. When
+ * `d2_messages` is absent, `messages` stays `[]` — the consumer renders a
+ * generic fallback from the code. No server English reaches the user-facing
+ * render path.
+ *
+ * Malformed body (non-JSON / empty) → a defined fail `D2Result` carrying
+ * `REQUEST_FAILED` (mirrors the non-JSON envelope branch) — never throws.
+ */
+export function parseProblemDetailsResponse<TData = void>(
+  text: string,
+  statusCode: HttpStatusCode,
+): D2Result<TData> {
+  let body: Record<string, unknown>;
+  try {
+    const raw: unknown = JSON.parse(text);
+    if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+      // Valid JSON, but not an object (e.g. a bare string / number / array).
+      // Treat as malformed — there are no extensions to read.
+      return new D2Result<TData>({
+        success: false,
+        statusCode,
+        messages: [TK.common.errors.REQUEST_FAILED],
+      });
+    }
+    body = raw as Record<string, unknown>;
+  } catch {
+    return new D2Result<TData>({
+      success: false,
+      statusCode,
+      messages: [TK.common.errors.REQUEST_FAILED],
+    });
+  }
+
+  // Read the extensions VERBATIM via the generated constants — no
+  // normalizeKeys() (the keys are deliberately snake_case / W3C-cased).
+  return new D2Result<TData>({
+    success: false,
+    statusCode,
+    messages: body[ProblemDetailsExtensionKeys.MESSAGES] as TKMessage[] | undefined,
+    inputErrors: body[ProblemDetailsExtensionKeys.INPUT_ERRORS] as InputError[] | undefined,
+    errorCode: body[ProblemDetailsExtensionKeys.ERROR_CODE] as string | undefined,
+    traceId: body[ProblemDetailsExtensionKeys.TRACE_ID] as string | undefined,
+    category: parseErrorCategory(body[ProblemDetailsExtensionKeys.CATEGORY]),
+  });
+}
+
+/**
+ * Safe-parse a wire `d2_category` value against the closed `ErrorCategory`
+ * union. Returns `undefined` for an absent / non-string / unknown value —
+ * never throws (deploy-skew tolerance: a newer producer category the BFF
+ * doesn't yet know about degrades to `undefined`, not a crash). Mirrors the
+ * gRPC codec's `_parseCategory` guard for cross-transport consistency.
+ */
+function parseErrorCategory(wire: unknown): ErrorCategory | undefined {
+  if (typeof wire !== "string") return undefined;
+  return (ALL_ERROR_CATEGORIES as readonly string[]).includes(wire)
+    ? (wire as ErrorCategory)
+    : undefined;
 }
 
 /**
@@ -191,8 +304,8 @@ export async function parseGatewayResponse<TData = void>(
  * `messages` field which is reserved for translation-key envelopes).
  */
 export function networkErrorResult<TData = void>(_error: unknown): D2Result<TData> {
-  return D2Result.unhandledException<TData>({
-    messages: [tk(TK.common.errors.REQUEST_FAILED)],
+  return unhandledException<TData>({
+    messages: [TK.common.errors.REQUEST_FAILED],
   });
 }
 
@@ -237,15 +350,15 @@ export async function executeFetch<TData>(
     return parseGatewayResponse<TData>(response);
   } catch (error: unknown) {
     if (error instanceof DOMException && error.name === "AbortError") {
-      return D2Result.fail<TData>({
-        messages: [tk(TK.common.errors.CANCELED)],
+      return fail<TData>({
+        messages: [TK.common.errors.CANCELED],
         statusCode: 408 as HttpStatusCode,
       });
     }
 
     if (error instanceof DOMException && error.name === "TimeoutError") {
-      return D2Result.fail<TData>({
-        messages: [tk(TK.common.errors.REQUEST_FAILED)],
+      return fail<TData>({
+        messages: [TK.common.errors.REQUEST_FAILED],
         statusCode: 408 as HttpStatusCode,
       });
     }

@@ -4,62 +4,63 @@ Copyright (c) DCSV. All rights reserved.
 
 # PATTERNS.md — D²-WORX Code Patterns
 
-Directory of the load-bearing patterns + cross-cutting conventions every D²-WORX shared library and service embodies. Engineers implementing new handlers, libs, or services find here the high-level shape + jump-links to the canonical per-lib READMEs that own the full reference. Three sections stay at depth here because they are codebase-wide conventions with no per-lib canonical home (TLC folder convention, spec-driven codegen philosophy, smart-constructor domain validation); every other entry is a thin description + small example + link.
+Directory of the load-bearing patterns + cross-cutting conventions every D²-WORX shared library and service embodies. Engineers implementing new handlers, libs, or services find here the high-level shape + jump-links to the canonical per-lib READMEs that own the full reference. Three sections stay at depth here because they are codebase-wide conventions with no per-lib canonical home (service project structure, spec-driven codegen philosophy, smart-constructor domain validation); every other entry is a thin description + small example + link.
 
 > This doc INTENTIONALLY summarizes content canonical at the cited per-lib READMEs. Updates to behavior land in the per-lib README FIRST, then propagate to the PATTERNS.md summary only if the at-a-glance description itself changes. Per `docs/dev/rules.md` §11.32 condensed-view discipline.
 
 ## Table of contents
 
 1. [.NET project layout (`.csproj`)](#net-project-layout-csproj)
-2. [TLC / 2LC / 3LC folder convention](#tlc--2lc--3lc-folder-convention)
+2. [Service project structure](#service-project-structure)
 3. [Handler](#handler)
 4. [D2Result](#d2result)
-5. [Utilities](#utilities)
-6. [Time / Temporal](#time--temporal)
-7. [Resilience](#resilience)
-8. [Repository](#repository)
-9. [Cache](#cache)
-10. [Composition root](#composition-root)
-11. [Logging](#logging)
-12. [Telemetry](#telemetry)
-13. [AspNetCore](#aspnetcore)
-14. [JWT inbound auth](#jwt-inbound-auth)
-15. [Deny-by-default endpoint boot guard](#deny-by-default-endpoint-boot-guard)
-16. [Translation — none on HTTP path (intentionally)](#translation--none-on-http-path-intentionally)
-17. [Configuration](#configuration)
-18. [i18n](#i18n)
-19. [Messaging](#messaging)
-20. [SAGA — cross-service synchronous compensation](#saga--cross-service-synchronous-compensation)
-21. [Multi-instance scaling](#multi-instance-scaling)
-22. [Mappers](#mappers)
-23. [Batch operations](#batch-operations)
-24. [Content-addressable entities](#content-addressable-entities)
-25. [Health checks](#health-checks)
-26. [PII redaction — `[RedactData]`](#pii-redaction--redactdata)
-27. [Anonymization — `[Anonymizable]` decoration + tiered reflection engine](#anonymization--anonymizable-decoration--tiered-reflection-engine)
-28. [Contact value objects](#contact-value-objects)
-29. [EF VO mapping — complex types + value converters](#ef-vo-mapping--complex-types--value-converters)
-30. [EF Core 10 complex-member-index limitation + `CreateD2Index`](#ef-core-10-complex-member-index-limitation--created2index)
-31. [Field-constraints codegen catalog](#field-constraints-codegen-catalog)
-32. [Spec-driven codegen — the cross-cutting pattern](#spec-driven-codegen--the-cross-cutting-pattern)
-33. [Domain validation — smart-constructor pattern](#domain-validation--smart-constructor-pattern)
-34. [Input validation](#input-validation)
-35. [Module-scoped cache-aside (build-once immutable static data)](#module-scoped-cache-aside-build-once-immutable-static-data)
-36. [Namespace-disambiguated extensions over a shared receiver](#namespace-disambiguated-extensions-over-a-shared-receiver)
-37. [Reference data](#reference-data)
+5. [Spec-driven error codes](#spec-driven-error-codes)
+6. [Utilities](#utilities)
+7. [Time / Temporal](#time--temporal)
+8. [Resilience](#resilience)
+9. [Repository](#repository)
+10. [Cache](#cache)
+11. [Composition root](#composition-root)
+12. [Logging](#logging)
+13. [Telemetry](#telemetry)
+14. [AspNetCore](#aspnetcore)
+15. [JWT inbound auth](#jwt-inbound-auth)
+16. [Deny-by-default endpoint boot guard](#deny-by-default-endpoint-boot-guard)
+17. [Translation — none on HTTP path (intentionally)](#translation--none-on-http-path-intentionally)
+18. [Configuration](#configuration)
+19. [i18n](#i18n)
+20. [Messaging](#messaging)
+21. [SAGA — cross-service synchronous compensation](#saga--cross-service-synchronous-compensation)
+22. [Multi-instance scaling](#multi-instance-scaling)
+23. [Mappers](#mappers)
+24. [Batch operations](#batch-operations)
+25. [Content-addressable entities](#content-addressable-entities)
+26. [Health checks](#health-checks)
+27. [PII redaction — `[RedactData]`](#pii-redaction--redactdata)
+28. [Anonymization — `[Anonymizable]` decoration + tiered reflection engine](#anonymization--anonymizable-decoration--tiered-reflection-engine)
+29. [Contact value objects](#contact-value-objects)
+30. [EF VO mapping — complex types + value converters](#ef-vo-mapping--complex-types--value-converters)
+31. [EF Core 10 complex-member-index limitation + `CreateD2Index`](#ef-core-10-complex-member-index-limitation--created2index)
+32. [Field-constraints codegen catalog](#field-constraints-codegen-catalog)
+33. [Spec-driven codegen — the cross-cutting pattern](#spec-driven-codegen--the-cross-cutting-pattern)
+34. [Domain validation — smart-constructor pattern](#domain-validation--smart-constructor-pattern)
+35. [Input validation](#input-validation)
+36. [Module-scoped cache-aside (build-once immutable static data)](#module-scoped-cache-aside-build-once-immutable-static-data)
+37. [Namespace-disambiguated extensions over a shared receiver](#namespace-disambiguated-extensions-over-a-shared-receiver)
+38. [Reference data](#reference-data)
     - [Endonym discipline](#endonym-discipline)
     - [Typed geo catalogs](#typed-geo-catalogs)
     - [Typed access on IRequestContext](#typed-access-on-irequestcontext)
     - [Geo name resolution at the integration boundary](#geo-name-resolution-at-the-integration-boundary)
     - [Reference data — user-preference cascades](#reference-data--user-preference-cascades)
-38. [Hash composition](#hash-composition)
-39. [Anti-patterns to actively avoid](#anti-patterns-to-actively-avoid)
+39. [Hash composition](#hash-composition)
+40. [Anti-patterns to actively avoid](#anti-patterns-to-actively-avoid)
 
 ---
 
 ## .NET project layout (`.csproj`)
 
-Universal build properties (`TargetFramework`, `LangVersion`, `Nullable`, `ImplicitUsings`, `TreatWarningsAsErrors`, `GenerateDocumentationFile`, `StyleCop.Analyzers`, `stylecop.json` link, four global usings) live in `server/Directory.Build.props` and apply to every csproj automatically. Per-project files only declare what's project-specific.
+Universal build properties (`TargetFramework`, `LangVersion`, `Nullable`, `ImplicitUsings`, `TreatWarningsAsErrors`, `GenerateDocumentationFile`, `StyleCop.Analyzers`, `stylecop.json` link) live in `server/Directory.Build.props` and apply to every csproj automatically. Per-project files only declare what's project-specific. Tier-1 global usings (`D2.Shared.Result`, `D2.Shared.Utilities.Extensions`/`.Attributes`/`.Enums`, `D2.Shared.I18n`) are scoped to **service projects** via `server/services/Directory.Build.targets` — shared libs keep explicit usings. Beyond Tier-1, each project carries a `GlobalUsings.cs` with any namespace repeated across roughly ≥3 files in that project — including `Microsoft.EntityFrameworkCore`, `Microsoft.Extensions.DependencyInjection`, `Microsoft.Extensions.Options`, `System.Security.Cryptography`, or any vendor SDK; the dependency law is enforced by `<ProjectReference>` edges, not using-directive visibility. The established `global using IClock = D2.Shared.Time.IClock;` alias appears project-wide wherever both NodaTime and `D2.Shared.Time` are used, resolving the `NodaTime.IClock` vs `D2.Shared.Time.IClock` ambiguity. Never duplicate SDK ImplicitUsings or Tier-1 entries. Reference implementation and full rationale: [ADR-0020](adrs/0020-service-project-structure.md) + rules.md §5.26.
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -74,50 +75,105 @@ Universal build properties (`TargetFramework`, `LangVersion`, `Nullable`, `Impli
 
 **SDKs**: shared libs + services use `Microsoft.NET.Sdk`; HTTP/gRPC service entry projects use `Microsoft.NET.Sdk.Web`; test projects add `<IsPackable>false</IsPackable>` + `<IsTestProject>true</IsTestProject>` + `<UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>` + `<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>` (xUnit v3 + MTP).
 
-**`RootNamespace`** is always declared explicitly and follows the **namespace structure**, not the directory path (e.g., `DistributedCache.Redis.csproj` under `Implementations/Caching/Distributed/` has `RootNamespace=D2.Shared.DistributedCache.Redis` — path noise dropped). **Central Package Management** pins every version in `server/Directory.Packages.props`; csproj `<PackageReference>` items reference by ID only (CPM rejects `Version="..."`). **`dotnet build` enforces zero warnings** via `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` — fix or `.editorconfig`-override with rationale; never suppress.
+**`RootNamespace`** is always declared explicitly and follows the **namespace structure**, not the directory path (e.g., `D2.Shared.Caching.Distributed.Redis.csproj` under `caching/distributed-redis/` has `RootNamespace=D2.Shared.Caching.Distributed.Redis` — path noise dropped). **Central Package Management** pins every version in `server/Directory.Packages.props`; csproj `<PackageReference>` items reference by ID only (CPM rejects `Version="..."`). **`dotnet build` enforces zero warnings** via `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` — fix or `.editorconfig`-override with rationale; never suppress.
 
 Lib inventory + per-csproj READMEs → [`server/shared/dotnet/README.md`](../server/shared/dotnet/README.md).
 
 ---
 
-## TLC / 2LC / 3LC folder convention
+## Service project structure
 
-Three-tier folder hierarchy for all backend code. **TLC** = architectural concern, **2LC** = implementation type, **3LC** = operation type.
+Every service project under `server/services/` takes one fixed layered shape. The canonical decision record — the full rationale, the module-within-host carve-out, the consequences — is [ADR-0020](adrs/0020-service-project-structure.md); this section is the daily-driver operational form.
 
-### Canonical TLCs (with their 3LC alphabets)
+### The layer set + the dependency law
 
-| TLC            | 3LC verbiage                                              | Meaning                   |
-| -------------- | --------------------------------------------------------- | ------------------------- |
-| **CQRS**       | `C/` Commands, `Q/` Queries, `U/` Utilities, `X/` Complex | Business operation intent |
-| **Messaging**  | `Pub/` Publishers, `Sub/` Subscribers                     | Message direction         |
-| **Repository** | `C/` Create, `R/` Read, `U/` Update, `D/` Delete          | CRUD operation            |
-| **Caching**    | `C/` Create, `R/` Read, `U/` Update, `D/` Delete          | CRUD operation            |
-| **Outbound**   | (per-protocol — `Grpc/`, `Http/`, `S3/`, etc.)            | Outbound integrations     |
-| **Realtime**   | `Push/`                                                   | Real-time push (SignalR)  |
-| **Storage**    | `C/` Create, `R/` Read, `U/` Update, `D/` Delete          | Object / file storage     |
+A standalone service is **five runtime projects** + consumer-facing client(s) + (when it owns spec-driven error codes) a `netstandard2.0` source-gen shell. The layers depend in exactly one direction:
 
-- **Interfaces** live in `Interfaces/{TLC}/Handlers/{3LC}/`
-- **Implementations** live in `Implementations/{TLC}/Handlers/{3LC}/` (app layer) or `{TLC}/Handlers/{3LC}/` (infra layer)
-- **One handler per file** under each 3LC subdirectory; one handler interface per file under `Interfaces/{TLC}/Handlers/{3LC}/`. Consumers `using` the namespaces directly — no `partial` interface aggregation, no grouping aliases.
+```
+Domain  ←  App  ←  Infra  ←  Api      (Tests reference what they test; Clients reference contracts + shared libs only)
+```
 
-### Capability vs Dependency
+| Project | csproj pattern | SDK | Role |
+| ------- | -------------- | --- | ---- |
+| `domain/` | `D2.<Area>.<Service>.Domain` | `Microsoft.NET.Sdk` | Pure model — `Entities`/`ValueObjects`/`Enums`/`Rules` (+ generated `Errors`). References shared primitives only — **no** EF, Options, DI, or logging. |
+| `app/` | `D2.<Area>.<Service>.App` | `Microsoft.NET.Sdk` | Orchestration — per-op handlers + observability + **ports + shapes** (the two-section split below). Transport-agnostic. |
+| `infra/` | `D2.<Area>.<Service>.Infra` | `Microsoft.NET.Sdk` | Adapters implementing the app's ports — the **only** vendor-SDK-touching layer. |
+| `api/` | `D2.<Area>.<Service>.Api` | `Microsoft.NET.Sdk.Web` | Composition root — `Program.cs` + host wiring + transport adapters (gRPC/REST/SSE) + transport mappers. The **only** project allowed to reference `infra/`. |
+| `tests/` | `D2.<Area>.<Service>.Tests` | `Microsoft.NET.Sdk` | One project per service — `Unit/` + `Integration/` mirroring source. |
+| `clients/dotnet/` | `D2.<Area>.<Service>.Client` | `Microsoft.NET.Sdk` | Consumer-facing — references **contracts + shared libs only**, never the service's internals. |
 
-A handler's TLC reflects **what it does** (capability), not **what it uses** (dependency). A query handler that internally consults a cache is still a `Q/` handler — it doesn't become `Caching/Q/` because it reads cache. Reserve TLC for the primary capability of the handler.
+`<Area>` = `Edge` (or the service's own name when standalone). **WHY one direction:** vendor churn touches infra only; the domain stays testable with zero infrastructure; the api is the one place every concrete adapter + transport binding is named. The tie-breaker for an ambiguous placement: *"which layer still compiles if I delete the layer below the candidate?"*
 
-### CQRS Q vs C distinction
+A **module-within-host** (KeyCustodian + the auth module, both inside Edge) takes the standard `domain`/`app`/`infra` but **omits `api/` and its own `tests/`**: the host's `api/` is its composition root (the module exposes `AddD2<Module>()`), the host's api does its transport mapping, and its tests live in the host's test project under a `<Module>/` subtree. The five-project shape is the default; the carve-out is explicit and named.
 
-| Type        | Distributed cache | DB write | External API | Message publish | Test                                                       |
-| ----------- | ----------------- | -------- | ------------ | --------------- | ---------------------------------------------------------- |
-| **Query**   | No                | No       | No           | No              | "If the process dies after, would state persist?" → **No** |
-| **Command** | Yes               | Yes      | Yes          | Yes             | Primary intent = mutation of persistent / shared state     |
-| **Complex** | Yes               | Yes      | Yes          | Yes             | Primary intent = retrieval, but may mutate as side effect  |
-| **Utility** | Varies            | Varies   | Varies       | Varies          | Shared logic invoked by other handlers as a building block |
+### Domain — `Entities` / `ValueObjects` / `Enums` / `Rules`
 
-Local / in-memory caching is permitted as an invisible optimization — instance-scoped, ephemeral, doesn't affect other instances. A query that warms a local memory cache is still a query.
+- `Entities/` — aggregate roots, state-machine sum-types (abstract base + sealed per-state — see [EF-as-DDD](#repository)), audit entities.
+- `ValueObjects/` — immutable smart-constructor VOs (`Create(...) → D2Result<T>`).
+- `Enums/` — closed discriminators + taxonomies.
+- `Rules/` — **pure, stateless, no-IO domain logic over entities/VOs** (decision rules, generators, projections, factories). A rule has no injected port, no IO, no `IOptions<>`, no logger (`IClock` is a permitted method *parameter*); a tunable like RSA modulus size is passed in by the handler, not read inside the rule. **WHY:** anything with no port and no IO is domain logic; hosting it in app behind an interface leaves the domain anemic and the logic un-unit-testable without the handler machinery. A rule that "wants" a logger or options is a handler, not a rule.
 
-### Why Utility lives in app layer, not domain
+### App — the two-section split
 
-A Utility handler exists when the same logic is needed by multiple Q/C/X handlers AND requires something domain shouldn't carry: third-party libs (HTTP / JSON / regex / crypto), DI-injected services (logger, telemetry, options, other handlers), or handler-pattern infrastructure (auto-emitted OTel metrics, `[RedactData]` integration, `DefaultOptions`, structured I/O logging). Domain stays pure — only entities, value objects, business rules, and helper methods with ZERO external deps. Conversely, if logic is genuinely pure, put it on the domain entity / value object as a method; don't manufacture a Utility handler "just in case."
+```
+app/
+├── Application/
+│   ├── Handlers/
+│   │   ├── Commands/<Operation>/       # one folder per command operation
+│   │   └── Queries/<Operation>/        # one folder per query operation
+│   ├── Observability/                  # <Service>Log + <Service>Metrics
+│   └── <Service>AppServiceCollectionExtensions.cs   # AddD2<Service>App()
+└── Infrastructure/
+    ├── <Concern>/                      # ports + shapes, grouped by capability concern
+    └── Configuration/<Service>Options.cs            # options POCO with SECTION const
+```
+
+`Application/` = "what this service *does*" (the operations); `Infrastructure/` = "what it *needs from the outside*" (the ports + the shapes those ports speak — no adapter, that lives in `infra/`). **WHY:** the split makes `infra/` a structural mirror — every concern folder in `app/Infrastructure/` has a same-named folder in `infra/` holding the adapter, so a port and its impl compare side-by-side.
+
+**Per-operation handler folders.** One folder per operation under its category; it co-locates the interface, impl, input, and output — all suffixed so the folder is namespace-safe:
+
+```
+Application/Handlers/Commands/RotateKey/
+├── IRotateKeyHandler.cs     # IRotateKeyHandler : IHandler<RotateKeyInput, RotateKeyOutput>
+├── RotateKeyHandler.cs      # sealed RotateKeyHandler : ..., IRotateKeyHandler
+├── RotateKeyInput.cs
+└── RotateKeyOutput.cs
+```
+
+Naming law: handler interface `I<Operation>Handler`, impl `<Operation>Handler` (file = type; the bare `<Operation>` type name is not used), input `<Operation>Input` (never `Request`/`Command`), output `<Operation>Output` (never document-style `Outcome`/`Plan`). An operation-private record is `<Operation><Role>` (suffixed) or a `private` nested type. One interface per file; consumers `using` the folder namespace directly — no `partial` aggregation, no grouping aliases. **WHY co-locate:** an interface and its impl are read together nearly always; two unrelated operations' interfaces are read together nearly never. A DTO bucket (`Models/`) is not used — a DTO either co-locates with its operation or, when a shape is shared by 2+ operations, is promoted to a domain VO.
+
+### Command vs Query — the binary side-effect rule
+
+**Exactly two categories: `Commands/` and `Queries/`. A handler's category is determined SOLELY by whether the operation mutates persistent/shared state — a DB write, a distributed-cache write, an external write, or a message publish. The verb in the name is irrelevant.** Side effect → `Commands/`; none → `Queries/`.
+
+| Category | Distributed cache | DB write | External API | Message publish | Test |
+| -------- | ----------------- | -------- | ------------ | --------------- | ---- |
+| **Commands** | yes | yes | yes | yes | "If the process dies right after, did state change persist?" → **yes**. |
+| **Queries** | no | no | no | no | Same death test → **no**. |
+
+There is no third category. An operation that *looks* like a query by name (`Find…`, `Get…`) but mutates as a side effect (find-or-create, cache-warm-on-read that broadcasts) is a `Command` wearing a query-ish verb — the side effect makes it a `Command`. `Find` (resolve, may fetch) vs `Get` (direct read) stays *naming* guidance but no longer maps to a folder. **Local/in-memory caching does NOT disqualify a Query** — instance-scoped ephemeral state (a per-instance `ILocalCache`, a module-scoped `Lazy<FrozenDictionary>`) is not shared-state mutation; only distributed-cache writes (`*AndBroadcast*`, anything other instances observe) push an operation to `Commands/`.
+
+### Concern folders + mandatory vendor/tech/protocol subfolders
+
+`app/Infrastructure/` groups ports + shapes by **capability concern** — a PascalCase singular capability noun (`Persistence`, `Messaging`, `Email`, `Sms`, `Realtime`, `Storage`, `Outbound`, `Vault`, `Scheduling`, `Configuration`, …). `Vault/` not `Secrets/` — a `Secrets/` folder collides with the universal `secrets/` key-material convention on case-insensitive filesystems. The `infra/` project mirrors those concern folders with adapters, and **every concern folder in `infra/` carries a tech/vendor/protocol subfolder — even when only one impl exists today**:
+
+```
+infra/Persistence/Postgres/...      not  infra/Persistence/...
+infra/Messaging/RabbitMq/...        not  infra/Messaging/...
+infra/Email/Resend/...   +  infra/Email/Ses/...      (vendor axis)
+infra/Outbound/Grpc/...  +  infra/Outbound/Rest/...   (protocol axis)
+infra/Observability/                                  (infra-side log delegates — same folder name as App's Application/Observability/)
+```
+
+**WHY mandatory even for a sole impl:** the subfolder is the seam a second vendor lands on without a reshuffle — the day Resend gains an SES fallback, the new adapter drops into a sibling folder and nothing else moves. The generic `Providers/` wrapper is dead; concern + vendor replaces it. The concern-noun set is open-but-deliberate — adding a noun is a standard amendment (this doc + [ADR-0020](adrs/0020-service-project-structure.md)), not an ad-hoc per-service invention.
+
+### Multi-provider — the keyed-resolver recipe
+
+A service may run two vendors of one capability at once (Stripe AND Square), resolving one-of-many by key. App stays vendor-blind (ONE capability port per concern in `app/Infrastructure/<Concern>/`); infra registers keyed adapters under .NET keyed DI (one per vendor subfolder); when the handler picks the vendor at runtime, a resolver port `I<Capability>Resolver.Get(key) → D2Result<T>` wraps `IServiceProvider.GetKeyedService<T>(key)` and maps an unknown key to a typed `D2Result` failure (not a thrown `InvalidOperationException`). A handler that statically knows its vendor injects `[FromKeyedServices("vendor")] I<Capability>` directly. For messaging the resolver layers *on top of* `[MqPub]` — each concrete publisher keeps its compile-time descriptor; the resolver only selects which already-described publisher to use. **WHY a resolver over raw keyed injection when the key is dynamic:** `[FromKeyedServices]` needs a compile-time key; a runtime key (an org's configured vendor) needs a lookup, and a bad key is operator data → `D2Result`, not an exception. Full vertical → [ADR-0020](adrs/0020-service-project-structure.md).
+
+### Options home + namespaces
+
+Options flow: env `SECTION__PROP` (arrays `SECTION__N`) → `D2Env.Load()` → `IConfiguration` → **binding + `ValidateOnStart` in `infra/Configuration/`** → the POCO declared in `app/Infrastructure/Configuration/` (carrying the `SECTION` const) → handlers consume `IOptions<T>` → the domain receives only adapted VOs/primitives (never `Microsoft.Extensions.Options`). `[Required]` on a non-nullable struct is a no-op — use `[Range(typeof(TimeSpan), …)]` or a custom `.Validate(…)`, plus the domain VO's smart constructor as the second floor. Namespaces are the folder path verbatim, **including** the `.App`/`.Infra` layer segment (`D2.Edge.KeyCustodian.App.Infrastructure.Persistence` vs `D2.Edge.KeyCustodian.Infra.Persistence.Postgres`) — not collapsed via `RootNamespace` tricks; in a service the layer IS semantics.
 
 ### Verb semantics
 
@@ -128,7 +184,7 @@ A Utility handler exists when the same logic is needed by multiple Q/C/X handler
 
 ## Handler
 
-`.NET`: `BaseHandler<TSelf, TInput, TOutput>` with using aliases (`H`, `I`, `O`), `IHandlerContext`, `DefaultOptions` override. `RunCorePipelineAsync` (sealed) hosts the observability pipeline (activity, span tags, log scope, stopwatch, 4 OTel metrics, universal try/catch); `HandleAsync` is virtual and one-line-pass-through by default. Repo handlers inherit `BaseRepoHandler<TSelf, TInput, TOutput>` which adds typed DB-failure mapping via an injected `IDbExceptionClassifier`.
+`.NET`: `BaseHandler<TSelf, TInput, TOutput>` with using aliases (`H`, `I`, `O`), `IHandlerContext`, `DefaultOptions` override. `RunCorePipelineAsync` (sealed) hosts the observability pipeline (activity, span tags, log scope, stopwatch, 4 OTel metrics, universal try/catch); `HandleAsync` is virtual and one-line-pass-through by default. Repo handlers inherit `BaseRepoHandler<TSelf, TInput, TOutput>` which adds typed DB-failure mapping via an injected `IDbExceptionClassifier`. EF-using command and query handlers inherit `BaseRepoHandler` for this DB-failure mapping; the per-operation Repository handler pattern is retired — handlers use the module `DbContext` contract + aggregates + LINQ directly (see [Repository](#repository)).
 
 ```csharp
 public sealed class CreateUser(HandlerContext<CreateUser> ctx, IDbExceptionClassifier cls, IAppDbContext db)
@@ -165,6 +221,32 @@ return D2Result<OutputDto>.Ok(order.ToDto());
 Partial-success ladder: `NotFound` (none resolved, Success=false) → `SomeFound` (partial, data attached, Success=false) → `Ok` (all resolved, Success=true). Callers use `IsPartialOrMissing` (`IsNotFound || IsSomeFound`) for cache-fallback. `Forbidden` is returned when an authenticated caller lacks the required scope.
 
 > Duplicated from [`server/shared/dotnet/result/core/README.md`](../server/shared/dotnet/result/core/README.md) for at-a-glance directory access. Full factory catalog, `BubbleFail` / `Bubble`, per-code booleans (`IsTransientRetryable` / `IsTransientDbFailure`), monadic `Bind` / `Map` / `ThenAsync` / `Match`, and auto-injected `traceId` semantics live in the lib README — update both in lockstep.
+
+---
+
+## Spec-driven error codes
+
+Every error code is declared in a `*-error-codes.spec.json` catalog — one entry per code carrying its `httpStatus`, semantic `category`, and `userMessageKey`. The .NET + TS code constants, the typed `D2Result` failure factories, and the merged cross-service registry are all CODEGEN-emitted from that spec; nothing about a code is hand-written. There are two catalog kinds:
+
+- **Generic catalog** — `contracts/error-codes/` owns the reserved unprefixed namespace (`NOT_FOUND`, `CONFLICT`, `VALIDATION_FAILED`, `SERVICE_UNAVAILABLE`, …). These drive the framework-level `D2Result` factories.
+- **Per-domain catalog** — `contracts/<domain>-error-codes/` (e.g. `contracts/auth-error-codes/`) owns codes carrying the enforced `<DOMAIN>_` prefix. These drive a generated `<Domain>Failures` factory class.
+
+The call site NAMES the scope it's drawing from — the factory's receiver tells the reader which catalog owns the code:
+
+```csharp
+// framework / generic catalog — the semantic D2Result factories
+return D2Result<UserDto>.NotFound();
+return D2Result<TokenDto>.ValidationFailed(inputErrors: errors);
+
+// per-domain catalog — the generated <Domain>Failures factory
+return AuthFailures<TokenDto>.InvalidGrant();
+```
+
+Each factory stamps the spec-declared `(code, httpStatus, category, userMessageKey)` tuple, so the wire payload carries the code + its `category` + a `TKMessage` whose key resolves to localized text on the client. A new code is added by editing the spec + re-running the generator — never by hand-mapping a status + message into a raw `Fail(statusCode, message)` call (per [`docs/dev/rules.md §26.6`](dev/rules.md#26-codegen-discipline-spec--proto--schema-derived-types) + [§5.3](dev/rules.md#5-c-code-conventions)).
+
+**Merged-registry resolution boundary** — the codegen also emits a merged cross-service registry (`ErrorCodeRegistry` in .NET, `errorCodeRegistry` in TS) that aggregates EVERY `*-error-codes.spec.json` catalog into one `code → ErrorCodeInfo` lookup. This is what lets a consuming service branch on a wire code it didn't produce: given a code string from any producer, `TryResolve(code, out info)` returns the `httpStatus`, `category`, `userMessageKey`, and originating `domain` WITHOUT the consumer importing the producer's catalog. The registry is the resolution surface; the per-catalog factories are the production surface — produce with `D2Result.X()` / `<Domain>Failures.X()`, resolve a foreign code with the registry.
+
+> Duplicated from [`server/shared/dotnet/error-codes/registry/README.md`](../server/shared/dotnet/error-codes/registry/README.md) for at-a-glance directory access — the full per-catalog spec format, the `ErrorCodeInfo` field set, and the build-time cross-catalog collision diagnostics live in the lib README — update both in lockstep.
 
 ---
 
@@ -231,12 +313,84 @@ services.AddResilientPipeline<string, MyDto>(p => p
 
 ## Repository
 
-EF Core for all relational data. Repo handlers inherit `BaseRepoHandler` (see [Handler](#handler)); the registered `IDbExceptionClassifier` translates DB exceptions into typed `D2Result` failures (`UniqueViolation`, `ConcurrencyConflict`, `DbDeadlock`, `DbTimeout`, etc.). Callers branch on `result.IsUniqueViolation` / `IsTransientDbFailure` — never on raw SQLSTATE catches.
+EF Core for all relational data, accessed **directly through the module `DbContext` contract + aggregates + LINQ** — the per-op Repository handler is retired ([ADR-0017](adrs/0017-ef-as-ddd-persistence.md)). Command/query handlers inherit `BaseRepoHandler` / `BaseHandler` (see [Handler](#handler)) for the cross-cutting pipeline; the registered `IDbExceptionClassifier` translates DB exceptions into typed `D2Result` failures (`UniqueViolation`, `ConcurrencyConflict`, `DbDeadlock`, `DbTimeout`, etc.). Callers branch on `result.IsUniqueViolation` / `IsTransientDbFailure` — never on raw SQLSTATE catches.
+
+**Physical homes** ([ADR-0020](adrs/0020-service-project-structure.md)): the `I<Service>DbContext` port, the flat `<Entity>Record`, the pure `<Entity>RecordMapper`, and the `<Entity>RecordQueryExtensions` all live in `app/Infrastructure/Persistence/`; the concrete `<Service>DbContext`, the `IEntityTypeConfiguration<Record>`, and the `Migrations/` folder live in `infra/Persistence/Postgres/`. App speaks the query *language* (DbContext/DbSet/LINQ); infra owns the *database* (Npgsql, connection, migrations, `xmin`).
 
 - **Batch chunking** — PG has a ~32K parameter cap per query (signed-int param index); default chunk size **500**. Use `input.HashIds.Chunk(_BATCH_SIZE)` with `_BATCH_SIZE` via the Options pattern. See [Batch operations](#batch-operations).
 - **Partial-success → D2Result mapping** — all resolved → `Ok`; some → `SomeFound`; none → `NotFound`. Never return `Ok` with empty data.
 - **UPDATE / DELETE row-count** — `SaveChangesAsync()` returns affected rows. Zero where you expected ≥1 → `NotFound`. Per `rules.md §9.32`.
 - **Migrations — generator only.** `dotnet ef migrations add <Name>` is the only path. NEVER hand-edit `*.cs` migration files, `*ModelSnapshot.cs`, or `__EFMigrationsHistory` rows. Multi-replica safety: startup migrator acquires a PG advisory lock. Per `rules.md §9.10`.
+- **EF migration `.editorconfig` exclusion** — add `[**/Migrations/*.cs] generated_code = true` to the service's `.editorconfig` when the first migration lands, so EF-emitted files are excluded from StyleCop (SA1200/SA1413/SA1633). Never suppress per-rule or hand-edit the generated output. Per `rules.md §26.9`.
+
+### Rich sum-type state-machine aggregates + flat-record persistence
+
+Stateful domain aggregates whose states differ in the operations they support are modeled as an **abstract base + sealed per-state subtype hierarchy** so illegal transitions are uncompilable. The `Status` enum is a derived persistence discriminator computed from the type at persistence time — never the authority on which transitions exist.
+
+```csharp
+// Domain — EF-free, sealed per state
+public abstract record EncryptionKey(Guid Id, ...);
+public sealed record PendingKey(Guid Id, ...) : EncryptionKey(Id, ...);
+public sealed record ActiveKey(Guid Id, ...) : EncryptionKey(Id, ...);
+public sealed record RetiredKey(Guid Id, ...) : EncryptionKey(Id, ...);
+
+// Enum — derived discriminator only (for DB lookups / LINQ filters)
+public enum KeyStatus { Pending, Active, Retired }
+```
+
+**Persistence shape — flat `<Entity>Record`, never TPH.** EF Core 10 confirmed that TPH with an abstract base produces `DELETE` + re-`INSERT` for state transitions (gap between delete and insert, loss of `xmin` token, foreign-key risks). The flat record keeps the transition as an atomic `UPDATE`:
+
+| Artifact | Home | Role |
+| -------- | ---- | ---- |
+| `KeyRecord` (flat EF record with all columns + `Status` + `xmin`) | `app/Infrastructure/Persistence/` | EF entity; `xmin` = concurrency token |
+| `KeyRecordMapper` (pure C# 14 extension members) | `app/Infrastructure/Persistence/` | `ToDomain()`: switch Status → sealed subtype; `ProjectOnto(key)`: overwrite mutable columns |
+| `KeyRecordQueryExtensions` | `app/Infrastructure/Persistence/` | `IQueryable<KeyRecord>` convenience filters |
+| `KeyCustodianDbContext` : `IKeyCustodianDbContext` | `infra/Persistence/Postgres/` | Concrete EF context |
+| `KeyRecordConfiguration` : `IEntityTypeConfiguration<KeyRecord>` | `infra/Persistence/Postgres/` | `HasKey`, `UseXminAsConcurrencyToken`, value-converters |
+| `Migrations/` | `infra/Persistence/Postgres/` | EF-generated only; excluded from StyleCop via `.editorconfig` |
+
+```csharp
+extension(KeyRecord record)
+{
+    public EncryptionKey ToDomain() => record.Status switch
+    {
+        KeyStatus.Pending  => new PendingKey(record.Id, ...),
+        KeyStatus.Active   => new ActiveKey(record.Id, ...),
+        KeyStatus.Retired  => new RetiredKey(record.Id, ...),
+        _ => throw new InvalidOperationException($"Unknown KeyStatus {record.Status}")
+    };
+
+    public KeyRecord ProjectOnto(EncryptionKey key) => record with
+    {
+        Status     = key.ToStatus(),   // derived from type
+        UpdatedAt  = key.UpdatedAt,
+        // ... other mutable columns
+    };
+}
+```
+
+**State transition pattern in handlers** (single `SaveChangesAsync` = atomic UPDATE + audit):
+
+```csharp
+// Load the flat record
+var record = await ctx.Keys.SingleOrDefaultAsync(r => r.Id == id, ct);
+if (record is null) return D2Result.NotFound();
+
+// Reconstruct the domain sum-type
+var key = record.ToDomain();
+
+// Apply the domain transition (compile-time safe — method only exists on PendingKey)
+if (key is not PendingKey pending) return D2Result.Conflict();
+var activated = pending.Activate(clock.GetCurrentInstant());
+
+// Write audit entry + updated record in the SAME transaction
+ctx.KeyAuditLog.Add(new KeyAuditEntry(...));
+record.ProjectOnto(activated);
+var rows = await ctx.SaveChangesAsync(ct);
+if (rows == 0) return D2Result.Conflict();   // xmin mismatch
+```
+
+Canonical: [ADR-0016](adrs/0016-keycustodian-lifecycle-store.md) + [ADR-0017](adrs/0017-ef-as-ddd-persistence.md). Predicate enforcement: `rules.md §9.31` (sum-type shape) + `§9.38` (flat-record persistence) + `§9.37` (EF-as-DDD handler shape).
 
 ---
 
@@ -502,14 +656,26 @@ Full service-onboarding checklist (rate limiting / HTTP idempotency / session+au
 
 ## Mappers
 
-`{Entity} ↔ {Dto}` projections live in `{Service}.App/Mappers/` as C# 14 extension members. Pure projections — no DI, no IO, no validation. Validation lives in the smart-constructor on the domain type. Use the C# 14 `extension(T target) { ... }` block form per `rules.md §5`, never the old `this T target` parameter style.
+**The uppermost-node rule: a mapping lives in the highest layer that actually touches the foreign representation; every layer beneath it speaks domain (or `<Op>Input`/`<Op>Output` at the handler boundary).** A service has five mapping surfaces, each with exactly one home:
+
+| # | Surface (foreign ↔ ours) | Home |
+| - | ------------------------ | ---- |
+| 1 | Transport — proto / REST JSON ↔ `<Op>Input`/`<Op>Output` | `api/Mappers/` (the host's api for a module-within-host) |
+| 2 | Persistence — EF record ↔ domain aggregate | `app/Infrastructure/Persistence/` (beside the record) |
+| 3 | Provider SDK — vendor type (Stripe / Resend / IpInfo) ↔ domain | `infra/<Concern>/<Vendor>/` (inside the adapter) |
+| 4 | Messaging wire — spec-generated event ↔ domain values | `infra/Messaging/<Broker>/` (inside the publisher) |
+| 5 | Primitives — `string` / `int` / bytes → domain VO | domain (`Create` factories + `Rules/` projections) |
+
+Every mapper is a pure static C# 14 extension-member class — no DI, no IO, no validation — named `<ForeignType>Mapper`. Use the `extension(T target) { ... }` block form per `rules.md §5`, never the old `this T target` parameter style. Validation lives in the smart-constructor on the domain type (surface 5).
 
 ```csharp
-extension(Order order)
+extension(KeyRecord record)
 {
-    public OrderDto ToDto() => new(order.Id, order.Status, order.Total);
+    public EncryptionKey ToDomain() => /* flat row → sum-type aggregate, switch on Status */;
 }
 ```
+
+**WHY transport mapping lives in `api/`, not `app/`:** proto/REST is a transport concern and the api is the uppermost node of the transport path; placing it in app would force app to reference the generated proto types, coupling the orchestration layer to one wire format and breaking "App is reusable across transports." **WHY the persistence mapper stays in `app/`, not `infra/`:** under EF-as-DDD the handlers compose the queries and materialize the records, so app is the uppermost node of the persistence path; the record mapper is a pure mapper over the app-owned record shape with no EF dependency (and placing it in infra is impossible anyway — app may not reference infra). Full rationale → [ADR-0020](adrs/0020-service-project-structure.md) + [ADR-0017](adrs/0017-ef-as-ddd-persistence.md).
 
 ---
 
@@ -1028,3 +1194,6 @@ Normalization: string inputs are lower-cased and whitespace-stripped before hash
 - **Hardcoding what should be in Options** — batch sizes, cache expirations, retry attempts, lock TTLs all go through `IOptions<T>`.
 - **Identity (UserId / OrgId / Scopes) in AMQP headers** — identity rebuilds from the JWT at every sync hop. Headers stay plaintext at-rest.
 - **Hand-mirrored constants for spec-driven catalogs** — if a catalog has a SourceGen, the hand-written file gets deleted outright. See [Spec-driven codegen](#spec-driven-codegen--the-cross-cutting-pattern).
+- **Pure logic hosted in the app layer** — a generator/verifier/projection with no port and no IO belongs in domain `Rules/`, not behind an app-layer handler or strategy interface. App handlers orchestrate; they do not host domain logic. See [Service project structure](#service-project-structure).
+- **A flat `Models/` DTO bucket** — a DTO either co-locates with its operation (`<Op>Input`/`<Op>Output`) or, when shared by 2+ operations, is promoted to a domain VO. A flat folder of records has no per-shape owner.
+- **A generic `Providers/` wrapper for vendor adapters** — use a capability concern folder + a mandatory vendor/tech/protocol subfolder (`infra/Email/Resend/`, not `infra/Providers/Email/`). See [Service project structure](#service-project-structure).

@@ -1,0 +1,105 @@
+<!--
+Copyright (c) DCSV. All rights reserved.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>D2.Edge.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+
+    <!--
+      Test-project-only warning suppressions. Public-API XML-doc + comment-style
+      enforcement remains active for non-test libraries.
+
+      CS1591 (Roslyn) / SA1600 (StyleCop): missing XML doc on public types/members.
+      Test method names follow `Method_Scenario_ExpectedResult` which IS the
+      documentation; requiring a `summary` echo on every test adds noise.
+
+      SA1512: single-line `//` comments not followed by blank lines. Section
+      dividers inside test classes are clearer with a blank line before the next
+      test method; SA1512 disagrees. Tests prioritize scan readability over the rule.
+    -->
+    <!--
+      xUnit1051: "use TestContext.Current.CancellationToken on every awaited
+      method that accepts a ct" — well-intentioned but exceptionally noisy in
+      unit tests that don't model cancellation; xUnit's own timeout already
+      bounds runaway tests. Suppressed for clarity.
+    -->
+    <NoWarn>$(NoWarn);1591;SA1600;SA1512;xUnit1051</NoWarn>
+  </PropertyGroup>
+
+  <!--
+    Edge-service test project. The integration-key-rotation Testcontainers gate (own
+    PostgresFixture + [Collection("Postgres")]) + temporal/adversarial unit
+    tests are housed here. Mirrors D2.Shared.Tests csproj settings (MTP runner, the standard
+    test-only NoWarn set).
+  -->
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="AwesomeAssertions" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+    <PackageReference Include="JetBrains.Annotations" />
+    <!-- Testcontainers.PostgreSql — for the integration-key-rotation gate (real PG
+         container with own PostgresFixture + [Collection("Postgres")]). -->
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="coverlet.msbuild">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <!--
+      Microsoft.CodeAnalysis.CSharp — needed by the keycustodian-error-codes
+      SrcGen integration tests (Unit/KeyCustodian/SourceGen +
+      Unit/KeyCustodian/SpecsConsistency) which drive CSharpGeneratorDriver
+      against synthetic compilations + byte-compare the committed .g.cs. The
+      SrcGen csproj marks this PrivateAssets="all" so it doesn't propagate;
+      tests need an explicit reference.
+    -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <!--
+      Microsoft.EntityFrameworkCore + .InMemory — the App-layer mapper / query-
+      extension / handler unit tests drive a test-owned KeyCustodianTestDbContext
+      on the provider-free in-memory database. Relational specifics (xmin token,
+      Instant value-converters, real SQL translation) are Infra + Testcontainers concerns; the InMemory provider exercises behavior here.
+    -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <!--
+      Microsoft.Extensions.DependencyInjection — the App-DI registration test
+      constructs a concrete ServiceCollection() + inspects descriptors.
+    -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <!--
+      Microsoft.Extensions.Configuration + .EnvironmentVariables + .Binder —
+      the KeyCustodianOptions env-binding round-trip test builds a real
+      ConfigurationBuilder over Environment.SetEnvironmentVariable to prove
+      KEYCUSTODIAN_APP__ binds correctly including the dashed dictionary key.
+    -->
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\key-custodian\domain\D2.Edge.KeyCustodian.Domain.csproj" />
+    <ProjectReference Include="..\key-custodian\app\D2.Edge.KeyCustodian.App.csproj" />
+    <ProjectReference Include="..\key-custodian\infra\D2.Edge.KeyCustodian.Infra.csproj" />
+    <!--
+      The keycustodian-error-codes SrcGen referenced as a NORMAL library (not an
+      Analyzer) so the generator/diagnostic + byte-parity tests can drive
+      ErrorCodesGenerator + read ErrorCodesGenerator.Config directly. The Domain
+      consumes the SAME project as an Analyzer; here it is a plain reference for
+      test-time introspection. The unified engine namespace
+      (D2.Shared.ErrorCodes.SourceGen) is unique in this test assembly's closure
+      (only the KC shell is referenced) so there is no CS0433 ambiguity.
+    -->
+    <ProjectReference Include="..\key-custodian\error-codes-source-gen\D2.Edge.KeyCustodian.ErrorCodes.SourceGen.csproj" />
+  </ItemGroup>
+</Project>

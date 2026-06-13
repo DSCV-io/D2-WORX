@@ -7,13 +7,18 @@
 namespace D2.Shared.Result;
 
 using System.Net;
+using D2.Shared.ErrorCodes.Category;
 using D2.Shared.I18n;
 
 /// <summary>
-/// Semantic factory methods on <see cref="D2Result{TData}"/>. The generic factories
-/// mirror the non-generic ones (<see cref="D2Result"/>) but additionally carry typed
-/// payloads, plus <see cref="BubbleFail"/> / <see cref="Bubble"/> for propagating an
-/// upstream <see cref="D2Result"/> into a typed result without re-stating its details.
+/// Hand-rolled factory methods on <see cref="D2Result{TData}"/> that are NOT
+/// derived from the error-code spec — the success / raw / propagation /
+/// data-carrying factories (<see cref="Ok"/> / <see cref="Created"/> /
+/// <see cref="Fail"/> / <see cref="BubbleFail"/> / <see cref="Bubble"/> /
+/// <see cref="SomeFound"/> / <see cref="PartialSuccess"/>). The spec-derived
+/// semantic failure factories (the typed twins of <c>NotFound</c> / … carrying
+/// <c>default</c> data) are generated onto the same partial class — see
+/// <c>D2Result.Generic.Factories.g.cs</c>.
 /// </summary>
 public sealed partial class D2Result<TData>
 {
@@ -74,7 +79,8 @@ public sealed partial class D2Result<TData>
             d2Result.InputErrors,
             d2Result.StatusCode,
             d2Result.ErrorCode,
-            d2Result.TraceId);
+            d2Result.TraceId,
+            d2Result.Category);
 
     /// <summary>
     /// Propagates an upstream <see cref="D2Result"/> (success OR failure) into a typed
@@ -92,164 +98,8 @@ public sealed partial class D2Result<TData>
             d2Result.InputErrors,
             d2Result.StatusCode,
             d2Result.ErrorCode,
-            d2Result.TraceId);
-
-    /// <inheritdoc cref="D2Result.NotFound"/>
-    public static new D2Result<TData> NotFound(
-        IReadOnlyList<TKMessage>? messages = null,
-        string? traceId = null)
-    {
-        messages ??= [TK.Common.Errors.NOT_FOUND];
-        return new(
-            false,
-            default,
-            messages,
-            statusCode: HttpStatusCode.NotFound,
-            errorCode: ErrorCodes.NOT_FOUND,
-            traceId: traceId);
-    }
-
-    /// <inheritdoc cref="D2Result.Forbidden"/>
-    public static new D2Result<TData> Forbidden(
-        IReadOnlyList<TKMessage>? messages = null,
-        string? errorCode = null,
-        string? traceId = null)
-    {
-        messages ??= [TK.Common.Errors.FORBIDDEN];
-        return new(
-            false,
-            default,
-            messages,
-            statusCode: HttpStatusCode.Forbidden,
-            errorCode: errorCode ?? ErrorCodes.FORBIDDEN,
-            traceId: traceId);
-    }
-
-    /// <inheritdoc cref="D2Result.Unauthorized"/>
-    public static new D2Result<TData> Unauthorized(
-        IReadOnlyList<TKMessage>? messages = null,
-        string? errorCode = null,
-        string? traceId = null)
-    {
-        messages ??= [TK.Common.Errors.UNAUTHORIZED];
-        return new(
-            false,
-            default,
-            messages,
-            statusCode: HttpStatusCode.Unauthorized,
-            errorCode: errorCode ?? ErrorCodes.UNAUTHORIZED,
-            traceId: traceId);
-    }
-
-    /// <inheritdoc cref="D2Result.ValidationFailed"/>
-    public static new D2Result<TData> ValidationFailed(
-        IReadOnlyList<TKMessage>? messages = null,
-        IReadOnlyList<InputError>? inputErrors = null,
-        string? errorCode = null,
-        string? traceId = null)
-    {
-        messages ??= [TK.Common.Errors.VALIDATION_FAILED];
-        return new(
-            false,
-            default,
-            messages,
-            inputErrors,
-            statusCode: HttpStatusCode.BadRequest,
-            errorCode: errorCode ?? ErrorCodes.VALIDATION_FAILED,
-            traceId: traceId);
-    }
-
-    /// <inheritdoc cref="D2Result.Conflict"/>
-    public static new D2Result<TData> Conflict(
-        IReadOnlyList<TKMessage>? messages = null,
-        string? traceId = null)
-    {
-        messages ??= [TK.Common.Errors.CONFLICT];
-        return new(
-            false,
-            default,
-            messages,
-            statusCode: HttpStatusCode.Conflict,
-            errorCode: ErrorCodes.CONFLICT,
-            traceId: traceId);
-    }
-
-    /// <inheritdoc cref="D2Result.ServiceUnavailable"/>
-    public static new D2Result<TData> ServiceUnavailable(
-        IReadOnlyList<TKMessage>? messages = null,
-        string? errorCode = null,
-        string? traceId = null)
-    {
-        messages ??= [TK.Common.Errors.SERVICE_UNAVAILABLE];
-        return new(
-            false,
-            default,
-            messages,
-            statusCode: HttpStatusCode.ServiceUnavailable,
-            errorCode: errorCode ?? ErrorCodes.SERVICE_UNAVAILABLE,
-            traceId: traceId);
-    }
-
-    /// <inheritdoc cref="D2Result.UnhandledException"/>
-    public static new D2Result<TData> UnhandledException(
-        IReadOnlyList<TKMessage>? messages = null,
-        string? traceId = null)
-    {
-        messages ??= [TK.Common.Errors.UNKNOWN];
-        return new(
-            false,
-            default,
-            messages,
-            statusCode: HttpStatusCode.InternalServerError,
-            errorCode: ErrorCodes.UNHANDLED_EXCEPTION,
-            traceId: traceId);
-    }
-
-    /// <inheritdoc cref="D2Result.PayloadTooLarge"/>
-    public static new D2Result<TData> PayloadTooLarge(
-        IReadOnlyList<TKMessage>? messages = null,
-        string? traceId = null)
-    {
-        messages ??= [TK.Common.Errors.PAYLOAD_TOO_LARGE];
-        return new(
-            false,
-            default,
-            messages,
-            statusCode: HttpStatusCode.RequestEntityTooLarge,
-            errorCode: ErrorCodes.PAYLOAD_TOO_LARGE,
-            traceId: traceId);
-    }
-
-    /// <inheritdoc cref="D2Result.TooManyRequests"/>
-    public static new D2Result<TData> TooManyRequests(
-        IReadOnlyList<TKMessage>? messages = null,
-        string? errorCode = null,
-        string? traceId = null)
-    {
-        messages ??= [TK.Common.Errors.TOO_MANY_REQUESTS];
-        return new(
-            false,
-            default,
-            messages,
-            statusCode: HttpStatusCode.TooManyRequests,
-            errorCode: errorCode ?? ErrorCodes.RATE_LIMITED,
-            traceId: traceId);
-    }
-
-    /// <inheritdoc cref="D2Result.Canceled"/>
-    public static new D2Result<TData> Canceled(
-        IReadOnlyList<TKMessage>? messages = null,
-        string? traceId = null)
-    {
-        messages ??= [TK.Common.Errors.CANCELED];
-        return new(
-            false,
-            default,
-            messages,
-            statusCode: HttpStatusCode.BadRequest,
-            errorCode: ErrorCodes.CANCELED,
-            traceId: traceId);
-    }
+            d2Result.TraceId,
+            d2Result.Category);
 
     /// <summary>
     /// Creates a partial-success result (HTTP 206, error code
@@ -276,7 +126,8 @@ public sealed partial class D2Result<TData>
             messages,
             statusCode: HttpStatusCode.PartialContent,
             errorCode: ErrorCodes.SOME_FOUND,
-            traceId: traceId);
+            traceId: traceId,
+            category: ErrorCategory.PartialSuccess);
     }
 
     /// <summary>
@@ -305,6 +156,7 @@ public sealed partial class D2Result<TData>
             messages,
             statusCode: HttpStatusCode.MultiStatus,
             errorCode: ErrorCodes.PARTIAL_SUCCESS,
-            traceId: traceId);
+            traceId: traceId,
+            category: ErrorCategory.PartialSuccess);
     }
 }

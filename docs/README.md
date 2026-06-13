@@ -14,7 +14,7 @@ Project documentation that doesn't belong at the repo root.
 
 | Doc                        | Purpose                                                                                                                                                                               |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [PATTERNS.md](PATTERNS.md) | Distilled tribal knowledge — TLC/2LC/3LC convention, handler, D2Result, utilities, repo, cache, middleware, RedactionSpec, i18n, configuration. The single biggest pattern reference. |
+| [PATTERNS.md](PATTERNS.md) | Service project structure, handler pipeline, D2Result, spec-driven error codes, utilities, cache, mappers, messaging, SAGA, EF persistence, domain validation, spec-driven codegen, configuration, i18n, and more. The single biggest pattern reference. |
 
 ### Process + quality
 
