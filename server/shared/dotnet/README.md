@@ -165,468 +165,149 @@ so the polyfills + scaffolding can never drift between source-gens.
 
 ## Dependency graph (built libs only)
 
-The chart below shows the actual `<ProjectReference>` graph of the libraries marked **Built**. Placeholders are not shown. Update this chart as part of adding / modifying any shared lib.
+> **Note — hand-crafted interim.** This layer-cake was produced manually after the previous per-edge Mermaid hairball became unrenderable. The long-term fix is to generate this view from the `<ProjectReference>` graph in the csprojs (same source of truth that governs the actual dep relationships); the hand-maintained graph drifted and broke. Until a generator exists, update the **per-lib table below** whenever a shared lib is added or its direct deps change.
 
-The `tests/` project is omitted because it depends on every shared lib (test infra) and nothing depends on it — including it would clutter the chart without showing any structural information.
+`tests/` is omitted — it depends on every shared lib and nothing depends on it.
 
-The chart is sliced into four subgraphs that mirror the layering rules. Within each subgraph, dependencies flow downward; cross-subgraph arrows go LEFT-to-RIGHT (foundation → context → handler → repo). To minimize crossings, only one direct cross-cluster arrow per pair is shown when a transitive path through a same-cluster intermediate exists; the prose under the chart calls out the load-bearing redirects.
+### Legend
+
+| Style | Meaning |
+| --- | --- |
+| **Solid arrow** | `<ProjectReference>` — runtime dep, ships in consumer's `bin/` |
+| **Dashed arrow** | `OutputItemType="Analyzer"` — build-time only; dll never ships in consumer's closure |
+| **Yellow nodes** | Source-gen analyzers — emit constants/types into the consuming assembly at compile time |
+| **Green nodes** | Runtime library |
+
+### Layer-cake diagram
+
+Dependencies flow **upward** (foundation at bottom, composition root at top). Arrows between bands show the allowed dependency direction; individual lib-to-lib edges within a band are in the per-lib table below.
 
 ```mermaid
-graph LR
-    classDef built fill:#d4edda,stroke:#28a745,color:#000
-    classDef analyzer fill:#fff3cd,stroke:#856404,color:#000
+flowchart BT
+    classDef band fill:#d4edda,stroke:#28a745,color:#000
 
-    subgraph FOUNDATION["Foundation (result + i18n + utilities + resilience + error-codes)"]
-        direction TB
-        I18nSG[i18n/source-gen]:::analyzer
-        ErrorCodesSG[source-gen-shared/error-codes-source-gen]:::analyzer
-        D2ResultEnvelopeSG[result/envelope-source-gen]:::analyzer
-        WireShapesSG[source-gen-shared/wire-shapes-source-gen]:::analyzer
-        ErrorCategorySG[error-codes/category-source-gen]:::analyzer
-        ErrorRegistrySG[error-codes/registry-source-gen]:::analyzer
-        I18nAbs[i18n/abstractions]
-        I18n[i18n/core]
-        Result[result/core]
-        Utilities[utilities]
-        Resilience[resilience]
-        ErrorCategory[error-codes/category]
-        ErrorRegistry[error-codes/registry]
+    L1["L1: Zero-dep primitives"]
+    L2["L2: Result + utilities"]
+    L3["L3: Auth + context"]
+    L4["L4: Domain primitives"]
+    L5["L5: Runtime impls"]
+    L6["L6: Transport + EF"]
+    L7["L7: EF + AspNetCore"]
+    L8["L8: Composition root"]
 
-        I18nSG -.->|analyzer| I18nAbs
-        ErrorCodesSG -.->|analyzer| Result
-        D2ResultEnvelopeSG -.->|analyzer| Result
-        WireShapesSG -.->|analyzer| I18nAbs
-        WireShapesSG -.->|analyzer| Result
-        ErrorCategorySG -.->|analyzer| ErrorCategory
-        ErrorRegistrySG -.->|analyzer| ErrorRegistry
-        I18n --> I18nAbs
-        I18n --> Utilities
-        Result --> I18nAbs
-        Result --> ErrorCategory
-        Utilities --> Result
-        Resilience --> Result
-        ErrorRegistry --> ErrorCategory
-    end
+    L1 --> L2
+    L2 --> L3
+    L3 --> L4
+    L4 --> L5
+    L5 --> L6
+    L6 --> L7
+    L7 --> L8
 
-    subgraph AUTHCTX["Auth + per-request context (codegen-driven)"]
-        direction TB
-        AuthScopesSG[auth/scopes-source-gen]:::analyzer
-        AuthAudiencesSG[auth/audiences-source-gen]:::analyzer
-        AuthAbs[auth/abstractions]
-        ContextSG[context/source-gen]:::analyzer
-        AuthCtxAbs[auth/context-abstractions]
-        CtxAbs[context/abstractions]
-
-        AuthScopesSG -.->|analyzer| AuthAbs
-        AuthAudiencesSG -.->|analyzer| AuthAbs
-        ContextSG -.->|analyzer| AuthCtxAbs
-        ContextSG -.->|analyzer| CtxAbs
-        AuthCtxAbs --> AuthAbs
-        CtxAbs --> AuthCtxAbs
-        CtxAbs --> AuthAbs
-    end
-
-    %% auth/abstractions also references the foundation Result + i18n/abstractions
-    %% (for D2Result<T> on IJwksProvider / ISessionLivenessTracker contracts) plus
-    %% Microsoft.IdentityModel.Tokens (NuGet) for SecurityKey on JwksKeySetSnapshot.
-    %% Cross-subgraph edge from AuthAbs to Result is implicit but load-bearing.
-    AuthAbs --> Result
-
-    subgraph HANDLER["Handler stack"]
-        direction TB
-        HandlerAbs[handler/abstractions]
-        Handler[handler/core]
-
-        Handler --> HandlerAbs
-    end
-
-    subgraph AUTHRUNTIME["Auth runtime"]
-        direction TB
-        AuthErrorCodesSG[auth/error-codes-source-gen]:::analyzer
-        ProblemDetailsSG[problem-details/source-gen]:::analyzer
-        ProblemDetailsAbs[problem-details/abstractions]
-        TelemetryTagsSG[telemetry/tags-source-gen]:::analyzer
-        GrpcTrailersSG[result/grpc-trailers-source-gen]:::analyzer
-        Auth[auth/core]
-        AuthHttp[auth/http]
-        AuthGrpc[auth/grpc]
-        AuthStartup[auth/startup]
-        AuthOutbound[auth/outbound]
-        AuthEvents[auth/events]
-
-        AuthErrorCodesSG -.->|analyzer| Auth
-        ProblemDetailsSG -.->|analyzer| ProblemDetailsAbs
-        TelemetryTagsSG -.->|analyzer| Auth
-        TelemetryTagsSG -.->|analyzer| AuthOutbound
-        GrpcTrailersSG -.->|analyzer| AuthGrpc
-        Auth --> AuthAbs
-        Auth --> AuthCtxAbs
-        Auth --> CtxAbs
-        AuthHttp --> Auth
-        AuthHttp --> AuthAbs
-        AuthHttp --> CtxAbs
-        AuthHttp --> ProblemDetailsAbs
-        AuthGrpc --> Auth
-        AuthGrpc --> AuthAbs
-        AuthGrpc --> CtxAbs
-        AuthStartup --> AuthHttp
-        AuthStartup --> AuthGrpc
-        AuthStartup --> AspNetCore
-        AuthOutbound --> AuthAbs
-        AuthOutbound --> CtxAbs
-        AuthEvents --> MsgAbs
-    end
-
-    subgraph REPO["Repo handler (provider-pluggable)"]
-        direction TB
-        RepoAbs[handler/repo-abstractions]
-        Repo[handler/repo]
-        RepoPg[handler/repo-postgres]
-
-        Repo --> RepoAbs
-        RepoPg --> RepoAbs
-    end
-
-    subgraph CRYPTO["Crypto primitives"]
-        direction TB
-        EncryptionDomainsSG[encryption/domains-source-gen]:::analyzer
-        EncryptionFrameSG[encryption/frame-source-gen]:::analyzer
-        Encryption[encryption/core]
-
-        EncryptionDomainsSG -.->|analyzer| Encryption
-        EncryptionFrameSG -.->|analyzer| Encryption
-    end
-
-    subgraph TEMPORAL["Temporal foundation"]
-        direction TB
-        Time[time]
-    end
-
-    subgraph GEO["Geo (spec-driven catalogs + lookup contracts)"]
-        direction TB
-        GeoSG[geo/source-gen]:::analyzer
-        GeoAbs[geo/abstractions]
-        GeoDefault[geo/default]
-        Location[location/core]
-        LocationEf[location/entity-framework-core]
-
-        GeoSG -.->|analyzer| GeoAbs
-        GeoSG -.->|analyzer| GeoDefault
-        GeoDefault --> GeoAbs
-        Location --> GeoAbs
-    end
-
-    subgraph VALIDATION["Input validation"]
-        direction TB
-        ValidationSG[validation/source-gen]:::analyzer
-        ValidationAbs[validation/abstractions]
-        ValidationDefault[validation/default]
-
-        ValidationSG -.->|analyzer| ValidationAbs
-        ValidationDefault --> ValidationAbs
-    end
-
-    subgraph CONTACTS["Contacts (composable PII value objects)"]
-        direction TB
-        Contacts[contacts/core]
-        ContactsEf[contacts/entity-framework-core]
-
-        ContactsEf --> Contacts
-    end
-
-    subgraph DATAGOV["Data governance (GDPR anonymization)"]
-        direction TB
-        DataGovAbs[data-governance/abstractions]
-        DataGovEf[data-governance/entity-framework-core]
-
-        DataGovEf --> DataGovAbs
-        DataGovEf --> Utilities
-    end
-
-    subgraph EFCORE["EF Core migration helpers"]
-        direction TB
-        LocksSG[entity-framework-core/locks-source-gen]:::analyzer
-        SharedEf[entity-framework-core/core]
-        SharedEfPg[entity-framework-core/postgres]
-
-        LocksSG -.->|analyzer| SharedEfPg
-        SharedEf --> Utilities
-        SharedEfPg --> Utilities
-        SharedEfPg --> Time
-    end
-
-    %% geo/abstractions also references the foundation Result + Utilities
-    %% and the auth/context-abstractions Context surface for IRequestContext
-    %% typed accessors. Cross-subgraph edges are implicit.
-    GeoAbs --> Result
-    GeoAbs --> Utilities
-    GeoAbs --> CtxAbs
-
-    %% geo/default depends on geo/abstractions plus the foundation
-    %% Utilities + Result for boundary helpers and D2Result factories, the
-    %% Context.Abstractions surface for IRequestContext typed accessors,
-    %% and I18n.Abstractions for the TK constants the resolver returns
-    %% in D2Result message keys.
-    GeoDefault --> Utilities
-    GeoDefault --> Result
-    GeoDefault --> CtxAbs
-    GeoDefault --> I18nAbs
-
-    %% location/core depends on geo/abstractions (CountryCode + SubdivisionCode
-    %% + SubdivisionCode.ParentCountry) plus the foundation Result + Utilities,
-    %% and validation/abstractions (FieldConstraints caps consumed by VO Create gates)
-    %% — pure-domain by design (no Geo.Default, no NodaTime).
-    Location --> Result
-    Location --> Utilities
-    Location --> I18nAbs  %% transitive via result/ — referenced for TK.* constants in D2Result message keys
-    Location --> ValidationAbs
-
-    %% location/entity-framework-core (the per-VO Location EF Core mapping helpers) depends
-    %% on location/core (StreetAddress + AdminLocation + Coordinates),
-    %% data-governance/entity-framework-core (the fluent .Anonymize* API), and
-    %% validation/abstractions (FieldConstraints caps — not transitive via location/core),
-    %% plus Microsoft.EntityFrameworkCore.Relational. Never refs contacts/entity-framework-core.
-    LocationEf --> Location
-    LocationEf --> DataGovEf
-    LocationEf --> ValidationAbs
-
-    %% validation/abstractions depends on Result (D2Result<string> return type)
-    %% and GeoAbs (CountryCode parameter on phone + postal-code validators).
-    ValidationAbs --> Result
-    ValidationAbs --> GeoAbs
-
-    %% validation/default depends on validation/abstractions (the contracts it
-    %% implements) plus the foundation Result + GeoAbs + Utilities + I18nAbs.
-    ValidationDefault --> Result
-    ValidationDefault --> GeoAbs
-    ValidationDefault --> Utilities
-    ValidationDefault --> I18nAbs
-
-    %% contacts/core (the six composable PII value objects) depends on
-    %% validation/abstractions (FieldConstraints caps + taxonomy enums +
-    %% IEmailValidator / IPhoneValidator contracts), the foundation Result +
-    %% Utilities, and GeoAbs (the CountryCode forwarded to the phone validator).
-    %% I18nAbs flows transitively via result/ for the TK.* message keys. No
-    %% Location dependency — address reuse lives in the sibling EF project.
-    Contacts --> Result
-    Contacts --> ValidationAbs
-    Contacts --> Utilities
-    Contacts --> GeoAbs
-    Contacts --> I18nAbs
-
-    %% contacts/entity-framework-core (the per-VO EF Core mapping helpers) depends
-    %% on contacts/core (the 6 VOs),
-    %% data-governance/entity-framework-core (the anonymize annotation key + rule factory),
-    %% and Microsoft.EntityFrameworkCore.Relational.
-    ContactsEf --> DataGovEf
-
-    %% data-governance/abstractions is a pure marker/attribute/seam lib.
-    %% Deps: D2.Shared.Result (IAnonymizationEngine seam) +
-    %% JetBrains.Annotations ([UsedImplicitly] on reflectively-read properties).
-    DataGovAbs --> Result
-
-    subgraph CACHING["Cache stack"]
-        direction TB
-        CacheAbs[caching/abstractions]
-        CacheLocal[caching/local-default]
-        CacheRedis[caching/distributed-redis]
-        CacheTiered[caching/tiered]
-
-        CacheLocal --> CacheAbs
-        CacheRedis --> CacheAbs
-        CacheTiered --> CacheAbs
-    end
-
-    subgraph MESSAGING["Messaging stack"]
-        direction TB
-        MsgSrcGen[messaging/source-gen]:::analyzer
-        DlqMetaSG[messaging/dlq-failure-metadata-source-gen]:::analyzer
-        OtelMsgTagsSG[messaging/otel-messaging-tags-source-gen]:::analyzer
-        MsgAbs[messaging/abstractions]
-        MsgRabbit[messaging/rabbitmq]
-
-        MsgSrcGen -.->|analyzer| MsgAbs
-        DlqMetaSG -.->|analyzer| MsgAbs
-        DlqMetaSG -.->|analyzer| MsgRabbit
-        OtelMsgTagsSG -.->|analyzer| MsgRabbit
-        MsgRabbit --> MsgAbs
-    end
-
-    subgraph HEADERS["Headers (per-transport, codegen-emitted)"]
-        direction TB
-        HeadersSG[headers/source-gen]:::analyzer
-        HeadersCommon[headers/common]
-        HeadersHttp[headers/http]
-        HeadersAmqp[headers/amqp]
-        HeadersGrpc[headers/grpc]
-
-        HeadersSG -.->|analyzer| HeadersCommon
-        HeadersSG -.->|analyzer| HeadersHttp
-        HeadersSG -.->|analyzer| HeadersAmqp
-        HeadersSG -.->|analyzer| HeadersGrpc
-    end
-
-    subgraph JWTCLAIMS["JWT-claims + in-process slot keys (codegen-emitted)"]
-        direction TB
-        JwtClaimsSG[auth/jwt-claims-source-gen]:::analyzer
-        InProcessKeysSG[encryption/in-process-keys-source-gen]:::analyzer
-
-        JwtClaimsSG -.->|analyzer| AuthAbs
-        InProcessKeysSG -.->|analyzer| AuthAbs
-    end
-
-    subgraph COMPOSITION["Composition root + cross-cutting host plumbing"]
-        direction TB
-        AspNetCore[aspnetcore]
-        Logging[logging]
-        Telemetry[telemetry/core]
-        ServiceDefaults[service-defaults]
-
-        Logging --> AspNetCore
-        Telemetry --> AspNetCore
-        ServiceDefaults --> AspNetCore
-        ServiceDefaults --> Logging
-        ServiceDefaults --> Telemetry
-    end
-
-    %% Cross-subgraph dependencies (only direct refs that aren't transitively
-    %% implied by an intra-subgraph path).
-    AuthHttp --> HeadersHttp
-    MsgRabbit --> HeadersAmqp
-    AspNetCore --> ProblemDetailsAbs
-    AspNetCore --> Result
-    AspNetCore --> HeadersHttp
-    InProcessKeysSG -.->|analyzer| AuthGrpc
-    AuthCtxAbs --> Utilities
-    CtxAbs --> Utilities
-    HandlerAbs --> CtxAbs
-    HandlerAbs --> Result
-    Repo --> Handler
-    RepoAbs --> I18n
-    CacheAbs --> Result
-    CacheLocal --> Utilities
-    CacheRedis --> Utilities
-    AuthOutbound --> CacheAbs
-    AuthOutbound --> Resilience
-    Auth --> CacheAbs
-    Auth --> CacheTiered
-    Auth --> Resilience
-    Auth --> Result
-    Auth --> Utilities
-    MsgAbs --> Handler
-    MsgAbs --> Encryption
-    MsgRabbit --> Encryption
-    Encryption --> Utilities
-    MsgRabbit --> CacheAbs
-    MsgRabbit --> Resilience
-    AspNetCore --> Utilities
-    Logging --> Utilities
-    Logging --> CtxAbs
-    Telemetry --> Utilities
-    Telemetry --> Handler
-    Telemetry --> Auth
-    Telemetry --> AuthOutbound
-    Telemetry --> MsgRabbit
-    Telemetry --> CacheRedis
-    Telemetry --> CacheLocal
-    ServiceDefaults --> I18n
-    ServiceDefaults --> Handler
-    ServiceDefaults --> Auth
-    ServiceDefaults --> AuthHttp
-    ServiceDefaults --> AuthGrpc
-    ServiceDefaults --> AuthStartup
-    ServiceDefaults --> CacheLocal
-    ServiceDefaults --> Utilities
-    Time --> Result
-    Time --> I18nAbs
-    Time --> Utilities
-
-    class I18nAbs,I18n,Result,Utilities,Resilience,ErrorCategory,ErrorRegistry,AuthAbs,AuthCtxAbs,CtxAbs,HandlerAbs,Handler,RepoAbs,Repo,RepoPg,Encryption,Time,CacheAbs,CacheLocal,CacheRedis,CacheTiered,Auth,AuthHttp,AuthGrpc,AuthStartup,AuthOutbound,AuthEvents,MsgAbs,MsgRabbit,MsgSrcGen,AspNetCore,Logging,Telemetry,ServiceDefaults,AuthErrorCodesSG,ErrorCodesSG,D2ResultEnvelopeSG,WireShapesSG,ErrorCategorySG,ErrorRegistrySG,ProblemDetailsAbs,TelemetryTagsSG,HeadersSG,HeadersCommon,HeadersHttp,HeadersAmqp,HeadersGrpc,JwtClaimsSG,InProcessKeysSG,GeoAbs,GeoDefault,Location,LocationEf,ValidationSG,ValidationAbs,ValidationDefault,DataGovAbs,DataGovEf,Contacts,ContactsEf,SharedEf,SharedEfPg,LocksSG built
+    class L1,L2,L3,L4,L5,L6,L7,L8 band
 ```
 
-**Reading the chart:**
+### Per-lib direct `<ProjectReference>` deps (grouped by band)
 
-- **Solid arrows = `<ProjectReference>`** (runtime dep). **Dashed arrows = `OutputItemType="Analyzer"`** (build-time only — the analyzer dll never ships in the consumer's `bin/`).
-- **Yellow nodes = analyzers** (i18n / auth-scopes / context source generators). They emit code into the consuming assembly at compile time.
-- **Green nodes = runtime libs.**
-- **`tests/` is omitted** — it depends on every shared lib (test infra) and nothing depends on it; including it would clutter the chart without showing any structural information.
+`tests/` is omitted throughout. Analyzer references (`OutputItemType="Analyzer"`) are shown as _italic_.
 
-**Why some arrows are not drawn explicitly:** several csprojs add direct `<ProjectReference>`s that are also reachable transitively through an intra-subgraph hop. To keep the chart legible, those redundant edges are hidden — the live deps still exist in the csprojs:
+#### Layer 1 — Zero-dep primitives
 
-- `context/abstractions` directly refs `auth/context-abstractions` + `auth/abstractions` (parsers use `ActorEntry` / enums)
-- `handler/core` directly refs `result/core` (transitive via `handler/abstractions`)
-- `handler/repo` directly refs `handler/abstractions`, `result/core` (transitive via `handler/core` and `handler/repo-abstractions`)
-- `handler/repo-abstractions` directly refs `result/core` (transitive via `i18n/core`)
-- `caching/abstractions`, `caching/local-default`, `caching/distributed-redis` each directly ref `i18n/abstractions` (transitive via `result/core → i18n/abstractions`)
-- `auth/abstractions` directly refs `i18n/abstractions` (transitive via `result/core → i18n/abstractions`)
-- `caching/tiered` directly refs `result/core` (transitive via `caching/abstractions → result/core`)
-- `auth/outbound` directly refs `auth/context-abstractions` (transitive via `context/abstractions → auth/context-abstractions`)
-- `auth/core` directly refs `i18n/abstractions`, `auth/context-abstractions` (transitive via `auth/abstractions` / `context/abstractions`)
-- `auth/http` and `auth/grpc` directly ref `result/core`, `i18n/abstractions`, `utilities` (transitive via `auth/core → result/core/i18n/abstractions/utilities`)
-- `geo/default` directly refs `utilities`, `result/core`, `context/abstractions`, `i18n/abstractions` — the name resolver and Default-layer extensions use `Falsey()` for boundary checks, return `D2Result<T>` via semantic factories with `TK.*` constants, and lift `IRequestContext` raw geo strings into typed records.
+| Lib | Direct deps |
+| --- | --- |
+| `error-codes/category` | _error-codes/category-source-gen_ |
+| `i18n/abstractions` | _source-gen-shared/wire-shapes-source-gen_ |
+| `headers/{common,http,amqp,grpc}` | _headers/source-gen_ |
+| `problem-details/abstractions` | _problem-details/source-gen_ |
+| All source-gen analyzers | `source-gen-shared/core/` shared `.cs` files (via `<Compile Include>`, not a csproj) |
 
-**Load-bearing direct edges that may LOOK redundant — do NOT prune:**
+#### Layer 2 — Core result + utilities
 
-- `auth/http → auth/abstractions` and `auth/grpc → auth/abstractions` are **NOT** transitively redundant via `auth/core`. Both transport csprojs reach the shared `D2HttpContextItems` slot key (lives in `auth/abstractions`) directly, NOT via `auth/core`. The cross-transport `IRequestContext` resolver pattern depends on both transports reading + writing to the same constant — both transports MUST take a direct dep on `auth/abstractions` to see it. Pruning either edge thinking it's redundant via `auth/core` silently breaks the resolver pattern.
-- `messaging/abstractions` directly refs `result/core`, `i18n/abstractions`, `utilities` (transitive via `handler/core`)
-- `messaging/rabbitmq` directly refs `handler/core`, `result/core`, `i18n/abstractions`, `utilities` (transitive via `messaging/abstractions`)
+| Lib | Direct deps |
+| --- | --- |
+| `result/core` | `i18n/abstractions` · `i18n/keys` · `error-codes/category` · _source-gen-shared/error-codes-source-gen_ · _source-gen-shared/wire-shapes-source-gen_ · _result/envelope-source-gen_ |
+| `i18n/keys` | `i18n/abstractions` · _i18n/source-gen_ |
+| `utilities` | `result/core` · `i18n/abstractions` · `i18n/keys` |
+| `resilience` | `result/core` |
+| `error-codes/registry` | `error-codes/category` · _error-codes/registry-source-gen_ |
 
-The cross-subgraph arrows that ARE drawn capture every load-bearing inter-cluster dep:
+#### Layer 3 — Auth vocabulary + request context
 
-- `auth/context-abstractions → utilities` — `[RedactData]` attribute + `RedactReason` enum placed by the spec-driven codegen on PII-bearing properties of the emitted `IAuthContext`
-- `context/abstractions → utilities` — uses `Falsey` / `TryParseTruthyNull` extensions in the parsers
-- `handler/abstractions → context/abstractions` — `IHandlerContext` exposes `IRequestContext`
-- `handler/abstractions → result/core` — `IHandler.HandleAsync` returns `D2Result<TOutput?>`
-- `handler/repo → handler/core` — `BaseRepoHandler` extends `BaseHandler`
-- `handler/repo-abstractions → i18n/core` — typed `D2Result.X()` factories use `TK.Common.Errors.*` for default messages
-- `caching/abstractions → result/core` — every cache op returns `D2Result<T>` / `D2Result`
-- `messaging/abstractions → handler/core` — `BaseHandler<THandler, TIn, Unit>` is the type constraint on subscribers + `IHandlerContext` flows into messaging through the same context envelope
-- `messaging/abstractions → encryption/core` — `messaging/source-gen` reads the encryption-domain constants from `D2.Shared.Encryption.EncryptionDomains` at codegen time to validate every `mq-messages.spec.json` entry's `encryption` value (D2MQ004 fires on drift)
-- `caching/local-default → utilities` — `Falsey()` / `IsNonPositive` for input validation
-- `caching/distributed-redis → utilities` — `Falsey()` / extension methods for input validation
-- `auth/outbound → caching/abstractions` — `ILocalCache` backs the service-identity cache; `IDistributedCache` backs the token-exchange cache
-- `auth/outbound → resilience` — `Singleflight` collapses concurrent token-fetch attempts; `RetryHelper` drives transient-failure retries
-- `encryption/core → utilities` — `ThrowIfFalsey()` guards on `serviceKey` arguments in `EncryptionRegistration` + `AddD2EncryptionFor`
-- `messaging/rabbitmq → encryption/core` — `IPayloadCrypto` per encryption domain is keyed-DI-resolved when composing message bodies
-- `messaging/rabbitmq → caching/abstractions` — `CacheIdempotencyStore` backs `IMessageIdempotencyStore` onto `IDistributedCache`
-- `messaging/rabbitmq → resilience` — `RetryHelper.RetryAsync` drives the publisher's transient-retry loop
-- `aspnetcore → utilities` — `Falsey()` / `Truthy()` / `ToNullIfEmpty()` for header-override tri-state, options validation, env-var resolution
-- `logging → aspnetcore` — `UseD2RequestLogging`'s level callback consumes the public `InfrastructurePathMatcher` to demote infrastructure-path request-completion logs to `Verbose`. Single source of truth shared with `telemetry`.
-- `logging → context/abstractions` — `D2RequestContextEnricher` projects 42 LOG-OK fields off the spec-driven `IRequestContext` onto the request-completion log line; the strongly-typed dep makes a spec-driven field rename surface as a build break in the enricher
-- `telemetry → aspnetcore` — AspNetCore-instrumentation `Filter` callback consumes the same public `InfrastructurePathMatcher` that `logging` uses; aligned path set without per-lib literal duplication
-- `telemetry → handler/core / auth/core / auth/outbound / messaging/rabbitmq / caching/distributed-redis / caching/local-default` — `AddD2Telemetry` aggregates each owning lib's `public const string` `ActivitySource` / `Meter` name through these refs (compile-time symbol references, not literal strings) so a rename in any owning lib surfaces as a build break here
-- `service-defaults → logging / telemetry / aspnetcore / i18n/core / handler/core / auth/core / auth/http / auth/grpc / auth/startup / caching/local-default / utilities` — pure thin-aggregator composition root; each ref is one of the 11 owning-lib `AddD2X` / `UseD2X` extensions the aggregator chains in the LOCKED middleware order
-- `auth/startup → auth/http` — `EndpointScopeMetadata` (HTTP declared-intent record); guard reads it from each `RouteEndpoint`'s metadata collection
-- `auth/startup → auth/grpc` — `MethodScopeMetadata` + `D2RequireAnyScopeAttribute` + `D2RequireAllScopesAttribute` + `D2HarmlessEndpointAttribute`; guard reads all four from endpoint metadata
-- `auth/startup → aspnetcore` — `InfrastructurePathMatcher.IsInfrastructurePath` + `D2AspNetCoreConstants.DEFAULT_INFRASTRUCTURE_PATHS`; guard uses these to skip infra endpoints from the declared-intent walk (these are NOT transitively available from `auth/http` or `auth/grpc`)
-- `data-governance/abstractions` directly refs `result/core` (`D2Result<AnonymizationOutcome>` on `IAnonymizationEngine` — the only dependency; purity mandate prohibits EF/DI/Utilities/Geo refs)
-- `data-governance/entity-framework-core` refs `data-governance/abstractions` (the `AnonymizationRule` / `[Anonymizable]` shapes it maps) + `D2.Shared.Utilities` (`Falsey()`/`Truthy()`/`ThrowIfFalsey()` guards + `SanitizedExceptionRender` for PII-safe exception logging) + `Microsoft.EntityFrameworkCore.Relational` (the tier classifier reads `IProperty.GetColumnName()`, `IReadOnlyEntityType.IsMappedToJson()`, and `IReadOnlyEntityType.GetTableName()` — these relational-metadata APIs live in the Relational assembly; base EF Core is brought transitively) + `Microsoft.Extensions.DependencyInjection.Abstractions` / `Microsoft.Extensions.Hosting.Abstractions` / `Microsoft.Extensions.Logging.Abstractions` / `Microsoft.Extensions.Options` / `Microsoft.Extensions.Configuration.Abstractions` / `Microsoft.Extensions.Configuration.Binder` (DI registration, `IHostedService`, structured logging via `ILogger<T>`, options pattern for `AnonymizationEngineOptions`, and options-section binding for `AddD2DataGovernance` + `AnonymizationModelValidator`)
-- `contacts/core → validation/abstractions` — the six PII value objects consume the `FieldConstraints` length caps, the `NamePrefix` / `NameSuffix` / `BiologicalSex` taxonomy enums, and the `IEmailValidator` / `IPhoneValidator` validator contracts from `validation/abstractions`; no direct `location/` dep (address reuse lives in the sibling EF project — core VOs carry no direct location dependency)
-- `contacts/entity-framework-core → contacts/core` — the per-VO mapping helpers reference all six value-object types when wiring `ComplexProperty` sub-mappings and value converters (`EmailAddress.FromTrusted` / `PhoneNumber.FromTrusted` on the converter read side); `FieldConstraints` flows transitively via `contacts/core → validation/abstractions`
-- `contacts/entity-framework-core → data-governance/entity-framework-core` — uses the `D2:Anonymize` annotation key + `AnonymizationRule.Create` factory to write anonymize defaults onto EF model properties via `HasAnnotation`
-- `location/entity-framework-core → location/core` — references `StreetAddress` + `AdminLocation` + `Coordinates` for the `MapStreetAddress` / `MapAdminLocation` / `MapCoordinates` helpers; `CountryCode` + `SubdivisionCode` flow transitively via `location/core → geo/abstractions`
-- `location/entity-framework-core → validation/abstractions` — `FieldConstraints.STREET_LINE_MAX` / `.CITY_MAX` / `.POSTAL_CODE_MAX` length caps (not transitively available via `location/core`, which refs `geo/abstractions` rather than `validation/abstractions`)
-- `location/entity-framework-core → data-governance/entity-framework-core` — uses the fluent `.Anonymize` / `.AnonymizeNull` / `.AnonymizeEmpty` API to write anonymize defaults onto EF complex-type member columns
-- `entity-framework-core/core` (`SharedEf`) — pure EF migration plumbing; refs `Microsoft.EntityFrameworkCore.Relational` (supplies `MigrationBuilder` + `CreateIndexOperation` + `OperationBuilder<>`) + `D2.Shared.Utilities` (`ThrowIfFalsey` argument guard — §5.1a; cycle-free)
-- `entity-framework-core/postgres` — PG/EF startup machinery (advisory-lock migrator + `pg_advisory_lock` helper + Npgsql defaults applier + design-time factory base); refs `Microsoft.EntityFrameworkCore` + `Npgsql.EntityFrameworkCore.PostgreSQL` + `Npgsql` + `D2.Shared.Time` (`AddD2NodaTime`) + `D2.Shared.Utilities`. Does NOT ref the cluster's `core/` (independent within the cluster). Hosts the `AdvisoryLocks` registry emitted by `locks-source-gen` (analyzer) from `contracts/advisory-locks/advisory-locks.spec.json`
-- `auth/http → headers/http` — `HttpHeaders.IDEMPOTENCY_KEY`, `.CLIENT_FINGERPRINT`, `.AUTHORIZATION`, `.INTERNAL_TOKEN` are spec-driven constants emitted into the `headers/http/` catalog
-- `auth/http → problem-details/abstractions` — `D2ProblemDetailsKeys.TYPE_URI_PREFIX` / `.CONTENT_TYPE` / `.EXTENSION_*` / `.TITLE_*` / `.TitleFor(...)` constants consumed by `D2ProblemDetailsExtensions.ToProblemDetails` (path A) + `JwtAuthMiddleware.WriteProblemAsync` (Content-Type write)
-- `aspnetcore → problem-details/abstractions` — same constants consumed by `D2ProblemDetailsCustomizer.Apply` (path B over ASP.NET `IProblemDetailsService`); single emitted catalog shared with `auth/http` for byte-identical Shape A bodies across both emit paths
-- `i18n/abstractions → source-gen-shared/wire-shapes-source-gen` (analyzer) — `TkMessageWireShape.KEY` / `.PARAMS` constants emitted into `i18n/abstractions/Generated/` from `contracts/tk-message/tk-message.spec.json`. Referenced by `TKMessageJsonConverter` for both `Read` and `Write` paths so the JSON property names come from the same spec source as the TS-side parser.
-- `result/core → source-gen-shared/wire-shapes-source-gen` (analyzer) — `InputErrorWireShape.FIELD` / `.ERRORS` constants emitted into `result/core/Generated/` from `contracts/input-error/input-error.spec.json`. Referenced by `InputError`'s `[JsonPropertyName]` attributes so the .NET serializer ships byte-equal property names regardless of which `JsonSerializerOptions` the call site passes.
-- `result/core → result/envelope-source-gen` (analyzer) — `D2ResultEnvelopeFieldNames.{SUCCESS,DATA,MESSAGES,INPUT_ERRORS,ERROR_CODE,TRACE_ID,STATUS_CODE}` constants emitted into `result/core/Generated/` from `contracts/d2result-envelope/d2result-envelope.spec.json`. Referenced by `[JsonPropertyName(D2ResultEnvelopeFieldNames.*)]` attributes on every `D2Result` / `D2Result<TData>` property so the BFF gateway always sees canonical camelCase keys regardless of the calling endpoint's `JsonSerializerOptions`. Same spec drives `@d2/result`'s `D2ResultEnvelopeFieldNames` on the TS side; the BFF gateway parser reads via these constants.
-- `aspnetcore → result/core` — Customizer reads originating `D2Result` from `HttpContext.Items[D2ProblemDetailsContextItems.D2_RESULT]` so it can set `Type`/`Title`/`Status`/extensions from `D2Result` fields
-- `aspnetcore → headers/http` — `HttpHeaders.IDEMPOTENCY_KEY` referenced by `D2CorsOptions.SR_DefaultAllowedHeaders` (spec-driven Stripe-style `Idempotency-Key` constant — single wire value for one concept across all consumers)
-- `messaging/rabbitmq → headers/amqp` — `AmqpHeaders.MESSAGE_ID`, `.PROTO_TYPE`, `.ENCRYPTION_KID`, `.FAILURE_REASON`, `.TRACEPARENT`, `.PROPAGATED_CONTEXT` are spec-driven constants emitted into the `headers/amqp/` catalog
-- `auth/jwt-claims-source-gen → auth/abstractions` (analyzer) — emits `JwtClaimTypes.g.cs` from `contracts/jwt-claims/jwt-claims.spec.json`. Same spec drives `@d2/auth-abstractions` `JwtClaimTypes` on the TS side
-- `encryption/in-process-keys-source-gen → auth/abstractions` (analyzer) AND `→ auth/grpc` (analyzer) — emits `D2HttpContextItems.g.cs` (public class in `D2.Shared.Auth.Abstractions.Http`) AND `D2GrpcUserStateKeys.g.cs` (internal class in `D2.Shared.Auth.Grpc.Interceptors`) from one spec; structurally guarantees identical wire values for the cross-binding `IRequestContext` slot
+| Lib | Direct deps |
+| --- | --- |
+| `auth/abstractions` | `result/core` · `i18n/abstractions` · _auth/scopes-source-gen_ · _auth/audiences-source-gen_ · _auth/jwt-claims-source-gen_ · _encryption/in-process-keys-source-gen_ |
+| `auth/context-abstractions` | `auth/abstractions` · `utilities` |
+| `context/abstractions` | `auth/context-abstractions` · `auth/abstractions` · `utilities` · _context/source-gen_ |
+| `i18n/core` | `i18n/abstractions` · `utilities` |
 
-**Load-bearing direct edges in COMPOSITION cluster — do NOT prune:**
+#### Layer 4 — Domain primitives
 
-- `service-defaults → utilities` is direct (transitive paths exist via `service-defaults → logging → utilities` etc.) because the aggregator calls `D2Env.Load()` directly during `AddD2ServiceDefaults` and the dep MUST be present at compile time.
-- `service-defaults → aspnetcore` is direct (transitive via `service-defaults → logging → aspnetcore`) because the aggregator's `UseD2DefaultPipeline` invokes `UseD2SecurityHeaders` / `UseD2Cors` / `UseD2InfrastructureBypass` / `MapD2HealthEndpoints` / `RunD2ServiceAsync` from `aspnetcore` directly, NOT through `logging`. Pruning would silently break the aggregator's pipeline composition.
-- `telemetry → aspnetcore` and `logging → aspnetcore` are BOTH direct (no transitive path exists between `logging` and `telemetry` — they're independent libs that cooperate at runtime via the MEL bridge). The single-source-of-truth `InfrastructurePathMatcher` rule depends on both reaching it directly.
+| Lib | Direct deps |
+| --- | --- |
+| `handler/abstractions` | `result/core` · `context/abstractions` |
+| `handler/repo-abstractions` | `result/core` · `i18n/core` |
+| `encryption/core` | `utilities` · _encryption/domains-source-gen_ · _encryption/frame-source-gen_ |
+| `caching/abstractions` | `result/core` · `i18n/abstractions` · `i18n/keys` |
+| `messaging/abstractions` | `handler/core` · `encryption/core` · _messaging/source-gen_ · _messaging/dlq-failure-metadata-source-gen_ |
+| `geo/abstractions` | `result/core` · `utilities` · `context/abstractions` · _geo/source-gen_ |
+| `validation/abstractions` | `result/core` · `geo/abstractions` · _validation/source-gen_ |
+| `time` | `result/core` · `i18n/abstractions` · `utilities` |
 
+> `messaging/abstractions` pulls in `handler/core` (Layer 5) — it is the one upward dep in this band. This is a structural constraint: messaging subscribers are typed as `BaseHandler<THandler, TIn, Unit>`, so the constraint type must be visible at the abstractions layer.
+
+#### Layer 5 — Runtime implementations
+
+| Lib | Direct deps |
+| --- | --- |
+| `handler/core` | `handler/abstractions` · `result/core` |
+| `handler/repo` | `handler/repo-abstractions` · `handler/core` · `handler/abstractions` · `result/core` |
+| `handler/repo-postgres` | `handler/repo-abstractions` |
+| `caching/local-default` | `caching/abstractions` · `utilities` |
+| `caching/distributed-redis` | `caching/abstractions` · `utilities` |
+| `caching/tiered` | `caching/abstractions` · `result/core` |
+| `messaging/rabbitmq` | `messaging/abstractions` · `encryption/core` · `caching/abstractions` · `resilience` · `headers/amqp` · `handler/core` · `result/core` · `i18n/abstractions` · `utilities` · _messaging/otel-messaging-tags-source-gen_ · _messaging/dlq-failure-metadata-source-gen_ |
+| `geo/default` | `geo/abstractions` · `utilities` · `result/core` · `context/abstractions` · `i18n/abstractions` · _geo/source-gen_ |
+| `validation/default` | `validation/abstractions` · `result/core` · `geo/abstractions` · `utilities` · `i18n/abstractions` |
+| `auth/core` | `auth/abstractions` · `auth/context-abstractions` · `context/abstractions` · `caching/abstractions` · `caching/tiered` · `resilience` · `result/core` · `utilities` · `i18n/abstractions` · _auth/error-codes-source-gen_ · _telemetry/tags-source-gen_ |
+| `auth/events` | `messaging/abstractions` |
+
+#### Layer 6 — Transport bindings + domain EF helpers
+
+| Lib | Direct deps |
+| --- | --- |
+| `auth/http` | `auth/core` · `auth/abstractions` · `context/abstractions` · `problem-details/abstractions` · `headers/http` · `result/core` · `i18n/abstractions` · `utilities` |
+| `auth/grpc` | `auth/core` · `auth/abstractions` · `context/abstractions` · `result/core` · `i18n/abstractions` · `utilities` · _result/grpc-trailers-source-gen_ · _encryption/in-process-keys-source-gen_ |
+| `auth/outbound` | `auth/abstractions` · `context/abstractions` · `caching/abstractions` · `resilience` · _telemetry/tags-source-gen_ |
+| `auth/startup` | `auth/http` · `auth/grpc` · `aspnetcore` |
+| `entity-framework-core/core` | `utilities` |
+| `entity-framework-core/postgres` | `utilities` · `time` · _entity-framework-core/locks-source-gen_ |
+| `data-governance/abstractions` | `result/core` |
+| `data-governance/entity-framework-core` | `data-governance/abstractions` · `utilities` |
+| `location/core` | `result/core` · `utilities` · `geo/abstractions` · `validation/abstractions` |
+| `contacts/core` | `result/core` · `utilities` · `i18n/abstractions` · `geo/abstractions` · `validation/abstractions` |
+
+> `auth/startup` references `aspnetcore` (Layer 7) — it needs `InfrastructurePathMatcher` to skip infra endpoints during the startup guard walk.
+
+#### Layer 7 — EF mapping helpers + AspNetCore cross-cutting
+
+| Lib | Direct deps |
+| --- | --- |
+| `location/entity-framework-core` | `location/core` · `data-governance/entity-framework-core` · `validation/abstractions` |
+| `contacts/entity-framework-core` | `contacts/core` · `data-governance/entity-framework-core` |
+| `aspnetcore` | `result/core` · `utilities` · `problem-details/abstractions` · `headers/http` |
+| `logging` | `aspnetcore` · `context/abstractions` · `utilities` |
+| `telemetry/core` | `aspnetcore` · `utilities` · `handler/core` · `auth/core` · `auth/outbound` · `messaging/rabbitmq` · `caching/distributed-redis` · `caching/local-default` |
+
+#### Layer 8 — Composition root
+
+| Lib | Direct deps |
+| --- | --- |
+| `service-defaults` | `aspnetcore` · `logging` · `telemetry/core` · `i18n/core` · `handler/core` · `auth/core` · `auth/http` · `auth/grpc` · `auth/startup` · `caching/local-default` · `utilities` |
+
+### Layering rules
+
+- **Abstractions slices stay zero-external-dep.** Domain code references `*/abstractions` freely; runtime concretes (DI, OTel, EF, ASP.NET Core) stay in sibling non-`-abstractions` csprojs.
+- **Dependencies flow toward the foundation** — a lib may not reference a lib in a higher band.
+- The two permitted cross-band exceptions are documented above: `messaging/abstractions → handler/core` (subscriber type constraint) and `auth/startup → aspnetcore` (infra-path matcher).
 
 ## Cross-tree path properties
 
