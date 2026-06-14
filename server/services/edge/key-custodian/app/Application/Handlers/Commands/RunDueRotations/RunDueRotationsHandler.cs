@@ -52,6 +52,18 @@ public sealed class RunDueRotationsHandler(
       IRunDueRotationsHandler
 {
     /// <inheritdoc/>
+    /// <remarks>
+    /// Orchestrates bootstrap / activate / rotate / generate / retire across all
+    /// domains — wall-clock routinely exceeds the platform default slow-handler
+    /// thresholds (100ms warn / 500ms error).
+    /// </remarks>
+    protected override HandlerOptions DefaultOptions => new()
+    {
+        SlowThreshold = TimeSpan.FromSeconds(30),
+        CriticalThreshold = TimeSpan.FromSeconds(120),
+    };
+
+    /// <inheritdoc/>
     protected override async ValueTask<D2Result<RunDueRotationsOutput?>> ExecuteAsync(
         RunDueRotationsInput input, CancellationToken ct)
     {

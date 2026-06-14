@@ -49,6 +49,65 @@ public sealed class KeyCustodianErrorCodesOutputParityTests
                 + "generation from the spec; run dotnet build to regenerate");
     }
 
+    /// <summary>
+    /// Deliberate-drift fail-path proof: mutates the spec (adds a dummy entry)
+    /// and asserts the regenerated output DIFFERS from the committed file.
+    /// This proves the parity check would catch a real drift, not just pass
+    /// vacuously.
+    /// </summary>
+    [Fact]
+    public void KeyCustodianErrorCodes_DriftedSpec_DoesNotMatchCommittedFile()
+    {
+        // Inject an extra entry so the regenerated output differs.
+        const string driftedSpec = """
+            {
+              "$schema": "./schema.json",
+              "errorCodes": [
+                {
+                  "code": "KEYCUSTODIAN_KID_INVALID",
+                  "httpStatus": 400,
+                  "category": "validation_failure",
+                  "userMessageKey": "TK.Common.Validation.ID_INVALID",
+                  "factoryName": "KidInvalid",
+                  "factoryShape": "standard",
+                  "doc": "The key identifier is null, empty, whitespace, or contains characters outside the JWKS-safe charset [A-Za-z0-9_-]."
+                },
+                {
+                  "code": "KEYCUSTODIAN_DRIFTED_ENTRY",
+                  "httpStatus": 400,
+                  "category": "validation_failure",
+                  "userMessageKey": "TK.Common.Validation.ID_INVALID",
+                  "factoryName": "DriftedEntry",
+                  "factoryShape": "standard",
+                  "doc": "This entry is NOT in the real spec."
+                }
+              ]
+            }
+            """;
+
+        var enUsJson = File.ReadAllText(TestPaths.EnUsMessages());
+        var categoryJson = File.ReadAllText(TestPaths.ErrorCategorySpec());
+
+        var regenerated = RunGenerator(
+            _ASSEMBLY,
+            new ErrorCodesGenerator().AsSourceGenerator(),
+            additionalTexts:
+            [
+                new FileBackedAdditionalText(_SPEC_NAME, driftedSpec),
+                new FileBackedAdditionalText("messages/en-US.json", enUsJson),
+                new FileBackedAdditionalText(_CATEGORY_SPEC_NAME, categoryJson),
+            ])["KeyCustodianErrorCodes.g.cs"];
+
+        var committed = File.ReadAllText(
+            Path.Combine(TestPaths.KeyCustodianGeneratedDir(), "KeyCustodianErrorCodes.g.cs"));
+
+        Normalize(regenerated).Should().NotBe(
+            Normalize(committed),
+            because:
+                "a deliberately drifted spec must produce output that differs "
+                + "from the committed file — proves the parity check is not vacuous");
+    }
+
     private static Dictionary<string, string> Regenerate()
     {
         var specJson = File.ReadAllText(TestPaths.KeyCustodianErrorCodesSpec());

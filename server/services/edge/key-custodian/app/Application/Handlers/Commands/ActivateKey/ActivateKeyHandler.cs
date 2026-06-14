@@ -29,6 +29,17 @@ public sealed class ActivateKeyHandler(
       IActivateKeyHandler
 {
     /// <inheritdoc/>
+    /// <remarks>
+    /// Root-key decrypt + smoke verification routinely exceeds the platform
+    /// default slow-handler thresholds (100ms warn / 500ms error).
+    /// </remarks>
+    protected override HandlerOptions DefaultOptions => new()
+    {
+        SlowThreshold = TimeSpan.FromSeconds(2),
+        CriticalThreshold = TimeSpan.FromSeconds(10),
+    };
+
+    /// <inheritdoc/>
     protected override async ValueTask<D2Result<KeySummary?>> ExecuteAsync(
         ActivateKeyInput input, CancellationToken ct)
     {

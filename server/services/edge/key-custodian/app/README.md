@@ -58,6 +58,7 @@ Each operation lives in its own folder under `Application/Handlers/{Commands,Que
 | `CompromiseKeyHandler`   | `Commands` | `BaseRepoHandler` | `CompromiseKeyInput` → `CompromiseKeyOutput`       | Mark compromised + auto-generate a replacement pending + urgent announce. |
 | `GetJwksHandler`         | `Queries`  | `BaseHandler`     | `GetJwksInput` → `GetJwksOutput`                   | Assemble the RFC 7517 JWKS from active + retiring signing keys (active first). |
 | `GetRotationPlanHandler` | `Queries`  | `BaseHandler`     | `GetRotationPlanInput` → `GetRotationPlanOutput`   | Report the lifecycle actions due across all domains (pure read). |
+| `RunDueRotationsHandler` | `Commands` | `BaseHandler`     | `RunDueRotationsInput` → `RunDueRotationsOutput`   | Orchestrate all due lifecycle actions across domains (bootstrap → activate → rotate → generate-successor → retire) by composing `GetRotationPlan` with the per-action command handlers; per-domain failures are isolated and counted in `Errors`. |
 
 `KeySummary` is a shared domain projection (`domain/Rules/KeySummary.cs`) returned by the generate / activate / retire commands; the other operations declare an operation-specific `<Op>Output`. Every command handler validates input at the top via the domain `Create` / transition smart constructors (`Kid.Create`, `KeyDomain.Create`), surfaces failures only via the generated `KeyCustodianFailures.*` factories + the domain's results, and checks every nested result. Outputs carry NO key material.
 
@@ -115,7 +116,7 @@ These counters complement the cross-cutting per-handler invocation/failure count
 
 ## DI
 
-`services.AddD2KeyCustodianApp()` registers the 7 handlers (transient) and the policy provider. Key generation + smoke testing are pure domain rules with no DI, so there are no generator / smoke-tester registrations. The seams App depends on but does not own — the concrete `IKeyCustodianDbContext`, the keyed root `IPayloadCrypto`, `IRootKeyProvider`, and `IKeyRotationAnnouncer` — are registered by the Infra layer, along with the options binding + startup validation.
+`services.AddD2KeyCustodianApp()` registers the 8 handlers (transient) and the policy provider. Key generation + smoke testing are pure domain rules with no DI, so there are no generator / smoke-tester registrations. The seams App depends on but does not own — the concrete `IKeyCustodianDbContext`, the keyed root `IPayloadCrypto`, `IRootKeyProvider`, and `IKeyRotationAnnouncer` — are registered by the Infra layer, along with the options binding + startup validation.
 
 ---
 
@@ -186,7 +187,7 @@ KEYCUSTODIAN_APP__POLICIES__JWKS-SIGNING__SMOKESOAK=0.02:00:00
 
 **Rotation plan**: call `GetRotationPlan` (query handler) to see the lifecycle actions due across all domains — keys approaching their cadence window, retiring keys whose grace window has elapsed, and any pending keys that have soaked long enough to activate.
 
-**Bootstrap sequence**: a new domain needs at least one key in the `Active` state before rotation can proceed. The typical bootstrap flow is: `GenerateKey` → wait for smoke-soak → `ActivateKey`. A startup health check reporting whether each configured domain has an active key is an Infra-layer concern — NOT IMPLEMENTED (see [`infra/README.md`](../infra/README.md)).
+**Bootstrap sequence**: a new domain needs at least one key in the `Active` state before rotation can proceed. The typical bootstrap flow is: `GenerateKey` → wait for smoke-soak → `ActivateKey`. Readiness is reported by `KeyCustodianHealthCheck` (Infra): **Unhealthy** when the root keyring cannot be loaded or the database is unreachable; **Degraded** when every configured domain (`KeyDomain.All`) is reachable but at least one lacks an `Active` key (e.g. first-boot soak — readiness still returns 200); **Healthy** when every configured domain has an `Active` key. See [`infra/README.md`](../infra/README.md).
 
 **Compromise recovery**: `CompromiseKey` marks the incumbent compromised, optionally auto-generates a replacement pending key for the same domain, and announces urgently (the announce signal triggers session invalidation for tokens signed by the compromised key). The replacement soaks normally — there is no emergency no-soak path. After the soak window elapses, `ActivateKey` the replacement.
 

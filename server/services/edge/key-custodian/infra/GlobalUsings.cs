@@ -13,8 +13,6 @@ global using D2.Edge.KeyCustodian.App.Infrastructure.Vault;
 global using D2.Edge.KeyCustodian.Domain.Enums;
 global using D2.Edge.KeyCustodian.Domain.ValueObjects;
 global using D2.Shared.Encryption;
-global using D2.Shared.Result;
 global using D2.Shared.Utilities.Diagnostics;
-global using D2.Shared.Utilities.Extensions;
 global using Microsoft.EntityFrameworkCore;
 global using NodaTime;

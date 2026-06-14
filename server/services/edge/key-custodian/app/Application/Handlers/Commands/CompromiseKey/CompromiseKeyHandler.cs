@@ -40,8 +40,15 @@ public sealed class CompromiseKeyHandler(
     /// <c>[RedactData] Reason</c>, but the Serilog destructuring policy is an
     /// optional wire-up; disabling input logging removes the dependency entirely
     /// (defense-in-depth — the sensitive operator reason never enters logs).
+    /// Root-wrap encryption + replacement-key generation also routinely exceeds
+    /// the platform default slow-handler thresholds (100ms warn / 500ms error).
     /// </remarks>
-    protected override HandlerOptions DefaultOptions => new() { LogInput = false };
+    protected override HandlerOptions DefaultOptions => new()
+    {
+        LogInput = false,
+        SlowThreshold = TimeSpan.FromSeconds(2),
+        CriticalThreshold = TimeSpan.FromSeconds(10),
+    };
 
     /// <inheritdoc/>
     protected override async ValueTask<D2Result<CompromiseKeyOutput?>> ExecuteAsync(

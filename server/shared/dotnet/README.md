@@ -252,6 +252,7 @@ graph LR
         AuthGrpc[auth/grpc]
         AuthStartup[auth/startup]
         AuthOutbound[auth/outbound]
+        AuthEvents[auth/events]
 
         AuthErrorCodesSG -.->|analyzer| Auth
         ProblemDetailsSG -.->|analyzer| ProblemDetailsAbs
@@ -273,6 +274,7 @@ graph LR
         AuthStartup --> AspNetCore
         AuthOutbound --> AuthAbs
         AuthOutbound --> CtxAbs
+        AuthEvents --> MsgAbs
     end
 
     subgraph REPO["Repo handler (provider-pluggable)"]
@@ -343,9 +345,14 @@ graph LR
 
     subgraph EFCORE["EF Core migration helpers"]
         direction TB
+        LocksSG[entity-framework-core/locks-source-gen]:::analyzer
         SharedEf[entity-framework-core/core]
+        SharedEfPg[entity-framework-core/postgres]
 
+        LocksSG -.->|analyzer| SharedEfPg
         SharedEf --> Utilities
+        SharedEfPg --> Utilities
+        SharedEfPg --> Time
     end
 
     %% geo/abstractions also references the foundation Result + Utilities
@@ -534,7 +541,7 @@ graph LR
     Time --> I18nAbs
     Time --> Utilities
 
-    class I18nAbs,I18n,Result,Utilities,Resilience,ErrorCategory,ErrorRegistry,AuthAbs,AuthCtxAbs,CtxAbs,HandlerAbs,Handler,RepoAbs,Repo,RepoPg,Encryption,Time,CacheAbs,CacheLocal,CacheRedis,CacheTiered,Auth,AuthHttp,AuthGrpc,AuthStartup,AuthOutbound,MsgAbs,MsgRabbit,MsgSrcGen,AspNetCore,Logging,Telemetry,ServiceDefaults,AuthErrorCodesSG,ErrorCodesSG,D2ResultEnvelopeSG,WireShapesSG,ErrorCategorySG,ErrorRegistrySG,ProblemDetailsAbs,TelemetryTagsSG,HeadersSG,HeadersCommon,HeadersHttp,HeadersAmqp,HeadersGrpc,JwtClaimsSG,InProcessKeysSG,GeoAbs,GeoDefault,Location,LocationEf,ValidationSG,ValidationAbs,ValidationDefault,DataGovAbs,DataGovEf,Contacts,ContactsEf,SharedEf built
+    class I18nAbs,I18n,Result,Utilities,Resilience,ErrorCategory,ErrorRegistry,AuthAbs,AuthCtxAbs,CtxAbs,HandlerAbs,Handler,RepoAbs,Repo,RepoPg,Encryption,Time,CacheAbs,CacheLocal,CacheRedis,CacheTiered,Auth,AuthHttp,AuthGrpc,AuthStartup,AuthOutbound,AuthEvents,MsgAbs,MsgRabbit,MsgSrcGen,AspNetCore,Logging,Telemetry,ServiceDefaults,AuthErrorCodesSG,ErrorCodesSG,D2ResultEnvelopeSG,WireShapesSG,ErrorCategorySG,ErrorRegistrySG,ProblemDetailsAbs,TelemetryTagsSG,HeadersSG,HeadersCommon,HeadersHttp,HeadersAmqp,HeadersGrpc,JwtClaimsSG,InProcessKeysSG,GeoAbs,GeoDefault,Location,LocationEf,ValidationSG,ValidationAbs,ValidationDefault,DataGovAbs,DataGovEf,Contacts,ContactsEf,SharedEf,SharedEfPg,LocksSG built
 ```
 
 **Reading the chart:**

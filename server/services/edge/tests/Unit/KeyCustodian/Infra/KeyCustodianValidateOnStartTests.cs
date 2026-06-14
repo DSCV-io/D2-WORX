@@ -196,6 +196,30 @@ public sealed class KeyCustodianValidateOnStartTests : IDisposable
             .Should().NotThrow("valid nested rotation policies must pass the startup gate");
     }
 
+    [Fact]
+    public void MissingConfigSection_AllDefaultsZero_FailsValidationOnResolve()
+    {
+        // With no KEYCUSTODIAN_APP keys present the binder leaves all TimeSpan
+        // fields at TimeSpan.Zero, which violates the [Range(typeof(TimeSpan),
+        // "00:00:01", ...)] constraint on every RotationPolicyOptions field.
+        // Must fail at the startup gate, not silently succeed then blow up on
+        // first ForDomain() call.
+        var settings = new Dictionary<string, string?>
+        {
+            ["KEYCUSTODIAN_INFRA:RootKeyPath"] = r_rootKeyDir,
+            ["KEYCUSTODIAN_INFRA:RotationCheckInterval"] = "00:05:00",
+            ["KEYCUSTODIAN_INFRA:DbCommandTimeoutSeconds"] = "30",
+        };
+        var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
+        using var sp = BuildProvider(config);
+
+        sp.Invoking(s => s.GetRequiredService<IOptions<KeyCustodianOptions>>().Value)
+            .Should().Throw<OptionsValidationException>(
+                because:
+                    "an absent KEYCUSTODIAN_APP section binds all TimeSpan fields to "
+                    + "TimeSpan.Zero and must fail the startup validation gate");
+    }
+
     private static ServiceProvider BuildProvider(IConfiguration configuration)
     {
         var services = new ServiceCollection();

@@ -15,10 +15,10 @@ The Edge service requires a key authority that is distinct from the auth service
 - **JWKS signing-key rotation**: the JWKS endpoint must continue serving the *retiring* key's public material during the grace window so in-flight tokens remain valid after rotation.
 - **Payload-encryption key overlap**: `AesPayload` keys used to encrypt RabbitMQ payloads must still decrypt historical messages after a new key activates.
 - **Cookie and client-secret material**: symmetric keys for session-cookie signing and client-secret derivation follow the same lifecycle pattern.
-- **Make-illegal-states-unrepresentable**: V2.md §5.4 sketched key state as an enum with nullable timestamps — anemic models that represent illegal states (e.g. an "Active" key without an `ActivatedAt`) and drift when checks are only in tests, not types.
+- **Make-illegal-states-unrepresentable**: an early design sketched key state as an enum with nullable timestamps — anemic models that represent illegal states (e.g. an "Active" key without an `ActivatedAt`) and drift when checks are only in tests, not types.
 - **Leaderless rotation**: the rotation coordinator must not be a single point of failure. Redis is a hot-path dependency already shared across services; using it as the distributed lock for a low-frequency operation (key rotation) adds unnecessary coupling. PostgreSQL is already owned for KeyCustodian storage.
 
-V2.md §5.4 originally sketched a Redis-coordinated rotation with an anemic enum model. This ADR supersedes that sketch.
+An early design sketched Redis-coordinated rotation with an anemic enum model. This ADR supersedes that sketch.
 
 ## Decision
 
@@ -109,11 +109,11 @@ Because the `KeyRecord` CLR type never changes, every transition is an ordinary 
 **Negative / trade-offs:**
 - Two representations of the aggregate (the sealed domain shape + the flat `KeyRecord`), bridged by the pure mapper. The mapper's null-all-then-set discipline is load-bearing and must be tested per-state (round-trip + no-stale-column assertions). This is the cost of keeping the domain pure; it is mechanical and source-gen-able once the shape is proven across 2–3 aggregates (ADR-0017).
 - A new PostgreSQL database (`keycustodian_db`) must be provisioned.
-- The V2.md §5.4 Redis-coordination sketch is superseded — operators following the old plan must switch to the PG advisory lock approach.
+- The Redis-coordination sketch from that earlier design is superseded — operators following the old plan must switch to the PG advisory lock approach.
 
 ## Alternatives considered
 
-- **Anemic enum + nullable timestamps as the DOMAIN model** (V2.md §5.4 sketch): rejected because nullable timestamps in the *domain* make illegal states representable (an "Active" key with null `ActivatedAt`), and the only enforcement is tests — not the type system. Drift between the enum and the lifecycle invariants is inevitable. (Note: the flat `KeyRecord` *persistence* row in §7 deliberately uses a `status` value column + nullable per-state columns — but it is NOT the domain; the pure mapper rehydrates the sealed state and the domain types remain the single source of lifecycle truth. The anti-pattern is an anemic *domain*, not a flat *row*.)
+- **Anemic enum + nullable timestamps as the DOMAIN model** (early anemic-enum sketch): rejected because nullable timestamps in the *domain* make illegal states representable (an "Active" key with null `ActivatedAt`), and the only enforcement is tests — not the type system. Drift between the enum and the lifecycle invariants is inevitable. (Note: the flat `KeyRecord` *persistence* row in §7 deliberately uses a `status` value column + nullable per-state columns — but it is NOT the domain; the pure mapper rehydrates the sealed state and the domain types remain the single source of lifecycle truth. The anti-pattern is an anemic *domain*, not a flat *row*.)
 - **Aggregate-as-TPH-entity with delete+insert transitions** (the original TPH-entity plan): rejected as unsound on EF Core 10 — the morph wall makes a same-PK delete+insert silently merge into a stale-column UPDATE, and a get-only-`Status` discriminator fails model-build. Falsified by the persistence-strategy spike; superseded by the flat `KeyRecord` + pure mapper in §7. Full rejection rationale + EF issue citations in [ADR-0017](0017-ef-as-ddd-persistence.md).
 - **Redis-coordinated rotation**: rejected because Redis is a hot-path dependency and advisory locks are already available in the PostgreSQL database owned by this service. Redis locking adds operational coupling for a rare operation.
 - **Storing key material outside the key record / external KMS**: out of scope. `D2.Shared.Encryption` root-wrap is the established mechanism for all service encryption.
