@@ -38,6 +38,7 @@ The following existing docs contain locked design content for Phase 3. Consult a
 | [PHASE_3_EDGE.md](PHASE_3_EDGE.md) | HTTP idempotency contract, request enrichment, scheduled-jobs receiver, session 3-tier storage, multi-instance scaling checklist, cross-service SAGA pattern |
 | [PHASE_3_RATE_LIMITING.md](PHASE_3_RATE_LIMITING.md) | 18-bucket rate-limit model, claims-driven keying, FP-too-common detection, runtime kill-switches, per-tier failure modes |
 | [PHASE_0_AUTH.md](PHASE_0_AUTH.md) | JWT shape (RS256, 15 min, `d2_`-prefixed snake_case custom claims), session model, JWKS at OIDC-canonical path, key-rotation flow, KeyCustodian lifecycle, anon-visitor authentication pattern |
+| [ADR-0021](../adrs/0021-unified-operation-contract-idl.md) | Unified operation-contract IDL — one source per operation → DTOs/proto/OpenAPI/route+policy/gRPC/SSE/in-process-leaf/parity across all three transport planes; TypeSpec front-end + D2 emitter fleet + `@d2*` policy decorators + dual REST+gRPC binding. The contract foundation for every endpoint-bearing deliverable. |
 | [V2.md §5.2](V2.md#52-edge--unified-gateway) | Edge topology, YARP wiring, OpenAPI per-version |
 | [V2.md §5.4](V2.md#54-auth--security) | Auth + security stack decisions |
 
@@ -71,6 +72,9 @@ Phase 3 is too large for one deliverable. It is carved into a dependency-ordered
 | # | Deliverable | Scope | Size | Status |
 |---|---|---|---|---|
 | **K1** | **KeyCustodian** | Key state machine (`pending → active → retiring → retired → compromised`), RSA gen/storage (root-key-wrapped), `encryption_key` + audit schema, rotation cadences, compromise runbook. Peer module within Edge (no standalone service). Builds on `D2.Shared.Encryption`, EF/PG, `IClock`. | M–L | ✅ Shipped (`n/keycustodian`) |
+| **C0** | **Unified operation-contract IDL** | TypeSpec front-end + the `@d2/typespec-emitters` fleet (C#/TS DTOs · proto · OpenAPI · route+policy · in-process leaf · parity) + the `@d2*` decorator vocabulary + the proven dual REST+gRPC binding convention. One source per operation → every representation across the external-REST/SSE, internal-gRPC, and in-process planes. Platform-wide; surfaces first at Edge. See [ADR-0021](../adrs/0021-unified-operation-contract-idl.md). | L | ☐ Next (foundational — precedes the endpoint-bearing work) |
+
+> **Foundational ordering (per [ADR-0021](../adrs/0021-unified-operation-contract-idl.md)).** The contract IDL (**C0**) is a foundational deliverable that lands **before** every endpoint-bearing deliverable — A2 (token issuance), A3 (sessions), the rest of the auth surface, the E-track, and KeyCustodian's deferred transport all *define endpoints*, so the IDL must precede them to avoid hand-writing endpoints that would later be migrated. Nothing endpoint-bearing exists yet (KeyCustodian shipped transport-deferred), so C0 can land before the first real endpoint with zero migration debt. The TypeSpec engine choice was validated by a supervised spike (the dual REST+gRPC single-source binding proven on real running code).
 
 ### Auth track (self-rolling BetterAuth in .NET)
 
