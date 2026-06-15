@@ -45,6 +45,9 @@ export const D2_CSRF_KEY = Symbol.for("D2.d2Csrf");
 /** State key for @d2Harmless — stores `true` on the marked operation. */
 export const D2_HARMLESS_KEY = Symbol.for("D2.d2Harmless");
 
+/** State key for @d2InProcess — stores `true` on the marked operation. */
+export const D2_IN_PROCESS_KEY = Symbol.for("D2.d2InProcess");
+
 /**
  * Payload stored by @d2GrpcMethod: the gRPC service name, method name, and
  * streaming mode. `streaming` is one of `unary | serverStream | clientStream |

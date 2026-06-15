@@ -33,6 +33,7 @@ import {
   D2_RESILIENCE_KEY,
   D2_CSRF_KEY,
   D2_HARMLESS_KEY,
+  D2_IN_PROCESS_KEY,
   $lib,
   $decorators,
   type ResilienceDiagnosticCode,
@@ -62,12 +63,13 @@ import {
   $d2Audience,
   $d2ServedBy,
   $d2GrpcMethod,
-  $d2Redact,
-  $d2ServerPush,
+  $d2Harmless,
   $d2Idempotent,
+  $d2InProcess,
+  $d2Redact,
   $d2Resilience,
   $d2Csrf,
-  $d2Harmless,
+  $d2ServerPush,
 } from "../src/decorators.js";
 import type {
   DecoratorContext,
@@ -248,6 +250,14 @@ describe("directUnit_$d2Harmless", () => {
   });
 });
 
+describe("directUnit_$d2InProcess", () => {
+  it("stores true under D2_IN_PROCESS_KEY on the operation", () => {
+    const { ctx, maps } = makeMockContext();
+    $d2InProcess(ctx, mockTarget);
+    expect(maps.get(D2_IN_PROCESS_KEY)!.get(mockTarget)).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Test library registration — mounts the real built package into the host
 // ---------------------------------------------------------------------------
@@ -326,6 +336,10 @@ describe("stateKeys_AreProcessGlobalSymbolFor", () => {
   it("D2_HARMLESS_KEY equals Symbol.for('D2.d2Harmless')", () => {
     expect(D2_HARMLESS_KEY).toBe(Symbol.for("D2.d2Harmless"));
   });
+
+  it("D2_IN_PROCESS_KEY equals Symbol.for('D2.d2InProcess')", () => {
+    expect(D2_IN_PROCESS_KEY).toBe(Symbol.for("D2.d2InProcess"));
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -340,7 +354,7 @@ it("lib_HasExpectedPackageName", () => {
 // Unit tests: $decorators registry key-set pin (§1.18 per-VALUE pin)
 // ---------------------------------------------------------------------------
 
-it("decorators_RegistryMapsAllTwelveDecoratorsUnderD2Namespace", () => {
+it("decorators_RegistryMapsAllThirteenDecoratorsUnderD2Namespace", () => {
   const keys = Object.keys($decorators.D2).sort();
   expect(keys).toEqual([
     "d2Audience",
@@ -348,6 +362,7 @@ it("decorators_RegistryMapsAllTwelveDecoratorsUnderD2Namespace", () => {
     "d2GrpcMethod",
     "d2Harmless",
     "d2Idempotent",
+    "d2InProcess",
     "d2RateLimitTier",
     "d2Redact",
     "d2RequireAllScopes",
@@ -539,8 +554,18 @@ it("d2Harmless_StoresTrueUnderHarmlessKeyOnOperation", async () => {
   expect(values).toContain(true);
 });
 
+it("d2InProcess_StoresTrueUnderInProcessKeyOnOperation", async () => {
+  await runner.compile(`
+    @d2InProcess
+    @d2ServedBy("Edge")
+    op leafOp(): void;
+  `);
+  const values = [...runner.program.stateMap(D2_IN_PROCESS_KEY).values()];
+  expect(values).toContain(true);
+});
+
 // ---------------------------------------------------------------------------
-// Gate test: all 12 decorators co-apply and round-trip independently.
+// Gate test: all 13 decorators co-apply and round-trip independently.
 // Uses the httpRunner (which includes HttpTestLibrary) so @d2RateLimitTier on
 // a @route-bound op does not trigger rate-tier-requires-route.
 // Uses real scope names from scopes.spec.json; @d2Harmless is on a separate
@@ -548,7 +573,7 @@ it("d2Harmless_StoresTrueUnderHarmlessKeyOnOperation", async () => {
 // $onValidate and verified in the $onValidate tests above).
 // ---------------------------------------------------------------------------
 
-it("allTwelveDecorators_CoApplyAndRoundTripIndependently", async () => {
+it("allThirteenDecorators_CoApplyAndRoundTripIndependently", async () => {
   await httpRunner.compile(`
     model RequestBody {
       @d2Redact sensitiveField: string;
@@ -563,6 +588,7 @@ it("allTwelveDecorators_CoApplyAndRoundTripIndependently", async () => {
     @d2Idempotent("derived", 300, "orgId", "requestId")
     @d2Resilience("retry(circuitBreaker(singleflight()))")
     @d2Csrf("required")
+    @d2InProcess
     @get @route("/gatetest-createorder")
     op gateTestCreateOrder(body: RequestBody): void;
 
@@ -643,6 +669,9 @@ it("allTwelveDecorators_CoApplyAndRoundTripIndependently", async () => {
 
   const harmlessValues = [...program.stateMap(D2_HARMLESS_KEY).values()];
   expect(harmlessValues).toContain(true);
+
+  const inProcessValues = [...program.stateMap(D2_IN_PROCESS_KEY).values()];
+  expect(inProcessValues).toContain(true);
 });
 
 // ===========================================================================
@@ -1162,6 +1191,88 @@ describe("directUnit_$onValidate", () => {
     expect(diags.some((d) => d.code.endsWith("harmless-scope-conflict"))).toBe(
       true,
     );
+  });
+
+  it("emits inprocess-requires-served-by when op has in-process but no served-by", () => {
+    const diags: Array<{ code: string }> = [];
+    const op = {} as unknown as Operation;
+    const stateMaps = new Map<symbol, Map<object, unknown>>();
+
+    const D2_IN_PROCESS_KEY_SYM = Symbol.for("D2.d2InProcess");
+    const D2_RATE_LIMIT_TIER_KEY_SYM = Symbol.for("D2.d2RateLimitTier");
+    const D2_HARMLESS_KEY_SYM = Symbol.for("D2.d2Harmless");
+    const D2_REQUIRE_ANY_SCOPE_KEY_SYM = Symbol.for("D2.d2RequireAnyScope");
+    const D2_REQUIRE_ALL_SCOPES_KEY_SYM = Symbol.for("D2.d2RequireAllScopes");
+
+    const inProcessMap = new Map<object, unknown>();
+    inProcessMap.set(op, true);
+    stateMaps.set(D2_IN_PROCESS_KEY_SYM, inProcessMap as Map<object, unknown>);
+
+    // No served-by entry — the check should fire
+    stateMaps.set(D2_RATE_LIMIT_TIER_KEY_SYM, new Map());
+    stateMaps.set(D2_HARMLESS_KEY_SYM, new Map());
+    stateMaps.set(D2_REQUIRE_ANY_SCOPE_KEY_SYM, new Map());
+    stateMaps.set(D2_REQUIRE_ALL_SCOPES_KEY_SYM, new Map());
+
+    const mockProgram = {
+      stateMap(key: symbol): Map<object, unknown> {
+        return stateMaps.get(key) ?? new Map();
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+      hasError(): boolean {
+        return diags.length > 0;
+      },
+    };
+
+    $onValidate(mockProgram as unknown as Program);
+    expect(
+      diags.some((d) => d.code.endsWith("inprocess-requires-served-by")),
+    ).toBe(true);
+  });
+
+  it("no inprocess-requires-served-by when op has both in-process and served-by", () => {
+    const diags: Array<{ code: string }> = [];
+    const op = {} as unknown as Operation;
+    const stateMaps = new Map<symbol, Map<object, unknown>>();
+
+    const D2_IN_PROCESS_KEY_SYM = Symbol.for("D2.d2InProcess");
+    const D2_SERVED_BY_KEY_SYM = Symbol.for("D2.d2ServedBy");
+    const D2_RATE_LIMIT_TIER_KEY_SYM = Symbol.for("D2.d2RateLimitTier");
+    const D2_HARMLESS_KEY_SYM = Symbol.for("D2.d2Harmless");
+    const D2_REQUIRE_ANY_SCOPE_KEY_SYM = Symbol.for("D2.d2RequireAnyScope");
+    const D2_REQUIRE_ALL_SCOPES_KEY_SYM = Symbol.for("D2.d2RequireAllScopes");
+
+    const inProcessMap = new Map<object, unknown>();
+    inProcessMap.set(op, true);
+    stateMaps.set(D2_IN_PROCESS_KEY_SYM, inProcessMap as Map<object, unknown>);
+
+    const servedByMap = new Map<object, unknown>();
+    servedByMap.set(op, "Edge");
+    stateMaps.set(D2_SERVED_BY_KEY_SYM, servedByMap as Map<object, unknown>);
+
+    stateMaps.set(D2_RATE_LIMIT_TIER_KEY_SYM, new Map());
+    stateMaps.set(D2_HARMLESS_KEY_SYM, new Map());
+    stateMaps.set(D2_REQUIRE_ANY_SCOPE_KEY_SYM, new Map());
+    stateMaps.set(D2_REQUIRE_ALL_SCOPES_KEY_SYM, new Map());
+
+    const mockProgram = {
+      stateMap(key: symbol): Map<object, unknown> {
+        return stateMaps.get(key) ?? new Map();
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+      hasError(): boolean {
+        return diags.length > 0;
+      },
+    };
+
+    $onValidate(mockProgram as unknown as Program);
+    expect(
+      diags.some((d) => d.code.endsWith("inprocess-requires-served-by")),
+    ).toBe(false);
   });
 });
 
@@ -1703,6 +1814,69 @@ describe("redact_OnOperationIsCompilerRejected", () => {
     // diagnostic code for target-type mismatch is not part of the public API surface.
     expect(runner.program.hasError()).toBe(true);
   });
+});
+
+// --- @d2InProcess ---
+
+describe("d2InProcess_RejectsMissingServedBy", () => {
+  it("emits inprocess-requires-served-by and hasError() when @d2InProcess is applied without @d2ServedBy", async () => {
+    await runner.diagnose(`
+      @d2InProcess
+      op leafOpNoOwner(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/inprocess-requires-served-by",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2InProcess_AcceptsWithServedBy", () => {
+  it("produces no inprocess-requires-served-by diagnostic when @d2ServedBy is present", async () => {
+    await runner.diagnose(`
+      @d2InProcess
+      @d2ServedBy("EdgeModule")
+      op leafOp(): void;
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/inprocess-requires-served-by",
+    );
+  });
+});
+
+describe("d2InProcess_DoubleApplyIsIdempotent", () => {
+  it("applying @d2InProcess twice stores true with no inprocess-requires-served-by error", async () => {
+    await runner.diagnose(`
+      @d2InProcess
+      @d2InProcess
+      @d2ServedBy("Edge")
+      op leafOpDouble(): void;
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/inprocess-requires-served-by",
+    );
+    const values = [...runner.program.stateMap(D2_IN_PROCESS_KEY).values()];
+    expect(values).toContain(true);
+  });
+});
+
+describe("d2InProcess_OnNonOperationIsCompilerRejected", () => {
+  it("program has errors when @d2InProcess is applied to a model property (wrong target type)", async () => {
+    await runner.diagnose(`
+      model Foo {
+        @d2InProcess x: string;
+      }
+    `);
+    // The TypeSpec compiler enforces the extern dec target: Operation constraint.
+    // We assert program.hasError() (not a specific code) since the compiler's internal
+    // diagnostic code for target-type mismatch is not part of the public API surface.
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+it("lib_InProcessDiagnosticHasErrorSeverity", () => {
+  const catalog = $lib.diagnostics as Record<string, { severity: string }>;
+  expect(catalog["inprocess-requires-served-by"].severity).toBe("error");
 });
 
 // ===========================================================================

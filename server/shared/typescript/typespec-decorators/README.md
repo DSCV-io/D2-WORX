@@ -25,6 +25,7 @@ Edge routing config, and structured-log redaction markers.
 | `@d2Resilience`       | `op`            | `pipeline: string`                                           | `D2_RESILIENCE_KEY`         |
 | `@d2Csrf`             | `op`            | `posture: string`                                            | `D2_CSRF_KEY`               |
 | `@d2Harmless`         | `op`            | _(none)_                                                     | `D2_HARMLESS_KEY`           |
+| `@d2InProcess`        | `op`            | _(none)_                                                     | `D2_IN_PROCESS_KEY`         |
 
 ### Scope decorators
 
@@ -119,7 +120,7 @@ if (result.ok) {
 
 ## Validation
 
-All 12 decorators carry build-time validation. Every diagnostic is **severity "error"** —
+All 13 decorators carry build-time validation. Every diagnostic is **severity "error"** —
 invalid configurations fail the TypeSpec compile rather than emitting a warning.
 
 ### Eager value-set checks (run in each `$fn` body)
@@ -140,10 +141,11 @@ invalid configurations fail the TypeSpec compile rather than emitting a warning.
 
 ### `$onValidate` cross-decorator checks (run after all decorators apply)
 
-| Code                       | Trigger                                                                                                           |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `rate-tier-requires-route` | `@d2RateLimitTier` on an op with no `@route` — internal ops bypass Edge rate-limiting                             |
-| `harmless-scope-conflict`  | `@d2Harmless` combined with `@d2RequireAnyScope` or `@d2RequireAllScopes` — auth-exempt ops cannot require scopes |
+| Code                           | Trigger                                                                                                           |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `rate-tier-requires-route`     | `@d2RateLimitTier` on an op with no `@route` — internal ops bypass Edge rate-limiting                             |
+| `harmless-scope-conflict`      | `@d2Harmless` combined with `@d2RequireAnyScope` or `@d2RequireAllScopes` — auth-exempt ops cannot require scopes |
+| `inprocess-requires-served-by` | `@d2InProcess` without `@d2ServedBy` — an in-process leaf needs a named owner to generate its interface           |
 
 ### `@d2Resilience` DSL parser
 
@@ -187,7 +189,7 @@ DSL-specific diagnostic codes:
 - **`lib/main.tsp`** (via `tspMain`) — declares `extern dec` under `namespace D2`; imported by
   TypeSpec consumers. Imports `dist/tsp-index.js` to register the JS implementations.
 - **`dist/index.js`** (via `main`) — emitter-facing barrel: re-exports state-key symbols
-  (`D2_*_KEY` constants), payload types (`GrpcMethodPayload`, `IdempotentPayload`), the
+  (`D2_*_KEY` constants including `D2_IN_PROCESS_KEY`), payload types (`GrpcMethodPayload`, `IdempotentPayload`), the
   resilience parser (`parse`, `ResiliencePolicyNode`, `ResilienceParseResult`,
   `ResilienceParseError`, `ResilienceDiagnosticCode`), `$lib`, and `$decorators`.
 - **`$onValidate`** is exported from `dist/tsp-index.js` (the module `lib/main.tsp` imports);
@@ -242,6 +244,7 @@ is an emitter-fleet responsibility, not encoded in the AST. The emitter must der
 | `@d2Resilience` | call `parse(program.stateMap(D2_RESILIENCE_KEY).get(op))` | Re-parse the stored raw string via the exported `parse()` to get the AST |
 | `@d2Csrf` | `program.stateMap(D2_CSRF_KEY).get(op) as string` | `required \| exempt` |
 | `@d2Harmless` | `program.stateMap(D2_HARMLESS_KEY).has(op)` | Presence check; mutually exclusive with scope decorators (enforced at compile time) |
+| `@d2InProcess` | `program.stateMap(D2_IN_PROCESS_KEY).has(op)` | Presence check; the explicit leaf-vs-gRPC trigger; requires `@d2ServedBy` (enforced at compile time) |
 
 `@d2Resilience` note: the decorator stores the validated raw DSL string. Emitters must call the
 exported `parse()` function to obtain the `ResiliencePolicyNode` AST for code generation. The
@@ -251,7 +254,7 @@ exported `parse()` function to obtain the `ResiliencePolicyNode` AST for code ge
 
 ```bash
 pnpm --filter @d2/typespec-decorators build            # tsc -b → dist/
-pnpm --filter @d2/typespec-decorators test             # vitest run (191 tests across decorators + resilience-dsl suites)
+pnpm --filter @d2/typespec-decorators test             # vitest run (204 tests across decorators + resilience-dsl suites)
 pnpm --filter @d2/typespec-decorators run test:coverage  # vitest run --coverage (100% threshold, requires dist/)
 ```
 

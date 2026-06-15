@@ -22,6 +22,7 @@ import {
   $d2GrpcMethod,
   $d2Harmless,
   $d2Idempotent,
+  $d2InProcess,
   $d2RateLimitTier,
   $d2Redact,
   $d2RequireAllScopes,
@@ -54,5 +55,6 @@ export const $decorators = {
     d2Resilience: $d2Resilience,
     d2Csrf: $d2Csrf,
     d2Harmless: $d2Harmless,
+    d2InProcess: $d2InProcess,
   },
 } as const;

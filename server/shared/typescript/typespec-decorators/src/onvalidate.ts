@@ -14,15 +14,19 @@
 //       Internal operations bypass Edge rate-limiting and must not carry a tier.
 //   Harmless/scope conflict: @d2Harmless + a scope decorator on the same op → error.
 //       An auth-exempt operation cannot also require scopes.
+//   InProcess/served-by required: @d2InProcess without @d2ServedBy on the same op → error.
+//       An in-process leaf needs a named owner to generate its I<Owner>InternalApi interface.
 
 import type { Operation, Program } from "@typespec/compiler";
 import { getRoutePath } from "@typespec/http";
 import { $lib } from "./lib.js";
 import {
   D2_HARMLESS_KEY,
+  D2_IN_PROCESS_KEY,
   D2_RATE_LIMIT_TIER_KEY,
   D2_REQUIRE_ALL_SCOPES_KEY,
   D2_REQUIRE_ANY_SCOPE_KEY,
+  D2_SERVED_BY_KEY,
 } from "./state-keys.js";
 
 /** Program-level cross-decorator validation. Runs after all decorators apply. */
@@ -49,6 +53,18 @@ export function $onValidate(program: Program): void {
     if (hasAnyScope || hasAllScopes)
       $lib.reportDiagnostic(program, {
         code: "harmless-scope-conflict",
+        format: { op: (op as Operation).name },
+        target: op as Operation,
+      });
+  }
+
+  // ----------------------------------------------------------------
+  // @d2InProcess requires @d2ServedBy — a leaf needs a named owner
+  // ----------------------------------------------------------------
+  for (const [op] of program.stateMap(D2_IN_PROCESS_KEY)) {
+    if (!program.stateMap(D2_SERVED_BY_KEY).has(op))
+      $lib.reportDiagnostic(program, {
+        code: "inprocess-requires-served-by",
         format: { op: (op as Operation).name },
         target: op as Operation,
       });

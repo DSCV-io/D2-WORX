@@ -13,6 +13,7 @@ import {
   D2_GRPC_METHOD_KEY,
   D2_HARMLESS_KEY,
   D2_IDEMPOTENT_KEY,
+  D2_IN_PROCESS_KEY,
   D2_RATE_LIMIT_TIER_KEY,
   D2_REDACT_KEY,
   D2_REQUIRE_ALL_SCOPES_KEY,
@@ -213,4 +214,18 @@ export function $d2Harmless(
   target: Operation,
 ): void {
   context.program.stateMap(D2_HARMLESS_KEY).set(target, true);
+}
+
+/**
+ * Marks an operation as eligible for in-process "leaf" invocation — a co-hosted
+ * module calling the owning module directly, with no network hop. Drives the
+ * generated I<Owner>InternalApi leaf interface; the explicit leaf-vs-gRPC trigger.
+ * Stores `true` on the operation; emitters check for presence.
+ * Requires @d2ServedBy on the same op — enforced by $onValidate.
+ */
+export function $d2InProcess(
+  context: DecoratorContext,
+  target: Operation,
+): void {
+  context.program.stateMap(D2_IN_PROCESS_KEY).set(target, true);
 }
