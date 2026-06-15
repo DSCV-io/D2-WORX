@@ -646,7 +646,7 @@ it("allTwelveDecorators_CoApplyAndRoundTripIndependently", async () => {
 });
 
 // ===========================================================================
-// SPEC-REGISTRY ANCHOR GUARD (MANDATORY — R2)
+// SPEC-REGISTRY ANCHOR GUARD (MANDATORY)
 // These tests prove the repo-root anchor in spec-registry.ts resolves correctly.
 // A wrong segment count silently yields an empty set, making every scope/audience
 // appear unknown and producing false "unknown-scope" / "unknown-audience" errors.

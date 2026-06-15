@@ -140,7 +140,8 @@ export const $lib = createTypeSpecLibrary({
       },
     },
 
-    /** The pipeline-expression contains a policy name not in {retry, circuitBreaker, singleflight}. */
+    /** The pipeline-expression contains a policy name not in
+     *  {retry, circuitBreaker, singleflight}. */
     "resilience-unknown-policy": {
       severity: "error",
       messages: {

@@ -15,7 +15,7 @@
 //   Harmless/scope conflict: @d2Harmless + a scope decorator on the same op → error.
 //       An auth-exempt operation cannot also require scopes.
 
-import type { Program } from "@typespec/compiler";
+import type { Operation, Program } from "@typespec/compiler";
 import { getRoutePath } from "@typespec/http";
 import { $lib } from "./lib.js";
 import {
@@ -24,7 +24,6 @@ import {
   D2_REQUIRE_ALL_SCOPES_KEY,
   D2_REQUIRE_ANY_SCOPE_KEY,
 } from "./state-keys.js";
-import type { Operation } from "@typespec/compiler";
 
 /** Program-level cross-decorator validation. Runs after all decorators apply. */
 export function $onValidate(program: Program): void {

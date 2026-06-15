@@ -68,7 +68,9 @@ extern dec d2Idempotent(
 /**
  * Wraps an operation's outbound call in a resilience pipeline expressed as a
  * composable DSL string (e.g. `"retry(circuitBreaker(singleflight()))"`).
- * The expression is stored raw; parsing and validation are handled by the emitter.
+ * The DSL is parsed and validated at TypeSpec compile time by `validateResilience()`.
+ * The raw expression is stored in the program state map; emitters re-parse it via the
+ * exported `parse()` function to walk the `ResiliencePolicyNode` AST at code-gen time.
  */
 extern dec d2Resilience(target: Operation, pipeline: valueof string);
 

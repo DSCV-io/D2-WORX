@@ -48,7 +48,14 @@ export type ResilienceDiagnosticCode =
 /** A single node in the linear resilience-policy composition tree. */
 export interface ResiliencePolicyNode {
   readonly policy: "retry" | "circuitBreaker" | "singleflight";
-  /** Tunable values resolved and normalized (durations → ms or seconds per tunable). */
+  /**
+   * Tunable values resolved and normalized (durations → ms or seconds per tunable).
+   *
+   * **Sparse contract (emitter-load-bearing):** only explicitly-provided tunable keys are
+   * present. An absent key means "use the C# library default" — the emitter must omit that
+   * property from the generated options constructor, NOT emit zero or false.
+   * Example: `retry()` → `{}` (all defaults); `retry(3)` → `{ maxAttempts: 3 }`.
+   */
   readonly tunables: Readonly<Record<string, number | boolean>>;
   /** The wrapped inner policy, if any.  undefined for leaf nodes. */
   readonly inner?: ResiliencePolicyNode;
@@ -223,7 +230,7 @@ function tokenize(input: string): Token[] | null {
       tokens.push({ kind: "string-literal", value: content, offset: i });
       i = j + 1;
     } else {
-      // Unrecognised character → signal malformed
+      // Unrecognized character → signal malformed
       return null;
     }
   }
@@ -298,7 +305,9 @@ class Parser {
     if (!KNOWN_POLICIES.has(policyName)) {
       this.errors.push({
         code: "resilience-unknown-policy",
-        message: `unknown resilience policy '${policyName}' — expected one of: retry, circuitBreaker, singleflight`,
+        message:
+          `unknown resilience policy '${policyName}' — ` +
+          "expected one of: retry, circuitBreaker, singleflight",
         offset: nameTok.offset,
       });
       // Attempt to consume the rest of the call for better subsequent error messages
@@ -349,7 +358,9 @@ class Parser {
               if (innerCount > 1) {
                 this.errors.push({
                   code: "resilience-multiple-inner",
-                  message: `'${policyName}' wraps more than one inner policy — a resilience pipeline is a linear stack`,
+                  message:
+                    `'${policyName}' wraps more than one inner policy — ` +
+                    "a resilience pipeline is a linear stack",
                   offset: nameTok.offset,
                 });
                 this.parsePolicyCall(); // consume
@@ -430,7 +441,9 @@ class Parser {
               const argTok = this.consume();
               this.errors.push({
                 code: "resilience-positional-after-named",
-                message: `'${policyName}' has a positional argument after a named one — positional args must come first`,
+                message:
+                  `'${policyName}' has a positional argument after a named one — ` +
+                  "positional args must come first",
                 offset: argTok.offset,
               });
             } else {
@@ -552,7 +565,9 @@ class Parser {
       if (raw.kind === "duration") return parseDurationToMs(raw.value);
       this.errors.push({
         code: "resilience-bad-arg",
-        message: `'${policy}.${name}' is invalid: expected an integer (ms) or duration (e.g. 200ms, 30s), got '${raw.value}'`,
+        message:
+          `'${policy}.${name}' is invalid: expected an integer (ms) or duration ` +
+          `(e.g. 200ms, 30s), got '${raw.value}'`,
         offset,
       });
       return undefined;
@@ -563,7 +578,9 @@ class Parser {
     if (raw.kind === "duration") return parseDurationToSeconds(raw.value);
     this.errors.push({
       code: "resilience-bad-arg",
-      message: `'${policy}.${name}' is invalid: expected an integer (seconds) or duration (e.g. 30s), got '${raw.value}'`,
+      message:
+        `'${policy}.${name}' is invalid: expected an integer (seconds) or duration ` +
+        `(e.g. 30s), got '${raw.value}'`,
       offset,
     });
     return undefined;
@@ -639,7 +656,7 @@ export function parse(expr: string): ResilienceParseResult {
       errors: [
         {
           code: "resilience-malformed",
-          message: "expression contains unrecognised characters",
+          message: "expression contains unrecognized characters",
           offset: 0,
         },
       ],

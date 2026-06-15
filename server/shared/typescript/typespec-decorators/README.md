@@ -186,14 +186,73 @@ DSL-specific diagnostic codes:
 
 - **`lib/main.tsp`** (via `tspMain`) — declares `extern dec` under `namespace D2`; imported by
   TypeSpec consumers. Imports `dist/tsp-index.js` to register the JS implementations.
-- **`dist/index.js`** (via `main`) — emitter-facing barrel: re-exports state-key symbols,
-  `GrpcMethodPayload` type, `$lib`, and `$decorators`.
+- **`dist/index.js`** (via `main`) — emitter-facing barrel: re-exports state-key symbols
+  (`D2_*_KEY` constants), payload types (`GrpcMethodPayload`, `IdempotentPayload`), the
+  resilience parser (`parse`, `ResiliencePolicyNode`, `ResilienceParseResult`,
+  `ResilienceParseError`, `ResilienceDiagnosticCode`), `$lib`, and `$decorators`.
+- **`$onValidate`** is exported from `dist/tsp-index.js` (the module `lib/main.tsp` imports);
+  the TypeSpec compiler discovers and runs it after all decorators have applied.
+
+## Emitter notes
+
+These notes cover contracts between the AST/state-map layer and the emitter fleet.
+Emitter authors must read this section before generating code from any `@d2*` decorator.
+
+### Sparse tunables — absent key means "use library default"
+
+`ResiliencePolicyNode.tunables` is a **sparse** record: only explicitly-provided tunable keys
+are present. An absent key means "use the C# library default" — the emitter must omit that
+property from the generated `RetryOptions` / `CircuitBreakerOptions` constructor, not emit a
+zero or false value.
+
+Example: `retry()` → `tunables: {}` (bare defaults); `retry(3)` → `tunables: { maxAttempts: 3 }`.
+Emitting `MaxAttempts = 0` for an absent `maxAttempts` would override the library default of 5
+and disable retries.
+
+### `backoffMultiplier` — DSL is integer, C# type is double
+
+The DSL restricts `backoffMultiplier` to integer tokens (the grammar excludes decimals). The C#
+`RetryOptions.BackoffMultiplier` property is `double` (library default `2.0`). When the emitter
+emits an explicit `backoffMultiplier` value, it must widen to double (e.g. emit `2` as
+`BackoffMultiplier = 2` — C# performs the implicit int→double conversion, which is correct).
+Non-integer multipliers (e.g. `1.5`) cannot be expressed in the DSL; the library default covers
+the common exponential back-off case.
+
+### Policy → DI wiring is the emitter's concern
+
+The AST carries policy identity (`retry` / `circuitBreaker` / `singleflight`), tunables, and the
+linear nesting order via `inner`. How the emitter keys and wires the DI services for
+`CircuitBreaker<TValue>` and `Singleflight<TKey, TValue>` (both require keyed DI registration)
+is an emitter-fleet responsibility, not encoded in the AST. The emitter must derive a service key
+(e.g. from the operation name) and register the instance via `services.AddKeyedSingleton<...>`.
+
+### Per-decorator read pattern
+
+| Decorator | Emitter read pattern | Notes |
+|---|---|---|
+| `@d2RequireAnyScope` | `program.stateMap(D2_REQUIRE_ANY_SCOPE_KEY).get(op) as string[]` | Any-match guard |
+| `@d2RequireAllScopes` | `program.stateMap(D2_REQUIRE_ALL_SCOPES_KEY).get(op) as string[]` | All-match guard |
+| `@d2RateLimitTier` | `program.stateMap(D2_RATE_LIMIT_TIER_KEY).get(op) as string` | Validated value in `Standard \| Elevated \| Restricted` |
+| `@d2Audience` | `program.stateMap(D2_AUDIENCE_KEY).get(op) as string` | Validated against spec at compile time |
+| `@d2ServedBy` | `program.stateMap(D2_SERVED_BY_KEY).get(op) as string` | Capability name; transport (leaf vs gRPC) is deployment-resolved |
+| `@d2GrpcMethod` | `program.stateMap(D2_GRPC_METHOD_KEY).get(op) as GrpcMethodPayload` | `{ service, method, streaming }` |
+| `@d2Redact` | `program.stateMap(D2_REDACT_KEY).has(prop)` | Presence check on `ModelProperty` |
+| `@d2ServerPush` | `program.stateMap(D2_SERVER_PUSH_KEY).get(op) as string` | `user \| session`; event-type is derived from the op name by the emitter |
+| `@d2Idempotent` | `program.stateMap(D2_IDEMPOTENT_KEY).get(op) as IdempotentPayload` | `{ keySource, ttlSeconds, fields }` |
+| `@d2Resilience` | call `parse(program.stateMap(D2_RESILIENCE_KEY).get(op))` | Re-parse the stored raw string via the exported `parse()` to get the AST |
+| `@d2Csrf` | `program.stateMap(D2_CSRF_KEY).get(op) as string` | `required \| exempt` |
+| `@d2Harmless` | `program.stateMap(D2_HARMLESS_KEY).has(op)` | Presence check; mutually exclusive with scope decorators (enforced at compile time) |
+
+`@d2Resilience` note: the decorator stores the validated raw DSL string. Emitters must call the
+exported `parse()` function to obtain the `ResiliencePolicyNode` AST for code generation. The
+`parse()` function is pure (no side effects) and safe to call at emit time.
 
 ## Build
 
 ```bash
-pnpm --filter @d2/typespec-decorators build   # tsc -b → dist/
-pnpm --filter @d2/typespec-decorators test    # vitest run (requires dist/ from build)
+pnpm --filter @d2/typespec-decorators build            # tsc -b → dist/
+pnpm --filter @d2/typespec-decorators test             # vitest run (191 tests across decorators + resilience-dsl suites)
+pnpm --filter @d2/typespec-decorators run test:coverage  # vitest run --coverage (100% threshold, requires dist/)
 ```
 
 ## Dependencies

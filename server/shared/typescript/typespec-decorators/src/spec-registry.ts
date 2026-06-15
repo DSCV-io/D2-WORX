@@ -56,6 +56,11 @@ export function loadScopeNames(): ReadonlySet<string> {
     "utf8",
   );
   const spec = JSON.parse(raw) as ScopesSpec;
+  if (!Array.isArray((spec as { scopes?: unknown }).scopes))
+    throw new Error(
+      "contracts/auth-scopes/scopes.spec.json has unexpected shape — " +
+        "expected { scopes: [{ name: string }] }",
+    );
   _scopeNames = new Set(spec.scopes.map((s) => s.name));
   return _scopeNames;
 }
@@ -68,6 +73,11 @@ export function loadAudienceNames(): ReadonlySet<string> {
     "utf8",
   );
   const spec = JSON.parse(raw) as AudiencesSpec;
+  if (!Array.isArray((spec as { audiences?: unknown }).audiences))
+    throw new Error(
+      "contracts/auth-audiences/audiences.spec.json has unexpected shape — " +
+        "expected { audiences: [{ name: string }] }",
+    );
   _audienceNames = new Set(spec.audiences.map((a) => a.name));
   return _audienceNames;
 }
