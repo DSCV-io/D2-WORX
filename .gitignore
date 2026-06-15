@@ -229,3 +229,6 @@ mcps/**
 # projects, generated wiring, extra .tsp/.mjs the spikes add) can't be staged by
 # accident. Durable record = the design-pass doc + the productionized package.
 tools/typespec-spike/
+# C# in-memory test-host spike for the TypeSpec emitter harness de-risk.
+# Throwaway proof-of-concept; the committed harness is built in a later step.
+server/shared/typescript/typespec-emitters/spike-csharp/

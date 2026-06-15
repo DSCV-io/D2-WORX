@@ -140,6 +140,7 @@ abbreviation, 3-digit number). Examples currently in use:
 | Field constraints    | `D2FC`   | `validation/source-gen`                                                |
 | Advisory locks       | `D2LCK`  | `entity-framework-core/locks-source-gen`                              |
 | KC error codes       | `D2KEC`  | `server/services/edge/key-custodian/error-codes-source-gen` (shell)    |
+| TypeSpec emitters    | `D2TSP`  | `server/shared/typescript/typespec-emitters` (TypeSpec emitter fleet — independent pipeline from ts-codegen; IDs allocated in `src/lib.ts`) |
 
 Diagnostic IDs are declared in two parallel files:
 
