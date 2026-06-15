@@ -4,8 +4,9 @@
 
 // Package barrel — the API surface that emitters import.
 // Re-exports state-key symbols (the read-back handles emitters need),
-// the GrpcMethodPayload type, the $lib descriptor, and the $decorators
-// registry. Mirrors the split used by @typespec/http:
+// the GrpcMethodPayload type, the $lib descriptor, the $decorators
+// registry, and the resilience-DSL parser + AST types.
+// Mirrors the split used by @typespec/http:
 //   index.js  = emitter API
 //   tsp-index.js = what main.tsp imports
 
@@ -29,3 +30,12 @@ export {
 export { $lib } from "./lib.js";
 
 export { $decorators } from "./tsp-index.js";
+
+// Resilience DSL parser + AST types — consumed by the emitter fleet.
+export {
+  parse,
+  type ResiliencePolicyNode,
+  type ResilienceParseResult,
+  type ResilienceParseError,
+  type ResilienceDiagnosticCode,
+} from "./resilience-dsl.js";

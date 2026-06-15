@@ -11,20 +11,20 @@ Edge routing config, and structured-log redaction markers.
 
 ## Public API
 
-| Decorator | Target | Args | State key |
-|---|---|---|---|
-| `@d2RequireAnyScope` | `op` | `...scopes: string[]` | `D2_REQUIRE_ANY_SCOPE_KEY` |
-| `@d2RequireAllScopes` | `op` | `...scopes: string[]` | `D2_REQUIRE_ALL_SCOPES_KEY` |
-| `@d2RateLimitTier` | `op` | `tier: string` | `D2_RATE_LIMIT_TIER_KEY` |
-| `@d2Audience` | `op` | `audience: string` | `D2_AUDIENCE_KEY` |
-| `@d2ServedBy` | `op` | `owner: string` | `D2_SERVED_BY_KEY` |
-| `@d2GrpcMethod` | `op` | `service: string, method: string, streaming?: string` | `D2_GRPC_METHOD_KEY` |
-| `@d2Redact` | `ModelProperty` | _(none)_ | `D2_REDACT_KEY` |
-| `@d2ServerPush` | `op` | `pushTarget: string` | `D2_SERVER_PUSH_KEY` |
-| `@d2Idempotent` | `op` | `keySource: string, ttlSeconds: number, ...fields: string[]` | `D2_IDEMPOTENT_KEY` |
-| `@d2Resilience` | `op` | `pipeline: string` | `D2_RESILIENCE_KEY` |
-| `@d2Csrf` | `op` | `posture: string` | `D2_CSRF_KEY` |
-| `@d2Harmless` | `op` | _(none)_ | `D2_HARMLESS_KEY` |
+| Decorator             | Target          | Args                                                         | State key                   |
+| --------------------- | --------------- | ------------------------------------------------------------ | --------------------------- |
+| `@d2RequireAnyScope`  | `op`            | `...scopes: string[]`                                        | `D2_REQUIRE_ANY_SCOPE_KEY`  |
+| `@d2RequireAllScopes` | `op`            | `...scopes: string[]`                                        | `D2_REQUIRE_ALL_SCOPES_KEY` |
+| `@d2RateLimitTier`    | `op`            | `tier: string`                                               | `D2_RATE_LIMIT_TIER_KEY`    |
+| `@d2Audience`         | `op`            | `audience: string`                                           | `D2_AUDIENCE_KEY`           |
+| `@d2ServedBy`         | `op`            | `owner: string`                                              | `D2_SERVED_BY_KEY`          |
+| `@d2GrpcMethod`       | `op`            | `service: string, method: string, streaming?: string`        | `D2_GRPC_METHOD_KEY`        |
+| `@d2Redact`           | `ModelProperty` | _(none)_                                                     | `D2_REDACT_KEY`             |
+| `@d2ServerPush`       | `op`            | `pushTarget: string`                                         | `D2_SERVER_PUSH_KEY`        |
+| `@d2Idempotent`       | `op`            | `keySource: string, ttlSeconds: number, ...fields: string[]` | `D2_IDEMPOTENT_KEY`         |
+| `@d2Resilience`       | `op`            | `pipeline: string`                                           | `D2_RESILIENCE_KEY`         |
+| `@d2Csrf`             | `op`            | `posture: string`                                            | `D2_CSRF_KEY`               |
+| `@d2Harmless`         | `op`            | _(none)_                                                     | `D2_HARMLESS_KEY`           |
 
 ### Scope decorators
 
@@ -41,6 +41,7 @@ op processPayment(): void;
 ```
 
 Emitters read back the stored `string[]`:
+
 ```ts
 import { D2_REQUIRE_ANY_SCOPE_KEY } from "@d2/typespec-decorators";
 const scopes = program.stateMap(D2_REQUIRE_ANY_SCOPE_KEY).get(op); // string[]
@@ -57,6 +58,7 @@ op streamEvents(): void;
 ```
 
 Emitters read back `{ service, method, streaming }`:
+
 ```ts
 import { D2_GRPC_METHOD_KEY } from "@d2/typespec-decorators";
 const payload = program.stateMap(D2_GRPC_METHOD_KEY).get(op);
@@ -82,15 +84,17 @@ Emitters read back `{ keySource, ttlSeconds, fields }`:
 ```ts
 import { D2_IDEMPOTENT_KEY } from "@d2/typespec-decorators";
 import type { IdempotentPayload } from "@d2/typespec-decorators";
-const payload = program.stateMap(D2_IDEMPOTENT_KEY).get(op) as IdempotentPayload;
+const payload = program
+  .stateMap(D2_IDEMPOTENT_KEY)
+  .get(op) as IdempotentPayload;
 // { keySource: "derived", ttlSeconds: 600, fields: ["orgId", "userId"] }
 ```
 
 ### Resilience pipeline
 
-`@d2Resilience` accepts a single composable pipeline-expression DSL string. The expression is
-stored raw; the emitter is responsible for parsing it and constructing the policy graph. Both
-bare-defaults and inline-tunables forms are supported:
+`@d2Resilience` accepts a single composable pipeline-expression DSL string. The DSL is validated
+at compile time; any invalid expression is an **error-severity diagnostic** that fails the build.
+Both bare-defaults and inline-tunables forms are supported:
 
 ```typespec
 // bare-defaults: every policy uses its built-in defaults
@@ -102,12 +106,81 @@ op callExternalService(): void;
 op callCriticalService(): void;
 ```
 
-Emitters read back the raw string:
+Emitters read back the raw string or use `parse()` directly to walk the AST:
 
 ```ts
-import { D2_RESILIENCE_KEY } from "@d2/typespec-decorators";
-const pipeline = program.stateMap(D2_RESILIENCE_KEY).get(op); // string
+import { D2_RESILIENCE_KEY, parse } from "@d2/typespec-decorators";
+const raw = program.stateMap(D2_RESILIENCE_KEY).get(op); // string
+const result = parse(raw);
+if (result.ok) {
+  // result.root: ResiliencePolicyNode — policy / tunables / inner chain
+}
 ```
+
+## Validation
+
+All 12 decorators carry build-time validation. Every diagnostic is **severity "error"** —
+invalid configurations fail the TypeSpec compile rather than emitting a warning.
+
+### Eager value-set checks (run in each `$fn` body)
+
+| Code                                 | Decorator                                   | Trigger                                                                            |
+| ------------------------------------ | ------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `invalid-rate-limit-tier`            | `@d2RateLimitTier`                          | tier not in `Standard \| Elevated \| Restricted`                                   |
+| `invalid-grpc-streaming`             | `@d2GrpcMethod`                             | streaming not in `unary \| serverStream \| clientStream \| bidiStream`             |
+| `invalid-push-target`                | `@d2ServerPush`                             | pushTarget not in `user \| session`                                                |
+| `invalid-csrf-posture`               | `@d2Csrf`                                   | posture not in `required \| exempt`                                                |
+| `invalid-idempotent-key-source`      | `@d2Idempotent`                             | keySource not in `header \| derived`                                               |
+| `invalid-idempotent-ttl`             | `@d2Idempotent`                             | ttlSeconds ≤ 0                                                                     |
+| `idempotent-derived-requires-fields` | `@d2Idempotent`                             | keySource "derived" with no field names                                            |
+| `idempotent-header-forbids-fields`   | `@d2Idempotent`                             | keySource "header" with field names                                                |
+| `unknown-scope`                      | `@d2RequireAnyScope`, `@d2RequireAllScopes` | scope not in `contracts/auth-scopes/scopes.spec.json`                              |
+| `unknown-audience`                   | `@d2Audience`                               | audience not in `contracts/auth-audiences/audiences.spec.json` (and not `d2-edge`) |
+| `empty-served-by`                    | `@d2ServedBy`                               | owner is empty or whitespace-only                                                  |
+
+### `$onValidate` cross-decorator checks (run after all decorators apply)
+
+| Code                       | Trigger                                                                                                           |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `rate-tier-requires-route` | `@d2RateLimitTier` on an op with no `@route` — internal ops bypass Edge rate-limiting                             |
+| `harmless-scope-conflict`  | `@d2Harmless` combined with `@d2RequireAnyScope` or `@d2RequireAllScopes` — auth-exempt ops cannot require scopes |
+
+### `@d2Resilience` DSL parser
+
+The DSL is parsed via a pure recursive-descent parser. Grammar:
+
+```
+expression   := policyCall
+policyCall   := policyName "(" argList? ")"
+policyName   := "retry" | "circuitBreaker" | "singleflight"
+argList      := arg ("," arg)*
+arg          := namedArg | positionalArg | policyCall
+namedArg     := identifier ":" literal
+positionalArg:= literal
+literal      := number | duration | boolean
+number       := [0-9]+
+duration     := [0-9]+(ms|s)      (normalized: ms stays ms; s is converted per-tunable)
+boolean      := "true" | "false"
+```
+
+Rules:
+
+- A resilience pipeline is a **linear stack**: each policy wraps at most one inner policy.
+- Positional arguments must come **before** named arguments.
+- `singleflight` accepts **no** tunables (it is always a leaf with zero configuration).
+- `retry` tunables: `maxAttempts` (int ≥ 1), `baseDelayMs`/`baseDelay` (duration-ms), `backoffMultiplier` (int ≥ 1), `maxDelayMs`/`maxDelay` (duration-ms), `jitter` (bool).
+- `circuitBreaker` tunables: `failureThreshold`/`threshold` (int ≥ 1), `cooldownSeconds`/`cooldown` (duration-s).
+
+DSL-specific diagnostic codes:
+
+| Code                                | Trigger                                                               |
+| ----------------------------------- | --------------------------------------------------------------------- |
+| `resilience-malformed`              | Syntactically invalid expression (missing paren, empty string, etc.)  |
+| `resilience-unknown-policy`         | Policy name not in `retry \| circuitBreaker \| singleflight`          |
+| `resilience-unknown-arg`            | Tunable name not defined for the policy, or any arg on `singleflight` |
+| `resilience-bad-arg`                | Tunable value has wrong type or is outside the allowed range          |
+| `resilience-multiple-inner`         | More than one nested policy call in a single policy's arg list        |
+| `resilience-positional-after-named` | Positional argument appears after a named argument                    |
 
 ### How `tspMain` / `main` split works
 

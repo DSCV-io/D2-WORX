@@ -21,6 +21,17 @@ import {
   D2_SERVED_BY_KEY,
   D2_SERVER_PUSH_KEY,
 } from "./state-keys.js";
+import {
+  validateAudience,
+  validateCsrfPosture,
+  validateGrpcStreaming,
+  validateIdempotent,
+  validatePushTarget,
+  validateRateLimitTier,
+  validateResilience,
+  validateScopes,
+  validateServedBy,
+} from "./validators.js";
 
 /**
  * Stores the required OAuth 2.0 scopes array on the operation (any-match:
@@ -33,6 +44,7 @@ export function $d2RequireAnyScope(
   target: Operation,
   ...scopes: string[]
 ): void {
+  validateScopes(context, target, scopes);
   context.program.stateMap(D2_REQUIRE_ANY_SCOPE_KEY).set(target, scopes);
 }
 
@@ -47,43 +59,50 @@ export function $d2RequireAllScopes(
   target: Operation,
   ...scopes: string[]
 ): void {
+  validateScopes(context, target, scopes);
   context.program.stateMap(D2_REQUIRE_ALL_SCOPES_KEY).set(target, scopes);
 }
 
 /**
  * Stores the rate-limit tier string on the operation.
- * Valid tier values (Standard | Elevated | Restricted) are enforced by the
- * validation layer; this decorator stores the raw string.
+ * Valid tier values: Standard | Elevated | Restricted.
+ * Emitters read back: program.stateMap(D2_RATE_LIMIT_TIER_KEY).get(op) → string.
  */
 export function $d2RateLimitTier(
   context: DecoratorContext,
   target: Operation,
   tier: string,
 ): void {
+  validateRateLimitTier(context, target, tier);
   context.program.stateMap(D2_RATE_LIMIT_TIER_KEY).set(target, tier);
 }
 
 /**
  * Stores the expected JWT audience claim string on the operation.
- * Audience validation against the audiences spec is handled by the validation layer.
+ * Validated against contracts/auth-audiences/audiences.spec.json; "d2-edge"
+ * is always valid as the Edge self-audience.
+ * Emitters read back: program.stateMap(D2_AUDIENCE_KEY).get(op) → string.
  */
 export function $d2Audience(
   context: DecoratorContext,
   target: Operation,
   audience: string,
 ): void {
+  validateAudience(context, target, audience);
   context.program.stateMap(D2_AUDIENCE_KEY).set(target, audience);
 }
 
 /**
  * Stores the owning module/service string on the operation.
- * Shape-check only — the owner string is not validated against a module registry.
+ * Shape-check only — the owner string must be non-empty.
+ * Emitters read back: program.stateMap(D2_SERVED_BY_KEY).get(op) → string.
  */
 export function $d2ServedBy(
   context: DecoratorContext,
   target: Operation,
   owner: string,
 ): void {
+  validateServedBy(context, target, owner);
   context.program.stateMap(D2_SERVED_BY_KEY).set(target, owner);
 }
 
@@ -101,14 +120,18 @@ export function $d2GrpcMethod(
   method: string,
   streaming?: string,
 ): void {
+  const mode = streaming ?? "unary";
+  validateGrpcStreaming(context, target, mode);
   context.program
     .stateMap(D2_GRPC_METHOD_KEY)
-    .set(target, { service, method, streaming: streaming ?? "unary" });
+    .set(target, { service, method, streaming: mode });
 }
 
 /**
  * Marks a model property as PII to be redacted in structured logs.
  * Stores `true` on the property; emitters check for presence.
+ * The target type `ModelProperty` is enforced by the `extern dec` declaration
+ * in lib/main.tsp — no additional runtime check is needed here.
  */
 export function $d2Redact(
   context: DecoratorContext,
@@ -119,15 +142,15 @@ export function $d2Redact(
 
 /**
  * Binds an operation to a server-initiated push channel. `pushTarget` selects
- * the channel class; validation of allowed values is deferred to the validation
- * layer. Emitters read back:
- * program.stateMap(D2_SERVER_PUSH_KEY).get(op) → string.
+ * the channel class; valid values are `user | session`.
+ * Emitters read back: program.stateMap(D2_SERVER_PUSH_KEY).get(op) → string.
  */
 export function $d2ServerPush(
   context: DecoratorContext,
   target: Operation,
   pushTarget: string,
 ): void {
+  validatePushTarget(context, target, pushTarget);
   context.program.stateMap(D2_SERVER_PUSH_KEY).set(target, pushTarget);
 }
 
@@ -145,6 +168,7 @@ export function $d2Idempotent(
   ttlSeconds: number,
   ...fields: string[]
 ): void {
+  validateIdempotent(context, target, keySource, ttlSeconds, fields);
   context.program
     .stateMap(D2_IDEMPOTENT_KEY)
     .set(target, { keySource, ttlSeconds, fields });
@@ -153,8 +177,8 @@ export function $d2Idempotent(
 /**
  * Wraps an operation's outbound call in a resilience pipeline expressed as a
  * composable DSL string (e.g. `"retry(circuitBreaker(singleflight()))"`).
- * Stores the raw expression; parsing and policy-graph construction are handled
- * by the emitter. Emitters read back:
+ * The expression is parsed and validated at compile time; the parsed AST is
+ * consumed by the emitter. Emitters read back:
  * program.stateMap(D2_RESILIENCE_KEY).get(op) → string.
  */
 export function $d2Resilience(
@@ -162,25 +186,27 @@ export function $d2Resilience(
   target: Operation,
   pipeline: string,
 ): void {
+  validateResilience(context, target, pipeline);
   context.program.stateMap(D2_RESILIENCE_KEY).set(target, pipeline);
 }
 
 /**
- * CSRF posture override for an operation. Stores the raw `posture` string;
- * validation of allowed values is deferred to the validation layer. Emitters
- * read back: program.stateMap(D2_CSRF_KEY).get(op) → string.
+ * CSRF posture override for an operation. Valid posture values: required | exempt.
+ * Emitters read back: program.stateMap(D2_CSRF_KEY).get(op) → string.
  */
 export function $d2Csrf(
   context: DecoratorContext,
   target: Operation,
   posture: string,
 ): void {
+  validateCsrfPosture(context, target, posture);
   context.program.stateMap(D2_CSRF_KEY).set(target, posture);
 }
 
 /**
  * Marks an operation as auth-pipeline-exempt (health probes / discovery only).
  * Stores `true` on the operation; emitters check for presence.
+ * Mutually exclusive with scope decorators — enforced by $onValidate.
  */
 export function $d2Harmless(
   context: DecoratorContext,

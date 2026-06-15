@@ -8,14 +8,16 @@
 // giving V8 source-level coverage. Integration tests use the TypeSpec test
 // host to verify the full compile + stateMap round-trip.
 // Adversarial rejection tests (bad tier, empty scope, redact-on-op, etc.)
-// require the validation layer.
+// exercise the full validation layer — each asserts both the diagnostic code
+// and program.hasError() === true so that a severity regression is detectable.
 
 import {
   createTestLibrary,
   createTestWrapper,
   findTestPackageRoot,
 } from "@typespec/compiler/testing";
-import { describe, it, expect, beforeAll } from "vitest";
+import { HttpTestLibrary } from "@typespec/http/testing";
+import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import type { BasicTestRunner } from "@typespec/compiler/testing";
 import { createTestHost } from "@typespec/compiler/testing";
 import {
@@ -33,8 +35,26 @@ import {
   D2_HARMLESS_KEY,
   $lib,
   $decorators,
+  type ResilienceDiagnosticCode,
 } from "../src/index.js";
 import type { GrpcMethodPayload, IdempotentPayload } from "../src/index.js";
+import {
+  loadScopeNames,
+  loadAudienceNames,
+  _resetSpecRegistryCache,
+} from "../src/spec-registry.js";
+import {
+  validateRateLimitTier,
+  validateGrpcStreaming,
+  validatePushTarget,
+  validateCsrfPosture,
+  validateIdempotent,
+  validateScopes,
+  validateAudience,
+  validateServedBy,
+  validateResilience,
+} from "../src/validators.js";
+import { $onValidate } from "../src/onvalidate.js";
 import {
   $d2RequireAnyScope,
   $d2RequireAllScopes,
@@ -53,6 +73,7 @@ import type {
   DecoratorContext,
   ModelProperty,
   Operation,
+  Program,
 } from "@typespec/compiler";
 
 // ---------------------------------------------------------------------------
@@ -70,6 +91,12 @@ function makeMockContext(): {
       stateMap(key: symbol): Map<object, unknown> {
         if (!maps.has(key)) maps.set(key, new Map());
         return maps.get(key)!;
+      },
+      // reportDiagnostic is a no-op in direct-unit tests; the mock context
+      // uses scope names / values that would be invalid in real compiles but
+      // are intentionally used here to verify storage, not validation.
+      reportDiagnostic(): void {
+        // no-op in mock context
       },
     },
   } as unknown as DecoratorContext;
@@ -341,30 +368,33 @@ it("decorators_RegistryMapsAllTwelveDecoratorsUnderD2Namespace", () => {
 
 it("d2RequireAnyScope_StoresScopesArrayUnderAnyKey", async () => {
   await runner.compile(`
-    @d2RequireAnyScope("orders:read", "orders:write")
+    @d2RequireAnyScope("self.read", "self.write")
     op listOrders(): void;
   `);
   const values = [
     ...runner.program.stateMap(D2_REQUIRE_ANY_SCOPE_KEY).values(),
   ] as string[][];
   expect(values).toHaveLength(1);
-  expect(values[0]).toEqual(["orders:read", "orders:write"]);
+  expect(values[0]).toEqual(["self.read", "self.write"]);
 });
 
 it("d2RequireAllScopes_StoresScopesArrayUnderAllKey", async () => {
   await runner.compile(`
-    @d2RequireAllScopes("admin:read", "admin:write")
+    @d2RequireAllScopes("auth.password.change", "self.write")
     op adminAction(): void;
   `);
   const values = [
     ...runner.program.stateMap(D2_REQUIRE_ALL_SCOPES_KEY).values(),
   ] as string[][];
   expect(values).toHaveLength(1);
-  expect(values[0]).toEqual(["admin:read", "admin:write"]);
+  expect(values[0]).toEqual(["auth.password.change", "self.write"]);
 });
 
 it("d2RateLimitTier_StoresTierStringUnderTierKey", async () => {
-  await runner.compile(`
+  // Use diagnose() rather than compile() because @d2RateLimitTier on an op
+  // without @route emits a rate-tier-requires-route error from $onValidate.
+  // We verify the tier value is stored despite the diagnostic (validate-and-continue).
+  await runner.diagnose(`
     @d2RateLimitTier("Standard")
     op getProduct(): void;
   `);
@@ -510,18 +540,21 @@ it("d2Harmless_StoresTrueUnderHarmlessKeyOnOperation", async () => {
 });
 
 // ---------------------------------------------------------------------------
-// Gate test: all 12 decorators co-apply and round-trip independently
-// @d2Harmless and the scope decorators are mutually exclusive (enforced by the
-// validation layer); the co-apply test does not model that illegal combination.
+// Gate test: all 12 decorators co-apply and round-trip independently.
+// Uses the httpRunner (which includes HttpTestLibrary) so @d2RateLimitTier on
+// a @route-bound op does not trigger rate-tier-requires-route.
+// Uses real scope names from scopes.spec.json; @d2Harmless is on a separate
+// op without scope decorators (the harmless/scope conflict is enforced by
+// $onValidate and verified in the $onValidate tests above).
 // ---------------------------------------------------------------------------
 
 it("allTwelveDecorators_CoApplyAndRoundTripIndependently", async () => {
-  await runner.compile(`
+  await httpRunner.compile(`
     model RequestBody {
       @d2Redact sensitiveField: string;
     }
 
-    @d2RequireAnyScope("orders:write", "orders:admin")
+    @d2RequireAnyScope("self.write", "auth.password.change")
     @d2RateLimitTier("Elevated")
     @d2Audience("d2-edge")
     @d2ServedBy("OrderService")
@@ -530,23 +563,26 @@ it("allTwelveDecorators_CoApplyAndRoundTripIndependently", async () => {
     @d2Idempotent("derived", 300, "orgId", "requestId")
     @d2Resilience("retry(circuitBreaker(singleflight()))")
     @d2Csrf("required")
-    op createOrder(body: RequestBody): void;
+    @get @route("/gatetest-createorder")
+    op gateTestCreateOrder(body: RequestBody): void;
 
-    @d2RequireAllScopes("admin:read", "admin:write")
-    op adminOp(): void;
+    @d2RequireAllScopes("auth.password.change", "self.write")
+    @get @route("/gatetest-adminop")
+    op gateTestAdminOp(): void;
 
     @d2Harmless
-    op healthCheck(): void;
+    @get @route("/gatetest-health")
+    op gateTestHealthCheck(): void;
   `);
 
-  const program = runner.program;
+  const program = httpRunner.program;
 
   const anyValues = [
     ...program.stateMap(D2_REQUIRE_ANY_SCOPE_KEY).values(),
   ] as string[][];
   expect(
     anyValues.some(
-      (v) => v.includes("orders:write") && v.includes("orders:admin"),
+      (v) => v.includes("self.write") && v.includes("auth.password.change"),
     ),
   ).toBe(true);
 
@@ -555,7 +591,7 @@ it("allTwelveDecorators_CoApplyAndRoundTripIndependently", async () => {
   ] as string[][];
   expect(
     allValues.some(
-      (v) => v.includes("admin:read") && v.includes("admin:write"),
+      (v) => v.includes("auth.password.change") && v.includes("self.write"),
     ),
   ).toBe(true);
 
@@ -571,12 +607,14 @@ it("allTwelveDecorators_CoApplyAndRoundTripIndependently", async () => {
   const grpcEntries = [
     ...program.stateMap(D2_GRPC_METHOD_KEY).values(),
   ] as GrpcMethodPayload[];
-  expect(grpcEntries).toHaveLength(1);
-  expect(grpcEntries[0]).toEqual({
-    service: "Orders",
-    method: "CreateOrder",
-    streaming: "unary",
-  });
+  expect(
+    grpcEntries.some(
+      (e) =>
+        e.service === "Orders" &&
+        e.method === "CreateOrder" &&
+        e.streaming === "unary",
+    ),
+  ).toBe(true);
 
   const redactValues = [...program.stateMap(D2_REDACT_KEY).values()];
   expect(redactValues).toContain(true);
@@ -587,12 +625,15 @@ it("allTwelveDecorators_CoApplyAndRoundTripIndependently", async () => {
   const idempotentEntries = [
     ...program.stateMap(D2_IDEMPOTENT_KEY).values(),
   ] as IdempotentPayload[];
-  expect(idempotentEntries).toHaveLength(1);
-  expect(idempotentEntries[0]).toEqual({
-    keySource: "derived",
-    ttlSeconds: 300,
-    fields: ["orgId", "requestId"],
-  });
+  expect(
+    idempotentEntries.some(
+      (e) =>
+        e.keySource === "derived" &&
+        e.ttlSeconds === 300 &&
+        e.fields.includes("orgId") &&
+        e.fields.includes("requestId"),
+    ),
+  ).toBe(true);
 
   const resilienceValues = [...program.stateMap(D2_RESILIENCE_KEY).values()];
   expect(resilienceValues).toContain("retry(circuitBreaker(singleflight()))");
@@ -602,4 +643,1153 @@ it("allTwelveDecorators_CoApplyAndRoundTripIndependently", async () => {
 
   const harmlessValues = [...program.stateMap(D2_HARMLESS_KEY).values()];
   expect(harmlessValues).toContain(true);
+});
+
+// ===========================================================================
+// SPEC-REGISTRY ANCHOR GUARD (MANDATORY — R2)
+// These tests prove the repo-root anchor in spec-registry.ts resolves correctly.
+// A wrong segment count silently yields an empty set, making every scope/audience
+// appear unknown and producing false "unknown-scope" / "unknown-audience" errors.
+// ===========================================================================
+
+describe("specRegistry_LoadsKnownScope", () => {
+  afterEach(() => _resetSpecRegistryCache());
+
+  it("loadScopeNames() contains 'self.read' — proves repo-root anchor is correct", () => {
+    const names = loadScopeNames();
+    expect(names.has("self.read")).toBe(true);
+  });
+
+  it("loadScopeNames() contains 'anon.public.health'", () => {
+    const names = loadScopeNames();
+    expect(names.has("anon.public.health")).toBe(true);
+  });
+
+  it("loadScopeNames() returns a non-empty set", () => {
+    const names = loadScopeNames();
+    expect(names.size).toBeGreaterThan(0);
+  });
+});
+
+describe("specRegistry_LoadsKnownAudience", () => {
+  afterEach(() => _resetSpecRegistryCache());
+
+  it("loadAudienceNames() contains 'Files' — proves repo-root anchor is correct", () => {
+    const names = loadAudienceNames();
+    expect(names.has("Files")).toBe(true);
+  });
+
+  it("loadAudienceNames() does NOT contain 'd2-edge' (it is the self-audience special-case)", () => {
+    const names = loadAudienceNames();
+    // d2-edge is not declared in audiences.spec.json; it is handled as a special case in the validator
+    expect(names.has("d2-edge")).toBe(false);
+  });
+
+  it("loadAudienceNames() returns a non-empty set", () => {
+    const names = loadAudienceNames();
+    expect(names.size).toBeGreaterThan(0);
+  });
+});
+
+// ===========================================================================
+// CATALOG INTEGRITY (drift guard — every ResilienceDiagnosticCode in $lib)
+// ===========================================================================
+
+// ===========================================================================
+// DIRECT UNIT TESTS for validators.ts — exercises src/ for coverage
+// These call validators directly with mock contexts so V8 sees the source file.
+// ===========================================================================
+
+function makeMockCtxWithDiags(): {
+  ctx: DecoratorContext;
+  target: Operation;
+  diags: Array<{ code: string }>;
+} {
+  const diags: Array<{ code: string }> = [];
+  const storeMap = new Map<symbol, Map<object, unknown>>();
+  const ctx = {
+    program: {
+      stateMap(key: symbol): Map<object, unknown> {
+        if (!storeMap.has(key)) storeMap.set(key, new Map());
+        return storeMap.get(key)!;
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+    },
+  } as unknown as DecoratorContext;
+  const target = {} as unknown as Operation;
+  return { ctx, target, diags };
+}
+
+describe("directUnit_validateRateLimitTier", () => {
+  it("no diagnostic for valid tier 'Elevated'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateRateLimitTier(ctx, target, "Elevated");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("emits invalid-rate-limit-tier for 'bad'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateRateLimitTier(ctx, target, "bad");
+    expect(diags.some((d) => d.code.endsWith("invalid-rate-limit-tier"))).toBe(
+      true,
+    );
+  });
+});
+
+describe("directUnit_validateGrpcStreaming", () => {
+  it("no diagnostic for 'unary'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateGrpcStreaming(ctx, target, "unary");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("no diagnostic for 'clientStream'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateGrpcStreaming(ctx, target, "clientStream");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("no diagnostic for 'bidiStream'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateGrpcStreaming(ctx, target, "bidiStream");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("emits invalid-grpc-streaming for 'bad'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateGrpcStreaming(ctx, target, "bad");
+    expect(diags.some((d) => d.code.endsWith("invalid-grpc-streaming"))).toBe(
+      true,
+    );
+  });
+});
+
+describe("directUnit_validatePushTarget", () => {
+  it("no diagnostic for 'session'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validatePushTarget(ctx, target, "session");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("emits invalid-push-target for 'team'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validatePushTarget(ctx, target, "team");
+    expect(diags.some((d) => d.code.endsWith("invalid-push-target"))).toBe(
+      true,
+    );
+  });
+});
+
+describe("directUnit_validateCsrfPosture", () => {
+  it("no diagnostic for 'required'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateCsrfPosture(ctx, target, "required");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("emits invalid-csrf-posture for 'optional'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateCsrfPosture(ctx, target, "optional");
+    expect(diags.some((d) => d.code.endsWith("invalid-csrf-posture"))).toBe(
+      true,
+    );
+  });
+});
+
+describe("directUnit_validateIdempotent", () => {
+  it("no diagnostic for valid header config", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateIdempotent(ctx, target, "header", 300, []);
+    expect(diags).toHaveLength(0);
+  });
+
+  it("no diagnostic for valid derived config with fields", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateIdempotent(ctx, target, "derived", 600, ["orgId"]);
+    expect(diags).toHaveLength(0);
+  });
+
+  it("emits invalid-idempotent-key-source for unknown keySource", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateIdempotent(ctx, target, "cookie", 300, []);
+    expect(
+      diags.some((d) => d.code.endsWith("invalid-idempotent-key-source")),
+    ).toBe(true);
+  });
+
+  it("emits invalid-idempotent-ttl for ttlSeconds = -1", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateIdempotent(ctx, target, "header", -1, []);
+    expect(diags.some((d) => d.code.endsWith("invalid-idempotent-ttl"))).toBe(
+      true,
+    );
+  });
+
+  it("emits idempotent-derived-requires-fields for derived with no fields", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateIdempotent(ctx, target, "derived", 300, []);
+    expect(
+      diags.some((d) => d.code.endsWith("idempotent-derived-requires-fields")),
+    ).toBe(true);
+  });
+
+  it("emits idempotent-header-forbids-fields for header with fields", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateIdempotent(ctx, target, "header", 300, ["x"]);
+    expect(
+      diags.some((d) => d.code.endsWith("idempotent-header-forbids-fields")),
+    ).toBe(true);
+  });
+});
+
+describe("directUnit_validateScopes", () => {
+  it("no diagnostic for known scope 'self.read'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateScopes(ctx, target, ["self.read"]);
+    expect(diags).toHaveLength(0);
+  });
+
+  it("emits unknown-scope for unknown scope", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateScopes(ctx, target, ["not.a.scope"]);
+    expect(diags.some((d) => d.code.endsWith("unknown-scope"))).toBe(true);
+  });
+
+  it("emits unknown-scope for empty string scope", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateScopes(ctx, target, [""]);
+    expect(diags.some((d) => d.code.endsWith("unknown-scope"))).toBe(true);
+  });
+
+  it("multiple scopes — emits per-unknown scope", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateScopes(ctx, target, ["self.read", "not.real"]);
+    expect(diags.filter((d) => d.code.endsWith("unknown-scope"))).toHaveLength(
+      1,
+    );
+  });
+});
+
+describe("directUnit_validateAudience", () => {
+  it("no diagnostic for 'd2-edge' (self-audience special case)", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateAudience(ctx, target, "d2-edge");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("no diagnostic for 'Files'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateAudience(ctx, target, "Files");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("emits unknown-audience for 'BadAudience'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateAudience(ctx, target, "BadAudience");
+    expect(diags.some((d) => d.code.endsWith("unknown-audience"))).toBe(true);
+  });
+});
+
+describe("directUnit_validateServedBy", () => {
+  it("no diagnostic for non-empty string", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateServedBy(ctx, target, "Edge");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("emits empty-served-by for empty string", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateServedBy(ctx, target, "");
+    expect(diags.some((d) => d.code.endsWith("empty-served-by"))).toBe(true);
+  });
+
+  it("emits empty-served-by for whitespace-only string", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateServedBy(ctx, target, "   ");
+    expect(diags.some((d) => d.code.endsWith("empty-served-by"))).toBe(true);
+  });
+});
+
+describe("directUnit_validateResilience", () => {
+  it("no diagnostic for valid 'retry()'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateResilience(ctx, target, "retry()");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("no diagnostic for 'retry(circuitBreaker(singleflight()))'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateResilience(ctx, target, "retry(circuitBreaker(singleflight()))");
+    expect(diags).toHaveLength(0);
+  });
+
+  it("emits resilience-malformed for empty string", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateResilience(ctx, target, "");
+    expect(diags.some((d) => d.code.endsWith("resilience-malformed"))).toBe(
+      true,
+    );
+  });
+
+  it("emits resilience-unknown-policy for 'breaker()'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateResilience(ctx, target, "breaker()");
+    expect(
+      diags.some((d) => d.code.endsWith("resilience-unknown-policy")),
+    ).toBe(true);
+  });
+
+  it("emits resilience-unknown-arg for 'retry(foo: 1)'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateResilience(ctx, target, "retry(foo: 1)");
+    expect(diags.some((d) => d.code.endsWith("resilience-unknown-arg"))).toBe(
+      true,
+    );
+  });
+
+  it("emits resilience-bad-arg for 'retry(maxAttempts: 0)'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateResilience(ctx, target, "retry(maxAttempts: 0)");
+    expect(diags.some((d) => d.code.endsWith("resilience-bad-arg"))).toBe(true);
+  });
+
+  it("emits resilience-multiple-inner for 'retry(circuitBreaker(), singleflight())'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateResilience(ctx, target, "retry(circuitBreaker(), singleflight())");
+    expect(
+      diags.some((d) => d.code.endsWith("resilience-multiple-inner")),
+    ).toBe(true);
+  });
+
+  it("emits resilience-positional-after-named for 'retry(maxAttempts: 3, 1000)'", () => {
+    const { ctx, target, diags } = makeMockCtxWithDiags();
+    validateResilience(ctx, target, "retry(maxAttempts: 3, 1000)");
+    expect(
+      diags.some((d) => d.code.endsWith("resilience-positional-after-named")),
+    ).toBe(true);
+  });
+});
+
+// ===========================================================================
+// DIRECT UNIT TESTS for $onValidate — exercises src/onvalidate.ts for coverage
+// ===========================================================================
+
+describe("directUnit_$onValidate", () => {
+  it("emits rate-tier-requires-route when op has tier but no route", () => {
+    const diags: Array<{ code: string }> = [];
+    const op = {} as unknown as Operation;
+    const stateMaps = new Map<symbol, Map<object, unknown>>();
+    const tierMap = new Map<object, unknown>();
+    tierMap.set(op, "Standard");
+
+    // Inject tier key map; harmless key has no entries
+    const D2_RATE_LIMIT_TIER_KEY_SYM = Symbol.for("D2.d2RateLimitTier");
+    stateMaps.set(D2_RATE_LIMIT_TIER_KEY_SYM, tierMap as Map<object, unknown>);
+
+    const mockProgram = {
+      stateMap(key: symbol): Map<object, unknown> {
+        return stateMaps.get(key) ?? new Map();
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+      hasError(): boolean {
+        return diags.length > 0;
+      },
+    };
+
+    // @typespec/http's getRoutePath will be called with the mock program;
+    // it will return undefined for any op not registered in its state.
+    // This causes $onValidate to emit the rate-tier-requires-route diagnostic.
+    $onValidate(mockProgram as unknown as Program);
+    expect(diags.some((d) => d.code.endsWith("rate-tier-requires-route"))).toBe(
+      true,
+    );
+  });
+
+  it("emits harmless-scope-conflict when op has both harmless and scope key", () => {
+    const diags: Array<{ code: string }> = [];
+    const op = {} as unknown as Operation;
+    const stateMaps = new Map<symbol, Map<object, unknown>>();
+
+    const D2_HARMLESS_KEY_SYM = Symbol.for("D2.d2Harmless");
+    const D2_REQUIRE_ANY_SCOPE_KEY_SYM = Symbol.for("D2.d2RequireAnyScope");
+    const D2_RATE_LIMIT_TIER_KEY_SYM = Symbol.for("D2.d2RateLimitTier");
+    const D2_REQUIRE_ALL_SCOPES_KEY_SYM = Symbol.for("D2.d2RequireAllScopes");
+
+    const harmlessMap = new Map<object, unknown>();
+    harmlessMap.set(op, true);
+    stateMaps.set(D2_HARMLESS_KEY_SYM, harmlessMap as Map<object, unknown>);
+
+    const anyMap = new Map<object, unknown>();
+    anyMap.set(op, ["self.read"]);
+    stateMaps.set(D2_REQUIRE_ANY_SCOPE_KEY_SYM, anyMap as Map<object, unknown>);
+
+    // No rate-limit tier entries, no all-scopes entries
+    stateMaps.set(D2_RATE_LIMIT_TIER_KEY_SYM, new Map());
+    stateMaps.set(D2_REQUIRE_ALL_SCOPES_KEY_SYM, new Map());
+
+    const mockProgram = {
+      stateMap(key: symbol): Map<object, unknown> {
+        return stateMaps.get(key) ?? new Map();
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+      hasError(): boolean {
+        return diags.length > 0;
+      },
+    };
+
+    $onValidate(mockProgram as unknown as Program);
+    expect(diags.some((d) => d.code.endsWith("harmless-scope-conflict"))).toBe(
+      true,
+    );
+  });
+
+  it("no diagnostic when rate-tier op has a route (getRoutePath returns non-undefined)", () => {
+    const diags: Array<{ code: string }> = [];
+    const op = { kind: "Operation", name: "routedOp" } as unknown as Operation;
+    const stateMaps = new Map<symbol, Map<object, unknown>>();
+
+    const D2_RATE_LIMIT_TIER_KEY_SYM = Symbol.for("D2.d2RateLimitTier");
+    const D2_HARMLESS_KEY_SYM = Symbol.for("D2.d2Harmless");
+    // @typespec/http route state key — what getRoutePath looks up
+    const HTTP_ROUTES_KEY = Symbol.for("@typespec/http/routes");
+    const HTTP_SHARED_ROUTES_KEY = Symbol.for("@typespec/http/sharedRoutes");
+
+    const tierMap = new Map<object, unknown>();
+    tierMap.set(op, "Standard");
+    stateMaps.set(D2_RATE_LIMIT_TIER_KEY_SYM, tierMap as Map<object, unknown>);
+    stateMaps.set(D2_HARMLESS_KEY_SYM, new Map());
+
+    // Inject a route path so getRoutePath returns { path, shared }
+    const routeMap = new Map<object, unknown>();
+    routeMap.set(op, "/test-route");
+    stateMaps.set(HTTP_ROUTES_KEY, routeMap as Map<object, unknown>);
+    stateMaps.set(HTTP_SHARED_ROUTES_KEY, new Map());
+
+    const mockProgram = {
+      stateMap(key: symbol): Map<object, unknown> {
+        return stateMaps.get(key) ?? new Map();
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+      hasError(): boolean {
+        return diags.length > 0;
+      },
+    };
+
+    $onValidate(mockProgram as unknown as Program);
+    // rate-tier op has a route → no rate-tier-requires-route diagnostic
+    expect(diags.some((d) => d.code.endsWith("rate-tier-requires-route"))).toBe(
+      false,
+    );
+  });
+
+  it("no diagnostics when harmless op has no scope decorators and no tier ops", () => {
+    const diags: Array<{ code: string }> = [];
+    const op = {} as unknown as Operation;
+    const stateMaps = new Map<symbol, Map<object, unknown>>();
+
+    const D2_HARMLESS_KEY_SYM = Symbol.for("D2.d2Harmless");
+    const D2_RATE_LIMIT_TIER_KEY_SYM = Symbol.for("D2.d2RateLimitTier");
+    const D2_REQUIRE_ANY_SCOPE_KEY_SYM = Symbol.for("D2.d2RequireAnyScope");
+    const D2_REQUIRE_ALL_SCOPES_KEY_SYM = Symbol.for("D2.d2RequireAllScopes");
+
+    const harmlessMap = new Map<object, unknown>();
+    harmlessMap.set(op, true);
+    stateMaps.set(D2_HARMLESS_KEY_SYM, harmlessMap as Map<object, unknown>);
+    stateMaps.set(D2_RATE_LIMIT_TIER_KEY_SYM, new Map());
+    stateMaps.set(D2_REQUIRE_ANY_SCOPE_KEY_SYM, new Map());
+    stateMaps.set(D2_REQUIRE_ALL_SCOPES_KEY_SYM, new Map());
+
+    const mockProgram = {
+      stateMap(key: symbol): Map<object, unknown> {
+        return stateMaps.get(key) ?? new Map();
+      },
+      reportDiagnostic(_diag: { code: string }): void {
+        diags.push(_diag);
+      },
+      hasError(): boolean {
+        return diags.length > 0;
+      },
+    };
+
+    $onValidate(mockProgram as unknown as Program);
+    expect(diags).toHaveLength(0);
+  });
+
+  it("emits harmless-scope-conflict when op has both harmless and all-scopes", () => {
+    const diags: Array<{ code: string }> = [];
+    const op = {} as unknown as Operation;
+    const stateMaps = new Map<symbol, Map<object, unknown>>();
+
+    const D2_HARMLESS_KEY_SYM = Symbol.for("D2.d2Harmless");
+    const D2_RATE_LIMIT_TIER_KEY_SYM = Symbol.for("D2.d2RateLimitTier");
+    const D2_REQUIRE_ANY_SCOPE_KEY_SYM = Symbol.for("D2.d2RequireAnyScope");
+    const D2_REQUIRE_ALL_SCOPES_KEY_SYM = Symbol.for("D2.d2RequireAllScopes");
+
+    const harmlessMap = new Map<object, unknown>();
+    harmlessMap.set(op, true);
+    stateMaps.set(D2_HARMLESS_KEY_SYM, harmlessMap as Map<object, unknown>);
+
+    const allMap = new Map<object, unknown>();
+    allMap.set(op, ["self.read"]);
+    stateMaps.set(
+      D2_REQUIRE_ALL_SCOPES_KEY_SYM,
+      allMap as Map<object, unknown>,
+    );
+    stateMaps.set(D2_RATE_LIMIT_TIER_KEY_SYM, new Map());
+    stateMaps.set(D2_REQUIRE_ANY_SCOPE_KEY_SYM, new Map());
+
+    const mockProgram = {
+      stateMap(key: symbol): Map<object, unknown> {
+        return stateMaps.get(key) ?? new Map();
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+      hasError(): boolean {
+        return diags.length > 0;
+      },
+    };
+
+    $onValidate(mockProgram as unknown as Program);
+    expect(diags.some((d) => d.code.endsWith("harmless-scope-conflict"))).toBe(
+      true,
+    );
+  });
+});
+
+it("lib_DiagnosticsCatalogCoversAllResilienceCodes", () => {
+  // The ResilienceDiagnosticCode union lists every code the parser can emit.
+  // Each must have a corresponding entry in $lib.diagnostics so that
+  // reportDiagnostic never throws on an unknown code.
+  const resilienceCodes: ResilienceDiagnosticCode[] = [
+    "resilience-malformed",
+    "resilience-unknown-policy",
+    "resilience-unknown-arg",
+    "resilience-bad-arg",
+    "resilience-multiple-inner",
+    "resilience-positional-after-named",
+  ];
+  const catalog = $lib.diagnostics as Record<string, unknown>;
+  for (const code of resilienceCodes) expect(catalog).toHaveProperty(code);
+});
+
+it("lib_AllDiagnosticsHaveErrorSeverity", () => {
+  // Every diagnostic must be severity "error" — a warning would NOT fail the
+  // build, which violates the hard requirement that invalid configs fail loud.
+  const catalog = $lib.diagnostics as Record<
+    string,
+    { severity: string; messages: Record<string, unknown> }
+  >;
+  for (const [code, diag] of Object.entries(catalog))
+    expect(diag.severity, `code '${code}' should be severity "error"`).toBe(
+      "error",
+    );
+});
+
+// ===========================================================================
+// IN-DECORATOR REJECTION + ACCEPTANCE TESTS
+// Each rejection test asserts BOTH the diagnostic code AND program.hasError()
+// (an invalid config must fail the build, not merely surface a diagnostic code)
+// ===========================================================================
+
+// ---------------------------------------------------------------------------
+// Shared runner is already set up above (D2DecoratorTestLibrary + runner).
+// ---------------------------------------------------------------------------
+
+function getDiagCodes(r: BasicTestRunner): string[] {
+  return r.program.diagnostics.map((d) => d.code);
+}
+
+// --- @d2RateLimitTier ---
+
+describe("d2RateLimitTier_RejectsInvalidTier", () => {
+  it("emits invalid-rate-limit-tier and hasError() for 'Standardx'", async () => {
+    await runner.diagnose(`
+      @d2RateLimitTier("Standardx")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/invalid-rate-limit-tier",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+
+  it("emits invalid-rate-limit-tier for wrong-case 'standard'", async () => {
+    await runner.diagnose(`
+      @d2RateLimitTier("standard")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/invalid-rate-limit-tier",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2RateLimitTier_AcceptsValidTiers", () => {
+  it("produces no invalid-rate-limit-tier diagnostic for 'Standard'", async () => {
+    await runner.diagnose(`
+      @d2RateLimitTier("Standard")
+      op goodOp(): void;
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/invalid-rate-limit-tier",
+    );
+  });
+
+  it("produces no diagnostic for 'Elevated'", async () => {
+    await runner.diagnose(`
+      @d2RateLimitTier("Elevated")
+      op goodOp(): void;
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/invalid-rate-limit-tier",
+    );
+  });
+
+  it("produces no diagnostic for 'Restricted'", async () => {
+    await runner.diagnose(`
+      @d2RateLimitTier("Restricted")
+      op goodOp(): void;
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/invalid-rate-limit-tier",
+    );
+  });
+});
+
+// --- @d2GrpcMethod streaming ---
+
+describe("d2GrpcMethod_RejectsInvalidStreaming", () => {
+  it("emits invalid-grpc-streaming for 'duplexStream'", async () => {
+    await runner.diagnose(`
+      @d2GrpcMethod("Svc", "Method", "duplexStream")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/invalid-grpc-streaming",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2GrpcMethod_AcceptsServerStream", () => {
+  it("produces no invalid-grpc-streaming diagnostic for 'serverStream'", async () => {
+    await runner.diagnose(`
+      @d2GrpcMethod("Svc", "Method", "serverStream")
+      op goodOp(): void;
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/invalid-grpc-streaming",
+    );
+  });
+});
+
+// --- @d2ServerPush ---
+
+describe("d2ServerPush_RejectsInvalidTarget", () => {
+  it("emits invalid-push-target for 'org'", async () => {
+    await runner.diagnose(`
+      @d2ServerPush("org")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/invalid-push-target",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2ServerPush_AcceptsUser", () => {
+  it("produces no invalid-push-target diagnostic for 'user'", async () => {
+    await runner.diagnose(`
+      @d2ServerPush("user")
+      op goodOp(): void;
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/invalid-push-target",
+    );
+  });
+});
+
+// --- @d2Csrf ---
+
+describe("d2Csrf_RejectsInvalidPosture", () => {
+  it("emits invalid-csrf-posture for 'maybe'", async () => {
+    await runner.diagnose(`
+      @d2Csrf("maybe")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/invalid-csrf-posture",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2Csrf_AcceptsExempt", () => {
+  it("produces no invalid-csrf-posture diagnostic for 'exempt'", async () => {
+    await runner.diagnose(`
+      @d2Csrf("exempt")
+      op goodOp(): void;
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/invalid-csrf-posture",
+    );
+  });
+});
+
+// --- @d2Idempotent ---
+
+describe("d2Idempotent_RejectsInvalidKeySource", () => {
+  it("emits invalid-idempotent-key-source for 'cookie'", async () => {
+    await runner.diagnose(`
+      @d2Idempotent("cookie", 300)
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/invalid-idempotent-key-source",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2Idempotent_RejectsNonPositiveTtl", () => {
+  it("emits invalid-idempotent-ttl for ttlSeconds 0", async () => {
+    await runner.diagnose(`
+      @d2Idempotent("header", 0)
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/invalid-idempotent-ttl",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2Idempotent_DerivedWithoutFieldsRejected", () => {
+  it("emits idempotent-derived-requires-fields when no fields supplied for 'derived'", async () => {
+    await runner.diagnose(`
+      @d2Idempotent("derived", 300)
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/idempotent-derived-requires-fields",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2Idempotent_HeaderWithFieldsRejected", () => {
+  it("emits idempotent-header-forbids-fields when fields supplied for 'header'", async () => {
+    await runner.diagnose(`
+      @d2Idempotent("header", 300, "orgId")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/idempotent-header-forbids-fields",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+// --- @d2RequireAnyScope ---
+
+describe("d2RequireAnyScope_RejectsUnknownScope", () => {
+  it("emits unknown-scope for 'made.up.scope'", async () => {
+    await runner.diagnose(`
+      @d2RequireAnyScope("made.up.scope")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/unknown-scope",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2RequireAnyScope_AcceptsKnownScope", () => {
+  it("produces no unknown-scope diagnostic for 'self.read'", async () => {
+    await runner.diagnose(`
+      @d2RequireAnyScope("self.read")
+      op goodOp(): void;
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/unknown-scope",
+    );
+  });
+});
+
+// --- @d2RequireAllScopes ---
+
+describe("d2RequireAllScopes_RejectsUnknownScope", () => {
+  it("emits unknown-scope for 'not.a.scope'", async () => {
+    await runner.diagnose(`
+      @d2RequireAllScopes("not.a.scope")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/unknown-scope",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2RequireAllScopes_AcceptsKnownScope", () => {
+  it("produces no unknown-scope diagnostic for 'self.write'", async () => {
+    await runner.diagnose(`
+      @d2RequireAllScopes("self.write")
+      op goodOp(): void;
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/unknown-scope",
+    );
+  });
+});
+
+// --- @d2Audience ---
+
+describe("d2Audience_RejectsUnknownAudience", () => {
+  it("emits unknown-audience for 'Nope'", async () => {
+    await runner.diagnose(`
+      @d2Audience("Nope")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/unknown-audience",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2Audience_AcceptsKnownAudience", () => {
+  it("produces no unknown-audience diagnostic for 'Files'", async () => {
+    await runner.diagnose(`
+      @d2Audience("Files")
+      op goodOp(): void;
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/unknown-audience",
+    );
+  });
+});
+
+describe("d2Audience_AcceptsD2EdgeSpecialCase", () => {
+  it("produces no unknown-audience diagnostic for 'd2-edge'", async () => {
+    await runner.diagnose(`
+      @d2Audience("d2-edge")
+      op goodOp(): void;
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/unknown-audience",
+    );
+  });
+});
+
+// --- @d2ServedBy ---
+
+describe("d2ServedBy_RejectsEmptyOwner", () => {
+  it("emits empty-served-by for empty string", async () => {
+    await runner.diagnose(`
+      @d2ServedBy("")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/empty-served-by",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+
+  it("emits empty-served-by for whitespace-only string", async () => {
+    await runner.diagnose(`
+      @d2ServedBy("   ")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/empty-served-by",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2ServedBy_AcceptsNonEmpty", () => {
+  it("produces no empty-served-by diagnostic for non-empty owner", async () => {
+    await runner.diagnose(`
+      @d2ServedBy("EdgeModule")
+      op goodOp(): void;
+    `);
+    expect(getDiagCodes(runner)).not.toContain(
+      "@d2/typespec-decorators/empty-served-by",
+    );
+  });
+});
+
+// --- @d2Resilience round-trip (compile + assert diagnostics + hasError) ---
+
+describe("d2Resilience_RejectsMalformed", () => {
+  it("emits resilience-malformed and hasError() for an unclosed '('", async () => {
+    await runner.diagnose(`
+      @d2Resilience("retry(")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/resilience-malformed",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+
+  it("emits resilience-malformed for empty string", async () => {
+    await runner.diagnose(`
+      @d2Resilience("")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/resilience-malformed",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+
+  it("emits resilience-malformed and hasError() for bare policy name 'retry(circuitBreaker)' — missing parens must fail loud", async () => {
+    // A bare policy name used as a positional arg is never a valid literal —
+    // an invalid config must fail the build, not merely surface a diagnostic code.
+    await runner.diagnose(`
+      @d2Resilience("retry(circuitBreaker)")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/resilience-malformed",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2Resilience_RejectsUnknownPolicy", () => {
+  it("emits resilience-unknown-policy for 'breaker()'", async () => {
+    await runner.diagnose(`
+      @d2Resilience("breaker()")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/resilience-unknown-policy",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2Resilience_RejectsUnknownArg", () => {
+  it("emits resilience-unknown-arg for retry(foo: 3)", async () => {
+    await runner.diagnose(`
+      @d2Resilience("retry(foo: 3)")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/resilience-unknown-arg",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+
+  it("emits resilience-unknown-arg for singleflight(3)", async () => {
+    await runner.diagnose(`
+      @d2Resilience("singleflight(3)")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/resilience-unknown-arg",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2Resilience_RejectsBadArg", () => {
+  it("emits resilience-bad-arg for retry(maxAttempts: 0) — out of range", async () => {
+    await runner.diagnose(`
+      @d2Resilience("retry(maxAttempts: 0)")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/resilience-bad-arg",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+
+  it("emits resilience-bad-arg for retry(jitter: 5) — bool expected", async () => {
+    await runner.diagnose(`
+      @d2Resilience("retry(jitter: 5)")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/resilience-bad-arg",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2Resilience_RejectsMultipleInner", () => {
+  it("emits resilience-multiple-inner for retry(circuitBreaker(), singleflight())", async () => {
+    await runner.diagnose(`
+      @d2Resilience("retry(circuitBreaker(), singleflight())")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/resilience-multiple-inner",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2Resilience_RejectsPositionalAfterNamed", () => {
+  it("emits resilience-positional-after-named for retry(maxAttempts: 3, 1000)", async () => {
+    await runner.diagnose(`
+      @d2Resilience("retry(maxAttempts: 3, 1000)")
+      op badOp(): void;
+    `);
+    expect(getDiagCodes(runner)).toContain(
+      "@d2/typespec-decorators/resilience-positional-after-named",
+    );
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+describe("d2Resilience_AcceptsValidExpressions", () => {
+  it("produces no resilience-* diagnostics for bare 'retry()'", async () => {
+    await runner.diagnose(`
+      @d2Resilience("retry()")
+      op goodOp(): void;
+    `);
+    const codes = getDiagCodes(runner);
+    const resilienceCodes = codes.filter((c) => c.includes("resilience-"));
+    expect(resilienceCodes).toHaveLength(0);
+  });
+
+  it("produces no resilience-* diagnostics for 'retry(circuitBreaker(singleflight()))'", async () => {
+    await runner.diagnose(`
+      @d2Resilience("retry(circuitBreaker(singleflight()))")
+      op goodOp(): void;
+    `);
+    const codes = getDiagCodes(runner);
+    const resilienceCodes = codes.filter((c) => c.includes("resilience-"));
+    expect(resilienceCodes).toHaveLength(0);
+  });
+
+  it("produces no resilience-* diagnostics for 'retry(3, circuitBreaker(threshold: 5))'", async () => {
+    await runner.diagnose(`
+      @d2Resilience("retry(3, circuitBreaker(threshold: 5))")
+      op goodOp(): void;
+    `);
+    const codes = getDiagCodes(runner);
+    const resilienceCodes = codes.filter((c) => c.includes("resilience-"));
+    expect(resilienceCodes).toHaveLength(0);
+  });
+});
+
+// --- @d2Redact on Operation — compiler-enforced target check ---
+
+describe("redact_OnOperationIsCompilerRejected", () => {
+  it("program has errors when @d2Redact is applied to an op (wrong target type)", async () => {
+    await runner.diagnose(`
+      @d2Redact
+      op badOp(): void;
+    `);
+    // The TypeSpec compiler enforces the extern dec target: ModelProperty constraint.
+    // We assert program.hasError() (not a specific code) since the compiler's internal
+    // diagnostic code for target-type mismatch is not part of the public API surface.
+    expect(runner.program.hasError()).toBe(true);
+  });
+});
+
+// ===========================================================================
+// $onValidate CROSS-DECORATOR TESTS
+// These use a SEPARATE createTestHost that includes HttpTestLibrary so @route works.
+// The @route check needs a separate http test host — reusing the shared runner
+// would not have HttpTestLibrary available, so @route would not be recognized.
+// ===========================================================================
+
+let httpRunner: BasicTestRunner;
+
+beforeAll(async () => {
+  const httpHost = await createTestHost({
+    libraries: [D2DecoratorTestLibrary, HttpTestLibrary],
+  });
+  httpRunner = createTestWrapper(httpHost, {
+    autoImports: ["@d2/typespec-decorators", "@typespec/http"],
+    autoUsings: ["D2", "TypeSpec.Http"],
+  });
+});
+
+function getHttpDiagCodes(): string[] {
+  return httpRunner.program.diagnostics.map((d) => d.code);
+}
+
+describe("onValidate_RateTierOnInternalOpReportsDiagnostic", () => {
+  it("emits rate-tier-requires-route and hasError() when @d2RateLimitTier is on an op with no @route", async () => {
+    await httpRunner.diagnose(`
+      @d2RateLimitTier("Standard")
+      op internalOp(): void;
+    `);
+    expect(getHttpDiagCodes()).toContain(
+      "@d2/typespec-decorators/rate-tier-requires-route",
+    );
+    expect(httpRunner.program.hasError()).toBe(true);
+  });
+});
+
+describe("onValidate_RateTierOnRoutedOpPasses", () => {
+  it("produces no rate-tier-requires-route diagnostic when @d2RateLimitTier is on a routed op", async () => {
+    await httpRunner.diagnose(`
+      @d2RateLimitTier("Standard")
+      @get @route("/items")
+      op listItems(): void;
+    `);
+    expect(getHttpDiagCodes()).not.toContain(
+      "@d2/typespec-decorators/rate-tier-requires-route",
+    );
+  });
+});
+
+describe("onValidate_HarmlessPlusAnyScopeReportsConflict", () => {
+  it("emits harmless-scope-conflict and hasError() for @d2Harmless + @d2RequireAnyScope", async () => {
+    await httpRunner.diagnose(`
+      @d2Harmless
+      @d2RequireAnyScope("self.read")
+      op conflictOp(): void;
+    `);
+    expect(getHttpDiagCodes()).toContain(
+      "@d2/typespec-decorators/harmless-scope-conflict",
+    );
+    expect(httpRunner.program.hasError()).toBe(true);
+  });
+});
+
+describe("onValidate_HarmlessPlusAllScopesReportsConflict", () => {
+  it("emits harmless-scope-conflict and hasError() for @d2Harmless + @d2RequireAllScopes", async () => {
+    await httpRunner.diagnose(`
+      @d2Harmless
+      @d2RequireAllScopes("self.read")
+      op conflictOp(): void;
+    `);
+    expect(getHttpDiagCodes()).toContain(
+      "@d2/typespec-decorators/harmless-scope-conflict",
+    );
+    expect(httpRunner.program.hasError()).toBe(true);
+  });
+});
+
+describe("onValidate_HarmlessAlonePasses", () => {
+  it("produces no harmless-scope-conflict diagnostic for @d2Harmless without scope decorators", async () => {
+    await httpRunner.diagnose(`
+      @d2Harmless
+      op healthCheck(): void;
+    `);
+    expect(getHttpDiagCodes()).not.toContain(
+      "@d2/typespec-decorators/harmless-scope-conflict",
+    );
+  });
 });

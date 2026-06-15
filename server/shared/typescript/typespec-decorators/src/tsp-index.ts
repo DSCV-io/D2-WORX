@@ -10,6 +10,11 @@
 // the sole module the .tsp pulls in. The split mirrors @typespec/http's
 // layout and prevents double-binding every decorator into the global namespace
 // (which would yield `ambiguous-symbol` under `using D2`).
+//
+// $onValidate is exported here so the TypeSpec compiler can discover and
+// register the program-level cross-decorator validation hook — the same
+// mechanism used by @typespec/http (its tsp-index re-exports $onValidate from
+// validate.ts).
 
 import {
   $d2Audience,
@@ -26,8 +31,10 @@ import {
   $d2ServerPush,
 } from "./decorators.js";
 
+export { $onValidate } from "./onvalidate.js";
+
 /**
- * Namespace → decorator-name → $fn map consumed by the TypeSpec compiler to
+ * Namespace → decorator-name → $fn map consumed by the TypeScript compiler to
  * link each `extern dec` declared under `namespace D2` in lib/main.tsp to its
  * JS implementation.
  *
