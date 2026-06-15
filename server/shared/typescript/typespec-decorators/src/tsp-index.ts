@@ -18,11 +18,14 @@
 
 import {
   $d2Audience,
+  $d2Command,
   $d2Csrf,
   $d2GrpcMethod,
   $d2Harmless,
   $d2Idempotent,
   $d2InProcess,
+  $d2Internal,
+  $d2Query,
   $d2RateLimitTier,
   $d2Redact,
   $d2RequireAllScopes,
@@ -56,5 +59,8 @@ export const $decorators = {
     d2Csrf: $d2Csrf,
     d2Harmless: $d2Harmless,
     d2InProcess: $d2InProcess,
+    d2Command: $d2Command,
+    d2Query: $d2Query,
+    d2Internal: $d2Internal,
   },
 } as const;

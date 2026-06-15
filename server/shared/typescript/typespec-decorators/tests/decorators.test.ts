@@ -34,6 +34,9 @@ import {
   D2_CSRF_KEY,
   D2_HARMLESS_KEY,
   D2_IN_PROCESS_KEY,
+  D2_COMMAND_KEY,
+  D2_QUERY_KEY,
+  D2_INTERNAL_KEY,
   $lib,
   $decorators,
   type ResilienceDiagnosticCode,
@@ -70,6 +73,9 @@ import {
   $d2Resilience,
   $d2Csrf,
   $d2ServerPush,
+  $d2Command,
+  $d2Query,
+  $d2Internal,
 } from "../src/decorators.js";
 import type {
   DecoratorContext,
@@ -258,6 +264,30 @@ describe("directUnit_$d2InProcess", () => {
   });
 });
 
+describe("directUnit_$d2Command", () => {
+  it("stores true under D2_COMMAND_KEY on the operation", () => {
+    const { ctx, maps } = makeMockContext();
+    $d2Command(ctx, mockTarget);
+    expect(maps.get(D2_COMMAND_KEY)!.get(mockTarget)).toBe(true);
+  });
+});
+
+describe("directUnit_$d2Query", () => {
+  it("stores true under D2_QUERY_KEY on the operation", () => {
+    const { ctx, maps } = makeMockContext();
+    $d2Query(ctx, mockTarget);
+    expect(maps.get(D2_QUERY_KEY)!.get(mockTarget)).toBe(true);
+  });
+});
+
+describe("directUnit_$d2Internal", () => {
+  it("stores true under D2_INTERNAL_KEY on the operation", () => {
+    const { ctx, maps } = makeMockContext();
+    $d2Internal(ctx, mockTarget);
+    expect(maps.get(D2_INTERNAL_KEY)!.get(mockTarget)).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Test library registration — mounts the real built package into the host
 // ---------------------------------------------------------------------------
@@ -340,6 +370,18 @@ describe("stateKeys_AreProcessGlobalSymbolFor", () => {
   it("D2_IN_PROCESS_KEY equals Symbol.for('D2.d2InProcess')", () => {
     expect(D2_IN_PROCESS_KEY).toBe(Symbol.for("D2.d2InProcess"));
   });
+
+  it("D2_COMMAND_KEY equals Symbol.for('D2.d2Command')", () => {
+    expect(D2_COMMAND_KEY).toBe(Symbol.for("D2.d2Command"));
+  });
+
+  it("D2_QUERY_KEY equals Symbol.for('D2.d2Query')", () => {
+    expect(D2_QUERY_KEY).toBe(Symbol.for("D2.d2Query"));
+  });
+
+  it("D2_INTERNAL_KEY equals Symbol.for('D2.d2Internal')", () => {
+    expect(D2_INTERNAL_KEY).toBe(Symbol.for("D2.d2Internal"));
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -354,15 +396,18 @@ it("lib_HasExpectedPackageName", () => {
 // Unit tests: $decorators registry key-set pin (§1.18 per-VALUE pin)
 // ---------------------------------------------------------------------------
 
-it("decorators_RegistryMapsAllThirteenDecoratorsUnderD2Namespace", () => {
+it("decorators_RegistryMapsAllSixteenDecoratorsUnderD2Namespace", () => {
   const keys = Object.keys($decorators.D2).sort();
   expect(keys).toEqual([
     "d2Audience",
+    "d2Command",
     "d2Csrf",
     "d2GrpcMethod",
     "d2Harmless",
     "d2Idempotent",
     "d2InProcess",
+    "d2Internal",
+    "d2Query",
     "d2RateLimitTier",
     "d2Redact",
     "d2RequireAllScopes",
@@ -383,6 +428,8 @@ it("decorators_RegistryMapsAllThirteenDecoratorsUnderD2Namespace", () => {
 
 it("d2RequireAnyScope_StoresScopesArrayUnderAnyKey", async () => {
   await runner.compile(`
+    @d2Query
+    @d2Internal
     @d2RequireAnyScope("self.read", "self.write")
     op listOrders(): void;
   `);
@@ -395,6 +442,8 @@ it("d2RequireAnyScope_StoresScopesArrayUnderAnyKey", async () => {
 
 it("d2RequireAllScopes_StoresScopesArrayUnderAllKey", async () => {
   await runner.compile(`
+    @d2Command
+    @d2Internal
     @d2RequireAllScopes("auth.password.change", "self.write")
     op adminAction(): void;
   `);
@@ -419,6 +468,8 @@ it("d2RateLimitTier_StoresTierStringUnderTierKey", async () => {
 
 it("d2Audience_StoresAudienceStringUnderAudienceKey", async () => {
   await runner.compile(`
+    @d2Query
+    @d2Internal
     @d2Audience("d2-edge")
     op checkHealth(): void;
   `);
@@ -428,6 +479,8 @@ it("d2Audience_StoresAudienceStringUnderAudienceKey", async () => {
 
 it("d2ServedBy_StoresOwnerStringUnderServedByKey", async () => {
   await runner.compile(`
+    @d2Command
+    @d2Internal
     @d2ServedBy("Edge")
     op authenticate(): void;
   `);
@@ -437,6 +490,7 @@ it("d2ServedBy_StoresOwnerStringUnderServedByKey", async () => {
 
 it("d2GrpcMethod_DefaultsStreamingToUnary", async () => {
   await runner.compile(`
+    @d2Command
     @d2GrpcMethod("Push", "PushNotificationCreated")
     op pushNotification(): void;
   `);
@@ -453,6 +507,7 @@ it("d2GrpcMethod_DefaultsStreamingToUnary", async () => {
 
 it("d2GrpcMethod_StoresExplicitStreamingMode", async () => {
   await runner.compile(`
+    @d2Query
     @d2GrpcMethod("Events", "StreamEvents", "serverStream")
     op streamEvents(): void;
   `);
@@ -479,6 +534,7 @@ it("d2Redact_StoresTrueUnderRedactKeyOnModelProperty", async () => {
 
 it("d2ServerPush_StoresTargetStringUnderServerPushKey", async () => {
   await runner.compile(`
+    @d2Command
     @d2ServerPush("user")
     op notifyUser(): void;
   `);
@@ -488,6 +544,8 @@ it("d2ServerPush_StoresTargetStringUnderServerPushKey", async () => {
 
 it("d2Idempotent_StoresHeaderPolicy", async () => {
   await runner.compile(`
+    @d2Command
+    @d2Internal
     @d2Idempotent("header", 300)
     op createOrder(): void;
   `);
@@ -504,6 +562,8 @@ it("d2Idempotent_StoresHeaderPolicy", async () => {
 
 it("d2Idempotent_StoresDerivedPolicyWithFields", async () => {
   await runner.compile(`
+    @d2Command
+    @d2Internal
     @d2Idempotent("derived", 600, "orgId", "userId")
     op createPayment(): void;
   `);
@@ -520,6 +580,8 @@ it("d2Idempotent_StoresDerivedPolicyWithFields", async () => {
 
 it("d2Resilience_StoresBareDefaultsExpressionAsRawString", async () => {
   await runner.compile(`
+    @d2Query
+    @d2Internal
     @d2Resilience("retry()")
     op callExternalService(): void;
   `);
@@ -529,6 +591,8 @@ it("d2Resilience_StoresBareDefaultsExpressionAsRawString", async () => {
 
 it("d2Resilience_StoresInlineTunablesExpressionAsRawString", async () => {
   await runner.compile(`
+    @d2Query
+    @d2Internal
     @d2Resilience("retry(3, circuitBreaker(threshold: 5))")
     op callCriticalService(): void;
   `);
@@ -538,6 +602,8 @@ it("d2Resilience_StoresInlineTunablesExpressionAsRawString", async () => {
 
 it("d2Csrf_StoresPostureStringUnderCsrfKey", async () => {
   await runner.compile(`
+    @d2Query
+    @d2Internal
     @d2Csrf("exempt")
     op getPublicData(): void;
   `);
@@ -547,6 +613,8 @@ it("d2Csrf_StoresPostureStringUnderCsrfKey", async () => {
 
 it("d2Harmless_StoresTrueUnderHarmlessKeyOnOperation", async () => {
   await runner.compile(`
+    @d2Query
+    @d2Internal
     @d2Harmless
     op healthCheck(): void;
   `);
@@ -556,6 +624,7 @@ it("d2Harmless_StoresTrueUnderHarmlessKeyOnOperation", async () => {
 
 it("d2InProcess_StoresTrueUnderInProcessKeyOnOperation", async () => {
   await runner.compile(`
+    @d2Command
     @d2InProcess
     @d2ServedBy("Edge")
     op leafOp(): void;
@@ -564,21 +633,55 @@ it("d2InProcess_StoresTrueUnderInProcessKeyOnOperation", async () => {
   expect(values).toContain(true);
 });
 
+it("d2Command_StoresTrueUnderCommandKeyOnOperation", async () => {
+  await runner.compile(`
+    @d2Command
+    @d2Internal
+    op mutatingOp(): void;
+  `);
+  const values = [...runner.program.stateMap(D2_COMMAND_KEY).values()];
+  expect(values).toContain(true);
+});
+
+it("d2Query_StoresTrueUnderQueryKeyOnOperation", async () => {
+  await runner.compile(`
+    @d2Query
+    @d2Internal
+    op readOp(): void;
+  `);
+  const values = [...runner.program.stateMap(D2_QUERY_KEY).values()];
+  expect(values).toContain(true);
+});
+
+it("d2Internal_StoresTrueUnderInternalKeyOnOperation", async () => {
+  await runner.compile(`
+    @d2Command
+    @d2Internal
+    op internalOp(): void;
+  `);
+  const values = [...runner.program.stateMap(D2_INTERNAL_KEY).values()];
+  expect(values).toContain(true);
+});
+
 // ---------------------------------------------------------------------------
-// Gate test: all 13 decorators co-apply and round-trip independently.
+// Gate test: all 16 decorators co-apply and round-trip independently.
 // Uses the httpRunner (which includes HttpTestLibrary) so @d2RateLimitTier on
 // a @route-bound op does not trigger rate-tier-requires-route.
 // Uses real scope names from scopes.spec.json; @d2Harmless is on a separate
 // op without scope decorators (the harmless/scope conflict is enforced by
 // $onValidate and verified in the $onValidate tests above).
+// gateTestCreateOrder is a Command (mutates); gateTestAdminOp and
+// gateTestHealthCheck are Queries (read-only). gateTestInternal exercises
+// @d2Internal round-trip (cannot add @d2Internal to an exposed op — internal-op-exposed).
 // ---------------------------------------------------------------------------
 
-it("allThirteenDecorators_CoApplyAndRoundTripIndependently", async () => {
+it("allSixteenDecorators_CoApplyAndRoundTripIndependently", async () => {
   await httpRunner.compile(`
     model RequestBody {
       @d2Redact sensitiveField: string;
     }
 
+    @d2Command
     @d2RequireAnyScope("self.write", "auth.password.change")
     @d2RateLimitTier("Elevated")
     @d2Audience("d2-edge")
@@ -592,13 +695,19 @@ it("allThirteenDecorators_CoApplyAndRoundTripIndependently", async () => {
     @get @route("/gatetest-createorder")
     op gateTestCreateOrder(body: RequestBody): void;
 
+    @d2Query
     @d2RequireAllScopes("auth.password.change", "self.write")
     @get @route("/gatetest-adminop")
     op gateTestAdminOp(): void;
 
+    @d2Query
     @d2Harmless
     @get @route("/gatetest-health")
     op gateTestHealthCheck(): void;
+
+    @d2Command
+    @d2Internal
+    op gateTestInternal(): void;
   `);
 
   const program = httpRunner.program;
@@ -672,6 +781,15 @@ it("allThirteenDecorators_CoApplyAndRoundTripIndependently", async () => {
 
   const inProcessValues = [...program.stateMap(D2_IN_PROCESS_KEY).values()];
   expect(inProcessValues).toContain(true);
+
+  const commandValues = [...program.stateMap(D2_COMMAND_KEY).values()];
+  expect(commandValues).toContain(true);
+
+  const queryValues = [...program.stateMap(D2_QUERY_KEY).values()];
+  expect(queryValues).toContain(true);
+
+  const internalValues = [...program.stateMap(D2_INTERNAL_KEY).values()];
+  expect(internalValues).toContain(true);
 });
 
 // ===========================================================================
@@ -1005,6 +1123,32 @@ describe("directUnit_validateResilience", () => {
 // DIRECT UNIT TESTS for $onValidate — exercises src/onvalidate.ts for coverage
 // ===========================================================================
 
+// Namespace stub for navigateProgram — provides getGlobalNamespaceType() with
+// the collections that navigateProgram iterates. Pass an Operation to have
+// navigateProgram visit it (drives category + exposure-or-internal-required coverage);
+// omit for an empty namespace (isolates internal-op-exposed map-loop tests without
+// unwanted category / exposure diagnostics).
+function makeGlobalNamespaceStub(op?: Operation): object {
+  const emptyMap = new Map();
+  const opsMap = new Map<string, unknown>();
+  if (op !== undefined) opsMap.set((op as unknown as { name: string }).name ?? "op", op);
+  return {
+    models: emptyMap,
+    scalars: emptyMap,
+    operations: opsMap,
+    namespaces: emptyMap,
+    unions: emptyMap,
+    interfaces: emptyMap,
+    enums: emptyMap,
+    decoratorDeclarations: emptyMap,
+    functionDeclarations: emptyMap,
+  };
+}
+
+function makeEmptyGlobalNamespace(): object {
+  return makeGlobalNamespaceStub();
+}
+
 describe("directUnit_$onValidate", () => {
   it("emits rate-tier-requires-route when op has tier but no route", () => {
     const diags: Array<{ code: string }> = [];
@@ -1027,6 +1171,7 @@ describe("directUnit_$onValidate", () => {
       hasError(): boolean {
         return diags.length > 0;
       },
+      getGlobalNamespaceType: makeEmptyGlobalNamespace,
     };
 
     // @typespec/http's getRoutePath will be called with the mock program;
@@ -1070,6 +1215,7 @@ describe("directUnit_$onValidate", () => {
       hasError(): boolean {
         return diags.length > 0;
       },
+      getGlobalNamespaceType: makeEmptyGlobalNamespace,
     };
 
     $onValidate(mockProgram as unknown as Program);
@@ -1110,6 +1256,7 @@ describe("directUnit_$onValidate", () => {
       hasError(): boolean {
         return diags.length > 0;
       },
+      getGlobalNamespaceType: makeEmptyGlobalNamespace,
     };
 
     $onValidate(mockProgram as unknown as Program);
@@ -1146,6 +1293,7 @@ describe("directUnit_$onValidate", () => {
       hasError(): boolean {
         return diags.length > 0;
       },
+      getGlobalNamespaceType: makeEmptyGlobalNamespace,
     };
 
     $onValidate(mockProgram as unknown as Program);
@@ -1185,6 +1333,7 @@ describe("directUnit_$onValidate", () => {
       hasError(): boolean {
         return diags.length > 0;
       },
+      getGlobalNamespaceType: makeEmptyGlobalNamespace,
     };
 
     $onValidate(mockProgram as unknown as Program);
@@ -1224,6 +1373,7 @@ describe("directUnit_$onValidate", () => {
       hasError(): boolean {
         return diags.length > 0;
       },
+      getGlobalNamespaceType: makeEmptyGlobalNamespace,
     };
 
     $onValidate(mockProgram as unknown as Program);
@@ -1267,12 +1417,319 @@ describe("directUnit_$onValidate", () => {
       hasError(): boolean {
         return diags.length > 0;
       },
+      getGlobalNamespaceType: makeEmptyGlobalNamespace,
     };
 
     $onValidate(mockProgram as unknown as Program);
     expect(
       diags.some((d) => d.code.endsWith("inprocess-requires-served-by")),
     ).toBe(false);
+  });
+
+  it("emits internal-op-exposed when internal op has a gRPC method", () => {
+    const diags: Array<{ code: string }> = [];
+    const op = {} as unknown as Operation;
+    const stateMaps = new Map<symbol, Map<object, unknown>>();
+
+    const D2_INTERNAL_KEY_SYM = Symbol.for("D2.d2Internal");
+    const D2_GRPC_METHOD_KEY_SYM = Symbol.for("D2.d2GrpcMethod");
+
+    const internalMap = new Map<object, unknown>();
+    internalMap.set(op, true);
+    stateMaps.set(D2_INTERNAL_KEY_SYM, internalMap as Map<object, unknown>);
+
+    const grpcMap = new Map<object, unknown>();
+    grpcMap.set(op, { service: "Svc", method: "M", streaming: "unary" });
+    stateMaps.set(D2_GRPC_METHOD_KEY_SYM, grpcMap as Map<object, unknown>);
+
+    const mockProgram = {
+      stateMap(key: symbol): Map<object, unknown> {
+        return stateMaps.get(key) ?? new Map();
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+      hasError(): boolean {
+        return diags.length > 0;
+      },
+      getGlobalNamespaceType: makeEmptyGlobalNamespace,
+    };
+
+    $onValidate(mockProgram as unknown as Program);
+    expect(diags.some((d) => d.code.endsWith("internal-op-exposed"))).toBe(
+      true,
+    );
+  });
+
+  it("emits internal-op-exposed when internal op is also in-process", () => {
+    const diags: Array<{ code: string }> = [];
+    const op = {} as unknown as Operation;
+    const stateMaps = new Map<symbol, Map<object, unknown>>();
+
+    const D2_INTERNAL_KEY_SYM = Symbol.for("D2.d2Internal");
+    const D2_IN_PROCESS_KEY_SYM = Symbol.for("D2.d2InProcess");
+
+    const internalMap = new Map<object, unknown>();
+    internalMap.set(op, true);
+    stateMaps.set(D2_INTERNAL_KEY_SYM, internalMap as Map<object, unknown>);
+
+    const inProcessMap = new Map<object, unknown>();
+    inProcessMap.set(op, true);
+    stateMaps.set(D2_IN_PROCESS_KEY_SYM, inProcessMap as Map<object, unknown>);
+
+    const mockProgram = {
+      stateMap(key: symbol): Map<object, unknown> {
+        return stateMaps.get(key) ?? new Map();
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+      hasError(): boolean {
+        return diags.length > 0;
+      },
+      getGlobalNamespaceType: makeEmptyGlobalNamespace,
+    };
+
+    $onValidate(mockProgram as unknown as Program);
+    expect(diags.some((d) => d.code.endsWith("internal-op-exposed"))).toBe(
+      true,
+    );
+  });
+
+  it("no internal-op-exposed when internal op has no exposure decorators", () => {
+    const diags: Array<{ code: string }> = [];
+    const op = {} as unknown as Operation;
+    const stateMaps = new Map<symbol, Map<object, unknown>>();
+
+    const D2_INTERNAL_KEY_SYM = Symbol.for("D2.d2Internal");
+
+    const internalMap = new Map<object, unknown>();
+    internalMap.set(op, true);
+    stateMaps.set(D2_INTERNAL_KEY_SYM, internalMap as Map<object, unknown>);
+
+    // All exposure maps are empty; getRoutePath returns undefined for unknown op
+    const mockProgram = {
+      stateMap(key: symbol): Map<object, unknown> {
+        return stateMaps.get(key) ?? new Map();
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+      hasError(): boolean {
+        return diags.length > 0;
+      },
+      getGlobalNamespaceType: makeEmptyGlobalNamespace,
+    };
+
+    $onValidate(mockProgram as unknown as Program);
+    expect(diags.some((d) => d.code.endsWith("internal-op-exposed"))).toBe(
+      false,
+    );
+  });
+
+  it("emits category-required when navigateProgram visits an op with no category", () => {
+    const diags: Array<{ code: string }> = [];
+    // isFinished: true passes navigateProgram's shouldNavigateTemplatableType guard.
+    // returnType uses entityKind + kind = "Intrinsic" so navigateTypeInternal returns early safely.
+    const voidType = { entityKind: "Type", kind: "Intrinsic" };
+    const op = { name: "noCategoryOp", isFinished: true, parameters: { properties: new Map() }, returnType: voidType, sourceOperation: undefined } as unknown as Operation;
+    const stateMaps = new Map<symbol, Map<object, unknown>>();
+
+    const mockProgram = {
+      stateMap(key: symbol): Map<object, unknown> {
+        return stateMaps.get(key) ?? new Map();
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+      hasError(): boolean {
+        return diags.length > 0;
+      },
+      getGlobalNamespaceType: () => makeGlobalNamespaceStub(op),
+    };
+
+    $onValidate(mockProgram as unknown as Program);
+    expect(diags.some((d) => d.code.endsWith("category-required"))).toBe(true);
+  });
+
+  it("emits category-exclusive when navigateProgram visits an op with both categories", () => {
+    const diags: Array<{ code: string }> = [];
+    // isFinished: true passes navigateProgram's shouldNavigateTemplatableType guard.
+    // returnType uses entityKind + kind = "Intrinsic" so navigateTypeInternal returns early safely.
+    const voidType = { entityKind: "Type", kind: "Intrinsic" };
+    const op = { name: "bothCategoryOp", isFinished: true, parameters: { properties: new Map() }, returnType: voidType, sourceOperation: undefined } as unknown as Operation;
+    const stateMaps = new Map<symbol, Map<object, unknown>>();
+
+    const D2_COMMAND_KEY_SYM = Symbol.for("D2.d2Command");
+    const D2_QUERY_KEY_SYM = Symbol.for("D2.d2Query");
+
+    const commandMap = new Map<object, unknown>();
+    commandMap.set(op, true);
+    stateMaps.set(D2_COMMAND_KEY_SYM, commandMap as Map<object, unknown>);
+
+    const queryMap = new Map<object, unknown>();
+    queryMap.set(op, true);
+    stateMaps.set(D2_QUERY_KEY_SYM, queryMap as Map<object, unknown>);
+
+    const mockProgram = {
+      stateMap(key: symbol): Map<object, unknown> {
+        return stateMaps.get(key) ?? new Map();
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+      hasError(): boolean {
+        return diags.length > 0;
+      },
+      getGlobalNamespaceType: () => makeGlobalNamespaceStub(op),
+    };
+
+    $onValidate(mockProgram as unknown as Program);
+    expect(diags.some((d) => d.code.endsWith("category-exclusive"))).toBe(true);
+  });
+
+  it("emits exposure-or-internal-required when op has a category but no exposure and no @d2Internal", () => {
+    const diags: Array<{ code: string }> = [];
+    // isFinished: true passes navigateProgram's shouldNavigateTemplatableType guard.
+    // returnType uses entityKind + kind = "Intrinsic" so navigateTypeInternal returns early safely.
+    const voidType = { entityKind: "Type", kind: "Intrinsic" };
+    const op = { name: "noExposureOp", isFinished: true, parameters: { properties: new Map() }, returnType: voidType, sourceOperation: undefined } as unknown as Operation;
+    const stateMaps = new Map<symbol, Map<object, unknown>>();
+
+    const D2_COMMAND_KEY_SYM = Symbol.for("D2.d2Command");
+    const commandMap = new Map<object, unknown>();
+    commandMap.set(op, true);
+    stateMaps.set(D2_COMMAND_KEY_SYM, commandMap as Map<object, unknown>);
+
+    const mockProgram = {
+      stateMap(key: symbol): Map<object, unknown> {
+        return stateMaps.get(key) ?? new Map();
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+      hasError(): boolean {
+        return diags.length > 0;
+      },
+      getGlobalNamespaceType: () => makeGlobalNamespaceStub(op),
+    };
+
+    $onValidate(mockProgram as unknown as Program);
+    expect(
+      diags.some((d) => d.code.endsWith("exposure-or-internal-required")),
+    ).toBe(true);
+  });
+
+  it("does not emit exposure-or-internal-required when @d2Internal is set (acceptance — covers !hasInternal false branch)", () => {
+    // This test exercises the false branch of `!hasExposure && !hasInternal` at onvalidate.ts:118,
+    // where hasInternal=true so the condition is false and no diagnostic is emitted.
+    const diags: Array<{ code: string }> = [];
+    const voidType = { entityKind: "Type", kind: "Intrinsic" };
+    const op = { name: "internalAcceptOp", isFinished: true, parameters: { properties: new Map() }, returnType: voidType, sourceOperation: undefined } as unknown as Operation;
+    const stateMaps = new Map<symbol, Map<object, unknown>>();
+
+    // Give it a category (category-required acceptance)
+    const D2_COMMAND_KEY_SYM = Symbol.for("D2.d2Command");
+    const commandMap = new Map<object, unknown>();
+    commandMap.set(op, true);
+    stateMaps.set(D2_COMMAND_KEY_SYM, commandMap as Map<object, unknown>);
+
+    // Mark as @d2Internal — satisfies exposure-or-internal-required (hasInternal=true → !hasInternal is false)
+    const D2_INTERNAL_KEY_SYM = Symbol.for("D2.d2Internal");
+    const internalMap = new Map<object, unknown>();
+    internalMap.set(op, true);
+    stateMaps.set(D2_INTERNAL_KEY_SYM, internalMap as Map<object, unknown>);
+
+    const mockProgram = {
+      stateMap(key: symbol): Map<object, unknown> {
+        return stateMaps.get(key) ?? new Map();
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+      hasError(): boolean {
+        return diags.length > 0;
+      },
+      getGlobalNamespaceType: () => makeGlobalNamespaceStub(op),
+    };
+
+    $onValidate(mockProgram as unknown as Program);
+    expect(
+      diags.some((d) => d.code.endsWith("exposure-or-internal-required")),
+    ).toBe(false);
+  });
+
+  it("emits internal-op-exposed when internal op has a route (route exposure branch)", () => {
+    const diags: Array<{ code: string }> = [];
+    const op = { name: "routedInternalOp" } as unknown as Operation;
+    const stateMaps = new Map<symbol, Map<object, unknown>>();
+
+    const D2_INTERNAL_KEY_SYM = Symbol.for("D2.d2Internal");
+    const HTTP_ROUTES_KEY = Symbol.for("@typespec/http/routes");
+    const HTTP_SHARED_ROUTES_KEY = Symbol.for("@typespec/http/sharedRoutes");
+
+    const internalMap = new Map<object, unknown>();
+    internalMap.set(op, true);
+    stateMaps.set(D2_INTERNAL_KEY_SYM, internalMap as Map<object, unknown>);
+
+    // Inject a route path so getRoutePath returns non-undefined
+    const routeMap = new Map<object, unknown>();
+    routeMap.set(op, "/route");
+    stateMaps.set(HTTP_ROUTES_KEY, routeMap as Map<object, unknown>);
+    stateMaps.set(HTTP_SHARED_ROUTES_KEY, new Map());
+
+    const mockProgram = {
+      stateMap(key: symbol): Map<object, unknown> {
+        return stateMaps.get(key) ?? new Map();
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+      hasError(): boolean {
+        return diags.length > 0;
+      },
+      getGlobalNamespaceType: makeEmptyGlobalNamespace,
+    };
+
+    $onValidate(mockProgram as unknown as Program);
+    expect(diags.some((d) => d.code.endsWith("internal-op-exposed"))).toBe(
+      true,
+    );
+  });
+
+  it("emits internal-op-exposed when internal op has a serverPush decorator (serverPush exposure branch)", () => {
+    const diags: Array<{ code: string }> = [];
+    const op = { name: "pushInternalOp" } as unknown as Operation;
+    const stateMaps = new Map<symbol, Map<object, unknown>>();
+
+    const D2_INTERNAL_KEY_SYM = Symbol.for("D2.d2Internal");
+    const D2_SERVER_PUSH_KEY_SYM = Symbol.for("D2.d2ServerPush");
+
+    const internalMap = new Map<object, unknown>();
+    internalMap.set(op, true);
+    stateMaps.set(D2_INTERNAL_KEY_SYM, internalMap as Map<object, unknown>);
+
+    const pushMap = new Map<object, unknown>();
+    pushMap.set(op, "user");
+    stateMaps.set(D2_SERVER_PUSH_KEY_SYM, pushMap as Map<object, unknown>);
+
+    const mockProgram = {
+      stateMap(key: symbol): Map<object, unknown> {
+        return stateMaps.get(key) ?? new Map();
+      },
+      reportDiagnostic(diag: { code: string }): void {
+        diags.push(diag);
+      },
+      hasError(): boolean {
+        return diags.length > 0;
+      },
+      getGlobalNamespaceType: makeEmptyGlobalNamespace,
+    };
+
+    $onValidate(mockProgram as unknown as Program);
+    expect(diags.some((d) => d.code.endsWith("internal-op-exposed"))).toBe(
+      true,
+    );
   });
 });
 
@@ -1348,6 +1805,8 @@ describe("d2RateLimitTier_RejectsInvalidTier", () => {
 describe("d2RateLimitTier_AcceptsValidTiers", () => {
   it("produces no invalid-rate-limit-tier diagnostic for 'Standard'", async () => {
     await runner.diagnose(`
+      @d2Query
+      @d2Internal
       @d2RateLimitTier("Standard")
       op goodOp(): void;
     `);
@@ -1358,6 +1817,8 @@ describe("d2RateLimitTier_AcceptsValidTiers", () => {
 
   it("produces no diagnostic for 'Elevated'", async () => {
     await runner.diagnose(`
+      @d2Query
+      @d2Internal
       @d2RateLimitTier("Elevated")
       op goodOp(): void;
     `);
@@ -1368,6 +1829,8 @@ describe("d2RateLimitTier_AcceptsValidTiers", () => {
 
   it("produces no diagnostic for 'Restricted'", async () => {
     await runner.diagnose(`
+      @d2Query
+      @d2Internal
       @d2RateLimitTier("Restricted")
       op goodOp(): void;
     `);
@@ -1395,6 +1858,7 @@ describe("d2GrpcMethod_RejectsInvalidStreaming", () => {
 describe("d2GrpcMethod_AcceptsServerStream", () => {
   it("produces no invalid-grpc-streaming diagnostic for 'serverStream'", async () => {
     await runner.diagnose(`
+      @d2Query
       @d2GrpcMethod("Svc", "Method", "serverStream")
       op goodOp(): void;
     `);
@@ -1422,6 +1886,7 @@ describe("d2ServerPush_RejectsInvalidTarget", () => {
 describe("d2ServerPush_AcceptsUser", () => {
   it("produces no invalid-push-target diagnostic for 'user'", async () => {
     await runner.diagnose(`
+      @d2Query
       @d2ServerPush("user")
       op goodOp(): void;
     `);
@@ -1449,6 +1914,8 @@ describe("d2Csrf_RejectsInvalidPosture", () => {
 describe("d2Csrf_AcceptsExempt", () => {
   it("produces no invalid-csrf-posture diagnostic for 'exempt'", async () => {
     await runner.diagnose(`
+      @d2Query
+      @d2Internal
       @d2Csrf("exempt")
       op goodOp(): void;
     `);
@@ -1530,6 +1997,8 @@ describe("d2RequireAnyScope_RejectsUnknownScope", () => {
 describe("d2RequireAnyScope_AcceptsKnownScope", () => {
   it("produces no unknown-scope diagnostic for 'self.read'", async () => {
     await runner.diagnose(`
+      @d2Query
+      @d2Internal
       @d2RequireAnyScope("self.read")
       op goodOp(): void;
     `);
@@ -1557,6 +2026,8 @@ describe("d2RequireAllScopes_RejectsUnknownScope", () => {
 describe("d2RequireAllScopes_AcceptsKnownScope", () => {
   it("produces no unknown-scope diagnostic for 'self.write'", async () => {
     await runner.diagnose(`
+      @d2Query
+      @d2Internal
       @d2RequireAllScopes("self.write")
       op goodOp(): void;
     `);
@@ -1584,6 +2055,8 @@ describe("d2Audience_RejectsUnknownAudience", () => {
 describe("d2Audience_AcceptsKnownAudience", () => {
   it("produces no unknown-audience diagnostic for 'Files'", async () => {
     await runner.diagnose(`
+      @d2Query
+      @d2Internal
       @d2Audience("Files")
       op goodOp(): void;
     `);
@@ -1596,6 +2069,8 @@ describe("d2Audience_AcceptsKnownAudience", () => {
 describe("d2Audience_AcceptsD2EdgeSpecialCase", () => {
   it("produces no unknown-audience diagnostic for 'd2-edge'", async () => {
     await runner.diagnose(`
+      @d2Query
+      @d2Internal
       @d2Audience("d2-edge")
       op goodOp(): void;
     `);
@@ -1634,6 +2109,8 @@ describe("d2ServedBy_RejectsEmptyOwner", () => {
 describe("d2ServedBy_AcceptsNonEmpty", () => {
   it("produces no empty-served-by diagnostic for non-empty owner", async () => {
     await runner.diagnose(`
+      @d2Query
+      @d2Internal
       @d2ServedBy("EdgeModule")
       op goodOp(): void;
     `);
@@ -1772,6 +2249,8 @@ describe("d2Resilience_RejectsPositionalAfterNamed", () => {
 describe("d2Resilience_AcceptsValidExpressions", () => {
   it("produces no resilience-* diagnostics for bare 'retry()'", async () => {
     await runner.diagnose(`
+      @d2Query
+      @d2Internal
       @d2Resilience("retry()")
       op goodOp(): void;
     `);
@@ -1782,6 +2261,8 @@ describe("d2Resilience_AcceptsValidExpressions", () => {
 
   it("produces no resilience-* diagnostics for 'retry(circuitBreaker(singleflight()))'", async () => {
     await runner.diagnose(`
+      @d2Query
+      @d2Internal
       @d2Resilience("retry(circuitBreaker(singleflight()))")
       op goodOp(): void;
     `);
@@ -1792,6 +2273,8 @@ describe("d2Resilience_AcceptsValidExpressions", () => {
 
   it("produces no resilience-* diagnostics for 'retry(3, circuitBreaker(threshold: 5))'", async () => {
     await runner.diagnose(`
+      @d2Query
+      @d2Internal
       @d2Resilience("retry(3, circuitBreaker(threshold: 5))")
       op goodOp(): void;
     `);
@@ -1834,6 +2317,7 @@ describe("d2InProcess_RejectsMissingServedBy", () => {
 describe("d2InProcess_AcceptsWithServedBy", () => {
   it("produces no inprocess-requires-served-by diagnostic when @d2ServedBy is present", async () => {
     await runner.diagnose(`
+      @d2Query
       @d2InProcess
       @d2ServedBy("EdgeModule")
       op leafOp(): void;
@@ -1847,6 +2331,7 @@ describe("d2InProcess_AcceptsWithServedBy", () => {
 describe("d2InProcess_DoubleApplyIsIdempotent", () => {
   it("applying @d2InProcess twice stores true with no inprocess-requires-served-by error", async () => {
     await runner.diagnose(`
+      @d2Query
       @d2InProcess
       @d2InProcess
       @d2ServedBy("Edge")
@@ -1875,8 +2360,22 @@ describe("d2InProcess_OnNonOperationIsCompilerRejected", () => {
 });
 
 it("lib_InProcessDiagnosticHasErrorSeverity", () => {
-  const catalog = $lib.diagnostics as Record<string, { severity: string }>;
-  expect(catalog["inprocess-requires-served-by"].severity).toBe("error");
+  const catalog = $lib.diagnostics as Record<
+    string,
+    { severity: string } | undefined
+  >;
+  expect(catalog["inprocess-requires-served-by"]?.severity).toBe("error");
+});
+
+it("lib_CategoryDiagnosticsHaveErrorSeverity", () => {
+  const catalog = $lib.diagnostics as Record<
+    string,
+    { severity: string } | undefined
+  >;
+  expect(catalog["category-required"]?.severity).toBe("error");
+  expect(catalog["category-exclusive"]?.severity).toBe("error");
+  expect(catalog["internal-op-exposed"]?.severity).toBe("error");
+  expect(catalog["exposure-or-internal-required"]?.severity).toBe("error");
 });
 
 // ===========================================================================
@@ -1918,6 +2417,7 @@ describe("onValidate_RateTierOnInternalOpReportsDiagnostic", () => {
 describe("onValidate_RateTierOnRoutedOpPasses", () => {
   it("produces no rate-tier-requires-route diagnostic when @d2RateLimitTier is on a routed op", async () => {
     await httpRunner.diagnose(`
+      @d2Query
       @d2RateLimitTier("Standard")
       @get @route("/items")
       op listItems(): void;
@@ -1959,11 +2459,218 @@ describe("onValidate_HarmlessPlusAllScopesReportsConflict", () => {
 describe("onValidate_HarmlessAlonePasses", () => {
   it("produces no harmless-scope-conflict diagnostic for @d2Harmless without scope decorators", async () => {
     await httpRunner.diagnose(`
+      @d2Query
+      @d2Internal
       @d2Harmless
       op healthCheck(): void;
     `);
     expect(getHttpDiagCodes()).not.toContain(
       "@d2/typespec-decorators/harmless-scope-conflict",
     );
+  });
+});
+
+// ===========================================================================
+// CQRS category required + exclusive tests (category-required / category-exclusive)
+// ===========================================================================
+
+describe("category_RejectsMissingCategory", () => {
+  it("emits category-required and hasError() when an op declares neither @d2Command nor @d2Query", async () => {
+    await httpRunner.diagnose(`
+      @d2Internal
+      op bareOp(): void;
+    `);
+    expect(getHttpDiagCodes()).toContain(
+      "@d2/typespec-decorators/category-required",
+    );
+    expect(httpRunner.program.hasError()).toBe(true);
+  });
+});
+
+describe("category_RejectsBothCommandAndQuery", () => {
+  it("emits category-exclusive and hasError() for @d2Command + @d2Query", async () => {
+    await httpRunner.diagnose(`
+      @d2Command
+      @d2Query
+      @d2Internal
+      op conflictCategoryOp(): void;
+    `);
+    expect(getHttpDiagCodes()).toContain(
+      "@d2/typespec-decorators/category-exclusive",
+    );
+    expect(httpRunner.program.hasError()).toBe(true);
+  });
+});
+
+describe("category_AcceptsExactlyOneCommand", () => {
+  it("produces no category-* diagnostic for a single @d2Command", async () => {
+    await httpRunner.diagnose(`
+      @d2Command
+      @d2Internal
+      op mutateOp(): void;
+    `);
+    expect(getHttpDiagCodes()).not.toContain(
+      "@d2/typespec-decorators/category-required",
+    );
+    expect(getHttpDiagCodes()).not.toContain(
+      "@d2/typespec-decorators/category-exclusive",
+    );
+  });
+});
+
+describe("category_AcceptsExactlyOneQuery", () => {
+  it("produces no category-* diagnostic for a single @d2Query", async () => {
+    await httpRunner.diagnose(`
+      @d2Query
+      @d2Internal
+      op readOp(): void;
+    `);
+    expect(getHttpDiagCodes()).not.toContain(
+      "@d2/typespec-decorators/category-required",
+    );
+    expect(getHttpDiagCodes()).not.toContain(
+      "@d2/typespec-decorators/category-exclusive",
+    );
+  });
+});
+
+// ===========================================================================
+// @d2Internal ⊕ exposure tests (internal-op-exposed)
+// ===========================================================================
+
+describe("internal_RejectsRouteExposure", () => {
+  it("emits internal-op-exposed and hasError() for @d2Internal + @route", async () => {
+    await httpRunner.diagnose(`
+      @d2Command
+      @d2Internal
+      @get @route("/x")
+      op exposedInternalOp(): void;
+    `);
+    expect(getHttpDiagCodes()).toContain(
+      "@d2/typespec-decorators/internal-op-exposed",
+    );
+    expect(httpRunner.program.hasError()).toBe(true);
+  });
+});
+
+describe("internal_RejectsGrpcExposure", () => {
+  it("emits internal-op-exposed and hasError() for @d2Internal + @d2GrpcMethod", async () => {
+    await httpRunner.diagnose(`
+      @d2Command
+      @d2Internal
+      @d2GrpcMethod("Svc", "M")
+      op grpcInternalOp(): void;
+    `);
+    expect(getHttpDiagCodes()).toContain(
+      "@d2/typespec-decorators/internal-op-exposed",
+    );
+    expect(httpRunner.program.hasError()).toBe(true);
+  });
+});
+
+describe("internal_RejectsInProcessExposure", () => {
+  it("emits internal-op-exposed and hasError() for @d2Internal + @d2InProcess", async () => {
+    await httpRunner.diagnose(`
+      @d2Command
+      @d2Internal
+      @d2InProcess
+      @d2ServedBy("Edge")
+      op inProcessInternalOp(): void;
+    `);
+    expect(getHttpDiagCodes()).toContain(
+      "@d2/typespec-decorators/internal-op-exposed",
+    );
+    expect(httpRunner.program.hasError()).toBe(true);
+  });
+});
+
+describe("internal_RejectsServerPushExposure", () => {
+  it("emits internal-op-exposed and hasError() for @d2Internal + @d2ServerPush", async () => {
+    await httpRunner.diagnose(`
+      @d2Command
+      @d2Internal
+      @d2ServerPush("user")
+      op pushInternalOp(): void;
+    `);
+    expect(getHttpDiagCodes()).toContain(
+      "@d2/typespec-decorators/internal-op-exposed",
+    );
+    expect(httpRunner.program.hasError()).toBe(true);
+  });
+});
+
+describe("internal_AcceptsWhenNotExposed", () => {
+  it("produces no internal-op-exposed diagnostic for @d2Internal with no exposure decorators", async () => {
+    await httpRunner.diagnose(`
+      @d2Command
+      @d2Internal
+      op pureInternalOp(): void;
+    `);
+    expect(getHttpDiagCodes()).not.toContain(
+      "@d2/typespec-decorators/internal-op-exposed",
+    );
+  });
+});
+
+// ===========================================================================
+// Exposure or internal required tests (exposure-or-internal-required)
+// ===========================================================================
+
+describe("exposureOrInternal_RejectsBareOp", () => {
+  it("emits exposure-or-internal-required and hasError() for an op with a category but no exposure and no @d2Internal", async () => {
+    await httpRunner.diagnose(`
+      @d2Query
+      op bareQueryOp(): void;
+    `);
+    expect(getHttpDiagCodes()).toContain(
+      "@d2/typespec-decorators/exposure-or-internal-required",
+    );
+    expect(httpRunner.program.hasError()).toBe(true);
+  });
+});
+
+describe("exposureOrInternal_AcceptsInternalOp", () => {
+  it("produces no exposure-or-internal-required diagnostic when @d2Internal is present", async () => {
+    await httpRunner.diagnose(`
+      @d2Query
+      @d2Internal
+      op internalQueryOp(): void;
+    `);
+    expect(getHttpDiagCodes()).not.toContain(
+      "@d2/typespec-decorators/exposure-or-internal-required",
+    );
+  });
+});
+
+// ===========================================================================
+// Adversarial: double-apply + non-operation target tests
+// ===========================================================================
+
+describe("category_DoubleApplyIsIdempotent", () => {
+  it("applying @d2Command twice stores true with no category-exclusive error", async () => {
+    await httpRunner.diagnose(`
+      @d2Command
+      @d2Command
+      @d2Internal
+      op doubleCommandOp(): void;
+    `);
+    expect(getHttpDiagCodes()).not.toContain(
+      "@d2/typespec-decorators/category-exclusive",
+    );
+    const values = [
+      ...httpRunner.program.stateMap(D2_COMMAND_KEY).values(),
+    ];
+    expect(values).toContain(true);
+  });
+});
+
+describe("category_OnNonOperationIsCompilerRejected", () => {
+  it("program has errors when @d2Command is applied to a model property", async () => {
+    await httpRunner.diagnose(`
+      model Foo {
+        @d2Command x: string;
+      }
+    `);
+    expect(httpRunner.program.hasError()).toBe(true);
   });
 });

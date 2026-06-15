@@ -24,6 +24,9 @@ export {
   D2_CSRF_KEY,
   D2_HARMLESS_KEY,
   D2_IN_PROCESS_KEY,
+  D2_COMMAND_KEY,
+  D2_QUERY_KEY,
+  D2_INTERNAL_KEY,
   type GrpcMethodPayload,
   type IdempotentPayload,
 } from "./state-keys.js";

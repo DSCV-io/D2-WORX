@@ -9,11 +9,14 @@ import type {
 } from "@typespec/compiler";
 import {
   D2_AUDIENCE_KEY,
+  D2_COMMAND_KEY,
   D2_CSRF_KEY,
   D2_GRPC_METHOD_KEY,
   D2_HARMLESS_KEY,
   D2_IDEMPOTENT_KEY,
   D2_IN_PROCESS_KEY,
+  D2_INTERNAL_KEY,
+  D2_QUERY_KEY,
   D2_RATE_LIMIT_TIER_KEY,
   D2_REDACT_KEY,
   D2_REQUIRE_ALL_SCOPES_KEY,
@@ -228,4 +231,48 @@ export function $d2InProcess(
   target: Operation,
 ): void {
   context.program.stateMap(D2_IN_PROCESS_KEY).set(target, true);
+}
+
+/**
+ * Marks an operation as a Command — it mutates persistent or shared state (DB write,
+ * distributed-cache write, external write, or message publish). Drives the generated
+ * handler into the Commands/ CQRS folder and the matching namespace segment.
+ * Stores `true` on the operation; emitters check for presence.
+ * Mutually exclusive with @d2Query (exactly one category required) — enforced by $onValidate.
+ */
+export function $d2Command(
+  context: DecoratorContext,
+  target: Operation,
+): void {
+  context.program.stateMap(D2_COMMAND_KEY).set(target, true);
+}
+
+/**
+ * Marks an operation as a Query — it is read-only (no persistent or shared-state mutation;
+ * local/in-memory caching does not make a Query a Command). Drives the generated handler into
+ * the Queries/ CQRS folder and the matching namespace segment.
+ * Stores `true` on the operation; emitters check for presence.
+ * Mutually exclusive with @d2Command (exactly one category required) — enforced by $onValidate.
+ */
+export function $d2Query(
+  context: DecoratorContext,
+  target: Operation,
+): void {
+  context.program.stateMap(D2_QUERY_KEY).set(target, true);
+}
+
+/**
+ * Marks an operation as in-app-only — NOT callable across any boundary. The emitter suppresses
+ * every cross-boundary surface (REST route, gRPC service + proto message, in-process leaf entry,
+ * and the I<Module>Client entry), so the op is structurally absent from the module's cross-boundary
+ * client. The explicit "not callable from outside" marker.
+ * Stores `true` on the operation; emitters check for presence.
+ * Mutually exclusive with the exposure decorators (@route / @d2GrpcMethod / @d2InProcess) —
+ * enforced by $onValidate.
+ */
+export function $d2Internal(
+  context: DecoratorContext,
+  target: Operation,
+): void {
+  context.program.stateMap(D2_INTERNAL_KEY).set(target, true);
 }

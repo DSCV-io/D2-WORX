@@ -26,6 +26,9 @@ Edge routing config, and structured-log redaction markers.
 | `@d2Csrf`             | `op`            | `posture: string`                                            | `D2_CSRF_KEY`               |
 | `@d2Harmless`         | `op`            | _(none)_                                                     | `D2_HARMLESS_KEY`           |
 | `@d2InProcess`        | `op`            | _(none)_                                                     | `D2_IN_PROCESS_KEY`         |
+| `@d2Command`          | `op`            | _(none)_                                                     | `D2_COMMAND_KEY`            |
+| `@d2Query`            | `op`            | _(none)_                                                     | `D2_QUERY_KEY`              |
+| `@d2Internal`         | `op`            | _(none)_                                                     | `D2_INTERNAL_KEY`           |
 
 ### Scope decorators
 
@@ -120,7 +123,7 @@ if (result.ok) {
 
 ## Validation
 
-All 13 decorators carry build-time validation. Every diagnostic is **severity "error"** —
+All 16 decorators carry build-time validation. Every diagnostic is **severity "error"** —
 invalid configurations fail the TypeSpec compile rather than emitting a warning.
 
 ### Eager value-set checks (run in each `$fn` body)
@@ -146,6 +149,41 @@ invalid configurations fail the TypeSpec compile rather than emitting a warning.
 | `rate-tier-requires-route`     | `@d2RateLimitTier` on an op with no `@route` — internal ops bypass Edge rate-limiting                             |
 | `harmless-scope-conflict`      | `@d2Harmless` combined with `@d2RequireAnyScope` or `@d2RequireAllScopes` — auth-exempt ops cannot require scopes |
 | `inprocess-requires-served-by` | `@d2InProcess` without `@d2ServedBy` — an in-process leaf needs a named owner to generate its interface           |
+| `category-required`            | Operation declares neither `@d2Command` nor `@d2Query` — exactly one CQRS category is required on every op        |
+| `category-exclusive`           | Operation declares both `@d2Command` and `@d2Query` — categories are mutually exclusive                           |
+| `internal-op-exposed`          | `@d2Internal` combined with `@route`, `@d2GrpcMethod`, `@d2InProcess`, or `@d2ServerPush` — an internal op is not callable across any boundary |
+| `exposure-or-internal-required`| Operation has no transport exposure (`@route` / `@d2GrpcMethod` / `@d2InProcess` / `@d2ServerPush`) and is not `@d2Internal` |
+
+### CQRS category + internal marker
+
+`@d2Command` marks a mutating CQRS operation (mutates persistent/shared state — DB write, distributed-cache write,
+external write, message publish). `@d2Query` marks a read-only operation. Exactly one must appear on every operation;
+the category drives the `Commands/` vs `Queries/` folder placement in generated handler scaffolding.
+
+`@d2Internal` marks an operation as in-app-only — no cross-boundary surface is generated. An internal op may not
+carry any exposure decorator (`@route`, `@d2GrpcMethod`, `@d2InProcess`, `@d2ServerPush`). Every operation must
+either carry an exposure decorator or be marked `@d2Internal`.
+
+```typespec
+@d2Command
+op createOrder(): void;   // mutating — goes in Commands/
+
+@d2Query
+op listOrders(): void;    // read-only — goes in Queries/
+
+@d2Command
+@d2Internal
+op recomputeCache(): void; // in-app-only mutating op — no cross-boundary surface
+```
+
+Emitters read these as presence checks:
+
+```ts
+import { D2_COMMAND_KEY, D2_QUERY_KEY, D2_INTERNAL_KEY } from "@d2/typespec-decorators";
+const isCommand  = program.stateMap(D2_COMMAND_KEY).has(op);   // → Commands/ folder
+const isQuery    = program.stateMap(D2_QUERY_KEY).has(op);     // → Queries/ folder
+const isInternal = program.stateMap(D2_INTERNAL_KEY).has(op);  // suppress cross-boundary surface
+```
 
 ### `@d2Resilience` DSL parser
 
@@ -189,9 +227,13 @@ DSL-specific diagnostic codes:
 - **`lib/main.tsp`** (via `tspMain`) — declares `extern dec` under `namespace D2`; imported by
   TypeSpec consumers. Imports `dist/tsp-index.js` to register the JS implementations.
 - **`dist/index.js`** (via `main`) — emitter-facing barrel: re-exports state-key symbols
-  (`D2_*_KEY` constants including `D2_IN_PROCESS_KEY`), payload types (`GrpcMethodPayload`, `IdempotentPayload`), the
-  resilience parser (`parse`, `ResiliencePolicyNode`, `ResilienceParseResult`,
-  `ResilienceParseError`, `ResilienceDiagnosticCode`), `$lib`, and `$decorators`.
+  (`D2_REQUIRE_ANY_SCOPE_KEY`, `D2_REQUIRE_ALL_SCOPES_KEY`, `D2_RATE_LIMIT_TIER_KEY`,
+  `D2_AUDIENCE_KEY`, `D2_SERVED_BY_KEY`, `D2_GRPC_METHOD_KEY`, `D2_REDACT_KEY`,
+  `D2_SERVER_PUSH_KEY`, `D2_IDEMPOTENT_KEY`, `D2_RESILIENCE_KEY`, `D2_CSRF_KEY`,
+  `D2_HARMLESS_KEY`, `D2_IN_PROCESS_KEY`, `D2_COMMAND_KEY`, `D2_QUERY_KEY`, `D2_INTERNAL_KEY`),
+  payload types (`GrpcMethodPayload`, `IdempotentPayload`), the resilience parser (`parse`,
+  `ResiliencePolicyNode`, `ResilienceParseResult`, `ResilienceParseError`,
+  `ResilienceDiagnosticCode`), `$lib`, and `$decorators`.
 - **`$onValidate`** is exported from `dist/tsp-index.js` (the module `lib/main.tsp` imports);
   the TypeSpec compiler discovers and runs it after all decorators have applied.
 
@@ -245,6 +287,9 @@ is an emitter-fleet responsibility, not encoded in the AST. The emitter must der
 | `@d2Csrf` | `program.stateMap(D2_CSRF_KEY).get(op) as string` | `required \| exempt` |
 | `@d2Harmless` | `program.stateMap(D2_HARMLESS_KEY).has(op)` | Presence check; mutually exclusive with scope decorators (enforced at compile time) |
 | `@d2InProcess` | `program.stateMap(D2_IN_PROCESS_KEY).has(op)` | Presence check; the explicit leaf-vs-gRPC trigger; requires `@d2ServedBy` (enforced at compile time) |
+| `@d2Command`   | `program.stateMap(D2_COMMAND_KEY).has(op)` | Presence check; drives `Commands/` folder placement in generated handler scaffolding |
+| `@d2Query`     | `program.stateMap(D2_QUERY_KEY).has(op)` | Presence check; drives `Queries/` folder placement in generated handler scaffolding |
+| `@d2Internal`  | `program.stateMap(D2_INTERNAL_KEY).has(op)` | Presence check; when true, suppress all cross-boundary surface generation for this op |
 
 `@d2Resilience` note: the decorator stores the validated raw DSL string. Emitters must call the
 exported `parse()` function to obtain the `ResiliencePolicyNode` AST for code generation. The
@@ -254,7 +299,7 @@ exported `parse()` function to obtain the `ResiliencePolicyNode` AST for code ge
 
 ```bash
 pnpm --filter @d2/typespec-decorators build            # tsc -b → dist/
-pnpm --filter @d2/typespec-decorators test             # vitest run (204 tests across decorators + resilience-dsl suites)
+pnpm --filter @d2/typespec-decorators test             # vitest run (236 tests across decorators + resilience-dsl suites)
 pnpm --filter @d2/typespec-decorators run test:coverage  # vitest run --coverage (100% threshold, requires dist/)
 ```
 

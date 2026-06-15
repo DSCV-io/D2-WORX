@@ -86,3 +86,12 @@ extern dec d2Harmless(target: Operation);
  * requires @d2ServedBy. Drives the generated I<Owner>InternalApi leaf interface.
  */
 extern dec d2InProcess(target: Operation);
+
+/** Marks an operation as a Command — it mutates persistent/shared state (drives the Commands/ folder). */
+extern dec d2Command(target: Operation);
+
+/** Marks an operation as a Query — read-only, no persistent/shared-state mutation (drives the Queries/ folder). */
+extern dec d2Query(target: Operation);
+
+/** Marks an operation as in-app-only — no cross-boundary surface is generated; structurally uncallable from outside. */
+extern dec d2Internal(target: Operation);

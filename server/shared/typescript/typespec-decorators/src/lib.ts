@@ -137,6 +137,38 @@ export const $lib = createTypeSpecLibrary({
       },
     },
 
+    /** An operation declares neither @d2Command nor @d2Query. Exactly one CQRS category is required. */
+    "category-required": {
+      severity: "error",
+      messages: {
+        default: paramMessage`operation '${"op"}' must declare @d2Command or @d2Query — exactly one CQRS category is required`,
+      },
+    },
+
+    /** An operation declares both @d2Command and @d2Query. The categories are mutually exclusive. */
+    "category-exclusive": {
+      severity: "error",
+      messages: {
+        default: paramMessage`operation '${"op"}' declares both @d2Command and @d2Query — exactly one CQRS category is required`,
+      },
+    },
+
+    /** @d2Internal was combined with a cross-boundary exposure decorator. An internal op is not callable from outside. */
+    "internal-op-exposed": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2Internal on '${"op"}' cannot be combined with ${"decorator"} — an internal op is not callable across any boundary`,
+      },
+    },
+
+    /** An operation declares no exposure decorator and is not marked @d2Internal. Every op must declare its callability. */
+    "exposure-or-internal-required": {
+      severity: "error",
+      messages: {
+        default: paramMessage`operation '${"op"}' must declare a transport (@route / @d2GrpcMethod / @d2InProcess) or be marked @d2Internal`,
+      },
+    },
+
     // ----------------------------------------------------------------
     // @d2Resilience pipeline-expression DSL parser diagnostics
     // ----------------------------------------------------------------

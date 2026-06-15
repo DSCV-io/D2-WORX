@@ -48,6 +48,15 @@ export const D2_HARMLESS_KEY = Symbol.for("D2.d2Harmless");
 /** State key for @d2InProcess — stores `true` on the marked operation. */
 export const D2_IN_PROCESS_KEY = Symbol.for("D2.d2InProcess");
 
+/** State key for @d2Command — stores `true` on the marked operation (mutating CQRS op). */
+export const D2_COMMAND_KEY = Symbol.for("D2.d2Command");
+
+/** State key for @d2Query — stores `true` on the marked operation (read-only CQRS op). */
+export const D2_QUERY_KEY = Symbol.for("D2.d2Query");
+
+/** State key for @d2Internal — stores `true` on the marked operation (no cross-boundary surface). */
+export const D2_INTERNAL_KEY = Symbol.for("D2.d2Internal");
+
 /**
  * Payload stored by @d2GrpcMethod: the gRPC service name, method name, and
  * streaming mode. `streaming` is one of `unary | serverStream | clientStream |
