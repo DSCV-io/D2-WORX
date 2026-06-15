@@ -16,6 +16,9 @@ Each row maps a committed fixture to its regeneration guarantee.
 | `GetJwksInput.g.cs` | `emitCsharpDtos("getJwks", "D2.Edge.Tests.TypeSpecDto.Generated", "contracts/typespec/key-custodian/key-custodian.tsp", [], [], [])` | Byte-identical to `GET_JWKS_INPUT_FIXTURE` | `tests/byte-parity.test.ts` | `byteParity_GetJwksInput_CommittedFixtureIdentical` |
 | `GetJwksOutput.g.cs` | `emitCsharpDtos("getJwks", ..., [], outputFields, [nested("Jwk", ...)])` | Byte-identical to `GET_JWKS_OUTPUT_FIXTURE` | `tests/byte-parity.test.ts` | `byteParity_GetJwksOutput_CommittedFixtureIdentical` |
 | `SignInput.g.cs` | `emitCsharpDtos("sign", ..., inputFields, [], [])` | Byte-identical to `SIGN_INPUT_FIXTURE` | `tests/byte-parity.test.ts` | `byteParity_SignInput_CommittedFixtureIdentical` |
+| `key_custodian_signer_sign.g.proto` | `emitProto("sign", "KeyCustodianSigner", "Sign", "unary", "d2.keycustodian.v1", "D2.Services.Protos.KeyCustodian.V1", ...)` | Byte-identical to `SIGN_PROTO_FIXTURE` | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_SignProto_CommittedFixtureIdentical` |
+| `KeyCustodianSignerService.g.cs` | `emitGrpcService("sign", "KeyCustodianSigner", "Sign", "D2.Edge.Tests.TypeSpecGrpc.Generated", ...)` | Byte-identical to `SIGN_SERVICE_FIXTURE` | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_KeyCustodianSignerService_CommittedFixtureIdentical` |
+| `SignTransportMappers.g.cs` | `emitGrpcService(...)` (mappers file) | Byte-identical to `SIGN_MAPPER_FIXTURE` | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_SignTransportMappers_CommittedFixtureIdentical` |
 
 **Deliberate-drift non-vacuity guard**: each byte-parity describe block contains a second
 test that mutates the respective fixture by one byte and asserts the regenerated content
@@ -79,6 +82,19 @@ TypeSpec test-host and asserts emitted file content in the in-memory FS:
 
 ---
 
+## gRPC harness C# validation table
+
+Committed C# fixture files exercised by the in-memory gRPC harness in `D2.Edge.Tests`:
+
+| Fixture | Validated by | Key assertion |
+|---|---|---|
+| `key_custodian_signer_sign.g.proto` | `ProtoRoundTripTests` (5 tests) | `SignRequest` / `SignResponse` proto3 messages compile and round-trip via `Grpc.Tools`-generated types |
+| `KeyCustodianSignerService.g.cs` | `GrpcServiceImplTests.Sign_Success_ReturnsSignatureFromHandler` | Proto→DTO mapping, handler delegation, and DTO→proto mapping work end-to-end via in-process `TestServer` |
+| `KeyCustodianSignerService.g.cs` | `GrpcServiceImplTests.Sign_HandlerFailure_ThrowsRpcExceptionInternal` | `D2Result` failure maps to `RpcException(StatusCode.Internal)` with empty detail (no info leak) |
+| `SignTransportMappers.g.cs` | Exercised by `GrpcServiceImplTests` via `KeyCustodianSignerService.g.cs` | `ToSignInput()` / `ToProtoSignOutput()` C# 14 extension members compile and map correctly |
+
+---
+
 ## Coverage summary
 
 | Metric | Result |
@@ -87,5 +103,5 @@ TypeSpec test-host and asserts emitted file content in the in-memory FS:
 | Branches | 100% |
 | Functions | 100% |
 | Statements | 100% |
-| Test files | 12 |
-| Total tests | 129 |
+| Test files | 17 |
+| Total tests | 216 |

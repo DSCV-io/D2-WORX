@@ -30,3 +30,8 @@ export type { EmittedFile } from "./lib/csharp-dto-emitter.js";
 
 export { emitTsDtos } from "./lib/ts-dto-emitter.js";
 export type { EmittedTsFile } from "./lib/ts-dto-emitter.js";
+
+export { emitProto } from "./lib/proto-emitter.js";
+export type { ProtoFieldInfo, StreamingMode } from "./lib/proto-emitter.js";
+
+export { emitGrpcService } from "./lib/grpc-service-emitter.js";

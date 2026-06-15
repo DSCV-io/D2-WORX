@@ -13,9 +13,11 @@ import { emitGeneratedFile, resolveOutputPath } from "./lib/emit-file.js";
 import { walkModel } from "./lib/model-walk.js";
 import { emitCsharpDtos } from "./lib/csharp-dto-emitter.js";
 import { emitTsDtos } from "./lib/ts-dto-emitter.js";
+import { emitProto } from "./lib/proto-emitter.js";
+import { emitGrpcService } from "./lib/grpc-service-emitter.js";
 import { $lib } from "./lib.js";
 
-// The $onEmit entry point drives three artifacts per tsp compile:
+// The $onEmit entry point drives five artifact families per tsp compile:
 //
 //   1. operations-manifest.json — operations smoke manifest from the initial
 //      scaffold; kept so the operations-manifest integration test stays green
@@ -23,11 +25,15 @@ import { $lib } from "./lib.js";
 //   2. <Op>Input.g.cs + <Op>Output.g.cs — C# sealed-record DTO pairs for
 //      every operation with a concrete input or output model.
 //   3. <op>-dto.g.ts — TypeScript interface pair for the same operations.
+//   4. <Service>_<method>.g.proto — proto3 service + message declarations for
+//      every operation decorated with @d2GrpcMethod.
+//   5. <Service>Service.g.cs + <Op>TransportMappers.g.cs — C# gRPC service
+//      class (extends the Grpc.Tools base) + transport mappers for those ops.
 //
-// Namespace for C# is read from the tspconfig emitter option `csharp-namespace`.
-// Each operation's Input/Output pair lands under that namespace. When the
-// option is absent, a safe default is used and a warning is noted via the
-// emitter package name in the banner.
+// Namespace for C# DTOs is read from `csharp-namespace`.
+// Proto package from `proto-package`; proto C# namespace from `proto-csharp-namespace`;
+// gRPC service-impl C# namespace from `grpc-service-namespace`.
+// Each option falls back to a safe placeholder when absent.
 
 /** Shape of one operation entry in the smoke manifest. */
 export interface ManifestOperation {
@@ -52,12 +58,24 @@ export async function $onEmit(context: EmitContext): Promise<void> {
   const program = context.program;
   const ops: ManifestOperation[] = [];
 
-  // Read the csharp-namespace emitter option; fall back to a safe placeholder.
+  // Read emitter options; fall back to safe placeholders when absent.
   const rawOptions = (context.options ?? {}) as Record<string, unknown>;
   const csNamespace =
     typeof rawOptions["csharp-namespace"] === "string" && rawOptions["csharp-namespace"].length > 0
       ? rawOptions["csharp-namespace"]
       : "D2.Generated";
+  const protoPackage =
+    typeof rawOptions["proto-package"] === "string" && rawOptions["proto-package"].length > 0
+      ? rawOptions["proto-package"]
+      : "d2.generated.v1";
+  const protoCsharpNs =
+    typeof rawOptions["proto-csharp-namespace"] === "string" && rawOptions["proto-csharp-namespace"].length > 0
+      ? rawOptions["proto-csharp-namespace"]
+      : "D2.Generated.Protos.V1";
+  const grpcServiceNs =
+    typeof rawOptions["grpc-service-namespace"] === "string" && rawOptions["grpc-service-namespace"].length > 0
+      ? rawOptions["grpc-service-namespace"]
+      : "D2.Generated.Grpc";
 
   navigateProgram(program, {
     operation(op: Operation) {
@@ -89,6 +107,26 @@ export async function $onEmit(context: EmitContext): Promise<void> {
       // Emit C# + TS DTOs only when we have at least one side with a concrete model.
       if (inputModel !== undefined || outputModel !== undefined) {
         emitDtoPair(context, program, op.name, csNamespace, specHint, inputModel, outputModel);
+      }
+
+      // Emit proto + gRPC service impl only for ops carrying @d2GrpcMethod.
+      const grpcPayload = program.stateMap(D2_GRPC_METHOD_KEY).get(op) as
+        | { service: string; method: string; streaming: string }
+        | undefined;
+      if (grpcPayload !== undefined && (inputModel !== undefined || outputModel !== undefined)) {
+        emitProtoAndGrpcService(
+          context,
+          program,
+          op.name,
+          grpcPayload,
+          protoPackage,
+          protoCsharpNs,
+          grpcServiceNs,
+          csNamespace,
+          specHint,
+          inputModel,
+          outputModel,
+        );
       }
     },
   });
@@ -176,6 +214,102 @@ function emitDtoPair(
 
   const tsPath = resolveOutputPath(context, tsFile.fileName);
   void emitGeneratedFile(program, tsPath, tsFile.content);
+}
+
+function emitProtoAndGrpcService(
+  context: EmitContext,
+  program: Parameters<typeof walkModel>[0],
+  opName: string,
+  grpc: { service: string; method: string; streaming: string },
+  protoPackage: string,
+  protoCsharpNs: string,
+  grpcServiceNs: string,
+  dtoCsharpNs: string,
+  specHint: string,
+  inputModel: Model | undefined,
+  outputModel: Model | undefined,
+): void {
+  const errors: string[] = [];
+  const onError = (
+    code: "unmapped-scalar" | "unsupported-property-type" | "invalid-streaming-mode",
+    message: string,
+  ): void => {
+    errors.push(message);
+    if (code === "unmapped-scalar")
+      $lib.reportDiagnostic(program, { code: "unmapped-scalar", format: { scalar: message }, target: NoTarget });
+    else if (code === "invalid-streaming-mode")
+      $lib.reportDiagnostic(program, { code: "unmapped-scalar", format: { scalar: message }, target: NoTarget });
+    else
+      $lib.reportDiagnostic(program, {
+        code: "unsupported-property-type",
+        format: { kind: "unsupported", property: message },
+        target: NoTarget,
+      });
+  };
+
+  const inputWalk = inputModel !== undefined
+    ? walkModel(program, inputModel, onError)
+    : { fields: [], nestedModels: [] };
+
+  const outputWalk = outputModel !== undefined
+    ? walkModel(program, outputModel, onError)
+    : { fields: [], nestedModels: [] };
+
+  if (errors.length > 0) return;
+
+  // ---- proto emission ----
+  // Proto message names follow the <Method>Request / <Method>Response convention
+  // (matches existing hand-authored protos in contracts/protos/) and are distinct
+  // from the DTO model names (<Op>Input / <Op>Output), eliminating any name collision.
+  const protoRequestName = `${grpc.method}Request`;
+  const protoResponseName = `${grpc.method}Response`;
+
+  // DTO model names come from the TypeSpec model name (e.g. SignInput / SignOutput).
+  const dtoRequestName = inputModel?.name ?? `${grpc.method}Input`;
+  const dtoResponseName = outputModel?.name ?? `${grpc.method}Output`;
+
+  const protoFile = emitProto(
+    opName,
+    grpc.service,
+    grpc.method,
+    grpc.streaming,
+    protoPackage,
+    protoCsharpNs,
+    specHint,
+    protoRequestName,
+    inputWalk.fields,
+    protoResponseName,
+    outputWalk.fields,
+    outputWalk.nestedModels,
+    onError,
+  );
+  if (errors.length > 0 || protoFile === undefined) return;
+
+  const protoPath = resolveOutputPath(context, protoFile.fileName);
+  void emitGeneratedFile(program, protoPath, protoFile.content);
+
+  // ---- gRPC service + mapper emission ----
+  const [serviceFile, mapperFile] = emitGrpcService(
+    opName,
+    grpc.service,
+    grpc.method,
+    protoCsharpNs,
+    grpcServiceNs,
+    dtoCsharpNs,
+    specHint,
+    protoRequestName,
+    protoResponseName,
+    dtoRequestName,
+    inputWalk.fields,
+    dtoResponseName,
+    outputWalk.fields,
+  );
+
+  const servicePath = resolveOutputPath(context, serviceFile.fileName);
+  void emitGeneratedFile(program, servicePath, serviceFile.content);
+
+  const mapperPath = resolveOutputPath(context, mapperFile.fileName);
+  void emitGeneratedFile(program, mapperPath, mapperFile.content);
 }
 
 /**

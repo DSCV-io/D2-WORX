@@ -42,6 +42,19 @@ export interface FieldInfo {
   readonly tsName: string;
   /** TypeScript type string including collection wrapper. */
   readonly tsType: string;
+  /**
+   * proto3 type string for the field's element type (scalars only, no `repeated`
+   * prefix or wrapper — the proto emitter adds those). Examples: "string",
+   * "bytes", "int32". Populated for scalar and scalar-array fields; undefined
+   * for nested-model fields (the model name is used directly as the proto type).
+   */
+  readonly protoType?: string;
+  /**
+   * True when the field represents a collection (TypeSpec `T[]`). Proto emitter
+   * emits `repeated <protoType> <field_name>` for these. Mirrors the C#
+   * `IReadOnlyList<T>` and TS `readonly T[]` wrappers already in csType/tsType.
+   */
+  readonly repeated: boolean;
   /** True when the ModelProperty is marked optional (`?:`). */
   readonly optional: boolean;
   /** True when the ModelProperty carries @d2Redact state. */
@@ -135,6 +148,8 @@ function resolveProperty(
       csType: optional ? `${mapping.cs}?` : mapping.cs,
       tsName: propName,
       tsType: mapping.ts,
+      protoType: mapping.proto,
+      repeated: false,
       optional,
       redact,
     };
@@ -161,6 +176,8 @@ function resolveProperty(
         csType: `IReadOnlyList<${mapping.cs}>`,
         tsName: propName,
         tsType: `readonly ${mapping.ts}[]`,
+        protoType: mapping.proto,
+        repeated: true,
         optional,
         redact,
       };
@@ -175,6 +192,10 @@ function resolveProperty(
         csType: `IReadOnlyList<${elementType.name}>`,
         tsName: propName,
         tsType: `readonly ${elementType.name}[]`,
+        // protoType is undefined for nested-model collections; the model name
+        // is used as the proto type directly (not a registry scalar).
+        protoType: undefined,
+        repeated: true,
         optional,
         redact,
         nested,
@@ -199,6 +220,9 @@ function resolveProperty(
       csType: optional ? `${t.name}?` : t.name,
       tsName: propName,
       tsType: t.name,
+      // protoType is undefined for nested models; the model name is the proto type.
+      protoType: undefined,
+      repeated: false,
       optional,
       redact,
       nested,
@@ -253,6 +277,8 @@ function collectNested(
         csType: optional ? `${mapping.cs}?` : mapping.cs,
         tsName: propName,
         tsType: mapping.ts,
+        protoType: mapping.proto,
+        repeated: false,
         optional,
         redact: false,
       });

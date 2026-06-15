@@ -545,6 +545,299 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     expect(csFile).toBeDefined();
     expect(csFile!.content).toContain("contracts/typespec/test.tsp");
   });
+
+  it("op with @d2GrpcMethod + concrete models → proto + service + mapper emitted", async () => {
+    // Exercise the emitProtoAndGrpcService path in src/emitter.ts.
+    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const bytesScalar = { kind: "Scalar", name: "bytes" } as unknown as Scalar;
+    const kidProp = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const payloadProp = { type: bytesScalar, optional: false } as unknown as ModelProperty;
+    const sigProp = { type: stringScalar, optional: false } as unknown as ModelProperty;
+
+    const inputModel = {
+      kind: "Model",
+      name: "SignInput",
+      properties: new Map<string, ModelProperty>([["kid", kidProp], ["payload", payloadProp]]),
+    } as unknown as Model;
+
+    const outputModel = {
+      kind: "Model",
+      name: "SignOutput",
+      properties: new Map<string, ModelProperty>([["signature", sigProp]]),
+    } as unknown as Model;
+
+    // Wrap inputModel as a single named param (matches the sign op shape).
+    const inputProp = { type: inputModel, optional: false } as unknown as ModelProperty;
+    const wrappedParams = {
+      kind: "Model",
+      name: "",
+      properties: new Map<string, ModelProperty>([["input", inputProp]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "sign",
+      parameters: wrappedParams,
+      returnType: outputModel,
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    // Wire @d2GrpcMethod state map for this op.
+    const grpcMap = new Map<object, unknown>([
+      [op, { service: "KeyCustodianSigner", method: "Sign", streaming: "unary" }],
+    ]);
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(key: symbol): Map<object, unknown> {
+        if (key === D2_GRPC_METHOD_KEY) return grpcMap;
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {
+        "csharp-namespace": "D2.Test",
+        "proto-package": "d2.test.v1",
+        "proto-csharp-namespace": "D2.Test.Protos.V1",
+        "grpc-service-namespace": "D2.Test.Grpc",
+      },
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    const paths = directUnitEmitted.map((e) => e.path);
+    // .proto file emitted.
+    expect(paths.some((p) => p.includes(".g.proto"))).toBe(true);
+    // gRPC service class emitted.
+    expect(paths.some((p) => p.includes("KeyCustodianSignerService.g.cs"))).toBe(true);
+    // Transport mapper emitted.
+    expect(paths.some((p) => p.includes("SignTransportMappers.g.cs"))).toBe(true);
+  });
+
+  it("op with @d2GrpcMethod + unmapped scalar → reportDiagnostic called, no proto emitted", async () => {
+    // Exercise the onError path inside emitProtoAndGrpcService.
+    const utcScalar = { kind: "Scalar", name: "utcDateTime" } as unknown as Scalar;
+    const badProp = { type: utcScalar, optional: false } as unknown as ModelProperty;
+
+    const badModel = {
+      kind: "Model",
+      name: "BadGrpcInput",
+      properties: new Map<string, ModelProperty>([["when", badProp]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "badGrpc",
+      parameters: badModel,
+      returnType: { kind: "Intrinsic", name: "void" } as unknown as Model,
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    const grpcMap = new Map<object, unknown>([
+      [op, { service: "MySvc", method: "Do", streaming: "unary" }],
+    ]);
+
+    const reportedDiagnostics: Array<{ code: string }> = [];
+    const libModule = await import("../src/lib.js");
+    vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
+      (_prog, diag: { code: string }) => { reportedDiagnostics.push({ code: diag.code }); },
+    );
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(key: symbol): Map<object, unknown> {
+        if (key === D2_GRPC_METHOD_KEY) return grpcMap;
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {
+        "csharp-namespace": "D2.Test",
+        "proto-package": "d2.test.v1",
+        "proto-csharp-namespace": "D2.Test.Protos.V1",
+        "grpc-service-namespace": "D2.Test.Grpc",
+      },
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    expect(reportedDiagnostics.some((d) => d.code === "unmapped-scalar")).toBe(true);
+    expect(directUnitEmitted.filter((e) => e.path.endsWith(".g.proto"))).toHaveLength(0);
+  });
+
+  it("op with @d2GrpcMethod + invalid streaming mode → reportDiagnostic called (else if branch)", async () => {
+    // Exercise the `else if (code === "invalid-streaming-mode")` branch in emitProtoAndGrpcService.
+    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const inputModel = {
+      kind: "Model",
+      name: "DoInput",
+      properties: new Map<string, ModelProperty>([["id", prop]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "doOp",
+      parameters: inputModel,
+      returnType: { kind: "Intrinsic", name: "void" } as unknown as Model,
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    // Use an invalid streaming mode — triggers onError with "invalid-streaming-mode".
+    const grpcMap = new Map<object, unknown>([
+      [op, { service: "MySvc", method: "Do", streaming: "bidirectional" }],
+    ]);
+
+    const reportedDiagnostics: Array<{ code: string }> = [];
+    const libModule = await import("../src/lib.js");
+    vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
+      (_prog, diag: { code: string }) => { reportedDiagnostics.push({ code: diag.code }); },
+    );
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(key: symbol): Map<object, unknown> {
+        if (key === D2_GRPC_METHOD_KEY) return grpcMap;
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {
+        "csharp-namespace": "D2.Test",
+        "proto-package": "d2.test.v1",
+        "proto-csharp-namespace": "D2.Test.Protos.V1",
+        "grpc-service-namespace": "D2.Test.Grpc",
+      },
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    // Invalid streaming mode fires diagnostic (mapped via the else-if branch to unmapped-scalar code).
+    expect(reportedDiagnostics.some((d) => d.code === "unmapped-scalar")).toBe(true);
+    expect(directUnitEmitted.filter((e) => e.path.endsWith(".g.proto"))).toHaveLength(0);
+  });
+
+  it("op with @d2GrpcMethod + enum field → reportDiagnostic unsupported-property-type (else branch)", async () => {
+    // Exercise the `else` branch in emitProtoAndGrpcService onError:
+    // walkModel fires "unsupported-property-type" for enum properties.
+    const enumType = { kind: "Enum", name: "Status" } as unknown as Model;
+    const enumProp = { type: enumType, optional: false } as unknown as ModelProperty;
+    const inputModel = {
+      kind: "Model",
+      name: "EnumGrpcInput",
+      properties: new Map<string, ModelProperty>([["status", enumProp]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "enumGrpc",
+      parameters: inputModel,
+      returnType: { kind: "Intrinsic", name: "void" } as unknown as Model,
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    const grpcMap = new Map<object, unknown>([
+      [op, { service: "MySvc", method: "EnumOp", streaming: "unary" }],
+    ]);
+
+    const reportedDiagnostics: Array<{ code: string }> = [];
+    const libModule = await import("../src/lib.js");
+    vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
+      (_prog, diag: { code: string }) => { reportedDiagnostics.push({ code: diag.code }); },
+    );
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(key: symbol): Map<object, unknown> {
+        if (key === D2_GRPC_METHOD_KEY) return grpcMap;
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {
+        "csharp-namespace": "D2.Test",
+        "proto-package": "d2.test.v1",
+        "proto-csharp-namespace": "D2.Test.Protos.V1",
+        "grpc-service-namespace": "D2.Test.Grpc",
+      },
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    // Enum property fires unsupported-property-type diagnostic.
+    expect(reportedDiagnostics.some((d) => d.code === "unsupported-property-type")).toBe(true);
+    expect(directUnitEmitted.filter((e) => e.path.endsWith(".g.proto"))).toHaveLength(0);
+  });
+
+  it("op with @d2GrpcMethod + no input model → inputModel undefined branch + fallback name used", async () => {
+    // Exercise inputModel === undefined in emitProtoAndGrpcService (lines 250 + 261 false branches).
+    // Op has no parameters (undefined) but has a concrete output model.
+    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const outputModel = {
+      kind: "Model",
+      name: "PingOutput",
+      properties: new Map<string, ModelProperty>([["message", prop]]),
+    } as unknown as Model;
+
+    // Op with NO parameters — rawParams is undefined, inputModel stays undefined.
+    const op = {
+      name: "ping",
+      // parameters intentionally omitted
+      returnType: outputModel,
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    const grpcMap = new Map<object, unknown>([
+      [op, { service: "PingSvc", method: "Ping", streaming: "unary" }],
+    ]);
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(key: symbol): Map<object, unknown> {
+        if (key === D2_GRPC_METHOD_KEY) return grpcMap;
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {
+        "csharp-namespace": "D2.Test",
+        "proto-package": "d2.test.v1",
+        "proto-csharp-namespace": "D2.Test.Protos.V1",
+        "grpc-service-namespace": "D2.Test.Grpc",
+      },
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    const paths = directUnitEmitted.map((e) => e.path);
+    // Proto file emitted. Message names use <Method>Request / <Method>Response convention.
+    expect(paths.some((p) => p.includes(".g.proto"))).toBe(true);
+    const protoFile = directUnitEmitted.find((e) => e.path.endsWith(".g.proto"));
+    expect(protoFile!.content).toContain("message PingRequest {}");
+    expect(protoFile!.content).toContain("message PingResponse {");
+  });
 });
 
 // ---------------------------------------------------------------------------

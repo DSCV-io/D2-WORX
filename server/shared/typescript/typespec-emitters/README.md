@@ -34,6 +34,17 @@ Current output per `tsp compile`:
 3. **`<op>-dto.g.ts`** — TypeScript interface pair for the same operations.
    Collections map to `readonly T[]`, optional fields use `?:`, `@d2Redact`
    fields are emitted normally (no attribute — redaction is a C# server concern).
+4. **`<service>_<op>.g.proto`** — proto3 service + message definitions for every
+   operation decorated with `@d2GrpcMethod`. Field names are `lower_snake_case`
+   (proto3 convention); `bytes` maps to `byte[]`; `IReadOnlyList<T>` maps to
+   `repeated T`. The `csharp_namespace` file option is emitted for Grpc.Tools.
+5. **`<Service>Service.g.cs` + `<Op>TransportMappers.g.cs`** — a `sealed` gRPC
+   service-impl class and C# 14 extension-member transport mapper pair for every
+   `@d2GrpcMethod` operation. The service class extends the Grpc.Tools-generated
+   `<Service>Base`, delegates to an injected `I<Op>Handler`, and maps
+   `D2Result` failures to `RpcException(StatusCode.Internal)` with empty detail
+   (no info leak). Mappers use `ByteString.CopyFrom` / `.ToByteArray()` for
+   `bytes` fields.
 
 ---
 
@@ -189,6 +200,55 @@ Emits one file per operation. Collections use `readonly T[]`. Optional fields us
 `Output` interface. `@d2Redact` fields are emitted as normal TS fields — redaction
 is a C# server-side concern, not a wire-protocol concern.
 
+### Proto emitter (`src/lib/proto-emitter.ts`)
+
+```typescript
+import { emitProto } from "@d2/typespec-emitters";
+
+const protoFile = emitProto(
+  "sign",
+  "KeyCustodianSigner",
+  "d2.keycustodian.v1",
+  "D2.Services.Protos.KeyCustodian.V1",
+  "contracts/typespec/key-custodian.tsp",
+  inputWalk,
+  outputWalk,
+  (code, msg) => { /* D2TSP001 on unmapped scalar */ },
+);
+// protoFile.fileName → "key_custodian_signer_sign.g.proto"
+```
+
+Emits a proto3 file with a single-method `service` + `message` definitions for
+input and output. Field names are `lower_snake_case` (via `toSnake`). `bytes`
+maps from C# `byte[]` scalar. `IReadOnlyList<T>` fields emit as `repeated T`.
+Unmapped scalars trigger `D2TSP001` and cause the function to return `undefined`
+(no partial output). Field numbers are assigned sequentially from `1`.
+
+### gRPC service-impl emitter (`src/lib/grpc-service-emitter.ts`)
+
+```typescript
+import { emitGrpcServiceImpl } from "@d2/typespec-emitters";
+
+const [serviceFile, mappersFile] = emitGrpcServiceImpl(
+  "sign",
+  "KeyCustodianSigner",
+  "D2.Edge.Tests.TypeSpecGrpc.Generated",
+  "D2.Services.Protos.KeyCustodian.V1",
+  "D2.Edge.Tests.TypeSpecDto.Generated",
+  "contracts/typespec/key-custodian.tsp",
+  inputWalk.fields,
+  outputWalk.fields,
+);
+// serviceFile.fileName  → "KeyCustodianSignerService.g.cs"
+// mappersFile.fileName  → "SignTransportMappers.g.cs"
+```
+
+Always returns exactly two files. The service class is `sealed`, uses a
+primary constructor `(I<Op>Handler handler)`, calls `result.IsOk` (the
+`D2Result<T>` success property), and throws `RpcException(StatusCode.Internal,
+string.Empty)` on failure. The mapper file uses C# 14 `extension(T target) { }`
+block syntax and `ByteString.CopyFrom` / `.ToByteArray()` for `bytes` fields.
+
 ### Emit-file wrapper (`src/lib/emit-file.ts`)
 
 ```typescript
@@ -242,47 +302,45 @@ pnpm run test:coverage
 pnpm run type-check:test
 ```
 
-12 test files, 129 tests. Coverage: 100% lines / branches / functions / statements
+17 test files, 216 tests. Coverage: 100% lines / branches / functions / statements
 on all `src/**` files (excluding the barrel `src/index.ts`).
 
 ---
 
 ## Regenerating the committed fixtures
 
-The byte-parity test suite pins the emitter output against committed `.g.cs` fixture
-files in:
+The byte-parity test suites pin the emitter output against committed fixture files in:
 
 ```
-server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/
+server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/   ← C# DTO fixtures
+server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/  ← gRPC service + mapper fixtures
+server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Protos/     ← .proto fixture
 ```
 
 These fixtures are an **independently committed snapshot** — they are NOT written by
 `tsp compile`. The `tspconfig.yaml` `emitter-output-dir` points to
 `dist/generated/` (inside the emitter package's build output), not to the test
-fixture directory.
+fixture directories.
 
 When the emitter changes in a way that alters emitted content, regenerate and recommit
 the fixtures as follows:
 
-1. Run `tsp compile contracts/typespec/` from the repo root to emit updated
-   `.g.cs` / `.g.ts` files into
+1. Run `tsp compile contracts/typespec/` from the repo root to emit updated files into
    `server/shared/typescript/typespec-emitters/dist/generated/`.
-2. Copy the updated `.g.cs` files into
-   `server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/`,
-   preserving filenames.
-3. Update the fixture constants in
-   `tests/byte-parity.test.ts` to match the new content.
+2. Copy the updated `.g.cs` files into the matching `Generated/` directories above.
+   Copy the updated `.g.proto` file into the `Protos/` directory.
+3. Update the fixture constants in `tests/byte-parity.test.ts` and
+   `tests/proto-grpc-byte-parity.test.ts` to match the new content.
 4. Run `pnpm run test:coverage` to confirm all byte-parity tests pass with 100%
    coverage.
 5. Run `dotnet build` + `dotnet test` (scoped to `D2.Edge.Tests`) to confirm the C#
-   validation tests still compile and pass against the new fixture records.
-6. Commit the updated `.g.cs` files and the updated test fixture constants together in
+   validation and gRPC harness tests still compile and pass against the new fixtures.
+6. Commit the updated fixture files and the updated test fixture constants together in
    one atomic change.
 
-The byte-parity tests (`tests/byte-parity.test.ts`) enforce that re-running the
-emitter in-process produces byte-identical content to the committed fixtures. This
-guarantees the fixtures are always in sync with the emitter — any emitter change that
-alters content will fail the byte-parity tests until the fixtures are refreshed.
+The byte-parity tests enforce that re-running the emitters in-process produces
+byte-identical content to the committed fixtures. Any emitter change that alters content
+will fail the byte-parity tests until the fixtures are refreshed.
 
 ---
 
