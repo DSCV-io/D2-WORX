@@ -12,7 +12,8 @@ import { createTypeSpecLibrary, paramMessage } from "@typespec/compiler";
 // prefix is the cross-tooling grep family registered in docs/SRC_GEN.md §1.2.
 //
 // Allocated IDs:
-//   D2TSP001  unmapped-scalar   — scalar has no C#/proto/TS mapping
+//   D2TSP001  unmapped-scalar           — scalar has no C#/proto/TS mapping
+//   D2TSP002  unsupported-property-type — enum, union, or anonymous-model prop
 // -----------------------------------------------------------------------
 
 /**
@@ -31,6 +32,19 @@ export const $lib = createTypeSpecLibrary({
       severity: "error",
       messages: {
         default: paramMessage`unmapped TypeSpec scalar '${"scalar"}' — no C#/proto/TS mapping in the scalar registry`,
+      },
+    },
+
+    /**
+     * D2TSP002 — A model property has a type the DTO emitter cannot yet express
+     * (enum, union, anonymous-model, or unrecognized kind). Enum/union support
+     * is deferred; these properties must be replaced with a scalar or a named
+     * model before the emitter can generate a DTO.
+     */
+    "unsupported-property-type": {
+      severity: "error",
+      messages: {
+        default: paramMessage`unsupported property type '${"kind"}' on '${"property"}' — enum, union, and anonymous-model properties are not yet supported by the DTO emitter`,
       },
     },
   },

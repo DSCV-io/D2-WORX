@@ -22,10 +22,18 @@ decorator state written by `@d2/typespec-decorators`. It then calls the
 compiler's `emitFile` API (via the `emitGeneratedFile` wrapper) to write
 artifacts to the `emitterOutputDir`.
 
-Current output: an `operations-manifest.json` listing every discovered
-operation and its `@d2ServedBy` / `@d2GrpcMethod` / `@d2InProcess` flags.
-Additional emitters (C# DTO, proto3, gRPC transport wiring, DI wiring) extend
-this suite in subsequent steps.
+Current output per `tsp compile`:
+
+1. **`operations-manifest.json`** — lists every discovered operation with its
+   `@d2ServedBy` / `@d2GrpcMethod` / `@d2InProcess` flags.
+2. **`<Op>Input.g.cs` + `<Op>Output.g.cs`** — C# `sealed record` DTO pairs for
+   every operation with a concrete input or output model. Parameterless records
+   use the semicolon form. Redacted fields carry
+   `[property: RedactData(Reason = RedactReason.PersonalInformation)]`.
+   Namespace is read from the `csharp-namespace` tspconfig emitter option.
+3. **`<op>-dto.g.ts`** — TypeScript interface pair for the same operations.
+   Collections map to `readonly T[]`, optional fields use `?:`, `@d2Redact`
+   fields are emitted normally (no attribute — redaction is a C# server concern).
 
 ---
 
@@ -40,10 +48,12 @@ emit:
 options:
   "@d2/typespec-emitters":
     emitter-output-dir: "{output-dir}"
+    csharp-namespace: "D2.YourService.Generated"
 ```
 
 The emitter reads `@d2/typespec-decorators` state keys and writes its output
-to `emitter-output-dir`. Import the decorators library in the `.tsp` spec:
+to `emitter-output-dir`. Set `csharp-namespace` to the target C# namespace.
+Import the decorators library in the `.tsp` spec:
 
 ```typespec
 import "@d2/typespec-decorators";
@@ -113,6 +123,72 @@ The banner is content-neutral from the emit-file wrapper's perspective — each
 emitter concatenates `buildBanner(...)` before calling `emitGeneratedFile`. JSON
 outputs (which have no comment syntax) correctly omit the banner.
 
+### Model walker (`src/lib/model-walk.ts`)
+
+Shared walker that both the C# and TS emitters consume from the same walk result,
+guaranteeing cross-language parity by construction:
+
+```typescript
+import { walkModel } from "@d2/typespec-emitters";
+
+const { fields, nestedModels } = walkModel(program, model, (code, message) => {
+  // code: "unmapped-scalar" | "unsupported-property-type"
+});
+```
+
+Returns `{ fields: FieldInfo[], nestedModels: NestedModel[] }`. Each `FieldInfo`
+carries `{ name, csName, csType, tsName, tsType, optional, redact }`. Nested
+models (e.g., the `Jwk` inside `GetJwksOutput`) are collected into `nestedModels`
+and deduplicated by name.
+
+**Redact flag**: `walkModel` reads `D2_REDACT_KEY` from the TypeSpec state map.
+Properties decorated with `@d2Redact` get `redact: true` in their `FieldInfo`.
+
+### C# DTO emitter (`src/lib/csharp-dto-emitter.ts`)
+
+```typescript
+import { emitCsharpDtos } from "@d2/typespec-emitters";
+
+const [inputFile, outputFile] = emitCsharpDtos(
+  "getJwks",
+  "D2.MyService.Generated",
+  "contracts/typespec/key-custodian.tsp",
+  inputWalk.fields,
+  outputWalk.fields,
+  outputWalk.nestedModels,
+);
+// inputFile.fileName → "GetJwksInput.g.cs"
+// outputFile.fileName → "GetJwksOutput.g.cs"
+```
+
+Always returns exactly two files. Parameterless records (no input fields) use the
+`public sealed record GetJwksInput;` semicolon form. Redacted fields emit
+`[property: RedactData(Reason = RedactReason.PersonalInformation)]` on the
+positional param (the `property:` attribute target is mandatory — bare param target
+is not seen by `RedactDataDestructuringPolicy`). Conditional `using` directives
+for `D2.Shared.Utilities.Attributes` and `D2.Shared.Utilities.Enums` are emitted
+only when at least one field is redacted.
+
+### TypeScript DTO emitter (`src/lib/ts-dto-emitter.ts`)
+
+```typescript
+import { emitTsDtos } from "@d2/typespec-emitters";
+
+const tsFile = emitTsDtos(
+  "getJwks",
+  "contracts/typespec/key-custodian.tsp",
+  inputWalk.fields,
+  outputWalk.fields,
+  outputWalk.nestedModels,
+);
+// tsFile.fileName → "get-jwks-dto.g.ts"
+```
+
+Emits one file per operation. Collections use `readonly T[]`. Optional fields use
+`?:` (never `| null`). Nested model interfaces are emitted before the owning
+`Output` interface. `@d2Redact` fields are emitted as normal TS fields — redaction
+is a C# server-side concern, not a wire-protocol concern.
+
 ### Emit-file wrapper (`src/lib/emit-file.ts`)
 
 ```typescript
@@ -140,9 +216,10 @@ surfaced by the compiler as `@d2/typespec-emitters/<name>`. The `D2TSP` ids
 are the grep-stable cross-tooling identifiers noted in comments alongside each
 catalog entry in `src/lib.ts`.
 
-| ID       | Named code      | Trigger                                                                 |
-| -------- | --------------- | ----------------------------------------------------------------------- |
-| D2TSP001 | `unmapped-scalar` | A TypeSpec scalar has no entry in the scalar registry. Emitter cannot proceed without a C#/proto/TS mapping. |
+| ID       | Named code                | Trigger                                                                 |
+| -------- | ------------------------- | ----------------------------------------------------------------------- |
+| D2TSP001 | `unmapped-scalar`         | A TypeSpec scalar has no entry in the scalar registry. Emitter cannot proceed without a C#/proto/TS mapping. |
+| D2TSP002 | `unsupported-property-type` | A model property has an enum, union, or anonymous-model type that the DTO emitter does not yet support. |
 
 All diagnostics have `severity: "error"` — every violation fails `tsp compile`
 with a non-zero exit code.
@@ -165,8 +242,47 @@ pnpm run test:coverage
 pnpm run type-check:test
 ```
 
-6 test files, 68 tests. Coverage: 100% lines / branches / functions / statements
+12 test files, 129 tests. Coverage: 100% lines / branches / functions / statements
 on all `src/**` files (excluding the barrel `src/index.ts`).
+
+---
+
+## Regenerating the committed fixtures
+
+The byte-parity test suite pins the emitter output against committed `.g.cs` fixture
+files in:
+
+```
+server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/
+```
+
+These fixtures are an **independently committed snapshot** — they are NOT written by
+`tsp compile`. The `tspconfig.yaml` `emitter-output-dir` points to
+`dist/generated/` (inside the emitter package's build output), not to the test
+fixture directory.
+
+When the emitter changes in a way that alters emitted content, regenerate and recommit
+the fixtures as follows:
+
+1. Run `tsp compile contracts/typespec/` from the repo root to emit updated
+   `.g.cs` / `.g.ts` files into
+   `server/shared/typescript/typespec-emitters/dist/generated/`.
+2. Copy the updated `.g.cs` files into
+   `server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/`,
+   preserving filenames.
+3. Update the fixture constants in
+   `tests/byte-parity.test.ts` to match the new content.
+4. Run `pnpm run test:coverage` to confirm all byte-parity tests pass with 100%
+   coverage.
+5. Run `dotnet build` + `dotnet test` (scoped to `D2.Edge.Tests`) to confirm the C#
+   validation tests still compile and pass against the new fixture records.
+6. Commit the updated `.g.cs` files and the updated test fixture constants together in
+   one atomic change.
+
+The byte-parity tests (`tests/byte-parity.test.ts`) enforce that re-running the
+emitter in-process produces byte-identical content to the committed fixtures. This
+guarantees the fixtures are always in sync with the emitter — any emitter change that
+alters content will fail the byte-parity tests until the fixtures are refreshed.
 
 ---
 

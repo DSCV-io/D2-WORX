@@ -5,7 +5,8 @@
 // Package barrel — the API surface that consumers import.
 // Re-exports the emitter entry point, the $lib descriptor, and the
 // shared-lib public surface (scalar registry, name transforms, banner,
-// emit-file utilities) so downstream steps import from the barrel.
+// emit-file utilities, model walker, DTO emitters) so all emitters in the
+// fleet import from the barrel.
 
 export { $onEmit } from "./emitter.js";
 export type { ManifestOperation, OperationsManifest } from "./emitter.js";
@@ -20,3 +21,12 @@ export { toSnake, toPascal } from "./lib/name-transforms.js";
 export { buildBanner } from "./lib/banner.js";
 
 export { emitGeneratedFile, resolveOutputPath } from "./lib/emit-file.js";
+
+export { walkModel } from "./lib/model-walk.js";
+export type { FieldInfo, NestedModel, WalkResult } from "./lib/model-walk.js";
+
+export { emitCsharpDtos } from "./lib/csharp-dto-emitter.js";
+export type { EmittedFile } from "./lib/csharp-dto-emitter.js";
+
+export { emitTsDtos } from "./lib/ts-dto-emitter.js";
+export type { EmittedTsFile } from "./lib/ts-dto-emitter.js";

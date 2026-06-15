@@ -88,6 +88,29 @@ Copyright (c) DCSV. All rights reserved.
   </ItemGroup>
 
   <ItemGroup>
+    <!--
+      D2.Shared.Logging — the TypeSpec validation tests drive the generated
+      SignInput record through RedactDataDestructuringPolicy (IVT granted in
+      D2.Shared.Logging.csproj) to assert that [property: RedactData] on a
+      generated positional-record parameter is correctly seen by the policy's
+      property-reflecting destructuring path.
+    -->
+    <ProjectReference Include="..\..\..\shared\dotnet\logging\D2.Shared.Logging.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Serilog — for the TypeSpec validation test that constructs a local
+      LoggerConfiguration + InMemorySink to drive the real redaction pipeline.
+      Serilog.AspNetCore is a transitive dep of D2.Shared.Logging; we reference
+      the core Serilog package explicitly for the test's LoggerConfiguration +
+      LogEventLevel usage, and use Serilog.Sinks.Spectre as the in-memory sink
+      equivalent via LogEvents capture.
+    -->
+    <PackageReference Include="Serilog.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\key-custodian\domain\D2.Edge.KeyCustodian.Domain.csproj" />
     <ProjectReference Include="..\key-custodian\app\D2.Edge.KeyCustodian.App.csproj" />
     <ProjectReference Include="..\key-custodian\infra\D2.Edge.KeyCustodian.Infra.csproj" />

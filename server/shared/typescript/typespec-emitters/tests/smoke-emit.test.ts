@@ -17,7 +17,7 @@
 //   $onEmit → emitFile pipeline works end-to-end.
 
 import { describe, it, expect, vi, beforeAll, afterEach } from "vitest";
-import type { EmitContext, Operation, Program } from "@typespec/compiler";
+import type { EmitContext, Model, ModelProperty, Operation, Program, Scalar } from "@typespec/compiler";
 import {
   createTestLibrary,
   createTestHost,
@@ -137,6 +137,413 @@ describe("$onEmit_directUnit_SmokeMockContext", () => {
     expect(grpc!.servedBy).toBeUndefined();
     expect(grpc!.hasGrpc).toBe(true);
     expect(grpc!.inProcess).toBe(false);
+  });
+});
+
+describe("$onEmit_directUnit_DtoPairEmission", () => {
+  it("emits manifest + C# + TS DTO files when op has concrete input and output models", async () => {
+    // Build a model stub with a scalar string property.
+    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const kidProp = { type: stringScalar, optional: false } as unknown as ModelProperty;
+
+    const inputModel = {
+      kind: "Model",
+      name: "GetJwksInput",
+      properties: new Map<string, ModelProperty>(),
+    } as unknown as Model;
+
+    const outputModel = {
+      kind: "Model",
+      name: "GetJwksOutput",
+      properties: new Map<string, ModelProperty>([["kid", kidProp]]),
+    } as unknown as Model;
+
+    // Op with parameters wrapping inputModel as a single named param.
+    const inputProp = { type: inputModel, optional: false } as unknown as ModelProperty;
+    const wrappedParams = {
+      kind: "Model",
+      name: "",
+      properties: new Map<string, ModelProperty>([["input", inputProp]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "getJwks",
+      parameters: wrappedParams,
+      returnType: outputModel,
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(_key: symbol): Map<object, unknown> {
+        return new Map();
+      },
+      reportDiagnostic() {},
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: { "csharp-namespace": "D2.Test" },
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    // Manifest + GetJwksInput.g.cs + GetJwksOutput.g.cs + get-jwks-dto.g.ts = 4 files.
+    expect(directUnitEmitted.length).toBeGreaterThanOrEqual(4);
+
+    const paths = directUnitEmitted.map((e) => e.path);
+    expect(paths.some((p) => p.includes("operations-manifest.json"))).toBe(true);
+    expect(paths.some((p) => p.includes("GetJwksInput.g.cs"))).toBe(true);
+    expect(paths.some((p) => p.includes("GetJwksOutput.g.cs"))).toBe(true);
+    expect(paths.some((p) => p.includes("get-jwks-dto.g.ts"))).toBe(true);
+  });
+
+  it("reportDiagnostic is called and no DTO files emitted for an unmapped scalar", async () => {
+    const utcDateTimeScalar = { kind: "Scalar", name: "utcDateTime" } as unknown as Scalar;
+    const badProp = { type: utcDateTimeScalar, optional: false } as unknown as ModelProperty;
+
+    const inputModel = {
+      kind: "Model",
+      name: "BadInput",
+      properties: new Map<string, ModelProperty>([["timestamp", badProp]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "badOp",
+      parameters: inputModel,
+      returnType: { kind: "Intrinsic", name: "void" },
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    const reportedDiagnostics: Array<{ code: string }> = [];
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(_key: symbol): Map<object, unknown> {
+        return new Map();
+      },
+    } as unknown as Program;
+
+    // Patch $lib.reportDiagnostic to capture calls.
+    const libModule = await import("../src/lib.js");
+    vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
+      (_prog, diag: { code: string }) => { reportedDiagnostics.push({ code: diag.code }); },
+    );
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: { "csharp-namespace": "D2.Test" },
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    // Unmapped scalar fires D2TSP001; no DTO files emitted.
+    expect(reportedDiagnostics.some((d) => d.code === "unmapped-scalar")).toBe(true);
+    const dtoFiles = directUnitEmitted.filter(
+      (e) => e.path.endsWith(".g.cs") || e.path.endsWith(".g.ts"),
+    );
+    expect(dtoFiles).toHaveLength(0);
+  });
+
+  it("reportDiagnostic is called with unsupported-property-type for enum properties", async () => {
+    // Build a model with an enum property (D2TSP002 triggers unsupported-property-type).
+    const enumType = { kind: "Enum", name: "Status" } as unknown as Model;
+    const enumProp = { type: enumType, optional: false } as unknown as ModelProperty;
+    const inputModel = {
+      kind: "Model",
+      name: "BadEnumInput",
+      properties: new Map<string, ModelProperty>([["status", enumProp]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "badEnum",
+      parameters: inputModel,
+      returnType: { kind: "Intrinsic", name: "void" },
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(_key: symbol): Map<object, unknown> {
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const reportedDiagnostics: Array<{ code: string }> = [];
+    const libModule = await import("../src/lib.js");
+    vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
+      (_prog, diag: { code: string }) => { reportedDiagnostics.push({ code: diag.code }); },
+    );
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {},
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    // D2TSP002 fires the unsupported-property-type diagnostic.
+    expect(reportedDiagnostics.some((d) => d.code === "unsupported-property-type")).toBe(true);
+    const dtoFiles = directUnitEmitted.filter(
+      (e) => e.path.endsWith(".g.cs") || e.path.endsWith(".g.ts"),
+    );
+    expect(dtoFiles).toHaveLength(0);
+  });
+
+  it("multi-param op → resolveSingleNamedParam returns undefined (size !== 1 branch)", async () => {
+    // Op with 2 named parameters — `params.properties.size !== 1` is true,
+    // resolveSingleNamedParam returns undefined and raw params model is used directly.
+    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const prop1 = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const prop2 = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const multiParams = {
+      kind: "Model",
+      name: "",
+      properties: new Map<string, ModelProperty>([["id", prop1], ["name", prop2]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "multiParam",
+      parameters: multiParams,
+      returnType: { kind: "Intrinsic", name: "void" },
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(_key: symbol): Map<object, unknown> {
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {},
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    // Multi-param op uses the raw params model — both scalar fields become params.
+    const csFile = directUnitEmitted.find((e) => e.path.includes("MultiParamInput.g.cs"));
+    expect(csFile).toBeDefined();
+    expect(csFile!.content).toContain("string Id");
+    expect(csFile!.content).toContain("string Name");
+  });
+
+  it("single Array-typed param → resolveSingleNamedParam returns undefined (prop.type.name === 'Array')", async () => {
+    // When the single named param wraps an Array model, resolveSingleNamedParam should
+    // return undefined (not unwrap it) — exercising the `prop.type.name !== "Array"` false branch.
+    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const arrayModel = {
+      kind: "Model",
+      name: "Array",
+      indexer: { value: stringScalar },
+      properties: new Map<string, ModelProperty>(),
+    } as unknown as Model;
+
+    const arrayProp = { type: arrayModel, optional: false } as unknown as ModelProperty;
+    const wrappedParams = {
+      kind: "Model",
+      name: "",
+      properties: new Map<string, ModelProperty>([["items", arrayProp]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "arrayParam",
+      parameters: wrappedParams,
+      returnType: { kind: "Intrinsic", name: "void" },
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(_key: symbol): Map<object, unknown> {
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {},
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    // The op was processed — manifest was emitted.
+    expect(directUnitEmitted.some((e) => e.path.includes("operations-manifest.json"))).toBe(true);
+  });
+
+  it("single scalar param op uses raw params model (resolveSingleNamedParam returns undefined)", async () => {
+    // Op with a single named parameter that is a Scalar (not a Model) —
+    // resolveSingleNamedParam should return undefined and the raw params model is used.
+    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const scalarProp = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const rawParams = {
+      kind: "Model",
+      name: "",
+      properties: new Map<string, ModelProperty>([["id", scalarProp]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "scalarParam",
+      parameters: rawParams,
+      returnType: { kind: "Intrinsic", name: "void" },
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(_key: symbol): Map<object, unknown> {
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {},
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    // ScalarParam input should appear as a field (from raw params model directly).
+    const csFile = directUnitEmitted.find((e) => e.path.includes("ScalarParamInput.g.cs"));
+    expect(csFile).toBeDefined();
+    expect(csFile!.content).toContain("string Id");
+  });
+
+  it("void-output op emits only input DTO (outputModel undefined branch)", async () => {
+    // Op with input model but void return — exercises outputModel === undefined branch.
+    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const inputModel = {
+      kind: "Model",
+      name: "VoidOutInput",
+      properties: new Map<string, ModelProperty>([["id", prop]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "voidOut",
+      parameters: inputModel,
+      returnType: { kind: "Intrinsic", name: "void" },
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(_key: symbol): Map<object, unknown> {
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {},
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    // Both C# files still emitted (Input + Output pair), even when outputModel is void.
+    expect(directUnitEmitted.some((e) => e.path.includes("VoidOutInput.g.cs"))).toBe(true);
+  });
+
+  it("input-less op (no parameters field) with output → inputModel undefined branch in emitDtoPair", async () => {
+    // Op with NO parameters property at all + a concrete output — exercises the
+    // `rawParams === undefined → inputModel = undefined` branch, then enters
+    // emitDtoPair with `inputModel=undefined`, hitting the `: { fields:[], nestedModels:[] }` branch.
+    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const outputModel = {
+      kind: "Model",
+      name: "NoInputOutput",
+      properties: new Map<string, ModelProperty>([["result", prop]]),
+    } as unknown as Model;
+
+    // Op has NO parameters field (undefined) — rawParams is undefined after cast.
+    const op = {
+      name: "noInput",
+      // parameters is intentionally omitted — rawParams becomes undefined.
+      returnType: outputModel,
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(_key: symbol): Map<object, unknown> {
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {},
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    expect(directUnitEmitted.some((e) => e.path.includes("NoInputOutput.g.cs"))).toBe(true);
+  });
+
+  it("tryGetSpecPath returns file path when op.node.file.path is present", async () => {
+    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const model = {
+      kind: "Model",
+      name: "SpecPathInput",
+      properties: new Map<string, ModelProperty>([["id", prop]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "withSpec",
+      parameters: model,
+      returnType: { kind: "Intrinsic", name: "void" },
+      // Provide the node.file.path that tryGetSpecPath reads.
+      node: { file: { path: "contracts/typespec/test.tsp" } },
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(_key: symbol): Map<object, unknown> {
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {},
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    // The spec hint from node.file.path should appear in the emitted C# banner.
+    const csFile = directUnitEmitted.find((e) => e.path.endsWith("WithSpecInput.g.cs"));
+    expect(csFile).toBeDefined();
+    expect(csFile!.content).toContain("contracts/typespec/test.tsp");
   });
 });
 
