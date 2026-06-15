@@ -30,6 +30,21 @@ export const D2_GRPC_METHOD_KEY = Symbol.for("D2.d2GrpcMethod");
 /** State key for @d2Redact — stores `true` on the marked model property. */
 export const D2_REDACT_KEY = Symbol.for("D2.d2Redact");
 
+/** State key for @d2ServerPush — stores the push channel class string. */
+export const D2_SERVER_PUSH_KEY = Symbol.for("D2.d2ServerPush");
+
+/** State key for @d2Idempotent — stores the {@link IdempotentPayload}. */
+export const D2_IDEMPOTENT_KEY = Symbol.for("D2.d2Idempotent");
+
+/** State key for @d2Resilience — stores the raw pipeline-expression string. */
+export const D2_RESILIENCE_KEY = Symbol.for("D2.d2Resilience");
+
+/** State key for @d2Csrf — stores the CSRF posture override string. */
+export const D2_CSRF_KEY = Symbol.for("D2.d2Csrf");
+
+/** State key for @d2Harmless — stores `true` on the marked operation. */
+export const D2_HARMLESS_KEY = Symbol.for("D2.d2Harmless");
+
 /**
  * Payload stored by @d2GrpcMethod: the gRPC service name, method name, and
  * streaming mode. `streaming` is one of `unary | serverStream | clientStream |
@@ -39,4 +54,15 @@ export interface GrpcMethodPayload {
   readonly service: string;
   readonly method: string;
   readonly streaming: string;
+}
+
+/**
+ * Payload stored by @d2Idempotent: the key-extraction source, the replay
+ * window in seconds, and the ordered list of input-property names hashed into
+ * the derived key. `fields` is empty when `keySource` is `"header"`.
+ */
+export interface IdempotentPayload {
+  readonly keySource: string;
+  readonly ttlSeconds: number;
+  readonly fields: string[];
 }

@@ -9,12 +9,17 @@ import type {
 } from "@typespec/compiler";
 import {
   D2_AUDIENCE_KEY,
+  D2_CSRF_KEY,
   D2_GRPC_METHOD_KEY,
+  D2_HARMLESS_KEY,
+  D2_IDEMPOTENT_KEY,
   D2_RATE_LIMIT_TIER_KEY,
   D2_REDACT_KEY,
   D2_REQUIRE_ALL_SCOPES_KEY,
   D2_REQUIRE_ANY_SCOPE_KEY,
+  D2_RESILIENCE_KEY,
   D2_SERVED_BY_KEY,
+  D2_SERVER_PUSH_KEY,
 } from "./state-keys.js";
 
 /**
@@ -72,8 +77,7 @@ export function $d2Audience(
 
 /**
  * Stores the owning module/service string on the operation.
- * Shape-check only — registry validation is deferred until the service/module
- * catalog stabilizes.
+ * Shape-check only — the owner string is not validated against a module registry.
  */
 export function $d2ServedBy(
   context: DecoratorContext,
@@ -111,4 +115,76 @@ export function $d2Redact(
   target: ModelProperty,
 ): void {
   context.program.stateMap(D2_REDACT_KEY).set(target, true);
+}
+
+/**
+ * Binds an operation to a server-initiated push channel. `pushTarget` selects
+ * the channel class; validation of allowed values is deferred to the validation
+ * layer. Emitters read back:
+ * program.stateMap(D2_SERVER_PUSH_KEY).get(op) → string.
+ */
+export function $d2ServerPush(
+  context: DecoratorContext,
+  target: Operation,
+  pushTarget: string,
+): void {
+  context.program.stateMap(D2_SERVER_PUSH_KEY).set(target, pushTarget);
+}
+
+/**
+ * Marks a mutating operation as idempotent, driving a generated dedupe gate.
+ * `keySource` selects key extraction; `ttlSeconds` is the replay window;
+ * `fields` (for `"derived"` keySource) are the input property names hashed
+ * into the key, in declaration order. Emitters read back:
+ * program.stateMap(D2_IDEMPOTENT_KEY).get(op) → { keySource, ttlSeconds, fields }.
+ */
+export function $d2Idempotent(
+  context: DecoratorContext,
+  target: Operation,
+  keySource: string,
+  ttlSeconds: number,
+  ...fields: string[]
+): void {
+  context.program
+    .stateMap(D2_IDEMPOTENT_KEY)
+    .set(target, { keySource, ttlSeconds, fields });
+}
+
+/**
+ * Wraps an operation's outbound call in a resilience pipeline expressed as a
+ * composable DSL string (e.g. `"retry(circuitBreaker(singleflight()))"`).
+ * Stores the raw expression; parsing and policy-graph construction are handled
+ * by the emitter. Emitters read back:
+ * program.stateMap(D2_RESILIENCE_KEY).get(op) → string.
+ */
+export function $d2Resilience(
+  context: DecoratorContext,
+  target: Operation,
+  pipeline: string,
+): void {
+  context.program.stateMap(D2_RESILIENCE_KEY).set(target, pipeline);
+}
+
+/**
+ * CSRF posture override for an operation. Stores the raw `posture` string;
+ * validation of allowed values is deferred to the validation layer. Emitters
+ * read back: program.stateMap(D2_CSRF_KEY).get(op) → string.
+ */
+export function $d2Csrf(
+  context: DecoratorContext,
+  target: Operation,
+  posture: string,
+): void {
+  context.program.stateMap(D2_CSRF_KEY).set(target, posture);
+}
+
+/**
+ * Marks an operation as auth-pipeline-exempt (health probes / discovery only).
+ * Stores `true` on the operation; emitters check for presence.
+ */
+export function $d2Harmless(
+  context: DecoratorContext,
+  target: Operation,
+): void {
+  context.program.stateMap(D2_HARMLESS_KEY).set(target, true);
 }

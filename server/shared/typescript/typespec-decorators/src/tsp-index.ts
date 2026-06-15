@@ -13,12 +13,17 @@
 
 import {
   $d2Audience,
+  $d2Csrf,
   $d2GrpcMethod,
+  $d2Harmless,
+  $d2Idempotent,
   $d2RateLimitTier,
   $d2Redact,
   $d2RequireAllScopes,
   $d2RequireAnyScope,
+  $d2Resilience,
   $d2ServedBy,
+  $d2ServerPush,
 } from "./decorators.js";
 
 /**
@@ -37,5 +42,10 @@ export const $decorators = {
     d2ServedBy: $d2ServedBy,
     d2GrpcMethod: $d2GrpcMethod,
     d2Redact: $d2Redact,
+    d2ServerPush: $d2ServerPush,
+    d2Idempotent: $d2Idempotent,
+    d2Resilience: $d2Resilience,
+    d2Csrf: $d2Csrf,
+    d2Harmless: $d2Harmless,
   },
 } as const;

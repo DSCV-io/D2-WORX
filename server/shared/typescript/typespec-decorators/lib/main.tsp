@@ -48,3 +48,32 @@ extern dec d2GrpcMethod(
 
 /** Marks a model property as PII to be redacted in structured logs. */
 extern dec d2Redact(target: ModelProperty);
+
+/** Binds an operation to a server-initiated push; `pushTarget` selects the channel class. */
+extern dec d2ServerPush(target: Operation, pushTarget: valueof string);
+
+/**
+ * Marks a mutating operation as idempotent — drives a generated dedupe gate.
+ * `keySource` selects key extraction; `ttlSeconds` is the replay window; `fields`
+ * (for `"derived"` keySource) are the input property names hashed into the key,
+ * in declaration order.
+ */
+extern dec d2Idempotent(
+  target: Operation,
+  keySource: valueof string,
+  ttlSeconds: valueof int32,
+  ...fields: valueof string[]
+);
+
+/**
+ * Wraps an operation's outbound call in a resilience pipeline expressed as a
+ * composable DSL string (e.g. `"retry(circuitBreaker(singleflight()))"`).
+ * The expression is stored raw; parsing and validation are handled by the emitter.
+ */
+extern dec d2Resilience(target: Operation, pipeline: valueof string);
+
+/** CSRF posture override for an operation; browser-facing mutations are protected by default. */
+extern dec d2Csrf(target: Operation, posture: valueof string);
+
+/** Marks an operation as auth-pipeline-exempt (health probes / discovery only). */
+extern dec d2Harmless(target: Operation);
