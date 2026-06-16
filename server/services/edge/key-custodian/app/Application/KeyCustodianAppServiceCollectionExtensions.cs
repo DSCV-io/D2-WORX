@@ -58,6 +58,10 @@ public static class KeyCustodianAppServiceCollectionExtensions
             // Policy provider.
             services.AddSingleton<IRotationPolicyProvider, OptionsRotationPolicyProvider>();
 
+            // Generated façade layer — registers IKeyCustodianInternalApi → KeyCustodianInternalApi (Transient).
+            // The generated extension is overwritten on rebuild; this call site is the stable hand-written anchor.
+            services.AddD2KeyCustodianClients();
+
             return services;
         }
     }

@@ -56,5 +56,7 @@ model GetJwksOutput {
  * The JWKS document is computed entirely from the signing keys in the store,
  * so the query takes no parameters.
  */
+@d2Query
+@d2InProcess
 @d2ServedBy("KeyCustodian")
 op getJwks(): GetJwksOutput;

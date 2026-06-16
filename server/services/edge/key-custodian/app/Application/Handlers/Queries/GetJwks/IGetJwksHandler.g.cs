@@ -8,7 +8,9 @@
 
 #nullable enable
 
-namespace D2.Edge.Tests.TypeSpecDto.Generated;
+namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
 
-/// <summary>Generated input DTO. No parameters required.</summary>
-public sealed record GetJwksInput;
+using D2.Edge.KeyCustodian.Clients;
+
+/// <summary>Generated handler interface for the <c>GetJwks</c> operation.</summary>
+public interface IGetJwksHandler : IHandler<GetJwksInput, GetJwksOutput>;

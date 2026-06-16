@@ -27,6 +27,9 @@ import {
   D2_SERVED_BY_KEY,
   D2_GRPC_METHOD_KEY,
   D2_IN_PROCESS_KEY,
+  D2_COMMAND_KEY,
+  D2_QUERY_KEY,
+  D2_INTERNAL_KEY,
 } from "@d2/typespec-decorators";
 import type { OperationsManifest } from "../src/emitter.js";
 
@@ -841,6 +844,501 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Namespace routing branches (direct-unit): exercises resolveDtoNamespace +
+// resolveHandlerNamespace with csharp-app-namespace-base set.
+//
+// These branches are NOT reachable from integration tests (which run through
+// dist/ and only credit V8 for src/ when the source is instrumented directly).
+// ---------------------------------------------------------------------------
+
+describe("$onEmit_directUnit_NamespaceRouting", () => {
+  it("exposed op + csClientsNamespace → DTOs land in Clients namespace (lines 299-300)", async () => {
+    // Exposed op (@d2InProcess) + Clients namespace set → DTOs go to Clients ns.
+    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const kidProp = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const inputModel = {
+      kind: "Model",
+      name: "GetJwksInput",
+      properties: new Map<string, ModelProperty>(),
+    } as unknown as Model;
+    const outputModel = {
+      kind: "Model",
+      name: "GetJwksOutput",
+      properties: new Map<string, ModelProperty>([["kid", kidProp]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "getJwks",
+      parameters: inputModel,
+      returnType: outputModel,
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    // @d2Query + @d2InProcess → isExposed=true, category="Queries".
+    const queryMap = new Map<object, unknown>([[op, true]]);
+    const inProcessMap = new Map<object, unknown>([[op, true]]);
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(key: symbol): Map<object, unknown> {
+        if (key === D2_QUERY_KEY) return queryMap;
+        if (key === D2_IN_PROCESS_KEY) return inProcessMap;
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {
+        "csharp-namespace": "D2.Test.Fixture",
+        "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+        "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        "grpc-service-namespace": "D2.Test.Grpc",
+      },
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    // DTOs should land in the Clients namespace, not the fixture or app namespace.
+    const csOutput = directUnitEmitted.find((e) => e.path.includes("GetJwksOutput.g.cs"));
+    expect(csOutput).toBeDefined();
+    expect(csOutput!.content).toContain("namespace D2.Edge.KeyCustodian.Clients;");
+  });
+
+  it("internal op + csAppNamespaceBase + category → DTOs land in app CQRS namespace (lines 302-306)", async () => {
+    // Internal op (@d2Internal + @d2Query) + app-namespace-base set → DTOs go to app CQRS ns.
+    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const outputModel = {
+      kind: "Model",
+      name: "ListKeysOutput",
+      properties: new Map<string, ModelProperty>([["keys", prop]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "listKeys",
+      parameters: { kind: "Model", name: "", properties: new Map() } as unknown as Model,
+      returnType: outputModel,
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    // @d2Query + @d2Internal → isExposed=false, isInternal=true, category="Queries".
+    const queryMap = new Map<object, unknown>([[op, true]]);
+    const internalMap = new Map<object, unknown>([[op, true]]);
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(key: symbol): Map<object, unknown> {
+        if (key === D2_QUERY_KEY) return queryMap;
+        if (key === D2_INTERNAL_KEY) return internalMap;
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {
+        "csharp-namespace": "D2.Test.Fixture",
+        "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+        "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        "grpc-service-namespace": "D2.Test.Grpc",
+      },
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    // DTOs should land in the per-op CQRS app namespace, not fixture or Clients ns.
+    const csOutput = directUnitEmitted.find((e) => e.path.includes("ListKeysOutput.g.cs"));
+    expect(csOutput).toBeDefined();
+    expect(csOutput!.content).toContain(
+      "namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.ListKeys;",
+    );
+  });
+
+  it("op with csAppNamespaceBase + missing CQRS category → D2TSP003 fires + falls back (lines 307-313)", async () => {
+    // Op missing both @d2Command and @d2Query → category undefined → D2TSP003 + fallback.
+    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const outputModel = {
+      kind: "Model",
+      name: "NoCategoryOutput",
+      properties: new Map<string, ModelProperty>([["result", prop]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "noCategory",
+      parameters: { kind: "Model", name: "", properties: new Map() } as unknown as Model,
+      returnType: outputModel,
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    // No command or query state → category resolves to undefined.
+    // @d2Internal is set so isInternal=true → hits the isInternal||!isExposed branch.
+    const internalMap = new Map<object, unknown>([[op, true]]);
+
+    const reportedDiagnostics: Array<{ code: string }> = [];
+    const libModule = await import("../src/lib.js");
+    vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
+      (_prog, diag: { code: string }) => { reportedDiagnostics.push({ code: diag.code }); },
+    );
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(key: symbol): Map<object, unknown> {
+        if (key === D2_INTERNAL_KEY) return internalMap;
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {
+        "csharp-namespace": "D2.Test.Fixture",
+        "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        "grpc-service-namespace": "D2.Test.Grpc",
+      },
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    // D2TSP003 fires.
+    expect(reportedDiagnostics.some((d) => d.code === "missing-cqrs-category")).toBe(true);
+    // DTOs still emit (fallback to fixture ns — loud but not crash).
+    const csOutput = directUnitEmitted.find((e) => e.path.includes("NoCategoryOutput.g.cs"));
+    expect(csOutput).toBeDefined();
+    expect(csOutput!.content).toContain("namespace D2.Test.Fixture;");
+  });
+
+  it("exposed op + csAppNamespaceBase + no csClientsNamespace → falls back to fixture ns (lines 316-317)", async () => {
+    // Exposed op but Clients namespace not configured → falls back to csNamespace.
+    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const outputModel = {
+      kind: "Model",
+      name: "ExposedNoClientOutput",
+      properties: new Map<string, ModelProperty>([["value", prop]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "exposedNoClient",
+      parameters: { kind: "Model", name: "", properties: new Map() } as unknown as Model,
+      returnType: outputModel,
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    // @d2Query + @d2InProcess → isExposed=true; no csClientsNamespace set.
+    const queryMap = new Map<object, unknown>([[op, true]]);
+    const inProcessMap = new Map<object, unknown>([[op, true]]);
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(key: symbol): Map<object, unknown> {
+        if (key === D2_QUERY_KEY) return queryMap;
+        if (key === D2_IN_PROCESS_KEY) return inProcessMap;
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {
+        "csharp-namespace": "D2.Test.Fixture",
+        // csharp-clients-namespace intentionally absent.
+        "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        "grpc-service-namespace": "D2.Test.Grpc",
+      },
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    // No Clients ns → falls back to fixture namespace.
+    const csOutput = directUnitEmitted.find((e) => e.path.includes("ExposedNoClientOutput.g.cs"));
+    expect(csOutput).toBeDefined();
+    expect(csOutput!.content).toContain("namespace D2.Test.Fixture;");
+  });
+
+  it("Command op (@d2Command, not @d2Query) → resolveCategory returns 'Commands' (line 264)", async () => {
+    // Exercises the `isCommand && !isQuery` branch in resolveCategory.
+    // The internal-op test hits the Queries branch; this hits the Commands branch.
+    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const outputModel = {
+      kind: "Model",
+      name: "CreateKeyOutput",
+      properties: new Map<string, ModelProperty>([["id", prop]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "createKey",
+      parameters: { kind: "Model", name: "", properties: new Map() } as unknown as Model,
+      returnType: outputModel,
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    // @d2Command + @d2Internal → isCommand=true, isQuery=false → "Commands".
+    const commandMap = new Map<object, unknown>([[op, true]]);
+    const internalMap = new Map<object, unknown>([[op, true]]);
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(key: symbol): Map<object, unknown> {
+        if (key === D2_COMMAND_KEY) return commandMap;
+        if (key === D2_INTERNAL_KEY) return internalMap;
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {
+        "csharp-namespace": "D2.Test.Fixture",
+        "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        "grpc-service-namespace": "D2.Test.Grpc",
+      },
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    // DTOs land in Commands CQRS path.
+    const csOutput = directUnitEmitted.find((e) => e.path.includes("CreateKeyOutput.g.cs"));
+    expect(csOutput).toBeDefined();
+    expect(csOutput!.content).toContain(
+      "namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CreateKey;",
+    );
+  });
+
+  it("op name with empty string in toPascalFromCamel guard (line 344) — zero-length fallback path", async () => {
+    // toPascalFromCamel("") → returns "" immediately (the early-return guard on line 344).
+    // resolveDtoNamespace is called BEFORE emitDtoPair / emitHandlerInterface, so
+    // toPascalFromCamel(opName) at line 304 fires before emitHandlerInterface's own guard.
+    // We force dtoEmitSucceeded=false (unmapped scalar) so emitHandlerInterface is never
+    // reached, which would otherwise throw for opName="".
+    const utcDateTimeScalar = { kind: "Scalar", name: "utcDateTime" } as unknown as Scalar;
+    const badProp = { type: utcDateTimeScalar, optional: false } as unknown as ModelProperty;
+    const outputModel = {
+      kind: "Model",
+      name: "EmptyNameOutput",
+      properties: new Map<string, ModelProperty>([["when", badProp]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "",
+      parameters: { kind: "Model", name: "", properties: new Map() } as unknown as Model,
+      returnType: outputModel,
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    // @d2Query + @d2Internal → category="Queries"; toPascalFromCamel("") fires at line 304.
+    const queryMap = new Map<object, unknown>([[op, true]]);
+    const internalMap = new Map<object, unknown>([[op, true]]);
+
+    const reportedDiagnostics: Array<{ code: string }> = [];
+    const libModule = await import("../src/lib.js");
+    vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
+      (_prog, diag: { code: string }) => { reportedDiagnostics.push({ code: diag.code }); },
+    );
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(key: symbol): Map<object, unknown> {
+        if (key === D2_QUERY_KEY) return queryMap;
+        if (key === D2_INTERNAL_KEY) return internalMap;
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {
+        "csharp-namespace": "D2.Test.Fixture",
+        "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        "grpc-service-namespace": "D2.Test.Grpc",
+      },
+    } as unknown as EmitContext;
+
+    // resolveDtoNamespace calls toPascalFromCamel("") at line 304 (guard fires → returns "").
+    // emitDtoPair returns false (unmapped utcDateTime scalar) → emitHandlerInterface skipped.
+    await $onEmit(mockContext);
+
+    // DTO error fired (unmapped scalar) — dtoEmitSucceeded=false.
+    expect(reportedDiagnostics.some((d) => d.code === "unmapped-scalar")).toBe(true);
+    // Manifest still emitted.
+    expect(directUnitEmitted.some((e) => e.path.includes("operations-manifest.json"))).toBe(true);
+  });
+
+  it("exposed op + csClientsNamespace + csAppNamespaceBase + servedBy → façade files emitted (lines 215-217, 253-257)", async () => {
+    // Exercises the two uncovered branches in emitter.ts:
+    //   lines 215-217: inner `if (servedBy !== undefined && servedBy.length > 0)` block
+    //                  that pushes into exposedOpsByModule.
+    //   lines 253-257: the `for (const [moduleName, moduleOps] of exposedOpsByModule)` loop
+    //                  that calls emitFacade + emits the three facade files.
+    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const kidProp = { type: stringScalar, optional: false } as unknown as ModelProperty;
+
+    const inputModel = {
+      kind: "Model",
+      name: "GetJwksInput",
+      properties: new Map<string, ModelProperty>(),
+    } as unknown as Model;
+
+    const outputModel = {
+      kind: "Model",
+      name: "GetJwksOutput",
+      properties: new Map<string, ModelProperty>([["kid", kidProp]]),
+    } as unknown as Model;
+
+    // Wrap inputModel as a single named param (standard convention).
+    const inputProp = { type: inputModel, optional: false } as unknown as ModelProperty;
+    const wrappedParams = {
+      kind: "Model",
+      name: "",
+      properties: new Map<string, ModelProperty>([["input", inputProp]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "getJwks",
+      parameters: wrappedParams,
+      returnType: outputModel,
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    // @d2Query + @d2InProcess → isExposed=true, category="Queries".
+    // @d2ServedBy("KeyCustodian") → stateMap returns "KeyCustodian" for D2_SERVED_BY_KEY.
+    const queryMap = new Map<object, unknown>([[op, true]]);
+    const inProcessMap = new Map<object, unknown>([[op, true]]);
+    const servedByMap = new Map<object, unknown>([[op, "KeyCustodian"]]);
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(key: symbol): Map<object, unknown> {
+        if (key === D2_QUERY_KEY) return queryMap;
+        if (key === D2_IN_PROCESS_KEY) return inProcessMap;
+        if (key === D2_SERVED_BY_KEY) return servedByMap;
+        return new Map();
+      },
+      reportDiagnostic() {},
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {
+        "csharp-namespace": "D2.Test.Fixture",
+        "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+        "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+      },
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    const paths = directUnitEmitted.map((e) => e.path);
+
+    // Façade interface file emitted (line 253-257 loop fired).
+    expect(paths.some((p) => p.includes("IKeyCustodianInternalApi.g.cs"))).toBe(true);
+
+    // Impl file emitted (the concrete class, not the interface — ends with /KeyCustodianInternalApi.g.cs).
+    expect(paths.some((p) => p.endsWith("/KeyCustodianInternalApi.g.cs"))).toBe(true);
+
+    // DI extension file emitted.
+    expect(paths.some((p) => p.includes("KeyCustodianClientsGenerated.g.cs"))).toBe(true);
+
+    // Interface content is in the Clients namespace (Clients-project file).
+    const ifaceFile = directUnitEmitted.find((e) => e.path.includes("IKeyCustodianInternalApi.g.cs"));
+    expect(ifaceFile).toBeDefined();
+    expect(ifaceFile!.content).toContain("namespace D2.Edge.KeyCustodian.Clients;");
+    expect(ifaceFile!.content).toContain("GetJwksAsync(");
+
+    // Impl file is in the app namespace root (stripped .Handlers suffix).
+    const implFile = directUnitEmitted.find((e) => e.path.endsWith("/KeyCustodianInternalApi.g.cs"));
+    expect(implFile).toBeDefined();
+    expect(implFile!.content).toContain("namespace D2.Edge.KeyCustodian.App.Application;");
+  });
+
+  it("resolveHandlerNamespace falls back to grpcServiceNs when csAppNamespaceBase set + category undefined (lines 336-337)", async () => {
+    // csAppNamespaceBase is set but category is undefined (no @d2Command or @d2Query) →
+    // resolveHandlerNamespace falls back to grpcServiceNs.
+    // Op is exposed (@d2InProcess) so DTOs emit; no category so handler ns falls back.
+    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const outputModel = {
+      kind: "Model",
+      name: "NoCatHandlerOutput",
+      properties: new Map<string, ModelProperty>([["val", prop]]),
+    } as unknown as Model;
+
+    const op = {
+      name: "noCatHandler",
+      parameters: { kind: "Model", name: "", properties: new Map() } as unknown as Model,
+      returnType: outputModel,
+      node: undefined,
+    } as unknown as Operation;
+
+    directUnitOps.push(op);
+
+    // @d2InProcess → isExposed=true; no command/query → category=undefined.
+    const inProcessMap = new Map<object, unknown>([[op, true]]);
+
+    // Spy to capture D2TSP003 (fires for missing category).
+    const reportedDiagnostics: Array<{ code: string }> = [];
+    const libModule = await import("../src/lib.js");
+    vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
+      (_prog, diag: { code: string }) => { reportedDiagnostics.push({ code: diag.code }); },
+    );
+
+    const mockProgram = {
+      diagnostics: [],
+      stateMap(key: symbol): Map<object, unknown> {
+        if (key === D2_IN_PROCESS_KEY) return inProcessMap;
+        return new Map();
+      },
+    } as unknown as Program;
+
+    const mockContext = {
+      program: mockProgram,
+      emitterOutputDir: "/out",
+      options: {
+        "csharp-namespace": "D2.Test.Fixture",
+        "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+        "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        "grpc-service-namespace": "D2.Test.Grpc",
+      },
+    } as unknown as EmitContext;
+
+    await $onEmit(mockContext);
+
+    // DTOs go to Clients (exposed + csClientsNamespace configured).
+    const csOutput = directUnitEmitted.find((e) => e.path.includes("NoCatHandlerOutput.g.cs"));
+    expect(csOutput).toBeDefined();
+    expect(csOutput!.content).toContain("namespace D2.Edge.KeyCustodian.Clients;");
+
+    // Handler interface emitted — namespace falls back to grpcServiceNs because category=undefined.
+    const handlerFile = directUnitEmitted.find((e) => e.path.includes("INoCatHandlerHandler.g.cs"));
+    expect(handlerFile).toBeDefined();
+    expect(handlerFile!.content).toContain("namespace D2.Test.Grpc;");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Integration test: full tsp compile → $onEmit → emitFile pipeline
 //
 // Uses the TypeSpec test-host to compile an inline .tsp file. The emitter
@@ -887,12 +1385,18 @@ describe("$onEmit_integration_SmokeManifest", () => {
 
       namespace TestNs;
 
+      @d2Query
+      @d2Internal
       op getStatus(): void;
 
+      @d2Query
       @d2ServedBy("Edge")
       @d2InProcess
       op createOrder(): void;
 
+      @d2Command
+      @d2ServedBy("Push")
+      @d2InProcess
       @d2GrpcMethod("Push", "PushEvent")
       op pushEvent(): void;
     `,

@@ -14,6 +14,10 @@ import { createTypeSpecLibrary, paramMessage } from "@typespec/compiler";
 // Allocated IDs:
 //   D2TSP001  unmapped-scalar           — scalar has no C#/proto/TS mapping
 //   D2TSP002  unsupported-property-type — enum, union, or anonymous-model prop
+//   D2TSP003  missing-cqrs-category     — op carries neither @d2Command nor @d2Query
+//                                         (defensive guard in namespace routing; the
+//                                         decorator-layer `category-required` invariant
+//                                         should prevent this from firing in valid programs)
 // -----------------------------------------------------------------------
 
 /**
@@ -45,6 +49,20 @@ export const $lib = createTypeSpecLibrary({
       severity: "error",
       messages: {
         default: paramMessage`unsupported property type '${"kind"}' on '${"property"}' — enum, union, and anonymous-model properties are not yet supported by the DTO emitter`,
+      },
+    },
+
+    /**
+     * D2TSP003 — An operation carries neither @d2Command nor @d2Query.
+     * The handler-interface emitter and namespace-routing logic require exactly
+     * one CQRS category on every op. The decorator-layer `category-required`
+     * invariant should prevent this in valid programs; this diagnostic fires
+     * defensively when the emitter encounters an uncategorized op.
+     */
+    "missing-cqrs-category": {
+      severity: "error",
+      messages: {
+        default: paramMessage`operation '${"op"}' has no CQRS category — exactly one of @d2Command or @d2Query is required`,
       },
     },
   },

@@ -78,6 +78,8 @@ describe("dtoEmitIntegration_GetJwks_EmitsParamterlessInput", () => {
       model Jwk { kid: string; n: string; e: string; kty: string; use: string; alg: string; }
       model GetJwksOutput { keys: Jwk[]; }
 
+      @d2Query
+      @d2InProcess
       @d2ServedBy("KeyCustodian")
       op getJwks(): GetJwksOutput;
       `,
@@ -133,6 +135,7 @@ describe("dtoEmitIntegration_Sign_RedactedFieldInGeneratedCSharp", () => {
       model SignInput { kid: string; @d2Redact payload: bytes; }
       model SignOutput { signature: string; }
 
+      @d2Command
       @d2ServedBy("KeyCustodian")
       @d2InProcess
       @d2GrpcMethod("KeyCustodianSigner", "Sign")
@@ -170,6 +173,155 @@ describe("dtoEmitIntegration_Sign_RedactedFieldInGeneratedCSharp", () => {
     expect(tsContent).toBeDefined();
     expect(tsContent).toContain("readonly payload: Uint8Array;");
     expect(tsContent).not.toContain("RedactData");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Handler-interface emitter integration tests (items 23-26).
+// ---------------------------------------------------------------------------
+
+describe("dtoEmitIntegration_HandlerInterface_EmittedForEveryOp", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("getJwks (@d2Query+@d2InProcess) → IGetJwksHandler.g.cs emitted in app CQRS namespace", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.KeyCustodian;
+
+      model Jwk { kid: string; n: string; e: string; kty: string; use: string; alg: string; }
+      model GetJwksOutput { keys: Jwk[]; }
+
+      @d2Query
+      @d2InProcess
+      @d2ServedBy("KeyCustodian")
+      op getJwks(): GetJwksOutput;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: {
+        "@d2/typespec-emitters": {
+          "csharp-namespace": "D2.Test",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        },
+      },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    expect(errors).toHaveLength(0);
+
+    const handlerContent = getEmittedFile(host, "IGetJwksHandler.g.cs");
+    expect(handlerContent).toBeDefined();
+    // getJwks has no input params → input type falls back to "GetJwksInput" (by convention).
+    expect(handlerContent).toContain("IHandler<");
+    expect(handlerContent).toContain("GetJwksOutput");
+    expect(handlerContent).toContain("public interface IGetJwksHandler");
+    // emitUsing=false when csAppNamespaceBase is present.
+    expect(handlerContent).not.toContain("using D2.Shared.Handler.Abstractions;");
+  });
+
+  it("sign fixture (@d2GrpcMethod) → ISignHandler.g.cs emitted with using directive", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.Fixtures;
+
+      model SignInput { kid: string; @d2Redact payload: bytes; }
+      model SignOutput { signature: string; }
+
+      @d2Command
+      @d2ServedBy("KeyCustodian")
+      @d2InProcess
+      @d2GrpcMethod("KeyCustodianSigner", "Sign")
+      op sign(input: SignInput): SignOutput;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: {
+        "@d2/typespec-emitters": {
+          "csharp-namespace": "D2.Edge.Tests.TypeSpecDto.Generated",
+          // grpc-service-namespace → the fixture gRPC namespace used for ISignHandler.
+          "grpc-service-namespace": "D2.Edge.Tests.TypeSpecGrpc.Generated",
+          // No csharp-app-namespace-base → fixture mode → emitUsing=true.
+        },
+      },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    expect(errors).toHaveLength(0);
+
+    const handlerContent = getEmittedFile(host, "ISignHandler.g.cs");
+    expect(handlerContent).toBeDefined();
+    expect(handlerContent).toContain(
+      "public interface ISignHandler : IHandler<SignInput, SignOutput>;",
+    );
+    // fixture mode → emitUsing=true.
+    expect(handlerContent).toContain("using D2.Shared.Handler.Abstractions;");
+    expect(handlerContent).toContain("namespace D2.Edge.Tests.TypeSpecGrpc.Generated;");
+  });
+
+  it("@d2Internal op → handler interface emitted, DTOs in app namespace", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.KeyCustodian;
+
+      model ReconcileInput { kid: string; }
+      model ReconcileOutput { success: boolean; }
+
+      @d2Command
+      @d2Internal
+      @d2ServedBy("KeyCustodian")
+      op reconcile(input: ReconcileInput): ReconcileOutput;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: {
+        "@d2/typespec-emitters": {
+          "csharp-namespace": "D2.Fixture.Ns",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        },
+      },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    expect(errors).toHaveLength(0);
+
+    // Handler interface must be emitted for internal op too.
+    const handlerContent = getEmittedFile(host, "IReconcileHandler.g.cs");
+    expect(handlerContent).toBeDefined();
+    expect(handlerContent).toContain("IHandler<ReconcileInput, ReconcileOutput>");
+
+    // DTOs for internal op go to the app CQRS namespace, NOT Clients.
+    const inputContent = getEmittedFile(host, "ReconcileInput.g.cs");
+    expect(inputContent).toBeDefined();
+    expect(inputContent).toContain(
+      "namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.Reconcile;",
+    );
+    expect(inputContent).not.toContain("D2.Edge.KeyCustodian.Clients");
   });
 });
 

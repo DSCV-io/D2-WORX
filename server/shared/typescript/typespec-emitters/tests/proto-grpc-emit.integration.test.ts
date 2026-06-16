@@ -76,6 +76,7 @@ describe("protoGrpcEmitIntegration_Sign_EmitsProtoAndService", () => {
       model SignInput { kid: string; @d2Redact payload: bytes; }
       model SignOutput { signature: string; }
 
+      @d2Command
       @d2ServedBy("KeyCustodian")
       @d2InProcess
       @d2GrpcMethod("KeyCustodianSigner", "Sign")
@@ -154,6 +155,8 @@ describe("protoGrpcEmitIntegration_GetJwks_NoProtoEmitted", () => {
       model Jwk { kid: string; }
       model GetJwksOutput { keys: Jwk[]; }
 
+      @d2Query
+      @d2InProcess
       @d2ServedBy("KeyCustodian")
       op getJwks(): GetJwksOutput;
       `,

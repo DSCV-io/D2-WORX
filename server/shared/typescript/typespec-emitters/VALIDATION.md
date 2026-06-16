@@ -13,12 +13,15 @@ Each row maps a committed fixture to its regeneration guarantee.
 
 | Fixture file | Emitter call | Key assertion | Test file | Test name |
 |---|---|---|---|---|
-| `GetJwksInput.g.cs` | `emitCsharpDtos("getJwks", "D2.Edge.Tests.TypeSpecDto.Generated", "contracts/typespec/key-custodian/key-custodian.tsp", [], [], [])` | Byte-identical to `GET_JWKS_INPUT_FIXTURE` | `tests/byte-parity.test.ts` | `byteParity_GetJwksInput_CommittedFixtureIdentical` |
-| `GetJwksOutput.g.cs` | `emitCsharpDtos("getJwks", ..., [], outputFields, [nested("Jwk", ...)])` | Byte-identical to `GET_JWKS_OUTPUT_FIXTURE` | `tests/byte-parity.test.ts` | `byteParity_GetJwksOutput_CommittedFixtureIdentical` |
+| `clients/GetJwksInput.g.cs` (ns `D2.Edge.KeyCustodian.Clients`) | `emitCsharpDtos("getJwks", "D2.Edge.KeyCustodian.Clients", "contracts/typespec/key-custodian/key-custodian.tsp", [], [], [])` | Byte-identical to `GET_JWKS_INPUT_FIXTURE` | `tests/byte-parity.test.ts` | `byteParity_GetJwksInput_CommittedFixtureIdentical` |
+| `clients/GetJwksOutput.g.cs` (ns `D2.Edge.KeyCustodian.Clients`) | `emitCsharpDtos("getJwks", "D2.Edge.KeyCustodian.Clients", ..., [], outputFields, [nested("Jwk", ...)])` | Byte-identical to `GET_JWKS_OUTPUT_FIXTURE` | `tests/byte-parity.test.ts` | `byteParity_GetJwksOutput_CommittedFixtureIdentical` |
 | `SignInput.g.cs` | `emitCsharpDtos("sign", ..., inputFields, [], [])` | Byte-identical to `SIGN_INPUT_FIXTURE` | `tests/byte-parity.test.ts` | `byteParity_SignInput_CommittedFixtureIdentical` |
 | `key_custodian_signer_sign.g.proto` | `emitProto("sign", "KeyCustodianSigner", "Sign", "unary", "d2.keycustodian.v1", "D2.Services.Protos.KeyCustodian.V1", ...)` | Byte-identical to `SIGN_PROTO_FIXTURE` | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_SignProto_CommittedFixtureIdentical` |
 | `KeyCustodianSignerService.g.cs` | `emitGrpcService("sign", "KeyCustodianSigner", "Sign", "D2.Edge.Tests.TypeSpecGrpc.Generated", ...)` | Byte-identical to `SIGN_SERVICE_FIXTURE` | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_KeyCustodianSignerService_CommittedFixtureIdentical` |
 | `SignTransportMappers.g.cs` | `emitGrpcService(...)` (mappers file) | Byte-identical to `SIGN_MAPPER_FIXTURE` | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_SignTransportMappers_CommittedFixtureIdentical` |
+| `clients/IKeyCustodianInternalApi.g.cs` (ns `D2.Edge.KeyCustodian.Clients`) | `emitFacade("KeyCustodian", [{ opName: "getJwks", ... }], "D2.Edge.KeyCustodian.Clients", "D2.Edge.KeyCustodian.App.Application")` (interface file) | Byte-identical to `INTERFACE_FIXTURE` | `tests/facade-emitter.test.ts` | `facadeEmitter_ByteGate_Interface > regenerated IKeyCustodianInternalApi.g.cs is byte-identical to the committed fixture` |
+| `app/Application/KeyCustodianInternalApi.g.cs` (ns `D2.Edge.KeyCustodian.App.Application`) | `emitFacade(...)` (impl file, index 1) | Byte-identical to `IMPL_FIXTURE` | `tests/facade-emitter.test.ts` | `facadeEmitter_ByteGate_Impl > regenerated KeyCustodianInternalApi.g.cs is byte-identical to the committed fixture` |
+| `app/Application/KeyCustodianClientsGenerated.g.cs` (ns `D2.Edge.KeyCustodian.App.Application`) | `emitFacade(...)` (DI extension file, index 2) | Byte-identical to `DI_FIXTURE` | `tests/facade-emitter.test.ts` | `facadeEmitter_ByteGate_DiExtension > regenerated KeyCustodianClientsGenerated.g.cs is byte-identical to the committed fixture` |
 
 **Deliberate-drift non-vacuity guard**: each byte-parity describe block contains a second
 test that mutates the respective fixture by one byte and asserts the regenerated content
@@ -32,9 +35,9 @@ comparing a buffer to itself — the guard covers `GetJwksInput`, `GetJwksOutput
 
 | Live type | Generated type | Validated by |
 |---|---|---|
-| `D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks.GetJwksInput` | `D2.Edge.Tests.TypeSpecDto.Generated.GetJwksInput` | `TypeSpecDtoValidationTests.GeneratedGetJwksInput_IsParameterless_MatchingLiveDto` |
-| `D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks.GetJwksOutput` | `D2.Edge.Tests.TypeSpecDto.Generated.GetJwksOutput` | `TypeSpecDtoValidationTests.GeneratedGetJwksOutput_HasSamePublicShape_AsLiveDto` |
-| `D2.Edge.KeyCustodian.Domain.ValueObjects.Jwk` (6 public members) | `D2.Edge.Tests.TypeSpecDto.Generated.Jwk` (6-field positional record) | `TypeSpecDtoValidationTests.GeneratedJwk_HasSameSixPublicMembers_AsLiveJwkVo` |
+| `D2.Edge.KeyCustodian.Clients.GetJwksInput` (parameterless) | `D2.Edge.KeyCustodian.Clients.GetJwksInput` (committed `clients/GetJwksInput.g.cs`) | `GetJwksTransportDtoTests.GetJwksInput_IsParameterless` |
+| `D2.Edge.KeyCustodian.Clients.GetJwksOutput` (`IReadOnlyList<Jwk> Keys`) | `D2.Edge.KeyCustodian.Clients.GetJwksOutput` (committed `clients/GetJwksOutput.g.cs`) | `GetJwksTransportDtoTests.GetJwksOutput_HasKeysProperty_OfCorrectType` |
+| `D2.Edge.KeyCustodian.Domain.ValueObjects.Jwk` (6 public members) | `D2.Edge.KeyCustodian.Clients.Jwk` (6-field positional record) | `GetJwksTransportDtoTests.Jwk_MatchesDomainVoPublicShape` |
 | `[property: RedactData]` on `SignInput.Payload` | `[property: RedactData(Reason = RedactReason.PersonalInformation)]` on generated `SignInput.Payload` | `TypeSpecDtoValidationTests.GeneratedSignInput_PayloadProperty_IsRedactedByRealPolicy` (real Serilog pipeline) |
 
 **Redaction proof**: `GeneratedSignInput_PayloadProperty_IsRedactedByRealPolicy` builds a
@@ -42,10 +45,12 @@ real `LoggerConfiguration().Destructure.With<RedactDataDestructuringPolicy>()` p
 mock), logs the generated `SignInput` record, and asserts the rendered output contains
 `"[REDACTED: PersonalInformation]"` and does NOT contain `"SECRET_PAYLOAD"`.
 
-**Transport-vs-domain-VO divergence note**: the live `Jwk` VO has 3 positional ctor params + 3
+**Transport-vs-domain-VO divergence note**: the domain `Jwk` VO has 3 positional ctor params + 3
 init-only properties with constant defaults (`Kty="RSA"`, `Use="sig"`, `Alg="RS256"`). The
-generated `Jwk` DTO is a 6-field positional record. Equivalence is validated by public-member-set
-comparison (6 public members, same names and types), NOT by constructor arity.
+transport `D2.Edge.KeyCustodian.Clients.Jwk` is a 6-field positional record. Equivalence is
+validated by public-member-set comparison (6 public members, same names and types), NOT by
+constructor arity. The transport DTO lives in `D2.Edge.KeyCustodian.Clients` — a separate project
+from the domain VO — because it is consumed by callers who must not depend on the domain layer.
 
 ---
 
@@ -103,5 +108,5 @@ Committed C# fixture files exercised by the in-memory gRPC harness in `D2.Edge.T
 | Branches | 100% |
 | Functions | 100% |
 | Statements | 100% |
-| Test files | 17 |
-| Total tests | 216 |
+| Test files | 21 |
+| Total tests | 296 |

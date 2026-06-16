@@ -249,6 +249,107 @@ primary constructor `(I<Op>Handler handler)`, calls `result.IsOk` (the
 string.Empty)` on failure. The mapper file uses C# 14 `extension(T target) { }`
 block syntax and `ByteString.CopyFrom` / `.ToByteArray()` for `bytes` fields.
 
+### Handler-interface emitter (`src/lib/handler-interface-emitter.ts`)
+
+```typescript
+import { emitHandlerInterface } from "@d2/typespec-emitters";
+
+const interfaceFile = emitHandlerInterface(
+  "getJwks",
+  "D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks",
+  "GetJwksInput",
+  "GetJwksOutput",
+  /*emitUsing*/ false,
+  "contracts/typespec/key-custodian/key-custodian.tsp",
+  /*dtoNamespace*/ "D2.Edge.KeyCustodian.Clients",
+);
+// interfaceFile.fileName → "IGetJwksHandler.g.cs"
+```
+
+Emits the generated `public interface I<Op>Handler : IHandler<<Op>Input, <Op>Output>;`
+marker interface for one operation. The interface lives in the per-op CQRS namespace
+inside `app/` and is module-internal — callers outside the module never import it
+directly.
+
+Parameters:
+
+- `emitUsing` — when `false`, the consuming app project supplies the
+  `D2.Shared.Handler.Abstractions` import via `GlobalUsings.cs` (real KC app). When
+  `true`, the file must carry a per-file `using D2.Shared.Handler.Abstractions;`
+  (fixture namespaces where no global using is present).
+- `dtoNamespace` — optional. When the DTO types live in a different namespace than
+  the handler interface (e.g. exposed ops whose DTOs are in the `Clients` project),
+  pass the DTO namespace here. The emitter adds a per-file
+  `using <dtoNamespace>;` so the interface declaration can reference the types.
+  Omit for internal ops where DTO and interface share the same namespace.
+
+### Façade emitter (`src/lib/facade-emitter.ts`)
+
+```typescript
+import { emitFacade } from "@d2/typespec-emitters";
+
+const [ifaceFile, implFile, diFile] = emitFacade(
+  "KeyCustodian",
+  [
+    {
+      opName: "getJwks",
+      inputTypeName: "GetJwksInput",
+      outputTypeName: "GetJwksOutput",
+      sourceSpec: "contracts/typespec/key-custodian/key-custodian.tsp",
+      category: "Queries",
+    },
+  ],
+  "D2.Edge.KeyCustodian.Clients",
+  "D2.Edge.KeyCustodian.App.Application",
+);
+// ifaceFile.fileName → "IKeyCustodianInternalApi.g.cs"
+// implFile.fileName  → "KeyCustodianInternalApi.g.cs"
+// diFile.fileName    → "KeyCustodianClientsGenerated.g.cs"
+```
+
+Emits the three-file façade layer for one module. Always returns exactly three
+`EmittedFile` instances (or an empty array when `exposedOps` is empty — a
+zero-exposed-op module produces no façade).
+
+The three files:
+
+1. **`I<Module>InternalApi.g.cs`** (targets the Clients project namespace) — the
+   curated public interface listing only the exposed operations. Internal-only
+   operations (`@d2Internal`) are structurally absent so callers cannot
+   accidentally invoke an op that was never meant to cross a boundary.
+2. **`<Module>InternalApi.g.cs`** (targets the app/ project namespace) — the thin
+   `sealed` delegating implementation. One primary-constructor parameter per
+   exposed op (`I<Op>Handler`); each method delegates to the matching handler's
+   `HandleAsync` call.
+3. **`<Module>ClientsGenerated.g.cs`** (targets the app/ project namespace) — the
+   generated DI extension using C# 14 `extension(IServiceCollection services)`
+   block syntax. Registers the impl as `Transient` (not `Singleton`) to match
+   handler lifetime — a Singleton façade would capture scoped DbContext dependencies
+   (captive-dependency bug).
+
+Parameters:
+
+- `moduleName` — PascalCase module name (e.g. `"KeyCustodian"`). Drives the
+  interface/impl/DI type names and file names.
+- `exposedOps` — all exposed operations for this module in encounter order
+  (determines method order in the interface and constructor-parameter order in
+  the impl). The `category` field (`"Commands"` | `"Queries"`) drives the
+  per-op handler `using` directive namespace in the impl.
+- `clientsNamespace` — the C# namespace for the Clients project (interface +
+  DTO types).
+- `appNamespace` — the C# namespace for the generated app-layer files (impl +
+  DI extension).
+
+Method signature shape (transport-neutral):
+
+```csharp
+ValueTask<D2Result<<Op>Output?>> <Op>Async(<Op>Input input, CancellationToken ct = default)
+```
+
+No `HandlerOptions?` parameter — the interface must back both the in-process
+impl today and a future gRPC-client impl; `HandlerOptions` is a server-side
+concern that cannot be expressed on a wire boundary.
+
 ### Emit-file wrapper (`src/lib/emit-file.ts`)
 
 ```typescript
@@ -280,6 +381,7 @@ catalog entry in `src/lib.ts`.
 | -------- | ------------------------- | ----------------------------------------------------------------------- |
 | D2TSP001 | `unmapped-scalar`         | A TypeSpec scalar has no entry in the scalar registry. Emitter cannot proceed without a C#/proto/TS mapping. |
 | D2TSP002 | `unsupported-property-type` | A model property has an enum, union, or anonymous-model type that the DTO emitter does not yet support. |
+| D2TSP003 | `missing-cqrs-category`   | An operation carries neither `@d2Command` nor `@d2Query`. The façade emitter cannot determine the handler namespace without a CQRS category. |
 
 All diagnostics have `severity: "error"` — every violation fails `tsp compile`
 with a non-zero exit code.
@@ -302,7 +404,7 @@ pnpm run test:coverage
 pnpm run type-check:test
 ```
 
-17 test files, 216 tests. Coverage: 100% lines / branches / functions / statements
+21 test files, 296 tests. Coverage: 100% lines / branches / functions / statements
 on all `src/**` files (excluding the barrel `src/index.ts`).
 
 ---
@@ -312,10 +414,20 @@ on all `src/**` files (excluding the barrel `src/index.ts`).
 The byte-parity test suites pin the emitter output against committed fixture files in:
 
 ```
-server/services/edge/tests/Unit/KeyCustodian/TypeSpecDto/Generated/   ← C# DTO fixtures
+server/services/edge/key-custodian/clients/                           ← GetJwks DTO fixtures + façade interface (Clients namespace)
+server/services/edge/key-custodian/app/Application/                   ← façade impl + DI extension fixtures (app namespace)
+server/services/edge/key-custodian/app/Application/Handlers/…/GetJwks/ ← GetJwks handler interface (app CQRS namespace)
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Generated/  ← gRPC service + mapper fixtures
 server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Protos/     ← .proto fixture
 ```
+
+The Sign operation DTOs live in the gRPC generated directory because they are emitted
+alongside the gRPC service and mappers. The GetJwks DTOs and the façade interface live in
+`key-custodian/clients/` because they are exposed through the `Clients` façade (the
+transport boundary for external callers). The façade impl (`KeyCustodianInternalApi.g.cs`)
+and the generated DI extension (`KeyCustodianClientsGenerated.g.cs`) live in `app/Application/`
+because they reference app-layer handler interfaces. The handler-interface root
+(`IGetJwksHandler.g.cs`) lives in the per-op CQRS handler folder.
 
 These fixtures are an **independently committed snapshot** — they are NOT written by
 `tsp compile`. The `tspconfig.yaml` `emitter-output-dir` points to
@@ -327,10 +439,13 @@ the fixtures as follows:
 
 1. Run `tsp compile contracts/typespec/` from the repo root to emit updated files into
    `server/shared/typescript/typespec-emitters/dist/generated/`.
-2. Copy the updated `.g.cs` files into the matching `Generated/` directories above.
+2. Copy the updated `.g.cs` files into the matching directories above (DTO fixtures
+   to `clients/`, façade impl + DI extension to `app/Application/`, handler interface
+   to the per-op CQRS handler folder, gRPC fixtures to `Generated/`).
    Copy the updated `.g.proto` file into the `Protos/` directory.
-3. Update the fixture constants in `tests/byte-parity.test.ts` and
-   `tests/proto-grpc-byte-parity.test.ts` to match the new content.
+3. Update the fixture constants in `tests/byte-parity.test.ts`,
+   `tests/facade-emitter.test.ts`, and `tests/proto-grpc-byte-parity.test.ts`
+   to match the new content.
 4. Run `pnpm run test:coverage` to confirm all byte-parity tests pass with 100%
    coverage.
 5. Run `dotnet build` + `dotnet test` (scoped to `D2.Edge.Tests`) to confirm the C#

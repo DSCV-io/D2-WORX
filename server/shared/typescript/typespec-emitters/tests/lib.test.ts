@@ -39,3 +39,18 @@ describe("lib_UnmappedScalarPresent", () => {
     expect($lib.name).toBe("@d2/typespec-emitters");
   });
 });
+
+describe("lib_MissingCqrsCategoryPresent", () => {
+  it("'missing-cqrs-category' (D2TSP003) is in the catalog", () => {
+    expect($lib.diagnostics["missing-cqrs-category"]).toBeDefined();
+  });
+
+  it("'missing-cqrs-category' has severity 'error'", () => {
+    expect($lib.diagnostics["missing-cqrs-category"].severity).toBe("error");
+  });
+
+  it("'missing-cqrs-category' messages.default is callable (paramMessage)", () => {
+    const descriptor = $lib.diagnostics["missing-cqrs-category"];
+    expect(typeof descriptor.messages.default).toBe("function");
+  });
+});

@@ -6,23 +6,26 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 
+using D2.Edge.Tests.TypeSpecDto.Generated;
 using D2.Edge.Tests.TypeSpecGrpc.Generated;
+using D2.Shared.Handler.Abstractions;
 using D2.Shared.Result;
-using DtoSignInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignInput;
-using DtoSignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;
 
 /// <summary>
 /// In-process stand-in for <see cref="ISignHandler"/> used by
 /// <see cref="GrpcServiceImplTests"/>.
 /// </summary>
-internal sealed class FakeSignHandler(D2Result<DtoSignOutput> result) : ISignHandler
+internal sealed class FakeSignHandler(D2Result<SignOutput?> result) : ISignHandler
 {
-    internal DtoSignInput? LastInput { get; private set; }
+    internal SignInput? LastInput { get; private set; }
 
     /// <inheritdoc/>
-    public Task<D2Result<DtoSignOutput>> HandleAsync(DtoSignInput input, CancellationToken ct)
+    public ValueTask<D2Result<SignOutput?>> HandleAsync(
+        SignInput input,
+        CancellationToken ct = default,
+        HandlerOptions? options = null)
     {
         LastInput = input;
-        return Task.FromResult(result);
+        return ValueTask.FromResult(result);
     }
 }

@@ -62,6 +62,13 @@ Copyright (c) DCSV. All rights reserved.
       passes to D2Result factories (e.g. the precondition arg-naming messages).
     -->
     <ProjectReference Include="..\..\..\..\shared\dotnet\i18n\keys\D2.Shared.I18n.Keys.csproj" />
+    <!--
+      D2.Edge.KeyCustodian.Clients — the thin leaf project that holds transport
+      DTOs for exposed operations + the module façade interface. App references
+      Clients so I<Op>Handler + handler bodies can use Clients DTOs directly
+      (App ← Clients is the legal edge; Clients refs Result only).
+    -->
+    <ProjectReference Include="..\clients\D2.Edge.KeyCustodian.Clients.csproj" />
   </ItemGroup>
 
   <ItemGroup>

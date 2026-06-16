@@ -6,8 +6,8 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 
-using System.Threading;
 using System.Threading.Tasks;
+using D2.Edge.Tests.TypeSpecDto.Generated;
 using D2.Edge.Tests.TypeSpecGrpc.Generated;
 using D2.Services.Protos.KeyCustodian.V1;
 using D2.Shared.Result;
@@ -19,8 +19,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using DtoSignInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignInput;
-using DtoSignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;
 
 /// <summary>
 /// In-memory gRPC harness tests for the TypeSpec-emitted
@@ -42,7 +40,7 @@ public sealed class GrpcServiceImplTests
         var payload = new byte[] { 1, 2, 3 };
         const string expectedSig = "sig-base64==";
 
-        var fakeHandler = new FakeSignHandler(D2Result<DtoSignOutput>.Ok(new DtoSignOutput(expectedSig)));
+        var fakeHandler = new FakeSignHandler(D2Result<SignOutput?>.Ok(new SignOutput(expectedSig)));
 
         using var host = await BuildHost(fakeHandler);
         using var channel = CreateChannel(host);
@@ -70,7 +68,7 @@ public sealed class GrpcServiceImplTests
     public async Task Sign_HandlerFailure_ThrowsRpcExceptionInternal()
     {
         // Arrange: handler returns a failure result.
-        var fakeHandler = new FakeSignHandler(D2Result<DtoSignOutput>.ServiceUnavailable());
+        var fakeHandler = new FakeSignHandler(D2Result<SignOutput?>.ServiceUnavailable());
 
         using var host = await BuildHost(fakeHandler);
         using var channel = CreateChannel(host);

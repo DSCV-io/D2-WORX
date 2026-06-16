@@ -140,7 +140,7 @@ abbreviation, 3-digit number). Examples currently in use:
 | Field constraints    | `D2FC`   | `validation/source-gen`                                                |
 | Advisory locks       | `D2LCK`  | `entity-framework-core/locks-source-gen`                              |
 | KC error codes       | `D2KEC`  | `server/services/edge/key-custodian/error-codes-source-gen` (shell)    |
-| TypeSpec emitters    | `D2TSP`  | `server/shared/typescript/typespec-emitters` (TypeSpec emitter fleet — independent pipeline from ts-codegen; IDs allocated in `src/lib.ts`) |
+| TypeSpec emitters    | `D2TSP`  | `server/shared/typescript/typespec-emitters` (TypeSpec emitter fleet — independent pipeline from ts-codegen; IDs allocated in `src/lib.ts`): `D2TSP001` unmapped-scalar — scalar has no C#/proto/TS mapping; `D2TSP002` unsupported-property-type — enum, union, or anonymous-model property; `D2TSP003` missing-cqrs-category — op carries neither @d2Command nor @d2Query (defensive guard in namespace routing; `category-required` invariant prevents this in valid programs) |
 
 Diagnostic IDs are declared in two parallel files:
 

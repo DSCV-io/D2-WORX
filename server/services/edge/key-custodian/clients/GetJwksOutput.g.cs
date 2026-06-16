@@ -8,7 +8,7 @@
 
 #nullable enable
 
-namespace D2.Edge.Tests.TypeSpecDto.Generated;
+namespace D2.Edge.KeyCustodian.Clients;
 
 /// <summary>Generated DTO for the <c>GetJwksOutput</c> operation.</summary>
 public sealed record GetJwksOutput(

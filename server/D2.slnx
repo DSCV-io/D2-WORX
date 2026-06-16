@@ -256,6 +256,9 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/services/edge/key-custodian/infra/">
     <Project Path="services/edge/key-custodian/infra/D2.Edge.KeyCustodian.Infra.csproj" />
   </Folder>
+  <Folder Name="/services/edge/key-custodian/clients/">
+    <Project Path="services/edge/key-custodian/clients/D2.Edge.KeyCustodian.Clients.csproj" />
+  </Folder>
   <Folder Name="/services/edge/tests/">
     <Project Path="services/edge/tests/D2.Edge.Tests.csproj" />
   </Folder>

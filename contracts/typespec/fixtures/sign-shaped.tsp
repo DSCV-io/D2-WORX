@@ -41,6 +41,7 @@ model SignOutput {
  * Fixture operation — exercises @d2Redact, @d2ServedBy, @d2InProcess,
  * and @d2GrpcMethod for the emitter fleet.
  */
+@d2Command
 @d2ServedBy("KeyCustodian")
 @d2InProcess
 @d2GrpcMethod("KeyCustodianSigner", "Sign")

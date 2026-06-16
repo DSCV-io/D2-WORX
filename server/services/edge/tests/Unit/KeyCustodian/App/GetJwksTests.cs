@@ -6,6 +6,8 @@
 
 namespace D2.Edge.Tests.Unit.KeyCustodian.App;
 
+using D2.Edge.KeyCustodian.Clients;
+
 /// <summary>
 /// Tests for <see cref="GetJwksHandler"/>: includes active + retiring signing keys
 /// (active first), excludes symmetric / non-signing-domain / terminal keys, and

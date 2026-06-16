@@ -141,6 +141,7 @@ Copyright (c) DCSV. All rights reserved.
   <ItemGroup>
     <ProjectReference Include="..\key-custodian\domain\D2.Edge.KeyCustodian.Domain.csproj" />
     <ProjectReference Include="..\key-custodian\app\D2.Edge.KeyCustodian.App.csproj" />
+    <ProjectReference Include="..\key-custodian\clients\D2.Edge.KeyCustodian.Clients.csproj" />
     <ProjectReference Include="..\key-custodian\infra\D2.Edge.KeyCustodian.Infra.csproj" />
     <!--
       The keycustodian-error-codes SrcGen referenced as a NORMAL library (not an

@@ -8,6 +8,10 @@ import {
   D2_SERVED_BY_KEY,
   D2_GRPC_METHOD_KEY,
   D2_IN_PROCESS_KEY,
+  D2_COMMAND_KEY,
+  D2_QUERY_KEY,
+  D2_INTERNAL_KEY,
+  D2_SERVER_PUSH_KEY,
 } from "@d2/typespec-decorators";
 import { emitGeneratedFile, resolveOutputPath } from "./lib/emit-file.js";
 import { walkModel } from "./lib/model-walk.js";
@@ -15,25 +19,47 @@ import { emitCsharpDtos } from "./lib/csharp-dto-emitter.js";
 import { emitTsDtos } from "./lib/ts-dto-emitter.js";
 import { emitProto } from "./lib/proto-emitter.js";
 import { emitGrpcService } from "./lib/grpc-service-emitter.js";
+import { emitHandlerInterface } from "./lib/handler-interface-emitter.js";
+import { emitFacade } from "./lib/facade-emitter.js";
+import type { ExposedOp } from "./lib/facade-emitter.js";
 import { $lib } from "./lib.js";
 
-// The $onEmit entry point drives five artifact families per tsp compile:
+// The $onEmit entry point drives six artifact families per tsp compile:
 //
 //   1. operations-manifest.json — operations smoke manifest from the initial
 //      scaffold; kept so the operations-manifest integration test stays green
 //      alongside DTO emission.
 //   2. <Op>Input.g.cs + <Op>Output.g.cs — C# sealed-record DTO pairs for
-//      every operation with a concrete input or output model.
-//   3. <op>-dto.g.ts — TypeScript interface pair for the same operations.
-//   4. <Service>_<method>.g.proto — proto3 service + message declarations for
+//      every operation with a concrete input or output model. Namespace is
+//      determined by exposure routing (see "Namespace routing" below).
+//   3. I<Op>Handler.g.cs — C# handler interface per op (EVERY op — exposed
+//      and internal). Lands in the app CQRS namespace.
+//   4. <op>-dto.g.ts — TypeScript interface pair for the same operations.
+//   5. <Service>_<method>.g.proto — proto3 service + message declarations for
 //      every operation decorated with @d2GrpcMethod.
-//   5. <Service>Service.g.cs + <Op>TransportMappers.g.cs — C# gRPC service
+//   6. <Service>Service.g.cs + <Op>TransportMappers.g.cs — C# gRPC service
 //      class (extends the Grpc.Tools base) + transport mappers for those ops.
 //
-// Namespace for C# DTOs is read from `csharp-namespace`.
-// Proto package from `proto-package`; proto C# namespace from `proto-csharp-namespace`;
-// gRPC service-impl C# namespace from `grpc-service-namespace`.
-// Each option falls back to a safe placeholder when absent.
+// Namespace routing for C# DTOs:
+//   EXPOSED op (@d2InProcess / @d2GrpcMethod / @d2ServerPush / @route):
+//     DTOs → `csharp-clients-namespace` (Clients project).
+//   INTERNAL op (@d2Internal):
+//     DTOs → `<csharp-app-namespace-base>.<Category>.<PascalOp>`.
+//   FIXTURE ops (no `csharp-app-namespace-base`):
+//     DTOs → `csharp-namespace` (legacy fixture placeholder; unchanged).
+//
+//   The app-layer I<Op>Handler interface always lands in:
+//     `<csharp-app-namespace-base>.<Category>.<PascalOp>`   (with emitUsing=false)
+//   OR `grpc-service-namespace` for fixture ops              (with emitUsing=true).
+//
+// tspconfig options:
+//   csharp-namespace       — fixture DTO namespace (legacy; kept for backward compat).
+//   csharp-clients-namespace — Clients project namespace for exposed-op DTOs + façade.
+//   csharp-app-namespace-base — app handler-namespace base; per-op CQRS path derived
+//                               as <base>.<Category>.<PascalOp>.
+//   proto-package          — proto3 package declaration.
+//   proto-csharp-namespace — C# namespace for Grpc.Tools-generated proto types.
+//   grpc-service-namespace — C# namespace for the generated gRPC service-impl class.
 
 /** Shape of one operation entry in the smoke manifest. */
 export interface ManifestOperation {
@@ -64,6 +90,17 @@ export async function $onEmit(context: EmitContext): Promise<void> {
     typeof rawOptions["csharp-namespace"] === "string" && rawOptions["csharp-namespace"].length > 0
       ? rawOptions["csharp-namespace"]
       : "D2.Generated";
+  // Clients namespace for exposed-op DTOs + façade interface (façade-layer routing).
+  const csClientsNamespace =
+    typeof rawOptions["csharp-clients-namespace"] === "string" && rawOptions["csharp-clients-namespace"].length > 0
+      ? rawOptions["csharp-clients-namespace"]
+      : undefined;
+  // App handler-namespace base; per-op CQRS path =
+  // <base>.<Category>.<PascalOp>. When absent, falls back to fixture mode.
+  const csAppNamespaceBase =
+    typeof rawOptions["csharp-app-namespace-base"] === "string" && rawOptions["csharp-app-namespace-base"].length > 0
+      ? rawOptions["csharp-app-namespace-base"]
+      : undefined;
   const protoPackage =
     typeof rawOptions["proto-package"] === "string" && rawOptions["proto-package"].length > 0
       ? rawOptions["proto-package"]
@@ -76,6 +113,10 @@ export async function $onEmit(context: EmitContext): Promise<void> {
     typeof rawOptions["grpc-service-namespace"] === "string" && rawOptions["grpc-service-namespace"].length > 0
       ? rawOptions["grpc-service-namespace"]
       : "D2.Generated.Grpc";
+
+  // Collect exposed ops per module (grouped by @d2ServedBy) for the façade emitter.
+  // Façade is one-per-module so it is emitted AFTER the per-op walk gathers all ops.
+  const exposedOpsByModule = new Map<string, ExposedOp[]>();
 
   navigateProgram(program, {
     operation(op: Operation) {
@@ -104,9 +145,86 @@ export async function $onEmit(context: EmitContext): Promise<void> {
         : undefined;
       const outputModel = op.returnType?.kind === "Model" ? (op.returnType as Model) : undefined;
 
+      // Determine exposure and category for namespace routing.
+      const isExposed = resolveIsExposed(program, op);
+      const isInternal = program.stateMap(D2_INTERNAL_KEY).get(op) === true;
+      const category = resolveCategory(program, op);
+
+      // Resolve the DTO namespace for C# emission:
+      //   - Real-module exposed op + Clients namespace configured → Clients ns.
+      //   - Real-module internal op + app-namespace-base configured → app CQRS ns.
+      //   - Fixture op (no app-namespace-base) → fixture csNamespace.
+      const dtoCsNamespace = resolveDtoNamespace(
+        isExposed,
+        isInternal,
+        category,
+        op.name,
+        csNamespace,
+        csClientsNamespace,
+        csAppNamespaceBase,
+        program,
+        op,
+      );
+
       // Emit C# + TS DTOs only when we have at least one side with a concrete model.
+      // Returns true when emission succeeded (no walk errors); the handler-interface
+      // emitter is gated on the same success so error paths produce zero .g.cs output.
+      let dtoEmitSucceeded = false;
       if (inputModel !== undefined || outputModel !== undefined) {
-        emitDtoPair(context, program, op.name, csNamespace, specHint, inputModel, outputModel);
+        dtoEmitSucceeded = emitDtoPair(context, program, op.name, dtoCsNamespace, specHint, inputModel, outputModel);
+      }
+
+      // Emit I<Op>Handler.g.cs for EVERY op (exposed and internal).
+      // Gated on dtoEmitSucceeded so unmapped-scalar / unsupported-property-type
+      // errors do not produce a partial handler-interface file with broken type refs.
+      // The handler interface always lands in the app CQRS namespace
+      // (or the fixture grpcServiceNs when csAppNamespaceBase is absent).
+      if (dtoEmitSucceeded) {
+        const handlerNs = resolveHandlerNamespace(
+          category,
+          op.name,
+          grpcServiceNs,
+          csAppNamespaceBase,
+        );
+        // emitUsing=false when a real app project has GlobalUsings supplying the import;
+        // emitUsing=true for fixture namespaces that have no such global using.
+        const handlerEmitUsing = csAppNamespaceBase === undefined;
+        const inputTypeName = (inputModel?.name?.length ?? 0) > 0 ? inputModel!.name : `${toPascalFromCamel(op.name)}Input`;
+        const outputTypeName = (outputModel?.name?.length ?? 0) > 0 ? outputModel!.name : `${toPascalFromCamel(op.name)}Output`;
+        // Pass the DTO namespace when it differs from the handler namespace so the
+        // emitter can add a per-file using for the Clients types (exposed ops only).
+        const dtoNsForHandler = dtoCsNamespace !== handlerNs ? dtoCsNamespace : undefined;
+        const handlerFile = emitHandlerInterface(
+          op.name,
+          handlerNs,
+          inputTypeName,
+          outputTypeName,
+          handlerEmitUsing,
+          specHint,
+          dtoNsForHandler,
+        );
+        const handlerPath = resolveOutputPath(context, handlerFile.fileName);
+        void emitGeneratedFile(program, handlerPath, handlerFile.content);
+
+        // Collect exposed ops for the façade emitter (one-per-module, emitted after the walk).
+        // Only collect when we have a real-module context (csAppNamespaceBase + csClientsNamespace)
+        // and the op is exposed (not @d2Internal). Fixture ops (no csAppNamespaceBase) are skipped.
+        // Only collect ops that have a known CQRS category — ops missing @d2Command / @d2Query
+        // already fired D2TSP003 and must not appear in the façade interface.
+        if (isExposed && category !== undefined && csAppNamespaceBase !== undefined && csClientsNamespace !== undefined) {
+          const servedBy = program.stateMap(D2_SERVED_BY_KEY).get(op) as string | undefined;
+          if (servedBy !== undefined && servedBy.length > 0) {
+            const existing = exposedOpsByModule.get(servedBy) ?? [];
+            existing.push({
+              opName: op.name,
+              inputTypeName,
+              outputTypeName,
+              sourceSpec: specHint,
+              category: category as "Commands" | "Queries",
+            });
+            exposedOpsByModule.set(servedBy, existing);
+          }
+        }
       }
 
       // Emit proto + gRPC service impl only for ops carrying @d2GrpcMethod.
@@ -122,7 +240,7 @@ export async function $onEmit(context: EmitContext): Promise<void> {
           protoPackage,
           protoCsharpNs,
           grpcServiceNs,
-          csNamespace,
+          dtoCsNamespace,
           specHint,
           inputModel,
           outputModel,
@@ -130,6 +248,24 @@ export async function $onEmit(context: EmitContext): Promise<void> {
       }
     },
   });
+
+  // ---- Façade emitter — one interface + impl + DI-ext per module (after the per-op walk) ----
+  // The façade is one-per-module; it groups ALL exposed ops for a @d2ServedBy value and emits
+  // three files: the interface (in Clients), the impl, and the DI extension (both in app/).
+  // Only fires when both csClientsNamespace and csAppNamespaceBase are configured.
+  if (csClientsNamespace !== undefined && csAppNamespaceBase !== undefined) {
+    for (const [moduleName, moduleOps] of exposedOpsByModule) {
+      // Derive the app namespace root from the namespace base (strip the per-op CQRS suffix).
+      // The base is e.g. "D2.Edge.KeyCustodian.App.Application.Handlers" →
+      // app namespace root = "D2.Edge.KeyCustodian.App.Application".
+      const appNsRoot = csAppNamespaceBase.replace(/\.Handlers$/, "");
+      const facadeFiles = emitFacade(moduleName, moduleOps, csClientsNamespace, appNsRoot);
+      for (const f of facadeFiles) {
+        const facadePath = resolveOutputPath(context, f.fileName);
+        void emitGeneratedFile(program, facadePath, f.content);
+      }
+    }
+  }
 
   // ---- Smoke manifest (kept so the operations-manifest integration test stays green) --------
   const manifest: OperationsManifest = {
@@ -140,6 +276,121 @@ export async function $onEmit(context: EmitContext): Promise<void> {
 
   const manifestPath = resolveOutputPath(context, "operations-manifest.json");
   await emitGeneratedFile(program, manifestPath, JSON.stringify(manifest, null, 2));
+}
+
+// ---------------------------------------------------------------------------
+// Namespace routing helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve whether an operation is "exposed" — carries any of the four
+ * transport decorators that make it reachable across a boundary.
+ * "Internal" ops (@d2Internal) are the complement; the decorator layer
+ * enforces mutual exclusion.
+ */
+function resolveIsExposed(program: Parameters<typeof walkModel>[0], op: Operation): boolean {
+  const hasInProcess = program.stateMap(D2_IN_PROCESS_KEY).get(op) === true;
+  const hasGrpc = program.stateMap(D2_GRPC_METHOD_KEY).get(op) !== undefined;
+  const hasServerPush = program.stateMap(D2_SERVER_PUSH_KEY).get(op) !== undefined;
+  // @route is not in the state-map directly — check via @typespec/http's getHttpOperation.
+  // The exposure decorators are @d2InProcess / @d2GrpcMethod / @d2ServerPush.
+  // @route is handled by the route emitter, not this pass. isExposed is therefore a union of the three keys.
+  return hasInProcess || hasGrpc || hasServerPush;
+}
+
+/**
+ * Resolve the CQRS category for an operation.
+ * Returns "Commands" for @d2Command ops, "Queries" for @d2Query ops,
+ * or throws D2TSP003 via the returned error string (caller must propagate).
+ */
+function resolveCategory(
+  program: Parameters<typeof walkModel>[0],
+  op: Operation,
+): "Commands" | "Queries" | undefined {
+  const isCommand = program.stateMap(D2_COMMAND_KEY).get(op) === true;
+  const isQuery = program.stateMap(D2_QUERY_KEY).get(op) === true;
+  if (isCommand && !isQuery) return "Commands";
+  if (isQuery && !isCommand) return "Queries";
+  // Neither or both — D2TSP003 defensive guard.
+  return undefined;
+}
+
+/**
+ * Resolve the C# namespace for emitting DTOs.
+ *
+ * Routing table:
+ *   - csAppNamespaceBase present + isExposed + csClientsNamespace present
+ *     → Clients namespace (exposed ops' DTOs live in Clients per D-c).
+ *   - csAppNamespaceBase present + isInternal + category resolved
+ *     → `<base>.<Category>.<PascalOp>` (internal-op DTOs in app CQRS ns).
+ *   - No csAppNamespaceBase (fixture mode)
+ *     → csNamespace (legacy fixture placeholder).
+ *   - csAppNamespaceBase present + category missing
+ *     → falls back to csNamespace (emitter reports D2TSP003 separately via
+ *       resolveCategory returning undefined; here we just avoid a crash).
+ */
+function resolveDtoNamespace(
+  isExposed: boolean,
+  isInternal: boolean,
+  category: "Commands" | "Queries" | undefined,
+  opName: string,
+  csNamespace: string,
+  csClientsNamespace: string | undefined,
+  csAppNamespaceBase: string | undefined,
+  program: Parameters<typeof walkModel>[0],
+  op: Operation,
+): string {
+  if (csAppNamespaceBase === undefined)
+    // Fixture mode — use the legacy csharp-namespace.
+    return csNamespace;
+
+  if (isExposed && csClientsNamespace !== undefined)
+    return csClientsNamespace;
+
+  if (isInternal || !isExposed) {
+    if (category !== undefined) {
+      const pascalOp = toPascalFromCamel(opName);
+      return `${csAppNamespaceBase}.${category}.${pascalOp}`;
+    }
+    // Missing category — D2TSP003 (loud; report and fall back to avoid crash).
+    $lib.reportDiagnostic(program, {
+      code: "missing-cqrs-category",
+      format: { op: opName },
+      target: op,
+    });
+    return csNamespace;
+  }
+
+  // Exposed but no Clients namespace configured — fall back to fixture ns.
+  return csNamespace;
+}
+
+/**
+ * Resolve the C# namespace for emitting the I<Op>Handler interface.
+ *
+ * For real-module ops (csAppNamespaceBase present + category resolved):
+ *   `<base>.<Category>.<PascalOp>`
+ * For fixture ops (no csAppNamespaceBase):
+ *   `grpcServiceNs` (the fixture gRPC namespace, matches the existing fixture
+ *   pattern for ISignHandler in D2.Edge.Tests.TypeSpecGrpc.Generated).
+ */
+function resolveHandlerNamespace(
+  category: "Commands" | "Queries" | undefined,
+  opName: string,
+  grpcServiceNs: string,
+  csAppNamespaceBase: string | undefined,
+): string {
+  if (csAppNamespaceBase !== undefined && category !== undefined) {
+    const pascalOp = toPascalFromCamel(opName);
+    return `${csAppNamespaceBase}.${category}.${pascalOp}`;
+  }
+  return grpcServiceNs;
+}
+
+/** Convert lowerCamelCase op name to PascalCase (local copy to avoid circular import). */
+function toPascalFromCamel(s: string): string {
+  if (s.length === 0) return s;
+  return s[0]!.toUpperCase() + s.slice(1);
 }
 
 // ---------------------------------------------------------------------------
@@ -154,7 +405,7 @@ function emitDtoPair(
   specHint: string,
   inputModel: Model | undefined,
   outputModel: Model | undefined,
-): void {
+): boolean {
   const errors: string[] = [];
   const onError = (
     code: "unmapped-scalar" | "unsupported-property-type",
@@ -186,7 +437,7 @@ function emitDtoPair(
     : { fields: [], nestedModels: [] };
 
   if (errors.length > 0)
-    return; // Diagnostics already reported; don't emit partial files.
+    return false; // Diagnostics already reported; don't emit partial files.
 
   // ---- C# DTO emission ----
   const csFiles = emitCsharpDtos(
@@ -214,6 +465,7 @@ function emitDtoPair(
 
   const tsPath = resolveOutputPath(context, tsFile.fileName);
   void emitGeneratedFile(program, tsPath, tsFile.content);
+  return true;
 }
 
 function emitProtoAndGrpcService(

@@ -31,6 +31,7 @@ function field(
     tsType,
     optional,
     redact,
+    repeated: false,
   };
 }
 

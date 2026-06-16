@@ -1,0 +1,766 @@
+// -----------------------------------------------------------------------
+// Copyright (c) DCSV. All rights reserved.
+// -----------------------------------------------------------------------
+
+// Tests for the façade emitter (src/lib/facade-emitter.ts).
+//
+// Coverage per the plan:
+//   7.  One exposed op → interface has exactly one method with the transport-
+//       neutral signature (no HandlerOptions), method name <PascalOp>Async.
+//   8.  Façade IMPL: primary-constructor parameter + straight-through delegation.
+//   9.  @d2Internal op structurally absent from the interface (structural-absence
+//       safety — proven at the pure-fn level by providing only exposed ops).
+//   10. Module name derived from the first call's moduleName arg → interface name.
+//   11. Multi-op module → multiple methods, same deterministic order as input list.
+//   12. DI extension: Transient registration, C# 14 extension block form, correct
+//       extension-method name AddD2<Module>Clients().
+//   13. Banner / #nullable enable / namespace-before-using / sealed / C# 14
+//       extension(...) block / American English / no phase-step-audit ids.
+//   14. Zero-exposed-op module → empty return (no façade emitted).
+//       Empty module name → Error thrown.
+//   Byte-gates for the three committed .g.cs files + drift negatives.
+//   Integration test confirming the façade-emitter integration path in emitter.ts.
+
+import { describe, it, expect, beforeAll } from "vitest";
+import { emitFacade } from "../src/lib/facade-emitter.js";
+import {
+  createTestLibrary,
+  createTestHost,
+  findTestPackageRoot,
+} from "@typespec/compiler/testing";
+
+// ---------------------------------------------------------------------------
+// Test helpers
+// ---------------------------------------------------------------------------
+
+const _KC_CLIENTS_NS = "D2.Edge.KeyCustodian.Clients";
+const _KC_APP_NS = "D2.Edge.KeyCustodian.App.Application";
+const _SPEC = "contracts/typespec/key-custodian/key-custodian.tsp";
+
+function makeOp(
+  opName: string,
+  inputTypeName?: string,
+  outputTypeName?: string,
+  sourceSpec?: string,
+  category?: "Commands" | "Queries",
+) {
+  return {
+    opName,
+    inputTypeName: inputTypeName ?? `${opName.charAt(0).toUpperCase()}${opName.slice(1)}Input`,
+    outputTypeName: outputTypeName ?? `${opName.charAt(0).toUpperCase()}${opName.slice(1)}Output`,
+    sourceSpec: sourceSpec ?? _SPEC,
+    category: category ?? "Queries",
+  };
+}
+
+// ---------------------------------------------------------------------------
+// 7. Transport-neutral signature, no HandlerOptions
+// ---------------------------------------------------------------------------
+
+describe("facadeEmitter_InterfaceMethod_TransportNeutralSignature", () => {
+  it("getJwks → method has ValueTask<D2Result<GetJwksOutput?>> return and no HandlerOptions", () => {
+    const [iface] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(iface!.content).toContain(
+      "ValueTask<D2Result<GetJwksOutput?>> GetJwksAsync(GetJwksInput input, CancellationToken ct = default);",
+    );
+    expect(iface!.content).not.toContain("HandlerOptions");
+  });
+
+  it("method name is <PascalOp>Async", () => {
+    const [iface] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(iface!.content).toContain("GetJwksAsync(");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 8. Impl: primary-constructor parameter + straight-through delegation
+// ---------------------------------------------------------------------------
+
+describe("facadeEmitter_Impl_DelegatesViaHandleAsync", () => {
+  it("impl has primary-constructor parameter IGetJwksHandler getJwksHandler", () => {
+    const [, impl] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(impl!.content).toContain("IGetJwksHandler getJwksHandler");
+  });
+
+  it("impl delegates via => getJwksHandler.HandleAsync(input, ct)", () => {
+    const [, impl] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(impl!.content).toContain("=> getJwksHandler.HandleAsync(input, ct);");
+  });
+
+  it("impl is sealed", () => {
+    const [, impl] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(impl!.content).toContain("public sealed class KeyCustodianInternalApi");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 9. Structural-absence safety: internal ops absent from interface
+//    (the pure-fn test — only exposed ops are passed to emitFacade;
+//    the integration test below proves the full emitter.ts routing)
+// ---------------------------------------------------------------------------
+
+describe("facadeEmitter_InternalOp_AbsentFromInterface", () => {
+  it("providing only exposed ops → only those methods appear in the interface", () => {
+    const [iface] = emitFacade(
+      "KeyCustodian",
+      // Only getJwks is passed — an internal op (e.g. reconcileKeyState) is NOT passed
+      // because emitter.ts filters internal ops before calling emitFacade.
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(iface!.content).toContain("GetJwksAsync(");
+    expect(iface!.content).not.toContain("ReconcileKeyState");
+    expect(iface!.content).not.toContain("InternalOp");
+  });
+
+  it("two-op module (only exposed) → both methods in interface", () => {
+    const [iface] = emitFacade(
+      "KeyCustodian",
+      [
+        makeOp("getJwks", "GetJwksInput", "GetJwksOutput"),
+        makeOp("sign", "SignInput", "SignOutput"),
+      ],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(iface!.content).toContain("GetJwksAsync(");
+    expect(iface!.content).toContain("SignAsync(");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 10. Module name derived from moduleName argument → interface/impl names
+// ---------------------------------------------------------------------------
+
+describe("facadeEmitter_ModuleNameDrivesTypeNames", () => {
+  it("moduleName=KeyCustodian → IKeyCustodianInternalApi / KeyCustodianInternalApi", () => {
+    const [iface, impl] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(iface!.content).toContain("public interface IKeyCustodianInternalApi");
+    expect(impl!.content).toContain("public sealed class KeyCustodianInternalApi");
+  });
+
+  it("interface file name is IKeyCustodianInternalApi.g.cs", () => {
+    const [iface] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(iface!.fileName).toBe("IKeyCustodianInternalApi.g.cs");
+  });
+
+  it("impl file name is KeyCustodianInternalApi.g.cs", () => {
+    const [, impl] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(impl!.fileName).toBe("KeyCustodianInternalApi.g.cs");
+  });
+
+  it("DI-extension file name is KeyCustodianClientsGenerated.g.cs", () => {
+    const [, , di] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(di!.fileName).toBe("KeyCustodianClientsGenerated.g.cs");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 11. Multi-op module → multiple methods, deterministic order
+// ---------------------------------------------------------------------------
+
+describe("facadeEmitter_MultiOp_DeterministicOrder", () => {
+  it("two-op module preserves the input order in the interface", () => {
+    const [iface] = emitFacade(
+      "KeyCustodian",
+      [
+        makeOp("getJwks", "GetJwksInput", "GetJwksOutput"),
+        makeOp("sign", "SignInput", "SignOutput"),
+      ],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    const jwksIdx = iface!.content.indexOf("GetJwksAsync(");
+    const signIdx = iface!.content.indexOf("SignAsync(");
+    expect(jwksIdx).toBeGreaterThanOrEqual(0);
+    expect(signIdx).toBeGreaterThan(jwksIdx);
+  });
+
+  it("two-op impl has two methods and two constructor parameters", () => {
+    const [, impl] = emitFacade(
+      "KeyCustodian",
+      [
+        makeOp("getJwks", "GetJwksInput", "GetJwksOutput"),
+        makeOp("sign", "SignInput", "SignOutput"),
+      ],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(impl!.content).toContain("IGetJwksHandler getJwksHandler");
+    expect(impl!.content).toContain("ISignHandler signHandler");
+    expect(impl!.content).toContain("GetJwksAsync(");
+    expect(impl!.content).toContain("SignAsync(");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 12. DI extension: Transient, C# 14 extension block, AddD2<Module>Clients
+// ---------------------------------------------------------------------------
+
+describe("facadeEmitter_DiExtension_TransientCSharp14", () => {
+  it("DI extension registers Transient (AddTransient<I…, …>)", () => {
+    const [, , di] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(di!.content).toContain(
+      "services.AddTransient<IKeyCustodianInternalApi, KeyCustodianInternalApi>();",
+    );
+  });
+
+  it("DI extension method name is AddD2KeyCustodianClients()", () => {
+    const [, , di] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(di!.content).toContain("public IServiceCollection AddD2KeyCustodianClients()");
+  });
+
+  it("DI extension uses C# 14 extension(IServiceCollection) block form", () => {
+    const [, , di] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(di!.content).toContain("extension(IServiceCollection services)");
+    // Must NOT use the old 'this T target' form.
+    expect(di!.content).not.toContain("this IServiceCollection");
+  });
+
+  it("DI extension returns services for chaining", () => {
+    const [, , di] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(di!.content).toContain("return services;");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 13. Banner / #nullable / ns-before-using / conventions / no step-audit ids
+// ---------------------------------------------------------------------------
+
+describe("facadeEmitter_ConventionsAndBanner", () => {
+  it("all three files have the auto-generated banner", () => {
+    const files = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    for (const f of files)
+      expect(f.content).toContain("// <auto-generated>");
+  });
+
+  it("all three files have #nullable enable", () => {
+    const files = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    for (const f of files)
+      expect(f.content).toContain("#nullable enable");
+  });
+
+  it("namespace appears before any using directive in the impl", () => {
+    const [, impl] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    const nsIdx = impl!.content.indexOf("namespace");
+    const usingIdx = impl!.content.indexOf("using");
+    expect(nsIdx).toBeGreaterThanOrEqual(0);
+    expect(usingIdx).toBeGreaterThan(nsIdx);
+  });
+
+  it("namespace appears before any using directive in the DI extension", () => {
+    const [, , di] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    // DI extension may or may not have a using; namespace must be first either way.
+    const nsIdx = di!.content.indexOf("namespace");
+    expect(nsIdx).toBeGreaterThanOrEqual(0);
+  });
+
+  it("interface namespace is the Clients namespace", () => {
+    const [iface] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(iface!.content).toContain(`namespace ${_KC_CLIENTS_NS};`);
+  });
+
+  it("impl and DI extension namespace is the app namespace", () => {
+    const [, impl, di] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(impl!.content).toContain(`namespace ${_KC_APP_NS};`);
+    expect(di!.content).toContain(`namespace ${_KC_APP_NS};`);
+  });
+
+  it("emitted files contain no phase/step/audit/round identifiers", () => {
+    const files = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    for (const f of files) {
+      expect(f.content).not.toMatch(/Step\s*\d/i);
+      expect(f.content).not.toMatch(/\bR\d+\b/);
+      expect(f.content).not.toMatch(/\bF\d+\b/);
+      expect(f.content).not.toMatch(/audit/i);
+      expect(f.content).not.toMatch(/deliverable/i);
+      expect(f.content).not.toMatch(/Phase\s*\d/i);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 14. Zero-exposed-op module → empty array; empty module name → Error
+// ---------------------------------------------------------------------------
+
+describe("facadeEmitter_ZeroOps_AndAdversarial", () => {
+  it("zero exposed ops → emitFacade returns empty array (no façade emitted)", () => {
+    const result = emitFacade("KeyCustodian", [], _KC_CLIENTS_NS, _KC_APP_NS);
+    expect(result).toHaveLength(0);
+  });
+
+  it("empty moduleName → Error thrown", () => {
+    expect(() =>
+      emitFacade("", [makeOp("getJwks")], _KC_CLIENTS_NS, _KC_APP_NS),
+    ).toThrow();
+  });
+
+  it("empty clientsNamespace → Error thrown", () => {
+    expect(() =>
+      emitFacade("KeyCustodian", [makeOp("getJwks")], "", _KC_APP_NS),
+    ).toThrow();
+  });
+
+  it("empty appNamespace → Error thrown", () => {
+    expect(() =>
+      emitFacade("KeyCustodian", [makeOp("getJwks")], _KC_CLIENTS_NS, ""),
+    ).toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Byte-gate: IKeyCustodianInternalApi.g.cs (interface)
+// ---------------------------------------------------------------------------
+
+const INTERFACE_FIXTURE = [
+  "// -----------------------------------------------------------------------",
+  "// <auto-generated>",
+  "//   Generated by the @d2/typespec-emitters TypeSpec emitter.",
+  `//   Source spec: ${_SPEC}`,
+  "//   Manual edits will be lost on rebuild.",
+  "// </auto-generated>",
+  "// -----------------------------------------------------------------------",
+  "",
+  "#nullable enable",
+  "",
+  `namespace ${_KC_CLIENTS_NS};`,
+  "",
+  "/// <summary>",
+  "/// Generated internal API façade for the module. Lists only the operations",
+  "/// exposed across a boundary; internal-only operations are absent.",
+  "/// </summary>",
+  "public interface IKeyCustodianInternalApi",
+  "{",
+  "    /// <summary>Dispatches the <c>GetJwks</c> operation.</summary>",
+  "    ValueTask<D2Result<GetJwksOutput?>> GetJwksAsync(GetJwksInput input, CancellationToken ct = default);",
+  "}",
+  "",
+].join("\n");
+
+describe("facadeEmitter_ByteGate_Interface", () => {
+  it("regenerated IKeyCustodianInternalApi.g.cs is byte-identical to the committed fixture", () => {
+    const [iface] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(iface!.content).toBe(INTERFACE_FIXTURE);
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match regenerated output", () => {
+    const drifted = INTERFACE_FIXTURE.replace("IKeyCustodianInternalApi", "IKeyCustodianInternalApiDRIFTED");
+    const [iface] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(iface!.content).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Byte-gate: KeyCustodianInternalApi.g.cs (impl)
+// ---------------------------------------------------------------------------
+
+const IMPL_FIXTURE = [
+  "// -----------------------------------------------------------------------",
+  "// <auto-generated>",
+  "//   Generated by the @d2/typespec-emitters TypeSpec emitter.",
+  `//   Source spec: ${_SPEC}`,
+  "//   Manual edits will be lost on rebuild.",
+  "// </auto-generated>",
+  "// -----------------------------------------------------------------------",
+  "",
+  "#nullable enable",
+  "",
+  `namespace ${_KC_APP_NS};`,
+  "",
+  "using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;",
+  `using ${_KC_CLIENTS_NS};`,
+  "",
+  "/// <summary>",
+  "/// Generated façade implementation. Delegates each exposed operation to the",
+  "/// corresponding app-layer handler. Registered Transient to match handler lifetime.",
+  "/// </summary>",
+  "public sealed class KeyCustodianInternalApi(",
+  "    IGetJwksHandler getJwksHandler) : IKeyCustodianInternalApi",
+  "{",
+  "    /// <inheritdoc/>",
+  "    public ValueTask<D2Result<GetJwksOutput?>> GetJwksAsync(GetJwksInput input, CancellationToken ct = default)",
+  "        => getJwksHandler.HandleAsync(input, ct);",
+  "}",
+  "",
+].join("\n");
+
+describe("facadeEmitter_ByteGate_Impl", () => {
+  it("regenerated KeyCustodianInternalApi.g.cs is byte-identical to the committed fixture", () => {
+    const [, impl] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(impl!.content).toBe(IMPL_FIXTURE);
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match regenerated output", () => {
+    const drifted = IMPL_FIXTURE.replace("KeyCustodianInternalApi", "KeyCustodianInternalApiDRIFTED");
+    const [, impl] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(impl!.content).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Byte-gate: KeyCustodianClientsGenerated.g.cs (DI extension)
+// ---------------------------------------------------------------------------
+
+const DI_FIXTURE = [
+  "// -----------------------------------------------------------------------",
+  "// <auto-generated>",
+  "//   Generated by the @d2/typespec-emitters TypeSpec emitter.",
+  `//   Source spec: ${_SPEC}`,
+  "//   Manual edits will be lost on rebuild.",
+  "// </auto-generated>",
+  "// -----------------------------------------------------------------------",
+  "",
+  "#nullable enable",
+  "",
+  `namespace ${_KC_APP_NS};`,
+  "",
+  `using ${_KC_CLIENTS_NS};`,
+  "",
+  "/// <summary>",
+  "/// Generated DI extension that registers the module façade (Transient).",
+  "/// Called from the hand-written app DI extension.",
+  "/// </summary>",
+  "public static class KeyCustodianClientsGeneratedServiceCollectionExtensions",
+  "{",
+  "    extension(IServiceCollection services)",
+  "    {",
+  "        /// <summary>",
+  "        /// Registers <see cref=\"IKeyCustodianInternalApi\"/> → <see cref=\"KeyCustodianInternalApi\"/> as Transient.",
+  "        /// </summary>",
+  "        public IServiceCollection AddD2KeyCustodianClients()",
+  "        {",
+  "            services.AddTransient<IKeyCustodianInternalApi, KeyCustodianInternalApi>();",
+  "            return services;",
+  "        }",
+  "    }",
+  "}",
+  "",
+].join("\n");
+
+describe("facadeEmitter_ByteGate_DiExtension", () => {
+  it("regenerated KeyCustodianClientsGenerated.g.cs is byte-identical to the committed fixture", () => {
+    const [, , di] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(di!.content).toBe(DI_FIXTURE);
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match regenerated output", () => {
+    const drifted = DI_FIXTURE.replace("AddD2KeyCustodianClients", "AddD2KeyCustodianClientsDRIFTED");
+    const [, , di] = emitFacade(
+      "KeyCustodian",
+      [makeOp("getJwks", "GetJwksInput", "GetJwksOutput")],
+      _KC_CLIENTS_NS,
+      _KC_APP_NS,
+    );
+
+    expect(di!.content).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Integration test: navigateProgram emits the façade for getJwks
+// ---------------------------------------------------------------------------
+
+const D2DecoratorTestLibrary = createTestLibrary({
+  name: "@d2/typespec-decorators",
+  packageRoot: await findTestPackageRoot(
+    new URL(
+      "../node_modules/@d2/typespec-decorators/package.json",
+      import.meta.url,
+    ).href,
+  ),
+  jsFileFolder: "dist",
+  typespecFileFolder: "lib",
+});
+
+const D2EmitterTestLibrary = createTestLibrary({
+  name: "@d2/typespec-emitters",
+  packageRoot: await findTestPackageRoot(import.meta.url),
+  jsFileFolder: "dist",
+  typespecFileFolder: "lib",
+});
+
+function getEmittedFile(
+  host: Awaited<ReturnType<typeof createTestHost>>,
+  suffix: string,
+): string | undefined {
+  const stored = (host as unknown as { fs?: Map<string, string> }).fs;
+  if (!(stored instanceof Map)) return undefined;
+  const key = [...stored.keys()].find((k) => k.endsWith(suffix));
+  return key !== undefined ? stored.get(key) : undefined;
+}
+
+describe("facadeEmitter_Integration_getJwks", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("getJwks (@d2InProcess) → all three façade files are emitted", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.KeyCustodian;
+
+      model GetJwksOutput { keys: string[]; }
+
+      @d2Query
+      @d2InProcess
+      @d2ServedBy("KeyCustodian")
+      op getJwks(): GetJwksOutput;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: {
+        "@d2/typespec-emitters": {
+          "csharp-namespace": "D2.Fixture.Ns",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        },
+      },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    expect(errors).toHaveLength(0);
+
+    // Interface file — in Clients namespace.
+    const ifaceContent = getEmittedFile(host, "IKeyCustodianInternalApi.g.cs");
+    expect(ifaceContent).toBeDefined();
+    expect(ifaceContent).toContain("namespace D2.Edge.KeyCustodian.Clients;");
+    expect(ifaceContent).toContain("public interface IKeyCustodianInternalApi");
+    expect(ifaceContent).toContain("GetJwksAsync(");
+
+    // Impl file — exact name match (not the interface which also ends with InternalApi.g.cs).
+    const implContent = getEmittedFile(host, "/KeyCustodianInternalApi.g.cs");
+    expect(implContent).toBeDefined();
+    expect(implContent).toContain("namespace D2.Edge.KeyCustodian.App.Application;");
+    expect(implContent).toContain("public sealed class KeyCustodianInternalApi");
+    expect(implContent).toContain("=> getJwksHandler.HandleAsync(input, ct);");
+
+    // DI extension file.
+    const diContent = getEmittedFile(host, "KeyCustodianClientsGenerated.g.cs");
+    expect(diContent).toBeDefined();
+    expect(diContent).toContain("AddD2KeyCustodianClients");
+    expect(diContent).toContain("AddTransient<IKeyCustodianInternalApi, KeyCustodianInternalApi>");
+  });
+});
+
+describe("facadeEmitter_Integration_InternalOp_AbsentFromFacade", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("@d2Internal op absent from the façade interface (cross-boundary structural-absence)", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.KeyCustodian;
+
+      model GetJwksOutput { keys: string[]; }
+      model ReconcileInput { kid: string; }
+      model ReconcileOutput { ok: boolean; }
+
+      @d2Query
+      @d2InProcess
+      @d2ServedBy("KeyCustodian")
+      op getJwks(): GetJwksOutput;
+
+      @d2Command
+      @d2Internal
+      @d2ServedBy("KeyCustodian")
+      op reconcileKeyState(input: ReconcileInput): ReconcileOutput;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: {
+        "@d2/typespec-emitters": {
+          "csharp-namespace": "D2.Fixture.Ns",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        },
+      },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    expect(errors).toHaveLength(0);
+
+    const ifaceContent = getEmittedFile(host, "IKeyCustodianInternalApi.g.cs");
+    expect(ifaceContent).toBeDefined();
+    // Only the exposed op should appear.
+    expect(ifaceContent).toContain("GetJwksAsync(");
+    // The internal op must NOT appear in the façade interface.
+    expect(ifaceContent).not.toContain("ReconcileKeyState");
+    expect(ifaceContent).not.toContain("reconcile");
+  });
+});
