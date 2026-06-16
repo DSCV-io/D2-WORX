@@ -15,8 +15,10 @@
 // shape of a signing operation for the purpose of exercising the emitter fleet.
 
 import "@d2/typespec-decorators";
+import "@typespec/http";
 
 using D2;
+using Http;
 
 namespace D2.Fixtures;
 
@@ -39,10 +41,15 @@ model SignOutput {
 /**
  * Sign the given payload with the specified key.
  * Fixture operation — exercises @d2Redact, @d2ServedBy, @d2InProcess,
- * and @d2GrpcMethod for the emitter fleet.
+ * @d2GrpcMethod, @route, and the auth/policy decorators for the emitter fleet.
  */
 @d2Command
 @d2ServedBy("KeyCustodian")
 @d2InProcess
 @d2GrpcMethod("KeyCustodianSigner", "Sign")
+@route("/internal/v1/kc/sign")
+@post
+@d2RequireAnyScope("self.write")
+@d2RateLimitTier("Standard")
+@d2Csrf("exempt")
 op sign(input: SignInput): SignOutput;

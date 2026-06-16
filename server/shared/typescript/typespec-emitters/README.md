@@ -224,30 +224,126 @@ maps from C# `byte[]` scalar. `IReadOnlyList<T>` fields emit as `repeated T`.
 Unmapped scalars trigger `D2TSP001` and cause the function to return `undefined`
 (no partial output). Field numbers are assigned sequentially from `1`.
 
+### REST route+policy emitter (`src/lib/route-policy-emitter.ts`)
+
+```typescript
+import { emitRoutePolicy, emitRoutePolicyMarkers } from "@d2/typespec-emitters";
+
+const routeFile = emitRoutePolicy({
+  opName: "sign",
+  verb: "post",
+  routePath: "/internal/v1/kc/sign",
+  delegationTarget: {
+    kind: "facade",
+    typeName: "IKeyCustodianSignerFacade",
+    methodName: "SignAsync",
+  },
+  delegationTargetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
+  inputTypeName: "SignInput",
+  outputTypeName: "SignOutput",
+  dtoNamespace: "D2.Edge.Tests.TypeSpecDto.Generated",
+  scopePolicy: { kind: "any", scopes: ["self.write"] },
+  rateTier: "Standard",
+  csrf: "exempt",
+  registrationNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated",
+  sourceSpec: "contracts/typespec/fixtures/sign-shaped.tsp",
+});
+// routeFile.fileName → "SignRouteRegistration.g.cs"
+
+const markersFile = emitRoutePolicyMarkers(
+  "D2.Edge.Tests.TypeSpecRoute.Generated",
+  "contracts/typespec/fixtures/sign-shaped.tsp",
+);
+// markersFile.fileName → "D2GeneratedRoutePolicyMarkers.g.cs"
+```
+
+Emits a static extension class `<Op>RouteRegistration` with one `extension(IEndpointRouteBuilder)` block
+containing `Map<Op>Route()`. The route delegate:
+
+- **Delegation** — when `delegationTarget.kind === "facade"`, the route injects the façade type and calls
+  `facade.<Method>(input, ct)` (transport-neutral, 2-arg). When `kind === "handler"`, injects `I<Op>Handler`
+  and calls `handler.HandleAsync(input, ct)`. The consuming `emitter.ts` computes the delegation target from
+  `@d2InProcess` (façade) vs its absence (handler).
+- **Verb → `Map*`** — `get → MapGet`, `post → MapPost`, `put → MapPut`, `delete → MapDelete`,
+  `patch → MapPatch`. Unknown verbs raise `D2TSP005`.
+- **Input binding** — GET and DELETE emit `[AsParameters]` on the input param so ASP.NET Minimal API
+  binds fields from the query string rather than a request body. POST/PUT/PATCH bind from the JSON body
+  (no attribute needed).
+- **Scope enforcement** — `@d2RequireAnyScope` → `builder.RequireAnyScope("s1", "s2", …)`
+  (first positional, rest params); `@d2RequireAllScopes` → `builder.RequireAllScopes(…)`;
+  `@d2Harmless` → `builder.MarkAsD2HarmlessEndpoint()` (no scope call). A routed op with none of these
+  raises `D2TSP004` (compile-time deny-by-default — louder than a boot-failing endpoint).
+- **Audience** — NOT emitted per-route (§9.2: audience is the per-service `AuthOptions.Audience` constant
+  validated by `JwtValidator` for every request). An XML-doc remark on the route method notes this.
+- **Rate-tier and CSRF markers** — faithful seam declarations:
+  `builder.WithMetadata(new D2GeneratedRateLimitTier("Standard"))` /
+  `builder.WithMetadata(new D2GeneratedCsrfPosture("exempt"))`. These are marker records the future Edge
+  rate-limit/CSRF middleware will read; no enforcement logic is emitted.
+- **MAP-ii (D2Result → IResult)** — success-first: `if (result.Success) return Results.Ok(result.Data);`
+  then `var pd = result.ToProblemDetails(http); return Results.Json(pd, statusCode: pd.Status ?? 500,
+  contentType: "application/problem+json")`. Uses the real `ToProblemDetails` extension (failure-only —
+  the success guard is mandatory).
+
+`emitRoutePolicyMarkers` emits `D2GeneratedRoutePolicyMarkers.g.cs` — a standalone file declaring the two
+marker records (`D2GeneratedRateLimitTier` + `D2GeneratedCsrfPosture`) once into the registration namespace.
+This file is emitted once per module (not once per route).
+
+Route fixtures live in `server/services/edge/tests/Unit/KeyCustodian/TypeSpecRoute/Generated/`. They are
+byte-pinned by `tests/route-policy-emitter.test.ts` byte-parity describe blocks and validated by the
+`RoutePolicyEnforcementTests` + `RouteFacadeDelegationTests` TestServer suites in `D2.Edge.Tests`.
+
 ### gRPC service-impl emitter (`src/lib/grpc-service-emitter.ts`)
 
 ```typescript
-import { emitGrpcServiceImpl } from "@d2/typespec-emitters";
+import { emitGrpcService, type GrpcDelegationTarget } from "@d2/typespec-emitters";
 
-const [serviceFile, mappersFile] = emitGrpcServiceImpl(
+// Façade delegation (when op has @d2InProcess):
+const facadeTarget: GrpcDelegationTarget = {
+  kind: "facade",
+  typeName: "IKeyCustodianSignerFacade",
+  methodName: "SignAsync",
+  targetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
+};
+const [serviceFile, mappersFile] = emitGrpcService(
   "sign",
   "KeyCustodianSigner",
-  "D2.Edge.Tests.TypeSpecGrpc.Generated",
+  "Sign",
   "D2.Services.Protos.KeyCustodian.V1",
+  "D2.Edge.Tests.TypeSpecGrpc.Generated",
   "D2.Edge.Tests.TypeSpecDto.Generated",
-  "contracts/typespec/key-custodian.tsp",
+  "contracts/typespec/fixtures/sign-shaped.tsp",
+  "SignRequest",
+  "SignResponse",
+  "SignInput",
   inputWalk.fields,
+  "SignOutput",
   outputWalk.fields,
+  facadeTarget,                  // omit to fall back to I<Op>Handler delegation
 );
 // serviceFile.fileName  → "KeyCustodianSignerService.g.cs"
 // mappersFile.fileName  → "SignTransportMappers.g.cs"
 ```
 
-Always returns exactly two files. The service class is `sealed`, uses a
-primary constructor `(I<Op>Handler handler)`, calls `result.IsOk` (the
-`D2Result<T>` success property), and throws `RpcException(StatusCode.Internal,
-string.Empty)` on failure. The mapper file uses C# 14 `extension(T target) { }`
-block syntax and `ByteString.CopyFrom` / `.ToByteArray()` for `bytes` fields.
+Always returns exactly two files. The service class is `sealed`. Its primary
+constructor and call site change based on the `delegationTarget`:
+
+- **Façade delegation** (`kind === "facade"`, when the op has `@d2InProcess`):
+  the service injects `I<Module>InternalApi facade` (or the fixture equivalent)
+  and calls `facade.<Op>Async(input, ct)` — the transport-neutral 2-arg façade
+  signature. A `using` for `targetNamespace` is emitted when the façade lives in
+  a different namespace from the service class.
+- **Handler delegation** (`kind === "handler"` or omitted): the service injects
+  `I<Op>Handler handler` and calls `handler.HandleAsync(input, ct)`.
+
+In both cases the failure mapping (`if (!result.IsOk) throw new RpcException(…)`)
+and the proto-projection (`result.Data!.ToProto<Op>Output()`) are identical.
+The `emitter.ts` entry point computes the `delegationTarget` from `@d2InProcess`
+and passes it to both the gRPC service emitter and the route-policy emitter so the
+same rule (`@d2InProcess` → façade; else → handler) applies uniformly.
+
+The mapper file is UNCHANGED by the delegation target — it always uses C# 14
+`extension(T target) { }` block syntax and `ByteString.CopyFrom` / `.ToByteArray()`
+for `bytes` fields.
 
 ### Handler-interface emitter (`src/lib/handler-interface-emitter.ts`)
 
@@ -382,6 +478,8 @@ catalog entry in `src/lib.ts`.
 | D2TSP001 | `unmapped-scalar`         | A TypeSpec scalar has no entry in the scalar registry. Emitter cannot proceed without a C#/proto/TS mapping. |
 | D2TSP002 | `unsupported-property-type` | A model property has an enum, union, or anonymous-model type that the DTO emitter does not yet support. |
 | D2TSP003 | `missing-cqrs-category`   | An operation carries neither `@d2Command` nor `@d2Query`. The façade emitter cannot determine the handler namespace without a CQRS category. |
+| D2TSP004 | `route-missing-auth-intent` | A routed operation (`@route`) carries none of `@d2RequireAnyScope`, `@d2RequireAllScopes`, or `@d2Harmless`. Every public route must declare an auth intent. The route emitter loud-fails at compile time rather than emitting a boot-failing unprotected endpoint — strictly stronger than a runtime boot guard. |
+| D2TSP005 | `unsupported-http-verb`   | An HTTP verb other than get/post/put/delete/patch (e.g. `head`, `options`) has no `Map*` mapping in the route emitter. |
 
 All diagnostics have `severity: "error"` — every violation fails `tsp compile`
 with a non-zero exit code.
@@ -404,7 +502,7 @@ pnpm run test:coverage
 pnpm run type-check:test
 ```
 
-21 test files, 296 tests. Coverage: 100% lines / branches / functions / statements
+24 test files, 402 tests. Coverage: 100% lines / branches / functions / statements
 on all `src/**` files (excluding the barrel `src/index.ts`).
 
 ---
@@ -465,7 +563,7 @@ will fail the byte-parity tests until the fixtures are refreshed.
 | ------------------ | ------------------------ | ---------- | ------------------------------------------------- |
 | `peerDependencies` | `@typespec/compiler`     | `^1.13.0`  | Must match the decorators package peer range      |
 | `dependencies`     | `@d2/typespec-decorators`| `workspace:*` | State-key symbols + resilience DSL parser      |
-| `dependencies`     | `@typespec/http`         | `1.13.0`   | Pre-staged for the route+policy emitter (`getHttpOperation`); consumed from a later step |
+| `dependencies`     | `@typespec/http`         | `1.13.0`   | Used by the route+policy emitter (`getHttpOperation` for verb + path resolution) |
 | `devDependencies`  | `@typespec/compiler`     | `1.13.0`   | Pinned exact version (matches decorators package) |
 | `devDependencies`  | `typescript`             | `5.9.3`    | Pinned to workspace version                       |
 | `devDependencies`  | `vitest`                 | `4.0.18`   | Test runner                                       |

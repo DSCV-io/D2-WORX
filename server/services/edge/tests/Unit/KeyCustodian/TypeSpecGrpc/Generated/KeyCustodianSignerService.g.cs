@@ -14,16 +14,17 @@ using SignResponse = global::D2.Services.Protos.KeyCustodian.V1.SignResponse;
 using SignInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignInput;
 using SignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;
 using Grpc.Core;
+using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;
 
-/// <summary>Generated gRPC service for the <c>Sign</c> operation, delegating to <see cref="ISignHandler"/>.</summary>
-public sealed class KeyCustodianSignerService(ISignHandler handler)
+/// <summary>Generated gRPC service for the <c>Sign</c> operation, delegating to <see cref="IKeyCustodianSignerFacade"/>.</summary>
+public sealed class KeyCustodianSignerService(IKeyCustodianSignerFacade facade)
     : global::D2.Services.Protos.KeyCustodian.V1.KeyCustodianSigner.KeyCustodianSignerBase
 {
     /// <inheritdoc/>
     public override async Task<SignResponse> Sign(SignRequest request, ServerCallContext context)
     {
         SignInput input = request.ToSignInput();
-        var result = await handler.HandleAsync(input, context.CancellationToken).ConfigureAwait(false);
+        var result = await facade.SignAsync(input, context.CancellationToken).ConfigureAwait(false);
         if (!result.IsOk)
             throw new RpcException(new Status(StatusCode.Internal, string.Empty));
         return result.Data!.ToProtoSignOutput();

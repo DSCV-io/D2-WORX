@@ -12,6 +12,7 @@
 import { describe, it, expect } from "vitest";
 import type { FieldInfo } from "../src/lib/model-walk.js";
 import { emitGrpcService } from "../src/lib/grpc-service-emitter.js";
+import type { GrpcDelegationTarget } from "../src/lib/grpc-service-emitter.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -275,5 +276,213 @@ describe("emitGrpcService_EmptyRequest_ParameterlessConstructor", () => {
     );
     expect(mapper.content).toContain("return new EmptyIn();");
     expect(mapper.content).toContain("return new DoResponse();");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 11: façade delegation branch — the re-pointed gRPC service
+// ---------------------------------------------------------------------------
+
+describe("emitGrpcService_FacadeDelegation_RePointedService", () => {
+  const FACADE_TARGET: GrpcDelegationTarget = {
+    kind: "facade",
+    typeName: "IKeyCustodianSignerFacade",
+    methodName: "SignAsync",
+    targetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade",
+  };
+
+  function emitSignWithFacade() {
+    return emitGrpcService(
+      "sign",
+      "KeyCustodianSigner",
+      "Sign",
+      PROTO_NS,
+      IMPL_NS,
+      DTO_NS,
+      SOURCE,
+      "SignRequest",
+      "SignResponse",
+      "SignInput",
+      [makeStringField("kid"), makeBytesField("payload")],
+      "SignOutput",
+      [makeStringField("signature")],
+      FACADE_TARGET,
+    );
+  }
+
+  it("ctor injects the façade type (not ISignHandler)", () => {
+    const [svc] = emitSignWithFacade();
+    expect(svc.content).toContain("public sealed class KeyCustodianSignerService(IKeyCustodianSignerFacade facade)");
+    expect(svc.content).not.toContain("ISignHandler handler");
+  });
+
+  it("call site uses facade.SignAsync (2-arg transport-neutral, not handler.HandleAsync)", () => {
+    const [svc] = emitSignWithFacade();
+    expect(svc.content).toContain("var result = await facade.SignAsync(input, context.CancellationToken).ConfigureAwait(false);");
+    expect(svc.content).not.toContain("handler.HandleAsync");
+  });
+
+  it("adds a using for the façade namespace", () => {
+    const [svc] = emitSignWithFacade();
+    expect(svc.content).toContain("using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;");
+  });
+
+  it("XML doc references the façade type", () => {
+    const [svc] = emitSignWithFacade();
+    expect(svc.content).toContain('delegating to <see cref="IKeyCustodianSignerFacade"/>');
+  });
+
+  it("failure-mapping is unchanged (RpcException Internal, empty detail)", () => {
+    const [svc] = emitSignWithFacade();
+    expect(svc.content).toContain("if (!result.IsOk)");
+    expect(svc.content).toContain("throw new RpcException(new Status(StatusCode.Internal, string.Empty));");
+  });
+
+  it("success path maps result.Data! to proto response (unchanged)", () => {
+    const [svc] = emitSignWithFacade();
+    expect(svc.content).toContain("return result.Data!.ToProtoSignOutput();");
+  });
+
+  it("transport mapper is UNCHANGED regardless of delegation target", () => {
+    const [, mapper] = emitSignWithFacade();
+    // Mapper uses the same proto↔DTO mapping irrespective of who the service delegates to.
+    expect(mapper.content).toContain("extension(SignRequest request)");
+    expect(mapper.content).toContain("extension(SignOutput output)");
+    expect(mapper.content).toContain("internal SignInput ToSignInput()");
+    expect(mapper.content).toContain("internal SignResponse ToProtoSignOutput()");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 12: handler delegation branch (no delegationTarget — backward-compat default)
+// ---------------------------------------------------------------------------
+
+describe("emitGrpcService_HandlerDelegation_Default", () => {
+  it("no delegationTarget supplied → defaults to I<PascalOp>Handler.HandleAsync", () => {
+    // The backward-compatible default (delegationTarget omitted) must produce
+    // the same handler-delegation output as passing an explicit handler target.
+    const [svcDefault] = emitGrpcService(
+      "sign",
+      "KeyCustodianSigner",
+      "Sign",
+      PROTO_NS,
+      IMPL_NS,
+      DTO_NS,
+      SOURCE,
+      "SignRequest",
+      "SignResponse",
+      "SignInput",
+      [makeStringField("kid"), makeBytesField("payload")],
+      "SignOutput",
+      [makeStringField("signature")],
+      // No delegationTarget — falls back to handler.
+    );
+    expect(svcDefault.content).toContain("ISignHandler handler");
+    expect(svcDefault.content).toContain("handler.HandleAsync(input, context.CancellationToken)");
+    expect(svcDefault.content).not.toContain("facade");
+  });
+
+  it("explicit handler target produces the same result as the omitted default", () => {
+    const handlerTarget: GrpcDelegationTarget = {
+      kind: "handler",
+      typeName: "ISignHandler",
+      methodName: "HandleAsync",
+    };
+    const [svcExplicit] = emitGrpcService(
+      "sign",
+      "KeyCustodianSigner",
+      "Sign",
+      PROTO_NS,
+      IMPL_NS,
+      DTO_NS,
+      SOURCE,
+      "SignRequest",
+      "SignResponse",
+      "SignInput",
+      [makeStringField("kid"), makeBytesField("payload")],
+      "SignOutput",
+      [makeStringField("signature")],
+      handlerTarget,
+    );
+    const [svcDefault] = emitGrpcService(
+      "sign",
+      "KeyCustodianSigner",
+      "Sign",
+      PROTO_NS,
+      IMPL_NS,
+      DTO_NS,
+      SOURCE,
+      "SignRequest",
+      "SignResponse",
+      "SignInput",
+      [makeStringField("kid"), makeBytesField("payload")],
+      "SignOutput",
+      [makeStringField("signature")],
+    );
+    expect(svcExplicit.content).toBe(svcDefault.content);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 13: façade target with targetNamespace === serviceImplNs → no extra using
+// ---------------------------------------------------------------------------
+
+describe("emitGrpcService_FacadeDelegation_SameNamespaceNoExtraUsing", () => {
+  it("façade targetNamespace === serviceImplNs → no duplicate using added", () => {
+    const sameNsTarget: GrpcDelegationTarget = {
+      kind: "facade",
+      typeName: "ISomeFacade",
+      methodName: "DoAsync",
+      targetNamespace: IMPL_NS, // same as serviceImplNs → no extra using
+    };
+    const [svc] = emitGrpcService(
+      "doIt",
+      "Svc",
+      "Do",
+      PROTO_NS,
+      IMPL_NS,
+      DTO_NS,
+      SOURCE,
+      "DoRequest",
+      "DoResponse",
+      "DoIn",
+      [],
+      "DoOut",
+      [],
+      sameNsTarget,
+    );
+    // The façade is in the same namespace — no extra using should be added.
+    const usingCount = (svc.content.match(/^using /gm) ?? []).length;
+    // Only the standard usings (proto aliases + Grpc.Core) — no duplicate.
+    expect(svc.content).not.toContain(`using ${IMPL_NS};`);
+    // Ctor uses the façade type.
+    expect(svc.content).toContain("ISomeFacade facade");
+    expect(usingCount).toBeGreaterThanOrEqual(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 14: no phase/step/audit identifiers — delegation target shapes (§5)
+// ---------------------------------------------------------------------------
+
+describe("emitGrpcService_FacadeDelegation_NoPhaseAuditIdentifiers", () => {
+  it("façade-delegation service contains no phase/step/deliverable identifiers", () => {
+    const facadeTarget: GrpcDelegationTarget = {
+      kind: "facade",
+      typeName: "IMyFacade",
+      methodName: "OpAsync",
+      targetNamespace: "My.Ns.Clients",
+    };
+    const [svc] = emitGrpcService(
+      "op", "Svc", "Do", PROTO_NS, IMPL_NS, DTO_NS, SOURCE,
+      "DoReq", "DoResp",
+      "DoIn", [],
+      "DoOut", [],
+      facadeTarget,
+    );
+    expect(svc.content).not.toMatch(/Step\s+\d/);
+    expect(svc.content).not.toContain("0019");
+    expect(svc.content).not.toMatch(/\bR[0-9]\b/);
+    expect(svc.content).not.toMatch(/\bF[0-9]\b/);
   });
 });

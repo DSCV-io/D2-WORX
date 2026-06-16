@@ -114,12 +114,17 @@ describe("protoGrpcEmitIntegration_Sign_EmitsProtoAndService", () => {
     expect(protoContent).toContain("bytes payload = 2;");
 
     // gRPC service class emitted.
+    // The sign op has @d2InProcess → the service delegates through the fixture façade,
+    // not ISignHandler directly. The façade type name in fixture mode (no csAppNamespaceBase)
+    // is I<ServedBy>SignerFacade = IKeyCustodianSignerFacade.
     const serviceContent = getEmittedFile(host, "KeyCustodianSignerService.g.cs");
     expect(serviceContent).toBeDefined();
     expect(serviceContent).toContain("namespace D2.Test.Grpc;");
     expect(serviceContent).toContain("global::D2.Test.Protos.V1.KeyCustodianSigner.KeyCustodianSignerBase");
-    expect(serviceContent).toContain("ISignHandler handler");
-    expect(serviceContent).toContain("handler.HandleAsync");
+    expect(serviceContent).toContain("IKeyCustodianSignerFacade facade");
+    expect(serviceContent).toContain("facade.SignAsync");
+    expect(serviceContent).not.toContain("ISignHandler handler");
+    expect(serviceContent).not.toContain("handler.HandleAsync");
 
     // Transport mapper emitted.
     const mapperContent = getEmittedFile(host, "SignTransportMappers.g.cs");
@@ -189,6 +194,77 @@ describe("protoGrpcEmitIntegration_GetJwks_NoProtoEmitted", () => {
     // DTOs are still emitted (normal DTO emission still fires).
     const inputContent = getEmittedFile(host, "GetJwksInput.g.cs");
     expect(inputContent).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 2b: @d2GrpcMethod + @d2InProcess + real-module options → IInternalApi façade
+// ---------------------------------------------------------------------------
+//
+// This exercises the real-module branch in emitter.ts (lines 253-259):
+//   csAppNamespaceBase + csClientsNamespace BOTH present + grpcInProcess=true
+//   → facadeTypeName = I<ServedBy>InternalApi (NOT I<ServedBy>SignerFacade).
+// This is the branch that runs for non-fixture (production) module compilation.
+
+describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesInternalApiFacade", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("@d2GrpcMethod + @d2InProcess with real-module options → gRPC service injects I<Module>InternalApi", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.KeyCustodian;
+
+      model SignInput { kid: string; }
+      model SignOutput { signature: string; }
+
+      @d2Command
+      @d2ServedBy("KeyCustodian")
+      @d2InProcess
+      @d2GrpcMethod("KeyCustodianSigner", "Sign")
+      op sign(input: SignInput): SignOutput;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: {
+        "@d2/typespec-emitters": {
+          "csharp-namespace": "D2.Fixture.Ns",
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+          "proto-package": "d2.keycustodian.v1",
+          "proto-csharp-namespace": "D2.Services.Protos.KeyCustodian.V1",
+          "grpc-service-namespace": "D2.Edge.KeyCustodian.Api.Generated",
+        },
+      },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    expect(errors).toHaveLength(0);
+
+    // In real-module mode the gRPC service delegates through I<Module>InternalApi
+    // (the production façade in the Clients namespace), NOT I<ServedBy>SignerFacade.
+    const serviceContent = getEmittedFile(host, "KeyCustodianSignerService.g.cs");
+    expect(serviceContent).toBeDefined();
+    // Real-module façade type name.
+    expect(serviceContent).toContain("IKeyCustodianInternalApi");
+    // Must use the Clients namespace as the using target.
+    expect(serviceContent).toContain("D2.Edge.KeyCustodian.Clients");
+    // Delegates via SignAsync (the façade method name).
+    expect(serviceContent).toContain("SignAsync");
+    // Must NOT fall through to ISignHandler.
+    expect(serviceContent).not.toContain("ISignHandler");
+    expect(serviceContent).not.toContain("HandleAsync");
   });
 });
 

@@ -9,6 +9,8 @@ namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 using System.Threading.Tasks;
 using D2.Edge.Tests.TypeSpecDto.Generated;
 using D2.Edge.Tests.TypeSpecGrpc.Generated;
+using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;
+using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
 using D2.Services.Protos.KeyCustodian.V1;
 using D2.Shared.Result;
 using global::Grpc.Core;
@@ -25,6 +27,8 @@ using Microsoft.Extensions.Hosting;
 /// <c>KeyCustodianSignerService</c> + <c>SignTransportMappers</c> pair.
 /// Hosts the generated service via <see cref="TestServer"/> and dials it
 /// via an in-process <see cref="GrpcChannel"/> — no network sockets.
+/// The service now delegates through <see cref="IKeyCustodianSignerFacade"/>
+/// (the fixture façade) rather than directly to <c>ISignHandler</c>.
 /// </summary>
 public sealed class GrpcServiceImplTests
 {
@@ -33,16 +37,17 @@ public sealed class GrpcServiceImplTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task Sign_Success_ReturnsSignatureFromHandler()
+    public async Task Sign_Success_ReturnsSignatureFromFacade()
     {
-        // Arrange: a fake handler that echoes a fixed signature.
+        // Arrange: a fake façade that echoes a fixed signature.
         const string kid = "key-001";
         var payload = new byte[] { 1, 2, 3 };
         const string expectedSig = "sig-base64==";
 
-        var fakeHandler = new FakeSignHandler(D2Result<SignOutput?>.Ok(new SignOutput(expectedSig)));
+        var fakeFacade = new FakeKeyCustodianSignerFacade(
+            D2Result<SignOutput?>.Ok(new SignOutput(expectedSig)));
 
-        using var host = await BuildHost(fakeHandler);
+        using var host = await BuildHost(fakeFacade);
         using var channel = CreateChannel(host);
         var client = new KeyCustodianSigner.KeyCustodianSignerClient(channel);
 
@@ -53,11 +58,12 @@ public sealed class GrpcServiceImplTests
             Payload = ByteString.CopyFrom(payload),
         });
 
-        // Assert: the generated service mapped proto→dto, called the handler,
-        // and mapped dto→proto correctly.
+        // Assert: the generated service mapped proto→dto, called the façade,
+        // and mapped dto→proto correctly. The façade records LastSignInput.
         reply.Signature.Should().Be(expectedSig);
-        fakeHandler.LastInput!.Kid.Should().Be(kid);
-        fakeHandler.LastInput.Payload.Should().Equal(payload);
+        fakeFacade.SignCallCount.Should().Be(1);
+        fakeFacade.LastSignInput!.Kid.Should().Be(kid);
+        fakeFacade.LastSignInput.Payload.Should().Equal(payload);
     }
 
     // ---------------------------------------------------------------------------
@@ -65,12 +71,12 @@ public sealed class GrpcServiceImplTests
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task Sign_HandlerFailure_ThrowsRpcExceptionInternal()
+    public async Task Sign_FacadeFailure_ThrowsRpcExceptionInternal()
     {
-        // Arrange: handler returns a failure result.
-        var fakeHandler = new FakeSignHandler(D2Result<SignOutput?>.ServiceUnavailable());
+        // Arrange: façade returns a failure result.
+        var fakeFacade = new FakeKeyCustodianSignerFacade(D2Result<SignOutput?>.ServiceUnavailable());
 
-        using var host = await BuildHost(fakeHandler);
+        using var host = await BuildHost(fakeFacade);
         using var channel = CreateChannel(host);
         var client = new KeyCustodianSigner.KeyCustodianSignerClient(channel);
 
@@ -89,10 +95,34 @@ public sealed class GrpcServiceImplTests
     }
 
     // ---------------------------------------------------------------------------
+    // Delegation verification — proves the service calls the FAÇADE (not the handler)
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Sign_DelegatesThroughFacade_RecordsCallCount()
+    {
+        // Arrange: the facade records call count so we can assert delegation.
+        var fakeFacade = new FakeKeyCustodianSignerFacade(
+            D2Result<SignOutput?>.Ok(new SignOutput("proof-sig")));
+
+        using var host = await BuildHost(fakeFacade);
+        using var channel = CreateChannel(host);
+        var client = new KeyCustodianSigner.KeyCustodianSignerClient(channel);
+
+        // Two calls → two façade invocations.
+        await client.SignAsync(new SignRequest { Kid = "k1", Payload = ByteString.CopyFrom(0x01) });
+        await client.SignAsync(new SignRequest { Kid = "k2", Payload = ByteString.CopyFrom(0x02) });
+
+        // Assert: the service called the FAÇADE exactly twice, routing through it
+        // rather than any direct handler invocation.
+        fakeFacade.SignCallCount.Should().Be(2);
+    }
+
+    // ---------------------------------------------------------------------------
     // Host + channel helpers
     // ---------------------------------------------------------------------------
 
-    private static async Task<IHost> BuildHost(ISignHandler handler)
+    private static async Task<IHost> BuildHost(IKeyCustodianSignerFacade facade)
     {
         var host = new HostBuilder()
             .ConfigureWebHost(web =>
@@ -100,7 +130,7 @@ public sealed class GrpcServiceImplTests
                 web.UseTestServer();
                 web.ConfigureServices(services =>
                 {
-                    services.AddSingleton(handler);
+                    services.AddSingleton(facade);
                     services.AddRouting();
                     services.AddGrpc();
                 });

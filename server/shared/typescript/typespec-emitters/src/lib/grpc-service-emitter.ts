@@ -4,7 +4,8 @@
 
 // gRPC service-impl emitter — pure string-template emission of:
 //   1. <Service>Service.g.cs   — C# sealed class extending the Grpc.Tools-generated base,
-//                                delegating to IHandler<TInput, TOutput>.
+//                                delegating through the façade (when @d2InProcess) or
+//                                directly to I<Op>Handler (when no @d2InProcess).
 //   2. <Op>TransportMappers.g.cs — C# 14 extension-member mappers (proto ↔ DTO).
 //
 // Conventions:
@@ -16,6 +17,9 @@
 //   - bytes ↔ byte[] conversion uses Google.Protobuf ByteString.CopyFrom / .ToByteArray().
 //   - C# 14 block-form extension members: `extension(T target) { public ... Method() }`.
 //   - Auto-generated banner; no phase/step/deliverable/audit-round identifiers.
+//   - Delegation target: when @d2InProcess the service injects the façade interface and
+//     calls facade.<Op>Async(input, ct) (2-arg, transport-neutral). Otherwise it injects
+//     I<Op>Handler and calls handler.HandleAsync(input, ct). Caller provides the target.
 //   - D2Result success path: maps output to proto response.
 //     D2Result failure path: throws RpcException(Status.Internal, empty detail) —
 //     info-leak-free per codebase posture (matches auth gRPC tests).
@@ -25,6 +29,26 @@ import { buildBanner } from "./banner.js";
 import { toPascal } from "./name-transforms.js";
 import type { FieldInfo } from "./model-walk.js";
 import type { EmittedFile } from "./csharp-dto-emitter.js";
+
+// ---------------------------------------------------------------------------
+// Public types
+// ---------------------------------------------------------------------------
+
+/** How the gRPC service delegates to the operation target. */
+export interface GrpcDelegationTarget {
+  /** "facade" when the op has @d2InProcess; "handler" otherwise. */
+  readonly kind: "facade" | "handler";
+  /** C# interface type name (e.g. "IKeyCustodianSignerFacade" or "ISignHandler"). */
+  readonly typeName: string;
+  /** Method name to call (e.g. "SignAsync" for façade; "HandleAsync" for handler). */
+  readonly methodName: string;
+  /**
+   * C# namespace where the delegation target interface lives.
+   * Only required when kind === "facade" (added as a using directive).
+   * When kind === "handler" the handler interface is already in the service namespace.
+   */
+  readonly targetNamespace?: string | undefined;
+}
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -53,6 +77,10 @@ import type { EmittedFile } from "./csharp-dto-emitter.js";
  * @param requestFields       - Resolved field list for the request DTO.
  * @param responseModelName   - TypeSpec DTO model name for the response (e.g. "SignOutput").
  * @param responseFields      - Resolved field list for the response DTO.
+ * @param delegationTarget    - Who the service delegates to. When omitted, defaults to
+ *                              handler delegation (I<PascalOp>Handler.HandleAsync) for
+ *                              backward compatibility with call sites that do not yet
+ *                              supply this argument. Supply explicitly for all new ops.
  * @returns [serviceFile, mapperFile] pair.
  */
 export function emitGrpcService(
@@ -69,6 +97,7 @@ export function emitGrpcService(
   requestFields: readonly FieldInfo[],
   responseModelName: string,
   responseFields: readonly FieldInfo[],
+  delegationTarget?: GrpcDelegationTarget,
 ): [EmittedFile, EmittedFile] {
   // buildBanner returns a string that ends with "\n" (the trailing "" in the join).
   // We pass it as-is to the sub-emitters so the blank separator line is preserved.
@@ -77,6 +106,15 @@ export function emitGrpcService(
 
   // Proto message names (<Method>Request / <Method>Response) are distinct from
   // DTO names (<Op>Input / <Op>Output), so no using-alias disambiguation is needed.
+
+  // Resolve the effective delegation target. When the caller does not supply one,
+  // fall back to the handler pattern (backward-compatible default).
+  const effectiveTarget: GrpcDelegationTarget = delegationTarget ?? {
+    kind: "handler",
+    typeName: `I${pascalOp}Handler`,
+    methodName: "HandleAsync",
+    targetNamespace: undefined,
+  };
 
   const serviceFile = emitServiceClass(
     opName,
@@ -91,6 +129,7 @@ export function emitGrpcService(
     protoResponseName,
     requestModelName,
     responseModelName,
+    effectiveTarget,
   );
 
   const mapperFile = emitTransportMappers(
@@ -127,8 +166,8 @@ function emitServiceClass(
   protoResponseName: string,
   requestModelName: string,
   responseModelName: string,
+  target: GrpcDelegationTarget,
 ): EmittedFile {
-  const handlerInterface = `I${pascalOp}Handler`;
   const serviceClassName = `${grpcService}Service`;
   const baseClassFq = `global::${protoCsharpNs}.${grpcService}.${grpcService}Base`;
 
@@ -151,13 +190,20 @@ function emitServiceClass(
   lines.push(`using ${requestModelName} = global::${dtoCsharpNs}.${requestModelName};`);
   lines.push(`using ${responseModelName} = global::${dtoCsharpNs}.${responseModelName};`);
   lines.push("using Grpc.Core;");
+  // When delegating through a façade whose interface lives in a different namespace,
+  // add a using for that namespace so the ctor parameter type resolves.
+  if (target.kind === "facade" && target.targetNamespace !== undefined && target.targetNamespace !== serviceImplNs)
+    lines.push(`using ${target.targetNamespace};`);
   lines.push("");
 
-  // XML doc.
-  lines.push(`/// <summary>Generated gRPC service for the <c>${grpcMethod}</c> operation, delegating to <see cref="${handlerInterface}"/>.</summary>`);
+  // XML doc — reference the actual delegation target.
+  lines.push(`/// <summary>Generated gRPC service for the <c>${grpcMethod}</c> operation, delegating to <see cref="${target.typeName}"/>.</summary>`);
 
-  // Class declaration — primary constructor takes the handler.
-  lines.push(`public sealed class ${serviceClassName}(${handlerInterface} handler)`);
+  // Class declaration — primary constructor takes the delegation target.
+  const ctorParam = target.kind === "facade"
+    ? `${target.typeName} facade`
+    : `${target.typeName} handler`;
+  lines.push(`public sealed class ${serviceClassName}(${ctorParam})`);
   lines.push(`    : ${baseClassFq}`);
   lines.push("{");
 
@@ -166,7 +212,11 @@ function emitServiceClass(
   lines.push(`    public override async Task<${protoResponseName}> ${grpcMethod}(${protoRequestName} request, ServerCallContext context)`);
   lines.push("    {");
   lines.push(`        ${requestModelName} input = request.To${requestModelName}();`);
-  lines.push(`        var result = await handler.HandleAsync(input, context.CancellationToken).ConfigureAwait(false);`);
+  // Delegation call — façade uses 2-arg transport-neutral signature; handler uses HandleAsync.
+  const callExpr = target.kind === "facade"
+    ? `facade.${target.methodName}(input, context.CancellationToken)`
+    : `handler.${target.methodName}(input, context.CancellationToken)`;
+  lines.push(`        var result = await ${callExpr}.ConfigureAwait(false);`);
   lines.push("        if (!result.IsOk)");
   lines.push("            throw new RpcException(new Status(StatusCode.Internal, string.Empty));");
   lines.push(`        return result.Data!.ToProto${responseModelName}();`);
@@ -175,6 +225,7 @@ function emitServiceClass(
   lines.push("");
 
   void opName; // opName consumed indirectly via pascalOp
+  void pascalOp; // consumed by caller to build effectiveTarget
 
   const fileName = `${serviceClassName}.g.cs`;
   return { fileName, content: lines.join("\n") };

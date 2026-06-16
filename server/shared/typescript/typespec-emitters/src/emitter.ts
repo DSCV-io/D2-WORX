@@ -4,6 +4,7 @@
 
 import { navigateProgram, NoTarget } from "@typespec/compiler";
 import type { EmitContext, Model, Operation } from "@typespec/compiler";
+import { getHttpOperation, getOperationVerb } from "@typespec/http";
 import {
   D2_SERVED_BY_KEY,
   D2_GRPC_METHOD_KEY,
@@ -12,6 +13,11 @@ import {
   D2_QUERY_KEY,
   D2_INTERNAL_KEY,
   D2_SERVER_PUSH_KEY,
+  D2_REQUIRE_ANY_SCOPE_KEY,
+  D2_REQUIRE_ALL_SCOPES_KEY,
+  D2_HARMLESS_KEY,
+  D2_RATE_LIMIT_TIER_KEY,
+  D2_CSRF_KEY,
 } from "@d2/typespec-decorators";
 import { emitGeneratedFile, resolveOutputPath } from "./lib/emit-file.js";
 import { walkModel } from "./lib/model-walk.js";
@@ -19,9 +25,12 @@ import { emitCsharpDtos } from "./lib/csharp-dto-emitter.js";
 import { emitTsDtos } from "./lib/ts-dto-emitter.js";
 import { emitProto } from "./lib/proto-emitter.js";
 import { emitGrpcService } from "./lib/grpc-service-emitter.js";
+import type { GrpcDelegationTarget } from "./lib/grpc-service-emitter.js";
 import { emitHandlerInterface } from "./lib/handler-interface-emitter.js";
 import { emitFacade } from "./lib/facade-emitter.js";
 import type { ExposedOp } from "./lib/facade-emitter.js";
+import { emitRoutePolicy } from "./lib/route-policy-emitter.js";
+import type { DelegationTarget, HttpVerb, ScopePolicy } from "./lib/route-policy-emitter.js";
 import { $lib } from "./lib.js";
 
 // The $onEmit entry point drives six artifact families per tsp compile:
@@ -232,6 +241,37 @@ export async function $onEmit(context: EmitContext): Promise<void> {
         | { service: string; method: string; streaming: string }
         | undefined;
       if (grpcPayload !== undefined && (inputModel !== undefined || outputModel !== undefined)) {
+        // Compute the delegation target for gRPC — same rule as the route emitter:
+        // @d2InProcess → façade; else → I<Op>Handler.
+        const grpcInProcess = program.stateMap(D2_IN_PROCESS_KEY).get(op) === true;
+        const grpcServedBy = program.stateMap(D2_SERVED_BY_KEY).get(op) as string | undefined;
+        const grpcPascalOp = toPascalFromCamel(op.name);
+
+        let grpcDelegationTarget: GrpcDelegationTarget;
+        if (grpcInProcess && grpcServedBy !== undefined && grpcServedBy.length > 0) {
+          // Façade delegation — use the same naming logic as the route emitter.
+          const facadeTypeName = csAppNamespaceBase !== undefined && csClientsNamespace !== undefined
+            ? `I${grpcServedBy}InternalApi`
+            : `I${grpcServedBy}SignerFacade`;
+          const facadeNs = csAppNamespaceBase !== undefined && csClientsNamespace !== undefined
+            ? csClientsNamespace
+            : `${grpcServiceNs}.Facade`;
+          grpcDelegationTarget = {
+            kind: "facade",
+            typeName: facadeTypeName,
+            methodName: `${grpcPascalOp}Async`,
+            targetNamespace: facadeNs,
+          };
+        } else {
+          // Handler delegation.
+          grpcDelegationTarget = {
+            kind: "handler",
+            typeName: `I${grpcPascalOp}Handler`,
+            methodName: "HandleAsync",
+            targetNamespace: undefined,
+          };
+        }
+
         emitProtoAndGrpcService(
           context,
           program,
@@ -241,6 +281,27 @@ export async function $onEmit(context: EmitContext): Promise<void> {
           protoCsharpNs,
           grpcServiceNs,
           dtoCsNamespace,
+          specHint,
+          inputModel,
+          outputModel,
+          grpcDelegationTarget,
+        );
+      }
+
+      // Emit REST route registration for ops carrying @route and not @d2Internal.
+      // getHttpOperation yields [httpOp, diags]; a verb+path means the op has @route.
+      // Skip if the op is @d2Internal (the decorator layer forbids internal + route,
+      // but guard defensively here for emitter robustness).
+      if (!isInternal) {
+        emitRouteIfPresent(
+          context,
+          program,
+          op,
+          isExposed,
+          dtoCsNamespace,
+          grpcServiceNs,
+          csAppNamespaceBase,
+          csClientsNamespace,
           specHint,
           inputModel,
           outputModel,
@@ -480,6 +541,7 @@ function emitProtoAndGrpcService(
   specHint: string,
   inputModel: Model | undefined,
   outputModel: Model | undefined,
+  delegationTarget?: GrpcDelegationTarget,
 ): void {
   const errors: string[] = [];
   const onError = (
@@ -555,6 +617,7 @@ function emitProtoAndGrpcService(
     inputWalk.fields,
     dtoResponseName,
     outputWalk.fields,
+    delegationTarget,
   );
 
   const servicePath = resolveOutputPath(context, serviceFile.fileName);
@@ -562,6 +625,175 @@ function emitProtoAndGrpcService(
 
   const mapperPath = resolveOutputPath(context, mapperFile.fileName);
   void emitGeneratedFile(program, mapperPath, mapperFile.content);
+}
+
+/**
+ * Emit the REST route registration for one operation if it carries @route.
+ *
+ * Calls getHttpOperation to detect the verb+path. Surfaces D2TSP004 (missing
+ * auth intent) and D2TSP005 (unsupported verb) as error diagnostics. Skips
+ * the op entirely when getHttpOperation yields no HTTP binding.
+ */
+function emitRouteIfPresent(
+  context: EmitContext,
+  program: Parameters<typeof walkModel>[0],
+  op: Operation,
+  isExposed: boolean,
+  dtoCsNamespace: string,
+  grpcServiceNs: string,
+  csAppNamespaceBase: string | undefined,
+  csClientsNamespace: string | undefined,
+  specHint: string,
+  inputModel: Model | undefined,
+  outputModel: Model | undefined,
+): void {
+  // Use getOperationVerb to detect if the op has an explicit HTTP verb decorator.
+  // getOperationVerb returns undefined when no @get/@post/@put/@delete/@patch/@head
+  // is present — that is the correct signal that this op has no @route.
+  const explicitVerb = getOperationVerb(
+    program as Parameters<typeof getOperationVerb>[0],
+    op,
+  );
+  if (explicitVerb === undefined)
+    // No explicit verb decorator → no @route → skip (e.g. getJwks).
+    return;
+
+  // Supported verbs for Minimal API Map* calls.
+  const supportedVerbs: readonly string[] = ["get", "post", "put", "delete", "patch"];
+  if (!supportedVerbs.includes(explicitVerb)) {
+    $lib.reportDiagnostic(program, {
+      code: "unsupported-http-verb",
+      format: { op: op.name, verb: explicitVerb },
+      target: op,
+    });
+    return;
+  }
+
+  // Get full HTTP operation to extract the resolved path.
+  const [httpOp, diags] = getHttpOperation(program as Parameters<typeof getHttpOperation>[0], op);
+
+  // Surface any error diagnostics from getHttpOperation.
+  for (const d of diags) {
+    if (d.severity === "error") {
+      $lib.reportDiagnostic(program, {
+        code: "unmapped-scalar",
+        format: { scalar: `getHttpOperation error on '${op.name}': ${String(d.message)}` },
+        target: NoTarget,
+      });
+    }
+  }
+
+  const verb = explicitVerb as HttpVerb;
+  const routePath = httpOp.path;
+
+  // Resolve scope/harmless policy.
+  const anyScopes = program.stateMap(D2_REQUIRE_ANY_SCOPE_KEY).get(op) as string[] | undefined;
+  const allScopes = program.stateMap(D2_REQUIRE_ALL_SCOPES_KEY).get(op) as string[] | undefined;
+  const harmless = program.stateMap(D2_HARMLESS_KEY).get(op) === true;
+
+  let scopePolicy: ScopePolicy;
+  if (anyScopes !== undefined && anyScopes.length > 0)
+    scopePolicy = { kind: "any", scopes: anyScopes };
+  else if (allScopes !== undefined && allScopes.length > 0)
+    scopePolicy = { kind: "all", scopes: allScopes };
+  else if (harmless)
+    scopePolicy = { kind: "harmless" };
+  else {
+    // D2TSP004 — deny-by-default: routed op with no auth intent.
+    $lib.reportDiagnostic(program, {
+      code: "route-missing-auth-intent",
+      format: { op: op.name },
+      target: op,
+    });
+    return;
+  }
+
+  // Resolve rate-tier and CSRF markers.
+  const rateTierRaw = program.stateMap(D2_RATE_LIMIT_TIER_KEY).get(op) as
+    | { tier: string } | string | undefined;
+  const rateTier = rateTierRaw !== undefined
+    ? (typeof rateTierRaw === "string" ? rateTierRaw : rateTierRaw.tier)
+    : undefined;
+
+  const csrfRaw = program.stateMap(D2_CSRF_KEY).get(op) as
+    | { posture: string } | string | undefined;
+  const csrf = csrfRaw !== undefined
+    ? (typeof csrfRaw === "string" ? csrfRaw : csrfRaw.posture)
+    : undefined;
+
+  // Resolve the delegation target.
+  const inProcess = program.stateMap(D2_IN_PROCESS_KEY).get(op) === true;
+  const servedBy = program.stateMap(D2_SERVED_BY_KEY).get(op) as string | undefined;
+  const pascalOp = toPascalFromCamel(op.name);
+
+  let delegationTarget: DelegationTarget;
+  let delegationTargetNamespace: string;
+
+  if (inProcess && servedBy !== undefined && servedBy.length > 0) {
+    // Facade delegation: the fixture façade interface name is I<ServedBy>SignerFacade
+    // (for the sign fixture, this is IKeyCustodianSignerFacade — the fixture-specific
+    // naming that avoids collision with the real IKeyCustodianInternalApi).
+    // In fixture mode (no csAppNamespaceBase), use the fixture gRPC namespace.
+    // In real-module mode, use the clients namespace.
+    const facadeTypeName = csAppNamespaceBase !== undefined && csClientsNamespace !== undefined
+      ? `I${servedBy}InternalApi`
+      : `I${servedBy}SignerFacade`;
+    const facadeNs = csAppNamespaceBase !== undefined && csClientsNamespace !== undefined
+      ? csClientsNamespace
+      : `${grpcServiceNs}.Facade`;
+    delegationTarget = {
+      kind: "facade",
+      typeName: facadeTypeName,
+      methodName: `${pascalOp}Async`,
+    };
+    delegationTargetNamespace = facadeNs;
+  } else {
+    // Handler delegation.
+    delegationTarget = {
+      kind: "handler",
+      typeName: `I${pascalOp}Handler`,
+      methodName: "HandleAsync",
+    };
+    // Handler namespace follows the same logic as resolveHandlerNamespace.
+    const category = resolveCategory(program, op);
+    delegationTargetNamespace = csAppNamespaceBase !== undefined && category !== undefined
+      ? `${csAppNamespaceBase}.${category}.${pascalOp}`
+      : grpcServiceNs;
+  }
+
+  // Resolve the registration namespace — in fixture mode use the gRPC service ns
+  // (all transport output is fixture-validated per FLAG f / R7.10).
+  const registrationNs = csAppNamespaceBase !== undefined
+    ? `${csAppNamespaceBase.replace(/\.Handlers$/, "")}.Routes`
+    : grpcServiceNs;
+
+  const inputTypeName = (inputModel?.name?.length ?? 0) > 0
+    ? inputModel!.name
+    : `${pascalOp}Input`;
+  const outputTypeName = (outputModel?.name?.length ?? 0) > 0
+    ? outputModel!.name
+    : `${pascalOp}Output`;
+
+  void isExposed; // exposure is already validated by the caller
+
+  const routeFile = emitRoutePolicy({
+    opName: op.name,
+    verb,
+    routePath,
+    delegationTarget,
+    delegationTargetNamespace,
+    inputTypeName,
+    outputTypeName,
+    dtoNamespace: dtoCsNamespace,
+    scopePolicy,
+    rateTier,
+    csrf,
+    registrationNamespace: registrationNs,
+    sourceSpec: specHint,
+  });
+
+  const routePath2 = resolveOutputPath(context, routeFile.fileName);
+  void emitGeneratedFile(program, routePath2, routeFile.content);
 }
 
 /**

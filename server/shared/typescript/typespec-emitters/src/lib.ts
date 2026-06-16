@@ -18,6 +18,12 @@ import { createTypeSpecLibrary, paramMessage } from "@typespec/compiler";
 //                                         (defensive guard in namespace routing; the
 //                                         decorator-layer `category-required` invariant
 //                                         should prevent this from firing in valid programs)
+//   D2TSP004  route-missing-auth-intent — a routed op carries neither @d2RequireAnyScope
+//                                         nor @d2RequireAllScopes nor @d2Harmless; every
+//                                         routed op must declare an auth intent (deny-by-default)
+//   D2TSP005  unsupported-http-verb     — an HTTP verb other than get/post/put/delete/patch
+//                                         (e.g. head/options/trace); the route emitter cannot
+//                                         map it to a Minimal-API Map* call
 // -----------------------------------------------------------------------
 
 /**
@@ -63,6 +69,33 @@ export const $lib = createTypeSpecLibrary({
       severity: "error",
       messages: {
         default: paramMessage`operation '${"op"}' has no CQRS category — exactly one of @d2Command or @d2Query is required`,
+      },
+    },
+
+    /**
+     * D2TSP004 — A routed operation carries no auth intent.
+     * Every operation with an HTTP route (@route) must declare exactly one of
+     * @d2RequireAnyScope, @d2RequireAllScopes, or @d2Harmless. An operation with
+     * none of these cannot be safely routed — the emitter refuses to emit the route
+     * registration (deny-by-default at compile time).
+     */
+    "route-missing-auth-intent": {
+      severity: "error",
+      messages: {
+        default: paramMessage`routed operation '${"op"}' has no auth intent — exactly one of @d2RequireAnyScope, @d2RequireAllScopes, or @d2Harmless is required`,
+      },
+    },
+
+    /**
+     * D2TSP005 — An operation's HTTP verb is not supported by the route emitter.
+     * Only get/post/put/delete/patch map to Minimal-API Map* calls. Verbs such as
+     * head/options/trace cannot be emitted; the author must change the verb or
+     * implement a hand-written route for that endpoint.
+     */
+    "unsupported-http-verb": {
+      severity: "error",
+      messages: {
+        default: paramMessage`operation '${"op"}' uses unsupported HTTP verb '${"verb"}' — only get/post/put/delete/patch are supported by the route emitter`,
       },
     },
   },

@@ -144,6 +144,19 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\key-custodian\clients\D2.Edge.KeyCustodian.Clients.csproj" />
     <ProjectReference Include="..\key-custodian\infra\D2.Edge.KeyCustodian.Infra.csproj" />
     <!--
+      D2.Shared.Auth.Http — route-policy enforcement tests wire JwtAuthMiddleware
+      via UseD2Auth() + RequireAnyScope/RequireAllScopes/MarkAsD2HarmlessEndpoint.
+      Also provides D2.Shared.Auth (AuthOptions/JwtValidator) and
+      D2.Shared.Auth.Abstractions (IJwksProvider/ISessionLivenessTracker) transitively.
+    -->
+    <ProjectReference Include="..\..\..\shared\dotnet\auth\http\D2.Shared.Auth.Http.csproj" />
+    <!--
+      D2.Shared.Caching.Local.Default — AddD2LocalCache() extension used in the
+      route-policy TestServer host setup to satisfy JwtValidator's tiered-cache DI
+      dependency. Also provides D2.Shared.Caching.Abstractions transitively.
+    -->
+    <ProjectReference Include="..\..\..\shared\dotnet\caching\local-default\D2.Shared.Caching.Local.Default.csproj" />
+    <!--
       The keycustodian-error-codes SrcGen referenced as a NORMAL library (not an
       Analyzer) so the generator/diagnostic + byte-parity tests can drive
       ErrorCodesGenerator + read ErrorCodesGenerator.Config directly. The Domain
