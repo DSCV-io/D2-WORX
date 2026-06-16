@@ -22,6 +22,9 @@ public interface IKeyCustodianSignerFacade
     /// <summary>Signs the payload with the specified key.</summary>
     ValueTask<D2Result<SignOutput?>> SignAsync(SignInput input, CancellationToken ct = default);
 
+    /// <summary>Signs the payload using a derived idempotency key.</summary>
+    ValueTask<D2Result<SignOutput?>> SignDerivedAsync(SignInput input, CancellationToken ct = default);
+
     /// <summary>Synthetic all-scopes op for coverage of RequireAllScopes route path.</summary>
     ValueTask<D2Result<SignOutput?>> AllScopesAsync(SignInput input, CancellationToken ct = default);
 }

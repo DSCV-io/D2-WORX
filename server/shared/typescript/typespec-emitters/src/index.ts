@@ -35,3 +35,6 @@ export { emitProto } from "./lib/proto-emitter.js";
 export type { ProtoFieldInfo, StreamingMode } from "./lib/proto-emitter.js";
 
 export { emitGrpcService } from "./lib/grpc-service-emitter.js";
+
+export { emitIdempotencyStoreSeam, buildIdempotencyGate } from "./lib/idempotency-gate-emitter.js";
+export type { IdempotencyGateInput, IdempotencyGateWeave, IdempotencyKeySource } from "./lib/idempotency-gate-emitter.js";

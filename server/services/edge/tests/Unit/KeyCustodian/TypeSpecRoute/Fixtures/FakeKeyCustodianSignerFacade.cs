@@ -17,13 +17,16 @@ using D2.Shared.Result;
 internal sealed class FakeKeyCustodianSignerFacade : IKeyCustodianSignerFacade
 {
     private readonly D2Result<SignOutput?> r_signResult;
+    private readonly D2Result<SignOutput?> r_signDerivedResult;
     private readonly D2Result<SignOutput?> r_allScopesResult;
 
     public FakeKeyCustodianSignerFacade(
         D2Result<SignOutput?> signResult,
+        D2Result<SignOutput?>? signDerivedResult = null,
         D2Result<SignOutput?>? allScopesResult = null)
     {
         r_signResult = signResult;
+        r_signDerivedResult = signDerivedResult ?? signResult;
         r_allScopesResult = allScopesResult ?? signResult;
     }
 
@@ -31,12 +34,22 @@ internal sealed class FakeKeyCustodianSignerFacade : IKeyCustodianSignerFacade
 
     public int SignCallCount { get; private set; }
 
+    public int SignDerivedCallCount { get; private set; }
+
     public ValueTask<D2Result<SignOutput?>> SignAsync(
         SignInput input, CancellationToken ct = default)
     {
         SignCallCount++;
         LastSignInput = input;
         return new(r_signResult);
+    }
+
+    public ValueTask<D2Result<SignOutput?>> SignDerivedAsync(
+        SignInput input, CancellationToken ct = default)
+    {
+        SignDerivedCallCount++;
+        LastSignInput = input;
+        return new(r_signDerivedResult);
     }
 
     public ValueTask<D2Result<SignOutput?>> AllScopesAsync(

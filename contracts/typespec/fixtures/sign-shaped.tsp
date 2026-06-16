@@ -41,7 +41,8 @@ model SignOutput {
 /**
  * Sign the given payload with the specified key.
  * Fixture operation — exercises @d2Redact, @d2ServedBy, @d2InProcess,
- * @d2GrpcMethod, @route, and the auth/policy decorators for the emitter fleet.
+ * @d2GrpcMethod, @route, the auth/policy decorators, and the idempotency gate
+ * (header keySource, 24-hour TTL) for the emitter fleet.
  */
 @d2Command
 @d2ServedBy("KeyCustodian")
@@ -52,4 +53,19 @@ model SignOutput {
 @d2RequireAnyScope("self.write")
 @d2RateLimitTier("Standard")
 @d2Csrf("exempt")
+@d2Idempotent("header", 86400)
 op sign(input: SignInput): SignOutput;
+
+/**
+ * Sign the given payload with the specified key (derived-key idempotency fixture).
+ * Exercises the derived keySource path of the idempotency gate — key is a
+ * SHA-256 hash of the `kid` field value, with a 1-hour TTL.
+ */
+@d2Command
+@d2ServedBy("KeyCustodian")
+@d2InProcess
+@route("/internal/v1/kc/sign-derived")
+@post
+@d2RequireAnyScope("self.write")
+@d2Idempotent("derived", 3600, "kid")
+op signDerived(input: SignInput): SignOutput;

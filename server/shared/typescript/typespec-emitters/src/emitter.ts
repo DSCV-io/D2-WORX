@@ -18,7 +18,9 @@ import {
   D2_HARMLESS_KEY,
   D2_RATE_LIMIT_TIER_KEY,
   D2_CSRF_KEY,
+  D2_IDEMPOTENT_KEY,
 } from "@d2/typespec-decorators";
+import type { IdempotentPayload } from "@d2/typespec-decorators";
 import { emitGeneratedFile, resolveOutputPath } from "./lib/emit-file.js";
 import { walkModel } from "./lib/model-walk.js";
 import { emitCsharpDtos } from "./lib/csharp-dto-emitter.js";
@@ -30,6 +32,7 @@ import { emitHandlerInterface } from "./lib/handler-interface-emitter.js";
 import { emitFacade } from "./lib/facade-emitter.js";
 import type { ExposedOp } from "./lib/facade-emitter.js";
 import { emitRoutePolicy } from "./lib/route-policy-emitter.js";
+import { emitIdempotencyStoreSeam } from "./lib/idempotency-gate-emitter.js";
 import type { DelegationTarget, HttpVerb, ScopePolicy } from "./lib/route-policy-emitter.js";
 import { $lib } from "./lib.js";
 
@@ -126,6 +129,13 @@ export async function $onEmit(context: EmitContext): Promise<void> {
   // Collect exposed ops per module (grouped by @d2ServedBy) for the façade emitter.
   // Façade is one-per-module so it is emitted AFTER the per-op walk gathers all ops.
   const exposedOpsByModule = new Map<string, ExposedOp[]>();
+
+  // Track which registration namespaces contain at least one idempotent route.
+  // The idempotency-store seam is emitted ONCE per namespace (mirrors the
+  // policy-markers approach) after the per-op walk completes.
+  const idempotentNamespaces = new Set<string>();
+  // Track the last specHint per namespace for the seam banner.
+  const idempotentNamespaceSpec = new Map<string, string>();
 
   navigateProgram(program, {
     operation(op: Operation) {
@@ -305,6 +315,8 @@ export async function $onEmit(context: EmitContext): Promise<void> {
           specHint,
           inputModel,
           outputModel,
+          idempotentNamespaces,
+          idempotentNamespaceSpec,
         );
       }
     },
@@ -326,6 +338,19 @@ export async function $onEmit(context: EmitContext): Promise<void> {
         void emitGeneratedFile(program, facadePath, f.content);
       }
     }
+  }
+
+  // ---- Idempotency-store seam — one per registration namespace (after the per-op walk) ------
+  // Emitted for every namespace that contains at least one idempotent routed op.
+  // idempotentNamespaces and idempotentNamespaceSpec are updated together in the per-op
+  // walk (lines 835-836), so has(ns) is always true here; the guard is belt-and-suspenders.
+  // idempotentNamespaceSpec is populated only when idempotentNamespaces.add(ns) also fires
+  // (both updates are in the same if-block in the per-op walk). Iterate spec entries directly —
+  // the has(ns) guard is redundant and would create an unreachable false branch.
+  for (const [ns, specHint] of idempotentNamespaceSpec) {
+    const seamFile = emitIdempotencyStoreSeam(ns, specHint);
+    const seamPath = resolveOutputPath(context, seamFile.fileName);
+    void emitGeneratedFile(program, seamPath, seamFile.content);
   }
 
   // ---- Smoke manifest (kept so the operations-manifest integration test stays green) --------
@@ -631,8 +656,9 @@ function emitProtoAndGrpcService(
  * Emit the REST route registration for one operation if it carries @route.
  *
  * Calls getHttpOperation to detect the verb+path. Surfaces D2TSP004 (missing
- * auth intent) and D2TSP005 (unsupported verb) as error diagnostics. Skips
- * the op entirely when getHttpOperation yields no HTTP binding.
+ * auth intent), D2TSP005 (unsupported verb), and D2TSP006 (@d2Idempotent
+ * without a @route) as error diagnostics. Skips the op entirely when
+ * getHttpOperation yields no HTTP binding.
  */
 function emitRouteIfPresent(
   context: EmitContext,
@@ -646,7 +672,15 @@ function emitRouteIfPresent(
   specHint: string,
   inputModel: Model | undefined,
   outputModel: Model | undefined,
+  idempotentNamespaces: Set<string>,
+  idempotentNamespaceSpec: Map<string, string>,
 ): void {
+  // Read the @d2Idempotent payload (if any) before the route check.
+  // D2TSP006: if @d2Idempotent is present but no @route exists, fail loud.
+  const idempotentPayload = program.stateMap(D2_IDEMPOTENT_KEY).get(op) as
+    | IdempotentPayload
+    | undefined;
+
   // Use getOperationVerb to detect if the op has an explicit HTTP verb decorator.
   // getOperationVerb returns undefined when no @get/@post/@put/@delete/@patch/@head
   // is present — that is the correct signal that this op has no @route.
@@ -654,9 +688,18 @@ function emitRouteIfPresent(
     program as Parameters<typeof getOperationVerb>[0],
     op,
   );
-  if (explicitVerb === undefined)
+  if (explicitVerb === undefined) {
+    // D2TSP006 — @d2Idempotent without @route: fail loud.
+    if (idempotentPayload !== undefined) {
+      $lib.reportDiagnostic(program, {
+        code: "idempotent-requires-route",
+        format: { op: op.name },
+        target: op,
+      });
+    }
     // No explicit verb decorator → no @route → skip (e.g. getJwks).
     return;
+  }
 
   // Supported verbs for Minimal API Map* calls.
   const supportedVerbs: readonly string[] = ["get", "post", "put", "delete", "patch"];
@@ -776,6 +819,27 @@ function emitRouteIfPresent(
 
   void isExposed; // exposure is already validated by the caller
 
+  // Map the idempotency payload's lowerCamel field names to PascalCase C# property names.
+  // walkModel populates FieldInfo.csName as PascalCase; here we do a simple camel→Pascal
+  // conversion (matching the convention used everywhere in the emitter fleet) because
+  // the inputWalk isn't passed into emitRouteIfPresent. The decorator guarantees valid
+  // field names; we map defensively (empty string → would throw in buildIdempotencyGate).
+  let idempotencyConfig: { keySource: "header" | "derived"; ttlSeconds: number; fields: readonly string[] } | undefined;
+  if (idempotentPayload !== undefined) {
+    const pascalFields = idempotentPayload.fields.map(
+      /* v8 ignore next 1 — decorator guarantees non-empty; defensive guard for belt-and-suspenders */
+      (f) => f.length === 0 ? f : f[0]!.toUpperCase() + f.slice(1),
+    );
+    idempotencyConfig = {
+      keySource: idempotentPayload.keySource as "header" | "derived",
+      ttlSeconds: idempotentPayload.ttlSeconds,
+      fields: pascalFields,
+    };
+    // Track this namespace for seam emission.
+    idempotentNamespaces.add(registrationNs);
+    idempotentNamespaceSpec.set(registrationNs, specHint);
+  }
+
   const routeFile = emitRoutePolicy({
     opName: op.name,
     verb,
@@ -788,6 +852,7 @@ function emitRouteIfPresent(
     scopePolicy,
     rateTier,
     csrf,
+    idempotency: idempotencyConfig,
     registrationNamespace: registrationNs,
     sourceSpec: specHint,
   });

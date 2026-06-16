@@ -19,31 +19,21 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-/// <summary>Faithful seam marker: rate-limit tier declaration for this route.</summary>
-public sealed record D2GeneratedRateLimitTier(string Tier);
-
-/// <summary>Faithful seam marker: CSRF posture declaration for this route.</summary>
-public sealed record D2GeneratedCsrfPosture(string Posture);
-
-/// <summary>Generated REST route registration for the <c>Sign</c> operation.</summary>
-public static class SignRouteRegistration
+/// <summary>Generated REST route registration for the <c>SignDerived</c> operation.</summary>
+public static class SignDerivedRouteRegistration
 {
     extension(IEndpointRouteBuilder endpoints)
     {
-        /// <summary>Maps <c>POST /internal/v1/kc/sign</c>, delegating to <see cref="IKeyCustodianSignerFacade"/>.</summary>
+        /// <summary>Maps <c>POST /internal/v1/kc/sign-derived</c>, delegating to <see cref="IKeyCustodianSignerFacade"/>.</summary>
         /// <remarks>Audience is enforced service-wide via <c>AuthOptions.Audience</c> — no per-route audience fluent (§9.2).</remarks>
-        public IEndpointConventionBuilder MapSignRoute()
+        public IEndpointConventionBuilder MapSignDerivedRoute()
         {
             var builder = endpoints.MapPost(
-                "/internal/v1/kc/sign",
+                "/internal/v1/kc/sign-derived",
                 static async (SignInput input, IKeyCustodianSignerFacade facade, D2GeneratedIdempotencyStore store, HttpContext http, CancellationToken ct) =>
                 {
-                    var idempotencyKey = http.Request.Headers["Idempotency-Key"].ToString();
-                    if (idempotencyKey.Falsey())
-                        return Results.Json(
-                            D2Result<SignOutput?>.ValidationFailed().ToProblemDetails(http),
-                            statusCode: 400,
-                            contentType: "application/problem+json");
+                    var idempotencyKeyRaw = System.Text.Encoding.UTF8.GetBytes(input.Kid);
+                    var idempotencyKey = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(idempotencyKeyRaw));
                     var cachedResult = await store.TryGetAsync<D2Result<SignOutput?>>(idempotencyKey, ct).ConfigureAwait(false);
                     if (cachedResult.Success && cachedResult.Data is not null)
                     {
@@ -54,8 +44,8 @@ public static class SignRouteRegistration
                         return Results.Json(rpd, statusCode: rpd.Status ?? 500, contentType: "application/problem+json");
                     }
 
-                    var result = await facade.SignAsync(input, ct).ConfigureAwait(false);
-                    await store.StoreAsync<D2Result<SignOutput?>>(idempotencyKey, result, TimeSpan.FromSeconds(86400), ct).ConfigureAwait(false);
+                    var result = await facade.SignDerivedAsync(input, ct).ConfigureAwait(false);
+                    await store.StoreAsync<D2Result<SignOutput?>>(idempotencyKey, result, TimeSpan.FromSeconds(3600), ct).ConfigureAwait(false);
 
                     if (result.Success)
                         return Results.Ok(result.Data);
@@ -64,8 +54,6 @@ public static class SignRouteRegistration
                 });
 
             builder.RequireAnyScope("self.write");
-            builder.WithMetadata(new D2GeneratedRateLimitTier("Standard"));
-            builder.WithMetadata(new D2GeneratedCsrfPosture("exempt"));
             return builder;
         }
     }

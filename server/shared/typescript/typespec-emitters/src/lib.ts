@@ -24,6 +24,9 @@ import { createTypeSpecLibrary, paramMessage } from "@typespec/compiler";
 //   D2TSP005  unsupported-http-verb     — an HTTP verb other than get/post/put/delete/patch
 //                                         (e.g. head/options/trace); the route emitter cannot
 //                                         map it to a Minimal-API Map* call
+//   D2TSP006  idempotent-requires-route — @d2Idempotent present on an op with no @route;
+//                                         idempotency gating is REST-only, so an in-process-only
+//                                         or gRPC-only op must not carry the gate annotation
 // -----------------------------------------------------------------------
 
 /**
@@ -96,6 +99,21 @@ export const $lib = createTypeSpecLibrary({
       severity: "error",
       messages: {
         default: paramMessage`operation '${"op"}' uses unsupported HTTP verb '${"verb"}' — only get/post/put/delete/patch are supported by the route emitter`,
+      },
+    },
+
+    /**
+     * D2TSP006 — @d2Idempotent is present on an operation that has no @route.
+     * Idempotency gating is a REST-only concern; it is meaningless without a
+     * public HTTP route. An operation that is only reachable via gRPC or an
+     * in-process call cannot carry the generated idempotency gate.
+     * Add @route + @post (or another supported verb) to the operation, or remove
+     * @d2Idempotent if the operation is not intended to have a REST surface.
+     */
+    "idempotent-requires-route": {
+      severity: "error",
+      messages: {
+        default: paramMessage`@d2Idempotent on '${"op"}' requires a public HTTP route (@route) — idempotency gating is REST-only and is meaningless without a route`,
       },
     },
   },

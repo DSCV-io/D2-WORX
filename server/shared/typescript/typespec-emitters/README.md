@@ -480,6 +480,7 @@ catalog entry in `src/lib.ts`.
 | D2TSP003 | `missing-cqrs-category`   | An operation carries neither `@d2Command` nor `@d2Query`. The façade emitter cannot determine the handler namespace without a CQRS category. |
 | D2TSP004 | `route-missing-auth-intent` | A routed operation (`@route`) carries none of `@d2RequireAnyScope`, `@d2RequireAllScopes`, or `@d2Harmless`. Every public route must declare an auth intent. The route emitter loud-fails at compile time rather than emitting a boot-failing unprotected endpoint — strictly stronger than a runtime boot guard. |
 | D2TSP005 | `unsupported-http-verb`   | An HTTP verb other than get/post/put/delete/patch (e.g. `head`, `options`) has no `Map*` mapping in the route emitter. |
+| D2TSP006 | `idempotent-requires-route` | `@d2Idempotent` is present on an operation that has no `@route`. Idempotency gating is REST-only; it is meaningless without a public HTTP route. Add `@route` + a supported HTTP verb to the operation, or remove `@d2Idempotent` if the operation is not intended to have a REST surface. |
 
 All diagnostics have `severity: "error"` — every violation fails `tsp compile`
 with a non-zero exit code.
@@ -502,7 +503,7 @@ pnpm run test:coverage
 pnpm run type-check:test
 ```
 
-24 test files, 402 tests. Coverage: 100% lines / branches / functions / statements
+25 test files, 472 tests. Coverage: 100% lines / branches / functions / statements
 on all `src/**` files (excluding the barrel `src/index.ts`).
 
 ---

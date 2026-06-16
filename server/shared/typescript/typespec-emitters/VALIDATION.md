@@ -118,7 +118,42 @@ The TestServer host in `D2.Edge.Tests` stands up the real `JwtAuthMiddleware` pi
 | `RouteFacadeDelegationTests` | Sign route → `NotFound` | 404 `application/problem+json` |
 | `RouteFacadeDelegationTests` | Sign route → `ValidationFailed` | 400 `application/problem+json` |
 
-**D2TSP004 / D2TSP005 assertion notes**: both diagnostics are tested in `route-policy-emitter.test.ts` via the pure-fn `onError` callback (no TypeSpec host needed) and in `route-emit.integration.test.ts` via `hasError()`. Severity is `"error"` in `src/lib.ts`; the per-code severity is asserted explicitly in `tests/lib.test.ts`.
+**D2TSP004 / D2TSP005 / D2TSP006 assertion notes**: D2TSP004 and D2TSP005 are tested in `route-policy-emitter.test.ts` via the pure-fn `onError` callback (no TypeSpec host needed) and in `route-emit.integration.test.ts` via `hasError()`. D2TSP006 (`idempotent-requires-route`) is tested directly in `route-emit.direct.test.ts` (`$onEmit_routeEmitDirect_IdempotentWithoutRoute_D2TSP006`) and in `route-emit.integration.test.ts` (`routeEmitIntegration_IdempotentWithoutRoute_D2TSP006`); catalog registration and error severity are asserted in `tests/idempotency-gate-emitter.test.ts` (`D2TSP006_IdempotentRequiresRoute_DirectCatalogTest`). Severity is `"error"` in `src/lib.ts`; the per-code severity is asserted explicitly in `tests/lib.test.ts` (all-catalog guard).
+
+---
+
+## Idempotency gate emitter — seam ledger
+
+The HTTP result-replay idempotency store is an unbuilt Edge concern (PHASE_3_EDGE §1 — the `Idempotency.*` middleware lib lands when Edge ships). The emitter owns a faithful seam interface so validation is not blocked on the unbuilt consumer.
+
+| Seam | Kind | Consumer | Replace-trigger |
+|---|---|---|---|
+| `D2GeneratedIdempotencyStore` (emitter-owned generated interface — `TryGetAsync<TStored>` + `StoreAsync<TStored>`) | **Faithful seam** — validates the real replay contract (store/lookup/TTL-expiry/result-replay) against an in-memory `FakeIdempotencyStore` with injectable `TimeProvider` | Unbuilt Edge `Idempotency.*` HTTP-idempotency middleware (PHASE_3_EDGE §1) | That middleware lib ships and implements `D2GeneratedIdempotencyStore` |
+
+The `D2GeneratedIdempotencyStore` prefix signals emitter ownership and avoids a future name collision when the real Edge `IIdempotencyStore` lands (the real one can carry the un-prefixed name). The design mirrors the route emitter's `D2GeneratedRateLimitTier` / `D2GeneratedCsrfPosture` faithful-seam pattern.
+
+---
+
+## Idempotency gate emitter — C# validation table (`RouteIdempotencyGateTests`)
+
+TestServer host with real `UseD2Auth()` + `FakeKeyCustodianSignerFacade` + `FakeIdempotencyStore` (injectable `FakeTimeProvider` for deterministic TTL-expiry tests).
+
+| Seam | Real or fake | Notes |
+|---|---|---|
+| `JwtAuthMiddleware` / `JwtValidator` / `RequireAnyScope` | **Real** | Same pipeline as `RoutePolicyEnforcementTests` — JWT, scope enforcement, MAP-ii |
+| `IKeyCustodianSignerFacade` | **Fake** (`FakeKeyCustodianSignerFacade`) | Records `SignCallCount` + `SignDerivedCallCount`; returns canned `D2Result` |
+| `D2GeneratedIdempotencyStore` | **Faithful in-memory seam** (`FakeIdempotencyStore`) | Real TTL-expiry via injectable `TimeProvider` (`FakeTimeProvider`); real store/lookup; `ServiceUnavailable` when faulted |
+
+| Test | Scenario | Key assertion |
+|---|---|---|
+| `SignRoute_DuplicateIdempotencyKey_ReturnsStoredResult_WithoutCallingFacade` | Dup key (header) | 2nd request replays stored result; `SignCallCount == 1`; `TryGetCallCount == 2` |
+| `SignRoute_MissingIdempotencyKeyHeader_Returns400ValidationFailed` | Missing header | 400 `application/problem+json`; `SignCallCount == 0` |
+| `SignRoute_WhitespaceIdempotencyKey_Returns400ValidationFailed` | Whitespace-only header | 400; `SignCallCount == 0` (Falsey guard) |
+| `SignRoute_StoreReadOutage_FailsOpen_DelegateStillInvoked` | Store read outage | Gate fails-open; 200 OK; `SignCallCount == 1` |
+| `SignRoute_StoredFailure_ReplaysFailureOnSecondCall` | Stored failure | First call stores 503; second call replays 503 without re-invoking façade |
+| `SignDerivedRoute_DuplicateKid_ReturnsStoredResult_WithoutCallingFacade` | Derived dup (same kid) | 2nd request replays; key = `SHA-256(kid)`; `SignDerivedCallCount == 1` |
+| `SignDerivedRoute_DifferentKid_NoCacheHit_FacadeCalledAgain` | Derived different kids | 2 distinct keys; `SignDerivedCallCount == 2` |
+| `SignRoute_ExpiredIdempotencyKey_ReExecutes_AfterTtlElapses` | TTL-expiry (clock-driven) | Before expiry: replay, `SignCallCount == 1`. After `FakeTimeProvider.Advance(86401s)`: expired → miss → `SignCallCount == 2` (deterministic, no `Task.Delay`) |
 
 ---
 
@@ -128,8 +163,11 @@ The TestServer host in `D2.Edge.Tests` stands up the real `JwtAuthMiddleware` pi
 |---|---|---|---|---|
 | `TypeSpecRoute/Generated/SignRouteRegistration.g.cs` (also contains marker records) | `emitRoutePolicy({ opName: "sign", verb: "post", ... })` | Byte-identical to `SIGN_ROUTE_REGISTRATION_FIXTURE` | `tests/route-policy-emitter.test.ts` | `byteParity_SignRouteRegistration_CommittedFixtureIdentical > regenerated SignRouteRegistration.g.cs is byte-identical to the committed fixture` |
 | `TypeSpecRoute/Generated/AllScopesRouteRegistration.g.cs` | `emitRoutePolicy({ opName: "allScopes", verb: "get", ... })` | Byte-identical to `ALL_SCOPES_ROUTE_REGISTRATION_FIXTURE`; verb is GET (emits `[AsParameters]` binding) | `tests/route-policy-emitter.test.ts` | `byteParity_AllScopesRouteRegistration_CommittedFixtureIdentical > regenerated AllScopesRouteRegistration.g.cs is byte-identical to committed fixture` |
+| `TypeSpecRoute/Generated/SignRouteRegistration.g.cs` (header-gated form — `@d2Idempotent("header", 86400)`) | `emitRoutePolicy({ ..., idempotency: { keySource: "header", ttlSeconds: 86400, fields: [] } })` | Byte-identical to `SIGN_ROUTE_REGISTRATION_GATED_FIXTURE` (gate woven in: `D2GeneratedIdempotencyStore store` param, header read, `Falsey()` guard, `TryGetAsync` replay, `StoreAsync` with `TimeSpan.FromSeconds(86400)`) | `tests/idempotency-gate-emitter.test.ts` | `byteParity_SignRouteRegistration_Gated_CommittedFixtureIdentical > regenerated SignRouteRegistration.g.cs (gated) is byte-identical to the committed fixture` |
+| `TypeSpecRoute/Generated/SignDerivedRouteRegistration.g.cs` (derived-gated form — `@d2Idempotent("derived", 3600, "kid")`) | `emitRoutePolicy({ ..., idempotency: { keySource: "derived", ttlSeconds: 3600, fields: ["Kid"] } })` | Byte-identical to `SIGN_DERIVED_ROUTE_REGISTRATION_FIXTURE` (SHA-256 derived key over `input.Kid`, `TimeSpan.FromSeconds(3600)`, no Falsey guard) | `tests/idempotency-gate-emitter.test.ts` | `byteParity_SignDerivedRouteRegistration_CommittedFixtureIdentical > regenerated SignDerivedRouteRegistration.g.cs is byte-identical to the committed fixture` |
+| `TypeSpecRoute/Generated/D2GeneratedIdempotencyStore.g.cs` (emitter-owned seam) | `emitIdempotencyStoreSeam("D2.Edge.Tests.TypeSpecRoute.Generated", "contracts/typespec/fixtures/sign-shaped.tsp")` | Byte-identical to `IDEMPOTENCY_STORE_SEAM_FIXTURE` (public interface with `TryGetAsync<TStored>` + `StoreAsync<TStored>`, XML docs, auto-generated banner) | `tests/idempotency-gate-emitter.test.ts` | `byteParity_IIdempotencyStore_SeamFixtureIdentical > regenerated D2GeneratedIdempotencyStore.g.cs is byte-identical to the committed fixture` |
 
-**Deliberate-drift non-vacuity guards**: each byte-parity describe block contains a second test that mutates the fixture by one token and asserts the regenerated content does NOT match. `SignRouteRegistration`: `.replace("MapPost", "MapGet")`; `AllScopesRouteRegistration`: `.replace("RequireAllScopes", "RequireAnyScope")`.
+**Deliberate-drift non-vacuity guards**: each byte-parity describe block contains a second test that mutates the fixture by one token and asserts the regenerated content does NOT match. `SignRouteRegistration`: `.replace("MapPost", "MapGet")`; `AllScopesRouteRegistration`: `.replace("RequireAllScopes", "RequireAnyScope")`; `SignRouteRegistration` (gated): `.replace("TryGetAsync", "TryGetAsyncDRIFTED")`; `SignDerivedRouteRegistration`: `.replace("SHA256.HashData", "SHA256.HashDataDRIFTED")`; `D2GeneratedIdempotencyStore`: `.replace("TryGetAsync", "TryGetAsyncDRIFTED")`.
 
 ---
 
@@ -155,5 +193,5 @@ Committed C# fixture files exercised by the in-memory gRPC harness in `D2.Edge.T
 | Branches | 100% |
 | Functions | 100% |
 | Statements | 100% |
-| Test files | 24 |
-| Total tests | 402 |
+| Test files | 25 |
+| Total tests | 472 |

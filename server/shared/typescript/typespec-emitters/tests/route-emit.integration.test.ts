@@ -506,3 +506,112 @@ describe("routeEmitIntegration_GrpcRePoint_BothSurfacesDelegateThroughFacade", (
     expect(grpcContent).not.toContain("ISignHandler");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Test 9: @d2Idempotent on an op WITHOUT @route → D2TSP006
+// ---------------------------------------------------------------------------
+
+describe("routeEmitIntegration_IdempotentWithoutRoute_D2TSP006", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [HttpTestLibrary, D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("@d2Idempotent on op with no @route → D2TSP006 error (idempotent-requires-route)", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.Fixtures;
+
+      model IdempInput { kid: string; }
+      model IdempOutput { result: string; }
+
+      @d2Command
+      @d2ServedBy("KeyCustodian")
+      @d2InProcess
+      @d2Idempotent("header", 86400)
+      op idempNoRoute(input: IdempInput): IdempOutput;
+      `,
+    );
+
+    const diagnostics = await host.diagnose("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: { "@d2/typespec-emitters": FIXTURE_OPTIONS },
+      outputDir: "testing:/out",
+    });
+
+    const d2tsp006 = diagnostics.filter(
+      (d) => d.severity === "error" && d.code.includes("idempotent-requires-route"),
+    );
+    expect(d2tsp006.length).toBeGreaterThan(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 10: @d2Idempotent (header) + @route → seam + gated route emitted
+// ---------------------------------------------------------------------------
+
+describe("routeEmitIntegration_Idempotent_Header_GatedRouteEmitted", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [HttpTestLibrary, D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("@d2Idempotent('header', 86400) + @route → route includes store param + gate lines + seam emitted", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      import "@typespec/http";
+      using D2;
+      using Http;
+      namespace D2.Fixtures;
+
+      model SignInput { kid: string; }
+      model SignOutput { signature: string; }
+
+      @d2Command
+      @d2ServedBy("KeyCustodian")
+      @d2InProcess
+      @route("/internal/v1/kc/sign")
+      @post
+      @d2RequireAnyScope("self.write")
+      @d2Idempotent("header", 86400)
+      op sign(input: SignInput): SignOutput;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: { "@d2/typespec-emitters": FIXTURE_OPTIONS },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    expect(errors).toHaveLength(0);
+
+    // Route registration contains the store parameter and gate calls.
+    const routeContent = getEmittedFile(host, "SignRouteRegistration.g.cs");
+    expect(routeContent).toBeDefined();
+    expect(routeContent).toContain("D2GeneratedIdempotencyStore store");
+    expect(routeContent).toContain("Idempotency-Key");
+    expect(routeContent).toContain("TryGetAsync");
+    expect(routeContent).toContain("StoreAsync");
+    expect(routeContent).toContain("ValidationFailed");
+
+    // Idempotency store seam emitted once for this namespace.
+    const seamContent = getEmittedFile(host, "D2GeneratedIdempotencyStore.g.cs");
+    expect(seamContent).toBeDefined();
+    expect(seamContent).toContain("D2GeneratedIdempotencyStore");
+    expect(seamContent).toContain("TryGetAsync");
+    expect(seamContent).toContain("StoreAsync");
+  });
+});

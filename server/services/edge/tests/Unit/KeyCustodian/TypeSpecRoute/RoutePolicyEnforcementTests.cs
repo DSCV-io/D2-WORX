@@ -62,6 +62,7 @@ public sealed class RoutePolicyEnforcementTests
             extraClaims: new Dictionary<string, object> { ["scope"] = "self.write" });
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Idempotency-Key", "policy-test-1");
 
         var response = await client.PostAsJsonAsync(
             "/internal/v1/kc/sign",
@@ -204,6 +205,7 @@ public sealed class RoutePolicyEnforcementTests
             extraClaims: new Dictionary<string, object> { ["scope"] = "self.write" });
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Idempotency-Key", "policy-test-2");
 
         var response = await client.PostAsJsonAsync(
             "/internal/v1/kc/sign",
@@ -254,6 +256,12 @@ public sealed class RoutePolicyEnforcementTests
 
                         // Register the façade fake for DI resolution in the route lambdas.
                         services.AddSingleton<IKeyCustodianSignerFacade>(fake);
+
+                        // The Sign route gate requires D2GeneratedIdempotencyStore in DI;
+                        // policy-enforcement tests supply a no-op store — idempotency semantics
+                        // are tested separately in RouteIdempotencyGateTests.
+                        services.AddSingleton<D2GeneratedIdempotencyStore>(
+                            new FakeIdempotencyStore());
                     })
                     .Configure(app =>
                     {

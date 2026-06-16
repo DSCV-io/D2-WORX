@@ -38,6 +38,7 @@ import {
   D2_HARMLESS_KEY,
   D2_RATE_LIMIT_TIER_KEY,
   D2_CSRF_KEY,
+  D2_IDEMPOTENT_KEY,
 } from "@d2/typespec-decorators";
 
 // ---------------------------------------------------------------------------
@@ -944,5 +945,144 @@ describe("$onEmit_grpcDirect_FixtureFacadeBranch_EmitterLines253To259", () => {
     expect(grpcFile!.content).toContain("D2.Test.Grpc.Facade");
     // Must NOT use the real-module naming.
     expect(grpcFile!.content).not.toContain("IKeyCustodianInternalApi");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test: D2TSP006 — @d2Idempotent on op WITHOUT @route → error diagnostic
+//
+// emitter.ts lines 690-695: when idempotentPayload is present but explicitVerb
+// is undefined (no @route), D2TSP006 (idempotent-requires-route) fires.
+// ---------------------------------------------------------------------------
+
+describe("$onEmit_routeEmitDirect_IdempotentWithoutRoute_D2TSP006", () => {
+  it("@d2Idempotent on op with no verb → D2TSP006 idempotent-requires-route fired", async () => {
+    const str = makeStringScalar();
+    const inputModel = makeModel("IdempNoRouteInput", { kid: str });
+    const outputModel = makeModel("IdempNoRouteOutput", { result: str });
+    const op = makeWrappedOp("idempNoRoute", inputModel, outputModel);
+
+    // No mockVerbMap entry for this op → getOperationVerb returns undefined (no @route).
+    // idempotentPayload IS set → should trigger D2TSP006 and return.
+    const idempotentMap = new Map<object, unknown>([
+      [op, { keySource: "header", ttlSeconds: 86400, fields: [] }],
+    ]);
+
+    directUnitOps.push(op);
+
+    const reportedCodes: string[] = [];
+    const libModule = await import("../src/lib.js");
+    vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
+      (_prog, diag: { code: string }) => { reportedCodes.push(diag.code); },
+    );
+
+    const program = makeMockProgram((key: symbol) => {
+      if (key === D2_IDEMPOTENT_KEY) return idempotentMap;
+      return new Map();
+    });
+
+    const ctx = makeBaseContext(program, FIXTURE_OPTS);
+    await $onEmit(ctx);
+
+    // D2TSP006 must have fired.
+    expect(reportedCodes).toContain("idempotent-requires-route");
+    // No route file emitted (early return after D2TSP006).
+    expect(directUnitEmitted.filter((e) => e.path.includes("RouteRegistration.g.cs"))).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test: @d2Idempotent (header) on op WITH @route → gate config built + seam emitted
+//
+// emitter.ts lines 825-836: when idempotentPayload !== undefined AND explicitVerb
+// is defined, the idempotency config is built, namespace tracked, and
+// D2GeneratedIdempotencyStore.g.cs is emitted once for the namespace.
+// ---------------------------------------------------------------------------
+
+describe("$onEmit_routeEmitDirect_IdempotentWithRoute_SeamAndGate", () => {
+  it("@d2Idempotent('header', 86400) + @post route → idempotency config built + seam emitted", async () => {
+    const str = makeStringScalar();
+    const inputModel = makeModel("IdempSignInput", { kid: str });
+    const outputModel = makeModel("IdempSignOutput", { signature: str });
+    const op = makeWrappedOp("idempSign", inputModel, outputModel);
+
+    mockVerbMap.set(op, "post");
+    mockHttpOpResult = [{ path: "/internal/v1/kc/sign" }, []];
+
+    const anyScopes = new Map<object, unknown>([[op, ["self.write"]]]);
+    const servedBy = new Map<object, unknown>([[op, "KeyCustodian"]]);
+    const inProcess = new Map<object, unknown>([[op, true]]);
+    const idempotentMap = new Map<object, unknown>([
+      [op, { keySource: "header", ttlSeconds: 86400, fields: [] }],
+    ]);
+
+    directUnitOps.push(op);
+
+    const program = makeMockProgram((key: symbol) => {
+      if (key === D2_REQUIRE_ANY_SCOPE_KEY) return anyScopes;
+      if (key === D2_SERVED_BY_KEY) return servedBy;
+      if (key === D2_IN_PROCESS_KEY) return inProcess;
+      if (key === D2_IDEMPOTENT_KEY) return idempotentMap;
+      return new Map();
+    });
+
+    const ctx = makeBaseContext(program, FIXTURE_OPTS);
+    await $onEmit(ctx);
+
+    // Route registration contains the idempotency gate.
+    const routeFile = directUnitEmitted.find((e) => e.path.includes("IdempSignRouteRegistration.g.cs"));
+    expect(routeFile).toBeDefined();
+    expect(routeFile!.content).toContain("D2GeneratedIdempotencyStore store");
+    expect(routeFile!.content).toContain("TryGetAsync");
+    expect(routeFile!.content).toContain("StoreAsync");
+    expect(routeFile!.content).toContain("Idempotency-Key");
+
+    // Seam file emitted for the namespace.
+    const seamFile = directUnitEmitted.find((e) => e.path.includes("D2GeneratedIdempotencyStore.g.cs"));
+    expect(seamFile).toBeDefined();
+    expect(seamFile!.content).toContain("D2GeneratedIdempotencyStore");
+    expect(seamFile!.content).toContain("TryGetAsync");
+    expect(seamFile!.content).toContain("StoreAsync");
+  });
+
+  it("@d2Idempotent('derived', 3600, 'kid') + @post route → Pascal field mapping + derived key gate", async () => {
+    const str = makeStringScalar();
+    const inputModel = makeModel("IdempDerivedInput", { kid: str });
+    const outputModel = makeModel("IdempDerivedOutput", { signature: str });
+    const op = makeWrappedOp("idempDerived", inputModel, outputModel);
+
+    mockVerbMap.set(op, "post");
+    mockHttpOpResult = [{ path: "/internal/v1/kc/sign-derived" }, []];
+
+    const anyScopes = new Map<object, unknown>([[op, ["self.write"]]]);
+    const servedBy = new Map<object, unknown>([[op, "KeyCustodian"]]);
+    const inProcess = new Map<object, unknown>([[op, true]]);
+    const idempotentMap = new Map<object, unknown>([
+      [op, { keySource: "derived", ttlSeconds: 3600, fields: ["kid"] }],
+    ]);
+
+    directUnitOps.push(op);
+
+    const program = makeMockProgram((key: symbol) => {
+      if (key === D2_REQUIRE_ANY_SCOPE_KEY) return anyScopes;
+      if (key === D2_SERVED_BY_KEY) return servedBy;
+      if (key === D2_IN_PROCESS_KEY) return inProcess;
+      if (key === D2_IDEMPOTENT_KEY) return idempotentMap;
+      return new Map();
+    });
+
+    const ctx = makeBaseContext(program, FIXTURE_OPTS);
+    await $onEmit(ctx);
+
+    // Route contains SHA256 derived key logic and PascalCase 'Kid' field access.
+    const routeFile = directUnitEmitted.find((e) => e.path.includes("IdempDerivedRouteRegistration.g.cs"));
+    expect(routeFile).toBeDefined();
+    expect(routeFile!.content).toContain("SHA256");
+    expect(routeFile!.content).toContain("Kid");
+    expect(routeFile!.content).toContain("StoreAsync");
+
+    // Seam emitted.
+    const seamFile = directUnitEmitted.find((e) => e.path.includes("D2GeneratedIdempotencyStore.g.cs"));
+    expect(seamFile).toBeDefined();
   });
 });

@@ -29,6 +29,7 @@
 
 import { buildBanner } from "./banner.js";
 import type { EmittedFile } from "./csharp-dto-emitter.js";
+import { buildIdempotencyGate } from "./idempotency-gate-emitter.js";
 import { toPascal } from "./name-transforms.js";
 
 // ---------------------------------------------------------------------------
@@ -79,6 +80,20 @@ export interface RoutePolicyEmitInput {
   readonly rateTier?: string | undefined;
   /** Optional CSRF posture string (e.g. "exempt") — faithful seam only. */
   readonly csrf?: string | undefined;
+  /**
+   * Optional idempotency gate configuration. When present, the emitter weaves
+   * a dedupe gate into the route delegate: key resolution (header or derived),
+   * a replay-check before the delegation call, and a store-outcome call after.
+   * When absent, the emitted route is byte-identical to a non-gated route.
+   *
+   * `fields` must be PascalCase C# property names (camel→Pascal mapping is
+   * the caller's responsibility before passing here).
+   */
+  readonly idempotency?: {
+    readonly keySource: "header" | "derived";
+    readonly ttlSeconds: number;
+    readonly fields: readonly string[];
+  } | undefined;
   /** Target C# namespace for the generated file. */
   readonly registrationNamespace: string;
   /** Relative spec path for the banner. */
@@ -111,6 +126,18 @@ export function emitRoutePolicy(input: RoutePolicyEmitInput): EmittedFile {
   const mapMethod = verbToMapMethod(input.verb);
   const banner = buildBanner(input.sourceSpec);
 
+  // Build the idempotency gate weave (if configured).
+  const gate = input.idempotency !== undefined
+    ? buildIdempotencyGate({
+        keySource: input.idempotency.keySource,
+        ttlSeconds: input.idempotency.ttlSeconds,
+        fields: input.idempotency.fields,
+        inputTypeName: input.inputTypeName,
+        outputTypeName: input.outputTypeName,
+        pascalOpName: pascalOp,
+      })
+    : undefined;
+
   const lines: string[] = [];
 
   lines.push(banner + "#nullable enable");
@@ -118,12 +145,14 @@ export function emitRoutePolicy(input: RoutePolicyEmitInput): EmittedFile {
   lines.push(`namespace ${input.registrationNamespace};`);
   lines.push("");
 
-  // Sorted using directives (SA1210).
+  // Sorted using directives (SA1210) — merge extra usings from the gate.
+  const extraUsings = gate?.extraUsings ?? [];
   const usings = buildUsings(
     input.registrationNamespace,
     input.delegationTargetNamespace,
     input.dtoNamespace,
     input.delegationTarget.kind,
+    extraUsings,
   );
   for (const u of usings)
     lines.push(`using ${u};`);
@@ -165,11 +194,34 @@ export function emitRoutePolicy(input: RoutePolicyEmitInput): EmittedFile {
     ? `[AsParameters] ${input.inputTypeName} input`
     : `${input.inputTypeName} input`;
 
+  // When the gate is present, inject the store parameter into the delegate signature.
+  const storeParam = gate !== undefined ? `, ${gate.storeParam}` : "";
+
   lines.push(`            var builder = endpoints.${mapMethod}(`);
   lines.push(`                "${input.routePath}",`);
-  lines.push(`                static async (${inputParam}, ${targetParam}, HttpContext http, CancellationToken ct) =>`);
+  lines.push(`                static async (${inputParam}, ${targetParam}${storeParam}, HttpContext http, CancellationToken ct) =>`);
   lines.push("                {");
+
+  // Pre-delegate gate lines (key resolution + replay check). Placed at the TOP
+  // of the delegate body, before the façade/handler call (§9.4 — validate / check
+  // before delegating; the gate is a mandatory pre-condition).
+  if (gate !== undefined) {
+    for (const l of gate.preDelegateLines)
+      lines.push(l);
+    lines.push("");
+  }
+
   lines.push(`                    var result = await ${callTarget}.${input.delegationTarget.methodName}(input, ct).ConfigureAwait(false);`);
+
+  // Post-delegate gate lines (store the outcome with TTL). Placed AFTER the
+  // delegation call and BEFORE the MAP-ii success check so the stored result
+  // mirrors the final outcome (success or failure).
+  if (gate !== undefined) {
+    for (const l of gate.postDelegateLines)
+      lines.push(l);
+    lines.push("");
+  }
+
   lines.push("                    if (result.Success)");
   lines.push("                        return Results.Ok(result.Data);");
   lines.push("                    var pd = result.ToProblemDetails(http);");
@@ -265,12 +317,14 @@ export function verbToMapMethod(verb: HttpVerb): string {
  * The usings always include the D2 auth http + result namespaces and the
  * ASP.NET Core routing/http namespaces. The delegation target namespace and
  * DTO namespace are added only when they differ from the registration namespace.
+ * Extra usings (e.g. from the idempotency gate) are merged and de-duplicated.
  */
 function buildUsings(
   registrationNamespace: string,
   delegationTargetNamespace: string,
   dtoNamespace: string,
   delegationKind: "facade" | "handler",
+  extraUsings: readonly string[] = [],
 ): readonly string[] {
   void delegationKind; // kind drives which namespace we add — both go in usings
   const set = new Set<string>([
@@ -280,6 +334,7 @@ function buildUsings(
     "Microsoft.AspNetCore.Builder",
     "Microsoft.AspNetCore.Http",
     "Microsoft.AspNetCore.Routing",
+    ...extraUsings,
   ]);
 
   if (delegationTargetNamespace !== registrationNamespace)

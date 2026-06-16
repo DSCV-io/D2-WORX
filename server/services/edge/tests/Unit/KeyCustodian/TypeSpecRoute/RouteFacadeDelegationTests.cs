@@ -63,6 +63,7 @@ public sealed class RouteFacadeDelegationTests
             extraClaims: new Dictionary<string, object> { ["scope"] = _SIGN_SCOPE });
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Idempotency-Key", "delegation-test-1");
 
         var response = await client.PostAsJsonAsync(
             "/internal/v1/kc/sign",
@@ -90,6 +91,7 @@ public sealed class RouteFacadeDelegationTests
             extraClaims: new Dictionary<string, object> { ["scope"] = _SIGN_SCOPE });
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Idempotency-Key", "delegation-test-2");
 
         await client.PostAsJsonAsync(
             "/internal/v1/kc/sign",
@@ -115,6 +117,7 @@ public sealed class RouteFacadeDelegationTests
             extraClaims: new Dictionary<string, object> { ["scope"] = _SIGN_SCOPE });
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Idempotency-Key", "delegation-test-3");
 
         var response = await client.PostAsJsonAsync(
             "/internal/v1/kc/sign",
@@ -137,6 +140,7 @@ public sealed class RouteFacadeDelegationTests
             extraClaims: new Dictionary<string, object> { ["scope"] = _SIGN_SCOPE });
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Idempotency-Key", "delegation-test-4");
 
         var response = await client.PostAsJsonAsync(
             "/internal/v1/kc/sign",
@@ -163,6 +167,7 @@ public sealed class RouteFacadeDelegationTests
             extraClaims: new Dictionary<string, object> { ["scope"] = _SIGN_SCOPE });
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Idempotency-Key", "delegation-test-5");
 
         var response = await client.PostAsJsonAsync(
             "/internal/v1/kc/sign",
@@ -208,6 +213,12 @@ public sealed class RouteFacadeDelegationTests
                             new FakeSessionLivenessTracker());
 
                         services.AddSingleton<IKeyCustodianSignerFacade>(fake);
+
+                        // The Sign route gate requires D2GeneratedIdempotencyStore in DI;
+                        // delegation tests supply a no-op store — idempotency semantics
+                        // are tested separately in RouteIdempotencyGateTests.
+                        services.AddSingleton<D2GeneratedIdempotencyStore>(
+                            new FakeIdempotencyStore());
                     })
                     .Configure(app =>
                     {
