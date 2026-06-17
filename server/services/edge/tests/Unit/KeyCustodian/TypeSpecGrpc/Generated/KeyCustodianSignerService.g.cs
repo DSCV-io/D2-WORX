@@ -13,6 +13,7 @@ using SignRequest = global::D2.Services.Protos.KeyCustodian.V1.SignRequest;
 using SignResponse = global::D2.Services.Protos.KeyCustodian.V1.SignResponse;
 using SignInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignInput;
 using SignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;
+using D2.Shared.Result.Grpc;
 using Grpc.Core;
 using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;
 
@@ -25,8 +26,6 @@ public sealed class KeyCustodianSignerService(IKeyCustodianSignerFacade facade)
     {
         SignInput input = request.ToSignInput();
         var result = await facade.SignAsync(input, context.CancellationToken).ConfigureAwait(false);
-        if (!result.IsOk)
-            throw new RpcException(new Status(StatusCode.Internal, string.Empty));
-        return result.Data!.ToProtoSignOutput();
+        return result.ToProtoResponse();
     }
 }

@@ -7,37 +7,40 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian.TypeSpecGrpc;
 
 using System.Threading.Tasks;
-using D2.Edge.Tests.TypeSpecDto.Generated;
 using D2.Edge.Tests.TypeSpecGrpc.Generated;
 using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;
 using D2.Edge.Tests.Unit.KeyCustodian.TypeSpecRoute.Fixtures;
+using D2.Services.Protos.Common.V1;
 using D2.Services.Protos.KeyCustodian.V1;
 using D2.Shared.Result;
-using global::Grpc.Core;
-using global::Grpc.Net.Client;
 using Google.Protobuf;
+using Grpc.Core;
+using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using DtoSignOutput = D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;
 
 /// <summary>
 /// In-memory gRPC harness tests for the TypeSpec-emitted
 /// <c>KeyCustodianSignerService</c> + <c>SignTransportMappers</c> pair.
 /// Hosts the generated service via <see cref="TestServer"/> and dials it
 /// via an in-process <see cref="GrpcChannel"/> — no network sockets.
-/// The service now delegates through <see cref="IKeyCustodianSignerFacade"/>
-/// (the fixture façade) rather than directly to <c>ISignHandler</c>.
+/// The service delegates through <see cref="IKeyCustodianSignerFacade"/>
+/// (the fixture façade). The response carries the <see cref="D2ResultProto"/>
+/// envelope (field 1) + typed <c>SignOutput</c> data (field 2); gRPC status
+/// stays <see cref="StatusCode.OK"/> for all business results.
 /// </summary>
 public sealed class GrpcServiceImplTests
 {
     // ---------------------------------------------------------------------------
-    // Success path
+    // Success path — data + envelope round-trip
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task Sign_Success_ReturnsSignatureFromFacade()
+    public async Task Sign_Success_ReturnsEnvelopeWithSuccessAndData()
     {
         // Arrange: a fake façade that echoes a fixed signature.
         const string kid = "key-001";
@@ -45,7 +48,7 @@ public sealed class GrpcServiceImplTests
         const string expectedSig = "sig-base64==";
 
         var fakeFacade = new FakeKeyCustodianSignerFacade(
-            D2Result<SignOutput?>.Ok(new SignOutput(expectedSig)));
+            D2Result<DtoSignOutput?>.Ok(new DtoSignOutput(expectedSig)));
 
         using var host = await BuildHost(fakeFacade);
         using var channel = CreateChannel(host);
@@ -58,40 +61,96 @@ public sealed class GrpcServiceImplTests
             Payload = ByteString.CopyFrom(payload),
         });
 
-        // Assert: the generated service mapped proto→dto, called the façade,
-        // and mapped dto→proto correctly. The façade records LastSignInput.
-        reply.Signature.Should().Be(expectedSig);
+        // Assert: the envelope carries success + the data payload.
+        reply.Result.Success.Should().BeTrue();
+        reply.Result.StatusCode.Should().Be(200);
+        reply.Data.Signature.Should().Be(expectedSig);
         fakeFacade.SignCallCount.Should().Be(1);
         fakeFacade.LastSignInput!.Kid.Should().Be(kid);
         fakeFacade.LastSignInput.Payload.Should().Equal(payload);
     }
 
     // ---------------------------------------------------------------------------
-    // Failure path — D2Result failure → RpcException(Internal)
+    // Fidelity — ValidationFailed rides the envelope (NOT Internal / swallowed)
     // ---------------------------------------------------------------------------
 
     [Fact]
-    public async Task Sign_FacadeFailure_ThrowsRpcExceptionInternal()
+    public async Task Sign_FacadeFailure_ValidationFailed_ReturnsEnvelopeWithRealCode()
     {
-        // Arrange: façade returns a failure result.
-        var fakeFacade = new FakeKeyCustodianSignerFacade(D2Result<SignOutput?>.ServiceUnavailable());
+        // Arrange: façade returns a ValidationFailed result.
+        var fakeFacade = new FakeKeyCustodianSignerFacade(D2Result<DtoSignOutput?>.ValidationFailed());
 
         using var host = await BuildHost(fakeFacade);
         using var channel = CreateChannel(host);
         var client = new KeyCustodianSigner.KeyCustodianSignerClient(channel);
 
-        // Act + Assert: the generated service throws RpcException(Internal) on failure.
-        Func<Task> act = () => client.SignAsync(new SignRequest
+        // Act: the gRPC call SUCCEEDS at the transport layer (StatusCode.OK).
+        // The business failure rides the D2ResultProto envelope — never throws.
+        var reply = await client.SignAsync(new SignRequest
         {
             Kid = "k",
             Payload = ByteString.CopyFrom(0xDE, 0xAD),
-        }).ResponseAsync;
+        });
 
-        var ex = await act.Should().ThrowAsync<RpcException>();
-        ex.Which.Status.StatusCode.Should().Be(StatusCode.Internal);
+        // Assert: the envelope carries the real ValidationFailed code (400),
+        // NOT a generic Internal / ServiceUnavailable — proving fidelity.
+        reply.Result.Success.Should().BeFalse();
+        reply.Result.StatusCode.Should().Be(400);
 
-        // Confirm no info-leak: detail string must be empty.
-        ex.Which.Status.Detail.Should().Be(string.Empty);
+        // Data is absent on failure: proto3 sub-message fields are null when not set by the sender.
+        reply.Data.Should().BeNull();
+    }
+
+    // ---------------------------------------------------------------------------
+    // Fidelity — NotFound rides the envelope with the real 404 code
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Sign_FacadeFailure_NotFound_ReturnsEnvelopeWithRealCode()
+    {
+        // Arrange: façade returns NotFound.
+        var fakeFacade = new FakeKeyCustodianSignerFacade(D2Result<DtoSignOutput?>.NotFound());
+
+        using var host = await BuildHost(fakeFacade);
+        using var channel = CreateChannel(host);
+        var client = new KeyCustodianSigner.KeyCustodianSignerClient(channel);
+
+        // Act: transport-layer call succeeds (StatusCode.OK).
+        var reply = await client.SignAsync(new SignRequest
+        {
+            Kid = "k",
+            Payload = ByteString.CopyFrom(0x01),
+        });
+
+        // Assert: the real 404 code survives over gRPC in the envelope.
+        reply.Result.Success.Should().BeFalse();
+        reply.Result.StatusCode.Should().Be(404);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Fidelity — ServiceUnavailable rides the envelope (was the old throw target)
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Sign_FacadeFailure_ServiceUnavailable_ReturnsEnvelopeWithRealCode()
+    {
+        // Arrange: façade returns ServiceUnavailable.
+        var fakeFacade = new FakeKeyCustodianSignerFacade(D2Result<DtoSignOutput?>.ServiceUnavailable());
+
+        using var host = await BuildHost(fakeFacade);
+        using var channel = CreateChannel(host);
+        var client = new KeyCustodianSigner.KeyCustodianSignerClient(channel);
+
+        // Act: transport-layer call SUCCEEDS (StatusCode.OK) — no throw.
+        var reply = await client.SignAsync(new SignRequest
+        {
+            Kid = "k",
+            Payload = ByteString.CopyFrom(0xDE, 0xAD),
+        });
+
+        // Assert: the real 503 code rides the envelope, not a thrown RpcException.
+        reply.Result.Success.Should().BeFalse();
+        reply.Result.StatusCode.Should().Be(503);
     }
 
     // ---------------------------------------------------------------------------
@@ -103,7 +162,7 @@ public sealed class GrpcServiceImplTests
     {
         // Arrange: the facade records call count so we can assert delegation.
         var fakeFacade = new FakeKeyCustodianSignerFacade(
-            D2Result<SignOutput?>.Ok(new SignOutput("proof-sig")));
+            D2Result<DtoSignOutput?>.Ok(new DtoSignOutput("proof-sig")));
 
         using var host = await BuildHost(fakeFacade);
         using var channel = CreateChannel(host);

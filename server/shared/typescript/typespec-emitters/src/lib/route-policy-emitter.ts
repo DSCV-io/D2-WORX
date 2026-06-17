@@ -7,7 +7,8 @@
 //      IEndpointRouteBuilder that maps one HTTP verb+path, attaches scope /
 //      harmless enforcement via the real D2 auth mechanism, adds faithful
 //      metadata markers for rate-tier / CSRF, and maps D2Result → IResult
-//      via the real ToProblemDetails (failure-only, success-first).
+//      via MAP-ii: 2xx-status-mapped success branch (status < 400) then
+//      ToProblemDetails (failure-only extension) for ≥400 statuses.
 //   2. D2GeneratedRoutePolicyMarkers.g.cs — small emitter-owned marker records
 //      (D2GeneratedRateLimitTier + D2GeneratedCsrfPosture) emitted once per
 //      registration namespace for use by future Edge middleware.
@@ -21,8 +22,12 @@
 //   - Scope/harmless enforcement uses the REAL D2 auth fluents:
 //       RequireAnyScope / RequireAllScopes / MarkAsD2HarmlessEndpoint.
 //     No per-route audience fluent (§9.2 — audience is service-level).
-//   - D2Result → IResult via MAP-ii: success-first short-circuit, then
-//     ToProblemDetails (failure-only extension) serialized verbatim.
+//   - D2Result → IResult via MAP-ii: status is authoritative — success branch
+//     keys on `(int)result.StatusCode < 400`, NOT on `result.Success`, so
+//     Created (201) / SomeFound (206) / PartialSuccess (207) carry their real
+//     HTTP status codes. Failures (≥400) go to ToProblemDetails (failure-only
+//     extension) serialized verbatim. Results.Json is used for both branches so
+//     the emitted status is always the real one from the D2Result.
 //   - Rate-tier / CSRF: faithful metadata markers (no enforcement — unbuilt
 //     consumer is future Edge middleware; ledgered in VALIDATION.md).
 //   - No phase/step/deliverable/audit-round identifiers in emitted code or source.
@@ -222,8 +227,9 @@ export function emitRoutePolicy(input: RoutePolicyEmitInput): EmittedFile {
     lines.push("");
   }
 
-  lines.push("                    if (result.Success)");
-  lines.push("                        return Results.Ok(result.Data);");
+  lines.push("                    var status = (int)result.StatusCode;");
+  lines.push("                    if (status < 400)");
+  lines.push("                        return Results.Json(result.Data, statusCode: status);");
   lines.push("                    var pd = result.ToProblemDetails(http);");
   lines.push("                    return Results.Json(pd, statusCode: pd.Status ?? 500, contentType: \"application/problem+json\");");
   lines.push("                });");

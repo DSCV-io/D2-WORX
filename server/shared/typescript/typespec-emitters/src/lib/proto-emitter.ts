@@ -17,6 +17,12 @@
 //   - Unmapped scalar → D2TSP001 loud failure; returns undefined (no partial file).
 //   - Unknown streaming mode → loud failure (belt-and-suspenders for stale state maps).
 //   - No phase/step/deliverable/audit-round identifiers in emitted content.
+//   - Response message carries the D2ResultProto envelope: field 1 is the result
+//     envelope (d2.common.v1.D2ResultProto), field 2 is the typed output data
+//     (<Op>Output). The import "common/v1/d2_result.proto" is emitted after syntax.
+//   - Request message is UNCHANGED (no envelope on requests).
+//   - The <Op>Output data message is emitted as a distinct message block; its fields
+//     are the response DTO fields. The Response wrapper has only the two envelope fields.
 
 import { buildBanner } from "./banner.js";
 import { toSnake } from "./name-transforms.js";
@@ -49,6 +55,11 @@ export type StreamingMode = "unary" | "serverStream" | "clientStream" | "bidiStr
 /**
  * Emit a proto3 `.proto` file for one gRPC operation. Pure function — no I/O.
  *
+ * The Response message carries the D2ResultProto envelope:
+ *   `{ d2.common.v1.D2ResultProto result = 1; <responseModelName> data = 2; }`
+ * The `<responseModelName>` data message is emitted as a separate message block
+ * with the response DTO fields. The Request message is UNCHANGED.
+ *
  * @param opName            - lowerCamelCase op name (for banner context only).
  * @param grpcService       - gRPC service name from @d2GrpcMethod (e.g. "KeyCustodianSigner").
  * @param grpcMethod        - gRPC method name from @d2GrpcMethod (e.g. "Sign").
@@ -58,8 +69,12 @@ export type StreamingMode = "unary" | "serverStream" | "clientStream" | "bidiStr
  * @param sourceSpec        - Relative spec path for the banner.
  * @param requestModelName  - TypeSpec model name for the request (e.g. "SignInput").
  * @param requestFields     - Resolved field list for the request model.
- * @param responseModelName - TypeSpec model name for the response (e.g. "SignOutput").
- * @param responseFields    - Resolved field list for the response model.
+ * @param responseModelName - TypeSpec model name for the response DTO (e.g. "SignOutput").
+ *                            This name is used for both the Response wrapper message name
+ *                            suffix AND the data message name. The Response wrapper message
+ *                            is always named `<grpcMethod>Response`; the data message is
+ *                            named `responseModelName` (e.g. "SignOutput").
+ * @param responseFields    - Resolved field list for the response DTO (the data message fields).
  * @param nestedMessages    - Distinct nested models from request/response walks.
  * @param onError           - Callback for D2TSP001 (unmapped scalar) / streaming errors.
  * @returns EmittedFile on success, undefined when a scalar is unmapped.
@@ -79,12 +94,12 @@ export function emitProto(
   nestedMessages: readonly NestedModel[],
   onError: (code: "unmapped-scalar" | "invalid-streaming-mode", message: string) => void,
 ): EmittedFile | undefined {
-  // Resolve proto fields for request + response.
+  // Resolve proto fields for request + response data message.
   const reqProtoFields = resolveProtoFields(requestFields, onError);
   if (reqProtoFields === undefined) return undefined;
 
-  const respProtoFields = resolveProtoFields(responseFields, onError);
-  if (respProtoFields === undefined) return undefined;
+  const respDataProtoFields = resolveProtoFields(responseFields, onError);
+  if (respDataProtoFields === undefined) return undefined;
 
   // Resolve nested message proto fields.
   const resolvedNested: Array<{ name: string; fields: readonly ProtoFieldInfo[] }> = [];
@@ -94,8 +109,11 @@ export function emitProto(
     resolvedNested.push({ name: nm.name, fields: nestedFields });
   }
 
+  // The rpc declaration uses <grpcMethod>Response as the response message name.
+  const protoResponseMsgName = `${grpcMethod}Response`;
+
   // Build the rpc declaration based on streaming mode.
-  const rpcLine = buildRpcLine(grpcMethod, streaming, requestModelName, responseModelName, onError);
+  const rpcLine = buildRpcLine(grpcMethod, streaming, requestModelName, protoResponseMsgName, onError);
   if (rpcLine === undefined) return undefined;
 
   // buildBanner returns a string ending with "\n". Use as-is to preserve the
@@ -105,6 +123,10 @@ export function emitProto(
 
   // Prepend banner then the first content line — banner already ends with "\n".
   lines.push(banner + "syntax = \"proto3\";");
+  lines.push("");
+  // Import the common D2ResultProto envelope definition. The import path mirrors
+  // the layout in contracts/protos/ (e.g. jobs.proto imports "common/v1/d2_result.proto").
+  lines.push("import \"common/v1/d2_result.proto\";");
   lines.push("");
   lines.push(`package ${protoPackage};`);
   lines.push("");
@@ -116,13 +138,20 @@ export function emitProto(
   lines.push(`  ${rpcLine}`);
   lines.push("}");
 
-  // Emit request message.
+  // Emit request message (UNCHANGED — no envelope on requests).
   lines.push("");
   lines.push(emitMessage(requestModelName, reqProtoFields));
 
-  // Emit response message.
+  // Emit the Response envelope wrapper. The response carries:
+  //   field 1: d2.common.v1.D2ResultProto result  — the D2Result envelope
+  //   field 2: <responseModelName> data            — the typed output payload
+  // Success AND failure both ride the envelope; gRPC status stays OK for business results.
   lines.push("");
-  lines.push(emitMessage(responseModelName, respProtoFields));
+  lines.push(emitResponseEnvelopeMessage(protoResponseMsgName, responseModelName));
+
+  // Emit the response data message (the DTO fields).
+  lines.push("");
+  lines.push(emitMessage(responseModelName, respDataProtoFields));
 
   // Emit nested messages.
   for (const nm of resolvedNested) {
@@ -253,6 +282,31 @@ function resolveProtoFromScalarCsType(
     `D2TSP001: cannot resolve proto type for C# type '${csType}' on field '${fieldName}' — no mapping in the scalar registry`,
   );
   return undefined;
+}
+
+/**
+ * Emit the D2ResultProto envelope Response message block.
+ *
+ * The shape is always:
+ *   message <protoResponseMsgName> {
+ *     d2.common.v1.D2ResultProto result = 1;
+ *     <dataMessageName> data = 2;
+ *   }
+ *
+ * Field 1 carries the D2Result envelope (success OR failure); field 2 carries
+ * the typed output payload (populated on success; absent/default on failure).
+ * gRPC status stays OK for all business results — transport faults use RpcException.
+ */
+function emitResponseEnvelopeMessage(
+  protoResponseMsgName: string,
+  dataMessageName: string,
+): string {
+  const lines: string[] = [];
+  lines.push(`message ${protoResponseMsgName} {`);
+  lines.push("  d2.common.v1.D2ResultProto result = 1;");
+  lines.push(`  ${dataMessageName} data = 2;`);
+  lines.push("}");
+  return lines.join("\n");
 }
 
 /**

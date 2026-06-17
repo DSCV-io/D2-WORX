@@ -6,8 +6,8 @@
 //
 // Covers: global:: base-class qualification, handler delegation body,
 // proto↔DTO short using-aliases, ByteString/byte[] mapper conversion,
-// file-header conventions, failure-mapping body, and absence of
-// phase/step/audit-round identifiers in emitted content.
+// file-header conventions, D2Result envelope population (no throw),
+// and absence of phase/step/audit-round identifiers in emitted content.
 
 import { describe, it, expect } from "vitest";
 import type { FieldInfo } from "../src/lib/model-walk.js";
@@ -114,24 +114,27 @@ describe("emitGrpcService_TypeAliases_Disambiguate", () => {
   it("emits short using-aliases for proto message and DTO types (distinct names, no prefix required)", () => {
     const [svc] = emitSign();
     // Proto message names (SignRequest/SignResponse) are distinct from DTO names
-    // (SignInput/SignOutput), so no Proto*/Dto* prefixes are needed.
+    // (SignInput/SignOutput), so no Proto*/Dto* prefixes are needed in the SERVICE file.
     expect(svc.content).toContain("using SignRequest = global::D2.Services.Protos.KeyCustodian.V1.SignRequest;");
     expect(svc.content).toContain("using SignResponse = global::D2.Services.Protos.KeyCustodian.V1.SignResponse;");
     expect(svc.content).toContain("using SignInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignInput;");
     expect(svc.content).toContain("using SignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;");
-    // Must NOT emit old Proto*/Dto*-prefixed using-alias declarations.
+    // Service file: no old Proto*/Dto*-prefixed using-alias declarations.
     expect(svc.content).not.toContain("using ProtoSignInput");
     expect(svc.content).not.toContain("using DtoSignInput");
+    // The service file does not reference the proto data message directly (mapper handles it).
     expect(svc.content).not.toContain("using ProtoSignOutput");
     expect(svc.content).not.toContain("using DtoSignOutput");
   });
 
-  it("mapper file also emits the short using-aliases", () => {
+  it("mapper file emits standard using-aliases PLUS a ProtoSignOutput disambiguation alias", () => {
     const [, mapper] = emitSign();
     expect(mapper.content).toContain("using SignRequest = global::D2.Services.Protos.KeyCustodian.V1.SignRequest;");
     expect(mapper.content).toContain("using SignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;");
-    // No Proto*/Dto*-prefixed using-alias declarations in mapper either.
-    expect(mapper.content).not.toContain("using ProtoSignInput");
+    // The proto data message name (<Op>Output) collides with the DTO name (<Op>Output).
+    // The mapper emits a ProtoSignOutput alias to disambiguate.
+    expect(mapper.content).toContain("using ProtoSignOutput = global::D2.Services.Protos.KeyCustodian.V1.SignOutput;");
+    // No DtoSignOutput prefix (the DTO alias keeps the bare SignOutput name).
     expect(mapper.content).not.toContain("using DtoSignOutput");
   });
 });
@@ -144,10 +147,26 @@ describe("emitGrpcService_TransportMapper_ExtensionBlockForm", () => {
   it("emits C# 14 block-form extension members (not this T parameter style)", () => {
     const [, mapper] = emitSign();
     expect(mapper.content).toContain("extension(SignRequest request)");
+    expect(mapper.content).toContain("extension(D2Result<SignOutput?> result)");
     expect(mapper.content).toContain("extension(SignOutput output)");
     // Must NOT use old `this T` form.
     expect(mapper.content).not.toContain("this SignRequest");
     expect(mapper.content).not.toContain("this SignOutput");
+  });
+
+  it("mapper emits D2Result.Grpc + D2.Shared.Result usings for the envelope block", () => {
+    const [, mapper] = emitSign();
+    expect(mapper.content).toContain("using D2.Shared.Result;");
+    expect(mapper.content).toContain("using D2.Shared.Result.Grpc;");
+  });
+
+  it("envelope extension block populates result + conditionally sets data", () => {
+    const [, mapper] = emitSign();
+    expect(mapper.content).toContain("internal SignResponse ToProtoResponse()");
+    expect(mapper.content).toContain("var response = new SignResponse { Result = result.ToProto() };");
+    expect(mapper.content).toContain("if (result.IsOk && result.Data is not null)");
+    expect(mapper.content).toContain("response.Data = result.Data.ToProtoSignOutput();");
+    expect(mapper.content).toContain("return response;");
   });
 
   it("request mapper uses .ToByteArray() for bytes↔byte[] conversion", () => {
@@ -155,13 +174,13 @@ describe("emitGrpcService_TransportMapper_ExtensionBlockForm", () => {
     expect(mapper.content).toContain("request.Payload.ToByteArray()");
   });
 
-  it("response mapper has no bytes conversion (string field only)", () => {
+  it("data-message mapper has no bytes conversion (string field only)", () => {
     const [, mapper] = emitSign();
     expect(mapper.content).toContain("Signature = output.Signature");
     expect(mapper.content).not.toContain("ByteString.CopyFrom(output.Signature)");
   });
 
-  it("response mapper with bytes field uses ByteString.CopyFrom", () => {
+  it("data-message mapper with bytes field uses ByteString.CopyFrom", () => {
     // Build a response that has a bytes field.
     const [, mapper] = emitGrpcService(
       "test", "Svc", "Do", PROTO_NS, IMPL_NS, DTO_NS, SOURCE,
@@ -209,19 +228,22 @@ describe("emitGrpcService_FileHeaderConventions", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Test 7: failure mapping body present
+// Test 7: envelope population — no throw (§0.5 fidelity)
 // ---------------------------------------------------------------------------
 
-describe("emitGrpcService_FailureMapping_RpcExceptionPresent", () => {
-  it("on failure IsSuccess false → throws RpcException with Status.Internal empty detail", () => {
+describe("emitGrpcService_EnvelopePopulation_NoThrow", () => {
+  it("method body ends with result.ToProtoResponse() — no throw, no IsOk branch", () => {
     const [svc] = emitSign();
-    expect(svc.content).toContain("if (!result.IsOk)");
-    expect(svc.content).toContain("throw new RpcException(new Status(StatusCode.Internal, string.Empty));");
+    // The service delegates the entire result (success OR failure) to the envelope mapper.
+    // RpcException is NEVER thrown for business results.
+    expect(svc.content).toContain("return result.ToProtoResponse();");
+    expect(svc.content).not.toContain("throw new RpcException");
+    expect(svc.content).not.toContain("if (!result.IsOk)");
   });
 
-  it("success path maps result.Data! to proto response", () => {
+  it("service emits using D2.Shared.Result.Grpc for the ToProtoResponse extension", () => {
     const [svc] = emitSign();
-    expect(svc.content).toContain("return result.Data!.ToProtoSignOutput();");
+    expect(svc.content).toContain("using D2.Shared.Result.Grpc;");
   });
 });
 
@@ -267,15 +289,19 @@ describe("emitGrpcService_FileNames", () => {
 // ---------------------------------------------------------------------------
 
 describe("emitGrpcService_EmptyRequest_ParameterlessConstructor", () => {
-  it("request with no fields → new DtoReq() call in mapper", () => {
+  it("request with no fields → new DtoReq() in request mapper; empty data-msg → new ProtoEmptyOut()", () => {
     const [, mapper] = emitGrpcService(
       "op", "Svc", "Do", PROTO_NS, IMPL_NS, DTO_NS, SOURCE,
       "DoRequest", "DoResponse",
       "EmptyIn", [],
       "EmptyOut", [],
     );
+    // Empty request → parameterless constructor.
     expect(mapper.content).toContain("return new EmptyIn();");
-    expect(mapper.content).toContain("return new DoResponse();");
+    // Empty data message → parameterless constructor for the proto alias type.
+    expect(mapper.content).toContain("return new ProtoEmptyOut();");
+    // The envelope Response is NOT hand-constructed here — it goes via ToProtoResponse().
+    expect(mapper.content).not.toContain("return new DoResponse();");
   });
 });
 
@@ -332,24 +358,23 @@ describe("emitGrpcService_FacadeDelegation_RePointedService", () => {
     expect(svc.content).toContain('delegating to <see cref="IKeyCustodianSignerFacade"/>');
   });
 
-  it("failure-mapping is unchanged (RpcException Internal, empty detail)", () => {
+  it("envelope population is unchanged (result.ToProtoResponse(), no throw)", () => {
     const [svc] = emitSignWithFacade();
-    expect(svc.content).toContain("if (!result.IsOk)");
-    expect(svc.content).toContain("throw new RpcException(new Status(StatusCode.Internal, string.Empty));");
+    // Same envelope pattern regardless of delegation target.
+    expect(svc.content).toContain("return result.ToProtoResponse();");
+    expect(svc.content).not.toContain("throw new RpcException");
+    expect(svc.content).not.toContain("if (!result.IsOk)");
   });
 
-  it("success path maps result.Data! to proto response (unchanged)", () => {
-    const [svc] = emitSignWithFacade();
-    expect(svc.content).toContain("return result.Data!.ToProtoSignOutput();");
-  });
-
-  it("transport mapper is UNCHANGED regardless of delegation target", () => {
+  it("transport mapper emits all three extension blocks regardless of delegation target", () => {
     const [, mapper] = emitSignWithFacade();
     // Mapper uses the same proto↔DTO mapping irrespective of who the service delegates to.
     expect(mapper.content).toContain("extension(SignRequest request)");
+    expect(mapper.content).toContain("extension(D2Result<SignOutput?> result)");
     expect(mapper.content).toContain("extension(SignOutput output)");
     expect(mapper.content).toContain("internal SignInput ToSignInput()");
-    expect(mapper.content).toContain("internal SignResponse ToProtoSignOutput()");
+    expect(mapper.content).toContain("internal SignResponse ToProtoResponse()");
+    expect(mapper.content).toContain("internal ProtoSignOutput ToProtoSignOutput()");
   });
 });
 

@@ -124,6 +124,19 @@ Copyright (c) DCSV. All rights reserved.
       property-reflecting destructuring path.
     -->
     <ProjectReference Include="..\..\..\shared\dotnet\logging\D2.Shared.Logging.csproj" />
+    <!--
+      D2.Shared.Result.Grpc — provides:
+        1. The C# D2ResultProto type (D2.Services.Protos.Common.V1.D2ResultProto),
+           generated from contracts/protos/common/v1/d2_result.proto via Grpc.Tools.
+        2. The D2Result.ToProto() and D2ResultProto.ToD2Result<T>() extension methods
+           used by the generated SignTransportMappers.g.cs (ToProtoResponse).
+      This is the SOLE source of D2ResultProto in this assembly — no second Protobuf
+      include for d2_result.proto is added here (that would double-generate the type
+      and cause CS0433). The fixture proto's import "common/v1/d2_result.proto" is
+      resolved at protoc time via the ProtoRoot search path on the fixture Protobuf
+      item (see ItemGroup below).
+    -->
+    <ProjectReference Include="..\..\..\shared\dotnet\result\grpc\D2.Shared.Result.Grpc.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -175,8 +188,29 @@ Copyright (c) DCSV. All rights reserved.
     the generated Grpc.Net.Client stub. NOT a wire contract — strictly a
     validation harness internal to the test project; lives alongside the
     other TypeSpec fixture files.
+
+    ProtoRoot is set to contracts/protos/ (via D2ContractsRoot) so that the
+    fixture proto's import "common/v1/d2_result.proto" resolves at protoc
+    time via the proto_path search. Grpc.Tools passes ProtoRoot as an
+    additional proto_path entry. The D2ResultProto C# type is NOT re-generated
+    here; it comes solely from the D2.Shared.Result.Grpc ProjectReference
+    above (avoiding CS0433 double-generation). The AdditionalImportDirs attribute
+    adds the fixture directory so its relative includes also resolve.
   -->
   <ItemGroup>
-    <Protobuf Include="Unit/KeyCustodian/TypeSpecGrpc/Protos/key_custodian_signer_sign.g.proto" GrpcServices="Both" />
+    <!--
+      ProtoRoot is the test project directory so the proto file (under Unit/)
+      resides within it. AdditionalImportDirs adds contracts/protos/ to the
+      protoc search path so the fixture's import "common/v1/d2_result.proto"
+      resolves. The C# type D2ResultProto is NOT re-generated here (no second
+      Protobuf include for d2_result.proto); it comes solely from the
+      D2.Shared.Result.Grpc ProjectReference above, avoiding CS0433.
+      GrpcServices="Both" generates both the server base class and client stub
+      so the test can host via MapGrpcService<T>() and dial via the stub.
+    -->
+    <Protobuf Include="$(MSBuildThisFileDirectory)Unit/KeyCustodian/TypeSpecGrpc/Protos/key_custodian_signer_sign.g.proto"
+              GrpcServices="Both"
+              ProtoRoot="$(MSBuildThisFileDirectory)"
+              AdditionalImportDirs="$(D2ContractsRoot)protos" />
   </ItemGroup>
 </Project>

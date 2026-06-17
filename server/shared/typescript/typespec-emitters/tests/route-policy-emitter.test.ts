@@ -6,7 +6,7 @@
 //
 // Coverage: verb→Map* (all 5 verbs), scope policy (any/all/harmless/none),
 // delegation branches (façade and handler), marker records (rate-tier/csrf),
-// MAP-ii success-first shape, §9.2 no per-route audience, banner/conventions,
+// MAP-ii 2xx-status-mapped shape, §9.2 no per-route audience, banner/conventions,
 // D2TSP004/D2TSP005 guards, adversarial inputs.
 
 import { describe, it, expect } from "vitest";
@@ -266,23 +266,25 @@ describe("emitRoutePolicy — §9.2 no per-route audience", () => {
 });
 
 // ---------------------------------------------------------------------------
-// MAP-ii — success-first short-circuit, then ToProblemDetails
+// MAP-ii — 2xx-status-mapped success branch, then ToProblemDetails for ≥400
 // ---------------------------------------------------------------------------
 
 describe("emitRoutePolicy — MAP-ii result mapping", () => {
-  it("success branch: Results.Ok(result.Data) comes BEFORE ToProblemDetails call", () => {
+  it("success branch: Results.Json(result.Data, statusCode: status) comes BEFORE ToProblemDetails call", () => {
     const file = emitRoutePolicy(makeFacadeInput());
-    const successIdx = file.content.indexOf("Results.Ok(result.Data)");
+    const successIdx = file.content.indexOf("Results.Json(result.Data, statusCode: status)");
     const failureIdx = file.content.indexOf("ToProblemDetails");
     expect(successIdx).toBeGreaterThan(-1);
     expect(failureIdx).toBeGreaterThan(-1);
-    // Success must appear before ToProblemDetails (the failure-only guard).
+    // Success branch must appear before ToProblemDetails (the failure-only guard).
     expect(successIdx).toBeLessThan(failureIdx);
   });
 
-  it("success short-circuit uses result.Success check", () => {
+  it("success branch keys on status < 400, not result.Success", () => {
     const file = emitRoutePolicy(makeFacadeInput());
-    expect(file.content).toContain("if (result.Success)");
+    expect(file.content).toContain("var status = (int)result.StatusCode;");
+    expect(file.content).toContain("if (status < 400)");
+    expect(file.content).not.toContain("if (result.Success)");
   });
 
   it("failure branch calls result.ToProblemDetails(http)", () => {
@@ -564,8 +566,9 @@ const SIGN_ROUTE_REGISTRATION_FIXTURE = [
   "                static async (SignInput input, IKeyCustodianSignerFacade facade, HttpContext http, CancellationToken ct) =>",
   "                {",
   "                    var result = await facade.SignAsync(input, ct).ConfigureAwait(false);",
-  "                    if (result.Success)",
-  "                        return Results.Ok(result.Data);",
+  "                    var status = (int)result.StatusCode;",
+  "                    if (status < 400)",
+  "                        return Results.Json(result.Data, statusCode: status);",
   "                    var pd = result.ToProblemDetails(http);",
   '                    return Results.Json(pd, statusCode: pd.Status ?? 500, contentType: "application/problem+json");',
   "                });",
@@ -616,8 +619,9 @@ const ALL_SCOPES_ROUTE_REGISTRATION_FIXTURE = [
   "                static async ([AsParameters] SignInput input, IKeyCustodianSignerFacade facade, HttpContext http, CancellationToken ct) =>",
   "                {",
   "                    var result = await facade.AllScopesAsync(input, ct).ConfigureAwait(false);",
-  "                    if (result.Success)",
-  "                        return Results.Ok(result.Data);",
+  "                    var status = (int)result.StatusCode;",
+  "                    if (status < 400)",
+  "                        return Results.Json(result.Data, statusCode: status);",
   "                    var pd = result.ToProblemDetails(http);",
   '                    return Results.Json(pd, statusCode: pd.Status ?? 500, contentType: "application/problem+json");',
   "                });",

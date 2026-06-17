@@ -115,7 +115,7 @@ function emitSignProto(streaming = "unary", onErr?: OnError) {
     SIGN_SOURCE,
     "SignRequest",
     buildSignInputFields(),
-    "SignResponse",
+    "SignOutput",     // data message name — wrapper is always <grpcMethod>Response
     buildSignOutputFields(),
     [],
     onError,
@@ -135,16 +135,29 @@ describe("emitProto_SignShape_EmitsServiceRpcMessages", () => {
     expect(result!.content).toContain("rpc Sign(SignRequest) returns (SignResponse);");
   });
 
-  it("emits request and response message declarations", () => {
+  it("emits request message, envelope wrapper, and data message declarations", () => {
     const { result } = emitSignProto();
     expect(result!.content).toContain("message SignRequest {");
+    // Envelope wrapper carries D2ResultProto (field 1) + typed data (field 2).
     expect(result!.content).toContain("message SignResponse {");
+    // Separate data message carries the DTO fields.
+    expect(result!.content).toContain("message SignOutput {");
   });
 
-  it("emits correct field types", () => {
+  it("emits the D2ResultProto import after syntax", () => {
     const { result } = emitSignProto();
+    expect(result!.content).toContain("import \"common/v1/d2_result.proto\";");
+  });
+
+  it("emits correct field types: request fields + envelope fields + data message fields", () => {
+    const { result } = emitSignProto();
+    // Request fields.
     expect(result!.content).toContain("string kid = 1;");
     expect(result!.content).toContain("bytes payload = 2;");
+    // Envelope wrapper fields.
+    expect(result!.content).toContain("d2.common.v1.D2ResultProto result = 1;");
+    expect(result!.content).toContain("SignOutput data = 2;");
+    // Data message field (signature lives in SignOutput, not SignResponse).
     expect(result!.content).toContain("string signature = 1;");
   });
 });
@@ -160,34 +173,35 @@ describe("emitProto_StreamingMode_CorrectRpcForm", () => {
     expect(result!.content).not.toContain("stream");
   });
 
-  it("serverStream → rpc M(Req) returns (stream Resp)", () => {
+  it("serverStream → rpc M(Req) returns (stream MethodResponse)", () => {
     const errors: string[] = [];
     const result = emitProto(
       "sign", "Svc", "Method", "serverStream", SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
       "Req", [], "Resp", [], [], (_, m) => errors.push(m),
     );
     expect(result).toBeDefined();
-    expect(result!.content).toContain("rpc Method(Req) returns (stream Resp);");
+    // The response wrapper is always <grpcMethod>Response ("MethodResponse"), not the data model name.
+    expect(result!.content).toContain("rpc Method(Req) returns (stream MethodResponse);");
   });
 
-  it("clientStream → rpc M(stream Req) returns (Resp)", () => {
+  it("clientStream → rpc M(stream Req) returns (MethodResponse)", () => {
     const errors: string[] = [];
     const result = emitProto(
       "sign", "Svc", "Method", "clientStream", SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
       "Req", [], "Resp", [], [], (_, m) => errors.push(m),
     );
     expect(result).toBeDefined();
-    expect(result!.content).toContain("rpc Method(stream Req) returns (Resp);");
+    expect(result!.content).toContain("rpc Method(stream Req) returns (MethodResponse);");
   });
 
-  it("bidiStream → rpc M(stream Req) returns (stream Resp)", () => {
+  it("bidiStream → rpc M(stream Req) returns (stream MethodResponse)", () => {
     const errors: string[] = [];
     const result = emitProto(
       "sign", "Svc", "Method", "bidiStream", SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
       "Req", [], "Resp", [], [], (_, m) => errors.push(m),
     );
     expect(result).toBeDefined();
-    expect(result!.content).toContain("rpc Method(stream Req) returns (stream Resp);");
+    expect(result!.content).toContain("rpc Method(stream Req) returns (stream MethodResponse);");
   });
 });
 
@@ -384,7 +398,7 @@ describe("emitProto_DecimalScalar_MapsToProtoString", () => {
 // ---------------------------------------------------------------------------
 
 describe("emitProto_EmptyMessage_WellFormed", () => {
-  it("op with no input fields → message Name {} (well-formed empty message)", () => {
+  it("op with no input fields → request is well-formed empty; data message is well-formed empty", () => {
     const errors: string[] = [];
     const result = emitProto(
       "test", "Svc", "Do", "unary", SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
@@ -392,7 +406,13 @@ describe("emitProto_EmptyMessage_WellFormed", () => {
     );
     expect(result).toBeDefined();
     expect(errors).toHaveLength(0);
+    // Request message: empty → well-formed `message EmptyIn {}`.
     expect(result!.content).toContain("message EmptyIn {}");
+    // The envelope wrapper is always `message DoResponse { ... }` (not EmptyOut).
+    expect(result!.content).toContain("message DoResponse {");
+    expect(result!.content).toContain("d2.common.v1.D2ResultProto result = 1;");
+    expect(result!.content).toContain("EmptyOut data = 2;");
+    // The data message with no DTO fields emits as a well-formed empty message.
     expect(result!.content).toContain("message EmptyOut {}");
   });
 });

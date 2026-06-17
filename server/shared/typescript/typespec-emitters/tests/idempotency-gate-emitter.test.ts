@@ -197,7 +197,9 @@ describe("buildIdempotencyGate — header keySource", () => {
     const pre = weave.preDelegateLines.join("\n");
     expect(pre).toContain("cachedResult.Success");
     expect(pre).toContain("replayed");
-    expect(pre).toContain("Results.Ok");
+    expect(pre).toContain("replayStatus = (int)replayed.StatusCode");
+    expect(pre).toContain("if (replayStatus < 400)");
+    expect(pre).toContain("Results.Json(replayed.Data, statusCode: replayStatus)");
     expect(pre).toContain("ToProblemDetails");
   });
 
@@ -443,9 +445,10 @@ describe("emitRoutePolicy — header idempotency gate woven in", () => {
       }),
     );
     const storeIdx = file.content.indexOf("store.StoreAsync");
-    const successIdx = file.content.indexOf("result.Success", storeIdx);
-    expect(successIdx).toBeGreaterThan(storeIdx);
-    expect(file.content).toContain("Results.Ok(result.Data)");
+    const statusIdx = file.content.indexOf("var status = (int)result.StatusCode;", storeIdx);
+    expect(statusIdx).toBeGreaterThan(storeIdx);
+    expect(file.content).toContain("if (status < 400)");
+    expect(file.content).toContain("Results.Json(result.Data, statusCode: status)");
     expect(file.content).toContain("ToProblemDetails");
   });
 });
@@ -599,8 +602,9 @@ const SIGN_ROUTE_REGISTRATION_GATED_FIXTURE = [
   "                    if (cachedResult.Success && cachedResult.Data is not null)",
   "                    {",
   "                        var replayed = cachedResult.Data;",
-  "                        if (replayed.Success)",
-  "                            return Results.Ok(replayed.Data);",
+  "                        var replayStatus = (int)replayed.StatusCode;",
+  "                        if (replayStatus < 400)",
+  "                            return Results.Json(replayed.Data, statusCode: replayStatus);",
   "                        var rpd = replayed.ToProblemDetails(http);",
   '                        return Results.Json(rpd, statusCode: rpd.Status ?? 500, contentType: "application/problem+json");',
   "                    }",
@@ -608,8 +612,9 @@ const SIGN_ROUTE_REGISTRATION_GATED_FIXTURE = [
   "                    var result = await facade.SignAsync(input, ct).ConfigureAwait(false);",
   "                    await store.StoreAsync<D2Result<SignOutput?>>(idempotencyKey, result, TimeSpan.FromSeconds(86400), ct).ConfigureAwait(false);",
   "",
-  "                    if (result.Success)",
-  "                        return Results.Ok(result.Data);",
+  "                    var status = (int)result.StatusCode;",
+  "                    if (status < 400)",
+  "                        return Results.Json(result.Data, statusCode: status);",
   "                    var pd = result.ToProblemDetails(http);",
   '                    return Results.Json(pd, statusCode: pd.Status ?? 500, contentType: "application/problem+json");',
   "                });",
@@ -720,8 +725,9 @@ const SIGN_DERIVED_ROUTE_REGISTRATION_FIXTURE = [
   "                    if (cachedResult.Success && cachedResult.Data is not null)",
   "                    {",
   "                        var replayed = cachedResult.Data;",
-  "                        if (replayed.Success)",
-  "                            return Results.Ok(replayed.Data);",
+  "                        var replayStatus = (int)replayed.StatusCode;",
+  "                        if (replayStatus < 400)",
+  "                            return Results.Json(replayed.Data, statusCode: replayStatus);",
   "                        var rpd = replayed.ToProblemDetails(http);",
   '                        return Results.Json(rpd, statusCode: rpd.Status ?? 500, contentType: "application/problem+json");',
   "                    }",
@@ -729,8 +735,9 @@ const SIGN_DERIVED_ROUTE_REGISTRATION_FIXTURE = [
   "                    var result = await facade.SignDerivedAsync(input, ct).ConfigureAwait(false);",
   "                    await store.StoreAsync<D2Result<SignOutput?>>(idempotencyKey, result, TimeSpan.FromSeconds(3600), ct).ConfigureAwait(false);",
   "",
-  "                    if (result.Success)",
-  "                        return Results.Ok(result.Data);",
+  "                    var status = (int)result.StatusCode;",
+  "                    if (status < 400)",
+  "                        return Results.Json(result.Data, statusCode: status);",
   "                    var pd = result.ToProblemDetails(http);",
   '                    return Results.Json(pd, statusCode: pd.Status ?? 500, contentType: "application/problem+json");',
   "                });",

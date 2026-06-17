@@ -225,8 +225,9 @@ export function buildIdempotencyGate(input: IdempotencyGateInput): IdempotencyGa
   preDelegateLines.push(`${ind}if (cachedResult.Success && cachedResult.Data is not null)`);
   preDelegateLines.push(`${ind}{`);
   preDelegateLines.push(`${ind}    var replayed = cachedResult.Data;`);
-  preDelegateLines.push(`${ind}    if (replayed.Success)`);
-  preDelegateLines.push(`${ind}        return Results.Ok(replayed.Data);`);
+  preDelegateLines.push(`${ind}    var replayStatus = (int)replayed.StatusCode;`);
+  preDelegateLines.push(`${ind}    if (replayStatus < 400)`);
+  preDelegateLines.push(`${ind}        return Results.Json(replayed.Data, statusCode: replayStatus);`);
   preDelegateLines.push(`${ind}    var rpd = replayed.ToProblemDetails(http);`);
   preDelegateLines.push(`${ind}    return Results.Json(rpd, statusCode: rpd.Status ?? 500, contentType: "application/problem+json");`);
   preDelegateLines.push(`${ind}}`);

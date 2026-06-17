@@ -11,8 +11,11 @@ namespace D2.Edge.Tests.TypeSpecGrpc.Generated;
 
 using SignRequest = global::D2.Services.Protos.KeyCustodian.V1.SignRequest;
 using SignResponse = global::D2.Services.Protos.KeyCustodian.V1.SignResponse;
+using ProtoSignOutput = global::D2.Services.Protos.KeyCustodian.V1.SignOutput;
 using SignInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignInput;
 using SignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;
+using D2.Shared.Result;
+using D2.Shared.Result.Grpc;
 using Google.Protobuf;
 
 /// <summary>Generated transport mappers: proto ↔ DTO for the <c>Sign</c> operation.</summary>
@@ -26,11 +29,22 @@ internal static class SignTransportMappers
         }
     }
 
+    extension(D2Result<SignOutput?> result)
+    {
+        internal SignResponse ToProtoResponse()
+        {
+            var response = new SignResponse { Result = result.ToProto() };
+            if (result.IsOk && result.Data is not null)
+                response.Data = result.Data.ToProtoSignOutput();
+            return response;
+        }
+    }
+
     extension(SignOutput output)
     {
-        internal SignResponse ToProtoSignOutput()
+        internal ProtoSignOutput ToProtoSignOutput()
         {
-            return new SignResponse
+            return new ProtoSignOutput
             {
                 Signature = output.Signature,
             };

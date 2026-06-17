@@ -29,9 +29,10 @@ using Microsoft.Extensions.Hosting;
 
 /// <summary>
 /// Delegation tests for the TypeSpec-emitted <c>SignRouteRegistration</c>.
-/// Exercises the MAP-ii success-first shape:
-///   - success → <c>Results.Ok(result.Data)</c>
-///   - failure → <c>Results.Json(pd, statusCode, contentType=application/problem+json)</c>
+/// Exercises the MAP-ii 2xx-status-mapped shape:
+///   - success (2xx/3xx status) maps to <c>Results.Json(result.Data, statusCode: status)</c>
+///     — e.g. Ok 200, Created 201, SomeFound 206, preserving the real status code
+///   - failure (status &gt;= 400) maps to <c>Results.Json(pd, statusCode, contentType=application/problem+json)</c>
 ///
 /// Verifies that the route lambda correctly threads the input through to the
 /// façade and returns the right HTTP response shape for both paths.
@@ -100,6 +101,67 @@ public sealed class RouteFacadeDelegationTests
         fake.SignCallCount.Should().Be(1);
         fake.LastSignInput.Should().NotBeNull();
         fake.LastSignInput!.Kid.Should().Be(kid);
+    }
+
+    // ── Status-fidelity paths — MAP-ii emits the real 2xx status code ────
+
+    [Fact]
+    public async Task SignRoute_Created_Returns201WithBody()
+    {
+        // Proves Created (201) survives MAP-ii as HTTP 201 — the old Results.Ok
+        // branch would have returned 200 instead of 201.
+        const string expectedSig = "created-sig==";
+        using var jwt = new TestJwtBuilder();
+        var fake = new FakeKeyCustodianSignerFacade(
+            D2Result<SignOutput?>.Created(new SignOutput(expectedSig)));
+        using var host = await BuildHostAsync(jwt, fake);
+        var client = host.GetTestServer().CreateClient();
+        var token = jwt.MintToken(
+            _ISSUER,
+            _AUDIENCE,
+            extraClaims: new Dictionary<string, object> { ["scope"] = _SIGN_SCOPE });
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Idempotency-Key", "delegation-test-created");
+
+        var response = await client.PostAsJsonAsync(
+            "/internal/v1/kc/sign",
+            new { kid = "key-001", payload = string.Empty });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain(expectedSig);
+    }
+
+    [Fact]
+    public async Task SignRoute_SomeFound_Returns206WithBody()
+    {
+        // Pins the latent bug D3: a SomeFound result has Success==false AND
+        // StatusCode==206. The old if (result.Success) branch would have routed
+        // this to ToProblemDetails, which throws on a 2xx status code. This test
+        // MUST fail without the status-mapped emitter change (status < 400 branch).
+        const string expectedSig = "some-found-sig==";
+        using var jwt = new TestJwtBuilder();
+        var fake = new FakeKeyCustodianSignerFacade(
+            D2Result<SignOutput?>.SomeFound(new SignOutput(expectedSig)));
+        using var host = await BuildHostAsync(jwt, fake);
+        var client = host.GetTestServer().CreateClient();
+        var token = jwt.MintToken(
+            _ISSUER,
+            _AUDIENCE,
+            extraClaims: new Dictionary<string, object> { ["scope"] = _SIGN_SCOPE });
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Idempotency-Key", "delegation-test-somefound");
+
+        var response = await client.PostAsJsonAsync(
+            "/internal/v1/kc/sign",
+            new { kid = "key-001", payload = string.Empty });
+
+        response.StatusCode.Should().Be(HttpStatusCode.PartialContent);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain(expectedSig);
+        response.Content.Headers.ContentType?.MediaType.Should().NotBe("application/problem+json");
     }
 
     // ── Failure path — MAP-ii: failure → problem-details JSON ────────────

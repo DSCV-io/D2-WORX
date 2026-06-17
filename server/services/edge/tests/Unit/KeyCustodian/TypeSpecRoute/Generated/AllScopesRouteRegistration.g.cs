@@ -32,8 +32,9 @@ public static class AllScopesRouteRegistration
                 static async ([AsParameters] SignInput input, IKeyCustodianSignerFacade facade, HttpContext http, CancellationToken ct) =>
                 {
                     var result = await facade.AllScopesAsync(input, ct).ConfigureAwait(false);
-                    if (result.Success)
-                        return Results.Ok(result.Data);
+                    var status = (int)result.StatusCode;
+                    if (status < 400)
+                        return Results.Json(result.Data, statusCode: status);
                     var pd = result.ToProblemDetails(http);
                     return Results.Json(pd, statusCode: pd.Status ?? 500, contentType: "application/problem+json");
                 });

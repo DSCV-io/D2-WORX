@@ -17,7 +17,7 @@ Each row maps a committed fixture to its regeneration guarantee.
 | `clients/GetJwksOutput.g.cs` (ns `D2.Edge.KeyCustodian.Clients`) | `emitCsharpDtos("getJwks", "D2.Edge.KeyCustodian.Clients", ..., [], outputFields, [nested("Jwk", ...)])` | Byte-identical to `GET_JWKS_OUTPUT_FIXTURE` | `tests/byte-parity.test.ts` | `byteParity_GetJwksOutput_CommittedFixtureIdentical` |
 | `SignInput.g.cs` | `emitCsharpDtos("sign", ..., inputFields, [], [])` | Byte-identical to `SIGN_INPUT_FIXTURE` | `tests/byte-parity.test.ts` | `byteParity_SignInput_CommittedFixtureIdentical` |
 | `key_custodian_signer_sign.g.proto` | `emitProto("sign", "KeyCustodianSigner", "Sign", "unary", "d2.keycustodian.v1", "D2.Services.Protos.KeyCustodian.V1", ...)` | Byte-identical to `SIGN_PROTO_FIXTURE` | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_SignProto_CommittedFixtureIdentical` |
-| `KeyCustodianSignerService.g.cs` | `emitGrpcService("sign", "KeyCustodianSigner", "Sign", ..., { kind: "facade", typeName: "IKeyCustodianSignerFacade", methodName: "SignAsync", targetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade" })` | Byte-identical to `SIGN_SERVICE_FIXTURE` (façade delegation — re-pointed from `ISignHandler` per `@d2InProcess`) | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_KeyCustodianSignerService_FacadeDelegation_CommittedFixtureIdentical` |
+| `KeyCustodianSignerService.g.cs` | `emitGrpcService("sign", "KeyCustodianSigner", "Sign", ..., { kind: "facade", typeName: "IKeyCustodianSignerFacade", methodName: "SignAsync", targetNamespace: "D2.Edge.Tests.TypeSpecRoute.Generated.Facade" })` | Byte-identical to `SIGN_SERVICE_FIXTURE` (façade delegation — op carries `@d2InProcess`) | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_KeyCustodianSignerService_FacadeDelegation_CommittedFixtureIdentical` |
 | `SignTransportMappers.g.cs` | `emitGrpcService(...)` (mappers file) | Byte-identical to `SIGN_MAPPER_FIXTURE` | `tests/proto-grpc-byte-parity.test.ts` | `byteParity_SignTransportMappers_CommittedFixtureIdentical` |
 | `clients/IKeyCustodianInternalApi.g.cs` (ns `D2.Edge.KeyCustodian.Clients`) | `emitFacade("KeyCustodian", [{ opName: "getJwks", ... }], "D2.Edge.KeyCustodian.Clients", "D2.Edge.KeyCustodian.App.Application")` (interface file) | Byte-identical to `INTERFACE_FIXTURE` | `tests/facade-emitter.test.ts` | `facadeEmitter_ByteGate_Interface > regenerated IKeyCustodianInternalApi.g.cs is byte-identical to the committed fixture` |
 | `app/Application/KeyCustodianInternalApi.g.cs` (ns `D2.Edge.KeyCustodian.App.Application`) | `emitFacade(...)` (impl file, index 1) | Byte-identical to `IMPL_FIXTURE` | `tests/facade-emitter.test.ts` | `facadeEmitter_ByteGate_Impl > regenerated KeyCustodianInternalApi.g.cs is byte-identical to the committed fixture` |
@@ -101,7 +101,7 @@ The TestServer host in `D2.Edge.Tests` stands up the real `JwtAuthMiddleware` pi
 | `IKeyCustodianSignerFacade` | **Fake** (`FakeKeyCustodianSignerFacade`) | Records call count + last input; returns a configurable `D2Result` |
 | `RequireAnyScope` / `RequireAllScopes` / `MarkAsD2HarmlessEndpoint` | **Real** | From `D2.Shared.Auth.Http.Endpoints` — real metadata attachment; real scope check in middleware |
 | Rate-tier + CSRF markers | **Faithful seam** | `D2GeneratedRateLimitTier` / `D2GeneratedCsrfPosture` — markers are asserted PRESENT on endpoint metadata; no rate-limit or CSRF enforcement (unbuilt Edge middleware; replace-trigger: Edge rate-limit/CSRF middleware landing) |
-| D2Result → ProblemDetails (MAP-ii) | **Real** | `ToProblemDetails(HttpContext)` from `D2.Shared.Auth.Http.ProblemDetails` — preserves `d2_error_code` extension |
+| D2Result → IResult (MAP-ii) | **Real** | Status-authoritative: `(int)result.StatusCode < 400` → `Results.Json(result.Data, statusCode: status)`; ≥400 → `ToProblemDetails(HttpContext)` from `D2.Shared.Auth.Http.ProblemDetails` (preserves `d2_error_code`). Keying on status (not `result.Success`) ensures `SomeFound` (206, `Success==false`) does not throw via the failure-only `ToProblemDetails` |
 
 | Test class | Scenario | Key assertion |
 |---|---|---|
@@ -117,6 +117,8 @@ The TestServer host in `D2.Edge.Tests` stands up the real `JwtAuthMiddleware` pi
 | `RouteFacadeDelegationTests` | Sign route → `ServiceUnavailable` | 503 `application/problem+json` |
 | `RouteFacadeDelegationTests` | Sign route → `NotFound` | 404 `application/problem+json` |
 | `RouteFacadeDelegationTests` | Sign route → `ValidationFailed` | 400 `application/problem+json` |
+| `RouteFacadeDelegationTests` | Sign route → `Created` | 201 with body (status-fidelity: real 2xx, not collapsed to 200) |
+| `RouteFacadeDelegationTests` | Sign route → `SomeFound` | 206 with body; NOT `application/problem+json` (pins D3 latent-bug fix — old branch threw on 206) |
 
 **D2TSP004 / D2TSP005 / D2TSP006 assertion notes**: D2TSP004 and D2TSP005 are tested in `route-policy-emitter.test.ts` via the pure-fn `onError` callback (no TypeSpec host needed) and in `route-emit.integration.test.ts` via `hasError()`. D2TSP006 (`idempotent-requires-route`) is tested directly in `route-emit.direct.test.ts` (`$onEmit_routeEmitDirect_IdempotentWithoutRoute_D2TSP006`) and in `route-emit.integration.test.ts` (`routeEmitIntegration_IdempotentWithoutRoute_D2TSP006`); catalog registration and error severity are asserted in `tests/idempotency-gate-emitter.test.ts` (`D2TSP006_IdempotentRequiresRoute_DirectCatalogTest`). Severity is `"error"` in `src/lib.ts`; the per-code severity is asserted explicitly in `tests/lib.test.ts` (all-catalog guard).
 
@@ -177,9 +179,9 @@ Committed C# fixture files exercised by the in-memory gRPC harness in `D2.Edge.T
 
 | Fixture | Validated by | Key assertion |
 |---|---|---|
-| `key_custodian_signer_sign.g.proto` | `ProtoRoundTripTests` (5 tests) | `SignRequest` / `SignResponse` proto3 messages compile and round-trip via `Grpc.Tools`-generated types |
-| `KeyCustodianSignerService.g.cs` | `GrpcServiceImplTests.Sign_Success_ReturnsSignatureFromFacade` | Proto→DTO mapping, façade delegation (`IKeyCustodianSignerFacade.SignAsync`), and DTO→proto mapping work end-to-end via in-process `TestServer` (re-pointed from `ISignHandler` per the `@d2InProcess` delegation rule) |
-| `KeyCustodianSignerService.g.cs` | `GrpcServiceImplTests.Sign_FacadeFailure_ThrowsRpcExceptionInternal` | `D2Result` failure from the façade maps to `RpcException(StatusCode.Internal)` with empty detail (no info leak) |
+| `key_custodian_signer_sign.g.proto` | `ProtoRoundTripTests` (7 tests) | `SignRequest` / `SignResponse` proto3 messages compile and round-trip via `Grpc.Tools`-generated types; includes `ValidationFailed_D2Result_ToProtoAndBack_PreservesAllFields` and `Ok_D2Result_ToProtoAndBack_PreservesSuccessAndData` envelope-fidelity proofs |
+| `KeyCustodianSignerService.g.cs` | `GrpcServiceImplTests.Sign_Success_ReturnsEnvelopeWithSuccessAndData` | Proto→DTO mapping, façade delegation (`IKeyCustodianSignerFacade.SignAsync`), and DTO→proto mapping work end-to-end via in-process `TestServer`; response carries `D2ResultProto` envelope with `Success=true` + typed data |
+| `KeyCustodianSignerService.g.cs` | `GrpcServiceImplTests.Sign_FacadeFailure_ValidationFailed_ReturnsEnvelopeWithRealCode` (+ `NotFound` + `ServiceUnavailable` variants) | `D2Result` business failures from the façade ride the `D2ResultProto` envelope with their real HTTP status code; gRPC status stays `OK` — no `RpcException` thrown |
 | `KeyCustodianSignerService.g.cs` | `GrpcServiceImplTests.Sign_DelegatesThroughFacade_RecordsCallCount` | Service calls the façade (not the handler) — call count asserted, proving the delegation target is the fixture façade |
 | `SignTransportMappers.g.cs` | Exercised by `GrpcServiceImplTests` via `KeyCustodianSignerService.g.cs` | `ToSignInput()` / `ToProtoSignOutput()` C# 14 extension members compile and map correctly; mapper is unchanged by the delegation target |
 
@@ -194,4 +196,5 @@ Committed C# fixture files exercised by the in-memory gRPC harness in `D2.Edge.T
 | Functions | 100% |
 | Statements | 100% |
 | Test files | 25 |
-| Total tests | 472 |
+| Total tests | 474 |
+| C# behavior tests (D2.Edge.Tests) | 625 (includes 2 new status-fidelity tests: `SignRoute_Created_Returns201WithBody` + `SignRoute_SomeFound_Returns206WithBody`) |

@@ -41,10 +41,14 @@ Current output per `tsp compile`:
 5. **`<Service>Service.g.cs` + `<Op>TransportMappers.g.cs`** — a `sealed` gRPC
    service-impl class and C# 14 extension-member transport mapper pair for every
    `@d2GrpcMethod` operation. The service class extends the Grpc.Tools-generated
-   `<Service>Base`, delegates to an injected `I<Op>Handler`, and maps
-   `D2Result` failures to `RpcException(StatusCode.Internal)` with empty detail
-   (no info leak). Mappers use `ByteString.CopyFrom` / `.ToByteArray()` for
-   `bytes` fields.
+   `<Service>Base` and delegates to the injected façade (`@d2InProcess` ops) or
+   `I<Op>Handler` (non-`@d2InProcess` ops). Every `D2Result` — success or
+   business failure — is mapped onto the response via `result.ToProtoResponse()`
+   (built on `D2.Shared.Result.Grpc`), which populates the `D2ResultProto`
+   envelope (field 1) and, on success, the typed `<Op>Output` data message (field
+   2). The gRPC status stays `StatusCode.OK` for all business results; `RpcException`
+   is reserved for genuine transport or auth faults only. Mappers use
+   `ByteString.CopyFrom` / `.ToByteArray()` for `bytes` fields.
 
 ---
 
@@ -279,10 +283,13 @@ containing `Map<Op>Route()`. The route delegate:
   `builder.WithMetadata(new D2GeneratedRateLimitTier("Standard"))` /
   `builder.WithMetadata(new D2GeneratedCsrfPosture("exempt"))`. These are marker records the future Edge
   rate-limit/CSRF middleware will read; no enforcement logic is emitted.
-- **MAP-ii (D2Result → IResult)** — success-first: `if (result.Success) return Results.Ok(result.Data);`
-  then `var pd = result.ToProblemDetails(http); return Results.Json(pd, statusCode: pd.Status ?? 500,
-  contentType: "application/problem+json")`. Uses the real `ToProblemDetails` extension (failure-only —
-  the success guard is mandatory).
+- **MAP-ii (D2Result → IResult)** — the HTTP status code is authoritative. The emitted branch keys on
+  `(int)result.StatusCode < 400` (not on `result.Success`), so `Created` (201), `SomeFound` (206), and
+  `PartialSuccess` (207) carry their real HTTP status codes via `Results.Json(result.Data, statusCode: status)`.
+  Failures (≥400) go to `var pd = result.ToProblemDetails(http); return Results.Json(pd, statusCode:
+  pd.Status ?? 500, contentType: "application/problem+json")`. `ToProblemDetails` is failure-only and would
+  throw on a 2xx status — keying on the status integer prevents that on non-error results like `SomeFound`
+  (`Success==false`, `StatusCode==206`).
 
 `emitRoutePolicyMarkers` emits `D2GeneratedRoutePolicyMarkers.g.cs` — a standalone file declaring the two
 marker records (`D2GeneratedRateLimitTier` + `D2GeneratedCsrfPosture`) once into the registration namespace.
@@ -335,8 +342,12 @@ constructor and call site change based on the `delegationTarget`:
 - **Handler delegation** (`kind === "handler"` or omitted): the service injects
   `I<Op>Handler handler` and calls `handler.HandleAsync(input, ct)`.
 
-In both cases the failure mapping (`if (!result.IsOk) throw new RpcException(…)`)
-and the proto-projection (`result.Data!.ToProto<Op>Output()`) are identical.
+In both cases the response shape is identical: the service calls
+`result.ToProtoResponse()` (built on `D2.Shared.Result.Grpc`'s `ToProto()`) to
+populate the `D2ResultProto` envelope (field 1) and, on success, the typed data
+message (field 2). Business failures ride the envelope with their real HTTP status
+code; the gRPC status is always `StatusCode.OK`. `RpcException` is reserved for
+genuine transport or auth faults only — never for business-logic failures.
 The `emitter.ts` entry point computes the `delegationTarget` from `@d2InProcess`
 and passes it to both the gRPC service emitter and the route-policy emitter so the
 same rule (`@d2InProcess` → façade; else → handler) applies uniformly.
