@@ -62,10 +62,10 @@ function assertRoundTrip<T>(source: D2Result<T>, data?: T): void {
   // messages: key + params
   expect(rebuilt.messages.length).toBe(source.messages.length);
   for (let i = 0; i < source.messages.length; i++) {
-    expect(rebuilt.messages[i].key).toBe(source.messages[i].key);
+    expect(rebuilt.messages[i]!.key).toBe(source.messages[i]!.key);
     // params: undefined for empty, or match entries
-    const srcParams = source.messages[i].params;
-    const rebParams = rebuilt.messages[i].params;
+    const srcParams = source.messages[i]!.params;
+    const rebParams = rebuilt.messages[i]!.params;
     if (!srcParams || Object.keys(srcParams).length === 0) {
       expect(rebParams).toBeUndefined();
     } else {
@@ -78,17 +78,17 @@ function assertRoundTrip<T>(source: D2Result<T>, data?: T): void {
   // inputErrors
   expect(rebuilt.inputErrors.length).toBe(source.inputErrors.length);
   for (let i = 0; i < source.inputErrors.length; i++) {
-    expect(rebuilt.inputErrors[i].field).toBe(source.inputErrors[i].field);
-    expect(rebuilt.inputErrors[i].errors.length).toBe(
-      source.inputErrors[i].errors.length,
+    expect(rebuilt.inputErrors[i]!.field).toBe(source.inputErrors[i]!.field);
+    expect(rebuilt.inputErrors[i]!.errors.length).toBe(
+      source.inputErrors[i]!.errors.length,
     );
-    for (let j = 0; j < source.inputErrors[i].errors.length; j++) {
-      expect(rebuilt.inputErrors[i].errors[j].key).toBe(
-        source.inputErrors[i].errors[j].key,
+    for (let j = 0; j < source.inputErrors[i]!.errors.length; j++) {
+      expect(rebuilt.inputErrors[i]!.errors[j]!.key).toBe(
+        source.inputErrors[i]!.errors[j]!.key,
       );
       // params: undefined for empty, or match entries (mirrors top-level messages[] assertion)
-      const srcErrParams = source.inputErrors[i].errors[j].params;
-      const rebErrParams = rebuilt.inputErrors[i].errors[j].params;
+      const srcErrParams = source.inputErrors[i]!.errors[j]!.params;
+      const rebErrParams = rebuilt.inputErrors[i]!.errors[j]!.params;
       if (!srcErrParams || Object.keys(srcErrParams).length === 0) {
         expect(rebErrParams).toBeUndefined();
       } else {
@@ -222,26 +222,26 @@ describe("d2ResultToProto / d2ResultFromProto — round-trip every shape", () =>
       ],
     });
     const proto = d2ResultToProto(source);
-    expect(proto.messages[0].params["locale"]).toBe("xx-ZZ");
-    expect(proto.messages[0].params["rule"]).toBe("BCP47");
+    expect(proto.messages[0]!.params["locale"]).toBe("xx-ZZ");
+    expect(proto.messages[0]!.params["rule"]).toBe("BCP47");
 
     const rebuilt = d2ResultFromProto(proto);
-    expect(rebuilt.messages[0].key).toBe("auth_errors_LOCALE_INVALID_FORMAT");
+    expect(rebuilt.messages[0]!.key).toBe("auth_errors_LOCALE_INVALID_FORMAT");
     expect(
-      (rebuilt.messages[0].params as Record<string, unknown>)["locale"],
+      (rebuilt.messages[0]!.params as Record<string, unknown>)["locale"],
     ).toBe("xx-ZZ");
     expect(
-      (rebuilt.messages[0].params as Record<string, unknown>)["rule"],
+      (rebuilt.messages[0]!.params as Record<string, unknown>)["rule"],
     ).toBe("BCP47");
   });
 
   it("empty params map → TKMessage.params is undefined after round-trip", () => {
     const source = fail({ messages: [{ key: "some_key" }] });
     const proto = d2ResultToProto(source);
-    expect(Object.keys(proto.messages[0].params).length).toBe(0);
+    expect(Object.keys(proto.messages[0]!.params).length).toBe(0);
 
     const rebuilt = d2ResultFromProto(proto);
-    expect(rebuilt.messages[0].params).toBeUndefined();
+    expect(rebuilt.messages[0]!.params).toBeUndefined();
   });
 
   it("statusCode exact integer pin — NOT a lossy gRPC bucket (404 ≠ 409 ≠ 400)", () => {
@@ -316,7 +316,7 @@ describe("d2ResultFromProto — adversarial", () => {
     const rebuilt = d2ResultFromProto(proto);
     expect(rebuilt.inputErrors.length).toBe(50);
     for (let i = 0; i < 50; i++)
-      expect(rebuilt.inputErrors[i].field).toBe(`field_${i}`);
+      expect(rebuilt.inputErrors[i]!.field).toBe(`field_${i}`);
   });
 });
 
@@ -406,7 +406,7 @@ describe("handleGrpcCall", () => {
     expect(allMessageKeys).not.toContain(sentinel);
     expect(allMessageKeys).not.toContain("SECRET");
     // The message MUST be the TK constant
-    expect(result.messages[0].key).toBe(
+    expect(result.messages[0]!.key).toBe(
       TK.common.errors.SERVICE_UNAVAILABLE.key,
     );
   });
@@ -443,7 +443,7 @@ describe("handleGrpcCall", () => {
     expect(allMessageKeys).not.toContain(sentinel);
     expect(allMessageKeys).not.toContain("SECRET");
     // The message MUST be the TK constant
-    expect(result.messages[0].key).toBe(TK.common.errors.CANCELED.key);
+    expect(result.messages[0]!.key).toBe(TK.common.errors.CANCELED.key);
   });
 
   it("ServiceError (UNAUTHENTICATED = 16) → unauthorized result", async () => {
@@ -454,7 +454,7 @@ describe("handleGrpcCall", () => {
       (r: never) => r,
     );
     expect(result.statusCode).toBe(HttpStatusCode.Unauthorized);
-    expect(result.messages[0].key).toBe(TK.common.errors.UNAUTHORIZED.key);
+    expect(result.messages[0]!.key).toBe(TK.common.errors.UNAUTHORIZED.key);
   });
 
   it("non-ServiceError → unhandledException with TK constant (NOT err.message)", async () => {
@@ -472,7 +472,7 @@ describe("handleGrpcCall", () => {
     const keys = result.messages.map((m) => m.key).join("|");
     expect(keys).not.toContain("internal-error");
     expect(keys).not.toContain("top-secret");
-    expect(result.messages[0].key).toBe(TK.common.errors.UNKNOWN.key);
+    expect(result.messages[0]!.key).toBe(TK.common.errors.UNKNOWN.key);
   });
 
   it("traceId threads through from envelope", async () => {

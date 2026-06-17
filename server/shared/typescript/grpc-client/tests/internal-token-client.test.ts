@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------
 
 import { describe, expect, it, vi } from "vitest";
-import { HttpKeyCustodianClient } from "../src/key-custodian-client.js";
+import { HttpInternalTokenClient } from "../src/internal-token-client.js";
 
 const VALID_OPTS = {
   tokenEndpoint: "http://localhost:9999/token",
@@ -20,12 +20,12 @@ function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
   });
 }
 
-describe("HttpKeyCustodianClient — happy path", () => {
+describe("HttpInternalTokenClient — happy path", () => {
   it("acquires a token from a well-formed response", async () => {
     const fetchImpl = vi.fn(async () =>
       jsonResponse({ access_token: "fake.jwt.sig", expires_in: 900 }),
     );
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
@@ -42,7 +42,7 @@ describe("HttpKeyCustodianClient — happy path", () => {
       capturedBody = (init as RequestInit | undefined)?.body as string;
       return jsonResponse({ access_token: "x", expires_in: 100 });
     });
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
@@ -60,7 +60,7 @@ describe("HttpKeyCustodianClient — happy path", () => {
     });
     const optsWithoutAud = { ...VALID_OPTS } as Record<string, unknown>;
     delete optsWithoutAud["audience"];
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...(optsWithoutAud as typeof VALID_OPTS),
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
@@ -69,12 +69,12 @@ describe("HttpKeyCustodianClient — happy path", () => {
   });
 });
 
-describe("HttpKeyCustodianClient — adversarial responses", () => {
+describe("HttpInternalTokenClient — adversarial responses", () => {
   it("returns failure on HTTP 5xx", async () => {
     const fetchImpl = vi.fn(
       async () => new Response("server down", { status: 503 }),
     );
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
@@ -86,7 +86,7 @@ describe("HttpKeyCustodianClient — adversarial responses", () => {
     const fetchImpl = vi.fn(
       async () => new Response("bad creds", { status: 401 }),
     );
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
@@ -102,7 +102,7 @@ describe("HttpKeyCustodianClient — adversarial responses", () => {
           headers: { "Content-Type": "text/plain" },
         }),
     );
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
@@ -112,7 +112,7 @@ describe("HttpKeyCustodianClient — adversarial responses", () => {
 
   it("returns failure when access_token is missing", async () => {
     const fetchImpl = vi.fn(async () => jsonResponse({ expires_in: 900 }));
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
@@ -124,7 +124,7 @@ describe("HttpKeyCustodianClient — adversarial responses", () => {
     const fetchImpl = vi.fn(async () =>
       jsonResponse({ access_token: "", expires_in: 900 }),
     );
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
@@ -137,7 +137,7 @@ describe("HttpKeyCustodianClient — adversarial responses", () => {
     const fetchImpl = vi.fn(async () =>
       jsonResponse({ access_token: big, expires_in: 900 }),
     );
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
@@ -147,7 +147,7 @@ describe("HttpKeyCustodianClient — adversarial responses", () => {
 
   it("returns failure when expires_in is missing", async () => {
     const fetchImpl = vi.fn(async () => jsonResponse({ access_token: "x" }));
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
@@ -159,7 +159,7 @@ describe("HttpKeyCustodianClient — adversarial responses", () => {
     const fetchImpl = vi.fn(async () =>
       jsonResponse({ access_token: "x", expires_in: -1 }),
     );
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
@@ -171,7 +171,7 @@ describe("HttpKeyCustodianClient — adversarial responses", () => {
     const fetchImpl = vi.fn(async () =>
       jsonResponse({ access_token: "x", expires_in: "abc" }),
     );
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
@@ -181,7 +181,7 @@ describe("HttpKeyCustodianClient — adversarial responses", () => {
 
   it("returns failure when response is JSON null", async () => {
     const fetchImpl = vi.fn(async () => jsonResponse(null));
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
@@ -191,7 +191,7 @@ describe("HttpKeyCustodianClient — adversarial responses", () => {
 
   it("returns failure when response is JSON array", async () => {
     const fetchImpl = vi.fn(async () => jsonResponse([1, 2, 3]));
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
@@ -203,7 +203,7 @@ describe("HttpKeyCustodianClient — adversarial responses", () => {
     const fetchImpl = vi.fn(async () => {
       throw new TypeError("fetch failed");
     });
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
@@ -225,7 +225,7 @@ describe("HttpKeyCustodianClient — adversarial responses", () => {
     const fetchImpl = vi.fn(async () => {
       throw "string thrown";
     });
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
       logger: fakeLogger,
@@ -250,7 +250,7 @@ describe("HttpKeyCustodianClient — adversarial responses", () => {
     const fetchImpl = vi.fn(async () => {
       throw new TypeError("network failure");
     });
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
       logger: fakeLogger,
@@ -261,7 +261,7 @@ describe("HttpKeyCustodianClient — adversarial responses", () => {
   });
 });
 
-describe("HttpKeyCustodianClient — Singleflight dedup", () => {
+describe("HttpInternalTokenClient — Singleflight dedup", () => {
   it("100 concurrent acquireToken calls trigger ONE upstream fetch", async () => {
     let count = 0;
     const fetchImpl = vi.fn(async () => {
@@ -270,7 +270,7 @@ describe("HttpKeyCustodianClient — Singleflight dedup", () => {
       await new Promise((r) => setTimeout(r, 5));
       return jsonResponse({ access_token: "x", expires_in: 900 });
     });
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
@@ -288,7 +288,7 @@ describe("HttpKeyCustodianClient — Singleflight dedup", () => {
       count++;
       return jsonResponse({ access_token: `x-${count}`, expires_in: 900 });
     });
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
@@ -298,10 +298,10 @@ describe("HttpKeyCustodianClient — Singleflight dedup", () => {
   });
 });
 
-describe("HttpKeyCustodianClient — defaults", () => {
+describe("HttpInternalTokenClient — defaults", () => {
   it("falls back to global fetch when no fetchImpl provided", () => {
     // Just asserting construction works; we don't actually invoke the network.
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       tokenEndpoint: "http://localhost:1/x",
       clientId: "x",
       clientSecret: "y",
@@ -310,11 +310,11 @@ describe("HttpKeyCustodianClient — defaults", () => {
   });
 });
 
-describe("HttpKeyCustodianClient — input validation", () => {
+describe("HttpInternalTokenClient — input validation", () => {
   it("throws on missing tokenEndpoint", () => {
     expect(
       () =>
-        new HttpKeyCustodianClient({
+        new HttpInternalTokenClient({
           ...VALID_OPTS,
           tokenEndpoint: "",
         }),
@@ -324,7 +324,7 @@ describe("HttpKeyCustodianClient — input validation", () => {
   it("throws on missing clientId", () => {
     expect(
       () =>
-        new HttpKeyCustodianClient({
+        new HttpInternalTokenClient({
           ...VALID_OPTS,
           clientId: "",
         }),
@@ -334,7 +334,7 @@ describe("HttpKeyCustodianClient — input validation", () => {
   it("throws on missing clientSecret", () => {
     expect(
       () =>
-        new HttpKeyCustodianClient({
+        new HttpInternalTokenClient({
           ...VALID_OPTS,
           clientSecret: "",
         }),
@@ -342,7 +342,7 @@ describe("HttpKeyCustodianClient — input validation", () => {
   });
 });
 
-describe("HttpKeyCustodianClient — timeout", () => {
+describe("HttpInternalTokenClient — timeout", () => {
   it("aborts after timeoutMs", async () => {
     const fetchImpl = vi.fn(async (_url: string, init?: RequestInit) => {
       return new Promise<Response>((_, reject) => {
@@ -350,7 +350,7 @@ describe("HttpKeyCustodianClient — timeout", () => {
         signal?.addEventListener("abort", () => reject(new Error("aborted")));
       });
     });
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
       timeoutMs: 50,
@@ -372,7 +372,7 @@ describe("HttpKeyCustodianClient — timeout", () => {
         );
       });
     });
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
       timeoutMs: 30,
@@ -401,7 +401,7 @@ describe("HttpKeyCustodianClient — timeout", () => {
         );
       });
     });
-    const client = new HttpKeyCustodianClient({
+    const client = new HttpInternalTokenClient({
       ...VALID_OPTS,
       fetchImpl: fetchImpl as unknown as typeof fetch,
       timeoutMs: 25,

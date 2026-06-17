@@ -9,9 +9,9 @@ Copyright (c) DCSV. All rights reserved.
 Singleton-per-process gRPC channel from the SvelteKit BFF to Edge, with
 two interceptors:
 
-- **Internal-token interceptor** — KeyCustodian-issued JWT (audience
-  `d2.edge`, 15-min TTL), BFF module-singleton cache, refresh-on-401
-  cache invalidation.
+- **Internal-token interceptor** — OAuth token-endpoint JWT (audience
+  `d2.edge`, 15-min TTL), BFF module-singleton cache with proactive
+  refresh-ahead, refresh-on-401 cache invalidation.
 - **Context-propagation interceptor** — serializes the current request's
   `IPropagatedContext` into the `x-d2-context` gRPC metadata key + forwards
   `traceparent` / `tracestate` for W3C tracing.
@@ -29,9 +29,9 @@ Mirrors the .NET `services.AddGrpcClient<T>()` registration shape +
 | `closeChannel()`                            | Idempotent shutdown; safe to call from any number of process-shutdown hooks.                   |
 | `createInternalTokenInterceptor(opts)`      | Returns a gRPC `Interceptor` that attaches `Authorization: Bearer <jwt>` on every call.        |
 | `createContextPropagationInterceptor(opts)` | Returns an `Interceptor` that injects `x-d2-context` + forwards `traceparent` / `tracestate`. |
-| `InternalTokenCache`                        | Single-slot atomic-style cache for the BFF's internal token.                                   |
-| `KeyCustodianClient` (interface)            | Pluggable contract for token-acquire backends. Production wires `HttpKeyCustodianClient`.      |
-| `HttpKeyCustodianClient`                    | Node-native `fetch()`-based KeyCustodian client; Singleflight-deduped.                         |
+| `InternalTokenCache`                        | Single-slot cache for the BFF's internal token; three-state read (fresh / aging / expired) with proactive refresh-ahead. |
+| `InternalTokenClient` (interface)           | Pluggable contract for OAuth token-endpoint backends. Production wires `HttpInternalTokenClient`. |
+| `HttpInternalTokenClient`                   | Node-native `fetch()`-based OAuth client (`grant_type=client_credentials`); Singleflight-deduped. |
 
 ### gRPC result codec — `D2Result` ↔ `D2ResultProto` wire round-trip
 
@@ -99,15 +99,25 @@ a TK constant (`TK.common.errors.SERVICE_UNAVAILABLE` / `CANCELED` /
 - **TTL**: 15-min (matches the platform's standard JWT TTL).
 - **Caching**: BFF module-singleton — one cached token per Node process;
   thread-safety is JS event-loop's single-threaded property.
-- **Refresh**: lazy-only. On `UNAUTHENTICATED` response the interceptor
-  CLEARS the cache so the NEXT call re-acquires fresh; the
-  `@grpc/grpc-js` interceptor SPI does not support truly re-issuing the
-  same call from inside the interceptor — the retry layer
-  (e.g. `@d2/resilience`'s `RetryHelper`) is responsible for the
+- **Refresh**: proactive refresh-ahead + reactive on-401. `InternalTokenCache`
+  distinguishes three token states:
+  - **Fresh** (`now < expiresAtMs − refreshLeadMs`, default 60 s): served
+    with no refresh signal.
+  - **Aging** (`expiresAtMs − refreshLeadMs ≤ now < expiresAtMs − skewMs`):
+    still valid — served immediately AND the interceptor fires a
+    **fire-and-forget background re-mint** so the next call finds a fresh
+    token. Errors in the background mint are silently swallowed (the next
+    call mints synchronously if needed).
+  - **Expired** (`now ≥ expiresAtMs − skewMs`, default 5 s): cache miss →
+    caller mints synchronously.
+  On `UNAUTHENTICATED` response the interceptor CLEARS the cache so the NEXT
+  call re-acquires fresh; the `@grpc/grpc-js` interceptor SPI does not
+  support truly re-issuing the same call from inside the interceptor — the
+  retry layer (e.g. `@d2/resilience`'s `RetryHelper`) is responsible for the
   second attempt.
-- **Singleflight dedup**: 100 concurrent gRPC calls all triggering
-  KeyCustodian acquire result in ONE upstream call thanks to
-  `@d2/resilience`'s `Singleflight<TKey, TValue>`.
+- **Singleflight dedup**: 100 concurrent gRPC calls all triggering a token
+  acquire result in ONE upstream OAuth call thanks to `@d2/resilience`'s
+  `Singleflight<TKey, TValue>` (inside `HttpInternalTokenClient`).
 
 ## Channel model
 
@@ -135,14 +145,14 @@ a TK constant (`TK.common.errors.SERVICE_UNAVAILABLE` / `CANCELED` /
 
 Token bytes never reach Pino. Diagnostic logs only record metadata
 SHAPE — `{ method, hasContext, hasTraceparent, hasTracestate }` — never
-values. The KeyCustodian client logs `{ httpStatus, endpoint, errorName }`
+values. The `HttpInternalTokenClient` logs `{ httpStatus, endpoint, errorName }`
 on failure paths; the actual response body never lands in any
 log binding.
 
 ## Dependencies
 
 - `@d2/auth-abstractions` — `AuthFailures.jwksUnavailable` factory for
-  KeyCustodian-unreachable failures.
+  token-endpoint-unreachable failures.
 - `@d2/error-category` — `ErrorCategory` union + `ALL_ERROR_CATEGORIES` for
   safe category parse on `d2ResultFromProto`.
 - `@d2/headers-common` — `PROPAGATED_CONTEXT` / `TRACEPARENT` /
@@ -176,20 +186,20 @@ import {
   closeChannel,
   createInternalTokenInterceptor,
   createContextPropagationInterceptor,
-  HttpKeyCustodianClient,
+  HttpInternalTokenClient,
   InternalTokenCache,
 } from "@d2/grpc-client";
 
 // One-time setup at composition root.
 const cache = new InternalTokenCache();
-const keyCustodian = new HttpKeyCustodianClient({
-  tokenEndpoint: process.env.D2_KEY_CUSTODIAN_TOKEN_ENDPOINT!,
+const tokenClient = new HttpInternalTokenClient({
+  tokenEndpoint: process.env.D2_TOKEN_ENDPOINT!,
   clientId: process.env.D2_BFF_CLIENT_ID!,
   clientSecret: process.env.D2_BFF_CLIENT_SECRET!,
 });
 
 const interceptors = [
-  createInternalTokenInterceptor({ cache, keyCustodian }),
+  createInternalTokenInterceptor({ cache, tokenClient }),
   createContextPropagationInterceptor({
     getCurrentContext: () => /* read from AsyncLocalStorage */ undefined,
     getCurrentTraceparent: () => /* read from OTel context */ undefined,
@@ -211,10 +221,13 @@ process.on("SIGTERM", async () => {
 
 ## Edge cases
 
-- KeyCustodian unreachable / 5xx / malformed response → `acquireToken`
+- Token endpoint unreachable / 5xx / malformed response → `acquireToken`
   returns `D2Result.serviceUnavailable()` via `AuthFailures.jwksUnavailable`.
 - Concurrent calls all triggering the same acquire share ONE upstream
-  fetch via Singleflight.
+  fetch via Singleflight (inside `HttpInternalTokenClient`).
+- Tokens in the aging window trigger a fire-and-forget background re-mint;
+  a failed background refresh is silently swallowed — the next call mints
+  synchronously.
 - `getChannel()` with no env var + no opts.endpoint throws with a
   diagnostic message.
 - `closeChannel()` is idempotent — safe before any `getChannel()`,
@@ -223,11 +236,14 @@ process.on("SIGTERM", async () => {
 - The `@grpc/grpc-js` interceptor SPI does NOT support re-issuing a
   call from inside an interceptor; refresh-on-401 clears the cache so
   the NEXT call (e.g. via `RetryHelper`) acquires fresh.
+- Background refresh-ahead errors are silently caught — never an
+  unhandled promise rejection; a debug/warn log is emitted with
+  `{ errorName }` only (no token bytes).
 
 ## Tests
 
 Adversarial coverage per platform discipline — every public function has
-happy-path + every-failure-branch (KeyCustodian 5xx / 4xx / non-JSON
+happy-path + every-failure-branch (token endpoint 5xx / 4xx / non-JSON
 / shape-violating / oversized / network-throw). Per-VALUE pin tests
 on metadata keys for cross-language parity. 100/100/100/100 coverage
 threshold.

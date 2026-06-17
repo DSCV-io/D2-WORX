@@ -14,9 +14,11 @@ import { falsey } from "@d2/utilities";
 import type { InternalTokenSnapshot } from "./types.js";
 
 /**
- * Configuration for the HTTP-based KeyCustodian client.
+ * Configuration for the HTTP-based internal-token client that acquires the
+ * BFF's service-identity token from the OAuth token endpoint
+ * (`grant_type=client_credentials`).
  */
-export interface HttpKeyCustodianClientOptions {
+export interface HttpInternalTokenClientOptions {
   /** Token endpoint URL (full path). Required. */
   readonly tokenEndpoint: string;
   /** OAuth client_id for the BFF service identity. Required. */
@@ -34,27 +36,34 @@ export interface HttpKeyCustodianClientOptions {
 }
 
 /**
- * Pluggable contract for any KeyCustodian token-acquire backend. The
- * interceptor depends on this interface, NOT the concrete HTTP client —
- * tests inject a mock; production wires the HTTP client.
+ * Pluggable contract for any internal-token acquire backend. The interceptor
+ * depends on this interface, NOT the concrete HTTP client — tests inject a
+ * mock; production wires the HTTP client.
+ *
+ * "Internal token" means the BFF's own service-identity JWT, minted by the
+ * OAuth token endpoint (`grant_type=client_credentials`), NOT a user-facing
+ * token.
  */
-export interface KeyCustodianClient {
+export interface InternalTokenClient {
   acquireToken(): Promise<D2Result<InternalTokenSnapshot>>;
 }
 
 /**
- * HTTP implementation of KeyCustodianClient using Node-native `fetch()`.
+ * HTTP implementation of {@link InternalTokenClient} using Node-native
+ * `fetch()`. Calls the OAuth token endpoint
+ * (`grant_type=client_credentials`) to acquire the BFF's service-identity
+ * JWT for use as `Authorization: Bearer <jwt>` on outbound gRPC calls.
  *
  * Resilience is composed from `@d2/resilience`: a Singleflight layer (so 100
  * concurrent gRPC calls all force-refreshing after a 401 trigger ONLY ONE
- * upstream KeyCustodian call) wraps a TimeoutLayer that bounds the request AND
- * — via the threaded `AbortSignal` passed into `fetch` — genuinely cancels it
+ * upstream call) wraps a TimeoutLayer that bounds the request AND — via the
+ * threaded `AbortSignal` passed into `fetch` — genuinely cancels it
  * (releasing the socket) on timeout. Server-side / SSR only.
  */
-export class HttpKeyCustodianClient implements KeyCustodianClient {
+export class HttpInternalTokenClient implements InternalTokenClient {
   private readonly pipeline: ResilientPipeline;
   private readonly opts: Required<
-    Omit<HttpKeyCustodianClientOptions, "logger" | "fetchImpl">
+    Omit<HttpInternalTokenClientOptions, "logger" | "fetchImpl">
   > & {
     fetchImpl: typeof fetch;
     logger: ILogger | undefined;
@@ -64,15 +73,15 @@ export class HttpKeyCustodianClient implements KeyCustodianClient {
   // Singleflight layer dedups, so this is 0 or 1). Test + observability probe.
   private inflight = 0;
 
-  constructor(opts: HttpKeyCustodianClientOptions) {
+  constructor(opts: HttpInternalTokenClientOptions) {
     if (falsey(opts.tokenEndpoint)) {
-      throw new TypeError("HttpKeyCustodianClient: tokenEndpoint required");
+      throw new TypeError("HttpInternalTokenClient: tokenEndpoint required");
     }
     if (falsey(opts.clientId)) {
-      throw new TypeError("HttpKeyCustodianClient: clientId required");
+      throw new TypeError("HttpInternalTokenClient: clientId required");
     }
     if (falsey(opts.clientSecret)) {
-      throw new TypeError("HttpKeyCustodianClient: clientSecret required");
+      throw new TypeError("HttpInternalTokenClient: clientSecret required");
     }
     this.opts = {
       tokenEndpoint: opts.tokenEndpoint,
@@ -143,14 +152,14 @@ export class HttpKeyCustodianClient implements KeyCustodianClient {
         });
         return AuthFailures.jwksUnavailable() as D2Result<InternalTokenSnapshot>;
       }
-      const snapshot = _validateTokenResponse(parsed, this.opts.audience);
-      if (snapshot === undefined) {
+      const snap = _validateTokenResponse(parsed, this.opts.audience);
+      if (snap === undefined) {
         this.opts.logger?.warn("internal-token response shape invalid", {
           endpoint: this.opts.tokenEndpoint,
         });
         return AuthFailures.jwksUnavailable() as D2Result<InternalTokenSnapshot>;
       }
-      return ok(snapshot);
+      return ok(snap);
     } finally {
       this.inflight--;
     }
