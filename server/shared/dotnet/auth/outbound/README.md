@@ -92,7 +92,7 @@ Single per-process slot. Atomic reference swap of an immutable `(Token, ExpiresA
 
 The `ServiceIdentityRefreshHostedService` polls every 5 s and proactively refreshes when `ExpiresAt - now <= ServiceIdentityRefreshLeadTime` (default 60 s). On refresh failure with a still-valid cached token, the warning logs but the existing token continues to be served until it actually expires; only when no still-valid token exists AND the fetch fails does `GetCurrentTokenAsync` hard-fail with `D2Result.ServiceUnavailable`.
 
-Concurrent first-callers (on-demand + the hosted service) dedup to a single HTTP fetch via `Singleflight` from `D2.Shared.Resilience`.
+Concurrent first-callers (on-demand + the hosted service) dedup to a single HTTP fetch via `Singleflight` from `D2.Shared.Resilience`. Each fetch also passes through a `CircuitBreaker` (5 consecutive transient failures → 30 s open) — after the threshold, callers receive `ServiceUnavailable` immediately without waiting for an HTTP timeout, stopping the hammering of a down Edge.
 
 ### TokenExchange cache
 
@@ -102,7 +102,7 @@ Backed by the shared `ILocalCache` singleton (with a `tokenexchange:` key prefix
 
 Concurrent first-callers for the same `(sessionId, audience, scope-set)` tuple dedup to a single HTTP fetch via `Singleflight`.
 
-Edge unreachable on cache miss → `D2Result.ServiceUnavailable` (no graceful-degradation fallback — Edge being down means auth is down, and downstream services would reject anything we hand them anyway; pretending we have a working token by serving stale entries creates harder-to-debug failure modes than a fast fail).
+Edge unreachable on cache miss → `D2Result.ServiceUnavailable` (no graceful-degradation fallback — Edge being down means auth is down, and downstream services would reject anything we hand them anyway; pretending we have a working token by serving stale entries creates harder-to-debug failure modes than a fast fail). The `CircuitBreaker` (5 consecutive failures → 30 s open) stops the hammering: once the threshold is hit, callers receive `ServiceUnavailable` immediately without waiting for an HTTP timeout.
 
 The backplane subscription is OPTIONAL. If `ICacheInvalidationBackplane` isn't registered, the cache logs a startup warning and falls back to TTL-only invalidation (acceptable for single-instance deployments; not for clusters that need cross-instance session-revoke propagation).
 
@@ -153,6 +153,6 @@ Hosts that deploy the inbound `D2.Shared.Auth` lib alongside this one MUST regis
 - [`D2.Shared.Auth`](../core/README.md) — inbound auth runtime (JWT validator + session liveness + `AddD2Auth` composition root); transport bindings in `D2.Shared.Auth.Http` + `D2.Shared.Auth.Grpc` siblings
 - [`D2.Shared.Auth.Abstractions`](../abstractions/README.md) — `Audiences.*` / `JwtClaimTypes.*` constants
 - [`D2.Shared.Caching.Abstractions`](../../caching/abstractions/README.md) — `ILocalCache` + `ICacheInvalidationBackplane` interfaces
-- [`D2.Shared.Resilience`](../../resilience/README.md) — `Singleflight` for fetch-path deduplication
+- [`D2.Shared.Resilience`](../../resilience/README.md) — `Singleflight` for fetch-path deduplication + `CircuitBreaker` to fast-fail during sustained Edge outage
 - [RFC 6749 §4.4](https://datatracker.ietf.org/doc/html/rfc6749#section-4.4) — `client_credentials` grant for service-identity tokens
 - [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) — token-exchange grant for user-context propagation

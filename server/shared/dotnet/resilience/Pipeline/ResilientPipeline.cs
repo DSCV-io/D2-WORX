@@ -7,6 +7,7 @@
 namespace D2.Shared.Resilience.Pipeline;
 
 using D2.Shared.Resilience.CircuitBreaker;
+using D2.Shared.Resilience.RateLimiting;
 using D2.Shared.Resilience.Retry;
 using D2.Shared.Result;
 
@@ -57,6 +58,11 @@ using D2.Shared.Result;
 ///     <see cref="D2Result{TValue}.ServiceUnavailable"/>
 ///   </description></item>
 ///   <item><description>
+///     <see cref="RateLimitRejectedException"/> →
+///     <see cref="D2Result{TValue}.TooManyRequests"/>
+///     (429 / <c>RATE_LIMITED</c>, <c>IsTransientRetryable = true</c>)
+///   </description></item>
+///   <item><description>
 ///     <see cref="OperationCanceledException"/> when the supplied token
 ///     was the source → <see cref="D2Result{TValue}.Canceled"/>
 ///   </description></item>
@@ -65,18 +71,33 @@ using D2.Shared.Result;
 ///     <see cref="RetryHelper.IsTransientException"/> →
 ///     <see cref="D2Result{TValue}.ServiceUnavailable"/>
 ///     (covers transient errors that slipped past the configured layers,
-///     e.g. when no Retry layer is configured)
+///     e.g. when no Retry layer is configured; <see cref="TimeoutException"/>
+///     from <see cref="TimeoutLayer{TKey, TValue}"/> takes this path)
 ///   </description></item>
 ///   <item><description>
 ///     Anything else →
 ///     <see cref="D2Result{TValue}.UnhandledException"/>
 ///   </description></item>
 /// </list>
+/// <para>
+/// <b>Disposal:</b> implements <see cref="IDisposable"/>. On dispose, walks
+/// the layer list and calls <see cref="IDisposable.Dispose"/> on any layer
+/// that implements it. Inline-options layers (e.g. a
+/// <see cref="RateLimiterLayer{TKey, TValue}"/> constructed via
+/// <c>UseRateLimiter(options)</c>) own their underlying primitives and
+/// release them on dispose. Keyed-DI layers hold a reference only — their
+/// primitives are registered directly with the container and disposed by it.
+/// Dispose is idempotent. The DI container calls it automatically when the
+/// <c>ServiceProvider</c> is disposed, provided the pipeline is registered
+/// as a keyed singleton (the only supported registration path via
+/// <see cref="ResilientPipelineServiceCollectionExtensions"/>).
+/// </para>
 /// </remarks>
-public sealed class ResilientPipeline<TKey, TValue>
+public sealed class ResilientPipeline<TKey, TValue> : IDisposable
     where TKey : notnull
 {
     private readonly IResilientLayer<TKey, TValue>[] r_layersOuterFirst;
+    private bool _disposed;
 
     /// <summary>
     /// Initializes a <see cref="ResilientPipeline{TKey, TValue}"/> with the
@@ -91,6 +112,34 @@ public sealed class ResilientPipeline<TKey, TValue>
     /// </param>
     public ResilientPipeline(params IResilientLayer<TKey, TValue>[] layersOuterFirst)
         => r_layersOuterFirst = layersOuterFirst;
+
+    /// <summary>
+    /// Gets a zero-layer pipeline that performs ONLY the exception → <see cref="D2Result{TValue}"/>
+    /// boundary mapping — no retry, no circuit-breaker, no timeout, no rate-limiter.
+    /// Use this as the per-call "bypass" override when a caller explicitly wants no
+    /// resilience but still needs the consistent <see cref="D2Result{TValue}"/> return shape.
+    /// </summary>
+    /// <remarks>
+    /// Equivalent to <c>new ResilientPipeline&lt;TKey, TValue&gt;()</c> (zero-arg
+    /// <c>params</c> ctor), exposed as a named sentinel to make the bypass intent
+    /// explicit in generated clients and per-call override sites.
+    /// </remarks>
+    public static ResilientPipeline<TKey, TValue> PassThrough { get; } = new();
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+
+        foreach (var layer in r_layersOuterFirst)
+        {
+            if (layer is IDisposable d)
+                d.Dispose();
+        }
+    }
 
     /// <summary>
     /// Executes <paramref name="operation"/> through the configured layer
@@ -124,6 +173,10 @@ public sealed class ResilientPipeline<TKey, TValue>
         catch (CircuitOpenException)
         {
             return D2Result<TValue>.ServiceUnavailable();
+        }
+        catch (RateLimitRejectedException)
+        {
+            return D2Result<TValue>.TooManyRequests();
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {

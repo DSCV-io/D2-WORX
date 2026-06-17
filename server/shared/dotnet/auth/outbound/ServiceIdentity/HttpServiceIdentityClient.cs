@@ -10,6 +10,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using D2.Shared.Auth.Outbound.Telemetry;
+using D2.Shared.Resilience.CircuitBreaker;
 using D2.Shared.Resilience.Singleflight;
 using D2.Shared.Result;
 using D2.Shared.Utilities.Diagnostics;
@@ -52,6 +53,7 @@ internal sealed class HttpServiceIdentityClient : IServiceIdentityClient, IDispo
     private readonly ILogger<HttpServiceIdentityClient> r_logger;
     private readonly TimeProvider r_clock;
     private readonly Singleflight<string, FetchResult> r_singleflight = new();
+    private readonly CircuitBreaker<FetchResult> r_circuitBreaker;
     private bool _disposed;
 
     /// <summary>
@@ -87,6 +89,21 @@ internal sealed class HttpServiceIdentityClient : IServiceIdentityClient, IDispo
         r_options = options.Value;
         r_logger = logger;
         r_clock = clock;
+
+        // 5 consecutive transient-failure FetchResults → 30 s open, matching the
+        // JWKS-provider breaker config (HttpJwksProvider / JwksProviderOptions
+        // defaults: 5 failures, 30 s cooldown). Value-based predicate required
+        // because FetchAsync catches exceptions internally and returns
+        // FetchResult.TransientFailure() — the breaker would never see an
+        // exception without this predicate.
+        // NowFunc converts TimeProvider.GetUtcNow() to milliseconds so that tests
+        // can advance FakeTimeProvider to drive cooldown deterministically.
+        r_circuitBreaker = new CircuitBreaker<FetchResult>(
+            isFailure: static r => !r.Success,
+            options: new CircuitBreakerOptions(
+                failureThreshold: AuthOutboundResilienceDefaults.FAILURE_THRESHOLD,
+                cooldownDuration: AuthOutboundResilienceDefaults.SR_CooldownDuration,
+                nowFunc: () => clock.GetUtcNow().ToUnixTimeMilliseconds()));
     }
 
     /// <inheritdoc/>
@@ -106,11 +123,23 @@ internal sealed class HttpServiceIdentityClient : IServiceIdentityClient, IDispo
             return D2Result<string>.Ok(cached.Token);
         }
 
-        // Cache miss / expired → fetch via singleflight.
-        var fetchResult = await r_singleflight.ExecuteAsync(_SINGLEFLIGHT_KEY, FetchAsync, ct);
-        return fetchResult.Success
-            ? D2Result<string>.Ok(fetchResult.Snapshot!.Token)
-            : D2Result<string>.ServiceUnavailable();
+        // Cache miss / expired → fetch via singleflight (outer) wrapping circuit
+        // breaker (inner). Singleflight deduplicates concurrent callers; the
+        // breaker fast-fails when Edge has been repeatedly unreachable.
+        try
+        {
+            var fetchResult = await r_singleflight.ExecuteAsync(
+                _SINGLEFLIGHT_KEY,
+                innerCt => r_circuitBreaker.ExecuteAsync(FetchAsync, ct: innerCt),
+                ct);
+            return fetchResult.Success
+                ? D2Result<string>.Ok(fetchResult.Snapshot!.Token)
+                : D2Result<string>.ServiceUnavailable();
+        }
+        catch (CircuitOpenException)
+        {
+            return D2Result<string>.ServiceUnavailable();
+        }
     }
 
     /// <summary>
@@ -128,10 +157,20 @@ internal sealed class HttpServiceIdentityClient : IServiceIdentityClient, IDispo
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        var fetchResult = await r_singleflight.ExecuteAsync(_SINGLEFLIGHT_KEY, FetchAsync, ct);
-        return fetchResult.Success
-            ? D2Result.Ok()
-            : D2Result.ServiceUnavailable();
+        try
+        {
+            var fetchResult = await r_singleflight.ExecuteAsync(
+                _SINGLEFLIGHT_KEY,
+                innerCt => r_circuitBreaker.ExecuteAsync(FetchAsync, ct: innerCt),
+                ct);
+            return fetchResult.Success
+                ? D2Result.Ok()
+                : D2Result.ServiceUnavailable();
+        }
+        catch (CircuitOpenException)
+        {
+            return D2Result.ServiceUnavailable();
+        }
     }
 
     /// <inheritdoc/>
@@ -270,17 +309,25 @@ internal sealed class HttpServiceIdentityClient : IServiceIdentityClient, IDispo
     }
 
     /// <summary>
-    /// Internal fetch outcome. Carries the <see cref="ServiceIdentitySnapshot"/>
+    /// Fetch outcome. Carries the <see cref="ServiceIdentitySnapshot"/>
     /// on success; <c>null</c> on transient failure (Edge unreachable, OIDC
     /// discovery failure, malformed response). Callers branch on
     /// <see cref="Success"/> to decide whether to fall through to a cached
     /// token or surface a hard failure.
+    /// <para>
+    /// <c>internal</c> (not <c>private</c>) so the assembly-level
+    /// <see cref="CircuitBreaker{T}"/> generic can be instantiated with this
+    /// type from within the same assembly.
+    /// </para>
     /// </summary>
-    private readonly record struct FetchResult(bool Success, ServiceIdentitySnapshot? Snapshot)
+    internal readonly record struct FetchResult(bool Success, ServiceIdentitySnapshot? Snapshot)
     {
+        /// <summary>Returns a successful fetch outcome carrying the given snapshot.</summary>
+        /// <param name="snapshot">The fetched token snapshot.</param>
         public static FetchResult Successful(ServiceIdentitySnapshot snapshot) =>
             new(true, snapshot);
 
+        /// <summary>Returns a transient-failure fetch outcome (no snapshot).</summary>
         public static FetchResult TransientFailure() =>
             new(false, null);
     }

@@ -4,6 +4,7 @@
 
 import type { D2Result } from "@d2/result";
 
+import { AbortError } from "../pipeline/abort.js";
 import { RETRY_DEFAULTS } from "./retry-defaults.js";
 import type { RetryOptions } from "./retry-options.js";
 
@@ -12,13 +13,13 @@ const sr_emptyAbort = (signal: AbortSignal | undefined): boolean =>
 
 function defaultDelay(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (sr_emptyAbort(signal)) return reject(new Error("aborted"));
+    if (sr_emptyAbort(signal)) return reject(new AbortError());
     const handle = setTimeout(resolve, ms);
     signal?.addEventListener(
       "abort",
       () => {
         clearTimeout(handle);
-        reject(new Error("aborted"));
+        reject(new AbortError());
       },
       { once: true },
     );
@@ -29,6 +30,63 @@ function isCancellation(err: unknown): boolean {
   if (err instanceof Error) {
     if (err.name === "AbortError") return true;
     if (err.message === "aborted") return true;
+  }
+  return false;
+}
+
+/**
+ * Well-known fetch network-failure messages. A network-level `fetch` failure
+ * throws a `TypeError` whose message is one of these (undici uses
+ * `"fetch failed"`; browsers vary). Matched only as a SECONDARY signal — see
+ * {@link defaultIsTransient} — so a plain programming `TypeError` (different
+ * message, no `cause`) is never misclassified as transient.
+ */
+const sr_fetchNetworkMessages: ReadonlySet<string> = new Set([
+  "fetch failed", // undici / Node fetch
+  "Failed to fetch", // Chromium
+  "NetworkError when attempting to fetch resource.", // Firefox
+  "Load failed", // Safari / WebKit
+]);
+
+/**
+ * Default transient-error classifier — the conservative whitelist used when a
+ * caller supplies NEITHER `shouldRetry` NOR `isTransient`. Mirrors the INTENT
+ * of .NET `RetryHelper.IsTransientException` (HTTP ≥500/429/408,
+ * `SocketException`, `TimeoutException`, `TaskCanceledException-from-timeout`,
+ * `CircuitOpenException`): retry ONLY genuine transient / network / timeout
+ * conditions, NEVER arbitrary programming bugs.
+ *
+ * The JS error taxonomy differs from .NET's (no `HttpRequestException` /
+ * `SocketException` types), so the TS transient set — matched by error `name`
+ * to stay robust across module-instance / structural-error boundaries, the
+ * same convention as {@link isCancellation} — is:
+ *
+ * - `TimeoutError` (our {@link import("../pipeline/timeout-layer.js").TimeoutError}'s
+ *   `name`) — the per-attempt-timeout analogue of .NET's `TimeoutException`.
+ * - `CircuitOpenError` (`name`) — mirrors .NET's `CircuitOpenException`
+ *   (the retry-OUTSIDE-CB restart-recovery composition).
+ * - A genuine fetch/undici NETWORK failure — a `TypeError` carrying a `cause`
+ *   (undici attaches a system error, e.g. `ECONNREFUSED` / `ENOTFOUND` /
+ *   `ECONNRESET`) OR whose message is a well-known fetch network-failure
+ *   string ({@link sr_fetchNetworkMessages}). A bare `TypeError` with neither
+ *   signal is a programming bug → NOT transient.
+ * - `name === "NetworkError"` — the DOM/whatwg network-error name.
+ *
+ * Everything else (plain `Error`, `RangeError`, assertion failures, a
+ * programming `TypeError`) is NON-transient and is NOT retried by default.
+ * A caller cancellation (`AbortError` / message `"aborted"`) is handled BEFORE
+ * this classifier by {@link isCancellation} and is never retried.
+ */
+export function defaultIsTransient(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  if (err.name === "TimeoutError") return true;
+  if (err.name === "CircuitOpenError") return true;
+  if (err.name === "NetworkError") return true;
+  if (err instanceof TypeError) {
+    // Network-level fetch failure — distinguished from a programming TypeError
+    // by an attached `cause` (undici system error) or a known network message.
+    if (err.cause !== undefined) return true;
+    return sr_fetchNetworkMessages.has(err.message);
   }
   return false;
 }
@@ -117,7 +175,10 @@ function shouldRetryError<T>(err: unknown, opts: RetryOptions<T>): boolean {
   if (isCancellation(err)) return false;
   if (opts.shouldRetry) return opts.shouldRetry(err);
   if (opts.isTransient) return opts.isTransient(err);
-  return true;
+  // No caller-supplied predicate → conservative default whitelist (mirrors
+  // .NET's `IsTransientException`): retry only genuine transient/network/
+  // timeout conditions, never programming bugs.
+  return defaultIsTransient(err);
 }
 
 function mergeOptions<T>(opts: Partial<RetryOptions<T>>): RetryOptions<T> {
@@ -143,7 +204,7 @@ async function runRetry<T>(
   let attempt = 0;
   while (true) {
     attempt++;
-    if (sr_emptyAbort(signal)) throw new Error("aborted");
+    if (sr_emptyAbort(signal)) throw new AbortError();
     try {
       return await op(attempt);
     } catch (e) {

@@ -4,7 +4,12 @@
 
 import { describe, expect, it, vi } from "vitest";
 import * as factories from "@d2/result";
-import { RetryHelper } from "../../src/retry/retry-helper.js";
+import { CircuitOpenError } from "../../src/circuit-breaker/circuit-open-error.js";
+import { TimeoutError } from "../../src/pipeline/timeout-layer.js";
+import {
+  defaultIsTransient,
+  RetryHelper,
+} from "../../src/retry/retry-helper.js";
 
 const noDelay = () => Promise.resolve();
 
@@ -23,8 +28,11 @@ describe("RetryHelper.retryAsync — happy paths", () => {
       if (calls < 3) throw new Error("transient");
       return "ok";
     };
+    // A plain Error is NOT transient under the default classifier (F-21); the
+    // caller opts this error into retry via an explicit isTransient predicate.
     const r = await RetryHelper.retryAsync(op, {
       maxAttempts: 5,
+      isTransient: () => true,
       delayFunc: noDelay,
     });
     expect(r).toBe("ok");
@@ -40,6 +48,7 @@ describe("RetryHelper.retryAsync — happy paths", () => {
     await expect(
       RetryHelper.retryAsync(op, {
         maxAttempts: 3,
+        isTransient: () => true,
         delayFunc: noDelay,
       }),
     ).rejects.toThrow("never works");
@@ -107,7 +116,10 @@ describe("RetryHelper.retryAsync — happy paths", () => {
     expect(calls).toBe(1);
   });
 
-  it("non-Error thrown values use the default predicate path (retried)", async () => {
+  it("non-Error thrown values are NOT transient by default (F-21) — not retried", async () => {
+    // A thrown non-Error value cannot be a transient/network/timeout condition
+    // under the conservative default classifier — it is a programming-level
+    // throw, so it is not retried (mirrors .NET's whitelist intent).
     let calls = 0;
     await expect(
       RetryHelper.retryAsync(
@@ -118,7 +130,7 @@ describe("RetryHelper.retryAsync — happy paths", () => {
         { maxAttempts: 2, delayFunc: noDelay },
       ),
     ).rejects.toThrow();
-    expect(calls).toBe(2);
+    expect(calls).toBe(1);
   });
 
   it("aborted signal pre-flight throws immediately", async () => {
@@ -163,6 +175,7 @@ describe("RetryHelper.retryAsync — backoff math", () => {
         backoffMultiplier: 2,
         maxDelayMs: 1000,
         jitter: 0,
+        isTransient: () => true,
         delayFunc: fakeDelay,
       },
       undefined,
@@ -187,6 +200,7 @@ describe("RetryHelper.retryAsync — backoff math", () => {
           backoffMultiplier: 10,
           maxDelayMs: 2000,
           jitter: 0,
+          isTransient: () => true,
           delayFunc: fakeDelay,
         },
       ),
@@ -210,6 +224,7 @@ describe("RetryHelper.retryAsync — backoff math", () => {
           backoffMultiplier: 1,
           maxDelayMs: 1000,
           jitter: 0.5,
+          isTransient: () => true,
           delayFunc: fakeDelay,
         },
         undefined,
@@ -237,6 +252,7 @@ describe("RetryHelper.retryAsync — default delay (real timers)", () => {
         backoffMultiplier: 1,
         maxDelayMs: 100,
         jitter: 0,
+        isTransient: () => true,
       },
     );
     expect(r).toBe(2);
@@ -394,10 +410,141 @@ describe("RetryHelper.retryD2ResultAsync", () => {
         },
         {
           maxAttempts: 2,
+          // A plain Error is non-transient by default (F-21); opt it into the
+          // retry path explicitly so this test exercises throw-retry semantics.
+          isTransient: () => true,
           delayFunc: noDelay,
         },
       ),
     ).rejects.toThrow("non-result error");
     expect(calls).toBe(2);
+  });
+});
+
+// ===========================================================================
+// F-21 — default transient classifier (conservative whitelist mirroring C#'s
+// RetryHelper.IsTransientException). With NO caller predicate, only genuine
+// transient/network/timeout errors retry; programming bugs do NOT.
+// ===========================================================================
+
+describe("defaultIsTransient (F-21 classifier)", () => {
+  it.each([
+    ["TimeoutError", new TimeoutError()],
+    ["CircuitOpenError", new CircuitOpenError()],
+    [
+      "NetworkError (by name)",
+      Object.assign(new Error("net"), { name: "NetworkError" }),
+    ],
+    [
+      "TypeError with cause (undici network failure)",
+      new TypeError("fetch failed", { cause: new Error("ECONNREFUSED") }),
+    ],
+    ["TypeError with known network message", new TypeError("Failed to fetch")],
+  ])("classifies %s as transient", (_label, err) => {
+    expect(defaultIsTransient(err)).toBe(true);
+  });
+
+  it.each([
+    ["plain Error", new Error("boom")],
+    ["RangeError (validation/programming)", new RangeError("bad")],
+    [
+      "bare TypeError (programming bug, no cause / non-network message)",
+      new TypeError("x is not a function"),
+    ],
+    ["non-Error string", "kaboom"],
+    [
+      "AbortError (caller cancellation)",
+      Object.assign(new Error("aborted"), { name: "AbortError" }),
+    ],
+  ])("classifies %s as NON-transient", (_label, err) => {
+    expect(defaultIsTransient(err)).toBe(false);
+  });
+});
+
+describe("RetryHelper.retryAsync — F-21 default classifier (no caller predicate)", () => {
+  it("retries a TimeoutError (transient) up to maxAttempts", async () => {
+    let calls = 0;
+    await expect(
+      RetryHelper.retryAsync(
+        async () => {
+          calls++;
+          throw new TimeoutError();
+        },
+        { maxAttempts: 3, delayFunc: noDelay },
+      ),
+    ).rejects.toBeInstanceOf(TimeoutError);
+    expect(calls).toBe(3);
+  });
+
+  it("retries a CircuitOpenError (transient) up to maxAttempts", async () => {
+    let calls = 0;
+    await expect(
+      RetryHelper.retryAsync(
+        async () => {
+          calls++;
+          throw new CircuitOpenError();
+        },
+        { maxAttempts: 3, delayFunc: noDelay },
+      ),
+    ).rejects.toBeInstanceOf(CircuitOpenError);
+    expect(calls).toBe(3);
+  });
+
+  it("retries a genuine network TypeError (undici 'fetch failed' with cause)", async () => {
+    let calls = 0;
+    await expect(
+      RetryHelper.retryAsync(
+        async () => {
+          calls++;
+          throw new TypeError("fetch failed", {
+            cause: new Error("ENOTFOUND"),
+          });
+        },
+        { maxAttempts: 2, delayFunc: noDelay },
+      ),
+    ).rejects.toBeInstanceOf(TypeError);
+    expect(calls).toBe(2);
+  });
+
+  it("does NOT retry a plain programming Error by default", async () => {
+    let calls = 0;
+    await expect(
+      RetryHelper.retryAsync(
+        async () => {
+          calls++;
+          throw new Error("programming bug");
+        },
+        { maxAttempts: 5, delayFunc: noDelay },
+      ),
+    ).rejects.toThrow("programming bug");
+    expect(calls).toBe(1);
+  });
+
+  it("does NOT retry a bare TypeError (no cause / non-network message) by default", async () => {
+    let calls = 0;
+    await expect(
+      RetryHelper.retryAsync(
+        async () => {
+          calls++;
+          throw new TypeError("cannot read properties of undefined");
+        },
+        { maxAttempts: 5, delayFunc: noDelay },
+      ),
+    ).rejects.toBeInstanceOf(TypeError);
+    expect(calls).toBe(1);
+  });
+
+  it("does NOT retry a caller AbortError by default", async () => {
+    let calls = 0;
+    await expect(
+      RetryHelper.retryAsync(
+        async () => {
+          calls++;
+          throw Object.assign(new Error("aborted"), { name: "AbortError" });
+        },
+        { maxAttempts: 5, delayFunc: noDelay },
+      ),
+    ).rejects.toThrow();
+    expect(calls).toBe(1);
   });
 });

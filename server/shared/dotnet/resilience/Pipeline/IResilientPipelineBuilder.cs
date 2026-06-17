@@ -7,8 +7,10 @@
 namespace D2.Shared.Resilience.Pipeline;
 
 using D2.Shared.Resilience.CircuitBreaker;
+using D2.Shared.Resilience.RateLimiting;
 using D2.Shared.Resilience.Retry;
 using D2.Shared.Resilience.Singleflight;
+using D2.Shared.Resilience.Timeout;
 
 /// <summary>
 /// Fluent builder for composing a <see cref="ResilientPipeline{TKey, TValue}"/>
@@ -71,6 +73,54 @@ public interface IResilientPipelineBuilder<TKey, TValue>
     /// </summary>
     /// <param name="options">Retry configuration; <c>null</c> = defaults.</param>
     IResilientPipelineBuilder<TKey, TValue> UseRetries(RetryOptions<TValue>? options = null);
+
+    /// <summary>
+    /// Adds a <see cref="TimeoutLayer{TKey, TValue}"/> at the current position in
+    /// the pipeline. Call at <b>two positions</b> to apply separate total-request
+    /// and per-attempt deadlines:
+    /// <list type="number">
+    ///   <item><description>
+    ///     Before <c>UseRetries</c> — total-request timeout: bounds all retry
+    ///     attempts combined.
+    ///   </description></item>
+    ///   <item><description>
+    ///     After <c>UseRetries</c> (before <c>UseCircuitBreaker</c>) — per-attempt
+    ///     timeout: bounds each individual attempt; a fired timeout surfaces as a
+    ///     <see cref="TimeoutException"/> that the outer retry layer retries
+    ///     (it is already classified transient by the default classifier).
+    ///   </description></item>
+    /// </list>
+    /// Timeout has no DI primitive — its config is passed inline.
+    /// </summary>
+    /// <param name="options">Timeout configuration; <c>null</c> = defaults (10 s).</param>
+    IResilientPipelineBuilder<TKey, TValue> UseTimeout(TimeoutOptions? options = null);
+
+    /// <summary>
+    /// Adds a <see cref="RateLimiterLayer{TKey, TValue}"/> resolved from DI via
+    /// <paramref name="serviceKey"/>. Use this overload when the same
+    /// <see cref="RateLimiting.RateLimiter"/> instance should be SHARED across
+    /// multiple pipelines (e.g. a shared broker-level concurrency cap) — the DI
+    /// container owns the limiter's lifetime and disposal.
+    /// </summary>
+    /// <param name="serviceKey">
+    /// The DI key the <see cref="RateLimiting.RateLimiter"/> was registered with.
+    /// </param>
+    IResilientPipelineBuilder<TKey, TValue> UseRateLimiter(object serviceKey);
+
+    /// <summary>
+    /// Adds a <see cref="RateLimiterLayer{TKey, TValue}"/> wrapping an inline
+    /// <see cref="RateLimiting.RateLimiter"/> constructed from
+    /// <paramref name="options"/>. Use this overload when the concurrency limit is
+    /// private to THIS pipeline. The layer owns the limiter; the
+    /// <see cref="ResilientPipeline{TKey, TValue}"/> (which implements
+    /// <see cref="IDisposable"/>) owns the layer and disposes it when the
+    /// container tears down the pipeline singleton.
+    /// </summary>
+    /// <param name="options">
+    /// Rate-limiter configuration; <c>null</c> = defaults (MaxConcurrency = 100,
+    /// AcquisitionTimeout = Zero / reject-fast).
+    /// </param>
+    IResilientPipelineBuilder<TKey, TValue> UseRateLimiter(RateLimiterOptions? options = null);
 
     /// <summary>
     /// Snapshots the accumulated layers into a new

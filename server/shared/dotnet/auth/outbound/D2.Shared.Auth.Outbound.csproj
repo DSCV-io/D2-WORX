@@ -68,8 +68,14 @@ Copyright (c) DCSV. All rights reserved.
     -->
     <ProjectReference Include="..\..\caching\abstractions\D2.Shared.Caching.Abstractions.csproj" />
     <!--
-      resilience — Singleflight on cache-miss / refresh paths to dedup concurrent
-      token requests. CircuitBreaker / RetryPolicy attach to the named HttpClient.
+      resilience — each token client (HttpServiceIdentityClient,
+      HttpTokenExchangeClient) composes a CircuitBreaker<FetchResult> + Singleflight
+      from this lib directly around its fetch path. The named HttpClient provides
+      only the transport + its Timeout. No retry layer: a transient failure on
+      the background-refreshed service-identity path is acceptable; on the
+      token-exchange path it fails one user request acceptably. The breaker
+      (5 failures → 30 s open) is the real resilience win — it stops hammering
+      a down Edge.
     -->
     <ProjectReference Include="..\..\resilience\D2.Shared.Resilience.csproj" />
     <ProjectReference Include="..\..\result\core\D2.Shared.Result.csproj" />

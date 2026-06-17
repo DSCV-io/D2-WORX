@@ -391,6 +391,88 @@ public sealed class HttpServiceIdentityClientTests
     }
 
     // ----------------------------------------------------------------------
+    // Circuit breaker — trips after N consecutive transient failures,
+    // fast-fails while open (no HTTP attempt), resets after cooldown.
+    // Deterministic via FakeTimeProvider injected into the client's NowFunc.
+    // ----------------------------------------------------------------------
+
+    [Fact]
+    public async Task GetCurrentTokenAsync_CircuitBreaker_OpensAfterThresholdFailures()
+    {
+        // Adversarial: queue exactly FAILURE_THRESHOLD failures, then one
+        // more request. The post-trip call must fast-fail (ServiceUnavailable)
+        // WITHOUT hitting the HTTP handler — HTTP call count must not climb
+        // past the threshold.
+        await using var harness = new Harness();
+        const int threshold = 5; // matches AuthOutboundResilienceDefaults.FAILURE_THRESHOLD
+        for (var i = 0; i < threshold; i++)
+            harness.QueueException(new HttpRequestException($"down-{i}"));
+
+        for (var i = 0; i < threshold; i++)
+            await harness.Client.GetCurrentTokenAsync();
+
+        // Breaker is now open — next call should fast-fail.
+        var result = await harness.Client.GetCurrentTokenAsync();
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(ErrorCodes.SERVICE_UNAVAILABLE);
+
+        // HTTP handler was not called for the fast-fail call.
+        harness.Handler.RequestCount.Should().Be(threshold);
+    }
+
+    [Fact]
+    public async Task GetCurrentTokenAsync_CircuitBreaker_StaysOpenDuringCooldown()
+    {
+        // While the breaker is open, repeated calls must not increase the
+        // HTTP call count regardless of how many times the client is called.
+        await using var harness = new Harness();
+        const int threshold = 5;
+        for (var i = 0; i < threshold; i++)
+            harness.QueueException(new HttpRequestException($"down-{i}"));
+
+        for (var i = 0; i < threshold; i++)
+            await harness.Client.GetCurrentTokenAsync();
+
+        // Call 3 more times during open window — no new HTTP calls.
+        var r1 = await harness.Client.GetCurrentTokenAsync();
+        var r2 = await harness.Client.GetCurrentTokenAsync();
+        var r3 = await harness.Client.GetCurrentTokenAsync();
+
+        r1.Success.Should().BeFalse();
+        r2.Success.Should().BeFalse();
+        r3.Success.Should().BeFalse();
+        harness.Handler.RequestCount.Should().Be(threshold);
+    }
+
+    [Fact]
+    public async Task GetCurrentTokenAsync_CircuitBreaker_ClosesAfterCooldownOnSuccess()
+    {
+        // After the cooldown elapses, the breaker allows a half-open probe.
+        // A successful probe resets the breaker to closed and subsequent calls
+        // go through normally. Uses FakeTimeProvider to drive cooldown
+        // deterministically without wall-clock sleep.
+        await using var harness = new Harness();
+        const int threshold = 5;
+        for (var i = 0; i < threshold; i++)
+            harness.QueueException(new HttpRequestException($"down-{i}"));
+
+        for (var i = 0; i < threshold; i++)
+            await harness.Client.GetCurrentTokenAsync();
+
+        // Advance clock past 30 s cooldown (AuthOutboundResilienceDefaults).
+        harness.Clock.Advance(TimeSpan.FromSeconds(31));
+
+        // Queue a success for the half-open probe.
+        harness.QueueOk("jwt-recovered", 300);
+        var probeResult = await harness.Client.GetCurrentTokenAsync();
+
+        probeResult.Success.Should().BeTrue();
+        probeResult.Data.Should().Be("jwt-recovered");
+        harness.Handler.RequestCount.Should().Be(threshold + 1);
+    }
+
+    // ----------------------------------------------------------------------
     // Disposal
     // ----------------------------------------------------------------------
 

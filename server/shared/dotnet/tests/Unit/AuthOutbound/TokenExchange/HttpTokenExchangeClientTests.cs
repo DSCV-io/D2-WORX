@@ -16,6 +16,7 @@ using D2.Shared.Result;
 using D2.Shared.Tests.Unit.AuthOutbound.Fixtures;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 /// <summary>
@@ -488,6 +489,110 @@ public sealed class HttpTokenExchangeClientTests
     }
 
     // ----------------------------------------------------------------------
+    // Circuit breaker — trips after N consecutive transient failures,
+    // fast-fails while open (no HTTP attempt), resets after cooldown.
+    // Deterministic via FakeTimeProvider injected into the client's NowFunc.
+    // ----------------------------------------------------------------------
+
+    [Fact]
+    public async Task ExchangeAsync_CircuitBreaker_OpensAfterThresholdFailures()
+    {
+        // Adversarial: queue exactly FAILURE_THRESHOLD failures, then one
+        // more request. The post-trip call must fast-fail (ServiceUnavailable)
+        // WITHOUT hitting the HTTP handler — HTTP call count must not climb
+        // past the threshold.
+        var clock = new FakeTimeProvider(
+            new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));
+        await using var harness = new Harness(clock: clock);
+        const int threshold = 5; // matches AuthOutboundResilienceDefaults.FAILURE_THRESHOLD
+        for (var i = 0; i < threshold; i++)
+            harness.QueueException(new HttpRequestException($"down-{i}"));
+
+        for (var i = 0; i < threshold; i++)
+        {
+            // Use a distinct session per call so each goes through to the CB
+            // (not served from cache after first fail).
+            var subject = TestJwt.WithSessionId(Guid.NewGuid());
+            await harness.Client.ExchangeAsync(subject, TARGET_AUDIENCE);
+        }
+
+        // Breaker is now open — next call should fast-fail.
+        var result = await harness.Client.ExchangeAsync(
+            TestJwt.WithSessionId(Guid.NewGuid()), TARGET_AUDIENCE);
+
+        result.Success.Should().BeFalse();
+        result.ErrorCode.Should().Be(ErrorCodes.SERVICE_UNAVAILABLE);
+
+        // HTTP handler was not called for the fast-fail call.
+        harness.Handler.RequestCount.Should().Be(threshold);
+    }
+
+    [Fact]
+    public async Task ExchangeAsync_CircuitBreaker_StaysOpenDuringCooldown()
+    {
+        // While the breaker is open, repeated calls must not increase the
+        // HTTP call count regardless of how many times the client is called.
+        var clock = new FakeTimeProvider(
+            new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));
+        await using var harness = new Harness(clock: clock);
+        const int threshold = 5;
+        for (var i = 0; i < threshold; i++)
+            harness.QueueException(new HttpRequestException($"down-{i}"));
+
+        for (var i = 0; i < threshold; i++)
+        {
+            var subject = TestJwt.WithSessionId(Guid.NewGuid());
+            await harness.Client.ExchangeAsync(subject, TARGET_AUDIENCE);
+        }
+
+        // Call 3 more times during open window — no new HTTP calls.
+        var r1 = await harness.Client.ExchangeAsync(
+            TestJwt.WithSessionId(Guid.NewGuid()), TARGET_AUDIENCE);
+        var r2 = await harness.Client.ExchangeAsync(
+            TestJwt.WithSessionId(Guid.NewGuid()), TARGET_AUDIENCE);
+        var r3 = await harness.Client.ExchangeAsync(
+            TestJwt.WithSessionId(Guid.NewGuid()), TARGET_AUDIENCE);
+
+        r1.Success.Should().BeFalse();
+        r2.Success.Should().BeFalse();
+        r3.Success.Should().BeFalse();
+        harness.Handler.RequestCount.Should().Be(threshold);
+    }
+
+    [Fact]
+    public async Task ExchangeAsync_CircuitBreaker_ClosesAfterCooldownOnSuccess()
+    {
+        // After the cooldown elapses, the breaker allows a half-open probe.
+        // A successful probe resets the breaker to closed and subsequent calls
+        // go through normally. Uses FakeTimeProvider to drive cooldown
+        // deterministically without wall-clock sleep.
+        var clock = new FakeTimeProvider(
+            new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));
+        await using var harness = new Harness(clock: clock);
+        const int threshold = 5;
+        for (var i = 0; i < threshold; i++)
+            harness.QueueException(new HttpRequestException($"down-{i}"));
+
+        for (var i = 0; i < threshold; i++)
+        {
+            var subject = TestJwt.WithSessionId(Guid.NewGuid());
+            await harness.Client.ExchangeAsync(subject, TARGET_AUDIENCE);
+        }
+
+        // Advance clock past 30 s cooldown (AuthOutboundResilienceDefaults).
+        clock.Advance(TimeSpan.FromSeconds(31));
+
+        // Queue a success for the half-open probe.
+        harness.QueueOk("exchanged-recovered", 300);
+        var probeResult = await harness.Client.ExchangeAsync(
+            TestJwt.WithSessionId(Guid.NewGuid()), TARGET_AUDIENCE);
+
+        probeResult.Success.Should().BeTrue();
+        probeResult.Data.Should().Be("exchanged-recovered");
+        harness.Handler.RequestCount.Should().Be(threshold + 1);
+    }
+
+    // ----------------------------------------------------------------------
     // Disposal
     // ----------------------------------------------------------------------
 
@@ -555,7 +660,7 @@ public sealed class HttpTokenExchangeClientTests
         private readonly DefaultLocalCache r_localCache;
         private readonly TokenExchangeCache r_cache;
 
-        public Harness(string tokenEndpoint = TOKEN_ENDPOINT)
+        public Harness(string tokenEndpoint = TOKEN_ENDPOINT, TimeProvider? clock = null)
         {
             Handler = new StubHttpMessageHandler(async (req, _) =>
             {
@@ -580,12 +685,15 @@ public sealed class HttpTokenExchangeClientTests
                 options,
                 NullLogger<TokenExchangeCache>.Instance,
                 backplane: null);
+            Clock = clock ?? new FakeTimeProvider(
+                new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));
             Client = new HttpTokenExchangeClient(
                 HttpClientFactory,
                 configManager,
                 r_cache,
                 options,
-                NullLogger<HttpTokenExchangeClient>.Instance);
+                NullLogger<HttpTokenExchangeClient>.Instance,
+                Clock);
         }
 
         public StubHttpMessageHandler Handler { get; }
@@ -593,6 +701,8 @@ public sealed class HttpTokenExchangeClientTests
         public IHttpClientFactory HttpClientFactory { get; }
 
         public HttpTokenExchangeClient Client { get; }
+
+        public TimeProvider Clock { get; }
 
         public TokenExchangeCache Cache => r_cache;
 

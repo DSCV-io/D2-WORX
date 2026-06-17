@@ -68,16 +68,6 @@ public sealed class D2ServiceDefaultsOptions
 
     /// <summary>
     /// Gets or sets a value indicating whether the aggregator should skip
-    /// the BCL standard HttpClient resilience handler
-    /// (<c>ConfigureHttpClientDefaults(http =&gt; http.AddStandardResilienceHandler())</c>).
-    /// Default <c>false</c> — auto-wire the standard
-    /// retry + circuit-break + timeout handler for ALL named HttpClients
-    /// in the host, mirroring .NET Aspire's service-defaults behavior.
-    /// </summary>
-    public bool SkipHttpClientResilienceDefaults { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether the aggregator should skip
     /// the deny-by-default auth endpoint guard
     /// (<c>AddD2AuthEndpointGuard</c>). Default <c>false</c> — guard ON,
     /// because the overwhelming majority of D² services are authenticated

@@ -4,7 +4,10 @@
 
 import { AuthFailures } from "@d2/auth-abstractions";
 import type { ILogger } from "@d2/logging";
-import { Singleflight } from "@d2/resilience";
+import {
+  type ResilientPipeline,
+  ResilientPipelineBuilder,
+} from "@d2/resilience";
 import type { D2Result } from "@d2/result";
 import { ok } from "@d2/result";
 import { falsey } from "@d2/utilities";
@@ -41,20 +44,25 @@ export interface KeyCustodianClient {
 
 /**
  * HTTP implementation of KeyCustodianClient using Node-native `fetch()`.
- * Singleflight-deduped so 100 concurrent gRPC calls all force-refreshing
- * after a 401 trigger ONLY ONE upstream KeyCustodian call.
+ *
+ * Resilience is composed from `@d2/resilience`: a Singleflight layer (so 100
+ * concurrent gRPC calls all force-refreshing after a 401 trigger ONLY ONE
+ * upstream KeyCustodian call) wraps a TimeoutLayer that bounds the request AND
+ * — via the threaded `AbortSignal` passed into `fetch` — genuinely cancels it
+ * (releasing the socket) on timeout. Server-side / SSR only.
  */
 export class HttpKeyCustodianClient implements KeyCustodianClient {
-  private readonly singleflight = new Singleflight<
-    string,
-    D2Result<InternalTokenSnapshot>
-  >();
+  private readonly pipeline: ResilientPipeline;
   private readonly opts: Required<
     Omit<HttpKeyCustodianClientOptions, "logger" | "fetchImpl">
   > & {
     fetchImpl: typeof fetch;
     logger: ILogger | undefined;
   };
+
+  // Reflects whether a real upstream fetch is currently in flight (the
+  // Singleflight layer dedups, so this is 0 or 1). Test + observability probe.
+  private inflight = 0;
 
   constructor(opts: HttpKeyCustodianClientOptions) {
     if (falsey(opts.tokenEndpoint)) {
@@ -75,20 +83,35 @@ export class HttpKeyCustodianClient implements KeyCustodianClient {
       fetchImpl: opts.fetchImpl ?? fetch,
       logger: opts.logger,
     };
+    this.pipeline = new ResilientPipelineBuilder()
+      .useSingleflight()
+      .useTimeout({ durationMs: this.opts.timeoutMs })
+      .build();
   }
 
   acquireToken(): Promise<D2Result<InternalTokenSnapshot>> {
-    return this.singleflight.do("internal-token", () => this.fetchToken());
+    // The pipeline THROWS on timeout (TimeoutError) — map that boundary to the
+    // same jwksUnavailable failure the inner fetch paths return.
+    return this.pipeline
+      .execute("internal-token", (signal) => this.fetchToken(signal))
+      .catch((err: unknown) => {
+        this.opts.logger?.warn("internal-token acquire threw", {
+          endpoint: this.opts.tokenEndpoint,
+          errorName: err instanceof Error ? err.name : "unknown",
+        });
+        return AuthFailures.jwksUnavailable() as D2Result<InternalTokenSnapshot>;
+      });
   }
 
-  /** Singleflight inflight count — for tests + observability. */
+  /** Inflight count (0 or 1 — Singleflight dedups) for tests + observability. */
   get inflightCount(): number {
-    return this.singleflight.inflightCount;
+    return this.inflight;
   }
 
-  private async fetchToken(): Promise<D2Result<InternalTokenSnapshot>> {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.opts.timeoutMs);
+  private async fetchToken(
+    signal?: AbortSignal,
+  ): Promise<D2Result<InternalTokenSnapshot>> {
+    this.inflight++;
     try {
       const body = new URLSearchParams({
         grant_type: "client_credentials",
@@ -96,11 +119,13 @@ export class HttpKeyCustodianClient implements KeyCustodianClient {
         client_secret: this.opts.clientSecret,
         audience: this.opts.audience,
       });
+      // The threaded signal is the TimeoutLayer's linked signal — passing it to
+      // fetch makes the timeout actually abort the in-flight request.
       const res = await this.opts.fetchImpl(this.opts.tokenEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: body.toString(),
-        signal: controller.signal,
+        signal,
       });
       if (!res.ok) {
         this.opts.logger?.warn("internal-token acquire failed", {
@@ -126,14 +151,8 @@ export class HttpKeyCustodianClient implements KeyCustodianClient {
         return AuthFailures.jwksUnavailable() as D2Result<InternalTokenSnapshot>;
       }
       return ok(snapshot);
-    } catch (err) {
-      this.opts.logger?.warn("internal-token acquire threw", {
-        endpoint: this.opts.tokenEndpoint,
-        errorName: err instanceof Error ? err.name : "unknown",
-      });
-      return AuthFailures.jwksUnavailable() as D2Result<InternalTokenSnapshot>;
     } finally {
-      clearTimeout(timer);
+      this.inflight--;
     }
   }
 }

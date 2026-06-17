@@ -61,7 +61,6 @@ Wires the canonical D² service-defaults stack in this exact order:
 8. `AddD2HealthChecks()` — baseline `"self"` check tagged `"live"`. Idempotent.
 9. `AddD2ProblemDetails(opts.ProblemDetailsConfigure)` — RFC 7807 customizer (`traceId` + `correlationId` + `instance` enrichment).
 10. `AddD2Cors(configuration, opts.CorsConfigure)` — `D2_DEFAULT` policy + indexed `D2_CORS_ORIGINS__*` env-var binding. Fail-closed via `ValidateOnStart()`.
-11. `ConfigureHttpClientDefaults(http => http.AddStandardResilienceHandler())` — BCL standard resilience handler (retry + circuit-break + timeout) for ALL named `HttpClient` instances. Skipped when `SkipHttpClientResilienceDefaults = true`.
 
 **Auth wiring contract (fail-fast)**: when `SkipAuthAutoWiring = false` (the default), `AuthConfigure` MUST be non-null — the aggregator throws `InvalidOperationException` at host build with a remediation message otherwise. Setting `SkipAuthAutoWiring = true` opts out of auth wiring entirely (test hosts, anonymous-only admin endpoints).
 
@@ -110,7 +109,6 @@ Re-exports `D2.Shared.AspNetCore.RunD2ServiceWebApplicationExtensions.RunD2Servi
 | `SkipAuthAutoWiring`               | `AddD2Auth` / `AddD2AuthHttp` / `AddD2AuthGrpc` / `AddD2AuthEndpointGuard` |
 | `SkipAuthEndpointGuard`            | `AddD2AuthEndpointGuard` (only effective when `SkipAuthAutoWiring = false`) |
 | `SkipLocalCacheAutoWiring`         | `AddD2LocalCache`                                                          |
-| `SkipHttpClientResilienceDefaults` | `ConfigureHttpClientDefaults(http => http.AddStandardResilienceHandler())` |
 
 Defaults are all `false` — every component is auto-wired by default. The opt-out flag set is intentionally narrow: only components where the >95% case wants auto-wire AND a small set of services (test hosts, dry-run admin tools) need to opt out. Components without an opt-out flag (Logging, Telemetry, I18n, Handler, HealthChecks, ProblemDetails, Cors) are wired unconditionally because every D² service needs them.
 
@@ -133,7 +131,7 @@ The aggregator owns ZERO field-level configuration knowledge. New options on any
 
 | Path                                            | Role                                                                                                                              |
 | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `D2.Shared.ServiceDefaults.csproj`              | csproj — `Microsoft.NET.Sdk.Web` + `OutputType=Library`. 10 `ProjectReference`s + `Microsoft.Extensions.Http.Resilience` package. |
+| `D2.Shared.ServiceDefaults.csproj`              | csproj — `Microsoft.NET.Sdk.Web` + `OutputType=Library`. 11 `ProjectReference`s + `JetBrains.Annotations` package.               |
 | `ServiceDefaultsServiceCollectionExtensions.cs` | The `AddD2ServiceDefaults` extension. Body = ordered sequence of `services.AddD2X(...)` calls.                                    |
 | `WebApplicationServiceDefaultsExtensions.cs`    | The `UseD2DefaultPipeline` + `MapD2DefaultEndpoints` + `RunD2ServiceAsync` extensions.                                            |
 | `D2ServiceDefaultsOptions.cs`                   | Sealed options class — opt-out flags + per-component pass-through `Action<T>?` delegates.                                         |
@@ -155,10 +153,9 @@ The aggregator owns ZERO field-level configuration knowledge. New options on any
 | `D2.Shared.Caching.Local.Default` | `AddD2LocalCache`                                                                                                                                                             |
 | `D2.Shared.Utilities`             | `D2Env.Load`                                                                                                                                                                  |
 
-| Package reference                      | Why                                                                                                                                                                                    |
-| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Microsoft.Extensions.Http.Resilience` | `AddStandardResilienceHandler()` for `ConfigureHttpClientDefaults` (retry + circuit-break + timeout). Not transitively present from any of the 10 ProjectRefs above; added explicitly. |
-| `JetBrains.Annotations`                | Transitive helper attributes (consumed nowhere directly here, but matches sibling foundation csproj pattern).                                                                          |
+| Package reference     | Why                                                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `JetBrains.Annotations` | Transitive helper attributes (consumed nowhere directly here, but matches sibling foundation csproj pattern). |
 
 ## Edge cases / gotchas
 
@@ -169,4 +166,3 @@ The aggregator owns ZERO field-level configuration knowledge. New options on any
 - **`MapD2DefaultEndpoints` MUST run exactly once per host.** `MapD2HealthEndpoints` raises a duplicate-route exception per the underlying ASP.NET Core endpoint-routing convention; `MapD2PrometheusEndpoint` similarly. The aggregator does not idempotency-guard the `Map*` calls.
 - **`SecurityHeadersConfigure` and `InfrastructureBypassConfigure` apply at pipeline-installation time.** Both underlying middleware extensions accept their `Action<T>?` at `Use*` time, not at service-registration time. The aggregator resolves `IOptions<D2ServiceDefaultsOptions>` from `app.ApplicationServices` to read these — when no options were registered (typical case; `AddD2ServiceDefaults` snapshots into a local but doesn't bind into DI), each underlying middleware uses its own defaults.
 - **`D2Env.Load` is idempotent.** Calling `AddD2ServiceDefaults` twice is safe — the second `D2Env.Load` no-ops via the `s_loaded` flag.
-- **`Microsoft.Extensions.Http.Resilience` is added explicitly.** Verified at build that the package is NOT transitively present from any of the 10 ProjectRefs; the aggregator's csproj adds the explicit `PackageReference` (versioned via `Directory.Packages.props`).

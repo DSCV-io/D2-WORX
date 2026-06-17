@@ -9,8 +9,10 @@ namespace D2.Shared.Tests.Unit.Resilience.Pipeline;
 using AwesomeAssertions;
 using D2.Shared.Resilience.CircuitBreaker;
 using D2.Shared.Resilience.Pipeline;
+using D2.Shared.Resilience.RateLimiting;
 using D2.Shared.Resilience.Retry;
 using D2.Shared.Resilience.Singleflight;
+using D2.Shared.Resilience.Timeout;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -181,6 +183,122 @@ public sealed class ResilientPipelineBuilderTests
         auditAfter.IsServiceUnavailable.Should().BeTrue();   // audit breaker is open
         notificationsAfter.Success.Should().BeTrue();        // notifications breaker is unaffected
         notificationsAfter.Data.Should().Be(2);
+    }
+
+    // ----------------------------------------------------------------------
+    // UseTimeout
+    // ----------------------------------------------------------------------
+
+    [Fact]
+    public async Task UseTimeout_NullOptions_AddsLayerWithDefaults()
+    {
+        var pipeline = NewBuilder<string, int>().UseTimeout().Build();
+
+        // Defaults = 10s; op completes immediately → no timeout fires.
+        var result = await pipeline.ExecuteAsync("k", _ => ValueTask.FromResult(7));
+
+        result.Success.Should().BeTrue();
+        result.Data.Should().Be(7);
+    }
+
+    [Fact]
+    public async Task UseTimeout_ExplicitOptions_AddsLayer()
+    {
+        // Very short timeout + a hanging op → ServiceUnavailable at boundary.
+        var pipeline = NewBuilder<string, int>()
+            .UseTimeout(new TimeoutOptions(TimeSpan.FromMilliseconds(30)))
+            .Build();
+
+        var result = await pipeline.ExecuteAsync("k", async ct =>
+        {
+            await Task.Delay(-1, ct);
+            return 0;
+        });
+
+        result.IsServiceUnavailable.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task UseTimeout_CalledTwice_ProducesTwoDistinctInstances_AtTwoPositions()
+    {
+        // Both a total-request timeout and a per-attempt timeout can be added
+        // via two UseTimeout calls. Verify by making the per-attempt one very short
+        // and an outer retry catch the timeout then succeed on a fast second attempt.
+        var attempts = 0;
+        var pipeline = NewBuilder<string, int>()
+            .UseTimeout(new TimeoutOptions(TimeSpan.FromSeconds(5))) // total
+            .UseRetries(NoDelayOptions(maxAttempts: 3))
+            .UseTimeout(new TimeoutOptions(TimeSpan.FromMilliseconds(40))) // per-attempt
+            .Build();
+
+        var result = await pipeline.ExecuteAsync("k", async ct =>
+        {
+            var n = Interlocked.Increment(ref attempts);
+            if (n == 1)
+                await Task.Delay(-1, ct);
+            return 42;
+        });
+
+        result.Success.Should().BeTrue();
+        result.Data.Should().Be(42);
+        attempts.Should().Be(2);
+    }
+
+    // ----------------------------------------------------------------------
+    // UseRateLimiter
+    // ----------------------------------------------------------------------
+
+    [Fact]
+    public async Task UseRateLimiter_NullOptions_AddsLayerWithDefaults()
+    {
+        var pipeline = NewBuilder<string, int>().UseRateLimiter().Build();
+
+        // Defaults = MaxConcurrency 100; single call succeeds.
+        var result = await pipeline.ExecuteAsync("k", _ => ValueTask.FromResult(7));
+
+        result.Success.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task UseRateLimiter_ExplicitOptions_AddsLayer()
+    {
+        // MaxConcurrency=1 + zero acquisition timeout → second concurrent call rejected.
+        var pipeline = NewBuilder<string, int>()
+            .UseRateLimiter(new RateLimiterOptions(maxConcurrency: 1, acquisitionTimeout: TimeSpan.Zero))
+            .Build();
+
+        var gate = new TaskCompletionSource();
+        var first = pipeline.ExecuteAsync("k", async _ =>
+        {
+            await gate.Task;
+            return 1;
+        }).AsTask();
+
+        await Task.Delay(20);
+
+        var second = await pipeline.ExecuteAsync("k", _ => ValueTask.FromResult(99));
+
+        second.IsRateLimited.Should().BeTrue();
+
+        gate.SetResult();
+        await first;
+    }
+
+    [Fact]
+    public async Task UseRateLimiter_ServiceKey_ResolvesKeyedFromServiceProvider()
+    {
+        const string key = "test-rl-key";
+        var services = new ServiceCollection();
+        services.AddKeyedSingleton<RateLimiter>(key, (_, _) => new RateLimiter(new(maxConcurrency: 5)));
+        var sp = services.BuildServiceProvider();
+
+        var pipeline = new ResilientPipelineBuilder<string, int>(sp)
+            .UseRateLimiter(serviceKey: key)
+            .Build();
+
+        var result = await pipeline.ExecuteAsync("k", _ => ValueTask.FromResult(42));
+
+        result.Success.Should().BeTrue();
     }
 
     // ----------------------------------------------------------------------

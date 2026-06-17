@@ -48,11 +48,7 @@ public static class ServiceDefaultsServiceCollectionExtensions
         /// is <c>true</c>);
         /// <c>AddD2HealthChecks()</c>;
         /// <c>AddD2ProblemDetails(options.ProblemDetailsConfigure)</c>;
-        /// <c>AddD2Cors(configuration, options.CorsConfigure)</c>;
-        /// <c>ConfigureHttpClientDefaults(http =&gt; http.AddStandardResilienceHandler())</c>
-        /// (skipped when
-        /// <see cref="D2ServiceDefaultsOptions.SkipHttpClientResilienceDefaults"/>
-        /// is <c>true</c>).
+        /// <c>AddD2Cors(configuration, options.CorsConfigure)</c>.
         /// </summary>
         /// <remarks>
         /// <para>
@@ -194,12 +190,6 @@ public static class ServiceDefaultsServiceCollectionExtensions
                 // it needs; both are idempotent at the framework level.
                 services.AddAuthentication();
                 services.AddAuthorization();
-            }
-
-            if (options.SkipHttpClientResilienceDefaults is false)
-            {
-                services.ConfigureHttpClientDefaults(http =>
-                    http.AddStandardResilienceHandler());
             }
 
             return services;

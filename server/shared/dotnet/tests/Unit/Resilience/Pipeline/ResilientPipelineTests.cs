@@ -9,7 +9,7 @@ namespace D2.Shared.Tests.Unit.Resilience.Pipeline;
 using AwesomeAssertions;
 using D2.Shared.Resilience.CircuitBreaker;
 using D2.Shared.Resilience.Pipeline;
-using D2.Shared.Resilience.Retry;
+using D2.Shared.Resilience.RateLimiting;
 using Xunit;
 using SingleflightT = D2.Shared.Resilience.Singleflight.Singleflight<string, int>;
 
@@ -192,7 +192,7 @@ public sealed class ResilientPipelineTests
         var pipeline = new ResilientPipeline<string, int>(
             new CircuitBreakerLayer<string, int>(
                 new CircuitBreaker<int>(_ => false, options: new(failureThreshold: 100))),
-            new RetryLayer<string, int>(NoDelayOptions(maxAttempts: 5)));
+            NoDelayOptions(maxAttempts: 5));
 
         var attempts = 0;
         var result = await pipeline.ExecuteAsync("k", _ =>
@@ -233,20 +233,23 @@ public sealed class ResilientPipelineTests
                 nowFunc: clock.Now));
 
         var attempts = 0;
-        var retryOptions = NoDelayOptions(maxAttempts: 3) with
-        {
-            DelayFunc = (_, _) =>
-            {
-                // Each retry "wait" advances simulated time past the cooldown
-                // so the CB transitions to Half-Open by the next attempt.
-                clock.Advance(TimeSpan.FromSeconds(2));
-                return Task.CompletedTask;
-            },
-        };
 
         // Layer order: Retry OUTER, CircuitBreaker INNER.
         var pipeline = new ResilientPipeline<string, int>(
-            new RetryLayer<string, int>(retryOptions),
+            new RetryLayer<string, int>(new()
+            {
+                MaxAttempts = 3,
+                BaseDelayMs = 0,
+                MaxDelayMs = 0,
+                Jitter = false,
+                DelayFunc = (_, _) =>
+                {
+                    // Each retry "wait" advances simulated time past the cooldown
+                    // so the CB transitions to Half-Open by the next attempt.
+                    clock.Advance(TimeSpan.FromSeconds(2));
+                    return Task.CompletedTask;
+                },
+            }),
             new CircuitBreakerLayer<string, int>(cb));
 
         var result = await pipeline.ExecuteAsync("k", _ =>
@@ -291,7 +294,7 @@ public sealed class ResilientPipelineTests
             var pipeline = new ResilientPipeline<string, int>(
                 new SingleflightLayer<string, int>(sf),
                 new CircuitBreakerLayer<string, int>(cb),
-                new RetryLayer<string, int>(NoDelayOptions(maxAttempts: 5)));
+                NoDelayOptions(maxAttempts: 5));
 
             var attempts = 0;
             var gate = new TaskCompletionSource();
@@ -412,7 +415,7 @@ public sealed class ResilientPipelineTests
         cb.State.Should().Be(CircuitState.Open);
 
         var pipeline = new ResilientPipeline<string, int>(
-            new RetryLayer<string, int>(NoDelayOptions(maxAttempts: 3)),
+            NoDelayOptions(maxAttempts: 3),
             new CircuitBreakerLayer<string, int>(cb));
 
         var result = await pipeline.ExecuteAsync("k", _ => ValueTask.FromResult(1));
@@ -421,15 +424,135 @@ public sealed class ResilientPipelineTests
         result.IsServiceUnavailable.Should().BeTrue();
     }
 
-    private static RetryOptions<int> NoDelayOptions(int maxAttempts = 3)
-        => new()
+    // ----------------------------------------------------------------------
+    // New mappings: TimeoutException + RateLimitRejectedException
+    // ----------------------------------------------------------------------
+
+    [Fact]
+    public async Task ExecuteAsync_TimeoutException_MapsToServiceUnavailable()
+    {
+        // TimeoutException is classified transient by IsTransientException →
+        // maps to ServiceUnavailable (503, IsTransientRetryable=true).
+        var pipeline = new ResilientPipeline<string, int>();
+
+        var result = await pipeline.ExecuteAsync("k", _ => throw new TimeoutException("slow"));
+
+        result.Success.Should().BeFalse();
+        result.IsServiceUnavailable.Should().BeTrue();
+        result.IsTransientRetryable.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_RateLimitRejectedException_MapsToTooManyRequests()
+    {
+        // Verifies the new RateLimitRejectedException → TooManyRequests catch arm.
+        var pipeline = new ResilientPipeline<string, int>();
+
+        var result = await pipeline.ExecuteAsync("k", _ => throw new RateLimitRejectedException());
+
+        result.Success.Should().BeFalse();
+        result.IsRateLimited.Should().BeTrue();
+        result.IsTransientRetryable.Should().BeTrue();
+    }
+
+    // ----------------------------------------------------------------------
+    // PassThrough sentinel
+    // ----------------------------------------------------------------------
+
+    [Fact]
+    public async Task PassThrough_IsZeroLayerPipeline_MapsExceptionsToD2Result()
+    {
+        // PassThrough performs exception→D2Result mapping (it IS a zero-layer pipeline).
+        var result = await ResilientPipeline<string, int>.PassThrough.ExecuteAsync(
+            "k",
+            _ => throw new InvalidOperationException("programmer error"));
+
+        result.Success.Should().BeFalse();
+        result.IsUnhandledException.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task PassThrough_SuccessfulOp_ReturnsOk()
+    {
+        var result = await ResilientPipeline<string, int>.PassThrough.ExecuteAsync(
+            "k",
+            _ => ValueTask.FromResult(99));
+
+        result.Success.Should().BeTrue();
+        result.Data.Should().Be(99);
+    }
+
+    [Fact]
+    public void PassThrough_IsSingletonInstance()
+    {
+        var a = ResilientPipeline<string, int>.PassThrough;
+        var b = ResilientPipeline<string, int>.PassThrough;
+
+        a.Should().BeSameAs(b);
+    }
+
+    [Fact]
+    public async Task PassThrough_DoesNotRetry_OperationCalledOnce()
+    {
+        // Zero layers = no retry, even if the exception is transient.
+        var calls = 0;
+
+        var result = await ResilientPipeline<string, int>.PassThrough.ExecuteAsync("k", _ =>
+        {
+            Interlocked.Increment(ref calls);
+            throw new TimeoutException();
+        });
+
+        result.IsServiceUnavailable.Should().BeTrue();
+        calls.Should().Be(1);
+    }
+
+    // ----------------------------------------------------------------------
+    // Canonical full-stack ordering: RateLimiter → Timeout(total) → Retry → CB → Timeout(per-attempt)
+    // ----------------------------------------------------------------------
+
+    [Fact]
+    public async Task ExecuteAsync_CanonicalFullStack_LayersAppliedInOrder()
+    {
+        // Verify outer-first ordering with all five layer types via a tracing op.
+        // The canonical order: RateLimiter → TotalTimeout → Retry → CB → PerAttemptTimeout.
+        var trace = new List<string>();
+        var pipeline = new ResilientPipeline<string, int>(
+            new TracingLayer("rate-limiter", trace),
+            new TracingLayer("total-timeout", trace),
+            new TracingLayer("retry", trace),
+            new TracingLayer("cb", trace),
+            new TracingLayer("per-attempt-timeout", trace));
+
+        await pipeline.ExecuteAsync("k", _ =>
+        {
+            trace.Add("op");
+            return ValueTask.FromResult(1);
+        });
+
+        trace.Should().Equal(
+            "rate-limiter-enter",
+            "total-timeout-enter",
+            "retry-enter",
+            "cb-enter",
+            "per-attempt-timeout-enter",
+            "op",
+            "per-attempt-timeout-exit",
+            "cb-exit",
+            "retry-exit",
+            "total-timeout-exit",
+            "rate-limiter-exit");
+    }
+
+    private static RetryLayer<string, int> NoDelayOptions(int maxAttempts = 3)
+        => new(new()
         {
             MaxAttempts = maxAttempts,
             BaseDelayMs = 0,
             MaxDelayMs = 0,
             Jitter = false,
             DelayFunc = (_, _) => Task.CompletedTask,
-        };
+        });
 
     private sealed class FakeClock
     {

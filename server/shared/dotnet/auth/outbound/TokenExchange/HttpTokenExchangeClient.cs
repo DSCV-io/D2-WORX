@@ -11,6 +11,7 @@ using System.Text;
 using System.Text.Json;
 using D2.Shared.Auth.Abstractions;
 using D2.Shared.Auth.Outbound.Telemetry;
+using D2.Shared.Resilience.CircuitBreaker;
 using D2.Shared.Resilience.Singleflight;
 using D2.Shared.Result;
 using D2.Shared.Utilities.Diagnostics;
@@ -57,6 +58,7 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
     private readonly AuthOutboundOptions r_options;
     private readonly ILogger<HttpTokenExchangeClient> r_logger;
     private readonly Singleflight<string, FetchResult> r_singleflight = new();
+    private readonly CircuitBreaker<FetchResult> r_circuitBreaker;
     private bool _disposed;
 
     /// <summary>
@@ -67,25 +69,43 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
     /// <param name="cache">The shared token-exchange cache.</param>
     /// <param name="options">Outbound auth options.</param>
     /// <param name="logger">The logger.</param>
+    /// <param name="clock">The time provider (overridable for tests).</param>
     [MustDisposeResource(false)]
     public HttpTokenExchangeClient(
         IHttpClientFactory httpClientFactory,
         IConfigurationManager<OpenIdConnectConfiguration> configManager,
         TokenExchangeCache cache,
         IOptions<AuthOutboundOptions> options,
-        ILogger<HttpTokenExchangeClient> logger)
+        ILogger<HttpTokenExchangeClient> logger,
+        TimeProvider clock)
     {
         ArgumentNullException.ThrowIfNull(httpClientFactory);
         ArgumentNullException.ThrowIfNull(configManager);
         ArgumentNullException.ThrowIfNull(cache);
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(clock);
 
         r_httpClientFactory = httpClientFactory;
         r_configManager = configManager;
         r_cache = cache;
         r_options = options.Value;
         r_logger = logger;
+
+        // 5 consecutive transient-failure FetchResults → 30 s open, matching the
+        // JWKS-provider breaker config (HttpJwksProvider / JwksProviderOptions
+        // defaults: 5 failures, 30 s cooldown). Value-based predicate required
+        // because FetchAsync catches exceptions internally and returns
+        // FetchResult.TransientFailure() — the breaker would never see an
+        // exception without this predicate.
+        // NowFunc converts TimeProvider.GetUtcNow() to milliseconds so that tests
+        // can advance FakeTimeProvider to drive cooldown deterministically.
+        r_circuitBreaker = new CircuitBreaker<FetchResult>(
+            isFailure: static r => !r.Success,
+            options: new CircuitBreakerOptions(
+                failureThreshold: AuthOutboundResilienceDefaults.FAILURE_THRESHOLD,
+                cooldownDuration: AuthOutboundResilienceDefaults.SR_CooldownDuration,
+                nowFunc: () => clock.GetUtcNow().ToUnixTimeMilliseconds()));
     }
 
     /// <inheritdoc/>
@@ -129,22 +149,31 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
             return D2Result<string>.Ok(cached);
         }
 
-        // Cache miss → singleflight on the cache key. Concurrent first-callers
-        // for the same (sessionId, audience, scope-set) tuple share one fetch.
+        // Cache miss → singleflight (outer) wrapping circuit breaker (inner).
+        // Concurrent first-callers for the same (sessionId, audience, scope-set)
+        // tuple share one fetch via Singleflight; the breaker fast-fails when
+        // Edge has been repeatedly unreachable.
         var request = new ExchangeRequest(
             (Guid)sessionId,
             subjectToken,
             targetAudience,
             narrowedScopes,
             key);
-        var fetchResult = await r_singleflight.ExecuteAsync(
-            key,
-            innerCt => FetchAsync(request, innerCt),
-            ct);
-
-        return fetchResult.Success
-            ? D2Result<string>.Ok(fetchResult.Token!)
-            : D2Result<string>.ServiceUnavailable();
+        try
+        {
+            var fetchResult = await r_singleflight.ExecuteAsync(
+                key,
+                innerCt => r_circuitBreaker.ExecuteAsync(
+                    cbCt => FetchAsync(request, cbCt), ct: innerCt),
+                ct);
+            return fetchResult.Success
+                ? D2Result<string>.Ok(fetchResult.Token!)
+                : D2Result<string>.ServiceUnavailable();
+        }
+        catch (CircuitOpenException)
+        {
+            return D2Result<string>.ServiceUnavailable();
+        }
     }
 
     /// <inheritdoc/>
@@ -353,13 +382,21 @@ internal sealed class HttpTokenExchangeClient : ITokenExchangeClient, IDisposabl
     }
 
     /// <summary>
-    /// Internal fetch outcome — see <see cref="ServiceIdentity.HttpServiceIdentityClient"/>
+    /// Fetch outcome — see <see cref="ServiceIdentity.HttpServiceIdentityClient"/>
     /// for the shape rationale.
+    /// <para>
+    /// <c>internal</c> (not <c>private</c>) so the assembly-level
+    /// <see cref="CircuitBreaker{T}"/> generic can be instantiated with this
+    /// type from within the same assembly.
+    /// </para>
     /// </summary>
-    private readonly record struct FetchResult(bool Success, string? Token)
+    internal readonly record struct FetchResult(bool Success, string? Token)
     {
+        /// <summary>Returns a successful fetch outcome carrying the exchanged token.</summary>
+        /// <param name="token">The exchanged access token.</param>
         public static FetchResult Successful(string token) => new(true, token);
 
+        /// <summary>Returns a transient-failure fetch outcome (no token).</summary>
         public static FetchResult TransientFailure() => new(false, null);
     }
 

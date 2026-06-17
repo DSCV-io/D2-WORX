@@ -358,4 +358,61 @@ describe("HttpKeyCustodianClient — timeout", () => {
     const result = await client.acquireToken();
     expect(result.success).toBe(false);
   });
+
+  it("the resilience TimeoutLayer ABORTS the underlying fetch on timeout", async () => {
+    // Proves the migration's whole point: the pipeline's timeout threads its
+    // AbortSignal into fetch, so the in-flight request is genuinely canceled
+    // (socket released) — not merely abandoned while it keeps running.
+    let observedSignal: AbortSignal | undefined;
+    const fetchImpl = vi.fn(async (_url: string, init?: RequestInit) => {
+      observedSignal = init?.signal as AbortSignal | undefined;
+      return new Promise<Response>((_resolve, reject) => {
+        observedSignal?.addEventListener("abort", () =>
+          reject(Object.assign(new Error("aborted"), { name: "AbortError" })),
+        );
+      });
+    });
+    const client = new HttpKeyCustodianClient({
+      ...VALID_OPTS,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      timeoutMs: 30,
+    });
+
+    const result = await client.acquireToken();
+
+    // fetch received a signal, and the timeout aborted it.
+    expect(observedSignal).toBeDefined();
+    expect(observedSignal?.aborted).toBe(true);
+    // The timeout maps to the same jwksUnavailable failure as the inner paths.
+    expect(result.success).toBe(false);
+    // The inflight probe returns to 0 (the fetchToken finally ran).
+    expect(client.inflightCount).toBe(0);
+  });
+
+  it("concurrent acquireToken calls during a timeout still trigger ONE fetch", async () => {
+    // Singleflight-in-pipeline dedup survives the timeout migration.
+    let count = 0;
+    const fetchImpl = vi.fn(async (_url: string, init?: RequestInit) => {
+      count++;
+      const signal = init?.signal as AbortSignal | undefined;
+      return new Promise<Response>((_resolve, reject) => {
+        signal?.addEventListener("abort", () =>
+          reject(Object.assign(new Error("aborted"), { name: "AbortError" })),
+        );
+      });
+    });
+    const client = new HttpKeyCustodianClient({
+      ...VALID_OPTS,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      timeoutMs: 25,
+    });
+
+    const results = await Promise.all(
+      Array.from({ length: 10 }, () => client.acquireToken()),
+    );
+
+    expect(count).toBe(1); // deduped despite 10 callers + a timeout
+    expect(results.every((r) => !r.success)).toBe(true);
+    expect(client.inflightCount).toBe(0);
+  });
 });

@@ -206,37 +206,6 @@ public sealed class TelemetryPipelineE2ETests
     }
 
     [Fact]
-    public async Task OTelSdk_AddD2ServiceDefaults_HttpClientResilience_DoesNotBreakHostBuild()
-    {
-        // SkipHttpClientResilienceDefaults=false (default) installs the
-        // standard resilience handler on EVERY HttpClient including OTel's
-        // OTLP exporters. Pin that the host still builds cleanly.
-        await using var handle = await CompositeTestHostBuilder.BuildAsync(
-            captureSerilog: false,
-            configureOptions: opts =>
-            {
-                opts.SkipAuthAutoWiring = true;
-                opts.SkipHttpClientResilienceDefaults = false;
-            });
-
-        handle.Host.Should().NotBeNull();
-    }
-
-    [Fact]
-    public async Task OTelSdk_SkipHttpClientResilienceDefaults_True_HostBuilds()
-    {
-        await using var handle = await CompositeTestHostBuilder.BuildAsync(
-            captureSerilog: false,
-            configureOptions: opts =>
-            {
-                opts.SkipAuthAutoWiring = true;
-                opts.SkipHttpClientResilienceDefaults = true;
-            });
-
-        handle.Host.Should().NotBeNull();
-    }
-
-    [Fact]
     public async Task OTelSdk_OnGetProbe_TraceContext_PropagatedThroughActivity()
     {
         // Verify the trace-id flows from HttpContext through the OTel

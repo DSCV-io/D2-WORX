@@ -44,7 +44,11 @@ describe("ResilientPipelineBuilder", () => {
   it("retry layer retries on transient errors", async () => {
     let calls = 0;
     const p = new ResilientPipelineBuilder()
-      .useRetries({ maxAttempts: 3, delayFunc: noDelay })
+      .useRetries({
+        maxAttempts: 3,
+        isTransient: () => true,
+        delayFunc: noDelay,
+      })
       .build();
     const r = await p.execute("k", async () => {
       calls++;
@@ -58,7 +62,11 @@ describe("ResilientPipelineBuilder", () => {
     let calls = 0;
     const p = new ResilientPipelineBuilder()
       .useSingleflight()
-      .useRetries({ maxAttempts: 3, delayFunc: noDelay })
+      .useRetries({
+        maxAttempts: 3,
+        isTransient: () => true,
+        delayFunc: noDelay,
+      })
       .build();
     const r = await p.execute("k", async () => {
       calls++;

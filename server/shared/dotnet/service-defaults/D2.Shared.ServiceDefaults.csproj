@@ -53,16 +53,6 @@ Copyright (c) DCSV. All rights reserved.
 
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations" />
-    <!--
-      Microsoft.Extensions.Http.Resilience — provides AddStandardResilienceHandler()
-      for ConfigureHttpClientDefaults. Not transitively present from any of the 10
-      ProjectRefs above (verified via grep: only Microsoft.Extensions.Http is
-      transitively pulled by D2.Shared.Auth.Outbound; Resilience is a separate
-      package). Adding explicitly here so AddD2ServiceDefaults can wire the
-      retry + circuit-break + timeout handler for ALL named HttpClients in the
-      host. Documented as §13.13 reconciliation in the step's journal.
-    -->
-    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
   </ItemGroup>
 
   <ItemGroup>
