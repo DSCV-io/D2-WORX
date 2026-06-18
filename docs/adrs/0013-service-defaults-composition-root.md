@@ -5,7 +5,7 @@ Copyright (c) DCSV. All rights reserved.
 # ADR-0013: ServiceDefaults — thin-aggregator composition root with a locked middleware order
 
 - **Status**: Accepted
-- **Date**: 2026-05-30
+- **Date**: 2026-05-30 (mTLS / forwarded-token forward note: 2026-06-18)
 - **Deliverable**: D2 shared libraries (backfilled)
 
 ## Context
@@ -42,6 +42,7 @@ Two fail-closed behaviors are baked in at host build, not deferred to request ti
 **Negative / risks.**
 
 - Services with genuinely non-standard ordering (e.g. a future Edge rate-limit layer between infra-bypass and authentication) cannot use `UseD2DefaultPipeline` and must hand-wire from the underlying lib extensions (the README acknowledges this; the rate-limit middleware will slot between infra-bypass and authentication when it ships).
+- The composition root wires inbound-only cross-cutting today; the cross-process workload-auth and forwarded-transaction-token plumbing is not built yet. When mTLS workload authentication ([ADR-0023](0023-mtls-workload-identity.md)) and forwarded-transaction-token validation ([ADR-0022](0022-service-auth-mint-once-forward.md)) are built, the mTLS client- and server-certificate validation and the forwarded-token handling slot into this composition root — the outbound mTLS channel configuration on the service's gRPC/HTTP clients and the server-side peer-certificate check alongside the existing inbound auth wiring. The locked inbound stack above is unchanged by that addition; the new layers compose with it rather than replace it.
 - The locked order has no in-band override: a consumer needing a single insertion must forgo the aggregator entirely — there is no partial use.
 - The aggregator csproj pulls the full ASP.NET Core web SDK graph into every referencing service, including services that might otherwise target a smaller SDK — intentional, but a transitive dependency cost.
 - The opt-out flags (`SkipAuthAutoWiring`, `SkipLocalCacheAutoWiring`) require explicit consumer awareness; a test host that omits the opt-out wires auth and fail-fasts without an `AuthConfigure` delegate — intended, but can surprise first-time contributors.

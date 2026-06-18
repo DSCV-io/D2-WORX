@@ -6,7 +6,16 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../../README.md)
 
-Outbound auth runtime — service-to-service identity (`client_credentials`) + user-context propagation (`token-exchange`, RFC 8693) + per-channel gRPC opt-in for attaching the service-identity bearer to outbound D² calls. Pure consumer of Edge's OAuth `token_endpoint`; this lib does NOT issue tokens.
+> ## ⚠ Status — this lib predates the auth pivot; read before relying on any flow below
+>
+> The service-to-service auth model changed. Two of this lib's surfaces no longer describe the intended runtime:
+>
+> - **`client_credentials` service identity (`IServiceIdentityClient` / `ServiceIdentityCallCredentials` / `AddD2ServiceIdentity()`) is superseded by mTLS workload identity** ([ADR-0023](../../../../../docs/adrs/0023-mtls-workload-identity.md)). Which workload is calling is established by a mutually-authenticated TLS channel — a verified client certificate — not by a service-identity bearer threaded onto every hop. Threading a second JWT through each hop would reintroduce a per-hop mint and an audience-targeting problem at a strict receiver; mTLS supplies workload identity without either.
+> - **RFC 8693 token exchange (`ITokenExchangeClient`) is repurposed off the per-hop path** ([ADR-0022](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md)). Edge mints exactly one internal transaction-token at the trust boundary; every downstream cross-process hop **forwards that token unchanged and re-validates it** rather than exchanging for a narrowed one. Exchange is retained for the single boundary mint and the deliberate exceptions — cross-trust-domain calls, justified narrowing, asynchronous scope reduction, and establishing/extending an impersonation `act` chain — not as the per-hop business default.
+>
+> **This lib is built but wired into no request flow today** — its clients have test-only callers and the Edge issuer endpoint they target is not built. The code disposition (remove the service-identity surface, keep the repurposed token-exchange surface) is a later deliverable; nothing here is removed yet. The sections below describe the lib **as it currently exists**, not the intended steady-state runtime.
+
+Outbound auth runtime — an RFC 8693 `token-exchange` client (`ITokenExchangeClient`) plus the now-superseded `client_credentials` service-identity client (`IServiceIdentityClient`) and a per-channel gRPC opt-in that attaches a service-identity bearer to outbound D² calls. Pure consumer of Edge's OAuth `token_endpoint`; this lib does NOT issue tokens. See the status note above for which surfaces are superseded (service identity → mTLS) versus repurposed (token exchange → boundary mint + exceptions).
 
 OIDC discovery is canonical: a single `D2_AUTH_ISSUER` env var drives `<issuer>/.well-known/openid-configuration`, and `token_endpoint` is read from the discovery doc — no separate URL knobs.
 
@@ -16,10 +25,12 @@ OIDC discovery is canonical: a single `D2_AUTH_ISSUER` env var drives `<issuer>/
 
 ### Outbound clients
 
+> Per the status note above: `IServiceIdentityClient` is superseded by mTLS workload identity, and `ITokenExchangeClient` is repurposed to the boundary mint + exception cases (not the per-hop default). The shapes below document the lib as it currently exists.
+
 | Type                                                                                    | Role                                                                                                                                     |
 | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `IServiceIdentityClient.GetCurrentTokenAsync(ct)`                                       | Returns the current service-identity JWT for outbound calls (cached in-process; refreshed proactively by the background hosted service). |
-| `ITokenExchangeClient.ExchangeAsync(subjectToken, targetAudience, narrowedScopes?, ct)` | Exchanges an inbound user JWT for a downstream-audience JWT (RFC 8693). Cached per `(sessionId, audience, scope-set)` in `ILocalCache`.  |
+| `ITokenExchangeClient.ExchangeAsync(subjectToken, targetAudience, narrowedScopes?, ct)` | Exchanges a subject JWT for a token addressed to `targetAudience` (RFC 8693). Cached per `(sessionId, audience, scope-set)` in `ILocalCache`.  |
 
 ### Composition root
 
@@ -41,7 +52,9 @@ Registers:
 - Three named `HttpClient`s (`d2-auth-oidc-discovery`, `d2-auth-service-identity`, `d2-auth-token-exchange`)
 - `ServiceIdentityRefreshHostedService` (proactive refresh ~60 s before token expiry)
 
-### Per-channel gRPC opt-in
+### Per-channel gRPC opt-in (service-identity attachment — superseded)
+
+> The service-identity bearer this section attaches is superseded by mTLS workload identity ([ADR-0023](../../../../../docs/adrs/0023-mtls-workload-identity.md)) — under the steady-state model the calling workload is identified by the mutually-authenticated TLS channel, and the bearer a downstream gRPC call carries is the single Edge-minted transaction-token forwarded unchanged ([ADR-0022](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md)), not a separate service-identity token. The opt-in below describes the lib as it currently stands; its disposition is a later deliverable.
 
 ```csharp
 services
@@ -138,6 +151,8 @@ Tag-key + tag-value constants are emitted by [`D2.Shared.Telemetry.Tags.SourceGe
 
 ## Bootstrap order
 
+> The bootstrap chain below reflects the superseded `client_credentials` service-identity model, where a service-identity bearer was acquired first and then used to authenticate a host's own outbound calls to Edge. Under the current model that chain dissolves: cross-process calls authenticate their workload by mTLS ([ADR-0023](../../../../../docs/adrs/0023-mtls-workload-identity.md)) — a host's keyring / JWKS calls to Edge present a client certificate, not a service-identity JWT — so the "acquire a service-identity token first" ordering requirement falls away. The bootstrap ordering for the mTLS path (certificate material available before the first outbound call) is part of the subsystem the implementing deliverable builds. This section is retained as a description of the lib as it currently stands.
+
 This lib's pieces depend on standard .NET hosting infrastructure but produce a strict bootstrap-order requirement for downstream auth components:
 
 1. `IServiceIdentityClient` initializes (the refresh hosted service acquires the first token at startup).
@@ -154,5 +169,7 @@ Hosts that deploy the inbound `D2.Shared.Auth` lib alongside this one MUST regis
 - [`D2.Shared.Auth.Abstractions`](../abstractions/README.md) — `Audiences.*` / `JwtClaimTypes.*` constants
 - [`D2.Shared.Caching.Abstractions`](../../caching/abstractions/README.md) — `ILocalCache` + `ICacheInvalidationBackplane` interfaces
 - [`D2.Shared.Resilience`](../../resilience/README.md) — `Singleflight` for fetch-path deduplication + `CircuitBreaker` to fast-fail during sustained Edge outage
-- [RFC 6749 §4.4](https://datatracker.ietf.org/doc/html/rfc6749#section-4.4) — `client_credentials` grant for service-identity tokens
-- [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) — token-exchange grant for user-context propagation
+- [ADR-0022](../../../../../docs/adrs/0022-service-auth-mint-once-forward.md) — mint-once-at-the-Edge, forward-unchanged service-to-service model; token exchange repurposed to the boundary mint + exceptions
+- [ADR-0023](../../../../../docs/adrs/0023-mtls-workload-identity.md) — mTLS workload identity that supersedes the `client_credentials` service-identity layer
+- [RFC 6749 §4.4](https://datatracker.ietf.org/doc/html/rfc6749#section-4.4) — `client_credentials` grant (the basis of the superseded service-identity client)
+- [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) — token-exchange grant (the boundary mint + the exception cases)

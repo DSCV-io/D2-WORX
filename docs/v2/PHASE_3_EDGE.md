@@ -73,7 +73,7 @@ Edge is the HTTP entry-point for scheduler-triggered work; the scheduler itself
 
 ```
 Cron trigger
-  → HTTP POST to Edge (service-identity JWT auth)
+  → HTTP POST to Edge (mTLS workload-identity auth — ADR-0023)
   → Edge forwards via gRPC to the owning service
   → Service handler acquires Redis lock
   → Batch delete / cleanup loop
@@ -103,8 +103,8 @@ shared Redis lock surface.
 
 > Cross-reference: the scheduler side (Dkron + cron config + retry policy) lives in
 > [PHASE_8_REFERENCE.md](PHASE_8_REFERENCE.md). The split is deliberate — Edge owns
-> the HTTP entry-point + service-identity auth + gRPC forwarding; the scheduler owns
-> what fires when.
+> the HTTP entry-point + mTLS workload-identity auth ([ADR-0023](../adrs/0023-mtls-workload-identity.md)) +
+> gRPC forwarding; the scheduler owns what fires when.
 
 ---
 

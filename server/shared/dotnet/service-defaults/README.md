@@ -17,7 +17,7 @@ The lib does NOT own (each is opt-in via the owning lib's own builder):
 - Tiered cache — `D2.Shared.Caching.Tiered`.
 - PostgreSQL — `D2.Shared.Handler.Repo.Postgres`.
 - RabbitMQ — `D2.Shared.Messaging.RabbitMq`.
-- Outbound auth — `D2.Shared.Auth.Outbound`.
+- Outbound auth — `D2.Shared.Auth.Outbound`. (Its `client_credentials` service-identity surface is superseded by mTLS workload identity per [ADR-0023](../../../../docs/adrs/0023-mtls-workload-identity.md); the RFC 8693 token-exchange half persists for the boundary mint + exceptions. Removing the service-identity components is a later deliverable.)
 
 ## Public API surface
 

@@ -16,8 +16,10 @@ two interceptors:
   `IPropagatedContext` into the `x-d2-context` gRPC metadata key + forwards
   `traceparent` / `tracestate` for W3C tracing.
 
-Mirrors the .NET `services.AddGrpcClient<T>()` registration shape +
-`D2.Shared.Auth.Outbound.ServiceIdentity.IServiceIdentityClient` semantics.
+Mirrors the .NET `services.AddGrpcClient<T>()` registration shape. The
+internal-token interceptor is the BFF's boundary-token acquisition — the BFF
+is an external client of Edge, so it acquires a `client_credentials` token
+(`aud=d2.edge`) and presents it on every gRPC call to Edge.
 
 ## Public API
 

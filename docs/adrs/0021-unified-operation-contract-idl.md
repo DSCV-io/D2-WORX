@@ -5,7 +5,7 @@ Copyright (c) DCSV. All rights reserved.
 # ADR-0021: Unified operation-contract IDL — one source per operation generates every representation across three transport planes, with TypeSpec as the compiler front-end and a D2-owned emitter fleet
 
 - **Status**: Accepted (validated 2026-06-13 by the supervised TypeSpec spike)
-- **Date**: 2026-06-13
+- **Date**: 2026-06-13 (service-auth cross-ref: 2026-06-18)
 - **Deliverable**: Edge contract-IDL spike
 
 ## Context
@@ -136,6 +136,8 @@ The seed `@d2/typespec-decorators` package and a diagnostic emitter were authore
 
 - [ADR-0019](0019-wrapped-result-wire-model.md) — the wrapped-result wire model whose `D2ResultProto` envelope and `D2ErrorResponse` arm the generated wire DTOs carry; the emitters target this codec rather than re-inventing one.
 - [ADR-0020](0020-service-project-structure.md) — the service-project structure standard whose layer boundaries the generated artifacts respect: transport mappers land in `api/Mappers/`, the api is the composition root that binds generated routes/gRPC services, and a module-within-host exposes the generated leaf as its seam. This ADR realizes the unified wire-contract direction that ADR-0020 noted as a future direction without committing to an engine.
+- [ADR-0022](0022-service-auth-mint-once-forward.md) — the mint-once-at-the-Edge, forward-the-token-unchanged service-auth model this contract IDL is the codegen vehicle for: `@d2ServedBy` drives the generated forwarding client (a cross-process gRPC client or an in-process leaf) that forwards the once-minted token unchanged, `@d2Audience` for internal operations resolves to the single broad internal audience `d2.internal`, and the build-time caller-scopes-superset-of-callee-scopes check and the propagated call-path field are additive emitter outputs the forward model relies on.
+- [ADR-0023](0023-mtls-workload-identity.md) — the mTLS workload-identity decision: the generated cross-process gRPC client this IDL emits runs over the mutually-authenticated TLS channel ADR-0023 secures, so the channel carrying the forwarded token between service processes is authenticated and encrypted.
 - [ADR-0018](0018-spec-driven-error-codes.md) — the spec-driven error codes the op-IDL references rather than re-declares; the error-code-existence parity test validates the reference.
 - [ADR-0007](0007-request-context-propagation.md) — the request-context spec that remains the ambient enrichment channel an op composes with, distinct from the per-op contract.
 - [ADR-0002](0002-spec-driven-codegen.md) — the spec-driven-codegen precedent this generalizes from "one spec → a type in two languages" to "one source → types + operations + bindings + policy across every language and transport."
