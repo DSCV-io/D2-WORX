@@ -175,6 +175,58 @@ Citations inline.
   SPIFFE/SPIRE adoption would not re-architect the identities already in use. The RFC-standard token
   mechanisms (RFC 8693, RFC 7519, RFC 7517) match mainstream Auth0 / Okta / Azure / Cognito / Keycloak
   patterns.
+  - **.NET mechanism** (pointer — full design in [ADR-0023](../adrs/0023-mtls-workload-identity.md)):
+    the callee requires + validates the client certificate via Kestrel (`RequireCertificate` + a
+    custom validation callback that chains the peer cert to the internal CA and runs the SPIFFE-SAN
+    peer check), wired through the shared service-defaults host configuration; the caller presents its
+    leaf via a per-channel opt-in client-certificate attachment on the outbound gRPC builder, fed from
+    a refresh-ahead leaf cache. Certificates are ECDSA P-256 (root + intermediate + leaf), the
+    workload SAN is `spiffe://d2.internal/workload/<service>`, and KeyCustodian is the issuing CA
+    (root + online intermediate; leaves issued on demand, short-lived, expiry-first revocation).
+    Base-class-library X.509 only — no service mesh, no payware.
+
+#### Minted transaction-token claim set
+
+The one internal transaction-token Edge mints at the boundary, and which is forwarded byte-for-byte
+down every cross-process hop ([ADR-0022](../adrs/0022-service-auth-mint-once-forward.md)). The token
+is **immutable in flight** — the call-path and the operational subset ride the `x-d2-context` header
+(§3.6 / ADR-0007), **never** the signed token. Claims that surface as `IAuthContext` properties
+follow `IAuthContext.spec.json`; the operational subset that surfaces on `IRequestContext` (which
+extends `IAuthContext`) follows `IRequestContext.spec.json`; standard OAuth/OIDC claims noted
+"minted, not surfaced" below are wire-only and have no spec-file property. D²-custom claims carry
+the `d2_` prefix (§3.1).
+
+| Claim | Standard | Value at Edge mint | Forwarded unchanged? | Notes |
+| ----- | -------- | ------------------ | -------------------- | ----- |
+| `iss` | RFC 7519 | Edge issuer (e.g. `https://edge.internal`) | yes | Validated as `iss` at every hop. Minted, not surfaced as an `IAuthContext` property. |
+| `sub` | RFC 7519 | Acting principal: user Guid for a user token; the OAuth `client_id` for a pure service-identity token; the impersonated user's id under impersonation | yes | `Subject` / `UserId`. |
+| `aud` | RFC 7519 | **`d2.internal`** — the single broad internal audience (`D2InternalAudience`) | yes | The broad audience is what makes forward-unchanged work; validated `aud == d2.internal` at every hop. `Audience`. |
+| `iat` | RFC 7519 | Mint instant (Unix seconds) | yes | `TokenIssuedAt`. |
+| `exp` | RFC 7519 | Short TTL (~15 min user / ~5 min service, §3.1) — bounds the whole chain's revocation lag | yes | `TokenExpiresAt`; lifetime checked with clock skew at every hop. |
+| `nbf` | RFC 7519 | Mint instant (or mint − skew) | yes | Part of the lifetime check. Minted, not surfaced as an `IAuthContext` property. |
+| `jti` | RFC 7519 | Unique token id | yes | Standard; minted, not surfaced as an `IAuthContext` property. |
+| `scope` | RFC 6749 §3.3 | The **union** of scopes the request needs across its whole downstream fan-out (space-separated) | yes (the whole union travels down) | `Scopes`; each hop's `RequiredScopes` check evaluates against this union. Build-time caller ⊇ callee guarantees presence. |
+| `act` | RFC 8693 §4.1 | **Present only when impersonating** (or after a deliberate exchange); recursive actor chain, outermost = current actor | yes (immutable in flight) | `ActorChain`; an ordinary internal hop does not exchange, so `act` is set at the boundary and forwarded. |
+| `client_id` | RFC 8693 §4.3 / RFC 9068 | The boundary-mint client; changes only at a deliberate exception exchange (e.g. impersonation), never the originating client | yes (set once at mint under forward-unchanged) | `RequestedByClientId`. |
+| `amr` | RFC 8176 | Auth-method refs (e.g. `pwd` / `mfa`); null for service-identity | yes | `AuthMethod`. |
+| `d2_session_id` | D²-custom | The user's `auth_db` session row id | yes | `SessionId`; drives the per-hop session-liveness check. |
+| `d2_username` | D²-custom | Lowercase login handle | yes | `Username`. |
+| `d2_org_id` / `d2_org_name` / `d2_org_type` / `d2_org_role` | D²-custom | Operating-org context (the impersonated user's org under impersonation) | yes | `OrgId` / `OrgName` / `OrgType` / `OrgRole`. |
+| `d2_fp` | D²-custom | Composite 10-slot session fingerprint, bound at mint (`v1.c1…c5.s1…s5`) | yes (the binding is the point) | `IRequestContext.SessionFingerprint`; the at-mint fingerprint binding (§3.6). Surfaces on `IRequestContext` (operational subset), not on `IAuthContext`. |
+| `d2_step_up_at` | D²-custom | Last step-up completion (Unix seconds), when applicable | yes | `LastStepUpAt`. |
+| `act.d2_kind` (inside `act` only) | D²-custom | `consent` / `force` impersonation flavor — only on impersonation actor entries | yes (part of the immutable `act`) | Sourced into `ImpersonationKind`. |
+| `act.d2_org_*` (inside `act` only) | D²-custom | The impersonator's home org (audit + agent-keyed authz) | yes (part of the immutable `act`) | Sourced into `ImpersonatorOrgId` / `…OrgName` / `…OrgType` / `…OrgRole`. |
+
+**Receiver-derived, not minted claims**: `ImmediateCallerClientId`, `OriginatingClientId`,
+`IsServiceIdentity`, `IsImpersonating`, `ImpersonationKind`, `ImpersonatedBy`,
+`ImpersonationSessionId`, and the impersonator-org properties are *computed by the receiver from the
+`act` chain* (the `derived: actorChain` properties in `IAuthContext.spec.json`) — they are not
+separate claims on the wire.
+
+**Not on the token — rides `x-d2-context`**: the service **call-path** (every hop appends its own
+identity + timestamp — it cannot live on an immutable signed token, so it travels alongside it) and
+the operational subset (`RequestId`, `IdempotencyKey`, the *current* fingerprint, `RiskScore`,
+locale, …) per ADR-0007 §2. No hop mutates the token to append itself.
 
 ### 3.3 Impersonation (RFC 8693 `act` chain)
 
@@ -1175,6 +1227,33 @@ Files" is established by the verified mTLS client certificate, additively — ev
 re-validates the forwarded JWT in full; the certificate is an *additional* fact, never a reason to
 skip token validation (ADR-0023). An accepted internal call needs both a valid transaction-token and a
 trusted workload certificate.
+
+**The per-hop check-list, annotated by layer.** The ordered sequence above is the same one §6.1 runs;
+this table tags each check by the layer that owns it. Every check except the last is a **transport**
+concern — the auth middleware / gRPC interceptor plus the Kestrel client-certificate validation —
+because it is a per-service invariant, not a per-operation one (`ValidateAudience` is a per-service
+constant, **never** a per-handler opt-out — a per-handler audience opt-out is the §9 per-layer-security
+footgun). Only the receiving operation's `RequiredScopes` check is **per-handler**, because the
+required scope set varies per operation (`RequiredScopes` IS per-handler). The decision authority for
+the ordered checks is [ADR-0022](../adrs/0022-service-auth-mint-once-forward.md) §"Each hop forwards
+the token unchanged and re-validates it"; this is its layer-annotated form, not a competing order.
+
+| # | Check | Layer |
+| - | ----- | ----- |
+| 0 | mTLS peer-certificate verify against the internal CA → workload identity (chain + SPIFFE-SAN trust-domain + allowed-workload set) | **Transport** (Kestrel client-cert validation) |
+| 1 | Extract the forwarded transaction-token; no bearer on a non-harmless endpoint → 401 | **Transport** (auth middleware / interceptor) |
+| 2 | RS256 signature vs cached JWKS (reactive refresh on unknown `kid`) | **Transport** |
+| 3 | `iss` == Edge issuer | **Transport** |
+| 4 | `aud` == `d2.internal` (strict — single `ValidAudience`, no per-handler opt-out) | **Transport** |
+| 5 | `exp` / `nbf` within the configured clock skew | **Transport** |
+| 6 | RS256 algorithm pin (reject `alg=none` / HMAC-with-public-key confusion) | **Transport** |
+| 7 | `act` parse (strict — malformed → 401) + `scope` parse | **Transport** |
+| 8 | Session liveness (`d2_session_id`); revoked or cache-outage → 401 fail-closed | **Transport** |
+| 9 | The receiving **operation's** `RequiredScopes` against the forwarded token's own scope set | **Per-handler** (`BaseHandler`) |
+
+Check 0 (mTLS) is **purely additive** — it adds the workload-identity precondition and removes none of
+checks 1–9. A valid leaf never rescues a bad token (checks 1–9 still run and still reject), and a valid
+token never rescues a bad leaf (check 0 rejects at the channel). Both factors are required.
 
 > **RFC 8693 token exchange is the exception, not this default.** This business hop does **not**
 > exchange. Exchange is reserved for the boundary mint and the deliberate exceptions enumerated in
