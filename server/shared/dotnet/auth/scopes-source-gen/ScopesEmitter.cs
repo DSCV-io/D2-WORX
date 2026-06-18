@@ -284,7 +284,7 @@ internal static class ScopesEmitter
         EmitHelpers(sb, validScopes, orgTypeNames, roleNames);
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static void EmitTreeNode(StringBuilder sb, TreeNode node, int indent)

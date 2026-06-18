@@ -187,7 +187,7 @@ internal static class LocaleDataEmitter
 
         return new EmitResult(
             HintName: "LocaleLookup.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty);
     }
 
@@ -322,7 +322,7 @@ internal static class LocaleDataEmitter
 
         return new EmitResult(
             HintName: "LocalesNested.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty);
     }
 

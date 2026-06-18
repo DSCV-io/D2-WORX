@@ -127,7 +127,7 @@ internal static class MutableEmitter
         EmitFromClaims(sb, auth, request);
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static void EmitMutableSections(StringBuilder sb, ContextSpec spec)

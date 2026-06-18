@@ -251,7 +251,7 @@ internal static class HeadersEmitter
         EmitAllHeaders(sb, sortedEntries, className);
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static void EmitConstantXmlDoc(StringBuilder sb, HeaderEntry entry)

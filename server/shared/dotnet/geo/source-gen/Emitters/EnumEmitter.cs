@@ -143,7 +143,7 @@ internal static class EnumEmitter
 
         return new EmitResult(
             HintName: "FixedVocabularyEnums.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty);
     }
 
@@ -252,7 +252,7 @@ internal static class EnumEmitter
 
         return new EmitResult(
             HintName: "GeopoliticalEntityType.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty);
     }
 
@@ -318,7 +318,7 @@ internal static class EnumEmitter
 
         return new EmitResult(
             HintName: "CountryCode.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty);
     }
 
@@ -398,7 +398,7 @@ internal static class EnumEmitter
 
         return new EmitResult(
             HintName: "CurrencyCode.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty);
     }
 
@@ -477,7 +477,7 @@ internal static class EnumEmitter
 
         return new EmitResult(
             HintName: "LanguageCode.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty);
     }
 
@@ -530,7 +530,7 @@ internal static class EnumEmitter
 
         return new EmitResult(
             HintName: "GeopoliticalEntityCode.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty);
     }
 

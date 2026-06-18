@@ -134,7 +134,7 @@ internal static class EncryptionDomainsEmitter
         EmitAllDomains(sb, entries);
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static void EmitAllDomains(StringBuilder sb, List<EncryptionDomainEntry> entries)

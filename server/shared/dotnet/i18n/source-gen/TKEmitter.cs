@@ -214,7 +214,7 @@ internal static class TKEmitter
         }
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static void EmitDomain(
@@ -297,7 +297,7 @@ internal static class TKEmitter
         sb.AppendLine($"public static partial class {_TK_CLASS_NAME}");
         sb.AppendLine("{");
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static string EscapeStringLiteral(string value)

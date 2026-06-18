@@ -293,7 +293,7 @@ internal static class MqEmitter
 
         sb.AppendLine("    };");
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static string EmitSubscriptionsClass(List<MqSubscriptionEntry> subscriptions)
@@ -380,7 +380,7 @@ internal static class MqEmitter
 
         sb.AppendLine("    };");
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static void EmitFileHeader(StringBuilder sb)

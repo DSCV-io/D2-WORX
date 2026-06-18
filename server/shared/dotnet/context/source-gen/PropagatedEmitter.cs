@@ -135,7 +135,7 @@ internal static class PropagatedEmitter
 
         sb.AppendLine("}");
         return new EmitResult(
-            $"{_RECORD_NAME}.g.cs", sb.ToString(), ImmutableArray<EmitDiagnostic>.Empty);
+            $"{_RECORD_NAME}.g.cs", sb.ToString().LfNormalized(), ImmutableArray<EmitDiagnostic>.Empty);
     }
 
     private static EmitResult EmitExtensions(IReadOnlyList<PropertySpec> propagated)
@@ -199,7 +199,7 @@ internal static class PropagatedEmitter
         sb.AppendLine("    }");
         sb.AppendLine("}");
         return new EmitResult(
-            $"{_EXTENSIONS_NAME}.g.cs", sb.ToString(), ImmutableArray<EmitDiagnostic>.Empty);
+            $"{_EXTENSIONS_NAME}.g.cs", sb.ToString().LfNormalized(), ImmutableArray<EmitDiagnostic>.Empty);
     }
 
     private static EmitResult EmitSerializer(IReadOnlyList<PropertySpec> propagated)
@@ -349,7 +349,7 @@ internal static class PropagatedEmitter
         sb.AppendLine("    }");
         sb.AppendLine("}");
         return new EmitResult(
-            $"{_SERIALIZER_NAME}.g.cs", sb.ToString(), ImmutableArray<EmitDiagnostic>.Empty);
+            $"{_SERIALIZER_NAME}.g.cs", sb.ToString().LfNormalized(), ImmutableArray<EmitDiagnostic>.Empty);
     }
 
     private static void EmitFileHeader(StringBuilder sb)

@@ -823,7 +823,7 @@ internal static class RecordShapeEmitter
     {
         return new EmitResult(
             HintName: hintName,
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty);
     }
 

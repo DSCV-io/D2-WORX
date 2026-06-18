@@ -8,6 +8,7 @@ namespace D2.Shared.ErrorCodes.Registry.SourceGen;
 
 using System.Collections.Generic;
 using System.Text;
+using D2.Shared.SourceGen;
 
 /// <summary>
 /// Emits the merged <c>ErrorCodeRegistry.g.cs</c> source file into
@@ -74,7 +75,7 @@ internal static class RegistryEmitter
         sb.AppendLine();
         EmitRegistryClass(sb, entries);
 
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     /// <summary>

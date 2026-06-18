@@ -199,7 +199,7 @@ internal static class FieldConstraintsEmitter
         }
 
         sb.AppendLine("}");
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static string BuildTaxonomySource(List<EnumEntry> enums)
@@ -242,7 +242,7 @@ internal static class FieldConstraintsEmitter
             sb.AppendLine("}");
         }
 
-        return sb.ToString();
+        return sb.ToString().LfNormalized();
     }
 
     private static IEnumerable<string> WrapDocLines(string doc)

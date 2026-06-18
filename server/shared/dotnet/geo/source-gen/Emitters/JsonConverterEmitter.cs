@@ -208,7 +208,7 @@ internal static class JsonConverterEmitter
 
         return new EmitResult(
             HintName: $"{converterClassName}.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty);
     }
 

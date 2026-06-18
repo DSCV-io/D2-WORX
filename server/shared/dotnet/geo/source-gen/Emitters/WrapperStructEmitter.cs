@@ -186,7 +186,7 @@ internal static class WrapperStructEmitter
 
         return new EmitResult(
             HintName: "SubdivisionCode.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty);
     }
 
@@ -299,7 +299,7 @@ internal static class WrapperStructEmitter
 
         return new EmitResult(
             HintName: "LocaleCode.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty);
     }
 
@@ -416,7 +416,7 @@ internal static class WrapperStructEmitter
 
         return new EmitResult(
             HintName: "TimezoneCode.g.cs",
-            GeneratedSource: sb.ToString(),
+            GeneratedSource: sb.ToString().LfNormalized(),
             Diagnostics: ImmutableArray<EmitDiagnostic>.Empty);
     }
 
