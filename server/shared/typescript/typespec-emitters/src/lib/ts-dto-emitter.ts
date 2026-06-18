@@ -109,7 +109,5 @@ function toPascalFromCamel(s: string): string {
  * Bucket 2 per regex-redos-discipline; no matchTimeout needed.
  */
 function kebab(s: string): string {
-  return s
-    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
-    .toLowerCase();
+  return s.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
 }

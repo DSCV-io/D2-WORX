@@ -17,7 +17,15 @@
 //   $onEmit → emitFile pipeline works end-to-end.
 
 import { describe, it, expect, vi, beforeAll, afterEach } from "vitest";
-import type { EmitContext, Model, ModelProperty, Operation, Program, Scalar } from "@typespec/compiler";
+import type {
+  EmitContext,
+  Model,
+  ModelProperty,
+  Operation,
+  Program,
+  Scalar,
+} from "@typespec/compiler";
+import type * as CompilerNs from "@typespec/compiler";
 import {
   createTestLibrary,
   createTestHost,
@@ -49,7 +57,7 @@ let mockGrpcMap: Map<object, unknown>;
 let mockInProcessMap: Map<object, unknown>;
 
 vi.mock("@typespec/compiler", async (importOriginal) => {
-  const original = await importOriginal<typeof import("@typespec/compiler")>();
+  const original = await importOriginal<typeof CompilerNs>();
   return {
     ...original,
     navigateProgram(
@@ -146,8 +154,14 @@ describe("$onEmit_directUnit_SmokeMockContext", () => {
 describe("$onEmit_directUnit_DtoPairEmission", () => {
   it("emits manifest + C# + TS DTO files when op has concrete input and output models", async () => {
     // Build a model stub with a scalar string property.
-    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
-    const kidProp = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
+    const kidProp = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
 
     const inputModel = {
       kind: "Model",
@@ -162,7 +176,10 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     } as unknown as Model;
 
     // Op with parameters wrapping inputModel as a single named param.
-    const inputProp = { type: inputModel, optional: false } as unknown as ModelProperty;
+    const inputProp = {
+      type: inputModel,
+      optional: false,
+    } as unknown as ModelProperty;
     const wrappedParams = {
       kind: "Model",
       name: "",
@@ -198,15 +215,23 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     expect(directUnitEmitted.length).toBeGreaterThanOrEqual(4);
 
     const paths = directUnitEmitted.map((e) => e.path);
-    expect(paths.some((p) => p.includes("operations-manifest.json"))).toBe(true);
+    expect(paths.some((p) => p.includes("operations-manifest.json"))).toBe(
+      true,
+    );
     expect(paths.some((p) => p.includes("GetJwksInput.g.cs"))).toBe(true);
     expect(paths.some((p) => p.includes("GetJwksOutput.g.cs"))).toBe(true);
     expect(paths.some((p) => p.includes("get-jwks-dto.g.ts"))).toBe(true);
   });
 
   it("reportDiagnostic is called and no DTO files emitted for an unmapped scalar", async () => {
-    const utcDateTimeScalar = { kind: "Scalar", name: "utcDateTime" } as unknown as Scalar;
-    const badProp = { type: utcDateTimeScalar, optional: false } as unknown as ModelProperty;
+    const utcDateTimeScalar = {
+      kind: "Scalar",
+      name: "utcDateTime",
+    } as unknown as Scalar;
+    const badProp = {
+      type: utcDateTimeScalar,
+      optional: false,
+    } as unknown as ModelProperty;
 
     const inputModel = {
       kind: "Model",
@@ -234,7 +259,9 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     // Patch $lib.reportDiagnostic to capture calls.
     const libModule = await import("../src/lib.js");
     vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
-      (_prog, diag: { code: string }) => { reportedDiagnostics.push({ code: diag.code }); },
+      (_prog, diag: { code: string }) => {
+        reportedDiagnostics.push({ code: diag.code });
+      },
     );
 
     const mockContext = {
@@ -246,7 +273,9 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     await $onEmit(mockContext);
 
     // Unmapped scalar fires D2TSP001; no DTO files emitted.
-    expect(reportedDiagnostics.some((d) => d.code === "unmapped-scalar")).toBe(true);
+    expect(reportedDiagnostics.some((d) => d.code === "unmapped-scalar")).toBe(
+      true,
+    );
     const dtoFiles = directUnitEmitted.filter(
       (e) => e.path.endsWith(".g.cs") || e.path.endsWith(".g.ts"),
     );
@@ -256,7 +285,10 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
   it("reportDiagnostic is called with unsupported-property-type for enum properties", async () => {
     // Build a model with an enum property (D2TSP002 triggers unsupported-property-type).
     const enumType = { kind: "Enum", name: "Status" } as unknown as Model;
-    const enumProp = { type: enumType, optional: false } as unknown as ModelProperty;
+    const enumProp = {
+      type: enumType,
+      optional: false,
+    } as unknown as ModelProperty;
     const inputModel = {
       kind: "Model",
       name: "BadEnumInput",
@@ -282,7 +314,9 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     const reportedDiagnostics: Array<{ code: string }> = [];
     const libModule = await import("../src/lib.js");
     vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
-      (_prog, diag: { code: string }) => { reportedDiagnostics.push({ code: diag.code }); },
+      (_prog, diag: { code: string }) => {
+        reportedDiagnostics.push({ code: diag.code });
+      },
     );
 
     const mockContext = {
@@ -294,7 +328,9 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     await $onEmit(mockContext);
 
     // D2TSP002 fires the unsupported-property-type diagnostic.
-    expect(reportedDiagnostics.some((d) => d.code === "unsupported-property-type")).toBe(true);
+    expect(
+      reportedDiagnostics.some((d) => d.code === "unsupported-property-type"),
+    ).toBe(true);
     const dtoFiles = directUnitEmitted.filter(
       (e) => e.path.endsWith(".g.cs") || e.path.endsWith(".g.ts"),
     );
@@ -304,13 +340,25 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
   it("multi-param op → resolveSingleNamedParam returns undefined (size !== 1 branch)", async () => {
     // Op with 2 named parameters — `params.properties.size !== 1` is true,
     // resolveSingleNamedParam returns undefined and raw params model is used directly.
-    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
-    const prop1 = { type: stringScalar, optional: false } as unknown as ModelProperty;
-    const prop2 = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
+    const prop1 = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
+    const prop2 = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
     const multiParams = {
       kind: "Model",
       name: "",
-      properties: new Map<string, ModelProperty>([["id", prop1], ["name", prop2]]),
+      properties: new Map<string, ModelProperty>([
+        ["id", prop1],
+        ["name", prop2],
+      ]),
     } as unknown as Model;
 
     const op = {
@@ -338,7 +386,9 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     await $onEmit(mockContext);
 
     // Multi-param op uses the raw params model — both scalar fields become params.
-    const csFile = directUnitEmitted.find((e) => e.path.includes("MultiParamInput.g.cs"));
+    const csFile = directUnitEmitted.find((e) =>
+      e.path.includes("MultiParamInput.g.cs"),
+    );
     expect(csFile).toBeDefined();
     expect(csFile!.content).toContain("string Id");
     expect(csFile!.content).toContain("string Name");
@@ -347,7 +397,10 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
   it("single Array-typed param → resolveSingleNamedParam returns undefined (prop.type.name === 'Array')", async () => {
     // When the single named param wraps an Array model, resolveSingleNamedParam should
     // return undefined (not unwrap it) — exercising the `prop.type.name !== "Array"` false branch.
-    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
     const arrayModel = {
       kind: "Model",
       name: "Array",
@@ -355,7 +408,10 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
       properties: new Map<string, ModelProperty>(),
     } as unknown as Model;
 
-    const arrayProp = { type: arrayModel, optional: false } as unknown as ModelProperty;
+    const arrayProp = {
+      type: arrayModel,
+      optional: false,
+    } as unknown as ModelProperty;
     const wrappedParams = {
       kind: "Model",
       name: "",
@@ -387,14 +443,24 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     await $onEmit(mockContext);
 
     // The op was processed — manifest was emitted.
-    expect(directUnitEmitted.some((e) => e.path.includes("operations-manifest.json"))).toBe(true);
+    expect(
+      directUnitEmitted.some((e) =>
+        e.path.includes("operations-manifest.json"),
+      ),
+    ).toBe(true);
   });
 
   it("single scalar param op uses raw params model (resolveSingleNamedParam returns undefined)", async () => {
     // Op with a single named parameter that is a Scalar (not a Model) —
     // resolveSingleNamedParam should return undefined and the raw params model is used.
-    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
-    const scalarProp = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
+    const scalarProp = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
     const rawParams = {
       kind: "Model",
       name: "",
@@ -426,15 +492,23 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     await $onEmit(mockContext);
 
     // ScalarParam input should appear as a field (from raw params model directly).
-    const csFile = directUnitEmitted.find((e) => e.path.includes("ScalarParamInput.g.cs"));
+    const csFile = directUnitEmitted.find((e) =>
+      e.path.includes("ScalarParamInput.g.cs"),
+    );
     expect(csFile).toBeDefined();
     expect(csFile!.content).toContain("string Id");
   });
 
   it("void-output op emits only input DTO (outputModel undefined branch)", async () => {
     // Op with input model but void return — exercises outputModel === undefined branch.
-    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
-    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
+    const prop = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
     const inputModel = {
       kind: "Model",
       name: "VoidOutInput",
@@ -466,15 +540,23 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     await $onEmit(mockContext);
 
     // Both C# files still emitted (Input + Output pair), even when outputModel is void.
-    expect(directUnitEmitted.some((e) => e.path.includes("VoidOutInput.g.cs"))).toBe(true);
+    expect(
+      directUnitEmitted.some((e) => e.path.includes("VoidOutInput.g.cs")),
+    ).toBe(true);
   });
 
   it("input-less op (no parameters field) with output → inputModel undefined branch in emitDtoPair", async () => {
     // Op with NO parameters property at all + a concrete output — exercises the
     // `rawParams === undefined → inputModel = undefined` branch, then enters
     // emitDtoPair with `inputModel=undefined`, hitting the `: { fields:[], nestedModels:[] }` branch.
-    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
-    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
+    const prop = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
     const outputModel = {
       kind: "Model",
       name: "NoInputOutput",
@@ -506,12 +588,20 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
 
     await $onEmit(mockContext);
 
-    expect(directUnitEmitted.some((e) => e.path.includes("NoInputOutput.g.cs"))).toBe(true);
+    expect(
+      directUnitEmitted.some((e) => e.path.includes("NoInputOutput.g.cs")),
+    ).toBe(true);
   });
 
   it("tryGetSpecPath returns file path when op.node.file.path is present", async () => {
-    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
-    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
+    const prop = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
     const model = {
       kind: "Model",
       name: "SpecPathInput",
@@ -544,23 +634,40 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     await $onEmit(mockContext);
 
     // The spec hint from node.file.path should appear in the emitted C# banner.
-    const csFile = directUnitEmitted.find((e) => e.path.endsWith("WithSpecInput.g.cs"));
+    const csFile = directUnitEmitted.find((e) =>
+      e.path.endsWith("WithSpecInput.g.cs"),
+    );
     expect(csFile).toBeDefined();
     expect(csFile!.content).toContain("contracts/typespec/test.tsp");
   });
 
   it("op with @d2GrpcMethod + concrete models → proto + service + mapper emitted", async () => {
     // Exercise the emitProtoAndGrpcService path in src/emitter.ts.
-    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
     const bytesScalar = { kind: "Scalar", name: "bytes" } as unknown as Scalar;
-    const kidProp = { type: stringScalar, optional: false } as unknown as ModelProperty;
-    const payloadProp = { type: bytesScalar, optional: false } as unknown as ModelProperty;
-    const sigProp = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const kidProp = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
+    const payloadProp = {
+      type: bytesScalar,
+      optional: false,
+    } as unknown as ModelProperty;
+    const sigProp = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
 
     const inputModel = {
       kind: "Model",
       name: "SignInput",
-      properties: new Map<string, ModelProperty>([["kid", kidProp], ["payload", payloadProp]]),
+      properties: new Map<string, ModelProperty>([
+        ["kid", kidProp],
+        ["payload", payloadProp],
+      ]),
     } as unknown as Model;
 
     const outputModel = {
@@ -570,7 +677,10 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     } as unknown as Model;
 
     // Wrap inputModel as a single named param (matches the sign op shape).
-    const inputProp = { type: inputModel, optional: false } as unknown as ModelProperty;
+    const inputProp = {
+      type: inputModel,
+      optional: false,
+    } as unknown as ModelProperty;
     const wrappedParams = {
       kind: "Model",
       name: "",
@@ -588,7 +698,10 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
 
     // Wire @d2GrpcMethod state map for this op.
     const grpcMap = new Map<object, unknown>([
-      [op, { service: "KeyCustodianSigner", method: "Sign", streaming: "unary" }],
+      [
+        op,
+        { service: "KeyCustodianSigner", method: "Sign", streaming: "unary" },
+      ],
     ]);
 
     const mockProgram = {
@@ -616,15 +729,25 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     // .proto file emitted.
     expect(paths.some((p) => p.includes(".g.proto"))).toBe(true);
     // gRPC service class emitted.
-    expect(paths.some((p) => p.includes("KeyCustodianSignerService.g.cs"))).toBe(true);
+    expect(
+      paths.some((p) => p.includes("KeyCustodianSignerService.g.cs")),
+    ).toBe(true);
     // Transport mapper emitted.
-    expect(paths.some((p) => p.includes("SignTransportMappers.g.cs"))).toBe(true);
+    expect(paths.some((p) => p.includes("SignTransportMappers.g.cs"))).toBe(
+      true,
+    );
   });
 
   it("op with @d2GrpcMethod + unmapped scalar → reportDiagnostic called, no proto emitted", async () => {
     // Exercise the onError path inside emitProtoAndGrpcService.
-    const utcScalar = { kind: "Scalar", name: "utcDateTime" } as unknown as Scalar;
-    const badProp = { type: utcScalar, optional: false } as unknown as ModelProperty;
+    const utcScalar = {
+      kind: "Scalar",
+      name: "utcDateTime",
+    } as unknown as Scalar;
+    const badProp = {
+      type: utcScalar,
+      optional: false,
+    } as unknown as ModelProperty;
 
     const badModel = {
       kind: "Model",
@@ -648,7 +771,9 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     const reportedDiagnostics: Array<{ code: string }> = [];
     const libModule = await import("../src/lib.js");
     vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
-      (_prog, diag: { code: string }) => { reportedDiagnostics.push({ code: diag.code }); },
+      (_prog, diag: { code: string }) => {
+        reportedDiagnostics.push({ code: diag.code });
+      },
     );
 
     const mockProgram = {
@@ -672,14 +797,24 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
 
     await $onEmit(mockContext);
 
-    expect(reportedDiagnostics.some((d) => d.code === "unmapped-scalar")).toBe(true);
-    expect(directUnitEmitted.filter((e) => e.path.endsWith(".g.proto"))).toHaveLength(0);
+    expect(reportedDiagnostics.some((d) => d.code === "unmapped-scalar")).toBe(
+      true,
+    );
+    expect(
+      directUnitEmitted.filter((e) => e.path.endsWith(".g.proto")),
+    ).toHaveLength(0);
   });
 
   it("op with @d2GrpcMethod + invalid streaming mode → reportDiagnostic called (else if branch)", async () => {
     // Exercise the `else if (code === "invalid-streaming-mode")` branch in emitProtoAndGrpcService.
-    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
-    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
+    const prop = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
     const inputModel = {
       kind: "Model",
       name: "DoInput",
@@ -703,7 +838,9 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     const reportedDiagnostics: Array<{ code: string }> = [];
     const libModule = await import("../src/lib.js");
     vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
-      (_prog, diag: { code: string }) => { reportedDiagnostics.push({ code: diag.code }); },
+      (_prog, diag: { code: string }) => {
+        reportedDiagnostics.push({ code: diag.code });
+      },
     );
 
     const mockProgram = {
@@ -728,15 +865,22 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     await $onEmit(mockContext);
 
     // Invalid streaming mode fires diagnostic (mapped via the else-if branch to unmapped-scalar code).
-    expect(reportedDiagnostics.some((d) => d.code === "unmapped-scalar")).toBe(true);
-    expect(directUnitEmitted.filter((e) => e.path.endsWith(".g.proto"))).toHaveLength(0);
+    expect(reportedDiagnostics.some((d) => d.code === "unmapped-scalar")).toBe(
+      true,
+    );
+    expect(
+      directUnitEmitted.filter((e) => e.path.endsWith(".g.proto")),
+    ).toHaveLength(0);
   });
 
   it("op with @d2GrpcMethod + enum field → reportDiagnostic unsupported-property-type (else branch)", async () => {
     // Exercise the `else` branch in emitProtoAndGrpcService onError:
     // walkModel fires "unsupported-property-type" for enum properties.
     const enumType = { kind: "Enum", name: "Status" } as unknown as Model;
-    const enumProp = { type: enumType, optional: false } as unknown as ModelProperty;
+    const enumProp = {
+      type: enumType,
+      optional: false,
+    } as unknown as ModelProperty;
     const inputModel = {
       kind: "Model",
       name: "EnumGrpcInput",
@@ -759,7 +903,9 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     const reportedDiagnostics: Array<{ code: string }> = [];
     const libModule = await import("../src/lib.js");
     vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
-      (_prog, diag: { code: string }) => { reportedDiagnostics.push({ code: diag.code }); },
+      (_prog, diag: { code: string }) => {
+        reportedDiagnostics.push({ code: diag.code });
+      },
     );
 
     const mockProgram = {
@@ -784,15 +930,25 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     await $onEmit(mockContext);
 
     // Enum property fires unsupported-property-type diagnostic.
-    expect(reportedDiagnostics.some((d) => d.code === "unsupported-property-type")).toBe(true);
-    expect(directUnitEmitted.filter((e) => e.path.endsWith(".g.proto"))).toHaveLength(0);
+    expect(
+      reportedDiagnostics.some((d) => d.code === "unsupported-property-type"),
+    ).toBe(true);
+    expect(
+      directUnitEmitted.filter((e) => e.path.endsWith(".g.proto")),
+    ).toHaveLength(0);
   });
 
   it("op with @d2GrpcMethod + no input model → inputModel undefined branch + fallback name used", async () => {
     // Exercise inputModel === undefined in emitProtoAndGrpcService (lines 250 + 261 false branches).
     // Op has no parameters (undefined) but has a concrete output model.
-    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
-    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
+    const prop = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
     const outputModel = {
       kind: "Model",
       name: "PingOutput",
@@ -837,7 +993,9 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
     const paths = directUnitEmitted.map((e) => e.path);
     // Proto file emitted. Message names use <Method>Request / <Method>Response convention.
     expect(paths.some((p) => p.includes(".g.proto"))).toBe(true);
-    const protoFile = directUnitEmitted.find((e) => e.path.endsWith(".g.proto"));
+    const protoFile = directUnitEmitted.find((e) =>
+      e.path.endsWith(".g.proto"),
+    );
     expect(protoFile!.content).toContain("message PingRequest {}");
     expect(protoFile!.content).toContain("message PingResponse {");
   });
@@ -854,8 +1012,14 @@ describe("$onEmit_directUnit_DtoPairEmission", () => {
 describe("$onEmit_directUnit_NamespaceRouting", () => {
   it("exposed op + csClientsNamespace → DTOs land in Clients namespace (lines 299-300)", async () => {
     // Exposed op (@d2InProcess) + Clients namespace set → DTOs go to Clients ns.
-    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
-    const kidProp = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
+    const kidProp = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
     const inputModel = {
       kind: "Model",
       name: "GetJwksInput",
@@ -895,7 +1059,8 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       options: {
         "csharp-namespace": "D2.Test.Fixture",
         "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
-        "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        "csharp-app-namespace-base":
+          "D2.Edge.KeyCustodian.App.Application.Handlers",
         "grpc-service-namespace": "D2.Test.Grpc",
       },
     } as unknown as EmitContext;
@@ -903,15 +1068,25 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     await $onEmit(mockContext);
 
     // DTOs should land in the Clients namespace, not the fixture or app namespace.
-    const csOutput = directUnitEmitted.find((e) => e.path.includes("GetJwksOutput.g.cs"));
+    const csOutput = directUnitEmitted.find((e) =>
+      e.path.includes("GetJwksOutput.g.cs"),
+    );
     expect(csOutput).toBeDefined();
-    expect(csOutput!.content).toContain("namespace D2.Edge.KeyCustodian.Clients;");
+    expect(csOutput!.content).toContain(
+      "namespace D2.Edge.KeyCustodian.Clients;",
+    );
   });
 
   it("internal op + csAppNamespaceBase + category → DTOs land in app CQRS namespace (lines 302-306)", async () => {
     // Internal op (@d2Internal + @d2Query) + app-namespace-base set → DTOs go to app CQRS ns.
-    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
-    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
+    const prop = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
     const outputModel = {
       kind: "Model",
       name: "ListKeysOutput",
@@ -920,7 +1095,11 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
 
     const op = {
       name: "listKeys",
-      parameters: { kind: "Model", name: "", properties: new Map() } as unknown as Model,
+      parameters: {
+        kind: "Model",
+        name: "",
+        properties: new Map(),
+      } as unknown as Model,
       returnType: outputModel,
       node: undefined,
     } as unknown as Operation;
@@ -946,7 +1125,8 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       options: {
         "csharp-namespace": "D2.Test.Fixture",
         "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
-        "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        "csharp-app-namespace-base":
+          "D2.Edge.KeyCustodian.App.Application.Handlers",
         "grpc-service-namespace": "D2.Test.Grpc",
       },
     } as unknown as EmitContext;
@@ -954,7 +1134,9 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     await $onEmit(mockContext);
 
     // DTOs should land in the per-op CQRS app namespace, not fixture or Clients ns.
-    const csOutput = directUnitEmitted.find((e) => e.path.includes("ListKeysOutput.g.cs"));
+    const csOutput = directUnitEmitted.find((e) =>
+      e.path.includes("ListKeysOutput.g.cs"),
+    );
     expect(csOutput).toBeDefined();
     expect(csOutput!.content).toContain(
       "namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.ListKeys;",
@@ -963,8 +1145,14 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
 
   it("op with csAppNamespaceBase + missing CQRS category → D2TSP003 fires + falls back (lines 307-313)", async () => {
     // Op missing both @d2Command and @d2Query → category undefined → D2TSP003 + fallback.
-    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
-    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
+    const prop = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
     const outputModel = {
       kind: "Model",
       name: "NoCategoryOutput",
@@ -973,7 +1161,11 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
 
     const op = {
       name: "noCategory",
-      parameters: { kind: "Model", name: "", properties: new Map() } as unknown as Model,
+      parameters: {
+        kind: "Model",
+        name: "",
+        properties: new Map(),
+      } as unknown as Model,
       returnType: outputModel,
       node: undefined,
     } as unknown as Operation;
@@ -987,7 +1179,9 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     const reportedDiagnostics: Array<{ code: string }> = [];
     const libModule = await import("../src/lib.js");
     vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
-      (_prog, diag: { code: string }) => { reportedDiagnostics.push({ code: diag.code }); },
+      (_prog, diag: { code: string }) => {
+        reportedDiagnostics.push({ code: diag.code });
+      },
     );
 
     const mockProgram = {
@@ -1003,7 +1197,8 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       emitterOutputDir: "/out",
       options: {
         "csharp-namespace": "D2.Test.Fixture",
-        "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        "csharp-app-namespace-base":
+          "D2.Edge.KeyCustodian.App.Application.Handlers",
         "grpc-service-namespace": "D2.Test.Grpc",
       },
     } as unknown as EmitContext;
@@ -1011,17 +1206,27 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     await $onEmit(mockContext);
 
     // D2TSP003 fires.
-    expect(reportedDiagnostics.some((d) => d.code === "missing-cqrs-category")).toBe(true);
+    expect(
+      reportedDiagnostics.some((d) => d.code === "missing-cqrs-category"),
+    ).toBe(true);
     // DTOs still emit (fallback to fixture ns — loud but not crash).
-    const csOutput = directUnitEmitted.find((e) => e.path.includes("NoCategoryOutput.g.cs"));
+    const csOutput = directUnitEmitted.find((e) =>
+      e.path.includes("NoCategoryOutput.g.cs"),
+    );
     expect(csOutput).toBeDefined();
     expect(csOutput!.content).toContain("namespace D2.Test.Fixture;");
   });
 
   it("exposed op + csAppNamespaceBase + no csClientsNamespace → falls back to fixture ns (lines 316-317)", async () => {
     // Exposed op but Clients namespace not configured → falls back to csNamespace.
-    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
-    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
+    const prop = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
     const outputModel = {
       kind: "Model",
       name: "ExposedNoClientOutput",
@@ -1030,7 +1235,11 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
 
     const op = {
       name: "exposedNoClient",
-      parameters: { kind: "Model", name: "", properties: new Map() } as unknown as Model,
+      parameters: {
+        kind: "Model",
+        name: "",
+        properties: new Map(),
+      } as unknown as Model,
       returnType: outputModel,
       node: undefined,
     } as unknown as Operation;
@@ -1056,7 +1265,8 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       options: {
         "csharp-namespace": "D2.Test.Fixture",
         // csharp-clients-namespace intentionally absent.
-        "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        "csharp-app-namespace-base":
+          "D2.Edge.KeyCustodian.App.Application.Handlers",
         "grpc-service-namespace": "D2.Test.Grpc",
       },
     } as unknown as EmitContext;
@@ -1064,7 +1274,9 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     await $onEmit(mockContext);
 
     // No Clients ns → falls back to fixture namespace.
-    const csOutput = directUnitEmitted.find((e) => e.path.includes("ExposedNoClientOutput.g.cs"));
+    const csOutput = directUnitEmitted.find((e) =>
+      e.path.includes("ExposedNoClientOutput.g.cs"),
+    );
     expect(csOutput).toBeDefined();
     expect(csOutput!.content).toContain("namespace D2.Test.Fixture;");
   });
@@ -1072,8 +1284,14 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
   it("Command op (@d2Command, not @d2Query) → resolveCategory returns 'Commands' (line 264)", async () => {
     // Exercises the `isCommand && !isQuery` branch in resolveCategory.
     // The internal-op test hits the Queries branch; this hits the Commands branch.
-    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
-    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
+    const prop = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
     const outputModel = {
       kind: "Model",
       name: "CreateKeyOutput",
@@ -1082,7 +1300,11 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
 
     const op = {
       name: "createKey",
-      parameters: { kind: "Model", name: "", properties: new Map() } as unknown as Model,
+      parameters: {
+        kind: "Model",
+        name: "",
+        properties: new Map(),
+      } as unknown as Model,
       returnType: outputModel,
       node: undefined,
     } as unknown as Operation;
@@ -1107,7 +1329,8 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       emitterOutputDir: "/out",
       options: {
         "csharp-namespace": "D2.Test.Fixture",
-        "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        "csharp-app-namespace-base":
+          "D2.Edge.KeyCustodian.App.Application.Handlers",
         "grpc-service-namespace": "D2.Test.Grpc",
       },
     } as unknown as EmitContext;
@@ -1115,7 +1338,9 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     await $onEmit(mockContext);
 
     // DTOs land in Commands CQRS path.
-    const csOutput = directUnitEmitted.find((e) => e.path.includes("CreateKeyOutput.g.cs"));
+    const csOutput = directUnitEmitted.find((e) =>
+      e.path.includes("CreateKeyOutput.g.cs"),
+    );
     expect(csOutput).toBeDefined();
     expect(csOutput!.content).toContain(
       "namespace D2.Edge.KeyCustodian.App.Application.Handlers.Commands.CreateKey;",
@@ -1128,8 +1353,14 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     // toPascalFromCamel(opName) at line 304 fires before emitHandlerInterface's own guard.
     // We force dtoEmitSucceeded=false (unmapped scalar) so emitHandlerInterface is never
     // reached, which would otherwise throw for opName="".
-    const utcDateTimeScalar = { kind: "Scalar", name: "utcDateTime" } as unknown as Scalar;
-    const badProp = { type: utcDateTimeScalar, optional: false } as unknown as ModelProperty;
+    const utcDateTimeScalar = {
+      kind: "Scalar",
+      name: "utcDateTime",
+    } as unknown as Scalar;
+    const badProp = {
+      type: utcDateTimeScalar,
+      optional: false,
+    } as unknown as ModelProperty;
     const outputModel = {
       kind: "Model",
       name: "EmptyNameOutput",
@@ -1138,7 +1369,11 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
 
     const op = {
       name: "",
-      parameters: { kind: "Model", name: "", properties: new Map() } as unknown as Model,
+      parameters: {
+        kind: "Model",
+        name: "",
+        properties: new Map(),
+      } as unknown as Model,
       returnType: outputModel,
       node: undefined,
     } as unknown as Operation;
@@ -1152,7 +1387,9 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     const reportedDiagnostics: Array<{ code: string }> = [];
     const libModule = await import("../src/lib.js");
     vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
-      (_prog, diag: { code: string }) => { reportedDiagnostics.push({ code: diag.code }); },
+      (_prog, diag: { code: string }) => {
+        reportedDiagnostics.push({ code: diag.code });
+      },
     );
 
     const mockProgram = {
@@ -1169,7 +1406,8 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       emitterOutputDir: "/out",
       options: {
         "csharp-namespace": "D2.Test.Fixture",
-        "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        "csharp-app-namespace-base":
+          "D2.Edge.KeyCustodian.App.Application.Handlers",
         "grpc-service-namespace": "D2.Test.Grpc",
       },
     } as unknown as EmitContext;
@@ -1179,9 +1417,15 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     await $onEmit(mockContext);
 
     // DTO error fired (unmapped scalar) — dtoEmitSucceeded=false.
-    expect(reportedDiagnostics.some((d) => d.code === "unmapped-scalar")).toBe(true);
+    expect(reportedDiagnostics.some((d) => d.code === "unmapped-scalar")).toBe(
+      true,
+    );
     // Manifest still emitted.
-    expect(directUnitEmitted.some((e) => e.path.includes("operations-manifest.json"))).toBe(true);
+    expect(
+      directUnitEmitted.some((e) =>
+        e.path.includes("operations-manifest.json"),
+      ),
+    ).toBe(true);
   });
 
   it("exposed op + csClientsNamespace + csAppNamespaceBase + servedBy → façade files emitted (lines 215-217, 253-257)", async () => {
@@ -1190,8 +1434,14 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     //                  that pushes into exposedOpsByModule.
     //   lines 253-257: the `for (const [moduleName, moduleOps] of exposedOpsByModule)` loop
     //                  that calls emitFacade + emits the three facade files.
-    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
-    const kidProp = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
+    const kidProp = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
 
     const inputModel = {
       kind: "Model",
@@ -1206,7 +1456,10 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     } as unknown as Model;
 
     // Wrap inputModel as a single named param (standard convention).
-    const inputProp = { type: inputModel, optional: false } as unknown as ModelProperty;
+    const inputProp = {
+      type: inputModel,
+      optional: false,
+    } as unknown as ModelProperty;
     const wrappedParams = {
       kind: "Model",
       name: "",
@@ -1245,7 +1498,8 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       options: {
         "csharp-namespace": "D2.Test.Fixture",
         "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
-        "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        "csharp-app-namespace-base":
+          "D2.Edge.KeyCustodian.App.Application.Handlers",
       },
     } as unknown as EmitContext;
 
@@ -1254,32 +1508,48 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     const paths = directUnitEmitted.map((e) => e.path);
 
     // Façade interface file emitted (line 253-257 loop fired).
-    expect(paths.some((p) => p.includes("IKeyCustodianInternalApi.g.cs"))).toBe(true);
+    expect(paths.some((p) => p.includes("IKeyCustodianApi.g.cs"))).toBe(true);
 
-    // Impl file emitted (the concrete class, not the interface — ends with /KeyCustodianInternalApi.g.cs).
-    expect(paths.some((p) => p.endsWith("/KeyCustodianInternalApi.g.cs"))).toBe(true);
+    // Impl file emitted (the concrete class, not the interface — ends with /KeyCustodianApi.g.cs).
+    expect(paths.some((p) => p.endsWith("/KeyCustodianApi.g.cs"))).toBe(true);
 
     // DI extension file emitted.
-    expect(paths.some((p) => p.includes("KeyCustodianClientsGenerated.g.cs"))).toBe(true);
+    expect(
+      paths.some((p) => p.includes("KeyCustodianClientsGenerated.g.cs")),
+    ).toBe(true);
 
     // Interface content is in the Clients namespace (Clients-project file).
-    const ifaceFile = directUnitEmitted.find((e) => e.path.includes("IKeyCustodianInternalApi.g.cs"));
+    const ifaceFile = directUnitEmitted.find((e) =>
+      e.path.includes("IKeyCustodianApi.g.cs"),
+    );
     expect(ifaceFile).toBeDefined();
-    expect(ifaceFile!.content).toContain("namespace D2.Edge.KeyCustodian.Clients;");
+    expect(ifaceFile!.content).toContain(
+      "namespace D2.Edge.KeyCustodian.Clients;",
+    );
     expect(ifaceFile!.content).toContain("GetJwksAsync(");
 
     // Impl file is in the app namespace root (stripped .Handlers suffix).
-    const implFile = directUnitEmitted.find((e) => e.path.endsWith("/KeyCustodianInternalApi.g.cs"));
+    const implFile = directUnitEmitted.find((e) =>
+      e.path.endsWith("/KeyCustodianApi.g.cs"),
+    );
     expect(implFile).toBeDefined();
-    expect(implFile!.content).toContain("namespace D2.Edge.KeyCustodian.App.Application;");
+    expect(implFile!.content).toContain(
+      "namespace D2.Edge.KeyCustodian.App.Application;",
+    );
   });
 
   it("resolveHandlerNamespace falls back to grpcServiceNs when csAppNamespaceBase set + category undefined (lines 336-337)", async () => {
     // csAppNamespaceBase is set but category is undefined (no @d2Command or @d2Query) →
     // resolveHandlerNamespace falls back to grpcServiceNs.
     // Op is exposed (@d2InProcess) so DTOs emit; no category so handler ns falls back.
-    const stringScalar = { kind: "Scalar", name: "string" } as unknown as Scalar;
-    const prop = { type: stringScalar, optional: false } as unknown as ModelProperty;
+    const stringScalar = {
+      kind: "Scalar",
+      name: "string",
+    } as unknown as Scalar;
+    const prop = {
+      type: stringScalar,
+      optional: false,
+    } as unknown as ModelProperty;
     const outputModel = {
       kind: "Model",
       name: "NoCatHandlerOutput",
@@ -1288,7 +1558,11 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
 
     const op = {
       name: "noCatHandler",
-      parameters: { kind: "Model", name: "", properties: new Map() } as unknown as Model,
+      parameters: {
+        kind: "Model",
+        name: "",
+        properties: new Map(),
+      } as unknown as Model,
       returnType: outputModel,
       node: undefined,
     } as unknown as Operation;
@@ -1302,7 +1576,9 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     const reportedDiagnostics: Array<{ code: string }> = [];
     const libModule = await import("../src/lib.js");
     vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
-      (_prog, diag: { code: string }) => { reportedDiagnostics.push({ code: diag.code }); },
+      (_prog, diag: { code: string }) => {
+        reportedDiagnostics.push({ code: diag.code });
+      },
     );
 
     const mockProgram = {
@@ -1319,7 +1595,8 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
       options: {
         "csharp-namespace": "D2.Test.Fixture",
         "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
-        "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+        "csharp-app-namespace-base":
+          "D2.Edge.KeyCustodian.App.Application.Handlers",
         "grpc-service-namespace": "D2.Test.Grpc",
       },
     } as unknown as EmitContext;
@@ -1327,12 +1604,18 @@ describe("$onEmit_directUnit_NamespaceRouting", () => {
     await $onEmit(mockContext);
 
     // DTOs go to Clients (exposed + csClientsNamespace configured).
-    const csOutput = directUnitEmitted.find((e) => e.path.includes("NoCatHandlerOutput.g.cs"));
+    const csOutput = directUnitEmitted.find((e) =>
+      e.path.includes("NoCatHandlerOutput.g.cs"),
+    );
     expect(csOutput).toBeDefined();
-    expect(csOutput!.content).toContain("namespace D2.Edge.KeyCustodian.Clients;");
+    expect(csOutput!.content).toContain(
+      "namespace D2.Edge.KeyCustodian.Clients;",
+    );
 
     // Handler interface emitted — namespace falls back to grpcServiceNs because category=undefined.
-    const handlerFile = directUnitEmitted.find((e) => e.path.includes("INoCatHandlerHandler.g.cs"));
+    const handlerFile = directUnitEmitted.find((e) =>
+      e.path.includes("INoCatHandlerHandler.g.cs"),
+    );
     expect(handlerFile).toBeDefined();
     expect(handlerFile!.content).toContain("namespace D2.Test.Grpc;");
   });

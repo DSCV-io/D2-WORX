@@ -63,11 +63,11 @@ domain because callers must not take a dependency on the domain layer.
 
 ### Module façade interface (generated)
 
-| Generated file                     | C# type                         | Location                          |
-| ---------------------------------- | ------------------------------- | --------------------------------- |
-| `IKeyCustodianInternalApi.g.cs`    | `IKeyCustodianInternalApi`      | This project (Clients namespace)  |
+| Generated file                  | C# type                      | Location                          |
+| ------------------------------- | ---------------------------- | --------------------------------- |
+| `IKeyCustodianApi.g.cs`         | `IKeyCustodianApi`           | This project (Clients namespace)  |
 
-`IKeyCustodianInternalApi` is the single import that host callers use to interact
+`IKeyCustodianApi` is the single import that host callers use to interact
 with the KeyCustodian module at runtime. It lists only the operations exposed
 across a boundary; internal-only operations are structurally absent.
 
@@ -79,7 +79,7 @@ future gRPC-client impl without modification:
 ValueTask<D2Result<GetJwksOutput?>> GetJwksAsync(GetJwksInput input, CancellationToken ct = default);
 ```
 
-The façade implementation (`KeyCustodianInternalApi`) and the generated DI extension
+The façade implementation (`KeyCustodianApi`) and the generated DI extension
 (`KeyCustodianClientsGenerated.g.cs`) live in the `app/Application/` directory, not
 here, because they reference app-layer handler interfaces.
 

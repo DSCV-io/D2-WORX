@@ -10,7 +10,7 @@ Copyright (c) DCSV. All rights reserved.
     Clients leaf project — the curated internal API surface for the
     KeyCustodian module. Holds only:
       - transport DTOs for exposed operations (generated .g.cs files),
-      - the module façade interface IKeyCustodianInternalApi (generated).
+      - the module façade interface IKeyCustodianApi (generated).
 
     Dependency law: references contracts + shared libs ONLY. No Domain,
     App, or Infra reference. The App project references Clients (App ← Clients

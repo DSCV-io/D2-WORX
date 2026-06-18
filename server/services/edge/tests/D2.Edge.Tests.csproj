@@ -110,6 +110,11 @@ Copyright (c) DCSV. All rights reserved.
     <!-- Grpc.Net.Client — client-side channel for the in-process gRPC integration
          test (constructs a GrpcChannel atop the TestServer's HttpClient). -->
     <PackageReference Include="Grpc.Net.Client" />
+    <!-- Grpc.Net.ClientFactory — AddGrpcClient<TStub>() extension used by the generated
+         gRPC client DI fixture (TypeSpecGrpc/Generated/KeyCustodianGrpcClientsGenerated.g.cs)
+         to register the channel. The fixture validates the emitter's DI-ext output compiles
+         + resolves; the production Clients project gains this ref in its own (later) step. -->
+    <PackageReference Include="Grpc.Net.ClientFactory" />
     <!-- Google.Protobuf — runtime types (IMessage, ByteString, etc.) consumed by
          the Grpc.Tools-generated code for the proto fixture. -->
     <PackageReference Include="Google.Protobuf" />
@@ -156,6 +161,15 @@ Copyright (c) DCSV. All rights reserved.
     <ProjectReference Include="..\key-custodian\app\D2.Edge.KeyCustodian.App.csproj" />
     <ProjectReference Include="..\key-custodian\clients\D2.Edge.KeyCustodian.Clients.csproj" />
     <ProjectReference Include="..\key-custodian\infra\D2.Edge.KeyCustodian.Infra.csproj" />
+    <!--
+      D2.Shared.Resilience — ResilientPipeline<TKey,TValue> + AddResilientPipeline +
+      ResilientPipeline<…>.PassThrough, consumed by the TypeSpec gRPC client harness
+      (GrpcClientTests) which drives the generated KeyCustodianGrpcClient fixture through
+      the in-memory channel + per-call pipeline overrides. The generated client fixture
+      (TypeSpecGrpc/Generated/) compiles inside this test project against the same proto
+      compile (GrpcServices="Both"); no production project compiles the fixture proto.
+    -->
+    <ProjectReference Include="..\..\..\shared\dotnet\resilience\D2.Shared.Resilience.csproj" />
     <!--
       D2.Shared.Auth.Http — route-policy enforcement tests wire JwtAuthMiddleware
       via UseD2Auth() + RequireAnyScope/RequireAllScopes/MarkAsD2HarmlessEndpoint.

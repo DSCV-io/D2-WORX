@@ -129,7 +129,7 @@ export const $lib = createTypeSpecLibrary({
     },
 
     /** @d2InProcess was applied to an op with no @d2ServedBy. A leaf needs a named
-     *  owner to generate the I<Owner>InternalApi interface name. */
+     *  owner to generate the I<Owner>Api interface name. */
     "inprocess-requires-served-by": {
       severity: "error",
       messages: {

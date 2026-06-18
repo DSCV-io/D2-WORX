@@ -65,7 +65,13 @@ export function emitCsharpDtos(
   const banner = buildBanner(sourceSpec);
 
   const inputFile = emitInput(pascalOp, namespace, banner, inputFields);
-  const outputFile = emitOutput(pascalOp, namespace, banner, outputFields, outputNested);
+  const outputFile = emitOutput(
+    pascalOp,
+    namespace,
+    banner,
+    outputFields,
+    outputNested,
+  );
 
   return [inputFile, outputFile];
 }
@@ -82,7 +88,14 @@ function emitInput(
 ): EmittedFile {
   const typeName = `${pascalOp}Input`;
   const needsRedactUsings = fields.some((f) => f.redact);
-  const content = emitRecord(namespace, banner, typeName, fields, needsRedactUsings, []);
+  const content = emitRecord(
+    namespace,
+    banner,
+    typeName,
+    fields,
+    needsRedactUsings,
+    [],
+  );
   return { fileName: `${typeName}.g.cs`, content };
 }
 
@@ -95,7 +108,14 @@ function emitOutput(
 ): EmittedFile {
   const typeName = `${pascalOp}Output`;
   const needsRedactUsings = fields.some((f) => f.redact);
-  const content = emitRecord(namespace, banner, typeName, fields, needsRedactUsings, nested);
+  const content = emitRecord(
+    namespace,
+    banner,
+    typeName,
+    fields,
+    needsRedactUsings,
+    nested,
+  );
   return { fileName: `${typeName}.g.cs`, content };
 }
 
@@ -141,10 +161,14 @@ function emitRecord(
   // The record declaration.
   if (fields.length === 0) {
     // Parameterless sealed record (e.g. GetJwksInput).
-    lines.push(`/// <summary>Generated input DTO. No parameters required.</summary>`);
+    lines.push(
+      `/// <summary>Generated input DTO. No parameters required.</summary>`,
+    );
     lines.push(`public sealed record ${typeName};`);
   } else {
-    lines.push(`/// <summary>Generated DTO for the <c>${typeName}</c> operation.</summary>`);
+    lines.push(
+      `/// <summary>Generated DTO for the <c>${typeName}</c> operation.</summary>`,
+    );
     const params = fields.map((f) => buildParam(f)).join(",\n    ");
     lines.push(`public sealed record ${typeName}(`);
     lines.push(`    ${params});`);
@@ -153,7 +177,9 @@ function emitRecord(
   // Nested model records, co-located below the owning output record.
   for (const nm of nested) {
     lines.push("");
-    lines.push(`/// <summary>Generated nested model DTO for <c>${nm.name}</c>.</summary>`);
+    lines.push(
+      `/// <summary>Generated nested model DTO for <c>${nm.name}</c>.</summary>`,
+    );
     if (nm.fields.length === 0) {
       lines.push(`public sealed record ${nm.name};`);
     } else {

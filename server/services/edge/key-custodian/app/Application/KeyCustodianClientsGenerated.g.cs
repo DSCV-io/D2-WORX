@@ -21,11 +21,11 @@ public static class KeyCustodianClientsGeneratedServiceCollectionExtensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers <see cref="IKeyCustodianInternalApi"/> → <see cref="KeyCustodianInternalApi"/> as Transient.
+        /// Registers <see cref="IKeyCustodianApi"/> → <see cref="KeyCustodianApi"/> as Transient.
         /// </summary>
         public IServiceCollection AddD2KeyCustodianClients()
         {
-            services.AddTransient<IKeyCustodianInternalApi, KeyCustodianInternalApi>();
+            services.AddTransient<IKeyCustodianApi, KeyCustodianApi>();
             return services;
         }
     }

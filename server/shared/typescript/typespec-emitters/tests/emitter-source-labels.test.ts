@@ -35,10 +35,8 @@ function collectTs(dir: string): string[] {
   const results: string[] = [];
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
-    if (statSync(full).isDirectory())
-      results.push(...collectTs(full));
-    else if (entry.endsWith(".ts"))
-      results.push(full);
+    if (statSync(full).isDirectory()) results.push(...collectTs(full));
+    else if (entry.endsWith(".ts")) results.push(full);
   }
   return results;
 }

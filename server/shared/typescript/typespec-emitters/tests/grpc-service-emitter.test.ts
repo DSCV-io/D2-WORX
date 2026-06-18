@@ -89,8 +89,12 @@ describe("emitGrpcService_BaseClass_GlobalQualified", () => {
 describe("emitGrpcService_CtorAndMethodSignature", () => {
   it("ctor takes ISignHandler; method overrides Sign with proto request + ServerCallContext", () => {
     const [svc] = emitSign();
-    expect(svc.content).toContain("public sealed class KeyCustodianSignerService(ISignHandler handler)");
-    expect(svc.content).toContain("public override async Task<SignResponse> Sign(SignRequest request, ServerCallContext context)");
+    expect(svc.content).toContain(
+      "public sealed class KeyCustodianSignerService(ISignHandler handler)",
+    );
+    expect(svc.content).toContain(
+      "public override async Task<SignResponse> Sign(SignRequest request, ServerCallContext context)",
+    );
   });
 });
 
@@ -102,7 +106,9 @@ describe("emitGrpcService_DelegationBody", () => {
   it("method body calls handler.HandleAsync with mapped input + CancellationToken", () => {
     const [svc] = emitSign();
     expect(svc.content).toContain("SignInput input = request.ToSignInput();");
-    expect(svc.content).toContain("var result = await handler.HandleAsync(input, context.CancellationToken).ConfigureAwait(false);");
+    expect(svc.content).toContain(
+      "var result = await handler.HandleAsync(input, context.CancellationToken).ConfigureAwait(false);",
+    );
   });
 });
 
@@ -115,10 +121,18 @@ describe("emitGrpcService_TypeAliases_Disambiguate", () => {
     const [svc] = emitSign();
     // Proto message names (SignRequest/SignResponse) are distinct from DTO names
     // (SignInput/SignOutput), so no Proto*/Dto* prefixes are needed in the SERVICE file.
-    expect(svc.content).toContain("using SignRequest = global::D2.Services.Protos.KeyCustodian.V1.SignRequest;");
-    expect(svc.content).toContain("using SignResponse = global::D2.Services.Protos.KeyCustodian.V1.SignResponse;");
-    expect(svc.content).toContain("using SignInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignInput;");
-    expect(svc.content).toContain("using SignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;");
+    expect(svc.content).toContain(
+      "using SignRequest = global::D2.Services.Protos.KeyCustodian.V1.SignRequest;",
+    );
+    expect(svc.content).toContain(
+      "using SignResponse = global::D2.Services.Protos.KeyCustodian.V1.SignResponse;",
+    );
+    expect(svc.content).toContain(
+      "using SignInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignInput;",
+    );
+    expect(svc.content).toContain(
+      "using SignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;",
+    );
     // Service file: no old Proto*/Dto*-prefixed using-alias declarations.
     expect(svc.content).not.toContain("using ProtoSignInput");
     expect(svc.content).not.toContain("using DtoSignInput");
@@ -129,11 +143,17 @@ describe("emitGrpcService_TypeAliases_Disambiguate", () => {
 
   it("mapper file emits standard using-aliases PLUS a ProtoSignOutput disambiguation alias", () => {
     const [, mapper] = emitSign();
-    expect(mapper.content).toContain("using SignRequest = global::D2.Services.Protos.KeyCustodian.V1.SignRequest;");
-    expect(mapper.content).toContain("using SignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;");
+    expect(mapper.content).toContain(
+      "using SignRequest = global::D2.Services.Protos.KeyCustodian.V1.SignRequest;",
+    );
+    expect(mapper.content).toContain(
+      "using SignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;",
+    );
     // The proto data message name (<Op>Output) collides with the DTO name (<Op>Output).
     // The mapper emits a ProtoSignOutput alias to disambiguate.
-    expect(mapper.content).toContain("using ProtoSignOutput = global::D2.Services.Protos.KeyCustodian.V1.SignOutput;");
+    expect(mapper.content).toContain(
+      "using ProtoSignOutput = global::D2.Services.Protos.KeyCustodian.V1.SignOutput;",
+    );
     // No DtoSignOutput prefix (the DTO alias keeps the bare SignOutput name).
     expect(mapper.content).not.toContain("using DtoSignOutput");
   });
@@ -163,9 +183,15 @@ describe("emitGrpcService_TransportMapper_ExtensionBlockForm", () => {
   it("envelope extension block populates result + conditionally sets data", () => {
     const [, mapper] = emitSign();
     expect(mapper.content).toContain("internal SignResponse ToProtoResponse()");
-    expect(mapper.content).toContain("var response = new SignResponse { Result = result.ToProto() };");
-    expect(mapper.content).toContain("if (result.IsOk && result.Data is not null)");
-    expect(mapper.content).toContain("response.Data = result.Data.ToProtoSignOutput();");
+    expect(mapper.content).toContain(
+      "var response = new SignResponse { Result = result.ToProto() };",
+    );
+    expect(mapper.content).toContain(
+      "if (result.IsOk && result.Data is not null)",
+    );
+    expect(mapper.content).toContain(
+      "response.Data = result.Data.ToProtoSignOutput();",
+    );
     expect(mapper.content).toContain("return response;");
   });
 
@@ -177,16 +203,27 @@ describe("emitGrpcService_TransportMapper_ExtensionBlockForm", () => {
   it("data-message mapper has no bytes conversion (string field only)", () => {
     const [, mapper] = emitSign();
     expect(mapper.content).toContain("Signature = output.Signature");
-    expect(mapper.content).not.toContain("ByteString.CopyFrom(output.Signature)");
+    expect(mapper.content).not.toContain(
+      "ByteString.CopyFrom(output.Signature)",
+    );
   });
 
   it("data-message mapper with bytes field uses ByteString.CopyFrom", () => {
     // Build a response that has a bytes field.
     const [, mapper] = emitGrpcService(
-      "test", "Svc", "Do", PROTO_NS, IMPL_NS, DTO_NS, SOURCE,
-      "DoRequest", "DoResponse",
-      "Req", [makeStringField("id")],
-      "Resp", [makeBytesField("data")],
+      "test",
+      "Svc",
+      "Do",
+      PROTO_NS,
+      IMPL_NS,
+      DTO_NS,
+      SOURCE,
+      "DoRequest",
+      "DoResponse",
+      "Req",
+      [makeStringField("id")],
+      "Resp",
+      [makeBytesField("data")],
     );
     expect(mapper.content).toContain("using Google.Protobuf;");
     expect(mapper.content).toContain("ByteString.CopyFrom(output.Data)");
@@ -201,7 +238,9 @@ describe("emitGrpcService_FileHeaderConventions", () => {
   it("service file has auto-generated banner", () => {
     const [svc] = emitSign();
     expect(svc.content).toContain("// <auto-generated>");
-    expect(svc.content).toContain("Generated by the @d2/typespec-emitters TypeSpec emitter.");
+    expect(svc.content).toContain(
+      "Generated by the @d2/typespec-emitters TypeSpec emitter.",
+    );
   });
 
   it("service file has #nullable enable", () => {
@@ -223,7 +262,9 @@ describe("emitGrpcService_FileHeaderConventions", () => {
 
   it("mapper class is internal static", () => {
     const [, mapper] = emitSign();
-    expect(mapper.content).toContain("internal static class SignTransportMappers");
+    expect(mapper.content).toContain(
+      "internal static class SignTransportMappers",
+    );
   });
 });
 
@@ -291,10 +332,19 @@ describe("emitGrpcService_FileNames", () => {
 describe("emitGrpcService_EmptyRequest_ParameterlessConstructor", () => {
   it("request with no fields → new DtoReq() in request mapper; empty data-msg → new ProtoEmptyOut()", () => {
     const [, mapper] = emitGrpcService(
-      "op", "Svc", "Do", PROTO_NS, IMPL_NS, DTO_NS, SOURCE,
-      "DoRequest", "DoResponse",
-      "EmptyIn", [],
-      "EmptyOut", [],
+      "op",
+      "Svc",
+      "Do",
+      PROTO_NS,
+      IMPL_NS,
+      DTO_NS,
+      SOURCE,
+      "DoRequest",
+      "DoResponse",
+      "EmptyIn",
+      [],
+      "EmptyOut",
+      [],
     );
     // Empty request → parameterless constructor.
     expect(mapper.content).toContain("return new EmptyIn();");
@@ -338,24 +388,32 @@ describe("emitGrpcService_FacadeDelegation_RePointedService", () => {
 
   it("ctor injects the façade type (not ISignHandler)", () => {
     const [svc] = emitSignWithFacade();
-    expect(svc.content).toContain("public sealed class KeyCustodianSignerService(IKeyCustodianSignerFacade facade)");
+    expect(svc.content).toContain(
+      "public sealed class KeyCustodianSignerService(IKeyCustodianSignerFacade facade)",
+    );
     expect(svc.content).not.toContain("ISignHandler handler");
   });
 
   it("call site uses facade.SignAsync (2-arg transport-neutral, not handler.HandleAsync)", () => {
     const [svc] = emitSignWithFacade();
-    expect(svc.content).toContain("var result = await facade.SignAsync(input, context.CancellationToken).ConfigureAwait(false);");
+    expect(svc.content).toContain(
+      "var result = await facade.SignAsync(input, context.CancellationToken).ConfigureAwait(false);",
+    );
     expect(svc.content).not.toContain("handler.HandleAsync");
   });
 
   it("adds a using for the façade namespace", () => {
     const [svc] = emitSignWithFacade();
-    expect(svc.content).toContain("using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;");
+    expect(svc.content).toContain(
+      "using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;",
+    );
   });
 
   it("XML doc references the façade type", () => {
     const [svc] = emitSignWithFacade();
-    expect(svc.content).toContain('delegating to <see cref="IKeyCustodianSignerFacade"/>');
+    expect(svc.content).toContain(
+      'delegating to <see cref="IKeyCustodianSignerFacade"/>',
+    );
   });
 
   it("envelope population is unchanged (result.ToProtoResponse(), no throw)", () => {
@@ -374,7 +432,9 @@ describe("emitGrpcService_FacadeDelegation_RePointedService", () => {
     expect(mapper.content).toContain("extension(SignOutput output)");
     expect(mapper.content).toContain("internal SignInput ToSignInput()");
     expect(mapper.content).toContain("internal SignResponse ToProtoResponse()");
-    expect(mapper.content).toContain("internal ProtoSignOutput ToProtoSignOutput()");
+    expect(mapper.content).toContain(
+      "internal ProtoSignOutput ToProtoSignOutput()",
+    );
   });
 });
 
@@ -403,7 +463,9 @@ describe("emitGrpcService_HandlerDelegation_Default", () => {
       // No delegationTarget — falls back to handler.
     );
     expect(svcDefault.content).toContain("ISignHandler handler");
-    expect(svcDefault.content).toContain("handler.HandleAsync(input, context.CancellationToken)");
+    expect(svcDefault.content).toContain(
+      "handler.HandleAsync(input, context.CancellationToken)",
+    );
     expect(svcDefault.content).not.toContain("facade");
   });
 
@@ -499,10 +561,19 @@ describe("emitGrpcService_FacadeDelegation_NoPhaseAuditIdentifiers", () => {
       targetNamespace: "My.Ns.Clients",
     };
     const [svc] = emitGrpcService(
-      "op", "Svc", "Do", PROTO_NS, IMPL_NS, DTO_NS, SOURCE,
-      "DoReq", "DoResp",
-      "DoIn", [],
-      "DoOut", [],
+      "op",
+      "Svc",
+      "Do",
+      PROTO_NS,
+      IMPL_NS,
+      DTO_NS,
+      SOURCE,
+      "DoReq",
+      "DoResp",
+      "DoIn",
+      [],
+      "DoOut",
+      [],
       facadeTarget,
     );
     expect(svc.content).not.toMatch(/Step\s+\d/);

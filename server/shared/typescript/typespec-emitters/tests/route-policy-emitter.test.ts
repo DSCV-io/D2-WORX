@@ -15,13 +15,19 @@ import {
   emitRoutePolicyMarkers,
   verbToMapMethod,
 } from "../src/lib/route-policy-emitter.js";
-import type { RoutePolicyEmitInput, HttpVerb, ScopePolicy } from "../src/lib/route-policy-emitter.js";
+import type {
+  RoutePolicyEmitInput,
+  HttpVerb,
+  ScopePolicy,
+} from "../src/lib/route-policy-emitter.js";
 
 // ---------------------------------------------------------------------------
 // Fixture builders
 // ---------------------------------------------------------------------------
 
-function makeFacadeInput(overrides: Partial<RoutePolicyEmitInput> = {}): RoutePolicyEmitInput {
+function makeFacadeInput(
+  overrides: Partial<RoutePolicyEmitInput> = {},
+): RoutePolicyEmitInput {
   return {
     opName: "sign",
     verb: "post",
@@ -42,7 +48,9 @@ function makeFacadeInput(overrides: Partial<RoutePolicyEmitInput> = {}): RoutePo
   };
 }
 
-function makeHandlerInput(overrides: Partial<RoutePolicyEmitInput> = {}): RoutePolicyEmitInput {
+function makeHandlerInput(
+  overrides: Partial<RoutePolicyEmitInput> = {},
+): RoutePolicyEmitInput {
   return {
     opName: "getJwks",
     verb: "get",
@@ -52,7 +60,8 @@ function makeHandlerInput(overrides: Partial<RoutePolicyEmitInput> = {}): RouteP
       typeName: "IGetJwksHandler",
       methodName: "HandleAsync",
     },
-    delegationTargetNamespace: "D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks",
+    delegationTargetNamespace:
+      "D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks",
     inputTypeName: "GetJwksInput",
     outputTypeName: "GetJwksOutput",
     dtoNamespace: "D2.Edge.KeyCustodian.Clients",
@@ -73,8 +82,10 @@ describe("verbToMapMethod", () => {
   it("get → MapGet", () => expect(verbToMapMethod("get")).toBe("MapGet"));
   it("post → MapPost", () => expect(verbToMapMethod("post")).toBe("MapPost"));
   it("put → MapPut", () => expect(verbToMapMethod("put")).toBe("MapPut"));
-  it("delete → MapDelete", () => expect(verbToMapMethod("delete")).toBe("MapDelete"));
-  it("patch → MapPatch", () => expect(verbToMapMethod("patch")).toBe("MapPatch"));
+  it("delete → MapDelete", () =>
+    expect(verbToMapMethod("delete")).toBe("MapDelete"));
+  it("patch → MapPatch", () =>
+    expect(verbToMapMethod("patch")).toBe("MapPatch"));
 });
 
 // ---------------------------------------------------------------------------
@@ -116,7 +127,9 @@ describe("emitRoutePolicy — façade delegation", () => {
 
   it("emits a using for the façade target namespace", () => {
     const file = emitRoutePolicy(makeFacadeInput());
-    expect(file.content).toContain("using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;");
+    expect(file.content).toContain(
+      "using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;",
+    );
   });
 });
 
@@ -149,7 +162,7 @@ describe("emitRoutePolicy — handler delegation", () => {
 // ---------------------------------------------------------------------------
 
 describe("emitRoutePolicy — RequireAnyScope", () => {
-  it("single scope → RequireAnyScope(\"self.write\")", () => {
+  it('single scope → RequireAnyScope("self.write")', () => {
     const file = emitRoutePolicy(
       makeFacadeInput({ scopePolicy: { kind: "any", scopes: ["self.write"] } }),
     );
@@ -157,9 +170,14 @@ describe("emitRoutePolicy — RequireAnyScope", () => {
   });
 
   it("multi-scope → RequireAnyScope first positional + rest params", () => {
-    const policy: ScopePolicy = { kind: "any", scopes: ["self.read", "self.write"] };
+    const policy: ScopePolicy = {
+      kind: "any",
+      scopes: ["self.read", "self.write"],
+    };
     const file = emitRoutePolicy(makeFacadeInput({ scopePolicy: policy }));
-    expect(file.content).toContain('builder.RequireAnyScope("self.read", "self.write");');
+    expect(file.content).toContain(
+      'builder.RequireAnyScope("self.read", "self.write");',
+    );
   });
 
   it("does NOT emit RequireAllScopes or MarkAsD2HarmlessEndpoint", () => {
@@ -176,7 +194,7 @@ describe("emitRoutePolicy — RequireAnyScope", () => {
 // ---------------------------------------------------------------------------
 
 describe("emitRoutePolicy — RequireAllScopes", () => {
-  it("single scope → RequireAllScopes(\"self.read\")", () => {
+  it('single scope → RequireAllScopes("self.read")', () => {
     const file = emitRoutePolicy(
       makeFacadeInput({ scopePolicy: { kind: "all", scopes: ["self.read"] } }),
     );
@@ -184,9 +202,14 @@ describe("emitRoutePolicy — RequireAllScopes", () => {
   });
 
   it("two scopes → RequireAllScopes first positional + one rest param", () => {
-    const policy: ScopePolicy = { kind: "all", scopes: ["self.read", "self.write"] };
+    const policy: ScopePolicy = {
+      kind: "all",
+      scopes: ["self.read", "self.write"],
+    };
     const file = emitRoutePolicy(makeFacadeInput({ scopePolicy: policy }));
-    expect(file.content).toContain('builder.RequireAllScopes("self.read", "self.write");');
+    expect(file.content).toContain(
+      'builder.RequireAllScopes("self.read", "self.write");',
+    );
   });
 
   it("does NOT emit RequireAnyScope or MarkAsD2HarmlessEndpoint", () => {
@@ -226,7 +249,9 @@ describe("emitRoutePolicy — MarkAsD2HarmlessEndpoint", () => {
 describe("emitRoutePolicy — rate-tier marker", () => {
   it("rateTier present → WithMetadata(new D2GeneratedRateLimitTier(...))", () => {
     const file = emitRoutePolicy(makeFacadeInput({ rateTier: "Standard" }));
-    expect(file.content).toContain('builder.WithMetadata(new D2GeneratedRateLimitTier("Standard"));');
+    expect(file.content).toContain(
+      'builder.WithMetadata(new D2GeneratedRateLimitTier("Standard"));',
+    );
   });
 
   it("rateTier absent → no D2GeneratedRateLimitTier in emitted content", () => {
@@ -238,7 +263,9 @@ describe("emitRoutePolicy — rate-tier marker", () => {
 describe("emitRoutePolicy — CSRF marker", () => {
   it("csrf present → WithMetadata(new D2GeneratedCsrfPosture(...))", () => {
     const file = emitRoutePolicy(makeFacadeInput({ csrf: "exempt" }));
-    expect(file.content).toContain('builder.WithMetadata(new D2GeneratedCsrfPosture("exempt"));');
+    expect(file.content).toContain(
+      'builder.WithMetadata(new D2GeneratedCsrfPosture("exempt"));',
+    );
   });
 
   it("csrf absent → no D2GeneratedCsrfPosture in emitted content", () => {
@@ -272,7 +299,9 @@ describe("emitRoutePolicy — §9.2 no per-route audience", () => {
 describe("emitRoutePolicy — MAP-ii result mapping", () => {
   it("success branch: Results.Json(result.Data, statusCode: status) comes BEFORE ToProblemDetails call", () => {
     const file = emitRoutePolicy(makeFacadeInput());
-    const successIdx = file.content.indexOf("Results.Json(result.Data, statusCode: status)");
+    const successIdx = file.content.indexOf(
+      "Results.Json(result.Data, statusCode: status)",
+    );
     const failureIdx = file.content.indexOf("ToProblemDetails");
     expect(successIdx).toBeGreaterThan(-1);
     expect(failureIdx).toBeGreaterThan(-1);
@@ -348,7 +377,9 @@ describe("emitRoutePolicy — C# conventions", () => {
 
   it("emits C# 14 extension(IEndpointRouteBuilder endpoints) block form", () => {
     const file = emitRoutePolicy(makeFacadeInput());
-    expect(file.content).toContain("extension(IEndpointRouteBuilder endpoints)");
+    expect(file.content).toContain(
+      "extension(IEndpointRouteBuilder endpoints)",
+    );
   });
 
   it("emits static class declaration", () => {
@@ -375,11 +406,22 @@ describe("emitRoutePolicy — C# conventions", () => {
     const file = emitRoutePolicy(makeFacadeInput());
     const lines = file.content.split("\n");
     const usingLines = lines
-      .filter((l) => l.startsWith("using ") && !l.startsWith("using D2.Shared.Auth.Http.ProblemDetails"))
-      .map((l) => l.replace(/^using /, "").replace(";", "").trim());
+      .filter(
+        (l) =>
+          l.startsWith("using ") &&
+          !l.startsWith("using D2.Shared.Auth.Http.ProblemDetails"),
+      )
+      .map((l) =>
+        l
+          .replace(/^using /, "")
+          .replace(";", "")
+          .trim(),
+      );
     // Verify each using is >= the previous (sorted).
     for (let i = 1; i < usingLines.length; i++) {
-      expect(usingLines[i]!.localeCompare(usingLines[i - 1]!)).toBeGreaterThanOrEqual(0);
+      expect(
+        usingLines[i]!.localeCompare(usingLines[i - 1]!),
+      ).toBeGreaterThanOrEqual(0);
     }
   });
 });
@@ -424,32 +466,55 @@ describe("emitRoutePolicy — scopePolicy none (defensive fallback)", () => {
 
 describe("emitRoutePolicyMarkers", () => {
   it("emits D2GeneratedRateLimitTier record", () => {
-    const file = emitRoutePolicyMarkers("D2.Edge.Tests.TypeSpecRoute.Generated", SOURCE);
-    expect(file.content).toContain("public sealed record D2GeneratedRateLimitTier(string Tier);");
+    const file = emitRoutePolicyMarkers(
+      "D2.Edge.Tests.TypeSpecRoute.Generated",
+      SOURCE,
+    );
+    expect(file.content).toContain(
+      "public sealed record D2GeneratedRateLimitTier(string Tier);",
+    );
   });
 
   it("emits D2GeneratedCsrfPosture record", () => {
-    const file = emitRoutePolicyMarkers("D2.Edge.Tests.TypeSpecRoute.Generated", SOURCE);
-    expect(file.content).toContain("public sealed record D2GeneratedCsrfPosture(string Posture);");
+    const file = emitRoutePolicyMarkers(
+      "D2.Edge.Tests.TypeSpecRoute.Generated",
+      SOURCE,
+    );
+    expect(file.content).toContain(
+      "public sealed record D2GeneratedCsrfPosture(string Posture);",
+    );
   });
 
   it("file name is D2GeneratedRoutePolicyMarkers.g.cs", () => {
-    const file = emitRoutePolicyMarkers("D2.Edge.Tests.TypeSpecRoute.Generated", SOURCE);
+    const file = emitRoutePolicyMarkers(
+      "D2.Edge.Tests.TypeSpecRoute.Generated",
+      SOURCE,
+    );
     expect(file.fileName).toBe("D2GeneratedRoutePolicyMarkers.g.cs");
   });
 
   it("emits correct namespace", () => {
-    const file = emitRoutePolicyMarkers("D2.Edge.Tests.TypeSpecRoute.Generated", SOURCE);
-    expect(file.content).toContain("namespace D2.Edge.Tests.TypeSpecRoute.Generated;");
+    const file = emitRoutePolicyMarkers(
+      "D2.Edge.Tests.TypeSpecRoute.Generated",
+      SOURCE,
+    );
+    expect(file.content).toContain(
+      "namespace D2.Edge.Tests.TypeSpecRoute.Generated;",
+    );
   });
 
   it("emits banner", () => {
-    const file = emitRoutePolicyMarkers("D2.Edge.Tests.TypeSpecRoute.Generated", SOURCE);
+    const file = emitRoutePolicyMarkers(
+      "D2.Edge.Tests.TypeSpecRoute.Generated",
+      SOURCE,
+    );
     expect(file.content).toContain("<auto-generated>");
   });
 
   it("throws on empty namespace", () => {
-    expect(() => emitRoutePolicyMarkers("", SOURCE)).toThrow("registrationNamespace must not be empty");
+    expect(() => emitRoutePolicyMarkers("", SOURCE)).toThrow(
+      "registrationNamespace must not be empty",
+    );
   });
 });
 
@@ -459,33 +524,41 @@ describe("emitRoutePolicyMarkers", () => {
 
 describe("emitRoutePolicy — adversarial inputs", () => {
   it("throws on empty opName", () => {
-    expect(() => emitRoutePolicy(makeFacadeInput({ opName: "" }))).toThrow("opName must not be empty");
+    expect(() => emitRoutePolicy(makeFacadeInput({ opName: "" }))).toThrow(
+      "opName must not be empty",
+    );
   });
 
   it("throws on empty routePath", () => {
-    expect(() => emitRoutePolicy(makeFacadeInput({ routePath: "" }))).toThrow("routePath must not be empty");
+    expect(() => emitRoutePolicy(makeFacadeInput({ routePath: "" }))).toThrow(
+      "routePath must not be empty",
+    );
   });
 
   it("throws on empty delegationTarget.typeName", () => {
     expect(() =>
       emitRoutePolicy(
         makeFacadeInput({
-          delegationTarget: { kind: "facade", typeName: "", methodName: "SignAsync" },
+          delegationTarget: {
+            kind: "facade",
+            typeName: "",
+            methodName: "SignAsync",
+          },
         }),
       ),
     ).toThrow("delegationTarget.typeName must not be empty");
   });
 
   it("throws on empty delegationTargetNamespace", () => {
-    expect(() => emitRoutePolicy(makeFacadeInput({ delegationTargetNamespace: "" }))).toThrow(
-      "delegationTargetNamespace must not be empty",
-    );
+    expect(() =>
+      emitRoutePolicy(makeFacadeInput({ delegationTargetNamespace: "" })),
+    ).toThrow("delegationTargetNamespace must not be empty");
   });
 
   it("throws on empty registrationNamespace", () => {
-    expect(() => emitRoutePolicy(makeFacadeInput({ registrationNamespace: "" }))).toThrow(
-      "registrationNamespace must not be empty",
-    );
+    expect(() =>
+      emitRoutePolicy(makeFacadeInput({ registrationNamespace: "" })),
+    ).toThrow("registrationNamespace must not be empty");
   });
 });
 
@@ -659,7 +732,10 @@ describe("byteParity_SignRouteRegistration_CommittedFixtureIdentical", () => {
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match", () => {
-    const drifted = SIGN_ROUTE_REGISTRATION_FIXTURE.replace("MapPost", "MapGet");
+    const drifted = SIGN_ROUTE_REGISTRATION_FIXTURE.replace(
+      "MapPost",
+      "MapGet",
+    );
     const file = emitRoutePolicy({
       opName: "sign",
       verb: "post",
@@ -706,7 +782,10 @@ describe("byteParity_AllScopesRouteRegistration_CommittedFixtureIdentical", () =
   });
 
   it("deliberate-drift detection: RequireAllScopes swap → not.toBe", () => {
-    const drifted = ALL_SCOPES_ROUTE_REGISTRATION_FIXTURE.replace("RequireAllScopes", "RequireAnyScope");
+    const drifted = ALL_SCOPES_ROUTE_REGISTRATION_FIXTURE.replace(
+      "RequireAllScopes",
+      "RequireAnyScope",
+    );
     const file = emitRoutePolicy({
       opName: "allScopes",
       verb: "get",

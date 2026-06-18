@@ -46,7 +46,11 @@ export interface ProtoFieldInfo {
 }
 
 /** Streaming mode values accepted by @d2GrpcMethod. */
-export type StreamingMode = "unary" | "serverStream" | "clientStream" | "bidiStream";
+export type StreamingMode =
+  | "unary"
+  | "serverStream"
+  | "clientStream"
+  | "bidiStream";
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -92,7 +96,10 @@ export function emitProto(
   responseModelName: string,
   responseFields: readonly FieldInfo[],
   nestedMessages: readonly NestedModel[],
-  onError: (code: "unmapped-scalar" | "invalid-streaming-mode", message: string) => void,
+  onError: (
+    code: "unmapped-scalar" | "invalid-streaming-mode",
+    message: string,
+  ) => void,
 ): EmittedFile | undefined {
   // Resolve proto fields for request + response data message.
   const reqProtoFields = resolveProtoFields(requestFields, onError);
@@ -102,7 +109,10 @@ export function emitProto(
   if (respDataProtoFields === undefined) return undefined;
 
   // Resolve nested message proto fields.
-  const resolvedNested: Array<{ name: string; fields: readonly ProtoFieldInfo[] }> = [];
+  const resolvedNested: Array<{
+    name: string;
+    fields: readonly ProtoFieldInfo[];
+  }> = [];
   for (const nm of nestedMessages) {
     const nestedFields = resolveProtoFields(nm.fields, onError);
     if (nestedFields === undefined) return undefined;
@@ -113,7 +123,13 @@ export function emitProto(
   const protoResponseMsgName = `${grpcMethod}Response`;
 
   // Build the rpc declaration based on streaming mode.
-  const rpcLine = buildRpcLine(grpcMethod, streaming, requestModelName, protoResponseMsgName, onError);
+  const rpcLine = buildRpcLine(
+    grpcMethod,
+    streaming,
+    requestModelName,
+    protoResponseMsgName,
+    onError,
+  );
   if (rpcLine === undefined) return undefined;
 
   // buildBanner returns a string ending with "\n". Use as-is to preserve the
@@ -122,11 +138,11 @@ export function emitProto(
   const lines: string[] = [];
 
   // Prepend banner then the first content line — banner already ends with "\n".
-  lines.push(banner + "syntax = \"proto3\";");
+  lines.push(banner + 'syntax = "proto3";');
   lines.push("");
   // Import the common D2ResultProto envelope definition. The import path mirrors
   // the layout in contracts/protos/ (e.g. jobs.proto imports "common/v1/d2_result.proto").
-  lines.push("import \"common/v1/d2_result.proto\";");
+  lines.push('import "common/v1/d2_result.proto";');
   lines.push("");
   lines.push(`package ${protoPackage};`);
   lines.push("");
@@ -147,7 +163,9 @@ export function emitProto(
   //   field 2: <responseModelName> data            — the typed output payload
   // Success AND failure both ride the envelope; gRPC status stays OK for business results.
   lines.push("");
-  lines.push(emitResponseEnvelopeMessage(protoResponseMsgName, responseModelName));
+  lines.push(
+    emitResponseEnvelopeMessage(protoResponseMsgName, responseModelName),
+  );
 
   // Emit the response data message (the DTO fields).
   lines.push("");
@@ -184,7 +202,10 @@ function buildRpcLine(
   streaming: string,
   reqName: string,
   respName: string,
-  onError: (code: "unmapped-scalar" | "invalid-streaming-mode", message: string) => void,
+  onError: (
+    code: "unmapped-scalar" | "invalid-streaming-mode",
+    message: string,
+  ) => void,
 ): string | undefined {
   switch (streaming) {
     case "unary":
@@ -210,7 +231,10 @@ function buildRpcLine(
  */
 function resolveProtoFields(
   fields: readonly FieldInfo[],
-  onError: (code: "unmapped-scalar" | "invalid-streaming-mode", message: string) => void,
+  onError: (
+    code: "unmapped-scalar" | "invalid-streaming-mode",
+    message: string,
+  ) => void,
 ): readonly ProtoFieldInfo[] | undefined {
   const result: ProtoFieldInfo[] = [];
   let fieldNumber = 1;
@@ -233,7 +257,10 @@ function resolveProtoFields(
 function resolveOneField(
   f: FieldInfo,
   fieldNumber: number,
-  onError: (code: "unmapped-scalar" | "invalid-streaming-mode", message: string) => void,
+  onError: (
+    code: "unmapped-scalar" | "invalid-streaming-mode",
+    message: string,
+  ) => void,
 ): ProtoFieldInfo | undefined {
   const protoName = toSnake(f.name);
 
@@ -242,9 +269,10 @@ function resolveOneField(
     const elemCsType = f.csType.slice("IReadOnlyList<".length, -1);
     // Model-typed collection: f.nested is set (walkModel sets it for model array elements).
     // Scalar collection: f.nested is undefined → resolve strictly via the registry.
-    const protoType = f.nested !== undefined
-      ? f.nested.name
-      : resolveProtoFromScalarCsType(elemCsType, f.name, onError);
+    const protoType =
+      f.nested !== undefined
+        ? f.nested.name
+        : resolveProtoFromScalarCsType(elemCsType, f.name, onError);
     if (protoType === undefined) return undefined;
     return { protoName, protoType, fieldNumber, repeated: true };
   }
@@ -256,11 +284,14 @@ function resolveOneField(
   }
 
   // Scalar field: resolve strictly from the scalar registry (no passthrough for unknown types).
-  const protoType = resolveProtoFromScalarCsType(f.csType.replace("?", ""), f.name, onError);
+  const protoType = resolveProtoFromScalarCsType(
+    f.csType.replace("?", ""),
+    f.name,
+    onError,
+  );
   if (protoType === undefined) return undefined;
   return { protoName, protoType, fieldNumber, repeated: false };
 }
-
 
 /**
  * Lookup the proto type for a C# scalar type via the registry reverse-lookup table.
@@ -272,7 +303,10 @@ function resolveOneField(
 function resolveProtoFromScalarCsType(
   csType: string,
   fieldName: string,
-  onError: (code: "unmapped-scalar" | "invalid-streaming-mode", message: string) => void,
+  onError: (
+    code: "unmapped-scalar" | "invalid-streaming-mode",
+    message: string,
+  ) => void,
 ): string | undefined {
   const proto = CS_TO_PROTO.get(csType);
   if (proto !== undefined) return proto;
@@ -313,18 +347,16 @@ function emitResponseEnvelopeMessage(
  * Emit one proto3 message block.
  * Empty messages emit `message Name {}` (well-formed proto3).
  */
-function emitMessage(
-  name: string,
-  fields: readonly ProtoFieldInfo[],
-): string {
-  if (fields.length === 0)
-    return `message ${name} {}`;
+function emitMessage(name: string, fields: readonly ProtoFieldInfo[]): string {
+  if (fields.length === 0) return `message ${name} {}`;
 
   const lines: string[] = [];
   lines.push(`message ${name} {`);
   for (const f of fields) {
     const repeated = f.repeated ? "repeated " : "";
-    lines.push(`  ${repeated}${f.protoType} ${f.protoName} = ${f.fieldNumber};`);
+    lines.push(
+      `  ${repeated}${f.protoType} ${f.protoName} = ${f.fieldNumber};`,
+    );
   }
   lines.push("}");
   return lines.join("\n");
@@ -338,19 +370,19 @@ function emitMessage(
 // ---------------------------------------------------------------------------
 
 const CS_TO_PROTO = new Map<string, string>([
-  ["string", "string"],  // string + url (url C# type is string; see scalar-registry.ts)
+  ["string", "string"], // string + url (url C# type is string; see scalar-registry.ts)
   ["bool", "bool"],
   ["byte[]", "bytes"],
-  ["long", "int64"],   // integer + int64 + safeint all map to long/int64
-  ["sbyte", "int32"],  // int8
-  ["short", "int32"],  // int16
-  ["int", "int32"],    // int32
-  ["byte", "uint32"],  // uint8
+  ["long", "int64"], // integer + int64 + safeint all map to long/int64
+  ["sbyte", "int32"], // int8
+  ["short", "int32"], // int16
+  ["int", "int32"], // int32
+  ["byte", "uint32"], // uint8
   ["ushort", "uint32"], // uint16
-  ["uint", "uint32"],  // uint32
+  ["uint", "uint32"], // uint32
   ["ulong", "uint64"], // uint64
   ["double", "double"], // float64 + float + numeric
-  ["float", "float"],  // float32
+  ["float", "float"], // float32
   ["decimal", "string"], // decimal + decimal128 → string (lossless wire)
   // NOTE: the `url` TypeSpec scalar maps to cs:"string" in scalar-registry.ts, so the
   // lookup key here is "string" (already above). A separate ["url","string"] entry

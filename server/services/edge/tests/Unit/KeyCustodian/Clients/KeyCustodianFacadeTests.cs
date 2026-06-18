@@ -13,7 +13,7 @@ using D2.Shared.Result;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
-/// Tests for the generated <see cref="IKeyCustodianInternalApi"/> façade layer.
+/// Tests for the generated <see cref="IKeyCustodianApi"/> façade layer.
 /// Covers DI resolution, delegation, and adversarial failure propagation.
 /// </summary>
 public sealed class KeyCustodianFacadeTests
@@ -23,12 +23,12 @@ public sealed class KeyCustodianFacadeTests
     // -------------------------------------------------------------------------
 
     [Fact]
-    public void AddD2KeyCustodianApp_RegistersKeyCustodianInternalApi()
+    public void AddD2KeyCustodianApp_RegistersKeyCustodianApi()
     {
         var services = new ServiceCollection();
         services.AddD2KeyCustodianApp();
 
-        services.Should().Contain(d => d.ServiceType == typeof(IKeyCustodianInternalApi));
+        services.Should().Contain(d => d.ServiceType == typeof(IKeyCustodianApi));
     }
 
     [Fact]
@@ -37,7 +37,7 @@ public sealed class KeyCustodianFacadeTests
         var services = new ServiceCollection();
         services.AddD2KeyCustodianApp();
 
-        var descriptor = services.Single(d => d.ServiceType == typeof(IKeyCustodianInternalApi));
+        var descriptor = services.Single(d => d.ServiceType == typeof(IKeyCustodianApi));
 
         // Transient — façade injects transient handlers that capture scoped DbContext;
         // a Singleton façade would be a captive-dependency bug.
@@ -45,17 +45,17 @@ public sealed class KeyCustodianFacadeTests
     }
 
     [Fact]
-    public void AddD2KeyCustodianApp_FacadeImplementationIsKeyCustodianInternalApi()
+    public void AddD2KeyCustodianApp_FacadeImplementationIsKeyCustodianApi()
     {
         var services = new ServiceCollection();
         services.AddD2KeyCustodianApp();
 
-        var descriptor = services.Single(d => d.ServiceType == typeof(IKeyCustodianInternalApi));
-        descriptor.ImplementationType.Should().Be<KeyCustodianInternalApi>();
+        var descriptor = services.Single(d => d.ServiceType == typeof(IKeyCustodianApi));
+        descriptor.ImplementationType.Should().Be<KeyCustodianApi>();
     }
 
     [Fact]
-    public void AddD2KeyCustodianClients_ResolvesIKeyCustodianInternalApi()
+    public void AddD2KeyCustodianClients_ResolvesIKeyCustodianApi()
     {
         var services = new ServiceCollection();
         services.AddD2KeyCustodianClients();
@@ -64,12 +64,12 @@ public sealed class KeyCustodianFacadeTests
 
         using var sp = services.BuildServiceProvider();
 
-        sp.GetRequiredService<IKeyCustodianInternalApi>()
-            .Should().BeOfType<KeyCustodianInternalApi>();
+        sp.GetRequiredService<IKeyCustodianApi>()
+            .Should().BeOfType<KeyCustodianApi>();
     }
 
     [Fact]
-    public void AddD2KeyCustodianApp_ResolvesIKeyCustodianInternalApi_ThroughFullEntryPoint()
+    public void AddD2KeyCustodianApp_ResolvesIKeyCustodianApi_ThroughFullEntryPoint()
     {
         // Proves AddD2KeyCustodianApp() wires the façade end-to-end.
         // AddD2KeyCustodianApp() calls AddD2KeyCustodianClients() internally — this
@@ -86,8 +86,8 @@ public sealed class KeyCustodianFacadeTests
 
         using var sp = services.BuildServiceProvider();
 
-        sp.GetRequiredService<IKeyCustodianInternalApi>()
-            .Should().BeOfType<KeyCustodianInternalApi>();
+        sp.GetRequiredService<IKeyCustodianApi>()
+            .Should().BeOfType<KeyCustodianApi>();
     }
 
     // -------------------------------------------------------------------------
@@ -100,7 +100,7 @@ public sealed class KeyCustodianFacadeTests
         var jwk = new Jwk("kid-001", "modulus", "AQAB", "RSA", "sig", "RS256");
         var expected = D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([jwk]));
         var stub = new StubGetJwksHandler(expected);
-        var facade = new KeyCustodianInternalApi(stub);
+        var facade = new KeyCustodianApi(stub);
 
         var result = await facade.GetJwksAsync(new GetJwksInput());
 
@@ -113,7 +113,7 @@ public sealed class KeyCustodianFacadeTests
     {
         var stub = new StubGetJwksHandler(D2Result<GetJwksOutput?>.Ok(new GetJwksOutput([])));
         using var cts = new CancellationTokenSource();
-        var facade = new KeyCustodianInternalApi(stub);
+        var facade = new KeyCustodianApi(stub);
 
         await facade.GetJwksAsync(new GetJwksInput(), cts.Token);
 
@@ -130,7 +130,7 @@ public sealed class KeyCustodianFacadeTests
         // Ensures the façade does not swallow failures — result identity must be preserved.
         var failure = D2Result<GetJwksOutput?>.ServiceUnavailable();
         var stub = new StubGetJwksHandler(failure);
-        var facade = new KeyCustodianInternalApi(stub);
+        var facade = new KeyCustodianApi(stub);
 
         var result = await facade.GetJwksAsync(new GetJwksInput());
 
@@ -144,7 +144,7 @@ public sealed class KeyCustodianFacadeTests
     {
         var canceled = D2Result<GetJwksOutput?>.Canceled();
         var stub = new StubGetJwksHandler(canceled);
-        var facade = new KeyCustodianInternalApi(stub);
+        var facade = new KeyCustodianApi(stub);
 
         var result = await facade.GetJwksAsync(new GetJwksInput());
 
@@ -157,29 +157,29 @@ public sealed class KeyCustodianFacadeTests
     // -------------------------------------------------------------------------
 
     [Fact]
-    public void IKeyCustodianInternalApi_IsInClientsNamespace()
+    public void IKeyCustodianApi_IsInClientsNamespace()
     {
-        typeof(IKeyCustodianInternalApi).Namespace
+        typeof(IKeyCustodianApi).Namespace
             .Should().Be("D2.Edge.KeyCustodian.Clients");
     }
 
     [Fact]
-    public void KeyCustodianInternalApi_IsInAppNamespace()
+    public void KeyCustodianApi_IsInAppNamespace()
     {
-        typeof(KeyCustodianInternalApi).Namespace
+        typeof(KeyCustodianApi).Namespace
             .Should().Be("D2.Edge.KeyCustodian.App.Application");
     }
 
     [Fact]
-    public void KeyCustodianInternalApi_IsSealed()
+    public void KeyCustodianApi_IsSealed()
     {
-        typeof(KeyCustodianInternalApi).IsSealed.Should().BeTrue();
+        typeof(KeyCustodianApi).IsSealed.Should().BeTrue();
     }
 
     [Fact]
-    public void IKeyCustodianInternalApi_HasGetJwksAsyncMethod()
+    public void IKeyCustodianApi_HasGetJwksAsyncMethod()
     {
-        typeof(IKeyCustodianInternalApi).GetMethod("GetJwksAsync")
+        typeof(IKeyCustodianApi).GetMethod("GetJwksAsync")
             .Should().NotBeNull();
     }
 

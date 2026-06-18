@@ -15,7 +15,7 @@
 //   Harmless/scope conflict: @d2Harmless + a scope decorator on the same op → error.
 //       An auth-exempt operation cannot also require scopes.
 //   InProcess/served-by required: @d2InProcess without @d2ServedBy on the same op → error.
-//       An in-process leaf needs a named owner to generate its I<Owner>InternalApi interface.
+//       An in-process leaf needs a named owner to generate its I<Owner>Api interface.
 //   Category required: every op must declare exactly one of @d2Command / @d2Query → error.
 //       category-required (neither) or category-exclusive (both).
 //   @d2Internal ⊕ exposure: @d2Internal combined with @route / @d2GrpcMethod / @d2InProcess → error.

@@ -30,7 +30,9 @@ import { $lib } from "../src/lib.js";
 const NS = "D2.Edge.Tests.TypeSpecRoute.Generated";
 const SOURCE = "contracts/typespec/fixtures/sign-shaped.tsp";
 
-function makeBaseRouteInput(overrides: Partial<RoutePolicyEmitInput> = {}): RoutePolicyEmitInput {
+function makeBaseRouteInput(
+  overrides: Partial<RoutePolicyEmitInput> = {},
+): RoutePolicyEmitInput {
   return {
     opName: "sign",
     verb: "post",
@@ -53,7 +55,9 @@ function makeBaseRouteInput(overrides: Partial<RoutePolicyEmitInput> = {}): Rout
   };
 }
 
-function makeHeaderGateInput(overrides: Partial<IdempotencyGateInput> = {}): IdempotencyGateInput {
+function makeHeaderGateInput(
+  overrides: Partial<IdempotencyGateInput> = {},
+): IdempotencyGateInput {
   return {
     keySource: "header",
     ttlSeconds: 86400,
@@ -65,7 +69,9 @@ function makeHeaderGateInput(overrides: Partial<IdempotencyGateInput> = {}): Ide
   };
 }
 
-function makeDerivedGateInput(overrides: Partial<IdempotencyGateInput> = {}): IdempotencyGateInput {
+function makeDerivedGateInput(
+  overrides: Partial<IdempotencyGateInput> = {},
+): IdempotencyGateInput {
   return {
     keySource: "derived",
     ttlSeconds: 3600,
@@ -119,27 +125,37 @@ describe("emitIdempotencyStoreSeam — file shape", () => {
 
   it("emits public interface D2GeneratedIdempotencyStore", () => {
     const file = emitIdempotencyStoreSeam(NS, SOURCE);
-    expect(file.content).toContain("public interface D2GeneratedIdempotencyStore");
+    expect(file.content).toContain(
+      "public interface D2GeneratedIdempotencyStore",
+    );
   });
 
   it("emits TryGetAsync generic method signature", () => {
     const file = emitIdempotencyStoreSeam(NS, SOURCE);
-    expect(file.content).toContain("ValueTask<D2Result<TStored?>> TryGetAsync<TStored>(string key, CancellationToken ct = default);");
+    expect(file.content).toContain(
+      "ValueTask<D2Result<TStored?>> TryGetAsync<TStored>(string key, CancellationToken ct = default);",
+    );
   });
 
   it("emits StoreAsync generic method signature", () => {
     const file = emitIdempotencyStoreSeam(NS, SOURCE);
-    expect(file.content).toContain("ValueTask<D2Result> StoreAsync<TStored>(string key, TStored value, TimeSpan ttl, CancellationToken ct = default);");
+    expect(file.content).toContain(
+      "ValueTask<D2Result> StoreAsync<TStored>(string key, TStored value, TimeSpan ttl, CancellationToken ct = default);",
+    );
   });
 
   it("emits XML doc summary on interface", () => {
     const file = emitIdempotencyStoreSeam(NS, SOURCE);
     expect(file.content).toContain("/// <summary>");
-    expect(file.content).toContain("Faithful seam for the generated idempotency gate");
+    expect(file.content).toContain(
+      "Faithful seam for the generated idempotency gate",
+    );
   });
 
   it("throws on empty registrationNamespace", () => {
-    expect(() => emitIdempotencyStoreSeam("", SOURCE)).toThrow("registrationNamespace must not be empty");
+    expect(() => emitIdempotencyStoreSeam("", SOURCE)).toThrow(
+      "registrationNamespace must not be empty",
+    );
   });
 });
 
@@ -199,7 +215,9 @@ describe("buildIdempotencyGate — header keySource", () => {
     expect(pre).toContain("replayed");
     expect(pre).toContain("replayStatus = (int)replayed.StatusCode");
     expect(pre).toContain("if (replayStatus < 400)");
-    expect(pre).toContain("Results.Json(replayed.Data, statusCode: replayStatus)");
+    expect(pre).toContain(
+      "Results.Json(replayed.Data, statusCode: replayStatus)",
+    );
     expect(pre).toContain("ToProblemDetails");
   });
 
@@ -230,8 +248,12 @@ describe("buildIdempotencyGate — header keySource", () => {
   });
 
   it("different ttlSeconds propagates correctly", () => {
-    const weave = buildIdempotencyGate(makeHeaderGateInput({ ttlSeconds: 3600 }));
-    expect(weave.postDelegateLines.join("\n")).toContain("TimeSpan.FromSeconds(3600)");
+    const weave = buildIdempotencyGate(
+      makeHeaderGateInput({ ttlSeconds: 3600 }),
+    );
+    expect(weave.postDelegateLines.join("\n")).toContain(
+      "TimeSpan.FromSeconds(3600)",
+    );
   });
 });
 
@@ -247,7 +269,9 @@ describe("buildIdempotencyGate — derived keySource", () => {
 
   it("preDelegateLines do NOT contain Idempotency-Key header read", () => {
     const weave = buildIdempotencyGate(makeDerivedGateInput());
-    expect(weave.preDelegateLines.join("\n")).not.toContain('"Idempotency-Key"');
+    expect(weave.preDelegateLines.join("\n")).not.toContain(
+      '"Idempotency-Key"',
+    );
   });
 
   it("preDelegateLines do NOT contain Falsey() guard (no header to check)", () => {
@@ -263,11 +287,15 @@ describe("buildIdempotencyGate — derived keySource", () => {
 
   it("preDelegateLines use Convert.ToHexStringLower for hex encoding", () => {
     const weave = buildIdempotencyGate(makeDerivedGateInput());
-    expect(weave.preDelegateLines.join("\n")).toContain("Convert.ToHexStringLower");
+    expect(weave.preDelegateLines.join("\n")).toContain(
+      "Convert.ToHexStringLower",
+    );
   });
 
   it("preDelegateLines access PascalCase field 'Kid' on input", () => {
-    const weave = buildIdempotencyGate(makeDerivedGateInput({ fields: ["Kid"] }));
+    const weave = buildIdempotencyGate(
+      makeDerivedGateInput({ fields: ["Kid"] }),
+    );
     expect(weave.preDelegateLines.join("\n")).toContain("input.Kid");
   });
 
@@ -282,7 +310,9 @@ describe("buildIdempotencyGate — derived keySource", () => {
 
   it("postDelegateLines include StoreAsync with derived TTL", () => {
     const weave = buildIdempotencyGate(makeDerivedGateInput());
-    expect(weave.postDelegateLines.join("\n")).toContain("TimeSpan.FromSeconds(3600)");
+    expect(weave.postDelegateLines.join("\n")).toContain(
+      "TimeSpan.FromSeconds(3600)",
+    );
   });
 
   it("preDelegateLines still include TryGetAsync replay check (same as header)", () => {
@@ -339,7 +369,9 @@ describe("buildIdempotencyGate — adversarial inputs", () => {
     // The decorator layer guarantees ttl > 0; the emitter reads it defensively
     // (emits whatever it is given, no silent default substitution).
     const weave = buildIdempotencyGate(makeHeaderGateInput({ ttlSeconds: 0 }));
-    expect(weave.postDelegateLines.join("\n")).toContain("TimeSpan.FromSeconds(0)");
+    expect(weave.postDelegateLines.join("\n")).toContain(
+      "TimeSpan.FromSeconds(0)",
+    );
   });
 
   it("derived keySource with many fields produces a hash over all of them", () => {
@@ -433,9 +465,16 @@ describe("emitRoutePolicy — header idempotency gate woven in", () => {
     const lines = file.content.split("\n");
     const usingLines = lines
       .filter((l) => l.startsWith("using "))
-      .map((l) => l.replace(/^using /, "").replace(";", "").trim());
+      .map((l) =>
+        l
+          .replace(/^using /, "")
+          .replace(";", "")
+          .trim(),
+      );
     for (let i = 1; i < usingLines.length; i++)
-      expect(usingLines[i]!.localeCompare(usingLines[i - 1]!)).toBeGreaterThanOrEqual(0);
+      expect(
+        usingLines[i]!.localeCompare(usingLines[i - 1]!),
+      ).toBeGreaterThanOrEqual(0);
   });
 
   it("MAP-ii success/failure shape is still present AFTER the gate lines", () => {
@@ -445,10 +484,15 @@ describe("emitRoutePolicy — header idempotency gate woven in", () => {
       }),
     );
     const storeIdx = file.content.indexOf("store.StoreAsync");
-    const statusIdx = file.content.indexOf("var status = (int)result.StatusCode;", storeIdx);
+    const statusIdx = file.content.indexOf(
+      "var status = (int)result.StatusCode;",
+      storeIdx,
+    );
     expect(statusIdx).toBeGreaterThan(storeIdx);
     expect(file.content).toContain("if (status < 400)");
-    expect(file.content).toContain("Results.Json(result.Data, statusCode: status)");
+    expect(file.content).toContain(
+      "Results.Json(result.Data, statusCode: status)",
+    );
     expect(file.content).toContain("ToProblemDetails");
   });
 });
@@ -457,7 +501,11 @@ describe("emitRoutePolicy — derived idempotency gate woven in", () => {
   it("store param appears in the delegate signature (derived)", () => {
     const file = emitRoutePolicy(
       makeBaseRouteInput({
-        idempotency: { keySource: "derived", ttlSeconds: 3600, fields: ["Kid"] },
+        idempotency: {
+          keySource: "derived",
+          ttlSeconds: 3600,
+          fields: ["Kid"],
+        },
       }),
     );
     expect(file.content).toContain("D2GeneratedIdempotencyStore store");
@@ -466,7 +514,11 @@ describe("emitRoutePolicy — derived idempotency gate woven in", () => {
   it("SHA-256 derived key block appears BEFORE the delegation call", () => {
     const file = emitRoutePolicy(
       makeBaseRouteInput({
-        idempotency: { keySource: "derived", ttlSeconds: 3600, fields: ["Kid"] },
+        idempotency: {
+          keySource: "derived",
+          ttlSeconds: 3600,
+          fields: ["Kid"],
+        },
       }),
     );
     const sha256Idx = file.content.indexOf("SHA256.HashData");
@@ -478,7 +530,11 @@ describe("emitRoutePolicy — derived idempotency gate woven in", () => {
   it("derived key references PascalCase input.Kid", () => {
     const file = emitRoutePolicy(
       makeBaseRouteInput({
-        idempotency: { keySource: "derived", ttlSeconds: 3600, fields: ["Kid"] },
+        idempotency: {
+          keySource: "derived",
+          ttlSeconds: 3600,
+          fields: ["Kid"],
+        },
       }),
     );
     expect(file.content).toContain("input.Kid");
@@ -487,7 +543,11 @@ describe("emitRoutePolicy — derived idempotency gate woven in", () => {
   it("no Idempotency-Key header read for derived keySource", () => {
     const file = emitRoutePolicy(
       makeBaseRouteInput({
-        idempotency: { keySource: "derived", ttlSeconds: 3600, fields: ["Kid"] },
+        idempotency: {
+          keySource: "derived",
+          ttlSeconds: 3600,
+          fields: ["Kid"],
+        },
       }),
     );
     expect(file.content).not.toContain('"Idempotency-Key"');
@@ -496,7 +556,11 @@ describe("emitRoutePolicy — derived idempotency gate woven in", () => {
   it("StoreAsync uses the derived TTL (3600)", () => {
     const file = emitRoutePolicy(
       makeBaseRouteInput({
-        idempotency: { keySource: "derived", ttlSeconds: 3600, fields: ["Kid"] },
+        idempotency: {
+          keySource: "derived",
+          ttlSeconds: 3600,
+          fields: ["Kid"],
+        },
       }),
     );
     expect(file.content).toContain("TimeSpan.FromSeconds(3600)");
@@ -655,7 +719,10 @@ describe("byteParity_SignRouteRegistration_Gated_CommittedFixtureIdentical", () 
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match", () => {
-    const drifted = SIGN_ROUTE_REGISTRATION_GATED_FIXTURE.replace("TryGetAsync", "TryGetAsyncDRIFTED");
+    const drifted = SIGN_ROUTE_REGISTRATION_GATED_FIXTURE.replace(
+      "TryGetAsync",
+      "TryGetAsyncDRIFTED",
+    );
     const file = emitRoutePolicy({
       opName: "sign",
       verb: "post",
@@ -719,7 +786,7 @@ const SIGN_DERIVED_ROUTE_REGISTRATION_FIXTURE = [
   '                "/internal/v1/kc/sign-derived",',
   "                static async (SignInput input, IKeyCustodianSignerFacade facade, D2GeneratedIdempotencyStore store, HttpContext http, CancellationToken ct) =>",
   "                {",
-  '                    var idempotencyKeyRaw = System.Text.Encoding.UTF8.GetBytes(input.Kid);',
+  "                    var idempotencyKeyRaw = System.Text.Encoding.UTF8.GetBytes(input.Kid);",
   "                    var idempotencyKey = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(idempotencyKeyRaw));",
   "                    var cachedResult = await store.TryGetAsync<D2Result<SignOutput?>>(idempotencyKey, ct).ConfigureAwait(false);",
   "                    if (cachedResult.Success && cachedResult.Data is not null)",
@@ -774,7 +841,10 @@ describe("byteParity_SignDerivedRouteRegistration_CommittedFixtureIdentical", ()
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match", () => {
-    const drifted = SIGN_DERIVED_ROUTE_REGISTRATION_FIXTURE.replace("SHA256.HashData", "SHA256.HashDataDRIFTED");
+    const drifted = SIGN_DERIVED_ROUTE_REGISTRATION_FIXTURE.replace(
+      "SHA256.HashData",
+      "SHA256.HashDataDRIFTED",
+    );
     const file = emitRoutePolicy({
       opName: "signDerived",
       verb: "post",
@@ -825,15 +895,15 @@ const IDEMPOTENCY_STORE_SEAM_FIXTURE = [
   "public interface D2GeneratedIdempotencyStore",
   "{",
   "    /// <summary>",
-  "    /// Try to retrieve a previously stored result for <paramref name=\"key\"/>.",
+  '    /// Try to retrieve a previously stored result for <paramref name="key"/>.',
   "    /// Returns <c>Ok(stored)</c> on a hit, <c>NotFound</c> on a miss,",
   "    /// or a failure result when the store is unavailable.",
   "    /// </summary>",
   "    ValueTask<D2Result<TStored?>> TryGetAsync<TStored>(string key, CancellationToken ct = default);",
   "",
   "    /// <summary>",
-  "    /// Store <paramref name=\"value\"/> under <paramref name=\"key\"/> with the",
-  "    /// given <paramref name=\"ttl\"/>. The entry expires after the TTL elapses.",
+  '    /// Store <paramref name="value"/> under <paramref name="key"/> with the',
+  '    /// given <paramref name="ttl"/>. The entry expires after the TTL elapses.',
   "    /// Returns <c>Ok</c> on success or a failure result when the store is unavailable.",
   "    /// </summary>",
   "    ValueTask<D2Result> StoreAsync<TStored>(string key, TStored value, TimeSpan ttl, CancellationToken ct = default);",
@@ -851,7 +921,10 @@ describe("byteParity_IIdempotencyStore_SeamFixtureIdentical", () => {
   });
 
   it("deliberate-drift detection: mutated method name does NOT match", () => {
-    const drifted = IDEMPOTENCY_STORE_SEAM_FIXTURE.replace("TryGetAsync", "TryGetAsyncDRIFTED");
+    const drifted = IDEMPOTENCY_STORE_SEAM_FIXTURE.replace(
+      "TryGetAsync",
+      "TryGetAsyncDRIFTED",
+    );
     const file = emitIdempotencyStoreSeam(
       "D2.Edge.Tests.TypeSpecRoute.Generated",
       "contracts/typespec/fixtures/sign-shaped.tsp",
@@ -880,7 +953,9 @@ describe("D2TSP006_IdempotentRequiresRoute_DirectCatalogTest", () => {
   });
 
   it("'idempotent-requires-route' (D2TSP006) has severity 'error'", () => {
-    expect($lib.diagnostics["idempotent-requires-route"].severity).toBe("error");
+    expect($lib.diagnostics["idempotent-requires-route"].severity).toBe(
+      "error",
+    );
   });
 
   it("'idempotent-requires-route' message template is callable (paramMessage)", () => {

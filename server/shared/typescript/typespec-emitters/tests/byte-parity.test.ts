@@ -108,7 +108,10 @@ function makeProp(type: Scalar, optional = false): ModelProperty {
   return { type, optional } as unknown as ModelProperty;
 }
 
-function makeRedactProp(type: Scalar): { prop: ModelProperty; redactMap: Map<object, unknown> } {
+function makeRedactProp(type: Scalar): {
+  prop: ModelProperty;
+  redactMap: Map<object, unknown>;
+} {
   const prop = { type, optional: false } as unknown as ModelProperty;
   return { prop, redactMap: new Map([[prop, true]]) };
 }
@@ -164,7 +167,10 @@ function buildGetJwksOutputWalk() {
     kind: "Model",
     name: "GetJwksOutput",
     properties: new Map<string, ModelProperty>([
-      ["keys", { type: arrayModel, optional: false } as unknown as ModelProperty],
+      [
+        "keys",
+        { type: arrayModel, optional: false } as unknown as ModelProperty,
+      ],
     ]),
   } as unknown as Model;
 
@@ -187,7 +193,10 @@ function buildSignInputWalk() {
     ]),
   } as unknown as Model;
 
-  return { walk: walkModel(makeProgram(redactMap), model, () => {}), redactMap };
+  return {
+    walk: walkModel(makeProgram(redactMap), model, () => {}),
+    redactMap,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -211,7 +220,10 @@ describe("byteParity_GetJwksInput_CommittedFixtureIdentical", () => {
 
   it("deliberate-drift detection: mutated fixture does NOT match regenerated output", () => {
     // Non-vacuous guard: deliberately corrupt the fixture by one byte.
-    const driftedFixture = GET_JWKS_INPUT_FIXTURE.replace("GetJwksInput", "GetJwksInputDRIFTED");
+    const driftedFixture = GET_JWKS_INPUT_FIXTURE.replace(
+      "GetJwksInput",
+      "GetJwksInputDRIFTED",
+    );
 
     const { fields, nestedModels } = buildGetJwksInputWalk();
     const [inputFile] = emitCsharpDtos(
@@ -245,7 +257,10 @@ describe("byteParity_GetJwksOutput_CommittedFixtureIdentical", () => {
 
   it("deliberate-drift detection: mutated fixture does NOT match regenerated output", () => {
     // Non-vacuous guard: deliberately corrupt the fixture by one byte.
-    const driftedFixture = GET_JWKS_OUTPUT_FIXTURE.replace("GetJwksOutput", "GetJwksOutputDRIFTED");
+    const driftedFixture = GET_JWKS_OUTPUT_FIXTURE.replace(
+      "GetJwksOutput",
+      "GetJwksOutputDRIFTED",
+    );
 
     const { fields, nestedModels } = buildGetJwksOutputWalk();
     const [, outputFile] = emitCsharpDtos(
@@ -279,7 +294,10 @@ describe("byteParity_SignInput_CommittedFixtureIdentical", () => {
 
   it("deliberate-drift detection: mutated fixture does NOT match regenerated output", () => {
     // §1.20 non-vacuous guard: deliberately corrupt the fixture by one byte.
-    const driftedFixture = SIGN_INPUT_FIXTURE.replace("SignInput", "SignInputDRIFTED");
+    const driftedFixture = SIGN_INPUT_FIXTURE.replace(
+      "SignInput",
+      "SignInputDRIFTED",
+    );
 
     const { walk } = buildSignInputWalk();
     const [inputFile] = emitCsharpDtos(

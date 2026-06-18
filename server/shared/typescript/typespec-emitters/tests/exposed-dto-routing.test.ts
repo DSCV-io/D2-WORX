@@ -86,13 +86,16 @@ describe("exposedDtoRouting_ExposedOp_DtosGoToClientsNamespace", () => {
         "@d2/typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
           "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
-          "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+          "csharp-app-namespace-base":
+            "D2.Edge.KeyCustodian.App.Application.Handlers",
         },
       },
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
     // GetJwksOutput should be in the Clients namespace.
@@ -107,7 +110,9 @@ describe("exposedDtoRouting_ExposedOp_DtosGoToClientsNamespace", () => {
       "namespace D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;",
     );
     // emitUsing=false when csAppNamespaceBase is present.
-    expect(handlerContent).not.toContain("using D2.Shared.Handler.Abstractions;");
+    expect(handlerContent).not.toContain(
+      "using D2.Shared.Handler.Abstractions;",
+    );
   });
 });
 
@@ -144,13 +149,16 @@ describe("exposedDtoRouting_InternalOp_DtosGoToAppCqrsNamespace", () => {
         "@d2/typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
           "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
-          "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+          "csharp-app-namespace-base":
+            "D2.Edge.KeyCustodian.App.Application.Handlers",
         },
       },
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
     // DTOs should be in the app Commands namespace.
@@ -205,7 +213,8 @@ describe("exposedDtoRouting_MissingCategory_D2TSP003Fires", () => {
         options: {
           "@d2/typespec-emitters": {
             "csharp-namespace": "D2.Fixture.Ns",
-            "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+            "csharp-app-namespace-base":
+              "D2.Edge.KeyCustodian.App.Application.Handlers",
           },
         },
         outputDir: "testing:/out",
@@ -216,7 +225,9 @@ describe("exposedDtoRouting_MissingCategory_D2TSP003Fires", () => {
 
     // The decorator layer will fire `category-required` first, OR the emitter fires D2TSP003.
     // Either way, there must be at least one error diagnostic.
-    const programErrors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const programErrors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     const hasErrors = compileError !== undefined || programErrors.length > 0;
     expect(hasErrors).toBe(true);
   });
@@ -259,20 +270,23 @@ describe("exposedDtoRouting_FacadeEmission_ExposedOpCollected", () => {
         "@d2/typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
           "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
-          "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+          "csharp-app-namespace-base":
+            "D2.Edge.KeyCustodian.App.Application.Handlers",
         },
       },
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
     // The façade interface must be emitted in the Clients namespace.
     const stored = (host as unknown as { fs?: Map<string, string> }).fs;
     expect(stored instanceof Map).toBe(true);
-    const ifaceKey = [...(stored as Map<string, string>).keys()].find(
-      (k) => k.endsWith("IKeyCustodianInternalApi.g.cs"),
+    const ifaceKey = [...(stored as Map<string, string>).keys()].find((k) =>
+      k.endsWith("IKeyCustodianApi.g.cs"),
     );
     expect(ifaceKey).toBeDefined();
     const ifaceContent = (stored as Map<string, string>).get(ifaceKey!);
@@ -322,12 +336,16 @@ describe("exposedDtoRouting_FixtureMode_LegacyNamespaceUsed", () => {
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
     const outputContent = getEmittedFile(host, "GetJwksOutput.g.cs");
     expect(outputContent).toBeDefined();
     // Should use the legacy fixture namespace, NOT a Clients namespace.
-    expect(outputContent).toContain("namespace D2.Edge.Tests.TypeSpecDto.Generated;");
+    expect(outputContent).toContain(
+      "namespace D2.Edge.Tests.TypeSpecDto.Generated;",
+    );
   });
 });

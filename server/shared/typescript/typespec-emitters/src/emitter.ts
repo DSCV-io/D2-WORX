@@ -31,9 +31,15 @@ import type { GrpcDelegationTarget } from "./lib/grpc-service-emitter.js";
 import { emitHandlerInterface } from "./lib/handler-interface-emitter.js";
 import { emitFacade } from "./lib/facade-emitter.js";
 import type { ExposedOp } from "./lib/facade-emitter.js";
+import { emitGrpcClient, emitClientKeys } from "./lib/grpc-client-emitter.js";
+import type { GrpcClientOp } from "./lib/grpc-client-emitter.js";
 import { emitRoutePolicy } from "./lib/route-policy-emitter.js";
 import { emitIdempotencyStoreSeam } from "./lib/idempotency-gate-emitter.js";
-import type { DelegationTarget, HttpVerb, ScopePolicy } from "./lib/route-policy-emitter.js";
+import type {
+  DelegationTarget,
+  HttpVerb,
+  ScopePolicy,
+} from "./lib/route-policy-emitter.js";
 import { $lib } from "./lib.js";
 
 // The $onEmit entry point drives six artifact families per tsp compile:
@@ -99,36 +105,47 @@ export async function $onEmit(context: EmitContext): Promise<void> {
   // Read emitter options; fall back to safe placeholders when absent.
   const rawOptions = (context.options ?? {}) as Record<string, unknown>;
   const csNamespace =
-    typeof rawOptions["csharp-namespace"] === "string" && rawOptions["csharp-namespace"].length > 0
+    typeof rawOptions["csharp-namespace"] === "string" &&
+    rawOptions["csharp-namespace"].length > 0
       ? rawOptions["csharp-namespace"]
       : "D2.Generated";
   // Clients namespace for exposed-op DTOs + façade interface (façade-layer routing).
   const csClientsNamespace =
-    typeof rawOptions["csharp-clients-namespace"] === "string" && rawOptions["csharp-clients-namespace"].length > 0
+    typeof rawOptions["csharp-clients-namespace"] === "string" &&
+    rawOptions["csharp-clients-namespace"].length > 0
       ? rawOptions["csharp-clients-namespace"]
       : undefined;
   // App handler-namespace base; per-op CQRS path =
   // <base>.<Category>.<PascalOp>. When absent, falls back to fixture mode.
   const csAppNamespaceBase =
-    typeof rawOptions["csharp-app-namespace-base"] === "string" && rawOptions["csharp-app-namespace-base"].length > 0
+    typeof rawOptions["csharp-app-namespace-base"] === "string" &&
+    rawOptions["csharp-app-namespace-base"].length > 0
       ? rawOptions["csharp-app-namespace-base"]
       : undefined;
   const protoPackage =
-    typeof rawOptions["proto-package"] === "string" && rawOptions["proto-package"].length > 0
+    typeof rawOptions["proto-package"] === "string" &&
+    rawOptions["proto-package"].length > 0
       ? rawOptions["proto-package"]
       : "d2.generated.v1";
   const protoCsharpNs =
-    typeof rawOptions["proto-csharp-namespace"] === "string" && rawOptions["proto-csharp-namespace"].length > 0
+    typeof rawOptions["proto-csharp-namespace"] === "string" &&
+    rawOptions["proto-csharp-namespace"].length > 0
       ? rawOptions["proto-csharp-namespace"]
       : "D2.Generated.Protos.V1";
   const grpcServiceNs =
-    typeof rawOptions["grpc-service-namespace"] === "string" && rawOptions["grpc-service-namespace"].length > 0
+    typeof rawOptions["grpc-service-namespace"] === "string" &&
+    rawOptions["grpc-service-namespace"].length > 0
       ? rawOptions["grpc-service-namespace"]
       : "D2.Generated.Grpc";
 
   // Collect exposed ops per module (grouped by @d2ServedBy) for the façade emitter.
   // Façade is one-per-module so it is emitted AFTER the per-op walk gathers all ops.
   const exposedOpsByModule = new Map<string, ExposedOp[]>();
+
+  // Collect gRPC-method ops per module (grouped by @d2ServedBy) for the gRPC client emitter.
+  // The client emitter emits one interface + impl + mappers + DI-ext per module, after the walk.
+  // Only populated when csClientsNamespace is configured (real-module mode).
+  const grpcOpsByModule = new Map<string, GrpcClientOp[]>();
 
   // Track which registration namespaces contain at least one idempotent route.
   // The idempotency-store seam is emitted ONCE per namespace (mirrors the
@@ -141,7 +158,9 @@ export async function $onEmit(context: EmitContext): Promise<void> {
     operation(op: Operation) {
       ops.push({
         name: op.name,
-        servedBy: program.stateMap(D2_SERVED_BY_KEY).get(op) as string | undefined,
+        servedBy: program.stateMap(D2_SERVED_BY_KEY).get(op) as
+          | string
+          | undefined,
         hasGrpc: program.stateMap(D2_GRPC_METHOD_KEY).get(op) !== undefined,
         inProcess: program.stateMap(D2_IN_PROCESS_KEY).get(op) === true,
       });
@@ -159,10 +178,12 @@ export async function $onEmit(context: EmitContext): Promise<void> {
       // We unwrap that to use the model directly so field-level @d2Redact state
       // (stored on the inner model's properties) is accessible.
       const rawParams = op.parameters as Model | undefined;
-      const inputModel = rawParams !== undefined
-        ? (resolveSingleNamedParam(rawParams) ?? rawParams)
-        : undefined;
-      const outputModel = op.returnType?.kind === "Model" ? (op.returnType as Model) : undefined;
+      const inputModel =
+        rawParams !== undefined
+          ? (resolveSingleNamedParam(rawParams) ?? rawParams)
+          : undefined;
+      const outputModel =
+        op.returnType?.kind === "Model" ? (op.returnType as Model) : undefined;
 
       // Determine exposure and category for namespace routing.
       const isExposed = resolveIsExposed(program, op);
@@ -190,7 +211,15 @@ export async function $onEmit(context: EmitContext): Promise<void> {
       // emitter is gated on the same success so error paths produce zero .g.cs output.
       let dtoEmitSucceeded = false;
       if (inputModel !== undefined || outputModel !== undefined) {
-        dtoEmitSucceeded = emitDtoPair(context, program, op.name, dtoCsNamespace, specHint, inputModel, outputModel);
+        dtoEmitSucceeded = emitDtoPair(
+          context,
+          program,
+          op.name,
+          dtoCsNamespace,
+          specHint,
+          inputModel,
+          outputModel,
+        );
       }
 
       // Emit I<Op>Handler.g.cs for EVERY op (exposed and internal).
@@ -208,11 +237,18 @@ export async function $onEmit(context: EmitContext): Promise<void> {
         // emitUsing=false when a real app project has GlobalUsings supplying the import;
         // emitUsing=true for fixture namespaces that have no such global using.
         const handlerEmitUsing = csAppNamespaceBase === undefined;
-        const inputTypeName = (inputModel?.name?.length ?? 0) > 0 ? inputModel!.name : `${toPascalFromCamel(op.name)}Input`;
-        const outputTypeName = (outputModel?.name?.length ?? 0) > 0 ? outputModel!.name : `${toPascalFromCamel(op.name)}Output`;
+        const inputTypeName =
+          (inputModel?.name?.length ?? 0) > 0
+            ? inputModel!.name
+            : `${toPascalFromCamel(op.name)}Input`;
+        const outputTypeName =
+          (outputModel?.name?.length ?? 0) > 0
+            ? outputModel!.name
+            : `${toPascalFromCamel(op.name)}Output`;
         // Pass the DTO namespace when it differs from the handler namespace so the
         // emitter can add a per-file using for the Clients types (exposed ops only).
-        const dtoNsForHandler = dtoCsNamespace !== handlerNs ? dtoCsNamespace : undefined;
+        const dtoNsForHandler =
+          dtoCsNamespace !== handlerNs ? dtoCsNamespace : undefined;
         const handlerFile = emitHandlerInterface(
           op.name,
           handlerNs,
@@ -230,8 +266,15 @@ export async function $onEmit(context: EmitContext): Promise<void> {
         // and the op is exposed (not @d2Internal). Fixture ops (no csAppNamespaceBase) are skipped.
         // Only collect ops that have a known CQRS category — ops missing @d2Command / @d2Query
         // already fired D2TSP003 and must not appear in the façade interface.
-        if (isExposed && category !== undefined && csAppNamespaceBase !== undefined && csClientsNamespace !== undefined) {
-          const servedBy = program.stateMap(D2_SERVED_BY_KEY).get(op) as string | undefined;
+        if (
+          isExposed &&
+          category !== undefined &&
+          csAppNamespaceBase !== undefined &&
+          csClientsNamespace !== undefined
+        ) {
+          const servedBy = program.stateMap(D2_SERVED_BY_KEY).get(op) as
+            | string
+            | undefined;
           if (servedBy !== undefined && servedBy.length > 0) {
             const existing = exposedOpsByModule.get(servedBy) ?? [];
             existing.push({
@@ -250,22 +293,34 @@ export async function $onEmit(context: EmitContext): Promise<void> {
       const grpcPayload = program.stateMap(D2_GRPC_METHOD_KEY).get(op) as
         | { service: string; method: string; streaming: string }
         | undefined;
-      if (grpcPayload !== undefined && (inputModel !== undefined || outputModel !== undefined)) {
+      if (
+        grpcPayload !== undefined &&
+        (inputModel !== undefined || outputModel !== undefined)
+      ) {
         // Compute the delegation target for gRPC — same rule as the route emitter:
         // @d2InProcess → façade; else → I<Op>Handler.
-        const grpcInProcess = program.stateMap(D2_IN_PROCESS_KEY).get(op) === true;
-        const grpcServedBy = program.stateMap(D2_SERVED_BY_KEY).get(op) as string | undefined;
+        const grpcInProcess =
+          program.stateMap(D2_IN_PROCESS_KEY).get(op) === true;
+        const grpcServedBy = program.stateMap(D2_SERVED_BY_KEY).get(op) as
+          | string
+          | undefined;
         const grpcPascalOp = toPascalFromCamel(op.name);
 
         let grpcDelegationTarget: GrpcDelegationTarget;
-        if (grpcInProcess && grpcServedBy !== undefined && grpcServedBy.length > 0) {
+        if (
+          grpcInProcess &&
+          grpcServedBy !== undefined &&
+          grpcServedBy.length > 0
+        ) {
           // Façade delegation — use the same naming logic as the route emitter.
-          const facadeTypeName = csAppNamespaceBase !== undefined && csClientsNamespace !== undefined
-            ? `I${grpcServedBy}InternalApi`
-            : `I${grpcServedBy}SignerFacade`;
-          const facadeNs = csAppNamespaceBase !== undefined && csClientsNamespace !== undefined
-            ? csClientsNamespace
-            : `${grpcServiceNs}.Facade`;
+          const facadeTypeName =
+            csAppNamespaceBase !== undefined && csClientsNamespace !== undefined
+              ? `I${grpcServedBy}Api`
+              : `I${grpcServedBy}SignerFacade`;
+          const facadeNs =
+            csAppNamespaceBase !== undefined && csClientsNamespace !== undefined
+              ? csClientsNamespace
+              : `${grpcServiceNs}.Facade`;
           grpcDelegationTarget = {
             kind: "facade",
             typeName: facadeTypeName,
@@ -296,6 +351,58 @@ export async function $onEmit(context: EmitContext): Promise<void> {
           outputModel,
           grpcDelegationTarget,
         );
+
+        // Collect this op for the per-module gRPC client emitter (real-module only).
+        // Only when csClientsNamespace is configured — fixture ops skip client emit.
+        // Walk the models again (walkModel is pure; no side effects from the second call).
+        if (
+          csClientsNamespace !== undefined &&
+          grpcServedBy !== undefined &&
+          grpcServedBy.length > 0
+        ) {
+          // Re-walk the (already-validated) models to collect the client field lists.
+          // emitProtoAndGrpcService ran first and returns early on any walk error, so by
+          // here the models are known-valid; the error sink + the anonymous-model name
+          // fallbacks are defensive and exercised only by malformed input that the proto
+          // block already rejected (covered there). The DTO-collection block above mirrors
+          // this exact shape.
+          /* v8 ignore start — defensive: walk error sink + anonymous-model name fallbacks (proto block validated first) */
+          const clientInputWalk =
+            inputModel !== undefined
+              ? walkModel(program, inputModel, () => undefined)
+              : { fields: [], nestedModels: [] };
+          const clientOutputWalk =
+            outputModel !== undefined
+              ? walkModel(program, outputModel, () => undefined)
+              : { fields: [], nestedModels: [] };
+
+          const requestModelName =
+            (inputModel?.name?.length ?? 0) > 0
+              ? inputModel!.name
+              : `${grpcPascalOp}Input`;
+          const responseModelName =
+            (outputModel?.name?.length ?? 0) > 0
+              ? outputModel!.name
+              : `${grpcPascalOp}Output`;
+          /* v8 ignore stop */
+
+          const clientOp: GrpcClientOp = {
+            opName: op.name,
+            grpcService: grpcPayload.service,
+            grpcMethod: grpcPayload.method,
+            protoCsharpNs,
+            dtoCsharpNs: dtoCsNamespace,
+            sourceSpec: specHint,
+            requestModelName,
+            requestFields: clientInputWalk.fields,
+            responseModelName,
+            responseFields: clientOutputWalk.fields,
+          };
+
+          const existing = grpcOpsByModule.get(grpcServedBy) ?? [];
+          existing.push(clientOp);
+          grpcOpsByModule.set(grpcServedBy, existing);
+        }
       }
 
       // Emit REST route registration for ops carrying @route and not @d2Internal.
@@ -332,10 +439,42 @@ export async function $onEmit(context: EmitContext): Promise<void> {
       // The base is e.g. "D2.Edge.KeyCustodian.App.Application.Handlers" →
       // app namespace root = "D2.Edge.KeyCustodian.App.Application".
       const appNsRoot = csAppNamespaceBase.replace(/\.Handlers$/, "");
-      const facadeFiles = emitFacade(moduleName, moduleOps, csClientsNamespace, appNsRoot);
+      const facadeFiles = emitFacade(
+        moduleName,
+        moduleOps,
+        csClientsNamespace,
+        appNsRoot,
+      );
       for (const f of facadeFiles) {
         const facadePath = resolveOutputPath(context, f.fileName);
         void emitGeneratedFile(program, facadePath, f.content);
+      }
+    }
+  }
+
+  // ---- gRPC client emitter — one interface + impl + mappers + DI-ext per module ----
+  // Fires after the per-op walk collects all @d2GrpcMethod ops per module.
+  // Only in real-module mode (csClientsNamespace configured).
+  if (csClientsNamespace !== undefined) {
+    for (const [moduleName, moduleOps] of grpcOpsByModule) {
+      const clientFiles = emitGrpcClient(
+        moduleName,
+        moduleOps,
+        csClientsNamespace,
+      );
+      for (const f of clientFiles) {
+        const clientPath = resolveOutputPath(context, f.fileName);
+        void emitGeneratedFile(program, clientPath, f.content);
+      }
+      // Per-op client keys constants (<Op>ClientKeys.g.cs).
+      for (const clientOp of moduleOps) {
+        const keysFile = emitClientKeys(
+          clientOp.opName,
+          csClientsNamespace,
+          clientOp.sourceSpec,
+        );
+        const keysPath = resolveOutputPath(context, keysFile.fileName);
+        void emitGeneratedFile(program, keysPath, keysFile.content);
       }
     }
   }
@@ -361,7 +500,11 @@ export async function $onEmit(context: EmitContext): Promise<void> {
   };
 
   const manifestPath = resolveOutputPath(context, "operations-manifest.json");
-  await emitGeneratedFile(program, manifestPath, JSON.stringify(manifest, null, 2));
+  await emitGeneratedFile(
+    program,
+    manifestPath,
+    JSON.stringify(manifest, null, 2),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -374,10 +517,14 @@ export async function $onEmit(context: EmitContext): Promise<void> {
  * "Internal" ops (@d2Internal) are the complement; the decorator layer
  * enforces mutual exclusion.
  */
-function resolveIsExposed(program: Parameters<typeof walkModel>[0], op: Operation): boolean {
+function resolveIsExposed(
+  program: Parameters<typeof walkModel>[0],
+  op: Operation,
+): boolean {
   const hasInProcess = program.stateMap(D2_IN_PROCESS_KEY).get(op) === true;
   const hasGrpc = program.stateMap(D2_GRPC_METHOD_KEY).get(op) !== undefined;
-  const hasServerPush = program.stateMap(D2_SERVER_PUSH_KEY).get(op) !== undefined;
+  const hasServerPush =
+    program.stateMap(D2_SERVER_PUSH_KEY).get(op) !== undefined;
   // @route is not in the state-map directly — check via @typespec/http's getHttpOperation.
   // The exposure decorators are @d2InProcess / @d2GrpcMethod / @d2ServerPush.
   // @route is handled by the route emitter, not this pass. isExposed is therefore a union of the three keys.
@@ -430,8 +577,7 @@ function resolveDtoNamespace(
     // Fixture mode — use the legacy csharp-namespace.
     return csNamespace;
 
-  if (isExposed && csClientsNamespace !== undefined)
-    return csClientsNamespace;
+  if (isExposed && csClientsNamespace !== undefined) return csClientsNamespace;
 
   if (isInternal || !isExposed) {
     if (category !== undefined) {
@@ -502,7 +648,11 @@ function emitDtoPair(
     // The `message` string already contains the full human-readable description;
     // we pass it through the format parameter that matches the paramMessage template.
     if (code === "unmapped-scalar")
-      $lib.reportDiagnostic(program, { code: "unmapped-scalar", format: { scalar: message }, target: NoTarget });
+      $lib.reportDiagnostic(program, {
+        code: "unmapped-scalar",
+        format: { scalar: message },
+        target: NoTarget,
+      });
     else
       // unsupported-property-type: split the message to extract kind + property context.
       $lib.reportDiagnostic(program, {
@@ -513,17 +663,18 @@ function emitDtoPair(
   };
 
   // Walk input model (empty walk when op has no params).
-  const inputWalk = inputModel !== undefined
-    ? walkModel(program, inputModel, onError)
-    : { fields: [], nestedModels: [] };
+  const inputWalk =
+    inputModel !== undefined
+      ? walkModel(program, inputModel, onError)
+      : { fields: [], nestedModels: [] };
 
   // Walk output model (empty when op returns void).
-  const outputWalk = outputModel !== undefined
-    ? walkModel(program, outputModel, onError)
-    : { fields: [], nestedModels: [] };
+  const outputWalk =
+    outputModel !== undefined
+      ? walkModel(program, outputModel, onError)
+      : { fields: [], nestedModels: [] };
 
-  if (errors.length > 0)
-    return false; // Diagnostics already reported; don't emit partial files.
+  if (errors.length > 0) return false; // Diagnostics already reported; don't emit partial files.
 
   // ---- C# DTO emission ----
   const csFiles = emitCsharpDtos(
@@ -570,14 +721,25 @@ function emitProtoAndGrpcService(
 ): void {
   const errors: string[] = [];
   const onError = (
-    code: "unmapped-scalar" | "unsupported-property-type" | "invalid-streaming-mode",
+    code:
+      | "unmapped-scalar"
+      | "unsupported-property-type"
+      | "invalid-streaming-mode",
     message: string,
   ): void => {
     errors.push(message);
     if (code === "unmapped-scalar")
-      $lib.reportDiagnostic(program, { code: "unmapped-scalar", format: { scalar: message }, target: NoTarget });
+      $lib.reportDiagnostic(program, {
+        code: "unmapped-scalar",
+        format: { scalar: message },
+        target: NoTarget,
+      });
     else if (code === "invalid-streaming-mode")
-      $lib.reportDiagnostic(program, { code: "unmapped-scalar", format: { scalar: message }, target: NoTarget });
+      $lib.reportDiagnostic(program, {
+        code: "unmapped-scalar",
+        format: { scalar: message },
+        target: NoTarget,
+      });
     else
       $lib.reportDiagnostic(program, {
         code: "unsupported-property-type",
@@ -586,13 +748,15 @@ function emitProtoAndGrpcService(
       });
   };
 
-  const inputWalk = inputModel !== undefined
-    ? walkModel(program, inputModel, onError)
-    : { fields: [], nestedModels: [] };
+  const inputWalk =
+    inputModel !== undefined
+      ? walkModel(program, inputModel, onError)
+      : { fields: [], nestedModels: [] };
 
-  const outputWalk = outputModel !== undefined
-    ? walkModel(program, outputModel, onError)
-    : { fields: [], nestedModels: [] };
+  const outputWalk =
+    outputModel !== undefined
+      ? walkModel(program, outputModel, onError)
+      : { fields: [], nestedModels: [] };
 
   if (errors.length > 0) return;
 
@@ -702,7 +866,13 @@ function emitRouteIfPresent(
   }
 
   // Supported verbs for Minimal API Map* calls.
-  const supportedVerbs: readonly string[] = ["get", "post", "put", "delete", "patch"];
+  const supportedVerbs: readonly string[] = [
+    "get",
+    "post",
+    "put",
+    "delete",
+    "patch",
+  ];
   if (!supportedVerbs.includes(explicitVerb)) {
     $lib.reportDiagnostic(program, {
       code: "unsupported-http-verb",
@@ -713,14 +883,19 @@ function emitRouteIfPresent(
   }
 
   // Get full HTTP operation to extract the resolved path.
-  const [httpOp, diags] = getHttpOperation(program as Parameters<typeof getHttpOperation>[0], op);
+  const [httpOp, diags] = getHttpOperation(
+    program as Parameters<typeof getHttpOperation>[0],
+    op,
+  );
 
   // Surface any error diagnostics from getHttpOperation.
   for (const d of diags) {
     if (d.severity === "error") {
       $lib.reportDiagnostic(program, {
         code: "unmapped-scalar",
-        format: { scalar: `getHttpOperation error on '${op.name}': ${String(d.message)}` },
+        format: {
+          scalar: `getHttpOperation error on '${op.name}': ${String(d.message)}`,
+        },
         target: NoTarget,
       });
     }
@@ -730,8 +905,12 @@ function emitRouteIfPresent(
   const routePath = httpOp.path;
 
   // Resolve scope/harmless policy.
-  const anyScopes = program.stateMap(D2_REQUIRE_ANY_SCOPE_KEY).get(op) as string[] | undefined;
-  const allScopes = program.stateMap(D2_REQUIRE_ALL_SCOPES_KEY).get(op) as string[] | undefined;
+  const anyScopes = program.stateMap(D2_REQUIRE_ANY_SCOPE_KEY).get(op) as
+    | string[]
+    | undefined;
+  const allScopes = program.stateMap(D2_REQUIRE_ALL_SCOPES_KEY).get(op) as
+    | string[]
+    | undefined;
   const harmless = program.stateMap(D2_HARMLESS_KEY).get(op) === true;
 
   let scopePolicy: ScopePolicy;
@@ -739,8 +918,7 @@ function emitRouteIfPresent(
     scopePolicy = { kind: "any", scopes: anyScopes };
   else if (allScopes !== undefined && allScopes.length > 0)
     scopePolicy = { kind: "all", scopes: allScopes };
-  else if (harmless)
-    scopePolicy = { kind: "harmless" };
+  else if (harmless) scopePolicy = { kind: "harmless" };
   else {
     // D2TSP004 — deny-by-default: routed op with no auth intent.
     $lib.reportDiagnostic(program, {
@@ -753,20 +931,32 @@ function emitRouteIfPresent(
 
   // Resolve rate-tier and CSRF markers.
   const rateTierRaw = program.stateMap(D2_RATE_LIMIT_TIER_KEY).get(op) as
-    | { tier: string } | string | undefined;
-  const rateTier = rateTierRaw !== undefined
-    ? (typeof rateTierRaw === "string" ? rateTierRaw : rateTierRaw.tier)
-    : undefined;
+    | { tier: string }
+    | string
+    | undefined;
+  const rateTier =
+    rateTierRaw !== undefined
+      ? typeof rateTierRaw === "string"
+        ? rateTierRaw
+        : rateTierRaw.tier
+      : undefined;
 
   const csrfRaw = program.stateMap(D2_CSRF_KEY).get(op) as
-    | { posture: string } | string | undefined;
-  const csrf = csrfRaw !== undefined
-    ? (typeof csrfRaw === "string" ? csrfRaw : csrfRaw.posture)
-    : undefined;
+    | { posture: string }
+    | string
+    | undefined;
+  const csrf =
+    csrfRaw !== undefined
+      ? typeof csrfRaw === "string"
+        ? csrfRaw
+        : csrfRaw.posture
+      : undefined;
 
   // Resolve the delegation target.
   const inProcess = program.stateMap(D2_IN_PROCESS_KEY).get(op) === true;
-  const servedBy = program.stateMap(D2_SERVED_BY_KEY).get(op) as string | undefined;
+  const servedBy = program.stateMap(D2_SERVED_BY_KEY).get(op) as
+    | string
+    | undefined;
   const pascalOp = toPascalFromCamel(op.name);
 
   let delegationTarget: DelegationTarget;
@@ -775,15 +965,17 @@ function emitRouteIfPresent(
   if (inProcess && servedBy !== undefined && servedBy.length > 0) {
     // Facade delegation: the fixture façade interface name is I<ServedBy>SignerFacade
     // (for the sign fixture, this is IKeyCustodianSignerFacade — the fixture-specific
-    // naming that avoids collision with the real IKeyCustodianInternalApi).
+    // naming that avoids collision with the real IKeyCustodianApi).
     // In fixture mode (no csAppNamespaceBase), use the fixture gRPC namespace.
     // In real-module mode, use the clients namespace.
-    const facadeTypeName = csAppNamespaceBase !== undefined && csClientsNamespace !== undefined
-      ? `I${servedBy}InternalApi`
-      : `I${servedBy}SignerFacade`;
-    const facadeNs = csAppNamespaceBase !== undefined && csClientsNamespace !== undefined
-      ? csClientsNamespace
-      : `${grpcServiceNs}.Facade`;
+    const facadeTypeName =
+      csAppNamespaceBase !== undefined && csClientsNamespace !== undefined
+        ? `I${servedBy}Api`
+        : `I${servedBy}SignerFacade`;
+    const facadeNs =
+      csAppNamespaceBase !== undefined && csClientsNamespace !== undefined
+        ? csClientsNamespace
+        : `${grpcServiceNs}.Facade`;
     delegationTarget = {
       kind: "facade",
       typeName: facadeTypeName,
@@ -799,23 +991,25 @@ function emitRouteIfPresent(
     };
     // Handler namespace follows the same logic as resolveHandlerNamespace.
     const category = resolveCategory(program, op);
-    delegationTargetNamespace = csAppNamespaceBase !== undefined && category !== undefined
-      ? `${csAppNamespaceBase}.${category}.${pascalOp}`
-      : grpcServiceNs;
+    delegationTargetNamespace =
+      csAppNamespaceBase !== undefined && category !== undefined
+        ? `${csAppNamespaceBase}.${category}.${pascalOp}`
+        : grpcServiceNs;
   }
 
   // Resolve the registration namespace — in fixture mode use the gRPC service ns
   // (all transport output is fixture-validated per FLAG f / R7.10).
-  const registrationNs = csAppNamespaceBase !== undefined
-    ? `${csAppNamespaceBase.replace(/\.Handlers$/, "")}.Routes`
-    : grpcServiceNs;
+  const registrationNs =
+    csAppNamespaceBase !== undefined
+      ? `${csAppNamespaceBase.replace(/\.Handlers$/, "")}.Routes`
+      : grpcServiceNs;
 
-  const inputTypeName = (inputModel?.name?.length ?? 0) > 0
-    ? inputModel!.name
-    : `${pascalOp}Input`;
-  const outputTypeName = (outputModel?.name?.length ?? 0) > 0
-    ? outputModel!.name
-    : `${pascalOp}Output`;
+  const inputTypeName =
+    (inputModel?.name?.length ?? 0) > 0 ? inputModel!.name : `${pascalOp}Input`;
+  const outputTypeName =
+    (outputModel?.name?.length ?? 0) > 0
+      ? outputModel!.name
+      : `${pascalOp}Output`;
 
   void isExposed; // exposure is already validated by the caller
 
@@ -824,11 +1018,17 @@ function emitRouteIfPresent(
   // conversion (matching the convention used everywhere in the emitter fleet) because
   // the inputWalk isn't passed into emitRouteIfPresent. The decorator guarantees valid
   // field names; we map defensively (empty string → would throw in buildIdempotencyGate).
-  let idempotencyConfig: { keySource: "header" | "derived"; ttlSeconds: number; fields: readonly string[] } | undefined;
+  let idempotencyConfig:
+    | {
+        keySource: "header" | "derived";
+        ttlSeconds: number;
+        fields: readonly string[];
+      }
+    | undefined;
   if (idempotentPayload !== undefined) {
     const pascalFields = idempotentPayload.fields.map(
       /* v8 ignore next 1 — decorator guarantees non-empty; defensive guard for belt-and-suspenders */
-      (f) => f.length === 0 ? f : f[0]!.toUpperCase() + f.slice(1),
+      (f) => (f.length === 0 ? f : f[0]!.toUpperCase() + f.slice(1)),
     );
     idempotencyConfig = {
       keySource: idempotentPayload.keySource as "header" | "derived",
@@ -881,8 +1081,10 @@ function tryGetSpecPath(op: Operation): string | undefined {
  * parameters model as-is.
  */
 function resolveSingleNamedParam(params: Model): Model | undefined {
-  if (params.properties === undefined || params.properties.size !== 1) return undefined;
+  if (params.properties === undefined || params.properties.size !== 1)
+    return undefined;
   const [, prop] = [...params.properties.entries()][0]!;
-  if (prop.type.kind === "Model" && prop.type.name !== "Array") return prop.type;
+  if (prop.type.kind === "Model" && prop.type.name !== "Array")
+    return prop.type;
   return undefined;
 }

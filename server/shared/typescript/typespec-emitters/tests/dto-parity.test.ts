@@ -23,7 +23,9 @@ function makeScalar(name: string): Scalar {
   return { kind: "Scalar", name } as unknown as Scalar;
 }
 
-function makeModel(entries: Array<[string, { type: Scalar; optional: boolean }]>): Model {
+function makeModel(
+  entries: Array<[string, { type: Scalar; optional: boolean }]>,
+): Model {
   const properties = new Map<string, ModelProperty>();
   for (const [name, { type, optional }] of entries)
     properties.set(name, { type, optional } as unknown as ModelProperty);
@@ -62,7 +64,14 @@ describe("dtoParity_OneWalkModel_CsAndTsFieldSetIdentical", () => {
     expect(errors).toHaveLength(0);
 
     // Emit C# + TS from the SAME walk result.
-    const csFiles = emitCsharpDtos("testOp", "D2.Test", "test.tsp", fields, [], []);
+    const csFiles = emitCsharpDtos(
+      "testOp",
+      "D2.Test",
+      "test.tsp",
+      fields,
+      [],
+      [],
+    );
     const tsFile = emitTsDtos("testOp", "test.tsp", fields, [], []);
 
     // Extract field names from C# (the positional record params).
@@ -89,7 +98,14 @@ describe("dtoParity_OneWalkModel_CsAndTsFieldSetIdentical", () => {
     const program = makeProgram();
     const { fields } = walkModel(program, model, () => {});
 
-    const csFiles = emitCsharpDtos("empty", "D2.Test", "test.tsp", fields, [], []);
+    const csFiles = emitCsharpDtos(
+      "empty",
+      "D2.Test",
+      "test.tsp",
+      fields,
+      [],
+      [],
+    );
     const tsFile = emitTsDtos("empty", "test.tsp", fields, [], []);
 
     // C#: parameterless record.

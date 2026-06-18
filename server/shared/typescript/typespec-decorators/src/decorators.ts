@@ -222,7 +222,7 @@ export function $d2Harmless(
 /**
  * Marks an operation as eligible for in-process "leaf" invocation — a co-hosted
  * module calling the owning module directly, with no network hop. Drives the
- * generated I<Owner>InternalApi leaf interface; the explicit leaf-vs-gRPC trigger.
+ * generated I<Owner>Api leaf interface; the explicit leaf-vs-gRPC trigger.
  * Stores `true` on the operation; emitters check for presence.
  * Requires @d2ServedBy on the same op — enforced by $onValidate.
  */

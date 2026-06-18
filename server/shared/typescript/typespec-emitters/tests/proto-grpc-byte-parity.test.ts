@@ -16,6 +16,11 @@ import type { FieldInfo } from "../src/lib/model-walk.js";
 import { emitProto } from "../src/lib/proto-emitter.js";
 import { emitGrpcService } from "../src/lib/grpc-service-emitter.js";
 import type { GrpcDelegationTarget } from "../src/lib/grpc-service-emitter.js";
+import {
+  emitGrpcClient,
+  emitClientKeys,
+} from "../src/lib/grpc-client-emitter.js";
+import type { GrpcClientOp } from "../src/lib/grpc-client-emitter.js";
 
 // ---------------------------------------------------------------------------
 // Committed fixture constants
@@ -31,13 +36,13 @@ const SIGN_PROTO_FIXTURE = [
   "//   Manual edits will be lost on rebuild.",
   "// </auto-generated>",
   "// -----------------------------------------------------------------------",
-  "syntax = \"proto3\";",
+  'syntax = "proto3";',
   "",
-  "import \"common/v1/d2_result.proto\";",
+  'import "common/v1/d2_result.proto";',
   "",
   "package d2.keycustodian.v1;",
   "",
-  "option csharp_namespace = \"D2.Services.Protos.KeyCustodian.V1\";",
+  'option csharp_namespace = "D2.Services.Protos.KeyCustodian.V1";',
   "",
   "service KeyCustodianSigner {",
   "  rpc Sign(SignRequest) returns (SignResponse);",
@@ -84,7 +89,7 @@ const SIGN_SERVICE_FIXTURE = [
   "using Grpc.Core;",
   "using D2.Edge.Tests.TypeSpecRoute.Generated.Facade;",
   "",
-  "/// <summary>Generated gRPC service for the <c>Sign</c> operation, delegating to <see cref=\"IKeyCustodianSignerFacade\"/>.</summary>",
+  '/// <summary>Generated gRPC service for the <c>Sign</c> operation, delegating to <see cref="IKeyCustodianSignerFacade"/>.</summary>',
   "public sealed class KeyCustodianSignerService(IKeyCustodianSignerFacade facade)",
   "    : global::D2.Services.Protos.KeyCustodian.V1.KeyCustodianSigner.KeyCustodianSignerBase",
   "{",
@@ -222,7 +227,7 @@ describe("byteParity_SignProto_CommittedFixtureIdentical", () => {
       SOURCE,
       "SignRequest",
       buildSignInputFields(),
-      "SignOutput",     // data message name — wrapper is always <grpcMethod>Response
+      "SignOutput", // data message name — wrapper is always <grpcMethod>Response
       buildSignOutputFields(),
       [],
       () => {},
@@ -233,7 +238,10 @@ describe("byteParity_SignProto_CommittedFixtureIdentical", () => {
 
   it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
     // §1.20 non-vacuous guard: corrupt the fixture by one byte — D2ResultProto → DRIFTED.
-    const drifted = SIGN_PROTO_FIXTURE.replace("D2ResultProto", "D2ResultProtoDRIFTED");
+    const drifted = SIGN_PROTO_FIXTURE.replace(
+      "D2ResultProto",
+      "D2ResultProtoDRIFTED",
+    );
     const result = emitProto(
       "sign",
       "KeyCustodianSigner",
@@ -288,7 +296,10 @@ describe("byteParity_KeyCustodianSignerService_FacadeDelegation_CommittedFixture
 
   it("deliberate-drift detection: handler delegation does NOT match façade fixture", () => {
     // Substituting SignAsync → HandleAsync would produce a mismatch (non-vacuous gate).
-    const drifted = SIGN_SERVICE_FIXTURE.replace("facade.SignAsync", "handler.HandleAsync");
+    const drifted = SIGN_SERVICE_FIXTURE.replace(
+      "facade.SignAsync",
+      "handler.HandleAsync",
+    );
     const [svc] = emitGrpcService(
       "sign",
       "KeyCustodianSigner",
@@ -334,7 +345,10 @@ describe("byteParity_SignTransportMappers_CommittedFixtureIdentical", () => {
   });
 
   it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
-    const drifted = SIGN_MAPPER_FIXTURE.replace("SignTransportMappers", "SignTransportMappersDRIFTED");
+    const drifted = SIGN_MAPPER_FIXTURE.replace(
+      "SignTransportMappers",
+      "SignTransportMappersDRIFTED",
+    );
     const [, mapper] = emitGrpcService(
       "sign",
       "KeyCustodianSigner",
@@ -351,5 +365,418 @@ describe("byteParity_SignTransportMappers_CommittedFixtureIdentical", () => {
       buildSignOutputFields(),
     );
     expect(mapper.content).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Client-fixture byte-parity gates (emitGrpcClient + emitClientKeys)
+// ---------------------------------------------------------------------------
+
+// The committed client fixtures live in the test project's gRPC namespace
+// (D2.Edge.Tests.TypeSpecGrpc.Generated) and reuse the existing test-project DTOs
+// (D2.Edge.Tests.TypeSpecDto.Generated) — the same layout as the service fixtures above.
+// The DTO namespace differs from the client namespace, so the emitter aliases the DTO
+// types (global:: rooted) to disambiguate <Op>Output from the same-named proto data message.
+const CLIENTS_NS = "D2.Edge.Tests.TypeSpecGrpc.Generated";
+const CLIENT_DTO_NS = "D2.Edge.Tests.TypeSpecDto.Generated";
+
+function buildClientSignOp(): GrpcClientOp {
+  return {
+    opName: "sign",
+    grpcService: "KeyCustodianSigner",
+    grpcMethod: "Sign",
+    protoCsharpNs: "D2.Services.Protos.KeyCustodian.V1",
+    dtoCsharpNs: CLIENT_DTO_NS,
+    sourceSpec: SOURCE,
+    requestModelName: "SignInput",
+    requestFields: buildSignInputFields(),
+    responseModelName: "SignOutput",
+    responseFields: buildSignOutputFields(),
+  };
+}
+
+/** Committed IKeyCustodianGrpcClient.g.cs content. */
+const SIGN_CLIENT_IFACE_FIXTURE = [
+  "// -----------------------------------------------------------------------",
+  "// <auto-generated>",
+  "//   Generated by the @d2/typespec-emitters TypeSpec emitter.",
+  "//   Source spec: contracts/typespec/fixtures/sign-shaped.tsp",
+  "//   Manual edits will be lost on rebuild.",
+  "// </auto-generated>",
+  "// -----------------------------------------------------------------------",
+  "#nullable enable",
+  "",
+  "namespace D2.Edge.Tests.TypeSpecGrpc.Generated;",
+  "",
+  "using SignInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignInput;",
+  "using SignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;",
+  "using D2.Shared.Resilience.Pipeline;",
+  "",
+  "/// <summary>",
+  "/// Generated cross-process gRPC client interface for the KeyCustodian module.",
+  "/// Lists the module's gRPC-exposed operations with the transport-aware signature.",
+  "/// </summary>",
+  "public interface IKeyCustodianGrpcClient",
+  "{",
+  "    /// <summary>Dispatches the <c>Sign</c> operation over gRPC.</summary>",
+  "    ValueTask<D2Result<SignOutput?>> SignAsync(",
+  "        SignInput input,",
+  "        ResilientPipeline<string, SignOutput?>? pipelineOverride = null,",
+  "        CancellationToken ct = default);",
+  "}",
+  "",
+].join("\n");
+
+/** Committed KeyCustodianGrpcClient.g.cs content. */
+const SIGN_CLIENT_IMPL_FIXTURE = [
+  "// -----------------------------------------------------------------------",
+  "// <auto-generated>",
+  "//   Generated by the @d2/typespec-emitters TypeSpec emitter.",
+  "//   Source spec: contracts/typespec/fixtures/sign-shaped.tsp",
+  "//   Manual edits will be lost on rebuild.",
+  "// </auto-generated>",
+  "// -----------------------------------------------------------------------",
+  "#nullable enable",
+  "",
+  "namespace D2.Edge.Tests.TypeSpecGrpc.Generated;",
+  "",
+  "using SignInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignInput;",
+  "using SignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;",
+  "using D2.Services.Protos.Common.V1;",
+  "using D2.Shared.Resilience.Pipeline;",
+  "using D2.Shared.Resilience.Retry;",
+  "using D2.Shared.Result.Grpc;",
+  "using Grpc.Core;",
+  "using Microsoft.Extensions.DependencyInjection;",
+  "",
+  "/// <summary>",
+  "/// Generated sealed cross-process gRPC client for the KeyCustodian module.",
+  "/// Runs each throwing stub call inside the keyed ResilientPipeline (transport-only",
+  "/// retry); reconstructs the business D2Result from the captured envelope after the",
+  "/// pipeline returns.",
+  "/// </summary>",
+  "public sealed class KeyCustodianGrpcClient(",
+  "    global::D2.Services.Protos.KeyCustodian.V1.KeyCustodianSigner.KeyCustodianSignerClient keyCustodianSignerStub,",
+  "    [FromKeyedServices(SignClientKeys.PIPELINE)] ResilientPipeline<string, SignOutput?> signPipeline",
+  ") : IKeyCustodianGrpcClient",
+  "{",
+  "    private readonly ResilientPipeline<string, SignOutput?> r_signPipeline = signPipeline;",
+  "",
+  "    /// <inheritdoc/>",
+  "    public ValueTask<D2Result<SignOutput?>> SignAsync(",
+  "        SignInput input,",
+  "        ResilientPipeline<string, SignOutput?>? pipelineOverride = null,",
+  "        CancellationToken ct = default)",
+  "        => SignCoreAsync(input, pipelineOverride ?? r_signPipeline, ct);",
+  "",
+  "    private async ValueTask<D2Result<SignOutput?>> SignCoreAsync(",
+  "        SignInput input,",
+  "        ResilientPipeline<string, SignOutput?> pipeline,",
+  "        CancellationToken ct)",
+  "    {",
+  "        var request = input.ToSignRequest();",
+  "        D2ResultProto? envelope = null;                  // captured out of the closure",
+  "        RpcException? transportFault = null;             // captured out of the closure",
+  "        var pipelineResult = await pipeline.ExecuteAsync(",
+  "            SignClientKeys.PIPELINE_KEY,",
+  "            async innerCt =>",
+  "            {",
+  "                try",
+  "                {",
+  "                    var response = await keyCustodianSignerStub.SignAsync(request, cancellationToken: innerCt);",
+  "                    envelope = response.Result;          // business result (gRPC status OK)",
+  "                    return response.Data is null ? default : response.Data.ToSignOutput();",
+  "                }",
+  "                catch (RpcException ex)",
+  "                {",
+  "                    transportFault = ex;                 // capture; rethrow so the retry layer still sees the throw",
+  "                    throw;",
+  "                }",
+  "            },",
+  "            ct);",
+  "        // Transport fault: the pipeline classifies RpcException via the gRPC-agnostic generic",
+  "        // path (mis-mapping to UnhandledException); remap the captured RpcException to the",
+  "        // gRPC-aware code (Cancelled -> Canceled, else -> ServiceUnavailable).",
+  "        if (!pipelineResult.Success && transportFault is not null)",
+  "            return transportFault.ToTransportFaultResult<SignOutput?>();",
+  "        // Business result: reconstruct the full D2Result from the captured envelope. Other",
+  "        // pipeline failures (CircuitOpen, RateLimit, caller-cancel) pass through verbatim.",
+  "        return pipelineResult.Success && envelope is not null",
+  "            ? envelope.ToD2Result<SignOutput?>(pipelineResult.Data)",
+  "            : pipelineResult;",
+  "    }",
+  "}",
+  "",
+].join("\n");
+
+/** Committed SignClientMappers.g.cs content. */
+const SIGN_CLIENT_MAPPER_FIXTURE = [
+  "// -----------------------------------------------------------------------",
+  "// <auto-generated>",
+  "//   Generated by the @d2/typespec-emitters TypeSpec emitter.",
+  "//   Source spec: contracts/typespec/fixtures/sign-shaped.tsp",
+  "//   Manual edits will be lost on rebuild.",
+  "// </auto-generated>",
+  "// -----------------------------------------------------------------------",
+  "#nullable enable",
+  "",
+  "namespace D2.Edge.Tests.TypeSpecGrpc.Generated;",
+  "",
+  "using D2.Edge.Tests.TypeSpecDto.Generated;",
+  "using D2.Services.Protos.KeyCustodian.V1;",
+  "using Google.Protobuf;",
+  "",
+  "/// <summary>Generated client-side mappers: DTO ↔ proto for the <c>Sign</c> operation (inverse of server transport mappers).</summary>",
+  "internal static class SignClientMappers",
+  "{",
+  "    extension(global::D2.Edge.Tests.TypeSpecDto.Generated.SignInput input)",
+  "    {",
+  "        internal global::D2.Services.Protos.KeyCustodian.V1.SignRequest ToSignRequest()",
+  "        {",
+  "            return new global::D2.Services.Protos.KeyCustodian.V1.SignRequest",
+  "            {",
+  "                Kid = input.Kid,",
+  "                Payload = global::Google.Protobuf.ByteString.CopyFrom(input.Payload),",
+  "            };",
+  "        }",
+  "    }",
+  "",
+  "    extension(global::D2.Services.Protos.KeyCustodian.V1.SignOutput data)",
+  "    {",
+  "        internal global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput ToSignOutput()",
+  "        {",
+  "            return new global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput(data.Signature);",
+  "        }",
+  "    }",
+  "}",
+  "",
+].join("\n");
+
+/** Committed KeyCustodianGrpcClientsGenerated.g.cs content. */
+const SIGN_CLIENT_DI_FIXTURE = [
+  "// -----------------------------------------------------------------------",
+  "// <auto-generated>",
+  "//   Generated by the @d2/typespec-emitters TypeSpec emitter.",
+  "//   Source spec: contracts/typespec/fixtures/sign-shaped.tsp",
+  "//   Manual edits will be lost on rebuild.",
+  "// </auto-generated>",
+  "// -----------------------------------------------------------------------",
+  "#nullable enable",
+  "",
+  "namespace D2.Edge.Tests.TypeSpecGrpc.Generated;",
+  "",
+  "using SignInput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignInput;",
+  "using SignOutput = global::D2.Edge.Tests.TypeSpecDto.Generated.SignOutput;",
+  "using D2.Shared.Resilience.Pipeline;",
+  "using D2.Shared.Resilience.Retry;",
+  "using D2.Shared.Result.Grpc;",
+  "using Grpc.Core;",
+  "using Microsoft.Extensions.DependencyInjection;",
+  "",
+  "/// <summary>Options for the KeyCustodian gRPC client channel. Supplied by the host composition root.</summary>",
+  "public sealed record KeyCustodianGrpcClientOptions",
+  "{",
+  "    /// <summary>gRPC channel endpoint address for the KeyCustodian service.</summary>",
+  "    public required Uri Address { get; init; }",
+  "}",
+  "",
+  "/// <summary>",
+  "/// Generated DI extension for the KeyCustodian gRPC client layer.",
+  "/// Called from the hand-written host composition root.",
+  "/// </summary>",
+  "public static class KeyCustodianGrpcClientsGeneratedServiceCollectionExtensions",
+  "{",
+  "    extension(IServiceCollection services)",
+  "    {",
+  "        /// <summary>",
+  "        /// Registers the KeyCustodian gRPC client: channel, per-op resilience pipelines,",
+  '        /// and the <see cref="IKeyCustodianGrpcClient"/> → <see cref="KeyCustodianGrpcClient"/> binding.',
+  "        /// The host MUST chain <c>.AddD2ServiceIdentity()</c> on the returned builder",
+  "        /// for production use (omitted here — plaintext in-process channels reject SecureSsl",
+  "        /// CallCredentials; the interceptor is proven by its own tests).",
+  "        /// </summary>",
+  "        public IServiceCollection AddD2KeyCustodianGrpcClients(KeyCustodianGrpcClientOptions options)",
+  "        {",
+  "            // KeyCustodianSigner channel — address from host-supplied options.",
+  "            services.AddGrpcClient<global::D2.Services.Protos.KeyCustodian.V1.KeyCustodianSigner.KeyCustodianSignerClient>(o =>",
+  "                o.Address = options.Address);",
+  "",
+  "            // Sign resilience pipeline — retry on gRPC transport transients only.",
+  "            // Replace with ResilientPipeline<…>.PassThrough in tests that do not need retry.",
+  "            services.AddResilientPipeline<string, SignOutput?>(",
+  "                SignClientKeys.PIPELINE,",
+  "                b => b.UseRetries(new RetryOptions<SignOutput?>",
+  "                {",
+  "                    IsTransient = ex => ex is RpcException r && ProtoExtensions.IsTransientGrpcException(r),",
+  "                }));",
+  "",
+  "            services.AddTransient<IKeyCustodianGrpcClient, KeyCustodianGrpcClient>();",
+  "            return services;",
+  "        }",
+  "    }",
+  "}",
+  "",
+].join("\n");
+
+/** Committed SignClientKeys.g.cs content. */
+const SIGN_CLIENT_KEYS_FIXTURE = [
+  "// -----------------------------------------------------------------------",
+  "// <auto-generated>",
+  "//   Generated by the @d2/typespec-emitters TypeSpec emitter.",
+  "//   Source spec: contracts/typespec/fixtures/sign-shaped.tsp",
+  "//   Manual edits will be lost on rebuild.",
+  "// </auto-generated>",
+  "// -----------------------------------------------------------------------",
+  "#nullable enable",
+  "",
+  "namespace D2.Edge.Tests.TypeSpecGrpc.Generated;",
+  "",
+  "/// <summary>",
+  "/// Service-key constants for the <c>Sign</c> gRPC client resilience pipeline.",
+  "/// </summary>",
+  "public static class SignClientKeys",
+  "{",
+  "    /// <summary>DI service key for the keyed <c>ResilientPipeline&lt;TKey, TValue&gt;</c> registration.</summary>",
+  '    public const string PIPELINE = "SignGrpcClientPipeline";',
+  "",
+  "    /// <summary>",
+  "    /// Per-call pipeline key passed to <c>ExecuteAsync</c>. Inert for retry-only",
+  "    /// pipelines; a singleflight-enabled pipeline must supply a per-request key",
+  "    /// instead to avoid wrongly deduplicating distinct calls.",
+  "    /// </summary>",
+  '    internal const string PIPELINE_KEY = "SignGrpcClientCall";',
+  "}",
+  "",
+].join("\n");
+
+// ---------------------------------------------------------------------------
+// byteParity_IKeyCustodianGrpcClient
+// ---------------------------------------------------------------------------
+
+describe("byteParity_IKeyCustodianGrpcClient_CommittedFixtureIdentical", () => {
+  it("re-emitted interface .g.cs is byte-identical to the committed fixture", () => {
+    const [iface] = emitGrpcClient(
+      "KeyCustodian",
+      [buildClientSignOp()],
+      CLIENTS_NS,
+    );
+    expect(iface!.content).toBe(SIGN_CLIENT_IFACE_FIXTURE);
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
+    const drifted = SIGN_CLIENT_IFACE_FIXTURE.replace(
+      "IKeyCustodianGrpcClient",
+      "IKeyCustodianGrpcClientDRIFTED",
+    );
+    const [iface] = emitGrpcClient(
+      "KeyCustodian",
+      [buildClientSignOp()],
+      CLIENTS_NS,
+    );
+    expect(iface!.content).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// byteParity_KeyCustodianGrpcClient (impl)
+// ---------------------------------------------------------------------------
+
+describe("byteParity_KeyCustodianGrpcClient_CommittedFixtureIdentical", () => {
+  it("re-emitted impl .g.cs is byte-identical to the committed fixture", () => {
+    const [, impl] = emitGrpcClient(
+      "KeyCustodian",
+      [buildClientSignOp()],
+      CLIENTS_NS,
+    );
+    expect(impl!.content).toBe(SIGN_CLIENT_IMPL_FIXTURE);
+  });
+
+  it("deliberate-drift detection: removing D2Services.Protos.Common.V1 does NOT match", () => {
+    const drifted = SIGN_CLIENT_IMPL_FIXTURE.replace(
+      "using D2.Services.Protos.Common.V1;\n",
+      "",
+    );
+    const [, impl] = emitGrpcClient(
+      "KeyCustodian",
+      [buildClientSignOp()],
+      CLIENTS_NS,
+    );
+    expect(impl!.content).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// byteParity_SignClientMappers
+// ---------------------------------------------------------------------------
+
+describe("byteParity_SignClientMappers_CommittedFixtureIdentical", () => {
+  it("re-emitted mapper .g.cs is byte-identical to the committed fixture", () => {
+    const [, , mapper] = emitGrpcClient(
+      "KeyCustodian",
+      [buildClientSignOp()],
+      CLIENTS_NS,
+    );
+    expect(mapper!.content).toBe(SIGN_CLIENT_MAPPER_FIXTURE);
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
+    const drifted = SIGN_CLIENT_MAPPER_FIXTURE.replace(
+      "SignClientMappers",
+      "SignClientMappersDRIFTED",
+    );
+    const [, , mapper] = emitGrpcClient(
+      "KeyCustodian",
+      [buildClientSignOp()],
+      CLIENTS_NS,
+    );
+    expect(mapper!.content).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// byteParity_KeyCustodianGrpcClientsGenerated (DI extension)
+// ---------------------------------------------------------------------------
+
+describe("byteParity_KeyCustodianGrpcClientsGenerated_CommittedFixtureIdentical", () => {
+  it("re-emitted DI-ext .g.cs is byte-identical to the committed fixture", () => {
+    const [, , , di] = emitGrpcClient(
+      "KeyCustodian",
+      [buildClientSignOp()],
+      CLIENTS_NS,
+    );
+    expect(di!.content).toBe(SIGN_CLIENT_DI_FIXTURE);
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
+    const drifted = SIGN_CLIENT_DI_FIXTURE.replace(
+      "AddD2KeyCustodianGrpcClients",
+      "AddD2KeyCustodianGrpcClientsDRIFTED",
+    );
+    const [, , , di] = emitGrpcClient(
+      "KeyCustodian",
+      [buildClientSignOp()],
+      CLIENTS_NS,
+    );
+    expect(di!.content).not.toBe(drifted);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// byteParity_SignClientKeys
+// ---------------------------------------------------------------------------
+
+describe("byteParity_SignClientKeys_CommittedFixtureIdentical", () => {
+  it("re-emitted keys .g.cs is byte-identical to the committed fixture", () => {
+    const file = emitClientKeys("sign", CLIENTS_NS, SOURCE);
+    expect(file.content).toBe(SIGN_CLIENT_KEYS_FIXTURE);
+  });
+
+  it("deliberate-drift detection: mutated fixture does NOT match re-emitted output", () => {
+    const drifted = SIGN_CLIENT_KEYS_FIXTURE.replace(
+      "SignGrpcClientPipeline",
+      "SignGrpcClientPipelineDRIFTED",
+    );
+    const file = emitClientKeys("sign", CLIENTS_NS, SOURCE);
+    expect(file.content).not.toBe(drifted);
   });
 });

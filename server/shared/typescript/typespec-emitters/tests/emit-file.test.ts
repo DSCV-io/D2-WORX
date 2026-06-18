@@ -11,6 +11,7 @@
 
 import { describe, it, expect, vi } from "vitest";
 import type { Program, EmitContext } from "@typespec/compiler";
+import type * as CompilerNs from "@typespec/compiler";
 
 // ---------------------------------------------------------------------------
 // Module-level spy storage for vi.mock (hoisted above the it() body).
@@ -21,7 +22,7 @@ import type { Program, EmitContext } from "@typespec/compiler";
 const emitFileCalls: Array<[Program, string, string]> = [];
 
 vi.mock("@typespec/compiler", async (importOriginal) => {
-  const original = await importOriginal<typeof import("@typespec/compiler")>();
+  const original = await importOriginal<typeof CompilerNs>();
   return {
     ...original,
     emitFile: async (
@@ -35,9 +36,8 @@ vi.mock("@typespec/compiler", async (importOriginal) => {
 });
 
 // Import AFTER the mock so the module under test gets the mocked emitFile.
-const { emitGeneratedFile, resolveOutputPath } = await import(
-  "../src/lib/emit-file.js"
-);
+const { emitGeneratedFile, resolveOutputPath } =
+  await import("../src/lib/emit-file.js");
 
 // ---------------------------------------------------------------------------
 // emitGeneratedFile

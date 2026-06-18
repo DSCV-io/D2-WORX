@@ -88,7 +88,10 @@ describe("walkModel_Repeated_PopulatedForArrayFields", () => {
       indexer: { value: makeScalar("string") },
       properties: new Map(),
     } as unknown as Model;
-    const prop = { type: arrayModel, optional: false } as unknown as ModelProperty;
+    const prop = {
+      type: arrayModel,
+      optional: false,
+    } as unknown as ModelProperty;
     const model = makeModel([["tags", prop]]);
     const { fields } = walkModel(makeProgram(), model, () => {});
     expect(fields[0]!.repeated).toBe(true);
@@ -102,7 +105,10 @@ describe("walkModel_Repeated_PopulatedForArrayFields", () => {
       indexer: { value: makeScalar("bytes") },
       properties: new Map(),
     } as unknown as Model;
-    const prop = { type: arrayModel, optional: false } as unknown as ModelProperty;
+    const prop = {
+      type: arrayModel,
+      optional: false,
+    } as unknown as ModelProperty;
     const model = makeModel([["chunks", prop]]);
     const { fields } = walkModel(makeProgram(), model, () => {});
     expect(fields[0]!.repeated).toBe(true);
@@ -126,7 +132,13 @@ describe("walkModel_NestedModel_ProtoTypeUndefined", () => {
       kind: "Model",
       name: "Inner",
       properties: new Map([
-        ["id", { type: makeScalar("string"), optional: false } as unknown as ModelProperty],
+        [
+          "id",
+          {
+            type: makeScalar("string"),
+            optional: false,
+          } as unknown as ModelProperty,
+        ],
       ]),
     } as unknown as Model;
     const prop = { type: inner, optional: false } as unknown as ModelProperty;
@@ -141,7 +153,13 @@ describe("walkModel_NestedModel_ProtoTypeUndefined", () => {
       kind: "Model",
       name: "Item",
       properties: new Map([
-        ["id", { type: makeScalar("string"), optional: false } as unknown as ModelProperty],
+        [
+          "id",
+          {
+            type: makeScalar("string"),
+            optional: false,
+          } as unknown as ModelProperty,
+        ],
       ]),
     } as unknown as Model;
     const arrayModel: Model = {
@@ -150,7 +168,10 @@ describe("walkModel_NestedModel_ProtoTypeUndefined", () => {
       indexer: { value: inner },
       properties: new Map(),
     } as unknown as Model;
-    const prop = { type: arrayModel, optional: false } as unknown as ModelProperty;
+    const prop = {
+      type: arrayModel,
+      optional: false,
+    } as unknown as ModelProperty;
     const model = makeModel([["items", prop]]);
     const { fields } = walkModel(makeProgram(), model, () => {});
     expect(fields[0]!.repeated).toBe(true);
@@ -164,11 +185,26 @@ describe("walkModel_NestedModel_ProtoTypeUndefined", () => {
 
 describe("walkModel_ProtoColumn_MatchesRegistry_ForEveryScalar", () => {
   const REGISTRY_SCALARS = [
-    "string", "boolean", "bytes",
-    "integer", "int8", "int16", "int32", "int64",
-    "uint8", "uint16", "uint32", "uint64",
-    "safeint", "float", "float32", "float64",
-    "numeric", "decimal", "decimal128", "url",
+    "string",
+    "boolean",
+    "bytes",
+    "integer",
+    "int8",
+    "int16",
+    "int32",
+    "int64",
+    "uint8",
+    "uint16",
+    "uint32",
+    "uint64",
+    "safeint",
+    "float",
+    "float32",
+    "float64",
+    "numeric",
+    "decimal",
+    "decimal128",
+    "url",
   ];
 
   for (const scalarName of REGISTRY_SCALARS) {
@@ -176,7 +212,9 @@ describe("walkModel_ProtoColumn_MatchesRegistry_ForEveryScalar", () => {
       const expected = resolveScalar(scalarName).proto;
       const model = makeModel([["field", makeProp(makeScalar(scalarName))]]);
       const errors: string[] = [];
-      const { fields } = walkModel(makeProgram(), model, (_, m) => errors.push(m));
+      const { fields } = walkModel(makeProgram(), model, (_, m) =>
+        errors.push(m),
+      );
       expect(errors).toHaveLength(0);
       expect(fields[0]!.protoType).toBe(expected);
     });

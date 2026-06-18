@@ -217,7 +217,9 @@ const protoFile = emitProto(
   "contracts/typespec/key-custodian.tsp",
   inputWalk,
   outputWalk,
-  (code, msg) => { /* D2TSP001 on unmapped scalar */ },
+  (code, msg) => {
+    /* D2TSP001 on unmapped scalar */
+  },
 );
 // protoFile.fileName → "key_custodian_signer_sign.g.proto"
 ```
@@ -287,7 +289,7 @@ containing `Map<Op>Route()`. The route delegate:
   `(int)result.StatusCode < 400` (not on `result.Success`), so `Created` (201), `SomeFound` (206), and
   `PartialSuccess` (207) carry their real HTTP status codes via `Results.Json(result.Data, statusCode: status)`.
   Failures (≥400) go to `var pd = result.ToProblemDetails(http); return Results.Json(pd, statusCode:
-  pd.Status ?? 500, contentType: "application/problem+json")`. `ToProblemDetails` is failure-only and would
+pd.Status ?? 500, contentType: "application/problem+json")`. `ToProblemDetails` is failure-only and would
   throw on a 2xx status — keying on the status integer prevents that on non-error results like `SomeFound`
   (`Success==false`, `StatusCode==206`).
 
@@ -302,7 +304,10 @@ byte-pinned by `tests/route-policy-emitter.test.ts` byte-parity describe blocks 
 ### gRPC service-impl emitter (`src/lib/grpc-service-emitter.ts`)
 
 ```typescript
-import { emitGrpcService, type GrpcDelegationTarget } from "@d2/typespec-emitters";
+import {
+  emitGrpcService,
+  type GrpcDelegationTarget,
+} from "@d2/typespec-emitters";
 
 // Façade delegation (when op has @d2InProcess):
 const facadeTarget: GrpcDelegationTarget = {
@@ -325,7 +330,7 @@ const [serviceFile, mappersFile] = emitGrpcService(
   inputWalk.fields,
   "SignOutput",
   outputWalk.fields,
-  facadeTarget,                  // omit to fall back to I<Op>Handler delegation
+  facadeTarget, // omit to fall back to I<Op>Handler delegation
 );
 // serviceFile.fileName  → "KeyCustodianSignerService.g.cs"
 // mappersFile.fileName  → "SignTransportMappers.g.cs"
@@ -335,7 +340,7 @@ Always returns exactly two files. The service class is `sealed`. Its primary
 constructor and call site change based on the `delegationTarget`:
 
 - **Façade delegation** (`kind === "facade"`, when the op has `@d2InProcess`):
-  the service injects `I<Module>InternalApi facade` (or the fixture equivalent)
+  the service injects `I<Module>Api facade` (or the fixture equivalent)
   and calls `facade.<Op>Async(input, ct)` — the transport-neutral 2-arg façade
   signature. A `using` for `targetNamespace` is emitted when the façade lives in
   a different namespace from the service class.
@@ -409,8 +414,8 @@ const [ifaceFile, implFile, diFile] = emitFacade(
   "D2.Edge.KeyCustodian.Clients",
   "D2.Edge.KeyCustodian.App.Application",
 );
-// ifaceFile.fileName → "IKeyCustodianInternalApi.g.cs"
-// implFile.fileName  → "KeyCustodianInternalApi.g.cs"
+// ifaceFile.fileName → "IKeyCustodianApi.g.cs"
+// implFile.fileName  → "KeyCustodianApi.g.cs"
 // diFile.fileName    → "KeyCustodianClientsGenerated.g.cs"
 ```
 
@@ -420,11 +425,11 @@ zero-exposed-op module produces no façade).
 
 The three files:
 
-1. **`I<Module>InternalApi.g.cs`** (targets the Clients project namespace) — the
+1. **`I<Module>Api.g.cs`** (targets the Clients project namespace) — the
    curated public interface listing only the exposed operations. Internal-only
    operations (`@d2Internal`) are structurally absent so callers cannot
    accidentally invoke an op that was never meant to cross a boundary.
-2. **`<Module>InternalApi.g.cs`** (targets the app/ project namespace) — the thin
+2. **`<Module>Api.g.cs`** (targets the app/ project namespace) — the thin
    `sealed` delegating implementation. One primary-constructor parameter per
    exposed op (`I<Op>Handler`); each method delegates to the matching handler's
    `HandleAsync` call.
@@ -484,14 +489,14 @@ surfaced by the compiler as `@d2/typespec-emitters/<name>`. The `D2TSP` ids
 are the grep-stable cross-tooling identifiers noted in comments alongside each
 catalog entry in `src/lib.ts`.
 
-| ID       | Named code                | Trigger                                                                 |
-| -------- | ------------------------- | ----------------------------------------------------------------------- |
-| D2TSP001 | `unmapped-scalar`         | A TypeSpec scalar has no entry in the scalar registry. Emitter cannot proceed without a C#/proto/TS mapping. |
-| D2TSP002 | `unsupported-property-type` | A model property has an enum, union, or anonymous-model type that the DTO emitter does not yet support. |
-| D2TSP003 | `missing-cqrs-category`   | An operation carries neither `@d2Command` nor `@d2Query`. The façade emitter cannot determine the handler namespace without a CQRS category. |
+| ID       | Named code                  | Trigger                                                                                                                                                                                                                                                                                                           |
+| -------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D2TSP001 | `unmapped-scalar`           | A TypeSpec scalar has no entry in the scalar registry. Emitter cannot proceed without a C#/proto/TS mapping.                                                                                                                                                                                                      |
+| D2TSP002 | `unsupported-property-type` | A model property has an enum, union, or anonymous-model type that the DTO emitter does not yet support.                                                                                                                                                                                                           |
+| D2TSP003 | `missing-cqrs-category`     | An operation carries neither `@d2Command` nor `@d2Query`. The façade emitter cannot determine the handler namespace without a CQRS category.                                                                                                                                                                      |
 | D2TSP004 | `route-missing-auth-intent` | A routed operation (`@route`) carries none of `@d2RequireAnyScope`, `@d2RequireAllScopes`, or `@d2Harmless`. Every public route must declare an auth intent. The route emitter loud-fails at compile time rather than emitting a boot-failing unprotected endpoint — strictly stronger than a runtime boot guard. |
-| D2TSP005 | `unsupported-http-verb`   | An HTTP verb other than get/post/put/delete/patch (e.g. `head`, `options`) has no `Map*` mapping in the route emitter. |
-| D2TSP006 | `idempotent-requires-route` | `@d2Idempotent` is present on an operation that has no `@route`. Idempotency gating is REST-only; it is meaningless without a public HTTP route. Add `@route` + a supported HTTP verb to the operation, or remove `@d2Idempotent` if the operation is not intended to have a REST surface. |
+| D2TSP005 | `unsupported-http-verb`     | An HTTP verb other than get/post/put/delete/patch (e.g. `head`, `options`) has no `Map*` mapping in the route emitter.                                                                                                                                                                                            |
+| D2TSP006 | `idempotent-requires-route` | `@d2Idempotent` is present on an operation that has no `@route`. Idempotency gating is REST-only; it is meaningless without a public HTTP route. Add `@route` + a supported HTTP verb to the operation, or remove `@d2Idempotent` if the operation is not intended to have a REST surface.                        |
 
 All diagnostics have `severity: "error"` — every violation fails `tsp compile`
 with a non-zero exit code.
@@ -534,7 +539,7 @@ server/services/edge/tests/Unit/KeyCustodian/TypeSpecGrpc/Protos/     ← .proto
 The Sign operation DTOs live in the gRPC generated directory because they are emitted
 alongside the gRPC service and mappers. The GetJwks DTOs and the façade interface live in
 `key-custodian/clients/` because they are exposed through the `Clients` façade (the
-transport boundary for external callers). The façade impl (`KeyCustodianInternalApi.g.cs`)
+transport boundary for external callers). The façade impl (`KeyCustodianApi.g.cs`)
 and the generated DI extension (`KeyCustodianClientsGenerated.g.cs`) live in `app/Application/`
 because they reference app-layer handler interfaces. The handler-interface root
 (`IGetJwksHandler.g.cs`) lives in the per-op CQRS handler folder.
@@ -571,12 +576,12 @@ will fail the byte-parity tests until the fixtures are refreshed.
 
 ## Dependencies
 
-| Kind               | Package                  | Version    | Notes                                             |
-| ------------------ | ------------------------ | ---------- | ------------------------------------------------- |
-| `peerDependencies` | `@typespec/compiler`     | `^1.13.0`  | Must match the decorators package peer range      |
-| `dependencies`     | `@d2/typespec-decorators`| `workspace:*` | State-key symbols + resilience DSL parser      |
-| `dependencies`     | `@typespec/http`         | `1.13.0`   | Used by the route+policy emitter (`getHttpOperation` for verb + path resolution) |
-| `devDependencies`  | `@typespec/compiler`     | `1.13.0`   | Pinned exact version (matches decorators package) |
-| `devDependencies`  | `typescript`             | `5.9.3`    | Pinned to workspace version                       |
-| `devDependencies`  | `vitest`                 | `4.0.18`   | Test runner                                       |
-| `devDependencies`  | `@vitest/coverage-v8`    | `4.0.18`   | V8 coverage provider                              |
+| Kind               | Package                   | Version       | Notes                                                                            |
+| ------------------ | ------------------------- | ------------- | -------------------------------------------------------------------------------- |
+| `peerDependencies` | `@typespec/compiler`      | `^1.13.0`     | Must match the decorators package peer range                                     |
+| `dependencies`     | `@d2/typespec-decorators` | `workspace:*` | State-key symbols + resilience DSL parser                                        |
+| `dependencies`     | `@typespec/http`          | `1.13.0`      | Used by the route+policy emitter (`getHttpOperation` for verb + path resolution) |
+| `devDependencies`  | `@typespec/compiler`      | `1.13.0`      | Pinned exact version (matches decorators package)                                |
+| `devDependencies`  | `typescript`              | `5.9.3`       | Pinned to workspace version                                                      |
+| `devDependencies`  | `vitest`                  | `4.0.18`      | Test runner                                                                      |
+| `devDependencies`  | `@vitest/coverage-v8`     | `4.0.18`      | V8 coverage provider                                                             |

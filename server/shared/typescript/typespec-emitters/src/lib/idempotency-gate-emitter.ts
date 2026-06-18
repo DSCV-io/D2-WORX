@@ -110,7 +110,9 @@ export function emitIdempotencyStoreSeam(
   sourceSpec: string,
 ): EmittedFile {
   if (registrationNamespace.length === 0)
-    throw new Error("emitIdempotencyStoreSeam: registrationNamespace must not be empty");
+    throw new Error(
+      "emitIdempotencyStoreSeam: registrationNamespace must not be empty",
+    );
 
   const banner = buildBanner(sourceSpec);
   const lines: string[] = [];
@@ -123,26 +125,46 @@ export function emitIdempotencyStoreSeam(
   lines.push("");
   lines.push("/// <summary>");
   lines.push("/// Faithful seam for the generated idempotency gate.");
-  lines.push("/// Supports result-replay: on a cache hit the stored <c>D2Result</c> is");
-  lines.push("/// returned verbatim without re-invoking the handler or façade.");
-  lines.push("/// The real Edge HTTP-idempotency middleware will implement this interface.");
+  lines.push(
+    "/// Supports result-replay: on a cache hit the stored <c>D2Result</c> is",
+  );
+  lines.push(
+    "/// returned verbatim without re-invoking the handler or façade.",
+  );
+  lines.push(
+    "/// The real Edge HTTP-idempotency middleware will implement this interface.",
+  );
   lines.push("/// No enforcement logic is present in this seam definition.");
   lines.push("/// </summary>");
   lines.push("public interface D2GeneratedIdempotencyStore");
   lines.push("{");
   lines.push("    /// <summary>");
-  lines.push("    /// Try to retrieve a previously stored result for <paramref name=\"key\"/>.");
-  lines.push("    /// Returns <c>Ok(stored)</c> on a hit, <c>NotFound</c> on a miss,");
+  lines.push(
+    '    /// Try to retrieve a previously stored result for <paramref name="key"/>.',
+  );
+  lines.push(
+    "    /// Returns <c>Ok(stored)</c> on a hit, <c>NotFound</c> on a miss,",
+  );
   lines.push("    /// or a failure result when the store is unavailable.");
   lines.push("    /// </summary>");
-  lines.push("    ValueTask<D2Result<TStored?>> TryGetAsync<TStored>(string key, CancellationToken ct = default);");
+  lines.push(
+    "    ValueTask<D2Result<TStored?>> TryGetAsync<TStored>(string key, CancellationToken ct = default);",
+  );
   lines.push("");
   lines.push("    /// <summary>");
-  lines.push("    /// Store <paramref name=\"value\"/> under <paramref name=\"key\"/> with the");
-  lines.push("    /// given <paramref name=\"ttl\"/>. The entry expires after the TTL elapses.");
-  lines.push("    /// Returns <c>Ok</c> on success or a failure result when the store is unavailable.");
+  lines.push(
+    '    /// Store <paramref name="value"/> under <paramref name="key"/> with the',
+  );
+  lines.push(
+    '    /// given <paramref name="ttl"/>. The entry expires after the TTL elapses.',
+  );
+  lines.push(
+    "    /// Returns <c>Ok</c> on success or a failure result when the store is unavailable.",
+  );
   lines.push("    /// </summary>");
-  lines.push("    ValueTask<D2Result> StoreAsync<TStored>(string key, TStored value, TimeSpan ttl, CancellationToken ct = default);");
+  lines.push(
+    "    ValueTask<D2Result> StoreAsync<TStored>(string key, TStored value, TimeSpan ttl, CancellationToken ct = default);",
+  );
   lines.push("}");
   lines.push("");
 
@@ -184,12 +206,18 @@ export function emitIdempotencyStoreSeam(
  *
  * Pure function — no I/O.
  */
-export function buildIdempotencyGate(input: IdempotencyGateInput): IdempotencyGateWeave {
+export function buildIdempotencyGate(
+  input: IdempotencyGateInput,
+): IdempotencyGateWeave {
   if (input.keySource !== "header" && input.keySource !== "derived")
-    throw new Error(`buildIdempotencyGate: unknown keySource '${input.keySource}' — expected 'header' or 'derived'`);
+    throw new Error(
+      `buildIdempotencyGate: unknown keySource '${input.keySource}' — expected 'header' or 'derived'`,
+    );
   if (input.keySource === "derived") {
     if (input.fields.length === 0)
-      throw new Error("buildIdempotencyGate: derived keySource requires at least one field name");
+      throw new Error(
+        "buildIdempotencyGate: derived keySource requires at least one field name",
+      );
     for (const f of input.fields) {
       if (f.length === 0)
         throw new Error("buildIdempotencyGate: field name must not be empty");
@@ -203,33 +231,55 @@ export function buildIdempotencyGate(input: IdempotencyGateInput): IdempotencyGa
     // Resolve the idempotency key from the Idempotency-Key header.
     // Use the literal "Idempotency-Key" — no D2.Shared.Headers.Http project
     // reference in the generated fixture's host project; constant follow-up tracked.
-    preDelegateLines.push(`${ind}var idempotencyKey = http.Request.Headers["Idempotency-Key"].ToString();`);
+    preDelegateLines.push(
+      `${ind}var idempotencyKey = http.Request.Headers["Idempotency-Key"].ToString();`,
+    );
     preDelegateLines.push(`${ind}if (idempotencyKey.Falsey())`);
     preDelegateLines.push(`${ind}    return Results.Json(`);
-    preDelegateLines.push(`${ind}        D2Result<${input.outputTypeName}?>.ValidationFailed().ToProblemDetails(http),`);
+    preDelegateLines.push(
+      `${ind}        D2Result<${input.outputTypeName}?>.ValidationFailed().ToProblemDetails(http),`,
+    );
     preDelegateLines.push(`${ind}        statusCode: 400,`);
-    preDelegateLines.push(`${ind}        contentType: "application/problem+json");`);
+    preDelegateLines.push(
+      `${ind}        contentType: "application/problem+json");`,
+    );
   } else {
     // Derived key: SHA-256 over the named PascalCase input fields, separator-joined.
     // SHA256.HashData + Convert.ToHexStringLower — BCL statics, no allocation.
-    const fieldAccesses = input.fields.map((f) => `input.${f}`).join(' + "|" + ');
-    preDelegateLines.push(`${ind}var idempotencyKeyRaw = System.Text.Encoding.UTF8.GetBytes(${fieldAccesses});`);
-    preDelegateLines.push(`${ind}var idempotencyKey = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(idempotencyKeyRaw));`);
+    const fieldAccesses = input.fields
+      .map((f) => `input.${f}`)
+      .join(' + "|" + ');
+    preDelegateLines.push(
+      `${ind}var idempotencyKeyRaw = System.Text.Encoding.UTF8.GetBytes(${fieldAccesses});`,
+    );
+    preDelegateLines.push(
+      `${ind}var idempotencyKey = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(idempotencyKeyRaw));`,
+    );
   }
 
   // Cache-hit check: replay the stored D2Result<TOut> without re-invoking the delegate.
   // TStored = D2Result<TOut>; the outer D2Result wraps the store look-up status.
   // Fail-open on store-read outage (non-Success, non-NotFound) — proceed to delegate.
   const storeType = `D2Result<${input.outputTypeName}?>`;
-  preDelegateLines.push(`${ind}var cachedResult = await store.TryGetAsync<${storeType}>(idempotencyKey, ct).ConfigureAwait(false);`);
-  preDelegateLines.push(`${ind}if (cachedResult.Success && cachedResult.Data is not null)`);
+  preDelegateLines.push(
+    `${ind}var cachedResult = await store.TryGetAsync<${storeType}>(idempotencyKey, ct).ConfigureAwait(false);`,
+  );
+  preDelegateLines.push(
+    `${ind}if (cachedResult.Success && cachedResult.Data is not null)`,
+  );
   preDelegateLines.push(`${ind}{`);
   preDelegateLines.push(`${ind}    var replayed = cachedResult.Data;`);
-  preDelegateLines.push(`${ind}    var replayStatus = (int)replayed.StatusCode;`);
+  preDelegateLines.push(
+    `${ind}    var replayStatus = (int)replayed.StatusCode;`,
+  );
   preDelegateLines.push(`${ind}    if (replayStatus < 400)`);
-  preDelegateLines.push(`${ind}        return Results.Json(replayed.Data, statusCode: replayStatus);`);
+  preDelegateLines.push(
+    `${ind}        return Results.Json(replayed.Data, statusCode: replayStatus);`,
+  );
   preDelegateLines.push(`${ind}    var rpd = replayed.ToProblemDetails(http);`);
-  preDelegateLines.push(`${ind}    return Results.Json(rpd, statusCode: rpd.Status ?? 500, contentType: "application/problem+json");`);
+  preDelegateLines.push(
+    `${ind}    return Results.Json(rpd, statusCode: rpd.Status ?? 500, contentType: "application/problem+json");`,
+  );
   preDelegateLines.push(`${ind}}`);
 
   // Post-delegate: store the entire D2Result<TOut> outcome (success or failure) with TTL.
@@ -239,9 +289,7 @@ export function buildIdempotencyGate(input: IdempotencyGateInput): IdempotencyGa
     `${ind}await store.StoreAsync<${storeType}>(idempotencyKey, result, ${ttl}, ct).ConfigureAwait(false);`,
   ];
 
-  const extraUsings: string[] = [
-    "D2.Shared.Utilities.Extensions",
-  ];
+  const extraUsings: string[] = ["D2.Shared.Utilities.Extensions"];
 
   return {
     extraUsings,

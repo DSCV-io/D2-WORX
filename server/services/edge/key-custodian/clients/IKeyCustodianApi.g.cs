@@ -14,7 +14,7 @@ namespace D2.Edge.KeyCustodian.Clients;
 /// Generated internal API façade for the module. Lists only the operations
 /// exposed across a boundary; internal-only operations are absent.
 /// </summary>
-public interface IKeyCustodianInternalApi
+public interface IKeyCustodianApi
 {
     /// <summary>Dispatches the <c>GetJwks</c> operation.</summary>
     ValueTask<D2Result<GetJwksOutput?>> GetJwksAsync(GetJwksInput input, CancellationToken ct = default);

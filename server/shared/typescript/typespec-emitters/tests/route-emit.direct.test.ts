@@ -28,6 +28,8 @@ import type {
   Program,
   Scalar,
 } from "@typespec/compiler";
+import type * as CompilerNs from "@typespec/compiler";
+import type * as HttpNs from "@typespec/http";
 import {
   D2_SERVED_BY_KEY,
   D2_IN_PROCESS_KEY,
@@ -57,17 +59,17 @@ const directUnitEmitted: Array<{ path: string; content: string }> = [];
 const mockVerbMap = new Map<object, string | undefined>();
 
 // getHttpOperation returns this value (default: { path: "/test/path" } with no diags).
-let mockHttpOpResult: [{ path: string }, Array<{ severity: string; message: string }>] = [
-  { path: "/test/path" },
-  [],
-];
+let mockHttpOpResult: [
+  { path: string },
+  Array<{ severity: string; message: string }>,
+] = [{ path: "/test/path" }, []];
 
 // ---------------------------------------------------------------------------
 // @typespec/compiler mock: navigateProgram + emitFile.
 // ---------------------------------------------------------------------------
 
 vi.mock("@typespec/compiler", async (importOriginal) => {
-  const original = await importOriginal<typeof import("@typespec/compiler")>();
+  const original = await importOriginal<typeof CompilerNs>();
   return {
     ...original,
     navigateProgram(
@@ -91,7 +93,7 @@ vi.mock("@typespec/compiler", async (importOriginal) => {
 // ---------------------------------------------------------------------------
 
 vi.mock("@typespec/http", async (importOriginal) => {
-  const original = await importOriginal<typeof import("@typespec/http")>();
+  const original = await importOriginal<typeof HttpNs>();
   return {
     ...original,
     getOperationVerb(_prog: unknown, op: object): string | undefined {
@@ -122,7 +124,10 @@ function makeStringScalar(): Scalar {
   return { kind: "Scalar", name: "string" } as unknown as Scalar;
 }
 
-function makeModel(name: string, props: Record<string, Scalar | Model> = {}): Model {
+function makeModel(
+  name: string,
+  props: Record<string, Scalar | Model> = {},
+): Model {
   const properties = new Map<string, ModelProperty>();
   for (const [k, v] of Object.entries(props))
     properties.set(k, { type: v, optional: false } as unknown as ModelProperty);
@@ -134,7 +139,10 @@ function makeWrappedOp(
   inputModel: Model,
   outputModel: Model,
 ): Operation {
-  const inputProp = { type: inputModel, optional: false } as unknown as ModelProperty;
+  const inputProp = {
+    type: inputModel,
+    optional: false,
+  } as unknown as ModelProperty;
   const wrappedParams = {
     kind: "Model",
     name: "",
@@ -148,7 +156,9 @@ function makeWrappedOp(
   } as unknown as Operation;
 }
 
-function makeMockProgram(stateMapFn: (key: symbol) => Map<object, unknown>): Program {
+function makeMockProgram(
+  stateMapFn: (key: symbol) => Map<object, unknown>,
+): Program {
   return {
     diagnostics: [],
     stateMap: stateMapFn,
@@ -210,7 +220,9 @@ describe("$onEmit_routeEmitDirect_SupportedVerbFacade", () => {
     const ctx = makeBaseContext(program, FIXTURE_OPTS);
     await $onEmit(ctx);
 
-    const routeFile = directUnitEmitted.find((e) => e.path.includes("SignRouteRegistration.g.cs"));
+    const routeFile = directUnitEmitted.find((e) =>
+      e.path.includes("SignRouteRegistration.g.cs"),
+    );
     expect(routeFile).toBeDefined();
     expect(routeFile!.content).toContain("MapPost");
     expect(routeFile!.content).toContain('"/internal/v1/kc/sign"');
@@ -241,7 +253,9 @@ describe("$onEmit_routeEmitDirect_UnsupportedVerb", () => {
     const reportedCodes: string[] = [];
     const libModule = await import("../src/lib.js");
     vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
-      (_prog, diag: { code: string }) => { reportedCodes.push(diag.code); },
+      (_prog, diag: { code: string }) => {
+        reportedCodes.push(diag.code);
+      },
     );
 
     const program = makeMockProgram((key: symbol) => {
@@ -253,7 +267,11 @@ describe("$onEmit_routeEmitDirect_UnsupportedVerb", () => {
     await $onEmit(ctx);
 
     expect(reportedCodes).toContain("unsupported-http-verb");
-    expect(directUnitEmitted.filter((e) => e.path.includes("RouteRegistration.g.cs"))).toHaveLength(0);
+    expect(
+      directUnitEmitted.filter((e) =>
+        e.path.includes("RouteRegistration.g.cs"),
+      ),
+    ).toHaveLength(0);
   });
 });
 
@@ -275,7 +293,9 @@ describe("$onEmit_routeEmitDirect_MissingAuthIntent", () => {
     const reportedCodes: string[] = [];
     const libModule = await import("../src/lib.js");
     vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
-      (_prog, diag: { code: string }) => { reportedCodes.push(diag.code); },
+      (_prog, diag: { code: string }) => {
+        reportedCodes.push(diag.code);
+      },
     );
 
     const program = makeMockProgram((_key: symbol) => new Map());
@@ -283,7 +303,11 @@ describe("$onEmit_routeEmitDirect_MissingAuthIntent", () => {
     await $onEmit(ctx);
 
     expect(reportedCodes).toContain("route-missing-auth-intent");
-    expect(directUnitEmitted.filter((e) => e.path.includes("RouteRegistration.g.cs"))).toHaveLength(0);
+    expect(
+      directUnitEmitted.filter((e) =>
+        e.path.includes("RouteRegistration.g.cs"),
+      ),
+    ).toHaveLength(0);
   });
 });
 
@@ -310,7 +334,9 @@ describe("$onEmit_routeEmitDirect_HttpOpError", () => {
     const reportedCodes: string[] = [];
     const libModule = await import("../src/lib.js");
     vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
-      (_prog, diag: { code: string }) => { reportedCodes.push(diag.code); },
+      (_prog, diag: { code: string }) => {
+        reportedCodes.push(diag.code);
+      },
     );
 
     const program = makeMockProgram((key: symbol) => {
@@ -339,7 +365,9 @@ describe("$onEmit_routeEmitDirect_RequireAllScopes", () => {
     mockVerbMap.set(op, "get");
     mockHttpOpResult = [{ path: "/all-scopes" }, []];
 
-    const allScopes = new Map<object, unknown>([[op, ["self.read", "self.write"]]]);
+    const allScopes = new Map<object, unknown>([
+      [op, ["self.read", "self.write"]],
+    ]);
     const servedBy = new Map<object, unknown>([[op, "KeyCustodian"]]);
     const inProcess = new Map<object, unknown>([[op, true]]);
 
@@ -355,7 +383,9 @@ describe("$onEmit_routeEmitDirect_RequireAllScopes", () => {
     const ctx = makeBaseContext(program, FIXTURE_OPTS);
     await $onEmit(ctx);
 
-    const routeFile = directUnitEmitted.find((e) => e.path.includes("AllScopesRouteRegistration.g.cs"));
+    const routeFile = directUnitEmitted.find((e) =>
+      e.path.includes("AllScopesRouteRegistration.g.cs"),
+    );
     expect(routeFile).toBeDefined();
     expect(routeFile!.content).toContain("RequireAllScopes");
     expect(routeFile!.content).toContain('"self.read"');
@@ -394,7 +424,9 @@ describe("$onEmit_routeEmitDirect_Harmless", () => {
     const ctx = makeBaseContext(program, FIXTURE_OPTS);
     await $onEmit(ctx);
 
-    const routeFile = directUnitEmitted.find((e) => e.path.includes("HealthRouteRegistration.g.cs"));
+    const routeFile = directUnitEmitted.find((e) =>
+      e.path.includes("HealthRouteRegistration.g.cs"),
+    );
     expect(routeFile).toBeDefined();
     expect(routeFile!.content).toContain("MarkAsD2HarmlessEndpoint");
     expect(routeFile!.content).not.toContain("RequireAnyScope");
@@ -435,7 +467,9 @@ describe("$onEmit_routeEmitDirect_Markers", () => {
     const ctx = makeBaseContext(program, FIXTURE_OPTS);
     await $onEmit(ctx);
 
-    const routeFile = directUnitEmitted.find((e) => e.path.includes("MarkedOpRouteRegistration.g.cs"));
+    const routeFile = directUnitEmitted.find((e) =>
+      e.path.includes("MarkedOpRouteRegistration.g.cs"),
+    );
     expect(routeFile).toBeDefined();
     expect(routeFile!.content).toContain("D2GeneratedRateLimitTier");
     expect(routeFile!.content).toContain("D2GeneratedCsrfPosture");
@@ -469,7 +503,9 @@ describe("$onEmit_routeEmitDirect_Markers", () => {
     const ctx = makeBaseContext(program, FIXTURE_OPTS);
     await $onEmit(ctx);
 
-    const routeFile = directUnitEmitted.find((e) => e.path.includes("StringTierRouteRegistration.g.cs"));
+    const routeFile = directUnitEmitted.find((e) =>
+      e.path.includes("StringTierRouteRegistration.g.cs"),
+    );
     expect(routeFile).toBeDefined();
     expect(routeFile!.content).toContain("D2GeneratedRateLimitTier");
     expect(routeFile!.content).toContain('"Premium"');
@@ -503,7 +539,9 @@ describe("$onEmit_routeEmitDirect_HandlerDelegation", () => {
     const ctx = makeBaseContext(program, FIXTURE_OPTS);
     await $onEmit(ctx);
 
-    const routeFile = directUnitEmitted.find((e) => e.path.includes("DirectOpRouteRegistration.g.cs"));
+    const routeFile = directUnitEmitted.find((e) =>
+      e.path.includes("DirectOpRouteRegistration.g.cs"),
+    );
     expect(routeFile).toBeDefined();
     expect(routeFile!.content).toContain("IDirectOpHandler");
     expect(routeFile!.content).toContain("HandleAsync");
@@ -516,7 +554,7 @@ describe("$onEmit_routeEmitDirect_HandlerDelegation", () => {
 // ---------------------------------------------------------------------------
 
 describe("$onEmit_routeEmitDirect_RealModuleFacade", () => {
-  it("@d2InProcess + csAppNamespaceBase set → IKeyCustodianInternalApi (real-module path)", async () => {
+  it("@d2InProcess + csAppNamespaceBase set → IKeyCustodianApi (real-module path)", async () => {
     const str = makeStringScalar();
     const inputModel = makeModel("RealInput", { id: str });
     const outputModel = makeModel("RealOutput", { data: str });
@@ -551,10 +589,12 @@ describe("$onEmit_routeEmitDirect_RealModuleFacade", () => {
     });
     await $onEmit(ctx);
 
-    const routeFile = directUnitEmitted.find((e) => e.path.includes("RealOpRouteRegistration.g.cs"));
+    const routeFile = directUnitEmitted.find((e) =>
+      e.path.includes("RealOpRouteRegistration.g.cs"),
+    );
     expect(routeFile).toBeDefined();
-    // In real-module mode, the façade type is I<ServedBy>InternalApi.
-    expect(routeFile!.content).toContain("IKeyCustodianInternalApi");
+    // In real-module mode, the façade type is I<ServedBy>Api.
+    expect(routeFile!.content).toContain("IKeyCustodianApi");
     expect(routeFile!.content).not.toContain("SignerFacade");
   });
 });
@@ -592,7 +632,9 @@ describe("$onEmit_routeEmitDirect_CsrfStringBranch", () => {
     const ctx = makeBaseContext(program, FIXTURE_OPTS);
     await $onEmit(ctx);
 
-    const routeFile = directUnitEmitted.find((e) => e.path.includes("CsrfStrRouteRegistration.g.cs"));
+    const routeFile = directUnitEmitted.find((e) =>
+      e.path.includes("CsrfStrRouteRegistration.g.cs"),
+    );
     expect(routeFile).toBeDefined();
     expect(routeFile!.content).toContain("D2GeneratedCsrfPosture");
     expect(routeFile!.content).toContain('"required"');
@@ -634,7 +676,9 @@ describe("$onEmit_routeEmitDirect_HandlerCategoryUndefined", () => {
     });
     await $onEmit(ctx);
 
-    const routeFile = directUnitEmitted.find((e) => e.path.includes("NoCatRouteRegistration.g.cs"));
+    const routeFile = directUnitEmitted.find((e) =>
+      e.path.includes("NoCatRouteRegistration.g.cs"),
+    );
     expect(routeFile).toBeDefined();
     expect(routeFile!.content).toContain("INoCatHandler");
   });
@@ -677,7 +721,9 @@ describe("$onEmit_routeEmitDirect_UndefinedInputModel", () => {
     const ctx = makeBaseContext(program, FIXTURE_OPTS);
     await $onEmit(ctx);
 
-    const routeFile = directUnitEmitted.find((e) => e.path.includes("NoParamsRouteRegistration.g.cs"));
+    const routeFile = directUnitEmitted.find((e) =>
+      e.path.includes("NoParamsRouteRegistration.g.cs"),
+    );
     expect(routeFile).toBeDefined();
     // inputModel was undefined → fallback name "NoParamsInput" used.
     expect(routeFile!.content).toContain("NoParamsInput");
@@ -711,7 +757,9 @@ describe("$onEmit_routeEmitDirect_HttpOpWarning", () => {
     const reportedCodes: string[] = [];
     const libModule = await import("../src/lib.js");
     vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
-      (_prog, diag: { code: string }) => { reportedCodes.push(diag.code); },
+      (_prog, diag: { code: string }) => {
+        reportedCodes.push(diag.code);
+      },
     );
 
     const program = makeMockProgram((key: symbol) => {
@@ -727,7 +775,9 @@ describe("$onEmit_routeEmitDirect_HttpOpWarning", () => {
     // Warning-severity should NOT fire unmapped-scalar (only errors do).
     expect(reportedCodes).not.toContain("unmapped-scalar");
     // Route still emitted (warning doesn't abort route emission).
-    const routeFile = directUnitEmitted.find((e) => e.path.includes("WarnOpRouteRegistration.g.cs"));
+    const routeFile = directUnitEmitted.find((e) =>
+      e.path.includes("WarnOpRouteRegistration.g.cs"),
+    );
     expect(routeFile).toBeDefined();
   });
 });
@@ -768,7 +818,9 @@ describe("$onEmit_routeEmitDirect_HandlerCategoryDefined", () => {
     });
     await $onEmit(ctx);
 
-    const routeFile = directUnitEmitted.find((e) => e.path.includes("CatOpRouteRegistration.g.cs"));
+    const routeFile = directUnitEmitted.find((e) =>
+      e.path.includes("CatOpRouteRegistration.g.cs"),
+    );
     expect(routeFile).toBeDefined();
     expect(routeFile!.content).toContain("ICatOpHandler");
     // Namespace should include "Commands" (category resolved).
@@ -786,7 +838,10 @@ describe("$onEmit_routeEmitDirect_UndefinedOutputModel", () => {
     const inputModel = makeModel("VoidRetInput", { id: str });
 
     // Op with a void return type — outputModel will be undefined inside $onEmit.
-    const inputProp = { type: inputModel, optional: false } as unknown as ModelProperty;
+    const inputProp = {
+      type: inputModel,
+      optional: false,
+    } as unknown as ModelProperty;
     const wrappedParams = {
       kind: "Model",
       name: "",
@@ -819,7 +874,9 @@ describe("$onEmit_routeEmitDirect_UndefinedOutputModel", () => {
     const ctx = makeBaseContext(program, FIXTURE_OPTS);
     await $onEmit(ctx);
 
-    const routeFile = directUnitEmitted.find((e) => e.path.includes("VoidRetRouteRegistration.g.cs"));
+    const routeFile = directUnitEmitted.find((e) =>
+      e.path.includes("VoidRetRouteRegistration.g.cs"),
+    );
     // Route is emitted even with void return (outputModel fallback ran without error).
     expect(routeFile).toBeDefined();
     // inputTypeName is used in the lambda signature.
@@ -836,14 +893,14 @@ describe("$onEmit_routeEmitDirect_UndefinedOutputModel", () => {
 //   - op has @d2ServedBy (grpcServedBy is a non-empty string)
 //   - csAppNamespaceBase AND csClientsNamespace are BOTH configured (real-module mode)
 //
-// When those four conditions hold, the gRPC service uses I<ServedBy>InternalApi
+// When those four conditions hold, the gRPC service uses I<ServedBy>Api
 // (the production façade type in the Clients namespace) instead of the fixture
 // I<ServedBy>SignerFacade. This is the only branch in $onEmit that is not
 // covered by fixture-mode tests (V8 integration compiles give no src credit).
 // ---------------------------------------------------------------------------
 
 describe("$onEmit_grpcDirect_RealModuleFacadeBranch_EmitterLines253To259", () => {
-  it("@d2GrpcMethod + @d2InProcess + real-module options → gRPC service emitted with I<ServedBy>InternalApi", async () => {
+  it("@d2GrpcMethod + @d2InProcess + real-module options → gRPC service emitted with I<ServedBy>Api", async () => {
     const str = makeStringScalar();
     const inputModel = makeModel("GrpcInput", { kid: str });
     const outputModel = makeModel("GrpcOutput", { signature: str });
@@ -856,7 +913,9 @@ describe("$onEmit_grpcDirect_RealModuleFacadeBranch_EmitterLines253To259", () =>
     const servedBy = new Map<object, unknown>([[op, "KeyCustodian"]]);
     const inProcess = new Map<object, unknown>([[op, true]]);
     // grpcPayload must be defined so the gRPC block fires.
-    const grpcMethod = new Map<object, unknown>([[op, { service: "Svc", method: "Do", streaming: "unary" }]]);
+    const grpcMethod = new Map<object, unknown>([
+      [op, { service: "Svc", method: "Do", streaming: "unary" }],
+    ]);
 
     directUnitOps.push(op);
 
@@ -880,11 +939,13 @@ describe("$onEmit_grpcDirect_RealModuleFacadeBranch_EmitterLines253To259", () =>
     });
     await $onEmit(ctx);
 
-    // The gRPC service file must use I<ServedBy>InternalApi (real-module façade path).
-    const grpcFile = directUnitEmitted.find((e) => e.path.includes("SvcService.g.cs"));
+    // The gRPC service file must use I<ServedBy>Api (real-module façade path).
+    const grpcFile = directUnitEmitted.find((e) =>
+      e.path.includes("SvcService.g.cs"),
+    );
     expect(grpcFile).toBeDefined();
-    // Real-module branch: typeName = I${grpcServedBy}InternalApi = IKeyCustodianInternalApi.
-    expect(grpcFile!.content).toContain("IKeyCustodianInternalApi");
+    // Real-module branch: typeName = I${grpcServedBy}Api = IKeyCustodianApi.
+    expect(grpcFile!.content).toContain("IKeyCustodianApi");
     // targetNamespace = csClientsNamespace = "D2.KeyCustodian.Clients".
     expect(grpcFile!.content).toContain("D2.KeyCustodian.Clients");
     // Method name = GrpcSignAsync (PascalOp from op.name = "grpcSign").
@@ -911,7 +972,9 @@ describe("$onEmit_grpcDirect_FixtureFacadeBranch_EmitterLines253To259", () => {
 
     const servedBy = new Map<object, unknown>([[op, "KeyCustodian"]]);
     const inProcess = new Map<object, unknown>([[op, true]]);
-    const grpcMethod = new Map<object, unknown>([[op, { service: "FixSvc", method: "FixDo", streaming: "unary" }]]);
+    const grpcMethod = new Map<object, unknown>([
+      [op, { service: "FixSvc", method: "FixDo", streaming: "unary" }],
+    ]);
     const commandMap = new Map<object, unknown>([[op, true]]);
 
     directUnitOps.push(op);
@@ -937,14 +1000,16 @@ describe("$onEmit_grpcDirect_FixtureFacadeBranch_EmitterLines253To259", () => {
     await $onEmit(ctx);
 
     // The gRPC service file must use the fixture façade naming.
-    const grpcFile = directUnitEmitted.find((e) => e.path.includes("FixSvcService.g.cs"));
+    const grpcFile = directUnitEmitted.find((e) =>
+      e.path.includes("FixSvcService.g.cs"),
+    );
     expect(grpcFile).toBeDefined();
     // Fixture mode: I<ServedBy>SignerFacade = IKeyCustodianSignerFacade.
     expect(grpcFile!.content).toContain("IKeyCustodianSignerFacade");
     // targetNamespace = "D2.Test.Grpc.Facade".
     expect(grpcFile!.content).toContain("D2.Test.Grpc.Facade");
     // Must NOT use the real-module naming.
-    expect(grpcFile!.content).not.toContain("IKeyCustodianInternalApi");
+    expect(grpcFile!.content).not.toContain("IKeyCustodianApi");
   });
 });
 
@@ -973,7 +1038,9 @@ describe("$onEmit_routeEmitDirect_IdempotentWithoutRoute_D2TSP006", () => {
     const reportedCodes: string[] = [];
     const libModule = await import("../src/lib.js");
     vi.spyOn(libModule.$lib, "reportDiagnostic").mockImplementation(
-      (_prog, diag: { code: string }) => { reportedCodes.push(diag.code); },
+      (_prog, diag: { code: string }) => {
+        reportedCodes.push(diag.code);
+      },
     );
 
     const program = makeMockProgram((key: symbol) => {
@@ -987,7 +1054,11 @@ describe("$onEmit_routeEmitDirect_IdempotentWithoutRoute_D2TSP006", () => {
     // D2TSP006 must have fired.
     expect(reportedCodes).toContain("idempotent-requires-route");
     // No route file emitted (early return after D2TSP006).
-    expect(directUnitEmitted.filter((e) => e.path.includes("RouteRegistration.g.cs"))).toHaveLength(0);
+    expect(
+      directUnitEmitted.filter((e) =>
+        e.path.includes("RouteRegistration.g.cs"),
+      ),
+    ).toHaveLength(0);
   });
 });
 
@@ -1030,7 +1101,9 @@ describe("$onEmit_routeEmitDirect_IdempotentWithRoute_SeamAndGate", () => {
     await $onEmit(ctx);
 
     // Route registration contains the idempotency gate.
-    const routeFile = directUnitEmitted.find((e) => e.path.includes("IdempSignRouteRegistration.g.cs"));
+    const routeFile = directUnitEmitted.find((e) =>
+      e.path.includes("IdempSignRouteRegistration.g.cs"),
+    );
     expect(routeFile).toBeDefined();
     expect(routeFile!.content).toContain("D2GeneratedIdempotencyStore store");
     expect(routeFile!.content).toContain("TryGetAsync");
@@ -1038,7 +1111,9 @@ describe("$onEmit_routeEmitDirect_IdempotentWithRoute_SeamAndGate", () => {
     expect(routeFile!.content).toContain("Idempotency-Key");
 
     // Seam file emitted for the namespace.
-    const seamFile = directUnitEmitted.find((e) => e.path.includes("D2GeneratedIdempotencyStore.g.cs"));
+    const seamFile = directUnitEmitted.find((e) =>
+      e.path.includes("D2GeneratedIdempotencyStore.g.cs"),
+    );
     expect(seamFile).toBeDefined();
     expect(seamFile!.content).toContain("D2GeneratedIdempotencyStore");
     expect(seamFile!.content).toContain("TryGetAsync");
@@ -1075,14 +1150,18 @@ describe("$onEmit_routeEmitDirect_IdempotentWithRoute_SeamAndGate", () => {
     await $onEmit(ctx);
 
     // Route contains SHA256 derived key logic and PascalCase 'Kid' field access.
-    const routeFile = directUnitEmitted.find((e) => e.path.includes("IdempDerivedRouteRegistration.g.cs"));
+    const routeFile = directUnitEmitted.find((e) =>
+      e.path.includes("IdempDerivedRouteRegistration.g.cs"),
+    );
     expect(routeFile).toBeDefined();
     expect(routeFile!.content).toContain("SHA256");
     expect(routeFile!.content).toContain("Kid");
     expect(routeFile!.content).toContain("StoreAsync");
 
     // Seam emitted.
-    const seamFile = directUnitEmitted.find((e) => e.path.includes("D2GeneratedIdempotencyStore.g.cs"));
+    const seamFile = directUnitEmitted.find((e) =>
+      e.path.includes("D2GeneratedIdempotencyStore.g.cs"),
+    );
     expect(seamFile).toBeDefined();
   });
 });

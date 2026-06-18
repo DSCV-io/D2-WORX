@@ -8,7 +8,13 @@
 // unsupported types (D2TSP002), and nested-model deduplication.
 
 import { describe, it, expect } from "vitest";
-import type { Model, ModelProperty, Program, Scalar, Type } from "@typespec/compiler";
+import type {
+  Model,
+  ModelProperty,
+  Program,
+  Scalar,
+  Type,
+} from "@typespec/compiler";
 import { D2_REDACT_KEY } from "@d2/typespec-decorators";
 import { walkModel } from "../src/lib/model-walk.js";
 
@@ -132,7 +138,13 @@ describe("walkModel_CollectionField_IReadOnlyList", () => {
       kind: "Model",
       name: "Jwk",
       properties: new Map([
-        ["kid", { type: makeScalar("string"), optional: false } as unknown as ModelProperty],
+        [
+          "kid",
+          {
+            type: makeScalar("string"),
+            optional: false,
+          } as unknown as ModelProperty,
+        ],
       ]),
     } as unknown as Model;
 
@@ -145,7 +157,11 @@ describe("walkModel_CollectionField_IReadOnlyList", () => {
 
     const { prop, redactMap } = makeProp(arrayModel as unknown as Type);
     const model = makeModel([["keys", prop]]);
-    const { fields, nestedModels } = walkModel(makeProgram(redactMap), model, () => {});
+    const { fields, nestedModels } = walkModel(
+      makeProgram(redactMap),
+      model,
+      () => {},
+    );
 
     expect(fields[0]!.csType).toBe("IReadOnlyList<Jwk>");
     expect(fields[0]!.tsType).toBe("readonly Jwk[]");
@@ -161,14 +177,30 @@ describe("walkModel_NestedModel_RecursionAndDedup", () => {
       kind: "Model",
       name: "Jwk",
       properties: new Map([
-        ["kid", { type: makeScalar("string"), optional: false } as unknown as ModelProperty],
-        ["n", { type: makeScalar("string"), optional: false } as unknown as ModelProperty],
+        [
+          "kid",
+          {
+            type: makeScalar("string"),
+            optional: false,
+          } as unknown as ModelProperty,
+        ],
+        [
+          "n",
+          {
+            type: makeScalar("string"),
+            optional: false,
+          } as unknown as ModelProperty,
+        ],
       ]),
     } as unknown as Model;
 
     const { prop, redactMap } = makeProp(inner as unknown as Type);
     const model = makeModel([["jwk", prop]]);
-    const { fields, nestedModels } = walkModel(makeProgram(redactMap), model, () => {});
+    const { fields, nestedModels } = walkModel(
+      makeProgram(redactMap),
+      model,
+      () => {},
+    );
 
     expect(fields[0]!.csType).toBe("Jwk");
     expect(nestedModels).toHaveLength(1);
@@ -180,13 +212,22 @@ describe("walkModel_NestedModel_RecursionAndDedup", () => {
       kind: "Model",
       name: "Jwk",
       properties: new Map([
-        ["kid", { type: makeScalar("string"), optional: false } as unknown as ModelProperty],
+        [
+          "kid",
+          {
+            type: makeScalar("string"),
+            optional: false,
+          } as unknown as ModelProperty,
+        ],
       ]),
     } as unknown as Model;
 
     const prop1 = { type: inner, optional: false } as unknown as ModelProperty;
     const prop2 = { type: inner, optional: false } as unknown as ModelProperty;
-    const model = makeModel([["first", prop1], ["second", prop2]]);
+    const model = makeModel([
+      ["first", prop1],
+      ["second", prop2],
+    ]);
     const { nestedModels } = walkModel(makeProgram(), model, () => {});
 
     expect(nestedModels).toHaveLength(1);
@@ -220,9 +261,13 @@ describe("walkModel_UnmappedScalar_D2TSP001Loud", () => {
     const model = makeModel([["createdAt", prop]]);
     const errors: Array<{ code: string; message: string }> = [];
 
-    const { fields } = walkModel(makeProgram(redactMap), model, (code, message) => {
-      errors.push({ code, message });
-    });
+    const { fields } = walkModel(
+      makeProgram(redactMap),
+      model,
+      (code, message) => {
+        errors.push({ code, message });
+      },
+    );
 
     expect(errors).toHaveLength(1);
     expect(errors[0]!.code).toBe("unmapped-scalar");
@@ -236,7 +281,10 @@ describe("walkModel_UnmappedScalar_D2TSP001Loud", () => {
 describe("walkModel_UnsupportedPropertyType_D2TSP002Loud", () => {
   it("union type → onError called with D2TSP002 code", () => {
     const unionType = { kind: "Union" } as unknown as Type;
-    const prop = { type: unionType, optional: false } as unknown as ModelProperty;
+    const prop = {
+      type: unionType,
+      optional: false,
+    } as unknown as ModelProperty;
     const model = makeModel([["status", prop]]);
     const errors: Array<{ code: string; message: string }> = [];
 
@@ -252,11 +300,16 @@ describe("walkModel_UnsupportedPropertyType_D2TSP002Loud", () => {
 
   it("enum type → onError called with D2TSP002 code", () => {
     const enumType = { kind: "Enum" } as unknown as Type;
-    const prop = { type: enumType, optional: false } as unknown as ModelProperty;
+    const prop = {
+      type: enumType,
+      optional: false,
+    } as unknown as ModelProperty;
     const model = makeModel([["kind", prop]]);
     const errors: Array<{ code: string }> = [];
 
-    walkModel(makeProgram(), model, (code) => { errors.push({ code }); });
+    walkModel(makeProgram(), model, (code) => {
+      errors.push({ code });
+    });
 
     expect(errors[0]!.code).toBe("unsupported-property-type");
   });
@@ -277,9 +330,13 @@ describe("walkModel_ArrayElement_UnmappedScalar_D2TSP001", () => {
     const model = makeModel([["timestamps", prop]]);
     const errors: Array<{ code: string; message: string }> = [];
 
-    const { fields } = walkModel(makeProgram(redactMap), model, (code, message) => {
-      errors.push({ code, message });
-    });
+    const { fields } = walkModel(
+      makeProgram(redactMap),
+      model,
+      (code, message) => {
+        errors.push({ code, message });
+      },
+    );
 
     expect(errors).toHaveLength(1);
     expect(errors[0]!.code).toBe("unmapped-scalar");
@@ -304,9 +361,13 @@ describe("walkModel_ArrayElement_UnsupportedKind_D2TSP002", () => {
     const model = makeModel([["statuses", prop]]);
     const errors: Array<{ code: string; message: string }> = [];
 
-    const { fields } = walkModel(makeProgram(redactMap), model, (code, message) => {
-      errors.push({ code, message });
-    });
+    const { fields } = walkModel(
+      makeProgram(redactMap),
+      model,
+      (code, message) => {
+        errors.push({ code, message });
+      },
+    );
 
     expect(errors).toHaveLength(1);
     expect(errors[0]!.code).toBe("unsupported-property-type");
@@ -321,7 +382,13 @@ describe("walkModel_NestedModel_OptionalField_NullableType", () => {
       kind: "Model",
       name: "Inner",
       properties: new Map<string, ModelProperty>([
-        ["id", { type: { kind: "Scalar", name: "string" } as unknown as Scalar, optional: false } as unknown as ModelProperty],
+        [
+          "id",
+          {
+            type: { kind: "Scalar", name: "string" } as unknown as Scalar,
+            optional: false,
+          } as unknown as ModelProperty,
+        ],
       ]),
     } as unknown as Model;
 
@@ -343,8 +410,20 @@ describe("walkModel_CollectedNested_OptionalScalarField", () => {
       kind: "Model",
       name: "OptionalFieldNested",
       properties: new Map<string, ModelProperty>([
-        ["required", { type: { kind: "Scalar", name: "string" } as unknown as Scalar, optional: false } as unknown as ModelProperty],
-        ["hint", { type: { kind: "Scalar", name: "string" } as unknown as Scalar, optional: true } as unknown as ModelProperty],
+        [
+          "required",
+          {
+            type: { kind: "Scalar", name: "string" } as unknown as Scalar,
+            optional: false,
+          } as unknown as ModelProperty,
+        ],
+        [
+          "hint",
+          {
+            type: { kind: "Scalar", name: "string" } as unknown as Scalar,
+            optional: true,
+          } as unknown as ModelProperty,
+        ],
       ]),
     } as unknown as Model;
 
@@ -378,9 +457,13 @@ describe("walkModel_ArrayElement_NullIndexerKind_UnknownFallback", () => {
     const model = makeModel([["items", prop]]);
     const errors: Array<{ code: string; message: string }> = [];
 
-    const { fields } = walkModel(makeProgram(redactMap), model, (code, message) => {
-      errors.push({ code, message });
-    });
+    const { fields } = walkModel(
+      makeProgram(redactMap),
+      model,
+      (code, message) => {
+        errors.push({ code, message });
+      },
+    );
 
     expect(errors).toHaveLength(1);
     expect(errors[0]!.code).toBe("unsupported-property-type");
@@ -404,13 +487,25 @@ describe("walkModel_CollectedNested_NonScalarFieldSkipped", () => {
       kind: "Model",
       name: "Shallow",
       properties: new Map<string, ModelProperty>([
-        ["id", { type: { kind: "Scalar", name: "string" } as unknown as Scalar, optional: false } as unknown as ModelProperty],
+        [
+          "id",
+          {
+            type: { kind: "Scalar", name: "string" } as unknown as Scalar,
+            optional: false,
+          } as unknown as ModelProperty,
+        ],
         // Non-scalar (Model) field — will be skipped inside collectNested.
-        ["deep", { type: anotherModel, optional: false } as unknown as ModelProperty],
+        [
+          "deep",
+          { type: anotherModel, optional: false } as unknown as ModelProperty,
+        ],
       ]),
     } as unknown as Model;
 
-    const prop = { type: innerModel, optional: false } as unknown as ModelProperty;
+    const prop = {
+      type: innerModel,
+      optional: false,
+    } as unknown as ModelProperty;
     const model = makeModel([["nested", prop]]);
 
     const { nestedModels } = walkModel(makeProgram(), model, () => {});
@@ -432,8 +527,20 @@ describe("walkModel_NestedModel_UnmappedScalarSkippedSilently", () => {
       kind: "Model",
       name: "Inner",
       properties: new Map<string, ModelProperty>([
-        ["goodField", { type: makeScalar("string"), optional: false } as unknown as ModelProperty],
-        ["badField", { type: makeScalar("utcDateTime"), optional: false } as unknown as ModelProperty],
+        [
+          "goodField",
+          {
+            type: makeScalar("string"),
+            optional: false,
+          } as unknown as ModelProperty,
+        ],
+        [
+          "badField",
+          {
+            type: makeScalar("utcDateTime"),
+            optional: false,
+          } as unknown as ModelProperty,
+        ],
       ]),
     } as unknown as Model;
 
@@ -441,7 +548,11 @@ describe("walkModel_NestedModel_UnmappedScalarSkippedSilently", () => {
     const model = makeModel([["inner", prop]]);
     const errors: string[] = [];
 
-    const { fields, nestedModels } = walkModel(makeProgram(redactMap), model, (_, m) => errors.push(m));
+    const { fields, nestedModels } = walkModel(
+      makeProgram(redactMap),
+      model,
+      (_, m) => errors.push(m),
+    );
 
     // No errors propagated to top level.
     expect(errors).toHaveLength(0);

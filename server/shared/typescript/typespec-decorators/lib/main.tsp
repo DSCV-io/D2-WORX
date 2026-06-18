@@ -83,7 +83,7 @@ extern dec d2Harmless(target: Operation);
 /**
  * Marks an operation as eligible for in-process leaf invocation (a co-hosted module
  * calling the owner directly, no network hop). The explicit leaf-vs-gRPC trigger;
- * requires @d2ServedBy. Drives the generated I<Owner>InternalApi leaf interface.
+ * requires @d2ServedBy. Drives the generated I<Owner>Api leaf interface.
  */
 extern dec d2InProcess(target: Operation);
 

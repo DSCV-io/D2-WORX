@@ -203,38 +203,58 @@ function emitServiceClass(
   // directly — so the service file has no collision and needs no extra alias.
   // Short using-aliases carry the global:: root so SC1 namespace-shadowing cannot reach
   // the generated code regardless of ambient usings.
-  lines.push(`using ${protoRequestName} = global::${protoCsharpNs}.${protoRequestName};`);
-  lines.push(`using ${protoResponseName} = global::${protoCsharpNs}.${protoResponseName};`);
-  lines.push(`using ${requestModelName} = global::${dtoCsharpNs}.${requestModelName};`);
-  lines.push(`using ${responseModelName} = global::${dtoCsharpNs}.${responseModelName};`);
+  lines.push(
+    `using ${protoRequestName} = global::${protoCsharpNs}.${protoRequestName};`,
+  );
+  lines.push(
+    `using ${protoResponseName} = global::${protoCsharpNs}.${protoResponseName};`,
+  );
+  lines.push(
+    `using ${requestModelName} = global::${dtoCsharpNs}.${requestModelName};`,
+  );
+  lines.push(
+    `using ${responseModelName} = global::${dtoCsharpNs}.${responseModelName};`,
+  );
   lines.push("using D2.Shared.Result.Grpc;");
   lines.push("using Grpc.Core;");
   // When delegating through a façade whose interface lives in a different namespace,
   // add a using for that namespace so the ctor parameter type resolves.
-  if (target.kind === "facade" && target.targetNamespace !== undefined && target.targetNamespace !== serviceImplNs)
+  if (
+    target.kind === "facade" &&
+    target.targetNamespace !== undefined &&
+    target.targetNamespace !== serviceImplNs
+  )
     lines.push(`using ${target.targetNamespace};`);
   lines.push("");
 
   // XML doc — reference the actual delegation target.
-  lines.push(`/// <summary>Generated gRPC service for the <c>${grpcMethod}</c> operation, delegating to <see cref="${target.typeName}"/>.</summary>`);
+  lines.push(
+    `/// <summary>Generated gRPC service for the <c>${grpcMethod}</c> operation, delegating to <see cref="${target.typeName}"/>.</summary>`,
+  );
 
   // Class declaration — primary constructor takes the delegation target.
-  const ctorParam = target.kind === "facade"
-    ? `${target.typeName} facade`
-    : `${target.typeName} handler`;
+  const ctorParam =
+    target.kind === "facade"
+      ? `${target.typeName} facade`
+      : `${target.typeName} handler`;
   lines.push(`public sealed class ${serviceClassName}(${ctorParam})`);
   lines.push(`    : ${baseClassFq}`);
   lines.push("{");
 
   // Override the rpc method.
   lines.push(`    /// <inheritdoc/>`);
-  lines.push(`    public override async Task<${protoResponseName}> ${grpcMethod}(${protoRequestName} request, ServerCallContext context)`);
+  lines.push(
+    `    public override async Task<${protoResponseName}> ${grpcMethod}(${protoRequestName} request, ServerCallContext context)`,
+  );
   lines.push("    {");
-  lines.push(`        ${requestModelName} input = request.To${requestModelName}();`);
+  lines.push(
+    `        ${requestModelName} input = request.To${requestModelName}();`,
+  );
   // Delegation call — façade uses 2-arg transport-neutral signature; handler uses HandleAsync.
-  const callExpr = target.kind === "facade"
-    ? `facade.${target.methodName}(input, context.CancellationToken)`
-    : `handler.${target.methodName}(input, context.CancellationToken)`;
+  const callExpr =
+    target.kind === "facade"
+      ? `facade.${target.methodName}(input, context.CancellationToken)`
+      : `handler.${target.methodName}(input, context.CancellationToken)`;
   lines.push(`        var result = await ${callExpr}.ConfigureAwait(false);`);
   // Populate the envelope from the handler result (success OR failure).
   // RpcException is NEVER thrown for business results — it is reserved for genuine
@@ -286,17 +306,29 @@ function emitTransportMappers(
   // The proto data message alias is Proto<Op>Output = global::<protoCsharpNs>.<Op>Output.
   // Short using-aliases carry the global:: root so SC1 shadowing cannot reach the code.
   const protoDataAlias = `Proto${responseModelName}`;
-  lines.push(`using ${protoRequestName} = global::${protoCsharpNs}.${protoRequestName};`);
-  lines.push(`using ${protoResponseName} = global::${protoCsharpNs}.${protoResponseName};`);
-  lines.push(`using ${protoDataAlias} = global::${protoCsharpNs}.${protoDataMsgName};`);
-  lines.push(`using ${requestModelName} = global::${dtoCsharpNs}.${requestModelName};`);
-  lines.push(`using ${responseModelName} = global::${dtoCsharpNs}.${responseModelName};`);
+  lines.push(
+    `using ${protoRequestName} = global::${protoCsharpNs}.${protoRequestName};`,
+  );
+  lines.push(
+    `using ${protoResponseName} = global::${protoCsharpNs}.${protoResponseName};`,
+  );
+  lines.push(
+    `using ${protoDataAlias} = global::${protoCsharpNs}.${protoDataMsgName};`,
+  );
+  lines.push(
+    `using ${requestModelName} = global::${dtoCsharpNs}.${requestModelName};`,
+  );
+  lines.push(
+    `using ${responseModelName} = global::${dtoCsharpNs}.${responseModelName};`,
+  );
   lines.push("using D2.Shared.Result;");
   lines.push("using D2.Shared.Result.Grpc;");
   lines.push("using Google.Protobuf;");
   lines.push("");
 
-  lines.push(`/// <summary>Generated transport mappers: proto ↔ DTO for the <c>${pascalOp}</c> operation.</summary>`);
+  lines.push(
+    `/// <summary>Generated transport mappers: proto ↔ DTO for the <c>${pascalOp}</c> operation.</summary>`,
+  );
   lines.push(`internal static class ${mapperClassName}`);
   lines.push("{");
 
@@ -310,7 +342,9 @@ function emitTransportMappers(
     lines.push(`            return new ${requestModelName}();`);
   } else {
     const args = requestFields.map((f) => buildProtoToDto(f));
-    lines.push(`            return new ${requestModelName}(${args.join(", ")});`);
+    lines.push(
+      `            return new ${requestModelName}(${args.join(", ")});`,
+    );
   }
   lines.push("        }");
   lines.push("    }");
@@ -324,9 +358,13 @@ function emitTransportMappers(
   lines.push("    {");
   lines.push(`        internal ${protoResponseName} ToProtoResponse()`);
   lines.push("        {");
-  lines.push(`            var response = new ${protoResponseName} { Result = result.ToProto() };`);
+  lines.push(
+    `            var response = new ${protoResponseName} { Result = result.ToProto() };`,
+  );
   lines.push(`            if (result.IsOk && result.Data is not null)`);
-  lines.push(`                response.Data = result.Data.ToProto${responseModelName}();`);
+  lines.push(
+    `                response.Data = result.Data.ToProto${responseModelName}();`,
+  );
   lines.push("            return response;");
   lines.push("        }");
   lines.push("    }");
@@ -336,7 +374,9 @@ function emitTransportMappers(
   // Maps the DTO fields to the proto data message (the <Op>Output proto message type).
   lines.push(`    extension(${responseModelName} output)`);
   lines.push("    {");
-  lines.push(`        internal ${protoDataAlias} ToProto${responseModelName}()`);
+  lines.push(
+    `        internal ${protoDataAlias} ToProto${responseModelName}()`,
+  );
   lines.push("        {");
 
   if (responseFields.length === 0) {
@@ -344,9 +384,10 @@ function emitTransportMappers(
   } else {
     lines.push(`            return new ${protoDataAlias}`);
     lines.push("            {");
-    const assignments = responseFields.map((f) => `                ${toPascal(f.name)} = ${buildDtoToProto(f)}`);
-    for (const assignment of assignments)
-      lines.push(`${assignment},`);
+    const assignments = responseFields.map(
+      (f) => `                ${toPascal(f.name)} = ${buildDtoToProto(f)}`,
+    );
+    for (const assignment of assignments) lines.push(`${assignment},`);
     lines.push("            };");
   }
   lines.push("        }");

@@ -17,7 +17,10 @@ import { emitProto } from "../src/lib/proto-emitter.js";
 // Helpers
 // ---------------------------------------------------------------------------
 
-type OnError = (code: "unmapped-scalar" | "invalid-streaming-mode", message: string) => void;
+type OnError = (
+  code: "unmapped-scalar" | "invalid-streaming-mode",
+  message: string,
+) => void;
 
 function makeStringField(name: string): FieldInfo {
   return {
@@ -61,7 +64,11 @@ function makeDecimalField(name: string): FieldInfo {
   };
 }
 
-function makeCollectionField(name: string, elemCsType: string, elemProtoType: string): FieldInfo {
+function makeCollectionField(
+  name: string,
+  elemCsType: string,
+  elemProtoType: string,
+): FieldInfo {
   return {
     name,
     csName: name.charAt(0).toUpperCase() + name.slice(1),
@@ -115,7 +122,7 @@ function emitSignProto(streaming = "unary", onErr?: OnError) {
     SIGN_SOURCE,
     "SignRequest",
     buildSignInputFields(),
-    "SignOutput",     // data message name — wrapper is always <grpcMethod>Response
+    "SignOutput", // data message name — wrapper is always <grpcMethod>Response
     buildSignOutputFields(),
     [],
     onError,
@@ -132,7 +139,9 @@ describe("emitProto_SignShape_EmitsServiceRpcMessages", () => {
     const { result } = emitSignProto();
     expect(result).toBeDefined();
     expect(result!.content).toContain("service KeyCustodianSigner {");
-    expect(result!.content).toContain("rpc Sign(SignRequest) returns (SignResponse);");
+    expect(result!.content).toContain(
+      "rpc Sign(SignRequest) returns (SignResponse);",
+    );
   });
 
   it("emits request message, envelope wrapper, and data message declarations", () => {
@@ -146,7 +155,7 @@ describe("emitProto_SignShape_EmitsServiceRpcMessages", () => {
 
   it("emits the D2ResultProto import after syntax", () => {
     const { result } = emitSignProto();
-    expect(result!.content).toContain("import \"common/v1/d2_result.proto\";");
+    expect(result!.content).toContain('import "common/v1/d2_result.proto";');
   });
 
   it("emits correct field types: request fields + envelope fields + data message fields", () => {
@@ -169,39 +178,80 @@ describe("emitProto_SignShape_EmitsServiceRpcMessages", () => {
 describe("emitProto_StreamingMode_CorrectRpcForm", () => {
   it("unary → rpc M(Req) returns (Resp)", () => {
     const { result } = emitSignProto("unary");
-    expect(result!.content).toContain("rpc Sign(SignRequest) returns (SignResponse);");
+    expect(result!.content).toContain(
+      "rpc Sign(SignRequest) returns (SignResponse);",
+    );
     expect(result!.content).not.toContain("stream");
   });
 
   it("serverStream → rpc M(Req) returns (stream MethodResponse)", () => {
     const errors: string[] = [];
     const result = emitProto(
-      "sign", "Svc", "Method", "serverStream", SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
-      "Req", [], "Resp", [], [], (_, m) => errors.push(m),
+      "sign",
+      "Svc",
+      "Method",
+      "serverStream",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [],
+      "Resp",
+      [],
+      [],
+      (_, m) => errors.push(m),
     );
     expect(result).toBeDefined();
     // The response wrapper is always <grpcMethod>Response ("MethodResponse"), not the data model name.
-    expect(result!.content).toContain("rpc Method(Req) returns (stream MethodResponse);");
+    expect(result!.content).toContain(
+      "rpc Method(Req) returns (stream MethodResponse);",
+    );
   });
 
   it("clientStream → rpc M(stream Req) returns (MethodResponse)", () => {
     const errors: string[] = [];
     const result = emitProto(
-      "sign", "Svc", "Method", "clientStream", SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
-      "Req", [], "Resp", [], [], (_, m) => errors.push(m),
+      "sign",
+      "Svc",
+      "Method",
+      "clientStream",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [],
+      "Resp",
+      [],
+      [],
+      (_, m) => errors.push(m),
     );
     expect(result).toBeDefined();
-    expect(result!.content).toContain("rpc Method(stream Req) returns (MethodResponse);");
+    expect(result!.content).toContain(
+      "rpc Method(stream Req) returns (MethodResponse);",
+    );
   });
 
   it("bidiStream → rpc M(stream Req) returns (stream MethodResponse)", () => {
     const errors: string[] = [];
     const result = emitProto(
-      "sign", "Svc", "Method", "bidiStream", SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
-      "Req", [], "Resp", [], [], (_, m) => errors.push(m),
+      "sign",
+      "Svc",
+      "Method",
+      "bidiStream",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [],
+      "Resp",
+      [],
+      [],
+      (_, m) => errors.push(m),
     );
     expect(result).toBeDefined();
-    expect(result!.content).toContain("rpc Method(stream Req) returns (stream MethodResponse);");
+    expect(result!.content).toContain(
+      "rpc Method(stream Req) returns (stream MethodResponse);",
+    );
   });
 });
 
@@ -226,8 +276,19 @@ describe("emitProto_FieldNaming_SnakeCaseFields_PascalCaseMessages", () => {
     ];
     const errors: string[] = [];
     const result = emitProto(
-      "test", "MyService", "DoThing", "unary", SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
-      "MyInput", fields, "MyOutput", [], [], (_, m) => errors.push(m),
+      "test",
+      "MyService",
+      "DoThing",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "MyInput",
+      fields,
+      "MyOutput",
+      [],
+      [],
+      (_, m) => errors.push(m),
     );
     expect(result).toBeDefined();
     expect(result!.content).toContain("string multi_word_field = 1;");
@@ -249,8 +310,19 @@ describe("emitProto_FieldNumbering_OneBased_InDeclarationOrder", () => {
     ];
     const errors: string[] = [];
     const result = emitProto(
-      "test", "Svc", "Do", "unary", SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
-      "Multi", fields, "Out", [], [], (_, m) => errors.push(m),
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Multi",
+      fields,
+      "Out",
+      [],
+      [],
+      (_, m) => errors.push(m),
     );
     expect(result).toBeDefined();
     expect(result!.content).toContain("string alpha = 1;");
@@ -265,11 +337,24 @@ describe("emitProto_FieldNumbering_OneBased_InDeclarationOrder", () => {
 
 describe("emitProto_CollectionField_RepeatedPrefix", () => {
   it("IReadOnlyList<string> field → repeated string tag", () => {
-    const fields: readonly FieldInfo[] = [makeCollectionField("items", "string", "string")];
+    const fields: readonly FieldInfo[] = [
+      makeCollectionField("items", "string", "string"),
+    ];
     const errors: string[] = [];
     const result = emitProto(
-      "test", "Svc", "Do", "unary", SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
-      "Req", fields, "Resp", [], [], (_, m) => errors.push(m),
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      fields,
+      "Resp",
+      [],
+      [],
+      (_, m) => errors.push(m),
     );
     expect(result).toBeDefined();
     expect(result!.content).toContain("repeated string items = 1;");
@@ -290,8 +375,19 @@ describe("emitProto_NestedMessage_EmittedAndFieldUsesModelName", () => {
 
     const errors: string[] = [];
     const result = emitProto(
-      "test", "Svc", "Do", "unary", SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
-      "Req", [nestedField], "Resp", [], [nestedModel], (_, m) => errors.push(m),
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [nestedField],
+      "Resp",
+      [],
+      [nestedModel],
+      (_, m) => errors.push(m),
     );
     expect(result).toBeDefined();
     // Field in message uses PascalCase model name as proto type.
@@ -321,8 +417,19 @@ describe("emitProto_UnmappedScalar_LoudFailure", () => {
     };
     const onError = vi.fn();
     const result = emitProto(
-      "test", "Svc", "Do", "unary", SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
-      "Req", [badField], "Resp", [], [], onError,
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [badField],
+      "Resp",
+      [],
+      [],
+      onError,
     );
     expect(result).toBeUndefined();
     expect(onError).toHaveBeenCalledOnce();
@@ -350,8 +457,19 @@ describe("emitProto_UnmappedArrayElementScalar_LoudFailure", () => {
     };
     const onError = vi.fn();
     const result = emitProto(
-      "test", "Svc", "Do", "unary", SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
-      "Req", [badField], "Resp", [], [], onError,
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [badField],
+      "Resp",
+      [],
+      [],
+      onError,
     );
     expect(result).toBeUndefined();
     expect(onError).toHaveBeenCalledOnce();
@@ -367,11 +485,15 @@ describe("emitProto_Banner_SyntaxPackageNamespace", () => {
   it("emits auto-generated banner + syntax + package + option csharp_namespace", () => {
     const { result } = emitSignProto();
     expect(result!.content).toContain("// <auto-generated>");
-    expect(result!.content).toContain("Generated by the @d2/typespec-emitters TypeSpec emitter.");
+    expect(result!.content).toContain(
+      "Generated by the @d2/typespec-emitters TypeSpec emitter.",
+    );
     expect(result!.content).toContain("Manual edits will be lost on rebuild.");
-    expect(result!.content).toContain("syntax = \"proto3\";");
+    expect(result!.content).toContain('syntax = "proto3";');
     expect(result!.content).toContain("package d2.keycustodian.v1;");
-    expect(result!.content).toContain("option csharp_namespace = \"D2.Services.Protos.KeyCustodian.V1\";");
+    expect(result!.content).toContain(
+      'option csharp_namespace = "D2.Services.Protos.KeyCustodian.V1";',
+    );
   });
 });
 
@@ -384,8 +506,19 @@ describe("emitProto_DecimalScalar_MapsToProtoString", () => {
     const fields: readonly FieldInfo[] = [makeDecimalField("amount")];
     const errors: string[] = [];
     const result = emitProto(
-      "test", "Svc", "Do", "unary", SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
-      "Req", fields, "Resp", [], [], (_, m) => errors.push(m),
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      fields,
+      "Resp",
+      [],
+      [],
+      (_, m) => errors.push(m),
     );
     expect(result).toBeDefined();
     expect(errors).toHaveLength(0);
@@ -401,8 +534,19 @@ describe("emitProto_EmptyMessage_WellFormed", () => {
   it("op with no input fields → request is well-formed empty; data message is well-formed empty", () => {
     const errors: string[] = [];
     const result = emitProto(
-      "test", "Svc", "Do", "unary", SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
-      "EmptyIn", [], "EmptyOut", [], [], (_, m) => errors.push(m),
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "EmptyIn",
+      [],
+      "EmptyOut",
+      [],
+      [],
+      (_, m) => errors.push(m),
     );
     expect(result).toBeDefined();
     expect(errors).toHaveLength(0);
@@ -425,8 +569,19 @@ describe("emitProto_UnknownStreamingMode_LoudFailure", () => {
   it("unknown streaming mode → onError called + returns undefined", () => {
     const onError = vi.fn();
     const result = emitProto(
-      "test", "Svc", "Do", "bidirectional" /* not a valid mode */, SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
-      "Req", [], "Resp", [], [], onError,
+      "test",
+      "Svc",
+      "Do",
+      "bidirectional" /* not a valid mode */,
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [],
+      "Resp",
+      [],
+      [],
+      onError,
     );
     expect(result).toBeUndefined();
     expect(onError).toHaveBeenCalledOnce();
@@ -465,8 +620,19 @@ describe("emitProto_UnmappedResponseField_EarlyReturn", () => {
     };
     const onError = vi.fn();
     const result = emitProto(
-      "test", "Svc", "Do", "unary", SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
-      "Req", [], "Resp", [badRespField], [], onError,
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [],
+      "Resp",
+      [badRespField],
+      [],
+      onError,
     );
     expect(result).toBeUndefined();
     expect(onError).toHaveBeenCalledOnce();
@@ -498,8 +664,19 @@ describe("emitProto_NestedModel_UnmappedField_EarlyReturn", () => {
     const nestedField = makeNestedField("item", nestedModel);
     const onError = vi.fn();
     const result = emitProto(
-      "test", "Svc", "Do", "unary", SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
-      "Req", [nestedField], "Resp", [], [nestedModel], onError,
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [nestedField],
+      "Resp",
+      [],
+      [nestedModel],
+      onError,
     );
     expect(result).toBeUndefined();
     expect(onError).toHaveBeenCalledOnce();
@@ -531,8 +708,19 @@ describe("emitProto_ModelTypedCollection_RepeatedWithModelName", () => {
     };
     const errors: string[] = [];
     const result = emitProto(
-      "test", "Svc", "Do", "unary", SIGN_PKG, SIGN_CS_NS, SIGN_SOURCE,
-      "Req", [collectionField], "Resp", [], [nestedModel], (_, m) => errors.push(m),
+      "test",
+      "Svc",
+      "Do",
+      "unary",
+      SIGN_PKG,
+      SIGN_CS_NS,
+      SIGN_SOURCE,
+      "Req",
+      [collectionField],
+      "Resp",
+      [],
+      [nestedModel],
+      (_, m) => errors.push(m),
     );
     expect(result).toBeDefined();
     expect(errors).toHaveLength(0);

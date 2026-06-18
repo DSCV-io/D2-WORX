@@ -62,10 +62,14 @@ export function emitHandlerInterface(
   sourceSpec: string,
   dtoNamespace?: string,
 ): EmittedFile {
-  if (opName.length === 0) throw new Error("emitHandlerInterface: opName must not be empty");
-  if (namespace.length === 0) throw new Error("emitHandlerInterface: namespace must not be empty");
-  if (inputTypeName.length === 0) throw new Error("emitHandlerInterface: inputTypeName must not be empty");
-  if (outputTypeName.length === 0) throw new Error("emitHandlerInterface: outputTypeName must not be empty");
+  if (opName.length === 0)
+    throw new Error("emitHandlerInterface: opName must not be empty");
+  if (namespace.length === 0)
+    throw new Error("emitHandlerInterface: namespace must not be empty");
+  if (inputTypeName.length === 0)
+    throw new Error("emitHandlerInterface: inputTypeName must not be empty");
+  if (outputTypeName.length === 0)
+    throw new Error("emitHandlerInterface: outputTypeName must not be empty");
 
   const pascalOp = toPascal(opName);
   const typeName = `I${pascalOp}Handler`;
@@ -73,7 +77,8 @@ export function emitHandlerInterface(
 
   // Emit a per-file using for the DTO namespace when the DTOs live in a different
   // namespace from the handler interface (e.g. exposed ops whose DTOs are in Clients).
-  const needsDtoUsing = dtoNamespace !== undefined && dtoNamespace !== namespace;
+  const needsDtoUsing =
+    dtoNamespace !== undefined && dtoNamespace !== namespace;
 
   const lines: string[] = [];
 
@@ -101,8 +106,12 @@ export function emitHandlerInterface(
   }
 
   // One-line extends declaration (no body — pure marker interface).
-  lines.push(`/// <summary>Generated handler interface for the <c>${pascalOp}</c> operation.</summary>`);
-  lines.push(`public interface ${typeName} : IHandler<${inputTypeName}, ${outputTypeName}>;`);
+  lines.push(
+    `/// <summary>Generated handler interface for the <c>${pascalOp}</c> operation.</summary>`,
+  );
+  lines.push(
+    `public interface ${typeName} : IHandler<${inputTypeName}, ${outputTypeName}>;`,
+  );
   lines.push("");
 
   const content = lines.join("\n");

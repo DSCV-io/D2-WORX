@@ -17,8 +17,8 @@ using D2.Edge.KeyCustodian.Clients;
 /// Generated façade implementation. Delegates each exposed operation to the
 /// corresponding app-layer handler. Registered Transient to match handler lifetime.
 /// </summary>
-public sealed class KeyCustodianInternalApi(
-    IGetJwksHandler getJwksHandler) : IKeyCustodianInternalApi
+public sealed class KeyCustodianApi(
+    IGetJwksHandler getJwksHandler) : IKeyCustodianApi
 {
     /// <inheritdoc/>
     public ValueTask<D2Result<GetJwksOutput?>> GetJwksAsync(GetJwksInput input, CancellationToken ct = default)

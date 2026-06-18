@@ -97,17 +97,23 @@ describe("protoGrpcEmitIntegration_Sign_EmitsProtoAndService", () => {
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
     // .proto file emitted.
     const protoContent = getEmittedFile(host, ".g.proto");
     expect(protoContent).toBeDefined();
-    expect(protoContent).toContain("syntax = \"proto3\";");
+    expect(protoContent).toContain('syntax = "proto3";');
     expect(protoContent).toContain("package d2.test.v1;");
-    expect(protoContent).toContain("option csharp_namespace = \"D2.Test.Protos.V1\";");
+    expect(protoContent).toContain(
+      'option csharp_namespace = "D2.Test.Protos.V1";',
+    );
     expect(protoContent).toContain("service KeyCustodianSigner {");
-    expect(protoContent).toContain("rpc Sign(SignRequest) returns (SignResponse);");
+    expect(protoContent).toContain(
+      "rpc Sign(SignRequest) returns (SignResponse);",
+    );
     expect(protoContent).toContain("message SignRequest {");
     expect(protoContent).toContain("message SignResponse {");
     expect(protoContent).toContain("string kid = 1;");
@@ -117,10 +123,15 @@ describe("protoGrpcEmitIntegration_Sign_EmitsProtoAndService", () => {
     // The sign op has @d2InProcess → the service delegates through the fixture façade,
     // not ISignHandler directly. The façade type name in fixture mode (no csAppNamespaceBase)
     // is I<ServedBy>SignerFacade = IKeyCustodianSignerFacade.
-    const serviceContent = getEmittedFile(host, "KeyCustodianSignerService.g.cs");
+    const serviceContent = getEmittedFile(
+      host,
+      "KeyCustodianSignerService.g.cs",
+    );
     expect(serviceContent).toBeDefined();
     expect(serviceContent).toContain("namespace D2.Test.Grpc;");
-    expect(serviceContent).toContain("global::D2.Test.Protos.V1.KeyCustodianSigner.KeyCustodianSignerBase");
+    expect(serviceContent).toContain(
+      "global::D2.Test.Protos.V1.KeyCustodianSigner.KeyCustodianSignerBase",
+    );
     expect(serviceContent).toContain("IKeyCustodianSignerFacade facade");
     expect(serviceContent).toContain("facade.SignAsync");
     expect(serviceContent).not.toContain("ISignHandler handler");
@@ -180,7 +191,9 @@ describe("protoGrpcEmitIntegration_GetJwks_NoProtoEmitted", () => {
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
     // No .proto file should be emitted for getJwks.
@@ -198,15 +211,15 @@ describe("protoGrpcEmitIntegration_GetJwks_NoProtoEmitted", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Test 2b: @d2GrpcMethod + @d2InProcess + real-module options → IInternalApi façade
+// Test 2b: @d2GrpcMethod + @d2InProcess + real-module options → IApi façade
 // ---------------------------------------------------------------------------
 //
 // This exercises the real-module branch in emitter.ts (lines 253-259):
 //   csAppNamespaceBase + csClientsNamespace BOTH present + grpcInProcess=true
-//   → facadeTypeName = I<ServedBy>InternalApi (NOT I<ServedBy>SignerFacade).
+//   → facadeTypeName = I<ServedBy>Api (NOT I<ServedBy>SignerFacade).
 // This is the branch that runs for non-fixture (production) module compilation.
 
-describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesInternalApiFacade", () => {
+describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesApiFacade", () => {
   let host: Awaited<ReturnType<typeof createTestHost>>;
 
   beforeAll(async () => {
@@ -215,7 +228,7 @@ describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesInternalApiFacad
     });
   });
 
-  it("@d2GrpcMethod + @d2InProcess with real-module options → gRPC service injects I<Module>InternalApi", async () => {
+  it("@d2GrpcMethod + @d2InProcess with real-module options → gRPC service injects I<Module>Api", async () => {
     host.addTypeSpecFile(
       "main.tsp",
       `
@@ -240,7 +253,8 @@ describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesInternalApiFacad
         "@d2/typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
           "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
-          "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+          "csharp-app-namespace-base":
+            "D2.Edge.KeyCustodian.App.Application.Handlers",
           "proto-package": "d2.keycustodian.v1",
           "proto-csharp-namespace": "D2.Services.Protos.KeyCustodian.V1",
           "grpc-service-namespace": "D2.Edge.KeyCustodian.Api.Generated",
@@ -249,15 +263,20 @@ describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesInternalApiFacad
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
-    // In real-module mode the gRPC service delegates through I<Module>InternalApi
+    // In real-module mode the gRPC service delegates through I<Module>Api
     // (the production façade in the Clients namespace), NOT I<ServedBy>SignerFacade.
-    const serviceContent = getEmittedFile(host, "KeyCustodianSignerService.g.cs");
+    const serviceContent = getEmittedFile(
+      host,
+      "KeyCustodianSignerService.g.cs",
+    );
     expect(serviceContent).toBeDefined();
     // Real-module façade type name.
-    expect(serviceContent).toContain("IKeyCustodianInternalApi");
+    expect(serviceContent).toContain("IKeyCustodianApi");
     // Must use the Clients namespace as the using target.
     expect(serviceContent).toContain("D2.Edge.KeyCustodian.Clients");
     // Delegates via SignAsync (the façade method name).
@@ -265,6 +284,83 @@ describe("protoGrpcEmitIntegration_RealModule_InProcessGrpc_UsesInternalApiFacad
     // Must NOT fall through to ISignHandler.
     expect(serviceContent).not.toContain("ISignHandler");
     expect(serviceContent).not.toContain("HandleAsync");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Test 2c: real-module @d2GrpcMethod op with NO input (parameterless) + NO output
+// (void) → exercises the input-undefined / output-undefined fallbacks in the gRPC
+// client-op collection (the `{ fields: [], nestedModels: [] }` branches). The
+// generated client interface + mappers are still emitted with empty request/response.
+// ---------------------------------------------------------------------------
+
+describe("protoGrpcEmitIntegration_RealModule_ParameterlessAndVoidGrpcOps", () => {
+  let host: Awaited<ReturnType<typeof createTestHost>>;
+
+  beforeAll(async () => {
+    host = await createTestHost({
+      libraries: [D2DecoratorTestLibrary, D2EmitterTestLibrary],
+    });
+  });
+
+  it("parameterless (no-input) + void (no-output) gRPC ops emit a client with empty mappers", async () => {
+    host.addTypeSpecFile(
+      "main.tsp",
+      `
+      import "@d2/typespec-decorators";
+      using D2;
+      namespace D2.KeyCustodian;
+
+      model PingOutput { ok: string; }
+      model FireInput { data: string; }
+
+      // No input model — exercises the inputModel-undefined fallback in the client collection.
+      @d2Query
+      @d2ServedBy("KeyCustodian")
+      @d2GrpcMethod("KeyCustodianPinger", "Ping")
+      op ping(): PingOutput;
+
+      // No output model (void) — exercises the outputModel-undefined fallback.
+      @d2Command
+      @d2ServedBy("KeyCustodian")
+      @d2GrpcMethod("KeyCustodianFirer", "Fire")
+      op fire(input: FireInput): void;
+      `,
+    );
+
+    await host.compile("main.tsp", {
+      emit: ["@d2/typespec-emitters"],
+      options: {
+        "@d2/typespec-emitters": {
+          "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
+          "csharp-app-namespace-base":
+            "D2.Edge.KeyCustodian.App.Application.Handlers",
+          "proto-package": "d2.keycustodian.v1",
+          "proto-csharp-namespace": "D2.Services.Protos.KeyCustodian.V1",
+          "grpc-service-namespace": "D2.Edge.KeyCustodian.Api.Generated",
+        },
+      },
+      outputDir: "testing:/out",
+    });
+
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
+    expect(errors).toHaveLength(0);
+
+    // The per-module gRPC client interface is emitted and declares both ops.
+    const ifaceContent = getEmittedFile(host, "IKeyCustodianGrpcClient.g.cs");
+    expect(ifaceContent).toBeDefined();
+    expect(ifaceContent).toContain("PingAsync(");
+    expect(ifaceContent).toContain("FireAsync(");
+
+    // Two ops in one module → a single combined client-mapper file with both mapper classes.
+    const mapper = getEmittedFile(host, "ClientMappers.g.cs");
+    expect(mapper).toBeDefined();
+    // Parameterless op → empty proto request ctor; void-output op → empty DTO output ctor.
+    expect(mapper).toContain("internal static class PingClientMappers");
+    expect(mapper).toContain("internal static class FireClientMappers");
+    expect(mapper).toContain("ToPingRequest()");
   });
 });
 
@@ -315,7 +411,9 @@ describe("protoGrpcEmitIntegration_UnmappedScalar_D2TSP001", () => {
       compileError = err;
     }
 
-    const programErrors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const programErrors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     const hasErrors = compileError !== undefined || programErrors.length > 0;
     expect(hasErrors).toBe(true);
   });

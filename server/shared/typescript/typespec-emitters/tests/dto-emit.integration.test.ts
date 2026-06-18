@@ -91,7 +91,9 @@ describe("dtoEmitIntegration_GetJwks_EmitsParamterlessInput", () => {
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
     // GetJwksInput — parameterless record.
@@ -149,7 +151,9 @@ describe("dtoEmitIntegration_Sign_RedactedFieldInGeneratedCSharp", () => {
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
     const inputContent = getEmittedFile(host, "SignInput.g.cs");
@@ -165,7 +169,8 @@ describe("dtoEmitIntegration_Sign_RedactedFieldInGeneratedCSharp", () => {
     expect(inputContent).toContain("string Kid");
     // Only the Payload param has [property: RedactData]; kid does not.
     // The attribute must appear exactly once (for Payload only).
-    const redactCount = (inputContent!.match(/\[property: RedactData/g) ?? []).length;
+    const redactCount = (inputContent!.match(/\[property: RedactData/g) ?? [])
+      .length;
     expect(redactCount).toBe(1);
 
     // TS side: redacted field emitted normally (no attribute).
@@ -213,13 +218,16 @@ describe("dtoEmitIntegration_HandlerInterface_EmittedForEveryOp", () => {
         "@d2/typespec-emitters": {
           "csharp-namespace": "D2.Test",
           "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
-          "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+          "csharp-app-namespace-base":
+            "D2.Edge.KeyCustodian.App.Application.Handlers",
         },
       },
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
     const handlerContent = getEmittedFile(host, "IGetJwksHandler.g.cs");
@@ -229,7 +237,9 @@ describe("dtoEmitIntegration_HandlerInterface_EmittedForEveryOp", () => {
     expect(handlerContent).toContain("GetJwksOutput");
     expect(handlerContent).toContain("public interface IGetJwksHandler");
     // emitUsing=false when csAppNamespaceBase is present.
-    expect(handlerContent).not.toContain("using D2.Shared.Handler.Abstractions;");
+    expect(handlerContent).not.toContain(
+      "using D2.Shared.Handler.Abstractions;",
+    );
   });
 
   it("sign fixture (@d2GrpcMethod) → ISignHandler.g.cs emitted with using directive", async () => {
@@ -264,7 +274,9 @@ describe("dtoEmitIntegration_HandlerInterface_EmittedForEveryOp", () => {
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
     const handlerContent = getEmittedFile(host, "ISignHandler.g.cs");
@@ -274,7 +286,9 @@ describe("dtoEmitIntegration_HandlerInterface_EmittedForEveryOp", () => {
     );
     // fixture mode → emitUsing=true.
     expect(handlerContent).toContain("using D2.Shared.Handler.Abstractions;");
-    expect(handlerContent).toContain("namespace D2.Edge.Tests.TypeSpecGrpc.Generated;");
+    expect(handlerContent).toContain(
+      "namespace D2.Edge.Tests.TypeSpecGrpc.Generated;",
+    );
   });
 
   it("@d2Internal op → handler interface emitted, DTOs in app namespace", async () => {
@@ -301,19 +315,24 @@ describe("dtoEmitIntegration_HandlerInterface_EmittedForEveryOp", () => {
         "@d2/typespec-emitters": {
           "csharp-namespace": "D2.Fixture.Ns",
           "csharp-clients-namespace": "D2.Edge.KeyCustodian.Clients",
-          "csharp-app-namespace-base": "D2.Edge.KeyCustodian.App.Application.Handlers",
+          "csharp-app-namespace-base":
+            "D2.Edge.KeyCustodian.App.Application.Handlers",
         },
       },
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
     // Handler interface must be emitted for internal op too.
     const handlerContent = getEmittedFile(host, "IReconcileHandler.g.cs");
     expect(handlerContent).toBeDefined();
-    expect(handlerContent).toContain("IHandler<ReconcileInput, ReconcileOutput>");
+    expect(handlerContent).toContain(
+      "IHandler<ReconcileInput, ReconcileOutput>",
+    );
 
     // DTOs for internal op go to the app CQRS namespace, NOT Clients.
     const inputContent = getEmittedFile(host, "ReconcileInput.g.cs");
@@ -362,7 +381,9 @@ describe("dtoEmitIntegration_UnmappedScalar_D2TSP001Diagnostic", () => {
 
     // Either the compile threw (because of the error diagnostic), or the
     // program has error diagnostics recorded (depending on TypeSpec version behavior).
-    const programErrors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const programErrors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     const hasErrors = compileError !== undefined || programErrors.length > 0;
     expect(hasErrors).toBe(true);
   });

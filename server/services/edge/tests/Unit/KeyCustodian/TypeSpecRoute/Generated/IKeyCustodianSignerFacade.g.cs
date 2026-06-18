@@ -14,7 +14,7 @@ using D2.Shared.Result;
 
 /// <summary>
 /// Fixture façade interface for the KeyCustodian signer operations.
-/// Distinct from the real <c>IKeyCustodianInternalApi</c> (which only exposes
+/// Distinct from the real <c>IKeyCustodianApi</c> (which only exposes
 /// <c>GetJwksAsync</c>). Used only by the TypeSpec route-policy test harness.
 /// </summary>
 public interface IKeyCustodianSignerFacade

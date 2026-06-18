@@ -6,13 +6,13 @@
 // files that form the module façade layer for one module (one module = one
 // @d2ServedBy value):
 //
-//   1. I<Module>InternalApi.g.cs  → Clients project
+//   1. I<Module>Api.g.cs  → Clients project
 //      The curated public interface listing ONLY the exposed operations.
 //      Internal-only (@d2Internal) ops are structurally absent — the
 //      structural-absence property prevents callers from accidentally calling
 //      an op that was never meant to cross a boundary.
 //
-//   2. <Module>InternalApi.g.cs   → app/ project
+//   2. <Module>Api.g.cs   → app/ project
 //      The thin delegating implementation. One primary-constructor parameter
 //      per exposed op (I<Op>Handler). Each method delegates to the matching
 //      handler's HandleAsync call.
@@ -102,15 +102,18 @@ export function emitFacade(
   clientsNamespace: string,
   appNamespace: string,
 ): EmittedFile[] {
-  if (moduleName.length === 0) throw new Error("emitFacade: moduleName must not be empty");
-  if (clientsNamespace.length === 0) throw new Error("emitFacade: clientsNamespace must not be empty");
-  if (appNamespace.length === 0) throw new Error("emitFacade: appNamespace must not be empty");
+  if (moduleName.length === 0)
+    throw new Error("emitFacade: moduleName must not be empty");
+  if (clientsNamespace.length === 0)
+    throw new Error("emitFacade: clientsNamespace must not be empty");
+  if (appNamespace.length === 0)
+    throw new Error("emitFacade: appNamespace must not be empty");
 
   // Zero-exposed-op module → no façade interface (the deliberate "empty module" behavior).
   if (exposedOps.length === 0) return [];
 
-  const interfaceName = `I${moduleName}InternalApi`;
-  const implName = `${moduleName}InternalApi`;
+  const interfaceName = `I${moduleName}Api`;
+  const implName = `${moduleName}Api`;
 
   // Use the first op's sourceSpec for the banner (all ops in a module share the same spec).
   const sourceSpec = exposedOps[0]!.sourceSpec;
@@ -118,8 +121,22 @@ export function emitFacade(
 
   return [
     emitInterface(interfaceName, exposedOps, clientsNamespace, banner),
-    emitImpl(interfaceName, implName, exposedOps, clientsNamespace, appNamespace, banner),
-    emitDiExtension(interfaceName, implName, moduleName, clientsNamespace, appNamespace, banner),
+    emitImpl(
+      interfaceName,
+      implName,
+      exposedOps,
+      clientsNamespace,
+      appNamespace,
+      banner,
+    ),
+    emitDiExtension(
+      interfaceName,
+      implName,
+      moduleName,
+      clientsNamespace,
+      appNamespace,
+      banner,
+    ),
   ];
 }
 
@@ -142,18 +159,24 @@ function emitInterface(
   lines.push("");
 
   lines.push(`/// <summary>`);
-  lines.push(`/// Generated internal API façade for the module. Lists only the operations`);
-  lines.push(`/// exposed across a boundary; internal-only operations are absent.`);
+  lines.push(
+    `/// Generated internal API façade for the module. Lists only the operations`,
+  );
+  lines.push(
+    `/// exposed across a boundary; internal-only operations are absent.`,
+  );
   lines.push(`/// </summary>`);
   lines.push(`public interface ${interfaceName}`);
   lines.push("{");
 
   for (const op of exposedOps) {
     const pascalOp = toPascal(op.opName);
-    lines.push(`    /// <summary>Dispatches the <c>${pascalOp}</c> operation.</summary>`);
+    lines.push(
+      `    /// <summary>Dispatches the <c>${pascalOp}</c> operation.</summary>`,
+    );
     lines.push(
       `    ValueTask<D2Result<${op.outputTypeName}?>> ${pascalOp}Async(` +
-      `${op.inputTypeName} input, CancellationToken ct = default);`,
+        `${op.inputTypeName} input, CancellationToken ct = default);`,
     );
   }
 
@@ -177,7 +200,9 @@ function emitImpl(
   // Handler namespaces: e.g. D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks
   const allUsings = [
     clientsNamespace,
-    ...exposedOps.map((op) => `${appNamespace}.Handlers.${op.category}.${toPascal(op.opName)}`),
+    ...exposedOps.map(
+      (op) => `${appNamespace}.Handlers.${op.category}.${toPascal(op.opName)}`,
+    ),
   ].sort();
 
   lines.push(banner);
@@ -185,8 +210,7 @@ function emitImpl(
   lines.push("");
   lines.push(`namespace ${appNamespace};`);
   lines.push("");
-  for (const ns of allUsings)
-    lines.push(`using ${ns};`);
+  for (const ns of allUsings) lines.push(`using ${ns};`);
   lines.push("");
 
   // Build the primary constructor parameter list.
@@ -199,8 +223,12 @@ function emitImpl(
     .join(",\n    ");
 
   lines.push(`/// <summary>`);
-  lines.push(`/// Generated façade implementation. Delegates each exposed operation to the`);
-  lines.push(`/// corresponding app-layer handler. Registered Transient to match handler lifetime.`);
+  lines.push(
+    `/// Generated façade implementation. Delegates each exposed operation to the`,
+  );
+  lines.push(
+    `/// corresponding app-layer handler. Registered Transient to match handler lifetime.`,
+  );
   lines.push(`/// </summary>`);
   lines.push(`public sealed class ${implName}(`);
   lines.push(`    ${ctorParams}) : ${interfaceName}`);
@@ -212,7 +240,7 @@ function emitImpl(
     lines.push(`    /// <inheritdoc/>`);
     lines.push(
       `    public ValueTask<D2Result<${op.outputTypeName}?>> ${pascalOp}Async(` +
-      `${op.inputTypeName} input, CancellationToken ct = default)`,
+        `${op.inputTypeName} input, CancellationToken ct = default)`,
     );
     lines.push(`        => ${paramName}.HandleAsync(input, ct);`);
   }
@@ -246,19 +274,27 @@ function emitDiExtension(
   lines.push("");
 
   lines.push(`/// <summary>`);
-  lines.push(`/// Generated DI extension that registers the module façade (Transient).`);
+  lines.push(
+    `/// Generated DI extension that registers the module façade (Transient).`,
+  );
   lines.push(`/// Called from the hand-written app DI extension.`);
   lines.push(`/// </summary>`);
-  lines.push(`public static class ${moduleName}ClientsGeneratedServiceCollectionExtensions`);
+  lines.push(
+    `public static class ${moduleName}ClientsGeneratedServiceCollectionExtensions`,
+  );
   lines.push("{");
   lines.push(`    extension(IServiceCollection services)`);
   lines.push("    {");
   lines.push(`        /// <summary>`);
-  lines.push(`        /// Registers <see cref="${interfaceName}"/> → <see cref="${implName}"/> as Transient.`);
+  lines.push(
+    `        /// Registers <see cref="${interfaceName}"/> → <see cref="${implName}"/> as Transient.`,
+  );
   lines.push(`        /// </summary>`);
   lines.push(`        public IServiceCollection ${extensionMethodName}()`);
   lines.push("        {");
-  lines.push(`            services.AddTransient<${interfaceName}, ${implName}>();`);
+  lines.push(
+    `            services.AddTransient<${interfaceName}, ${implName}>();`,
+  );
   lines.push(`            return services;`);
   lines.push("        }");
   lines.push("    }");

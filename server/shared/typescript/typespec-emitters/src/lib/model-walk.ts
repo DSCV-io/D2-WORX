@@ -95,16 +95,24 @@ export interface WalkResult {
 export function walkModel(
   program: Program,
   model: Model,
-  onError: (code: "unmapped-scalar" | "unsupported-property-type", message: string) => void,
+  onError: (
+    code: "unmapped-scalar" | "unsupported-property-type",
+    message: string,
+  ) => void,
 ): WalkResult {
   const redactMap = program.stateMap(D2_REDACT_KEY);
   const nestedByName = new Map<string, NestedModel>();
   const fields: FieldInfo[] = [];
 
   for (const [propName, prop] of model.properties) {
-    const fieldInfo = resolveProperty(propName, prop, redactMap, nestedByName, onError);
-    if (fieldInfo !== undefined)
-      fields.push(fieldInfo);
+    const fieldInfo = resolveProperty(
+      propName,
+      prop,
+      redactMap,
+      nestedByName,
+      onError,
+    );
+    if (fieldInfo !== undefined) fields.push(fieldInfo);
   }
 
   return {
@@ -122,7 +130,10 @@ function resolveProperty(
   prop: ModelProperty,
   redactMap: Map<object, unknown>,
   nestedByName: Map<string, NestedModel>,
-  onError: (code: "unmapped-scalar" | "unsupported-property-type", message: string) => void,
+  onError: (
+    code: "unmapped-scalar" | "unsupported-property-type",
+    message: string,
+  ) => void,
 ): FieldInfo | undefined {
   const optional = prop.optional;
   const redact = redactMap.get(prop) === true;
@@ -247,8 +258,7 @@ function collectNested(
   nestedByName: Map<string, NestedModel>,
 ): NestedModel {
   const existing = nestedByName.get(model.name);
-  if (existing !== undefined)
-    return existing;
+  if (existing !== undefined) return existing;
 
   // Recurse: walk nested model's own fields (no redact state — nested models
   // are transport containers, not direct op-context objects; redact is set on

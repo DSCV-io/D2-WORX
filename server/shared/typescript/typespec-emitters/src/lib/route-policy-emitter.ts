@@ -94,11 +94,13 @@ export interface RoutePolicyEmitInput {
    * `fields` must be PascalCase C# property names (camel→Pascal mapping is
    * the caller's responsibility before passing here).
    */
-  readonly idempotency?: {
-    readonly keySource: "header" | "derived";
-    readonly ttlSeconds: number;
-    readonly fields: readonly string[];
-  } | undefined;
+  readonly idempotency?:
+    | {
+        readonly keySource: "header" | "derived";
+        readonly ttlSeconds: number;
+        readonly fields: readonly string[];
+      }
+    | undefined;
   /** Target C# namespace for the generated file. */
   readonly registrationNamespace: string;
   /** Relative spec path for the banner. */
@@ -121,27 +123,37 @@ export interface RoutePolicyEmitInput {
  *     must NOT be called when scopePolicy.kind === "none").
  */
 export function emitRoutePolicy(input: RoutePolicyEmitInput): EmittedFile {
-  if (input.opName.length === 0) throw new Error("emitRoutePolicy: opName must not be empty");
-  if (input.routePath.length === 0) throw new Error("emitRoutePolicy: routePath must not be empty");
-  if (input.delegationTarget.typeName.length === 0) throw new Error("emitRoutePolicy: delegationTarget.typeName must not be empty");
-  if (input.delegationTargetNamespace.length === 0) throw new Error("emitRoutePolicy: delegationTargetNamespace must not be empty");
-  if (input.registrationNamespace.length === 0) throw new Error("emitRoutePolicy: registrationNamespace must not be empty");
+  if (input.opName.length === 0)
+    throw new Error("emitRoutePolicy: opName must not be empty");
+  if (input.routePath.length === 0)
+    throw new Error("emitRoutePolicy: routePath must not be empty");
+  if (input.delegationTarget.typeName.length === 0)
+    throw new Error(
+      "emitRoutePolicy: delegationTarget.typeName must not be empty",
+    );
+  if (input.delegationTargetNamespace.length === 0)
+    throw new Error(
+      "emitRoutePolicy: delegationTargetNamespace must not be empty",
+    );
+  if (input.registrationNamespace.length === 0)
+    throw new Error("emitRoutePolicy: registrationNamespace must not be empty");
 
   const pascalOp = toPascal(input.opName);
   const mapMethod = verbToMapMethod(input.verb);
   const banner = buildBanner(input.sourceSpec);
 
   // Build the idempotency gate weave (if configured).
-  const gate = input.idempotency !== undefined
-    ? buildIdempotencyGate({
-        keySource: input.idempotency.keySource,
-        ttlSeconds: input.idempotency.ttlSeconds,
-        fields: input.idempotency.fields,
-        inputTypeName: input.inputTypeName,
-        outputTypeName: input.outputTypeName,
-        pascalOpName: pascalOp,
-      })
-    : undefined;
+  const gate =
+    input.idempotency !== undefined
+      ? buildIdempotencyGate({
+          keySource: input.idempotency.keySource,
+          ttlSeconds: input.idempotency.ttlSeconds,
+          fields: input.idempotency.fields,
+          inputTypeName: input.inputTypeName,
+          outputTypeName: input.outputTypeName,
+          pascalOpName: pascalOp,
+        })
+      : undefined;
 
   const lines: string[] = [];
 
@@ -159,8 +171,7 @@ export function emitRoutePolicy(input: RoutePolicyEmitInput): EmittedFile {
     input.delegationTarget.kind,
     extraUsings,
   );
-  for (const u of usings)
-    lines.push(`using ${u};`);
+  for (const u of usings) lines.push(`using ${u};`);
   lines.push("");
 
   // Marker records (emitted inline, before the registration class).
@@ -170,68 +181,84 @@ export function emitRoutePolicy(input: RoutePolicyEmitInput): EmittedFile {
   }
 
   // Registration class.
-  lines.push(`/// <summary>Generated REST route registration for the <c>${pascalOp}</c> operation.</summary>`);
+  lines.push(
+    `/// <summary>Generated REST route registration for the <c>${pascalOp}</c> operation.</summary>`,
+  );
   lines.push(`public static class ${pascalOp}RouteRegistration`);
   lines.push("{");
   lines.push("    extension(IEndpointRouteBuilder endpoints)");
   lines.push("    {");
 
-  const xmlDocTarget = input.delegationTarget.kind === "facade"
-    ? `<see cref="${input.delegationTarget.typeName}"/>`
-    : `<see cref="${input.delegationTarget.typeName}"/>`;
+  const xmlDocTarget =
+    input.delegationTarget.kind === "facade"
+      ? `<see cref="${input.delegationTarget.typeName}"/>`
+      : `<see cref="${input.delegationTarget.typeName}"/>`;
 
-  lines.push(`        /// <summary>Maps <c>${input.verb.toUpperCase()} ${input.routePath}</c>, delegating to ${xmlDocTarget}.</summary>`);
-  lines.push(`        /// <remarks>Audience is enforced service-wide via <c>AuthOptions.Audience</c> — no per-route audience fluent (§9.2).</remarks>`);
+  lines.push(
+    `        /// <summary>Maps <c>${input.verb.toUpperCase()} ${input.routePath}</c>, delegating to ${xmlDocTarget}.</summary>`,
+  );
+  lines.push(
+    `        /// <remarks>Audience is enforced service-wide via <c>AuthOptions.Audience</c> — no per-route audience fluent (§9.2).</remarks>`,
+  );
   lines.push(`        public IEndpointConventionBuilder Map${pascalOp}Route()`);
   lines.push("        {");
 
   // Route delegate.
-  const targetParam = input.delegationTarget.kind === "facade"
-    ? `${input.delegationTarget.typeName} facade`
-    : `${input.delegationTarget.typeName} handler`;
-  const callTarget = input.delegationTarget.kind === "facade" ? "facade" : "handler";
+  const targetParam =
+    input.delegationTarget.kind === "facade"
+      ? `${input.delegationTarget.typeName} facade`
+      : `${input.delegationTarget.typeName} handler`;
+  const callTarget =
+    input.delegationTarget.kind === "facade" ? "facade" : "handler";
 
   // GET and DELETE do not carry a request body. ASP.NET Core Minimal APIs infer
   // body binding for any complex type, which fails at runtime for body-less verbs.
   // [AsParameters] tells the framework to bind the DTO from query-string / route
   // segments instead.
-  const inputParam = (input.verb === "get" || input.verb === "delete")
-    ? `[AsParameters] ${input.inputTypeName} input`
-    : `${input.inputTypeName} input`;
+  const inputParam =
+    input.verb === "get" || input.verb === "delete"
+      ? `[AsParameters] ${input.inputTypeName} input`
+      : `${input.inputTypeName} input`;
 
   // When the gate is present, inject the store parameter into the delegate signature.
   const storeParam = gate !== undefined ? `, ${gate.storeParam}` : "";
 
   lines.push(`            var builder = endpoints.${mapMethod}(`);
   lines.push(`                "${input.routePath}",`);
-  lines.push(`                static async (${inputParam}, ${targetParam}${storeParam}, HttpContext http, CancellationToken ct) =>`);
+  lines.push(
+    `                static async (${inputParam}, ${targetParam}${storeParam}, HttpContext http, CancellationToken ct) =>`,
+  );
   lines.push("                {");
 
   // Pre-delegate gate lines (key resolution + replay check). Placed at the TOP
   // of the delegate body, before the façade/handler call (§9.4 — validate / check
   // before delegating; the gate is a mandatory pre-condition).
   if (gate !== undefined) {
-    for (const l of gate.preDelegateLines)
-      lines.push(l);
+    for (const l of gate.preDelegateLines) lines.push(l);
     lines.push("");
   }
 
-  lines.push(`                    var result = await ${callTarget}.${input.delegationTarget.methodName}(input, ct).ConfigureAwait(false);`);
+  lines.push(
+    `                    var result = await ${callTarget}.${input.delegationTarget.methodName}(input, ct).ConfigureAwait(false);`,
+  );
 
   // Post-delegate gate lines (store the outcome with TTL). Placed AFTER the
   // delegation call and BEFORE the MAP-ii success check so the stored result
   // mirrors the final outcome (success or failure).
   if (gate !== undefined) {
-    for (const l of gate.postDelegateLines)
-      lines.push(l);
+    for (const l of gate.postDelegateLines) lines.push(l);
     lines.push("");
   }
 
   lines.push("                    var status = (int)result.StatusCode;");
   lines.push("                    if (status < 400)");
-  lines.push("                        return Results.Json(result.Data, statusCode: status);");
+  lines.push(
+    "                        return Results.Json(result.Data, statusCode: status);",
+  );
   lines.push("                    var pd = result.ToProblemDetails(http);");
-  lines.push("                    return Results.Json(pd, statusCode: pd.Status ?? 500, contentType: \"application/problem+json\");");
+  lines.push(
+    '                    return Results.Json(pd, statusCode: pd.Status ?? 500, contentType: "application/problem+json");',
+  );
   lines.push("                });");
   lines.push("");
 
@@ -240,9 +267,13 @@ export function emitRoutePolicy(input: RoutePolicyEmitInput): EmittedFile {
 
   // Metadata markers.
   if (input.rateTier !== undefined)
-    lines.push(`            builder.WithMetadata(new D2GeneratedRateLimitTier("${input.rateTier}"));`);
+    lines.push(
+      `            builder.WithMetadata(new D2GeneratedRateLimitTier("${input.rateTier}"));`,
+    );
   if (input.csrf !== undefined)
-    lines.push(`            builder.WithMetadata(new D2GeneratedCsrfPosture("${input.csrf}"));`);
+    lines.push(
+      `            builder.WithMetadata(new D2GeneratedCsrfPosture("${input.csrf}"));`,
+    );
 
   lines.push("            return builder;");
   lines.push("        }");
@@ -272,7 +303,9 @@ export function emitRoutePolicyMarkers(
   sourceSpec: string,
 ): EmittedFile {
   if (registrationNamespace.length === 0)
-    throw new Error("emitRoutePolicyMarkers: registrationNamespace must not be empty");
+    throw new Error(
+      "emitRoutePolicyMarkers: registrationNamespace must not be empty",
+    );
 
   const banner = buildBanner(sourceSpec);
   const lines: string[] = [];
@@ -282,15 +315,23 @@ export function emitRoutePolicyMarkers(
   lines.push(`namespace ${registrationNamespace};`);
   lines.push("");
   lines.push("/// <summary>");
-  lines.push("/// Faithful seam marker for a generated route's rate-limit tier declaration.");
-  lines.push("/// Future Edge rate-limit middleware reads this from endpoint metadata.");
+  lines.push(
+    "/// Faithful seam marker for a generated route's rate-limit tier declaration.",
+  );
+  lines.push(
+    "/// Future Edge rate-limit middleware reads this from endpoint metadata.",
+  );
   lines.push("/// No enforcement logic is present in this record.");
   lines.push("/// </summary>");
   lines.push("public sealed record D2GeneratedRateLimitTier(string Tier);");
   lines.push("");
   lines.push("/// <summary>");
-  lines.push("/// Faithful seam marker for a generated route's CSRF posture declaration.");
-  lines.push("/// Future Edge CSRF middleware reads this from endpoint metadata.");
+  lines.push(
+    "/// Faithful seam marker for a generated route's CSRF posture declaration.",
+  );
+  lines.push(
+    "/// Future Edge CSRF middleware reads this from endpoint metadata.",
+  );
   lines.push("/// No enforcement logic is present in this record.");
   lines.push("/// </summary>");
   lines.push("public sealed record D2GeneratedCsrfPosture(string Posture);");
@@ -309,11 +350,16 @@ export function emitRoutePolicyMarkers(
 /** Map an HTTP verb string to the Minimal-API Map* method name. */
 export function verbToMapMethod(verb: HttpVerb): string {
   switch (verb) {
-    case "get":    return "MapGet";
-    case "post":   return "MapPost";
-    case "put":    return "MapPut";
-    case "delete": return "MapDelete";
-    case "patch":  return "MapPatch";
+    case "get":
+      return "MapGet";
+    case "post":
+      return "MapPost";
+    case "put":
+      return "MapPut";
+    case "delete":
+      return "MapDelete";
+    case "patch":
+      return "MapPatch";
   }
 }
 
@@ -345,7 +391,10 @@ function buildUsings(
 
   if (delegationTargetNamespace !== registrationNamespace)
     set.add(delegationTargetNamespace);
-  if (dtoNamespace !== registrationNamespace && dtoNamespace !== delegationTargetNamespace)
+  if (
+    dtoNamespace !== registrationNamespace &&
+    dtoNamespace !== delegationTargetNamespace
+  )
     set.add(dtoNamespace);
 
   return [...set].sort();
@@ -356,13 +405,15 @@ function buildAuthLines(policy: ScopePolicy): string[] {
   if (policy.kind === "any") {
     const first = policy.scopes[0]!;
     const rest = policy.scopes.slice(1);
-    const restArgs = rest.length > 0 ? `, ${rest.map((s) => `"${s}"`).join(", ")}` : "";
+    const restArgs =
+      rest.length > 0 ? `, ${rest.map((s) => `"${s}"`).join(", ")}` : "";
     return [`            builder.RequireAnyScope("${first}"${restArgs});`];
   }
   if (policy.kind === "all") {
     const first = policy.scopes[0]!;
     const rest = policy.scopes.slice(1);
-    const restArgs = rest.length > 0 ? `, ${rest.map((s) => `"${s}"`).join(", ")}` : "";
+    const restArgs =
+      rest.length > 0 ? `, ${rest.map((s) => `"${s}"`).join(", ")}` : "";
     return [`            builder.RequireAllScopes("${first}"${restArgs});`];
   }
   if (policy.kind === "harmless")
@@ -378,12 +429,16 @@ function buildMarkerRecords(
 ): string[] {
   const lines: string[] = [];
   if (rateTier !== undefined) {
-    lines.push("/// <summary>Faithful seam marker: rate-limit tier declaration for this route.</summary>");
+    lines.push(
+      "/// <summary>Faithful seam marker: rate-limit tier declaration for this route.</summary>",
+    );
     lines.push("public sealed record D2GeneratedRateLimitTier(string Tier);");
   }
   if (csrf !== undefined) {
     if (rateTier !== undefined) lines.push("");
-    lines.push("/// <summary>Faithful seam marker: CSRF posture declaration for this route.</summary>");
+    lines.push(
+      "/// <summary>Faithful seam marker: CSRF posture declaration for this route.</summary>",
+    );
     lines.push("public sealed record D2GeneratedCsrfPosture(string Posture);");
   }
   return lines;

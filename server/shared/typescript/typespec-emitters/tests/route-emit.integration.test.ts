@@ -75,7 +75,11 @@ describe("routeEmitIntegration_Sign_EmitsRouteRegistration", () => {
 
   beforeAll(async () => {
     host = await createTestHost({
-      libraries: [HttpTestLibrary, D2DecoratorTestLibrary, D2EmitterTestLibrary],
+      libraries: [
+        HttpTestLibrary,
+        D2DecoratorTestLibrary,
+        D2EmitterTestLibrary,
+      ],
     });
   });
 
@@ -111,7 +115,9 @@ describe("routeEmitIntegration_Sign_EmitsRouteRegistration", () => {
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
     // Route registration emitted.
@@ -139,7 +145,11 @@ describe("routeEmitIntegration_MissingAuthIntent_D2TSP004", () => {
 
   beforeAll(async () => {
     host = await createTestHost({
-      libraries: [HttpTestLibrary, D2DecoratorTestLibrary, D2EmitterTestLibrary],
+      libraries: [
+        HttpTestLibrary,
+        D2DecoratorTestLibrary,
+        D2EmitterTestLibrary,
+      ],
     });
   });
 
@@ -173,7 +183,8 @@ describe("routeEmitIntegration_MissingAuthIntent_D2TSP004", () => {
     });
 
     const d2tsp004 = diagnostics.filter(
-      (d) => d.severity === "error" && d.code.includes("route-missing-auth-intent"),
+      (d) =>
+        d.severity === "error" && d.code.includes("route-missing-auth-intent"),
     );
     expect(d2tsp004.length).toBeGreaterThan(0);
   });
@@ -188,7 +199,11 @@ describe("routeEmitIntegration_NoRoute_NoRegistrationEmitted", () => {
 
   beforeAll(async () => {
     host = await createTestHost({
-      libraries: [HttpTestLibrary, D2DecoratorTestLibrary, D2EmitterTestLibrary],
+      libraries: [
+        HttpTestLibrary,
+        D2DecoratorTestLibrary,
+        D2EmitterTestLibrary,
+      ],
     });
   });
 
@@ -216,7 +231,9 @@ describe("routeEmitIntegration_NoRoute_NoRegistrationEmitted", () => {
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
     // No route registration emitted.
@@ -238,7 +255,11 @@ describe("routeEmitIntegration_InProcess_FacadeDelegation", () => {
 
   beforeAll(async () => {
     host = await createTestHost({
-      libraries: [HttpTestLibrary, D2DecoratorTestLibrary, D2EmitterTestLibrary],
+      libraries: [
+        HttpTestLibrary,
+        D2DecoratorTestLibrary,
+        D2EmitterTestLibrary,
+      ],
     });
   });
 
@@ -271,7 +292,9 @@ describe("routeEmitIntegration_InProcess_FacadeDelegation", () => {
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
     const routeContent = getEmittedFile(host, "PingRouteRegistration.g.cs");
@@ -293,7 +316,11 @@ describe("routeEmitIntegration_UnsupportedVerb_D2TSP005", () => {
 
   beforeAll(async () => {
     host = await createTestHost({
-      libraries: [HttpTestLibrary, D2DecoratorTestLibrary, D2EmitterTestLibrary],
+      libraries: [
+        HttpTestLibrary,
+        D2DecoratorTestLibrary,
+        D2EmitterTestLibrary,
+      ],
     });
   });
 
@@ -343,7 +370,11 @@ describe("routeEmitIntegration_AllScopes_RequireAllScopesEmitted", () => {
 
   beforeAll(async () => {
     host = await createTestHost({
-      libraries: [HttpTestLibrary, D2DecoratorTestLibrary, D2EmitterTestLibrary],
+      libraries: [
+        HttpTestLibrary,
+        D2DecoratorTestLibrary,
+        D2EmitterTestLibrary,
+      ],
     });
   });
 
@@ -376,10 +407,15 @@ describe("routeEmitIntegration_AllScopes_RequireAllScopesEmitted", () => {
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
-    const routeContent = getEmittedFile(host, "AllScopesRouteRegistration.g.cs");
+    const routeContent = getEmittedFile(
+      host,
+      "AllScopesRouteRegistration.g.cs",
+    );
     expect(routeContent).toBeDefined();
     expect(routeContent).toContain("RequireAllScopes");
     expect(routeContent).toContain('"self.read"');
@@ -392,13 +428,16 @@ describe("routeEmitIntegration_AllScopes_RequireAllScopesEmitted", () => {
 // Test 7: @d2Harmless op → MarkAsD2HarmlessEndpoint in emitted route
 // ---------------------------------------------------------------------------
 
-
 describe("routeEmitIntegration_Harmless_MarkAsHarmlessEmitted", () => {
   let host: Awaited<ReturnType<typeof createTestHost>>;
 
   beforeAll(async () => {
     host = await createTestHost({
-      libraries: [HttpTestLibrary, D2DecoratorTestLibrary, D2EmitterTestLibrary],
+      libraries: [
+        HttpTestLibrary,
+        D2DecoratorTestLibrary,
+        D2EmitterTestLibrary,
+      ],
     });
   });
 
@@ -431,7 +470,9 @@ describe("routeEmitIntegration_Harmless_MarkAsHarmlessEmitted", () => {
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
     const routeContent = getEmittedFile(host, "HealthRouteRegistration.g.cs");
@@ -451,7 +492,11 @@ describe("routeEmitIntegration_GrpcRePoint_BothSurfacesDelegateThroughFacade", (
 
   beforeAll(async () => {
     host = await createTestHost({
-      libraries: [HttpTestLibrary, D2DecoratorTestLibrary, D2EmitterTestLibrary],
+      libraries: [
+        HttpTestLibrary,
+        D2DecoratorTestLibrary,
+        D2EmitterTestLibrary,
+      ],
     });
   });
 
@@ -487,7 +532,9 @@ describe("routeEmitIntegration_GrpcRePoint_BothSurfacesDelegateThroughFacade", (
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
     // Route delegates through the façade.
@@ -516,7 +563,11 @@ describe("routeEmitIntegration_IdempotentWithoutRoute_D2TSP006", () => {
 
   beforeAll(async () => {
     host = await createTestHost({
-      libraries: [HttpTestLibrary, D2DecoratorTestLibrary, D2EmitterTestLibrary],
+      libraries: [
+        HttpTestLibrary,
+        D2DecoratorTestLibrary,
+        D2EmitterTestLibrary,
+      ],
     });
   });
 
@@ -546,7 +597,8 @@ describe("routeEmitIntegration_IdempotentWithoutRoute_D2TSP006", () => {
     });
 
     const d2tsp006 = diagnostics.filter(
-      (d) => d.severity === "error" && d.code.includes("idempotent-requires-route"),
+      (d) =>
+        d.severity === "error" && d.code.includes("idempotent-requires-route"),
     );
     expect(d2tsp006.length).toBeGreaterThan(0);
   });
@@ -561,7 +613,11 @@ describe("routeEmitIntegration_Idempotent_Header_GatedRouteEmitted", () => {
 
   beforeAll(async () => {
     host = await createTestHost({
-      libraries: [HttpTestLibrary, D2DecoratorTestLibrary, D2EmitterTestLibrary],
+      libraries: [
+        HttpTestLibrary,
+        D2DecoratorTestLibrary,
+        D2EmitterTestLibrary,
+      ],
     });
   });
 
@@ -595,7 +651,9 @@ describe("routeEmitIntegration_Idempotent_Header_GatedRouteEmitted", () => {
       outputDir: "testing:/out",
     });
 
-    const errors = host.program.diagnostics.filter((d) => d.severity === "error");
+    const errors = host.program.diagnostics.filter(
+      (d) => d.severity === "error",
+    );
     expect(errors).toHaveLength(0);
 
     // Route registration contains the store parameter and gate calls.
@@ -608,7 +666,10 @@ describe("routeEmitIntegration_Idempotent_Header_GatedRouteEmitted", () => {
     expect(routeContent).toContain("ValidationFailed");
 
     // Idempotency store seam emitted once for this namespace.
-    const seamContent = getEmittedFile(host, "D2GeneratedIdempotencyStore.g.cs");
+    const seamContent = getEmittedFile(
+      host,
+      "D2GeneratedIdempotencyStore.g.cs",
+    );
     expect(seamContent).toBeDefined();
     expect(seamContent).toContain("D2GeneratedIdempotencyStore");
     expect(seamContent).toContain("TryGetAsync");
