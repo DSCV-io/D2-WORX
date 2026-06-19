@@ -176,5 +176,41 @@ namespace D2.Shared.Auth.Outbound.Telemetry
                 __TokenExchangeFetchFailedCallback(logger, exceptionType, firstFrame, null);
             }
         }
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
+        private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, global::System.String, global::System.String, global::System.Exception?> __WorkloadLeafReissueFailedCallback =
+            global::Microsoft.Extensions.Logging.LoggerMessage.Define<global::System.String, global::System.String>(global::Microsoft.Extensions.Logging.LogLevel.Warning, new global::Microsoft.Extensions.Logging.EventId(3001, nameof(WorkloadLeafReissueFailed)), "Workload leaf reissue failed: {ExceptionType} ({FirstFrame}).", new global::Microsoft.Extensions.Logging.LogDefineOptions() { SkipEnabledCheck = true }); 
+
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
+        public static partial void WorkloadLeafReissueFailed(this global::Microsoft.Extensions.Logging.ILogger logger, global::System.String exceptionType, global::System.String firstFrame)
+        {
+            if (logger.IsEnabled(global::Microsoft.Extensions.Logging.LogLevel.Warning))
+            {
+                __WorkloadLeafReissueFailedCallback(logger, exceptionType, firstFrame, null);
+            }
+        }
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
+        private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, global::System.TimeSpan, global::System.Exception?> __WorkloadLeafStartupAcquireFailedCallback =
+            global::Microsoft.Extensions.Logging.LoggerMessage.Define<global::System.TimeSpan>(global::Microsoft.Extensions.Logging.LogLevel.Warning, new global::Microsoft.Extensions.Logging.EventId(3002, nameof(WorkloadLeafStartupAcquireFailed)), "Initial workload leaf acquisition failed at startup; will retry on the polling cadence ({PollInterval}).", new global::Microsoft.Extensions.Logging.LogDefineOptions() { SkipEnabledCheck = true }); 
+
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
+        public static partial void WorkloadLeafStartupAcquireFailed(this global::Microsoft.Extensions.Logging.ILogger logger, global::System.TimeSpan pollInterval)
+        {
+            if (logger.IsEnabled(global::Microsoft.Extensions.Logging.LogLevel.Warning))
+            {
+                __WorkloadLeafStartupAcquireFailedCallback(logger, pollInterval, null);
+            }
+        }
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
+        private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, global::System.Exception?> __WorkloadLeafRefreshTickFailedCallback =
+            global::Microsoft.Extensions.Logging.LoggerMessage.Define(global::Microsoft.Extensions.Logging.LogLevel.Warning, new global::Microsoft.Extensions.Logging.EventId(3003, nameof(WorkloadLeafRefreshTickFailed)), "Workload leaf proactive reissue failed; will retry on next tick.", new global::Microsoft.Extensions.Logging.LogDefineOptions() { SkipEnabledCheck = true }); 
+
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Logging.Generators", "10.0.14.21808")]
+        public static partial void WorkloadLeafRefreshTickFailed(this global::Microsoft.Extensions.Logging.ILogger logger)
+        {
+            if (logger.IsEnabled(global::Microsoft.Extensions.Logging.LogLevel.Warning))
+            {
+                __WorkloadLeafRefreshTickFailedCallback(logger, null);
+            }
+        }
     }
 }

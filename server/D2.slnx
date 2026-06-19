@@ -242,6 +242,9 @@ Copyright (c) DCSV. All rights reserved.
   <Folder Name="/shared/dotnet/utilities/">
     <Project Path="shared/dotnet/utilities/D2.Shared.Utilities.csproj" />
   </Folder>
+  <Folder Name="/shared/dotnet/workload-identity/">
+    <Project Path="shared/dotnet/workload-identity/D2.Shared.WorkloadIdentity.csproj" />
+  </Folder>
   <Folder Name="/services/" />
   <Folder Name="/services/edge/" />
   <Folder Name="/services/edge/key-custodian/domain/">

@@ -7,6 +7,7 @@
 namespace D2.Shared.ServiceDefaults;
 
 using D2.Shared.AspNetCore;
+using D2.Shared.AspNetCore.Mtls;
 using D2.Shared.Auth;
 using D2.Shared.Auth.Grpc;
 using D2.Shared.Auth.Http;
@@ -46,6 +47,10 @@ public static class ServiceDefaultsServiceCollectionExtensions
         /// (skipped when
         /// <see cref="D2ServiceDefaultsOptions.SkipLocalCacheAutoWiring"/>
         /// is <c>true</c>);
+        /// <c>AddD2MutualTls(options.MutualTlsConfigure)</c>
+        /// (gated — wired only when
+        /// <see cref="D2ServiceDefaultsOptions.MutualTlsConfigure"/> is
+        /// non-null);
         /// <c>AddD2HealthChecks()</c>;
         /// <c>AddD2ProblemDetails(options.ProblemDetailsConfigure)</c>;
         /// <c>AddD2Cors(configuration, options.CorsConfigure)</c>.
@@ -174,6 +179,14 @@ public static class ServiceDefaultsServiceCollectionExtensions
 
             if (options.SkipLocalCacheAutoWiring is false)
                 services.AddD2LocalCache(options.LocalCacheConfigure);
+
+            // mTLS is opt-in via supplying the delegate — a host that doesn't
+            // supply it gets no client-certificate requirement (safe-by-default;
+            // an un-wired host must not start requiring client certs and lock
+            // itself out). The Kestrel-config logic lives in D2.Shared.AspNetCore;
+            // the aggregator only composes it (zero logic of its own).
+            if (options.MutualTlsConfigure is not null)
+                services.AddD2MutualTls(options.MutualTlsConfigure);
 
             services.AddD2HealthChecks();
             services.AddD2ProblemDetails(options.ProblemDetailsConfigure);

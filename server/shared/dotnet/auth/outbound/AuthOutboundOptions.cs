@@ -59,6 +59,16 @@ public sealed class AuthOutboundOptions
     public TimeSpan HttpRequestTimeout { get; set; } = TimeSpan.FromSeconds(5);
 
     /// <summary>
+    /// Gets or sets how far in advance of leaf-certificate expiry the
+    /// <c>WorkloadLeafRefreshHostedService</c> proactively reissues the cached
+    /// workload leaf for outbound mutual-TLS. Default 5 min — leaf TTLs are on the
+    /// order of hours, so a generous lead is fine. Set lower for short-TTL test
+    /// scenarios. Only consulted when a host opts into workload-certificate
+    /// presentation via <c>AddD2WorkloadCertificateOutbound</c>.
+    /// </summary>
+    public TimeSpan WorkloadLeafRefreshLeadTime { get; set; } = TimeSpan.FromMinutes(5);
+
+    /// <summary>
     /// Gets or sets the cache-key prefix the
     /// <c>TokenExchangeCache</c> applies when writing through the shared
     /// <c>ILocalCache</c> singleton. Default <c>"tokenexchange:"</c>.

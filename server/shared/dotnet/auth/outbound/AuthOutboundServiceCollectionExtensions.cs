@@ -8,6 +8,7 @@ namespace D2.Shared.Auth.Outbound;
 
 using D2.Shared.Auth.Outbound.ServiceIdentity;
 using D2.Shared.Auth.Outbound.TokenExchange;
+using D2.Shared.Auth.Outbound.WorkloadCertificate;
 using D2.Shared.Utilities.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -116,6 +117,52 @@ public static class AuthOutboundServiceCollectionExtensions
                 var opts = sp.GetRequiredService<IOptions<AuthOutboundOptions>>().Value;
                 client.Timeout = opts.HttpRequestTimeout;
             });
+
+            return services;
+        }
+
+        /// <summary>
+        /// Registers the outbound workload-certificate (mutual-TLS leaf)
+        /// presentation stack — the single per-process live-leaf cache, the
+        /// refresh-ahead leaf client (<see cref="IWorkloadLeafSource"/>), and the
+        /// proactive reissue hosted service. Composable with — and independent of —
+        /// <see cref="AddD2AuthOutbound"/>: a host that presents a workload leaf but
+        /// wants no outbound tokens (or vice-versa) wires only what it needs.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>The host supplies the issuer.</b> The reissue mechanism is the
+        /// host-supplied <see cref="IWorkloadCertificateIssuer"/> port — register it
+        /// (an in-process adapter calling KeyCustodian's issuance handler in dev; a
+        /// local issuance in the end-to-end harness) BEFORE building the host. The
+        /// shared lib never references a service's domain.
+        /// </para>
+        /// <para>
+        /// Per-channel attachment is opt-in via
+        /// <c>GrpcClientBuilderExtensions.AddD2WorkloadCertificate()</c> on the gRPC
+        /// client builder — a channel that does not call it presents no client cert.
+        /// </para>
+        /// </remarks>
+        /// <returns>The same <paramref name="services"/> instance for chaining.</returns>
+        public IServiceCollection AddD2WorkloadCertificateOutbound()
+        {
+            ArgumentNullException.ThrowIfNull(services);
+
+            services.AddOptions<AuthOutboundOptions>();
+            services.TryAddSingleton(TimeProvider.System);
+
+            services.TryAddSingleton<WorkloadLeafCache>();
+            services.TryAddSingleton<WorkloadLeafClient>();
+            services.TryAddSingleton<IWorkloadLeafSource>(sp =>
+                sp.GetRequiredService<WorkloadLeafClient>());
+
+            services.AddHostedService(sp => new WorkloadLeafRefreshHostedService(
+                sp.GetRequiredService<WorkloadLeafClient>(),
+                sp.GetRequiredService<WorkloadLeafCache>(),
+                sp.GetRequiredService<IOptions<AuthOutboundOptions>>(),
+                sp.GetRequiredService<
+                    Microsoft.Extensions.Logging.ILogger<WorkloadLeafRefreshHostedService>>(),
+                sp.GetRequiredService<TimeProvider>()));
 
             return services;
         }

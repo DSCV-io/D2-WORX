@@ -6,16 +6,17 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/shared/dotnet/`](../README.md)
 
-Cross-cutting ASP.NET Core middleware + endpoint primitives every D² service composition root needs but that don't belong on a single domain lib. Six public surfaces — `UseD2SecurityHeaders`, `UseD2Cors`, `UseD2InfrastructureBypass`, `AddD2ProblemDetails`, `MapD2HealthEndpoints`, `RunD2ServiceAsync` — plus the canonical `InfrastructurePathMatcher` consumed by `D2.Shared.Logging`'s request-logging middleware and `D2.Shared.Telemetry`'s AspNetCore-instrumentation `Filter` callback so all three libs share one source of truth for `/health`, `/alive`, `/metrics`, `/.well-known` matching.
+Cross-cutting ASP.NET Core middleware + endpoint primitives every D² service composition root needs but that don't belong on a single domain lib. Seven public surfaces — `UseD2SecurityHeaders`, `UseD2Cors`, `UseD2InfrastructureBypass`, `AddD2ProblemDetails`, `MapD2HealthEndpoints`, `RunD2ServiceAsync`, `AddD2MutualTls` — plus the canonical `InfrastructurePathMatcher` consumed by `D2.Shared.Logging`'s request-logging middleware and `D2.Shared.Telemetry`'s AspNetCore-instrumentation `Filter` callback so all three libs share one source of truth for `/health`, `/alive`, `/metrics`, `/.well-known` matching.
 
-Foundation tier — depends only on `D2.Shared.Utilities` (for `Falsey()` / `Truthy()` / `ToNullIfEmpty()`) and `Serilog.AspNetCore` (for the `RunD2ServiceAsync` startup wrapper's `Log.Fatal` + `CloseAndFlushAsync`). `D2.Shared.Logging` and `D2.Shared.Telemetry` depend on this lib, not the other way around.
+Foundation tier — depends on `D2.Shared.Utilities` (for `Falsey()` / `Truthy()` / `ToNullIfEmpty()`), `D2.Shared.Result` (the mTLS peer validator returns a `D2Result`), `D2.Shared.WorkloadIdentity` (the SPIFFE grammar the mTLS validator parses a presented SAN with), `D2.Shared.ProblemDetails.Abstractions` + `D2.Shared.Headers.Http` (the ProblemDetails customizer), and `Serilog.AspNetCore` (for the `RunD2ServiceAsync` startup wrapper's `Log.Fatal` + `CloseAndFlushAsync`). `D2.Shared.Logging` and `D2.Shared.Telemetry` depend on this lib, not the other way around.
 
 The lib does NOT own:
 
 - Authentication / authorization — `D2.Shared.Auth.Http` owns JWT validation, scope checks, identity extraction.
 - OpenTelemetry SDK setup — `D2.Shared.Telemetry` owns it.
 - Serilog configuration / sinks — `D2.Shared.Logging` owns them.
-- `[LoggerMessage]` source-generated delegates — middleware in this lib runs in the request pipeline; logging at MEL-bridge time is cleaner via the host's standard `ILogger<T>` injection (and the startup wrapper uses Serilog static `Log.*` calls because host startup runs outside the request pipeline).
+
+The request-pipeline middleware in this lib (security-headers, infrastructure-bypass, ProblemDetails) deliberately logs via the host's standard `ILogger<T>` rather than `[LoggerMessage]` delegates, and the startup wrapper uses Serilog static `Log.*` calls (host startup runs outside the request pipeline). The one exception is the mutual-TLS peer validator (`MtlsLog`): a peer-certificate rejection at the TLS handshake is a security event worth a structured, allocation-free `[LoggerMessage]` record — no delegate accepts an `Exception` (the exception type name is rendered PII-safely via `SanitizedExceptionRender.TypeName`).
 
 ## Public API surface
 
@@ -138,6 +139,32 @@ PII discipline: exception messages at host startup can carry connection strings,
 
 Async form captures both synchronously-faulted (host build / hosted-service `StartAsync`) and asynchronously-faulted (post-startup, mid-request) exceptions.
 
+### `AddD2MutualTls(Action<D2MutualTlsOptions>)`
+
+Wires mutual-TLS client-certificate require-and-validate into the host's Kestrel HTTPS endpoint. When `D2MutualTlsOptions.Enabled`, Kestrel is configured with `ClientCertificateMode.RequireCertificate` and a `ClientCertificateValidation` callback that delegates to the default-deny `SpiffeSanPeerValidator`. When disabled (the default), no Kestrel client-certificate configuration is added — an un-wired host never starts requiring client certificates and locking itself out. Off by default; the dev harness and a real cross-process host opt in.
+
+This is the server (callee) half of the internal-mTLS workload-identity layer. The client (caller) half — per-channel leaf presentation + refresh-ahead — lives in `D2.Shared.Auth.Outbound` (opt-in). The Kestrel-config LOGIC lives here; the `D2.Shared.ServiceDefaults` aggregator COMPOSES it via a gated `AddD2MutualTls` call + a `MutualTlsConfigure` pass-through.
+
+`SpiffeSanPeerValidator` is a default-deny check with three conjuncts, ALL of which must hold for a certificate to be accepted:
+
+1. **Chains to the internal CA.** The presented certificate is re-chained against the configured trust anchors with `X509ChainTrustMode.CustomRootTrust` — NOT the OS machine store. A certificate valid against the machine store but not OUR internal root is rejected; `SslPolicyErrors.None` alone is insufficient.
+2. **SPIFFE SAN trust domain matches.** Exactly one URI subject-alternative-name is extracted (via `System.Formats.Asn1`) and parsed through the shared `SpiffeWorkloadIdentity` grammar — a foreign trust domain, a non-SPIFFE SAN, no URI SAN, or more than one URI SAN is rejected.
+3. **Workload in the allowed set.** The parsed workload id must be a member of `D2MutualTlsOptions.AllowedWorkloads` (the receiver's "who may call ME" list).
+
+The validator NEVER throws — a crypto exception, a malformed SAN, or a chain build failure all map to a rejection (the same discipline the CA provider uses). The Kestrel callback adapts the `D2Result` to a `bool` (`Ok` ⇒ accept).
+
+`D2MutualTlsOptions`:
+
+| Property               | Default | Role                                                                                                                                       |
+| ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Enabled`              | `false` | mTLS is opt-in. When `true`, `AllowedWorkloads` MUST be non-empty AND `TrustAnchorsProvider` MUST be set, or the host throws at build.      |
+| `AllowedWorkloads`     | `[]`    | The receiver's allowed-workload set (lowercase service ids). Empty + `Enabled` is fail-loud — a require-cert host that allows none.         |
+| `TrustAnchorsProvider` | `null`  | Host-supplied provider of the PUBLIC internal CA trust anchor(s) the peer chains to. NEVER private keys. Required (non-null) when `Enabled`. |
+
+The SPIFFE trust domain is fixed at `d2.internal` — enforced by the `SpiffeWorkloadIdentity` grammar, not a configurable option. Any SAN whose host differs from `d2.internal` is rejected by the grammar before reaching the workload-membership check.
+
+Fail-loud, not fail-open: the options are validated at host build via `ValidateOnStart()`. The host owns trust-anchor sourcing through `TrustAnchorsProvider` — the dev harness loads the public root locally; a real host supplies it from KeyCustodian's certificate-authority provider. This lib reads no files, no `secrets/`, and never references a service domain.
+
 ### Constants — `D2AspNetCoreConstants`
 
 | Constant                               | Value                                                                                          |
@@ -196,6 +223,10 @@ Uses the AspNetCore-canonical `PathString.StartsWithSegments(PathString)` overlo
 | `Internal/SecurityHeadersMiddleware.cs`               | Internal sealed middleware impl behind `UseD2SecurityHeaders`.                                                |
 | `Internal/InfrastructureBypassMiddleware.cs`          | Internal sealed middleware impl behind `UseD2InfrastructureBypass`.                                           |
 | `Internal/D2ProblemDetailsCustomizer.cs`              | Internal helper — the `Action<ProblemDetailsContext>` body.                                                   |
+| `Mtls/D2MutualTlsOptions.cs`                          | Sealed class — mutual-TLS Options-pattern config (enabled / allowed-workloads / trust-domain / anchors).      |
+| `Mtls/MutualTlsHostExtensions.cs`                     | Public extension: `AddD2MutualTls` (Kestrel require + validate wiring, fail-loud option validation).         |
+| `Mtls/SpiffeSanPeerValidator.cs`                      | Internal sealed default-deny 3-conjunct peer-certificate validator.                                           |
+| `Mtls/MtlsLog.cs`                                     | Internal `[LoggerMessage]` delegates for the peer-validator rejection path (no `Exception` param).            |
 
 ## Dependencies
 
@@ -204,9 +235,13 @@ Uses the AspNetCore-canonical `PathString.StartsWithSegments(PathString)` overlo
 | `Serilog.AspNetCore`    | Static `Log.*` facade used by `RunD2ServiceAsync`. Already pinned (consumed transitively by `D2.Shared.Logging`). |
 | `JetBrains.Annotations` | `[MustDisposeResource]` annotations on disposable factory paths (none currently; consumed transitively).          |
 
-| Project reference     | Why                                                                                                                                                                                |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `D2.Shared.Utilities` | `Falsey()` / `Truthy()` / `ToNullIfEmpty()` extensions consumed throughout (options validation, env-var resolution, header-override tri-state, per-entry path / origin filtering). |
+| Project reference              | Why                                                                                                                                                                                |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `D2.Shared.Utilities`          | `Falsey()` / `Truthy()` / `ToNullIfEmpty()` extensions consumed throughout (options validation, env-var resolution, header-override tri-state, per-entry path / origin filtering). |
+| `D2.Shared.Result`             | `D2Result` returned by the mTLS peer validator + consumed by the ProblemDetails customizer.                                                                                        |
+| `D2.Shared.ProblemDetails.Abstractions` | Spec-emitted `D2ProblemDetailsKeys` consumed by the ProblemDetails customizer.                                                                                            |
+| `D2.Shared.Headers.Http`       | `HttpHeaders.IDEMPOTENCY_KEY` / `CORRELATION_ID` consumed by the CORS allowlist + ProblemDetails customizer.                                                                       |
+| `D2.Shared.WorkloadIdentity`   | The shared `SpiffeWorkloadIdentity` SPIFFE grammar the mTLS peer validator parses a presented certificate's URI SAN with.                                                          |
 
 The `Microsoft.AspNetCore.App` framework reference (via `Microsoft.NET.Sdk.Web`) provides `IApplicationBuilder`, `IEndpointRouteBuilder`, `WebApplication`, `HttpContext`, `PathString`, `ProblemDetails`, `ProblemDetailsContext`, `IProblemDetailsService`, `HealthCheckResult`, `HealthCheckOptions`, the CORS `CorsPolicyBuilder` + middleware, and the `Microsoft.Extensions.{DependencyInjection,Options,Configuration,Logging,Hosting}.Abstractions` packages.
 

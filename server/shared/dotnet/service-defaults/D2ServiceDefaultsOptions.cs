@@ -7,6 +7,7 @@
 namespace D2.Shared.ServiceDefaults;
 
 using D2.Shared.AspNetCore;
+using D2.Shared.AspNetCore.Mtls;
 using D2.Shared.Auth;
 using D2.Shared.Caching;
 using D2.Shared.Logging;
@@ -126,6 +127,19 @@ public sealed class D2ServiceDefaultsOptions
     /// pipeline-installation time, NOT at service registration).
     /// </summary>
     public Action<D2InfrastructureBypassOptions>? InfrastructureBypassConfigure { get; set; }
+
+    /// <summary>
+    /// Gets or sets the optional pass-through to <c>AddD2MutualTls</c>'s
+    /// configure callback. When non-null, the aggregator wires mutual-TLS
+    /// client-certificate require-and-validate into the host's Kestrel HTTPS
+    /// endpoint (the server / callee half of the internal-mTLS workload-identity
+    /// layer). When null (the default), no mTLS is wired — opt-in per-host, so a
+    /// host that does not supply this gets no client-certificate requirement
+    /// (safe-by-default). The delegate populates
+    /// <see cref="D2MutualTlsOptions"/> (enabled / allowed-workloads /
+    /// trust-domain / trust-anchors).
+    /// </summary>
+    public Action<D2MutualTlsOptions>? MutualTlsConfigure { get; set; }
 
     /// <summary>
     /// Gets or sets the optional pass-through to <c>AddD2LocalCache</c>'s

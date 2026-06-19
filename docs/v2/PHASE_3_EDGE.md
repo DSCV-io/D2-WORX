@@ -106,6 +106,20 @@ shared Redis lock surface.
 > the HTTP entry-point + mTLS workload-identity auth ([ADR-0023](../adrs/0023-mtls-workload-identity.md)) +
 > gRPC forwarding; the scheduler owns what fires when.
 
+> **Deferred mTLS machinery to build here.** The mTLS workload-identity layer shipped
+> dev-first as a standalone deliverable: KeyCustodian is the internal CA (generate /
+> seed / issue / rotate / compromise) and the shared transport plumbing exists
+> (server require+validate in `D2.Shared.AspNetCore`, client leaf-present + refresh-ahead
+> in `D2.Shared.Auth.Outbound`, the `D2.Shared.WorkloadIdentity` SPIFFE grammar), proven
+> end-to-end on a local harness. **Three cross-process pieces remain for the Edge build:**
+> (1) expose `IssueWorkloadCertificate` over the gRPC contract — today `IKeyCustodianApi`
+> exposes only `GetJwks`, and issuance is an in-process command; (2) the workload
+> **first-leaf bootstrap identity** — chicken-and-egg (a workload needs a leaf to mTLS-call
+> KeyCustodian for a leaf), provisioned by the deployment orchestrator; (3) wire the mTLS
+> server + the leaf-refresh client into the running Edge host. The shipped client uses an
+> in-process issuer delegate as the dev/harness seam. See [ADR-0023](../adrs/0023-mtls-workload-identity.md)
+> "Negative / new work".
+
 ---
 
 ## §4. Session storage layers (3-tier)

@@ -67,6 +67,34 @@ services
 
 Per-channel opt-in is the safe default — auto-applying to every gRPC channel would leak our internal Edge JWT to non-D² services.
 
+### Workload certificate — mTLS leaf presentation (the caller half of ADR-0023)
+
+This is the **caller (client) half** of the internal-mTLS workload-identity layer; the callee (server) half — Kestrel require-and-validate — lives in `D2.Shared.AspNetCore` (`AddD2MutualTls`). A workload holds its current leaf certificate in memory and proactively reissues it before expiry, on the same refresh-ahead pattern the service-identity client uses, then presents it on outbound gRPC channels that opt in.
+
+```csharp
+// Composition root (opt-in, independent of AddD2AuthOutbound):
+services.AddD2WorkloadCertificateOutbound();
+
+// The host supplies the reissue adapter (the dev / harness in-process seam) —
+// the shared lib defines only the port, never referencing a service domain:
+services.AddSingleton<IWorkloadCertificateIssuer, MyInProcessWorkloadCertificateIssuer>();
+
+// Per-channel opt-in — composes ALONGSIDE .AddD2ServiceIdentity():
+services
+    .AddGrpcClient<FilesGrpc.FilesGrpcClient>(o => o.Address = new Uri("https://files.internal"))
+    .AddD2WorkloadCertificate();   // ← presents the current leaf on the mTLS handshake
+```
+
+`AddD2WorkloadCertificateOutbound()` registers:
+
+- `WorkloadLeafCache` — single per-process slot holding the live leaf `X509Certificate2` (atomic-ref swap; disposes the superseded leaf on swap, the current leaf on cache disposal).
+- `WorkloadLeafClient` + `IWorkloadLeafSource` — the refresh-ahead leaf source. Reissues through the host-supplied `IWorkloadCertificateIssuer`, builds a live private-key-bearing certificate from the returned DER + PKCS#8 (zeroing the PKCS#8 once the cert owns the key), caches it, and serves-stale-on-transient (singleflight + circuit-breaker, same shape as the service-identity client).
+- `WorkloadLeafRefreshHostedService` — polls every 30 s and reissues when `NotAfter - now <= WorkloadLeafRefreshLeadTime` (default 5 min; leaf TTLs are hours).
+
+`AddD2WorkloadCertificate()` on the gRPC builder sets the channel handler's `SslClientAuthenticationOptions.LocalCertificateSelectionCallback` to read the current leaf from the cache at connect time — a rotated leaf is picked up without rebuilding the channel. It composes alongside `AddD2ServiceIdentity()` (the leaf is set on the channel handler's `SslOptions`; the token is set on `options.Credentials` — orthogonal, compose-don't-clobber on `options.HttpHandler`). Safe-by-default: a channel that does not call it presents no client certificate.
+
+The cross-process "a separate service obtains its first leaf from KeyCustodian over the wire" bootstrap (the gRPC issuance contract + bootstrap-identity provisioning) is documented future work — not the `IWorkloadCertificateIssuer` port, which is the in-process / harness seam that proves the full refresh-ahead + presentation path locally.
+
 ---
 
 ## File layout
@@ -77,7 +105,7 @@ auth/outbound/
 ├── AuthOutboundServiceCollectionExtensions.cs        # AddD2AuthOutbound composition root
 ├── Grpc/
 │   ├── ServiceIdentityCallCredentials.cs             # gRPC CallCredentials sourcing the bearer from IServiceIdentityClient
-│   └── GrpcClientBuilderExtensions.cs                # .AddD2ServiceIdentity() per-channel opt-in
+│   └── GrpcClientBuilderExtensions.cs                # .AddD2ServiceIdentity() + .AddD2WorkloadCertificate() per-channel opt-ins
 ├── ServiceIdentity/
 │   ├── IServiceIdentityClient.cs                     # interface
 │   ├── HttpServiceIdentityClient.cs                  # POST /oauth/token grant_type=client_credentials
@@ -85,6 +113,14 @@ auth/outbound/
 │   ├── ServiceIdentitySnapshot.cs                    # (Token, ExpiresAt) record
 │   ├── ServiceIdentityException.cs                   # internal parse-failure exception
 │   └── ServiceIdentityRefreshHostedService.cs        # background proactive refresh
+├── WorkloadCertificate/
+│   ├── IWorkloadLeafSource.cs                        # interface — current live leaf accessor
+│   ├── IWorkloadCertificateIssuer.cs                 # host-supplied reissue port (BCL DER+PKCS#8 boundary)
+│   ├── WorkloadLeafMaterial.cs                       # (CertificateDer, PrivateKeyPkcs8, IssuerCertificateDer, NotAfter) record
+│   ├── WorkloadLeafClient.cs                         # refresh-ahead reissue + live-cert build (singleflight + breaker)
+│   ├── WorkloadLeafCache.cs                          # atomic-ref single-value live-cert cache (disposes superseded leaf)
+│   ├── WorkloadLeafSnapshot.cs                       # (Leaf, NotAfter) record
+│   └── WorkloadLeafRefreshHostedService.cs           # background proactive reissue
 ├── TokenExchange/
 │   ├── ITokenExchangeClient.cs                       # interface
 │   ├── HttpTokenExchangeClient.cs                    # POST /oauth/token grant_type=token-exchange

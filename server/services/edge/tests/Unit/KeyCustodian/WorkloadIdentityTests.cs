@@ -7,57 +7,79 @@
 namespace D2.Edge.Tests.Unit.KeyCustodian;
 
 /// <summary>
-/// Adversarial unit tests for <see cref="WorkloadIdentity"/> — the issuance-side
-/// <see cref="WorkloadIdentity.Create"/> validation, the peer-validation-side
-/// <see cref="WorkloadIdentity.Parse"/> SPIFFE grammar (default-deny), the
-/// computed <see cref="WorkloadIdentity.Uri"/> round-trip, and
-/// <see cref="WorkloadIdentity.FromTrusted"/>.
+/// Tests for KeyCustodian's <see cref="WorkloadIdentity"/> domain wrapper. The
+/// exhaustive SPIFFE-grammar matrix now lives in the shared
+/// <c>SpiffeWorkloadIdentityTests</c> (the grammar moved to
+/// <c>D2.Shared.WorkloadIdentity</c>). This suite is the
+/// <b>delegation regression-pin</b>: KeyCustodian re-maps the shared grammar's
+/// generic <c>ValidationFailed</c> to its own
+/// <c>KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY</c> code on the issuance side, and the
+/// re-exported constants, <see cref="WorkloadIdentity.Uri"/>, valid-path success,
+/// and <see cref="WorkloadIdentity.FromTrusted"/> all behave identically post-refactor.
 /// </summary>
 public sealed class WorkloadIdentityTests
 {
     // -----------------------------------------------------------------------
-    // Create — valid input
+    // Create / Parse — valid input still succeeds through the delegation
     // -----------------------------------------------------------------------
 
     [Theory]
     [InlineData("edge")]
     [InlineData("files")]
-    [InlineData("a")]
     [InlineData("my-service-01")]
     public void Create_ValidServiceId_ReturnsOk(string serviceId)
     {
         var result = WorkloadIdentity.Create(serviceId);
+
         result.Success.Should().BeTrue();
         result.Data!.ServiceId.Should().Be(serviceId);
-    }
-
-    [Fact]
-    public void Create_MaxLengthServiceId_ReturnsOk()
-    {
-        var serviceId = new string('a', 64);
-        var result = WorkloadIdentity.Create(serviceId);
-        result.Success.Should().BeTrue();
     }
 
     [Fact]
     public void Create_UpperCase_NormalizesToLowercase()
     {
         var result = WorkloadIdentity.Create(" EDGE ");
+
         result.Success.Should().BeTrue();
         result.Data!.ServiceId.Should().Be("edge");
     }
 
+    [Fact]
+    public void Parse_ValidSpiffeUri_ReturnsOkWithServiceId()
+    {
+        var result = WorkloadIdentity.Parse("spiffe://d2.internal/workload/edge");
+
+        result.Success.Should().BeTrue();
+        result.Data!.ServiceId.Should().Be("edge");
+    }
+
+    [Fact]
+    public void Uri_RoundTripsThroughParse()
+    {
+        var identity = WorkloadIdentity.Create("files").Data!;
+        identity.Uri.Should().Be("spiffe://d2.internal/workload/files");
+
+        var parsed = WorkloadIdentity.Parse(identity.Uri);
+        parsed.Success.Should().BeTrue();
+        parsed.Data!.ServiceId.Should().Be("files");
+    }
+
     // -----------------------------------------------------------------------
-    // Create — null / empty / whitespace / over-length
+    // Delegation regression-pin: the shared generic failure is re-mapped to the
+    // KeyCustodian code on BOTH Create (issuance) AND Parse (peer-validation).
     // -----------------------------------------------------------------------
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Create_NullEmptyWhitespace_ReturnsInvalidWorkloadIdentity(string? serviceId)
+    [InlineData("svc with spaces")]
+    [InlineData("svc/slash")]
+    [InlineData("svc_underscore")]
+    public void Create_Invalid_ReturnsKeyCustodianInvalidWorkloadIdentity(string? serviceId)
     {
         var result = WorkloadIdentity.Create(serviceId);
+
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(
             KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY);
@@ -65,109 +87,40 @@ public sealed class WorkloadIdentityTests
     }
 
     [Fact]
-    public void Create_OverMaxLength_ReturnsInvalidWorkloadIdentity()
+    public void Create_OverMaxLength_ReturnsKeyCustodianInvalidWorkloadIdentity()
     {
         var result = WorkloadIdentity.Create(new string('a', 65));
-        result.Success.Should().BeFalse();
-        result.ErrorCode.Should().Be(
-            KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY);
-    }
 
-    // -----------------------------------------------------------------------
-    // Create — invalid charset (lowercase DNS-label only)
-    // -----------------------------------------------------------------------
-
-    [Theory]
-    [InlineData("svc with spaces")]
-    [InlineData("svc/slash")]
-    [InlineData("svc.dot")]
-    [InlineData("svc_underscore")]
-    [InlineData("svc@at")]
-    [InlineData("svcé")]
-    [InlineData("svc:colon")]
-    public void Create_InvalidCharset_ReturnsInvalidWorkloadIdentity(string serviceId)
-    {
-        var result = WorkloadIdentity.Create(serviceId);
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(
             KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY);
     }
 
     [Theory]
-    [InlineData("Edge", "edge")]
-    [InlineData("FILES", "files")]
-    public void Create_MixedOrUpperCase_NormalizesToLowercase(string input, string expected)
-    {
-        // Uppercase is normalized (lowercased), not rejected — the same convenience
-        // KeyDomain.Create offers. The charset check runs AFTER normalization.
-        var result = WorkloadIdentity.Create(input);
-        result.Success.Should().BeTrue();
-        result.Data!.ServiceId.Should().Be(expected);
-    }
-
-    // -----------------------------------------------------------------------
-    // Uri — computed SPIFFE SAN
-    // -----------------------------------------------------------------------
-
-    [Fact]
-    public void Uri_ValidIdentity_ProducesSpiffeFormat()
-    {
-        var identity = WorkloadIdentity.Create("edge").Data!;
-        identity.Uri.Should().Be("spiffe://d2.internal/workload/edge");
-    }
-
-    [Fact]
-    public void Uri_RoundTripsThroughParse()
-    {
-        var identity = WorkloadIdentity.Create("files").Data!;
-        var parsed = WorkloadIdentity.Parse(identity.Uri);
-        parsed.Success.Should().BeTrue();
-        parsed.Data!.ServiceId.Should().Be("files");
-    }
-
-    // -----------------------------------------------------------------------
-    // Parse — valid SPIFFE URI
-    // -----------------------------------------------------------------------
-
-    [Fact]
-    public void Parse_ValidSpiffeUri_ReturnsOkWithServiceId()
-    {
-        var result = WorkloadIdentity.Parse("spiffe://d2.internal/workload/edge");
-        result.Success.Should().BeTrue();
-        result.Data!.ServiceId.Should().Be("edge");
-    }
-
-    // -----------------------------------------------------------------------
-    // Parse — default-deny (the R3 fail-open guard)
-    // -----------------------------------------------------------------------
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
     [InlineData("not-a-uri")]
     [InlineData("spiffe://evil.internal/workload/edge")] // wrong trust domain
     [InlineData("https://d2.internal/workload/edge")] // wrong scheme
     [InlineData("spiffe://d2.internal/svc/edge")] // missing /workload/ path
     [InlineData("spiffe://d2.internal/workload/")] // empty workload segment
-    [InlineData("spiffe://d2.internal/workload/svc_underscore")] // invalid charset
     [InlineData("spiffe://d2.internal.evil.com/workload/edge")] // trust-domain suffix attack
-    public void Parse_Adversarial_ReturnsInvalidWorkloadIdentity(string? uri)
+    public void Parse_Adversarial_ReturnsKeyCustodianInvalidWorkloadIdentity(string? uri)
     {
         var result = WorkloadIdentity.Parse(uri);
+
         result.Success.Should().BeFalse();
         result.ErrorCode.Should().Be(
             KeyCustodianErrorCodes.KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY);
     }
 
     // -----------------------------------------------------------------------
-    // FromTrusted
+    // FromTrusted (KeyCustodian-owned rehydration)
     // -----------------------------------------------------------------------
 
     [Fact]
     public void FromTrusted_ValidServiceId_WrapsVerbatim()
     {
         var identity = WorkloadIdentity.FromTrusted("edge");
+
         identity.ServiceId.Should().Be("edge");
     }
 
@@ -175,24 +128,19 @@ public sealed class WorkloadIdentityTests
     public void FromTrusted_Null_ThrowsArgumentNullException()
     {
         var act = () => WorkloadIdentity.FromTrusted(null!);
-        act.Should().Throw<ArgumentNullException>();
-    }
 
-    [Fact]
-    public void FromTrusted_Empty_ThrowsArgumentException()
-    {
-        var act = () => WorkloadIdentity.FromTrusted(string.Empty);
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
     public void FromTrusted_Whitespace_ThrowsArgumentException()
     {
         var act = () => WorkloadIdentity.FromTrusted("   ");
+
         act.Should().Throw<ArgumentException>();
     }
 
-    // Gate-intact pin: FromTrusted bypasses validation, Create still rejects
+    // Gate-intact pin: FromTrusted bypasses validation, Create still rejects.
     [Fact]
     public void FromTrusted_AcceptsInvalidCharset_CreateRejectsIt()
     {
@@ -203,7 +151,7 @@ public sealed class WorkloadIdentityTests
     }
 
     [Fact]
-    public void Constants_PinTheSpiffeWireFormat()
+    public void Constants_ReExportTheSharedSpiffeWireFormat()
     {
         WorkloadIdentity.SCHEME.Should().Be("spiffe");
         WorkloadIdentity.TRUST_DOMAIN.Should().Be("d2.internal");

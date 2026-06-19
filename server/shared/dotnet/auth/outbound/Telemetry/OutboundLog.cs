@@ -95,4 +95,28 @@ internal static partial class OutboundLog
         this ILogger logger,
         string exceptionType,
         string firstFrame);
+
+    [LoggerMessage(
+        EventId = 3001,
+        Level = LogLevel.Warning,
+        Message = "Workload leaf reissue failed: {ExceptionType} ({FirstFrame}).")]
+    public static partial void WorkloadLeafReissueFailed(
+        this ILogger logger,
+        string exceptionType,
+        string firstFrame);
+
+    [LoggerMessage(
+        EventId = 3002,
+        Level = LogLevel.Warning,
+        Message = "Initial workload leaf acquisition failed at startup; "
+                + "will retry on the polling cadence ({PollInterval}).")]
+    public static partial void WorkloadLeafStartupAcquireFailed(
+        this ILogger logger,
+        TimeSpan pollInterval);
+
+    [LoggerMessage(
+        EventId = 3003,
+        Level = LogLevel.Warning,
+        Message = "Workload leaf proactive reissue failed; will retry on next tick.")]
+    public static partial void WorkloadLeafRefreshTickFailed(this ILogger logger);
 }

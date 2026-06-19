@@ -6,7 +6,9 @@
 
 namespace D2.Shared.Auth.Outbound.Grpc;
 
+using System.Net.Security;
 using D2.Shared.Auth.Outbound.ServiceIdentity;
+using D2.Shared.Auth.Outbound.WorkloadCertificate;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
@@ -70,6 +72,63 @@ public static class GrpcClientBuilderExtensions
                     ? global::Grpc.Core.ChannelCredentials.Create(
                         global::Grpc.Core.ChannelCredentials.SecureSsl, ours)
                     : global::Grpc.Core.ChannelCredentials.Create(options.Credentials, ours);
+            });
+        }
+
+        /// <summary>
+        /// Attaches this workload's mutual-TLS leaf certificate to the gRPC channel
+        /// under construction. Every connection through the resulting channel
+        /// presents the current live leaf from <see cref="WorkloadLeafCache"/>
+        /// (read at connect time via the TLS handshake's
+        /// <see cref="SslClientAuthenticationOptions.LocalCertificateSelectionCallback"/>),
+        /// so a rotated leaf is picked up without rebuilding the channel.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Composes ALONGSIDE <see cref="AddD2ServiceIdentity"/>: a channel can have
+        /// both — the leaf for workload mTLS (set on the channel handler's
+        /// <c>SslOptions</c>) and the call-credentials for the forwarded token (set
+        /// on <c>options.Credentials</c>). Both factors are required, neither
+        /// rescues the other; the handler-vs-credentials split keeps them orthogonal.
+        /// </para>
+        /// <para>
+        /// Safe-by-default: a channel that does NOT call this presents no client
+        /// certificate (the same posture as <see cref="AddD2ServiceIdentity"/>).
+        /// Compose-don't-clobber: an existing <see cref="SocketsHttpHandler"/> set on
+        /// the channel options is augmented (its <c>SslOptions</c> /
+        /// selection-callback are set) rather than replaced.
+        /// </para>
+        /// </remarks>
+        /// <returns>The same <paramref name="builder"/> instance for chaining.</returns>
+        public IHttpClientBuilder AddD2WorkloadCertificate()
+        {
+            ArgumentNullException.ThrowIfNull(builder);
+
+            return builder.ConfigureChannel((sp, options) =>
+            {
+                var leafCache = sp.GetRequiredService<WorkloadLeafCache>();
+                var clock = sp.GetRequiredService<TimeProvider>();
+
+                // Compose-don't-clobber: reuse an existing SocketsHttpHandler if a
+                // sibling extension set one; otherwise create it. Never overwrite a
+                // handler another extension may depend on.
+                var handler = options.HttpHandler as SocketsHttpHandler
+                    ?? new SocketsHttpHandler();
+
+                handler.SslOptions.LocalCertificateSelectionCallback =
+                    (_, _, _, _, _) =>
+                    {
+                        // Read the current live leaf at connect time; a rotated leaf
+                        // is picked up without rebuilding the channel. Returns null
+                        // when no current leaf exists (the handshake then presents
+                        // no client certificate — the callee's RequireCertificate
+                        // rejects it, which is the correct fail-closed behavior).
+                        var leaf = leafCache.GetCurrentLeaf(clock.GetUtcNow());
+
+                        return leaf!;
+                    };
+
+                options.HttpHandler = handler;
             });
         }
     }

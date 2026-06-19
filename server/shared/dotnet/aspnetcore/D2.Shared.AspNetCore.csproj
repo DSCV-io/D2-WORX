@@ -22,28 +22,33 @@ Copyright (c) DCSV. All rights reserved.
   <!--
     D2.Shared.AspNetCore — the canonical home for cross-cutting ASP.NET Core
     middleware + endpoint primitives that every D² service composition root
-    needs but that don't belong on a single domain lib. Six public surfaces:
+    needs but that don't belong on a single domain lib. Seven public surfaces:
     UseD2SecurityHeaders, UseD2Cors, UseD2InfrastructureBypass,
-    AddD2ProblemDetails, MapD2HealthEndpoints, RunD2ServiceAsync. Plus the
-    canonical InfrastructurePathMatcher (consumed by D2.Shared.Logging's
+    AddD2ProblemDetails, MapD2HealthEndpoints, RunD2ServiceAsync, AddD2MutualTls.
+    Plus the canonical InfrastructurePathMatcher (consumed by D2.Shared.Logging's
     request-logging middleware + D2.Shared.Telemetry's AspNetCore-instrumentation
     Filter callback so all three libs share one source of truth for
     /health, /alive, /metrics, /.well-known matching).
 
-    Foundation tier — depends only on D2.Shared.Utilities (for
-    Falsey() / Truthy() / ToNullIfEmpty()) and Serilog (for the
-    RunD2ServiceAsync startup wrapper's Log.Fatal + CloseAndFlushAsync).
+    Foundation tier — depends on D2.Shared.Utilities (Falsey/Truthy/ToNullIfEmpty),
+    D2.Shared.Result (the mTLS peer validator returns a D2Result),
+    D2.Shared.WorkloadIdentity (the SPIFFE grammar the mTLS validator parses a
+    presented SAN with), D2.Shared.ProblemDetails.Abstractions + D2.Shared.Headers.Http
+    (the ProblemDetails customizer), and Serilog (the RunD2ServiceAsync startup
+    wrapper's Log.Fatal + CloseAndFlushAsync).
 
     Does NOT own:
-      • [LoggerMessage] delegates           — middleware runs in the request
-                                              pipeline; logging at MEL-bridge
-                                              time is cleaner via the host's
-                                              standard ILogger<T> injection.
       • Authentication / Authorization      — D2.Shared.Auth + auth-http own
                                               JWT validation, scope checks,
                                               identity extraction.
       • OpenTelemetry SDK setup             — D2.Shared.Telemetry owns it.
       • Serilog configuration / sinks       — D2.Shared.Logging owns them.
+
+    The request-pipeline middleware logs via the host's standard ILogger<T>
+    rather than [LoggerMessage] delegates. The one [LoggerMessage] surface is
+    MtlsLog — a peer-certificate rejection at the TLS handshake is a security
+    event worth a structured, allocation-free record; no delegate accepts an
+    Exception (type name rendered PII-safely via SanitizedExceptionRender.TypeName).
   -->
 
   <ItemGroup>
@@ -95,6 +100,14 @@ Copyright (c) DCSV. All rights reserved.
       wire value for one concept.
     -->
     <ProjectReference Include="..\headers\http\D2.Shared.Headers.Http.csproj" />
+    <!--
+      workload-identity — the shared SPIFFE grammar (SpiffeWorkloadIdentity)
+      consumed by the mTLS SpiffeSanPeerValidator to parse + validate a presented
+      certificate's URI SAN. Leaf-tier (refs result + utilities only) — keeps the
+      SPIFFE format single-source across the server validator + KeyCustodian's
+      issuance path, never referencing a service domain.
+    -->
+    <ProjectReference Include="..\workload-identity\D2.Shared.WorkloadIdentity.csproj" />
   </ItemGroup>
 
   <ItemGroup>
