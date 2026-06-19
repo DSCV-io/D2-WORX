@@ -234,6 +234,20 @@ These tiers added wall-clock time without commensurate value at our scale.
 
 ---
 
+## Platform-dependent transport tests
+
+A test that exercises a real socket or a platform-dependent transport path — a mutual-TLS handshake over a real TCP connection, a Unix-domain-socket bind, a platform-specific TLS-stack behavior — sometimes CANNOT run on the developer's OS (the OS TLS stack rejects the handshake, the socket capability is unavailable). The tempting wrong fix is to make the test pass unconditionally on that OS. **Never mark a platform-incompatible test green on an OS where it cannot actually exercise the path** — a fake green reports coverage that does not exist, so the gap stays invisible until the deploy-target container (or production) surfaces the untested path. A fake green is strictly worse than an honest skip.
+
+The correct shape ships all three artifacts, then proves the full path in the deploy-target container (Docker / Linux):
+
+1. **Honest platform-skip on the incompatible OS** — report SKIPPED via a real skip primitive (`[SkippableFact]` + `Skip.IfNot(OperatingSystem.IsLinux())`, an xUnit `Skip`, a runtime platform guard). The incompatible-OS run must show SKIPPED in the runner output — never a green assertion (`Assert.True(true)`), never a `[Fact(Skip = ...)]` masking a path that was never made to work. The honest skip keeps the gap VISIBLE.
+2. **Deterministic cross-platform unit matrix for the underlying logic** — extract the platform-independent decision logic (the certificate / token validator, the wire parser, the handshake-policy evaluator) and unit-test it on EVERY OS, decoupled from the socket. The adversarial coverage (malformed cert, expired cert, wrong SAN, untrusted issuer) lives HERE — it must not be gated behind the platform-skipped socket test.
+3. **Same-platform canary for the platform-independent slice** — a test covering the parts that DO run on the dev OS (constructing the TLS options, building the cert chain in memory, pre-handshake validation) proves the non-socket portion on the developer's machine.
+
+The real-socket path itself is then proven in the deploy-target container — the Docker / Linux CI job (or `docker run`) that actually exercises the handshake where it CAN run. The container test self-provisions its own trust material (a test-scoped fixture) so the pass depends on the fixture, not on the developer's machine state. Canonical predicate: [rules.md §1.30](dev/rules.md#1-test-discipline); the orchestrator re-runs environment-touching gates from a clean state per [rules.md §24.27](dev/rules.md#24-audit-evidence-discipline-meta--how-to-audit) so a green that depended on a diagnostic-installed trust root cannot be mistaken for real coverage.
+
+---
+
 ## Required CI Gate
 
 `integration-key-rotation` is non-skippable. Coverage:
