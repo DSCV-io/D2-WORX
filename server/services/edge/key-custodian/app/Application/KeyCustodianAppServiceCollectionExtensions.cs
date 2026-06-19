@@ -18,7 +18,7 @@ using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetJwks;
 using D2.Edge.KeyCustodian.App.Application.Handlers.Queries.GetRotationPlan;
 
 /// <summary>
-/// DI registration for the KeyCustodian App layer: the 8 lifecycle handlers and
+/// DI registration for the KeyCustodian App layer: the 10 lifecycle handlers and
 /// the options-backed rotation-policy provider.
 /// </summary>
 /// <remarks>

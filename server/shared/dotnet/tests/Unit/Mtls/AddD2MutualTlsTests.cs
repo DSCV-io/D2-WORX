@@ -23,6 +23,7 @@ using Xunit;
 /// resolvability (every registered seam resolves via
 /// <c>GetRequiredService&lt;&gt;</c>).
 /// </summary>
+[Trait("Category", "Unit")]
 public sealed class AddD2MutualTlsTests
 {
     // -----------------------------------------------------------------------

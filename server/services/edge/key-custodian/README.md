@@ -6,7 +6,7 @@ Copyright (c) DCSV. All rights reserved.
 
 > Parent: [`server/services/edge/`](../README.md)
 
-For engineers working on the KeyCustodian module or integrating with the key lifecycle from other Edge modules. The KeyCustodian is Edge's key-lifecycle authority. It owns the lifecycle of every long-lived secret the platform uses — JWKS signing keys (RS256), RabbitMQ payload-encryption keys (AES-256-GCM), session-cookie signing secrets, and service-identity client secrets. It is the single point that generates, activates, rotates, retires, and compromises managed keys, ensuring that no other module holds or controls key material lifecycle.
+For engineers working on the KeyCustodian module or integrating with the key lifecycle from other Edge modules. The KeyCustodian is Edge's key-lifecycle authority. It owns the lifecycle of every long-lived secret the platform uses — JWKS signing keys (RS256), RabbitMQ payload-encryption keys (AES-256-GCM), session-cookie signing secrets, service-identity client secrets, and the internal certificate-authority key (`X509CaCertificate`) that issues per-workload mTLS leaf certificates. KeyCustodian is the internal CA: it seeds the root + issuing intermediate certificate authority, issues short-lived workload leaf certificates on demand, and rotates the CA key through the same overlap lifecycle all managed keys use. It is the single point that generates, activates, rotates, retires, and compromises managed keys, ensuring that no other module holds or controls key material lifecycle.
 
 Key operations are persisted to a dedicated `keycustodian_db` (independent of `auth_db`) using an EF-as-DDD flat-record + pure-mapper pattern (no per-op Repository handlers — direct DbContext + aggregate access per [ADR-0017](../../../../docs/adrs/0017-ef-as-ddd-persistence.md)). Rotation coordination uses PostgreSQL advisory locks — leaderless, no Redis dependency for a rare, non-latency-sensitive operation. The root key that protects all managed key material at rest is file-backed (`secrets/keycustodian/root.key`), loaded at startup via `FileRootKeyProvider` in the Infra layer.
 
@@ -29,7 +29,7 @@ Key operations are persisted to a dedicated `keycustodian_db` (independent of `a
 
 ## Database
 
-`keycustodian_db` — owned by this module. Tables: `key_record`, `key_audit_record`.
+`keycustodian_db` — owned by this module. Tables: `key_record`, `key_audit_record`, `leaf_issuance_audit_record`.
 
 ## Operations
 

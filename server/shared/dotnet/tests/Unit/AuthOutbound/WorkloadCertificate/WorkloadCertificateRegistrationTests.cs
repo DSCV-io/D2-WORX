@@ -23,6 +23,7 @@ using Xunit;
 /// null, and the two channel opt-ins (<c>AddD2ServiceIdentity</c> +
 /// <c>AddD2WorkloadCertificate</c>) coexist (compose-don't-clobber).
 /// </summary>
+[Trait("Category", "Unit")]
 public sealed class WorkloadCertificateRegistrationTests
 {
     // -----------------------------------------------------------------------

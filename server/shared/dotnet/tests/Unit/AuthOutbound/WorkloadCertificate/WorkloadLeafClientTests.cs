@@ -20,6 +20,7 @@ using Xunit;
 /// <c>HttpServiceIdentityClientTests</c> with a certificate reissue instead of a
 /// token fetch.
 /// </summary>
+[Trait("Category", "Unit")]
 public sealed class WorkloadLeafClientTests
 {
     private static readonly DateTimeOffset SR_Base =

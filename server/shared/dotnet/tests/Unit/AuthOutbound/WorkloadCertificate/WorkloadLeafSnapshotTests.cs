@@ -20,6 +20,7 @@ using Xunit;
 /// snapshot carries the leaf, its issuing intermediate, and the pre-built chain
 /// context the gRPC channel presents.
 /// </summary>
+[Trait("Category", "Unit")]
 public sealed class WorkloadLeafSnapshotTests
 {
     private static readonly DateTimeOffset SR_Base =

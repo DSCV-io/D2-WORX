@@ -19,6 +19,7 @@ using Xunit;
 /// <c>ServiceIdentityCacheTests</c>, with the leaf + intermediate disposal-on-swap
 /// addition.
 /// </summary>
+[Trait("Category", "Unit")]
 public sealed class WorkloadLeafCacheTests
 {
     [Fact]

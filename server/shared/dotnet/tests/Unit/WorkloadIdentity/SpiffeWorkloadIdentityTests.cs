@@ -22,6 +22,7 @@ using Xunit;
 /// KeyCustodian's <c>KEYCUSTODIAN_INVALID_WORKLOAD_IDENTITY</c>) is the consumer's
 /// concern, covered by the KeyCustodian-side test.
 /// </summary>
+[Trait("Category", "Unit")]
 public sealed class SpiffeWorkloadIdentityTests
 {
     // -----------------------------------------------------------------------

@@ -21,6 +21,7 @@ using Xunit;
 /// a missing / non-URI / multiple-URI SAN, a CA-as-leaf, garbage bytes, and a null
 /// certificate are ALL rejected — and the validator NEVER throws.
 /// </summary>
+[Trait("Category", "Unit")]
 public sealed class SpiffeSanPeerValidatorTests
 {
     // -----------------------------------------------------------------------

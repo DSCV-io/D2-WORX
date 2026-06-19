@@ -20,6 +20,7 @@ using Xunit;
 /// survival, and clean cancellation. Mirrors
 /// <c>ServiceIdentityRefreshHostedServiceTests</c>.
 /// </summary>
+[Trait("Category", "Unit")]
 public sealed class WorkloadLeafRefreshHostedServiceTests
 {
     private static readonly DateTimeOffset SR_Base =
